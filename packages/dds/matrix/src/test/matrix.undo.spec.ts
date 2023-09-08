@@ -515,7 +515,7 @@ describe("Matrix", () => {
 					"matrix1",
 					SharedMatrixFactory.Attributes,
 				);
-
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 				matrix1.connect({
 					deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 					objectStorage: new MockStorage(),
