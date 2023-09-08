@@ -16,7 +16,7 @@ import { DefaultEditBuilder } from "../default-field-kinds";
 import { NodeKeyManager } from "../node-key";
 import { FieldGenerator } from "../contextuallyTyped";
 import { TypedSchemaCollection } from "../typed-schema";
-import { disposeSymbol } from "../../util";
+import { disposeSymbol, IDisposable } from "../../util";
 import { UntypedField } from "./editableTreeTypes";
 import { makeField } from "./lazyField";
 import { LazyEntity, prepareForEditSymbol } from "./lazyEntity";
@@ -44,7 +44,7 @@ export interface TreeContext extends ISubscribable<ForestEvents> {
  *
  * @remarks An editor is required to edit the EditableTrees.
  */
-export class Context implements TreeContext {
+export class Context implements TreeContext, IDisposable {
 	public readonly withCursors: Set<LazyEntity> = new Set();
 	public readonly withAnchors: Set<LazyEntity> = new Set();
 
@@ -81,11 +81,7 @@ export class Context implements TreeContext {
 		assert(this.withCursors.size === 0, "prepareForEdit should remove all cursors");
 	}
 
-	/**
-	 * Call to free resources.
-	 * It is invalid to use the context after this.
-	 */
-	public free(): void {
+	public [disposeSymbol](): void {
 		this.clear();
 		for (const unregister of this.eventUnregister) {
 			unregister();

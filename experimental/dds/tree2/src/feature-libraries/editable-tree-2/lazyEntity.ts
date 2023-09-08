@@ -10,7 +10,7 @@ import {
 	ITreeSubscriptionCursorState,
 } from "../../core";
 import { TreeStatus } from "../editable-tree";
-import { fail, disposeSymbol } from "../../util";
+import { fail, disposeSymbol, IDisposable } from "../../util";
 import { Context } from "./context";
 import { UntypedEntity } from "./editableTreeTypes";
 
@@ -60,7 +60,7 @@ export const anchorSymbol = Symbol("anchor");
  * This is a base class for lazy (cursor based) UntypedEntity implementations, which uniformly handles cursors and anchors.
  */
 export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
-	implements UntypedEntity<TSchema>
+	implements UntypedEntity<TSchema>, IDisposable
 {
 	readonly #lazyCursor: ITreeSubscriptionCursor;
 	public readonly [anchorSymbol]: TAnchor;

@@ -389,6 +389,26 @@ export interface Named<TName> {
 export const disposeSymbol: unique symbol = Symbol("Symbol.dispose");
 
 /**
+ * An object with an explicit lifetime that can be ended.
+ */
+export interface IDisposable {
+	/**
+	 * Call to end the lifetime of this object.
+	 *
+	 * It is invalid to use this object after this,
+	 * except for operations which explicitly document they are valid after disposal.
+	 *
+	 * @remarks
+	 * May cleanup resources retained by this object.
+	 * Often includes un-registering from events and thus preventing other objects from retaining a reference to this indefinably.
+	 *
+	 * Usually the only operations allowed after disposal are querying if an object is already disposed,
+	 * but this can vary between implementations.
+	 */
+	[disposeSymbol](): void;
+}
+
+/**
  * Capitalize a string.
  */
 export function capitalize<S extends string>(s: S): Capitalize<S> {

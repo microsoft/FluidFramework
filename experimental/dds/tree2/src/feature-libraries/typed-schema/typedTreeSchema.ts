@@ -123,9 +123,18 @@ export type StructSchema = TreeSchema & {
  */
 export type FieldNodeSchema = StructSchema & {
 	/**
-	 * The field this node wraps is placed under the {@link EmptyKey}.
+	 * The fields of this node.
+	 * Only uses the {@link EmptyKey}.
+	 *
+	 * TODO: this extra indirection will be removed when refactoring TreeSchema (see other related TODOs for details).
 	 */
-	structFieldsObject: { [""]: FieldSchema };
+	structFieldsObject: {
+		/**
+		 * The field this node wraps.
+		 * It is under the {@link EmptyKey}.
+		 */
+		[""]: FieldSchema;
+	};
 };
 
 export function schemaIsMap(schema: TreeSchema): schema is MapSchema {
