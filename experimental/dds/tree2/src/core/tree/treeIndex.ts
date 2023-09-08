@@ -3,7 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { Brand, NestedMap, brand, fail, setInNestedMap, tryGetFromNestedMap } from "../../util";
+import { assert } from "@fluidframework/core-utils";
+import {
+	Brand,
+	NestedMap,
+	brand,
+	deleteFromNestedMap,
+	fail,
+	setInNestedMap,
+	tryGetFromNestedMap,
+} from "../../util";
 import { FieldKey } from "../schema-stored";
 import * as Delta from "./delta";
 
@@ -15,20 +24,31 @@ import * as Delta from "./delta";
  */
 export type ForestRootId = Brand<number, "tree.ForestRootId">;
 
-type RemovedNodeKey = string | number | undefined;
+export interface Entry {
+	field: FieldKey;
+	root: ForestRootId;
+}
 
-export type Entry = { field: FieldKey; root: ForestRootId };
 /**
  * The tree index records detached field ids and associates them with a change atom ID.
  */
 export class TreeIndex {
-	private readonly detachedNodeToField: NestedMap<RemovedNodeKey, RemovedNodeKey, Entry> =
-		new Map<RemovedNodeKey, Map<RemovedNodeKey, Entry>>();
+	private readonly detachedNodeToField: NestedMap<string | number | undefined, number, Entry> =
+		new Map<string | number | undefined, Map<number, Entry>>();
 
 	public constructor(
 		private readonly name: string,
 		private readonly rootIdAllocator: (count: number) => ForestRootId,
+		private readonly tag: number = Math.random(),
 	) {}
+
+	public *entries(): Generator<Entry & { id: Delta.DetachedNodeId }> {
+		for (const [major, innerMap] of this.detachedNodeToField) {
+			for (const [minor, entry] of innerMap) {
+				yield { id: { major, minor }, ...entry };
+			}
+		}
+	}
 
 	/**
 	 * Returns a field key for the given ID.
@@ -43,7 +63,9 @@ export class TreeIndex {
 	 * Returns undefined if no such id is known to the index.
 	 */
 	public tryGetEntry(id: Delta.DetachedNodeId): Entry | undefined {
-		return tryGetFromNestedMap(this.detachedNodeToField, id.major, id.minor);
+		const entry = tryGetFromNestedMap(this.detachedNodeToField, id.major, id.minor);
+		console.log(this.tag, "tryGetEntry", id.major, id.minor, entry);
+		return entry;
 	}
 
 	/**
@@ -51,8 +73,9 @@ export class TreeIndex {
 	 * Fails if no such id is known to the index.
 	 */
 	public getEntry(id: Delta.DetachedNodeId): Entry {
-		const key = tryGetFromNestedMap(this.detachedNodeToField, id.major, id.minor);
-		return key ?? fail("Unknown removed node ID");
+		const key = this.tryGetEntry(id);
+		assert(key !== undefined, "Unknown removed node ID");
+		return key;
 	}
 
 	/**
@@ -61,6 +84,12 @@ export class TreeIndex {
 	 */
 	public getOrCreateEntry(nodeId: Delta.DetachedNodeId, count: number = 1): Entry {
 		return this.tryGetEntry(nodeId) ?? this.createEntry(nodeId);
+	}
+
+	public deleteEntry(nodeId: Delta.DetachedNodeId): void {
+		console.log(this.tag, "deleteEntry", nodeId.major, nodeId.minor);
+		const found = deleteFromNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor);
+		assert(found, "Unable to delete unknown entry");
 	}
 
 	/**
@@ -72,6 +101,7 @@ export class TreeIndex {
 		const entry = { field, root };
 
 		if (nodeId !== undefined) {
+			console.log(this.tag, "createEntry", nodeId.major, nodeId.minor, entry);
 			setInNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor, entry);
 		}
 		return entry;

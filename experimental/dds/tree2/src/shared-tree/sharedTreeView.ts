@@ -22,6 +22,9 @@ import {
 	TreeIndex,
 	ForestRootId,
 	makeAnonChange,
+	moveToDetachedField,
+	mapCursorField,
+	announceVisitor,
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import {
@@ -47,6 +50,7 @@ import {
 	FieldSchema,
 	idAllocatorFromMaxId,
 	IdAllocator,
+	jsonableTreeFromCursor,
 } from "../feature-libraries";
 import { SharedTreeBranch } from "../shared-tree-core";
 import { TransactionResult, brand } from "../util";
@@ -56,7 +60,6 @@ import {
 	initializeContent,
 	schematize,
 } from "./schematizedTree";
-import { announceVisitor } from "../core/tree";
 
 /**
  * Events for {@link ISharedTreeView}.
@@ -455,6 +458,16 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		branch.on("revertible", (type) => {
 			this.events.emit("revertible", type);
 		});
+	}
+
+	protected logRemovedTrees() {
+		for (const { field, id } of this.removedTrees.entries()) {
+			const cursor = this.forest.allocateCursor();
+			moveToDetachedField(this.forest, cursor, brand(field));
+			const copy = mapCursorField(cursor, jsonableTreeFromCursor);
+			cursor.free();
+			console.log(`${field}: ${id.major}.${id.minor} `, copy);
+		}
 	}
 
 	private readonly removedTrees = new TreeIndex(

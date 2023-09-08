@@ -11,18 +11,17 @@ import { ForestRootId, TreeIndex } from "./treeIndex";
 import { ReplaceKind } from "./visitPath";
 import { DeltaVisitor, visitDelta } from "./visitDelta";
 
+export function makeTreeIndex(prefix: string = "Temp"): TreeIndex {
+	return new TreeIndex(prefix, idAllocatorFromMaxId() as unknown as IdAllocator<ForestRootId>);
+}
+
 export function applyDelta(
 	delta: Delta.Root,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor },
 	treeIndex?: TreeIndex,
 ): void {
 	const visitor = deltaProcessor.acquireVisitor();
-	visitDelta(
-		delta,
-		visitor,
-		treeIndex ??
-			new TreeIndex("Temp", idAllocatorFromMaxId() as unknown as IdAllocator<ForestRootId>),
-	);
+	visitDelta(delta, visitor, treeIndex ?? makeTreeIndex());
 	visitor.free();
 }
 
@@ -32,12 +31,7 @@ export function announceDelta(
 	treeIndex?: TreeIndex,
 ): void {
 	const visitor = announceVisitor(deltaProcessor.acquireVisitor());
-	visitDelta(
-		delta,
-		visitor,
-		treeIndex ??
-			new TreeIndex("Temp", idAllocatorFromMaxId() as unknown as IdAllocator<ForestRootId>),
-	);
+	visitDelta(delta, visitor, treeIndex ?? makeTreeIndex());
 	visitor.free();
 }
 

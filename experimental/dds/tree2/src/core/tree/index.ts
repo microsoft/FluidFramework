@@ -77,7 +77,13 @@ export {
 	rootField,
 } from "./types";
 export { DeltaVisitor, visitDelta } from "./visitDelta";
-export { announceDelta, applyDelta, combineVisitors, announceVisitor } from "./visitorUtils";
+export {
+	announceDelta,
+	applyDelta,
+	combineVisitors,
+	announceVisitor,
+	makeTreeIndex,
+} from "./visitorUtils";
 export { PathVisitor, ReplaceKind } from "./visitPath";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
