@@ -315,8 +315,6 @@ export abstract class FluidDataStoreContext
 				all: {
 					...tagCodeArtifacts({
 						fluidDataStoreId: this.id,
-					}),
-					...tagCodeArtifacts({
 						// The package name is a getter because `this.pkg` may not be initialized during construction.
 						// For data stores loaded from summary, it is initialized during data store realization.
 						fullPackageName: () => this.pkg?.join("/"),

@@ -351,27 +351,20 @@ export class SampledTelemetryHelper implements IDisposable {
 export const sessionStorageConfigProvider: Lazy<IConfigProviderBase>;
 
 // @public
-export function tagCodeArtifacts<T extends Record<string, TelemetryBaseEventPropertyType>>(values: T): {
-    [P in keyof T]: {
+export const tagCodeArtifacts: <T extends Record<string, TelemetryEventPropertyType | (() => TelemetryBaseEventPropertyType)>>(values: T) => { [P in keyof T]: (T[P] extends () => TelemetryBaseEventPropertyType ? () => {
+        value: ReturnType<T[P]>;
+        tag: TelemetryDataTag.CodeArtifact;
+    } : {
         value: Exclude<T[P], undefined>;
         tag: TelemetryDataTag.CodeArtifact;
-    } | (T[P] extends undefined ? undefined : never);
-};
+    }) | (T[P] extends undefined ? undefined : never); };
 
 // @public (undocumented)
-export function tagCodeArtifacts<T extends TelemetryBaseEventPropertyType, V extends Record<string, () => T>>(values: V): {
-    [P in keyof V]: (() => {
-        value: Exclude<T, undefined>;
-        tag: TelemetryDataTag.CodeArtifact;
-    }) | (V[P] extends undefined ? undefined : never);
-};
-
-// @public (undocumented)
-export const tagData: <T extends TelemetryDataTag, U extends TelemetryEventPropertyType, V extends Record<string, U | (() => U)>>(tag: T, values: V) => { [P in keyof V]: {
-        value: Exclude<U, undefined>;
+export const tagData: <T extends TelemetryDataTag, V extends Record<string, TelemetryEventPropertyType | (() => TelemetryBaseEventPropertyType)>>(tag: T, values: V) => { [P in keyof V]: (V[P] extends () => TelemetryBaseEventPropertyType ? () => {
+        value: ReturnType<V[P]>;
         tag: T;
-    } | (() => {
-        value: Exclude<U, undefined>;
+    } : {
+        value: Exclude<V[P], undefined>;
         tag: T;
     }) | (V[P] extends undefined ? undefined : never); };
 

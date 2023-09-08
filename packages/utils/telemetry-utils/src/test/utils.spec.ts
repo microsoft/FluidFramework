@@ -77,7 +77,7 @@ describe("tagCodeArtifacts", () => {
 		assert.deepStrictEqual(taggedData, expected, "undefined not tagged as expected");
 	});
 
-	it("tagCodeArtifacts with TelemetryBaseEventPropertyType", () => {
+	it("tagCodeArtifacts with TelemetryBaseEventPropertyType properties", () => {
 		const taggedData = tagCodeArtifacts({
 			string: "foo",
 			number: 0,
@@ -137,6 +137,67 @@ describe("tagCodeArtifacts", () => {
 				tag: TelemetryDataTag.CodeArtifact,
 				value: true,
 			},
+			"boolean getter not tagged as expected",
+		);
+	});
+
+	it("tagCodeArtifacts with both TelemetryBaseEventPropertyType properties and getters", () => {
+		const expectedStringValue = {
+			tag: TelemetryDataTag.CodeArtifact,
+			value: "foo",
+		};
+		const expectedNumberValue = {
+			tag: TelemetryDataTag.CodeArtifact,
+			value: 0,
+		};
+		const expectedBooleanValue = {
+			tag: TelemetryDataTag.CodeArtifact,
+			value: true,
+		};
+
+		const taggedData = tagCodeArtifacts({
+			string: "foo",
+			number: 0,
+			boolean: true,
+			stringGetter: () => "foo",
+			numberGetter: () => 0,
+			booleanGetter: () => true,
+		});
+
+		// Validate basic properties are tagged.
+		assert.deepStrictEqual(
+			taggedData.string,
+			expectedStringValue,
+			"string property not tagged as expected",
+		);
+		assert.deepStrictEqual(
+			taggedData.number,
+			expectedNumberValue,
+			"number property not tagged as expected",
+		);
+		assert.deepStrictEqual(
+			taggedData.boolean,
+			expectedBooleanValue,
+			"boolean property not tagged as expected",
+		);
+
+		// Validate getters are tagged.
+		const stringValue = taggedData.stringGetter();
+		const numberValue = taggedData.numberGetter();
+		const booleanValue = taggedData.booleanGetter();
+		assert.deepStrictEqual(
+			stringValue,
+			expectedStringValue,
+			"string getter not tagged as expected",
+		);
+		assert.deepStrictEqual(
+			numberValue,
+			expectedNumberValue,
+			"number getter not tagged as expected",
+		);
+		assert.deepStrictEqual(
+			booleanValue,
+			expectedBooleanValue,
 			"boolean getter not tagged as expected",
 		);
 	});
