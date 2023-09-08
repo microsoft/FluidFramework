@@ -14,6 +14,9 @@ import { fail, disposeSymbol } from "../../util";
 import { Context } from "./context";
 import { UntypedEntity } from "./editableTreeTypes";
 
+/**
+ * Declare an enumerable own property on `T` under the key `key` using the implementation of one on `from`.
+ */
 export function makePropertyEnumerableOwn<T extends object>(
 	target: T,
 	key: keyof T,
@@ -25,27 +28,24 @@ export function makePropertyEnumerableOwn<T extends object>(
 	Object.defineProperty(target, key, { ...descriptor, enumerable: true });
 }
 
-export function makePrivatePropertyEnumerableOwn<T extends object>(
-	target: T,
-	key: keyof T,
-	from: object,
-): void {
-	assert(Object.getOwnPropertyDescriptor(target, key) === undefined, "preexisting property");
-
-	const descriptor = Object.getOwnPropertyDescriptor(from, key) ?? fail("missing property");
-	Object.defineProperty(target, key, { ...descriptor, enumerable: true });
-}
-
+/**
+ * Modify a property on `T` under the key `key` to be not-enumerable
+ */
 export function makePropertyNotEnumerable<T extends object>(target: T, key: keyof T): void {
-	assert(Object.getOwnPropertyDescriptor(target, key) !== undefined, "missing property");
-	Object.defineProperty(target, key, { enumerable: false });
+	makePrivatePropertyNotEnumerable(target, key);
 }
 
 /**
- * Like makePropertyNotEnumerable, but less type safe so it works on private properties.
+ * Like {@link makePropertyNotEnumerable}, but less type safe so it works on private properties.
  */
-export function makePrivatePropertyNotEnumerable(target: object, key: string | symbol): void {
-	assert(Object.getOwnPropertyDescriptor(target, key) !== undefined, "missing property");
+export function makePrivatePropertyNotEnumerable(
+	target: object,
+	key: string | symbol | number,
+): void {
+	assert(
+		Object.getOwnPropertyDescriptor(target, key)?.enumerable === true,
+		"missing property or not enumerable",
+	);
 	Object.defineProperty(target, key, { enumerable: false });
 }
 
