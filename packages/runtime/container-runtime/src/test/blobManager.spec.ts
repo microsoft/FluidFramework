@@ -886,7 +886,7 @@ describe("BlobManager", () => {
 			);
 		});
 
-		it("noSweepAttachmentBlobs true - DOESN'T delete unused blobs ", async () => {
+		it("disableAttachmentBlobsSweep true - DOESN'T delete unused blobs ", async () => {
 			injectedSettings[disableAttachmentBlobSweepKey] = true;
 
 			await runtime.attach();
