@@ -958,6 +958,7 @@ declare namespace InternalTypedSchemaTypes {
         StructSchemaSpecification,
         MapSchemaSpecification,
         LeafSchemaSpecification,
+        MapFieldSchema,
         FlexList,
         FlexListToNonLazyArray,
         ConstantFlexListToNonLazyArray,
@@ -1292,9 +1293,12 @@ interface MakeNominal {
 }
 
 // @alpha
+type MapFieldSchema = FieldSchema<typeof FieldKinds.optional | typeof FieldKinds.sequence>;
+
+// @alpha
 interface MapSchemaSpecification {
     // (undocumented)
-    readonly mapFields: FieldSchema;
+    readonly mapFields: MapFieldSchema;
 }
 
 // @alpha
@@ -1866,7 +1870,7 @@ export interface TreeAdapter {
 
 // @alpha
 export interface TreeContent<TRoot extends FieldSchema = FieldSchema> extends SchemaConfiguration<TRoot> {
-    readonly initialTree: SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Simple> | readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous;
+    readonly initialTree: SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Flexible> | readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous;
 }
 
 // @alpha
@@ -1890,7 +1894,7 @@ export const enum TreeNavigationResult {
     Pending = 0
 }
 
-// @alpha @sealed
+// @alpha
 export class TreeSchema<Name extends string = string, T extends RecursiveTreeSchemaSpecification = TreeSchemaSpecification> {
     constructor(builder: Named<string>, name: Name, info: T);
     // (undocumented)
@@ -1900,7 +1904,7 @@ export class TreeSchema<Name extends string = string, T extends RecursiveTreeSch
     // (undocumented)
     readonly leafValue: WithDefault<Assume<T, TreeSchemaSpecification>["leafValue"], undefined>;
     // (undocumented)
-    readonly mapFields?: FieldSchema;
+    readonly mapFields: WithDefault<Assume<T, TreeSchemaSpecification>["mapFields"], undefined>;
     // (undocumented)
     readonly name: Name & TreeSchemaIdentifier;
     // (undocumented)

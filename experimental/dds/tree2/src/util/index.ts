@@ -73,6 +73,9 @@ export {
 	objectToMap,
 	oneFromSet,
 	Named,
+	disposeSymbol,
+	IDisposable,
+	capitalize,
 } from "./utils";
 export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting";
 

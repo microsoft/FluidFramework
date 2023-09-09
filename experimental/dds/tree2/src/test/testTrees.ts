@@ -3,12 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { JsonableTree, ValueSchema } from "../core";
+import { strict as assert } from "assert";
+
+import { ITreeCursorSynchronous, JsonableTree, ValueSchema } from "../core";
 import {
 	Any,
 	FieldKinds,
 	FieldSchema,
 	FullSchemaPolicy,
+	Multiplicity,
 	SchemaAware,
 	SchemaBuilder,
 	SchemaLibrary,
@@ -62,10 +65,27 @@ function testField<T extends FieldSchema>(
 	};
 }
 
+function cursorsToFieldContent(
+	cursors: readonly ITreeCursorSynchronous[],
+	schema: FieldSchema,
+): readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous | undefined {
+	if (schema.kind.multiplicity === Multiplicity.Sequence) {
+		return cursors;
+	}
+	if (cursors.length === 1) {
+		return cursors[0];
+	}
+	assert(cursors.length === 0);
+	return undefined;
+}
+
 export function treeContentFromTestTree(test: TestTree): TreeContent {
 	return {
 		schema: test.schemaData,
-		initialTree: test.treeFactory().map(singleTextCursor),
+		initialTree: cursorsToFieldContent(
+			test.treeFactory().map(singleTextCursor),
+			test.schemaData.rootFieldSchema,
+		),
 	};
 }
 
@@ -90,12 +110,12 @@ export const hasOptionalField = builder.struct("hasOptionalField", {
 });
 export const allTheFields = builder.struct("allTheFields", {
 	optional: SchemaBuilder.fieldOptional(numeric),
-	value: SchemaBuilder.fieldValue(numeric),
+	valueField: SchemaBuilder.fieldValue(numeric),
 	sequence: SchemaBuilder.fieldSequence(numeric),
 });
 export const anyFields = builder.struct("anyFields", {
 	optional: SchemaBuilder.fieldOptional(Any),
-	value: SchemaBuilder.fieldValue(Any),
+	valueField: SchemaBuilder.fieldValue(Any),
 	sequence: SchemaBuilder.fieldSequence(Any),
 });
 
@@ -153,22 +173,22 @@ export const testTrees: readonly TestTree[] = [
 	}),
 	testTree("hasOptionalField-empty", library, hasOptionalField, { field: undefined }),
 	testTree("allTheFields-minimal", library, allTheFields, {
-		value: 5,
+		valueField: 5,
 		optional: undefined,
 		sequence: [],
 	}),
 	testTree("allTheFields-full", library, allTheFields, {
-		value: 5,
+		valueField: 5,
 		optional: 5,
 		sequence: [5],
 	}),
 	testTree("anyFields-minimal", library, anyFields, {
-		value: { [typeNameSymbol]: numeric.name, [valueSymbol]: 5 },
+		valueField: { [typeNameSymbol]: numeric.name, [valueSymbol]: 5 },
 		optional: undefined,
 		sequence: [],
 	}),
 	testTree("anyFields-full", library, anyFields, {
-		value: { [typeNameSymbol]: numeric.name, [valueSymbol]: 5 },
+		valueField: { [typeNameSymbol]: numeric.name, [valueSymbol]: 5 },
 		optional: { [typeNameSymbol]: numeric.name, [valueSymbol]: 5 },
 		sequence: [
 			{ [typeNameSymbol]: numeric.name, [valueSymbol]: 5 },
