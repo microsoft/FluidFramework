@@ -434,17 +434,28 @@ function catalogAttachPassRootChanges(mark: Exclude<Delta.Mark, number>, config:
 			break;
 		}
 		case Delta.MarkType.Restore: {
-			nodeId = mark.newContent.restoreId;
-			fields = mark.fields;
 			if (mark.newContent.detachId !== undefined) {
+				nodeId = mark.newContent.detachId;
+				fields = mark.fields;
 				const { root: rootSource } = config.treeIndex.getOrCreateEntry(
 					mark.newContent.restoreId,
 				);
 				const { root: rootDestination } = config.treeIndex.getOrCreateEntry(
 					mark.newContent.detachId,
 				);
-				setRootReplaces(mark.count, config, rootDestination, rootSource, nodeId);
+				setRootReplaces(
+					mark.count,
+					config,
+					rootDestination,
+					rootSource,
+					mark.newContent.restoreId,
+				);
 			}
+			break;
+		}
+		case Delta.MarkType.Remove: {
+			nodeId = mark.detachId;
+			fields = mark.fields;
 			break;
 		}
 		default:

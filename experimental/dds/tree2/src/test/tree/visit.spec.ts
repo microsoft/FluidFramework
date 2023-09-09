@@ -409,139 +409,109 @@ describe("visit", () => {
 		testTreeVisit(delta, expected, index);
 		assert.equal(index.entries().next().done, true);
 	});
-	// it("modify and move children", () => {
-	// 	const moveId: Delta.MoveId = brand(1);
-	// 	const moveOut: Delta.MoveOut = {
-	// 		type: Delta.MarkType.MoveOut,
-	// 		count: 1,
-	// 		moveId,
-	// 	};
-	// 	const moveIn: Delta.MoveIn = {
-	// 		type: Delta.MarkType.MoveIn,
-	// 		count: 1,
-	// 		moveId,
-	// 	};
-	// 	const delta: Delta.Root = new Map([
-	// 		[
-	// 			rootKey,
-	// 			[
-	// 				{
-	// 					type: Delta.MarkType.Modify,
-	// 					fields: new Map([[fooKey, [2, moveIn, 4, moveOut]]]),
-	// 				},
-	// 			],
-	// 		],
-	// 	]);
-	// 	const expected: VisitScript = [
-	// 		["enterField", rootKey],
-	// 		["enterNode", 0],
-	// 		["enterField", fooKey],
-	// 		["onMoveOut", 6, 1, moveId],
-	// 		["exitField", fooKey],
-	// 		["exitNode", 0],
-	// 		["exitField", rootKey],
-	// 		["enterField", rootKey],
-	// 		["enterNode", 0],
-	// 		["enterField", fooKey],
-	// 		["onMoveIn", 2, 1, moveId],
-	// 		["exitField", fooKey],
-	// 		["exitNode", 0],
-	// 		["exitField", rootKey],
-	// 	];
-	// 	testVisit(delta, expected);
-	// });
-	// it("move cousins", () => {
-	// 	const moveId: Delta.MoveId = brand(1);
-	// 	const moveOut: Delta.MoveOut = {
-	// 		type: Delta.MarkType.MoveOut,
-	// 		count: 2,
-	// 		moveId,
-	// 	};
-	// 	const moveIn: Delta.MoveIn = {
-	// 		type: Delta.MarkType.MoveIn,
-	// 		count: 2,
-	// 		moveId,
-	// 	};
-	// 	const delta: Delta.Root = new Map([
-	// 		[
-	// 			rootKey,
-	// 			[
-	// 				{
-	// 					type: Delta.MarkType.Modify,
-	// 					fields: new Map([
-	// 						[fooKey, [moveIn]],
-	// 						[barKey, [moveOut]],
-	// 					]),
-	// 				},
-	// 			],
-	// 		],
-	// 	]);
-	// 	const expected: VisitScript = [
-	// 		["enterField", rootKey],
-	// 		["enterNode", 0],
-	// 		["enterField", fooKey],
-	// 		["exitField", fooKey],
-	// 		["enterField", barKey],
-	// 		["onMoveOut", 0, 2, moveId],
-	// 		["exitField", barKey],
-	// 		["exitNode", 0],
-	// 		["exitField", rootKey],
-	// 		["enterField", rootKey],
-	// 		["enterNode", 0],
-	// 		["enterField", fooKey],
-	// 		["onMoveIn", 0, 2, moveId],
-	// 		["exitField", fooKey],
-	// 		["enterField", barKey],
-	// 		["exitField", barKey],
-	// 		["exitNode", 0],
-	// 		["exitField", rootKey],
-	// 	];
-	// 	testVisit(delta, expected);
-	// });
-	// it("move-in under delete", () => {
-	// 	const moveId: Delta.MoveId = brand(1);
-	// 	const moveOut: Delta.MoveOut = {
-	// 		type: Delta.MarkType.MoveOut,
-	// 		count: 2,
-	// 		moveId,
-	// 	};
-	// 	const moveIn: Delta.MoveIn = {
-	// 		type: Delta.MarkType.MoveIn,
-	// 		count: 2,
-	// 		moveId,
-	// 	};
-	// 	const delta: Delta.Root = new Map([
-	// 		[
-	// 			rootKey,
-	// 			[
-	// 				{
-	// 					type: Delta.MarkType.Remove,
-	// 					count: 1,
-	// 					fields: new Map([[fooKey, [moveIn]]]),
-	// 				},
-	// 				moveOut,
-	// 			],
-	// 		],
-	// 	]);
-	// 	const expected: VisitScript = [
-	// 		["enterField", rootKey],
-	// 		["enterNode", 0],
-	// 		["enterField", fooKey],
-	// 		["exitField", fooKey],
-	// 		["exitNode", 0],
-	// 		["onMoveOut", 1, 2, moveId],
-	// 		["exitField", rootKey],
-	// 		["enterField", rootKey],
-	// 		["enterNode", 0],
-	// 		["enterField", fooKey],
-	// 		["onMoveIn", 0, 2, moveId],
-	// 		["exitField", fooKey],
-	// 		["exitNode", 0],
-	// 		["onDelete", 0, 1],
-	// 		["exitField", rootKey],
-	// 	];
-	// 	testVisit(delta, expected);
-	// });
+	it("move cousins", () => {
+		const index = makeTreeIndex("");
+		const moveId: Delta.MoveId = brand(1);
+		const moveOut: Delta.MoveOut = {
+			type: Delta.MarkType.MoveOut,
+			count: 1,
+			moveId,
+		};
+		const moveIn: Delta.MoveIn = {
+			type: Delta.MarkType.MoveIn,
+			count: 1,
+			moveId,
+		};
+		const delta = [
+			{
+				type: Delta.MarkType.Modify,
+				fields: new Map([
+					[fooKey, [moveIn]],
+					[barKey, [moveOut]],
+				]),
+			},
+		];
+		const expected: VisitScript = [
+			["enterField", rootKey],
+			["enterNode", 0],
+			["enterField", fooKey],
+			["exitField", fooKey],
+			["enterField", barKey],
+			[
+				"detach",
+				{ start: 0, end: 1 },
+				brand<DetachedPlaceUpPath>({ field: field0, index: 0 }),
+			],
+			["exitField", barKey],
+			["exitNode", 0],
+			["exitField", rootKey],
+			["enterField", rootKey],
+			["enterNode", 0],
+			["enterField", fooKey],
+			["attach", brand<DetachedRangeUpPath>({ field: field0, start: 0, end: 1 }), 0],
+			["exitField", fooKey],
+			["enterField", barKey],
+			["exitField", barKey],
+			["exitNode", 0],
+			["exitField", rootKey],
+		];
+		testTreeVisit(delta, expected, index);
+		assert.equal(index.entries().next().done, true);
+	});
+	it("move-in under remove", () => {
+		const index = makeTreeIndex("");
+		const moveId: Delta.MoveId = brand(1);
+		const moveOut: Delta.MoveOut = {
+			type: Delta.MarkType.MoveOut,
+			count: 1,
+			moveId,
+		};
+		const moveIn: Delta.MoveIn = {
+			type: Delta.MarkType.MoveIn,
+			count: 1,
+			moveId,
+		};
+		const delta = [
+			{
+				type: Delta.MarkType.Remove,
+				detachId: { minor: 42 },
+				count: 1,
+				fields: new Map([[fooKey, [moveIn]]]),
+			},
+			moveOut,
+		];
+		const expected: VisitScript = [
+			["enterField", rootKey],
+			["enterNode", 0],
+			["enterField", fooKey],
+			["exitField", fooKey],
+			["exitNode", 0],
+			[
+				"detach",
+				{ start: 0, end: 1 },
+				brand<DetachedPlaceUpPath>({ field: field0, index: 0 }),
+			],
+			[
+				"detach",
+				{ start: 0, end: 1 },
+				brand<DetachedPlaceUpPath>({ field: field1, index: 0 }),
+			],
+			["exitField", rootKey],
+			["enterField", rootKey],
+			["exitField", rootKey],
+			["enterField", field0],
+			["enterNode", 0],
+			["enterField", fooKey],
+			["attach", brand<DetachedRangeUpPath>({ field: field1, start: 0, end: 1 }), 0],
+			["exitField", fooKey],
+			["exitNode", 0],
+			["exitField", field0],
+		];
+		testTreeVisit(delta, expected, index);
+		assert.deepEqual(Array.from(index.entries()), [
+			{ field: field0, id: { minor: 42 }, root: 0 },
+		]);
+	});
 	// it("move-out under delete", () => {
 	// 	const moveId: Delta.MoveId = brand(1);
 	// 	const moveOut: Delta.MoveOut = {
