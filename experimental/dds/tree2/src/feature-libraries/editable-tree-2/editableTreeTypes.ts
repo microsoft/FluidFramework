@@ -333,7 +333,7 @@ export interface Sequence<TTypes extends AllowedTypes> extends UntypedField {
  * @remarks
  * Unboxes its content, so in schema aware APIs which do unboxing, the RequiredField itself will be skipped over and its content will be returned directly.
  * @privateRemarks
- * Finish renaming from ValueField to RequiredField
+ * TODO: Finish renaming from ValueField to RequiredField
  * @alpha
  */
 export interface RequiredField<TTypes extends AllowedTypes> extends UntypedField {
