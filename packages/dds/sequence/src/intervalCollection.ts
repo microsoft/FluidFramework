@@ -101,7 +101,13 @@ export interface InteriorSequencePlace {
  * @remarks See {@link SequencePlace} for additional context on usage.
  */
 export enum Side {
+	/**
+	 * Content inserted will be placed before the endpoint
+	 */
 	Before = 0,
+	/**
+	 * Content inserted will be placed after the endpoint
+	 */
 	After = 1,
 }
 
@@ -1182,10 +1188,13 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		const endIndex = this.getIndex(end);
 		if (startIndex !== undefined && endIndex !== undefined && startIndex > endIndex) {
 			throw new UsageError("interval start cannot be greater than end");
-		} else if (startIndex !== undefined && startIndex === endIndex && startSide < endSide) {
-			throw new UsageError(
-				"interval start side cannot be greater than end side at same position",
-			);
+		} else if (
+			startIndex !== undefined &&
+			startIndex === endIndex &&
+			startSide === Side.Before &&
+			endSide === Side.After
+		) {
+			throw new UsageError("interval startSide Before and endSide After at same position");
 		}
 
 		const stickiness = computeStickinessFromSide(startPos, startSide, endPos, endSide);
@@ -1342,9 +1351,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			) {
 				const newStartSide = typeof start === "object" ? start.side : interval.startSide;
 				const newEndSide = typeof end === "object" ? end.side : interval.endSide;
-				if (newStartSide < newEndSide) {
+				if (newStartSide === Side.Before && newEndSide === Side.After) {
 					throw new UsageError(
-						`interval start side ${start} ${newStartSide} cannot be greater than end side ${end} ${newEndSide} at same position`,
+						"interval startSide Before and endSide After at same position",
 					);
 				}
 			}
