@@ -8,11 +8,7 @@ import { parse } from "url";
 import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
 
 import { IRequest, IResponse, IRequestHeader } from "@fluidframework/core-interfaces";
-import {
-	createAndAttachContainer,
-	createTestContainerRuntimeFactoryWithDefaultDataStore,
-	ITestObjectProvider,
-} from "@fluidframework/test-utils";
+import { createAndAttachContainer, ITestObjectProvider } from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
@@ -21,6 +17,7 @@ import {
 	requestResolvedObjectFromContainer,
 	waitContainerToCatchUp,
 } from "@fluidframework/container-loader";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
 // REVIEW: enable compat testing?
 describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
@@ -127,21 +124,17 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
 
-	const runtimeFactory = createTestContainerRuntimeFactoryWithDefaultDataStore(
-		ContainerRuntimeFactoryWithDefaultDataStore,
-		{
-			defaultFactory: testSharedDataObjectFactory1,
-			registryEntries: [
-				[testSharedDataObjectFactory1.type, Promise.resolve(testSharedDataObjectFactory1)],
-				[testSharedDataObjectFactory2.type, Promise.resolve(testSharedDataObjectFactory2)],
-				[
-					testFactoryWithRequestHeaders.type,
-					Promise.resolve(testFactoryWithRequestHeaders),
-				],
-			],
-			requestHandlers: [innerRequestHandler],
-		},
-	);
+	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+		defaultFactory: testSharedDataObjectFactory1,
+		registryEntries: [
+			[testSharedDataObjectFactory1.type, Promise.resolve(testSharedDataObjectFactory1)],
+			[testSharedDataObjectFactory2.type, Promise.resolve(testSharedDataObjectFactory2)],
+			[testFactoryWithRequestHeaders.type, Promise.resolve(testFactoryWithRequestHeaders)],
+		],
+		requestHandlers: [innerRequestHandler],
+		// The requestResolvedObjectFromContainer expects the entryPoint to act as containerRuntime request router
+		initializeEntryPoint: async (containerRuntime: IContainerRuntime) => containerRuntime,
+	});
 
 	beforeEach(async () => {
 		provider = getTestObjectProvider();
