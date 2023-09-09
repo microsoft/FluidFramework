@@ -64,7 +64,7 @@ export interface UntypedEntity<TSchema = unknown> extends Iterable<UntypedEntity
  *
  * All content of the tree is accessible via this API.
  *
- * Down-casting (via {@link UntypedTree#is}) is required to access Schema-Aware APIs, including editing.
+ * @remarks Down-casting (via {@link UntypedTree#is}) is required to access Schema-Aware APIs, including editing.
  *
  * @alpha
  */
@@ -111,7 +111,7 @@ export interface UntypedTree extends UntypedEntity<TreeSchema> {
 /**
  * A field of an {@link UntypedTree} as an array-like sequence of unwrapped nodes (see {@link UnwrappedUntypedTree}).
  *
- * Down-casting (via {@link UntypedField#is}) is required to access Schema-Aware APIs, including editing.
+ * @remarks Down-casting (via {@link UntypedField#is}) is required to access Schema-Aware APIs, including editing.
  *
  * @alpha
  */
@@ -281,7 +281,7 @@ export type FlexibleNodeContent<TTypes extends AllowedTypes> = SchemaAware.Allow
 >;
 
 /**
- * Field this stores a sequence of children.
+ * Field that stores a sequence of children.
  *
  * @remarks
  * Allows for concurrent editing based on index, adjusting the locations of indexes as needed so they apply to the same logical place in the sequence when rebased and merged.
@@ -328,7 +328,7 @@ export interface Sequence<TTypes extends AllowedTypes> extends UntypedField {
 }
 
 /**
- * Field this stores exactly one child.
+ * Field that stores exactly one child.
  *
  * @remarks
  * Unboxes its content, so in schema aware APIs which do unboxing, the RequiredField itself will be skipped over and its content will be returned directly.
@@ -343,7 +343,7 @@ export interface RequiredField<TTypes extends AllowedTypes> extends UntypedField
 }
 
 /**
- * Field this stores zero or one child.
+ * Field that stores zero or one child.
  *
  * @remarks
  * Unboxes its content, so in schema aware APIs which do unboxing, the OptionalField itself will be skipped over and its content will be returned directly.
