@@ -64,7 +64,7 @@ export interface UntypedEntity<TSchema = unknown> extends Iterable<UntypedEntity
  *
  * All content of the tree is accessible via this API.
  *
- * Down-casting (via {@link UntypedTree#is}) is required to access Schema-Aware APIs, including editing.
+ * @remarks Down-casting (via {@link UntypedTree#is}) is required to access Schema-Aware APIs, including editing.
  *
  * @alpha
  */
@@ -111,7 +111,7 @@ export interface UntypedTree extends UntypedEntity<TreeSchema> {
 /**
  * A field of an {@link UntypedTree} as an array-like sequence of unwrapped nodes (see {@link UnwrappedUntypedTree}).
  *
- * Down-casting (via {@link UntypedField#is}) is required to access Schema-Aware APIs, including editing.
+ * @remarks Down-casting (via {@link UntypedField#is}) is required to access Schema-Aware APIs, including editing.
  *
  * @alpha
  */
