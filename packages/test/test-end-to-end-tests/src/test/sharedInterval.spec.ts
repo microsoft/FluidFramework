@@ -93,12 +93,9 @@ function testIntervalOperations(intervalCollection: IIntervalCollection<Sequence
 	intervalArray[0] = intervalCollection.add(0, 0, IntervalType.SlideOnRemove);
 	intervalArray[1] = intervalCollection.add(0, 1, IntervalType.SlideOnRemove);
 	intervalArray[2] = intervalCollection.add(0, 2, IntervalType.SlideOnRemove);
-	intervalArray[3] = intervalCollection.add(1, 0, IntervalType.SlideOnRemove);
-	intervalArray[4] = intervalCollection.add(1, 1, IntervalType.SlideOnRemove);
-	intervalArray[5] = intervalCollection.add(1, 2, IntervalType.SlideOnRemove);
-	intervalArray[6] = intervalCollection.add(2, 0, IntervalType.SlideOnRemove);
-	intervalArray[7] = intervalCollection.add(2, 1, IntervalType.SlideOnRemove);
-	intervalArray[8] = intervalCollection.add(2, 2, IntervalType.SlideOnRemove);
+	intervalArray[3] = intervalCollection.add(1, 1, IntervalType.SlideOnRemove);
+	intervalArray[4] = intervalCollection.add(1, 2, IntervalType.SlideOnRemove);
+	intervalArray[5] = intervalCollection.add(2, 2, IntervalType.SlideOnRemove);
 
 	let i: number;
 	let result;
@@ -106,7 +103,6 @@ function testIntervalOperations(intervalCollection: IIntervalCollection<Sequence
 	let iterator = intervalCollection.CreateForwardIteratorWithStartPosition(1);
 	tempArray[0] = intervalArray[3];
 	tempArray[1] = intervalArray[4];
-	tempArray[2] = intervalArray[5];
 	for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
 		interval = result.value;
 		assert.strictEqual(
@@ -124,8 +120,8 @@ function testIntervalOperations(intervalCollection: IIntervalCollection<Sequence
 	iterator = intervalCollection.CreateForwardIteratorWithEndPosition(2);
 	tempArray = [];
 	tempArray[0] = intervalArray[2];
-	tempArray[1] = intervalArray[5];
-	tempArray[2] = intervalArray[8];
+	tempArray[1] = intervalArray[4];
+	tempArray[2] = intervalArray[5];
 	for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
 		interval = result.value;
 		assert.strictEqual(
@@ -162,8 +158,8 @@ function testIntervalOperations(intervalCollection: IIntervalCollection<Sequence
 	iterator = intervalCollection.CreateForwardIteratorWithEndPosition(2);
 	tempArray = [];
 	tempArray[0] = intervalArray[2];
-	tempArray[1] = intervalArray[5];
-	tempArray[2] = intervalArray[8];
+	tempArray[1] = intervalArray[4];
+	tempArray[2] = intervalArray[5];
 	for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
 		interval = result.value;
 		assert.strictEqual(
@@ -180,9 +176,8 @@ function testIntervalOperations(intervalCollection: IIntervalCollection<Sequence
 
 	iterator = intervalCollection.CreateBackwardIteratorWithEndPosition(1);
 	tempArray = [];
-	tempArray[0] = intervalArray[7];
-	tempArray[1] = intervalArray[4];
-	tempArray[2] = intervalArray[1];
+	tempArray[0] = intervalArray[3];
+	tempArray[1] = intervalArray[1];
 	for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
 		interval = result.value;
 		assert.strictEqual(
@@ -446,12 +441,9 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 			intervalArray[0] = intervals1.add(0, 0, IntervalType.SlideOnRemove);
 			intervalArray[1] = intervals1.add(0, 1, IntervalType.SlideOnRemove);
 			intervalArray[2] = intervals1.add(0, 2, IntervalType.SlideOnRemove);
-			intervalArray[3] = intervals1.add(1, 0, IntervalType.SlideOnRemove);
-			intervalArray[4] = intervals1.add(1, 1, IntervalType.SlideOnRemove);
-			intervalArray[5] = intervals1.add(1, 2, IntervalType.SlideOnRemove);
-			intervalArray[6] = intervals1.add(2, 0, IntervalType.SlideOnRemove);
-			intervalArray[7] = intervals1.add(2, 1, IntervalType.SlideOnRemove);
-			intervalArray[8] = intervals1.add(2, 2, IntervalType.SlideOnRemove);
+			intervalArray[3] = intervals1.add(1, 1, IntervalType.SlideOnRemove);
+			intervalArray[4] = intervals1.add(1, 2, IntervalType.SlideOnRemove);
+			intervalArray[5] = intervals1.add(2, 2, IntervalType.SlideOnRemove);
 
 			// Load the Container that was created by the first client.
 			const container2 = await provider.loadTestContainer(testContainerConfig);
@@ -471,7 +463,6 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 			let iterator = intervals2.CreateForwardIteratorWithStartPosition(1);
 			tempArray[0] = intervalArray[3];
 			tempArray[1] = intervalArray[4];
-			tempArray[2] = intervalArray[5];
 			for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
 				checkIdEquals(
 					result.value,
@@ -505,9 +496,8 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 
 			iterator = intervals2.CreateBackwardIteratorWithEndPosition(1);
 			tempArray = [];
-			tempArray[0] = intervalArray[7];
-			tempArray[1] = intervalArray[4];
-			tempArray[2] = intervalArray[1];
+			tempArray[0] = intervalArray[3];
+			tempArray[1] = intervalArray[1];
 			for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
 				checkIdEquals(
 					result.value,
@@ -659,7 +649,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 			) {
 				// Conflicting changes
 				intervals1.change(id1, 1, 2);
-				intervals2.change(id1, 2, 1);
+				intervals2.change(id1, 2, 3);
 
 				await provider.ensureSynchronized();
 
