@@ -19,7 +19,7 @@ import {
 	getDataRuntimeApi,
 } from "@fluid-internal/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+import { FlushMode, IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 
 const versionWithChunking = "0.56.0";
@@ -52,7 +52,7 @@ describeInstallVersions(
 	 */
 	const createOldContainer = async (): Promise<IContainer> => {
 		const oldDataRuntimeApi = getDataRuntimeApi(versionWithChunking);
-		const oldDefaultObjectFactory = new oldDataRuntimeApi.TestFluidObjectFactory(
+		const oldDataObjectFactory = new oldDataRuntimeApi.TestFluidObjectFactory(
 			[[mapId, oldDataRuntimeApi.dds.SharedMap.getFactory()]],
 			"default",
 		);
@@ -60,10 +60,20 @@ describeInstallVersions(
 		const ContainerRuntimeFactoryWithDefaultDataStore_Old =
 			getContainerRuntimeApi(versionWithChunking).ContainerRuntimeFactoryWithDefaultDataStore;
 		const oldRuntimeFactory = new (ContainerRuntimeFactoryWithDefaultDataStore_Old as any)(
-			oldDefaultObjectFactory,
-			[[oldDefaultObjectFactory.type, Promise.resolve(oldDefaultObjectFactory)]],
+			oldDataObjectFactory,
+			[[oldDataObjectFactory.type, Promise.resolve(oldDataObjectFactory)]],
 			undefined,
 			[innerRequestHandler],
+			{
+				// Chunking did not work with FlushMode.TurnBased,
+				// as it was breaking batching semantics. So we need
+				// to force the container to flush the ops as soon as
+				// they are produced.
+				flushMode: FlushMode.Immediate,
+				gcOptions: {
+					gcAllowed: true,
+				},
+			},
 		);
 
 		return provider.createContainer(oldRuntimeFactory);
