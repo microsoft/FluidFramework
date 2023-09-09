@@ -72,7 +72,8 @@ export class Context implements TreeContext, IDisposable {
 	}
 
 	/**
-	 * Call before editing.
+	 * Called before editing.
+	 * Clears all cursors so editing can proceed.
 	 */
 	private prepareForEdit(): void {
 		for (const target of this.withCursors) {

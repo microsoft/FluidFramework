@@ -120,9 +120,7 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 	 */
 	public readonly type: TreeSchemaIdentifier;
 
-	/**
-	 * Using JS private here prevents it from showing up as a enumerable own property, or conflicting with struct fields.
-	 */
+	// Using JS private here prevents it from showing up as a enumerable own property, or conflicting with struct fields.
 	readonly #removeDeleteCallback: () => void;
 
 	readonly #anchorNode: AnchorNode;
