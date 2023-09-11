@@ -445,7 +445,7 @@ export class PlainTextNode extends DocumentationLiteralNodeBase<string> implemen
 }
 
 // @public
-export function renderApiModelAsMarkdown(transformConfig: ApiItemTransformationConfiguration, renderConfig: MarkdownRenderConfiguration, outputDirectoryPath: string): Promise<void>;
+export function renderApiModelAsMarkdown(transformConfig: Omit<ApiItemTransformationConfiguration, "logger">, renderConfig: Omit<MarkdownRenderConfiguration, "logger">, outputDirectoryPath: string, logger?: Logger): Promise<void>;
 
 // @public
 export function renderDocumentAsMarkdown(document: DocumentNode, config: MarkdownRenderConfiguration): string;

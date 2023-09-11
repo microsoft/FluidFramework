@@ -12,6 +12,7 @@ import {
 	transformApiModel,
 } from "./api-item-transforms";
 import { DocumentNode } from "./documentation-domain";
+import { Logger } from "./Logging";
 import {
 	MarkdownRenderConfiguration,
 	getMarkdownRenderConfigurationWithDefaults,
@@ -35,20 +36,24 @@ import {
  * @param transformConfig - Configuration for transforming API items into {@link DocumentationNode}s.
  * @param renderConfig - Configuration for rendering {@link DocumentNode}s as Markdown.
  * @param outputDirectoryPath - The directory under which the document files will be generated.
+ * @param logger - Receiver of system log data. Default: {@link defaultConsoleLogger}.
  *
  * @public
  */
 export async function renderApiModelAsMarkdown(
-	transformConfig: ApiItemTransformationConfiguration,
-	renderConfig: MarkdownRenderConfiguration,
+	transformConfig: Omit<ApiItemTransformationConfiguration, "logger">,
+	renderConfig: Omit<MarkdownRenderConfiguration, "logger">,
 	outputDirectoryPath: string,
+	logger?: Logger,
 ): Promise<void> {
-	const completeTransformConfig =
-		getApiItemTransformationConfigurationWithDefaults(transformConfig);
+	const completeTransformConfig = getApiItemTransformationConfigurationWithDefaults({
+		...transformConfig,
+		logger,
+	});
 
 	const documents = transformApiModel(completeTransformConfig);
 
-	return renderDocumentsAsMarkdown(documents, renderConfig, outputDirectoryPath);
+	return renderDocumentsAsMarkdown(documents, { ...renderConfig, logger }, outputDirectoryPath);
 }
 
 /**
