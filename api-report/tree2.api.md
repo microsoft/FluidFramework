@@ -841,7 +841,7 @@ export interface ICodecOptions {
 }
 
 // @alpha
-export type IdAllocator = (count?: number) => ChangesetLocalId;
+export type IdAllocator = (count?: number) => number;
 
 // @alpha (undocumented)
 export interface IDecoder<TDecoded, TEncoded> {
@@ -958,6 +958,7 @@ declare namespace InternalTypedSchemaTypes {
         StructSchemaSpecification,
         MapSchemaSpecification,
         LeafSchemaSpecification,
+        MapFieldSchema,
         FlexList,
         FlexListToNonLazyArray,
         ConstantFlexListToNonLazyArray,
@@ -1062,7 +1063,10 @@ export function isEditableTree(field: UnwrappedEditableField): field is Editable
 export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : false;
 
 // @alpha
-export interface ISharedTree extends ISharedObject, ISharedTreeView {
+export interface ISharedTree extends ISharedObject {
+    schematize<TRoot extends FieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): ISharedTreeView;
+    // @deprecated
+    readonly view: ISharedTreeView;
 }
 
 // @alpha
@@ -1089,6 +1093,7 @@ export interface ISharedTreeView extends AnchorLocator {
     redo(): void;
     get root(): UnwrappedEditableField;
     readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
+    // @deprecated (undocumented)
     schematize<TRoot extends FieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): ISharedTreeView;
     setContent(data: NewFieldContent): void;
     readonly storedSchema: StoredSchemaRepository;
@@ -1288,9 +1293,12 @@ interface MakeNominal {
 }
 
 // @alpha
+type MapFieldSchema = FieldSchema<typeof FieldKinds.optional | typeof FieldKinds.sequence>;
+
+// @alpha
 interface MapSchemaSpecification {
     // (undocumented)
-    readonly mapFields: FieldSchema;
+    readonly mapFields: MapFieldSchema;
 }
 
 // @alpha
@@ -1862,7 +1870,7 @@ export interface TreeAdapter {
 
 // @alpha
 export interface TreeContent<TRoot extends FieldSchema = FieldSchema> extends SchemaConfiguration<TRoot> {
-    readonly initialTree: SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Simple> | readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous;
+    readonly initialTree: SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Flexible> | readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous;
 }
 
 // @alpha
@@ -1886,7 +1894,7 @@ export const enum TreeNavigationResult {
     Pending = 0
 }
 
-// @alpha @sealed
+// @alpha
 export class TreeSchema<Name extends string = string, T extends RecursiveTreeSchemaSpecification = TreeSchemaSpecification> {
     constructor(builder: Named<string>, name: Name, info: T);
     // (undocumented)
@@ -1896,7 +1904,7 @@ export class TreeSchema<Name extends string = string, T extends RecursiveTreeSch
     // (undocumented)
     readonly leafValue: WithDefault<Assume<T, TreeSchemaSpecification>["leafValue"], undefined>;
     // (undocumented)
-    readonly mapFields?: FieldSchema;
+    readonly mapFields: WithDefault<Assume<T, TreeSchemaSpecification>["mapFields"], undefined>;
     // (undocumented)
     readonly name: Name & TreeSchemaIdentifier;
     // (undocumented)

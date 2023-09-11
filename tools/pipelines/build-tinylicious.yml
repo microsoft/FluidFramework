@@ -78,5 +78,6 @@ extends:
     taskBuild: build
     taskBuildDocs: false
     taskLint: true
-    taskTest: [] # no tests
+    taskTest:
+    - test
     namespace: false

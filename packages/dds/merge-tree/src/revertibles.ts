@@ -224,7 +224,9 @@ export function appendToMergeTreeDeltaRevertibles(
 			break;
 
 		default:
-			throw new UsageError(`Unsupported event delta type: ${deltaArgs.operation}`);
+			throw new UsageError("Unsupported event delta type", {
+				operation: deltaArgs.operation,
+			});
 	}
 }
 

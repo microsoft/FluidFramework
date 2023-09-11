@@ -72,12 +72,36 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean, session?: ISession): Promise<IDocumentService>;
 }
 
-// @public
+// @public @deprecated
 export enum RouterliciousErrorType {
     fileNotFoundOrAccessDeniedError = "fileNotFoundOrAccessDeniedError",
-    // (undocumented)
     sslCertError = "sslCertError"
 }
+
+// @public
+export const RouterliciousErrorTypes: {
+    readonly sslCertError: "sslCertError";
+    readonly genericNetworkError: "genericNetworkError";
+    readonly authorizationError: "authorizationError";
+    readonly fileNotFoundOrAccessDeniedError: "fileNotFoundOrAccessDeniedError";
+    readonly offlineError: "offlineError";
+    readonly unsupportedClientProtocolVersion: "unsupportedClientProtocolVersion";
+    readonly writeError: "writeError";
+    readonly fetchFailure: "fetchFailure";
+    readonly fetchTokenError: "fetchTokenError";
+    readonly incorrectServerResponse: "incorrectServerResponse";
+    readonly fileOverwrittenInStorage: "fileOverwrittenInStorage";
+    readonly deltaStreamConnectionForbidden: "deltaStreamConnectionForbidden";
+    readonly locationRedirection: "locationRedirection";
+    readonly fluidInvalidSchema: "fluidInvalidSchema";
+    readonly fileIsLocked: "fileIsLocked";
+    readonly genericError: "genericError";
+    readonly throttlingError: "throttlingError";
+    readonly usageError: "usageError";
+};
+
+// @public (undocumented)
+export type RouterliciousErrorTypes = typeof RouterliciousErrorTypes[keyof typeof RouterliciousErrorTypes];
 
 // (No @packageDocumentation comment for this package)
 

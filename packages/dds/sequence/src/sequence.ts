@@ -464,7 +464,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	}
 
 	/**
-	 * @returns - The most recent sequence number which has been acked by the server and processed by this
+	 * @returns The most recent sequence number which has been acked by the server and processed by this
 	 * SharedSegmentSequence.
 	 */
 	public getCurrentSeq() {
@@ -539,6 +539,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * @returns An iterable object that enumerates the IntervalCollection labels.
 	 *
 	 * @example
+	 *
 	 * ```typescript
 	 * const iter = this.getIntervalCollectionKeys();
 	 * for (key of iter)

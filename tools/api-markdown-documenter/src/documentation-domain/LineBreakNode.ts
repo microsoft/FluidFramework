@@ -22,6 +22,16 @@ export class LineBreakNode implements MultiLineDocumentationNode {
 	public readonly type = DocumentationNodeType.LineBreak;
 
 	/**
+	 * {@inheritDoc DocumentationNode.isLiteral}
+	 */
+	public readonly isLiteral = true;
+
+	/**
+	 * {@inheritDoc DocumentationNode.isParent}
+	 */
+	public readonly isParent = false;
+
+	/**
 	 * Static `LineBreakNode` singleton.
 	 */
 	public static readonly Singleton = new LineBreakNode();

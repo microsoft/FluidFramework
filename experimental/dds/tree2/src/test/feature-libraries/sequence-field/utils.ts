@@ -5,8 +5,6 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
-	IdAllocator,
-	idAllocatorFromMaxId,
 	MemoizedIdRangeAllocator,
 	RevisionInfo,
 	revisionMetadataSourceFromInfo,
@@ -20,7 +18,7 @@ import {
 	defaultRevisionMetadataFromChanges,
 	fakeTaggedRepair as fakeRepair,
 } from "../../utils";
-import { brand, fail } from "../../../util";
+import { brand, fail, IdAllocator, idAllocatorFromMaxId } from "../../../util";
 import { TestChangeset } from "./testEdits";
 
 export function composeAnonChanges(changes: TestChangeset[]): TestChangeset {
