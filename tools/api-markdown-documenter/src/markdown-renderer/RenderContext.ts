@@ -76,10 +76,11 @@ export interface MarkdownRenderContext extends TextFormatting {
 export function getContextWithDefaults(
 	partialContext: Partial<MarkdownRenderContext> | undefined,
 ): MarkdownRenderContext {
+	const headingLevel = partialContext?.headingLevel ?? 1;
 	const renderers = getRenderersWithDefaults(partialContext?.renderers);
 	return {
-		headingLevel: 1,
 		...partialContext,
+		headingLevel,
 		renderers,
 	};
 }
