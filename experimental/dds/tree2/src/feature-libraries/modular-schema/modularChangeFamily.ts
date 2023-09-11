@@ -440,7 +440,7 @@ export class ModularChangeFamily
 		over: TaggedChange<ModularChangeset>,
 	): ModularChangeset {
 		const maxId = Math.max(change.maxId ?? -1, over.change.maxId ?? -1);
-		const idState: IdAllocationState = { maxId: maxId };
+		const idState: IdAllocationState = { maxId };
 		const genId: IdAllocator = idAllocatorFromState(idState);
 		const crossFieldTable: RebaseTable = {
 			...newCrossFieldTable<FieldChange>(),

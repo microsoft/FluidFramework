@@ -5,10 +5,10 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { RevisionTag } from "../../core";
+import { IdAllocator } from "../../util";
 import { Mark } from "./format";
 import { applyMoveEffectsToMark, MoveEffectTable } from "./moveEffectTable";
 import { splitMark } from "./utils";
-import { IdAllocator } from "../../util";
 
 export class MarkQueue<T> {
 	private readonly stack: Mark<T>[] = [];
