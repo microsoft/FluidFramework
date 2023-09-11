@@ -118,6 +118,8 @@
 				"addToApiReportFile": false // Ensure build failure on errors
 			},
 
+			// #region Enabled Rules
+
 			// Prevent cyclic `@inheritDoc` comments
 			"ae-cyclic-inherit-doc": {
 				"logLevel": "error",
@@ -138,11 +140,6 @@
 				"logLevel": "error",
 				"addToApiReportFile": false
 			},
-			// Disabled. We don't require that internal members be prefixed with an underscore.
-			"ae-internal-missing-underscore": {
-				"logLevel": "none",
-				"addToApiReportFile": false
-			},
 			// Multiple function overloads should not have @internal tags with other tags.
 			"ae-internal-mixed-release-tag": {
 				"logLevel": "error",
@@ -153,7 +150,6 @@
 				"logLevel": "error",
 				"addToApiReportFile": false
 			},
-
 			// Require explicit release tags for all API members.
 			"ae-missing-release-tag": {
 				"logLevel": "error",
@@ -169,11 +165,24 @@
 				"logLevel": "error",
 				"addToApiReportFile": false
 			},
+
 			// The @link tag needs a TSDoc declaration reference.
 			"ae-unresolved-link": {
 				"logLevel": "error",
 				"addToApiReportFile": false
+			},
+
+			// #endregion
+
+			// #region Disabled Rules
+
+			// Disabled. We don't require that internal members be prefixed with an underscore.
+			"ae-internal-missing-underscore": {
+				"logLevel": "none",
+				"addToApiReportFile": false
 			}
+
+			// #endregion
 		},
 
 		/**
