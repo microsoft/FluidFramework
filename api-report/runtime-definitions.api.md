@@ -223,8 +223,6 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     readonly attachState: AttachState;
     // (undocumented)
     readonly baseSnapshot: ISnapshotTree | undefined;
-    // @deprecated (undocumented)
-    bindToContext(): void;
     // (undocumented)
     readonly clientDetails: IClientDetails;
     // (undocumented)

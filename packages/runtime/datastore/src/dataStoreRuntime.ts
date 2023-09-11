@@ -528,17 +528,6 @@ export class FluidDataStoreRuntime
 		this.makeVisibleAndAttachGraph();
 	}
 
-	/**
-	 * @deprecated - Not necessary if consumers add a new dataStore to the container by storing its handle.
-	 * Binds this runtime to the container
-	 * This includes the following:
-	 * 1. Sending an Attach op that includes all existing state
-	 * 2. Attaching the graph if the data store becomes attached.
-	 */
-	public bindToContext() {
-		this.makeVisibleAndAttachGraph();
-	}
-
 	public bind(handle: IFluidHandle): void {
 		// If visible, attach the incoming handle's graph. Else, this will be done when we become visible.
 		if (this.visibilityState !== VisibilityState.NotVisible) {

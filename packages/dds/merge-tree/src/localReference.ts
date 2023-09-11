@@ -66,6 +66,11 @@ export interface LocalReferencePosition extends ReferencePosition {
 		Record<"beforeSlide" | "afterSlide", (ref: LocalReferencePosition) => void>
 	>;
 	readonly trackingCollection: TrackingGroupCollection;
+	/**
+	 * Whether or not this reference position can slide onto one of the two
+	 * special segments representing the position before or after the tree
+	 */
+	readonly canSlideToEndpoint?: boolean;
 }
 
 /**
@@ -91,6 +96,7 @@ class LocalReference implements LocalReferencePosition {
 		public refType = ReferenceType.Simple,
 		properties?: PropertySet,
 		public readonly slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
+		public readonly canSlideToEndpoint?: boolean,
 	) {
 		_validateReferenceType(refType);
 		this.properties = properties;
@@ -318,8 +324,9 @@ export class LocalReferenceCollection {
 		refType: ReferenceType,
 		properties: PropertySet | undefined,
 		slidingPreference?: SlidingPreference,
+		canSlideToEndpoint?: boolean,
 	): LocalReferencePosition {
-		const ref = new LocalReference(refType, properties, slidingPreference);
+		const ref = new LocalReference(refType, properties, slidingPreference, canSlideToEndpoint);
 		ref.link(this.segment, offset, undefined);
 		if (!refTypeIncludesFlag(ref, ReferenceType.Transient)) {
 			this.addLocalRef(ref, offset);

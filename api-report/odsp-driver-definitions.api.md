@@ -205,12 +205,14 @@ export type OdspError = IOdspError | (DriverError & IOdspErrorAugmentations);
 
 // @public
 export enum OdspErrorType {
+    blockedIPAddress = "blockedIPAddress",
     cannotCatchUp = "cannotCatchUp",
     fetchTimeout = "fetchTimeout",
     // (undocumented)
     fetchTokenError = "fetchTokenError",
     fluidNotEnabled = "fluidNotEnabled",
     invalidFileNameError = "invalidFileNameError",
+    // @deprecated (undocumented)
     outOfStorageError = "outOfStorageError",
     serviceReadOnly = "serviceReadOnly",
     snapshotTooBig = "snapshotTooBig"
