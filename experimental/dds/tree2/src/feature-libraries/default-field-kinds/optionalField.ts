@@ -14,7 +14,7 @@ import {
 	ChangeAtomId,
 	RevisionTag,
 } from "../../core";
-import { fail, Mutable, NestedMap } from "../../util";
+import { fail, Mutable, SizedNestedMap } from "../../util";
 import { singleTextCursor, jsonableTreeFromCursor } from "../treeTextCursor";
 import {
 	ToDelta,
@@ -49,52 +49,34 @@ interface IChildChangeMap<T> {
 }
 
 class ChildChangeMap<T> implements IChildChangeMap<T> {
-	private readonly data = new Map<ChangesetLocalId | "self", Map<RevisionTag | undefined, T>>();
-	private readonly nestedMapData: NestedMap<ChangesetLocalId | "self", RevisionTag, T> =
-		new Map();
+	private readonly nestedMapData = new SizedNestedMap<
+		ChangesetLocalId | "self",
+		RevisionTag | undefined,
+		T
+	>();
 	public set(id: ChangeId, childChange: T): void {
 		if (id === "self") {
-			const nestedMap = this.data.get(id);
-			if (nestedMap === undefined) {
-				const newMap = new Map();
-				newMap.set(undefined, childChange);
-				this.data.set(id, newMap);
-			} else {
-				nestedMap.set(undefined, childChange);
-			}
+			this.nestedMapData.set("self", undefined, childChange);
 		} else {
-			const nestedMap = this.data.get(id.localId);
-			if (nestedMap === undefined) {
-				const newMap = new Map();
-				newMap.set(id.revision, childChange);
-				this.data.set(id.localId, newMap);
-			} else {
-				nestedMap.set(id.revision, childChange);
-			}
+			this.nestedMapData.set(id.localId, id.revision, childChange);
 		}
 	}
 
 	public get(id: ChangeId): T | undefined {
 		return id === "self"
-			? this.data.get(id)?.get(undefined)
-			: this.data.get(id.localId)?.get(id.revision);
+			? this.nestedMapData.tryGet(id, undefined)
+			: this.nestedMapData.tryGet(id.localId, id.revision);
 	}
 
 	public delete(id: ChangeId): boolean {
-		if (id === "self") {
-			return this.data.delete("self");
-		} else {
-			const map = this.data.get(id.localId);
-			if (map === undefined) {
-				return false;
-			}
-			return map.delete(id.revision);
-		}
+		return id === "self"
+			? this.nestedMapData.delete("self", undefined)
+			: this.nestedMapData.delete(id.localId, id.revision);
 	}
 
 	public keys(): Iterable<ChangeId> {
 		const changeIds: ChangeId[] = [];
-		for (const [localId, nestedMap] of this.data) {
+		for (const [localId, nestedMap] of this.nestedMapData) {
 			if (localId === "self") {
 				changeIds.push("self");
 			} else {
@@ -107,17 +89,17 @@ class ChildChangeMap<T> implements IChildChangeMap<T> {
 		return changeIds;
 	}
 	public values(): Iterable<T> {
-		return Array.from(this.data.values()).flatMap((map) => Array.from(map.values()));
+		return this.nestedMapData.values();
 	}
 	public entries(): Iterable<[ChangeId, T]> {
 		const entries: [ChangeId, T][] = [];
 		for (const changeId of this.keys()) {
 			if (changeId === "self") {
-				const entry = this.data.get("self")?.get(undefined);
+				const entry = this.nestedMapData.tryGet("self", undefined);
 				assert(entry !== undefined, "Entry should not be undefined when iterating keys.");
 				entries.push(["self", entry]);
 			} else {
-				const entry = this.data.get(changeId.localId)?.get(changeId.revision);
+				const entry = this.nestedMapData.tryGet(changeId.localId, changeId.revision);
 				assert(entry !== undefined, "Entry should not be undefined when iterating keys.");
 				entries.push([changeId, entry]);
 			}
@@ -126,11 +108,7 @@ class ChildChangeMap<T> implements IChildChangeMap<T> {
 		return entries;
 	}
 	public get size(): number {
-		let sum = 0;
-		for (const [_, map] of this.data) {
-			sum += map.size;
-		}
-		return sum;
+		return this.nestedMapData.size;
 	}
 }
 

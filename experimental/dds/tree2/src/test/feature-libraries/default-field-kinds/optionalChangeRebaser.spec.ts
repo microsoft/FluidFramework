@@ -32,7 +32,9 @@ import {
 	optionalChangeRebaser,
 	optionalFieldEditor,
 	optionalFieldIntoDelta,
+	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/default-field-kinds/optionalField";
+// eslint-disable-next-line import/no-internal-modules
 import { OptionalChangeset } from "../../../feature-libraries/default-field-kinds/defaultFieldChangeTypes";
 
 const type: TreeSchemaIdentifier = brand("Node");
