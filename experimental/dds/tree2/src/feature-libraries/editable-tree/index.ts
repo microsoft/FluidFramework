@@ -13,7 +13,6 @@ export {
 	areCursors,
 	localNodeKeySymbol,
 	setField,
-	TreeStatus,
 } from "./editableTreeTypes";
 
 export { isEditableField } from "./editableField";
@@ -57,4 +56,4 @@ export {
 
 export { EditableTreeContext, getEditableTreeContext } from "./editableTreeContext";
 
-export { isPrimitive, treeStatusFromPath } from "./utilities";
+export { isPrimitive } from "./utilities";

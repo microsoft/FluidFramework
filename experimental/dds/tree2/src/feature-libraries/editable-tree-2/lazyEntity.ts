@@ -8,8 +8,8 @@ import {
 	TreeNavigationResult,
 	ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
+	TreeStatus,
 } from "../../core";
-import { TreeStatus } from "../editable-tree";
 import { fail, disposeSymbol, IDisposable } from "../../util";
 import { Context } from "./context";
 import { UntypedEntity } from "./editableTreeTypes";

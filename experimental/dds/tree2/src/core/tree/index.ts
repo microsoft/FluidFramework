@@ -39,6 +39,8 @@ export {
 	FieldUpPath,
 	compareUpPaths,
 	compareFieldUpPaths,
+	TreeStatus,
+	treeStatusFromPath,
 	UpPathDefault,
 } from "./pathTree";
 export {

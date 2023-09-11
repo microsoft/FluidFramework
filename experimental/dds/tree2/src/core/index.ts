@@ -82,6 +82,8 @@ export {
 	ProtoNodes,
 	CursorMarker,
 	isCursor,
+	TreeStatus,
+	treeStatusFromPath,
 } from "./tree";
 
 export {

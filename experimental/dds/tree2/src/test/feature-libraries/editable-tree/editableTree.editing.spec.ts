@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { FieldKey, TreeSchemaIdentifier } from "../../../core";
+import { FieldKey, TreeSchemaIdentifier, TreeStatus } from "../../../core";
 import { brand, clone } from "../../../util";
 import {
 	singleTextCursor,
@@ -22,7 +22,6 @@ import {
 	setField,
 	EditableTree,
 	treeStatus,
-	TreeStatus,
 } from "../../../feature-libraries";
 import { viewWithContent } from "../../utils";
 import {

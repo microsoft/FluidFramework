@@ -4,7 +4,7 @@
  */
 
 import * as SchemaAware from "../schema-aware";
-import { FieldKey, TreeSchemaIdentifier, TreeValue } from "../../core";
+import { FieldKey, TreeSchemaIdentifier, TreeValue, TreeStatus } from "../../core";
 import { Assume, RestrictiveReadonlyRecord, _InlineTrick } from "../../util";
 import { LocalNodeKey } from "../node-key";
 import {
@@ -19,7 +19,6 @@ import {
 } from "../typed-schema";
 import { EditableTreeEvents } from "../untypedTree";
 import { FieldKindTypes, FieldKinds } from "../default-field-kinds";
-import { TreeStatus } from "../editable-tree";
 import { TreeContext } from "./context";
 
 /**

@@ -20,6 +20,8 @@ import {
 	AnchorNode,
 	inCursorField,
 	rootFieldKey,
+	TreeStatus,
+	treeStatusFromPath,
 } from "../../core";
 import { brand, fail } from "../../util";
 import { FieldKind } from "../modular-schema";
@@ -41,12 +43,7 @@ import {
 	contextSymbol,
 	treeStatus,
 } from "../untypedTree";
-import {
-	AdaptingProxyHandler,
-	adaptWithProxy,
-	getStableNodeKey,
-	treeStatusFromPath,
-} from "./utilities";
+import { AdaptingProxyHandler, adaptWithProxy, getStableNodeKey } from "./utilities";
 import { ProxyContext } from "./editableTreeContext";
 import {
 	EditableField,
@@ -55,7 +52,6 @@ import {
 	proxyTargetSymbol,
 	localNodeKeySymbol,
 	setField,
-	TreeStatus,
 } from "./editableTreeTypes";
 import { makeField, unwrappedField } from "./editableField";
 import { ProxyTarget } from "./ProxyTarget";
