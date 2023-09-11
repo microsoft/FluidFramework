@@ -841,7 +841,7 @@ export interface ICodecOptions {
 }
 
 // @alpha
-export type IdAllocator = (count?: number) => ChangesetLocalId;
+export type IdAllocator = (count?: number) => number;
 
 // @alpha (undocumented)
 export interface IDecoder<TDecoded, TEncoded> {

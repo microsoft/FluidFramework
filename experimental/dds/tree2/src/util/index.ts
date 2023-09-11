@@ -99,3 +99,10 @@ export {
 } from "./brandedMap";
 
 export { getFirstFromRangeMap, RangeEntry, RangeMap, setInRangeMap } from "./rangeMap";
+
+export {
+	IdAllocator,
+	idAllocatorFromMaxId,
+	idAllocatorFromState,
+	IdAllocationState,
+} from "./idAllocator";

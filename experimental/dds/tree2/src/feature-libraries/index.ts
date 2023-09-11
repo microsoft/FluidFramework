@@ -100,7 +100,6 @@ import * as SequenceField from "./sequence-field";
 export { SequenceField };
 
 export {
-	idAllocatorFromMaxId,
 	isNeverField,
 	ModularEditBuilder,
 	EditDescription,
@@ -113,7 +112,6 @@ export {
 	FieldChangeset,
 	ToDelta,
 	ModularChangeset,
-	IdAllocator,
 	NodeChangeComposer,
 	NodeChangeInverter,
 	NodeChangeRebaser,
