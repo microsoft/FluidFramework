@@ -46,17 +46,20 @@ The new way to do this is via the object's "entry point".
 Here it is on `IContainer`, returning an anonymous `FluidObject` - the application-specified root object:
 
 ```ts
-getEntryPoint?(): Promise<FluidObject | undefined>;
+getEntryPoint(): Promise<FluidObject>;
 ```
 
 And here it is on `IDataStore`, returning an `IFluidHandle` to an anonymous `FluidObject` - the DataStore's root object:
 
 ```ts
-readonly entryPoint?: IFluidHandle<FluidObject>;
+readonly entryPoint: IFluidHandle<FluidObject>;
 ```
 
 So how does an application specify what the Container or DataStore's entry point is?
 Via a parameter `initializeEntryPoint` that's found on `ContainerRuntime.loadRuntime` and `FluidDataStoreRuntime`'s constructor.
+
+See [testContainerRuntimeFactoryWithDefaultDataStore.ts](https://github.com/microsoft/FluidFramework/tree/main/packages/test/test-utils/src/testContainerRuntimeFactoryWithDefaultDataStore.ts) for an example implemtation of `initializeEntryPoint` for ContainerRuntime.
+See [pureDataObjectFactory.ts](https://github.com/microsoft/FluidFramework/tree/main/packages/framework/aqueduct/src/data-object-factories/pureDataObjectFactory.ts#L83) for an example implementation of `initializeEntryPoint` for DataStoreRuntime.
 
 ### ILoader request pattern
 
