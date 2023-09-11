@@ -4,20 +4,12 @@
  */
 import * as Path from "node:path";
 
-import { FileSystem } from "@rushstack/node-core-library";
+import { FileSystem, NewlineKind } from "@rushstack/node-core-library";
 
-import {
-	ApiItemTransformationConfiguration,
-	getApiItemTransformationConfigurationWithDefaults,
-	transformApiModel,
-} from "./api-item-transforms";
+import { ApiItemTransformationConfiguration, transformApiModel } from "./api-item-transforms";
 import { DocumentNode } from "./documentation-domain";
 import { Logger } from "./Logging";
-import {
-	MarkdownRenderConfiguration,
-	getMarkdownRenderConfigurationWithDefaults,
-	renderDocumentAsMarkdown,
-} from "./markdown-renderer";
+import { MarkdownRenderConfiguration, renderDocumentAsMarkdown } from "./markdown-renderer";
 
 /**
  * Renders the provided model and its contents, and writes each document to a file on disk.
@@ -46,12 +38,10 @@ export async function renderApiModelAsMarkdown(
 	outputDirectoryPath: string,
 	logger?: Logger,
 ): Promise<void> {
-	const completeTransformConfig = getApiItemTransformationConfigurationWithDefaults({
+	const documents = transformApiModel({
 		...transformConfig,
 		logger,
 	});
-
-	const documents = transformApiModel(completeTransformConfig);
 
 	return renderDocumentsAsMarkdown(documents, { ...renderConfig, logger }, outputDirectoryPath);
 }
@@ -74,11 +64,9 @@ export async function renderDocumentsAsMarkdown(
 	config: MarkdownRenderConfiguration,
 	outputDirectoryPath: string,
 ): Promise<void> {
-	const { logger } = config;
+	const { logger, newlineKind } = config;
 
 	logger?.verbose("Rendering documents as Markdown and writing to disk...");
-
-	const completeRenderConfig = getMarkdownRenderConfigurationWithDefaults(config);
 
 	await FileSystem.ensureEmptyFolderAsync(outputDirectoryPath);
 
@@ -88,7 +76,7 @@ export async function renderDocumentsAsMarkdown(
 
 			const filePath = Path.join(outputDirectoryPath, document.filePath);
 			await FileSystem.writeFileAsync(filePath, renderedDocument, {
-				convertLineEndings: completeRenderConfig.newlineKind,
+				convertLineEndings: newlineKind ?? NewlineKind.OsDefault,
 				ensureFolderExists: true,
 			});
 		}),

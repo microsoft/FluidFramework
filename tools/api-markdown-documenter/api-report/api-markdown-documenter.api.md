@@ -265,9 +265,6 @@ export class FencedCodeBlockNode extends DocumentationParentNodeBase implements 
 }
 
 // @public
-export function getApiItemTransformationConfigurationWithDefaults(inputOptions: ApiItemTransformationConfiguration): Required<ApiItemTransformationConfiguration>;
-
-// @public
 export function getDefaultValueBlock(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): DocSection | undefined;
 
 // @public
@@ -284,9 +281,6 @@ export function getHeadingForApiItem(apiItem: ApiItem, config: Required<ApiItemT
 
 // @public
 export function getLinkForApiItem(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>, textOverride?: string): Link;
-
-// @public
-export function getMarkdownRenderersWithDefaults(customRenderers?: MarkdownRenderers): MarkdownRenderers;
 
 // @public
 export function getModifiers(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]): ApiModifier[];
@@ -391,18 +385,18 @@ export type LoggingFunction = (message: string | Error, ...args: unknown[]) => v
 
 // @public
 export interface MarkdownRenderConfiguration extends ConfigurationBase {
+    readonly customRenderers?: MarkdownRenderers;
     readonly newlineKind?: NewlineKind;
-    readonly renderers?: MarkdownRenderers;
     readonly startingHeadingLevel?: number;
 }
 
 // @public
 export interface MarkdownRenderContext extends TextFormatting {
+    customRenderers?: MarkdownRenderers;
     headingLevel: number;
     readonly insideCodeBlock?: boolean;
     readonly insideHtml?: boolean;
     readonly insideTable?: boolean;
-    renderers: MarkdownRenderers;
 }
 
 // @public

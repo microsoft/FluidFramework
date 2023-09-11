@@ -28,7 +28,6 @@ export {
 	type DefaultDocumentationSuiteOptions,
 	type DocumentationSuiteOptions,
 	type DocumentBoundaries,
-	getApiItemTransformationConfigurationWithDefaults,
 	getDefaultValueBlock,
 	getDeprecatedBlock,
 	getExampleBlocks,
@@ -59,7 +58,6 @@ export * from "./documentation-domain";
 export {
 	createDocumentWriter,
 	DocumentWriter,
-	getMarkdownRenderersWithDefaults,
 	type MarkdownRenderContext,
 	type MarkdownRenderers,
 	type RenderDocumentationNode as RenderDocumentationNodeAsMarkdown,

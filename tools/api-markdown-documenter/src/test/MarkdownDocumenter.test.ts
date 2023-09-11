@@ -11,16 +11,9 @@ import { compare } from "dir-compare";
 import { Suite } from "mocha";
 
 import { renderApiModelAsMarkdown } from "../RenderMarkdown";
-import {
-	ApiItemTransformationConfiguration,
-	getApiItemTransformationConfigurationWithDefaults,
-	transformApiModel,
-} from "../api-item-transforms";
+import { type ApiItemTransformationConfiguration, transformApiModel } from "../api-item-transforms";
 import { DocumentNode } from "../documentation-domain";
-import {
-	MarkdownRenderConfiguration,
-	getMarkdownRenderConfigurationWithDefaults,
-} from "../markdown-renderer";
+import { type MarkdownRenderConfiguration } from "../markdown-renderer";
 
 /**
  * Temp directory under which all tests that generate files will output their contents.
@@ -119,12 +112,12 @@ function apiTestSuite(
 				/**
 				 * Complete transform config used in tests. Generated in `before` hook.
 				 */
-				let transformConfig: Required<ApiItemTransformationConfiguration>;
+				let transformConfig: ApiItemTransformationConfiguration;
 
 				/**
 				 * Complete Markdown render config used in tests. Generated in `before` hook.
 				 */
-				let renderConfig: Required<MarkdownRenderConfiguration>;
+				let renderConfig: MarkdownRenderConfiguration;
 
 				before(async () => {
 					const apiModel = new ApiModel();
@@ -132,14 +125,12 @@ function apiTestSuite(
 						apiModel.loadPackage(apiReportFilePath);
 					}
 
-					transformConfig = getApiItemTransformationConfigurationWithDefaults({
+					transformConfig = {
 						...configProps.transformConfigLessApiModel,
 						apiModel,
-					});
+					};
 
-					renderConfig = getMarkdownRenderConfigurationWithDefaults(
-						configProps.renderConfig,
-					);
+					renderConfig = configProps.renderConfig;
 				});
 
 				it("Ensure no duplicate file paths", () => {

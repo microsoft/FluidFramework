@@ -6,7 +6,7 @@ import { NewlineKind } from "@rushstack/node-core-library";
 
 import { ConfigurationBase } from "../../ConfigurationBase";
 import { defaultConsoleLogger } from "../../Logging";
-import { MarkdownRenderers, getRenderersWithDefaults } from "./RenderOptions";
+import { MarkdownRenderers } from "./RenderOptions";
 
 /**
  * Configuration for Markdown rendering of generated documentation contents.
@@ -24,7 +24,7 @@ export interface RenderConfiguration extends ConfigurationBase {
 	/**
 	 * {@inheritDoc MarkdownRenderers}
 	 */
-	readonly renderers?: MarkdownRenderers;
+	readonly customRenderers?: MarkdownRenderers;
 
 	/**
 	 * Optional override for the starting heading level of a document.
@@ -41,13 +41,15 @@ export interface RenderConfiguration extends ConfigurationBase {
  * in the remainder with the documented defaults.
  */
 export function getRenderConfigurationWithDefaults(
-	inputConfig: RenderConfiguration,
-): Required<RenderConfiguration> {
-	const renderers = getRenderersWithDefaults(inputConfig.renderers);
+	inputConfig: Partial<RenderConfiguration> | undefined,
+): RenderConfiguration {
+	const logger = inputConfig?.logger ?? defaultConsoleLogger;
+	const newlineKind = inputConfig?.newlineKind ?? NewlineKind.OsDefault;
+	const startingHeadingLevel = inputConfig?.startingHeadingLevel ?? 1;
 	return {
-		logger: inputConfig.logger ?? defaultConsoleLogger,
-		newlineKind: inputConfig.newlineKind ?? NewlineKind.OsDefault,
-		startingHeadingLevel: inputConfig.startingHeadingLevel ?? 1,
-		renderers,
+		...inputConfig,
+		logger,
+		newlineKind,
+		startingHeadingLevel,
 	};
 }
