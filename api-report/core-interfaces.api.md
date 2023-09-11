@@ -399,7 +399,7 @@ export interface IResponse {
 export const isFluidCodeDetails: (details: unknown) => details is Readonly<IFluidCodeDetails>;
 
 // @public @deprecated
-export const isFluidPackage: (pkg: any) => pkg is Readonly<IFluidPackage>;
+export const isFluidPackage: (pkg: unknown) => pkg is Readonly<IFluidPackage>;
 
 // @public @deprecated (undocumented)
 export interface ITaggedTelemetryPropertyType {
