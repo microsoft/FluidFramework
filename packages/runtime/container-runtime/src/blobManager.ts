@@ -755,7 +755,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	 * Delete attachment blobs that are sweep ready.
 	 * @param sweepReadyBlobRoutes - The routes of blobs that are sweep ready and should be deleted. These routes will
 	 * be based off of local ids.
-	 * @returns - The routes of blobs that were deleted.
+	 * @returns The routes of blobs that were deleted.
 	 */
 	public deleteSweepReadyNodes(sweepReadyBlobRoutes: string[]): string[] {
 		// If sweep for attachment blobs is not enabled, return empty list indicating nothing is deleted.

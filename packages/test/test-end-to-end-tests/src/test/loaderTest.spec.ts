@@ -344,6 +344,8 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 		const newLoader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
 		const resolvedContainer = await newLoader.resolve({ url });
 		await waitContainerToCatchUp(resolvedContainer);
+		await provider.ensureSynchronized();
+
 		const response = await requestResolvedObjectFromContainer(resolvedContainer, headers);
 
 		assert.strictEqual(response.status, 200, "Did not return the correct status");

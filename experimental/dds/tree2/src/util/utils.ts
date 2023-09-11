@@ -228,7 +228,7 @@ export type JsonCompatibleReadOnly =
 	| { readonly [P in string]?: JsonCompatibleReadOnly };
 
 /**
- * @remarks - TODO: Audit usage of this type in schemas, evaluating whether it is necessary and performance
+ * @remarks TODO: Audit usage of this type in schemas, evaluating whether it is necessary and performance
  * of alternatives.
  *
  * True "arbitrary serializable data" is probably fine, but some persisted types declarations might be better
