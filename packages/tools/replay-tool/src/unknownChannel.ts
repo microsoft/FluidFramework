@@ -139,6 +139,7 @@ export function mixinDataStoreWithAnyChannel(
 				new ObjectRegistryWithUnknownChannels(sharedObjectRegistry),
 				existing,
 				() => {
+					// TODO: AB#4779
 					throw new Error("TODO");
 				},
 			);

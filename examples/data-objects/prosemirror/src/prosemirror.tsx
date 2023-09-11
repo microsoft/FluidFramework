@@ -176,6 +176,7 @@ export class ProseMirrorFactory implements IFluidDataStoreFactory {
 			),
 			existing,
 			() => {
+				// TODO: AB#4993
 				throw new Error("TODO");
 			},
 		);
