@@ -7,6 +7,8 @@ import { MarkdownRenderers, getRenderersWithDefaults } from "./configuration";
 
 /**
  * Context passed down during recursive {@link DocumentationNode} rendering.
+ *
+ * @public
  */
 export interface MarkdownRenderContext extends TextFormatting {
 	/**

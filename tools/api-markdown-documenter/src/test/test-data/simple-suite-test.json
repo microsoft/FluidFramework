@@ -1717,7 +1717,7 @@
 				{
 					"kind": "Namespace",
 					"canonicalReference": "simple-suite-test!TestNamespace:namespace",
-					"docComment": "/**\n * Test Namespace\n *\n * @remarks\n *\n * Here are some remarks about the namespace\n *\n * @example\n *\n * Example 1\n * ```typescript\n * const foo = bar;\n * ```\n *\n * @example\n *\n * Example 2\n * ```javascript\n * const bar = foo\n * ```\n *\n * @public\n */\n",
+					"docComment": "/**\n * Test Namespace\n *\n * @remarks\n *\n * Here are some remarks about the namespace\n *\n * @example TypeScript Example\n * ```typescript\n * const foo = bar;\n * ```\n *\n * @example JavaScript Example\n *\n * ```javascript\n * const bar = foo\n * ```\n *\n * @public\n */\n",
 					"excerptTokens": [
 						{
 							"kind": "Content",

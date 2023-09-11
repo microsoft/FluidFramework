@@ -4,7 +4,7 @@
  */
 
 import { Delta, makeAnonChange, tagChange, TaggedChange } from "../../core";
-import { brand, fail } from "../../util";
+import { brand, fail, IdAllocator } from "../../util";
 import { CrossFieldManager } from "./crossFieldQueries";
 import {
 	FieldChangeHandler,
@@ -12,7 +12,6 @@ import {
 	NodeChangeComposer,
 	NodeChangeInverter,
 	NodeChangeRebaser,
-	IdAllocator,
 	RevisionMetadataSource,
 } from "./fieldChangeHandler";
 import { FieldKind, Multiplicity } from "./fieldKind";

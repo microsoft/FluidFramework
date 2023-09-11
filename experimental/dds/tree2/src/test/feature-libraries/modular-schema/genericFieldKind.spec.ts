@@ -8,13 +8,12 @@ import {
 	NodeChangeset,
 	GenericChangeset,
 	genericFieldKind,
-	IdAllocator,
 	CrossFieldManager,
 	RevisionMetadataSource,
 	MemoizedIdRangeAllocator,
 } from "../../../feature-libraries";
 import { makeAnonChange, tagChange, TaggedChange, Delta, FieldKey } from "../../../core";
-import { brand } from "../../../util";
+import { IdAllocator, brand } from "../../../util";
 import {
 	EncodingTestData,
 	fakeTaggedRepair as fakeRepair,

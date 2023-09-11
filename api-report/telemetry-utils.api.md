@@ -23,6 +23,8 @@ import { IUsageError } from '@fluidframework/core-interfaces';
 import { Lazy } from '@fluidframework/core-utils';
 import { LogLevel } from '@fluidframework/core-interfaces';
 import { Tagged } from '@fluidframework/core-interfaces';
+import { TelemetryBaseEventPropertyType } from '@fluidframework/core-interfaces';
+import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @public (undocumented)
@@ -309,6 +311,9 @@ export function normalizeError(error: unknown, annotations?: IFluidErrorAnnotati
 // @public
 export function numberFromString(str: string | null | undefined): string | number | undefined;
 
+// @internal
+export function overwriteStack(error: IFluidErrorBase | LoggingError, stack: string): void;
+
 // @public
 export class PerformanceEvent {
     protected constructor(logger: ITelemetryLoggerExt, event: ITelemetryGenericEvent, markers?: IPerformanceEventMarkers, recordHeapSize?: boolean);
@@ -348,17 +353,23 @@ export class SampledTelemetryHelper implements IDisposable {
 // @public
 export const sessionStorageConfigProvider: Lazy<IConfigProviderBase>;
 
-// @public (undocumented)
-export const tagCodeArtifacts: <T extends Record<string, TelemetryEventPropertyTypeExt>>(values: T) => { [P in keyof T]: {
+// @public
+export const tagCodeArtifacts: <T extends Record<string, TelemetryEventPropertyType | (() => TelemetryBaseEventPropertyType)>>(values: T) => { [P in keyof T]: (T[P] extends () => TelemetryBaseEventPropertyType ? () => {
+        value: ReturnType<T[P]>;
+        tag: TelemetryDataTag.CodeArtifact;
+    } : {
         value: Exclude<T[P], undefined>;
         tag: TelemetryDataTag.CodeArtifact;
-    } | (T[P] extends undefined ? undefined : never); };
+    }) | (T[P] extends undefined ? undefined : never); };
 
 // @public (undocumented)
-export const tagData: <T extends TelemetryDataTag, V extends Record<string, TelemetryEventPropertyTypeExt>>(tag: T, values: V) => { [P in keyof V]: {
+export const tagData: <T extends TelemetryDataTag, V extends Record<string, TelemetryEventPropertyType | (() => TelemetryBaseEventPropertyType)>>(tag: T, values: V) => { [P in keyof V]: (V[P] extends () => TelemetryBaseEventPropertyType ? () => {
+        value: ReturnType<V[P]>;
+        tag: T;
+    } : {
         value: Exclude<V[P], undefined>;
         tag: T;
-    } | (V[P] extends undefined ? undefined : never); };
+    }) | (V[P] extends undefined ? undefined : never); };
 
 // @public @deprecated (undocumented)
 export class TaggedLoggerAdapter implements ITelemetryBaseLogger {

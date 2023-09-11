@@ -99,6 +99,7 @@ describe("mock-customer-service", () => {
 					},
 					body: JSON.stringify({
 						url: `http://localhost:${localServicePort}/broadcast-signal?externalTaskListId=${externalTaskListId}`,
+						externalTaskListId,
 					}),
 				},
 			);

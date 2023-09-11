@@ -29,6 +29,8 @@ import { apiItemToDocument, apiItemToSections } from "./TransformApiItem";
  * - {@link DocumentationSuiteOptions.hierarchyBoundaries}
  *
  * @param transformConfig - Configuration for transforming API items into {@link DocumentationNode}s.
+ *
+ * @public
  */
 export function transformApiModel(
 	transformConfig: ApiItemTransformationConfiguration,
