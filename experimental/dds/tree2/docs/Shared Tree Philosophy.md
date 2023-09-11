@@ -1,4 +1,4 @@
-# Shared Tree
+# Shared Tree Design Philosophy
 
 The goal of the shared tree project is empower developers to create and maintain better collaborative experiences.
 
@@ -16,7 +16,7 @@ To best achieve this goal we plan to deliver a set of libraries that enable deve
 
 -   Avoid common pitfalls of collaborative software.
 
-    Collaboration often introduces subtle requirements, especially around compatibility, updates, offline use, error cases, persistance and concurrency.
+    Collaboration often introduces subtle requirements, especially around compatibility, updates, offline use, error cases, persistence and concurrency.
     Picking the right design patterns (above) as well as explicitly drawing attention to particular details in the API design, documentation and examples all need to work together to holistically guide developers into creating experiences that collaborate correctly.
     Additionally, the resulting experiences need to be maintainable, including easy authoring of new features and reviewing of changes for possible collaboration issues.
     For code authors, it should be easy to find the right way to do something, and know it will be robust.
@@ -71,14 +71,14 @@ This puts a large tension between maintainability and extensibility.
 This leads to a design that is focused on optimizing for extensibility while minimizing the difficult of maintaining compatibility across these extensions.
 The approach Shared Tree takes for this is separation of concerns and version-ability of components.
 
-Concepts are split into three catagories based on compatibility requirements (see [SchemaVersioning](packages/dds/SchemaVersioning.md) for details of why these exist and what is in each):
+Concepts are split into three categories based on compatibility requirements (see [SchemaVersioning](packages/dds/SchemaVersioning.md) for details of why these exist and what is in each):
 
 1. Critical for consistent behavior and thus must have compatibility forever to support old document and cross version collaboration.
 2. Only impacts the current instance of the application, and can be changed without maintaining identical behavior in previously supported cases.
 
-The Shared Tree design minimizes the amount of stuff (code, formats, data, etc) in the first category, as well as to keep the items in the first category as simple and independent as practical.
+The Shared Tree design minimizes the amount of stuff (code, formats, data, etc) in the first category and attempts to keep items in the first category as simple and independent as practical.
 
-For example, the merge resolution logic for sequences is defined as a single component, and if it needs changes that are incompatible (for example an improvement,ent to merge resolution), its possible to simply author a new version of this logic, and select between both at runtime based on either protocol version or schema.
+For example, the merge resolution logic for sequences is defined as a single component, and if it needs changes that are incompatible (for example an improvement to merge resolution), its possible to simply author a new version of this logic, and select between both at runtime based on either protocol version or schema.
 
 Additionally the Shared Tree architecture organizes these components such that if needed they can be replaced incrementally.
 For example, the tree reading and editing API is build on-top of cursors.
@@ -89,32 +89,32 @@ This kind concurrent multi-version support is extra important for cases which fa
 For example shared tree can introduce a new version of editing primitives and/or merge semantics for a field kind (for example sequence, see below),
 which applications can opt into in their schema in a compatible way.
 
-Shared Tree is also designed to ensure applications using it can also adopt this same compatibility approach if needed while minimizing the frequency its required as well as the difficulty of doing it.
+Shared Tree is also designed to ensure applications using it can also adopt this same compatibility approach while minimizing the frequency and difficulty of doing so.
 This has the largest impact around application schema evolution (changing the schema the application uses to view and edit documents).
 
 ## Bipartite Tree and Field Kinds
 
 When users edit documents, those high level semantic operations need to be encoded in a way that supports merges.
 Additionally this encoding needs to be deterministically applied in all clients, even if they are using different version of Shared Tree.
-This needs to be done such that when desired, applications can ensure invariants hold.
-This means the editing and merge logic must be kept identical for compatibility, and changes to it instead have to be strictly new cases being supported:
-for example new edit operations can be added or new configuration flags added to existing ones can be added, but how a particular merge gets resolved can not be changed without introducing a compatibility issue.
+This needs to be done such that applications can ensure invariants hold in their data model.
+This means the editing and merge logic must be kept identical for compatibility, and changes to them instead must only add support for new cases.
+For example, new edit operations can be added or new configuration flags added to existing ones, but how a particular merge gets resolved cannot be changed without introducing a compatibility issue.
 This can get complicated, so to keep it manageable, this problem was subdivided in a few different ways.
 
 The data-model for Shared Tree was selected to assist with subdividing this problem.
 The selected data-model consists of many small structures where collaborative edits interact—fields—, and nodes which connect them into a hierarchy and assigns types to each of the fields.
 
 The nodes have schema which define the schema for their fields.
-There are a few [kinds](<https://en.wikipedia.org/wiki/Kind_(type_theory)>) of nodes configure their fields differently, for example like structs (with a fixed set of mixed field types) or maps (with an extensible set of matching field types).
+There are a few [kinds](<https://en.wikipedia.org/wiki/Kind_(type_theory)>) of nodes that configure their fields differently, for example structs (with a fixed set of mixed field types) or maps (with an extensible set of matching field types).
 
 There are also a few kinds of fields which provide different collaborative data-structures (like `sequence`, or `optional`), each of which hold nodes.
 
 All of the editing is done in the fields via the `field kind`.
 This allows the editing logic, both API and merge policy, to be packaged together into minimal versionable units ( `field kinds`).
-Since the schema explicitly selects what field kinds to use, updating of them is opt in, and can be coordinated with deployment schedules to achieve the required cross version collaboration requirements.
-This also leverages all the same collaboration as the rest od schema evolution, making adopting alternative field kinds no different from updating other aspects of the application's schema.
+Since the schema explicitly selects what field kinds to use, updating them is opt-in, and can be coordinated with deployment schedules to achieve the required cross version collaboration requirements.
+This also leverages all the same collaboration as the rest of schema evolution, making adopting alternative field kinds no different from updating other aspects of the application's schema.
 
-This results in a tree where the overall shape is controlled by the application via its tree schema (for the nodes), but its made of alternating layers of fields provide all the complex logic, neatly separating the concerns.
+This results in a tree where the overall shape is controlled by the application via its tree schema (for the nodes) and the alternating layers of fields provide all the complex logic, neatly separating the concerns.
 This can also be thought of as a tree of entities alternating between fields and nodes.
 As these two kinds of entities alternate and thus never touch, this resembles a [Bipartite Graph](https://en.wikipedia.org/wiki/Bipartite_graph), and can be called a Bipartite Tree.
 
@@ -123,9 +123,9 @@ As these two kinds of entities alternate and thus never touch, this resembles a 
 When users edit documents, those high level semantic operations need to be encoded in a way that supports merges.
 Applications need to be able to easily ensure the invariants they require will be maintained across merged, and (possible with some effort) high fidelity merge resolution should be achievable.
 
-Ideally the built in merge resolution will be sufficient to ensure the application invariants hold (see "Field Kinds" below), however this won't always be the case.
-Thus an additional tool is required: "Constraints".
-Constraints are used to specify what concurrent edits could cause an unacceptable merge result.
+While the built in merge resolution will often be sufficient to ensure the application invariants hold (see "Field Kinds" above), this won't always be the case.
+To cover those instances, an additional tool is required: "Constraints".
+Constraints are used to specify which concurrent edits could cause an unacceptable merge result.
 The constraints API (status: its not finished yet) allows defining a constraint that is sufficiently conservative, meaning that it will detect all concurrent edits that could possible be an issue, but might include some that would be fine.
 The most basic constraint, that nothing has changed, will detect any concurrent edit, and the application can opt into refining that to allow concurrent edits it knows are safe.
 For example for many transactions, edits to unrelated subtrees are safe, so only constraining the smallest impacted subtree makes sense.
