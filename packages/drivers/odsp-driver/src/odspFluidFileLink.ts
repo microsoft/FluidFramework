@@ -61,11 +61,12 @@ export function encodeOdspFluidDataStoreLocator(locator: OdspFluidDataStoreLocat
 function decodeOdspFluidDataStoreLocator(
 	encodedLocatorValue: string,
 	siteOriginUrl: string,
+	requireFluidSignature: boolean = true,
 ): OdspFluidDataStoreLocator | undefined {
 	const locatorInfo = new URLSearchParams(fromBase64ToUtf8(encodedLocatorValue));
 
 	const signatureValue = locatorInfo.get(fluidSignatureParamName);
-	if (signatureValue !== "1") {
+	if (requireFluidSignature && signatureValue !== "1") {
 		return undefined;
 	}
 
@@ -128,7 +129,10 @@ export function storeLocatorInOdspUrl(url: URL, locator: OdspFluidDataStoreLocat
  * @param url - ODSP url representing Fluid file link
  * @returns object representing Fluid data store location in ODSP terms
  */
-export function getLocatorFromOdspUrl(url: URL): OdspFluidDataStoreLocator | undefined {
+export function getLocatorFromOdspUrl(
+	url: URL,
+	requireFluidSignature?: boolean,
+): OdspFluidDataStoreLocator | undefined {
 	// NOTE: No need to apply decodeURIComponent when accessing query params via URLSearchParams class.
 	const encodedLocatorValue = url.searchParams.get(locatorQueryParamName);
 	if (!encodedLocatorValue) {
@@ -140,5 +144,9 @@ export function getLocatorFromOdspUrl(url: URL): OdspFluidDataStoreLocator | und
 	const siteOriginUrl =
 		url.origin.toLowerCase() === OdcFileSiteOrigin ? OdcApiSiteOrigin : url.origin;
 
-	return decodeOdspFluidDataStoreLocator(encodedLocatorValue, siteOriginUrl);
+	return decodeOdspFluidDataStoreLocator(
+		encodedLocatorValue,
+		siteOriginUrl,
+		requireFluidSignature,
+	);
 }
