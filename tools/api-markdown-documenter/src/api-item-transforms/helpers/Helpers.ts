@@ -650,7 +650,6 @@ export function createExampleSection(
 		exampleParagraph = stripTitleFromParagraph(exampleParagraph, exampleTitle, logger);
 	}
 
-	// TODO: use title in ID?
 	const headingId = `${getQualifiedApiItemName(example.apiItem)}-example${
 		example.exampleNumber === undefined ? "" : example.exampleNumber
 	}`;
