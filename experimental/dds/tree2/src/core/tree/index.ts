@@ -39,8 +39,7 @@ export {
 	FieldUpPath,
 	compareUpPaths,
 	compareFieldUpPaths,
-	TreeStatus,
-	treeStatusFromPath,
+	getDetachedFieldContainingPath,
 	UpPathDefault,
 } from "./pathTree";
 export {

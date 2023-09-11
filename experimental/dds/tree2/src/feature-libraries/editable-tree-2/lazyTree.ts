@@ -20,8 +20,6 @@ import {
 	EmptyKey,
 	TreeSchemaIdentifier,
 	forEachField,
-	TreeStatus,
-	treeStatusFromPath,
 } from "../../core";
 import { capitalize, disposeSymbol, fail, getOrCreate } from "../../util";
 import {
@@ -37,6 +35,7 @@ import {
 	LeafSchema,
 	StructSchema,
 } from "../typed-schema";
+import { TreeStatus, treeStatusFromPath } from "../editable-tree";
 import { EditableTreeEvents } from "../untypedTree";
 import { Context } from "./context";
 import {

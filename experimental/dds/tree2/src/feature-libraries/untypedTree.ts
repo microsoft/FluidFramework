@@ -13,11 +13,11 @@ import {
 	UpPath,
 	PathVisitor,
 	TreeStoredSchema,
-	TreeStatus,
 } from "../core";
 import { ISubscribable } from "../events";
 import { Named } from "../util";
 import { PrimitiveValue, MarkedArrayLike, typeNameSymbol, valueSymbol } from "./contextuallyTyped";
+import { TreeStatus } from "./editable-tree";
 
 /**
  * This file provides an API for working with trees which is type safe even when schema is not known.

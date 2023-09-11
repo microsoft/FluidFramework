@@ -4,7 +4,7 @@
  */
 
 import { FieldKey } from "../schema-stored";
-import { DetachedField, keyAsDetachedField, rootField } from "./types";
+import { DetachedField, keyAsDetachedField } from "./types";
 
 /**
  * Identical to {@link UpPathDefault}, but a duplicate declaration is needed to make the default type parameter compile.
@@ -142,40 +142,6 @@ export function compareFieldUpPaths(a: FieldUpPath, b: FieldUpPath): boolean {
 		return false;
 	}
 	return compareUpPaths(a.parent, b.parent);
-}
-
-/**
- * Status of the tree that a particular node in {@link EditableTree} and {@link UntypedTree} belongs to.
- * @alpha
- */
-export enum TreeStatus {
-	/**
-	 * Is parented under the root field.
-	 */
-	InDocument = 0,
-
-	/**
-	 * Is not parented under the root field, but can be added back to the original document tree.
-	 */
-	Removed = 1,
-
-	/**
-	 * Is removed and cannot be added back to the original document tree.
-	 */
-	Deleted = 2,
-}
-
-/**
- * Checks the path and returns the TreeStatus based on whether or not the detached field is the root field.
- * TODO: Performance: This is a slow initial implementation which traverses the entire path up to the root of the tree.
- * This should eventually be optimized.
- * @param path - the path you want to check
- * @returns the {@link TreeStatus} from the path provided.
- */
-export function treeStatusFromPath(path: UpPath): TreeStatus {
-	return getDetachedFieldContainingPath(path) === rootField
-		? TreeStatus.InDocument
-		: TreeStatus.Removed;
 }
 
 /**

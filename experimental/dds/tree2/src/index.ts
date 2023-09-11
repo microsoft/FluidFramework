@@ -77,7 +77,6 @@ export {
 	MapTree,
 	LocalCommitSource,
 	forbiddenFieldKindIdentifier,
-	TreeStatus,
 } from "./core";
 
 export {
@@ -264,6 +263,7 @@ export {
 	compileSyntaxTree,
 	nodeKeyFieldKey,
 	SchemaLintConfiguration,
+	TreeStatus,
 	treeStatus,
 } from "./feature-libraries";
 

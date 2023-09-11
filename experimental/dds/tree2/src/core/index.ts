@@ -82,8 +82,7 @@ export {
 	ProtoNodes,
 	CursorMarker,
 	isCursor,
-	TreeStatus,
-	treeStatusFromPath,
+	getDetachedFieldContainingPath,
 } from "./tree";
 
 export {

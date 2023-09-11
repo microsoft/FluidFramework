@@ -20,8 +20,6 @@ import {
 	ITreeCursor,
 	keyAsDetachedField,
 	rootField,
-	TreeStatus,
-	treeStatusFromPath,
 } from "../../core";
 import { FieldKind, Multiplicity } from "../modular-schema";
 import {
@@ -47,11 +45,13 @@ import {
 	isPrimitive,
 	keyIsValidIndex,
 	getOwnArrayKeys,
+	treeStatusFromPath,
 } from "./utilities";
 import { ProxyContext } from "./editableTreeContext";
 import {
 	EditableField,
 	EditableTree,
+	TreeStatus,
 	UnwrappedEditableField,
 	UnwrappedEditableTree,
 	proxyTargetSymbol,
