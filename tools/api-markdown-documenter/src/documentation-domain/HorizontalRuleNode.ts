@@ -29,6 +29,16 @@ export class HorizontalRuleNode implements MultiLineDocumentationNode {
 	public readonly type = DocumentationNodeType.HorizontalRule;
 
 	/**
+	 * {@inheritDoc DocumentationNode.isLiteral}
+	 */
+	public readonly isLiteral = true;
+
+	/**
+	 * {@inheritDoc DocumentationNode.isParent}
+	 */
+	public readonly isParent = false;
+
+	/**
 	 * Static `HorizontalRuleNode` singleton.
 	 */
 	public static readonly Singleton = new HorizontalRuleNode();
