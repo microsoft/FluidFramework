@@ -91,6 +91,7 @@ export {
 	JsonCompatibleObject,
 	NestedMap,
 	fail,
+	IdAllocator,
 	TransactionResult,
 	BrandedKey,
 	BrandedMapSubset,
@@ -123,7 +124,6 @@ export {
 } from "./domains";
 
 export {
-	IdAllocator,
 	MemoizedIdRangeAllocator,
 	IdRange,
 	ModularChangeset,
