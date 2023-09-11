@@ -19,10 +19,6 @@ import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-serv
  * Manager to fetch document from Alfred using the internal URL.
  */
 export class DocumentManager implements IDocumentManager {
-	// private static documentStaticDataCache: ICache;
-	/** True if the cache was initialized by setStaticProperty. Becomes false if the cache is overwritten by readDocument. */
-	private static staticCacheInitializedManually: boolean;
-
 	constructor(
 		private readonly internalAlfredUrl: string,
 		private readonly tenantManager: ITenantManager,
@@ -32,9 +28,6 @@ export class DocumentManager implements IDocumentManager {
 			Lumberjack.info(
 				"DocumentManager static data cache is undefined, cache will not be used.",
 			);
-		}
-		if (!DocumentManager.staticCacheInitializedManually) {
-			DocumentManager.staticCacheInitializedManually = false;
 		}
 	}
 
@@ -52,7 +45,6 @@ export class DocumentManager implements IDocumentManager {
 
 		if (this.documentStaticDataCache) {
 			// Cache the static properties of the document
-			DocumentManager.staticCacheInitializedManually = false;
 			const staticPropsKey: string = DocumentManager.getDocumentStaticKey(documentId);
 			await this.documentStaticDataCache.set(staticPropsKey, JSON.stringify(staticProps));
 		}
@@ -61,78 +53,46 @@ export class DocumentManager implements IDocumentManager {
 		return document;
 	}
 
-	public async readStaticProperty<K extends keyof IDocumentStaticProperties>(
+	public async readStaticProperties(
 		tenantId: string,
 		documentId: string,
-		propName: K,
-	): Promise<IDocumentStaticProperties[K] | undefined> {
+	): Promise<IDocumentStaticProperties | undefined> {
 		// If the cache is undefined, just read the document normally
 		if (!this.documentStaticDataCache) {
+			Lumberjack.warning(
+				"Falling back to database after attempting to read cached static document data, because the DocumentManager cache is undefined.",
+				getLumberBaseProperties(documentId, tenantId),
+			);
 			const document: IDocument = await this.readDocument(tenantId, documentId);
-			return document?.[propName] as IDocumentStaticProperties[K] | undefined;
+			return document as IDocumentStaticProperties | undefined;
 		}
 
 		// Retrieve cached static document props
 		const staticPropsKey: string = DocumentManager.getDocumentStaticKey(documentId);
 		const staticPropsStr: string = await this.documentStaticDataCache.get(staticPropsKey);
-		const staticProps: IDocumentStaticProperties = JSON.parse(
-			staticPropsStr,
-		) as IDocumentStaticProperties;
 
-		// If there are no cached static document props, or we need to overwrite an manually initialized cache,
-		// read the document and return its static properties
-		const overwriteManualCache: boolean =
-			DocumentManager.staticCacheInitializedManually && staticProps?.[propName] === undefined;
-		if (!staticPropsStr || overwriteManualCache) {
+		// If there are no cached static document props
+		if (!staticPropsStr) {
 			Lumberjack.info(
-				"Falling back to database after attempting to read cached static document data. ",
+				"Falling back to database after attempting to read cached static document data.",
 				getLumberBaseProperties(documentId, tenantId),
 			);
 			const document: IDocument = await this.readDocument(tenantId, documentId);
-			return document?.[propName] as IDocumentStaticProperties[K] | undefined;
+			return document as IDocumentStaticProperties | undefined;
 		}
 
 		// Return the static data, parsed into a JSON object
-		return staticProps[propName];
-	}
-
-	public async setStaticProperty<K extends keyof IDocumentStaticProperties>(
-		documentId: string,
-		propName: K,
-		propValue: IDocumentStaticProperties[K],
-	): Promise<void> {
-		// If the cache is undefined, do nothing, because there are no cached static properties to change
-		if (!this.documentStaticDataCache) {
-			Lumberjack.error(
-				"Cannot set document static property because the DocumentManager cache is undefined",
-			);
-			return;
-		}
-
-		// Retrieve the current static cache
-		const staticPropsKey: string = DocumentManager.getDocumentStaticKey(documentId);
-		const staticPropsStr: string = await this.documentStaticDataCache.get(staticPropsKey);
-		let staticProps: IDocumentStaticProperties;
-
-		if (!staticPropsStr) {
-			// If the static properties do not exist, create a new empty object
-			staticProps = DocumentManager.createEmptyStaticProps();
-			DocumentManager.staticCacheInitializedManually = true;
-		} else {
-			// Otherwise, use the existing static props
-			staticProps = JSON.parse(staticPropsStr);
-		}
-
-		// Modify the specified property, and set the new value in the cache
-		staticProps[propName] = propValue;
-		await this.documentStaticDataCache.set(staticPropsKey, JSON.stringify(staticProps));
+		const staticProps: IDocumentStaticProperties = JSON.parse(
+			staticPropsStr,
+		) as IDocumentStaticProperties;
+		return staticProps;
 	}
 
 	public async purgeStaticCache(documentId: string): Promise<void> {
 		// If the cache is undefined, do nothing, because there are no cached static properties to purge
 		if (!this.documentStaticDataCache) {
 			Lumberjack.error(
-				"Cannot set document static property because the DocumentManager cache is undefined",
+				"Cannot purge document static properties cache, because the DocumentManager cache is undefined.",
 			);
 			return;
 		}
@@ -188,22 +148,6 @@ export class DocumentManager implements IDocumentManager {
 			tenantId: document.tenantId,
 			storageName: document.storageName,
 			isEphemeralContainer: document.isEphemeralContainer,
-		};
-	}
-
-	/**
-	 * Creates an empty IDocumentStaticProperties object
-	 *
-	 * @returns - an empty IDocumentStaticProperties object
-	 */
-	private static createEmptyStaticProps(): IDocumentStaticProperties {
-		return {
-			version: undefined,
-			createTime: undefined,
-			documentId: undefined,
-			tenantId: undefined,
-			storageName: undefined,
-			isEphemeralContainer: undefined,
 		};
 	}
 }

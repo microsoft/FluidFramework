@@ -21,27 +21,12 @@ export interface IDocumentManager {
 	 *
 	 * @param tenantId - The tenant ID for the tenant that owns the document
 	 * @param documentId - The document ID for the document to be read
-	 * @param propName - The static property to be read
-	 * @returns - The value of the property [propName]
+	 * @returns - The static properties of the document
 	 */
-	readStaticProperty<K extends keyof IDocumentStaticProperties>(
+	readStaticProperties(
 		tenantId: string,
 		documentId: string,
-		propName: K,
-	): Promise<IDocumentStaticProperties[K] | undefined>;
-
-	/**
-	 * Modifies a static property for a specific document.
-	 *
-	 * @param documentId - The document ID for the document to be modified
-	 * @param propName - The static property to be modified
-	 * @param propValue - The new value for the static property
-	 */
-	setStaticProperty<K extends keyof IDocumentStaticProperties>(
-		documentId: string,
-		propName: K,
-		propValue: IDocumentStaticProperties[K],
-	): Promise<void>;
+	): Promise<IDocumentStaticProperties | undefined>;
 
 	/**
 	 * Deletes the static cache for the specified document
