@@ -48,6 +48,8 @@ import {
  * - `Model`
  *
  * - `Package`
+ *
+ * @public
  */
 export type ApiMemberKind = Omit<
 	ApiItemKind,
@@ -56,6 +58,8 @@ export type ApiMemberKind = Omit<
 
 /**
  * `ApiItem` union type representing function-like API kinds.
+ *
+ * @public
  */
 export type ApiFunctionLike =
 	| ApiConstructSignature
@@ -66,16 +70,22 @@ export type ApiFunctionLike =
 
 /**
  * `ApiItem` union type representing call-signature-like API kinds.
+ *
+ * @public
  */
 export type ApiSignatureLike = ApiCallSignature | ApiIndexSignature;
 
 /**
  * `ApiItem` union type representing module-like API kinds.
+ *
+ * @public
  */
 export type ApiModuleLike = ApiEntryPoint | ApiNamespace;
 
 /**
  * Represents an API item modifier.
+ *
+ * @public
  */
 export enum ApiModifier {
 	/**
@@ -111,6 +121,8 @@ export enum ApiModifier {
  * Accounts for method overloads by adding a suffix such as "myMethod_2".
  *
  * @param apiItem - The API item for which the qualified name is being queried.
+ *
+ * @public
  */
 export function getQualifiedApiItemName(apiItem: ApiItem): string {
 	let qualifiedName: string = Utilities.getSafeFilenameForName(apiItem.displayName);
@@ -132,7 +144,7 @@ export function getQualifiedApiItemName(apiItem: ApiItem): string {
  * @param apiItem - The API item for which we are generating a file path.
  * @param documentBoundaries - See {@link DocumentBoundaries}
  */
-export function getFirstAncestorWithOwnDocument(
+function getFirstAncestorWithOwnDocument(
 	apiItem: ApiItem,
 	documentBoundaries: DocumentBoundaries,
 ): ApiItem {
@@ -162,6 +174,8 @@ export function getFirstAncestorWithOwnDocument(
  * @param apiItem - The API item for which we are generating the link.
  * @param config - See {@link ApiItemTransformationConfiguration}
  * @param textOverride - Text to use in the link. If not provided, the default item name/signature will be used.
+ *
+ * @public
  */
 export function getLinkForApiItem(
 	apiItem: ApiItem,
@@ -186,7 +200,7 @@ export function getLinkForApiItem(
  * @param apiItem - The API item for which we are generating the link.
  * @param config - See {@link ApiItemTransformationConfiguration}
  */
-export function getLinkUrlForApiItem(
+function getLinkUrlForApiItem(
 	apiItem: ApiItem,
 	config: Required<ApiItemTransformationConfiguration>,
 ): string {
@@ -216,6 +230,8 @@ export function getLinkUrlForApiItem(
  * @example
  *
  * For the package `@foo/bar`, this would return `bar`.
+ *
+ * @public
  */
 export function getUnscopedPackageName(apiPackage: ApiPackage): string {
 	return PackageName.getUnscopedName(apiPackage.displayName);
@@ -232,6 +248,8 @@ export function getUnscopedPackageName(apiPackage: ApiPackage): string {
  *
  * @param apiItem - The API item for which we are generating a file path.
  * @param config - See {@link ApiItemTransformationConfiguration}.
+ *
+ * @public
  */
 export function getFilePathForApiItem(
 	apiItem: ApiItem,
@@ -282,7 +300,7 @@ function getApiItemPath(
  * @param config - See {@link ApiItemTransformationConfiguration}.
  * @param includeExtension - Whether or not to include the `.md` file extension at the end of the file name.
  */
-export function getFileNameForApiItem(
+function getFileNameForApiItem(
 	apiItem: ApiItem,
 	config: Required<ApiItemTransformationConfiguration>,
 	includeExtension: boolean,
@@ -344,6 +362,8 @@ export function getFileNameForApiItem(
  * @param headingLevel - Heading level to use.
  * If not specified, the heading level will be automatically generated based on the item's context in the resulting
  * document.
+ *
+ * @public
  */
 export function getHeadingForApiItem(
 	apiItem: ApiItem,
@@ -379,7 +399,7 @@ export function getHeadingForApiItem(
  *
  * @returns A unique heading ID for the API item if one is needed. Otherwise, `undefined`.
  */
-export function getHeadingIdForApiItem(
+function getHeadingIdForApiItem(
 	apiItem: ApiItem,
 	config: Required<ApiItemTransformationConfiguration>,
 ): string {
@@ -418,7 +438,7 @@ export function getHeadingIdForApiItem(
  *
  * @param apiItem - The API item whose filtered parent will be returned.
  */
-export function getFilteredParent(apiItem: ApiItem): ApiItem | undefined {
+function getFilteredParent(apiItem: ApiItem): ApiItem | undefined {
 	const parent = apiItem.parent;
 	if (parent?.kind === ApiItemKind.EntryPoint) {
 		return parent.parent;
@@ -531,7 +551,7 @@ export function doesItemRequireOwnDocument(
  *
  * @returns `true` if the item should contribute to directory-wise hierarchy in the output. `false` otherwise.
  */
-export function doesItemKindGenerateHierarchy(
+function doesItemKindGenerateHierarchy(
 	kind: ApiItemKind,
 	hierarchyBoundaries: HierarchyBoundaries,
 ): boolean {
@@ -556,7 +576,7 @@ export function doesItemKindGenerateHierarchy(
  * @param apiItem - The API item being queried.
  * @param hierarchyBoundaries - See {@link HierarchyBoundaries}
  */
-export function doesItemGenerateHierarchy(
+function doesItemGenerateHierarchy(
 	apiItem: ApiItem,
 	hierarchyBoundaries: HierarchyBoundaries,
 ): boolean {
@@ -642,6 +662,8 @@ function getCustomBlockSectionForSingleInstanceTag(
  * @param apiItem - The API item whose documentation is being queried.
  *
  * @returns The `@example` comment block sections, if the API item has one. Otherwise, `undefined`.
+ *
+ * @public
  */
 export function getExampleBlocks(apiItem: ApiItem): DocSection[] | undefined {
 	return getCustomBlockSectionsForMultiInstanceTags(apiItem, StandardTags.example.tagName);
@@ -653,6 +675,8 @@ export function getExampleBlocks(apiItem: ApiItem): DocSection[] | undefined {
  * @param apiItem - The API item whose documentation is being queried.
  *
  * @returns The `@throws` comment block sections, if the API item has one. Otherwise, `undefined`.
+ *
+ * @public
  */
 export function getThrowsBlocks(apiItem: ApiItem): DocSection[] | undefined {
 	return getCustomBlockSectionsForMultiInstanceTags(apiItem, StandardTags.throws.tagName);
@@ -664,6 +688,8 @@ export function getThrowsBlocks(apiItem: ApiItem): DocSection[] | undefined {
  * @param apiItem - The API item whose documentation is being queried.
  *
  * @returns The `@see` comment block section, if the API item has one. Otherwise, `undefined`.
+ *
+ * @public
  */
 export function getSeeBlocks(apiItem: ApiItem): DocSection[] | undefined {
 	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.seeBlocks !== undefined) {
@@ -681,6 +707,8 @@ export function getSeeBlocks(apiItem: ApiItem): DocSection[] | undefined {
  * @param config - See {@link ApiItemTransformationConfiguration}
  *
  * @returns The `@defaultValue` comment block section, if the API item has one. Otherwise, `undefined`.
+ *
+ * @public
  */
 export function getDefaultValueBlock(
 	apiItem: ApiItem,
@@ -699,6 +727,8 @@ export function getDefaultValueBlock(
  * @param apiItem - The API item whose documentation is being queried.
  *
  * @returns The `@returns` comment block section, if the API item has one. Otherwise, `undefined`.
+ *
+ * @public
  */
 export function getReturnsBlock(apiItem: ApiItem): DocSection | undefined {
 	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.returnsBlock !== undefined) {
@@ -714,6 +744,8 @@ export function getReturnsBlock(apiItem: ApiItem): DocSection | undefined {
  * @param apiItem - The API item whose documentation is being queried.
  *
  * @returns The `@deprecated` comment block section, if the API item has one. Otherwise, `undefined`.
+ *
+ * @public
  */
 export function getDeprecatedBlock(apiItem: ApiItem): DocSection | undefined {
 	return apiItem instanceof ApiDocumentedItem &&
@@ -725,6 +757,8 @@ export function getDeprecatedBlock(apiItem: ApiItem): DocSection | undefined {
 /**
  * Returns whether or not the provided API item is of a kind that can be marked as optional, and if it is
  * indeed optional.
+ *
+ * @public
  */
 export function isDeprecated(apiItem: ApiItem): boolean {
 	return (
@@ -735,6 +769,8 @@ export function isDeprecated(apiItem: ApiItem): boolean {
 /**
  * Returns whether or not the provided API item is of a kind that can be marked as optional, and if it is
  * indeed optional.
+ *
+ * @public
  */
 export function isOptional(apiItem: ApiItem): boolean {
 	if (ApiOptionalMixin.isBaseClassOf(apiItem)) {
@@ -746,6 +782,8 @@ export function isOptional(apiItem: ApiItem): boolean {
 /**
  * Returns whether or not the provided API item is of a kind that can be marked as readonly, and if it is
  * indeed readonly.
+ *
+ * @public
  */
 export function isReadonly(apiItem: ApiItem): boolean {
 	if (ApiReadonlyMixin.isBaseClassOf(apiItem)) {
@@ -757,6 +795,8 @@ export function isReadonly(apiItem: ApiItem): boolean {
 /**
  * Returns whether or not the provided API item is of a kind that can be marked as static, and if it is
  * indeed static.
+ *
+ * @public
  */
 export function isStatic(apiItem: ApiItem): boolean {
 	if (ApiStaticMixin.isBaseClassOf(apiItem)) {
@@ -770,6 +810,8 @@ export function isStatic(apiItem: ApiItem): boolean {
  *
  * @param apiItem - The API item being queried.
  * @param modifiersToOmit - An optional list of modifier kinds to omit, even if they apply to the provided item.
+ *
+ * @public
  */
 export function getModifiers(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]): ApiModifier[] {
 	const modifiers: ApiModifier[] = [];

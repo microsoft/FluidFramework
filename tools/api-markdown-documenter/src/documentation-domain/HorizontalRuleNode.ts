@@ -21,6 +21,8 @@ import { DocumentationNodeType } from "./DocumentationNodeType";
  * ```
  *
  * @see {@link https://www.markdownguide.org/basic-syntax#horizontal-rules}
+ *
+ * @public
  */
 export class HorizontalRuleNode implements MultiLineDocumentationNode {
 	/**

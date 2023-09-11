@@ -13,6 +13,8 @@ export { IndentedWriter as DocumentWriter } from "@microsoft/api-documenter/lib/
  * Creates a new `DocumentWriter` for use in rendering.
  *
  * @remarks Helpful wrapper so that consumers don't have to instantiate their own `StringBuilder`.
+ *
+ * @public
  */
 export function createDocumentWriter(): DocumentWriter {
 	return new DocumentWriter(new StringBuilder());

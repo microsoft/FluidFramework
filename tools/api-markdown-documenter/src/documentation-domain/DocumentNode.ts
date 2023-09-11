@@ -9,6 +9,8 @@ import { SectionNode } from "./SectionNode";
 
 /**
  * {@link DocumentNode} construction properties.
+ *
+ * @public
  */
 export interface DocumentNodeProps {
 	/**
@@ -41,6 +43,8 @@ export interface DocumentNodeProps {
  *
  * Note that this node is special.
  * It forms the root of a Documentation tree, and cannot be parented under other {@link DocumentationNode}s.
+ *
+ * @public
  */
 export class DocumentNode implements UnistParent<SectionNode>, DocumentNodeProps {
 	/**
