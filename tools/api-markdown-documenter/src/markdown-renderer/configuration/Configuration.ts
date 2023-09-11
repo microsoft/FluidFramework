@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { NewlineKind } from "@rushstack/node-core-library";
 
 import { ConfigurationBase } from "../../ConfigurationBase";
 import { defaultConsoleLogger } from "../../Logging";
@@ -14,13 +13,6 @@ import { MarkdownRenderers } from "./RenderOptions";
  * @public
  */
 export interface RenderConfiguration extends ConfigurationBase {
-	/**
-	 * Specifies what type of newlines API Documenter should use when writing output files.
-	 *
-	 * @defaultValue {@link @rushstack/node-core-library#NewlineKind.OsDefault}
-	 */
-	readonly newlineKind?: NewlineKind;
-
 	/**
 	 * {@inheritDoc MarkdownRenderers}
 	 */
@@ -44,12 +36,10 @@ export function getRenderConfigurationWithDefaults(
 	inputConfig: Partial<RenderConfiguration> | undefined,
 ): RenderConfiguration {
 	const logger = inputConfig?.logger ?? defaultConsoleLogger;
-	const newlineKind = inputConfig?.newlineKind ?? NewlineKind.OsDefault;
 	const startingHeadingLevel = inputConfig?.startingHeadingLevel ?? 1;
 	return {
 		...inputConfig,
 		logger,
-		newlineKind,
 		startingHeadingLevel,
 	};
 }

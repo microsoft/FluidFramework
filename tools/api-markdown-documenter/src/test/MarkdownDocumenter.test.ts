@@ -38,29 +38,33 @@ async function snapshotTest(
 	transformConfig: ApiItemTransformationConfiguration,
 	renderConfig: MarkdownRenderConfiguration,
 ): Promise<void> {
-	const outputDirPath = Path.resolve(testTempDirPath, relativeSnapshotDirectoryPath);
-	const snapshotDirPath = Path.resolve(snapshotsDirPath, relativeSnapshotDirectoryPath);
+	const outputDirectoryPath = Path.resolve(testTempDirPath, relativeSnapshotDirectoryPath);
+	const snapshotDirectoryPath = Path.resolve(snapshotsDirPath, relativeSnapshotDirectoryPath);
 
 	// Ensure the output temp and snapshots directories exists (will create an empty ones if they don't).
-	await FileSystem.ensureFolderAsync(outputDirPath);
-	await FileSystem.ensureFolderAsync(snapshotDirPath);
+	await FileSystem.ensureFolderAsync(outputDirectoryPath);
+	await FileSystem.ensureFolderAsync(snapshotDirectoryPath);
 
 	// Clear any existing test_temp data
-	await FileSystem.ensureEmptyFolderAsync(outputDirPath);
+	await FileSystem.ensureEmptyFolderAsync(outputDirectoryPath);
 
 	// Run transformation and rendering logic
-	await renderApiModelAsMarkdown(transformConfig, renderConfig, outputDirPath);
+	const fileSystemConfig = {
+		outputDirectoryPath,
+		newlineKind: NewlineKind.Lf,
+	};
+	await renderApiModelAsMarkdown(transformConfig, renderConfig, fileSystemConfig);
 
 	// Verify against expected contents
-	const result = await compare(outputDirPath, snapshotDirPath, {
+	const result = await compare(outputDirectoryPath, snapshotDirectoryPath, {
 		compareContent: true,
 	});
 
 	if (!result.same) {
-		await FileSystem.ensureEmptyFolderAsync(snapshotDirPath);
+		await FileSystem.ensureEmptyFolderAsync(snapshotDirectoryPath);
 		await FileSystem.copyFilesAsync({
-			sourcePath: outputDirPath,
-			destinationPath: snapshotDirPath,
+			sourcePath: outputDirectoryPath,
+			destinationPath: snapshotDirectoryPath,
 		});
 	}
 
@@ -171,9 +175,7 @@ describe("api-markdown-documenter full-suite tests", () => {
 				uriRoot: ".",
 				frontMatter: "<!-- Front Matter! -->",
 			},
-			renderConfig: {
-				newlineKind: NewlineKind.Lf,
-			},
+			renderConfig: {},
 		},
 
 		/**
@@ -190,9 +192,7 @@ describe("api-markdown-documenter full-suite tests", () => {
 				frontMatter: (documentItem): string =>
 					`<!--- This is sample front-matter for API item "${documentItem.displayName}" -->`,
 			},
-			renderConfig: {
-				newlineKind: NewlineKind.Lf,
-			},
+			renderConfig: {},
 		},
 
 		/**
@@ -226,7 +226,6 @@ describe("api-markdown-documenter full-suite tests", () => {
 				hierarchyBoundaries: [], // No additional hierarchy beyond the package level
 			},
 			renderConfig: {
-				newlineKind: NewlineKind.Lf,
 				startingHeadingLevel: 2,
 			},
 		},

@@ -265,6 +265,12 @@ export class FencedCodeBlockNode extends DocumentationParentNodeBase implements 
 }
 
 // @public
+export interface FileSystemConfiguration {
+    readonly newlineKind?: NewlineKind;
+    outputDirectoryPath: string;
+}
+
+// @public
 export function getDefaultValueBlock(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): DocSection | undefined;
 
 // @public
@@ -386,7 +392,6 @@ export type LoggingFunction = (message: string | Error, ...args: unknown[]) => v
 // @public
 export interface MarkdownRenderConfiguration extends ConfigurationBase {
     readonly customRenderers?: MarkdownRenderers;
-    readonly newlineKind?: NewlineKind;
     readonly startingHeadingLevel?: number;
 }
 
@@ -408,6 +413,8 @@ export interface MarkdownRenderers {
 export interface MultiLineDocumentationNode<TData extends object = Data> extends DocumentationNode<TData> {
     readonly singleLine: false;
 }
+
+export { NewlineKind }
 
 // @public
 export class OrderedListNode extends DocumentationParentNodeBase<SingleLineDocumentationNode> implements MultiLineDocumentationNode {
@@ -439,7 +446,7 @@ export class PlainTextNode extends DocumentationLiteralNodeBase<string> implemen
 }
 
 // @public
-export function renderApiModelAsMarkdown(transformConfig: Omit<ApiItemTransformationConfiguration, "logger">, renderConfig: Omit<MarkdownRenderConfiguration, "logger">, outputDirectoryPath: string, logger?: Logger): Promise<void>;
+export function renderApiModelAsMarkdown(transformConfig: Omit<ApiItemTransformationConfiguration, "logger">, renderConfig: Omit<MarkdownRenderConfiguration, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
 
 // @public
 export function renderDocumentAsMarkdown(document: DocumentNode, config: MarkdownRenderConfiguration): string;
@@ -448,7 +455,7 @@ export function renderDocumentAsMarkdown(document: DocumentNode, config: Markdow
 export type RenderDocumentationNodeAsMarkdown<TDocumentationNode extends DocumentationNode = DocumentationNode> = (node: TDocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext) => void;
 
 // @public
-export function renderDocumentsAsMarkdown(documents: DocumentNode[], config: MarkdownRenderConfiguration, outputDirectoryPath: string): Promise<void>;
+export function renderDocumentsAsMarkdown(documents: DocumentNode[], renderConfig: Omit<MarkdownRenderConfiguration, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
 
 // @public
 export function renderNodeAsMarkdown(node: DocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext): void;

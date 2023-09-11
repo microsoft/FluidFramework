@@ -12,6 +12,25 @@ import { Logger } from "./Logging";
 import { MarkdownRenderConfiguration, renderDocumentAsMarkdown } from "./markdown-renderer";
 
 /**
+ * Configuration for interacting with the file-system.
+ *
+ * @public
+ */
+export interface FileSystemConfiguration {
+	/**
+	 * The directory under which the document files will be generated.
+	 */
+	outputDirectoryPath: string;
+
+	/**
+	 * Specifies what type of newlines API Documenter should use when writing output files.
+	 *
+	 * @defaultValue {@link @rushstack/node-core-library#NewlineKind.OsDefault}
+	 */
+	readonly newlineKind?: NewlineKind;
+}
+
+/**
  * Renders the provided model and its contents, and writes each document to a file on disk.
  *
  * @remarks
@@ -27,7 +46,7 @@ import { MarkdownRenderConfiguration, renderDocumentAsMarkdown } from "./markdow
  *
  * @param transformConfig - Configuration for transforming API items into {@link DocumentationNode}s.
  * @param renderConfig - Configuration for rendering {@link DocumentNode}s as Markdown.
- * @param outputDirectoryPath - The directory under which the document files will be generated.
+ * @param fileSystemConfig - Configuration for writing document files to disk.
  * @param logger - Receiver of system log data. Default: {@link defaultConsoleLogger}.
  *
  * @public
@@ -35,7 +54,7 @@ import { MarkdownRenderConfiguration, renderDocumentAsMarkdown } from "./markdow
 export async function renderApiModelAsMarkdown(
 	transformConfig: Omit<ApiItemTransformationConfiguration, "logger">,
 	renderConfig: Omit<MarkdownRenderConfiguration, "logger">,
-	outputDirectoryPath: string,
+	fileSystemConfig: FileSystemConfiguration,
 	logger?: Logger,
 ): Promise<void> {
 	const documents = transformApiModel({
@@ -43,7 +62,7 @@ export async function renderApiModelAsMarkdown(
 		logger,
 	});
 
-	return renderDocumentsAsMarkdown(documents, { ...renderConfig, logger }, outputDirectoryPath);
+	return renderDocumentsAsMarkdown(documents, renderConfig, fileSystemConfig, logger);
 }
 
 /**
@@ -51,20 +70,19 @@ export async function renderApiModelAsMarkdown(
  *
  * @param documents - The documents to render. Each will be rendered to its own file on disk per
  * {@link DocumentNode.filePath} (relative to the provided output directory).
- *
- * @param config - A partial {@link MarkdownRenderConfiguration}.
- * Missing values will be filled in with system defaults.
- *
- * @param outputDirectoryPath - The directory under which the document files will be generated.
+ * @param renderConfig - A partial {@link MarkdownRenderConfiguration}.
+ * @param fileSystemConfig - Configuration for writing document files to disk.
+ * @param logger - Receiver of system log data. Default: {@link defaultConsoleLogger}.
  *
  * @public
  */
 export async function renderDocumentsAsMarkdown(
 	documents: DocumentNode[],
-	config: MarkdownRenderConfiguration,
-	outputDirectoryPath: string,
+	renderConfig: Omit<MarkdownRenderConfiguration, "logger">,
+	fileSystemConfig: FileSystemConfiguration,
+	logger?: Logger,
 ): Promise<void> {
-	const { logger, newlineKind } = config;
+	const { outputDirectoryPath, newlineKind } = fileSystemConfig;
 
 	logger?.verbose("Rendering documents as Markdown and writing to disk...");
 
@@ -72,7 +90,10 @@ export async function renderDocumentsAsMarkdown(
 
 	await Promise.all(
 		documents.map(async (document) => {
-			const renderedDocument = renderDocumentAsMarkdown(document, config);
+			const renderedDocument = renderDocumentAsMarkdown(document, {
+				...renderConfig,
+				logger,
+			});
 
 			const filePath = Path.join(outputDirectoryPath, document.filePath);
 			await FileSystem.writeFileAsync(filePath, renderedDocument, {
