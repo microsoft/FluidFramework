@@ -30,6 +30,11 @@ variables:
 - name: testPackage
   value: "@fluid-internal/test-service-load"
   readonly: true
+# Temporarily enabling debug logs for all pipeline runs to be able to better troubleshoot when the odsp/odsp-df stages
+# time out and produce no output even though we know the tests did run.
+# TODO : remove this after troubleshooting.
+- name: system.debug
+  value: true
 
 lockBehavior: sequential
 stages:
