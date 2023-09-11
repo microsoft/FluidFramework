@@ -14,13 +14,12 @@ import {
 	PathVisitor,
 	ProtoNodes,
 	DetachedRangeUpPath,
-	AttachedRangeUpPath,
 	ReplaceKind,
 	DetachedPlaceUpPath,
 	PlaceUpPath,
 	RangeUpPath,
 } from "../../../core";
-import { brand, fail } from "../../../util";
+import { brand } from "../../../util";
 import { getField, on, singleTextCursor } from "../../../feature-libraries";
 import { IEmitter } from "../../../events";
 import {

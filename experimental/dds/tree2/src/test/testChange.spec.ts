@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { MemoizedIdRangeAllocator, singleTextCursor } from "../feature-libraries";
+import { singleTextCursor } from "../feature-libraries";
 import { makeAnonChange, Delta, FieldKey, tagChange, mintRevisionTag } from "../core";
 import { brand } from "../util";
 import { TestChange } from "./testChange";

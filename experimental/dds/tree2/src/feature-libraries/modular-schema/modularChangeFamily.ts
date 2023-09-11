@@ -308,7 +308,7 @@ export class ModularChangeFamily
 		if (crossFieldTable.invalidatedFields.size > 0) {
 			const fieldsToUpdate = crossFieldTable.invalidatedFields;
 			crossFieldTable.invalidatedFields = new Set();
-			for (const { fieldKey, fieldChange, path, originalRevision } of fieldsToUpdate) {
+			for (const { fieldChange, originalRevision } of fieldsToUpdate) {
 				const amendedChange = getChangeHandler(
 					this.fieldKinds,
 					fieldChange.fieldKind,

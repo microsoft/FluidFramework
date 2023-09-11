@@ -42,9 +42,7 @@ export {
 	PlaceUpPath,
 	PlaceIndex,
 	NodeIndex,
-	AttachedPlaceUpPath,
 	DetachedPlaceUpPath,
-	AttachedRangeUpPath,
 	DetachedRangeUpPath,
 	compareUpPaths,
 	compareFieldUpPaths,
@@ -78,6 +76,7 @@ export {
 } from "./types";
 export { DeltaVisitor, visitDelta } from "./visitDelta";
 export {
+	AnnouncedVisitor,
 	announceDelta,
 	applyDelta,
 	combineVisitors,
