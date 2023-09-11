@@ -4,7 +4,7 @@
 		"module": "esnext",
 		"jsx": "react",
 		"rootDir": "./src",
-		"outDir": "lib",
+		"outDir": "dist-esm",
 		"types": ["react"],
 	},
 	"include": ["src/**/*"],

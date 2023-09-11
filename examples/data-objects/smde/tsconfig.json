@@ -3,7 +3,7 @@
 	"compilerOptions": {
 		"target": "es6",
 		"module": "esnext",
-		"outDir": "lib",
+		"outDir": "dist-esm",
 		"jsx": "react",
 		"types": ["react"],
 	},

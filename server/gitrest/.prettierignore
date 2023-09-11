@@ -13,6 +13,7 @@ SECURITY.md
 
 # Build output
 **/dist/*
+**/dist-esm/*
 **/lib/*
 !common/lib/*
 !**/src/lib/**

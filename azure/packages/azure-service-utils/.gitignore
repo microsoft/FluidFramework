@@ -1,6 +1,6 @@
 # Compiled TypeScript and CSS
 dist
-lib
+dist-esm
 
 # Babel
 public/scripts/es5

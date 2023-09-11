@@ -1057,7 +1057,10 @@ function missingCleanDirectories(scripts: any) {
 	const esnextScriptsNames = ["build:esnext", "tsc:esnext"];
 	const hasBuildEsNext = esnextScriptsNames.some((name) => scripts[name] !== undefined);
 	if (hasBuildEsNext) {
+		// Packages previously output ESM to "lib" but now output to "dist-esm".
+		// Enforce that the clean script has both for now so that devs can easily clean up old build state.
 		expectedClean.push("lib");
+		expectedClean.push("dist-esm");
 	}
 
 	if (scripts["build"]?.startsWith("fluid-build")) {

@@ -1,3 +1,4 @@
 dist
+dist-esm
 lib
 node_modules

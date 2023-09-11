@@ -13,6 +13,7 @@ DOCUMENTATION/_build
 
 # Distribution files that we don't want to Lint
 dist/*
+dist-esm/*
 
 .nyc_output
 test-result

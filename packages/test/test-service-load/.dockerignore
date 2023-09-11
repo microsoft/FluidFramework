@@ -1,5 +1,6 @@
 **/node_modules
 **/dist
+**/dist-esm
 **/lib
 **/nyc
 **/*.tsbuildinfo

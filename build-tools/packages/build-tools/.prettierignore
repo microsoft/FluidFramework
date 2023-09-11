@@ -1,5 +1,6 @@
 /api-report
 /dist
+/dist-esm
 /lib
 # Generated type-tests
 **/*.generated.ts

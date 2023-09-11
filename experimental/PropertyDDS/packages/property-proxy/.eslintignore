@@ -1,6 +1,7 @@
 doc
 node_modules
 dist
+dist-esm
 lib
 jest.config.js
 src/index.d.ts

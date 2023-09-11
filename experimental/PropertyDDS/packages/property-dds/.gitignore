@@ -1,5 +1,6 @@
 # Compiled typescript
 dist
+dist-esm
 lib
 
 # Logs

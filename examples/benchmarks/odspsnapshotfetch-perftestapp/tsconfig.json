@@ -3,7 +3,7 @@
 	"compilerOptions": {
 		"module": "esnext",
 		"rootDir": "./src",
-		"outDir": "lib",
+		"outDir": "dist-esm",
 		"jsx": "react",
 		"composite": true,
 	},

@@ -12,7 +12,7 @@
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
 	"main": "dist/index.js",
-	"module": "lib/index.js",
+	"module": "dist-esm/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint && npm run build:docs",
@@ -22,7 +22,7 @@
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf --glob 'dist' 'lib' '*.tsbuildinfo' '*.build.log' '_api-extractor-temp' 'nyc'",
+		"clean": "rimraf --glob 'dist' 'lib' 'dist-esm' '*.tsbuildinfo' '*.build.log' '_api-extractor-temp' 'nyc'",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",

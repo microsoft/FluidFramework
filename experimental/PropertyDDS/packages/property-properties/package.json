@@ -11,11 +11,11 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"main": "dist/index.js",
-	"module": "lib/index.js",
+	"module": "dist-esm/index.js",
 	"types": "src/index.d.ts",
 	"files": [
 		"dist/**/*",
-		"lib/**/*",
+		"dist-esm/**/*",
 		"src/index.d.ts"
 	],
 	"scripts": {
@@ -24,7 +24,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"clean": "rimraf --glob 'dist' 'lib' '*.tsbuildinfo' '*.build.log' 'nyc'",
+		"clean": "rimraf --glob 'dist' 'lib' 'dist-esm' '*.tsbuildinfo' '*.build.log' 'nyc'",
 		"coverage": "npx nyc --silent --cwd .. --nycrc-path `pwd`/.nycrc npm run test && npx nyc --no-clean --silent --cwd .. --nycrc-path `pwd`/.nycrc npm run test:changeset && npx nyc --no-clean --cwd .. --nycrc-path `pwd`/.nycrc npm run test:common",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",

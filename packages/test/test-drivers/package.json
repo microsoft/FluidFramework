@@ -12,7 +12,7 @@
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
 	"main": "dist/index.js",
-	"module": "lib/index.js",
+	"module": "dist-esm/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
@@ -20,7 +20,7 @@
 		"build:compile:min": "npm run build:compile",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:genver": "gen-version",
-		"clean": "rimraf --glob 'dist' 'lib' '*.tsbuildinfo' '*.build.log'",
+		"clean": "rimraf --glob 'dist' 'lib' 'dist-esm' '*.tsbuildinfo' '*.build.log'",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",

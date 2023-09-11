@@ -9,11 +9,7 @@ SECURITY.md
 
 # Build output
 **/dist/*
-**/lib/*
-!common/lib/*
-!**/src/lib/**
-!**/test/lib/**
-common/lib/**/lib
+**/dist-esm
 common/build/eslint-config-fluid/printed-configs/
 build-tools/packages/*/docs/*.md
 build-tools/packages/build-cli/README.md

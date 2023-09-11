@@ -11,21 +11,21 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"main": "dist/src/index.js",
-	"module": "lib/src/index.js",
+	"module": "dist-esm/src/index.js",
 	"types": "dist/src/index.d.ts",
 	"files": [
 		"dist/src",
 		"dist/assets",
-		"lib/src",
-		"lib/assets"
+		"dist-esm/src",
+		"dist-esm/assets"
 	],
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:copy-resources": "copyfiles -u 2 \"dist/assets/**/*\" \"lib/assets\"",
+		"build:copy-resources": "copyfiles -u 2 \"dist/assets/**/*\" \"dist-esm/assets\"",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
-		"build:webpack": "webpack --config webpack.svgs.js && copyfiles -u 2 \"dist/assets/**/*\" \"lib/assets\"",
-		"clean": "rimraf --glob 'dist' 'lib' '*.tsbuildinfo' '*.build.log' 'nyc'",
+		"build:webpack": "webpack --config webpack.svgs.js && copyfiles -u 2 \"dist/assets/**/*\" \"dist-esm/assets\"",
+		"clean": "rimraf --glob 'dist' 'lib' 'dist-esm' '*.tsbuildinfo' '*.build.log' 'nyc'",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",

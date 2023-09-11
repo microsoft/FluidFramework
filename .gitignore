@@ -1,6 +1,7 @@
 .cache-loader
 node_modules
 dist
+dist-esm
 lib
 !common/lib
 nyc

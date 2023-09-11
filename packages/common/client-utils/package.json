@@ -12,10 +12,10 @@
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
 	"main": "dist/index.js",
-	"module": "lib/index.js",
+	"module": "dist-esm/index.js",
 	"browser": {
 		"./dist/indexNode.js": "./dist/indexBrowser.js",
-		"./lib/indexNode.js": "./lib/indexBrowser.js"
+		"./dist-esm/indexNode.js": "./dist-esm/indexBrowser.js"
 	},
 	"types": "dist/index.d.ts",
 	"scripts": {
@@ -29,7 +29,7 @@
 		"build:test:mocha": "tsc --project ./src/test/mocha/tsconfig.json",
 		"build:test:types": "tsc --project ./src/test/types/tsconfig.json",
 		"ci:build:docs": "api-extractor run --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
-		"clean": "rimraf --glob '_api-extractor-temp' 'dist' 'lib' '*.tsbuildinfo' '*.build.log' 'nyc'",
+		"clean": "rimraf --glob '_api-extractor-temp' 'dist' 'lib' 'dist-esm' '*.tsbuildinfo' '*.build.log' 'nyc'",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",

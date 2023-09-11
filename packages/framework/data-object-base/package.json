@@ -12,12 +12,12 @@
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
 	"main": "dist/index.js",
-	"module": "lib/index.js",
+	"module": "dist-esm/index.js",
 	"types": "dist/index.d.ts",
 	"files": [
 		"dist/**/*",
 		"!dist/test/**",
-		"lib/**/*",
+		"dist-esm/**/*",
 		"es5/**/*"
 	],
 	"scripts": {
@@ -27,7 +27,7 @@
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"ci:build:docs": "api-extractor run --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/* ../../../_api-extractor-temp/",
-		"clean": "rimraf --glob 'dist' 'lib' 'es5' '*.tsbuildinfo' '*.build.log' '_api-extractor-temp'",
+		"clean": "rimraf --glob 'dist' 'lib' 'dist-esm' 'es5' '*.tsbuildinfo' '*.build.log' '_api-extractor-temp'",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
