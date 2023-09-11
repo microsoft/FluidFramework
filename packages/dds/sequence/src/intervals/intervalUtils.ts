@@ -5,13 +5,10 @@
 
 /* eslint-disable no-bitwise */
 
-import {
-	Client,
-	PropertiesManager,
-	PropertySet,
-	SlidingPreference,
-} from "@fluidframework/merge-tree";
+import { PropertiesManager, PropertySet, SlidingPreference } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { LocalReferenceTracker } from "../sequence";
+
 /**
  * Basic interval abstraction
  */
@@ -183,7 +180,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 	 * irrelevant for transient intervals.
 	 * @param start - numerical start position of the interval
 	 * @param end - numerical end position of the interval
-	 * @param client - client creating the interval
+	 * @param localReferenceTracker - the object to track the local reference
 	 * @param intervalType - Type of interval to create. Default is SlideOnRemove
 	 * @param op - If this create came from a remote client, op that created it. Default is undefined (i.e. local)
 	 * @param fromSnapshot - If this create came from loading a snapshot. Default is false.
@@ -193,7 +190,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 		label: string,
 		start: number | undefined,
 		end: number | undefined,
-		client: Client | undefined,
+		localReferenceTracker: LocalReferenceTracker | undefined,
 		intervalType: IntervalType,
 		op?: ISequencedDocumentMessage,
 		fromSnapshot?: boolean,

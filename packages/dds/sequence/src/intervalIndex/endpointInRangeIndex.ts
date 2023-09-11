@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Client, PropertyAction, RedBlackTree } from "@fluidframework/merge-tree";
+import { PropertyAction, RedBlackTree } from "@fluidframework/merge-tree";
 import { IIntervalHelpers, ISerializableInterval, IntervalType } from "../intervals";
+import { LocalReferenceTracker } from "../sequence";
 import { IntervalIndex } from "./intervalIndex";
 import { HasComparisonOverride, compareOverrideables, forceCompare } from "./intervalIndexUtils";
 
@@ -28,7 +29,7 @@ class EndpointInRangeIndex<TInterval extends ISerializableInterval>
 
 	constructor(
 		private readonly helpers: IIntervalHelpers<TInterval>,
-		private readonly client: Client,
+		private readonly localReferenceTracker: LocalReferenceTracker,
 	) {
 		this.intervalTree = new RedBlackTree<TInterval, TInterval>((a: TInterval, b: TInterval) => {
 			const compareEndsResult = helpers.compareEnds(a, b);
@@ -75,7 +76,7 @@ class EndpointInRangeIndex<TInterval extends ISerializableInterval>
 			"transient",
 			start,
 			start,
-			this.client,
+			this.localReferenceTracker,
 			IntervalType.Transient,
 		);
 
@@ -83,7 +84,7 @@ class EndpointInRangeIndex<TInterval extends ISerializableInterval>
 			"transient",
 			end,
 			end,
-			this.client,
+			this.localReferenceTracker,
 			IntervalType.Transient,
 		);
 
@@ -98,7 +99,7 @@ class EndpointInRangeIndex<TInterval extends ISerializableInterval>
 
 export function createEndpointInRangeIndex<TInterval extends ISerializableInterval>(
 	helpers: IIntervalHelpers<TInterval>,
-	client: Client,
+	localReferenceTracker: LocalReferenceTracker,
 ): IEndpointInRangeIndex<TInterval> {
-	return new EndpointInRangeIndex<TInterval>(helpers, client);
+	return new EndpointInRangeIndex<TInterval>(helpers, localReferenceTracker);
 }

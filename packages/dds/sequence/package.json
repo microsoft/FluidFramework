@@ -122,6 +122,19 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_ISharedString": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_SharedSegmentSequence": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_SharedSequence": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_SharedString": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

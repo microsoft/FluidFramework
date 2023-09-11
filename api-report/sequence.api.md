@@ -66,22 +66,22 @@ export function appendIntervalPropertyChangedToRevertibles(interval: SequenceInt
 export function appendSharedStringDeltaToRevertibles(string: SharedString, delta: SequenceDeltaEvent, revertibles: SharedStringRevertible[]): void;
 
 // @public (undocumented)
-export function createEndpointIndex<TInterval extends ISerializableInterval>(client: Client, helpers: IIntervalHelpers<TInterval>): IEndpointIndex<TInterval>;
+export function createEndpointIndex<TInterval extends ISerializableInterval>(localReferenceTracker: LocalReferenceTracker, helpers: IIntervalHelpers<TInterval>): IEndpointIndex<TInterval>;
 
 // @public (undocumented)
-export function createEndpointInRangeIndex<TInterval extends ISerializableInterval>(helpers: IIntervalHelpers<TInterval>, client: Client): IEndpointInRangeIndex<TInterval>;
+export function createEndpointInRangeIndex<TInterval extends ISerializableInterval>(helpers: IIntervalHelpers<TInterval>, localReferenceTracker: LocalReferenceTracker): IEndpointInRangeIndex<TInterval>;
 
 // @public (undocumented)
 export function createIdIntervalIndex<TInterval extends ISerializableInterval>(): IIdIntervalIndex<TInterval>;
 
 // @public (undocumented)
-export function createOverlappingIntervalsIndex<TInterval extends ISerializableInterval>(client: Client, helpers: IIntervalHelpers<TInterval>): IOverlappingIntervalsIndex<TInterval>;
+export function createOverlappingIntervalsIndex<TInterval extends ISerializableInterval>(localReferenceTracker: LocalReferenceTracker, helpers: IIntervalHelpers<TInterval>): IOverlappingIntervalsIndex<TInterval>;
 
 // @public (undocumented)
-export function createOverlappingSequenceIntervalsIndex(client: Client): SequenceIntervalIndexes.Overlapping;
+export function createOverlappingSequenceIntervalsIndex(localReferenceTracker: LocalReferenceTracker): SequenceIntervalIndexes.Overlapping;
 
 // @public (undocumented)
-export function createStartpointInRangeIndex<TInterval extends ISerializableInterval>(helpers: IIntervalHelpers<TInterval>, client: Client): IStartpointInRangeIndex<TInterval>;
+export function createStartpointInRangeIndex<TInterval extends ISerializableInterval>(helpers: IIntervalHelpers<TInterval>, localReferenceTracker: LocalReferenceTracker): IStartpointInRangeIndex<TInterval>;
 
 // @public (undocumented)
 export type DeserializeCallback = (properties: PropertySet) => void;
@@ -180,7 +180,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
     // @deprecated (undocumented)
     compareStarts?(a: TInterval, b: TInterval): number;
     // (undocumented)
-    create(label: string, start: number | undefined, end: number | undefined, client: Client | undefined, intervalType: IntervalType, op?: ISequencedDocumentMessage, fromSnapshot?: boolean, stickiness?: IntervalStickiness): TInterval;
+    create(label: string, start: number | undefined, end: number | undefined, localReferenceTracker: LocalReferenceTracker | undefined, intervalType: IntervalType, op?: ISequencedDocumentMessage, fromSnapshot?: boolean, stickiness?: IntervalStickiness): TInterval;
 }
 
 // @public @deprecated (undocumented)
@@ -382,6 +382,9 @@ export interface IValueOpEmitter {
     emit(opName: string, previousValue: any, params: any, localOpMetadata: IMapMessageLocalMetadata): void;
 }
 
+// @public (undocumented)
+export type LocalReferenceTracker = Pick<Client, "getContainingSegment" | "localReferencePositionToPosition" | "getCurrentSeq" | "createLocalReferencePosition">;
+
 // @alpha
 export function revertSharedStringRevertibles(sharedString: SharedString, revertibles: SharedStringRevertible[]): void;
 
@@ -408,7 +411,7 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
 
 // @public
 export class SequenceInterval implements ISerializableInterval {
-    constructor(client: Client,
+    constructor(localReferenceTracker: LocalReferenceTracker,
     start: LocalReferencePosition,
     end: LocalReferencePosition, intervalType: IntervalType, props?: PropertySet, stickiness?: IntervalStickiness);
     // @internal
@@ -558,12 +561,15 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     protected initializeLocalCore(): void;
     insertAtReferencePosition(pos: ReferencePosition, segment: T): void;
     insertFromSpec(pos: number, spec: IJSONSegment): void;
+    get intervalCollectionClient(): LocalReferenceTracker;
     // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     // (undocumented)
     get loaded(): Promise<void>;
     protected loadedDeferred: Deferred<void>;
     localReferencePositionToPosition(lref: ReferencePosition): number;
+    // (undocumented)
+    localReferenceTracker: LocalReferenceTracker | undefined;
     // (undocumented)
     protected onConnect(): void;
     // (undocumented)

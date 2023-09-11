@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Client, RedBlackTree } from "@fluidframework/merge-tree";
+import { RedBlackTree } from "@fluidframework/merge-tree";
 import { IIntervalHelpers, ISerializableInterval, IntervalType } from "../intervals";
+import { LocalReferenceTracker } from "../sequence";
 import { IntervalIndex } from "./intervalIndex";
 
 export interface IEndpointIndex<TInterval extends ISerializableInterval>
@@ -26,7 +27,7 @@ class EndpointIndex<TInterval extends ISerializableInterval> implements IEndpoin
 	private readonly endIntervalTree: RedBlackTree<TInterval, TInterval>;
 
 	constructor(
-		private readonly client: Client,
+		private readonly localReferenceTracker: LocalReferenceTracker,
 		private readonly helpers: IIntervalHelpers<TInterval>,
 	) {
 		// eslint-disable-next-line @typescript-eslint/unbound-method
@@ -38,7 +39,7 @@ class EndpointIndex<TInterval extends ISerializableInterval> implements IEndpoin
 			"transient",
 			pos,
 			pos,
-			this.client,
+			this.localReferenceTracker,
 			IntervalType.Transient,
 		);
 		const rbNode = this.endIntervalTree.floor(transientInterval);
@@ -52,7 +53,7 @@ class EndpointIndex<TInterval extends ISerializableInterval> implements IEndpoin
 			"transient",
 			pos,
 			pos,
-			this.client,
+			this.localReferenceTracker,
 			IntervalType.Transient,
 		);
 		const rbNode = this.endIntervalTree.ceil(transientInterval);
@@ -71,8 +72,8 @@ class EndpointIndex<TInterval extends ISerializableInterval> implements IEndpoin
 }
 
 export function createEndpointIndex<TInterval extends ISerializableInterval>(
-	client: Client,
+	localReferenceTracker: LocalReferenceTracker,
 	helpers: IIntervalHelpers<TInterval>,
 ): IEndpointIndex<TInterval> {
-	return new EndpointIndex<TInterval>(client, helpers);
+	return new EndpointIndex<TInterval>(localReferenceTracker, helpers);
 }

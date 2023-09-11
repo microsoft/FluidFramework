@@ -62,7 +62,11 @@ export {
 	revertSharedStringRevertibles,
 	SharedStringRevertible,
 } from "./revertibles";
-export { ISharedSegmentSequenceEvents, SharedSegmentSequence } from "./sequence";
+export {
+	ISharedSegmentSequenceEvents,
+	SharedSegmentSequence,
+	LocalReferenceTracker,
+} from "./sequence";
 export {
 	ISequenceDeltaRange,
 	SequenceDeltaEvent,

@@ -112,6 +112,14 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 	);
 }
 
+export type LocalReferenceTracker = Pick<
+	Client,
+	| "getContainingSegment"
+	| "localReferencePositionToPosition"
+	| "getCurrentSeq"
+	| "createLocalReferencePosition"
+>;
+
 export abstract class SharedSegmentSequence<T extends ISegment>
 	extends SharedObject<ISharedSegmentSequenceEvents>
 	implements ISharedIntervalCollection<SequenceInterval>, MergeTreeRevertibleDriver
@@ -191,6 +199,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	}
 
 	protected client: Client;
+
+	// The object to track the local reference of the associated client
+	public localReferenceTracker: LocalReferenceTracker | undefined;
+
 	/** `Deferred` that triggers once the object is loaded */
 	protected loadedDeferred = new Deferred<void>();
 	// cache out going ops created when partial loading
@@ -483,6 +495,44 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 */
 	public getIntervalCollection(label: string): IIntervalCollection<SequenceInterval> {
 		return this.intervalCollections.get(label);
+	}
+
+	/**
+	 * The collection of API's to track the local reference of the associated client
+	 */
+	public get intervalCollectionClient(): LocalReferenceTracker {
+		return {
+			createLocalReferencePosition: (
+				segment: ISegment,
+				offset: number | undefined,
+				refType: ReferenceType,
+				properties: PropertySet | undefined,
+				slidingPreference?: SlidingPreference,
+			) => {
+				return this.client.createLocalReferencePosition(
+					segment,
+					offset,
+					refType,
+					properties,
+					slidingPreference,
+				);
+			},
+
+			getContainingSegment: <U extends ISegment>(pos: number) => {
+				return this.getContainingSegment(pos) as {
+					segment: U | undefined;
+					offset: number | undefined;
+				};
+			},
+
+			localReferencePositionToPosition: (lref: ReferencePosition) => {
+				return this.localReferencePositionToPosition(lref);
+			},
+
+			getCurrentSeq: () => {
+				return this.getCurrentSeq();
+			},
+		};
 	}
 
 	/**
