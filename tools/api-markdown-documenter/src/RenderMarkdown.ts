@@ -35,6 +35,8 @@ import {
  * @param transformConfig - Configuration for transforming API items into {@link DocumentationNode}s.
  * @param renderConfig - Configuration for rendering {@link DocumentNode}s as Markdown.
  * @param outputDirectoryPath - The directory under which the document files will be generated.
+ *
+ * @public
  */
 export async function renderApiModelAsMarkdown(
 	transformConfig: ApiItemTransformationConfiguration,
@@ -59,6 +61,8 @@ export async function renderApiModelAsMarkdown(
  * Missing values will be filled in with system defaults.
  *
  * @param outputDirectoryPath - The directory under which the document files will be generated.
+ *
+ * @public
  */
 export async function renderDocumentsAsMarkdown(
 	documents: DocumentNode[],

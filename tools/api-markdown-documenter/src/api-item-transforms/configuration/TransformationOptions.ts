@@ -30,6 +30,8 @@ import { ApiItemTransformationConfiguration } from "./Configuration";
 /**
  * Signature for a function which generates one or more {@link SectionNode}s describing an
  * API item that potentially has child items to be rendered as content under it.
+ *
+ * @public
  */
 export type TransformApiItemWithChildren<TApiItem extends ApiItem> = (
 	apiItem: TApiItem,
@@ -40,6 +42,8 @@ export type TransformApiItemWithChildren<TApiItem extends ApiItem> = (
 /**
  * Signature for a function which generates one or more {@link SectionNode}s describing an
  * API item that *does not* have child items to be rendered.
+ *
+ * @public
  */
 export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (
 	apiItem: TApiItem,
@@ -49,6 +53,8 @@ export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (
 /**
  * Signature for a function which generates information about an API item with inner content injected
  * into the same section.
+ *
+ * @public
  */
 export type CreateChildContentSections = (
 	apiItem: ApiItem,
@@ -60,6 +66,8 @@ export type CreateChildContentSections = (
  * Transformations for generating {@link DocumentationNode} trees from different kinds of API content.
  *
  * @remarks For any transformation not explicitly configured, a default will be used.
+ *
+ * @public
  */
 export interface ApiItemTransformationOptions {
 	/**
