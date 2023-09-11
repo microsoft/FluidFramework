@@ -16,6 +16,20 @@ export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElem
 	focusDiv.id = "focus-div";
 	focusDiv.style.fontSize = "14px";
 
+	const focusMessageDiv = document.createElement("div");
+	focusMessageDiv.id = "message-div";
+	focusMessageDiv.textContent = "Click to focus";
+	focusMessageDiv.style.position = "absolute";
+	focusMessageDiv.style.top = "10px";
+	focusMessageDiv.style.right = "10px";
+	focusMessageDiv.style.color = "red";
+	focusMessageDiv.style.fontWeight = "bold";
+	focusMessageDiv.style.fontSize = "18px";
+	focusMessageDiv.style.border = "2px solid red";
+	focusMessageDiv.style.padding = "10px";
+	focusMessageDiv.style.display = "none";
+	wrapperDiv.appendChild(focusMessageDiv);
+
 	const onFocusChanged = () => {
 		const currentUser = focusTracker.audience.getMyself()?.userName;
 		const focusPresences = focusTracker.getFocusPresences();
@@ -25,26 +39,8 @@ export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElem
             ${getFocusPresencesString("</br>", focusTracker)}
         `;
 
-		const existingMessageDiv = document.getElementById("message-div");
-
-		if (existingMessageDiv) {
-			wrapperDiv.removeChild(existingMessageDiv);
-		}
-
-		if (currentUser !== undefined && focusPresences.get(currentUser) === false) {
-			const messageDiv = document.createElement("div");
-			messageDiv.id = "message-div";
-			messageDiv.textContent = "Click to focus";
-			messageDiv.style.position = "absolute";
-			messageDiv.style.top = "10px";
-			messageDiv.style.right = "10px";
-			messageDiv.style.color = "red";
-			messageDiv.style.fontWeight = "bold";
-			messageDiv.style.fontSize = "18px";
-			messageDiv.style.border = "2px solid red";
-			messageDiv.style.padding = "10px";
-			wrapperDiv.appendChild(messageDiv);
-		}
+		focusMessageDiv.style.display =
+			currentUser !== undefined && focusPresences.get(currentUser) === false ? "" : "none";
 	};
 
 	onFocusChanged();
@@ -86,9 +82,7 @@ export function renderMousePresence(
 				posDiv.style.position = "absolute";
 				posDiv.style.left = `${mousePosition.x}px`;
 				posDiv.style.top = `${mousePosition.y}px`;
-				if (focusTracker.getFocusPresences().get(userName) === true) {
-					posDiv.style.fontWeight = "bold";
-				}
+				posDiv.style.fontWeight = "bold";
 				div.appendChild(posDiv);
 			}
 		});
