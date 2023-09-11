@@ -200,9 +200,6 @@ data:
             "checkpointTimeIntervalMsec": 1000,
             "restartOnCheckpointFailure": {{ .Values.scriptorium.restartOnCheckpointFailure }}
         },
-        "paparazzi": {
-            "queue": "paparazziQueue"
-        },
         "rabbitmq": {
             "connectionString": "{{ .Values.rabbitmq.connectionString }}"
         },
