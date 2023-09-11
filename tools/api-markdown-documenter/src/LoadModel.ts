@@ -27,6 +27,8 @@ import { Logger } from "./Logging";
  *
  * @param reportsDirectoryPath - Path to the directory containing the API reports.
  * @param logger - Optional logger for reporting system events while loading the model.
+ *
+ * @public
  */
 export async function loadModel(reportsDirectoryPath: string, logger?: Logger): Promise<ApiModel> {
 	if (!(await FileSystem.existsAsync(reportsDirectoryPath))) {

@@ -51,6 +51,8 @@ import { ApiItemTransformationConfiguration } from "./configuration";
  *
  * @returns The transformed `DocNode`, if it was of a kind we support.
  * Else, an error will be logged, and `undefined` will be returned.
+ *
+ * @public
  */
 export function transformDocNode(
 	docNode: DocNode,

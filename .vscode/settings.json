@@ -82,14 +82,21 @@
 		"**/*build.log": true,
 		"**/*.tsbuildinfo": true,
 		"**/_api-extractor-temp": true,
+		// exclude built `dist` folders
 		"**/dist/*": true,
 		"**/dist-esm/*": true,
 		// See notes in these packages' READMEs: they need to build to /lib to avoid bugs in oclif.
 		// Special-case ignoring searching their build output as such without excluding other lib folders.
-		// TODO: Maybe just build-tools/packages/*/lib/**
 		"build-tools/packages/build-cli/lib/**": true,
 		"build-tools/packages/readme-command/lib/**": true,
 		"build-tools/packages/version-tools/lib/**": true,
+		// TODO: These patterns are left in while letting devs clean up old "lib" state to keep VSCode from
+		// over-indexing files. They can be removed once "lib" is removed from clean scripts + .gitignore.
+		// exclude built `lib` folders but preserve ./common/lib
+		//   paths with packages container
+		"**/packages/**/lib/*": true,
+		//   other sets known to build `lib`
+		"{common/lib,examples,experimental}/**/lib/*": true,
 		"**/nyc/*": true,
 		"**/*.log": true,
 		"**/DS_Store": true,
