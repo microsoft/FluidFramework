@@ -13,7 +13,7 @@ import {
 	JsonableTree,
 	ChangeAtomId,
 } from "../../core";
-import { fail, Mutable } from "../../util";
+import { fail, IdAllocator, Mutable } from "../../util";
 import { singleTextCursor, jsonableTreeFromCursor } from "../treeTextCursor";
 import {
 	ToDelta,
@@ -23,7 +23,6 @@ import {
 	NodeChangeRebaser,
 	NodeChangeset,
 	FieldEditor,
-	IdAllocator,
 	CrossFieldManager,
 	RevisionMetadataSource,
 	getIntention,

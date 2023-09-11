@@ -21,23 +21,27 @@ import {
 	FieldUpPath,
 	ChangesetLocalId,
 } from "../../core";
-import { brand, getOrAddEmptyToMap, Mutable } from "../../util";
+import {
+	brand,
+	getOrAddEmptyToMap,
+	IdAllocationState,
+	IdAllocator,
+	idAllocatorFromMaxId,
+	idAllocatorFromState,
+	Mutable,
+} from "../../util";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
 import {
 	CrossFieldManager,
 	CrossFieldMap,
 	CrossFieldQuerySet,
 	CrossFieldTarget,
-	IdAllocationState,
 	addCrossFieldQuery,
 	getFirstFromCrossFieldMap,
-	idAllocatorFromMaxId,
-	idAllocatorFromState,
 	setInCrossFieldMap,
 } from "./crossFieldQueries";
 import {
 	FieldChangeHandler,
-	IdAllocator,
 	RevisionMetadataSource,
 	NodeExistenceState,
 } from "./fieldChangeHandler";
@@ -287,7 +291,10 @@ export class ModularChangeFamily
 			return makeModularChangeset(new Map());
 		}
 
-		const idState: IdAllocationState = { maxId: brand(change.change.maxId ?? -1) };
+		const idState: IdAllocationState = { maxId: change.change.maxId ?? -1 };
+		// This idState is used for the whole of the IdAllocator's lifetime, which allows
+		// this function to read the updated idState.maxId after more IDs are allocated.
+		// TODO: add a getMax function to IdAllocator to make for a clearer contract.
 		const genId: IdAllocator = idAllocatorFromState(idState);
 		const crossFieldTable = newCrossFieldTable<InvertData>();
 
@@ -420,7 +427,7 @@ export class ModularChangeFamily
 		over: TaggedChange<ModularChangeset>,
 	): ModularChangeset {
 		const maxId = Math.max(change.maxId ?? -1, over.change.maxId ?? -1);
-		const idState: IdAllocationState = { maxId: brand(maxId) };
+		const idState: IdAllocationState = { maxId };
 		const genId: IdAllocator = idAllocatorFromState(idState);
 		const crossFieldTable: RebaseTable = {
 			...newCrossFieldTable<FieldChange>(),
@@ -1043,7 +1050,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	}
 
 	public generateId(count?: number): ChangesetLocalId {
-		return this.idAllocator(count);
+		return brand(this.idAllocator(count));
 	}
 
 	private buildChangeMap(

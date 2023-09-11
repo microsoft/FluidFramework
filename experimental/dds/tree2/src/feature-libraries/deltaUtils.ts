@@ -94,7 +94,9 @@ export function mapMark<TIn, TOut>(
 }
 
 type OldContent<T> = Mutable<(Delta.Insert<T> | Delta.Restore<T>)["oldContent"]>;
-type HasOldContent<T> = { oldContent?: OldContent<T> };
+interface HasOldContent<T> {
+	oldContent?: OldContent<T>;
+}
 
 function mapOldContent<TIn, TOut>(
 	input: HasOldContent<TIn>,

@@ -6,6 +6,7 @@
 import { assert } from "@fluidframework/core-utils";
 import {
 	Brand,
+	IdAllocator,
 	NestedMap,
 	brand,
 	deleteFromNestedMap,
@@ -43,7 +44,7 @@ export class TreeIndex {
 
 	public constructor(
 		private readonly name: string,
-		private readonly rootIdAllocator: (count: number) => ForestRootId, // private readonly tag: number = Math.random(),
+		private readonly rootIdAllocator: IdAllocator<ForestRootId>,
 	) {}
 
 	public clone(): TreeIndex {

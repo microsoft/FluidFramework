@@ -74,6 +74,9 @@ export {
 	objectToMap,
 	oneFromSet,
 	Named,
+	disposeSymbol,
+	IDisposable,
+	capitalize,
 } from "./utils";
 export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting";
 
@@ -97,3 +100,10 @@ export {
 } from "./brandedMap";
 
 export { getFirstFromRangeMap, RangeEntry, RangeMap, setInRangeMap } from "./rangeMap";
+
+export {
+	IdAllocator,
+	idAllocatorFromMaxId,
+	idAllocatorFromState,
+	IdAllocationState,
+} from "./idAllocator";

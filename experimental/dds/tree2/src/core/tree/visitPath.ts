@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 import {
-	AttachedPlaceUpPath,
-	AttachedRangeUpPath,
 	DetachedPlaceUpPath,
 	DetachedRangeUpPath,
 	PlaceUpPath,
