@@ -14,7 +14,7 @@ import {
 	ChangeAtomId,
 	RevisionTag,
 } from "../../core";
-import { fail, Mutable } from "../../util";
+import { fail, Mutable, NestedMap } from "../../util";
 import { singleTextCursor, jsonableTreeFromCursor } from "../treeTextCursor";
 import {
 	ToDelta,
@@ -50,6 +50,8 @@ interface IChildChangeMap<T> {
 
 class ChildChangeMap<T> implements IChildChangeMap<T> {
 	private readonly data = new Map<ChangesetLocalId | "self", Map<RevisionTag | undefined, T>>();
+	private readonly nestedMapData: NestedMap<ChangesetLocalId | "self", RevisionTag, T> =
+		new Map();
 	public set(id: ChangeId, childChange: T): void {
 		if (id === "self") {
 			const nestedMap = this.data.get(id);
@@ -111,11 +113,13 @@ class ChildChangeMap<T> implements IChildChangeMap<T> {
 		const entries: [ChangeId, T][] = [];
 		for (const changeId of this.keys()) {
 			if (changeId === "self") {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				entries.push(["self", this.data.get("self")!.get(undefined)!]);
+				const entry = this.data.get("self")?.get(undefined);
+				assert(entry !== undefined, "Entry should not be undefined when iterating keys.");
+				entries.push(["self", entry]);
 			} else {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				entries.push([changeId, this.data.get(changeId.localId)!.get(changeId.revision)!]);
+				const entry = this.data.get(changeId.localId)?.get(changeId.revision);
+				assert(entry !== undefined, "Entry should not be undefined when iterating keys.");
+				entries.push([changeId, entry]);
 			}
 		}
 
@@ -246,9 +250,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 					originalChildChanges = invertChild(childChange, 0);
 				} else {
 					inverseChildChanges.set(
-						// TODO: It's a bit weird that we re-use the id here. It should conceivably be
-						// something like a rollback of that revision.
-						// Maybe we should operate solely in terms of ChangesetLocalId_s in the format? or something like that
+						// This makes assumptions about how sandwich rebasing works
 						id,
 						invertChild(childChange, 0),
 					);
@@ -291,7 +293,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 	amendInvert: () => fail("Not implemented"),
 
-	// last-write wins
 	rebase: (
 		change: OptionalChangeset,
 		overTagged: TaggedChange<OptionalChangeset>,
@@ -303,8 +304,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	): OptionalChangeset => {
 		const over = overTagged.change;
 
-		// TODO: Similar to invert, when `change` doesn't have a fieldChange with set, we need to detect
-		// when `over` has revived a node that has changes and move those changes to 'fieldChanges'
 		const perChildChanges = new ChildChangeMap<NodeChangeset>();
 		if (change.childChanges !== undefined) {
 			// TODO: (minor) early exits, better data structure choices, etc.
@@ -337,9 +336,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			}
 
 			for (const [id, childChange] of change.childChanges) {
-				// TODO: NodeExistenceState needs to be double-checked for these cases.
-				// TODO: Consolidate these cases. Lots of duplication.
-				// Just a bit tricky to get right...
 				if (id === "self") {
 					const overChildChange = overChildChanges.get(id);
 					if (over.fieldChange !== undefined && change.fieldChange !== undefined) {
@@ -394,7 +390,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 					) {
 						// childChange refers to changes to node being revived by `over`.
 						const overChange = over.fieldChange?.newContent?.changes;
-						// TODO: confirm NodeExistenceState is reasonable
 						const rebasedChild = rebaseChild(
 							childChange,
 							overChange,
@@ -407,7 +402,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 						// childChange refers to changes to node removed by some past revision. Rebase over any changes that
 						// `over` has to that same revision.
 						const overChange = overChildChanges.get(id);
-						// TODO: confirm NodeExistenceState is reasonable
 						const rebasedChild = rebaseChild(
 							childChange,
 							overChange,
@@ -456,7 +450,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 			const childChanges: typeof change.childChanges = [];
 			for (const [id, childChange] of change.childChanges) {
-				// TODO: Maybe need an 'end' clause here.
+				// TODO: Maybe need an 'self' clause here.
 				// Prior impl is weird in that it doesn't seem to check that rebaseChild
 				// call is legit at all.
 				const rebasedChange = rebaseChild(childChange, overChildChanges.get(id));
@@ -559,7 +553,6 @@ export function optionalFieldIntoDelta(change: OptionalChangeset, deltaFromChild
 	const deleteDelta = deltaForDelete(!change.fieldChange.wasEmpty, childChange, deltaFromChild);
 
 	const update = change.fieldChange?.newContent;
-	// TODO: make sense of this.
 	let content: ITreeCursorSynchronous | undefined;
 	if (update === undefined) {
 		content = undefined;
