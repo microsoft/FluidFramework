@@ -295,9 +295,9 @@ Uncompressed batch:
 +-----------------+-----------------+-----------------+-----------------+-----------------+
 ```
 
-### How the op flow woks
+## How the op flow works
 
-## Outbound
+### Outbound
 
 The outbound view is how ops are accumulated and sent by the runtime with `FlushMode.TurnBased` (default).
 
@@ -337,9 +337,9 @@ stateDiagram-v2
 
 With `FlushMode.Immediate` the difference is that ops are no longer accumulated in batches, but flushed as they are submitted, instead of waiting for the end of the JS turn. All the other components work in the exact same manner with the difference that they operate on batches with length 1.
 
-## Inbound
+### Inbound
 
-There is no concept of batch in the inbound view when we receive the ops. Ops are being received and processed one-by-one and the batch is reconstructed in the runtime layer.
+There is no concept of batch in the inbound view when we receive the ops. Ops are being received and processed one-by-one and the batch is reconstructed in the runtime layer. This requires individual components to maintain their own internal state in order to keep track of the batch.
 
 ```mermaid
 stateDiagram-v2
