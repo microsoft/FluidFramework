@@ -4,12 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	CrossFieldManager,
-	NodeChangeset,
-	idAllocatorFromMaxId,
-	singleTextCursor,
-} from "../../../feature-libraries";
+import { CrossFieldManager, NodeChangeset, singleTextCursor } from "../../../feature-libraries";
 import {
 	ChangesetLocalId,
 	Delta,
@@ -27,7 +22,7 @@ import {
 // Search this file for "as any" and "as NodeChangeset"
 import { TestChange } from "../../testChange";
 import { deepFreeze, defaultRevisionMetadataFromChanges, isDeltaVisible } from "../../utils";
-import { brand } from "../../../util";
+import { brand, idAllocatorFromMaxId } from "../../../util";
 import {
 	optionalChangeRebaser,
 	optionalFieldEditor,

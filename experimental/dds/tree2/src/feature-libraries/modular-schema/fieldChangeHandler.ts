@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Delta, TaggedChange, RevisionTag, ChangesetLocalId } from "../../core";
-import { fail, Invariant } from "../../util";
+import { Delta, TaggedChange, RevisionTag } from "../../core";
+import { fail, IdAllocator, Invariant } from "../../util";
 import { ICodecFamily, IJsonCodec } from "../../codec";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
 import { CrossFieldManager } from "./crossFieldQueries";
@@ -205,13 +205,6 @@ export type NodeChangeRebaser = (
  * @alpha
  */
 export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => NodeChangeset;
-
-/**
- * Allocates a block of `count` consecutive IDs and returns the first ID in the block.
- * For convenience can be called with no parameters to allocate a single ID.
- * @alpha
- */
-export type IdAllocator = (count?: number) => ChangesetLocalId;
 
 /**
  * A callback that returns the index of the changeset associated with the given RevisionTag among the changesets being

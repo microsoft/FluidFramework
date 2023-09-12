@@ -14,7 +14,7 @@ import {
 	ChangeAtomId,
 	RevisionTag,
 } from "../../core";
-import { fail, Mutable, SizedNestedMap } from "../../util";
+import { fail, Mutable, IdAllocator, SizedNestedMap } from "../../util";
 import { singleTextCursor, jsonableTreeFromCursor } from "../treeTextCursor";
 import {
 	ToDelta,
@@ -25,7 +25,6 @@ import {
 	NodeChangeset,
 	FieldEditor,
 	NodeReviver,
-	IdAllocator,
 	CrossFieldManager,
 	RevisionMetadataSource,
 	getIntention,

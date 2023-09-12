@@ -4,12 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	CrossFieldManager,
-	IdAllocator,
-	NodeChangeset,
-	NodeReviver,
-} from "../../../feature-libraries";
+import { CrossFieldManager, NodeChangeset, NodeReviver } from "../../../feature-libraries";
 import {
 	makeAnonChange,
 	RevisionTag,
@@ -19,7 +14,7 @@ import {
 	tagChange,
 	tagRollbackInverse,
 } from "../../../core";
-import { brand } from "../../../util";
+import { IdAllocator, brand } from "../../../util";
 import {
 	assertMarkListEqual,
 	defaultRevisionMetadataFromChanges,

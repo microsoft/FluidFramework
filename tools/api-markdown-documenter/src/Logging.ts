@@ -6,11 +6,15 @@ import chalk from "chalk";
 
 /**
  * Function signature for logging a message or error.
+ *
+ * @public
  */
 export type LoggingFunction = (message: string | Error, ...args: unknown[]) => void;
 
 /**
  * A logger for use with the system.
+ *
+ * @public
  */
 export interface Logger {
 	/**
@@ -42,6 +46,8 @@ export interface Logger {
 
 /**
  * Default logger, configured to log to the console.
+ *
+ * @public
  */
 export const defaultConsoleLogger: Logger = {
 	info: console.log,
@@ -55,6 +61,8 @@ export const defaultConsoleLogger: Logger = {
 
 /**
  * Verbose logger, configured to log to the console.
+ *
+ * @public
  */
 export const verboseConsoleLogger: Logger = {
 	...defaultConsoleLogger,
