@@ -1,12 +1,12 @@
+/* eslint-disable unicorn/prefer-code-point */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
-import sha1 from "sha.js/sha1";
-// eslint-disable-next-line import/no-internal-modules
-import sha256 from "sha.js/sha256";
+// eslint-disable-next-line import/no-nodejs-modules
+import { Hash } from "crypto";
+import { sha1, sha256 } from "sha.js";
 import { IsoBuffer } from "./bufferNode";
 
 /**
@@ -27,7 +27,7 @@ export async function hashFile(
 	algorithm: "SHA-1" | "SHA-256" = "SHA-1",
 	hashEncoding: "hex" | "base64" = "hex",
 ): Promise<string> {
-	let engine;
+	let engine: Hash;
 	// eslint-disable-next-line default-case
 	switch (algorithm) {
 		case "SHA-1": {
@@ -39,7 +39,7 @@ export async function hashFile(
 			break;
 		}
 	}
-	return engine.update(file).digest(hashEncoding) as string;
+	return engine.update(file).digest(hashEncoding);
 }
 
 /**
@@ -55,5 +55,5 @@ export async function gitHashFile(file: IsoBuffer): Promise<string> {
 	const size = file.byteLength;
 	const filePrefix = `blob ${size.toString()}${String.fromCharCode(0)}`;
 	const engine = new sha1();
-	return engine.update(filePrefix).update(file).digest("hex") as string;
+	return engine.update(filePrefix).update(file).digest("hex");
 }
