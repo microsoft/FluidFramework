@@ -30,7 +30,7 @@ import {
 	ReplaceKind,
 	Range,
 } from "../../core";
-import { brand, fail, getOrAddEmptyToMap } from "../../util";
+import { assertValidIndex, brand, fail, getOrAddEmptyToMap } from "../../util";
 import { createEmitter } from "../../events";
 import { BasicChunk, BasicChunkCursor, SiblingsOrKey } from "./basicChunk";
 import { basicChunkTree, chunkTree, IChunker } from "./chunkTree";
@@ -96,8 +96,6 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 		);
 		this.events.emit("beforeChange");
 
-		const moves: Map<Delta.MoveId, DetachedField> = new Map();
-
 		if (this.roots.isShared()) {
 			this.roots = this.roots.clone();
 		}
@@ -115,17 +113,9 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 				);
 				return this.mutableChunkStack[this.mutableChunkStack.length - 1];
 			},
-			moveIn(
-				index: number,
-				toAttach: DetachedField,
-				invalidateDependents: boolean = true,
-			): number {
-				if (invalidateDependents) {
-					this.forest.invalidateDependents();
-				}
-				const detachedKey = detachedFieldAsKey(toAttach);
-				const children = this.forest.roots.fields.get(detachedKey) ?? [];
-				this.forest.roots.fields.delete(detachedKey);
+			moveIn(index: number, key: FieldKey): number {
+				const children = this.forest.roots.fields.get(key) ?? [];
+				this.forest.roots.fields.delete(key);
 				if (children.length === 0) {
 					return 0; // Prevent creating 0 sized fields when inserting empty into empty.
 				}
@@ -147,53 +137,62 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 				this.forest.activeVisitor = undefined;
 				this.forest.events.emit("afterChange");
 			},
-			create(index: PlaceIndex, content: Delta.ProtoNodes): void {},
-			destroy(range: Range): void {},
-			attach(source: DetachedRangeUpPath, destination: PlaceIndex): void {},
-			detach(source: Range, destination: DetachedPlaceUpPath): void {},
-			replace(
-				newContentSource: DetachedRangeUpPath,
-				oldContent: Range,
-				oldContentDestination: DetachedPlaceUpPath,
-				kind: ReplaceKind,
-			): void {},
-			onDelete(index: number, count: number): void {
-				this.onMoveOut(index, count);
+			destroy(range: Range): void {
+				this.detachEdit(range, undefined);
 			},
-			onInsert(index: number, content: Delta.ProtoNodes): void {
+			create(index: PlaceIndex, content: Delta.ProtoNodes): void {
 				this.forest.invalidateDependents();
 				const chunks: TreeChunk[] = content.map((c) => chunkTree(c, this.forest.chunker));
-				const field = this.forest.newDetachedField();
-				this.forest.roots.fields.set(detachedFieldAsKey(field), chunks);
-				this.moveIn(index, field, false);
+				const parent = this.getParent();
+				this.forest.roots.fields.set(parent.key, chunks);
 			},
-			onMoveOut(index: number, count: number, id?: Delta.MoveId): void {
+			attach(source: DetachedRangeUpPath, destination: PlaceIndex): void {
 				this.forest.invalidateDependents();
+				this.attachEdit(source, destination);
+			},
+			detach(source: Range, destination: DetachedPlaceUpPath): void {
+				this.forest.invalidateDependents();
+				this.detachEdit(source, destination);
+			},
+			attachEdit(source: DetachedRangeUpPath, destination: PlaceIndex): void {
+				const sourceField = this.forest.roots.fields.get(source.field) ?? [];
+				assertValidIndex(source.start, sourceField, true);
+				assertValidIndex(source.end, sourceField, true);
+				assert(source.end >= source.start, "Range end must be >= its start");
+
+				this.moveIn(destination, source.field);
+			},
+			detachEdit(source: Range, destination: DetachedPlaceUpPath | undefined): void {
 				const parent = this.getParent();
 				const sourceField = parent.mutableChunk.fields.get(parent.key) ?? [];
-				const newField = sourceField.splice(index, count);
 
-				if (id !== undefined) {
-					const detached = this.forest.newDetachedField();
-					const key = detachedFieldAsKey(detached);
+				assertValidIndex(source.start, sourceField, true);
+				assertValidIndex(source.end, sourceField, true);
+				assert(source.end >= source.start, "Range end must be >= its start");
+				const newField = sourceField.splice(source.start, source.end - source.start);
+
+				if (sourceField.length === 0) {
+					parent.mutableChunk.fields.delete(parent.key);
+				}
+				if (destination !== undefined) {
 					if (newField.length > 0) {
-						this.forest.roots.fields.set(key, newField);
+						this.forest.roots.fields.set(destination.field, newField);
 					}
-					moves.set(id, detached);
 				} else {
 					for (const child of newField) {
 						child.referenceRemoved();
 					}
 				}
-				if (sourceField.length === 0) {
-					parent.mutableChunk.fields.delete(parent.key);
-				}
 			},
-			onMoveIn(index: number, count: number, id: Delta.MoveId): void {
-				const toAttach = moves.get(id) ?? fail("move in without move out");
-				moves.delete(id);
-				const countMoved = this.moveIn(index, toAttach);
-				assert(countMoved === count, 0x533 /* counts must match */);
+			replace(
+				newContentSource: DetachedRangeUpPath,
+				oldContent: Range,
+				oldContentDestination: DetachedPlaceUpPath,
+				kind: ReplaceKind,
+			): void {
+				this.forest.invalidateDependents();
+				this.detachEdit(oldContent, oldContentDestination);
+				this.attachEdit(newContentSource, oldContent.start);
 			},
 			enterNode(index: number): void {
 				assert(this.mutableChunk === undefined, 0x535 /* should be in field */);
