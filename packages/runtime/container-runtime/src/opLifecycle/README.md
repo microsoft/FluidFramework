@@ -19,6 +19,9 @@ By default, the runtime is configured with a max batch size of `716800` bytes, w
     -   [Example configs](#example-configs)
     -   [How it works](#how-it-works)
     -   [How grouped batching works](#how-grouped-batching-works)
+    -   [How the overall op flow works](#How-the-overall-op-flow-works)
+        -   [Outbound](#outbound)
+        -   [Inbound](#inbound)
 
 ## Compression
 
@@ -295,7 +298,7 @@ Uncompressed batch:
 +-----------------+-----------------+-----------------+-----------------+-----------------+
 ```
 
-## How the op flow works
+## How the overall op flow works
 
 ### Outbound
 
