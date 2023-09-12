@@ -68,7 +68,7 @@
 		"@fluidframework/build-tools": "^0.22.0",
 		"@fluidframework/eslint-config-fluid": "^2.1.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@microsoft/api-extractor": "^7.34.4",
+		"@microsoft/api-extractor": "^7.36.4",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^16.18.38",
 		"@types/sinon": "^7.0.13",

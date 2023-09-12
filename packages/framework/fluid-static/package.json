@@ -80,7 +80,7 @@
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
-		"@microsoft/api-extractor": "^7.34.4",
+		"@microsoft/api-extractor": "^7.36.4",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^16.18.38",
 		"c8": "^7.7.1",

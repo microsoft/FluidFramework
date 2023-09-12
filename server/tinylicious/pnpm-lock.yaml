@@ -24,7 +24,7 @@ importers:
       '@fluidframework/server-services-telemetry': ^1.0.1
       '@fluidframework/server-services-utils': ^1.0.1
       '@fluidframework/server-test-utils': ^1.0.1
-      '@microsoft/api-extractor': ^7.34.4
+      '@microsoft/api-extractor': ^7.36.4
       '@types/compression': ^1.7.2
       '@types/cookie-parser': ^1.4.1
       '@types/cors': ^2.8.4
@@ -111,7 +111,7 @@ importers:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': 2.0.0-internal.6.2.0
-      '@microsoft/api-extractor': 7.34.4_@types+node@16.18.21
+      '@microsoft/api-extractor': 7.36.4_@types+node@16.18.21
       '@types/compression': 1.7.2
       '@types/cookie-parser': 1.4.3
       '@types/cors': 2.8.12
@@ -583,32 +583,32 @@ packages:
     resolution: {integrity: sha512-Sx1pU8EM64o2BrqNpEO1CNLtKQwyhuXuqyfH7oGKCk+1a33d2r5saW8zNwm3j6BTExtjrv2BxTgzzkMwts6vGg==}
     dev: false
 
-  /@microsoft/api-extractor-model/7.26.4_@types+node@16.18.21:
-    resolution: {integrity: sha512-PDCgCzXDo+SLY5bsfl4bS7hxaeEtnXj7XtuzEE+BtALp7B5mK/NrS2kHWU69pohgsRmEALycQdaQPXoyT2i5MQ==}
+  /@microsoft/api-extractor-model/7.27.6_@types+node@16.18.21:
+    resolution: {integrity: sha512-eiCnlayyum1f7fS2nA9pfIod5VCNR1G+Tq84V/ijDrKrOFVa598BLw145nCsGDMoFenV6ajNi2PR5WCwpAxW6Q==}
     dependencies:
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 3.55.2_@types+node@16.18.21
+      '@rushstack/node-core-library': 3.59.7_@types+node@16.18.21
     transitivePeerDependencies:
       - '@types/node'
     dev: true
 
-  /@microsoft/api-extractor/7.34.4_@types+node@16.18.21:
-    resolution: {integrity: sha512-HOdcci2nT40ejhwPC3Xja9G+WSJmWhCUKKryRfQYsmE9cD+pxmBaKBKCbuS9jUcl6bLLb4Gz+h7xEN5r0QiXnQ==}
+  /@microsoft/api-extractor/7.36.4_@types+node@16.18.21:
+    resolution: {integrity: sha512-21UECq8C/8CpHT23yiqTBQ10egKUacIpxkPyYR7hdswo/M5yTWdBvbq+77YC9uPKQJOUfOD1FImBQ1DzpsdeQQ==}
     hasBin: true
     dependencies:
-      '@microsoft/api-extractor-model': 7.26.4_@types+node@16.18.21
+      '@microsoft/api-extractor-model': 7.27.6_@types+node@16.18.21
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 3.55.2_@types+node@16.18.21
-      '@rushstack/rig-package': 0.3.18
-      '@rushstack/ts-command-line': 4.13.2
+      '@rushstack/node-core-library': 3.59.7_@types+node@16.18.21
+      '@rushstack/rig-package': 0.4.1
+      '@rushstack/ts-command-line': 4.15.2
       colors: 1.2.5
       lodash: 4.17.21
       resolve: 1.22.1
-      semver: 7.3.8
+      semver: 7.5.4
       source-map: 0.6.1
-      typescript: 4.8.4
+      typescript: 5.0.4
     transitivePeerDependencies:
       - '@types/node'
     dev: true
@@ -690,8 +690,8 @@ packages:
       - typescript
     dev: true
 
-  /@rushstack/node-core-library/3.55.2_@types+node@16.18.21:
-    resolution: {integrity: sha512-SaLe/x/Q/uBVdNFK5V1xXvsVps0y7h1sN7aSJllQyFbugyOaxhNRF25bwEDnicARNEjJw0pk0lYnJQ9Kr6ev0A==}
+  /@rushstack/node-core-library/3.59.7_@types+node@16.18.21:
+    resolution: {integrity: sha512-ln1Drq0h+Hwa1JVA65x5mlSgUrBa1uHL+V89FqVWQgXd1vVIMhrtqtWGQrhTnFHxru5ppX+FY39VWELF/FjQCw==}
     peerDependencies:
       '@types/node': '*'
     peerDependenciesMeta:
@@ -704,12 +704,12 @@ packages:
       import-lazy: 4.0.0
       jju: 1.4.0
       resolve: 1.22.1
-      semver: 7.3.8
+      semver: 7.5.4
       z-schema: 5.0.5
     dev: true
 
-  /@rushstack/rig-package/0.3.18:
-    resolution: {integrity: sha512-SGEwNTwNq9bI3pkdd01yCaH+gAsHqs0uxfGvtw9b0LJXH52qooWXnrFTRRLG1aL9pf+M2CARdrA9HLHJys3jiQ==}
+  /@rushstack/rig-package/0.4.1:
+    resolution: {integrity: sha512-AGRwpqlXNSp9LhUSz4HKI9xCluqQDt/obsQFdv/NYIekF3pTTPzc+HbQsIsjVjYnJ3DcmxOREVMhvrMEjpiq6g==}
     dependencies:
       resolve: 1.22.1
       strip-json-comments: 3.1.1
@@ -719,8 +719,8 @@ packages:
     resolution: {integrity: sha512-8KWZxzn6XKuy3iKRSAd2CHXSXneRlGCmH9h/qM7jYQDekp+U18oUzub5xqOqHS2PLUC+torOMYZxgAIO/fF86A==}
     dev: true
 
-  /@rushstack/ts-command-line/4.13.2:
-    resolution: {integrity: sha512-bCU8qoL9HyWiciltfzg7GqdfODUeda/JpI0602kbN5YH22rzTxyqYvv7aRLENCM7XCQ1VRs7nMkEqgJUOU8Sag==}
+  /@rushstack/ts-command-line/4.15.2:
+    resolution: {integrity: sha512-5+C2uoJY8b+odcZD6coEe2XNC4ZjGB4vCMESbqW/8DHRWC/qIHfANdmN9F1wz/lAgxz72i7xRoVtPY2j7e4gpQ==}
     dependencies:
       '@types/argparse': 1.0.38
       argparse: 1.0.10
@@ -933,7 +933,7 @@ packages:
       functional-red-black-tree: 1.0.1
       ignore: 5.2.0
       regexpp: 3.2.0
-      semver: 7.3.8
+      semver: 7.5.4
       tsutils: 3.21.0_typescript@4.5.5
       typescript: 4.5.5
     transitivePeerDependencies:
@@ -3107,7 +3107,7 @@ packages:
     optional: true
 
   /function-bind/1.1.1:
-    resolution: {integrity: sha1-pWiZ0+o8m6uHS7l3O3xe3pL0iV0=}
+    resolution: {integrity: sha512-yIovAzMX49sF8Yl58fSCWJ5svSLuaibPxXQJFLmBObTuCr0Mf1KiPopGM9NiFjiYBCbfaa2Fh6breQ6ANVTI0A==}
 
   /function.prototype.name/1.1.5:
     resolution: {integrity: sha1-zOBQX+H/uAUD5vnkbMZORqEqliE=}
@@ -5104,12 +5104,12 @@ packages:
     dev: false
 
   /semver/5.7.1:
-    resolution: {integrity: sha1-qVT5Ma66UI0we78Gnv8MAclhFvc=}
+    resolution: {integrity: sha512-sauaDf/PZdVgrLTNYHRtpXa1iRiKcaebiKQ1BJdpQlWH2lCvexQdX55snPFyK7QzpudqbCI0qXFfOasHdyNDGQ==}
     hasBin: true
     dev: true
 
   /semver/6.3.0:
-    resolution: {integrity: sha1-7gpkyK9ejO6mdoexM3YeG+y9HT0=}
+    resolution: {integrity: sha512-b39TBaTSfV6yBrapU89p5fKekE2m/NwnDocOVruQFS1/veMgdzuPcnOM34M6CwxW8jH/lxEa5rBoDeUwu5HHTw==}
     hasBin: true
     dev: true
 
@@ -5693,9 +5693,9 @@ packages:
     hasBin: true
     dev: true
 
-  /typescript/4.8.4:
-    resolution: {integrity: sha512-QCh+85mCy+h0IGff8r5XWzOVSbBO+KfeYrMQh7NJ58QujwcE22u+NUSmUxqF+un70P9GXKxa2HCNiTTMJknyjQ==}
-    engines: {node: '>=4.2.0'}
+  /typescript/5.0.4:
+    resolution: {integrity: sha512-cW9T5W9xY37cc+jfEnaUvX91foxtHkza3Nw3wkoF4sSlKn0MONdkdEndig/qPBWXNkmplh3NzayQzCiHM4/hqw==}
+    engines: {node: '>=12.20'}
     hasBin: true
     dev: true
 
