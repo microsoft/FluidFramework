@@ -110,7 +110,6 @@ const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<Te
 ];
 deepFreeze(testChanges);
 
-//
 // TODO: Refactor these tests to support moves
 describe("SequenceField - Rebaser Axioms", () => {
 	/**
@@ -250,7 +249,6 @@ describe("SequenceField - Rebaser Axioms", () => {
 		}
 	});
 
-	//
 	describe("A⁻¹ ○ A === ε", () => {
 		for (const [name, makeChange] of testChanges) {
 			it(`${name}⁻¹ ○ ${name} === ε`, () => {
