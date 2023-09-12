@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { LocalReferenceTracker } from "../sequence";
+import { Client } from "@fluidframework/merge-tree";
 import { IntervalType, IIntervalHelpers, ISerializableInterval } from "../intervals";
 import { IntervalNode, IntervalTree } from "../intervalTree";
+// import { SharedString } from "../sharedString";
 import { IntervalIndex } from "./intervalIndex";
 
 export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInterval>
@@ -31,14 +32,11 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 	implements IOverlappingIntervalsIndex<TInterval>
 {
 	protected readonly intervalTree = new IntervalTree<TInterval>();
-	protected readonly localReferenceTracker: LocalReferenceTracker;
+	protected readonly client: Client;
 	protected readonly helpers: IIntervalHelpers<TInterval>;
 
-	constructor(
-		localReferenceTracker: LocalReferenceTracker,
-		helpers: IIntervalHelpers<TInterval>,
-	) {
-		this.localReferenceTracker = localReferenceTracker;
+	constructor(client: Client, helpers: IIntervalHelpers<TInterval>) {
+		this.client = client;
 		this.helpers = helpers;
 	}
 
@@ -76,7 +74,7 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 				"transient",
 				start,
 				end,
-				this.localReferenceTracker,
+				this.client,
 				IntervalType.Transient,
 			);
 
@@ -140,7 +138,7 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 			"transient",
 			start,
 			end,
-			this.localReferenceTracker,
+			this.client,
 			IntervalType.Transient,
 		);
 
@@ -158,8 +156,8 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 }
 
 export function createOverlappingIntervalsIndex<TInterval extends ISerializableInterval>(
-	localReferenceTracker: LocalReferenceTracker,
+	client: Client,
 	helpers: IIntervalHelpers<TInterval>,
 ): IOverlappingIntervalsIndex<TInterval> {
-	return new OverlappingIntervalsIndex<TInterval>(localReferenceTracker, helpers);
+	return new OverlappingIntervalsIndex<TInterval>(client, helpers);
 }

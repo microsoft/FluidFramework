@@ -6,6 +6,7 @@
 /* eslint-disable no-bitwise */
 
 import {
+	Client,
 	ICombiningOp,
 	ISegment,
 	LocalReferencePosition,
@@ -25,7 +26,6 @@ import {
 import { assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { UsageError } from "@fluidframework/telemetry-utils";
-import { LocalReferenceTracker } from "../sequence";
 import {
 	IIntervalHelpers,
 	ISerializableInterval,
@@ -71,7 +71,7 @@ export class SequenceInterval implements ISerializableInterval {
 	public propertyManager: PropertiesManager;
 
 	constructor(
-		private readonly localReferenceTracker: LocalReferenceTracker,
+		private readonly client: Client,
 		/**
 		 * Start endpoint of this interval.
 		 * @remarks This endpoint can be resolved into a character position using the SharedString it's a part of.
@@ -134,14 +134,12 @@ export class SequenceInterval implements ISerializableInterval {
 	 * @internal
 	 */
 	public serialize(): ISerializedInterval {
-		const startPosition = this.localReferenceTracker.localReferencePositionToPosition(
-			this.start,
-		);
-		const endPosition = this.localReferenceTracker.localReferencePositionToPosition(this.end);
+		const startPosition = this.client.localReferencePositionToPosition(this.start);
+		const endPosition = this.client.localReferencePositionToPosition(this.end);
 		const serializedInterval: ISerializedInterval = {
 			end: endPosition,
 			intervalType: this.intervalType,
-			sequenceNumber: this.localReferenceTracker.getCurrentSeq(),
+			sequenceNumber: this.client.getCurrentSeq(),
 			start: startPosition,
 		};
 
@@ -160,7 +158,7 @@ export class SequenceInterval implements ISerializableInterval {
 	 */
 	public clone() {
 		return new SequenceInterval(
-			this.localReferenceTracker,
+			this.client,
 			this.start,
 			this.end,
 			this.intervalType,
@@ -233,7 +231,7 @@ export class SequenceInterval implements ISerializableInterval {
 	 */
 	public union(b: SequenceInterval) {
 		return new SequenceInterval(
-			this.localReferenceTracker,
+			this.client,
 			minReferencePosition(this.start, b.start),
 			maxReferencePosition(this.end, b.end),
 			this.intervalType,
@@ -258,8 +256,8 @@ export class SequenceInterval implements ISerializableInterval {
 	 * @returns whether this interval overlaps two numerical positions.
 	 */
 	public overlapsPos(bstart: number, bend: number) {
-		const startPos = this.localReferenceTracker.localReferencePositionToPosition(this.start);
-		const endPos = this.localReferenceTracker.localReferencePositionToPosition(this.end);
+		const startPos = this.client.localReferencePositionToPosition(this.start);
+		const endPos = this.client.localReferencePositionToPosition(this.end);
 		return endPos > bstart && startPos < bend;
 	}
 
@@ -287,7 +285,7 @@ export class SequenceInterval implements ISerializableInterval {
 		let startRef = this.start;
 		if (start !== undefined) {
 			startRef = createPositionReference(
-				this.localReferenceTracker,
+				this.client,
 				start,
 				getRefType(this.start.refType),
 				op,
@@ -303,7 +301,7 @@ export class SequenceInterval implements ISerializableInterval {
 		let endRef = this.end;
 		if (end !== undefined) {
 			endRef = createPositionReference(
-				this.localReferenceTracker,
+				this.client,
 				end,
 				getRefType(this.end.refType),
 				op,
@@ -316,12 +314,7 @@ export class SequenceInterval implements ISerializableInterval {
 			}
 		}
 
-		const newInterval = new SequenceInterval(
-			this.localReferenceTracker,
-			startRef,
-			endRef,
-			this.intervalType,
-		);
+		const newInterval = new SequenceInterval(this.client, startRef, endRef, this.intervalType);
 		if (this.properties) {
 			newInterval.initializeProperties();
 			this.propertyManager.copyTo(
@@ -343,8 +336,8 @@ export class SequenceInterval implements ISerializableInterval {
 	}
 }
 
-export function createPositionReferenceFromSegoff(
-	localReferenceTracker: LocalReferenceTracker,
+export function createPositionReferenceFromSegoff<T extends ISegment>(
+	client: Client,
 	segoff: { segment: ISegment | undefined; offset: number | undefined },
 	refType: ReferenceType,
 	op?: ISequencedDocumentMessage,
@@ -353,8 +346,8 @@ export function createPositionReferenceFromSegoff(
 	slidingPreference?: SlidingPreference,
 ): LocalReferencePosition {
 	if (segoff.segment) {
-		const ref = localReferenceTracker.createLocalReferencePosition(
-			segoff.segment,
+		const ref = client.createLocalReferencePosition(
+			segoff.segment as T,
 			segoff.offset,
 			refType,
 			undefined,
@@ -380,8 +373,8 @@ export function createPositionReferenceFromSegoff(
 	return createDetachedLocalReferencePosition(refType);
 }
 
-function createPositionReference(
-	localReferenceTracker: LocalReferenceTracker,
+function createPositionReference<T extends ISegment>(
+	client: Client,
 	pos: number,
 	refType: ReferenceType,
 	op?: ISequencedDocumentMessage,
@@ -395,7 +388,7 @@ function createPositionReference(
 			(refType & ReferenceType.SlideOnRemove) !== 0,
 			0x2f5 /* op create references must be SlideOnRemove */,
 		);
-		segoff = localReferenceTracker.getContainingSegment(pos, {
+		segoff = client.getContainingSegment(pos, {
 			referenceSequenceNumber: op.referenceSequenceNumber,
 			clientId: op.clientId,
 		});
@@ -405,11 +398,11 @@ function createPositionReference(
 			(refType & ReferenceType.SlideOnRemove) === 0 || !!fromSnapshot,
 			0x2f6 /* SlideOnRemove references must be op created */,
 		);
-		segoff = localReferenceTracker.getContainingSegment(pos, undefined, localSeq);
+		segoff = client.getContainingSegment(pos, undefined, localSeq);
 	}
 
 	return createPositionReferenceFromSegoff(
-		localReferenceTracker,
+		client,
 		segoff,
 		refType,
 		op,
@@ -419,11 +412,11 @@ function createPositionReference(
 	);
 }
 
-export function createSequenceInterval(
+export function createSequenceInterval<T extends ISegment>(
 	label: string,
 	start: number,
 	end: number,
-	localReferenceTracker: LocalReferenceTracker,
+	client: Client,
 	intervalType: IntervalType,
 	op?: ISequencedDocumentMessage,
 	fromSnapshot?: boolean,
@@ -452,7 +445,7 @@ export function createSequenceInterval(
 	}
 
 	const startLref = createPositionReference(
-		localReferenceTracker,
+		client,
 		start,
 		beginRefType,
 		op,
@@ -462,7 +455,7 @@ export function createSequenceInterval(
 	);
 
 	const endLref = createPositionReference(
-		localReferenceTracker,
+		client,
 		end,
 		endRefType,
 		op,
@@ -478,7 +471,7 @@ export function createSequenceInterval(
 	endLref.addProperties(rangeProp);
 
 	const ival = new SequenceInterval(
-		localReferenceTracker,
+		client,
 		startLref,
 		endLref,
 		intervalType,

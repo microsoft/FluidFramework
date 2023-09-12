@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { PropertyAction, RedBlackTree } from "@fluidframework/merge-tree";
+import { Client, PropertyAction, RedBlackTree } from "@fluidframework/merge-tree";
 import { assert } from "@fluidframework/core-utils";
 import { IIntervalHelpers, ISerializableInterval, IntervalType } from "../intervals";
-import { LocalReferenceTracker } from "../sequence";
 import { IntervalIndex } from "./intervalIndex";
 import { HasComparisonOverride, compareOverrideables, forceCompare } from "./intervalIndexUtils";
 
@@ -29,8 +28,8 @@ class StartpointInRangeIndex<TInterval extends ISerializableInterval>
 	private readonly intervalTree;
 
 	constructor(
+		private readonly client: Client,
 		private readonly helpers: IIntervalHelpers<TInterval>,
-		private readonly localReferenceTracker: LocalReferenceTracker,
 	) {
 		this.intervalTree = new RedBlackTree<TInterval, TInterval>((a: TInterval, b: TInterval) => {
 			assert(
@@ -81,7 +80,7 @@ class StartpointInRangeIndex<TInterval extends ISerializableInterval>
 			"transient",
 			start,
 			start,
-			this.localReferenceTracker,
+			this.client,
 			IntervalType.Transient,
 		);
 
@@ -89,7 +88,7 @@ class StartpointInRangeIndex<TInterval extends ISerializableInterval>
 			"transient",
 			end,
 			end,
-			this.localReferenceTracker,
+			this.client,
 			IntervalType.Transient,
 		);
 
@@ -103,8 +102,8 @@ class StartpointInRangeIndex<TInterval extends ISerializableInterval>
 }
 
 export function createStartpointInRangeIndex<TInterval extends ISerializableInterval>(
+	client: Client,
 	helpers: IIntervalHelpers<TInterval>,
-	localReferenceTracker: LocalReferenceTracker,
 ): IStartpointInRangeIndex<TInterval> {
-	return new StartpointInRangeIndex<TInterval>(helpers, localReferenceTracker);
+	return new StartpointInRangeIndex<TInterval>(client, helpers);
 }

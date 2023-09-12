@@ -356,7 +356,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 	}
 }
 
-class SequenceIntervalCollectionFactory
+class SequenceIntervalCollectionFactory<T extends ISegment>
 	implements IValueFactory<IntervalCollection<SequenceInterval>>
 {
 	public load(
@@ -380,7 +380,7 @@ class SequenceIntervalCollectionFactory
 	}
 }
 
-export class SequenceIntervalCollectionValueType
+export class SequenceIntervalCollectionValueType<T extends ISegment>
 	implements IValueType<IntervalCollection<SequenceInterval>>
 {
 	public static Name = "sharedStringIntervalCollection";

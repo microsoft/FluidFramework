@@ -4,6 +4,7 @@
  */
 
 import {
+	Client,
 	ISegment,
 	ReferenceType,
 	compareReferencePositions,
@@ -15,16 +16,16 @@ import {
 	SequenceInterval,
 	createPositionReferenceFromSegoff,
 } from "../intervals";
-import { LocalReferenceTracker } from "../sequence";
+import { SharedString } from "../sharedString";
 import { SequenceIntervalIndexes } from "./sequenceIntervalIndexes";
 import { OverlappingIntervalsIndex } from "./overlappingIntervalsIndex";
 
-class OverlappingSequenceIntervalsIndex
+class OverlappingSequenceIntervalsIndex<T extends ISegment>
 	extends OverlappingIntervalsIndex<SequenceInterval>
 	implements SequenceIntervalIndexes.Overlapping
 {
-	constructor(localReferenceTracker: LocalReferenceTracker) {
-		super(localReferenceTracker, sequenceIntervalHelpers);
+	constructor(sharedString: SharedString) {
+		super(sharedString as unknown as Client, sequenceIntervalHelpers);
 	}
 
 	public findOverlappingIntervalsBySegoff(
@@ -36,13 +37,13 @@ class OverlappingSequenceIntervalsIndex
 		}
 
 		const startLref = createPositionReferenceFromSegoff(
-			this.localReferenceTracker,
+			this.client,
 			startSegoff,
 			ReferenceType.Transient,
 		);
 
 		const endLref = createPositionReferenceFromSegoff(
-			this.localReferenceTracker,
+			this.client,
 			endSegoff,
 			ReferenceType.Transient,
 		);
@@ -52,7 +53,7 @@ class OverlappingSequenceIntervalsIndex
 		}
 
 		const transientInterval = new SequenceInterval(
-			this.localReferenceTracker,
+			this.client,
 			startLref,
 			endLref,
 			IntervalType.Transient,
@@ -65,7 +66,7 @@ class OverlappingSequenceIntervalsIndex
 }
 
 export function createOverlappingSequenceIntervalsIndex(
-	localReferenceTracker: LocalReferenceTracker,
+	sharedString: SharedString,
 ): SequenceIntervalIndexes.Overlapping {
-	return new OverlappingSequenceIntervalsIndex(localReferenceTracker);
+	return new OverlappingSequenceIntervalsIndex(sharedString);
 }

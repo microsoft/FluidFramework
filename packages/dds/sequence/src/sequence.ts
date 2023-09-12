@@ -112,14 +112,6 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 	);
 }
 
-export type LocalReferenceTracker = Pick<
-	Client,
-	| "getContainingSegment"
-	| "localReferencePositionToPosition"
-	| "getCurrentSeq"
-	| "createLocalReferencePosition"
->;
-
 export abstract class SharedSegmentSequence<T extends ISegment>
 	extends SharedObject<ISharedSegmentSequenceEvents>
 	implements ISharedIntervalCollection<SequenceInterval>, MergeTreeRevertibleDriver
@@ -199,9 +191,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	}
 
 	protected client: Client;
-
-	// The object to track the local reference of the associated client
-	public localReferenceTracker: LocalReferenceTracker | undefined;
 
 	/** `Deferred` that triggers once the object is loaded */
 	protected loadedDeferred = new Deferred<void>();
@@ -289,11 +278,15 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * If the position is past the end of the string, `segment` and `offset` on the returned object may be undefined.
 	 * @param pos - Character position (index) into the current local view of the SharedString.
 	 */
-	public getContainingSegment(pos: number): {
+	public getContainingSegment(
+		pos: number,
+		sequenceArgs?: Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">,
+		localSeq?: number,
+	): {
 		segment: T | undefined;
 		offset: number | undefined;
 	} {
-		return this.client.getContainingSegment<T>(pos);
+		return this.client.getContainingSegment<T>(pos, sequenceArgs, localSeq);
 	}
 
 	/**
@@ -348,7 +341,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 */
 	public createLocalReferencePosition(
 		segment: T,
-		offset: number,
+		offset: number | undefined,
 		refType: ReferenceType,
 		properties: PropertySet | undefined,
 		slidingPreference?: SlidingPreference,
@@ -495,44 +488,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 */
 	public getIntervalCollection(label: string): IIntervalCollection<SequenceInterval> {
 		return this.intervalCollections.get(label);
-	}
-
-	/**
-	 * The collection of API's to track the local reference of the associated client
-	 */
-	public get intervalCollectionClient(): LocalReferenceTracker {
-		return {
-			createLocalReferencePosition: (
-				segment: ISegment,
-				offset: number | undefined,
-				refType: ReferenceType,
-				properties: PropertySet | undefined,
-				slidingPreference?: SlidingPreference,
-			) => {
-				return this.client.createLocalReferencePosition(
-					segment,
-					offset,
-					refType,
-					properties,
-					slidingPreference,
-				);
-			},
-
-			getContainingSegment: <U extends ISegment>(pos: number) => {
-				return this.getContainingSegment(pos) as {
-					segment: U | undefined;
-					offset: number | undefined;
-				};
-			},
-
-			localReferencePositionToPosition: (lref: ReferencePosition) => {
-				return this.localReferencePositionToPosition(lref);
-			},
-
-			getCurrentSeq: () => {
-				return this.getCurrentSeq();
-			},
-		};
 	}
 
 	/**

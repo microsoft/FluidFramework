@@ -61,8 +61,8 @@ describe("findOverlappingIntervalsBySegoff", () => {
 	let results;
 
 	const queryIntervalsByPositions = (start: number, end: number): Iterable<SequenceInterval> => {
-		const startSegOff = testSharedString.intervalCollectionClient.getContainingSegment(start);
-		const endSegOff = testSharedString.intervalCollectionClient.getContainingSegment(end);
+		const startSegOff = testSharedString.getContainingSegment(start);
+		const endSegOff = testSharedString.getContainingSegment(end);
 
 		const intervals = overlappingSequenceIntervalsIndex.findOverlappingIntervalsBySegoff(
 			startSegOff,
@@ -81,9 +81,8 @@ describe("findOverlappingIntervalsBySegoff", () => {
 			"test-shared-string",
 			SharedStringFactory.Attributes,
 		);
-		overlappingSequenceIntervalsIndex = createOverlappingSequenceIntervalsIndex(
-			testSharedString.intervalCollectionClient,
-		);
+		overlappingSequenceIntervalsIndex =
+			createOverlappingSequenceIntervalsIndex(testSharedString);
 
 		testSharedString.initializeLocal();
 		collection = testSharedString.getIntervalCollection("test");
