@@ -3,17 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 import { buildChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest";
-// eslint-disable-next-line import/no-internal-modules
-import { tryGetChunk } from "../../../feature-libraries/chunked-forest/chunk";
 import {
 	IChunker,
-	basicChunkTree,
-	basicOnlyChunkPolicy,
 	makeTreeChunker,
 	Chunker,
 	polymorphic,
@@ -23,27 +17,9 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree";
 
-import {
-	mintRevisionTag,
-	initializeForest,
-	InMemoryStoredSchemaRepository,
-	JsonableTree,
-	mapCursorField,
-	moveToDetachedField,
-	rootFieldKey,
-	Delta,
-	IForestSubscription,
-	StoredSchemaRepository,
-	applyDelta,
-} from "../../../core";
-import { jsonObject } from "../../../domains";
-import {
-	defaultSchemaPolicy,
-	jsonableTreeFromCursor,
-	singleTextCursor,
-} from "../../../feature-libraries";
+import { StoredSchemaRepository } from "../../../core";
+import { defaultSchemaPolicy } from "../../../feature-libraries";
 import { testForest } from "../../forestTestSuite";
-import { jsonSequenceRootSchema, mockIntoDelta } from "../../utils";
 
 const chunkers: [string, (schema: StoredSchemaRepository) => IChunker][] = [
 	[

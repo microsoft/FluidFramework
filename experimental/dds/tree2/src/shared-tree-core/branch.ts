@@ -115,7 +115,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	SharedTreeBranchEvents<TEditor, TChange>
 > {
 	public readonly editor: TEditor;
-	private readonly transactions = new TransactionStack<TChange>();
+	private readonly transactions = new TransactionStack();
 	private disposed = false;
 	/**
 	 * Construct a new branch.

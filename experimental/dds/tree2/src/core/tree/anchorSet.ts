@@ -22,7 +22,6 @@ import {
 	PlaceIndex,
 	UpPath,
 	Range,
-	AttachedRangeUpPath,
 	PlaceUpPath,
 	RangeUpPath,
 } from "./pathTree";
@@ -697,11 +696,11 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				kind: ReplaceKind,
 			): void {
 				assert(this.parentField !== undefined, "Must be in a field in order to replace");
-				const oldContentPath: AttachedRangeUpPath = brand({
+				const oldContentPath: RangeUpPath = {
 					parent: this.parent,
 					field: this.parentField,
 					...oldContent,
-				});
+				};
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
 						pathVisitor.beforeReplace(

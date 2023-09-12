@@ -130,14 +130,12 @@ import { ITreeCursorSynchronous } from "./cursor";
  * Immutable, therefore safe to retain for async processing.
  * @alpha
  */
-export interface Root<TTree = ProtoNode> extends FieldMarks<TTree> {
-	// readonly detached?: readonly DetachedMark<TTree>[];
-}
+export type Root<TTree = ProtoNode> = FieldMarks<TTree>;
 
-// export type DetachedMark<TTree = ProtoNode> = Create<TTree> | DetachedModify<TTree> | Destroy;
-// export interface DetachedModify<TTree = ProtoNode> extends Modify<TTree>, IsDetachedMark {}
-// export interface DetachedMoveOut<TTree = ProtoNode> extends MoveOut<TTree>, IsDetachedMark {}
-
+/**
+ * A Delta mark that targets detached content.
+ * @alpha
+ */
 export interface IsDetachedMark {
 	/**
 	 * When specified, indicates that the target node(s) are detached, and specifies the ID associated with the first node.

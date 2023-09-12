@@ -413,8 +413,12 @@ export const StablePlaceInternal = {
 export const StableRangeInternal = {
 	/**
 	 * Factory for producing a `StableRange` from a start `StablePlace` to an end `StablePlace`.
+	 *
 	 * @example
+	 *
+	 * ```typescript
 	 * StableRange.from(StablePlace.before(startNode)).to(StablePlace.after(endNode))
+	 * ```
 	 */
 	from: (start: StablePlaceInternal): { to: (end: StablePlaceInternal) => StableRangeInternal } => ({
 		to: (end: StablePlaceInternal): StableRangeInternal => {

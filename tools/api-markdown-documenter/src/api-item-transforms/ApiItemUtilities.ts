@@ -213,7 +213,9 @@ export function getLinkUrlForApiItem(
 /**
  * Gets the unscoped version of the provided package's name.
  *
- * @example For the package `@foo/bar`, this would return `bar`.
+ * @example
+ *
+ * For the package `@foo/bar`, this would return `bar`.
  */
 export function getUnscopedPackageName(apiPackage: ApiPackage): string {
 	return PackageName.getUnscopedName(apiPackage.displayName);
@@ -567,7 +569,7 @@ export function doesItemGenerateHierarchy(
  * @param apiItems - The list of items being filtered.
  * @param kinds - The kinds of items to consider. An item is considered a match if it matches any kind in this list.
  *
- * @returns - The filtered list of items.
+ * @returns The filtered list of items.
  */
 export function filterByKind(apiItems: readonly ApiItem[], kinds: ApiItemKind[]): ApiItem[] {
 	return apiItems.filter((apiMember) => kinds.includes(apiMember.kind));

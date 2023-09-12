@@ -110,7 +110,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	/**
 	 * Used to encode/decode messages sent to/received from the Fluid runtime.
 	 *
-	 * @remarks - Since there is currently only one format, this can just be cached on the class.
+	 * @remarks Since there is currently only one format, this can just be cached on the class.
 	 * With more write formats active, it may make sense to keep around the "usual" format codec
 	 * (the one for the current persisted configuration) and resolve codecs for different versions
 	 * as necessary (e.g. an upgrade op came in, or the configuration changed within the collab window

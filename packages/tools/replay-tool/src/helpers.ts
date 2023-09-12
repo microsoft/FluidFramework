@@ -63,6 +63,7 @@ export function compareWithReferenceSnapshot(
 	 * package versions with X before we compare them.
 	 *
 	 * @example
+	 *
 	 * This is how it will look:
 	 * Before replace:
 	 *

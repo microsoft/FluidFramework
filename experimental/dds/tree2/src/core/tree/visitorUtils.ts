@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { brand } from "../../util";
-import { IdAllocator, idAllocatorFromMaxId } from "../../feature-libraries";
+import { brand, IdAllocator, idAllocatorFromMaxId } from "../../util";
 import * as Delta from "./delta";
 import { DetachedPlaceUpPath, DetachedRangeUpPath, PlaceIndex, Range } from "./pathTree";
 import { ForestRootId, TreeIndex } from "./treeIndex";
@@ -12,7 +11,7 @@ import { ReplaceKind } from "./visitPath";
 import { DeltaVisitor, visitDelta } from "./visitDelta";
 
 export function makeTreeIndex(prefix: string = "Temp"): TreeIndex {
-	return new TreeIndex(prefix, idAllocatorFromMaxId() as unknown as IdAllocator<ForestRootId>);
+	return new TreeIndex(prefix, idAllocatorFromMaxId() as IdAllocator<ForestRootId>);
 }
 
 export function applyDelta(

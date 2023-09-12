@@ -6,10 +6,11 @@
 import { assert } from "@fluidframework/core-utils";
 import {
 	Brand,
+	IdAllocator,
 	NestedMap,
 	brand,
 	deleteFromNestedMap,
-	fail,
+	populateNestedMap,
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../util";
@@ -29,23 +30,55 @@ export interface Entry {
 	root: ForestRootId;
 }
 
+type Major = string | number | undefined;
+type Minor = number;
+
 /**
  * The tree index records detached field ids and associates them with a change atom ID.
  */
 export class TreeIndex {
-	private readonly detachedNodeToField: NestedMap<string | number | undefined, number, Entry> =
-		new Map<string | number | undefined, Map<number, Entry>>();
+	private readonly detachedNodeToField: NestedMap<Major, Minor, Entry> = new Map<
+		Major,
+		Map<Minor, Entry>
+	>();
 
 	public constructor(
 		private readonly name: string,
-		private readonly rootIdAllocator: (count: number) => ForestRootId,
-		private readonly tag: number = Math.random(),
+		private readonly rootIdAllocator: IdAllocator<ForestRootId>,
 	) {}
+
+	public clone(): TreeIndex {
+		const clone = new TreeIndex(this.name, this.rootIdAllocator);
+		populateNestedMap(this.detachedNodeToField, clone.detachedNodeToField);
+		return clone;
+	}
 
 	public *entries(): Generator<Entry & { id: Delta.DetachedNodeId }> {
 		for (const [major, innerMap] of this.detachedNodeToField) {
-			for (const [minor, entry] of innerMap) {
-				yield { id: { major, minor }, ...entry };
+			if (major !== undefined) {
+				for (const [minor, entry] of innerMap) {
+					yield { id: { major, minor }, ...entry };
+				}
+			} else {
+				for (const [minor, entry] of innerMap) {
+					yield { id: { minor }, ...entry };
+				}
+			}
+		}
+	}
+
+	public updateMajor(current: Major, updated: Major) {
+		const innerCurrent = this.detachedNodeToField.get(current);
+		if (innerCurrent !== undefined) {
+			this.detachedNodeToField.delete(current);
+			const innerUpdated = this.detachedNodeToField.get(updated);
+			if (innerUpdated === undefined) {
+				this.detachedNodeToField.set(updated, innerCurrent);
+			} else {
+				for (const [minor, entry] of innerCurrent) {
+					assert(innerUpdated.get(minor) === undefined, "Collision during index update");
+					innerUpdated.set(minor, entry);
+				}
 			}
 		}
 	}
@@ -64,7 +97,7 @@ export class TreeIndex {
 	 */
 	public tryGetEntry(id: Delta.DetachedNodeId): Entry | undefined {
 		const entry = tryGetFromNestedMap(this.detachedNodeToField, id.major, id.minor);
-		console.log(this.tag, "tryGetEntry", id.major, id.minor, entry);
+		// console.log(this.tag, "tryGetEntry", id.major, id.minor, entry);
 		return entry;
 	}
 
@@ -87,7 +120,7 @@ export class TreeIndex {
 	}
 
 	public deleteEntry(nodeId: Delta.DetachedNodeId): void {
-		console.log(this.tag, "deleteEntry", nodeId.major, nodeId.minor);
+		// console.log(this.tag, "deleteEntry", nodeId.major, nodeId.minor);
 		const found = deleteFromNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor);
 		assert(found, "Unable to delete unknown entry");
 	}
@@ -101,7 +134,7 @@ export class TreeIndex {
 		const entry = { field, root };
 
 		if (nodeId !== undefined) {
-			console.log(this.tag, "createEntry", nodeId.major, nodeId.minor, entry);
+			// console.log(this.tag, "createEntry", nodeId.major, nodeId.minor, entry);
 			setInNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor, entry);
 		}
 		return entry;

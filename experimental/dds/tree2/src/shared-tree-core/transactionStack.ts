@@ -9,7 +9,7 @@ import { fail } from "../util";
 /**
  * A helper class that organizes the state needed for managing nesting transactions.
  */
-export class TransactionStack<TChange> {
+export class TransactionStack {
 	private readonly stack: {
 		startRevision: RevisionTag;
 		dispose: () => void;

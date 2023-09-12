@@ -96,6 +96,26 @@ export type AnchorSlot<TContent> = BrandedKey<Opaque<Brand<number, "AnchorSlot">
 export function anchorSlot<TContent>(): AnchorSlot<TContent>;
 
 // @alpha
+export interface AnnouncedVisitor extends DeltaVisitor {
+    // (undocumented)
+    afterAttach(source: DetachedPlaceUpPath, destination: Range_2): void;
+    // (undocumented)
+    afterCreate(range: Range_2, content: Delta.ProtoNodes): void;
+    // (undocumented)
+    afterDetach(source: PlaceIndex, destination: DetachedRangeUpPath): void;
+    // (undocumented)
+    afterReplace(newContentSource: DetachedPlaceUpPath, newContent: Range_2, oldContent: DetachedRangeUpPath, kind: ReplaceKind): void;
+    // (undocumented)
+    beforeAttach(source: DetachedRangeUpPath, destination: PlaceIndex): void;
+    // (undocumented)
+    beforeDestroy(range: Range_2): void;
+    // (undocumented)
+    beforeDetach(source: Range_2, destination: DetachedPlaceUpPath): void;
+    // (undocumented)
+    beforeReplace(newContent: DetachedRangeUpPath, oldContent: Range_2, oldContentDestination: DetachedPlaceUpPath, kind: ReplaceKind): void;
+}
+
+// @alpha
 export const Any: "Any";
 
 // @alpha
@@ -132,9 +152,6 @@ type ArrayToUnion<T extends readonly unknown[]> = T extends readonly (infer TVal
 
 // @alpha
 type Assume<TInput, TAssumeToBe> = TInput extends TAssumeToBe ? TInput : TAssumeToBe;
-
-// @public
-export type AttachedRangeUpPath = Brand<RangeUpPath, "AttachedRangeUpPath">;
 
 // @alpha
 export interface BatchBindingContext extends BindingContext {
@@ -474,7 +491,10 @@ interface DetachedNodeId {
     minor: number;
 }
 
-// @public
+// @alpha
+export type DetachedPlaceUpPath = Brand<Omit<PlaceUpPath, "parent">, "DetachedRangeUpPath">;
+
+// @alpha
 export type DetachedRangeUpPath = Brand<Omit<RangeUpPath, "parent">, "DetachedRangeUpPath">;
 
 // @alpha
@@ -853,7 +873,7 @@ export interface ICodecOptions {
 }
 
 // @alpha
-export type IdAllocator<TId extends Brand<number, string> = ChangesetLocalId> = (count?: number) => TId;
+export type IdAllocator<TId = number> = (count?: number) => TId;
 
 // @alpha (undocumented)
 export interface IDecoder<TDecoded, TEncoded> {
@@ -974,6 +994,7 @@ declare namespace InternalTypedSchemaTypes {
         StructSchemaSpecification,
         MapSchemaSpecification,
         LeafSchemaSpecification,
+        MapFieldSchema,
         FlexList,
         FlexListToNonLazyArray,
         ConstantFlexListToNonLazyArray,
@@ -1068,7 +1089,7 @@ type isAny<T> = boolean extends (T extends {} ? true : false) ? true : false;
 // @alpha
 export function isContextuallyTypedNodeDataObject(data: ContextuallyTypedNodeData | undefined): data is ContextuallyTypedNodeDataObject;
 
-// @public (undocumented)
+// @alpha
 interface IsDetachedMark {
     readonly detachedNodeId: DetachedNodeId;
 }
@@ -1083,7 +1104,10 @@ export function isEditableTree(field: UnwrappedEditableField): field is Editable
 export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : false;
 
 // @alpha
-export interface ISharedTree extends ISharedObject, ISharedTreeView {
+export interface ISharedTree extends ISharedObject {
+    schematize<TRoot extends FieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): ISharedTreeView;
+    // @deprecated
+    readonly view: ISharedTreeView;
 }
 
 // @alpha
@@ -1110,6 +1134,7 @@ export interface ISharedTreeView extends AnchorLocator {
     redo(): void;
     get root(): UnwrappedEditableField;
     readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
+    // @deprecated (undocumented)
     schematize<TRoot extends FieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): ISharedTreeView;
     setContent(data: NewFieldContent): void;
     readonly storedSchema: StoredSchemaRepository;
@@ -1309,9 +1334,12 @@ interface MakeNominal {
 }
 
 // @alpha
+type MapFieldSchema = FieldSchema<typeof FieldKinds.optional | typeof FieldKinds.sequence>;
+
+// @alpha
 interface MapSchemaSpecification {
     // (undocumented)
-    readonly mapFields: FieldSchema;
+    readonly mapFields: MapFieldSchema;
 }
 
 // @alpha
@@ -1468,6 +1496,9 @@ export interface NodeExistsConstraint {
 }
 
 // @alpha
+export type NodeIndex = number;
+
+// @alpha
 export const nodeKeyField: {
     __n_id__: FieldSchema<NodeKeyFieldKind, [TreeSchema<TreeSchemaIdentifier, {
     leafValue: ValueSchema.String;
@@ -1584,6 +1615,14 @@ export interface PathVisitor {
 }
 
 // @alpha
+export type PlaceIndex = number;
+
+// @alpha
+export interface PlaceUpPath<TUpPath extends UpPath = UpPath> extends FieldUpPath<TUpPath> {
+    readonly index: PlaceIndex;
+}
+
+// @alpha
 export function prefixFieldPath(prefix: PathRootPrefix | undefined, path: FieldUpPath): FieldUpPath;
 
 // @alpha
@@ -1604,7 +1643,7 @@ type ProtoNodes = readonly ProtoNode[];
 // @alpha
 export const proxyTargetSymbol: unique symbol;
 
-// @public (undocumented)
+// @alpha
 interface Range_2 {
     readonly end: PlaceIndex;
     readonly start: PlaceIndex;
@@ -1621,7 +1660,7 @@ export interface RangeEntry<T> {
     value: T;
 }
 
-// @public
+// @alpha
 export interface RangeUpPath<TUpPath extends UpPath = UpPath> extends FieldUpPath<TUpPath>, Range_2 {
 }
 
@@ -1702,8 +1741,7 @@ export interface RevisionMetadataSource {
 export type RevisionTag = StableId;
 
 // @alpha
-interface Root<TTree = ProtoNode> extends FieldMarks<TTree> {
-}
+type Root<TTree = ProtoNode> = FieldMarks<TTree>;
 
 // @alpha
 export interface RootField {
@@ -1928,7 +1966,7 @@ export interface TreeAdapter {
 
 // @alpha
 export interface TreeContent<TRoot extends FieldSchema = FieldSchema> extends SchemaConfiguration<TRoot> {
-    readonly initialTree: SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Simple> | readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous;
+    readonly initialTree: SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Flexible> | readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous;
 }
 
 // @alpha
@@ -1952,7 +1990,7 @@ export const enum TreeNavigationResult {
     Pending = 0
 }
 
-// @alpha @sealed
+// @alpha
 export class TreeSchema<Name extends string = string, T extends RecursiveTreeSchemaSpecification = TreeSchemaSpecification> {
     constructor(builder: Named<string>, name: Name, info: T);
     // (undocumented)
@@ -1962,7 +2000,7 @@ export class TreeSchema<Name extends string = string, T extends RecursiveTreeSch
     // (undocumented)
     readonly leafValue: WithDefault<Assume<T, TreeSchemaSpecification>["leafValue"], undefined>;
     // (undocumented)
-    readonly mapFields?: FieldSchema;
+    readonly mapFields: WithDefault<Assume<T, TreeSchemaSpecification>["mapFields"], undefined>;
     // (undocumented)
     readonly name: Name & TreeSchemaIdentifier;
     // (undocumented)

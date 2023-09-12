@@ -50,10 +50,14 @@ steps:
           echo "@fluidframework:registry=${{ parameters.feedName }}" >> ./.npmrc
           echo "@fluid-experimental:registry=${{ parameters.feedName }}" >> ./.npmrc
           echo "@fluid-tools:registry=${{ parameters.feedName }}" >> ./.npmrc
+          echo "@fluid-internal:registry=${{ parameters.feedName }}" >> ./.npmrc
           echo "always-auth=true" >> ./.npmrc
           cat .npmrc
-          echo Deleting @fluid-internal packages
-          rm -f fluid-internal-*
+          echo Deleting @fluid-internal packages except fluid-internal-client-utils package
+          for packageName in $(ls fluid-internal-*.tgz | grep -v fluid-internal-client-utils-*.tgz)
+          do
+            rm -f $packageName
+          done
           echo Deleting @fluid-example packages
           rm -f fluid-example-*
     ${{ if eq(parameters.namespace, false) }}:

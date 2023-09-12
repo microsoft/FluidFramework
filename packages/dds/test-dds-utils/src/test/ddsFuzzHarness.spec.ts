@@ -40,9 +40,11 @@ type Model = DDSFuzzModel<SharedNothingFactory, Operation | ChangeConnectionStat
 
 /**
  * Mixes in spying functionality to a DDS fuzz model.
- * @returns - A derived DDS fuzz model alongside spied lists of:
+ * @returns A derived DDS fuzz model alongside spied lists of:
+ *
  * - operations returned by any generator produced by the model's generator factory.
  * If multiple generators are created by the model, all operations end up in this flat list.
+ *
  * - operations processed by the reducer of the model
  *
  * These spy lists are used to validate the behavior of the harness in subsequent tests.

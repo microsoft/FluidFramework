@@ -14,6 +14,7 @@ import {
 	LogLevel,
 	Tagged,
 	ITelemetryBaseProperties,
+	TelemetryBaseEventPropertyType,
 } from "@fluidframework/core-interfaces";
 import { IsomorphicPerformance, performance } from "@fluid-internal/client-utils";
 import { CachedConfigProvider, loggerIsMonitoringContext, mixinMonitoringContext } from "./config";
@@ -784,38 +785,64 @@ function convertToBasePropertyTypeUntagged(
 
 export const tagData = <
 	T extends TelemetryDataTag,
-	V extends Record<string, TelemetryEventPropertyTypeExt>,
+	V extends Record<
+		string,
+		TelemetryBaseEventPropertyType | (() => TelemetryBaseEventPropertyType)
+	>,
 >(
 	tag: T,
 	values: V,
 ): {
 	[P in keyof V]:
-		| {
-				value: Exclude<V[P], undefined>;
-				tag: T;
-		  }
+		| (V[P] extends () => TelemetryBaseEventPropertyType
+				? () => {
+						value: ReturnType<V[P]>;
+						tag: T;
+				  }
+				: {
+						value: Exclude<V[P], undefined>;
+						tag: T;
+				  })
 		| (V[P] extends undefined ? undefined : never);
 } =>
-	(Object.entries(values) as [keyof V, V[keyof V]][])
-		.filter((e): e is [keyof V, Exclude<V[keyof V], undefined>] => e[1] !== undefined)
-		// eslint-disable-next-line unicorn/no-array-reduce
-		.reduce<{
-			[P in keyof V]:
-				| (V[P] extends undefined ? undefined : never)
-				| { value: Exclude<V[P], undefined>; tag: T };
-		}>((pv, cv) => {
-			pv[cv[0]] = { tag, value: cv[1] };
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	Object.entries(values)
+		.filter((e) => e[1] !== undefined)
+		// eslint-disable-next-line unicorn/no-array-reduce, unicorn/prefer-object-from-entries
+		.reduce((pv, cv) => {
+			const [key, value] = cv;
+			if (typeof value === "function") {
+				// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+				pv[key] = () => {
+					return { tag, value: value() };
+				};
+			} else {
+				pv[key] = { tag, value };
+			}
 			return pv;
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-		}, {} as any);
+		}, {}) as ReturnType<typeof tagData>;
 
-export const tagCodeArtifacts = <T extends Record<string, TelemetryEventPropertyTypeExt>>(
+/**
+ * Helper function to tag telemetry properties as CodeArtifacts. It supports properties of type
+ * TelemetryBaseEventPropertyType as well as getters that return TelemetryBaseEventPropertyType.
+ */
+export const tagCodeArtifacts = <
+	T extends Record<
+		string,
+		TelemetryBaseEventPropertyType | (() => TelemetryBaseEventPropertyType)
+	>,
+>(
 	values: T,
 ): {
 	[P in keyof T]:
-		| {
-				value: Exclude<T[P], undefined>;
-				tag: TelemetryDataTag.CodeArtifact;
-		  }
+		| (T[P] extends () => TelemetryBaseEventPropertyType
+				? () => {
+						value: ReturnType<T[P]>;
+						tag: TelemetryDataTag.CodeArtifact;
+				  }
+				: {
+						value: Exclude<T[P], undefined>;
+						tag: TelemetryDataTag.CodeArtifact;
+				  })
 		| (T[P] extends undefined ? undefined : never);
-} => tagData(TelemetryDataTag.CodeArtifact, values);
+} => tagData<TelemetryDataTag.CodeArtifact, T>(TelemetryDataTag.CodeArtifact, values);
