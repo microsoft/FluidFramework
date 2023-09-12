@@ -6,7 +6,6 @@
 import { Client } from "@fluidframework/merge-tree";
 import { IntervalType, IIntervalHelpers, ISerializableInterval } from "../intervals";
 import { IntervalNode, IntervalTree } from "../intervalTree";
-// import { SharedString } from "../sharedString";
 import { IntervalIndex } from "./intervalIndex";
 
 export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInterval>

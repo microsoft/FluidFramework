@@ -528,7 +528,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     createLocalReferencePosition(segment: T, offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference): LocalReferencePosition;
     // (undocumented)
     protected didAttach(): void;
-    getContainingSegment(pos: number, sequenceArgs?: Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">, localSeq?: number): {
+    getContainingSegment(pos: number): {
         segment: T | undefined;
         offset: number | undefined;
     };

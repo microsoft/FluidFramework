@@ -336,7 +336,7 @@ export class SequenceInterval implements ISerializableInterval {
 	}
 }
 
-export function createPositionReferenceFromSegoff<T extends ISegment>(
+export function createPositionReferenceFromSegoff(
 	client: Client,
 	segoff: { segment: ISegment | undefined; offset: number | undefined },
 	refType: ReferenceType,
@@ -347,7 +347,7 @@ export function createPositionReferenceFromSegoff<T extends ISegment>(
 ): LocalReferencePosition {
 	if (segoff.segment) {
 		const ref = client.createLocalReferencePosition(
-			segoff.segment as T,
+			segoff.segment,
 			segoff.offset,
 			refType,
 			undefined,
@@ -373,7 +373,7 @@ export function createPositionReferenceFromSegoff<T extends ISegment>(
 	return createDetachedLocalReferencePosition(refType);
 }
 
-function createPositionReference<T extends ISegment>(
+function createPositionReference(
 	client: Client,
 	pos: number,
 	refType: ReferenceType,
@@ -412,7 +412,7 @@ function createPositionReference<T extends ISegment>(
 	);
 }
 
-export function createSequenceInterval<T extends ISegment>(
+export function createSequenceInterval(
 	label: string,
 	start: number,
 	end: number,

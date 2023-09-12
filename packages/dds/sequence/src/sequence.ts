@@ -191,7 +191,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	}
 
 	protected client: Client;
-
 	/** `Deferred` that triggers once the object is loaded */
 	protected loadedDeferred = new Deferred<void>();
 	// cache out going ops created when partial loading
@@ -278,15 +277,11 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * If the position is past the end of the string, `segment` and `offset` on the returned object may be undefined.
 	 * @param pos - Character position (index) into the current local view of the SharedString.
 	 */
-	public getContainingSegment(
-		pos: number,
-		sequenceArgs?: Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">,
-		localSeq?: number,
-	): {
+	public getContainingSegment(pos: number): {
 		segment: T | undefined;
 		offset: number | undefined;
 	} {
-		return this.client.getContainingSegment<T>(pos, sequenceArgs, localSeq);
+		return this.client.getContainingSegment<T>(pos);
 	}
 
 	/**

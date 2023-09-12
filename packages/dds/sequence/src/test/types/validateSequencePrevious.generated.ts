@@ -407,7 +407,6 @@ declare function get_old_InterfaceDeclaration_ISharedString():
 declare function use_current_InterfaceDeclaration_ISharedString(
     use: TypeOnly<current.ISharedString>);
 use_current_InterfaceDeclaration_ISharedString(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISharedString());
 
 /*
@@ -888,7 +887,6 @@ declare function get_old_ClassDeclaration_SharedSegmentSequence():
 declare function use_current_ClassDeclaration_SharedSegmentSequence(
     use: TypeOnly<current.SharedSegmentSequence<any>>);
 use_current_ClassDeclaration_SharedSegmentSequence(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SharedSegmentSequence());
 
 /*
@@ -913,7 +911,6 @@ declare function get_old_ClassDeclaration_SharedSequence():
 declare function use_current_ClassDeclaration_SharedSequence(
     use: TypeOnly<current.SharedSequence<any>>);
 use_current_ClassDeclaration_SharedSequence(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SharedSequence());
 
 /*
@@ -938,7 +935,6 @@ declare function get_old_ClassDeclaration_SharedString():
 declare function use_current_ClassDeclaration_SharedString(
     use: TypeOnly<current.SharedString>);
 use_current_ClassDeclaration_SharedString(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SharedString());
 
 /*
