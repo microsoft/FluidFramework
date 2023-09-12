@@ -1,8 +1,9 @@
-/* eslint-disable unicorn/prefer-code-point */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+/* eslint-disable unicorn/prefer-code-point */
 
 // eslint-disable-next-line import/no-nodejs-modules
 import { Hash } from "crypto";
