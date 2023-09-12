@@ -59,7 +59,7 @@ export class DocumentManager implements IDocumentManager {
 	): Promise<IDocumentStaticProperties | undefined> {
 		// If the cache is undefined, fetch the document from the database
 		if (!this.documentStaticDataCache) {
-			Lumberjack.warning(
+			Lumberjack.info(
 				"Falling back to database after attempting to read cached static document data, because the DocumentManager cache is undefined.",
 				getLumberBaseProperties(documentId, tenantId),
 			);
