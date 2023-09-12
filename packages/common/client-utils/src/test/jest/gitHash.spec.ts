@@ -10,7 +10,6 @@ import fs from "fs";
 import http from "http";
 import { AddressInfo } from "net";
 import path from "path";
-import { Page } from "puppeteer";
 import rewire from "rewire";
 
 import * as HashNode from "../../hashFileNode";
@@ -32,7 +31,6 @@ async function getFileContents(p: string): Promise<Buffer> {
 const dataDir = "../../../src/test/jest";
 
 async function evaluateBrowserHash(
-	page: Page,
 	file: Buffer,
 	algorithm: "SHA-1" | "SHA-256" = "SHA-1",
 	hashEncoding: "hex" | "base64" = "hex",
@@ -91,13 +89,13 @@ async function evaluateBrowserHash(
  * Same as evaluateBrowserHash above except prepends the
  * `blob ${size.toString()}${String.fromCharCode(0)}` prefix for git
  * */
-async function evaluateBrowserGitHash(page: Page, file: Buffer): Promise<string> {
+async function evaluateBrowserGitHash(file: Buffer): Promise<string> {
 	// Add the prefix for git hashing
 	const size = file.byteLength;
 	const filePrefix = `blob ${size.toString()}${String.fromCharCode(0)}`;
 	const prefixBuffer = Buffer.from(filePrefix, "utf-8");
 	const hashBuffer = Buffer.concat([prefixBuffer, file], prefixBuffer.length + file.length);
-	return evaluateBrowserHash(page, hashBuffer);
+	return evaluateBrowserHash(hashBuffer);
 }
 
 describe("Client-Utils", () => {
@@ -151,7 +149,7 @@ describe("Client-Utils", () => {
 		test("XML should Hash", async () => {
 			const expectedHash = "64056b04956fb446b4014cb8d159d2e2494ed0fc";
 			const hashNode = await HashNode.gitHashFile(xmlFile);
-			const hashBrowser = await evaluateBrowserGitHash(page, xmlFile);
+			const hashBrowser = await evaluateBrowserGitHash(xmlFile);
 
 			expect(hashNode).toEqual(expectedHash);
 			expect(hashBrowser).toEqual(expectedHash);
@@ -160,7 +158,7 @@ describe("Client-Utils", () => {
 		test("SVG should Hash", async () => {
 			const expectedHash = "c741e46ae4a5f1ca19debf0ac609aabc5fe94add";
 			const hashNode = await HashNode.gitHashFile(svgFile);
-			const hashBrowser = await evaluateBrowserGitHash(page, svgFile);
+			const hashBrowser = await evaluateBrowserGitHash(svgFile);
 
 			expect(hashNode).toEqual(expectedHash);
 			expect(hashBrowser).toEqual(expectedHash);
@@ -169,7 +167,7 @@ describe("Client-Utils", () => {
 		test("AKA PDF should Hash", async () => {
 			const expectedHash = "f3423703f542852aa7f3d1a13e73f0de0d8c9c0f";
 			const hashNode = await HashNode.gitHashFile(pdfFile);
-			const hashBrowser = await evaluateBrowserGitHash(page, pdfFile);
+			const hashBrowser = await evaluateBrowserGitHash(pdfFile);
 
 			expect(hashNode).toEqual(expectedHash);
 			expect(hashBrowser).toEqual(expectedHash);
@@ -178,7 +176,7 @@ describe("Client-Utils", () => {
 		test("Grid GIF should Hash", async () => {
 			const expectedHash = "a7d63376bbcb05d0a6fa749594048c8ce6be23fb";
 			const hashNode = await HashNode.gitHashFile(gifFile);
-			const hashBrowser = await evaluateBrowserGitHash(page, gifFile);
+			const hashBrowser = await evaluateBrowserGitHash(gifFile);
 
 			expect(hashNode).toEqual(expectedHash);
 			expect(hashBrowser).toEqual(expectedHash);
@@ -189,8 +187,8 @@ describe("Client-Utils", () => {
 			const hash2Node = await HashNode.gitHashFile(svgFile);
 			expect(hash1Node).toEqual(hash2Node);
 
-			const hash1Browser = await evaluateBrowserGitHash(page, svgFile);
-			const hash2Browser = await evaluateBrowserGitHash(page, svgFile);
+			const hash1Browser = await evaluateBrowserGitHash(svgFile);
+			const hash2Browser = await evaluateBrowserGitHash(svgFile);
 			expect(hash1Browser).toEqual(hash2Browser);
 		});
 	});
@@ -199,7 +197,7 @@ describe("Client-Utils", () => {
 		test("SHA256 hashes match", async () => {
 			const expectedHash = "9b8abd0b90324ffce0b6a9630e5c4301972c364ed9aeb7e7329e424a4ae8a630";
 			const hashNode = await HashNode.hashFile(svgFile, "SHA-256");
-			const hashBrowser = await evaluateBrowserHash(page, svgFile, "SHA-256");
+			const hashBrowser = await evaluateBrowserHash(svgFile, "SHA-256");
 			expect(hashNode).toEqual(expectedHash);
 			expect(hashBrowser).toEqual(expectedHash);
 		});
@@ -207,13 +205,13 @@ describe("Client-Utils", () => {
 		test("base64 encoded hashes match", async () => {
 			const expectedHash1 = "4/nXhjtBQhhvXTNNSNq/cJgb4sQ=";
 			const hashNode1 = await HashNode.hashFile(xmlFile, "SHA-1", "base64");
-			const hashBrowser1 = await evaluateBrowserHash(page, xmlFile, "SHA-1", "base64");
+			const hashBrowser1 = await evaluateBrowserHash(xmlFile, "SHA-1", "base64");
 			expect(hashNode1).toEqual(expectedHash1);
 			expect(hashBrowser1).toEqual(expectedHash1);
 
 			const expectedHash256 = "QPQh34aj1TNmyo34aPDA0vMIU7r5QC/6KNgIzlLYiFY=";
 			const hashNode256 = await HashNode.hashFile(pdfFile, "SHA-256", "base64");
-			const hashBrowser256 = await evaluateBrowserHash(page, pdfFile, "SHA-256", "base64");
+			const hashBrowser256 = await evaluateBrowserHash(pdfFile, "SHA-256", "base64");
 			expect(hashNode256).toEqual(expectedHash256);
 			expect(hashBrowser256).toEqual(expectedHash256);
 		});

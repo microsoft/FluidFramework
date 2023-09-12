@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable unicorn/prefer-code-point */
+// eslint-disable-next-line import/no-internal-modules
+import sha1 from "sha.js/sha1";
+// eslint-disable-next-line import/no-internal-modules
+import sha256 from "sha.js/sha256";
 
-// eslint-disable-next-line import/no-nodejs-modules
-import { Hash } from "crypto";
-import { sha1, sha256 } from "sha.js";
-import { IsoBuffer } from "./bufferNode";
+import type { IsoBuffer } from "./bufferNode";
 
 /**
  * Hash a file. Consistent within a session, but should not be persisted and
@@ -28,19 +28,22 @@ export async function hashFile(
 	algorithm: "SHA-1" | "SHA-256" = "SHA-1",
 	hashEncoding: "hex" | "base64" = "hex",
 ): Promise<string> {
-	let engine: Hash;
+	let engine;
 	// eslint-disable-next-line default-case
 	switch (algorithm) {
 		case "SHA-1": {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
 			engine = new sha1();
 			break;
 		}
 		case "SHA-256": {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
 			engine = new sha256();
 			break;
 		}
 	}
-	return engine.update(file).digest(hashEncoding);
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+	return engine.update(file).digest(hashEncoding) as string;
 }
 
 /**
@@ -54,7 +57,10 @@ export async function hashFile(
  */
 export async function gitHashFile(file: IsoBuffer): Promise<string> {
 	const size = file.byteLength;
+	// eslint-disable-next-line unicorn/prefer-code-point
 	const filePrefix = `blob ${size.toString()}${String.fromCharCode(0)}`;
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
 	const engine = new sha1();
-	return engine.update(filePrefix).update(file).digest("hex");
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+	return engine.update(filePrefix).update(file).digest("hex") as string;
 }
