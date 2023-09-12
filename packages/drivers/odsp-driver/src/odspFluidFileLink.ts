@@ -56,7 +56,7 @@ export function encodeOdspFluidDataStoreLocator(locator: OdspFluidDataStoreLocat
  * @param encodedLocatorValue - encoded Fluid data store locator value which was produced by
  * {@link encodeOdspFluidDataStoreLocator} function
  * @param siteOriginUrl - site origin that will be appended to encoded relative path to form absolute file url
- * @param requireFluidSignature - flag representing if the fluid signature is expected in the url, default true
+ * @param requireFluidSignature - flag representing if the Fluid signature is expected in the url, default true
  * @returns object representing Fluid data store location in ODSP terms
  */
 function decodeOdspFluidDataStoreLocator(
@@ -128,7 +128,7 @@ export function storeLocatorInOdspUrl(url: URL, locator: OdspFluidDataStoreLocat
  * Extract ODSP Fluid data store locator object from given ODSP url. This extracts things like
  * driveId, ItemId, siteUrl etc from a url where these are encoded in nav query param.
  * @param url - ODSP url representing Fluid file link
- * @param requireFluidSignature - flag representing if the fluid signature is expected in the url, default true
+ * @param requireFluidSignature - flag representing if the Fluid signature is expected in the url, default true
  * @returns object representing Fluid data store location in ODSP terms
  */
 export function getLocatorFromOdspUrl(
