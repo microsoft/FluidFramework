@@ -147,8 +147,6 @@ export type BinderEventsCompare = CompareFunction<VisitorBindingContext>;
 // @alpha
 export interface BinderOptions {
     // (undocumented)
-    matchPolicy: MatchPolicy;
-    // (undocumented)
     sortFn?: BinderEventsCompare;
 }
 
@@ -171,6 +169,14 @@ export const BindingType: {
 
 // @alpha
 export type BindPath = DownPath;
+
+// @alpha
+export interface BindPolicy {
+    // (undocumented)
+    readonly bindTree: BindTree;
+    // (undocumented)
+    readonly matchPolicy: MatchPolicy;
+}
 
 // @alpha
 export interface BindSyntaxTree {
@@ -269,7 +275,7 @@ export function compareLocalNodeKeys(a: LocalNodeKey, b: LocalNodeKey): -1 | 0 |
 export function comparePipeline<T>(...fns: CompareFunction<T>[]): CompareFunction<T>;
 
 // @alpha
-export function compileSyntaxTree(syntaxTree: BindSyntaxTree): BindTree;
+export function compileSyntaxTree(syntaxTree: BindSyntaxTree, matchPolicy?: MatchPolicy): BindPolicy;
 
 // @alpha
 type ConstantFlexListToNonLazyArray<List extends FlexList> = List extends readonly [
@@ -307,8 +313,7 @@ interface Covariant<T> {
 }
 
 // @alpha
-export function createBinderOptions({ matchPolicy, sortFn, }: {
-    matchPolicy?: MatchPolicy;
+export function createBinderOptions({ sortFn }: {
     sortFn?: BinderEventsCompare;
 }): BinderOptions;
 
@@ -325,8 +330,7 @@ export function createDataBinderInvalidating<E extends Events<E>>(view: ISubscri
 export function createEmitter<E extends Events<E>>(noListeners?: NoListenersCallback<E>): ISubscribable<E> & IEmitter<E> & HasListeners<E>;
 
 // @alpha
-export function createFlushableBinderOptions<E extends Events<E>>({ matchPolicy, sortFn, sortAnchorsFn, autoFlush, autoFlushPolicy, }: {
-    matchPolicy?: MatchPolicy;
+export function createFlushableBinderOptions<E extends Events<E>>({ sortFn, sortAnchorsFn, autoFlush, autoFlushPolicy, }: {
     sortFn?: BinderEventsCompare;
     sortAnchorsFn?: AnchorsCompare;
     autoFlush?: boolean;
@@ -382,7 +386,7 @@ export interface CursorWithNode<TNode> extends ITreeCursorSynchronous {
 
 // @alpha
 export interface DataBinder<B extends OperationBinderEvents | InvalidationBinderEvents> {
-    register<K extends keyof Events<B>>(anchor: EditableTree, eventType: K, eventTrees: BindTree[], listener?: B[K]): void;
+    register<K extends keyof Events<B>>(anchor: EditableTree, eventType: K, eventTrees: BindPolicy[], listener?: B[K]): void;
     unregisterAll(): void;
 }
 
@@ -1331,7 +1335,7 @@ const MarkType: {
 };
 
 // @alpha
-export type MatchPolicy = "subtree" | "path";
+export type MatchPolicy = SubtreePolicy | "subtree" | "path";
 
 // @alpha
 export interface MemoizedIdRangeAllocator {
@@ -1837,6 +1841,12 @@ export interface StoredSchemaRepository extends Dependee, ISubscribable<SchemaEv
 interface StructSchemaSpecification {
     // (undocumented)
     readonly structFields: RestrictiveReadonlyRecord<string, FieldSchema>;
+}
+
+// @alpha
+export interface SubtreePolicy {
+    // (undocumented)
+    maxDepth: number;
 }
 
 // @alpha (undocumented)

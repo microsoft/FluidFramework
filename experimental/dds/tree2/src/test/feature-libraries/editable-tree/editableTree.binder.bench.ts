@@ -8,7 +8,7 @@ import {
 	BatchBindingContext,
 	BinderOptions,
 	BindingType,
-	BindTree,
+	BindPolicy,
 	compileSyntaxTree,
 	createBinderOptions,
 	createDataBinderBuffering,
@@ -32,10 +32,8 @@ describe("Data binder benchmarks", () => {
 	describe("Direct data binder", () => {
 		// TODO: Do not create shared trees during test enumeration.
 		const { tree, root, address } = retrieveNodes();
-		const bindTree: BindTree = compileSyntaxTree({ address: true });
-		const options: BinderOptions = createBinderOptions({
-			matchPolicy: "subtree",
-		});
+		const bindTree: BindPolicy = compileSyntaxTree({ address: true }, "subtree");
+		const options: BinderOptions = createBinderOptions({});
 		benchmark({
 			type: BenchmarkType.Measurement,
 			title: `Direct data binder: single insert callback`,
@@ -66,10 +64,9 @@ describe("Data binder benchmarks", () => {
 
 	describe("Invalidation data binder", () => {
 		const { tree, root, address } = retrieveNodes();
-		const bindTree: BindTree = compileSyntaxTree({ address: true });
+		const bindTree: BindPolicy = compileSyntaxTree({ address: true }, "subtree");
 		const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
 			autoFlushPolicy: "afterBatch",
-			matchPolicy: "subtree",
 		});
 		benchmark({
 			type: BenchmarkType.Measurement,
@@ -99,10 +96,9 @@ describe("Data binder benchmarks", () => {
 
 	describe("Buffering data binder", () => {
 		const { tree, root, address } = retrieveNodes();
-		const bindTree: BindTree = compileSyntaxTree({ address: true });
+		const bindTree: BindPolicy = compileSyntaxTree({ address: true }, "subtree");
 		const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
 			autoFlushPolicy: "afterBatch",
-			matchPolicy: "subtree",
 		});
 		benchmark({
 			type: BenchmarkType.Measurement,
@@ -133,10 +129,9 @@ describe("Data binder benchmarks", () => {
 	for (const listeners of [10, 50, 100, 500, 1000]) {
 		describe(`Buffering data binder, invoke ${listeners} listener of ${2 * listeners}`, () => {
 			const { tree, root, address } = retrieveNodes();
-			const bindTree: BindTree = compileSyntaxTree({ address: true });
+			const bindTree: BindPolicy = compileSyntaxTree({ address: true }, "subtree");
 			const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
 				autoFlushPolicy: "afterBatch",
-				matchPolicy: "subtree",
 			});
 			benchmark({
 				type: BenchmarkType.Measurement,
@@ -171,10 +166,9 @@ describe("Data binder benchmarks", () => {
 	describe("Buffering data binder, batched notification", () => {
 		// TODO: Do not create shared trees during test enumeration.
 		const { tree, root, address } = retrieveNodes();
-		const bindTree: BindTree = compileSyntaxTree({ address: true });
+		const bindTree: BindPolicy = compileSyntaxTree({ address: true }, "subtree");
 		const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
 			autoFlushPolicy: "afterBatch",
-			matchPolicy: "subtree",
 		});
 		benchmark({
 			type: BenchmarkType.Measurement,
@@ -207,7 +201,7 @@ function registerLoop(
 	listeners: number,
 	dataBinder: FlushableDataBinder<OperationBinderEvents>,
 	root: EditableTree,
-	bindTree: BindTree,
+	bindTree: BindPolicy,
 ) {
 	for (let i = 0; i < listeners; i++) {
 		dataBinder.register(
