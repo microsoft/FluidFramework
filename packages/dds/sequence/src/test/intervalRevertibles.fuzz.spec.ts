@@ -161,17 +161,17 @@ function operationGenerator(
 	async function revertSharedStringRevertibles(
 		state: ClientOpState,
 	): Promise<RevertSharedStringRevertibles> {
-		assert(isRevertibleSharedString(state.channel));
+		assert(isRevertibleSharedString(state.client.channel));
 		return {
 			type: "revertSharedStringRevertibles",
 			// grab a random number of edits to revert
-			editsToRevert: state.random.integer(1, state.channel.revertibles.length),
+			editsToRevert: state.random.integer(1, state.client.channel.revertibles.length),
 		};
 	}
 
-	const hasRevertibles = ({ channel }: ClientOpState): boolean => {
-		assert(isRevertibleSharedString(channel));
-		return channel.revertibles.length > 0;
+	const hasRevertibles = ({ client }: ClientOpState): boolean => {
+		assert(isRevertibleSharedString(client.channel));
+		return client.channel.revertibles.length > 0;
 	};
 
 	assert(optionsParam.weights !== undefined);
