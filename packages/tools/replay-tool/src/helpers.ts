@@ -14,7 +14,7 @@ import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-util
 import { getNormalizedSnapshot, ISnapshotNormalizerConfig } from "@fluidframework/tool-utils";
 import stringify from "json-stable-stringify";
 import { FluidObject, ITelemetryLogger } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	excludeChannelContentDdsFactories,
 	ReplayDataStoreFactory,
@@ -63,6 +63,7 @@ export function compareWithReferenceSnapshot(
 	 * package versions with X before we compare them.
 	 *
 	 * @example
+	 *
 	 * This is how it will look:
 	 * Before replace:
 	 *

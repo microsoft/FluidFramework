@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IdCluster, clustersEqual, lastAllocatedFinal, lastFinalizedFinal } from "./sessions";
 import { FinalCompressedId } from "./identifiers";
 
@@ -29,7 +29,7 @@ export class FinalSpace {
 			lastCluster === undefined ||
 				// eslint-disable-next-line @typescript-eslint/restrict-plus-operands
 				newCluster.baseFinalId === lastCluster.baseFinalId + lastCluster.capacity,
-			"Cluster insert to final_space is out of order.",
+			0x753 /* Cluster insert to final_space is out of order. */,
 		);
 		this.clusterList.push(newCluster);
 	}

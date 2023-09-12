@@ -9,8 +9,15 @@ import { SectionNode } from "./SectionNode";
 
 /**
  * {@link DocumentNode} construction properties.
+ *
+ * @public
  */
 export interface DocumentNodeProps {
+	/**
+	 * Name of the API item from which this document node was generated.
+	 */
+	readonly apiItemName: string;
+
 	/**
 	 * Child nodes.
 	 *
@@ -36,12 +43,19 @@ export interface DocumentNodeProps {
  *
  * Note that this node is special.
  * It forms the root of a Documentation tree, and cannot be parented under other {@link DocumentationNode}s.
+ *
+ * @public
  */
 export class DocumentNode implements UnistParent<SectionNode>, DocumentNodeProps {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
 	public readonly type = DocumentationNodeType.Document;
+
+	/**
+	 * {@inheritDoc DocumentNodeProps.apiItemName}
+	 */
+	public readonly apiItemName: string;
 
 	/**
 	 * {@inheritDoc DocumentNodeProps.children}
@@ -59,6 +73,7 @@ export class DocumentNode implements UnistParent<SectionNode>, DocumentNodeProps
 	public readonly frontMatter?: string;
 
 	public constructor(props: DocumentNodeProps) {
+		this.apiItemName = props.apiItemName;
 		this.children = props.children;
 		this.filePath = props.filePath;
 		this.frontMatter = props.frontMatter;

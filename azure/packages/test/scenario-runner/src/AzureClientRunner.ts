@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { AzureClient } from "@fluidframework/azure-client";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 
 import { IRunConfig, IRunner, IRunnerEvents, IRunnerStatus, RunnerStatus } from "./interface";
 import {

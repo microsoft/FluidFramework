@@ -4,7 +4,7 @@
  */
 
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
-import { unreachableCase } from "@fluidframework/common-utils";
+import { unreachableCase } from "@fluidframework/core-utils";
 import { singleTextCursor, SequenceField as SF, NodeChangeset } from "../../../feature-libraries";
 import { jsonNumber } from "../../../domains";
 import { brand } from "../../../util";

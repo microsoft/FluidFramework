@@ -3,9 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
+import { fromUtf8ToBase64, TypedEventEmitter } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
 import { IClient, IClientJoin, ScopeType } from "@fluidframework/protocol-definitions";
+import {
+	IBroadcastSignalEventPayload,
+	ICollaborationSessionEvents,
+	IRoom,
+} from "@fluidframework/server-lambdas";
 import { BasicRestWrapper } from "@fluidframework/server-services-client";
 import * as core from "@fluidframework/server-services-core";
 import {
@@ -15,6 +20,7 @@ import {
 	getCorrelationId,
 	getBooleanFromConfig,
 	verifyToken,
+	verifyStorageToken,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
@@ -41,6 +47,7 @@ export function create(
 	tenantThrottlers: Map<string, core.IThrottler>,
 	jwtTokenCache?: core.ICache,
 	revokedTokenChecker?: core.IRevokedTokenChecker,
+	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 ): Router {
 	const router: Router = Router();
 
@@ -126,6 +133,26 @@ export function create(
 				.catch((err) => {
 					response.status(400).end(err.toString());
 				});
+		},
+	);
+
+	router.post(
+		"/:tenantId/:id/broadcast-signal",
+		validateRequestParams("tenantId", "id"),
+		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
+		verifyStorageToken(tenantManager, config),
+		async (request, response) => {
+			const tenantId = getParam(request.params, "tenantId");
+			const documentId = getParam(request.params, "id");
+			const signalContent = getParam(request.body, "singalContent");
+			try {
+				const signalRoom: IRoom = { tenantId, documentId };
+				const payload: IBroadcastSignalEventPayload = { signalRoom, signalContent };
+				collaborationSessionEventEmitter.emit("broadcast-signal", payload);
+				response.status(200).send("OK");
+			} catch (error) {
+				response.status(500).send(error);
+			}
 		},
 	);
 

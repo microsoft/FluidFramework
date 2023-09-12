@@ -29,6 +29,8 @@ import { apiItemToDocument, apiItemToSections } from "./TransformApiItem";
  * - {@link DocumentationSuiteOptions.hierarchyBoundaries}
  *
  * @param transformConfig - Configuration for transforming API items into {@link DocumentationNode}s.
+ *
+ * @public
  */
 export function transformApiModel(
 	transformConfig: ApiItemTransformationConfiguration,
@@ -36,7 +38,7 @@ export function transformApiModel(
 	const config = getApiItemTransformationConfigurationWithDefaults(transformConfig);
 	const { apiModel, logger, skipPackage } = config;
 
-	logger.info(`Generating Markdown documentation for API Model ${apiModel.displayName}...`);
+	logger.verbose(`Generating documentation for API Model...`);
 
 	// If a package has multiple entry-points, it's possible for the same API item to appear under more than one
 	// entry-point (i.e., we are traversing a graph, rather than a tree).
@@ -112,7 +114,7 @@ export function transformApiModel(
 		}
 	}
 
-	logger.success("Documents generated!");
+	logger.success("API Model documents generated!");
 
 	return [...documents.values()];
 }

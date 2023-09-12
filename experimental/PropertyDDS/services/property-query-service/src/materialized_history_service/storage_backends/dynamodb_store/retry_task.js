@@ -50,7 +50,10 @@ class RetryTask {
 	 *   between retries. When left undefined, the timeout between retries grows indefinitely.
 	 * @param {taskFunction} taskFn A function that returns an asynchronous task to start or retry.
 	 * @param {string} [taskName=undefined] The task name. Used in debug logs only.
+	 *
 	 * @example
+	 *
+	 * ```javascript
 	 * // retry interval of 250, 200, 300, 400, 500, 500, 500 ...
 	 * const task = new RetryTask ({
 	 *    maxRetryCount: 10,
@@ -69,6 +72,7 @@ class RetryTask {
 	 * try {
 	 *   await result = task.start;
 	 * } catch {}
+	 * ```
 	 */
 	constructor(config, taskFn, taskName) {
 		this._taskFn = taskFn;

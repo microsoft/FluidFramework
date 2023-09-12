@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 import { strict as assert } from "assert";
-import { bufferToString, stringToBuffer } from "@fluidframework/common-utils";
+import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
@@ -30,7 +30,7 @@ import {
 import { v4 as uuid } from "uuid";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 // eslint-disable-next-line import/no-internal-modules
-import { PendingLocalState, IPendingBlobs } from "@fluidframework/container-runtime/src/test";
+import { IPendingRuntimeState, IPendingBlobs } from "@fluidframework/container-runtime/src/test";
 import {
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
@@ -647,7 +647,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 
 		let pendingBlobs: IPendingBlobs = await (container1 as any).runtime
 			.getPendingLocalState()
-			.then((s) => (s as PendingLocalState).pendingAttachmentBlobs);
+			.then((s) => (s as IPendingRuntimeState).pendingAttachmentBlobs);
 		assert.strictEqual(Object.values<any>(pendingBlobs).length, 1);
 		const acked = Object.values<any>(pendingBlobs)[0].acked;
 		assert.strictEqual(acked, false, "reconnection should not reupload pending blobs");
@@ -661,7 +661,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 		await assert.doesNotReject(handleP);
 		pendingBlobs = await (container1 as any).runtime
 			.getPendingLocalState()
-			.then((s) => (s as PendingLocalState).pendingAttachmentBlobs);
+			.then((s) => (s as IPendingRuntimeState).pendingAttachmentBlobs);
 		assert.strictEqual(Object.values<any>(pendingBlobs)[0].acked, true);
 		runtimeStorage.uploadBlob = delayedUploadBlob;
 	});

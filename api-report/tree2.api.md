@@ -9,7 +9,7 @@ import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
-import { IsoBuffer } from '@fluidframework/common-utils';
+import { IsoBuffer } from '@fluid-internal/client-utils';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { SessionSpaceCompressedId } from '@fluidframework/runtime-definitions';
 import { StableId } from '@fluidframework/runtime-definitions';
@@ -71,7 +71,7 @@ export type AnchorsCompare = CompareFunction<UpPath>;
 
 // @alpha @sealed
 export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLocator {
-    applyDelta(delta: Delta.Root): void;
+    acquireVisitor(): DeltaVisitor;
     // (undocumented)
     forget(anchor: Anchor): void;
     internalizePath(originalPath: UpPath): UpPath;
@@ -147,8 +147,6 @@ export type BinderEventsCompare = CompareFunction<VisitorBindingContext>;
 // @alpha
 export interface BinderOptions {
     // (undocumented)
-    matchPolicy: MatchPolicy;
-    // (undocumented)
     sortFn?: BinderEventsCompare;
 }
 
@@ -171,6 +169,14 @@ export const BindingType: {
 
 // @alpha
 export type BindPath = DownPath;
+
+// @alpha
+export interface BindPolicy {
+    // (undocumented)
+    readonly bindTree: BindTree;
+    // (undocumented)
+    readonly matchPolicy: MatchPolicy;
+}
 
 // @alpha
 export interface BindSyntaxTree {
@@ -269,7 +275,7 @@ export function compareLocalNodeKeys(a: LocalNodeKey, b: LocalNodeKey): -1 | 0 |
 export function comparePipeline<T>(...fns: CompareFunction<T>[]): CompareFunction<T>;
 
 // @alpha
-export function compileSyntaxTree(syntaxTree: BindSyntaxTree): BindTree;
+export function compileSyntaxTree(syntaxTree: BindSyntaxTree, matchPolicy?: MatchPolicy): BindPolicy;
 
 // @alpha
 type ConstantFlexListToNonLazyArray<List extends FlexList> = List extends readonly [
@@ -307,8 +313,7 @@ interface Covariant<T> {
 }
 
 // @alpha
-export function createBinderOptions({ matchPolicy, sortFn, }: {
-    matchPolicy?: MatchPolicy;
+export function createBinderOptions({ sortFn }: {
     sortFn?: BinderEventsCompare;
 }): BinderOptions;
 
@@ -325,8 +330,7 @@ export function createDataBinderInvalidating<E extends Events<E>>(view: ISubscri
 export function createEmitter<E extends Events<E>>(noListeners?: NoListenersCallback<E>): ISubscribable<E> & IEmitter<E> & HasListeners<E>;
 
 // @alpha
-export function createFlushableBinderOptions<E extends Events<E>>({ matchPolicy, sortFn, sortAnchorsFn, autoFlush, autoFlushPolicy, }: {
-    matchPolicy?: MatchPolicy;
+export function createFlushableBinderOptions<E extends Events<E>>({ sortFn, sortAnchorsFn, autoFlush, autoFlushPolicy, }: {
     sortFn?: BinderEventsCompare;
     sortAnchorsFn?: AnchorsCompare;
     autoFlush?: boolean;
@@ -382,7 +386,7 @@ export interface CursorWithNode<TNode> extends ITreeCursorSynchronous {
 
 // @alpha
 export interface DataBinder<B extends OperationBinderEvents | InvalidationBinderEvents> {
-    register<K extends keyof Events<B>>(anchor: EditableTree, eventType: K, eventTrees: BindTree[], listener?: B[K]): void;
+    register<K extends keyof Events<B>>(anchor: EditableTree, eventType: K, eventTrees: BindPolicy[], listener?: B[K]): void;
     unregisterAll(): void;
 }
 
@@ -427,6 +431,28 @@ declare namespace Delta {
     }
 }
 export { Delta }
+
+// @alpha
+export interface DeltaVisitor {
+    // (undocumented)
+    enterField(key: FieldKey): void;
+    // (undocumented)
+    enterNode(index: number): void;
+    // (undocumented)
+    exitField(key: FieldKey): void;
+    // (undocumented)
+    exitNode(index: number): void;
+    // (undocumented)
+    free(): void;
+    // (undocumented)
+    onDelete(index: number, count: number): void;
+    // (undocumented)
+    onInsert(index: number, content: Delta.ProtoNodes): void;
+    // (undocumented)
+    onMoveIn(index: number, count: number, id: Delta.MoveId): void;
+    // (undocumented)
+    onMoveOut(index: number, count: number, id: Delta.MoveId): void;
+}
 
 // @alpha
 export interface Dependee extends NamedComputation {
@@ -570,7 +596,7 @@ export interface FieldChangeHandler<TChangeset, TEditor extends FieldEditor<TCha
     // (undocumented)
     readonly editor: TEditor;
     // (undocumented)
-    intoDelta(change: TChangeset, deltaFromChild: ToDelta): Delta.MarkList;
+    intoDelta(change: TaggedChange<TChangeset>, deltaFromChild: ToDelta, idAllocator: MemoizedIdRangeAllocator): Delta.MarkList;
     isEmpty(change: TChangeset): boolean;
     // (undocumented)
     readonly rebaser: FieldChangeRebaser<TChangeset>;
@@ -747,12 +773,18 @@ export const forbiddenFieldKindIdentifier = "Forbidden";
 
 // @alpha
 export interface ForestEvents {
-    afterDelta(delta: Delta.Root): void;
-    beforeDelta(delta: Delta.Root): void;
+    afterChange(): void;
+    beforeChange(): void;
 }
 
 // @alpha
 export type ForestLocation = ITreeSubscriptionCursor | Anchor;
+
+// @alpha
+export enum ForestType {
+    Optimized = 1,
+    Reference = 0
+}
 
 // @alpha
 export interface FullSchemaPolicy {
@@ -813,7 +845,7 @@ export interface ICodecOptions {
 }
 
 // @alpha
-export type IdAllocator = (count?: number) => ChangesetLocalId;
+export type IdAllocator = (count?: number) => number;
 
 // @alpha (undocumented)
 export interface IDecoder<TDecoded, TEncoded> {
@@ -833,10 +865,19 @@ export interface IDefaultEditBuilder {
     valueField(field: FieldUpPath): ValueFieldEditBuilder;
 }
 
+// @alpha (undocumented)
+export interface IdRange {
+    // (undocumented)
+    readonly count: number;
+    // (undocumented)
+    readonly first: ChangesetLocalId;
+}
+
 // @alpha
 export interface IEditableForest extends IForestSubscription {
+    // (undocumented)
+    acquireVisitor(): DeltaVisitor;
     readonly anchors: AnchorSet;
-    applyDelta(delta: Delta.Root): void;
 }
 
 // @alpha
@@ -856,13 +897,12 @@ export interface IForestSubscription extends Dependee, ISubscribable<ForestEvent
     clone(schema: StoredSchemaRepository, anchors: AnchorSet): IEditableForest;
     forgetAnchor(anchor: Anchor): void;
     readonly isEmpty: boolean;
-    readonly schema: StoredSchemaRepository;
     tryMoveCursorToField(destination: FieldAnchor, cursorToMove: ITreeSubscriptionCursor): TreeNavigationResult;
     tryMoveCursorToNode(destination: Anchor, cursorToMove: ITreeSubscriptionCursor): TreeNavigationResult;
 }
 
 // @alpha (undocumented)
-export interface IJsonCodec<TDecoded, TEncoded extends JsonCompatibleReadOnly = JsonCompatibleReadOnly> extends IEncoder<TDecoded, TEncoded>, IDecoder<TDecoded, TEncoded> {
+export interface IJsonCodec<TDecoded, TEncoded = JsonCompatibleReadOnly> extends IEncoder<TDecoded, TEncoded>, IDecoder<TDecoded, TEncoded> {
     // (undocumented)
     encodedSchema?: TAnySchema;
 }
@@ -879,6 +919,10 @@ export interface IMultiFormatCodec<TDecoded, TJsonEncoded extends JsonCompatible
 
 // @alpha
 export const indexSymbol: unique symbol;
+
+// @alpha
+export interface InitializeAndSchematizeConfiguration<TRoot extends FieldSchema = FieldSchema> extends TreeContent<TRoot>, SchematizeConfiguration<TRoot> {
+}
 
 // @alpha
 type _InlineTrick = 0;
@@ -918,6 +962,7 @@ declare namespace InternalTypedSchemaTypes {
         StructSchemaSpecification,
         MapSchemaSpecification,
         LeafSchemaSpecification,
+        MapFieldSchema,
         FlexList,
         FlexListToNonLazyArray,
         ConstantFlexListToNonLazyArray,
@@ -1022,7 +1067,10 @@ export function isEditableTree(field: UnwrappedEditableField): field is Editable
 export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : false;
 
 // @alpha
-export interface ISharedTree extends ISharedObject, ISharedTreeView {
+export interface ISharedTree extends ISharedObject {
+    schematize<TRoot extends FieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): ISharedTreeView;
+    // @deprecated
+    readonly view: ISharedTreeView;
 }
 
 // @alpha
@@ -1049,7 +1097,8 @@ export interface ISharedTreeView extends AnchorLocator {
     redo(): void;
     get root(): UnwrappedEditableField;
     readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
-    schematize<TRoot extends FieldSchema>(config: SchematizeConfiguration<TRoot>): ISharedTreeView;
+    // @deprecated (undocumented)
+    schematize<TRoot extends FieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): ISharedTreeView;
     setContent(data: NewFieldContent): void;
     readonly storedSchema: StoredSchemaRepository;
     readonly transaction: ITransaction;
@@ -1248,9 +1297,12 @@ interface MakeNominal {
 }
 
 // @alpha
+type MapFieldSchema = FieldSchema<typeof FieldKinds.optional | typeof FieldKinds.sequence>;
+
+// @alpha
 interface MapSchemaSpecification {
     // (undocumented)
-    readonly mapFields: FieldSchema;
+    readonly mapFields: MapFieldSchema;
 }
 
 // @alpha
@@ -1283,7 +1335,18 @@ const MarkType: {
 };
 
 // @alpha
-export type MatchPolicy = "subtree" | "path";
+export type MatchPolicy = SubtreePolicy | "subtree" | "path";
+
+// @alpha
+export interface MemoizedIdRangeAllocator {
+    allocate(revision: RevisionTag | undefined, startId: ChangesetLocalId, count?: number): IdRange[];
+    mint(count?: number): ChangesetLocalId;
+}
+
+// @alpha (undocumented)
+export const MemoizedIdRangeAllocator: {
+    fromNextId(nextId?: number): MemoizedIdRangeAllocator;
+};
 
 // @alpha
 interface Modify<TTree = ProtoNode> extends HasModifications<TTree> {
@@ -1657,6 +1720,11 @@ export class SchemaBuilder {
 }
 
 // @alpha
+export interface SchemaConfiguration<TRoot extends FieldSchema = FieldSchema> {
+    readonly schema: TypedSchemaCollection<TRoot>;
+}
+
+// @alpha
 export interface SchemaData {
     // (undocumented)
     readonly rootFieldSchema: FieldStoredSchema;
@@ -1696,10 +1764,8 @@ export interface SchemaLintConfiguration {
 }
 
 // @alpha
-export interface SchematizeConfiguration<TRoot extends FieldSchema = FieldSchema> {
+export interface SchematizeConfiguration<TRoot extends FieldSchema = FieldSchema> extends SchemaConfiguration<TRoot> {
     readonly allowedSchemaModifications: AllowedUpdateType;
-    readonly initialTree: SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Simple> | readonly ITreeCursorSynchronous[];
-    readonly schema: TypedSchemaCollection<TRoot>;
 }
 
 // @alpha
@@ -1734,6 +1800,7 @@ export class SharedTreeFactory implements IChannelFactory {
 
 // @alpha (undocumented)
 export interface SharedTreeOptions extends Partial<ICodecOptions> {
+    forest?: ForestType;
 }
 
 // @alpha
@@ -1776,6 +1843,12 @@ interface StructSchemaSpecification {
     readonly structFields: RestrictiveReadonlyRecord<string, FieldSchema>;
 }
 
+// @alpha
+export interface SubtreePolicy {
+    // (undocumented)
+    maxDepth: number;
+}
+
 // @alpha (undocumented)
 export interface TaggedChange<TChangeset> {
     // (undocumented)
@@ -1806,6 +1879,11 @@ export interface TreeAdapter {
 }
 
 // @alpha
+export interface TreeContent<TRoot extends FieldSchema = FieldSchema> extends SchemaConfiguration<TRoot> {
+    readonly initialTree: SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Flexible> | readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous;
+}
+
+// @alpha
 export interface TreeDataContext {
     fieldSource?(key: FieldKey, schema: FieldStoredSchema): undefined | FieldGenerator;
     readonly schema: SchemaData;
@@ -1826,7 +1904,7 @@ export const enum TreeNavigationResult {
     Pending = 0
 }
 
-// @alpha @sealed
+// @alpha
 export class TreeSchema<Name extends string = string, T extends RecursiveTreeSchemaSpecification = TreeSchemaSpecification> {
     constructor(builder: Named<string>, name: Name, info: T);
     // (undocumented)
@@ -1836,7 +1914,7 @@ export class TreeSchema<Name extends string = string, T extends RecursiveTreeSch
     // (undocumented)
     readonly leafValue: WithDefault<Assume<T, TreeSchemaSpecification>["leafValue"], undefined>;
     // (undocumented)
-    readonly mapFields?: FieldSchema;
+    readonly mapFields: WithDefault<Assume<T, TreeSchemaSpecification>["mapFields"], undefined>;
     // (undocumented)
     readonly name: Name & TreeSchemaIdentifier;
     // (undocumented)

@@ -29,7 +29,8 @@ import {
 } from "@fluidframework/test-utils";
 import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
 import { ConnectionState, IContainerExperimental } from "@fluidframework/container-loader";
-import { bufferToString, Deferred, stringToBuffer } from "@fluidframework/common-utils";
+import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import { Deferred } from "@fluidframework/core-utils";
 import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import {
 	ContainerMessageType,
@@ -900,8 +901,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		assert.strictEqual(map2.get(testKey), testValue);
 	});
 
-	// https://dev.azure.com/fluidframework/internal/_workitems/edit/5095
-	it.skip("handles stashed ops for local DDS", async function () {
+	it("handles stashed ops for local DDS", async function () {
 		const newCounterId = "newCounter";
 		const container = (await provider.loadTestContainer(
 			testContainerConfig,
@@ -945,7 +945,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		await waitForContainerConnection(container2);
 	});
 
-	it.skip("handles stashed ops created on top of sequenced local ops", async function () {
+	it("handles stashed ops created on top of sequenced local ops", async function () {
 		const container = (await provider.loadTestContainer(
 			testContainerConfig,
 		)) as IContainerExperimental;
@@ -974,7 +974,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 				// of how small this window is.
 				if (op.clientId === container.clientId) {
 					// hacky; but we need to make sure we don't process further ops
-					(container as any).processRemoteMessage = (message) => console.debug(message);
+					(container as any).processRemoteMessage = (message) => null;
 					const pendingStateP = container.closeAndGetPendingLocalState?.();
 					assert.ok(pendingStateP);
 					resolve(pendingStateP);

@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import {
 	IGCRuntimeOptions,
+	IOnDemandSummarizeOptions,
 	ISummarizer,
 	TombstoneResponseHeaderKey,
 } from "@fluidframework/container-runtime";
@@ -26,7 +27,7 @@ import {
 	itExpects,
 	TestDataObjectType,
 } from "@fluid-internal/test-version-utils";
-import { delay } from "@fluidframework/common-utils";
+import { delay } from "@fluidframework/core-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IErrorBase, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { getGCDeletedStateFromSummary, getGCStateFromSummary } from "./gcTestSummaryUtils.js";
@@ -65,7 +66,6 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 		if (provider.driver.type !== "local") {
 			this.skip();
 		}
-		settings["Fluid.GarbageCollection.Test.SweepDataStores"] = true;
 		settings["Fluid.GarbageCollection.RunSweep"] = true;
 		settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
 	});
@@ -92,9 +92,9 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 			summaryVersion,
 		);
 	};
-	const summarize = async (summarizer: ISummarizer) => {
+	const summarize = async (summarizer: ISummarizer, options?: IOnDemandSummarizeOptions) => {
 		await provider.ensureSynchronized();
-		return summarizeNow(summarizer);
+		return summarizeNow(summarizer, options);
 	};
 
 	let opCount = 0;
@@ -426,52 +426,93 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 
 	describe("Deleted data stores in summary", () => {
 		/**
-		 * Validates that the given data store state is correct in the summary:
+		 * Validates that the given data store state is correct in the summary.
+		 * e.g. if expectDelete is true::
 		 * - It should be deleted from the data store summary tree.
 		 * - It should not be present in the GC state in GC summary tree.
 		 * - It should be present in the deleted nodes in GC summary tree.
+		 *
+		 * And the opposite results if false.
 		 */
 		function validateDataStoreStateInSummary(
 			summaryTree: ISummaryTree,
 			dataStoreNodePath: string,
+			expectDelete: boolean = true,
 		) {
-			// Validate that the data store is deleted from the data store summary tree.
+			const shouldShouldNot = expectDelete ? "should" : "should not";
+
+			// Check if the data store is deleted from the data store summary tree or not.
 			const deletedDataStoreId = dataStoreNodePath.split("/")[1];
 			const channelsTree = (summaryTree.tree[channelsTreeName] as ISummaryTree).tree;
-			for (const [id] of Object.entries(channelsTree)) {
-				if (id === deletedDataStoreId) {
-					assert(false, `Data store ${id} should have been deleted from the summary`);
-				}
-			}
+			assert.notEqual(
+				Object.keys(channelsTree).includes(deletedDataStoreId),
+				expectDelete,
+				`Data store ${deletedDataStoreId} ${shouldShouldNot} have been deleted from the summary`,
+			);
 
 			// Validate that the GC state does not contain an entry for the deleted data store.
 			const gcState = getGCStateFromSummary(summaryTree);
 			assert(gcState !== undefined, "GC tree is not available in the summary");
-			for (const [nodePath] of Object.entries(gcState.gcNodes)) {
-				if (nodePath === dataStoreNodePath) {
-					assert(false, `Data store ${nodePath} should not present be in GC state`);
-				}
-			}
+			assert.notEqual(
+				Object.keys(gcState.gcNodes).includes(dataStoreNodePath),
+				expectDelete,
+				`Data store ${dataStoreNodePath} ${shouldShouldNot} have been removed from GC state`,
+			);
 
 			// Validate that the deleted nodes in the GC data has the deleted data store.
 			const deletedNodesState = getGCDeletedStateFromSummary(summaryTree);
-			assert(
-				deletedNodesState?.includes(dataStoreNodePath),
-				`Data store ${dataStoreNodePath} should be in deleted nodes`,
+			assert.equal(
+				deletedNodesState?.includes(dataStoreNodePath) ?? false,
+				expectDelete,
+				`Data store ${dataStoreNodePath} ${shouldShouldNot} be in deleted nodes`,
 			);
 		}
 
 		it("updates deleted data store state in the summary", async () => {
 			const { unreferencedId, summarizingContainer, summarizer } =
 				await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
-			const deletedDataStoreNodePath = `/${unreferencedId}`;
+			const sweepReadyDataStoreNodePath = `/${unreferencedId}`;
 			await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
 
 			// The datastore should be swept now
 			const summary2 = await summarize(summarizer);
 
 			// Validate that the deleted data store's state is correct in the summary.
-			validateDataStoreStateInSummary(summary2.summaryTree, deletedDataStoreNodePath);
+			validateDataStoreStateInSummary(summary2.summaryTree, sweepReadyDataStoreNodePath);
 		});
+
+		itExpects(
+			"disableDatastoreSweep true - DOES NOT update deleted data store state in the summary",
+			[
+				{
+					// Since we do full tree summary, everything is loaded including the sweepReady node
+					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Loaded",
+					clientType: "noninteractive/summarizer",
+				},
+			],
+			async () => {
+				settings["Fluid.GarbageCollection.DisableDataStoreSweep"] = true;
+
+				const { unreferencedId, summarizingContainer, summarizer } =
+					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+				const sweepReadyDataStoreNodePath = `/${unreferencedId}`;
+				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
+
+				// The datastore should NOT be swept here.
+				// We need to do fullTree because the GC data won't change (since it's not swept).
+				// But the validation depends on the GC subtree being present (not a handle).
+				const summary2 = await summarize(summarizer, {
+					reason: "end-to-end test",
+					fullTree: true,
+				});
+
+				// Validate that the data store's state is correct in the summary - it shouldn't have been deleted.
+				validateDataStoreStateInSummary(
+					summary2.summaryTree,
+					sweepReadyDataStoreNodePath,
+					false /* expectDelete */,
+				);
+			},
+		);
 	});
 });

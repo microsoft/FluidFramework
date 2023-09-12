@@ -24,6 +24,7 @@ export {
 	RootField,
 	ChildCollection,
 	ChildLocation,
+	DeltaVisitor,
 	FieldMapObject,
 	NodeData,
 	GenericTreeNode,
@@ -91,6 +92,7 @@ export {
 	JsonCompatibleObject,
 	NestedMap,
 	fail,
+	IdAllocator,
 	TransactionResult,
 	BrandedKey,
 	BrandedMapSubset,
@@ -123,7 +125,8 @@ export {
 } from "./domains";
 
 export {
-	IdAllocator,
+	MemoizedIdRangeAllocator,
+	IdRange,
 	ModularChangeset,
 	EditDescription,
 	FieldChangeHandler,
@@ -235,8 +238,10 @@ export {
 	FlushableBinderOptions,
 	FlushableDataBinder,
 	MatchPolicy,
+	SubtreePolicy,
 	BindSyntaxTree,
 	indexSymbol,
+	BindPolicy,
 	BindTree,
 	BindTreeDefault,
 	DownPath,
@@ -274,6 +279,10 @@ export {
 	ISharedTreeBranchView,
 	ViewEvents,
 	SchematizeConfiguration,
+	TreeContent,
+	InitializeAndSchematizeConfiguration,
+	SchemaConfiguration,
+	ForestType,
 } from "./shared-tree";
 
 export type {

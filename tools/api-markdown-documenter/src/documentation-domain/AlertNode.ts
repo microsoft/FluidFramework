@@ -11,6 +11,8 @@ import { createNodesFromPlainText } from "./Utilities";
 
 /**
  * Kind of alert.
+ *
+ * @public
  */
 export enum AlertKind {
 	/**
@@ -62,6 +64,8 @@ export enum AlertKind {
  * 	More details about unit tests...
  * </blockquote>
  * ```
+ *
+ * @public
  */
 export class AlertNode extends DocumentationParentNodeBase {
 	/**

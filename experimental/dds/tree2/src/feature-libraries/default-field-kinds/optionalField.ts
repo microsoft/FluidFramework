@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	Delta,
 	ITreeCursor,
@@ -12,7 +12,7 @@ import {
 	tagChange,
 	ChangesetLocalId,
 } from "../../core";
-import { fail, Mutable } from "../../util";
+import { fail, IdAllocator, Mutable } from "../../util";
 import { singleTextCursor, jsonableTreeFromCursor } from "../treeTextCursor";
 import {
 	ToDelta,
@@ -23,7 +23,6 @@ import {
 	NodeChangeset,
 	FieldEditor,
 	NodeReviver,
-	IdAllocator,
 	CrossFieldManager,
 	RevisionMetadataSource,
 	getIntention,
@@ -375,7 +374,7 @@ export const optionalChangeHandler: FieldChangeHandler<OptionalChangeset, Option
 	codecsFactory: makeOptionalFieldCodecFamily,
 	editor: optionalFieldEditor,
 
-	intoDelta: (change: OptionalChangeset, deltaFromChild: ToDelta) =>
+	intoDelta: ({ change }: TaggedChange<OptionalChangeset>, deltaFromChild: ToDelta) =>
 		optionalFieldIntoDelta(change, deltaFromChild),
 	isEmpty: (change: OptionalChangeset) =>
 		change.childChange === undefined && change.fieldChange === undefined,

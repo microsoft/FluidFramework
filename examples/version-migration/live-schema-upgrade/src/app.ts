@@ -10,7 +10,7 @@ import {
 	InsecureTinyliciousUrlResolver,
 } from "@fluidframework/tinylicious-driver";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 
 import { DemoCodeLoader as DemoCodeLoader1 } from "./demoCodeLoader1";
 import { DemoCodeLoader as DemoCodeLoader2 } from "./demoCodeLoader2";

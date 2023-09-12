@@ -8,6 +8,8 @@ import { TableCellNode, TableHeaderCellNode } from "./TableCellNode";
 
 /**
  * Kind of Table Row.
+ *
+ * @public
  */
 export enum TableRowKind {
 	/**
@@ -47,7 +49,10 @@ export enum TableRowKind {
  * @see
  *
  * - {@link TableNode}
+ *
  * - {@link TableCellNode}
+ *
+ * @public
  */
 export abstract class TableRowNode extends DocumentationParentNodeBase<TableCellNode> {
 	/**
@@ -68,6 +73,8 @@ export abstract class TableRowNode extends DocumentationParentNodeBase<TableCell
 
 /**
  * A {@link TableRowNode} that represents the header row of a {@link TableNode}.
+ *
+ * @public
  */
 export class TableHeaderRowNode extends TableRowNode {
 	/**
@@ -82,6 +89,8 @@ export class TableHeaderRowNode extends TableRowNode {
 
 /**
  * A {@link TableRowNode} that lives in the body of a {@link TableNode}.
+ *
+ * @public
  */
 export class TableBodyRowNode extends TableRowNode {
 	/**
