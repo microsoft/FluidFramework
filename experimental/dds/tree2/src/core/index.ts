@@ -97,6 +97,7 @@ export {
 	isCursor,
 	TreeIndex,
 	ForestRootId,
+	getDetachedFieldContainingPath,
 } from "./tree";
 
 export {

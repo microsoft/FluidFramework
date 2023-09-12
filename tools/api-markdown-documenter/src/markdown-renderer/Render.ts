@@ -14,6 +14,8 @@ import { MarkdownRenderContext, getContextWithDefaults } from "./RenderContext";
  *
  * @param document - The document to render.
  * @param config - Partial Markdown rendering configuration.
+ *
+ * @public
  */
 export function renderDocument(document: DocumentNode, config: RenderConfiguration): string {
 	const writer = new DocumentWriter(new StringBuilder());
@@ -41,6 +43,8 @@ export function renderDocument(document: DocumentNode, config: RenderConfigurati
 /**
  * Renders the provided {@link DocumentationNode} per the configured
  * {@link MarkdownRenderContext.renderers | renderers}.
+ *
+ * @public
  */
 export function renderNode(
 	node: DocumentationNode,
@@ -59,6 +63,8 @@ export function renderNode(
 /**
  * Renders a list of child {@link DocumentationNode}s per the configured
  * {@link MarkdownRenderContext.renderers | renderers}.
+ *
+ * @public
  */
 export function renderNodes(
 	children: DocumentationNode[],

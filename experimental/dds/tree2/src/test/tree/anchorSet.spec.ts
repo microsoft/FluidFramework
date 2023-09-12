@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { TreeStatus, singleTextCursor } from "../../feature-libraries";
+import { singleTextCursor } from "../../feature-libraries";
 import {
 	Anchor,
 	AnchorNode,
@@ -23,11 +23,11 @@ import {
 	PlaceUpPath,
 	DetachedPlaceUpPath,
 	DeltaVisitor,
+	getDetachedFieldContainingPath,
 } from "../../core";
 import { brand } from "../../util";
 import { expectEqualPaths } from "../utils";
 import { jsonString } from "../../domains";
-import { treeStatusFromPath } from "../../feature-libraries/editable-tree/utilities";
 
 const fieldFoo: FieldKey = brand("foo");
 const fieldBar: FieldKey = brand("bar");
@@ -492,10 +492,11 @@ function makePath(...steps: [PathStep, ...PathStep[]]): UpPath {
 function checkEquality(actual: UpPath | undefined, expected: UpPath | undefined) {
 	assert.deepEqual(clonePath(actual), clonePath(expected));
 }
-function checkRemoved(path: UpPath | undefined) {
+
+function checkRemoved(path: UpPath | undefined, expected: FieldKey = brand("Temp-0")) {
 	assert.notEqual(path, undefined);
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	assert.equal(treeStatusFromPath(path!), TreeStatus.Removed);
+	assert.equal(getDetachedFieldContainingPath(path!), expected);
 }
 
 function makeDelta(mark: Delta.Mark, path: UpPath): Delta.Root {

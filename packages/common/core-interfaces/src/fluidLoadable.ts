@@ -24,6 +24,8 @@ export interface IProvideFluidRunnable {
 	readonly IFluidRunnable: IFluidRunnable;
 }
 export interface IFluidRunnable {
+	// TODO: Use `unknown` instead (API-Breaking)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	run(...args: any[]): Promise<void>;
 	stop(reason?: string): void;
 }

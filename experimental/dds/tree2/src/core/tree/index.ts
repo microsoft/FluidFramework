@@ -46,6 +46,7 @@ export {
 	DetachedRangeUpPath,
 	compareUpPaths,
 	compareFieldUpPaths,
+	getDetachedFieldContainingPath,
 	UpPathDefault,
 } from "./pathTree";
 export {
