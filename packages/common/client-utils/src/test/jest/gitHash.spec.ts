@@ -50,9 +50,11 @@ async function evaluateBrowserHash(
 	// do only the crypto.subtle part in page.evaluate and do the other half outside
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 	const browserHashFn = HashBrowser.__get__("digestBuffer").toString();
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const hashCharCodeString = await page.evaluate(
 		async (fn, f, alg) => {
 			// convert back into Uint8Array
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const fileCharCodes = Array.prototype.map.call([...f], (char: string) => {
 				return char.charCodeAt(0);
 			}) as number[];
