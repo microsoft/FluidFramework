@@ -80,3 +80,6 @@ jobs:
                 official: ${{ parameters.official }}
                 customEndPoint: ${{ parameters.customEndPoint }}
                 publishFlags: ${{ parameters.publishFlags }}
+          - template: include-git-tag-steps.yml
+            parameters:
+              tagName: ${{ parameters.tagName }}

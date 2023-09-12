@@ -127,9 +127,91 @@ steps:
         else
           f=$packageName
         fi
-        if [[ $f != "" ]]; then
-          for i in $( seq 1 $maximumRetryIfNetworkError )
+      if [[ $f != "" ]]; then
+        for i in $( seq 1 $maximumRetryIfNetworkError )
           do
+            npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
+            if grep -q "npm ERR!" "publish_log"
+            then
+                if grep -q "code ENOTFOUND" "publish_log"
+                then
+                  if ! $i -eq $maximumRetryIfNetworkError
+                  then
+                    echo "Network Error Detected"
+                    continue
+                  else
+                    echo "Final Network Error"
+                    exit 1
+                  fi
+                else
+                  if grep -q "You cannot publish over the previously published versions" "publish_log"
+                  then
+                    echo Package has already been published.
+                    local_f="${f}_local"
+                    mv "$f" "$local_f"
+                    package_name=$(grep -oP 'npm notice package: \K.*' "publish_log")
+                    npm pack $package_name
+                    if cmp -s "$f" "$local_f"
+                    then
+                      echo Continuing as published package matches the current one that was attempting to be released.
+                      rm "$f"
+                      mv "$local_f" "$f"
+                      break
+                    else
+                      echo ERROR: Published package does not match the current one attempting to be released for the same version.
+                    fi
+                  fi
+                  rm "$f"
+                  mv "$local_f" "$f"
+                  exit 1
+                fi
+            else
+              feedId=$(grep -oP '_packaging/\K[^/]+(?=/npm/)' publish_log)
+              if [[ $release == "release" && $feedId == "build" ]]; then
+                packageVersion=$(grep -oP 'npm notice version:\s+\K[^\s]+' publish_log)
+                
+                if [ "${{ parameters.artifactPath }}" == "scoped" ]; then
+                  scopes=("fluidframework" "fluid-tools" "fluid-internal" "fluid-experimental")
+                  for scope in "${scopes[@]}"; do
+                      if [[ "$packageName" == "$scope"* ]]; then
+                          packageName="@${packageName/$scope-/$scope/}"
+                      fi
+                  done
+                fi
+                baseURL="${${{ parameters.feedName }}%/registry/}"
+                feedPromotionUrl="${baseURL/_packaging/_apis/packaging/feeds}"
+                response=$(curl -f -s -X PATCH \
+                  -H "Content-Type: application/json" \
+                  -H "Accept: application/json" \
+                  -u ":$(System.AccessToken)" \
+                  -d '{
+                        "views": {
+                          "op": "add",
+                          "path": "/views/-",
+                          "value": "Release"
+                        }
+                      }' \
+                      "$feedPromotionUrl"
+                  )
+                
+                curlExitStatus=$?
+                
+                if echo "$response" | grep -q '"success":"false"'; then
+                  reason="${response#*\"reason\":\"}"
+                  reason="${reason%%\"*}"
+                  echo "Failed to promote package to Release view"
+                  echo "Error reason: $reason"
+                  exit 1
+                elif [ $curlExitStatus -ne 0 ]; then
+                  echo "Failed to promote package due to curl error"
+                  exit 1
+                fi
+              fi
+              
+              rm publish_log
+              break
+            fi
+            rm publish_log
             echo "finalluy"
             echo $f
           done
