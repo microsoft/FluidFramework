@@ -336,7 +336,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 */
 	public createLocalReferencePosition(
 		segment: T,
-		offset: number | undefined,
+		offset: number,
 		refType: ReferenceType,
 		properties: PropertySet | undefined,
 		slidingPreference?: SlidingPreference,

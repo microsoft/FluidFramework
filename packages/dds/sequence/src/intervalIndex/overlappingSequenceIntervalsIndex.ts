@@ -20,7 +20,7 @@ import { SharedString } from "../sharedString";
 import { SequenceIntervalIndexes } from "./sequenceIntervalIndexes";
 import { OverlappingIntervalsIndex } from "./overlappingIntervalsIndex";
 
-class OverlappingSequenceIntervalsIndex<T extends ISegment>
+class OverlappingSequenceIntervalsIndex
 	extends OverlappingIntervalsIndex<SequenceInterval>
 	implements SequenceIntervalIndexes.Overlapping
 {
