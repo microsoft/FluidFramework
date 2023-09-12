@@ -79,6 +79,7 @@ async function evaluateBrowserHash(
 	);
 
 	// reconstruct the Uint8Array from the string
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const charCodes = Array.prototype.map.call([...hashCharCodeString], (char: string) => {
 		return char.charCodeAt(0);
 	}) as number[];
