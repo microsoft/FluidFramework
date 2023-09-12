@@ -128,12 +128,12 @@ export function storeLocatorInOdspUrl(url: URL, locator: OdspFluidDataStoreLocat
  * Extract ODSP Fluid data store locator object from given ODSP url. This extracts things like
  * driveId, ItemId, siteUrl etc from a url where these are encoded in nav query param.
  * @param url - ODSP url representing Fluid file link
- * @param requireFluidSignature - flag representing if the fluid signature is expected in the url, optional
+ * @param requireFluidSignature - flag representing if the fluid signature is expected in the url, default true
  * @returns object representing Fluid data store location in ODSP terms
  */
 export function getLocatorFromOdspUrl(
 	url: URL,
-	requireFluidSignature?: boolean,
+	requireFluidSignature: boolean = true,
 ): OdspFluidDataStoreLocator | undefined {
 	// NOTE: No need to apply decodeURIComponent when accessing query params via URLSearchParams class.
 	const encodedLocatorValue = url.searchParams.get(locatorQueryParamName);
