@@ -294,3 +294,76 @@ Uncompressed batch:
 | ClientSeqNum: 1 | ClientSeqNum: 2 | ClientSeqNum: 3 | ClientSeqNum: 4 | ClientSeqNum: 5 |
 +-----------------+-----------------+-----------------+-----------------+-----------------+
 ```
+
+### How the op flow woks
+
+## Outbound
+
+The outbound view is how ops are accumulated and sent by the runtime with `FlushMode.TurnBased` (default).
+
+```mermaid
+stateDiagram-v2
+	state "* End of JS turn *" as jsTurn
+	state "Group batch" as opGrouping
+	state "Send batch over the wire" as post
+	state "Send chunks (partial ops) over the wire" as postChunks
+	state "Store original (uncompressed, unchunked, ungrouped) batch locally" as store
+	[*] --> ContainerRuntime.submit
+	ContainerRuntime.submit --> outbox.submitAttach
+	ContainerRuntime.submit --> outbox.submitBlobAttach
+	ContainerRuntime.submit --> outbox.submit
+	outbox.submit --> scheduleFlush
+	outbox.submitAttach --> scheduleFlush
+	outbox.submitBlobAttach --> scheduleFlush
+	scheduleFlush --> jsTurn
+	jsTurn --> outbox.flush
+	outbox.flush --> outbox.flushInternalMain
+	outbox.flush --> outbox.flushInternalAttach
+	outbox.flush --> outbox.flushInternalBlobAttach
+	outbox.flushInternalMain --> outbox.flushBatch
+	outbox.flushInternalAttach --> outbox.flushBatch
+	outbox.flushInternalBlobAttach --> outbox.flushBatch
+	outbox.flushBatch --> ContainerRuntime.reSubmit: if batch has reentrant ops
+	ContainerRuntime.reSubmit --> outbox.flushBatch
+	outbox.flushBatch --> opGrouping: if batch is consistent
+	opGrouping --> post
+	post --> store
+	opGrouping --> opCompressor.Compress: if compression is enabled
+	opCompressor.Compress --> post: if the compressed payload is smaller than the chunk size
+	opCompressor.Compress --> opSplitter.split: if the compressed payload is larger than the chunk size
+	opSplitter.split --> post
+	opSplitter.split --> postChunks
+```
+
+With `FlushMode.Immediate` the difference is that ops are no longer accumulated in batches, but flushed as they are submitted, instead of waiting for the end of the JS turn. All the other components work in the exact same manner with the difference that they operate on batches with length 1.
+
+## Inbound
+
+There is no concept of batch in the inbound view when we receive the ops. Ops are being received and processed one-by-one and the batch is reconstructed in the runtime layer.
+
+```mermaid
+stateDiagram-v2
+	[*] --> ContainerRuntime.process
+	ContainerRuntime.process --> remoteMessageProcessor
+	state remoteMessageProcessor {
+		[*] --> ungroupBatch_1
+		ungroupBatch_1 --> unpackRuntimeMessage: deals with legacy op formats
+		unpackRuntimeMessage --> unpack: peels off a level of content from the op
+		unpack --> opSplitter.processRemoteMessage
+		opSplitter.processRemoteMessage --> [*]: if received partial chunk
+		opSplitter.processRemoteMessage --> ungroupBatch_2
+		ungroupBatch_2 --> opDecompressor.decompress
+		opDecompressor.decompress --> ungroupBatch_3
+		ungroupBatch_3 --> unpack2: peels off a level of metadata from the op
+		unpack2 --> [*]
+	}
+	remoteMessageProcessor --> ContainerRuntime.processCore: reconstructed batch
+	ContainerRuntime.processCore --> [*]
+	note left of ContainerRuntime.processCore
+		ops reach the datastores as appropriate,
+		one by one, along with cross referencing
+		the batch layout via the pending state manager
+	end note
+```
+
+Note that each component in the flow is pass-through. Which means that if an op type is not relevant for it, it will be ignored and pushed towards the next component. For example if an op is not compressed, the op decompressor will ignore it and return the same message which will then be passed through to the next component, etc..
