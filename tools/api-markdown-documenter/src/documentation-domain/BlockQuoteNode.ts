@@ -30,6 +30,8 @@ import { createNodesFromPlainText } from "./Utilities";
  * 	Bar
  * </blockquote>
  * ```
+ *
+ * @public
  */
 export class BlockQuoteNode
 	extends DocumentationParentNodeBase
