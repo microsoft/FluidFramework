@@ -244,7 +244,8 @@ describe("OptionalField - Rebaser Axioms", () => {
 			if (["SetA", "SetB", "SetUndefined"].includes(name)) {
 				// TODO:AB#4622: OptionalChangeset should obey group axioms, but the current compose implementation does not
 				// cancel changes from inverses, and in some cases the representation isn't sufficient for doing so.
-				// Set operations
+				// Set operations fail to satisfy this test because they generate explicit deltas which set the trait to be
+				// the previous value, rather than noops.
 				continue;
 			}
 			it(`${name}⁻¹ ○ ${name} === ε`, () => {

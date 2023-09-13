@@ -80,7 +80,11 @@ class ChildChangeMap<T> implements IChildChangeMap<T> {
 				changeIds.push("self");
 			} else {
 				for (const [revisionTag, _] of nestedMap) {
-					changeIds.push({ localId, revision: revisionTag });
+					changeIds.push(
+						revisionTag === undefined
+							? { localId }
+							: { localId, revision: revisionTag },
+					);
 				}
 			}
 		}
@@ -186,10 +190,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 					fieldChange.newContent !== undefined,
 					"after node must be defined to receive changes",
 				);
-				fieldChange.newContent.changes =
-					currentChildNodeChanges.length === 1
-						? currentChildNodeChanges[0].change
-						: composeChild(currentChildNodeChanges);
+				fieldChange.newContent.changes = composeChild(currentChildNodeChanges);
 			} else {
 				addChildChange("self", ...currentChildNodeChanges);
 			}
@@ -204,7 +205,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		if (perChildChanges.size > 0) {
 			composed.childChanges = Array.from(perChildChanges.entries(), ([id, changeList]) => [
 				id,
-				changeList.length === 1 ? changeList[0].change : composeChild(changeList),
+				composeChild(changeList),
 			]);
 		}
 
@@ -315,11 +316,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			for (const [id, childChange] of change.childChanges) {
 				if (id === "self") {
 					const overChildChange = overChildChanges.get(id);
-					if (over.fieldChange !== undefined && change.fieldChange !== undefined) {
-						// `overChange` and `childChange` refer to conceptually different nodes: each replaced the field.
-						// No need to rebase.
-						perChildChanges.set(id, childChange);
-					} else if (over.fieldChange !== undefined && change.fieldChange === undefined) {
+					if (over.fieldChange !== undefined) {
 						// `childChange` refers to the node existing in this field before rebasing, but
 						// that node was removed by `over`.
 						const rebasedChild = rebaseChild(
