@@ -35,8 +35,8 @@ import { apiItemToDocument, apiItemToSections } from "./TransformApiItem";
 export function transformApiModel(
 	transformConfig: ApiItemTransformationConfiguration,
 ): DocumentNode[] {
-	const config = getApiItemTransformationConfigurationWithDefaults(transformConfig);
-	const { apiModel, logger, skipPackage } = config;
+	const completeConfig = getApiItemTransformationConfigurationWithDefaults(transformConfig);
+	const { apiModel, logger, skipPackage } = completeConfig;
 
 	logger.verbose(`Generating documentation for API Model...`);
 
@@ -46,7 +46,7 @@ export function transformApiModel(
 	const documents: Map<ApiItem, DocumentNode> = new Map<ApiItem, DocumentNode>();
 
 	// Always render Model document (this is the "root" of the generated documentation suite).
-	documents.set(apiModel, createDocumentForApiModel(apiModel, config));
+	documents.set(apiModel, createDocumentForApiModel(apiModel, completeConfig));
 
 	const packages = apiModel.packages;
 
@@ -83,13 +83,13 @@ export function transformApiModel(
 
 			documents.set(
 				packageItem,
-				createDocumentForSingleEntryPointPackage(packageItem, entryPoint, config),
+				createDocumentForSingleEntryPointPackage(packageItem, entryPoint, completeConfig),
 			);
 
-			const packageDocumentItems = getDocumentItems(entryPoint, config);
+			const packageDocumentItems = getDocumentItems(entryPoint, completeConfig);
 			for (const apiItem of packageDocumentItems) {
 				if (!documents.has(apiItem)) {
-					documents.set(apiItem, apiItemToDocument(apiItem, config));
+					documents.set(apiItem, apiItemToDocument(apiItem, completeConfig));
 				}
 			}
 		} else {
@@ -98,16 +98,23 @@ export function transformApiModel(
 
 			documents.set(
 				packageItem,
-				createDocumentForMultiEntryPointPackage(packageItem, packageEntryPoints, config),
+				createDocumentForMultiEntryPointPackage(
+					packageItem,
+					packageEntryPoints,
+					completeConfig,
+				),
 			);
 
 			for (const entryPoint of packageEntryPoints) {
-				documents.set(entryPoint, createDocumentForApiEntryPoint(entryPoint, config));
+				documents.set(
+					entryPoint,
+					createDocumentForApiEntryPoint(entryPoint, completeConfig),
+				);
 
-				const packageDocumentItems = getDocumentItems(entryPoint, config);
+				const packageDocumentItems = getDocumentItems(entryPoint, completeConfig);
 				for (const apiItem of packageDocumentItems) {
 					if (!documents.has(apiItem)) {
-						documents.set(apiItem, apiItemToDocument(apiItem, config));
+						documents.set(apiItem, apiItemToDocument(apiItem, completeConfig));
 					}
 				}
 			}
@@ -201,7 +208,7 @@ function createDocumentForSingleEntryPointPackage(
 	);
 
 	// Wrap entry-point contents with package-level docs
-	sections.push(...config.createChildContentSections(apiPackage, entryPointSections, config));
+	sections.push(...config.createDefaultLayout(apiPackage, entryPointSections, config));
 
 	logger.verbose(`Package document rendered successfully.`);
 
