@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils";
+import {
+	MockFluidDataStoreRuntime,
+	validateAssertionError,
+} from "@fluidframework/test-runtime-utils";
 import { ITestFluidObject, waitForContainerConnection } from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IContainerExperimental } from "@fluidframework/container-loader";
@@ -15,6 +18,7 @@ import {
 	ContextuallyTypedNodeData,
 	SchemaBuilder,
 	Any,
+	TreeStatus,
 } from "../../feature-libraries";
 import { brand, fail, TransactionResult } from "../../util";
 import {
@@ -90,13 +94,34 @@ describe("SharedTree", () => {
 	it("reads only one node", () => {
 		// This is a regression test for a scenario in which a transaction would apply its delta twice,
 		// inserting two nodes instead of just one
-		const provider = new TestTreeProviderLite();
 		const view = viewWithContent({ schema: jsonSequenceRootSchema, initialTree: [] });
 		runSynchronous(view, (t) => {
 			t.context.root.insertNodes(0, [5]);
 		});
 
 		assert.deepEqual(toJsonableTree(view), [{ type: jsonNumber.name, value: 5 }]);
+	});
+
+	it("editable-tree-2-end-to-end", () => {
+		const builder = new SchemaBuilder("e2e");
+		const numberSchema = builder.leaf("number", ValueSchema.Number);
+		const schema = builder.intoDocumentSchema(SchemaBuilder.fieldValue(numberSchema));
+		const factory = new SharedTreeFactory({
+			jsonValidator: typeboxValidator,
+			forest: ForestType.Reference,
+		});
+		const sharedTree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
+		const view = sharedTree.schematize({
+			allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
+			initialTree: 1,
+			schema,
+		});
+		const root = view.editableTree2(schema);
+		const leaf = root.boxedContent;
+		assert.equal(leaf.value, 1);
+		root.setContent(2);
+		assert(leaf.treeStatus() !== TreeStatus.InDocument);
+		assert.equal(root.content, 2);
 	});
 
 	it("can be connected to another tree", async () => {
