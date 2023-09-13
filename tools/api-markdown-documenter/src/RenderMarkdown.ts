@@ -4,19 +4,31 @@
  */
 import * as Path from "node:path";
 
-import { FileSystem } from "@rushstack/node-core-library";
+import { FileSystem, NewlineKind } from "@rushstack/node-core-library";
 
-import {
-	ApiItemTransformationConfiguration,
-	getApiItemTransformationConfigurationWithDefaults,
-	transformApiModel,
-} from "./api-item-transforms";
+import { ApiItemTransformationConfiguration, transformApiModel } from "./api-item-transforms";
 import { DocumentNode } from "./documentation-domain";
-import {
-	MarkdownRenderConfiguration,
-	getMarkdownRenderConfigurationWithDefaults,
-	renderDocumentAsMarkdown,
-} from "./markdown-renderer";
+import { Logger } from "./Logging";
+import { MarkdownRenderConfiguration, renderDocumentAsMarkdown } from "./markdown-renderer";
+
+/**
+ * Configuration for interacting with the file-system.
+ *
+ * @public
+ */
+export interface FileSystemConfiguration {
+	/**
+	 * The directory under which the document files will be generated.
+	 */
+	outputDirectoryPath: string;
+
+	/**
+	 * Specifies what type of newlines API Documenter should use when writing output files.
+	 *
+	 * @defaultValue {@link @rushstack/node-core-library#NewlineKind.OsDefault}
+	 */
+	readonly newlineKind?: NewlineKind;
+}
 
 /**
  * Renders the provided model and its contents, and writes each document to a file on disk.
@@ -34,21 +46,23 @@ import {
  *
  * @param transformConfig - Configuration for transforming API items into {@link DocumentationNode}s.
  * @param renderConfig - Configuration for rendering {@link DocumentNode}s as Markdown.
- * @param outputDirectoryPath - The directory under which the document files will be generated.
+ * @param fileSystemConfig - Configuration for writing document files to disk.
+ * @param logger - Receiver of system log data. Default: {@link defaultConsoleLogger}.
  *
  * @public
  */
 export async function renderApiModelAsMarkdown(
-	transformConfig: ApiItemTransformationConfiguration,
-	renderConfig: MarkdownRenderConfiguration,
-	outputDirectoryPath: string,
+	transformConfig: Omit<ApiItemTransformationConfiguration, "logger">,
+	renderConfig: Omit<MarkdownRenderConfiguration, "logger">,
+	fileSystemConfig: FileSystemConfiguration,
+	logger?: Logger,
 ): Promise<void> {
-	const completeTransformConfig =
-		getApiItemTransformationConfigurationWithDefaults(transformConfig);
+	const documents = transformApiModel({
+		...transformConfig,
+		logger,
+	});
 
-	const documents = transformApiModel(completeTransformConfig);
-
-	return renderDocumentsAsMarkdown(documents, renderConfig, outputDirectoryPath);
+	return renderDocumentsAsMarkdown(documents, renderConfig, fileSystemConfig, logger);
 }
 
 /**
@@ -56,34 +70,34 @@ export async function renderApiModelAsMarkdown(
  *
  * @param documents - The documents to render. Each will be rendered to its own file on disk per
  * {@link DocumentNode.filePath} (relative to the provided output directory).
- *
- * @param config - A partial {@link MarkdownRenderConfiguration}.
- * Missing values will be filled in with system defaults.
- *
- * @param outputDirectoryPath - The directory under which the document files will be generated.
+ * @param renderConfig - A partial {@link MarkdownRenderConfiguration}.
+ * @param fileSystemConfig - Configuration for writing document files to disk.
+ * @param logger - Receiver of system log data. Default: {@link defaultConsoleLogger}.
  *
  * @public
  */
 export async function renderDocumentsAsMarkdown(
 	documents: DocumentNode[],
-	config: MarkdownRenderConfiguration,
-	outputDirectoryPath: string,
+	renderConfig: Omit<MarkdownRenderConfiguration, "logger">,
+	fileSystemConfig: FileSystemConfiguration,
+	logger?: Logger,
 ): Promise<void> {
-	const { logger } = config;
+	const { outputDirectoryPath, newlineKind } = fileSystemConfig;
 
 	logger?.verbose("Rendering documents as Markdown and writing to disk...");
-
-	const completeRenderConfig = getMarkdownRenderConfigurationWithDefaults(config);
 
 	await FileSystem.ensureEmptyFolderAsync(outputDirectoryPath);
 
 	await Promise.all(
 		documents.map(async (document) => {
-			const renderedDocument = renderDocumentAsMarkdown(document, config);
+			const renderedDocument = renderDocumentAsMarkdown(document, {
+				...renderConfig,
+				logger,
+			});
 
 			const filePath = Path.join(outputDirectoryPath, document.filePath);
 			await FileSystem.writeFileAsync(filePath, renderedDocument, {
-				convertLineEndings: completeRenderConfig.newlineKind,
+				convertLineEndings: newlineKind ?? NewlineKind.OsDefault,
 				ensureFolderExists: true,
 			});
 		}),

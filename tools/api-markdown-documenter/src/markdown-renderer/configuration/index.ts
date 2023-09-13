@@ -5,7 +5,7 @@
 
 export { getRenderConfigurationWithDefaults, RenderConfiguration } from "./Configuration";
 export {
-	getRenderersWithDefaults,
+	defaultMarkdownRenderers,
 	MarkdownRenderers,
 	RenderDocumentationNode,
 } from "./RenderOptions";

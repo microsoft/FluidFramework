@@ -17,6 +17,7 @@ function encodeDigest(hashArray: Uint8Array, encoding: "hex" | "base64"): string
 		case "hex": {
 			const hashHex = Array.prototype.map
 				.call(hashArray, (byte) => {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 					return byte.toString(16).padStart(2, "0") as string;
 				})
 				.join("");
@@ -74,6 +75,7 @@ export async function hashFile(
  */
 export async function gitHashFile(file: IsoBuffer): Promise<string> {
 	const size = file.byteLength;
+	// eslint-disable-next-line unicorn/prefer-code-point
 	const filePrefix = `blob ${size.toString()}${String.fromCharCode(0)}`;
 	const hashBuffer = IsoBuffer.from(filePrefix + file.toString());
 
