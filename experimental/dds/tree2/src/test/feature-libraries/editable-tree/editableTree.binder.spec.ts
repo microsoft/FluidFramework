@@ -203,7 +203,7 @@ describe("editable-tree: data binder", () => {
 			assert.deepEqual(log, [
 				[
 					{ field: fieldAddress, index: 0 },
-					{ field: fieldZip, index: 1 },
+					{ field: fieldZip, index: 0 },
 				],
 			]);
 			dataBinder.unregisterAll();
@@ -239,7 +239,7 @@ describe("editable-tree: data binder", () => {
 			assert.deepEqual(log, [
 				[
 					{ field: fieldAddress, index: 0 },
-					{ field: fieldZip, index: 1 },
+					{ field: fieldZip, index: 0 },
 				],
 			]);
 			dataBinder.unregisterAll();
@@ -272,13 +272,13 @@ describe("editable-tree: data binder", () => {
 			assert.deepEqual(log, [
 				[
 					{ field: fieldAddress, index: 0 },
-					{ field: fieldZip, index: 1 },
+					{ field: fieldZip, index: 0 },
 				],
 				[
 					{ field: fieldAddress, index: 0 },
 					{ field: fieldPhones, index: 0 },
 					{ field: "", index: 2 },
-					{ field: fieldPrefix, index: 1 },
+					{ field: fieldPrefix, index: 0 },
 				],
 			]);
 			dataBinder.unregisterAll();
