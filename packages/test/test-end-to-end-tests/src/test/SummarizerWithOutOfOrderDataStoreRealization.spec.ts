@@ -17,7 +17,7 @@ import {
 	waitForContainerConnection,
 	summarizeNow,
 	createSummarizerFromFactory,
-	createTestContainerRuntimeFactoryWithDefaultDataStore,
+	createContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/test-utils";
 import { describeNoCompat, getContainerRuntimeApi } from "@fluid-internal/test-version-utils";
 import { IContainerRuntimeBase, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
@@ -136,7 +136,7 @@ const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 ]);
 const containerRuntimeFactoryWithDefaultDataStore =
 	getContainerRuntimeApi(pkgVersion).ContainerRuntimeFactoryWithDefaultDataStore;
-const runtimeFactory = createTestContainerRuntimeFactoryWithDefaultDataStore(
+const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 	containerRuntimeFactoryWithDefaultDataStore,
 	{
 		defaultFactory: dataStoreFactory1,

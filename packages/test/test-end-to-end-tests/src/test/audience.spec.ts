@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestObjectProvider,
-	createTestContainerRuntimeFactoryWithDefaultDataStore,
+	createContainerRuntimeFactoryWithDefaultDataStore,
 	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
@@ -32,7 +32,7 @@ describeFullCompat("Audience correctness", (getTestObjectProvider, apis) => {
 	);
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
-	const runtimeFactory = createTestContainerRuntimeFactoryWithDefaultDataStore(
+	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 		apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore,
 		{
 			defaultFactory: dataObjectFactory,

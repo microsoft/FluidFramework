@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import {
+	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
 	DataObjectFactory,
 	IDataObjectProps,
@@ -21,7 +22,6 @@ import {
 	createDocumentId,
 	LoaderContainerTracker,
 	ITestObjectProvider,
-	TestContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
@@ -116,7 +116,7 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 	});
 
 	async function createContainer(): Promise<IContainer> {
-		const runtimeFactory = new TestContainerRuntimeFactoryWithDefaultDataStore({
+		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: testDataObjectFactory,
 			registryEntries: [[testDataObjectFactory.type, Promise.resolve(testDataObjectFactory)]],
 		});
@@ -140,7 +140,7 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 		defaultFactory: IFluidDataStoreFactory,
 		headers?: IRequestHeader,
 	): Promise<IContainer> {
-		const runtimeFactory = new TestContainerRuntimeFactoryWithDefaultDataStore({
+		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory,
 			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
 		});
@@ -158,7 +158,7 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 	}
 
 	async function createSummarizerFromContainer(container: IContainer): Promise<ISummarizer> {
-		const runtimeFactory = new TestContainerRuntimeFactoryWithDefaultDataStore({
+		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: testDataObjectFactory,
 			registryEntries: [[testDataObjectFactory.type, Promise.resolve(testDataObjectFactory)]],
 		});

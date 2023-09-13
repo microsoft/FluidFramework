@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 import {
-	TestContainerRuntimeFactoryWithDefaultDataStore,
 	TestFluidObjectFactory,
 	timeoutPromise,
 	waitForContainerConnection,
@@ -18,6 +17,7 @@ import {
 import { Loader } from "@fluidframework/container-loader";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { SharedMap } from "@fluidframework/map";
 
 describe("Audience correctness", () => {
@@ -32,7 +32,7 @@ describe("Audience correctness", () => {
 		"default",
 	);
 
-	const runtimeFactory = new TestContainerRuntimeFactoryWithDefaultDataStore({
+	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: factory,
 		registryEntries: [[factory.type, Promise.resolve(factory)]],
 	});

@@ -15,7 +15,7 @@ import type { SharedString } from "@fluidframework/sequence";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITestObjectProvider,
-	createTestContainerRuntimeFactoryWithDefaultDataStore,
+	createContainerRuntimeFactoryWithDefaultDataStore,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluid-internal/test-version-utils";
@@ -89,7 +89,7 @@ describeFullCompat("GC reference updates in local summary", (getTestObjectProvid
 		},
 		gcOptions: { gcAllowed: true },
 	};
-	const runtimeFactory = createTestContainerRuntimeFactoryWithDefaultDataStore(
+	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 		apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore,
 		{
 			defaultFactory,

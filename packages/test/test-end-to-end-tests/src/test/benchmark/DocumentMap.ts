@@ -11,7 +11,6 @@ import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ChannelFactoryRegistry,
-	TestContainerRuntimeFactoryWithDefaultDataStore,
 	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils";
@@ -29,7 +28,11 @@ import {
 	ISummarizer,
 } from "@fluidframework/container-runtime";
 import { assertDocumentTypeInfo, isDocumentMapInfo } from "@fluid-internal/test-version-utils";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import {
+	ContainerRuntimeFactoryWithDefaultDataStore,
+	DataObject,
+	DataObjectFactory,
+} from "@fluidframework/aqueduct";
 import {
 	IDocumentLoaderAndSummarizer,
 	IDocumentProps,
@@ -116,7 +119,7 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 	public get dataObjectFactory() {
 		return this._dataObjectFactory;
 	}
-	private readonly runtimeFactory: TestContainerRuntimeFactoryWithDefaultDataStore;
+	private readonly runtimeFactory: ContainerRuntimeFactoryWithDefaultDataStore;
 	public get logger(): ITelemetryLoggerExt | undefined {
 		return this.props.logger;
 	}
@@ -140,7 +143,7 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 			[SharedMap.getFactory(), SharedMap.getFactory()],
 			[],
 		);
-		this.runtimeFactory = new TestContainerRuntimeFactoryWithDefaultDataStore({
+		this.runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: this.dataObjectFactory,
 			registryEntries: [
 				[this.dataObjectFactory.type, Promise.resolve(this.dataObjectFactory)],

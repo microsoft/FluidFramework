@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IRequest } from "@fluidframework/core-interfaces";
@@ -18,7 +19,6 @@ import {
 	createSummarizerFromFactory,
 	waitForContainerConnection,
 	summarizeNow,
-	TestContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/test-utils";
 import { describeFullCompat, getContainerRuntimeApi } from "@fluid-internal/test-version-utils";
 import { pkgVersion } from "../../packageVersion.js";
@@ -50,7 +50,7 @@ describeFullCompat.skip("GC summary compatibility tests", (getTestObjectProvider
 		};
 		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 			runtime.IFluidHandleContext.resolveHandle(request);
-		const runtimeFactory = new TestContainerRuntimeFactoryWithDefaultDataStore({
+		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: dataObjectFactory,
 			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
 			requestHandlers: [innerRequestHandler],

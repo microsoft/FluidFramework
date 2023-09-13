@@ -19,7 +19,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITestObjectProvider,
-	createTestContainerRuntimeFactoryWithDefaultDataStore,
+	createContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
 
@@ -61,7 +61,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider, apis) => {
 	};
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
-	const runtimeFactory = createTestContainerRuntimeFactoryWithDefaultDataStore(
+	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 		ContainerRuntimeFactoryWithDefaultDataStore,
 		{
 			defaultFactory: dataObjectFactory,

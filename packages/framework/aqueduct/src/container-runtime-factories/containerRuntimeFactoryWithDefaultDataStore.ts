@@ -17,6 +17,14 @@ import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory";
 
 const defaultDataStoreId = "default";
 
+const getDefaultFluidObject = async (runtime: IContainerRuntime) => {
+	const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
+	if (entryPoint === undefined) {
+		throw new Error("default dataStore must exist");
+	}
+	return entryPoint.get();
+};
+
 /**
  * A ContainerRuntimeFactory that initializes Containers with a single default data store, which can be requested from
  * the container with an empty URL.
@@ -43,13 +51,15 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 		dependencyContainer?: IFluidDependencySynthesizer;
 		requestHandlers?: RuntimeRequestHandler[];
 		runtimeOptions?: IContainerRuntimeOptions;
-		initializeEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+		initializeEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
 	}) {
 		const requestHandlers = props.requestHandlers ?? [];
+		const initializeEntryPoint = props.initializeEntryPoint ?? getDefaultFluidObject;
 
 		super({
 			...props,
 			requestHandlers: [defaultRouteRequestHandler(defaultDataStoreId), ...requestHandlers],
+			initializeEntryPoint,
 		});
 
 		this.defaultFactory = props.defaultFactory;

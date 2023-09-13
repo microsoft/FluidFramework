@@ -5,7 +5,11 @@
 
 import * as crypto from "crypto";
 import { IRandom } from "@fluid-internal/stochastic-test-utils";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import {
+	ContainerRuntimeFactoryWithDefaultDataStore,
+	DataObject,
+	DataObjectFactory,
+} from "@fluidframework/aqueduct";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { ISharedCounter, SharedCounter } from "@fluidframework/counter";
 import { ITaskManager, TaskManager } from "@fluidframework/task-manager";
@@ -17,7 +21,6 @@ import { delay, assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ILoaderOptions } from "@fluidframework/container-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { TestContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/test-utils";
 import { ILoadTestConfig } from "./testConfigFile";
 import { LeaderElection } from "./leaderElection";
 
@@ -752,7 +755,7 @@ const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntime
 	runtime.IFluidHandleContext.resolveHandle(request);
 
 export const createFluidExport = (runtimeOptions: IContainerRuntimeOptions) =>
-	new TestContainerRuntimeFactoryWithDefaultDataStore({
+	new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: LoadTestDataStoreInstantiationFactory,
 		registryEntries: new Map([
 			[

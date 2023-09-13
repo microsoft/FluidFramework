@@ -6,7 +6,7 @@
 import assert from "assert";
 import {
 	ITestObjectProvider,
-	createTestContainerRuntimeFactoryWithDefaultDataStore,
+	createContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
@@ -53,7 +53,7 @@ describeNoCompat("Cache CreateNewSummary", (getTestObjectProvider, apis) => {
 			gcAllowed: true,
 		},
 	};
-	const runtimeFactory = createTestContainerRuntimeFactoryWithDefaultDataStore(
+	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 		ContainerRuntimeFactoryWithDefaultDataStore,
 		{
 			defaultFactory: dataObjectFactory,

@@ -4,7 +4,11 @@
  */
 
 import assert from "assert";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import {
+	ContainerRuntimeFactoryWithDefaultDataStore,
+	DataObject,
+	DataObjectFactory,
+} from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
 import {
 	IContainerRuntimeOptions,
@@ -16,11 +20,7 @@ import { ITelemetryBaseEvent, IRequest } from "@fluidframework/core-interfaces";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils";
-import {
-	ITestObjectProvider,
-	TestContainerRuntimeFactoryWithDefaultDataStore,
-	timeoutAwait,
-} from "@fluidframework/test-utils";
+import { ITestObjectProvider, timeoutAwait } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
 
 class TestDataObject extends DataObject {
@@ -61,7 +61,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
 	};
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
-	const runtimeFactory = new TestContainerRuntimeFactoryWithDefaultDataStore({
+	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: dataObjectFactory,
 		registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
 		requestHandlers: [innerRequestHandler],

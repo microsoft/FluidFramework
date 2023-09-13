@@ -8,6 +8,7 @@ import { ConfigTypes } from '@fluidframework/telemetry-utils';
 import { ContainerRuntime } from '@fluidframework/container-runtime';
 import { ContainerRuntimeFactoryWithDefaultDataStore } from '@fluidframework/aqueduct';
 import { FluidDataStoreRuntime } from '@fluidframework/datastore';
+import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { ICodeDetailsLoader } from '@fluidframework/container-definitions';
 import { IConfigProviderBase } from '@fluidframework/telemetry-utils';
@@ -59,6 +60,16 @@ export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFacto
 export function createAndAttachContainer(source: IFluidCodeDetails, loader: IHostLoader, attachRequest: IRequest): Promise<IContainer>;
 
 // @public (undocumented)
+export const createContainerRuntimeFactoryWithDefaultDataStore: (Base: typeof ContainerRuntimeFactoryWithDefaultDataStore | undefined, ctorArgs: {
+    defaultFactory: IFluidDataStoreFactory;
+    registryEntries: NamedFluidDataStoreRegistryEntries;
+    dependencyContainer?: any;
+    requestHandlers?: RuntimeRequestHandler[] | undefined;
+    runtimeOptions?: IContainerRuntimeOptions | undefined;
+    initializeEntryPoint?: ((runtime: IContainerRuntime) => Promise<FluidObject>) | undefined;
+}) => ContainerRuntimeFactoryWithDefaultDataStore;
+
+// @public (undocumented)
 export const createDocumentId: () => string;
 
 // @public
@@ -91,15 +102,6 @@ export const createTestContainerRuntimeFactory: (containerRuntimeCtor: typeof Co
         hasInitialized(_runtime: IContainerRuntime): Promise<void>;
     };
 };
-
-// @public (undocumented)
-export const createTestContainerRuntimeFactoryWithDefaultDataStore: (Base: typeof ContainerRuntimeFactoryWithDefaultDataStore | undefined, ctorArgs: {
-    defaultFactory: IFluidDataStoreFactory;
-    registryEntries: NamedFluidDataStoreRegistryEntries;
-    dependencyContainer?: any;
-    requestHandlers?: RuntimeRequestHandler[];
-    runtimeOptions?: IContainerRuntimeOptions;
-}) => TestContainerRuntimeFactoryWithDefaultDataStore;
 
 // @public (undocumented)
 export enum DataObjectFactoryType {
@@ -263,17 +265,6 @@ export const TestContainerRuntimeFactory: {
         hasInitialized(_runtime: IContainerRuntime): Promise<void>;
     };
 };
-
-// @public (undocumented)
-export class TestContainerRuntimeFactoryWithDefaultDataStore extends ContainerRuntimeFactoryWithDefaultDataStore {
-    constructor(props: {
-        defaultFactory: IFluidDataStoreFactory;
-        registryEntries: NamedFluidDataStoreRegistryEntries;
-        dependencyContainer?: any;
-        requestHandlers?: RuntimeRequestHandler[];
-        runtimeOptions?: IContainerRuntimeOptions;
-    });
-}
 
 // @public
 export class TestFluidObject implements ITestFluidObject {

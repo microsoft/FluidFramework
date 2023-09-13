@@ -11,7 +11,7 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	createSummarizer,
-	createTestContainerRuntimeFactoryWithDefaultDataStore,
+	createContainerRuntimeFactoryWithDefaultDataStore,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
@@ -86,7 +86,7 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider, apis) => {
 		enableRuntimeIdCompressor: true,
 	};
 
-	const runtimeFactory = createTestContainerRuntimeFactoryWithDefaultDataStore(
+	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 		ContainerRuntimeFactoryWithDefaultDataStore,
 		{
 			defaultFactory,
@@ -185,7 +185,7 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider, apis) => {
 		// The first container should set a metadata property that automatically should
 		// enable it for any other container runtimes that are created.
 		const runtimeFactoryWithoutCompressorEnabled =
-			createTestContainerRuntimeFactoryWithDefaultDataStore(
+			createContainerRuntimeFactoryWithDefaultDataStore(
 				ContainerRuntimeFactoryWithDefaultDataStore,
 				{
 					defaultFactory,

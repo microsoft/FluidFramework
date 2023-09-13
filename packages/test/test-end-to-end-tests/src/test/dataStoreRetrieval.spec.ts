@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import {
 	ITestObjectProvider,
-	createTestContainerRuntimeFactoryWithDefaultDataStore,
+	createContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/test-utils";
 import { describeFullCompat, ITestDataObject } from "@fluid-internal/test-version-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -94,7 +94,7 @@ describeFullCompat(
 		});
 
 		it("Requesting data store before outer data store completes initialization", async () => {
-			const containerRuntimeFactory = createTestContainerRuntimeFactoryWithDefaultDataStore(
+			const containerRuntimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 				ContainerRuntimeFactoryWithDefaultDataStore,
 				{
 					defaultFactory: outerDataObjectFactory,
@@ -119,7 +119,7 @@ describeFullCompat(
 		});
 
 		it("Requesting data store before outer data store (non-root) completes initialization", async () => {
-			const containerRuntimeFactory = createTestContainerRuntimeFactoryWithDefaultDataStore(
+			const containerRuntimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 				ContainerRuntimeFactoryWithDefaultDataStore,
 				{
 					defaultFactory: innerDataObjectFactory,

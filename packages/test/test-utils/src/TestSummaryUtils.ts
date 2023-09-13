@@ -19,7 +19,7 @@ import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider"
 import { mockConfigProvider } from "./TestConfigs";
 import { waitForContainerConnection } from "./containerUtils";
 import { timeoutAwait } from "./timeoutUtils";
-import { createTestContainerRuntimeFactoryWithDefaultDataStore } from "./testContainerRuntimeFactoryWithDefaultDataStore";
+import { createContainerRuntimeFactoryWithDefaultDataStore } from "./testContainerRuntimeFactoryWithDefaultDataStore";
 
 const summarizerClientType = "summarizer";
 
@@ -86,7 +86,7 @@ export async function createSummarizerFromFactory(
 ): Promise<{ container: IContainer; summarizer: ISummarizer }> {
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
-	const runtimeFactory = createTestContainerRuntimeFactoryWithDefaultDataStore(
+	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 		containerRuntimeFactoryType,
 		{
 			defaultFactory: dataStoreFactory,

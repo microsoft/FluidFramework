@@ -67,7 +67,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
         dependencyContainer?: IFluidDependencySynthesizer;
         requestHandlers?: RuntimeRequestHandler[];
         runtimeOptions?: IContainerRuntimeOptions;
-        initializeEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+        initializeEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
     });
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
     // (undocumented)

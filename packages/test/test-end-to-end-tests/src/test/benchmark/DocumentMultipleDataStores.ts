@@ -9,16 +9,16 @@ import {
 	ISummarizer,
 } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import {
+	ContainerRuntimeFactoryWithDefaultDataStore,
+	DataObject,
+	DataObjectFactory,
+} from "@fluidframework/aqueduct";
 import { SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import {
-	TestContainerRuntimeFactoryWithDefaultDataStore,
-	createSummarizerFromFactory,
-	summarizeNow,
-} from "@fluidframework/test-utils";
+import { createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-utils";
 import {
 	assertDocumentTypeInfo,
 	isDocumentMultipleDataStoresInfo,
@@ -97,7 +97,7 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 	public get dataObjectFactory() {
 		return this._dataObjectFactory;
 	}
-	private readonly runtimeFactory: TestContainerRuntimeFactoryWithDefaultDataStore;
+	private readonly runtimeFactory: ContainerRuntimeFactoryWithDefaultDataStore;
 
 	public get mainContainer(): IContainer | undefined {
 		return this._mainContainer;
@@ -168,7 +168,7 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 			[SharedMap.getFactory(), SharedString.getFactory()],
 			[],
 		);
-		this.runtimeFactory = new TestContainerRuntimeFactoryWithDefaultDataStore({
+		this.runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: this.dataObjectFactory,
 			registryEntries: [
 				[this.dataObjectFactory.type, Promise.resolve(this.dataObjectFactory)],

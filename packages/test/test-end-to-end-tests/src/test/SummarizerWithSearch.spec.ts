@@ -4,7 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { DataObject, DataObjectFactory, PureDataObject } from "@fluidframework/aqueduct";
+import {
+	ContainerRuntimeFactoryWithDefaultDataStore,
+	DataObject,
+	DataObjectFactory,
+	PureDataObject,
+} from "@fluidframework/aqueduct";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { IContainer, IRuntimeFactory, LoaderHeader } from "@fluidframework/container-definitions";
 import { ILoaderProps } from "@fluidframework/container-loader";
@@ -34,7 +39,6 @@ import {
 	waitForContainerConnection,
 	summarizeNow,
 	createSummarizerFromFactory,
-	TestContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
@@ -255,7 +259,7 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
 		[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
 		[dataStoreFactory2.type, Promise.resolve(dataStoreFactory2)],
 	]);
-	const runtimeFactory = new TestContainerRuntimeFactoryWithDefaultDataStore({
+	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: dataStoreFactory1,
 		registryEntries: registryStoreEntries,
 		requestHandlers: [innerRequestHandler],
