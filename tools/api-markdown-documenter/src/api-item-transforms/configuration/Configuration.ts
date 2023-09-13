@@ -17,6 +17,8 @@ import {
 
 /**
  * API Item transformation configuration.
+ *
+ * @public
  */
 export interface ApiItemTransformationConfiguration
 	extends ApiItemTransformationOptions,
@@ -43,6 +45,8 @@ export interface ApiItemTransformationConfiguration
 /**
  * Gets a complete {@link ApiItemTransformationConfiguration} using the provided partial configuration, and filling
  * in the remainder with the documented defaults.
+ *
+ * @public
  */
 export function getApiItemTransformationConfigurationWithDefaults(
 	inputOptions: ApiItemTransformationConfiguration,

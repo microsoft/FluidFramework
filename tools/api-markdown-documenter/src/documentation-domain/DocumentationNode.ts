@@ -14,6 +14,8 @@ import type {
  *
  * @typeParam TData - The kind of data used by the node to represent its child content.
  * See {@link https://github.com/syntax-tree/unist#data}.
+ *
+ * @public
  */
 export interface DocumentationNode<TData extends object = UnistData> extends UnistNode<TData> {
 	/**
@@ -50,6 +52,8 @@ export interface DocumentationNode<TData extends object = UnistData> extends Uni
 
 /**
  * A {@link DocumentationNode} that is contractually rendered to a single line (no line breaks allowed).
+ *
+ * @public
  */
 export interface SingleLineDocumentationNode<TData extends object = UnistData>
 	extends DocumentationNode<TData> {
@@ -61,6 +65,8 @@ export interface SingleLineDocumentationNode<TData extends object = UnistData>
 
 /**
  * A {@link DocumentationNode} that is contractually rendered as more than 1 line.
+ *
+ * @public
  */
 export interface MultiLineDocumentationNode<TData extends object = UnistData>
 	extends DocumentationNode<TData> {
@@ -74,6 +80,8 @@ export interface MultiLineDocumentationNode<TData extends object = UnistData>
  * A documentation node that has child nodes.
  *
  * @see {@link https://github.com/syntax-tree/unist#parent}
+ *
+ * @public
  */
 export interface DocumentationParentNode<
 	TDocumentationNode extends DocumentationNode = DocumentationNode,
@@ -111,6 +119,8 @@ export interface DocumentationParentNode<
  * A documentation node that is a terminal (i.e. has no children).
  *
  * @see {@link https://github.com/syntax-tree/unist#literal}
+ *
+ * @public
  */
 export interface DocumentationLiteralNode<TValue = unknown>
 	extends UnistLiteral<TValue>,
@@ -140,6 +150,8 @@ export interface DocumentationLiteralNode<TValue = unknown>
 
 /**
  * Helper base class for {@link DocumentationParentNode} implementations.
+ *
+ * @public
  */
 export abstract class DocumentationParentNodeBase<
 	TDocumentationNode extends DocumentationNode = DocumentationNode,
@@ -191,6 +203,8 @@ export abstract class DocumentationParentNodeBase<
 
 /**
  * Helper base class for {@link DocumentationParentNode} implementations.
+ *
+ * @public
  */
 export abstract class DocumentationLiteralNodeBase<TValue = unknown>
 	implements DocumentationLiteralNode<TValue>
