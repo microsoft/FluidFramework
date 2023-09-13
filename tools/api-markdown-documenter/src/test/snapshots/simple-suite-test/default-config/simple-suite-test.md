@@ -74,7 +74,7 @@ const foo = bar;
 
 | Function | Alerts | Return Type | Description |
 | --- | --- | --- | --- |
-| [testFunction(testParameter, testOptionalParameter)](./simple-suite-test#testfunction-function) |  | TTypeParameter | Test function |
+| [testFunction(testParameter, testOptionalParameter)](./simple-suite-test#testfunction-function) | `ALPHA` | TTypeParameter | Test function |
 | [testFunctionReturningInlineType()](./simple-suite-test#testfunctionreturninginlinetype-function) |  | {     foo: number;     bar: [TestEnum](./simple-suite-test#testenum-enum); } | Test function that returns an inline type |
 | [testFunctionReturningIntersectionType()](./simple-suite-test#testfunctionreturningintersectiontype-function) | `DEPRECATED` | [TestEmptyInterface](./simple-suite-test/testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)&lt;number&gt; | Test function that returns an inline type |
 | [testFunctionReturningUnionType()](./simple-suite-test#testfunctionreturninguniontype-function) |  | string \| [TestInterface](./simple-suite-test/testinterface-interface) | Test function that returns an inline type |
@@ -83,7 +83,7 @@ const foo = bar;
 
 | Variable | Alerts | Modifiers | Description |
 | --- | --- | --- | --- |
-| [testConst](./simple-suite-test#testconst-variable) |  | `readonly` | **_(BETA)_** Test Constant |
+| [testConst](./simple-suite-test#testconst-variable) | `BETA` | `readonly` | Test Constant |
 | [testConstWithEmptyDeprecatedBlock](./simple-suite-test#testconstwithemptydeprecatedblock-variable) | `DEPRECATED` | `readonly` | I have a `@deprecated` tag with an empty comment block. |
 
 ## Namespaces
