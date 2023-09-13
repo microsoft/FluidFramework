@@ -374,19 +374,15 @@ export function createBreadcrumbParagraph(
 }
 
 /**
- * Alert text used in {@link betaAlert}.
+ * Alert text used in {@link betaWarningSpan}.
  */
-const betaWarning: string =
-	"This API is provided as a preview for developers and may change" +
-	" based on feedback that we receive. Do not use this API in a production environment.";
+export const betaWarningText: string =
+	"WARNING: This API is provided as a beta preview for developers and may change based on feedback that we receive. Use at your own risk.";
 
 /**
- * A simple alert containing a warning about using `@beta` APIs.
+ * A simple italic span containing a warning about using `@beta` APIs.
  */
-export const betaAlert = new AlertNode(
-	[ParagraphNode.createFromPlainText(betaWarning)],
-	AlertKind.Danger,
-);
+export const betaWarningSpan = SpanNode.createFromPlainText(betaWarningText, { bold: true });
 
 /**
  * Renders a section containing the API item's summary comment if it has one.

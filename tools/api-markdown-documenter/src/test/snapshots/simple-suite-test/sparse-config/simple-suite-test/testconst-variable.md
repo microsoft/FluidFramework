@@ -1,4 +1,6 @@
-## testConst
+## testConst (BETA)
+
+**WARNING: This API is provided as a beta preview for developers and may change based on feedback that we receive. Use at your own risk.**
 
 Test Constant
 

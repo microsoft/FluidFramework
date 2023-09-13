@@ -8,7 +8,6 @@ import {
 	ApiItemKind,
 	ApiPackage,
 	ApiPropertyItem,
-	ApiReleaseTagMixin,
 	ApiReturnTypeMixin,
 	Excerpt,
 	Parameter,
@@ -36,6 +35,7 @@ import {
 	getDefaultValueBlock,
 	getLinkForApiItem,
 	getModifiers,
+	getReleaseTag,
 	isDeprecated,
 } from "../ApiItemUtilities";
 import { transformDocSection } from "../DocNodeTransforms";
@@ -521,9 +521,11 @@ export function createApiSummaryCell(
 ): TableBodyCellNode {
 	const contents: DocumentationNode[] = [];
 
-	if (ApiReleaseTagMixin.isBaseClassOf(apiItem) && apiItem.releaseTag === ReleaseTag.Beta) {
+	// TODO: alpha
+	const releaseTag = getReleaseTag(apiItem);
+	if (releaseTag === ReleaseTag.Beta) {
 		contents.push(
-			new SpanNode([new PlainTextNode("(BETA)")], {
+			new SpanNode([new PlainTextNode("(BETA) ")], {
 				bold: true,
 				italic: true,
 			}),

@@ -2,13 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ApiItem, ApiReleaseTagMixin, ReleaseTag } from "@microsoft/api-extractor-model";
+import { ApiItem, ReleaseTag } from "@microsoft/api-extractor-model";
 
 import { SectionNode } from "../../documentation-domain";
-import { doesItemRequireOwnDocument, getHeadingForApiItem } from "../ApiItemUtilities";
+import {
+	doesItemRequireOwnDocument,
+	getHeadingForApiItem,
+	getReleaseTag,
+} from "../ApiItemUtilities";
 import { ApiItemTransformationConfiguration } from "../configuration";
 import {
-	betaAlert,
+	betaWarningSpan,
 	createDeprecationNoticeSection,
 	createExamplesSection,
 	createRemarksSection,
@@ -45,9 +49,11 @@ export function createSectionWithChildContent(
 ): SectionNode[] {
 	const sections: SectionNode[] = [];
 
-	// Render beta warning if applicable
-	if (ApiReleaseTagMixin.isBaseClassOf(apiItem) && apiItem.releaseTag === ReleaseTag.Beta) {
-		sections.push(wrapInSection([betaAlert]));
+	// Render beta notice if applicable
+	// TODO: alpha support
+	const releaseTag = getReleaseTag(apiItem);
+	if (releaseTag === ReleaseTag.Beta) {
+		sections.push(wrapInSection([betaWarningSpan]));
 	}
 
 	// Render deprecation notice (if any)

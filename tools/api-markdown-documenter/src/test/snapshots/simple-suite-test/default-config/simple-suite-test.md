@@ -83,7 +83,7 @@ const foo = bar;
 
 | Variable | Alerts | Modifiers | Description |
 | --- | --- | --- | --- |
-| [testConst](./simple-suite-test#testconst-variable) |  | `readonly` | Test Constant |
+| [testConst](./simple-suite-test#testconst-variable) |  | `readonly` | **_(BETA)_** Test Constant |
 | [testConstWithEmptyDeprecatedBlock](./simple-suite-test#testconstwithemptydeprecatedblock-variable) | `DEPRECATED` | `readonly` | I have a `@deprecated` tag with an empty comment block. |
 
 ## Namespaces
@@ -300,7 +300,9 @@ A union type
 
 ## Variable Details
 
-### testConst {#testconst-variable}
+### testConst (BETA) {#testconst-variable}
+
+**WARNING: This API is provided as a beta preview for developers and may change based on feedback that we receive. Use at your own risk.**
 
 Test Constant
 
