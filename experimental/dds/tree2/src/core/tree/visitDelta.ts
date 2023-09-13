@@ -134,7 +134,7 @@ function transferRoots(rootTransfers: RootTransfers, treeIndex: TreeIndex, visit
 export interface DeltaVisitor {
 	free(): void;
 	create(index: PlaceIndex, content: Delta.ProtoNodes): void;
-	destroy(range: DetachedRangeUpPath): void;
+	destroy(range: Range): void;
 
 	attach(source: DetachedRangeUpPath, destination: PlaceIndex): void;
 	detach(source: Range, destination: DetachedPlaceUpPath): void;

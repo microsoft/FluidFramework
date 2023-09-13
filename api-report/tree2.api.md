@@ -455,7 +455,7 @@ export interface DeltaVisitor {
     // (undocumented)
     create(index: PlaceIndex, content: Delta.ProtoNodes): void;
     // (undocumented)
-    destroy(range: DetachedRangeUpPath): void;
+    destroy(range: Range_2): void;
     // (undocumented)
     detach(source: Range_2, destination: DetachedPlaceUpPath): void;
     // (undocumented)

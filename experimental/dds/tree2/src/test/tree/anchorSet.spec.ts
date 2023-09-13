@@ -94,7 +94,7 @@ describe("AnchorSet", () => {
 
 	it("can rebase over destroy", () => {
 		const [anchors, anchor1, anchor2, anchor3] = setup();
-		withVisitorInFoo(anchors, (v) => v.destroy(brand({ field: fieldFoo, start: 4, end: 5 })));
+		withVisitorInFoo(anchors, (v) => v.destroy({ start: 4, end: 5 }));
 
 		checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 4], [fieldBar, 4]));
 		checkEquality(anchors.locate(anchor2), path2);
@@ -122,7 +122,7 @@ describe("AnchorSet", () => {
 	it("can rebase over delete of parent node", () => {
 		const [anchors, anchor1, anchor2, anchor3, anchor4] = setup();
 
-		withVisitorInFoo(anchors, (v) => v.destroy(brand({ field: fieldFoo, start: 5, end: 6 })));
+		withVisitorInFoo(anchors, (v) => v.destroy({ start: 5, end: 6 }));
 
 		assert.equal(anchors.locate(anchor4), undefined);
 		assert.equal(anchors.locate(anchor1), undefined);
@@ -134,14 +134,14 @@ describe("AnchorSet", () => {
 		assert.throws(() => anchors.locate(anchor1));
 
 		checkEquality(anchors.locate(anchor2), path2);
-		withVisitorInFoo(anchors, (v) => v.destroy(brand({ field: fieldFoo, start: 3, end: 4 })));
+		withVisitorInFoo(anchors, (v) => v.destroy({ start: 3, end: 4 }));
 		checkEquality(anchors.locate(anchor2), undefined);
 		assert.doesNotThrow(() => anchors.forget(anchor2));
 		assert.throws(() => anchors.locate(anchor2));
 
 		// The index of anchor3 has changed from 4 to 3 because of the deletion of the node at index 3.
 		checkEquality(anchors.locate(anchor3), makePath([fieldFoo, 3]));
-		withVisitorInFoo(anchors, (v) => v.destroy(brand({ field: fieldFoo, start: 3, end: 4 })));
+		withVisitorInFoo(anchors, (v) => v.destroy({ start: 3, end: 4 }));
 		checkEquality(anchors.locate(anchor3), undefined);
 		assert.doesNotThrow(() => anchors.forget(anchor3));
 		assert.throws(() => anchors.locate(anchor3));
