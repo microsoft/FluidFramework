@@ -208,7 +208,7 @@ function createDocumentForSingleEntryPointPackage(
 	);
 
 	// Wrap entry-point contents with package-level docs
-	sections.push(...config.createChildContentSections(apiPackage, entryPointSections, config));
+	sections.push(...config.createDefaultLayout(apiPackage, entryPointSections, config));
 
 	logger.verbose(`Package document rendered successfully.`);
 

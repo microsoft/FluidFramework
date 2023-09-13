@@ -32,17 +32,15 @@ export {
 	isStatic,
 } from "./ApiItemUtilities";
 export {
-	ApiItemTransformationConfiguration,
-	ApiItemTransformationOptions,
-	CreateChildContentSections,
-	// Consumers should not use this, it exists externally for documentation purposes only.
+	type ApiItemTransformationConfiguration,
+	type ApiItemTransformationOptions,
 	type DefaultDocumentationSuiteOptions,
-	DocumentationSuiteOptions,
-	DocumentBoundaries,
+	type DocumentationSuiteOptions,
+	type DocumentBoundaries,
 	getApiItemTransformationConfigurationWithDefaults,
-	HierarchyBoundaries,
-	TransformApiItemWithChildren,
-	TransformApiItemWithoutChildren,
+	type HierarchyBoundaries,
+	type TransformApiItemWithChildren,
+	type TransformApiItemWithoutChildren,
 } from "./configuration";
 export { transformDocNode } from "./DocNodeTransforms";
 export { apiItemToDocument, apiItemToSections } from "./TransformApiItem";

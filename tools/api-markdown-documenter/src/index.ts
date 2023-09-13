@@ -24,7 +24,6 @@ export {
 	type ApiModifier,
 	type ApiModuleLike,
 	type ApiSignatureLike,
-	type CreateChildContentSections,
 	type DefaultDocumentationSuiteOptions,
 	type DocumentationSuiteOptions,
 	type DocumentBoundaries,
