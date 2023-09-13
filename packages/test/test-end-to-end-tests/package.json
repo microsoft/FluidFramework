@@ -41,7 +41,7 @@
 		"test:realsvc:local:report:full": "cross-env fluid__test__backCompat=FULL npm run test:realsvc:local --",
 		"test:realsvc:odsp": "npm run test:realsvc:run -- --driver=odsp --timeout=20s",
 		"test:realsvc:odsp:report": "npm run test:realsvc:odsp --",
-		"test:realsvc:r11s": "npm run test:realsvc:run -- --driver=r11s --timeout=5s --use-openssl-ca",
+		"test:realsvc:r11s": "npm run test:realsvc:run -- --driver=r11s --timeout=20s --use-openssl-ca",
 		"test:realsvc:routerlicious": "npm run test:realsvc:r11s",
 		"test:realsvc:routerlicious:report": "npm run test:realsvc:r11s --",
 		"test:realsvc:run": "mocha dist/test --config src/test/.mocharc.cjs --exclude dist/test/benchmark/**/* --verbose",
