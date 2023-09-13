@@ -94,6 +94,11 @@ This has the largest impact around application schema evolution (changing the sc
 
 ## Bipartite Tree and Field Kinds
 
+The Tree is made up of Nodes and Fields:
+
+1. Nodes are (shallowly) immutable and have a logical identity, a type and either a value or fields under string keys.
+2. Fields are collaboratively editable collections of nodes.
+
 When users edit documents, those high level semantic operations need to be encoded in a way that supports merges.
 Additionally this encoding needs to be deterministically applied in all clients, even if they are using different version of Shared Tree.
 This needs to be done such that applications can ensure invariants hold in their data model.
