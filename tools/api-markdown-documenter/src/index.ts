@@ -28,7 +28,6 @@ export {
 	type DefaultDocumentationSuiteOptions,
 	type DocumentationSuiteOptions,
 	type DocumentBoundaries,
-	getApiItemTransformationConfigurationWithDefaults,
 	getDefaultValueBlock,
 	getDeprecatedBlock,
 	getExampleBlocks,
@@ -59,7 +58,6 @@ export * from "./documentation-domain";
 export {
 	createDocumentWriter,
 	DocumentWriter,
-	getMarkdownRenderersWithDefaults,
 	type MarkdownRenderContext,
 	type MarkdownRenderers,
 	type RenderDocumentationNode as RenderDocumentationNodeAsMarkdown,
@@ -68,7 +66,11 @@ export {
 	renderNodeAsMarkdown,
 	renderNodesAsMarkdown,
 } from "./markdown-renderer";
-export { renderApiModelAsMarkdown, renderDocumentsAsMarkdown } from "./RenderMarkdown";
+export {
+	type FileSystemConfiguration,
+	renderApiModelAsMarkdown,
+	renderDocumentsAsMarkdown,
+} from "./RenderMarkdown";
 export type { ConfigurationBase } from "./ConfigurationBase";
 export type { Heading } from "./Heading";
 export type { Link, UrlTarget } from "./Link";
@@ -80,5 +82,6 @@ export {
 	verboseConsoleLogger,
 } from "./Logging";
 
-// Convenience re-exports of API model types
+// Convenience re-exports
 export type { ApiItem, ApiItemKind, ApiModel, ApiPackage } from "@microsoft/api-extractor-model";
+export { NewlineKind } from "@rushstack/node-core-library";

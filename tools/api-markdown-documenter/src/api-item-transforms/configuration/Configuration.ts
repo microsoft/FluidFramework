@@ -51,13 +51,14 @@ export interface ApiItemTransformationConfiguration
 export function getApiItemTransformationConfigurationWithDefaults(
 	inputOptions: ApiItemTransformationConfiguration,
 ): Required<ApiItemTransformationConfiguration> {
+	const logger = inputOptions.logger ?? defaultConsoleLogger;
 	const documentationSuiteOptions = getDocumentationSuiteOptionsWithDefaults(inputOptions);
 	const transformationOptions = getApiItemTransformationOptionsWithDefaults(inputOptions);
 	return {
-		apiModel: inputOptions.apiModel,
-		uriRoot: inputOptions.uriRoot,
-		logger: inputOptions.logger ?? defaultConsoleLogger,
 		...documentationSuiteOptions,
 		...transformationOptions,
+		apiModel: inputOptions.apiModel,
+		uriRoot: inputOptions.uriRoot,
+		logger,
 	};
 }
