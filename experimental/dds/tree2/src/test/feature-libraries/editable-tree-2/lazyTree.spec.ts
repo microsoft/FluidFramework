@@ -24,9 +24,9 @@ import {
 	jsonableTreeFromCursor,
 	singleMapTreeCursor,
 	typeNameSymbol,
-	UntypedEntity,
-	UntypedField2 as UntypedField,
-	UntypedTree2 as UntypedTree,
+	Tree,
+	TreeField,
+	TreeNode,
 	Skip,
 	bannedFieldNames,
 	fieldApiPrefixes,
@@ -203,7 +203,7 @@ describe("lazyTree", () => {
 	});
 });
 
-function fieldToMapTree(field: UntypedField): MapTree[] {
+function fieldToMapTree(field: TreeField): MapTree[] {
 	const results: MapTree[] = [];
 	for (const child of field) {
 		results.push(nodeToMapTree(child));
@@ -211,7 +211,7 @@ function fieldToMapTree(field: UntypedField): MapTree[] {
 	return results;
 }
 
-function nodeToMapTree(node: UntypedTree): MapTree {
+function nodeToMapTree(node: TreeNode): MapTree {
 	const fields: Map<FieldKey, MapTree[]> = new Map();
 	for (const field of node) {
 		fields.set(field.key, fieldToMapTree(field));
@@ -220,7 +220,7 @@ function nodeToMapTree(node: UntypedTree): MapTree {
 	return { fields, type: node.type, value: node.value };
 }
 
-function checkPropertyInvariants(root: UntypedEntity): void {
+function checkPropertyInvariants(root: Tree): void {
 	const treeValues = new Map<TreeValue, number>();
 	// Assert all nodes and fields traversed, and all values found.
 	// TODO: checking that unboxed fields and nodes were traversed is not fully implemented here.
