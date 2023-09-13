@@ -13,6 +13,12 @@ import { OpDecompressor } from "./opDecompressor";
 import { OpGroupingManager } from "./opGroupingManager";
 import { OpSplitter } from "./opSplitter";
 
+/**
+ * Stateful class for processing incoming remote messages as the virtualization measures are unwrapped,
+ * potentially across numerous inbound ops.
+ *
+ * @internal
+ */
 export class RemoteMessageProcessor {
 	constructor(
 		private readonly opSplitter: OpSplitter,
