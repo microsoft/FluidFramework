@@ -374,10 +374,21 @@ export function createBreadcrumbParagraph(
 }
 
 /**
+ * Alert text used in {@link alphaWarningSpan}.
+ */
+export const alphaWarningText: string =
+	"WARNING: This API is provided as an alpha preview and may change without notice. Use at your own risk.";
+
+/**
+ * A simple italic span containing a warning about using `@alpha` APIs.
+ */
+export const alphaWarningSpan = SpanNode.createFromPlainText(alphaWarningText, { bold: true });
+
+/**
  * Alert text used in {@link betaWarningSpan}.
  */
 export const betaWarningText: string =
-	"WARNING: This API is provided as a beta preview for developers and may change based on feedback that we receive. Use at your own risk.";
+	"WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.";
 
 /**
  * A simple italic span containing a warning about using `@beta` APIs.

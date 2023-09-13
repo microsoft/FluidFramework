@@ -17,6 +17,7 @@ import {
 	getQualifiedApiItemName,
 	getReleaseTag,
 	getUnscopedPackageName,
+	releaseTagToString,
 } from "../ApiItemUtilities";
 
 /**
@@ -280,10 +281,12 @@ export namespace DefaultDocumentationSuiteOptions {
 	 * Uses the item's `displayName`, except for `Model` items, in which case the text "API Overview" is displayed.
 	 */
 	export function defaultGetHeadingTextForItem(apiItem: ApiItem): string {
-		// If the API is `@beta`, append a notice to the heading text
-		// TODO: alpha support
+		// If the API is `@alpha` or `@beta`, append a notice to the heading text
 		const releaseTag = getReleaseTag(apiItem);
-		const headingTextPostfix = releaseTag === ReleaseTag.Beta ? " (BETA)" : "";
+		const headingTextPostfix =
+			releaseTag === ReleaseTag.Alpha || releaseTag === ReleaseTag.Beta
+				? ` (${releaseTagToString(releaseTag).toUpperCase()})`
+				: "";
 
 		switch (apiItem.kind) {
 			case ApiItemKind.Model:

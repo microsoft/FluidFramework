@@ -12,6 +12,7 @@ import {
 } from "../ApiItemUtilities";
 import { ApiItemTransformationConfiguration } from "../configuration";
 import {
+	alphaWarningSpan,
 	betaWarningSpan,
 	createDeprecationNoticeSection,
 	createExamplesSection,
@@ -50,9 +51,10 @@ export function createSectionWithChildContent(
 	const sections: SectionNode[] = [];
 
 	// Render beta notice if applicable
-	// TODO: alpha support
 	const releaseTag = getReleaseTag(apiItem);
-	if (releaseTag === ReleaseTag.Beta) {
+	if (releaseTag === ReleaseTag.Alpha) {
+		sections.push(wrapInSection([alphaWarningSpan]));
+	} else if (releaseTag === ReleaseTag.Beta) {
 		sections.push(wrapInSection([betaWarningSpan]));
 	}
 

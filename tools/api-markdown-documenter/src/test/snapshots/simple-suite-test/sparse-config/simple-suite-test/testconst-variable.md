@@ -1,6 +1,6 @@
 ## testConst (BETA)
 
-**WARNING: This API is provided as a beta preview for developers and may change based on feedback that we receive. Use at your own risk.**
+**WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.**
 
 Test Constant
 

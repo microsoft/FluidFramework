@@ -211,7 +211,9 @@ Here are some remarks about the type alias
 
 ## Function Details
 
-### testFunction {#testfunction-function}
+### testFunction (ALPHA) {#testfunction-function}
+
+**WARNING: This API is provided as an alpha preview and may change without notice. Use at your own risk.**
 
 Test function
 
@@ -302,7 +304,7 @@ A union type
 
 ### testConst (BETA) {#testconst-variable}
 
-**WARNING: This API is provided as a beta preview for developers and may change based on feedback that we receive. Use at your own risk.**
+**WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.**
 
 Test Constant
 

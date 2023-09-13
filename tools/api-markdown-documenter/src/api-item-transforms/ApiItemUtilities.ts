@@ -609,6 +609,27 @@ export function getReleaseTag(apiItem: ApiItem): ReleaseTag | undefined {
 }
 
 /**
+ * Creates a string representation of the provided release tag.
+ *
+ * @remarks If `None`, this will return an empty string.
+ */
+export function releaseTagToString(releaseTag: ReleaseTag): string {
+	// eslint-disable-next-line default-case
+	switch (releaseTag) {
+		case ReleaseTag.Alpha:
+			return "Alpha";
+		case ReleaseTag.Beta:
+			return "Beta";
+		case ReleaseTag.Internal:
+			return "Internal";
+		case ReleaseTag.Public:
+			return "Public";
+		case ReleaseTag.None:
+			return "";
+	}
+}
+
+/**
  * Gets any custom-tag comment blocks on the API item matching the provided tag name, if any.
  * Intended for use with tag types for which only multiple instances are allowed in a TSDoc comment (e.g.
  * {@link https://tsdoc.org/pages/tags/throws/ | @throws}).
