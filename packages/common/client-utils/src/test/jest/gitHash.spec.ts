@@ -49,12 +49,11 @@ async function evaluateBrowserHash(
 	// there are also issues around nested function calls when using page.exposeFunction, so
 	// do only the crypto.subtle part in page.evaluate and do the other half outside
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-	const browserHashFn = HashBrowser.__get__("digestBuffer").toString();
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-	const hashCharCodeString = await page.evaluate(
-		async (fn, f, alg) => {
+	const browserHashFn: string = HashBrowser.__get__("digestBuffer").toString();
+
+	const hashCharCodeString = (await page.evaluate(
+		async (fn: string, f: string, alg: "SHA-1" | "SHA-256") => {
 			// convert back into Uint8Array
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const fileCharCodes = Array.prototype.map.call([...f], (char: string) => {
 				return char.charCodeAt(0);
 			}) as number[];
@@ -76,7 +75,7 @@ async function evaluateBrowserHash(
 		browserHashFn,
 		fileCharCodeString,
 		algorithm,
-	);
+	)) as string;
 
 	// reconstruct the Uint8Array from the string
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
