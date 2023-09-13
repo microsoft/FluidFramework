@@ -4,6 +4,7 @@
 "@fluidframework/container-definitions": major
 "@fluidframework/container-loader": major
 "@fluidframework/container-runtime": major
+"@fluidframework/core-interfaces": major
 "@fluidframework/data-object-base": major
 "@fluidframework/datastore": major
 "@fluidframework/datastore-definitions": major
@@ -20,7 +21,6 @@ initializeEntryPoint is required
 The optional `initializeEntryPoint` method has become required on a number of constructors. A value will need to be provided to the following classes:
 
 -   `BaseContainerRuntimeFactory`
--   `ContainerRuntimeFactoryWithDefaultDataStore`
 -   `RuntimeFactory`
 -   `ContainerRuntime` (constructor and `loadRuntime`)
 -   `FluidDataStoreRuntime`

@@ -70,7 +70,7 @@ The `request` API (associated with the `IFluidRouter` interface) has been deprec
 After calling `ILoader.resolve(...)`, call the `request(...)` method on the returned `IContainer` with a corresponding request URL. For converting a request URL from `Loader` to `Container`, use the `IUrlResolver` passed into the `Loader`'s constructor.
 The following is an example of what this change may look like:
 
-```
+```ts
 // OLD
 const request: IRequest;
 const urlResolver = new YourUrlResolver();
@@ -80,7 +80,7 @@ await loader.resolve(request);
 const response = loader.request(request);
 ```
 
-```
+```ts
 // NEW
 const request: IRequest;
 const urlResolver = new YourUrlResolver();
