@@ -30,14 +30,18 @@ export class RemoteMessageProcessor {
 
 	/**
 	 * Ungroups and Unchunks the runtime ops encapsulated by the single remoteMessage received over the wire
-	 * @param remoteMessage - A message from another client, likely a chunked/grouped op
-	 * @returns the ungrouped, unchunked, unpacked SequencedContainerRuntimeMessage encapsulated in the remote message
+	 * @param remoteMessage - A message from another client, possible virtualized (grouped, compressed, and/or chunked).
+	 * Considered mutable, meaning no other Container or other parallel procedure depends on this object instance.
+	 * @returns the unchunked, decompressed, ungrouped, unpacked SequencedContainerRuntimeMessages encapsulated in the remote message
+	 * Passes through ops that weren't virtualized, e.g. System ops that the ContainerRuntime will ultimately ignore.
 	 */
 	public process(remoteMessage: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
 		const result: ISequencedDocumentMessage[] = [];
 
+		ensureContentsDeserialized(remoteMessage);
+
 		// Ungroup before and after decompression for back-compat (cleanup tracked by AB#4371)
-		for (const ungroupedMessage of this.opGroupingManager.ungroupOp(copy(remoteMessage))) {
+		for (const ungroupedMessage of this.opGroupingManager.ungroupOp(remoteMessage)) {
 			const message = this.opDecompressor.processMessage(ungroupedMessage).message;
 
 			for (let ungroupedMessage2 of this.opGroupingManager.ungroupOp(message)) {
@@ -84,21 +88,14 @@ export class RemoteMessageProcessor {
 	}
 }
 
-const copy = (remoteMessage: ISequencedDocumentMessage): ISequencedDocumentMessage => {
-	// Do shallow copy of message, as the processing flow will modify it.
-	// There might be multiple container instances receiving same message
-	// We do not need to make deep copy, as each layer will just replace message.content itself,
-	// but would not modify contents details
-	const message = { ...remoteMessage };
-
+/** Takes an incoming message and if the contents is a string, JSON.parse's it in place */
+const ensureContentsDeserialized = (mutableMessage: ISequencedDocumentMessage): void => {
 	// back-compat: ADO #1385: eventually should become unconditional, but only for runtime messages!
 	// System message may have no contents, or in some cases (mostly for back-compat) they may have actual objects.
 	// Old ops may contain empty string (I assume noops).
-	if (typeof message.contents === "string" && message.contents !== "") {
-		message.contents = JSON.parse(message.contents);
+	if (typeof mutableMessage.contents === "string" && mutableMessage.contents !== "") {
+		mutableMessage.contents = JSON.parse(mutableMessage.contents);
 	}
-
-	return message;
 };
 
 /**
