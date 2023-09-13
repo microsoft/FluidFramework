@@ -80,7 +80,9 @@ describe("findOverlappingIntervalsBySegoff", () => {
 
 	beforeEach(() => {
 		dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: "1" });
-		dataStoreRuntime.options = { intervalStickinessEnabled: true };
+		dataStoreRuntime.options = {
+			intervalStickinessEnabled: true,
+		};
 		testSharedString = new TestSharedString(
 			dataStoreRuntime,
 			"test-shared-string",

@@ -140,6 +140,9 @@
 			},
 			"TypeAliasDeclaration_SharedStringRevertible": {
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_SequenceOptions": {
+				"forwardCompat": false
 			}
 		}
 	}

@@ -138,6 +138,7 @@ export class SequenceInterval implements ISerializableInterval {
 		 */
 		public end: LocalReferencePosition,
 		public intervalType: IntervalType,
+		public useNewSlidingBehavior: boolean,
 		props?: PropertySet,
 		public readonly startSide: Side = Side.Before,
 		public readonly endSide: Side = Side.Before,
@@ -219,6 +220,7 @@ export class SequenceInterval implements ISerializableInterval {
 			this.start,
 			this.end,
 			this.intervalType,
+			this.useNewSlidingBehavior,
 			this.properties,
 			this.startSide,
 			this.endSide,
@@ -324,6 +326,7 @@ export class SequenceInterval implements ISerializableInterval {
 			newStart,
 			newEnd,
 			this.intervalType,
+			this.useNewSlidingBehavior,
 			undefined,
 			startSide,
 			endSide,
@@ -391,6 +394,7 @@ export class SequenceInterval implements ISerializableInterval {
 				localSeq,
 				startReferenceSlidingPreference(stickiness),
 				startReferenceSlidingPreference(stickiness) === SlidingPreference.BACKWARD,
+				this.useNewSlidingBehavior,
 			);
 			if (this.start.properties) {
 				startRef.addProperties(this.start.properties);
@@ -408,6 +412,7 @@ export class SequenceInterval implements ISerializableInterval {
 				localSeq,
 				endReferenceSlidingPreference(stickiness),
 				endReferenceSlidingPreference(stickiness) === SlidingPreference.FORWARD,
+				this.useNewSlidingBehavior,
 			);
 			if (this.end.properties) {
 				endRef.addProperties(this.end.properties);
@@ -419,6 +424,7 @@ export class SequenceInterval implements ISerializableInterval {
 			startRef,
 			endRef,
 			this.intervalType,
+			this.useNewSlidingBehavior,
 			undefined,
 			startSide ?? this.startSide,
 			endSide ?? this.endSide,
@@ -503,6 +509,7 @@ function createPositionReference(
 	localSeq?: number,
 	slidingPreference?: SlidingPreference,
 	exclusive: boolean = false,
+	useNewSlidingBehavior: boolean = false,
 ): LocalReferencePosition {
 	let segoff;
 
@@ -518,7 +525,7 @@ function createPositionReference(
 				referenceSequenceNumber: op.referenceSequenceNumber,
 				clientId: op.clientId,
 			});
-			segoff = getSlideToSegoff(segoff);
+			segoff = getSlideToSegoff(segoff, undefined, useNewSlidingBehavior);
 		}
 	} else {
 		assert(
@@ -551,6 +558,7 @@ export function createSequenceInterval(
 	intervalType: IntervalType,
 	op?: ISequencedDocumentMessage,
 	fromSnapshot?: boolean,
+	useNewSlidingBehavior: boolean = false,
 ): SequenceInterval {
 	const { startPos, startSide, endPos, endSide } = endpointPosAndSide(
 		start ?? "start",
@@ -595,6 +603,7 @@ export function createSequenceInterval(
 		undefined,
 		startReferenceSlidingPreference(stickiness),
 		startReferenceSlidingPreference(stickiness) === SlidingPreference.BACKWARD,
+		useNewSlidingBehavior,
 	);
 
 	const endLref = createPositionReference(
@@ -606,6 +615,7 @@ export function createSequenceInterval(
 		undefined,
 		endReferenceSlidingPreference(stickiness),
 		endReferenceSlidingPreference(stickiness) === SlidingPreference.FORWARD,
+		useNewSlidingBehavior,
 	);
 
 	const rangeProp = {
@@ -619,6 +629,7 @@ export function createSequenceInterval(
 		startLref,
 		endLref,
 		intervalType,
+		useNewSlidingBehavior,
 		rangeProp,
 		startSide,
 		endSide,

@@ -63,6 +63,7 @@ export interface SequenceOptions {
 	 * any IIntervalCollection API.
 	 */
 	intervalStickinessEnabled: boolean;
+	mergeTreeReferencesCanSlideToEndpoint: boolean;
 	[key: string]: boolean;
 }
 

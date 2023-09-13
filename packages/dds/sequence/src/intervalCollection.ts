@@ -992,7 +992,12 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		// if segment is undefined, it slid off the string
 		assert(segment !== undefined, 0x54e /* No segment found */);
 
-		const segoff = getSlideToSegoff({ segment, offset }) ?? segment;
+		const segoff =
+			getSlideToSegoff(
+				{ segment, offset },
+				undefined,
+				this.options.mergeTreeReferencesCanSlideToEndpoint,
+			) ?? segment;
 
 		// case happens when rebasing op, but concurrently entire string has been deleted
 		if (segoff.segment === undefined || segoff.offset === undefined) {
@@ -1585,7 +1590,11 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		if (segoff.segment?.localRefs?.has(lref) !== true) {
 			return undefined;
 		}
-		const newSegoff = getSlideToSegoff(segoff);
+		const newSegoff = getSlideToSegoff(
+			segoff,
+			undefined,
+			this.options.mergeTreeReferencesCanSlideToEndpoint,
+		);
 		const value: { segment: ISegment | undefined; offset: number | undefined } | undefined =
 			segoff.segment === newSegoff.segment && segoff.offset === newSegoff.offset
 				? undefined

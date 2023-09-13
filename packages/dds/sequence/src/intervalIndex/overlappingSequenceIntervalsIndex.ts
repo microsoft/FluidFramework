@@ -56,6 +56,7 @@ class OverlappingSequenceIntervalsIndex
 			startLref,
 			endLref,
 			IntervalType.Transient,
+			false,
 			{ [reservedRangeLabelsKey]: ["transient"] },
 		);
 
