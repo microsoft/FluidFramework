@@ -9,7 +9,7 @@ import { FileSystem, NewlineKind } from "@rushstack/node-core-library";
 import { ApiItemTransformationConfiguration, transformApiModel } from "./api-item-transforms";
 import { DocumentNode } from "./documentation-domain";
 import { Logger } from "./Logging";
-import { MarkdownRenderConfiguration, renderDocumentAsMarkdown } from "./markdown-renderer";
+import { MarkdownRenderConfiguration, renderDocumentAsMarkdown } from "./renderers";
 
 /**
  * Configuration for interacting with the file-system.

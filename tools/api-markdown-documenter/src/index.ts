@@ -59,12 +59,12 @@ export {
 	DocumentWriter,
 	type MarkdownRenderContext,
 	type MarkdownRenderers,
-	type RenderDocumentationNode as RenderDocumentationNodeAsMarkdown,
+	type RenderDocumentationNodeAsMarkdown,
 	type MarkdownRenderConfiguration,
 	renderDocumentAsMarkdown,
 	renderNodeAsMarkdown,
 	renderNodesAsMarkdown,
-} from "./markdown-renderer";
+} from "./renderers";
 export {
 	type FileSystemConfiguration,
 	renderApiModelAsMarkdown,

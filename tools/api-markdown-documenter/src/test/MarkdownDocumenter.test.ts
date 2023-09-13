@@ -13,7 +13,7 @@ import { Suite } from "mocha";
 import { renderApiModelAsMarkdown } from "../RenderMarkdown";
 import { type ApiItemTransformationConfiguration, transformApiModel } from "../api-item-transforms";
 import { DocumentNode } from "../documentation-domain";
-import { type MarkdownRenderConfiguration } from "../markdown-renderer";
+import { type MarkdownRenderConfiguration } from "../renderers";
 
 /**
  * Temp directory under which all tests that generate files will output their contents.
