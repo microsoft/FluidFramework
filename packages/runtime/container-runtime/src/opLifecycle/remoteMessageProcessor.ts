@@ -100,14 +100,14 @@ export class RemoteMessageProcessor {
 }
 
 /** Takes an incoming message and if the contents is a string, JSON.parse's it in place */
-const ensureContentsDeserialized = (mutableMessage: ISequencedDocumentMessage): void => {
+function ensureContentsDeserialized(mutableMessage: ISequencedDocumentMessage): void {
 	// back-compat: ADO #1385: eventually should become unconditional, but only for runtime messages!
 	// System message may have no contents, or in some cases (mostly for back-compat) they may have actual objects.
 	// Old ops may contain empty string (I assume noops).
 	if (typeof mutableMessage.contents === "string" && mutableMessage.contents !== "") {
 		mutableMessage.contents = JSON.parse(mutableMessage.contents);
 	}
-};
+}
 
 /**
  * For a given message, it moves the nested ContainerRuntimeMessage props one level up.

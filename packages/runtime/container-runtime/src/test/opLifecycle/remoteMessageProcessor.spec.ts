@@ -19,7 +19,7 @@ describe("RemoteMessageProcessor", () => {
 		message: ISequencedDocumentMessage,
 		value: string,
 	): ISequencedDocumentMessage => {
-		const newMessage = message;
+		const newMessage = { ...message };
 		newMessage.metadata = message.metadata === undefined ? {} : message.metadata;
 		(newMessage.metadata as { history?: string[] }).history ??= [];
 		(newMessage.metadata as { history: string[] }).history.push(value);
