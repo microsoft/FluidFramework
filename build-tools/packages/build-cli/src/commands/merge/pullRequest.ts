@@ -27,6 +27,8 @@ export default class MergePullRequest extends BaseCommand<typeof MergePullReques
 
 		// squash pr
 		// fetch the pr number
+
+		// create the object
 		const pr = {
 			token: flags.pat,
 			owner: "sonalideshpandemsft",
