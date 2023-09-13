@@ -89,7 +89,7 @@ export class EventForwarder<TEvent = IEvent>
 					this.forwardingEvents.set(event, sources);
 				}
 				if (!sources.has(source)) {
-					const listener = (...args: any[]): boolean => this.emit(event, ...args);
+					const listener = (...args: unknown[]): boolean => this.emit(event, ...args);
 					sources.set(source, () => source.off(event, listener));
 					source.on(event, listener);
 				}
