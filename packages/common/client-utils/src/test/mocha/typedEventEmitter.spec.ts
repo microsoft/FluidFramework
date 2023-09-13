@@ -30,6 +30,7 @@ describe("TypedEventEmitter", () => {
 		const tee = new TypedEventEmitter<IErrorEvent>();
 		let newListenerCalls = 0;
 		let removeListenerCalls = 0;
+		// eslint-disable-next-line unicorn/consistent-function-scoping
 		const errListener = (): void => {};
 		tee.on("removeListener", (event, listener) => {
 			assert.equal(event, "error");
