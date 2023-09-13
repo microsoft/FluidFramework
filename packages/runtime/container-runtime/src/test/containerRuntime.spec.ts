@@ -1578,6 +1578,7 @@ describe("Runtime", () => {
 					context: getMockContext(settings) as IContainerContext,
 					registryEntries: [],
 					existing: false,
+					initializeEntryPoint: mockInitializeEntryPoint,
 				});
 			});
 

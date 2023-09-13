@@ -61,13 +61,10 @@ export class BaseContainerRuntimeFactory
 	}) {
 		super();
 
-		({
-			registryEntries: this.registryEntries,
-			dependencyContainer: this.dependencyContainer,
-			runtimeOptions: this.runtimeOptions,
-			initializeEntryPoint: this.initializeEntryPoint,
-		} = props);
-
+		this.registryEntries = props.registryEntries;
+		this.dependencyContainer = props.dependencyContainer;
+		this.runtimeOptions = props.runtimeOptions;
+		this.initializeEntryPoint = props.initializeEntryPoint;
 		this.requestHandlers = props.requestHandlers ?? [];
 		this.registry = new FluidDataStoreRegistry(this.registryEntries);
 	}

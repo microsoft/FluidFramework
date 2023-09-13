@@ -707,6 +707,9 @@ export class ContainerRuntime
 			containerScope,
 			containerRuntimeCtor,
 			requestHandler,
+			initializeEntryPoint: () => {
+				throw new UsageError("initializeEntryPoint was not provided");
+			},
 		});
 	}
 
@@ -733,23 +736,18 @@ export class ContainerRuntime
 		containerScope?: FluidObject;
 		containerRuntimeCtor?: typeof ContainerRuntime;
 		requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
-		initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
+		initializeEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
 	}): Promise<ContainerRuntime> {
 		const {
 			context,
 			registryEntries,
 			existing,
 			requestHandler,
+			initializeEntryPoint,
 			runtimeOptions = {},
 			containerScope = {},
 			containerRuntimeCtor = ContainerRuntime,
 		} = params;
-
-		const initializeEntryPoint =
-			params.initializeEntryPoint ??
-			(() => {
-				throw new UsageError("initializeEntryPoint was not provided");
-			});
 
 		// If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
 		// back-compat: Remove the TaggedLoggerAdapter fallback once all the host are using loader > 0.45

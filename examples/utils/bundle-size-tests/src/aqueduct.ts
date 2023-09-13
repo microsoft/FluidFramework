@@ -24,11 +24,11 @@ export function apisToBundle() {
 		defaultFactory,
 		registryEntries: [["BundleTestDo", Promise.resolve(defaultFactory)]],
 		initializeEntryPoint: async (runtime: IContainerRuntime) => {
-			const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
-			if (entryPoint === undefined) {
+			const dataStoreHandle = await runtime.getAliasedDataStoreEntryPoint("default");
+			if (dataStoreHandle === undefined) {
 				throw new Error("default dataStore must exist");
 			}
-			return entryPoint.get();
+			return dataStoreHandle.get();
 		},
 	});
 }

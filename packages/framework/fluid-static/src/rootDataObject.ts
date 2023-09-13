@@ -176,7 +176,7 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
 					rootDataStoreId,
 				);
 				if (entryPoint === undefined) {
-					throw new Error("default dataStore must exist");
+					throw new Error(`default dataStore [${rootDataStoreId}] must exist`);
 				}
 				return entryPoint.get();
 			},
