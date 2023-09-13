@@ -27,6 +27,7 @@ export {
 export {
 	ContainerMessageType,
 	ContainerRuntimeMessage,
+	UnknownContainerMessageType,
 	UnknownContainerRuntimeMessage,
 	IContainerRuntimeMessageCompatDetails,
 	CompatModeBehavior,

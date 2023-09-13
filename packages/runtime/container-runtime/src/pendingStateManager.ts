@@ -11,7 +11,11 @@ import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { DataProcessingError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 
-import { ContainerMessageType, TypedContainerRuntimeMessage } from "./messageTypes";
+import {
+	ContainerMessageType,
+	TypedContainerRuntimeMessage,
+	UnknownContainerMessageType,
+} from "./messageTypes";
 import { pkgVersion } from "./packageVersion";
 import { IBatchMetadata } from "./metadata";
 
@@ -243,7 +247,11 @@ export class PendingStateManager implements IDisposable {
 	 * @param message - The message that got ack'd and needs to be processed.
 	 */
 	public processPendingLocalMessage(
-		message: ISequencedDocumentMessage & TypedContainerRuntimeMessage<string, unknown>,
+		message: ISequencedDocumentMessage &
+			TypedContainerRuntimeMessage<
+				ContainerMessageType | UnknownContainerMessageType,
+				unknown
+			>,
 	): unknown {
 		// Pre-processing part - This may be the start of a batch.
 		this.maybeProcessBatchBegin(message);

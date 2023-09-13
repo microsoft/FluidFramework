@@ -35,6 +35,7 @@ import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import {
 	UnknownContainerRuntimeMessage,
 	DefaultSummaryConfiguration,
+	UnknownContainerMessageType,
 } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
@@ -244,7 +245,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 					submit: (containerRuntimeMessage: UnknownContainerRuntimeMessage) => void;
 				}
 			).submit({
-				type: "__unknown__",
+				type: "FROM_THE_FUTURE" as unknown as UnknownContainerMessageType,
 				contents: "Hello",
 				compatDetails: { behavior: "Ignore" },
 			});

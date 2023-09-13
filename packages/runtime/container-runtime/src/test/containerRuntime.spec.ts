@@ -51,6 +51,7 @@ import {
 import {
 	ContainerMessageType,
 	OutboundContainerRuntimeMessage,
+	UnknownContainerMessageType,
 	UnknownContainerRuntimeMessage,
 } from "../messageTypes";
 import { IPendingMessageNew, PendingStateManager } from "../pendingStateManager";
@@ -1041,7 +1042,7 @@ describe("Runtime", () => {
 			});
 			it("process remote op with unrecognized type and 'Ignore' compat behavior", async () => {
 				const futureRuntimeMessage: UnknownContainerRuntimeMessage = {
-					type: "__unknown__",
+					type: "FROM_THE_FUTURE" as unknown as UnknownContainerMessageType,
 					contents: "Hello",
 					compatDetails: { behavior: "Ignore" },
 				};
@@ -1057,7 +1058,7 @@ describe("Runtime", () => {
 
 			it("process remote op with unrecognized type and 'FailToProcess' compat behavior", async () => {
 				const futureRuntimeMessage: UnknownContainerRuntimeMessage = {
-					type: "__unknown__",
+					type: "FROM_THE_FUTURE" as unknown as UnknownContainerMessageType,
 					contents: "Hello",
 				};
 
@@ -1081,7 +1082,7 @@ describe("Runtime", () => {
 
 			it("process remote op with unrecognized type and no compat behavior", async () => {
 				const futureRuntimeMessage: UnknownContainerRuntimeMessage = {
-					type: "__unknown__",
+					type: "FROM_THE_FUTURE" as unknown as UnknownContainerMessageType,
 					contents: "Hello",
 					compatDetails: { behavior: "FailToProcess" },
 				};

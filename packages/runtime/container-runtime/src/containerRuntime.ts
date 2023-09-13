@@ -88,7 +88,6 @@ import {
 	IIdCompressorCore,
 	IdCreationRange,
 	IdCreationRangeWithStashedState,
-	IAttachMessage,
 } from "@fluidframework/runtime-definitions";
 import {
 	addBlobToSummary,
@@ -1977,12 +1976,11 @@ export class ContainerRuntime
 	private async applyStashedOp(serializedOpContent: string): Promise<unknown> {
 		// Need to parse from string for back-compat
 		const opContents = this.parseLocalOpContent(serializedOpContent);
-		const { type, contents, compatDetails } = opContents;
 		switch (opContents.type) {
 			case ContainerMessageType.FluidDataStoreOp:
-				return this.dataStores.applyStashedOp(contents as IEnvelope);
+				return this.dataStores.applyStashedOp(opContents.contents);
 			case ContainerMessageType.Attach:
-				return this.dataStores.applyStashedAttachOp(contents as IAttachMessage);
+				return this.dataStores.applyStashedAttachOp(opContents.contents);
 			case ContainerMessageType.IdAllocation:
 				assert(
 					this.idCompressor !== undefined,
@@ -2000,7 +1998,7 @@ export class ContainerRuntime
 				// This should be extremely rare for stashed ops.
 				// It would require a newer runtime stashing ops and then an older one applying them,
 				// e.g. if an app rolled back its container version
-				const compatBehavior = compatDetails?.behavior;
+				const compatBehavior = opContents.compatDetails?.behavior;
 				if (!compatBehaviorAllowsMessageType(opContents.type, compatBehavior)) {
 					const error = DataProcessingError.create(
 						"Stashed runtime message of unknown type",
@@ -2008,7 +2006,7 @@ export class ContainerRuntime
 						undefined /* sequencedMessage */,
 						{
 							messageDetails: JSON.stringify({
-								type,
+								type: opContents.type,
 								compatBehavior,
 							}),
 						},
@@ -2112,6 +2110,7 @@ export class ContainerRuntime
 		for (const message of this.remoteMessageProcessor.process(messageCopy)) {
 			if (modernRuntimeMessage) {
 				this.processCore({
+					// This cast is appropriate iff `modernRuntimeMessage` is true
 					message: message as InboundSequencedContainerRuntimeMessage,
 					local,
 					modernRuntimeMessage,

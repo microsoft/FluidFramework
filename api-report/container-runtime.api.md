@@ -791,8 +791,10 @@ export type SummaryStage = SubmitSummaryResult["stage"] | "unknown";
 // @public
 export const TombstoneResponseHeaderKey = "isTombstoned";
 
+// @public
+export type UnknownContainerMessageType = "__unknown_container_message_type__";
+
 // Warning: (ae-forgotten-export) The symbol "TypedContainerRuntimeMessage" needs to be exported by the entry point index.d.ts
-// Warning: (ae-forgotten-export) The symbol "UnknownContainerMessageType" needs to be exported by the entry point index.d.ts
 //
 // @public (undocumented)
 export type UnknownContainerRuntimeMessage = TypedContainerRuntimeMessage<UnknownContainerMessageType, unknown>;
