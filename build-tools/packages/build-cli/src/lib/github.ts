@@ -124,3 +124,16 @@ export async function createPullRequest(
 
 	return newPr.data.number;
 }
+
+export async function getPullRequest(token: string, prNumber: number, log: CommandLogger) {
+	const octokit = new Octokit({ auth: token });
+	const pr = await octokit.request("GET /repos/{owner}/{repo}/pulls/{pull_number}", {
+		owner: "OWNER",
+		repo: "REPO",
+		pull_number: prNumber,
+		headers: {
+			"X-GitHub-Api-Version": "2022-11-28",
+		},
+	});
+	log.log(`Pr info: ${JSON.stringify(pr)}`);
+}
