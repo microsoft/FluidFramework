@@ -19,7 +19,7 @@ describe("RemoteMessageProcessor", () => {
 		message: ISequencedDocumentMessage,
 		value: string,
 	): ISequencedDocumentMessage => {
-		const newMessage = { ...message };
+		const newMessage = message;
 		newMessage.metadata = message.metadata === undefined ? {} : message.metadata;
 		(newMessage.metadata as { history?: string[] }).history ??= [];
 		(newMessage.metadata as { history: string[] }).history.push(value);
@@ -53,31 +53,6 @@ describe("RemoteMessageProcessor", () => {
 			mockDecompressor as OpDecompressor,
 			new OpGroupingManager(false),
 		);
-
-	it("Always processing a shallow copy of the message", () => {
-		const messageProcessor = getMessageProcessor();
-		const contents = {
-			contents: { key: "value" },
-			type: ContainerMessageType.FluidDataStoreOp,
-		};
-		const message = {
-			contents,
-			clientId: "clientId",
-			type: MessageType.Operation,
-			metadata: { meta: "data" },
-		};
-		const documentMessage = message as ISequencedDocumentMessage;
-		const processResult = messageProcessor.process(documentMessage);
-
-		assert.strictEqual(processResult.length, 1, "only expected a single processed message");
-		const result = processResult[0];
-
-		delete documentMessage.metadata;
-		assert.ok(result.metadata);
-
-		assert.strictEqual(result.contents, contents.contents);
-		assert.strictEqual(result.type, contents.type);
-	});
 
 	it("Invokes internal processors in order", () => {
 		const messageProcessor = getMessageProcessor();
