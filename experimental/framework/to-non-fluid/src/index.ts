@@ -3,7 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export { toLocalFluid, toLocalChannel } from "./toLocalFluid";
-export { LocalRuntime } from "./localRuntime";
-export { ILocalChannel } from "./interfaces";
-export { LocalDataStore, LocalDataObject } from "./localDataStore";
+export { toLocalChannel } from "./toLocalFluid";
+export { LocalDataObject } from "./localDataStore";
