@@ -22,7 +22,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"clean": "rimraf --glob \"dist\" \"lib\" \"*.tsbuildinfo\" \"*.build.log\"",
+		"clean": "rimraf --glob 'dist' 'lib' '*.tsbuildinfo' '*.build.log' 'nyc'",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -87,7 +87,6 @@
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",
 		"sinon": "^7.4.2",
-		"source-map-support": "^0.5.16",
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {

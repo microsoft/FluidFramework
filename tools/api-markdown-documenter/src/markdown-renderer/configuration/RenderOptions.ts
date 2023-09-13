@@ -51,6 +51,8 @@ import {
  * @param node - The `DocumentationNode` to render.
  * @param writer - The writing context to render into.
  * @param context - Recursive contextual state.
+ *
+ * @public
  */
 export type RenderDocumentationNode<
 	TDocumentationNode extends DocumentationNode = DocumentationNode,
@@ -64,6 +66,8 @@ export type RenderDocumentationNode<
  * Note: in order to be complete, this *must* include an entry for all types enumerated under {@link DocumentationNodeType}.
  *
  * We supply a suite of default renderers for all of these.
+ *
+ * @public
  */
 export interface MarkdownRenderers {
 	/**
@@ -115,6 +119,8 @@ const defaultMarkdownRenderers: MarkdownRenderers = {
 /**
  * Constructs a complete list of {@link MarkdownRenderers} using provided optional renderer overrides, and filling
  * in the rest with system defaults.
+ *
+ * @public
  */
 export function getRenderersWithDefaults(customRenderers?: MarkdownRenderers): MarkdownRenderers {
 	return {

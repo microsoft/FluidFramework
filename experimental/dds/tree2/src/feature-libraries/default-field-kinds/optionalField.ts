@@ -12,7 +12,7 @@ import {
 	tagChange,
 	ChangesetLocalId,
 } from "../../core";
-import { fail, Mutable } from "../../util";
+import { fail, IdAllocator, Mutable } from "../../util";
 import { singleTextCursor, jsonableTreeFromCursor } from "../treeTextCursor";
 import {
 	ToDelta,
@@ -23,7 +23,6 @@ import {
 	NodeChangeset,
 	FieldEditor,
 	NodeReviver,
-	IdAllocator,
 	CrossFieldManager,
 	RevisionMetadataSource,
 	getIntention,

@@ -708,7 +708,7 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * All intervals which are part of this collection will be added to the index, and the index will automatically
 	 * be updated when this collection updates due to local or remote changes.
 	 *
-	 * @remarks - After attaching an index to an interval collection, applications should typically store this
+	 * @remarks After attaching an index to an interval collection, applications should typically store this
 	 * index somewhere in their in-memory data model for future reference and querying.
 	 */
 	attachIndex(index: IntervalIndex<TInterval>): void;
@@ -717,7 +717,7 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * All intervals which are part of this collection will be removed from the index, and updates to this collection
 	 * due to local or remote changes will no longer incur updates to the index.
 	 *
-	 * @returns - Return false if the target index cannot be found in the indexes, otherwise remove all intervals in the index and return true
+	 * @returns `false` if the target index cannot be found in the indexes, otherwise remove all intervals in the index and return `true`.
 	 */
 	detachIndex(index: IntervalIndex<TInterval>): boolean;
 	/**
@@ -732,8 +732,8 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * @param intervalType - type of the interval. All intervals are SlideOnRemove.
 	 * Intervals may not be Transient.
 	 * @param props - properties of the interval
-	 * @returns - the created interval
-	 * @remarks - See documentation on {@link SequenceInterval} for comments on
+	 * @returns The created interval
+	 * @remarks See documentation on {@link SequenceInterval} for comments on
 	 * interval endpoint semantics: there are subtleties with how the current
 	 * half-open behavior is represented.
 	 *
@@ -794,7 +794,7 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * \{start\} - A[- E - F - G - C -]D - \{end\}
 	 * ```
 	 *
-	 * @privateRemarks todo: ADO:5205 the above comment regarding behavior in
+	 * @privateRemarks TODO: ADO:5205 the above comment regarding behavior in
 	 * the case that the entire interval has been deleted should be resolved at
 	 * the same time as this ticket
 	 */

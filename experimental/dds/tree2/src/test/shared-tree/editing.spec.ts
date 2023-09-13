@@ -14,6 +14,153 @@ import { singleTextCursor } from "../../feature-libraries";
 
 describe("Editing", () => {
 	describe("Sequence Field", () => {
+		it("concurrent inserts", () => {
+			const tree1 = makeTreeFromJson([]);
+			const tree2 = tree1.fork();
+			insert(tree1, 0, "y");
+			tree2.rebaseOnto(tree1);
+
+			insert(tree1, 0, "x");
+			insert(tree2, 1, "a", "c");
+			insert(tree2, 2, "b");
+			tree2.rebaseOnto(tree1);
+			tree1.merge(tree2);
+
+			const expected = ["x", "y", "a", "b", "c"];
+			expectJsonTree([tree1, tree2], expected);
+		});
+
+		it("can rebase delete over move", () => {
+			const tree1 = makeTreeFromJson([]);
+			const tree2 = tree1.fork();
+			insert(tree1, 0, "a", "b");
+			tree2.rebaseOnto(tree1);
+
+			// Move b before a
+			tree1.editor.move(
+				{ parent: undefined, field: rootFieldKey },
+				1,
+				1,
+				{ parent: undefined, field: rootFieldKey },
+				0,
+			);
+
+			// Delete b
+			remove(tree2, 1, 1);
+
+			tree2.rebaseOnto(tree1);
+			tree1.merge(tree2);
+
+			const expected = ["a"];
+			expectJsonTree([tree1, tree2], expected);
+		});
+
+		it("can rebase delete over cross-field move", () => {
+			const tree1 = makeTreeFromJson([
+				{
+					foo: ["a", "b", "c"],
+					bar: ["d", "e"],
+				},
+			]);
+
+			const tree2 = tree1.fork();
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKey,
+				parentIndex: 0,
+			};
+
+			const fooArrayPath: UpPath = {
+				parent: rootPath,
+				parentField: brand("foo"),
+				parentIndex: 0,
+			};
+
+			const barArrayPath: UpPath = {
+				parent: rootPath,
+				parentField: brand("bar"),
+				parentIndex: 0,
+			};
+
+			// Move bc between d and e.
+			tree1.editor.move(
+				{ parent: fooArrayPath, field: brand("") },
+				1,
+				2,
+				{ parent: barArrayPath, field: brand("") },
+				1,
+			);
+
+			// Delete c
+			const field = tree2.editor.sequenceField({ parent: fooArrayPath, field: brand("") });
+			field.delete(2, 1);
+
+			tree2.rebaseOnto(tree1);
+			tree1.merge(tree2);
+
+			const expectedState = {
+				foo: ["a"],
+				bar: ["d", "b", "e"],
+			};
+
+			expectJsonTree([tree1, tree2], [expectedState]);
+		});
+
+		it("can rebase cross-field move over delete", () => {
+			const tree1 = makeTreeFromJson([
+				{
+					foo: ["a", "b", "c"],
+					bar: ["d", "e"],
+				},
+			]);
+
+			const tree2 = tree1.fork();
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKey,
+				parentIndex: 0,
+			};
+
+			const fooArrayPath: UpPath = {
+				parent: rootPath,
+				parentField: brand("foo"),
+				parentIndex: 0,
+			};
+
+			const barArrayPath: UpPath = {
+				parent: rootPath,
+				parentField: brand("bar"),
+				parentIndex: 0,
+			};
+
+			// Delete c
+			const field = tree1.editor.sequenceField({ parent: fooArrayPath, field: brand("") });
+			field.delete(2, 1);
+
+			// Move bc between d and e.
+			tree2.editor.move(
+				{ parent: fooArrayPath, field: brand("") },
+				1,
+				2,
+				{ parent: barArrayPath, field: brand("") },
+				1,
+			);
+
+			tree2.rebaseOnto(tree1);
+			tree1.merge(tree2);
+
+			const expectedState = [
+				{
+					foo: ["a"],
+					bar: ["d", "b", "e"],
+				},
+			];
+
+			expectJsonTree([tree1, tree2], expectedState);
+		});
+
 		it("can order concurrent inserts within concurrently deleted content", () => {
 			const tree = makeTreeFromJson(["A", "B", "C", "D"]);
 			const delAB = tree.fork();

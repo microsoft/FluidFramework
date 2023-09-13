@@ -9,7 +9,7 @@ import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions"
 /**
  * Utility api to convert ISummaryTree to a summary tree where blob contents are only utf8 strings.
  * @param summary - Summary supplied by the runtime to upload.
- * @returns - Modified summary tree where the blob contents could be utf8 string only.
+ * @returns Modified summary tree where the blob contents could be utf8 string only.
  */
 export function convertSummaryToCreateNewSummary(summary: ISummaryTree): ISummaryTree {
 	const keys = Object.keys(summary.tree);

@@ -187,7 +187,9 @@ export const dataStoreAttributesBlobName = ".component";
  * @param summarizeResult - Summary tree and stats to modify
  *
  * @example
+ *
  * Converts from:
+ *
  * ```typescript
  * {
  *     type: SummaryType.Tree,
@@ -208,6 +210,7 @@ export const dataStoreAttributesBlobName = ".component";
  *     },
  * }
  * ```
+ *
  * And adds +1 to treeNodeCount in stats.
  */
 export function wrapSummaryInChannelsTree(summarizeResult: ISummaryTreeWithStats): void {

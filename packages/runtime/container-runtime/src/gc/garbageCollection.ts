@@ -579,14 +579,17 @@ export class GarbageCollector implements IGarbageCollector {
 
 	/**
 	 * Runs the GC Mark phase. It does the following:
+	 *
 	 * 1. Marks all referenced nodes in this run by clearing tracking for them.
+	 *
 	 * 2. Marks unreferenced nodes in this run by starting tracking for them.
+	 *
 	 * 3. Calls the runtime to update nodes that were marked referenced.
 	 *
 	 * @param gcResult - The result of the GC run on the gcData.
 	 * @param allReferencedNodeIds - Nodes referenced in this GC run + referenced between previous and current GC run.
 	 * @param currentReferenceTimestampMs - The timestamp to be used for unreferenced nodes' timestamp.
-	 * @returns - A list of sweep ready nodes, i.e., nodes that ready to be deleted.
+	 * @returns A list of sweep ready nodes, i.e., nodes that ready to be deleted.
 	 */
 	private runMarkPhase(
 		gcResult: IGCResult,
@@ -645,7 +648,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 * @param sweepReadyNodes - List of nodes that are sweep ready.
 	 * @param currentReferenceTimestampMs - The timestamp to be used for unreferenced nodes' timestamp.
 	 * @param logger - The logger to be used to log any telemetry.
-	 * @returns - A list of nodes that have been deleted.
+	 * @returns A list of nodes that have been deleted.
 	 */
 	private runSweepPhase(
 		gcResult: IGCResult,
@@ -724,7 +727,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 * This function identifies nodes that were referenced since the last run.
 	 * If these nodes are currently unreferenced, they will be assigned new unreferenced state by the current run.
 	 *
-	 * @returns - a list of all nodes referenced from the last local summary until now.
+	 * @returns A list of all nodes referenced from the last local summary until now.
 	 */
 	private findAllNodesReferencedBetweenGCs(
 		currentGCData: IGarbageCollectionData,

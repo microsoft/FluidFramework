@@ -20,6 +20,8 @@ import { PlainTextNode } from "./PlainTextNode";
  * ```html
  * <code>Foo</code>
  * ```
+ *
+ * @public
  */
 export class CodeSpanNode
 	extends DocumentationParentNodeBase<SingleLineDocumentationNode>

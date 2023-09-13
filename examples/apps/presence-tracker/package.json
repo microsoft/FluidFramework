@@ -18,7 +18,7 @@
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc",
-		"clean": "rimraf --glob \"dist\" \"lib\" \"*.tsbuildinfo\" \"*.build.log\"",
+		"clean": "rimraf --glob 'dist' 'lib' '*.tsbuildinfo' '*.build.log' 'nyc'",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -45,7 +45,8 @@
 		"@fluidframework/protocol-definitions": "^1.1.0",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/tinylicious-client": "workspace:~",
-		"fluid-framework": "workspace:~"
+		"fluid-framework": "workspace:~",
+		"process": "^0.11.10"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.22.0",

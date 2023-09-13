@@ -10,6 +10,8 @@ import { MarkdownRenderers, getRenderersWithDefaults } from "./RenderOptions";
 
 /**
  * Configuration for Markdown rendering of generated documentation contents.
+ *
+ * @public
  */
 export interface RenderConfiguration extends ConfigurationBase {
 	/**
