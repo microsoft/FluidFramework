@@ -6,7 +6,7 @@ import { StringBuilder } from "@microsoft/tsdoc";
 
 import type { DocumentNode, DocumentationNode } from "../../documentation-domain";
 import { DocumentWriter } from "../DocumentWriter";
-import { RenderConfiguration, defaultMarkdownRenderers } from "./configuration";
+import { RenderConfiguration, defaultRenderers } from "./configuration";
 import { RenderContext, getContextWithDefaults } from "./RenderContext";
 
 /**
@@ -57,9 +57,9 @@ export function renderNode(
 	) {
 		// User-provided renderers take precedence. If we found an appropriate one, use it.
 		context.customRenderers[node.type](node, writer, context);
-	} else if (Object.keys(defaultMarkdownRenderers).includes(node.type)) {
+	} else if (Object.keys(defaultRenderers).includes(node.type)) {
 		// If no user-provided renderer was given for this node type, but we have a default, use the default.
-		defaultMarkdownRenderers[node.type](node, writer, context);
+		defaultRenderers[node.type](node, writer, context);
 	} else {
 		throw new Error(
 			`Encountered a DocumentationNode with neither a user-provided nor system-default renderer. Type: ${node.type}. Please provide a renderer for this type.`,

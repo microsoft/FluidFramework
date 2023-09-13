@@ -4,4 +4,4 @@
  */
 
 export { getRenderConfigurationWithDefaults, RenderConfiguration } from "./Configuration";
-export { defaultMarkdownRenderers, Renderers, RenderDocumentationNode } from "./RenderOptions";
+export { defaultRenderers, Renderers, RenderDocumentationNode } from "./RenderOptions";

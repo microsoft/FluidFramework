@@ -79,7 +79,7 @@ export interface Renderers {
 /**
  * Default Markdown rendering configuration.
  */
-export const defaultMarkdownRenderers: Renderers = {
+export const defaultRenderers: Renderers = {
 	[DocumentationNodeType.BlockQuote]: (node, writer, context): void =>
 		renderBlockQuote(node as BlockQuoteNode, writer, context),
 	[DocumentationNodeType.CodeSpan]: (node, writer, context): void =>
