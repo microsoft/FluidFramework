@@ -21,13 +21,12 @@ import { DocNode, DocNodeContainer, DocNodeKind, DocPlainText, DocSection } from
 
 import { Heading } from "../../Heading";
 import {
-	AlertKind,
-	AlertNode,
 	DocumentationNode,
 	DocumentationNodeType,
 	DocumentationParentNode,
 	FencedCodeBlockNode,
 	HeadingNode,
+	LineBreakNode,
 	LinkNode,
 	ParagraphNode,
 	PlainTextNode,
@@ -472,7 +471,7 @@ export function createThrowsSection(
 
 /**
  * Renders a section containing the {@link https://tsdoc.org/pages/tags/deprecated/ | @deprecated} notice documentation
- * of the provided API item if it has any.
+ * of the provided API item if it is annotated as `@deprecated`.
  *
  * @remarks Displayed as a simple note box containing the deprecation notice comment.
  *
@@ -484,7 +483,7 @@ export function createThrowsSection(
 export function createDeprecationNoticeSection(
 	apiItem: ApiItem,
 	config: Required<ApiItemTransformationConfiguration>,
-): AlertNode | undefined {
+): ParagraphNode | undefined {
 	const docNodeTransformOptions = getDocNodeTransformationOptions(apiItem, config);
 
 	const deprecatedBlock = getDeprecatedBlock(apiItem);
@@ -492,11 +491,16 @@ export function createDeprecationNoticeSection(
 		return undefined;
 	}
 
-	return new AlertNode(
-		[transformDocSection(deprecatedBlock, docNodeTransformOptions)],
-		AlertKind.Warning,
-		"Deprecated",
-	);
+	return new ParagraphNode([
+		SpanNode.createFromPlainText(
+			"WARNING: This API is deprecated and will be removed in a future release.",
+			{ bold: true },
+		),
+		LineBreakNode.Singleton,
+		new SpanNode([transformDocSection(deprecatedBlock, docNodeTransformOptions)], {
+			italic: true,
+		}),
+	]);
 }
 
 /**

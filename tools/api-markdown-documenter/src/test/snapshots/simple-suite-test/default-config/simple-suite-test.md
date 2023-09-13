@@ -265,10 +265,9 @@ An inline type
 
 ### testFunctionReturningIntersectionType {#testfunctionreturningintersectiontype-function}
 
-> **\[Warning\]: Deprecated**
-> 
-> This is a test deprecation notice. Here is a [link](./simple-suite-test#testfunctionreturninguniontype-function) to something else!
-> 
+**WARNING: This API is deprecated and will be removed in a future release.**
+
+_This is a test deprecation notice. Here is a_ [_link_](./simple-suite-test#testfunctionreturninguniontype-function)<!-- --> _to something else!_
 
 Test function that returns an inline type
 
@@ -320,9 +319,7 @@ Here are some remarks about the variable
 
 ### testConstWithEmptyDeprecatedBlock {#testconstwithemptydeprecatedblock-variable}
 
-> **\[Warning\]: Deprecated**
-> 
-> 
+**WARNING: This API is deprecated and will be removed in a future release.**
 
 I have a `@deprecated` tag with an empty comment block.
 

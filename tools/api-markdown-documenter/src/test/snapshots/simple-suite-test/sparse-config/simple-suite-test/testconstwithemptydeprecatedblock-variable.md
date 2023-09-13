@@ -1,8 +1,6 @@
 ## testConstWithEmptyDeprecatedBlock
 
-> **\[Warning\]: Deprecated**
-> 
-> 
+**WARNING: This API is deprecated and will be removed in a future release.**
 
 I have a `@deprecated` tag with an empty comment block.
 
