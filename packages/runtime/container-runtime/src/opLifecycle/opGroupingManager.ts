@@ -22,6 +22,12 @@ interface IGroupedMessage {
 	compression?: string;
 }
 
+function isGroupContents(
+	opContents: IGroupedBatchMessageContents | { type?: unknown } | undefined,
+): opContents is IGroupedBatchMessageContents {
+	return opContents?.type === OpGroupingManager.groupedBatchOp;
+}
+
 export class OpGroupingManager {
 	static readonly groupedBatchOp = "groupedBatch";
 
@@ -68,14 +74,11 @@ export class OpGroupingManager {
 	}
 
 	public ungroupOp(op: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
-		if (
-			(op.contents as { type?: unknown } | undefined)?.type !==
-			OpGroupingManager.groupedBatchOp
-		) {
+		if (!isGroupContents(op.contents)) {
 			return [op];
 		}
 
-		const messages = (op.contents as IGroupedBatchMessageContents).contents;
+		const messages = op.contents.contents;
 		let fakeCsn = 1;
 		return messages.map((subMessage) => ({
 			...op,
