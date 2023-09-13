@@ -5,7 +5,7 @@
 import type { HeadingNode } from "../../../documentation-domain";
 import type { DocumentWriter } from "../../DocumentWriter";
 import { renderNodes } from "../Render";
-import type { MarkdownRenderContext } from "../RenderContext";
+import type { RenderContext } from "../RenderContext";
 
 /**
  * Maximum heading level supported by most systems.
@@ -19,18 +19,18 @@ const maxHeadingLevel = 6;
  *
  * @param node - The node to render.
  * @param writer - Writer context object into which the document contents will be written.
- * @param context - See {@link MarkdownRenderContext}.
+ * @param context - See {@link RenderContext}.
  *
  * @remarks
  *
- * Observes {@link MarkdownRenderContext.headingLevel} to determine the heading level to use.
+ * Observes {@link RenderContext.headingLevel} to determine the heading level to use.
  *
  * Will render as HTML when in an HTML context, or within a table context.
  */
 export function renderHeading(
 	headingNode: HeadingNode,
 	writer: DocumentWriter,
-	context: MarkdownRenderContext,
+	context: RenderContext,
 ): void {
 	// Markdown tables do not support multi-line Markdown content.
 	// If we encounter a header in a table context, we will render using HTML syntax.
@@ -44,7 +44,7 @@ export function renderHeading(
 function renderHeadingWithMarkdownSyntax(
 	headingNode: HeadingNode,
 	writer: DocumentWriter,
-	context: MarkdownRenderContext,
+	context: RenderContext,
 ): void {
 	const headingLevel = context.headingLevel;
 
@@ -73,7 +73,7 @@ function renderHeadingWithMarkdownSyntax(
 function renderHeadingWithHtmlSyntax(
 	headingNode: HeadingNode,
 	writer: DocumentWriter,
-	context: MarkdownRenderContext,
+	context: RenderContext,
 ): void {
 	const headingLevel = context.headingLevel;
 

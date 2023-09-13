@@ -4,7 +4,7 @@
  */
 import type { PlainTextNode } from "../../../documentation-domain";
 import type { DocumentWriter } from "../../DocumentWriter";
-import type { MarkdownRenderContext } from "../RenderContext";
+import type { RenderContext } from "../RenderContext";
 
 /**
  * This logic was adapted from:
@@ -16,14 +16,14 @@ import type { MarkdownRenderContext } from "../RenderContext";
  *
  * @param node - The node to render.
  * @param writer - Writer context object into which the document contents will be written.
- * @param context - See {@link MarkdownRenderContext}.
+ * @param context - See {@link RenderContext}.
  *
  * @remarks Will render as HTML when in an HTML context, or within a table context.
  */
 export function renderPlainText(
 	node: PlainTextNode,
 	writer: DocumentWriter,
-	context: MarkdownRenderContext,
+	context: RenderContext,
 ): void {
 	const text = node.value;
 	if (text.length === 0) {
@@ -40,7 +40,7 @@ export function renderPlainText(
 function renderPlainTextWithMarkdownSyntax(
 	node: PlainTextNode,
 	writer: DocumentWriter,
-	context: MarkdownRenderContext,
+	context: RenderContext,
 ): void {
 	const anyFormatting =
 		context.bold === true || context.italic === true || context.strikethrough === true;
@@ -100,7 +100,7 @@ function renderPlainTextWithMarkdownSyntax(
 function renderPlainTextWithHtmlSyntax(
 	node: PlainTextNode,
 	writer: DocumentWriter,
-	context: MarkdownRenderContext,
+	context: RenderContext,
 ): void {
 	// We will render leading and trailing whitespace *outside* of any formatting tags.
 	const { leadingWhitespace, body, trailingWhitespace } = splitLeadingAndTrailingWhitespace(

@@ -5,21 +5,21 @@
 import type { OrderedListNode } from "../../../documentation-domain";
 import type { DocumentWriter } from "../../DocumentWriter";
 import { renderNode } from "../Render";
-import type { MarkdownRenderContext } from "../RenderContext";
+import type { RenderContext } from "../RenderContext";
 
 /**
  * Renders a {@link OrderedListNode} as Markdown.
  *
  * @param node - The node to render.
  * @param writer - Writer context object into which the document contents will be written.
- * @param context - See {@link MarkdownRenderContext}.
+ * @param context - See {@link RenderContext}.
  *
  * @remarks Will render as HTML when in an HTML context, or within a table context.
  */
 export function renderOrderedList(
 	node: OrderedListNode,
 	writer: DocumentWriter,
-	context: MarkdownRenderContext,
+	context: RenderContext,
 ): void {
 	// Markdown tables do not support multi-line Markdown content.
 	// If we encounter a list in a table context, we will render using HTML syntax.
@@ -33,7 +33,7 @@ export function renderOrderedList(
 function renderOrderedListWithMarkdownSyntax(
 	node: OrderedListNode,
 	writer: DocumentWriter,
-	context: MarkdownRenderContext,
+	context: RenderContext,
 ): void {
 	writer.ensureSkippedLine(); // Lists require leading blank line
 	writer.increaseIndent("1. "); // Use numeric indentation for list
@@ -48,7 +48,7 @@ function renderOrderedListWithMarkdownSyntax(
 function renderOrderedListWithHtmlSyntax(
 	node: OrderedListNode,
 	writer: DocumentWriter,
-	context: MarkdownRenderContext,
+	context: RenderContext,
 ): void {
 	writer.writeLine("<ol>");
 	writer.increaseIndent();

@@ -8,13 +8,9 @@
  */
 
 export {
-	type RenderConfiguration as MarkdownRenderConfiguration,
-	type MarkdownRenderers,
+	type RenderConfiguration,
+	type Renderers,
 	type RenderDocumentationNode,
 } from "./configuration";
-export {
-	renderDocument as renderDocumentAsMarkdown,
-	renderNode as renderNodeAsMarkdown,
-	renderNodes as renderNodesAsMarkdown,
-} from "./Render";
-export { type MarkdownRenderContext } from "./RenderContext";
+export { renderDocument, renderNode, renderNodes } from "./Render";
+export { type RenderContext } from "./RenderContext";

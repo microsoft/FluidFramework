@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 import type { TextFormatting } from "../../documentation-domain";
-import type { MarkdownRenderers } from "./configuration";
+import type { Renderers } from "./configuration";
 
 /**
  * Context passed down during recursive {@link DocumentationNode} rendering.
  *
  * @public
  */
-export interface MarkdownRenderContext extends TextFormatting {
+export interface RenderContext extends TextFormatting {
 	/**
 	 * Whether or not we are currently rendering inside of a table context.
 	 *
@@ -66,16 +66,16 @@ export interface MarkdownRenderContext extends TextFormatting {
 	 * Will include default renderers for all {@link DocumentationNode} types enumerated in
 	 * {@link DocumentationNodeType}.
 	 */
-	customRenderers?: MarkdownRenderers;
+	customRenderers?: Renderers;
 }
 
 /**
- * Constructs a {@link MarkdownRenderContext} using provided optional parameters, and filling in the rest with
+ * Constructs a {@link RenderContext} using provided optional parameters, and filling in the rest with
  * system defaults.
  */
 export function getContextWithDefaults(
-	partialContext: Partial<MarkdownRenderContext> | undefined,
-): MarkdownRenderContext {
+	partialContext: Partial<RenderContext> | undefined,
+): RenderContext {
 	const headingLevel = partialContext?.headingLevel ?? 1;
 	return {
 		...partialContext,

@@ -5,22 +5,18 @@
 import type { LinkNode } from "../../../documentation-domain";
 import type { DocumentWriter } from "../../DocumentWriter";
 import { renderNodes } from "../Render";
-import type { MarkdownRenderContext } from "../RenderContext";
+import type { RenderContext } from "../RenderContext";
 
 /**
  * Renders a {@link LinkNode} as Markdown.
  *
  * @param node - The node to render.
  * @param writer - Writer context object into which the document contents will be written.
- * @param context - See {@link MarkdownRenderContext}.
+ * @param context - See {@link RenderContext}.
  *
  * @remarks Will render as HTML when in an HTML context.
  */
-export function renderLink(
-	node: LinkNode,
-	writer: DocumentWriter,
-	context: MarkdownRenderContext,
-): void {
+export function renderLink(node: LinkNode, writer: DocumentWriter, context: RenderContext): void {
 	if (context.insideHtml === true) {
 		renderLinkWithHtmlSyntax(node, writer, context);
 	} else {
@@ -31,7 +27,7 @@ export function renderLink(
 function renderLinkWithMarkdownSyntax(
 	node: LinkNode,
 	writer: DocumentWriter,
-	context: MarkdownRenderContext,
+	context: RenderContext,
 ): void {
 	writer.write("[");
 	renderNodes(node.children, writer, context);
@@ -41,7 +37,7 @@ function renderLinkWithMarkdownSyntax(
 function renderLinkWithHtmlSyntax(
 	node: LinkNode,
 	writer: DocumentWriter,
-	context: MarkdownRenderContext,
+	context: RenderContext,
 ): void {
 	writer.write(`<a href='${node.target}'>`);
 	renderNodes(node.children, writer, {

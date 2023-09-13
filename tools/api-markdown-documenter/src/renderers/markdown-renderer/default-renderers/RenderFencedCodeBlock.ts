@@ -5,21 +5,21 @@
 import type { FencedCodeBlockNode } from "../../../documentation-domain";
 import type { DocumentWriter } from "../../DocumentWriter";
 import { renderNodes } from "../Render";
-import type { MarkdownRenderContext } from "../RenderContext";
+import type { RenderContext } from "../RenderContext";
 
 /**
  * Renders a {@link FencedCodeBlockNode} as Markdown.
  *
  * @param node - The node to render.
  * @param writer - Writer context object into which the document contents will be written.
- * @param context - See {@link MarkdownRenderContext}.
+ * @param context - See {@link RenderContext}.
  *
  * @remarks Will render as HTML when in an HTML context, or within a table context.
  */
 export function renderFencedCodeBlock(
 	node: FencedCodeBlockNode,
 	writer: DocumentWriter,
-	context: MarkdownRenderContext,
+	context: RenderContext,
 ): void {
 	// Markdown tables do not support multi-line Markdown content.
 	// If we encounter a line break in a table context, we will render using HTML syntax.
@@ -33,7 +33,7 @@ export function renderFencedCodeBlock(
 function renderFencedCodeBlockWithMarkdownSyntax(
 	node: FencedCodeBlockNode,
 	writer: DocumentWriter,
-	context: MarkdownRenderContext,
+	context: RenderContext,
 ): void {
 	writer.ensureSkippedLine(); // Code blocks require a leading blank line
 	writer.write("```");
@@ -50,7 +50,7 @@ function renderFencedCodeBlockWithMarkdownSyntax(
 function renderFencedCodeBlockWithHtmlSyntax(
 	node: FencedCodeBlockNode,
 	writer: DocumentWriter,
-	context: MarkdownRenderContext,
+	context: RenderContext,
 ): void {
 	writer.writeLine("<code>");
 	writer.increaseIndent();

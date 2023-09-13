@@ -7,14 +7,14 @@ import { StringBuilder } from "@microsoft/tsdoc";
 import type { DocumentationNode } from "../../../documentation-domain";
 import { DocumentWriter } from "../../DocumentWriter";
 import { renderNode } from "../Render";
-import { MarkdownRenderContext, getContextWithDefaults } from "../RenderContext";
+import { RenderContext, getContextWithDefaults } from "../RenderContext";
 
 /**
  * Tests the rendering of an individual {@link DocumentationNode}, returning the generated string content.
  */
 export function testRender(
 	node: DocumentationNode,
-	partialContext?: Partial<MarkdownRenderContext>,
+	partialContext?: Partial<RenderContext>,
 ): string {
 	const context = getContextWithDefaults(partialContext);
 	const writer = new DocumentWriter(new StringBuilder());

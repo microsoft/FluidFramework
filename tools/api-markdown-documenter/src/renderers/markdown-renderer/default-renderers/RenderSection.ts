@@ -5,18 +5,18 @@
 import type { SectionNode } from "../../../documentation-domain";
 import type { DocumentWriter } from "../../DocumentWriter";
 import { renderNode, renderNodes } from "../Render";
-import type { MarkdownRenderContext } from "../RenderContext";
+import type { RenderContext } from "../RenderContext";
 
 /**
  * Renders a {@link SectionNode} as Markdown.
  *
  * @param node - The node to render.
  * @param writer - Writer context object into which the document contents will be written.
- * @param context - See {@link MarkdownRenderContext}.
+ * @param context - See {@link RenderContext}.
  *
  * @remarks
  *
- * Automatically increases the context's {@link MarkdownRenderContext.headingLevel}, when rendering child contents,
+ * Automatically increases the context's {@link RenderContext.headingLevel}, when rendering child contents,
  * such that heading levels increase appropriately through nested sections.
  *
  * Will render as HTML when in an HTML context, or within a table context.
@@ -24,7 +24,7 @@ import type { MarkdownRenderContext } from "../RenderContext";
 export function renderSection(
 	node: SectionNode,
 	writer: DocumentWriter,
-	context: MarkdownRenderContext,
+	context: RenderContext,
 ): void {
 	// Markdown tables do not support multi-line Markdown content.
 	// If we encounter a section in a table context, we will render using HTML syntax.
@@ -38,7 +38,7 @@ export function renderSection(
 function renderHierarchicalSectionWithMarkdownSyntax(
 	node: SectionNode,
 	writer: DocumentWriter,
-	context: MarkdownRenderContext,
+	context: RenderContext,
 ): void {
 	writer.ensureSkippedLine(); // Ensure blank line before new section
 
@@ -58,7 +58,7 @@ function renderHierarchicalSectionWithMarkdownSyntax(
 function renderHierarchicalSectionWithHtmlSyntax(
 	node: SectionNode,
 	writer: DocumentWriter,
-	context: MarkdownRenderContext,
+	context: RenderContext,
 ): void {
 	writer.writeLine("<section>");
 	writer.increaseIndent();

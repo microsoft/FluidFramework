@@ -59,9 +59,9 @@ export {
 	DocumentWriter,
 	type MarkdownRenderContext,
 	type MarkdownRenderers,
-	type RenderDocumentationNodeAsMarkdown,
 	type MarkdownRenderConfiguration,
 	renderDocumentAsMarkdown,
+	type RenderDocumentationNodeAsMarkdown,
 	renderNodeAsMarkdown,
 	renderNodesAsMarkdown,
 } from "./renderers";

@@ -23,7 +23,7 @@ import {
 	type UnorderedListNode,
 } from "../../../documentation-domain";
 import type { DocumentWriter } from "../../DocumentWriter";
-import type { MarkdownRenderContext } from "../RenderContext";
+import type { RenderContext } from "../RenderContext";
 import {
 	renderBlockQuote,
 	renderCodeSpan,
@@ -51,10 +51,12 @@ import {
  * @param context - Recursive contextual state.
  *
  * @public
+ *
+ * @privateRemarks TODO: inline in {@link MarkdownRenderers}
  */
 export type RenderDocumentationNode<
 	TDocumentationNode extends DocumentationNode = DocumentationNode,
-> = (node: TDocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext) => void;
+> = (node: TDocumentationNode, writer: DocumentWriter, context: RenderContext) => void;
 
 /**
  * Configuration for rendering {@link DocumentationNode}s to `Markdown`, specified by {@link DocumentationNode."type"}.
@@ -67,7 +69,7 @@ export type RenderDocumentationNode<
  *
  * @public
  */
-export interface MarkdownRenderers {
+export interface Renderers {
 	/**
 	 * Maps from a {@link DocumentationNode}'s {@link DocumentationNode."type"} to a renderer implementation for that kind of node.
 	 */
@@ -77,7 +79,7 @@ export interface MarkdownRenderers {
 /**
  * Default Markdown rendering configuration.
  */
-export const defaultMarkdownRenderers: MarkdownRenderers = {
+export const defaultMarkdownRenderers: Renderers = {
 	[DocumentationNodeType.BlockQuote]: (node, writer, context): void =>
 		renderBlockQuote(node as BlockQuoteNode, writer, context),
 	[DocumentationNodeType.CodeSpan]: (node, writer, context): void =>

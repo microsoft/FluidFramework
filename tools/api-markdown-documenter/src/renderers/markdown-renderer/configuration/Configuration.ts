@@ -5,7 +5,7 @@
 
 import { ConfigurationBase } from "../../../ConfigurationBase";
 import { defaultConsoleLogger } from "../../../Logging";
-import { MarkdownRenderers } from "./RenderOptions";
+import { Renderers } from "./RenderOptions";
 
 /**
  * Configuration for Markdown rendering of generated documentation contents.
@@ -16,7 +16,7 @@ export interface RenderConfiguration extends ConfigurationBase {
 	/**
 	 * {@inheritDoc MarkdownRenderers}
 	 */
-	readonly customRenderers?: MarkdownRenderers;
+	readonly customRenderers?: Renderers;
 
 	/**
 	 * Optional override for the starting heading level of a document.

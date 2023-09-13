@@ -5,21 +5,21 @@
 import type { CodeSpanNode } from "../../../documentation-domain";
 import type { DocumentWriter } from "../../DocumentWriter";
 import { renderNodes } from "../Render";
-import type { MarkdownRenderContext } from "../RenderContext";
+import type { RenderContext } from "../RenderContext";
 
 /**
  * Renders a {@link CodeSpanNode} as Markdown.
  *
  * @param node - The node to render.
  * @param writer - Writer context object into which the document contents will be written.
- * @param context - See {@link MarkdownRenderContext}.
+ * @param context - See {@link RenderContext}.
  *
  * @remarks Will render as HTML when in an HTML context.
  */
 export function renderCodeSpan(
 	node: CodeSpanNode,
 	writer: DocumentWriter,
-	context: MarkdownRenderContext,
+	context: RenderContext,
 ): void {
 	if (context.insideHtml === true) {
 		renderCodeSpanWithHtmlSyntax(node, writer, context);
@@ -31,7 +31,7 @@ export function renderCodeSpan(
 function renderCodeSpanWithMarkdownSyntax(
 	codeSpanNode: CodeSpanNode,
 	writer: DocumentWriter,
-	context: MarkdownRenderContext,
+	context: RenderContext,
 ): void {
 	writer.write("`");
 	renderNodes(codeSpanNode.children, writer, {
@@ -44,7 +44,7 @@ function renderCodeSpanWithMarkdownSyntax(
 function renderCodeSpanWithHtmlSyntax(
 	codeSpanNode: CodeSpanNode,
 	writer: DocumentWriter,
-	context: MarkdownRenderContext,
+	context: RenderContext,
 ): void {
 	writer.write("<code>");
 	renderNodes(codeSpanNode.children, writer, {

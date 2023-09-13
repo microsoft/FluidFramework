@@ -10,22 +10,18 @@ import {
 } from "../../../documentation-domain";
 import type { DocumentWriter } from "../../DocumentWriter";
 import { renderNode, renderNodes } from "../Render";
-import type { MarkdownRenderContext } from "../RenderContext";
+import type { RenderContext } from "../RenderContext";
 
 /**
  * Renders a {@link TableNode} as Markdown.
  *
  * @param node - The node to render.
  * @param writer - Writer context object into which the document contents will be written.
- * @param context - See {@link MarkdownRenderContext}.
+ * @param context - See {@link RenderContext}.
  *
  * @remarks Will render as HTML when in an HTML context, or within another table context.
  */
-export function renderTable(
-	node: TableNode,
-	writer: DocumentWriter,
-	context: MarkdownRenderContext,
-): void {
+export function renderTable(node: TableNode, writer: DocumentWriter, context: RenderContext): void {
 	// Render as HTML if we are in an HTML context already, or if we are rendering this table
 	// under another table (not supported by Markdown).
 	if (context.insideTable === true || context.insideHtml === true) {
@@ -38,9 +34,9 @@ export function renderTable(
 function renderTableWithMarkdownSyntax(
 	node: TableNode,
 	writer: DocumentWriter,
-	context: MarkdownRenderContext,
+	context: RenderContext,
 ): void {
-	const childContext: MarkdownRenderContext = {
+	const childContext: RenderContext = {
 		...context,
 		insideTable: true,
 	};
@@ -78,9 +74,9 @@ function renderTableWithMarkdownSyntax(
 function renderTableWithHtmlSyntax(
 	node: TableNode,
 	writer: DocumentWriter,
-	context: MarkdownRenderContext,
+	context: RenderContext,
 ): void {
-	const childContext: MarkdownRenderContext = {
+	const childContext: RenderContext = {
 		...context,
 		insideTable: true,
 		insideHtml: true,

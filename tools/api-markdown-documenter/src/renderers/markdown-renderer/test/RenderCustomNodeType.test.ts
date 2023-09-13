@@ -6,7 +6,7 @@ import { expect } from "chai";
 
 import { DocumentationLiteralNodeBase } from "../../../documentation-domain";
 import { DocumentWriter } from "../../DocumentWriter";
-import { MarkdownRenderContext } from "../RenderContext";
+import { RenderContext } from "../RenderContext";
 import { testRender } from "./Utilities";
 
 /**
@@ -27,7 +27,7 @@ class CustomDocumentationNode extends DocumentationLiteralNodeBase<string> {
 function renderCustomDocumentationNode(
 	node: CustomDocumentationNode,
 	writer: DocumentWriter,
-	context: MarkdownRenderContext,
+	context: RenderContext,
 ): void {
 	writer.write(node.value);
 }

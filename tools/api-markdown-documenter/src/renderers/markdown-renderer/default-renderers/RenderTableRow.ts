@@ -5,21 +5,21 @@
 import type { TableRowNode } from "../../../documentation-domain";
 import type { DocumentWriter } from "../../DocumentWriter";
 import { renderNode, renderNodes } from "../Render";
-import type { MarkdownRenderContext } from "../RenderContext";
+import type { RenderContext } from "../RenderContext";
 
 /**
  * Renders a {@link TableRowNode} as Markdown.
  *
  * @param node - The node to render.
  * @param writer - Writer context object into which the document contents will be written.
- * @param context - See {@link MarkdownRenderContext}.
+ * @param context - See {@link RenderContext}.
  *
  * @remarks Will render as HTML when in an HTML context.
  */
 export function renderTableRow(
 	node: TableRowNode,
 	writer: DocumentWriter,
-	context: MarkdownRenderContext,
+	context: RenderContext,
 ): void {
 	if (context.insideHtml === true) {
 		renderTableRowWithHtmlSyntax(node, writer, context);
@@ -31,7 +31,7 @@ export function renderTableRow(
 function renderTableRowWithMarkdownSyntax(
 	node: TableRowNode,
 	writer: DocumentWriter,
-	context: MarkdownRenderContext,
+	context: RenderContext,
 ): void {
 	writer.ensureNewLine(); // Ensure line break before new row
 	writer.write("| ");
@@ -49,7 +49,7 @@ function renderTableRowWithMarkdownSyntax(
 function renderTableRowWithHtmlSyntax(
 	node: TableRowNode,
 	writer: DocumentWriter,
-	context: MarkdownRenderContext,
+	context: RenderContext,
 ): void {
 	writer.ensureNewLine(); // Ensure line break before row tag
 	writer.writeLine("<tr>");

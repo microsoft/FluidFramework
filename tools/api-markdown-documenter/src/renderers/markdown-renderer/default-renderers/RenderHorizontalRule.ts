@@ -4,21 +4,21 @@
  */
 import type { HorizontalRuleNode } from "../../../documentation-domain";
 import type { DocumentWriter } from "../../DocumentWriter";
-import type { MarkdownRenderContext } from "../RenderContext";
+import type { RenderContext } from "../RenderContext";
 
 /**
  * Renders a {@link HorizontalRuleNode} as Markdown.
  *
  * @param node - The node to render.
  * @param writer - Writer context object into which the document contents will be written.
- * @param context - See {@link MarkdownRenderContext}.
+ * @param context - See {@link RenderContext}.
  *
  * @remarks Will render as HTML when in an HTML context, or within a table context.
  */
 export function renderHorizontalRule(
 	node: HorizontalRuleNode,
 	writer: DocumentWriter,
-	context: MarkdownRenderContext,
+	context: RenderContext,
 ): void {
 	// Horizontal rule syntax conflicts with table syntax in Markdown,
 	// so if we are inside of a table, we must render using HTML syntax.

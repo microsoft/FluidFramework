@@ -7,7 +7,7 @@ import { StringBuilder } from "@microsoft/tsdoc";
 import type { DocumentNode, DocumentationNode } from "../../documentation-domain";
 import { DocumentWriter } from "../DocumentWriter";
 import { RenderConfiguration, defaultMarkdownRenderers } from "./configuration";
-import { MarkdownRenderContext, getContextWithDefaults } from "./RenderContext";
+import { RenderContext, getContextWithDefaults } from "./RenderContext";
 
 /**
  * Renders a {@link DocumentNode} as Markdown, and returns the resulting file contents as a `string`.
@@ -49,7 +49,7 @@ export function renderDocument(document: DocumentNode, config: RenderConfigurati
 export function renderNode(
 	node: DocumentationNode,
 	writer: DocumentWriter,
-	context: MarkdownRenderContext,
+	context: RenderContext,
 ): void {
 	if (
 		context.customRenderers !== undefined &&
@@ -76,7 +76,7 @@ export function renderNode(
 export function renderNodes(
 	children: DocumentationNode[],
 	writer: DocumentWriter,
-	childContext: MarkdownRenderContext,
+	childContext: RenderContext,
 ): void {
 	for (const child of children) {
 		renderNode(child, writer, childContext);
