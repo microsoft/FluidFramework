@@ -819,6 +819,76 @@ describe("visit", () => {
 			{ field: field0, id: { minor: 1 }, root: 0 },
 		]);
 	});
+	it("transient move-in and modify", () => {
+		const index = makeTreeIndex("");
+		const moveOut: Delta.MoveOut = {
+			type: Delta.MarkType.MoveOut,
+			count: 1,
+			moveId: brand(1),
+			fields: new Map([
+				[
+					fooKey,
+					[
+						{
+							type: Delta.MarkType.MoveOut,
+							moveId: brand(2),
+							count: 1,
+						},
+						{
+							type: Delta.MarkType.MoveIn,
+							count: 1,
+							moveId: brand(2),
+						},
+					],
+				],
+			]),
+		};
+		const moveIn: Delta.MoveIn = {
+			type: Delta.MarkType.MoveIn,
+			count: 1,
+			moveId: brand(1),
+			detachId: { minor: 42 },
+		};
+		const delta = [moveOut, moveIn];
+		const expected: VisitScript = [
+			["enterField", rootKey],
+			["enterNode", 0],
+			["enterField", fooKey],
+			[
+				"detach",
+				{ start: 0, end: 1 },
+				brand<DetachedPlaceUpPath>({ field: field1, index: 0 }),
+			],
+			["exitField", fooKey],
+			["exitNode", 0],
+			[
+				"detach",
+				{ start: 0, end: 1 },
+				brand<DetachedPlaceUpPath>({ field: field0, index: 0 }),
+			],
+			["exitField", rootKey],
+			["enterField", rootKey],
+			["exitField", rootKey],
+			["enterField", field0],
+			[
+				"detach",
+				{ start: 0, end: 1 },
+				brand<DetachedPlaceUpPath>({ field: field2, index: 0 }),
+			],
+			["exitField", field0],
+			["enterField", field2],
+			["enterNode", 0],
+			["enterField", fooKey],
+			["attach", brand<DetachedRangeUpPath>({ field: field1, start: 0, end: 1 }), 0],
+			["exitField", fooKey],
+			["exitNode", 0],
+			["exitField", field2],
+		];
+		testTreeVisit(delta, expected, index);
+		assert.deepEqual(Array.from(index.entries()), [
+			{ field: field2, id: { minor: 42 }, root: 2 },
+		]);
+	});
 	it("transient restore", () => {
 		const index = makeTreeIndex("");
 		const node1 = { minor: 1 };
