@@ -34,24 +34,6 @@ import type { Node as Node_2 } from 'unist';
 import type { Parent } from 'unist';
 
 // @public
-export enum AlertKind {
-    Danger = "Danger",
-    Important = "Important",
-    Note = "Note",
-    Tip = "Tip",
-    Warning = "Warning"
-}
-
-// @public
-export class AlertNode extends DocumentationParentNodeBase {
-    constructor(children: DocumentationNode[], alertKind: AlertKind, title?: string);
-    readonly alertKind: AlertKind;
-    static createFromPlainText(text: string, alertKind: AlertKind, title?: string): AlertNode;
-    readonly title?: string;
-    readonly type = DocumentationNodeType.Alert;
-}
-
-// @public
 export type ApiFunctionLike = ApiConstructSignature | ApiConstructor | ApiFunction | ApiMethod | ApiMethodSignature;
 
 export { ApiItem }
@@ -178,7 +160,6 @@ export interface DocumentationNode<TData extends object = Data> extends Node_2<T
 
 // @public
 export enum DocumentationNodeType {
-    Alert = "Alert",
     BlockQuote = "BlockQuote",
     CodeSpan = "CodeSpan",
     Document = "Document",

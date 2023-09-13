@@ -14,7 +14,6 @@
  * transformations, or by writing your own!
  */
 
-export { AlertKind, AlertNode } from "./AlertNode";
 export { BlockQuoteNode } from "./BlockQuoteNode";
 export { CodeSpanNode } from "./CodeSpanNode";
 export { DocumentNode, DocumentNodeProps } from "./DocumentNode";
