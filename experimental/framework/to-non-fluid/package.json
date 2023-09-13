@@ -31,12 +31,18 @@
 	},
 	"dependencies": {
 		"@fluid-internal/client-utils": "workspace:~",
-		"@fluidframework/aqueduct": "workspace:~",
+		"@fluidframework/container-definitions": "workspace:~",
+		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
+		"@fluidframework/counter": "workspace:~",
+		"@fluidframework/datastore": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/map": "workspace:~",
-		"@fluidframework/runtime-definitions": "workspace:~",
+		"@fluidframework/protocol-definitions": "^1.1.0",
+		"@fluidframework/runtime-utils": "workspace:~",
+		"@fluidframework/sequence": "workspace:~",
+		"@fluidframework/shared-object-base": "workspace:~",
 		"events": "^3.1.0"
 	},
 	"devDependencies": {
