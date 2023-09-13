@@ -36,18 +36,23 @@ export class RemoteMessageProcessor {
 
 	/**
 	 * Ungroups and Unchunks the runtime ops encapsulated by the single remoteMessage received over the wire
-	 * @param remoteMessage - A message from another client, possible virtualized (grouped, compressed, and/or chunked).
-	 * Considered mutable, meaning no other Container or other parallel procedure depends on this object instance.
-	 * @returns the unchunked, decompressed, ungrouped, unpacked SequencedContainerRuntimeMessages encapsulated in the remote message
-	 * Passes through ops that weren't virtualized, e.g. System ops that the ContainerRuntime will ultimately ignore.
+	 * @param remoteMessageCopy - A shallow copy of a message from another client, possibly virtualized
+	 * (grouped, compressed, and/or chunked).
+	 * Being a shallow copy, it's considered mutable, meaning no other Container or other parallel procedure
+	 * depends on this object instance.
+	 * Note remoteMessageCopy.contents (and other object props) MUST not be modified,
+	 * but may be overwritten (as is the case with contents).
+	 * @returns the unchunked, decompressed, ungrouped, unpacked SequencedContainerRuntimeMessages encapsulated in the remote message.
+	 * For ops that weren't virtualized (e.g. System ops that the ContainerRuntime will ultimately ignore),
+	 * a singleton array [remoteMessageCopy] is returned
 	 */
-	public process(remoteMessage: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
+	public process(remoteMessageCopy: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
 		const result: ISequencedDocumentMessage[] = [];
 
-		ensureContentsDeserialized(remoteMessage);
+		ensureContentsDeserialized(remoteMessageCopy);
 
 		// Ungroup before and after decompression for back-compat (cleanup tracked by AB#4371)
-		for (const ungroupedMessage of this.opGroupingManager.ungroupOp(remoteMessage)) {
+		for (const ungroupedMessage of this.opGroupingManager.ungroupOp(remoteMessageCopy)) {
 			const message = this.opDecompressor.processMessage(ungroupedMessage).message;
 
 			for (let ungroupedMessage2 of this.opGroupingManager.ungroupOp(message)) {

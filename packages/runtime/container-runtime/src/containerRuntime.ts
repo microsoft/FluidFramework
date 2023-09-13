@@ -2156,9 +2156,9 @@ export class ContainerRuntime
 		const modernRuntimeMessage = messageArg.type === MessageType.Operation;
 
 		// Do shallow copy of message, as the processing flow will modify it.
-		// There might be multiple container instances receiving same message
-		// We do not need to make deep copy, as each layer will just replace message.content itself,
-		// but would not modify contents details
+		// There might be multiple container instances receiving the same message.
+		// We do not need to make a deep copy. Each layer will just replace message.contents itself,
+		// but will not modify the contents object (likely it will replace it on the message).
 		const messageCopy = { ...messageArg };
 		for (const message of this.remoteMessageProcessor.process(messageCopy)) {
 			this.processCore(message, local, modernRuntimeMessage);
