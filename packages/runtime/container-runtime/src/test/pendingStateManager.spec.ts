@@ -15,7 +15,7 @@ import { isILoggingError } from "@fluidframework/telemetry-utils";
 
 import { IPendingMessageNew, PendingStateManager } from "../pendingStateManager";
 import { BatchManager, BatchMessage } from "../opLifecycle";
-import { UnknownContainerRuntimeMessage } from "..";
+import { UnknownContainerRuntimeMessage } from "../messageTypes";
 
 type PendingStateManager_WithPrivates = Omit<PendingStateManager, "initialMessages"> & {
 	initialMessages: Deque<IPendingMessageNew>;

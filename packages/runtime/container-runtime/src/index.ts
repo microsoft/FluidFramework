@@ -4,26 +4,6 @@
  */
 
 export {
-	ContainerMessageType,
-	UnknownContainerMessageType,
-	ContainerRuntimeMessage,
-	LocalContainerRuntimeMessage,
-	InboundContainerRuntimeMessage,
-	OutboundContainerRuntimeMessage,
-	ContainerRuntimeAliasMessage,
-	ContainerRuntimeBlobAttachMessage,
-	ContainerRuntimeChunkedOpMessage,
-	ContainerRuntimeDataStoreOpMessage,
-	ContainerRuntimeRejoinMessage,
-	InTransitContainerRuntimeIdAllocationMessage,
-	InboundContainerRuntimeAttachMessage,
-	UnknownContainerRuntimeMessage,
-	InboundSequencedContainerRuntimeMessage,
-	LocalContainerRuntimeIdAllocationMessage,
-	OutboundContainerRuntimeAttachMessage,
-	OutboundSequencedContainerRuntimeMessage,
-	IContainerRuntimeMessageCompatDetails,
-	CompatModeBehavior,
 	ISummaryRuntimeOptions,
 	ISummaryBaseConfiguration,
 	ISummaryConfigurationHeuristics,
@@ -44,6 +24,13 @@ export {
 	ICompressionRuntimeOptions,
 	CompressionAlgorithms,
 } from "./containerRuntime";
+export {
+	ContainerMessageType,
+	ContainerRuntimeMessage,
+	UnknownContainerRuntimeMessage,
+	IContainerRuntimeMessageCompatDetails,
+	CompatModeBehavior,
+} from "./messageTypes";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry";
 export { IGCRuntimeOptions, IGCStats } from "./gc";
 export {

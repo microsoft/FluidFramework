@@ -8,8 +8,9 @@ import { compress } from "lz4js";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IsoBuffer } from "@fluid-internal/client-utils";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { ContainerMessageType, ContainerRuntimeMessage } from "../..";
+import { ContainerMessageType } from "../..";
 import { OpDecompressor } from "../../opLifecycle";
+import { TypedContainerRuntimeMessage } from "../../messageTypes";
 
 /**
  * Format of test messages generated in this test.
@@ -19,7 +20,7 @@ interface ITestMessageContents {
 }
 
 function generateCompressedBatchMessage(length: number): ISequencedDocumentMessage {
-	const batch: ContainerRuntimeMessage<ContainerMessageType.FluidDataStoreOp, string>[] = [];
+	const batch: TypedContainerRuntimeMessage<ContainerMessageType.FluidDataStoreOp, string>[] = [];
 	for (let i = 0; i < length; i++) {
 		batch.push({ contents: `value${i}`, type: ContainerMessageType.FluidDataStoreOp });
 	}

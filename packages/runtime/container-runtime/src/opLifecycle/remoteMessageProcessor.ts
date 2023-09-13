@@ -8,7 +8,7 @@ import {
 	ContainerMessageType,
 	InboundSequencedContainerRuntimeMessage,
 	InboundContainerRuntimeMessage,
-} from "../containerRuntime";
+} from "../messageTypes";
 import { OpDecompressor } from "./opDecompressor";
 import { OpGroupingManager } from "./opGroupingManager";
 import { OpSplitter } from "./opSplitter";

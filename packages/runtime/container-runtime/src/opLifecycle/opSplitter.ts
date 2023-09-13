@@ -12,7 +12,7 @@ import { assert } from "@fluidframework/core-utils";
 import { IBatchMessage } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { ContainerMessageType, ContainerRuntimeChunkedOpMessage } from "../containerRuntime";
+import { ContainerMessageType, ContainerRuntimeChunkedOpMessage } from "../messageTypes";
 import { estimateSocketSize } from "./batchManager";
 import { BatchMessage, IBatch, IChunkedOp, IMessageProcessingResult } from "./definitions";
 

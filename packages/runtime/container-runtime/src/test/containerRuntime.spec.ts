@@ -44,13 +44,15 @@ import {
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import {
 	CompressionAlgorithms,
-	ContainerMessageType,
 	ContainerRuntime,
-	OutboundContainerRuntimeMessage,
-	defaultPendingOpsWaitTimeoutMs,
 	IContainerRuntimeOptions,
-	UnknownContainerRuntimeMessage,
+	defaultPendingOpsWaitTimeoutMs,
 } from "../containerRuntime";
+import {
+	ContainerMessageType,
+	OutboundContainerRuntimeMessage,
+	UnknownContainerRuntimeMessage,
+} from "../messageTypes";
 import { IPendingMessageNew, PendingStateManager } from "../pendingStateManager";
 import { DataStores } from "../dataStores";
 import { ISummaryCancellationToken, neverCancelledSummaryToken } from "../summary";

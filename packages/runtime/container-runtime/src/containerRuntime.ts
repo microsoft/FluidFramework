@@ -181,64 +181,19 @@ import {
 	RemoteMessageProcessor,
 	OpGroupingManager,
 	getLongStack,
-	IChunkedOp,
 } from "./opLifecycle";
 import { DeltaManagerSummarizerProxy } from "./deltaManagerSummarizerProxy";
 import { IBatchMetadata } from "./metadata";
-
-export enum ContainerMessageType {
-	// An op to be delivered to store
-	FluidDataStoreOp = "component",
-
-	// Creates a new store
-	Attach = "attach",
-
-	// Chunked operation.
-	ChunkedOp = "chunkedOp",
-
-	// Signifies that a blob has been attached and should not be garbage collected by storage
-	BlobAttach = "blobAttach",
-
-	// Ties our new clientId to our old one on reconnect
-	Rejoin = "rejoin",
-
-	// Sets the alias of a root data store
-	Alias = "alias",
-
-	/**
-	 * An op containing an IdRange of Ids allocated using the runtime's IdCompressor since
-	 * the last allocation op was sent.
-	 * See the [IdCompressor README](./id-compressor/README.md) for more details.
-	 */
-	IdAllocation = "idAllocation",
-}
-
-/**
- * Represents an unrecognized {@link ContainerMessageType}, e.g. a message type from a future version of the container runtime.
- * This is useful for type narrowing but should never be used as an actual message type at runtime.
- */
-export type UnknownContainerMessageType = "__unknown__";
-
-/**
- * How should an older client handle an unrecognized remote op type?
- *
- * @internal
- */
-export type CompatModeBehavior =
-	/** Ignore the op. It won't be persisted if this client summarizes */
-	| "Ignore"
-	/** Fail processing immediately. (The container will close) */
-	| "FailToProcess";
-
-/**
- * All the info an older client would need to know how to handle an unrecognized remote op type
- *
- * @internal
- */
-export interface IContainerRuntimeMessageCompatDetails {
-	/** How should an older client handle an unrecognized remote op type? */
-	behavior: CompatModeBehavior;
-}
+import {
+	ContainerMessageType,
+	InboundContainerRuntimeMessage,
+	InboundSequencedContainerRuntimeMessage,
+	InTransitContainerRuntimeIdAllocationMessage,
+	LocalContainerRuntimeIdAllocationMessage,
+	LocalContainerRuntimeMessage,
+	OutboundContainerRuntimeMessage,
+	UnknownContainerMessageType,
+} from "./messageTypes";
 
 /**
  * Utility to implement compat behaviors given an unknown message type
@@ -256,97 +211,6 @@ function compatBehaviorAllowsMessageType(
 	return compatBehavior === "Ignore";
 }
 
-/**
- * The unpacked runtime message / details to be handled or dispatched by the ContainerRuntime.
- * Message type are differentiated via a `type` string and contain different contents depending on their type.
- *
- * IMPORTANT: when creating one to be serialized, set the properties in the order they appear here.
- * This way stringified values can be compared.
- */
-export interface ContainerRuntimeMessage<TType, TContents> {
-	/** Type of the op, within the ContainerRuntime's domain */
-	type: TType;
-	/** Domain-specific contents, interpreted according to the type */
-	contents: TContents;
-	/** Info describing how to handle this op in case the type is unrecognized (default: fail to process) */
-	compatDetails?: IContainerRuntimeMessageCompatDetails;
-}
-
-export type ContainerRuntimeDataStoreOpMessage = ContainerRuntimeMessage<
-	ContainerMessageType.FluidDataStoreOp,
-	IEnvelope
->;
-export type InboundContainerRuntimeAttachMessage = ContainerRuntimeMessage<
-	ContainerMessageType.Attach,
-	InboundAttachMessage
->;
-export type OutboundContainerRuntimeAttachMessage = ContainerRuntimeMessage<
-	ContainerMessageType.Attach,
-	IAttachMessage
->;
-export type ContainerRuntimeChunkedOpMessage = ContainerRuntimeMessage<
-	ContainerMessageType.ChunkedOp,
-	IChunkedOp
->;
-export type ContainerRuntimeBlobAttachMessage = ContainerRuntimeMessage<
-	ContainerMessageType.BlobAttach,
-	undefined
->;
-export type ContainerRuntimeRejoinMessage = ContainerRuntimeMessage<
-	ContainerMessageType.Rejoin,
-	undefined
->;
-export type ContainerRuntimeAliasMessage = ContainerRuntimeMessage<
-	ContainerMessageType.Alias,
-	IDataStoreAliasMessage
->;
-export type LocalContainerRuntimeIdAllocationMessage = ContainerRuntimeMessage<
-	ContainerMessageType.IdAllocation,
-	IdCreationRangeWithStashedState
->;
-export type InTransitContainerRuntimeIdAllocationMessage = ContainerRuntimeMessage<
-	ContainerMessageType.IdAllocation,
-	IdCreationRange & { stashedState?: never }
->;
-export type UnknownContainerRuntimeMessage = ContainerRuntimeMessage<
-	UnknownContainerMessageType,
-	unknown
->;
-
-/**
- * A {@link ContainerRuntimeMessage} that is received from the server and will be processed by the container runtime.
- */
-export type InboundContainerRuntimeMessage =
-	| ContainerRuntimeDataStoreOpMessage
-	| InboundContainerRuntimeAttachMessage
-	| ContainerRuntimeChunkedOpMessage
-	| ContainerRuntimeBlobAttachMessage
-	| ContainerRuntimeRejoinMessage
-	| ContainerRuntimeAliasMessage
-	| InTransitContainerRuntimeIdAllocationMessage
-	| UnknownContainerRuntimeMessage;
-
-/** A {@link ContainerRuntimeMessage} that has been generated by the container runtime but is not yet being sent to the server. */
-export type LocalContainerRuntimeMessage =
-	| ContainerRuntimeDataStoreOpMessage
-	| OutboundContainerRuntimeAttachMessage
-	| ContainerRuntimeChunkedOpMessage
-	| ContainerRuntimeBlobAttachMessage
-	| ContainerRuntimeRejoinMessage
-	| ContainerRuntimeAliasMessage
-	| LocalContainerRuntimeIdAllocationMessage
-	| UnknownContainerRuntimeMessage;
-
-/** A {@link ContainerRuntimeMessage} that is being sent to the server from the container runtime. */
-export type OutboundContainerRuntimeMessage =
-	| ContainerRuntimeDataStoreOpMessage
-	| OutboundContainerRuntimeAttachMessage
-	| ContainerRuntimeChunkedOpMessage
-	| ContainerRuntimeBlobAttachMessage
-	| ContainerRuntimeRejoinMessage
-	| ContainerRuntimeAliasMessage
-	| InTransitContainerRuntimeIdAllocationMessage;
-
 function prepareLocalContainerRuntimeIdAllocationMessageForTransit(
 	message:
 		| LocalContainerRuntimeIdAllocationMessage
@@ -357,16 +221,6 @@ function prepareLocalContainerRuntimeIdAllocationMessageForTransit(
 		delete message.contents.stashedState;
 	}
 }
-
-/**
- * An unpacked ISequencedDocumentMessage with the inner ContainerRuntimeMessage type/contents/etc
- * promoted up to the outer object
- */
-export type InboundSequencedContainerRuntimeMessage = ISequencedDocumentMessage &
-	InboundContainerRuntimeMessage;
-
-export type OutboundSequencedContainerRuntimeMessage = ISequencedDocumentMessage &
-	OutboundContainerRuntimeMessage;
 
 export interface ISummaryBaseConfiguration {
 	/**

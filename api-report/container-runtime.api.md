@@ -9,7 +9,6 @@ import { ContainerWarning } from '@fluidframework/container-definitions';
 import { FluidDataStoreRegistryEntry } from '@fluidframework/runtime-definitions';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { FlushMode } from '@fluidframework/runtime-definitions';
-import { IAttachMessage } from '@fluidframework/runtime-definitions';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IContainerContext } from '@fluidframework/container-definitions';
@@ -17,13 +16,10 @@ import { IContainerRuntime } from '@fluidframework/container-runtime-definitions
 import { IContainerRuntimeEvents } from '@fluidframework/container-runtime-definitions';
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
 import { IDataStore } from '@fluidframework/runtime-definitions';
-import { IdCreationRange } from '@fluidframework/runtime-definitions';
-import { IdCreationRangeWithStashedState } from '@fluidframework/runtime-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
-import { IEnvelope } from '@fluidframework/runtime-definitions';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions';
@@ -36,7 +32,6 @@ import { IIdCompressor } from '@fluidframework/runtime-definitions';
 import { IIdCompressorCore } from '@fluidframework/runtime-definitions';
 import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
-import { InboundAttachMessage } from '@fluidframework/runtime-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
@@ -245,30 +240,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
-// Warning: (ae-forgotten-export) The symbol "IDataStoreAliasMessage" needs to be exported by the entry point index.d.ts
-//
-// @public (undocumented)
-export type ContainerRuntimeAliasMessage = ContainerRuntimeMessage<ContainerMessageType.Alias, IDataStoreAliasMessage>;
-
-// @public (undocumented)
-export type ContainerRuntimeBlobAttachMessage = ContainerRuntimeMessage<ContainerMessageType.BlobAttach, undefined>;
-
-// @public (undocumented)
-export type ContainerRuntimeChunkedOpMessage = ContainerRuntimeMessage<ContainerMessageType.ChunkedOp, IChunkedOp>;
-
-// @public (undocumented)
-export type ContainerRuntimeDataStoreOpMessage = ContainerRuntimeMessage<ContainerMessageType.FluidDataStoreOp, IEnvelope>;
-
-// @public
-export interface ContainerRuntimeMessage<TType, TContents> {
+// @public @deprecated
+export interface ContainerRuntimeMessage {
     // Warning: (ae-incompatible-release-tags) The symbol "compatDetails" is marked as @public, but its signature references "IContainerRuntimeMessageCompatDetails" which is marked as @internal
     compatDetails?: IContainerRuntimeMessageCompatDetails;
-    contents: TContents;
-    type: TType;
+    contents: any;
+    type: ContainerMessageType;
 }
-
-// @public (undocumented)
-export type ContainerRuntimeRejoinMessage = ContainerRuntimeMessage<ContainerMessageType.Rejoin, undefined>;
 
 // @public (undocumented)
 export const DefaultSummaryConfiguration: ISummaryConfiguration;
@@ -465,20 +443,6 @@ export interface INackSummaryResult extends IRetriableFailureResult {
 
 // @public
 export const InactiveResponseHeaderKey = "isInactive";
-
-// @public (undocumented)
-export type InboundContainerRuntimeAttachMessage = ContainerRuntimeMessage<ContainerMessageType.Attach, InboundAttachMessage>;
-
-// @public
-export type InboundContainerRuntimeMessage = ContainerRuntimeDataStoreOpMessage | InboundContainerRuntimeAttachMessage | ContainerRuntimeChunkedOpMessage | ContainerRuntimeBlobAttachMessage | ContainerRuntimeRejoinMessage | ContainerRuntimeAliasMessage | InTransitContainerRuntimeIdAllocationMessage | UnknownContainerRuntimeMessage;
-
-// @public
-export type InboundSequencedContainerRuntimeMessage = ISequencedDocumentMessage & InboundContainerRuntimeMessage;
-
-// @public (undocumented)
-export type InTransitContainerRuntimeIdAllocationMessage = ContainerRuntimeMessage<ContainerMessageType.IdAllocation, IdCreationRange & {
-    stashedState?: never;
-}>;
 
 // @public (undocumented)
 export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
@@ -692,12 +656,6 @@ export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "
     readonly uploadDuration: number;
 }
 
-// @public (undocumented)
-export type LocalContainerRuntimeIdAllocationMessage = ContainerRuntimeMessage<ContainerMessageType.IdAllocation, IdCreationRangeWithStashedState>;
-
-// @public
-export type LocalContainerRuntimeMessage = ContainerRuntimeDataStoreOpMessage | OutboundContainerRuntimeAttachMessage | ContainerRuntimeChunkedOpMessage | ContainerRuntimeBlobAttachMessage | ContainerRuntimeRejoinMessage | ContainerRuntimeAliasMessage | LocalContainerRuntimeIdAllocationMessage;
-
 // @public
 export const neverCancelledSummaryToken: ISummaryCancellationToken;
 
@@ -706,15 +664,6 @@ export type OpActionEventListener = (op: ISequencedDocumentMessage) => void;
 
 // @public (undocumented)
 export type OpActionEventName = MessageType.Summarize | MessageType.SummaryAck | MessageType.SummaryNack | "default";
-
-// @public (undocumented)
-export type OutboundContainerRuntimeAttachMessage = ContainerRuntimeMessage<ContainerMessageType.Attach, IAttachMessage>;
-
-// @public
-export type OutboundContainerRuntimeMessage = ContainerRuntimeDataStoreOpMessage | OutboundContainerRuntimeAttachMessage | ContainerRuntimeChunkedOpMessage | ContainerRuntimeBlobAttachMessage | ContainerRuntimeRejoinMessage | ContainerRuntimeAliasMessage | InTransitContainerRuntimeIdAllocationMessage;
-
-// @public (undocumented)
-export type OutboundSequencedContainerRuntimeMessage = ISequencedDocumentMessage & OutboundContainerRuntimeMessage;
 
 // @public
 export enum RuntimeHeaders {
@@ -842,11 +791,11 @@ export type SummaryStage = SubmitSummaryResult["stage"] | "unknown";
 // @public
 export const TombstoneResponseHeaderKey = "isTombstoned";
 
-// @public
-export type UnknownContainerMessageType = "__unknown__";
-
+// Warning: (ae-forgotten-export) The symbol "TypedContainerRuntimeMessage" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "UnknownContainerMessageType" needs to be exported by the entry point index.d.ts
+//
 // @public (undocumented)
-export type UnknownContainerRuntimeMessage = ContainerRuntimeMessage<UnknownContainerMessageType, unknown>;
+export type UnknownContainerRuntimeMessage = TypedContainerRuntimeMessage<UnknownContainerMessageType, unknown>;
 
 // @internal
 export function unpackRuntimeMessage(message: ISequencedDocumentMessage): boolean;
