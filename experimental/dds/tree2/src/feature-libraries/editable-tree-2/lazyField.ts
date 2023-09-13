@@ -46,8 +46,8 @@ import {
 	UnboxField,
 	UnboxNode,
 	UnboxNodeUnion,
-	UntypedField,
-	UntypedTree,
+	TreeField,
+	TreeNode,
 	RequiredField,
 } from "./editableTreeTypes";
 import { makeTree } from "./lazyTree";
@@ -66,7 +66,7 @@ export function makeField(
 	context: Context,
 	schema: FieldSchema,
 	cursor: ITreeSubscriptionCursor,
-): UntypedField {
+): TreeField {
 	const fieldAnchor = cursor.buildFieldAnchor();
 
 	const field = new (kindToClass.get(schema.kind) ?? fail("missing field implementation"))(
@@ -95,7 +95,7 @@ export function makeField(
  */
 export abstract class LazyField<TKind extends FieldKindTypes, TTypes extends AllowedTypes>
 	extends LazyEntity<FieldSchema<TKind, TTypes>, FieldAnchor>
-	implements UntypedField
+	implements TreeField
 {
 	public readonly key: FieldKey;
 
@@ -130,7 +130,7 @@ export abstract class LazyField<TKind extends FieldKindTypes, TTypes extends All
 		return compareSets({ a: this.schema.types, b: schema.types });
 	}
 
-	public isSameAs(other: UntypedField): boolean {
+	public isSameAs(other: TreeField): boolean {
 		assert(
 			other.context === this.context,
 			"Content from different editable trees should not be used together",
@@ -142,7 +142,7 @@ export abstract class LazyField<TKind extends FieldKindTypes, TTypes extends All
 		return normalizeNewFieldContent(this.context, this.schema, content);
 	}
 
-	public get parent(): UntypedTree | undefined {
+	public get parent(): TreeNode | undefined {
 		if (this[anchorSymbol].parent === undefined) {
 			return undefined;
 		}
