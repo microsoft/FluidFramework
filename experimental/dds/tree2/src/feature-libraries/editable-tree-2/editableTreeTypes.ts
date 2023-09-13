@@ -118,9 +118,9 @@ export interface TreeNode extends Tree<TreeSchema> {
 }
 
 /**
- * A collaboratively editable collections of nodes within a {@link Tree}.
+ * A collaboratively editable collection of nodes within a {@link Tree}.
  *
- * Fields are inherently part of their parent, and thus can-not be moved.
+ * Fields are inherently part of their parent, and thus cannot be moved.
  * Instead their content can be moved, deleted or created.
  *
  * @remarks
@@ -210,7 +210,7 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
  * Instead {@link FieldNode}s can be use to achieve something similar, more like:
  * `FieldNode<Sequence<Foo>> | FieldNode<Sequence<Bar>>` or `OptionalField<FieldNode<Sequence<Foo>>>`.
  *
- * This extra layer of field nodes is then omitted when using schema-aware APIs which  do unboxing.
+ * This extra layer of field nodes is then omitted when using schema-aware APIs which do unboxing.
  *
  * Other than this unboxing, a FieldNode is identical to a struct node with a single field using the {@link EmptyKey}.
  *
