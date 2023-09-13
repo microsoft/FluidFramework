@@ -6,8 +6,8 @@
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
 	ContainerMessageType,
-	ContainerRuntimeMessage,
-	SequencedContainerRuntimeMessage,
+	InboundSequencedContainerRuntimeMessage,
+	InboundContainerRuntimeMessage,
 } from "../containerRuntime";
 import { OpDecompressor } from "./opDecompressor";
 import { OpGroupingManager } from "./opGroupingManager";
@@ -110,11 +110,11 @@ const copy = (remoteMessage: ISequencedDocumentMessage): ISequencedDocumentMessa
  */
 function unpack(
 	message: ISequencedDocumentMessage,
-): asserts message is SequencedContainerRuntimeMessage {
-	const innerContents = message.contents as ContainerRuntimeMessage;
+): asserts message is InboundSequencedContainerRuntimeMessage {
+	const innerContents = message.contents as InboundContainerRuntimeMessage;
 
 	// We're going to turn message into a SequencedContainerRuntimeMessage in-place
-	const sequencedContainerRuntimeMessage = message as SequencedContainerRuntimeMessage;
+	const sequencedContainerRuntimeMessage = message as InboundSequencedContainerRuntimeMessage;
 	sequencedContainerRuntimeMessage.type = innerContents.type;
 	sequencedContainerRuntimeMessage.contents = innerContents.contents;
 	sequencedContainerRuntimeMessage.compatDetails = innerContents.compatDetails;

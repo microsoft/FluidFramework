@@ -33,8 +33,7 @@ import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { Deferred } from "@fluidframework/core-utils";
 import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import {
-	ContainerMessageType,
-	ContainerRuntimeMessage,
+	UnknownContainerRuntimeMessage,
 	DefaultSummaryConfiguration,
 } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
@@ -242,10 +241,10 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 			// Super rare corner case where you stash an op and then roll back to a previous runtime version that doesn't recognize it
 			(
 				d.context.containerRuntime as unknown as {
-					submit: (containerRuntimeMessage: ContainerRuntimeMessage) => void;
+					submit: (containerRuntimeMessage: UnknownContainerRuntimeMessage) => void;
 				}
 			).submit({
-				type: "FUTURE_TYPE" as ContainerMessageType,
+				type: "__unknown__",
 				contents: "Hello",
 				compatDetails: { behavior: "Ignore" },
 			});

@@ -46,9 +46,10 @@ import {
 	CompressionAlgorithms,
 	ContainerMessageType,
 	ContainerRuntime,
-	ContainerRuntimeMessage,
+	OutboundContainerRuntimeMessage,
 	defaultPendingOpsWaitTimeoutMs,
 	IContainerRuntimeOptions,
+	UnknownContainerRuntimeMessage,
 } from "../containerRuntime";
 import { IPendingMessageNew, PendingStateManager } from "../pendingStateManager";
 import { DataStores } from "../dataStores";
@@ -1037,8 +1038,8 @@ describe("Runtime", () => {
 				});
 			});
 			it("process remote op with unrecognized type and 'Ignore' compat behavior", async () => {
-				const futureRuntimeMessage: ContainerRuntimeMessage = {
-					type: "FROM_THE_FUTURE" as ContainerMessageType,
+				const futureRuntimeMessage: UnknownContainerRuntimeMessage = {
+					type: "__unknown__",
 					contents: "Hello",
 					compatDetails: { behavior: "Ignore" },
 				};
@@ -1053,8 +1054,8 @@ describe("Runtime", () => {
 			});
 
 			it("process remote op with unrecognized type and 'FailToProcess' compat behavior", async () => {
-				const futureRuntimeMessage: ContainerRuntimeMessage = {
-					type: "FROM_THE_FUTURE" as ContainerMessageType,
+				const futureRuntimeMessage: UnknownContainerRuntimeMessage = {
+					type: "__unknown__",
 					contents: "Hello",
 				};
 
@@ -1077,8 +1078,8 @@ describe("Runtime", () => {
 			});
 
 			it("process remote op with unrecognized type and no compat behavior", async () => {
-				const futureRuntimeMessage: ContainerRuntimeMessage = {
-					type: "FROM_THE_FUTURE" as ContainerMessageType,
+				const futureRuntimeMessage: UnknownContainerRuntimeMessage = {
+					type: "__unknown__",
 					contents: "Hello",
 					compatDetails: { behavior: "FailToProcess" },
 				};
@@ -1692,7 +1693,7 @@ describe("Runtime", () => {
 				// processing requires creation of data store context and runtime as well.
 				type ContainerRuntimeWithSubmit = Omit<ContainerRuntime, "submit"> & {
 					submit(
-						containerRuntimeMessage: ContainerRuntimeMessage,
+						containerRuntimeMessage: OutboundContainerRuntimeMessage,
 						localOpMetadata: unknown,
 						metadata: Record<string, unknown> | undefined,
 					): void;
@@ -1703,7 +1704,7 @@ describe("Runtime", () => {
 				containerRuntimeWithSubmit.submit(
 					{
 						type: ContainerMessageType.Rejoin,
-						contents: "something",
+						contents: undefined,
 					},
 					undefined,
 					undefined,

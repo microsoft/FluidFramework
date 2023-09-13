@@ -165,7 +165,7 @@ use_old_ClassDeclaration_ContainerRuntime(
 declare function get_old_InterfaceDeclaration_ContainerRuntimeMessage():
     TypeOnly<old.ContainerRuntimeMessage>;
 declare function use_current_InterfaceDeclaration_ContainerRuntimeMessage(
-    use: TypeOnly<current.ContainerRuntimeMessage>);
+    use: TypeOnly<current.ContainerRuntimeMessage<any,any>>);
 use_current_InterfaceDeclaration_ContainerRuntimeMessage(
     get_old_InterfaceDeclaration_ContainerRuntimeMessage());
 
@@ -175,7 +175,7 @@ use_current_InterfaceDeclaration_ContainerRuntimeMessage(
 * "InterfaceDeclaration_ContainerRuntimeMessage": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ContainerRuntimeMessage():
-    TypeOnly<current.ContainerRuntimeMessage>;
+    TypeOnly<current.ContainerRuntimeMessage<any,any>>;
 declare function use_old_InterfaceDeclaration_ContainerRuntimeMessage(
     use: TypeOnly<old.ContainerRuntimeMessage>);
 use_old_InterfaceDeclaration_ContainerRuntimeMessage(
