@@ -57,4 +57,4 @@ export {
 
 export { EditableTreeContext, getEditableTreeContext } from "./editableTreeContext";
 
-export { isPrimitive } from "./utilities";
+export { isPrimitive, treeStatusFromPath } from "./utilities";

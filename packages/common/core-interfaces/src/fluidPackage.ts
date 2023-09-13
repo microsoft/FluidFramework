@@ -73,8 +73,10 @@ export interface IFluidPackage {
  *
  * @param pkg - The package json data to check if it is a Fluid package.
  */
-export const isFluidPackage = (pkg: any): pkg is Readonly<IFluidPackage> =>
-	typeof pkg === "object" && typeof pkg?.name === "string" && typeof pkg?.fluid === "object";
+export const isFluidPackage = (pkg: unknown): pkg is Readonly<IFluidPackage> =>
+	typeof pkg === "object" &&
+	typeof (pkg as Partial<IFluidPackage>)?.name === "string" &&
+	typeof (pkg as Partial<IFluidPackage>)?.fluid === "object";
 
 /**
  * Package manager configuration. Provides a key value mapping of config values.
@@ -105,6 +107,7 @@ export interface IFluidCodeDetails {
 	readonly config?: IFluidCodeDetailsConfig;
 }
 
+// eslint-disable-next-line jsdoc/require-description
 /**
  * @deprecated in favor of {@link @fluidframework/container-definitions#isFluidCodeDetails}
  * to have code loading modules in same package.

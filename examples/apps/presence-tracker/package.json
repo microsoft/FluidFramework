@@ -45,7 +45,8 @@
 		"@fluidframework/protocol-definitions": "^1.1.0",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/tinylicious-client": "workspace:~",
-		"fluid-framework": "workspace:~"
+		"fluid-framework": "workspace:~",
+		"process": "^0.11.10"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.22.0",
