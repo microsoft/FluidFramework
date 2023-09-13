@@ -11,6 +11,7 @@ const PULL_REQUEST = "POST /repos/{owner}/{repo}/pulls";
 const ASSIGNEE = "POST /repos/{owner}/{repo}/issues/{issue_number}/assignees";
 const LABEL = "POST /repos/{owner}/{repo}/issues/{issue_number}/labels";
 const REVIEWER = "POST /repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers";
+const MERGE_PULL_REQUEST = "PUT /repos/{owner}/{repo}/pulls/{pull_number}/merge";
 
 /**
  *
@@ -136,4 +137,30 @@ export async function getPullRequest(token: string, prNumber: number, log: Comma
 		},
 	});
 	log.log(`Pr info: ${JSON.stringify(pr)}`);
+}
+
+export async function mergePullRequest(
+	pr: {
+		token: string;
+		owner: string;
+		repo: string;
+		title: string;
+		description: string;
+		prNumber: number;
+	},
+	log: CommandLogger,
+) {
+	const octokit = new Octokit({ auth: pr.token });
+	const squash = await octokit.request(MERGE_PULL_REQUEST, {
+		owner: pr.owner,
+		repo: pr.repo,
+		pull_number: pr.prNumber,
+		commit_title: pr.title,
+		commit_message: pr.description,
+		merge_method: "squash",
+		headers: {
+			"X-GitHub-Api-Version": "2022-11-28",
+		},
+	});
+	log.log(`Squashed pull request: ${squash}`);
 }

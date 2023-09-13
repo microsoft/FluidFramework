@@ -6,6 +6,7 @@
 import { Flags } from "@oclif/core";
 
 import { BaseCommand } from "../../base";
+import { mergePullRequest } from "../../lib";
 
 export default class MergePullRequest extends BaseCommand<typeof MergePullRequest> {
 	static readonly description = "Merge Pull Request";
@@ -18,15 +19,33 @@ export default class MergePullRequest extends BaseCommand<typeof MergePullReques
 			required: true,
 			env: "GITHUB_PAT",
 		}),
-		branch: Flags.string({
-			description: "Branch name",
-			char: "b",
-			required: true,
-		}),
 		...BaseCommand.flags,
 	};
 
 	public async run(): Promise<void> {
 		const flags = this.flags;
+
+		// squash pr
+		// fetch the pr number
+		const pr = {
+			token: flags.pat,
+			owner: "sonalideshpandemsft",
+			repo: "FluidFramework",
+			title: "Title",
+			description: "description",
+			prNumber: 1234,
+		};
+
+		await mergePullRequest(pr, this.logger);
+
+		// merge pr
+		// fetch the automation pr
+		// find the commit id
+		// create comment on the automation pr - "this PR is queued to be merged in next in 10mins. please close the PR if you want to stop the merge"
+		// git checkout next
+		// git pull
+		// git fetch
+		// git merge --ff-only COMMIT_ID -> returns an error imples HEAD of next has changed
+		// git push
 	}
 }
