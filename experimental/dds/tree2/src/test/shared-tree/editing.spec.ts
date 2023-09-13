@@ -1406,6 +1406,27 @@ describe("Editing", () => {
 			expectJsonTree([tree, tree1, tree2], [{ foo: [{}, { baz: "b" }] }]);
 		});
 
+		it("undo restores a removed node even when that node was never present on the branch", () => {
+			const tree = makeTreeFromJson([]);
+			const tree2 = tree.fork();
+
+			tree.editor.sequenceField(rootField).insert(0, singleJsonCursor("43"));
+			tree.editor.sequenceField(rootField).delete(0, 1);
+
+			const tree3 = tree.fork();
+			tree3.undo(); // Restores "43"
+
+			tree.merge(tree3, false);
+			tree3.rebaseOnto(tree);
+
+			expectJsonTree([tree, tree3], ["43"]);
+
+			// This rebase should introduce/restore 43 even though tree2 never saw 43 before
+			tree2.rebaseOnto(tree);
+
+			expectJsonTree([tree2], ["43"]);
+		});
+
 		describe.skip("Exhaustive removal tests", () => {
 			// Toggle the constant below to run each scenario as a separate test.
 			// This is useful to debug a specific scenario but makes CI and the test browser slower.
@@ -1663,7 +1684,7 @@ describe("Editing", () => {
 			expectJsonTree(tree1, ["42"]);
 		});
 
-		it("rebases repair data", () => {
+		it("undo restores a removed node even when that node was not the one originally removed by the undone change", () => {
 			const tree = makeTreeFromJson(["42"]);
 			const tree2 = tree.fork();
 
@@ -1680,6 +1701,29 @@ describe("Editing", () => {
 			tree2.rebaseOnto(tree);
 
 			expectJsonTree([tree, tree2], ["43"]);
+		});
+
+		it("undo restores a removed node even when that node was never present on the branch", () => {
+			const tree = makeTreeFromJson(["42"]);
+			const tree2 = tree.fork();
+
+			tree.editor.optionalField(rootField).set(singleJsonCursor("43"), false);
+			tree.editor.optionalField(rootField).set(singleJsonCursor("44"), false);
+
+			const tree3 = tree.fork();
+			tree3.undo(); // Restores "43"
+
+			tree.editor.optionalField(rootField).set(singleJsonCursor("45"), false);
+
+			tree.merge(tree3, false);
+			tree3.rebaseOnto(tree);
+
+			expectJsonTree([tree, tree3], ["43"]);
+
+			// This rebase should introduce/restore 43 even though tree2 never saw 43 before
+			tree2.rebaseOnto(tree);
+
+			expectJsonTree([tree2], ["43"]);
 		});
 	});
 
