@@ -239,9 +239,9 @@ export {
 	TypedField,
 	TypedNode,
 	TypedNodeUnion,
-	UntypedEntity,
-	UntypedField as UntypedField2,
-	UntypedTree as UntypedTree2,
+	Tree,
+	TreeField,
+	TreeNode,
 	getTreeContext,
 } from "./editable-tree-2";
 
