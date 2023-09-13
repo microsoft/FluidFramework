@@ -25,7 +25,7 @@ class OverlappingSequenceIntervalsIndex
 	implements SequenceIntervalIndexes.Overlapping
 {
 	constructor(sharedString: SharedString) {
-		super(sharedString as unknown as Client, sequenceIntervalHelpers);
+		super(sharedString as unknown as { client: Client } as unknown as Client, sequenceIntervalHelpers);
 	}
 
 	public findOverlappingIntervalsBySegoff(
