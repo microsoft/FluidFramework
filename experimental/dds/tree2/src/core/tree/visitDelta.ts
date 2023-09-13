@@ -12,10 +12,30 @@ import { ForestRootId, TreeIndex } from "./treeIndex";
 import { ReplaceKind } from "./visitPath";
 
 /**
+ * Implementation notes:
+ *
+ * The visit is organized in two passes: a detach pass and an attach pass.
+ * The core idea is that before content can be attached, it must first exist and be in a detached field.
+ * The detach pass is therefore responsible for making sure that all roots that needs to be attached during the
+ * attach pass are ready to be attached.
+ * In practice, this means the detach pass must:
+ * - Create all subtrees that need to be created
+ * - Detach all moved nodes
+ *
+ * In addition to that, the detach pass also detaches nodes that need removing, with the exception of nodes that get
+ * replaced. The reason for this exception is that we need to be able to communicate replaces as atomic operations.
+ * In order to do that, we need to wait until we are sure that the content to attach is available as a detached root.
+ * Replaces are therefore handled during the attach pass.
+ * Note that this could theoretically lead to a situation where, in the attach pass, one replace wants to attach
+ * a node that has yet to be detached by another replace. This does not occur in practice because we do not support
+ * editing operations that would lead to this situation.
+ */
+
+/**
  * Crawls the given `delta`, calling `visitor`'s callback for each change encountered.
  * Each successive call to the visitor callbacks assumes that the change described by earlier calls have been applied
- * to the document tree. For example, for a change that deletes the first and third node of a field, the visitor calls
- * will pass indices 0 and 1 respectively.
+ * to the document tree. For example, for a change that removes the first and third node of a field, the visitor calls
+ * will first call detach with a range from indices 0 to 1 then call detach with a range from indices 1 to 2.
  *
  * @param delta - The delta to be crawled.
  * @param visitor - The object to notify of the changes encountered.
@@ -24,7 +44,7 @@ export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor, treeIndex: 
 	const modsToMovedTrees: Map<Delta.MoveId, Delta.FieldMarks> = new Map();
 	const insertToRootId: Map<Delta.Insert, ForestRootId> = new Map();
 	const creations: Map<Delta.Insert, ForestRootId> = new Map();
-	const rootTreesDetachPass: Map<ForestRootId, Delta.FieldMarks> = new Map();
+	const rootChanges: Map<ForestRootId, Delta.FieldMarks> = new Map();
 	const rootTransfers: RootTransfers = new Map();
 	const detachConfig: PassConfig = {
 		name: "detach",
@@ -33,12 +53,11 @@ export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor, treeIndex: 
 		treeIndex,
 		insertToRootId,
 		creations,
-		rootTrees: rootTreesDetachPass,
-		rootTransfers,
+		rootChanges,
+		rootToRootTransfers: rootTransfers,
 	};
 	visitFieldMarks(delta, visitor, detachConfig);
-	// Fixed point iteration until we have no more detached roots to execute the detach pass on.
-	while (creations.size > 0 || rootTreesDetachPass.size > 0 || rootTransfers.size > 0) {
+	while (creations.size > 0 || rootChanges.size > 0 || rootTransfers.size > 0) {
 		for (const [insert, firstRoot] of creations) {
 			creations.delete(insert);
 			for (let i = 0; i < insert.content.length; i += 1) {
@@ -49,8 +68,8 @@ export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor, treeIndex: 
 				visitor.exitField(field);
 			}
 		}
-		for (const [root, modifications] of rootTreesDetachPass) {
-			rootTreesDetachPass.delete(root);
+		for (const [root, modifications] of rootChanges) {
+			rootChanges.delete(root);
 			const field = treeIndex.toFieldKey(root);
 			visitor.enterField(field);
 			visitModify(0, modifications, visitor, detachConfig);
@@ -58,7 +77,6 @@ export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor, treeIndex: 
 		}
 		transferRoots(rootTransfers, treeIndex, visitor);
 	}
-	const rootTreesAttachPass: Map<ForestRootId, Delta.FieldMarks> = new Map();
 	const attachConfig: PassConfig = {
 		name: "attach",
 		func: attachPass,
@@ -66,14 +84,14 @@ export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor, treeIndex: 
 		treeIndex,
 		insertToRootId,
 		creations,
-		rootTrees: rootTreesAttachPass,
-		rootTransfers,
+		rootChanges,
+		rootToRootTransfers: rootTransfers,
 	};
 	visitFieldMarks(delta, visitor, attachConfig);
-	while (rootTransfers.size > 0 || rootTreesAttachPass.size > 0) {
+	while (rootTransfers.size > 0 || rootChanges.size > 0) {
 		transferRoots(rootTransfers, treeIndex, visitor);
-		for (const [root, modifications] of rootTreesAttachPass) {
-			rootTreesAttachPass.delete(root);
+		for (const [root, modifications] of rootChanges) {
+			rootChanges.delete(root);
 			const field = treeIndex.toFieldKey(root);
 			visitor.enterField(field);
 			visitModify(0, modifications, visitor, attachConfig);
@@ -85,6 +103,10 @@ export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor, treeIndex: 
 type RootTransfers = Map<
 	ForestRootId,
 	{
+		/**
+		 * The node ID that characterizes the detached field of origin.
+		 * Used to delete the entry from the tree index once the root is transferred.
+		 */
 		nodeId?: Delta.DetachedNodeId;
 		destination: ForestRootId;
 	}
@@ -133,18 +155,42 @@ export interface DeltaVisitor {
 interface PassConfig {
 	readonly name: "detach" | "attach";
 	readonly func: Pass;
-
-	readonly insertToRootId: Map<Delta.Insert, ForestRootId>;
-	readonly creations: Map<Delta.Insert, ForestRootId>;
-	readonly rootTrees: Map<ForestRootId, Delta.FieldMarks>;
-	readonly rootTransfers: RootTransfers;
 	readonly treeIndex: TreeIndex;
+
+	/**
+	 * The new trees that need to be created.
+	 * Only used in the detach pass.
+	 */
+	readonly creations: Map<Delta.Insert, ForestRootId>;
+	/**
+	 * Nested changes that need to be applied to detached roots.
+	 * In the detach pass, this is used for:
+	 * - Changes under newly created trees (since they are created in a detached field)
+	 * - Changes under existing trees that start out as being removed (no matter what happens to them during this visit)
+	 * In the attach pass, this is used for:
+	 * - Changes under trees end up as removed as part of this visit (no matter what happened to them during this visit)
+	 */
+	readonly rootChanges: Map<ForestRootId, Delta.FieldMarks>;
+	/**
+	 * Represents transfers of roots from one detached field to another.
+	 * In the detach pass, this is used for:
+	 * - Transferring a removed node (that is being moved) to the detached field that corresponds to the move ID
+	 * In the attach pass, this is used for:
+	 * - Transferring a created node (that is transient) to the detached field that corresponds to its detach ID
+	 * - Transferring a restored node (that is transient) to the detached field that corresponds to its detach ID
+	 * - Transferring a moved node (that is removed) to the detached field that corresponds to its detach ID
+	 * TODO#5481: update the TreeIndex instead of moving the nodes around.
+	 */
+	readonly rootToRootTransfers: RootTransfers;
 	/**
 	 * Stores the nested changes for all moved trees.
-	 * Only used for the attach pass in cases where the moved-in tree is transient.
-	 * In cases where the moved-in tree is not transient, the nested changes are obtained from the replace.
 	 */
 	readonly modsToMovedTrees: Map<Delta.MoveId, Delta.FieldMarks>;
+	/**
+	 * All creations are made in a detached field and eventually transferred to their final destination.
+	 * This map keeps track of the root ID where creations occur.
+	 */
+	readonly insertToRootId: Map<Delta.Insert, ForestRootId>;
 }
 
 function ensureCreation(mark: Delta.Insert, config: PassConfig): ForestRootId {
@@ -238,6 +284,17 @@ function offsetDetachId(
 	};
 }
 
+/**
+ * Normalizes the mark into a list of replaces that should apply to the current pass and in the current field.
+ * The "in the current pass" restriction means that...
+ * - In the detach pass, operations that represent attaches are ignored (replaces are also ignored).
+ * - In the attach pass, operations that represent detaches are ignored (replaces are not ignored).
+ * The "in the current field" restriction means that...
+ * - In the detach pass, operations that target nodes which start out as detached are ignored.
+ * - In the attach pass, operations that target nodes that will end up as detached are ignored.
+ *
+ * Does not mutate `config` members aside from idempotent tree index queries that may lead to the creation of new entries.
+ */
 function asReplaces(
 	mark: Exclude<Delta.Mark, number | Delta.Modify<any>>,
 	config: PassConfig,
@@ -353,6 +410,9 @@ function asReplaces(
 	return [];
 }
 
+/**
+ * Populates the `config` members with operations that need to be performed on detached roots as part of the detach pass.
+ */
 function catalogDetachPassRootChanges(mark: Exclude<Delta.Mark, number>, config: PassConfig): void {
 	let nodeId: Delta.DetachedNodeId | undefined;
 	let fields: Delta.FieldMarks | undefined;
@@ -361,7 +421,7 @@ function catalogDetachPassRootChanges(mark: Exclude<Delta.Mark, number>, config:
 			if (mark.content.length > 0) {
 				const root = ensureCreation(mark, config);
 				if (mark.fields !== undefined) {
-					config.rootTrees.set(root, mark.fields);
+					config.rootChanges.set(root, mark.fields);
 				}
 			}
 			break;
@@ -379,7 +439,7 @@ function catalogDetachPassRootChanges(mark: Exclude<Delta.Mark, number>, config:
 				const { root: rootSource } = config.treeIndex.getEntry(nodeId);
 				const { root: rootDestination } =
 					config.treeIndex.getOrCreateEntry(destinationNodeId);
-				setRootReplaces(mark.count, config, rootDestination, rootSource, nodeId);
+				addRootReplaces(mark.count, config, rootDestination, rootSource, nodeId);
 			}
 			break;
 		case Delta.MarkType.Restore: {
@@ -392,10 +452,13 @@ function catalogDetachPassRootChanges(mark: Exclude<Delta.Mark, number>, config:
 	}
 	if (nodeId !== undefined && fields !== undefined) {
 		const { root } = config.treeIndex.getOrCreateEntry(nodeId);
-		config.rootTrees.set(root, fields);
+		config.rootChanges.set(root, fields);
 	}
 }
 
+/**
+ * Populates the `config` members with operations that need to be performed on detached roots as part of the attach pass.
+ */
 function catalogAttachPassRootChanges(mark: Exclude<Delta.Mark, number>, config: PassConfig): void {
 	let nodeId: Delta.DetachedNodeId | undefined;
 	let fields: Delta.FieldMarks | undefined;
@@ -411,7 +474,7 @@ function catalogAttachPassRootChanges(mark: Exclude<Delta.Mark, number>, config:
 						mark.detachId,
 						count,
 					);
-					setRootReplaces(count, config, rootDestination, rootSource);
+					addRootReplaces(count, config, rootDestination, rootSource);
 				}
 			}
 			break;
@@ -429,7 +492,7 @@ function catalogAttachPassRootChanges(mark: Exclude<Delta.Mark, number>, config:
 				const sourceNodeId = { major: "move", minor };
 				const { root: rootSource } = config.treeIndex.getOrCreateEntry(sourceNodeId);
 				const { root: rootDestination } = config.treeIndex.getOrCreateEntry(mark.detachId);
-				setRootReplaces(mark.count, config, rootDestination, rootSource, sourceNodeId);
+				addRootReplaces(mark.count, config, rootDestination, rootSource, sourceNodeId);
 			}
 			break;
 		}
@@ -443,7 +506,7 @@ function catalogAttachPassRootChanges(mark: Exclude<Delta.Mark, number>, config:
 				const { root: rootDestination } = config.treeIndex.getOrCreateEntry(
 					mark.newContent.detachId,
 				);
-				setRootReplaces(
+				addRootReplaces(
 					mark.count,
 					config,
 					rootDestination,
@@ -463,11 +526,11 @@ function catalogAttachPassRootChanges(mark: Exclude<Delta.Mark, number>, config:
 	}
 	if (nodeId !== undefined && fields !== undefined) {
 		const { root } = config.treeIndex.getOrCreateEntry(nodeId);
-		config.rootTrees.set(root, fields);
+		config.rootChanges.set(root, fields);
 	}
 }
 
-function setRootReplaces(
+function addRootReplaces(
 	count: number,
 	config: PassConfig,
 	destination: ForestRootId,
@@ -478,9 +541,10 @@ function setRootReplaces(
 	// Making such a transfer wouldn't just be inefficient, it would lead us to mistakenly think we have moved all content
 	// out of the source detached field, and would lead us to delete the tree index entry for that source detached field.
 	// This would effectively result in the tree index missing an entry for the detached field.
+	// This if statement prevents that from happening.
 	if (source !== destination) {
 		for (let i = 0; i < count; i += 1) {
-			config.rootTransfers.set(brand(source + i), {
+			config.rootToRootTransfers.set(brand(source + i), {
 				destination: brand(destination + i),
 				nodeId: offsetDetachId(sourceNodeId, i),
 			});
@@ -491,7 +555,7 @@ function setRootReplaces(
 /**
  * Preforms the following:
  * - Collects all root creations
- * - Collects all roots that need a first pass
+ * - Collects all roots that need a detach pass
  * - Executes detaches (bottom-up) provided they are not part of a replace
  * (because we want to wait until we are sure content to attach is available as a root)
  */
@@ -536,6 +600,12 @@ function detachPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 	}
 }
 
+/**
+ * Preforms the following:
+ * - Collects all roots that need an attach pass
+ * - Executes attaches (top-down)
+ * - Executes replaces (top-down)
+ */
 function attachPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassConfig): void {
 	let index = 0;
 	for (const mark of delta) {
