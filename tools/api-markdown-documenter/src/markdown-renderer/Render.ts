@@ -62,7 +62,7 @@ export function renderNode(
 		defaultMarkdownRenderers[node.type](node, writer, context);
 	} else {
 		throw new Error(
-			`Encountered an DocumentationNode with neither a user-provided nor system-default renderer. Type: ${node.type}. Please provide a renderer for this type.`,
+			`Encountered a DocumentationNode with neither a user-provided nor system-default renderer. Type: ${node.type}. Please provide a renderer for this type.`,
 		);
 	}
 }

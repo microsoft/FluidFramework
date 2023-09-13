@@ -12,13 +12,18 @@
  */
 export declare class Buffer extends Uint8Array {
 	toString(encoding?: string): string;
+
 	/**
+	 * Static constructor
+	 *
 	 * @param value - (string | ArrayBuffer).
 	 * @param encodingOrOffset - (string | number).
 	 * @param length - (number).
+	 *
+	 * @privateRemarks TODO: Use actual types
 	 */
-	static from(value, encodingOrOffset?, length?): IsoBuffer;
-	static isBuffer(obj: any): obj is Buffer;
+	static from(value: unknown, encodingOrOffset?: unknown, length?: unknown): IsoBuffer;
+	static isBuffer(obj: unknown): obj is Buffer;
 }
 
 /**
