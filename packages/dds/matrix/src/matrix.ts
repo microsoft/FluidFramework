@@ -751,7 +751,8 @@ export class SharedMatrix<T = any>
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
 	 */
-	protected applyStashedOp(content: any): unknown {
+	protected applyStashedOp(op: any): unknown {
+		const content = parseHandles(op, this.serializer);
 		if (content.target === SnapshotPath.cols || content.target === SnapshotPath.rows) {
 			const op = content as IMergeTreeOp;
 			const currentVector = content.target === SnapshotPath.cols ? this.cols : this.rows;
