@@ -64,26 +64,26 @@ use_old_VariableDeclaration_AllowTombstoneRequestHeaderKey(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_CompatModeBehavior": {"forwardCompat": false}
+* "TypeAliasDeclaration_CompatModeBehavior": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_CompatModeBehavior():
     TypeOnly<old.CompatModeBehavior>;
-declare function use_current_RemovedTypeAliasDeclaration_CompatModeBehavior(
+declare function use_current_TypeAliasDeclaration_CompatModeBehavior(
     use: TypeOnly<current.CompatModeBehavior>);
-use_current_RemovedTypeAliasDeclaration_CompatModeBehavior(
+use_current_TypeAliasDeclaration_CompatModeBehavior(
     get_old_TypeAliasDeclaration_CompatModeBehavior());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_CompatModeBehavior": {"backCompat": false}
+* "TypeAliasDeclaration_CompatModeBehavior": {"backCompat": false}
 */
-declare function get_current_RemovedTypeAliasDeclaration_CompatModeBehavior():
+declare function get_current_TypeAliasDeclaration_CompatModeBehavior():
     TypeOnly<current.CompatModeBehavior>;
 declare function use_old_TypeAliasDeclaration_CompatModeBehavior(
     use: TypeOnly<old.CompatModeBehavior>);
 use_old_TypeAliasDeclaration_CompatModeBehavior(
-    get_current_RemovedTypeAliasDeclaration_CompatModeBehavior());
+    get_current_TypeAliasDeclaration_CompatModeBehavior());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -112,26 +112,26 @@ use_old_EnumDeclaration_CompressionAlgorithms(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedEnumDeclaration_ContainerMessageType": {"forwardCompat": false}
+* "EnumDeclaration_ContainerMessageType": {"forwardCompat": false}
 */
 declare function get_old_EnumDeclaration_ContainerMessageType():
     TypeOnly<old.ContainerMessageType>;
-declare function use_current_RemovedEnumDeclaration_ContainerMessageType(
+declare function use_current_EnumDeclaration_ContainerMessageType(
     use: TypeOnly<current.ContainerMessageType>);
-use_current_RemovedEnumDeclaration_ContainerMessageType(
+use_current_EnumDeclaration_ContainerMessageType(
     get_old_EnumDeclaration_ContainerMessageType());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedEnumDeclaration_ContainerMessageType": {"backCompat": false}
+* "EnumDeclaration_ContainerMessageType": {"backCompat": false}
 */
-declare function get_current_RemovedEnumDeclaration_ContainerMessageType():
+declare function get_current_EnumDeclaration_ContainerMessageType():
     TypeOnly<current.ContainerMessageType>;
 declare function use_old_EnumDeclaration_ContainerMessageType(
     use: TypeOnly<old.ContainerMessageType>);
 use_old_EnumDeclaration_ContainerMessageType(
-    get_current_RemovedEnumDeclaration_ContainerMessageType());
+    get_current_EnumDeclaration_ContainerMessageType());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -160,26 +160,26 @@ use_old_ClassDeclaration_ContainerRuntime(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ContainerRuntimeMessage": {"forwardCompat": false}
+* "InterfaceDeclaration_ContainerRuntimeMessage": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ContainerRuntimeMessage():
     TypeOnly<old.ContainerRuntimeMessage>;
-declare function use_current_RemovedInterfaceDeclaration_ContainerRuntimeMessage(
+declare function use_current_InterfaceDeclaration_ContainerRuntimeMessage(
     use: TypeOnly<current.ContainerRuntimeMessage>);
-use_current_RemovedInterfaceDeclaration_ContainerRuntimeMessage(
+use_current_InterfaceDeclaration_ContainerRuntimeMessage(
     get_old_InterfaceDeclaration_ContainerRuntimeMessage());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ContainerRuntimeMessage": {"backCompat": false}
+* "InterfaceDeclaration_ContainerRuntimeMessage": {"backCompat": false}
 */
-declare function get_current_RemovedInterfaceDeclaration_ContainerRuntimeMessage():
+declare function get_current_InterfaceDeclaration_ContainerRuntimeMessage():
     TypeOnly<current.ContainerRuntimeMessage>;
 declare function use_old_InterfaceDeclaration_ContainerRuntimeMessage(
     use: TypeOnly<old.ContainerRuntimeMessage>);
 use_old_InterfaceDeclaration_ContainerRuntimeMessage(
-    get_current_RemovedInterfaceDeclaration_ContainerRuntimeMessage());
+    get_current_InterfaceDeclaration_ContainerRuntimeMessage());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -496,26 +496,26 @@ use_old_InterfaceDeclaration_IConnectableRuntime(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IContainerRuntimeMessageCompatDetails": {"forwardCompat": false}
+* "InterfaceDeclaration_IContainerRuntimeMessageCompatDetails": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IContainerRuntimeMessageCompatDetails():
     TypeOnly<old.IContainerRuntimeMessageCompatDetails>;
-declare function use_current_RemovedInterfaceDeclaration_IContainerRuntimeMessageCompatDetails(
+declare function use_current_InterfaceDeclaration_IContainerRuntimeMessageCompatDetails(
     use: TypeOnly<current.IContainerRuntimeMessageCompatDetails>);
-use_current_RemovedInterfaceDeclaration_IContainerRuntimeMessageCompatDetails(
+use_current_InterfaceDeclaration_IContainerRuntimeMessageCompatDetails(
     get_old_InterfaceDeclaration_IContainerRuntimeMessageCompatDetails());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IContainerRuntimeMessageCompatDetails": {"backCompat": false}
+* "InterfaceDeclaration_IContainerRuntimeMessageCompatDetails": {"backCompat": false}
 */
-declare function get_current_RemovedInterfaceDeclaration_IContainerRuntimeMessageCompatDetails():
+declare function get_current_InterfaceDeclaration_IContainerRuntimeMessageCompatDetails():
     TypeOnly<current.IContainerRuntimeMessageCompatDetails>;
 declare function use_old_InterfaceDeclaration_IContainerRuntimeMessageCompatDetails(
     use: TypeOnly<old.IContainerRuntimeMessageCompatDetails>);
 use_old_InterfaceDeclaration_IContainerRuntimeMessageCompatDetails(
-    get_current_RemovedInterfaceDeclaration_IContainerRuntimeMessageCompatDetails());
+    get_current_InterfaceDeclaration_IContainerRuntimeMessageCompatDetails());
 
 /*
 * Validate forward compat by using old type in place of current type
