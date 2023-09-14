@@ -104,9 +104,6 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"ClassDeclaration_DeliLambda": {
-				"backCompat": false
-			},
 			"InterfaceDeclaration_ICheckpointParams": {
 				"backCompat": false
 			},

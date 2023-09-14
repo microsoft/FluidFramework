@@ -132,7 +132,8 @@
 				"forwardCompat": false
 			},
 			"ClassDeclaration_RiddlerResources": {
-				"forwardCompat": false
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}

@@ -16,12 +16,12 @@ import {
 	IRunnerFactory,
 	IWebServerFactory,
 	ICollection,
+	ICache,
 } from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import * as Redis from "ioredis";
-import { RedisCache } from "@fluidframework/server-services";
 import { RiddlerRunner } from "./runner";
 import { ITenantDocument } from "./tenantManager";
 
@@ -41,7 +41,7 @@ export class RiddlerResources implements IResources {
 		public readonly secretManager: ISecretManager,
 		public readonly fetchTenantKeyMetricIntervalMs: number,
 		public readonly riddlerStorageRequestMetricIntervalMs: number,
-		public readonly cache: RedisCache,
+		public readonly cache: ICache,
 	) {
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
 		this.webServerFactory = new services.BasicWebServerFactory(httpServerConfig);
@@ -56,7 +56,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 	public async create(config: Provider): Promise<RiddlerResources> {
 		// Cache connection
 		const redisConfig = config.get("redisForTenantCache");
-		let cache: RedisCache;
+		let cache: ICache;
 		if (redisConfig) {
 			const redisOptions: Redis.RedisOptions = {
 				host: redisConfig.host,
@@ -83,10 +83,11 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 			}
 			const redisParams = {
 				expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
+				prefix: "page",
 			};
 			const redisClient = new Redis.default(redisOptions);
 
-			cache = new RedisCache(redisClient, redisParams);
+			cache = new services.RedisCache(redisClient, redisParams);
 		}
 		// Database connection
 		const factory = await services.getDbFactory(config);

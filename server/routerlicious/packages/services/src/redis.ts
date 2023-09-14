@@ -14,7 +14,8 @@ import { Lumberjack } from "@fluidframework/server-services-telemetry";
  */
 export class RedisCache implements ICache {
 	private readonly expireAfterSeconds: number = 60 * 60 * 24;
-	private readonly prefix: string = "page";
+	private readonly prefix: string;
+
 	constructor(private readonly client: Redis.default, parameters?: IRedisParameters) {
 		if (parameters?.expireAfterSeconds) {
 			this.expireAfterSeconds = parameters.expireAfterSeconds;
@@ -22,6 +23,10 @@ export class RedisCache implements ICache {
 
 		if (parameters?.prefix) {
 			this.prefix = parameters.prefix;
+		} else {
+			this.prefix = "";
+			winston.warn("A prefix for RedisCache was not included in the parameters.");
+			Lumberjack.warning("A prefix for RedisCache was not included in the parameters.");
 		}
 
 		client.on("error", (err) => {
@@ -29,26 +34,37 @@ export class RedisCache implements ICache {
 			Lumberjack.error("Error with Redis", undefined, err);
 		});
 	}
-	public async delete(key: string): Promise<boolean> {
+
+	public async delete(key: string, appendPrefixToKey: boolean = true): Promise<boolean> {
+		// If 'appendPrefixToKey' is true, we prepend a prefix to the 'key' parameter.
+		// This is useful in scenarios where we want to consistently manage keys with a common prefix,
+		// If 'appendPrefixToKey' is false, we assume that the 'key' parameter with prefix is already passed in by the caller,
+		// and no additional prefix needs to be added.
 		try {
-			await this.client.del(this.getKey(key));
-			return true;
+			const keyToDelete: string = appendPrefixToKey ? this.getKey(key) : key;
+			const result = await this.client.del(keyToDelete);
+			return result === 1;
 		} catch (error) {
 			Lumberjack.error(`Error deleting from cache.`, undefined, error);
 			return false;
 		}
 	}
 
-	public async get(key: string): Promise<string> {
-		return this.client.get(this.getKey(key));
+	public async get<T>(key: string): Promise<T> {
+		const stringValue: string = await this.client.get(this.getKey(key));
+		return JSON.parse(stringValue) as T;
 	}
 
-	public async set(key: string, value: string, expireAfterSeconds?: number): Promise<void> {
+	public async set<T>(
+		key: string,
+		value: T,
+		expireAfterSeconds: number = this.expireAfterSeconds,
+	): Promise<void> {
 		const result = await this.client.set(
 			this.getKey(key),
-			value,
+			JSON.stringify(value),
 			"EX",
-			expireAfterSeconds ?? this.expireAfterSeconds,
+			expireAfterSeconds,
 		);
 		if (result !== "OK") {
 			throw new Error(result);
@@ -66,6 +82,16 @@ export class RedisCache implements ICache {
 			);
 			throw error;
 		}
+	}
+
+	/**
+	 * Get a list of keys that have a given prefix.
+	 *
+	 * @param keyPrefix - Prefix for the keys to get.
+	 */
+	public async keysByPrefix(keyPrefix: string): Promise<string[]> {
+		const result: string[] = await this.client.keys(`${this.getKey(keyPrefix)}*`);
+		return result;
 	}
 
 	public async decr(key: string): Promise<number> {

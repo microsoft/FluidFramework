@@ -7,13 +7,13 @@ import type { ICache } from "@fluidframework/server-services-core";
 
 export class TestCache implements ICache {
 	private readonly map = new Map<string, string>();
-	public async get(key: string): Promise<string> {
-		return this.map.get(key) ?? "";
+	public async get<T>(key: string): Promise<T> {
+		return JSON.parse(this.map.get(key) ?? "") as T;
 	}
-	public async set(key: string, value: string): Promise<void> {
-		this.map.set(key, value);
+	public async set<T>(key: string, value: T, expireAfterSeconds?: number): Promise<void> {
+		this.map.set(key, JSON.stringify(value));
 	}
-	public async delete(key: string): Promise<boolean> {
+	public async delete(key: string, appendPrefixToKey?: boolean): Promise<boolean> {
 		const result = this.map.delete(key);
 		return result;
 	}

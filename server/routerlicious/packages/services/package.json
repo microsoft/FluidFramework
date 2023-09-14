@@ -115,6 +115,9 @@
 			},
 			"ClassDeclaration_SecretManager": {
 				"forwardCompat": false
+			},
+			"ClassDeclaration_RedisCache": {
+				"forwardCompat": false
 			}
 		}
 	}

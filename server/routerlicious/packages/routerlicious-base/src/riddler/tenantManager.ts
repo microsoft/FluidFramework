@@ -763,7 +763,7 @@ export class TenantManager {
 
 	private async getKeyFromCache(tenantId: string): Promise<string> {
 		try {
-			const cachedKey = await this.runWithCacheRequestCounter(async () =>
+			const cachedKey: string = await this.runWithCacheRequestCounter(async () =>
 				this.cache?.get(`tenantKeys:${tenantId}`),
 			);
 

@@ -109,7 +109,7 @@ export class AlfredResources implements core.IResources {
 		public documentDeleteService: IDocumentDeleteService,
 		public throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
 		public verifyMaxMessageSize?: boolean,
-		public redisCache?: core.ICache,
+		public cache?: core.ICache,
 		public socketTracker?: core.IWebSocketTracker,
 		public tokenRevocationManager?: core.ITokenRevocationManager,
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
@@ -197,15 +197,16 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			};
 		}
 
-		const redisParams2 = {
+		const redisParams2: utils.IRedisParameters = {
 			expireAfterSeconds: redisConfig2.keyExpireAfterSeconds as number | undefined,
+			prefix: "page",
 		};
 
 		const redisClient = new Redis.default(redisOptions2);
 		const clientManager = new services.ClientManager(redisClient, redisParams2);
 
 		const redisClientForJwtCache = new Redis.default(redisOptions2);
-		const redisJwtCache = new services.RedisCache(redisClientForJwtCache);
+		const redisJwtCache = new services.RedisCache(redisClientForJwtCache, redisParams2);
 
 		// Database connection for global db if enabled
 		let globalDbMongoManager;
@@ -499,7 +500,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 				};
 			}
 			const redisClientForLogging = new Redis.default(redisOptions);
-			redisCache = new services.RedisCache(redisClientForLogging);
+			redisCache = new services.RedisCache(redisClientForLogging, redisParams2);
 		}
 
 		const nodeFactory = new LocalNodeFactory(
@@ -626,7 +627,7 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
 			resources.documentDeleteService,
 			resources.throttleAndUsageStorageManager,
 			resources.verifyMaxMessageSize,
-			resources.redisCache,
+			resources.cache,
 			resources.socketTracker,
 			resources.tokenRevocationManager,
 			resources.revokedTokenChecker,

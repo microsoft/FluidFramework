@@ -109,5 +109,15 @@
 				"@types/node"
 			]
 		}
+	},
+	"typeValidation": {
+		"broken": {
+			"InterfaceDeclaration_ICache": {
+				"backCompat": false
+			},
+			"ClassDeclaration_RedisCache": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

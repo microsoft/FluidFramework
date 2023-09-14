@@ -359,6 +359,7 @@ declare function get_old_ClassDeclaration_RedisCache():
 declare function use_current_ClassDeclaration_RedisCache(
     use: TypeOnly<current.RedisCache>);
 use_current_ClassDeclaration_RedisCache(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_RedisCache());
 
 /*

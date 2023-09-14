@@ -155,7 +155,6 @@ declare function get_current_ClassDeclaration_DeliLambda():
 declare function use_old_ClassDeclaration_DeliLambda(
     use: TypeOnly<old.DeliLambda>);
 use_old_ClassDeclaration_DeliLambda(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_DeliLambda());
 
 /*

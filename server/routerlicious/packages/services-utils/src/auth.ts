@@ -213,7 +213,7 @@ export async function verifyToken(
 			Lumberjack.info("Token cache miss", logProperties);
 			const tokenCacheKey = token;
 			options.tokenCache
-				.set(
+				.set<string>(
 					tokenCacheKey,
 					"used",
 					tokenLifetimeMs !== undefined ? Math.floor(tokenLifetimeMs / 1000) : undefined,
