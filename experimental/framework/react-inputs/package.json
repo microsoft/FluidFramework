@@ -34,6 +34,7 @@
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/cell": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/map": "workspace:~",
 		"@fluidframework/merge-tree": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"react": "^17.0.1"

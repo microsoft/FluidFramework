@@ -19,3 +19,5 @@ export {
 	ISharedStringHelperTextChangedEventArgs,
 	SharedStringHelper,
 } from "./SharedStringHelper";
+export { CollaborativeMap } from "./CollaborativeMap";
+export { CollaborativeDirectory } from "./CollaborativeDirectory";

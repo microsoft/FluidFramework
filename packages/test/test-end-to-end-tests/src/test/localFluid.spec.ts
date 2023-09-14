@@ -55,7 +55,6 @@ class RootDataObject extends DataObject {
 		const child = await this.getFluidObject<ChildDataObject>(childKey);
 		localDataObject.dataObjects.set(childKey, await child.toLocalDataObject());
 
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return localDataObject;
 	}
 }
@@ -89,7 +88,6 @@ class ChildDataObject extends DataObject {
 		const map = await this.getFluidObject<SharedMap>(mapKey);
 		localDataObject.dataStructures.set(mapKey, toLocalChannel(map));
 
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return localDataObject;
 	}
 }

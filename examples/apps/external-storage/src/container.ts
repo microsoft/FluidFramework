@@ -8,22 +8,14 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
-import { CollaborativeText } from "./fluid-object";
-
-export interface ICollaborativeTextAppModel {
-	readonly collaborativeText: CollaborativeText;
-}
-
-class CollaborativeTextAppModel implements ICollaborativeTextAppModel {
-	public constructor(public readonly collaborativeText: CollaborativeText) {}
-}
+import { ChildDataObject, RootDataObject } from "./fluid-object";
 
 const collaborativeTextId = "collaborative-text";
 
-export class CollaborativeTextContainerRuntimeFactory extends ModelContainerRuntimeFactory<ICollaborativeTextAppModel> {
+export class DownloadableViewContainerRuntimeFactory extends ModelContainerRuntimeFactory<RootDataObject> {
 	constructor() {
 		super(
-			new Map([CollaborativeText.getFactory().registryEntry]), // registryEntries
+			new Map([RootDataObject.factory.registryEntry, ChildDataObject.factory.registryEntry]), // registryEntries
 		);
 	}
 
@@ -31,9 +23,7 @@ export class CollaborativeTextContainerRuntimeFactory extends ModelContainerRunt
 	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
 	 */
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-		const collaborativeText = await runtime.createDataStore(
-			CollaborativeText.getFactory().type,
-		);
+		const collaborativeText = await runtime.createDataStore(RootDataObject.factory.type);
 		await collaborativeText.trySetAlias(collaborativeTextId);
 	}
 
@@ -41,10 +31,9 @@ export class CollaborativeTextContainerRuntimeFactory extends ModelContainerRunt
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
 	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
-		const collaborativeText = await requestFluidObject<CollaborativeText>(
+		return requestFluidObject<RootDataObject>(
 			await runtime.getRootDataStore(collaborativeTextId),
 			"",
 		);
-		return new CollaborativeTextAppModel(collaborativeText);
 	}
 }
