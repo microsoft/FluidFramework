@@ -213,9 +213,9 @@ Here are some remarks about the type alias
 
 ### testFunction (ALPHA) {#testfunction-function}
 
-**WARNING: This API is provided as an alpha preview and may change without notice. Use at your own risk.**
-
 Test function
+
+**WARNING: This API is provided as an alpha preview and may change without notice. Use at your own risk.**
 
 #### Signature {#testfunction-signature}
 
@@ -265,11 +265,11 @@ An inline type
 
 ### testFunctionReturningIntersectionType {#testfunctionreturningintersectiontype-function}
 
+Test function that returns an inline type
+
 **WARNING: This API is deprecated and will be removed in a future release.**
 
 _This is a test deprecation notice. Here is a_ [_link_](./simple-suite-test#testfunctionreturninguniontype-function)<!-- --> _to something else!_
-
-Test function that returns an inline type
 
 #### Signature {#testfunctionreturningintersectiontype-signature}
 
@@ -303,9 +303,9 @@ A union type
 
 ### testConst (BETA) {#testconst-variable}
 
-**WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.**
-
 Test Constant
+
+**WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.**
 
 #### Signature {#testconst-signature}
 
@@ -319,9 +319,9 @@ Here are some remarks about the variable
 
 ### testConstWithEmptyDeprecatedBlock {#testconstwithemptydeprecatedblock-variable}
 
-**WARNING: This API is deprecated and will be removed in a future release.**
-
 I have a `@deprecated` tag with an empty comment block.
+
+**WARNING: This API is deprecated and will be removed in a future release.**
 
 #### Signature {#testconstwithemptydeprecatedblock-signature}
 
