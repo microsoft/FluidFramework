@@ -22,7 +22,9 @@ import {
 	ApiPackage,
 	ApiParameterListMixin,
 	ApiReadonlyMixin,
+	ApiReleaseTagMixin,
 	ApiStaticMixin,
+	ReleaseTag,
 } from "@microsoft/api-extractor-model";
 import { DocSection, StandardTags } from "@microsoft/tsdoc";
 import { PackageName } from "@rushstack/node-core-library";
@@ -593,6 +595,40 @@ function doesItemGenerateHierarchy(
  */
 export function filterByKind(apiItems: readonly ApiItem[], kinds: ApiItemKind[]): ApiItem[] {
 	return apiItems.filter((apiMember) => kinds.includes(apiMember.kind));
+}
+
+/**
+ * Gets the release tag associated with the provided API item, if one exists.
+ *
+ * @param apiItem - The API item whose documentation is being queried.
+ *
+ * @returns The associated release tag, if it exists. Otherwise, `undefined`.
+ *
+ * @public
+ */
+export function getReleaseTag(apiItem: ApiItem): ReleaseTag | undefined {
+	return ApiReleaseTagMixin.isBaseClassOf(apiItem) ? apiItem.releaseTag : undefined;
+}
+
+/**
+ * Creates a string representation of the provided release tag.
+ *
+ * @remarks If `None`, this will return an empty string.
+ */
+export function releaseTagToString(releaseTag: ReleaseTag): string {
+	// eslint-disable-next-line default-case
+	switch (releaseTag) {
+		case ReleaseTag.Alpha:
+			return "Alpha";
+		case ReleaseTag.Beta:
+			return "Beta";
+		case ReleaseTag.Internal:
+			return "Internal";
+		case ReleaseTag.Public:
+			return "Public";
+		case ReleaseTag.None:
+			return "";
+	}
 }
 
 /**
