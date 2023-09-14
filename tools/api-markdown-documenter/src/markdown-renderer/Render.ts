@@ -5,7 +5,7 @@
 import { StringBuilder } from "@microsoft/tsdoc";
 
 import type { DocumentNode, DocumentationNode } from "../documentation-domain";
-import { RenderConfiguration } from "./configuration";
+import { RenderConfiguration, defaultMarkdownRenderers } from "./configuration";
 import { DocumentWriter } from "./DocumentWriter";
 import { MarkdownRenderContext, getContextWithDefaults } from "./RenderContext";
 
@@ -21,7 +21,7 @@ export function renderDocument(document: DocumentNode, config: RenderConfigurati
 	const writer = new DocumentWriter(new StringBuilder());
 	const renderContext = getContextWithDefaults({
 		headingLevel: config.startingHeadingLevel,
-		renderers: config.renderers,
+		customRenderers: config.customRenderers,
 	});
 
 	renderNodes(document.children, writer, renderContext);
@@ -42,7 +42,7 @@ export function renderDocument(document: DocumentNode, config: RenderConfigurati
 
 /**
  * Renders the provided {@link DocumentationNode} per the configured
- * {@link MarkdownRenderContext.renderers | renderers}.
+ * {@link MarkdownRenderContext.customRenderers | renderers}.
  *
  * @public
  */
@@ -51,18 +51,25 @@ export function renderNode(
 	writer: DocumentWriter,
 	context: MarkdownRenderContext,
 ): void {
-	if (Object.keys(context.renderers).includes(node.type)) {
-		context.renderers[node.type](node, writer, context);
+	if (
+		context.customRenderers !== undefined &&
+		Object.keys(context.customRenderers).includes(node.type)
+	) {
+		// User-provided renderers take precedence. If we found an appropriate one, use it.
+		context.customRenderers[node.type](node, writer, context);
+	} else if (Object.keys(defaultMarkdownRenderers).includes(node.type)) {
+		// If no user-provided renderer was given for this node type, but we have a default, use the default.
+		defaultMarkdownRenderers[node.type](node, writer, context);
 	} else {
 		throw new Error(
-			`Encountered an unrecognized DocumentationNode type: ${node.type}. Please provide a renderer for this type.`,
+			`Encountered a DocumentationNode with neither a user-provided nor system-default renderer. Type: ${node.type}. Please provide a renderer for this type.`,
 		);
 	}
 }
 
 /**
  * Renders a list of child {@link DocumentationNode}s per the configured
- * {@link MarkdownRenderContext.renderers | renderers}.
+ * {@link MarkdownRenderContext.customRenderers | renderers}.
  *
  * @public
  */
