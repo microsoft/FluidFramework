@@ -2102,7 +2102,14 @@ export type TreeType = TreeSchemaIdentifier;
 export type TreeTypeSet = ReadonlySet<TreeSchemaIdentifier> | undefined;
 
 // @alpha
-export type TreeValue = TypedTreeValue<ValueSchema>;
+export type TreeValue<TSchema extends ValueSchema = ValueSchema> = [
+    {
+    [ValueSchema.Number]: number;
+    [ValueSchema.String]: string;
+    [ValueSchema.Boolean]: boolean;
+    [ValueSchema.FluidHandle]: IFluidHandle;
+}[TSchema]
+][_InlineTrick];
 
 // @alpha
 type TypeArrayToTypedTreeArray<Mode extends ApiMode, T extends readonly TreeSchema[]> = [
@@ -2165,14 +2172,6 @@ export interface TypedSchemaCollection<T extends FieldSchema = FieldSchema> {
     // (undocumented)
     readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
 }
-
-// @alpha
-export type TypedTreeValue<TSchema extends ValueSchema> = {
-    [ValueSchema.Number]: number;
-    [ValueSchema.String]: string;
-    [ValueSchema.Boolean]: boolean;
-    [ValueSchema.FluidHandle]: IFluidHandle;
-}[TSchema];
 
 // @alpha
 type TypedValue<TValue extends ValueSchema> = {

@@ -62,7 +62,6 @@ export {
 	RootField,
 	Value,
 	TreeValue,
-	TypedTreeValue,
 	detachedFieldAsKey,
 	keyAsDetachedField,
 	rootFieldKey,

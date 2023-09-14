@@ -22,7 +22,6 @@ export {
 	TreeType,
 	Value,
 	TreeValue,
-	TypedTreeValue,
 	AnchorSet,
 	DetachedField,
 	UpPath,

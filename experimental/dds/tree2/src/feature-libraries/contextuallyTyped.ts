@@ -18,7 +18,7 @@ import {
 	MapTree,
 	ITreeCursorSynchronous,
 	SchemaData,
-	TypedTreeValue,
+	TreeValue,
 } from "../core";
 // TODO:
 // This module currently is assuming use of default-field-kinds.
@@ -93,7 +93,7 @@ export function allowsValue(schema: ValueSchema | undefined, nodeValue: Value): 
 export function valueSchemaAllows<TSchema extends ValueSchema>(
 	schema: TSchema,
 	nodeValue: Value,
-): nodeValue is TypedTreeValue<TSchema> {
+): nodeValue is TreeValue<TSchema> {
 	switch (schema) {
 		case ValueSchema.String:
 			return typeof nodeValue === "string";

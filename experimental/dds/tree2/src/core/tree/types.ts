@@ -5,7 +5,7 @@
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { FieldKey, TreeSchemaIdentifier, ValueSchema } from "../schema-stored";
-import { brand, Brand, extractFromOpaque, Opaque } from "../../util";
+import { _InlineTrick, brand, Brand, extractFromOpaque, Opaque } from "../../util";
 
 /**
  * @alpha
@@ -121,18 +121,14 @@ export interface FieldKind {
  * Value that may be stored on a leaf node.
  * @alpha
  */
-export type TypedTreeValue<TSchema extends ValueSchema> = {
-	[ValueSchema.Number]: number;
-	[ValueSchema.String]: string;
-	[ValueSchema.Boolean]: boolean;
-	[ValueSchema.FluidHandle]: IFluidHandle;
-}[TSchema];
-
-/**
- * Value that may be stored on a leaf node.
- * @alpha
- */
-export type TreeValue = TypedTreeValue<ValueSchema>;
+export type TreeValue<TSchema extends ValueSchema = ValueSchema> = [
+	{
+		[ValueSchema.Number]: number;
+		[ValueSchema.String]: string;
+		[ValueSchema.Boolean]: boolean;
+		[ValueSchema.FluidHandle]: IFluidHandle;
+	}[TSchema],
+][_InlineTrick];
 
 /**
  * Value stored on a node.

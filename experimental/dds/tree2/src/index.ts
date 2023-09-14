@@ -77,7 +77,6 @@ export {
 	MapTree,
 	LocalCommitSource,
 	forbiddenFieldKindIdentifier,
-	TypedTreeValue,
 } from "./core";
 
 export {
