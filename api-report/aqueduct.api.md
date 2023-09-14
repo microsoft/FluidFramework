@@ -45,7 +45,7 @@ export class BaseContainerRuntimeFactory extends RuntimeFactoryHelper implements
         dependencyContainer?: IFluidDependencySynthesizer;
         requestHandlers?: RuntimeRequestHandler[];
         runtimeOptions?: IContainerRuntimeOptions;
-        initializeEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+        provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
     });
     protected containerHasInitialized(runtime: IContainerRuntime): Promise<void>;
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
@@ -67,7 +67,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
         dependencyContainer?: IFluidDependencySynthesizer;
         requestHandlers?: RuntimeRequestHandler[];
         runtimeOptions?: IContainerRuntimeOptions;
-        initializeEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
+        provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
     });
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
     // (undocumented)

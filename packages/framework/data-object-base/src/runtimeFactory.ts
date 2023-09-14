@@ -21,18 +21,18 @@ export class RuntimeFactory extends RuntimeFactoryHelper {
 
 	private readonly defaultStoreFactory: IFluidDataStoreFactory;
 	private readonly requestHandlers: RuntimeRequestHandler[];
-	private readonly initializeEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+	private readonly provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
 
 	constructor(props: {
 		defaultStoreFactory: IFluidDataStoreFactory;
 		storeFactories: IFluidDataStoreFactory[];
 		requestHandlers?: RuntimeRequestHandler[];
-		initializeEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+		provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
 	}) {
 		super();
 
 		this.defaultStoreFactory = props.defaultStoreFactory;
-		this.initializeEntryPoint = props.initializeEntryPoint;
+		this.provideEntryPoint = props.provideEntryPoint;
 		this.requestHandlers = props.requestHandlers ?? [];
 		const storeFactories = props.storeFactories ?? [this.defaultStoreFactory];
 
@@ -57,7 +57,7 @@ export class RuntimeFactory extends RuntimeFactoryHelper {
 			registryEntries: this.registry,
 			existing,
 			requestHandler: buildRuntimeRequestHandler(...this.requestHandlers),
-			initializeEntryPoint: this.initializeEntryPoint,
+			provideEntryPoint: this.provideEntryPoint,
 		});
 
 		return runtime;

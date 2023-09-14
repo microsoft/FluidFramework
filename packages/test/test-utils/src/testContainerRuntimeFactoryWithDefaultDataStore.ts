@@ -24,7 +24,7 @@ export const createContainerRuntimeFactoryWithDefaultDataStore = (
 		dependencyContainer?: any;
 		requestHandlers?: RuntimeRequestHandler[];
 		runtimeOptions?: IContainerRuntimeOptions;
-		initializeEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
+		provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
 	},
 ): ContainerRuntimeFactoryWithDefaultDataStore => {
 	try {

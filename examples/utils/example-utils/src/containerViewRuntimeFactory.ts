@@ -49,7 +49,7 @@ export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory 
 			requestHandlers: [
 				mountableViewRequestHandler(MountableView, [makeViewRequestHandler(viewCallback)]),
 			],
-			initializeEntryPoint: async (containerRuntime: IContainerRuntime) => {
+			provideEntryPoint: async (containerRuntime: IContainerRuntime) => {
 				const entryPoint = await containerRuntime.getAliasedDataStoreEntryPoint(
 					dataStoreId,
 				);

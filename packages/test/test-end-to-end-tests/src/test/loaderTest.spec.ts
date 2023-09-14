@@ -133,7 +133,7 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 		],
 		requestHandlers: [innerRequestHandler],
 		// The requestResolvedObjectFromContainer expects the entryPoint to act as containerRuntime request router
-		initializeEntryPoint: async (containerRuntime: IContainerRuntime) => containerRuntime,
+		provideEntryPoint: async (containerRuntime: IContainerRuntime) => containerRuntime,
 	});
 
 	beforeEach(async () => {

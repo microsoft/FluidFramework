@@ -56,10 +56,10 @@ readonly entryPoint: IFluidHandle<FluidObject>;
 ```
 
 So how does an application specify what the Container or DataStore's entry point is?
-Via a parameter `initializeEntryPoint` that's found on `ContainerRuntime.loadRuntime` and `FluidDataStoreRuntime`'s constructor.
+Via a parameter `provideEntryPoint` that's found on `ContainerRuntime.loadRuntime` and `FluidDataStoreRuntime`'s constructor.
 
-See [testContainerRuntimeFactoryWithDefaultDataStore.ts](https://github.com/microsoft/FluidFramework/tree/main/packages/test/test-utils/src/testContainerRuntimeFactoryWithDefaultDataStore.ts) for an example implemtation of `initializeEntryPoint` for ContainerRuntime.
-See [pureDataObjectFactory.ts](https://github.com/microsoft/FluidFramework/tree/main/packages/framework/aqueduct/src/data-object-factories/pureDataObjectFactory.ts#L83) for an example implementation of `initializeEntryPoint` for DataStoreRuntime.
+See [testContainerRuntimeFactoryWithDefaultDataStore.ts](https://github.com/microsoft/FluidFramework/tree/main/packages/test/test-utils/src/testContainerRuntimeFactoryWithDefaultDataStore.ts) for an example implemtation of `provideEntryPoint` for ContainerRuntime.
+See [pureDataObjectFactory.ts](https://github.com/microsoft/FluidFramework/tree/main/packages/framework/aqueduct/src/data-object-factories/pureDataObjectFactory.ts#L83) for an example implementation of `provideEntryPoint` for DataStoreRuntime.
 
 ### ILoader request pattern
 

@@ -47,7 +47,7 @@ export class ReplayRuntimeFactory extends RuntimeFactoryHelper {
 	): Promise<ContainerRuntime> {
 		return ContainerRuntime.loadRuntime({
 			context,
-			initializeEntryPoint: async (containerRuntime: IContainerRuntime) => {
+			provideEntryPoint: async (containerRuntime: IContainerRuntime) => {
 				// For the replay tool, the entryPoint exposes the containerRuntime itself so the helpers for the tool
 				// can use it. This is an anti-pattern, and is *not* what an actual application should do (it should
 				// expose an object with a defined API that allows hosts that consume the container to interact with it).

@@ -59,14 +59,14 @@ export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFacto
 // @public
 export function createAndAttachContainer(source: IFluidCodeDetails, loader: IHostLoader, attachRequest: IRequest): Promise<IContainer>;
 
-// @public (undocumented)
+// @public
 export const createContainerRuntimeFactoryWithDefaultDataStore: (Base: typeof ContainerRuntimeFactoryWithDefaultDataStore | undefined, ctorArgs: {
     defaultFactory: IFluidDataStoreFactory;
     registryEntries: NamedFluidDataStoreRegistryEntries;
     dependencyContainer?: any;
     requestHandlers?: RuntimeRequestHandler[] | undefined;
     runtimeOptions?: IContainerRuntimeOptions | undefined;
-    initializeEntryPoint?: ((runtime: IContainerRuntime) => Promise<FluidObject>) | undefined;
+    provideEntryPoint?: ((runtime: IContainerRuntime) => Promise<FluidObject>) | undefined;
 }) => ContainerRuntimeFactoryWithDefaultDataStore;
 
 // @public (undocumented)

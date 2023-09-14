@@ -42,14 +42,14 @@ export class BaseContainerRuntimeFactory
 	private readonly dependencyContainer?: IFluidDependencySynthesizer;
 	private readonly runtimeOptions?: IContainerRuntimeOptions;
 	private readonly requestHandlers: RuntimeRequestHandler[];
-	private readonly initializeEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+	private readonly provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
 
 	/**
 	 * @param registryEntries - The data store registry for containers produced
 	 * @param dependencyContainer - deprecated, will be removed in a future release
 	 * @param requestHandlers - Request handlers for containers produced
 	 * @param runtimeOptions - The runtime options passed to the ContainerRuntime when instantiating it
-	 * @param initializeEntryPoint - Function that will initialize the entryPoint of the ContainerRuntime instances
+	 * @param provideEntryPoint - Function that will initialize the entryPoint of the ContainerRuntime instances
 	 * created with this factory
 	 */
 	constructor(props: {
@@ -57,14 +57,14 @@ export class BaseContainerRuntimeFactory
 		dependencyContainer?: IFluidDependencySynthesizer;
 		requestHandlers?: RuntimeRequestHandler[];
 		runtimeOptions?: IContainerRuntimeOptions;
-		initializeEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+		provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
 	}) {
 		super();
 
 		this.registryEntries = props.registryEntries;
 		this.dependencyContainer = props.dependencyContainer;
 		this.runtimeOptions = props.runtimeOptions;
-		this.initializeEntryPoint = props.initializeEntryPoint;
+		this.provideEntryPoint = props.provideEntryPoint;
 		this.requestHandlers = props.requestHandlers ?? [];
 		this.registry = new FluidDataStoreRegistry(this.registryEntries);
 	}
@@ -98,7 +98,7 @@ export class BaseContainerRuntimeFactory
 			registryEntries: this.registryEntries,
 			containerScope: scope,
 			requestHandler: buildRuntimeRequestHandler(...this.requestHandlers),
-			initializeEntryPoint: this.initializeEntryPoint,
+			provideEntryPoint: this.provideEntryPoint,
 		});
 	}
 

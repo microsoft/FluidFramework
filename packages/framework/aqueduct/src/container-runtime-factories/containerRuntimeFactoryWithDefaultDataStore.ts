@@ -43,7 +43,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 	 * @param dependencyContainer - deprecated, will be removed in a future release
 	 * @param requestHandlers -
 	 * @param runtimeOptions -
-	 * @param initializeEntryPoint -
+	 * @param provideEntryPoint -
 	 */
 	constructor(props: {
 		defaultFactory: IFluidDataStoreFactory;
@@ -51,15 +51,15 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 		dependencyContainer?: IFluidDependencySynthesizer;
 		requestHandlers?: RuntimeRequestHandler[];
 		runtimeOptions?: IContainerRuntimeOptions;
-		initializeEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
+		provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
 	}) {
 		const requestHandlers = props.requestHandlers ?? [];
-		const initializeEntryPoint = props.initializeEntryPoint ?? getDefaultFluidObject;
+		const provideEntryPoint = props.provideEntryPoint ?? getDefaultFluidObject;
 
 		super({
 			...props,
 			requestHandlers: [defaultRouteRequestHandler(defaultDataStoreId), ...requestHandlers],
-			initializeEntryPoint,
+			provideEntryPoint,
 		});
 
 		this.defaultFactory = props.defaultFactory;

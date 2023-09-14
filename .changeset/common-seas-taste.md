@@ -20,7 +20,7 @@ new BaseContainerRuntimeFactory(
 	myDependencyContainer,
 	myRequestHandlers,
 	myRuntimeOptions,
-	myInitializeEntryPoint,
+	myProvideEntryPoint,
 );
 
 // New
@@ -29,6 +29,6 @@ new BaseContainerRuntimeFactory({
 	dependencyContainer: myDependencyContainer,
 	requestHandlers: myRequestHandlers,
 	runtimeOptions: myRuntimeOptions,
-	initializeEntryPoint: myInitializeEntryPoint,
+	provideEntryPoint: myProvideEntryPoint,
 });
 ```

@@ -79,7 +79,7 @@ export class RuntimeFactory extends RuntimeFactoryHelper {
         defaultStoreFactory: IFluidDataStoreFactory;
         storeFactories: IFluidDataStoreFactory[];
         requestHandlers?: RuntimeRequestHandler[];
-        initializeEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+        provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
     });
     // (undocumented)
     instantiateFirstTime(runtime: ContainerRuntime): Promise<void>;

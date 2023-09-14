@@ -83,7 +83,7 @@ async function createDataObject<
 			// Without this I ran into issues with the load-existing flow not working correctly.
 			await instance.finishInitialization(true);
 			return instance;
-		} /* initializeEntryPoint */,
+		} /* provideEntryPoint */,
 	);
 
 	// Create object right away.

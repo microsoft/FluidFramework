@@ -707,8 +707,10 @@ export class ContainerRuntime
 			containerScope,
 			containerRuntimeCtor,
 			requestHandler,
-			initializeEntryPoint: () => {
-				throw new UsageError("ContainerRuntime.load is deprecated and should no longer be used");
+			provideEntryPoint: () => {
+				throw new UsageError(
+					"ContainerRuntime.load is deprecated and should no longer be used",
+				);
 			},
 		});
 	}
@@ -725,7 +727,7 @@ export class ContainerRuntime
 	 * - containerScope - runtime services provided with context
 	 * - containerRuntimeCtor - Constructor to use to create the ContainerRuntime instance.
 	 * This allows mixin classes to leverage this method to define their own async initializer.
-	 * - initializeEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
+	 * - provideEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
 	 * This object should provide all the functionality that the Container is expected to provide to the loader layer.
 	 */
 	public static async loadRuntime(params: {
@@ -736,14 +738,14 @@ export class ContainerRuntime
 		containerScope?: FluidObject;
 		containerRuntimeCtor?: typeof ContainerRuntime;
 		requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
-		initializeEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
+		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
 	}): Promise<ContainerRuntime> {
 		const {
 			context,
 			registryEntries,
 			existing,
 			requestHandler,
-			initializeEntryPoint,
+			provideEntryPoint,
 			runtimeOptions = {},
 			containerScope = {},
 			containerRuntimeCtor = ContainerRuntime,
@@ -877,7 +879,7 @@ export class ContainerRuntime
 			blobManagerSnapshot,
 			context.storage,
 			idCompressor,
-			initializeEntryPoint,
+			provideEntryPoint,
 			requestHandler,
 			undefined, // summaryConfiguration
 		);
@@ -1157,7 +1159,7 @@ export class ContainerRuntime
 		blobManagerSnapshot: IBlobManagerLoadInfo,
 		private readonly _storage: IDocumentStorageService,
 		idCompressor: (IIdCompressor & IIdCompressorCore) | undefined,
-		initializeEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
+		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
 		private readonly requestHandler?: (
 			request: IRequest,
 			runtime: IContainerRuntime,
@@ -1688,7 +1690,7 @@ export class ContainerRuntime
 				);
 				return this._summarizer;
 			}
-			return initializeEntryPoint(this);
+			return provideEntryPoint(this);
 		});
 	}
 

@@ -37,8 +37,7 @@ describe("entryPoint compat", () => {
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: dataObjectFactory,
 			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
-			initializeEntryPoint: async (runtime: IContainerRuntime) =>
-				getDefaultFluidObject(runtime),
+			provideEntryPoint: async (runtime: IContainerRuntime) => getDefaultFluidObject(runtime),
 		});
 
 		return provider.createContainer(runtimeFactory);

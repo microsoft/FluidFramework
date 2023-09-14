@@ -85,7 +85,7 @@ class TodoContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 		super({
 			registryEntries: new Map([TodoFactory.registryEntry]),
 			requestHandlers: [mountableViewRequestHandler(MountableView, [todoRequestHandler])],
-			initializeEntryPoint: async (containerRuntime: IContainerRuntime) => {
+			provideEntryPoint: async (containerRuntime: IContainerRuntime) => {
 				const entryPoint = await containerRuntime.getAliasedDataStoreEntryPoint(todoId);
 				if (entryPoint === undefined) {
 					throw new Error("default dataStore must exist");

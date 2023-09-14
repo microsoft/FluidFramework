@@ -125,7 +125,7 @@ describe("Runtime", () => {
 		return mockContext;
 	};
 
-	const mockInitializeEntryPoint = async () => ({
+	const mockProvideEntryPoint = async () => ({
 		myProp: "myValue",
 	});
 
@@ -137,7 +137,7 @@ describe("Runtime", () => {
 					registryEntries: [],
 					existing: false,
 					runtimeOptions: {},
-					initializeEntryPoint: mockInitializeEntryPoint,
+					provideEntryPoint: mockProvideEntryPoint,
 				});
 
 				assert.strictEqual(containerRuntime.flushMode, FlushMode.TurnBased);
@@ -151,7 +151,7 @@ describe("Runtime", () => {
 					runtimeOptions: {
 						flushMode: FlushMode.Immediate,
 					},
-					initializeEntryPoint: mockInitializeEntryPoint,
+					provideEntryPoint: mockProvideEntryPoint,
 				});
 
 				assert.strictEqual(containerRuntime.flushMode, FlushMode.Immediate);
@@ -165,7 +165,7 @@ describe("Runtime", () => {
 					runtimeOptions: {
 						flushMode: FlushMode.TurnBased,
 					},
-					initializeEntryPoint: mockInitializeEntryPoint,
+					provideEntryPoint: mockProvideEntryPoint,
 				});
 
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -266,7 +266,7 @@ describe("Runtime", () => {
 								},
 								flushMode,
 							},
-							initializeEntryPoint: mockInitializeEntryPoint,
+							provideEntryPoint: mockProvideEntryPoint,
 						});
 						containerErrors.length = 0;
 						submittedOpsMetdata.length = 0;
@@ -621,7 +621,7 @@ describe("Runtime", () => {
 								},
 								flushMode,
 							},
-							initializeEntryPoint: mockInitializeEntryPoint,
+							provideEntryPoint: mockProvideEntryPoint,
 						});
 						containerErrors.length = 0;
 					});
@@ -683,7 +683,7 @@ describe("Runtime", () => {
 					existing: false,
 					runtimeOptions: undefined,
 					containerScope: {},
-					initializeEntryPoint: mockInitializeEntryPoint,
+					provideEntryPoint: mockProvideEntryPoint,
 				});
 				assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
 				assert.deepStrictEqual(updateDirtyStateStub.args, [[false]]);
@@ -698,7 +698,7 @@ describe("Runtime", () => {
 					existing: false,
 					requestHandler: undefined,
 					runtimeOptions: {},
-					initializeEntryPoint: mockInitializeEntryPoint,
+					provideEntryPoint: mockProvideEntryPoint,
 				});
 				assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
 				assert.deepStrictEqual(updateDirtyStateStub.args, [[true]]);
@@ -713,7 +713,7 @@ describe("Runtime", () => {
 					existing: false,
 					requestHandler: undefined,
 					runtimeOptions: {},
-					initializeEntryPoint: mockInitializeEntryPoint,
+					provideEntryPoint: mockProvideEntryPoint,
 				});
 				assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
 				assert.deepStrictEqual(updateDirtyStateStub.args, [[true]]);
@@ -728,7 +728,7 @@ describe("Runtime", () => {
 					existing: false,
 					requestHandler: undefined,
 					runtimeOptions: {},
-					initializeEntryPoint: mockInitializeEntryPoint,
+					provideEntryPoint: mockProvideEntryPoint,
 				});
 				assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
 				assert.deepStrictEqual(updateDirtyStateStub.args, [[true]]);
@@ -814,7 +814,7 @@ describe("Runtime", () => {
 							},
 						},
 					},
-					initializeEntryPoint: mockInitializeEntryPoint,
+					provideEntryPoint: mockProvideEntryPoint,
 				});
 			});
 
@@ -1047,7 +1047,7 @@ describe("Runtime", () => {
 					existing: false,
 					requestHandler: undefined,
 					runtimeOptions: {},
-					initializeEntryPoint: mockInitializeEntryPoint,
+					provideEntryPoint: mockProvideEntryPoint,
 				});
 			});
 			it("process remote op with unrecognized type and 'Ignore' compat behavior", async () => {
@@ -1126,7 +1126,7 @@ describe("Runtime", () => {
 					existing: false,
 					requestHandler: undefined,
 					runtimeOptions: {},
-					initializeEntryPoint: mockInitializeEntryPoint,
+					provideEntryPoint: mockProvideEntryPoint,
 				});
 			});
 
@@ -1210,7 +1210,7 @@ describe("Runtime", () => {
 						public static async loadRuntime(params: {
 							context: IContainerContext;
 							containerRuntimeCtor?: typeof ContainerRuntime;
-							initializeEntryPoint: (
+							provideEntryPoint: (
 								containerRuntime: IContainerRuntime,
 							) => Promise<FluidObject>;
 							existing: boolean;
@@ -1241,7 +1241,7 @@ describe("Runtime", () => {
 					42,
 				).loadRuntime({
 					context: getMockContext() as IContainerContext,
-					initializeEntryPoint: async (containerRuntime) => myEntryPoint,
+					provideEntryPoint: async (containerRuntime) => myEntryPoint,
 					existing: false,
 					registryEntries: [],
 				});
@@ -1287,7 +1287,7 @@ describe("Runtime", () => {
 				};
 				const containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext() as IContainerContext,
-					initializeEntryPoint: async (ctrRuntime) => myEntryPoint,
+					provideEntryPoint: async (ctrRuntime) => myEntryPoint,
 					existing: false,
 					registryEntries: [],
 				});
@@ -1315,7 +1315,7 @@ describe("Runtime", () => {
 				const containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext() as IContainerContext,
 					requestHandler: async (req, ctrRuntime) => myResponse,
-					initializeEntryPoint: async (ctrRuntime) => myEntryPoint,
+					provideEntryPoint: async (ctrRuntime) => myEntryPoint,
 					existing: false,
 					registryEntries: [],
 				});
@@ -1349,7 +1349,7 @@ describe("Runtime", () => {
 					registryEntries: [],
 					existing: false,
 					runtimeOptions: {},
-					initializeEntryPoint: mockInitializeEntryPoint,
+					provideEntryPoint: mockProvideEntryPoint,
 				});
 				pendingStateManager = (containerRuntime as any).pendingStateManager;
 			});
@@ -1437,7 +1437,7 @@ describe("Runtime", () => {
 					registryEntries: [],
 					existing: false,
 					runtimeOptions,
-					initializeEntryPoint: mockInitializeEntryPoint,
+					provideEntryPoint: mockProvideEntryPoint,
 				});
 
 				mockLogger.assertMatchAny([
@@ -1465,7 +1465,7 @@ describe("Runtime", () => {
 					registryEntries: [],
 					existing: false,
 					runtimeOptions,
-					initializeEntryPoint: mockInitializeEntryPoint,
+					provideEntryPoint: mockProvideEntryPoint,
 				});
 
 				mockLogger.assertMatchAny([
@@ -1524,7 +1524,7 @@ describe("Runtime", () => {
 						runtimeOptions: {
 							flushMode: FlushModeExperimental.Async as unknown as FlushMode,
 						},
-						initializeEntryPoint: mockInitializeEntryPoint,
+						provideEntryPoint: mockProvideEntryPoint,
 					});
 
 					assert.equal(runtime.flushMode, FlushMode.TurnBased);
@@ -1547,7 +1547,7 @@ describe("Runtime", () => {
 					runtimeOptions: {
 						flushMode: FlushModeExperimental.Async as unknown as FlushMode,
 					},
-					initializeEntryPoint: mockInitializeEntryPoint,
+					provideEntryPoint: mockProvideEntryPoint,
 				});
 
 				assert.equal(runtime.flushMode, FlushModeExperimental.Async);
@@ -1578,7 +1578,7 @@ describe("Runtime", () => {
 					context: getMockContext(settings) as IContainerContext,
 					registryEntries: [],
 					existing: false,
-					initializeEntryPoint: mockInitializeEntryPoint,
+					provideEntryPoint: mockProvideEntryPoint,
 				});
 			});
 

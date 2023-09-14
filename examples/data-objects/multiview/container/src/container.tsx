@@ -112,7 +112,7 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
 			requestHandlers: [
 				mountableViewRequestHandler(MountableView, [defaultViewRequestHandler]),
 			],
-			initializeEntryPoint: () => {
+			provideEntryPoint: () => {
 				// TODO: AB#4993
 				throw new Error("TODO");
 			},

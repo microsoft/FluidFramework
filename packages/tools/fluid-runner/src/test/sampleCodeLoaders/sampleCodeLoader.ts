@@ -27,7 +27,7 @@ export class SampleCodeLoader implements ICodeDetailsLoader {
 			module: {
 				fluidExport: new BaseContainerRuntimeFactory({
 					registryEntries: new Map(),
-					initializeEntryPoint: async () => ({
+					provideEntryPoint: async () => ({
 						myProp: "myValue",
 					}),
 				}),
