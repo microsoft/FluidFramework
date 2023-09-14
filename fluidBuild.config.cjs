@@ -37,7 +37,7 @@ module.exports = {
 		"build:copy": [],
 		"build:genver": [],
 		"typetests:gen": ["^tsc", "build:genver"], // we may reexport type from dependent packages, needs to build them first.
-		"tsc": tscDependsOn,
+		"tsc": [...tscDependsOn, "webpack"],
 		"build:esnext": tscDependsOn,
 		"build:test": [...tscDependsOn, "typetests:gen", "tsc"],
 		"build:docs": [...tscDependsOn, "tsc"],
