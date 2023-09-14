@@ -25,7 +25,7 @@ export function renderDocument(document: DocumentNode, config: RenderConfigurati
 		customRenderers,
 	});
 
-	// TODO: clean this up a bit
+	// Write top-level metadata
 	writer.writeLine("<!DOCTYPE html>");
 	writer.writeLine(`<html lang="${language ?? "en"}">`);
 	writer.increaseIndent();
@@ -34,14 +34,15 @@ export function renderDocument(document: DocumentNode, config: RenderConfigurati
 	writer.writeLine('<meta charset="utf-8" />');
 	writer.decreaseIndent();
 	writer.writeLine("</head>");
+
+	// Write contents under the document body
 	writer.writeLine(`<body>`);
 	writer.increaseIndent();
-
 	renderNodes(document.children, writer, renderContext);
-
 	writer.ensureNewLine();
 	writer.decreaseIndent();
 	writer.writeLine(`</body>`);
+
 	writer.decreaseIndent();
 	writer.writeLine("</html>");
 
