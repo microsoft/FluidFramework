@@ -531,6 +531,13 @@ describe("editable-tree: data binder", () => {
 					},
 					{ field: fieldSequencePhones, index: 0 },
 				],
+				[
+					{
+						field: fieldAddress,
+						index: 0,
+					},
+					{ field: fieldSequencePhones, index: 1 },
+				],
 			];
 			assert.deepEqual(log, expectedLog);
 			dataBinder.unregisterAll();
@@ -606,6 +613,17 @@ describe("editable-tree: data binder", () => {
 						index: 0,
 					},
 					"1": {
+						field: "sequencePhones",
+						index: 0,
+					},
+					"type": "delete",
+				},
+				{
+					"0": {
+						field: "address",
+						index: 0,
+					},
+					"1": {
 						field: "zip",
 						index: 0,
 					},
@@ -641,6 +659,17 @@ describe("editable-tree: data binder", () => {
 					"1": {
 						field: "sequencePhones",
 						index: 0,
+					},
+					"type": "insert",
+				},
+				{
+					"0": {
+						field: "address",
+						index: 0,
+					},
+					"1": {
+						field: "sequencePhones",
+						index: 1,
 					},
 					"type": "insert",
 				},
@@ -757,6 +786,17 @@ describe("editable-tree: data binder", () => {
 						index: 0,
 					},
 					"1": {
+						field: "sequencePhones",
+						index: 0,
+					},
+					"type": "delete",
+				},
+				{
+					"0": {
+						field: "address",
+						index: 0,
+					},
+					"1": {
 						field: "street",
 						index: 0,
 					},
@@ -803,6 +843,17 @@ describe("editable-tree: data binder", () => {
 					"1": {
 						field: "sequencePhones",
 						index: 0,
+					},
+					"type": "insert",
+				},
+				{
+					"0": {
+						field: "address",
+						index: 0,
+					},
+					"1": {
+						field: "sequencePhones",
+						index: 1,
 					},
 					"type": "insert",
 				},
@@ -932,6 +983,17 @@ describe("editable-tree: data binder", () => {
 							index: 0,
 						},
 						"1": {
+							field: "sequencePhones",
+							index: 0,
+						},
+						"type": "delete",
+					},
+					{
+						"0": {
+							field: "address",
+							index: 0,
+						},
+						"1": {
 							field: "zip",
 							index: 0,
 						},
@@ -967,6 +1029,17 @@ describe("editable-tree: data binder", () => {
 						"1": {
 							field: "sequencePhones",
 							index: 0,
+						},
+						"type": "insert",
+					},
+					{
+						"0": {
+							field: "address",
+							index: 0,
+						},
+						"1": {
+							field: "sequencePhones",
+							index: 1,
 						},
 						"type": "insert",
 					},
@@ -1094,7 +1167,7 @@ describe("editable-tree: data binder", () => {
 			];
 			assert.deepEqual(batchLog, expectedBatchLog);
 			// the incremental log should contain all other changes except the zip modifications
-			assert.equal(incrLog.length, 6);
+			assert.equal(incrLog.length, 8);
 			const expectedIncrLog = [
 				{
 					"0": {
@@ -1103,6 +1176,17 @@ describe("editable-tree: data binder", () => {
 					},
 					"1": {
 						field: "phones",
+						index: 0,
+					},
+					"type": "delete",
+				},
+				{
+					"0": {
+						field: "address",
+						index: 0,
+					},
+					"1": {
+						field: "sequencePhones",
 						index: 0,
 					},
 					"type": "delete",
@@ -1148,6 +1232,17 @@ describe("editable-tree: data binder", () => {
 					"1": {
 						field: "sequencePhones",
 						index: 0,
+					},
+					"type": "insert",
+				},
+				{
+					"0": {
+						field: "address",
+						index: 0,
+					},
+					"1": {
+						field: "sequencePhones",
+						index: 1,
 					},
 					"type": "insert",
 				},
