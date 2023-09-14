@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 import { compress } from "lz4js";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IsoBuffer } from "@fluid-internal/client-utils";
+import type { IEnvelope } from "@fluidframework/runtime-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ContainerMessageType } from "../..";
 import { OpDecompressor } from "../../opLifecycle";
@@ -22,10 +23,10 @@ interface ITestMessageContents {
 function generateCompressedBatchMessage(length: number): ISequencedDocumentMessage {
 	const batch: InboundContainerRuntimeMessage[] = [];
 	for (let i = 0; i < length; i++) {
-		// Actual Op and contents aren't important. Values chosen to look
+		// Actual Op and contents aren't important. Values are not realistic.
 		batch.push({
 			type: ContainerMessageType.FluidDataStoreOp,
-			contents: { address: `address${i}`, contents: `value${i}` },
+			contents: `value${i}` as unknown as IEnvelope,
 		});
 	}
 
