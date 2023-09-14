@@ -27,6 +27,11 @@ export interface DocumentNodeProps {
 
 	/**
 	 * Path to which the resulting document should be saved.
+	 *
+	 * @remarks Does not include the file extension, as this domain has no concept of what kind of file will be produced.
+	 *
+	 * @privateRemarks TODO: Maybe consider renaming this to something like "documentPath", since "filePath" would
+	 * normally imply the inclusion of an extension.
 	 */
 	readonly filePath: string;
 

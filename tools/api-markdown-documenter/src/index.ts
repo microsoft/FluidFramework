@@ -30,7 +30,6 @@ export {
 	getDefaultValueBlock,
 	getDeprecatedBlock,
 	getExampleBlocks,
-	getFilePathForApiItem,
 	getHeadingForApiItem,
 	getLinkForApiItem,
 	getModifiers,

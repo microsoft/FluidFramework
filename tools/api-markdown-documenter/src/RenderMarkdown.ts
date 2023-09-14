@@ -77,7 +77,7 @@ export async function renderDocumentsAsMarkdown(
 				logger,
 			});
 
-			const filePath = Path.join(outputDirectoryPath, document.filePath);
+			const filePath = Path.join(outputDirectoryPath, `${document.filePath}.md`);
 			await FileSystem.writeFileAsync(filePath, renderedDocument, {
 				convertLineEndings: newlineKind ?? NewlineKind.OsDefault,
 				ensureFolderExists: true,
