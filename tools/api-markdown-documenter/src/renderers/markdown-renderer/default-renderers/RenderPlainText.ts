@@ -17,31 +17,16 @@ import type { RenderContext } from "../RenderContext";
  * @param node - The node to render.
  * @param writer - Writer context object into which the document contents will be written.
  * @param context - See {@link RenderContext}.
- *
- * @remarks Will render as HTML when in an HTML context, or within a table context.
  */
 export function renderPlainText(
 	node: PlainTextNode,
 	writer: DocumentWriter,
 	context: RenderContext,
 ): void {
-	const text = node.value;
-	if (text.length === 0) {
+	if (node.text.length === 0) {
 		return;
 	}
 
-	if (context.insideHtml === true) {
-		renderPlainTextWithHtmlSyntax(node, writer, context);
-	} else {
-		renderPlainTextWithMarkdownSyntax(node, writer, context);
-	}
-}
-
-function renderPlainTextWithMarkdownSyntax(
-	node: PlainTextNode,
-	writer: DocumentWriter,
-	context: RenderContext,
-): void {
 	const anyFormatting =
 		context.bold === true || context.italic === true || context.strikethrough === true;
 	if (anyFormatting) {
@@ -97,43 +82,6 @@ function renderPlainTextWithMarkdownSyntax(
 	writer.write(trailingWhitespace); // write trailing whitespace
 }
 
-function renderPlainTextWithHtmlSyntax(
-	node: PlainTextNode,
-	writer: DocumentWriter,
-	context: RenderContext,
-): void {
-	// We will render leading and trailing whitespace *outside* of any formatting tags.
-	const { leadingWhitespace, body, trailingWhitespace } = splitLeadingAndTrailingWhitespace(
-		node.value,
-	);
-
-	writer.write(leadingWhitespace); // write leading whitespace
-
-	if (context.bold === true) {
-		writer.write("<b>");
-	}
-	if (context.italic === true) {
-		writer.write("<i>");
-	}
-	if (context.strikethrough === true) {
-		writer.write("<s>");
-	}
-
-	writer.write(node.escaped ? body : getHtmlEscapedText(body));
-
-	if (context.strikethrough === true) {
-		writer.write("</s>");
-	}
-	if (context.italic === true) {
-		writer.write("</i>");
-	}
-	if (context.bold === true) {
-		writer.write("</b>");
-	}
-
-	writer.write(trailingWhitespace); // write trailing whitespace
-}
-
 interface SplitTextResult {
 	leadingWhitespace: string;
 	body: string;
@@ -166,19 +114,4 @@ function getMarkdownEscapedText(text: string): string {
 		.replace(/&/g, "&amp;")
 		.replace(/</g, "&lt;")
 		.replace(/>/g, "&gt;");
-}
-
-/**
- * Escapes text in a way that makes it usable inside of table elements
- *
- * @param text - Text to escape
- * @returns Escaped text
- */
-function getHtmlEscapedText(text: string): string {
-	return text
-		.replace(/&/g, "&amp;")
-		.replace(/"/g, "&quot;")
-		.replace(/</g, "&lt;")
-		.replace(/>/g, "&gt;")
-		.replace(/\|/g, "&#124;");
 }

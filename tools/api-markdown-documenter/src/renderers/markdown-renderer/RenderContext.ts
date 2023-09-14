@@ -37,18 +37,6 @@ export interface RenderContext extends TextFormatting {
 	readonly insideCodeBlock?: boolean;
 
 	/**
-	 * Whether or not we are currently rendering as a child of some HTML content, within the Markdown document.
-	 *
-	 * @remarks
-	 *
-	 * Any content being rendered in an HTML context must also be rendered as HTML.
-	 * I.e. Markdown content may contain HTML content, but not vice-versa.
-	 *
-	 * @defaultValue `false`
-	 */
-	readonly insideHtml?: boolean;
-
-	/**
 	 * Contextual heading level.
 	 *
 	 * @remarks

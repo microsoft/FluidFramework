@@ -4,7 +4,7 @@
  */
 import type { TableRowNode } from "../../../documentation-domain";
 import type { DocumentWriter } from "../../DocumentWriter";
-import { renderNode, renderNodes } from "../Render";
+import { renderNode } from "../Render";
 import type { RenderContext } from "../RenderContext";
 
 /**
@@ -13,22 +13,8 @@ import type { RenderContext } from "../RenderContext";
  * @param node - The node to render.
  * @param writer - Writer context object into which the document contents will be written.
  * @param context - See {@link RenderContext}.
- *
- * @remarks Will render as HTML when in an HTML context.
  */
 export function renderTableRow(
-	node: TableRowNode,
-	writer: DocumentWriter,
-	context: RenderContext,
-): void {
-	if (context.insideHtml === true) {
-		renderTableRowWithHtmlSyntax(node, writer, context);
-	} else {
-		renderTableRowWithMarkdownSyntax(node, writer, context);
-	}
-}
-
-function renderTableRowWithMarkdownSyntax(
 	node: TableRowNode,
 	writer: DocumentWriter,
 	context: RenderContext,
@@ -44,22 +30,4 @@ function renderTableRowWithMarkdownSyntax(
 		writer.write(i === node.children.length - 1 ? " |" : " | ");
 	}
 	writer.ensureNewLine(); // Ensure line break after row
-}
-
-function renderTableRowWithHtmlSyntax(
-	node: TableRowNode,
-	writer: DocumentWriter,
-	context: RenderContext,
-): void {
-	writer.ensureNewLine(); // Ensure line break before row tag
-	writer.writeLine("<tr>");
-	writer.increaseIndent();
-	renderNodes(node.children, writer, {
-		...context,
-		insideTable: true,
-		insideHtml: true,
-	});
-	writer.ensureNewLine(); // Ensure line break after content
-	writer.decreaseIndent();
-	writer.writeLine("</tr>");
 }

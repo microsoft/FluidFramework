@@ -4,8 +4,10 @@
  */
 import type { HeadingNode } from "../../../documentation-domain";
 import type { DocumentWriter } from "../../DocumentWriter";
+import { renderAnchor } from "../../html-renderer";
 import { renderNodes } from "../Render";
 import type { RenderContext } from "../RenderContext";
+import { renderNodeWithHtmlSyntax } from "../Utilities";
 
 /**
  * Maximum heading level supported by most systems.
@@ -25,7 +27,7 @@ const maxHeadingLevel = 6;
  *
  * Observes {@link RenderContext.headingLevel} to determine the heading level to use.
  *
- * Will render as HTML when in an HTML context, or within a table context.
+ * Will render as HTML when in an a table context.
  */
 export function renderHeading(
 	headingNode: HeadingNode,
@@ -34,8 +36,8 @@ export function renderHeading(
 ): void {
 	// Markdown tables do not support multi-line Markdown content.
 	// If we encounter a header in a table context, we will render using HTML syntax.
-	if (context.insideTable === true || context.insideHtml === true) {
-		renderHeadingWithHtmlSyntax(headingNode, writer, context);
+	if (context.insideTable === true) {
+		renderNodeWithHtmlSyntax(headingNode, writer, context);
 	} else {
 		renderHeadingWithMarkdownSyntax(headingNode, writer, context);
 	}
@@ -68,44 +70,4 @@ function renderHeadingWithMarkdownSyntax(
 	}
 
 	writer.ensureSkippedLine(); // Headings require trailing blank line
-}
-
-function renderHeadingWithHtmlSyntax(
-	headingNode: HeadingNode,
-	writer: DocumentWriter,
-	context: RenderContext,
-): void {
-	const headingLevel = context.headingLevel;
-
-	// HTML only supports heading levels up to 6. If our level is beyond that, we will render as simple
-	// bold text, with an accompanying anchor to ensure we can still link to the text.
-	const renderAsHeading = headingLevel <= maxHeadingLevel;
-	if (renderAsHeading) {
-		writer.write(`<h${headingLevel}`);
-		if (headingNode.id !== undefined) {
-			writer.write(` id="${headingNode.id}"`);
-		}
-		writer.writeLine(">");
-		writer.increaseIndent();
-		renderNodes(headingNode.children, writer, {
-			...context,
-			insideHtml: true,
-		});
-		writer.ensureNewLine();
-		writer.decreaseIndent();
-		writer.writeLine(`</h${headingLevel}>`);
-	} else {
-		if (headingNode.id !== undefined) {
-			renderAnchor(headingNode.id, writer);
-		}
-		renderNodes(headingNode.children, writer, {
-			...context,
-			bold: true,
-		});
-		writer.ensureNewLine();
-	}
-}
-
-function renderAnchor(anchorId: string, writer: DocumentWriter): void {
-	writer.writeLine(`<a name="${anchorId}" />`);
 }

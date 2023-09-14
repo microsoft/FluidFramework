@@ -8,37 +8,16 @@ import { CodeSpanNode, PlainTextNode } from "../../../documentation-domain";
 import { testRender } from "./Utilities";
 
 describe("CodeSpan Markdown rendering tests", () => {
-	describe("Markdown context", () => {
-		it("Empty CodeSpan", () => {
-			expect(testRender(CodeSpanNode.Empty)).to.equal("``");
-		});
-
-		it("Simple CodeSpan", () => {
-			const codeSpanNode = new CodeSpanNode([
-				new PlainTextNode("console.log('hello world');"),
-			]);
-			const result = testRender(codeSpanNode);
-
-			const expected = "`console.log('hello world');`";
-
-			expect(result).to.equal(expected);
-		});
+	it("Empty CodeSpan", () => {
+		expect(testRender(CodeSpanNode.Empty)).to.equal("``");
 	});
 
-	describe("HTML context", () => {
-		it("Empty CodeSpan", () => {
-			expect(testRender(CodeSpanNode.Empty, { insideHtml: true })).to.equal("<code></code>");
-		});
+	it("Simple CodeSpan", () => {
+		const codeSpanNode = new CodeSpanNode([new PlainTextNode("console.log('hello world');")]);
+		const result = testRender(codeSpanNode);
 
-		it("Simple CodeSpan", () => {
-			const codeSpanNode = new CodeSpanNode([
-				new PlainTextNode("console.log('hello world');"),
-			]);
-			const result = testRender(codeSpanNode, { insideHtml: true });
+		const expected = "`console.log('hello world');`";
 
-			const expected = "<code>console.log('hello world');</code>";
-
-			expect(result).to.equal(expected);
-		});
+		expect(result).to.equal(expected);
 	});
 });

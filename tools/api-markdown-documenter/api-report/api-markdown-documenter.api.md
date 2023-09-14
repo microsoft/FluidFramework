@@ -378,7 +378,6 @@ export interface MarkdownRenderContext extends TextFormatting {
     customRenderers?: MarkdownRenderers;
     headingLevel: number;
     readonly insideCodeBlock?: boolean;
-    readonly insideHtml?: boolean;
     readonly insideTable?: boolean;
 }
 

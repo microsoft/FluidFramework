@@ -6,6 +6,7 @@ import type { FencedCodeBlockNode } from "../../../documentation-domain";
 import type { DocumentWriter } from "../../DocumentWriter";
 import { renderNodes } from "../Render";
 import type { RenderContext } from "../RenderContext";
+import { renderNodeWithHtmlSyntax } from "../Utilities";
 
 /**
  * Renders a {@link FencedCodeBlockNode} as Markdown.
@@ -14,7 +15,7 @@ import type { RenderContext } from "../RenderContext";
  * @param writer - Writer context object into which the document contents will be written.
  * @param context - See {@link RenderContext}.
  *
- * @remarks Will render as HTML when in an HTML context, or within a table context.
+ * @remarks Will render as HTML when in a table context.
  */
 export function renderFencedCodeBlock(
 	node: FencedCodeBlockNode,
@@ -23,8 +24,8 @@ export function renderFencedCodeBlock(
 ): void {
 	// Markdown tables do not support multi-line Markdown content.
 	// If we encounter a line break in a table context, we will render using HTML syntax.
-	if (context.insideTable === true || context.insideHtml === true) {
-		renderFencedCodeBlockWithHtmlSyntax(node, writer, context);
+	if (context.insideTable === true) {
+		renderNodeWithHtmlSyntax(node, writer, context);
 	} else {
 		renderFencedCodeBlockWithMarkdownSyntax(node, writer, context);
 	}
@@ -45,21 +46,4 @@ function renderFencedCodeBlockWithMarkdownSyntax(
 	writer.ensureNewLine(); // Ensure newline after body content
 	writer.writeLine("```");
 	writer.ensureSkippedLine(); // Code blocks require a trailing blank line
-}
-
-function renderFencedCodeBlockWithHtmlSyntax(
-	node: FencedCodeBlockNode,
-	writer: DocumentWriter,
-	context: RenderContext,
-): void {
-	writer.writeLine("<code>");
-	writer.increaseIndent();
-	renderNodes(node.children, writer, {
-		...context,
-		insideCodeBlock: true,
-		insideHtml: true,
-	});
-	writer.ensureNewLine(); // Ensure newline after body content
-	writer.decreaseIndent();
-	writer.writeLine("</code>");
 }

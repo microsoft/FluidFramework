@@ -6,6 +6,7 @@ import type { SectionNode } from "../../../documentation-domain";
 import type { DocumentWriter } from "../../DocumentWriter";
 import { renderNode, renderNodes } from "../Render";
 import type { RenderContext } from "../RenderContext";
+import { renderNodeWithHtmlSyntax } from "../Utilities";
 
 /**
  * Renders a {@link SectionNode} as Markdown.
@@ -19,7 +20,7 @@ import type { RenderContext } from "../RenderContext";
  * Automatically increases the context's {@link RenderContext.headingLevel}, when rendering child contents,
  * such that heading levels increase appropriately through nested sections.
  *
- * Will render as HTML when in an HTML context, or within a table context.
+ * Will render as HTML when in a table context.
  */
 export function renderSection(
 	node: SectionNode,
@@ -28,8 +29,8 @@ export function renderSection(
 ): void {
 	// Markdown tables do not support multi-line Markdown content.
 	// If we encounter a section in a table context, we will render using HTML syntax.
-	if (context.insideTable === true || context.insideHtml === true) {
-		renderHierarchicalSectionWithHtmlSyntax(node, writer, context);
+	if (context.insideTable === true) {
+		renderNodeWithHtmlSyntax(node, writer, context);
 	} else {
 		renderHierarchicalSectionWithMarkdownSyntax(node, writer, context);
 	}
@@ -53,31 +54,4 @@ function renderHierarchicalSectionWithMarkdownSyntax(
 		headingLevel: context.headingLevel + 1, // Increment heading level for child content
 	});
 	writer.ensureSkippedLine(); // Ensure blank line after section
-}
-
-function renderHierarchicalSectionWithHtmlSyntax(
-	node: SectionNode,
-	writer: DocumentWriter,
-	context: RenderContext,
-): void {
-	writer.writeLine("<section>");
-	writer.increaseIndent();
-
-	// Render section heading, if one was provided.
-	if (node.heading !== undefined) {
-		renderNode(node.heading, writer, {
-			...context,
-			insideHtml: true,
-		});
-		writer.ensureNewLine(); // Ensure line break after heading element
-	}
-
-	renderNodes(node.children, writer, {
-		...context,
-		headingLevel: context.headingLevel + 1, // Increment heading level for child content
-		insideHtml: true,
-	});
-
-	writer.decreaseIndent();
-	writer.writeLine("</section>");
 }

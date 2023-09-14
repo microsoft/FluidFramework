@@ -8,7 +8,7 @@ import { UnorderedListNode } from "../../../documentation-domain";
 import { testRender } from "./Utilities";
 
 describe("UnorderedListNode Markdown rendering tests", () => {
-	describe("Markdown context", () => {
+	describe("Standard context", () => {
 		it("Empty list", () => {
 			expect(testRender(UnorderedListNode.Empty)).to.equal("\n");
 		});
@@ -27,9 +27,9 @@ describe("UnorderedListNode Markdown rendering tests", () => {
 		});
 	});
 
-	describe("HTML context", () => {
+	describe("Table context", () => {
 		it("Empty list", () => {
-			expect(testRender(UnorderedListNode.Empty, { insideHtml: true })).to.equal(
+			expect(testRender(UnorderedListNode.Empty, { insideTable: true })).to.equal(
 				"<ul>\n</ul>\n",
 			);
 		});
@@ -40,7 +40,7 @@ describe("UnorderedListNode Markdown rendering tests", () => {
 			const text3 = "Item 3";
 
 			const input = UnorderedListNode.createFromPlainTextEntries([text1, text2, text3]);
-			const result = testRender(input, { insideHtml: true });
+			const result = testRender(input, { insideTable: true });
 
 			const expected = [
 				"<ul>",

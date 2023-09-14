@@ -8,7 +8,7 @@ import { FencedCodeBlockNode, PlainTextNode } from "../../../documentation-domai
 import { testRender } from "./Utilities";
 
 describe("FencedCodeBlock Markdown rendering tests", () => {
-	it("Simple FencedCodeBlock (Markdown context)", () => {
+	it("Simple FencedCodeBlock (standard context)", () => {
 		const input = new FencedCodeBlockNode(
 			[new PlainTextNode("console.log('hello world');")],
 			"typescript",
@@ -22,12 +22,12 @@ describe("FencedCodeBlock Markdown rendering tests", () => {
 		expect(result).to.equal(expected);
 	});
 
-	it("Simple FencedCodeBlock (HTML context)", () => {
+	it("Simple FencedCodeBlock (table context)", () => {
 		const input = new FencedCodeBlockNode(
 			[new PlainTextNode("console.log('hello world');")],
 			"typescript",
 		);
-		const result = testRender(input, { insideHtml: true });
+		const result = testRender(input, { insideTable: true });
 
 		const expected = ["<code>", "  console.log('hello world');", "</code>", ""].join("\n");
 

@@ -13,36 +13,9 @@ import type { RenderContext } from "../RenderContext";
  * @param node - The node to render.
  * @param writer - Writer context object into which the document contents will be written.
  * @param context - See {@link RenderContext}.
- *
- * @remarks Will render as HTML when in an HTML context.
  */
 export function renderLink(node: LinkNode, writer: DocumentWriter, context: RenderContext): void {
-	if (context.insideHtml === true) {
-		renderLinkWithHtmlSyntax(node, writer, context);
-	} else {
-		renderLinkWithMarkdownSyntax(node, writer, context);
-	}
-}
-
-function renderLinkWithMarkdownSyntax(
-	node: LinkNode,
-	writer: DocumentWriter,
-	context: RenderContext,
-): void {
 	writer.write("[");
 	renderNodes(node.children, writer, context);
 	writer.write(`](${node.target})`);
-}
-
-function renderLinkWithHtmlSyntax(
-	node: LinkNode,
-	writer: DocumentWriter,
-	context: RenderContext,
-): void {
-	writer.write(`<a href='${node.target}'>`);
-	renderNodes(node.children, writer, {
-		...context,
-		insideHtml: true,
-	});
-	writer.write("</a>");
 }

@@ -13,7 +13,7 @@ import {
 import { testRender } from "./Utilities";
 
 describe("HierarchicalSection Markdown rendering tests", () => {
-	describe("Markdown context", () => {
+	describe("Standard context", () => {
 		it("Simple section", () => {
 			const input = new SectionNode(
 				[
@@ -95,7 +95,7 @@ describe("HierarchicalSection Markdown rendering tests", () => {
 		});
 	});
 
-	describe("HTML context", () => {
+	describe("Table context", () => {
 		it("Simple section", () => {
 			const input = new SectionNode(
 				[
@@ -109,7 +109,7 @@ describe("HierarchicalSection Markdown rendering tests", () => {
 				),
 			);
 
-			const result = testRender(input, { insideHtml: true });
+			const result = testRender(input, { insideTable: true });
 
 			const expected = [
 				"<section>",
@@ -157,7 +157,7 @@ describe("HierarchicalSection Markdown rendering tests", () => {
 				),
 			);
 
-			const result = testRender(input, { insideHtml: true });
+			const result = testRender(input, { insideTable: true });
 
 			const expected = [
 				"<section>",

@@ -8,7 +8,7 @@ import { ParagraphNode, PlainTextNode } from "../../../documentation-domain";
 import { testRender } from "./Utilities";
 
 describe("ParagraphNode Markdown rendering tests", () => {
-	describe("Markdown context", () => {
+	describe("Standard context", () => {
 		it("Empty paragraph", () => {
 			expect(testRender(ParagraphNode.Empty)).to.equal("\n"); // Paragraphs always create a trailing blank line in Markdown
 		});
@@ -25,9 +25,9 @@ describe("ParagraphNode Markdown rendering tests", () => {
 		});
 	});
 
-	describe("HTML context", () => {
+	describe("Table context", () => {
 		it("Empty paragraph", () => {
-			expect(testRender(ParagraphNode.Empty, { insideHtml: true })).to.equal("<p>\n</p>\n");
+			expect(testRender(ParagraphNode.Empty, { insideTable: true })).to.equal("<p>\n</p>\n");
 		});
 
 		it("Simple paragraph", () => {
@@ -35,7 +35,7 @@ describe("ParagraphNode Markdown rendering tests", () => {
 			const text2 = "This is more text!";
 
 			const input = new ParagraphNode([new PlainTextNode(text1), new PlainTextNode(text2)]);
-			const result = testRender(input, { insideHtml: true });
+			const result = testRender(input, { insideTable: true });
 
 			const expected = ["<p>", `  ${text1}${text2}`, "</p>", ""].join("\n");
 			expect(result).to.equal(expected);

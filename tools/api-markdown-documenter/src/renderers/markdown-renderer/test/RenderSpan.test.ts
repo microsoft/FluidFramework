@@ -13,7 +13,7 @@ import {
 import { testRender } from "./Utilities";
 
 describe("Span Markdown rendering tests", () => {
-	describe("Markdown context", () => {
+	describe("Standard context", () => {
 		it("Empty span", () => {
 			expect(testRender(SpanNode.Empty)).to.equal("");
 		});
@@ -42,9 +42,9 @@ describe("Span Markdown rendering tests", () => {
 		});
 	});
 
-	describe("HTML context", () => {
+	describe("Table context", () => {
 		it("Empty span", () => {
-			expect(testRender(SpanNode.Empty, { insideHtml: true })).to.equal("<span></span>");
+			expect(testRender(SpanNode.Empty, { insideTable: true })).to.equal("");
 		});
 
 		it("Simple span", () => {
@@ -53,11 +53,10 @@ describe("Span Markdown rendering tests", () => {
 			const node1 = new PlainTextNode(text1);
 			const node2 = new PlainTextNode(text2);
 			const span = new SpanNode([node1, node2]);
-			expect(testRender(span, { insideHtml: true })).to.equal(
-				`<span>${text1}${text2}</span>`,
-			);
+			expect(testRender(span, { insideTable: true })).to.equal(`${text1}${text2}`);
 		});
 
+		// Note: multi-line spans are rendered as HTML in a table context
 		it("Formatted span", () => {
 			const formatting: TextFormatting = {
 				bold: true,
@@ -69,7 +68,7 @@ describe("Span Markdown rendering tests", () => {
 			const node2 = LineBreakNode.Singleton;
 			const node3 = new PlainTextNode(text2);
 			const span = new SpanNode([node1, node2, node3], formatting);
-			expect(testRender(span, { insideHtml: true })).to.equal(
+			expect(testRender(span, { insideTable: true })).to.equal(
 				`<span><b><i>This is some text.</i></b> \n<br>\n<b><i>${text2}</i></b></span>`,
 			);
 		});

@@ -13,44 +13,18 @@ import type { RenderContext } from "../RenderContext";
  * @param node - The node to render.
  * @param writer - Writer context object into which the document contents will be written.
  * @param context - See {@link RenderContext}.
- *
- * @remarks Will render as HTML when in an HTML context.
  */
 export function renderCodeSpan(
 	node: CodeSpanNode,
 	writer: DocumentWriter,
 	context: RenderContext,
 ): void {
-	if (context.insideHtml === true) {
-		renderCodeSpanWithHtmlSyntax(node, writer, context);
-	} else {
-		renderCodeSpanWithMarkdownSyntax(node, writer, context);
-	}
-}
-
-function renderCodeSpanWithMarkdownSyntax(
-	codeSpanNode: CodeSpanNode,
-	writer: DocumentWriter,
-	context: RenderContext,
-): void {
+	// TODO: This will not correctly handle nested code spans / blocks.
+	// We likely want to escape inner code span / block backticks.
 	writer.write("`");
-	renderNodes(codeSpanNode.children, writer, {
+	renderNodes(node.children, writer, {
 		...context,
 		insideCodeBlock: true,
 	});
 	writer.write("`");
-}
-
-function renderCodeSpanWithHtmlSyntax(
-	codeSpanNode: CodeSpanNode,
-	writer: DocumentWriter,
-	context: RenderContext,
-): void {
-	writer.write("<code>");
-	renderNodes(codeSpanNode.children, writer, {
-		...context,
-		insideCodeBlock: true,
-		insideHtml: true,
-	});
-	writer.write("</code>");
 }

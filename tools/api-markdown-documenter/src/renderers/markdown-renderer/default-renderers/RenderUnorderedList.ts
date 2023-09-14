@@ -6,6 +6,7 @@ import type { UnorderedListNode } from "../../../documentation-domain";
 import type { DocumentWriter } from "../../DocumentWriter";
 import { renderNode } from "../Render";
 import type { RenderContext } from "../RenderContext";
+import { renderNodeWithHtmlSyntax } from "../Utilities";
 
 /**
  * Renders an {@link UnorderedList} as Markdown.
@@ -14,7 +15,7 @@ import type { RenderContext } from "../RenderContext";
  * @param writer - Writer context object into which the document contents will be written.
  * @param context - See {@link RenderContext}.
  *
- * @remarks Will render as HTML when in an HTML context, or within a table context.
+ * @remarks Will render as HTML when in a table context.
  */
 export function renderUnorderedList(
 	node: UnorderedListNode,
@@ -23,8 +24,8 @@ export function renderUnorderedList(
 ): void {
 	// Markdown tables do not support multi-line Markdown content.
 	// If we encounter a list in a table context, we will render using HTML syntax.
-	if (context.insideTable === true || context.insideHtml === true) {
-		renderUnorderedListWithHtmlSyntax(node, writer, context);
+	if (context.insideTable === true) {
+		renderNodeWithHtmlSyntax(node, writer, context);
 	} else {
 		renderUnorderedListWithMarkdownSyntax(node, writer, context);
 	}
@@ -43,28 +44,4 @@ function renderUnorderedListWithMarkdownSyntax(
 	}
 	writer.decreaseIndent();
 	writer.ensureSkippedLine(); // Ensure blank line after list
-}
-
-function renderUnorderedListWithHtmlSyntax(
-	node: UnorderedListNode,
-	writer: DocumentWriter,
-	context: RenderContext,
-): void {
-	writer.writeLine("<ul>");
-	writer.increaseIndent();
-
-	for (const child of node.children) {
-		writer.writeLine("<li>");
-		writer.increaseIndent();
-		renderNode(child, writer, {
-			...context,
-			insideHtml: true,
-		});
-		writer.decreaseIndent();
-		writer.ensureNewLine(); // Ensure newline after previous list item
-		writer.writeLine("</li>");
-	}
-
-	writer.decreaseIndent();
-	writer.writeLine("</ul>");
 }

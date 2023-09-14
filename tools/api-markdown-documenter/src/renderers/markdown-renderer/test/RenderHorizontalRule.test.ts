@@ -8,12 +8,12 @@ import { HorizontalRuleNode } from "../../../documentation-domain";
 import { testRender } from "./Utilities";
 
 describe("HorizontalRule Markdown rendering tests", () => {
-	it("Markdown context", () => {
+	it("Standard context", () => {
 		// Horizontal Rules always create a leading and trailing line breaks
 		expect(testRender(HorizontalRuleNode.Singleton)).to.equal("\n---\n\n");
 	});
 
-	it("HTML context", () => {
-		expect(testRender(HorizontalRuleNode.Singleton, { insideHtml: true })).to.equal("<hr>\n");
+	it("Table context", () => {
+		expect(testRender(HorizontalRuleNode.Singleton, { insideTable: true })).to.equal("<hr>\n");
 	});
 });

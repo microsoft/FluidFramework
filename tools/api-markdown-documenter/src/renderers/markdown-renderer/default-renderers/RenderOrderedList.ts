@@ -6,6 +6,7 @@ import type { OrderedListNode } from "../../../documentation-domain";
 import type { DocumentWriter } from "../../DocumentWriter";
 import { renderNode } from "../Render";
 import type { RenderContext } from "../RenderContext";
+import { renderNodeWithHtmlSyntax } from "../Utilities";
 
 /**
  * Renders a {@link OrderedListNode} as Markdown.
@@ -14,7 +15,7 @@ import type { RenderContext } from "../RenderContext";
  * @param writer - Writer context object into which the document contents will be written.
  * @param context - See {@link RenderContext}.
  *
- * @remarks Will render as HTML when in an HTML context, or within a table context.
+ * @remarks Will render as HTML when in a table context.
  */
 export function renderOrderedList(
 	node: OrderedListNode,
@@ -23,8 +24,8 @@ export function renderOrderedList(
 ): void {
 	// Markdown tables do not support multi-line Markdown content.
 	// If we encounter a list in a table context, we will render using HTML syntax.
-	if (context.insideTable === true || context.insideHtml === true) {
-		renderOrderedListWithHtmlSyntax(node, writer, context);
+	if (context.insideTable === true) {
+		renderNodeWithHtmlSyntax(node, writer, context);
 	} else {
 		renderOrderedListWithMarkdownSyntax(node, writer, context);
 	}
@@ -43,28 +44,4 @@ function renderOrderedListWithMarkdownSyntax(
 	}
 	writer.decreaseIndent();
 	writer.ensureSkippedLine(); // Ensure blank line after list
-}
-
-function renderOrderedListWithHtmlSyntax(
-	node: OrderedListNode,
-	writer: DocumentWriter,
-	context: RenderContext,
-): void {
-	writer.writeLine("<ol>");
-	writer.increaseIndent();
-
-	for (const child of node.children) {
-		writer.writeLine("<li>");
-		writer.increaseIndent();
-		renderNode(child, writer, {
-			...context,
-			insideHtml: true,
-		});
-		writer.decreaseIndent();
-		writer.ensureNewLine(); // Ensure newline after previous list item
-		writer.writeLine("</li>");
-	}
-
-	writer.decreaseIndent();
-	writer.writeLine("</ol>");
 }

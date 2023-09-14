@@ -6,6 +6,7 @@ import type { SpanNode } from "../../../documentation-domain";
 import type { DocumentWriter } from "../../DocumentWriter";
 import { renderNodes } from "../Render";
 import type { RenderContext } from "../RenderContext";
+import { renderNodeWithHtmlSyntax } from "../Utilities";
 
 /**
  * Renders a {@link SpanNode} as Markdown.
@@ -14,13 +15,13 @@ import type { RenderContext } from "../RenderContext";
  * @param writer - Writer context object into which the document contents will be written.
  * @param context - See {@link RenderContext}.
  *
- * @remarks Will render as HTML when in an HTML context.
+ * @remarks Will render as HTML when content is multi-line while in a table context.
  */
 export function renderSpan(node: SpanNode, writer: DocumentWriter, context: RenderContext): void {
 	// Markdown tables do not support multi-line Markdown content.
 	// If we encounter a multi-line span in a table context, we will render using HTML syntax.
-	if (context.insideHtml === true || (!node.singleLine && context.insideTable === true)) {
-		renderSpanWithHtmlSyntax(node, writer, context);
+	if (!node.singleLine && context.insideTable === true) {
+		renderNodeWithHtmlSyntax(node, writer, context);
 	} else {
 		renderSpanWithMarkdownSyntax(node, writer, context);
 	}
@@ -37,18 +38,4 @@ function renderSpanWithMarkdownSyntax(
 		...context,
 		...node.textFormatting, // Override any existing formatting as needed
 	});
-}
-
-function renderSpanWithHtmlSyntax(
-	node: SpanNode,
-	writer: DocumentWriter,
-	context: RenderContext,
-): void {
-	writer.write("<span>");
-	renderNodes(node.children, writer, {
-		...context,
-		...node.textFormatting, // Override any existing formatting as needed
-		insideHtml: true,
-	});
-	writer.write("</span>");
 }

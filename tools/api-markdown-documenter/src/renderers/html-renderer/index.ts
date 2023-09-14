@@ -10,3 +10,4 @@
 export { type RenderConfiguration, type Renderers } from "./configuration";
 export { renderDocument, renderNode, renderNodes } from "./Render";
 export { type RenderContext } from "./RenderContext";
+export { renderAnchor } from "./Utilities";

@@ -8,7 +8,7 @@ import { BlockQuoteNode, LineBreakNode, PlainTextNode } from "../../../documenta
 import { testRender } from "./Utilities";
 
 describe("BlockQuote Markdown rendering tests", () => {
-	describe("Markdown context", () => {
+	describe("Standard context", () => {
 		it("Empty BlockQuote", () => {
 			expect(testRender(BlockQuoteNode.Empty)).to.equal("\n");
 		});
@@ -35,9 +35,9 @@ describe("BlockQuote Markdown rendering tests", () => {
 		});
 	});
 
-	describe("HTML context", () => {
+	describe("Table context", () => {
 		it("Empty BlockQuote", () => {
-			expect(testRender(BlockQuoteNode.Empty, { insideHtml: true })).to.equal(
+			expect(testRender(BlockQuoteNode.Empty, { insideTable: true })).to.equal(
 				"<blockquote>\n</blockquote>\n",
 			);
 		});
@@ -49,7 +49,7 @@ describe("BlockQuote Markdown rendering tests", () => {
 				new LineBreakNode(),
 				new PlainTextNode("-BlockQuote"),
 			]);
-			const result = testRender(blockQuoteNode, { insideHtml: true });
+			const result = testRender(blockQuoteNode, { insideTable: true });
 
 			const expected = [
 				"<blockquote>",

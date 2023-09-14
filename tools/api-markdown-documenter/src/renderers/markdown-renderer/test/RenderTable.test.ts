@@ -14,7 +14,7 @@ import {
 import { testRender } from "./Utilities";
 
 describe("Table Markdown rendering tests", () => {
-	describe("Markdown context", () => {
+	describe("Standard context", () => {
 		it("Empty table", () => {
 			expect(testRender(TableNode.Empty)).to.equal("\n");
 		});
@@ -81,9 +81,9 @@ describe("Table Markdown rendering tests", () => {
 		});
 	});
 
-	describe("HTML context", () => {
+	describe("Table context", () => {
 		it("Empty table", () => {
-			expect(testRender(TableNode.Empty, { insideHtml: true })).to.equal(
+			expect(testRender(TableNode.Empty, { insideTable: true })).to.equal(
 				"<table>\n</table>\n",
 			);
 		});
@@ -101,7 +101,7 @@ describe("Table Markdown rendering tests", () => {
 				]),
 			]);
 
-			const result = testRender(input, { insideHtml: true });
+			const result = testRender(input, { insideTable: true });
 
 			const expected = [
 				"<table>",
@@ -153,7 +153,7 @@ describe("Table Markdown rendering tests", () => {
 				]),
 			);
 
-			const result = testRender(input, { insideHtml: true });
+			const result = testRender(input, { insideTable: true });
 
 			const expected = [
 				"<table>",

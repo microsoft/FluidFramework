@@ -5,6 +5,7 @@
 import type { LineBreakNode } from "../../../documentation-domain";
 import type { DocumentWriter } from "../../DocumentWriter";
 import type { RenderContext } from "../RenderContext";
+import { renderNodeWithHtmlSyntax } from "../Utilities";
 
 /**
  * Renders a {@link LineBreakNode} as Markdown.
@@ -22,8 +23,8 @@ export function renderLineBreak(
 ): void {
 	// Markdown tables do not support multi-line Markdown content.
 	// If we encounter a line break in a table context, we will render using HTML syntax.
-	if (context.insideTable === true || context.insideHtml === true) {
-		renderLineBreakWithHtmlSyntax(writer);
+	if (context.insideTable === true) {
+		renderNodeWithHtmlSyntax(node, writer, context);
 	} else {
 		renderLineBreakWithMarkdownSyntax(writer, context);
 	}
@@ -38,9 +39,4 @@ function renderLineBreakWithMarkdownSyntax(writer: DocumentWriter, context: Rend
 	} else {
 		writer.ensureSkippedLine();
 	}
-}
-
-function renderLineBreakWithHtmlSyntax(writer: DocumentWriter): void {
-	writer.ensureNewLine();
-	writer.writeLine("<br>");
 }

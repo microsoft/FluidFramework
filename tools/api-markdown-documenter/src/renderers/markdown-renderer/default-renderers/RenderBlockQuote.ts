@@ -15,7 +15,7 @@ import { renderNodeWithHtmlSyntax } from "../Utilities";
  * @param writer - Writer context object into which the document contents will be written.
  * @param context - See {@link RenderContext}.
  *
- * @remarks Will render as HTML when in an HTML context, or within a table context.
+ * @remarks Will render as HTML when in a table context.
  */
 export function renderBlockQuote(
 	node: BlockQuoteNode,
@@ -24,7 +24,7 @@ export function renderBlockQuote(
 ): void {
 	// Markdown tables do not support multi-line Markdown content.
 	// If we encounter a block quote in a table context, we will render using HTML syntax.
-	if (context.insideTable === true || context.insideHtml === true) {
+	if (context.insideTable === true) {
 		renderNodeWithHtmlSyntax(node, writer, context);
 	} else {
 		renderBlockQuoteWithMarkdownSyntax(node, writer, context);

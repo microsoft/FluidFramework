@@ -5,6 +5,7 @@
 import type { HorizontalRuleNode } from "../../../documentation-domain";
 import type { DocumentWriter } from "../../DocumentWriter";
 import type { RenderContext } from "../RenderContext";
+import { renderNodeWithHtmlSyntax } from "../Utilities";
 
 /**
  * Renders a {@link HorizontalRuleNode} as Markdown.
@@ -13,7 +14,7 @@ import type { RenderContext } from "../RenderContext";
  * @param writer - Writer context object into which the document contents will be written.
  * @param context - See {@link RenderContext}.
  *
- * @remarks Will render as HTML when in an HTML context, or within a table context.
+ * @remarks Will render as HTML when in a table context.
  */
 export function renderHorizontalRule(
 	node: HorizontalRuleNode,
@@ -22,8 +23,8 @@ export function renderHorizontalRule(
 ): void {
 	// Horizontal rule syntax conflicts with table syntax in Markdown,
 	// so if we are inside of a table, we must render using HTML syntax.
-	if (context.insideTable === true || context.insideHtml === true) {
-		renderHorizontalRuleWithHtmlSyntax(writer);
+	if (context.insideTable === true) {
+		renderNodeWithHtmlSyntax(node, writer, context);
 	} else {
 		renderHorizontalRuleWithMarkdownSyntax(writer);
 	}
@@ -33,9 +34,4 @@ function renderHorizontalRuleWithMarkdownSyntax(writer: DocumentWriter): void {
 	writer.ensureSkippedLine(); // Markdown horizontal rules require leading blank line
 	writer.writeLine("---");
 	writer.ensureSkippedLine(); // Markdown horizontal rules require trailing blank line
-}
-
-function renderHorizontalRuleWithHtmlSyntax(writer: DocumentWriter): void {
-	writer.ensureNewLine();
-	writer.writeLine("<hr>");
 }
