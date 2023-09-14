@@ -1041,7 +1041,10 @@ export function createDDSFuzzSuite<
 	});
 }
 
-const getFullModel = <TChannelFactory extends IChannelFactory, TOperation extends BaseOperation>(
+export const getFullModel = <
+	TChannelFactory extends IChannelFactory,
+	TOperation extends BaseOperation,
+>(
 	ddsModel: DDSFuzzModel<TChannelFactory, TOperation>,
 	options: DDSFuzzSuiteOptions,
 ): DDSFuzzModel<

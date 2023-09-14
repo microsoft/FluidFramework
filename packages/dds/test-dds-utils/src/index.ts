@@ -18,4 +18,5 @@ export {
 	DDSFuzzHarnessEvents,
 	Synchronize,
 	replayTest,
+	getFullModel,
 } from "./ddsFuzzHarness";
