@@ -81,7 +81,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 					servername: redisConfig.host,
 				};
 			}
-			const redisParams = {
+			const redisParams: utils.IRedisParameters = {
 				expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
 				prefix: "page",
 			};
