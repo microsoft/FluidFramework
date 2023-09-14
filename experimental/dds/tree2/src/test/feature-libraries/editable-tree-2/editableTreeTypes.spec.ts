@@ -19,7 +19,7 @@ import {
 import {
 	Sequence,
 	TypedNode,
-	UntypedField,
+	TreeField,
 	RequiredField,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/editable-tree-2/editableTreeTypes";
@@ -45,7 +45,7 @@ describe("editableTreeTypes", () => {
 	 * Example showing the node kinds used in the json domain (everything except structs),
 	 * including narrowing and exhaustive matches.
 	 */
-	function jsonExample(root: UntypedField): void {
+	function jsonExample(root: TreeField): void {
 		assert(root.is(jsonSequenceRootSchema.rootFieldSchema));
 		for (const tree of root) {
 			if (tree.is(jsonBoolean)) {

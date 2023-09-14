@@ -4,9 +4,9 @@
  */
 
 export {
-	UntypedField,
-	UntypedTree,
-	UntypedEntity,
+	TreeField,
+	TreeNode,
+	Tree,
 	TypedField,
 	FieldNode,
 	FlexibleFieldContent,

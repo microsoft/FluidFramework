@@ -20,27 +20,37 @@ import {
 } from "../helpers";
 
 /**
- * Default transformation helper for API items that potentially have child contents.
- * Wraps the item-kind-specific details in the following manner:
+ * Default content layout for all API items.
+ *
+ * @remarks Lays out the content in the following manner:
  *
  * 1. Heading (if not the document-root item, in which case headings are handled specially by document-level rendering)
+ *
  * 1. Beta warning (if item annotated with `@beta`)
+ *
  * 1. Deprecation notice (if any)
+ *
  * 1. Summary (if any)
+ *
  * 1. Item Signature
+ *
  * 1. Remarks (if any)
+ *
  * 1. Examples (if any)
- * 1. `innerSectionBody`
+ *
+ * 1. `itemSpecificContent`
+ *
  * 1. Throws (if any)
+ *
  * 1. See (if any)
  *
  * @param apiItem - The API item being rendered.
- * @param childContent - A doc section of contents to be written after the standard metadata content types.
+ * @param itemSpecificContent - API item-specific details to be included in the default layout.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
-export function createSectionWithChildContent(
+export function createDefaultLayout(
 	apiItem: ApiItem,
-	childContent: SectionNode[] | undefined,
+	itemSpecificContent: SectionNode[] | undefined,
 	config: Required<ApiItemTransformationConfiguration>,
 ): SectionNode[] {
 	const sections: SectionNode[] = [];
@@ -80,9 +90,10 @@ export function createSectionWithChildContent(
 		sections.push(renderedExamples);
 	}
 
-	if (childContent !== undefined) {
+	// Render provided contents
+	if (itemSpecificContent !== undefined) {
 		// Flatten contents into this section
-		sections.push(...childContent);
+		sections.push(...itemSpecificContent);
 	}
 
 	// Render @throws content (if any)

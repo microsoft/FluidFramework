@@ -36,6 +36,24 @@ stages:
       pool: ${{ parameters.pool }}
       publishNonScopedPackages: ${{ parameters.publishNonScopedPackages }}
 
+- stage: publish_npm_internal_client_utils_package
+  dependsOn: build
+  displayName: Publish Client-Utils Internal Package
+  condition: and(succeeded(), eq(variables['testBuild'], false))
+  variables:
+  - group: ado-feeds
+  jobs:
+  - template: include-publish-npm-package-deployment.yml
+    parameters:
+      namespace: ${{ parameters.namespace }}
+      devFeedName: $(ado-feeds-dev) # Comes from the ado-feeds variable group
+      feedName: $(ado-feeds-build) # Comes from the ado-feeds variable group
+      official: false
+      environment: package-build-feed
+      pool: ${{ parameters.pool }}
+      publishNonScopedPackages: false
+      isClientUtilsPackage: true
+
 - stage: publish_npm_internal
   dependsOn: build
   displayName: Publish Internal Packages

@@ -38,7 +38,7 @@ import { TreeContext } from "./context";
  *
  * @alpha
  */
-export interface UntypedEntity<TSchema = unknown> extends Iterable<UntypedEntity> {
+export interface Tree<TSchema = unknown> extends Iterable<Tree> {
 	/**
 	 * Schema for this entity.
 	 * If well-formed, it must follow this schema.
@@ -60,15 +60,24 @@ export interface UntypedEntity<TSchema = unknown> extends Iterable<UntypedEntity
 }
 
 /**
- * Generic tree access API.
+ * Generic tree node API.
  *
- * All content of the tree is accessible via this API.
+ * Nodes are (shallowly) immutable and have a logical identity, a type and either a value or fields under string keys.
  *
- * @remarks Down-casting (via {@link UntypedTree#is}) is required to access Schema-Aware APIs, including editing.
+ * This "logical identity" is exposed as the object identity: if a node is moved within a document,
+ * the same {@link TreeNode} instance will be used in the new location.
+ * Similarly, edits applied to a node's sub-tree concurrently with the move of the node will still be applied to its subtree in its new location.
+ *
+ *
+ * @remarks
+ * Down-casting (via {@link TreeNode#is}) is required to access Schema-Aware APIs, including editing.
+ * All content in the tree is accessible without down-casting, but if the schema is known,
+ * the schema aware API may be more ergonomic.
+ * All editing is actually done via {@link TreeField}s: the nodes are immutable other than that they contain mutable fields.
  *
  * @alpha
  */
-export interface UntypedTree extends UntypedEntity<TreeSchema> {
+export interface TreeNode extends Tree<TreeSchema> {
 	/**
 	 * Value stored on this node.
 	 */
@@ -85,12 +94,12 @@ export interface UntypedTree extends UntypedEntity<TreeSchema> {
 	/**
 	 * Gets a field of this node, if it is not empty.
 	 */
-	tryGetField(key: FieldKey): undefined | UntypedField;
+	tryGetField(key: FieldKey): undefined | TreeField;
 
 	/**
 	 * The field this tree is in, and the index within that field.
 	 */
-	readonly parentField: { readonly parent: UntypedField; readonly index: number };
+	readonly parentField: { readonly parent: TreeField; readonly index: number };
 
 	/**
 	 * Type guard for narrowing / down-casting to a specific schema.
@@ -105,19 +114,31 @@ export interface UntypedTree extends UntypedEntity<TreeSchema> {
 	// TODO: do we want to leave this and other similar properties in the TypeScript API?
 	readonly type: TreeSchemaIdentifier;
 
-	[Symbol.iterator](): Iterator<UntypedField>;
+	[Symbol.iterator](): Iterator<TreeField>;
 }
 
 /**
- * A field of an {@link UntypedTree} as an array-like sequence of unwrapped nodes (see {@link UnwrappedUntypedTree}).
+ * A collaboratively editable collection of nodes within a {@link Tree}.
  *
- * @remarks Down-casting (via {@link UntypedField#is}) is required to access Schema-Aware APIs, including editing.
+ * Fields are inherently part of their parent, and thus cannot be moved.
+ * Instead their content can be moved, deleted or created.
+ *
+ * @remarks
+ * Fields are used wherever an editable collection of nodes is required.
+ * This is required in two places:
+ * 1. To hold the children of non-leaf {@link TreeNode}s.
+ * 2. As the root of a {@link Tree}.
+ *
+ * Down-casting (via {@link TreeField#is}) is required to access Schema-Aware APIs, including editing.
+ * All content in the tree is accessible without down-casting, but if the schema is known,
+ * the schema aware API may be more ergonomic.
  *
  * @alpha
  */
-export interface UntypedField extends UntypedEntity<FieldSchema>, Iterable<UntypedTree> {
+export interface TreeField extends Tree<FieldSchema>, Iterable<TreeNode> {
 	/**
 	 * The `FieldKey` this field is under.
+	 * Defines what part of its parent this field makes up.
 	 */
 	readonly key: FieldKey;
 
@@ -125,21 +146,26 @@ export interface UntypedField extends UntypedEntity<FieldSchema>, Iterable<Untyp
 	 * The node which has this field on it under `fieldKey`.
 	 * `undefined` iff this field is a detached field.
 	 */
-	readonly parent?: UntypedTree;
+	readonly parent?: TreeNode;
 
 	/**
 	 * Type guard for narrowing / down-casting to a specific schema.
 	 */
 	is<TSchema extends FieldSchema>(schema: TSchema): this is TypedField<TSchema>;
 
-	[Symbol.iterator](): Iterator<UntypedTree>;
+	[Symbol.iterator](): Iterator<TreeNode>;
 
 	/**
 	 * Check if this field is the same as a different field.
 	 * This is defined to mean that both are in the same editable tree, and are the same field on the same node.
 	 * This is more than just a reference comparison because unlike EditableTree nodes, fields are not cached on anchors and can be duplicated.
+	 *
+	 * @privateRemarks
+	 * TODO:
+	 * If practical, cache TreeField instances so use of this method can be replaced with `===` to compare object identity.
+	 * Implementing this will require some care to preserve lazy-ness and work efficiently (without leaks) for empty fields, particularly on MapNodes.
 	 */
-	isSameAs(other: UntypedField): boolean;
+	isSameAs(other: TreeField): boolean;
 }
 
 // #region Node Kinds
@@ -148,7 +174,15 @@ export interface UntypedField extends UntypedEntity<FieldSchema>, Iterable<Untyp
  * A node that behaves like a `Map<FieldKey, Field>` for a specific `Field` type.
  * @alpha
  */
-export interface MapNode<TSchema extends MapSchema> extends UntypedTree {
+export interface MapNode<TSchema extends MapSchema> extends TreeNode {
+	/**
+	 * Get the field for `key`.
+	 * @param key - which map entry to look up.
+	 *
+	 * @remarks
+	 * All fields under a map implicitly exist, so `get` can be called with any key and will always return a field.
+	 * Even if the field is empty, it will still be returned, and can be edited to insert content into the map.
+	 */
 	get(key: FieldKey): TypedField<TSchema["mapFields"]>;
 
 	// TODO: Add `set` method when FieldKind provides a setter (and derive the type from it).
@@ -164,14 +198,25 @@ export interface MapNode<TSchema extends MapSchema> extends UntypedTree {
 }
 
 /**
- * A node that behaves like a `{ content: Field }` for a specific `Field` type.
+ * A {@link TreeNode} that wraps a single field.
  *
  * @remarks
  * FieldNodes unbox to their content, so in schema aware APIs which do unboxing, the FieldNode itself will be skipped over.
+ * Mainly useful when a field (such as a sequence) is desired in a location where nodes are required (like the member of a union or the child of another field).
+ *
+ * For example:
+ * `Sequence<Foo> | Sequence<Bar>` or `OptionalField<Sequence<Foo>>` can't be expressed as simple fields
+ * (unlike `Sequence<Foo | Bar>` or `OptionalField<Foo>` which can be done as simple fields).
+ * Instead {@link FieldNode}s can be use to achieve something similar, more like:
+ * `FieldNode<Sequence<Foo>> | FieldNode<Sequence<Bar>>` or `OptionalField<FieldNode<Sequence<Foo>>>`.
+ *
+ * This extra layer of field nodes is then omitted when using schema-aware APIs which do unboxing.
+ *
+ * Other than this unboxing, a FieldNode is identical to a struct node with a single field using the {@link EmptyKey}.
  *
  * @alpha
  */
-export interface FieldNode<TSchema extends FieldNodeSchema> extends UntypedTree {
+export interface FieldNode<TSchema extends FieldNodeSchema> extends TreeNode {
 	/**
 	 * The content this field node wraps.
 	 * @remarks
@@ -199,7 +244,7 @@ export interface FieldNode<TSchema extends FieldNodeSchema> extends UntypedTree 
  *
  * @alpha
  */
-export interface Struct extends UntypedTree {
+export interface Struct extends TreeNode {
 	/**
 	 * {@link LocalNodeKey} that identifies this node.
 	 */
@@ -214,7 +259,7 @@ export interface Struct extends UntypedTree {
  * Leaf unboxes its content, so in schema aware APIs which do unboxing, the Leaf itself will be skipped over and its value will be returned directly.
  * @alpha
  */
-export interface Leaf<TSchema extends LeafSchema> extends UntypedTree {
+export interface Leaf<TSchema extends LeafSchema> extends TreeNode {
 	/**
 	 * Value stored on this node.
 	 */
@@ -287,7 +332,7 @@ export type FlexibleNodeContent<TTypes extends AllowedTypes> = SchemaAware.Allow
  * Allows for concurrent editing based on index, adjusting the locations of indexes as needed so they apply to the same logical place in the sequence when rebased and merged.
  * @alpha
  */
-export interface Sequence<TTypes extends AllowedTypes> extends UntypedField {
+export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
 	/**
 	 * Gets a node of this field by its index with unboxing.
 	 * Note that a node must exist at the given index.
@@ -336,7 +381,7 @@ export interface Sequence<TTypes extends AllowedTypes> extends UntypedField {
  * TODO: Finish renaming from ValueField to RequiredField
  * @alpha
  */
-export interface RequiredField<TTypes extends AllowedTypes> extends UntypedField {
+export interface RequiredField<TTypes extends AllowedTypes> extends TreeField {
 	readonly content: UnboxNodeUnion<TTypes>;
 	readonly boxedContent: TypedNodeUnion<TTypes>;
 	setContent(content: FlexibleNodeContent<TTypes>): void;
@@ -349,7 +394,7 @@ export interface RequiredField<TTypes extends AllowedTypes> extends UntypedField
  * Unboxes its content, so in schema aware APIs which do unboxing, the OptionalField itself will be skipped over and its content will be returned directly.
  * @alpha
  */
-export interface OptionalField<TTypes extends AllowedTypes> extends UntypedField {
+export interface OptionalField<TTypes extends AllowedTypes> extends TreeField {
 	readonly content?: UnboxNodeUnion<TTypes>;
 	readonly boxedContent?: TypedNodeUnion<TTypes>;
 	setContent(content: undefined | FlexibleNodeContent<TTypes>): void;
@@ -360,7 +405,7 @@ export interface OptionalField<TTypes extends AllowedTypes> extends UntypedField
 // #region Typed
 
 /**
- * Schema aware specialization of {@link UntypedField}.
+ * Schema aware specialization of {@link TreeField}.
  * @alpha
  */
 export type TypedField<TSchema extends FieldSchema> = TypedFieldInner<
@@ -381,10 +426,10 @@ export type TypedFieldInner<
 	? RequiredField<Types>
 	: Kind extends typeof FieldKinds.optional
 	? OptionalField<Types>
-	: UntypedField;
+	: TreeField;
 
 /**
- * Schema aware specialization of {@link UntypedTree} for a given {@link AllowedTypes}.
+ * Schema aware specialization of {@link TreeNode} for a given {@link AllowedTypes}.
  * @alpha
  */
 export type TypedNodeUnion<TTypes extends AllowedTypes> =
@@ -397,7 +442,7 @@ export type TypedNodeUnion<TTypes extends AllowedTypes> =
 					>
 				>
 		  >
-		: UntypedTree;
+		: TreeNode;
 
 /**
  * Takes in `TreeSchema[]` and returns a TypedNode union.
@@ -413,7 +458,7 @@ export type TypeArrayToTypedTreeArray<T extends readonly TreeSchema[]> = [
 ][_InlineTrick];
 
 /**
- * Schema aware specialization of {@link UntypedTree} for a given {@link TreeSchema}.
+ * Schema aware specialization of {@link TreeNode} for a given {@link TreeSchema}.
  * @alpha
  */
 export type TypedNode<TSchema extends TreeSchema> = TSchema extends LeafSchema
@@ -424,7 +469,7 @@ export type TypedNode<TSchema extends TreeSchema> = TSchema extends LeafSchema
 	? FieldNode<TSchema>
 	: TSchema extends StructSchema
 	? StructTyped<TSchema>
-	: UntypedTree;
+	: TreeNode;
 
 // #endregion
 
