@@ -188,6 +188,19 @@ export function createSummaryTable(
 }
 
 /**
+ * Scans the list of `ApiItem`s to determine if any of the items contain the relevant tags to require an "Alert" column.
+ * I.e. If they are marked as `@deprecated`, `@alpha`, or `@beta`.
+ */
+function doItemsContainAlerts(apiItems: readonly ApiItem[]): boolean {
+	const hasDeprecated = apiItems.some((element) => isDeprecated(element));
+	const hasAlphaOrBeta = apiItems.some((element) => {
+		const releaseTag = getReleaseTag(element);
+		return releaseTag === ReleaseTag.Alpha || releaseTag === ReleaseTag.Beta;
+	});
+	return hasDeprecated || hasAlphaOrBeta;
+}
+
+/**
  * Default summary table generation. Displays each item's name, modifiers, and description (summary) comment.
  *
  * @param apiItems - The items to be displayed. All of these items must be of the kind specified via `itemKind`.
@@ -206,12 +219,7 @@ export function createDefaultSummaryTable(
 	}
 
 	// Only display "Alerts" column if there are any deprecated or alpha/beta items in the list.
-	const hasDeprecated = apiItems.some((element) => isDeprecated(element));
-	const hasAlphaOrBeta = apiItems.some((element) => {
-		const releaseTag = getReleaseTag(element);
-		return releaseTag === ReleaseTag.Alpha || releaseTag === ReleaseTag.Beta;
-	});
-	const hasAlerts = hasDeprecated || hasAlphaOrBeta;
+	const hasAlerts = doItemsContainAlerts(apiItems);
 
 	// Only display "Modifiers" column if there are any modifiers to display.
 	const hasModifiers = apiItems.some(
@@ -363,12 +371,7 @@ export function createFunctionLikeSummaryTable(
 	}
 
 	// Only display "Alerts" column if there are any deprecated or alpha/beta items in the list.
-	const hasDeprecated = apiItems.some((element) => isDeprecated(element));
-	const hasAlphaOrBeta = apiItems.some((element) => {
-		const releaseTag = getReleaseTag(element);
-		return releaseTag === ReleaseTag.Alpha || releaseTag === ReleaseTag.Beta;
-	});
-	const hasAlerts = hasDeprecated || hasAlphaOrBeta;
+	const hasAlerts = doItemsContainAlerts(apiItems);
 
 	// Only display "Modifiers" column if there are any modifiers to display.
 	const hasModifiers = apiItems.some(
@@ -429,12 +432,7 @@ export function createPropertiesTable(
 	}
 
 	// Only display "Alerts" column if there are any deprecated or alpha/beta items in the list.
-	const hasDeprecated = apiProperties.some((element) => isDeprecated(element));
-	const hasAlphaOrBeta = apiProperties.some((element) => {
-		const releaseTag = getReleaseTag(element);
-		return releaseTag === ReleaseTag.Alpha || releaseTag === ReleaseTag.Beta;
-	});
-	const hasAlerts = hasDeprecated || hasAlphaOrBeta;
+	const hasAlerts = doItemsContainAlerts(apiProperties);
 
 	// Only display "Modifiers" column if there are any modifiers to display.
 	const hasModifiers = apiProperties.some(
@@ -498,12 +496,7 @@ export function createPackagesTable(
 	}
 
 	// Only display "Alerts" column if there are any deprecated or alpha/beta items in the list.
-	const hasDeprecated = apiPackages.some((element) => isDeprecated(element));
-	const hasAlphaOrBeta = apiPackages.some((element) => {
-		const releaseTag = getReleaseTag(element);
-		return releaseTag === ReleaseTag.Alpha || releaseTag === ReleaseTag.Beta;
-	});
-	const hasAlerts = hasDeprecated || hasAlphaOrBeta;
+	const hasAlerts = doItemsContainAlerts(apiPackages);
 
 	const headerRowCells: TableHeaderCellNode[] = [
 		TableHeaderCellNode.createFromPlainText("Package"),
