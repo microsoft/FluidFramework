@@ -18,7 +18,7 @@ export interface ILumberjackOptions {
 	enableGlobalTelemetryContext: boolean;
 }
 const defaultLumberjackOptions: ILumberjackOptions = {
-	enableGlobalTelemetryContext: true,
+	enableGlobalTelemetryContext: false,
 };
 
 export const getGlobalLumberjackInstance = () =>

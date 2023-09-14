@@ -74,7 +74,7 @@ const defaultLumberjackConfig: ILumberjackConfig = {
 	engineList: [new WinstonLumberjackEngine()],
 	schemaValidator: undefined,
 	options: {
-		enableGlobalTelemetryContext: true,
+		enableGlobalTelemetryContext: false,
 	},
 };
 function configureLumberjackLogging(config: ILumberjackConfig) {
