@@ -138,7 +138,7 @@ function apiTestSuite(
 	});
 }
 
-describe("api-markdown-documenter full-suite tests", () => {
+describe("Markdown rendering end-to-end tests", () => {
 	const configs: ConfigTestProps[] = [
 		/**
 		 * Sample "default" configuration.
