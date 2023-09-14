@@ -133,7 +133,7 @@ export function isFluidHandle(value: undefined | FluidSerializableReadOnly): val
 	// Regular Json compatible data can have fields named "IFluidHandle" (especially if field names come from user data).
 	// Separate this case from actual fluid handles by checking for a circular reference: Json data can't have this circular reference so it is a safe way to detect IFluidHandles.
 	const isHandle = handle === value;
-	// Since the requirement for this reference to by cyclic isn't particularly clear in the interface (typescript can't model that very well)
+	// Since the requirement for this reference to be cyclic isn't particularly clear in the interface (typescript can't model that very well)
 	// do an extra test.
 	// Since json compatible data shouldn't have methods, and IFluidHandle requires one, use that as a redundant check:
 	const getMember = (value as Partial<IFluidHandle>).get;
