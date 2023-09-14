@@ -13,6 +13,12 @@ import { OpDecompressor } from "./opDecompressor";
 import { OpGroupingManager } from "./opGroupingManager";
 import { OpSplitter } from "./opSplitter";
 
+/**
+ * Stateful class for processing incoming remote messages as the virtualization measures are unwrapped,
+ * potentially across numerous inbound ops.
+ *
+ * @internal
+ */
 export class RemoteMessageProcessor {
 	constructor(
 		private readonly opSplitter: OpSplitter,
@@ -30,14 +36,23 @@ export class RemoteMessageProcessor {
 
 	/**
 	 * Ungroups and Unchunks the runtime ops encapsulated by the single remoteMessage received over the wire
-	 * @param remoteMessage - A message from another client, likely a chunked/grouped op
-	 * @returns the ungrouped, unchunked, unpacked SequencedContainerRuntimeMessage encapsulated in the remote message
+	 * @param remoteMessageCopy - A shallow copy of a message from another client, possibly virtualized
+	 * (grouped, compressed, and/or chunked).
+	 * Being a shallow copy, it's considered mutable, meaning no other Container or other parallel procedure
+	 * depends on this object instance.
+	 * Note remoteMessageCopy.contents (and other object props) MUST not be modified,
+	 * but may be overwritten (as is the case with contents).
+	 * @returns the unchunked, decompressed, ungrouped, unpacked SequencedContainerRuntimeMessages encapsulated in the remote message.
+	 * For ops that weren't virtualized (e.g. System ops that the ContainerRuntime will ultimately ignore),
+	 * a singleton array [remoteMessageCopy] is returned
 	 */
-	public process(remoteMessage: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
+	public process(remoteMessageCopy: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
 		const result: ISequencedDocumentMessage[] = [];
 
+		ensureContentsDeserialized(remoteMessageCopy);
+
 		// Ungroup before and after decompression for back-compat (cleanup tracked by AB#4371)
-		for (const ungroupedMessage of this.opGroupingManager.ungroupOp(copy(remoteMessage))) {
+		for (const ungroupedMessage of this.opGroupingManager.ungroupOp(remoteMessageCopy)) {
 			const message = this.opDecompressor.processMessage(ungroupedMessage).message;
 
 			for (let ungroupedMessage2 of this.opGroupingManager.ungroupOp(message)) {
@@ -84,22 +99,15 @@ export class RemoteMessageProcessor {
 	}
 }
 
-const copy = (remoteMessage: ISequencedDocumentMessage): ISequencedDocumentMessage => {
-	// Do shallow copy of message, as the processing flow will modify it.
-	// There might be multiple container instances receiving same message
-	// We do not need to make deep copy, as each layer will just replace message.content itself,
-	// but would not modify contents details
-	const message = { ...remoteMessage };
-
+/** Takes an incoming message and if the contents is a string, JSON.parse's it in place */
+function ensureContentsDeserialized(mutableMessage: ISequencedDocumentMessage): void {
 	// back-compat: ADO #1385: eventually should become unconditional, but only for runtime messages!
 	// System message may have no contents, or in some cases (mostly for back-compat) they may have actual objects.
 	// Old ops may contain empty string (I assume noops).
-	if (typeof message.contents === "string" && message.contents !== "") {
-		message.contents = JSON.parse(message.contents);
+	if (typeof mutableMessage.contents === "string" && mutableMessage.contents !== "") {
+		mutableMessage.contents = JSON.parse(mutableMessage.contents);
 	}
-
-	return message;
-};
+}
 
 /**
  * For a given message, it moves the nested ContainerRuntimeMessage props one level up.
