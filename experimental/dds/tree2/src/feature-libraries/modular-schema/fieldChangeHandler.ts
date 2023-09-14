@@ -74,7 +74,6 @@ export interface FieldChangeRebaser<TChangeset> {
 	invert(
 		change: TaggedChange<TChangeset>,
 		invertChild: NodeChangeInverter,
-		reviver: NodeReviver,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
 	): TChangeset;
@@ -85,7 +84,6 @@ export interface FieldChangeRebaser<TChangeset> {
 	amendInvert(
 		invertedChange: TChangeset,
 		originalRevision: RevisionTag | undefined,
-		reviver: NodeReviver,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
 	): TChangeset;
@@ -123,12 +121,12 @@ export interface FieldChangeRebaser<TChangeset> {
  */
 export function referenceFreeFieldChangeRebaser<TChangeset>(data: {
 	compose: (changes: TChangeset[]) => TChangeset;
-	invert: (change: TChangeset, reviver: NodeReviver) => TChangeset;
+	invert: (change: TChangeset) => TChangeset;
 	rebase: (change: TChangeset, over: TChangeset) => TChangeset;
 }): FieldChangeRebaser<TChangeset> {
 	return isolatedFieldChangeRebaser({
 		compose: (changes, _composeChild, _genId) => data.compose(changes.map((c) => c.change)),
-		invert: (change, _invertChild, reviver, _genId) => data.invert(change.change, reviver),
+		invert: (change, _invertChild, _genId) => data.invert(change.change),
 		rebase: (change, over, _rebaseChild, _genId) => data.rebase(change, over.change),
 	});
 }
@@ -162,15 +160,6 @@ export interface FieldEditor<TChangeset> {
  * @alpha
  */
 export type ToDelta = (child: NodeChangeset) => Delta.Modify;
-
-/**
- * @alpha
- */
-export type NodeReviver = (
-	revision: RevisionTag,
-	index: number,
-	count: number,
-) => Delta.ProtoNode[];
 
 /**
  * @alpha

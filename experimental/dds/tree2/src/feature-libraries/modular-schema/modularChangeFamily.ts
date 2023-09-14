@@ -315,7 +315,6 @@ export class ModularChangeFamily
 				).rebaser.amendInvert(
 					fieldChange.change,
 					originalRevision,
-					(revision: RevisionTag, index: number, count: number): Delta.ProtoNode[] => [],
 					genId,
 					newCrossFieldManager(crossFieldTable),
 				);
@@ -353,12 +352,6 @@ export class ModularChangeFamily
 		for (const [field, fieldChange] of changes.change) {
 			const { revision } = fieldChange.revision !== undefined ? fieldChange : changes;
 
-			const reviver = (
-				revisionTag: RevisionTag,
-				index: number,
-				count: number,
-			): Delta.ProtoNode[] => [];
-
 			const manager = newCrossFieldManager(crossFieldTable);
 			const invertedChange = getChangeHandler(
 				this.fieldKinds,
@@ -378,7 +371,6 @@ export class ModularChangeFamily
 									parentIndex: index,
 							  },
 					),
-				reviver,
 				genId,
 				manager,
 			);

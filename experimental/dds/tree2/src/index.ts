@@ -144,7 +144,6 @@ export {
 	FieldChangeset,
 	FieldChange,
 	ToDelta,
-	NodeReviver,
 	NodeChangeComposer,
 	NodeChangeInverter,
 	NodeChangeRebaser,

@@ -501,6 +501,7 @@ export type DetachedPlaceUpPath = Brand<Omit<PlaceUpPath, "parent">, "DetachedRa
 // @alpha
 export type DetachedRangeUpPath = Brand<Omit<RangeUpPath, "parent">, "DetachedRangeUpPath">;
 
+// @alpha
 function downCast<TSchema extends TreeSchema>(schema: TSchema, tree: UntypedTreeCore<any, any>): tree is TypedNode_2<TSchema>;
 
 // @alpha
@@ -641,11 +642,11 @@ export type FieldChangeMap = Map<FieldKey, FieldChange>;
 // @alpha (undocumented)
 export interface FieldChangeRebaser<TChangeset> {
     amendCompose(composedChange: TChangeset, composeChild: NodeChangeComposer, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionMetadata: RevisionMetadataSource): TChangeset;
-    amendInvert(invertedChange: TChangeset, originalRevision: RevisionTag | undefined, reviver: NodeReviver, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
+    amendInvert(invertedChange: TChangeset, originalRevision: RevisionTag | undefined, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
     amendRebase(rebasedChange: TChangeset, over: TaggedChange<TChangeset>, rebaseChild: NodeChangeRebaser, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionMetadata: RevisionMetadataSource): TChangeset;
     compose(changes: TaggedChange<TChangeset>[], composeChild: NodeChangeComposer, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionMetadata: RevisionMetadataSource): TChangeset;
     // (undocumented)
-    invert(change: TaggedChange<TChangeset>, invertChild: NodeChangeInverter, reviver: NodeReviver, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
+    invert(change: TaggedChange<TChangeset>, invertChild: NodeChangeInverter, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
     rebase(change: TChangeset, over: TaggedChange<TChangeset>, rebaseChild: NodeChangeRebaser, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionMetadata: RevisionMetadataSource, existenceState?: NodeExistenceState): TChangeset;
 }
 
@@ -1573,9 +1574,6 @@ export interface NodeKeyFieldKind extends BrandedFieldKind<"NodeKey", Multiplici
 
 // @alpha
 export const nodeKeySchema: SchemaLibrary;
-
-// @alpha (undocumented)
-export type NodeReviver = (revision: RevisionTag, index: number, count: number) => Delta.ProtoNode[];
 
 // @alpha
 export type NoListenersCallback<E extends Events<E>> = (eventName: keyof Events<E>) => void;

@@ -14,7 +14,7 @@ import {
 } from "../../../feature-libraries/default-field-kinds/defaultFieldKinds";
 import { makeAnonChange, TaggedChange, mintRevisionTag, tagChange } from "../../../core";
 import { IdAllocator, brand } from "../../../util";
-import { defaultRevisionMetadataFromChanges, fakeTaggedRepair as fakeRepair } from "../../utils";
+import { defaultRevisionMetadataFromChanges } from "../../utils";
 // eslint-disable-next-line import/no-internal-modules
 import { OptionalChangeset } from "../../../feature-libraries/default-field-kinds/defaultFieldChangeTypes";
 import { changesetForChild, testTree, testTreeCursor } from "./fieldKindTestUtils";
@@ -162,7 +162,6 @@ describe("defaultFieldKinds", () => {
 			const inverted = fieldHandler.rebaser.invert(
 				{ revision: mintRevisionTag(), change: change1WithChildChange },
 				childInverter,
-				fakeRepair,
 				failIdAllocator,
 				failCrossFieldManager,
 			);
