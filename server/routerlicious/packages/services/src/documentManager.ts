@@ -19,6 +19,8 @@ import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-serv
  * Manager to fetch document from Alfred using the internal URL.
  */
 export class DocumentManager implements IDocumentManager {
+	private static readonly cacheKeyPrefix = "page";
+
 	constructor(
 		private readonly internalAlfredUrl: string,
 		private readonly tenantManager: ITenantManager,
@@ -49,6 +51,8 @@ export class DocumentManager implements IDocumentManager {
 			await this.documentStaticDataCache.set<string>(
 				staticPropsKey,
 				JSON.stringify(staticProps),
+				undefined,
+				DocumentManager.cacheKeyPrefix,
 			);
 		}
 
@@ -74,6 +78,7 @@ export class DocumentManager implements IDocumentManager {
 		const staticPropsKey: string = DocumentManager.getDocumentStaticKey(documentId);
 		const staticPropsStr: string = await this.documentStaticDataCache.get<string>(
 			staticPropsKey,
+			DocumentManager.cacheKeyPrefix,
 		);
 
 		// If there are no cached static document props, fetch the document from the database
@@ -103,7 +108,11 @@ export class DocumentManager implements IDocumentManager {
 		}
 
 		const staticPropsKey: string = DocumentManager.getDocumentStaticKey(documentId);
-		await this.documentStaticDataCache.delete(staticPropsKey);
+		await this.documentStaticDataCache.delete(
+			staticPropsKey,
+			undefined,
+			DocumentManager.cacheKeyPrefix,
+		);
 	}
 
 	private async getBasicRestWrapper(tenantId: string, documentId: string) {

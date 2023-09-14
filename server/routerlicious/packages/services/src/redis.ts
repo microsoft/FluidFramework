@@ -35,23 +35,8 @@ export class RedisCache implements ICache {
 		});
 	}
 
-	public async delete(key: string, appendPrefixToKey: boolean = true): Promise<boolean> {
-		// If 'appendPrefixToKey' is true, we prepend a prefix to the 'key' parameter.
-		// This is useful in scenarios where we want to consistently manage keys with a common prefix,
-		// If 'appendPrefixToKey' is false, we assume that the 'key' parameter with prefix is already passed in by the caller,
-		// and no additional prefix needs to be added.
-		try {
-			const keyToDelete: string = appendPrefixToKey ? this.getKey(key) : key;
-			const result = await this.client.del(keyToDelete);
-			return result === 1;
-		} catch (error) {
-			Lumberjack.error(`Error deleting from cache.`, undefined, error);
-			return false;
-		}
-	}
-
-	public async get<T>(key: string): Promise<T> {
-		const stringValue: string = await this.client.get(this.getKey(key));
+	public async get<T>(key: string, prefix?: string): Promise<T> {
+		const stringValue: string = await this.client.get(this.getKey(key, prefix));
 		return JSON.parse(stringValue) as T;
 	}
 
@@ -59,9 +44,10 @@ export class RedisCache implements ICache {
 		key: string,
 		value: T,
 		expireAfterSeconds: number = this.expireAfterSeconds,
+		prefix?: string,
 	): Promise<void> {
 		const result = await this.client.set(
-			this.getKey(key),
+			this.getKey(key, prefix),
 			JSON.stringify(value),
 			"EX",
 			expireAfterSeconds,
@@ -71,12 +57,44 @@ export class RedisCache implements ICache {
 		}
 	}
 
+	public async delete(
+		key: string,
+		appendPrefixToKey: boolean = true,
+		prefix?: string,
+	): Promise<boolean> {
+		// If 'appendPrefixToKey' is true, we prepend a prefix to the 'key' parameter.
+		// This is useful in scenarios where we want to consistently manage keys with a common prefix,
+		// If 'appendPrefixToKey' is false, we assume that the 'key' parameter with prefix is already passed in by the caller,
+		// and no additional prefix needs to be added.
+		try {
+			const keyToDelete: string = appendPrefixToKey ? this.getKey(key, prefix) : key;
+			const result = await this.client.del(keyToDelete);
+			return result === 1;
+		} catch (error) {
+			Lumberjack.error(`Error deleting from cache.`, undefined, error);
+			return false;
+		}
+	}
+
 	public async incr(key: string): Promise<number> {
 		try {
 			return this.client.incr(key);
 		} catch (error) {
 			Lumberjack.error(
 				`Error while incrementing counter for ${key} in redis.`,
+				undefined,
+				error,
+			);
+			throw error;
+		}
+	}
+
+	public async decr(key: string): Promise<number> {
+		try {
+			return this.client.decr(key);
+		} catch (error) {
+			Lumberjack.error(
+				`Error while decrementing counter for ${key} in redis.`,
 				undefined,
 				error,
 			);
@@ -94,23 +112,11 @@ export class RedisCache implements ICache {
 		return result;
 	}
 
-	public async decr(key: string): Promise<number> {
-		try {
-			return this.client.decr(key);
-		} catch (error) {
-			Lumberjack.error(
-				`Error while decrementing counter for ${key} in redis.`,
-				undefined,
-				error,
-			);
-			throw error;
-		}
-	}
-
 	/**
 	 * Translates the input key to the one we will actually store in redis
 	 */
-	private getKey(key: string): string {
-		return `${this.prefix}:${key}`;
+	private getKey(key: string, prefix?: string): string {
+		const keyPrefix = prefix === undefined ? this.prefix : prefix;
+		return `${keyPrefix}:${key}`;
 	}
 }
