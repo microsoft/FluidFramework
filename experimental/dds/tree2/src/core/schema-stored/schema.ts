@@ -64,7 +64,7 @@ export enum ValueSchema {
 /**
  * {@link ValueSchema} for privative types.
  * @privateRemarks
- * TODO: when old editable tree APi is removed.
+ * TODO: remove when old editable tree API is removed.
  * @alpha
  */
 export type PrimitiveValueSchema = ValueSchema.Number | ValueSchema.String | ValueSchema.Boolean;
