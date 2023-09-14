@@ -5,15 +5,15 @@
 import * as Path from "node:path";
 
 import { ApiItemKind, ApiModel } from "@microsoft/api-extractor-model";
-import { FileSystem, NewlineKind } from "@rushstack/node-core-library";
+import { FileSystem } from "@rushstack/node-core-library";
 import { expect } from "chai";
-import { compare } from "dir-compare";
 import { Suite } from "mocha";
 
 import { renderApiModelAsMarkdown } from "../RenderMarkdown";
 import { type ApiItemTransformationConfiguration, transformApiModel } from "../api-item-transforms";
 import { DocumentNode } from "../documentation-domain";
 import { type MarkdownRenderConfiguration } from "../renderers";
+import { compareDocumentationSuiteSnapshot } from "./SnapshotTestUtilities";
 
 /**
  * Temp directory under which all tests that generate files will output their contents.
@@ -22,7 +22,6 @@ const testTempDirPath = Path.resolve(__dirname, "test_temp");
 
 /**
  * Snapshot directory to which generated test data will be copied.
- * Relative to dist/test.
  */
 const snapshotsDirPath = Path.resolve(__dirname, "..", "..", "src", "test", "snapshots");
 
@@ -41,36 +40,11 @@ async function snapshotTest(
 	const outputDirectoryPath = Path.resolve(testTempDirPath, relativeSnapshotDirectoryPath);
 	const snapshotDirectoryPath = Path.resolve(snapshotsDirPath, relativeSnapshotDirectoryPath);
 
-	// Ensure the output temp and snapshots directories exists (will create an empty ones if they don't).
-	await FileSystem.ensureFolderAsync(outputDirectoryPath);
-	await FileSystem.ensureFolderAsync(snapshotDirectoryPath);
-
-	// Clear any existing test_temp data
-	await FileSystem.ensureEmptyFolderAsync(outputDirectoryPath);
-
-	// Run transformation and rendering logic
-	const fileSystemConfig = {
+	await compareDocumentationSuiteSnapshot(
+		snapshotDirectoryPath,
 		outputDirectoryPath,
-		newlineKind: NewlineKind.Lf,
-	};
-	await renderApiModelAsMarkdown(transformConfig, renderConfig, fileSystemConfig);
-
-	// Verify against expected contents
-	const result = await compare(outputDirectoryPath, snapshotDirectoryPath, {
-		compareContent: true,
-	});
-
-	if (!result.same) {
-		await FileSystem.ensureEmptyFolderAsync(snapshotDirectoryPath);
-		await FileSystem.copyFilesAsync({
-			sourcePath: outputDirectoryPath,
-			destinationPath: snapshotDirectoryPath,
-		});
-	}
-
-	// If this fails, then the docs build has generated new content.
-	// View the diff in git and determine if the changes are appropriate or not.
-	expect(result.same).to.be.true;
+		async (fsConfig) => renderApiModelAsMarkdown(transformConfig, renderConfig, fsConfig),
+	);
 }
 
 /**
