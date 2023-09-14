@@ -60,12 +60,10 @@ export function createDefaultLayout(
 ): SectionNode[] {
 	const sections: SectionNode[] = [];
 
-	// Render beta notice if applicable
-	const releaseTag = getReleaseTag(apiItem);
-	if (releaseTag === ReleaseTag.Alpha) {
-		sections.push(wrapInSection([alphaWarningSpan]));
-	} else if (releaseTag === ReleaseTag.Beta) {
-		sections.push(wrapInSection([betaWarningSpan]));
+	// Render summary comment (if any)
+	const summary = createSummaryParagraph(apiItem, config);
+	if (summary !== undefined) {
+		sections.push(wrapInSection([summary]));
 	}
 
 	// Render deprecation notice (if any)
@@ -74,10 +72,12 @@ export function createDefaultLayout(
 		sections.push(wrapInSection([deprecationNotice]));
 	}
 
-	// Render summary comment (if any)
-	const summary = createSummaryParagraph(apiItem, config);
-	if (summary !== undefined) {
-		sections.push(wrapInSection([summary]));
+	// Render alpha/beta notice if applicable
+	const releaseTag = getReleaseTag(apiItem);
+	if (releaseTag === ReleaseTag.Alpha) {
+		sections.push(wrapInSection([alphaWarningSpan]));
+	} else if (releaseTag === ReleaseTag.Beta) {
+		sections.push(wrapInSection([betaWarningSpan]));
 	}
 
 	// Render signature (if any)
