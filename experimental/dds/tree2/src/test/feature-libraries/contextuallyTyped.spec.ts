@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { MockHandle } from "@fluidframework/test-runtime-utils";
 import { EmptyKey, MapTree, ValueSchema } from "../../core";
 
 import {
@@ -32,35 +33,36 @@ describe("ContextuallyTyped", () => {
 	});
 
 	it("allowsValue", () => {
-		assert(!allowsValue(ValueSchema.Serializable, undefined));
+		assert(!allowsValue(ValueSchema.FluidHandle, undefined));
 		assert(!allowsValue(ValueSchema.Boolean, undefined));
 		assert(allowsValue(undefined, undefined));
 		assert(!allowsValue(ValueSchema.String, undefined));
 		assert(!allowsValue(ValueSchema.Number, undefined));
 
-		assert(allowsValue(ValueSchema.Serializable, false));
+		assert(!allowsValue(ValueSchema.FluidHandle, false));
 		assert(allowsValue(ValueSchema.Boolean, false));
 		assert(!allowsValue(undefined, false));
 		assert(!allowsValue(ValueSchema.String, false));
 		assert(!allowsValue(ValueSchema.Number, false));
 
-		assert(allowsValue(ValueSchema.Serializable, 5));
+		assert(!allowsValue(ValueSchema.FluidHandle, 5));
 		assert(!allowsValue(ValueSchema.Boolean, 5));
 		assert(!allowsValue(undefined, 5));
 		assert(!allowsValue(ValueSchema.String, 5));
 		assert(allowsValue(ValueSchema.Number, 5));
 
-		assert(allowsValue(ValueSchema.Serializable, ""));
+		assert(!allowsValue(ValueSchema.FluidHandle, ""));
 		assert(!allowsValue(ValueSchema.Boolean, ""));
 		assert(!allowsValue(undefined, ""));
 		assert(allowsValue(ValueSchema.String, ""));
 		assert(!allowsValue(ValueSchema.Number, ""));
 
-		assert(allowsValue(ValueSchema.Serializable, {}));
-		assert(!allowsValue(ValueSchema.Boolean, {}));
-		assert(!allowsValue(undefined, {}));
-		assert(!allowsValue(ValueSchema.String, {}));
-		assert(!allowsValue(ValueSchema.Number, {}));
+		const handle = new MockHandle(5);
+		assert(allowsValue(ValueSchema.FluidHandle, handle));
+		assert(!allowsValue(ValueSchema.Boolean, handle));
+		assert(!allowsValue(undefined, handle));
+		assert(!allowsValue(ValueSchema.String, handle));
+		assert(!allowsValue(ValueSchema.Number, handle));
 	});
 
 	it("applyTypesFromContext omits empty fields", () => {

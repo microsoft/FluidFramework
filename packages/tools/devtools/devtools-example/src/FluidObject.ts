@@ -222,11 +222,11 @@ export class AppData extends DataObject {
 		const stringSchema = builder.leaf("string-property", ValueSchema.String);
 		const numberSchema = builder.leaf("number-property", ValueSchema.Number);
 		const booleanSchema = builder.leaf("boolean-property", ValueSchema.Boolean);
-
-		const serializableSchema = builder.leaf("serializable-property", ValueSchema.Serializable);
+		// TODO: Maybe include example handle
+		const handleSchema = builder.leaf("handle-property", ValueSchema.FluidHandle);
 
 		const leafSchema = builder.struct("leaf-item", {
-			leafField: SchemaBuilder.fieldValue(serializableSchema),
+			leafField: SchemaBuilder.fieldValue(stringSchema, booleanSchema, handleSchema),
 		});
 
 		const childSchema = builder.struct("child-item", {
@@ -256,7 +256,7 @@ export class AppData extends DataObject {
 						childField: true,
 						childData: {
 							leafField: {
-								[valueSymbol]: false, // TODO: SharedTree should encode the handle.
+								[valueSymbol]: false,
 							},
 						},
 					},

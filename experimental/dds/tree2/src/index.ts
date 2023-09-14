@@ -77,6 +77,7 @@ export {
 	MapTree,
 	LocalCommitSource,
 	forbiddenFieldKindIdentifier,
+	TypedTreeValue,
 } from "./core";
 
 export {
@@ -158,7 +159,6 @@ export {
 	EditableTreeOrPrimitive,
 	EditableTree,
 	EditableField,
-	isPrimitiveValue,
 	isPrimitive,
 	getPrimaryField,
 	typeSymbol,
