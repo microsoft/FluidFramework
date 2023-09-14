@@ -85,7 +85,7 @@ describe("compressedEncode", () => {
 			["none", undefined, false, []],
 			["optional none", undefined, undefined, [false]],
 			["optional some", 5, undefined, [true, 5]],
-			["optional object", mockHandle, undefined, [true, mockHandle]],
+			["handle", mockHandle, undefined, [true, mockHandle]],
 			["required", false, true, [false]],
 			["constant", 5, [5], []],
 		];
