@@ -17,13 +17,33 @@ import { RenderContext, getContextWithDefaults } from "./RenderContext";
  * @alpha
  */
 export function renderDocument(document: DocumentNode, config: RenderConfiguration): string {
+	const { customRenderers, language, startingHeadingLevel } = config;
+
 	const writer = createDocumentWriter();
 	const renderContext = getContextWithDefaults({
-		headingLevel: config.startingHeadingLevel,
-		customRenderers: config.customRenderers,
+		headingLevel: startingHeadingLevel,
+		customRenderers,
 	});
 
+	// TODO: clean this up a bit
+	writer.writeLine("<!DOCTYPE html>");
+	writer.writeLine(`<html lang="${language ?? "en"}">`);
+	writer.increaseIndent();
+	writer.writeLine("<head>");
+	writer.increaseIndent();
+	writer.writeLine('<meta charset="utf-8" />');
+	writer.decreaseIndent();
+	writer.writeLine("</head>");
+	writer.writeLine(`<body>`);
+	writer.increaseIndent();
+
 	renderNodes(document.children, writer, renderContext);
+
+	writer.ensureNewLine();
+	writer.decreaseIndent();
+	writer.writeLine(`<body>`);
+	writer.decreaseIndent();
+	writer.writeLine("</html>");
 
 	// Trim any leading and trailing whitespace
 	let renderedDocument = writer.getText().trim();

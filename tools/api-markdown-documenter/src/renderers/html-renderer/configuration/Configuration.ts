@@ -28,6 +28,15 @@ export interface RenderConfiguration extends ConfigurationBase {
 	 * @defaultValue 1
 	 */
 	readonly startingHeadingLevel?: number;
+
+	/**
+	 * HTML language attribute.
+	 *
+	 * @defaultValue "en"
+	 *
+	 * @see {@link https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/lang}
+	 */
+	readonly language?: string;
 }
 
 /**

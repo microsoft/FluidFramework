@@ -318,6 +318,7 @@ export class HorizontalRuleNode implements MultiLineDocumentationNode {
 // @alpha
 export interface HtmlRenderConfiguration extends ConfigurationBase {
     readonly customRenderers?: HtmlRenderers;
+    readonly language?: string;
     readonly startingHeadingLevel?: number;
 }
 
