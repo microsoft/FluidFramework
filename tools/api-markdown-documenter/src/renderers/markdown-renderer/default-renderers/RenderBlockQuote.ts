@@ -6,6 +6,7 @@ import type { BlockQuoteNode } from "../../../documentation-domain";
 import type { DocumentWriter } from "../../DocumentWriter";
 import { renderNodes } from "../Render";
 import type { RenderContext } from "../RenderContext";
+import { renderNodeWithHtmlSyntax } from "../Utilities";
 
 /**
  * Renders a {@link BlockQuoteNode} as Markdown.
@@ -24,7 +25,7 @@ export function renderBlockQuote(
 	// Markdown tables do not support multi-line Markdown content.
 	// If we encounter a block quote in a table context, we will render using HTML syntax.
 	if (context.insideTable === true || context.insideHtml === true) {
-		renderBlockQuoteWithHtmlSyntax(node, writer, context);
+		renderNodeWithHtmlSyntax(node, writer, context);
 	} else {
 		renderBlockQuoteWithMarkdownSyntax(node, writer, context);
 	}
@@ -40,21 +41,4 @@ function renderBlockQuoteWithMarkdownSyntax(
 	renderNodes(node.children, writer, context);
 	writer.decreaseIndent();
 	writer.ensureSkippedLine(); // Block quotes require a trailing blank line
-}
-
-function renderBlockQuoteWithHtmlSyntax(
-	node: BlockQuoteNode,
-	writer: DocumentWriter,
-	context: RenderContext,
-): void {
-	writer.ensureNewLine();
-	writer.writeLine("<blockquote>");
-	writer.increaseIndent();
-	renderNodes(node.children, writer, {
-		...context,
-		insideHtml: true,
-	});
-	writer.ensureNewLine();
-	writer.decreaseIndent();
-	writer.writeLine("</blockquote>");
 }
