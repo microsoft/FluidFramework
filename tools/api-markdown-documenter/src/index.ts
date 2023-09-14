@@ -70,12 +70,10 @@ export {
 	renderNodesAsHtml,
 	renderNodesAsMarkdown,
 } from "./renderers";
-export {
-	type FileSystemConfiguration,
-	renderApiModelAsMarkdown,
-	renderDocumentsAsMarkdown,
-} from "./RenderMarkdown";
+export { renderApiModelAsHtml, renderDocumentsAsHtml } from "./RenderHtml";
+export { renderApiModelAsMarkdown, renderDocumentsAsMarkdown } from "./RenderMarkdown";
 export type { ConfigurationBase } from "./ConfigurationBase";
+export type { FileSystemConfiguration } from "./FileSystemConfiguration";
 export type { Heading } from "./Heading";
 export type { Link, UrlTarget } from "./Link";
 export { loadModel } from "./LoadModel";

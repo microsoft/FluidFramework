@@ -9,7 +9,7 @@ import { FileSystem, NewlineKind } from "@rushstack/node-core-library";
 import { ApiItemTransformationConfiguration, transformApiModel } from "./api-item-transforms";
 import { DocumentNode } from "./documentation-domain";
 import { Logger } from "./Logging";
-import { MarkdownRenderConfiguration, renderDocumentAsMarkdown } from "./renderers";
+import { HtmlRenderConfiguration, renderDocumentAsHtml } from "./renderers";
 import { FileSystemConfiguration } from "./FileSystemConfiguration";
 
 /**
@@ -27,15 +27,15 @@ import { FileSystemConfiguration } from "./FileSystemConfiguration";
  * - {@link DocumentationSuiteOptions.hierarchyBoundaries}
  *
  * @param transformConfig - Configuration for transforming API items into {@link DocumentationNode}s.
- * @param renderConfig - Configuration for rendering {@link DocumentNode}s as Markdown.
+ * @param renderConfig - Configuration for rendering {@link DocumentNode}s as HTML.
  * @param fileSystemConfig - Configuration for writing document files to disk.
  * @param logger - Receiver of system log data. Default: {@link defaultConsoleLogger}.
  *
  * @public
  */
-export async function renderApiModelAsMarkdown(
+export async function renderApiModelAsHtml(
 	transformConfig: Omit<ApiItemTransformationConfiguration, "logger">,
-	renderConfig: Omit<MarkdownRenderConfiguration, "logger">,
+	renderConfig: Omit<HtmlRenderConfiguration, "logger">,
 	fileSystemConfig: FileSystemConfiguration,
 	logger?: Logger,
 ): Promise<void> {
@@ -44,35 +44,35 @@ export async function renderApiModelAsMarkdown(
 		logger,
 	});
 
-	return renderDocumentsAsMarkdown(documents, renderConfig, fileSystemConfig, logger);
+	return renderDocumentsAsHtml(documents, renderConfig, fileSystemConfig, logger);
 }
 
 /**
- * Renders the provided documents using Markdown syntax, and writes each document to a file on disk.
+ * Renders the provided documents using HTML syntax, and writes each document to a file on disk.
  *
  * @param documents - The documents to render. Each will be rendered to its own file on disk per
  * {@link DocumentNode.filePath} (relative to the provided output directory).
- * @param renderConfig - Configuration for rendering {@link DocumentNode}s as Markdown.
+ * @param renderConfig - Configuration for rendering {@link DocumentNode}s as HTML.
  * @param fileSystemConfig - Configuration for writing document files to disk.
  * @param logger - Receiver of system log data. Default: {@link defaultConsoleLogger}.
  *
  * @public
  */
-export async function renderDocumentsAsMarkdown(
+export async function renderDocumentsAsHtml(
 	documents: DocumentNode[],
-	renderConfig: Omit<MarkdownRenderConfiguration, "logger">,
+	renderConfig: Omit<HtmlRenderConfiguration, "logger">,
 	fileSystemConfig: FileSystemConfiguration,
 	logger?: Logger,
 ): Promise<void> {
 	const { outputDirectoryPath, newlineKind } = fileSystemConfig;
 
-	logger?.verbose("Rendering documents as Markdown and writing to disk...");
+	logger?.verbose("Rendering documents as HTML and writing to disk...");
 
 	await FileSystem.ensureEmptyFolderAsync(outputDirectoryPath);
 
 	await Promise.all(
 		documents.map(async (document) => {
-			const renderedDocument = renderDocumentAsMarkdown(document, {
+			const renderedDocument = renderDocumentAsHtml(document, {
 				...renderConfig,
 				logger,
 			});
@@ -85,5 +85,5 @@ export async function renderDocumentsAsMarkdown(
 		}),
 	);
 
-	logger?.success("Markdown documents written to disk.");
+	logger?.success("HTML documents written to disk.");
 }
