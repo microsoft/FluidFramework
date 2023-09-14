@@ -112,15 +112,17 @@ const copy = (remoteMessage: ISequencedDocumentMessage): ISequencedDocumentMessa
 function unpack(
 	message: ISequencedDocumentMessage,
 ): asserts message is InboundSequencedContainerRuntimeMessage {
-	const innerContents = message.contents as InboundContainerRuntimeMessage;
+	// We assume the contents is an InboundContainerRuntimeMessage (the message is "packed")
+	const contents = message.contents as InboundContainerRuntimeMessage;
 
-	// We're going to turn message into a SequencedContainerRuntimeMessage in-place
-	const sequencedContainerRuntimeMessage = message as InboundSequencedContainerRuntimeMessage;
-	sequencedContainerRuntimeMessage.type = innerContents.type;
-	sequencedContainerRuntimeMessage.contents = innerContents.contents;
-	if ("compatDetails" in innerContents) {
-		(message as InboundSequencedRecentlyAddedContainerRuntimeMessage).compatDetails =
-			innerContents.compatDetails;
+	// We're going to unpack message in-place (promoting those properties of contents up to message itself)
+	const messageUnpacked = message as InboundSequencedContainerRuntimeMessage;
+
+	messageUnpacked.type = contents.type;
+	messageUnpacked.contents = contents.contents;
+	if ("compatDetails" in contents) {
+		(messageUnpacked as InboundSequencedRecentlyAddedContainerRuntimeMessage).compatDetails =
+			contents.compatDetails;
 	}
 }
 
