@@ -61,6 +61,44 @@ const testCases: {
 		editedState: ["C", "D"],
 	},
 	{
+		name: "nested deletes",
+		edit: (actedOn) => {
+			const listNode: UpPath = {
+				parent: rootPath,
+				parentField: brand("foo"),
+				parentIndex: 0,
+			};
+
+			actedOn.transaction.start();
+			const listField = actedOn.editor.sequenceField({
+				parent: listNode,
+				field: brand(""),
+			});
+			listField.delete(0, 1);
+			remove(actedOn, 0, 1);
+			actedOn.transaction.commit();
+		},
+		initialState: [{ foo: ["A"] }],
+		editedState: [],
+	},
+	{
+		name: "move out under delete",
+		edit: (actedOn) => {
+			const listNode: UpPath = {
+				parent: rootPath,
+				parentField: brand("foo"),
+				parentIndex: 0,
+			};
+
+			actedOn.transaction.start();
+			actedOn.editor.move({ parent: listNode, field: brand("") }, 0, 1, rootField, 1);
+			remove(actedOn, 0, 1);
+			actedOn.transaction.commit();
+		},
+		initialState: [{ foo: ["A"] }],
+		editedState: ["A"],
+	},
+	{
 		name: "the move of a node",
 		edit: (actedOn) => {
 			const field = actedOn.editor.sequenceField(rootField);
