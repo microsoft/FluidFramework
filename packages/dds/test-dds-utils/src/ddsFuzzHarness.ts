@@ -86,6 +86,7 @@ export interface AddClient {
 
 export interface Synchronize {
 	type: "synchronize";
+	clients?: string[];
 }
 
 interface HasWorkloadName {
@@ -306,7 +307,8 @@ export interface DDSFuzzSuiteOptions {
 	 */
 	validationStrategy:
 		| { type: "random"; probability: number }
-		| { type: "fixedInterval"; interval: number };
+		| { type: "fixedInterval"; interval: number }
+		| { type: "partialSynchronization"; probability: number; clientProbability: number };
 	parseOperations: (serialized: string) => BaseOperation[];
 
 	/**
@@ -682,12 +684,42 @@ export function mixinSynchronization<
 				);
 			};
 			break;
+
+		case "partialSynchronization":
+			// passing 1 here causes infinite loops. passing close to 1 is wasteful
+			// as synchronization + eventual consistency validation should be idempotent.
+			// 0.5 is arbitrary but there's no reason anyone should want a probability near this.
+			assert(
+				validationStrategy.probability < 0.5,
+				"Use a lower synchronization probability.",
+			);
+			generatorFactory = (): Generator<TOperation | Synchronize, TState> => {
+				const baseGenerator = model.generatorFactory();
+				return async (state: TState): Promise<TOperation | Synchronize | typeof done> => {
+					if (!state.isDetached && state.random.bool(validationStrategy.probability)) {
+						const connectedClients = new Set(
+							state.clients
+								.filter((client) => client.containerRuntime.connected)
+								.filter(() =>
+									state.random.bool(validationStrategy.clientProbability),
+								)
+								.map((client) => client.containerRuntime.clientId),
+						);
+
+						return { type: "synchronize", clients: [...connectedClients] };
+					} else {
+						return baseGenerator(state);
+					}
+				};
+			};
+			break;
 		default:
 			unreachableCase(validationStrategy);
 	}
 
 	const isSynchronizeOp = (op: BaseOperation): op is Synchronize => op.type === "synchronize";
 	const reducer: Reducer<TOperation | Synchronize, TState> = async (state, operation) => {
+		// TODO: Only synchronize listed clients if specified
 		if (isSynchronizeOp(operation)) {
 			const connectedClients = state.clients.filter(
 				(client) => client.containerRuntime.connected,
