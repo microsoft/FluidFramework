@@ -15,7 +15,10 @@ import { isILoggingError } from "@fluidframework/telemetry-utils";
 
 import { IPendingMessageNew, PendingStateManager } from "../pendingStateManager";
 import { BatchManager, BatchMessage } from "../opLifecycle";
-import { UnknownContainerMessageType, UnknownContainerRuntimeMessage } from "../messageTypes";
+import type {
+	RecentlyAddedContainerRuntimeMessageDetails,
+	UnknownContainerRuntimeMessage,
+} from "../messageTypes";
 
 type PendingStateManager_WithPrivates = Omit<PendingStateManager, "initialMessages"> & {
 	initialMessages: Deque<IPendingMessageNew>;
@@ -312,8 +315,9 @@ describe("Pending State Manager", () => {
 		describe("Future op compat behavior", () => {
 			it("pending op roundtrip", async () => {
 				const pendingStateManager = createPendingStateManager([]);
-				const futureRuntimeMessage: UnknownContainerRuntimeMessage = {
-					type: "FROM_THE_FUTURE" as unknown as UnknownContainerMessageType,
+				const futureRuntimeMessage: Pick<ISequencedDocumentMessage, "type" | "contents"> &
+					RecentlyAddedContainerRuntimeMessageDetails = {
+					type: "FROM_THE_FUTURE",
 					contents: "Hello",
 					compatDetails: { behavior: "FailToProcess" },
 				};

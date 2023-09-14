@@ -27,10 +27,9 @@ export {
 export {
 	ContainerMessageType,
 	ContainerRuntimeMessage,
-	UnknownContainerMessageType,
-	UnknownContainerRuntimeMessage,
 	IContainerRuntimeMessageCompatDetails,
 	CompatModeBehavior,
+	RecentlyAddedContainerRuntimeMessageDetails,
 } from "./messageTypes";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry";
 export { IGCRuntimeOptions, IGCStats } from "./gc";

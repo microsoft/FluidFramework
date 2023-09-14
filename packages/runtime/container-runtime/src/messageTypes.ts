@@ -42,12 +42,6 @@ export enum ContainerMessageType {
 }
 
 /**
- * Represents an unrecognized {@link ContainerMessageType}, e.g. a message type from a future version of the container runtime.
- * This is useful for type narrowing but should never be used as an actual message type at runtime.
- */
-export type UnknownContainerMessageType = "__unknown_container_message_type__";
-
-/**
  * How should an older client handle an unrecognized remote op type?
  *
  * @internal
@@ -75,16 +69,20 @@ export interface IContainerRuntimeMessageCompatDetails {
  * IMPORTANT: when creating one to be serialized, set the properties in the order they appear here.
  * This way stringified values can be compared.
  */
-export interface TypedContainerRuntimeMessage<
-	TType extends ContainerMessageType | UnknownContainerMessageType,
-	TContents,
-> {
+export interface TypedContainerRuntimeMessage<TType extends ContainerMessageType, TContents> {
 	/** Type of the op, within the ContainerRuntime's domain */
 	type: TType;
 	/** Domain-specific contents, interpreted according to the type */
 	contents: TContents;
+}
+
+/**
+ * Additional details expected for any recently added message.
+ * @internal
+ */
+export interface RecentlyAddedContainerRuntimeMessageDetails {
 	/** Info describing how to handle this op in case the type is unrecognized (default: fail to process) */
-	compatDetails?: IContainerRuntimeMessageCompatDetails;
+	compatDetails: IContainerRuntimeMessageCompatDetails;
 }
 
 export type ContainerRuntimeDataStoreOpMessage = TypedContainerRuntimeMessage<
@@ -123,10 +121,22 @@ export type InTransitContainerRuntimeIdAllocationMessage = TypedContainerRuntime
 	ContainerMessageType.IdAllocation,
 	IdCreationRange & { stashedState?: never }
 >;
-export type UnknownContainerRuntimeMessage = TypedContainerRuntimeMessage<
-	UnknownContainerMessageType,
-	unknown
->;
+
+/**
+ * Represents an unrecognized {@link TypedContainerRuntimeMessage}, e.g. a message from a future version of the container runtime.
+ * @internal
+ */
+export interface UnknownContainerRuntimeMessage
+	extends Partial<RecentlyAddedContainerRuntimeMessageDetails> {
+	/** Invalid type of the op, within the ContainerRuntime's domain. This value should never exist at runtime.
+	 * This is useful for type narrowing but should never be used as an actual message type at runtime.
+	 * Actual value will not be "__unknown...", but the type `Exclude<string, ContainerMessageType>` is not supported.
+	 */
+	type: "__unknown_container_message_type__never_use_as_value__";
+
+	/** Domain-specific contents, but not decipherable by an unknown op. */
+	contents: unknown;
+}
 
 /**
  * A {@link TypedContainerRuntimeMessage} that is received from the server and will be processed by the container runtime.
@@ -174,6 +184,9 @@ export type InboundSequencedContainerRuntimeMessage = ISequencedDocumentMessage 
 export type OutboundSequencedContainerRuntimeMessage = ISequencedDocumentMessage &
 	OutboundContainerRuntimeMessage;
 
+export type InboundSequencedRecentlyAddedContainerRuntimeMessage = ISequencedDocumentMessage &
+	Partial<RecentlyAddedContainerRuntimeMessageDetails>;
+
 /**
  * The unpacked runtime message / details to be handled or dispatched by the ContainerRuntime
  *
@@ -182,6 +195,8 @@ export type OutboundSequencedContainerRuntimeMessage = ISequencedDocumentMessage
  *
  * @deprecated - this is an internal type which should not be used outside of the package.
  * Internally, it is superseded by `TypedContainerRuntimeMessage`.
+ *
+ * @internal
  */
 export interface ContainerRuntimeMessage {
 	/** Type of the op, within the ContainerRuntime's domain */

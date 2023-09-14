@@ -50,9 +50,8 @@ import {
 } from "../containerRuntime";
 import {
 	ContainerMessageType,
-	OutboundContainerRuntimeMessage,
-	UnknownContainerMessageType,
-	UnknownContainerRuntimeMessage,
+	type RecentlyAddedContainerRuntimeMessageDetails,
+	type OutboundContainerRuntimeMessage,
 } from "../messageTypes";
 import { IPendingMessageNew, PendingStateManager } from "../pendingStateManager";
 import { DataStores } from "../dataStores";
@@ -1041,13 +1040,21 @@ describe("Runtime", () => {
 				});
 			});
 			it("process remote op with unrecognized type and 'Ignore' compat behavior", async () => {
-				const futureRuntimeMessage: UnknownContainerRuntimeMessage = {
-					type: "FROM_THE_FUTURE" as unknown as UnknownContainerMessageType,
+				const futureRuntimeMessage: RecentlyAddedContainerRuntimeMessageDetails &
+					Record<string, unknown> = {
+					type: "FROM_THE_FUTURE",
 					contents: "Hello",
 					compatDetails: { behavior: "Ignore" },
 				};
 
-				const packedOp: Partial<ISequencedDocumentMessage> = {
+				const packedOp: Omit<
+					ISequencedDocumentMessage,
+					| "term"
+					| "minimumSequenceNumber"
+					| "clientSequenceNumber"
+					| "referenceSequenceNumber"
+					| "timestamp"
+				> = {
 					contents: JSON.stringify(futureRuntimeMessage),
 					type: MessageType.Operation,
 					sequenceNumber: 123,
@@ -1057,12 +1064,19 @@ describe("Runtime", () => {
 			});
 
 			it("process remote op with unrecognized type and 'FailToProcess' compat behavior", async () => {
-				const futureRuntimeMessage: UnknownContainerRuntimeMessage = {
-					type: "FROM_THE_FUTURE" as unknown as UnknownContainerMessageType,
+				const futureRuntimeMessage = {
+					type: "FROM_THE_FUTURE",
 					contents: "Hello",
 				};
 
-				const packedOp: Partial<ISequencedDocumentMessage> = {
+				const packedOp: Omit<
+					ISequencedDocumentMessage,
+					| "term"
+					| "minimumSequenceNumber"
+					| "clientSequenceNumber"
+					| "referenceSequenceNumber"
+					| "timestamp"
+				> = {
 					type: MessageType.Operation,
 					contents: JSON.stringify(futureRuntimeMessage),
 					sequenceNumber: 123,
@@ -1081,13 +1095,21 @@ describe("Runtime", () => {
 			});
 
 			it("process remote op with unrecognized type and no compat behavior", async () => {
-				const futureRuntimeMessage: UnknownContainerRuntimeMessage = {
-					type: "FROM_THE_FUTURE" as unknown as UnknownContainerMessageType,
+				const futureRuntimeMessage: RecentlyAddedContainerRuntimeMessageDetails &
+					Record<string, unknown> = {
+					type: "FROM THE FUTURE",
 					contents: "Hello",
 					compatDetails: { behavior: "FailToProcess" },
 				};
 
-				const packedOp: Partial<ISequencedDocumentMessage> = {
+				const packedOp: Omit<
+					ISequencedDocumentMessage,
+					| "term"
+					| "minimumSequenceNumber"
+					| "clientSequenceNumber"
+					| "referenceSequenceNumber"
+					| "timestamp"
+				> = {
 					contents: JSON.stringify(futureRuntimeMessage),
 					type: MessageType.Operation,
 					sequenceNumber: 123,
