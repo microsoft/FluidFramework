@@ -27,36 +27,13 @@ parameters:
   type: string
   default:
 
-- name: isClientUtilsPackage
-  type: boolean
-  default: false
-
 steps:
 - task: Bash@3
   displayName: Generate .npmrc for ${{ parameters.artifactPath }}
   inputs:
     targetType: 'inline'
     workingDirectory: $(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}
-    ${{ if eq(parameters.isClientUtilsPackage, true) }}:
-      script: |
-        echo Generating .npmrc for ${{ parameters.feedName }}
-        echo "@fluid-internal:registry=${{ parameters.feedName }}" >> ./.npmrc
-        echo "always-auth=true" >> ./.npmrc
-        cat .npmrc
-        echo Deleting @fluid-internal packages except fluid-internal-client-utils package
-        for packageName in $(ls fluid-internal-*.tgz | grep -v fluid-internal-client-utils-*.tgz)
-        do
-          rm -f $packageName
-        done
-        echo Deleting @fluid-example packages
-        rm -f fluid-example-*
-        echo Deleting @fluidframework packages
-        rm -f fluidframework-*
-        echo Deleting @fluid-experimental packages
-        rm -f fluid-experimental-*
-        echo Deleting @fluid-tools packages
-        rm -f fluid-tools-*
-    ${{ elseif eq(parameters.namespace, true) }}:
+    ${{ if eq(parameters.namespace, true) }}:
       ${{ if eq(parameters.official, false) }}:
         script: |
           echo Generating .npmrc for ${{ parameters.feedName }}
@@ -83,7 +60,7 @@ steps:
           done
           echo Deleting @fluid-example packages
           rm -f fluid-example-*
-    ${{ elseif eq(parameters.namespace, false) }}:
+    ${{ if eq(parameters.namespace, false) }}:
       script: |
         echo Generating .npmrc for ${{ parameters.feedName }}
         echo "registry=${{ parameters.feedName }}" >> ./.npmrc
