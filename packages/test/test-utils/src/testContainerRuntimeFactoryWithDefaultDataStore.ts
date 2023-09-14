@@ -13,6 +13,9 @@ import {
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 
+/**
+ * ! Note: This function is purely needed for back-compat as the constructor argument structure was changed
+ */
 export const createContainerRuntimeFactoryWithDefaultDataStore = (
 	Base: typeof ContainerRuntimeFactoryWithDefaultDataStore = ContainerRuntimeFactoryWithDefaultDataStore,
 	ctorArgs: {

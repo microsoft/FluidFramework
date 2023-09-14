@@ -708,7 +708,7 @@ export class ContainerRuntime
 			containerRuntimeCtor,
 			requestHandler,
 			initializeEntryPoint: () => {
-				throw new UsageError("initializeEntryPoint was not provided");
+				throw new UsageError("ContainerRuntime.load is deprecated and should no longer be used");
 			},
 		});
 	}

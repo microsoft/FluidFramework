@@ -118,9 +118,6 @@ export interface IRuntime extends IDisposable {
 	 * Use this as the primary way of getting access to the user-defined logic within the container runtime.
 	 *
 	 * @see {@link IContainer.getEntryPoint}
-	 *
-	 * @remarks The plan is that eventually IRuntime will no longer have a request() method and this method
-	 * will become the only way to access the entryPoint for the runtime.
 	 */
 	getEntryPoint(): Promise<FluidObject | undefined>;
 }

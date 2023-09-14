@@ -485,9 +485,6 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	/**
 	 * Exposes the entryPoint for the container.
 	 * Use this as the primary way of getting access to the user-defined logic within the container.
-	 *
-	 * @remarks The plan is that eventually IContainer will no longer implement IFluidRouter (and thus won't have a
-	 * request() method) and this method will become the only way to access the entryPoint for the container.
 	 */
 	getEntryPoint(): Promise<FluidObject | undefined>;
 }

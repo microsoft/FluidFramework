@@ -132,9 +132,6 @@ export interface IFluidDataStoreRuntime
 	/**
 	 * Exposes a handle to the root object / entryPoint of the data store. Use this as the primary way of interacting
 	 * with it.
-	 *
-	 * @remarks The plan is that eventually the data store will stop providing IFluidRouter functionality and this will
-	 * become the only way to access the data store's entryPoint.
 	 */
 	readonly entryPoint: IFluidHandle<FluidObject>;
 

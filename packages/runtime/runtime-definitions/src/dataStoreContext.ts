@@ -143,9 +143,6 @@ export interface IDataStore {
 	/**
 	 * Exposes a handle to the root object / entryPoint of the data store. Use this as the primary way of interacting
 	 * with it.
-	 *
-	 * @remarks The plan is that eventually the data store will stop providing IFluidRouter functionality and this will
-	 * become the only way to access the data store's entryPoint.
 	 */
 	readonly entryPoint: IFluidHandle<FluidObject>;
 
@@ -349,9 +346,6 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	/**
 	 * Exposes a handle to the root object / entryPoint of the component. Use this as the primary way of interacting
 	 * with the component.
-	 *
-	 * @remarks The plan is that eventually the component will stop providing IFluidRouter functionality and this will
-	 * become the only way to access the component's entryPoint.
 	 */
 	readonly entryPoint: IFluidHandle<FluidObject>;
 
