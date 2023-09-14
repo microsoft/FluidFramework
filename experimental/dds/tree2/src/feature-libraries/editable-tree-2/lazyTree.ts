@@ -47,8 +47,8 @@ import {
 	TypedField,
 	TypedNode,
 	UnboxField,
-	UntypedField,
-	UntypedTree,
+	TreeField,
+	TreeNode,
 } from "./editableTreeTypes";
 import { makeField, unboxedField } from "./lazyField";
 import {
@@ -113,7 +113,7 @@ function buildSubclass(
  */
 export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 	extends LazyEntity<TSchema, Anchor>
-	implements UntypedTree
+	implements TreeNode
 {
 	/**
 	 * Enumerable own property providing a more JS object friendly alternative to "schema".
@@ -180,7 +180,7 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 		return this[cursorSymbol].value;
 	}
 
-	public tryGetField(fieldKey: FieldKey): UntypedField | undefined {
+	public tryGetField(fieldKey: FieldKey): TreeField | undefined {
 		const schema = getFieldSchema(fieldKey, this.schema);
 		return inCursorField(this[cursorSymbol], fieldKey, (cursor) => {
 			if (cursor.getFieldLength() === 0) {
@@ -190,13 +190,13 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 		});
 	}
 
-	public [Symbol.iterator](): IterableIterator<UntypedField> {
+	public [Symbol.iterator](): IterableIterator<TreeField> {
 		return mapCursorFields(this[cursorSymbol], (cursor) =>
 			makeField(this.context, getFieldSchema(cursor.getFieldKey(), this.schema), cursor),
 		).values();
 	}
 
-	public get parentField(): { readonly parent: UntypedField; readonly index: number } {
+	public get parentField(): { readonly parent: TreeField; readonly index: number } {
 		const cursor = this[cursorSymbol];
 		const index = this.#anchorNode.parentIndex;
 		assert(cursor.fieldIndex === index, "mismatched indexes");

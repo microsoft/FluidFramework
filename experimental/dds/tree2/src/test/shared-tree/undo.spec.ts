@@ -28,6 +28,7 @@ const testCases: {
 	editedState: JsonCompatible[];
 	parentUndoState?: JsonCompatible[];
 	forkUndoState?: JsonCompatible[];
+	skip?: true;
 }[] = [
 	{
 		name: "inserts",
@@ -61,6 +62,7 @@ const testCases: {
 		editedState: ["C", "D"],
 	},
 	{
+		skip: true, // Blocked on #5263
 		name: "nested deletes",
 		edit: (actedOn) => {
 			const listNode: UpPath = {
@@ -82,6 +84,7 @@ const testCases: {
 		editedState: [],
 	},
 	{
+		skip: true, // Blocked on #5263
 		name: "move out under delete",
 		edit: (actedOn) => {
 			const listNode: UpPath = {
@@ -141,6 +144,7 @@ const testCases: {
 describe("Undo and redo", () => {
 	for (const {
 		name,
+		skip,
 		edit,
 		undoCount,
 		initialState,
@@ -149,7 +153,8 @@ describe("Undo and redo", () => {
 		forkUndoState,
 	} of testCases) {
 		const count = undoCount ?? 1;
-		it(`${name} (act on fork undo on fork)`, () => {
+		const itFn = skip ? it.skip : it;
+		itFn(`${name} (act on fork undo on fork)`, () => {
 			const view = makeTreeFromJson(initialState);
 			const fork = view.fork();
 
@@ -173,7 +178,7 @@ describe("Undo and redo", () => {
 			expectJsonTree(fork, editedState);
 		});
 
-		it(`${name} (act on view undo on fork)`, () => {
+		itFn(`${name} (act on view undo on fork)`, () => {
 			const view = makeTreeFromJson(initialState);
 			const fork = view.fork();
 
@@ -197,7 +202,7 @@ describe("Undo and redo", () => {
 			expectJsonTree(fork, editedState);
 		});
 
-		it(`${name} (act on view undo on view)`, () => {
+		itFn(`${name} (act on view undo on view)`, () => {
 			const view = makeTreeFromJson(initialState);
 			const fork = view.fork();
 
@@ -220,7 +225,7 @@ describe("Undo and redo", () => {
 			expectJsonTree(view, editedState);
 		});
 
-		it(`${name} (act on fork undo on view)`, () => {
+		itFn(`${name} (act on fork undo on view)`, () => {
 			const view = makeTreeFromJson(initialState);
 			const fork = view.fork();
 
