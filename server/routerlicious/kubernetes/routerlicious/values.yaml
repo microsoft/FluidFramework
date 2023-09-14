@@ -167,3 +167,7 @@ ingress:
 error:
   track: true
   endpoint: "error_tracking_endpoint"
+
+lumberjack:
+  options:
+    enableGlobalTelemetryContext: true
