@@ -20,7 +20,7 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	defaultDDSFuzzSuiteOptions,
 	runTestForSeed,
-// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import/no-internal-modules
 } from "@fluid-internal/test-dds-utils/dist/ddsFuzzHarness";
 import { SharedTreeTestFactory, toJsonableTree } from "../../utils";
 import { makeOpGenerator, EditGeneratorOpWeights, FuzzTestState } from "./fuzzEditGenerators";
@@ -40,7 +40,7 @@ interface FuzzTestStateWithHistory extends FuzzTestState {
 const fuzzReducerWithHistory = combineReducersAsync<Operation, FuzzTestStateWithHistory>({
 	edit: async (state, operation) => {
 		const { contents } = operation;
-		updateEmptyClientHistory(state)
+		updateEmptyClientHistory(state);
 		switch (contents.type) {
 			case "fieldEdit": {
 				const tree = state.channel.view;
@@ -55,7 +55,7 @@ const fuzzReducerWithHistory = combineReducersAsync<Operation, FuzzTestStateWith
 		return state;
 	},
 	transaction: async (state, operation) => {
-		updateEmptyClientHistory(state)
+		updateEmptyClientHistory(state);
 		const { contents } = operation;
 		const tree = state.channel;
 		applyTransactionEdit(tree.view, contents);
@@ -63,7 +63,7 @@ const fuzzReducerWithHistory = combineReducersAsync<Operation, FuzzTestStateWith
 		return state;
 	},
 	undoRedo: async (state, operation) => {
-		updateEmptyClientHistory(state)
+		updateEmptyClientHistory(state);
 		const { contents } = operation;
 		const tree = state.channel;
 		applyUndoRedoEdit(tree.view, contents);
@@ -71,16 +71,16 @@ const fuzzReducerWithHistory = combineReducersAsync<Operation, FuzzTestStateWith
 		return state;
 	},
 	synchronizeTrees: async (state) => {
-		updateEmptyClientHistory(state)
+		updateEmptyClientHistory(state);
 		applySynchronizationOp(state);
 		updateStateHistory(state);
 		return state;
 	},
 });
 
-function updateEmptyClientHistory(state: FuzzTestStateWithHistory){
-	if (state.history?.get(state.client) === undefined){
-		state.history?.set(state.client, [JSON.stringify(toJsonableTree(state.channel.view))])
+function updateEmptyClientHistory(state: FuzzTestStateWithHistory) {
+	if (state.history?.get(state.client) === undefined) {
+		state.history?.set(state.client, [JSON.stringify(toJsonableTree(state.channel.view))]);
 	}
 }
 
@@ -95,7 +95,7 @@ export async function getFuzzTestTreeStates(seed: number, numberOfClients: numbe
 		insert: 1,
 		delete: 1,
 		start: 0,
-		commit: 0
+		commit: 0,
 	};
 	const opsPerRun = 20;
 	const runsPerBatch = 1;
@@ -146,7 +146,6 @@ export async function getFuzzTestTreeStates(seed: number, numberOfClients: numbe
 
 describe.only("Fuzz - save tree states history", () => {
 	it.only("with provided seed and number of clients", async () => {
-		const test = await getFuzzTestTreeStates(0, 2);
-		assert.equal(test, "ete")
+		await getFuzzTestTreeStates(0, 2);
 	});
 });
