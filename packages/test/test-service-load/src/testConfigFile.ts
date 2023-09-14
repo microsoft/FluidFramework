@@ -29,11 +29,15 @@ export interface IDetachedTestRunner {
 	writeBlob(blobNumber: number): Promise<void>;
 }
 
+export const ITestRunner: keyof IProvideTestRunner = "ITestRunner";
+export interface IProvideTestRunner {
+	readonly ITestRunner: ITestRunner;
+}
 /**
  * The main test runner interface. The test runner data objects must implement this interface. This is
  * called by the runner process and is the entry point into the test work load.
  */
-export interface ITestRunner {
+export interface ITestRunner extends IProvideTestRunner {
 	run(config: IRunConfig, reset: boolean): Promise<boolean>;
 	getRuntime(): Promise<IFluidDataStoreRuntime>;
 	getDetachedRunner?(

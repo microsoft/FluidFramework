@@ -285,6 +285,7 @@ async function runnerProcess(
 
 			container.connect();
 			const test = await requestFluidObject<ITestRunner>(container, "/");
+			assert(test.ITestRunner !== undefined, "Test runner doesn't implement ITestRunner");
 
 			// Retain old behavior of runtime being disposed on container close
 			container.once("closed", () => container?.dispose());

@@ -293,6 +293,10 @@ export const leafDataObjectFactory = new DataObjectFactory(
 export class RootDataObject extends BaseDataObject implements ITestRunner {
 	public static type = "SummaryStressDataObject";
 
+	public get ITestRunner() {
+		return this;
+	}
+
 	private get nodeId(): string {
 		assert(this._nodeId !== undefined, "id accessed before run");
 		return this._nodeId;

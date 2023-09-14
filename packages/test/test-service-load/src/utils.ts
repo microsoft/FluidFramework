@@ -154,6 +154,7 @@ const codeDetails: IFluidCodeDetails = {
 };
 
 export async function createCodeLoader(options: IContainerRuntimeOptions, workLoadPath: string) {
+	// The work load path must contain a `fluidExport` which provides IFluidDataStoreFactory.
 	const module = await import(`./${workLoadPath}/fluidExport`);
 	const dataStoreFactory = (module.fluidExport as IProvideFluidDataStoreFactory)
 		.IFluidDataStoreFactory;
@@ -316,6 +317,7 @@ export async function createTestDriver(
 export function getProfile(profileArg: string, workLoadPath: string) {
 	let config: ITestConfig;
 	try {
+		// The work load path must contain the `testConfig.json` config file.
 		config = JSON.parse(fs.readFileSync(`./src/${workLoadPath}/testConfig.json`, "utf-8"));
 	} catch (e) {
 		console.error("Failed to read testConfig.json");

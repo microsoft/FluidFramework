@@ -967,6 +967,10 @@ export const multiCollabDataObjectFactory = new DataObjectFactory(
 export class RootDataObject extends DataObject implements ITestRunner {
 	public static type = "GCStressDataObject";
 
+	public get ITestRunner() {
+		return this;
+	}
+
 	private readonly singleCollabDataObjectKey = "singleCollabDataObject";
 	private readonly multiCollabDataObjectKey = "multiCollabDataObject";
 

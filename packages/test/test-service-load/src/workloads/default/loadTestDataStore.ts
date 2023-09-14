@@ -469,6 +469,10 @@ export class LoadTestDataStoreModel implements IDetachedTestRunner {
 export class LoadTestDataStore extends DataObject implements ITestRunner {
 	public static type = "StressTestDataStore";
 
+	public get ITestRunner() {
+		return this;
+	}
+
 	protected async initializingFirstTime() {
 		this.root.set(taskManagerKey, TaskManager.create(this.runtime).handle);
 	}
