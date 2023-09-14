@@ -1,23 +1,23 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { assert } from "@fluidframework/core-utils";
 import { IDirectory } from "@fluidframework/map";
 
 export class Directory implements Map<string, any> {
 	private readonly map: Map<string, any> = new Map();
 	private readonly subDirectoryMap: Map<string, Directory> = new Map();
-	constructor(public readonly id: string, sharedDirectory?: IDirectory) {
+	constructor(sharedDirectory?: IDirectory) {
 		if (sharedDirectory === undefined) return;
 
 		this.map = new Map(sharedDirectory.entries());
 		for (const [key, subDirectory] of sharedDirectory.subdirectories()) {
 			assert(!this.subDirectoryMap.has(key), "sub directory should not exist yet");
-			const parts = subDirectory.absolutePath.split("/");
-			const directoryId = parts[parts.length - 1];
-			const directory = new Directory(directoryId, subDirectory);
+			const directory = new Directory(subDirectory);
 			this.subDirectoryMap.set(key, directory);
 		}
-	}
-	get absolutePath(): string {
-		throw new Error("Should not be getting absolute path");
 	}
 	get<T = any>(key: string): T | undefined {
 		return this.map.get(key) as T;
@@ -31,7 +31,7 @@ export class Directory implements Map<string, any> {
 	}
 	createSubDirectory(subdirName: string): Directory {
 		assert(!this.subDirectoryMap.has(subdirName), "sub directory should not exist yet");
-		const newDirectory = new Directory(subdirName);
+		const newDirectory = new Directory();
 		this.subDirectoryMap.set(subdirName, newDirectory);
 		return newDirectory;
 	}
@@ -46,17 +46,6 @@ export class Directory implements Map<string, any> {
 	}
 	subdirectories(): IterableIterator<[string, Directory]> {
 		return this.subDirectoryMap.entries();
-	}
-	getWorkingDirectory(relativePath: string): Directory | undefined {
-		if (relativePath === this.id) return this;
-		const parts = relativePath.split("/");
-		assert(parts.length >= 2, "there should be parts left!");
-		assert(parts[0] === this.id, "path should be correct");
-		const newParts = parts.slice(1);
-		const newPath = newParts.join("/");
-		const nextDirectory = this.getSubDirectory(parts[1]);
-		assert(nextDirectory !== undefined, "next directory should exist");
-		return nextDirectory.getWorkingDirectory(newPath);
 	}
 	clear(): void {
 		this.map.clear();

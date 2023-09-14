@@ -22,7 +22,7 @@ export function toLocalChannel(channel: IChannel): LocalDataStructure {
 			return new LocalDataStructure<number>(type, counter);
 		}
 		case SharedDirectory.getFactory().type: {
-			const directory = new Directory(channel.id, channel as SharedDirectory);
+			const directory = new Directory(channel as SharedDirectory);
 			return new LocalDataStructure<Directory>(type, directory);
 		}
 		case SharedMap.getFactory().type: {

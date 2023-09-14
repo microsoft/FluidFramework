@@ -7,9 +7,11 @@ import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example
 import React from "react";
 import ReactDOM from "react-dom";
 
+import { assert } from "@fluidframework/core-utils";
 import { DownloadableViewContainerRuntimeFactory } from "./container";
-import { CollaborativeView } from "./view";
+import { CollaborativeView } from "./collaborativeView";
 import { RootDataObject } from "./fluid-object";
+import { LoadView } from "./loadView";
 
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
@@ -22,26 +24,25 @@ async function start() {
 
 	let id: string;
 	let model: RootDataObject;
+	const contentDiv = document.getElementById("content");
+	assert(contentDiv !== null, "should have content div!");
 
 	if (location.hash.length === 0) {
 		// Normally our code loader is expected to match up with the version passed here.
 		// But since we're using a StaticCodeLoader that always loads the same runtime factory regardless,
 		// the version doesn't actually matter.
-		const createResponse = await tinyliciousModelLoader.createDetached("1.0");
-		model = createResponse.model;
-		id = await createResponse.attach();
+		const detachedModel = await tinyliciousModelLoader.createDetached("1.0");
+
+		ReactDOM.render(React.createElement(LoadView, { detachedModel }), contentDiv);
 	} else {
 		id = location.hash.substring(1);
 		model = await tinyliciousModelLoader.loadExisting(id);
-	}
 
-	// update the browser URL and the window title with the actual container ID
-	location.hash = id;
-	document.title = id;
+		// update the browser URL and the window title with the actual container ID
+		location.hash = id;
+		document.title = id;
 
-	// Render it
-	const contentDiv = document.getElementById("content");
-	if (contentDiv !== null) {
+		// Render collaborative view
 		ReactDOM.render(React.createElement(CollaborativeView, { model }), contentDiv);
 	}
 }

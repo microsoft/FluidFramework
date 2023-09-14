@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { SharedCounter } from "@fluidframework/counter";
+import { SharedDirectory, SharedMap } from "@fluidframework/map";
+import { SharedString } from "@fluidframework/sequence";
 import { Directory } from "./directory";
 import { LocalDataObject } from "./localDataStore";
-import { LocalDataStructure } from "./localDataStructure";
+import { DataStructure, LocalDataStructure } from "./localDataStructure";
 
 export interface ISerializableDirectory {
 	map: Record<string, any>;
@@ -88,4 +91,64 @@ export function makeSerializableDataObject(
 	};
 
 	return serializable;
+}
+
+function populateDirectory(directory: Directory, serializableDirectory: ISerializableDirectory) {
+	for (const [key, value] of Object.entries(serializableDirectory.map)) {
+		directory.set(key, value);
+	}
+
+	for (const [key, value] of Object.entries(serializableDirectory.subDirectories)) {
+		const subDirectory = directory.createSubDirectory(key);
+		populateDirectory(subDirectory, value);
+	}
+}
+
+function parseSerializableDirectory(serializableDirectory: ISerializableDirectory): Directory {
+	const directory = new Directory();
+	populateDirectory(directory, serializableDirectory);
+	return directory;
+}
+
+function parseSerializableStructure(
+	type: string,
+	serializableDataStructure: SerializableStructure,
+): DataStructure {
+	switch (type) {
+		case SharedCounter.getFactory().type: {
+			return serializableDataStructure as number;
+		}
+		case SharedString.getFactory().type: {
+			return serializableDataStructure as string;
+		}
+		case SharedDirectory.getFactory().type: {
+			const serializableDirectory = serializableDataStructure as ISerializableDirectory;
+			return parseSerializableDirectory(serializableDirectory);
+		}
+		case SharedMap.getFactory().type: {
+			return new Map(Object.entries(serializableDataStructure));
+		}
+		default:
+			throw new Error("unsupported type");
+	}
+}
+
+function parseDataStructure(
+	serializableDataStructure: ISerializableDataStructure,
+): LocalDataStructure {
+	const type = serializableDataStructure.type;
+	const value = parseSerializableStructure(type, serializableDataStructure.value);
+	return new LocalDataStructure<DataStructure>(type, value);
+}
+
+export function parseDataObject(serializableDataObject: ISerializableDataObject): LocalDataObject {
+	const type = serializableDataObject.type;
+	const localDataObject = new LocalDataObject(type);
+	for (const [key, value] of Object.entries(serializableDataObject.dataObjects)) {
+		localDataObject.dataObjects.set(key, parseDataObject(value));
+	}
+	for (const [key, value] of Object.entries(serializableDataObject.dataStructures)) {
+		localDataObject.dataStructures.set(key, parseDataStructure(value));
+	}
+	return localDataObject;
 }

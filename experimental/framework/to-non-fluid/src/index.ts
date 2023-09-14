@@ -6,7 +6,4 @@
 export { toLocalChannel } from "./toLocalFluid";
 export { LocalDataObject } from "./localDataStore";
 export { Directory } from "./directory";
-export {
-	makeSerializableDataObject,
-	ISerializableDataObject as SerializableDataObject,
-} from "./serialize";
+export { makeSerializableDataObject, ISerializableDataObject, parseDataObject } from "./serialize";

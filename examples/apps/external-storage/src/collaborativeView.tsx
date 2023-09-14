@@ -4,14 +4,11 @@
  */
 
 import React from "react";
-import {
-	CollaborativeTextArea,
-	CollaborativeMap,
-	SharedStringHelper,
-	CollaborativeDirectory,
-} from "@fluid-experimental/react-inputs";
+import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
 import { LocalDataObject, makeSerializableDataObject } from "@fluid-experimental/to-non-fluid";
 import { ChildDataObject, RootDataObject } from "./fluid-object";
+import { CollaborativeDirectory } from "./collaborativeDirectory";
+import { CollaborativeMap } from "./collaborativeMap";
 
 interface CollaborativeProps {
 	model: RootDataObject;
@@ -30,7 +27,8 @@ export const CollaborativeView = (props: CollaborativeProps) => {
 				console.log(localDataObject);
 				const serializableDataObject = makeSerializableDataObject(localDataObject);
 				console.log(serializableDataObject);
-				setValue(JSON.stringify(serializableDataObject));
+				console.log("abc");
+				setValue(JSON.stringify(serializableDataObject, undefined, 2));
 			})
 			.catch((error) => console.log(error));
 	};
@@ -42,9 +40,9 @@ export const CollaborativeView = (props: CollaborativeProps) => {
 		<div>
 			<CollaborativeDirectory data={props.model.directory} />
 			<ChildView model={props.model.child} />
-			{value !== "" ? <p>{value}</p> : null}
 			<button onClick={serialize}>Serialize</button>
 			<button onClick={clear}>Clear</button>
+			{value !== "" ? <pre>{value}</pre> : null}
 		</div>
 	);
 };
