@@ -59,7 +59,7 @@ function generateTreeRecursively(
 				const writeCursor = singleTextCursor({
 					type: leafNodeSchema.name,
 					// TODO: these values show up in the snapshot as "[object Object]", which doesn't seem right.
-					value: currentValue.toString(),
+					value: currentValue.value.toString(),
 				});
 				field.insert(i, writeCursor);
 				currentValue.value++;
