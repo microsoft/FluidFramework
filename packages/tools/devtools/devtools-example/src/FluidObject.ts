@@ -17,6 +17,7 @@ import {
 	ValueSchema,
 	SharedTreeFactory,
 	valueSymbol,
+	typeNameSymbol,
 } from "@fluid-experimental/tree2";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 /**
@@ -250,12 +251,18 @@ export class AppData extends DataObject {
 				childrenOne: [
 					{
 						childField: "Hello world!",
-						childData: { leafField: { [valueSymbol]: "Hello world again!" } },
+						childData: {
+							leafField: {
+								[typeNameSymbol]: stringSchema.name,
+								[valueSymbol]: "Hello world again!",
+							},
+						},
 					},
 					{
 						childField: true,
 						childData: {
 							leafField: {
+								[typeNameSymbol]: booleanSchema.name,
 								[valueSymbol]: false,
 							},
 						},
