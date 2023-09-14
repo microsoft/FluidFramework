@@ -65,7 +65,6 @@ export {
 	type MarkdownRenderConfiguration,
 	renderDocumentAsHtml,
 	renderDocumentAsMarkdown,
-	type RenderDocumentationNodeAsMarkdown,
 	renderNodeAsHtml,
 	renderNodeAsMarkdown,
 	renderNodesAsHtml,

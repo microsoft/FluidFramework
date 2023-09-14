@@ -44,21 +44,6 @@ import {
 } from "../default-renderers";
 
 /**
- * {@link DocumentationNode} renderer type-signature.
- *
- * @param node - The `DocumentationNode` to render.
- * @param writer - The writing context to render into.
- * @param context - Recursive contextual state.
- *
- * @public
- *
- * @privateRemarks TODO: inline in {@link MarkdownRenderers}
- */
-export type RenderDocumentationNode<
-	TDocumentationNode extends DocumentationNode = DocumentationNode,
-> = (node: TDocumentationNode, writer: DocumentWriter, context: RenderContext) => void;
-
-/**
  * Configuration for rendering {@link DocumentationNode}s to `Markdown`, specified by {@link DocumentationNode."type"}.
  *
  * @remarks
@@ -72,8 +57,16 @@ export type RenderDocumentationNode<
 export interface Renderers {
 	/**
 	 * Maps from a {@link DocumentationNode}'s {@link DocumentationNode."type"} to a renderer implementation for that kind of node.
+	 *
+	 * @param node - The `DocumentationNode` to render.
+	 * @param writer - The writing context to render into.
+	 * @param context - Recursive contextual state.
 	 */
-	[documentationNodeKind: string]: RenderDocumentationNode;
+	[documentationNodeKind: string]: (
+		node: DocumentationNode,
+		writer: DocumentWriter,
+		context: RenderContext,
+	) => void;
 }
 
 /**

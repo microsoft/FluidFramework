@@ -4,4 +4,4 @@
  */
 
 export { getRenderConfigurationWithDefaults, RenderConfiguration } from "./Configuration";
-export { defaultRenderers, Renderers, RenderDocumentationNode } from "./RenderOptions";
+export { defaultRenderers, Renderers } from "./RenderOptions";
