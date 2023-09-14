@@ -11,6 +11,7 @@ import { RuntimeRequestHandler } from "./requestHandlers";
 /**
  * The RuntimeRequestHandlerBuilder creates a runtime request handler based on request handlers.
  * The provided handlers sequentially applied until one is able to satisfy the request.
+ * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
  */
 export class RuntimeRequestHandlerBuilder {
 	private readonly handlers: RuntimeRequestHandler[] = [];

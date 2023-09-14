@@ -1319,6 +1319,9 @@ export class Container
 		);
 	}
 
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
 	public async request(path: IRequest): Promise<IResponse> {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,

@@ -152,6 +152,10 @@ export interface IDataStore {
 	readonly entryPoint?: IFluidHandle<FluidObject>;
 
 	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 *
+	 * !!! TODO
+	 *
 	 * IMPORTANT: This overload is provided for back-compat where IDataStore.request(\{ url: "/" \}) is already implemented and used.
 	 * The functionality it can provide (if the DataStore implementation is built for it) is redundant with @see {@link IDataStore.entryPoint}.
 	 * Once that API is mandatory on IDataStore, this overload will be deprecated.
@@ -201,6 +205,7 @@ export interface IContainerRuntimeBase
 
 	/**
 	 * Executes a request against the container runtime
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	request(request: IRequest): Promise<IResponse>;
 

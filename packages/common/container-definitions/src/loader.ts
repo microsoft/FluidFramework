@@ -391,6 +391,10 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 
 	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 *
+	 * !!! TODO
+	 *
 	 * IMPORTANT: This overload is provided for back-compat where IContainer.request(\{ url: "/" \}) is already implemented and used.
 	 * The functionality it can provide (if the Container implementation is built for it) is redundant with @see {@link IContainer.getEntryPoint}.
 	 * Once that API is mandatory on IContainer, this overload will be deprecated.
