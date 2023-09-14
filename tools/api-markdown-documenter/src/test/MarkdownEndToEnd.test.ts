@@ -22,6 +22,7 @@ const testTempDirPath = Path.resolve(__dirname, "test_temp", "markdown");
 
 /**
  * Snapshot directory to which generated test data will be copied.
+ * Relative to dist/test
  */
 const snapshotsDirPath = Path.resolve(
 	__dirname,
@@ -32,6 +33,10 @@ const snapshotsDirPath = Path.resolve(
 	"snapshots",
 	"markdown",
 );
+
+// Relative to dist/test
+const testDataDirPath = Path.resolve(__dirname, "..", "..", "src", "test", "test-data");
+const testModelPaths = [Path.resolve(testDataDirPath, "simple-suite-test.json")];
 
 /**
  * Simple integration test that validates complete output from simple test package.
@@ -79,7 +84,7 @@ interface ConfigTestProps {
  * Runs a full-suite test for the provided Model name against the provided list of configs.
  *
  * @remarks
- * Snapshots are generated under `./snapshots` within sub-directories generated for each <package-name>, <config-name>
+ * Snapshots are generated under `./snapshots/markdown` within sub-directories generated for each <package-name>, <config-name>
  * pair. These snapshots are checked in. Evaluating test diffs can be accomplished by looking at the git-wise diff.
  * If a change in the Markdown rendering is expected, it should be checked in.
  *
@@ -223,10 +228,5 @@ describe("Markdown rendering end-to-end tests", () => {
 	});
 
 	// Run the test suite against a sample report
-	apiTestSuite(
-		"simple-suite-test",
-		// Relative to dist/test
-		[Path.resolve(__dirname, "test-data", "simple-suite-test.json")],
-		configs,
-	);
+	apiTestSuite("simple-suite-test", testModelPaths, configs);
 });
