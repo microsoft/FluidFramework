@@ -587,6 +587,8 @@ class InvalidatingPathVisitor
 	extends AbstractPathVisitor
 	implements Flushable<InvalidatingPathVisitor>
 {
+	private readonly listeners: Set<Listener> = new Set();
+
 	private processRegisteredPaths(path: UpPath): void {
 		const current = toDownPath(path);
 		const listeners = this.getListeners(BindingType.Invalidation, current);
@@ -604,8 +606,6 @@ class InvalidatingPathVisitor
 	public onInsert(path: UpPath, content: ProtoNodes): void {
 		this.processRegisteredPaths(path);
 	}
-
-	private readonly listeners: Set<Listener> = new Set();
 
 	public flush(): InvalidatingPathVisitor {
 		for (const listener of this.listeners) {
