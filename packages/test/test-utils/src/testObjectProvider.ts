@@ -7,7 +7,6 @@ import {
 	IContainer,
 	IHostLoader,
 	IFluidCodeDetails,
-	LoaderHeader,
 	ILoader,
 } from "@fluidframework/container-definitions";
 import {
@@ -383,10 +382,10 @@ export class TestObjectProvider implements ITestObjectProvider {
 		return this.resolveContainer(loader, requestHeader);
 	}
 
-	private async resolveContainer(loader: ILoader, requestHeader?: IRequestHeader) {
+	private async resolveContainer(loader: ILoader, headers?: IRequestHeader) {
 		const container = await loader.resolve({
 			url: await this.driver.createContainerUrl(this.documentId),
-			headers: requestHeader,
+			headers,
 		});
 
 		return container;
