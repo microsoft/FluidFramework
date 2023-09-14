@@ -9,10 +9,10 @@ import { RenderConfiguration, defaultRenderers } from "./configuration";
 import { RenderContext, getContextWithDefaults } from "./RenderContext";
 
 /**
- * Renders a {@link DocumentNode} as Markdown, and returns the resulting file contents as a `string`.
+ * Renders a {@link DocumentNode} as HTML, and returns the resulting file contents as a `string`.
  *
  * @param document - The document to render.
- * @param config - Markdown rendering configuration.
+ * @param config - HTML rendering configuration.
  *
  * @public
  */
@@ -29,8 +29,8 @@ export function renderDocument(document: DocumentNode, config: RenderConfigurati
 	let renderedDocument = writer.getText().trim();
 
 	if (document.frontMatter !== undefined) {
-		// Join body contents with front-matter, separated by a blank line.
-		renderedDocument = [document.frontMatter, "", renderedDocument].join("\n");
+		// Join body contents with front-matter.
+		renderedDocument = [document.frontMatter, renderedDocument].join("\n");
 	}
 
 	// Ensure file ends with a single newline.
@@ -41,7 +41,7 @@ export function renderDocument(document: DocumentNode, config: RenderConfigurati
 
 /**
  * Renders the provided {@link DocumentationNode} per the configured
- * {@link MarkdownRenderContext.customRenderers | renderers}.
+ * {@link HtmlRenderContext.customRenderers | renderers}.
  *
  * @public
  */
@@ -68,7 +68,7 @@ export function renderNode(
 
 /**
  * Renders a list of child {@link DocumentationNode}s per the configured
- * {@link MarkdownRenderContext.customRenderers | renderers}.
+ * {@link HtmlRenderContext.customRenderers | renderers}.
  *
  * @public
  */

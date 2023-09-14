@@ -12,8 +12,8 @@ import {
 } from "../../../documentation-domain";
 import { testRender } from "./Utilities";
 
-describe("Span rendering tests", () => {
-	describe("Markdown", () => {
+describe("Span Markdown rendering tests", () => {
+	describe("Markdown context", () => {
 		it("Empty span", () => {
 			expect(testRender(SpanNode.Empty)).to.equal("");
 		});
@@ -42,7 +42,7 @@ describe("Span rendering tests", () => {
 		});
 	});
 
-	describe("HTML", () => {
+	describe("HTML context", () => {
 		it("Empty span", () => {
 			expect(testRender(SpanNode.Empty, { insideHtml: true })).to.equal("<span></span>");
 		});

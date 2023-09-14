@@ -8,8 +8,8 @@ import { PlainTextNode } from "../../../documentation-domain";
 import { RenderContext } from "../RenderContext";
 import { testRender } from "./Utilities";
 
-describe("PlainText rendering tests", () => {
-	describe("Markdown", () => {
+describe("PlainText Markdown rendering tests", () => {
+	describe("Markdown context", () => {
 		it("Empty text", () => {
 			expect(testRender(PlainTextNode.Empty)).to.equal("");
 		});
@@ -54,7 +54,7 @@ describe("PlainText rendering tests", () => {
 		});
 	});
 
-	describe("HTML", () => {
+	describe("HTML context", () => {
 		it("Empty text", () => {
 			const context: Partial<RenderContext> = {
 				insideHtml: true,

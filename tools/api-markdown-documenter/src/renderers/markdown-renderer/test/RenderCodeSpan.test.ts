@@ -7,8 +7,8 @@ import { expect } from "chai";
 import { CodeSpanNode, PlainTextNode } from "../../../documentation-domain";
 import { testRender } from "./Utilities";
 
-describe("CodeSpan rendering tests", () => {
-	describe("Markdown", () => {
+describe("CodeSpan Markdown rendering tests", () => {
+	describe("Markdown context", () => {
 		it("Empty CodeSpan", () => {
 			expect(testRender(CodeSpanNode.Empty)).to.equal("``");
 		});
@@ -25,7 +25,7 @@ describe("CodeSpan rendering tests", () => {
 		});
 	});
 
-	describe("HTML", () => {
+	describe("HTML context", () => {
 		it("Empty CodeSpan", () => {
 			expect(testRender(CodeSpanNode.Empty, { insideHtml: true })).to.equal("<code></code>");
 		});

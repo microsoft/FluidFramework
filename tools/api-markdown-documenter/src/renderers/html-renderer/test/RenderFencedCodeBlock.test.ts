@@ -7,27 +7,13 @@ import { expect } from "chai";
 import { FencedCodeBlockNode, PlainTextNode } from "../../../documentation-domain";
 import { testRender } from "./Utilities";
 
-describe("FencedCodeBlock Markdown rendering tests", () => {
-	it("Simple FencedCodeBlock (Markdown context)", () => {
+describe("FencedCodeBlock HTML rendering tests", () => {
+	it("Simple FencedCodeBlock", () => {
 		const input = new FencedCodeBlockNode(
 			[new PlainTextNode("console.log('hello world');")],
 			"typescript",
 		);
 		const result = testRender(input);
-
-		const expected = ["", "```typescript", "console.log('hello world');", "```", "", ""].join(
-			"\n",
-		);
-
-		expect(result).to.equal(expected);
-	});
-
-	it("Simple FencedCodeBlock (HTML context)", () => {
-		const input = new FencedCodeBlockNode(
-			[new PlainTextNode("console.log('hello world');")],
-			"typescript",
-		);
-		const result = testRender(input, { insideHtml: true });
 
 		const expected = ["<code>", "  console.log('hello world');", "</code>", ""].join("\n");
 

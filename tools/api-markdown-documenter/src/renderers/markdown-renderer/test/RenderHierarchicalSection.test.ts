@@ -12,8 +12,8 @@ import {
 } from "../../../documentation-domain";
 import { testRender } from "./Utilities";
 
-describe("HierarchicalSection rendering tests", () => {
-	describe("Markdown", () => {
+describe("HierarchicalSection Markdown rendering tests", () => {
+	describe("Markdown context", () => {
 		it("Simple section", () => {
 			const input = new SectionNode(
 				[
@@ -95,7 +95,7 @@ describe("HierarchicalSection rendering tests", () => {
 		});
 	});
 
-	describe("HTML", () => {
+	describe("HTML context", () => {
 		it("Simple section", () => {
 			const input = new SectionNode(
 				[

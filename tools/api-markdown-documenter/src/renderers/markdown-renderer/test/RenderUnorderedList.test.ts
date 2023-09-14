@@ -7,8 +7,8 @@ import { expect } from "chai";
 import { UnorderedListNode } from "../../../documentation-domain";
 import { testRender } from "./Utilities";
 
-describe("UnorderedListNode rendering tests", () => {
-	describe("Markdown", () => {
+describe("UnorderedListNode Markdown rendering tests", () => {
+	describe("Markdown context", () => {
 		it("Empty list", () => {
 			expect(testRender(UnorderedListNode.Empty)).to.equal("\n");
 		});
@@ -27,7 +27,7 @@ describe("UnorderedListNode rendering tests", () => {
 		});
 	});
 
-	describe("HTML", () => {
+	describe("HTML context", () => {
 		it("Empty list", () => {
 			expect(testRender(UnorderedListNode.Empty, { insideHtml: true })).to.equal(
 				"<ul>\n</ul>\n",

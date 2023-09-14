@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { expect } from "chai";
 
 import {
@@ -14,7 +15,7 @@ import {
 } from "../../../documentation-domain";
 import { renderDocument } from "../Render";
 
-describe("Document Markdown rendering tests", () => {
+describe("Document HTML rendering tests", () => {
 	it("Renders a simple document", () => {
 		const document = new DocumentNode({
 			apiItemName: "Foo",
@@ -47,15 +48,25 @@ describe("Document Markdown rendering tests", () => {
 		});
 
 		const expected = [
-			"# Sample Document",
-			"",
-			"This is a sample document. It has very basic content.\t",
-			"",
-			"## Section Heading",
-			"",
-			"This is test inside of a paragraph. It is also inside of a hierarchical section node. _That's real neat-o._",
+			"<section>",
+			"  <h1>",
+			"    Sample Document",
+			"  </h1>",
+			"  <p>",
+			"    This is a sample document. It has very basic content.\t",
+			"  </p>",
+			"  <section>",
+			"    <h2>",
+			"      Section Heading",
+			"    </h2>",
+			"    <p>",
+			"      This is test inside of a paragraph. It is also inside of a hierarchical section node. <span><i>That's real neat-o.</i></span>",
+			"    </p>",
+			"  </section>",
+			"</section>",
 			"",
 		].join("\n");
+
 		expect(renderDocument(document, {})).to.equal(expected);
 	});
 });

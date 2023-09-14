@@ -7,8 +7,8 @@ import { expect } from "chai";
 import { ParagraphNode, PlainTextNode } from "../../../documentation-domain";
 import { testRender } from "./Utilities";
 
-describe("ParagraphNode rendering tests", () => {
-	describe("Markdown", () => {
+describe("ParagraphNode Markdown rendering tests", () => {
+	describe("Markdown context", () => {
 		it("Empty paragraph", () => {
 			expect(testRender(ParagraphNode.Empty)).to.equal("\n"); // Paragraphs always create a trailing blank line in Markdown
 		});
@@ -25,7 +25,7 @@ describe("ParagraphNode rendering tests", () => {
 		});
 	});
 
-	describe("HTML", () => {
+	describe("HTML context", () => {
 		it("Empty paragraph", () => {
 			expect(testRender(ParagraphNode.Empty, { insideHtml: true })).to.equal("<p>\n</p>\n");
 		});

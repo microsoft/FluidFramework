@@ -7,8 +7,8 @@ import { expect } from "chai";
 import { BlockQuoteNode, LineBreakNode, PlainTextNode } from "../../../documentation-domain";
 import { testRender } from "./Utilities";
 
-describe("BlockQuote rendering tests", () => {
-	describe("Markdown", () => {
+describe("BlockQuote Markdown rendering tests", () => {
+	describe("Markdown context", () => {
 		it("Empty BlockQuote", () => {
 			expect(testRender(BlockQuoteNode.Empty)).to.equal("\n");
 		});
@@ -35,7 +35,7 @@ describe("BlockQuote rendering tests", () => {
 		});
 	});
 
-	describe("HTML", () => {
+	describe("HTML context", () => {
 		it("Empty BlockQuote", () => {
 			expect(testRender(BlockQuoteNode.Empty, { insideHtml: true })).to.equal(
 				"<blockquote>\n</blockquote>\n",

@@ -8,7 +8,7 @@ import { defaultConsoleLogger } from "../../../Logging";
 import { Renderers } from "./RenderOptions";
 
 /**
- * Configuration for Markdown rendering of generated documentation contents.
+ * Configuration for HTML rendering of generated documentation contents.
  *
  * @public
  */

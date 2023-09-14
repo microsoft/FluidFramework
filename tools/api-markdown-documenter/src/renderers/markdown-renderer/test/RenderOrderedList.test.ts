@@ -7,8 +7,8 @@ import { expect } from "chai";
 import { OrderedListNode } from "../../../documentation-domain";
 import { testRender } from "./Utilities";
 
-describe("OrderedListNode rendering tests", () => {
-	describe("Markdown", () => {
+describe("OrderedListNode Markdown rendering tests", () => {
+	describe("Markdown context", () => {
 		it("Empty list", () => {
 			expect(testRender(OrderedListNode.Empty)).to.equal("\n");
 		});
@@ -27,7 +27,7 @@ describe("OrderedListNode rendering tests", () => {
 		});
 	});
 
-	describe("HTML", () => {
+	describe("HTML context", () => {
 		it("Empty list", () => {
 			expect(testRender(OrderedListNode.Empty, { insideHtml: true })).to.equal(
 				"<ol>\n</ol>\n",

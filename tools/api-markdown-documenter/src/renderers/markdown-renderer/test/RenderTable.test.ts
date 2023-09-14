@@ -13,8 +13,8 @@ import {
 } from "../../../documentation-domain";
 import { testRender } from "./Utilities";
 
-describe("Table rendering tests", () => {
-	describe("Markdown", () => {
+describe("Table Markdown rendering tests", () => {
+	describe("Markdown context", () => {
 		it("Empty table", () => {
 			expect(testRender(TableNode.Empty)).to.equal("\n");
 		});
@@ -81,7 +81,7 @@ describe("Table rendering tests", () => {
 		});
 	});
 
-	describe("HTML", () => {
+	describe("HTML context", () => {
 		it("Empty table", () => {
 			expect(testRender(TableNode.Empty, { insideHtml: true })).to.equal(
 				"<table>\n</table>\n",
