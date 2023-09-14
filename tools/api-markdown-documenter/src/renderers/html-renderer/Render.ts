@@ -41,7 +41,7 @@ export function renderDocument(document: DocumentNode, config: RenderConfigurati
 
 	writer.ensureNewLine();
 	writer.decreaseIndent();
-	writer.writeLine(`<body>`);
+	writer.writeLine(`</body>`);
 	writer.decreaseIndent();
 	writer.writeLine("</html>");
 
