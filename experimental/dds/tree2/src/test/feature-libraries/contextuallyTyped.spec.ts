@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { MockHandle } from "@fluidframework/test-runtime-utils";
+import { MockHandle, validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { EmptyKey, MapTree, ValueSchema } from "../../core";
 
 import {
@@ -13,6 +13,7 @@ import {
 	applyTypesFromContext,
 	ContextuallyTypedNodeDataObject,
 	cursorFromContextualData,
+	isFluidHandle,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../feature-libraries/contextuallyTyped";
@@ -30,6 +31,26 @@ describe("ContextuallyTyped", () => {
 		assert(!isPrimitiveValue(undefined));
 		assert(!isPrimitiveValue(null));
 		assert(!isPrimitiveValue([]));
+		assert(!isPrimitiveValue(new MockHandle(5)));
+	});
+
+	it("isFluidHandle", () => {
+		assert(!isFluidHandle(0));
+		assert(!isFluidHandle({}));
+		assert(!isFluidHandle(undefined));
+		assert(!isFluidHandle(null));
+		assert(!isFluidHandle([]));
+		assert(isFluidHandle(new MockHandle(5)));
+		assert(!isFluidHandle({ IFluidHandle: 5 }));
+		assert(!isFluidHandle({ IFluidHandle: {} }));
+		const loopy = { IFluidHandle: {} };
+		loopy.IFluidHandle = loopy;
+		// isFluidHandle has extra logic to check the handle is valid if it passed the detection via cyclic ref.
+		// Thus this case asserts:
+		assert.throws(
+			() => isFluidHandle(loopy),
+			(e: Error) => validateAssertionError(e, /IFluidHandle/),
+		);
 	});
 
 	it("allowsValue", () => {
