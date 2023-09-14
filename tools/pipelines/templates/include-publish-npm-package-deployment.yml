@@ -39,10 +39,6 @@ parameters:
   type: string
   default:
 
-- name: isClientUtilsPackage
-  type: boolean
-  default: false
-
 jobs:
 - deployment: publish_${{ replace(parameters.environment, '-', '_') }}
   displayName: Publish ${{ parameters.environment }}
@@ -69,7 +65,6 @@ jobs:
               customEndPoint: ${{ parameters.customEndPoint }}
               official: ${{ parameters.official }}
               publishFlags: ${{ parameters.publishFlags }}
-              isClientUtilsPackage: ${{ parameters.isClientUtilsPackage }}
           - ${{ if eq(parameters.publishNonScopedPackages, true) }}:
             - template: include-publish-npm-package-steps.yml
               parameters:
