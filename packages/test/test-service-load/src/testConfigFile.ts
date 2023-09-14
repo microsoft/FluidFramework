@@ -3,12 +3,47 @@
  * Licensed under the MIT License.
  */
 
+import { IRandom } from "@fluid-internal/stochastic-test-utils";
 import { OptionsMatrix } from "@fluid-internal/test-pairwise-generator";
 import { ILoaderOptions } from "@fluidframework/container-definitions";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { ConfigTypes } from "@fluidframework/telemetry-utils";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { ConfigTypes, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 
 export const GcFailureExitCode = 254;
+
+/** The configuration used by the test runner. */
+export interface IRunConfig {
+	runId: number;
+	profileName: string;
+	testConfig: ILoadTestConfig;
+	verbose: boolean;
+	random: IRandom;
+	logger: ITelemetryLoggerExt;
+	loaderConfig?: ILoaderOptions;
+}
+
+/** The interface for test runners that supports running in detached container mode. */
+export interface IDetachedTestRunner {
+	/** Uploads blobs when container is detached. */
+	writeBlob(blobNumber: number): Promise<void>;
+}
+
+export const ITestRunner: keyof IProvideTestRunner = "ITestRunner";
+export interface IProvideTestRunner {
+	readonly ITestRunner: ITestRunner;
+}
+/**
+ * The main test runner interface. The test runner data objects must implement this interface. This is
+ * called by the runner process and is the entry point into the test work load.
+ */
+export interface ITestRunner extends IProvideTestRunner {
+	run(config: IRunConfig, reset: boolean): Promise<boolean>;
+	getRuntime(): Promise<IFluidDataStoreRuntime>;
+	getDetachedRunner?(
+		config: Omit<IRunConfig, "runId" | "profileName">,
+	): Promise<IDetachedTestRunner>;
+}
 
 /** Type modeling the structure of the testConfig.json file */
 export interface ITestConfig {

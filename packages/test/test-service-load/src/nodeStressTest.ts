@@ -59,6 +59,11 @@ async function main() {
 			"Which test profile to use from testConfig.json",
 			"ci",
 		)
+		.requiredOption(
+			"-w, --workLoadPath <dirPath>",
+			"The test workload directory path relative to the test directory",
+			"default",
+		)
 		.option("-e, --driverEndpoint <endpoint>", "Which endpoint should the driver target?")
 		.option("-id, --testId <testId>", "Load an existing data store rather than creating new")
 		.option("-c, --credFile <filePath>", "Filename containing user credentials for test")
@@ -77,13 +82,14 @@ async function main() {
 		.option(
 			"--createTestId",
 			"Flag indicating whether to create a document corresponding \
-        to the testId passed",
+		to the testId passed",
 		)
 		.parse(process.argv);
 
 	const driver: TestDriverTypes = commander.driver;
 	const endpoint: DriverEndpoint | undefined = commander.driverEndpoint;
 	const profileName: string = commander.profile;
+	const workLoadPath: string = `workloads/${commander.workLoadPath}`;
 	const testId: string | undefined = commander.testId;
 	const debug: true | undefined = commander.debug;
 	const log: string | undefined = commander.log;
@@ -94,7 +100,7 @@ async function main() {
 	const enableMetrics: boolean = commander.enableMetrics ?? false;
 	const createTestId: boolean = commander.createTestId ?? false;
 
-	const profile = getProfile(profileName);
+	const profile = getProfile(profileName, workLoadPath);
 
 	if (log !== undefined) {
 		process.env.DEBUG = log;
@@ -104,7 +110,7 @@ async function main() {
 
 	const testDriver = await createTestDriver(driver, endpoint, seed, undefined, browserAuth);
 
-	await orchestratorProcess(testDriver, profile, {
+	await orchestratorProcess(testDriver, profile, workLoadPath, {
 		testId,
 		debug,
 		verbose,
@@ -133,6 +139,7 @@ interface RunnerResult {
 async function orchestratorProcess(
 	testDriver: ITestDriver,
 	profile: ILoadTestConfig,
+	workLoadPath: string,
 	args: {
 		testId?: string;
 		debug?: true;
@@ -154,6 +161,7 @@ async function orchestratorProcess(
 				testDriver,
 				args.seed,
 				profile,
+				workLoadPath,
 				args.verbose === true,
 				args.profileName,
 				args.testId,
@@ -187,6 +195,8 @@ async function orchestratorProcess(
 			url,
 			"--seed",
 			`0x${args.seed.toString(16)}`,
+			"--workLoadPath",
+			workLoadPath,
 		];
 		if (args.debug === true) {
 			const debugPort = 9230 + i; // 9229 is the default and will be used for the root orchestrator process
@@ -306,7 +316,7 @@ function writeTestResultXmlFile(results: RunnerResult[], durationSec: number) {
 		};
 	});
 	const suiteAttributes = {
-		name: "GC Stress Test",
+		name: "Stress Test",
 		tests: results.length,
 		failures: results.filter(({ returnCode }) => returnCode === GcFailureExitCode).length,
 		errors: results.filter(({ returnCode }) => returnCode !== 0).length,

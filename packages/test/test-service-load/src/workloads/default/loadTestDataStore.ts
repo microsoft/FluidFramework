@@ -4,41 +4,17 @@
  */
 
 import * as crypto from "crypto";
-import { IRandom } from "@fluid-internal/stochastic-test-utils";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISharedCounter, SharedCounter } from "@fluidframework/counter";
 import { ITaskManager, TaskManager } from "@fluidframework/task-manager";
 import { IDirectory, ISharedDirectory, ISharedMap, SharedMap } from "@fluidframework/map";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { delay, assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ILoaderOptions } from "@fluidframework/container-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ILoadTestConfig } from "./testConfigFile";
-import { LeaderElection } from "./leaderElection";
-
-export interface IRunConfig {
-	runId: number;
-	profileName: string;
-	testConfig: ILoadTestConfig;
-	verbose: boolean;
-	random: IRandom;
-	logger: ITelemetryLoggerExt;
-	loaderConfig?: ILoaderOptions;
-}
-
-export interface ILoadTest {
-	run(config: IRunConfig, reset: boolean): Promise<boolean>;
-	detached(config: Omit<IRunConfig, "runId" | "profileName">): Promise<LoadTestDataStoreModel>;
-	getRuntime(): Promise<IFluidDataStoreRuntime>;
-}
+import { IDetachedTestRunner, IRunConfig, ITestRunner } from "../../testConfigFile";
+import { LeaderElection } from "../../leaderElection";
 
 const taskManagerKey = "taskManager";
 const counterKey = "counter";
@@ -54,7 +30,7 @@ const defaultBlobSize = 1024;
  * and provide common abstractions for workload scheduling
  * via task picking.
  */
-export class LoadTestDataStoreModel {
+export class LoadTestDataStoreModel implements IDetachedTestRunner {
 	private static async waitForCatchup(runtime: IFluidDataStoreRuntime): Promise<void> {
 		if (!runtime.connected) {
 			await new Promise<void>((resolve, reject) => {
@@ -120,7 +96,7 @@ export class LoadTestDataStoreModel {
 		let gcDataStore: LoadTestDataStore | undefined;
 		if (!root.has(gcDataStoreIdKey)) {
 			// The data store for this pair doesn't exist, create it and store its url.
-			gcDataStore = await LoadTestDataStoreInstantiationFactory.createInstance(
+			gcDataStore = await loadTestDataStoreInstantiationFactory.createInstance(
 				containerRuntime,
 			);
 			// Force the new data store to be attached.
@@ -490,14 +466,30 @@ export class LoadTestDataStoreModel {
 	}
 }
 
-class LoadTestDataStore extends DataObject implements ILoadTest {
-	public static DataStoreName = "StressTestDataStore";
+export class LoadTestDataStore extends DataObject implements ITestRunner {
+	public static type = "StressTestDataStore";
+
+	public get ITestRunner() {
+		return this;
+	}
 
 	protected async initializingFirstTime() {
 		this.root.set(taskManagerKey, TaskManager.create(this.runtime).handle);
 	}
 
 	public async detached(config: Omit<IRunConfig, "runId">) {
+		return LoadTestDataStoreModel.createRunnerInstance(
+			{ ...config, runId: -1 },
+			false,
+			this.root,
+			this.runtime,
+			this.context.containerRuntime,
+		);
+	}
+
+	public async getDetachedRunner(
+		config: Omit<IRunConfig, "runId">,
+	): Promise<IDetachedTestRunner> {
 		return LoadTestDataStoreModel.createRunnerInstance(
 			{ ...config, runId: -1 },
 			false,
@@ -744,26 +736,10 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 	}
 }
 
-const LoadTestDataStoreInstantiationFactory = new DataObjectFactory(
-	LoadTestDataStore.DataStoreName,
+export const loadTestDataStoreInstantiationFactory = new DataObjectFactory(
+	LoadTestDataStore.type,
 	LoadTestDataStore,
 	[SharedCounter.getFactory(), TaskManager.getFactory()],
 	{},
+	[],
 );
-
-const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-	runtime.IFluidHandleContext.resolveHandle(request);
-
-export const createFluidExport = (options: IContainerRuntimeOptions) =>
-	new ContainerRuntimeFactoryWithDefaultDataStore(
-		LoadTestDataStoreInstantiationFactory,
-		new Map([
-			[
-				LoadTestDataStore.DataStoreName,
-				Promise.resolve(LoadTestDataStoreInstantiationFactory),
-			],
-		]),
-		undefined,
-		[innerRequestHandler],
-		options,
-	);

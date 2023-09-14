@@ -41,9 +41,9 @@ variables:
 
 lockBehavior: sequential
 stages:
-  # stress tests odsp
-  - stage: stress_tests_odsp
-    displayName:  Stress tests - Odsp
+  # gc stress tests odsp
+  - stage: gc_stress_tests_odsp
+    displayName: GC stress tests - Odsp
     dependsOn: []
     # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
     variables:
@@ -59,18 +59,18 @@ stages:
         testCommand: start:odsp
         splitTestVariants:
           - name: Tombstone Mode
-            flags: --profile gc_ci_tombstone
+            flags: --workloadPath gc --profile ci_tombstone
           - name: Sweep Mode
-            flags: --profile gc_ci_sweep
+            flags: --workloadPath gc --profile ci_sweep
         env:
           login__microsoft__clientId: $(login-microsoft-clientId)
           login__microsoft__secret: $(login-microsoft-secret)
           login__odsp__test__tenants: $(automation-stress-login-odsp-test-tenants)
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
-  # stress tests tinylicious
-  - stage: stress_tests_tinylicious
-    displayName: Stress tests - tinylicious
+  # gc stress tests tinylicious
+  - stage: gc_stress_tests_tinylicious
+    displayName: GC stress tests - tinylicious
     dependsOn: []
     jobs:
     - template: templates/include-test-real-service.yml
@@ -97,3 +97,44 @@ stages:
           - name: Sweep Mode
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+
+  # summarizer stress test odsp
+  - stage: summary_stress_tests_odsp
+    displayName: Summary stress tests - Odsp
+    dependsOn: []
+    # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
+    variables:
+    - group: stress-odsp-lock
+    jobs:
+    - template: templates/include-test-real-service.yml
+      parameters:
+        poolBuild: Large
+        testPackage: ${{ variables.testPackage }}
+        testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
+        timeoutInMinutes: 200
+        testCommand: start:odsp
+        splitTestVariants:
+          - flags: --workloadPath summary --profile ci
+        env:
+          login__microsoft__clientId: $(login-microsoft-clientId)
+          login__microsoft__secret: $(login-microsoft-secret)
+          login__odsp__test__tenants: $(automation-stress-login-odsp-test-tenants)
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+
+  # summarizer stress tests tinylicious
+  - stage: summary_stress_tests_tinylicious
+    displayName: Summary stress tests - tinylicious
+    dependsOn: []
+    jobs:
+    - template: templates/include-test-real-service.yml
+      parameters:
+        poolBuild: Large
+        testPackage: ${{ variables.testPackage }}
+        testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
+        timeoutInMinutes: 200
+        testCommand: start:t9s:summary:ci
+        env:
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+    

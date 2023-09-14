@@ -19,7 +19,7 @@ import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { SharedCounter } from "@fluidframework/counter";
 import { SharedMap } from "@fluidframework/map";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { IRunConfig } from "./loadTestDataStore";
+import { IRunConfig, ITestRunner } from "../../testConfigFile";
 
 /**
  * The maximum number of leaf data objects that can be created.
@@ -74,7 +74,7 @@ const LeafActivityType = {
 	/** Don't do anything. */
 	None: 0,
 	/** Another don't do anything activity to ensure that creation / changes don't happen too frequently. */
-	AnotherNode: 1,
+	AnotherNone: 1,
 	/** Update one of the DDSes in the data object. */
 	UpdateOneDDS: 2,
 	/** Update all the DDSes in the data object. */
@@ -268,7 +268,7 @@ export class LeafDataObject extends DataObject implements IActivityObject {
 				break;
 			}
 			case LeafActivityType.None:
-			case LeafActivityType.AnotherNode:
+			case LeafActivityType.AnotherNone:
 				logEvent(this.logger, {
 					eventName: "DDS-",
 					fromId: this.nodeId,
@@ -290,9 +290,11 @@ export const leafDataObjectFactory = new DataObjectFactory(
  * Data object that is the root in the data object hierarchy. This does one of the activities in
  * "RootActivityType" at regular intervals.
  */
-export class RootDataObject extends BaseDataObject {
-	public static get type(): string {
-		return "RootDataObject";
+export class RootDataObject extends BaseDataObject implements ITestRunner {
+	public static type = "SummaryStressDataObject";
+
+	public get ITestRunner() {
+		return this;
 	}
 
 	private get nodeId(): string {
@@ -410,6 +412,10 @@ export class RootDataObject extends BaseDataObject {
 				"InitialDSActivityFailed",
 			);
 		}
+	}
+
+	async getRuntime() {
+		return this.runtime;
 	}
 
 	public async run(config: IRunConfig): Promise<boolean> {
@@ -532,6 +538,15 @@ const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntime
 	runtime.IFluidHandleContext.resolveHandle(request);
 
 export const createSummarizerFluidExport = (options: IContainerRuntimeOptions) =>
+	new ContainerRuntimeFactoryWithDefaultDataStore(
+		rootDataObjectFactory,
+		[[rootDataObjectFactory.type, Promise.resolve(rootDataObjectFactory)]],
+		undefined,
+		[innerRequestHandler],
+		options,
+	);
+
+export const fluidExport = (options: IContainerRuntimeOptions) =>
 	new ContainerRuntimeFactoryWithDefaultDataStore(
 		rootDataObjectFactory,
 		[[rootDataObjectFactory.type, Promise.resolve(rootDataObjectFactory)]],

@@ -20,7 +20,6 @@ import { assert, delay } from "@fluidframework/core-utils";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
-import { ILoadTest, IRunConfig } from "./loadTestDataStore";
 import {
 	createCodeLoader,
 	createLogger,
@@ -36,7 +35,7 @@ import {
 	generateRuntimeOptions,
 	getOptionOverride,
 } from "./optionsMatrix";
-import { GcFailureExitCode } from "./testConfigFile";
+import { GcFailureExitCode, IRunConfig, ITestRunner } from "./testConfigFile";
 
 function printStatus(runConfig: IRunConfig, message: string) {
 	if (runConfig.verbose) {
@@ -66,6 +65,11 @@ async function main() {
 			parseIntArg,
 		)
 		.requiredOption("-s, --seed <number>", "Seed for this runners random number generator")
+		.requiredOption(
+			"-w, --workLoadPath <dirPath>",
+			"The test workload directory path relative to the test directory",
+			"default",
+		)
 		.option("-e, --driverEndpoint <endpoint>", "Which endpoint should the driver target?")
 		.option(
 			"-l, --log <filter>",
@@ -80,12 +84,13 @@ async function main() {
 	const profileName: string = commander.profile;
 	const url: string = commander.url;
 	const runId: number = commander.runId;
+	const workLoadPath: string = commander.workLoadPath;
 	const log: string | undefined = commander.log;
 	const verbose: boolean = commander.verbose ?? false;
 	const seed: number = commander.seed;
 	const enableOpsMetrics: boolean = commander.enableOpsMetrics ?? false;
 
-	const profile = getProfile(profileName);
+	const profile = getProfile(profileName, workLoadPath);
 
 	if (log !== undefined) {
 		process.env.DEBUG = log;
@@ -146,6 +151,7 @@ async function main() {
 		result = await runnerProcess(
 			driver,
 			endpoint,
+			workLoadPath,
 			{
 				runId,
 				testConfig: profile,
@@ -208,6 +214,7 @@ function* factoryPermutations<T extends IDocumentServiceFactory>(create: () => T
 async function runnerProcess(
 	driver: TestDriverTypes,
 	endpoint: DriverEndpoint | undefined,
+	workLoadPath: string,
 	runConfig: IRunConfig,
 	url: string,
 	seed: number,
@@ -254,12 +261,14 @@ async function runnerProcess(
 					configurations: configurations[runConfig.runId % configurations.length],
 				}),
 			});
+			const codeLoader = await createCodeLoader(
+				containerOptions[runConfig.runId % containerOptions.length],
+				workLoadPath,
+			);
 			const loader = new Loader({
 				urlResolver: testDriver.createUrlResolver(),
 				documentServiceFactory,
-				codeLoader: createCodeLoader(
-					containerOptions[runConfig.runId % containerOptions.length],
-				),
+				codeLoader,
 				logger: runConfig.logger,
 				options: runConfig.loaderConfig,
 				configProvider: {
@@ -275,7 +284,8 @@ async function runnerProcess(
 			container = await loader.resolve({ url, headers }, stashedOps);
 
 			container.connect();
-			const test = await requestFluidObject<ILoadTest>(container, "/");
+			const test = await requestFluidObject<ITestRunner>(container, "/");
+			assert(test.ITestRunner !== undefined, "Test runner doesn't implement ITestRunner");
 
 			// Retain old behavior of runtime being disposed on container close
 			container.once("closed", () => container?.dispose());

@@ -5,6 +5,7 @@
 
 import crypto from "crypto";
 import fs from "fs";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import {
 	createFluidTestDriver,
 	generateOdspHostStoragePolicy,
@@ -14,6 +15,7 @@ import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { IEvent, ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise } from "@fluidframework/core-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IProvideFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
@@ -27,7 +29,6 @@ import {
 } from "@fluidframework/test-driver-definitions";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { ILoadTest } from "./loadTestDataStore";
 import {
 	generateConfigurations,
 	generateLoaderOptions,
@@ -35,8 +36,7 @@ import {
 	getOptionOverride,
 } from "./optionsMatrix";
 import { pkgName, pkgVersion } from "./packageVersion";
-import { ILoadTestConfig, ITestConfig } from "./testConfigFile";
-import { createGCFluidExport } from "./gcDataStores";
+import { ILoadTestConfig, ITestConfig, ITestRunner } from "./testConfigFile";
 
 const packageName = `${pkgName}@${pkgVersion}`;
 
@@ -153,8 +153,26 @@ const codeDetails: IFluidCodeDetails = {
 	config: {},
 };
 
-export const createCodeLoader = (options: IContainerRuntimeOptions) =>
-	new LocalCodeLoader([[codeDetails, createGCFluidExport(options)]]);
+export async function createCodeLoader(options: IContainerRuntimeOptions, workLoadPath: string) {
+	// The work load path must contain a `fluidExport` which provides IFluidDataStoreFactory.
+	const module = await import(`./${workLoadPath}/fluidExport`);
+	const dataStoreFactory = (module.fluidExport as IProvideFluidDataStoreFactory)
+		.IFluidDataStoreFactory;
+	assert(
+		dataStoreFactory !== undefined,
+		"Invalid data store factory in workload directory's fluidExport",
+	);
+
+	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
+		dataStoreFactory,
+		[[dataStoreFactory.type, Promise.resolve(dataStoreFactory)]],
+		undefined,
+		undefined,
+		options,
+	);
+	const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);
+	return codeLoader;
+}
 
 class MockDetachedBlobStorage implements IDetachedBlobStorage {
 	public readonly blobs = new Map<string, ArrayBufferLike>();
@@ -184,6 +202,7 @@ export async function initialize(
 	testDriver: ITestDriver,
 	seed: number,
 	testConfig: ILoadTestConfig,
+	workLoadPath: string,
 	verbose: boolean,
 	profileName: string,
 	testIdn?: string,
@@ -218,11 +237,13 @@ export async function initialize(
 		}),
 	});
 
+	const codeLoader = await createCodeLoader(containerOptions, workLoadPath);
+
 	// Construct the loader
 	const loader = new Loader({
 		urlResolver: testDriver.createUrlResolver(),
 		documentServiceFactory: testDriver.createDocumentServiceFactory(),
-		codeLoader: createCodeLoader(containerOptions),
+		codeLoader,
 		logger,
 		options: loaderOptions,
 		detachedBlobStorage: new MockDetachedBlobStorage(),
@@ -239,10 +260,21 @@ export async function initialize(
 			testDriver.type === "odsp",
 			"attachment blobs in detached container not supported on this service",
 		);
-		const ds = await requestFluidObject<ILoadTest>(container, "/");
-		const dsm = await ds.detached({ testConfig, verbose, random, logger });
+		const ds = await requestFluidObject<ITestRunner>(container, "/");
+		const detachedRunner = await ds.getDetachedRunner?.({
+			testConfig,
+			verbose,
+			random,
+			logger,
+		});
+		assert(
+			detachedRunner !== undefined,
+			"attachment blobs in detached container not supported by the test runner",
+		);
 		await Promise.all(
-			[...Array(testConfig.detachedBlobCount).keys()].map(async (i) => dsm.writeBlob(i)),
+			[...Array(testConfig.detachedBlobCount).keys()].map(async (i) =>
+				detachedRunner.writeBlob(i),
+			),
 		);
 	}
 
@@ -282,10 +314,11 @@ export async function createTestDriver(
 	});
 }
 
-export function getProfile(profileArg: string) {
+export function getProfile(profileArg: string, workLoadPath: string) {
 	let config: ITestConfig;
 	try {
-		config = JSON.parse(fs.readFileSync("./testConfig.json", "utf-8"));
+		// The work load path must contain the `testConfig.json` config file.
+		config = JSON.parse(fs.readFileSync(`./src/${workLoadPath}/testConfig.json`, "utf-8"));
 	} catch (e) {
 		console.error("Failed to read testConfig.json");
 		console.error(e);
