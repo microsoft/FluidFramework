@@ -689,7 +689,7 @@ export interface FieldMapObject<TChild> {
 type FieldMarks<TTree = ProtoNode> = FieldMap<MarkList<TTree>>;
 
 // @alpha
-export interface FieldNode<TSchema extends FieldNodeSchema> extends UntypedTree2 {
+export interface FieldNode<TSchema extends FieldNodeSchema> extends TreeNode {
     readonly boxedContent: TypedField<TSchema["structFieldsObject"][""]>;
     readonly content: UnboxField<TSchema["structFieldsObject"][""]>;
 }
@@ -1307,7 +1307,7 @@ type LazyItem<Item = unknown> = Item | (() => Item);
 export type LazyTreeSchema = TreeSchema | (() => TreeSchema);
 
 // @alpha
-export interface Leaf<TSchema extends LeafSchema> extends UntypedTree2 {
+export interface Leaf<TSchema extends LeafSchema> extends TreeNode {
     readonly value: SchemaAware.InternalTypes.TypedValue<TSchema["leafValue"]>;
 }
 
@@ -1341,14 +1341,13 @@ interface MakeNominal {
 type MapFieldSchema = FieldSchema<typeof FieldKinds.optional | typeof FieldKinds.sequence>;
 
 // @alpha
-export interface MapNode<TSchema extends MapSchema> extends UntypedTree2 {
+export interface MapNode<TSchema extends MapSchema> extends TreeNode {
     // (undocumented)
     [Symbol.iterator](): Iterator<TypedField<TSchema["mapFields"]>>;
     // (undocumented)
     readonly asObject: {
         readonly [P in FieldKey]?: UnboxField<TSchema["mapFields"]>;
     };
-    // (undocumented)
     get(key: FieldKey): TypedField<TSchema["mapFields"]>;
 }
 
@@ -1583,7 +1582,7 @@ export interface Optional extends BrandedFieldKind<"Optional", Multiplicity.Opti
 }
 
 // @alpha
-export interface OptionalField<TTypes extends AllowedTypes> extends UntypedField2 {
+export interface OptionalField<TTypes extends AllowedTypes> extends TreeField {
     // (undocumented)
     readonly boxedContent?: TypedNodeUnion<TTypes>;
     // (undocumented)
@@ -1682,7 +1681,7 @@ export interface RepairDataStore<TChange, TTree = Delta.ProtoNode, TRevisionTag 
 }
 
 // @alpha
-export interface RequiredField<TTypes extends AllowedTypes> extends UntypedField2 {
+export interface RequiredField<TTypes extends AllowedTypes> extends TreeField {
     // (undocumented)
     readonly boxedContent: TypedNodeUnion<TTypes>;
     // (undocumented)
@@ -1855,7 +1854,7 @@ export interface Sequence extends BrandedFieldKind<"Sequence", Multiplicity.Sequ
 }
 
 // @alpha
-export interface Sequence2<TTypes extends AllowedTypes> extends UntypedField2 {
+export interface Sequence2<TTypes extends AllowedTypes> extends TreeField {
     // (undocumented)
     [Symbol.iterator](): Iterator<TypedNodeUnion<TTypes>>;
     // (undocumented)
@@ -1930,7 +1929,7 @@ export interface StoredSchemaRepository extends Dependee, ISubscribable<SchemaEv
 }
 
 // @alpha
-export interface Struct extends UntypedTree2 {
+export interface Struct extends TreeNode {
     readonly localNodeKey?: LocalNodeKey;
 }
 
@@ -1982,6 +1981,13 @@ export enum TransactionResult {
     Commit = 1
 }
 
+// @alpha
+export interface Tree<TSchema = unknown> extends Iterable<Tree> {
+    readonly context: TreeContext;
+    readonly schema: TSchema;
+    treeStatus(): TreeStatus;
+}
+
 // @alpha (undocumented)
 export interface TreeAdapter {
     // (undocumented)
@@ -1997,7 +2003,7 @@ export interface TreeContent<TRoot extends FieldSchema = FieldSchema> extends Sc
 
 // @alpha
 export interface TreeContext extends ISubscribable<ForestEvents> {
-    get root(): UntypedField2;
+    get root(): TreeField;
     readonly schema: TypedSchemaCollection;
 }
 
@@ -2005,6 +2011,16 @@ export interface TreeContext extends ISubscribable<ForestEvents> {
 export interface TreeDataContext {
     fieldSource?(key: FieldKey, schema: FieldStoredSchema): undefined | FieldGenerator;
     readonly schema: SchemaData;
+}
+
+// @alpha
+export interface TreeField extends Tree<FieldSchema>, Iterable<TreeNode> {
+    // (undocumented)
+    [Symbol.iterator](): Iterator<TreeNode>;
+    is<TSchema extends FieldSchema>(schema: TSchema): this is TypedField<TSchema>;
+    isSameAs(other: TreeField): boolean;
+    readonly key: FieldKey;
+    readonly parent?: TreeNode;
 }
 
 // @alpha (undocumented)
@@ -2020,6 +2036,22 @@ export const enum TreeNavigationResult {
     NotFound = -1,
     Ok = 1,
     Pending = 0
+}
+
+// @alpha
+export interface TreeNode extends Tree<TreeSchema> {
+    // (undocumented)
+    [Symbol.iterator](): Iterator<TreeField>;
+    is<TSchema extends TreeSchema>(schema: TSchema): this is TypedNode<TSchema>;
+    // (undocumented)
+    on<K extends keyof EditableTreeEvents>(eventName: K, listener: EditableTreeEvents[K]): () => void;
+    readonly parentField: {
+        readonly parent: TreeField;
+        readonly index: number;
+    };
+    tryGetField(key: FieldKey): undefined | TreeField;
+    readonly type: TreeSchemaIdentifier;
+    readonly value?: TreeValue;
 }
 
 // @alpha
@@ -2104,7 +2136,7 @@ ApplyMultiplicity<TField["kind"]["multiplicity"], AllowedTypesToTypedTrees<Mode,
 ][_InlineTrick];
 
 // @alpha
-type TypedFieldInner<Kind extends FieldKindTypes, Types extends AllowedTypes> = Kind extends typeof FieldKinds.sequence ? Sequence2<Types> : Kind extends typeof FieldKinds.value ? RequiredField<Types> : Kind extends typeof FieldKinds.optional ? OptionalField<Types> : UntypedField2;
+type TypedFieldInner<Kind extends FieldKindTypes, Types extends AllowedTypes> = Kind extends typeof FieldKinds.sequence ? Sequence2<Types> : Kind extends typeof FieldKinds.value ? RequiredField<Types> : Kind extends typeof FieldKinds.optional ? OptionalField<Types> : TreeField;
 
 // @alpha
 type TypedFields<Mode extends ApiMode, TFields extends undefined | {
@@ -2118,13 +2150,13 @@ TFields extends {
 ][_InlineTrick];
 
 // @alpha
-export type TypedNode<TSchema extends TreeSchema> = TSchema extends LeafSchema ? Leaf<TSchema> : TSchema extends MapSchema ? MapNode<TSchema> : TSchema extends FieldNodeSchema ? FieldNode<TSchema> : TSchema extends StructSchema ? StructTyped<TSchema> : UntypedTree2;
+export type TypedNode<TSchema extends TreeSchema> = TSchema extends LeafSchema ? Leaf<TSchema> : TSchema extends MapSchema ? MapNode<TSchema> : TSchema extends FieldNodeSchema ? FieldNode<TSchema> : TSchema extends StructSchema ? StructTyped<TSchema> : TreeNode;
 
 // @alpha
 type TypedNode_2<TSchema extends TreeSchema, Mode extends ApiMode = ApiMode.Editable> = FlattenKeys<CollectOptions<Mode, TypedFields<Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode, TSchema["structFieldsObject"]>, TSchema["leafValue"], TSchema["name"]>>;
 
 // @alpha
-export type TypedNodeUnion<TTypes extends AllowedTypes> = TTypes extends InternalTypedSchemaTypes.FlexList<TreeSchema> ? InternalTypedSchemaTypes.ArrayToUnion<TypeArrayToTypedTreeArray_2<Assume<InternalTypedSchemaTypes.ConstantFlexListToNonLazyArray<TTypes>, readonly TreeSchema[]>>> : UntypedTree2;
+export type TypedNodeUnion<TTypes extends AllowedTypes> = TTypes extends InternalTypedSchemaTypes.FlexList<TreeSchema> ? InternalTypedSchemaTypes.ArrayToUnion<TypeArrayToTypedTreeArray_2<Assume<InternalTypedSchemaTypes.ConstantFlexListToNonLazyArray<TTypes>, readonly TreeSchema[]>>> : TreeNode;
 
 // @alpha
 export interface TypedSchemaCollection<T extends FieldSchema = FieldSchema> {
@@ -2190,13 +2222,6 @@ type UntypedApi<Mode extends ApiMode> = {
 }[Mode];
 
 // @alpha
-export interface UntypedEntity<TSchema = unknown> extends Iterable<UntypedEntity> {
-    readonly context: TreeContext;
-    readonly schema: TSchema;
-    treeStatus(): TreeStatus;
-}
-
-// @alpha
 export interface UntypedField<TContext = UntypedTreeContext, TChild = UntypedTree<TContext>, TParent = UntypedTree<TContext>, TUnwrappedChild = UnwrappedUntypedTree<TContext>> extends MarkedArrayLike<TUnwrappedChild> {
     readonly context: TContext;
     readonly fieldKey: FieldKey;
@@ -2204,16 +2229,6 @@ export interface UntypedField<TContext = UntypedTreeContext, TChild = UntypedTre
     getNode(index: number): TChild;
     readonly parent?: TParent;
     treeStatus(): TreeStatus;
-}
-
-// @alpha
-export interface UntypedField2 extends UntypedEntity<FieldSchema>, Iterable<UntypedTree2> {
-    // (undocumented)
-    [Symbol.iterator](): Iterator<UntypedTree2>;
-    is<TSchema extends FieldSchema>(schema: TSchema): this is TypedField<TSchema>;
-    isSameAs(other: UntypedField2): boolean;
-    readonly key: FieldKey;
-    readonly parent?: UntypedTree2;
 }
 
 // @alpha
@@ -2244,22 +2259,6 @@ export interface UntypedTree<TContext = UntypedTreeContext> extends UntypedTreeC
     readonly [typeNameSymbol]: TreeSchemaIdentifier;
     readonly [valueSymbol]: Value;
     readonly [key: FieldKey]: UnwrappedUntypedField<TContext>;
-}
-
-// @alpha
-export interface UntypedTree2 extends UntypedEntity<TreeSchema> {
-    // (undocumented)
-    [Symbol.iterator](): Iterator<UntypedField2>;
-    is<TSchema extends TreeSchema>(schema: TSchema): this is TypedNode<TSchema>;
-    // (undocumented)
-    on<K extends keyof EditableTreeEvents>(eventName: K, listener: EditableTreeEvents[K]): () => void;
-    readonly parentField: {
-        readonly parent: UntypedField2;
-        readonly index: number;
-    };
-    tryGetField(key: FieldKey): undefined | UntypedField2;
-    readonly type: TreeSchemaIdentifier;
-    readonly value?: TreeValue;
 }
 
 // @alpha
