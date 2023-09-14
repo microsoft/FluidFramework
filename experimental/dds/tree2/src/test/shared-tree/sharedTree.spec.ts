@@ -59,7 +59,6 @@ import {
 	AllowedUpdateType,
 	LocalCommitSource,
 	storedEmptyFieldSchema,
-	mintRevisionTag,
 } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
 import { EditManager } from "../../shared-tree-core";

@@ -279,16 +279,13 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 				this.detachedRevision,
 			);
 		}
-
-		const replacedIdCommit =
-			this.idCompressor !== undefined
-				? this.idCompressor.normalizeToOpSpace(commit.revision as SessionSpaceCompressedId)
-				: commit.revision;
-
-		const message = this.messageCodec.encode({
-			commit: { ...commit, revision: replacedIdCommit },
-			sessionId: this.editManager.localSessionId,
-		});
+		const message = this.messageCodec.encode(
+			{
+				commit,
+				sessionId: this.editManager.localSessionId,
+			},
+			this.idCompressor,
+		);
 		this.submitLocalMessage(message);
 	}
 
@@ -297,17 +294,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
-		const { commit, sessionId } = this.messageCodec.decode(message.contents);
-		const normalizedCommitRevision =
-			this.idCompressor !== undefined
-				? this.idCompressor.normalizeToSessionSpace(
-						commit.revision as OpSpaceCompressedId,
-						sessionId as any,
-				  )
-				: commit.revision;
+		const { commit, sessionId } = this.messageCodec.decode(message.contents, this.idCompressor);
 
 		this.editManager.addSequencedChange(
-			{ ...commit, revision: normalizedCommitRevision, sessionId },
+			{ ...commit, sessionId },
 			brand(message.sequenceNumber),
 			brand(message.referenceSequenceNumber),
 		);

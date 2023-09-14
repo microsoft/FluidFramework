@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IIdCompressor } from "@fluidframework/runtime-definitions";
 import { bufferToString, IsoBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import type { Static, TAnySchema, TSchema } from "@sinclair/typebox";
@@ -13,9 +14,9 @@ import { fail, JsonCompatibleReadOnly } from "../util";
  */
 export interface IEncoder<TDecoded, TEncoded> {
 	/**
-	 * Encodes `obj` into some encoded format. Typically paired with an {@link IDecoder}.
+	 * Encodes `obj` into some encoded format. If an idCompressor is supplied, RevisionTags will be translated to OpSpace. Typically paired with an {@link IDecoder}.
 	 */
-	encode(obj: TDecoded): TEncoded;
+	encode(obj: TDecoded, idCompressor?: IIdCompressor): TEncoded;
 }
 
 /**
@@ -23,9 +24,9 @@ export interface IEncoder<TDecoded, TEncoded> {
  */
 export interface IDecoder<TDecoded, TEncoded> {
 	/**
-	 * Decodes `obj` from some encoded format. Typically paired with an {@link IEncoder}.
+	 * Decodes `obj` from some encoded format. If an idCompressor is supplied, RevisionTags will be translated to SessionSpace. Typically paired with an {@link IEncoder}.
 	 */
-	decode(obj: TEncoded): TDecoded;
+	decode(obj: TEncoded, idCompressor?: IIdCompressor): TDecoded;
 }
 
 /**
