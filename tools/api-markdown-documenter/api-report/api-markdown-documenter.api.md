@@ -258,9 +258,6 @@ export function getDeprecatedBlock(apiItem: ApiItem): DocSection | undefined;
 export function getExampleBlocks(apiItem: ApiItem): DocSection[] | undefined;
 
 // @public
-export function getFilePathForApiItem(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): string;
-
-// @public
 export function getHeadingForApiItem(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>, headingLevel?: number): Heading;
 
 // @public
