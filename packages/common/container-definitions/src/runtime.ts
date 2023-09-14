@@ -119,8 +119,8 @@ export interface IRuntime extends IDisposable {
 	 *
 	 * @see {@link IContainer.getEntryPoint}
 	 *
-	 * @remarks The plan is that eventually IRuntime will no longer have a request() method, this method will no
-	 * longer be optional, and it will become the only way to access the entryPoint for the runtime.
+	 * @remarks The plan is that eventually IRuntime will no longer have a request() method and this method
+	 * will become the only way to access the entryPoint for the runtime.
 	 */
 	getEntryPoint(): Promise<FluidObject | undefined>;
 }
