@@ -8,7 +8,7 @@ import type { Renderers } from "./configuration";
 /**
  * Context passed down during recursive {@link DocumentationNode} rendering.
  *
- * @public
+ * @alpha
  */
 export interface RenderContext extends TextFormatting {
 	/**

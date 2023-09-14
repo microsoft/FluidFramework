@@ -10,7 +10,7 @@ import { Renderers } from "./RenderOptions";
 /**
  * Configuration for HTML rendering of generated documentation contents.
  *
- * @public
+ * @alpha
  */
 export interface RenderConfiguration extends ConfigurationBase {
 	/**

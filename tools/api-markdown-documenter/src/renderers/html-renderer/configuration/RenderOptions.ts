@@ -50,7 +50,7 @@ import {
  *
  * We supply a suite of default renderers for all of these.
  *
- * @public
+ * @alpha
  */
 export interface Renderers {
 	/**

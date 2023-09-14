@@ -31,7 +31,7 @@ import { FileSystemConfiguration } from "./FileSystemConfiguration";
  * @param fileSystemConfig - Configuration for writing document files to disk.
  * @param logger - Receiver of system log data. Default: {@link defaultConsoleLogger}.
  *
- * @public
+ * @alpha
  */
 export async function renderApiModelAsHtml(
 	transformConfig: Omit<ApiItemTransformationConfiguration, "logger">,
@@ -56,7 +56,7 @@ export async function renderApiModelAsHtml(
  * @param fileSystemConfig - Configuration for writing document files to disk.
  * @param logger - Receiver of system log data. Default: {@link defaultConsoleLogger}.
  *
- * @public
+ * @alpha
  */
 export async function renderDocumentsAsHtml(
 	documents: DocumentNode[],

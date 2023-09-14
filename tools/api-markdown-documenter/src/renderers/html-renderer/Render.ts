@@ -14,7 +14,7 @@ import { RenderContext, getContextWithDefaults } from "./RenderContext";
  * @param document - The document to render.
  * @param config - HTML rendering configuration.
  *
- * @public
+ * @alpha
  */
 export function renderDocument(document: DocumentNode, config: RenderConfiguration): string {
 	const writer = createDocumentWriter();
@@ -43,7 +43,7 @@ export function renderDocument(document: DocumentNode, config: RenderConfigurati
  * Renders the provided {@link DocumentationNode} per the configured
  * {@link HtmlRenderContext.customRenderers | renderers}.
  *
- * @public
+ * @alpha
  */
 export function renderNode(
 	node: DocumentationNode,
@@ -70,7 +70,7 @@ export function renderNode(
  * Renders a list of child {@link DocumentationNode}s per the configured
  * {@link HtmlRenderContext.customRenderers | renderers}.
  *
- * @public
+ * @alpha
  */
 export function renderNodes(
 	children: DocumentationNode[],
