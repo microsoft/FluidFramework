@@ -22,6 +22,7 @@ export class RuntimeFactory extends RuntimeFactoryHelper {
 	constructor(
 		private readonly defaultStoreFactory: IFluidDataStoreFactory,
 		storeFactories: IFluidDataStoreFactory[] = [defaultStoreFactory],
+		/** @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md */
 		private readonly requestHandlers: RuntimeRequestHandler[] = [],
 		private readonly initializeEntryPoint?: (
 			runtime: IContainerRuntime,

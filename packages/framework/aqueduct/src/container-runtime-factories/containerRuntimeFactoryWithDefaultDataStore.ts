@@ -39,6 +39,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 		protected readonly defaultFactory: IFluidDataStoreFactory,
 		registryEntries: NamedFluidDataStoreRegistryEntries,
 		dependencyContainer?: IFluidDependencySynthesizer,
+		/** @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md */
 		requestHandlers: RuntimeRequestHandler[] = [],
 		runtimeOptions?: IContainerRuntimeOptions,
 		initializeEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>,

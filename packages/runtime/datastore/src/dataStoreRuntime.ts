@@ -1117,6 +1117,7 @@ export class FluidDataStoreRuntime
 }
 
 /**
+ * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
  * Mixin class that adds request handler to FluidDataStoreRuntime
  * Request handler is only called when data store can't resolve request, i.e. for custom requests.
  * @param Base - base class, inherits from FluidDataStoreRuntime
