@@ -69,7 +69,7 @@ export interface IContainerRuntimeMessageCompatDetails {
  * IMPORTANT: when creating one to be serialized, set the properties in the order they appear here.
  * This way stringified values can be compared.
  */
-export interface TypedContainerRuntimeMessage<TType extends ContainerMessageType, TContents> {
+interface TypedContainerRuntimeMessage<TType extends ContainerMessageType, TContents> {
 	/** Type of the op, within the ContainerRuntime's domain */
 	type: TType;
 	/** Domain-specific contents, interpreted according to the type */

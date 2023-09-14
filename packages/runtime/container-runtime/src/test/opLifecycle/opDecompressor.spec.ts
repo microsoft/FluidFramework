@@ -10,7 +10,7 @@ import { IsoBuffer } from "@fluid-internal/client-utils";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ContainerMessageType } from "../..";
 import { OpDecompressor } from "../../opLifecycle";
-import { TypedContainerRuntimeMessage } from "../../messageTypes";
+import type { InboundContainerRuntimeMessage } from "../../messageTypes";
 
 /**
  * Format of test messages generated in this test.
@@ -20,9 +20,13 @@ interface ITestMessageContents {
 }
 
 function generateCompressedBatchMessage(length: number): ISequencedDocumentMessage {
-	const batch: TypedContainerRuntimeMessage<ContainerMessageType.FluidDataStoreOp, string>[] = [];
+	const batch: InboundContainerRuntimeMessage[] = [];
 	for (let i = 0; i < length; i++) {
-		batch.push({ contents: `value${i}`, type: ContainerMessageType.FluidDataStoreOp });
+		// Actual Op and contents aren't important. Values chosen to look
+		batch.push({
+			type: ContainerMessageType.FluidDataStoreOp,
+			contents: { address: `address${i}`, contents: `value${i}` },
+		});
 	}
 
 	const contentsAsBuffer = new TextEncoder().encode(JSON.stringify(batch));
