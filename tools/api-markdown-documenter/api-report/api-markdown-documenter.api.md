@@ -32,6 +32,7 @@ import type { Literal } from 'unist';
 import { NewlineKind } from '@rushstack/node-core-library';
 import type { Node as Node_2 } from 'unist';
 import type { Parent } from 'unist';
+import { ReleaseTag } from '@microsoft/api-extractor-model';
 
 // @public
 export type ApiFunctionLike = ApiConstructSignature | ApiConstructor | ApiFunction | ApiMethod | ApiMethodSignature;
@@ -270,6 +271,9 @@ export function getModifiers(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]):
 export function getQualifiedApiItemName(apiItem: ApiItem): string;
 
 // @public
+export function getReleaseTag(apiItem: ApiItem): ReleaseTag | undefined;
+
+// @public
 export function getReturnsBlock(apiItem: ApiItem): DocSection | undefined;
 
 // @public
@@ -435,6 +439,8 @@ export class PlainTextNode extends DocumentationLiteralNodeBase<string> implemen
     get text(): string;
     readonly type = DocumentationNodeType.PlainText;
 }
+
+export { ReleaseTag }
 
 // @alpha
 export function renderApiModelAsHtml(transformConfig: Omit<ApiItemTransformationConfiguration, "logger">, renderConfig: Omit<HtmlRenderConfiguration, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;

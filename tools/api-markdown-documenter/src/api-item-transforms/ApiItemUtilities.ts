@@ -594,6 +594,8 @@ export function filterByKind(apiItems: readonly ApiItem[], kinds: ApiItemKind[])
  * @param apiItem - The API item whose documentation is being queried.
  *
  * @returns The associated release tag, if it exists. Otherwise, `undefined`.
+ *
+ * @public
  */
 export function getReleaseTag(apiItem: ApiItem): ReleaseTag | undefined {
 	return ApiReleaseTagMixin.isBaseClassOf(apiItem) ? apiItem.releaseTag : undefined;
