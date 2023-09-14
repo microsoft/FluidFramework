@@ -246,7 +246,8 @@
 		"connectTimeout": 10000,
 		"maxRetriesPerRequest": 20,
 		"enableAutoPipelining": false,
-		"enableOfflineQueue": true
+		"enableOfflineQueue": true,
+		"prefix": "page"
 	},
 	"redisForTenantCache": {
 		"host": "redis",
@@ -255,7 +256,8 @@
 		"connectTimeout": 10000,
 		"maxRetriesPerRequest": 20,
 		"enableAutoPipelining": false,
-		"enableOfflineQueue": true
+		"enableOfflineQueue": true,
+		"prefix": "page"
 	},
 	"redis2": {
 		"host": "redis",
@@ -264,7 +266,8 @@
 		"connectTimeout": 10000,
 		"maxRetriesPerRequest": 20,
 		"enableAutoPipelining": false,
-		"enableOfflineQueue": true
+		"enableOfflineQueue": true,
+		"prefix": "page"
 	},
 	"redisForThrottling": {
 		"host": "redis",
@@ -273,7 +276,8 @@
 		"connectTimeout": 10000,
 		"maxRetriesPerRequest": 20,
 		"enableAutoPipelining": false,
-		"enableOfflineQueue": true
+		"enableOfflineQueue": true,
+		"prefix": "page"
 	},
 	"error": {
 		"track": false,

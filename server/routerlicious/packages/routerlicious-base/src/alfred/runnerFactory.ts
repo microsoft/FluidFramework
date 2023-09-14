@@ -199,7 +199,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 
 		const redisParams2: utils.IRedisParameters = {
 			expireAfterSeconds: redisConfig2.keyExpireAfterSeconds as number | undefined,
-			prefix: "page",
+			prefix: redisConfig2.prefix as string | undefined,
 		};
 
 		const redisClient = new Redis.default(redisOptions2);

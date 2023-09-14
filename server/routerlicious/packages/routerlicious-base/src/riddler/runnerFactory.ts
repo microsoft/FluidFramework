@@ -83,7 +83,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 			}
 			const redisParams: utils.IRedisParameters = {
 				expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
-				prefix: "page",
+				prefix: redisConfig.prefix as string | undefined,
 			};
 			const redisClient = new Redis.default(redisOptions);
 
