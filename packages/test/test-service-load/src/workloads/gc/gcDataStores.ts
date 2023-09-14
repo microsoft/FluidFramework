@@ -4,24 +4,17 @@
  */
 /* eslint-disable jsdoc/check-indentation */
 
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	IFluidHandle,
-	IRequest,
 	ITelemetryGenericEvent,
 	ITelemetryLogger,
 } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { SharedCounter } from "@fluidframework/counter";
 import { IValueChanged, SharedMap } from "@fluidframework/map";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { IRunConfig } from "./loadTestDataStore";
+import { IRunConfig, ITestRunner } from "../../testConfigFile";
 
 /**
  * The maximum number of leaf data objects that can be running at a given time per client. This is used to limit the
@@ -65,9 +58,10 @@ interface IActivityObjectDetails {
 	object: IGCActivityObject;
 }
 
-function logEvent(logger: ITelemetryLogger, props: ITelemetryGenericEvent & { id: string }) {
+function logEvent(logger: ITelemetryLogger, props: ITelemetryGenericEvent) {
 	logger.sendTelemetryEvent(props);
-	console.log(`########## ${props.eventName} - ${props.id}`);
+	const toId = props.id !== undefined ? `-> ${props.id}` : "";
+	console.log(`########## ${props.eventName}: ${props.fromId} ${toId}`);
 }
 
 function getBlobIdFromHandle(blobHandle: IFluidHandle<ArrayBufferLike>) {
@@ -322,9 +316,7 @@ export const leafDataObjectFactory = new DataObjectFactory(
  *   - Upload an attachment blob, reference it and start running activity on it.
  */
 export class SingleCollabDataObject extends BaseDataObject implements IGCActivityObject {
-	public static get type(): string {
-		return "SingleCollabDataObject";
-	}
+	public static type = "SingleCollabDataObject";
 
 	protected get nodeId(): string {
 		assert(this._nodeId !== undefined, "id accessed before run");
@@ -456,10 +448,10 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 	}
 
 	/**
-	 * Set up an event listener that would run / stop activity based on the activities of the previous run of this
-	 * client. For example, a client could have referenced / unreferenced data objects, then closed and re-loaded
-	 * before those ops were summarizer. So, it would receive those ops after the load and should start / stop
-	 * activity accordingly.
+	 * At startup, set up an event listener that would run / stop activity based on the activities of the previous
+	 * run of this client. For example, a client could have referenced / unreferenced data objects, then closed and
+	 * reloaded before those ops were summarizer. So, it would receive those ops after the load and should start or
+	 * stop activity accordingly.
 	 */
 	private setupEventHandlers() {
 		const runActivity = async (
@@ -526,10 +518,10 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 	}
 
 	/**
-	 * Initialize the data stores and attachment blobs created by this client. When a container reloads because
-	 * of error or session expiry, it can have referenced objects that should now run.
+	 * At startup, initialize the data stores and attachment blobs created by this client. When a container reloads
+	 * because of error or session expiry, it can have referenced objects that should now run.
 	 */
-	private async initialize(): Promise<void> {
+	private async initializeChildren(): Promise<void> {
 		// Initialize the referenced data object list from the data object map.
 		for (const dataObjectDetails of this.dataObjectMap) {
 			const dataObjectId = dataObjectDetails[0];
@@ -567,7 +559,6 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 	/**
 	 * Runs activity on initial set of objects that are referenced, if any. When a container reloads because
 	 * of error or session expiry, it can have referenced objects that should now run.
-	 * @returns A set of promises of each object's run result.
 	 */
 	private runInitialActivity(): void {
 		// Run the data objects and blobs that are in the referenced list.
@@ -623,8 +614,8 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 		// Set up the listener that would run / stop activity from previous run of this client.
 		this.setupEventHandlers();
 
-		// Initialize referenced objects, if any and run activity on them.
-		await this.initialize();
+		// Initialize referenced child objects, if any and run activity on them.
+		await this.initializeChildren();
 
 		this.runInitialActivity();
 
@@ -634,7 +625,7 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 			!this.runtime.disposed &&
 			!this.activityFailed
 		) {
-			// After every activityThresholdOpCount ops, run activities.
+			// After every activityThresholdOpCount ops, run activity.
 			if (localSendCount % activityThresholdOpCount === 0) {
 				this.runActivity(config);
 			}
@@ -702,6 +693,7 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 				});
 				logEvent(this.logger, {
 					eventName: "DS+",
+					fromId: this.nodeId,
 					id: dataObjectId,
 				});
 				return dataObject.run(this.childRunConfig, dataObjectId);
@@ -724,6 +716,7 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 					this.unreferencedDataObjects.push(dataObjectDetails);
 					logEvent(this.logger, {
 						eventName: "DS-",
+						fromId: this.nodeId,
 						id: dataObjectDetails.id,
 					});
 				}
@@ -736,6 +729,7 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 					this.referencedDataObjects.push(dataObjectDetails);
 					logEvent(this.logger, {
 						eventName: "DS^",
+						fromId: this.nodeId,
 						id: dataObjectDetails.id,
 					});
 					return dataObjectDetails.object.run(this.childRunConfig, dataObjectDetails.id);
@@ -769,6 +763,7 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 
 				logEvent(this.logger, {
 					eventName: "Blob+",
+					fromId: this.nodeId,
 					id: blobId,
 				});
 
@@ -785,6 +780,7 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 					assert(blobDetails !== undefined, "Cannot find blob to unreference");
 					logEvent(this.logger, {
 						eventName: "Blob-",
+						fromId: this.nodeId,
 						id: blobDetails.id,
 					});
 
@@ -804,6 +800,7 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 				if (nextUnreferencedAttachmentBlob !== undefined) {
 					logEvent(this.logger, {
 						eventName: "Blob^",
+						fromId: this.nodeId,
 						id: nextUnreferencedAttachmentBlob.id,
 					});
 					this.blobMap.set(
@@ -841,9 +838,7 @@ export const singleCollabDataObjectFactory = new DataObjectFactory(
  * the same part of a document.
  */
 export class MultiCollabDataObject extends SingleCollabDataObject implements IGCActivityObject {
-	public static get type(): string {
-		return "MultiCollabDataObject";
-	}
+	public static type = "MultiCollabDataObject";
 
 	// A map of partner activity objects that are running in this client.
 	private readonly partnerActivityObjectsRunning: Map<string, IGCActivityObject> = new Map();
@@ -969,10 +964,8 @@ export const multiCollabDataObjectFactory = new DataObjectFactory(
 /**
  * Root data object that creates a single collab and a multi collab data object and runs them.
  */
-export class RootDataObject extends DataObject {
-	public static get type(): string {
-		return "RootDataObject";
-	}
+export class RootDataObject extends DataObject implements ITestRunner {
+	public static type = "GCStressDataObject";
 
 	private readonly singleCollabDataObjectKey = "singleCollabDataObject";
 	private readonly multiCollabDataObjectKey = "multiCollabDataObject";
@@ -992,6 +985,10 @@ export class RootDataObject extends DataObject {
 			this.context,
 		);
 		this.root.set<IFluidHandle>(this.multiCollabDataObjectKey, collabDataObject.handle);
+	}
+
+	async getRuntime() {
+		return this.runtime;
 	}
 
 	public async run(config: IRunConfig): Promise<boolean> {
@@ -1059,15 +1056,3 @@ export const rootDataObjectFactory = new DataObjectFactory(
 		[MultiCollabDataObject.type, Promise.resolve(multiCollabDataObjectFactory)],
 	],
 );
-
-const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-	runtime.IFluidHandleContext.resolveHandle(request);
-
-export const createGCFluidExport = (options: IContainerRuntimeOptions) =>
-	new ContainerRuntimeFactoryWithDefaultDataStore(
-		rootDataObjectFactory,
-		[[rootDataObjectFactory.type, Promise.resolve(rootDataObjectFactory)]],
-		undefined,
-		[innerRequestHandler],
-		options,
-	);

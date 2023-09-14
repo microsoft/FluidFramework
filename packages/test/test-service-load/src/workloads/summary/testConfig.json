@@ -1,0 +1,93 @@
+{
+	"profiles": {
+		"mini": {
+			"opRatePerMin": 600,
+			"progressIntervalMs": 5000,
+			"numClients": 5,
+			"totalSendCount": 300,
+			"faultInjectionMs": {
+				"min": 0,
+				"max": 20000
+			},
+			"optionOverrides": {
+				"tinylicious": {
+					"configurations": {
+						"Fluid.Summarizer.ValidateSummaryBeforeUpload": [true, false],
+						"Fluid.Summarizer.TryDynamicRetries": [true, false]
+					},
+					"container": {
+						"summaryOptions": {
+							"summaryConfigOverrides": [
+								{
+									"state": "enabled",
+									"initialSummarizerDelayMs": [0, 100, 1000, 2000, 5000, 10000]
+								}
+							]
+						}
+					}
+				},
+				"odsp": {
+					"configurations": {
+						"Fluid.Summarizer.ValidateSummaryBeforeUpload": [true, false],
+						"Fluid.Summarizer.TryDynamicRetries": [true, false]
+					},
+					"container": {
+						"summaryOptions": {
+							"summaryConfigOverrides": [
+								{
+									"state": "enabled",
+									"initialSummarizerDelayMs": [0, 100, 1000, 2000, 5000, 10000]
+								}
+							]
+						}
+					}
+				}
+			}
+		},
+		"ci": {
+			"opRatePerMin": 800,
+			"progressIntervalMs": 5000,
+			"numClients": 10,
+			"totalSendCount": 16000,
+			"faultInjectionMs": {
+				"min": 0,
+				"max": 600000
+			},
+			"optionOverrides": {
+				"tinylicious": {
+					"configurations": {
+						"Fluid.Summarizer.ValidateSummaryBeforeUpload": [true, false],
+						"Fluid.Summarizer.TryDynamicRetries": [true, false]
+					},
+					"container": {
+						"summaryOptions": {
+							"summaryConfigOverrides": [
+								{
+									"state": "enabled",
+									"initialSummarizerDelayMs": [0, 100, 1000, 2000, 5000, 10000]
+								}
+							]
+						}
+					}
+				},
+				"odsp": {
+					"configurations": {
+						"Fluid.Driver.Odsp.TestOverride.SnapshotCacheExpiryTimeoutMs": [300000],
+						"Fluid.Summarizer.ValidateSummaryBeforeUpload": [true, false],
+						"Fluid.Summarizer.TryDynamicRetries": [true, false]
+					},
+					"container": {
+						"summaryOptions": {
+							"summaryConfigOverrides": [
+								{
+									"state": "enabled",
+									"initialSummarizerDelayMs": [0, 100, 1000, 2000, 5000, 10000]
+								}
+							]
+						}
+					}
+				}
+			}
+		}
+	}
+}
