@@ -18,12 +18,20 @@ import { compareDocumentationSuiteSnapshot } from "./SnapshotTestUtilities";
 /**
  * Temp directory under which all tests that generate files will output their contents.
  */
-const testTempDirPath = Path.resolve(__dirname, "test_temp");
+const testTempDirPath = Path.resolve(__dirname, "test_temp", "markdown");
 
 /**
  * Snapshot directory to which generated test data will be copied.
  */
-const snapshotsDirPath = Path.resolve(__dirname, "..", "..", "src", "test", "snapshots");
+const snapshotsDirPath = Path.resolve(
+	__dirname,
+	"..",
+	"..",
+	"src",
+	"test",
+	"snapshots",
+	"markdown",
+);
 
 /**
  * Simple integration test that validates complete output from simple test package.
