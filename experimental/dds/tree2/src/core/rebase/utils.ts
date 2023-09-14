@@ -391,8 +391,10 @@ export function findAncestor<T extends { parent?: T }>(
  * but otherwise including `descendant`).
  * @param predicate - a function which will be evaluated on every ancestor of `descendant` until it returns true.
  * @returns the closest ancestor of `descendant` that satisfies `predicate`, or `undefined` if no such ancestor exists.
+ *
  * @example
- * ```ts
+ *
+ * ```typescript
  * interface Parented {
  *   id: string;
  *   parent?: Parented;
@@ -442,8 +444,10 @@ export function findAncestor<T extends { parent?: T }>(
  * @param descendantB - another descendant. If an empty `path` array is included, it will be populated
  * with the chain of commits from the ancestor to `descendantB` (not including the ancestor).
  * @returns the common ancestor of `descendantA` and `descendantB`, or `undefined` if no such ancestor exists.
+ *
  * @example
- * ```ts
+ *
+ * ```typescript
  * interface Parented {
  *   parent?: Parented;
  * }

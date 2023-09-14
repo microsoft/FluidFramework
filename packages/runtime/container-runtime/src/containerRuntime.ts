@@ -725,30 +725,16 @@ export class ContainerRuntime
 	 * - initializeEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
 	 * This object should provide all the functionality that the Container is expected to provide to the loader layer.
 	 */
-	public static async loadRuntime(
-		params: {
-			context: IContainerContext;
-			registryEntries: NamedFluidDataStoreRegistryEntries;
-			existing: boolean;
-			runtimeOptions?: IContainerRuntimeOptions;
-			containerScope?: FluidObject;
-			containerRuntimeCtor?: typeof ContainerRuntime;
-		} & (
-			| {
-					requestHandler?: (
-						request: IRequest,
-						runtime: IContainerRuntime,
-					) => Promise<IResponse>;
-					initializeEntryPoint?: undefined;
-			  }
-			| {
-					requestHandler?: undefined;
-					initializeEntryPoint: (
-						containerRuntime: IContainerRuntime,
-					) => Promise<FluidObject>;
-			  }
-		),
-	): Promise<ContainerRuntime> {
+	public static async loadRuntime(params: {
+		context: IContainerContext;
+		registryEntries: NamedFluidDataStoreRegistryEntries;
+		existing: boolean;
+		runtimeOptions?: IContainerRuntimeOptions;
+		containerScope?: FluidObject;
+		containerRuntimeCtor?: typeof ContainerRuntime;
+		requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
+		initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
+	}): Promise<ContainerRuntime> {
 		const {
 			context,
 			registryEntries,
@@ -2170,6 +2156,9 @@ export class ContainerRuntime
 		const modernRuntimeMessage = messageArg.type === MessageType.Operation;
 
 		// Do shallow copy of message, as the processing flow will modify it.
+		// There might be multiple container instances receiving the same message.
+		// We do not need to make a deep copy. Each layer will just replace message.contents itself,
+		// but will not modify the contents object (likely it will replace it on the message).
 		const messageCopy = { ...messageArg };
 		for (const message of this.remoteMessageProcessor.process(messageCopy)) {
 			this.processCore(message, local, modernRuntimeMessage);
@@ -2448,8 +2437,8 @@ export class ContainerRuntime
 	/**
 	 * Returns the aliased data store's entryPoint, given the alias.
 	 * @param alias - The alias for the data store.
-	 * @returns - The data store's entry point (IFluidHandle) if it exists and is aliased. Returns undefined if no
-	 * data store has been assigned the given alias.
+	 * @returns The data store's entry point ({@link @fluidframework/core-interfaces#IFluidHandle}) if it exists and is aliased.
+	 * Returns undefined if no data store has been assigned the given alias.
 	 */
 	public async getAliasedDataStoreEntryPoint(
 		alias: string,
@@ -2811,7 +2800,7 @@ export class ContainerRuntime
 	/**
 	 * After GC has run and identified nodes that are sweep ready, this is called to delete the sweep ready nodes.
 	 * @param sweepReadyRoutes - The routes of nodes that are sweep ready and should be deleted.
-	 * @returns - The routes of nodes that were deleted.
+	 * @returns The routes of nodes that were deleted.
 	 */
 	public deleteSweepReadyNodes(sweepReadyRoutes: string[]): string[] {
 		const { dataStoreRoutes, blobManagerRoutes } =
@@ -2882,7 +2871,7 @@ export class ContainerRuntime
 	/**
 	 * From a given list of routes, separate and return routes that belong to blob manager and data stores.
 	 * @param routes - A list of routes that can belong to data stores or blob manager.
-	 * @returns - Two route lists - One that contains routes for blob manager and another one that contains routes
+	 * @returns Two route lists - One that contains routes for blob manager and another one that contains routes
 	 * for data stores.
 	 */
 	private getDataStoreAndBlobManagerRoutes(routes: string[]) {
@@ -3655,7 +3644,7 @@ export class ContainerRuntime
 				break;
 			case ContainerMessageType.IdAllocation:
 				// Remove the stashedState from the op if it's a stashed op
-				if (contents.stashedState !== undefined) {
+				if ("stashedState" in contents) {
 					delete contents.stashedState;
 				}
 				this.submit(message, localOpMetadata);
@@ -3735,7 +3724,7 @@ export class ContainerRuntime
 	public async refreshLatestSummaryAck(options: IRefreshSummaryAckOptions) {
 		const { proposalHandle, ackHandle, summaryRefSeq, summaryLogger } = options;
 		// proposalHandle is always passed from RunningSummarizer.
-		assert(proposalHandle !== undefined, "proposalHandle should be available");
+		assert(proposalHandle !== undefined, 0x766 /* proposalHandle should be available */);
 		const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
 		const result = await this.summarizerNode.refreshLatestSummary(
 			proposalHandle,

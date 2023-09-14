@@ -40,7 +40,7 @@ describe("editable-tree context", () => {
 			allowedSchemaModifications: AllowedUpdateType.None,
 		});
 
-		view.context.on("afterDelta", () => {
+		view.context.on("afterChange", () => {
 			view.context.clear();
 		});
 

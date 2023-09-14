@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-query",
-	"version": "2.0.0-internal.6.3.0",
+	"version": "2.0.0-internal.6.4.0",
 	"description": "QueryService implementation",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -13,6 +13,7 @@
 	"main": "src/index.js",
 	"types": "src/index.d.ts",
 	"scripts": {
+		"clean": "rimraf --glob 'nyc'",
 		"coverage": "npx nyc --silent --cwd .. --nycrc-path `pwd`/.nycrc npm run test && npx nyc --no-clean --silent --cwd .. --nycrc-path `pwd`/.nycrc npm run test:changeset && npx nyc --no-clean --cwd .. --nycrc-path `pwd`/.nycrc npm run test:common",
 		"format": "npm run prettier:fix",
 		"lint": "npm run prettier",
@@ -50,6 +51,7 @@
 		"moment": "^2.21.0",
 		"nock": "^13.3.3",
 		"prettier": "~2.6.2",
+		"rimraf": "^4.4.0",
 		"sinon": "^7.4.2"
 	},
 	"typeValidation": {

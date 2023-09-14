@@ -30,6 +30,7 @@ import { IFluidModuleWithDetails } from '@fluidframework/container-definitions';
 import { IHostLoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { ILoaderProps } from '@fluidframework/container-loader';
+import { IOnDemandSummarizeOptions } from '@fluidframework/container-runtime';
 import { IProvideFluidCodeDetailsComparer } from '@fluidframework/container-definitions';
 import { IProvideFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
@@ -230,7 +231,7 @@ export const mockConfigProvider: (settings?: Record<string, ConfigTypes>) => ICo
 export const retryWithEventualValue: <T>(callback: () => Promise<T>, check: (value: T) => boolean, defaultValue: T, maxTries?: number, backOffMs?: number) => Promise<T>;
 
 // @public
-export function summarizeNow(summarizer: ISummarizer, reason?: string): Promise<{
+export function summarizeNow(summarizer: ISummarizer, inputs?: string | IOnDemandSummarizeOptions): Promise<{
     summaryTree: ISummaryTree;
     summaryVersion: string;
     summaryRefSeq: number;

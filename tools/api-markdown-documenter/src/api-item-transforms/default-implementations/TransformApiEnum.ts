@@ -53,5 +53,5 @@ export function transformApiEnum(
 		}
 	}
 
-	return config.createChildContentSections(apiEnum, sections, config);
+	return config.createDefaultLayout(apiEnum, sections, config);
 }
