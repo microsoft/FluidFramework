@@ -32,24 +32,7 @@ import type { Literal } from 'unist';
 import { NewlineKind } from '@rushstack/node-core-library';
 import type { Node as Node_2 } from 'unist';
 import type { Parent } from 'unist';
-
-// @public
-export enum AlertKind {
-    Danger = "Danger",
-    Important = "Important",
-    Note = "Note",
-    Tip = "Tip",
-    Warning = "Warning"
-}
-
-// @public
-export class AlertNode extends DocumentationParentNodeBase {
-    constructor(children: DocumentationNode[], alertKind: AlertKind, title?: string);
-    readonly alertKind: AlertKind;
-    static createFromPlainText(text: string, alertKind: AlertKind, title?: string): AlertNode;
-    readonly title?: string;
-    readonly type = DocumentationNodeType.Alert;
-}
+import { ReleaseTag } from '@microsoft/api-extractor-model';
 
 // @public
 export type ApiFunctionLike = ApiConstructSignature | ApiConstructor | ApiFunction | ApiMethod | ApiMethodSignature;
@@ -175,7 +158,6 @@ export interface DocumentationNode<TData extends object = Data> extends Node_2<T
 
 // @public
 export enum DocumentationNodeType {
-    Alert = "Alert",
     BlockQuote = "BlockQuote",
     CodeSpan = "CodeSpan",
     Document = "Document",
@@ -290,6 +272,9 @@ export function getModifiers(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]):
 
 // @public
 export function getQualifiedApiItemName(apiItem: ApiItem): string;
+
+// @public
+export function getReleaseTag(apiItem: ApiItem): ReleaseTag | undefined;
 
 // @public
 export function getReturnsBlock(apiItem: ApiItem): DocSection | undefined;
@@ -441,6 +426,8 @@ export class PlainTextNode extends DocumentationLiteralNodeBase<string> implemen
     get text(): string;
     readonly type = DocumentationNodeType.PlainText;
 }
+
+export { ReleaseTag }
 
 // @public
 export function renderApiModelAsMarkdown(transformConfig: Omit<ApiItemTransformationConfiguration, "logger">, renderConfig: Omit<MarkdownRenderConfiguration, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;

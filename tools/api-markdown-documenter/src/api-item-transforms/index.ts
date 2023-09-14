@@ -22,6 +22,7 @@ export {
 	getLinkForApiItem,
 	getModifiers,
 	getQualifiedApiItemName,
+	getReleaseTag,
 	getReturnsBlock,
 	getSeeBlocks,
 	getThrowsBlocks,
