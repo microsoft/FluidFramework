@@ -57,12 +57,18 @@ export * from "./documentation-domain";
 export {
 	createDocumentWriter,
 	DocumentWriter,
+	type HtmlRenderContext,
+	type HtmlRenderers,
+	type HtmlRenderConfiguration,
 	type MarkdownRenderContext,
 	type MarkdownRenderers,
 	type MarkdownRenderConfiguration,
+	renderDocumentAsHtml,
 	renderDocumentAsMarkdown,
 	type RenderDocumentationNodeAsMarkdown,
+	renderNodeAsHtml,
 	renderNodeAsMarkdown,
+	renderNodesAsHtml,
 	renderNodesAsMarkdown,
 } from "./renderers";
 export {

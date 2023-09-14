@@ -315,6 +315,23 @@ export class HorizontalRuleNode implements MultiLineDocumentationNode {
 }
 
 // @public
+export interface HtmlRenderConfiguration extends ConfigurationBase {
+    readonly customRenderers?: HtmlRenderers;
+    readonly startingHeadingLevel?: number;
+}
+
+// @public
+export interface HtmlRenderContext extends TextFormatting {
+    customRenderers?: HtmlRenderers;
+    headingLevel: number;
+}
+
+// @public
+export interface HtmlRenderers {
+    [documentationNodeKind: string]: (node: DocumentationNode, writer: DocumentWriter, context: HtmlRenderContext) => void;
+}
+
+// @public
 export function isDeprecated(apiItem: ApiItem): boolean;
 
 // @public
@@ -426,6 +443,9 @@ export class PlainTextNode extends DocumentationLiteralNodeBase<string> implemen
 export function renderApiModelAsMarkdown(transformConfig: Omit<ApiItemTransformationConfiguration, "logger">, renderConfig: Omit<MarkdownRenderConfiguration, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
 
 // @public
+export function renderDocumentAsHtml(document: DocumentNode, config: HtmlRenderConfiguration): string;
+
+// @public
 export function renderDocumentAsMarkdown(document: DocumentNode, config: MarkdownRenderConfiguration): string;
 
 // @public
@@ -435,7 +455,13 @@ export type RenderDocumentationNodeAsMarkdown<TDocumentationNode extends Documen
 export function renderDocumentsAsMarkdown(documents: DocumentNode[], renderConfig: Omit<MarkdownRenderConfiguration, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
 
 // @public
+export function renderNodeAsHtml(node: DocumentationNode, writer: DocumentWriter, context: HtmlRenderContext): void;
+
+// @public
 export function renderNodeAsMarkdown(node: DocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext): void;
+
+// @public
+export function renderNodesAsHtml(children: DocumentationNode[], writer: DocumentWriter, childContext: HtmlRenderContext): void;
 
 // @public
 export function renderNodesAsMarkdown(children: DocumentationNode[], writer: DocumentWriter, childContext: MarkdownRenderContext): void;
