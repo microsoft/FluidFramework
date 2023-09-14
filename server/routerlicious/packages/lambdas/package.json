@@ -121,6 +121,9 @@
 			"RemovedClassDeclaration_ForemanLambdaFactory": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"ClassDeclaration_DeliLambda": {
+				"backCompat": false
 			}
 		}
 	}
