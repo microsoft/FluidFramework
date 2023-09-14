@@ -1293,7 +1293,7 @@ describe("Runtime", () => {
 				});
 
 				// The entryPoint should come from the provided initialization function.
-				const actualEntryPoint = await containerRuntime.getEntryPoint?.();
+				const actualEntryPoint = await containerRuntime.getEntryPoint();
 				assert(actualEntryPoint !== undefined, "entryPoint was not initialized");
 				assert.deepEqual(
 					actualEntryPoint,
@@ -1329,7 +1329,7 @@ describe("Runtime", () => {
 				);
 
 				// The entryPoint should come from the provided initialization function.
-				const actualEntryPoint = await containerRuntime.getEntryPoint?.();
+				const actualEntryPoint = await containerRuntime.getEntryPoint();
 				assert(actualEntryPoint !== undefined, "entryPoint was not initialized");
 				assert.deepEqual(
 					actualEntryPoint,
