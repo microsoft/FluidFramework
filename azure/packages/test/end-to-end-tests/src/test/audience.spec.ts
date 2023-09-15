@@ -10,8 +10,13 @@ import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { createAzureClient } from "./AzureClientFactory";
 import { waitForMember } from "./utils";
+
+const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+	getRawConfig: (name: string): ConfigTypes => settings[name],
+});
 
 describe("Fluid audience", () => {
 	const connectTimeoutMs = 10_000;
@@ -82,7 +87,14 @@ describe("Fluid audience", () => {
 		const originalSelf = await waitForMember(services.audience, "test-user-id-1");
 		assert.notStrictEqual(originalSelf, undefined, "We should have myself at this point.");
 
-		const client2 = createAzureClient("test-user-id-2", "test-user-name-2");
+		const client2 = createAzureClient(
+			"test-user-id-2",
+			"test-user-name-2",
+			undefined,
+			configProvider({
+				"Fluid.Container.ForceWriteConnection": true,
+			}),
+		);
 		const { services: servicesGet } = await client2.getContainer(containerId, schema);
 
 		/* This is a workaround for a known bug, we should have one member (self) upon container connection */
@@ -114,7 +126,14 @@ describe("Fluid audience", () => {
 			errorMsg: "container connect() timeout",
 		});
 
-		const client2 = createAzureClient("test-user-id-2", "test-user-name-2");
+		const client2 = createAzureClient(
+			"test-user-id-2",
+			"test-user-name-2",
+			undefined,
+			configProvider({
+				"Fluid.Container.ForceWriteConnection": true,
+			}),
+		);
 		const { services: servicesGet } = await client2.getContainer(containerId, schema);
 
 		/* This is a workaround for a known bug, we should have one member (self) upon container connection */
