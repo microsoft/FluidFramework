@@ -11,7 +11,7 @@ export interface ICache {
 	 * Retrieves the cached entry for the given key. Or null if it doesn't exist.
 	 *
 	 * @param key - Key to get value of.
-	 * @param prefix - Prefix to append to the key, handled by the implementation if left undefined
+	 * @param prefix - Prefix to append to the key, handled by the implementation if left undefined. Empty string will not add any prefix to the key.
 	 */
 	get<T>(key: string, prefix?: string): Promise<T>;
 
@@ -21,7 +21,7 @@ export interface ICache {
 	 * @param key - Key to set value of.
 	 * @param value - Value to set key to.
 	 * @param expireAfterSeconds - Amount of seconds that the key/value pair should exist for.
-	 * @param prefix - Prefix to append to the key, handled by the implementation if left undefined
+	 * @param prefix - Prefix to append to the key, handled by the implementation if left undefined. Empty string will not add any prefix to the key.
 	 */
 	set<T>(key: string, value: T, expireAfterSeconds?: number, prefix?: string): Promise<void>;
 
@@ -29,7 +29,7 @@ export interface ICache {
 	 * Deletes a cache value
 	 *
 	 * @param key - Key to delete value for.
-	 * @param prefix - Prefix to append to the key, handled by the implementation if left undefined
+	 * @param prefix - Prefix to append to the key, handled by the implementation if left undefined. Empty string will not add any prefix to the key.
 	 */
 	delete?(key: string, prefix?: string): Promise<boolean>;
 

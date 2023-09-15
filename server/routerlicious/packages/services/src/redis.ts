@@ -77,7 +77,8 @@ export class RedisCache implements ICache {
 
 	public async incr(key: string): Promise<number> {
 		try {
-			return this.client.incr(key);
+			const incrKey: string = this.getKey(key);
+			return this.client.incr(incrKey);
 		} catch (error) {
 			Lumberjack.error(
 				`Error while incrementing counter for ${key} in redis.`,
@@ -90,7 +91,8 @@ export class RedisCache implements ICache {
 
 	public async decr(key: string): Promise<number> {
 		try {
-			return this.client.decr(key);
+			const decrKey: string = this.getKey(key);
+			return this.client.decr(decrKey);
 		} catch (error) {
 			Lumberjack.error(
 				`Error while decrementing counter for ${key} in redis.`,
@@ -107,15 +109,14 @@ export class RedisCache implements ICache {
 	 * @param keyPrefix - Prefix for the keys to get.
 	 */
 	public async keysByPrefix(keyPrefix: string): Promise<string[]> {
-		const result: string[] = await this.client.keys(`${this.getKey(keyPrefix)}*`);
-		return result;
+		return this.client.keys(`${this.getKey(keyPrefix)}*`);
 	}
 
 	/**
 	 * Translates the input key to the one we will actually store in redis
 	 * 
 	 * @param key - The input key
-	 * @param prefix - Prefix to append to key
+	 * @param prefix - Prefix to append to key. Empty string will not add any prefix to the key.
 	 */
 	private getKey(key: string, prefix?: string): string {
 		const keyPrefix = prefix === undefined ? this.prefix : prefix;
