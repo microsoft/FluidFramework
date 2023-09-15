@@ -186,6 +186,7 @@ import { IBatchMetadata } from "./metadata";
 import {
 	ContainerMessageType,
 	type InboundSequencedContainerRuntimeMessage,
+	type InboundSequencedContainerRuntimeMessageOrSystemMessage,
 	type InTransitContainerRuntimeIdAllocationMessage,
 	type LocalContainerRuntimeIdAllocationMessage,
 	type LocalContainerRuntimeMessage,
@@ -622,7 +623,7 @@ type MessageWithContext =
 			local: boolean;
 	  }
 	| {
-			message: InboundSequencedContainerRuntimeMessage | ISequencedDocumentMessage;
+			message: InboundSequencedContainerRuntimeMessageOrSystemMessage;
 			modernRuntimeMessage: false;
 			local: boolean;
 	  };
@@ -2198,27 +2199,35 @@ export class ContainerRuntime
 		messageWithContext: MessageWithContext,
 		localOpMetadata: unknown,
 	): void {
-		// TODO: destructure modernRuntimeMessage once using typescript 5.2.2+
-		const { message, local } = messageWithContext;
+		// TODO: destructure message and modernRuntimeMessage once using typescript 5.2.2+
+		const { local } = messageWithContext;
 		switch (messageWithContext.message.type) {
 			case ContainerMessageType.Attach:
-				this.dataStores.processAttachMessage(message, local);
+				this.dataStores.processAttachMessage(messageWithContext.message, local);
 				break;
 			case ContainerMessageType.Alias:
-				this.dataStores.processAliasMessage(message, localOpMetadata, local);
+				this.dataStores.processAliasMessage(
+					messageWithContext.message,
+					localOpMetadata,
+					local,
+				);
 				break;
 			case ContainerMessageType.FluidDataStoreOp:
-				this.dataStores.processFluidDataStoreOp(message, local, localOpMetadata);
+				this.dataStores.processFluidDataStoreOp(
+					messageWithContext.message,
+					local,
+					localOpMetadata,
+				);
 				break;
 			case ContainerMessageType.BlobAttach:
-				this.blobManager.processBlobAttachOp(message, local);
+				this.blobManager.processBlobAttachOp(messageWithContext.message, local);
 				break;
 			case ContainerMessageType.IdAllocation:
 				assert(
 					this.idCompressor !== undefined,
 					0x67c /* IdCompressor should be defined if enabled */,
 				);
-				this.idCompressor.finalizeCreationRange(message.contents);
+				this.idCompressor.finalizeCreationRange(messageWithContext.message.contents);
 				break;
 			case ContainerMessageType.ChunkedOp:
 			case ContainerMessageType.Rejoin:
@@ -2237,6 +2246,7 @@ export class ContainerRuntime
 						compatBehavior,
 					)
 				) {
+					const { message } = messageWithContext;
 					const error = DataProcessingError.create(
 						// Former assert 0x3ce
 						"Runtime message of unknown type",
