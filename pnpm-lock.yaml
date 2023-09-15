@@ -1955,7 +1955,6 @@ importers:
       '@fluidframework/merge-tree': workspace:~
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/sequence': workspace:~
-      '@types/node': ^16.18.38
       '@types/react': ^17.0.44
       css-loader: ^1.0.0
       eslint: ~8.6.0
@@ -1985,13 +1984,12 @@ importers:
       '@fluidframework/merge-tree': link:../../../packages/dds/merge-tree
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
       '@fluidframework/sequence': link:../../../packages/dds/sequence
-      '@types/node': 16.18.38
       monaco-editor: 0.30.1
       react: 17.0.2
     devDependencies:
       '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.0
-      '@fluidframework/build-tools': 0.22.0_2wska3rv6ra5ajbmktsvyxwga4
+      '@fluidframework/build-tools': 0.22.0_webpack-cli@4.10.0
       '@fluidframework/eslint-config-fluid': 2.1.0_kufnqfq7tb5rpdawkdb6g5smma
       '@types/react': 17.0.52
       css-loader: 1.0.1_webpack@5.83.0
@@ -4197,7 +4195,6 @@ importers:
       '@fluidframework/shared-object-base': link:../../../../packages/dds/shared-object-base
       '@fluidframework/tinylicious-driver': link:../../../../packages/drivers/tinylicious-driver
       '@fluidframework/view-interfaces': link:../../../../packages/framework/view-interfaces
-      '@types/uuid': 9.0.2
       events: 3.3.0
       jsonwebtoken: 8.5.1
       lodash: 4.17.21
@@ -4210,6 +4207,7 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
       '@types/puppeteer': 1.3.0
+      '@types/uuid': 9.0.2
       clean-webpack-plugin: 4.0.0_webpack@5.83.0
       concurrently: 8.2.1
       cross-env: 7.0.3
@@ -4334,7 +4332,6 @@ importers:
       '@material-ui/core': 4.12.4_sfoxds7t5ydpegc3knd667wn6m
       '@material-ui/lab': 4.0.0-alpha.61_phlbjj2qqbzyjdfzujtmlw3coi
       '@material-ui/styles': 4.11.5_sfoxds7t5ydpegc3knd667wn6m
-      '@types/uuid': 9.0.2
       events: 3.3.0
       jsonwebtoken: 8.5.1
       lodash: 4.17.21
@@ -4348,6 +4345,7 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
       '@types/puppeteer': 1.3.0
+      '@types/uuid': 9.0.2
       clean-webpack-plugin: 4.0.0_webpack@5.83.0
       concurrently: 8.2.1
       cross-env: 7.0.3
@@ -23334,6 +23332,7 @@ packages:
 
   /@types/node/16.18.38:
     resolution: {integrity: sha512-6sfo1qTulpVbkxECP+AVrHV9OoJqhzCsfTNp5NIG+enM4HyM3HvZCO798WShIXBN0+QtDIcutJCjsVYnQP5rIQ==}
+    dev: true
 
   /@types/node/16.18.40:
     resolution: {integrity: sha512-+yno3ItTEwGxXiS/75Q/aHaa5srkpnJaH+kdkTVJ3DtJEwv92itpKbxU+FjPoh2m/5G9zmUQfrL4A4C13c+iGA==}
@@ -23557,6 +23556,7 @@ packages:
 
   /@types/uuid/9.0.2:
     resolution: {integrity: sha512-kNnC1GFBLuhImSnV7w4njQkUiJi0ZXUycu1rUaouPqiKlXkh77JKgdRnTAp1x5eBwcIwbtI+3otwzuIDEuDoxQ==}
+    dev: true
 
   /@types/valid-url/1.0.4:
     resolution: {integrity: sha512-msGTxAnOwsiKZ36i5h3eBfOsMfuh+vKMqwsepJAd56ov9b+F9yYbJuE3rFOznHScNMKPY/y6rXbtWkb5RhyHMg==}
