@@ -22,9 +22,13 @@ const testTempDirPath = Path.resolve(__dirname, "test_temp");
 
 /**
  * Snapshot directory to which generated test data will be copied.
- * Relative to dist/test.
+ * Relative to dist/test
  */
 const snapshotsDirPath = Path.resolve(__dirname, "..", "..", "src", "test", "snapshots");
+
+// Relative to dist/test
+const testDataDirPath = Path.resolve(__dirname, "..", "..", "src", "test", "test-data");
+const testModelPaths = [Path.resolve(testDataDirPath, "simple-suite-test.json")];
 
 /**
  * Simple integration test that validates complete output from simple test package.
@@ -241,10 +245,5 @@ describe("api-markdown-documenter full-suite tests", () => {
 	});
 
 	// Run the test suite against a sample report
-	apiTestSuite(
-		"simple-suite-test",
-		// Relative to dist/test
-		[Path.resolve(__dirname, "test-data", "simple-suite-test.json")],
-		configs,
-	);
+	apiTestSuite("simple-suite-test", testModelPaths, configs);
 });
