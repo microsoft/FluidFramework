@@ -49,10 +49,10 @@ export const CollaborativeMap: React.FC<ICollaborativeMapProps> = (
 		<div style={standardPaddingStyle}>
 			<Stack horizontal tokens={stackTokens}>
 				<Stack.Item align="center">
-					<TextField placeholder="Key" type="text" componentRef={keyInputRef} />
+					<TextField label="Key" underlined type="text" componentRef={keyInputRef} />
 				</Stack.Item>
 				<Stack.Item align="center">
-					<TextField placeholder="Value" type="text" componentRef={valueInputRef} />
+					<TextField label="Value" underlined type="text" componentRef={valueInputRef} />
 				</Stack.Item>
 				<Stack.Item align="center">
 					<PrimaryButton text="Set" iconProps={sendIcon} onClick={addEntry} />

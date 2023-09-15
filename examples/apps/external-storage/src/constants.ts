@@ -6,7 +6,10 @@ export const clearIcon: IIconProps = { iconName: "PageRemove" };
 export const marginTop10 = { marginTop: 10 };
 export const sendIcon: IIconProps = { iconName: "Send" };
 export const stackTokens: IStackTokens = { childrenGap: 10 };
-export const standardLength = { width: 180 };
+export const standardLength = {
+	width: 220,
+	paddingLeft: 10,
+};
 export const standardPaddingStyle: React.CSSProperties = {
 	marginTop: 10,
 	paddingLeft: 20,

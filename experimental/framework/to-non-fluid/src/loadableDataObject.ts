@@ -4,10 +4,10 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IEvent, IEventProvider, IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import { SharedCounter } from "@fluidframework/counter";
-import { SharedDirectory, SharedMap } from "@fluidframework/map";
+import { IValueChanged, SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 import { AttachState } from "@fluidframework/container-definitions";
 import { LocalDataObject } from "./localDataStore";
@@ -16,7 +16,12 @@ import { fromLocalDataStructure } from "./fromLocalFluid";
 
 export type SupportedSharedObjects = SharedCounter | SharedDirectory | SharedMap | SharedString;
 
-export class LoadableDataObject extends DataObject {
+export interface ILoadableEvent extends IEvent {
+	(event: "sharedObjectsUpdated", listener: (message: any) => void);
+	(event: "dataObjectsUpdated", listener: (message: any) => void);
+}
+
+export class LoadableDataObject extends DataObject implements IEventProvider<ILoadableEvent> {
 	public get attributes() {
 		return undefined;
 	}
@@ -51,7 +56,7 @@ export class LoadableDataObject extends DataObject {
 	public readonly childSharedObjects: SupportedSharedObjects[] = [];
 
 	public async hasInitialized(): Promise<void> {
-		for (const [_, handle] of this.root) {
+		for (const handle of this.root.values()) {
 			const child = await (
 				handle as IFluidHandle<SupportedSharedObjects | LoadableDataObject>
 			).get();
@@ -61,19 +66,70 @@ export class LoadableDataObject extends DataObject {
 				this.childDataObjects.push(child);
 			}
 		}
+		this.root.on("containedValueChanged", (value: IValueChanged) => {
+			const handle = this.root.get(value.key) as IFluidHandle<
+				SupportedSharedObjects | LoadableDataObject
+			>;
+			handle.get().then((fluidObject) => {
+				if (fluidObject.attributes !== undefined) {
+					this.childSharedObjects.push(fluidObject);
+					this.emit("sharedObjectsUpdated");
+				} else {
+					this.childDataObjects.push(fluidObject);
+					this.emit("dataObjectsUpdated");
+				}
+			});
+		});
+	}
+
+	private storeFluidObject(
+		key: string,
+		fluidObject: SupportedSharedObjects | LoadableDataObject,
+	) {
+		assert(!this.hasFluidObject(key), "should not be overriding a fluid object");
+		this.root.set(key, fluidObject.handle);
+	}
+
+	public hasFluidObject(key: string): boolean {
+		return this.root.has(key);
 	}
 
 	public async createChildDataObject(
 		key: string,
 		type: string = LoadableDataObject.Type,
 	): Promise<LoadableDataObject> {
-		assert(!this.root.has(key), "key should not exist on creation!");
+		assert(!this.hasFluidObject(key), "key should not exist on creation!");
 		const child = await this.context.containerRuntime.createDataStore(type);
 		assert(child.entryPoint !== undefined, "should have entrypoint!");
 		const dataObject = (await child.entryPoint.get()) as LoadableDataObject;
-		this.root.set(key, dataObject.handle);
-		this.childDataObjects.push(dataObject);
+		this.storeFluidObject(key, dataObject);
 		return dataObject;
+	}
+
+	public createChildSharedObject(type: string) {
+		let channel: SupportedSharedObjects;
+		switch (type) {
+			case SharedCounter.getFactory().type: {
+				channel = SharedCounter.create(this.runtime);
+				break;
+			}
+			case SharedDirectory.getFactory().type: {
+				channel = SharedDirectory.create(this.runtime);
+				break;
+			}
+			case SharedMap.getFactory().type: {
+				channel = SharedMap.create(this.runtime);
+				break;
+			}
+			case SharedString.getFactory().type: {
+				channel = SharedString.create(this.runtime);
+				break;
+			}
+			default: {
+				throw new Error("unsupported shared object");
+			}
+		}
+		this.storeFluidObject(channel.id, channel);
 	}
 
 	// Handles considered as references will need to be discussed as a limitation
@@ -108,8 +164,7 @@ export class LoadableDataObject extends DataObject {
 
 		for (const [key, localDataStructure] of localDataObject.dataStructures) {
 			const child = fromLocalDataStructure(localDataStructure, this.runtime);
-			this.root.set(key, child.handle);
-			this.childSharedObjects.push(child);
+			this.storeFluidObject(key, child);
 		}
 
 		for (const [key, childDataObject] of localDataObject.dataObjects) {

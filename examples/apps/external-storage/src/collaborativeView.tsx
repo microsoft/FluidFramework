@@ -13,7 +13,13 @@ import {
 import { SharedCounter } from "@fluidframework/counter";
 import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
-import { DefaultButton, PrimaryButton, Stack } from "@fluentui/react";
+import {
+	DefaultButton,
+	IContextualMenuItem,
+	IContextualMenuProps,
+	PrimaryButton,
+	Stack,
+} from "@fluentui/react";
 import {
 	Accordion,
 	AccordionHeader,
@@ -23,7 +29,14 @@ import {
 import { CollaborativeMap } from "./collaborativeMap";
 import { CollaborativeDirectory } from "./collaborativeDirectory";
 import { CollaborativeCounter } from "./collaborativeCounter";
-import { buildIcon, clearIcon, marginTop10, stackTokens, standardSidePadding } from "./constants";
+import {
+	addIcon,
+	buildIcon,
+	clearIcon,
+	marginTop10,
+	stackTokens,
+	standardSidePadding,
+} from "./constants";
 
 export interface CollaborativeProps {
 	model: LoadableDataObject;
@@ -31,6 +44,12 @@ export interface CollaborativeProps {
 
 export const CollaborativeView = (props: CollaborativeProps) => {
 	const [value, setValue] = React.useState("");
+	const [childDataObjects, setChildDataObjects] = React.useState([
+		...props.model.childDataObjects,
+	]);
+	const [childSharedObjects, setChildSharedObjects] = React.useState([
+		...props.model.childSharedObjects,
+	]);
 	const serialize = () => {
 		props.model
 			.toLocalDataObject()
@@ -43,6 +62,59 @@ export const CollaborativeView = (props: CollaborativeProps) => {
 	const clear = () => {
 		setValue("");
 	};
+	const addDataObject = () => {
+		props.model.createChildDataObject(`${childDataObjects.length}`);
+	};
+
+	const addSharedObject = (item: IContextualMenuItem | undefined) => {
+		console.log(item);
+		if (item === undefined) return;
+		props.model.createChildSharedObject(item.key);
+	};
+
+	const menuProps: IContextualMenuProps = {
+		// For example: disable dismiss if shift key is held down while dismissing
+		onItemClick: (ev, item) => addSharedObject(item),
+		items: [
+			{
+				key: SharedCounter.getFactory().type,
+				text: "SharedCounter",
+				iconProps: { iconName: "NumberSymbol" },
+			},
+			{
+				key: SharedDirectory.getFactory().type,
+				text: "SharedDirectory",
+				iconProps: { iconName: "ModelingView" },
+			},
+			{
+				key: SharedMap.getFactory().type,
+				text: "SharedMap",
+				iconProps: { iconName: "Nav2DMapView" },
+			},
+			{
+				key: SharedString.getFactory().type,
+				text: "SharedString",
+				iconProps: { iconName: "InsertTextBox" },
+			},
+		],
+		directionalHintFixed: true,
+	};
+
+	React.useEffect(() => {
+		const handleSharedObjectChildChanged = () => {
+			setChildSharedObjects([...props.model.childSharedObjects]);
+		};
+		const handleDataObjectChildChanged = () => {
+			setChildDataObjects([...props.model.childDataObjects]);
+		};
+
+		props.model.on("sharedObjectsUpdated", handleSharedObjectChildChanged);
+		props.model.on("dataObjectsUpdated", handleDataObjectChildChanged);
+		return () => {
+			props.model.off("sharedObjectsUpdated", handleSharedObjectChildChanged);
+			props.model.off("dataObjectsUpdated", handleDataObjectChildChanged);
+		};
+	});
 
 	const textareaStyle: React.CSSProperties = {
 		width: "100%",
@@ -55,21 +127,28 @@ export const CollaborativeView = (props: CollaborativeProps) => {
 	return (
 		<div style={standardSidePadding}>
 			<Accordion multiple collapsible>
-				{props.model.childDataObjects.map((child, index) => {
-					const length: number = props.model.childSharedObjects.length;
+				<PrimaryButton text="Add Data Object" iconProps={addIcon} onClick={addDataObject} />
+				{childDataObjects.map((child, index) => {
+					const length: number = childSharedObjects.length;
 					const i: number = index;
 					const newIndex: number = length + i;
 					return (
 						<AccordionItem value={newIndex} key={newIndex}>
-							<AccordionHeader>{child.constructor.name}</AccordionHeader>
+							<AccordionHeader>{`${child.constructor.name} ${index}`}</AccordionHeader>
 							<AccordionPanel>
 								<CollaborativeView model={child} />
 							</AccordionPanel>
 						</AccordionItem>
 					);
 				})}
-
-				{props.model.childSharedObjects.map((child, index) => {
+				<div style={marginTop10}>
+					<PrimaryButton
+						text="Add Shared Object"
+						iconProps={addIcon}
+						menuProps={menuProps}
+					/>
+				</div>
+				{childSharedObjects.map((child, index) => {
 					let childElement: JSX.Element;
 					switch (child.attributes.type) {
 						case SharedCounter.getFactory().type: {
@@ -106,7 +185,7 @@ export const CollaborativeView = (props: CollaborativeProps) => {
 
 					return (
 						<AccordionItem value={index} key={index}>
-							<AccordionHeader>{child.constructor.name}</AccordionHeader>
+							<AccordionHeader>{`${child.constructor.name} ${index}`}</AccordionHeader>
 							<AccordionPanel>{childElement}</AccordionPanel>
 						</AccordionItem>
 					);

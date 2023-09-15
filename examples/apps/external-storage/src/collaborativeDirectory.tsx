@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Stack, TextField, PrimaryButton, ITextField } from "@fluentui/react";
+import { Stack, TextField, PrimaryButton, ITextField, TextFieldBase } from "@fluentui/react";
 import { assert } from "@fluidframework/core-utils";
 import { IDirectory } from "@fluidframework/map";
 import React from "react";
@@ -34,7 +34,7 @@ export const CollaborativeDirectory: React.FC<ICollaborativeDirectoryProps> = (
 ) => {
 	const [map, setMap] = React.useState(Array.from(props.data.entries()));
 	const [directories, setDirectories] = React.useState(Array.from(props.data.subdirectories()));
-	const keyInputRef = React.useRef<ITextField>(null);
+	const keyInputRef = React.useRef<TextFieldBase>(null);
 	const valueInputRef = React.useRef<ITextField>(null);
 	const directoryInputRef = React.useRef<ITextField>(null);
 
@@ -69,19 +69,17 @@ export const CollaborativeDirectory: React.FC<ICollaborativeDirectoryProps> = (
 		assert(directoryInput !== null, "key ref not set!");
 		const directory = directoryInput.value ?? "";
 		if (directory === "") return;
-		const subDirectory = props.data.createSubDirectory(directory);
-		console.log(subDirectory);
-		console.log(directories);
+		props.data.createSubDirectory(directory);
 	};
 
 	return (
 		<div style={standardPaddingStyle}>
 			<Stack horizontal tokens={stackTokens}>
 				<Stack.Item align="center">
-					<TextField placeholder="Key" type="text" componentRef={keyInputRef} />
+					<TextField label="Key" underlined type="text" componentRef={keyInputRef} />
 				</Stack.Item>
 				<Stack.Item align="center">
-					<TextField placeholder="Value" type="text" componentRef={valueInputRef} />
+					<TextField label="Value" underlined type="text" componentRef={valueInputRef} />
 				</Stack.Item>
 				<Stack.Item align="center">
 					<PrimaryButton text="Set" iconProps={sendIcon} onClick={addEntry} />
@@ -104,14 +102,20 @@ export const CollaborativeDirectory: React.FC<ICollaborativeDirectoryProps> = (
 				</Stack>
 			))}
 			<div style={marginTop10}>
-				<TextField label="Subdirectories" type="text" componentRef={directoryInputRef} />
-				<div style={marginTop10}>
+				<Stack horizontal tokens={stackTokens}>
+					<TextField
+						style={{ width: 355 }}
+						label="subdirectories"
+						underlined
+						type="text"
+						componentRef={directoryInputRef}
+					/>
 					<PrimaryButton
 						text="Add Subdirectory"
 						iconProps={addIcon}
 						onClick={addSubDirectory}
 					/>
-				</div>
+				</Stack>
 			</div>
 
 			<Accordion multiple collapsible>
