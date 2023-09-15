@@ -125,7 +125,10 @@
 					"webpack"
 				],
 				"script": false
-			}
+			},
+			"tsc": [
+				"webpack"
+			]
 		}
 	},
 	"typeValidation": {
