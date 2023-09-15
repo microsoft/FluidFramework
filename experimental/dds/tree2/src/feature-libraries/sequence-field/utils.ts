@@ -36,6 +36,7 @@ import {
 	HasMarkFields,
 	CellId,
 	CellMark,
+	Composite,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { isMoveMark, MoveEffectTable } from "./moveEffectTable";
@@ -246,6 +247,7 @@ export function getEffectiveNodeChanges<TNodeChange>(
 	);
 	switch (type) {
 		case "Insert":
+		case "Composite":
 			return changes;
 		case "Revive":
 			// So long as the input cell is populated, the nested changes are still effective
@@ -281,6 +283,7 @@ export function areOutputCellsEmpty(mark: Mark<unknown>): boolean {
 			return mark.isSrcConflicted ?? false;
 		case "Delete":
 		case "MoveOut":
+		case "Composite":
 			return true;
 		case "ReturnFrom":
 			return mark.cellId !== undefined || !mark.isDstConflicted;
@@ -406,6 +409,11 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 	if (type === NoopMarkType) {
 		lhs.count += rhs.count;
 		return true;
+	}
+
+	if (type === "Composite") {
+		// TODO
+		return false;
 	}
 
 	if (rhs.revision !== (lhs as HasRevisionTag).revision) {
@@ -941,6 +949,8 @@ export function splitMark<T, TMark extends Mark<T>>(mark: TMark, length: number)
 		}
 		case "Placeholder":
 			fail("TODO");
+		case "Composite":
+			fail("XXX");
 		default:
 			unreachableCase(type);
 	}
@@ -1009,7 +1019,8 @@ export function withRevision<TMark extends Mark<unknown>>(
 
 	const cloned = cloneMark(mark);
 
-	(cloned as Exclude<Mark<unknown>, CellMark<NoopMark, unknown>>).revision = revision;
+	assert(cloned.type !== "Composite", "TODO");
+	(cloned as Exclude<Mark<unknown>, CellMark<NoopMark | Composite, unknown>>).revision = revision;
 	return cloned;
 }
 

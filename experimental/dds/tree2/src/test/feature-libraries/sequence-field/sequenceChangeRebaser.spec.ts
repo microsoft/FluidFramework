@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 import { SequenceField as SF, singleTextCursor } from "../../../feature-libraries";
 import {
 	ChangesetLocalId,
+	makeAnonChange,
 	mintRevisionTag,
 	RevisionTag,
 	tagChange,
@@ -364,5 +365,16 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const moveRollback = tagRollbackInverse(moveInverse, tag3, tag1);
 		const rebasedUndo = rebaseTagged(undo, moveRollback, move);
 		assert.deepEqual(rebasedUndo, undo);
+	});
+});
+
+describe("SequenceField - Composed sandwich Rebasing", () => {
+	it("Nested inserts rebasing", () => {
+		const insertA = tagChange(Change.insert(0, 2), tag1);
+		const insertB = tagChange(Change.insert(1, 1), tag2);
+		const inverseA = tagRollbackInverse(invert(insertA), tag3, insertA.revision);
+		const sandwich = compose([inverseA, insertA]);
+		const insertB2 = rebaseTagged(insertB, makeAnonChange(sandwich));
+		assert.deepEqual(insertB2.change, insertB.change);
 	});
 });

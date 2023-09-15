@@ -351,8 +351,20 @@ export interface MovePlaceholder extends HasRevisionTag, HasMoveId {
 	type: "Placeholder";
 }
 
-export type MarkEffect = NoopMark | MovePlaceholder | Attach | Detach;
-export const MarkEffect = Type.Union([NoopMark, Attach, Detach]);
+export interface Composite {
+	type: "Composite";
+	attach: Attach;
+	detach: Detach;
+}
+
+export const Composite = Type.Object({
+	type: Type.Literal("Composite"),
+	attach: Attach,
+	detach: Detach,
+});
+
+export type MarkEffect = NoopMark | MovePlaceholder | Attach | Detach | Composite;
+export const MarkEffect = Type.Union([NoopMark, Attach, Detach, Composite]);
 
 export type CellMark<TMark, TNodeChange> = TMark & HasMarkFields<TNodeChange>;
 export const CellMark = <TMark extends TSchema, TNodeChange extends TSchema>(

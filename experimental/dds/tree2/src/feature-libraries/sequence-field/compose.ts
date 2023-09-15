@@ -383,7 +383,8 @@ function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
 	revision: RevisionTag | undefined,
 	composeChild: NodeChangeComposer<TNodeChange>,
 ): TMark {
-	if (isNoopMark(mark)) {
+	if (isNoopMark(mark) || mark.type === "Composite") {
+		// A composite mark has already been composed.
 		return mark;
 	}
 
@@ -396,7 +397,10 @@ function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
 		asMutable(cloned.cellId).revision = revision;
 	}
 
-	assert(!isNoopMark(cloned), 0x4de /* Cloned should be same type as input mark */);
+	assert(
+		!isNoopMark(cloned) && cloned.type !== "Composite",
+		0x4de /* Cloned should be same type as input mark */,
+	);
 	if (revision !== undefined && cloned.revision === undefined) {
 		cloned.revision = revision;
 	}
