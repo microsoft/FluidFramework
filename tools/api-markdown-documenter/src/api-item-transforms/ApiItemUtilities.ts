@@ -251,8 +251,6 @@ export function getUnscopedPackageName(apiPackage: ApiPackage): string {
  *
  * @param apiItem - The API item for which we are generating a file path.
  * @param config - See {@link ApiItemTransformationConfiguration}.
- *
- * @public
  */
 export function getDocumentPathForApiItem(
 	apiItem: ApiItem,
