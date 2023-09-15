@@ -101,5 +101,13 @@
 				"^tsc"
 			]
 		}
+	},
+	"pnpm": {
+		"comments": [
+			"nodegit is replaced with an empty package here because it's currently only used by good-fences for features we do not need, and has issues building when changing node versions. See https://github.com/smikula/good-fences/issues/105 for details."
+		],
+		"overrides": {
+			"nodegit": "npm:empty-npm-package@1.0.0"
+		}
 	}
 }
