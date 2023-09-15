@@ -65,8 +65,8 @@ export interface ITestDriver {
 	 * type; this should only be done it absolutely necessary for complex scenarios
 	 * as the test may not work against all supported servers if done.
 	 *
-	 * @param testId - Implementations can use this to try to generate a consistent request
-	 * if passed the same value several times.
+	 * @param testId - If passed in, implementations should use it in the generated request, which should
+	 * also be consistent every time for a given value of this parameter.
 	 */
 	createCreateNewRequest(testId?: string): IRequest;
 
@@ -80,8 +80,8 @@ export interface ITestDriver {
 	 * type; this should only be done if absolutely necessary for complex scenarios
 	 * as the test may not work against all supported servers if done.
 	 *
-	 * @param testId - Implementations can use this to try to generate a consistent request
-	 * if passed the same value several times.
+	 * @param testId - If passed in, implementations should use it in generated url, which should
+	 * also be consistent every time for a given value of this parameter.
 	 * @param containerUrl - Implementations can use this to help disambiguate the container.
 	 * E.g. if passed a value from a container created earlier, the driver can us it as a hint
 	 * when resolving the container  URL.
