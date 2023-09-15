@@ -162,17 +162,24 @@ export async function mergePullRequest(
 		strategy: "squash" | "merge" | undefined;
 	},
 	log: CommandLogger,
-) {
+): Promise<any> {
 	const octokit = new Octokit({ auth: pr.token });
-	const squash = await octokit.request(MERGE_PULL_REQUEST, {
-		owner: pr.owner,
-		repo: pr.repo,
-		pull_number: pr.prNumber,
-		commit_title: pr.title,
-		commit_message: pr.description,
-		merge_method: pr.strategy,
-	});
-	log.log(`Squashed pull request: ${JSON.stringify(squash)}`);
+	try {
+		const squash = await octokit.request(MERGE_PULL_REQUEST, {
+			owner: pr.owner,
+			repo: pr.repo,
+			pull_number: pr.prNumber,
+			commit_title: pr.title,
+			commit_message: pr.description,
+			merge_method: pr.strategy,
+		});
+		log.log(`Squashed pull request`);
+		return squash.status;
+	} catch (error: any) {
+		log.log(`Error: ${JSON.stringify(error.response.data.message)}`);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+		return error.status;
+	}
 }
 
 export async function getPullRequestInfo(
@@ -193,5 +200,6 @@ export async function getPullRequestInfo(
 		repo: pr.repo,
 		pull_number: pr.prNumber,
 	});
+	log.log("Fetched pull request");
 	return response;
 }

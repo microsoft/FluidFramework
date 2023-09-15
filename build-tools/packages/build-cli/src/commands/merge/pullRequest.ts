@@ -77,6 +77,8 @@ export default class MergePullRequest extends BaseCommand<typeof MergePullReques
 		const [owner, repo] = context.originRemotePartialUrl.split("/");
 		this.log(`owner: ${owner} and repo: ${repo}`);
 
+		// create comment on the automation pr - "this PR is queued to be merged in next in 10mins. please close the PR if you want to stop the merge"
+
 		const pr1: PRObject = {
 			token: flags.pat,
 			owner: "sonalideshpandemsft",
@@ -92,10 +94,16 @@ export default class MergePullRequest extends BaseCommand<typeof MergePullReques
 		// Write the JSON data to the file
 		await fs.writeFile("file.json", jsonData, "utf-8");
 
-		const title = JSON.stringify(info.data.title);
-		const description = JSON.stringify(info.data.body);
+		const title = info.data.title;
+		const description = info.data.body;
 		const labels = info.data.labels;
+		const state = JSON.stringify(info.data.state);
 		const arr = [];
+
+		if (state === "closed") {
+			this.log(`PR is closed`);
+			return;
+		}
 
 		for (const label of labels) {
 			arr.push(label.name);
@@ -116,10 +124,19 @@ export default class MergePullRequest extends BaseCommand<typeof MergePullReques
 			strategy: mergeStrategy,
 		};
 
+		this.log(`PR Object: ${JSON.stringify(pr)}`);
+
+		this.log(`Merge strategy: ${mergeStrategy}`);
+
 		// squash pull request
 		if (mergeStrategy === MergeStrategy.Squash) {
 			const response = await mergePullRequest(pr, this.logger);
-			this.log(`Squash merge PRs: ${JSON.stringify(response)}`);
+			this.log(`Squash PR repsonse: ${JSON.stringify(response)}`);
+
+			if (response !== 200) {
+				this.errorLog(`Pull Request is not mergeable`);
+				return;
+			}
 		}
 
 		// merge pr
@@ -127,8 +144,6 @@ export default class MergePullRequest extends BaseCommand<typeof MergePullReques
 			// find the commit id
 			const commitInfo = await listCommitsPullRequest(pr, this.logger);
 			this.log(`Number of commits: ${commitInfo.length}`);
-
-			// create comment on the automation pr - "this PR is queued to be merged in next in 10mins. please close the PR if you want to stop the merge"
 
 			await filterCommits(commitInfo, flags.targetBranch, this.gitRepo, this.logger);
 			this.log(`Merge Pull Request`);
@@ -161,7 +176,7 @@ async function filterCommits(
 			const sha = filteredCommits[0].sha;
 			await mergeAutomationPullRequest(sha, branch, gitRepo);
 		} else {
-			log.log(
+			log.errorLog(
 				`The last commit does not have the message ${automationTitle}. The fixup commit is named/pushed incorrectly`,
 			);
 		}
