@@ -36,7 +36,7 @@ export type TestRunResult =
 	| {
 			/** Abort and fail the runner */
 			abort: true;
-			/** The errorCode that the runner exits with */
+			/** The errorCode that the runner exits with. Should be non-zero. */
 			errorCode: number;
 	  }
 	| {
