@@ -240,9 +240,10 @@ export function getUnscopedPackageName(apiPackage: ApiPackage): string {
 }
 
 /**
- * Gets the file path for the specified API item.
+ * Gets the path to the document for the specified API item.
  *
  * @remarks
+ *
  * In the case of an item that does not get rendered to its own document, this will point to the document
  * of the ancestor item under which the provided item will be rendered.
  *
@@ -250,10 +251,8 @@ export function getUnscopedPackageName(apiPackage: ApiPackage): string {
  *
  * @param apiItem - The API item for which we are generating a file path.
  * @param config - See {@link ApiItemTransformationConfiguration}.
- *
- * @public
  */
-export function getFilePathForApiItem(
+export function getDocumentPathForApiItem(
 	apiItem: ApiItem,
 	config: Required<ApiItemTransformationConfiguration>,
 ): string {
@@ -273,7 +272,7 @@ function getApiItemPath(
 ): string[] {
 	const targetDocumentItem = getFirstAncestorWithOwnDocument(apiItem, config.documentBoundaries);
 
-	const fileName = getFileNameForApiItem(apiItem, config);
+	const fileName = getDocumentNameForApiItem(apiItem, config);
 
 	// Filtered ancestry in ascending order
 	const documentAncestry = getAncestralHierarchy(targetDocumentItem, (hierarchyItem) =>
@@ -287,19 +286,20 @@ function getApiItemPath(
 }
 
 /**
- * Gets the file name for the specified API item.
+ * Gets the document name for the specified API item.
  *
  * @remarks
+ *
  * In the case of an item that does not get rendered to its own document, this will be the file name for the document
  * of the ancestor item under which the provided item will be rendered.
  *
  * Note: This is strictly the name of the file, not a path to that file.
- * To get the path, use {@link getFilePathForApiItem}.
+ * To get the path, use {@link getDocumentPathForApiItem}.
  *
  * @param apiItem - The API item for which we are generating a file path.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
-function getFileNameForApiItem(
+function getDocumentNameForApiItem(
 	apiItem: ApiItem,
 	config: Required<ApiItemTransformationConfiguration>,
 ): string {

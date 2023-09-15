@@ -51,7 +51,7 @@ export async function renderApiModelAsHtml(
  * Renders the provided documents using HTML syntax, and writes each document to a file on disk.
  *
  * @param documents - The documents to render. Each will be rendered to its own file on disk per
- * {@link DocumentNode.filePath} (relative to the provided output directory).
+ * {@link DocumentNode.documentPath} (relative to the provided output directory).
  * @param renderConfig - Configuration for rendering {@link DocumentNode}s as HTML.
  * @param fileSystemConfig - Configuration for writing document files to disk.
  * @param logger - Receiver of system log data. Default: {@link defaultConsoleLogger}.
@@ -77,7 +77,7 @@ export async function renderDocumentsAsHtml(
 				logger,
 			});
 
-			const filePath = Path.join(outputDirectoryPath, `${document.filePath}.html`);
+			const filePath = Path.join(outputDirectoryPath, `${document.documentPath}.html`);
 			await FileSystem.writeFileAsync(filePath, renderedDocument, {
 				convertLineEndings: newlineKind ?? NewlineKind.OsDefault,
 				ensureFolderExists: true,

@@ -129,12 +129,12 @@ function apiTestSuite(
 
 					const pathMap = new Map<string, DocumentNode>();
 					for (const document of documents) {
-						if (pathMap.has(document.filePath)) {
+						if (pathMap.has(document.documentPath)) {
 							expect.fail(
 								`Rendering generated multiple documents to be rendered to the same file path.`,
 							);
 						} else {
-							pathMap.set(document.filePath, document);
+							pathMap.set(document.documentPath, document);
 						}
 					}
 				});

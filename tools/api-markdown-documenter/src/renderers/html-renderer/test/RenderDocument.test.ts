@@ -44,7 +44,7 @@ describe("Document HTML rendering tests", () => {
 					HeadingNode.createFromPlainText("Sample Document"),
 				),
 			],
-			filePath: "./test.md",
+			documentPath: "./test",
 		});
 
 		const expected = [
