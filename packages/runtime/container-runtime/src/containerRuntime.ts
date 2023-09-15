@@ -187,7 +187,7 @@ import {
 	ContainerMessageType,
 	type InboundSequencedContainerRuntimeMessage,
 	type InboundSequencedContainerRuntimeMessageOrSystemMessage,
-	type InTransitContainerRuntimeIdAllocationMessage,
+	type ContainerRuntimeIdAllocationMessage,
 	type LocalContainerRuntimeIdAllocationMessage,
 	type LocalContainerRuntimeMessage,
 	type OutboundContainerRuntimeMessage,
@@ -211,10 +211,8 @@ function compatBehaviorAllowsMessageType(
 }
 
 function prepareLocalContainerRuntimeIdAllocationMessageForTransit(
-	message:
-		| LocalContainerRuntimeIdAllocationMessage
-		| InTransitContainerRuntimeIdAllocationMessage,
-): asserts message is InTransitContainerRuntimeIdAllocationMessage {
+	message: LocalContainerRuntimeIdAllocationMessage | ContainerRuntimeIdAllocationMessage,
+): asserts message is ContainerRuntimeIdAllocationMessage {
 	// Remove the stashedState from the op if it's a stashed op
 	if ("stashedState" in message.contents) {
 		delete message.contents.stashedState;
@@ -1983,6 +1981,7 @@ export class ContainerRuntime
 	 * Parse an op's type and actual content from given serialized content
 	 * ! Note: this format needs to be in-line with what is set in the "ContainerRuntime.submit(...)" method
 	 */
+	// TODO: markfields: confirm Local- versus Outbound- ContainerRuntimeMessage typing
 	private parseLocalOpContent(serializedContents?: string): LocalContainerRuntimeMessage {
 		assert(serializedContents !== undefined, 0x6d5 /* content must be defined */);
 		const message: LocalContainerRuntimeMessage = JSON.parse(serializedContents);
@@ -2130,12 +2129,16 @@ export class ContainerRuntime
 		for (const message of this.remoteMessageProcessor.process(messageCopy)) {
 			if (modernRuntimeMessage) {
 				this.processCore({
-					// This cast is appropriate iff `modernRuntimeMessage` is true
+					// Cast it since we expect it to be this based on modernRuntimeMessage computation above.
+					// There is nothing really ensuring that anytime original message.type is Operation that
+					// the result messages will be so. In the end modern bool being true only directs to
+					// throw error if ultimately unrecognized without compat details saying otherwise.
 					message: message as InboundSequencedContainerRuntimeMessage,
 					local,
 					modernRuntimeMessage,
 				});
 			} else {
+				// Unrecognized message will be ignored.
 				this.processCore({ message, local, modernRuntimeMessage });
 			}
 		}
@@ -3379,7 +3382,7 @@ export class ContainerRuntime
 			}
 
 			if (idRange !== undefined) {
-				const idAllocationMessage: InTransitContainerRuntimeIdAllocationMessage = {
+				const idAllocationMessage: ContainerRuntimeIdAllocationMessage = {
 					type: ContainerMessageType.IdAllocation,
 					contents: idRange,
 				};

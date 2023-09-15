@@ -117,7 +117,7 @@ export type LocalContainerRuntimeIdAllocationMessage = TypedContainerRuntimeMess
 	ContainerMessageType.IdAllocation,
 	IdCreationRangeWithStashedState
 >;
-export type InTransitContainerRuntimeIdAllocationMessage = TypedContainerRuntimeMessage<
+export type ContainerRuntimeIdAllocationMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.IdAllocation,
 	IdCreationRange & { stashedState?: never }
 >;
@@ -148,7 +148,7 @@ export type InboundContainerRuntimeMessage =
 	| ContainerRuntimeBlobAttachMessage
 	| ContainerRuntimeRejoinMessage
 	| ContainerRuntimeAliasMessage
-	| InTransitContainerRuntimeIdAllocationMessage
+	| ContainerRuntimeIdAllocationMessage
 	// Inbound messages may include unknown types from other clients, so we include that as a special case here
 	| UnknownContainerRuntimeMessage;
 
@@ -172,7 +172,7 @@ export type OutboundContainerRuntimeMessage =
 	| ContainerRuntimeBlobAttachMessage
 	| ContainerRuntimeRejoinMessage
 	| ContainerRuntimeAliasMessage
-	| InTransitContainerRuntimeIdAllocationMessage;
+	| ContainerRuntimeIdAllocationMessage;
 
 /**
  * An unpacked ISequencedDocumentMessage with the inner TypedContainerRuntimeMessage type/contents/etc
