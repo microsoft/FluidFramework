@@ -2,10 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { strict as assert } from "assert";
 import { takeAsync } from "@fluid-internal/stochastic-test-utils";
 import { DDSFuzzModel, createDDSFuzzSuite, DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { SharedTreeTestFactory, validateTreeConsistency } from "../../utils";
+// eslint-disable-next-line import/no-internal-modules
+import { getFuzzTestTreeStates } from "../../../fuzz/fuzzTreeStateHistory";
 import { makeOpGenerator, EditGeneratorOpWeights } from "./fuzzEditGenerators";
 import { fuzzReducer } from "./fuzzEditReducers";
 import { onCreate } from "./fuzzUtils";
@@ -81,5 +84,11 @@ describe("Fuzz - Top-Level", () => {
 			},
 		};
 		createDDSFuzzSuite(model, options);
+	});
+	describe.only("Fuzz - save tree states history", () => {
+		it.only("with provided seed and number of clients", async () => {
+			const test = await getFuzzTestTreeStates(1, 2);
+			assert.equal(test, "");
+		});
 	});
 });

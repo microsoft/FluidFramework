@@ -78,8 +78,22 @@ const fuzzReducerWithHistory = combineReducersAsync<Operation, FuzzTestStateWith
 });
 
 function updateEmptyClientHistory(state: FuzzTestStateWithHistory) {
+	let opsNumber = 0;
+	for (const client of state.clients) {
+		if (state.history?.get(client) !== undefined) {
+			const opsLength = state.history?.get(client)?.length;
+			assert(opsLength !== undefined, "");
+			opsNumber = Math.max(opsLength, opsNumber);
+		}
+	}
 	if (state.history?.get(state.client) === undefined) {
-		state.history?.set(state.client, [JSON.stringify(toJsonableTree(state.channel.view))]);
+		state.history?.set(state.client, ["{}"]);
+		for (let i = 0; i < opsNumber - 1; i += 1) {
+			state.history?.get(state.client)?.push("{}");
+		}
+		for (const client of state.clients) {
+			state.history?.get(client)?.push(JSON.stringify(toJsonableTree(client.channel.view)));
+		}
 	}
 }
 
@@ -101,6 +115,7 @@ export async function getFuzzTestTreeStates(seed: number, numberOfClients: numbe
 		delete: 1,
 		start: 0,
 		commit: 0,
+		synchronizeTrees: 0,
 	};
 	const opsPerRun = 20;
 	const runsPerBatch = 1;

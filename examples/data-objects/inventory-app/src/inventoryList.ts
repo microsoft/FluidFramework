@@ -4,12 +4,10 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { ISharedTree, SharedTreeFactory, getFuzzTestTreeStates } from "@fluid-experimental/tree2";
+import { ISharedTree, SharedTreeFactory } from "@fluid-experimental/tree2";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 
 const treeKey = "tree";
-const test = await getFuzzTestTreeStates(0, 1);
-console.log(test);
 
 export class InventoryList extends DataObject {
 	private _tree: ISharedTree | undefined;
