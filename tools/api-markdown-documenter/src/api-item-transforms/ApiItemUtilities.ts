@@ -207,7 +207,7 @@ function getLinkUrlForApiItem(
 	config: Required<ApiItemTransformationConfiguration>,
 ): string {
 	const uriBase = config.getUriBaseOverrideForItem(apiItem) ?? config.uriRoot;
-	let documentPath = getApiItemPath(apiItem, config, /* includeExtension: */ false).join("/");
+	let documentPath = getApiItemPath(apiItem, config).join("/");
 
 	// Omit "index" file name from path generated in links.
 	// This can be considered an optimization in most cases, but some documentation systems also special-case
@@ -240,9 +240,10 @@ export function getUnscopedPackageName(apiPackage: ApiPackage): string {
 }
 
 /**
- * Gets the file path for the specified API item.
+ * Gets the path to the document for the specified API item.
  *
  * @remarks
+ *
  * In the case of an item that does not get rendered to its own document, this will point to the document
  * of the ancestor item under which the provided item will be rendered.
  *
@@ -250,14 +251,12 @@ export function getUnscopedPackageName(apiPackage: ApiPackage): string {
  *
  * @param apiItem - The API item for which we are generating a file path.
  * @param config - See {@link ApiItemTransformationConfiguration}.
- *
- * @public
  */
-export function getFilePathForApiItem(
+export function getDocumentPathForApiItem(
 	apiItem: ApiItem,
 	config: Required<ApiItemTransformationConfiguration>,
 ): string {
-	const pathSegments = getApiItemPath(apiItem, config, true);
+	const pathSegments = getApiItemPath(apiItem, config);
 	return Path.join(...pathSegments);
 }
 
@@ -266,16 +265,14 @@ export function getFilePathForApiItem(
  *
  * @param apiItem - The API item for which we are generating a file path.
  * @param config - See {@link ApiItemTransformationConfiguration}.
- * @param includeExtension - Whether or not to include the `.md` file extension at the end of the path.
  */
 function getApiItemPath(
 	apiItem: ApiItem,
 	config: Required<ApiItemTransformationConfiguration>,
-	includeExtension: boolean,
 ): string[] {
 	const targetDocumentItem = getFirstAncestorWithOwnDocument(apiItem, config.documentBoundaries);
 
-	const fileName = getFileNameForApiItem(apiItem, config, includeExtension);
+	const fileName = getDocumentNameForApiItem(apiItem, config);
 
 	// Filtered ancestry in ascending order
 	const documentAncestry = getAncestralHierarchy(targetDocumentItem, (hierarchyItem) =>
@@ -289,23 +286,22 @@ function getApiItemPath(
 }
 
 /**
- * Gets the file name for the specified API item.
+ * Gets the document name for the specified API item.
  *
  * @remarks
+ *
  * In the case of an item that does not get rendered to its own document, this will be the file name for the document
  * of the ancestor item under which the provided item will be rendered.
  *
  * Note: This is strictly the name of the file, not a path to that file.
- * To get the path, use {@link getFilePathForApiItem}.
+ * To get the path, use {@link getDocumentPathForApiItem}.
  *
  * @param apiItem - The API item for which we are generating a file path.
  * @param config - See {@link ApiItemTransformationConfiguration}.
- * @param includeExtension - Whether or not to include the `.md` file extension at the end of the file name.
  */
-function getFileNameForApiItem(
+function getDocumentNameForApiItem(
 	apiItem: ApiItem,
 	config: Required<ApiItemTransformationConfiguration>,
-	includeExtension: boolean,
 ): string {
 	const targetDocumentItem = getFirstAncestorWithOwnDocument(apiItem, config.documentBoundaries);
 
@@ -319,11 +315,6 @@ function getFileNameForApiItem(
 		targetDocumentItem.kind !== ApiItemKind.Package
 	) {
 		unscopedFileName = `${unscopedFileName}-${targetDocumentItem.kind.toLocaleLowerCase()}`;
-	}
-
-	// Append file extension if requested
-	if (includeExtension) {
-		unscopedFileName = `${unscopedFileName}.md`;
 	}
 
 	// Walk parentage up until we reach the first ancestor which injects directory hierarchy.

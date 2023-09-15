@@ -219,7 +219,7 @@ export class DocumentNode implements Parent<SectionNode>, DocumentNodeProps {
     constructor(props: DocumentNodeProps);
     readonly apiItemName: string;
     readonly children: SectionNode[];
-    readonly filePath: string;
+    readonly documentPath: string;
     readonly frontMatter?: string;
     readonly type = DocumentationNodeType.Document;
 }
@@ -228,7 +228,7 @@ export class DocumentNode implements Parent<SectionNode>, DocumentNodeProps {
 export interface DocumentNodeProps {
     readonly apiItemName: string;
     readonly children: SectionNode[];
-    readonly filePath: string;
+    readonly documentPath: string;
     readonly frontMatter?: string;
 }
 
@@ -257,9 +257,6 @@ export function getDeprecatedBlock(apiItem: ApiItem): DocSection | undefined;
 
 // @public
 export function getExampleBlocks(apiItem: ApiItem): DocSection[] | undefined;
-
-// @public
-export function getFilePathForApiItem(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): string;
 
 // @public
 export function getHeadingForApiItem(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>, headingLevel?: number): Heading;
