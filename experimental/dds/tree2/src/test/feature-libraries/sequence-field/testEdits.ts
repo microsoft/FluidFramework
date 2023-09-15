@@ -82,7 +82,7 @@ function createRedundantRemoveChangeset(
 	detachEvent: ChangeAtomId,
 ): SF.Changeset<never> {
 	const changeset = createDeleteChangeset(index, size);
-	(changeset[changeset.length - 1] as SF.Delete).cellId = detachEvent;
+	changeset[changeset.length - 1].cellId = detachEvent;
 	return changeset;
 }
 
@@ -94,7 +94,7 @@ function createReviveChangeset(
 	lastDetach?: SF.CellId,
 ): SF.Changeset<never> {
 	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent, reviver);
-	const mark = markList[markList.length - 1] as SF.Reattach;
+	const mark = markList[markList.length - 1];
 	if (lastDetach !== undefined) {
 		mark.cellId = lastDetach;
 	}
@@ -115,7 +115,7 @@ function createRedundantReviveChangeset(
 		reviver,
 		isIntention,
 	);
-	const mark = markList[markList.length - 1] as SF.Reattach;
+	const mark = markList[markList.length - 1];
 	delete mark.cellId;
 	return markList;
 }
@@ -128,7 +128,7 @@ function createBlockedReviveChangeset(
 	reviver = fakeRepair,
 ): SF.Changeset<never> {
 	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent, reviver);
-	const mark = markList[markList.length - 1] as SF.Reattach;
+	const mark = markList[markList.length - 1];
 	mark.cellId = lastDetach;
 	return markList;
 }
@@ -141,7 +141,7 @@ function createIntentionalReviveChangeset(
 	lastDetach?: SF.CellId,
 ): SF.Changeset<never> {
 	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent, reviver, true);
-	const mark = markList[markList.length - 1] as SF.Reattach;
+	const mark = markList[markList.length - 1];
 
 	if (lastDetach !== undefined) {
 		mark.cellId = lastDetach;
@@ -183,7 +183,7 @@ function createModifyDetachedChangeset<TNodeChange>(
 	detachEvent: SF.CellId,
 ): SF.Changeset<TNodeChange> {
 	const changeset = createModifyChangeset(index, change);
-	const modify = changeset[changeset.length - 1] as SF.NoopMark<TNodeChange>;
+	const modify = changeset[changeset.length - 1] as SF.CellMark<SF.NoopMark, TNodeChange>;
 	modify.cellId = detachEvent;
 	return changeset;
 }
@@ -198,13 +198,13 @@ function createModifyDetachedChangeset<TNodeChange>(
 function createInsertMark<TChange = never>(
 	countOrContent: number | JsonableTree[],
 	cellId: ChangesetLocalId | SF.CellId,
-	overrides?: Partial<SF.Insert<TChange>>,
-): SF.Insert<TChange> {
+	overrides?: Partial<SF.CellMark<SF.Insert, TChange>>,
+): SF.CellMark<SF.Insert, TChange> {
 	const content = Array.isArray(countOrContent)
 		? countOrContent
 		: generateJsonables(countOrContent);
 	const cellIdObject: SF.CellId = typeof cellId === "object" ? cellId : { localId: cellId };
-	const mark: SF.Insert<TChange> = {
+	const mark: SF.CellMark<SF.Insert, TChange> = {
 		type: "Insert",
 		content,
 		count: content.length,
@@ -227,12 +227,12 @@ function createInsertMark<TChange = never>(
 function createReviveMark<TChange = never>(
 	countOrContent: number | ITreeCursorSynchronous[],
 	cellId?: SF.CellId,
-	overrides?: Partial<SF.Revive<TChange>>,
-): SF.Revive<TChange> {
+	overrides?: Partial<SF.CellMark<SF.Revive, TChange>>,
+): SF.CellMark<SF.Revive, TChange> {
 	const content = Array.isArray(countOrContent)
 		? countOrContent
 		: generateJsonables(countOrContent).map(singleTextCursor);
-	const mark: SF.Revive<TChange> = {
+	const mark: SF.CellMark<SF.Revive, TChange> = {
 		type: "Revive",
 		count: content.length,
 		content,
@@ -252,10 +252,10 @@ function createReviveMark<TChange = never>(
 function createDeleteMark<TChange = never>(
 	count: number,
 	markId: ChangesetLocalId | ChangeAtomId,
-	overrides?: Partial<SF.Delete<TChange>>,
-): SF.Delete<TChange> {
+	overrides?: Partial<SF.CellMark<SF.Delete, TChange>>,
+): SF.CellMark<SF.Delete, TChange> {
 	const cellId: ChangeAtomId = typeof markId === "object" ? markId : { localId: markId };
-	const mark: SF.Delete<TChange> = {
+	const mark: SF.CellMark<SF.Delete, TChange> = {
 		type: "Delete",
 		count,
 		id: cellId.localId,
@@ -275,10 +275,10 @@ function createDeleteMark<TChange = never>(
 function createMoveOutMark<TChange = never>(
 	count: number,
 	markId: ChangesetLocalId | ChangeAtomId,
-	overrides?: Partial<SF.MoveOut<TChange>>,
-): SF.MoveOut<TChange> {
+	overrides?: Partial<SF.CellMark<SF.MoveOut, TChange>>,
+): SF.CellMark<SF.MoveOut, TChange> {
 	const atomId: ChangeAtomId = typeof markId === "object" ? markId : { localId: markId };
-	const mark: SF.MoveOut<TChange> = {
+	const mark: SF.CellMark<SF.MoveOut, TChange> = {
 		type: "MoveOut",
 		count,
 		id: atomId.localId,
@@ -298,10 +298,10 @@ function createMoveOutMark<TChange = never>(
 function createMoveInMark(
 	count: number,
 	cellId: ChangesetLocalId | SF.CellId,
-	overrides?: Partial<SF.MoveIn>,
-): SF.MoveIn {
+	overrides?: Partial<SF.CellMark<SF.MoveIn, never>>,
+): SF.CellMark<SF.MoveIn, never> {
 	const cellIdObject: SF.CellId = typeof cellId === "object" ? cellId : { localId: cellId };
-	const mark: SF.MoveIn = {
+	const mark: SF.CellMark<SF.MoveIn, never> = {
 		type: "MoveIn",
 		id: cellIdObject.localId,
 		cellId: cellIdObject,
@@ -322,10 +322,10 @@ function createMoveInMark(
 function createReturnFromMark<TChange = never>(
 	count: number,
 	markId: ChangesetLocalId | ChangeAtomId,
-	overrides?: Partial<SF.ReturnFrom<TChange>>,
-): SF.ReturnFrom<TChange> {
+	overrides?: Partial<SF.CellMark<SF.ReturnFrom, TChange>>,
+): SF.CellMark<SF.ReturnFrom, TChange> {
 	const atomId: ChangeAtomId = typeof markId === "object" ? markId : { localId: markId };
-	const mark: SF.ReturnFrom<TChange> = {
+	const mark: SF.CellMark<SF.ReturnFrom, TChange> = {
 		type: "ReturnFrom",
 		count,
 		id: atomId.localId,
@@ -347,10 +347,10 @@ function createReturnToMark(
 	count: number,
 	markId: ChangesetLocalId | ChangeAtomId,
 	cellId?: SF.CellId,
-	overrides?: Partial<SF.ReturnTo>,
-): SF.ReturnTo {
+	overrides?: Partial<SF.CellMark<SF.ReturnTo, never>>,
+): SF.CellMark<SF.ReturnTo, never> {
 	const atomId: ChangeAtomId = typeof markId === "object" ? markId : { localId: markId };
-	const mark: SF.ReturnTo = {
+	const mark: SF.CellMark<SF.ReturnTo, never> = {
 		type: "ReturnTo",
 		id: atomId.localId,
 		count,
@@ -368,8 +368,11 @@ function createReturnToMark(
  * @param changes - The changes to apply to the node.
  * @param cellId - Describes the cell that the target node used to reside in. Used when the target node is removed.
  */
-function createModifyMark<TChange>(changes: TChange, cellId?: SF.CellId): SF.NoopMark<TChange> {
-	const mark: SF.NoopMark<TChange> = {
+function createModifyMark<TChange>(
+	changes: TChange,
+	cellId?: SF.CellId,
+): SF.CellMark<SF.NoopMark, TChange> {
+	const mark: SF.CellMark<SF.NoopMark, TChange> = {
 		count: 1,
 		changes,
 	};

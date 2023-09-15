@@ -41,6 +41,7 @@ import {
 	NoopMarkType,
 	HasLineage,
 	IdRange,
+	CellMark,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { ComposeQueue } from "./compose";
@@ -211,7 +212,7 @@ function rebaseMarkList<TNodeChange>(
  * @param revision - The revision, if available.
  * @returns A NoOp mark that targets the same cells as the input mark.
  */
-function generateNoOpWithCellId<T>(mark: Mark<T>, revision?: StableId): NoopMark<T> {
+function generateNoOpWithCellId<T>(mark: Mark<T>, revision?: StableId): CellMark<NoopMark, T> {
 	const length = mark.count;
 	const cellId = getInputCellId(mark, revision);
 	return cellId === undefined ? { count: length } : { count: length, cellId };
@@ -340,7 +341,7 @@ function rebaseMark<TNodeChange>(
 			const modify = rebasedMark.changes;
 			if (modify !== undefined) {
 				rebasedMark = withNodeChange(rebasedMark, undefined);
-				const nestedChange: NoopMark<TNodeChange> = {
+				const nestedChange: CellMark<NoopMark, TNodeChange> = {
 					count: 1,
 					changes: modify,
 				};

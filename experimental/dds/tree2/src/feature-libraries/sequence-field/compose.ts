@@ -13,7 +13,16 @@ import {
 	IdAllocator,
 	RevisionMetadataSource,
 } from "../modular-schema";
-import { Changeset, Mark, MarkList, MoveId, NoopMarkType, CellId, NoopMark } from "./format";
+import {
+	Changeset,
+	Mark,
+	MarkList,
+	MoveId,
+	NoopMarkType,
+	CellId,
+	NoopMark,
+	CellMark,
+} from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { MarkQueue } from "./markQueue";
 import {
@@ -343,7 +352,7 @@ function createNoopMark<TNodeChange>(
 	nodeChange: TNodeChange | undefined,
 	cellId?: ChangeAtomId,
 ): Mark<TNodeChange> {
-	const mark: NoopMark<TNodeChange> = { count: length };
+	const mark: CellMark<NoopMark, TNodeChange> = { count: length };
 	if (nodeChange !== undefined) {
 		assert(length === 1, 0x692 /* A mark with a node change must have length one */);
 		mark.changes = nodeChange;

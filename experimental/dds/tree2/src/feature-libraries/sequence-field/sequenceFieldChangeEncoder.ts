@@ -69,8 +69,7 @@ function makeV0Codec<TNodeChange>(
 					case "ReturnFrom":
 						break;
 					case "Revive": {
-						(decodedMark as Revive<unknown>).content =
-							mark.content.map(singleTextCursor);
+						(decodedMark as Revive).content = mark.content.map(singleTextCursor);
 						break;
 					}
 					case "Placeholder":

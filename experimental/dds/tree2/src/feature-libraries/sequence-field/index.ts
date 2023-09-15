@@ -31,6 +31,7 @@ export {
 	HasMarkFields,
 	HasLineage,
 	IdRange,
+	CellMark,
 } from "./format";
 export {
 	SequenceFieldChangeHandler,

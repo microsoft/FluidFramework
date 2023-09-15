@@ -16,6 +16,7 @@ import {
 	MoveOut,
 	NoopMark,
 	Delete,
+	CellMark,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import {
@@ -205,7 +206,7 @@ function invertMark<TNodeChange>(
 					];
 				}
 
-				const deleteMark: Delete<TNodeChange> = {
+				const deleteMark: CellMark<Delete, TNodeChange> = {
 					type: "Delete",
 					count: mark.count,
 					id: mark.cellId.localId,
@@ -301,7 +302,7 @@ function invertMark<TNodeChange>(
 				}
 			}
 
-			const invertedMark: ReturnFrom<TNodeChange> = {
+			const invertedMark: CellMark<ReturnFrom, TNodeChange> = {
 				type: "ReturnFrom",
 				id: mark.id,
 				count: mark.count,
@@ -337,7 +338,7 @@ function amendMarkList<TNodeChange>(
 }
 
 function applyMovedChanges<TNodeChange>(
-	mark: MoveOut<TNodeChange> | ReturnFrom<TNodeChange>,
+	mark: CellMark<MoveOut | ReturnFrom, TNodeChange>,
 	revision: RevisionTag | undefined,
 	manager: CrossFieldManager<TNodeChange>,
 ): Mark<TNodeChange>[] {
@@ -376,7 +377,7 @@ function invertNodeChangeOrSkip<TNodeChange>(
 ): Mark<TNodeChange> {
 	if (changes !== undefined) {
 		assert(length === 1, 0x66c /* A modify mark must have length equal to one */);
-		const noop: NoopMark<TNodeChange> = {
+		const noop: CellMark<NoopMark, TNodeChange> = {
 			count: 1,
 			changes: inverter(changes, index),
 		};
