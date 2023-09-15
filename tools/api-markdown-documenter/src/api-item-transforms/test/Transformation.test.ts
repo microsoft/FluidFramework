@@ -365,7 +365,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 		const expectedPackageDoc = new DocumentNode({
 			apiItemName: "test-package",
-			filePath: "test-package.md",
+			documentPath: "test-package",
 			children: [
 				new SectionNode(
 					[
@@ -403,7 +403,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 		const expectedEntryPointADoc = new DocumentNode({
 			apiItemName: "entry-point-a",
-			filePath: "test-package/entry-point-a-entrypoint.md",
+			documentPath: "test-package/entry-point-a-entrypoint",
 			children: [
 				new SectionNode(
 					[
@@ -487,7 +487,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 		const expectedEntryPointBDoc = new DocumentNode({
 			apiItemName: "entry-point-b",
-			filePath: "test-package/entry-point-b-entrypoint.md",
+			documentPath: "test-package/entry-point-b-entrypoint",
 			children: [
 				new SectionNode(
 					[
