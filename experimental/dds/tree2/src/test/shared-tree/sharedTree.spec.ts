@@ -1988,10 +1988,10 @@ function getTestValue({ forest }: ISharedTreeView): TreeValue | undefined {
 /**
  * Reads all values in a tree set by {@link insertFirstNode} in the order they were added (which is the reverse of the tree order).
  */
-function getTestValues({ forest }: ISharedTreeView): TreeValue[] {
+function getTestValues({ forest }: ISharedTreeView): Value[] {
 	const readCursor = forest.allocateCursor();
 	moveToDetachedField(forest, readCursor);
-	const values: TreeValue[] = [];
+	const values: Value[] = [];
 	if (readCursor.firstNode()) {
 		values.unshift(readCursor.value);
 		while (readCursor.nextNode()) {
