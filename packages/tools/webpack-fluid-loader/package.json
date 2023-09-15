@@ -127,6 +127,7 @@
 				"script": false
 			},
 			"tsc": [
+				"...",
 				"webpack"
 			]
 		}
