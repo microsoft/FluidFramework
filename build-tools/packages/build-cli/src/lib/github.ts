@@ -193,6 +193,5 @@ export async function getPullRequestInfo(
 		repo: pr.repo,
 		pull_number: pr.prNumber,
 	});
-	log.log(`Get Pull Request info: ${response}`);
 	return response;
 }

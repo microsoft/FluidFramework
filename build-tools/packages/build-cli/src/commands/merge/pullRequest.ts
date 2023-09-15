@@ -4,6 +4,7 @@
  */
 
 import { Flags } from "@oclif/core";
+import { promises as fs } from "fs";
 import { BaseCommand } from "../../base";
 import {
 	Repository,
@@ -74,6 +75,12 @@ export default class MergePullRequest extends BaseCommand<typeof MergePullReques
 		};
 
 		const info = await getPullRequestInfo(pr1, this.logger);
+
+		// Convert the 'info' object to a JSON string
+		const jsonData = JSON.stringify(info, null, 2);
+
+		// Write the JSON data to the file
+		await fs.writeFile("file.json", jsonData, "utf-8");
 		const pr = {
 			token: flags.pat,
 			owner: "sonalideshpandemsft",
