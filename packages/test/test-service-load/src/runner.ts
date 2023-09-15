@@ -12,7 +12,7 @@ import {
 } from "@fluidframework/test-driver-definitions";
 import { Loader, ConnectionState, IContainerExperimental } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { IRequestHeader, ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
+import { IRequestHeader, LogLevel } from "@fluidframework/core-interfaces";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { getRetryDelayFromError } from "@fluidframework/driver-utils";
@@ -20,14 +20,7 @@ import { assert, delay } from "@fluidframework/core-utils";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
-import {
-	createCodeLoader,
-	createLogger,
-	createTestDriver,
-	FileLogger,
-	getProfile,
-	safeExit,
-} from "./utils";
+import { createCodeLoader, createLogger, createTestDriver, getProfile, safeExit } from "./utils";
 import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
 import {
 	generateConfigurations,
@@ -35,7 +28,7 @@ import {
 	generateRuntimeOptions,
 	getOptionOverride,
 } from "./optionsMatrix";
-import { GcFailureExitCode, IRunConfig, ITestRunner } from "./testConfigFile";
+import { IRunConfig, ITestRunner } from "./testConfigFile";
 
 function printStatus(runConfig: IRunConfig, message: string) {
 	if (runConfig.verbose) {
@@ -111,6 +104,7 @@ async function main() {
 			driverType: driver,
 			driverEndpointName: endpoint,
 			profile: profileName,
+			workLoadPath,
 		},
 		random.pick([LogLevel.verbose, LogLevel.default]),
 	);
@@ -128,21 +122,6 @@ async function main() {
 			logger.sendErrorEvent({ eventName: "uncaughtExceptionMonitor", origin }, error);
 		} catch (e) {
 			console.error("Error during logging unhandled exception: ", e);
-		}
-	});
-
-	let testFailed: boolean = false;
-	const fileLogger = await FileLogger.loggerP();
-	// Check for InactiveObject or SweepReadyObject logs
-	fileLogger.observer.on("logEvent", (logEvent: ITelemetryBaseEvent) => {
-		if (
-			logEvent.eventName.includes("InactiveObject") ||
-			logEvent.eventName.includes("SweepReadyObject") ||
-			logEvent.eventName.includes("GC_Tombstone") ||
-			logEvent.eventName.includes("GC_Deleted")
-		) {
-			testFailed = true;
-			console.error(`xxxxxxxxx ${JSON.stringify(logEvent)}`);
 		}
 	});
 
@@ -166,11 +145,7 @@ async function main() {
 		);
 	} catch (e) {
 		logger.sendErrorEvent({ eventName: "runnerFailed" }, e);
-		console.log(`xxxxxxxxx Runner failed. Error: ${JSON.stringify(e)}`);
 	} finally {
-		if (testFailed) {
-			result = GcFailureExitCode;
-		}
 		await safeExit(result, url, runId);
 	}
 }
@@ -237,6 +212,7 @@ async function runnerProcess(
 		() => new FaultInjectionDocumentServiceFactory(testDriver.createDocumentServiceFactory()),
 	);
 
+	let exitCode: number = 0;
 	let done = false;
 	// Reset the workload once, on the first iteration
 	let reset = true;
@@ -333,8 +309,14 @@ async function runnerProcess(
 			}
 
 			printStatus(runConfig, `running`);
-			done = await test.run(runConfig, reset);
-			reset = false;
+			const result = await test.run(runConfig, reset);
+			if (result.abort) {
+				exitCode = result.errorCode;
+				done = true;
+			} else {
+				done = result.done;
+				reset = false;
+			}
 			printStatus(runConfig, done ? `finished` : "closed");
 		} catch (error) {
 			// clear stashed op in case of error
@@ -360,7 +342,7 @@ async function runnerProcess(
 			metricsCleanup();
 		}
 	}
-	return 0;
+	return exitCode;
 }
 
 function scheduleFaultInjection(

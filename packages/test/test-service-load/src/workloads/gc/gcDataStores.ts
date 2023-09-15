@@ -8,13 +8,15 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	IFluidHandle,
+	ITelemetryBaseEvent,
 	ITelemetryGenericEvent,
 	ITelemetryLogger,
+	LogLevel,
 } from "@fluidframework/core-interfaces";
-import { assert, delay } from "@fluidframework/core-utils";
+import { Deferred, assert, delay } from "@fluidframework/core-utils";
 import { SharedCounter } from "@fluidframework/counter";
 import { IValueChanged, SharedMap } from "@fluidframework/map";
-import { IRunConfig, ITestRunner } from "../../testConfigFile";
+import { GcFailureExitCode, IRunConfig, ITestRunner, TestRunResult } from "../../testConfigFile";
 
 /**
  * The maximum number of leaf data objects that can be running at a given time per client. This is used to limit the
@@ -995,7 +997,26 @@ export class RootDataObject extends DataObject implements ITestRunner {
 		return this.runtime;
 	}
 
-	public async run(config: IRunConfig): Promise<boolean> {
+	public async run(config: IRunConfig): Promise<TestRunResult> {
+		const abortP = new Deferred<TestRunResult>();
+		// Override the logger to observe GC events that indicate a GC error. If such an event is sent,
+		// abort the test.
+		// eslint-disable-next-line @typescript-eslint/unbound-method
+		let sendFunc = config.logger.send;
+		const sendOverride = (event: ITelemetryBaseEvent, logLevel?: LogLevel) => {
+			sendFunc = sendFunc.bind(config.logger);
+			sendFunc(event, logLevel);
+			if (
+				event.eventName.includes("InactiveObject") ||
+				event.eventName.includes("SweepReadyObject") ||
+				event.eventName.includes("GC_Tombstone") ||
+				event.eventName.includes("GC_Deleted")
+			) {
+				abortP.resolve({ abort: true, errorCode: GcFailureExitCode });
+			}
+		};
+		config.logger.send = sendOverride;
+
 		const nonCollabDataObjectHandle = this.root.get<IFluidHandle<IGCActivityObject>>(
 			this.singleCollabDataObjectKey,
 		);
@@ -1039,9 +1060,12 @@ export class RootDataObject extends DataObject implements ITestRunner {
 			`client${config.runId + 1}MultiCollab`,
 		);
 
-		return Promise.all([child1RunP, child2RunP]).then(([child1Result, child2Result]) => {
-			return child1Result.done && child2Result.done;
-		});
+		const runP: Promise<TestRunResult> = Promise.all([child1RunP, child2RunP]).then(
+			([child1Result, child2Result]) => {
+				return { abort: false, done: child1Result.done && child2Result.done };
+			},
+		);
+		return Promise.race([abortP.promise, runP]);
 	}
 
 	public stop() {

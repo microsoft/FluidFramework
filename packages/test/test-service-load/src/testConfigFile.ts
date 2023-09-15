@@ -29,6 +29,23 @@ export interface IDetachedTestRunner {
 	writeBlob(blobNumber: number): Promise<void>;
 }
 
+/**
+ * The result of running the test on a specific runner.
+ */
+export type TestRunResult =
+	| {
+			/** Abort and fail the runner */
+			abort: true;
+			/** The errorCode that the runner exits with */
+			errorCode: number;
+	  }
+	| {
+			/** The runner should not be aborted */
+			abort: false;
+			/** Whether the runner is done. If this is false, the runner reruns the test */
+			done: boolean;
+	  };
+
 export const ITestRunner: keyof IProvideTestRunner = "ITestRunner";
 export interface IProvideTestRunner {
 	readonly ITestRunner: ITestRunner;
@@ -38,7 +55,7 @@ export interface IProvideTestRunner {
  * called by the runner process and is the entry point into the test work load.
  */
 export interface ITestRunner extends IProvideTestRunner {
-	run(config: IRunConfig, reset: boolean): Promise<boolean>;
+	run(config: IRunConfig, reset: boolean): Promise<TestRunResult>;
 	getRuntime(): Promise<IFluidDataStoreRuntime>;
 	getDetachedRunner?(
 		config: Omit<IRunConfig, "runId" | "profileName">,

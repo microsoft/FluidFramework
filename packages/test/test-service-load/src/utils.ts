@@ -12,7 +12,7 @@ import {
 	OdspTestDriver,
 } from "@fluid-internal/test-drivers";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
-import { IEvent, ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise } from "@fluidframework/core-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { IProvideFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
@@ -28,7 +28,6 @@ import {
 	DriverEndpoint,
 } from "@fluidframework/test-driver-definitions";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	generateConfigurations,
 	generateLoaderOptions,
@@ -50,10 +49,6 @@ export function writeToFile(data: string, relativeDirPath: string, fileName: str
 	fs.writeFileSync(filePath, data);
 }
 
-interface IObservableLoggerEvents extends IEvent {
-	(event: "logEvent", listener: (logEvent: ITelemetryBaseEvent) => void): void;
-}
-
 export class FileLogger implements ITelemetryBufferedLogger {
 	public static readonly loggerP = (minLogLevel?: LogLevel) =>
 		new LazyPromise<FileLogger>(async () => {
@@ -72,6 +67,7 @@ export class FileLogger implements ITelemetryBufferedLogger {
 			driverType: string;
 			driverEndpointName: string | undefined;
 			profile: string;
+			workLoadPath: string;
 			runId: number | undefined;
 		},
 		minLogLevel: LogLevel = LogLevel.default,
@@ -92,8 +88,6 @@ export class FileLogger implements ITelemetryBufferedLogger {
 	private error: boolean = false;
 	private readonly schema = new Map<string, number>();
 	private logs: ITelemetryBaseEvent[] = [];
-
-	public readonly observer: TypedEventEmitter<IObservableLoggerEvents> = new TypedEventEmitter();
 
 	private constructor(
 		private readonly baseLogger?: ITelemetryBufferedLogger,
@@ -142,7 +136,6 @@ export class FileLogger implements ITelemetryBufferedLogger {
 			this.error = true;
 		}
 		this.logs.push(event);
-		this.observer.emit("logEvent", event);
 	}
 }
 
@@ -222,6 +215,7 @@ export async function initialize(
 			driverType: testDriver.type,
 			driverEndpointName: testDriver.endpointName,
 			profile: profileName,
+			workLoadPath,
 			runId: undefined,
 		},
 		minLogLevel,

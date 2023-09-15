@@ -13,7 +13,7 @@ import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { delay, assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IDetachedTestRunner, IRunConfig, ITestRunner } from "../../testConfigFile";
+import { IDetachedTestRunner, IRunConfig, ITestRunner, TestRunResult } from "../../testConfigFile";
 import { LeaderElection } from "../../leaderElection";
 
 const taskManagerKey = "taskManager";
@@ -499,7 +499,7 @@ export class LoadTestDataStore extends DataObject implements ITestRunner {
 		);
 	}
 
-	public async run(config: IRunConfig, reset: boolean) {
+	public async run(config: IRunConfig, reset: boolean): Promise<TestRunResult> {
 		const dataModel = await LoadTestDataStoreModel.createRunnerInstance(
 			config,
 			reset,
@@ -536,7 +536,7 @@ export class LoadTestDataStore extends DataObject implements ITestRunner {
 				clearTimeout(timeout);
 			}
 		}
-		return runResult[0];
+		return { abort: false, done: runResult[0] };
 	}
 
 	async getRuntime() {

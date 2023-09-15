@@ -19,7 +19,7 @@ import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { SharedCounter } from "@fluidframework/counter";
 import { SharedMap } from "@fluidframework/map";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { IRunConfig, ITestRunner } from "../../testConfigFile";
+import { IRunConfig, ITestRunner, TestRunResult } from "../../testConfigFile";
 
 /**
  * The maximum number of leaf data objects that can be created.
@@ -418,9 +418,9 @@ export class RootDataObject extends BaseDataObject implements ITestRunner {
 		return this.runtime;
 	}
 
-	public async run(config: IRunConfig): Promise<boolean> {
+	public async run(config: IRunConfig): Promise<TestRunResult> {
 		if (this.running) {
-			return true;
+			return { abort: false, done: true };
 		}
 
 		this._nodeId = `client${config.runId + 1}`;
@@ -476,10 +476,10 @@ export class RootDataObject extends BaseDataObject implements ITestRunner {
 		}
 		this.stop();
 		const notDone = this.runtime.disposed || this.activityFailed;
-		return !notDone;
+		return { abort: false, done: !notDone };
 	}
 
-	public stop() {
+	private stop() {
 		this.running = false;
 		this.localChildDataObjects.forEach((dataObject: IActivityObject, id: string) => {
 			dataObject.stop();

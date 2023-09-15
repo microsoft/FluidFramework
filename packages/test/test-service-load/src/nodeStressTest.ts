@@ -178,6 +178,7 @@ async function orchestratorProcess(
 		driverType: testDriver.type,
 		driverEndpointName: testDriver.endpointName,
 		profile: args.profileName,
+		workLoadPath,
 		runId: undefined,
 	});
 
