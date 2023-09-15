@@ -50,7 +50,7 @@ stages:
     - group: stress-odsp-lock
     jobs:
     - template: templates/include-test-real-service.yml
-      parameters:
+      parameters
         poolBuild: Large
         testPackage: ${{ variables.testPackage }}
         testWorkspace: ${{ variables.testWorkspace }}
@@ -59,9 +59,9 @@ stages:
         testCommand: start:odsp
         splitTestVariants:
           - name: Tombstone Mode
-            flags: --workloadPath gc --profile ci_tombstone
+            flags: --workLoadPath gc --profile ci_tombstone
           - name: Sweep Mode
-            flags: --workloadPath gc --profile ci_sweep
+            flags: --workLoadPath gc --profile ci_sweep
         env:
           login__microsoft__clientId: $(login-microsoft-clientId)
           login__microsoft__secret: $(login-microsoft-secret)
@@ -115,7 +115,7 @@ stages:
         timeoutInMinutes: 200
         testCommand: start:odsp
         splitTestVariants:
-          - flags: --workloadPath summary --profile ci
+          - flags: --workLoadPath summary --profile ci
         env:
           login__microsoft__clientId: $(login-microsoft-clientId)
           login__microsoft__secret: $(login-microsoft-secret)
