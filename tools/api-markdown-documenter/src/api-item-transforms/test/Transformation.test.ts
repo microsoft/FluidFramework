@@ -48,11 +48,23 @@ const defaultPartialConfig: Omit<ApiItemTransformationConfiguration, "apiModel">
 	uriRoot: ".",
 };
 
+// Relative to dist/api-item-transforms/test
+const testDataDirPath = Path.resolve(
+	__dirname,
+	"..",
+	"..",
+	"..",
+	"src",
+	"api-item-transforms",
+	"test",
+	"test-data",
+);
+
 /**
  * Generates an `ApiModel` from the API report file at the provided path.
  */
 function generateModel(testReportFileName: string): ApiModel {
-	const filePath = Path.resolve(__dirname, "test-data", testReportFileName);
+	const filePath = Path.resolve(testDataDirPath, testReportFileName);
 
 	const apiModel = new ApiModel();
 	apiModel.loadPackage(filePath);
