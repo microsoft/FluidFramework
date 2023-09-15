@@ -11,7 +11,7 @@ import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { DataProcessingError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 
-import { ContainerMessageType, SequencedContainerRuntimeMessage } from "./containerRuntime";
+import { ContainerMessageType, InboundSequencedContainerRuntimeMessage } from "./messageTypes";
 import { pkgVersion } from "./packageVersion";
 import { IBatchMetadata } from "./metadata";
 
@@ -67,6 +67,26 @@ export interface IRuntimeStateHandler {
 	reSubmit(message: IPendingBatchMessage): void;
 	reSubmitBatch(batch: IPendingBatchMessage[]): void;
 	isActiveConnection: () => boolean;
+}
+
+/** Union of keys of T */
+type KeysOfUnion<T extends object> = T extends T ? keyof T : never;
+/** *Partial* type all possible combinations of properties and values of union T.
+ * This loosens typing allowing access to all possible properties without
+ * narrowing.
+ */
+type AnyComboFromUnion<T extends object> = { [P in KeysOfUnion<T>]?: T[P] };
+
+function buildPendingMessageContent(
+	// AnyComboFromUnion is needed need to gain access to compatDetails that
+	// is only defined for some cases.
+	message: AnyComboFromUnion<InboundSequencedContainerRuntimeMessage>,
+): string {
+	// IMPORTANT: Order matters here, this must match the order of the properties used
+	// when submitting the message.
+	const { type, contents, compatDetails } = message;
+	// Any properties that are not defined, won't be emitted by stringify.
+	return JSON.stringify({ type, contents, compatDetails });
 }
 
 /**
@@ -242,7 +262,7 @@ export class PendingStateManager implements IDisposable {
 	 * the batch information was preserved for batch messages.
 	 * @param message - The message that got ack'd and needs to be processed.
 	 */
-	public processPendingLocalMessage(message: SequencedContainerRuntimeMessage): unknown {
+	public processPendingLocalMessage(message: InboundSequencedContainerRuntimeMessage): unknown {
 		// Pre-processing part - This may be the start of a batch.
 		this.maybeProcessBatchBegin(message);
 
@@ -256,10 +276,7 @@ export class PendingStateManager implements IDisposable {
 
 		this.pendingMessages.shift();
 
-		// IMPORTANT: Order matters here, this must match the order of the properties used
-		// when submitting the message.
-		const { type, contents, compatDetails } = message;
-		const messageContent = JSON.stringify({ type, contents, compatDetails });
+		const messageContent = buildPendingMessageContent(message);
 
 		// Stringified content should match
 		if (pendingMessage.content !== messageContent) {
