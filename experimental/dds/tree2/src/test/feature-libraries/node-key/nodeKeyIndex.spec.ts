@@ -159,7 +159,7 @@ describe("Node Key Index", () => {
 					{
 						type: nodeSchema.name,
 						fields: {
-							[nodeKeyFieldKey]: [{ type: nodeKeyTreeSchema.name, value: {} }],
+							[nodeKeyFieldKey]: [{ type: nodeKeyTreeSchema.name, value: 5 }],
 						},
 					},
 					nodeSchemaData,
@@ -202,7 +202,10 @@ describe("Node Key Index", () => {
 				type: nodeSchema.name,
 				fields: {
 					[nodeKeyFieldKey]: [
-						{ type: nodeKeyTreeSchema.name, value: view.nodeKey.generate() },
+						{
+							type: nodeKeyTreeSchema.name,
+							value: view.nodeKey.generate() as unknown as number,
+						},
 					],
 				},
 			},

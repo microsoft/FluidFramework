@@ -85,7 +85,7 @@
 		"eslint": "~8.6.0",
 		"eslint-plugin-chai-expect": "^3.0.0",
 		"eslint-plugin-chai-friendly": "^0.7.2",
-		"good-fences": "^1.1.1",
+		"good-fences": "^1.2.0",
 		"mocha": "^10.2.0",
 		"mocha-json-output-reporter": "^2.1.0",
 		"mocha-multi-reporters": "^1.5.1",
@@ -100,6 +100,14 @@
 			"build:tsc": [
 				"^tsc"
 			]
+		}
+	},
+	"pnpm": {
+		"comments": [
+			"nodegit is replaced with an empty package here because it's currently only used by good-fences for features we do not need, and has issues building when changing node versions. See https://github.com/smikula/good-fences/issues/105 for details."
+		],
+		"overrides": {
+			"nodegit": "npm:empty-npm-package@1.0.0"
 		}
 	}
 }
