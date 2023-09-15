@@ -345,7 +345,7 @@ abstract class AbstractPathVisitor implements PathVisitor {
 				parentField: destination.field,
 				parentIndex: destination.start,
 			},
-			[],
+			this.getContent(destination),
 		);
 	}
 	public beforeDetach(source: RangeUpPath, destination: DetachedPlaceUpPath): void {}
@@ -385,8 +385,12 @@ abstract class AbstractPathVisitor implements PathVisitor {
 				parentField: newContent.field,
 				parentIndex: newContent.start,
 			},
-			[],
+			this.getContent(newContent),
 		);
+	}
+	protected getContent(range: RangeUpPath): ProtoNodes {
+		// TODO: either lookup the content in the forest or stop providing the content in the events
+		return [];
 	}
 
 	public abstract onDelete(path: UpPath, count: number): void;
@@ -587,6 +591,8 @@ class InvalidatingPathVisitor
 	extends AbstractPathVisitor
 	implements Flushable<InvalidatingPathVisitor>
 {
+	private readonly listeners: Set<Listener> = new Set();
+
 	private processRegisteredPaths(path: UpPath): void {
 		const current = toDownPath(path);
 		const listeners = this.getListeners(BindingType.Invalidation, current);
@@ -604,8 +610,6 @@ class InvalidatingPathVisitor
 	public onInsert(path: UpPath, content: ProtoNodes): void {
 		this.processRegisteredPaths(path);
 	}
-
-	private readonly listeners: Set<Listener> = new Set();
 
 	public flush(): InvalidatingPathVisitor {
 		for (const listener of this.listeners) {

@@ -175,8 +175,6 @@ export type Mark<TTree = ProtoNode> =
 	| Modify<TTree>
 	| Remove<TTree>
 	| Restore<TTree>
-	// | Create<TTree>
-	// | Destroy
 	| MoveOut<TTree>
 	| MoveIn
 	| Insert<TTree>;
@@ -232,18 +230,6 @@ export interface Remove<TTree = ProtoNode> extends HasModifications<TTree> {
 	readonly detachId: DetachedNodeId;
 }
 
-// /**
-//  * Describes the destruction of a contiguous range of detached nodes.
-//  * @alpha
-//  */
-// export interface Destroy extends IsDetachedMark {
-// 	readonly type: typeof MarkType.Destroy;
-// 	/**
-// 	 * Must be 1 when `fields` is populated.
-// 	 */
-// 	readonly count: number;
-// }
-
 /**
  * Describes the moving out of a contiguous range of node.
  * @alpha
@@ -281,23 +267,6 @@ export interface MoveIn {
 	 */
 	readonly detachId?: DetachedNodeId;
 }
-
-// /**
-//  * Describes the creation of a contiguous range of node.
-//  * @alpha
-//  */
-// export interface Create<TTree = ProtoNode> {
-// 	readonly type: typeof MarkType.Create;
-// 	/**
-// 	 * Must be of length 1 when `fields` is populated.
-// 	 */
-// 	readonly data: readonly TTree[];
-
-// 	/**
-// 	 * Modifications to the new content.
-// 	 */
-// 	readonly fields?: FieldMarks<TTree>;
-// }
 
 /**
  * Describes the insertion of a contiguous range of node.
@@ -419,6 +388,4 @@ export const MarkType = {
 	Remove: 3,
 	MoveOut: 4,
 	Restore: 5,
-	// Create: 6,
-	// Destroy: 7,
 } as const;
