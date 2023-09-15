@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { FluidSerializableReadOnly } from "@fluidframework/shared-object-base";
 import { ITreeCursorSynchronous, forEachField, forEachNode } from "../../../core";
-import { FluidSerializableReadOnly } from "../../contextuallyTyped";
 import { EncodedChunk, version, EncodedTreeShape, EncodedNestedArray } from "./format";
 import { ShapeIndex } from "./formatGeneric";
 

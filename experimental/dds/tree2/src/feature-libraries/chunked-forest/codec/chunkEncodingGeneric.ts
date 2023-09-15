@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { FluidSerializableReadOnly } from "@fluidframework/shared-object-base";
 import { TreeValue } from "../../../core";
 import { fail } from "../../../util";
-import { FluidSerializableReadOnly } from "../../contextuallyTyped";
 import { EncodedChunkGeneric } from "./formatGeneric";
 import {
 	Counter,

@@ -27,6 +27,11 @@ import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 export function createSingleBlobSummary(key: string, content: string | Uint8Array): ISummaryTreeWithStats;
 
 // @public
+export type FluidSerializableReadOnly = IFluidHandle | string | number | boolean | null | readonly FluidSerializableReadOnly[] | {
+    readonly [P in string]?: FluidSerializableReadOnly;
+};
+
+// @public
 export class FluidSerializer implements IFluidSerializer {
     constructor(context: IFluidHandleContext, handleParsedCb: (handle: IFluidHandle) => void);
     decode(input: any): any;
@@ -41,7 +46,7 @@ export class FluidSerializer implements IFluidSerializer {
         url: string;
     };
     // (undocumented)
-    stringify(input: any, bind: IFluidHandle): string;
+    stringify(input: unknown, bind: IFluidHandle): string;
 }
 
 // @public (undocumented)
@@ -59,6 +64,9 @@ export interface ISerializedHandle {
     // (undocumented)
     url: string;
 }
+
+// @public
+export function isFluidHandle(value: undefined | FluidSerializableReadOnly): value is IFluidHandle;
 
 // @public
 export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends IChannel, IEventProvider<TEvent> {

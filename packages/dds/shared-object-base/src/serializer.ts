@@ -8,6 +8,7 @@
 
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import { RemoteFluidObjectHandle } from "./remoteObjectHandle";
 
 /**
@@ -58,7 +59,64 @@ export interface IFluidSerializer {
 }
 
 /**
- * Data Store serializer implementation
+ * Use for readonly view of Json compatible data that can also contain {@link @fluidframework/core-interfaces#IFluidHandle}s.
+ *
+ * To be "Json compatible" requires that the data is acyclic
+ *
+ * Note that this does not robustly forbid non json comparable data via type checking,
+ * but instead mostly restricts access to it.
+ *
+ * See also {@link isFluidHandle}.
+ * @public
+ */
+export type FluidSerializableReadOnly =
+	| IFluidHandle
+	| string
+	| number
+	| boolean
+	// eslint-disable-next-line @rushstack/no-new-null
+	| null
+	| readonly FluidSerializableReadOnly[]
+	| { readonly [P in string]?: FluidSerializableReadOnly };
+
+/**
+ * Check if a value in {@link FluidSerializableReadOnly} data is an {@link @fluidframework/core-interfaces#IFluidHandle}.
+ *
+ * @remarks
+ * This is sound to use on data that is actually valid Json + IFluidHandles (but not on `unknown` data)
+ * because IFluidHandles are not json compatible, and thus can be robustly distinguished from json compatible data with no false positives or false negatives.
+ * Unfortunately TypeScript doesn't prevent non-json compatible data (such as data with function and cycles) from being used as `FluidSerializableReadOnly`,
+ * so some of this correctness still depends on the caller to ensure they didn't use such data as FluidSerializableReadOnly invalidly.
+ *
+ * @public
+ */
+export function isFluidHandle(value: undefined | FluidSerializableReadOnly): value is IFluidHandle {
+	if (typeof value !== "object" || value === null) {
+		return false;
+	}
+	const handle = (value as Partial<IFluidHandle>).IFluidHandle;
+	// Regular Json compatible data can have fields named "IFluidHandle" (especially if field names come from user data).
+	// Separate this case from actual Fluid handles by checking for a circular reference: Json data can't have this circular reference so it is a safe way to detect IFluidHandles.
+	const isHandle = handle === value;
+	// Since the requirement for this reference to be cyclic isn't particularly clear in the interface (typescript can't model that very well)
+	// do an extra test.
+	// Since json compatible data shouldn't have methods, and IFluidHandle requires one, use that as a redundant check:
+	const getMember = (value as Partial<IFluidHandle>).get;
+	assert(
+		(typeof getMember === "function") === isHandle,
+		"Fluid handle detection via get method should match detection via IFluidHandle field",
+	);
+	return isHandle;
+}
+
+/**
+ * Data Store serializer implementation.
+ *
+ * @privateRemarks
+ * Since this type is package exported (not just the Interface above),
+ * updating the types to use FluidSerializableReadOnly will be a breaking change:
+ * updating these APIs, (and the IFluidSerializer), as well as possible removing this type from the package exports
+ * will need to be done as a breaking change on next.
  */
 export class FluidSerializer implements IFluidSerializer {
 	private readonly root: IFluidHandleContext;
@@ -114,7 +172,7 @@ export class FluidSerializer implements IFluidSerializer {
 			: input;
 	}
 
-	public stringify(input: any, bind: IFluidHandle) {
+	public stringify(input: unknown, bind: IFluidHandle) {
 		return JSON.stringify(input, (key, value) => this.encodeValue(value, bind));
 	}
 
@@ -125,12 +183,15 @@ export class FluidSerializer implements IFluidSerializer {
 
 	// If the given 'value' is an IFluidHandle, returns the encoded IFluidHandle.
 	// Otherwise returns the original 'value'.  Used by 'encode()' and 'stringify()'.
-	private readonly encodeValue = (value: any, bind: IFluidHandle) => {
+	private readonly encodeValue = (value: FluidSerializableReadOnly, bind: IFluidHandle) => {
 		// Detect if 'value' is an IFluidHandle.
-		const handle = value?.IFluidHandle;
+		// To help detect is the limitation of this old handle detection was impacting behavior, keep it around for now:
+		const isHandleLegacy = (value as Partial<IFluidHandle>)?.IFluidHandle !== undefined;
+		const isHandle = isFluidHandle(value);
+		assert(isHandleLegacy === isHandle, "new isFluidHandle should not change existing policy.");
 
 		// If 'value' is an IFluidHandle return its encoded form.
-		return handle !== undefined ? this.serializeHandle(handle, bind) : value;
+		return isHandle ? this.serializeHandle(value, bind) : value;
 	};
 
 	// If the given 'value' is an encoded IFluidHandle, returns the decoded IFluidHandle.

@@ -8,6 +8,8 @@ export {
 	IFluidSerializer,
 	ISerializedHandle,
 	isSerializedHandle,
+	isFluidHandle,
+	FluidSerializableReadOnly,
 } from "./serializer";
 export { SharedObject, SharedObjectCore } from "./sharedObject";
 export { SummarySerializer } from "./summarySerializer";

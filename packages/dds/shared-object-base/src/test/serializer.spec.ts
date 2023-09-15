@@ -5,8 +5,9 @@
 
 import { strict as assert } from "assert";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { MockHandle, validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { RemoteFluidObjectHandle } from "../remoteObjectHandle";
-import { FluidSerializer } from "../serializer";
+import { FluidSerializer, isFluidHandle } from "../serializer";
 import { makeJson, MockHandleContext } from "./utils";
 
 describe("FluidSerializer", () => {
@@ -33,6 +34,25 @@ describe("FluidSerializer", () => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return testCases;
 	}
+
+	it("isFluidHandle", () => {
+		assert(!isFluidHandle(0));
+		assert(!isFluidHandle({}));
+		assert(!isFluidHandle(undefined));
+		assert(!isFluidHandle(null));
+		assert(!isFluidHandle([]));
+		assert(isFluidHandle(new MockHandle(5)));
+		assert(!isFluidHandle({ IFluidHandle: 5 }));
+		assert(!isFluidHandle({ IFluidHandle: {} }));
+		const loopy = { IFluidHandle: {} };
+		loopy.IFluidHandle = loopy;
+		// isFluidHandle has extra logic to check the handle is valid if it passed the detection via cyclic ref.
+		// Thus this case asserts:
+		assert.throws(
+			() => isFluidHandle(loopy),
+			(e: Error) => validateAssertionError(e, /IFluidHandle/),
+		);
+	});
 
 	describe("vanilla JSON", () => {
 		const context = new MockHandleContext();
