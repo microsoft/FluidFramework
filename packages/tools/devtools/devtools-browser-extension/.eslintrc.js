@@ -26,6 +26,7 @@ module.exports = {
 				devDependencies: ["src/**/test/**"],
 			},
 		],
+		"import/no-nodejs-modules": "off",
 	},
 	overrides: [
 		{

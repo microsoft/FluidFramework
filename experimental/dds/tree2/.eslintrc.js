@@ -22,6 +22,7 @@ module.exports = {
 				caughtErrorsIgnorePattern: "^_",
 			},
 		],
+		"import/no-nodejs-modules": "off",
 	},
 	overrides: [
 		{

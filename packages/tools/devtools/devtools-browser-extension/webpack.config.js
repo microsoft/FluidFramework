@@ -44,6 +44,10 @@ module.exports = {
 	},
 	resolve: {
 		extensions: [".js", ".jsx", ".ts", ".tsx"],
+		fallback: {
+			"path": false,
+			"process/browser": require.resolve("process/browser"),
+		},
 	},
 	module: {
 		rules: [

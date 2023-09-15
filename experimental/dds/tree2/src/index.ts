@@ -321,6 +321,8 @@ export type {
 export { noopValidator } from "./codec";
 export { typeboxValidator } from "./external-utilities";
 
+export { getFuzzTestTreeStates } from "./fuzz";
+
 // Below here are things that are used by the above, but not part of the desired API surface.
 import * as InternalTypes from "./internal";
 export { InternalTypes };

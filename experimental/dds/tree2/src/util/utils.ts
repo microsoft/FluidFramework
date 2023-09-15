@@ -70,7 +70,7 @@ export function isReadonlyArray<T>(x: readonly T[] | unknown): x is readonly T[]
  * @param filler - Callback for populating the array with a value for a given index
  */
 export function makeArray<T>(size: number, filler: (index: number) => T): T[] {
-	const array = [];
+	const array: T[] = [];
 	for (let i = 0; i < size; ++i) {
 		array.push(filler(i));
 	}

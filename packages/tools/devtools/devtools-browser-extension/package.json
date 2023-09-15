@@ -153,5 +153,10 @@
 	"typeValidation": {
 		"disabled": true,
 		"broken": {}
+	},
+	"browser": {
+		"fs": false,
+		"path": false,
+		"os": false
 	}
 }

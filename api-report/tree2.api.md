@@ -824,6 +824,9 @@ export interface GenericTreeNode<TChild> extends GenericFieldsNode<TChild>, Node
 export const getField: unique symbol;
 
 // @alpha (undocumented)
+export function getFuzzTestTreeStates(seed: number, numberOfClients: number): Promise<string[][]>;
+
+// @alpha (undocumented)
 export function getPrimaryField(schema: TreeStoredSchema): {
     key: FieldKey;
     schema: FieldStoredSchema;
