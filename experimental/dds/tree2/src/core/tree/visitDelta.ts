@@ -389,7 +389,7 @@ function asReplaces(
 					const replace: Mutable<Replace> = {};
 					if (mark.newContent.detachId === undefined) {
 						const nodeId = offsetDetachId(mark.newContent.restoreId, i);
-						const { root: restoredRoot } = config.treeIndex.getOrCreateEntry(nodeId);
+						const { root: restoredRoot } = config.treeIndex.getEntry(nodeId);
 						const newContent = { source: restoredRoot, nodeId, fields: mark.fields };
 						replace.newContent = newContent;
 					}
