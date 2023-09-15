@@ -22,10 +22,15 @@ export interface ISerializableDataStructure {
 	value: SerializableStructure;
 }
 
+export interface ISerializableHandle {
+	path: string[];
+}
+
 export interface ISerializableDataObject {
 	type: string;
 	dataObjects: Record<string, ISerializableDataObject>;
 	dataStructures: Record<string, ISerializableDataStructure>;
+	handles: Record<string, ISerializableHandle>;
 }
 
 function makeSerializableMap(map: Map<string, any>): Record<string, any> {
@@ -84,10 +89,16 @@ export function makeSerializableDataObject(
 		serializableDataObjects[key] = makeSerializableDataObject(value);
 	}
 
+	const serializableHandles: Record<string, ISerializableHandle> = {};
+	for (const [key, value] of localDataObject.handles) {
+		serializableHandles[key] = value;
+	}
+
 	const serializable: ISerializableDataObject = {
 		type: localDataObject.type,
 		dataObjects: serializableDataObjects,
 		dataStructures: serializableDataStructures,
+		handles: serializableHandles,
 	};
 
 	return serializable;
@@ -149,6 +160,9 @@ export function parseDataObject(serializableDataObject: ISerializableDataObject)
 	}
 	for (const [key, value] of Object.entries(serializableDataObject.dataStructures)) {
 		localDataObject.dataStructures.set(key, parseDataStructure(value));
+	}
+	for (const [key, value] of Object.entries(serializableDataObject.handles)) {
+		localDataObject.handles.set(key, value);
 	}
 	return localDataObject;
 }

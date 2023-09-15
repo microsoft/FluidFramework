@@ -12,13 +12,20 @@ import { SharedString } from "@fluidframework/sequence";
 import { AttachState } from "@fluidframework/container-definitions";
 import { LocalDataObject } from "./localDataStore";
 import { toLocalChannel } from "./toLocalFluid";
-import { fromLocalDataStructure } from "./fromLocalFluid";
+import { findDataObject, fromLocalDataStructure } from "./fromLocalFluid";
+import { LocalHandle } from "./localHandle";
 
 export type SupportedSharedObjects = SharedCounter | SharedDirectory | SharedMap | SharedString;
 
 export interface ILoadableEvent extends IEvent {
 	(event: "sharedObjectsUpdated", listener: (message: any) => void);
 	(event: "dataObjectsUpdated", listener: (message: any) => void);
+	(event: "handlesUpdated", listener: (message: any) => void);
+}
+
+export class ReferenceHandle {
+	public readonly isReferenceHandle = true;
+	constructor(public readonly handle: IFluidHandle<LoadableDataObject>) {}
 }
 
 export class LoadableDataObject extends DataObject implements IEventProvider<ILoadableEvent> {
@@ -51,34 +58,65 @@ export class LoadableDataObject extends DataObject implements IEventProvider<ILo
 		);
 	}
 
-	public readonly childDataObjects: LoadableDataObject[] = [];
+	private _path?: string[];
+	public get path(): string[] {
+		assert(this._path !== undefined, "path should be defined");
+		return [...this._path];
+	}
+	private localDataObject?: LocalDataObject;
 
-	public readonly childSharedObjects: SupportedSharedObjects[] = [];
+	private readonly dataObjectMap: Map<string, LoadableDataObject> = new Map();
+	private readonly sharedObjectMap: Map<string, SupportedSharedObjects> = new Map();
+
+	public get dataObjects(): LoadableDataObject[] {
+		return [...this.dataObjectMap.values()];
+	}
+
+	public get sharedObjects(): SupportedSharedObjects[] {
+		return [...this.sharedObjectMap.values()];
+	}
+
+	private readonly handleMap: Map<string, IFluidHandle<LoadableDataObject>> = new Map();
 
 	public async hasInitialized(): Promise<void> {
-		for (const handle of this.root.values()) {
-			const child = await (
-				handle as IFluidHandle<SupportedSharedObjects | LoadableDataObject>
-			).get();
+		for (const [key, value] of this.root) {
+			if (value.isReferenceHandle === true) {
+				const referenceHandle = value as ReferenceHandle;
+				this.handleMap.set(key, referenceHandle.handle);
+				continue;
+			}
+
+			const handle = value as IFluidHandle<SupportedSharedObjects | LoadableDataObject>;
+			const child = await handle.get();
 			if (child.attributes !== undefined) {
-				this.childSharedObjects.push(child);
+				this.sharedObjectMap.set(key, child);
 			} else {
-				this.childDataObjects.push(child);
+				this.dataObjectMap.set(key, child);
 			}
 		}
-		this.root.on("containedValueChanged", (value: IValueChanged) => {
-			const handle = this.root.get(value.key) as IFluidHandle<
-				SupportedSharedObjects | LoadableDataObject
-			>;
-			handle.get().then((fluidObject) => {
-				if (fluidObject.attributes !== undefined) {
-					this.childSharedObjects.push(fluidObject);
-					this.emit("sharedObjectsUpdated");
-				} else {
-					this.childDataObjects.push(fluidObject);
-					this.emit("dataObjectsUpdated");
-				}
-			});
+		this.root.on("containedValueChanged", (valueChanged: IValueChanged) => {
+			const key = valueChanged.key;
+			const value = this.root.get(key);
+			if (value.isReferenceHandle === true) {
+				const referenceHandle = value as ReferenceHandle;
+				this.handleMap.set(key, referenceHandle.handle);
+				this.emit("handlesUpdated");
+				return;
+			}
+
+			const handle = value as IFluidHandle<SupportedSharedObjects | LoadableDataObject>;
+			handle
+				.get()
+				.then((fluidObject) => {
+					if (fluidObject.attributes !== undefined) {
+						this.sharedObjectMap.set(key, fluidObject);
+						this.emit("sharedObjectsUpdated");
+					} else {
+						this.dataObjectMap.set(key, fluidObject);
+						this.emit("dataObjectsUpdated");
+					}
+				})
+				.catch((error) => console.log(error));
 		});
 	}
 
@@ -88,6 +126,11 @@ export class LoadableDataObject extends DataObject implements IEventProvider<ILo
 	) {
 		assert(!this.hasFluidObject(key), "should not be overriding a fluid object");
 		this.root.set(key, fluidObject.handle);
+	}
+
+	public addReferenceHandle(key: string, handle: IFluidHandle<LoadableDataObject>) {
+		assert(!this.hasFluidObject(key), "should not be overriding a fluid object");
+		this.root.set(key, new ReferenceHandle(handle));
 	}
 
 	public hasFluidObject(key: string): boolean {
@@ -132,23 +175,41 @@ export class LoadableDataObject extends DataObject implements IEventProvider<ILo
 		this.storeFluidObject(channel.id, channel);
 	}
 
-	// Handles considered as references will need to be discussed as a limitation
+	public getChildDataObject(key: string): LoadableDataObject {
+		assert(this.dataObjectMap.has(key), "key should exist in dataObjectMap!");
+		const dataObject = this.dataObjectMap.get(key);
+		assert(dataObject !== undefined, "should have gotten a dataObject!");
+		return dataObject;
+	}
 
-	public async toLocalDataObject(): Promise<LocalDataObject> {
+	public async toRawLocalDataObject(path: string[]): Promise<LocalDataObject> {
 		const type = this.context.packagePath[this.context.packagePath.length - 1];
 		const localDataObject = new LocalDataObject(type);
+		assert(this.localDataObject === undefined, "overriding localDataObject");
+		assert(this._path === undefined, "overriding a path!");
+		this._path = [...path];
 
 		// de-fluid DDS
-		for (const [key, handle] of this.root) {
-			const child = await (
-				handle as IFluidHandle<SupportedSharedObjects | LoadableDataObject>
-			).get();
-			if (child.attributes !== undefined) {
-				localDataObject.dataStructures.set(key, toLocalChannel(child));
-			} else {
-				localDataObject.dataObjects.set(key, await child.toLocalDataObject());
-			}
+		for (const [key, child] of this.sharedObjectMap.entries()) {
+			localDataObject.dataStructures.set(key, toLocalChannel(child));
 		}
+		for (const [key, child] of this.dataObjectMap.entries()) {
+			localDataObject.dataObjects.set(key, await child.toRawLocalDataObject([...path, key]));
+		}
+
+		this.localDataObject = localDataObject;
+		return localDataObject;
+	}
+
+	public async toLocalDataObject(): Promise<LocalDataObject> {
+		assert(this.localDataObject !== undefined, "should have called toRawLocalDataObject");
+		for (const [key, handle] of this.handleMap.entries()) {
+			const dataObject = await handle.get();
+			const localHandle = new LocalHandle(dataObject.path);
+			this.localDataObject.handles.set(key, localHandle);
+		}
+		const localDataObject = this.localDataObject;
+		this.localDataObject = undefined;
 
 		return localDataObject;
 	}
@@ -170,6 +231,20 @@ export class LoadableDataObject extends DataObject implements IEventProvider<ILo
 		for (const [key, childDataObject] of localDataObject.dataObjects) {
 			const child = await this.createChildDataObject(key, childDataObject.type);
 			await child.fromLocalDataObject(childDataObject);
+		}
+		this.localDataObject = localDataObject;
+	}
+
+	// SharedObjectHandles considered as references will need to be discussed as a limitation
+
+	public async loadFluidHandles(parentDataObject: LoadableDataObject) {
+		assert(this.localDataObject !== undefined, "should have set localDataObject");
+		for (const [key, handle] of this.localDataObject.handles) {
+			const dataObject = findDataObject(handle.path, parentDataObject);
+			this.addReferenceHandle(key, dataObject.handle);
+		}
+		for (const child of this.dataObjects) {
+			await child.loadFluidHandles(parentDataObject);
 		}
 	}
 }

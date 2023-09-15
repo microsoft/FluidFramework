@@ -5,10 +5,12 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { DataStructure, LocalDataStructure } from "./localDataStructure";
+import { LocalHandle } from "./localHandle";
 
 export class LocalDataObject {
 	public readonly dataStructures: Map<string, LocalDataStructure> = new Map();
 	public readonly dataObjects: Map<string, LocalDataObject> = new Map();
+	public readonly handles: Map<string, LocalHandle> = new Map();
 
 	constructor(public readonly type: string) {}
 

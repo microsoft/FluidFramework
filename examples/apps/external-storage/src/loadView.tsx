@@ -29,8 +29,11 @@ export const LoadView = (props: LoadProps) => {
 		if (text.length > 0) {
 			const serializable = JSON.parse(text) as ISerializableDataObject;
 			props.runtimeFactory.setDefaultType(serializable.type);
-			detached = await props.loadableLoader.createDetached("1.0");
-			await detached.model.fromLocalDataObject(parseDataObject(serializable));
+			const detachedLoadable = await props.loadableLoader.createDetached("1.0");
+			const model = detachedLoadable.model;
+			await model.fromLocalDataObject(parseDataObject(serializable));
+			await model.loadFluidHandles(model);
+			detached = detachedLoadable;
 		} else {
 			detached = await props.rootLoader.createDetached("1.0");
 		}

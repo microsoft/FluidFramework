@@ -8,7 +8,7 @@ import { IDirectory, SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { Directory } from "./directory";
-import { SupportedSharedObjects } from "./loadableDataObject";
+import { LoadableDataObject, SupportedSharedObjects } from "./loadableDataObject";
 import { LocalDataStructure } from "./localDataStructure";
 
 export function fromLocalDataStructure(
@@ -56,4 +56,14 @@ function populateSharedMap(sharedMap: SharedMap, map: Map<string, any>) {
 	for (const [key, value] of map.entries()) {
 		sharedMap.set(key, value);
 	}
+}
+
+export function findDataObject(
+	path: string[],
+	parentDataObject: LoadableDataObject,
+): LoadableDataObject {
+	if (path.length === 0) throw new Error("unexpected path!");
+	if (path.length === 1) return parentDataObject;
+	const newPath = path.slice(1);
+	return findDataObject(newPath, parentDataObject.getChildDataObject(path[0]));
 }
