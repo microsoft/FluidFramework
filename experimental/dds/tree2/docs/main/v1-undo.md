@@ -355,12 +355,12 @@ This gives applications more options for dealing with situations where a client 
 that involves editing a removed region of the document.
 Indeed, without that capability, such work could not be reconciled with the rest of the document,
 and would need to be detected and dropped.
-This scenario likely to occur if client applications use local branches to stage their work.
+This scenario is likely to occur if client applications use local branches to stage their work.
 
 #### Proposed Scheme
 
-Allowing the garbage-collection of repair data means that not all clients will have the repair data if it become necessary later.
-When a client makes an edit such that a peer may have evicted repair data that is required to for the edits,
+Allowing the garbage-collection of repair data means that not all clients will have the repair data if it becomes necessary later.
+When a client makes an edit that requires repair data which may have been evicted by peers,
 that client must include a copy of the relevant repair data in the edit being sent.
 This acts as a "refresher" for any peers that may have garbage collected that repair data.
 (See [Creating Repair Data On Change Application](#creating-repair-data-on-change-application) for details on how that refresher is handled by the peers.)
