@@ -10,7 +10,7 @@ import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
 import { FluidSerializer } from '@fluidframework/shared-object-base';
 import { Definition, NodeId } from '../Identifiers';
 import { getChangeNodeFromView } from '../SerializationUtilities';
-import { noop } from '../Common';
+import { fail, noop } from '../Common';
 import {
 	convertTreeNodes,
 	deepCompareNodes,
@@ -612,9 +612,9 @@ describe('EditUtilities', () => {
 			// This is used instead of MockHandle so equal handles compare deeply equal.
 			function makeMockHandle(data: string): IFluidHandle {
 				// `/` prefix is needed to prevent serializing from modifying handle.
-				const handleObject = { absolutePath: `/${data}`, IFluidHandle: undefined as unknown };
+				const handleObject = { absolutePath: `/${data}`, IFluidHandle: undefined as unknown, get: fail };
 				handleObject.IFluidHandle = handleObject;
-				return handleObject as IFluidHandle;
+				return handleObject as unknown as IFluidHandle;
 			}
 			// Theoretically handles serialize as objects with 2 fields and thus serialization is allowed to be non-deterministic
 			// so use allEqualUnstable not allEqual.
