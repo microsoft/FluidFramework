@@ -31,6 +31,11 @@ interface PRObject {
 	strategy?: "squash" | "merge";
 }
 
+enum MergeStrategy {
+	Merge = "merge",
+	Squash = "squash",
+}
+
 export default class MergePullRequest extends BaseCommand<typeof MergePullRequest> {
 	static readonly description = "Merge Pull Request";
 
@@ -47,18 +52,11 @@ export default class MergePullRequest extends BaseCommand<typeof MergePullReques
 			char: "n",
 			required: true,
 		}),
-		mergeStrategy: Flags.custom<"squash" | "merge">({
-			description: "PR Merge Startegy",
-			char: "m",
-			default: "squash",
-			parse: async (input) => {
-				if (input === "squash" || input === "merge") {
-					return input;
-				}
-
-				throw new Error(`Invalid merge strategy: ${input}`);
-			},
-		})(),
+		targetBranch: Flags.string({
+			description: "Target branch name",
+			char: "t",
+			required: true,
+		}),
 		...BaseCommand.flags,
 	};
 
@@ -66,6 +64,8 @@ export default class MergePullRequest extends BaseCommand<typeof MergePullReques
 
 	public async run(): Promise<void> {
 		const flags = this.flags;
+
+		let mergeStrategy = MergeStrategy.Squash;
 
 		const context = await this.getContext();
 		this.gitRepo ??= new Repository({ baseDir: context.gitRepo.resolvedRoot });
@@ -91,60 +91,75 @@ export default class MergePullRequest extends BaseCommand<typeof MergePullReques
 
 		// Write the JSON data to the file
 		await fs.writeFile("file.json", jsonData, "utf-8");
+
+		const title = JSON.stringify(info.data.title);
+		const description = JSON.stringify(info.data.body);
+		const labels = info.data.labels;
+		const arr = [];
+
+		for (const label of labels) {
+			arr.push(label.name);
+			this.log(`Labels list: ${label.name}`);
+
+			if (
+				label.name === "main-next-integrate" &&
+				title === "Automation: main-next integrate"
+			) {
+				mergeStrategy = MergeStrategy.Merge;
+			}
+		}
+
 		const pr = {
 			...pr1,
-			title: JSON.stringify(info.data.title),
-			description: JSON.stringify(info.data.body),
-			strategy: flags.mergeStrategy,
+			title,
+			description,
+			strategy: mergeStrategy,
 		};
 
 		// squash pull request
-
-		if (flags.mergeStrategy === "squash") {
+		if (mergeStrategy === MergeStrategy.Squash) {
 			const response = await mergePullRequest(pr, this.logger);
 			this.log(`Squash merge PRs: ${JSON.stringify(response)}`);
 		}
 
 		// merge pr
-		if (flags.mergeStrategy === "merge") {
-			// fetch the automation pr
+		if (mergeStrategy === MergeStrategy.Merge) {
 			// find the commit id
 			const commitInfo = await listCommitsPullRequest(pr, this.logger);
 			this.log(`Number of commits: ${commitInfo.length}`);
 
-			await filterCommits(commitInfo, this.gitRepo, this.logger);
-			this.log(`Merge Pull Request`);
-
 			// create comment on the automation pr - "this PR is queued to be merged in next in 10mins. please close the PR if you want to stop the merge"
+
+			await filterCommits(commitInfo, flags.targetBranch, this.gitRepo, this.logger);
+			this.log(`Merge Pull Request`);
 		}
 	}
 }
 
 async function filterCommits(
 	commitDataArray: CommitData[],
+	branch: string,
 	gitRepo: Repository,
 	log: CommandLogger,
 ): Promise<any> {
-	const automationTitle = "Automation: main next integrate";
+	const automationTitle = "Automation: main-next integrate";
 	const filteredCommits = commitDataArray.filter(
-		(commit) => commit.commit.message === "Automation: main next integrate",
+		(commit) => commit.commit.message === "Automation: main-next integrate",
 	);
-
-	log.log(`filteredCommits: ${JSON.stringify(filteredCommits)}`);
 
 	if (filteredCommits.length > 1) {
 		log.log("More the one commit with the name automation...");
 	}
 
 	if (filteredCommits.length === 1) {
-		// Check if the last element's commit message is "Automation: main next integrate"
+		// Check if the last element's commit message is "Automation: main-next integrate"
 		if (
 			commitDataArray.length > 0 &&
 			commitDataArray[commitDataArray.length - 1].commit.message === automationTitle
 		) {
 			log.log(`The last commit has the message ${automationTitle}`);
 			const sha = filteredCommits[0].sha;
-			await mergeAutomationPullRequest(sha, gitRepo);
+			await mergeAutomationPullRequest(sha, branch, gitRepo);
 		} else {
 			log.log(
 				`The last commit does not have the message ${automationTitle}. The fixup commit is named/pushed incorrectly`,
@@ -153,9 +168,9 @@ async function filterCommits(
 	}
 }
 
-async function mergeAutomationPullRequest(sha: string, gitRepo: Repository) {
+async function mergeAutomationPullRequest(sha: string, branch: string, gitRepo: Repository) {
 	// git checkout next
-	await gitRepo.gitClient.checkout("test-1");
+	await gitRepo.gitClient.checkout(branch);
 	// git fetch
 	await gitRepo.gitClient.fetch();
 	// git pull
