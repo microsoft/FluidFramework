@@ -57,10 +57,7 @@ export class RedisCache implements ICache {
 		}
 	}
 
-	public async delete(
-		key: string,
-		prefix?: string,
-	): Promise<boolean> {
+	public async delete(key: string, prefix?: string): Promise<boolean> {
 		// If 'appendPrefixToKey' is true, we prepend a prefix to the 'key' parameter.
 		// This is useful in scenarios where we want to consistently manage keys with a common prefix,
 		// If 'appendPrefixToKey' is false, we assume that the 'key' parameter with prefix is already passed in by the caller,
@@ -114,7 +111,7 @@ export class RedisCache implements ICache {
 
 	/**
 	 * Translates the input key to the one we will actually store in redis
-	 * 
+	 *
 	 * @param key - The input key
 	 * @param prefix - Prefix to append to key. Empty string will not add any prefix to the key.
 	 */

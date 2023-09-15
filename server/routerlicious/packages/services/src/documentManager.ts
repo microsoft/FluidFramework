@@ -108,11 +108,7 @@ export class DocumentManager implements IDocumentManager {
 		}
 
 		const staticPropsKey: string = DocumentManager.getDocumentStaticKey(documentId);
-		await this.documentStaticDataCache.delete(
-			staticPropsKey,
-			undefined,
-			DocumentManager.cacheKeyPrefix,
-		);
+		await this.documentStaticDataCache.delete(staticPropsKey, DocumentManager.cacheKeyPrefix);
 	}
 
 	private async getBasicRestWrapper(tenantId: string, documentId: string) {
