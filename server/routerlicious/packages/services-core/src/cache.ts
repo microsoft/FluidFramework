@@ -29,10 +29,9 @@ export interface ICache {
 	 * Deletes a cache value
 	 *
 	 * @param key - Key to delete value for.
-	 * @param appendPrefixToKey - True if we should add a prefix to the deleted key
 	 * @param prefix - Prefix to append to the key, handled by the implementation if left undefined
 	 */
-	delete?(key: string, appendPrefixToKey?: boolean, prefix?: string): Promise<boolean>;
+	delete?(key: string, prefix?: string): Promise<boolean>;
 
 	/**
 	 * Increments key value by 1. If the key does not exist, its value will be first set to 0 and then incremented.

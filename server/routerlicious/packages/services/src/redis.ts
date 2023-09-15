@@ -59,7 +59,6 @@ export class RedisCache implements ICache {
 
 	public async delete(
 		key: string,
-		appendPrefixToKey: boolean = true,
 		prefix?: string,
 	): Promise<boolean> {
 		// If 'appendPrefixToKey' is true, we prepend a prefix to the 'key' parameter.
@@ -67,7 +66,7 @@ export class RedisCache implements ICache {
 		// If 'appendPrefixToKey' is false, we assume that the 'key' parameter with prefix is already passed in by the caller,
 		// and no additional prefix needs to be added.
 		try {
-			const keyToDelete: string = appendPrefixToKey ? this.getKey(key, prefix) : key;
+			const keyToDelete: string = this.getKey(key, prefix);
 			const result = await this.client.del(keyToDelete);
 			return result === 1;
 		} catch (error) {
@@ -114,9 +113,16 @@ export class RedisCache implements ICache {
 
 	/**
 	 * Translates the input key to the one we will actually store in redis
+	 * 
+	 * @param key - The input key
+	 * @param prefix - Prefix to append to key
 	 */
 	private getKey(key: string, prefix?: string): string {
 		const keyPrefix = prefix === undefined ? this.prefix : prefix;
+		if (prefix === "") {
+			// Empty prefix should not put a colon in front of string
+			return key;
+		}
 		return `${keyPrefix}:${key}`;
 	}
 }
