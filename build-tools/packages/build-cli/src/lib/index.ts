@@ -37,6 +37,7 @@ export {
 	pullRequestExists,
 	mergePullRequest,
 	listCommitsPullRequest,
+	getPullRequestInfo,
 } from "./github";
 export {
 	getRanges,

@@ -4,9 +4,13 @@
  */
 
 import { Flags } from "@oclif/core";
-
 import { BaseCommand } from "../../base";
-import { Repository, listCommitsPullRequest, mergePullRequest } from "../../lib";
+import {
+	Repository,
+	getPullRequestInfo,
+	listCommitsPullRequest,
+	mergePullRequest,
+} from "../../lib";
 import { CommandLogger } from "../../logging";
 
 interface CommitData {
@@ -26,16 +30,6 @@ export default class MergePullRequest extends BaseCommand<typeof MergePullReques
 			char: "p",
 			required: true,
 			env: "GITHUB_PAT",
-		}),
-		title: Flags.string({
-			description: "PR title",
-			char: "t",
-			required: true,
-		}),
-		description: Flags.string({
-			description: "PR description",
-			char: "d",
-			required: true,
 		}),
 		prNumber: Flags.integer({
 			description: "PR number",
@@ -72,24 +66,30 @@ export default class MergePullRequest extends BaseCommand<typeof MergePullReques
 		const [owner, repo] = context.originRemotePartialUrl.split("/");
 		this.log(`owner: ${owner} and repo: ${repo}`);
 
+		const pr1 = {
+			token: flags.pat,
+			owner: "sonalideshpandemsft",
+			repo: "FluidFramework",
+			prNumber: flags.prNumber,
+		};
+
+		const info = await getPullRequestInfo(pr1, this.logger);
 		const pr = {
 			token: flags.pat,
 			owner: "sonalideshpandemsft",
 			repo: "FluidFramework",
-			title: flags.title,
-			description: flags.description,
+			title: JSON.stringify(info.data.title),
+			description: JSON.stringify(info.data.body),
 			prNumber: flags.prNumber,
 			strategy: flags.mergeStrategy,
 		};
 
 		// squash pull request
-		let response;
 
 		if (flags.mergeStrategy === "squash") {
-			response = await mergePullRequest(pr, this.logger);
+			const response = await mergePullRequest(pr, this.logger);
+			this.log(`Squash merge PRs: ${JSON.stringify(response)}`);
 		}
-
-		this.log(`Squash merge PRs: ${JSON.stringify(response)}`);
 
 		// merge pr
 		if (flags.mergeStrategy === "merge") {
@@ -98,8 +98,8 @@ export default class MergePullRequest extends BaseCommand<typeof MergePullReques
 			const commitInfo = await listCommitsPullRequest(pr, this.logger);
 			this.log(`Number of commits: ${commitInfo.length}`);
 
-			const filteredCommit = filterCommits(commitInfo, this.gitRepo, this.logger);
-			this.log(`Merge Pull Request: ${JSON.stringify(filteredCommit)}`);
+			await filterCommits(commitInfo, this.gitRepo, this.logger);
+			this.log(`Merge Pull Request`);
 
 			// create comment on the automation pr - "this PR is queued to be merged in next in 10mins. please close the PR if you want to stop the merge"
 		}
@@ -111,6 +111,7 @@ async function filterCommits(
 	gitRepo: Repository,
 	log: CommandLogger,
 ): Promise<any> {
+	const automationTitle = "Automation: main next integrate";
 	const filteredCommits = commitDataArray.filter(
 		(commit) => commit.commit.message === "Automation: main next integrate",
 	);
@@ -125,15 +126,14 @@ async function filterCommits(
 		// Check if the last element's commit message is "Automation: main next integrate"
 		if (
 			commitDataArray.length > 0 &&
-			commitDataArray[commitDataArray.length - 1].commit.message ===
-				"Automation: main next integrate"
+			commitDataArray[commitDataArray.length - 1].commit.message === automationTitle
 		) {
-			log.log("The last commit has the message 'Automation: main next integrate'");
+			log.log(`The last commit has the message ${automationTitle}`);
 			const sha = filteredCommits[0].sha;
 			await mergeAutomationPullRequest(sha, gitRepo);
 		} else {
 			log.log(
-				"The last commit does not have the message 'Automation: main next integrate'. The fixup commit is named/pushed incorrectly",
+				`The last commit does not have the message ${automationTitle}. The fixup commit is named/pushed incorrectly`,
 			);
 		}
 	}
@@ -141,7 +141,7 @@ async function filterCommits(
 
 async function mergeAutomationPullRequest(sha: string, gitRepo: Repository) {
 	// git checkout next
-	await gitRepo.gitClient.checkout("next");
+	await gitRepo.gitClient.checkout("test-1");
 	// git fetch
 	await gitRepo.gitClient.fetch();
 	// git pull

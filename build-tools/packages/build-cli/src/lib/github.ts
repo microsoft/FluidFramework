@@ -137,7 +137,7 @@ export async function listCommitsPullRequest(
 		prNumber: number;
 		strategy?: "squash" | "merge" | undefined;
 	},
-	log: CommandLogger,
+	log?: CommandLogger,
 ): Promise<any> {
 	const octokit = new Octokit({ auth: pr.token });
 	const response = await octokit.request(
@@ -148,7 +148,6 @@ export async function listCommitsPullRequest(
 			pull_number: pr.prNumber,
 		},
 	);
-	log.log(`Pr info: ${JSON.stringify(response)}`);
 	return response.data;
 }
 
@@ -174,4 +173,26 @@ export async function mergePullRequest(
 		merge_method: pr.strategy,
 	});
 	log.log(`Squashed pull request: ${JSON.stringify(squash)}`);
+}
+
+export async function getPullRequestInfo(
+	pr: {
+		token: string;
+		owner: string;
+		repo: string;
+		title?: string;
+		description?: string;
+		prNumber: number;
+		strategy?: "squash" | "merge" | undefined;
+	},
+	log: CommandLogger,
+): Promise<any> {
+	const octokit = new Octokit({ auth: pr.token });
+	const response = await octokit.request("GET /repos/{owner}/{repo}/pulls/{pull_number}", {
+		owner: pr.owner,
+		repo: pr.repo,
+		pull_number: pr.prNumber,
+	});
+	log.log(`Get Pull Request info: ${response}`);
+	return response;
 }
