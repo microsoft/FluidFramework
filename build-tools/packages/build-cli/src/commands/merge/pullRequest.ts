@@ -21,6 +21,16 @@ interface CommitData {
 	};
 }
 
+interface PRObject {
+	token: string;
+	owner: string;
+	repo: string;
+	title?: string;
+	description?: string;
+	prNumber: number;
+	strategy?: "squash" | "merge";
+}
+
 export default class MergePullRequest extends BaseCommand<typeof MergePullRequest> {
 	static readonly description = "Merge Pull Request";
 
@@ -67,7 +77,7 @@ export default class MergePullRequest extends BaseCommand<typeof MergePullReques
 		const [owner, repo] = context.originRemotePartialUrl.split("/");
 		this.log(`owner: ${owner} and repo: ${repo}`);
 
-		const pr1 = {
+		const pr1: PRObject = {
 			token: flags.pat,
 			owner: "sonalideshpandemsft",
 			repo: "FluidFramework",
@@ -82,12 +92,9 @@ export default class MergePullRequest extends BaseCommand<typeof MergePullReques
 		// Write the JSON data to the file
 		await fs.writeFile("file.json", jsonData, "utf-8");
 		const pr = {
-			token: flags.pat,
-			owner: "sonalideshpandemsft",
-			repo: "FluidFramework",
+			...pr1,
 			title: JSON.stringify(info.data.title),
 			description: JSON.stringify(info.data.body),
-			prNumber: flags.prNumber,
 			strategy: flags.mergeStrategy,
 		};
 
