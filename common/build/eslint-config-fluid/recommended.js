@@ -68,8 +68,6 @@ module.exports = {
 		 */
 		"unicorn/prefer-node-protocol": "off",
 
-		"unicorn/prevent-abbreviations": "off",
-
 		/**
 		 * Disallows the `any` type.
 		 * Using the `any` type defeats the purpose of using TypeScript.
