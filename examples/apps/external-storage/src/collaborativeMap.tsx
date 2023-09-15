@@ -2,9 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { ITextField, PrimaryButton, Stack, TextField } from "@fluentui/react";
 import { assert } from "@fluidframework/core-utils";
 import { SharedMap } from "@fluidframework/map";
 import React from "react";
+import { sendIcon, stackTokens, standardLength, standardPaddingStyle } from "./constants";
 
 export interface ICollaborativeMapProps {
 	data: SharedMap;
@@ -17,8 +19,8 @@ export const CollaborativeMap: React.FC<ICollaborativeMapProps> = (
 	props: ICollaborativeMapProps,
 ) => {
 	const [map, setMap] = React.useState(Array.from(props.data.entries()));
-	const keyInputRef = React.useRef<HTMLInputElement>(null);
-	const valueInputRef = React.useRef<HTMLInputElement>(null);
+	const keyInputRef = React.useRef<ITextField>(null);
+	const valueInputRef = React.useRef<ITextField>(null);
 
 	React.useEffect(() => {
 		const handleMapChanged = () => {
@@ -29,7 +31,7 @@ export const CollaborativeMap: React.FC<ICollaborativeMapProps> = (
 
 		props.data.on("valueChanged", handleMapChanged);
 		return () => {
-			props.data.off("textChanged", handleMapChanged);
+			props.data.off("valueChanged", handleMapChanged);
 		};
 	});
 
@@ -38,39 +40,41 @@ export const CollaborativeMap: React.FC<ICollaborativeMapProps> = (
 		const valueInput = valueInputRef.current;
 		assert(keyInput !== null, "key ref not set!");
 		assert(valueInput !== null, "value ref not set!");
-		const key = keyInput.value;
-		const value = valueInput.value;
+		const key = keyInput.value ?? "";
+		const value = valueInput.value ?? "";
 		props.data.set(key, value);
 	};
 
-	const listStyle = {
-		listStyleType: "none",
-		margin: 0,
-		padding: 0,
-	};
-
 	return (
-		<div>
-			<h3>Map</h3>
-			<p>
-				Key: <input type="text" ref={keyInputRef} /> Value:{" "}
-				<input type="text" ref={valueInputRef} /> <button onClick={addEntry}>Set</button>
-			</p>
-			<ul style={listStyle}>
-				{map.map(([key, value]) => (
-					<li key={key}>
+		<div style={standardPaddingStyle}>
+			<Stack horizontal tokens={stackTokens}>
+				<Stack.Item align="center">
+					<TextField placeholder="Key" type="text" componentRef={keyInputRef} />
+				</Stack.Item>
+				<Stack.Item align="center">
+					<TextField placeholder="Value" type="text" componentRef={valueInputRef} />
+				</Stack.Item>
+				<Stack.Item align="center">
+					<PrimaryButton text="Set" iconProps={sendIcon} onClick={addEntry} />
+				</Stack.Item>
+			</Stack>
+
+			{map.map(([key, value]) => (
+				<Stack key={key} horizontal tokens={stackTokens} style={{ marginTop: 10 }}>
+					<Stack.Item align="center" style={standardLength}>
 						{key}
-						{":"}
-						<input
+					</Stack.Item>
+					<Stack.Item align="center">
+						<TextField
 							type="text"
 							value={value}
-							onInput={(ev: React.FormEvent<HTMLInputElement>) => {
+							onChange={(ev) => {
 								props.data.set(key, ev.currentTarget.value);
 							}}
 						/>
-					</li>
-				))}
-			</ul>
+					</Stack.Item>
+				</Stack>
+			))}
 		</div>
 	);
 };

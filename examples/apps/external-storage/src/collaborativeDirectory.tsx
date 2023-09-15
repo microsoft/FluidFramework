@@ -2,11 +2,27 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { Stack, TextField, PrimaryButton, ITextField } from "@fluentui/react";
 import { assert } from "@fluidframework/core-utils";
 import { IDirectory } from "@fluidframework/map";
 import React from "react";
+import {
+	Accordion,
+	AccordionHeader,
+	AccordionItem,
+	AccordionPanel,
+} from "@fluentui/react-components";
+import {
+	standardPaddingStyle,
+	stackTokens,
+	sendIcon,
+	standardLength,
+	addIcon,
+	marginTop10,
+} from "./constants";
 
 export interface ICollaborativeDirectoryProps {
+	subDirectoryName?: string;
 	data: IDirectory;
 }
 
@@ -18,9 +34,9 @@ export const CollaborativeDirectory: React.FC<ICollaborativeDirectoryProps> = (
 ) => {
 	const [map, setMap] = React.useState(Array.from(props.data.entries()));
 	const [directories, setDirectories] = React.useState(Array.from(props.data.subdirectories()));
-	const keyInputRef = React.useRef<HTMLInputElement>(null);
-	const valueInputRef = React.useRef<HTMLInputElement>(null);
-	const directoryInputRef = React.useRef<HTMLInputElement>(null);
+	const keyInputRef = React.useRef<ITextField>(null);
+	const valueInputRef = React.useRef<ITextField>(null);
+	const directoryInputRef = React.useRef<ITextField>(null);
 
 	React.useEffect(() => {
 		const handleDirectoryChanged = () => {
@@ -43,7 +59,7 @@ export const CollaborativeDirectory: React.FC<ICollaborativeDirectoryProps> = (
 		const valueInput = valueInputRef.current;
 		assert(keyInput !== null, "key ref not set!");
 		assert(valueInput !== null, "value ref not set!");
-		const key = keyInput.value;
+		const key = keyInput.value ?? "";
 		const value = valueInput.value;
 		props.data.set(key, value);
 	};
@@ -51,50 +67,63 @@ export const CollaborativeDirectory: React.FC<ICollaborativeDirectoryProps> = (
 	const addSubDirectory = () => {
 		const directoryInput = directoryInputRef.current;
 		assert(directoryInput !== null, "key ref not set!");
-		const directory = directoryInput.value;
+		const directory = directoryInput.value ?? "";
+		if (directory === "") return;
 		const subDirectory = props.data.createSubDirectory(directory);
 		console.log(subDirectory);
 		console.log(directories);
 	};
 
 	return (
-		<div>
-			<h3>Directory</h3>
-			<p>
-				Key: <input type="text" ref={keyInputRef} /> Value:{" "}
-				<input type="text" ref={valueInputRef} /> <button onClick={addEntry}>Set</button>
-			</p>
-			<ul>
-				{map.map(([key, value]) => (
-					<li key={key}>
+		<div style={standardPaddingStyle}>
+			<Stack horizontal tokens={stackTokens}>
+				<Stack.Item align="center">
+					<TextField placeholder="Key" type="text" componentRef={keyInputRef} />
+				</Stack.Item>
+				<Stack.Item align="center">
+					<TextField placeholder="Value" type="text" componentRef={valueInputRef} />
+				</Stack.Item>
+				<Stack.Item align="center">
+					<PrimaryButton text="Set" iconProps={sendIcon} onClick={addEntry} />
+				</Stack.Item>
+			</Stack>
+			{map.map(([key, value]) => (
+				<Stack key={key} horizontal tokens={stackTokens} style={marginTop10}>
+					<Stack.Item align="center" style={standardLength}>
 						{key}
-						{":"}
-						<input
+					</Stack.Item>
+					<Stack.Item align="center">
+						<TextField
 							type="text"
 							value={value}
-							onInput={(ev: React.FormEvent<HTMLInputElement>) => {
+							onChange={(ev) => {
 								props.data.set(key, ev.currentTarget.value);
 							}}
 						/>
-					</li>
+					</Stack.Item>
+				</Stack>
+			))}
+			<div style={marginTop10}>
+				<TextField label="Subdirectories" type="text" componentRef={directoryInputRef} />
+				<div style={marginTop10}>
+					<PrimaryButton
+						text="Add Subdirectory"
+						iconProps={addIcon}
+						onClick={addSubDirectory}
+					/>
+				</div>
+			</div>
+
+			<Accordion multiple collapsible>
+				{directories.map(([key, value], index) => (
+					<AccordionItem key={key} value={index}>
+						<AccordionHeader>{key}</AccordionHeader>
+						<AccordionPanel>
+							<CollaborativeDirectory subDirectoryName={key} data={value} />
+						</AccordionPanel>
+					</AccordionItem>
 				))}
-				<li>
-					<input type="text" ref={directoryInputRef} />
-					<button onClick={addSubDirectory}>Add SubDirectory</button>
-				</li>
-				{directories.length > 0 ? (
-					<li>
-						<ul>
-							{directories.map(([key, value]) => (
-								<li key={key}>
-									<h2>{key}</h2>
-									<CollaborativeDirectory data={value} />
-								</li>
-							))}
-						</ul>
-					</li>
-				) : null}
-			</ul>
+			</Accordion>
 		</div>
 	);
 };

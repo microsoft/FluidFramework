@@ -25,6 +25,10 @@ module.exports = (env) => {
 						test: /\.tsx?$/,
 						loader: "ts-loader",
 					},
+					{
+						test: /\.css$/,
+						use: ["style-loader", "css-loader"],
+					},
 				],
 			},
 			output: {

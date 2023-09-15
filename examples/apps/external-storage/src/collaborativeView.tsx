@@ -5,17 +5,28 @@
 
 import React from "react";
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
-import { LocalDataObject, makeSerializableDataObject } from "@fluid-experimental/to-non-fluid";
-import { ChildDataObject, RootDataObject } from "./fluid-object";
-import { CollaborativeDirectory } from "./collaborativeDirectory";
+import {
+	LocalDataObject,
+	makeSerializableDataObject,
+	LoadableDataObject,
+} from "@fluid-experimental/to-non-fluid";
+import { SharedCounter } from "@fluidframework/counter";
+import { SharedDirectory, SharedMap } from "@fluidframework/map";
+import { SharedString } from "@fluidframework/sequence";
+import { DefaultButton, PrimaryButton, Stack } from "@fluentui/react";
+import {
+	Accordion,
+	AccordionHeader,
+	AccordionItem,
+	AccordionPanel,
+} from "@fluentui/react-components";
 import { CollaborativeMap } from "./collaborativeMap";
+import { CollaborativeDirectory } from "./collaborativeDirectory";
+import { CollaborativeCounter } from "./collaborativeCounter";
+import { buildIcon, clearIcon, marginTop10, stackTokens, standardSidePadding } from "./constants";
 
-interface CollaborativeProps {
-	model: RootDataObject;
-}
-
-interface ChildProps {
-	model: ChildDataObject;
+export interface CollaborativeProps {
+	model: LoadableDataObject;
 }
 
 export const CollaborativeView = (props: CollaborativeProps) => {
@@ -24,11 +35,8 @@ export const CollaborativeView = (props: CollaborativeProps) => {
 		props.model
 			.toLocalDataObject()
 			.then((localDataObject: LocalDataObject) => {
-				console.log(localDataObject);
 				const serializableDataObject = makeSerializableDataObject(localDataObject);
-				console.log(serializableDataObject);
-				console.log("abc");
-				setValue(JSON.stringify(serializableDataObject, undefined, 2));
+				setValue(JSON.stringify(serializableDataObject, undefined, 4));
 			})
 			.catch((error) => console.log(error));
 	};
@@ -36,23 +44,82 @@ export const CollaborativeView = (props: CollaborativeProps) => {
 		setValue("");
 	};
 
-	return (
-		<div>
-			<CollaborativeDirectory data={props.model.directory} />
-			<ChildView model={props.model.child} />
-			<button onClick={serialize}>Serialize</button>
-			<button onClick={clear}>Clear</button>
-			{value !== "" ? <pre>{value}</pre> : null}
-		</div>
-	);
-};
+	const textareaStyle: React.CSSProperties = {
+		width: "100%",
+		height: 150,
+		background: "#323130",
+		color: "#FFFFFF",
+		border: "1px solid #D0D0D0",
+	};
 
-export const ChildView = (props: ChildProps) => {
-	const sharedString = props.model.sharedString;
 	return (
-		<div>
-			<CollaborativeMap data={props.model.map} />
-			<CollaborativeTextArea sharedStringHelper={new SharedStringHelper(sharedString)} />
+		<div style={standardSidePadding}>
+			<Accordion multiple collapsible>
+				{props.model.childDataObjects.map((child, index) => {
+					const length: number = props.model.childSharedObjects.length;
+					const i: number = index;
+					const newIndex: number = length + i;
+					return (
+						<AccordionItem value={newIndex} key={newIndex}>
+							<AccordionHeader>{child.constructor.name}</AccordionHeader>
+							<AccordionPanel>
+								<CollaborativeView model={child} />
+							</AccordionPanel>
+						</AccordionItem>
+					);
+				})}
+
+				{props.model.childSharedObjects.map((child, index) => {
+					let childElement: JSX.Element;
+					switch (child.attributes.type) {
+						case SharedCounter.getFactory().type: {
+							childElement = <CollaborativeCounter data={child as SharedCounter} />;
+							break;
+						}
+						case SharedDirectory.getFactory().type: {
+							childElement = (
+								<CollaborativeDirectory data={child as SharedDirectory} />
+							);
+							break;
+						}
+						case SharedString.getFactory().type: {
+							const helper = new SharedStringHelper(child as SharedString);
+							childElement = (
+								<div style={standardSidePadding}>
+									<CollaborativeTextArea
+										className={"ms-TextField-field field-111"}
+										style={textareaStyle}
+										sharedStringHelper={helper}
+									/>
+								</div>
+							);
+							break;
+						}
+						case SharedMap.getFactory().type: {
+							childElement = <CollaborativeMap data={child as SharedMap} />;
+							break;
+						}
+						default: {
+							throw new Error("Unexpected type!");
+						}
+					}
+
+					return (
+						<AccordionItem value={index} key={index}>
+							<AccordionHeader>{child.constructor.name}</AccordionHeader>
+							<AccordionPanel>{childElement}</AccordionPanel>
+						</AccordionItem>
+					);
+				})}
+			</Accordion>
+
+			<div style={marginTop10}>
+				<Stack horizontal tokens={stackTokens}>
+					<PrimaryButton text="Serialize" iconProps={buildIcon} onClick={serialize} />
+					<DefaultButton text="Clear" iconProps={clearIcon} onClick={clear} />
+				</Stack>
+			</div>
+			{value !== "" ? <pre>{value}</pre> : null}
 		</div>
 	);
 };

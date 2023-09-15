@@ -9,11 +9,13 @@ import { SharedCounter } from "@fluidframework/counter";
 import { SharedString } from "@fluidframework/sequence";
 import { Directory } from "./directory";
 import { LocalDataStructure } from "./localDataStructure";
+import { SupportedSharedObjects } from "./loadableDataObject";
 
 export function toLocalChannel(channel: SharedCounter): LocalDataStructure<number>;
 export function toLocalChannel(channel: SharedDirectory): LocalDataStructure<Directory>;
 export function toLocalChannel(channel: SharedMap): LocalDataStructure<Map<string, any>>;
 export function toLocalChannel(channel: SharedString): LocalDataStructure<string>;
+export function toLocalChannel(channel: SupportedSharedObjects): LocalDataStructure;
 export function toLocalChannel(channel: IChannel): LocalDataStructure {
 	const type = channel.attributes.type;
 	switch (type) {
