@@ -50,7 +50,7 @@ stages:
     - group: stress-odsp-lock
     jobs:
     - template: templates/include-test-real-service.yml
-      parameters
+      parameters:
         poolBuild: Large
         testPackage: ${{ variables.testPackage }}
         testWorkspace: ${{ variables.testWorkspace }}
