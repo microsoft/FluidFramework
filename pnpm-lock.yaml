@@ -9799,6 +9799,7 @@ importers:
       '@fluidframework/tool-utils': workspace:~
       '@microsoft/api-extractor': ^7.34.4
       '@types/node': ^16.18.38
+      agentkeepalive: ^4.5.0
       axios: ^0.26.0
       c8: ^7.7.1
       copyfiles: ^2.4.1
@@ -9826,6 +9827,7 @@ importers:
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@fluidframework/tinylicious-driver': link:../../drivers/tinylicious-driver
       '@fluidframework/tool-utils': link:../../utils/tool-utils
+      agentkeepalive: 4.5.0
       axios: 0.26.1
       semver: 7.5.3
       uuid: 9.0.0
@@ -10091,7 +10093,7 @@ importers:
       commander: 5.1.0
       ps-node: 0.1.6
       start-server-and-test: 1.15.5
-      tinylicious: 1.0.0
+      tinylicious: link:../../../server/tinylicious
     devDependencies:
       '@fluid-tools/build-cli': 0.22.0_@types+node@16.18.38
       '@fluidframework/build-common': 2.0.0
@@ -24487,6 +24489,12 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
+  /agentkeepalive/4.5.0:
+    resolution: {integrity: sha512-5GG/5IbQQpC9FpkRGsSvZI5QYeSCzlJHdpBQntCsuTOxhKD8lqKhrleg2Yi7yvMIf82Ycmmqln9U8V9qwEiJew==}
+    engines: {node: '>= 8.0.0'}
+    dependencies:
+      humanize-ms: 1.2.1
+
   /aggregate-error/3.1.0:
     resolution: {integrity: sha512-4I7Td01quW/RpocfNayFdFVk1qSuoh0E7JrbRJ16nH01HhKFQ88INq9Sd+nd72zqRySlr9BmDA8xlEJ6vJMrYA==}
     engines: {node: '>=8'}
@@ -36088,7 +36096,7 @@ packages:
     resolution: {integrity: sha512-NgOPbRiaQM10DYXvN3/hhGVI2M5MtITFryzBGxHM5p4wnFxsVCbxkrBrDsk+EZ5OB4jEOT7AjDxtdF+KVEFT7w==}
     engines: {node: ^12.13.0 || ^14.15.0 || >=16.0.0}
     dependencies:
-      agentkeepalive: 4.3.0
+      agentkeepalive: 4.5.0
       cacache: 16.1.3
       http-cache-semantics: 4.1.1
       http-proxy-agent: 5.0.0
@@ -36113,7 +36121,7 @@ packages:
     resolution: {integrity: sha512-rLWS7GCSTcEujjVBs2YqG7Y4643u8ucvCJeSRqiLYhesrDuzeuFIk37xREzAsfQaqzl8b9rNCE4m6J8tvX4Q8w==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
     dependencies:
-      agentkeepalive: 4.3.0
+      agentkeepalive: 4.5.0
       cacache: 17.1.2
       http-cache-semantics: 4.1.1
       http-proxy-agent: 5.0.0
@@ -36136,7 +36144,7 @@ packages:
     resolution: {integrity: sha512-+zopwDy7DNknmwPQplem5lAZX/eCOzSvSNNcSKm5eVwTkOBzoktEfXsa9L23J/GIRhxRsaxzkPEhrJEpE2F4Gg==}
     engines: {node: '>= 10'}
     dependencies:
-      agentkeepalive: 4.3.0
+      agentkeepalive: 4.5.0
       cacache: 15.3.0
       http-cache-semantics: 4.1.1
       http-proxy-agent: 4.0.1
@@ -43184,7 +43192,7 @@ packages:
       schema-utils: 3.3.0
       serialize-javascript: 6.0.1
       terser: 5.17.4
-      webpack: 5.88.1_webpack-cli@4.10.0
+      webpack: 5.88.1
     dev: true
 
   /terser/4.8.1:

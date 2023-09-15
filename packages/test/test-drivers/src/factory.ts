@@ -4,6 +4,7 @@
  */
 
 import http from "http";
+import Agent from "agentkeepalive";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { unreachableCase } from "@fluidframework/core-utils";
 import { LocalServerTestDriver } from "./localServerTestDriver";
@@ -38,7 +39,14 @@ function patchHttpRequestToForceKeepAlive() {
 
 	httpRequestPatched = true;
 
-	const httpAgent = new http.Agent({ keepAlive: true, scheduling: "fifo" });
+	// IMPORTANT: the Agent from agentkeepalive sets keep-alive to true by default and manages timeouts for active and
+	// inactive connections on the client side (default to 8s and 4s respectively). This should be coordinated with the
+	// corresponding timeout on the server's end. If the timeout on the client is higher than on the server, an inactive
+	// connection might be closed by the server but kept around on the client, and when something attempts to reuse it,
+	// our drivers will end up throwing an error like ECONNRESET or "socket hang up", indicating that "the other side of
+	// the connection closed it abruptly", which in this case isn't really abruptly, it's just that the client doesn't
+	// immediately react to the server closing the socket.
+	const httpAgent = new Agent();
 	const oldRequest = http.request;
 	http.request = ((url, options, callback) => {
 		// There are two variant of the API
@@ -91,7 +99,7 @@ export async function createFluidTestDriver(
 
 		case "t9s":
 		case "tinylicious":
-			// patchHttpRequestToForceKeepAlive();
+			patchHttpRequestToForceKeepAlive();
 			return new TinyliciousTestDriver(api.RouterliciousDriverApi);
 
 		case "r11s":
