@@ -383,12 +383,10 @@ export class TestObjectProvider implements ITestObjectProvider {
 	}
 
 	private async resolveContainer(loader: ILoader, headers?: IRequestHeader) {
-		const container = await loader.resolve({
+		return loader.resolve({
 			url: await this.driver.createContainerUrl(this.documentId),
 			headers,
 		});
-
-		return container;
 	}
 
 	/**
