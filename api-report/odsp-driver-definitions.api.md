@@ -236,7 +236,9 @@ export const OdspErrorTypes: {
     readonly incorrectServerResponse: "incorrectServerResponse";
     readonly fileOverwrittenInStorage: "fileOverwrittenInStorage";
     readonly deltaStreamConnectionForbidden: "deltaStreamConnectionForbidden";
-    readonly locationRedirection: "locationRedirection";
+    readonly locationRedirection: "locationRedirection"; /**
+    * SPO admin toggle: fluid service is not enabled.
+    */
     readonly fluidInvalidSchema: "fluidInvalidSchema";
     readonly fileIsLocked: "fileIsLocked";
     readonly genericError: "genericError";
