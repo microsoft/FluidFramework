@@ -2243,4 +2243,35 @@ describe("Editing", () => {
 			});
 		});
 	});
+
+	it.skip("edit removed content", () => {
+		const tree = makeTreeFromJson({ foo: "A" });
+		const cursor = tree.forest.allocateCursor();
+		moveToDetachedField(tree.forest, cursor);
+		cursor.enterNode(0);
+		const anchor = cursor.buildAnchor();
+		cursor.free();
+
+		// Remove the root node
+		tree.editor.sequenceField(rootField).delete(0, 1);
+
+		// Fork the tree so we can undo the removal of the root without undoing later changes
+		const restoreRoot = tree.fork();
+		restoreRoot.undo();
+
+		// Get access to the removed node
+		const parent = tree.locate(anchor) ?? assert.fail();
+		// Make some nested change to it (remove A)
+		tree.editor.sequenceField({ parent, field: brand("foo") }).delete(0, 1);
+
+		// Restore the root node so we can see the effect of the edit
+		tree.merge(restoreRoot, false);
+		expectJsonTree(tree, [{}]);
+
+		// TODO: this doesn't work because the removal of A was described as occurring under the detached field where
+		// the root resided while removed. The rebaser is unable to associate that with the ChangeAtomId of the root.
+		// That removal of A is therefore carried out under that detached field even though the root is restored.
+		restoreRoot.rebaseOnto(tree);
+		expectJsonTree(restoreRoot, [{}]);
+	});
 });
