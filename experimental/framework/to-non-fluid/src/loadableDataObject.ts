@@ -67,6 +67,7 @@ export class LoadableDataObject extends DataObject implements IEventProvider<ILo
 
 	private readonly dataObjectMap: Map<string, LoadableDataObject> = new Map();
 	private readonly sharedObjectMap: Map<string, SupportedSharedObjects> = new Map();
+	private readonly handleMap: Map<string, IFluidHandle<LoadableDataObject>> = new Map();
 
 	public get dataObjects(): LoadableDataObject[] {
 		return [...this.dataObjectMap.values()];
@@ -76,7 +77,9 @@ export class LoadableDataObject extends DataObject implements IEventProvider<ILo
 		return [...this.sharedObjectMap.values()];
 	}
 
-	private readonly handleMap: Map<string, IFluidHandle<LoadableDataObject>> = new Map();
+	public get handles(): [string, IFluidHandle<LoadableDataObject>][] {
+		return [...this.handleMap.entries()];
+	}
 
 	public async hasInitialized(): Promise<void> {
 		for (const [key, value] of this.root) {
@@ -131,6 +134,7 @@ export class LoadableDataObject extends DataObject implements IEventProvider<ILo
 	public addReferenceHandle(key: string, handle: IFluidHandle<LoadableDataObject>) {
 		assert(!this.hasFluidObject(key), "should not be overriding a fluid object");
 		this.root.set(key, new ReferenceHandle(handle));
+		this.handleMap.set(key, handle);
 	}
 
 	public hasFluidObject(key: string): boolean {
@@ -146,6 +150,7 @@ export class LoadableDataObject extends DataObject implements IEventProvider<ILo
 		assert(child.entryPoint !== undefined, "should have entrypoint!");
 		const dataObject = (await child.entryPoint.get()) as LoadableDataObject;
 		this.storeFluidObject(key, dataObject);
+		this.dataObjectMap.set(key, dataObject);
 		return dataObject;
 	}
 
@@ -182,6 +187,13 @@ export class LoadableDataObject extends DataObject implements IEventProvider<ILo
 		return dataObject;
 	}
 
+	public getHandle(key: string): IFluidHandle<LoadableDataObject> {
+		assert(this.handleMap.has(key), "key should exist in handleMap!");
+		const handle = this.handleMap.get(key);
+		assert(handle !== undefined, "should have gotten a handle!");
+		return handle;
+	}
+
 	public async toRawLocalDataObject(path: string[]): Promise<LocalDataObject> {
 		const type = this.context.packagePath[this.context.packagePath.length - 1];
 		const localDataObject = new LocalDataObject(type);
@@ -207,6 +219,9 @@ export class LoadableDataObject extends DataObject implements IEventProvider<ILo
 			const dataObject = await handle.get();
 			const localHandle = new LocalHandle(dataObject.path);
 			this.localDataObject.handles.set(key, localHandle);
+		}
+		for (const child of this.dataObjects) {
+			await child.toLocalDataObject();
 		}
 		const localDataObject = this.localDataObject;
 		this.localDataObject = undefined;
@@ -245,6 +260,14 @@ export class LoadableDataObject extends DataObject implements IEventProvider<ILo
 		}
 		for (const child of this.dataObjects) {
 			await child.loadFluidHandles(parentDataObject);
+		}
+	}
+
+	public clear() {
+		this.localDataObject = undefined;
+		this._path = undefined;
+		for (const child of this.dataObjects) {
+			child.clear();
 		}
 	}
 }

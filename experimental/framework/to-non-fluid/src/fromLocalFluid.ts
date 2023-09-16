@@ -65,5 +65,5 @@ export function findDataObject(
 	if (path.length === 0) throw new Error("unexpected path!");
 	if (path.length === 1) return parentDataObject;
 	const newPath = path.slice(1);
-	return findDataObject(newPath, parentDataObject.getChildDataObject(path[0]));
+	return findDataObject(newPath, parentDataObject.getChildDataObject(path[1]));
 }

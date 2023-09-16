@@ -14,7 +14,6 @@ import {
 	IContextualMenuItem,
 	IContextualMenuProps,
 	PrimaryButton,
-	Stack,
 } from "@fluentui/react";
 import {
 	Accordion,
@@ -29,38 +28,39 @@ import {
 	NumberSymbolRegular,
 	RocketRegular,
 } from "@fluentui/react-icons";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { CollaborativeMap } from "./collaborativeMap";
 import { CollaborativeDirectory } from "./collaborativeDirectory";
 import { CollaborativeCounter } from "./collaborativeCounter";
-import {
-	addIcon,
-	buildIcon,
-	clearIcon,
-	marginTop10,
-	stackTokens,
-	standardSidePadding,
-} from "./constants";
+import { addIcon, buildIcon, clearIcon, marginTop10, standardSidePadding } from "./constants";
 
 export interface CollaborativeProps {
 	model: LoadableDataObject;
+	handleState: [
+		IFluidHandle<LoadableDataObject> | undefined,
+		React.Dispatch<React.SetStateAction<IFluidHandle<LoadableDataObject> | undefined>>,
+	];
 }
 
 export const CollaborativeView = (props: CollaborativeProps) => {
 	const [value, setValue] = React.useState("");
 	const [childDataObjects, setDataObjects] = React.useState([...props.model.dataObjects]);
 	const [childSharedObjects, setSharedObjects] = React.useState([...props.model.sharedObjects]);
+	const [handle, setHandle] = props.handleState;
 
-	const getLocalDataObjectAsync = async () => {
-		await props.model.toRawLocalDataObject([""]);
-		const localDataObject = await props.model.toLocalDataObject();
+	const getLocalDataObjectAsync = async (model: LoadableDataObject) => {
+		// unfortunately we need to update the tree twice, once for the tree, twice for the handles
+		await model.toRawLocalDataObject([""]);
+		const localDataObject = await model.toLocalDataObject();
 		const serializableDataObject = makeSerializableDataObject(localDataObject);
 		setValue(JSON.stringify(serializableDataObject, undefined, 4));
 	};
 	const serialize = () => {
-		getLocalDataObjectAsync().catch((error) => console.log(error));
+		getLocalDataObjectAsync(props.model).catch((error) => console.log(error));
 	};
 	const clear = () => {
 		setValue("");
+		props.model.clear();
 	};
 	const addDataObject = () => {
 		props.model.createChildDataObject(`${childDataObjects.length}`);
@@ -70,6 +70,55 @@ export const CollaborativeView = (props: CollaborativeProps) => {
 		console.log(item);
 		if (item === undefined) return;
 		props.model.createChildSharedObject(item.key);
+	};
+
+	const actOnDataObject = (item: IContextualMenuItem | undefined) => {
+		if (item === undefined) return;
+		switch (item.key) {
+			case "Serialize":
+				serialize();
+				break;
+			case "Clear":
+				clear();
+				break;
+			case "Pick Handle":
+				setHandle(props.model.handle);
+				break;
+			case "Store Handle":
+				if (handle === undefined) return;
+				props.model.addReferenceHandle(handle?.absolutePath, handle);
+				break;
+			default:
+				break;
+		}
+	};
+
+	const actMenuProps: IContextualMenuProps = {
+		// For example: disable dismiss if shift key is held down while dismissing
+		onItemClick: (ev, item) => actOnDataObject(item),
+		items: [
+			{
+				key: "Serialize",
+				text: "Serialize",
+				iconProps: buildIcon,
+			},
+			{
+				key: "Clear",
+				text: "Clear",
+				iconProps: clearIcon,
+			},
+			{
+				key: "Pick Handle",
+				text: "Pick Handle",
+				iconProps: { iconName: "Touch" },
+			},
+			{
+				key: "Store Handle",
+				text: "Store Handle",
+				iconProps: { iconName: "Subscribe" },
+			},
+		],
+		directionalHintFixed: true,
 	};
 
 	const menuProps: IContextualMenuProps = {
@@ -97,6 +146,36 @@ export const CollaborativeView = (props: CollaborativeProps) => {
 				iconProps: { iconName: "InsertTextBox" },
 			},
 		],
+		directionalHintFixed: true,
+	};
+
+	const showHandleAsync = async (childHandle: IFluidHandle<LoadableDataObject>) => {
+		const model = await childHandle.get();
+		const localDataObject = await model.toRawLocalDataObject([""]);
+		const serializableDataObject = makeSerializableDataObject(localDataObject);
+		setValue(JSON.stringify(serializableDataObject, undefined, 4));
+	};
+
+	const showHandle = (item: IContextualMenuItem | undefined) => {
+		if (item === undefined) return;
+		const childHandle = props.model.getHandle(item.key);
+		if (childHandle === undefined) {
+			console.log(`handle missing ${item.key}`);
+			return;
+		}
+		showHandleAsync(childHandle).catch((error) => console.log(error));
+	};
+
+	const handleMenuProps: IContextualMenuProps = {
+		// For example: disable dismiss if shift key is held down while dismissing
+		onItemClick: (_, item) => showHandle(item),
+		items: props.model.handles.map(([key, _]) => {
+			return {
+				key,
+				text: key,
+				iconProps: { iconName: "POI" },
+			};
+		}),
 		directionalHintFixed: true,
 	};
 
@@ -138,7 +217,7 @@ export const CollaborativeView = (props: CollaborativeProps) => {
 								icon={<ArchiveRegular />}
 							>{`${child.constructor.name} ${index}`}</AccordionHeader>
 							<AccordionPanel>
-								<CollaborativeView model={child} />
+								<CollaborativeView model={child} handleState={props.handleState} />
 							</AccordionPanel>
 						</AccordionItem>
 					);
@@ -228,10 +307,19 @@ export const CollaborativeView = (props: CollaborativeProps) => {
 			</Accordion>
 
 			<div style={marginTop10}>
-				<Stack horizontal tokens={stackTokens}>
-					<PrimaryButton text="Serialize" iconProps={buildIcon} onClick={serialize} />
-					<DefaultButton text="Clear" iconProps={clearIcon} onClick={clear} />
-				</Stack>
+				<PrimaryButton
+					text="Handles"
+					iconProps={{ iconName: "SetAction" }}
+					menuProps={handleMenuProps}
+				/>
+			</div>
+
+			<div style={marginTop10}>
+				<DefaultButton
+					text="Act on Data Object"
+					iconProps={{ iconName: "SetAction" }}
+					menuProps={actMenuProps}
+				/>
 			</div>
 			{value !== "" ? <pre>{value}</pre> : null}
 		</div>
