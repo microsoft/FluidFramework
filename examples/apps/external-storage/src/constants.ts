@@ -4,6 +4,7 @@ export const addIcon: IIconProps = { iconName: "Add" };
 export const buildIcon: IIconProps = { iconName: "Build" };
 export const clearIcon: IIconProps = { iconName: "PageRemove" };
 export const marginTop10 = { marginTop: 10 };
+export const marginTop1010 = { marginTop: 10, paddingLeft: 10 };
 export const sendIcon: IIconProps = { iconName: "Send" };
 export const stackTokens: IStackTokens = { childrenGap: 10 };
 export const standardLength = {

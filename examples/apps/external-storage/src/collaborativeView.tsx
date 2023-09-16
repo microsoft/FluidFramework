@@ -25,14 +25,14 @@ import {
 	ArchiveRegular,
 	ArrowFlowUpRightRectangleMultipleRegular,
 	DrawTextRegular,
+	MapRegular,
 	NumberSymbolRegular,
-	RocketRegular,
 } from "@fluentui/react-icons";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { CollaborativeMap } from "./collaborativeMap";
 import { CollaborativeDirectory } from "./collaborativeDirectory";
 import { CollaborativeCounter } from "./collaborativeCounter";
-import { addIcon, buildIcon, clearIcon, marginTop10, standardSidePadding } from "./constants";
+import { addIcon, buildIcon, clearIcon, marginTop1010, standardSidePadding } from "./constants";
 
 export interface CollaborativeProps {
 	model: LoadableDataObject;
@@ -53,7 +53,9 @@ export const CollaborativeView = (props: CollaborativeProps) => {
 		await model.toRawLocalDataObject([""]);
 		const localDataObject = await model.toLocalDataObject();
 		const serializableDataObject = makeSerializableDataObject(localDataObject);
-		setValue(JSON.stringify(serializableDataObject, undefined, 4));
+		const text = JSON.stringify(serializableDataObject, undefined, 4);
+		setValue(text);
+		navigator.clipboard.writeText(text).catch((error) => console.error(error));
 	};
 	const serialize = () => {
 		getLocalDataObjectAsync(props.model).catch((error) => console.log(error));
@@ -88,6 +90,9 @@ export const CollaborativeView = (props: CollaborativeProps) => {
 				if (handle === undefined) return;
 				props.model.addReferenceHandle(handle?.absolutePath, handle);
 				break;
+			case "Add Data Object":
+				addDataObject();
+				break;
 			default:
 				break;
 		}
@@ -106,6 +111,11 @@ export const CollaborativeView = (props: CollaborativeProps) => {
 				key: "Clear",
 				text: "Clear",
 				iconProps: clearIcon,
+			},
+			{
+				key: "Add Data Object",
+				text: "Add Data Object",
+				iconProps: addIcon,
 			},
 			{
 				key: "Pick Handle",
@@ -153,7 +163,9 @@ export const CollaborativeView = (props: CollaborativeProps) => {
 		const model = await childHandle.get();
 		const localDataObject = await model.toRawLocalDataObject([""]);
 		const serializableDataObject = makeSerializableDataObject(localDataObject);
-		setValue(JSON.stringify(serializableDataObject, undefined, 4));
+		const text = JSON.stringify(serializableDataObject, undefined, 4);
+		setValue(text);
+		navigator.clipboard.writeText(text).catch((error) => console.error(error));
 	};
 
 	const showHandle = (item: IContextualMenuItem | undefined) => {
@@ -206,7 +218,6 @@ export const CollaborativeView = (props: CollaborativeProps) => {
 	return (
 		<div style={standardSidePadding}>
 			<Accordion multiple collapsible>
-				<PrimaryButton text="Add Data Object" iconProps={addIcon} onClick={addDataObject} />
 				{childDataObjects.map((child, index) => {
 					const length: number = childSharedObjects.length;
 					const i: number = index;
@@ -222,7 +233,7 @@ export const CollaborativeView = (props: CollaborativeProps) => {
 						</AccordionItem>
 					);
 				})}
-				<div style={marginTop10}>
+				<div style={marginTop1010}>
 					<PrimaryButton
 						text="Add Shared Object"
 						iconProps={addIcon}
@@ -283,7 +294,7 @@ export const CollaborativeView = (props: CollaborativeProps) => {
 						case SharedMap.getFactory().type: {
 							childElement = (
 								<AccordionItem value={index} key={index}>
-									<AccordionHeader icon={<RocketRegular />}>
+									<AccordionHeader icon={<MapRegular />}>
 										{`${child.constructor.name} ${index}`}
 									</AccordionHeader>
 									<AccordionPanel>
@@ -306,7 +317,7 @@ export const CollaborativeView = (props: CollaborativeProps) => {
 				})}
 			</Accordion>
 
-			<div style={marginTop10}>
+			<div style={marginTop1010}>
 				<PrimaryButton
 					text="Handles"
 					iconProps={{ iconName: "SetAction" }}
@@ -314,14 +325,14 @@ export const CollaborativeView = (props: CollaborativeProps) => {
 				/>
 			</div>
 
-			<div style={marginTop10}>
+			<div style={marginTop1010}>
 				<DefaultButton
 					text="Act on Data Object"
 					iconProps={{ iconName: "SetAction" }}
 					menuProps={actMenuProps}
 				/>
 			</div>
-			{value !== "" ? <pre>{value}</pre> : null}
+			{value !== "" ? <pre style={{ paddingLeft: 10 }}>{value}</pre> : null}
 		</div>
 	);
 };

@@ -19,6 +19,7 @@ import {
 	standardLength,
 	addIcon,
 	marginTop10,
+	marginTop1010,
 } from "./constants";
 
 export interface ICollaborativeDirectoryProps {
@@ -74,7 +75,7 @@ export const CollaborativeDirectory: React.FC<ICollaborativeDirectoryProps> = (
 
 	return (
 		<div style={standardPaddingStyle}>
-			<Stack horizontal tokens={stackTokens}>
+			<Stack horizontal tokens={stackTokens} style={{ paddingLeft: 10 }}>
 				<Stack.Item align="center">
 					<TextField label="Key" underlined type="text" componentRef={keyInputRef} />
 				</Stack.Item>
@@ -86,7 +87,7 @@ export const CollaborativeDirectory: React.FC<ICollaborativeDirectoryProps> = (
 				</Stack.Item>
 			</Stack>
 			{map.map(([key, value]) => (
-				<Stack key={key} horizontal tokens={stackTokens} style={marginTop10}>
+				<Stack key={key} horizontal tokens={stackTokens} style={marginTop1010}>
 					<Stack.Item align="center" style={standardLength}>
 						{key}
 					</Stack.Item>
@@ -102,7 +103,7 @@ export const CollaborativeDirectory: React.FC<ICollaborativeDirectoryProps> = (
 				</Stack>
 			))}
 			<div style={marginTop10}>
-				<Stack horizontal tokens={stackTokens}>
+				<Stack horizontal tokens={stackTokens} style={{ paddingLeft: 10 }}>
 					<TextField
 						style={{ width: 355 }}
 						label="subdirectories"
