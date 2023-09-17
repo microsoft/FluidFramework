@@ -8,6 +8,7 @@ import { promises as fs } from "fs";
 import { BaseCommand } from "../../base";
 import {
 	Repository,
+	createComment,
 	getPullRequestInfo,
 	listCommitsPullRequest,
 	mergePullRequest,
@@ -29,6 +30,7 @@ interface PRObject {
 	description?: string;
 	prNumber: number;
 	strategy?: "squash" | "merge";
+	comment: string;
 }
 
 enum MergeStrategy {
@@ -77,14 +79,23 @@ export default class MergePullRequest extends BaseCommand<typeof MergePullReques
 		const [owner, repo] = context.originRemotePartialUrl.split("/");
 		this.log(`owner: ${owner} and repo: ${repo}`);
 
-		// create comment on the automation pr - "this PR is queued to be merged in next in 10mins. please close the PR if you want to stop the merge"
-
 		const pr1: PRObject = {
 			token: flags.pat,
 			owner: "sonalideshpandemsft",
 			repo: "FluidFramework",
 			prNumber: flags.prNumber,
+			comment: `This PR is queued to be merged in ${flags.targetBranch} in 10mins. Please close the PR if you ***DO NOT*** wish to merge`,
 		};
+
+		// create comment on the pr
+		const comment = await createComment(pr1, this.logger);
+		this.log(`Comment created on the PR: ${flags.prNumber}: ${JSON.stringify(comment)}`);
+
+		// Wait for 10 minutes
+		const delayMilliseconds = 10 * 60 * 1000;
+		setTimeout(() => {
+			this.log("Wait for 10 mins");
+		}, delayMilliseconds);
 
 		const info = await getPullRequestInfo(pr1, this.logger);
 
@@ -139,7 +150,7 @@ export default class MergePullRequest extends BaseCommand<typeof MergePullReques
 			}
 		}
 
-		// merge pr
+		// merge pull request
 		if (mergeStrategy === MergeStrategy.Merge) {
 			// find the commit id
 			const commitInfo = await listCommitsPullRequest(pr, this.logger);
@@ -163,7 +174,8 @@ async function filterCommits(
 	);
 
 	if (filteredCommits.length > 1) {
-		log.log("More the one commit with the name automation...");
+		log.errorLog(`More the one commit with the name ${automationTitle}`);
+		return;
 	}
 
 	if (filteredCommits.length === 1) {
@@ -177,7 +189,7 @@ async function filterCommits(
 			await mergeAutomationPullRequest(sha, branch, gitRepo);
 		} else {
 			log.errorLog(
-				`The last commit does not have the message ${automationTitle}. The fixup commit is named/pushed incorrectly`,
+				`The last commit does not have the message ${automationTitle}. The fixup commit is named incorrectly`,
 			);
 		}
 	}
@@ -186,10 +198,8 @@ async function filterCommits(
 async function mergeAutomationPullRequest(sha: string, branch: string, gitRepo: Repository) {
 	// git checkout next
 	await gitRepo.gitClient.checkout(branch);
-	// git fetch
-	await gitRepo.gitClient.fetch();
-	// git pull
-	await gitRepo.gitClient.pull();
+	// git fetch and pull
+	await gitRepo.gitClient.fetch().pull();
 	// git merge --ff-only sha
 	await gitRepo.gitClient.merge(["--ff-only", sha]);
 	// git push

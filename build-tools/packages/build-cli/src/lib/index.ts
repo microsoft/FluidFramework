@@ -38,6 +38,7 @@ export {
 	mergePullRequest,
 	listCommitsPullRequest,
 	getPullRequestInfo,
+	createComment,
 } from "./github";
 export {
 	getRanges,

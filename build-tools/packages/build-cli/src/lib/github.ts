@@ -203,3 +203,31 @@ export async function getPullRequestInfo(
 	log.log("Fetched pull request");
 	return response;
 }
+
+export async function createComment(
+	pr: {
+		token: string;
+		owner: string;
+		repo: string;
+		prNumber: number;
+		comment: string;
+	},
+	log: CommandLogger,
+): Promise<any> {
+	const octokit = new Octokit({
+		auth: pr.token,
+	});
+
+	const response = await octokit.request(
+		"POST /repos/{owner}/{repo}/issues/{issue_number}/comments",
+		{
+			owner: pr.owner,
+			repo: pr.repo,
+			issue_number: pr.prNumber,
+			body: pr.comment,
+		},
+	);
+
+	log.log(`PR comment created`);
+	return response;
+}
