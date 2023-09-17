@@ -159,7 +159,7 @@ export async function mergePullRequest(
 		title: string;
 		description: string;
 		prNumber: number;
-		strategy: "squash" | "merge" | undefined;
+		mergeStrategy: "squash" | "merge" | undefined;
 	},
 	log: CommandLogger,
 ): Promise<any> {
@@ -171,7 +171,7 @@ export async function mergePullRequest(
 			pull_number: pr.prNumber,
 			commit_title: pr.title,
 			commit_message: pr.description,
-			merge_method: pr.strategy,
+			merge_method: pr.mergeStrategy,
 		});
 		log.log(`Squashed pull request`);
 		return squash.status;
@@ -212,7 +212,7 @@ export async function createComment(
 		prNumber: number;
 		comment: string;
 	},
-	log: CommandLogger,
+	log?: CommandLogger,
 ): Promise<any> {
 	const octokit = new Octokit({
 		auth: pr.token,
@@ -228,6 +228,6 @@ export async function createComment(
 		},
 	);
 
-	log.log(`PR comment created`);
+	log?.log(`PR comment created`);
 	return response;
 }

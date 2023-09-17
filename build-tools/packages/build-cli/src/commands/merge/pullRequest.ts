@@ -4,7 +4,6 @@
  */
 
 import { Flags } from "@oclif/core";
-import { promises as fs } from "fs";
 import { BaseCommand } from "../../base";
 import {
 	Repository,
@@ -22,15 +21,18 @@ interface CommitData {
 	};
 }
 
-interface PRObject {
+interface PullRequestWithComment {
 	token: string;
 	owner: string;
 	repo: string;
-	title?: string;
-	description?: string;
 	prNumber: number;
-	strategy?: "squash" | "merge";
 	comment: string;
+}
+
+interface PullRequestWithDetails {
+	title: string;
+	description: string;
+	mergeStrategy: MergeStrategy;
 }
 
 enum MergeStrategy {
@@ -50,7 +52,7 @@ export default class MergePullRequest extends BaseCommand<typeof MergePullReques
 			env: "GITHUB_PAT",
 		}),
 		prNumber: Flags.integer({
-			description: "PR number",
+			description: "Pull request number",
 			char: "n",
 			required: true,
 		}),
@@ -63,85 +65,48 @@ export default class MergePullRequest extends BaseCommand<typeof MergePullReques
 	};
 
 	private gitRepo: Repository | undefined;
+	private owner: string = "";
+	private repo: string = "";
+	private readonly automationTitle = "Automation: main-next integrate";
 
 	public async run(): Promise<void> {
 		const flags = this.flags;
 
-		let mergeStrategy = MergeStrategy.Squash;
-
 		const context = await this.getContext();
 		this.gitRepo ??= new Repository({ baseDir: context.gitRepo.resolvedRoot });
 		if (this.gitRepo === undefined) {
-			this.errorLog(`gitRepo undefined: ${JSON.stringify(this.gitRepo)}`);
 			this.error("gitRepo is undefined", { exit: 1 });
 		}
 
-		const [owner, repo] = context.originRemotePartialUrl.split("/");
-		this.log(`owner: ${owner} and repo: ${repo}`);
+		[this.owner, this.repo] = context.originRemotePartialUrl.split("/");
+		this.log(`owner: ${this.owner} and repo: ${this.repo}`);
 
-		const pr1: PRObject = {
+		const prComment: PullRequestWithComment = {
 			token: flags.pat,
-			owner: "sonalideshpandemsft",
-			repo: "FluidFramework",
+			owner: this.owner,
+			repo: this.repo,
 			prNumber: flags.prNumber,
 			comment: `This PR is queued to be merged in ${flags.targetBranch} in 10mins. Please close the PR if you ***DO NOT*** wish to merge`,
 		};
 
-		// create comment on the pr
-		const comment = await createComment(pr1, this.logger);
-		this.log(`Comment created on the PR: ${flags.prNumber}: ${JSON.stringify(comment)}`);
+		// get the merge strategy: merge or squash
+		const details = await getMergeStrategy(prComment, this.automationTitle, this.logger);
 
-		// Wait for 10 minutes
-		const delayMilliseconds = 10 * 60 * 1000;
-		setTimeout(() => {
-			this.log("Wait for 10 mins");
-		}, delayMilliseconds);
-
-		const info = await getPullRequestInfo(pr1, this.logger);
-
-		// Convert the 'info' object to a JSON string
-		const jsonData = JSON.stringify(info, null, 2);
-
-		// Write the JSON data to the file
-		await fs.writeFile("file.json", jsonData, "utf-8");
-
-		const title = info.data.title;
-		const description = info.data.body;
-		const labels = info.data.labels;
-		const state = JSON.stringify(info.data.state);
-		const arr = [];
-
-		if (state === "closed") {
-			this.log(`PR is closed`);
-			return;
-		}
-
-		for (const label of labels) {
-			arr.push(label.name);
-			this.log(`Labels list: ${label.name}`);
-
-			if (
-				label.name === "main-next-integrate" &&
-				title === "Automation: main-next integrate"
-			) {
-				mergeStrategy = MergeStrategy.Merge;
-			}
-		}
-
-		const pr = {
-			...pr1,
-			title,
-			description,
-			strategy: mergeStrategy,
+		const prDetails = {
+			token: flags.pat,
+			owner: this.owner,
+			repo: this.repo,
+			prNumber: flags.prNumber,
+			title: details.title,
+			description: details.description,
+			mergeStrategy: details.mergeStrategy,
 		};
 
-		this.log(`PR Object: ${JSON.stringify(pr)}`);
-
-		this.log(`Merge strategy: ${mergeStrategy}`);
+		this.log(`Pull Request Details: ${prDetails}`);
 
 		// squash pull request
-		if (mergeStrategy === MergeStrategy.Squash) {
-			const response = await mergePullRequest(pr, this.logger);
+		if (prDetails.mergeStrategy === MergeStrategy.Squash) {
+			const response = await mergePullRequest(prDetails, this.logger);
 			this.log(`Squash PR repsonse: ${JSON.stringify(response)}`);
 
 			if (response !== 200) {
@@ -151,26 +116,85 @@ export default class MergePullRequest extends BaseCommand<typeof MergePullReques
 		}
 
 		// merge pull request
-		if (mergeStrategy === MergeStrategy.Merge) {
+		if (prDetails.mergeStrategy === MergeStrategy.Merge) {
 			// find the commit id
-			const commitInfo = await listCommitsPullRequest(pr, this.logger);
+			const commitInfo = await listCommitsPullRequest(prDetails, this.logger);
 			this.log(`Number of commits: ${commitInfo.length}`);
 
-			await filterCommits(commitInfo, flags.targetBranch, this.gitRepo, this.logger);
+			await filterCommits(
+				commitInfo,
+				flags.targetBranch,
+				this.automationTitle,
+				this.gitRepo,
+				this.logger,
+			);
 			this.log(`Merge Pull Request`);
 		}
 	}
+
+	protected override async catch(err: Error & { exitCode?: number }): Promise<any> {
+		this.log(`Cannot merge pull request: ${err}`);
+		const comment: PullRequestWithComment = {
+			token: this.flags.pat,
+			owner: this.owner,
+			repo: this.repo,
+			prNumber: this.flags.prNumber,
+			comment: `Cannot merge pull request: ${err}`,
+		};
+		await createComment(comment);
+	}
+}
+
+async function getMergeStrategy(
+	prComment: PullRequestWithComment,
+	automationTitle: string,
+	log: CommandLogger,
+): Promise<PullRequestWithDetails> {
+	let mergeStrategy = MergeStrategy.Squash;
+
+	// create comment on the pr
+	const comment = await createComment(prComment, log);
+	log.log(`Comment created on PR ${prComment.prNumber}: ${JSON.stringify(comment)}`);
+
+	// Wait for 10 minutes
+	const delayMilliseconds = 10 * 60 * 1000;
+	setTimeout(() => {
+		log.log("Wait for 10 mins");
+	}, delayMilliseconds);
+
+	const info = await getPullRequestInfo(prComment, log);
+
+	const title: string = info.data.title;
+	const description: string = info.data.body;
+	const labels = info.data.labels;
+	const state = JSON.stringify(info.data.state);
+	const arr = [];
+
+	if (state === "closed") {
+		log.errorLog(`PR is closed`);
+	}
+
+	for (const label of labels) {
+		arr.push(label.name);
+		log.log(`Labels list: ${label.name}`);
+
+		if (label.name === "main-next-integrate" && title === automationTitle) {
+			mergeStrategy = MergeStrategy.Merge;
+		}
+	}
+
+	return { title, description, mergeStrategy };
 }
 
 async function filterCommits(
 	commitDataArray: CommitData[],
 	branch: string,
+	automationTitle: string,
 	gitRepo: Repository,
 	log: CommandLogger,
 ): Promise<any> {
-	const automationTitle = "Automation: main-next integrate";
 	const filteredCommits = commitDataArray.filter(
-		(commit) => commit.commit.message === "Automation: main-next integrate",
+		(commit) => commit.commit.message === automationTitle,
 	);
 
 	if (filteredCommits.length > 1) {
