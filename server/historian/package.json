@@ -31,7 +31,7 @@
 		"test": "pnpm run -r --stream --no-bail --no-sort test",
 		"tsc": "pnpm run -r --stream tsc"
 	},
-	"nyc": {
+	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [],
@@ -45,21 +45,19 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.23.0",
+		"@fluid-tools/build-cli": "^0.22.0",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.23.0",
+		"@fluidframework/build-tools": "^0.22.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@rushstack/eslint-config": "^2.6.1",
 		"@types/compression": "0.0.36",
 		"@types/cors": "^2.8.4",
 		"@types/debug": "^4.1.5",
 		"@types/lodash": "^4.14.119",
-		"@types/mocha": "^10.0.0",
 		"@types/nconf": "0.0.37",
 		"@types/redis": "^2.8.10",
 		"@types/supertest": "^2.0.7",
 		"async": "^3.2.2",
-		"concurrently": "^7.5.0",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.27.0",
 		"eslint-plugin-eslint-comments": "~3.1.2",
@@ -70,8 +68,6 @@
 		"eslint-plugin-unicorn": "~40.0.0",
 		"eslint-plugin-unused-imports": "~2.0.0",
 		"lerna": "5.6.2",
-		"mocha": "^10.1.0",
-		"nyc": "^15.1.0",
 		"rimraf": "^3.0.2",
 		"run-script-os": "^1.1.5",
 		"supertest": "^3.3.0",

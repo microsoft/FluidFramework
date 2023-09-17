@@ -49,7 +49,7 @@ The current feature focus is on:
     -   New field kinds to allow data-modeling with more specific merge semantics (ex: adding support for special collections like sets, or sorted sequences)
     -   New services (ex: to support permissions, server side indexing etc.)
 
-## Whats missing from existing DDSes?
+## What's missing from existing DDSes?
 
 `directory` and `map` can not provide merge resolution that guarantees well-formedness of trees while supporting the desired editing APIs (like subsequence move),
 and are missing (and cannot be practically extended to have) efficient ways to handle large data or schema.
@@ -85,7 +85,7 @@ This package can be developed using any of the [regular workflows for working on
 
 -   Open the [.vscode/Tree.code-workspace](.vscode/Tree.code-workspace) in VS Code.
     This will recommend a test runner extension, which should be installed.
--   Build the Client release group as normal (for example: `npm i && npm run build:fast` in the repository root).
+-   Build the Client release group as normal (for example: `pnpm i && npm run build:fast` in the repository root).
 -   After editing the tree project, run `npm run build` in its directory.
 -   Run tests using the "Testing" side panel in VS Code, or using the inline `Run | Debug` buttons which should show up above tests in the source:
     both of these are provided by the mocha testing extension thats recommended by the workspace.
@@ -142,7 +142,7 @@ Views may also have state from the application, including:
 -   registrations for application callbacks / events.
 
 [`shared-tree`](./src/shared-tree/) provides a default view which it owns, but applications can create more if desired, which they will own.
-Since views subscribe to events from `shared-tree`, explicitly disposing any additionally created ones of is required to avoid leaks.
+Since views subscribe to events from `shared-tree`, explicitly disposing any additionally created ones is required to avoid leaks.
 
 [transactions](./src/core/transaction/README.md) are created by `ISharedTreeView`s and are currently synchronous.
 Support for asynchronous transactions, with the application managing the lifetime and ensuring it does not exceed the lifetime of the view,
@@ -272,7 +272,7 @@ graph LR;
 ### Dependencies
 
 `@fluid-experimental/tree2` depends on the Fluid runtime (various packages in `@fluidframework/*`)
-and will be depended on directly by application using it (though at that time it will be moved out of `@fluid-internal`).
+and will be depended on directly by application using it (though at that time it will be moved out of `@fluid-experimental`).
 `@fluid-experimental/tree2` is also complex,
 so its implementation is broken up into several parts which have carefully controlled dependencies to help ensure the codebase is maintainable.
 The goal of this internal structuring is to make evolution and maintenance easy.
@@ -299,7 +299,7 @@ Some of the principles used to guide this are:
     This is important for testability, since complex conditional logic (like `ChangeRebaser` implementations) require extensive unit testing,
     which is very difficult (and often slow) for stateful systems and systems with lots of dependencies.
     If we instead took the pattern of putting the change rebasing policy in `Rebaser` subclasses,
-    this would violate this guiding principal and result in much harder to isolate and test policy logic.
+    this would violate this guiding principle and result in much harder to isolate and test policy logic.
 
     Another aspect of reducing transitive dependencies is reducing the required dependencies for particular scenarios.
     This means factoring out code that is not always required (such as support for extra features and optimizations) such that they can be omitted when not needed.

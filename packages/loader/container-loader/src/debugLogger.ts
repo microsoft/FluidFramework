@@ -8,7 +8,7 @@ import {
 	ITelemetryBaseLogger,
 	ITelemetryProperties,
 } from "@fluidframework/core-interfaces";
-import { performance } from "@fluidframework/common-utils";
+import { performance } from "@fluid-internal/client-utils";
 import { debug as registerDebug, IDebugger } from "debug";
 import {
 	ITelemetryLoggerExt,

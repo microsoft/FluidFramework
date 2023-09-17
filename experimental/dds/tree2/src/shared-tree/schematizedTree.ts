@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	AllowedUpdateType,
 	Compatibility,
@@ -206,7 +206,7 @@ export interface TreeContent<TRoot extends FieldSchema = FieldSchema>
 	 * (meaning it does not even have any schema set at all).
 	 */
 	readonly initialTree:
-		| SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Simple>
+		| SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Flexible>
 		| readonly ITreeCursorSynchronous[]
 		| ITreeCursorSynchronous;
 }

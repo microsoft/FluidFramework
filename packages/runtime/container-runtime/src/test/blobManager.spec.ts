@@ -6,13 +6,13 @@
 import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
 
+import { Deferred } from "@fluidframework/core-utils";
 import {
 	bufferToString,
-	Deferred,
 	gitHashFile,
 	IsoBuffer,
 	TypedEventEmitter,
-} from "@fluidframework/common-utils";
+} from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
 import { IErrorBase, IFluidHandle } from "@fluidframework/core-interfaces";
@@ -30,7 +30,7 @@ import {
 	createChildLogger,
 } from "@fluidframework/telemetry-utils";
 import { BlobManager, IBlobManagerLoadInfo, IBlobManagerRuntime } from "../blobManager";
-import { sweepAttachmentBlobsKey } from "../gc";
+import { disableAttachmentBlobSweepKey } from "../gc";
 
 const MIN_TTL = 24 * 60 * 60; // same as ODSP
 abstract class BaseMockBlobStorage
@@ -840,7 +840,6 @@ describe("BlobManager", () => {
 		}
 
 		beforeEach(() => {
-			injectedSettings[sweepAttachmentBlobsKey] = true;
 			redirectTable = (runtime.blobManager as any).redirectTable;
 		});
 
@@ -885,6 +884,28 @@ describe("BlobManager", () => {
 				},
 				"Deleted blob2 fetch should have failed",
 			);
+		});
+
+		it("disableAttachmentBlobsSweep true - DOESN'T delete unused blobs ", async () => {
+			injectedSettings[disableAttachmentBlobSweepKey] = true;
+
+			await runtime.attach();
+			await runtime.connect();
+
+			const blob1 = await createBlobAndGetIds("blob1");
+			const blob2 = await createBlobAndGetIds("blob2");
+
+			// Delete blob1's local id. The local id and the storage id should both be deleted from the redirect table
+			// since the blob only had one reference.
+			runtime.blobManager.deleteSweepReadyNodes([blob1.localGCNodeId]);
+			assert(redirectTable.has(blob1.localId));
+			assert(redirectTable.has(blob1.storageId));
+
+			// Delete blob2's local id. The local id and the storage id should both be deleted from the redirect table
+			// since the blob only had one reference.
+			runtime.blobManager.deleteSweepReadyNodes([blob2.localGCNodeId]);
+			assert(redirectTable.has(blob2.localId));
+			assert(redirectTable.has(blob2.storageId));
 		});
 
 		it("deletes unused blobs", async () => {

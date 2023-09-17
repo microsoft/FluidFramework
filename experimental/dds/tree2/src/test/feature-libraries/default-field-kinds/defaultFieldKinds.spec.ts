@@ -4,12 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	FieldChangeHandler,
-	IdAllocator,
-	NodeChangeset,
-	CrossFieldManager,
-} from "../../../feature-libraries";
+import { FieldChangeHandler, NodeChangeset, CrossFieldManager } from "../../../feature-libraries";
 import {
 	ValueFieldEditor,
 	valueChangeHandler,
@@ -18,7 +13,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/default-field-kinds/defaultFieldKinds";
 import { makeAnonChange, TaggedChange, mintRevisionTag, tagChange } from "../../../core";
-import { brand } from "../../../util";
+import { IdAllocator, brand } from "../../../util";
 import { defaultRevisionMetadataFromChanges, fakeTaggedRepair as fakeRepair } from "../../utils";
 // eslint-disable-next-line import/no-internal-modules
 import { OptionalChangeset } from "../../../feature-libraries/default-field-kinds/defaultFieldChangeTypes";

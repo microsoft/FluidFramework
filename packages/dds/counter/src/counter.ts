@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
 	IFluidDataStoreRuntime,
@@ -46,7 +46,7 @@ const snapshotFileName = "header";
  *
  * @remarks Note that `SharedCounter` only operates on integer values. This is validated at runtime.
  *
- * @example Creating a `SharedCounter`:
+ * @example Creating a `SharedCounter`
  *
  * First, get the factory and call {@link @fluidframework/datastore-definitions#IChannelFactory.create}
  * with a runtime and string ID:
@@ -60,7 +60,7 @@ const snapshotFileName = "header";
  * If you wish to initialize the counter to a different value, you may call {@link SharedCounter.increment} before
  * attaching the Container, or before inserting it into an existing shared object.
  *
- * @example Using the `SharedCounter`:
+ * @example Using the `SharedCounter`
  *
  * Once created, you can call {@link SharedCounter.increment} to modify the value with either a positive or
  * negative number:

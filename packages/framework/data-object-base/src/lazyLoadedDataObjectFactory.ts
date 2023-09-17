@@ -10,7 +10,7 @@ import {
 	mixinRequestHandler,
 } from "@fluidframework/datastore";
 import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
-import { LazyPromise } from "@fluidframework/core-utils";
+import { assert, LazyPromise } from "@fluidframework/core-utils";
 import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
@@ -19,7 +19,6 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
-import { assert } from "@fluidframework/common-utils";
 import { LazyLoadedDataObject } from "./lazyLoadedDataObject";
 
 export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject>

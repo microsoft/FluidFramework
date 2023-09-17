@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 import {
-	AnchorSet,
 	Delta,
 	FieldKey,
 	FieldKindIdentifier,
@@ -52,7 +51,7 @@ describe("ModularChangeFamily integration", () => {
 	describe("rebase", () => {
 		it("delete over cross-field move", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
-			const editor = new DefaultEditBuilder(family, changeReceiver, new AnchorSet());
+			const editor = new DefaultEditBuilder(family, changeReceiver);
 			editor.move(
 				{ parent: undefined, field: fieldA },
 				1,
@@ -71,7 +70,7 @@ describe("ModularChangeFamily integration", () => {
 
 		it("cross-field move over delete", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
-			const editor = new DefaultEditBuilder(family, changeReceiver, new AnchorSet());
+			const editor = new DefaultEditBuilder(family, changeReceiver);
 			editor.sequenceField({ parent: undefined, field: fieldA }).delete(1, 1);
 			editor.move(
 				{ parent: undefined, field: fieldA },
@@ -98,7 +97,7 @@ describe("ModularChangeFamily integration", () => {
 	describe("compose", () => {
 		it("cross-field move and nested changes", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
-			const editor = new DefaultEditBuilder(family, changeReceiver, new AnchorSet());
+			const editor = new DefaultEditBuilder(family, changeReceiver);
 			editor.move(
 				{ parent: undefined, field: fieldA },
 				0,
@@ -141,7 +140,7 @@ describe("ModularChangeFamily integration", () => {
 
 		it("cross-field move and inverse with nested changes", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
-			const editor = new DefaultEditBuilder(family, changeReceiver, new AnchorSet());
+			const editor = new DefaultEditBuilder(family, changeReceiver);
 			editor.move(
 				{ parent: undefined, field: fieldA },
 				0,
@@ -190,7 +189,7 @@ describe("ModularChangeFamily integration", () => {
 
 		it("two cross-field moves of same node", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
-			const editor = new DefaultEditBuilder(family, changeReceiver, new AnchorSet());
+			const editor = new DefaultEditBuilder(family, changeReceiver);
 			editor.move(
 				{ parent: undefined, field: fieldA },
 				0,

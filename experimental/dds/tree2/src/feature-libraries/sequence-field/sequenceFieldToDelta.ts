@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { brandOpaque, fail, Mutable, OffsetListFactory } from "../../util";
 import { Delta, RevisionTag, TaggedChange } from "../../core";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
@@ -76,7 +76,7 @@ function cellDeltaFromMark<TNodeChange>(
 			}
 			case "MoveIn":
 			case "ReturnTo": {
-				const ranges = idAllocator(mark.revision ?? revision, mark.id, mark.count);
+				const ranges = idAllocator.allocate(mark.revision ?? revision, mark.id, mark.count);
 				return ranges.map(({ first, count }) => ({
 					type: Delta.MarkType.MoveIn,
 					moveId: brandOpaque<Delta.MoveId>(first),
@@ -96,7 +96,7 @@ function cellDeltaFromMark<TNodeChange>(
 			}
 			case "MoveOut":
 			case "ReturnFrom": {
-				const ranges = idAllocator(mark.revision ?? revision, mark.id, mark.count);
+				const ranges = idAllocator.allocate(mark.revision ?? revision, mark.id, mark.count);
 				return ranges.map(({ first, count }) => ({
 					type: Delta.MarkType.MoveOut,
 					moveId: brandOpaque<Delta.MoveId>(first),

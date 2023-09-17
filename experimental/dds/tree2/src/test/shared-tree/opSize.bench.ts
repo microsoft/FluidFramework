@@ -85,7 +85,7 @@ function createTreeWithSize(desiredByteSize: number): JsonableTree {
 	return node;
 }
 
-function getChildrenLength(tree: ISharedTree): number {
+function getChildrenLength(tree: ISharedTreeView): number {
 	const cursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, cursor);
 	cursor.enterNode(0);
@@ -95,7 +95,7 @@ function getChildrenLength(tree: ISharedTree): number {
 	return length;
 }
 
-function assertChildNodeCount(tree: ISharedTree, nodeCount: number): void {
+function assertChildNodeCount(tree: ISharedTreeView, nodeCount: number): void {
 	const cursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, cursor);
 	cursor.enterNode(0);
@@ -107,7 +107,7 @@ function assertChildNodeCount(tree: ISharedTree, nodeCount: number): void {
 /**
  * Checks that the first `childCount` values under "children" have the provided value.
  */
-function expectChildrenValues(tree: ISharedTree, expected: Value, childCount: number): void {
+function expectChildrenValues(tree: ISharedTreeView, expected: Value, childCount: number): void {
 	const cursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, cursor);
 	cursor.enterNode(0);
@@ -173,7 +173,7 @@ function insertNodesWithSingleTransaction(
 }
 
 function deleteNodesWithIndividualTransactions(
-	tree: ISharedTree,
+	tree: ISharedTreeView,
 	numDeletes: number,
 	deletesPerTransaction: number,
 ): void {
@@ -190,7 +190,7 @@ function deleteNodesWithIndividualTransactions(
 	}
 }
 
-function deleteNodesWithSingleTransaction(tree: ISharedTree, numDeletes: number): void {
+function deleteNodesWithSingleTransaction(tree: ISharedTreeView, numDeletes: number): void {
 	tree.transaction.start();
 	const path = {
 		parent: undefined,
@@ -207,7 +207,7 @@ function createStringFromLength(numberOfBytes: number): string {
 }
 
 function editNodesWithIndividualTransactions(
-	tree: ISharedTree,
+	tree: ISharedTreeView,
 	numChildrenToEdit: number,
 	editPayload: Value,
 ): void {
@@ -235,7 +235,7 @@ function editNodesWithIndividualTransactions(
 }
 
 function editNodesWithSingleTransaction(
-	tree: ISharedTree,
+	tree: ISharedTreeView,
 	numChildrenToEdit: number,
 	editPayload: Value,
 ): void {
@@ -446,8 +446,8 @@ describe("Op Size", () => {
 				transactionStyle === TransactionStyle.Individual
 					? insertNodesWithIndividualTransactions
 					: insertNodesWithSingleTransaction;
-			apply(tree, jsonNode, BENCHMARK_NODE_COUNT);
-			assertChildNodeCount(tree, BENCHMARK_NODE_COUNT);
+			apply(tree.view, jsonNode, BENCHMARK_NODE_COUNT);
+			assertChildNodeCount(tree.view, BENCHMARK_NODE_COUNT);
 		}
 
 		for (const { description, style, extraDescription } of styles) {
@@ -473,11 +473,11 @@ describe("Op Size", () => {
 			initializeTestTree(tree, createInitialTree(100, childByteSize));
 			deleteCurrentOps(); // We don't want to record any ops from initializing the tree.
 			if (transactionStyle === TransactionStyle.Individual) {
-				deleteNodesWithIndividualTransactions(tree, 100, 1);
+				deleteNodesWithIndividualTransactions(tree.view, 100, 1);
 			} else {
-				deleteNodesWithSingleTransaction(tree, 100);
+				deleteNodesWithSingleTransaction(tree.view, 100);
 			}
-			assertChildNodeCount(tree, 0);
+			assertChildNodeCount(tree.view, 0);
 		}
 
 		for (const { description, style, extraDescription } of styles) {
@@ -506,11 +506,11 @@ describe("Op Size", () => {
 				getSuccessfulOpByteSize(Operation.Edit, transactionStyle, percentile),
 			);
 			if (transactionStyle === TransactionStyle.Individual) {
-				editNodesWithIndividualTransactions(tree, BENCHMARK_NODE_COUNT, editPayload);
+				editNodesWithIndividualTransactions(tree.view, BENCHMARK_NODE_COUNT, editPayload);
 			} else {
-				editNodesWithSingleTransaction(tree, BENCHMARK_NODE_COUNT, editPayload);
+				editNodesWithSingleTransaction(tree.view, BENCHMARK_NODE_COUNT, editPayload);
 			}
-			expectChildrenValues(tree, editPayload, BENCHMARK_NODE_COUNT);
+			expectChildrenValues(tree.view, editPayload, BENCHMARK_NODE_COUNT);
 		}
 
 		for (const { description, style, extraDescription } of styles) {
@@ -529,13 +529,48 @@ describe("Op Size", () => {
 	});
 
 	describe("Insert, Delete & Edit Nodes", () => {
+		const oneThirdNodeCount = Math.floor(BENCHMARK_NODE_COUNT * (1 / 3));
+		const seventyPercentCount = Math.floor(BENCHMARK_NODE_COUNT * 0.7);
+		const fifteenPercentCount = Math.floor(BENCHMARK_NODE_COUNT * 0.15);
+
+		type OpKindDistribution = {
+			readonly [OpKind in keyof typeof Operation]: number;
+		};
+
+		const distributions: OpKindDistribution[] = [
+			{
+				[Operation.Insert]: oneThirdNodeCount,
+				[Operation.Edit]: oneThirdNodeCount,
+				[Operation.Delete]: oneThirdNodeCount,
+			},
+			{
+				[Operation.Insert]: seventyPercentCount,
+				[Operation.Edit]: fifteenPercentCount,
+				[Operation.Delete]: fifteenPercentCount,
+			},
+			{
+				[Operation.Insert]: fifteenPercentCount,
+				[Operation.Edit]: seventyPercentCount,
+				[Operation.Delete]: fifteenPercentCount,
+			},
+			{
+				[Operation.Insert]: fifteenPercentCount,
+				[Operation.Edit]: fifteenPercentCount,
+				[Operation.Delete]: seventyPercentCount,
+			},
+		];
+
 		describe("Individual Transactions", () => {
 			const benchmarkInsertDeleteEditNodesWithInvidiualTxs = (
 				percentile: number,
-				insertNodeCount: number,
-				deleteNodeCount: number,
-				editNodeCount: number,
+				distribution: OpKindDistribution,
 			) => {
+				const {
+					Delete: deleteNodeCount,
+					Insert: insertNodeCount,
+					Edit: editNodeCount,
+				} = distribution;
+
 				const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
 				initializeOpDataCollection(tree);
 
@@ -547,8 +582,8 @@ describe("Op Size", () => {
 				);
 				initializeTestTree(tree, createInitialTree(deleteNodeCount, childByteSize));
 				deleteCurrentOps(); // We don't want to record the ops from initializing the tree.
-				deleteNodesWithIndividualTransactions(tree, deleteNodeCount, 1);
-				assertChildNodeCount(tree, 0);
+				deleteNodesWithIndividualTransactions(tree.view, deleteNodeCount, 1);
+				assertChildNodeCount(tree.view, 0);
 
 				// insert
 				const insertChildNode = createTreeWithSize(
@@ -558,8 +593,8 @@ describe("Op Size", () => {
 						percentile,
 					),
 				);
-				insertNodesWithIndividualTransactions(tree, insertChildNode, insertNodeCount);
-				assertChildNodeCount(tree, insertNodeCount);
+				insertNodesWithIndividualTransactions(tree.view, insertChildNode, insertNodeCount);
+				assertChildNodeCount(tree.view, insertNodeCount);
 
 				// edit
 				// The editing function iterates over each child node and performs an edit so we have to make sure we have enough children to avoid going out of bounds.
@@ -567,7 +602,7 @@ describe("Op Size", () => {
 					const remainder = editNodeCount - insertNodeCount;
 					saveAndResetCurrentOps();
 					insertNodesWithIndividualTransactions(
-						tree,
+						tree.view,
 						createTreeWithSize(childByteSize),
 						remainder,
 					);
@@ -580,136 +615,23 @@ describe("Op Size", () => {
 						percentile,
 					),
 				);
-				editNodesWithIndividualTransactions(tree, editNodeCount, editPayload);
-				expectChildrenValues(tree, editPayload, editNodeCount);
+				editNodesWithIndividualTransactions(tree.view, editNodeCount, editPayload);
+				expectChildrenValues(tree.view, editPayload, editNodeCount);
 			};
 
-			describe("an equal distribution of operation type", () => {
-				const oneThirdNodeCount = Math.floor(BENCHMARK_NODE_COUNT * (1 / 3));
-
-				it(`insert ${oneThirdNodeCount} small nodes, delete ${oneThirdNodeCount} small nodes, edit ${oneThirdNodeCount} nodes with small payloads`, () => {
-					benchmarkInsertDeleteEditNodesWithInvidiualTxs(
-						0.01,
-						oneThirdNodeCount,
-						oneThirdNodeCount,
-						oneThirdNodeCount,
-					);
+			for (const distribution of distributions) {
+				const suiteDescription = `Distribution: ${distribution.Insert}% insert, ${distribution.Edit}% edit, ${distribution.Delete}% delete`;
+				describe(suiteDescription, () => {
+					for (const { percentile } of sizes) {
+						it(`Percentile: ${percentile}`, () => {
+							benchmarkInsertDeleteEditNodesWithInvidiualTxs(
+								percentile,
+								distribution,
+							);
+						});
+					}
 				});
-
-				it(`insert ${oneThirdNodeCount} medium nodes, delete ${oneThirdNodeCount} medium nodes, edit ${oneThirdNodeCount} nodes with medium payloads`, () => {
-					benchmarkInsertDeleteEditNodesWithInvidiualTxs(
-						0.5,
-						oneThirdNodeCount,
-						oneThirdNodeCount,
-						oneThirdNodeCount,
-					);
-				});
-
-				it(`insert ${oneThirdNodeCount} large nodes, delete ${oneThirdNodeCount} large medium, edit ${oneThirdNodeCount} nodes with large payloads`, () => {
-					benchmarkInsertDeleteEditNodesWithInvidiualTxs(
-						1,
-						oneThirdNodeCount,
-						oneThirdNodeCount,
-						oneThirdNodeCount,
-					);
-				});
-			});
-
-			describe("70% distribution of operations towards insert", () => {
-				const seventyPercentCount = BENCHMARK_NODE_COUNT * 0.7;
-				const fifteenPercentCount = BENCHMARK_NODE_COUNT * 0.15;
-
-				it(`Insert ${seventyPercentCount} small nodes, delete ${fifteenPercentCount} small nodes, edit ${fifteenPercentCount} nodes with small payloads`, () => {
-					benchmarkInsertDeleteEditNodesWithInvidiualTxs(
-						0.01,
-						seventyPercentCount,
-						fifteenPercentCount,
-						fifteenPercentCount,
-					);
-				});
-
-				it(`Insert ${seventyPercentCount} medium nodes, delete ${fifteenPercentCount} medium nodes, edit ${fifteenPercentCount} nodes with medium payloads`, () => {
-					benchmarkInsertDeleteEditNodesWithInvidiualTxs(
-						0.5,
-						seventyPercentCount,
-						fifteenPercentCount,
-						fifteenPercentCount,
-					);
-				});
-
-				it(`Insert ${seventyPercentCount} large nodes, delete ${fifteenPercentCount} large nodes, edit ${fifteenPercentCount} nodes with large payloads`, () => {
-					benchmarkInsertDeleteEditNodesWithInvidiualTxs(
-						1,
-						seventyPercentCount,
-						fifteenPercentCount,
-						fifteenPercentCount,
-					);
-				});
-			});
-
-			describe("70% distribution of operations towards delete", () => {
-				const seventyPercentCount = BENCHMARK_NODE_COUNT * 0.7;
-				const fifteenPercentCount = BENCHMARK_NODE_COUNT * 0.15;
-
-				it(`Insert ${fifteenPercentCount} small nodes, delete ${seventyPercentCount} small nodes, edit ${fifteenPercentCount} nodes with small payloads`, () => {
-					benchmarkInsertDeleteEditNodesWithInvidiualTxs(
-						0.01,
-						fifteenPercentCount,
-						seventyPercentCount,
-						fifteenPercentCount,
-					);
-				});
-
-				it(`Insert ${fifteenPercentCount} medium nodes, delete ${seventyPercentCount} medium nodes, edit ${fifteenPercentCount} nodes with medium payloads`, () => {
-					benchmarkInsertDeleteEditNodesWithInvidiualTxs(
-						0.5,
-						fifteenPercentCount,
-						seventyPercentCount,
-						fifteenPercentCount,
-					);
-				});
-
-				it(`Insert ${fifteenPercentCount} large nodes, delete ${seventyPercentCount} large nodes, edit ${fifteenPercentCount} nodes with large payloads`, () => {
-					benchmarkInsertDeleteEditNodesWithInvidiualTxs(
-						1,
-						fifteenPercentCount,
-						seventyPercentCount,
-						fifteenPercentCount,
-					);
-				});
-			});
-
-			describe("70% distribution of operations towards edit", () => {
-				const seventyPercentCount = BENCHMARK_NODE_COUNT * 0.7;
-				const fifteenPercentCount = BENCHMARK_NODE_COUNT * 0.15;
-
-				it(`Insert ${fifteenPercentCount} small nodes, delete ${fifteenPercentCount} small nodes, edit ${seventyPercentCount} nodes with small payloads`, () => {
-					benchmarkInsertDeleteEditNodesWithInvidiualTxs(
-						0.01,
-						fifteenPercentCount,
-						fifteenPercentCount,
-						seventyPercentCount,
-					);
-				});
-
-				it(`Insert ${fifteenPercentCount} medium nodes, delete ${fifteenPercentCount} medium nodes, edit ${seventyPercentCount} nodes with medium payloads`, () => {
-					benchmarkInsertDeleteEditNodesWithInvidiualTxs(
-						0.5,
-						fifteenPercentCount,
-						fifteenPercentCount,
-						seventyPercentCount,
-					);
-				});
-
-				it(`Insert ${fifteenPercentCount} large nodes, delete ${seventyPercentCount} large nodes, edit ${seventyPercentCount} nodes with large payloads`, () => {
-					benchmarkInsertDeleteEditNodesWithInvidiualTxs(
-						1,
-						fifteenPercentCount,
-						fifteenPercentCount,
-						seventyPercentCount,
-					);
-				});
-			});
+			}
 		});
 
 		// TODO:
@@ -721,10 +643,14 @@ describe("Op Size", () => {
 		describe("Single Transactions", () => {
 			const benchmarkInsertDeleteEditNodesWithSingleTxs = (
 				percentile: number,
-				insertNodeCount: number,
-				deleteNodeCount: number,
-				editNodeCount: number,
+				distribution: OpKindDistribution,
 			) => {
+				const {
+					Delete: deleteNodeCount,
+					Insert: insertNodeCount,
+					Edit: editNodeCount,
+				} = distribution;
+
 				const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
 				initializeOpDataCollection(tree);
 
@@ -736,15 +662,15 @@ describe("Op Size", () => {
 				);
 				initializeTestTree(tree, createInitialTree(deleteNodeCount, childByteSize));
 				deleteCurrentOps(); // We don't want to record the ops from initializing the tree.
-				deleteNodesWithSingleTransaction(tree, deleteNodeCount);
-				assertChildNodeCount(tree, 0);
+				deleteNodesWithSingleTransaction(tree.view, deleteNodeCount);
+				assertChildNodeCount(tree.view, 0);
 
 				// insert
 				const insertChildNode = createTreeWithSize(
 					getSuccessfulOpByteSize(Operation.Insert, TransactionStyle.Single, percentile),
 				);
-				insertNodesWithSingleTransaction(tree, insertChildNode, insertNodeCount);
-				assertChildNodeCount(tree, insertNodeCount);
+				insertNodesWithSingleTransaction(tree.view, insertChildNode, insertNodeCount);
+				assertChildNodeCount(tree.view, insertNodeCount);
 
 				// edit
 				// The editing function iterates over each child node and performs an edit so we have to make sure we have enough children to avoid going out of bounds.
@@ -753,7 +679,7 @@ describe("Op Size", () => {
 					const remainder = editNodeCount - insertNodeCount;
 					saveAndResetCurrentOps();
 					insertNodesWithIndividualTransactions(
-						tree,
+						tree.view,
 						createTreeWithSize(childByteSize),
 						remainder,
 					);
@@ -762,136 +688,20 @@ describe("Op Size", () => {
 				const editPayload = createStringFromLength(
 					getSuccessfulOpByteSize(Operation.Edit, TransactionStyle.Single, percentile),
 				);
-				editNodesWithSingleTransaction(tree, editNodeCount, editPayload);
-				expectChildrenValues(tree, editPayload, editNodeCount);
+				editNodesWithSingleTransaction(tree.view, editNodeCount, editPayload);
+				expectChildrenValues(tree.view, editPayload, editNodeCount);
 			};
 
-			describe("equal distribution of operation type", () => {
-				const oneThirdNodeCount = Math.floor(BENCHMARK_NODE_COUNT * (1 / 3));
-
-				it(`insert ${oneThirdNodeCount} small nodes, delete ${oneThirdNodeCount} small nodes, edit ${oneThirdNodeCount} nodes with small payloads`, () => {
-					benchmarkInsertDeleteEditNodesWithSingleTxs(
-						0.01,
-						oneThirdNodeCount,
-						oneThirdNodeCount,
-						oneThirdNodeCount,
-					);
+			for (const distribution of distributions) {
+				const suiteDescription = `Distribution: ${distribution.Insert}% insert, ${distribution.Edit}% edit, ${distribution.Delete}% delete`;
+				describe(suiteDescription, () => {
+					for (const { percentile } of sizes) {
+						it(`Percentile: ${percentile}`, () => {
+							benchmarkInsertDeleteEditNodesWithSingleTxs(percentile, distribution);
+						});
+					}
 				});
-
-				it(`insert ${oneThirdNodeCount} medium nodes, delete ${oneThirdNodeCount} medium nodes, edit ${oneThirdNodeCount} nodes with medium payloads`, () => {
-					benchmarkInsertDeleteEditNodesWithSingleTxs(
-						0.5,
-						oneThirdNodeCount,
-						oneThirdNodeCount,
-						oneThirdNodeCount,
-					);
-				});
-
-				it(`insert ${oneThirdNodeCount} large nodes, delete ${oneThirdNodeCount} large medium, edit ${oneThirdNodeCount} nodes with large payloads`, () => {
-					benchmarkInsertDeleteEditNodesWithSingleTxs(
-						1,
-						oneThirdNodeCount,
-						oneThirdNodeCount,
-						oneThirdNodeCount,
-					);
-				});
-			});
-
-			describe("70% distribution of operations towards insert", () => {
-				const seventyPercentCount = BENCHMARK_NODE_COUNT * 0.7;
-				const fifteenPercentCount = BENCHMARK_NODE_COUNT * 0.15;
-
-				it(`Insert ${seventyPercentCount} small nodes, delete ${fifteenPercentCount} small nodes, edit ${fifteenPercentCount} nodes with small payloads`, () => {
-					benchmarkInsertDeleteEditNodesWithSingleTxs(
-						0.01,
-						seventyPercentCount,
-						fifteenPercentCount,
-						fifteenPercentCount,
-					);
-				});
-
-				it(`Insert ${seventyPercentCount} medium nodes, delete ${fifteenPercentCount} medium nodes, edit ${fifteenPercentCount} nodes with medium payloads`, () => {
-					benchmarkInsertDeleteEditNodesWithSingleTxs(
-						0.5,
-						seventyPercentCount,
-						fifteenPercentCount,
-						fifteenPercentCount,
-					);
-				});
-
-				it(`Insert ${seventyPercentCount} large nodes, delete ${fifteenPercentCount} large nodes, edit ${fifteenPercentCount} nodes with large payloads`, () => {
-					benchmarkInsertDeleteEditNodesWithSingleTxs(
-						1,
-						seventyPercentCount,
-						fifteenPercentCount,
-						fifteenPercentCount,
-					);
-				});
-			});
-
-			describe("70% distribution of operations towards delete", () => {
-				const seventyPercentCount = BENCHMARK_NODE_COUNT * 0.7;
-				const fifteenPercentCount = BENCHMARK_NODE_COUNT * 0.15;
-
-				it(`Insert ${fifteenPercentCount} small nodes, delete ${seventyPercentCount} small nodes, edit ${fifteenPercentCount} nodes with small payloads`, () => {
-					benchmarkInsertDeleteEditNodesWithSingleTxs(
-						0.01,
-						fifteenPercentCount,
-						seventyPercentCount,
-						fifteenPercentCount,
-					);
-				});
-
-				it(`Insert ${fifteenPercentCount} medium nodes, delete ${seventyPercentCount} medium nodes, edit ${fifteenPercentCount} nodes with medium payloads`, () => {
-					benchmarkInsertDeleteEditNodesWithSingleTxs(
-						0.5,
-						fifteenPercentCount,
-						seventyPercentCount,
-						fifteenPercentCount,
-					);
-				});
-
-				it(`Insert ${fifteenPercentCount} large nodes, delete ${seventyPercentCount} large nodes, edit ${fifteenPercentCount} nodes with large payloads`, () => {
-					benchmarkInsertDeleteEditNodesWithSingleTxs(
-						1,
-						fifteenPercentCount,
-						seventyPercentCount,
-						fifteenPercentCount,
-					);
-				});
-			});
-
-			describe("70% distribution of operations towards edit", () => {
-				const seventyPercentCount = BENCHMARK_NODE_COUNT * 0.7;
-				const fifteenPercentCount = BENCHMARK_NODE_COUNT * 0.15;
-
-				it(`Insert ${fifteenPercentCount} small nodes, delete ${fifteenPercentCount} small nodes, edit ${seventyPercentCount} nodes with small payloads`, () => {
-					benchmarkInsertDeleteEditNodesWithSingleTxs(
-						0.01,
-						fifteenPercentCount,
-						fifteenPercentCount,
-						seventyPercentCount,
-					);
-				});
-
-				it(`Insert ${fifteenPercentCount} medium nodes, delete ${fifteenPercentCount} medium nodes, edit ${seventyPercentCount} nodes with medium payloads`, () => {
-					benchmarkInsertDeleteEditNodesWithSingleTxs(
-						0.5,
-						fifteenPercentCount,
-						fifteenPercentCount,
-						seventyPercentCount,
-					);
-				});
-
-				it(`Insert ${fifteenPercentCount} large nodes, delete ${seventyPercentCount} large nodes, edit ${seventyPercentCount} nodes with large payloads`, () => {
-					benchmarkInsertDeleteEditNodesWithSingleTxs(
-						1,
-						fifteenPercentCount,
-						fifteenPercentCount,
-						seventyPercentCount,
-					);
-				});
-			});
+			}
 		});
 	});
 });

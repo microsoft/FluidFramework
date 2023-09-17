@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
 	gcBlobPrefix,
@@ -12,7 +12,6 @@ import {
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 } from "@fluidframework/runtime-definitions";
-import { TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { GCFeatureMatrix, GCVersion, IGCMetadata } from "./gcDefinitions";
 import {
 	IGarbageCollectionNodeData,
@@ -303,15 +302,4 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
  */
 export function trimLeadingAndTrailingSlashes(str: string) {
 	return str.replace(/^\/+|\/+$/g, "");
-}
-
-/**
- * Tags the passed value as a CodeArtifact and returns the tagged value.
- * @deprecated - Use telemetry-utils tagCodeArtifacts instead
- */
-export function tagAsCodeArtifact(value: string) {
-	return {
-		value,
-		tag: TelemetryDataTag.CodeArtifact,
-	};
 }

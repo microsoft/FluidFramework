@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 import {
-	type AlertNode,
 	type BlockQuoteNode,
 	type CodeSpanNode,
 	type DocumentationNode,
@@ -26,7 +25,6 @@ import {
 import type { DocumentWriter } from "../DocumentWriter";
 import type { MarkdownRenderContext } from "../RenderContext";
 import {
-	renderAlert,
 	renderBlockQuote,
 	renderCodeSpan,
 	renderFencedCodeBlock,
@@ -51,6 +49,8 @@ import {
  * @param node - The `DocumentationNode` to render.
  * @param writer - The writing context to render into.
  * @param context - Recursive contextual state.
+ *
+ * @public
  */
 export type RenderDocumentationNode<
 	TDocumentationNode extends DocumentationNode = DocumentationNode,
@@ -64,6 +64,8 @@ export type RenderDocumentationNode<
  * Note: in order to be complete, this *must* include an entry for all types enumerated under {@link DocumentationNodeType}.
  *
  * We supply a suite of default renderers for all of these.
+ *
+ * @public
  */
 export interface MarkdownRenderers {
 	/**
@@ -75,9 +77,7 @@ export interface MarkdownRenderers {
 /**
  * Default Markdown rendering configuration.
  */
-const defaultMarkdownRenderers: MarkdownRenderers = {
-	[DocumentationNodeType.Alert]: (node, writer, context): void =>
-		renderAlert(node as AlertNode, writer, context),
+export const defaultMarkdownRenderers: MarkdownRenderers = {
 	[DocumentationNodeType.BlockQuote]: (node, writer, context): void =>
 		renderBlockQuote(node as BlockQuoteNode, writer, context),
 	[DocumentationNodeType.CodeSpan]: (node, writer, context): void =>
@@ -111,14 +111,3 @@ const defaultMarkdownRenderers: MarkdownRenderers = {
 	[DocumentationNodeType.UnorderedList]: (node, writer, context): void =>
 		renderUnorderedList(node as UnorderedListNode, writer, context),
 };
-
-/**
- * Constructs a complete list of {@link MarkdownRenderers} using provided optional renderer overrides, and filling
- * in the rest with system defaults.
- */
-export function getRenderersWithDefaults(customRenderers?: MarkdownRenderers): MarkdownRenderers {
-	return {
-		...defaultMarkdownRenderers,
-		...customRenderers,
-	};
-}

@@ -2,6 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+
 import { IFluidLoadable, IProvideFluidLoadable, FluidObject, FluidObjectKeys } from "../../";
 
 declare function getFluidObject(): FluidObject;
@@ -15,7 +20,7 @@ declare function useProviderKey<T, TKey extends FluidObjectKeys<T> = FluidObject
 declare function useLoadable(params: FluidObject<IFluidLoadable> | undefined): void;
 declare function getLoadable(): IFluidLoadable;
 
-declare function use(obj: any);
+declare function use(obj: unknown);
 // test implicit conversions between FluidObject and a FluidObject with a provides interface
 {
     const provider: FluidObject<IProvideFluidLoadable> = getFluidObject();

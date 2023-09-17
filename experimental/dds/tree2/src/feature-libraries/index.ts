@@ -27,8 +27,10 @@ export {
 	FlushableBinderOptions,
 	FlushableDataBinder,
 	MatchPolicy,
+	SubtreePolicy,
 	BindSyntaxTree,
 	indexSymbol,
+	BindPolicy,
 	BindTree,
 	BindTreeDefault,
 	DownPath,
@@ -77,6 +79,7 @@ export {
 	TreeDataContext,
 	normalizeNewFieldContent,
 	NewFieldContent,
+	assertAllowedValue,
 } from "./contextuallyTyped";
 
 export { ForestSummarizer } from "./forestSummarizer";
@@ -100,7 +103,6 @@ import * as SequenceField from "./sequence-field";
 export { SequenceField };
 
 export {
-	idAllocatorFromMaxId,
 	isNeverField,
 	ModularEditBuilder,
 	EditDescription,
@@ -113,7 +115,6 @@ export {
 	FieldChangeset,
 	ToDelta,
 	ModularChangeset,
-	IdAllocator,
 	NodeChangeComposer,
 	NodeChangeInverter,
 	NodeChangeRebaser,
@@ -149,6 +150,17 @@ export {
 	InternalTypedSchemaTypes,
 	ViewSchema,
 	SchemaLintConfiguration,
+	FieldNodeSchema,
+	LeafSchema,
+	MapSchema,
+	StructSchema,
+	schemaIsFieldNode,
+	schemaIsLeaf,
+	schemaIsMap,
+	schemaIsStruct,
+	bannedFieldNames,
+	fieldApiPrefixes,
+	validateStructFieldName,
 } from "./typed-schema";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
@@ -156,7 +168,13 @@ export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from 
 export { ForestRepairDataStore, ForestRepairDataStoreProvider } from "./forestRepairDataStore";
 export { dummyRepairDataStore } from "./fakeRepairDataStore";
 
-export { TreeChunk, chunkTree, buildChunkedForest, defaultChunkPolicy } from "./chunked-forest";
+export {
+	TreeChunk,
+	chunkTree,
+	buildChunkedForest,
+	defaultChunkPolicy,
+	makeTreeChunker,
+} from "./chunked-forest";
 
 export {
 	compareLocalNodeKeys,
@@ -204,6 +222,29 @@ export {
 	contextSymbol,
 	treeStatus,
 } from "./untypedTree";
+
+export {
+	FieldNode,
+	FlexibleFieldContent,
+	FlexibleNodeContent,
+	InternalEditableTreeTypes,
+	Leaf,
+	MapNode,
+	OptionalField,
+	RequiredField,
+	Sequence as Sequence2,
+	Skip,
+	Struct,
+	StructTyped,
+	TreeContext,
+	TypedField,
+	TypedNode,
+	TypedNodeUnion,
+	Tree,
+	TreeField,
+	TreeNode,
+	getTreeContext,
+} from "./editable-tree-2";
 
 // Split into separate import and export for compatibility with API-Extractor.
 import * as SchemaAware from "./schema-aware";

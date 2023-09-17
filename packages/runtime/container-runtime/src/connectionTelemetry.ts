@@ -14,7 +14,8 @@ import {
 	ISequencedDocumentMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { assert, performance } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
+import { performance } from "@fluid-internal/client-utils";
 
 /**
  * We report various latency-related errors when waiting for op roundtrip takes longer than that amout of time.
