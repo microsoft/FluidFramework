@@ -221,6 +221,12 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 
 	private activeVisitor?: DeltaVisitor;
 
+	public constructor() {
+		this.on("treeChanging", () => {
+			this.generationNumber += 1;
+		});
+	}
+
 	public on<K extends keyof AnchorSetRootEvents>(
 		eventName: K,
 		listener: AnchorSetRootEvents[K],

@@ -321,9 +321,6 @@ describe("AnchorSet", () => {
 	// Simple scenario using just anchorSets to validate if cache implementation of the EditableTree.treeStatus api works.
 	it("AnchorNode cache can be set and retrieved.", () => {
 		const anchors = new AnchorSet();
-		anchors.on("treeChanging", () => {
-			anchors.generationNumber += 1;
-		});
 
 		const anchor0 = anchors.track(makePath([rootFieldKey, 0]));
 		const anchorNode0 = anchors.locate(anchor0);
@@ -346,7 +343,7 @@ describe("AnchorSet", () => {
 		assert.equal(fieldSlotCache, cache);
 
 		// Applies a dummy delta to trigger "treeChanging" event and increment anchorSet generationNumber.
-		anchors.applyDelta(new Map([]));
+		applyDelta(new Map([]), anchors);
 
 		// Check that the cache generationNumber is no longer matching anchorSet generationNumber.
 		assert.notEqual(

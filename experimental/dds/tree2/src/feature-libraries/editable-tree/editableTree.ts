@@ -84,9 +84,6 @@ export function makeTree(context: ProxyContext, cursor: ITreeSubscriptionCursor)
 	const output = adaptWithProxy(newTarget, nodeProxyHandler);
 	anchorNode.slots.set(editableTreeSlot, output);
 	anchorNode.on("afterDelete", cleanupTree);
-	context.forest.anchors.on("treeChanging", () => {
-		context.forest.anchors.generationNumber += 1;
-	});
 	return output;
 }
 

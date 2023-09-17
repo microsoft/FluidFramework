@@ -77,9 +77,6 @@ export function makeField(
 			targetSequence.free();
 		});
 	}
-	context.forest.anchors.on("treeChanging", () => {
-		context.forest.anchors.generationNumber += 1;
-	});
 	return output;
 }
 

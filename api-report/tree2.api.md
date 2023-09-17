@@ -71,6 +71,7 @@ export type AnchorsCompare = CompareFunction<UpPath>;
 
 // @alpha @sealed
 export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLocator {
+    constructor();
     acquireVisitor(): DeltaVisitor;
     // (undocumented)
     forget(anchor: Anchor): void;
