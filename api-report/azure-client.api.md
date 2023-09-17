@@ -48,8 +48,8 @@ export class AzureClient {
 export interface AzureClientProps {
     readonly configProvider?: IConfigProviderBase;
     readonly connection: AzureRemoteConnectionConfig | AzureLocalConnectionConfig;
-    readonly logger?: ITelemetryBaseLogger;
     // (undocumented)
+    readonly logger?: ITelemetryBaseLogger;
     readonly summaryCompression?: boolean | ICompressionStorageConfig;
 }
 
@@ -76,15 +76,15 @@ export interface AzureContainerVersion {
 
 // @public @deprecated
 export class AzureFunctionTokenProvider implements ITokenProvider {
+    // @internal
     constructor(azFunctionUrl: string, user?: Pick<AzureMember<any>, "userId" | "userName" | "additionalDetails"> | undefined);
-    // (undocumented)
     fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse>;
-    // (undocumented)
     fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
 }
 
 // @public
 export interface AzureGetVersionsOptions {
+    // (undocumented)
     maxCount: number;
 }
 

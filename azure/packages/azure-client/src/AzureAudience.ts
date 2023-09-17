@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { assert } from "@fluidframework/core-utils";
 import { ServiceAudience } from "@fluidframework/fluid-static";
 import { IClient } from "@fluidframework/protocol-definitions";
@@ -9,19 +10,25 @@ import { IClient } from "@fluidframework/protocol-definitions";
 import { AzureMember, AzureUser, IAzureAudience } from "./interfaces";
 
 /**
- * Azure-specific {@link @fluidframework/fluid-static#ServiceAudience} implementation.
+ * Azure-specific {@link @fluidframework/fluid-static#ServiceAudience | ServiceAudience} implementation.
  *
- * @remarks Operates in terms of {@link AzureMember}s.
+ * @remarks
+ * Operates in terms of {@link AzureMember | AzureMembers}.
+ *
+ * @public
+ * @see {@link IAzureAudience} for additional details.
  */
 export class AzureAudience extends ServiceAudience<AzureMember> implements IAzureAudience {
 	/**
-	 * Creates a {@link @fluidframework/fluid-static#ServiceAudience} from the provided
-	 * {@link @fluidframework/protocol-definitions#IClient | audience member}.
+	 * Creates a {@link @fluidframework/fluid-static#ServiceAudience | ServiceAudience} from the provided
+	 * {@link @fluidframework/protocol-definitions#IClient | IClient audience member}.
 	 *
 	 * @param audienceMember - Audience member for which the `ServiceAudience` will be generated.
-	 * Note: its {@link @fluidframework/protocol-definitions#IClient.user} is required to be an {@link AzureUser}.
-	 *
+	 * @remarks
+	 * {@link @fluidframework/protocol-definitions#IClient.user | user} is required to be an {@link AzureUser | AzureUser}.
 	 * @internal
+	 * @returns An instance of {@link AzureMember | AzureMember}.
+	 * @throws Will throw an error if the provided user is not an AzureUser.
 	 */
 	protected createServiceMember(audienceMember: IClient): AzureMember {
 		const azureUser = audienceMember.user as AzureUser;

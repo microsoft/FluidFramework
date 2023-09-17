@@ -13,32 +13,62 @@ import { AzureMember } from "./interfaces";
  * Azure Fluid Relay token resolution.
  *
  * @deprecated 1.2.0, This API will be removed in 2.0.0
- * No replacement since it is not expected anyone will use this token provider as is
- * See https://github.com/microsoft/FluidFramework/issues/13693 for context
+ * @remarks No replacement since it is not expected anyone will use this token provider as is.
+ * @see {@link https://github.com/microsoft/FluidFramework/issues/13693} for context
  */
 export class AzureFunctionTokenProvider implements ITokenProvider {
 	/**
 	 * Creates a new instance using configuration parameters.
+	 *
 	 * @param azFunctionUrl - URL to Azure Function endpoint
-	 * @param user - User object
+	 * @internal
+	 *
+	 * @param user - User object containing user details
+	 * @defaultValue None. Optional during class instantiation.
+	 * @internal
+	 *
+	 * @remarks The `user` object is optional and can be omitted.
 	 */
 	public constructor(
 		private readonly azFunctionUrl: string,
 		private readonly user?: Pick<AzureMember, "userId" | "userName" | "additionalDetails">,
 	) {}
 
+	/**
+	 * Fetches the Orderer Token.
+	 *
+	 * @param tenantId - The tenant ID
+	 * @param documentId - The document ID (optional)
+	 * @returns A Promise that resolves to an ITokenResponse object
+	 * @public
+	 */
 	public async fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse> {
 		return {
 			jwt: await this.getToken(tenantId, documentId),
 		};
 	}
 
+	/**
+	 * Fetches the Storage Token.
+	 *
+	 * @param tenantId - The tenant ID
+	 * @param documentId - The document ID
+	 * @returns A Promise that resolves to an ITokenResponse object
+	 * @public
+	 */
 	public async fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse> {
 		return {
 			jwt: await this.getToken(tenantId, documentId),
 		};
 	}
 
+	/**
+	 * Retrieves the token.
+	 *
+	 * @param tenantId - The tenant ID
+	 * @param documentId - The document ID (optional)
+	 * @returns A Promise that resolves to a string containing the JWT token
+	 */
 	private async getToken(tenantId: string, documentId?: string): Promise<string> {
 		const response = await axios.get(this.azFunctionUrl, {
 			params: {

@@ -47,16 +47,49 @@ const MAX_VERSION_COUNT = 5;
 
 /**
  * AzureClient provides the ability to have a Fluid object backed by the Azure Fluid Relay or,
- * when running with local tenantId, have it be backed by a local Azure Fluid Relay instance.
+ * when running with a local tenantId, have it be backed by a local Azure Fluid Relay instance.
+ *
+ * @remarks
+ * This class serves as the main entry point for any client-side operations in Azure Fluid.
+ *
+ * @example
+ * ```typescript
+ * import { AzureClient, AzureConnectionConfig } from "@fluidframework/azure-client";
+ * import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
+ *
+ * const clientProps = {
+ * 	connection: {
+ * 		type: "local",
+ * 		tokenProvider: new InsecureTokenProvider("fooBar", { id: "123", name: "Test User" }),
+ * 		endpoint: "http://localhost:7070",
+ * 	},
+ * };
+ * const azureClient = new AzureClient(clientProps);
+ * ```
+ *
+ * @public
  */
 export class AzureClient {
+	/**
+	 * The document service factory used for creating and interacting with Fluid documents.
+	 */
 	private readonly documentServiceFactory: IDocumentServiceFactory;
+
+	/**
+	 * The URL resolver for resolving URLs to Fluid documents.
+	 */
 	private readonly urlResolver: IUrlResolver;
+
+	/**
+	 * Optional configuration provider for telemetry.
+	 */
 	private readonly configProvider: IConfigProviderBase | undefined;
 
 	/**
 	 * Creates a new client instance using configuration parameters.
 	 * @param props - Properties for initializing a new AzureClient instance
+	 *
+	 * @public
 	 */
 	public constructor(private readonly props: AzureClientProps) {
 		// remove trailing slash from URL if any
@@ -79,9 +112,33 @@ export class AzureClient {
 	}
 
 	/**
-	 * Creates a new detached container instance in the Azure Fluid Relay.
-	 * @param containerSchema - Container schema for the new container.
-	 * @returns New detached container instance along with associated services.
+	 * Creates a new detached container instance in the Azure Fluid Relay service.
+	 * @param containerSchema - The schema defining the new container.
+	 * @returns A promise that resolves to the new detached container instance and its associated services.
+	 *
+	 * @example
+	 * ```typescript
+	 * let container: IFluidContainer;
+	 * const containerId = window.location.hash.substring(1);
+	 * if (!containerId) {
+	 *     ({ container } = await client.createContainer(containerSchema));
+	 *     const id = await container.attach();
+	 *     window.location.hash = id;
+	 *     // Return the Fluid SharedString object.
+	 *     return container.initialObjects.sharedString as SharedString;
+	 * }
+	 *
+	 * ({ container } = await client.getContainer(containerId, containerSchema));
+	 * if (container.connectionState !== ConnectionState.Connected) {
+	 *     await new Promise<void>((resolve) => {
+	 *         container.once("connected", () => {
+	 *             resolve();
+	 *         });
+	 *     });
+	 * }
+	 * ```
+	 *
+	 * @public
 	 */
 	public async createContainer(containerSchema: ContainerSchema): Promise<{
 		container: IFluidContainer;
@@ -101,11 +158,15 @@ export class AzureClient {
 
 	/**
 	 * Creates new detached container out of specific version of another container.
+	 *
 	 * @param id - Unique ID of the source container in Azure Fluid Relay.
 	 * @param containerSchema - Container schema used to access data objects in the container.
 	 * @param version - Unique version of the source container in Azure Fluid Relay.
-	 * It defaults to latest version if parameter not provided.
+	 * @defaultValue latest. It defaults to latest version if parameter not provided.
 	 * @returns New detached container instance along with associated services.
+	 * @throws Will throw an error if the source container's URL cannot be resolved.
+	 *
+	 * @public
 	 */
 	public async copyContainer(
 		id: string,
@@ -149,6 +210,7 @@ export class AzureClient {
 	 * @param id - Unique ID of the container in Azure Fluid Relay.
 	 * @param containerSchema - Container schema used to access data objects in the container.
 	 * @returns Existing container instance along with associated services.
+	 * @public
 	 */
 	public async getContainer(
 		id: string,
@@ -172,9 +234,11 @@ export class AzureClient {
 	/**
 	 * Get the list of versions for specific container.
 	 * @param id - Unique ID of the source container in Azure Fluid Relay.
-	 * @param options - "Get" options. If options are not provided, API
-	 * will assume maxCount of versions to retreive to be 5.
+	 * @param options - "Get" options.
+	 * @defaultValue 5. If options are not provided, API will assume maxCount of versions to retreive to be 5.
 	 * @returns Array of available container versions.
+	 * @throws Will throw an error if the URL cannot be resolved.
+	 * @public
 	 */
 	public async getContainerVersions(
 		id: string,
@@ -203,12 +267,24 @@ export class AzureClient {
 		});
 	}
 
+	/**
+	 * Creates an object with container services.
+	 *
+	 * @param container - The container for which to create services.
+	 * @returns An object containing various services for the provided container.
+	 */
 	private getContainerServices(container: IContainer): AzureContainerServices {
 		return {
 			audience: new AzureAudience(container),
 		};
 	}
 
+	/**
+	 * Creates a Fluid Loader for the given container schema.
+	 *
+	 * @param containerSchema - The schema for which to create a Loader.
+	 * @returns The Fluid Loader instance.
+	 */
 	private createLoader(containerSchema: ContainerSchema): Loader {
 		const runtimeFactory = new DOProviderContainerRuntimeFactory(containerSchema);
 		const load = async (): Promise<IFluidModuleWithDetails> => {
@@ -239,6 +315,15 @@ export class AzureClient {
 		});
 	}
 
+	/**
+	 * Creates a FluidContainer object for a given Fluid container and connection configuration.
+	 *
+	 * @param container - The Fluid container.
+	 * @param connection - The Azure connection configuration.
+	 * @returns A FluidContainer object.
+	 * @throws Will throw an error if the container is not in a detached state.
+	 * @throws Will throw an error if the resolved URL is not available on the attached container.
+	 */
 	private async createFluidContainer(
 		container: IContainer,
 		connection: AzureConnectionConfig,

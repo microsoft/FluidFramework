@@ -9,12 +9,36 @@ import { DriverHeader, IResolvedUrl, IUrlResolver } from "@fluidframework/driver
  * Implementation of {@link @fluidframework/driver-definitions#IUrlResolver} to resolve documents stored using the
  * Azure Fluid Relay based off of the orderer and storage URLs provide.
  *
+ * @public
  * @remarks The token provider here can be an `InsecureTokenProvider` for basic scenarios or more robust, secure
  * providers that fulfill the {@link @fluidframework/routerlicious-driver#ITokenProvider} interface.
+ *
+ * @example
+ * ```typescript
+ * const azureUrlResolver = new AzureUrlResolver();
+ * const resolvedUrl = await azureUrlResolver.resolve(request);
+ * ```
  */
 export class AzureUrlResolver implements IUrlResolver {
+	/**
+	 * Initializes a new instance of AzureUrlResolver.
+	 * @public
+	 */
 	public constructor() {}
 
+	/**
+	 * Resolves the given Fluid request to an IResolvedUrl.
+	 *
+	 * @public
+	 * @param request - Fluid request object.
+	 * @returns Promise that resolves to an IResolvedUrl object.
+	 * @throws Will throw an error if the containerId is not found in the Azure URL.
+	 *
+	 * @example
+	 * ```typescript
+	 * const resolvedUrl = await azureUrlResolver.resolve(request);
+	 * ```
+	 */
 	public async resolve(request: IRequest): Promise<IResolvedUrl> {
 		const { ordererUrl, storageUrl, tenantId, containerId } = decodeAzureUrl(request.url);
 		// determine whether the request is for creating of a new container.
@@ -51,6 +75,20 @@ export class AzureUrlResolver implements IUrlResolver {
 		};
 	}
 
+	/**
+	 * Constructs an absolute URL from a resolved URL and a relative URL.
+	 *
+	 * @public
+	 * @param resolvedUrl - Resolved Fluid URL.
+	 * @param relativeUrl - Relative Fluid URL.
+	 * @returns Promise that resolves to an absolute Fluid URL.
+	 * @throws Will throw an error if the resolved URL type is invalid.
+	 *
+	 * @example
+	 * ```typescript
+	 * const absoluteUrl = await azureUrlResolver.getAbsoluteUrl(resolvedUrl, relativeUrl);
+	 * ```
+	 */
 	public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
 		if (resolvedUrl.type !== "fluid") {
 			throw new Error("Invalid Resolved Url");
@@ -59,6 +97,15 @@ export class AzureUrlResolver implements IUrlResolver {
 	}
 }
 
+/**
+ * Decodes an Azure Fluid URL into its constituent components.
+ *
+ * @internal
+ * @param urlString - The Azure Fluid URL string.
+ * @returns An object containing the ordererUrl, storageUrl, tenantId, and optionally, the containerId.
+ * @throws Will throw an error if the URL does not contain a storage URL.
+ * @throws Will throw an error if the URL does not contain a tenant ID.
+ */
 function decodeAzureUrl(urlString: string): {
 	ordererUrl: string;
 	storageUrl: string;
@@ -94,6 +141,12 @@ function decodeAzureUrl(urlString: string): {
  *
  * @param endpointUrl - URI to the Azure Fluid Relay service discovery endpoint.
  * @param tenantId - Unique tenant identifier.
+ * @returns IRequest object that can be passed to IFluidContainer.attach.
+ *
+ * @example
+ * ```typescript
+ * const request = createAzureCreateNewRequest(endpointUrl, tenantId);
+ * ```
  */
 export const createAzureCreateNewRequest = (endpointUrl: string, tenantId: string): IRequest => {
 	const url = new URL(endpointUrl);
