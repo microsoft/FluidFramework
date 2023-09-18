@@ -22,9 +22,13 @@ const testTempDirPath = Path.resolve(__dirname, "test_temp");
 
 /**
  * Snapshot directory to which generated test data will be copied.
- * Relative to dist/test.
+ * Relative to dist/test
  */
 const snapshotsDirPath = Path.resolve(__dirname, "..", "..", "src", "test", "snapshots");
+
+// Relative to dist/test
+const testDataDirPath = Path.resolve(__dirname, "..", "..", "src", "test", "test-data");
+const testModelPaths = [Path.resolve(testDataDirPath, "simple-suite-test.json")];
 
 /**
  * Simple integration test that validates complete output from simple test package.
@@ -142,12 +146,12 @@ function apiTestSuite(
 
 					const pathMap = new Map<string, DocumentNode>();
 					for (const document of documents) {
-						if (pathMap.has(document.filePath)) {
+						if (pathMap.has(document.documentPath)) {
 							expect.fail(
 								`Rendering generated multiple documents to be rendered to the same file path.`,
 							);
 						} else {
-							pathMap.set(document.filePath, document);
+							pathMap.set(document.documentPath, document);
 						}
 					}
 				});
@@ -241,10 +245,5 @@ describe("api-markdown-documenter full-suite tests", () => {
 	});
 
 	// Run the test suite against a sample report
-	apiTestSuite(
-		"simple-suite-test",
-		// Relative to dist/test
-		[Path.resolve(__dirname, "test-data", "simple-suite-test.json")],
-		configs,
-	);
+	apiTestSuite("simple-suite-test", testModelPaths, configs);
 });

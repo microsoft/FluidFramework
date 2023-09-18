@@ -7,7 +7,7 @@ import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { FluidObject } from "@fluidframework/core-interfaces";
-import { buildRuntimeRequestHandler, RuntimeRequestHandler } from "@fluidframework/request-handler";
+import { RuntimeRequestHandler, buildRuntimeRequestHandler } from "@fluidframework/request-handler";
 import {
 	NamedFluidDataStoreRegistryEntries,
 	IFluidDataStoreFactory,
@@ -19,19 +19,27 @@ const defaultStoreId = "" as const;
 export class RuntimeFactory extends RuntimeFactoryHelper {
 	private readonly registry: NamedFluidDataStoreRegistryEntries;
 
-	constructor(
-		private readonly defaultStoreFactory: IFluidDataStoreFactory,
-		storeFactories: IFluidDataStoreFactory[] = [defaultStoreFactory],
-		private readonly requestHandlers: RuntimeRequestHandler[] = [],
-		private readonly initializeEntryPoint?: (
-			runtime: IContainerRuntime,
-		) => Promise<FluidObject>,
-	) {
+	private readonly defaultStoreFactory: IFluidDataStoreFactory;
+	private readonly requestHandlers: RuntimeRequestHandler[];
+	private readonly provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+
+	constructor(props: {
+		defaultStoreFactory: IFluidDataStoreFactory;
+		storeFactories: IFluidDataStoreFactory[];
+		requestHandlers?: RuntimeRequestHandler[];
+		provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+	}) {
 		super();
+
+		this.defaultStoreFactory = props.defaultStoreFactory;
+		this.provideEntryPoint = props.provideEntryPoint;
+		this.requestHandlers = props.requestHandlers ?? [];
+		const storeFactories = props.storeFactories ?? [this.defaultStoreFactory];
+
 		this.registry = (
-			storeFactories.includes(defaultStoreFactory)
+			storeFactories.includes(this.defaultStoreFactory)
 				? storeFactories
-				: storeFactories.concat(defaultStoreFactory)
+				: storeFactories.concat(this.defaultStoreFactory)
 		).map((factory) => [factory.type, factory]) as NamedFluidDataStoreRegistryEntries;
 	}
 
@@ -49,7 +57,7 @@ export class RuntimeFactory extends RuntimeFactoryHelper {
 			registryEntries: this.registry,
 			existing,
 			requestHandler: buildRuntimeRequestHandler(...this.requestHandlers),
-			initializeEntryPoint: this.initializeEntryPoint,
+			provideEntryPoint: this.provideEntryPoint,
 		});
 
 		return runtime;

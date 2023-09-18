@@ -397,7 +397,6 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	 *
 	 * IMPORTANT: This overload is provided for back-compat where IContainer.request(\{ url: "/" \}) is already implemented and used.
 	 * The functionality it can provide (if the Container implementation is built for it) is redundant with @see {@link IContainer.getEntryPoint}.
-	 * Once that API is mandatory on IContainer, this overload will be deprecated.
 	 *
 	 * Refer to Removing-IFluidRouter.md for details on migrating from the request pattern to using entryPoint.
 	 *
@@ -413,9 +412,6 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	 * Instead, access the objects in a Fluid Container using entryPoint, and then navigate from there using
 	 * app-specific logic (e.g. retrieving handles from the entryPoint's DDSes, or a container's entryPoint object
 	 * could implement a request paradigm itself)
-	 *
-	 * NOTE: IContainer.request(\{url: "/"\}) is not yet deprecated. If and only if the Container implementation supports it,
-	 * that overload may be used as a proxy for getting the entryPoint until {@link IContainer.getEntryPoint} is mandatory.
 	 *
 	 * Refer to Removing-IFluidRouter.md for details on migrating from the request pattern to using entryPoint.
 	 */
@@ -493,15 +489,8 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	/**
 	 * Exposes the entryPoint for the container.
 	 * Use this as the primary way of getting access to the user-defined logic within the container.
-	 * If the method is undefined or the returned promise returns undefined (meaning that exposing the entryPoint
-	 * hasn't been implemented in a particular scenario) fall back to the current approach of requesting the default
-	 * object of the container through the request pattern.
-	 *
-	 * @remarks The plan is that eventually IContainer will no longer implement IFluidRouter (and thus won't have a
-	 * request() method), this method will no longer be optional, and it will become the only way to access
-	 * the entryPoint for the container.
 	 */
-	getEntryPoint?(): Promise<FluidObject | undefined>;
+	getEntryPoint(): Promise<FluidObject | undefined>;
 }
 
 /**

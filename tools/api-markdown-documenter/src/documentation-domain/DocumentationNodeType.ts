@@ -13,11 +13,6 @@
  */
 export enum DocumentationNodeType {
 	/**
-	 * See {@link AlertNode}
-	 */
-	Alert = "Alert",
-
-	/**
 	 * See {@link BlockQuoteNode}
 	 */
 	BlockQuote = "BlockQuote",

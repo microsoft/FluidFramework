@@ -16,17 +16,18 @@
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint && npm run build:docs",
 		"build-and-test": "npm run build && npm run test",
-		"build:compile": "concurrently npm:tsc npm:build:copy",
-		"build:copy": "copyfiles \"src/**/test-data/**\" dist --up 1",
+		"build:compile": "npm run tsc",
 		"build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../_api-extractor-temp/",
-		"build:tsc": "tsc --pretty",
+		"build:tsc": "npm run tsc",
 		"ci:build:docs": "api-extractor run && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../_api-extractor-temp/",
 		"clean": "rimraf --glob '_api-extractor-temp' 'nyc' 'dist' '*.tsbuildinfo' '*.build.log'",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
 		"format": "npm run prettier:fix",
 		"format-and-build": "npm run format && npm run build",
-		"lint": "npm run prettier && npm run eslint",
+		"good-fences": "gf",
+		"lint": "npm run prettier && npm run good-fences && npm run eslint",
+		"lint:fences": "npm run good-fences",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --ignore-path ../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../.prettierignore",
@@ -84,6 +85,7 @@
 		"eslint": "~8.6.0",
 		"eslint-plugin-chai-expect": "^3.0.0",
 		"eslint-plugin-chai-friendly": "^0.7.2",
+		"good-fences": "^1.2.0",
 		"mocha": "^10.2.0",
 		"mocha-json-output-reporter": "^2.1.0",
 		"mocha-multi-reporters": "^1.5.1",
@@ -98,6 +100,14 @@
 			"build:tsc": [
 				"^tsc"
 			]
+		}
+	},
+	"pnpm": {
+		"comments": [
+			"nodegit is replaced with an empty package here because it's currently only used by good-fences for features we do not need, and has issues building when changing node versions. See https://github.com/smikula/good-fences/issues/105 for details."
+		],
+		"overrides": {
+			"nodegit": "npm:empty-npm-package@1.0.0"
 		}
 	}
 }

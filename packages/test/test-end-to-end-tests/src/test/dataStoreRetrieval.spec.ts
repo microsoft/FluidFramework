@@ -5,7 +5,10 @@
 
 import { strict as assert } from "assert";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
+import {
+	ITestObjectProvider,
+	createContainerRuntimeFactoryWithDefaultDataStore,
+} from "@fluidframework/test-utils";
 import { describeFullCompat, ITestDataObject } from "@fluid-internal/test-version-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
@@ -91,14 +94,16 @@ describeFullCompat(
 		});
 
 		it("Requesting data store before outer data store completes initialization", async () => {
-			const containerRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-				outerDataObjectFactory,
-				[
-					[outerDataObjectFactory.type, Promise.resolve(outerDataObjectFactory)],
-					[innerDataObjectFactory.type, Promise.resolve(innerDataObjectFactory)],
-				],
-				undefined,
-				[innerRequestHandler],
+			const containerRuntimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
+				ContainerRuntimeFactoryWithDefaultDataStore,
+				{
+					defaultFactory: outerDataObjectFactory,
+					registryEntries: [
+						[outerDataObjectFactory.type, Promise.resolve(outerDataObjectFactory)],
+						[innerDataObjectFactory.type, Promise.resolve(innerDataObjectFactory)],
+					],
+					requestHandlers: [innerRequestHandler],
+				},
 			);
 			const request = provider.driver.createCreateNewRequest(provider.documentId);
 			const loader = provider.createLoader([
@@ -114,14 +119,16 @@ describeFullCompat(
 		});
 
 		it("Requesting data store before outer data store (non-root) completes initialization", async () => {
-			const containerRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-				innerDataObjectFactory,
-				[
-					[outerDataObjectFactory.type, Promise.resolve(outerDataObjectFactory)],
-					[innerDataObjectFactory.type, Promise.resolve(innerDataObjectFactory)],
-				],
-				undefined,
-				[innerRequestHandler],
+			const containerRuntimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
+				ContainerRuntimeFactoryWithDefaultDataStore,
+				{
+					defaultFactory: innerDataObjectFactory,
+					registryEntries: [
+						[outerDataObjectFactory.type, Promise.resolve(outerDataObjectFactory)],
+						[innerDataObjectFactory.type, Promise.resolve(innerDataObjectFactory)],
+					],
+					requestHandlers: [innerRequestHandler],
+				},
 			);
 			const request = provider.driver.createCreateNewRequest(provider.documentId);
 			const loader = provider.createLoader([

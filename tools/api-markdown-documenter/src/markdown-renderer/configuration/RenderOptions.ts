@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 import {
-	type AlertNode,
 	type BlockQuoteNode,
 	type CodeSpanNode,
 	type DocumentationNode,
@@ -26,7 +25,6 @@ import {
 import type { DocumentWriter } from "../DocumentWriter";
 import type { MarkdownRenderContext } from "../RenderContext";
 import {
-	renderAlert,
 	renderBlockQuote,
 	renderCodeSpan,
 	renderFencedCodeBlock,
@@ -80,8 +78,6 @@ export interface MarkdownRenderers {
  * Default Markdown rendering configuration.
  */
 export const defaultMarkdownRenderers: MarkdownRenderers = {
-	[DocumentationNodeType.Alert]: (node, writer, context): void =>
-		renderAlert(node as AlertNode, writer, context),
 	[DocumentationNodeType.BlockQuote]: (node, writer, context): void =>
 		renderBlockQuote(node as BlockQuoteNode, writer, context),
 	[DocumentationNodeType.CodeSpan]: (node, writer, context): void =>
