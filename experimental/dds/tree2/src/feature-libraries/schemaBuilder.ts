@@ -4,23 +4,21 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { Adapters, TreeSchemaIdentifier, ValueSchema } from "../../core";
-import { RestrictiveReadonlyRecord } from "../../util";
-import { FieldKindTypes, FieldKinds } from "../default-field-kinds";
+import { Adapters, TreeSchemaIdentifier, ValueSchema } from "../core";
+import { RestrictiveReadonlyRecord } from "../util";
+import { FieldKindTypes, FieldKinds } from "./default-field-kinds";
 import {
 	SchemaLibraryData,
 	SchemaLintConfiguration,
 	buildViewSchemaCollection,
 	schemaLintDefault,
-} from "./buildViewSchemaCollection";
-import {
 	AllowedTypes,
 	TreeSchema,
 	FieldSchema,
 	TypedSchemaCollection,
 	RecursiveTreeSchema,
-} from "./typedTreeSchema";
-import { FlexList } from "./flexList";
+	FlexList,
+} from "./typed-schema";
 
 // TODO: tests and examples for this file
 
