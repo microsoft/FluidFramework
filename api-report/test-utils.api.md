@@ -152,7 +152,6 @@ export interface ITestContainerConfig {
     loaderProps?: Partial<ILoaderProps>;
     registry?: ChannelFactoryRegistry;
     runtimeOptions?: IContainerRuntimeOptions;
-    simulateReadConnectionUsingDelay?: boolean;
 }
 
 // @public (undocumented)
