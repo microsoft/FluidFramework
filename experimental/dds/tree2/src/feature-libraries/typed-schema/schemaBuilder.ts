@@ -4,44 +4,25 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { Adapters, TreeAdapter, TreeSchemaIdentifier, ValueSchema } from "../../core";
-import { requireAssignableTo, RestrictiveReadonlyRecord } from "../../util";
+import { Adapters, TreeSchemaIdentifier, ValueSchema } from "../../core";
+import { RestrictiveReadonlyRecord } from "../../util";
 import { FieldKindTypes, FieldKinds } from "../default-field-kinds";
-import { FullSchemaPolicy } from "../modular-schema";
-import { Sourced } from "./view";
-import { buildViewSchemaCollection } from "./buildViewSchemaCollection";
-import { AllowedTypes, TreeSchema, TreeSchemaSpecification, FieldSchema } from "./typedTreeSchema";
+import {
+	SchemaLibraryData,
+	SchemaLintConfiguration,
+	buildViewSchemaCollection,
+	schemaLintDefault,
+} from "./buildViewSchemaCollection";
+import {
+	AllowedTypes,
+	TreeSchema,
+	FieldSchema,
+	TypedSchemaCollection,
+	RecursiveTreeSchema,
+} from "./typedTreeSchema";
 import { FlexList } from "./flexList";
 
 // TODO: tests and examples for this file
-
-/**
- * Placeholder for to `TreeSchema` to use in constraints where `TreeSchema` is desired but using it causes
- * recursive types to fail to compile due to TypeScript limitations.
- *
- * Using `TreeSchema` instead in some key "extends" clauses cause recursive types to error with:
- * "'theSchema' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer."
- *
- * TODO: how much more specific of a type can be provided without triggering the above error?
- * @alpha
- */
-export type RecursiveTreeSchema = unknown;
-
-/**
- * Placeholder for to `TreeSchemaSpecification` to use in constraints where `TreeSchemaSpecification` is desired but using it causes
- * recursive types to fail to compile due to TypeScript limitations.
- *
- * See `RecursiveTreeSchema`.
- *
- * TODO: how much more specific of a type can be provided without triggering the above error?
- * @alpha
- */
-export type RecursiveTreeSchemaSpecification = unknown;
-
-{
-	type _check1 = requireAssignableTo<TreeSchemaSpecification, RecursiveTreeSchemaSpecification>;
-	type _check2 = requireAssignableTo<TreeSchema, RecursiveTreeSchema>;
-}
 
 /**
  * Builds schema libraries, and the schema within them.
@@ -390,49 +371,6 @@ export class SchemaBuilder {
 }
 
 /**
- * Allows opting into and out of errors for some unusual schema patterns which are usually bugs.
- * @alpha
- */
-export interface SchemaLintConfiguration {
-	readonly rejectForbidden: boolean;
-	readonly rejectEmpty: boolean;
-}
-
-const schemaLintDefault: SchemaLintConfiguration = {
-	rejectForbidden: true,
-	rejectEmpty: true,
-};
-
-/**
- * Schema data collected by a single SchemaBuilder (does not include referenced libraries).
- * @alpha
- */
-export interface SchemaLibraryData {
-	readonly name: string;
-	readonly rootFieldSchema?: FieldSchema;
-	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
-	readonly adapters: Adapters;
-}
-
-/**
- * Schema data that can be be used to view a document.
- * Strongly typed over its rootFieldSchema.
- *
- * @remarks
- * This type is mainly used as a type constraint to mean that the code working with it requires strongly typed schema.
- * The actual type used will include detailed schema information for all the types in the collection.
- * This pattern is used to implement SchemaAware APIs.
- *
- * @alpha
- */
-export interface TypedSchemaCollection<T extends FieldSchema = FieldSchema> {
-	readonly rootFieldSchema: T;
-	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
-	readonly policy: FullSchemaPolicy;
-	readonly adapters: Adapters;
-}
-
-/**
  * Schema information collected by a SchemaBuilder, including referenced libraries.
  * Can be aggregated into other libraries by adding to their builders.
  * @alpha
@@ -442,16 +380,4 @@ export interface SchemaLibrary extends TypedSchemaCollection {
 	 * Schema data aggregated from a collection of libraries by a SchemaBuilder.
 	 */
 	readonly libraries: ReadonlySet<SchemaLibraryData>;
-}
-
-/**
- * Mutable adapter collection which records the associated factory.
- * See {@link Adapters}.
- */
-export interface SourcedAdapters {
-	readonly tree: (Sourced & TreeAdapter)[];
-}
-
-{
-	type _check = requireAssignableTo<SourcedAdapters, Adapters>;
 }
