@@ -164,7 +164,7 @@ data:
         },
         "system": {
             "httpServer": {
-                "connectionTimeout": {{ .Values.system.httpServer.connectionTimeout }}
+                "connectionTimeoutMs": {{ .Values.system.httpServer.connectionTimeoutMs }}
             },
             "topics": {
                 "send": "{{ .Values.kafka.topics.deltas }}"
