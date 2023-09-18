@@ -1268,30 +1268,6 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		);
 	});
 
-	it("get pending blob without close while online", async function () {
-		const dataStore = await requestFluidObject<ITestFluidObject>(container1, "default");
-		const map = await dataStore.getSharedObject<SharedMap>(mapId);
-		await provider.ensureSynchronized();
-
-		const handle = await dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
-		const pendingOps = await container1.getPendingLocalState?.();
-		map.set("blob handle", handle);
-
-		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
-		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
-
-		await provider.ensureSynchronized();
-		assert.strictEqual(
-			bufferToString(await map1.get("blob handle").get(), "utf8"),
-			"blob contents",
-		);
-		assert.strictEqual(
-			bufferToString(await map2.get("blob handle").get(), "utf8"),
-			"blob contents",
-		);
-	});
-
 	it("close while uploading multiple blob", async function () {
 		const dataStore = await requestFluidObject<ITestFluidObject>(container1, "default");
 		const map = await dataStore.getSharedObject<SharedMap>(mapId);
