@@ -88,10 +88,8 @@ export function create(
 		const tenantId = getParam(request.params, "tenantId");
 		const documentId = getParam(request.params, "id");
 		const signalContent = getParam(request.body, "signalContent");
-		const documentP = storage.getDocument(
-			getParam(request.params, "tenantId"),
-			getParam(request.params, "id"),
-		);
+		const documentP = storage.getDocument(tenantId, documentId);
+
 		documentP.then(
 			(_document: any) => {
 				try {
