@@ -259,13 +259,12 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
 		[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
 		[dataStoreFactory2.type, Promise.resolve(dataStoreFactory2)],
 	]);
-	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-		dataStoreFactory1,
-		registryStoreEntries,
-		undefined,
-		[innerRequestHandler],
+	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+		defaultFactory: dataStoreFactory1,
+		registryEntries: registryStoreEntries,
+		requestHandlers: [innerRequestHandler],
 		runtimeOptions,
-	);
+	});
 	const logger = createChildLogger();
 
 	// Stores the latest summary uploaded to the server.
