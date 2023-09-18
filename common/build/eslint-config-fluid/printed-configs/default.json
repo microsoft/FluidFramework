@@ -1384,7 +1384,10 @@
             "error"
         ],
         "unicorn/numeric-separators-style": [
-            "error"
+            "error",
+            {
+                "onlyIfContainsSeparator": true
+            }
         ],
         "unicorn/prefer-add-event-listener": [
             "error"

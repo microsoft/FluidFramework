@@ -9,7 +9,7 @@ import {
 	MonitoringContext,
 	UsageError,
 } from "@fluidframework/telemetry-utils";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IBatchMessage, ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { ICompressionRuntimeOptions } from "../containerRuntime";
@@ -67,9 +67,8 @@ export function getLongStack<T>(action: () => T, length: number = 50): T {
 	if (
 		(
 			Object.getOwnPropertyDescriptor(errorObj, "stackTraceLimit") ||
-			Object.getOwnPropertyDescriptor(Object.getPrototypeOf(errorObj), "stackTraceLimit") ||
-			{}
-		).writable !== true
+			Object.getOwnPropertyDescriptor(Object.getPrototypeOf(errorObj), "stackTraceLimit")
+		)?.writable !== true
 	) {
 		return action();
 	}

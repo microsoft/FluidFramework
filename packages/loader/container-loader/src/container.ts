@@ -7,12 +7,8 @@
 import merge from "lodash/merge";
 
 import { v4 as uuid } from "uuid";
-import {
-	TypedEventEmitter,
-	assert,
-	performance,
-	unreachableCase,
-} from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
 import {
 	IEvent,
 	ITelemetryProperties,
@@ -21,6 +17,7 @@ import {
 	IResponse,
 	IFluidRouter,
 	FluidObject,
+	LogLevel,
 } from "@fluidframework/core-interfaces";
 import {
 	AttachState,
@@ -429,7 +426,11 @@ export class Container
 								// Depending where error happens, we can be attempting to connect to web socket
 								// and continuously retrying (consider offline mode)
 								// Host has no container to close, so it's prudent to do it here
+								// Note: We could only dispose the container instead of just close but that would
+								// the telemetry where users sometimes search for ContainerClose event to look
+								// for load failures. So not removing this at this time.
 								container.close(err);
+								container.dispose(err);
 								onClosed(err);
 							},
 						);
@@ -752,6 +753,7 @@ export class Container
 
 		this.connectionTransitionTimes[ConnectionState.Disconnected] = performance.now();
 		const pendingLocalState = loadProps?.pendingLocalState;
+		this._clientId = pendingLocalState?.clientId;
 
 		this._canReconnect = canReconnect ?? true;
 		this.clientDetailsOverride = clientDetailsOverride;
@@ -1099,38 +1101,50 @@ export class Container
 	}
 
 	private async getPendingLocalStateCore(props: { notifyImminentClosure: boolean }) {
-		if (!this.offlineLoadEnabled) {
-			throw new UsageError("Can't get pending local state unless offline load is enabled");
-		}
-		if (this.closed || this._disposed) {
-			throw new UsageError(
-				"Pending state cannot be retried if the container is closed or disposed",
-			);
-		}
-		assert(
-			this.attachState === AttachState.Attached,
-			0x0d1 /* "Container should be attached before close" */,
-		);
-		assert(
-			this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
-			0x0d2 /* "resolved url should be valid Fluid url" */,
-		);
-		assert(!!this.baseSnapshot, 0x5d4 /* no base snapshot */);
-		assert(!!this.baseSnapshotBlobs, 0x5d5 /* no snapshot blobs */);
-		const pendingRuntimeState = await this.runtime.getPendingLocalState(props);
-		const pendingState: IPendingContainerState = {
-			pendingRuntimeState,
-			baseSnapshot: this.baseSnapshot,
-			snapshotBlobs: this.baseSnapshotBlobs,
-			savedOps: this.savedOps,
-			url: this.resolvedUrl.url,
-			term: OnlyValidTermValue,
-			clientId: this.clientId,
-		};
+		return PerformanceEvent.timedExecAsync(
+			this.mc.logger,
+			{
+				eventName: "getPendingLocalState",
+				notifyImminentClosure: props.notifyImminentClosure,
+				savedOpsSize: this.savedOps.length,
+				clientId: this.clientId,
+			},
+			async () => {
+				if (!this.offlineLoadEnabled) {
+					throw new UsageError(
+						"Can't get pending local state unless offline load is enabled",
+					);
+				}
+				if (this.closed || this._disposed) {
+					throw new UsageError(
+						"Pending state cannot be retried if the container is closed or disposed",
+					);
+				}
+				assert(
+					this.attachState === AttachState.Attached,
+					0x0d1 /* "Container should be attached before close" */,
+				);
+				assert(
+					this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
+					0x0d2 /* "resolved url should be valid Fluid url" */,
+				);
+				assert(!!this.baseSnapshot, 0x5d4 /* no base snapshot */);
+				assert(!!this.baseSnapshotBlobs, 0x5d5 /* no snapshot blobs */);
+				const pendingRuntimeState = await this.runtime.getPendingLocalState(props);
+				const pendingState: IPendingContainerState = {
+					pendingRuntimeState,
+					baseSnapshot: this.baseSnapshot,
+					snapshotBlobs: this.baseSnapshotBlobs,
+					savedOps: this.savedOps,
+					url: this.resolvedUrl.url,
+					term: OnlyValidTermValue,
+					// no need to save this if there is no pending runtime state
+					clientId: pendingRuntimeState !== undefined ? this.clientId : undefined,
+				};
 
-		this.mc.logger.sendTelemetryEvent({ eventName: "GetPendingLocalState" });
-
-		return JSON.stringify(pendingState);
+				return JSON.stringify(pendingState);
+			},
+		);
 	}
 
 	public get attachState(): AttachState {
@@ -1516,6 +1530,7 @@ export class Container
 		pendingLocalState: IPendingContainerState | undefined,
 		loadToSequenceNumber: number | undefined,
 	) {
+		const timings: Record<string, number> = { phase1: performance.now() };
 		this.service = await this.serviceFactory.createDocumentService(
 			resolvedUrl,
 			this.subLogger,
@@ -1554,6 +1569,7 @@ export class Container
 
 		this._attachState = AttachState.Attached;
 
+		timings.phase2 = performance.now();
 		// Fetch specified snapshot.
 		const { snapshot, versionId } =
 			pendingLocalState === undefined
@@ -1666,11 +1682,13 @@ export class Container
 		// Initialize the protocol handler
 		await this.initializeProtocolStateFromSnapshot(attributes, this.storageAdapter, snapshot);
 
+		timings.phase3 = performance.now();
 		const codeDetails = this.getCodeDetailsFromQuorum();
 		await this.instantiateRuntime(
 			codeDetails,
 			snapshot,
-			pendingLocalState?.pendingRuntimeState,
+			// give runtime a dummy value so it knows we're loading from a stash blob
+			pendingLocalState ? pendingLocalState?.pendingRuntimeState ?? {} : undefined,
 		);
 
 		// replay saved ops
@@ -1682,13 +1700,6 @@ export class Container
 				await this.runtime.notifyOpReplay?.(message);
 			}
 			pendingLocalState.savedOps = [];
-
-			// now set clientId to stashed clientId so live ops are correctly processed as local
-			assert(
-				this.clientId === undefined,
-				0x5d6 /* Unexpected clientId when setting stashed clientId */,
-			);
-			this._clientId = pendingLocalState?.clientId;
 		}
 
 		// We might have hit some failure that did not manifest itself in exception in this flow,
@@ -1746,7 +1757,15 @@ export class Container
 
 		// Internal context is fully loaded at this point
 		this.setLoaded();
-
+		timings.end = performance.now();
+		this.subLogger.sendTelemetryEvent(
+			{
+				eventName: "LoadStagesTimings",
+				details: JSON.stringify(timings),
+			},
+			undefined,
+			LogLevel.verbose,
+		);
 		return {
 			sequenceNumber: attributes.sequenceNumber,
 			version: versionId,

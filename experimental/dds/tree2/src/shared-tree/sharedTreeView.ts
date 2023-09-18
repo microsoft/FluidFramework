@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	AnchorLocator,
 	StoredSchemaRepository,
@@ -16,6 +16,8 @@ import {
 	assertIsRevisionTag,
 	UndoRedoManager,
 	LocalCommitSource,
+	schemaDataIsEmpty,
+	applyDelta,
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import {
@@ -28,7 +30,6 @@ import {
 	NodeKeyIndex,
 	buildForest,
 	DefaultChangeFamily,
-	defaultSchemaPolicy,
 	getEditableTreeContext,
 	ForestRepairDataStoreProvider,
 	DefaultEditBuilder,
@@ -40,11 +41,18 @@ import {
 	ModularChangeset,
 	nodeKeyFieldKey,
 	FieldSchema,
+	TypedSchemaCollection,
+	getTreeContext,
+	TypedField,
 } from "../feature-libraries";
 import { SharedTreeBranch } from "../shared-tree-core";
 import { TransactionResult, brand } from "../util";
 import { noopValidator } from "../codec";
-import { SchematizeConfiguration, schematizeView } from "./schematizedTree";
+import {
+	InitializeAndSchematizeConfiguration,
+	initializeContent,
+	schematize,
+} from "./schematizedTree";
 
 /**
  * Events for {@link ISharedTreeView}.
@@ -93,7 +101,7 @@ export interface ISharedTreeView extends AnchorLocator {
 	 * See {@link EditableTreeContext.unwrappedRoot} on how its setter works.
 	 *
 	 * Currently this editable tree's fields do not update on edits,
-	 * so holding onto this root object across edits will only work if its an unwrapped node.
+	 * so holding onto this root object across edits will only work if it's an unwrapped node.
 	 * TODO: Fix this issue.
 	 *
 	 * Currently any access to this view of the tree may allocate cursors and thus require
@@ -239,32 +247,28 @@ export interface ISharedTreeView extends AnchorLocator {
 	};
 
 	/**
-	 * Takes in a tree and returns a view of it that conforms to the view schema.
-	 * The returned view referees to and can edit the provided one: it is not a fork of it.
-	 * Updates the stored schema in the tree to match the provided one if requested by config and compatible.
+	 * @deprecated {@link ISharedTree.schematize} which will replace this. View schema should be applied before creating an ISharedTreeView.
+	 */
+	schematize<TRoot extends FieldSchema>(
+		config: InitializeAndSchematizeConfiguration<TRoot>,
+	): ISharedTreeView;
+
+	/**
+	 * Get a typed view of the tree content using the editable-tree-2 API.
 	 *
-	 * If the tree is uninitialized (has no nodes or schema at all),
-	 * it is initialized to the config's initial tree and the provided schema are stored.
-	 * This is done even if `AllowedUpdateType.None`.
-	 *
-	 * @remarks
-	 * Doing initialization here, regardless of `AllowedUpdateType`, allows a small API that is hard to use incorrectly.
-	 * Other approach tend to have leave easy to make mistakes.
-	 * For example, having a separate initialization function means apps can forget to call it, making an app that can only open existing document,
-	 * or call it unconditionally leaving an app that can only create new documents.
-	 * It also would require the schema to be passed into to separate places and could cause issues if they didn't match.
-	 * Since the initialization function couldn't return a typed tree, the type checking wouldn't help catch that.
-	 * Also, if an app manages to create a document, but the initialization fails to get persisted, an app that only calls the initialization function
-	 * on the create code-path (for example how a schematized factory might do it),
-	 * would leave the document in an unusable state which could not be repaired when it is reopened (by the same or other clients).
-	 * Additionally, once out of schema content adapters are properly supported (with lazy document updates),
-	 * this initialization could become just another out of schema content adapter: at tha point it clearly belong here in schematize.
+	 * Warning: This API is not fully tested yet and is still under development.
+	 * It will eventually replace the current editable-tree API and become the main entry point for working with SharedTree.
+	 * Access to this API is exposed here as a temporary measure to enable experimenting with the API while its being finished and evaluated.
 	 *
 	 * TODO:
-	 * - Implement schema-aware API for return type.
-	 * - Support adapters for handling out of schema data.
+	 * ISharedTreeView should already have the view schema, and thus nor require it to be passed in.
+	 * As long as it is passed in here as a workaround, the caller must ensure that the stored schema is compatible.
+	 * If the stored schema is edited and becomes incompatible (or was not originally compatible),
+	 * using the returned tree is invalid and is likely to error or corrupt the document.
 	 */
-	schematize<TRoot extends FieldSchema>(config: SchematizeConfiguration<TRoot>): ISharedTreeView;
+	editableTree2<TRoot extends FieldSchema>(
+		viewSchema: TypedSchemaCollection<TRoot>,
+	): TypedField<TRoot>;
 }
 
 /**
@@ -277,15 +281,15 @@ export interface ISharedTreeView extends AnchorLocator {
 export function createSharedTreeView(args?: {
 	branch?: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
 	changeFamily?: DefaultChangeFamily;
-	schema?: InMemoryStoredSchemaRepository;
+	schema?: StoredSchemaRepository;
 	forest?: IEditableForest;
 	repairProvider?: ForestRepairDataStoreProvider<DefaultChangeset>;
 	nodeKeyManager?: NodeKeyManager;
 	nodeKeyIndex?: NodeKeyIndex;
 	events?: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>;
 }): ISharedTreeView {
-	const schema = args?.schema ?? new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
-	const forest = args?.forest ?? buildForest(schema, new AnchorSet());
+	const schema = args?.schema ?? new InMemoryStoredSchemaRepository();
+	const forest = args?.forest ?? buildForest();
 	const changeFamily =
 		args?.changeFamily ?? new DefaultChangeFamily({ jsonValidator: noopValidator });
 	const repairDataStoreProvider =
@@ -304,11 +308,11 @@ export function createSharedTreeView(args?: {
 			changeFamily,
 			repairDataStoreProvider,
 			undoRedoManager,
-			forest.anchors,
 		);
 	const nodeKeyManager = args?.nodeKeyManager ?? createNodeKeyManager();
 	const context = getEditableTreeContext(
 		forest,
+		schema,
 		branch.editor,
 		nodeKeyManager,
 		brand(nodeKeyFieldKey),
@@ -414,7 +418,7 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		public readonly transaction: ITransaction,
 		private readonly branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
 		private readonly changeFamily: DefaultChangeFamily,
-		public readonly storedSchema: InMemoryStoredSchemaRepository,
+		public readonly storedSchema: StoredSchemaRepository,
 		public readonly forest: IEditableForest,
 		public readonly context: EditableTreeContext,
 		private readonly nodeKeyManager: NodeKeyManager,
@@ -426,7 +430,8 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		branch.on("change", ({ change }) => {
 			if (change !== undefined) {
 				const delta = this.changeFamily.intoDelta(change);
-				this.forest.applyDelta(delta);
+				applyDelta(delta, this.forest.anchors);
+				applyDelta(delta, this.forest);
 				this.nodeKeyIndex.scanKeys(this.context);
 				this.events.emit("afterBatch");
 			}
@@ -460,9 +465,23 @@ export class SharedTreeView implements ISharedTreeBranchView {
 	}
 
 	public schematize<TRoot extends FieldSchema>(
-		config: SchematizeConfiguration<TRoot>,
+		config: InitializeAndSchematizeConfiguration<TRoot>,
 	): ISharedTreeView {
-		return schematizeView(this, config);
+		schematizeView(this, config, this.storedSchema);
+		return this;
+	}
+
+	public editableTree2<TRoot extends FieldSchema>(
+		viewSchema: TypedSchemaCollection<TRoot>,
+	): TypedField<TRoot> {
+		const context = getTreeContext(
+			viewSchema,
+			this.forest,
+			this.branch.editor,
+			this.nodeKeyManager,
+			this.nodeKeyIndex.fieldKey,
+		);
+		return context.root as TypedField<TRoot>;
 	}
 
 	public locate(anchor: Anchor): AnchorNode | undefined {
@@ -471,16 +490,18 @@ export class SharedTreeView implements ISharedTreeBranchView {
 
 	public fork(): SharedTreeView {
 		const anchors = new AnchorSet();
-		const storedSchema = this.storedSchema.clone();
+		// TODO: ensure editing this clone of the schema does the right thing.
+		const storedSchema = new InMemoryStoredSchemaRepository(this.storedSchema);
 		const forest = this.forest.clone(storedSchema, anchors);
 		const repairDataStoreProvider = new ForestRepairDataStoreProvider(
 			forest,
 			storedSchema,
 			(change: ModularChangeset) => this.changeFamily.intoDelta(change),
 		);
-		const branch = this.branch.fork(repairDataStoreProvider, anchors);
+		const branch = this.branch.fork(repairDataStoreProvider);
 		const context = getEditableTreeContext(
 			forest,
+			storedSchema,
 			branch.editor,
 			this.nodeKeyManager,
 			this.nodeKeyIndex.fieldKey,
@@ -538,6 +559,32 @@ export class SharedTreeView implements ISharedTreeBranchView {
 	public dispose(): void {
 		this.branch.dispose();
 	}
+}
+
+/**
+ * @param view - view to edit.
+ * @param config - config to apply.
+ * @param storedSchema - provided separate from view since editing schema of view doesn't send ops properly.
+ */
+// TODO: once schematize is removed from ISharedTreeView, this should be moved/integrated into SharedTree.
+export function schematizeView<TRoot extends FieldSchema>(
+	view: ISharedTreeView,
+	config: InitializeAndSchematizeConfiguration<TRoot>,
+	storedSchema: StoredSchemaRepository,
+): void {
+	// TODO:
+	// When this becomes a more proper out of schema adapter, editing should be made lazy.
+	// This will improve support for readonly documents, cross version collaboration and attribution.
+
+	// Check for empty.
+	// TODO: Better detection of empty case
+	if (view.forest.isEmpty && schemaDataIsEmpty(storedSchema)) {
+		view.transaction.start();
+		initializeContent(storedSchema, config.schema, () => view.setContent(config.initialTree));
+		view.transaction.commit();
+	}
+
+	schematize(view.events, storedSchema, config);
 }
 
 /**

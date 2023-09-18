@@ -22,7 +22,7 @@
 		"build": "concurrently npm:build:compile npm:lint",
 		"build:commonjs": "npm run tsc",
 		"build:compile": "npm run build:commonjs",
-		"clean": "rimraf --glob \"dist\" \"lib\" \"*.tsbuildinfo\" \"*.build.log\"",
+		"clean": "rimraf --glob 'dist' 'lib' '*.tsbuildinfo' '*.build.log'",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -41,10 +41,9 @@
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"concurrently": "^7.6.0",
+		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.6.0",
-		"jest": "^26.6.3",
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0"
 	}

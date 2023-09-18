@@ -6,6 +6,7 @@
 import { strict as assert, fail } from "assert";
 
 import { compareArrays } from "@fluidframework/core-utils";
+import { MockHandle } from "@fluidframework/test-runtime-utils";
 import {
 	decode,
 	readValue,
@@ -35,7 +36,7 @@ import {
 	fieldCursorFromJsonableTrees,
 	jsonableTreesFromFieldCursor,
 } from "../fieldCursorTestUtilities";
-import { FieldStoredSchema, TreeSchemaIdentifier, TreeValue } from "../../../../core";
+import { FieldStoredSchema, TreeSchemaIdentifier, Value } from "../../../../core";
 import {
 	EncodedChunkShape,
 	EncodedValueShape,
@@ -77,17 +78,14 @@ describe("compressedEncode", () => {
 		}
 	});
 
+	const mockHandle = new MockHandle("x");
+
 	describe("encodeValue", () => {
-		const testValues: [
-			string,
-			TreeValue,
-			EncodedValueShape,
-			BufferFormat<EncodedChunkShape>,
-		][] = [
+		const testValues: [string, Value, EncodedValueShape, BufferFormat<EncodedChunkShape>][] = [
 			["none", undefined, false, []],
 			["optional none", undefined, undefined, [false]],
 			["optional some", 5, undefined, [true, 5]],
-			["optional object", { foo: 0 }, undefined, [true, { foo: 0 }]],
+			["handle", mockHandle, undefined, [true, mockHandle]],
 			["required", false, true, [false]],
 			["constant", 5, [5], []],
 		];

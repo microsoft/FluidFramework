@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-export { ISharedTree, SharedTreeFactory, SharedTreeOptions } from "./sharedTree";
+export {
+	ISharedTree,
+	SharedTreeFactory,
+	SharedTreeOptions,
+	SharedTree,
+	ForestType,
+} from "./sharedTree";
 
 export {
 	createSharedTreeView,
@@ -14,4 +20,9 @@ export {
 	ISharedTreeBranchView,
 } from "./sharedTreeView";
 
-export { SchematizeConfiguration } from "./schematizedTree";
+export {
+	SchematizeConfiguration,
+	TreeContent,
+	InitializeAndSchematizeConfiguration,
+	SchemaConfiguration,
+} from "./schematizedTree";
