@@ -7,6 +7,11 @@
 		"timestamp": true,
 		"label": "winston"
 	},
+	"lumberjack": {
+		"options": {
+			"enableGlobalTelemetryContext": true
+		}
+	},
 	"mongo": {
 		"operationsDbEndpoint": "mongodb://mongodb:27017",
 		"globalDbEndpoint": "mongodb://mongodb:27017",
