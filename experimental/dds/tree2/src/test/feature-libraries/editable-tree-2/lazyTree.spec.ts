@@ -15,11 +15,8 @@ import {
 } from "../../../feature-libraries/editable-tree-2/lazyTree";
 import {
 	Any,
-	DefaultEditBuilder,
 	PrimitiveValue,
 	SchemaBuilder,
-	TypedSchemaCollection,
-	createMockNodeKeyManager,
 	isPrimitiveValue,
 	jsonableTreeFromCursor,
 	singleMapTreeCursor,
@@ -35,14 +32,7 @@ import {
 } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { Context } from "../../../feature-libraries/editable-tree-2/context";
-import {
-	FieldKey,
-	IEditableForest,
-	MapTree,
-	TreeNavigationResult,
-	TreeValue,
-	rootFieldKey,
-} from "../../../core";
+import { FieldKey, MapTree, TreeNavigationResult, TreeValue, rootFieldKey } from "../../../core";
 import { forestWithContent } from "../../utils";
 import { TreeContent } from "../../../shared-tree";
 import { RestrictiveReadonlyRecord, brand } from "../../../util";
@@ -57,12 +47,7 @@ import {
 import { visitIterableTree } from "../../../feature-libraries/editable-tree-2";
 import { testTrees, treeContentFromTestTree } from "../../testTrees";
 import { jsonSchema } from "../../../domains";
-
-function getReadonlyContext(forest: IEditableForest, schema: TypedSchemaCollection): Context {
-	// This will error if someone tries to call mutation methods on it
-	const dummyEditor = {} as unknown as DefaultEditBuilder;
-	return new Context(schema, forest, dummyEditor, createMockNodeKeyManager());
-}
+import { getReadonlyContext } from "./utils";
 
 function contextWithContentReadonly(content: TreeContent): Context {
 	const forest = forestWithContent(content);

@@ -236,8 +236,8 @@ export abstract class LazyField<TKind extends FieldKindTypes, TTypes extends All
 	 */
 	public getFieldPathForEditing(): FieldUpPath {
 		assert(
-			this.key === rootFieldKey || this.parent?.treeStatus() === TreeStatus.InDocument,
-			"Field must be in the document to be edited",
+			this.treeStatus() === TreeStatus.InDocument,
+			"Editing only allowed on fields with TreeStatus.InDocument status",
 		);
 		return this.getFieldPath();
 	}
