@@ -308,6 +308,7 @@ export interface DDSFuzzSuiteOptions {
 	validationStrategy:
 		| { type: "random"; probability: number }
 		| { type: "fixedInterval"; interval: number }
+		// WIP: This validation strategy still currently synchronizes all clients.
 		| { type: "partialSynchronization"; probability: number; clientProbability: number };
 	parseOperations: (serialized: string) => BaseOperation[];
 
@@ -697,7 +698,7 @@ export function mixinSynchronization<
 				const baseGenerator = model.generatorFactory();
 				return async (state: TState): Promise<TOperation | Synchronize | typeof done> => {
 					if (!state.isDetached && state.random.bool(validationStrategy.probability)) {
-						const connectedClients = new Set(
+						const selectedClients = new Set(
 							state.clients
 								.filter((client) => client.containerRuntime.connected)
 								.filter(() =>
@@ -706,7 +707,7 @@ export function mixinSynchronization<
 								.map((client) => client.containerRuntime.clientId),
 						);
 
-						return { type: "synchronize", clients: [...connectedClients] };
+						return { type: "synchronize", clients: [...selectedClients] };
 					} else {
 						return baseGenerator(state);
 					}

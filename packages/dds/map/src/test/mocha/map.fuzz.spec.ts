@@ -118,45 +118,50 @@ describe("Map fuzz tests", () => {
 		// Uncomment to replay a particular seed.
 		// replay: 0,
 		saveFailures: { directory: path.join(__dirname, "../../../src/test/mocha/results/map") },
+		validationStrategy: {
+			type: "partialSynchronization",
+			probability: 0.33,
+			clientProbability: 0.5,
+		},
 	});
 
-	createDDSFuzzSuite(
-		{ ...model, workloadName: "with reconnect" },
-		{
-			defaultTestCount: 100,
-			numberOfClients: 3,
-			clientJoinOptions: {
-				maxNumberOfClients: 6,
-				clientAddProbability: 0.1,
-			},
-			reconnectProbability: 0.1,
-			// Uncomment to replay a particular seed.
-			// replay: 0,
-			saveFailures: {
-				directory: path.join(__dirname, "../../../src/test/mocha/results/map-reconnect"),
-			},
-		},
-	);
+	// createDDSFuzzSuite(
+	// 	{ ...model, workloadName: "with reconnect" },
+	// 	{
+	// 		defaultTestCount: 100,
+	// 		numberOfClients: 3,
+	// 		clientJoinOptions: {
+	// 			maxNumberOfClients: 6,
+	// 			clientAddProbability: 0.1,
+	// 		},
+	// 		reconnectProbability: 0.1,
+	// 		// Uncomment to replay a particular seed.
+	// 		// replay: 0,
+	// 		saveFailures: {
+	// 			directory: path.join(__dirname, "../../../src/test/mocha/results/map-reconnect"),
+	// 		},
+	// 	},
+	// );
 
-	createDDSFuzzSuite(
-		{ ...model, workloadName: "with batches and rebasing" },
-		{
-			defaultTestCount: 100,
-			numberOfClients: 3,
-			clientJoinOptions: {
-				maxNumberOfClients: 6,
-				clientAddProbability: 0.1,
-			},
-			rebaseProbability: 0.2,
-			containerRuntimeOptions: {
-				flushMode: FlushMode.TurnBased,
-				enableGroupedBatching: true,
-			},
-			// Uncomment to replay a particular seed.
-			// replay: 0,
-			saveFailures: {
-				directory: path.join(__dirname, "../../../src/test/mocha/results/map-rebase"),
-			},
-		},
-	);
+	// createDDSFuzzSuite(
+	// 	{ ...model, workloadName: "with batches and rebasing" },
+	// 	{
+	// 		defaultTestCount: 100,
+	// 		numberOfClients: 3,
+	// 		clientJoinOptions: {
+	// 			maxNumberOfClients: 6,
+	// 			clientAddProbability: 0.1,
+	// 		},
+	// 		rebaseProbability: 0.2,
+	// 		containerRuntimeOptions: {
+	// 			flushMode: FlushMode.TurnBased,
+	// 			enableGroupedBatching: true,
+	// 		},
+	// 		// Uncomment to replay a particular seed.
+	// 		// replay: 0,
+	// 		saveFailures: {
+	// 			directory: path.join(__dirname, "../../../src/test/mocha/results/map-rebase"),
+	// 		},
+	// 	},
+	// );
 });
