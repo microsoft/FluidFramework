@@ -10,7 +10,7 @@ export type RangeMap<T> = RangeEntry<T>[];
 
 /**
  * An association between a range of integer keys a single value.
- * @alpha
+ * @public
  */
 export interface RangeEntry<T> {
 	start: number;

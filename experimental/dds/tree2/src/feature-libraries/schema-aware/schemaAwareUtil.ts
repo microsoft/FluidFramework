@@ -9,7 +9,7 @@ import { PrimitiveValue } from "../contextuallyTyped";
 
 /**
  * {@link ValueSchema} to allowed types for that schema.
- * @alpha
+ * @public
  */
 export type TypedValue<TValue extends ValueSchema> = {
 	[ValueSchema.Number]: number;
@@ -20,7 +20,7 @@ export type TypedValue<TValue extends ValueSchema> = {
 
 /**
  * {@link ValueSchema} | undefined to allowed types for that schema.
- * @alpha
+ * @public
  */
 export type TypedValueOrUndefined<TValue extends ValueSchema | undefined> =
 	TValue extends ValueSchema ? TypedValue<TValue> : undefined;
@@ -37,6 +37,6 @@ export type TypedValueOrUndefined<TValue extends ValueSchema | undefined> =
 }
 
 /**
- * @alpha
+ * @public
  */
 export type ValuesOf<T> = T[keyof T];

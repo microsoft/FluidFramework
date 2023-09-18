@@ -18,7 +18,7 @@ import type { JsonValidator } from "../codec";
  *
  * Defining this validator in its own file also helps to ensure it is tree-shakeable.
  *
- * @alpha
+ * @public
  */
 export const typeboxValidator: JsonValidator = {
 	compile: <Schema extends TSchema>(schema: Schema) => {

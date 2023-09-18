@@ -25,7 +25,7 @@ import { ProxyTarget } from "./ProxyTarget";
 /**
  * A common context of a "forest" of EditableTrees.
  * It handles group operations like transforming cursors into anchors for edits.
- * @alpha
+ * @public
  */
 export interface EditableTreeContext extends ISubscribable<ForestEvents> {
 	/**

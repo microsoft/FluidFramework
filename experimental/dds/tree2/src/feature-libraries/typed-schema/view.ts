@@ -150,7 +150,7 @@ export class ViewSchema {
 
 /**
  * Record where a schema came from for error reporting purposes.
- * @alpha
+ * @public
  */
 export interface Sourced {
 	readonly builder: Named<string>;

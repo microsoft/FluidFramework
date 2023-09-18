@@ -52,7 +52,7 @@ import {
 import { GenerativeMark, EmptyInputCellMark } from "./helperTypes";
 
 /**
- * @alpha
+ * @public
  */
 export type NodeChangeComposer<TNodeChange> = (changes: TaggedChange<TNodeChange>[]) => TNodeChange;
 

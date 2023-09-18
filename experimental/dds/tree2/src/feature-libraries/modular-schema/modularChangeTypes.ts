@@ -7,7 +7,7 @@ import { ChangesetLocalId, FieldKey, FieldKindIdentifier, RevisionTag } from "..
 import { Brand } from "../../util";
 
 /**
- * @alpha
+ * @public
  */
 export interface RevisionInfo {
 	readonly revision: RevisionTag;
@@ -19,7 +19,7 @@ export interface RevisionInfo {
 }
 
 /**
- * @alpha
+ * @public
  */
 export interface ModularChangeset extends HasFieldChanges {
 	/**
@@ -38,7 +38,7 @@ export interface ModularChangeset extends HasFieldChanges {
 }
 
 /**
- * @alpha
+ * @public
  */
 export interface NodeExistsConstraint {
 	violated: boolean;
@@ -46,26 +46,26 @@ export interface NodeExistsConstraint {
 
 /**
  * Changeset for a subtree rooted at a specific node.
- * @alpha
+ * @public
  */
 export interface NodeChangeset extends HasFieldChanges {
 	nodeExistsConstraint?: NodeExistsConstraint;
 }
 
 /**
- * @alpha
+ * @public
  */
 export interface HasFieldChanges {
 	fieldChanges?: FieldChangeMap;
 }
 
 /**
- * @alpha
+ * @public
  */
 export type FieldChangeMap = Map<FieldKey, FieldChange>;
 
 /**
- * @alpha
+ * @public
  */
 export interface FieldChange {
 	fieldKind: FieldKindIdentifier;
@@ -82,6 +82,6 @@ export interface FieldChange {
 }
 
 /**
- * @alpha
+ * @public
  */
 export type FieldChangeset = Brand<unknown, "FieldChangeset">;

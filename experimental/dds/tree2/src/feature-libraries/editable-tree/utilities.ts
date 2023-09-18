@@ -28,7 +28,7 @@ import { EditableTree, TreeStatus } from "./editableTreeTypes";
  * since EditableTree avoids ever unwrapping primitives that are objects
  * so users checking for primitives by type won't be broken.
  * Checking for this object case is done elsewhere.
- * @alpha
+ * @public
  */
 export function isPrimitive(schema: TreeStoredSchema): boolean {
 	// TODO: use a separate `ITreeSchema` type, with metadata that determines if the type is primitive.

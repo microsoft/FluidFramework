@@ -19,7 +19,7 @@ import { IForestSubscription, ITreeSubscriptionCursor } from "./forest";
 
 /**
  * Editing APIs.
- * @alpha
+ * @public
  */
 export interface IEditableForest extends IForestSubscription {
 	/**
@@ -62,12 +62,12 @@ export function initializeForest(
 
 /**
  * Ways to refer to a node in an IEditableForest.
- * @alpha
+ * @public
  */
 export type ForestLocation = ITreeSubscriptionCursor | Anchor;
 
 /**
- * @alpha
+ * @public
  */
 export interface TreeLocation {
 	readonly range: FieldLocation | DetachedField;
@@ -80,7 +80,7 @@ export function isFieldLocation(range: FieldLocation | DetachedField): range is 
 
 /**
  * Location of a field within a tree that is not a detached/root field.
- * @alpha
+ * @public
  */
 export interface FieldLocation {
 	readonly key: FieldKey;

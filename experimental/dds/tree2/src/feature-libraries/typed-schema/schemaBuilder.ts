@@ -23,7 +23,7 @@ import { FlexList } from "./flexList";
  * "'theSchema' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer."
  *
  * TODO: how much more specific of a type can be provided without triggering the above error?
- * @alpha
+ * @public
  */
 export type RecursiveTreeSchema = unknown;
 
@@ -34,7 +34,7 @@ export type RecursiveTreeSchema = unknown;
  * See `RecursiveTreeSchema`.
  *
  * TODO: how much more specific of a type can be provided without triggering the above error?
- * @alpha
+ * @public
  */
 export type RecursiveTreeSchemaSpecification = unknown;
 
@@ -45,7 +45,7 @@ export type RecursiveTreeSchemaSpecification = unknown;
 
 /**
  * Builds schema libraries, and the schema within them.
- * @sealed @alpha
+ * @sealed @public
  */
 export class SchemaBuilder {
 	private readonly lintConfiguration: SchemaLintConfiguration;
@@ -391,7 +391,7 @@ export class SchemaBuilder {
 
 /**
  * Allows opting into and out of errors for some unusual schema patterns which are usually bugs.
- * @alpha
+ * @public
  */
 export interface SchemaLintConfiguration {
 	readonly rejectForbidden: boolean;
@@ -405,7 +405,7 @@ const schemaLintDefault: SchemaLintConfiguration = {
 
 /**
  * Schema data collected by a single SchemaBuilder (does not include referenced libraries).
- * @alpha
+ * @public
  */
 export interface SchemaLibraryData {
 	readonly name: string;
@@ -423,7 +423,7 @@ export interface SchemaLibraryData {
  * The actual type used will include detailed schema information for all the types in the collection.
  * This pattern is used to implement SchemaAware APIs.
  *
- * @alpha
+ * @public
  */
 export interface TypedSchemaCollection<T extends FieldSchema = FieldSchema> {
 	readonly rootFieldSchema: T;
@@ -435,7 +435,7 @@ export interface TypedSchemaCollection<T extends FieldSchema = FieldSchema> {
 /**
  * Schema information collected by a SchemaBuilder, including referenced libraries.
  * Can be aggregated into other libraries by adding to their builders.
- * @alpha
+ * @public
  */
 export interface SchemaLibrary extends TypedSchemaCollection {
 	/**

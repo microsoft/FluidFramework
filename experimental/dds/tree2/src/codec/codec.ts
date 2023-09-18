@@ -9,7 +9,7 @@ import type { Static, TAnySchema, TSchema } from "@sinclair/typebox";
 import { fail, JsonCompatibleReadOnly } from "../util";
 
 /**
- * @alpha
+ * @public
  */
 export interface IEncoder<TDecoded, TEncoded> {
 	/**
@@ -19,7 +19,7 @@ export interface IEncoder<TDecoded, TEncoded> {
 }
 
 /**
- * @alpha
+ * @public
  */
 export interface IDecoder<TDecoded, TEncoded> {
 	/**
@@ -31,7 +31,7 @@ export interface IDecoder<TDecoded, TEncoded> {
 /**
  * Validates data complies with some particular schema.
  * Implementations are typically created by a {@link JsonValidator}.
- * @alpha
+ * @public
  */
 export interface SchemaValidationFunction<Schema extends TSchema> {
 	/**
@@ -42,7 +42,7 @@ export interface SchemaValidationFunction<Schema extends TSchema> {
 
 /**
  * JSON schema validator compliant with draft 6 schema. See https://json-schema.org.
- * @alpha
+ * @public
  */
 export interface JsonValidator {
 	/**
@@ -59,7 +59,7 @@ export interface JsonValidator {
 
 /**
  * Options relating to handling of persisted data.
- * @alpha
+ * @public
  */
 export interface ICodecOptions {
 	/**
@@ -74,7 +74,7 @@ export interface ICodecOptions {
 }
 
 /**
- * @alpha
+ * @public
  * @remarks `TEncoded` should always be valid Json (i.e. not contain functions), but due to Typescript's handling
  * of index signatures and `JsonCompatibleReadOnly`'s index signature in the Json object case, specifying this as a
  * type-system level constraint makes code that uses this interface more difficult to write.
@@ -87,7 +87,7 @@ export interface IJsonCodec<TDecoded, TEncoded = JsonCompatibleReadOnly>
 
 /**
  * @remarks TODO: We might consider using DataView or some kind of writer instead of IsoBuffer.
- * @alpha
+ * @public
  */
 export interface IBinaryCodec<TDecoded>
 	extends IEncoder<TDecoded, IsoBuffer>,
@@ -104,7 +104,7 @@ export interface IBinaryCodec<TDecoded>
  * Using an {@link ICodecFamily} is the recommended strategy for managing this support, keeping in
  * mind evolution of encodings over time.
  *
- * @alpha
+ * @public
  */
 export interface IMultiFormatCodec<
 	TDecoded,
@@ -127,7 +127,7 @@ export interface IMultiFormatCodec<
  * the `formatVersion` parameter)
  * allows avoiding some duplicate work at encode/decode time, since the vast majority of document usage will not
  * involve mixed format versions.
- * @alpha
+ * @public
  */
 export interface ICodecFamily<TDecoded> {
 	/**

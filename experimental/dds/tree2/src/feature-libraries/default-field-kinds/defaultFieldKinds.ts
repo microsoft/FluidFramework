@@ -177,27 +177,27 @@ export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
 // TODO: ensure thy work in generated docs.
 // TODO: add these comments to the rest of the cases below.
 /**
- * @alpha
+ * @public
  */
 export interface ValueFieldKind
 	extends BrandedFieldKind<"Value", Multiplicity.Value, FieldEditor<any>> {}
 /**
- * @alpha
+ * @public
  */
 export interface Optional
 	extends BrandedFieldKind<"Optional", Multiplicity.Optional, FieldEditor<any>> {}
 /**
- * @alpha
+ * @public
  */
 export interface Sequence
 	extends BrandedFieldKind<"Sequence", Multiplicity.Sequence, FieldEditor<any>> {}
 /**
- * @alpha
+ * @public
  */
 export interface NodeKeyFieldKind
 	extends BrandedFieldKind<"NodeKey", Multiplicity.Value, FieldEditor<any>> {}
 /**
- * @alpha
+ * @public
  */
 export interface Forbidden
 	extends BrandedFieldKind<
@@ -208,7 +208,7 @@ export interface Forbidden
 
 /**
  * Default FieldKinds with their editor types erased.
- * @alpha
+ * @public
  */
 export const FieldKinds: {
 	// TODO: inheritDoc for these somehow
@@ -220,6 +220,6 @@ export const FieldKinds: {
 } = { value, optional, sequence, nodeKey, forbidden };
 
 /**
- * @alpha
+ * @public
  */
 export type FieldKindTypes = typeof FieldKinds[keyof typeof FieldKinds];

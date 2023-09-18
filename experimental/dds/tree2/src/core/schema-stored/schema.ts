@@ -21,21 +21,21 @@ import { Brand, brand, brandedStringType } from "../../util";
  * Optionally validate loaded data against schema.
  * 2. Persist the whole schema.
  * Use the identifier to associate it with schema when loading to check that the schema match.
- * @alpha
+ * @public
  */
 export type SchemaIdentifier = TreeSchemaIdentifier;
 
 /**
  * SchemaIdentifier for a Tree.
  * Also known as "Definition"
- * @alpha
+ * @public
  */
 export type TreeSchemaIdentifier = Brand<string, "tree.Schema">;
 export const TreeSchemaIdentifierSchema = brandedStringType<TreeSchemaIdentifier>();
 
 /**
  * Key (aka Name or Label) for a field which is scoped to a specific TreeStoredSchema.
- * @alpha
+ * @public
  */
 export type FieldKey = Brand<string, "tree.FieldKey">;
 export const FieldKeySchema = brandedStringType<FieldKey>();
@@ -45,7 +45,7 @@ export const FieldKeySchema = brandedStringType<FieldKey>();
  * Refers to an exact stable policy (ex: specific version of a policy),
  * for how to handle (ex: edit and merge edits to) fields marked with this kind.
  * Persisted in documents as part of stored schema.
- * @alpha
+ * @public
  */
 export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
 export const FieldKindIdentifierSchema = brandedStringType<FieldKindIdentifier>();
@@ -68,7 +68,7 @@ export const FieldKindIdentifierSchema = brandedStringType<FieldKindIdentifier>(
  *
  * TODO: come up with a final design for how to handle primitives / values.
  * This design is just a placeholder.
- * @alpha
+ * @public
  */
 export enum ValueSchema {
 	Number,
@@ -85,7 +85,7 @@ export enum ValueSchema {
 
 /**
  * {@link ValueSchema} for privative types.
- * @alpha
+ * @public
  */
 export type PrimitiveValueSchema = ValueSchema.Number | ValueSchema.String | ValueSchema.Boolean;
 
@@ -117,7 +117,7 @@ export type PrimitiveValueSchema = ValueSchema.Number | ValueSchema.String | Val
  * - Constrain the types allowed based on which types guarantee their data will always meet the constraints.
  *
  * Care would need to be taken to make sure this is sound for the schema updating mechanisms.
- * @alpha
+ * @public
  */
 export type TreeTypeSet = ReadonlySet<TreeSchemaIdentifier> | undefined;
 
@@ -127,14 +127,14 @@ export type TreeTypeSet = ReadonlySet<TreeSchemaIdentifier> | undefined;
  * @remarks
  * This is used instead of just the FieldKindIdentifier so that it can be subtyped into a more expressive type with additional information.
  *
- * @alpha
+ * @public
  */
 export interface FieldKindSpecifier<T = FieldKindIdentifier> {
 	identifier: T;
 }
 
 /**
- * @alpha
+ * @public
  */
 export interface FieldStoredSchema {
 	readonly kind: FieldKindSpecifier;
@@ -153,7 +153,7 @@ export interface FieldStoredSchema {
  * 1. The root default field for documents.
  * 2. The schema used for out of schema fields (which thus must be empty/not exist) on a struct and leaf nodes.
  *
- * @alpha
+ * @public
  */
 export const forbiddenFieldKindIdentifier = "Forbidden";
 
@@ -163,7 +163,7 @@ export const storedEmptyFieldSchema: FieldStoredSchema = {
 };
 
 /**
- * @alpha
+ * @public
  */
 export interface TreeStoredSchema {
 	/**
@@ -209,7 +209,7 @@ export interface TreeStoredSchema {
  *
  * Note: the owner of this may modify it over time:
  * thus if needing to hand onto a specific version, make a copy.
- * @alpha
+ * @public
  */
 export interface SchemaData {
 	readonly rootFieldSchema: FieldStoredSchema;

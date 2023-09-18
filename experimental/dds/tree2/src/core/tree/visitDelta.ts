@@ -108,7 +108,7 @@ export function applyDelta(
 /**
  * Visitor for changes in a delta.
  * Must be freed after use.
- * @alpha
+ * @public
  */
 export interface DeltaVisitor {
 	free(): void;

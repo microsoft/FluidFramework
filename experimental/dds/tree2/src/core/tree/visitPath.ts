@@ -9,7 +9,7 @@ import { UpPath } from "./pathTree";
  * Delta visitor for the path tree.
  *
  * TODO: additional callbacks
- * @alpha
+ * @public
  */
 export interface PathVisitor {
 	/**

@@ -667,7 +667,7 @@ export function unwrappedField(
 
 /**
  * Checks the type of an UnwrappedEditableField.
- * @alpha
+ * @public
  */
 export function isEditableField(field: UnwrappedEditableField): field is EditableField {
 	return (

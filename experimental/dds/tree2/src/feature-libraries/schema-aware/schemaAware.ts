@@ -27,7 +27,7 @@ import { TypedValue, TypedValueOrUndefined } from "./schemaAwareUtil";
 
 /**
  * Empty Object for use in type computations that should contribute no fields when `&`ed with another type.
- * @alpha
+ * @public
  */
 // Using {} instead of interface {} or Record<string, never> for empty object here produces better IntelliSense in the generated types than `Record<string, never>` recommended by the linter.
 // Making this a type instead of an interface prevents it from showing up in IntelliSense, and also avoids breaking the typing somehow.
@@ -35,14 +35,14 @@ import { TypedValue, TypedValueOrUndefined } from "./schemaAwareUtil";
 export type EmptyObject = {};
 
 /**
- * @alpha
+ * @public
  */
 export type ValuePropertyFromSchema<TSchema extends ValueSchema | undefined> =
 	TSchema extends ValueSchema ? { [valueSymbol]: TypedValue<TSchema> } : EmptyObject;
 
 /**
  * Different schema aware APIs that can be generated.
- * @alpha
+ * @public
  */
 export const enum ApiMode {
 	/**
@@ -84,7 +84,7 @@ export const enum ApiMode {
 
 /**
  * Collects the various parts of the API together.
- * @alpha
+ * @public
  */
 export type CollectOptions<
 	Mode extends ApiMode,
@@ -118,7 +118,7 @@ export type CollectOptions<
 
 /**
  * The name and value part of the `Flexible` API.
- * @alpha
+ * @public
  */
 export type FlexibleObject<TValueSchema extends ValueSchema | undefined, TName> = [
 	FlattenKeys<
@@ -128,7 +128,7 @@ export type FlexibleObject<TValueSchema extends ValueSchema | undefined, TName> 
 
 /**
  * Remove type brand from name.
- * @alpha
+ * @public
  */
 export type UnbrandedName<TName> = [
 	TName extends infer S & TreeSchemaIdentifier ? S : string,
@@ -138,7 +138,7 @@ export type UnbrandedName<TName> = [
  * `{ [key: string]: FieldSchemaTypeInfo }` to `{ [key: string]: TypedTree }`
  *
  * In Editable mode, unwraps the fields.
- * @alpha
+ * @public
  */
 export type TypedFields<
 	Mode extends ApiMode,
@@ -156,7 +156,7 @@ export type TypedFields<
 
 /**
  * `FieldSchema` to `TypedField`. May unwrap to child depending on Mode and FieldKind.
- * @alpha
+ * @public
  */
 export type TypedField<TField extends FieldSchema, Mode extends ApiMode = ApiMode.Editable> = [
 	ApplyMultiplicity<
@@ -168,7 +168,7 @@ export type TypedField<TField extends FieldSchema, Mode extends ApiMode = ApiMod
 
 /**
  * Adjusts the API for a field based on its Multiplicity.
- * @alpha
+ * @public
  */
 export type ApplyMultiplicity<
 	TMultiplicity extends Multiplicity,
@@ -192,21 +192,21 @@ export type EditableField<TypedChild> = UntypedField & MarkedArrayLike<TypedChil
 
 // TODO: add strong typed `getNode`.
 /**
- * @alpha
+ * @public
  */
 export type EditableSequenceField<TypedChild> = [
 	UntypedSequenceField & MarkedArrayLike<TypedChild>,
 ][_InlineTrick];
 
 /**
- * @alpha
+ * @public
  */
 export type EditableValueField<TypedChild> = [
 	UntypedValueField & MarkedArrayLike<TypedChild>,
 ][_InlineTrick];
 
 /**
- * @alpha
+ * @public
  */
 export type EditableOptionalField<TypedChild> = [
 	UntypedOptionalField & MarkedArrayLike<TypedChild>,
@@ -214,7 +214,7 @@ export type EditableOptionalField<TypedChild> = [
 
 /**
  * Takes in `AllowedTypes` and returns a TypedTree union.
- * @alpha
+ * @public
  */
 export type AllowedTypesToTypedTrees<Mode extends ApiMode, T extends AllowedTypes> = [
 	T extends InternalTypedSchemaTypes.FlexList<TreeSchema>
@@ -232,7 +232,7 @@ export type AllowedTypesToTypedTrees<Mode extends ApiMode, T extends AllowedType
 
 /**
  * Takes in `TreeSchema[]` and returns a TypedTree union.
- * @alpha
+ * @public
  */
 export type TypeArrayToTypedTreeArray<Mode extends ApiMode, T extends readonly TreeSchema[]> = [
 	T extends readonly [infer Head, ...infer Tail]
@@ -246,7 +246,7 @@ export type TypeArrayToTypedTreeArray<Mode extends ApiMode, T extends readonly T
 // TODO: make these more accurate
 /**
  * API if type is unknown or Any.
- * @alpha
+ * @public
  */
 export type UntypedApi<Mode extends ApiMode> = {
 	[ApiMode.Editable]: UntypedTree;
@@ -258,7 +258,7 @@ export type UntypedApi<Mode extends ApiMode> = {
 
 /**
  * Generate a schema aware API for a single tree schema.
- * @alpha
+ * @public
  */
 export type TypedNode<
 	TSchema extends TreeSchema,
@@ -277,7 +277,7 @@ export type TypedNode<
 
 /**
  * Generate a schema aware API for a single tree schema.
- * @alpha
+ * @public
  * @deprecated Use `TypedNode` instead (and reverse the type parameter order).
  */
 export type NodeDataFor<Mode extends ApiMode, TSchema extends TreeSchema> = TypedNode<
@@ -288,7 +288,7 @@ export type NodeDataFor<Mode extends ApiMode, TSchema extends TreeSchema> = Type
 /**
  * Check if an `UntypedTreeCore` has a specific schema, and if it does, cast it to use `ApiMode.Editable` with that schema.
  * Provided schema must be included in the schema for the tree being viewed (getting this wrong will error).
- * @alpha
+ * @public
  */
 // TODO: tests
 export function downCast<TSchema extends TreeSchema>(

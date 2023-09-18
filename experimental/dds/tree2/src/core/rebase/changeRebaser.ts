@@ -86,7 +86,7 @@ export interface ChangeRebaser<TChangeset> {
 }
 
 /**
- * @alpha
+ * @public
  */
 export interface TaggedChange<TChangeset> {
 	readonly revision: RevisionTag | undefined;

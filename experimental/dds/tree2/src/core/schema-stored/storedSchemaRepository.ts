@@ -17,7 +17,7 @@ import {
  * Events for {@link StoredSchemaRepository}.
  *
  * TODO: consider having before and after events per subtree instead while applying anchor (and this just shows what happens at the root).
- * @alpha
+ * @public
  */
 export interface SchemaEvents {
 	/**
@@ -35,7 +35,7 @@ export interface SchemaEvents {
  * Mutable collection of stored schema.
  *
  * TODO: could implement more fine grained dependency tracking.
- * @alpha
+ * @public
  */
 export interface StoredSchemaRepository extends Dependee, ISubscribable<SchemaEvents>, SchemaData {
 	/**

@@ -33,40 +33,40 @@ import { TreeStatus } from "./editable-tree";
 
 /**
  * A symbol to get the type of {@link EditableTree} in contexts where string keys are already in use for fields.
- * @alpha
+ * @public
  */
 export const typeSymbol: unique symbol = Symbol("editable-tree:type");
 
 /**
  * A symbol to get the function, which returns the field of {@link EditableTree} without unwrapping,
  * in contexts where string keys are already in use for fields.
- * @alpha
+ * @public
  */
 export const getField: unique symbol = Symbol("editable-tree:getField()");
 
 /**
  * A symbol to get information about where an {@link EditableTree} is parented
  * in contexts where string keys are already in use for fields.
- * @alpha
+ * @public
  */
 export const parentField: unique symbol = Symbol("editable-tree:parentField()");
 
 /**
  * A symbol to get a common context of a "forest" of EditableTrees
  * in contexts where string keys are already in use for fields.
- * @alpha
+ * @public
  */
 export const contextSymbol: unique symbol = Symbol("editable-tree:context");
 
 /**
  * A symbol for subscribing to events.
- * @alpha
+ * @public
  */
 export const on: unique symbol = Symbol("editable-tree:on");
 
 /**
  * A symbol to get the function, which gets the {@link TreeStatus} of {@link EditableTree}
- * @alpha
+ * @public
  */
 export const treeStatus: unique symbol = Symbol("editable-tree:treeStatus()");
 
@@ -76,7 +76,7 @@ export const treeStatus: unique symbol = Symbol("editable-tree:treeStatus()");
  *
  * TODO: document how to downcast to more specific types for schema aware reading and editing APIs.
  *
- * @alpha
+ * @public
  */
 export interface UntypedTree<TContext = UntypedTreeContext> extends UntypedTreeCore<TContext> {
 	/**
@@ -105,7 +105,7 @@ export interface UntypedTree<TContext = UntypedTreeContext> extends UntypedTreeC
  *
  * TODO:
  * getField should be made schema aware and moved to `UntypedTree`.
- * @alpha
+ * @public
  */
 export interface UntypedTreeCore<TContext = UntypedTreeContext, TField = UntypedField<TContext>>
 	extends Iterable<TField> {
@@ -148,7 +148,7 @@ export interface UntypedTreeCore<TContext = UntypedTreeContext, TField = Untyped
 /**
  * UntypedTree,
  * but with any type that `isPrimitive` unwrapped into the value if that value is a {@link PrimitiveValue}.
- * @alpha
+ * @public
  */
 export type UntypedTreeOrPrimitive<TContext = UntypedTreeContext> =
 	| UntypedTree<TContext>
@@ -159,7 +159,7 @@ export type UntypedTreeOrPrimitive<TContext = UntypedTreeContext> =
  * - primitives are unwrapped. See {@link UntypedTreeOrPrimitive}.
  * - nodes with PrimaryField (see `getPrimaryField`) are unwrapped to {@link UntypedField}s.
  * - fields are unwrapped based on their schema's multiplicity. See {@link UnwrappedUntypedField}.
- * @alpha
+ * @public
  */
 export type UnwrappedUntypedTree<TContext = UntypedTreeContext> =
 	| UntypedTreeOrPrimitive<TContext>
@@ -170,7 +170,7 @@ export type UnwrappedUntypedTree<TContext = UntypedTreeContext> =
  * Non-sequence multiplicities are unwrapped to the child tree or `undefined` if there is none.
  * Sequence multiplicities are handled with {@link UntypedField}.
  * See {@link UnwrappedUntypedTree} for how the children themselves are unwrapped.
- * @alpha
+ * @public
  */
 export type UnwrappedUntypedField<TContext = UntypedTreeContext> =
 	| UnwrappedUntypedTree<TContext>
@@ -179,7 +179,7 @@ export type UnwrappedUntypedField<TContext = UntypedTreeContext> =
 
 /**
  * A field of an {@link UntypedTree} as an array-like sequence of unwrapped nodes (see {@link UnwrappedUntypedTree}).
- * @alpha
+ * @public
  */
 export interface UntypedField<
 	TContext = UntypedTreeContext,
@@ -222,7 +222,7 @@ export interface UntypedField<
 
 /**
  * A common context of a "forest" of UntypedTrees.
- * @alpha
+ * @public
  */
 export interface UntypedTreeContext extends ISubscribable<ForestEvents> {
 	/**
@@ -279,7 +279,7 @@ export interface UntypedTreeContext extends ISubscribable<ForestEvents> {
  * - Add more events.
  * - Have some events (or a way to defer events) until the tree can be read.
  *
- * @alpha
+ * @public
  */
 export interface EditableTreeEvents {
 	/**

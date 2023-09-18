@@ -7,7 +7,7 @@ import { FieldKey } from "../schema-stored";
 
 /**
  * Identical to {@link UpPathDefault}, but a duplicate declaration is needed to make the default type parameter compile.
- * @alpha
+ * @public
  */
 export type UpPathDefault = UpPath;
 
@@ -22,7 +22,7 @@ export type UpPathDefault = UpPath;
  *
  * UpPaths can be mutated over time and should be considered to be invalidated when any edits occurs:
  * Use of an UpPath that was acquired before the most recent edit is undefined behavior.
- * @alpha
+ * @public
  */
 export interface UpPath<TParent = UpPathDefault> {
 	/**
@@ -44,7 +44,7 @@ export interface UpPath<TParent = UpPathDefault> {
  * Path from a field in the tree upward.
  *
  * See {@link UpPath}.
- * @alpha
+ * @public
  */
 export interface FieldUpPath<TUpPath extends UpPath = UpPath> {
 	/**

@@ -8,7 +8,7 @@
  * Can be values, functions that return the value (to allow cyclic references to work), or arrays.
  * @remarks
  * Does not work properly if T can be a function.
- * @alpha
+ * @public
  */
 export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 
@@ -36,26 +36,26 @@ export function normalizeFlexListEager<List extends FlexList>(
 /**
  * T, but can be wrapped in a function to allow referring to types before they are declared.
  * This makes recursive and co-recursive types possible.
- * @alpha
+ * @public
  */
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
 /**
- * @alpha
+ * @public
  */
 export type NormalizedFlexList<Item> = readonly Item[];
 
 export type NormalizedLazyFlexList<Item> = (() => Item)[];
 
 /**
- * @alpha
+ * @public
  */
 export type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result
 	? Result
 	: Item;
 
 /**
- * @alpha
+ * @public
  */
 export type ExtractListItemType<List extends FlexList> = List extends FlexList<infer Item>
 	? Item
@@ -65,7 +65,7 @@ type NormalizeLazyItem<List extends LazyItem> = List extends () => unknown ? Lis
 
 /**
  * Normalize FlexList type to a non-lazy array.
- * @alpha
+ * @public
  */
 export type FlexListToNonLazyArray<List extends FlexList> = ArrayHasFixedLength<List> extends true
 	? ConstantFlexListToNonLazyArray<List>
@@ -73,7 +73,7 @@ export type FlexListToNonLazyArray<List extends FlexList> = ArrayHasFixedLength<
 
 /**
  * Normalize FlexList type to a non-lazy array.
- * @alpha
+ * @public
  */
 export type ConstantFlexListToNonLazyArray<List extends FlexList> = List extends readonly [
 	infer Head,
@@ -92,7 +92,7 @@ export type ConstantFlexListToNonLazyArray<List extends FlexList> = List extends
  * For example recursive patterns for processing them often just return the base case,
  * losing all the type information.
  *
- * @alpha
+ * @public
  */
 // This works by determining if the length is `number` (and not a specific number).
 export type ArrayHasFixedLength<List extends readonly unknown[]> = number extends List["length"]

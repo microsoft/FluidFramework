@@ -8,7 +8,7 @@
  * exposing the entirely of Node's typings.  This should match the public interface
  * of the browser implementation, so any changes made in one should be made in both.
  *
- * @internal
+ * @public
  */
 export declare class Buffer extends Uint8Array {
 	toString(encoding?: string): string;
@@ -22,12 +22,12 @@ export declare class Buffer extends Uint8Array {
 }
 
 /**
- * @internal
+ * @public
  */
 export const IsoBuffer = Buffer;
 
 /**
- * @internal
+ * @public
  */
 export type IsoBuffer = Buffer;
 

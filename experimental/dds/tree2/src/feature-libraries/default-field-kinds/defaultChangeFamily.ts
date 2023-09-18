@@ -55,7 +55,7 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
 
 /**
  * Default editor for transactions.
- * @alpha
+ * @public
  */
 export interface IDefaultEditBuilder {
 	/**
@@ -240,7 +240,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 }
 
 /**
- * @alpha
+ * @public
  */
 export interface ValueFieldEditBuilder {
 	/**
@@ -251,7 +251,7 @@ export interface ValueFieldEditBuilder {
 }
 
 /**
- * @alpha
+ * @public
  */
 export interface OptionalFieldEditBuilder {
 	/**
@@ -263,7 +263,7 @@ export interface OptionalFieldEditBuilder {
 }
 
 /**
- * @alpha
+ * @public
  */
 export interface SequenceFieldEditBuilder {
 	/**

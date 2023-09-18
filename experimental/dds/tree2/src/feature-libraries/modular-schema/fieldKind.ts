@@ -27,7 +27,7 @@ import { FieldChangeHandler, FieldEditor } from "./fieldChangeHandler";
  *
  * These policies include the data encoding, change encoding, change rebase and change application.
  *
- * @sealed @alpha
+ * @sealed @public
  */
 export class FieldKind<
 	TEditor extends FieldEditor<any> = FieldEditor<any>,
@@ -83,7 +83,7 @@ export class FieldKind<
 /**
  * Policy from the app for interpreting the stored schema.
  * The app must ensure consistency for all users of the document.
- * @alpha
+ * @public
  */
 export interface FullSchemaPolicy {
 	/**
@@ -100,7 +100,7 @@ export interface FullSchemaPolicy {
  * Describes how a particular field functions.
  *
  * This determine its reading and editing APIs, multiplicity, and what merge resolution policies it will use.
- * @alpha
+ * @public
  */
 export enum Multiplicity {
 	/**
@@ -148,7 +148,7 @@ export enum Multiplicity {
 }
 
 /**
- * @alpha
+ * @public
  */
 export type BrandedFieldKind<
 	TName extends string,

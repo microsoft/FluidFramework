@@ -48,7 +48,7 @@ import {
  * powered by {@link @fluidframework/shared-object-base#ISharedObject}.
  *
  * See [the README](../../README.md) for details.
- * @alpha
+ * @public
  */
 export interface ISharedTree extends ISharedObject {
 	/**
@@ -209,7 +209,7 @@ export class SharedTree
 }
 
 /**
- * @alpha
+ * @public
  */
 export interface SharedTreeOptions extends Partial<ICodecOptions> {
 	/**
@@ -220,7 +220,7 @@ export interface SharedTreeOptions extends Partial<ICodecOptions> {
 
 /**
  * Used to distinguish between different forest types.
- * @alpha
+ * @public
  */
 export enum ForestType {
 	/**
@@ -240,7 +240,7 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
 
 /**
  * A channel factory that creates {@link ISharedTree}s.
- * @alpha
+ * @public
  */
 export class SharedTreeFactory implements IChannelFactory {
 	public type: string = "SharedTree";

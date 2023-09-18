@@ -18,7 +18,7 @@ export const SessionIdSchema = brandedStringType<SessionId>();
 /**
  * A unique identifier for a commit. Commits that have been rebased, but are semantically
  * the same, will share the same revision tag.
- * @alpha
+ * @public
  */
 // TODO: These can be compressed by an `IdCompressor` in the future
 export type RevisionTag = StableId;
@@ -28,13 +28,13 @@ export const RevisionTagSchema = brandedStringType<StableId>();
  * An ID which is unique within a revision of a `ModularChangeset`.
  * A `ModularChangeset` which is a composition of multiple revisions may contain duplicate `ChangesetLocalId`s,
  * but they are unique when qualified by the revision of the change they are used in.
- * @alpha
+ * @public
  */
 export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
 
 /**
  * A globally unique ID for an atom of change, or a node associated with the atom of change.
- * @alpha
+ * @public
  *
  * @privateRemarks
  * TODO: Rename this to be more general.

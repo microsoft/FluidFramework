@@ -19,7 +19,7 @@ import { fail } from "../util";
 
 /**
  * {@link ITreeCursorSynchronous} that can return the underlying node objects.
- * @alpha
+ * @public
  */
 export interface CursorWithNode<TNode> extends ITreeCursorSynchronous {
 	/**
@@ -44,7 +44,7 @@ export interface CursorWithNode<TNode> extends ITreeCursorSynchronous {
  * Create a cursor, in `nodes` mode at the root of the provided tree.
  *
  * @returns an {@link ITreeCursorSynchronous} for a single root.
- * @alpha
+ * @public
  */
 export function singleStackTreeCursor<TNode>(
 	root: TNode,
@@ -55,7 +55,7 @@ export function singleStackTreeCursor<TNode>(
 
 /**
  * Provides functionality to allow a {@link singleStackTreeCursor} to implement a cursor.
- * @alpha
+ * @public
  */
 export interface CursorAdapter<TNode> {
 	/**
@@ -360,7 +360,7 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 
 /**
  * Apply `prefix` to `path`.
- * @alpha
+ * @public
  */
 export function prefixPath(
 	prefix: PathRootPrefix | undefined,
@@ -381,7 +381,7 @@ export function prefixPath(
 
 /**
  * Apply `prefix` to `path`.
- * @alpha
+ * @public
  */
 export function prefixFieldPath(
 	prefix: PathRootPrefix | undefined,

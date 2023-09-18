@@ -128,7 +128,7 @@ import { ITreeCursorSynchronous } from "./cursor";
 /**
  * Represents the change made to a document.
  * Immutable, therefore safe to retain for async processing.
- * @alpha
+ * @public
  */
 export type Root<TTree = ProtoNode> = FieldMarks<TTree>;
 
@@ -139,7 +139,7 @@ export type Root<TTree = ProtoNode> = FieldMarks<TTree>;
  * Ownership and lifetime of data referenced by this cursor is unclear,
  * so it is a poor abstraction for this use-case which needs to hold onto the data in a non-exclusive (readonly) way.
  * Cursors can be one supported way to input data, but aren't a good storage format.
- * @alpha
+ * @public
  */
 export type ProtoNode = ITreeCursorSynchronous;
 
@@ -151,13 +151,13 @@ export type ProtoNode = ITreeCursorSynchronous;
  * Additionally, Cursors support sequences, so if using cursors, there are better ways to handle this than an array of cursors,
  * like using a cursor over all the content (starting in fields mode).
  * Long term something like TreeChunk should probably be used here.
- * @alpha
+ * @public
  */
 export type ProtoNodes = readonly ProtoNode[];
 
 /**
  * Represents a change being made to a part of the tree.
- * @alpha
+ * @public
  */
 export type Mark<TTree = ProtoNode> =
 	| Skip
@@ -171,20 +171,20 @@ export type Mark<TTree = ProtoNode> =
  * Represents a list of changes to some range of nodes. The index of each mark within the range of nodes, before
  * applying any of the changes, is not represented explicitly.
  * It corresponds to the sum of `inputLength(mark)` for all previous marks.
- * @alpha
+ * @public
  */
 export type MarkList<TTree = ProtoNode> = readonly Mark<TTree>[];
 
 /**
  * Represents a range of contiguous nodes that is unaffected by changes.
  * The value represents the length of the range.
- * @alpha
+ * @public
  */
 export type Skip = number;
 
 /**
  * Describes modifications made to a subtree.
- * @alpha
+ * @public
  */
 export interface HasModifications<TTree = ProtoNode> {
 	readonly fields?: FieldMarks<TTree>;
@@ -192,7 +192,7 @@ export interface HasModifications<TTree = ProtoNode> {
 
 /**
  * Describes modifications made to an otherwise untouched subtree.
- * @alpha
+ * @public
  */
 export interface Modify<TTree = ProtoNode> extends HasModifications<TTree> {
 	readonly type: typeof MarkType.Modify;
@@ -200,7 +200,7 @@ export interface Modify<TTree = ProtoNode> extends HasModifications<TTree> {
 
 /**
  * Describes the deletion of a contiguous range of node.
- * @alpha
+ * @public
  */
 export interface Delete<TTree = ProtoNode> extends HasModifications<TTree> {
 	readonly type: typeof MarkType.Delete;
@@ -212,7 +212,7 @@ export interface Delete<TTree = ProtoNode> extends HasModifications<TTree> {
 
 /**
  * Describes the moving out of a contiguous range of node.
- * @alpha
+ * @public
  */
 export interface MoveOut<TTree = ProtoNode> extends HasModifications<TTree> {
 	readonly type: typeof MarkType.MoveOut;
@@ -228,7 +228,7 @@ export interface MoveOut<TTree = ProtoNode> extends HasModifications<TTree> {
 
 /**
  * Describes the moving in of a contiguous range of node.
- * @alpha
+ * @public
  */
 export interface MoveIn {
 	readonly type: typeof MarkType.MoveIn;
@@ -241,7 +241,7 @@ export interface MoveIn {
 
 /**
  * Describes the insertion of a contiguous range of node.
- * @alpha
+ * @public
  */
 export interface Insert<TTree = ProtoNode> extends HasModifications<TTree> {
 	readonly type: typeof MarkType.Insert;
@@ -260,22 +260,22 @@ export interface Insert<TTree = ProtoNode> extends HasModifications<TTree> {
 
 /**
  * Uniquely identifies a MoveOut/MoveIn pair within a delta.
- * @alpha
+ * @public
  */
 export interface MoveId extends Opaque<Brand<number, "delta.MoveId">> {}
 
 /**
- * @alpha
+ * @public
  */
 export type FieldMap<T> = ReadonlyMap<FieldKey, T>;
 
 /**
- * @alpha
+ * @public
  */
 export type FieldMarks<TTree = ProtoNode> = FieldMap<MarkList<TTree>>;
 
 /**
- * @alpha
+ * @public
  */
 export const MarkType = {
 	Modify: 0,

@@ -10,22 +10,22 @@ import { requireAssignableTo } from "../../util";
 const builder = new SchemaBuilder("Json Domain");
 
 /**
- * @alpha
+ * @public
  */
 export const jsonNumber = builder.leaf("Json.Number", ValueSchema.Number);
 
 /**
- * @alpha
+ * @public
  */
 export const jsonString = builder.leaf("Json.String", ValueSchema.String);
 
 /**
- * @alpha
+ * @public
  */
 export const jsonNull = builder.struct("Json.Null", {});
 
 /**
- * @alpha
+ * @public
  */
 export const jsonBoolean = builder.leaf("Json.Boolean", ValueSchema.Boolean);
 
@@ -33,7 +33,7 @@ const jsonPrimitives = [jsonNumber, jsonString, jsonNull, jsonBoolean] as const;
 
 /**
  * Types allowed as roots of Json content.
- * @alpha
+ * @public
  */
 export const jsonRoot = [() => jsonObject, () => jsonArray, ...jsonPrimitives] as const;
 
@@ -43,7 +43,7 @@ export const jsonRoot = [() => jsonObject, () => jsonArray, ...jsonPrimitives] a
 }
 
 /**
- * @alpha
+ * @public
  */
 export const jsonObject = builder.mapRecursive(
 	"Json.Object",
@@ -51,7 +51,7 @@ export const jsonObject = builder.mapRecursive(
 );
 
 /**
- * @alpha
+ * @public
  */
 export const jsonArray = builder.fieldNodeRecursive(
 	"Json.Array",
@@ -59,6 +59,6 @@ export const jsonArray = builder.fieldNodeRecursive(
 );
 
 /**
- * @alpha
+ * @public
  */
 export const jsonSchema = builder.intoLibrary();

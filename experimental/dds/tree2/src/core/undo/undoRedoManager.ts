@@ -254,7 +254,7 @@ export interface ReversibleCommit<TChange> {
 /**
  * The source of a local commit.
  *
- * @alpha
+ * @public
  */
 export enum LocalCommitSource {
 	/** A typical local commit */

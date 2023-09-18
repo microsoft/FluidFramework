@@ -48,7 +48,7 @@ import { NodeData } from "./types";
  * but even in those cases consider lists of key value pairs for serialization and using `Map`
  * for runtime.
  *
- * @alpha
+ * @public
  */
 export interface FieldMapObject<TChild> {
 	[key: string]: TChild[];
@@ -57,14 +57,14 @@ export interface FieldMapObject<TChild> {
 /**
  * Json comparable tree node, generic over child type.
  * Json compatibility assumes `TChild` is also json compatible.
- * @alpha
+ * @public
  */
 export interface GenericTreeNode<TChild> extends GenericFieldsNode<TChild>, NodeData {}
 
 /**
  * Json comparable field collection, generic over child type.
  * Json compatibility assumes `TChild` is also json compatible.
- * @alpha
+ * @public
  */
 export interface GenericFieldsNode<TChild> {
 	fields?: FieldMapObject<TChild>;
@@ -75,7 +75,7 @@ export interface GenericFieldsNode<TChild> {
  * Can be passed to `JSON.stringify()` to produce a human-readable/editable JSON tree.
  *
  * JsonableTrees should not store empty fields.
- * @alpha
+ * @public
  */
 export interface JsonableTree extends GenericTreeNode<JsonableTree> {}
 

@@ -13,7 +13,7 @@ import { NodeData } from "./types";
 /**
  * Simple in memory tree representation based on Maps.
  * MapTrees should not store empty fields.
- * @alpha
+ * @public
  */
 export interface MapTree extends NodeData {
 	fields: Map<FieldKey, MapTree[]>;

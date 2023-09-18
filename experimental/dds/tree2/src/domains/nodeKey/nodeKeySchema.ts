@@ -15,7 +15,7 @@ const builder = new SchemaBuilder("Node Key Schema");
 
 /**
  * Schema for a node which holds a {@link StableNodeKey}.
- * @alpha
+ * @public
  */
 export const nodeKeyTreeSchema = builder.leaf(nodeKeyTreeIdentifier, ValueSchema.String);
 
@@ -25,7 +25,7 @@ export const nodeKeyTreeSchema = builder.leaf(nodeKeyTreeIdentifier, ValueSchema
  * This object can be expanded into a schema to add the field.
  *
  * Requires including {@link nodeKeySchema}.
- * @alpha
+ * @public
  */
 export const nodeKeyField = {
 	[nodeKeyFieldKey]: SchemaBuilder.field(FieldKinds.nodeKey, nodeKeyTreeSchema),
@@ -34,6 +34,6 @@ export const nodeKeyField = {
 /**
  * The schema library for working with {@link StableNodeKey}s in a tree.
  * Required to use {@link nodeKeyField}.
- * @alpha
+ * @public
  */
 export const nodeKeySchema = builder.intoLibrary();

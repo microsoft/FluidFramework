@@ -470,7 +470,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 
 /**
  * Checks the type of an UnwrappedEditableField.
- * @alpha
+ * @public
  */
 export function isEditableTree(field: UnwrappedEditableField): field is EditableTree {
 	return (

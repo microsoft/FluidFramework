@@ -79,7 +79,7 @@ export type { EnforceTypeCheckTests } from "./typeCheckTests";
  * protected _typeCheck?: MakeNominal;
  * ```
  *
- * @alpha
+ * @public
  */
 export interface MakeNominal {}
 
@@ -92,7 +92,7 @@ export interface MakeNominal {}
  * protected _typeCheck?: Contravariant<T>;
  * ```
  *
- * @alpha
+ * @public
  */
 export interface Contravariant<T> {
 	_removeCovariance?: (_: T) => void;
@@ -107,7 +107,7 @@ export interface Contravariant<T> {
  * protected _typeCheck?: Covariant<T>;
  * ```
  *
- * @alpha
+ * @public
  */
 export interface Covariant<T> {
 	_removeContravariance?: T;
@@ -126,7 +126,7 @@ export interface Covariant<T> {
  * protected _typeCheck?: Bivariant<T>;
  * ```
  *
- * @alpha
+ * @public
  */
 export interface Bivariant<T> {
 	/**
@@ -144,7 +144,7 @@ export interface Bivariant<T> {
  * protected _typeCheck?: Invariant<T>;
  * ```
  *
- * @alpha
+ * @public
  */
 export interface Invariant<T> extends Contravariant<T>, Covariant<T> {}
 
@@ -153,7 +153,7 @@ export interface Invariant<T> extends Contravariant<T>, Covariant<T> {}
  * To use, simply define a type:
  * `type _check = requireTrue<your type check>;`
  *
- * @alpha
+ * @public
  */
 export type requireTrue<_X extends true> = true;
 
@@ -162,14 +162,14 @@ export type requireTrue<_X extends true> = true;
  * To use, simply define a type:
  * `type _check = requireFalse<your type check>;`
  *
- * @alpha
+ * @public
  */
 export type requireFalse<_X extends false> = true;
 
 /**
  * Returns a type parameter that is true iff Source is assignable to Destination.
  *
- * @alpha
+ * @public
  */
 export type isAssignableTo<Source, Destination> = isAny<Source> extends true
 	? true
@@ -180,7 +180,7 @@ export type isAssignableTo<Source, Destination> = isAny<Source> extends true
 /**
  * Returns a type parameter that is true iff Subset is a strict subset of Superset.
  *
- * @alpha
+ * @public
  */
 export type isStrictSubset<Subset, Superset> = isAssignableTo<Subset, Superset> extends false
 	? false
@@ -192,7 +192,7 @@ export type isStrictSubset<Subset, Superset> = isAssignableTo<Subset, Superset> 
  * Returns a type parameter that is true iff A and B are assignable to each other, and neither is any.
  * This is useful for checking if the output of a type meta-function is the expected type.
  *
- * @alpha
+ * @public
  */
 export type areSafelyAssignable<A, B> = eitherIsAny<A, B> extends true
 	? false
@@ -203,14 +203,14 @@ export type areSafelyAssignable<A, B> = eitherIsAny<A, B> extends true
 /**
  * Returns a type parameter that is true iff A is any or B is any.
  *
- * @alpha
+ * @public
  */
 export type eitherIsAny<A, B> = true extends isAny<A> | isAny<B> ? true : false;
 
 /**
  * Returns a type parameter that is true iff T is any.
  *
- * @alpha
+ * @public
  */
 // eslint-disable-next-line @typescript-eslint/ban-types
 export type isAny<T> = boolean extends (T extends {} ? true : false) ? true : false;
@@ -220,6 +220,6 @@ export type isAny<T> = boolean extends (T extends {} ? true : false) ? true : fa
  * To use, simply define a type:
  * `type _check = requireAssignableTo<T, Expected>;`
  *
- * @alpha
+ * @public
  */
 export type requireAssignableTo<_A extends B, B> = true;

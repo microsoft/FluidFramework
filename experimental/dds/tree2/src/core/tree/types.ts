@@ -8,7 +8,7 @@ import { FieldKey, TreeSchemaIdentifier } from "../schema-stored";
 import { brand, Brand, extractFromOpaque, Opaque } from "../../util";
 
 /**
- * @alpha
+ * @public
  */
 export type TreeType = TreeSchemaIdentifier;
 
@@ -23,7 +23,7 @@ export type TreeType = TreeSchemaIdentifier;
  * This has to be a FieldKey since different nodes will have different FieldStoredSchema for it.
  * This makes it prone to collisions and suggests
  * that this intention may be better conveyed by metadata on the ITreeSchema.
- * @alpha
+ * @public
  */
 export const EmptyKey: FieldKey = brand("");
 
@@ -31,19 +31,19 @@ export const EmptyKey: FieldKey = brand("");
  * FieldKey to use for the root of documents in places that need to refer to detached sequences or the root.
  * TODO: if we do want to standardize on a single value for this,
  * it likely should be namespaced or a UUID to avoid risk of collisions.
- * @alpha
+ * @public
  */
 export const rootFieldKey: FieldKey = brand("rootFieldKey");
 
 /**
- * @alpha
+ * @public
  */
 export const rootField = keyAsDetachedField(rootFieldKey);
 
 /**
  * Location of a tree relative to is parent container (which can be a tree or forest).
  *
- * @alpha
+ * @public
  */
 export interface ChildLocation {
 	readonly container: ChildCollection;
@@ -52,7 +52,7 @@ export interface ChildLocation {
 
 /**
  * Wrapper around DetachedField that can be detected at runtime.
- * @alpha
+ * @public
  */
 export interface RootField {
 	readonly key: DetachedField;
@@ -60,7 +60,7 @@ export interface RootField {
 
 /**
  * Identifier for a child collection, either on a node/tree or at the root of a forest.
- * @alpha
+ * @public
  */
 export type ChildCollection = FieldKey | RootField;
 
@@ -79,7 +79,7 @@ export type ChildCollection = FieldKey | RootField;
  *
  * In some APIs DetachedFields are used as FieldKeys on a special implicit root node
  * to simplify the APIs and implementation.
- * @alpha
+ * @public
  */
 export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField">> {}
 
@@ -88,7 +88,7 @@ export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField"
  * This maps detached field to field keys for thus use.
  *
  * @returns `field` as a {@link FieldKey} usable on a special root node serving as a parent of detached fields.
- * @alpha
+ * @public
  */
 export function detachedFieldAsKey(field: DetachedField): FieldKey {
 	return brand(extractFromOpaque(field));
@@ -98,7 +98,7 @@ export function detachedFieldAsKey(field: DetachedField): FieldKey {
  * The inverse of {@link detachedFieldAsKey}.
  * Thus must only be used on {@link FieldKey}s which were produced via {@link detachedFieldAsKey},
  * and with the same scope (ex: forest) as the detachedFieldAsKey was originally from.
- * @alpha
+ * @public
  */
 export function keyAsDetachedField(key: FieldKey): DetachedField {
 	return brand(key);
@@ -108,7 +108,7 @@ export function keyAsDetachedField(key: FieldKey): DetachedField {
  * TODO: integrate this into Schema. Decide how to persist them (need stable Id?). Maybe allow updating field kinds?.
  * TODO: make families of changes per field kind. Build editing APIs from that.
  * TODO: factor ChangeRebaser implementations to support adding new field kinds.
- * @alpha
+ * @public
  */
 export interface FieldKind {
 	readonly name: string;
@@ -126,13 +126,13 @@ export interface FieldKind {
  * Use this type instead of directly using Serializable for both clarity and so the above TODO can be addressed.
  *
  * This is a named interface instead of a Type alias so tooling (ex: refactors) will not replace it with `any`.
- * @alpha
+ * @public
  */
 export interface TreeValue extends Serializable {}
 
 /**
  * Value stored on a node.
- * @alpha
+ * @public
  */
 export type Value = undefined | TreeValue;
 
@@ -143,7 +143,7 @@ export type Value = undefined | TreeValue;
  * Changes to this type might necessitate changes to `EncodedNodeData` or codecs.
  * See persistedTreeTextFormat's module documentation for more details.
  *
- * @alpha
+ * @public
  */
 export interface NodeData {
 	/**

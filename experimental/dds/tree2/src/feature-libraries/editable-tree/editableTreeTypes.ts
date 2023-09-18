@@ -18,25 +18,25 @@ import { EditableTreeContext } from "./editableTreeContext";
 /**
  * A symbol for extracting target from {@link EditableTree} proxies.
  * Useful for debugging and testing, but not part of the public API.
- * @alpha
+ * @public
  */
 export const proxyTargetSymbol: unique symbol = Symbol("editable-tree:proxyTarget");
 
 /**
  * A symbol to get the {@link LocalNodeKey} that identifies this {@link EditableTree} node.
- * @alpha
+ * @public
  */
 export const localNodeKeySymbol: unique symbol = Symbol("editable-tree:localNodeKey");
 
 /**
  * A symbol to get the function, which replaces the content of a field of {@link EditableTree}.
- * @alpha
+ * @public
  */
 export const setField: unique symbol = Symbol("editable-tree:setField()");
 
 /**
  * Status of the tree that a particular node in {@link EditableTree} and {@link UntypedTree} belongs to.
- * @alpha
+ * @public
  */
 export enum TreeStatus {
 	/**
@@ -77,7 +77,7 @@ export enum TreeStatus {
  * When iterating, reads all fields at once before the iteration starts to get a "snapshot" of this node.
  * It might be inefficient regarding resources, but avoids situations
  * when the fields are getting changed while iterating.
- * @alpha
+ * @public
  */
 export interface EditableTree
 	extends Iterable<EditableField>,
@@ -162,7 +162,7 @@ export function areCursors(
 /**
  * EditableTree,
  * but with any type that `isPrimitive` unwrapped into the value if that value is a {@link PrimitiveValue}.
- * @alpha
+ * @public
  */
 export type EditableTreeOrPrimitive = EditableTree | PrimitiveValue;
 
@@ -171,7 +171,7 @@ export type EditableTreeOrPrimitive = EditableTree | PrimitiveValue;
  * - primitives are unwrapped. See {@link EditableTreeOrPrimitive}.
  * - nodes with PrimaryField (see `getPrimaryField`) are unwrapped to {@link EditableField}s.
  * - fields are unwrapped based on their schema's multiplicity. See {@link UnwrappedEditableField}.
- * @alpha
+ * @public
  */
 export type UnwrappedEditableTree = EditableTreeOrPrimitive | EditableField;
 
@@ -180,7 +180,7 @@ export type UnwrappedEditableTree = EditableTreeOrPrimitive | EditableField;
  * Non-sequence multiplicities are unwrapped to the child tree or `undefined` if there is none.
  * Sequence multiplicities are handled with {@link EditableField}.
  * See {@link UnwrappedEditableTree} for how the children themselves are unwrapped.
- * @alpha
+ * @public
  */
 export type UnwrappedEditableField = UnwrappedEditableTree | undefined | EditableField;
 
@@ -199,7 +199,7 @@ export type UnwrappedEditableField = UnwrappedEditableTree | undefined | Editabl
  * It is forbidden to remove the node using the `remvoe` operator, use the `removeNodes()` method instead.
  *
  * TODO: split this interface by field kind.
- * @alpha
+ * @public
  */
 export interface EditableField
 	extends UntypedField<EditableTreeContext, EditableTree, EditableTree, UnwrappedEditableTree> {

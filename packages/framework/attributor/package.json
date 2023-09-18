@@ -13,7 +13,7 @@
 	"sideEffects": false,
 	"main": "dist/index.js",
 	"module": "lib/index.js",
-	"types": "dist/attributor-alpha.d.ts",
+	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",

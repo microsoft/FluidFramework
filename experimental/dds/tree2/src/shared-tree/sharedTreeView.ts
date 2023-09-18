@@ -53,7 +53,7 @@ import {
 
 /**
  * Events for {@link ISharedTreeView}.
- * @alpha
+ * @public
  */
 export interface ViewEvents {
 	/**
@@ -89,7 +89,7 @@ export interface ViewEvents {
  * This includes reading data from the tree and running transactions to mutate the tree.
  * @remarks This interface should not have any implementations other than those provided by the SharedTree package libraries.
  * @privateRemarks Implementations of this interface must implement the {@link branchKey} property.
- * @alpha
+ * @public
  */
 export interface ISharedTreeView extends AnchorLocator {
 	/**
@@ -324,7 +324,7 @@ export function createSharedTreeView(args?: {
  *
  * To avoid updating observers of the view state with intermediate results during a transaction,
  * use {@link ISharedTreeView#fork} and {@link ISharedTreeFork#merge}.
- * @alpha
+ * @public
  */
 export interface ITransaction {
 	/**
@@ -380,7 +380,7 @@ class Transaction implements ITransaction {
  * Branch (like in a version control system) of SharedTree.
  *
  * {@link ISharedTreeView} that has forked off of the main trunk/branch.
- * @alpha
+ * @public
  */
 export interface ISharedTreeBranchView extends ISharedTreeView {
 	/**
@@ -561,7 +561,7 @@ export function schematizeView<TRoot extends FieldSchema>(
  * @param transaction - the transaction function. This will be executed immediately. It is passed `view` as an argument for convenience.
  * If this function returns an `Abort` result then the transaction will be aborted. Otherwise, it will be committed.
  * @returns whether or not the transaction was committed or aborted
- * @alpha
+ * @public
  */
 export function runSynchronous(
 	view: ISharedTreeView,

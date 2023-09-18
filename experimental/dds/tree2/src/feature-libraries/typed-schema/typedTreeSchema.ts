@@ -21,21 +21,21 @@ import { RecursiveTreeSchemaSpecification } from "./schemaBuilder";
 // TODO: tests for this file
 
 /**
- * @alpha
+ * @public
  */
 export interface Fields {
 	readonly [key: string]: FieldSchema;
 }
 
 /**
- * @alpha
+ * @public
  */
 export type NormalizeStructFieldsInner<T extends Fields> = {
 	[Property in keyof T]: NormalizeField<T[Property]>;
 };
 
 /**
- * @alpha
+ * @public
  */
 export type NormalizeStructFields<T extends Fields | undefined> = NormalizeStructFieldsInner<
 	WithDefault<T, Record<string, never>>
@@ -45,7 +45,7 @@ export type NormalizeStructFields<T extends Fields | undefined> = NormalizeStruc
  * T must extend TreeSchemaSpecification.
  * This can not be enforced using TypeScript since doing so breaks recursive type support.
  * See note on SchemaBuilder.fieldRecursive.
- * @sealed @alpha
+ * @sealed @public
  */
 export class TreeSchema<
 	Name extends string = string,
@@ -90,7 +90,7 @@ export class TreeSchema<
 
 /**
  * Convert FieldSchemaSpecification | undefined into FieldSchema.
- * @alpha
+ * @public
  */
 export type NormalizeField<T extends FieldSchema | undefined> = T extends FieldSchema
 	? T
@@ -122,19 +122,19 @@ function normalizeField<T extends FieldSchema | undefined>(t: T): NormalizeField
 
 /**
  * Allow any node (as long as it meets the schema for its own type).
- * @alpha
+ * @public
  */
 export const Any = "Any" as const;
 /**
  * Allow any node (as long as it meets the schema for its own type).
- * @alpha
+ * @public
  */
 export type Any = typeof Any;
 
 /**
  * Tree type, but can be wrapped in a function to allow referring to types before they are declared.
  * This makes recursive and co-recursive types possible.
- * @alpha
+ * @public
  */
 export type LazyTreeSchema = TreeSchema | (() => TreeSchema);
 
@@ -142,13 +142,13 @@ export type LazyTreeSchema = TreeSchema | (() => TreeSchema);
  * Types for use in fields.
  *
  * "Any" is boxed in an array to allow use as variadic parameter.
- * @alpha
+ * @public
  */
 export type AllowedTypes = [Any] | readonly LazyItem<TreeSchema>[];
 
 /**
  * Checks if an {@link AllowedTypes} is {@link (Any:type)}.
- * @alpha
+ * @public
  */
 export function allowedTypesIsAny(t: AllowedTypes): t is [Any] {
 	return t.length === 1 && t[0] === Any;
@@ -156,7 +156,7 @@ export function allowedTypesIsAny(t: AllowedTypes): t is [Any] {
 
 /**
  * `TreeSchemaSpecification` for {@link SchemaBuilder.struct}.
- * @alpha
+ * @public
  */
 export interface StructSchemaSpecification {
 	readonly structFields: RestrictiveReadonlyRecord<string, FieldSchema>;
@@ -164,7 +164,7 @@ export interface StructSchemaSpecification {
 
 /**
  * `TreeSchemaSpecification` for {@link SchemaBuilder.map}.
- * @alpha
+ * @public
  */
 export interface MapSchemaSpecification {
 	readonly mapFields: FieldSchema;
@@ -172,7 +172,7 @@ export interface MapSchemaSpecification {
 
 /**
  * `TreeSchemaSpecification` for {@link SchemaBuilder.leaf}.
- * @alpha
+ * @public
  */
 export interface LeafSchemaSpecification {
 	readonly leafValue: ValueSchema;
@@ -180,7 +180,7 @@ export interface LeafSchemaSpecification {
 
 /**
  * Object for capturing information about a TreeStoredSchema for use at both compile time and runtime.
- * @alpha
+ * @public
  */
 export type TreeSchemaSpecification = [
 	FlattenKeys<
@@ -194,7 +194,7 @@ export type TreeSchemaSpecification = [
  * including functionality that does not have to be kept consistent across versions or deterministic.
  *
  * This can include policy for how to use this schema for "view" purposes, and well as how to expose editing APIs.
- * @sealed @alpha
+ * @sealed @public
  */
 export class FieldSchema<Kind extends FieldKindTypes = FieldKindTypes, Types = AllowedTypes> {
 	/**
@@ -213,7 +213,7 @@ export class FieldSchema<Kind extends FieldKindTypes = FieldKindTypes, Types = A
 // TODO: maybe remove the need for this here? Just use AllowedTypes in view schema?
 /**
  * Convert {@link AllowedTypes} to {@link TreeTypeSet}.
- * @alpha
+ * @public
  */
 export function allowedTypesToTypeSet(t: AllowedTypes): TreeTypeSet {
 	if (allowedTypesIsAny(t)) {

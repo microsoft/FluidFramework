@@ -8,7 +8,7 @@ import { Delta, UpPath } from "../tree";
 
 /**
  * An object that can queried for document data that was deleted in prior revisions.
- * @alpha
+ * @public
  */
 export interface ReadonlyRepairDataStore<TTree = Delta.ProtoNode, TRevisionTag = unknown> {
 	/**
@@ -35,7 +35,7 @@ export interface ReadonlyRepairDataStore<TTree = Delta.ProtoNode, TRevisionTag =
 
 /**
  * An object that captures document data being deleted by changes, and can be queried to retrieve that data.
- * @alpha
+ * @public
  */
 export interface RepairDataStore<TChange, TTree = Delta.ProtoNode, TRevisionTag = unknown>
 	extends ReadonlyRepairDataStore<TTree, TRevisionTag> {

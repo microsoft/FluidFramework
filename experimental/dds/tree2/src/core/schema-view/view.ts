@@ -25,7 +25,7 @@ export enum Compatibility {
  *
  * TODO:
  * Currently this does not account for lazy schema updates, and/or use of adapters.
- * @alpha
+ * @public
  */
 export enum AllowedUpdateType {
 	/**
@@ -44,7 +44,7 @@ export enum AllowedUpdateType {
 }
 
 /**
- * @alpha
+ * @public
  */
 export interface TreeAdapter {
 	readonly output: TreeSchemaIdentifier;
@@ -59,7 +59,7 @@ export interface TreeAdapter {
  *
  * TODO: Support more kinds of adapters
  * TODO: support efficient lookup of adapters
- * @alpha
+ * @public
  */
 export interface Adapters {
 	readonly tree?: readonly TreeAdapter[];

@@ -16,7 +16,7 @@ enum State {
  * A {@link Dependee} which runs a callback once it removes its last dependent.
  * See {@link DisposingDependee.endInitialization}.
  *
- * @alpha
+ * @public
  */
 export class DisposingDependee implements Dependee {
 	private readonly dependents = new Set<Dependent>();

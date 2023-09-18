@@ -45,7 +45,7 @@ export function asMutable<T>(readonly: T): Mutable<T> {
 export const clone = structuredClone;
 
 /**
- * @alpha
+ * @public
  */
 export function fail(message: string): never {
 	throw new Error(message);
@@ -191,7 +191,7 @@ export function* zipIterables<T, U>(
  *
  * Note that this does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
- * @alpha
+ * @public
  */
 export type JsonCompatible =
 	| string
@@ -207,7 +207,7 @@ export type JsonCompatible =
  *
  * Note that this does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
- * @alpha
+ * @public
  */
 export type JsonCompatibleObject = { [P in string]?: JsonCompatible };
 
@@ -216,7 +216,7 @@ export type JsonCompatibleObject = { [P in string]?: JsonCompatible };
  *
  * Note that this does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
- * @alpha
+ * @public
  */
 export type JsonCompatibleReadOnly =
 	| string
@@ -275,7 +275,7 @@ export function assertNonNegativeSafeInteger(index: number) {
  * When the generic code is parameterized with a concrete type, if that type actually does extend `TAssumeToBe`,
  * it will behave like `TInput` was used directly.
  *
- * @alpha
+ * @public
  */
 export type Assume<TInput, TAssumeToBe> = TInput extends TAssumeToBe ? TInput : TAssumeToBe;
 
@@ -375,7 +375,7 @@ export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
 /**
  * Type with a name describing what it is.
  * Typically used with values (like schema) that can be stored in a map, but in some representations have their name/key as a field.
- * @alpha
+ * @public
  */
 export interface Named<TName> {
 	readonly name: TName;

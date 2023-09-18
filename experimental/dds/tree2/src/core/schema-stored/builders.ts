@@ -31,7 +31,7 @@ export const emptyMap: ReadonlyMap<never, never> = new Map<never, never>();
 
 /**
  * Helper for building {@link FieldStoredSchema}.
- * @alpha
+ * @public
  */
 export function fieldSchema(
 	kind: { identifier: FieldKindIdentifier },

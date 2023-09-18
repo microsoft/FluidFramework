@@ -11,7 +11,7 @@ import { Dependent, Dependee } from "./dependencies";
 
 /**
  * State/Environment for a computation which can observe {@link Dependees}.
- * @alpha
+ * @public
  */
 export interface ObservingContext {
 	/**
@@ -29,7 +29,7 @@ export interface ObservingContext {
 /**
  * Ensures this context's computation is a dependant to dependee (adding it if needed).
  * Ensures this context's computation has dependee as a dependee (adding it if needed).
- * @alpha
+ * @public
  */
 export function recordDependency(
 	dependent: ObservingDependent | undefined,
@@ -44,7 +44,7 @@ export function recordDependency(
 
 /**
  * A dependent which can have observations it makes recorded onto it.
- * @alpha
+ * @public
  */
 export interface ObservingDependent extends Dependent {
 	/**

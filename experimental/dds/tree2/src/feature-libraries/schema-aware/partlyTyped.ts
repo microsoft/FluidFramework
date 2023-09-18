@@ -19,7 +19,7 @@ import {
  * TODO:
  * insertNodes and replaceNodes should be made more strongly typed (and moved elsewhere)
  * and/or and API supporting more strongly typed data should be added (elsewhere).
- * @alpha
+ * @public
  */
 export interface UntypedSequenceField<
 	TContext = UntypedTreeContext,
@@ -85,7 +85,7 @@ export interface UntypedSequenceField<
 
 /**
  * A value field in an {@link UntypedTree}.
- * @alpha
+ * @public
  */
 export interface UntypedValueField<
 	TContext = UntypedTreeContext,
@@ -116,7 +116,7 @@ export interface UntypedValueField<
 
 /**
  * A value field in an {@link UntypedTree}.
- * @alpha
+ * @public
  */
 export interface UntypedOptionalField<
 	TContext = UntypedTreeContext,

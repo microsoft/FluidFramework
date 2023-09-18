@@ -16,7 +16,7 @@ import {
 /**
  * A unique ID allocator that returns the output ID for the same input ID.
  *
- * @alpha
+ * @public
  */
 export interface MemoizedIdRangeAllocator {
 	/**
@@ -42,7 +42,7 @@ export interface MemoizedIdRangeAllocator {
 }
 
 /**
- * @alpha
+ * @public
  */
 export interface IdRange {
 	readonly first: ChangesetLocalId;
@@ -50,7 +50,7 @@ export interface IdRange {
 }
 
 /**
- * @alpha
+ * @public
  */
 export const MemoizedIdRangeAllocator = {
 	fromNextId(nextId: number = 0): MemoizedIdRangeAllocator {

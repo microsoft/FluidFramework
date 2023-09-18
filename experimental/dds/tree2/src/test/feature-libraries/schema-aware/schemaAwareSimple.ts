@@ -27,7 +27,7 @@ import {
 import { Assume, _InlineTrick } from "../../../util";
 
 /**
- * @alpha
+ * @public
  */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type ValuePropertyFromSchema<TSchema extends ValueSchema> = {
@@ -36,7 +36,7 @@ export type ValuePropertyFromSchema<TSchema extends ValueSchema> = {
 
 /**
  * Collects the various parts of the API together.
- * @alpha
+ * @public
  */
 export type CollectOptions<TTypedFields, TValueSchema extends ValueSchema | undefined> = Record<
 	string,
@@ -50,7 +50,7 @@ export type CollectOptions<TTypedFields, TValueSchema extends ValueSchema | unde
  *
  * TODO:
  * Extend this to support global fields.
- * @alpha
+ * @public
  */
 export type TypedFields<TFields extends undefined | { [key: string]: FieldSchema }> = [
 	TFields extends { [key: string]: FieldSchema }
@@ -62,7 +62,7 @@ export type TypedFields<TFields extends undefined | { [key: string]: FieldSchema
 
 /**
  * `FieldSchemaTypeInfo` to `TypedTree`
- * @alpha
+ * @public
  */
 export type TypedField<TField extends FieldSchema> = [
 	ApplyMultiplicity<
@@ -73,7 +73,7 @@ export type TypedField<TField extends FieldSchema> = [
 
 /**
  * Adjusts the API for a field based on its Multiplicity.
- * @alpha
+ * @public
  */
 export type ApplyMultiplicity<TMultiplicity extends Multiplicity, TypedChild> = {
 	[Multiplicity.Forbidden]: undefined;
@@ -87,13 +87,13 @@ export type EditableField<TypedChild> = UntypedField & MarkedArrayLike<TypedChil
 
 // TODO: add strong typed `getNode`.
 /**
- * @alpha
+ * @public
  */
 export type EditableSequenceField<TypedChild> = UntypedSequenceField & MarkedArrayLike<TypedChild>;
 
 /**
  * Takes in `AllowedTypes` and returns a TypedTree union.
- * @alpha
+ * @public
  */
 export type AllowedTypesToTypedTrees<T extends AllowedTypes> = [
 	T extends InternalTypedSchemaTypes.FlexList<TreeSchema>
@@ -110,7 +110,7 @@ export type AllowedTypesToTypedTrees<T extends AllowedTypes> = [
 
 /**
  * Takes in `TreeSchema[]` and returns a TypedTree union.
- * @alpha
+ * @public
  */
 export type TypeArrayToTypedTreeArray<T extends readonly TreeSchema[]> = [
 	T extends readonly [infer Head, ...infer Tail]
@@ -128,7 +128,7 @@ export type TypeArrayToTypedTreeArray<T extends readonly TreeSchema[]> = [
  * The arguments here are in an order that makes the truncated strings printed for the types more useful.
  * This is important since this generic type is not inlined when recursing.
  * That mens it will show up in IntelliSense and errors.
- * @alpha
+ * @public
  */
 export type TypedNode<TSchema extends TreeSchema> = CollectOptions<
 	TypedFields<TSchema["structFieldsObject"]>,
@@ -137,7 +137,7 @@ export type TypedNode<TSchema extends TreeSchema> = CollectOptions<
 
 /**
  * Generate a schema aware API for a single tree schema.
- * @alpha
+ * @public
  */
 // TODO: make TypedSchema.FlattenKeys work here for recursive types?
 export type SimpleNodeDataFor<TSchema extends TreeSchema> = TypedNode<TSchema>;

@@ -63,7 +63,7 @@ const OptionalTrue = Type.Optional(Type.Literal(true));
  * Note that `LineageEvent`s with the same revision are not necessarily referring to the same detach.
  * `LineageEvent`s for a given revision can only be meaningfully compared if it is known that they must refer to the
  * same detach.
- * @alpha
+ * @public
  */
 export interface LineageEvent {
 	readonly revision: RevisionTag;
@@ -86,7 +86,7 @@ export const LineageEvent = Type.Object(
 );
 
 /**
- * @alpha
+ * @public
  */
 export interface HasLineage {
 	/**
@@ -108,7 +108,7 @@ export const IdRange = Type.Object({
 });
 
 /**
- * @alpha
+ * @public
  */
 export interface CellId extends ChangeAtomId, HasLineage {
 	/**
