@@ -11,4 +11,3 @@ export {
 	mixinRequestHandler,
 	mixinSummaryHandler,
 } from "./dataStoreRuntime";
-export { LocalChannelStorageService } from "./localChannelStorageService";
