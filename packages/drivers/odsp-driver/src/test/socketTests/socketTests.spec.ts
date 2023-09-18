@@ -137,7 +137,7 @@ describe("OdspDocumentDeltaConnection tests", () => {
 			});
 		} catch (err) {
 			errorhappened = true;
-			assert(isFluidError(err), "should be a fluid error");
+			assert(isFluidError(err), "should be a Fluid error");
 			assert(err.message.includes("TestSocketError"), "error message should match");
 			assert(
 				err.errorType === DriverErrorTypes.genericNetworkError,
@@ -170,7 +170,7 @@ describe("OdspDocumentDeltaConnection tests", () => {
 			});
 		} catch (err) {
 			errorhappened = true;
-			assert(isFluidError(err), "should be a fluid error");
+			assert(isFluidError(err), "should be a Fluid error");
 			assert(err.message.includes("TestSocketError"), "error message should match");
 			assert(
 				err.errorType === DriverErrorTypes.genericNetworkError,
@@ -201,7 +201,7 @@ describe("OdspDocumentDeltaConnection tests", () => {
 			});
 		} catch (err) {
 			errorhappened = true;
-			assert(isFluidError(err), "should be a fluid error");
+			assert(isFluidError(err), "should be a Fluid error");
 			assert(err.message.includes("connect_timeout"), "error message should match");
 			assert(
 				err.errorType === DriverErrorTypes.genericNetworkError,
