@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { SchemaBuilder, SchemaLibrary } from "./schemaBuilder";
-
 export {
 	TreeSchema,
 	FieldSchema,
@@ -21,6 +19,7 @@ export {
 	schemaIsMap,
 	schemaIsStruct,
 	TypedSchemaCollection,
+	RecursiveTreeSchema,
 } from "./typedTreeSchema";
 
 export { ViewSchema } from "./view";
@@ -31,7 +30,11 @@ export {
 	validateStructFieldName,
 	SchemaLibraryData,
 	SchemaLintConfiguration,
-} from "./buildViewSchemaCollection";
+	buildViewSchemaCollection,
+	schemaLintDefault,
+} from "./schemaCollection";
+
+export { FlexList } from "./flexList";
 
 // Below here are things that are used by the above, but not part of the desired API surface.
 import * as InternalTypedSchemaTypes from "./internal";

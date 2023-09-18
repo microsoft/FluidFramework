@@ -7,7 +7,7 @@ import type { Server } from "http";
 
 import cors from "cors";
 import express from "express";
-import fetch from "node-fetch";
+import fetch, { Response } from "node-fetch";
 
 import { delay } from "@fluidframework/core-utils";
 
@@ -20,6 +20,64 @@ import { closeServer } from "./utilities";
 
 const localServicePort = 5002;
 const externalTaskListId = "task-list-1";
+
+/**
+ * Helper function for updating data within the external data service.
+ * It also tests the response for a given code as well and will fail if it doesnt match.
+ */
+const updateExternalData = async (data: ITaskData, taskListId: string): Promise<Response> => {
+	const dataUpdateResponse = await fetch(
+		`http://localhost:${externalDataServicePort}/set-tasks/${taskListId}`,
+		{
+			method: "POST",
+			headers: {
+				"Access-Control-Allow-Origin": "*",
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				taskList: {
+					...data,
+				},
+			}),
+		},
+	);
+
+	return dataUpdateResponse;
+};
+
+/**
+ * Helper function for registering a Fluid session with the customer service.
+ */
+const registerSessionWithCustomerService = async (
+	taskListId: string,
+	containerUrl: string,
+): Promise<Response> => {
+	const registerSessionUrl = await fetch(
+		`http://localhost:${customerServicePort}/register-session-url`,
+		{
+			method: "POST",
+			headers: {
+				"Access-Control-Allow-Origin": "*",
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				externalTaskListId: taskListId,
+				containerUrl,
+			}),
+		},
+	);
+	return registerSessionUrl;
+};
+
+/**
+ * Helper function to configure a local express server meant to simulate the Fluid service.
+ */
+const initializeMockFluidService = (localServiceApp: express.Express): express.Express => {
+	localServiceApp.use(express.json());
+	localServiceApp.use(cors());
+	return localServiceApp;
+};
+
 /**
  * @remarks
  *
@@ -53,6 +111,7 @@ describe("mock-customer-service", () => {
 		customerService = await initializeCustomerService({
 			port: customerServicePort,
 			externalDataServiceWebhookRegistrationUrl: `http://localhost:${externalDataServicePort}/register-for-webhook`,
+			externalDataServiceWebhookUnregistrationUrl: `http://localhost:${externalDataServicePort}/unregister-webhook`,
 			fluidServiceUrl: `http://localhost:${localServicePort}/broadcast-signal`,
 		});
 	});
@@ -74,13 +133,14 @@ describe("mock-customer-service", () => {
 	// So for these tests we have to live with `any`.
 	it("register-for-webhook: Complete data flow", async () => {
 		// Set up mock local service, which will be registered as webhook listener
-		const localServiceApp = express();
-		localServiceApp.use(express.json());
-		localServiceApp.use(cors());
+		const localServiceApp = initializeMockFluidService(express());
 
 		// Bind listener
 		let wasFluidNotifiedForChange = false;
-		localServiceApp.post("/broadcast-signal", (_, result) => {
+		let webhookChangeNotification;
+		localServiceApp.post("/broadcast-signal", (request, result) => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			webhookChangeNotification = request.body;
 			wasFluidNotifiedForChange = true;
 			result.send();
 		});
@@ -109,27 +169,15 @@ describe("mock-customer-service", () => {
 			}
 
 			// Update external data
-			const dataUpdateResponse = await fetch(
-				`http://localhost:${externalDataServicePort}/set-tasks/${externalTaskListId}`,
-				{
-					method: "POST",
-					headers: {
-						"Access-Control-Allow-Origin": "*",
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify({
-						taskList: {
-							42: {
-								name: "Determine the meaning of life",
-								priority: 37,
-							},
-						},
-					}),
+			const taskDataUpdate = {
+				42: {
+					name: "Determine the meaning of life",
+					priority: 37,
 				},
-			);
-
-			if (!dataUpdateResponse.ok) {
-				fail(`Data update failed. Code: ${dataUpdateResponse.status}.`);
+			};
+			const dataUpdateResponse = await updateExternalData(taskDataUpdate, externalTaskListId);
+			if (dataUpdateResponse.status !== 200) {
+				fail(`Data update failed. Code: ${dataUpdateResponse.status}`);
 			}
 
 			// Delay for a bit to ensure time enough for our webhook listener to have been called.
@@ -137,6 +185,9 @@ describe("mock-customer-service", () => {
 
 			// Verify our listener was notified of data change.
 			expect(wasFluidNotifiedForChange).toBe(true);
+			expect(webhookChangeNotification).toMatchObject({
+				data: taskDataUpdate,
+			});
 		} catch (error) {
 			fail(error);
 		} finally {
@@ -144,4 +195,146 @@ describe("mock-customer-service", () => {
 		}
 	});
 	/* eslint-enable @typescript-eslint/no-non-null-assertion */
+
+	it("register-session-url: Complete data flow", async () => {
+		// Set up mock local Fluid service, which will be registered as webhook listener
+		const localServiceApp = initializeMockFluidService(express());
+
+		// Bind listener
+		let webhookChangeNotification;
+		localServiceApp.post("/broadcast-signal", (request, result) => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			webhookChangeNotification = request.body;
+			result.send();
+		});
+
+		const localService: Server = localServiceApp.listen(localServicePort);
+
+		const containerUrl = "https://www.mockFluidFrameworkService.com/container1";
+
+		try {
+			// 1. Register Fluid container URL for notifications with the customer service
+			const registerSessionUrl = await registerSessionWithCustomerService(
+				externalTaskListId,
+				containerUrl,
+			);
+			expect(registerSessionUrl.status).toBe(200);
+
+			// 2. Update external data within the external data service,
+			// which should relay the changes to the customer notification service.
+			const taskDataUpdate = {
+				42: {
+					name: "Determine the meaning of life",
+					priority: 37,
+				},
+			};
+			const dataUpdateResponse = await updateExternalData(taskDataUpdate, externalTaskListId);
+			if (dataUpdateResponse.status !== 200) {
+				fail(`Data update failed. Code: ${dataUpdateResponse.status}`);
+			}
+
+			// Delay for a bit to ensure time enough for our webhook listener to have been called.
+			await delay(1000);
+
+			// Verify our listener was notified of data change.
+			expect(webhookChangeNotification).toMatchObject({
+				containerUrl,
+				externalTaskListId,
+				taskData: taskDataUpdate,
+			});
+		} catch (error) {
+			fail(error);
+		} finally {
+			await closeServer(localService);
+		}
+	});
+
+	it("events-listener: Complete data flow for session-end event", async () => {
+		// Set up mock local Fluid service, which will be registered as webhook listener
+		const localServiceApp = initializeMockFluidService(express());
+
+		// Bind listener
+		let webhookChangeNotification;
+		localServiceApp.post("/broadcast-signal", (request, result) => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			webhookChangeNotification = request.body;
+			result.send();
+		});
+
+		const localService: Server = localServiceApp.listen(localServicePort);
+
+		const containerUrl = "https://www.mockFluidFrameworkService.com/container1";
+
+		try {
+			// 1. Register Fluid container URL for notifications with the customer service
+			const registerSessionUrl = await registerSessionWithCustomerService(
+				externalTaskListId,
+				containerUrl,
+			);
+			expect(registerSessionUrl.status).toBe(200);
+
+			// 2. Update external data within the external data service,
+			// which should relay the changes to the customer notification service.
+			const taskDataUpdate = {
+				42: {
+					name: "Determine the meaning of life",
+					priority: 37,
+				},
+			};
+			const dataUpdateResponse = await updateExternalData(taskDataUpdate, externalTaskListId);
+			expect(dataUpdateResponse.status).toBe(200);
+
+			// Delay for a bit to ensure time enough for our webhook listener to have been called.
+			await delay(1000);
+			// Verify our listener was notified of data change.
+			expect(webhookChangeNotification).toMatchObject({
+				containerUrl,
+				externalTaskListId,
+				taskData: taskDataUpdate,
+			});
+			// Set the webhookChangeNotification variable back to undefined.
+			webhookChangeNotification = undefined;
+
+			// 3. Tell the customer service that the session has ended, which should
+			// unregister the outstanding webhook for the given container URL and task list id
+			const sessionEndEventResponse = await fetch(
+				`http://localhost:${customerServicePort}/events-listener`,
+				{
+					method: "POST",
+					headers: {
+						"Access-Control-Allow-Origin": "*",
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						type: "session-end",
+						containerUrl,
+					}),
+				},
+			);
+			expect(sessionEndEventResponse.status).toBe(200);
+
+			// 4. Update external data within the external data service,
+			// which should relay the changes to the customer notification service.
+			const taskDataUpdate2 = {
+				42: {
+					name: "Some other task name",
+					priority: 52,
+				},
+			};
+			const dataUpdateResponse2 = await updateExternalData(
+				taskDataUpdate2,
+				externalTaskListId,
+			);
+			expect(dataUpdateResponse2.status).toBe(200);
+
+			// Delay for a bit to ensure time enough for our webhook listener to have been called.
+			await delay(1000);
+			// Verify that we did not recieve a new change notification
+			expect(webhookChangeNotification).toBeUndefined();
+		} catch (error) {
+			fail(error);
+		} finally {
+			await closeServer(localService);
+		}
+	});
 });
