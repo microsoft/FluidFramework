@@ -14,6 +14,8 @@ import { DocumentationNodeType } from "./DocumentationNodeType";
  *
  * To build up a grouping of text including line breaks, use this type alongside text nodes within a
  * container type like {@link ParagraphNode} or {@link SpanNode}.
+ *
+ * @public
  */
 export class LineBreakNode implements MultiLineDocumentationNode {
 	/**

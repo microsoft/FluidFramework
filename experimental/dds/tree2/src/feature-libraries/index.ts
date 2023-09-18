@@ -27,8 +27,10 @@ export {
 	FlushableBinderOptions,
 	FlushableDataBinder,
 	MatchPolicy,
+	SubtreePolicy,
 	BindSyntaxTree,
 	indexSymbol,
+	BindPolicy,
 	BindTree,
 	BindTreeDefault,
 	DownPath,
@@ -77,6 +79,7 @@ export {
 	TreeDataContext,
 	normalizeNewFieldContent,
 	NewFieldContent,
+	assertAllowedValue,
 } from "./contextuallyTyped";
 
 export { ForestSummarizer } from "./forestSummarizer";
@@ -237,9 +240,9 @@ export {
 	TypedField,
 	TypedNode,
 	TypedNodeUnion,
-	UntypedEntity,
-	UntypedField as UntypedField2,
-	UntypedTree as UntypedTree2,
+	Tree,
+	TreeField,
+	TreeNode,
 	getTreeContext,
 } from "./editable-tree-2";
 

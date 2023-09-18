@@ -21,13 +21,12 @@ import { DocNode, DocNodeContainer, DocNodeKind, DocPlainText, DocSection } from
 
 import { Heading } from "../../Heading";
 import {
-	AlertKind,
-	AlertNode,
 	DocumentationNode,
 	DocumentationNodeType,
 	DocumentationParentNode,
 	FencedCodeBlockNode,
 	HeadingNode,
+	LineBreakNode,
 	LinkNode,
 	ParagraphNode,
 	PlainTextNode,
@@ -374,19 +373,26 @@ export function createBreadcrumbParagraph(
 }
 
 /**
- * Alert text used in {@link betaAlert}.
+ * Alert text used in {@link alphaWarningSpan}.
  */
-const betaWarning: string =
-	"This API is provided as a preview for developers and may change" +
-	" based on feedback that we receive. Do not use this API in a production environment.";
+export const alphaWarningText: string =
+	"WARNING: This API is provided as an alpha preview and may change without notice. Use at your own risk.";
 
 /**
- * A simple alert containing a warning about using `@beta` APIs.
+ * A simple italic span containing a warning about using `@alpha` APIs.
  */
-export const betaAlert = new AlertNode(
-	[ParagraphNode.createFromPlainText(betaWarning)],
-	AlertKind.Danger,
-);
+export const alphaWarningSpan = SpanNode.createFromPlainText(alphaWarningText, { bold: true });
+
+/**
+ * Alert text used in {@link betaWarningSpan}.
+ */
+export const betaWarningText: string =
+	"WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.";
+
+/**
+ * A simple italic span containing a warning about using `@beta` APIs.
+ */
+export const betaWarningSpan = SpanNode.createFromPlainText(betaWarningText, { bold: true });
 
 /**
  * Renders a section containing the API item's summary comment if it has one.
@@ -465,7 +471,7 @@ export function createThrowsSection(
 
 /**
  * Renders a section containing the {@link https://tsdoc.org/pages/tags/deprecated/ | @deprecated} notice documentation
- * of the provided API item if it has any.
+ * of the provided API item if it is annotated as `@deprecated`.
  *
  * @remarks Displayed as a simple note box containing the deprecation notice comment.
  *
@@ -477,7 +483,7 @@ export function createThrowsSection(
 export function createDeprecationNoticeSection(
 	apiItem: ApiItem,
 	config: Required<ApiItemTransformationConfiguration>,
-): AlertNode | undefined {
+): ParagraphNode | undefined {
 	const docNodeTransformOptions = getDocNodeTransformationOptions(apiItem, config);
 
 	const deprecatedBlock = getDeprecatedBlock(apiItem);
@@ -485,11 +491,16 @@ export function createDeprecationNoticeSection(
 		return undefined;
 	}
 
-	return new AlertNode(
-		[transformDocSection(deprecatedBlock, docNodeTransformOptions)],
-		AlertKind.Warning,
-		"Deprecated",
-	);
+	return new ParagraphNode([
+		SpanNode.createFromPlainText(
+			"WARNING: This API is deprecated and will be removed in a future release.",
+			{ bold: true },
+		),
+		LineBreakNode.Singleton,
+		new SpanNode([transformDocSection(deprecatedBlock, docNodeTransformOptions)], {
+			italic: true,
+		}),
+	]);
 }
 
 /**

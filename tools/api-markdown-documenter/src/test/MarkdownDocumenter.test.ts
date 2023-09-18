@@ -11,16 +11,9 @@ import { compare } from "dir-compare";
 import { Suite } from "mocha";
 
 import { renderApiModelAsMarkdown } from "../RenderMarkdown";
-import {
-	ApiItemTransformationConfiguration,
-	getApiItemTransformationConfigurationWithDefaults,
-	transformApiModel,
-} from "../api-item-transforms";
+import { type ApiItemTransformationConfiguration, transformApiModel } from "../api-item-transforms";
 import { DocumentNode } from "../documentation-domain";
-import {
-	MarkdownRenderConfiguration,
-	getMarkdownRenderConfigurationWithDefaults,
-} from "../markdown-renderer";
+import { type MarkdownRenderConfiguration } from "../markdown-renderer";
 
 /**
  * Temp directory under which all tests that generate files will output their contents.
@@ -29,9 +22,13 @@ const testTempDirPath = Path.resolve(__dirname, "test_temp");
 
 /**
  * Snapshot directory to which generated test data will be copied.
- * Relative to dist/test.
+ * Relative to dist/test
  */
 const snapshotsDirPath = Path.resolve(__dirname, "..", "..", "src", "test", "snapshots");
+
+// Relative to dist/test
+const testDataDirPath = Path.resolve(__dirname, "..", "..", "src", "test", "test-data");
+const testModelPaths = [Path.resolve(testDataDirPath, "simple-suite-test.json")];
 
 /**
  * Simple integration test that validates complete output from simple test package.
@@ -45,29 +42,33 @@ async function snapshotTest(
 	transformConfig: ApiItemTransformationConfiguration,
 	renderConfig: MarkdownRenderConfiguration,
 ): Promise<void> {
-	const outputDirPath = Path.resolve(testTempDirPath, relativeSnapshotDirectoryPath);
-	const snapshotDirPath = Path.resolve(snapshotsDirPath, relativeSnapshotDirectoryPath);
+	const outputDirectoryPath = Path.resolve(testTempDirPath, relativeSnapshotDirectoryPath);
+	const snapshotDirectoryPath = Path.resolve(snapshotsDirPath, relativeSnapshotDirectoryPath);
 
 	// Ensure the output temp and snapshots directories exists (will create an empty ones if they don't).
-	await FileSystem.ensureFolderAsync(outputDirPath);
-	await FileSystem.ensureFolderAsync(snapshotDirPath);
+	await FileSystem.ensureFolderAsync(outputDirectoryPath);
+	await FileSystem.ensureFolderAsync(snapshotDirectoryPath);
 
 	// Clear any existing test_temp data
-	await FileSystem.ensureEmptyFolderAsync(outputDirPath);
+	await FileSystem.ensureEmptyFolderAsync(outputDirectoryPath);
 
 	// Run transformation and rendering logic
-	await renderApiModelAsMarkdown(transformConfig, renderConfig, outputDirPath);
+	const fileSystemConfig = {
+		outputDirectoryPath,
+		newlineKind: NewlineKind.Lf,
+	};
+	await renderApiModelAsMarkdown(transformConfig, renderConfig, fileSystemConfig);
 
 	// Verify against expected contents
-	const result = await compare(outputDirPath, snapshotDirPath, {
+	const result = await compare(outputDirectoryPath, snapshotDirectoryPath, {
 		compareContent: true,
 	});
 
 	if (!result.same) {
-		await FileSystem.ensureEmptyFolderAsync(snapshotDirPath);
+		await FileSystem.ensureEmptyFolderAsync(snapshotDirectoryPath);
 		await FileSystem.copyFilesAsync({
-			sourcePath: outputDirPath,
-			destinationPath: snapshotDirPath,
+			sourcePath: outputDirectoryPath,
+			destinationPath: snapshotDirectoryPath,
 		});
 	}
 
@@ -119,12 +120,12 @@ function apiTestSuite(
 				/**
 				 * Complete transform config used in tests. Generated in `before` hook.
 				 */
-				let transformConfig: Required<ApiItemTransformationConfiguration>;
+				let transformConfig: ApiItemTransformationConfiguration;
 
 				/**
 				 * Complete Markdown render config used in tests. Generated in `before` hook.
 				 */
-				let renderConfig: Required<MarkdownRenderConfiguration>;
+				let renderConfig: MarkdownRenderConfiguration;
 
 				before(async () => {
 					const apiModel = new ApiModel();
@@ -132,14 +133,12 @@ function apiTestSuite(
 						apiModel.loadPackage(apiReportFilePath);
 					}
 
-					transformConfig = getApiItemTransformationConfigurationWithDefaults({
+					transformConfig = {
 						...configProps.transformConfigLessApiModel,
 						apiModel,
-					});
+					};
 
-					renderConfig = getMarkdownRenderConfigurationWithDefaults(
-						configProps.renderConfig,
-					);
+					renderConfig = configProps.renderConfig;
 				});
 
 				it("Ensure no duplicate file paths", () => {
@@ -147,12 +146,12 @@ function apiTestSuite(
 
 					const pathMap = new Map<string, DocumentNode>();
 					for (const document of documents) {
-						if (pathMap.has(document.filePath)) {
+						if (pathMap.has(document.documentPath)) {
 							expect.fail(
 								`Rendering generated multiple documents to be rendered to the same file path.`,
 							);
 						} else {
-							pathMap.set(document.filePath, document);
+							pathMap.set(document.documentPath, document);
 						}
 					}
 				});
@@ -180,9 +179,7 @@ describe("api-markdown-documenter full-suite tests", () => {
 				uriRoot: ".",
 				frontMatter: "<!-- Front Matter! -->",
 			},
-			renderConfig: {
-				newlineKind: NewlineKind.Lf,
-			},
+			renderConfig: {},
 		},
 
 		/**
@@ -199,9 +196,7 @@ describe("api-markdown-documenter full-suite tests", () => {
 				frontMatter: (documentItem): string =>
 					`<!--- This is sample front-matter for API item "${documentItem.displayName}" -->`,
 			},
-			renderConfig: {
-				newlineKind: NewlineKind.Lf,
-			},
+			renderConfig: {},
 		},
 
 		/**
@@ -235,7 +230,6 @@ describe("api-markdown-documenter full-suite tests", () => {
 				hierarchyBoundaries: [], // No additional hierarchy beyond the package level
 			},
 			renderConfig: {
-				newlineKind: NewlineKind.Lf,
 				startingHeadingLevel: 2,
 			},
 		},
@@ -251,10 +245,5 @@ describe("api-markdown-documenter full-suite tests", () => {
 	});
 
 	// Run the test suite against a sample report
-	apiTestSuite(
-		"simple-suite-test",
-		// Relative to dist/test
-		[Path.resolve(__dirname, "test-data", "simple-suite-test.json")],
-		configs,
-	);
+	apiTestSuite("simple-suite-test", testModelPaths, configs);
 });

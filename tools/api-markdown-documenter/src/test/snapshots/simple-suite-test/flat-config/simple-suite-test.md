@@ -72,7 +72,7 @@ const foo = bar;
 
 | Function | Alerts | Return Type | Description |
 | --- | --- | --- | --- |
-| [testFunction(testParameter, testOptionalParameter)](docs/simple-suite-test#testfunction-function) |  | TTypeParameter | Test function |
+| [testFunction(testParameter, testOptionalParameter)](docs/simple-suite-test#testfunction-function) | `ALPHA` | TTypeParameter | Test function |
 | [testFunctionReturningInlineType()](docs/simple-suite-test#testfunctionreturninginlinetype-function) |  | {     foo: number;     bar: [TestEnum](docs/simple-suite-test#testenum-enum); } | Test function that returns an inline type |
 | [testFunctionReturningIntersectionType()](docs/simple-suite-test#testfunctionreturningintersectiontype-function) | `DEPRECATED` | [TestEmptyInterface](docs/simple-suite-test#testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface)&lt;number&gt; | Test function that returns an inline type |
 | [testFunctionReturningUnionType()](docs/simple-suite-test#testfunctionreturninguniontype-function) |  | string \| [TestInterface](docs/simple-suite-test#testinterface-interface) | Test function that returns an inline type |
@@ -81,7 +81,7 @@ const foo = bar;
 
 | Variable | Alerts | Modifiers | Description |
 | --- | --- | --- | --- |
-| [testConst](docs/simple-suite-test#testconst-variable) |  | `readonly` | Test Constant |
+| [testConst](docs/simple-suite-test#testconst-variable) | `BETA` | `readonly` | Test Constant |
 | [testConstWithEmptyDeprecatedBlock](docs/simple-suite-test#testconstwithemptydeprecatedblock-variable) | `DEPRECATED` | `readonly` | I have a `@deprecated` tag with an empty comment block. |
 
 # Namespaces
@@ -870,9 +870,11 @@ Here are some remarks about the type alias
 
 # Function Details
 
-## testFunction {#testfunction-function}
+## testFunction (ALPHA) {#testfunction-function}
 
 Test function
+
+**WARNING: This API is provided as an alpha preview and may change without notice. Use at your own risk.**
 
 ### Signature {#testfunction-signature}
 
@@ -922,12 +924,11 @@ An inline type
 
 ## testFunctionReturningIntersectionType {#testfunctionreturningintersectiontype-function}
 
-> **\[Warning\]: Deprecated**
-> 
-> This is a test deprecation notice. Here is a [link](docs/simple-suite-test#testfunctionreturninguniontype-function) to something else!
-> 
-
 Test function that returns an inline type
+
+**WARNING: This API is deprecated and will be removed in a future release.**
+
+_This is a test deprecation notice. Here is a_ [_link_](docs/simple-suite-test#testfunctionreturninguniontype-function)<!-- --> _to something else!_
 
 ### Signature {#testfunctionreturningintersectiontype-signature}
 
@@ -959,9 +960,11 @@ A union type
 
 # Variable Details
 
-## testConst {#testconst-variable}
+## testConst (BETA) {#testconst-variable}
 
 Test Constant
+
+**WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.**
 
 ### Signature {#testconst-signature}
 
@@ -975,11 +978,9 @@ Here are some remarks about the variable
 
 ## testConstWithEmptyDeprecatedBlock {#testconstwithemptydeprecatedblock-variable}
 
-> **\[Warning\]: Deprecated**
-> 
-> 
-
 I have a `@deprecated` tag with an empty comment block.
+
+**WARNING: This API is deprecated and will be removed in a future release.**
 
 ### Signature {#testconstwithemptydeprecatedblock-signature}
 
