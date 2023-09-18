@@ -87,5 +87,10 @@
 	"storageUrl": "",
 	"tokenRevocation": {
 		"enable": false
+	},
+	"system": {
+		"httpServer": {
+			"connectionTimeoutMs": 0
+		}
 	}
 }
