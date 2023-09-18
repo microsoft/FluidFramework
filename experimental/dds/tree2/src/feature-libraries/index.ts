@@ -79,6 +79,7 @@ export {
 	TreeDataContext,
 	normalizeNewFieldContent,
 	NewFieldContent,
+	assertAllowedValue,
 } from "./contextuallyTyped";
 
 export { ForestSummarizer } from "./forestSummarizer";

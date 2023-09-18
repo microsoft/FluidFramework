@@ -761,7 +761,7 @@ export class MockRepairDataStore<TChange> implements RepairDataStore<TChange> {
 	}
 
 	public getValue(revision: RevisionTag, path: UpPath): Value {
-		return brand("MockRevivedValue");
+		return "MockRevivedValue";
 	}
 }
 
