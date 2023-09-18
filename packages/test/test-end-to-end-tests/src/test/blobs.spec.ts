@@ -642,11 +642,9 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 		container1.disconnect();
 		container1.connect();
 		await waitForContainerConnection(container1);
-
+		// sending some ops to confirm pending blob is not blocking other ops
 		dataStore1._root.set("key", "value");
 		dataStore1._root.set("another key", "another value");
-		resolveUploadBlob();
-		await assert.doesNotReject(handleP);
 
 		const container2 = await provider.loadTestContainer(testContainerConfig);
 		const dataStore2 = await requestFluidObject<ITestDataObject>(container2, "default");
@@ -655,6 +653,8 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 		assert.strictEqual(dataStore2._root.get("key"), "value");
 		assert.strictEqual(dataStore2._root.get("another key"), "another value");
 
+		resolveUploadBlob();
+		await assert.doesNotReject(handleP);
 		runtimeStorage.uploadBlob = delayedUploadBlob;
 	});
 });
