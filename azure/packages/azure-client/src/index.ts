@@ -65,6 +65,13 @@ export {
 } from "./interfaces";
 
 /**
+ * Test API with comprehensive TSDoc documentation.
+ * {@label TEST TSDoc}
+ * @public
+ */
+export { testTSDocBellsAndWhistles } from "./utils";
+
+/**
  * Interface for the token provider.
  * {@label External Dependencies}
  * @public

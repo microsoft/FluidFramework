@@ -62,8 +62,6 @@ export function isAzureLocalConnectionConfig(
  * @remarks
  * This API is designed to showcase all possible features of TSDoc and API Extractor.
  *
- * @alpha
- * @beta
  * @defaultValue 'N/A'
  * @decorator TEST
  * @deprecated Use another API instead.
@@ -76,23 +74,27 @@ export function isAzureLocalConnectionConfig(
  * ```javascript
  * const result = testTSDocBellsAndWhistles();
  * ```
- * @experimental
- * @internal
+ *
  * @see {@link https://example.com | Example URL}
  * @override
  * @packageDocumentation
  * @param param1 - Description of the first parameter.
  * @privateRemarks
  * This is private and should not appear in public documentation.
- * @public
  * @readonly
  * @returns Does not return anything.
  * @sealed
  * @see {@link https://example.com | Another Example URL}
  * @throws Throws an error if something goes wrong.
  * @typeParam T - A generic type parameter.
+ * @experimental
  * @virtual
- * Internal usage notes.
+ *
+ * Release Tags choose one
+ * @alpha
+ * \@beta
+ * \@internal
+ * \@public
  */
 export function testTSDocBellsAndWhistles<T>(param1: string): void {
 	// Function implementation here.
