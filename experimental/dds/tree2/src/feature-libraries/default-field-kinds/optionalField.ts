@@ -140,8 +140,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 					if (childId === "self") {
 						// childChange refers to the node that existed at the start of `change`,
 						// Thus in the composition, it should be referred to by whatever deletes that node in the future, which is what
-						// currentChildNodeChanges tracks (note that since we handle childChanges before fieldChange, this applies to
-						// if the current change does delete that node).
+						// currentChildNodeChanges tracks
 						currentChildNodeChanges.push(taggedChildChange);
 					} else {
 						addChildChange(childId, taggedChildChange);
@@ -344,8 +343,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 							);
 						}
 					} else {
-						// `over` didn't remove the node (its fieldChange is undefined), and so `overChildChange`
-						// refers to the same node
+						// `over` didn't remove the node (its fieldChange is undefined)
 						const rebasedChild = rebaseChild(
 							childChange,
 							overChildChange,
@@ -424,9 +422,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 			const childChanges: typeof change.childChanges = [];
 			for (const [id, childChange] of change.childChanges) {
-				// TODO: Maybe need an 'self' clause here.
-				// Prior impl is weird in that it doesn't seem to check that rebaseChild
-				// call is legit at all.
 				const rebasedChange = rebaseChild(childChange, overChildChanges.get(id));
 				if (rebasedChange !== undefined) {
 					childChanges.push([id, rebasedChange]);
