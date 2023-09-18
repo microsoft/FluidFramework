@@ -208,7 +208,7 @@ describe("mock-customer-service", () => {
 		const containerUrl = "https://www.mockFluidFrameworkService.com/container1";
 
 		try {
-			// 1. Register Fluid container url for notifications with the customer service
+			// 1. Register Fluid container URL for notifications with the customer service
 			const registerSessionUrl = await registerSessionWithCustomerService(
 				externalTaskListId,
 				containerUrl,
@@ -263,7 +263,7 @@ describe("mock-customer-service", () => {
 		const containerUrl = "https://www.mockFluidFrameworkService.com/container1";
 
 		try {
-			// 1. Register Fluid container url for notifications with the customer service
+			// 1. Register Fluid container URL for notifications with the customer service
 			const registerSessionUrl = await registerSessionWithCustomerService(
 				externalTaskListId,
 				containerUrl,
@@ -293,7 +293,7 @@ describe("mock-customer-service", () => {
 			webhookChangeNotification = undefined;
 
 			// 3. Tell the customer service that the session has ended, which should
-			// unregister the outstanding webhook for the given container url and task list id
+			// unregister the outstanding webhook for the given container URL and task list id
 			const sessionEndEventResponse = await fetch(
 				`http://localhost:${customerServicePort}/events-listener`,
 				{
