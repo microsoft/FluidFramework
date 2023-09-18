@@ -17,13 +17,8 @@ import {
 	responseToException,
 	SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils";
-import {
-	assert,
-	bufferToString,
-	Deferred,
-	stringToBuffer,
-	TypedEventEmitter,
-} from "@fluidframework/common-utils";
+import { assert, Deferred } from "@fluidframework/core-utils";
+import { bufferToString, stringToBuffer, TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
@@ -43,7 +38,11 @@ import {
 } from "@fluidframework/runtime-definitions";
 
 import { ContainerRuntime, TombstoneResponseHeaderKey } from "./containerRuntime";
-import { sendGCUnexpectedUsageEvent, sweepAttachmentBlobsKey, throwOnTombstoneLoadKey } from "./gc";
+import {
+	sendGCUnexpectedUsageEvent,
+	disableAttachmentBlobSweepKey,
+	throwOnTombstoneLoadKey,
+} from "./gc";
 import { Throttler, formExponentialFn, IThrottler } from "./throttler";
 import { summarizerClientType } from "./summary";
 import { IBlobMetadata } from "./metadata";
@@ -760,11 +759,11 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	 * Delete attachment blobs that are sweep ready.
 	 * @param sweepReadyBlobRoutes - The routes of blobs that are sweep ready and should be deleted. These routes will
 	 * be based off of local ids.
-	 * @returns - The routes of blobs that were deleted.
+	 * @returns The routes of blobs that were deleted.
 	 */
 	public deleteSweepReadyNodes(sweepReadyBlobRoutes: string[]): string[] {
 		// If sweep for attachment blobs is not enabled, return empty list indicating nothing is deleted.
-		if (this.mc.config.getBoolean(sweepAttachmentBlobsKey) !== true) {
+		if (this.mc.config.getBoolean(disableAttachmentBlobSweepKey) === true) {
 			return [];
 		}
 

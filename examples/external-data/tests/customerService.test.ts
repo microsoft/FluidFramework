@@ -9,7 +9,7 @@ import cors from "cors";
 import express from "express";
 import fetch from "node-fetch";
 
-import { delay } from "@fluidframework/common-utils";
+import { delay } from "@fluidframework/core-utils";
 
 import { initializeCustomerService } from "../src/mock-customer-service";
 import { customerServicePort } from "../src/mock-customer-service-interface";
@@ -99,6 +99,7 @@ describe("mock-customer-service", () => {
 					},
 					body: JSON.stringify({
 						url: `http://localhost:${localServicePort}/broadcast-signal?externalTaskListId=${externalTaskListId}`,
+						externalTaskListId,
 					}),
 				},
 			);

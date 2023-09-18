@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	ConnectionMode,
 	IClient,
@@ -35,28 +36,23 @@ import {
 	getLumberBaseProperties,
 } from "@fluidframework/server-services-telemetry";
 import {
+	ConnectionCountLogger,
 	createRoomJoinMessage,
 	createNackMessage,
 	createRoomLeaveMessage,
+	createRuntimeMessage,
 	generateClientId,
-	ConnectionCountLogger,
+	IRuntimeSignalEnvelope,
 } from "../utils";
+import {
+	IBroadcastSignalEventPayload,
+	ICollaborationSessionEvents,
+	IConnectedClient,
+	IRoom,
+} from "./interfaces";
+export { IBroadcastSignalEventPayload, ICollaborationSessionEvents, IRoom } from "./interfaces";
 
 const summarizerClientType = "summarizer";
-
-interface IRoom {
-	tenantId: string;
-
-	documentId: string;
-}
-
-interface IConnectedClient {
-	connection: IConnected;
-
-	details: IClient;
-
-	connectVersions: string[];
-}
 
 function getRoomId(room: IRoom) {
 	return `${room.tenantId}/${room.documentId}`;
@@ -231,6 +227,7 @@ export function configureWebSocketServices(
 	verifyMaxMessageSize?: boolean,
 	socketTracker?: core.IWebSocketTracker,
 	revokedTokenChecker?: core.IRevokedTokenChecker,
+	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 ) {
 	webSocketServer.on("connection", (socket: core.IWebSocket) => {
 		// Map from client IDs on this connection to the object ID and user info.
@@ -617,6 +614,49 @@ export function configureWebSocketServices(
 					socket,
 				);
 			}
+
+			// Set up listener to forward signal to clients in the collaboration session when the broadcast-signal endpoint is called
+			collaborationSessionEventEmitter?.on(
+				"broadcastSignal",
+				(broadcastSignal: IBroadcastSignalEventPayload) => async () => {
+					const { signalRoom, signalContent } = broadcastSignal;
+
+					// No-op if the room (collab session) that signal came in from is different
+					// than the current room. We reuse websockets so there could be multiple rooms
+					// that we are sending the signal to, and we don't want to do that.
+					if (
+						signalRoom.documentId === room.documentId &&
+						signalRoom.tenantId === room.tenantId
+					) {
+						try {
+							const contents = JSON.parse(signalContent) as IRuntimeSignalEnvelope;
+							const runtimeMessage = createRuntimeMessage(contents);
+
+							socket
+								.emitToRoom(getRoomId(signalRoom), "signal", runtimeMessage)
+								.catch((error: any) => {
+									const errorMsg = `Failed to broadcast signal from external API.`;
+									Lumberjack.error(
+										errorMsg,
+										getLumberBaseProperties(
+											signalRoom.documentId,
+											signalRoom.tenantId,
+										),
+										error,
+									);
+								});
+						} catch (error) {
+							const errorMsg = `broadcast-signal conent body is malformed`;
+							return handleServerError(
+								logger,
+								errorMsg,
+								claims.documentId,
+								claims.tenantId,
+							);
+						}
+					}
+				},
+			);
 
 			return {
 				connection: connectedMessage,

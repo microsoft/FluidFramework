@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/routerlicious-driver",
-	"version": "2.0.0-internal.6.3.0",
+	"version": "2.0.0-internal.6.4.0",
 	"description": "Socket.IO + Git implementation of Fluid service API",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -23,7 +23,7 @@
 		"build:genver": "gen-version",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"ci:build:docs": "api-extractor run --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/* ../../../_api-extractor-temp/",
-		"clean": "rimraf --glob \"dist\" \"lib\" \"*.tsbuildinfo\" \"*.build.log\"",
+		"clean": "rimraf --glob 'dist' 'lib' '*.tsbuildinfo' '*.build.log' '_api-extractor-temp' 'nyc'",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -32,14 +32,14 @@
 		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
-		"test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
-		"test:mocha": "mocha --ignore 'dist/test/types/*' --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
+		"test:coverage": "c8 npm test",
+		"test:mocha": "mocha --ignore 'dist/test/types/*' --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
-	"nyc": {
+	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
@@ -60,15 +60,16 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/common-utils": "^1.1.1",
+		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/driver-base": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
-		"@fluidframework/gitresources": "^1.0.0",
-		"@fluidframework/protocol-base": "^1.0.0",
+		"@fluidframework/gitresources": "^1.0.1",
+		"@fluidframework/protocol-base": "^1.0.1",
 		"@fluidframework/protocol-definitions": "^1.1.0",
-		"@fluidframework/server-services-client": "^1.0.0",
+		"@fluidframework/server-services-client": "^1.0.1",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"cross-fetch": "^3.1.5",
 		"json-stringify-safe": "5.0.1",
@@ -77,12 +78,12 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.23.0",
+		"@fluid-tools/build-cli": "^0.22.0",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.23.0",
+		"@fluidframework/build-tools": "^0.22.0",
 		"@fluidframework/eslint-config-fluid": "^2.1.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@fluidframework/routerlicious-driver-previous": "npm:@fluidframework/routerlicious-driver@2.0.0-internal.6.1.1",
+		"@fluidframework/routerlicious-driver-previous": "npm:@fluidframework/routerlicious-driver@2.0.0-internal.6.3.0",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/mocha": "^9.1.1",
 		"@types/nock": "^9.3.0",
@@ -91,7 +92,7 @@
 		"@types/url-parse": "1.4.4",
 		"@types/uuid": "^9.0.2",
 		"axios": "^0.26.0",
-		"concurrently": "^7.6.0",
+		"c8": "^7.7.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.6.0",
@@ -99,18 +100,13 @@
 		"mocha-json-output-reporter": "^2.0.1",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
-		"nock": "^10.0.1",
-		"nyc": "^15.1.0",
+		"nock": "^13.3.3",
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",
 		"sinon": "^7.4.2",
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"InterfaceDeclaration_IRouterliciousDriverPolicies": {
-				"forwardCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

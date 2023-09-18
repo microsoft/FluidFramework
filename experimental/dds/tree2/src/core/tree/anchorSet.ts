@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { createEmitter, ISubscribable } from "../../events";
 import {
 	brand,
@@ -19,7 +19,7 @@ import { FieldKey } from "../schema-stored";
 import { UpPath } from "./pathTree";
 import { Value, detachedFieldAsKey, DetachedField, EmptyKey } from "./types";
 import { PathVisitor } from "./visitPath";
-import { visitDelta, DeltaVisitor } from "./visitDelta";
+import { DeltaVisitor } from "./visitDelta";
 import * as Delta from "./delta";
 
 /**
@@ -213,6 +213,8 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 	// TODO: anchor system could be optimized a bit to avoid the maps (Anchor is ref to Path, path has ref count).
 	// For now use this more encapsulated approach with maps.
 	private readonly anchorToPath: Map<Anchor, PathNode> = new Map();
+
+	private activeVisitor?: DeltaVisitor;
 
 	public on<K extends keyof AnchorSetRootEvents>(
 		eventName: K,
@@ -556,128 +558,154 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 	/**
 	 * Updates the anchors according to the changes described in the given delta
 	 */
-	public applyDelta(delta: Delta.Root): void {
-		let parentField: FieldKey | undefined;
-		let parent: UpPath | undefined;
+	public acquireVisitor(): DeltaVisitor {
+		assert(
+			this.activeVisitor === undefined,
+			0x767 /* Must release existing visitor before acquiring another */,
+		);
 		const moveTable = new Map<Delta.MoveId, UpPath>();
 
-		// Run `withNode` on anchorNode for parent if there is such an anchorNode.
-		// If at root, run `withRoot` instead.
-		const maybeWithNode: (
-			withNode: (anchorNode: PathNode) => void,
-			withRoot?: () => void,
-		) => void = (withNode, withRoot) => {
-			if (parent === undefined && withRoot !== undefined) {
-				withRoot();
-			} else {
-				assert(parent !== undefined, 0x5b0 /* parent must exist */);
-				// TODO:Perf:
-				// When traversing to a depth D when there are not anchors in that subtree, this goes O(D^2).
-				// Delta traversal should early out in this case because no work is needed (and all move outs are known to not contain anchors).
-				parent = this.internalizePath(parent);
-				if (parent instanceof PathNode) {
-					withNode(parent);
+		const visitor = {
+			anchorSet: this,
+			// Run `withNode` on anchorNode for parent if there is such an anchorNode.
+			// If at root, run `withRoot` instead.
+			maybeWithNode(withNode: (anchorNode: PathNode) => void, withRoot?: () => void) {
+				if (this.parent === undefined && withRoot !== undefined) {
+					withRoot();
+				} else {
+					assert(this.parent !== undefined, 0x5b0 /* parent must exist */);
+					// TODO:Perf:
+					// When traversing to a depth D when there are not anchors in that subtree, this goes O(D^2).
+					// Delta traversal should early out in this case because no work is needed (and all move outs are known to not contain anchors).
+					this.parent = this.anchorSet.internalizePath(this.parent);
+					if (this.parent instanceof PathNode) {
+						withNode(this.parent);
+					}
 				}
-			}
-		};
-
-		// Lookup table for path visitors collected from {@link AnchorEvents.visitSubtreeChanging} emitted events.
-		// The key is the path of the node that the visitor is registered on. The code ensures that the path visitor visits only the appropriate subtrees
-		// by maintaining the mapping only during time between the {@link DeltaVisitor.enterNode} and {@link DeltaVisitor.exitNode} calls for a given anchorNode.
-		const pathVisitors: Map<PathNode, Set<PathVisitor>> = new Map();
-
-		const visitor: DeltaVisitor = {
-			onDelete: (start: number, count: number): void => {
-				assert(parentField !== undefined, 0x3a7 /* Must be in a field to delete */);
-				maybeWithNode(
+			},
+			// Lookup table for path visitors collected from {@link AnchorEvents.visitSubtreeChanging} emitted events.
+			// The key is the path of the node that the visitor is registered on. The code ensures that the path visitor visits only the appropriate subtrees
+			// by maintaining the mapping only during time between the {@link DeltaVisitor.enterNode} and {@link DeltaVisitor.exitNode} calls for a given anchorNode.
+			pathVisitors: new Map<PathNode, Set<PathVisitor>>(),
+			parentField: undefined as FieldKey | undefined,
+			parent: undefined as UpPath | undefined,
+			free() {
+				assert(
+					this.anchorSet.activeVisitor !== undefined,
+					0x768 /* Multiple free calls for same visitor */,
+				);
+				this.anchorSet.activeVisitor = undefined;
+			},
+			onDelete(start: number, count: number): void {
+				assert(this.parentField !== undefined, 0x3a7 /* Must be in a field to delete */);
+				this.maybeWithNode(
 					(p) => {
 						p.events.emit("childrenChanging", p);
 					},
-					() => this.events.emit("childrenChanging", this),
+					() => this.anchorSet.events.emit("childrenChanging", this.anchorSet),
 				);
 				const upPath: UpPath = {
-					parent,
-					parentField,
+					parent: this.parent,
+					parentField: this.parentField,
 					parentIndex: start,
 				};
-				for (const visitors of pathVisitors.values()) {
+				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
 						pathVisitor.onDelete(upPath, count);
 					}
 				}
 
-				this.removeChildren(
+				this.anchorSet.removeChildren(
 					{
-						parent,
-						parentField,
+						parent: this.parent,
+						parentField: this.parentField,
 						parentIndex: start,
 					},
 					count,
 				);
 			},
-			onInsert: (start: number, content: Delta.ProtoNodes): void => {
-				assert(parentField !== undefined, 0x3a8 /* Must be in a field to insert */);
-				maybeWithNode(
+			onInsert(start: number, content: Delta.ProtoNodes): void {
+				assert(this.parentField !== undefined, 0x3a8 /* Must be in a field to insert */);
+				this.maybeWithNode(
 					(p) => p.events.emit("childrenChanging", p),
-					() => this.events.emit("childrenChanging", this),
+					() => this.anchorSet.events.emit("childrenChanging", this.anchorSet),
 				);
 				const upPath: UpPath = {
-					parent,
-					parentField,
+					parent: this.parent,
+					parentField: this.parentField,
 					parentIndex: start,
 				};
-				for (const visitors of pathVisitors.values()) {
+				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
 						pathVisitor.onInsert(upPath, content);
 					}
 				}
 
-				this.offsetChildren(
+				this.anchorSet.offsetChildren(
 					{
-						parent,
-						parentField,
+						parent: this.parent,
+						parentField: this.parentField,
 						parentIndex: start,
 					},
 					content.length,
 				);
 			},
-			onMoveOut: (start: number, count: number, id: Delta.MoveId): void => {
-				assert(parentField !== undefined, 0x3a9 /* Must be in a field to move out */);
-				maybeWithNode(
+			onMoveOut(start: number, count: number, id: Delta.MoveId): void {
+				assert(this.parentField !== undefined, 0x3a9 /* Must be in a field to move out */);
+				this.maybeWithNode(
 					(p) => p.events.emit("childrenChanging", p),
-					() => this.events.emit("childrenChanging", this),
+					() => this.anchorSet.events.emit("childrenChanging", this.anchorSet),
 				);
 
-				const fieldKey = this.createEmptyDetachedField();
-				const source = { parent, parentField, parentIndex: start };
-				const destination = { parent: this.root, parentField: fieldKey, parentIndex: 0 };
-				this.moveChildren(source, destination, count);
+				const fieldKey = this.anchorSet.createEmptyDetachedField();
+				const source = {
+					parent: this.parent,
+					parentField: this.parentField,
+					parentIndex: start,
+				};
+				const destination = {
+					parent: this.anchorSet.root,
+					parentField: fieldKey,
+					parentIndex: 0,
+				};
+				this.anchorSet.moveChildren(source, destination, count);
 				moveTable.set(id, destination);
 			},
-			onMoveIn: (start: number, count: number, id: Delta.MoveId): void => {
-				assert(parentField !== undefined, 0x3aa /* Must be in a field to move in */);
-				maybeWithNode(
+			onMoveIn(start: number, count: number, id: Delta.MoveId): void {
+				assert(this.parentField !== undefined, 0x3aa /* Must be in a field to move in */);
+				this.maybeWithNode(
 					(p) => p.events.emit("childrenChanging", p),
-					() => this.events.emit("childrenChanging", this),
+					() => this.anchorSet.events.emit("childrenChanging", this.anchorSet),
 				);
 				const sourcePath =
 					moveTable.get(id) ?? fail("Must visit a move in after its move out");
 				moveTable.delete(id);
-				this.moveChildren(sourcePath, { parent, parentField, parentIndex: start }, count);
+				this.anchorSet.moveChildren(
+					sourcePath,
+					{ parent: this.parent, parentField: this.parentField, parentIndex: start },
+					count,
+				);
 			},
-			enterNode: (index: number): void => {
-				assert(parentField !== undefined, 0x3ab /* Must be in a field to enter node */);
-				parent = { parent, parentField, parentIndex: index };
-				parentField = undefined;
-				maybeWithNode((p) => {
+			enterNode(index: number): void {
+				assert(
+					this.parentField !== undefined,
+					0x3ab /* Must be in a field to enter node */,
+				);
+				this.parent = {
+					parent: this.parent,
+					parentField: this.parentField,
+					parentIndex: index,
+				};
+				this.parentField = undefined;
+				this.maybeWithNode((p) => {
 					// avoid multiple pass side-effects
-					if (!pathVisitors.has(p)) {
+					if (!this.pathVisitors.has(p)) {
 						const visitors: (PathVisitor | void)[] = p.events.emitAndCollect(
 							"subtreeChanging",
 							p,
 						);
 						if (visitors.length > 0) {
-							pathVisitors.set(
+							this.pathVisitors.set(
 								p,
 								new Set(visitors.filter((v): v is PathVisitor => v !== undefined)),
 							);
@@ -685,24 +713,27 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					}
 				});
 			},
-			exitNode: (index: number): void => {
-				assert(parent !== undefined, 0x3ac /* Must have parent node */);
-				maybeWithNode((p) => {
+			exitNode(index: number): void {
+				assert(this.parent !== undefined, 0x3ac /* Must have parent node */);
+				this.maybeWithNode((p) => {
 					// Remove subtree path visitors added at this node if there are any
-					pathVisitors.delete(p);
+					this.pathVisitors.delete(p);
 				});
-				parentField = parent.parentField;
-				parent = parent.parent;
+				const parent = this.parent;
+				assert(parent !== undefined, 0x769 /* Unable to exit root node */);
+				this.parentField = parent.parentField;
+				this.parent = parent.parent;
 			},
-			enterField: (key: FieldKey): void => {
-				parentField = key;
+			enterField(key: FieldKey): void {
+				this.parentField = key;
 			},
-			exitField: (key: FieldKey): void => {
-				parentField = undefined;
+			exitField(key: FieldKey): void {
+				this.parentField = undefined;
 			},
 		};
 		this.events.emit("treeChanging", this);
-		visitDelta(delta, visitor);
+		this.activeVisitor = visitor;
+		return visitor;
 	}
 }
 

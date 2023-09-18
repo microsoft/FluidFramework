@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
-import { FieldKey, TreeSchemaIdentifier, TreeTypeSet, ValueSchema } from "../../core";
+import { assert } from "@fluidframework/core-utils";
+import { EmptyKey, FieldKey, TreeSchemaIdentifier, TreeTypeSet, ValueSchema } from "../../core";
 import {
 	MakeNominal,
 	Assume,
@@ -45,7 +45,7 @@ export type NormalizeStructFields<T extends Fields | undefined> = NormalizeStruc
  * T must extend TreeSchemaSpecification.
  * This can not be enforced using TypeScript since doing so breaks recursive type support.
  * See note on SchemaBuilder.fieldRecursive.
- * @sealed @alpha
+ * @alpha
  */
 export class TreeSchema<
 	Name extends string = string,
@@ -62,7 +62,10 @@ export class TreeSchema<
 		Assume<T, TreeSchemaSpecification>["structFields"]
 	>;
 
-	public readonly mapFields?: FieldSchema;
+	public readonly mapFields: WithDefault<
+		Assume<T, TreeSchemaSpecification>["mapFields"],
+		undefined
+	>;
 	// WithDefault is needed to convert unknown to undefined here (missing properties show up as unknown in types).
 	public readonly leafValue: WithDefault<
 		Assume<T, TreeSchemaSpecification>["leafValue"],
@@ -80,12 +83,74 @@ export class TreeSchema<
 			Assume<T, TreeSchemaSpecification>["structFields"]
 		>(this.info.structFields);
 		this.structFields = objectToMapTyped(this.structFieldsObject);
-		this.mapFields = this.info.mapFields;
+		this.mapFields = this.info.mapFields as WithDefault<
+			Assume<T, TreeSchemaSpecification>["mapFields"],
+			undefined
+		>;
 		this.leafValue = this.info.leafValue as WithDefault<
 			Assume<T, TreeSchemaSpecification>["leafValue"],
 			undefined
 		>;
 	}
+}
+
+// TODO: TreeSchema should be a union of the more specific schema type below, rather than containing all the info for all of them.
+// When this change is made, FieldNodeSchema should be properly separated from StructSchema,
+// and the bellow type checks could be done with instanceof tests.
+
+/**
+ * @alpha
+ */
+export type MapSchema = TreeSchema & MapSchemaSpecification;
+/**
+ * @alpha
+ */
+export type LeafSchema = TreeSchema & LeafSchemaSpecification;
+
+/**
+ * TODO: this includes FieldNodeSchema when it shouldn't
+ * @alpha
+ */
+export type StructSchema = TreeSchema & {
+	[P in keyof (MapSchemaSpecification & LeafSchemaSpecification)]?: undefined;
+};
+
+/**
+ * @alpha
+ *
+ * This is the subset of StructSchema that uses {@link EmptyKey} so the the old (editable-tree 1) API unboxes it.
+ * TODO: Once that API is removed, this can be cleaned up and properly separated from StructSchema
+ */
+export type FieldNodeSchema = StructSchema & {
+	/**
+	 * The fields of this node.
+	 * Only uses the {@link EmptyKey}.
+	 *
+	 * TODO: this extra indirection will be removed when refactoring TreeSchema (see other related TODOs for details).
+	 */
+	structFieldsObject: {
+		/**
+		 * The field this node wraps.
+		 * It is under the {@link EmptyKey}.
+		 */
+		[""]: FieldSchema;
+	};
+};
+
+export function schemaIsMap(schema: TreeSchema): schema is MapSchema {
+	return schema.mapFields !== undefined;
+}
+
+export function schemaIsLeaf(schema: TreeSchema): schema is LeafSchema {
+	return schema.leafValue !== undefined;
+}
+
+export function schemaIsFieldNode(schema: TreeSchema): schema is FieldNodeSchema {
+	return schema.structFields.size === 1 && schema.structFields.has(EmptyKey);
+}
+
+export function schemaIsStruct(schema: TreeSchema): schema is StructSchema {
+	return !schemaIsMap(schema) && !schemaIsLeaf(schema) && !schemaIsFieldNode(schema);
 }
 
 /**
@@ -167,8 +232,15 @@ export interface StructSchemaSpecification {
  * @alpha
  */
 export interface MapSchemaSpecification {
-	readonly mapFields: FieldSchema;
+	readonly mapFields: MapFieldSchema;
 }
+
+/**
+ * Subset of FieldSchema thats legal in maps.
+ * This requires empty to be a valid value for the map.
+ * @alpha
+ */
+export type MapFieldSchema = FieldSchema<typeof FieldKinds.optional | typeof FieldKinds.sequence>;
 
 /**
  * `TreeSchemaSpecification` for {@link SchemaBuilder.leaf}.

@@ -17,7 +17,7 @@
 		"build": "concurrently npm:build:compile npm:lint",
 		"build:compile": "npm run tsc && npm run typetests:gen && npm run build:test",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"clean": "rimraf --glob \"dist\" \"lib\" \"*.tsbuildinfo\" \"*.build.log\"",
+		"clean": "rimraf --glob 'dist' 'lib' '*.tsbuildinfo' '*.build.log' 'nyc'",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -25,13 +25,13 @@
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --ignore-path ../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../.prettierignore",
-		"test": "mocha --recursive dist/test/*.spec.js --unhandled-rejections=strict",
-		"test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
+		"test": "mocha --recursive dist/test/*.spec.js",
+		"test:coverage": "c8 npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
-	"nyc": {
+	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
@@ -52,6 +52,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
+		"@fluidframework/common-definitions": "^1.0.0",
 		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/gitresources": "workspace:~",
 		"@fluidframework/protocol-base": "workspace:~",
@@ -75,9 +76,9 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.23.0",
+		"@fluid-tools/build-cli": "^0.22.0",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.23.0",
+		"@fluidframework/build-tools": "^0.22.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/server-lambdas-previous": "npm:@fluidframework/server-lambdas@0.1040.1000",
 		"@fluidframework/server-test-utils": "workspace:~",
@@ -89,10 +90,10 @@
 		"@types/node": "^18.17.1",
 		"@types/sinon": "^9.0.9",
 		"@types/uuid": "^9.0.2",
-		"concurrently": "^7.6.0",
+		"c8": "^7.7.1",
+		"concurrently": "^8.2.1",
 		"eslint": "~8.27.0",
 		"mocha": "^10.2.0",
-		"nyc": "^15.1.0",
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",
 		"sinon": "^9.2.3",

@@ -20,8 +20,6 @@ import { DirectoryFactory, IDirectoryNewStorageFormat, SharedDirectory } from ".
 import { IDirectory, IDirectoryValueChanged, ISharedMap } from "../../interfaces";
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils";
 
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-
 function createConnectedDirectory(
 	id: string,
 	runtimeFactory: MockContainerRuntimeFactory,
@@ -29,7 +27,7 @@ function createConnectedDirectory(
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
-		deltaConnection: containerRuntime.createDeltaConnection(),
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
 	const directory = new SharedDirectory(id, dataStoreRuntime, DirectoryFactory.Attributes);
@@ -322,7 +320,7 @@ describe("Directory", () => {
 					);
 				});
 
-				// Test dispose on subdirectory delete
+				// Test dispose on subDirectory delete
 				let subDirectoryDisposed = false;
 				const subDirectory = directory.createSubDirectory("rock");
 				subDirectory.on("disposed", (value: IDirectory) => {
@@ -394,7 +392,6 @@ describe("Directory", () => {
 					directory.set(undefined as unknown as string, "testValue");
 				}, "Should throw for key of undefined");
 				assert.throws(() => {
-					// eslint-disable-next-line unicorn/no-null
 					directory.set(null as unknown as string, "testValue");
 				}, "Should throw for key of null");
 			});
@@ -402,11 +399,10 @@ describe("Directory", () => {
 			it("Rejects subdirectories with undefined and null names", () => {
 				assert.throws(() => {
 					directory.createSubDirectory(undefined as unknown as string);
-				}, "Should throw for undefined subdirectory name");
+				}, "Should throw for undefined subDirectory name");
 				assert.throws(() => {
-					// eslint-disable-next-line unicorn/no-null
 					directory.createSubDirectory(null as unknown as string);
-				}, "Should throw for null subdirectory name");
+				}, "Should throw for null subDirectory name");
 			});
 		});
 
@@ -479,9 +475,9 @@ describe("Directory", () => {
 				directory.set("testKey", "testValue");
 				assert.equal(directory.get("testKey"), "testValue", "Failed to set testKey");
 				directory.createSubDirectory("testSubDir").set("testSubKey", "testSubValue");
-				const subdir = directory.getWorkingDirectory("testSubDir");
-				assert(subdir);
-				assert.equal(subdir.get("testSubKey"), "testSubValue", "Failed to set testSubKey");
+				const subDir = directory.getWorkingDirectory("testSubDir");
+				assert(subDir);
+				assert.equal(subDir.get("testSubKey"), "testSubValue", "Failed to set testSubKey");
 			});
 
 			it("Should populate the directory from a basic JSON object (old format)", async () => {
@@ -664,7 +660,7 @@ describe("Directory", () => {
 				const services2 = MockSharedObjectServices.createFromSummary(
 					directory.getAttachSummary().summary,
 				);
-				services2.deltaConnection = containerRuntime2.createDeltaConnection();
+				services2.deltaConnection = dataStoreRuntime2.createDeltaConnection();
 
 				const directory2 = new SharedDirectory(
 					"directory2",
@@ -675,28 +671,27 @@ describe("Directory", () => {
 
 				// Now connect the first SharedDirectory
 				dataStoreRuntime.local = false;
-				const containerRuntime1 =
-					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 				const services1 = {
-					deltaConnection: containerRuntime1.createDeltaConnection(),
+					deltaConnection: dataStoreRuntime.createDeltaConnection(),
 					objectStorage: new MockStorage(undefined),
 				};
 				directory.connect(services1);
 
-				// Create a sub direcotry in a sub directory and queue up keys to be set in it
+				// Create a sub directory in a sub directory and queue up keys to be set in it
 				const someParentDir1 = directory.createSubDirectory("lists");
 
-				const subdir1 = someParentDir1.createSubDirectory("ListLevels-0");
-				subdir1.set("random1", 1);
-				subdir1.set("random2", 2);
+				const subDir1 = someParentDir1.createSubDirectory("ListLevels-0");
+				subDir1.set("random1", 1);
+				subDir1.set("random2", 2);
 
 				// Let everything get stamped and round-trip back to us
 				containerRuntimeFactory.processAllMessages();
 
 				// Now, let's be tricky. Let's set one of the keys again...
 				const dir1 = directory.getSubDirectory("lists");
-				const subdirDir11 = dir1?.getSubDirectory("ListLevels-0");
-				subdirDir11?.set("random1", 3);
+				const subDirDir11 = dir1?.getSubDirectory("ListLevels-0");
+				subDirDir11?.set("random1", 3);
 
 				// ... then delete the sub directory and its parent, create a new sub directory
 				// and parent with the exact same paths. We need to set at least one of the same
@@ -706,8 +701,8 @@ describe("Directory", () => {
 				directory.deleteSubDirectory("lists");
 
 				const someParentDir2 = directory.createSubDirectory("lists");
-				const subdir2 = someParentDir2.createSubDirectory("ListLevels-0");
-				subdir2.set("random1", 4);
+				const subDir2 = someParentDir2.createSubDirectory("ListLevels-0");
+				subDir2.set("random1", 4);
 
 				// Let everything get stamped and round-trip back to us
 				containerRuntimeFactory.processAllMessages();
@@ -717,8 +712,8 @@ describe("Directory", () => {
 				const testSubDir2 = directory2
 					.getSubDirectory("lists")
 					?.getSubDirectory("ListLevels-0");
-				assert(testSubDir1 !== undefined, "second level subdir should exists in dir1");
-				assert(testSubDir2 !== undefined, "second level subdir should exists in dir2");
+				assert(testSubDir1 !== undefined, "second level subDir should exists in dir1");
+				assert(testSubDir2 !== undefined, "second level subDir should exists in dir2");
 				assert(testSubDir1.get("random1") === 4, "value should be correct in dir1");
 				assert(testSubDir2.get("random1") === 4, "value should be correct in dir2");
 				assert(
@@ -743,7 +738,7 @@ describe("Directory", () => {
 				const services2 = MockSharedObjectServices.createFromSummary(
 					directory.getAttachSummary().summary,
 				);
-				services2.deltaConnection = containerRuntime2.createDeltaConnection();
+				services2.deltaConnection = dataStoreRuntime2.createDeltaConnection();
 
 				const directory2 = new SharedDirectory(
 					"directory2",
@@ -754,12 +749,11 @@ describe("Directory", () => {
 
 				// Now load another directory to send op from that.
 				const dataStoreRuntime3 = new MockFluidDataStoreRuntime();
-				const containerRuntime3 =
-					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime3);
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime3);
 				const services3 = MockSharedObjectServices.createFromSummary(
 					directory.getAttachSummary().summary,
 				);
-				services3.deltaConnection = containerRuntime3.createDeltaConnection();
+				services3.deltaConnection = dataStoreRuntime3.createDeltaConnection();
 
 				const directory3 = new SharedDirectory(
 					"directory3",
@@ -809,7 +803,7 @@ describe("Directory", () => {
 				const services2 = MockSharedObjectServices.createFromSummary(
 					directory.getAttachSummary().summary,
 				);
-				services2.deltaConnection = containerRuntime2.createDeltaConnection();
+				services2.deltaConnection = dataStoreRuntime2.createDeltaConnection();
 
 				const directory2 = new SharedDirectory(
 					"directory2",
@@ -820,10 +814,9 @@ describe("Directory", () => {
 
 				// Now connect the first SharedDirectory
 				dataStoreRuntime.local = false;
-				const containerRuntime1 =
-					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 				const services1 = {
-					deltaConnection: containerRuntime1.createDeltaConnection(),
+					deltaConnection: dataStoreRuntime.createDeltaConnection(),
 					objectStorage: new MockStorage(undefined),
 				};
 				directory.connect(services1);
@@ -841,7 +834,7 @@ describe("Directory", () => {
 				);
 
 				// Set a new value for the same key in the second SharedDirectory.
-				const newValue = "newvalue";
+				const newValue = "newValue";
 				directory2.set(key, newValue);
 
 				// Process the message.
@@ -860,7 +853,7 @@ describe("Directory", () => {
 				);
 			});
 
-			it("should correctly process subdirectory operations sent in local state", async () => {
+			it("should correctly process subDirectory operations sent in local state", async () => {
 				// Set the data store runtime to local.
 				dataStoreRuntime.local = true;
 
@@ -876,7 +869,7 @@ describe("Directory", () => {
 				const services2 = MockSharedObjectServices.createFromSummary(
 					directory.getAttachSummary().summary,
 				);
-				services2.deltaConnection = containerRuntime2.createDeltaConnection();
+				services2.deltaConnection = dataStoreRuntime2.createDeltaConnection();
 
 				const directory2 = new SharedDirectory(
 					"directory2",
@@ -887,10 +880,9 @@ describe("Directory", () => {
 
 				// Now connect the first SharedDirectory
 				dataStoreRuntime.local = false;
-				const containerRuntime1 =
-					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 				const services1 = {
-					deltaConnection: containerRuntime1.createDeltaConnection(),
+					deltaConnection: dataStoreRuntime.createDeltaConnection(),
 					objectStorage: new MockStorage(undefined),
 				};
 				directory.connect(services1);
@@ -910,7 +902,7 @@ describe("Directory", () => {
 
 				assertEquivalentDirectories(directory, directory2);
 
-				// Delete the subdirectory in the second SharedDirectory.
+				// Delete the subDirectory in the second SharedDirectory.
 				directory2.deleteSubDirectory(subDirName);
 
 				// Process the message.
@@ -1313,7 +1305,7 @@ describe("Directory", () => {
 				assert.ok(expectedDirectories.size === 0);
 			});
 
-			it("Can get a subdirectory", () => {
+			it("Can get a subDirectory", () => {
 				const fooDirectory = directory1.createSubDirectory("foo");
 				const barDirectory = directory1.createSubDirectory("bar");
 				fooDirectory.set("testKey", "testValue");
@@ -1350,7 +1342,7 @@ describe("Directory", () => {
 				assert.equal(barDirectory2.absolutePath, "/foo/bar");
 			});
 
-			it("Can get and set keys from a subdirectory using relative paths", () => {
+			it("Can get and set keys from a subDirectory using relative paths", () => {
 				const fooDirectory = directory1.createSubDirectory("foo");
 				const barDirectory = directory1.createSubDirectory("bar");
 				fooDirectory.set("testKey", "testValue");
@@ -1360,13 +1352,13 @@ describe("Directory", () => {
 				containerRuntimeFactory.processAllMessages();
 
 				// Verify the local SharedDirectory
-				const testSubdir = directory1.getWorkingDirectory("/foo");
-				assert(testSubdir);
-				assert.equal(testSubdir.has("testKey"), true);
-				assert.equal(testSubdir.has("garbage"), false);
-				assert.equal(testSubdir.get("testKey"), "testValue");
-				assert.equal(testSubdir.get("testKey2"), "testValue2");
-				assert.equal(testSubdir.get("testKey3"), undefined);
+				const testSubDir = directory1.getWorkingDirectory("/foo");
+				assert(testSubDir);
+				assert.equal(testSubDir.has("testKey"), true);
+				assert.equal(testSubDir.has("garbage"), false);
+				assert.equal(testSubDir.get("testKey"), "testValue");
+				assert.equal(testSubDir.get("testKey2"), "testValue2");
+				assert.equal(testSubDir.get("testKey3"), undefined);
 
 				// Verify the remote SharedDirectory
 				const barSubDir = directory2.getWorkingDirectory("/foo");
@@ -1378,24 +1370,24 @@ describe("Directory", () => {
 				assert.equal(barSubDir.get("testKey3"), undefined);
 
 				// Set value in sub directory1.
-				testSubdir.set("fromSubdir", "testValue4");
+				testSubDir.set("fromSubDir", "testValue4");
 
 				containerRuntimeFactory.processAllMessages();
 
 				// Verify the local sub directory1
 				assert.equal(
-					directory1.getWorkingDirectory("foo")?.get("fromSubdir"),
+					directory1.getWorkingDirectory("foo")?.get("fromSubDir"),
 					"testValue4",
 				);
 
 				// Verify the remote sub directory1
 				assert.equal(
-					directory2.getWorkingDirectory("foo")?.get("fromSubdir"),
+					directory2.getWorkingDirectory("foo")?.get("fromSubDir"),
 					"testValue4",
 				);
 			});
 
-			it("raises the containedValueChanged event when keys are set and deleted from a subdirectory", () => {
+			it("raises the containedValueChanged event when keys are set and deleted from a subDirectory", () => {
 				directory1.createSubDirectory("foo");
 				directory1.createSubDirectory("bar");
 				containerRuntimeFactory.processAllMessages();
@@ -1424,22 +1416,22 @@ describe("Directory", () => {
 				assert.strictEqual(
 					called1,
 					1,
-					"containedValueChanged on local foo subdirectory after set()",
+					"containedValueChanged on local foo subDirectory after set()",
 				);
 				assert.strictEqual(
 					called2,
 					1,
-					"containedValueChanged on remote foo subdirectory after set()",
+					"containedValueChanged on remote foo subDirectory after set()",
 				);
 				assert.strictEqual(
 					called3,
 					0,
-					"containedValueChanged on local bar subdirectory after set()",
+					"containedValueChanged on local bar subDirectory after set()",
 				);
 				assert.strictEqual(
 					called4,
 					0,
-					"containedValueChanged on remote bar subdirectory after set()",
+					"containedValueChanged on remote bar subDirectory after set()",
 				);
 
 				foo1.delete("testKey");
@@ -1448,26 +1440,26 @@ describe("Directory", () => {
 				assert.strictEqual(
 					called1,
 					2,
-					"containedValueChanged on local subdirectory after delete()",
+					"containedValueChanged on local subDirectory after delete()",
 				);
 				assert.strictEqual(
 					called2,
 					2,
-					"containedValueChanged on remote subdirectory after delete()",
+					"containedValueChanged on remote subDirectory after delete()",
 				);
 				assert.strictEqual(
 					called3,
 					0,
-					"containedValueChanged on local bar subdirectory after delete()",
+					"containedValueChanged on local bar subDirectory after delete()",
 				);
 				assert.strictEqual(
 					called4,
 					0,
-					"containedValueChanged on remote bar subdirectory after delete()",
+					"containedValueChanged on remote bar subDirectory after delete()",
 				);
 			});
 
-			it("Can be cleared from the subdirectory", () => {
+			it("Can be cleared from the subDirectory", () => {
 				const fooDirectory = directory1.createSubDirectory("foo");
 				const barDirectory = directory1.createSubDirectory("bar");
 				fooDirectory.set("testKey", "testValue");
@@ -1475,9 +1467,9 @@ describe("Directory", () => {
 				barDirectory.set("testKey3", "testValue3");
 				directory1.set("testKey", "testValue4");
 				directory1.set("testKey2", "testValue5");
-				const testSubdir = directory1.getWorkingDirectory("/foo");
-				assert(testSubdir);
-				testSubdir.clear();
+				const testSubDir = directory1.getWorkingDirectory("/foo");
+				assert(testSubDir);
+				testSubDir.clear();
 
 				containerRuntimeFactory.processAllMessages();
 
@@ -1500,7 +1492,7 @@ describe("Directory", () => {
 				assert.equal(directory2.getWorkingDirectory(".")?.get("testKey2"), "testValue5");
 			});
 
-			it("Can delete keys from the subdirectory", () => {
+			it("Can delete keys from the subDirectory", () => {
 				const fooDirectory = directory1.createSubDirectory("foo");
 				const barDirectory = directory1.createSubDirectory("bar");
 				fooDirectory.set("testKey", "testValue");
@@ -1508,12 +1500,12 @@ describe("Directory", () => {
 				barDirectory.set("testKey3", "testValue3");
 				directory1.set("testKey", "testValue4");
 				directory1.set("testKey2", "testValue5");
-				const testSubdirFoo = directory1.getWorkingDirectory("/foo");
-				assert(testSubdirFoo);
-				testSubdirFoo.delete("testKey2");
-				const testSubdirBar = directory1.getWorkingDirectory("/bar");
-				assert(testSubdirBar);
-				testSubdirBar.delete("testKey3");
+				const testSubDirFoo = directory1.getWorkingDirectory("/foo");
+				assert(testSubDirFoo);
+				testSubDirFoo.delete("testKey2");
+				const testSubDirBar = directory1.getWorkingDirectory("/bar");
+				assert(testSubDirBar);
+				testSubDirBar.delete("testKey3");
 
 				containerRuntimeFactory.processAllMessages();
 
@@ -1540,7 +1532,7 @@ describe("Directory", () => {
 				assert.equal(directory2.get("testKey2"), "testValue5");
 			});
 
-			it("Knows the size of the subdirectory", () => {
+			it("Knows the size of the subDirectory", () => {
 				const fooDirectory = directory1.createSubDirectory("foo");
 				const barDirectory = directory1.createSubDirectory("bar");
 				fooDirectory.set("testKey", "testValue");
@@ -1552,61 +1544,61 @@ describe("Directory", () => {
 				containerRuntimeFactory.processAllMessages();
 
 				// Verify the local SharedDirectory
-				const testSubdirFoo = directory1.getWorkingDirectory("/foo");
-				assert(testSubdirFoo);
-				assert.equal(testSubdirFoo.size, 2);
+				const testSubDirFoo = directory1.getWorkingDirectory("/foo");
+				assert(testSubDirFoo);
+				assert.equal(testSubDirFoo.size, 2);
 				// Verify the remote SharedDirectory
-				const testSubdirFoo2 = directory2.getWorkingDirectory("/foo");
-				assert(testSubdirFoo2);
-				assert.equal(testSubdirFoo2.size, 2);
+				const testSubDirFoo2 = directory2.getWorkingDirectory("/foo");
+				assert(testSubDirFoo2);
+				assert.equal(testSubDirFoo2.size, 2);
 
-				testSubdirFoo.delete("testKey2");
+				testSubDirFoo.delete("testKey2");
 
 				containerRuntimeFactory.processAllMessages();
 
 				// Verify the local SharedDirectory
-				assert.equal(testSubdirFoo.size, 1);
+				assert.equal(testSubDirFoo.size, 1);
 				// Verify the remote SharedDirectory
-				assert.equal(testSubdirFoo2.size, 1);
+				assert.equal(testSubDirFoo2.size, 1);
 
 				directory1.delete("testKey");
 
 				containerRuntimeFactory.processAllMessages();
 
 				// Verify the local SharedDirectory
-				assert.equal(testSubdirFoo.size, 1);
+				assert.equal(testSubDirFoo.size, 1);
 				// Verify the remote SharedDirectory
-				assert.equal(testSubdirFoo2.size, 1);
+				assert.equal(testSubDirFoo2.size, 1);
 
-				const testSubdirBar = directory1.getWorkingDirectory("/bar");
-				assert(testSubdirBar);
-				testSubdirBar.delete("testKey3");
+				const testSubDirBar = directory1.getWorkingDirectory("/bar");
+				assert(testSubDirBar);
+				testSubDirBar.delete("testKey3");
 
 				// Verify the local SharedDirectory
-				assert.equal(testSubdirFoo.size, 1);
+				assert.equal(testSubDirFoo.size, 1);
 				// Verify the remote SharedDirectory
-				assert.equal(testSubdirFoo2.size, 1);
+				assert.equal(testSubDirFoo2.size, 1);
 
 				directory1.clear();
 
 				containerRuntimeFactory.processAllMessages();
 
 				// Verify the local SharedDirectory
-				assert.equal(testSubdirFoo.size, 1);
+				assert.equal(testSubDirFoo.size, 1);
 				// Verify the remote SharedDirectory
-				assert.equal(testSubdirFoo2.size, 1);
+				assert.equal(testSubDirFoo2.size, 1);
 
-				testSubdirFoo.clear();
+				testSubDirFoo.clear();
 
 				containerRuntimeFactory.processAllMessages();
 
 				// Verify the local SharedDirectory
-				assert.equal(testSubdirFoo.size, 0);
+				assert.equal(testSubDirFoo.size, 0);
 				// Verify the remote SharedDirectory
-				assert.equal(testSubdirFoo2.size, 0);
+				assert.equal(testSubDirFoo2.size, 0);
 			});
 
-			it("Can get a subdirectory from a subdirectory", () => {
+			it("Can get a subDirectory from a subDirectory", () => {
 				const fooDirectory = directory1.createSubDirectory("foo");
 				const barDirectory = directory1.createSubDirectory("bar");
 				const bazDirectory = barDirectory.createSubDirectory("baz");
@@ -1618,21 +1610,21 @@ describe("Directory", () => {
 				containerRuntimeFactory.processAllMessages();
 
 				// Verify the local SharedDirectory
-				const barSubdir = directory1.getWorkingDirectory("/bar");
-				assert.ok(barSubdir);
-				const bazSubDir = barSubdir.getWorkingDirectory("./baz");
+				const barSubDir = directory1.getWorkingDirectory("/bar");
+				assert.ok(barSubDir);
+				const bazSubDir = barSubDir.getWorkingDirectory("./baz");
 				assert.ok(bazSubDir);
 				assert.equal(bazSubDir.get("testKey4"), "testValue4");
 
 				// Verify the remote SharedDirectory
-				const barSubdir2 = directory2.getWorkingDirectory("/bar");
-				assert.ok(barSubdir2);
-				const bazSubDir2 = barSubdir2.getWorkingDirectory("./baz");
+				const barSubDir2 = directory2.getWorkingDirectory("/bar");
+				assert.ok(barSubDir2);
+				const bazSubDir2 = barSubDir2.getWorkingDirectory("./baz");
 				assert.ok(bazSubDir2);
 				assert.equal(bazSubDir2.get("testKey4"), "testValue4");
 			});
 
-			it("Can delete a child subdirectory", () => {
+			it("Can delete a child subDirectory", () => {
 				const fooDirectory = directory1.createSubDirectory("foo");
 				const barDirectory = directory1.createSubDirectory("bar");
 				const bazDirectory = barDirectory.createSubDirectory("baz");
@@ -1653,7 +1645,7 @@ describe("Directory", () => {
 				assert.equal(barDirectory2.getWorkingDirectory("baz"), undefined);
 			});
 
-			it("Can delete a child subdirectory with children", () => {
+			it("Can delete a child subDirectory with children", () => {
 				const fooDirectory = directory1.createSubDirectory("foo");
 				const barDirectory = directory1.createSubDirectory("bar");
 				const bazDirectory = barDirectory.createSubDirectory("baz");
@@ -1882,7 +1874,7 @@ describe("Directory", () => {
 				assert.ok(expectedDirectories2.size === 0);
 			});
 
-			it("Only creates a subdirectory once", () => {
+			it("Only creates a subDirectory once", () => {
 				const fooDirectory = directory1.createSubDirectory("foo");
 				fooDirectory.set("testKey", "testValue");
 				const fooDirectory2 = directory1.createSubDirectory("foo");
@@ -1971,7 +1963,6 @@ describe("Directory", () => {
 
 				const subMapId = `subMap-${this.subMapCount}`;
 
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				const deletedHandle = fooDirectory.get(subMapId);
 				assert(deletedHandle, "Route must be added before deleting");
 
@@ -2010,5 +2001,3 @@ describe("Directory", () => {
 		runGCTests(GCSharedDirectoryProvider);
 	});
 });
-
-/* eslint-enable @typescript-eslint/no-unsafe-member-access */

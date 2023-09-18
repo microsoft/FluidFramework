@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { Type } from "@sinclair/typebox";
 import structuredClone from "@ungap/structured-clone";
 import {
@@ -42,9 +42,7 @@ export function asMutable<T>(readonly: T): Mutable<T> {
 	return readonly as Mutable<T>;
 }
 
-export function clone<T>(original: T): T {
-	return structuredClone(original);
-}
+export const clone = structuredClone;
 
 /**
  * @alpha
@@ -230,7 +228,7 @@ export type JsonCompatibleReadOnly =
 	| { readonly [P in string]?: JsonCompatibleReadOnly };
 
 /**
- * @remarks - TODO: Audit usage of this type in schemas, evaluating whether it is necessary and performance
+ * @remarks TODO: Audit usage of this type in schemas, evaluating whether it is necessary and performance
  * of alternatives.
  *
  * True "arbitrary serializable data" is probably fine, but some persisted types declarations might be better
@@ -290,11 +288,11 @@ let deterministicStableIdCount: number | undefined;
  * Runs `f` with {@link generateStableId} altered to return sequential StableIds starting as a fixed seed.
  * Used to make test logic that uses {@link generateStableId} deterministic.
  *
- * @remarks
- * Only use this function for testing purposes.
+ * @remarks Only use this function for testing purposes.
  *
  * @example
- * ```ts
+ *
+ * ```typescript
  * function f() {
  *    const id = generateStableId();
  *    ...
@@ -381,4 +379,46 @@ export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
  */
 export interface Named<TName> {
 	readonly name: TName;
+}
+
+/**
+ * Placeholder for `Symbol.dispose`.
+ *
+ * Replace this with `Symbol.dispose` when it is available.
+ */
+export const disposeSymbol: unique symbol = Symbol("Symbol.dispose");
+
+/**
+ * An object with an explicit lifetime that can be ended.
+ */
+export interface IDisposable {
+	/**
+	 * Call to end the lifetime of this object.
+	 *
+	 * It is invalid to use this object after this,
+	 * except for operations which explicitly document they are valid after disposal.
+	 *
+	 * @remarks
+	 * May cleanup resources retained by this object.
+	 * Often includes un-registering from events and thus preventing other objects from retaining a reference to this indefinably.
+	 *
+	 * Usually the only operations allowed after disposal are querying if an object is already disposed,
+	 * but this can vary between implementations.
+	 */
+	[disposeSymbol](): void;
+}
+
+/**
+ * Capitalize a string.
+ */
+export function capitalize<S extends string>(s: S): Capitalize<S> {
+	// To avoid splitting characters which are made of multiple UTF-16 code units,
+	// use iteration instead of indexing to separate the first character.
+	const iterated = s[Symbol.iterator]().next();
+	if (iterated.done === true) {
+		// Empty string case.
+		return "" as Capitalize<S>;
+	}
+
+	return (iterated.value.toUpperCase() + s.slice(iterated.value.length)) as Capitalize<S>;
 }

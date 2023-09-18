@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/debugger",
-	"version": "2.0.0-internal.6.3.0",
+	"version": "2.0.0-internal.6.4.0",
 	"description": "Fluid Debugger - a tool to play through history of a file",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -20,7 +20,7 @@
 		"build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"ci:build:docs": "api-extractor run --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/* ../../../_api-extractor-temp/",
-		"clean": "rimraf --glob \"dist\" \"lib\" \"*.tsbuildinfo\" \"*.build.log\"",
+		"clean": "rimraf --glob 'dist' 'lib' '*.tsbuildinfo' '*.build.log' '_api-extractor-temp'",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -33,7 +33,7 @@
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
-		"@fluidframework/common-utils": "^1.1.1",
+		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/protocol-definitions": "^1.1.0",
@@ -41,18 +41,15 @@
 		"jsonschema": "^1.2.6"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.23.0",
+		"@fluid-tools/build-cli": "^0.22.0",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.23.0",
-		"@fluidframework/debugger-previous": "npm:@fluidframework/debugger@2.0.0-internal.6.1.1",
+		"@fluidframework/build-tools": "^0.22.0",
+		"@fluidframework/debugger-previous": "npm:@fluidframework/debugger@2.0.0-internal.6.3.0",
 		"@fluidframework/eslint-config-fluid": "^2.1.0",
 		"@microsoft/api-extractor": "^7.34.4",
-		"@types/mocha": "^9.1.1",
 		"@types/node": "^16.18.38",
-		"concurrently": "^7.6.0",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.6.0",
-		"mocha": "^10.2.0",
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",
 		"typescript": "~4.5.5"

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/contact-collection",
-	"version": "2.0.0-internal.6.3.0",
+	"version": "2.0.0-internal.6.4.0",
 	"private": true,
 	"description": "Example of using a Fluid Object as a collection of items",
 	"homepage": "https://fluidframework.com",
@@ -18,7 +18,7 @@
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc",
-		"clean": "rimraf --glob \"dist\" \"lib\" \"*.tsbuildinfo\" \"*.build.log\"",
+		"clean": "rimraf --glob 'dist' 'lib' '*.tsbuildinfo' '*.build.log' 'nyc'",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -49,9 +49,9 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.23.0",
+		"@fluid-tools/build-cli": "^0.22.0",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.23.0",
+		"@fluidframework/build-tools": "^0.22.0",
 		"@fluidframework/eslint-config-fluid": "^2.1.0",
 		"@fluidframework/test-tools": "^0.2.158186",
 		"@types/expect-puppeteer": "2.2.1",
@@ -60,7 +60,6 @@
 		"@types/node": "^16.18.38",
 		"@types/puppeteer": "1.3.0",
 		"clean-webpack-plugin": "^4.0.0",
-		"concurrently": "^7.6.0",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.6.0",
 		"html-webpack-plugin": "^5.5.0",
@@ -88,10 +87,6 @@
 				"library": "main"
 			}
 		}
-	},
-	"jest-junit": {
-		"outputDirectory": "nyc",
-		"outputName": "jest-junit-report.xml"
 	},
 	"typeValidation": {
 		"disabled": true,

@@ -5,7 +5,6 @@
 import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SharedTreeBranch, SharedTreeCore, Summarizable } from "../../shared-tree-core";
-import { AnchorSet } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
 import { DefaultChangeFamily, DefaultChangeset, DefaultEditBuilder } from "../../feature-libraries";
 import { MockRepairDataStoreProvider } from "../utils";
@@ -26,12 +25,10 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 		runtime: IFluidDataStoreRuntime = new MockFluidDataStoreRuntime(),
 		id = "TestSharedTreeCore",
 		summarizables: readonly Summarizable[] = [],
-		anchors = new AnchorSet(),
 	) {
 		super(
 			summarizables,
 			new DefaultChangeFamily({ jsonValidator: typeboxValidator }),
-			anchors,
 			new MockRepairDataStoreProvider(),
 			{ jsonValidator: typeboxValidator },
 			id,

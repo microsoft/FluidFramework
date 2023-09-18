@@ -43,9 +43,14 @@
 
 	/**
 	 * Delays / Waits / Sleeps for the specified duration.
+	 *
 	 * @example
+	 *
+	 * ```javascript
 	 * // Sleeps for a second:
 	 * await sleep(1000);
+	 * ```
+	 *
 	 * @param {number} timeoutMilliSec The sleep timeout, in milliseconds.
 	 * @return {Promise} A promise that resolves after the specified timeout.
 	 */

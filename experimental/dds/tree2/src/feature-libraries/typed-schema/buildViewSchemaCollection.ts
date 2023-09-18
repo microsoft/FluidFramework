@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { Adapters, TreeSchemaIdentifier } from "../../core";
 import { FullSchemaPolicy } from "../modular-schema";
-import { fail } from "../../util";
-import { defaultSchemaPolicy, FieldKinds } from "../default-field-kinds";
+import { capitalize, fail } from "../../util";
+import { defaultSchemaPolicy, FieldKinds, FieldKindTypes } from "../default-field-kinds";
 import {
 	SchemaBuilder,
 	SchemaLibraryData,
@@ -141,14 +141,10 @@ export function validateViewSchemaCollection(
 	}
 	for (const [identifier, tree] of collection.treeSchema) {
 		for (const [key, field] of tree.structFields) {
-			validateField(
-				lintConfiguration,
-				collection,
-				field,
-				() =>
-					`Struct field "${key}" of "${identifier}" schema from library "${tree.builder.name}"`,
-				errors,
-			);
+			const description = () =>
+				`Struct field "${key}" of "${identifier}" schema from library "${tree.builder.name}"`;
+			validateField(lintConfiguration, collection, field, description, errors);
+			validateStructFieldName(key, description, errors);
 		}
 		if (tree.mapFields !== undefined) {
 			validateField(
@@ -158,7 +154,7 @@ export function validateViewSchemaCollection(
 				() => `Map fields of "${identifier}" schema from library "${tree.builder.name}"`,
 				errors,
 			);
-			if (tree.mapFields.kind === FieldKinds.value) {
+			if ((tree.mapFields.kind as FieldKindTypes) === FieldKinds.value) {
 				errors.push(
 					`Map fields of "${identifier}" schema from library "${tree.builder.name}" has kind "value". This is invalid since it requires all possible field keys to have a value under them.`,
 				);
@@ -228,4 +224,56 @@ export function validateField(
 	// 		`${describeField()} explicitly uses "counter" kind, which is finished.`,
 	// 	);
 	// }
+}
+
+/**
+ * Reserved field names to avoid collisions with the API.
+ */
+export const bannedFieldNames = new Set([
+	"constructor",
+	"context",
+	"is",
+	"on",
+	"parentField",
+	"schema",
+	"treeStatus",
+	"tryGetField",
+	"type",
+	"value",
+]);
+
+/**
+ * Field names starting with these must not be followed by an upper case letter
+ */
+export const fieldApiPrefixes = new Set(["set", "boxed"]);
+
+export function validateStructFieldName(
+	name: string,
+	describeField: () => string,
+	errors: string[],
+): void {
+	// TODO: support custom field keys.
+	const suggestion =
+		"Pick a different field name to avoid property name collisions in the tree API. In the future, it will be possible to pick a separate field name for use in identifiers in the the API (to fix errors like this one) while keeping the field key (used everywhere else, including in persisted data) for compatibility but this is not implemented yet.";
+
+	if (bannedFieldNames.has(name)) {
+		errors.push(
+			`${describeField()} uses one of the banned field names (${[
+				...bannedFieldNames,
+			]}). ${suggestion}`,
+		);
+	}
+
+	for (const prefix of fieldApiPrefixes) {
+		if (name.startsWith(prefix)) {
+			const afterPrefix = name.slice(prefix.length);
+			if (afterPrefix === capitalize(afterPrefix)) {
+				errors.push(
+					`${describeField()} has name that starts with one of the banned prefixes (${[
+						...fieldApiPrefixes,
+					]}) followed by something other than a lowercase letter. ${suggestion}`,
+				);
+			}
+		}
+	}
 }

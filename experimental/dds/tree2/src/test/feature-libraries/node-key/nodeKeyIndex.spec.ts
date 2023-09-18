@@ -134,10 +134,10 @@ describe("Node Key Index", () => {
 	it("can look up a node that was loaded from summary", async () => {
 		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 		const [tree] = provider.trees;
-		const key = tree.nodeKey.generate();
+		const key = tree.view.nodeKey.generate();
 		tree.schematize({
 			initialTree: {
-				...contextualizeKey(tree, key),
+				...contextualizeKey(tree.view, key),
 				child: undefined,
 			},
 			schema: nodeSchemaData,
@@ -148,7 +148,7 @@ describe("Node Key Index", () => {
 		await provider.summarize();
 		const tree2 = await provider.createTree();
 		await provider.ensureSynchronized();
-		assertIds(tree2, [tree2.nodeKey.localize(tree.nodeKey.stabilize(key))]);
+		assertIds(tree2.view, [tree2.view.nodeKey.localize(tree.view.nodeKey.stabilize(key))]);
 	});
 
 	it("errors on nodes which have keys of the wrong type", () => {
@@ -159,7 +159,7 @@ describe("Node Key Index", () => {
 					{
 						type: nodeSchema.name,
 						fields: {
-							[nodeKeyFieldKey]: [{ type: nodeKeyTreeSchema.name, value: {} }],
+							[nodeKeyFieldKey]: [{ type: nodeKeyTreeSchema.name, value: 5 }],
 						},
 					},
 					nodeSchemaData,
@@ -202,7 +202,10 @@ describe("Node Key Index", () => {
 				type: nodeSchema.name,
 				fields: {
 					[nodeKeyFieldKey]: [
-						{ type: nodeKeyTreeSchema.name, value: view.nodeKey.generate() },
+						{
+							type: nodeKeyTreeSchema.name,
+							value: view.nodeKey.generate() as unknown as number,
+						},
 					],
 				},
 			},

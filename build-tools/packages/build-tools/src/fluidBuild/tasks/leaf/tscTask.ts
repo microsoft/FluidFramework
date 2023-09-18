@@ -5,12 +5,12 @@
 import * as assert from "assert";
 import * as fs from "fs";
 import path from "path";
-import * as ts from "typescript";
+import type * as tsTypes from "typescript";
 
 import { defaultLogger } from "../../../common/logging";
 import { existsSync, readFileAsync } from "../../../common/utils";
 import { getInstalledPackageVersion } from "../../../common/taskUtils";
-import * as TscUtils from "../../../common/tscUtils";
+import { getTscUtils, TscUtil } from "../../../common/tscUtils";
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 
 const isEqual = require("lodash.isequal");
@@ -30,10 +30,19 @@ interface ITsBuildInfo {
 export class TscTask extends LeafTask {
 	private _tsBuildInfoFullPath: string | undefined;
 	private _tsBuildInfo: ITsBuildInfo | undefined;
-	private _tsConfig: ts.ParsedCommandLine | undefined;
+	private _tsConfig: tsTypes.ParsedCommandLine | undefined;
 	private _tsConfigFullPath: string | undefined;
 	private _projectReference: TscTask | undefined;
 	private _sourceStats: (fs.Stats | fs.BigIntStats)[] | undefined;
+	private _tscUtils: TscUtil | undefined;
+
+	private getTscUtils() {
+		if (this._tscUtils) {
+			return this._tscUtils;
+		}
+		this._tscUtils = getTscUtils(this.node.pkg.directory);
+		return this._tscUtils;
+	}
 
 	protected async checkLeafIsUpToDate() {
 		const tsBuildInfoFileFullPath = this.tsBuildInfoFileFullPath;
@@ -62,11 +71,13 @@ export class TscTask extends LeafTask {
 			return false;
 		}
 
+		const tscUtils = this.getTscUtils();
+
 		// Keep a list of files that need to be compiled based on the command line flags and config, and
 		// remove the files that we sees from the tsBuildInfo.  The remaining files are
 		// new files that need to be rebuilt.
 		const configFileNames = new Set(
-			config.fileNames.map((p) => TscUtils.getCanonicalFileName(path.normalize(p))),
+			config.fileNames.map((p) => tscUtils.getCanonicalFileName(path.normalize(p))),
 		);
 
 		// Check dependencies file hashes
@@ -89,7 +100,7 @@ export class TscTask extends LeafTask {
 				}
 				const hash = await this.node.buildContext.fileHashCache.getFileHash(
 					fullPath,
-					TscUtils.getSourceFileVersion,
+					tscUtils.getSourceFileVersion,
 				);
 				const version = typeof fileInfo === "string" ? fileInfo : fileInfo.version;
 				if (hash !== version) {
@@ -98,7 +109,7 @@ export class TscTask extends LeafTask {
 				}
 
 				// Remove files that we have built before
-				configFileNames.delete(TscUtils.getCanonicalFileName(path.normalize(fullPath)));
+				configFileNames.delete(tscUtils.getCanonicalFileName(path.normalize(fullPath)));
 			} catch (e: any) {
 				this.traceTrigger(`exception generating hash for ${fileName}\n\t${e.stack}`);
 				return false;
@@ -117,7 +128,7 @@ export class TscTask extends LeafTask {
 			);
 
 			if (tsVersion !== tsBuildInfo.version) {
-				this.traceTrigger("previous build error");
+				this.traceTrigger("mismatched type script version");
 				return false;
 			}
 		} catch (e) {
@@ -131,7 +142,7 @@ export class TscTask extends LeafTask {
 		return this.checkTsConfig(tsBuildInfoFileDirectory, tsBuildInfo, config);
 	}
 
-	private remapSrcDeclFile(fullPath: string, config: ts.ParsedCommandLine) {
+	private remapSrcDeclFile(fullPath: string, config: tsTypes.ParsedCommandLine) {
 		if (!this._sourceStats) {
 			this._sourceStats = config ? config.fileNames.map((v) => fs.lstatSync(v)) : [];
 		}
@@ -148,23 +159,26 @@ export class TscTask extends LeafTask {
 	private checkTsConfig(
 		tsBuildInfoFileDirectory: string,
 		tsBuildInfo: ITsBuildInfo,
-		options: ts.ParsedCommandLine,
+		options: tsTypes.ParsedCommandLine,
 	) {
 		const configFileFullPath = this.configFileFullPath;
 		if (!configFileFullPath) {
 			assert.fail();
 		}
 
+		const tscUtils = this.getTscUtils();
 		// Patch relative path based on the file directory where the config comes from
-		const configOptions = TscUtils.filterIncrementalOptions(
-			TscUtils.convertToOptionsWithAbsolutePath(
+		const configOptions = tscUtils.filterIncrementalOptions(
+			tscUtils.convertOptionPaths(
 				options.options,
 				path.dirname(configFileFullPath),
+				path.resolve,
 			),
 		);
-		const tsBuildInfoOptions = TscUtils.convertToOptionsWithAbsolutePath(
+		const tsBuildInfoOptions = tscUtils.convertOptionPaths(
 			tsBuildInfo.program.options,
 			tsBuildInfoFileDirectory,
+			path.resolve,
 		);
 
 		if (!isEqual(configOptions, tsBuildInfoOptions)) {
@@ -192,20 +206,23 @@ export class TscTask extends LeafTask {
 				return undefined;
 			}
 
-			const config = TscUtils.readConfigFile(configFileFullPath);
+			const tscUtils = this.getTscUtils();
+			const config = tscUtils.readConfigFile(configFileFullPath);
 			if (!config) {
 				verbose(`${this.node.pkg.nameColored}: ts fail to parse ${configFileFullPath}`);
 				return undefined;
 			}
 
 			// Fix up relative path from the command line based on the package directory
-			const commandOptions = TscUtils.convertToOptionsWithAbsolutePath(
+			const commandOptions = tscUtils.convertOptionPaths(
 				parsedCommand.options,
 				this.node.pkg.directory,
+				path.resolve,
 			);
 
 			// Parse the config file relative to the config file directory
 			const configDir = path.parse(configFileFullPath).dir;
+			const ts = tscUtils.tsLib;
 			const options = ts.parseJsonConfigFileContent(
 				config,
 				ts.sys,
@@ -240,7 +257,7 @@ export class TscTask extends LeafTask {
 				return undefined;
 			}
 
-			this._tsConfigFullPath = TscUtils.findConfigFile(
+			this._tsConfigFullPath = this.getTscUtils().findConfigFile(
 				this.node.pkg.directory,
 				parsedCommand,
 			);
@@ -249,7 +266,7 @@ export class TscTask extends LeafTask {
 	}
 
 	private get parsedCommandLine() {
-		const parsedCommand = TscUtils.parseCommandLine(this.command);
+		const parsedCommand = this.getTscUtils().parseCommandLine(this.command);
 		if (!parsedCommand) {
 			verbose(`${this.node.pkg.nameColored}: ts fail to parse command line ${this.command}`);
 		}
@@ -293,7 +310,7 @@ export class TscTask extends LeafTask {
 		return this.remapOutFile(options, path.parse(configFileFullPath).dir, tsBuildInfoFileName);
 	}
 
-	private remapOutFile(options: ts.ParsedCommandLine, directory: string, fileName: string) {
+	private remapOutFile(options: tsTypes.ParsedCommandLine, directory: string, fileName: string) {
 		if (options.options.outDir) {
 			if (options.options.rootDir) {
 				const relative = path.relative(options.options.rootDir, directory);
@@ -337,11 +354,16 @@ export class TscTask extends LeafTask {
 					const tsBuildInfo = JSON.parse(
 						await readFileAsync(tsBuildInfoFileFullPath, "utf8"),
 					);
-					if (tsBuildInfo.program && tsBuildInfo.program.fileNames) {
+					if (
+						tsBuildInfo.program &&
+						tsBuildInfo.program.fileNames &&
+						tsBuildInfo.program.fileInfos &&
+						tsBuildInfo.program.options
+					) {
 						this._tsBuildInfo = tsBuildInfo;
 					} else {
 						verbose(
-							`${this.node.pkg.nameColored}: Missing program or fileNames property ${tsBuildInfoFileFullPath}`,
+							`${this.node.pkg.nameColored}: Invalid format ${tsBuildInfoFileFullPath}`,
 						);
 					}
 				} catch {
@@ -358,6 +380,36 @@ export class TscTask extends LeafTask {
 
 	protected async markExecDone() {
 		this._tsBuildInfo = undefined;
+
+		const config = this.readTsConfig();
+		const tsBuildInfoFileFullPath = this.tsBuildInfoFileFullPath;
+		const configFileFullPath = this.configFileFullPath;
+
+		// If there are no input, tsc doesn't update the build info file.  Do it manually so we use it for
+		// incremental build
+		if (tsBuildInfoFileFullPath && configFileFullPath && config?.fileNames.length === 0) {
+			const tscUtils = this.getTscUtils();
+			// Patch relative path based on the file directory where the config comes from
+			const options = tscUtils.filterIncrementalOptions(
+				tscUtils.convertOptionPaths(
+					config.options,
+					path.dirname(tsBuildInfoFileFullPath),
+					path.relative,
+				),
+			);
+			const dir = path.dirname(tsBuildInfoFileFullPath);
+			if (!existsSync(dir)) {
+				await fs.promises.mkdir(dir, { recursive: true });
+			}
+			await fs.promises.writeFile(
+				tsBuildInfoFileFullPath,
+				JSON.stringify({
+					program: { fileNames: [], fileInfos: [], options },
+					version: tscUtils.tsLib.version,
+				}),
+				"utf8",
+			);
+		}
 	}
 
 	protected get useWorker() {

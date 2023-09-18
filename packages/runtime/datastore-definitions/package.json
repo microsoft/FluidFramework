@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/datastore-definitions",
-	"version": "2.0.0-internal.6.3.0",
+	"version": "2.0.0-internal.6.4.0",
 	"description": "Fluid data store definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -19,7 +19,7 @@
 		"build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"ci:build:docs": "api-extractor run --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/* ../../../_api-extractor-temp/",
-		"clean": "rimraf --glob \"dist\" \"*.tsbuildinfo\" \"*.build.log\"",
+		"clean": "rimraf --glob 'dist' '*.tsbuildinfo' '*.build.log' '_api-extractor-temp'",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -32,20 +32,18 @@
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
-		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/protocol-definitions": "^1.1.0",
 		"@fluidframework/runtime-definitions": "workspace:~"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.23.0",
+		"@fluid-tools/build-cli": "^0.22.0",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.23.0",
-		"@fluidframework/datastore-definitions-previous": "npm:@fluidframework/datastore-definitions@2.0.0-internal.6.1.1",
+		"@fluidframework/build-tools": "^0.22.0",
+		"@fluidframework/datastore-definitions-previous": "npm:@fluidframework/datastore-definitions@2.0.0-internal.6.3.0",
 		"@fluidframework/eslint-config-fluid": "^2.1.0",
 		"@microsoft/api-extractor": "^7.34.4",
-		"concurrently": "^7.6.0",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.6.0",
 		"prettier": "~2.6.2",
@@ -53,10 +51,6 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"InterfaceDeclaration_IFluidDataStoreRuntime": {
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

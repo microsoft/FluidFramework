@@ -48,11 +48,23 @@ const defaultPartialConfig: Omit<ApiItemTransformationConfiguration, "apiModel">
 	uriRoot: ".",
 };
 
+// Relative to dist/api-item-transforms/test
+const testDataDirPath = Path.resolve(
+	__dirname,
+	"..",
+	"..",
+	"..",
+	"src",
+	"api-item-transforms",
+	"test",
+	"test-data",
+);
+
 /**
  * Generates an `ApiModel` from the API report file at the provided path.
  */
 function generateModel(testReportFileName: string): ApiModel {
-	const filePath = Path.resolve(__dirname, "test-data", testReportFileName);
+	const filePath = Path.resolve(testDataDirPath, testReportFileName);
 
 	const apiModel = new ApiModel();
 	apiModel.loadPackage(filePath);
@@ -364,7 +376,8 @@ describe("ApiItem to Documentation transformation tests", () => {
 		// The model-level doc in this case isn't particularly interesting, so we will skip evaluating it.
 
 		const expectedPackageDoc = new DocumentNode({
-			filePath: "test-package.md",
+			apiItemName: "test-package",
+			documentPath: "test-package",
 			children: [
 				new SectionNode(
 					[
@@ -401,7 +414,8 @@ describe("ApiItem to Documentation transformation tests", () => {
 		expect(documents[1]).to.deep.equal(expectedPackageDoc);
 
 		const expectedEntryPointADoc = new DocumentNode({
-			filePath: "test-package/entry-point-a-entrypoint.md",
+			apiItemName: "entry-point-a",
+			documentPath: "test-package/entry-point-a-entrypoint",
 			children: [
 				new SectionNode(
 					[
@@ -484,7 +498,8 @@ describe("ApiItem to Documentation transformation tests", () => {
 		expect(documents[2]).to.deep.equal(expectedEntryPointADoc);
 
 		const expectedEntryPointBDoc = new DocumentNode({
-			filePath: "test-package/entry-point-b-entrypoint.md",
+			apiItemName: "entry-point-b",
+			documentPath: "test-package/entry-point-b-entrypoint",
 			children: [
 				new SectionNode(
 					[

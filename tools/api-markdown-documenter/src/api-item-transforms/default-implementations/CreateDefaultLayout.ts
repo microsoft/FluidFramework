@@ -2,13 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ApiItem, ApiReleaseTagMixin, ReleaseTag } from "@microsoft/api-extractor-model";
+import { ApiItem, ReleaseTag } from "@microsoft/api-extractor-model";
 
 import { SectionNode } from "../../documentation-domain";
-import { doesItemRequireOwnDocument, getHeadingForApiItem } from "../ApiItemUtilities";
+import {
+	doesItemRequireOwnDocument,
+	getHeadingForApiItem,
+	getReleaseTag,
+} from "../ApiItemUtilities";
 import { ApiItemTransformationConfiguration } from "../configuration";
 import {
-	betaAlert,
+	alphaWarningSpan,
+	betaWarningSpan,
 	createDeprecationNoticeSection,
 	createExamplesSection,
 	createRemarksSection,
@@ -20,34 +25,45 @@ import {
 } from "../helpers";
 
 /**
- * Default transformation helper for API items that potentially have child contents.
- * Wraps the item-kind-specific details in the following manner:
+ * Default content layout for all API items.
+ *
+ * @remarks Lays out the content in the following manner:
  *
  * 1. Heading (if not the document-root item, in which case headings are handled specially by document-level rendering)
+ *
  * 1. Beta warning (if item annotated with `@beta`)
+ *
  * 1. Deprecation notice (if any)
+ *
  * 1. Summary (if any)
+ *
  * 1. Item Signature
+ *
  * 1. Remarks (if any)
+ *
  * 1. Examples (if any)
- * 1. `innerSectionBody`
+ *
+ * 1. `itemSpecificContent`
+ *
  * 1. Throws (if any)
+ *
  * 1. See (if any)
  *
  * @param apiItem - The API item being rendered.
- * @param childContent - A doc section of contents to be written after the standard metadata content types.
+ * @param itemSpecificContent - API item-specific details to be included in the default layout.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
-export function createSectionWithChildContent(
+export function createDefaultLayout(
 	apiItem: ApiItem,
-	childContent: SectionNode[] | undefined,
+	itemSpecificContent: SectionNode[] | undefined,
 	config: Required<ApiItemTransformationConfiguration>,
 ): SectionNode[] {
 	const sections: SectionNode[] = [];
 
-	// Render beta warning if applicable
-	if (ApiReleaseTagMixin.isBaseClassOf(apiItem) && apiItem.releaseTag === ReleaseTag.Beta) {
-		sections.push(wrapInSection([betaAlert]));
+	// Render summary comment (if any)
+	const summary = createSummaryParagraph(apiItem, config);
+	if (summary !== undefined) {
+		sections.push(wrapInSection([summary]));
 	}
 
 	// Render deprecation notice (if any)
@@ -56,10 +72,12 @@ export function createSectionWithChildContent(
 		sections.push(wrapInSection([deprecationNotice]));
 	}
 
-	// Render summary comment (if any)
-	const summary = createSummaryParagraph(apiItem, config);
-	if (summary !== undefined) {
-		sections.push(wrapInSection([summary]));
+	// Render alpha/beta notice if applicable
+	const releaseTag = getReleaseTag(apiItem);
+	if (releaseTag === ReleaseTag.Alpha) {
+		sections.push(wrapInSection([alphaWarningSpan]));
+	} else if (releaseTag === ReleaseTag.Beta) {
+		sections.push(wrapInSection([betaWarningSpan]));
 	}
 
 	// Render signature (if any)
@@ -80,9 +98,10 @@ export function createSectionWithChildContent(
 		sections.push(renderedExamples);
 	}
 
-	if (childContent !== undefined) {
+	// Render provided contents
+	if (itemSpecificContent !== undefined) {
 		// Flatten contents into this section
-		sections.push(...childContent);
+		sections.push(...itemSpecificContent);
 	}
 
 	// Render @throws content (if any)
