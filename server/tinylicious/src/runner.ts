@@ -13,12 +13,13 @@ import {
 	DefaultMetricClient,
 	IRunner,
 } from "@fluidframework/server-services-core";
-import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { Deferred } from "@fluidframework/common-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import { configureWebSocketServices, ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
+import { configureWebSocketServices } from "@fluidframework/server-lambdas";
 import { TestClientManager } from "@fluidframework/server-test-utils";
 import detect from "detect-port";
+import * as app from "./app";
 
 export class TinyliciousRunner implements IRunner {
 	private server?: IWebServer;
@@ -51,8 +52,7 @@ export class TinyliciousRunner implements IRunner {
 			throw e;
 		}
 
-		const collaborationSessionEventsEmitter = new TypedEventEmitter<ICollaborationSessionEvents>();
-		const alfred = app.create(this.config, this.storage, this.mongoManager, collaborationSessionEventsEmitter);
+		const alfred = app.create(this.config, this.storage, this.mongoManager);
 		alfred.set("port", this.port);
 
 		this.server = this.serverFactory.create(alfred);
@@ -66,22 +66,6 @@ export class TinyliciousRunner implements IRunner {
 			new TestClientManager(),
 			new DefaultMetricClient(),
 			winston,
-			undefined,
-			undefined,
-			undefined,
-			undefined,
-			undefined,
-			undefined,
-			undefined,
-			undefined,
-			undefined,
-			undefined,
-			undefined,
-			undefined,
-			undefined,
-			undefined,
-			undefined,
-			collaborationSessionEventsEmitter,
 		);
 
 		// Listen on provided port, on all network interfaces.

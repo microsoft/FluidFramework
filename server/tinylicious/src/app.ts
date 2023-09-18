@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ICollaborationSessionEvents, IBroadcastSignalEventPayload } from "@fluidframework/server-lambdas";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IDocumentStorage, MongoManager } from "@fluidframework/server-services-core";
 import { RestLessServer } from "@fluidframework/server-services-shared";
 import { json, urlencoded } from "body-parser";
@@ -28,12 +26,7 @@ const stream = split().on("data", (message) => {
 	winston.info(message);
 });
 
-export function create(
-	config: Provider,
-	storage: IDocumentStorage,
-	mongoManager: MongoManager,
-	collaborationSessionEventsEmitter: TypedEventEmitter<ICollaborationSessionEvents>,
-) {
+export function create(config: Provider, storage: IDocumentStorage, mongoManager: MongoManager) {
 	// Maximum REST request size
 	const requestSize = config.get("alfred:restJsonSize");
 
@@ -84,22 +77,6 @@ export function create(
 		(err as any).status = 404;
 		next(err);
 	});
-
-	// API to broadcast a signal to a container
-	app.use(
-		Router().post("/broadcast-signal", (req, res) => {
-			try {
-				const tenantId = req.body?.tenantId;
-				const doucmentId = req.body?.doucmentId;
-				const signalContent = req.body?.singalContent;
-				const payload : IBroadcastSignalEventPayload = { tenantId, doucmentId, signalContent };
-				collaborationSessionEventsEmitter.emit("broadcast-signal", payload);
-				res.status(200).send("Triggering debug signal from tinylicious");
-			} catch (error) {
-				res.status(500).send(error);
-			}
-		}),
-	);
 
 	// Error handlers
 	app.use((err, req, res, next) => {
