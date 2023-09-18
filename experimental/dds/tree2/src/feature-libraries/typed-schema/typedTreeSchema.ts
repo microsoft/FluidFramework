@@ -311,6 +311,12 @@ export class FieldSchema<Kind extends FieldKindTypes = FieldKindTypes, Types = A
 	public static readonly empty = new FieldSchema(FieldKinds.forbidden, []);
 
 	protected _typeCheck?: MakeNominal;
+
+	/**
+	 * @param kind - The [kind](https://en.wikipedia.org/wiki/Kind_(type_theory)) of this field.
+	 * Determine the multiplicity, viewing and editing APIs as well as the merge resolution policy.
+	 * @param allowedTypes - What types of tree nodes are allowed in this field.
+	 */
 	public constructor(public readonly kind: Kind, public readonly allowedTypes: Types) {}
 
 	public get types(): TreeTypeSet {
