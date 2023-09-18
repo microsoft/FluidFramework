@@ -3,13 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export {
-	SchemaBuilder,
-	TypedSchemaCollection,
-	SchemaLibrary,
-	SchemaLibraryData,
-	SchemaLintConfiguration,
-} from "./schemaBuilder";
+export { SchemaBuilder, SchemaLibrary } from "./schemaBuilder";
 
 export {
 	TreeSchema,
@@ -26,6 +20,7 @@ export {
 	schemaIsLeaf,
 	schemaIsMap,
 	schemaIsStruct,
+	TypedSchemaCollection,
 } from "./typedTreeSchema";
 
 export { ViewSchema } from "./view";
@@ -34,6 +29,8 @@ export {
 	bannedFieldNames,
 	fieldApiPrefixes,
 	validateStructFieldName,
+	SchemaLibraryData,
+	SchemaLintConfiguration,
 } from "./buildViewSchemaCollection";
 
 // Below here are things that are used by the above, but not part of the desired API surface.

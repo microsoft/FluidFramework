@@ -979,8 +979,6 @@ export { InternalEditableTreeTypes }
 
 declare namespace InternalTypedSchemaTypes {
     export {
-        RecursiveTreeSchemaSpecification,
-        RecursiveTreeSchema,
         ObjectToMap,
         WithDefault,
         Unbrand,
@@ -995,6 +993,8 @@ declare namespace InternalTypedSchemaTypes {
         MapSchemaSpecification,
         LeafSchemaSpecification,
         MapFieldSchema,
+        RecursiveTreeSchemaSpecification,
+        RecursiveTreeSchema,
         FlexList,
         FlexListToNonLazyArray,
         ConstantFlexListToNonLazyArray,
