@@ -5,6 +5,7 @@ Sync branches depending on the batch size passed
 
 * [`flub merge branches`](#flub-merge-branches)
 * [`flub merge info`](#flub-merge-info)
+* [`flub merge pullRequest`](#flub-merge-pullrequest)
 
 ## `flub merge branches`
 
@@ -62,4 +63,26 @@ EXAMPLES
   Output the merge status as JSON using --json.
 
     $ flub merge info --json
+```
+
+## `flub merge pullRequest`
+
+Merge pull request into the target branch according to the labels applied on the pull request
+
+```
+USAGE
+  $ flub merge pullRequest -p <value> -n <value> -t <value> [-v | --quiet]
+
+FLAGS
+  -n, --prNumber=<value>      (required) Pull request number
+  -p, --pat=<value>           (required) GitHub Personal Access Token. This parameter should be passed using the
+                              GITHUB_PAT environment variable for security purposes.
+  -t, --targetBranch=<value>  (required) Target branch name
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+  --quiet        Disable all logging.
+
+DESCRIPTION
+  Merge pull request into the target branch according to the labels applied on the pull request
 ```

@@ -41,7 +41,8 @@ enum MergeStrategy {
 }
 
 export default class MergePullRequest extends BaseCommand<typeof MergePullRequest> {
-	static readonly description = "Merge Pull Request";
+	static readonly description =
+		"Merge pull request into the target branch according to the labels applied on the pull request";
 
 	static flags = {
 		pat: Flags.string({
