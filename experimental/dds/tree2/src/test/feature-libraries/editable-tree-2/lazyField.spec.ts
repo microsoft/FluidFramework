@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { Any, SchemaBuilder } from "../../../feature-libraries";
-import { FieldAnchor, FieldKey, TreeNavigationResult, UpPath } from "../../../core";
+import { FieldKey, TreeNavigationResult } from "../../../core";
 import { forestWithContent } from "../../utils";
 import { brand } from "../../../util";
 import {
@@ -21,7 +21,7 @@ const detachedField: FieldKey = brand("detached");
 const detachedFieldAnchor = { parent: undefined, fieldKey: detachedField };
 
 describe("lazyField", () => {
-	it("Querying the path for editing throws for detached trees", () => {
+	it("LazyField implementations do not allow edits to detached trees", () => {
 		const builder = new SchemaBuilder("lazyTree");
 		builder.struct("empty", {});
 		const schema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
@@ -32,45 +32,36 @@ describe("lazyField", () => {
 			forest.tryMoveCursorToField({ fieldKey: detachedField, parent: undefined }, cursor),
 			TreeNavigationResult.Ok,
 		);
-		const parentNodePath: UpPath = {
-			parent: undefined,
-			parentField: detachedField,
-			parentIndex: 0,
-		};
-		const parentAnchor = forest.anchors.track(parentNodePath);
-		const nestedFieldAnchor: FieldAnchor = {
-			parent: parentAnchor,
-			fieldKey: brand("nested"),
-		};
-		const fields = [
-			new LazySequence(
-				context,
-				SchemaBuilder.fieldSequence(Any),
-				cursor,
-				detachedFieldAnchor,
-			),
-			new LazySequence(context, SchemaBuilder.fieldSequence(Any), cursor, nestedFieldAnchor),
-			new LazyOptionalField(
-				context,
-				SchemaBuilder.fieldOptional(Any),
-				cursor,
-				detachedFieldAnchor,
-			),
-			new LazyOptionalField(
-				context,
-				SchemaBuilder.fieldOptional(Any),
-				cursor,
-				nestedFieldAnchor,
-			),
-			new LazyValueField(context, SchemaBuilder.fieldValue(Any), cursor, detachedFieldAnchor),
-			new LazyValueField(context, SchemaBuilder.fieldValue(Any), cursor, nestedFieldAnchor),
-		];
+		const sequenceField = new LazySequence(
+			context,
+			SchemaBuilder.fieldSequence(Any),
+			cursor,
+			detachedFieldAnchor,
+		);
+		const optionalField = new LazyOptionalField(
+			context,
+			SchemaBuilder.fieldOptional(Any),
+			cursor,
+			detachedFieldAnchor,
+		);
+		const valueField = new LazyValueField(
+			context,
+			SchemaBuilder.fieldValue(Any),
+			cursor,
+			detachedFieldAnchor,
+		);
 		cursor.free();
-		for (const field of fields) {
-			assert.throws(
-				() => field.getFieldPathForEditing(),
-				/only allowed on fields with TreeStatus.InDocument status/,
-			);
-		}
+		assert.throws(
+			() => sequenceField.replaceRange(0, 1, []),
+			/only allowed on fields with TreeStatus.InDocument status/,
+		);
+		assert.throws(
+			() => optionalField.setContent(undefined),
+			/only allowed on fields with TreeStatus.InDocument status/,
+		);
+		assert.throws(
+			() => valueField.setContent({}),
+			/only allowed on fields with TreeStatus.InDocument status/,
+		);
 	});
 });

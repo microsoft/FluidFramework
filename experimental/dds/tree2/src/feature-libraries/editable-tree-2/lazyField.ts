@@ -230,8 +230,8 @@ export abstract class LazyField<TKind extends FieldKindTypes, TTypes extends All
 	}
 
 	/**
-	 * Throws iff the field is under a node whose tree status is not `TreeStatus.InDocument`.
-	 * Does not throw for the field that contains the document root.
+	 * Returns the path to this field to use for editing. Throws iff this path is not {@link TreeStatus#InDocument}.
+	 * This path is not valid to hold onto across edits: this must be recalled for each edit.
 	 */
 	public getFieldPathForEditing(): FieldUpPath {
 		assert(

@@ -36,8 +36,6 @@ import { TreeContext } from "./context";
  * Design and document iterator invalidation rules and ordering rules.
  * Providing a custom iterator type with place anchor semantics would be a good approach.
  *
- * Editing operations are only valid on trees with the `TreeState.InDocument` `TreeState`.
- *
  * @alpha
  */
 export interface Tree<TSchema = unknown> extends Iterable<Tree> {
@@ -124,6 +122,8 @@ export interface TreeNode extends Tree<TreeSchema> {
  *
  * Fields are inherently part of their parent, and thus cannot be moved.
  * Instead their content can be moved, deleted or created.
+ *
+ * Editing operations are only valid on trees with the {@link TreeStatus#InDocument} `TreeStatus`.
  *
  * @remarks
  * Fields are used wherever an editable collection of nodes is required.
