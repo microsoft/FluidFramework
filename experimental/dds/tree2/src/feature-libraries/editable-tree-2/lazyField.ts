@@ -17,6 +17,7 @@ import {
 	keyAsDetachedField,
 	rootField,
 	EmptyKey,
+	rootFieldKey,
 } from "../../core";
 import { FieldKind } from "../modular-schema";
 import { NewFieldContent, normalizeNewFieldContent } from "../contextuallyTyped";
@@ -228,6 +229,18 @@ export abstract class LazyField<TKind extends FieldKindTypes, TTypes extends All
 	public getFieldPath(): FieldUpPath {
 		return this[cursorSymbol].getFieldPath();
 	}
+
+	/**
+	 * Throws iff the field is under a node whose tree status is not `TreeStatus.InDocument`.
+	 * Does not throw for the field that contains the document root.
+	 */
+	public getFieldPathForEditing(): FieldUpPath {
+		assert(
+			this.key === rootFieldKey || this.parent?.treeStatus() === TreeStatus.InDocument,
+			"Field must be in the document to be edited",
+		);
+		return this.getFieldPath();
+	}
 }
 
 export class LazySequence<TTypes extends AllowedTypes>
@@ -246,7 +259,7 @@ export class LazySequence<TTypes extends AllowedTypes>
 	}
 
 	private sequenceEditor(): SequenceFieldEditBuilder {
-		const fieldPath = this[cursorSymbol].getFieldPath();
+		const fieldPath = this.getFieldPathForEditing();
 		const fieldEditor = this.context.editor.sequenceField(fieldPath);
 		return fieldEditor;
 	}
@@ -284,7 +297,7 @@ export class LazyValueField<TTypes extends AllowedTypes>
 	}
 
 	private valueFieldEditor(): ValueFieldEditBuilder {
-		const fieldPath = this[cursorSymbol].getFieldPath();
+		const fieldPath = this.getFieldPathForEditing();
 		const fieldEditor = this.context.editor.valueField(fieldPath);
 		return fieldEditor;
 	}
@@ -321,7 +334,7 @@ export class LazyOptionalField<TTypes extends AllowedTypes>
 	}
 
 	private optionalEditor(): OptionalFieldEditBuilder {
-		const fieldPath = this[cursorSymbol].getFieldPath();
+		const fieldPath = this.getFieldPathForEditing();
 		const fieldEditor = this.context.editor.optionalField(fieldPath);
 		return fieldEditor;
 	}

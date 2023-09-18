@@ -36,6 +36,8 @@ import { TreeContext } from "./context";
  * Design and document iterator invalidation rules and ordering rules.
  * Providing a custom iterator type with place anchor semantics would be a good approach.
  *
+ * Editing operations are only valid on trees with the `TreeState.InDocument` `TreeState`.
+ *
  * @alpha
  */
 export interface Tree<TSchema = unknown> extends Iterable<Tree> {
