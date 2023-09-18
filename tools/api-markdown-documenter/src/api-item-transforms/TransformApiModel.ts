@@ -22,7 +22,7 @@ import { apiItemToDocument, apiItemToSections } from "./TransformApiItem";
  * Which API members get their own documents and which get written to the contents of their parent is
  * determined by {@link DocumentationSuiteOptions.documentBoundaries}.
  *
- * The generated nodes' {@link DocumentNode.filePath}s are determined by the provided output path and the
+ * The generated nodes' {@link DocumentNode.documentPath}s are determined by the provided output path and the
  * following configuration properties:
  *
  * - {@link DocumentationSuiteOptions.documentBoundaries}

@@ -23,6 +23,7 @@ import {
 	ValueSchema,
 	SharedTreeFactory,
 	valueSymbol,
+	typeNameSymbol,
 } from "@fluid-experimental/tree2";
 
 import { EditType, FluidObjectId } from "../CommonInterfaces";
@@ -411,11 +412,10 @@ describe("DefaultVisualizers unit tests", () => {
 		const stringSchema = builder.leaf("string-property", ValueSchema.String);
 		const numberSchema = builder.leaf("number-property", ValueSchema.Number);
 		const booleanSchema = builder.leaf("boolean-property", ValueSchema.Boolean);
-
-		const serializableSchema = builder.leaf("serializable-property", ValueSchema.Serializable);
+		const handleSchema = builder.leaf("handle-property", ValueSchema.FluidHandle);
 
 		const leafSchema = builder.struct("leaf-item", {
-			leafField: SchemaBuilder.fieldValue(serializableSchema),
+			leafField: SchemaBuilder.fieldValue(booleanSchema, handleSchema, stringSchema),
 		});
 
 		const childSchema = builder.struct("child-item", {
@@ -439,13 +439,19 @@ describe("DefaultVisualizers unit tests", () => {
 				childrenOne: [
 					{
 						childField: "Hello world!",
-						childData: { leafField: { [valueSymbol]: "Hello world again!" } },
+						childData: {
+							leafField: {
+								[typeNameSymbol]: stringSchema.name,
+								[valueSymbol]: "Hello world again!",
+							},
+						},
 					},
 					{
 						childField: true,
 						childData: {
 							leafField: {
-								[valueSymbol]: false, // TODO: SharedTree should encode the handle.
+								[typeNameSymbol]: booleanSchema.name,
+								[valueSymbol]: false, // TODO: Use a handle here.
 							},
 						},
 					},
