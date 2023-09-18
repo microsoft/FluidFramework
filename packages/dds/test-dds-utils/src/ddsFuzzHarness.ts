@@ -6,6 +6,7 @@
 import path from "path";
 import { mkdirSync, readFileSync } from "fs";
 import { strict as assert } from "assert";
+import { execSync } from "child_process";
 import {
 	BaseFuzzTestState,
 	createFuzzDescribe,
@@ -31,6 +32,7 @@ import {
 import { IChannelFactory, IChannelServices } from "@fluidframework/datastore-definitions";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { unreachableCase } from "@fluidframework/core-utils";
+import { saveStringFuzzTestToFile } from "./stringFuzzTestGenerator";
 
 export interface Client<TChannelFactory extends IChannelFactory> {
 	channel: ReturnType<TChannelFactory["create"]>;
@@ -372,6 +374,11 @@ export interface DDSFuzzSuiteOptions {
 	saveFailures: false | { directory: string };
 
 	/**
+	 *
+	 */
+	saveTest: false | { directory: string };
+
+	/**
 	 * Options to be provided to the underlying container runtimes {@link IMockContainerRuntimeOptions}.
 	 * By default nothing will be provided, which means that the runtimes will:
 	 * - use FlushMode.Immediate, which means that all ops will be sent as soon as they are produced,
@@ -396,6 +403,7 @@ export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
 	rebaseProbability: 0,
 	saveFailures: false,
 	validationStrategy: { type: "random", probability: 0.05 },
+	saveTest: false,
 };
 
 /**
@@ -982,6 +990,23 @@ export async function replayTest<
 	await runTestForSeed(model, options, seed, saveInfo);
 }
 
+function applyLintFix(dir: string): void {
+	// Use the 'exec' function to run the shell command
+	execSync("npm run lint:fix", { cwd: dir });
+	/*
+	exec("npm run lint:fix", { cwd: dir }, (error, stdout, stderr) => {
+		if (error) {
+			console.error(`Error running 'npm run lint:fix': ${error.message}`);
+			return;
+		}
+		if (stderr) {
+			console.error(`npm run lint:fix stderr: ${stderr}`);
+			return;
+		}
+		console.log(`npm run lint:fix output: ${stdout}`);
+	}); */
+}
+
 /**
  * Creates a suite of eventual consistency tests for a particular DDS model.
  */
@@ -1037,6 +1062,11 @@ export function createDDSFuzzSuite<
 				};
 				runTest(replayModel, options, seed, undefined);
 			});
+			// Genereate the replayed test suite
+			if (options.saveTest) {
+				saveStringFuzzTestToFile(directory as string, options.saveTest.directory, seed);
+				applyLintFix(options.saveTest.directory);
+			}
 		}
 	});
 }

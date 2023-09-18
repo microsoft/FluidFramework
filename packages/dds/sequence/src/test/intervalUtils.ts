@@ -4,14 +4,45 @@
  */
 
 import { strict as assert } from "assert";
-import { MockContainerRuntimeForReconnection } from "@fluidframework/test-runtime-utils";
+import {
+	MockContainerRuntimeFactoryForReconnection,
+	MockContainerRuntimeForReconnection,
+	MockFluidDataStoreRuntime,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils";
+import { IChannelServices } from "@fluidframework/datastore-definitions";
 import { SharedString } from "../sharedString";
 import { IIntervalCollection } from "../intervalCollection";
 import { SequenceInterval } from "../intervals";
+import { SharedStringFactory } from "../sequenceFactory";
 
 export interface Client {
 	sharedString: SharedString;
 	containerRuntime: MockContainerRuntimeForReconnection;
+}
+
+export function constructClients(
+	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
+	numClients = 3,
+): [Client, Client, Client] {
+	return Array.from({ length: numClients }, (_, index) => {
+		const dataStoreRuntime = new MockFluidDataStoreRuntime();
+		dataStoreRuntime.options = { intervalStickinessEnabled: true };
+		const sharedString = new SharedString(
+			dataStoreRuntime,
+			String.fromCharCode(index + 65),
+			SharedStringFactory.Attributes,
+		);
+		const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+		const services: IChannelServices = {
+			deltaConnection: dataStoreRuntime.createDeltaConnection(),
+			objectStorage: new MockStorage(),
+		};
+
+		sharedString.initializeLocal();
+		sharedString.connect(services);
+		return { containerRuntime, sharedString };
+	}) as [Client, Client, Client];
 }
 
 /**

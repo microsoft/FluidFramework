@@ -289,7 +289,7 @@ describe("IntervalCollection fuzz testing with rebased batches", () => {
 	createDDSFuzzSuite(noReconnectWithRebaseModel, {
 		...defaultFuzzOptions,
 		// ADO:4477: Same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477.
-		skip: [9, 12, 29],
+		// skip: [9, 12, 29],
 		// TODO:AB#5338: IntervalCollection doesn't correctly handle edits made while detached. Once supported,
 		// this config should be enabled (deleting is sufficient: detached start is enabled by default)
 		detachedStartOptions: {
@@ -308,7 +308,8 @@ describe("IntervalCollection fuzz testing with rebased batches", () => {
 			enableGroupedBatching: true,
 		},
 		// Uncomment this line to replay a specific seed from its failure file:
-		// replay: 0,
+		replay: 9,
+		saveTest: { directory: path.join(__dirname, "../..") },
 	});
 });
 
