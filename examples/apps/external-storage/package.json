@@ -1,13 +1,13 @@
 {
-	"name": "@fluid-example/downloadable-view",
+	"name": "@fluid-example/external-storage",
 	"version": "2.0.0-internal.6.4.0",
 	"private": true,
-	"description": "A minimal example using the react downloadable-view",
+	"description": "A minimal example using the react external-storage",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "examples/apps/downloadable-view"
+		"directory": "examples/apps/external-storage"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
@@ -28,9 +28,8 @@
 		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"start": "npm run start:tinylicious && npm run start:webpack",
-		"start:webpack": "webpack serve --config webpack.config.js",
-		"start:tinylicious": "tinylicious 7070",
 		"start:test": "webpack serve --config webpack.test.js",
+		"start:webpack": "webpack serve --config webpack.config.js",
 		"test": "npm run test:jest",
 		"test:jest": "jest",
 		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",
@@ -44,6 +43,7 @@
 		"@fluentui/react-icons": "^2.0.201",
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-experimental/react-inputs": "workspace:~",
+		"@fluid-experimental/to-non-fluid": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
@@ -53,7 +53,6 @@
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
-		"@fluid-experimental/to-non-fluid": "workspace:~",
 		"@fluidframework/view-interfaces": "workspace:~",
 		"css-loader": "^1.0.0",
 		"react": "^17.0.1",

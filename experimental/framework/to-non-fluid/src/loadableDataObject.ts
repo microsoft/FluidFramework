@@ -127,12 +127,12 @@ export class LoadableDataObject extends DataObject implements IEventProvider<ILo
 		key: string,
 		fluidObject: SupportedSharedObjects | LoadableDataObject,
 	) {
-		assert(!this.hasFluidObject(key), "should not be overriding a fluid object");
+		assert(!this.hasFluidObject(key), "should not be overriding a Fluid object");
 		this.root.set(key, fluidObject.handle);
 	}
 
 	public addReferenceHandle(key: string, handle: IFluidHandle<LoadableDataObject>) {
-		assert(!this.hasFluidObject(key), "should not be overriding a fluid object");
+		assert(!this.hasFluidObject(key), "should not be overriding a Fluid object");
 		this.root.set(key, new ReferenceHandle(handle));
 		this.handleMap.set(key, handle);
 	}
@@ -201,7 +201,7 @@ export class LoadableDataObject extends DataObject implements IEventProvider<ILo
 		assert(this._path === undefined, "overriding a path!");
 		this._path = [...path];
 
-		// de-fluid DDS
+		// de-Fluid DDS
 		for (const [key, child] of this.sharedObjectMap.entries()) {
 			localDataObject.dataStructures.set(key, toLocalChannel(child));
 		}
@@ -233,10 +233,7 @@ export class LoadableDataObject extends DataObject implements IEventProvider<ILo
 		assert(this.runtime.attachState === AttachState.Detached, "Can only transition detached!");
 		assert(this.context.deltaManager.lastKnownSeqNumber === 0, "Should be empty container!");
 		const type = this.context.packagePath[this.context.packagePath.length - 1];
-		assert(
-			localDataObject.type === type,
-			`Type should match ${localDataObject.type} = ${type}!`,
-		);
+		assert(localDataObject.type === type, "Type should match");
 
 		for (const [key, localDataStructure] of localDataObject.dataStructures) {
 			const child = fromLocalDataStructure(localDataStructure, this.runtime);

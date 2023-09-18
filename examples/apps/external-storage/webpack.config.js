@@ -37,7 +37,7 @@ module.exports = (env) => {
 				library: "[name]",
 				// https://github.com/webpack/webpack/issues/5767
 				// https://github.com/webpack/webpack/issues/7939
-				devtoolNamespace: "fluid-example/downloadable-view",
+				devtoolNamespace: "fluid-example/external-storage",
 				libraryTarget: "umd",
 			},
 			plugins: [

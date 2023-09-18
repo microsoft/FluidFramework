@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IIconProps, IStackTokens, createTheme } from "@fluentui/react";
 
 export const addIcon: IIconProps = { iconName: "Add" };
