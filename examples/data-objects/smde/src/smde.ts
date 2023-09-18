@@ -6,13 +6,7 @@
 import { EventEmitter } from "events";
 import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/core-utils";
-import {
-	IFluidLoadable,
-	IFluidRouter,
-	IRequest,
-	IResponse,
-	IFluidHandle,
-} from "@fluidframework/core-interfaces";
+import { IFluidLoadable, IRequest, IResponse, IFluidHandle } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { ReferenceType, reservedTileLabelsKey } from "@fluidframework/merge-tree";
@@ -29,7 +23,7 @@ import "simplemde/dist/simplemde.min.css";
 /**
  * Data object storing the data to back a SimpleMDE editor.  Primarily just a SharedString.
  */
-export class SmdeDataObject extends EventEmitter implements IFluidLoadable, IFluidRouter {
+export class SmdeDataObject extends EventEmitter implements IFluidLoadable {
 	public static async load(runtime: IFluidDataStoreRuntime, existing: boolean) {
 		const collection = new SmdeDataObject(runtime);
 		await collection.initialize(existing);

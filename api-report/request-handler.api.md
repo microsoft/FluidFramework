@@ -32,14 +32,13 @@ export const rootDataStoreRequestHandler: (request: IRequest, runtime: IContaine
 // @public
 export type RuntimeRequestHandler = (request: RequestParser, runtime: IContainerRuntime) => Promise<IResponse | undefined>;
 
-// @public
+// @public @deprecated
 export class RuntimeRequestHandlerBuilder {
     // (undocumented)
     handleRequest(request: IRequest, runtime: IContainerRuntime): Promise<IResponse>;
     // (undocumented)
     pushHandler(...handlers: RuntimeRequestHandler[]): void;
 }
-
 
 // (No @packageDocumentation comment for this package)
 

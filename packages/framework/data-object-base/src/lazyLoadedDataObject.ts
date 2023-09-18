@@ -7,6 +7,7 @@ import {
 	IEvent,
 	IFluidHandle,
 	IFluidLoadable,
+	// eslint-disable-next-line import/no-deprecated
 	IFluidRouter,
 	IRequest,
 	IResponse,
@@ -24,10 +25,12 @@ export abstract class LazyLoadedDataObject<
 		TEvents extends IEvent = IEvent,
 	>
 	extends EventForwarder<TEvents>
+	// eslint-disable-next-line import/no-deprecated
 	implements IFluidLoadable, IProvideFluidHandle, IFluidRouter
 {
 	private _handle?: IFluidHandle<this>;
 
+	// eslint-disable-next-line import/no-deprecated
 	public get IFluidRouter() {
 		return this;
 	}

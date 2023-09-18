@@ -15,6 +15,7 @@ import {
 	TelemetryEventCategory,
 	IRequest,
 	IResponse,
+	// eslint-disable-next-line import/no-deprecated
 	IFluidRouter,
 	FluidObject,
 	LogLevel,
@@ -595,6 +596,10 @@ export class Container
 		return this._deltaManager.connectionManager.connectionMode;
 	}
 
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
+	// eslint-disable-next-line import/no-deprecated
 	public get IFluidRouter(): IFluidRouter {
 		return this;
 	}

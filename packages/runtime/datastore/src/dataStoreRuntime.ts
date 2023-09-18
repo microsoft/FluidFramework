@@ -63,7 +63,6 @@ import {
 	createResponseError,
 	exceptionToResponse,
 	GCDataBuilder,
-	requestFluidObject,
 	unpackChildNodesUsedRoutes,
 } from "@fluidframework/runtime-utils";
 import {
@@ -118,7 +117,7 @@ export class FluidDataStoreRuntime
 			context,
 			sharedObjectRegistry,
 			existing,
-			async (dataStoreRuntime) => requestFluidObject(dataStoreRuntime, "/"),
+			async (dataStoreRuntime) => dataStoreRuntime.entryPoint,
 		);
 	}
 

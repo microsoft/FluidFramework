@@ -9,6 +9,7 @@ import {
 	mountableViewRequestHandler,
 } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+// eslint-disable-next-line import/no-deprecated
 import { requestFluidObject, RequestParser } from "@fluidframework/runtime-utils";
 import { MountableView } from "@fluidframework/view-adapters";
 import React from "react";
@@ -45,6 +46,7 @@ const todoRequestHandler = async (request: RequestParser, runtime: IContainerRun
 		url: ``,
 		headers: request.headers,
 	});
+	// eslint-disable-next-line import/no-deprecated
 	const todo = await requestFluidObject<Todo>(
 		await runtime.getRootDataStore(todoId),
 		objectRequest,

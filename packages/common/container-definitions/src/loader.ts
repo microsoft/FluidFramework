@@ -6,6 +6,7 @@
 import {
 	IRequest,
 	IResponse,
+	// eslint-disable-next-line import/no-deprecated
 	IFluidRouter,
 	FluidObject,
 	IEvent,
@@ -291,6 +292,7 @@ export type ConnectionState =
 /**
  * The Host's view of a Container and its connection to storage
  */
+// eslint-disable-next-line import/no-deprecated
 export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRouter {
 	/**
 	 * The Delta Manager supporting the op stream for this Container
@@ -420,6 +422,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	/**
 	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	readonly IFluidRouter: IFluidRouter;
 
 	/**
@@ -516,6 +519,7 @@ export interface ILoader extends Partial<IProvideLoader> {
 	/**
 	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	readonly IFluidRouter: IFluidRouter;
 }
 

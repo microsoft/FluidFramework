@@ -9,7 +9,6 @@ import { EventEmitter } from "events";
 import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
 import {
 	IFluidLoadable,
-	IFluidRouter,
 	IRequest,
 	IResponse,
 	IFluidHandle,
@@ -71,10 +70,7 @@ function createTreeMarkerOps(
  * It has its own implementation of IFluidLoadable and does not extend PureDataObject / DataObject. This is
  * done intentionally to serve as an example of exposing the URL and handle via IFluidLoadable.
  */
-export class ProseMirror
-	extends EventEmitter
-	implements IFluidLoadable, IFluidRouter, IProvideRichTextEditor
-{
+export class ProseMirror extends EventEmitter implements IFluidLoadable, IProvideRichTextEditor {
 	public static async load(
 		runtime: IFluidDataStoreRuntime,
 		context: IFluidDataStoreContext,
