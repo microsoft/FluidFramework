@@ -630,6 +630,7 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	getIntervalById(id: string): TInterval | undefined;
 	/**
 	 * Creates a new interval and add it to the collection.
+	 * @deprecated - call IntervalCollection.add without specifying an intervalType
 	 * @param start - interval start position (inclusive)
 	 * @param end - interval end position (exclusive)
 	 * @param intervalType - type of the interval. All intervals are SlideOnRemove. Intervals may not be Transient.
@@ -1025,7 +1026,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		if (!this.localCollection) {
 			throw new LoggingError("attach must be called prior to adding intervals");
 		}
-
+		if (type & IntervalType.Transient) {
+			throw new LoggingError("Can not add transient intervals");
+		}
 		if (stickiness !== IntervalStickiness.END && !this.options.intervalStickinessEnabled) {
 			throw new UsageError(
 				"attempted to set interval stickiness without enabling `intervalStickinessEnabled` feature flag",
