@@ -9,9 +9,13 @@ import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
+import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
+import { IDeltaConnection } from '@fluidframework/datastore-definitions';
+import { IDeltaHandler } from '@fluidframework/datastore-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
+import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
@@ -26,9 +30,12 @@ import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { ISnapshotTree } from '@fluidframework/protocol-definitions';
+import { ISummarizeResult } from '@fluidframework/runtime-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { Lazy } from '@fluidframework/core-utils';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 import { VisibilityState as VisibilityState_2 } from '@fluidframework/runtime-definitions';
 
@@ -63,8 +70,16 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     get clientId(): string | undefined;
     // (undocumented)
     get connected(): boolean;
+    // Warning: (ae-forgotten-export) The symbol "IChannelContext" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    protected readonly contexts: Map<string, IChannelContext>;
     // (undocumented)
     createChannel(id: string | undefined, type: string): IChannel;
+    // Warning: (ae-forgotten-export) The symbol "LocalChannelContext" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    protected createLocalChannelContext(id: string, type: string, sharedObjectRegistry: ISharedObjectRegistry): LocalChannelContext;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
@@ -119,6 +134,8 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     setConnectionState(connected: boolean, clientId?: string): void;
     // (undocumented)
+    protected readonly sharedObjectRegistry: ISharedObjectRegistry;
+    // (undocumented)
     submitMessage(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;
     // (undocumented)
     submitSignal(type: string, content: any): void;
@@ -126,6 +143,8 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     updateUsedRoutes(usedRoutes: string[]): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
+    // (undocumented)
+    protected verifyNotClosed(): void;
     // (undocumented)
     visibilityState: VisibilityState_2;
     waitAttached(): Promise<void>;
@@ -158,6 +177,17 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject> implements I
 export interface ISharedObjectRegistry {
     // (undocumented)
     get(name: string): IChannelFactory | undefined;
+}
+
+// @public
+export class MigratorFluidDataStoreRuntime extends FluidDataStoreRuntime {
+    constructor(_dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean, initializeEntryPoint?: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>);
+    // (undocumented)
+    protected createLocalChannelContext(id: string, type: string, sharedObjectRegistry: ISharedObjectRegistry): LocalChannelContext;
+    // (undocumented)
+    protected readonly _dataStoreContext: IFluidDataStoreContext;
+    // (undocumented)
+    replaceChannel(id: string, channelFactory: IChannelFactory): IChannel;
 }
 
 // @public
