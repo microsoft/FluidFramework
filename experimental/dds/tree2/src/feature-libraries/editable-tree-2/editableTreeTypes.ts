@@ -123,6 +123,8 @@ export interface TreeNode extends Tree<TreeSchema> {
  * Fields are inherently part of their parent, and thus cannot be moved.
  * Instead their content can be moved, deleted or created.
  *
+ * Editing operations are only valid on trees with the {@link TreeStatus#InDocument} `TreeStatus`.
+ *
  * @remarks
  * Fields are used wherever an editable collection of nodes is required.
  * This is required in two places:
