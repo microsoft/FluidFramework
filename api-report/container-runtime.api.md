@@ -238,9 +238,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
-// @public
+// @internal @deprecated
 export interface ContainerRuntimeMessage {
-    // Warning: (ae-incompatible-release-tags) The symbol "compatDetails" is marked as @public, but its signature references "IContainerRuntimeMessageCompatDetails" which is marked as @internal
     compatDetails?: IContainerRuntimeMessageCompatDetails;
     contents: any;
     type: ContainerMessageType;
@@ -660,6 +659,11 @@ export type OpActionEventListener = (op: ISequencedDocumentMessage) => void;
 
 // @public (undocumented)
 export type OpActionEventName = MessageType.Summarize | MessageType.SummaryAck | MessageType.SummaryNack | "default";
+
+// @internal
+export interface RecentlyAddedContainerRuntimeMessageDetails {
+    compatDetails: IContainerRuntimeMessageCompatDetails;
+}
 
 // @public
 export enum RuntimeHeaders {
