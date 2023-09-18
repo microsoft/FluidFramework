@@ -22,12 +22,8 @@ interface IGroupedMessage {
 	compression?: string;
 }
 
-function isGroupContents(opContents: unknown): opContents is IGroupedBatchMessageContents {
-	return (
-		typeof opContents === "object" &&
-		// eslint-disable-next-line @typescript-eslint/dot-notation
-		opContents?.["type"] === OpGroupingManager.groupedBatchOp
-	);
+function isGroupContents(opContents: any): opContents is IGroupedBatchMessageContents {
+	return opContents?.type === OpGroupingManager.groupedBatchOp;
 }
 
 export class OpGroupingManager {
