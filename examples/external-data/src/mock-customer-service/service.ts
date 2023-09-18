@@ -68,7 +68,7 @@ export interface SessionEndEventsListenerRequest extends EventsListenerRequest {
 		 */
 		type: "session-end";
 		/**
-		 * The url of the Fluid container whose session has ended.
+		 * The URL of the Fluid container whose session has ended.
 		 */
 		containerUrl: string;
 	};
@@ -220,7 +220,7 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	 *
 	 * Note: Implementers choice --can choose to break up containerUrl into multiple pieces
 	 * containing tenantId, documentId and socketStreamURL separately and send them as a json
-	 * object. The URL also contains all this information so for simplicity I use the url here.
+	 * object. The URL also contains all this information so for simplicity I use the URL here.
 	 */
 	expressApp.post("/register-session-url", (request, result) => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -248,7 +248,7 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 					"Content-Type": "application/json",
 				},
 				body: JSON.stringify({
-					// External data service will call our webhook echoer to notify our subscribers of the data changes.
+					// The external data service will call this service's own webhook echoer endpoint which will in turn notify our subscribers of the data changes.
 					url: `http://localhost:${port}/external-data-webhook?externalTaskListId=${externalTaskListId}`,
 					externalTaskListId,
 				}),
@@ -276,9 +276,9 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	/**
 	 * An 'events' endpoint that can be called by Fluid services.
 	 *
-	 * For the 'session-end' event {@link SessionEndEventsListenerRequest}: If, after unregistering the given client url, there are any task ids that have an outstanding
-	 * webhook registered using this services internal '/external-data-webhook' endpoint but has no respective active client sessions mapped to it anymore,
-	 * then that webhook will be deregistered.
+	 * For the 'session-end' event {@link SessionEndEventsListenerRequest}: If after unregistering the given client URL, there are any task ids that have an outstanding
+	 * webhook registered using this service's internal '/external-data-webhook' endpoint but has no respective active client sessions mapped to them anymore,
+	 * then those webhooks will be deregistered.
 	 *
 	 * @remarks Currently, the only supported request type is 'session-end' {@link SessionEndEventsListenerRequest} which enables the Fluid service to notify this service
 	 * that a particular Fluid session has ended which in turn causes this service to unregister any related webhooks to the respective Fluid session.
