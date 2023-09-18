@@ -16,6 +16,30 @@ type TypeOnly<T> = {
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_AllowInactiveRequestHeaderKey": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_AllowInactiveRequestHeaderKey():
+    TypeOnly<typeof old.AllowInactiveRequestHeaderKey>;
+declare function use_current_VariableDeclaration_AllowInactiveRequestHeaderKey(
+    use: TypeOnly<typeof current.AllowInactiveRequestHeaderKey>);
+use_current_VariableDeclaration_AllowInactiveRequestHeaderKey(
+    get_old_VariableDeclaration_AllowInactiveRequestHeaderKey());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_AllowInactiveRequestHeaderKey": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_AllowInactiveRequestHeaderKey():
+    TypeOnly<typeof current.AllowInactiveRequestHeaderKey>;
+declare function use_old_VariableDeclaration_AllowInactiveRequestHeaderKey(
+    use: TypeOnly<typeof old.AllowInactiveRequestHeaderKey>);
+use_old_VariableDeclaration_AllowInactiveRequestHeaderKey(
+    get_current_VariableDeclaration_AllowInactiveRequestHeaderKey());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_AllowTombstoneRequestHeaderKey": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_AllowTombstoneRequestHeaderKey():
@@ -36,6 +60,30 @@ declare function use_old_VariableDeclaration_AllowTombstoneRequestHeaderKey(
     use: TypeOnly<typeof old.AllowTombstoneRequestHeaderKey>);
 use_old_VariableDeclaration_AllowTombstoneRequestHeaderKey(
     get_current_VariableDeclaration_AllowTombstoneRequestHeaderKey());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_CompatModeBehavior": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_CompatModeBehavior():
+    TypeOnly<old.CompatModeBehavior>;
+declare function use_current_TypeAliasDeclaration_CompatModeBehavior(
+    use: TypeOnly<current.CompatModeBehavior>);
+use_current_TypeAliasDeclaration_CompatModeBehavior(
+    get_old_TypeAliasDeclaration_CompatModeBehavior());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_CompatModeBehavior": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_CompatModeBehavior():
+    TypeOnly<current.CompatModeBehavior>;
+declare function use_old_TypeAliasDeclaration_CompatModeBehavior(
+    use: TypeOnly<old.CompatModeBehavior>);
+use_old_TypeAliasDeclaration_CompatModeBehavior(
+    get_current_TypeAliasDeclaration_CompatModeBehavior());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -107,7 +155,6 @@ declare function get_current_ClassDeclaration_ContainerRuntime():
 declare function use_old_ClassDeclaration_ContainerRuntime(
     use: TypeOnly<old.ContainerRuntime>);
 use_old_ClassDeclaration_ContainerRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ContainerRuntime());
 
 /*
@@ -449,6 +496,30 @@ use_old_InterfaceDeclaration_IConnectableRuntime(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IContainerRuntimeMessageCompatDetails": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IContainerRuntimeMessageCompatDetails():
+    TypeOnly<old.IContainerRuntimeMessageCompatDetails>;
+declare function use_current_InterfaceDeclaration_IContainerRuntimeMessageCompatDetails(
+    use: TypeOnly<current.IContainerRuntimeMessageCompatDetails>);
+use_current_InterfaceDeclaration_IContainerRuntimeMessageCompatDetails(
+    get_old_InterfaceDeclaration_IContainerRuntimeMessageCompatDetails());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IContainerRuntimeMessageCompatDetails": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IContainerRuntimeMessageCompatDetails():
+    TypeOnly<current.IContainerRuntimeMessageCompatDetails>;
+declare function use_old_InterfaceDeclaration_IContainerRuntimeMessageCompatDetails(
+    use: TypeOnly<old.IContainerRuntimeMessageCompatDetails>);
+use_old_InterfaceDeclaration_IContainerRuntimeMessageCompatDetails(
+    get_current_InterfaceDeclaration_IContainerRuntimeMessageCompatDetails());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IContainerRuntimeOptions": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IContainerRuntimeOptions():
@@ -665,6 +736,30 @@ use_old_InterfaceDeclaration_IRefreshSummaryAckOptions(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IRetriableFailureResult": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IRetriableFailureResult():
+    TypeOnly<old.IRetriableFailureResult>;
+declare function use_current_InterfaceDeclaration_IRetriableFailureResult(
+    use: TypeOnly<current.IRetriableFailureResult>);
+use_current_InterfaceDeclaration_IRetriableFailureResult(
+    get_old_InterfaceDeclaration_IRetriableFailureResult());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IRetriableFailureResult": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IRetriableFailureResult():
+    TypeOnly<current.IRetriableFailureResult>;
+declare function use_old_InterfaceDeclaration_IRetriableFailureResult(
+    use: TypeOnly<old.IRetriableFailureResult>);
+use_old_InterfaceDeclaration_IRetriableFailureResult(
+    get_current_InterfaceDeclaration_IRetriableFailureResult());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISubmitSummaryOpResult": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISubmitSummaryOpResult():
@@ -709,6 +804,30 @@ declare function use_old_InterfaceDeclaration_ISubmitSummaryOptions(
     use: TypeOnly<old.ISubmitSummaryOptions>);
 use_old_InterfaceDeclaration_ISubmitSummaryOptions(
     get_current_InterfaceDeclaration_ISubmitSummaryOptions());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISummarizeEventProps": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ISummarizeEventProps():
+    TypeOnly<old.ISummarizeEventProps>;
+declare function use_current_InterfaceDeclaration_ISummarizeEventProps(
+    use: TypeOnly<current.ISummarizeEventProps>);
+use_current_InterfaceDeclaration_ISummarizeEventProps(
+    get_old_InterfaceDeclaration_ISummarizeEventProps());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISummarizeEventProps": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ISummarizeEventProps():
+    TypeOnly<current.ISummarizeEventProps>;
+declare function use_old_InterfaceDeclaration_ISummarizeEventProps(
+    use: TypeOnly<old.ISummarizeEventProps>);
+use_old_InterfaceDeclaration_ISummarizeEventProps(
+    get_current_InterfaceDeclaration_ISummarizeEventProps());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1189,6 +1308,30 @@ declare function use_old_InterfaceDeclaration_IUploadSummaryResult(
     use: TypeOnly<old.IUploadSummaryResult>);
 use_old_InterfaceDeclaration_IUploadSummaryResult(
     get_current_InterfaceDeclaration_IUploadSummaryResult());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_InactiveResponseHeaderKey": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_InactiveResponseHeaderKey():
+    TypeOnly<typeof old.InactiveResponseHeaderKey>;
+declare function use_current_VariableDeclaration_InactiveResponseHeaderKey(
+    use: TypeOnly<typeof current.InactiveResponseHeaderKey>);
+use_current_VariableDeclaration_InactiveResponseHeaderKey(
+    get_old_VariableDeclaration_InactiveResponseHeaderKey());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_InactiveResponseHeaderKey": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_InactiveResponseHeaderKey():
+    TypeOnly<typeof current.InactiveResponseHeaderKey>;
+declare function use_old_VariableDeclaration_InactiveResponseHeaderKey(
+    use: TypeOnly<typeof old.InactiveResponseHeaderKey>);
+use_old_VariableDeclaration_InactiveResponseHeaderKey(
+    get_current_VariableDeclaration_InactiveResponseHeaderKey());
 
 /*
 * Validate forward compat by using old type in place of current type

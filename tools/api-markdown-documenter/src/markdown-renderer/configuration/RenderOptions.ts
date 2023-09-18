@@ -51,6 +51,8 @@ import {
  * @param node - The `DocumentationNode` to render.
  * @param writer - The writing context to render into.
  * @param context - Recursive contextual state.
+ *
+ * @public
  */
 export type RenderDocumentationNode<
 	TDocumentationNode extends DocumentationNode = DocumentationNode,
@@ -64,6 +66,8 @@ export type RenderDocumentationNode<
  * Note: in order to be complete, this *must* include an entry for all types enumerated under {@link DocumentationNodeType}.
  *
  * We supply a suite of default renderers for all of these.
+ *
+ * @public
  */
 export interface MarkdownRenderers {
 	/**
@@ -75,7 +79,7 @@ export interface MarkdownRenderers {
 /**
  * Default Markdown rendering configuration.
  */
-const defaultMarkdownRenderers: MarkdownRenderers = {
+export const defaultMarkdownRenderers: MarkdownRenderers = {
 	[DocumentationNodeType.Alert]: (node, writer, context): void =>
 		renderAlert(node as AlertNode, writer, context),
 	[DocumentationNodeType.BlockQuote]: (node, writer, context): void =>
@@ -111,14 +115,3 @@ const defaultMarkdownRenderers: MarkdownRenderers = {
 	[DocumentationNodeType.UnorderedList]: (node, writer, context): void =>
 		renderUnorderedList(node as UnorderedListNode, writer, context),
 };
-
-/**
- * Constructs a complete list of {@link MarkdownRenderers} using provided optional renderer overrides, and filling
- * in the rest with system defaults.
- */
-export function getRenderersWithDefaults(customRenderers?: MarkdownRenderers): MarkdownRenderers {
-	return {
-		...defaultMarkdownRenderers,
-		...customRenderers,
-	};
-}

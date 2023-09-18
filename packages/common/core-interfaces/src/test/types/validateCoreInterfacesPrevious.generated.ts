@@ -16,6 +16,78 @@ type TypeOnly<T> = {
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_ExtendEventProvider": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_ExtendEventProvider():
+    TypeOnly<old.ExtendEventProvider<any,any,any>>;
+declare function use_current_TypeAliasDeclaration_ExtendEventProvider(
+    use: TypeOnly<current.ExtendEventProvider<any,any,any>>);
+use_current_TypeAliasDeclaration_ExtendEventProvider(
+    get_old_TypeAliasDeclaration_ExtendEventProvider());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_ExtendEventProvider": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_ExtendEventProvider():
+    TypeOnly<current.ExtendEventProvider<any,any,any>>;
+declare function use_old_TypeAliasDeclaration_ExtendEventProvider(
+    use: TypeOnly<old.ExtendEventProvider<any,any,any>>);
+use_old_TypeAliasDeclaration_ExtendEventProvider(
+    get_current_TypeAliasDeclaration_ExtendEventProvider());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_FluidErrorTypes": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_FluidErrorTypes():
+    TypeOnly<typeof old.FluidErrorTypes>;
+declare function use_current_VariableDeclaration_FluidErrorTypes(
+    use: TypeOnly<typeof current.FluidErrorTypes>);
+use_current_VariableDeclaration_FluidErrorTypes(
+    get_old_VariableDeclaration_FluidErrorTypes());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_FluidErrorTypes": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_FluidErrorTypes():
+    TypeOnly<typeof current.FluidErrorTypes>;
+declare function use_old_VariableDeclaration_FluidErrorTypes(
+    use: TypeOnly<typeof old.FluidErrorTypes>);
+use_old_VariableDeclaration_FluidErrorTypes(
+    get_current_VariableDeclaration_FluidErrorTypes());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_FluidErrorTypes": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_FluidErrorTypes():
+    TypeOnly<old.FluidErrorTypes>;
+declare function use_current_TypeAliasDeclaration_FluidErrorTypes(
+    use: TypeOnly<current.FluidErrorTypes>);
+use_current_TypeAliasDeclaration_FluidErrorTypes(
+    get_old_TypeAliasDeclaration_FluidErrorTypes());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_FluidErrorTypes": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_FluidErrorTypes():
+    TypeOnly<current.FluidErrorTypes>;
+declare function use_old_TypeAliasDeclaration_FluidErrorTypes(
+    use: TypeOnly<old.FluidErrorTypes>);
+use_old_TypeAliasDeclaration_FluidErrorTypes(
+    get_current_TypeAliasDeclaration_FluidErrorTypes());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_FluidObject": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_FluidObject():
@@ -108,6 +180,150 @@ declare function use_old_InterfaceDeclaration_IDisposable(
     use: TypeOnly<old.IDisposable>);
 use_old_InterfaceDeclaration_IDisposable(
     get_current_InterfaceDeclaration_IDisposable());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IErrorBase": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IErrorBase():
+    TypeOnly<old.IErrorBase>;
+declare function use_current_InterfaceDeclaration_IErrorBase(
+    use: TypeOnly<current.IErrorBase>);
+use_current_InterfaceDeclaration_IErrorBase(
+    get_old_InterfaceDeclaration_IErrorBase());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IErrorBase": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IErrorBase():
+    TypeOnly<current.IErrorBase>;
+declare function use_old_InterfaceDeclaration_IErrorBase(
+    use: TypeOnly<old.IErrorBase>);
+use_old_InterfaceDeclaration_IErrorBase(
+    get_current_InterfaceDeclaration_IErrorBase());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IErrorEvent": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IErrorEvent():
+    TypeOnly<old.IErrorEvent>;
+declare function use_current_InterfaceDeclaration_IErrorEvent(
+    use: TypeOnly<current.IErrorEvent>);
+use_current_InterfaceDeclaration_IErrorEvent(
+    get_old_InterfaceDeclaration_IErrorEvent());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IErrorEvent": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IErrorEvent():
+    TypeOnly<current.IErrorEvent>;
+declare function use_old_InterfaceDeclaration_IErrorEvent(
+    use: TypeOnly<old.IErrorEvent>);
+use_old_InterfaceDeclaration_IErrorEvent(
+    get_current_InterfaceDeclaration_IErrorEvent());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IEvent": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IEvent():
+    TypeOnly<old.IEvent>;
+declare function use_current_InterfaceDeclaration_IEvent(
+    use: TypeOnly<current.IEvent>);
+use_current_InterfaceDeclaration_IEvent(
+    get_old_InterfaceDeclaration_IEvent());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IEvent": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IEvent():
+    TypeOnly<current.IEvent>;
+declare function use_old_InterfaceDeclaration_IEvent(
+    use: TypeOnly<old.IEvent>);
+use_old_InterfaceDeclaration_IEvent(
+    get_current_InterfaceDeclaration_IEvent());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IEventProvider": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IEventProvider():
+    TypeOnly<old.IEventProvider<any>>;
+declare function use_current_InterfaceDeclaration_IEventProvider(
+    use: TypeOnly<current.IEventProvider<any>>);
+use_current_InterfaceDeclaration_IEventProvider(
+    get_old_InterfaceDeclaration_IEventProvider());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IEventProvider": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IEventProvider():
+    TypeOnly<current.IEventProvider<any>>;
+declare function use_old_InterfaceDeclaration_IEventProvider(
+    use: TypeOnly<old.IEventProvider<any>>);
+use_old_InterfaceDeclaration_IEventProvider(
+    get_current_InterfaceDeclaration_IEventProvider());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_IEventThisPlaceHolder": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_IEventThisPlaceHolder():
+    TypeOnly<old.IEventThisPlaceHolder>;
+declare function use_current_TypeAliasDeclaration_IEventThisPlaceHolder(
+    use: TypeOnly<current.IEventThisPlaceHolder>);
+use_current_TypeAliasDeclaration_IEventThisPlaceHolder(
+    get_old_TypeAliasDeclaration_IEventThisPlaceHolder());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_IEventThisPlaceHolder": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_IEventThisPlaceHolder():
+    TypeOnly<current.IEventThisPlaceHolder>;
+declare function use_old_TypeAliasDeclaration_IEventThisPlaceHolder(
+    use: TypeOnly<old.IEventThisPlaceHolder>);
+use_old_TypeAliasDeclaration_IEventThisPlaceHolder(
+    get_current_TypeAliasDeclaration_IEventThisPlaceHolder());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_IEventTransformer": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_IEventTransformer():
+    TypeOnly<old.IEventTransformer<any,any>>;
+declare function use_current_TypeAliasDeclaration_IEventTransformer(
+    use: TypeOnly<current.IEventTransformer<any,any>>);
+use_current_TypeAliasDeclaration_IEventTransformer(
+    get_old_TypeAliasDeclaration_IEventTransformer());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_IEventTransformer": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_IEventTransformer():
+    TypeOnly<current.IEventTransformer<any,any>>;
+declare function use_old_TypeAliasDeclaration_IEventTransformer(
+    use: TypeOnly<old.IEventTransformer<any,any>>);
+use_old_TypeAliasDeclaration_IEventTransformer(
+    get_current_TypeAliasDeclaration_IEventTransformer());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -496,6 +712,30 @@ use_old_InterfaceDeclaration_IFluidRunnable(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IGenericError": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IGenericError():
+    TypeOnly<old.IGenericError>;
+declare function use_current_InterfaceDeclaration_IGenericError(
+    use: TypeOnly<current.IGenericError>);
+use_current_InterfaceDeclaration_IGenericError(
+    get_old_InterfaceDeclaration_IGenericError());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IGenericError": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IGenericError():
+    TypeOnly<current.IGenericError>;
+declare function use_old_InterfaceDeclaration_IGenericError(
+    use: TypeOnly<old.IGenericError>);
+use_old_InterfaceDeclaration_IGenericError(
+    get_current_InterfaceDeclaration_IGenericError());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ILoggingError": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ILoggingError():
@@ -808,6 +1048,30 @@ use_old_InterfaceDeclaration_ITelemetryBaseLogger(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_ITelemetryBaseProperties": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_ITelemetryBaseProperties():
+    TypeOnly<old.ITelemetryBaseProperties>;
+declare function use_current_TypeAliasDeclaration_ITelemetryBaseProperties(
+    use: TypeOnly<current.ITelemetryBaseProperties>);
+use_current_TypeAliasDeclaration_ITelemetryBaseProperties(
+    get_old_TypeAliasDeclaration_ITelemetryBaseProperties());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_ITelemetryBaseProperties": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_ITelemetryBaseProperties():
+    TypeOnly<current.ITelemetryBaseProperties>;
+declare function use_old_TypeAliasDeclaration_ITelemetryBaseProperties(
+    use: TypeOnly<old.ITelemetryBaseProperties>);
+use_old_TypeAliasDeclaration_ITelemetryBaseProperties(
+    get_current_TypeAliasDeclaration_ITelemetryBaseProperties());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITelemetryErrorEvent": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITelemetryErrorEvent():
@@ -928,6 +1192,174 @@ use_old_InterfaceDeclaration_ITelemetryProperties(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IThrottlingWarning": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IThrottlingWarning():
+    TypeOnly<old.IThrottlingWarning>;
+declare function use_current_InterfaceDeclaration_IThrottlingWarning(
+    use: TypeOnly<current.IThrottlingWarning>);
+use_current_InterfaceDeclaration_IThrottlingWarning(
+    get_old_InterfaceDeclaration_IThrottlingWarning());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IThrottlingWarning": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IThrottlingWarning():
+    TypeOnly<current.IThrottlingWarning>;
+declare function use_old_InterfaceDeclaration_IThrottlingWarning(
+    use: TypeOnly<old.IThrottlingWarning>);
+use_old_InterfaceDeclaration_IThrottlingWarning(
+    get_current_InterfaceDeclaration_IThrottlingWarning());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IUsageError": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IUsageError():
+    TypeOnly<old.IUsageError>;
+declare function use_current_InterfaceDeclaration_IUsageError(
+    use: TypeOnly<current.IUsageError>);
+use_current_InterfaceDeclaration_IUsageError(
+    get_old_InterfaceDeclaration_IUsageError());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IUsageError": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IUsageError():
+    TypeOnly<current.IUsageError>;
+declare function use_old_InterfaceDeclaration_IUsageError(
+    use: TypeOnly<old.IUsageError>);
+use_old_InterfaceDeclaration_IUsageError(
+    get_current_InterfaceDeclaration_IUsageError());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_LogLevel": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_LogLevel():
+    TypeOnly<typeof old.LogLevel>;
+declare function use_current_VariableDeclaration_LogLevel(
+    use: TypeOnly<typeof current.LogLevel>);
+use_current_VariableDeclaration_LogLevel(
+    get_old_VariableDeclaration_LogLevel());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_LogLevel": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_LogLevel():
+    TypeOnly<typeof current.LogLevel>;
+declare function use_old_VariableDeclaration_LogLevel(
+    use: TypeOnly<typeof old.LogLevel>);
+use_old_VariableDeclaration_LogLevel(
+    get_current_VariableDeclaration_LogLevel());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_LogLevel": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_LogLevel():
+    TypeOnly<old.LogLevel>;
+declare function use_current_TypeAliasDeclaration_LogLevel(
+    use: TypeOnly<current.LogLevel>);
+use_current_TypeAliasDeclaration_LogLevel(
+    get_old_TypeAliasDeclaration_LogLevel());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_LogLevel": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_LogLevel():
+    TypeOnly<current.LogLevel>;
+declare function use_old_TypeAliasDeclaration_LogLevel(
+    use: TypeOnly<old.LogLevel>);
+use_old_TypeAliasDeclaration_LogLevel(
+    get_current_TypeAliasDeclaration_LogLevel());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_ReplaceIEventThisPlaceHolder": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_ReplaceIEventThisPlaceHolder():
+    TypeOnly<old.ReplaceIEventThisPlaceHolder<any,any>>;
+declare function use_current_TypeAliasDeclaration_ReplaceIEventThisPlaceHolder(
+    use: TypeOnly<current.ReplaceIEventThisPlaceHolder<any,any>>);
+use_current_TypeAliasDeclaration_ReplaceIEventThisPlaceHolder(
+    get_old_TypeAliasDeclaration_ReplaceIEventThisPlaceHolder());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_ReplaceIEventThisPlaceHolder": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_ReplaceIEventThisPlaceHolder():
+    TypeOnly<current.ReplaceIEventThisPlaceHolder<any,any>>;
+declare function use_old_TypeAliasDeclaration_ReplaceIEventThisPlaceHolder(
+    use: TypeOnly<old.ReplaceIEventThisPlaceHolder<any,any>>);
+use_old_TypeAliasDeclaration_ReplaceIEventThisPlaceHolder(
+    get_current_TypeAliasDeclaration_ReplaceIEventThisPlaceHolder());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_Tagged": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_Tagged():
+    TypeOnly<old.Tagged<any,any>>;
+declare function use_current_InterfaceDeclaration_Tagged(
+    use: TypeOnly<current.Tagged<any,any>>);
+use_current_InterfaceDeclaration_Tagged(
+    get_old_InterfaceDeclaration_Tagged());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_Tagged": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_Tagged():
+    TypeOnly<current.Tagged<any,any>>;
+declare function use_old_InterfaceDeclaration_Tagged(
+    use: TypeOnly<old.Tagged<any,any>>);
+use_old_InterfaceDeclaration_Tagged(
+    get_current_InterfaceDeclaration_Tagged());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_TelemetryBaseEventPropertyType": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_TelemetryBaseEventPropertyType():
+    TypeOnly<old.TelemetryBaseEventPropertyType>;
+declare function use_current_TypeAliasDeclaration_TelemetryBaseEventPropertyType(
+    use: TypeOnly<current.TelemetryBaseEventPropertyType>);
+use_current_TypeAliasDeclaration_TelemetryBaseEventPropertyType(
+    get_old_TypeAliasDeclaration_TelemetryBaseEventPropertyType());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_TelemetryBaseEventPropertyType": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_TelemetryBaseEventPropertyType():
+    TypeOnly<current.TelemetryBaseEventPropertyType>;
+declare function use_old_TypeAliasDeclaration_TelemetryBaseEventPropertyType(
+    use: TypeOnly<old.TelemetryBaseEventPropertyType>);
+use_old_TypeAliasDeclaration_TelemetryBaseEventPropertyType(
+    get_current_TypeAliasDeclaration_TelemetryBaseEventPropertyType());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_TelemetryEventCategory": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_TelemetryEventCategory():
@@ -972,6 +1404,30 @@ declare function use_old_TypeAliasDeclaration_TelemetryEventPropertyType(
     use: TypeOnly<old.TelemetryEventPropertyType>);
 use_old_TypeAliasDeclaration_TelemetryEventPropertyType(
     get_current_TypeAliasDeclaration_TelemetryEventPropertyType());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_TransformedEvent": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_TransformedEvent():
+    TypeOnly<old.TransformedEvent<any,any,any>>;
+declare function use_current_TypeAliasDeclaration_TransformedEvent(
+    use: TypeOnly<current.TransformedEvent<any,any,any>>);
+use_current_TypeAliasDeclaration_TransformedEvent(
+    get_old_TypeAliasDeclaration_TransformedEvent());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_TransformedEvent": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_TransformedEvent():
+    TypeOnly<current.TransformedEvent<any,any,any>>;
+declare function use_old_TypeAliasDeclaration_TransformedEvent(
+    use: TypeOnly<old.TransformedEvent<any,any,any>>);
+use_old_TypeAliasDeclaration_TransformedEvent(
+    get_current_TypeAliasDeclaration_TransformedEvent());
 
 /*
 * Validate forward compat by using old type in place of current type

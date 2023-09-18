@@ -56,7 +56,10 @@ import { TableBodyRowNode, TableHeaderRowNode } from "./TableRowNode";
  * @see
  *
  * - {@link TableCellNode}
+ *
  * - {@link TableRowNode}
+ *
+ * @public
  */
 export class TableNode
 	extends DocumentationParentNodeBase<TableBodyRowNode>

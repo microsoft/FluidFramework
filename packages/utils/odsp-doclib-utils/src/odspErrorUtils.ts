@@ -18,6 +18,7 @@ import {
 	FluidInvalidSchemaError,
 } from "@fluidframework/driver-utils";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	OdspErrorType,
 	OdspError,
 	IOdspErrorAugmentations,
@@ -205,6 +206,7 @@ export function createOdspNetworkError(
 			if (innerMostErrorCode === OdspServiceReadOnlyErrorCode) {
 				error = new RetryableError(
 					errorMessage,
+					// eslint-disable-next-line import/no-deprecated
 					OdspErrorType.serviceReadOnly,
 					driverProps,
 				);
@@ -246,6 +248,7 @@ export function createOdspNetworkError(
 			);
 			break;
 		case 410:
+			// eslint-disable-next-line import/no-deprecated
 			error = new NonRetryableError(errorMessage, OdspErrorType.cannotCatchUp, driverProps);
 			break;
 		case 409:
@@ -271,11 +274,13 @@ export function createOdspNetworkError(
 			);
 			break;
 		case 413:
+			// eslint-disable-next-line import/no-deprecated
 			error = new NonRetryableError(errorMessage, OdspErrorType.snapshotTooBig, driverProps);
 			break;
 		case 414:
 			error = new NonRetryableError(
 				errorMessage,
+				// eslint-disable-next-line import/no-deprecated
 				OdspErrorType.invalidFileNameError,
 				driverProps,
 			);
@@ -302,11 +307,13 @@ export function createOdspNetworkError(
 			);
 			break;
 		case 501:
+			// eslint-disable-next-line import/no-deprecated
 			error = new NonRetryableError(errorMessage, OdspErrorType.fluidNotEnabled, driverProps);
 			break;
 		case 507:
 			error = new NonRetryableError(
 				errorMessage,
+				// eslint-disable-next-line import/no-deprecated
 				OdspErrorType.outOfStorageError,
 				driverProps,
 			);

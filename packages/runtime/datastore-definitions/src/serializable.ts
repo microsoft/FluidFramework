@@ -17,10 +17,10 @@ import { Jsonable } from "./jsonable";
  * Important: `T extends Serializable<T>` is generally incorrect.
  * (Any value of `T` extends the serializable subset of itself.)
  *
- * @example
- * Typical usage:
+ * @example Typical usage
+ *
  * ```typescript
- *      function serialize<T>(value: Serializable<T>) { ... }
+ * function serialize<T>(value: Serializable<T>) { ... }
  * ```
  */
 export type Serializable<T = any> = Jsonable<T, IFluidHandle>;

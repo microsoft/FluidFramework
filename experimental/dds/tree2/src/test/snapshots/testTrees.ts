@@ -26,12 +26,12 @@ function generateCompleteTree(
 		new MockFluidDataStoreRuntime({ clientId: "test-client", id: "test" }),
 		"test",
 	);
-	tree.schematize({
+	const view = tree.schematize({
 		allowedSchemaModifications: AllowedUpdateType.None,
 		schema: testSchema,
 		initialTree: [],
 	});
-	generateTreeRecursively(tree, undefined, fields, height, nodesPerField, { value: 1 });
+	generateTreeRecursively(view, undefined, fields, height, nodesPerField, { value: 1 });
 	return tree;
 }
 
@@ -116,9 +116,9 @@ export function generateTestTrees(): { name: string; tree: () => ISharedTree }[]
 					new MockFluidDataStoreRuntime({ clientId: "test-client", id: "test" }),
 					"test",
 				);
-				tree.schematize(config);
+				const view = tree.schematize(config);
 
-				const field = tree.editor.optionalField({
+				const field = view.editor.optionalField({
 					parent: undefined,
 					field: rootFieldKey,
 				});
@@ -148,20 +148,18 @@ export function generateTestTrees(): { name: string; tree: () => ISharedTree }[]
 					new MockFluidDataStoreRuntime({ clientId: "test-client", id: "test" }),
 					"test",
 				);
-				tree.schematize(config);
-
-				tree.storedSchema.update(docSchema);
-				tree.transaction.start();
+				const view = tree.schematize(config);
+				view.transaction.start();
 				// We must make this shallow change to the sequence field as part of the same transaction as the
 				// nested change. Otherwise, the nested change will be represented using the generic field kind.
-				tree.editor
+				view.editor
 					.sequenceField({
 						parent: undefined,
 						field: rootFieldKey,
 					})
 					.insert(0, [singleTextCursor({ type: brand("SeqMap") })]);
 				// The nested change
-				tree.editor
+				view.editor
 					.sequenceField({
 						parent: {
 							parent: undefined,
@@ -171,7 +169,7 @@ export function generateTestTrees(): { name: string; tree: () => ISharedTree }[]
 						field: brand("foo"),
 					})
 					.insert(0, [singleTextCursor({ type: brand("SeqMap") })]);
-				tree.transaction.commit();
+				view.transaction.commit();
 				return tree;
 			},
 		},

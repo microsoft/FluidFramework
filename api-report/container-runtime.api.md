@@ -182,13 +182,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
         runtimeOptions?: IContainerRuntimeOptions;
         containerScope?: FluidObject;
         containerRuntimeCtor?: typeof ContainerRuntime;
-    } & ({
         requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
-        initializeEntryPoint?: undefined;
-    } | {
-        requestHandler?: undefined;
-        initializeEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
-    })): Promise<ContainerRuntime>;
+        initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
+    }): Promise<ContainerRuntime>;
     // (undocumented)
     readonly logger: ITelemetryLoggerExt;
     // (undocumented)

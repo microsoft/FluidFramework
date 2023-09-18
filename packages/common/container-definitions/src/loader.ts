@@ -54,7 +54,7 @@ export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComp
 	 * Load the code module (package) that can interact with the document.
 	 *
 	 * @param source - Code proposal that articulates the current schema the document is written in.
-	 * @returns - Code module entry point along with the code details associated with it.
+	 * @returns Code module entry point along with the code details associated with it.
 	 */
 	load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }
@@ -85,7 +85,7 @@ export interface IFluidCodeResolver {
 	/**
 	 * Resolves a Fluid code details into a form that can be loaded.
 	 * @param details - The Fluid code details to resolve.
-	 * @returns - A IResolvedFluidCodeDetails where the resolvedPackage's Fluid file entries are absolute urls, and
+	 * @returns A IResolvedFluidCodeDetails where the resolvedPackage's Fluid file entries are absolute urls, and
 	 * an optional resolvedPackageCacheId if the loaded package should be cached.
 	 */
 	resolveCodeDetails(details: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails>;
@@ -544,6 +544,7 @@ export interface IHostLoader extends ILoader {
 }
 
 export type ILoaderOptions = {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	[key in string | number]: any;
 } & {
 	/**

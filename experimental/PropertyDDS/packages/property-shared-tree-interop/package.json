@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-shared-tree-interop",
-	"version": "2.0.0-internal.6.3.0",
+	"version": "2.0.0-internal.6.4.0",
 	"description": "Utilities for migration from PropertyDDS to the new SharedTree DDS",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -18,7 +18,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"clean": "rimraf --glob \"dist\" \"*.tsbuildinfo\" \"*.build.log\"",
+		"clean": "rimraf --glob 'dist' '*.tsbuildinfo' '*.build.log' 'lib' 'nyc'",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",

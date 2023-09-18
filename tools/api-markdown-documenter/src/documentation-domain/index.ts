@@ -21,9 +21,10 @@ export { DocumentNode, DocumentNodeProps } from "./DocumentNode";
 export {
 	DocumentationNode,
 	DocumentationLiteralNode,
-	MultiLineDocumentationNode,
+	DocumentationLiteralNodeBase,
 	DocumentationParentNode,
 	DocumentationParentNodeBase,
+	MultiLineDocumentationNode,
 	SingleLineDocumentationNode,
 } from "./DocumentationNode";
 export { DocumentationNodeType } from "./DocumentationNodeType";
