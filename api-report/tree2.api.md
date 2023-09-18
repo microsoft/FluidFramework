@@ -17,36 +17,36 @@ import type { Static } from '@sinclair/typebox';
 import type { TAnySchema } from '@sinclair/typebox';
 import type { TSchema } from '@sinclair/typebox';
 
-// @alpha
+// @public
 export interface Adapters {
     // (undocumented)
     readonly tree?: readonly TreeAdapter[];
 }
 
-// @alpha
+// @public
 export type AllowedTypes = [Any] | readonly LazyItem<TreeSchema>[];
 
-// @alpha
+// @public
 type AllowedTypesToTypedTrees<Mode extends ApiMode, T extends AllowedTypes> = [
 T extends InternalTypedSchemaTypes.FlexList<TreeSchema> ? InternalTypedSchemaTypes.ArrayToUnion<TypeArrayToTypedTreeArray<Mode, Assume<InternalTypedSchemaTypes.ConstantFlexListToNonLazyArray<T>, readonly TreeSchema[]>>> : UntypedApi<Mode>
 ][_InlineTrick];
 
-// @alpha
+// @public
 export enum AllowedUpdateType {
     None = 0,
     SchemaCompatible = 1
 }
 
-// @alpha
+// @public
 type AllowOptional<T> = [FlattenKeys<RequiredFields<T> & OptionalFields<T>>][_InlineTrick];
 
-// @alpha
+// @public
 type AllowOptionalNotFlattened<T> = [RequiredFields<T> & OptionalFields<T>][_InlineTrick];
 
-// @alpha
+// @public
 export type Anchor = Brand<number, "rebaser.Anchor">;
 
-// @alpha
+// @public
 export interface AnchorEvents {
     afterDelete(anchor: AnchorNode): void;
     childrenChanging(anchor: AnchorNode): void;
@@ -54,22 +54,22 @@ export interface AnchorEvents {
     valueChanging(anchor: AnchorNode, value: Value): void;
 }
 
-// @alpha
+// @public
 export interface AnchorLocator {
     locate(anchor: Anchor): AnchorNode | undefined;
 }
 
-// @alpha
+// @public
 export interface AnchorNode extends UpPath<AnchorNode>, ISubscribable<AnchorEvents> {
     child(key: FieldKey, index: number): UpPath<AnchorNode>;
     getOrCreateChildRef(key: FieldKey, index: number): [Anchor, AnchorNode];
     readonly slots: BrandedMapSubset<AnchorSlot<any>>;
 }
 
-// @alpha
+// @public
 export type AnchorsCompare = CompareFunction<UpPath>;
 
-// @alpha @sealed
+// @public @sealed
 export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLocator {
     acquireVisitor(): DeltaVisitor;
     // (undocumented)
@@ -83,25 +83,25 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
     track(path: UpPath | null): Anchor;
 }
 
-// @alpha
+// @public
 export interface AnchorSetRootEvents {
     childrenChanging(anchors: AnchorSet): void;
     treeChanging(anchors: AnchorSet): void;
 }
 
-// @alpha
+// @public
 export type AnchorSlot<TContent> = BrandedKey<Opaque<Brand<number, "AnchorSlot">>, TContent>;
 
-// @alpha
+// @public
 export function anchorSlot<TContent>(): AnchorSlot<TContent>;
 
-// @alpha
+// @public
 export const Any: "Any";
 
-// @alpha
+// @public
 export type Any = typeof Any;
 
-// @alpha
+// @public
 const enum ApiMode {
     Editable = 1,
     EditableUnwrapped = 2,
@@ -110,7 +110,7 @@ const enum ApiMode {
     Wrapped = 3
 }
 
-// @alpha
+// @public
 type ApplyMultiplicity<TMultiplicity extends Multiplicity, TypedChild, Mode extends ApiMode> = {
     [Multiplicity.Forbidden]: undefined;
     [Multiplicity.Optional]: Mode extends ApiMode.Editable ? EditableOptionalField<TypedChild> : undefined | TypedChild;
@@ -118,22 +118,22 @@ type ApplyMultiplicity<TMultiplicity extends Multiplicity, TypedChild, Mode exte
     [Multiplicity.Value]: Mode extends ApiMode.Editable ? EditableValueField<TypedChild> : TypedChild;
 }[TMultiplicity];
 
-// @alpha
+// @public
 type ArrayHasFixedLength<List extends readonly unknown[]> = number extends List["length"] ? false : true;
 
-// @alpha
+// @public
 export interface ArrayLikeMut<TGet, TSet extends TGet = TGet> extends ArrayLike<TGet> {
     // (undocumented)
     [n: number]: TSet;
 }
 
-// @alpha
+// @public
 type ArrayToUnion<T extends readonly unknown[]> = T extends readonly (infer TValue)[] ? TValue : never;
 
-// @alpha
+// @public
 type Assume<TInput, TAssumeToBe> = TInput extends TAssumeToBe ? TInput : TAssumeToBe;
 
-// @alpha
+// @public
 export interface BatchBindingContext extends BindingContext {
     // (undocumented)
     readonly events: VisitorBindingContext[];
@@ -141,25 +141,25 @@ export interface BatchBindingContext extends BindingContext {
     readonly type: typeof BindingType.Batch;
 }
 
-// @alpha
+// @public
 export type BinderEventsCompare = CompareFunction<VisitorBindingContext>;
 
-// @alpha
+// @public
 export interface BinderOptions {
     // (undocumented)
     sortFn?: BinderEventsCompare;
 }
 
-// @alpha
+// @public
 export interface BindingContext {
     // (undocumented)
     readonly type: BindingContextType;
 }
 
-// @alpha
+// @public
 export type BindingContextType = typeof BindingType[keyof typeof BindingType];
 
-// @alpha
+// @public
 export const BindingType: {
     readonly Delete: "delete";
     readonly Insert: "insert";
@@ -167,10 +167,10 @@ export const BindingType: {
     readonly Batch: "batch";
 };
 
-// @alpha
+// @public
 export type BindPath = DownPath;
 
-// @alpha
+// @public
 export interface BindPolicy {
     // (undocumented)
     readonly bindTree: BindTree;
@@ -178,7 +178,7 @@ export interface BindPolicy {
     readonly matchPolicy: MatchPolicy;
 }
 
-// @alpha
+// @public
 export interface BindSyntaxTree {
     // (undocumented)
     readonly [indexSymbol]?: number;
@@ -186,33 +186,33 @@ export interface BindSyntaxTree {
     readonly [key: string]: true | BindSyntaxTree;
 }
 
-// @alpha
+// @public
 export interface BindTree<T = BindTreeDefault> extends PathStep {
     // (undocumented)
     readonly children: Map<FieldKey, T>;
 }
 
-// @alpha
+// @public
 export type BindTreeDefault = BindTree;
 
-// @alpha
+// @public
 export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
 
-// @alpha
+// @public
 export function brand<T extends Brand<any, string>>(value: T extends BrandedType<infer ValueType, string> ? ValueType : never): T;
 
-// @alpha (undocumented)
+// @public (undocumented)
 export type BrandedFieldKind<TName extends string, TMultiplicity extends Multiplicity, TEditor extends FieldEditor<any>> = FieldKind<TEditor, TMultiplicity> & {
     identifier: TName & FieldKindIdentifier;
 };
 
-// @alpha
+// @public
 export type BrandedKey<TKey, TContent> = TKey & Invariant<TContent>;
 
-// @alpha (undocumented)
+// @public (undocumented)
 type BrandedKeyContent<TKey extends BrandedKey<unknown, any>> = TKey extends BrandedKey<unknown, infer TContent> ? TContent : never;
 
-// @alpha
+// @public
 export interface BrandedMapSubset<K extends BrandedKey<unknown, any>> {
     // (undocumented)
     delete(key: K): boolean;
@@ -224,23 +224,23 @@ export interface BrandedMapSubset<K extends BrandedKey<unknown, any>> {
     set<K2 extends K>(key: K2, value: BrandedKeyContent<K2>): this;
 }
 
-// @alpha @sealed
+// @public @sealed
 abstract class BrandedType<ValueType, Name extends string> {
     protected readonly _type_brand: Name;
     // (undocumented)
     protected _typeCheck?: Invariant<ValueType>;
 }
 
-// @alpha
+// @public
 export function brandOpaque<T extends BrandedType<any, string>>(value: isAny<ValueFromBranded<T>> extends true ? never : ValueFromBranded<T>): BrandedType<ValueFromBranded<T>, NameFromBranded<T>>;
 
-// @alpha
+// @public
 export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
 
-// @alpha
+// @public
 export type ChildCollection = FieldKey | RootField;
 
-// @alpha
+// @public
 export interface ChildLocation {
     // (undocumented)
     readonly container: ChildCollection;
@@ -248,7 +248,7 @@ export interface ChildLocation {
     readonly index: number;
 }
 
-// @alpha
+// @public
 type CollectOptions<Mode extends ApiMode, TTypedFields, TValueSchema extends ValueSchema | undefined, TName> = {
     [ApiMode.Flexible]: EmptyObject extends TTypedFields ? TypedValueOrUndefined<TValueSchema> | FlexibleObject<TValueSchema, TName> : FlexibleObject<TValueSchema, TName> & TTypedFields;
     [ApiMode.Editable]: {
@@ -265,34 +265,34 @@ type CollectOptions<Mode extends ApiMode, TTypedFields, TValueSchema extends Val
     [ApiMode.Simple]: EmptyObject extends TTypedFields ? TypedValueOrUndefined<TValueSchema> : FlexibleObject<TValueSchema, TName> & TTypedFields;
 }[Mode];
 
-// @alpha
+// @public
 export type CompareFunction<T> = (a: T, b: T) => number;
 
-// @alpha
+// @public
 export function compareLocalNodeKeys(a: LocalNodeKey, b: LocalNodeKey): -1 | 0 | 1;
 
-// @alpha
+// @public
 export function comparePipeline<T>(...fns: CompareFunction<T>[]): CompareFunction<T>;
 
-// @alpha
+// @public
 export function compileSyntaxTree(syntaxTree: BindSyntaxTree, matchPolicy?: MatchPolicy): BindPolicy;
 
-// @alpha
+// @public
 type ConstantFlexListToNonLazyArray<List extends FlexList> = List extends readonly [
 infer Head,
 ...infer Tail
 ] ? [ExtractItemType<Head>, ...ConstantFlexListToNonLazyArray<Tail>] : [];
 
-// @alpha
+// @public
 export const contextSymbol: unique symbol;
 
-// @alpha
+// @public
 export type ContextuallyTypedFieldData = ContextuallyTypedNodeData | undefined;
 
-// @alpha
+// @public
 export type ContextuallyTypedNodeData = ContextuallyTypedNodeDataObject | PrimitiveValue | readonly ContextuallyTypedNodeData[] | MarkedArrayLike<ContextuallyTypedNodeData>;
 
-// @alpha
+// @public
 export interface ContextuallyTypedNodeDataObject {
     readonly [typeNameSymbol]?: string;
     readonly [valueSymbol]?: Value;
@@ -300,36 +300,36 @@ export interface ContextuallyTypedNodeDataObject {
     [key: string]: ContextuallyTypedFieldData;
 }
 
-// @alpha
+// @public
 interface Contravariant<T> {
     // (undocumented)
     _removeCovariance?: (_: T) => void;
 }
 
-// @alpha
+// @public
 interface Covariant<T> {
     // (undocumented)
     _removeContravariance?: T;
 }
 
-// @alpha
+// @public
 export function createBinderOptions({ sortFn }: {
     sortFn?: BinderEventsCompare;
 }): BinderOptions;
 
-// @alpha
+// @public
 export function createDataBinderBuffering<E extends Events<E>>(view: ISubscribable<E>, options: FlushableBinderOptions<E>): FlushableDataBinder<OperationBinderEvents>;
 
-// @alpha
+// @public
 export function createDataBinderDirect<E extends Events<E>>(view: ISubscribable<E>, options: BinderOptions): DataBinder<OperationBinderEvents>;
 
-// @alpha
+// @public
 export function createDataBinderInvalidating<E extends Events<E>>(view: ISubscribable<E>, options: FlushableBinderOptions<E>): FlushableDataBinder<InvalidationBinderEvents>;
 
-// @alpha
+// @public
 export function createEmitter<E extends Events<E>>(noListeners?: NoListenersCallback<E>): ISubscribable<E> & IEmitter<E> & HasListeners<E>;
 
-// @alpha
+// @public
 export function createFlushableBinderOptions<E extends Events<E>>({ sortFn, sortAnchorsFn, autoFlush, autoFlushPolicy, }: {
     sortFn?: BinderEventsCompare;
     sortAnchorsFn?: AnchorsCompare;
@@ -337,13 +337,13 @@ export function createFlushableBinderOptions<E extends Events<E>>({ sortFn, sort
     autoFlushPolicy: keyof Events<E>;
 }): FlushableBinderOptions<E>;
 
-// @alpha
+// @public
 export interface CrossFieldManager<T = unknown> {
     get(target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId, count: number, addDependency: boolean): RangeEntry<T> | undefined;
     set(target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId, count: number, newValue: T, invalidateDependents: boolean): void;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export enum CrossFieldTarget {
     // (undocumented)
     Destination = 1,
@@ -351,7 +351,7 @@ export enum CrossFieldTarget {
     Source = 0
 }
 
-// @alpha
+// @public
 export interface CursorAdapter<TNode> {
     // (undocumented)
     getFieldFromNode(node: TNode, key: FieldKey): readonly TNode[];
@@ -363,44 +363,44 @@ export interface CursorAdapter<TNode> {
     value(node: TNode): Value;
 }
 
-// @alpha
+// @public
 export function cursorForTypedTreeData<T extends TreeSchema>(context: TreeDataContext, schema: T, data: TypedNode_2<T, ApiMode.Simple>): ITreeCursorSynchronous;
 
-// @alpha
+// @public
 export function cursorFromContextualData(context: TreeDataContext, typeSet: TreeTypeSet, data: ContextuallyTypedNodeData): ITreeCursorSynchronous;
 
-// @alpha (undocumented)
+// @public (undocumented)
 export const enum CursorLocationType {
     Fields = 1,
     Nodes = 0
 }
 
-// @alpha
+// @public
 export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible;
 
-// @alpha
+// @public
 export interface CursorWithNode<TNode> extends ITreeCursorSynchronous {
     fork(): CursorWithNode<TNode>;
     getNode(): TNode;
 }
 
-// @alpha
+// @public
 export interface DataBinder<B extends OperationBinderEvents | InvalidationBinderEvents> {
     register<K extends keyof Events<B>>(anchor: EditableTree, eventType: K, eventTrees: BindPolicy[], listener?: B[K]): void;
     unregisterAll(): void;
 }
 
-// @alpha
+// @public
 export const defaultSchemaPolicy: FullSchemaPolicy;
 
-// @alpha
+// @public
 interface Delete<TTree = ProtoNode> extends HasModifications<TTree> {
     readonly count: number;
     // (undocumented)
     readonly type: typeof MarkType.Delete;
 }
 
-// @alpha
+// @public
 export interface DeleteBindingContext extends BindingContext {
     // (undocumented)
     readonly count: number;
@@ -432,7 +432,7 @@ declare namespace Delta {
 }
 export { Delta }
 
-// @alpha
+// @public
 export interface DeltaVisitor {
     // (undocumented)
     enterField(key: FieldKey): void;
@@ -454,28 +454,28 @@ export interface DeltaVisitor {
     onMoveOut(index: number, count: number, id: Delta.MoveId): void;
 }
 
-// @alpha
+// @public
 export interface Dependee extends NamedComputation {
     registerDependent(dependent: Dependent): boolean;
     removeDependent(dependent: Dependent): void;
 }
 
-// @alpha
+// @public
 export interface Dependent extends NamedComputation {
     markInvalid(token?: InvalidationToken): void;
 }
 
-// @alpha
+// @public
 export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField">> {
 }
 
-// @alpha
+// @public
 function downCast<TSchema extends TreeSchema>(schema: TSchema, tree: UntypedTreeCore<any, any>): tree is TypedNode_2<TSchema>;
 
-// @alpha
+// @public
 export type DownPath = PathStep[];
 
-// @alpha
+// @public
 export interface EditableField extends UntypedField<EditableTreeContext, EditableTree, EditableTree, UnwrappedEditableTree> {
     readonly [proxyTargetSymbol]: object;
     get content(): EditableTree | undefined | EditableField;
@@ -487,17 +487,17 @@ export interface EditableField extends UntypedField<EditableTreeContext, Editabl
     setContent(newContent: NewFieldContent): void;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 type EditableOptionalField<TypedChild> = [
 UntypedOptionalField & MarkedArrayLike<TypedChild>
 ][_InlineTrick];
 
-// @alpha (undocumented)
+// @public (undocumented)
 type EditableSequenceField<TypedChild> = [
 UntypedSequenceField & MarkedArrayLike<TypedChild>
 ][_InlineTrick];
 
-// @alpha
+// @public
 export interface EditableTree extends Iterable<EditableField>, Omit<UntypedTreeCore<EditableTreeContext, EditableField>, typeof Symbol.iterator> {
     readonly [localNodeKeySymbol]?: LocalNodeKey;
     readonly [parentField]: {
@@ -511,7 +511,7 @@ export interface EditableTree extends Iterable<EditableField>, Omit<UntypedTreeC
     [key: string]: UnwrappedEditableField;
 }
 
-// @alpha
+// @public
 export interface EditableTreeContext extends ISubscribable<ForestEvents> {
     clear(): void;
     fieldSource?(key: FieldKey, schema: FieldStoredSchema): undefined | FieldGenerator;
@@ -523,21 +523,21 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
     get unwrappedRoot(): UnwrappedEditableField;
 }
 
-// @alpha
+// @public
 export interface EditableTreeEvents {
     changing(upPath: UpPath): void;
     subtreeChanging(upPath: UpPath): PathVisitor | void;
 }
 
-// @alpha
+// @public
 export type EditableTreeOrPrimitive = EditableTree | PrimitiveValue;
 
-// @alpha (undocumented)
+// @public (undocumented)
 type EditableValueField<TypedChild> = [
 UntypedValueField & MarkedArrayLike<TypedChild>
 ][_InlineTrick];
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface EditDescription {
     // (undocumented)
     change: FieldChangeset;
@@ -547,40 +547,40 @@ export interface EditDescription {
     fieldKind: FieldKindIdentifier;
 }
 
-// @alpha
+// @public
 export const EmptyKey: FieldKey;
 
-// @alpha
+// @public
 type EmptyObject = {};
 
-// @alpha
+// @public
 export type Events<E> = {
     [P in (string | symbol) & keyof E as IsEvent<E[P]> extends true ? P : never]: E[P];
 };
 
-// @alpha
+// @public
 type ExtractFromOpaque<TOpaque extends BrandedType<any, string>> = TOpaque extends BrandedType<infer ValueType, infer Name> ? isAny<ValueType> extends true ? unknown : Brand<ValueType, Name> : never;
 
-// @alpha
+// @public
 export function extractFromOpaque<TOpaque extends BrandedType<any, string>>(value: TOpaque): ExtractFromOpaque<TOpaque>;
 
-// @alpha (undocumented)
+// @public (undocumented)
 type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
 
-// @alpha (undocumented)
+// @public (undocumented)
 type ExtractListItemType<List extends FlexList> = List extends FlexList<infer Item> ? Item : unknown;
 
-// @alpha (undocumented)
+// @public (undocumented)
 export function fail(message: string): never;
 
-// @alpha
+// @public
 export interface FieldAnchor {
     // (undocumented)
     fieldKey: FieldKey;
     parent: Anchor | undefined;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface FieldChange {
     // (undocumented)
     change: FieldChangeset;
@@ -589,7 +589,7 @@ export interface FieldChange {
     revision?: RevisionTag;
 }
 
-// @alpha
+// @public
 export interface FieldChangeHandler<TChangeset, TEditor extends FieldEditor<TChangeset> = FieldEditor<TChangeset>> {
     // (undocumented)
     readonly codecsFactory: (childCodec: IJsonCodec<NodeChangeset>) => ICodecFamily<TChangeset>;
@@ -604,10 +604,10 @@ export interface FieldChangeHandler<TChangeset, TEditor extends FieldEditor<TCha
     _typeCheck?: Invariant<TChangeset>;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export type FieldChangeMap = Map<FieldKey, FieldChange>;
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface FieldChangeRebaser<TChangeset> {
     amendCompose(composedChange: TChangeset, composeChild: NodeChangeComposer, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionMetadata: RevisionMetadataSource): TChangeset;
     amendInvert(invertedChange: TChangeset, originalRevision: RevisionTag | undefined, reviver: NodeReviver, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
@@ -618,21 +618,21 @@ export interface FieldChangeRebaser<TChangeset> {
     rebase(change: TChangeset, over: TaggedChange<TChangeset>, rebaseChild: NodeChangeRebaser, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionMetadata: RevisionMetadataSource, existenceState?: NodeExistenceState): TChangeset;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export type FieldChangeset = Brand<unknown, "FieldChangeset">;
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface FieldEditor<TChangeset> {
     buildChildChange(childIndex: number, change: NodeChangeset): TChangeset;
 }
 
-// @alpha
+// @public
 export type FieldGenerator = () => MapTree[];
 
-// @alpha
+// @public
 export type FieldKey = Brand<string, "tree.FieldKey">;
 
-// @alpha @sealed
+// @public @sealed
 export class FieldKind<TEditor extends FieldEditor<any> = FieldEditor<any>, TMultiplicity extends Multiplicity = Multiplicity> implements FieldKindSpecifier {
     constructor(identifier: FieldKindIdentifier, multiplicity: TMultiplicity, changeHandler: FieldChangeHandler<any, TEditor>, allowsTreeSupersetOf: (originalTypes: TreeTypeSet, superset: FieldStoredSchema) => boolean, handlesEditsFrom: ReadonlySet<FieldKindIdentifier>);
     // (undocumented)
@@ -647,10 +647,10 @@ export class FieldKind<TEditor extends FieldEditor<any> = FieldEditor<any>, TMul
     readonly multiplicity: TMultiplicity;
 }
 
-// @alpha
+// @public
 export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
 
-// @alpha
+// @public
 export const FieldKinds: {
     readonly value: ValueFieldKind;
     readonly optional: Optional;
@@ -659,16 +659,16 @@ export const FieldKinds: {
     readonly forbidden: Forbidden;
 };
 
-// @alpha
+// @public
 export interface FieldKindSpecifier<T = FieldKindIdentifier> {
     // (undocumented)
     identifier: T;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export type FieldKindTypes = typeof FieldKinds[keyof typeof FieldKinds];
 
-// @alpha
+// @public
 export interface FieldLocation {
     // (undocumented)
     readonly key: FieldKey;
@@ -676,38 +676,38 @@ export interface FieldLocation {
     readonly parent: ForestLocation;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 type FieldMap<T> = ReadonlyMap<FieldKey, T>;
 
-// @alpha
+// @public
 export interface FieldMapObject<TChild> {
     // (undocumented)
     [key: string]: TChild[];
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 type FieldMarks<TTree = ProtoNode> = FieldMap<MarkList<TTree>>;
 
-// @alpha
+// @public
 export interface FieldNode<TSchema extends FieldNodeSchema> extends TreeNode {
     readonly boxedContent: TypedField<TSchema["structFieldsObject"][""]>;
     readonly content: UnboxField<TSchema["structFieldsObject"][""]>;
 }
 
-// @alpha
+// @public
 export type FieldNodeSchema = StructSchema & {
     structFieldsObject: {
         [""]: FieldSchema;
     };
 };
 
-// @alpha (undocumented)
+// @public (undocumented)
 interface Fields {
     // (undocumented)
     readonly [key: string]: FieldSchema;
 }
 
-// @alpha @sealed
+// @public @sealed
 export class FieldSchema<Kind extends FieldKindTypes = FieldKindTypes, Types = AllowedTypes> {
     constructor(kind: Kind, allowedTypes: Types);
     // (undocumented)
@@ -721,55 +721,55 @@ export class FieldSchema<Kind extends FieldKindTypes = FieldKindTypes, Types = A
     get types(): TreeTypeSet;
 }
 
-// @alpha
+// @public
 export function fieldSchema(kind: {
     identifier: FieldKindIdentifier;
 }, types?: Iterable<TreeSchemaIdentifier>): FieldStoredSchema;
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface FieldStoredSchema {
     // (undocumented)
     readonly kind: FieldKindSpecifier;
     readonly types?: TreeTypeSet;
 }
 
-// @alpha
+// @public
 export interface FieldUpPath<TUpPath extends UpPath = UpPath> {
     readonly field: FieldKey;
     readonly parent: TUpPath | undefined;
 }
 
-// @alpha
+// @public
 type FlattenKeys<T> = [{
     [Property in keyof T]: T[Property];
 }][_InlineTrick];
 
-// @alpha
+// @public
 export type FlexibleFieldContent<TSchema extends FieldSchema> = SchemaAware.TypedField<TSchema, SchemaAware.ApiMode.Flexible>;
 
-// @alpha
+// @public
 export type FlexibleNodeContent<TTypes extends AllowedTypes> = SchemaAware.AllowedTypesToTypedTrees<SchemaAware.ApiMode.Flexible, TTypes>;
 
-// @alpha
+// @public
 type FlexibleObject<TValueSchema extends ValueSchema | undefined, TName> = [
 FlattenKeys<{
     [typeNameSymbol]?: UnbrandedName<TName>;
 } & ValuePropertyFromSchema<TValueSchema>>
 ][_InlineTrick];
 
-// @alpha
+// @public
 type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 
-// @alpha
+// @public
 type FlexListToNonLazyArray<List extends FlexList> = ArrayHasFixedLength<List> extends true ? ConstantFlexListToNonLazyArray<List> : NormalizedFlexList<ExtractListItemType<List>>;
 
-// @alpha
+// @public
 export interface Flushable<T> {
     // (undocumented)
     flush(): T;
 }
 
-// @alpha
+// @public
 export interface FlushableBinderOptions<E extends Events<E>> extends BinderOptions {
     // (undocumented)
     autoFlush: boolean;
@@ -779,78 +779,78 @@ export interface FlushableBinderOptions<E extends Events<E>> extends BinderOptio
     sortAnchorsFn?: AnchorsCompare;
 }
 
-// @alpha
+// @public
 export interface FlushableDataBinder<B extends OperationBinderEvents | InvalidationBinderEvents> extends DataBinder<B>, Flushable<FlushableDataBinder<B>> {
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface Forbidden extends BrandedFieldKind<typeof forbiddenFieldKindIdentifier, Multiplicity.Forbidden, FieldEditor<any>> {
 }
 
-// @alpha
+// @public
 export const forbiddenFieldKindIdentifier = "Forbidden";
 
-// @alpha
+// @public
 export interface ForestEvents {
     afterChange(): void;
     beforeChange(): void;
 }
 
-// @alpha
+// @public
 export type ForestLocation = ITreeSubscriptionCursor | Anchor;
 
-// @alpha
+// @public
 export enum ForestType {
     Optimized = 1,
     Reference = 0
 }
 
-// @alpha
+// @public
 export interface FullSchemaPolicy {
     readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>;
 }
 
-// @alpha
+// @public
 export interface GenericFieldsNode<TChild> {
     // (undocumented)
     fields?: FieldMapObject<TChild>;
 }
 
-// @alpha
+// @public
 export interface GenericTreeNode<TChild> extends GenericFieldsNode<TChild>, NodeData {
 }
 
-// @alpha
+// @public
 export const getField: unique symbol;
 
-// @alpha (undocumented)
+// @public (undocumented)
 export function getPrimaryField(schema: TreeStoredSchema): {
     key: FieldKey;
     schema: FieldStoredSchema;
 } | undefined;
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface HasFieldChanges {
     // (undocumented)
     fieldChanges?: FieldChangeMap;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface HasListeners<E extends Events<E>> {
     hasListeners(eventName?: keyof Events<E>): boolean;
 }
 
-// @alpha
+// @public
 interface HasModifications<TTree = ProtoNode> {
     // (undocumented)
     readonly fields?: FieldMarks<TTree>;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface IBinaryCodec<TDecoded> extends IEncoder<TDecoded, IsoBuffer>, IDecoder<TDecoded, IsoBuffer> {
 }
 
-// @alpha
+// @public
 export interface ICodecFamily<TDecoded> {
     // (undocumented)
     getSupportedFormats(): Iterable<number>;
@@ -858,20 +858,20 @@ export interface ICodecFamily<TDecoded> {
     resolve(formatVersion: number): IMultiFormatCodec<TDecoded>;
 }
 
-// @alpha
+// @public
 export interface ICodecOptions {
     readonly jsonValidator: JsonValidator;
 }
 
-// @alpha
+// @public
 export type IdAllocator = (count?: number) => number;
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface IDecoder<TDecoded, TEncoded> {
     decode(obj: TEncoded): TDecoded;
 }
 
-// @alpha
+// @public
 export interface IDefaultEditBuilder {
     // (undocumented)
     addNodeExistsConstraint(path: UpPath): void;
@@ -884,7 +884,7 @@ export interface IDefaultEditBuilder {
     valueField(field: FieldUpPath): ValueFieldEditBuilder;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface IdRange {
     // (undocumented)
     readonly count: number;
@@ -892,25 +892,25 @@ export interface IdRange {
     readonly first: ChangesetLocalId;
 }
 
-// @alpha
+// @public
 export interface IEditableForest extends IForestSubscription {
     // (undocumented)
     acquireVisitor(): DeltaVisitor;
     readonly anchors: AnchorSet;
 }
 
-// @alpha
+// @public
 export interface IEmitter<E extends Events<E>> {
     emit<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): void;
     emitAndCollect<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): ReturnType<E[K]>[];
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface IEncoder<TDecoded, TEncoded> {
     encode(obj: TDecoded): TEncoded;
 }
 
-// @alpha
+// @public
 export interface IForestSubscription extends Dependee, ISubscribable<ForestEvents> {
     allocateCursor(): ITreeSubscriptionCursor;
     clone(schema: StoredSchemaRepository, anchors: AnchorSet): IEditableForest;
@@ -920,13 +920,13 @@ export interface IForestSubscription extends Dependee, ISubscribable<ForestEvent
     tryMoveCursorToNode(destination: Anchor, cursorToMove: ITreeSubscriptionCursor): TreeNavigationResult;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface IJsonCodec<TDecoded, TEncoded = JsonCompatibleReadOnly> extends IEncoder<TDecoded, TEncoded>, IDecoder<TDecoded, TEncoded> {
     // (undocumented)
     encodedSchema?: TAnySchema;
 }
 
-// @alpha
+// @public
 export interface IMultiFormatCodec<TDecoded, TJsonEncoded extends JsonCompatibleReadOnly = JsonCompatibleReadOnly> {
     // (undocumented)
     binary: IBinaryCodec<TDecoded>;
@@ -936,17 +936,17 @@ export interface IMultiFormatCodec<TDecoded, TJsonEncoded extends JsonCompatible
     json: IJsonCodec<TDecoded, TJsonEncoded>;
 }
 
-// @alpha
+// @public
 export const indexSymbol: unique symbol;
 
-// @alpha
+// @public
 export interface InitializeAndSchematizeConfiguration<TRoot extends FieldSchema = FieldSchema> extends TreeContent<TRoot>, SchematizeConfiguration<TRoot> {
 }
 
-// @alpha
+// @public
 type _InlineTrick = 0;
 
-// @alpha
+// @public
 interface Insert<TTree = ProtoNode> extends HasModifications<TTree> {
     readonly content: readonly TTree[];
     readonly isTransient?: true;
@@ -954,7 +954,7 @@ interface Insert<TTree = ProtoNode> extends HasModifications<TTree> {
     readonly type: typeof MarkType.Insert;
 }
 
-// @alpha
+// @public
 export interface InsertBindingContext extends BindingContext {
     // (undocumented)
     readonly content: ProtoNodes;
@@ -1056,19 +1056,19 @@ declare namespace InternalTypes_2 {
     }
 }
 
-// @alpha
+// @public
 export interface InvalidationBinderEvents {
     // (undocumented)
     invalidation(context: InvalidationBindingContext): void;
 }
 
-// @alpha
+// @public
 export interface InvalidationBindingContext extends BindingContext {
     // (undocumented)
     readonly type: typeof BindingType.Invalidation;
 }
 
-// @alpha
+// @public
 export class InvalidationToken {
     constructor(description: string, isSecondaryInvalidation?: boolean);
     // (undocumented)
@@ -1079,38 +1079,38 @@ export class InvalidationToken {
     protected readonly _typeCheck: MakeNominal;
 }
 
-// @alpha
+// @public
 interface Invariant<T> extends Contravariant<T>, Covariant<T> {
 }
 
-// @alpha
+// @public
 type isAny<T> = boolean extends (T extends {} ? true : false) ? true : false;
 
-// @alpha
+// @public
 export function isContextuallyTypedNodeDataObject(data: ContextuallyTypedNodeData | undefined): data is ContextuallyTypedNodeDataObject;
 
-// @alpha
+// @public
 export function isEditableField(field: UnwrappedEditableField): field is EditableField;
 
-// @alpha
+// @public
 export function isEditableTree(field: UnwrappedEditableField): field is EditableTree;
 
-// @alpha
+// @public
 export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : false;
 
-// @alpha
+// @public
 export interface ISharedTree extends ISharedObject {
     schematize<TRoot extends FieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): ISharedTreeView;
     // @deprecated
     readonly view: ISharedTreeView;
 }
 
-// @alpha
+// @public
 export interface ISharedTreeBranchView extends ISharedTreeView {
     rebaseOnto(view: ISharedTreeView): void;
 }
 
-// @alpha
+// @public
 export interface ISharedTreeView extends AnchorLocator {
     readonly context: EditableTreeContext;
     editableTree2<TRoot extends FieldSchema>(viewSchema: TypedSchemaCollection<TRoot>): TypedField<TRoot>;
@@ -1138,18 +1138,18 @@ export interface ISharedTreeView extends AnchorLocator {
     undo(): void;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export function isNeverField(policy: FullSchemaPolicy, originalData: SchemaData, field: FieldStoredSchema): boolean;
 
-// @alpha (undocumented)
+// @public (undocumented)
 export function isPrimitive(schema: TreeStoredSchema): boolean;
 
-// @alpha
+// @public
 export interface ISubscribable<E extends Events<E>> {
     on<K extends keyof Events<E>>(eventName: K, listener: E[K]): () => void;
 }
 
-// @alpha
+// @public
 export interface ITransaction {
     abort(): TransactionResult.Abort;
     commit(): TransactionResult.Commit;
@@ -1157,7 +1157,7 @@ export interface ITransaction {
     start(): void;
 }
 
-// @alpha
+// @public
 export interface ITreeCursor {
     readonly [CursorMarker]: true;
     readonly chunkLength: number;
@@ -1185,13 +1185,13 @@ export interface ITreeCursor {
     readonly value: Value;
 }
 
-// @alpha
+// @public
 export interface ITreeCursorSynchronous extends ITreeCursor {
     // (undocumented)
     readonly pending: false;
 }
 
-// @alpha
+// @public
 export interface ITreeSubscriptionCursor extends ITreeCursor {
     buildAnchor(): Anchor;
     buildFieldAnchor(): FieldAnchor;
@@ -1202,21 +1202,21 @@ export interface ITreeSubscriptionCursor extends ITreeCursor {
     readonly state: ITreeSubscriptionCursorState;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export enum ITreeSubscriptionCursorState {
     Cleared = 1,
     Current = 0,
     Freed = 2
 }
 
-// @alpha
+// @public
 export interface JsonableTree extends GenericTreeNode<JsonableTree> {
 }
 
-// @alpha
+// @public
 export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree;
 
-// @alpha (undocumented)
+// @public (undocumented)
 export const jsonArray: TreeSchema<"Json.Array", {
 structFields: {
 "": FieldSchema<Sequence, [any, any, TreeSchema<"Json.Number", {
@@ -1231,35 +1231,35 @@ leafValue: ValueSchema.Boolean;
 };
 }>;
 
-// @alpha (undocumented)
+// @public (undocumented)
 export const jsonBoolean: TreeSchema<"Json.Boolean", {
 leafValue: ValueSchema.Boolean;
 }>;
 
-// @alpha
+// @public
 export type JsonCompatible = string | number | boolean | null | JsonCompatible[] | JsonCompatibleObject;
 
-// @alpha
+// @public
 export type JsonCompatibleObject = {
     [P in string]?: JsonCompatible;
 };
 
-// @alpha
+// @public
 export type JsonCompatibleReadOnly = string | number | boolean | null | readonly JsonCompatibleReadOnly[] | {
     readonly [P in string]?: JsonCompatibleReadOnly;
 };
 
-// @alpha (undocumented)
+// @public (undocumented)
 export const jsonNull: TreeSchema<"Json.Null", {
 structFields: {};
 }>;
 
-// @alpha (undocumented)
+// @public (undocumented)
 export const jsonNumber: TreeSchema<"Json.Number", {
 leafValue: ValueSchema.Number;
 }>;
 
-// @alpha (undocumented)
+// @public (undocumented)
 export const jsonObject: TreeSchema<"Json.Object", {
 mapFields: FieldSchema<Optional, [any, () => TreeSchema<"Json.Array", {
 structFields: {
@@ -1284,60 +1284,60 @@ leafValue: ValueSchema.Boolean;
 }>]>;
 }>;
 
-// @alpha (undocumented)
+// @public (undocumented)
 export const jsonSchema: SchemaLibrary;
 
-// @alpha (undocumented)
+// @public (undocumented)
 export const jsonString: TreeSchema<"Json.String", {
 leafValue: ValueSchema.String;
 }>;
 
-// @alpha
+// @public
 export interface JsonValidator {
     compile<Schema extends TSchema>(schema: Schema): SchemaValidationFunction<Schema>;
 }
 
-// @alpha
+// @public
 type LazyItem<Item = unknown> = Item | (() => Item);
 
-// @alpha
+// @public
 export type LazyTreeSchema = TreeSchema | (() => TreeSchema);
 
-// @alpha
+// @public
 export interface Leaf<TSchema extends LeafSchema> extends TreeNode {
     readonly value: SchemaAware.InternalTypes.TypedValue<TSchema["leafValue"]>;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export type LeafSchema = TreeSchema & LeafSchemaSpecification;
 
-// @alpha
+// @public
 interface LeafSchemaSpecification {
     // (undocumented)
     readonly leafValue: ValueSchema;
 }
 
-// @alpha
+// @public
 export enum LocalCommitSource {
     Default = 0,
     Redo = 2,
     Undo = 1
 }
 
-// @alpha
+// @public
 export type LocalNodeKey = Opaque<Brand<SessionSpaceCompressedId, "Local Node Key">>;
 
-// @alpha
+// @public
 export const localNodeKeySymbol: unique symbol;
 
-// @alpha
+// @public
 interface MakeNominal {
 }
 
-// @alpha
+// @public
 type MapFieldSchema = FieldSchema<typeof FieldKinds.optional | typeof FieldKinds.sequence>;
 
-// @alpha
+// @public
 export interface MapNode<TSchema extends MapSchema> extends TreeNode {
     // (undocumented)
     [Symbol.iterator](): Iterator<TypedField<TSchema["mapFields"]>>;
@@ -1348,25 +1348,25 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
     get(key: FieldKey): TypedField<TSchema["mapFields"]>;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export type MapSchema = TreeSchema & MapSchemaSpecification;
 
-// @alpha
+// @public
 interface MapSchemaSpecification {
     // (undocumented)
     readonly mapFields: MapFieldSchema;
 }
 
-// @alpha
+// @public
 export interface MapTree extends NodeData {
     // (undocumented)
     fields: Map<FieldKey, MapTree[]>;
 }
 
-// @alpha
+// @public
 type Mark<TTree = ProtoNode> = Skip | Modify<TTree> | Delete<TTree> | MoveOut<TTree> | MoveIn | Insert<TTree>;
 
-// @alpha
+// @public
 export interface MarkedArrayLike<TGet, TSet extends TGet = TGet> extends ArrayLikeMut<TGet, TSet> {
     // (undocumented)
     readonly [arrayLikeMarkerSymbol]: true;
@@ -1374,10 +1374,10 @@ export interface MarkedArrayLike<TGet, TSet extends TGet = TGet> extends ArrayLi
     [Symbol.iterator](): IterableIterator<TGet>;
 }
 
-// @alpha
+// @public
 type MarkList<TTree = ProtoNode> = readonly Mark<TTree>[];
 
-// @alpha (undocumented)
+// @public (undocumented)
 const MarkType: {
     readonly Modify: 0;
     readonly Insert: 1;
@@ -1386,27 +1386,27 @@ const MarkType: {
     readonly MoveOut: 4;
 };
 
-// @alpha
+// @public
 export type MatchPolicy = SubtreePolicy | "subtree" | "path";
 
-// @alpha
+// @public
 export interface MemoizedIdRangeAllocator {
     allocate(revision: RevisionTag | undefined, startId: ChangesetLocalId, count?: number): IdRange[];
     mint(count?: number): ChangesetLocalId;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export const MemoizedIdRangeAllocator: {
     fromNextId(nextId?: number): MemoizedIdRangeAllocator;
 };
 
-// @alpha
+// @public
 interface Modify<TTree = ProtoNode> extends HasModifications<TTree> {
     // (undocumented)
     readonly type: typeof MarkType.Modify;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface ModularChangeset extends HasFieldChanges {
     // (undocumented)
     constraintViolationCount?: number;
@@ -1416,11 +1416,11 @@ export interface ModularChangeset extends HasFieldChanges {
     readonly revisions?: readonly RevisionInfo[];
 }
 
-// @alpha
+// @public
 interface MoveId extends Opaque<Brand<number, "delta.MoveId">> {
 }
 
-// @alpha
+// @public
 interface MoveIn {
     // (undocumented)
     readonly count: number;
@@ -1429,7 +1429,7 @@ interface MoveIn {
     readonly type: typeof MarkType.MoveIn;
 }
 
-// @alpha
+// @public
 interface MoveOut<TTree = ProtoNode> extends HasModifications<TTree> {
     readonly count: number;
     readonly moveId: MoveId;
@@ -1437,7 +1437,7 @@ interface MoveOut<TTree = ProtoNode> extends HasModifications<TTree> {
     readonly type: typeof MarkType.MoveOut;
 }
 
-// @alpha
+// @public
 export enum Multiplicity {
     Forbidden = 3,
     Optional = 1,
@@ -1445,54 +1445,54 @@ export enum Multiplicity {
     Value = 0
 }
 
-// @alpha
+// @public
 export interface Named<TName> {
     // (undocumented)
     readonly name: TName;
 }
 
-// @alpha
+// @public
 export interface NamedComputation {
     readonly computationName: string;
     listDependees?(): Iterable<Dependee>;
     listDependents?(): Iterable<Dependent>;
 }
 
-// @alpha
+// @public
 export type NameFromBranded<T extends BrandedType<any, string>> = T extends BrandedType<any, infer Name> ? Name : never;
 
-// @alpha
+// @public
 export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;
 
-// @alpha
+// @public
 export type NewFieldContent = ITreeCursorSynchronous | readonly ITreeCursorSynchronous[] | ContextuallyTypedFieldData;
 
-// @alpha (undocumented)
+// @public (undocumented)
 export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => NodeChangeset;
 
-// @alpha (undocumented)
+// @public (undocumented)
 export type NodeChangeInverter = (change: NodeChangeset, index: number | undefined) => NodeChangeset;
 
-// @alpha (undocumented)
+// @public (undocumented)
 export type NodeChangeRebaser = (change: NodeChangeset | undefined, baseChange: NodeChangeset | undefined,
 state?: NodeExistenceState) => NodeChangeset | undefined;
 
-// @alpha
+// @public
 export interface NodeChangeset extends HasFieldChanges {
     // (undocumented)
     nodeExistsConstraint?: NodeExistsConstraint;
 }
 
-// @alpha
+// @public
 export interface NodeData {
     readonly type: TreeSchemaIdentifier;
     value?: TreeValue;
 }
 
-// @alpha @deprecated
+// @public @deprecated
 type NodeDataFor<Mode extends ApiMode, TSchema extends TreeSchema> = TypedNode_2<TSchema, Mode>;
 
-// @alpha (undocumented)
+// @public (undocumented)
 export enum NodeExistenceState {
     // (undocumented)
     Alive = 0,
@@ -1500,71 +1500,71 @@ export enum NodeExistenceState {
     Dead = 1
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface NodeExistsConstraint {
     // (undocumented)
     violated: boolean;
 }
 
-// @alpha
+// @public
 export const nodeKeyField: {
     __n_id__: FieldSchema<NodeKeyFieldKind, [TreeSchema<TreeSchemaIdentifier, {
     leafValue: ValueSchema.String;
     }>]>;
 };
 
-// @alpha
+// @public
 export const nodeKeyFieldKey = "__n_id__";
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface NodeKeyFieldKind extends BrandedFieldKind<"NodeKey", Multiplicity.Value, FieldEditor<any>> {
 }
 
-// @alpha
+// @public
 export const nodeKeySchema: SchemaLibrary;
 
-// @alpha (undocumented)
+// @public (undocumented)
 export type NodeReviver = (revision: RevisionTag, index: number, count: number) => Delta.ProtoNode[];
 
-// @alpha
+// @public
 export type NoListenersCallback<E extends Events<E>> = (eventName: keyof Events<E>) => void;
 
-// @alpha
+// @public
 export const noopValidator: JsonValidator;
 
-// @alpha (undocumented)
+// @public (undocumented)
 type NormalizedFlexList<Item> = readonly Item[];
 
-// @alpha
+// @public
 type NormalizeField<T extends FieldSchema | undefined> = T extends FieldSchema ? T : FieldSchema<typeof FieldKinds.forbidden, []>;
 
-// @alpha (undocumented)
+// @public (undocumented)
 type NormalizeStructFields<T extends Fields | undefined> = NormalizeStructFieldsInner<WithDefault<T, Record<string, never>>>;
 
-// @alpha (undocumented)
+// @public (undocumented)
 type NormalizeStructFieldsInner<T extends Fields> = {
     [Property in keyof T]: NormalizeField<T[Property]>;
 };
 
-// @alpha
+// @public
 type ObjectToMap<ObjectMap, MapKey extends number | string, MapValue> = ReadonlyMap<MapKey, MapValue> & {
     get<TKey extends keyof ObjectMap>(key: TKey): ObjectMap[TKey];
 };
 
-// @alpha
+// @public
 export interface ObservingDependent extends Dependent {
     // @override
     listDependees(): Iterable<Dependee>;
     registerDependee(dependee: Dependee): void;
 }
 
-// @alpha
+// @public
 export const on: unique symbol;
 
-// @alpha
+// @public
 export type Opaque<T extends Brand<any, string>> = T extends Brand<infer ValueType, infer Name> ? BrandedType<ValueType, Name> : never;
 
-// @alpha
+// @public
 export interface OperationBinderEvents {
     // (undocumented)
     batch(context: BatchBindingContext): void;
@@ -1574,11 +1574,11 @@ export interface OperationBinderEvents {
     insert(context: InsertBindingContext): void;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface Optional extends BrandedFieldKind<"Optional", Multiplicity.Optional, FieldEditor<any>> {
 }
 
-// @alpha
+// @public
 export interface OptionalField<TTypes extends AllowedTypes> extends TreeField {
     // (undocumented)
     readonly boxedContent?: TypedNodeUnion<TTypes>;
@@ -1588,63 +1588,63 @@ export interface OptionalField<TTypes extends AllowedTypes> extends TreeField {
     setContent(content: undefined | FlexibleNodeContent<TTypes>): void;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface OptionalFieldEditBuilder {
     set(newContent: ITreeCursor | undefined, wasEmpty: boolean): void;
 }
 
-// @alpha
+// @public
 type OptionalFields<T> = [
     {
     [P in keyof T as undefined extends T[P] ? T[P] extends undefined ? never : P : never]?: T[P];
 }
 ][_InlineTrick];
 
-// @alpha
+// @public
 export const parentField: unique symbol;
 
-// @alpha
+// @public
 export interface PathRootPrefix {
     indexOffset?: number;
     parent?: UpPath | undefined;
     rootFieldOverride?: FieldKey;
 }
 
-// @alpha
+// @public
 export interface PathStep {
     readonly field: FieldKey;
     readonly index?: number;
 }
 
-// @alpha
+// @public
 export interface PathVisitor {
     onDelete(path: UpPath, count: number): void;
     // (undocumented)
     onInsert(path: UpPath, content: Delta.ProtoNodes): void;
 }
 
-// @alpha
+// @public
 export function prefixFieldPath(prefix: PathRootPrefix | undefined, path: FieldUpPath): FieldUpPath;
 
-// @alpha
+// @public
 export function prefixPath(prefix: PathRootPrefix | undefined, path: UpPath | undefined): UpPath | undefined;
 
-// @alpha (undocumented)
+// @public (undocumented)
 export type PrimitiveValue = string | boolean | number;
 
-// @alpha
+// @public
 type PrimitiveValueSchema = ValueSchema.Number | ValueSchema.String | ValueSchema.Boolean;
 
-// @alpha
+// @public
 type ProtoNode = ITreeCursorSynchronous;
 
-// @alpha
+// @public
 type ProtoNodes = readonly ProtoNode[];
 
-// @alpha
+// @public
 export const proxyTargetSymbol: unique symbol;
 
-// @alpha
+// @public
 export interface RangeEntry<T> {
     // (undocumented)
     length: number;
@@ -1654,30 +1654,30 @@ export interface RangeEntry<T> {
     value: T;
 }
 
-// @alpha
+// @public
 export interface ReadonlyRepairDataStore<TTree = Delta.ProtoNode, TRevisionTag = unknown> {
     // (undocumented)
     getNodes(revision: TRevisionTag, path: UpPath | undefined, key: FieldKey, index: number, count: number): TTree[];
 }
 
-// @alpha
+// @public
 export function recordDependency(dependent: ObservingDependent | undefined, dependee: Dependee): void;
 
-// @alpha
+// @public
 type RecursiveTreeSchema = unknown;
 
-// @alpha
+// @public
 type RecursiveTreeSchemaSpecification = unknown;
 
-// @alpha
+// @public
 type _RecursiveTrick = never;
 
-// @alpha
+// @public
 export interface RepairDataStore<TChange, TTree = Delta.ProtoNode, TRevisionTag = unknown> extends ReadonlyRepairDataStore<TTree, TRevisionTag> {
     capture(change: TChange, revision: TRevisionTag): void;
 }
 
-// @alpha
+// @public
 export interface RequiredField<TTypes extends AllowedTypes> extends TreeField {
     // (undocumented)
     readonly boxedContent: TypedNodeUnion<TTypes>;
@@ -1687,29 +1687,29 @@ export interface RequiredField<TTypes extends AllowedTypes> extends TreeField {
     setContent(content: FlexibleNodeContent<TTypes>): void;
 }
 
-// @alpha
+// @public
 type RequiredFields<T> = [
     {
     [P in keyof T as undefined extends T[P] ? never : P]: T[P];
 }
 ][_InlineTrick];
 
-// @alpha
+// @public
 type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
     readonly [P in symbol | string]: P extends K ? T : never;
 };
 
-// @alpha
+// @public
 export type RevisionIndexer = (tag: RevisionTag) => number;
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface RevisionInfo {
     // (undocumented)
     readonly revision: RevisionTag;
     readonly rollbackOf?: RevisionTag;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface RevisionMetadataSource {
     // (undocumented)
     readonly getIndex: RevisionIndexer;
@@ -1717,25 +1717,25 @@ export interface RevisionMetadataSource {
     readonly getInfo: (tag: RevisionTag) => RevisionInfo;
 }
 
-// @alpha
+// @public
 export type RevisionTag = StableId;
 
-// @alpha
+// @public
 type Root<TTree = ProtoNode> = FieldMarks<TTree>;
 
-// @alpha
+// @public
 export interface RootField {
     // (undocumented)
     readonly key: DetachedField;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export const rootField: DetachedField;
 
-// @alpha
+// @public
 export const rootFieldKey: FieldKey;
 
-// @alpha
+// @public
 export function runSynchronous(view: ISharedTreeView, transaction: (view: ISharedTreeView) => TransactionResult | void): TransactionResult;
 
 declare namespace SchemaAware {
@@ -1751,7 +1751,7 @@ declare namespace SchemaAware {
 }
 export { SchemaAware }
 
-// @alpha @sealed
+// @public @sealed
 export class SchemaBuilder {
     constructor(name: string, lint?: Partial<SchemaLintConfiguration>, ...libraries: SchemaLibrary[]);
     addLibraries(...libraries: SchemaLibrary[]): void;
@@ -1791,12 +1791,12 @@ export class SchemaBuilder {
     }>;
 }
 
-// @alpha
+// @public
 export interface SchemaConfiguration<TRoot extends FieldSchema = FieldSchema> {
     readonly schema: TypedSchemaCollection<TRoot>;
 }
 
-// @alpha
+// @public
 export interface SchemaData {
     // (undocumented)
     readonly rootFieldSchema: FieldStoredSchema;
@@ -1804,18 +1804,18 @@ export interface SchemaData {
     readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeStoredSchema>;
 }
 
-// @alpha
+// @public
 export interface SchemaEvents {
     afterSchemaChange(newSchema: SchemaData): void;
     beforeSchemaChange(newSchema: SchemaData): void;
 }
 
-// @alpha
+// @public
 export interface SchemaLibrary extends TypedSchemaCollection {
     readonly libraries: ReadonlySet<SchemaLibraryData>;
 }
 
-// @alpha
+// @public
 export interface SchemaLibraryData {
     // (undocumented)
     readonly adapters: Adapters;
@@ -1827,7 +1827,7 @@ export interface SchemaLibraryData {
     readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
 }
 
-// @alpha
+// @public
 export interface SchemaLintConfiguration {
     // (undocumented)
     readonly rejectEmpty: boolean;
@@ -1835,22 +1835,22 @@ export interface SchemaLintConfiguration {
     readonly rejectForbidden: boolean;
 }
 
-// @alpha
+// @public
 export interface SchematizeConfiguration<TRoot extends FieldSchema = FieldSchema> extends SchemaConfiguration<TRoot> {
     readonly allowedSchemaModifications: AllowedUpdateType;
 }
 
-// @alpha
+// @public
 export interface SchemaValidationFunction<Schema extends TSchema> {
     // (undocumented)
     check(data: unknown): data is Static<Schema>;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface Sequence extends BrandedFieldKind<"Sequence", Multiplicity.Sequence, FieldEditor<any>> {
 }
 
-// @alpha
+// @public
 export interface Sequence2<TTypes extends AllowedTypes> extends TreeField {
     // (undocumented)
     [Symbol.iterator](): Iterator<TypedNodeUnion<TTypes>>;
@@ -1866,14 +1866,14 @@ export interface Sequence2<TTypes extends AllowedTypes> extends TreeField {
     replaceRange(index: number, count: number, content: Iterable<FlexibleNodeContent<TTypes>>): void;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface SequenceFieldEditBuilder {
     delete(index: number, count: number): void;
     insert(index: number, newContent: ITreeCursor | readonly ITreeCursor[]): void;
     move(sourceIndex: number, count: number, destIndex: number): void;
 }
 
-// @alpha
+// @public
 export class SharedTreeFactory implements IChannelFactory {
     constructor(options?: SharedTreeOptions);
     // (undocumented)
@@ -1886,12 +1886,12 @@ export class SharedTreeFactory implements IChannelFactory {
     type: string;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface SharedTreeOptions extends Partial<ICodecOptions> {
     forest?: ForestType;
 }
 
-// @alpha
+// @public
 export class SimpleDependee implements Dependee {
     constructor(computationName?: string);
     // (undocumented)
@@ -1905,59 +1905,59 @@ export class SimpleDependee implements Dependee {
     removeDependent(dependent: Dependent): void;
 }
 
-// @alpha
+// @public
 export function singleJsonCursor(root: JsonCompatible): ITreeCursorSynchronous;
 
-// @alpha
+// @public
 export function singleStackTreeCursor<TNode>(root: TNode, adapter: CursorAdapter<TNode>): CursorWithNode<TNode>;
 
-// @alpha
+// @public
 export function singleTextCursor(root: JsonableTree): ITreeCursorSynchronous;
 
-// @alpha
+// @public
 type Skip = number;
 
-// @alpha
+// @public
 export type StableNodeKey = Brand<StableId, "Stable Node Key">;
 
-// @alpha
+// @public
 export interface StoredSchemaRepository extends Dependee, ISubscribable<SchemaEvents>, SchemaData {
     update(newSchema: SchemaData): void;
 }
 
-// @alpha
+// @public
 export interface Struct extends TreeNode {
     readonly localNodeKey?: LocalNodeKey;
 }
 
-// @alpha
+// @public
 type StructFields<TFields extends RestrictiveReadonlyRecord<string, FieldSchema>> = {
     readonly [key in keyof TFields]: UnboxField<TFields[key]>;
 } & {
     readonly [key in keyof TFields as `boxed${Capitalize<key & string>}`]: TypedField<TFields[key]>;
 };
 
-// @alpha
+// @public
 export type StructSchema = TreeSchema & {
     [P in keyof (MapSchemaSpecification & LeafSchemaSpecification)]?: undefined;
 };
 
-// @alpha
+// @public
 interface StructSchemaSpecification {
     // (undocumented)
     readonly structFields: RestrictiveReadonlyRecord<string, FieldSchema>;
 }
 
-// @alpha
+// @public
 export type StructTyped<TSchema extends StructSchema> = Struct & StructFields<TSchema["structFieldsObject"]>;
 
-// @alpha
+// @public
 export interface SubtreePolicy {
     // (undocumented)
     maxDepth: number;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface TaggedChange<TChangeset> {
     // (undocumented)
     readonly change: TChangeset;
@@ -1966,26 +1966,26 @@ export interface TaggedChange<TChangeset> {
     readonly rollbackOf?: RevisionTag;
 }
 
-// @alpha
+// @public
 export type ToDelta = (child: NodeChangeset) => Delta.Modify;
 
-// @alpha
+// @public
 export function toDownPath(upPath: UpPath): DownPath;
 
-// @alpha
+// @public
 export enum TransactionResult {
     Abort = 0,
     Commit = 1
 }
 
-// @alpha
+// @public
 export interface Tree<TSchema = unknown> extends Iterable<Tree> {
     readonly context: TreeContext;
     readonly schema: TSchema;
     treeStatus(): TreeStatus;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface TreeAdapter {
     // (undocumented)
     readonly input: TreeSchemaIdentifier;
@@ -1993,24 +1993,24 @@ export interface TreeAdapter {
     readonly output: TreeSchemaIdentifier;
 }
 
-// @alpha
+// @public
 export interface TreeContent<TRoot extends FieldSchema = FieldSchema> extends SchemaConfiguration<TRoot> {
     readonly initialTree: SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Flexible> | readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous;
 }
 
-// @alpha
+// @public
 export interface TreeContext extends ISubscribable<ForestEvents> {
     get root(): TreeField;
     readonly schema: TypedSchemaCollection;
 }
 
-// @alpha
+// @public
 export interface TreeDataContext {
     fieldSource?(key: FieldKey, schema: FieldStoredSchema): undefined | FieldGenerator;
     readonly schema: SchemaData;
 }
 
-// @alpha
+// @public
 export interface TreeField extends Tree<FieldSchema>, Iterable<TreeNode> {
     // (undocumented)
     [Symbol.iterator](): Iterator<TreeNode>;
@@ -2020,7 +2020,7 @@ export interface TreeField extends Tree<FieldSchema>, Iterable<TreeNode> {
     readonly parent?: TreeNode;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface TreeLocation {
     // (undocumented)
     readonly index: number;
@@ -2028,14 +2028,14 @@ export interface TreeLocation {
     readonly range: FieldLocation | DetachedField;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export const enum TreeNavigationResult {
     NotFound = -1,
     Ok = 1,
     Pending = 0
 }
 
-// @alpha
+// @public
 export interface TreeNode extends Tree<TreeSchema> {
     // (undocumented)
     [Symbol.iterator](): Iterator<TreeField>;
@@ -2051,7 +2051,7 @@ export interface TreeNode extends Tree<TreeSchema> {
     readonly value?: TreeValue;
 }
 
-// @alpha
+// @public
 export class TreeSchema<Name extends string = string, T extends RecursiveTreeSchemaSpecification = TreeSchemaSpecification> {
     constructor(builder: Named<string>, name: Name, info: T);
     // (undocumented)
@@ -2070,38 +2070,38 @@ export class TreeSchema<Name extends string = string, T extends RecursiveTreeSch
     readonly structFieldsObject: NormalizeStructFields<Assume<T, TreeSchemaSpecification>["structFields"]>;
 }
 
-// @alpha
+// @public
 export type TreeSchemaIdentifier = Brand<string, "tree.Schema">;
 
-// @alpha
+// @public
 type TreeSchemaSpecification = [
 FlattenKeys<(StructSchemaSpecification | MapSchemaSpecification | LeafSchemaSpecification) & Partial<StructSchemaSpecification & MapSchemaSpecification & LeafSchemaSpecification>>
 ][_InlineTrick];
 
-// @alpha
+// @public
 export enum TreeStatus {
     Deleted = 2,
     InDocument = 0,
     Removed = 1
 }
 
-// @alpha
+// @public
 export const treeStatus: unique symbol;
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface TreeStoredSchema {
     readonly leafValue?: ValueSchema;
     readonly mapFields?: FieldStoredSchema;
     readonly structFields: ReadonlyMap<FieldKey, FieldStoredSchema>;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export type TreeType = TreeSchemaIdentifier;
 
-// @alpha
+// @public
 export type TreeTypeSet = ReadonlySet<TreeSchemaIdentifier> | undefined;
 
-// @alpha
+// @public
 export type TreeValue<TSchema extends ValueSchema = ValueSchema> = [
     {
     [ValueSchema.Number]: number;
@@ -2111,7 +2111,7 @@ export type TreeValue<TSchema extends ValueSchema = ValueSchema> = [
 }[TSchema]
 ][_InlineTrick];
 
-// @alpha
+// @public
 type TypeArrayToTypedTreeArray<Mode extends ApiMode, T extends readonly TreeSchema[]> = [
 T extends readonly [infer Head, ...infer Tail] ? [
 TypedNode_2<Assume<Head, TreeSchema>, Mode>,
@@ -2119,7 +2119,7 @@ TypedNode_2<Assume<Head, TreeSchema>, Mode>,
 ] : []
 ][_InlineTrick];
 
-// @alpha
+// @public
 type TypeArrayToTypedTreeArray_2<T extends readonly TreeSchema[]> = [
 T extends readonly [infer Head, ...infer Tail] ? [
 TypedNode<Assume<Head, TreeSchema>>,
@@ -2127,21 +2127,21 @@ TypedNode<Assume<Head, TreeSchema>>,
 ] : []
 ][_InlineTrick];
 
-// @alpha
+// @public
 export const typeboxValidator: JsonValidator;
 
-// @alpha
+// @public
 export type TypedField<TSchema extends FieldSchema> = TypedFieldInner<TSchema["kind"], TSchema["allowedTypes"]>;
 
-// @alpha
+// @public
 type TypedField_2<TField extends FieldSchema, Mode extends ApiMode = ApiMode.Editable> = [
 ApplyMultiplicity<TField["kind"]["multiplicity"], AllowedTypesToTypedTrees<Mode, TField["allowedTypes"]>, Mode>
 ][_InlineTrick];
 
-// @alpha
+// @public
 type TypedFieldInner<Kind extends FieldKindTypes, Types extends AllowedTypes> = Kind extends typeof FieldKinds.sequence ? Sequence2<Types> : Kind extends typeof FieldKinds.value ? RequiredField<Types> : Kind extends typeof FieldKinds.optional ? OptionalField<Types> : TreeField;
 
-// @alpha
+// @public
 type TypedFields<Mode extends ApiMode, TFields extends undefined | {
     [key: string]: FieldSchema;
 }> = [
@@ -2152,16 +2152,16 @@ TFields extends {
 } : EmptyObject
 ][_InlineTrick];
 
-// @alpha
+// @public
 export type TypedNode<TSchema extends TreeSchema> = TSchema extends LeafSchema ? Leaf<TSchema> : TSchema extends MapSchema ? MapNode<TSchema> : TSchema extends FieldNodeSchema ? FieldNode<TSchema> : TSchema extends StructSchema ? StructTyped<TSchema> : TreeNode;
 
-// @alpha
+// @public
 type TypedNode_2<TSchema extends TreeSchema, Mode extends ApiMode = ApiMode.Editable> = FlattenKeys<CollectOptions<Mode, TypedFields<Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode, TSchema["structFieldsObject"]>, TSchema["leafValue"], TSchema["name"]>>;
 
-// @alpha
+// @public
 export type TypedNodeUnion<TTypes extends AllowedTypes> = TTypes extends InternalTypedSchemaTypes.FlexList<TreeSchema> ? InternalTypedSchemaTypes.ArrayToUnion<TypeArrayToTypedTreeArray_2<Assume<InternalTypedSchemaTypes.ConstantFlexListToNonLazyArray<TTypes>, readonly TreeSchema[]>>> : TreeNode;
 
-// @alpha
+// @public
 export interface TypedSchemaCollection<T extends FieldSchema = FieldSchema> {
     // (undocumented)
     readonly adapters: Adapters;
@@ -2173,7 +2173,7 @@ export interface TypedSchemaCollection<T extends FieldSchema = FieldSchema> {
     readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
 }
 
-// @alpha
+// @public
 type TypedValue<TValue extends ValueSchema> = {
     [ValueSchema.Number]: number;
     [ValueSchema.String]: string;
@@ -2181,41 +2181,41 @@ type TypedValue<TValue extends ValueSchema> = {
     [ValueSchema.FluidHandle]: IFluidHandle;
 }[TValue];
 
-// @alpha
+// @public
 type TypedValueOrUndefined<TValue extends ValueSchema | undefined> = TValue extends ValueSchema ? TypedValue<TValue> : undefined;
 
-// @alpha
+// @public
 export const typeNameSymbol: unique symbol;
 
-// @alpha
+// @public
 export const typeSymbol: unique symbol;
 
-// @alpha
+// @public
 type UnboxField<TSchema extends FieldSchema> = UnboxFieldInner<TSchema["kind"], TSchema["allowedTypes"]>;
 
-// @alpha
+// @public
 type UnboxFieldInner<Kind extends FieldKindTypes, TTypes extends AllowedTypes> = Kind extends typeof FieldKinds.sequence ? Sequence2<TTypes> : Kind extends typeof FieldKinds.value ? UnboxNodeUnion<TTypes> : Kind extends typeof FieldKinds.optional ? UnboxNodeUnion<TTypes> | undefined : unknown;
 
-// @alpha
+// @public
 type UnboxNode<TSchema extends TreeSchema> = TSchema extends LeafSchema ? SchemaAware.InternalTypes.TypedValue<TSchema["leafValue"]> : TSchema extends MapSchema ? MapNode<TSchema> : TSchema extends FieldNodeSchema ? UnboxField<TSchema["structFieldsObject"][""]> : TSchema extends StructSchema ? StructTyped<TSchema> : unknown;
 
-// @alpha
+// @public
 type UnboxNodeUnion<TTypes extends AllowedTypes> = TTypes extends readonly [
 InternalTypedSchemaTypes.LazyItem<infer InnerType>
 ] ? InnerType extends TreeSchema ? UnboxNode<InnerType> : TypedNodeUnion<TTypes> : TypedNodeUnion<TTypes>;
 
-// @alpha
+// @public
 type Unbrand<T, B> = T extends infer S & B ? S : T;
 
-// @alpha
+// @public
 type UnbrandedName<TName> = [
 TName extends infer S & TreeSchemaIdentifier ? S : string
 ][_InlineTrick];
 
-// @alpha
+// @public
 type UnbrandList<T extends unknown[], B> = T extends [infer Head, ...infer Tail] ? [Unbrand<Head, B>, ...UnbrandList<Tail, B>] : [];
 
-// @alpha
+// @public
 type UntypedApi<Mode extends ApiMode> = {
     [ApiMode.Editable]: UntypedTree;
     [ApiMode.EditableUnwrapped]: UntypedTree | PrimitiveValue;
@@ -2224,7 +2224,7 @@ type UntypedApi<Mode extends ApiMode> = {
     [ApiMode.Wrapped]: UntypedTree;
 }[Mode];
 
-// @alpha
+// @public
 export interface UntypedField<TContext = UntypedTreeContext, TChild = UntypedTree<TContext>, TParent = UntypedTree<TContext>, TUnwrappedChild = UnwrappedUntypedTree<TContext>> extends MarkedArrayLike<TUnwrappedChild> {
     readonly context: TContext;
     readonly fieldKey: FieldKey;
@@ -2234,7 +2234,7 @@ export interface UntypedField<TContext = UntypedTreeContext, TChild = UntypedTre
     treeStatus(): TreeStatus;
 }
 
-// @alpha
+// @public
 interface UntypedOptionalField<TContext = UntypedTreeContext, TChild = UntypedTree<TContext>, TUnwrappedChild = UnwrappedUntypedTree<TContext>> extends UntypedField<TContext, TChild, UntypedTree<TContext>, TUnwrappedChild> {
     readonly content: TChild;
     readonly fieldSchema: FieldStoredSchema & {
@@ -2244,7 +2244,7 @@ interface UntypedOptionalField<TContext = UntypedTreeContext, TChild = UntypedTr
     setContent(newContent: ITreeCursor | ContextuallyTypedNodeData | undefined): void;
 }
 
-// @alpha
+// @public
 interface UntypedSequenceField<TContext = UntypedTreeContext, TChild = UntypedTree<TContext>, TUnwrappedChild = UnwrappedUntypedTree<TContext>, TNewFieldContent = NewFieldContent> extends UntypedField<TContext, TChild, UntypedTree<TContext>, TUnwrappedChild> {
     readonly fieldSchema: FieldStoredSchema & {
         readonly kind: Sequence;
@@ -2257,14 +2257,14 @@ interface UntypedSequenceField<TContext = UntypedTreeContext, TChild = UntypedTr
     setContent(newContent: TNewFieldContent): void;
 }
 
-// @alpha
+// @public
 export interface UntypedTree<TContext = UntypedTreeContext> extends UntypedTreeCore<TContext> {
     readonly [typeNameSymbol]: TreeSchemaIdentifier;
     readonly [valueSymbol]: Value;
     readonly [key: FieldKey]: UnwrappedUntypedField<TContext>;
 }
 
-// @alpha
+// @public
 export interface UntypedTreeContext extends ISubscribable<ForestEvents> {
     clear(): void;
     free(): void;
@@ -2274,7 +2274,7 @@ export interface UntypedTreeContext extends ISubscribable<ForestEvents> {
     readonly unwrappedRoot: UnwrappedUntypedField;
 }
 
-// @alpha
+// @public
 export interface UntypedTreeCore<TContext = UntypedTreeContext, TField = UntypedField<TContext>> extends Iterable<TField> {
     readonly [contextSymbol]: TContext;
     [getField](fieldKey: FieldKey): TField;
@@ -2288,10 +2288,10 @@ export interface UntypedTreeCore<TContext = UntypedTreeContext, TField = Untyped
     readonly [typeSymbol]: TreeStoredSchema & Named<TreeSchemaIdentifier>;
 }
 
-// @alpha
+// @public
 export type UntypedTreeOrPrimitive<TContext = UntypedTreeContext> = UntypedTree<TContext> | PrimitiveValue;
 
-// @alpha
+// @public
 interface UntypedValueField<TContext = UntypedTreeContext, TChild = UntypedTree<TContext>, TUnwrappedChild = UnwrappedUntypedTree<TContext>, TNewContent = ContextuallyTypedNodeData> extends UntypedField<TContext, TChild, UntypedTree<TContext>, TUnwrappedChild> {
     readonly content: TChild;
     readonly fieldSchema: FieldStoredSchema & {
@@ -2300,49 +2300,49 @@ interface UntypedValueField<TContext = UntypedTreeContext, TChild = UntypedTree<
     setContent(newContent: ITreeCursor | TNewContent): void;
 }
 
-// @alpha
+// @public
 export type UnwrappedEditableField = UnwrappedEditableTree | undefined | EditableField;
 
-// @alpha
+// @public
 export type UnwrappedEditableTree = EditableTreeOrPrimitive | EditableField;
 
-// @alpha
+// @public
 export type UnwrappedUntypedField<TContext = UntypedTreeContext> = UnwrappedUntypedTree<TContext> | undefined | UntypedField<TContext>;
 
-// @alpha
+// @public
 export type UnwrappedUntypedTree<TContext = UntypedTreeContext> = UntypedTreeOrPrimitive<TContext> | UntypedField<TContext>;
 
-// @alpha
+// @public
 export interface UpPath<TParent = UpPathDefault> {
     readonly parent: TParent | undefined;
     readonly parentField: FieldKey;
     readonly parentIndex: number;
 }
 
-// @alpha
+// @public
 export type UpPathDefault = UpPath;
 
-// @alpha
+// @public
 export type Value = undefined | TreeValue;
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface ValueFieldEditBuilder {
     set(newContent: ITreeCursor): void;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface ValueFieldKind extends BrandedFieldKind<"Value", Multiplicity.Value, FieldEditor<any>> {
 }
 
-// @alpha
+// @public
 export type ValueFromBranded<T extends BrandedType<any, string>> = T extends BrandedType<infer ValueType, string> ? ValueType : never;
 
-// @alpha (undocumented)
+// @public (undocumented)
 type ValuePropertyFromSchema<TSchema extends ValueSchema | undefined> = TSchema extends ValueSchema ? {
     [valueSymbol]: TypedValue<TSchema>;
 } : EmptyObject;
 
-// @alpha
+// @public
 export enum ValueSchema {
     // (undocumented)
     Boolean = 2,
@@ -2354,22 +2354,22 @@ export enum ValueSchema {
     String = 1
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 type ValuesOf<T> = T[keyof T];
 
-// @alpha
+// @public
 export const valueSymbol: unique symbol;
 
-// @alpha
+// @public
 export interface ViewEvents {
     afterBatch(): void;
     revertible(source: LocalCommitSource): void;
 }
 
-// @alpha
+// @public
 export type VisitorBindingContext = DeleteBindingContext | InsertBindingContext;
 
-// @alpha
+// @public
 type WithDefault<T, Default> = T extends undefined ? Default : unknown extends T ? Default : T;
 
 // (No @packageDocumentation comment for this package)

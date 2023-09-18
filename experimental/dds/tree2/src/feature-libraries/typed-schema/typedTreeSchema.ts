@@ -29,21 +29,21 @@ import { ObjectToMap, WithDefault, objectToMapTyped } from "./typeUtils";
 // TODO: tests for this file
 
 /**
- * @alpha
+ * @public
  */
 export interface Fields {
 	readonly [key: string]: FieldSchema;
 }
 
 /**
- * @alpha
+ * @public
  */
 export type NormalizeStructFieldsInner<T extends Fields> = {
 	[Property in keyof T]: NormalizeField<T[Property]>;
 };
 
 /**
- * @alpha
+ * @public
  */
 export type NormalizeStructFields<T extends Fields | undefined> = NormalizeStructFieldsInner<
 	WithDefault<T, Record<string, never>>
@@ -57,7 +57,7 @@ export type NormalizeStructFields<T extends Fields | undefined> = NormalizeStruc
  * "'theSchema' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer."
  *
  * TODO: how much more specific of a type can be provided without triggering the above error?
- * @alpha
+ * @public
  */
 export type RecursiveTreeSchema = unknown;
 
@@ -68,7 +68,7 @@ export type RecursiveTreeSchema = unknown;
  * See `RecursiveTreeSchema`.
  *
  * TODO: how much more specific of a type can be provided without triggering the above error?
- * @alpha
+ * @public
  */
 export type RecursiveTreeSchemaSpecification = unknown;
 
@@ -81,7 +81,7 @@ export type RecursiveTreeSchemaSpecification = unknown;
  * T must extend TreeSchemaSpecification.
  * This can not be enforced using TypeScript since doing so breaks recursive type support.
  * See note on SchemaBuilder.fieldRecursive.
- * @alpha
+ * @public
  */
 export class TreeSchema<
 	Name extends string = string,
@@ -135,27 +135,26 @@ export class TreeSchema<
 // and the bellow type checks could be done with instanceof tests.
 
 /**
- * @alpha
+ * @public
  */
 export type MapSchema = TreeSchema & MapSchemaSpecification;
 /**
- * @alpha
+ * @public
  */
 export type LeafSchema = TreeSchema & LeafSchemaSpecification;
 
 /**
  * TODO: this includes FieldNodeSchema when it shouldn't
- * @alpha
+ * @public
  */
 export type StructSchema = TreeSchema & {
 	[P in keyof (MapSchemaSpecification & LeafSchemaSpecification)]?: undefined;
 };
 
 /**
- * @alpha
- *
  * This is the subset of StructSchema that uses {@link EmptyKey} so the the old (editable-tree 1) API unboxes it.
  * TODO: Once that API is removed, this can be cleaned up and properly separated from StructSchema
+ * @public
  */
 export type FieldNodeSchema = StructSchema & {
 	/**
@@ -191,7 +190,7 @@ export function schemaIsStruct(schema: TreeSchema): schema is StructSchema {
 
 /**
  * Convert FieldSchemaSpecification | undefined into FieldSchema.
- * @alpha
+ * @public
  */
 export type NormalizeField<T extends FieldSchema | undefined> = T extends FieldSchema
 	? T
@@ -223,19 +222,19 @@ function normalizeField<T extends FieldSchema | undefined>(t: T): NormalizeField
 
 /**
  * Allow any node (as long as it meets the schema for its own type).
- * @alpha
+ * @public
  */
 export const Any = "Any" as const;
 /**
  * Allow any node (as long as it meets the schema for its own type).
- * @alpha
+ * @public
  */
 export type Any = typeof Any;
 
 /**
  * Tree type, but can be wrapped in a function to allow referring to types before they are declared.
  * This makes recursive and co-recursive types possible.
- * @alpha
+ * @public
  */
 export type LazyTreeSchema = TreeSchema | (() => TreeSchema);
 
@@ -243,13 +242,13 @@ export type LazyTreeSchema = TreeSchema | (() => TreeSchema);
  * Types for use in fields.
  *
  * "Any" is boxed in an array to allow use as variadic parameter.
- * @alpha
+ * @public
  */
 export type AllowedTypes = [Any] | readonly LazyItem<TreeSchema>[];
 
 /**
  * Checks if an {@link AllowedTypes} is {@link (Any:type)}.
- * @alpha
+ * @public
  */
 export function allowedTypesIsAny(t: AllowedTypes): t is [Any] {
 	return t.length === 1 && t[0] === Any;
@@ -257,7 +256,7 @@ export function allowedTypesIsAny(t: AllowedTypes): t is [Any] {
 
 /**
  * `TreeSchemaSpecification` for {@link SchemaBuilder.struct}.
- * @alpha
+ * @public
  */
 export interface StructSchemaSpecification {
 	readonly structFields: RestrictiveReadonlyRecord<string, FieldSchema>;
@@ -265,7 +264,7 @@ export interface StructSchemaSpecification {
 
 /**
  * `TreeSchemaSpecification` for {@link SchemaBuilder.map}.
- * @alpha
+ * @public
  */
 export interface MapSchemaSpecification {
 	readonly mapFields: MapFieldSchema;
@@ -274,13 +273,13 @@ export interface MapSchemaSpecification {
 /**
  * Subset of FieldSchema thats legal in maps.
  * This requires empty to be a valid value for the map.
- * @alpha
+ * @public
  */
 export type MapFieldSchema = FieldSchema<typeof FieldKinds.optional | typeof FieldKinds.sequence>;
 
 /**
  * `TreeSchemaSpecification` for {@link SchemaBuilder.leaf}.
- * @alpha
+ * @public
  */
 export interface LeafSchemaSpecification {
 	readonly leafValue: ValueSchema;
@@ -288,7 +287,7 @@ export interface LeafSchemaSpecification {
 
 /**
  * Object for capturing information about a TreeStoredSchema for use at both compile time and runtime.
- * @alpha
+ * @public
  */
 export type TreeSchemaSpecification = [
 	FlattenKeys<
@@ -302,7 +301,7 @@ export type TreeSchemaSpecification = [
  * including functionality that does not have to be kept consistent across versions or deterministic.
  *
  * This can include policy for how to use this schema for "view" purposes, and well as how to expose editing APIs.
- * @sealed @alpha
+ * @sealed @public
  */
 export class FieldSchema<Kind extends FieldKindTypes = FieldKindTypes, Types = AllowedTypes> {
 	/**
@@ -321,7 +320,7 @@ export class FieldSchema<Kind extends FieldKindTypes = FieldKindTypes, Types = A
 // TODO: maybe remove the need for this here? Just use AllowedTypes in view schema?
 /**
  * Convert {@link AllowedTypes} to {@link TreeTypeSet}.
- * @alpha
+ * @public
  */
 export function allowedTypesToTypeSet(t: AllowedTypes): TreeTypeSet {
 	if (allowedTypesIsAny(t)) {
@@ -341,7 +340,7 @@ export function allowedTypesToTypeSet(t: AllowedTypes): TreeTypeSet {
  * The actual type used will include detailed schema information for all the types in the collection.
  * This pattern is used to implement SchemaAware APIs.
  *
- * @alpha
+ * @public
  */
 
 export interface TypedSchemaCollection<T extends FieldSchema = FieldSchema> {

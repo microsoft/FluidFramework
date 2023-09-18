@@ -21,7 +21,7 @@ import { Sourced } from "./view";
 
 /**
  * Schema data collected by a single SchemaBuilder (does not include referenced libraries).
- * @alpha
+ * @public
  */
 export interface SchemaLibraryData {
 	readonly name: string;
@@ -44,7 +44,7 @@ export interface SourcedAdapters {
 
 /**
  * Allows opting into and out of errors for some unusual schema patterns which are usually bugs.
- * @alpha
+ * @public
  */
 export interface SchemaLintConfiguration {
 	readonly rejectForbidden: boolean;

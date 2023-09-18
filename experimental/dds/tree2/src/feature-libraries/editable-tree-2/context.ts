@@ -24,7 +24,7 @@ import { LazyEntity, prepareForEditSymbol } from "./lazyEntity";
 /**
  * A common context of a "forest" of EditableTrees.
  * It handles group operations like transforming cursors into anchors for edits.
- * @alpha
+ * @public
  */
 export interface TreeContext extends ISubscribable<ForestEvents> {
 	/**

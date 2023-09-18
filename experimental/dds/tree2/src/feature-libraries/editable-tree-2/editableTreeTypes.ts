@@ -36,7 +36,7 @@ import { TreeContext } from "./context";
  * Design and document iterator invalidation rules and ordering rules.
  * Providing a custom iterator type with place anchor semantics would be a good approach.
  *
- * @alpha
+ * @public
  */
 export interface Tree<TSchema = unknown> extends Iterable<Tree> {
 	/**
@@ -75,7 +75,7 @@ export interface Tree<TSchema = unknown> extends Iterable<Tree> {
  * the schema aware API may be more ergonomic.
  * All editing is actually done via {@link TreeField}s: the nodes are immutable other than that they contain mutable fields.
  *
- * @alpha
+ * @public
  */
 export interface TreeNode extends Tree<TreeSchema> {
 	/**
@@ -135,7 +135,7 @@ export interface TreeNode extends Tree<TreeSchema> {
  * All content in the tree is accessible without down-casting, but if the schema is known,
  * the schema aware API may be more ergonomic.
  *
- * @alpha
+ * @public
  */
 export interface TreeField extends Tree<FieldSchema>, Iterable<TreeNode> {
 	/**
@@ -174,7 +174,7 @@ export interface TreeField extends Tree<FieldSchema>, Iterable<TreeNode> {
 
 /**
  * A node that behaves like a `Map<FieldKey, Field>` for a specific `Field` type.
- * @alpha
+ * @public
  */
 export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	/**
@@ -216,7 +216,7 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
  *
  * Other than this unboxing, a FieldNode is identical to a struct node with a single field using the {@link EmptyKey}.
  *
- * @alpha
+ * @public
  */
 export interface FieldNode<TSchema extends FieldNodeSchema> extends TreeNode {
 	/**
@@ -244,7 +244,7 @@ export interface FieldNode<TSchema extends FieldNodeSchema> extends TreeNode {
  * Struct nodes require complex typing, and have been split into two parts for implementation purposes.
  * See {@link StructTyped} for the schema aware extensions to this.
  *
- * @alpha
+ * @public
  */
 export interface Struct extends TreeNode {
 	/**
@@ -259,7 +259,7 @@ export interface Struct extends TreeNode {
  * @remarks
  * Leaves are immutable and have no children.
  * Leaf unboxes its content, so in schema aware APIs which do unboxing, the Leaf itself will be skipped over and its value will be returned directly.
- * @alpha
+ * @public
  */
 export interface Leaf<TSchema extends LeafSchema> extends TreeNode {
 	/**
@@ -271,7 +271,7 @@ export interface Leaf<TSchema extends LeafSchema> extends TreeNode {
 /**
  * A node that behaves like struct, providing properties to access its fields.
  *
- * @alpha
+ * @public
  */
 export type StructTyped<TSchema extends StructSchema> = Struct &
 	StructFields<TSchema["structFieldsObject"]>;
@@ -282,7 +282,7 @@ export type StructTyped<TSchema extends StructSchema> = Struct &
  * @privateRemarks
  * TODO: support custom field keys
  *
- * @alpha
+ * @public
  */
 export type StructFields<TFields extends RestrictiveReadonlyRecord<string, FieldSchema>> =
 	// Getters
@@ -311,7 +311,7 @@ export type StructFields<TFields extends RestrictiveReadonlyRecord<string, Field
 
 /**
  * Strongly typed tree literals for inserting as the content of a field.
- * @alpha
+ * @public
  */
 export type FlexibleFieldContent<TSchema extends FieldSchema> = SchemaAware.TypedField<
 	TSchema,
@@ -320,7 +320,7 @@ export type FlexibleFieldContent<TSchema extends FieldSchema> = SchemaAware.Type
 
 /**
  * Strongly typed tree literals for inserting as a node.
- * @alpha
+ * @public
  */
 export type FlexibleNodeContent<TTypes extends AllowedTypes> = SchemaAware.AllowedTypesToTypedTrees<
 	SchemaAware.ApiMode.Flexible,
@@ -332,7 +332,7 @@ export type FlexibleNodeContent<TTypes extends AllowedTypes> = SchemaAware.Allow
  *
  * @remarks
  * Allows for concurrent editing based on index, adjusting the locations of indexes as needed so they apply to the same logical place in the sequence when rebased and merged.
- * @alpha
+ * @public
  */
 export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
 	/**
@@ -381,7 +381,7 @@ export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
  * Unboxes its content, so in schema aware APIs which do unboxing, the RequiredField itself will be skipped over and its content will be returned directly.
  * @privateRemarks
  * TODO: Finish renaming from ValueField to RequiredField
- * @alpha
+ * @public
  */
 export interface RequiredField<TTypes extends AllowedTypes> extends TreeField {
 	readonly content: UnboxNodeUnion<TTypes>;
@@ -394,7 +394,7 @@ export interface RequiredField<TTypes extends AllowedTypes> extends TreeField {
  *
  * @remarks
  * Unboxes its content, so in schema aware APIs which do unboxing, the OptionalField itself will be skipped over and its content will be returned directly.
- * @alpha
+ * @public
  */
 export interface OptionalField<TTypes extends AllowedTypes> extends TreeField {
 	readonly content?: UnboxNodeUnion<TTypes>;
@@ -408,7 +408,7 @@ export interface OptionalField<TTypes extends AllowedTypes> extends TreeField {
 
 /**
  * Schema aware specialization of {@link TreeField}.
- * @alpha
+ * @public
  */
 export type TypedField<TSchema extends FieldSchema> = TypedFieldInner<
 	TSchema["kind"],
@@ -417,7 +417,7 @@ export type TypedField<TSchema extends FieldSchema> = TypedFieldInner<
 
 /**
  * Helper for implementing {@link TypedField}.
- * @alpha
+ * @public
  */
 export type TypedFieldInner<
 	Kind extends FieldKindTypes,
@@ -432,7 +432,7 @@ export type TypedFieldInner<
 
 /**
  * Schema aware specialization of {@link TreeNode} for a given {@link AllowedTypes}.
- * @alpha
+ * @public
  */
 export type TypedNodeUnion<TTypes extends AllowedTypes> =
 	TTypes extends InternalTypedSchemaTypes.FlexList<TreeSchema>
@@ -448,7 +448,7 @@ export type TypedNodeUnion<TTypes extends AllowedTypes> =
 
 /**
  * Takes in `TreeSchema[]` and returns a TypedNode union.
- * @alpha
+ * @public
  */
 export type TypeArrayToTypedTreeArray<T extends readonly TreeSchema[]> = [
 	T extends readonly [infer Head, ...infer Tail]
@@ -461,7 +461,7 @@ export type TypeArrayToTypedTreeArray<T extends readonly TreeSchema[]> = [
 
 /**
  * Schema aware specialization of {@link TreeNode} for a given {@link TreeSchema}.
- * @alpha
+ * @public
  */
 export type TypedNode<TSchema extends TreeSchema> = TSchema extends LeafSchema
 	? Leaf<TSchema>
@@ -482,7 +482,7 @@ export type TypedNode<TSchema extends TreeSchema> = TSchema extends LeafSchema
  * @remarks
  * Unboxes fields to their content if appropriate for the kind.
  * Recursively unboxes that content (then its content etc.) as well if the node union does unboxing.
- * @alpha
+ * @public
  */
 export type UnboxField<TSchema extends FieldSchema> = UnboxFieldInner<
 	TSchema["kind"],
@@ -491,7 +491,7 @@ export type UnboxField<TSchema extends FieldSchema> = UnboxFieldInner<
 
 /**
  * Helper for implementing {@link InternalEditableTreeTypes#UnboxField}.
- * @alpha
+ * @public
  */
 export type UnboxFieldInner<
 	Kind extends FieldKindTypes,
@@ -510,7 +510,7 @@ export type UnboxFieldInner<
  * @remarks
  * Unboxes when not polymorphic.
  * Recursively unboxes that content as well if the node kind does unboxing.
- * @alpha
+ * @public
  */
 export type UnboxNodeUnion<TTypes extends AllowedTypes> = TTypes extends readonly [
 	InternalTypedSchemaTypes.LazyItem<infer InnerType>,
@@ -525,7 +525,7 @@ export type UnboxNodeUnion<TTypes extends AllowedTypes> = TTypes extends readonl
  * @remarks
  * Unboxes if the node kind does unboxing.
  * Recursively unboxes that content as well if it does unboxing.
- * @alpha
+ * @public
  */
 export type UnboxNode<TSchema extends TreeSchema> = TSchema extends LeafSchema
 	? SchemaAware.InternalTypes.TypedValue<TSchema["leafValue"]>

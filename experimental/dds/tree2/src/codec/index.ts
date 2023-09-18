@@ -17,5 +17,7 @@ export {
 	unitCodec,
 	withDefaultBinaryEncoding,
 	withSchemaValidation,
+	BetaInterface1,
+	BetaInterface2,
 } from "./codec";
 export { noopValidator } from "./noopValidator";

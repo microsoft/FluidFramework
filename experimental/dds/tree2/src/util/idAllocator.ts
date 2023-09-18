@@ -8,7 +8,7 @@ import { assert } from "@fluidframework/core-utils";
 /**
  * Allocates a block of `count` consecutive IDs and returns the first ID in the block.
  * For convenience can be called with no parameters to allocate a single ID.
- * @alpha
+ * @public
  */
 export type IdAllocator = (count?: number) => number;
 
@@ -17,7 +17,7 @@ export interface IdAllocationState {
 }
 
 /**
- * @alpha
+ * @public
  */
 export function idAllocatorFromMaxId(maxId: number | undefined = undefined): IdAllocator {
 	return idAllocatorFromState({ maxId: maxId ?? -1 });

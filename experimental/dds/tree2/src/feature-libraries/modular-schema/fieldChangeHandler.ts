@@ -13,7 +13,7 @@ import { NodeChangeset, RevisionInfo } from "./modularChangeTypes";
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
  * implement a unified ChangeFamily supporting documents with multiple field kinds.
- * @alpha
+ * @public
  */
 export interface FieldChangeHandler<
 	TChangeset,
@@ -37,7 +37,7 @@ export interface FieldChangeHandler<
 }
 
 /**
- * @alpha
+ * @public
  */
 export interface FieldChangeRebaser<TChangeset> {
 	/**
@@ -147,7 +147,7 @@ export function isolatedFieldChangeRebaser<TChangeset>(data: {
 }
 
 /**
- * @alpha
+ * @public
  */
 export interface FieldEditor<TChangeset> {
 	/**
@@ -159,12 +159,12 @@ export interface FieldEditor<TChangeset> {
 /**
  * The `index` represents the index of the child node in the input context.
  * The `index` should be `undefined` iff the child node does not exist in the input context (e.g., an inserted node).
- * @alpha
+ * @public
  */
 export type ToDelta = (child: NodeChangeset) => Delta.Modify;
 
 /**
- * @alpha
+ * @public
  */
 export type NodeReviver = (
 	revision: RevisionTag,
@@ -173,7 +173,7 @@ export type NodeReviver = (
 ) => Delta.ProtoNode[];
 
 /**
- * @alpha
+ * @public
  */
 export type NodeChangeInverter = (
 	change: NodeChangeset,
@@ -181,7 +181,7 @@ export type NodeChangeInverter = (
 ) => NodeChangeset;
 
 /**
- * @alpha
+ * @public
  */
 export enum NodeExistenceState {
 	Alive,
@@ -189,7 +189,7 @@ export enum NodeExistenceState {
 }
 
 /**
- * @alpha
+ * @public
  */
 export type NodeChangeRebaser = (
 	change: NodeChangeset | undefined,
@@ -202,7 +202,7 @@ export type NodeChangeRebaser = (
 ) => NodeChangeset | undefined;
 
 /**
- * @alpha
+ * @public
  */
 export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => NodeChangeset;
 
@@ -215,12 +215,12 @@ export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => Nod
  * being produced.
  *
  * During rebase, the indices of the base changes are all lower than the indices of the change being rebased.
- * @alpha
+ * @public
  */
 export type RevisionIndexer = (tag: RevisionTag) => number;
 
 /**
- * @alpha
+ * @public
  */
 export interface RevisionMetadataSource {
 	readonly getIndex: RevisionIndexer;
@@ -228,7 +228,7 @@ export interface RevisionMetadataSource {
 }
 
 /**
- * @alpha
+ * @public
  */
 export function getIntention(
 	rev: RevisionTag | undefined,

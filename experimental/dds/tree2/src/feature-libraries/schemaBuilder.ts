@@ -24,7 +24,7 @@ import {
 
 /**
  * Builds schema libraries, and the schema within them.
- * @sealed @alpha
+ * @sealed @public
  */
 export class SchemaBuilder {
 	private readonly lintConfiguration: SchemaLintConfiguration;
@@ -371,7 +371,7 @@ export class SchemaBuilder {
 /**
  * Schema information collected by a SchemaBuilder, including referenced libraries.
  * Can be aggregated into other libraries by adding to their builders.
- * @alpha
+ * @public
  */
 export interface SchemaLibrary extends TypedSchemaCollection {
 	/**

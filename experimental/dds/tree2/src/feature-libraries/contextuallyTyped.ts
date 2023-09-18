@@ -52,18 +52,18 @@ const scope = "contextuallyTyped";
 /**
  * A symbol for the name of the type of a tree in contexts where string keys are already in use for fields.
  * See {@link TreeSchemaIdentifier}.
- * @alpha
+ * @public
  */
 export const typeNameSymbol: unique symbol = Symbol(`${scope}:typeName`);
 
 /**
  * A symbol for the value of a tree node in contexts where string keys are already in use for fields.
- * @alpha
+ * @public
  */
 export const valueSymbol: unique symbol = Symbol(`${scope}:value`);
 
 /**
- * @alpha
+ * @public
  * @privateRemarks
  * TODO: remove from package API when old editable-tree API is removed
  */
@@ -154,7 +154,7 @@ export function assertAllowedValue(
  * @returns the key and the schema of the primary field out of the given tree schema.
  *
  * See note on {@link EmptyKey} for what is a primary field.
- * @alpha
+ * @public
  */
 export function getPrimaryField(
 	schema: TreeStoredSchema,
@@ -212,13 +212,13 @@ export function getPossibleTypes(
 
 /**
  * A symbol used to define a {@link MarkedArrayLike} interface.
- * @alpha
+ * @public
  */
 export const arrayLikeMarkerSymbol: unique symbol = Symbol("editable-tree:arrayLikeMarker");
 
 /**
  * Can be used to mark a type which works like an array, but is not compatible with `Array.isArray`.
- * @alpha
+ * @public
  */
 export interface MarkedArrayLike<TGet, TSet extends TGet = TGet> extends ArrayLikeMut<TGet, TSet> {
 	readonly [arrayLikeMarkerSymbol]: true;
@@ -227,7 +227,7 @@ export interface MarkedArrayLike<TGet, TSet extends TGet = TGet> extends ArrayLi
 
 /**
  * Can be used to mark a type which works like an array, but is not compatible with `Array.isArray`.
- * @alpha
+ * @public
  */
 export interface ReadonlyMarkedArrayLike<T> extends ArrayLike<T> {
 	readonly [arrayLikeMarkerSymbol]: true;
@@ -242,7 +242,7 @@ export interface ReadonlyMarkedArrayLike<T> extends ArrayLike<T> {
  * This is why `TSet extends TGet` is required.
  *
  * See https://github.com/microsoft/TypeScript/issues/43826.
- * @alpha
+ * @public
  */
 export interface ArrayLikeMut<TGet, TSet extends TGet = TGet> extends ArrayLike<TGet> {
 	[n: number]: TSet;
@@ -254,7 +254,7 @@ export interface ArrayLikeMut<TGet, TSet extends TGet = TGet> extends ArrayLike<
  * This format is intended for concise authoring of tree literals when the schema is statically known.
  *
  * Once schema aware APIs are implemented, they can be used to provide schema specific subsets of this type.
- * @alpha
+ * @public
  */
 export type ContextuallyTypedNodeData =
 	| ContextuallyTypedNodeDataObject
@@ -268,16 +268,16 @@ export type ContextuallyTypedNodeData =
  * This format is intended for concise authoring of tree literals when the schema is statically known.
  *
  * Once schema aware APIs are implemented, they can be used to provide schema specific subsets of this type.
- * @alpha
+ * @public
  */
 export type ContextuallyTypedFieldData = ContextuallyTypedNodeData | undefined;
 
 /**
  * Information needed to interpret a subtree described by {@link ContextuallyTypedNodeData} and {@link ContextuallyTypedFieldData}.
- * @alpha
  * TODO:
  * Currently being exposed at the package level which also requires us to export MapTree at the package level.
  * Refactor the FieldGenerator to use JsonableTree instead of MapTree, and convert them internally.
+ * @public
  */
 export interface TreeDataContext {
 	/**
@@ -300,10 +300,10 @@ export interface TreeDataContext {
 
 /**
  * Generates field content for a MapTree on demand.
- * @alpha
  * TODO:
  * Currently being exposed at the package level which also requires us to export MapTree at the package level.
  * Refactor the FieldGenerator to use JsonableTree instead of MapTree, and convert them internally.
+ * @public
  */
 export type FieldGenerator = () => MapTree[];
 
@@ -326,7 +326,7 @@ export function isArrayLike(
 
 /**
  * Checks the type of a `ContextuallyTypedNodeData`.
- * @alpha
+ * @public
  */
 export function isContextuallyTypedNodeDataObject(
 	data: ContextuallyTypedNodeData | undefined,
@@ -336,7 +336,7 @@ export function isContextuallyTypedNodeDataObject(
 
 /**
  * Object case of {@link ContextuallyTypedNodeData}.
- * @alpha
+ * @public
  */
 export interface ContextuallyTypedNodeDataObject {
 	/**
@@ -415,7 +415,7 @@ function shallowCompatibilityTest(
  * Construct a tree from ContextuallyTypedNodeData.
  *
  * TODO: this should probably be refactored into a `try` function which either returns a Cursor or a SchemaError with a path to the error.
- * @alpha
+ * @public
  */
 export function cursorFromContextualData(
 	context: TreeDataContext,
@@ -428,7 +428,7 @@ export function cursorFromContextualData(
 
 /**
  * Strongly typed {@link cursorFromContextualData} for a TreeSchema
- * @alpha
+ * @public
  */
 export function cursorForTypedTreeData<T extends TreeSchema>(
 	context: TreeDataContext,
@@ -444,7 +444,7 @@ export function cursorForTypedTreeData<T extends TreeSchema>(
 
 /**
  * Strongly typed {@link cursorFromContextualData} for AllowedTypes.
- * @alpha
+ * @public
  */
 export function cursorForTypedData<T extends AllowedTypes>(
 	context: TreeDataContext,
@@ -475,7 +475,7 @@ export function cursorsFromContextualData(
 
 /**
  * Strongly typed {@link cursorsFromContextualData} for a FieldSchema
- * @alpha
+ * @public
  */
 export function cursorsForTypedFieldData<T extends FieldSchema>(
 	context: TreeDataContext,
@@ -638,7 +638,7 @@ export function applyFieldTypesFromContext(
  *
  * TODO: this should allow a field cursor instead of an array of cursors.
  * TODO: Make this generic so a variant of this type that allows placeholders for detached sequences to consume.
- * @alpha
+ * @public
  */
 export type NewFieldContent =
 	| ITreeCursorSynchronous
