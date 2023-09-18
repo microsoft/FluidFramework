@@ -310,8 +310,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     baseSnapshot: ISnapshotTree | undefined;
     // (undocumented)
-    bindToContext(): void;
-    // (undocumented)
     clientDetails: IClientDetails;
     // (undocumented)
     clientId: string | undefined;
@@ -422,7 +420,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     ensureNoDataModelChanges<T>(callback: () => T): T;
     // (undocumented)
-    readonly entryPoint?: IFluidHandle<FluidObject>;
+    readonly entryPoint: IFluidHandle<FluidObject>;
     // (undocumented)
     readonly existing: boolean;
     // (undocumented)

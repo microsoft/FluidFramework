@@ -53,9 +53,6 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (
 		};
 		model.migrationTool.on("proposingMigration", migrationStateChangedHandler);
 		model.migrationTool.on("stoppingCollaboration", migrationStateChangedHandler);
-		model.migrationTool.on("generatingV1Summary", migrationStateChangedHandler);
-		model.migrationTool.on("uploadingV1Summary", migrationStateChangedHandler);
-		model.migrationTool.on("submittingV1Summary", migrationStateChangedHandler);
 		model.migrationTool.on("proposingV2Code", migrationStateChangedHandler);
 		model.migrationTool.on("waitingForV2ProposalCompletion", migrationStateChangedHandler);
 		model.migrationTool.on("readyForMigration", migrationStateChangedHandler);
@@ -66,9 +63,6 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (
 		return () => {
 			model.migrationTool.off("proposingMigration", migrationStateChangedHandler);
 			model.migrationTool.off("stoppingCollaboration", migrationStateChangedHandler);
-			model.migrationTool.off("generatingV1Summary", migrationStateChangedHandler);
-			model.migrationTool.off("uploadingV1Summary", migrationStateChangedHandler);
-			model.migrationTool.off("submittingV1Summary", migrationStateChangedHandler);
 			model.migrationTool.off("proposingV2Code", migrationStateChangedHandler);
 			model.migrationTool.off("waitingForV2ProposalCompletion", migrationStateChangedHandler);
 			model.migrationTool.off("readyForMigration", migrationStateChangedHandler);
@@ -96,9 +90,6 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (
 				{migrationState === "collaborating" && " Normal collaboration"}
 				{migrationState === "proposingMigration" && " Proposing to migrate"}
 				{migrationState === "stoppingCollaboration" && " Stopping collaboration"}
-				{migrationState === "generatingV1Summary" && " Generating v1 summary"}
-				{migrationState === "uploadingV1Summary" && " Uploading v1 summary"}
-				{migrationState === "submittingV1Summary" && " Submitting v1 summary"}
 				{migrationState === "proposingV2Code" && " Proposing v2 code"}
 				{migrationState === "waitingForV2ProposalCompletion" &&
 					" Waiting for v2 code proposal completion"}
