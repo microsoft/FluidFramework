@@ -24,13 +24,14 @@ import {
 	jsonableTreeFromCursor,
 	singleMapTreeCursor,
 	typeNameSymbol,
-	UntypedEntity,
-	UntypedField2 as UntypedField,
-	UntypedTree2 as UntypedTree,
+	Tree,
+	TreeField,
+	TreeNode,
 	Skip,
 	bannedFieldNames,
 	fieldApiPrefixes,
 	validateStructFieldName,
+	assertAllowedValue,
 } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { Context } from "../../../feature-libraries/editable-tree-2/context";
@@ -203,7 +204,7 @@ describe("lazyTree", () => {
 	});
 });
 
-function fieldToMapTree(field: UntypedField): MapTree[] {
+function fieldToMapTree(field: TreeField): MapTree[] {
 	const results: MapTree[] = [];
 	for (const child of field) {
 		results.push(nodeToMapTree(child));
@@ -211,7 +212,7 @@ function fieldToMapTree(field: UntypedField): MapTree[] {
 	return results;
 }
 
-function nodeToMapTree(node: UntypedTree): MapTree {
+function nodeToMapTree(node: TreeNode): MapTree {
 	const fields: Map<FieldKey, MapTree[]> = new Map();
 	for (const field of node) {
 		fields.set(field.key, fieldToMapTree(field));
@@ -220,8 +221,8 @@ function nodeToMapTree(node: UntypedTree): MapTree {
 	return { fields, type: node.type, value: node.value };
 }
 
-function checkPropertyInvariants(root: UntypedEntity): void {
-	const treeValues = new Map<TreeValue, number>();
+function checkPropertyInvariants(root: Tree): void {
+	const treeValues = new Map<unknown, number>();
 	// Assert all nodes and fields traversed, and all values found.
 	// TODO: checking that unboxed fields and nodes were traversed is not fully implemented here.
 	visitIterableTree(root, (item) => {
@@ -253,6 +254,7 @@ function checkPropertyInvariants(root: UntypedEntity): void {
 
 		if (typeof child === "object") {
 			if (treeValues.has(child)) {
+				assertAllowedValue(child);
 				primitivesAndValues.set(child, (primitivesAndValues.get(child) ?? 0) + 1);
 				return Skip;
 			}
@@ -287,7 +289,7 @@ function checkPropertyInvariants(root: UntypedEntity): void {
 	// TODO: checking that unboxed fields and nodes were traversed is not fully implemented here.
 	visitIterableTree(root, (item) => {
 		if (!unboxable.has(Object.getPrototypeOf(item))) {
-			if (!primitivesAndValues.has(item) && !visited.has(item)) {
+			if (!primitivesAndValues.has(item as unknown as TreeValue) && !visited.has(item)) {
 				// Fields don't have stable object identity, so they can fail the above test.
 				// Nothing else should fail it.
 				assert(item instanceof LazyField);

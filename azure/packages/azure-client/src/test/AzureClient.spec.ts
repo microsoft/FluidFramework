@@ -13,6 +13,7 @@ import { timeoutPromise } from "@fluidframework/test-utils";
 
 import { v4 as uuid } from "uuid";
 
+import { ConnectionState } from "@fluidframework/container-loader";
 import { AzureClient } from "../AzureClient";
 import { AzureLocalConnectionConfig } from "../interfaces";
 
@@ -93,10 +94,12 @@ describe("AzureClient", () => {
 		const { container } = await client.createContainer(schema);
 		const containerId = await container.attach();
 
-		await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-			durationMs: connectTimeoutMs,
-			errorMsg: "container connect() timeout",
-		});
+		if (container.connectionState !== ConnectionState.Connected) {
+			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+				durationMs: connectTimeoutMs,
+				errorMsg: "container connect() timeout",
+			});
+		}
 
 		assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
 		assert.strictEqual(
@@ -116,10 +119,12 @@ describe("AzureClient", () => {
 		const { container } = await client.createContainer(schema);
 		const containerId = await container.attach();
 
-		await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-			durationMs: connectTimeoutMs,
-			errorMsg: "container connect() timeout",
-		});
+		if (container.connectionState !== ConnectionState.Connected) {
+			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+				durationMs: connectTimeoutMs,
+				errorMsg: "container connect() timeout",
+			});
+		}
 
 		assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
 		assert.strictEqual(
@@ -140,10 +145,12 @@ describe("AzureClient", () => {
 		const { container: newContainer } = await client.createContainer(schema);
 		const containerId = await newContainer.attach();
 
-		await timeoutPromise((resolve) => newContainer.once("connected", () => resolve()), {
-			durationMs: connectTimeoutMs,
-			errorMsg: "container connect() timeout",
-		});
+		if (newContainer.connectionState !== ConnectionState.Connected) {
+			await timeoutPromise((resolve) => newContainer.once("connected", () => resolve()), {
+				durationMs: connectTimeoutMs,
+				errorMsg: "container connect() timeout",
+			});
+		}
 
 		const resources = client.getContainer(containerId, schema);
 		await assert.doesNotReject(

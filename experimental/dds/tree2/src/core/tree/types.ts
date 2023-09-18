@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Serializable } from "@fluidframework/datastore-definitions";
-import { FieldKey, TreeSchemaIdentifier } from "../schema-stored";
-import { brand, Brand, extractFromOpaque, Opaque } from "../../util";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { FieldKey, TreeSchemaIdentifier, ValueSchema } from "../schema-stored";
+import { _InlineTrick, brand, Brand, extractFromOpaque, Opaque } from "../../util";
 
 /**
  * @alpha
@@ -118,17 +118,17 @@ export interface FieldKind {
 }
 
 /**
- * Value that may be stored on a node.
- *
- * TODO: `Serializable` is not really the right type to use here,
- * since many types (including functions) are "Serializable" (according to the type) despite not being serializable.
- *
- * Use this type instead of directly using Serializable for both clarity and so the above TODO can be addressed.
- *
- * This is a named interface instead of a Type alias so tooling (ex: refactors) will not replace it with `any`.
+ * Value that may be stored on a leaf node.
  * @alpha
  */
-export interface TreeValue extends Serializable {}
+export type TreeValue<TSchema extends ValueSchema = ValueSchema> = [
+	{
+		[ValueSchema.Number]: number;
+		[ValueSchema.String]: string;
+		[ValueSchema.Boolean]: boolean;
+		[ValueSchema.FluidHandle]: IFluidHandle;
+	}[TSchema],
+][_InlineTrick];
 
 /**
  * Value stored on a node.
