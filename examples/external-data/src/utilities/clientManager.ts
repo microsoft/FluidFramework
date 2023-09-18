@@ -96,7 +96,7 @@ export class ClientManager<TData = unknown> {
 
 	/**
 	 * De-registers the provided subscriber URL from future notifications for all existing tasks it is subscribed to.
-	 * @returns A list of task list id's who no longer have any client sessions mapped to them.
+	 * @returns A list of task list ID's that no longer have any client sessions mapped to them.
 	 */
 	public removeAllClientTaskListRegistrations(client: ClientSessionUrl): string[] {
 		const clientTaskListIds = this._clientMapping.get(client);

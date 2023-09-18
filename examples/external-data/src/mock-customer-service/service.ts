@@ -323,8 +323,8 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 				});
 			}
 		} else {
-			const errorMessage = `Unexpected event type; ${eventType}`;
-			console.error(formatLogMessage(`Unexpected event type; ${eventType}`));
+			const errorMessage = `Unexpected event type: ${eventType}`;
+			console.error(formatLogMessage(errorMessage));
 			result.status(400).json({ errorMessage });
 		}
 
