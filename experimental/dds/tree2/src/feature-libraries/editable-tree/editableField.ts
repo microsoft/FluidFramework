@@ -11,7 +11,6 @@ import {
 	ITreeSubscriptionCursor,
 	FieldStoredSchema,
 	TreeStoredSchema,
-	ValueSchema,
 	mapCursorField,
 	CursorLocationType,
 	FieldAnchor,
@@ -622,10 +621,7 @@ function unwrappedTree(
 		if (isPrimitiveValue(nodeValue)) {
 			return nodeValue;
 		}
-		assert(
-			nodeType.leafValue === ValueSchema.Serializable,
-			0x3c7 /* `undefined` values not allowed for primitive fields */,
-		);
+		fail("`undefined` values not allowed for primitive fields");
 	}
 
 	const primary = getPrimaryArrayKey(nodeType);

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Delta, TaggedChange, RevisionTag, ChangesetLocalId } from "../../core";
-import { fail, Invariant } from "../../util";
+import { Delta, TaggedChange, RevisionTag } from "../../core";
+import { fail, IdAllocator, Invariant } from "../../util";
 import { ICodecFamily, IJsonCodec } from "../../codec";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
 import { CrossFieldManager } from "./crossFieldQueries";
@@ -13,7 +13,7 @@ import { NodeChangeset, RevisionInfo } from "./modularChangeTypes";
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
  * implement a unified ChangeFamily supporting documents with multiple field kinds.
- * @public
+ * @alpha
  */
 export interface FieldChangeHandler<
 	TChangeset,
@@ -37,7 +37,7 @@ export interface FieldChangeHandler<
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface FieldChangeRebaser<TChangeset> {
 	/**
@@ -147,7 +147,7 @@ export function isolatedFieldChangeRebaser<TChangeset>(data: {
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface FieldEditor<TChangeset> {
 	/**
@@ -159,12 +159,12 @@ export interface FieldEditor<TChangeset> {
 /**
  * The `index` represents the index of the child node in the input context.
  * The `index` should be `undefined` iff the child node does not exist in the input context (e.g., an inserted node).
- * @public
+ * @alpha
  */
 export type ToDelta = (child: NodeChangeset) => Delta.Modify;
 
 /**
- * @public
+ * @alpha
  */
 export type NodeReviver = (
 	revision: RevisionTag,
@@ -173,7 +173,7 @@ export type NodeReviver = (
 ) => Delta.ProtoNode[];
 
 /**
- * @public
+ * @alpha
  */
 export type NodeChangeInverter = (
 	change: NodeChangeset,
@@ -181,7 +181,7 @@ export type NodeChangeInverter = (
 ) => NodeChangeset;
 
 /**
- * @public
+ * @alpha
  */
 export enum NodeExistenceState {
 	Alive,
@@ -189,7 +189,7 @@ export enum NodeExistenceState {
 }
 
 /**
- * @public
+ * @alpha
  */
 export type NodeChangeRebaser = (
 	change: NodeChangeset | undefined,
@@ -202,16 +202,9 @@ export type NodeChangeRebaser = (
 ) => NodeChangeset | undefined;
 
 /**
- * @public
+ * @alpha
  */
 export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => NodeChangeset;
-
-/**
- * Allocates a block of `count` consecutive IDs and returns the first ID in the block.
- * For convenience can be called with no parameters to allocate a single ID.
- * @public
- */
-export type IdAllocator = (count?: number) => ChangesetLocalId;
 
 /**
  * A callback that returns the index of the changeset associated with the given RevisionTag among the changesets being
@@ -222,12 +215,12 @@ export type IdAllocator = (count?: number) => ChangesetLocalId;
  * being produced.
  *
  * During rebase, the indices of the base changes are all lower than the indices of the change being rebased.
- * @public
+ * @alpha
  */
 export type RevisionIndexer = (tag: RevisionTag) => number;
 
 /**
- * @public
+ * @alpha
  */
 export interface RevisionMetadataSource {
 	readonly getIndex: RevisionIndexer;
@@ -235,7 +228,7 @@ export interface RevisionMetadataSource {
 }
 
 /**
- * @public
+ * @alpha
  */
 export function getIntention(
 	rev: RevisionTag | undefined,

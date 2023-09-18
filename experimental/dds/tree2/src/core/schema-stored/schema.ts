@@ -21,21 +21,21 @@ import { Brand, brand, brandedStringType } from "../../util";
  * Optionally validate loaded data against schema.
  * 2. Persist the whole schema.
  * Use the identifier to associate it with schema when loading to check that the schema match.
- * @public
+ * @alpha
  */
 export type SchemaIdentifier = TreeSchemaIdentifier;
 
 /**
  * SchemaIdentifier for a Tree.
  * Also known as "Definition"
- * @public
+ * @alpha
  */
 export type TreeSchemaIdentifier = Brand<string, "tree.Schema">;
 export const TreeSchemaIdentifierSchema = brandedStringType<TreeSchemaIdentifier>();
 
 /**
  * Key (aka Name or Label) for a field which is scoped to a specific TreeStoredSchema.
- * @public
+ * @alpha
  */
 export type FieldKey = Brand<string, "tree.FieldKey">;
 export const FieldKeySchema = brandedStringType<FieldKey>();
@@ -45,47 +45,27 @@ export const FieldKeySchema = brandedStringType<FieldKey>();
  * Refers to an exact stable policy (ex: specific version of a policy),
  * for how to handle (ex: edit and merge edits to) fields marked with this kind.
  * Persisted in documents as part of stored schema.
- * @public
+ * @alpha
  */
 export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
 export const FieldKindIdentifierSchema = brandedStringType<FieldKindIdentifier>();
 
 /**
- * Example for how we might want to handle values.
- *
- * This might be significantly different if we want to focus more on binary formats
- * (need to work out how Fluid GC would work with that).
- * For now, this is a simple easy to support setup.
- *
- * Note that use of non-Nothing values might be restricted in the actual user facing schema languages:
- * we could instead choose to get by with the only types supporting values being effectively builtin,
- * though this limitation could prevent users for updating/extending
- * the primitive schema to allow the annotations they might want.
- *
- * An interesting alternative to this simple value Enum would be to use something more expressive here, like JsonSchema:
- * since this is modeling immutable data, we really just need a way to figure out which if these value schema allow
- * super sets of each-other.
- *
- * TODO: come up with a final design for how to handle primitives / values.
- * This design is just a placeholder.
- * @public
+ * Schema for what {@link TreeValue} is allowed on a Leaf node.
+ * @alpha
  */
 export enum ValueSchema {
 	Number,
 	String,
 	Boolean,
-	/**
-	 * Any Fluid serializable data.
-	 *
-	 * This does not include Nothing / undefined.
-	 *
-	 */
-	Serializable,
+	FluidHandle,
 }
 
 /**
  * {@link ValueSchema} for privative types.
- * @public
+ * @privateRemarks
+ * TODO: remove when old editable tree API is removed.
+ * @alpha
  */
 export type PrimitiveValueSchema = ValueSchema.Number | ValueSchema.String | ValueSchema.Boolean;
 
@@ -117,7 +97,7 @@ export type PrimitiveValueSchema = ValueSchema.Number | ValueSchema.String | Val
  * - Constrain the types allowed based on which types guarantee their data will always meet the constraints.
  *
  * Care would need to be taken to make sure this is sound for the schema updating mechanisms.
- * @public
+ * @alpha
  */
 export type TreeTypeSet = ReadonlySet<TreeSchemaIdentifier> | undefined;
 
@@ -127,14 +107,14 @@ export type TreeTypeSet = ReadonlySet<TreeSchemaIdentifier> | undefined;
  * @remarks
  * This is used instead of just the FieldKindIdentifier so that it can be subtyped into a more expressive type with additional information.
  *
- * @public
+ * @alpha
  */
 export interface FieldKindSpecifier<T = FieldKindIdentifier> {
 	identifier: T;
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface FieldStoredSchema {
 	readonly kind: FieldKindSpecifier;
@@ -153,7 +133,7 @@ export interface FieldStoredSchema {
  * 1. The root default field for documents.
  * 2. The schema used for out of schema fields (which thus must be empty/not exist) on a struct and leaf nodes.
  *
- * @public
+ * @alpha
  */
 export const forbiddenFieldKindIdentifier = "Forbidden";
 
@@ -163,7 +143,7 @@ export const storedEmptyFieldSchema: FieldStoredSchema = {
 };
 
 /**
- * @public
+ * @alpha
  */
 export interface TreeStoredSchema {
 	/**
@@ -209,7 +189,7 @@ export interface TreeStoredSchema {
  *
  * Note: the owner of this may modify it over time:
  * thus if needing to hand onto a specific version, make a copy.
- * @public
+ * @alpha
  */
 export interface SchemaData {
 	readonly rootFieldSchema: FieldStoredSchema;

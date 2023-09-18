@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { fail, isReadonlyArray } from "../util";
 import {
 	EmptyKey,
@@ -17,6 +18,7 @@ import {
 	MapTree,
 	ITreeCursorSynchronous,
 	SchemaData,
+	TreeValue,
 } from "../core";
 // TODO:
 // This module currently is assuming use of default-field-kinds.
@@ -50,29 +52,48 @@ const scope = "contextuallyTyped";
 /**
  * A symbol for the name of the type of a tree in contexts where string keys are already in use for fields.
  * See {@link TreeSchemaIdentifier}.
- * @public
+ * @alpha
  */
 export const typeNameSymbol: unique symbol = Symbol(`${scope}:typeName`);
 
 /**
  * A symbol for the value of a tree node in contexts where string keys are already in use for fields.
- * @public
+ * @alpha
  */
 export const valueSymbol: unique symbol = Symbol(`${scope}:value`);
 
 /**
- * @public
+ * @alpha
+ * @privateRemarks
+ * TODO: remove from package API when old editable-tree API is removed
  */
 export type PrimitiveValue = string | boolean | number;
 
 /**
- * @public
+ * Checks if a value is a {@link PrimitiveValue}.
  */
-export function isPrimitiveValue(nodeValue: Value): nodeValue is PrimitiveValue {
-	return nodeValue !== undefined && typeof nodeValue !== "object";
+export function isPrimitiveValue(nodeValue: unknown): nodeValue is PrimitiveValue {
+	switch (typeof nodeValue) {
+		case "string":
+		case "number":
+		case "boolean":
+			return true;
+		default:
+			return false;
+	}
 }
 
 export function allowsValue(schema: ValueSchema | undefined, nodeValue: Value): boolean {
+	if (schema === undefined) {
+		return nodeValue === undefined;
+	}
+	return valueSchemaAllows(schema, nodeValue);
+}
+
+export function valueSchemaAllows<TSchema extends ValueSchema>(
+	schema: TSchema,
+	nodeValue: Value,
+): nodeValue is TreeValue<TSchema> {
 	switch (schema) {
 		case ValueSchema.String:
 			return typeof nodeValue === "string";
@@ -80,20 +101,60 @@ export function allowsValue(schema: ValueSchema | undefined, nodeValue: Value): 
 			return typeof nodeValue === "number";
 		case ValueSchema.Boolean:
 			return typeof nodeValue === "boolean";
-		case undefined:
-			return nodeValue === undefined;
-		case ValueSchema.Serializable:
-			return nodeValue !== undefined;
+		case ValueSchema.FluidHandle:
+			return isFluidHandle(nodeValue);
 		default:
-			fail("invalid ValueSchema");
+			unreachableCase(schema);
 	}
+}
+
+/**
+ * Use for readonly view of Json compatible data that can also contain IFluidHandles.
+ *
+ * Note that this does not robustly forbid non json comparable data via type checking,
+ * but instead mostly restricts access to it.
+ */
+export type FluidSerializableReadOnly =
+	| IFluidHandle
+	| string
+	| number
+	| boolean
+	// eslint-disable-next-line @rushstack/no-new-null
+	| null
+	| readonly FluidSerializableReadOnly[]
+	| { readonly [P in string]?: FluidSerializableReadOnly };
+
+// TODO: replace test in FluidSerializer.encodeValue with this.
+export function isFluidHandle(value: undefined | FluidSerializableReadOnly): value is IFluidHandle {
+	if (typeof value !== "object" || value === null) {
+		return false;
+	}
+	const handle = (value as Partial<IFluidHandle>).IFluidHandle;
+	// Regular Json compatible data can have fields named "IFluidHandle" (especially if field names come from user data).
+	// Separate this case from actual Fluid handles by checking for a circular reference: Json data can't have this circular reference so it is a safe way to detect IFluidHandles.
+	const isHandle = handle === value;
+	// Since the requirement for this reference to be cyclic isn't particularly clear in the interface (typescript can't model that very well)
+	// do an extra test.
+	// Since json compatible data shouldn't have methods, and IFluidHandle requires one, use that as a redundant check:
+	const getMember = (value as Partial<IFluidHandle>).get;
+	assert(
+		(typeof getMember === "function") === isHandle,
+		"Fluid handle detection via get method should match detection via IFluidHandle field",
+	);
+	return isHandle;
+}
+
+export function assertAllowedValue(
+	value: undefined | FluidSerializableReadOnly,
+): asserts value is Value {
+	assert(isPrimitiveValue(value) || isFluidHandle(value), "invalid value");
 }
 
 /**
  * @returns the key and the schema of the primary field out of the given tree schema.
  *
  * See note on {@link EmptyKey} for what is a primary field.
- * @public
+ * @alpha
  */
 export function getPrimaryField(
 	schema: TreeStoredSchema,
@@ -151,13 +212,13 @@ export function getPossibleTypes(
 
 /**
  * A symbol used to define a {@link MarkedArrayLike} interface.
- * @public
+ * @alpha
  */
 export const arrayLikeMarkerSymbol: unique symbol = Symbol("editable-tree:arrayLikeMarker");
 
 /**
  * Can be used to mark a type which works like an array, but is not compatible with `Array.isArray`.
- * @public
+ * @alpha
  */
 export interface MarkedArrayLike<TGet, TSet extends TGet = TGet> extends ArrayLikeMut<TGet, TSet> {
 	readonly [arrayLikeMarkerSymbol]: true;
@@ -166,7 +227,7 @@ export interface MarkedArrayLike<TGet, TSet extends TGet = TGet> extends ArrayLi
 
 /**
  * Can be used to mark a type which works like an array, but is not compatible with `Array.isArray`.
- * @public
+ * @alpha
  */
 export interface ReadonlyMarkedArrayLike<T> extends ArrayLike<T> {
 	readonly [arrayLikeMarkerSymbol]: true;
@@ -181,7 +242,7 @@ export interface ReadonlyMarkedArrayLike<T> extends ArrayLike<T> {
  * This is why `TSet extends TGet` is required.
  *
  * See https://github.com/microsoft/TypeScript/issues/43826.
- * @public
+ * @alpha
  */
 export interface ArrayLikeMut<TGet, TSet extends TGet = TGet> extends ArrayLike<TGet> {
 	[n: number]: TSet;
@@ -193,7 +254,7 @@ export interface ArrayLikeMut<TGet, TSet extends TGet = TGet> extends ArrayLike<
  * This format is intended for concise authoring of tree literals when the schema is statically known.
  *
  * Once schema aware APIs are implemented, they can be used to provide schema specific subsets of this type.
- * @public
+ * @alpha
  */
 export type ContextuallyTypedNodeData =
 	| ContextuallyTypedNodeDataObject
@@ -207,16 +268,16 @@ export type ContextuallyTypedNodeData =
  * This format is intended for concise authoring of tree literals when the schema is statically known.
  *
  * Once schema aware APIs are implemented, they can be used to provide schema specific subsets of this type.
- * @public
+ * @alpha
  */
 export type ContextuallyTypedFieldData = ContextuallyTypedNodeData | undefined;
 
 /**
  * Information needed to interpret a subtree described by {@link ContextuallyTypedNodeData} and {@link ContextuallyTypedFieldData}.
+ * @alpha
  * TODO:
  * Currently being exposed at the package level which also requires us to export MapTree at the package level.
  * Refactor the FieldGenerator to use JsonableTree instead of MapTree, and convert them internally.
- * @public
  */
 export interface TreeDataContext {
 	/**
@@ -239,10 +300,10 @@ export interface TreeDataContext {
 
 /**
  * Generates field content for a MapTree on demand.
+ * @alpha
  * TODO:
  * Currently being exposed at the package level which also requires us to export MapTree at the package level.
  * Refactor the FieldGenerator to use JsonableTree instead of MapTree, and convert them internally.
- * @public
  */
 export type FieldGenerator = () => MapTree[];
 
@@ -265,7 +326,7 @@ export function isArrayLike(
 
 /**
  * Checks the type of a `ContextuallyTypedNodeData`.
- * @public
+ * @alpha
  */
 export function isContextuallyTypedNodeDataObject(
 	data: ContextuallyTypedNodeData | undefined,
@@ -275,7 +336,7 @@ export function isContextuallyTypedNodeDataObject(
 
 /**
  * Object case of {@link ContextuallyTypedNodeData}.
- * @public
+ * @alpha
  */
 export interface ContextuallyTypedNodeDataObject {
 	/**
@@ -354,7 +415,7 @@ function shallowCompatibilityTest(
  * Construct a tree from ContextuallyTypedNodeData.
  *
  * TODO: this should probably be refactored into a `try` function which either returns a Cursor or a SchemaError with a path to the error.
- * @public
+ * @alpha
  */
 export function cursorFromContextualData(
 	context: TreeDataContext,
@@ -367,7 +428,7 @@ export function cursorFromContextualData(
 
 /**
  * Strongly typed {@link cursorFromContextualData} for a TreeSchema
- * @public
+ * @alpha
  */
 export function cursorForTypedTreeData<T extends TreeSchema>(
 	context: TreeDataContext,
@@ -383,7 +444,7 @@ export function cursorForTypedTreeData<T extends TreeSchema>(
 
 /**
  * Strongly typed {@link cursorFromContextualData} for AllowedTypes.
- * @public
+ * @alpha
  */
 export function cursorForTypedData<T extends AllowedTypes>(
 	context: TreeDataContext,
@@ -414,7 +475,7 @@ export function cursorsFromContextualData(
 
 /**
  * Strongly typed {@link cursorsFromContextualData} for a FieldSchema
- * @public
+ * @alpha
  */
 export function cursorsForTypedFieldData<T extends FieldSchema>(
 	context: TreeDataContext,
@@ -577,7 +638,7 @@ export function applyFieldTypesFromContext(
  *
  * TODO: this should allow a field cursor instead of an array of cursors.
  * TODO: Make this generic so a variant of this type that allows placeholders for detached sequences to consume.
- * @public
+ * @alpha
  */
 export type NewFieldContent =
 	| ITreeCursorSynchronous

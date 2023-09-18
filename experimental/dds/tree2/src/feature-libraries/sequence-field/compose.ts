@@ -5,12 +5,11 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { ChangeAtomId, makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../core";
-import { asMutable, brand, fail } from "../../util";
+import { asMutable, brand, fail, IdAllocator } from "../../util";
 import {
 	CrossFieldManager,
 	CrossFieldTarget,
 	getIntention,
-	IdAllocator,
 	RevisionMetadataSource,
 } from "../modular-schema";
 import { Changeset, Mark, MarkList, MoveId, NoopMarkType, CellId, NoopMark } from "./format";

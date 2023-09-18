@@ -4,6 +4,7 @@
  */
 
 import { FieldKey } from "../schema-stored";
+import { DetachedField, keyAsDetachedField } from "./types";
 
 /**
  * Identical to {@link UpPathDefault}, but a duplicate declaration is needed to make the default type parameter compile.
@@ -141,4 +142,21 @@ export function compareFieldUpPaths(a: FieldUpPath, b: FieldUpPath): boolean {
 		return false;
 	}
 	return compareUpPaths(a.parent, b.parent);
+}
+
+/**
+ * Checks whether or not a given path is parented under the root field.
+ * @param path - the path you want to check.
+ * @returns the {@link DetachedField} which contains the path.
+ */
+export function getDetachedFieldContainingPath(path: UpPath): DetachedField {
+	let currentPath = path;
+	while (currentPath !== undefined) {
+		if (currentPath.parent === undefined) {
+			return keyAsDetachedField(currentPath.parentField);
+		} else {
+			currentPath = currentPath.parent;
+		}
+	}
+	return keyAsDetachedField(path.parentField);
 }

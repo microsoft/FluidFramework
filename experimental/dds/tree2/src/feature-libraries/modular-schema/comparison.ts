@@ -92,13 +92,7 @@ export function allowsValueSuperset(
 	original: ValueSchema | undefined,
 	superset: ValueSchema | undefined,
 ): boolean {
-	if (original === superset) {
-		return true;
-	}
-	if (original === undefined) {
-		return false;
-	}
-	return superset === ValueSchema.Serializable;
+	return original === superset;
 }
 
 /**

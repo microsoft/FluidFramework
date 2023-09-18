@@ -12,7 +12,7 @@ import { EditableTree } from "./editableTreeTypes";
 
 /**
  * Binder events reflecting atomic data operations
- * @public
+ * @alpha
  */
 export interface OperationBinderEvents {
 	delete(context: DeleteBindingContext): void;
@@ -22,7 +22,7 @@ export interface OperationBinderEvents {
 
 /**
  * Binder events signaling state invalidation
- * @public
+ * @alpha
  */
 export interface InvalidationBinderEvents {
 	invalidation(context: InvalidationBindingContext): void;
@@ -31,21 +31,21 @@ export interface InvalidationBinderEvents {
 /**
  * Compare function, generic.
  *
- * @public
+ * @alpha
  */
 export type CompareFunction<T> = (a: T, b: T) => number;
 
 /**
  * Compare function for binder events.
  *
- * @public
+ * @alpha
  */
 export type BinderEventsCompare = CompareFunction<VisitorBindingContext>;
 
 /**
  * Compare function for anchors.
  *
- * @public
+ * @alpha
  */
 export type AnchorsCompare = CompareFunction<UpPath>;
 
@@ -55,17 +55,16 @@ export type AnchorsCompare = CompareFunction<UpPath>;
  * TODO: add more options:
  * `filterFn?: (context: BindingContext) => boolean;`
  * `pathPolicy?: "relative" | "absolute";`
- * @public
+ * @alpha
  */
 export interface BinderOptions {
 	sortFn?: BinderEventsCompare;
-	matchPolicy: MatchPolicy;
 }
 
 /**
  * Specialized binder options for flushable binders.
  *
- * @public
+ * @alpha
  */
 export interface FlushableBinderOptions<E extends Events<E>> extends BinderOptions {
 	autoFlush: boolean;
@@ -77,18 +76,30 @@ export interface FlushableBinderOptions<E extends Events<E>> extends BinderOptio
  * Match policy for binding: subtree or path.
  *
  * - `subtree` match policy means that path filtering would return events matching the exact path and its subpaths,
- * ie. changes to children would be allowed to bubble up to parent listeners.
+ * ie. changes to (nested) children would be allowed to bubble up to parent listeners.
+ * - {@link SubtreePolicy} match policy is  equivalent with `subtree` match policy, while allowing to specify a maximum
+ * depth for the subtree.
  * - `path` match policy means that path filtering would return events matching the _exact_ path only. In this case
  * _exact_ semantics include interpreting an `undefined` _index_ field in the {@link PathStep} as a wildcard.
  *
- * @public
+ *
+ * @alpha
  */
-export type MatchPolicy = "subtree" | "path";
+export type MatchPolicy = SubtreePolicy | "subtree" | "path";
+
+/**
+ * Subtree match policy where max depth can be specified.
+ *
+ * @alpha
+ */
+export interface SubtreePolicy {
+	maxDepth: number;
+}
 
 /**
  * The data binder interface
  *
- * @public
+ * @alpha
  */
 export interface DataBinder<B extends OperationBinderEvents | InvalidationBinderEvents> {
 	/**
@@ -96,13 +107,13 @@ export interface DataBinder<B extends OperationBinderEvents | InvalidationBinder
 	 *
 	 * @param anchor - The anchor to register the listener on
 	 * @param eventType - The {@link BindingType} to listen for.
-	 * @param eventTrees - The {@link BindTree}s to filter on.
+	 * @param eventTrees - The {@link BindPolicy}s to filter on.
 	 * @param listener - The listener to register
 	 */
 	register<K extends keyof Events<B>>(
 		anchor: EditableTree,
 		eventType: K,
-		eventTrees: BindTree[],
+		eventTrees: BindPolicy[],
 		listener?: B[K],
 	): void;
 
@@ -115,7 +126,7 @@ export interface DataBinder<B extends OperationBinderEvents | InvalidationBinder
 /**
  * An interface describing the ability to flush.
  *
- * @public
+ * @alpha
  */
 export interface Flushable<T> {
 	flush(): T;
@@ -124,7 +135,7 @@ export interface Flushable<T> {
 /**
  * An interface describing a flushable data binder.
  *
- * @public
+ * @alpha
  */
 export interface FlushableDataBinder<B extends OperationBinderEvents | InvalidationBinderEvents>
 	extends DataBinder<B>,
@@ -133,7 +144,7 @@ export interface FlushableDataBinder<B extends OperationBinderEvents | Invalidat
 /**
  * A step in a bind path
  *
- * @public
+ * @alpha
  */
 export interface PathStep {
 	/**
@@ -150,23 +161,33 @@ export interface PathStep {
 /**
  * The default type for a bind tree
  *
- * @public
+ * @alpha
  */
 export type BindTreeDefault = BindTree;
 
 /**
  * A bind tree is a compact representation of related {@link BindPath}s.
  *
- * @public
+ * @alpha
  */
 export interface BindTree<T = BindTreeDefault> extends PathStep {
 	readonly children: Map<FieldKey, T>;
 }
 
 /**
+ * A bind policy is a combination of a {@link BindTree} and a {@link MatchPolicy}.
+ *
+ * @alpha
+ */
+export interface BindPolicy {
+	readonly bindTree: BindTree;
+	readonly matchPolicy: MatchPolicy;
+}
+
+/**
  * Index symbol for syntax tree
  *
- * @public
+ * @alpha
  */
 export const indexSymbol = Symbol("editable-tree-binder:index");
 
@@ -179,7 +200,7 @@ export const indexSymbol = Symbol("editable-tree-binder:index");
  * see {@link BindTree}
  * see {@link compileSyntaxTree}
  *
- * @public
+ * @alpha
  */
 export interface BindSyntaxTree {
 	readonly [indexSymbol]?: number;
@@ -192,28 +213,28 @@ export interface BindSyntaxTree {
  * see {@link BindTree}
  * see {@link UpPath}
  *
- * @public
+ * @alpha
  */
 export type DownPath = PathStep[];
 
 /**
  * A bind path is a top down path in a bind tree
  *
- * @public
+ * @alpha
  */
 export type BindPath = DownPath;
 
 /**
  * A binding context specialized for {@link PathVisitor} triggered binding events.
  *
- * @public
+ * @alpha
  */
 export type VisitorBindingContext = DeleteBindingContext | InsertBindingContext;
 
 /**
  * Enumeration of binding categories
  *
- * @public
+ * @alpha
  */
 export const BindingType = {
 	Delete: "delete",
@@ -225,14 +246,14 @@ export const BindingType = {
 /**
  * The type of a binding context
  *
- * @public
+ * @alpha
  */
 export type BindingContextType = typeof BindingType[keyof typeof BindingType];
 
 /**
  * The binding context attribution common to all binding events
  *
- * @public
+ * @alpha
  */
 export interface BindingContext {
 	readonly type: BindingContextType;
@@ -241,7 +262,7 @@ export interface BindingContext {
 /**
  * The binding context for a delete event
  *
- * @public
+ * @alpha
  */
 export interface DeleteBindingContext extends BindingContext {
 	readonly type: typeof BindingType.Delete;
@@ -252,7 +273,7 @@ export interface DeleteBindingContext extends BindingContext {
 /**
  * The binding context for an insert event
  *
- * @public
+ * @alpha
  */
 export interface InsertBindingContext extends BindingContext {
 	readonly type: typeof BindingType.Insert;
@@ -263,7 +284,7 @@ export interface InsertBindingContext extends BindingContext {
 /**
  * The binding context for an invalidation event
  *
- * @public
+ * @alpha
  */
 export interface InvalidationBindingContext extends BindingContext {
 	readonly type: typeof BindingType.Invalidation;
@@ -272,7 +293,7 @@ export interface InvalidationBindingContext extends BindingContext {
 /**
  * The binding context for a batch event
  *
- * @public
+ * @alpha
  */
 export interface BatchBindingContext extends BindingContext {
 	readonly type: typeof BindingType.Batch;
@@ -282,20 +303,20 @@ export interface BatchBindingContext extends BindingContext {
 /**
  * The listener interface. Internal.
  *
- * @public
+ * @alpha
  */
 type Listener = (...args: unknown[]) => void;
 
 /**
  * A call tree is a {@link BindTree} augmented with listeners. Internal.
  *
- * @public
+ * @alpha
  */
-type CallTree = BindTree<CallTree> & { listeners: Set<Listener> };
+type CallTree = BindTree<CallTree> & { listeners: Set<Listener>; matchPolicy?: MatchPolicy };
 
 /**
  * A generic implementation of a {@link PathVisitor} enabling the registration of listeners
- * categorized by {@link BindingContextType} and {@link BindTree}.
+ * categorized by {@link BindingContextType} and {@link BindPolicy}.
  */
 abstract class AbstractPathVisitor implements PathVisitor {
 	protected readonly registeredListeners: Map<BindingContextType, Map<FieldKey, CallTree>> =
@@ -305,11 +326,12 @@ abstract class AbstractPathVisitor implements PathVisitor {
 	public abstract onInsert(path: UpPath, content: ProtoNodes): void;
 	public registerListener(
 		contextType: BindingContextType,
-		trees: BindTree[],
+		policies: BindPolicy[],
 		listener: Listener,
 	): () => void {
 		const contextRoots = getOrCreate(this.registeredListeners, contextType, () => new Map());
-		trees.forEach((tree) => {
+		policies.forEach((policy) => {
+			const tree = policy.bindTree;
 			const currentRoot = this.findRoot(contextType, tree.field);
 			if (currentRoot === undefined) {
 				const newRoot: CallTree = {
@@ -317,6 +339,7 @@ abstract class AbstractPathVisitor implements PathVisitor {
 					index: tree.index,
 					listeners: new Set(),
 					children: new Map(),
+					matchPolicy: policy.matchPolicy,
 				};
 				assert(contextRoots !== undefined, 0x6da /* expected contextRoots to be defined */);
 				contextRoots.set(tree.field, newRoot);
@@ -326,7 +349,9 @@ abstract class AbstractPathVisitor implements PathVisitor {
 			}
 		});
 		return () => {
-			trees.forEach((tree) => this.unregisterListener(contextType, tree, listener));
+			policies.forEach((policy) =>
+				this.unregisterListener(contextType, policy.bindTree, listener),
+			);
 		};
 	}
 
@@ -389,6 +414,15 @@ abstract class AbstractPathVisitor implements PathVisitor {
 		if (foundRoot === undefined) {
 			return undefined;
 		} else {
+			const subtreeMatch = (
+				subtreePolicy: SubtreePolicy | undefined,
+				depth: number,
+			): boolean => {
+				if (subtreePolicy?.maxDepth !== undefined && depth > subtreePolicy.maxDepth) {
+					return false;
+				}
+				return true;
+			};
 			const accumulateMatching = (
 				treeNode: CallTree,
 				index: number,
@@ -405,18 +439,23 @@ abstract class AbstractPathVisitor implements PathVisitor {
 				for (const child of treeNode.children.values()) {
 					accumulateMatching(child, index + 1, onMatch);
 				}
-
 				onMatch(index, treeNode);
 			};
 			const matchedNodes: Set<Listener> = new Set();
-
-			if (this.options.matchPolicy === "subtree") {
+			if (foundRoot.matchPolicy === "path") {
+				accumulateMatching(foundRoot, 0, (index: number, treeNode: CallTree): void => {
+					if (index === downPath.length - 1) {
+						treeNode.listeners.forEach((listener) => matchedNodes.add(listener));
+					}
+				});
+			} else if (foundRoot.matchPolicy === "subtree") {
 				accumulateMatching(foundRoot, 0, (index: number, treeNode: CallTree): void => {
 					treeNode.listeners.forEach((listener) => matchedNodes.add(listener));
 				});
 			} else {
+				const matchPolicy: SubtreePolicy | undefined = foundRoot.matchPolicy;
 				accumulateMatching(foundRoot, 0, (index: number, treeNode: CallTree): void => {
-					if (index === downPath.length - 1) {
+					if (subtreeMatch(matchPolicy, downPath.length - 1)) {
 						treeNode.listeners.forEach((listener) => matchedNodes.add(listener));
 					}
 				});
@@ -618,7 +657,7 @@ class AbstractDataBinder<
 	public register<K extends keyof Events<B>>(
 		anchor: EditableTree,
 		eventType: K,
-		eventTrees: BindTree[],
+		eventTrees: BindPolicy[],
 		listener: B[K],
 	): void {
 		// TODO: validate BindPath semantics against the schema
@@ -756,7 +795,7 @@ class InvalidateDataBinder<E extends Events<E>>
 /**
  * Compute a top-town {@link DownPath} from an {@link UpPath}.
  *
- * @public
+ * @alpha
  */
 export function toDownPath(upPath: UpPath): DownPath {
 	const downPath: UpPath[] = topDownPath(upPath);
@@ -770,7 +809,7 @@ export function toDownPath(upPath: UpPath): DownPath {
 /**
  * Create a buffering data binder.
  *
- * @public
+ * @alpha
  */
 export function createDataBinderBuffering<E extends Events<E>>(
 	view: ISubscribable<E>,
@@ -782,7 +821,7 @@ export function createDataBinderBuffering<E extends Events<E>>(
 /**
  * Create a direct data binder.
  *
- * @public
+ * @alpha
  */
 export function createDataBinderDirect<E extends Events<E>>(
 	view: ISubscribable<E>,
@@ -794,7 +833,7 @@ export function createDataBinderDirect<E extends Events<E>>(
 /**
  * Create an invalidating data binder.
  *
- * @public
+ * @alpha
  */
 export function createDataBinderInvalidating<E extends Events<E>>(
 	view: ISubscribable<E>,
@@ -805,45 +844,34 @@ export function createDataBinderInvalidating<E extends Events<E>>(
 
 /**
  * Create binder options. If not specified, the default values are:
- * - matchPolicy: "path"
  * - sortFn: no sorting
  *
- * @public
+ * @alpha
  */
-export function createBinderOptions({
-	matchPolicy = "path",
-	sortFn,
-}: {
-	matchPolicy?: MatchPolicy;
-	sortFn?: BinderEventsCompare;
-}): BinderOptions {
-	return { matchPolicy, sortFn };
+export function createBinderOptions({ sortFn }: { sortFn?: BinderEventsCompare }): BinderOptions {
+	return { sortFn };
 }
 
 /**
  * Create flushable binder options. If not specified, the default values are:
- * - matchPolicy: "path"
  * - sortFn: no sorting
  * - sortAnchorsFn: no sorting
  * - autoFlush: true
  *
- * @public
+ * @alpha
  */
 export function createFlushableBinderOptions<E extends Events<E>>({
-	matchPolicy = "path",
 	sortFn,
 	sortAnchorsFn,
 	autoFlush = true,
 	autoFlushPolicy,
 }: {
-	matchPolicy?: MatchPolicy;
 	sortFn?: BinderEventsCompare;
 	sortAnchorsFn?: AnchorsCompare;
 	autoFlush?: boolean;
 	autoFlushPolicy: keyof Events<E>;
 }): FlushableBinderOptions<E> {
 	return {
-		matchPolicy,
 		sortFn,
 		sortAnchorsFn,
 		autoFlush,
@@ -856,7 +884,7 @@ export function createFlushableBinderOptions<E extends Events<E>>({
  *
  * @param fns - a list of compare functions
  * @returns a compare function that can be used for sorting
- * @public
+ * @alpha
  */
 export function comparePipeline<T>(...fns: CompareFunction<T>[]): CompareFunction<T> {
 	return (a: T, b: T): number => {
@@ -883,15 +911,21 @@ function nativeSort<T>(arr: T[], compareFn: CompareFunction<T>): T[] {
 
 /**
  * Compiles a (user friendly) syntax tree into the internal binding structure.
- *
- * @public
+ * The syntax tree is a compact representation of related {@link BindPath}s.
+ * The match policy can be specified. If not specified, the default value is "path".
+ * @returns a {@link BindPolicy} object
+ * @alpha
  */
-export function compileSyntaxTree(syntaxTree: BindSyntaxTree): BindTree {
+export function compileSyntaxTree(
+	syntaxTree: BindSyntaxTree,
+	matchPolicy?: MatchPolicy,
+): BindPolicy {
 	const entries = Object.entries(syntaxTree);
 	if (entries.length === 1) {
 		const [fieldName, childNode] = entries[0];
 		const fieldKey: FieldKey = brand(fieldName);
-		return compileSyntaxTreeNode(childNode as BindSyntaxTree, fieldKey);
+		const bindTree = compileSyntaxTreeNode(childNode as BindSyntaxTree, fieldKey);
+		return { matchPolicy: matchPolicy ?? "path", bindTree };
 	} else throw new Error("Invalid BindSyntaxTree structure");
 }
 

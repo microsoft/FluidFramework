@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Value, ValueSchema, PrimitiveValueSchema, TreeValue } from "../../core";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { Value, ValueSchema, PrimitiveValueSchema } from "../../core";
 import { areSafelyAssignable, isAssignableTo, requireTrue } from "../../util";
 import { PrimitiveValue } from "../contextuallyTyped";
 
@@ -15,7 +16,7 @@ export type TypedValue<TValue extends ValueSchema> = {
 	[ValueSchema.Number]: number;
 	[ValueSchema.String]: string;
 	[ValueSchema.Boolean]: boolean;
-	[ValueSchema.Serializable]: TreeValue;
+	[ValueSchema.FluidHandle]: IFluidHandle;
 }[TValue];
 
 /**

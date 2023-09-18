@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { Serializable } from "@fluidframework/datastore-definitions";
-import { FieldKey, TreeSchemaIdentifier } from "../schema-stored";
-import { brand, Brand, extractFromOpaque, Opaque } from "../../util";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { FieldKey, TreeSchemaIdentifier, ValueSchema } from "../schema-stored";
+import { _InlineTrick, brand, Brand, extractFromOpaque, Opaque } from "../../util";
 
 /**
- * @public
+ * @alpha
  */
 export type TreeType = TreeSchemaIdentifier;
 
@@ -23,7 +23,7 @@ export type TreeType = TreeSchemaIdentifier;
  * This has to be a FieldKey since different nodes will have different FieldStoredSchema for it.
  * This makes it prone to collisions and suggests
  * that this intention may be better conveyed by metadata on the ITreeSchema.
- * @public
+ * @alpha
  */
 export const EmptyKey: FieldKey = brand("");
 
@@ -31,19 +31,19 @@ export const EmptyKey: FieldKey = brand("");
  * FieldKey to use for the root of documents in places that need to refer to detached sequences or the root.
  * TODO: if we do want to standardize on a single value for this,
  * it likely should be namespaced or a UUID to avoid risk of collisions.
- * @public
+ * @alpha
  */
 export const rootFieldKey: FieldKey = brand("rootFieldKey");
 
 /**
- * @public
+ * @alpha
  */
 export const rootField = keyAsDetachedField(rootFieldKey);
 
 /**
  * Location of a tree relative to is parent container (which can be a tree or forest).
  *
- * @public
+ * @alpha
  */
 export interface ChildLocation {
 	readonly container: ChildCollection;
@@ -52,7 +52,7 @@ export interface ChildLocation {
 
 /**
  * Wrapper around DetachedField that can be detected at runtime.
- * @public
+ * @alpha
  */
 export interface RootField {
 	readonly key: DetachedField;
@@ -60,7 +60,7 @@ export interface RootField {
 
 /**
  * Identifier for a child collection, either on a node/tree or at the root of a forest.
- * @public
+ * @alpha
  */
 export type ChildCollection = FieldKey | RootField;
 
@@ -79,7 +79,7 @@ export type ChildCollection = FieldKey | RootField;
  *
  * In some APIs DetachedFields are used as FieldKeys on a special implicit root node
  * to simplify the APIs and implementation.
- * @public
+ * @alpha
  */
 export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField">> {}
 
@@ -88,7 +88,7 @@ export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField"
  * This maps detached field to field keys for thus use.
  *
  * @returns `field` as a {@link FieldKey} usable on a special root node serving as a parent of detached fields.
- * @public
+ * @alpha
  */
 export function detachedFieldAsKey(field: DetachedField): FieldKey {
 	return brand(extractFromOpaque(field));
@@ -98,7 +98,7 @@ export function detachedFieldAsKey(field: DetachedField): FieldKey {
  * The inverse of {@link detachedFieldAsKey}.
  * Thus must only be used on {@link FieldKey}s which were produced via {@link detachedFieldAsKey},
  * and with the same scope (ex: forest) as the detachedFieldAsKey was originally from.
- * @public
+ * @alpha
  */
 export function keyAsDetachedField(key: FieldKey): DetachedField {
 	return brand(key);
@@ -108,7 +108,7 @@ export function keyAsDetachedField(key: FieldKey): DetachedField {
  * TODO: integrate this into Schema. Decide how to persist them (need stable Id?). Maybe allow updating field kinds?.
  * TODO: make families of changes per field kind. Build editing APIs from that.
  * TODO: factor ChangeRebaser implementations to support adding new field kinds.
- * @public
+ * @alpha
  */
 export interface FieldKind {
 	readonly name: string;
@@ -118,21 +118,21 @@ export interface FieldKind {
 }
 
 /**
- * Value that may be stored on a node.
- *
- * TODO: `Serializable` is not really the right type to use here,
- * since many types (including functions) are "Serializable" (according to the type) despite not being serializable.
- *
- * Use this type instead of directly using Serializable for both clarity and so the above TODO can be addressed.
- *
- * This is a named interface instead of a Type alias so tooling (ex: refactors) will not replace it with `any`.
- * @public
+ * Value that may be stored on a leaf node.
+ * @alpha
  */
-export interface TreeValue extends Serializable {}
+export type TreeValue<TSchema extends ValueSchema = ValueSchema> = [
+	{
+		[ValueSchema.Number]: number;
+		[ValueSchema.String]: string;
+		[ValueSchema.Boolean]: boolean;
+		[ValueSchema.FluidHandle]: IFluidHandle;
+	}[TSchema],
+][_InlineTrick];
 
 /**
  * Value stored on a node.
- * @public
+ * @alpha
  */
 export type Value = undefined | TreeValue;
 
@@ -143,7 +143,7 @@ export type Value = undefined | TreeValue;
  * Changes to this type might necessitate changes to `EncodedNodeData` or codecs.
  * See persistedTreeTextFormat's module documentation for more details.
  *
- * @public
+ * @alpha
  */
 export interface NodeData {
 	/**
