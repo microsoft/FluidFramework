@@ -75,7 +75,7 @@ export interface ICodecOptions {
 
 /**
  * @alpha
- * @remarks `TEncoded` should always be valid Json (i.e. not contain functions), but due to Typescript's handling
+ * @remarks `TEncoded` should always be valid Json (i.e. not contain functions), but due to TypeScript's handling
  * of index signatures and `JsonCompatibleReadOnly`'s index signature in the Json object case, specifying this as a
  * type-system level constraint makes code that uses this interface more difficult to write.
  */

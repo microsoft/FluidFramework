@@ -19,6 +19,11 @@ data:
             "timestamp": false,
             "label": "winston"
         },
+        "lumberjack": {
+            "options": {
+                "enableGlobalTelemetryContext": {{ .Values.lumberjack.options.enableGlobalTelemetryContext }}
+            }
+        },
         "mongo": {
             "operationsDbEndpoint": "{{ .Values.mongodb.operationsDbEndpoint }}",
             "globalDbEndpoint": "{{ .Values.mongodb.globalDbEndpoint }}",
