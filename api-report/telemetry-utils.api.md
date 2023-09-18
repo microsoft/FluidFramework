@@ -335,8 +335,6 @@ export interface SystematicEventSampler {
     state: {
         eventCount: number;
     };
-    // (undocumented)
-    willSample: (eventCount: number) => boolean;
 }
 
 // @public (undocumented)

@@ -5,7 +5,6 @@
 
 import {
 	ITelemetryLoggerExt,
-	SystematicEventSampler,
 	createChildLogger,
 	createSampledLoggerExt,
 	createSystematicEventSampler,
@@ -77,9 +76,7 @@ class OpPerfTelemetry {
 
 	private readonly logger: ITelemetryLoggerExt;
 
-	private readonly opLatencyLoggerEventSampler: SystematicEventSampler;
 	private static readonly OP_LATENCY_SAMPLE_RATE = 500;
-	private readonly opLatencyLogger: ITelemetryLoggerExt;
 
 	private static readonly DELTA_LATENCY_SAMPLE_RATE = 100;
 	private readonly deltaLatencyLogger: ITelemetryLoggerExt;
@@ -90,11 +87,6 @@ class OpPerfTelemetry {
 		logger: ITelemetryLoggerExt,
 	) {
 		this.logger = createChildLogger({ logger, namespace: "OpPerf" });
-
-		this.opLatencyLoggerEventSampler = createSystematicEventSampler({
-			samplingRate: OpPerfTelemetry.OP_LATENCY_SAMPLE_RATE,
-		});
-		this.opLatencyLogger = createSampledLoggerExt(logger, this.opLatencyLoggerEventSampler);
 
 		this.deltaLatencyLogger = createSampledLoggerExt(
 			logger,
@@ -133,7 +125,7 @@ class OpPerfTelemetry {
 			for (const msg of messages) {
 				if (
 					msg.type === MessageType.Operation &&
-					this.opLatencyLoggerEventSampler.willSample(msg.clientSequenceNumber)
+					msg.clientSequenceNumber % OpPerfTelemetry.OP_LATENCY_SAMPLE_RATE === 0
 				) {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const latencyStats = this.latencyStatistics.get(msg.clientSequenceNumber)!;
@@ -169,9 +161,10 @@ class OpPerfTelemetry {
 			if (
 				this.clientId === message.clientId &&
 				message.type === MessageType.Operation &&
-				this.opLatencyLoggerEventSampler.willSample(message.clientSequenceNumber)
+				message.clientSequenceNumber % OpPerfTelemetry.OP_LATENCY_SAMPLE_RATE === 0
 			) {
-				const latencyStats = this.latencyStatistics.get(message.clientSequenceNumber);
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const latencyStats = this.latencyStatistics.get(message.clientSequenceNumber)!;
 				assert(latencyStats !== undefined, "Latency stats for op should exist");
 				if (latencyStats.opProcessingTimes.outboundPushEventTime !== undefined) {
 					latencyStats.opProcessingTimes.inboundPushEventTime = Date.now();
@@ -236,7 +229,7 @@ class OpPerfTelemetry {
 
 	private beforeOpSubmit(message: IDocumentMessage) {
 		// start with first client op and measure latency every 500 client ops
-		if (this.opLatencyLoggerEventSampler.willSample(message.clientSequenceNumber)) {
+		if (message.clientSequenceNumber % OpPerfTelemetry.OP_LATENCY_SAMPLE_RATE === 0) {
 			assert(
 				this.latencyStatistics.get(message.clientSequenceNumber) === undefined,
 				"Existing op perf data for client sequence number",
@@ -247,7 +240,6 @@ class OpPerfTelemetry {
 				},
 				opPerfData: {},
 			});
-			this.opLatencyLoggerEventSampler.state.eventCount = message.clientSequenceNumber;
 		}
 	}
 
@@ -282,9 +274,10 @@ class OpPerfTelemetry {
 
 		if (
 			this.clientId === message.clientId &&
-			this.opLatencyLoggerEventSampler.willSample(message.clientSequenceNumber)
+			message.clientSequenceNumber % OpPerfTelemetry.OP_LATENCY_SAMPLE_RATE === 0
 		) {
-			const latencyData = this.latencyStatistics.get(message.clientSequenceNumber);
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const latencyData = this.latencyStatistics.get(message.clientSequenceNumber)!;
 			assert(latencyData !== undefined, "Undefined latency statistics for op");
 			assert(
 				latencyData.opProcessingTimes.submitOpEventTime !== undefined,
@@ -305,8 +298,7 @@ class OpPerfTelemetry {
 			// The threshold could be adjusted, but ideally it stays  workload-agnostic, as service
 			// performance impacts all workloads relying on service.
 			const category = duration > latencyThreshold ? "error" : "performance";
-
-			this.opLatencyLogger.sendPerformanceEvent({
+			this.logger.sendPerformanceEvent({
 				eventName: "OpRoundtripTime",
 				sequenceNumber,
 				referenceSequenceNumber: message.referenceSequenceNumber,

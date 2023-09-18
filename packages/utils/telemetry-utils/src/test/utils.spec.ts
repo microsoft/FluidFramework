@@ -90,15 +90,15 @@ describe("Sampling", () => {
 
 		const loggerWithoutSampling = createSampledLogger(
 			logger as ITelemetryBaseLogger,
-			createSystematicEventSampler({ samplingRate: 1 }),
+			createSystematicEventSampler({ samplingRate: 1, autoIncrementCounter: true }),
 		);
 		const loggerWithEvery3Sampling = createSampledLogger(
 			logger,
-			createSystematicEventSampler({ samplingRate: 3 }),
+			createSystematicEventSampler({ samplingRate: 3, autoIncrementCounter: true }),
 		);
 		const loggerWithEvery5Sampling = createSampledLogger(
 			logger,
-			createSystematicEventSampler({ samplingRate: 5 }),
+			createSystematicEventSampler({ samplingRate: 5, autoIncrementCounter: true }),
 		);
 
 		const totalEventCount = 15;

@@ -26,6 +26,7 @@ import {
 	createChildLogger,
 	ITelemetryLoggerPropertyBags,
 	PerformanceEvent,
+	createSampledLoggerExt,
 } from '@fluidframework/telemetry-utils';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { fail, copyPropertyIfDefined, RestOrArray, unwrapRestOrArray } from './Common';
@@ -93,7 +94,7 @@ import { SharedTreeEncoder_0_0_2, SharedTreeEncoder_0_1_1 } from './SharedTreeEn
 import { revert } from './HistoryEditFactory';
 import { BuildNode, BuildTreeNode, Change, ChangeType } from './ChangeTypes';
 import { TransactionInternal } from './TransactionInternal';
-import { IdCompressor, createSessionId, createThrottledIdCompressorLogger } from './id-compressor';
+import { IdCompressor, createSessionId } from './id-compressor';
 import { convertEditIds } from './IdConversion';
 import { MutableStringInterner } from './StringInterner';
 import { nilUuid } from './UuidUtilities';
@@ -559,12 +560,18 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		});
 
 		const attributionId = (options as SharedTreeOptions<WriteFormat.v0_1_1>).attributionId;
-		this.idCompressor = new IdCompressor(
-			createSessionId(),
-			reservedIdCount,
-			attributionId,
-			createThrottledIdCompressorLogger(this.logger, 0.05)
-		);
+
+		const isIdCompressorTelemetryEnabled = Math.random() < 0.05;
+		/**
+		 * Because the IdCompressor emits so much telemetry, this function is used to sample
+		 * less than approximatley 0.5% of all clients. Only the given percentage of sessions will emit telemetry.
+		 */
+		const loggerWithSampling = createSampledLoggerExt(this.logger, {
+			poll: () => {
+				return isIdCompressorTelemetryEnabled;
+			},
+		});
+		this.idCompressor = new IdCompressor(createSessionId(), reservedIdCount, attributionId, loggerWithSampling);
 		this.editLogSize = options.inMemoryHistorySize;
 		this.editEvictionFrequency = options.inMemoryHistorySize;
 		const { editLog, cachingLogViewer } = this.initializeNewEditLogFromSummary(
