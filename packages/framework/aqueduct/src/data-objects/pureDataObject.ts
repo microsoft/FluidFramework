@@ -9,7 +9,6 @@ import {
 	IEvent,
 	IFluidHandle,
 	IFluidLoadable,
-	IFluidRouter,
 	IProvideFluidHandle,
 	IRequest,
 	IResponse,
@@ -29,7 +28,7 @@ import { DataObjectTypes, IDataObjectProps } from "./types";
  */
 export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes>
 	extends TypedEventEmitter<I["Events"] & IEvent>
-	implements IFluidLoadable, IFluidRouter, IProvideFluidHandle
+	implements IFluidLoadable, IProvideFluidHandle
 {
 	/**
 	 * This is your FluidDataStoreRuntime object
@@ -57,6 +56,9 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	public get id() {
 		return this.runtime.id;
 	}
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
 	public get IFluidRouter() {
 		return this;
 	}
@@ -101,6 +103,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	// #region IFluidRouter
 
 	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 * Return this object if someone requests it directly
 	 * We will return this object in two scenarios:
 	 *
