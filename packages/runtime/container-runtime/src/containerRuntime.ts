@@ -3910,6 +3910,10 @@ export class ContainerRuntime
 				if (this._orderSequentiallyCalls !== 0) {
 					throw new UsageError("can't get state during orderSequentially");
 				}
+				// Flush pending batch.
+				// getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
+				// to close current batch.
+				this.flush();
 				const pendingAttachmentBlobs = waitBlobsToAttach
 					? await this.blobManager.attachAndGetPendingBlobs()
 					: undefined;
@@ -3917,10 +3921,6 @@ export class ContainerRuntime
 				if (!pendingAttachmentBlobs && !this.hasPendingMessages()) {
 					return; // no pending state to save
 				}
-				// Flush pending batch.
-				// getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
-				// to close current batch.
-				this.flush();
 
 				const pendingState: IPendingRuntimeState = {
 					pending,

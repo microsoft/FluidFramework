@@ -1022,9 +1022,6 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 
 			[...Array(lots).keys()].map((i) => dataStore.root.set(`test op #${i}`, i));
 
-			// wait for flush to happen and see added ops in the pending queue
-			await new Promise<void>((resolve) => setTimeout(resolve, 0));
-
 			const pendingState = await container.getPendingLocalState?.();
 
 			const container2 = await loader.resolve({ url }, pendingState);
@@ -1193,8 +1190,6 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 			await provider.opProcessingController.pauseProcessing(container2);
 			assert(dataStore2.runtime.deltaManager.outbound.paused);
 			[...Array(lots).keys()].map((i) => map2.set((i + lots).toString(), i + lots));
-			// wait for flush to happen and see added ops in the pending queue
-			await new Promise<void>((resolve) => setTimeout(resolve, 0));
 
 			const morePendingOps = await container2.getPendingLocalState?.();
 			assert.ok(morePendingOps);
