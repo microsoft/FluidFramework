@@ -349,10 +349,14 @@ we also want to ensure that the associated memory needs can be constrained.
 How we should go about evicting repair data from the forest is dependent on the set of merge semantics we support.
 For this V1 of undo, we intend to allow editing of removed content,
 meaning it can be edited after it is removed and before (as well as after) it is restored,
-even if the issuer of the edit was aware of the item being removed (and not aware of the item being restored).
+but solely in situations where the issuer of the edit was now aware of the item being removed.
+In other words, we only allow new edits to be generated on in-document trees,
+and we tolerate the fact that some of those edits will end up affecting removed trees due to concurrency.
+
+In the future, we will also support editing already removed trees.
 
 This gives applications more options for dealing with situations where a client has locally performed some amount of work
-that involves editing a removed region of the document.
+that involves editing a region of the document that was concurrently removed.
 Indeed, without that capability, such work could not be reconciled with the rest of the document,
 and would need to be detected and dropped.
 This scenario is likely to occur if client applications use local branches to stage their work.
