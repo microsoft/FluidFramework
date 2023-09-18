@@ -70,6 +70,15 @@ const registerSessionWithCustomerService = async (
 };
 
 /**
+ * Helper function to configure a local express server meant to simulate the Fluid service.
+ */
+const initializeMockFluidService = (localServiceApp: express.Express): express.Express => {
+	localServiceApp.use(express.json());
+	localServiceApp.use(cors());
+	return localServiceApp;
+};
+
+/**
  * @remarks
  *
  * These tests spin up their own Express server instances so we can directly test against it
@@ -124,9 +133,7 @@ describe("mock-customer-service", () => {
 	// So for these tests we have to live with `any`.
 	it("register-for-webhook: Complete data flow", async () => {
 		// Set up mock local service, which will be registered as webhook listener
-		const localServiceApp = express();
-		localServiceApp.use(express.json());
-		localServiceApp.use(cors());
+		const localServiceApp = initializeMockFluidService(express());
 
 		// Bind listener
 		let wasFluidNotifiedForChange = false;
@@ -190,10 +197,8 @@ describe("mock-customer-service", () => {
 	/* eslint-enable @typescript-eslint/no-non-null-assertion */
 
 	it("register-session-url: Complete data flow", async () => {
-		// Set up mock local service, which will be registered as webhook listener
-		const localServiceApp = express();
-		localServiceApp.use(express.json());
-		localServiceApp.use(cors());
+		// Set up mock local Fluid service, which will be registered as webhook listener
+		const localServiceApp = initializeMockFluidService(express());
 
 		// Bind listener
 		let webhookChangeNotification;
@@ -245,10 +250,8 @@ describe("mock-customer-service", () => {
 	});
 
 	it("events-listener: Complete data flow for session-end event", async () => {
-		// Set up mock local service, which will be registered as webhook listener
-		const localServiceApp = express();
-		localServiceApp.use(express.json());
-		localServiceApp.use(cors());
+		// Set up mock local Fluid service, which will be registered as webhook listener
+		const localServiceApp = initializeMockFluidService(express());
 
 		// Bind listener
 		let webhookChangeNotification;
