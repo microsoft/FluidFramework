@@ -26,15 +26,15 @@
 		"print-config:test": "eslint --config ./index.js --print-config ./src/test/file.ts > ./printed-configs/test.json"
 	},
 	"dependencies": {
-		"@rushstack/eslint-patch": "~1.3.3",
-		"@rushstack/eslint-plugin": "~0.12.0",
-		"@rushstack/eslint-plugin-security": "~0.6.0",
-		"@typescript-eslint/eslint-plugin": "~6.4.1",
-		"@typescript-eslint/parser": "~6.4.1",
+		"@rushstack/eslint-patch": "~1.4.0",
+		"@rushstack/eslint-plugin": "~0.13.0",
+		"@rushstack/eslint-plugin-security": "~0.7.0",
+		"@typescript-eslint/eslint-plugin": "~6.7.2",
+		"@typescript-eslint/parser": "~6.7.2",
 		"eslint-config-prettier": "~9.0.0",
 		"eslint-plugin-eslint-comments": "~3.2.0",
 		"eslint-plugin-import": "~2.28.1",
-		"eslint-plugin-jsdoc": "~46.4.6",
+		"eslint-plugin-jsdoc": "~46.8.1",
 		"eslint-plugin-promise": "~6.1.1",
 		"eslint-plugin-react": "~7.33.2",
 		"eslint-plugin-react-hooks": "~4.6.0",
@@ -45,7 +45,7 @@
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.0",
 		"concurrently": "^8.2.1",
-		"eslint": "~8.47.0",
+		"eslint": "~8.49.0",
 		"prettier": "~3.0.3",
 		"sort-json": "^2.0.1",
 		"typescript": "~4.5.5"
