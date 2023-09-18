@@ -65,7 +65,9 @@ export const CollaborativeView = (props: CollaborativeProps) => {
 		props.model.clear();
 	};
 	const addDataObject = () => {
-		props.model.createChildDataObject(`${childDataObjects.length}`);
+		props.model
+			.createChildDataObject(`${childDataObjects.length}`)
+			.catch((error) => console.log(error));
 	};
 
 	const addSharedObject = (item: IContextualMenuItem | undefined) => {
