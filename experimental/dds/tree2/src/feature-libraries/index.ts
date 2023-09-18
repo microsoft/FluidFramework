@@ -138,13 +138,11 @@ export {
 } from "./modular-schema";
 
 export {
-	SchemaBuilder,
 	TreeSchema,
 	AllowedTypes,
 	FieldSchema,
 	TypedSchemaCollection,
 	Any,
-	SchemaLibrary,
 	SchemaLibraryData,
 	LazyTreeSchema,
 	InternalTypedSchemaTypes,
@@ -162,6 +160,7 @@ export {
 	fieldApiPrefixes,
 	validateStructFieldName,
 } from "./typed-schema";
+export { SchemaBuilder, SchemaLibrary } from "./schemaBuilder";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
 
