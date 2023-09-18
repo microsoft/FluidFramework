@@ -2,7 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
+import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { LocalOrdererManager } from "@fluidframework/server-local-server";
 import { DocumentStorage } from "@fluidframework/server-services-shared";
 import { Historian } from "@fluidframework/server-services-client";
@@ -94,6 +95,9 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
 			pubsub,
 		);
 
+		const collaborationSessionEventEmitter =
+			new TypedEventEmitter<ICollaborationSessionEvents>();
+
 		return new TinyliciousResources(
 			config,
 			orderManager,
@@ -102,6 +106,7 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
 			mongoManager,
 			port,
 			webServerFactory,
+			collaborationSessionEventEmitter,
 		);
 	}
 }

@@ -4,11 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import {
-	IBroadcastSignalEventPayload,
-	ICollaborationSessionEvents,
-	IRoom,
-} from "@fluidframework/server-lambdas";
+import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { IDocumentStorage } from "@fluidframework/server-services-core";
 import {
 	defaultHash,
@@ -74,32 +70,6 @@ export function create(
 		createP.then(
 			() => {
 				response.status(201).json(id);
-			},
-			(error) => {
-				response.status(400).json(error);
-			},
-		);
-	});
-
-	/**
-	 * Passes on content to all clients in a collaboration session happening on the document via means of signal.
-	 */
-	router.post("/:tenantId/:id/broadcast-signal", (request, response) => {
-		const tenantId = getParam(request.params, "tenantId");
-		const documentId = getParam(request.params, "id");
-		const signalContent = getParam(request.body, "signalContent");
-		const documentP = storage.getDocument(tenantId, documentId);
-
-		documentP.then(
-			(_document: any) => {
-				try {
-					const signalRoom: IRoom = { tenantId, documentId };
-					const payload: IBroadcastSignalEventPayload = { signalRoom, signalContent };
-					collaborationSessionEventEmitter.emit("broadcast-signal", payload);
-					response.status(200).send("OK");
-				} catch (error) {
-					response.status(500).send(error);
-				}
 			},
 			(error) => {
 				response.status(400).json(error);
