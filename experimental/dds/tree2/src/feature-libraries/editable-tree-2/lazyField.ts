@@ -17,7 +17,6 @@ import {
 	keyAsDetachedField,
 	rootField,
 	EmptyKey,
-	rootFieldKey,
 } from "../../core";
 import { FieldKind } from "../modular-schema";
 import { NewFieldContent, normalizeNewFieldContent } from "../contextuallyTyped";
