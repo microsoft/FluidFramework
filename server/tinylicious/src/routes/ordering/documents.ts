@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { IDocumentStorage } from "@fluidframework/server-services-core";
 import {
 	defaultHash,
@@ -15,10 +13,7 @@ import { v4 as uuid } from "uuid";
 import winston from "winston";
 import { getParam } from "../../utils";
 
-export function create(
-	storage: IDocumentStorage,
-	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
-): Router {
+export function create(storage: IDocumentStorage): Router {
 	const router: Router = Router();
 
 	router.get("/:tenantId?/:id", (request, response) => {
@@ -64,6 +59,7 @@ export function create(
 			`http://${request.hostname}`,
 			`http://${request.hostname}`,
 			values,
+			false,
 			false,
 		);
 
