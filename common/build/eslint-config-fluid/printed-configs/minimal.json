@@ -1,6 +1,7 @@
 {
     "env": {
         "browser": true,
+        "es2024": false,
         "es6": true,
         "node": true
     },
