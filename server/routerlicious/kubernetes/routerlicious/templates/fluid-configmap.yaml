@@ -164,7 +164,7 @@ data:
         },
         "system": {
             "httpServer": {
-                "connectionTimeout": {{ .Values.system.httpServer.connectionTimeout }}
+                "connectionTimeoutMs": {{ .Values.system.httpServer.connectionTimeoutMs }}
             },
             "topics": {
                 "send": "{{ .Values.kafka.topics.deltas }}"
@@ -204,9 +204,6 @@ data:
             "checkpointBatchSize": 1,
             "checkpointTimeIntervalMsec": 1000,
             "restartOnCheckpointFailure": {{ .Values.scriptorium.restartOnCheckpointFailure }}
-        },
-        "paparazzi": {
-            "queue": "paparazziQueue"
         },
         "rabbitmq": {
             "connectionString": "{{ .Values.rabbitmq.connectionString }}"

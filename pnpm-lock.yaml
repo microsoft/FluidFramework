@@ -320,7 +320,6 @@ importers:
     specifiers:
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/azure-client': workspace:~
-      '@fluidframework/azure-local-service': workspace:~
       '@fluidframework/build-common': ^2.0.0
       '@fluidframework/build-tools': ^0.22.0
       '@fluidframework/container-definitions': workspace:~
@@ -381,7 +380,6 @@ importers:
       tinylicious: 1.0.0
       uuid: 9.0.0
     devDependencies:
-      '@fluidframework/azure-local-service': link:../../azure-local-service
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.22.0_@types+node@16.18.38
       '@fluidframework/eslint-config-fluid': 2.1.0_kufnqfq7tb5rpdawkdb6g5smma
@@ -25210,16 +25208,6 @@ packages:
       - supports-color
     dev: true
 
-  /agentkeepalive/4.3.0:
-    resolution: {integrity: sha512-7Epl1Blf4Sy37j4v9f9FjICCh4+KAQOyXgHEwlyBiAQLbhKdq/i2QQU3amQalS/wPhdPzDXPL5DMR5bkn+YeWg==}
-    engines: {node: '>= 8.0.0'}
-    dependencies:
-      debug: 4.3.4
-      depd: 2.0.0
-      humanize-ms: 1.2.1
-    transitivePeerDependencies:
-      - supports-color
-
   /agentkeepalive/4.5.0:
     resolution: {integrity: sha512-5GG/5IbQQpC9FpkRGsSvZI5QYeSCzlJHdpBQntCsuTOxhKD8lqKhrleg2Yi7yvMIf82Ycmmqln9U8V9qwEiJew==}
     engines: {node: '>= 8.0.0'}
@@ -44052,7 +44040,7 @@ packages:
       '@fluidframework/server-services-shared': 1.0.0
       '@fluidframework/server-services-telemetry': 1.0.1
       '@fluidframework/server-services-utils': 1.0.0
-      '@fluidframework/server-test-utils': 1.0.1
+      '@fluidframework/server-test-utils': 1.0.0
       agentkeepalive: 4.3.0
       axios: 0.26.1
       body-parser: 1.20.2

@@ -26,8 +26,6 @@
 		"docker-run": "docker run --rm -v $(pwd):/usr/src/server -w /usr/src/server node:8.14.0-slim",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"foreman": "node dist/foreman/index.js",
-		"foreman:debug": "node --inspect=0.0.0.0:5858 dist/foreman/index.js",
 		"format": "npm run prettier:fix",
 		"lint": "npm run prettier && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
@@ -40,9 +38,9 @@
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
-		"@fluidframework/common-utils": "^1.1.1",
+		"@fluidframework/common-utils": "^3.0.0",
 		"@fluidframework/gitresources": "workspace:~",
-		"@fluidframework/protocol-definitions": "^2.1.0",
+		"@fluidframework/protocol-definitions": "^3.0.0",
 		"@fluidframework/server-kafka-orderer": "workspace:~",
 		"@fluidframework/server-lambdas": "workspace:~",
 		"@fluidframework/server-lambdas-driver": "workspace:~",
