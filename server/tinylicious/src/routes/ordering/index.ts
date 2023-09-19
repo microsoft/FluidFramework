@@ -45,7 +45,7 @@ export function create(
 			collaborationSessionEventEmitter?.emit("broadcast-signal", payload);
 			response.status(200).send("OK");
 		} catch (error) {
-			response.status(404).send(error);
+			response.status(500).send(error);
 		}
 	});
 
