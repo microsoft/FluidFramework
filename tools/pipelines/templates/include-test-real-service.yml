@@ -342,7 +342,7 @@ jobs:
             targetPath: '${{ parameters.buildDirectory }}/packages/test/test-end-to-end-tests/tinylicious.log'
             artifactName: 'tinyliciousLog'
             publishLocation: 'pipeline'
-          condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+          condition: succeededOrFailed()
           continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
 
       # Log Test Failures
