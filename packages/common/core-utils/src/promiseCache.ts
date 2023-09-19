@@ -22,10 +22,16 @@ export type PromiseCacheExpiry =
  * Options for configuring the {@link PromiseCache}
  */
 export interface PromiseCacheOptions {
-	/** Common expiration policy for all items added to this cache */
+	/**
+	 * Common expiration policy for all items added to this cache
+	 */
 	expiry?: PromiseCacheExpiry;
-	/** If the stored Promise is rejected with a particular error, should the given key be removed? */
-	removeOnError?: (e: any) => boolean;
+	/**
+	 * If the stored Promise is rejected with a particular error, should the given key be removed?
+	 */
+	// TODO: Use `unknown` instead (API breaking)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	removeOnError?: (error: any) => boolean;
 }
 
 /**
@@ -86,7 +92,7 @@ export class PromiseCache<TKey, TResult> {
 	private readonly cache = new Map<TKey, Promise<TResult>>();
 	private readonly gc: GarbageCollector<TKey>;
 
-	private readonly removeOnError: (error: any) => boolean;
+	private readonly removeOnError: (error: unknown) => boolean;
 
 	/**
 	 * Create the PromiseCache with the given options, with the following defaults:
