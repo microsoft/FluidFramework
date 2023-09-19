@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { FieldKey } from "../schema-stored";
 import {
 	AnchorSet,
@@ -12,6 +12,8 @@ import {
 	Anchor,
 	ITreeCursorSynchronous,
 	rootFieldKey,
+	DeltaVisitor,
+	applyDelta,
 } from "../tree";
 import { IForestSubscription, ITreeSubscriptionCursor } from "./forest";
 
@@ -31,10 +33,13 @@ export interface IEditableForest extends IForestSubscription {
 	readonly anchors: AnchorSet;
 
 	/**
-	 * Applies the supplied Delta to the forest.
-	 * Does NOT update anchors.
+	 * @returns a visitor that can be used to mutate the forest.
+	 *
+	 * Mutating the forest does NOT update anchors.
+	 * The visitor must be released after use.
+	 * It is invalid to acquire a visitor without releasing the previous one.
 	 */
-	applyDelta(delta: Delta.Root): void;
+	acquireVisitor(): DeltaVisitor;
 }
 
 /**
@@ -50,7 +55,7 @@ export function initializeForest(
 ): void {
 	assert(forest.isEmpty, 0x747 /* forest must be empty */);
 	const insert: Delta.Insert = { type: Delta.MarkType.Insert, content };
-	forest.applyDelta(new Map([[rootFieldKey, [insert]]]));
+	applyDelta(new Map([[rootFieldKey, [insert]]]), forest);
 }
 
 // TODO: Types below here may be useful for input into edit building APIs, but are no longer used here directly.

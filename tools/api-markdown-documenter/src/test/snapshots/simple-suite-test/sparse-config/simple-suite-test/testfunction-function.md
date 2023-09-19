@@ -1,6 +1,8 @@
-## testFunction
+## testFunction (ALPHA)
 
 Test function
+
+**WARNING: This API is provided as an alpha preview and may change without notice. Use at your own risk.**
 
 ### Signature {#testfunction-signature}
 

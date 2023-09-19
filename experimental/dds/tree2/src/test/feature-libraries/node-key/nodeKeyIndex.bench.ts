@@ -6,7 +6,7 @@
 import { strict as assert, fail } from "assert";
 import { benchmark, BenchmarkTimer, BenchmarkType } from "@fluid-tools/benchmark";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
-import { IsoBuffer } from "@fluidframework/common-utils";
+import { IsoBuffer } from "@fluid-internal/client-utils";
 import { ISharedTree, ISharedTreeView } from "../../../shared-tree";
 import { ITestTreeProvider, TestTreeProvider } from "../../utils";
 import {
@@ -104,10 +104,10 @@ describe("Node Key Index Benchmarks", () => {
 							const ids: (LocalNodeKey | undefined)[] = [];
 							for (let i = 0; i < nodeCount; i++) {
 								const nodeKey =
-									i % period === 0 ? tree.nodeKey.generate() : undefined;
+									i % period === 0 ? tree.view.nodeKey.generate() : undefined;
 
 								ids.push(nodeKey);
-								cursors.push(createNode(tree, nodeKey));
+								cursors.push(createNode(tree.view, nodeKey));
 							}
 
 							// Measure how long it takes to insert a node with a key
@@ -118,8 +118,8 @@ describe("Node Key Index Benchmarks", () => {
 							duration = state.timer.toSeconds(before, state.timer.now());
 
 							// Validate that the tree is as we expect
-							const cursor = tree.forest.allocateCursor();
-							moveToDetachedField(tree.forest, cursor);
+							const cursor = tree.view.forest.allocateCursor();
+							moveToDetachedField(tree.view.forest, cursor);
 							cursor.firstNode();
 							for (let i = 0; i < nodeCount; i++) {
 								if (i % period === 0) {
@@ -127,12 +127,14 @@ describe("Node Key Index Benchmarks", () => {
 									cursor.enterNode(0);
 									const id = ids[i];
 									const stableId =
-										id !== undefined ? tree.nodeKey.stabilize(id) : undefined;
+										id !== undefined
+											? tree.view.nodeKey.stabilize(id)
+											: undefined;
 
 									assert.equal(cursor.value, stableId);
 									cursor.exitNode();
 									cursor.exitField();
-									const node = tree.nodeKey.map.get(
+									const node = tree.view.nodeKey.map.get(
 										ids[i] ?? fail("Expected node key to be in list"),
 									);
 									assert(node !== undefined);
@@ -161,11 +163,11 @@ describe("Node Key Index Benchmarks", () => {
 							const ids: LocalNodeKey[] = [];
 							for (let i = 0; i < nodeCount; i++) {
 								if (i % period === 0) {
-									const nodeKey = tree.nodeKey.generate();
-									field.insert(i, createNode(tree, nodeKey));
+									const nodeKey = tree.view.nodeKey.generate();
+									field.insert(i, createNode(tree.view, nodeKey));
 									ids.push(nodeKey);
 								} else {
-									field.insert(i, createNode(tree));
+									field.insert(i, createNode(tree.view));
 								}
 							}
 
@@ -173,7 +175,7 @@ describe("Node Key Index Benchmarks", () => {
 
 							// Measure how long it takes to lookup a randomly selected key that is known to be in the document
 							const before = state.timer.now();
-							const node = tree.nodeKey.map.get(id);
+							const node = tree.view.nodeKey.map.get(id);
 							duration = state.timer.toSeconds(before, state.timer.now());
 
 							assert(node !== undefined);
@@ -195,15 +197,16 @@ describe("Node Key Index Benchmarks", () => {
 							assert.equal(state.iterationsPerBatch, 1);
 							const [tree, field] = await makeTree();
 							for (let i = 0; i < nodeCount; i++) {
-								const key = i % period === 0 ? tree.nodeKey.generate() : undefined;
+								const key =
+									i % period === 0 ? tree.view.nodeKey.generate() : undefined;
 
-								field.insert(i, createNode(tree, key));
+								field.insert(i, createNode(tree.view, key));
 							}
 
 							// Measure how long it takes to lookup a key that is not in the document
-							const nodeKey = tree.nodeKey.generate();
+							const nodeKey = tree.view.nodeKey.generate();
 							const before = state.timer.now();
-							const node = tree.nodeKey.map.get(nodeKey);
+							const node = tree.view.nodeKey.map.get(nodeKey);
 							duration = state.timer.toSeconds(before, state.timer.now());
 
 							assert(node === undefined);
@@ -219,15 +222,16 @@ describe("Node Key Index Benchmarks", () => {
 					// Create a baseline tree with no keys
 					const [treeBaseline, fieldBaseline, providerBaseline] = await makeTree();
 					for (let i = 0; i < nodeCount; i++) {
-						fieldBaseline.insert(i, createNode(treeBaseline));
+						fieldBaseline.insert(i, createNode(treeBaseline.view));
 					}
 					await providerBaseline.ensureSynchronized();
 					// Create a tree of the same size as the baseline, but with some keys
 					const [treeWithIds, fieldWithIds, providerWithIds] = await makeTree();
 					for (let i = 0; i < nodeCount; i++) {
-						const key = i % period === 0 ? treeWithIds.nodeKey.generate() : undefined;
+						const key =
+							i % period === 0 ? treeWithIds.view.nodeKey.generate() : undefined;
 
-						fieldWithIds.insert(i, createNode(treeWithIds, key));
+						fieldWithIds.insert(i, createNode(treeWithIds.view, key));
 					}
 					await providerWithIds.ensureSynchronized();
 

@@ -16,7 +16,7 @@
 		"build:commonjs": "npm run tsc && npm run build:test",
 		"build:compile": "npm run build:commonjs",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"clean": "rimraf --glob \"dist\" \"*.tsbuildinfo\" \"*.build.log\"",
+		"clean": "rimraf --glob 'dist' '*.tsbuildinfo' '*.build.log' 'nyc'",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -25,8 +25,29 @@
 		"prettier": "prettier --check . --ignore-path ../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../.prettierignore",
 		"start": "node dist/www.js",
-		"test": "nyc --all -x dist/test/**/* mocha dist/test",
+		"test": "mocha dist/test",
+		"test:coverage": "c8 npm test",
 		"tsc": "tsc"
+	},
+	"c8": {
+		"all": true,
+		"cache-dir": "nyc/.cache",
+		"exclude": [
+			"src/test/**/*.ts",
+			"dist/test/**/*.js"
+		],
+		"exclude-after-remap": false,
+		"include": [
+			"src/**/*.ts",
+			"dist/**/*.js"
+		],
+		"report-dir": "nyc/report",
+		"reporter": [
+			"cobertura",
+			"html",
+			"text"
+		],
+		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
 		"@fluidframework/common-utils": "^1.1.1",
@@ -74,11 +95,11 @@
 		"@types/uuid": "^3.4.4",
 		"@types/winston": "^2.4.4",
 		"async": "^3.2.2",
-		"concurrently": "^7.5.0",
+		"c8": "^7.7.1",
+		"concurrently": "^8.2.1",
 		"eslint": "~8.27.0",
 		"lorem-ipsum": "^1.0.6",
 		"mocha": "^10.1.0",
-		"nyc": "^15.1.0",
 		"rimraf": "^3.0.2",
 		"sillyname": "^0.1.0",
 		"supertest": "^3.4.2",

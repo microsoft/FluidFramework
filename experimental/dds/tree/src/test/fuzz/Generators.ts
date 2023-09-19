@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IsoBuffer } from '@fluidframework/common-utils';
+import { IsoBuffer } from '@fluid-internal/client-utils';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import {
 	AcceptanceCondition,

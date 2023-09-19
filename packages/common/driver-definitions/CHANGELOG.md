@@ -1,5 +1,13 @@
 # @fluidframework/driver-definitions
 
+## 2.0.0-internal.6.3.0
+
+### Minor Changes
+
+-   Add new error type enumeration that extends common errors from core-interfaces ([#17078](https://github.com/microsoft/FluidFramework/issues/17078)) [5c4bf0d9c2](https://github.com/microsoft/FluidFramework/commits/5c4bf0d9c224af86d0c2205c67c6e64405fee51c)
+
+    Deprecates existing `DriverErrorType` enum in favor of the new `DriverErrorTypes` type.
+
 ## 2.0.0-internal.6.2.0
 
 ### Minor Changes

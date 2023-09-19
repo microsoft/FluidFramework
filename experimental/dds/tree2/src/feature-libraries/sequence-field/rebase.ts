@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { StableId } from "@fluidframework/runtime-definitions";
-import { fail } from "../../util";
+import { IdAllocator, fail } from "../../util";
 import { ChangeAtomId, ChangesetLocalId, RevisionTag, TaggedChange } from "../../core";
 import {
 	CrossFieldManager,
 	CrossFieldTarget,
-	IdAllocator,
 	NodeExistenceState,
 	RevisionMetadataSource,
 } from "../modular-schema";

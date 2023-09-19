@@ -47,8 +47,7 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
-import { assert } from "@fluidframework/common-utils";
-import { Lazy } from "@fluidframework/core-utils";
+import { assert, Lazy } from "@fluidframework/core-utils";
 import { v4 as uuid } from "uuid";
 import { DataStoreContexts } from "./dataStoreContexts";
 import {
@@ -68,7 +67,7 @@ import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs";
 import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
 import {
 	GCNodeType,
-	sweepDatastoresKey,
+	disableDatastoreSweepKey,
 	throwOnTombstoneLoadKey,
 	sendGCUnexpectedUsageEvent,
 } from "./gc";
@@ -821,11 +820,11 @@ export class DataStores implements IDisposable {
 	 * Delete data stores and its objects that are sweep ready.
 	 * @param sweepReadyDataStoreRoutes - The routes of data stores and its objects that are sweep ready and should
 	 * be deleted.
-	 * @returns - The routes of data stores and its objects that were deleted.
+	 * @returns The routes of data stores and its objects that were deleted.
 	 */
 	public deleteSweepReadyNodes(sweepReadyDataStoreRoutes: string[]): string[] {
 		// If sweep for data stores is not enabled, return empty list indicating nothing is deleted.
-		if (this.mc.config.getBoolean(sweepDatastoresKey) !== true) {
+		if (this.mc.config.getBoolean(disableDatastoreSweepKey) === true) {
 			return [];
 		}
 		for (const route of sweepReadyDataStoreRoutes) {

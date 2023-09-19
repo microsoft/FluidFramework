@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { assertValidIndex } from "../../../util";
 import { FieldKey, TreeSchemaIdentifier, Value } from "../../../core";
 import { TreeChunk } from "../chunk";
@@ -28,6 +28,7 @@ import {
 	readStreamBoolean,
 	readStreamNumber,
 	readStreamStream,
+	readStreamValue,
 } from "./chunkCodecUtilities";
 import {
 	DecoderContext,
@@ -71,10 +72,10 @@ const decoderLibrary = new DiscriminatedUnionDispatcher<
  */
 export function readValue(stream: StreamCursor, shape: EncodedValueShape): Value {
 	if (shape === undefined) {
-		return readStreamBoolean(stream) ? readStream(stream) : undefined;
+		return readStreamBoolean(stream) ? readStreamValue(stream) : undefined;
 	} else {
 		if (shape === true) {
-			return readStream(stream);
+			return readStreamValue(stream);
 		} else if (shape === false) {
 			return undefined;
 		} else if (Array.isArray(shape)) {

@@ -8,5 +8,13 @@
 	"docModel": {
 		"enabled": true,
 		"apiJsonFilePath": "<projectFolder>/_api-extractor-temp/doc-models/<unscopedPackageName>.api.json"
+	},
+	"messages": {
+		"extractorMessageReporting": {
+			"ae-missing-release-tag": {
+				"logLevel": "error",
+				"addToApiReportFile": false // Fail build, rather than logging the error to the report document
+			}
+		}
 	}
 }

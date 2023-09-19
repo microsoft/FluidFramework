@@ -49,7 +49,7 @@
 		"tsc:fast": "fluid-build --root . --task tsc --worker",
 		"watch": "pnpm run -r --parallel tsc --watch"
 	},
-	"nyc": {
+	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [],
@@ -73,7 +73,6 @@
 		"@microsoft/api-extractor": "^7.36.1",
 		"c8": "^7.14.0",
 		"commitizen": "^4.3.0",
-		"concurrently": "^7.6.0",
 		"conventional-changelog-cli": "^2.2.2",
 		"conventional-changelog-conventionalcommits": "^5.0.0",
 		"copyfiles": "^2.4.1",

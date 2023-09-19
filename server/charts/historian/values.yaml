@@ -32,6 +32,9 @@ historian:
       createSummary: disabled
   restGitService:
     disableGitCache: false
+  system:
+    httpServer:
+      connectionTimeoutMs: 0
 
 gitrest:
   name: gitrest
@@ -64,6 +67,9 @@ gitrest:
     maxRetriesPerRequest: 20
     enableAutoPipelining: false
     enableOfflineQueue: true
+  system:
+    httpServer:
+      connectionTimeoutMs: 0
 
 gitssh:
   name: gitssh

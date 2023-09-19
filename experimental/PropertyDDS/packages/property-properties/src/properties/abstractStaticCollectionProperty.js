@@ -207,6 +207,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
 	 * Returns an object with all the nested values contained in this property.
 	 *
 	 * @example
+	 *
 	 * ```javascript
 	 * {
 	 *   position: {

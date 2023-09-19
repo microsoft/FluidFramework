@@ -14,8 +14,8 @@ describe("Buffer isomorphism", () => {
 			"比特币", // non-ascii range
 			"😂💁🏼‍♂️💁🏼‍💁‍♂", // surrogate pairs with glyph modifiers
 			"\u0080\u0080", // invalid sequence of utf-8 continuation codes
-			"\ud800", // single utf-16 surrogate without pair
-			"\u2962\u0000\uffff\uaaaa", // garbage
+			"\uD800", // single utf-16 surrogate without pair
+			"\u2962\u0000\uFFFF\uAAAA", // garbage
 		];
 
 		for (const item of testArray) {

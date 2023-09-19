@@ -129,6 +129,11 @@ extends:
       - ci:test:realsvc:tinylicious:full
     - ci:test:stress:tinylicious
     - test:copyresults
+    testResultDirs:
+    - nyc/azure
+    - nyc/examples
+    - nyc/experimental
+    - nyc/packages
     checks:
     - syncpack:deps
     - syncpack:versions

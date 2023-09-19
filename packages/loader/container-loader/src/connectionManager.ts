@@ -4,7 +4,8 @@
  */
 
 import { IDisposable, ITelemetryProperties } from "@fluidframework/core-interfaces";
-import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
+import { performance, TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	ICriticalContainerError,
 	IDeltaQueue,

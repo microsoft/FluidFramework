@@ -51,6 +51,8 @@ import { ApiItemTransformationConfiguration } from "./configuration";
  *
  * @returns The transformed `DocNode`, if it was of a kind we support.
  * Else, an error will be logged, and `undefined` will be returned.
+ *
+ * @public
  */
 export function transformDocNode(
 	docNode: DocNode,
@@ -145,6 +147,13 @@ export function transformDocParagraph(
 
 /**
  * Converts a {@link @microsoft/tsdoc#DocSection} to a {@link ParagraphNode}.
+ *
+ * @remarks
+ *
+ * We define "section" a bit differently from TSDoc's definition.
+ * We align the concept of "section" with a level of hierarchy in the document, where TSDoc does not.
+ * For that reason, their "section" concept gets mapped to a paragraph, rather than a section.
+ * Consumers can wrap this in a section node as desired based on context.
  */
 export function transformDocSection(
 	node: DocSection,
