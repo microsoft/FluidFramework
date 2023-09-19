@@ -1435,7 +1435,7 @@
             "error"
         ],
         "unicorn/prefer-event-target": [
-            "error"
+            "off"
         ],
         "unicorn/prefer-export-from": [
             "error"
@@ -1504,7 +1504,7 @@
             "error"
         ],
         "unicorn/prefer-string-replace-all": [
-            "error"
+            "off"
         ],
         "unicorn/prefer-string-slice": [
             "error"

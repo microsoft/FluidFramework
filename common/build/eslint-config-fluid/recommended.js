@@ -71,6 +71,17 @@ module.exports = {
 		"unicorn/prevent-abbreviations": "off",
 
 		/**
+		 * Disabled because we use EventEmitter everywhere today and changing it will be a bigger change outside of lint
+		 * rules.
+		 */
+		"unicorn/prefer-event-target": "off",
+
+		/**
+		 * Disabled because we don't yet target a ES version that includes string.replaceAll.
+		 */
+		"unicorn/prefer-string-replace-all": "off",
+
+		/**
 		 * Disallows the `any` type.
 		 * Using the `any` type defeats the purpose of using TypeScript.
 		 * When `any` is used, all compiler type checks around that value are ignored.

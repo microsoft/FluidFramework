@@ -13,6 +13,7 @@ prettier has been updated to version ~3.0.3.
 ### Update #16699 typescript-eslint
 
 typescript-eslint has been updated to version ~6.7.2.
+
 ## [2.1.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v2.1.0)
 
 ### Enable the import-no-deprecated rule
