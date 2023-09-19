@@ -1,7 +1,7 @@
 {
     "env": {
         "browser": true,
-        "es2024": true,
+        "es2024": false,
         "es6": true,
         "node": true
     },
@@ -87,6 +87,15 @@
         ],
         "@typescript-eslint/consistent-type-definitions": [
             "error"
+        ],
+        "@typescript-eslint/consistent-type-exports": [
+            "error"
+        ],
+        "@typescript-eslint/consistent-type-imports": [
+            "error",
+            {
+                "fixStyle": "inline-type-imports"
+            }
         ],
         "@typescript-eslint/dot-notation": [
             "error"
@@ -1408,7 +1417,7 @@
             "error"
         ],
         "unicorn/prefer-at": [
-            "error"
+            "off"
         ],
         "unicorn/prefer-blob-reading-methods": [
             "error"
@@ -1549,7 +1558,7 @@
             "error"
         ],
         "unicorn/template-indent": [
-            "error"
+            "off"
         ],
         "unicorn/text-encoding-identifier-case": [
             "error"
