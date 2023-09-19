@@ -44,6 +44,22 @@ module.exports = {
 				],
 			},
 		],
+
+		/**
+		 * Abbreviations are problematic for developer accessibility.
+		 * This rule helps ensure we are writing developer-accessible code.
+		 */
+		"unicorn/prevent-abbreviations": [
+			"error",
+			{
+				allowList: {
+					// Industry-standard index variable name.
+					// Note: `j`, etc. are not enabled intentionally - for multi-level iteration, more descriptive
+					// variable names are recommended.
+					i: true,
+				},
+			},
+		],
 	},
 	overrides: [
 		{

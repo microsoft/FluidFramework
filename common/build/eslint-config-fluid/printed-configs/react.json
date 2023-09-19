@@ -1544,7 +1544,7 @@
             "error"
         ],
         "unicorn/prevent-abbreviations": [
-            "error"
+            "off"
         ],
         "unicorn/relative-url-style": [
             "error"

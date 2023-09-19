@@ -1515,7 +1515,12 @@
             "error"
         ],
         "unicorn/prevent-abbreviations": [
-            "error"
+            "error",
+            {
+                "allowList": {
+                    "i": true
+                }
+            }
         ],
         "unicorn/relative-url-style": [
             "error"
