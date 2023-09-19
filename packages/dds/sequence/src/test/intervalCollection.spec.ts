@@ -1674,6 +1674,7 @@ describe("SharedString interval collections", () => {
 
 			const intervalId = interval.getIntervalId();
 			assert(intervalId);
+			// was: (6, 8)
 			collection1.change(intervalId, 5, 9); // " fri"
 			sharedString2.removeText(8, 10);
 			containerRuntimeFactory.processAllMessages();

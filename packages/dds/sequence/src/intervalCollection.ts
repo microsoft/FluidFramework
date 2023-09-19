@@ -813,8 +813,13 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			throw new LoggingError("mergeTree client must exist");
 		}
 
-		const segment = ref.getSegment();
-		const offset = ref.getOffset();
+		const segment1 = ref.getSegment();
+		const offset1 = ref.getOffset();
+
+		const { segment, offset } = getSlideToSegoff(
+			{ segment: segment1, offset: offset1 },
+			ref.slidingPreference,
+		);
 
 		// case happens when rebasing op, but concurrently entire string has been deleted
 		if (segment === undefined || offset === undefined) {
@@ -841,16 +846,16 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		const rebased = { ...original };
 		const { start, end, properties } = original;
 
-		const id = properties?.intervalId;
-		assert(id !== undefined, "expected interval to have id");
-		const interval = this.getIntervalById(id);
+		const intervalId = properties?.intervalId;
+		assert(intervalId !== undefined, "expected interval to have id");
+		const interval = this.getIntervalById(intervalId);
 
 		if (interval instanceof SequenceInterval && start !== undefined) {
-			rebased.start = this.rebaseLocalReferencePosition(interval.start, localSeq);
+			rebased.start = this.rebaseLocalReferencePosition(interval.start, 0);
 		}
 
 		if (interval instanceof SequenceInterval && end !== undefined) {
-			rebased.end = this.rebaseLocalReferencePosition(interval.end, localSeq);
+			rebased.end = this.rebaseLocalReferencePosition(interval.end, 0);
 		}
 
 		return rebased;
@@ -1302,12 +1307,12 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		}
 
 		const { intervalType, properties } = serializedInterval;
+		const intervalId = properties?.[reservedIntervalIdKey];
 
 		const { start: startRebased, end: endRebased } =
 			this.localSeqToRebasedInterval.get(localSeq) ?? this.computeRebasedPositions(localSeq);
 
-		const intervalId = properties?.[reservedIntervalIdKey];
-		const localInterval = this.localCollection?.idIntervalIndex.getIntervalById(intervalId);
+		const localInterval = this.getIntervalById(intervalId);
 
 		const rebased: SerializedIntervalDelta = {
 			start: startRebased,

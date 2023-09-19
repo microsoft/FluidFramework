@@ -1219,17 +1219,18 @@ export class MergeTree {
 		refPos: ReferencePosition,
 		refSeq = this.collabWindow.currentSeq,
 		clientId = this.collabWindow.clientId,
+		localSeq?: number,
 	): number {
 		const seg: ISegmentLeaf | undefined = refPos.getSegment();
 		if (seg?.parent === undefined) {
 			return DetachedReferencePosition;
 		}
 		if (refPos.isLeaf()) {
-			return this.getPosition(refPos, refSeq, clientId);
+			return this.getPosition(refPos, refSeq, clientId, localSeq);
 		}
 		if (refTypeIncludesFlag(refPos, ReferenceType.Transient) || seg.localRefs?.has(refPos)) {
 			const offset = isRemoved(seg) ? 0 : refPos.getOffset();
-			return offset + this.getPosition(seg, refSeq, clientId);
+			return offset + this.getPosition(seg, refSeq, clientId, localSeq);
 		}
 		return DetachedReferencePosition;
 	}

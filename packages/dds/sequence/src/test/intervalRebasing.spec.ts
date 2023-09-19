@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
 	MockContainerRuntimeFactoryForReconnection,
@@ -12,7 +13,7 @@ import {
 import { IntervalType } from "../intervals";
 import { SharedStringFactory } from "../sequenceFactory";
 import { SharedString } from "../sharedString";
-import { assertConsistent, Client } from "./intervalUtils";
+import { assertConsistent, assertIntervals, Client } from "./intervalUtils";
 
 function constructClients(
 	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
@@ -155,6 +156,8 @@ describe("interval rebasing", () => {
 
 		containerRuntimeFactory.processAllMessages();
 		assertConsistent(clients);
+
+		assert.equal(clients[0].sharedString.getText(), "CE");
 	});
 
 	it("does not crash when endpoint segment is deleted during combination by zamboni", () => {
@@ -181,10 +184,21 @@ describe("interval rebasing", () => {
 		containerRuntimeFactory.processAllMessages();
 		assertConsistent(clients);
 		clients[1].containerRuntime.connected = true;
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+
+		assert.equal(clients[1].sharedString.getText(), "HIJFGEDCAB");
+
+		assertIntervals(
+			clients[1].sharedString,
+			clients[1].sharedString.getIntervalCollection("comments"),
+			[{ start: 0, end: 4 }],
+		);
 	});
 
 	it("slides to correct segment when inserting segment while disconnected after changing interval", () => {
 		// B-A
+		//   ^
 		clients[0].sharedString.insertText(0, "A");
 		const collection_0 = clients[0].sharedString.getIntervalCollection("comments");
 		collection_0.add(0, 0, IntervalType.SlideOnRemove, { intervalId: "0" });
@@ -194,15 +208,23 @@ describe("interval rebasing", () => {
 		clients[0].containerRuntime.connected = true;
 		containerRuntimeFactory.processAllMessages();
 		assertConsistent(clients);
+
+		assert.equal(clients[0].sharedString.getText(), "BA");
+
+		assertIntervals(
+			clients[0].sharedString,
+			clients[0].sharedString.getIntervalCollection("comments"),
+			[{ start: 1, end: 1 }],
+		);
 	});
 
-	it("...", () => {
+	it("changing interval to concurrently deleted segment detaches interval", () => {
 		// B-A
 		// ^
 		// (B)-A
 		//     ^
 		// (B)-(A)-C
-		//         ^
+		//
 		clients[0].sharedString.insertText(0, "A");
 		clients[2].sharedString.insertText(0, "B");
 		const collection_0 = clients[2].sharedString.getIntervalCollection("comments");
@@ -222,6 +244,15 @@ describe("interval rebasing", () => {
 		clients[0].containerRuntime.connected = true;
 		containerRuntimeFactory.processAllMessages();
 		assertConsistent(clients);
+
+		assert.equal(clients[0].sharedString.getText(), "C");
+
+		assertIntervals(
+			clients[0].sharedString,
+			clients[0].sharedString.getIntervalCollection("comments"),
+			[{ start: -1, end: -1 }],
+			false,
+		);
 	});
 
 	it("changing detached interval while disconnected doesn't delete it entirely from interval collection", () => {
@@ -241,5 +272,35 @@ describe("interval rebasing", () => {
 		clients[0].containerRuntime.connected = true;
 		containerRuntimeFactory.processAllMessages();
 		assertConsistent(clients);
+
+		assert.equal(clients[0].sharedString.getText(), "");
+
+		assertIntervals(
+			clients[0].sharedString,
+			clients[0].sharedString.getIntervalCollection("comments"),
+			[{ start: -1, end: -1 }],
+		);
+	});
+
+	it("changing interval endpoint while disconnected to segment also inserted while disconnected", () => {
+		clients[0].sharedString.insertText(0, "AC");
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+		const collection_0 = clients[0].sharedString.getIntervalCollection("comments");
+		collection_0.add(0, 0, IntervalType.SlideOnRemove, { intervalId: "0" });
+		clients[0].containerRuntime.connected = false;
+		clients[0].sharedString.insertText(1, "B");
+		collection_0.change("0", 1, 1);
+		clients[0].containerRuntime.connected = true;
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+
+		assert.equal(clients[0].sharedString.getText(), "ABC");
+
+		assertIntervals(
+			clients[0].sharedString,
+			clients[0].sharedString.getIntervalCollection("comments"),
+			[{ start: 1, end: 1 }],
+		);
 	});
 });
