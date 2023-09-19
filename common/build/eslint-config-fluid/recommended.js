@@ -167,6 +167,14 @@ module.exports = {
 			},
 		},
 		{
+			// Rules for test code
+			files: ["*.spec.ts", "*.test.ts", "**/test/**"],
+			rules: {
+				// Does not work well with describe/it block scoping
+				"unicorn/consistent-function-scoping": "off",
+			},
+		},
+		{
 			// Rules only for type validation files
 			files: ["**/types/*validate*Previous*.ts"],
 			rules: {

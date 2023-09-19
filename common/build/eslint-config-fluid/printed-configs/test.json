@@ -1228,7 +1228,7 @@
             "error"
         ],
         "unicorn/consistent-function-scoping": [
-            "error"
+            "off"
         ],
         "unicorn/custom-error-definition": [
             "off"

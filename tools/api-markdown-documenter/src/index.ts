@@ -47,7 +47,7 @@ export {
 	type TransformApiItemWithChildren,
 	type TransformApiItemWithoutChildren,
 	transformApiModel,
-	transformDocNode,
+	transformTsdocNode,
 } from "./api-item-transforms";
 
 // We want to make sure the entirety of this domain is accessible.
