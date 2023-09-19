@@ -1,5 +1,8 @@
 lockfileVersion: 5.4
 
+overrides:
+  nodegit: npm:empty-npm-package@1.0.0
+
 importers:
 
   .:
@@ -27,6 +30,7 @@ importers:
       eslint: ~8.6.0
       eslint-plugin-chai-expect: ^3.0.0
       eslint-plugin-chai-friendly: ^0.7.2
+      good-fences: ^1.2.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.1.0
       mocha-multi-reporters: ^1.5.1
@@ -59,6 +63,7 @@ importers:
       eslint: 8.6.0
       eslint-plugin-chai-expect: 3.0.0_eslint@8.6.0
       eslint-plugin-chai-friendly: 0.7.2_eslint@8.6.0
+      good-fences: 1.2.0
       mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
@@ -1913,6 +1918,11 @@ packages:
     engines: {node: '>= 6'}
     dev: true
 
+  /commander/7.2.0:
+    resolution: {integrity: sha512-QrWXB+ZQSVPmIWIhtEO9H+gwHaMGYiF5ChvoJ+K9ZGHG/sVsa6yiesAD1GC/x46sET00Xlwo1u49RVVVzvcSkw==}
+    engines: {node: '>= 10'}
+    dev: true
+
   /commander/9.5.0:
     resolution: {integrity: sha512-KRs7WVDKg86PWiuAqhDrAQnTXZKraVcCc6vFdL14qrZ/DcWwuRo7VoiYXalXO7S5GKpqYiVEwCbgFDfxNHKJBQ==}
     engines: {node: ^12.20.0 || >=14}
@@ -2245,6 +2255,10 @@ packages:
 
   /emoji-regex/8.0.0:
     resolution: {integrity: sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==}
+    dev: true
+
+  /empty-npm-package/1.0.0:
+    resolution: {integrity: sha512-q4Mq/+XO7UNDdMiPpR/LIBIW1Zl4V0Z6UT9aKGqIAnBCtCb3lvZJM1KbDbdzdC8fKflwflModfjR29Nt0EpcwA==}
     dev: true
 
   /end-of-stream/1.4.4:
@@ -2812,6 +2826,17 @@ packages:
       reusify: 1.0.4
     dev: true
 
+  /fdir/5.3.0_picomatch@2.3.1:
+    resolution: {integrity: sha512-BtE53+jaa7nNHT+gPdfU6cFAXOJUWDs2b5GFox8dtl6zLXmfNf/N6im69b9nqNNwDyl27mpIWX8qR7AafWzSdQ==}
+    peerDependencies:
+      picomatch: 2.x
+    peerDependenciesMeta:
+      picomatch:
+        optional: true
+    dependencies:
+      picomatch: 2.3.1
+    dev: true
+
   /file-entry-cache/6.0.1:
     resolution: {integrity: sha512-7Gps/XWymbLk2QLYK4NzpMOrYjMhdIxXuIvy2QBsLE6ljuodKvdkWs/cpyJJ3CVIVpH0Oi1Hvg1ovbMzLdFBBg==}
     engines: {node: ^10.12.0 || >=12.0.0}
@@ -3132,6 +3157,21 @@ packages:
       ignore: 5.2.4
       merge2: 1.4.1
       slash: 3.0.0
+    dev: true
+
+  /good-fences/1.2.0:
+    resolution: {integrity: sha512-SUWYA1Ry12945kJ/pOZu1yoRTk3pJmJ5kk+BpRrZvHBTfg9H7IjQ5FhBb6mMDkRpMpm0qbGR0zrinP9NPHy2WA==}
+    hasBin: true
+    dependencies:
+      cli-progress: 3.12.0
+      commander: 7.2.0
+      fdir: 5.3.0_picomatch@2.3.1
+      minimatch: 3.1.2
+      nodegit: /empty-npm-package/1.0.0
+      picomatch: 2.3.1
+      strip-json-comments: 3.1.1
+      tsconfig-paths: 3.14.2
+      typescript: 4.8.4
     dev: true
 
   /gopd/1.0.1:

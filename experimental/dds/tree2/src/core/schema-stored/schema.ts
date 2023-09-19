@@ -51,40 +51,20 @@ export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
 export const FieldKindIdentifierSchema = brandedStringType<FieldKindIdentifier>();
 
 /**
- * Example for how we might want to handle values.
- *
- * This might be significantly different if we want to focus more on binary formats
- * (need to work out how Fluid GC would work with that).
- * For now, this is a simple easy to support setup.
- *
- * Note that use of non-Nothing values might be restricted in the actual user facing schema languages:
- * we could instead choose to get by with the only types supporting values being effectively builtin,
- * though this limitation could prevent users for updating/extending
- * the primitive schema to allow the annotations they might want.
- *
- * An interesting alternative to this simple value Enum would be to use something more expressive here, like JsonSchema:
- * since this is modeling immutable data, we really just need a way to figure out which if these value schema allow
- * super sets of each-other.
- *
- * TODO: come up with a final design for how to handle primitives / values.
- * This design is just a placeholder.
+ * Schema for what {@link TreeValue} is allowed on a Leaf node.
  * @alpha
  */
 export enum ValueSchema {
 	Number,
 	String,
 	Boolean,
-	/**
-	 * Any Fluid serializable data.
-	 *
-	 * This does not include Nothing / undefined.
-	 *
-	 */
-	Serializable,
+	FluidHandle,
 }
 
 /**
  * {@link ValueSchema} for privative types.
+ * @privateRemarks
+ * TODO: remove when old editable tree API is removed.
  * @alpha
  */
 export type PrimitiveValueSchema = ValueSchema.Number | ValueSchema.String | ValueSchema.Boolean;

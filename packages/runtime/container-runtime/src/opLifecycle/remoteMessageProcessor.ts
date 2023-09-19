@@ -6,9 +6,11 @@
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
 	ContainerMessageType,
-	ContainerRuntimeMessage,
-	SequencedContainerRuntimeMessage,
-} from "../containerRuntime";
+	type InboundContainerRuntimeMessage,
+	type InboundSequencedContainerRuntimeMessage,
+	type InboundSequencedContainerRuntimeMessageOrSystemMessage,
+	type InboundSequencedRecentlyAddedContainerRuntimeMessage,
+} from "../messageTypes";
 import { OpDecompressor } from "./opDecompressor";
 import { OpGroupingManager } from "./opGroupingManager";
 import { OpSplitter } from "./opSplitter";
@@ -46,8 +48,10 @@ export class RemoteMessageProcessor {
 	 * For ops that weren't virtualized (e.g. System ops that the ContainerRuntime will ultimately ignore),
 	 * a singleton array [remoteMessageCopy] is returned
 	 */
-	public process(remoteMessageCopy: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
-		const result: ISequencedDocumentMessage[] = [];
+	public process(
+		remoteMessageCopy: ISequencedDocumentMessage,
+	): InboundSequencedContainerRuntimeMessageOrSystemMessage[] {
+		const result: InboundSequencedContainerRuntimeMessageOrSystemMessage[] = [];
 
 		ensureContentsDeserialized(remoteMessageCopy);
 
@@ -65,7 +69,9 @@ export class RemoteMessageProcessor {
 				if (chunkProcessingResult.state !== "Processed") {
 					// If the message is not chunked or if the splitter is still rebuilding the original message,
 					// there is no need to continue processing
-					result.push(ungroupedMessage2);
+					result.push(
+						ungroupedMessage2 as InboundSequencedContainerRuntimeMessageOrSystemMessage,
+					);
 					continue;
 				}
 
@@ -83,7 +89,9 @@ export class RemoteMessageProcessor {
 						if (decompressionAfterChunking.state === "Skipped") {
 							// After chunking, if the original message was not compressed,
 							// there is no need to continue processing
-							result.push(ungroupedMessageAfterChunking2);
+							result.push(
+								ungroupedMessageAfterChunking2 as InboundSequencedContainerRuntimeMessageOrSystemMessage,
+							);
 							continue;
 						}
 
@@ -110,22 +118,27 @@ function ensureContentsDeserialized(mutableMessage: ISequencedDocumentMessage): 
 }
 
 /**
- * For a given message, it moves the nested ContainerRuntimeMessage props one level up.
+ * For a given message, it moves the nested InboundContainerRuntimeMessage props one level up.
  *
  * The return type illustrates the assumption that the message param
- * becomes a ContainerRuntimeMessage by the time the function returns
- * (but there is no runtime validation of the 'type' or 'compatDetails' values)
+ * becomes a InboundSequencedContainerRuntimeMessage by the time the function returns
+ * (but there is no runtime validation of the 'type' or 'compatDetails' values).
  */
 function unpack(
 	message: ISequencedDocumentMessage,
-): asserts message is SequencedContainerRuntimeMessage {
-	const innerContents = message.contents as ContainerRuntimeMessage;
+): asserts message is InboundSequencedContainerRuntimeMessage {
+	// We assume the contents is an InboundContainerRuntimeMessage (the message is "packed")
+	const contents = message.contents as InboundContainerRuntimeMessage;
 
-	// We're going to turn message into a SequencedContainerRuntimeMessage in-place
-	const sequencedContainerRuntimeMessage = message as SequencedContainerRuntimeMessage;
-	sequencedContainerRuntimeMessage.type = innerContents.type;
-	sequencedContainerRuntimeMessage.contents = innerContents.contents;
-	sequencedContainerRuntimeMessage.compatDetails = innerContents.compatDetails;
+	// We're going to unpack message in-place (promoting those properties of contents up to message itself)
+	const messageUnpacked = message as InboundSequencedContainerRuntimeMessage;
+
+	messageUnpacked.type = contents.type;
+	messageUnpacked.contents = contents.contents;
+	if ("compatDetails" in contents) {
+		(messageUnpacked as InboundSequencedRecentlyAddedContainerRuntimeMessage).compatDetails =
+			contents.compatDetails;
+	}
 }
 
 /**

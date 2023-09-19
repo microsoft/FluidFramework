@@ -24,7 +24,6 @@ import {
 import { capitalize, disposeSymbol, fail, getOrCreate } from "../../util";
 import {
 	FieldSchema,
-	SchemaBuilder,
 	TreeSchema,
 	MapSchema,
 	schemaIsFieldNode,
@@ -34,9 +33,11 @@ import {
 	FieldNodeSchema,
 	LeafSchema,
 	StructSchema,
+	Any,
 } from "../typed-schema";
 import { TreeStatus, treeStatusFromPath } from "../editable-tree";
 import { EditableTreeEvents } from "../untypedTree";
+import { FieldKinds } from "../default-field-kinds";
 import { Context } from "./context";
 import {
 	FieldNode,
@@ -214,7 +215,7 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 				fieldSchema = this.context.schema.rootFieldSchema;
 			} else {
 				// All fields (in the editable tree API) have a schema.
-				// Since currently there is no known schema for detached sequences other than the special default root:
+				// Since currently there is no known schema for detached field other than the special default root:
 				// give all other detached fields a schema of sequence of any.
 				// That schema is the only one that is safe since its the only field schema that allows any possible field content.
 				//
@@ -226,7 +227,7 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 				// Additionally this approach makes it possible for a user to take an EditableTree node, get its parent, check its schema, down cast based on that, then edit that detached field (ex: removing the node in it).
 				// This MIGHT work properly with existing merge resolution logic (it must keep client in sync and be unable to violate schema), but this either needs robust testing or to be explicitly banned (error before s3ending the op).
 				// Issues like replacing a node in the a removed sequenced then undoing the remove could easily violate schema if not everything works exactly right!
-				fieldSchema = SchemaBuilder.fieldSequence();
+				fieldSchema = new FieldSchema(FieldKinds.sequence, [Any]);
 			}
 		} else {
 			cursor.exitField();

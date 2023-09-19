@@ -1475,7 +1475,7 @@ describe("Editing", () => {
 					cursor2.enterNode(0);
 					cursor2.enterField(brand("foo"));
 					cursor2.enterNode(1);
-					valueAfterInsert = cursor2.value;
+					valueAfterInsert = cursor2.value as string;
 					cursor2.free();
 				},
 				beforeDetach(source: RangeUpPath, destination: DetachedPlaceUpPath): void {},
@@ -1828,7 +1828,7 @@ describe("Editing", () => {
 					cursor2.enterNode(0);
 					cursor2.enterField(brand("foo"));
 					cursor2.enterNode(0);
-					valueAfterInsert = cursor2.value;
+					valueAfterInsert = cursor2.value as string;
 					cursor2.free();
 				},
 				beforeDetach(source: RangeUpPath, destination: DetachedPlaceUpPath): void {},

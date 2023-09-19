@@ -88,7 +88,6 @@ import {
 	IIdCompressorCore,
 	IdCreationRange,
 	IdCreationRangeWithStashedState,
-	IAttachMessage,
 } from "@fluidframework/runtime-definitions";
 import {
 	addBlobToSummary,
@@ -184,91 +183,41 @@ import {
 } from "./opLifecycle";
 import { DeltaManagerSummarizerProxy } from "./deltaManagerSummarizerProxy";
 import { IBatchMetadata } from "./metadata";
-
-export enum ContainerMessageType {
-	// An op to be delivered to store
-	FluidDataStoreOp = "component",
-
-	// Creates a new store
-	Attach = "attach",
-
-	// Chunked operation.
-	ChunkedOp = "chunkedOp",
-
-	// Signifies that a blob has been attached and should not be garbage collected by storage
-	BlobAttach = "blobAttach",
-
-	// Ties our new clientId to our old one on reconnect
-	Rejoin = "rejoin",
-
-	// Sets the alias of a root data store
-	Alias = "alias",
-
-	/**
-	 * An op containing an IdRange of Ids allocated using the runtime's IdCompressor since
-	 * the last allocation op was sent.
-	 * See the [IdCompressor README](./id-compressor/README.md) for more details.
-	 */
-	IdAllocation = "idAllocation",
-}
-
-/**
- * How should an older client handle an unrecognized remote op type?
- *
- * @internal
- */
-export type CompatModeBehavior =
-	/** Ignore the op. It won't be persisted if this client summarizes */
-	| "Ignore"
-	/** Fail processing immediately. (The container will close) */
-	| "FailToProcess";
-
-/**
- * All the info an older client would need to know how to handle an unrecognized remote op type
- *
- * @internal
- */
-export interface IContainerRuntimeMessageCompatDetails {
-	/** How should an older client handle an unrecognized remote op type? */
-	behavior: CompatModeBehavior;
-}
+import {
+	ContainerMessageType,
+	type InboundSequencedContainerRuntimeMessage,
+	type InboundSequencedContainerRuntimeMessageOrSystemMessage,
+	type ContainerRuntimeIdAllocationMessage,
+	type LocalContainerRuntimeIdAllocationMessage,
+	type LocalContainerRuntimeMessage,
+	type OutboundContainerRuntimeMessage,
+	type UnknownContainerRuntimeMessage,
+} from "./messageTypes";
 
 /**
  * Utility to implement compat behaviors given an unknown message type
  * The parameters are typed to support compile-time enforcement of handling all known types/behaviors
  *
- * @param _unknownContainerRuntimeMessageType - Typed as never, to ensure all known types have been
+ * @param _unknownContainerRuntimeMessageType - Typed as something unexpected, to ensure all known types have been
  * handled before calling this function (e.g. in a switch statement).
  * @param compatBehavior - Typed redundantly with CompatModeBehavior to ensure handling is added when updating that type
  */
 function compatBehaviorAllowsMessageType(
-	_unknownContainerRuntimeMessageType: never,
+	_unknownContainerRuntimeMessageType: UnknownContainerRuntimeMessage["type"],
 	compatBehavior: "Ignore" | "FailToProcess" | undefined,
 ): boolean {
 	// undefined defaults to same behavior as "FailToProcess"
 	return compatBehavior === "Ignore";
 }
 
-/**
- * The unpacked runtime message / details to be handled or dispatched by the ContainerRuntime
- *
- * IMPORTANT: when creating one to be serialized, set the properties in the order they appear here.
- * This way stringified values can be compared.
- */
-export interface ContainerRuntimeMessage {
-	/** Type of the op, within the ContainerRuntime's domain */
-	type: ContainerMessageType;
-	/** Domain-specific contents, interpreted according to the type */
-	contents: any;
-	/** Info describing how to handle this op in case the type is unrecognized (default: fail to process) */
-	compatDetails?: IContainerRuntimeMessageCompatDetails;
+function prepareLocalContainerRuntimeIdAllocationMessageForTransit(
+	message: LocalContainerRuntimeIdAllocationMessage | ContainerRuntimeIdAllocationMessage,
+): asserts message is ContainerRuntimeIdAllocationMessage {
+	// Remove the stashedState from the op if it's a stashed op
+	if ("stashedState" in message.contents) {
+		delete message.contents.stashedState;
+	}
 }
-
-/**
- * An unpacked ISequencedDocumentMessage with the inner ContainerRuntimeMessage type/contents/etc
- * promoted up to the outer object
- */
-export type SequencedContainerRuntimeMessage = ISequencedDocumentMessage & ContainerRuntimeMessage;
 
 export interface ISummaryBaseConfiguration {
 	/**
@@ -597,7 +546,7 @@ export const defaultPendingOpsRetryDelayMs = 1000;
 const defaultCloseSummarizerDelayMs = 5000; // 5 seconds
 
 /**
- * @deprecated - use ContainerRuntimeMessage instead
+ * @deprecated - use ContainerRuntimeMessageType instead
  */
 export enum RuntimeMessage {
 	FluidDataStoreOp = "component",
@@ -659,6 +608,23 @@ export const makeLegacySendBatchFn =
 
 		deltaManager.flush();
 	};
+
+/** Helper type for type constraints passed through several functions.
+ * message - The unpacked message. Likely a TypedContainerRuntimeMessage, but could also be a system op
+ * modernRuntimeMessage - Does this appear like a current TypedContainerRuntimeMessage?
+ * local - Did this client send the op?
+ */
+type MessageWithContext =
+	| {
+			message: InboundSequencedContainerRuntimeMessage;
+			modernRuntimeMessage: true;
+			local: boolean;
+	  }
+	| {
+			message: InboundSequencedContainerRuntimeMessageOrSystemMessage;
+			modernRuntimeMessage: false;
+			local: boolean;
+	  };
 
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
@@ -2015,28 +1981,28 @@ export class ContainerRuntime
 	 * Parse an op's type and actual content from given serialized content
 	 * ! Note: this format needs to be in-line with what is set in the "ContainerRuntime.submit(...)" method
 	 */
-	private parseOpContent(serializedContent?: string): ContainerRuntimeMessage {
-		assert(serializedContent !== undefined, 0x6d5 /* content must be defined */);
-		const { type, contents, compatDetails }: ContainerRuntimeMessage =
-			JSON.parse(serializedContent);
-		assert(type !== undefined, 0x6d6 /* incorrect op content format */);
-		return { type, contents, compatDetails };
+	// TODO: markfields: confirm Local- versus Outbound- ContainerRuntimeMessage typing
+	private parseLocalOpContent(serializedContents?: string): LocalContainerRuntimeMessage {
+		assert(serializedContents !== undefined, 0x6d5 /* content must be defined */);
+		const message: LocalContainerRuntimeMessage = JSON.parse(serializedContents);
+		assert(message.type !== undefined, 0x6d6 /* incorrect op content format */);
+		return message;
 	}
 
-	private async applyStashedOp(op: string): Promise<unknown> {
+	private async applyStashedOp(serializedOpContent: string): Promise<unknown> {
 		// Need to parse from string for back-compat
-		const { type, contents, compatDetails } = this.parseOpContent(op);
-		switch (type) {
+		const opContents = this.parseLocalOpContent(serializedOpContent);
+		switch (opContents.type) {
 			case ContainerMessageType.FluidDataStoreOp:
-				return this.dataStores.applyStashedOp(contents as IEnvelope);
+				return this.dataStores.applyStashedOp(opContents.contents);
 			case ContainerMessageType.Attach:
-				return this.dataStores.applyStashedAttachOp(contents as IAttachMessage);
+				return this.dataStores.applyStashedAttachOp(opContents.contents);
 			case ContainerMessageType.IdAllocation:
 				assert(
 					this.idCompressor !== undefined,
 					0x67b /* IdCompressor should be defined if enabled */,
 				);
-				return this.applyStashedIdAllocationOp(contents as IdCreationRangeWithStashedState);
+				return this.applyStashedIdAllocationOp(opContents.contents);
 			case ContainerMessageType.Alias:
 			case ContainerMessageType.BlobAttach:
 				return;
@@ -2048,15 +2014,15 @@ export class ContainerRuntime
 				// This should be extremely rare for stashed ops.
 				// It would require a newer runtime stashing ops and then an older one applying them,
 				// e.g. if an app rolled back its container version
-				const compatBehavior = compatDetails?.behavior;
-				if (!compatBehaviorAllowsMessageType(type, compatBehavior)) {
+				const compatBehavior = opContents.compatDetails?.behavior;
+				if (!compatBehaviorAllowsMessageType(opContents.type, compatBehavior)) {
 					const error = DataProcessingError.create(
 						"Stashed runtime message of unknown type",
 						"applyStashedOp",
 						undefined /* sequencedMessage */,
 						{
 							messageDetails: JSON.stringify({
-								type,
+								type: opContents.type,
 								compatBehavior,
 							}),
 						},
@@ -2161,7 +2127,20 @@ export class ContainerRuntime
 		// but will not modify the contents object (likely it will replace it on the message).
 		const messageCopy = { ...messageArg };
 		for (const message of this.remoteMessageProcessor.process(messageCopy)) {
-			this.processCore(message, local, modernRuntimeMessage);
+			if (modernRuntimeMessage) {
+				this.processCore({
+					// Cast it since we expect it to be this based on modernRuntimeMessage computation above.
+					// There is nothing really ensuring that anytime original message.type is Operation that
+					// the result messages will be so. In the end modern bool being true only directs to
+					// throw error if ultimately unrecognized without compat details saying otherwise.
+					message: message as InboundSequencedContainerRuntimeMessage,
+					local,
+					modernRuntimeMessage,
+				});
+			} else {
+				// Unrecognized message will be ignored.
+				this.processCore({ message, local, modernRuntimeMessage });
+			}
 		}
 	}
 
@@ -2169,15 +2148,9 @@ export class ContainerRuntime
 
 	/**
 	 * Direct the message to the correct subsystem for processing, and implement other side effects
-	 * @param message - The unpacked message. Likely a ContainerRuntimeMessage, but could also be a system op
-	 * @param local - Did this client send the op?
-	 * @param modernRuntimeMessage - Does this appear like a current ContainerRuntimeMessage?
 	 */
-	private processCore(
-		message: ISequencedDocumentMessage | SequencedContainerRuntimeMessage,
-		local: boolean,
-		modernRuntimeMessage: boolean,
-	) {
+	private processCore(messageWithContext: MessageWithContext) {
+		const { message, local } = messageWithContext;
 		// Surround the actual processing of the operation with messages to the schedule manager indicating
 		// the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
 		// messages once a batch has been fully processed.
@@ -2187,9 +2160,13 @@ export class ContainerRuntime
 
 		try {
 			let localOpMetadata: unknown;
-			if (local && modernRuntimeMessage && message.type !== ContainerMessageType.ChunkedOp) {
+			if (
+				local &&
+				messageWithContext.modernRuntimeMessage &&
+				message.type !== ContainerMessageType.ChunkedOp
+			) {
 				localOpMetadata = this.pendingStateManager.processPendingLocalMessage(
-					message as SequencedContainerRuntimeMessage,
+					messageWithContext.message,
 				);
 			}
 
@@ -2199,14 +2176,9 @@ export class ContainerRuntime
 				this.updateDocumentDirtyState(false);
 			}
 
-			this.validateAndProcessRuntimeMessage(
-				message,
-				localOpMetadata,
-				local,
-				modernRuntimeMessage,
-			);
+			this.validateAndProcessRuntimeMessage(messageWithContext, localOpMetadata);
 
-			this.emit("op", message, modernRuntimeMessage);
+			this.emit("op", message, messageWithContext.modernRuntimeMessage);
 
 			this.scheduleManager.afterOpProcessing(undefined, message);
 
@@ -2222,39 +2194,43 @@ export class ContainerRuntime
 		}
 	}
 	/**
-	 * Assuming the given message is also a ContainerRuntimeMessage,
+	 * Assuming the given message is also a TypedContainerRuntimeMessage,
 	 * checks its type and dispatches the message to the appropriate handler in the runtime.
-	 * Throws a DataProcessingError if the message doesn't conform to the ContainerRuntimeMessage type.
+	 * Throws a DataProcessingError if the message looks like but doesn't conform to a known TypedContainerRuntimeMessage type.
 	 */
 	private validateAndProcessRuntimeMessage(
-		message: ISequencedDocumentMessage,
+		messageWithContext: MessageWithContext,
 		localOpMetadata: unknown,
-		local: boolean,
-		expectRuntimeMessageType: boolean,
-	): asserts message is SequencedContainerRuntimeMessage {
-		// Optimistically extract ContainerRuntimeMessage-specific props from the message
-		const { type: maybeContainerMessageType, compatDetails } =
-			message as ContainerRuntimeMessage;
-
-		switch (maybeContainerMessageType) {
+	): void {
+		// TODO: destructure message and modernRuntimeMessage once using typescript 5.2.2+
+		const { local } = messageWithContext;
+		switch (messageWithContext.message.type) {
 			case ContainerMessageType.Attach:
-				this.dataStores.processAttachMessage(message, local);
+				this.dataStores.processAttachMessage(messageWithContext.message, local);
 				break;
 			case ContainerMessageType.Alias:
-				this.dataStores.processAliasMessage(message, localOpMetadata, local);
+				this.dataStores.processAliasMessage(
+					messageWithContext.message,
+					localOpMetadata,
+					local,
+				);
 				break;
 			case ContainerMessageType.FluidDataStoreOp:
-				this.dataStores.processFluidDataStoreOp(message, local, localOpMetadata);
+				this.dataStores.processFluidDataStoreOp(
+					messageWithContext.message,
+					local,
+					localOpMetadata,
+				);
 				break;
 			case ContainerMessageType.BlobAttach:
-				this.blobManager.processBlobAttachOp(message, local);
+				this.blobManager.processBlobAttachOp(messageWithContext.message, local);
 				break;
 			case ContainerMessageType.IdAllocation:
 				assert(
 					this.idCompressor !== undefined,
 					0x67c /* IdCompressor should be defined if enabled */,
 				);
-				this.idCompressor.finalizeCreationRange(message.contents as IdCreationRange);
+				this.idCompressor.finalizeCreationRange(messageWithContext.message.contents);
 				break;
 			case ContainerMessageType.ChunkedOp:
 			case ContainerMessageType.Rejoin:
@@ -2262,12 +2238,18 @@ export class ContainerRuntime
 			default: {
 				// If we didn't necessarily expect a runtime message type, then no worries - just return
 				// e.g. this case applies to system ops, or legacy ops that would have fallen into the above cases anyway.
-				if (!expectRuntimeMessageType) {
+				if (!messageWithContext.modernRuntimeMessage) {
 					return;
 				}
 
-				const compatBehavior = compatDetails?.behavior;
-				if (!compatBehaviorAllowsMessageType(maybeContainerMessageType, compatBehavior)) {
+				const compatBehavior = messageWithContext.message.compatDetails?.behavior;
+				if (
+					!compatBehaviorAllowsMessageType(
+						messageWithContext.message.type,
+						compatBehavior,
+					)
+				) {
+					const { message } = messageWithContext;
 					const error = DataProcessingError.create(
 						// Former assert 0x3ce
 						"Runtime message of unknown type",
@@ -2538,7 +2520,7 @@ export class ContainerRuntime
 		return this.dirtyContainer;
 	}
 
-	private isContainerMessageDirtyable({ type, contents }: ContainerRuntimeMessage) {
+	private isContainerMessageDirtyable({ type, contents }: OutboundContainerRuntimeMessage) {
 		// For legacy purposes, exclude the old built-in AgentScheduler from dirty consideration as a special-case.
 		// Ultimately we should have no special-cases from the ContainerRuntime's perspective.
 		if (type === ContainerMessageType.Attach) {
@@ -3400,7 +3382,7 @@ export class ContainerRuntime
 			}
 
 			if (idRange !== undefined) {
-				const idAllocationMessage: ContainerRuntimeMessage = {
+				const idAllocationMessage: ContainerRuntimeIdAllocationMessage = {
 					type: ContainerMessageType.IdAllocation,
 					contents: idRange,
 				};
@@ -3420,7 +3402,7 @@ export class ContainerRuntime
 	}
 
 	private submit(
-		containerRuntimeMessage: ContainerRuntimeMessage,
+		containerRuntimeMessage: OutboundContainerRuntimeMessage,
 		localOpMetadata: unknown = undefined,
 		metadata: Record<string, unknown> | undefined = undefined,
 	): void {
@@ -3616,39 +3598,36 @@ export class ContainerRuntime
 
 	private reSubmit(message: IPendingBatchMessage) {
 		// Need to parse from string for back-compat
-		const containerRuntimeMessage = this.parseOpContent(message.content);
+		const containerRuntimeMessage = this.parseLocalOpContent(message.content);
 		this.reSubmitCore(containerRuntimeMessage, message.localOpMetadata, message.opMetadata);
 	}
 
 	/**
 	 * Finds the right store and asks it to resubmit the message. This typically happens when we
 	 * reconnect and there are pending messages.
-	 * @param message - The original ContainerRuntimeMessage.
+	 * @param message - The original LocalContainerRuntimeMessage.
 	 * @param localOpMetadata - The local metadata associated with the original message.
 	 */
 	private reSubmitCore(
-		message: ContainerRuntimeMessage,
+		message: LocalContainerRuntimeMessage,
 		localOpMetadata: unknown,
 		opMetadata: Record<string, unknown> | undefined,
 	) {
-		const contents = message.contents;
 		switch (message.type) {
 			case ContainerMessageType.FluidDataStoreOp:
 				// For Operations, call resubmitDataStoreOp which will find the right store
 				// and trigger resubmission on it.
-				this.dataStores.resubmitDataStoreOp(contents, localOpMetadata);
+				this.dataStores.resubmitDataStoreOp(message.contents, localOpMetadata);
 				break;
 			case ContainerMessageType.Attach:
 			case ContainerMessageType.Alias:
 				this.submit(message, localOpMetadata);
 				break;
-			case ContainerMessageType.IdAllocation:
-				// Remove the stashedState from the op if it's a stashed op
-				if ("stashedState" in contents) {
-					delete contents.stashedState;
-				}
+			case ContainerMessageType.IdAllocation: {
+				prepareLocalContainerRuntimeIdAllocationMessageForTransit(message);
 				this.submit(message, localOpMetadata);
 				break;
+			}
 			case ContainerMessageType.ChunkedOp:
 				throw new Error(`chunkedOp not expected here`);
 			case ContainerMessageType.BlobAttach:
@@ -3687,7 +3666,7 @@ export class ContainerRuntime
 
 	private rollback(content: string | undefined, localOpMetadata: unknown) {
 		// Need to parse from string for back-compat
-		const { type, contents } = this.parseOpContent(content);
+		const { type, contents } = this.parseLocalOpContent(content);
 		switch (type) {
 			case ContainerMessageType.FluidDataStoreOp:
 				// For operations, call rollbackDataStoreOp which will find the right store
@@ -3899,17 +3878,17 @@ export class ContainerRuntime
 				if (this._orderSequentiallyCalls !== 0) {
 					throw new UsageError("can't get state during orderSequentially");
 				}
-				const pendingAttachmentBlobs = await this.blobManager.getPendingBlobs(
-					waitBlobsToAttach,
-				);
-				const pending = this.pendingStateManager.getLocalState();
-				if (!pendingAttachmentBlobs && !this.hasPendingMessages()) {
-					return; // no pending state to save
-				}
 				// Flush pending batch.
 				// getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
 				// to close current batch.
 				this.flush();
+				const pendingAttachmentBlobs = waitBlobsToAttach
+					? await this.blobManager.attachAndGetPendingBlobs()
+					: undefined;
+				const pending = this.pendingStateManager.getLocalState();
+				if (!pendingAttachmentBlobs && !this.hasPendingMessages()) {
+					return; // no pending state to save
+				}
 
 				const pendingState: IPendingRuntimeState = {
 					pending,

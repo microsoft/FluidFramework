@@ -71,7 +71,7 @@
 		{
 			"type": "node",
 			"request": "attach",
-			"name": "Attach to paparazzi",
+			"name": "Attach to scriptorium",
 			"address": "localhost",
 			"port": 5860,
 			"restart": true,
@@ -85,7 +85,7 @@
 		{
 			"type": "node",
 			"request": "attach",
-			"name": "Attach to scriptorium",
+			"name": "Attach to copier",
 			"address": "localhost",
 			"port": 5861,
 			"restart": true,
@@ -99,7 +99,7 @@
 		{
 			"type": "node",
 			"request": "attach",
-			"name": "Attach to foreman",
+			"name": "Attach to scribe",
 			"address": "localhost",
 			"port": 5862,
 			"restart": true,

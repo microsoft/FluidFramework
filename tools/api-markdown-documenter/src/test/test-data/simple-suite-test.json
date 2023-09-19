@@ -826,7 +826,7 @@
 				{
 					"kind": "Variable",
 					"canonicalReference": "simple-suite-test!testConst:var",
-					"docComment": "/**\n * Test Constant\n *\n * @remarks\n *\n * Here are some remarks about the variable\n *\n * @public\n */\n",
+					"docComment": "/**\n * Test Constant\n *\n * @remarks\n *\n * Here are some remarks about the variable\n *\n * @beta\n */\n",
 					"excerptTokens": [
 						{
 							"kind": "Content",
@@ -842,7 +842,7 @@
 						"endIndex": 2
 					},
 					"isReadonly": true,
-					"releaseTag": "Public",
+					"releaseTag": "Beta",
 					"name": "testConst",
 					"variableTypeTokenRange": {
 						"startIndex": 0,
@@ -973,7 +973,7 @@
 				{
 					"kind": "Function",
 					"canonicalReference": "simple-suite-test!testFunction:function(1)",
-					"docComment": "/**\n * Test function\n *\n * @remarks\n *\n * This is a test {@link TestInterface | link} to another API member\n *\n * @param testParameter - A test parameter\n *\n * @param testParameter - An optional parameter\n *\n * @typeParam TTypeParameter - A test type parameter\n *\n * @returns The provided parameter\n *\n * @throws\n *\n * An Error when something bad happens.\n *\n * @public\n */\n",
+					"docComment": "/**\n * Test function\n *\n * @remarks\n *\n * This is a test {@link TestInterface | link} to another API member\n *\n * @param testParameter - A test parameter\n *\n * @param testParameter - An optional parameter\n *\n * @typeParam TTypeParameter - A test type parameter\n *\n * @returns The provided parameter\n *\n * @throws\n *\n * An Error when something bad happens.\n *\n * @alpha\n */\n",
 					"excerptTokens": [
 						{
 							"kind": "Content",
@@ -1008,7 +1008,7 @@
 						"startIndex": 5,
 						"endIndex": 6
 					},
-					"releaseTag": "Public",
+					"releaseTag": "Alpha",
 					"overloadIndex": 1,
 					"parameters": [
 						{

@@ -8,9 +8,9 @@ import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
+import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { IsoBuffer } from '@fluid-internal/client-utils';
-import { Serializable } from '@fluidframework/datastore-definitions';
 import { SessionSpaceCompressedId } from '@fluidframework/runtime-definitions';
 import { StableId } from '@fluidframework/runtime-definitions';
 import type { Static } from '@sinclair/typebox';
@@ -1015,8 +1015,6 @@ export { InternalEditableTreeTypes }
 
 declare namespace InternalTypedSchemaTypes {
     export {
-        RecursiveTreeSchemaSpecification,
-        RecursiveTreeSchema,
         ObjectToMap,
         WithDefault,
         Unbrand,
@@ -1031,6 +1029,8 @@ declare namespace InternalTypedSchemaTypes {
         MapSchemaSpecification,
         LeafSchemaSpecification,
         MapFieldSchema,
+        RecursiveTreeSchemaSpecification,
+        RecursiveTreeSchema,
         FlexList,
         FlexListToNonLazyArray,
         ConstantFlexListToNonLazyArray,
@@ -1184,9 +1184,6 @@ export function isNeverField(policy: FullSchemaPolicy, originalData: SchemaData,
 
 // @alpha (undocumented)
 export function isPrimitive(schema: TreeStoredSchema): boolean;
-
-// @alpha (undocumented)
-export function isPrimitiveValue(nodeValue: Value): nodeValue is PrimitiveValue;
 
 // @alpha
 export interface ISubscribable<E extends Events<E>> {
@@ -2201,8 +2198,14 @@ export type TreeType = TreeSchemaIdentifier;
 export type TreeTypeSet = ReadonlySet<TreeSchemaIdentifier> | undefined;
 
 // @alpha
-export interface TreeValue extends Serializable {
-}
+export type TreeValue<TSchema extends ValueSchema = ValueSchema> = [
+    {
+    [ValueSchema.Number]: number;
+    [ValueSchema.String]: string;
+    [ValueSchema.Boolean]: boolean;
+    [ValueSchema.FluidHandle]: IFluidHandle;
+}[TSchema]
+][_InlineTrick];
 
 // @alpha
 type TypeArrayToTypedTreeArray<Mode extends ApiMode, T extends readonly TreeSchema[]> = [
@@ -2271,7 +2274,7 @@ type TypedValue<TValue extends ValueSchema> = {
     [ValueSchema.Number]: number;
     [ValueSchema.String]: string;
     [ValueSchema.Boolean]: boolean;
-    [ValueSchema.Serializable]: TreeValue;
+    [ValueSchema.FluidHandle]: IFluidHandle;
 }[TValue];
 
 // @alpha
@@ -2440,8 +2443,9 @@ export enum ValueSchema {
     // (undocumented)
     Boolean = 2,
     // (undocumented)
+    FluidHandle = 3,
+    // (undocumented)
     Number = 0,
-    Serializable = 3,
     // (undocumented)
     String = 1
 }

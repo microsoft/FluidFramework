@@ -20,7 +20,7 @@ import {
 	RangeUpPath,
 } from "../../../core";
 import { brand } from "../../../util";
-import { getField, on, singleTextCursor } from "../../../feature-libraries";
+import { getField, jsonableTreeFromCursor, on, singleTextCursor } from "../../../feature-libraries";
 import { IEmitter } from "../../../events";
 import {
 	fullSchemaData,
@@ -28,6 +28,7 @@ import {
 	getReadonlyEditableTreeContext,
 	setupForest,
 	addressSchema,
+	int32Schema,
 } from "./mockData";
 
 const fieldAddress: FieldKey = brand("address");
@@ -73,8 +74,20 @@ describe("editable-tree: event subscription", () => {
 					visitLog.push(path);
 				},
 				onInsert(path: UpPath, content: ProtoNodes): void {
-					assert.deepEqual(content[0].type, "Test:Address-1.0.0");
-					assert.deepEqual(content[0].value, { zip: "33428" });
+					const jsonable = content.map(jsonableTreeFromCursor);
+					assert.deepEqual(jsonable, [
+						{
+							type: addressSchema.name,
+							fields: {
+								zip: [
+									{
+										type: int32Schema.name,
+										value: 33428,
+									},
+								],
+							},
+						},
+					]);
 					assert.deepEqual(path, node);
 					visitLog.push(path);
 				},
@@ -104,7 +117,14 @@ describe("editable-tree: event subscription", () => {
 		const insertContent = [
 			singleTextCursor({
 				type: addressSchema.name,
-				value: { zip: "33428" },
+				fields: {
+					zip: [
+						{
+							type: int32Schema.name,
+							value: 33428,
+						},
+					],
+				},
 			}),
 		];
 		visitors.forEach((visitor) => {
