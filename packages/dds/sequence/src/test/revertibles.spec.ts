@@ -22,7 +22,7 @@ import { SharedString } from "../sharedString";
 import { IIntervalCollection } from "../intervalCollection";
 import { SharedStringFactory } from "../sequenceFactory";
 import { IntervalType, SequenceInterval } from "../intervals";
-import { assertIntervals } from "./intervalUtils";
+import { assertIntervals } from "./intervalEquivalenceUtils";
 
 describe("Sequence.Revertibles with Local Edits", () => {
 	let sharedString: SharedString;

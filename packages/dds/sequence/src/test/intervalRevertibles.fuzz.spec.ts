@@ -33,7 +33,7 @@ import {
 	appendSharedStringDeltaToRevertibles,
 } from "../revertibles";
 import { SharedString } from "../sharedString";
-import { assertEquivalentSharedStrings } from "./intervalUtils";
+import { assertEquivalentSharedStrings } from "./intervalEquivalenceUtils";
 import {
 	Operation,
 	FuzzTestState,

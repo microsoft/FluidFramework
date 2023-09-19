@@ -14,7 +14,7 @@ import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 import { IIntervalCollection, intervalLocatorFromEndpoint } from "../intervalCollection";
 import { IntervalStickiness, IntervalType, SequenceInterval } from "../intervals";
-import { assertIntervals } from "./intervalUtils";
+import { assertIntervals } from "./intervalEquivalenceUtils";
 
 async function loadSharedString(
 	containerRuntimeFactory: MockContainerRuntimeFactory,

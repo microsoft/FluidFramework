@@ -3,8 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { Client, PropertyAction, RedBlackTree } from "@fluidframework/merge-tree";
-import { IIntervalHelpers, ISerializableInterval, IntervalType } from "../intervals";
+import {
+	Client,
+	ISegment,
+	PropertyAction,
+	RedBlackTree,
+	ReferenceType,
+	compareReferencePositions,
+	reservedRangeLabelsKey,
+} from "@fluidframework/merge-tree";
+import {
+	IIntervalHelpers,
+	ISerializableInterval,
+	IntervalType,
+	SequenceInterval,
+	createPositionReferenceFromSegoff,
+	sequenceIntervalHelpers,
+} from "../intervals";
+import { SharedString } from "../sharedString";
 import { IntervalIndex } from "./intervalIndex";
 import { HasComparisonOverride, compareOverrideables, forceCompare } from "./intervalIndexUtils";
 
@@ -18,10 +34,13 @@ export interface IEndpointInRangeIndex<TInterval extends ISerializableInterval>
 	/**
 	 * @returns an array of all intervals contained in this collection whose endpoints locate in the range [start, end] (includes both ends)
 	 */
-	findIntervalsWithEndpointInRange(start: number, end: number);
+	findIntervalsWithEndpointInRange(
+		start: number | { segment: ISegment | undefined; offset: number | undefined },
+		end: number | { segment: ISegment | undefined; offset: number | undefined },
+	);
 }
 
-class EndpointInRangeIndex<TInterval extends ISerializableInterval>
+export class EndpointInRangeIndex<TInterval extends ISerializableInterval>
 	implements IEndpointInRangeIndex<TInterval>
 {
 	private readonly intervalTree;
@@ -61,8 +80,11 @@ class EndpointInRangeIndex<TInterval extends ISerializableInterval>
 		this.intervalTree.remove(interval);
 	}
 
-	public findIntervalsWithEndpointInRange(start: number, end: number) {
-		if (start <= 0 || start > end || this.intervalTree.isEmpty()) {
+	public findIntervalsWithEndpointInRange(
+		start: number | { segment: ISegment | undefined; offset: number | undefined },
+		end: number | { segment: ISegment | undefined; offset: number | undefined },
+	) {
+		if (this.intervalTree.isEmpty()) {
 			return [];
 		}
 		const results: TInterval[] = [];
@@ -70,22 +92,60 @@ class EndpointInRangeIndex<TInterval extends ISerializableInterval>
 			results.push(node.data);
 			return true;
 		};
+		let transientStartInterval;
+		let transientEndInterval;
 
-		const transientStartInterval = this.helpers.create(
-			"transient",
-			start,
-			start,
-			this.client,
-			IntervalType.Transient,
-		);
+		if (typeof start === "number" && typeof end === "number") {
+			if (start <= 0 || start > end) {
+				return results;
+			}
+			transientStartInterval = this.helpers.create(
+				"transient",
+				start,
+				start,
+				this.client,
+				IntervalType.Transient,
+			);
 
-		const transientEndInterval = this.helpers.create(
-			"transient",
-			end,
-			end,
-			this.client,
-			IntervalType.Transient,
-		);
+			transientEndInterval = this.helpers.create(
+				"transient",
+				end,
+				end,
+				this.client,
+				IntervalType.Transient,
+			);
+		} else {
+			const startLref = createPositionReferenceFromSegoff(
+				this.client,
+				start as { segment: ISegment | undefined; offset: number | undefined },
+				ReferenceType.Transient,
+			);
+
+			const endLref = createPositionReferenceFromSegoff(
+				this.client,
+				end as { segment: ISegment | undefined; offset: number | undefined },
+				ReferenceType.Transient,
+			);
+
+			if (compareReferencePositions(startLref, endLref) > 0) {
+				return [];
+			}
+
+			transientStartInterval = new SequenceInterval(
+				this.client,
+				startLref,
+				startLref,
+				IntervalType.Transient,
+				{ [reservedRangeLabelsKey]: ["transient"] },
+			);
+			transientEndInterval = new SequenceInterval(
+				this.client,
+				endLref,
+				endLref,
+				IntervalType.Transient,
+				{ [reservedRangeLabelsKey]: ["transient"] },
+			);
+		}
 
 		// Add comparison overrides to the transient intervals
 		(transientStartInterval as Partial<HasComparisonOverride>)[forceCompare] = -1;
@@ -96,9 +156,9 @@ class EndpointInRangeIndex<TInterval extends ISerializableInterval>
 	}
 }
 
-export function createEndpointInRangeIndex<TInterval extends ISerializableInterval>(
-	client: Client,
-	helpers: IIntervalHelpers<TInterval>,
-): IEndpointInRangeIndex<TInterval> {
-	return new EndpointInRangeIndex<TInterval>(client, helpers);
+export function createEndpointInRangeIndex(
+	sharedString: SharedString,
+): IEndpointInRangeIndex<SequenceInterval> {
+	const client = (sharedString as unknown as { client: Client }).client;
+	return new EndpointInRangeIndex<SequenceInterval>(client, sequenceIntervalHelpers);
 }
