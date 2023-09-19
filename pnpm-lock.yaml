@@ -44040,8 +44040,8 @@ packages:
       '@fluidframework/server-services-shared': 1.0.0
       '@fluidframework/server-services-telemetry': 1.0.1
       '@fluidframework/server-services-utils': 1.0.0
-      '@fluidframework/server-test-utils': 1.0.0
-      agentkeepalive: 4.3.0
+      '@fluidframework/server-test-utils': 1.0.1
+      agentkeepalive: 4.5.0
       axios: 0.26.1
       body-parser: 1.20.2
       charwise: 3.0.1
