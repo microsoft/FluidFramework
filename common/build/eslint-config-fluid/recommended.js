@@ -62,12 +62,6 @@ module.exports = {
 		 */
 		"unicorn/numeric-separators-style": ["error", { onlyIfContainsSeparator: true }],
 
-		/**
-		 * "node:" imports are not supported prior to Node.js v16.
-		 * TODO: re-enable this (remove override) once the repo has been updated to v16.
-		 */
-		"unicorn/prefer-node-protocol": "off",
-
 		"unicorn/prevent-abbreviations": "off",
 
 		/**
@@ -142,6 +136,14 @@ module.exports = {
 			files: ["*.jsx", "*.tsx"],
 			rules: {
 				// Conflicts with best practices for various React hooks.
+				"unicorn/consistent-function-scoping": "off",
+			},
+		},
+		{
+			// Rules for test code
+			files: ["*.spec.ts", "*.test.ts", "**/test/**"],
+			rules: {
+				// Does not work well with describe/it block scoping
 				"unicorn/consistent-function-scoping": "off",
 			},
 		},

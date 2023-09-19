@@ -18,13 +18,13 @@ import { compareDocumentationSuiteSnapshot } from "./SnapshotTestUtilities";
 /**
  * Temp directory under which all tests that generate files will output their contents.
  */
-const testTempDirPath = Path.resolve(__dirname, "test_temp", "markdown");
+const testTemporaryDirectoryPath = Path.resolve(__dirname, "test_temp", "markdown");
 
 /**
  * Snapshot directory to which generated test data will be copied.
  * Relative to dist/test
  */
-const snapshotsDirPath = Path.resolve(
+const snapshotsDirectoryPath = Path.resolve(
 	__dirname,
 	"..",
 	"..",
@@ -35,8 +35,8 @@ const snapshotsDirPath = Path.resolve(
 );
 
 // Relative to dist/test
-const testDataDirPath = Path.resolve(__dirname, "..", "..", "src", "test", "test-data");
-const testModelPaths = [Path.resolve(testDataDirPath, "simple-suite-test.json")];
+const testDataDirectoryPath = Path.resolve(__dirname, "..", "..", "src", "test", "test-data");
+const testModelFilePaths = [Path.resolve(testDataDirectoryPath, "simple-suite-test.json")];
 
 /**
  * Simple integration test that validates complete output from simple test package.
@@ -50,8 +50,14 @@ async function snapshotTest(
 	transformConfig: ApiItemTransformationConfiguration,
 	renderConfig: MarkdownRenderConfiguration,
 ): Promise<void> {
-	const outputDirectoryPath = Path.resolve(testTempDirPath, relativeSnapshotDirectoryPath);
-	const snapshotDirectoryPath = Path.resolve(snapshotsDirPath, relativeSnapshotDirectoryPath);
+	const outputDirectoryPath = Path.resolve(
+		testTemporaryDirectoryPath,
+		relativeSnapshotDirectoryPath,
+	);
+	const snapshotDirectoryPath = Path.resolve(
+		snapshotsDirectoryPath,
+		relativeSnapshotDirectoryPath,
+	);
 
 	await compareDocumentationSuiteSnapshot(
 		snapshotDirectoryPath,
@@ -63,7 +69,7 @@ async function snapshotTest(
 /**
  * Input props for {@link apiTestSuite}.
  */
-interface ConfigTestProps {
+interface ConfigurationTestProperties {
 	/**
 	 * Name of the config to be used in naming of the test-suite
 	 */
@@ -90,16 +96,16 @@ interface ConfigTestProps {
  *
  * @param modelName - Name of the model for which the docs are being generated.
  * @param apiReportFilePaths - List of paths to package API report files to be loaded into the model.
- * @param configs - Configurations to test against.
+ * @param configurations - Configurations to test against.
  */
 function apiTestSuite(
 	modelName: string,
 	apiReportFilePaths: string[],
-	configs: ConfigTestProps[],
+	configurations: ConfigurationTestProperties[],
 ): Suite {
 	return describe(modelName, () => {
-		for (const configProps of configs) {
-			describe(configProps.configName, () => {
+		for (const configurationProperties of configurations) {
+			describe(configurationProperties.configName, () => {
 				/**
 				 * Complete transform config used in tests. Generated in `before` hook.
 				 */
@@ -117,11 +123,11 @@ function apiTestSuite(
 					}
 
 					transformConfig = {
-						...configProps.transformConfigLessApiModel,
+						...configurationProperties.transformConfigLessApiModel,
 						apiModel,
 					};
 
-					renderConfig = configProps.renderConfig;
+					renderConfig = configurationProperties.renderConfig;
 				});
 
 				it("Ensure no duplicate file paths", () => {
@@ -141,7 +147,7 @@ function apiTestSuite(
 
 				it("Snapshot test", async () => {
 					await snapshotTest(
-						Path.join(modelName, configProps.configName),
+						Path.join(modelName, configurationProperties.configName),
 						transformConfig,
 						renderConfig,
 					);
@@ -152,7 +158,7 @@ function apiTestSuite(
 }
 
 describe("Markdown rendering end-to-end tests", () => {
-	const configs: ConfigTestProps[] = [
+	const configs: ConfigurationTestProperties[] = [
 		/**
 		 * Sample "default" configuration.
 		 */
@@ -220,13 +226,13 @@ describe("Markdown rendering end-to-end tests", () => {
 
 	before(async () => {
 		// Ensure the output temp and snapshots directories exists (will create an empty ones if they don't).
-		await FileSystem.ensureFolderAsync(testTempDirPath);
-		await FileSystem.ensureFolderAsync(snapshotsDirPath);
+		await FileSystem.ensureFolderAsync(testTemporaryDirectoryPath);
+		await FileSystem.ensureFolderAsync(snapshotsDirectoryPath);
 
 		// Clear test temp dir before test run to make sure we are running from a clean state.
-		await FileSystem.ensureEmptyFolderAsync(testTempDirPath);
+		await FileSystem.ensureEmptyFolderAsync(testTemporaryDirectoryPath);
 	});
 
 	// Run the test suite against a sample report
-	apiTestSuite("simple-suite-test", testModelPaths, configs);
+	apiTestSuite("simple-suite-test", testModelFilePaths, configs);
 });

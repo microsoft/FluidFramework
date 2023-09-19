@@ -216,7 +216,7 @@ export type DocumentBoundaries = ApiMemberKind[];
 
 // @public
 export class DocumentNode implements Parent<SectionNode>, DocumentNodeProps {
-    constructor(props: DocumentNodeProps);
+    constructor(properties: DocumentNodeProps);
     readonly apiItemName: string;
     readonly children: SectionNode[];
     readonly documentPath: string;
@@ -384,7 +384,7 @@ export interface Logger {
 }
 
 // @public
-export type LoggingFunction = (message: string | Error, ...args: unknown[]) => void;
+export type LoggingFunction = (message: string | Error, ...parameters: unknown[]) => void;
 
 // @public
 export interface MarkdownRenderConfiguration extends ConfigurationBase {
@@ -582,7 +582,7 @@ export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (apiItem
 export function transformApiModel(transformConfig: ApiItemTransformationConfiguration): DocumentNode[];
 
 // @public
-export function transformDocNode(docNode: DocNode, contextApiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): DocumentationNode | undefined;
+export function transformTsdocNode(node: DocNode, contextApiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): DocumentationNode | undefined;
 
 // @public
 export class UnorderedListNode extends DocumentationParentNodeBase<SingleLineDocumentationNode> implements MultiLineDocumentationNode {

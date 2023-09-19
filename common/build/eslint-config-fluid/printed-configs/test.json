@@ -1200,7 +1200,7 @@
             "error"
         ],
         "unicorn/consistent-function-scoping": [
-            "error"
+            "off"
         ],
         "unicorn/custom-error-definition": [
             "off"
@@ -1416,7 +1416,7 @@
             "error"
         ],
         "unicorn/prefer-node-protocol": [
-            "off"
+            "error"
         ],
         "unicorn/prefer-number-properties": [
             "error"
