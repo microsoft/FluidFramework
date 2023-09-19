@@ -1653,11 +1653,13 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 
 	it("applies stashed ops with no saved ops", async function () {
 		// wait for summary
-		await new Promise<void>((resolve) => container1.on("op", (op) => {
-			if (op.type === "summarize") {
-				resolve();
-			}
-		}));
+		await new Promise<void>((resolve) =>
+			container1.on("op", (op) => {
+				if (op.type === "summarize") {
+					resolve();
+				}
+			}),
+		);
 
 		// avoid our join op being saved
 		const headers: IRequestHeader = { [LoaderHeader.loadMode]: { deltaConnection: "none" } };
@@ -1670,8 +1672,10 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		assert(stashBlob);
 		const pendingState = JSON.parse(stashBlob);
 		// make sure the container loaded from summary and we have no saved ops
-		assert(pendingState.savedOps.length  === 0);
-		assert(pendingState.pendingRuntimeState.pending.pendingStates[0].referenceSequenceNumber > 0);
+		assert.strictEqual(pendingState.savedOps.length, 0);
+		assert(
+			pendingState.pendingRuntimeState.pending.pendingStates[0].referenceSequenceNumber > 0,
+		);
 
 		// load container with pending ops, which should resend the op not sent by previous container
 		const container2 = await loader.resolve({ url }, stashBlob);
