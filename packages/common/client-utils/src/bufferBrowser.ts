@@ -187,7 +187,6 @@ export class IsoBuffer extends Uint8Array {
 
 		// Remove invalid characters - Node buffer strips invalid characters
 		// whereas base64-js replaces them with "A"
-		// eslint-disable-next-line unicorn/prefer-string-replace-all
 		sanitizedStr = sanitizedStr.replace(/[^\w+-/]/g, "");
 
 		// Check for missing padding - Node buffer tolerates missing padding

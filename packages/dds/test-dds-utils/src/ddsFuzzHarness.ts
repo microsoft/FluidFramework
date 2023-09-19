@@ -100,7 +100,6 @@ function getSaveDirectory(
 	if (!options.saveFailures) {
 		return undefined;
 	}
-	// eslint-disable-next-line unicorn/prefer-string-replace-all
 	const workloadFriendly = model.workloadName.replace(/[\s_]+/g, "-").toLowerCase();
 	return path.join(options.saveFailures.directory, workloadFriendly);
 }

@@ -254,7 +254,6 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): React.Re
 		return (
 			<g>
 				<text x={x} y={y} textAnchor="end" fill={graphColorPalette.axisTick} fontSize={16}>
-					{}
 					{`${payload.value}${props.yAxisUnitDisplayName ?? ""}`}
 				</text>
 			</g>
