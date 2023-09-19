@@ -41,7 +41,7 @@ export interface PromiseCacheOptions {
 class GarbageCollector<TKey> {
 	private readonly gcTimeouts = new Map<TKey, ReturnType<typeof setTimeout>>();
 
-	constructor(
+	public constructor(
 		private readonly expiry: PromiseCacheExpiry,
 		private readonly cleanup: (key: TKey) => void,
 	) {}
@@ -99,7 +99,7 @@ export class PromiseCache<TKey, TResult> {
 	 *
 	 * expiry: indefinite, removeOnError: true for all errors
 	 */
-	constructor({
+	public constructor({
 		expiry = { policy: "indefinite" },
 		removeOnError = (): boolean => true,
 	}: PromiseCacheOptions = {}) {

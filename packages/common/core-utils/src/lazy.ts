@@ -13,7 +13,7 @@ export class Lazy<T> {
 	 * Instantiates an instance of Lazy<T>.
 	 * @param valueGenerator - The function that will generate the value when value is accessed the first time.
 	 */
-	constructor(private readonly valueGenerator: () => T) {}
+	public constructor(private readonly valueGenerator: () => T) {}
 
 	/**
 	 * Return true if the value as been generated, otherwise false.
@@ -48,7 +48,7 @@ export class LazyPromise<T> implements Promise<T> {
 
 	private result: Promise<T> | undefined;
 
-	constructor(private readonly execute: () => Promise<T>) {}
+	public constructor(private readonly execute: () => Promise<T>) {}
 
 	// eslint-disable-next-line unicorn/no-thenable
 	public async then<TResult1 = T, TResult2 = never>(

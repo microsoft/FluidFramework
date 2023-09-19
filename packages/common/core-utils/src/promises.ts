@@ -12,7 +12,7 @@ export class Deferred<T> {
 	private rej: ((reason?: unknown) => void) | undefined;
 	private completed: boolean = false;
 
-	constructor() {
+	public constructor() {
 		this.p = new Promise<T>((resolve, reject) => {
 			this.res = resolve;
 			this.rej = reject;
