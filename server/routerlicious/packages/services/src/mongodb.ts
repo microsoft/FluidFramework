@@ -539,8 +539,8 @@ const DefaultMongoDbMonitoringEvents = [
 	"topologyOpening",
 	"topologyClosed",
 	"topologyDescriptionChanged",
-	"serverHeartbeatStarted",
-	"serverHeartbeatSucceeded",
+	// "serverHeartbeatStarted",
+	// "serverHeartbeatSucceeded",
 	"serverHeartbeatFailed",
 	// "commandStarted", Comment out because this will be too often
 	// "commandSucceeded", Comment out because this will be too often
