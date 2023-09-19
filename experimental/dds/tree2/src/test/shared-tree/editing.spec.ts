@@ -555,17 +555,17 @@ describe("Editing", () => {
 				1,
 			);
 
-			// Change value of A to C
-			const editor = tree2.editor.valueField({
+			// Delete A
+			const editor = tree2.editor.sequenceField({
 				parent: { parent: fooList, parentField: brand(""), parentIndex: 0 },
 				field: brand("baz"),
 			});
-			editor.set(singleTextCursor({ type: jsonString.name, value: "C" }));
+			editor.delete(0, 1);
 
 			const expectedState: JsonCompatible = [
 				{
 					foo: [],
-					bar: ["B", { baz: "C" }],
+					bar: ["B", {}],
 				},
 			];
 
