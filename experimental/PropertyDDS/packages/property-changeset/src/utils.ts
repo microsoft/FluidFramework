@@ -1817,11 +1817,11 @@ export namespace Utils {
 	 *
 	 * ```typescript
 	 * new Map([
-	 * ['entry', new Map()],
-	 * ['nested', new Map([
-	 * ['entry2', new Map()],
-	 * ['entry3', new Map()]
-	 * ])]
+	 *   ['entry', new Map()],
+	 *   ['nested', new Map([
+	 *     ['entry2', new Map()],
+	 *     ['entry3', new Map()]
+	 *   ])]
 	 * ])
 	 * ```
 	 *
@@ -1829,11 +1829,11 @@ export namespace Utils {
 	 *
 	 * ```typescript
 	 * {
-	 * entry: {},
-	 * nested: {
-	 * entry2: {}
-	 * entry3: {}
-	 * }
+	 *   entry: {},
+	 *   nested: {
+	 *     entry2: {}
+	 *     entry3: {}
+	 *   }
 	 * }
 	 * ```
 	 *
@@ -1934,7 +1934,11 @@ export namespace Utils {
 				if (_isUserData(k)) {
 					thisLevel[k] = v;
 				} else {
-					thisLevel[k] = v instanceof Map ? _convertMapToLevel(v) : v;
+					if (v instanceof Map) {
+						thisLevel[k] = _convertMapToLevel(v);
+					} else {
+						thisLevel[k] = v;
+					}
 				}
 			}
 			return thisLevel;
