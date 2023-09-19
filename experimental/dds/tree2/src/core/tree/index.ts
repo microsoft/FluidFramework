@@ -94,4 +94,4 @@ export { SparseNode, getDescendant } from "./sparseTree";
 
 export { isSkipMark, emptyDelta } from "./deltaUtil";
 
-export { TreeIndex, ForestRootId } from "./treeIndex";
+export { TreeIndex, ForestRootId, TreeIndexSummarizer } from "./treeIndex";

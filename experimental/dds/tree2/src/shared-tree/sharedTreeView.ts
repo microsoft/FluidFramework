@@ -290,6 +290,7 @@ export function createSharedTreeView(args?: {
 	nodeKeyManager?: NodeKeyManager;
 	nodeKeyIndex?: NodeKeyIndex;
 	events?: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>;
+	removedTrees?: TreeIndex;
 }): ISharedTreeView {
 	const schema = args?.schema ?? new InMemoryStoredSchemaRepository();
 	const forest = args?.forest ?? buildForest();
@@ -329,6 +330,7 @@ export function createSharedTreeView(args?: {
 		nodeKeyManager,
 		nodeKeyIndex,
 		events,
+		args?.removedTrees,
 	);
 }
 

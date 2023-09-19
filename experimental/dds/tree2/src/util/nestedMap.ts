@@ -162,6 +162,31 @@ export function deleteFromNestedMap<Key1, Key2, Value>(
 }
 
 /**
+ * Encodes a NestedMap as a string.
+ */
+export function encodeNestedMap<Key1, Key2, Value>(map: NestedMap<Key1, Key2, Value>): string {
+	const encoded: [Key1, Key2, Value][] = [];
+	map.forEach((innerMap, key1) => {
+		innerMap.forEach((val, key2) => {
+			encoded.push([key1, key2, val]);
+		});
+	});
+	return JSON.stringify(encoded);
+}
+
+/**
+ * Decodes a NestedMap from a string.
+ */
+export function decodeNestedMap<Key1, Key2, Value>(encoded: string): NestedMap<Key1, Key2, Value> {
+	const decoded: [Key1, Key2, Value][] = JSON.parse(encoded);
+	const map = new Map<Key1, Map<Key2, Value>>();
+	for (const [key1, key2, val] of decoded) {
+		getOrAddInMap(map, key1, new Map<Key2, Value>()).set(key2, val);
+	}
+	return map;
+}
+
+/**
  * Map with two keys; same semantics as NestedMap, but maintains a size count for the entire collection.
  * Note: undefined is not supported as a value, and will cause incorrect behavior.
  *

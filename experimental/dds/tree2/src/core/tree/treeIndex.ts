@@ -5,16 +5,31 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
+	IGarbageCollectionData,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
+} from "@fluidframework/runtime-definitions";
+import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
+import { IChannelStorageService } from "@fluidframework/datastore-definitions";
+import { bufferToString } from "@fluid-internal/client-utils";
+import {
 	Brand,
 	IdAllocator,
 	NestedMap,
 	brand,
+	decodeNestedMap,
 	deleteFromNestedMap,
+	encodeNestedMap,
 	populateNestedMap,
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../util";
 import { FieldKey } from "../schema-stored";
+import {
+	Summarizable,
+	SummaryElementParser,
+	SummaryElementStringifier,
+} from "../../shared-tree-core";
 import * as Delta from "./delta";
 
 /**
@@ -37,7 +52,7 @@ type Minor = number;
  * The tree index records detached field ids and associates them with a change atom ID.
  */
 export class TreeIndex {
-	private readonly detachedNodeToField: NestedMap<Major, Minor, Entry> = new Map<
+	private detachedNodeToField: NestedMap<Major, Minor, Entry> = new Map<
 		Major,
 		Map<Minor, Entry>
 	>();
@@ -138,5 +153,69 @@ export class TreeIndex {
 			setInNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor, entry);
 		}
 		return entry;
+	}
+
+	public encode(): string {
+		return encodeNestedMap(this.detachedNodeToField);
+	}
+
+	/**
+	 * Loads the tree index from the given string, this overrides any existing data.
+	 */
+	public loadData(data: string): void {
+		this.detachedNodeToField = decodeNestedMap(data);
+	}
+}
+
+/**
+ * The storage key for the blob in the summary containing schema data
+ */
+const treeIndexBlobKey = "TreeIndexBlob";
+
+/**
+ * Provides methods for summarizing and loading a tree index.
+ */
+export class TreeIndexSummarizer implements Summarizable {
+	public readonly key = "TreeIndex";
+
+	public constructor(private readonly treeIndex: TreeIndex) {}
+
+	public getAttachSummary(
+		stringify: SummaryElementStringifier,
+		fullTree?: boolean,
+		trackState?: boolean,
+		telemetryContext?: ITelemetryContext,
+	): ISummaryTreeWithStats {
+		return createSingleBlobSummary(treeIndexBlobKey, this.treeIndex.encode());
+	}
+
+	public async summarize(
+		stringify: SummaryElementStringifier,
+		fullTree?: boolean,
+		trackState?: boolean,
+		telemetryContext?: ITelemetryContext,
+	): Promise<ISummaryTreeWithStats> {
+		return createSingleBlobSummary(treeIndexBlobKey, this.treeIndex.encode());
+	}
+
+	public getGCData(fullGC?: boolean): IGarbageCollectionData {
+		// TODO: Properly implement garbage collection. Right now, garbage collection is performed automatically
+		// by the code in SharedObject (from which SharedTreeCore extends). The `runtime.uploadBlob` API delegates
+		// to the `BlobManager`, which automatically populates the summary with ISummaryAttachment entries for each
+		// blob.
+		return {
+			gcNodes: {},
+		};
+	}
+
+	public async load(
+		services: IChannelStorageService,
+		parse: SummaryElementParser,
+	): Promise<void> {
+		if (await services.contains(treeIndexBlobKey)) {
+			const treeIndexBuffer = await services.readBlob(treeIndexBlobKey);
+			const treeBufferString = bufferToString(treeIndexBuffer, "utf8");
+			this.treeIndex.loadData(treeBufferString);
+		}
 	}
 }
