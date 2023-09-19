@@ -57,6 +57,7 @@
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/azure-client": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
+		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/counter": "workspace:~",
 		"@fluidframework/fluid-static": "workspace:~",

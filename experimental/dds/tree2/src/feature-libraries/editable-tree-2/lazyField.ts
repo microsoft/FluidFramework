@@ -228,6 +228,18 @@ export abstract class LazyField<TKind extends FieldKindTypes, TTypes extends All
 	public getFieldPath(): FieldUpPath {
 		return this[cursorSymbol].getFieldPath();
 	}
+
+	/**
+	 * Returns the path to this field to use for editing. Throws iff this path is not {@link TreeStatus#InDocument}.
+	 * This path is not valid to hold onto across edits: this must be recalled for each edit.
+	 */
+	public getFieldPathForEditing(): FieldUpPath {
+		assert(
+			this.treeStatus() === TreeStatus.InDocument,
+			"Editing only allowed on fields with TreeStatus.InDocument status",
+		);
+		return this.getFieldPath();
+	}
 }
 
 export class LazySequence<TTypes extends AllowedTypes>
@@ -246,7 +258,7 @@ export class LazySequence<TTypes extends AllowedTypes>
 	}
 
 	private sequenceEditor(): SequenceFieldEditBuilder {
-		const fieldPath = this[cursorSymbol].getFieldPath();
+		const fieldPath = this.getFieldPathForEditing();
 		const fieldEditor = this.context.editor.sequenceField(fieldPath);
 		return fieldEditor;
 	}
@@ -284,7 +296,7 @@ export class LazyValueField<TTypes extends AllowedTypes>
 	}
 
 	private valueFieldEditor(): ValueFieldEditBuilder {
-		const fieldPath = this[cursorSymbol].getFieldPath();
+		const fieldPath = this.getFieldPathForEditing();
 		const fieldEditor = this.context.editor.valueField(fieldPath);
 		return fieldEditor;
 	}
@@ -321,7 +333,7 @@ export class LazyOptionalField<TTypes extends AllowedTypes>
 	}
 
 	private optionalEditor(): OptionalFieldEditBuilder {
-		const fieldPath = this[cursorSymbol].getFieldPath();
+		const fieldPath = this.getFieldPathForEditing();
 		const fieldEditor = this.context.editor.optionalField(fieldPath);
 		return fieldEditor;
 	}

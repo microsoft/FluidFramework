@@ -62,12 +62,6 @@ module.exports = {
 		 */
 		"unicorn/numeric-separators-style": ["error", { onlyIfContainsSeparator: true }],
 
-		/**
-		 * "node:" imports are not supported prior to Node.js v16.
-		 * TODO: re-enable this (remove override) once the repo has been updated to v16.
-		 */
-		"unicorn/prefer-node-protocol": "off",
-
 		// Enabled in "strict" configuration, but disabled here.
 		// We may wish to promote this to "recommended" in the future, but for now there are too many
 		// violations for that to be practical.

@@ -10,6 +10,7 @@ import express from "express";
 import {
 	alternativeMorganLoggerMiddleware,
 	bindCorrelationId,
+	bindTelemetryContext,
 	jsonMorganLoggerMiddleware,
 } from "@fluidframework/server-services-utils";
 import { catch404, getTenantIdFromRequest, handleError } from "../utils";
@@ -33,6 +34,7 @@ export function create(
 	// Running behind iisnode
 	app.set("trust proxy", 1);
 
+	app.use(bindTelemetryContext());
 	if (loggerFormat === "json") {
 		app.use(
 			jsonMorganLoggerMiddleware("riddler", (tokens, req, res) => {
