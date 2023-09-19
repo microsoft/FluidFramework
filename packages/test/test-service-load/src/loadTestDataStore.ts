@@ -17,7 +17,7 @@ import { IDirectory, ISharedDirectory, ISharedMap, SharedMap } from "@fluidframe
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { delay, assert } from "@fluidframework/common-utils";
+import { delay, assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ILoaderOptions } from "@fluidframework/container-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
@@ -754,16 +754,15 @@ const LoadTestDataStoreInstantiationFactory = new DataObjectFactory(
 const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 	runtime.IFluidHandleContext.resolveHandle(request);
 
-export const createFluidExport = (options: IContainerRuntimeOptions) =>
-	new ContainerRuntimeFactoryWithDefaultDataStore(
-		LoadTestDataStoreInstantiationFactory,
-		new Map([
+export const createFluidExport = (runtimeOptions: IContainerRuntimeOptions) =>
+	new ContainerRuntimeFactoryWithDefaultDataStore({
+		defaultFactory: LoadTestDataStoreInstantiationFactory,
+		registryEntries: new Map([
 			[
 				LoadTestDataStore.DataStoreName,
 				Promise.resolve(LoadTestDataStoreInstantiationFactory),
 			],
 		]),
-		undefined,
-		[innerRequestHandler],
-		options,
-	);
+		requestHandlers: [innerRequestHandler],
+		runtimeOptions,
+	});

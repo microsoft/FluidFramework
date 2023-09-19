@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
 	readAndParse,
@@ -187,7 +187,9 @@ export const dataStoreAttributesBlobName = ".component";
  * @param summarizeResult - Summary tree and stats to modify
  *
  * @example
+ *
  * Converts from:
+ *
  * ```typescript
  * {
  *     type: SummaryType.Tree,
@@ -208,6 +210,7 @@ export const dataStoreAttributesBlobName = ".component";
  *     },
  * }
  * ```
+ *
  * And adds +1 to treeNodeCount in stats.
  */
 export function wrapSummaryInChannelsTree(summarizeResult: ISummaryTreeWithStats): void {

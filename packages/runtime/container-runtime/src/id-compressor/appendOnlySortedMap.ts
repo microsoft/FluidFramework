@@ -5,7 +5,7 @@
 
 /* eslint-disable tsdoc/syntax */
 /* eslint-disable no-bitwise */
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 
 /**
  * A map in which entries are always added in key-sorted order.
@@ -234,7 +234,10 @@ export class AppendOnlySortedMap<K, V> {
 		let prev: readonly [K, unknown] | undefined;
 		for (const kv of this.entries()) {
 			if (prev !== undefined) {
-				assert(this.comparator(kv[0], prev[0]) > 0, "Keys in map must be sorted.");
+				assert(
+					this.comparator(kv[0], prev[0]) > 0,
+					0x752 /* Keys in map must be sorted. */,
+				);
 			}
 			prev = kv;
 		}

@@ -407,7 +407,6 @@
 			"program": "${workspaceRoot}/node_modules/jest/bin/jest.js",
 			"cwd": "${fileDirname}/..",
 			"args": ["--verbose", "-i", "--no-cache", "${file}"],
-			"runtimeArgs": ["--unhandled-rejections=strict"],
 			"console": "integratedTerminal",
 			"internalConsoleOptions": "neverOpen",
 		},

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	IChannelAttributes,
 	IChannelStorageService,
@@ -24,7 +24,6 @@ import {
 import { ICodecOptions, IJsonCodec } from "../codec";
 import {
 	ChangeFamily,
-	AnchorSet,
 	Delta,
 	ChangeFamilyEditor,
 	IRepairDataStoreProvider,
@@ -117,7 +116,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	/**
 	 * Used to encode/decode messages sent to/received from the Fluid runtime.
 	 *
-	 * @remarks - Since there is currently only one format, this can just be cached on the class.
+	 * @remarks Since there is currently only one format, this can just be cached on the class.
 	 * With more write formats active, it may make sense to keep around the "usual" format codec
 	 * (the one for the current persisted configuration) and resolve codecs for different versions
 	 * as necessary (e.g. an upgrade op came in, or the configuration changed within the collab window
@@ -129,7 +128,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 * @param summarizables - Summarizers for all indexes used by this tree
 	 * @param changeFamily - The change family
 	 * @param editManager - The edit manager
-	 * @param anchors - The anchor set
 	 * @param id - The id of the shared object
 	 * @param runtime - The IFluidDataStoreRuntime which contains the shared object
 	 * @param attributes - Attributes of the shared object
@@ -138,7 +136,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	public constructor(
 		summarizables: readonly Summarizable[],
 		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
-		anchors: AnchorSet,
 		repairDataStoreProvider: IRepairDataStoreProvider<TChange>,
 		options: ICodecOptions,
 		// Base class arguments
@@ -156,12 +153,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		 */
 		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
 		const localSessionId = generateStableId();
-		this.editManager = new EditManager(
-			changeFamily,
-			localSessionId,
-			repairDataStoreProvider,
-			anchors,
-		);
+		this.editManager = new EditManager(changeFamily, localSessionId, repairDataStoreProvider);
 		this.editManager.on("newTrunkHead", (head) => {
 			this.changeEvents.emit("newSequencedChange", head.change);
 		});

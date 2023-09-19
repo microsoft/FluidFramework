@@ -17,14 +17,14 @@ import { ISerializableInterval } from "../intervals";
 export interface IntervalIndex<TInterval extends ISerializableInterval> {
 	/**
 	 * Adds an interval to the index.
-	 * @remarks - Application code should never need to invoke this method on their index for production scenarios:
+	 * @remarks Application code should never need to invoke this method on their index for production scenarios:
 	 * Fluid handles adding and removing intervals from an index in response to sequence or interval changes.
 	 */
 	add(interval: TInterval): void;
 
 	/**
 	 * Removes an interval from the index.
-	 * @remarks - Application code should never need to invoke this method on their index for production scenarios:
+	 * @remarks Application code should never need to invoke this method on their index for production scenarios:
 	 * Fluid handles adding and removing intervals from an index in response to sequence or interval changes.
 	 */
 	remove(interval: TInterval): void;

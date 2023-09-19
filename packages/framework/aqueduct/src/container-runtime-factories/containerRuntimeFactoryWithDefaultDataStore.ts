@@ -17,6 +17,14 @@ import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory";
 
 const defaultDataStoreId = "default";
 
+const getDefaultFluidObject = async (runtime: IContainerRuntime) => {
+	const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
+	if (entryPoint === undefined) {
+		throw new Error("default dataStore must exist");
+	}
+	return entryPoint.get();
+};
+
 /**
  * A ContainerRuntimeFactory that initializes Containers with a single default data store, which can be requested from
  * the container with an empty URL.
@@ -26,6 +34,8 @@ const defaultDataStoreId = "default";
 export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRuntimeFactory {
 	public static readonly defaultDataStoreId = defaultDataStoreId;
 
+	protected readonly defaultFactory: IFluidDataStoreFactory;
+
 	/**
 	 * Constructor
 	 * @param defaultFactory -
@@ -33,23 +43,26 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 	 * @param dependencyContainer - deprecated, will be removed in a future release
 	 * @param requestHandlers -
 	 * @param runtimeOptions -
-	 * @param initializeEntryPoint -
+	 * @param provideEntryPoint -
 	 */
-	constructor(
-		protected readonly defaultFactory: IFluidDataStoreFactory,
-		registryEntries: NamedFluidDataStoreRegistryEntries,
-		dependencyContainer?: IFluidDependencySynthesizer,
-		requestHandlers: RuntimeRequestHandler[] = [],
-		runtimeOptions?: IContainerRuntimeOptions,
-		initializeEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>,
-	) {
-		super(
-			registryEntries,
-			dependencyContainer,
-			[defaultRouteRequestHandler(defaultDataStoreId), ...requestHandlers],
-			runtimeOptions,
-			initializeEntryPoint,
-		);
+	constructor(props: {
+		defaultFactory: IFluidDataStoreFactory;
+		registryEntries: NamedFluidDataStoreRegistryEntries;
+		dependencyContainer?: IFluidDependencySynthesizer;
+		requestHandlers?: RuntimeRequestHandler[];
+		runtimeOptions?: IContainerRuntimeOptions;
+		provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
+	}) {
+		const requestHandlers = props.requestHandlers ?? [];
+		const provideEntryPoint = props.provideEntryPoint ?? getDefaultFluidObject;
+
+		super({
+			...props,
+			requestHandlers: [defaultRouteRequestHandler(defaultDataStoreId), ...requestHandlers],
+			provideEntryPoint,
+		});
+
+		this.defaultFactory = props.defaultFactory;
 	}
 
 	/**

@@ -40,6 +40,7 @@ export {
 	IDocument,
 	ICheckpoint,
 	IDocumentDetails,
+	IDocumentStaticProperties,
 	IDocumentStorage,
 	IScribe,
 } from "./document";

@@ -203,8 +203,9 @@ export const isTokenFromCache: (tokenResponse: string | TokenResponse | null) =>
 // @public (undocumented)
 export type OdspError = IOdspError | (DriverError & IOdspErrorAugmentations);
 
-// @public
+// @public @deprecated
 export enum OdspErrorType {
+    blockedIPAddress = "blockedIPAddress",
     cannotCatchUp = "cannotCatchUp",
     fetchTimeout = "fetchTimeout",
     // (undocumented)
@@ -215,6 +216,38 @@ export enum OdspErrorType {
     serviceReadOnly = "serviceReadOnly",
     snapshotTooBig = "snapshotTooBig"
 }
+
+// @public
+export const OdspErrorTypes: {
+    readonly invalidFileNameError: "invalidFileNameError";
+    readonly snapshotTooBig: "snapshotTooBig";
+    readonly fetchTimeout: "fetchTimeout";
+    readonly fluidNotEnabled: "fluidNotEnabled";
+    readonly cannotCatchUp: "cannotCatchUp";
+    readonly serviceReadOnly: "serviceReadOnly";
+    readonly blockedIPAddress: "blockedIPAddress";
+    readonly genericNetworkError: "genericNetworkError";
+    readonly authorizationError: "authorizationError";
+    readonly fileNotFoundOrAccessDeniedError: "fileNotFoundOrAccessDeniedError";
+    readonly offlineError: "offlineError";
+    readonly unsupportedClientProtocolVersion: "unsupportedClientProtocolVersion";
+    readonly writeError: "writeError";
+    readonly fetchFailure: "fetchFailure";
+    readonly fetchTokenError: "fetchTokenError";
+    readonly incorrectServerResponse: "incorrectServerResponse";
+    readonly fileOverwrittenInStorage: "fileOverwrittenInStorage";
+    readonly deltaStreamConnectionForbidden: "deltaStreamConnectionForbidden";
+    readonly locationRedirection: "locationRedirection";
+    readonly fluidInvalidSchema: "fluidInvalidSchema";
+    readonly fileIsLocked: "fileIsLocked";
+    readonly outOfStorageError: "outOfStorageError";
+    readonly genericError: "genericError";
+    readonly throttlingError: "throttlingError";
+    readonly usageError: "usageError";
+};
+
+// @public (undocumented)
+export type OdspErrorTypes = typeof OdspErrorTypes[keyof typeof OdspErrorTypes];
 
 // @public
 export interface OdspResourceTokenFetchOptions extends TokenFetchOptions {

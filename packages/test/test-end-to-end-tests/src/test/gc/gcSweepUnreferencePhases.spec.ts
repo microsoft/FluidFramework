@@ -19,7 +19,8 @@ import {
 	TestDataObjectType,
 } from "@fluid-internal/test-version-utils";
 import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
-import { delay, stringToBuffer } from "@fluidframework/common-utils";
+import { stringToBuffer } from "@fluid-internal/client-utils";
+import { delay } from "@fluidframework/core-utils";
 import { gcTreeKey } from "@fluidframework/runtime-definitions";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
@@ -78,13 +79,13 @@ describeNoCompat("GC sweep unreference phases", (getTestObjectProvider) => {
 			this.skip();
 		}
 
-		settings["Fluid.GarbageCollection.Test.SweepDataStores"] = true;
+		settings["Fluid.GarbageCollection.DisableAttachmentBlobSweep"] = true; // Only sweep DataStores
 		settings["Fluid.GarbageCollection.RunSweep"] = true;
 		settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = true;
 		settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
 	});
 
-	it("GC nodes go from referenced to unreferenced to inactive to sweep ready to tombstone", async () => {
+	it("GC nodes go from referenced to unreferenced to inactive to sweep ready to swept", async () => {
 		const mainContainer = await provider.makeTestContainer(testContainerConfig);
 		const mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "default");
 		await waitForContainerConnection(mainContainer);

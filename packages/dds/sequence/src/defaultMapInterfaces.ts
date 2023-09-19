@@ -55,8 +55,12 @@ export interface IMapMessageLocalMetadata {
  */
 export interface SequenceOptions {
 	/**
-	 * Enable {@link (IntervalStickiness:type) | interval stickiness}
-	 * other than "end"
+	 * Enable the ability to use interval APIs that rely on positions before and
+	 * after individual characters, referred to as "sides". See {@link SequencePlace}
+	 * for additional context.
+	 *
+	 * This flag must be enabled to pass instances of {@link SequencePlace} to
+	 * any IIntervalCollection API.
 	 */
 	intervalStickinessEnabled: boolean;
 	[key: string]: boolean;

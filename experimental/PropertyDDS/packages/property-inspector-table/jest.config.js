@@ -10,7 +10,16 @@ module.exports = {
 		},
 	},
 	preset: "ts-jest",
-
+	reporters: [
+		"default",
+		[
+			"jest-junit",
+			{
+				outputDirectory: "nyc",
+				outputName: "jest-junit-report.xml",
+			},
+		],
+	],
 	// The glob patterns Jest uses to detect test files
 	testMatch: ["/**/test/*.spec.tsx"],
 

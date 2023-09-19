@@ -10,7 +10,7 @@ import express from "express";
 import fetch from "node-fetch";
 import request from "supertest";
 
-import { delay } from "@fluidframework/common-utils";
+import { delay } from "@fluidframework/core-utils";
 
 import { externalDataServicePort } from "../src/mock-external-data-service-interface";
 import {
@@ -129,15 +129,98 @@ describe("mock-external-data-service", () => {
 
 	it("register-for-webhook: Registering valid URI succeeds", async () => {
 		await request(externalDataService!)
-			.post(`/register-for-webhook?externalTaskListId=${externalTaskListId}`)
-			.send({ url: "https://www.fluidframework.com" })
+			.post(`/register-for-webhook`)
+			.send({ url: "https://www.fluidframework.com", externalTaskListId })
 			.expect(200);
 	});
 
 	it("register-for-webhook: Registering invalid URI fails", async () => {
+		// missing url
 		await request(externalDataService!)
-			.post(`/register-for-webhook?externalTaskListId=${externalTaskListId}`)
-			.send({ url: "I am not a URI" })
+			.post(`/register-for-webhook`)
+			.send({ externalTaskListId })
+			.expect(400);
+		// invalid uri
+		await request(externalDataService!)
+			.post(`/register-for-webhook`)
+			.send({ url: "I am not a URI", externalTaskListId })
+			.expect(400);
+		// invalid data type
+		await request(externalDataService!)
+			.post(`/register-for-webhook`)
+			.send({ url: 123, externalTaskListId })
+			.expect(400);
+	});
+
+	it("register-for-webhook: Registering missing/invalid externalTaskListId fails", async () => {
+		// missing externalTaskListId
+		await request(externalDataService!)
+			.post(`/register-for-webhook`)
+			.send({ url: "https://www.fluidframework.com" })
+			.expect(400);
+		// invalid data type
+		await request(externalDataService!)
+			.post(`/register-for-webhook`)
+			.send({ url: "https://www.fluidframework.com", externalTaskListId: 123 })
+			.expect(400);
+	});
+
+	it("unregister-webhook: Unregistering from an existing webhook with a valid URI succeeds", async () => {
+		await request(externalDataService!)
+			.post(`/register-for-webhook`)
+			.send({ url: "https://www.fluidframework.com", externalTaskListId })
+			.expect(200);
+
+		await request(externalDataService!)
+			.post(`/unregister-webhook`)
+			.send({ url: "https://www.fluidframework.com", externalTaskListId })
+			.expect(200);
+	});
+
+	it("unregister-webhook: Unregistering from an webhook that doesn't exist fails", async () => {
+		await request(externalDataService!)
+			.post(`/unregister-webhook`)
+			.send({ url: "https://www.thefirstSubscriber.com", externalTaskListId })
+			.expect(400);
+	});
+
+	it("unregister-webhook: Unregistering from an webhook that exists but the provided subscriber is not subscribed to succeeds", async () => {
+		await request(externalDataService!)
+			.post(`/register-for-webhook`)
+			.send({ url: "https://www.thefirstSubscriber.com", externalTaskListId })
+			.expect(200);
+
+		await request(externalDataService!)
+			.post(`/unregister-webhook`)
+			.send({ url: "https://www.theSecondSubscriber.com", externalTaskListId })
+			.expect(200);
+	});
+
+	it("unregister-webhook: Invalid request with missing/invalid url fails", async () => {
+		// invalid url
+		await request(externalDataService!)
+			.post(`/unregister-webhook`)
+			.send({ url: "not a url", externalTaskListId })
+			.expect(400);
+		// missing url
+		await request(externalDataService!).post(`/unregister-webhook`).send({}).expect(400);
+		// invalid data type
+		await request(externalDataService!)
+			.post(`/unregister-webhook`)
+			.send({ url: 123, externalTaskListId })
+			.expect(400);
+	});
+
+	it("unregister-webhook: Invalid request with missing/invalid externalTaskListId fails", async () => {
+		// missing externalTaskListId
+		await request(externalDataService!)
+			.post(`/unregister-webhook`)
+			.send({ url: "https://www.thefirstSubscriber.com" })
+			.expect(400);
+		// invalid externalTaskListId data type
+		await request(externalDataService!)
+			.post(`/unregister-webhook`)
+			.send({ url: "https://www.thefirstSubscriber.com", externalTaskListId: 123 })
 			.expect(400);
 	});
 
@@ -194,6 +277,7 @@ describe("mock-external-data-service: webhook", () => {
 					},
 					body: JSON.stringify({
 						url: `http://localhost:${localServicePort}/broadcast-signal?externalTaskListId=${externalTaskListId}`,
+						externalTaskListId,
 					}),
 				},
 			);

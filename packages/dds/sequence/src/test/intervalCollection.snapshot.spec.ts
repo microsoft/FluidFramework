@@ -12,7 +12,7 @@ import {
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
-import { IIntervalCollection, intervalLocatorFromEndpoint } from "../intervalCollection";
+import { IIntervalCollection, intervalLocatorFromEndpoint, Side } from "../intervalCollection";
 import { IntervalStickiness, IntervalType, SequenceInterval } from "../intervals";
 import { assertIntervals } from "./intervalUtils";
 
@@ -25,7 +25,7 @@ async function loadSharedString(
 	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 	dataStoreRuntime.deltaManager.lastSequenceNumber = containerRuntimeFactory.sequenceNumber;
 	const services = {
-		deltaConnection: containerRuntime.createDeltaConnection(),
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: MockStorage.createFromSummary(summary),
 	};
 	const sharedString = new SharedString(dataStoreRuntime, id, SharedStringFactory.Attributes);
@@ -39,9 +39,9 @@ async function getSingleIntervalSummary(): Promise<{ summary: ISummaryTree; seq:
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	dataStoreRuntime.local = false;
 	dataStoreRuntime.options = { intervalStickinessEnabled: true };
-	const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+	containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
-		deltaConnection: containerRuntime1.createDeltaConnection(),
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
 	const sharedString = new SharedString(dataStoreRuntime, "", SharedStringFactory.Attributes);
@@ -52,20 +52,16 @@ async function getSingleIntervalSummary(): Promise<{ summary: ISummaryTree; seq:
 	collection.add(0, 2, IntervalType.SlideOnRemove);
 	const collectionStartSticky = sharedString.getIntervalCollection("start-sticky");
 	const startStickyInterval = collectionStartSticky.add(
-		0,
-		2,
+		{ pos: 0, side: Side.After },
+		{ pos: 2, side: Side.After },
 		IntervalType.SlideOnRemove,
-		undefined,
-		IntervalStickiness.START,
 	);
 	assert.equal(startStickyInterval.stickiness, IntervalStickiness.START);
 	const collectionEndSticky = sharedString.getIntervalCollection("end-sticky");
 	const endStickyInterval = collectionEndSticky.add(
-		0,
-		2,
+		{ pos: 0, side: Side.Before },
+		{ pos: 2, side: Side.Before },
 		IntervalType.SlideOnRemove,
-		undefined,
-		IntervalStickiness.END,
 	);
 	assert.equal(endStickyInterval.stickiness, IntervalStickiness.END);
 	containerRuntimeFactory.processAllMessages();

@@ -7,12 +7,8 @@
 import merge from "lodash/merge";
 
 import { v4 as uuid } from "uuid";
-import {
-	TypedEventEmitter,
-	assert,
-	performance,
-	unreachableCase,
-} from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
 import {
 	IEvent,
 	ITelemetryProperties,
@@ -1105,39 +1101,50 @@ export class Container
 	}
 
 	private async getPendingLocalStateCore(props: { notifyImminentClosure: boolean }) {
-		if (!this.offlineLoadEnabled) {
-			throw new UsageError("Can't get pending local state unless offline load is enabled");
-		}
-		if (this.closed || this._disposed) {
-			throw new UsageError(
-				"Pending state cannot be retried if the container is closed or disposed",
-			);
-		}
-		assert(
-			this.attachState === AttachState.Attached,
-			0x0d1 /* "Container should be attached before close" */,
-		);
-		assert(
-			this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
-			0x0d2 /* "resolved url should be valid Fluid url" */,
-		);
-		assert(!!this.baseSnapshot, 0x5d4 /* no base snapshot */);
-		assert(!!this.baseSnapshotBlobs, 0x5d5 /* no snapshot blobs */);
-		const pendingRuntimeState = await this.runtime.getPendingLocalState(props);
-		const pendingState: IPendingContainerState = {
-			pendingRuntimeState,
-			baseSnapshot: this.baseSnapshot,
-			snapshotBlobs: this.baseSnapshotBlobs,
-			savedOps: this.savedOps,
-			url: this.resolvedUrl.url,
-			term: OnlyValidTermValue,
-			// no need to save this if there is no pending runtime state
-			clientId: pendingRuntimeState !== undefined ? this.clientId : undefined,
-		};
+		return PerformanceEvent.timedExecAsync(
+			this.mc.logger,
+			{
+				eventName: "getPendingLocalState",
+				notifyImminentClosure: props.notifyImminentClosure,
+				savedOpsSize: this.savedOps.length,
+				clientId: this.clientId,
+			},
+			async () => {
+				if (!this.offlineLoadEnabled) {
+					throw new UsageError(
+						"Can't get pending local state unless offline load is enabled",
+					);
+				}
+				if (this.closed || this._disposed) {
+					throw new UsageError(
+						"Pending state cannot be retried if the container is closed or disposed",
+					);
+				}
+				assert(
+					this.attachState === AttachState.Attached,
+					0x0d1 /* "Container should be attached before close" */,
+				);
+				assert(
+					this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
+					0x0d2 /* "resolved url should be valid Fluid url" */,
+				);
+				assert(!!this.baseSnapshot, 0x5d4 /* no base snapshot */);
+				assert(!!this.baseSnapshotBlobs, 0x5d5 /* no snapshot blobs */);
+				const pendingRuntimeState = await this.runtime.getPendingLocalState(props);
+				const pendingState: IPendingContainerState = {
+					pendingRuntimeState,
+					baseSnapshot: this.baseSnapshot,
+					snapshotBlobs: this.baseSnapshotBlobs,
+					savedOps: this.savedOps,
+					url: this.resolvedUrl.url,
+					term: OnlyValidTermValue,
+					// no need to save this if there is no pending runtime state
+					clientId: pendingRuntimeState !== undefined ? this.clientId : undefined,
+				};
 
-		this.mc.logger.sendTelemetryEvent({ eventName: "GetPendingLocalState" });
-
-		return JSON.stringify(pendingState);
+				return JSON.stringify(pendingState);
+			},
+		);
 	}
 
 	public get attachState(): AttachState {
@@ -1530,18 +1537,15 @@ export class Container
 			this.client.details.type === summarizerClientType,
 		);
 
-		// Ideally we always connect as "read" by default.
-		// Currently that works with SPO & r11s, because we get "write" connection when connecting to non-existing file.
-		// We should not rely on it by (one of them will address the issue, but we need to address both)
-		// 1) switching create new flow to one where we create file by posting snapshot
-		// 2) Fixing quorum workflows (have retry logic)
-		// That all said, "read" does not work with memorylicious workflows (that opens two simultaneous
-		// connections to same file) in two ways:
-		// A) creation flow breaks (as one of the clients "sees" file as existing, and hits #2 above)
-		// B) Once file is created, transition from view-only connection to write does not work - some bugs to be fixed.
+		// Except in cases where it has stashed ops or requested by feature gate, the container will connect in "read" mode
+		const mode =
+			this.mc.config.getBoolean("Fluid.Container.ForceWriteConnection") === true ||
+			(pendingLocalState?.savedOps.length ?? 0) > 0
+				? "write"
+				: "read";
 		const connectionArgs: IConnectionArgs = {
 			reason: { text: "DocumentOpen" },
-			mode: "write",
+			mode,
 			fetchOpsFromStorage: false,
 		};
 

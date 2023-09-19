@@ -18,10 +18,16 @@ import {
 	DDSFuzzSuiteOptions,
 } from "@fluid-internal/test-dds-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
+import {
+	IChannelAttributes,
+	IChannelServices,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { IIntervalCollection } from "../intervalCollection";
+import { IIntervalCollection, Side } from "../intervalCollection";
 import { SharedStringFactory } from "../sequenceFactory";
-import { IntervalStickiness, SequenceInterval } from "../intervals";
+import { SharedString } from "../sharedString";
+import { SequenceInterval } from "../intervals";
 import { assertEquivalentSharedStrings } from "./intervalUtils";
 import {
 	Operation,
@@ -109,9 +115,8 @@ export function makeOperationGenerator(
 			...inclusiveRange(state),
 			collectionName: state.random.pick(options.intervalCollectionNamePool),
 			id: state.random.uuid4(),
-			stickiness: state.random.pick(
-				Object.values(IntervalStickiness) as IntervalStickiness[],
-			),
+			startSide: state.random.pick([Side.Before, Side.After]),
+			endSide: state.random.pick([Side.Before, Side.After]),
 		};
 	}
 
@@ -126,8 +131,10 @@ export function makeOperationGenerator(
 		const { start, end } = inclusiveRange(state);
 		return {
 			type: "changeInterval",
-			start: state.random.integer(0, 5) === 5 ? undefined : start,
-			end: state.random.integer(0, 5) === 5 ? undefined : end,
+			start,
+			end,
+			startSide: state.random.pick([Side.Before, Side.After]),
+			endSide: state.random.pick([Side.Before, Side.After]),
 			...interval(state),
 		};
 	}
@@ -182,6 +189,23 @@ export function makeOperationGenerator(
 	]);
 }
 
+class IntervalCollectionFuzzFactory extends SharedStringFactory {
+	public async load(
+		runtime: IFluidDataStoreRuntime,
+		id: string,
+		services: IChannelServices,
+		attributes: IChannelAttributes,
+	): Promise<SharedString> {
+		runtime.options.intervalStickinessEnabled = true;
+		return super.load(runtime, id, services, attributes);
+	}
+
+	public create(document: IFluidDataStoreRuntime, id: string): SharedString {
+		document.options.intervalStickinessEnabled = true;
+		return super.create(document, id);
+	}
+}
+
 const baseModel: Omit<
 	DDSFuzzModel<SharedStringFactory, Operation, FuzzTestState>,
 	"workloadName"
@@ -193,7 +217,7 @@ const baseModel: Omit<
 		// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
 		makeReducer(),
 	validateConsistency: assertEquivalentSharedStrings,
-	factory: new SharedStringFactory(),
+	factory: new IntervalCollectionFuzzFactory(),
 };
 
 export const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
@@ -260,7 +284,7 @@ describe("IntervalCollection no reconnect fuzz testing", () => {
 	createDDSFuzzSuite(noReconnectModel, {
 		...options,
 		// AB#4477: Same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477.
-		skip: [80, 9, 12, 44],
+		skip: [92],
 		// TODO:AB#5338: IntervalCollection doesn't correctly handle edits made while detached. Once supported,
 		// this config should be enabled (deleting is sufficient: detached start is enabled by default)
 		detachedStartOptions: {
@@ -281,7 +305,7 @@ describe("IntervalCollection fuzz testing with rebased batches", () => {
 	createDDSFuzzSuite(noReconnectWithRebaseModel, {
 		...defaultFuzzOptions,
 		// ADO:4477: Same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477.
-		skip: [9, 12, 29],
+		skip: [31],
 		// TODO:AB#5338: IntervalCollection doesn't correctly handle edits made while detached. Once supported,
 		// this config should be enabled (deleting is sufficient: detached start is enabled by default)
 		detachedStartOptions: {

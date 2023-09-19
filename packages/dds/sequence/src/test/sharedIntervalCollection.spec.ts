@@ -70,7 +70,7 @@ function createConnectedIntervalCollection(
 	);
 	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
-		deltaConnection: containerRuntime.createDeltaConnection(),
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(undefined),
 	};
 	intervals.connect(services);
@@ -147,7 +147,7 @@ describe("SharedIntervalCollection", () => {
 			runtimeFactory.processAllMessages();
 
 			const id = interval.getIntervalId() ?? assert.fail("expected interval to have id");
-			collection1.change(id, 10);
+			collection1.change(id, 10, 20);
 			assertIntervals(collection1, [
 				{ start: 10, end: 20 },
 				{ start: 10, end: 30 },

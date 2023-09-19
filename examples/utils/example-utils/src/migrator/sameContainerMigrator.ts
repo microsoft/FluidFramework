@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import type {
 	DataTransformationCallback,
 	ISameContainerMigratableModel,
@@ -22,6 +23,14 @@ export class SameContainerMigrator
 	private _currentModel: ISameContainerMigratableModel;
 	public get currentModel(): ISameContainerMigratableModel {
 		return this._currentModel;
+	}
+
+	private _pausedModel: ISameContainerMigratableModel | undefined;
+	public get pausedModel(): ISameContainerMigratableModel {
+		if (this._pausedModel === undefined) {
+			throw new Error("_pausedModel has not been initialized");
+		}
+		return this._pausedModel;
 	}
 
 	private _currentModelId: string;
@@ -144,7 +153,17 @@ export class SameContainerMigrator
 				const detachedModel = await this.modelLoader.createDetached(acceptedVersion);
 				const migratedModel = detachedModel.model;
 
-				const exportedData = await migratable.exportData();
+				const acceptedSeqNum = this.currentModel.migrationTool.acceptedSeqNum;
+				assert(acceptedSeqNum !== undefined, "acceptedSeqNum should be defined");
+				this._pausedModel = await this.modelLoader.loadExistingPaused(
+					this._currentModelId,
+					acceptedSeqNum,
+				);
+				assert(
+					this.pausedModel.container.deltaManager.lastSequenceNumber === acceptedSeqNum,
+					"paused model should be at accepted sequence number",
+				);
+				const exportedData = await this.pausedModel.exportData();
 
 				// TODO: Is there a reasonable way to validate at proposal time whether we'll be able to get the
 				// exported data into a format that the new model can import?  If we can determine it early, then

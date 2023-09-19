@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	IFluidLoadable,
 	IFluidRouter,
@@ -113,6 +113,7 @@ export class SmdeFactory implements IFluidDataStoreFactory {
 				]),
 			),
 			existing,
+			async () => routerP,
 		);
 		const routerP = SmdeDataObject.load(runtime, existing);
 

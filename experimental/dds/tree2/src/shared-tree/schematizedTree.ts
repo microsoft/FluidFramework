@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	AllowedUpdateType,
 	Compatibility,
@@ -43,7 +43,7 @@ export function initializeContent(
 	schema: TypedSchemaCollection,
 	setInitialTree: () => void,
 ): void {
-	assert(schemaDataIsEmpty(storedSchema), "cannot initialize after a schema is set");
+	assert(schemaDataIsEmpty(storedSchema), 0x743 /* cannot initialize after a schema is set */);
 
 	const rootSchema = schema.rootFieldSchema;
 	const rootKind = rootSchema.kind.identifier;
@@ -206,7 +206,7 @@ export interface TreeContent<TRoot extends FieldSchema = FieldSchema>
 	 * (meaning it does not even have any schema set at all).
 	 */
 	readonly initialTree:
-		| SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Simple>
+		| SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Flexible>
 		| readonly ITreeCursorSynchronous[]
 		| ITreeCursorSynchronous;
 }

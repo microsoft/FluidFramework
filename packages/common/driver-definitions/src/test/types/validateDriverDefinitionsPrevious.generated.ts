@@ -35,6 +35,7 @@ declare function get_current_TypeAliasDeclaration_DriverError():
 declare function use_old_TypeAliasDeclaration_DriverError(
     use: TypeOnly<old.DriverError>);
 use_old_TypeAliasDeclaration_DriverError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_DriverError());
 
 /*
@@ -59,7 +60,58 @@ declare function get_current_EnumDeclaration_DriverErrorType():
 declare function use_old_EnumDeclaration_DriverErrorType(
     use: TypeOnly<old.DriverErrorType>);
 use_old_EnumDeclaration_DriverErrorType(
+    // @ts-expect-error compatibility expected to be broken
     get_current_EnumDeclaration_DriverErrorType());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_DriverErrorTypes": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_DriverErrorTypes():
+    TypeOnly<typeof old.DriverErrorTypes>;
+declare function use_current_VariableDeclaration_DriverErrorTypes(
+    use: TypeOnly<typeof current.DriverErrorTypes>);
+use_current_VariableDeclaration_DriverErrorTypes(
+    // @ts-expect-error compatibility expected to be broken
+    get_old_VariableDeclaration_DriverErrorTypes());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_DriverErrorTypes": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_DriverErrorTypes():
+    TypeOnly<typeof current.DriverErrorTypes>;
+declare function use_old_VariableDeclaration_DriverErrorTypes(
+    use: TypeOnly<typeof old.DriverErrorTypes>);
+use_old_VariableDeclaration_DriverErrorTypes(
+    get_current_VariableDeclaration_DriverErrorTypes());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_DriverErrorTypes": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_DriverErrorTypes():
+    TypeOnly<old.DriverErrorTypes>;
+declare function use_current_TypeAliasDeclaration_DriverErrorTypes(
+    use: TypeOnly<current.DriverErrorTypes>);
+use_current_TypeAliasDeclaration_DriverErrorTypes(
+    get_old_TypeAliasDeclaration_DriverErrorTypes());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_DriverErrorTypes": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_DriverErrorTypes():
+    TypeOnly<current.DriverErrorTypes>;
+declare function use_old_TypeAliasDeclaration_DriverErrorTypes(
+    use: TypeOnly<old.DriverErrorTypes>);
+use_old_TypeAliasDeclaration_DriverErrorTypes(
+    // @ts-expect-error compatibility expected to be broken
+    get_current_TypeAliasDeclaration_DriverErrorTypes());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -203,6 +255,7 @@ declare function get_current_InterfaceDeclaration_IAuthorizationError():
 declare function use_old_InterfaceDeclaration_IAuthorizationError(
     use: TypeOnly<old.IAuthorizationError>);
 use_old_InterfaceDeclaration_IAuthorizationError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IAuthorizationError());
 
 /*
@@ -491,6 +544,7 @@ declare function get_current_InterfaceDeclaration_IDriverBasicError():
 declare function use_old_InterfaceDeclaration_IDriverBasicError(
     use: TypeOnly<old.IDriverBasicError>);
 use_old_InterfaceDeclaration_IDriverBasicError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDriverBasicError());
 
 /*
@@ -515,6 +569,7 @@ declare function get_current_InterfaceDeclaration_IDriverErrorBase():
 declare function use_old_InterfaceDeclaration_IDriverErrorBase(
     use: TypeOnly<old.IDriverErrorBase>);
 use_old_InterfaceDeclaration_IDriverErrorBase(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDriverErrorBase());
 
 /*
@@ -563,6 +618,7 @@ declare function get_current_InterfaceDeclaration_IGenericNetworkError():
 declare function use_old_InterfaceDeclaration_IGenericNetworkError(
     use: TypeOnly<old.IGenericNetworkError>);
 use_old_InterfaceDeclaration_IGenericNetworkError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IGenericNetworkError());
 
 /*
@@ -587,6 +643,7 @@ declare function get_current_InterfaceDeclaration_ILocationRedirectionError():
 declare function use_old_InterfaceDeclaration_ILocationRedirectionError(
     use: TypeOnly<old.ILocationRedirectionError>);
 use_old_InterfaceDeclaration_ILocationRedirectionError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ILocationRedirectionError());
 
 /*
@@ -707,6 +764,7 @@ declare function get_current_InterfaceDeclaration_IThrottlingWarning():
 declare function use_old_InterfaceDeclaration_IThrottlingWarning(
     use: TypeOnly<old.IThrottlingWarning>);
 use_old_InterfaceDeclaration_IThrottlingWarning(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IThrottlingWarning());
 
 /*

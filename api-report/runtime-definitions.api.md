@@ -148,7 +148,7 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
 
 // @public
 export interface IDataStore {
-    readonly entryPoint?: IFluidHandle<FluidObject>;
+    readonly entryPoint: IFluidHandle<FluidObject>;
     // @deprecated (undocumented)
     readonly IFluidRouter: IFluidRouter;
     request(request: {
@@ -196,7 +196,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
     // @deprecated
     attachGraph(): void;
     readonly attachState: AttachState;
-    readonly entryPoint?: IFluidHandle<FluidObject>;
+    readonly entryPoint: IFluidHandle<FluidObject>;
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)
@@ -223,8 +223,6 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     readonly attachState: AttachState;
     // (undocumented)
     readonly baseSnapshot: ISnapshotTree | undefined;
-    // @deprecated (undocumented)
-    bindToContext(): void;
     // (undocumented)
     readonly clientDetails: IClientDetails;
     // (undocumented)
