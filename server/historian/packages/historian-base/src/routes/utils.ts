@@ -90,7 +90,6 @@ export class createGitServiceArgs {
 	storageName?: string;
 	allowDisabledTenant?: boolean = false;
 	isEphemeralContainer?: boolean = false;
-	ignoreEphemeralFlag?: boolean = true;
 	denyList?: IDenyList;
 }
 
@@ -108,7 +107,6 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 		storageName,
 		allowDisabledTenant,
 		isEphemeralContainer,
-		ignoreEphemeralFlag,
 		denyList,
 	} = createArgs;
 	const token = parseToken(tenantId, authorization);
@@ -125,6 +123,7 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 	const customData: ITenantCustomDataExternal = details.customData;
 	const writeToExternalStorage = !!customData?.externalStorageData;
 	const storageUrl = config.get("storageUrl") as string | undefined;
+	const ignoreEphemeralFlag: boolean = config.get("ignoreEphemeralFlag");
 	const maxCacheableSummarySize: number =
 		config.get("restGitService:maxCacheableSummarySize") ?? 1_000_000_000; // default: 1gb
 
@@ -143,7 +142,7 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 					const staticProps: IDocumentStaticProperties =
 						await documentManager.readStaticProperties(tenantId, documentId);
 					isEphemeral = staticProps?.isEphemeralContainer ?? false;
-					await cache?.set(isEphemeralKey, isEphemeral);
+					await cache?.set(isEphemeralKey, isEphemeral); // Cache the value from the static data
 				} catch (e) {
 					isEphemeral = false;
 				}

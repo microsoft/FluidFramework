@@ -128,7 +128,6 @@ export function create(
 			initialUpload: initial,
 			storageName,
 			isEphemeralContainer,
-			ignoreEphemeralFlag,
 			denyList,
 		});
 		return service.createSummary(params, initial);
