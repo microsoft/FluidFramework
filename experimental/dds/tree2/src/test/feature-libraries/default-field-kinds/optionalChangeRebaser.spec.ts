@@ -60,7 +60,9 @@ const failCrossFieldManager: CrossFieldManager = {
 };
 
 function toDelta(change: OptionalChangeset, revision?: RevisionTag): Delta.MarkList {
-	return optionalFieldIntoDelta(tagChange(change, revision), (childChange) => TestChange.toDelta(tagChange(childChange as TestChange, revision)));
+	return optionalFieldIntoDelta(tagChange(change, revision), (childChange) =>
+		TestChange.toDelta(tagChange(childChange as TestChange, revision)),
+	);
 }
 
 function getMaxId(...changes: OptionalChangeset[]): ChangesetLocalId | undefined {
