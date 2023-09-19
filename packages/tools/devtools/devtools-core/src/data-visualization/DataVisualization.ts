@@ -212,17 +212,17 @@ export class DataVisualizerGraph
 		const result: Record<string, RootHandleNode> = {};
 		await Promise.all(
 			rootDataEntries.map(async ([key, value]) => {
-				if (value.handle !== undefined) {
+				if (value.handle === undefined) {
+					console.error(
+						`Container data includes a non-Fluid object under key ${key}. Cannot visualize!`,
+					);
+					result[key] = unknownObjectNode;
+				} else {
 					const fluidObjectId = await this.registerVisualizerForHandle(value.handle);
 					result[key] =
 						fluidObjectId === undefined
 							? unknownObjectNode
 							: createHandleNode(fluidObjectId);
-				} else {
-					console.error(
-						`Container data includes a non-Fluid object under key ${key}. Cannot visualize!`,
-					);
-					result[key] = unknownObjectNode;
 				}
 			}),
 		);
@@ -257,9 +257,9 @@ export class DataVisualizerGraph
 		if (!this.visualizerNodes.has(sharedObject.id)) {
 			// Create visualizer node for the shared object
 			const visualizationFunction =
-				this.visualizers[sharedObject.attributes.type] !== undefined
-					? this.visualizers[sharedObject.attributes.type]
-					: visualizeUnknownSharedObject;
+				this.visualizers[sharedObject.attributes.type] === undefined
+					? visualizeUnknownSharedObject
+					: this.visualizers[sharedObject.attributes.type];
 
 			// Create visualizer node for the shared object
 			const editorFunction = this.editors[sharedObject.attributes.type];

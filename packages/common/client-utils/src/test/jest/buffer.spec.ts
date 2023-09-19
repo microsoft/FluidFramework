@@ -29,6 +29,7 @@ describe("Buffer isomorphism", () => {
 			const nodeBuffer = BufferNode.IsoBuffer.from(testArray[1]);
 			const browserBuffer = BufferBrowser.IsoBuffer.from(testArray[1]);
 			expect(nodeBuffer.toString("utf8")).toEqual(browserBuffer.toString("utf8"));
+			// eslint-disable-next-line unicorn/text-encoding-identifier-case
 			expect(nodeBuffer.toString("utf-8")).toEqual(browserBuffer.toString("utf-8"));
 		}
 	});
@@ -254,10 +255,12 @@ describe("Buffer isomorphism", () => {
 
 		const buffer = BufferBrowser.IsoBuffer.from(test, "base64");
 		expect(BufferBrowser.bufferToString(buffer, "base64")).toEqual(test);
+		// eslint-disable-next-line unicorn/text-encoding-identifier-case
 		expect(BufferBrowser.bufferToString(buffer, "utf-8")).toEqual("hellothere");
 
 		const buffer2 = BufferNode.IsoBuffer.from(test, "base64");
 		expect(BufferNode.bufferToString(buffer2, "base64")).toEqual(test);
+		// eslint-disable-next-line unicorn/text-encoding-identifier-case
 		expect(BufferNode.bufferToString(buffer2, "utf-8")).toEqual("hellothere");
 	});
 });

@@ -79,7 +79,7 @@ function decodeAzureUrl(urlString: string): {
 	const storageUrlDecoded = decodeURIComponent(storageUrl);
 	const tenantIdDecoded = decodeURIComponent(tenantId);
 	const containerId = searchParams.get("containerId");
-	const containerIdDecoded = containerId !== null ? decodeURIComponent(containerId) : undefined;
+	const containerIdDecoded = containerId === null ? undefined : decodeURIComponent(containerId);
 	return {
 		ordererUrl,
 		storageUrl: storageUrlDecoded,

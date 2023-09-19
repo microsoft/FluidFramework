@@ -13,4 +13,8 @@ module.exports = {
 			"./src/test/types/tsconfig.json",
 		],
 	},
+	rules: {
+		// TODO: Remove this once disabled in shared config.
+		"unicorn/prefer-event-target": "off",
+	},
 };

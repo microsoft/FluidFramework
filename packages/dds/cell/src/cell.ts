@@ -242,14 +242,17 @@ export class SharedCell<T = any>
 	 */
 	private applyInnerOp(content: ICellOperation): Serializable<T> | undefined {
 		switch (content.type) {
-			case "setCell":
+			case "setCell": {
 				return this.setCore(this.decode(content.value));
+			}
 
-			case "deleteCell":
+			case "deleteCell": {
 				return this.deleteCore();
+			}
 
-			default:
+			default: {
 				throw new Error("Unknown operation");
+			}
 		}
 	}
 

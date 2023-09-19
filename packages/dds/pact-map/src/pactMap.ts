@@ -485,7 +485,7 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 			const op = message.contents as IPactMapOperation<T>;
 
 			switch (op.type) {
-				case "set":
+				case "set": {
 					this.incomingOp.emit(
 						"set",
 						op.key,
@@ -494,8 +494,9 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 						message.sequenceNumber,
 					);
 					break;
+				}
 
-				case "accept":
+				case "accept": {
 					this.incomingOp.emit(
 						"accept",
 						op.key,
@@ -503,9 +504,11 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 						message.sequenceNumber,
 					);
 					break;
+				}
 
-				default:
+				default: {
 					throw new Error("Unknown operation");
+				}
 			}
 		}
 	}

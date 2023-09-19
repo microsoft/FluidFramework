@@ -387,11 +387,11 @@ function View(props: ViewProps): React.ReactElement {
 
 	let view: React.ReactElement;
 	switch (menuSelection?.type) {
-		case "telemetryMenuSelection":
+		case "telemetryMenuSelection": {
 			view = <TelemetryView />;
 			break;
-		case "containerMenuSelection":
-			// eslint-disable-next-line no-case-declarations
+		}
+		case "containerMenuSelection": {
 			const container: ContainerKey | undefined = containers?.find(
 				(containerKey) => containerKey === menuSelection.containerKey,
 			);
@@ -402,18 +402,23 @@ function View(props: ViewProps): React.ReactElement {
 					<ContainerDevtoolsView containerKey={menuSelection.containerKey} />
 				);
 			break;
-		case "settingsMenuSelection":
+		}
+		case "settingsMenuSelection": {
 			view = <SettingsView />;
 			break;
-		case "homeMenuSelection":
+		}
+		case "homeMenuSelection": {
 			view = <LandingView />;
 			break;
-		case "opLatencyMenuSelection":
+		}
+		case "opLatencyMenuSelection": {
 			view = <OpLatencyView />;
 			break;
-		default:
+		}
+		default: {
 			view = <LandingView />;
 			break;
+		}
 	}
 
 	return <div className={styles.root}>{view}</div>;

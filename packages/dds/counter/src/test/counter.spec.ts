@@ -62,7 +62,9 @@ describe("SharedCounter", () => {
 							"The increment amount in the first event is incorrect",
 						);
 						assert.equal(newValue, 10, "The new value in the first event is incorrect");
-					} else if (!fired2) {
+					} else if (fired2) {
+						assert.fail("incremented event fired too many times");
+					} else {
 						fired2 = true;
 						assert.equal(
 							incrementAmount,
@@ -70,8 +72,6 @@ describe("SharedCounter", () => {
 							"The increment amount in the second event is incorrect",
 						);
 						assert.equal(newValue, 7, "The new value in the second event is incorrect");
-					} else {
-						assert.fail("incremented event fired too many times");
 					}
 				});
 
@@ -179,7 +179,9 @@ describe("SharedCounter", () => {
 							"The increment amount in the first event is incorrect",
 						);
 						assert.equal(newValue, 10, "The new value in the first event is incorrect");
-					} else if (!fired2) {
+					} else if (fired2) {
+						assert.fail("incremented event fired too many times");
+					} else {
 						fired2 = true;
 						assert.equal(
 							incrementAmount,
@@ -187,8 +189,6 @@ describe("SharedCounter", () => {
 							"The increment amount in the second event is incorrect",
 						);
 						assert.equal(newValue, 7, "The new value in the second event is incorrect");
-					} else {
-						assert.fail("incremented event fired too many times");
 					}
 				});
 

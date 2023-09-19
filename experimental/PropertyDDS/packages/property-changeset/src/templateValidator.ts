@@ -593,15 +593,15 @@ const _validateSameVersion = function (
  *
  * ```
  * <pre>
- *   {
- *     'isValid': true or false,
- *     'typeid': 'The typeid of the object being parsed',
- *     'unresolvedTypes': [ 'An array', 'of strong typeids', 'that were found',
- *       'in the document', 'but not resolved from the local cache' ],
- *     'resolvedTypes': [ 'Array of', 'strong types resolved', 'during template parsing'],
- *     'errors': [ 'Array of', 'objects describing', 'syntax errors in the template' ]
- *     ...
- *   }
+ * {
+ * 'isValid': true or false,
+ * 'typeid': 'The typeid of the object being parsed',
+ * 'unresolvedTypes': [ 'An array', 'of strong typeids', 'that were found',
+ * 'in the document', 'but not resolved from the local cache' ],
+ * 'resolvedTypes': [ 'Array of', 'strong types resolved', 'during template parsing'],
+ * 'errors': [ 'Array of', 'objects describing', 'syntax errors in the template' ]
+ * ...
+ * }
  * </pre>
  * ```
  * @throws if context validation fails
@@ -1083,10 +1083,10 @@ export class TemplateValidator {
 	 *
 	 * ```json
 	 * {
-	 *   isValid: false,
-	 *   errors: ['Something went wrong. Validation failed.'],
-	 *   warnings: ['A non-fatal warning'],
-	 *   typeid: 'SomeNamespace:PointID-1.0.0'
+	 * isValid: false,
+	 * errors: ['Something went wrong. Validation failed.'],
+	 * warnings: ['A non-fatal warning'],
+	 * typeid: 'SomeNamespace:PointID-1.0.0'
 	 * }
 	 * ```
 	 *
@@ -1216,10 +1216,10 @@ export class TemplateValidator {
 	 *
 	 * ```json
 	 * {
-	 *   isValid: false,
-	 *   errors: ['Something went wrong. Validation failed.'],
-	 *   warnings: ['A non-fatal warning'],
-	 *   typeid: 'SomeNamespace:PointID-1.0.0'
+	 * isValid: false,
+	 * errors: ['Something went wrong. Validation failed.'],
+	 * warnings: ['A non-fatal warning'],
+	 * typeid: 'SomeNamespace:PointID-1.0.0'
 	 * }
 	 * ```
 	 *

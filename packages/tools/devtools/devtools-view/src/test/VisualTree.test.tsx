@@ -28,7 +28,6 @@ const testFluidObjectId = "test-fluid-object-id";
 const testLabel = "test-node-key";
 
 describe("VisualTreeView component tests", () => {
-	// eslint-disable-next-line jest/expect-expect
 	it("UnknownDataView", async (): Promise<void> => {
 		const input: UnknownObjectNode = {
 			nodeKind: VisualNodeKind.UnknownObjectNode,
@@ -39,7 +38,6 @@ describe("VisualTreeView component tests", () => {
 		await screen.findByText(/Unrecognized kind of data./); // Will throw if exact text not found
 	});
 
-	// eslint-disable-next-line jest/expect-expect
 	it("UnknownFluidObjectView", async (): Promise<void> => {
 		const input: FluidUnknownObjectNode = {
 			fluidObjectId: testFluidObjectId,
@@ -52,7 +50,6 @@ describe("VisualTreeView component tests", () => {
 		await screen.findByText(/Unrecognized kind of Fluid Object./); // Will throw if exact text not found
 	});
 
-	// eslint-disable-next-line jest/expect-expect
 	it("FluidObjectTreeView", async (): Promise<void> => {
 		const messageRelay = new MockMessageRelay((untypedMessage: IDevtoolsMessage) => {
 			switch (untypedMessage.type) {
@@ -71,8 +68,9 @@ describe("VisualTreeView component tests", () => {
 						},
 					};
 				}
-				default:
+				default: {
 					throw new Error("Received unexpected message.");
+				}
 			}
 		});
 

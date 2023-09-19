@@ -164,7 +164,7 @@ function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.React
 
 	let innerView: React.ReactElement;
 	switch (innerViewSelection) {
-		case PanelView.ContainerData:
+		case PanelView.ContainerData: {
 			innerView = (
 				<ContainerFeatureFlagContext.Provider
 					value={{ containerFeatureFlags: supportedFeatures }}
@@ -173,14 +173,18 @@ function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.React
 				</ContainerFeatureFlagContext.Provider>
 			);
 			break;
-		case PanelView.Audience:
+		}
+		case PanelView.Audience: {
 			innerView = <AudienceView containerKey={containerKey} />;
 			break;
-		case PanelView.ContainerStateHistory:
+		}
+		case PanelView.ContainerStateHistory: {
 			innerView = <ContainerHistoryView containerKey={containerKey} />;
 			break;
-		default:
+		}
+		default: {
 			throw new Error(`Unrecognized PanelView selection value: "${innerViewSelection}".`);
+		}
 	}
 
 	const onTabSelect = (event: SelectTabEvent, data: SelectTabData): void => {

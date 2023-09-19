@@ -22,6 +22,7 @@ export function Uint8ArrayToString(arr: Uint8Array, encoding?: string): string {
 			return base64js.fromByteArray(arr);
 		}
 		case "utf8":
+		// eslint-disable-next-line unicorn/text-encoding-identifier-case
 		case "utf-8":
 		case undefined: {
 			return new TextDecoder().decode(arr);
@@ -157,6 +158,7 @@ export class IsoBuffer extends Uint8Array {
 				return new IsoBuffer(encoded.buffer);
 			}
 			case "utf8":
+			// eslint-disable-next-line unicorn/text-encoding-identifier-case
 			case "utf-8":
 			case undefined: {
 				const encoded = new TextEncoder().encode(str);
@@ -185,6 +187,7 @@ export class IsoBuffer extends Uint8Array {
 
 		// Remove invalid characters - Node buffer strips invalid characters
 		// whereas base64-js replaces them with "A"
+		// eslint-disable-next-line unicorn/prefer-string-replace-all
 		sanitizedStr = sanitizedStr.replace(/[^\w+-/]/g, "");
 
 		// Check for missing padding - Node buffer tolerates missing padding

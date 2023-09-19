@@ -139,24 +139,27 @@ function containerStatusValueCell(statusComponents: string[]): React.ReactElemen
 		<TableCellLayout
 			media={((): JSX.Element => {
 				switch (statusComponents[0]) {
-					case AttachState.Attaching:
+					case AttachState.Attaching: {
 						return (
 							<Badge shape="rounded" color="warning">
 								{statusComponents[0]}
 							</Badge>
 						);
-					case AttachState.Detached:
+					}
+					case AttachState.Detached: {
 						return (
 							<Badge shape="rounded" color="danger">
 								{statusComponents[0]}
 							</Badge>
 						);
-					default:
+					}
+					default: {
 						return (
 							<Badge shape="rounded" color="success">
 								{statusComponents[0]}
 							</Badge>
 						);
+					}
 				}
 			})()}
 		>

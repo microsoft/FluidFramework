@@ -198,12 +198,14 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
 			const op = message.contents as IIncrementOperation;
 
 			switch (op.type) {
-				case "increment":
+				case "increment": {
 					this.incrementCore(op.incrementAmount);
 					break;
+				}
 
-				default:
+				default: {
 					throw new Error("Unknown operation");
+				}
 			}
 		}
 	}

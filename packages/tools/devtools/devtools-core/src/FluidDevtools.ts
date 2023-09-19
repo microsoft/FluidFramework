@@ -242,14 +242,14 @@ export class FluidDevtools implements IFluidDevtools {
 	 * be returned.
 	 */
 	public static initialize(props?: FluidDevtoolsProps): FluidDevtools {
-		if (FluidDevtools.I !== undefined) {
+		if (FluidDevtools.I === undefined) {
+			FluidDevtools.I = new FluidDevtools(props);
+		} else {
 			console.warn(
 				"Devtools have already been initialized. " +
 					"Existing Devtools instance must be disposed before new ones may be initialized. " +
 					"Returning existing Devtools instance.",
 			);
-		} else {
-			FluidDevtools.I = new FluidDevtools(props);
 		}
 
 		return FluidDevtools.I;

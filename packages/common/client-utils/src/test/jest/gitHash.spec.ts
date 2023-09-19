@@ -95,7 +95,7 @@ async function evaluateBrowserGitHash(file: Buffer): Promise<string> {
 	// Add the prefix for git hashing
 	const size = file.byteLength;
 	const filePrefix = `blob ${size.toString()}${String.fromCharCode(0)}`;
-	const prefixBuffer = Buffer.from(filePrefix, "utf-8");
+	const prefixBuffer = Buffer.from(filePrefix, "utf8");
 	const hashBuffer = Buffer.concat([prefixBuffer, file], prefixBuffer.length + file.length);
 	return evaluateBrowserHash(hashBuffer);
 }

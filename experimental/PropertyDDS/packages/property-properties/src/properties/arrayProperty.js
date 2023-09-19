@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable jsdoc/check-line-alignment */
+
 /**
  * @fileoverview Definition of the array property class
  */

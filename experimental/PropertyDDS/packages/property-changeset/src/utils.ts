@@ -70,7 +70,7 @@ export namespace Utils {
 	 *
 	 * @param in_preCallback - The (pre-order) callback function that is invoked for each property
 	 * @param in_postCallback - The (post-order) callback function that is invoked for each property
-	 * @param in_context -  The traversal context for the currently processed property
+	 * @param in_context - The traversal context for the currently processed property
 	 * @param in_levelCallback - A callback for when a node is reached
 	 */
 	function _traverseChangeSetRecursivelyAsync(
@@ -726,7 +726,7 @@ export namespace Utils {
 	 *
 	 * @param in_preCallback - The (pre-order) callback function that is invoked for each property
 	 * @param in_postCallback - The (post-order) callback function that is invoked for each property
-	 * @param in_context -  The traversal context for the currently processed property
+	 * @param in_context - The traversal context for the currently processed property
 	 */
 	const _traverseChangeSetRecursively = function (
 		in_preCallback: (context: TraversalContext) => any | undefined,
@@ -1817,11 +1817,11 @@ export namespace Utils {
 	 *
 	 * ```typescript
 	 * new Map([
-	 *   ['entry', new Map()],
-	 *   ['nested', new Map([
-	 *     ['entry2', new Map()],
-	 *     ['entry3', new Map()]
-	 *   ])]
+	 * ['entry', new Map()],
+	 * ['nested', new Map([
+	 * ['entry2', new Map()],
+	 * ['entry3', new Map()]
+	 * ])]
 	 * ])
 	 * ```
 	 *
@@ -1829,11 +1829,11 @@ export namespace Utils {
 	 *
 	 * ```typescript
 	 * {
-	 *   entry: {},
-	 *   nested: {
-	 *     entry2: {}
-	 *     entry3: {}
-	 *   }
+	 * entry: {},
+	 * nested: {
+	 * entry2: {}
+	 * entry3: {}
+	 * }
 	 * }
 	 * ```
 	 *
@@ -1934,11 +1934,7 @@ export namespace Utils {
 				if (_isUserData(k)) {
 					thisLevel[k] = v;
 				} else {
-					if (v instanceof Map) {
-						thisLevel[k] = _convertMapToLevel(v);
-					} else {
-						thisLevel[k] = v;
-					}
+					thisLevel[k] = v instanceof Map ? _convertMapToLevel(v) : v;
 				}
 			}
 			return thisLevel;
