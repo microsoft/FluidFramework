@@ -30,7 +30,7 @@ import {
 	ReplaceKind,
 	Range,
 } from "../../core";
-import { assertValidIndex, brand, fail, getOrAddEmptyToMap } from "../../util";
+import { assertValidRange, brand, fail, getOrAddEmptyToMap } from "../../util";
 import { createEmitter } from "../../events";
 import { BasicChunk, BasicChunkCursor, SiblingsOrKey } from "./basicChunk";
 import { basicChunkTree, chunkTree, IChunker } from "./chunkTree";
@@ -113,20 +113,6 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 				);
 				return this.mutableChunkStack[this.mutableChunkStack.length - 1];
 			},
-			moveIn(index: number, key: FieldKey): number {
-				const children = this.forest.roots.fields.get(key) ?? [];
-				this.forest.roots.fields.delete(key);
-				if (children.length === 0) {
-					return 0; // Prevent creating 0 sized fields when inserting empty into empty.
-				}
-
-				const parent = this.getParent();
-				const destinationField = getOrAddEmptyToMap(parent.mutableChunk.fields, parent.key);
-				// TODO: this will fail for very large moves due to argument limits.
-				destinationField.splice(index, 0, ...children);
-
-				return children.length;
-			},
 			free(): void {
 				this.mutableChunk = undefined;
 				this.mutableChunkStack.length = 0;
@@ -138,6 +124,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 				this.forest.events.emit("afterChange");
 			},
 			destroy(range: Range): void {
+				this.forest.invalidateDependents();
 				this.detachEdit(range, undefined);
 			},
 			create(index: PlaceIndex, content: Delta.ProtoNodes): void {
@@ -154,21 +141,38 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 				this.forest.invalidateDependents();
 				this.detachEdit(source, destination);
 			},
+			/**
+			 * Attaches the range into the current field by transferring it from the given source path.
+			 * Does not invalidate dependents.
+			 * @param source - The the range to be attached.
+			 * @param destination - The index in the current field at which to attach the content.
+			 */
 			attachEdit(source: DetachedRangeUpPath, destination: PlaceIndex): void {
 				const sourceField = this.forest.roots.fields.get(source.field) ?? [];
-				assertValidIndex(source.start, sourceField, true);
-				assertValidIndex(source.end, sourceField, true);
-				assert(source.end >= source.start, "Range end must be >= its start");
+				assertValidRange(source, sourceField);
 
-				this.moveIn(destination, source.field);
+				this.forest.roots.fields.delete(source.field);
+				if (sourceField.length === 0) {
+					return; // Prevent creating 0 sized fields when inserting empty into empty.
+				}
+
+				const parent = this.getParent();
+				const destinationField = getOrAddEmptyToMap(parent.mutableChunk.fields, parent.key);
+				// TODO: this will fail for very large moves due to argument limits.
+				destinationField.splice(destination, 0, ...sourceField);
 			},
+			/**
+			 * Detaches the range from the current field and transfers it to the given destination if any.
+			 * Does not invalidate dependents.
+			 * @param source - The bounds of the range to be detached from the current field.
+			 * @param destination - If specified, the destination to transfer the detached range to.
+			 * If not specified, the detached range is destroyed.
+			 */
 			detachEdit(source: Range, destination: DetachedPlaceUpPath | undefined): void {
 				const parent = this.getParent();
 				const sourceField = parent.mutableChunk.fields.get(parent.key) ?? [];
 
-				assertValidIndex(source.start, sourceField, true);
-				assertValidIndex(source.end, sourceField, true);
-				assert(source.end >= source.start, "Range end must be >= its start");
+				assertValidRange(source, sourceField);
 				const newField = sourceField.splice(source.start, source.end - source.start);
 
 				if (sourceField.length === 0) {
@@ -190,6 +194,10 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 				oldContentDestination: DetachedPlaceUpPath,
 				kind: ReplaceKind,
 			): void {
+				assert(
+					newContentSource.field !== oldContentDestination.field,
+					"Replace detached source field and detached destination field must be different",
+				);
 				this.forest.invalidateDependents();
 				this.detachEdit(oldContent, oldContentDestination);
 				this.attachEdit(newContentSource, oldContent.start);
