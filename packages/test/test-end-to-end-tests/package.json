@@ -25,7 +25,7 @@
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
-		"start:tinylicious:test": "NODE_OPTIONS='--max-old-space-size=266' tinylicious > tinylicious.log 2>&1",
+		"start:tinylicious:test": "tinylicious > tinylicious.log 2>&1",
 		"test": "npm run test:realsvc",
 		"test:benchmark:report": "mocha --config src/test/benchmark/.mocharc.time.cjs -- --driver=local --e2eConfigFile='src/test/benchmark/e2eDocsConfig.json'",
 		"test:benchmark:report:frs": "mocha --config src/test/benchmark/.mocharc.time.cjs -- --driver=r11s --r11sEndpointName=frs --e2eConfigFile='src/test/benchmark/e2eDocsConfig.json'",
