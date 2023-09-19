@@ -2909,12 +2909,7 @@ export class ContainerRuntime
 	 * @param options - options controlling how the summary is generated or submitted
 	 */
 	public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
-		const {
-			fullTree = false,
-			finalAttempt = false,
-			downloadLatestStateAndClose,
-			summaryLogger,
-		} = options;
+		const { fullTree = false, finalAttempt = false, refreshLatestAck, summaryLogger } = options;
 		// The summary number for this summary. This will be updated during the summary process, so get it now and
 		// use it for all events logged during this summary.
 		const summaryNumber = this.nextSummaryNumber;
@@ -2929,7 +2924,7 @@ export class ContainerRuntime
 
 		// We close the summarizer and download a new snapshot and reload the container
 		let latestSnapshotVersionId: string | undefined;
-		if (downloadLatestStateAndClose === true) {
+		if (refreshLatestAck === true) {
 			return this.closeSummarizerOnSummaryStateStale(
 				createChildLogger({
 					logger: summaryNumberLogger,

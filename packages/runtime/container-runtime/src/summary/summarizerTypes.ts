@@ -107,7 +107,7 @@ export interface ISummarizeOptions {
 	 * @deprecated - Summarize will not refresh latest snapshot state anymore. Instead it updates the cache and closes
 	 * It's expected a new summarizer client will be created, likely by the same parent.
 	 */
-	readonly downloadLatestStateAndClose?: boolean;
+	readonly refreshLatestAck?: boolean;
 }
 
 export interface ISubmitSummaryOptions extends ISummarizeOptions {
