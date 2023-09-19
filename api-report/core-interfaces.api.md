@@ -300,7 +300,7 @@ export interface IFluidPackageEnvironment {
 // @public (undocumented)
 export const IFluidRouter: keyof IProvideFluidRouter;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IFluidRouter extends IProvideFluidRouter {
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
@@ -353,7 +353,7 @@ export interface IProvideFluidLoadable {
     readonly IFluidLoadable: IFluidLoadable;
 }
 
-// @public
+// @public @deprecated
 export interface IProvideFluidRouter {
     // (undocumented)
     readonly IFluidRouter: IFluidRouter;
