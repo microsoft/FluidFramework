@@ -1650,6 +1650,38 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		// remote value is what we expect
 		assert.strictEqual(counter1.value, 5);
 	});
+
+	it("applies stashed ops with no saved ops", async function () {
+		// wait for summary
+		await new Promise<void>((resolve) => container1.on("op", (op) => {
+			if (op.type === "summarize") {
+				resolve();
+			}
+		}));
+
+		// avoid our join op being saved
+		const headers: IRequestHeader = { [LoaderHeader.loadMode]: { deltaConnection: "none" } };
+		const container: IContainerExperimental = await loader.resolve({ url, headers });
+		const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
+		const map = await dataStore.getSharedObject<SharedMap>(mapId);
+		// generate ops with RSN === summary SN
+		map.set(testKey, testValue);
+		const stashBlob = await container.closeAndGetPendingLocalState?.();
+		assert(stashBlob);
+		const pendingState = JSON.parse(stashBlob);
+		// make sure the container loaded from summary and we have no saved ops
+		assert(pendingState.savedOps.length  === 0);
+		assert(pendingState.pendingRuntimeState.pending.pendingStates[0].referenceSequenceNumber > 0);
+
+		// load container with pending ops, which should resend the op not sent by previous container
+		const container2 = await loader.resolve({ url }, stashBlob);
+		const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+		await waitForContainerConnection(container2);
+		await provider.ensureSynchronized();
+		assert.strictEqual(map1.get(testKey), testValue);
+		assert.strictEqual(map2.get(testKey), testValue);
+	});
 });
 
 describeNoCompat("stashed ops", (getTestObjectProvider) => {
