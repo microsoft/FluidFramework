@@ -128,28 +128,22 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 	const maxCacheableSummarySize: number =
 		config.get("restGitService:maxCacheableSummarySize") ?? 1_000_000_000; // default: 1gb
 
-	Lumberjack.info(
-		`IsEphemeralContainer=${isEphemeralContainer} ; ignoreEphemeralFlag=${ignoreEphemeralFlag}`,
-	);
-
 	let isEphemeral: boolean = isEphemeralContainer;
 	if (!ignoreEphemeralFlag) {
 		const isEphemeralKey: string = `isEphemeralContainer:${documentId}`;
 		if (isEphemeral !== undefined && isEphemeral !== null) {
 			// If an isEphemeral flag was passed in, cache it in Redis
-			Lumberjack.info(`Setting ${isEphemeralKey} to ${isEphemeralContainer}`);
-			await cache?.set(isEphemeralKey, isEphemeralContainer);
+			Lumberjack.info(`Setting ${isEphemeralKey} to ${isEphemeral}`);
+			await cache?.set(isEphemeralKey, isEphemeral);
 		} else {
 			isEphemeral = await cache?.get(isEphemeralKey);
-			// If isEphemeral is still null/undefined fetch the value from database
 			if (isEphemeral === null || isEphemeral === undefined) {
-				Lumberjack.info(
-					`Reading document static props of tId=${tenantId} and dId=${documentId}`,
-				);
+				// If isEphemeral is still null/undefined fetch the value from database
 				try {
 					const staticProps: IDocumentStaticProperties =
 						await documentManager.readStaticProperties(tenantId, documentId);
-					isEphemeral = staticProps.isEphemeralContainer ?? false;
+					isEphemeral = staticProps?.isEphemeralContainer ?? false;
+					await cache?.set(isEphemeralKey, isEphemeral);
 				} catch (e) {
 					isEphemeral = false;
 				}
@@ -158,7 +152,7 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 	} else {
 		isEphemeral = false;
 	}
-	Lumberjack.info(`Document ${documentId} is ${isEphemeral ? "" : "not "}ephemeral.`);
+	Lumberjack.info(`Document ${documentId} is ephemeral? ${isEphemeral}`);
 
 	const calculatedStorageName =
 		initialUpload && storageName
