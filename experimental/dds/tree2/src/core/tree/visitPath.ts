@@ -65,8 +65,7 @@ export interface PathVisitor {
 	/**
 	 * Invoked before the replacement of a range of nodes.
 	 *
-	 * Note that, for splice-like replaces, the `newContent` range length may be different from the `oldContent`
-	 * range length.
+	 * Note that the `newContent` range length will always match the `oldContent` range length.
 	 *
 	 * @param newContent - The content that will be attached in place of the old.
 	 * @param oldContent - The old that will be replaced.
@@ -83,8 +82,7 @@ export interface PathVisitor {
 	/**
 	 * Invoked after the replacement of a range of nodes.
 	 *
-	 * Note that, for splice-like replaces, the `newContent` range length may be different from the `oldContent`
-	 * range length.
+	 * Note that the `newContent` range length will always match the `oldContent` range length.
 	 *
 	 * @param newContentSource - The place that the new content came from.
 	 * @param newContent - The new content.

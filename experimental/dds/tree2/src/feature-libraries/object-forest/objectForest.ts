@@ -15,7 +15,6 @@ import {
 	FieldKey,
 	DetachedField,
 	AnchorSet,
-	detachedFieldAsKey,
 	Delta,
 	UpPath,
 	Anchor,
@@ -29,13 +28,17 @@ import {
 	ForestEvents,
 	PathRootPrefix,
 	DeltaVisitor,
-	DetachedPlaceUpPath,
-	DetachedRangeUpPath,
 	Range,
 	PlaceIndex,
 	Value,
 } from "../../core";
-import { brand, fail, assertValidIndex } from "../../util";
+import {
+	brand,
+	fail,
+	assertValidIndex,
+	assertValidRange,
+	assertNonNegativeSafeInteger,
+} from "../../util";
 import { CursorWithNode, SynchronousCursor } from "../treeCursorUtils";
 import { mapTreeFromCursor, singleMapTreeCursor } from "../mapTreeCursor";
 import { createEmitter } from "../../events";
@@ -127,74 +130,88 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 				this.forest.activeVisitor = undefined;
 				this.forest.events.emit("afterChange");
 			},
-			destroy(range: Range): void {
-				this.detachEdit(range, undefined);
-			},
-			create(index: PlaceIndex, content: Delta.ProtoNodes): void {
+			destroy(detachedField: FieldKey, count: number): void {
 				this.forest.invalidateDependents();
-				const nodes = Array.from(content, mapTreeFromCursor);
-				const [parent, key] = this.cursor.getParent();
-				const destinationField = getMapTreeField(parent, key, true);
-				assertValidIndex(index, destinationField, true);
-				// TODO: this will fail for very large insertions due to argument limits.
-				destinationField.splice(index, 0, ...nodes);
+				this.forest.delete(detachedField);
 			},
-			attach(source: DetachedRangeUpPath, destination: PlaceIndex): void {
+			create(content: Delta.ProtoNodes, destination: FieldKey): void {
 				this.forest.invalidateDependents();
-				this.attachEdit(source, destination);
+				this.forest.add(content, destination);
 			},
-			detach(source: Range, destination: DetachedPlaceUpPath): void {
+			attach(source: FieldKey, count: number, destination: PlaceIndex): void {
+				this.forest.invalidateDependents();
+				this.attachEdit(source, count, destination);
+			},
+			detach(source: Range, destination: FieldKey): void {
 				this.forest.invalidateDependents();
 				this.detachEdit(source, destination);
 			},
-			attachEdit(source: DetachedRangeUpPath, destination: PlaceIndex): void {
+			/**
+			 * Attaches the range into the current field by transferring it from the given source path.
+			 * Does not invalidate dependents.
+			 * @param source - The the range to be attached.
+			 * @param destination - The index in the current field at which to attach the content.
+			 */
+			attachEdit(source: FieldKey, count: number, destination: PlaceIndex): void {
+				assertNonNegativeSafeInteger(count);
+				if (count === 0) {
+					return;
+				}
 				const [parent, key] = cursor.getParent();
+				assert(
+					parent !== this.forest.roots || key !== source,
+					"Attach source field must be different from current field",
+				);
 				const currentField = getMapTreeField(parent, key, true);
 				assertValidIndex(destination, currentField, true);
-				const sourceField = getMapTreeField(this.forest.roots, source.field, false);
-				assertValidIndex(source.start, sourceField, true);
-				assertValidIndex(source.end, sourceField, true);
-				assert(source.end >= source.start, "Range end must be >= its start");
-				const content = sourceField.splice(source.start, source.end - source.start);
-				if (sourceField.length === 0) {
-					this.forest.roots.fields.delete(source.field);
-				}
+				const sourceField = getMapTreeField(this.forest.roots, source, false);
+				assert(
+					sourceField !== undefined && sourceField.length === count,
+					"Attach must consume all nodes in source field",
+				);
 				// TODO: this will fail for very large insertions due to argument limits.
-				currentField.splice(destination, 0, ...content);
+				currentField.splice(destination, 0, ...sourceField);
+				this.forest.delete(source);
 			},
-			detachEdit(source: Range, destination: DetachedPlaceUpPath | undefined): void {
+			/**
+			 * Detaches the range from the current field and transfers it to the given destination if any.
+			 * Does not invalidate dependents.
+			 * @param source - The bounds of the range to be detached from the current field.
+			 * @param destination - If specified, the destination to transfer the detached range to.
+			 * If not specified, the detached range is destroyed.
+			 */
+			detachEdit(source: Range, destination: FieldKey | undefined): void {
 				const [parent, key] = cursor.getParent();
+				assert(
+					destination === undefined ||
+						parent !== this.forest.roots ||
+						key !== destination,
+					"Detach destination field must be different from current field",
+				);
 				const currentField = getMapTreeField(parent, key, true);
-				assertValidIndex(source.start, currentField, true);
-				assertValidIndex(source.end, currentField, true);
-				assert(source.end >= source.start, "Range end must be >= its start");
+				assertValidRange(source, currentField);
 				const content = currentField.splice(source.start, source.end - source.start);
+				if (destination !== undefined) {
+					this.forest.addFieldAsDetached(content, destination);
+				}
+				// This check is performed after the transfer to ensure that the field is not removed in scenarios
+				// where the source and destination are the same.
 				if (currentField.length === 0) {
 					parent.fields.delete(key);
 				}
-				if (destination !== undefined) {
-					const destinationField = getMapTreeField(
-						this.forest.roots,
-						destination.field,
-						true,
-					);
-					assertValidIndex(destination.index, destinationField, true);
-					destinationField.splice(
-						destination.index,
-						0,
-						// TODO: this will fail for very large insertions due to argument limits.
-						...content,
-					);
-				}
 			},
 			replace(
-				newContentSource: DetachedRangeUpPath,
-				oldContentRange: Range,
-				oldContentDestination: DetachedPlaceUpPath,
+				newContentSource: FieldKey,
+				range: Range,
+				oldContentDestination: FieldKey,
 			): void {
+				assert(
+					newContentSource !== oldContentDestination,
+					"Replace detached source field and detached destination field must be different",
+				);
 				this.forest.invalidateDependents();
-				this.detachEdit(oldContentRange, oldContentDestination);
-				this.attachEdit(newContentSource, oldContentRange.start);
+				this.detachEdit(range, oldContentDestination);
+				this.attachEdit(newContentSource, range.end - range.start, range.start);
 			},
 			enterNode(index: number): void {
 				this.cursor.enterNode(index);
@@ -220,23 +237,20 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 		return range;
 	}
 
-	private add(nodes: Iterable<ITreeCursor>): DetachedField {
+	private add(nodes: Iterable<ITreeCursor>, key: FieldKey): void {
 		const field: ObjectField = Array.from(nodes, mapTreeFromCursor);
-		return this.addFieldAsDetached(field);
+		this.addFieldAsDetached(field, key);
 	}
 
-	private addFieldAsDetached(field: ObjectField): DetachedField {
-		const detached = this.newDetachedField();
-		const key = detachedFieldAsKey(detached);
+	private addFieldAsDetached(field: ObjectField, key: FieldKey): void {
 		assert(!this.roots.fields.has(key), 0x370 /* new range must not already exist */);
 		if (field.length > 0) {
 			this.roots.fields.set(key, field);
 		}
-		return detached;
 	}
 
-	private delete(field: DetachedField): void {
-		this.roots.fields.delete(detachedFieldAsKey(field));
+	private delete(field: FieldKey): void {
+		this.roots.fields.delete(field);
 	}
 
 	public allocateCursor(): Cursor {

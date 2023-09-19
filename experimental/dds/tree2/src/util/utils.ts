@@ -260,6 +260,16 @@ export function assertValidIndex(
 	}
 }
 
+export function assertValidRange(
+	{ start, end }: { start: number; end: number },
+	array: { readonly length: number },
+) {
+	assertNonNegativeSafeInteger(start);
+	assertNonNegativeSafeInteger(end);
+	assert(end <= array.length, "Range end must be less than or equal to length");
+	assert(start <= end, "Range start must be less than or equal to range start");
+}
+
 export function assertNonNegativeSafeInteger(index: number) {
 	assert(Number.isSafeInteger(index), 0x376 /* index must be an integer */);
 	assert(index >= 0, 0x377 /* index must be non-negative */);

@@ -555,17 +555,17 @@ describe("Editing", () => {
 				1,
 			);
 
-			// Change value of A to C
-			const editor = tree2.editor.valueField({
+			// Delete A
+			const editor = tree2.editor.sequenceField({
 				parent: { parent: fooList, parentField: brand(""), parentIndex: 0 },
 				field: brand("baz"),
 			});
-			editor.set(singleTextCursor({ type: jsonString.name, value: "C" }));
+			editor.delete(0, 1);
 
 			const expectedState: JsonCompatible = [
 				{
 					foo: [],
-					bar: ["B", { baz: "C" }],
+					bar: ["B", {}],
 				},
 			];
 
@@ -1720,6 +1720,26 @@ describe("Editing", () => {
 			tree2.rebaseOnto(tree1);
 
 			expectJsonTree([tree1, tree2], [{ foo: "43" }]);
+		});
+
+		it("can rebase a node edit over an unrelated edit", () => {
+			const tree1 = makeTreeFromJson([{ foo: "40", bar: "123" }]);
+			const tree2 = tree1.fork();
+
+			tree1.editor
+				.optionalField({
+					parent: rootNode,
+					field: brand("bar"),
+				})
+				.set(singleJsonCursor("456"), false);
+
+			const editor = tree2.editor.valueField({ parent: rootNode, field: brand("foo") });
+			editor.set(singleTextCursor({ type: jsonString.name, value: "42" }));
+
+			tree1.merge(tree2, false);
+			tree2.rebaseOnto(tree1);
+
+			expectJsonTree([tree1, tree2], [{ foo: "42", bar: "456" }]);
 		});
 
 		it("can rebase a node edit over the node being replaced and restored", () => {

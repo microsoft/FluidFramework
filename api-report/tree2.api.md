@@ -98,21 +98,21 @@ export function anchorSlot<TContent>(): AnchorSlot<TContent>;
 // @alpha
 export interface AnnouncedVisitor extends DeltaVisitor {
     // (undocumented)
-    afterAttach(source: DetachedPlaceUpPath, destination: Range_2): void;
+    afterAttach(source: FieldKey, destination: Range_2): void;
     // (undocumented)
-    afterCreate(range: Range_2, content: Delta.ProtoNodes): void;
+    afterCreate(content: Delta.ProtoNodes, destination: FieldKey): void;
     // (undocumented)
-    afterDetach(source: PlaceIndex, destination: DetachedRangeUpPath): void;
+    afterDetach(source: PlaceIndex, count: number, destination: FieldKey): void;
     // (undocumented)
-    afterReplace(newContentSource: DetachedPlaceUpPath, newContent: Range_2, oldContent: DetachedRangeUpPath, kind: ReplaceKind): void;
+    afterReplace(newContentSource: FieldKey, newContent: Range_2, oldContent: FieldKey, kind: ReplaceKind): void;
     // (undocumented)
-    beforeAttach(source: DetachedRangeUpPath, destination: PlaceIndex): void;
+    beforeAttach(source: FieldKey, count: number, destination: PlaceIndex): void;
     // (undocumented)
-    beforeDestroy(range: Range_2): void;
+    beforeDestroy(field: FieldKey, count: number): void;
     // (undocumented)
-    beforeDetach(source: Range_2, destination: DetachedPlaceUpPath): void;
+    beforeDetach(source: Range_2, destination: FieldKey): void;
     // (undocumented)
-    beforeReplace(newContent: DetachedRangeUpPath, oldContent: Range_2, oldContentDestination: DetachedPlaceUpPath, kind: ReplaceKind): void;
+    beforeReplace(newContent: FieldKey, oldContent: Range_2, oldContentDestination: FieldKey, kind: ReplaceKind): void;
 }
 
 // @alpha
@@ -450,14 +450,10 @@ export { Delta }
 
 // @alpha
 export interface DeltaVisitor {
-    // (undocumented)
-    attach(source: DetachedRangeUpPath, destination: PlaceIndex): void;
-    // (undocumented)
-    create(index: PlaceIndex, content: Delta.ProtoNodes): void;
-    // (undocumented)
-    destroy(range: Range_2): void;
-    // (undocumented)
-    detach(source: Range_2, destination: DetachedPlaceUpPath): void;
+    attach(source: FieldKey, count: number, destination: PlaceIndex): void;
+    create(content: Delta.ProtoNodes, destination: FieldKey): void;
+    destroy(detachedField: FieldKey, count: number): void;
+    detach(source: Range_2, destination: FieldKey): void;
     // (undocumented)
     enterField(key: FieldKey): void;
     // (undocumented)
@@ -468,8 +464,7 @@ export interface DeltaVisitor {
     exitNode(index: NodeIndex): void;
     // (undocumented)
     free(): void;
-    // (undocumented)
-    replace(newContentSource: DetachedRangeUpPath, oldContent: Range_2, oldContentDestination: DetachedPlaceUpPath, kind: ReplaceKind): void;
+    replace(newContentSource: FieldKey, range: Range_2, oldContentDestination: FieldKey, kind: ReplaceKind): void;
 }
 
 // @alpha
