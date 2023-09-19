@@ -28,8 +28,7 @@ import {
 	SharedTreeFactory as NewSharedTreeFactory,
 	ISharedTree as ISharedTree2,
 } from "@fluid-experimental/tree2";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { ContainerRuntime } from "@fluidframework/container-runtime/src";
+import { IContainerRuntimeOptions, ContainerRuntime } from "@fluidframework/container-runtime";
 
 export class MigratorDataObject<I extends DataObjectTypes = DataObjectTypes> extends DataObject<I> {
 	private readonly migratorRuntime: MigratorFluidDataStoreRuntime;
