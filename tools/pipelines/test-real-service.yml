@@ -66,16 +66,6 @@ stages:
           logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
           logger__morganFormat: tiny
 
-        # Publish the tinylicious log
-        - task: PublishPipelineArtifact@1
-          displayName: Publish Artifact - Tinylicious Log
-          inputs:
-            # NOTE: this depends on knowledge of what the template does and where it puts things.
-            # If the template changes its logic, we might need to adjust this path.
-            targetPath: '${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}/tinylicious.log'
-            artifactName: 'tinyliciousLog'
-            publishLocation: 'pipeline'
-
   # end-to-end tests routerlicious
   - stage: e2e_routerlicious
     displayName: e2e - routerlicious
