@@ -97,8 +97,6 @@ services:
     image: "redis:alpine"
   mongodb:
     image: "mongo:4"
-  rabbitmq:
-    image: "rabbitmq:alpine"
 volumes:
   git:
     driver: local

@@ -219,9 +219,6 @@
 		"checkpointBatchSize": 1,
 		"checkpointTimeIntervalMsec": 1000
 	},
-	"rabbitmq": {
-		"connectionString": "amqp://rabbitmq"
-	},
 	"redis": {
 		"host": "redis",
 		"port": 6379,

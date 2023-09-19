@@ -161,9 +161,6 @@ services:
   mongodb:
     platform: linux/arm64/v8
     image: "mongo:4"
-  rabbitmq:
-    platform: linux/arm64
-    image: "rabbitmq:alpine"
 volumes:
   git:
     driver: local

@@ -205,9 +205,6 @@ data:
             "checkpointTimeIntervalMsec": 1000,
             "restartOnCheckpointFailure": {{ .Values.scriptorium.restartOnCheckpointFailure }}
         },
-        "rabbitmq": {
-            "connectionString": "{{ .Values.rabbitmq.connectionString }}"
-        },
         "riddler": {
             "port": 5000
         },
