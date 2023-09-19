@@ -115,7 +115,7 @@ function cellDeltaFromMark<TNodeChange>(
 			}
 			case "Placeholder":
 				fail("Should not have placeholders in a changeset being converted to delta");
-			case "Composite":
+			case "Transient":
 				fail("XXX");
 			default:
 				unreachableCase(type);

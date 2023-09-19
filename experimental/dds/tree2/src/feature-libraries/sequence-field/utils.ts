@@ -36,7 +36,7 @@ import {
 	HasMarkFields,
 	CellId,
 	CellMark,
-	Composite,
+	TransientEffect,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { isMoveMark, MoveEffectTable } from "./moveEffectTable";
@@ -247,7 +247,7 @@ export function getEffectiveNodeChanges<TNodeChange>(
 	);
 	switch (type) {
 		case "Insert":
-		case "Composite":
+		case "Transient":
 			return changes;
 		case "Revive":
 			// So long as the input cell is populated, the nested changes are still effective
@@ -283,7 +283,7 @@ export function areOutputCellsEmpty(mark: Mark<unknown>): boolean {
 			return mark.isSrcConflicted ?? false;
 		case "Delete":
 		case "MoveOut":
-		case "Composite":
+		case "Transient":
 			return true;
 		case "ReturnFrom":
 			return mark.cellId !== undefined || !mark.isDstConflicted;
@@ -411,7 +411,7 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 		return true;
 	}
 
-	if (type === "Composite") {
+	if (type === "Transient") {
 		// TODO
 		return false;
 	}
@@ -949,7 +949,7 @@ export function splitMark<T, TMark extends Mark<T>>(mark: TMark, length: number)
 		}
 		case "Placeholder":
 			fail("TODO");
-		case "Composite":
+		case "Transient":
 			fail("XXX");
 		default:
 			unreachableCase(type);
@@ -1019,8 +1019,9 @@ export function withRevision<TMark extends Mark<unknown>>(
 
 	const cloned = cloneMark(mark);
 
-	assert(cloned.type !== "Composite", "TODO");
-	(cloned as Exclude<Mark<unknown>, CellMark<NoopMark | Composite, unknown>>).revision = revision;
+	assert(cloned.type !== "Transient", "TODO");
+	(cloned as Exclude<Mark<unknown>, CellMark<NoopMark | TransientEffect, unknown>>).revision =
+		revision;
 	return cloned;
 }
 

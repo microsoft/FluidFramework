@@ -462,7 +462,7 @@ function markFollowsMoves(mark: Mark<unknown>): boolean {
 		case "ReturnTo":
 		case "Placeholder":
 			return false;
-		case "Composite":
+		case "Transient":
 			fail("Should not rebase composite marks");
 		default:
 			unreachableCase(type);

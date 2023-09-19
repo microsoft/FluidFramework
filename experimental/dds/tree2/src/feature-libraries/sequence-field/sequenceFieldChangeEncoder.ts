@@ -42,7 +42,7 @@ function makeV0Codec<TNodeChange>(
 					}
 					case "Placeholder":
 						fail("Should not have placeholders in serialized changeset");
-					case "Composite":
+					case "Transient":
 						fail("XXX");
 					default:
 						unreachableCase(type);
@@ -76,7 +76,7 @@ function makeV0Codec<TNodeChange>(
 					}
 					case "Placeholder":
 						fail("Should not have placeholders in serialized changeset");
-					case "Composite":
+					case "Transient":
 						fail("XXX");
 					default:
 						unreachableCase(type);

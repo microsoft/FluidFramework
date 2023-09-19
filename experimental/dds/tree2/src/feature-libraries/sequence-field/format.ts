@@ -351,20 +351,20 @@ export interface MovePlaceholder extends HasRevisionTag, HasMoveId {
 	type: "Placeholder";
 }
 
-export interface Composite {
-	type: "Composite";
+export interface TransientEffect {
+	type: "Transient";
 	attach: Attach;
 	detach: Detach;
 }
 
-export const Composite = Type.Object({
-	type: Type.Literal("Composite"),
+export const TransientEffect = Type.Object({
+	type: Type.Literal("Transient"),
 	attach: Attach,
 	detach: Detach,
 });
 
-export type MarkEffect = NoopMark | MovePlaceholder | Attach | Detach | Composite;
-export const MarkEffect = Type.Union([NoopMark, Attach, Detach, Composite]);
+export type MarkEffect = NoopMark | MovePlaceholder | Attach | Detach | TransientEffect;
+export const MarkEffect = Type.Union([NoopMark, Attach, Detach, TransientEffect]);
 
 export type CellMark<TMark, TNodeChange> = TMark & HasMarkFields<TNodeChange>;
 export const CellMark = <TMark extends TSchema, TNodeChange extends TSchema>(
