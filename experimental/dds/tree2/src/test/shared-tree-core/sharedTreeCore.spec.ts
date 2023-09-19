@@ -230,8 +230,9 @@ describe("SharedTreeCore", () => {
 		const runtime = new MockFluidDataStoreRuntime();
 		const tree = new TestSharedTreeCore(runtime);
 		const factory = new MockContainerRuntimeFactory();
+		factory.createContainerRuntime(runtime);
 		tree.connect({
-			deltaConnection: factory.createContainerRuntime(runtime).createDeltaConnection(),
+			deltaConnection: runtime.createDeltaConnection(),
 			objectStorage: new MockStorage(),
 		});
 
@@ -255,8 +256,9 @@ describe("SharedTreeCore", () => {
 		const runtime = new MockFluidDataStoreRuntime();
 		const tree = new TestSharedTreeCore(runtime);
 		const factory = new MockContainerRuntimeFactory();
+		factory.createContainerRuntime(runtime);
 		tree.connect({
-			deltaConnection: factory.createContainerRuntime(runtime).createDeltaConnection(),
+			deltaConnection: runtime.createDeltaConnection(),
 			objectStorage: new MockStorage(),
 		});
 

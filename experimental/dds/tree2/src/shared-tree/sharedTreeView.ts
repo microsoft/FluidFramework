@@ -17,6 +17,7 @@ import {
 	UndoRedoManager,
 	LocalCommitSource,
 	schemaDataIsEmpty,
+	applyDelta,
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import {
@@ -40,6 +41,9 @@ import {
 	ModularChangeset,
 	nodeKeyFieldKey,
 	FieldSchema,
+	TypedSchemaCollection,
+	getTreeContext,
+	TypedField,
 } from "../feature-libraries";
 import { SharedTreeBranch } from "../shared-tree-core";
 import { TransactionResult, brand } from "../util";
@@ -243,34 +247,28 @@ export interface ISharedTreeView extends AnchorLocator {
 	};
 
 	/**
-	 * Takes in a tree and returns a view of it that conforms to the view schema.
-	 * The returned view refers to and can edit the provided one: it is not a fork of it.
-	 * Updates the stored schema in the tree to match the provided one if requested by config and compatible.
-	 *
-	 * If the tree is uninitialized (has no nodes or schema at all),
-	 * it is initialized to the config's initial tree and the provided schema are stored.
-	 * This is done even if `AllowedUpdateType.None`.
-	 *
-	 * @remarks
-	 * Doing initialization here, regardless of `AllowedUpdateType`, allows a small API that is hard to use incorrectly.
-	 * Other approaches tend to have easy-to-make mistakes.
-	 * For example, having a separate initialization function means apps can forget to call it, making an app that can only open existing document,
-	 * or call it unconditionally leaving an app that can only create new documents.
-	 * It also would require the schema to be passed in to separate places and could cause issues if they didn't match.
-	 * Since the initialization function couldn't return a typed tree, the type checking wouldn't help catch that.
-	 * Also, if an app manages to create a document, but the initialization fails to get persisted, an app that only calls the initialization function
-	 * on the create code-path (for example how a schematized factory might do it),
-	 * would leave the document in an unusable state which could not be repaired when it is reopened (by the same or other clients).
-	 * Additionally, once out of schema content adapters are properly supported (with lazy document updates),
-	 * this initialization could become just another out of schema content adapter: at that point it clearly belongs here in schematize.
-	 *
-	 * TODO:
-	 * - Implement schema-aware API for return type.
-	 * - Support adapters for handling out of schema data.
+	 * @deprecated {@link ISharedTree.schematize} which will replace this. View schema should be applied before creating an ISharedTreeView.
 	 */
 	schematize<TRoot extends FieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
 	): ISharedTreeView;
+
+	/**
+	 * Get a typed view of the tree content using the editable-tree-2 API.
+	 *
+	 * Warning: This API is not fully tested yet and is still under development.
+	 * It will eventually replace the current editable-tree API and become the main entry point for working with SharedTree.
+	 * Access to this API is exposed here as a temporary measure to enable experimenting with the API while its being finished and evaluated.
+	 *
+	 * TODO:
+	 * ISharedTreeView should already have the view schema, and thus nor require it to be passed in.
+	 * As long as it is passed in here as a workaround, the caller must ensure that the stored schema is compatible.
+	 * If the stored schema is edited and becomes incompatible (or was not originally compatible),
+	 * using the returned tree is invalid and is likely to error or corrupt the document.
+	 */
+	editableTree2<TRoot extends FieldSchema>(
+		viewSchema: TypedSchemaCollection<TRoot>,
+	): TypedField<TRoot>;
 }
 
 /**
@@ -432,8 +430,8 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		branch.on("change", ({ change }) => {
 			if (change !== undefined) {
 				const delta = this.changeFamily.intoDelta(change);
-				this.forest.anchors.applyDelta(delta);
-				this.forest.applyDelta(delta);
+				applyDelta(delta, this.forest.anchors);
+				applyDelta(delta, this.forest);
 				this.nodeKeyIndex.scanKeys(this.context);
 				this.events.emit("afterBatch");
 			}
@@ -469,7 +467,21 @@ export class SharedTreeView implements ISharedTreeBranchView {
 	public schematize<TRoot extends FieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
 	): ISharedTreeView {
-		return schematizeView(this, config);
+		schematizeView(this, config, this.storedSchema);
+		return this;
+	}
+
+	public editableTree2<TRoot extends FieldSchema>(
+		viewSchema: TypedSchemaCollection<TRoot>,
+	): TypedField<TRoot> {
+		const context = getTreeContext(
+			viewSchema,
+			this.forest,
+			this.branch.editor,
+			this.nodeKeyManager,
+			this.nodeKeyIndex.fieldKey,
+		);
+		return context.root as TypedField<TRoot>;
 	}
 
 	public locate(anchor: Anchor): AnchorNode | undefined {
@@ -549,27 +561,30 @@ export class SharedTreeView implements ISharedTreeBranchView {
 	}
 }
 
+/**
+ * @param view - view to edit.
+ * @param config - config to apply.
+ * @param storedSchema - provided separate from view since editing schema of view doesn't send ops properly.
+ */
+// TODO: once schematize is removed from ISharedTreeView, this should be moved/integrated into SharedTree.
 export function schematizeView<TRoot extends FieldSchema>(
 	view: ISharedTreeView,
 	config: InitializeAndSchematizeConfiguration<TRoot>,
-): ISharedTreeView {
+	storedSchema: StoredSchemaRepository,
+): void {
 	// TODO:
 	// When this becomes a more proper out of schema adapter, editing should be made lazy.
 	// This will improve support for readonly documents, cross version collaboration and attribution.
 
 	// Check for empty.
 	// TODO: Better detection of empty case
-	if (view.forest.isEmpty && schemaDataIsEmpty(view.storedSchema)) {
+	if (view.forest.isEmpty && schemaDataIsEmpty(storedSchema)) {
 		view.transaction.start();
-		initializeContent(view.storedSchema, config.schema, () =>
-			view.setContent(config.initialTree),
-		);
+		initializeContent(storedSchema, config.schema, () => view.setContent(config.initialTree));
 		view.transaction.commit();
 	}
 
-	schematize(view.events, view.storedSchema, config);
-
-	return view;
+	schematize(view.events, storedSchema, config);
 }
 
 /**

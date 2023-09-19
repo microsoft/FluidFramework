@@ -17,7 +17,6 @@ export {
 	CrossFieldMap,
 	CrossFieldQuerySet,
 	CrossFieldTarget,
-	idAllocatorFromMaxId,
 	setInCrossFieldMap,
 } from "./crossFieldQueries";
 export { ChangesetLocalIdSchema, EncodedChangeAtomId } from "./modularChangeFormat";
@@ -29,7 +28,6 @@ export {
 	brandedFieldKind,
 } from "./fieldKind";
 export {
-	IdAllocator,
 	FieldChangeHandler,
 	FieldChangeRebaser,
 	FieldEditor,

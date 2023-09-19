@@ -48,11 +48,23 @@ const defaultPartialConfig: Omit<ApiItemTransformationConfiguration, "apiModel">
 	uriRoot: ".",
 };
 
+// Relative to dist/api-item-transforms/test
+const testDataDirPath = Path.resolve(
+	__dirname,
+	"..",
+	"..",
+	"..",
+	"src",
+	"api-item-transforms",
+	"test",
+	"test-data",
+);
+
 /**
  * Generates an `ApiModel` from the API report file at the provided path.
  */
 function generateModel(testReportFileName: string): ApiModel {
-	const filePath = Path.resolve(__dirname, "test-data", testReportFileName);
+	const filePath = Path.resolve(testDataDirPath, testReportFileName);
 
 	const apiModel = new ApiModel();
 	apiModel.loadPackage(filePath);
@@ -365,7 +377,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 		const expectedPackageDoc = new DocumentNode({
 			apiItemName: "test-package",
-			filePath: "test-package.md",
+			documentPath: "test-package",
 			children: [
 				new SectionNode(
 					[
@@ -403,7 +415,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 		const expectedEntryPointADoc = new DocumentNode({
 			apiItemName: "entry-point-a",
-			filePath: "test-package/entry-point-a-entrypoint.md",
+			documentPath: "test-package/entry-point-a-entrypoint",
 			children: [
 				new SectionNode(
 					[
@@ -487,7 +499,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 		const expectedEntryPointBDoc = new DocumentNode({
 			apiItemName: "entry-point-b",
-			filePath: "test-package/entry-point-b-entrypoint.md",
+			documentPath: "test-package/entry-point-b-entrypoint",
 			children: [
 				new SectionNode(
 					[

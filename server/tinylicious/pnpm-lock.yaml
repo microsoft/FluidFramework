@@ -12,7 +12,7 @@ importers:
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': ^1.0.1
-      '@fluidframework/mocha-test-setup': ^1.0.0
+      '@fluidframework/mocha-test-setup': ~2.0.0-internal.6.2.0
       '@fluidframework/protocol-base': ^1.0.0
       '@fluidframework/protocol-definitions': ^2.1.0
       '@fluidframework/server-lambdas': ^1.0.1
@@ -45,7 +45,7 @@ importers:
       body-parser: ^1.17.1
       charwise: ^3.0.1
       compression: ^1.7.2
-      concurrently: ^7.6.0
+      concurrently: ^8.2.1
       cookie-parser: ^1.4.3
       copyfiles: ^2.4.1
       cors: ^2.8.4
@@ -110,7 +110,7 @@ importers:
     devDependencies:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/mocha-test-setup': 1.2.3
+      '@fluidframework/mocha-test-setup': 2.0.0-internal.6.2.0
       '@microsoft/api-extractor': 7.34.4_@types+node@16.18.21
       '@types/compression': 1.7.2
       '@types/cookie-parser': 1.4.3
@@ -127,7 +127,7 @@ importers:
       '@types/rimraf': 3.0.2
       '@types/split': 0.3.28
       '@types/uuid': 9.0.2
-      concurrently: 7.6.0
+      concurrently: 8.2.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
@@ -162,6 +162,13 @@ packages:
       '@babel/helper-validator-identifier': 7.19.1
       chalk: 2.4.2
       js-tokens: 4.0.0
+    dev: true
+
+  /@babel/runtime/7.22.11:
+    resolution: {integrity: sha512-ee7jVNlWN09+KftVOu9n7S8gQzD/Z6hN/I8VBRXW4P1+Xe7kJGXMwu8vds4aGIMHZnNbdpSWCfZZtinytpcAvA==}
+    engines: {node: '>=6.9.0'}
+    dependencies:
+      regenerator-runtime: 0.14.0
     dev: true
 
   /@colors/colors/1.5.0:
@@ -221,16 +228,15 @@ packages:
       sha.js: 2.4.11
     dev: false
 
-  /@fluidframework/core-interfaces/1.2.3:
-    resolution: {integrity: sha512-4Z0/6O2iVIFuY40HABCP+N5lV1Ga3leCZP1KCSDeEhzGIpCEU04XtEMYCjCEc4O4FGII/kvCGuum/UaQDNCanQ==}
+  /@fluidframework/core-interfaces/2.0.0-internal.6.2.0:
+    resolution: {integrity: sha512-VsIoxjv1c132k9mZJbMUXRxASaen1MGffYnnPyq/pwuPk20PrlDlzZtBpnCqp0KVVO9W5EK54S7z8DupmBhy0A==}
     dev: true
 
-  /@fluidframework/driver-definitions/1.2.3:
-    resolution: {integrity: sha512-talJDyezDaXo2De0JWsFXqOiyCnSaU51zV6zKNig6V9uk/wd57wrF455HLtKSGCjt4VHvr0R0EdHMoN+LckDyw==}
+  /@fluidframework/driver-definitions/2.0.0-internal.6.2.0:
+    resolution: {integrity: sha512-3aIpoG2cHkPzpI05bcYllaCsK9bL81kw4uCjHMBnrUcMHHUvsdYnby4NCczsS9lSpsyRGVceFfVafUTyRj+I0w==}
     dependencies:
-      '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/core-interfaces': 1.2.3
-      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/core-interfaces': 2.0.0-internal.6.2.0
+      '@fluidframework/protocol-definitions': 1.1.0
     dev: true
 
   /@fluidframework/eslint-config-fluid/2.0.0_kufnqfq7tb5rpdawkdb6g5smma:
@@ -263,11 +269,11 @@ packages:
     resolution: {integrity: sha512-zs4RKtlgGaEgd6YvFeLtk5FeG9UslGV05TTDWHJm1T8ZCu1b3nopoivsvpID0boHmMFlJ5cpdI2RYHZ1kLgu9A==}
     dev: false
 
-  /@fluidframework/mocha-test-setup/1.2.3:
-    resolution: {integrity: sha512-eHEsjIEvEAb8nXBr0uG6pwVyO4fRfwKH5gR43T7WnEQe6uiFUz0zf5rsMlVKezMDjHKuXb+aoP5dZchwI+2ZZw==}
+  /@fluidframework/mocha-test-setup/2.0.0-internal.6.2.0:
+    resolution: {integrity: sha512-v5S45oGYDxMy9aQn4maoFhwwdSweA/02P3UVvjLosjzO68GZ1/3tflsNCYSM27ludmOaYQqEiWtk6qX3O8vZsw==}
     dependencies:
-      '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/test-driver-definitions': 1.2.3
+      '@fluidframework/core-interfaces': 2.0.0-internal.6.2.0
+      '@fluidframework/test-driver-definitions': 2.0.0-internal.6.2.0
       mocha: 10.2.0
     dev: true
 
@@ -289,17 +295,10 @@ packages:
       events: 3.3.0
     dev: false
 
-  /@fluidframework/protocol-definitions/0.1028.2000:
-    resolution: {integrity: sha512-ZUPCmPFcK7UAK4RkfVWfzQPAWFvYNm6ywP51V42YC38gCGye+Epvyr3beA+FSaHPIZGxm5+Uw52+ykTvmDb2UA==}
-    dependencies:
-      '@fluidframework/common-definitions': 0.20.1
-    dev: true
-
   /@fluidframework/protocol-definitions/1.1.0:
     resolution: {integrity: sha512-Q4YA6FBlB2cHicgvfs9z3LPKnfZMdx5JrmIEGOmxFmom/l9EV1F43sXl6K9/j5se8tQ9V9L8drFbDzqVf37roQ==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-    dev: false
 
   /@fluidframework/protocol-definitions/2.1.0:
     resolution: {integrity: sha512-aRM1FYLpGi0JrQnG91garwaizG3DRu/ZqjR0Gwovu8i4fd6YyqYJefH6A9R11D/VAxv/p4bYvttq04sXgLzqLQ==}
@@ -556,14 +555,13 @@ packages:
       - supports-color
     dev: false
 
-  /@fluidframework/test-driver-definitions/1.2.3:
-    resolution: {integrity: sha512-ah7d9mnwTNAjMGbs7BhNOAFqcLKf8tkIZUYc4fH6R7VKK0aUiWXBNnajIGWH1tC/mi3L82axDylqyDEJo2Xc2w==}
+  /@fluidframework/test-driver-definitions/2.0.0-internal.6.2.0:
+    resolution: {integrity: sha512-Z9nHMke74S0l6i7szNpSNdn+4ae4WF9o4+HyAS3RUeYEoWzPWA5pcEDyHpLnThMbcIKICLd3DGSTh9uSU2Gprg==}
     dependencies:
-      '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/core-interfaces': 1.2.3
-      '@fluidframework/driver-definitions': 1.2.3
-      '@fluidframework/protocol-definitions': 0.1028.2000
-      uuid: 8.3.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.6.2.0
+      '@fluidframework/driver-definitions': 2.0.0-internal.6.2.0
+      '@fluidframework/protocol-definitions': 1.1.0
+      uuid: 9.0.0
     dev: true
 
   /@humanwhocodes/config-array/0.9.5:
@@ -1919,20 +1917,20 @@ packages:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
     dev: true
 
-  /concurrently/7.6.0:
-    resolution: {integrity: sha512-BKtRgvcJGeZ4XttiDiNcFiRlxoAeZOseqUvyYRUp/Vtd+9p1ULmeoSqGsDA+2ivdeDFpqrJvGvmI+StKfKl5hw==}
-    engines: {node: ^12.20.0 || ^14.13.0 || >=16.0.0}
+  /concurrently/8.2.1:
+    resolution: {integrity: sha512-nVraf3aXOpIcNud5pB9M82p1tynmZkrSGQ1p6X/VY8cJ+2LMVqAgXsJxYYefACSHbTYlm92O1xuhdGTjwoEvbQ==}
+    engines: {node: ^14.13.0 || >=16.0.0}
     hasBin: true
     dependencies:
       chalk: 4.1.2
-      date-fns: 2.29.3
+      date-fns: 2.30.0
       lodash: 4.17.21
-      rxjs: 7.8.0
-      shell-quote: 1.8.0
-      spawn-command: 0.0.2-1
+      rxjs: 7.8.1
+      shell-quote: 1.8.1
+      spawn-command: 0.0.2
       supports-color: 8.1.1
       tree-kill: 1.2.2
-      yargs: 17.7.1
+      yargs: 17.7.2
     dev: true
 
   /configstore/4.0.0:
@@ -2051,9 +2049,11 @@ packages:
     engines: {node: '>=0.4.0'}
     dev: true
 
-  /date-fns/2.29.3:
-    resolution: {integrity: sha512-dDCnyH2WnnKusqvZZ6+jA1O51Ibt8ZMRNkDZdyAyK4YfbDwa/cEmuztzG5pk6hqlp9aSBPYcjOlktquahGwGeA==}
+  /date-fns/2.30.0:
+    resolution: {integrity: sha512-fnULvOpxnC5/Vg3NCiWelDsLiUc9bRwAPs/+LfTLNvetFCtCTN+yQz15C/fs4AwX1R9K5GLtLfn8QW+dWisaAw==}
     engines: {node: '>=0.11'}
+    dependencies:
+      '@babel/runtime': 7.22.11
     dev: true
 
   /debug/2.6.9:
@@ -4928,6 +4928,10 @@ packages:
       redis-errors: 1.2.0
     dev: false
 
+  /regenerator-runtime/0.14.0:
+    resolution: {integrity: sha512-srw17NI0TUWHuGa5CFGGmhfNIeja30WMBfbslPNhf6JrqQlLN5gcrvig1oqPxiVaXb0oW0XRKtH6Nngs5lKCIA==}
+    dev: true
+
   /regex-not/1.0.2:
     resolution: {integrity: sha512-J6SDjUgDxQj5NusnOtdFxDwN/+HWykR8GELwctJ7mdqhcyy1xEc4SRFHUXvxTp661YaVKAjfRLZ9cCqS6tn32A==}
     engines: {node: '>=0.10.0'}
@@ -5056,8 +5060,8 @@ packages:
       queue-microtask: 1.2.3
     dev: true
 
-  /rxjs/7.8.0:
-    resolution: {integrity: sha512-F2+gxDshqmIub1KdvZkaEfGDwLNpPvk9Fs6LD/MyQxNgMds/WH9OdDDXOmxUZpME+iSK3rQCctkL0DYyytUqMg==}
+  /rxjs/7.8.1:
+    resolution: {integrity: sha512-AA3TVj+0A2iuIoQkWEK/tqFjBq2j+6PO6Y0zJcvzLAFhEFIO3HL0vls9hWLncZbAAbK0mar7oZ4V079I/qPMxg==}
     dependencies:
       tslib: 2.5.0
     dev: true
@@ -5204,8 +5208,8 @@ packages:
     engines: {node: '>=8'}
     dev: true
 
-  /shell-quote/1.8.0:
-    resolution: {integrity: sha512-QHsz8GgQIGKlRi24yFc6a6lN69Idnx634w49ay6+jA5yFh7a1UY+4Rp6HPx/L/1zcEDPEij8cIsiqR6bQsE5VQ==}
+  /shell-quote/1.8.1:
+    resolution: {integrity: sha512-6j1W9l1iAs/4xYBI1SYOVZyFcCis9b4KCLQ8fgAGG07QvzaRLVVRQvAy85yNmmZSjYjg4MWh4gNvlPujU/5LpA==}
     dev: true
 
   /shush/1.0.2:
@@ -5356,8 +5360,8 @@ packages:
     engines: {node: '>=0.10.0'}
     dev: true
 
-  /spawn-command/0.0.2-1:
-    resolution: {integrity: sha512-n98l9E2RMSJ9ON1AKisHzz7V42VDiBQGY6PB1BwRglz99wpVsSuGzQ+jOi6lFXBGVTCrRpltvjm+/XA+tpeJrg==}
+  /spawn-command/0.0.2:
+    resolution: {integrity: sha512-zC8zGoGkmc8J9ndvml8Xksr1Amk9qBujgbF0JAIWO7kXr43w0h/0GJNM/Vustixu+YE8N/MTrQ7N31FvHUACxQ==}
     dev: true
 
   /spdx-correct/3.1.1:
@@ -5815,11 +5819,11 @@ packages:
   /uuid/8.3.2:
     resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
     hasBin: true
+    dev: false
 
   /uuid/9.0.0:
     resolution: {integrity: sha512-MXcSTerfPa4uqyzStbRoTgt5XIe3x5+42+q1sDuy3R5MDk66URdLMOZe5aPX/SQd+kuYAh0FdP/pO28IkQyTeg==}
     hasBin: true
-    dev: false
 
   /v8-compile-cache/2.3.0:
     resolution: {integrity: sha512-l8lCEmLcLYZh4nbunNZvQCJc5pv7+RCwa8q/LdUx8u7lsWvPDKmpodJAJNwkAhJC//dFY48KuIEmjtd4RViDrA==}
@@ -6042,8 +6046,8 @@ packages:
       y18n: 5.0.8
       yargs-parser: 20.2.9
 
-  /yargs/17.7.1:
-    resolution: {integrity: sha512-cwiTb08Xuv5fqF4AovYacTFNxk62th7LKJ6BL9IGUpTJrWoU7/7WdQGTP2SjKf1dUNBGzDd28p/Yfs/GI6JrLw==}
+  /yargs/17.7.2:
+    resolution: {integrity: sha512-7dSzzRQ++CKnNI/krKnYRV7JKKPUXMEh61soaHKg9mrWEhzFWhFnxPxGl+69cD1Ou63C13NUPCnmIcrvqCuM6w==}
     engines: {node: '>=12'}
     dependencies:
       cliui: 8.0.1

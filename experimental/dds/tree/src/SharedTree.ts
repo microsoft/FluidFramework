@@ -747,7 +747,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 
 	/**
 	 * Initialize shared tree with a serialized summary. This is used for testing.
-	 * @returns - statistics about the loaded summary.
+	 * @returns Statistics about the loaded summary.
 	 * @internal
 	 */
 	public loadSerializedSummary(blobData: string): ITelemetryProperties {

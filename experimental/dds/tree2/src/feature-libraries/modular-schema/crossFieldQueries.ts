@@ -3,17 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
 import { ChangesetLocalId, RevisionTag } from "../../core";
 import {
 	RangeEntry,
 	RangeMap,
-	brand,
 	getFirstFromRangeMap,
 	getOrAddInMap,
 	setInRangeMap,
 } from "../../util";
-import { IdAllocator } from "./fieldChangeHandler";
 
 export type CrossFieldMap<T> = Map<RevisionTag | undefined, RangeMap<T>>;
 export type CrossFieldQuerySet = CrossFieldMap<boolean>;
@@ -85,25 +82,4 @@ export interface CrossFieldManager<T = unknown> {
 		newValue: T,
 		invalidateDependents: boolean,
 	): void;
-}
-
-export interface IdAllocationState {
-	maxId: ChangesetLocalId;
-}
-
-/**
- * @alpha
- */
-export function idAllocatorFromMaxId(maxId: ChangesetLocalId | undefined = undefined): IdAllocator {
-	return idAllocatorFromState({ maxId: maxId ?? brand(-1) });
-}
-
-export function idAllocatorFromState(state: IdAllocationState): IdAllocator {
-	return (c?: number) => {
-		const count = c ?? 1;
-		assert(count > 0, 0x5cf /* Must allocate at least one ID */);
-		const id: ChangesetLocalId = brand((state.maxId as number) + 1);
-		state.maxId = brand((state.maxId as number) + count);
-		return id;
-	};
 }

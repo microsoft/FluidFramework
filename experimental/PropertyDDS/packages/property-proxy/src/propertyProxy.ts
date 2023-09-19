@@ -116,6 +116,7 @@ export namespace PropertyProxy {
 	 * if the specified property name does not yet exist on the parent and the parent is dynamic.
 	 *
 	 * @example
+	 *
 	 * ```typescript
 	 * // The data can be accessed and modified using standard JavaScript syntax. Operations directly
 	 * // happen on the PropertyTree data, nothing is cached.

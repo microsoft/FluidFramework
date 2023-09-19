@@ -5,9 +5,9 @@
 
 import {
 	ILoggingError,
-	ITaggedTelemetryPropertyType,
-	ITelemetryProperties,
-	TelemetryEventPropertyType,
+	ITelemetryBaseProperties,
+	TelemetryBaseEventPropertyType,
+	Tagged,
 } from "@fluidframework/core-interfaces";
 import { v4 as uuid } from "uuid";
 import {
@@ -16,11 +16,7 @@ import {
 	isFluidError,
 	isValidLegacyError,
 } from "./fluidErrorBase";
-import {
-	ITaggedTelemetryPropertyTypeExt,
-	ITelemetryLoggerExt,
-	TelemetryEventPropertyTypeExt,
-} from "./telemetryTypes";
+import { ITelemetryLoggerExt, TelemetryEventPropertyTypeExt } from "./telemetryTypes";
 
 /**
  * Determines if the provided value is an object but neither null nor an array.
@@ -87,8 +83,8 @@ export const isILoggingError = (x: unknown): x is ILoggingError =>
  * Copy props from source onto target, but do not overwrite an existing prop that matches
  */
 function copyProps(
-	target: ITelemetryProperties | LoggingError,
-	source: ITelemetryProperties,
+	target: ITelemetryBaseProperties | LoggingError,
+	source: ITelemetryBaseProperties,
 ): void {
 	for (const key of Object.keys(source)) {
 		if (target[key] === undefined) {
@@ -104,7 +100,7 @@ export interface IFluidErrorAnnotations {
 	/**
 	 * Telemetry props to log with the error
 	 */
-	props?: ITelemetryProperties;
+	props?: ITelemetryBaseProperties;
 }
 
 /**
@@ -288,8 +284,15 @@ export function wrapErrorAndLog<T extends LoggingError>(
 	return newError;
 }
 
-function overwriteStack(error: IFluidErrorBase | LoggingError, stack: string): void {
-	// supposedly setting stack on an Error can throw.
+/**
+ * Attempts to overwrite the error's stack
+ *
+ * There have been reports of certain JS environments where overwriting stack will throw.
+ * If that happens, this adds the given stack as the telemetry property "stack2"
+ *
+ * @internal
+ */
+export function overwriteStack(error: IFluidErrorBase | LoggingError, stack: string): void {
 	try {
 		Object.assign(error, { stack });
 	} catch {
@@ -319,18 +322,18 @@ export function isExternalError(error: unknown): boolean {
  * Type guard to identify if a particular telemetry property appears to be a tagged telemetry property
  */
 export function isTaggedTelemetryPropertyValue(
-	x: ITaggedTelemetryPropertyTypeExt | TelemetryEventPropertyTypeExt,
-): x is ITaggedTelemetryPropertyType | ITaggedTelemetryPropertyTypeExt {
-	return typeof (x as Partial<ITaggedTelemetryPropertyTypeExt>)?.tag === "string";
+	x: Tagged<TelemetryEventPropertyTypeExt> | TelemetryEventPropertyTypeExt,
+): x is Tagged<TelemetryEventPropertyTypeExt> {
+	return typeof (x as Partial<Tagged<unknown>>)?.tag === "string";
 }
 
 /**
  * Filter serializable telemetry properties
- * @param x - any telemetry prop
- * @returns - as-is if x is primitive. returns stringified if x is an array of primitive.
+ * @param x - Any telemetry prop
+ * @returns As-is if x is primitive. returns stringified if x is an array of primitive.
  * otherwise returns null since this is what we support at the moment.
  */
-function filterValidTelemetryProps(x: unknown, key: string): TelemetryEventPropertyType {
+function filterValidTelemetryProps(x: unknown, key: string): TelemetryBaseEventPropertyType {
 	if (Array.isArray(x) && x.every((val) => isTelemetryEventPropertyValue(val))) {
 		return JSON.stringify(x);
 	}
@@ -343,7 +346,7 @@ function filterValidTelemetryProps(x: unknown, key: string): TelemetryEventPrope
 }
 
 // checking type of x, returns false if x is null
-function isTelemetryEventPropertyValue(x: unknown): x is TelemetryEventPropertyType {
+function isTelemetryEventPropertyValue(x: unknown): x is TelemetryBaseEventPropertyType {
 	switch (typeof x) {
 		case "string":
 		case "number":
@@ -357,13 +360,15 @@ function isTelemetryEventPropertyValue(x: unknown): x is TelemetryEventPropertyT
 /**
  * Walk an object's enumerable properties to find those fit for telemetry.
  */
-function getValidTelemetryProps(obj: object, keysToOmit: Set<string>): ITelemetryProperties {
-	const props: ITelemetryProperties = {};
+function getValidTelemetryProps(obj: object, keysToOmit: Set<string>): ITelemetryBaseProperties {
+	const props: ITelemetryBaseProperties = {};
 	for (const key of Object.keys(obj)) {
 		if (keysToOmit.has(key)) {
 			continue;
 		}
-		const val = obj[key] as ITaggedTelemetryPropertyTypeExt | TelemetryEventPropertyTypeExt;
+		const val = obj[key] as
+			| TelemetryEventPropertyTypeExt
+			| Tagged<TelemetryEventPropertyTypeExt>;
 
 		// ensure only valid props get logged, since props of logging error could be in any shape
 		if (isTaggedTelemetryPropertyValue(val)) {
@@ -435,7 +440,7 @@ export class LoggingError
 	 */
 	constructor(
 		message: string,
-		props?: ITelemetryProperties,
+		props?: ITelemetryBaseProperties,
 		private readonly omitPropsFromLogging: Set<string> = new Set(),
 	) {
 		super(message);
@@ -452,7 +457,7 @@ export class LoggingError
 	/**
 	 * Determines if a given object is an instance of a LoggingError
 	 * @param object - any object
-	 * @returns - true if the object is an instance of a LoggingError, false if not.
+	 * @returns true if the object is an instance of a LoggingError, false if not.
 	 */
 	public static typeCheck(object: unknown): object is LoggingError {
 		if (typeof object === "object" && object !== null) {
@@ -468,14 +473,14 @@ export class LoggingError
 	/**
 	 * Add additional properties to be logged
 	 */
-	public addTelemetryProperties(props: ITelemetryProperties): void {
+	public addTelemetryProperties(props: ITelemetryBaseProperties): void {
 		copyProps(this, props);
 	}
 
 	/**
 	 * Get all properties fit to be logged to telemetry for this error
 	 */
-	public getTelemetryProperties(): ITelemetryProperties {
+	public getTelemetryProperties(): ITelemetryBaseProperties {
 		const taggableProps = getValidTelemetryProps(this, this.omitPropsFromLogging);
 		// Include non-enumerable props that are not returned by getValidTelemetryProps
 		return {

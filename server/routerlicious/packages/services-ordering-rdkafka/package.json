@@ -15,7 +15,7 @@
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint",
 		"build:compile": "npm run tsc && npm run typetests:gen",
-		"clean": "rimraf --glob \"dist\" \"lib\" \"*.tsbuildinfo\" \"*.build.log\"",
+		"clean": "rimraf --glob 'dist' 'lib' '*.tsbuildinfo' '*.build.log'",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -49,7 +49,7 @@
 		"@types/lru-cache": "^5.1.0",
 		"@types/node": "^18.17.1",
 		"@types/sinon": "^9.0.9",
-		"concurrently": "^7.6.0",
+		"concurrently": "^8.2.1",
 		"eslint": "~8.27.0",
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",

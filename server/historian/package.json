@@ -31,7 +31,7 @@
 		"test": "pnpm run -r --stream --no-bail --no-sort test",
 		"tsc": "pnpm run -r --stream tsc"
 	},
-	"nyc": {
+	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [],
@@ -58,7 +58,6 @@
 		"@types/redis": "^2.8.10",
 		"@types/supertest": "^2.0.7",
 		"async": "^3.2.2",
-		"concurrently": "^7.5.0",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.27.0",
 		"eslint-plugin-eslint-comments": "~3.1.2",

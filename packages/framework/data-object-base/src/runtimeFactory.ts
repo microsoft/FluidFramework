@@ -44,15 +44,12 @@ export class RuntimeFactory extends RuntimeFactoryHelper {
 		context: IContainerContext,
 		existing: boolean,
 	): Promise<ContainerRuntime> {
-		const augment = this.initializeEntryPoint
-			? { initializeEntryPoint: this.initializeEntryPoint }
-			: { requestHandler: buildRuntimeRequestHandler(...this.requestHandlers) };
-
 		const runtime: ContainerRuntime = await ContainerRuntime.loadRuntime({
 			context,
 			registryEntries: this.registry,
 			existing,
-			...augment,
+			requestHandler: buildRuntimeRequestHandler(...this.requestHandlers),
+			initializeEntryPoint: this.initializeEntryPoint,
 		});
 
 		return runtime;
