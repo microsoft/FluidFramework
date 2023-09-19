@@ -35,8 +35,8 @@ export class RedisCache implements ICache {
 		});
 	}
 
-	public async get<T>(key: string, prefix?: string): Promise<T> {
-		const stringValue: string = await this.client.get(this.getKey(key, prefix));
+	public async get<T>(key: string, prefixOverride?: string): Promise<T> {
+		const stringValue: string = await this.client.get(this.getKey(key, prefixOverride));
 		return JSON.parse(stringValue) as T;
 	}
 
@@ -44,10 +44,10 @@ export class RedisCache implements ICache {
 		key: string,
 		value: T,
 		expireAfterSeconds: number = this.expireAfterSeconds,
-		prefix?: string,
+		prefixOverride?: string,
 	): Promise<void> {
 		const result = await this.client.set(
-			this.getKey(key, prefix),
+			this.getKey(key, prefixOverride),
 			JSON.stringify(value),
 			"EX",
 			expireAfterSeconds,
@@ -57,13 +57,13 @@ export class RedisCache implements ICache {
 		}
 	}
 
-	public async delete(key: string, prefix?: string): Promise<boolean> {
+	public async delete(key: string, prefixOverride?: string): Promise<boolean> {
 		// If 'appendPrefixToKey' is true, we prepend a prefix to the 'key' parameter.
 		// This is useful in scenarios where we want to consistently manage keys with a common prefix,
 		// If 'appendPrefixToKey' is false, we assume that the 'key' parameter with prefix is already passed in by the caller,
 		// and no additional prefix needs to be added.
 		try {
-			const keyToDelete: string = this.getKey(key, prefix);
+			const keyToDelete: string = this.getKey(key, prefixOverride);
 			const result = await this.client.del(keyToDelete);
 			return result === 1;
 		} catch (error) {
@@ -113,11 +113,11 @@ export class RedisCache implements ICache {
 	 * Translates the input key to the one we will actually store in redis
 	 *
 	 * @param key - The input key
-	 * @param prefix - Prefix to append to key. Empty string will not add any prefix to the key.
+	 * @param prefixOverride - Prefix to append to key. Empty string will not add any prefix to the key.
 	 */
-	private getKey(key: string, prefix?: string): string {
-		const keyPrefix = prefix === undefined ? this.prefix : prefix;
-		if (prefix === "") {
+	private getKey(key: string, prefixOverride?: string): string {
+		const keyPrefix = prefixOverride === undefined ? this.prefix : prefixOverride;
+		if (keyPrefix === "") {
 			// Empty prefix should not put a colon in front of string
 			return key;
 		}
