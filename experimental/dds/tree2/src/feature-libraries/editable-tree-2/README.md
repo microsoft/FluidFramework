@@ -52,23 +52,24 @@ There are four main usage modes for this API:
     Some control over these events is available via branching which provides snapshot isolation (among other things):
     this is done at a higher level than the tree API covered here but can be accessed via each tree entity's context property. (TODO: provide this access).
 
-To accommodate all of these at once in a single API surface, a few principals are followed in the API's design:
+To accommodate all of these at once in a single API surface, a few principles are followed in the API's design:
 
 -   Generic APIs suited for generic (non schema aware) tree readers form the base types of everything in the API.
     These provide access to all content of the tree in a uniform manner, including objects for every field and node.
     These are all traversable via iteration, and also can be walked along specific paths through the tree.
     This for example motivates the include of the optional `.value` on TreeNode.
--   Schema aware specializations of these types are provided which provide ergonomic access to optimized based on the specific kind of the node or field.
-    These APIs provide accessors which skip over levels of the tree (called "unboxing") that provide no additional information to a user that knows thew schema.
-    Since skipping over these layers is sometimes undesired (for example when needing to edit them), all APis which do this implicit "unboxing" have "boxed" alternatives that do not skip any layers of the tree.
-    An example of this is how structs provide properties for their fields that "unbox" some field kinds, like Required restoring the TreeNode in them instead of the field itself.
+-   Schema aware specializations of these types are provided which provide ergonomic access based on the specific kind of the node or field.
+    These APIs provide accessors which skip over (or "unbox") redundant layers of the tree - layers that provide no additional information to a user that knows the schema.
+    Since skipping over these layers is sometimes undesired (for example when needing to edit them), all APIs which do this implicit "unboxing" have "boxed" alternatives that do not skip any layers of the tree.
+    An example of this is how structs provide properties for their fields that "unbox" some field kinds.
+    For example, reading a Required field returns the content in the field instead of the field itself.
 -   A subset of the tree properties are picked to be enumerable own properties for use by generic JavaScript object handling code.
     This prefers the APIs which do implicit unboxing,
     and occasionally special purposes APIs added just for this use-case to ensure all content in the tree is reachable exactly once (for example `MapNode.asObject`).
-    This ensure operations like `assert.deepEqual` behave semantically correctly.
+    This ensures operations like `assert.deepEqual` behave semantically correctly.
     See Section below for details.
 -   Special attention is paid to defining what is and is not valid to hold onto across edits, and providing ways to check what edits happened.
-    For example `Tree.treeStatus` allow checking if the subtree is still part of the document and `TreeNode.on` allows subscribing to events.
+    For example `Tree.treeStatus` allows checking if the subtree is still part of the document and `TreeNode.on` allows subscribing to events.
 
 ## Javascript Object API: `enumerable` and `own` properties
 
