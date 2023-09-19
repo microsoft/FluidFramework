@@ -2952,6 +2952,7 @@ export class ContainerRuntime
 
 		assert(this.outbox.isEmpty, 0x3d1 /* Can't trigger summary in the middle of a batch */);
 
+		// We close the summarizer and download a new snapshot and reload the container
 		let latestSnapshotVersionId: string | undefined;
 		if (downloadLatestStateAndClose === true) {
 			return this.closeSummarizerOnSummaryStateStale(
