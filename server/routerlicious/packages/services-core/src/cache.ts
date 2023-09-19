@@ -23,7 +23,12 @@ export interface ICache {
 	 * @param expireAfterSeconds - Amount of seconds that the key/value pair should exist for.
 	 * @param prefixOverride - Prefix to append to the key, handled by the implementation if left undefined. Empty string will not add any prefix to the key.
 	 */
-	set<T>(key: string, value: T, expireAfterSeconds?: number, prefixOverride?: string): Promise<void>;
+	set<T>(
+		key: string,
+		value: T,
+		expireAfterSeconds?: number,
+		prefixOverride?: string,
+	): Promise<void>;
 
 	/**
 	 * Deletes a cache value

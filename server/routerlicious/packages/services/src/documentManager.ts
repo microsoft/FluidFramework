@@ -88,7 +88,9 @@ export class DocumentManager implements IDocumentManager {
 				getLumberBaseProperties(documentId, tenantId),
 			);
 			const document: IDocument = await this.readDocument(tenantId, documentId);
-			return DocumentManager.getStaticPropsFromDoc(document);
+			return document !== undefined
+				? DocumentManager.getStaticPropsFromDoc(document)
+				: undefined;
 		}
 
 		// Return the static data, parsed into a JSON object
@@ -152,12 +154,12 @@ export class DocumentManager implements IDocumentManager {
 	 */
 	private static getStaticPropsFromDoc(document: IDocument): IDocumentStaticProperties {
 		return {
-			version: document.version,
-			createTime: document.createTime,
-			documentId: document.documentId,
-			tenantId: document.tenantId,
-			storageName: document.storageName,
-			isEphemeralContainer: document.isEphemeralContainer,
+			version: document?.version,
+			createTime: document?.createTime,
+			documentId: document?.documentId,
+			tenantId: document?.tenantId,
+			storageName: document?.storageName,
+			isEphemeralContainer: document?.isEphemeralContainer,
 		};
 	}
 }
