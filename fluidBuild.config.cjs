@@ -126,6 +126,10 @@ module.exports = {
 		],
 		// Exclusion per handler
 		handlerExclusions: {
+			"html-copyright-file-header": [
+				// Tests generate HTML "snapshot" artifacts
+				"tools/api-markdown-documenter/src/test/snapshots/.*",
+			],
 			"npm-package-json-script-clean": [
 				// eslint-config-fluid's build step generate printed configs that are checked in. No need to clean
 				"common/build/eslint-config-fluid/package.json",
