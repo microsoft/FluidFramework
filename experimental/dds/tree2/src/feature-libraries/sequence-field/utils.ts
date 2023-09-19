@@ -226,8 +226,8 @@ export function markHasCellEffect(mark: Mark<unknown>): boolean {
 	return areInputCellsEmpty(mark) !== areOutputCellsEmpty(mark);
 }
 
-export function markIsTransient<T>(mark: Mark<T>): mark is TransientMark<T> {
-	return isGenerativeMark(mark) && mark.transientDetach !== undefined;
+export function markIsTransient<T>(mark: Mark<T>): mark is CellMark<TransientEffect, T> {
+	return mark.type === "Transient";
 }
 
 /**

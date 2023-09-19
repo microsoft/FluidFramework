@@ -22,6 +22,7 @@ import {
 	CellId,
 	NoopMark,
 	CellMark,
+	TransientEffect,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { MarkQueue } from "./markQueue";
@@ -57,6 +58,8 @@ import {
 	areOverlappingIdRanges,
 	getDetachCellId,
 	getInputCellId,
+	isAttach,
+	getOutputCellId,
 } from "./utils";
 import { GenerativeMark, EmptyInputCellMark } from "./helperTypes";
 
@@ -282,15 +285,29 @@ function composeMarks<TNodeChange>(
 		}
 
 		if (isMoveMark(baseMark)) {
-			setReplacementMark(
-				moveEffects,
-				CrossFieldTarget.Source,
-				baseMark.revision,
-				baseMark.id,
-				baseMark.count,
-				withRevision(withNodeChange(newMark, nodeChange), newRev),
+			assert(
+				isAttach(baseMark) && isDetachMark(newMark),
+				"Marks with cell effects targeting empty cells must be an attach and detach",
 			);
-			return { count: 0 };
+
+			// TODO: Should strip mark fields from base attach and detach
+			// TODO: Add revision information the marks
+			const composed: CellMark<TransientEffect, TNodeChange> = {
+				type: "Transient",
+				count: baseMark.count,
+				attach: baseMark,
+				detach: newMark,
+			};
+
+			if (baseMark.cellId !== undefined) {
+				composed.cellId = baseMark.cellId;
+			}
+
+			if (nodeChange !== undefined) {
+				composed.changes = nodeChange;
+			}
+
+			return composed;
 		}
 
 		if (isMoveMark(newMark)) {

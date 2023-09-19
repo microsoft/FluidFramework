@@ -985,4 +985,13 @@ describe("SequenceField - Compose", () => {
 
 		assert.deepEqual(actual, expected);
 	});
+
+	it("move, delete, revive", () => {
+		const move = tagChange(Change.move(1, 1, 0), tag1);
+		const del = tagChange(Change.delete(0, 1), tag2);
+		const revive = tagChange(Change.revive(0, 1, { revision: tag2, localId: brand(0) }), tag3);
+		const actual = shallowCompose([move, del, revive]);
+		const expected = shallowCompose([move]);
+		assert.deepEqual(actual, expected);
+	});
 });
