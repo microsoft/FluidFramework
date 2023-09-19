@@ -23,8 +23,6 @@ import {
 	runSweepKey,
 } from "./gcDefinitions";
 import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";
-// eslint-disable-next-line import/no-deprecated
-import { tagAsCodeArtifact } from "./gcHelpers";
 
 type NodeUsageType = "Changed" | "Loaded" | "Revived";
 
@@ -184,8 +182,7 @@ export class GCTelemetryTracker {
 				{
 					eventName: `GC_Tombstone_${nodeType}_Revived`,
 					category: "generic",
-					// eslint-disable-next-line import/no-deprecated
-					url: tagAsCodeArtifact(id),
+					...tagCodeArtifacts({ url: id }),
 					gcTombstoneEnforcementAllowed: this.gcTombstoneEnforcementAllowed,
 				},
 				undefined /* packagePath */,

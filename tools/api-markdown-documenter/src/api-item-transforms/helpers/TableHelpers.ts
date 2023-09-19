@@ -8,7 +8,6 @@ import {
 	ApiItemKind,
 	ApiPackage,
 	ApiPropertyItem,
-	ApiReleaseTagMixin,
 	ApiReturnTypeMixin,
 	Excerpt,
 	Parameter,
@@ -23,19 +22,20 @@ import {
 	LinkNode,
 	PlainTextNode,
 	SectionNode,
-	SpanNode,
 	TableBodyCellNode,
 	TableBodyRowNode,
 	TableHeaderCellNode,
 	TableHeaderRowNode,
 	TableNode,
 } from "../../documentation-domain";
+import { injectSeparator } from "../../utilities";
 import {
 	ApiFunctionLike,
 	ApiModifier,
 	getDefaultValueBlock,
 	getLinkForApiItem,
 	getModifiers,
+	getReleaseTag,
 	isDeprecated,
 } from "../ApiItemUtilities";
 import { transformDocSection } from "../DocNodeTransforms";
@@ -188,6 +188,19 @@ export function createSummaryTable(
 }
 
 /**
+ * Scans the list of `ApiItem`s to determine if any of the items contain the relevant tags to require an "Alert" column.
+ * I.e. If they are marked as `@deprecated`, `@alpha`, or `@beta`.
+ */
+function doItemsContainAlerts(apiItems: readonly ApiItem[]): boolean {
+	const hasDeprecated = apiItems.some((element) => isDeprecated(element));
+	const hasAlphaOrBeta = apiItems.some((element) => {
+		const releaseTag = getReleaseTag(element);
+		return releaseTag === ReleaseTag.Alpha || releaseTag === ReleaseTag.Beta;
+	});
+	return hasDeprecated || hasAlphaOrBeta;
+}
+
+/**
  * Default summary table generation. Displays each item's name, modifiers, and description (summary) comment.
  *
  * @param apiItems - The items to be displayed. All of these items must be of the kind specified via `itemKind`.
@@ -205,8 +218,8 @@ export function createDefaultSummaryTable(
 		return undefined;
 	}
 
-	// Only display "Alerts" column if there are any deprecated items in the list.
-	const hasDeprecated = apiItems.some((element) => isDeprecated(element));
+	// Only display "Alerts" column if there are any deprecated or alpha/beta items in the list.
+	const hasAlerts = doItemsContainAlerts(apiItems);
 
 	// Only display "Modifiers" column if there are any modifiers to display.
 	const hasModifiers = apiItems.some(
@@ -216,7 +229,7 @@ export function createDefaultSummaryTable(
 	const headerRowCells: TableHeaderCellNode[] = [
 		TableHeaderCellNode.createFromPlainText(getTableHeadingTitleForApiKind(itemKind)),
 	];
-	if (hasDeprecated) {
+	if (hasAlerts) {
 		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Alerts"));
 	}
 	if (hasModifiers) {
@@ -228,8 +241,8 @@ export function createDefaultSummaryTable(
 	const bodyRows: TableBodyRowNode[] = [];
 	for (const apiItem of apiItems) {
 		const bodyRowCells: TableBodyCellNode[] = [createApiTitleCell(apiItem, config)];
-		if (hasDeprecated) {
-			bodyRowCells.push(createDeprecatedCell(apiItem));
+		if (hasAlerts) {
+			bodyRowCells.push(createAlertsCell(apiItem));
 		}
 		if (hasModifiers) {
 			bodyRowCells.push(createModifiersCell(apiItem, options?.modifiersToOmit));
@@ -357,8 +370,8 @@ export function createFunctionLikeSummaryTable(
 		return undefined;
 	}
 
-	// Only display "Alerts" column if there are any deprecated items in the list.
-	const hasDeprecated = apiItems.some((element) => isDeprecated(element));
+	// Only display "Alerts" column if there are any deprecated or alpha/beta items in the list.
+	const hasAlerts = doItemsContainAlerts(apiItems);
 
 	// Only display "Modifiers" column if there are any modifiers to display.
 	const hasModifiers = apiItems.some(
@@ -369,7 +382,7 @@ export function createFunctionLikeSummaryTable(
 	const headerRowCells: TableHeaderCellNode[] = [
 		TableHeaderCellNode.createFromPlainText(getTableHeadingTitleForApiKind(itemKind)),
 	];
-	if (hasDeprecated) {
+	if (hasAlerts) {
 		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Alerts"));
 	}
 	if (hasModifiers) {
@@ -384,8 +397,8 @@ export function createFunctionLikeSummaryTable(
 	const bodyRows: TableBodyRowNode[] = [];
 	for (const apiItem of apiItems) {
 		const bodyRowCells: TableBodyCellNode[] = [createApiTitleCell(apiItem, config)];
-		if (hasDeprecated) {
-			bodyRowCells.push(createDeprecatedCell(apiItem));
+		if (hasAlerts) {
+			bodyRowCells.push(createAlertsCell(apiItem));
 		}
 		if (hasModifiers) {
 			bodyRowCells.push(createModifiersCell(apiItem, options?.modifiersToOmit));
@@ -418,8 +431,8 @@ export function createPropertiesTable(
 		return undefined;
 	}
 
-	// Only display "Alerts" column if there are any deprecated items in the list.
-	const hasDeprecated = apiProperties.some((element) => isDeprecated(element));
+	// Only display "Alerts" column if there are any deprecated or alpha/beta items in the list.
+	const hasAlerts = doItemsContainAlerts(apiProperties);
 
 	// Only display "Modifiers" column if there are any modifiers to display.
 	const hasModifiers = apiProperties.some(
@@ -432,7 +445,7 @@ export function createPropertiesTable(
 	const headerRowCells: TableHeaderCellNode[] = [
 		TableHeaderCellNode.createFromPlainText("Property"),
 	];
-	if (hasDeprecated) {
+	if (hasAlerts) {
 		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Alerts"));
 	}
 	if (hasModifiers) {
@@ -448,8 +461,8 @@ export function createPropertiesTable(
 	const bodyRows: TableBodyRowNode[] = [];
 	for (const apiProperty of apiProperties) {
 		const bodyRowCells: TableBodyCellNode[] = [createApiTitleCell(apiProperty, config)];
-		if (hasDeprecated) {
-			bodyRowCells.push(createDeprecatedCell(apiProperty));
+		if (hasAlerts) {
+			bodyRowCells.push(createAlertsCell(apiProperty));
 		}
 		if (hasModifiers) {
 			bodyRowCells.push(createModifiersCell(apiProperty, options?.modifiersToOmit));
@@ -482,13 +495,13 @@ export function createPackagesTable(
 		return undefined;
 	}
 
-	// Only display "Alerts" column if there are any deprecated items in the list.
-	const hasDeprecated = apiPackages.some((element) => isDeprecated(element));
+	// Only display "Alerts" column if there are any deprecated or alpha/beta items in the list.
+	const hasAlerts = doItemsContainAlerts(apiPackages);
 
 	const headerRowCells: TableHeaderCellNode[] = [
 		TableHeaderCellNode.createFromPlainText("Package"),
 	];
-	if (hasDeprecated) {
+	if (hasAlerts) {
 		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Alerts"));
 	}
 	headerRowCells.push(TableHeaderCellNode.createFromPlainText("Description"));
@@ -497,8 +510,8 @@ export function createPackagesTable(
 	const bodyRows: TableBodyRowNode[] = [];
 	for (const apiPackage of apiPackages) {
 		const bodyRowCells: TableBodyCellNode[] = [createApiTitleCell(apiPackage, config)];
-		if (hasDeprecated) {
-			bodyRowCells.push(createDeprecatedCell(apiPackage));
+		if (hasAlerts) {
+			bodyRowCells.push(createAlertsCell(apiPackage));
 		}
 		bodyRowCells.push(createApiSummaryCell(apiPackage, config));
 
@@ -519,17 +532,6 @@ export function createApiSummaryCell(
 	apiItem: ApiItem,
 	config: Required<ApiItemTransformationConfiguration>,
 ): TableBodyCellNode {
-	const contents: DocumentationNode[] = [];
-
-	if (ApiReleaseTagMixin.isBaseClassOf(apiItem) && apiItem.releaseTag === ReleaseTag.Beta) {
-		contents.push(
-			new SpanNode([new PlainTextNode("(BETA)")], {
-				bold: true,
-				italic: true,
-			}),
-		);
-	}
-
 	if (apiItem instanceof ApiDocumentedItem) {
 		const docNodeTransformOptions = getDocNodeTransformationOptions(apiItem, config);
 		if (apiItem.tsdocComment !== undefined) {
@@ -537,11 +539,11 @@ export function createApiSummaryCell(
 				apiItem.tsdocComment.summarySection,
 				docNodeTransformOptions,
 			);
-			contents.push(...summaryComment.children);
+			return new TableBodyCellNode(summaryComment.children);
 		}
 	}
 
-	return contents.length === 0 ? TableBodyCellNode.Empty : new TableBodyCellNode(contents);
+	return TableBodyCellNode.Empty;
 }
 
 /**
@@ -631,16 +633,34 @@ export function createDefaultValueCell(
 }
 
 /**
- * Creates a table cell noting that the item is deprecated if it is annotated with an `@deprecated` comment.
+ * Creates a table cell noting alerts related to the item. Namely:
+ *
+ * - If the item is deprecated (if it is annotated with an `@deprecated` comment).
+ *
+ * - If the item is an alpha or beta release (if it is annotated with `@alpha` or `@beta`).
+ *
  * Will use an empty table cell otherwise.
  *
  * @param apiItem - The API item for which the deprecation notice will be displayed if appropriate.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
-export function createDeprecatedCell(apiItem: ApiItem): TableBodyCellNode {
-	return isDeprecated(apiItem)
-		? new TableBodyCellNode([CodeSpanNode.createFromPlainText("DEPRECATED")])
-		: TableBodyCellNode.Empty;
+export function createAlertsCell(apiItem: ApiItem): TableBodyCellNode {
+	const alerts: DocumentationNode[] = [];
+
+	const releaseTag = getReleaseTag(apiItem);
+	if (releaseTag === ReleaseTag.Alpha) {
+		alerts.push(CodeSpanNode.createFromPlainText("ALPHA"));
+	} else if (releaseTag === ReleaseTag.Beta) {
+		alerts.push(CodeSpanNode.createFromPlainText("BETA"));
+	}
+
+	if (isDeprecated(apiItem)) {
+		alerts.push(CodeSpanNode.createFromPlainText("DEPRECATED"));
+	}
+
+	return alerts.length === 0
+		? TableBodyCellNode.Empty
+		: new TableBodyCellNode(injectSeparator(alerts, new PlainTextNode(", ")));
 }
 
 /**
