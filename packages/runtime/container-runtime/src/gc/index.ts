@@ -5,7 +5,7 @@
 
 export { GarbageCollector } from "./garbageCollection";
 export {
-	nextGCVersion as currentGCVersion,
+	nextGCVersion,
 	defaultInactiveTimeoutMs,
 	defaultSessionExpiryDurationMs,
 	disableSweepLogKey,
