@@ -113,6 +113,9 @@
 			},
 			"ClassDeclaration_DummyTokenRevocationManager": {
 				"backCompat": false
+			},
+			"InterfaceDeclaration_IWinstonConfig": {
+				"backCompat": false
 			}
 		}
 	}

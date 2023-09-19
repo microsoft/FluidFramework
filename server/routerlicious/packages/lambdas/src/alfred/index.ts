@@ -27,12 +27,14 @@ import {
 
 import safeStringify from "json-stringify-safe";
 import * as semver from "semver";
+import { v4 as uuid } from "uuid";
 import * as core from "@fluidframework/server-services-core";
 import {
 	BaseTelemetryProperties,
 	CommonProperties,
 	LumberEventName,
 	Lumberjack,
+	getGlobalTelemetryContext,
 	getLumberBaseProperties,
 } from "@fluidframework/server-services-telemetry";
 import {
@@ -770,6 +772,7 @@ export function configureWebSocketServices(
 				connectionMessage.id,
 				connectionMessage.tenantId,
 			);
+			const correlationId = uuid();
 			connectMetric.setProperties({
 				...baseLumberjackProperties,
 				[CommonProperties.clientDriverVersion]: driverVersion,
@@ -778,98 +781,107 @@ export function configureWebSocketServices(
 					Array.from(connectionsMap.keys()),
 				),
 				[CommonProperties.roomClients]: JSON.stringify(Array.from(roomMap.keys())),
+				[BaseTelemetryProperties.correlationId]: correlationId,
 			});
 
-			connectDocumentP = connectDocument(connectionMessage)
-				.then((message) => {
-					socket.emit("connect_document_success", message.connection);
-					const room = roomMap.get(message.connection.clientId);
-					if (room) {
-						socket.emitToRoom(
-							getRoomId(room),
-							"signal",
-							createRoomJoinMessage(message.connection.clientId, message.details),
-						);
-					}
-
-					connectMetric.setProperties({
-						[CommonProperties.clientId]: message.connection.clientId,
-						[CommonProperties.clientCount]:
-							message.connection.initialClients.length + 1,
-						[CommonProperties.clientType]: message.details.details?.type,
-					});
-					connectMetric.success(`Connect document successful`);
-				})
-				.catch((error) => {
-					socket.emit("connect_document_error", error);
-					clearExpirationTimer();
-					if (error?.code !== undefined) {
-						connectMetric.setProperty(CommonProperties.errorCode, error.code);
-					}
-					connectMetric.error(`Connect document failed`, error);
-				})
-				.finally(() => {
-					connectDocumentComplete = true;
-					if (disconnectDocumentP) {
-						Lumberjack.warning(
-							`ConnectDocument completed after disconnect was handled.`,
-						);
-						// We have already received disconnect for this connection.
-						disconnectDocumentP
-							.catch((error) => {
-								Lumberjack.error(
-									"Error encountered in disconnectDocumentP",
-									{ ...baseLumberjackProperties },
-									error,
-								);
-							})
-							.finally(() => {
-								// We might need to re-run disconnect handler after previous disconnect handler completes.
-								// DisconnectDocument internally handles the cases where we have already run disconnect for
-								// roomsMap and connectionsMap so that we don't duplicate disconnect efforts.
-								// The primary need for this retry is when we receive "disconnect" in the narrow window after
-								// "connect_document" but before "connectDocumentP" is defined.
-								const alreadyDisconnectedAllConnections: boolean =
-									connectionsMap.size === clientIdConnectionsDisconnected.size;
-								const alreadyDisconnectedAllClients: boolean =
-									roomMap.size === clientIdClientsDisconnected.size;
-								if (
-									alreadyDisconnectedAllConnections &&
-									alreadyDisconnectedAllClients
-								) {
-									// Don't retry disconnect if all connections and clients are already handled.
-									return;
-								}
-
-								const disconnectRetryMetric = Lumberjack.newLumberMetric(
-									LumberEventName.DisconnectDocumentRetry,
-								);
-								disconnectRetryMetric.setProperties({
-									...baseLumberjackProperties,
-									[CommonProperties.connectionCount]: connectionsMap.size,
-									[CommonProperties.connectionClients]: JSON.stringify(
-										Array.from(connectionsMap.keys()),
+			connectDocumentP = getGlobalTelemetryContext().bindPropertiesAsync(
+				{ correlationId, ...baseLumberjackProperties },
+				async () =>
+					connectDocument(connectionMessage)
+						.then((message) => {
+							socket.emit("connect_document_success", message.connection);
+							const room = roomMap.get(message.connection.clientId);
+							if (room) {
+								socket.emitToRoom(
+									getRoomId(room),
+									"signal",
+									createRoomJoinMessage(
+										message.connection.clientId,
+										message.details,
 									),
-									[CommonProperties.roomClients]: JSON.stringify(
-										Array.from(roomMap.keys()),
-									),
-								});
+								);
+							}
 
-								disconnectDocument()
-									.then(() => {
-										disconnectRetryMetric.success(
-											`Successfully retried disconnect.`,
-										);
-									})
+							connectMetric.setProperties({
+								[CommonProperties.clientId]: message.connection.clientId,
+								[CommonProperties.clientCount]:
+									message.connection.initialClients.length + 1,
+								[CommonProperties.clientType]: message.details.details?.type,
+							});
+							connectMetric.success(`Connect document successful`);
+						})
+						.catch((error) => {
+							socket.emit("connect_document_error", error);
+							clearExpirationTimer();
+							if (error?.code !== undefined) {
+								connectMetric.setProperty(CommonProperties.errorCode, error.code);
+							}
+							connectMetric.error(`Connect document failed`, error);
+						})
+						.finally(() => {
+							connectDocumentComplete = true;
+							if (disconnectDocumentP) {
+								Lumberjack.warning(
+									`ConnectDocument completed after disconnect was handled.`,
+								);
+								// We have already received disconnect for this connection.
+								disconnectDocumentP
 									.catch((error) => {
-										disconnectRetryMetric.error(
-											`Disconnect retry failed.`,
+										Lumberjack.error(
+											"Error encountered in disconnectDocumentP",
+											{ ...baseLumberjackProperties },
 											error,
 										);
+									})
+									.finally(() => {
+										// We might need to re-run disconnect handler after previous disconnect handler completes.
+										// DisconnectDocument internally handles the cases where we have already run disconnect for
+										// roomsMap and connectionsMap so that we don't duplicate disconnect efforts.
+										// The primary need for this retry is when we receive "disconnect" in the narrow window after
+										// "connect_document" but before "connectDocumentP" is defined.
+										const alreadyDisconnectedAllConnections: boolean =
+											connectionsMap.size ===
+											clientIdConnectionsDisconnected.size;
+										const alreadyDisconnectedAllClients: boolean =
+											roomMap.size === clientIdClientsDisconnected.size;
+										if (
+											alreadyDisconnectedAllConnections &&
+											alreadyDisconnectedAllClients
+										) {
+											// Don't retry disconnect if all connections and clients are already handled.
+											return;
+										}
+
+										const disconnectRetryMetric = Lumberjack.newLumberMetric(
+											LumberEventName.DisconnectDocumentRetry,
+										);
+										disconnectRetryMetric.setProperties({
+											...baseLumberjackProperties,
+											[CommonProperties.connectionCount]: connectionsMap.size,
+											[CommonProperties.connectionClients]: JSON.stringify(
+												Array.from(connectionsMap.keys()),
+											),
+											[CommonProperties.roomClients]: JSON.stringify(
+												Array.from(roomMap.keys()),
+											),
+										});
+
+										disconnectDocument()
+											.then(() => {
+												disconnectRetryMetric.success(
+													`Successfully retried disconnect.`,
+												);
+											})
+											.catch((error) => {
+												disconnectRetryMetric.error(
+													`Disconnect retry failed.`,
+													error,
+												);
+											});
 									});
-							});
-					}
-				});
+							}
+						}),
+			);
 		});
 
 		// Message sent when a new operation is submitted to the router
