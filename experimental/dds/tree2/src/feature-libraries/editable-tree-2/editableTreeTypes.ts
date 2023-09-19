@@ -430,7 +430,7 @@ export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
 
 	/**
 	 * This is provided as a enumerable own property allow JavaScript object traversals by enumerable own properties to access {@link Sequence} content.
-	 * It is recommenced to NOT use this when possible (for performance and type safety reasons): instead use {@link Sequence.at} or iterate over nodes with `Symbol.iterator`.
+	 * It is recommenced to NOT use this when possible (for performance and type safety reasons): instead use {@link Sequence#at} or iterate over nodes with `Symbol.iterator`.
 	 * See [ReadMe](./README.md) for details.
 	 *
 	 * This array is not guaranteed to be kept up to date across edits and thus should not be help onto across edits.
