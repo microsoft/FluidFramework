@@ -5,9 +5,14 @@
 
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreContext, ISummarizerNodeWithGC } from "@fluidframework/runtime-definitions";
-import { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import {
+	IChannel,
+	IChannelFactory,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions";
 import { assert } from "@fluidframework/core-utils";
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "./dataStoreRuntime";
+import { LocalChannelContextBase } from "./localChannelContext";
 
 export interface IModifiableFluidDataStoreContext {
 	summarizerNode: ISummarizerNodeWithGC;
@@ -29,8 +34,6 @@ export class MigratorFluidDataStoreRuntime extends FluidDataStoreRuntime {
 		super(_dataStoreContext, sharedObjectRegistry, existing, initializeEntryPoint);
 	}
 
-	private interceptFactory?: IChannelFactory;
-
 	// Returns a detached channel
 	public replaceChannel(id: string, channelFactory: IChannelFactory) {
 		assert(this.contexts.has(id), "channel to be replaced should exist!");
@@ -41,22 +44,19 @@ export class MigratorFluidDataStoreRuntime extends FluidDataStoreRuntime {
 			dataStoreContext.summarizerNode.deleteChild(id);
 		}
 		this.contexts.delete(id);
-		this.interceptFactory = channelFactory;
-		const channel = this.createChannel(id, channelFactory.type);
-		return channel;
+		const interceptRegistry = new InterceptSharedObjectRegistry(
+			this.sharedObjectRegistry,
+			channelFactory,
+		);
+		const context = this.createLocalChannelContext(id, channelFactory.type, interceptRegistry);
+		this.contexts.set(id, context);
+		return context.channel;
 	}
 
-	protected createLocalChannelContext(
-		id: string,
-		type: string,
-		sharedObjectRegistry: ISharedObjectRegistry,
-	) {
-		const interceptRegistry =
-			this.interceptFactory !== undefined
-				? new InterceptSharedObjectRegistry(sharedObjectRegistry, this.interceptFactory)
-				: sharedObjectRegistry;
-
-		return super.createLocalChannelContext(id, type, interceptRegistry);
+	public reAttachChannel(channel: IChannel): void {
+		this.verifyNotClosed();
+		const context = this.contexts.get(channel.id) as LocalChannelContextBase;
+		context.makeVisible();
 	}
 }
 

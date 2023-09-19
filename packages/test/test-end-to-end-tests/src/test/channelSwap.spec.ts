@@ -24,14 +24,26 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { MigratorFluidDataStoreRuntime } from "@fluidframework/datastore";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedTree } from "@fluid-experimental/tree";
-import { SharedTreeFactory as NewSharedTreeFactory } from "@fluid-experimental/tree2";
+import {
+	SharedTreeFactory as NewSharedTreeFactory,
+	ISharedTree as ISharedTree2,
+} from "@fluid-experimental/tree2";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { ContainerRuntime } from "@fluidframework/container-runtime/src";
 
 export class MigratorDataObject<I extends DataObjectTypes = DataObjectTypes> extends DataObject<I> {
 	private readonly migratorRuntime: MigratorFluidDataStoreRuntime;
 
 	public get _root(): ISharedDirectory {
 		return this.root;
+	}
+
+	public get containerRuntime() {
+		return this.context.containerRuntime as ContainerRuntime;
+	}
+
+	public get _runtime() {
+		return this.runtime;
 	}
 
 	public constructor(props: IDataObjectProps<I>) {
@@ -43,6 +55,10 @@ export class MigratorDataObject<I extends DataObjectTypes = DataObjectTypes> ext
 	// Deleting DDSes is dangerous it's best just to replace
 	public replaceChannel(channel: IChannel, factory: IChannelFactory) {
 		return this.migratorRuntime.replaceChannel(channel.id, factory);
+	}
+
+	public reAttachChannel(channel: IChannel) {
+		this.migratorRuntime.reAttachChannel(channel);
 	}
 
 	protected async initializingFirstTime(): Promise<void> {
@@ -132,10 +148,15 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 		const dataObject1 = await requestFluidObject<MigratorDataObject>(container1, "/");
 		const handle1 = dataObject1._root.get("handle") as IFluidHandle<IChannel>;
 		const channel1 = await handle1.get();
-		const newChannel1 = dataObject1.replaceChannel(channel1, new NewSharedTreeFactory());
-		dataObject1._root.set("handle", newChannel1.handle);
+		const newChannel1 = dataObject1.replaceChannel(
+			channel1,
+			new NewSharedTreeFactory(),
+		) as ISharedTree2;
 
+		dataObject1.reAttachChannel(newChannel1);
+		// Note, any channel1 handles will still reference channel1.
 		await provider.ensureSynchronized();
+
 		const { summaryVersion } = await summarizeNow(summarizer);
 
 		const container2 = await loadContainerV2(summaryVersion);
@@ -145,5 +166,35 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 
 		assert(tree2.attributes.type === "SharedTree", "Should be a shared tree");
 		assert(tree2.attributes.snapshotFormatVersion === "0.0.0", "Should be new shared tree");
+	});
+
+	it("Can attach swapped channel without sending ops", async () => {
+		const container = await createContainer();
+		const dataObject = await requestFluidObject<MigratorDataObject>(container, "/");
+		const handle = dataObject._root.get("handle") as IFluidHandle<IChannel>;
+		const channel = await handle.get();
+		const newChannel = dataObject.replaceChannel(
+			channel,
+			new NewSharedTreeFactory(),
+		) as ISharedTree2;
+
+		// instead of storing the handle, we just call handle.attachGraph() which is equivalent.
+		await provider.ensureSynchronized();
+		const preAttachSequenceNumber = dataObject.containerRuntime.deltaManager.lastSequenceNumber;
+		dataObject.reAttachChannel(newChannel);
+		// Note, any channel handles will still reference the old channel.
+		await provider.ensureSynchronized();
+		const postAttachSequenceNumber =
+			dataObject.containerRuntime.deltaManager.lastSequenceNumber;
+		assert(
+			preAttachSequenceNumber === postAttachSequenceNumber,
+			"sequence number should not have changed",
+		);
+
+		assert(newChannel.attributes.type === "SharedTree", "Should be a shared tree");
+		assert(
+			newChannel.attributes.snapshotFormatVersion === "0.0.0",
+			"Should be new shared tree",
+		);
 	});
 });
