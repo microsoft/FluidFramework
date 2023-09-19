@@ -7,6 +7,7 @@ import { IRequest, IFluidRouter, FluidObject } from "@fluidframework/core-interf
 import {
 	FluidDataStoreRuntime,
 	ISharedObjectRegistry,
+	// eslint-disable-next-line import/no-deprecated
 	mixinRequestHandler,
 } from "@fluidframework/datastore";
 import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
@@ -57,6 +58,7 @@ async function createDataObject<
 	let runtimeClass = runtimeClassArg;
 
 	// request mixin in
+	// eslint-disable-next-line import/no-deprecated
 	runtimeClass = mixinRequestHandler(
 		async (request: IRequest, runtimeArg: FluidDataStoreRuntime) => {
 			const router: FluidObject<IFluidRouter> = await runtimeArg.entryPoint.get();

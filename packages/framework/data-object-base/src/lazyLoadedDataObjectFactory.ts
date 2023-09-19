@@ -7,6 +7,7 @@ import { FluidObject, IProvideFluidRouter, IRequest } from "@fluidframework/core
 import {
 	FluidDataStoreRuntime,
 	ISharedObjectRegistry,
+	// eslint-disable-next-line import/no-deprecated
 	mixinRequestHandler,
 } from "@fluidframework/datastore";
 import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
@@ -61,6 +62,7 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject>
 		context: IFluidDataStoreContext,
 		existing: boolean,
 	): Promise<FluidDataStoreRuntime> {
+		// eslint-disable-next-line import/no-deprecated
 		const runtimeClass = mixinRequestHandler(
 			async (request: IRequest, rt: FluidDataStoreRuntime) => {
 				const router: FluidObject<IProvideFluidRouter> = await rt.entryPoint.get();

@@ -4,6 +4,7 @@
  */
 
 import { EventEmitter } from "events";
+// eslint-disable-next-line import/no-deprecated
 import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
 import {
 	IFluidLoadable,
@@ -12,6 +13,7 @@ import {
 	IResponse,
 	IFluidHandle,
 } from "@fluidframework/core-interfaces";
+// eslint-disable-next-line import/no-deprecated
 import { FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { ReferenceType, reservedTileLabelsKey } from "@fluidframework/merge-tree";
@@ -74,6 +76,7 @@ export class CodeMirrorComponent extends EventEmitter implements IFluidLoadable,
 	}
 
 	public async request(request: IRequest): Promise<IResponse> {
+		// eslint-disable-next-line import/no-deprecated
 		return defaultFluidObjectRequestHandler(this, request);
 	}
 
@@ -103,6 +106,7 @@ export class SmdeFactory implements IFluidDataStoreFactory {
 	}
 
 	public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
+		// eslint-disable-next-line import/no-deprecated
 		const runtimeClass = mixinRequestHandler(async (request: IRequest) => {
 			const router = await routerP;
 			return router.request(request);

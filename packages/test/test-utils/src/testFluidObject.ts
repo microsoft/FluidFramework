@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-deprecated
 import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
 import {
 	IRequest,
@@ -14,6 +15,7 @@ import {
 import {
 	FluidObjectHandle,
 	FluidDataStoreRuntime,
+	// eslint-disable-next-line import/no-deprecated
 	mixinRequestHandler,
 } from "@fluidframework/datastore";
 import { SharedMap, ISharedMap } from "@fluidframework/map";
@@ -94,6 +96,7 @@ export class TestFluidObject implements ITestFluidObject {
 	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	public async request(request: IRequest): Promise<IResponse> {
+		// eslint-disable-next-line import/no-deprecated
 		return defaultFluidObjectRequestHandler(this, request);
 	}
 
@@ -198,6 +201,7 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
 			}
 		}
 
+		// eslint-disable-next-line import/no-deprecated
 		const runtimeClass = mixinRequestHandler(
 			async (request: IRequest, rt: FluidDataStoreRuntime) => {
 				const maybeRouter: FluidObject<IProvideFluidRouter> = await rt.entryPoint.get();

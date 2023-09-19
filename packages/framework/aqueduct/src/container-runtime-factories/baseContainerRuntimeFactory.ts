@@ -10,6 +10,7 @@ import {
 	ContainerRuntime,
 } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+// eslint-disable-next-line import/no-deprecated
 import { RuntimeRequestHandler, buildRuntimeRequestHandler } from "@fluidframework/request-handler";
 import {
 	IFluidDataStoreRegistry,
@@ -98,6 +99,7 @@ export class BaseContainerRuntimeFactory
 			runtimeOptions: this.runtimeOptions,
 			registryEntries: this.registryEntries,
 			containerScope: scope,
+			// eslint-disable-next-line import/no-deprecated
 			requestHandler: buildRuntimeRequestHandler(...this.requestHandlers),
 			provideEntryPoint: this.provideEntryPoint,
 		});

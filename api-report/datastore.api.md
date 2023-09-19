@@ -158,7 +158,7 @@ export interface ISharedObjectRegistry {
     get(name: string): IChannelFactory | undefined;
 }
 
-// @public @deprecated (undocumented)
+// @public @deprecated
 export const mixinRequestHandler: (requestHandler: (request: IRequest, runtime: FluidDataStoreRuntime) => Promise<IResponse>, Base?: typeof FluidDataStoreRuntime) => typeof FluidDataStoreRuntime;
 
 // @public

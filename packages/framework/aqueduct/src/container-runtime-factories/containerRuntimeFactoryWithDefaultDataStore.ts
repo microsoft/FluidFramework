@@ -12,6 +12,7 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { IFluidDependencySynthesizer } from "@fluidframework/synthesize";
 import { RuntimeRequestHandler } from "@fluidframework/request-handler";
 import { FluidObject } from "@fluidframework/core-interfaces";
+// eslint-disable-next-line import/no-deprecated
 import { defaultRouteRequestHandler } from "../request-handlers";
 import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory";
 
@@ -59,6 +60,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 
 		super({
 			...props,
+			// eslint-disable-next-line import/no-deprecated
 			requestHandlers: [defaultRouteRequestHandler(defaultDataStoreId), ...requestHandlers],
 			provideEntryPoint,
 		});

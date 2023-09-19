@@ -7,6 +7,7 @@ import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { FluidObject } from "@fluidframework/core-interfaces";
+// eslint-disable-next-line import/no-deprecated
 import { RuntimeRequestHandler, buildRuntimeRequestHandler } from "@fluidframework/request-handler";
 import {
 	NamedFluidDataStoreRegistryEntries,
@@ -57,6 +58,7 @@ export class RuntimeFactory extends RuntimeFactoryHelper {
 			context,
 			registryEntries: this.registry,
 			existing,
+			// eslint-disable-next-line import/no-deprecated
 			requestHandler: buildRuntimeRequestHandler(...this.requestHandlers),
 			provideEntryPoint: this.provideEntryPoint,
 		});
