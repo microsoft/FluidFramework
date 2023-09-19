@@ -335,7 +335,7 @@ jobs:
         condition: succeededOrFailed()
 
       # Publish tinylicious log for troubleshooting
-      - ${{ if contains(convertToJson(parameters.taskTest), 'tinylicious') }}:
+      - ${{ if contains(convertToJson(parameters.testCommand), 'tinylicious') }}:
         - task: PublishPipelineArtifact@1
           displayName: Publish Artifact - Tinylicious Log
           inputs:
