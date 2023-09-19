@@ -14,6 +14,7 @@ import {
 	IStorageNameRetriever,
 	IRevokedTokenChecker,
 	IDocumentManager,
+	IDocumentStaticProperties,
 } from "@fluidframework/server-services-core";
 import {
 	ICache,
@@ -127,15 +128,38 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 	const maxCacheableSummarySize: number =
 		config.get("restGitService:maxCacheableSummarySize") ?? 1_000_000_000; // default: 1gb
 
-	let isEphemeral = cache ? isEphemeralContainer : false;
+	Lumberjack.info(
+		`IsEphemeralContainer=${isEphemeralContainer} ; ignoreEphemeralFlag=${ignoreEphemeralFlag}`,
+	);
+
+	let isEphemeral: boolean = isEphemeralContainer;
 	if (!ignoreEphemeralFlag) {
-		if (isEphemeralContainer !== undefined) {
-			await cache?.set(`isEphemeral:${documentId}`, isEphemeralContainer);
+		const isEphemeralKey: string = `isEphemeralContainer:${documentId}`;
+		if (isEphemeral !== undefined && isEphemeral !== null) {
+			// If an isEphemeral flag was passed in, cache it in Redis
+			Lumberjack.info(`Setting ${isEphemeralKey} to ${isEphemeralContainer}`);
+			await cache?.set(isEphemeralKey, isEphemeralContainer);
 		} else {
-			isEphemeral = await cache?.get(`isEphemeral:${documentId}`);
-			// Todo: If isEphemeral is still undefined fetch the value from database
+			isEphemeral = await cache?.get(isEphemeralKey);
+			// If isEphemeral is still null/undefined fetch the value from database
+			if (isEphemeral === null || isEphemeral === undefined) {
+				Lumberjack.info(
+					`Reading document static props of tId=${tenantId} and dId=${documentId}`,
+				);
+				try {
+					const staticProps: IDocumentStaticProperties =
+						await documentManager.readStaticProperties(tenantId, documentId);
+					isEphemeral = staticProps.isEphemeralContainer ?? false;
+				} catch (e) {
+					isEphemeral = false;
+				}
+			}
 		}
+	} else {
+		isEphemeral = false;
 	}
+	Lumberjack.info(`Document ${documentId} is ${isEphemeral ? "" : "not "}ephemeral.`);
+
 	const calculatedStorageName =
 		initialUpload && storageName
 			? storageName

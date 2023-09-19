@@ -215,6 +215,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		const documentManager: core.IDocumentManager = new services.DocumentManager(
 			alfredEndpoint,
 			tenantManager,
+			gitCache,
 		);
 
 		const port = normalizePort(process.env.PORT || "3000");
