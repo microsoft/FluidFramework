@@ -29,7 +29,8 @@ export class HistorianResources implements core.IResources {
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
 		public readonly denyList?: historianServices.IDenyList,
 	) {
-		this.webServerFactory = new services.BasicWebServerFactory();
+		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
+		this.webServerFactory = new services.BasicWebServerFactory(httpServerConfig);
 	}
 
 	public async dispose(): Promise<void> {

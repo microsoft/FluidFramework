@@ -13,10 +13,9 @@ import { TransformedEvent } from '@fluidframework/core-interfaces';
 
 // @internal
 export class Buffer extends Uint8Array {
+    static from(value: unknown, encodingOrOffset?: unknown, length?: unknown): IsoBuffer;
     // (undocumented)
-    static from(value: any, encodingOrOffset?: any, length?: any): IsoBuffer;
-    // (undocumented)
-    static isBuffer(obj: any): obj is Buffer;
+    static isBuffer(obj: unknown): obj is Buffer;
     // (undocumented)
     toString(encoding?: string): string;
 }

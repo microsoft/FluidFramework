@@ -67,7 +67,7 @@ import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs";
 import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
 import {
 	GCNodeType,
-	sweepDatastoresKey,
+	disableDatastoreSweepKey,
 	throwOnTombstoneLoadKey,
 	sendGCUnexpectedUsageEvent,
 } from "./gc";
@@ -824,7 +824,7 @@ export class DataStores implements IDisposable {
 	 */
 	public deleteSweepReadyNodes(sweepReadyDataStoreRoutes: string[]): string[] {
 		// If sweep for data stores is not enabled, return empty list indicating nothing is deleted.
-		if (this.mc.config.getBoolean(sweepDatastoresKey) !== true) {
+		if (this.mc.config.getBoolean(disableDatastoreSweepKey) === true) {
 			return [];
 		}
 		for (const route of sweepReadyDataStoreRoutes) {

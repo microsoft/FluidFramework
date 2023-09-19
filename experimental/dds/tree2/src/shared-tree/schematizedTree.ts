@@ -206,7 +206,7 @@ export interface TreeContent<TRoot extends FieldSchema = FieldSchema>
 	 * (meaning it does not even have any schema set at all).
 	 */
 	readonly initialTree:
-		| SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Simple>
+		| SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Flexible>
 		| readonly ITreeCursorSynchronous[]
 		| ITreeCursorSynchronous;
 }

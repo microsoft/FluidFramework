@@ -88,7 +88,7 @@ describe("SharedOT", () => {
 					const containerRuntimeN =
 						containerRuntimeFactory.createContainerRuntime(dataStoreRuntimeN);
 					const servicesN: IChannelServices = {
-						deltaConnection: containerRuntimeN.createDeltaConnection(),
+						deltaConnection: dataStoreRuntimeN.createDeltaConnection(),
 						objectStorage: new MockStorage(),
 					};
 
