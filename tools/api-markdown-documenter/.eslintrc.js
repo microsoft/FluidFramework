@@ -26,8 +26,8 @@ module.exports = {
 			"error",
 			{
 				allowList: {
-					// Name comes from external library
-					DocNode: true,
+					// Industry-standard index variable name.
+					i: true,
 				},
 			},
 		],
