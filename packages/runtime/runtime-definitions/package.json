@@ -53,6 +53,12 @@
 	},
 	"typeValidation": {
 		"broken": {
+			"InterfaceDeclaration_IDataStore": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IFluidDataStoreChannel": {
+				"forwardCompat": false
+			},
 			"InterfaceDeclaration_IFluidDataStoreContextDetached": {
 				"backCompat": false
 			},

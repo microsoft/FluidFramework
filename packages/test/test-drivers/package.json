@@ -68,6 +68,7 @@
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/tinylicious-driver": "workspace:~",
 		"@fluidframework/tool-utils": "workspace:~",
+		"agentkeepalive": "^4.5.0",
 		"axios": "^0.26.0",
 		"semver": "^7.5.3",
 		"uuid": "^9.0.0"

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { BatchManager, BatchMessage, estimateSocketSize } from "../../opLifecycle";
-import { ContainerMessageType } from "../../containerRuntime";
+import { ContainerMessageType } from "../../messageTypes";
 
 describe("BatchManager", () => {
 	const softLimit = 1024;

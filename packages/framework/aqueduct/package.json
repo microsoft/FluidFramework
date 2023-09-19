@@ -106,13 +106,14 @@
 	"module:es5": "es5/index.js",
 	"typeValidation": {
 		"broken": {
+			"InterfaceDeclaration_IDataObjectProps": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
 			"ClassDeclaration_DataObject": {
 				"backCompat": false
 			},
 			"ClassDeclaration_PureDataObject": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_IDataObjectProps": {
 				"backCompat": false
 			}
 		}

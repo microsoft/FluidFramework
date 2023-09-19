@@ -7,7 +7,7 @@ import { DocDeclarationReference } from "@microsoft/tsdoc";
 
 import { Link } from "../Link";
 import { DocumentNode, SectionNode } from "../documentation-domain";
-import { getFilePathForApiItem, getLinkForApiItem } from "./ApiItemUtilities";
+import { getDocumentPathForApiItem, getLinkForApiItem } from "./ApiItemUtilities";
 import { DocNodeTransformOptions } from "./DocNodeTransforms";
 import { ApiItemTransformationConfiguration } from "./configuration";
 import { wrapInSection } from "./helpers";
@@ -46,7 +46,7 @@ export function createDocument(
 	return new DocumentNode({
 		apiItemName: documentItem.displayName,
 		children: contents,
-		filePath: getFilePathForApiItem(documentItem, config),
+		documentPath: getDocumentPathForApiItem(documentItem, config),
 		frontMatter,
 	});
 }

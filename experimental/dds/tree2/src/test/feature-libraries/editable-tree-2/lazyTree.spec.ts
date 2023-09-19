@@ -31,6 +31,7 @@ import {
 	bannedFieldNames,
 	fieldApiPrefixes,
 	validateStructFieldName,
+	assertAllowedValue,
 } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { Context } from "../../../feature-libraries/editable-tree-2/context";
@@ -221,7 +222,7 @@ function nodeToMapTree(node: TreeNode): MapTree {
 }
 
 function checkPropertyInvariants(root: Tree): void {
-	const treeValues = new Map<TreeValue, number>();
+	const treeValues = new Map<unknown, number>();
 	// Assert all nodes and fields traversed, and all values found.
 	// TODO: checking that unboxed fields and nodes were traversed is not fully implemented here.
 	visitIterableTree(root, (item) => {
@@ -253,6 +254,7 @@ function checkPropertyInvariants(root: Tree): void {
 
 		if (typeof child === "object") {
 			if (treeValues.has(child)) {
+				assertAllowedValue(child);
 				primitivesAndValues.set(child, (primitivesAndValues.get(child) ?? 0) + 1);
 				return Skip;
 			}
@@ -287,7 +289,7 @@ function checkPropertyInvariants(root: Tree): void {
 	// TODO: checking that unboxed fields and nodes were traversed is not fully implemented here.
 	visitIterableTree(root, (item) => {
 		if (!unboxable.has(Object.getPrototypeOf(item))) {
-			if (!primitivesAndValues.has(item) && !visited.has(item)) {
+			if (!primitivesAndValues.has(item as unknown as TreeValue) && !visited.has(item)) {
 				// Fields don't have stable object identity, so they can fail the above test.
 				// Nothing else should fail it.
 				assert(item instanceof LazyField);

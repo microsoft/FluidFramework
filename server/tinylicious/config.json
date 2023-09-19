@@ -25,6 +25,8 @@
 		"restJsonSize": "50mb",
 		"maxNumberOfClientsPerDocument": 1000000
 	},
+	"deli": {},
+	"scribe": {},
 	"mongo": {
 		"endpoint": "mongodb://mongodb:27017",
 		"collectionNames": {

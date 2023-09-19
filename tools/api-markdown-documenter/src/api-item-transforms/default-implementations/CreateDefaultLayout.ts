@@ -2,13 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ApiItem, ApiReleaseTagMixin, ReleaseTag } from "@microsoft/api-extractor-model";
+import { ApiItem, ReleaseTag } from "@microsoft/api-extractor-model";
 
 import { SectionNode } from "../../documentation-domain";
-import { doesItemRequireOwnDocument, getHeadingForApiItem } from "../ApiItemUtilities";
+import {
+	doesItemRequireOwnDocument,
+	getHeadingForApiItem,
+	getReleaseTag,
+} from "../ApiItemUtilities";
 import { ApiItemTransformationConfiguration } from "../configuration";
 import {
-	betaAlert,
+	alphaWarningSpan,
+	betaWarningSpan,
 	createDeprecationNoticeSection,
 	createExamplesSection,
 	createRemarksSection,
@@ -55,9 +60,10 @@ export function createDefaultLayout(
 ): SectionNode[] {
 	const sections: SectionNode[] = [];
 
-	// Render beta warning if applicable
-	if (ApiReleaseTagMixin.isBaseClassOf(apiItem) && apiItem.releaseTag === ReleaseTag.Beta) {
-		sections.push(wrapInSection([betaAlert]));
+	// Render summary comment (if any)
+	const summary = createSummaryParagraph(apiItem, config);
+	if (summary !== undefined) {
+		sections.push(wrapInSection([summary]));
 	}
 
 	// Render deprecation notice (if any)
@@ -66,10 +72,12 @@ export function createDefaultLayout(
 		sections.push(wrapInSection([deprecationNotice]));
 	}
 
-	// Render summary comment (if any)
-	const summary = createSummaryParagraph(apiItem, config);
-	if (summary !== undefined) {
-		sections.push(wrapInSection([summary]));
+	// Render alpha/beta notice if applicable
+	const releaseTag = getReleaseTag(apiItem);
+	if (releaseTag === ReleaseTag.Alpha) {
+		sections.push(wrapInSection([alphaWarningSpan]));
+	} else if (releaseTag === ReleaseTag.Beta) {
+		sections.push(wrapInSection([betaWarningSpan]));
 	}
 
 	// Render signature (if any)

@@ -58,7 +58,8 @@ function generateTreeRecursively(
 			if (height === 1) {
 				const writeCursor = singleTextCursor({
 					type: leafNodeSchema.name,
-					value: currentValue.toString,
+					// TODO: these values show up in the snapshot as "[object Object]", which doesn't seem right.
+					value: currentValue.value.toString(),
 				});
 				field.insert(i, writeCursor);
 				currentValue.value++;
@@ -102,7 +103,7 @@ export function generateTestTrees(): { name: string; tree: () => ISharedTree }[]
 			name: "has-handle",
 			tree: () => {
 				const innerBuilder = new SchemaBuilder("has-handle");
-				const handleSchema = innerBuilder.leaf("Handle", ValueSchema.Serializable);
+				const handleSchema = innerBuilder.leaf("Handle", ValueSchema.FluidHandle);
 				const docSchema = innerBuilder.intoDocumentSchema(
 					SchemaBuilder.fieldOptional(handleSchema),
 				);

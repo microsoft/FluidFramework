@@ -510,7 +510,7 @@ describe("editable-tree: read-only", () => {
 		assert(isEditableField(proxy.address.phones));
 		assert.equal(proxy.address.phones.length, 4);
 		assert.equal(proxy.address.phones[1], 123456879);
-		const expectedPhones: Value[] = [
+		const expectedPhones: unknown[] = [
 			"+49123456778",
 			123456879,
 			{
@@ -524,7 +524,7 @@ describe("editable-tree: read-only", () => {
 		];
 		let i = 0;
 		for (const phone of proxy.address.phones ?? []) {
-			const expectedPhone: Value = expectedPhones[i++];
+			const expectedPhone = expectedPhones[i++];
 			if (isPrimitiveValue(phone)) {
 				assert.equal(phone, expectedPhone);
 			} else if (isEditableField(phone)) {
