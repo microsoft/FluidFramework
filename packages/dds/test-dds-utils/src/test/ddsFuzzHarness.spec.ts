@@ -2,9 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
-import fs from "fs";
-import path from "path";
+import { strict as assert } from "node:assert";
+import fs from "node:fs";
+import path from "node:path";
+
 import execa from "execa";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {

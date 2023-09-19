@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { Server } from "http";
+import type { Server } from "node:http";
 
 import cors from "cors";
 import express from "express";
