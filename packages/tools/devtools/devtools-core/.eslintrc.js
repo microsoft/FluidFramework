@@ -14,9 +14,6 @@ module.exports = {
 
 		// Disabled because it is incompatible with API-Extractor.
 		"@typescript-eslint/no-namespace": "off",
-
-		// TODO: Remove this once disabled in shared config.
-		"unicorn/prefer-event-target": "off",
 	},
 	overrides: [
 		{
