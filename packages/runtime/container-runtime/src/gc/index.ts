@@ -5,7 +5,7 @@
 
 export { GarbageCollector } from "./garbageCollection";
 export {
-	currentGCVersion,
+	nextGCVersion as currentGCVersion,
 	defaultInactiveTimeoutMs,
 	defaultSessionExpiryDurationMs,
 	disableSweepLogKey,
@@ -15,7 +15,7 @@ export {
 	gcSweepGenerationOptionName,
 	GCFeatureMatrix,
 	GCVersion,
-	gcVersionUpgradeToV3Key,
+	gcVersionUpgradeToV4Key,
 	IGarbageCollectionRuntime,
 	IGarbageCollector,
 	IGarbageCollectorConfigs,
