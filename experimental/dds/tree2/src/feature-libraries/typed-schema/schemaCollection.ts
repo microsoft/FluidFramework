@@ -4,21 +4,57 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { Adapters, TreeSchemaIdentifier } from "../../core";
+import { Adapters, TreeAdapter, TreeSchemaIdentifier } from "../../core";
 import { FullSchemaPolicy } from "../modular-schema";
-import { capitalize, fail } from "../../util";
+import { capitalize, fail, requireAssignableTo } from "../../util";
 import { defaultSchemaPolicy, FieldKinds, FieldKindTypes } from "../default-field-kinds";
 import {
-	SchemaBuilder,
-	SchemaLibraryData,
-	SchemaLintConfiguration,
-	SourcedAdapters,
+	FieldSchema,
+	TreeSchema,
+	allowedTypesIsAny,
 	TypedSchemaCollection,
-} from "./schemaBuilder";
-import { FieldSchema, TreeSchema, allowedTypesIsAny } from "./typedTreeSchema";
+} from "./typedTreeSchema";
 import { normalizeFlexListEager } from "./flexList";
+import { Sourced } from "./view";
 
 // TODO: tests for this file
+
+/**
+ * Schema data collected by a single SchemaBuilder (does not include referenced libraries).
+ * @alpha
+ */
+export interface SchemaLibraryData {
+	readonly name: string;
+	readonly rootFieldSchema?: FieldSchema;
+	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
+	readonly adapters: Adapters;
+}
+
+/**
+ * Mutable adapter collection which records the associated factory.
+ * See {@link Adapters}.
+ */
+export interface SourcedAdapters {
+	readonly tree: (Sourced & TreeAdapter)[];
+}
+
+{
+	type _check = requireAssignableTo<SourcedAdapters, Adapters>;
+}
+
+/**
+ * Allows opting into and out of errors for some unusual schema patterns which are usually bugs.
+ * @alpha
+ */
+export interface SchemaLintConfiguration {
+	readonly rejectForbidden: boolean;
+	readonly rejectEmpty: boolean;
+}
+
+export const schemaLintDefault: SchemaLintConfiguration = {
+	rejectForbidden: true,
+	rejectEmpty: true,
+};
 
 /**
  * Build and validate a SchemaCollection.
@@ -96,7 +132,7 @@ export function buildViewSchemaCollection(
 		// Thus a library can be used as SchemaData, but if used for full document's SchemaData,
 		// the document will be forced to be empty (due to having an empty root field):
 		// this seems unlikely to cause issues in practice, and results in convenient type compatibility.
-		rootFieldSchema: rootFieldSchema ?? SchemaBuilder.field(FieldKinds.forbidden),
+		rootFieldSchema: rootFieldSchema ?? new FieldSchema(FieldKinds.forbidden, []),
 		treeSchema,
 		adapters,
 		policy: defaultSchemaPolicy,
