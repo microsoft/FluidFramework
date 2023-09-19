@@ -263,7 +263,7 @@ export interface IDb {
 
 	on(event: IDbEvents, listener: (...args: any[]) => void);
 
-	collection<T>(name: string): ICollection<T>;
+	collection<T>(name: string, dbName?: string): ICollection<T>;
 
 	/**
 	 * Removes a collection or view from the database.
