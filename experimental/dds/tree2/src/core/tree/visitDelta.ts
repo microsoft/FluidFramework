@@ -7,7 +7,7 @@ import { unreachableCase } from "@fluidframework/core-utils";
 import { Mutable, brand, extractFromOpaque, makeArray } from "../../util";
 import { FieldKey } from "../schema-stored";
 import * as Delta from "./delta";
-import { DetachedPlaceUpPath, DetachedRangeUpPath, NodeIndex, PlaceIndex, Range } from "./pathTree";
+import { NodeIndex, PlaceIndex, Range } from "./pathTree";
 import { ForestRootId, TreeIndex } from "./treeIndex";
 import { ReplaceKind } from "./visitPath";
 
@@ -63,9 +63,7 @@ export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor, treeIndex: 
 			for (let i = 0; i < insert.content.length; i += 1) {
 				const root: ForestRootId = brand(firstRoot + i);
 				const field = treeIndex.toFieldKey(root);
-				visitor.enterField(field);
-				visitor.create(0, insert.content.slice(i, i + 1));
-				visitor.exitField(field);
+				visitor.create(insert.content.slice(i, i + 1), field);
 			}
 		}
 		for (const [root, modifications] of rootChanges) {
@@ -118,7 +116,7 @@ function transferRoots(rootTransfers: RootTransfers, treeIndex: TreeIndex, visit
 		const sourceField = treeIndex.toFieldKey(source);
 		const destinationField = treeIndex.toFieldKey(destination);
 		visitor.enterField(sourceField);
-		visitor.detach({ start: 0, end: 1 }, brand({ field: destinationField, index: 0 }));
+		visitor.detach({ start: 0, end: 1 }, destinationField);
 		visitor.exitField(sourceField);
 		if (nodeId !== undefined) {
 			treeIndex.deleteEntry(nodeId);
@@ -133,16 +131,48 @@ function transferRoots(rootTransfers: RootTransfers, treeIndex: TreeIndex, visit
  */
 export interface DeltaVisitor {
 	free(): void;
-	create(index: PlaceIndex, content: Delta.ProtoNodes): void;
-	destroy(range: Range): void;
-
-	attach(source: DetachedRangeUpPath, destination: PlaceIndex): void;
-	detach(source: Range, destination: DetachedPlaceUpPath): void;
-
+	/**
+	 * Creates nodes for the given content in a new detached field.
+	 * @param content - The content to create.
+	 * @param destination - The key for a new detached field.
+	 * A field with this key must not already exist.
+	 */
+	create(content: Delta.ProtoNodes, destination: FieldKey): void;
+	/**
+	 * Recursively destroys the given detached field and all of the nodes within it.
+	 * @param detachedField - The key for the detached field to destroy.
+	 * @param count - The number of nodes being destroyed.
+	 * Expected to match the number of nodes in the detached field being destroyed.
+	 */
+	destroy(detachedField: FieldKey, count: number): void;
+	/**
+	 * Transfers all the nodes from a detached field to the current field.
+	 * @param source - The detached field to transfer the nodes from.
+	 * @param count - The number of nodes being attached.
+	 * Expected to match the number of nodes in the source detached field.
+	 * @param destination - The index at which to attach the nodes.
+	 */
+	attach(source: FieldKey, count: number, destination: PlaceIndex): void;
+	/**
+	 * Transfers a range of nodes from the current field to a new detached field.
+	 * @param source - The bounds of the range of nodes to detach.
+	 * @param destination - The key for a new detached field.
+	 * A field with this key must not already exist.
+	 */
+	detach(source: Range, destination: FieldKey): void;
+	/**
+	 * Replaces a range of nodes in the current field by transferring them out to a new detached field
+	 * and transferring in all the nodes from an existing detached field in their place.
+	 * The number of nodes being detached must match the number of nodes being attached.
+	 * @param newContentSource - The detached field to transfer the new nodes from.
+	 * @param range - The bounds of the range of nodes to replace.
+	 * @param oldContentDestination - The key for a new detached field to transfer the old nodes to.
+	 * @param kind - The kinds of replacement this operation conveys.
+	 */
 	replace(
-		newContentSource: DetachedRangeUpPath,
-		oldContent: Range,
-		oldContentDestination: DetachedPlaceUpPath,
+		newContentSource: FieldKey,
+		range: Range,
+		oldContentDestination: FieldKey,
 		kind: ReplaceKind,
 	): void;
 
@@ -584,10 +614,7 @@ function detachPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 							// This a simple detach
 							const oldRoot = oldContent.destination;
 							const field = config.treeIndex.toFieldKey(brand(oldRoot));
-							visitor.detach(
-								{ start: index, end: index + 1 },
-								brand({ field, index: 0 }),
-							);
+							visitor.detach({ start: index, end: index + 1 }, field);
 						} else {
 							// This really is a replace.
 							// Delay the detach until we can do it during the attach pass.
@@ -630,17 +657,14 @@ function attachPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 							const oldRoot = oldContent.destination;
 							const oldContentField = config.treeIndex.toFieldKey(oldRoot);
 							visitor.replace(
-								brand({ field: newContentField, start: 0, end: 1 }),
+								newContentField,
 								{ start: index, end: index + 1 },
-								brand({ field: oldContentField, index: 0 }),
+								oldContentField,
 								ReplaceKind.CellPerfect,
 							);
 						} else {
 							// This a simple attach
-							visitor.attach(
-								brand({ field: newContentField, start: 0, end: 1 }),
-								index,
-							);
+							visitor.attach(brand(newContentField), 1, index);
 						}
 						if (newContent.nodeId !== undefined) {
 							config.treeIndex.deleteEntry(newContent.nodeId);

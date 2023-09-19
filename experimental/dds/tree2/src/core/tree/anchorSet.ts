@@ -601,21 +601,30 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					() => this.anchorSet.events.emit("childrenChanging", this.anchorSet),
 				);
 			},
-			beforeAttach(source: DetachedRangeUpPath, destination: PlaceIndex): void {
+			beforeAttach(source: FieldKey, count: number, destination: PlaceIndex): void {
 				assert(this.parentField !== undefined, "Must be in a field in order to attach");
 				const destinationPath: PlaceUpPath = {
 					parent: this.parent,
 					field: this.parentField,
 					index: destination,
 				};
+				const sourcePath: DetachedRangeUpPath = brand({
+					field: source,
+					start: 0,
+					end: count,
+				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
-						pathVisitor.beforeAttach(source, destinationPath);
+						pathVisitor.beforeAttach(sourcePath, destinationPath);
 					}
 				}
 			},
-			afterAttach(source: DetachedPlaceUpPath, destination: Range): void {
+			afterAttach(source: FieldKey, destination: Range): void {
 				assert(this.parentField !== undefined, "Must be in a field in order to attach");
+				const sourcePath: DetachedPlaceUpPath = brand({
+					field: source,
+					index: 0,
+				});
 				const destinationPath: RangeUpPath = {
 					parent: this.parent,
 					field: this.parentField,
@@ -623,59 +632,68 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				};
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
-						pathVisitor.afterAttach(source, destinationPath);
+						pathVisitor.afterAttach(sourcePath, destinationPath);
 					}
 				}
 			},
-			attach(source: DetachedRangeUpPath, destination: PlaceIndex): void {
+			attach(source: FieldKey, count: number, destination: PlaceIndex): void {
 				this.notifyChildrenChanging();
-				this.attachEdit(source, destination);
+				this.attachEdit(source, count, destination);
 			},
-			attachEdit(source: DetachedRangeUpPath, destination: PlaceIndex): void {
+			attachEdit(source: FieldKey, count: number, destination: PlaceIndex): void {
 				assert(this.parentField !== undefined, "Must be in a field in order to attach");
 				const sourcePath = {
 					parent: this.anchorSet.root,
-					parentField: source.field,
-					parentIndex: source.start,
+					parentField: source,
+					parentIndex: 0,
 				};
 				const destinationPath = {
 					parent: this.parent,
 					parentField: this.parentField,
 					parentIndex: destination,
 				};
-				this.anchorSet.moveChildren(sourcePath, destinationPath, source.end - source.start);
+				this.anchorSet.moveChildren(sourcePath, destinationPath, count);
 			},
-			beforeDetach(source: Range, destination: DetachedPlaceUpPath): void {
+			beforeDetach(source: Range, destination: FieldKey): void {
 				assert(this.parentField !== undefined, "Must be in a field in order to attach");
 				const sourcePath: RangeUpPath = {
 					parent: this.parent,
 					field: this.parentField,
 					...source,
 				};
+				const destinationPath: DetachedPlaceUpPath = brand({
+					field: destination,
+					index: 0,
+				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
-						pathVisitor.beforeDetach(sourcePath, destination);
+						pathVisitor.beforeDetach(sourcePath, destinationPath);
 					}
 				}
 			},
-			afterDetach(source: PlaceIndex, destination: DetachedRangeUpPath): void {
+			afterDetach(source: PlaceIndex, count: number, destination: FieldKey): void {
 				assert(this.parentField !== undefined, "Must be in a field in order to attach");
 				const sourcePath: PlaceUpPath = {
 					parent: this.parent,
 					field: this.parentField,
 					index: source,
 				};
+				const destinationPath: DetachedRangeUpPath = brand({
+					field: destination,
+					start: 0,
+					end: count,
+				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
-						pathVisitor.afterDetach(sourcePath, destination);
+						pathVisitor.afterDetach(sourcePath, destinationPath);
 					}
 				}
 			},
-			detach(source: Range, destination: DetachedPlaceUpPath): void {
+			detach(source: Range, destination: FieldKey): void {
 				this.notifyChildrenChanging();
 				this.detachEdit(source, destination);
 			},
-			detachEdit(source: Range, destination: DetachedPlaceUpPath): void {
+			detachEdit(source: Range, destination: FieldKey): void {
 				assert(this.parentField !== undefined, "Must be in a field in order to detach");
 				const sourcePath = {
 					parent: this.parent,
@@ -684,15 +702,15 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				};
 				const destinationPath = {
 					parent: this.anchorSet.root,
-					parentField: destination.field,
-					parentIndex: destination.index,
+					parentField: destination,
+					parentIndex: 0,
 				};
 				this.anchorSet.moveChildren(sourcePath, destinationPath, source.end - source.start);
 			},
 			beforeReplace(
-				newContent: DetachedRangeUpPath,
+				newContent: FieldKey,
 				oldContent: Range,
-				oldContentDestination: DetachedPlaceUpPath,
+				destination: FieldKey,
 				kind: ReplaceKind,
 			): void {
 				assert(this.parentField !== undefined, "Must be in a field in order to replace");
@@ -701,21 +719,30 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					field: this.parentField,
 					...oldContent,
 				};
+				const newNodesSourcePath: DetachedRangeUpPath = brand({
+					field: newContent,
+					start: 0,
+					end: oldContent.end - oldContent.start,
+				});
+				const oldNodesDestinationPath: DetachedPlaceUpPath = brand({
+					field: destination,
+					index: 0,
+				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
 						pathVisitor.beforeReplace(
-							newContent,
+							newNodesSourcePath,
 							oldContentPath,
-							oldContentDestination,
+							oldNodesDestinationPath,
 							kind,
 						);
 					}
 				}
 			},
 			afterReplace(
-				newContentSource: DetachedPlaceUpPath,
+				newContentSource: FieldKey,
 				newContent: Range,
-				oldContent: DetachedRangeUpPath,
+				oldContent: FieldKey,
 				kind: ReplaceKind,
 			): void {
 				assert(this.parentField !== undefined, "Must be in a field in order to replace");
@@ -724,64 +751,68 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					field: this.parentField,
 					...newContent,
 				};
+				const newNodesSourcePath: DetachedPlaceUpPath = brand({
+					field: newContentSource,
+					index: 0,
+				});
+				const oldNodesDestinationPath: DetachedRangeUpPath = brand({
+					field: oldContent,
+					start: 0,
+					end: newContent.end - newContent.start,
+				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
 						pathVisitor.afterReplace(
-							newContentSource,
+							newNodesSourcePath,
 							newContentPath,
-							oldContent,
+							oldNodesDestinationPath,
 							kind,
 						);
 					}
 				}
 			},
 			replace(
-				newContentSource: DetachedRangeUpPath,
-				oldContentRange: Range,
-				oldContentDestination: DetachedPlaceUpPath,
+				newContentSource: FieldKey,
+				range: Range,
+				oldContentDestination: FieldKey,
 			): void {
 				this.notifyChildrenChanging();
-				this.detachEdit(oldContentRange, oldContentDestination);
-				this.attachEdit(newContentSource, oldContentRange.start);
+				this.detachEdit(range, oldContentDestination);
+				this.attachEdit(newContentSource, range.end - range.start, range.start);
 			},
-			destroy(range: DetachedRangeUpPath): void {
-				assert(this.parentField !== undefined, "Must be in a field to destroy");
-				const count = range.end - range.start;
+			destroy(detachedField: FieldKey, count: number): void {
 				this.anchorSet.removeChildren(
 					{
-						parent: this.parent,
-						parentField: this.parentField,
-						parentIndex: range.start,
+						parent: undefined,
+						parentField: detachedField,
+						parentIndex: 0,
 					},
 					count,
 				);
 			},
-			beforeDestroy(range: DetachedRangeUpPath): void {
-				assert(this.parentField !== undefined, "Must be in a field to destroy");
+			beforeDestroy(detachedField: FieldKey, count: number): void {
+				const range: DetachedRangeUpPath = brand({
+					field: detachedField,
+					start: 0,
+					end: count,
+				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
 						pathVisitor.beforeDestroy(range);
 					}
 				}
 			},
-			create(start: PlaceIndex, content: Delta.ProtoNodes): void {
-				assert(this.parentField !== undefined, "Must be in a field to create");
-				this.anchorSet.offsetChildren(
-					{
-						parent: this.parent,
-						parentField: this.parentField,
-						parentIndex: start,
-					},
-					content.length,
-				);
+			create(content: Delta.ProtoNodes, destination: FieldKey): void {
+				// Nothing to do since content can only be created in a new detached field,
+				// which cannot contain any anchors.
 			},
-			afterCreate(range: Range, content: Delta.ProtoNodes): void {
-				assert(this.parentField !== undefined, "Must be in a field to create");
+			afterCreate(content: Delta.ProtoNodes, destination: FieldKey): void {
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
 						const rangePath: DetachedRangeUpPath = brand({
-							field: this.parentField,
-							...range,
+							field: destination,
+							start: 0,
+							end: content.length,
 						});
 						pathVisitor.afterCreate(rangePath);
 					}

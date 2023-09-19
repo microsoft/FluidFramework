@@ -32,6 +32,7 @@ import { jsonString } from "../../domains";
 const fieldFoo: FieldKey = brand("foo");
 const fieldBar: FieldKey = brand("bar");
 const fieldBaz: FieldKey = brand("baz");
+const detachedField: FieldKey = brand("detached");
 const node: JsonableTree = { type: brand("A"), value: "X" };
 const detachId = { minor: 42 };
 
@@ -94,7 +95,12 @@ describe("AnchorSet", () => {
 
 	it("can rebase over destroy", () => {
 		const [anchors, anchor1, anchor2, anchor3] = setup();
-		withVisitorInFoo(anchors, (v) => v.destroy({ start: 4, end: 5 }));
+		withVisitor(anchors, (v) => {
+			v.enterField(fieldFoo);
+			v.detach({ start: 4, end: 5 }, detachedField);
+			v.exitField(fieldFoo);
+			v.destroy(detachedField, 1);
+		});
 
 		checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 4], [fieldBar, 4]));
 		checkEquality(anchors.locate(anchor2), path2);
@@ -122,7 +128,12 @@ describe("AnchorSet", () => {
 	it("can rebase over delete of parent node", () => {
 		const [anchors, anchor1, anchor2, anchor3, anchor4] = setup();
 
-		withVisitorInFoo(anchors, (v) => v.destroy({ start: 5, end: 6 }));
+		withVisitor(anchors, (v) => {
+			v.enterField(fieldFoo);
+			v.detach({ start: 5, end: 6 }, detachedField);
+			v.exitField(fieldFoo);
+			v.destroy(detachedField, 1);
+		});
 
 		assert.equal(anchors.locate(anchor4), undefined);
 		assert.equal(anchors.locate(anchor1), undefined);
@@ -134,14 +145,24 @@ describe("AnchorSet", () => {
 		assert.throws(() => anchors.locate(anchor1));
 
 		checkEquality(anchors.locate(anchor2), path2);
-		withVisitorInFoo(anchors, (v) => v.destroy({ start: 3, end: 4 }));
+		withVisitor(anchors, (v) => {
+			v.enterField(fieldFoo);
+			v.detach({ start: 3, end: 4 }, detachedField);
+			v.exitField(fieldFoo);
+			v.destroy(detachedField, 1);
+		});
 		checkEquality(anchors.locate(anchor2), undefined);
 		assert.doesNotThrow(() => anchors.forget(anchor2));
 		assert.throws(() => anchors.locate(anchor2));
 
 		// The index of anchor3 has changed from 4 to 3 because of the deletion of the node at index 3.
 		checkEquality(anchors.locate(anchor3), makePath([fieldFoo, 3]));
-		withVisitorInFoo(anchors, (v) => v.destroy({ start: 3, end: 4 }));
+		withVisitor(anchors, (v) => {
+			v.enterField(fieldFoo);
+			v.detach({ start: 3, end: 4 }, detachedField);
+			v.exitField(fieldFoo);
+			v.destroy(detachedField, 1);
+		});
 		checkEquality(anchors.locate(anchor3), undefined);
 		assert.doesNotThrow(() => anchors.forget(anchor3));
 		assert.throws(() => anchors.locate(anchor3));
@@ -458,11 +479,9 @@ class UnorderedTestLogger {
 	}
 }
 
-function withVisitorInFoo(anchors: AnchorSet, action: (visitor: DeltaVisitor) => void) {
+function withVisitor(anchors: AnchorSet, action: (visitor: DeltaVisitor) => void) {
 	const visitor = anchors.acquireVisitor();
-	visitor.enterField(fieldFoo);
 	action(visitor);
-	visitor.exitField(fieldFoo);
 	visitor.free();
 }
 

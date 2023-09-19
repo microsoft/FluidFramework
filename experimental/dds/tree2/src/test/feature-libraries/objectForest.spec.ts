@@ -32,7 +32,7 @@ describe("object-forest", () => {
 			const visitor = forest.acquireVisitor();
 			visitor.enterField(rootFieldKey);
 			assert.throws(
-				() => visitor.attach(brand({ field: rootFieldKey, start: 0, end: 1 }), 0),
+				() => visitor.attach(rootFieldKey, 1, 0),
 				/Attach source field must be different from current field/,
 			);
 			visitor.exitField(rootFieldKey);
@@ -44,8 +44,7 @@ describe("object-forest", () => {
 			const visitor = forest.acquireVisitor();
 			visitor.enterField(rootFieldKey);
 			assert.throws(
-				() =>
-					visitor.detach({ start: 0, end: 1 }, brand({ field: rootFieldKey, index: 0 })),
+				() => visitor.detach({ start: 0, end: 1 }, rootFieldKey),
 				/Detach destination field must be different from current field/,
 			);
 			visitor.exitField(rootFieldKey);
@@ -59,9 +58,9 @@ describe("object-forest", () => {
 			assert.throws(
 				() =>
 					visitor.replace(
-						brand({ field: detachedFieldKey, start: 0, end: 1 }),
+						detachedFieldKey,
 						{ start: 0, end: 1 },
-						brand({ field: detachedFieldKey, index: 0 }),
+						detachedFieldKey,
 						ReplaceKind.CellPerfect,
 					),
 				/Replace detached source field and detached destination field must be different/,

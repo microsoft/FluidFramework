@@ -24,8 +24,6 @@ import {
 	rootFieldKey,
 	mapCursorField,
 	DeltaVisitor,
-	DetachedPlaceUpPath,
-	DetachedRangeUpPath,
 	PlaceIndex,
 	ReplaceKind,
 	Range,
@@ -123,21 +121,21 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 				this.forest.activeVisitor = undefined;
 				this.forest.events.emit("afterChange");
 			},
-			destroy(range: Range): void {
+			destroy(detachedField: FieldKey, count: number): void {
 				this.forest.invalidateDependents();
-				this.detachEdit(range, undefined);
+				const parent = this.getParent();
+				parent.mutableChunk.fields.delete(detachedField);
 			},
-			create(index: PlaceIndex, content: Delta.ProtoNodes): void {
+			create(content: Delta.ProtoNodes, destination: FieldKey): void {
 				this.forest.invalidateDependents();
 				const chunks: TreeChunk[] = content.map((c) => chunkTree(c, this.forest.chunker));
-				const parent = this.getParent();
-				this.forest.roots.fields.set(parent.key, chunks);
+				this.forest.roots.fields.set(destination, chunks);
 			},
-			attach(source: DetachedRangeUpPath, destination: PlaceIndex): void {
+			attach(source: FieldKey, count: number, destination: PlaceIndex): void {
 				this.forest.invalidateDependents();
-				this.attachEdit(source, destination);
+				this.attachEdit(source, count, destination);
 			},
-			detach(source: Range, destination: DetachedPlaceUpPath): void {
+			detach(source: Range, destination: FieldKey): void {
 				this.forest.invalidateDependents();
 				this.detachEdit(source, destination);
 			},
@@ -147,11 +145,9 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 			 * @param source - The the range to be attached.
 			 * @param destination - The index in the current field at which to attach the content.
 			 */
-			attachEdit(source: DetachedRangeUpPath, destination: PlaceIndex): void {
-				const sourceField = this.forest.roots.fields.get(source.field) ?? [];
-				assertValidRange(source, sourceField);
-
-				this.forest.roots.fields.delete(source.field);
+			attachEdit(source: FieldKey, count: number, destination: PlaceIndex): void {
+				const sourceField = this.forest.roots.fields.get(source) ?? [];
+				this.forest.roots.fields.delete(source);
 				if (sourceField.length === 0) {
 					return; // Prevent creating 0 sized fields when inserting empty into empty.
 				}
@@ -168,7 +164,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 			 * @param destination - If specified, the destination to transfer the detached range to.
 			 * If not specified, the detached range is destroyed.
 			 */
-			detachEdit(source: Range, destination: DetachedPlaceUpPath | undefined): void {
+			detachEdit(source: Range, destination: FieldKey | undefined): void {
 				const parent = this.getParent();
 				const sourceField = parent.mutableChunk.fields.get(parent.key) ?? [];
 
@@ -180,7 +176,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 				}
 				if (destination !== undefined) {
 					if (newField.length > 0) {
-						this.forest.roots.fields.set(destination.field, newField);
+						this.forest.roots.fields.set(destination, newField);
 					}
 				} else {
 					for (const child of newField) {
@@ -189,18 +185,18 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 				}
 			},
 			replace(
-				newContentSource: DetachedRangeUpPath,
-				oldContent: Range,
-				oldContentDestination: DetachedPlaceUpPath,
+				newContentSource: FieldKey,
+				range: Range,
+				oldContentDestination: FieldKey,
 				kind: ReplaceKind,
 			): void {
 				assert(
-					newContentSource.field !== oldContentDestination.field,
+					newContentSource !== oldContentDestination,
 					"Replace detached source field and detached destination field must be different",
 				);
 				this.forest.invalidateDependents();
-				this.detachEdit(oldContent, oldContentDestination);
-				this.attachEdit(newContentSource, oldContent.start);
+				this.detachEdit(range, oldContentDestination);
+				this.attachEdit(newContentSource, range.end - range.start, range.start);
 			},
 			enterNode(index: number): void {
 				assert(this.mutableChunk === undefined, 0x535 /* should be in field */);

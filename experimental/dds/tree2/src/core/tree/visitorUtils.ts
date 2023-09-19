@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { brand, IdAllocator, idAllocatorFromMaxId } from "../../util";
+import { IdAllocator, idAllocatorFromMaxId } from "../../util";
+import { FieldKey } from "../schema-stored";
 import * as Delta from "./delta";
-import { DetachedPlaceUpPath, DetachedRangeUpPath, PlaceIndex, Range } from "./pathTree";
+import { PlaceIndex, Range } from "./pathTree";
 import { ForestRootId, TreeIndex } from "./treeIndex";
 import { ReplaceKind } from "./visitPath";
 import { DeltaVisitor, visitDelta } from "./visitDelta";
@@ -52,64 +53,31 @@ export function combineVisitors(visitors: readonly DeltaVisitor[]): DeltaVisitor
 export function announceVisitor(visitor: AnnouncedVisitor): DeltaVisitor {
 	return {
 		free: () => visitor.free(),
-		create: (index: PlaceIndex, content: Delta.ProtoNodes) => {
-			visitor.create(index, content);
-			visitor.afterCreate({ start: index, end: index + content.length }, content);
+		create: (...args) => {
+			visitor.create(...args);
+			visitor.afterCreate(...args);
 		},
 		destroy: (...args) => {
 			visitor.beforeDestroy(...args);
 			visitor.destroy(...args);
 		},
-		replace: (
-			newContentSource: DetachedRangeUpPath,
-			oldContent: Range,
-			oldContentDestination: DetachedPlaceUpPath,
-			kind: ReplaceKind,
-		) => {
-			visitor.beforeReplace(newContentSource, oldContent, oldContentDestination, kind);
-			visitor.replace(newContentSource, oldContent, oldContentDestination, kind);
-			visitor.afterReplace(
-				brand({
-					field: newContentSource.field,
-					index: newContentSource.start,
-				}),
-				{
-					start: oldContent.start,
-					end: oldContent.start + newContentSource.end - newContentSource.start,
-				},
-				brand({
-					field: oldContentDestination.field,
-					start: oldContentDestination.index,
-					end: oldContentDestination.index + oldContent.end - oldContent.start,
-				}),
-				kind,
-			);
+		replace: (...args) => {
+			visitor.beforeReplace(...args);
+			visitor.replace(...args);
+			visitor.afterReplace(...args);
 		},
-		attach: (source: DetachedRangeUpPath, destination: PlaceIndex) => {
-			visitor.beforeAttach(source, destination);
-			visitor.attach(source, destination);
-			visitor.afterAttach(
-				brand({
-					field: source.field,
-					index: source.start,
-				}),
-				{
-					start: destination,
-					end: destination + source.end - source.start,
-				},
-			);
+		attach: (source: FieldKey, count: number, destination: PlaceIndex) => {
+			visitor.beforeAttach(source, count, destination);
+			visitor.attach(source, count, destination);
+			visitor.afterAttach(source, {
+				start: destination,
+				end: destination + count,
+			});
 		},
-		detach: (source: Range, destination: DetachedPlaceUpPath) => {
+		detach: (source: Range, destination: FieldKey) => {
 			visitor.beforeDetach(source, destination);
 			visitor.detach(source, destination);
-			visitor.afterDetach(
-				source.start,
-				brand({
-					field: destination.field,
-					start: destination.index,
-					end: destination.index + source.end - source.start,
-				}),
-			);
+			visitor.afterDetach(source.start, source.end - source.start, destination);
 		},
 		enterNode: (...args) => visitor.enterNode(...args),
 		exitNode: (...args) => visitor.exitNode(...args),
@@ -124,22 +92,22 @@ export function announceVisitor(visitor: AnnouncedVisitor): DeltaVisitor {
  * @alpha
  */
 export interface AnnouncedVisitor extends DeltaVisitor {
-	afterCreate(range: Range, content: Delta.ProtoNodes): void;
-	beforeDestroy(range: Range): void;
-	beforeAttach(source: DetachedRangeUpPath, destination: PlaceIndex): void;
-	afterAttach(source: DetachedPlaceUpPath, destination: Range): void;
-	beforeDetach(source: Range, destination: DetachedPlaceUpPath): void;
-	afterDetach(source: PlaceIndex, destination: DetachedRangeUpPath): void;
+	afterCreate(content: Delta.ProtoNodes, destination: FieldKey): void;
+	beforeDestroy(field: FieldKey, count: number): void;
+	beforeAttach(source: FieldKey, count: number, destination: PlaceIndex): void;
+	afterAttach(source: FieldKey, destination: Range): void;
+	beforeDetach(source: Range, destination: FieldKey): void;
+	afterDetach(source: PlaceIndex, count: number, destination: FieldKey): void;
 	beforeReplace(
-		newContent: DetachedRangeUpPath,
+		newContent: FieldKey,
 		oldContent: Range,
-		oldContentDestination: DetachedPlaceUpPath,
+		oldContentDestination: FieldKey,
 		kind: ReplaceKind,
 	): void;
 	afterReplace(
-		newContentSource: DetachedPlaceUpPath,
+		newContentSource: FieldKey,
 		newContent: Range,
-		oldContent: DetachedRangeUpPath,
+		oldContent: FieldKey,
 		kind: ReplaceKind,
 	): void;
 }
