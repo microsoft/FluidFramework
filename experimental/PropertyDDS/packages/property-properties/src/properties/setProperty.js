@@ -73,10 +73,14 @@ export class SetProperty extends IndexedCollectionBaseProperty {
 		var result = {};
 		for (var i = 0; i < ids.length; i++) {
 			var child = this.get(ids[i]);
-			result[ids[i]] =
-				child instanceof Property.ValueProperty || child instanceof Property.StringProperty
-					? this.get(ids[i]).getValue()
-					: child.getValues();
+			if (
+				child instanceof Property.ValueProperty ||
+				child instanceof Property.StringProperty
+			) {
+				result[ids[i]] = this.get(ids[i]).getValue();
+			} else {
+				result[ids[i]] = child.getValues();
+			}
 		}
 		return result;
 	}

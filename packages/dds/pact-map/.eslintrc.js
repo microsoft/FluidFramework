@@ -11,9 +11,6 @@ module.exports = {
 	rules: {
 		// This library is used in the browser, so we don't want dependencies on most node libraries.
 		"import/no-nodejs-modules": ["error", { allow: ["events"] }],
-
-		// TODO: Remove this once disabled in shared config.
-		"unicorn/prefer-event-target": "off",
 	},
 	overrides: [
 		{
