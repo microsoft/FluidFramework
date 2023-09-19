@@ -4,11 +4,11 @@
 
 ### Update eslint-related dependencies
 
-eslint has been updated to version ~8.47.0. eslint plugins have also been updated to the latest version.
+eslint has been updated to version ~8.49.0. eslint plugins have also been updated to the latest version.
 
 ### Update prettier
 
-prettier has been updated to version ~3.0.2.
+prettier has been updated to version ~3.0.3.
 
 ## [2.1.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v2.1.0)
 
