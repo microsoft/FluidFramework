@@ -72,12 +72,12 @@ describe("OdspDocumentDeltaConnection tests", () => {
 	});
 
 	async function mockSocket<T>(_response: Socket, callback: () => Promise<T>): Promise<T> {
-		const geSocketCreationStub = stub(socketModule, "SocketIOClientStatic");
-		geSocketCreationStub.returns(_response);
+		const getSocketCreationStub = stub(socketModule, "SocketIOClientStatic");
+		getSocketCreationStub.returns(_response);
 		try {
 			return await callback();
 		} finally {
-			geSocketCreationStub.restore();
+			getSocketCreationStub.restore();
 		}
 	}
 
