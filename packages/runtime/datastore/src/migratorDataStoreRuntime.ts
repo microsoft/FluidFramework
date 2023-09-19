@@ -12,9 +12,9 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { assert } from "@fluidframework/core-utils";
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "./dataStoreRuntime";
-import { LocalChannelContextBase } from "./localChannelContext";
+import { LocalChannelContext } from "./localChannelContext";
 
-export interface IModifiableFluidDataStoreContext {
+interface IModifiableFluidDataStoreContext extends IFluidDataStoreContext {
 	summarizerNode: ISummarizerNodeWithGC;
 }
 
@@ -25,23 +25,24 @@ export interface IModifiableFluidDataStoreContext {
  * very similar results by removing all the handles and deleting all the data.
  */
 export class MigratorFluidDataStoreRuntime extends FluidDataStoreRuntime {
+	private readonly modifiableDataStoreContext: IModifiableFluidDataStoreContext;
+	private readonly replacedContexts: Map<string, LocalChannelContext> = new Map();
 	public constructor(
-		protected readonly _dataStoreContext: IFluidDataStoreContext,
+		dataStoreContext: IFluidDataStoreContext,
 		sharedObjectRegistry: ISharedObjectRegistry,
 		existing: boolean,
 		initializeEntryPoint?: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>,
 	) {
-		super(_dataStoreContext, sharedObjectRegistry, existing, initializeEntryPoint);
+		super(dataStoreContext, sharedObjectRegistry, existing, initializeEntryPoint);
+		this.modifiableDataStoreContext = dataStoreContext as IModifiableFluidDataStoreContext;
 	}
 
 	// Returns a detached channel
 	public replaceChannel(id: string, channelFactory: IChannelFactory) {
 		assert(this.contexts.has(id), "channel to be replaced should exist!");
-		const dataStoreContext = this
-			._dataStoreContext as unknown as IModifiableFluidDataStoreContext;
-		if (dataStoreContext.summarizerNode.getChild(id) !== undefined) {
-			// Local channels don't have summarizer nodes.
-			dataStoreContext.summarizerNode.deleteChild(id);
+		// Local channels don't have summarizer nodes.
+		if (this.modifiableDataStoreContext.summarizerNode.getChild(id) !== undefined) {
+			this.modifiableDataStoreContext.summarizerNode.deleteChild(id);
 		}
 		this.contexts.delete(id);
 		const interceptRegistry = new InterceptSharedObjectRegistry(
@@ -50,13 +51,17 @@ export class MigratorFluidDataStoreRuntime extends FluidDataStoreRuntime {
 		);
 		const context = this.createLocalChannelContext(id, channelFactory.type, interceptRegistry);
 		this.contexts.set(id, context);
+		this.replacedContexts.set(id, context);
 		return context.channel;
 	}
 
 	public reAttachChannel(channel: IChannel): void {
 		this.verifyNotClosed();
-		const context = this.contexts.get(channel.id) as LocalChannelContextBase;
+		assert(this.contexts.has(channel.id), "The replaced channel context have been created!");
+		const context = this.replacedContexts.get(channel.id);
+		assert(context !== undefined, "The replaced channel context should have been replaced!");
 		context.makeVisible();
+		this.replacedContexts.delete(channel.id);
 	}
 }
 

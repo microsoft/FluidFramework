@@ -181,9 +181,7 @@ export interface ISharedObjectRegistry {
 
 // @public
 export class MigratorFluidDataStoreRuntime extends FluidDataStoreRuntime {
-    constructor(_dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean, initializeEntryPoint?: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>);
-    // (undocumented)
-    protected readonly _dataStoreContext: IFluidDataStoreContext;
+    constructor(dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean, initializeEntryPoint?: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>);
     // (undocumented)
     reAttachChannel(channel: IChannel): void;
     // (undocumented)

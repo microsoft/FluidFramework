@@ -196,4 +196,24 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 			"Should be new shared tree",
 		);
 	});
+
+	it("Can't freely re-attach any channel", async () => {
+		const container = await createContainer();
+		const dataObject = await requestFluidObject<MigratorDataObject>(container, "/");
+		const handle = dataObject._root.get("handle") as IFluidHandle<IChannel>;
+		const channel = await handle.get();
+		const newChannel = dataObject.replaceChannel(
+			channel,
+			new NewSharedTreeFactory(),
+		) as ISharedTree2;
+
+		dataObject.reAttachChannel(newChannel);
+		assert.throws(
+			() => dataObject.reAttachChannel(newChannel),
+			(error: Error) => {
+				return error.message === "The replaced channel context should have been replaced!";
+			},
+			"Expected an assert",
+		);
+	});
 });
