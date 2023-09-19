@@ -10,7 +10,11 @@ import * as nconf from "nconf";
 import { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { IStorageNameRetriever, IRevokedTokenChecker } from "@fluidframework/server-services-core";
+import {
+	IStorageNameRetriever,
+	IRevokedTokenChecker,
+	IDocumentManager,
+} from "@fluidframework/server-services-core";
 import {
 	ICache,
 	ITenantService,
@@ -78,6 +82,7 @@ export class createGitServiceArgs {
 	authorization: string;
 	tenantService: ITenantService;
 	storageNameRetriever: IStorageNameRetriever;
+	documentManager: IDocumentManager;
 	cache?: ICache;
 	asyncLocalStorage?: AsyncLocalStorage<string>;
 	initialUpload?: boolean = false;
@@ -95,6 +100,7 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 		authorization,
 		tenantService,
 		storageNameRetriever,
+		documentManager,
 		cache,
 		asyncLocalStorage,
 		initialUpload,

@@ -24,6 +24,7 @@ export class HistorianResources implements core.IResources {
 		public readonly storageNameRetriever: core.IStorageNameRetriever,
 		public readonly restTenantThrottlers: Map<string, core.IThrottler>,
 		public readonly restClusterThrottlers: Map<string, core.IThrottler>,
+		public readonly documentManager: core.IDocumentManager,
 		public readonly cache?: historianServices.RedisCache,
 		public readonly asyncLocalStorage?: AsyncLocalStorage<string>,
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
@@ -80,6 +81,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		const tenantCache = new historianServices.RedisTenantCache(redisClient, redisParams);
 		// Create services
 		const riddlerEndpoint = config.get("riddler");
+		const alfredEndpoint = config.get("alfred");
 		const asyncLocalStorage = config.get("asyncLocalStorageInstance")?.[0];
 		const riddler = new historianServices.RiddlerService(
 			riddlerEndpoint,
@@ -206,6 +208,15 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			? customizations?.storageNameRetriever ?? new services.StorageNameRetriever()
 			: undefined;
 
+		const tenantManager: core.ITenantManager = new services.TenantManager(
+			riddlerEndpoint,
+			undefined /* internalHistorianUrl */,
+		);
+		const documentManager: core.IDocumentManager = new services.DocumentManager(
+			alfredEndpoint,
+			tenantManager,
+		);
+
 		const port = normalizePort(process.env.PORT || "3000");
 
 		// Token revocation
@@ -224,6 +235,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			storageNameRetriever,
 			restTenantThrottlers,
 			restClusterThrottlers,
+			documentManager,
 			gitCache,
 			asyncLocalStorage,
 			revokedTokenChecker,
@@ -242,6 +254,7 @@ export class HistorianRunnerFactory implements core.IRunnerFactory<HistorianReso
 			resources.storageNameRetriever,
 			resources.restTenantThrottlers,
 			resources.restClusterThrottlers,
+			resources.documentManager,
 			resources.cache,
 			resources.asyncLocalStorage,
 			resources.revokedTokenChecker,
