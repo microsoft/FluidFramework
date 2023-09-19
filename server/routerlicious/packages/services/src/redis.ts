@@ -58,10 +58,6 @@ export class RedisCache implements ICache {
 	}
 
 	public async delete(key: string, prefixOverride?: string): Promise<boolean> {
-		// If 'appendPrefixToKey' is true, we prepend a prefix to the 'key' parameter.
-		// This is useful in scenarios where we want to consistently manage keys with a common prefix,
-		// If 'appendPrefixToKey' is false, we assume that the 'key' parameter with prefix is already passed in by the caller,
-		// and no additional prefix needs to be added.
 		try {
 			const keyToDelete: string = this.getKey(key, prefixOverride);
 			const result = await this.client.del(keyToDelete);
