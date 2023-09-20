@@ -113,6 +113,10 @@ export class KafkaRunner implements IRunner {
 		this.stopped = true;
 		Lumberjack.info("KafkaRunner.stop starting.");
 		try {
+			this.runnerMetric.setProperties({
+				caller,
+			});
+
 			// Stop listening for new updates
 			await this.consumer.pause();
 
