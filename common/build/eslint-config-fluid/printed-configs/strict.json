@@ -58,6 +58,9 @@
         "@typescript-eslint/ban-ts-comment": [
             "error"
         ],
+        "@typescript-eslint/ban-tslint-comment": [
+            "error"
+        ],
         "@typescript-eslint/ban-types": [
             "error"
         ],
@@ -71,11 +74,20 @@
                 "allowSingleLine": true
             }
         ],
+        "@typescript-eslint/class-literal-property-style": [
+            "error"
+        ],
         "@typescript-eslint/comma-dangle": [
             "off",
             "always-multiline"
         ],
         "@typescript-eslint/comma-spacing": [
+            "error"
+        ],
+        "@typescript-eslint/consistent-generic-constructors": [
+            "error"
+        ],
+        "@typescript-eslint/consistent-indexed-object-style": [
             "error"
         ],
         "@typescript-eslint/consistent-type-assertions": [
@@ -175,6 +187,9 @@
             "error"
         ],
         "@typescript-eslint/no-base-to-string": [
+            "error"
+        ],
+        "@typescript-eslint/no-confusing-non-null-assertion": [
             "error"
         ],
         "@typescript-eslint/no-duplicate-enum-values": [
@@ -307,6 +322,9 @@
         "@typescript-eslint/no-var-requires": [
             "error"
         ],
+        "@typescript-eslint/non-nullable-type-assertion-style": [
+            "error"
+        ],
         "@typescript-eslint/object-curly-spacing": [
             "error",
             "always"
@@ -333,6 +351,9 @@
             "error"
         ],
         "@typescript-eslint/prefer-readonly": [
+            "error"
+        ],
+        "@typescript-eslint/prefer-string-starts-ends-with": [
             "error"
         ],
         "@typescript-eslint/promise-function-async": [
@@ -811,6 +832,9 @@
         ],
         "no-empty-character-class": [
             "error"
+        ],
+        "no-empty-function": [
+            "off"
         ],
         "no-empty-pattern": [
             "error"
