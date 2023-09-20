@@ -206,7 +206,7 @@ export function makeReducer(
 		},
 		addInterval: async ({ channel }, { start, end, collectionName, id }) => {
 			const collection = channel.getIntervalCollection(collectionName);
-			collection.add(start, end, { intervalId: id });
+			collection.add({ start, end, props: { intervalId: id } });
 		},
 		deleteInterval: async ({ channel }, { id, collectionName }) => {
 			const collection = channel.getIntervalCollection(collectionName);

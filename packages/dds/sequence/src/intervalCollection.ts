@@ -657,12 +657,17 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * @remarks - See documentation on {@link SequenceInterval} for comments on interval endpoint semantics: there are subtleties
 	 * with how the current half-open behavior is represented.
 	 */
-	add(
-		start: number,
-		end: number,
-		props?: PropertySet,
-		stickiness?: IntervalStickiness,
-	): TInterval;
+	add({
+		start,
+		end,
+		props,
+		stickiness,
+	}: {
+		start: number;
+		end: number;
+		props?: PropertySet;
+		stickiness?: IntervalStickiness;
+	}): TInterval;
 	/**
 	 * Removes an interval from the collection.
 	 * @param id - Id of the interval to remove
@@ -993,34 +998,52 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		stickiness?: IntervalStickiness,
 	): TInterval;
 
-	public add(
-		start: number,
-		end: number,
-		props?: PropertySet,
-		stickiness?: IntervalStickiness,
-	): TInterval;
+	public add({
+		start,
+		end,
+		props,
+		stickiness,
+	}: {
+		start: number;
+		end: number;
+		props?: PropertySet;
+		stickiness?: IntervalStickiness;
+	}): TInterval;
 
 	public add(
-		start: number,
-		end: number,
-		intervalType: IntervalType | PropertySet | undefined,
-		props?: PropertySet | IntervalStickiness,
-		stickiness: IntervalStickiness = IntervalStickiness.END,
-	) {
+		startOrOptions:
+			| number
+			| {
+					start: number;
+					end: number;
+					props?: PropertySet;
+					stickiness?: IntervalStickiness;
+			  },
+		end?: number,
+		intervalType?: IntervalType,
+		props?: PropertySet,
+		stickiness?: IntervalStickiness,
+	): TInterval {
+		let intStart: number;
+		let intEnd: number;
 		let type: IntervalType;
 		let properties: PropertySet | undefined;
-		let sticky = stickiness;
-		if (intervalType !== undefined && typeof intervalType === "number") {
-			type = intervalType;
-			if (props === undefined || typeof props === "object") {
-				properties = props;
-			}
-		} else {
+		let intStickiness: IntervalStickiness;
+
+		if (typeof startOrOptions !== "number") {
+			intStart = startOrOptions.start;
+			intEnd = startOrOptions.end;
 			type = IntervalType.SlideOnRemove;
-			properties = intervalType;
-			if (typeof props === "number") {
-				sticky = props;
-			}
+			properties = startOrOptions.props;
+			intStickiness = startOrOptions.stickiness ?? IntervalStickiness.END;
+		} else {
+			intStart = startOrOptions;
+			assert(end !== undefined, 0x3fd /* end must be defined */);
+			intEnd = end;
+			assert(intervalType !== undefined, 0x3fe /* intervalType must be defined */);
+			type = intervalType;
+			properties = props;
+			intStickiness = stickiness ?? IntervalStickiness.END;
 		}
 
 		if (!this.localCollection) {
@@ -1029,29 +1052,29 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		if (type & IntervalType.Transient) {
 			throw new LoggingError("Can not add transient intervals");
 		}
-		if (stickiness !== IntervalStickiness.END && !this.options.intervalStickinessEnabled) {
+		if (intStickiness !== IntervalStickiness.END && !this.options.intervalStickinessEnabled) {
 			throw new UsageError(
 				"attempted to set interval stickiness without enabling `intervalStickinessEnabled` feature flag",
 			);
 		}
 
 		const interval: TInterval = this.localCollection.addInterval(
-			start,
-			end,
+			intStart,
+			intEnd,
 			type,
 			properties,
 			undefined,
-			sticky,
+			intStickiness,
 		);
 
 		if (interval) {
 			const serializedInterval = {
-				end,
+				end: intEnd,
 				intervalType: type,
 				properties: interval.properties,
 				sequenceNumber: this.client?.getCurrentSeq() ?? 0,
-				start,
-				stickiness,
+				start: intStart,
+				stickiness: intStickiness,
 			};
 			const localSeq = this.getNextLocalSeq();
 			this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
