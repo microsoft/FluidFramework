@@ -2925,7 +2925,7 @@ export class ContainerRuntime
 		// We close the summarizer and download a new snapshot and reload the container
 		let latestSnapshotVersionId: string | undefined;
 		if (refreshLatestAck === true) {
-			return this.closeSummarizerOnSummaryStateStale(
+			return this.prefetchLatestSummaryThenClose(
 				createChildLogger({
 					logger: summaryNumberLogger,
 					properties: { all: { safeSummary: true } },
@@ -3738,15 +3738,18 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Fetches the latest snapshot from storage and uses it to refresh SummarizerNode's
-	 * internal state as it should be considered the latest summary ack.
+	 * Fetches the latest snapshot from storage to refresh the cache as a performance optimization and closes the
+	 * summarizer to reload from new state.
 	 * @param summaryLogger - logger to use when fetching snapshot from storage
-	 * @returns downloaded snapshot's reference sequence number
+	 * @returns a generic summarization error
 	 */
-	private async closeSummarizerOnSummaryStateStale(
+	private async prefetchLatestSummaryThenClose(
 		summaryLogger: ITelemetryLoggerExt,
 	): Promise<IBaseSummarizeResult> {
 		const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
+
+		// This is a performance optimization as the same parent is likely to be elected again, and would use its
+		// cache to fetch the snapshot instead of the network.
 		await this.fetchSnapshotFromStorage(
 			summaryLogger,
 			{
@@ -3760,7 +3763,7 @@ export class ContainerRuntime
 
 		return {
 			stage: "base",
-			error: "summary state stale",
+			error: "summary state stale - Unsupported option 'refreshLatestAck'",
 			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 			minimumSequenceNumber: this.deltaManager.minimumSequenceNumber,
 		};
@@ -3816,7 +3819,7 @@ export class ContainerRuntime
 				const versions = await this.storage.getVersions(
 					versionId,
 					1,
-					"refreshLatestSummaryAckFromServer",
+					"prefetchLatestSummaryBeforeClose",
 					versionId === null ? FetchSource.noCache : undefined,
 				);
 				assert(
