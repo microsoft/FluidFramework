@@ -236,9 +236,12 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	entries(): IterableIterator<[FieldKey, UnboxField<TSchema["mapFields"]>]>;
 
 	/**
-	 * Executes a provided function once per each key/value pair in the map, in insertion order.
+	 * Executes a provided function once per each key/value pair in the map.
 	 * @param callbackFn - The function to run for each map entry
 	 * @param thisArg - If present, `callbackFn` will be bound to `thisArg`
+	 *
+	 * @privateRemarks
+	 * TODO: This should run over fields in insertion order if we want to match the javascript foreach spec.
 	 */
 	forEach(
 		callbackFn: (
