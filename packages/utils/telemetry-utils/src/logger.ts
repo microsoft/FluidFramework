@@ -814,6 +814,7 @@ export const tagData = <
 		// eslint-disable-next-line unicorn/no-array-reduce, unicorn/prefer-object-from-entries
 		.reduce((pv, cv) => {
 			const [key, value] = cv;
+			// The ternary form is less legible in this case.
 			// eslint-disable-next-line unicorn/prefer-ternary
 			if (typeof value === "function") {
 				// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
