@@ -30,7 +30,7 @@ function isUpdatePackageJsonTypes(type: string): type is UpdatePackageJsonTypes 
 export default class UpdatePackageTypesCommand extends BaseCommand<
 	typeof UpdatePackageTypesCommand
 > {
-	static readonly description = "";
+	static readonly description = "Updates the types in package.json based on the release flag";
 
 	static flags = {
 		types: Flags.custom<UpdatePackageJsonTypes>({
@@ -46,5 +46,15 @@ export default class UpdatePackageTypesCommand extends BaseCommand<
 		...BaseCommand.flags,
 	};
 
-	public async run(): Promise<void> {}
+	public async run(): Promise<void> {
+		const flags = this.flags;
+
+		const pkg = new Package(path.join(".", "package.json"), "none");
+
+		const pkgApiRollup = new Package(path.join(".", "api-extractor.json"), "none");
+
+		this.log(`Package: ${pkg}`);
+
+		this.log(`Ap extractor: ${pkgApiRollup}`);
+	}
 }
