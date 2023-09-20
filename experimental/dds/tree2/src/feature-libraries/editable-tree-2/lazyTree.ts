@@ -296,6 +296,52 @@ export class LazyMap<TSchema extends MapSchema>
 		makePropertyEnumerableOwn(this, "asObject", LazyMap.prototype);
 	}
 
+	public get size(): number {
+		let fieldCount = 0;
+		forEachField(this[cursorSymbol], () => (fieldCount += 1));
+		return fieldCount;
+	}
+
+	public keys(): IterableIterator<FieldKey> {
+		return mapCursorFields(this[cursorSymbol], (cursor) => cursor.getFieldKey()).values();
+	}
+
+	public values(): IterableIterator<UnboxField<TSchema["mapFields"]>> {
+		return mapCursorFields(
+			this[cursorSymbol],
+			(cursor) =>
+				unboxedField(this.context, this.schema.mapFields, cursor) as UnboxField<
+					TSchema["mapFields"]
+				>,
+		).values();
+	}
+
+	public entries(): IterableIterator<[FieldKey, UnboxField<TSchema["mapFields"]>]> {
+		return mapCursorFields(this[cursorSymbol], (cursor) => {
+			const entry: [FieldKey, UnboxField<TSchema["mapFields"]>] = [
+				cursor.getFieldKey(),
+				unboxedField(this.context, this.schema.mapFields, cursor) as UnboxField<
+					TSchema["mapFields"]
+				>,
+			];
+			return entry;
+		}).values();
+	}
+
+	public forEach(
+		callbackFn: (
+			value: UnboxField<TSchema["mapFields"]>,
+			key: FieldKey,
+			map: MapNode<TSchema>,
+		) => void,
+		thisArg?: any,
+	): void {
+		const fn = thisArg !== undefined ? callbackFn.bind(thisArg) : callbackFn;
+		for (const [key, value] of this.entries()) {
+			fn(value, key, this);
+		}
+	}
+
 	public has(key: FieldKey): boolean {
 		return this.tryGetField(key) !== undefined;
 	}

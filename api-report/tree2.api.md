@@ -1344,9 +1344,14 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
     readonly asObject: {
         readonly [P in FieldKey]?: UnboxField<TSchema["mapFields"]>;
     };
+    entries(): IterableIterator<[FieldKey, UnboxField<TSchema["mapFields"]>]>;
+    forEach(callbackFn: (value: UnboxField<TSchema["mapFields"]>, key: FieldKey, map: MapNode<TSchema>) => void, thisArg?: any): void;
     get(key: FieldKey): UnboxField<TSchema["mapFields"]>;
     getBoxed(key: FieldKey): TypedField<TSchema["mapFields"]>;
     has(key: FieldKey): boolean;
+    keys(): IterableIterator<FieldKey>;
+    readonly size: number;
+    values(): IterableIterator<UnboxField<TSchema["mapFields"]>>;
 }
 
 // @alpha (undocumented)
