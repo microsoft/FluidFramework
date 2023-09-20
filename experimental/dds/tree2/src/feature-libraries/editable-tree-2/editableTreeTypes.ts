@@ -109,9 +109,8 @@ export interface TreeNode extends Tree<TreeSchema> {
 	/**
 	 * Same as `this.schema.name`.
 	 * This is provided as a enumerable own property to aid with JavaScript object traversals of this data-structure.
-	 * See [readme](./README.md) for details.
+	 * See [ReadMe](./README.md) for details.
 	 */
-	// TODO: do we want to leave this and other similar properties in the TypeScript API?
 	readonly type: TreeSchemaIdentifier;
 
 	[Symbol.iterator](): Iterator<TreeField>;
@@ -192,6 +191,15 @@ export interface TreeField extends Tree<FieldSchema>, Iterable<TreeNode> {
  */
 export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	/**
+	 * Get the value associated with `key`.
+	 * @param key - which map entry to look up.
+	 *
+	 * @privateRemarks
+	 * TODO: Consider changing the key type to `string` for easier use.
+	 */
+	get(key: FieldKey): UnboxField<TSchema["mapFields"]>;
+
+	/**
 	 * Get the field for `key`.
 	 * @param key - which map entry to look up.
 	 *
@@ -202,15 +210,20 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	 * @privateRemarks
 	 * TODO: Consider changing the key type to `string` for easier use.
 	 */
-	get(key: FieldKey): TypedField<TSchema["mapFields"]>;
+	getBoxed(key: FieldKey): TypedField<TSchema["mapFields"]>;
 
 	// TODO: Add `set` method when FieldKind provides a setter (and derive the type from it).
 	// set(key: FieldKey, content: FlexibleFieldContent<TSchema["mapFields"]>): void;
 
 	[Symbol.iterator](): Iterator<TypedField<TSchema["mapFields"]>>;
 
-	// TODO: JS object traversal docs
-	// Inclines only non-empty fields, like iteration.
+	/**
+	 * An enumerable own property which allows JavaScript object traversals to access {@link Sequence} content.
+	 * It is recommenced to NOT use this when possible (for performance and type safety reasons): instead use {@link MapNode.get} or iterate over fields with `Symbol.iterator`.
+	 * See [ReadMe](./README.md) for details.
+	 *
+	 * This object is not guaranteed to be kept up to date across edits and thus should not be held onto across edits.
+	 */
 	readonly asObject: {
 		readonly [P in FieldKey]?: UnboxField<TSchema["mapFields"]>;
 	};
@@ -424,7 +437,13 @@ export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
 
 	[Symbol.iterator](): Iterator<TypedNodeUnion<TTypes>>;
 
-	// TODO: JS object traversal docs
+	/**
+	 * An enumerable own property which allows JavaScript object traversals to access {@link Sequence} content.
+	 * It is recommenced to NOT use this when possible (for performance and type safety reasons): instead use {@link Sequence#at} or iterate over nodes with `Symbol.iterator`.
+	 * See [ReadMe](./README.md) for details.
+	 *
+	 * This array is not guaranteed to be kept up to date across edits and thus should not be held onto across edits.
+	 */
 	readonly asArray: readonly UnboxNodeUnion<TTypes>[];
 }
 

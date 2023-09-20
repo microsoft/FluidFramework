@@ -1341,11 +1341,11 @@ type MapFieldSchema = FieldSchema<typeof FieldKinds.optional | typeof FieldKinds
 export interface MapNode<TSchema extends MapSchema> extends TreeNode {
     // (undocumented)
     [Symbol.iterator](): Iterator<TypedField<TSchema["mapFields"]>>;
-    // (undocumented)
     readonly asObject: {
         readonly [P in FieldKey]?: UnboxField<TSchema["mapFields"]>;
     };
-    get(key: FieldKey): TypedField<TSchema["mapFields"]>;
+    get(key: FieldKey): UnboxField<TSchema["mapFields"]>;
+    getBoxed(key: FieldKey): TypedField<TSchema["mapFields"]>;
 }
 
 // @alpha (undocumented)
@@ -1854,7 +1854,6 @@ export interface Sequence extends BrandedFieldKind<"Sequence", Multiplicity.Sequ
 export interface Sequence2<TTypes extends AllowedTypes> extends TreeField {
     // (undocumented)
     [Symbol.iterator](): Iterator<TypedNodeUnion<TTypes>>;
-    // (undocumented)
     readonly asArray: readonly UnboxNodeUnion<TTypes>[];
     at(index: number): UnboxNodeUnion<TTypes>;
     boxedAt(index: number): TypedNodeUnion<TTypes>;
