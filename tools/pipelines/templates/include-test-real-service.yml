@@ -129,9 +129,9 @@ jobs:
 
       # Install
       - task: UseNode@1
-        displayName: Use Node 18.x
+        displayName: Use Node 18.17.1
         inputs:
-          version: 18.x
+          version: 18.17.1
 
       # Download artifact
       - task: DownloadPipelineArtifact@2

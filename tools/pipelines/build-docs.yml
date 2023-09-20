@@ -180,9 +180,9 @@ stages:
             path: '$(Build.SourcesDirectory)/_api-extractor-temp/doc-models'
 
         - task: UseNode@1
-          displayName: Use Node 18.x
+          displayName: Use Node 18.17.1
           inputs:
-            version: 18.x
+            version: 18.17.1
 
         - task: Npm@1
           displayName: npm ci
@@ -227,9 +227,9 @@ stages:
           clean: true
 
         - task: UseNode@1
-          displayName: Use Node 18.x
+          displayName: Use Node 18.17.1
           inputs:
-            version: 18.x
+            version: 18.17.1
 
         - task: UseDotNet@2
           displayName: 'Use .NET Core 3.x'
