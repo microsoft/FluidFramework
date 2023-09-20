@@ -134,7 +134,7 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 			// If an isEphemeral flag was passed in, cache it
 			Lumberjack.info(
 				`Setting cache for ${isEphemeralKey} to ${isEphemeralContainer}.`,
-				getLumberBaseProperties(tenantId, documentId),
+				getLumberBaseProperties(documentId, tenantId),
 			);
 			isEphemeral = isEphemeralContainer;
 			await cache?.set(isEphemeralKey, isEphemeral);
@@ -155,7 +155,7 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 	}
 	Lumberjack.info(
 		`Document is ephemeral? ${isEphemeral}`,
-		getLumberBaseProperties(tenantId, documentId),
+		getLumberBaseProperties(documentId, tenantId),
 	);
 
 	const calculatedStorageName =
