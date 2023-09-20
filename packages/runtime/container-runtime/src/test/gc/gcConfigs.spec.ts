@@ -707,7 +707,7 @@ describe("Garbage Collection configurations", () => {
 			});
 
 			it("shouldRunGC should be false when gcVersionInEffect is older than gcVersionInBaseSnapshot", () => {
-				const gcVersionInBaseSnapshot = currentGCVersion + 1;
+				const gcVersionInBaseSnapshot = nextGCVersion + 1;
 				gc = createGcWithPrivateMembers({ gcFeature: gcVersionInBaseSnapshot });
 				assert.equal(gc.configs.gcEnabled, true, "PRECONDITION: gcEnabled set incorrectly");
 				assert.equal(gc.configs.shouldRunGC, false, "shouldRunGC should be false");
