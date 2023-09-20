@@ -35,10 +35,10 @@
 		"tsc": "tsc"
 	},
 	"dependencies": {
-		"@fluidframework/common-utils": "^1.1.1",
+		"@fluidframework/common-utils": "^3.0.0",
 		"@fluidframework/gitresources": "^2.0.0",
 		"@fluidframework/protocol-base": "^2.0.0",
-		"@fluidframework/protocol-definitions": "^2.1.0",
+		"@fluidframework/protocol-definitions": "^3.0.0",
 		"@fluidframework/server-lambdas": "^2.0.0",
 		"@fluidframework/server-local-server": "^2.0.0",
 		"@fluidframework/server-memory-orderer": "^2.0.0",
