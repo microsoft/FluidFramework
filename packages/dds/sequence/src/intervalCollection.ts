@@ -1330,7 +1330,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 		if (
 			opName === "change" &&
-			(this.hasPendingChangeStart(intervalId) || this.hasPendingChangeEnd(intervalId))
+			(this.hasPendingChangeStart(intervalId) ?? this.hasPendingChangeEnd(intervalId))
 		) {
 			this.removePendingChange(serializedInterval);
 			this.addPendingChange(intervalId, rebased);

@@ -344,7 +344,6 @@ function getDocuments(): string[] {
 }
 
 // Format a number separating 3 digits by comma
-// eslint-disable-next-line unicorn/no-unsafe-regex
 const formatNumber = (num: number): string => num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
 function spyOnOperations(baseGenerator: Generator<Operation, FuzzTestState>): {

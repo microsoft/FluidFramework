@@ -4,7 +4,6 @@
  */
 
 /* eslint max-nested-callbacks: 0 */
-/* eslint-disable unicorn/no-unsafe-regex */
 
 /**
  * @fileoverview In this file, we will test the functions exported by guid_utils.js

@@ -1,7 +1,9 @@
 /*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
+* Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+* Licensed under the MIT License.
+*/
+
+/* eslint-disable @typescript-eslint/no-base-to-string */
 
 import { assert } from "@fluidframework/core-utils";
 import { Serializable } from "@fluidframework/datastore-definitions";

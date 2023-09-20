@@ -406,6 +406,7 @@ const gatherTextAndMarkers: ISegmentAction<ITextAndMarkerAccumulator> = (
 		if (placeholder && placeholder.length > 0) {
 			const placeholderText =
 				placeholder === "*"
+					// eslint-disable-next-line @typescript-eslint/no-base-to-string
 					? `\n${segment.toString()}`
 					: placeholder.repeat(segment.cachedLength);
 			textSegment.text += placeholderText;

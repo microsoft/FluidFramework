@@ -15,9 +15,7 @@ interface IApp {
 }
 
 export class Bubblebench extends DataObject {
-	public static get Name() {
-		return "@fluid-example/bubblebench-sharedtree";
-	}
+	public static readonly Name = "@fluid-example/bubblebench-sharedtree";
 	private maybeTree?: SharedTree = undefined;
 	private maybeAppState?: AppState = undefined;
 

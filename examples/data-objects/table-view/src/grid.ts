@@ -9,7 +9,6 @@ import { ISheetlet, createSheetletProducer } from "@tiny-calc/micro";
 import { BorderRect } from "./borderstyle";
 import * as styles from "./index.css";
 
-// eslint-disable-next-line unicorn/no-unsafe-regex
 const numberExp = /^[+-]?\d*\.?\d+(?:[Ee][+-]?\d+)?$/;
 
 const enum KeyCode {

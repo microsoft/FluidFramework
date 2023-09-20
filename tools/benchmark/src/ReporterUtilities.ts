@@ -62,7 +62,6 @@ export function prettyNumber(num: number, numDecimals = 3): string {
 	}
 	// Add commas to the numbers before the decimal.
 	// Since this only ever runs on strings <= 9 characters, its not a performance problem problem.
-	// eslint-disable-next-line unicorn/no-unsafe-regex
 	split[0] = split[0].replace(/(\d)(?=(\d{3})+$)/g, "$1,");
 	return split.join(".");
 }
