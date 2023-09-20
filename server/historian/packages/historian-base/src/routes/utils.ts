@@ -130,7 +130,7 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 	let isEphemeral: boolean = false;
 	if (!ignoreEphemeralFlag) {
 		const isEphemeralKey: string = `isEphemeralContainer:${documentId}`;
-		if (typeof(isEphemeralContainer) === "boolean") {
+		if (typeof isEphemeralContainer === "boolean") {
 			// If an isEphemeral flag was passed in, cache it
 			Lumberjack.info(
 				`Setting cache for ${isEphemeralKey} to ${isEphemeralContainer}.`,
@@ -140,7 +140,7 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 			await cache?.set(isEphemeralKey, isEphemeral);
 		} else {
 			isEphemeral = await cache?.get(isEphemeralKey);
-			if (typeof(isEphemeral) !== "boolean") {
+			if (typeof isEphemeral !== "boolean") {
 				// If isEphemeral was not in the cache, fetch the value from database
 				try {
 					const staticProps: IDocumentStaticProperties =
