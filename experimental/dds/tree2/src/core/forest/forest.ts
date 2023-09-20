@@ -73,6 +73,11 @@ export interface IForestSubscription extends Dependee, ISubscribable<ForestEvent
 	forgetAnchor(anchor: Anchor): void;
 
 	/**
+	 * Retrieves all detached fields on the forest, including the root field.
+	 */
+	getDetachedFields(): DetachedField[];
+
+	/**
 	 * It is an error not to free `cursorToMove` before the next edit.
 	 * Must provide a `cursorToMove` from this subscription (acquired via `allocateCursor`).
 	 */

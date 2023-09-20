@@ -30,6 +30,7 @@ import {
 	PathRootPrefix,
 	DeltaVisitor,
 	Value,
+	keyAsDetachedField,
 } from "../../core";
 import { brand, fail, assertValidIndex } from "../../util";
 import { CursorWithNode, SynchronousCursor } from "../treeCursorUtils";
@@ -222,6 +223,14 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 
 	public allocateCursor(): Cursor {
 		return new Cursor(this);
+	}
+
+	public getDetachedFields(): DetachedField[] {
+		const fields: DetachedField[] = [];
+		for (const [key] of this.roots.fields) {
+			fields.push(keyAsDetachedField(key));
+		}
+		return fields;
 	}
 
 	public tryMoveCursorToNode(
