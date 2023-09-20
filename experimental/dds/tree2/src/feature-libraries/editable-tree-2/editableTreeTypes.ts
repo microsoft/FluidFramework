@@ -191,6 +191,18 @@ export interface TreeField extends Tree<FieldSchema>, Iterable<TreeNode> {
  */
 export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	/**
+	 * Checks whether a value exists for the given key.
+	 * @param key - Which map entry to look up.
+	 *
+	 * @remarks
+	 * All fields under a map implicitly exist, but `has` will only return true if there are one or more nodes present in the given field.
+	 *
+	 * @privateRemarks
+	 * TODO: Consider changing the key type to `string` for easier use.
+	 */
+	has(key: FieldKey): boolean;
+
+	/**
 	 * Get the value associated with `key`.
 	 * @param key - which map entry to look up.
 	 *

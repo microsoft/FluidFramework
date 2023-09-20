@@ -1346,6 +1346,7 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
     };
     get(key: FieldKey): UnboxField<TSchema["mapFields"]>;
     getBoxed(key: FieldKey): TypedField<TSchema["mapFields"]>;
+    has(key: FieldKey): boolean;
 }
 
 // @alpha (undocumented)

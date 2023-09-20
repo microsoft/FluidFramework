@@ -296,6 +296,10 @@ export class LazyMap<TSchema extends MapSchema>
 		makePropertyEnumerableOwn(this, "asObject", LazyMap.prototype);
 	}
 
+	public has(key: FieldKey): boolean {
+		return this.tryGetField(key) !== undefined;
+	}
+
 	public get(key: FieldKey): UnboxField<TSchema["mapFields"]> {
 		return inCursorField(this[cursorSymbol], key, (cursor) =>
 			unboxedField(this.context, this.schema.mapFields, cursor),
