@@ -31,7 +31,7 @@ class EndpointInRangeIndex<TInterval extends ISerializableInterval>
 		private readonly client: Client,
 	) {
 		this.intervalTree = new RedBlackTree<TInterval, TInterval>((a: TInterval, b: TInterval) => {
-			const compareEndsResult = helpers.compareEnds(a, b);
+			const compareEndsResult = a.compareEnd(b);
 			if (compareEndsResult !== 0) {
 				return compareEndsResult;
 			}
