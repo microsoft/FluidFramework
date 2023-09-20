@@ -9,7 +9,7 @@ import { decode } from "jsonwebtoken";
 import * as nconf from "nconf";
 import { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { NetworkError } from "@fluidframework/server-services-client";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
 import {
 	IStorageNameRetriever,
 	IRevokedTokenChecker,
@@ -132,7 +132,10 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 		const isEphemeralKey: string = `isEphemeralContainer:${documentId}`;
 		if (isEphemeral !== undefined && isEphemeral !== null) {
 			// If an isEphemeral flag was passed in, cache it in Redis
-			Lumberjack.info(`Setting ${isEphemeralKey} to ${isEphemeral}`);
+			Lumberjack.info(
+				`Setting ${isEphemeralKey} to ${isEphemeral}`,
+				getLumberBaseProperties(tenantId, documentId),
+			);
 			await cache?.set(isEphemeralKey, isEphemeral);
 		} else {
 			isEphemeral = await cache?.get(isEphemeralKey);
@@ -151,7 +154,10 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 	} else {
 		isEphemeral = false;
 	}
-	Lumberjack.info(`Document ${documentId} is ephemeral? ${isEphemeral}`);
+	Lumberjack.info(
+		`Document is ephemeral? ${isEphemeral}`,
+		getLumberBaseProperties(tenantId, documentId),
+	);
 
 	const calculatedStorageName =
 		initialUpload && storageName
