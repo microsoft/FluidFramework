@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
+[].find;
 import { strict as assert } from "assert";
 import { unreachableCase } from "@fluidframework/core-utils";
 import {
