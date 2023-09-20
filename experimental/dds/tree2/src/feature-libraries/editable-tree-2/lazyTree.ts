@@ -342,7 +342,17 @@ export class LazyMap<TSchema extends MapSchema>
 		}
 	}
 
-	public get(key: FieldKey): TypedField<TSchema["mapFields"]> {
+	public has(key: FieldKey): boolean {
+		return this.tryGetField(key) !== undefined;
+	}
+
+	public get(key: FieldKey): UnboxField<TSchema["mapFields"]> {
+		return inCursorField(this[cursorSymbol], key, (cursor) =>
+			unboxedField(this.context, this.schema.mapFields, cursor),
+		) as UnboxField<TSchema["mapFields"]>;
+	}
+
+	public getBoxed(key: FieldKey): TypedField<TSchema["mapFields"]> {
 		return inCursorField(this[cursorSymbol], key, (cursor) =>
 			makeField(this.context, this.schema.mapFields, cursor),
 		) as TypedField<TSchema["mapFields"]>;

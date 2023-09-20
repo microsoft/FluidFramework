@@ -199,6 +199,27 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	readonly size: number;
 
 	/**
+	 * Checks whether a value exists for the given key.
+	 * @param key - Which map entry to look up.
+	 *
+	 * @remarks
+	 * All fields under a map implicitly exist, but `has` will only return true if there are one or more nodes present in the given field.
+	 *
+	 * @privateRemarks
+	 * TODO: Consider changing the key type to `string` for easier use.
+	 */
+	has(key: FieldKey): boolean;
+
+	/**
+	 * Get the value associated with `key`.
+	 * @param key - which map entry to look up.
+	 *
+	 * @privateRemarks
+	 * TODO: Consider changing the key type to `string` for easier use.
+	 */
+	get(key: FieldKey): UnboxField<TSchema["mapFields"]>;
+
+	/**
 	 * Get the field for `key`.
 	 * @param key - which map entry to look up.
 	 *
@@ -209,7 +230,7 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	 * @privateRemarks
 	 * TODO: Consider changing the key type to `string` for easier use.
 	 */
-	get(key: FieldKey): TypedField<TSchema["mapFields"]>;
+	getBoxed(key: FieldKey): TypedField<TSchema["mapFields"]>;
 
 	/**
 	 * Returns an iterable of keys in the map.
