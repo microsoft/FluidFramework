@@ -381,7 +381,6 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 			headers,
 		});
 		const do2 = await requestFluidObject<ITestFluidObject>(loaded, "default");
-		// loaded.disconnect();
 		loaded.connect();
 		loaded.forceReadonly?.(true);
 		const map2 = await do2.getSharedObject<SharedMap>(mapId);
