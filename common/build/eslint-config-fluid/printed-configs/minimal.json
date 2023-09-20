@@ -85,10 +85,10 @@
             "error"
         ],
         "@typescript-eslint/consistent-generic-constructors": [
-            "error"
+            "off"
         ],
         "@typescript-eslint/consistent-indexed-object-style": [
-            "error"
+            "off"
         ],
         "@typescript-eslint/consistent-type-assertions": [
             "error",
@@ -99,6 +99,12 @@
         ],
         "@typescript-eslint/consistent-type-definitions": [
             "error"
+        ],
+        "@typescript-eslint/consistent-type-exports": [
+            "off"
+        ],
+        "@typescript-eslint/consistent-type-imports": [
+            "off"
         ],
         "@typescript-eslint/dot-notation": [
             "error"
@@ -170,7 +176,7 @@
             "error"
         ],
         "@typescript-eslint/no-duplicate-type-constituents": [
-            "error"
+            "off"
         ],
         "@typescript-eslint/no-dynamic-delete": [
             "error"
@@ -233,7 +239,7 @@
             "error"
         ],
         "@typescript-eslint/no-redundant-type-constituents": [
-            "error"
+            "off"
         ],
         "@typescript-eslint/no-require-imports": [
             "error"
@@ -276,7 +282,7 @@
             "error"
         ],
         "@typescript-eslint/no-unsafe-enum-comparison": [
-            "error"
+            "off"
         ],
         "@typescript-eslint/no-unsafe-member-access": [
             "off"
@@ -297,7 +303,7 @@
             "error"
         ],
         "@typescript-eslint/non-nullable-type-assertion-style": [
-            "error"
+            "off"
         ],
         "@typescript-eslint/object-curly-spacing": [
             "error",
@@ -627,7 +633,7 @@
             "error"
         ],
         "jsdoc/check-line-alignment": [
-            "error"
+            "warn"
         ],
         "jsdoc/check-tag-names": [
             "off"
@@ -1206,6 +1212,9 @@
             "error"
         ],
         "unicorn/empty-brace-spaces": [
+            "off"
+        ],
+        "unicorn/expiring-todo-comments": [
             "off"
         ],
         "unicorn/filename-case": [

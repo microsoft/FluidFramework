@@ -170,6 +170,9 @@ module.exports = {
 		"unicorn/no-for-loop": "off",
 		"unicorn/no-new-buffer": "error",
 
+		// The rule seems to crash on some of our code
+		"unicorn/expiring-todo-comments": "off",
+
 		// eslint
 		"arrow-body-style": "off",
 		"arrow-parens": ["error", "always"],
@@ -299,6 +302,10 @@ module.exports = {
 		"use-isnan": "error",
 		"valid-typeof": "off",
 		"yoda": "off",
+
+		// TEMPORARY
+		"@typescript-eslint/consistent-type-exports": "off",
+		"@typescript-eslint/consistent-type-imports": "off",
 	},
 	overrides: [
 		{
@@ -314,6 +321,17 @@ module.exports = {
 				"@typescript-eslint/no-unsafe-assignment": "off",
 				"@typescript-eslint/no-unsafe-call": "off",
 				"@typescript-eslint/no-unsafe-member-access": "off",
+			},
+		},
+		{
+			// Rules only for type validation files
+			files: ["**/types/*validate*Previous*.ts"],
+			rules: {
+				"@typescript-eslint/comma-spacing": "off",
+
+				// Type validation files don't need to use export/import type syntax
+				"@typescript-eslint/consistent-type-exports": "off",
+				"@typescript-eslint/consistent-type-imports": "off",
 			},
 		},
 	],

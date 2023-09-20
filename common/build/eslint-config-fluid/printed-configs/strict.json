@@ -101,13 +101,10 @@
             "error"
         ],
         "@typescript-eslint/consistent-type-exports": [
-            "error"
+            "off"
         ],
         "@typescript-eslint/consistent-type-imports": [
-            "error",
-            {
-                "fixStyle": "inline-type-imports"
-            }
+            "off"
         ],
         "@typescript-eslint/dot-notation": [
             "error"
@@ -196,7 +193,7 @@
             "error"
         ],
         "@typescript-eslint/no-duplicate-type-constituents": [
-            "error"
+            "off"
         ],
         "@typescript-eslint/no-dynamic-delete": [
             "error"
@@ -323,7 +320,7 @@
             "error"
         ],
         "@typescript-eslint/non-nullable-type-assertion-style": [
-            "error"
+            "off"
         ],
         "@typescript-eslint/object-curly-spacing": [
             "error",
@@ -653,7 +650,7 @@
             "error"
         ],
         "jsdoc/check-line-alignment": [
-            "error"
+            "warn"
         ],
         "jsdoc/check-tag-names": [
             "off"
@@ -1297,7 +1294,7 @@
             "error"
         ],
         "unicorn/expiring-todo-comments": [
-            "error"
+            "off"
         ],
         "unicorn/explicit-length-check": [
             "error"
