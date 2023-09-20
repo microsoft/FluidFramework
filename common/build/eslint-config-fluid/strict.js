@@ -70,15 +70,6 @@ module.exports = {
 					},
 				],
 
-				// Parameter properties can be confusing to those new to TypeScript as they are less explicit than other
-				// ways of declaring and initializing class members.
-				"@typescript-eslint/no-parameter-properties": [
-					"warn",
-					{
-						allows: ["private", "private readonly", "public readonly", "readonly"],
-					},
-				],
-
 				/**
 				 * Requires that type-only exports be done using `export type`. Being explicit allows the TypeScript
 				 * `isolatedModules` flag to be used, and isolated modules are needed to adopt modern build tools like swc.

@@ -57,10 +57,8 @@ module.exports = {
 		"@typescript-eslint/dot-notation": "error",
 		"@typescript-eslint/explicit-function-return-type": "off",
 		"@typescript-eslint/func-call-spacing": "off",
-		"@typescript-eslint/interface-name-prefix": "off",
 		"@typescript-eslint/keyword-spacing": "off",
 		"@typescript-eslint/member-delimiter-style": "off",
-		"@typescript-eslint/no-duplicate-imports": "error",
 		"@typescript-eslint/no-dynamic-delete": "error",
 		"@typescript-eslint/no-empty-function": "off",
 		"@typescript-eslint/no-empty-interface": "error",
@@ -74,7 +72,6 @@ module.exports = {
 		"@typescript-eslint/no-magic-numbers": "off",
 		"@typescript-eslint/no-misused-new": "error",
 		"@typescript-eslint/no-non-null-assertion": "error",
-		"@typescript-eslint/no-parameter-properties": "off",
 		"@typescript-eslint/no-require-imports": "error",
 		"@typescript-eslint/no-shadow": [
 			"error",
@@ -214,7 +211,7 @@ module.exports = {
 		"no-control-regex": "error",
 		"no-debugger": "off",
 		"no-duplicate-case": "error",
-		"no-duplicate-imports": "off", // Superseded by @typescript-eslint/no-duplicate-imports
+		"no-duplicate-imports": "off", // Doesn't work with TypeScript
 		"no-empty": "off",
 		"no-eval": "error",
 		"no-extra-semi": "off", // Superseded by @typescript-eslint/no-extra-semi
@@ -270,7 +267,6 @@ module.exports = {
 		"one-var": ["error", "never"],
 		"padded-blocks": ["error", "never"],
 		"padding-line-between-statements": [
-			"off",
 			"error",
 			{
 				blankLine: "always",

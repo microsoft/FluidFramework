@@ -113,9 +113,6 @@
         "@typescript-eslint/indent": [
             "off"
         ],
-        "@typescript-eslint/interface-name-prefix": [
-            "off"
-        ],
         "@typescript-eslint/key-spacing": [
             "off"
         ],
@@ -162,9 +159,6 @@
             "error"
         ],
         "@typescript-eslint/no-duplicate-enum-values": [
-            "error"
-        ],
-        "@typescript-eslint/no-duplicate-imports": [
             "error"
         ],
         "@typescript-eslint/no-duplicate-type-constituents": [
@@ -229,9 +223,6 @@
         ],
         "@typescript-eslint/no-non-null-assertion": [
             "error"
-        ],
-        "@typescript-eslint/no-parameter-properties": [
-            "off"
         ],
         "@typescript-eslint/no-redundant-type-constituents": [
             "error"
@@ -1037,7 +1028,6 @@
             "never"
         ],
         "padding-line-between-statements": [
-            "off",
             "error",
             {
                 "blankLine": "always",
