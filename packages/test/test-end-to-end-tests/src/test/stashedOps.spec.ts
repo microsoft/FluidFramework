@@ -1655,7 +1655,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		// wait for summary
 		await new Promise<void>((resolve) =>
 			container1.on("op", (op) => {
-				if (op.type === "summarize") {
+				if (op.type === "summaryAck") {
 					resolve();
 				}
 			}),
