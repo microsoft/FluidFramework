@@ -24,8 +24,8 @@ class OverlappingSequenceIntervalsIndex
 	extends OverlappingIntervalsIndex<SequenceInterval>
 	implements SequenceIntervalIndexes.Overlapping
 {
-	constructor(client: Client) {
-		super(client, sequenceIntervalHelpers);
+	constructor(sharedString: SharedString) {
+		super(sharedString as unknown as { client: Client } as unknown as Client, sequenceIntervalHelpers);
 	}
 
 	public findOverlappingIntervalsBySegoff(
@@ -68,6 +68,5 @@ class OverlappingSequenceIntervalsIndex
 export function createOverlappingSequenceIntervalsIndex(
 	sharedString: SharedString,
 ): SequenceIntervalIndexes.Overlapping {
-	const client = (sharedString as unknown as { client: Client }).client;
-	return new OverlappingSequenceIntervalsIndex(client);
+	return new OverlappingSequenceIntervalsIndex(sharedString);
 }

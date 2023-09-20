@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 import { MockContainerRuntimeForReconnection } from "@fluidframework/test-runtime-utils";
-import { LocalReferencePosition } from "@fluidframework/merge-tree";
 import { SharedString } from "../sharedString";
 import { IIntervalCollection } from "../intervalCollection";
 import { SequenceInterval } from "../intervals";
@@ -112,34 +111,3 @@ export const assertIntervals = (
 	});
 	assert.deepEqual(actualPos, expected, "intervals are not as expected");
 };
-
-export function assertSequenceIntervalsEqual(
-	string: SharedString,
-	results: SequenceInterval[],
-	expected: { start: number; end: number }[] | SequenceInterval[],
-): void {
-	assert.equal(results.length, expected.length, "Mismatched result count");
-
-	for (let i = 0; i < results.length; ++i) {
-		assert(results[i]);
-		const resultStart = string.localReferencePositionToPosition(results[i].start);
-		const resultEnd = string.localReferencePositionToPosition(results[i].end);
-		let expectedStart;
-		let expectedEnd;
-
-		if (expected[i] instanceof SequenceInterval) {
-			expectedStart = string.localReferencePositionToPosition(
-				expected[i].start as LocalReferencePosition,
-			);
-			expectedEnd = string.localReferencePositionToPosition(
-				expected[i].end as LocalReferencePosition,
-			);
-		} else {
-			expectedStart = expected[i].start;
-			expectedEnd = expected[i].end;
-		}
-
-		assert.equal(resultStart, expectedStart, "mismatched start");
-		assert.equal(resultEnd, expectedEnd, "mismatched end");
-	}
-}

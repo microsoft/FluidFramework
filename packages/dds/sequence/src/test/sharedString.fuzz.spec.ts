@@ -17,7 +17,7 @@ import {
 } from "@fluid-internal/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { SharedStringFactory } from "../sequenceFactory";
-import { assertEquivalentSharedStrings } from "./intervalEquivalenceUtils";
+import { assertEquivalentSharedStrings } from "./intervalUtils";
 import {
 	Operation,
 	FuzzTestState,

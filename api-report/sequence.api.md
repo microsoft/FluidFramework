@@ -69,7 +69,7 @@ export function appendSharedStringDeltaToRevertibles(string: SharedString, delta
 export function createEndpointIndex<TInterval extends ISerializableInterval>(client: Client, helpers: IIntervalHelpers<TInterval>): IEndpointIndex<TInterval>;
 
 // @public (undocumented)
-export function createEndpointInRangeIndex(sharedString: SharedString): IEndpointInRangeIndex<SequenceInterval>;
+export function createEndpointInRangeIndex<TInterval extends ISerializableInterval>(client: Client, helpers: IIntervalHelpers<TInterval>): IEndpointInRangeIndex<TInterval>;
 
 // @public (undocumented)
 export function createIdIntervalIndex<TInterval extends ISerializableInterval>(): IIdIntervalIndex<TInterval>;
@@ -106,13 +106,7 @@ export interface IEndpointIndex<TInterval extends ISerializableInterval> extends
 // @public
 export interface IEndpointInRangeIndex<TInterval extends ISerializableInterval> extends IntervalIndex<TInterval> {
     // (undocumented)
-    findIntervalsWithEndpointInRange(start: number | {
-        segment: ISegment | undefined;
-        offset: number | undefined;
-    }, end: number | {
-        segment: ISegment | undefined;
-        offset: number | undefined;
-    }): any;
+    findIntervalsWithEndpointInRange(start: number, end: number): any;
 }
 
 // @public (undocumented)

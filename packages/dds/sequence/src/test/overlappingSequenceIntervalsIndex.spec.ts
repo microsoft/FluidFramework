@@ -7,14 +7,44 @@
 
 import { strict as assert } from "assert";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { compareReferencePositions } from "@fluidframework/merge-tree";
+import { LocalReferencePosition, compareReferencePositions } from "@fluidframework/merge-tree";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { IntervalType, SequenceInterval } from "../intervals";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 import { createOverlappingSequenceIntervalsIndex } from "../intervalIndex";
 import { RandomIntervalOptions } from "./intervalIndexUtils";
-import { assertSequenceIntervalsEqual } from "./intervalEquivalenceUtils";
+
+function assertSequenceIntervalsEqual(
+	string: SharedString,
+	results: SequenceInterval[],
+	expected: { start: number; end: number }[] | SequenceInterval[],
+): void {
+	assert.equal(results.length, expected.length, "Mismatched result count");
+
+	for (let i = 0; i < results.length; ++i) {
+		assert(results[i]);
+		const resultStart = string.localReferencePositionToPosition(results[i].start);
+		const resultEnd = string.localReferencePositionToPosition(results[i].end);
+		let expectedStart;
+		let expectedEnd;
+
+		if (expected[i] instanceof SequenceInterval) {
+			expectedStart = string.localReferencePositionToPosition(
+				expected[i].start as LocalReferencePosition,
+			);
+			expectedEnd = string.localReferencePositionToPosition(
+				expected[i].end as LocalReferencePosition,
+			);
+		} else {
+			expectedStart = expected[i].start;
+			expectedEnd = expected[i].end;
+		}
+
+		assert.equal(resultStart, expectedStart, "mismatched start");
+		assert.equal(resultEnd, expectedEnd, "mismatched end");
+	}
+}
 
 describe("findOverlappingIntervalsBySegoff", () => {
 	// sort the query results by the local reference position of interval endpoints

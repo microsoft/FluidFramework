@@ -22,7 +22,7 @@ import { FlushMode } from "@fluidframework/runtime-definitions";
 import { IIntervalCollection } from "../intervalCollection";
 import { SharedStringFactory } from "../sequenceFactory";
 import { IntervalStickiness, SequenceInterval } from "../intervals";
-import { assertEquivalentSharedStrings } from "./intervalEquivalenceUtils";
+import { assertEquivalentSharedStrings } from "./intervalUtils";
 import {
 	Operation,
 	RangeSpec,

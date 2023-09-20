@@ -12,7 +12,7 @@ import {
 import { IntervalType } from "../intervals";
 import { SharedStringFactory } from "../sequenceFactory";
 import { SharedString } from "../sharedString";
-import { assertConsistent, Client } from "./intervalEquivalenceUtils";
+import { assertConsistent, Client } from "./intervalUtils";
 
 function constructClients(
 	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,

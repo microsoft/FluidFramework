@@ -13,7 +13,7 @@ import {
 import { DDSFuzzModel, replayTest } from "@fluid-internal/test-dds-utils";
 import { SharedStringFactory } from "../sequenceFactory";
 import { LoggingInfo, Operation, FuzzTestState, makeReducer } from "./intervalCollection.fuzzUtils";
-import { assertEquivalentSharedStrings } from "./intervalEquivalenceUtils";
+import { assertEquivalentSharedStrings } from "./intervalUtils";
 
 const directory = path.join(__dirname, "../../src/test/results/default-interval-collection");
 
