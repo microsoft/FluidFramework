@@ -97,6 +97,9 @@ export interface InteriorSequencePlace {
 
 /**
  * Defines a side relative to a character in a sequence.
+ * If it is toward the other interval endpoint, it is exclusive.
+ * If it is away from the other interval endpoint, it is inclusive.
+ * E.g. start + Side.After is exclusive of the character.
  *
  * @remarks See {@link SequencePlace} for additional context on usage.
  */

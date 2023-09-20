@@ -453,7 +453,9 @@ end of the sequence respectively.
 
 By placing the endpoints of an interval either before or after a character, it
 is possible to make the endpoints inclusive or exclusive. An exclusive endpoint
-in a given direction implies stickiness in that direction.
+in a given direction implies stickiness in that direction. Whether an endpoint
+is inclusive or exclusive depends on both the Side and if it is the start or the
+end.
 
 Given the string "ABCD":
 
@@ -503,6 +505,9 @@ With the string now being,
 ```typescript
 {start} - A[- E - F - G - C -]D - {end}
 ```
+
+Note that the endpoint continues to remain with the associated character, except
+when the character is removed.
 
 <!-- This line ends the content that is copied to the sequences.md README -->
 
