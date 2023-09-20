@@ -21,12 +21,24 @@ import { DocumentationNodeType } from "./DocumentationNodeType";
  * ```
  *
  * @see {@link https://www.markdownguide.org/basic-syntax#horizontal-rules}
+ *
+ * @public
  */
 export class HorizontalRuleNode implements MultiLineDocumentationNode {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
 	public readonly type = DocumentationNodeType.HorizontalRule;
+
+	/**
+	 * {@inheritDoc DocumentationNode.isLiteral}
+	 */
+	public readonly isLiteral = true;
+
+	/**
+	 * {@inheritDoc DocumentationNode.isParent}
+	 */
+	public readonly isParent = false;
 
 	/**
 	 * Static `HorizontalRuleNode` singleton.

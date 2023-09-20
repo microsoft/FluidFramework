@@ -89,7 +89,7 @@ describe("Matrix", () => {
 					const containerRuntimeN =
 						containerRuntimeFactory.createContainerRuntime(dataStoreRuntimeN);
 					const servicesN: IChannelServices = {
-						deltaConnection: containerRuntimeN.createDeltaConnection(),
+						deltaConnection: dataStoreRuntimeN.createDeltaConnection(),
 						objectStorage: new MockStorage(),
 					};
 
@@ -390,7 +390,7 @@ describe("Matrix", () => {
 				.toString(16)
 				.padStart(8, "0")})`, async function () {
 				// Note: Must use 'function' rather than arrow '() => { .. }' in order to set 'this.timeout(..)'
-				this.timeout(20000);
+				this.timeout(25000);
 
 				await stress(
 					numClients,

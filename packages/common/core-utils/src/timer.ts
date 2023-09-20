@@ -106,7 +106,7 @@ export class Timer implements ITimer {
 
 	private runningState: IRunningTimerState | undefined;
 
-	constructor(
+	public constructor(
 		private readonly defaultTimeout: number,
 		private readonly defaultHandler: () => void,
 		private readonly getCurrentTick: () => number = (): number => Date.now(),
@@ -195,7 +195,7 @@ export class Timer implements ITimer {
 	}
 
 	private handler(): void {
-		assert(!!this.runningState, "Running timer missing handler");
+		assert(!!this.runningState, 0x764 /* Running timer missing handler */);
 		const restart = this.runningState.restart;
 		if (restart !== undefined) {
 			// Restart with remaining time
@@ -248,7 +248,7 @@ export class PromiseTimer implements IPromiseTimer {
 		return this.timer.hasTimer;
 	}
 
-	constructor(defaultTimeout: number, defaultHandler: () => void) {
+	public constructor(defaultTimeout: number, defaultHandler: () => void) {
 		this.timer = new Timer(defaultTimeout, () => this.wrapHandler(defaultHandler));
 	}
 
@@ -272,7 +272,7 @@ export class PromiseTimer implements IPromiseTimer {
 
 	protected wrapHandler(handler: () => void): void {
 		handler();
-		assert(!!this.deferred, "Handler executed without deferred");
+		assert(!!this.deferred, 0x765 /* Handler executed without deferred */);
 		this.deferred.resolve({ timerResult: "timeout" });
 		this.deferred = undefined;
 	}

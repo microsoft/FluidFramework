@@ -19,7 +19,7 @@ import {
 	TestDataObjectType,
 } from "@fluid-internal/test-version-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { stringToBuffer } from "@fluidframework/common-utils";
+import { stringToBuffer } from "@fluid-internal/client-utils";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";

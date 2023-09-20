@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { Deferred } from "@fluidframework/core-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	ITelemetryLoggerExt,
 	createChildLogger,
@@ -215,7 +216,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 	 * Should we try to run a last summary for the given stop reason?
 	 * Currently only allows "parentNotConnected"
 	 * @param stopReason - SummarizerStopReason
-	 * @returns - true if the stop reason can run a last summary
+	 * @returns `true` if the stop reason can run a last summary, otherwise `false`.
 	 */
 	public static stopReasonCanRunLastSummary(stopReason: SummarizerStopReason): boolean {
 		return stopReason === "parentNotConnected";
@@ -230,7 +231,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 	 * @param onBehalfOf - ID of the client that requested that the summarizer start
 	 * @param runCoordinator - cancellation token
 	 * @param newConfig - Summary configuration to override the existing config when invoking the RunningSummarizer.
-	 * @returns - Promise that is fulfilled when the RunningSummarizer is ready
+	 * @returns A promise that is fulfilled when the RunningSummarizer is ready.
 	 */
 	private async start(
 		onBehalfOf: string,

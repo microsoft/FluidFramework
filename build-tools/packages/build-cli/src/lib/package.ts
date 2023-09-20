@@ -777,10 +777,8 @@ export async function npmCheckUpdatesHomegrown(
 	if (releaseGroupFilter !== undefined) {
 		const indexOfFilteredGroup = selectionCriteria.releaseGroups.indexOf(releaseGroupFilter);
 		if (indexOfFilteredGroup !== -1) {
-			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-			delete selectionCriteria.releaseGroups[indexOfFilteredGroup];
-			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-			delete selectionCriteria.releaseGroupRoots[indexOfFilteredGroup];
+			selectionCriteria.releaseGroups.splice(indexOfFilteredGroup, 1);
+			selectionCriteria.releaseGroupRoots.splice(indexOfFilteredGroup, 1);
 		}
 	}
 

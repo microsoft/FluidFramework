@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-binder",
-	"version": "2.0.0-internal.6.3.0",
+	"version": "2.0.0-internal.6.4.0",
 	"description": "Data Binder for Fluid PropertyDDS",
 	"keywords": [],
 	"homepage": "https://fluidframework.com",
@@ -26,7 +26,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"clean": "rimraf --glob \"dist\" \"lib\" \"*.tsbuildinfo\" \"*.build.log\"",
+		"clean": "rimraf --glob 'dist' 'lib' '*.tsbuildinfo' '*.build.log' 'nyc'",
 		"doc": "cross-var appfw-typedoc $npm_package_name",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -40,11 +40,11 @@
 		"prettier:fix": "prettier --write . --ignore-path ../../../../.prettierignore",
 		"test": "npm run test:jest",
 		"pretest:coverage": "rimraf --glob \"coverage/\"",
-		"test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
+		"test:coverage": "c8 npm test",
 		"test:jest": "jest",
 		"tsc": "tsc"
 	},
-	"nyc": {
+	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
@@ -79,7 +79,7 @@
 		"@babel/plugin-transform-runtime": "^7.2.0",
 		"@babel/preset-env": "^7.2.0",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.23.0",
+		"@fluidframework/build-tools": "^0.22.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@types/jest": "29.5.3",
@@ -96,18 +96,16 @@
 		"babel-plugin-polyfill-regenerator": "^0.1.6",
 		"babel-plugin-transform-jsx": "^2.0.0",
 		"body-parser": "^1.18.3",
+		"c8": "^7.7.1",
 		"chai": "^4.2.0",
-		"concurrently": "^7.6.0",
 		"eslint": "~8.6.0",
 		"jest": "^29.6.2",
 		"jest-junit": "^10.0.0",
 		"jsdoc": "3.6.7",
 		"lighthouse": "^5.2.0",
-		"nyc": "^15.1.0",
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",
 		"source-map-loader": "^2.0.0",
-		"source-map-support": "^0.5.16",
 		"typedoc": "^0.12.0",
 		"typescript": "~4.5.5",
 		"webpack": "^5.82.0"
@@ -118,10 +116,6 @@
 				"^tsc"
 			]
 		}
-	},
-	"jest-junit": {
-		"outputDirectory": "nyc",
-		"outputName": "jest-junit-report.xml"
 	},
 	"typeValidation": {
 		"disabled": true,

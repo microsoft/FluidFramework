@@ -41,7 +41,7 @@ describe("Sequence.Revertibles with Local Edits", () => {
 
 		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 		const services1 = {
-			deltaConnection: containerRuntime1.createDeltaConnection(),
+			deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 			objectStorage: new MockStorage(),
 		};
 		sharedString.initializeLocal();
@@ -307,7 +307,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 		dataStoreRuntime1.local = false;
 		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 		const services1 = {
-			deltaConnection: containerRuntime1.createDeltaConnection(),
+			deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 			objectStorage: new MockStorage(),
 		};
 		sharedString.initializeLocal();
@@ -317,7 +317,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 		const dataStoreRuntime2 = new MockFluidDataStoreRuntime({ clientId: "2" });
 		const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 		const services2 = {
-			deltaConnection: containerRuntime2.createDeltaConnection(),
+			deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 			objectStorage: new MockStorage(),
 		};
 
@@ -650,7 +650,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 		dataStoreRuntime1.local = false;
 		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 		const services1 = {
-			deltaConnection: containerRuntime1.createDeltaConnection(),
+			deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 			objectStorage: new MockStorage(),
 		};
 		sharedString.initializeLocal();
@@ -668,7 +668,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 			const containerRuntime2 =
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 			const services2 = {
-				deltaConnection: containerRuntime2.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 

@@ -27,14 +27,18 @@ import {
 	createDocumentId,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
+import {
+	describeNoCompat,
+	itExpects,
+	itSkipsFailureOnSpecificDrivers,
+} from "@fluid-internal/test-version-utils";
 import { ConnectionState, IContainerExperimental } from "@fluidframework/container-loader";
-import { bufferToString, Deferred, stringToBuffer } from "@fluidframework/common-utils";
+import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import { Deferred } from "@fluidframework/core-utils";
 import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import {
-	ContainerMessageType,
-	ContainerRuntimeMessage,
 	DefaultSummaryConfiguration,
+	type RecentlyAddedContainerRuntimeMessageDetails,
 } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
@@ -241,10 +245,13 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 			// Super rare corner case where you stash an op and then roll back to a previous runtime version that doesn't recognize it
 			(
 				d.context.containerRuntime as unknown as {
-					submit: (containerRuntimeMessage: ContainerRuntimeMessage) => void;
+					submit: (
+						containerRuntimeMessage: RecentlyAddedContainerRuntimeMessageDetails &
+							Record<string, any>,
+					) => void;
 				}
 			).submit({
-				type: "FUTURE_TYPE" as ContainerMessageType,
+				type: "FROM_THE_FUTURE",
 				contents: "Hello",
 				compatDetails: { behavior: "Ignore" },
 			});
@@ -1297,29 +1304,35 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		}
 	});
 
-	it("load offline with blob redirect table", async function () {
-		// upload blob offline so an entry is added to redirect table
-		const container = await loadOffline(provider, { url });
-		const dataStore = await requestFluidObject<ITestFluidObject>(
-			container.container,
-			"default",
-		);
-		const map = await dataStore.getSharedObject<SharedMap>(mapId);
+	itSkipsFailureOnSpecificDrivers(
+		"load offline with blob redirect table",
+		// We've seen this fail a few times against local server with a timeout
+		// TODO: AB#5482
+		["local"],
+		async function () {
+			// upload blob offline so an entry is added to redirect table
+			const container = await loadOffline(provider, { url });
+			const dataStore = await requestFluidObject<ITestFluidObject>(
+				container.container,
+				"default",
+			);
+			const map = await dataStore.getSharedObject<SharedMap>(mapId);
 
-		const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
-		container.connect();
-		const handle = await handleP;
-		map.set("blob handle", handle);
-		assert.strictEqual(bufferToString(await handle.get(), "utf8"), "blob contents");
+			const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
+			container.connect();
+			const handle = await handleP;
+			map.set("blob handle", handle);
+			assert.strictEqual(bufferToString(await handle.get(), "utf8"), "blob contents");
 
-		// wait for summary with redirect table
-		await provider.ensureSynchronized();
-		await waitForSummary();
+			// wait for summary with redirect table
+			await provider.ensureSynchronized();
+			await waitForSummary();
 
-		// should be able to load entirely offline
-		const stashBlob = await getPendingOps(provider, true);
-		await loadOffline(provider, { url }, stashBlob);
-	});
+			// should be able to load entirely offline
+			const stashBlob = await getPendingOps(provider, true);
+			await loadOffline(provider, { url }, stashBlob);
+		},
+	);
 
 	it("stashed changes with blobs", async function () {
 		const container = await loadOffline(provider, { url });
@@ -1354,53 +1367,61 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		);
 	});
 
-	it("not expired stashed blobs", async function () {
-		if (provider.driver.type === "tinylicious" || provider.driver.type === "t9s") {
-			this.skip();
-		}
-		const container = await loadOffline(provider, { url });
-		const dataStore = await requestFluidObject<ITestFluidObject>(
-			container.container,
-			"default",
-		);
-		const map = await dataStore.getSharedObject<SharedMap>(mapId);
+	itSkipsFailureOnSpecificDrivers(
+		"not expired stashed blobs",
+		// We've seen this fail a few times against local server with a timeout
+		// TODO: AB#5483
+		["local"],
+		async function () {
+			// This test was not designed for t9s. Hard skip for that driver.
+			if (provider.driver.type === "tinylicious" || provider.driver.type === "t9s") {
+				this.skip();
+			}
 
-		// Call uploadBlob() while offline to get local ID handle, and generate an op referencing it
-		const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 1", "utf8"));
+			const container = await loadOffline(provider, { url });
+			const dataStore = await requestFluidObject<ITestFluidObject>(
+				container.container,
+				"default",
+			);
+			const map = await dataStore.getSharedObject<SharedMap>(mapId);
 
-		container.connect();
-		await waitForDataStoreRuntimeConnection(dataStore.runtime);
+			// Call uploadBlob() while offline to get local ID handle, and generate an op referencing it
+			const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 1", "utf8"));
 
-		const stashedChangesP = container.container.closeAndGetPendingLocalState?.();
-		const handle = await handleP;
-		map.set("blob handle 1", handle);
-		const stashedChanges = await stashedChangesP;
-		assert.ok(stashedChanges);
-		const parsedChanges = JSON.parse(stashedChanges);
-		const pendingBlobs = parsedChanges.pendingRuntimeState.pendingAttachmentBlobs;
-		// verify we have a blob in pending upload array
-		assert.strictEqual(Object.keys(pendingBlobs).length, 1, "no pending blob");
+			container.connect();
+			await waitForDataStoreRuntimeConnection(dataStore.runtime);
 
-		const container3 = await loadOffline(provider, { url }, stashedChanges);
-		const dataStore3 = await requestFluidObject<ITestFluidObject>(
-			container3.container,
-			"default",
-		);
-		const map3 = await dataStore3.getSharedObject<SharedMap>(mapId);
-		container3.connect();
-		await waitForContainerConnection(container3.container, true);
-		await provider.ensureSynchronized();
+			const stashedChangesP = container.container.closeAndGetPendingLocalState?.();
+			const handle = await handleP;
+			map.set("blob handle 1", handle);
+			const stashedChanges = await stashedChangesP;
+			assert.ok(stashedChanges);
+			const parsedChanges = JSON.parse(stashedChanges);
+			const pendingBlobs = parsedChanges.pendingRuntimeState.pendingAttachmentBlobs;
+			// verify we have a blob in pending upload array
+			assert.strictEqual(Object.keys(pendingBlobs).length, 1, "no pending blob");
 
-		// Blob is uploaded and accessible by all clients
-		assert.strictEqual(
-			bufferToString(await map1.get("blob handle 1").get(), "utf8"),
-			"blob contents 1",
-		);
-		assert.strictEqual(
-			bufferToString(await map3.get("blob handle 1").get(), "utf8"),
-			"blob contents 1",
-		);
-	});
+			const container3 = await loadOffline(provider, { url }, stashedChanges);
+			const dataStore3 = await requestFluidObject<ITestFluidObject>(
+				container3.container,
+				"default",
+			);
+			const map3 = await dataStore3.getSharedObject<SharedMap>(mapId);
+			container3.connect();
+			await waitForContainerConnection(container3.container, true);
+			await provider.ensureSynchronized();
+
+			// Blob is uploaded and accessible by all clients
+			assert.strictEqual(
+				bufferToString(await map1.get("blob handle 1").get(), "utf8"),
+				"blob contents 1",
+			);
+			assert.strictEqual(
+				bufferToString(await map3.get("blob handle 1").get(), "utf8"),
+				"blob contents 1",
+			);
+		},
+	);
 
 	it("offline attach", async function () {
 		const newMapId = "newMap";
@@ -1628,6 +1649,42 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		assert.strictEqual(counter2.value, 5);
 		// remote value is what we expect
 		assert.strictEqual(counter1.value, 5);
+	});
+
+	it("applies stashed ops with no saved ops", async function () {
+		// wait for summary
+		await new Promise<void>((resolve) =>
+			container1.on("op", (op) => {
+				if (op.type === "summaryAck") {
+					resolve();
+				}
+			}),
+		);
+
+		// avoid our join op being saved
+		const headers: IRequestHeader = { [LoaderHeader.loadMode]: { deltaConnection: "none" } };
+		const container: IContainerExperimental = await loader.resolve({ url, headers });
+		const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
+		const map = await dataStore.getSharedObject<SharedMap>(mapId);
+		// generate ops with RSN === summary SN
+		map.set(testKey, testValue);
+		const stashBlob = await container.closeAndGetPendingLocalState?.();
+		assert(stashBlob);
+		const pendingState = JSON.parse(stashBlob);
+		// make sure the container loaded from summary and we have no saved ops
+		assert.strictEqual(pendingState.savedOps.length, 0);
+		assert(
+			pendingState.pendingRuntimeState.pending.pendingStates[0].referenceSequenceNumber > 0,
+		);
+
+		// load container with pending ops, which should resend the op not sent by previous container
+		const container2 = await loader.resolve({ url }, stashBlob);
+		const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+		await waitForContainerConnection(container2);
+		await provider.ensureSynchronized();
+		assert.strictEqual(map1.get(testKey), testValue);
+		assert.strictEqual(map2.get(testKey), testValue);
 	});
 });
 

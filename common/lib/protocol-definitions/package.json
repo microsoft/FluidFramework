@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/protocol-definitions",
-	"version": "3.0.0",
+	"version": "3.1.0",
 	"description": "Fluid protocol definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -23,7 +23,7 @@
 		"ci:build:docs": "api-extractor run --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
 		"ci:test": "echo No test for this package",
 		"ci:test:coverage": "echo No test for this package",
-		"clean": "rimraf --glob _api-extractor-temp dist lib *.tsbuildinfo *.build.log",
+		"clean": "rimraf --glob '_api-extractor-temp' 'dist' 'lib' '*.tsbuildinfo' '*.build.log'",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -40,11 +40,11 @@
 		"@fluidframework/common-definitions": "^1.0.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.23.0",
+		"@fluid-tools/build-cli": "^0.22.0",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.23.0",
+		"@fluidframework/build-tools": "^0.22.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/protocol-definitions-previous": "npm:@fluidframework/protocol-definitions@1.1.0",
+		"@fluidframework/protocol-definitions-previous": "npm:@fluidframework/protocol-definitions@2.0.0",
 		"@microsoft/api-extractor": "^7.22.2",
 		"@rushstack/eslint-config": "^2.5.1",
 		"concurrently": "^6.2.0",
@@ -80,42 +80,6 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"InterfaceDeclaration_IDocumentAttributes": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_IConnected": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_ISequencedDocumentAugmentedMessage": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_ISequencedDocumentMessage": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_ISequencedDocumentSystemMessage": {
-				"backCompat": false
-			},
-			"RemovedInterfaceDeclaration_IHelpMessage": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedInterfaceDeclaration_IQueueMessage": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"EnumDeclaration_MessageType": {
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_IQuorum": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_IQuorumClients": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_IQuorumProposals": {
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

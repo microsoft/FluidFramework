@@ -18,7 +18,7 @@ import {
 } from "../../../core";
 import { FieldKinds, singleTextCursor } from "../../../feature-libraries";
 import { brand } from "../../../util";
-import { ISharedTree } from "../../../shared-tree";
+import { SharedTree, ISharedTreeView } from "../../../shared-tree";
 import { namedTreeSchema } from "../../utils";
 
 export const initialTreeState: JsonableTree = {
@@ -48,14 +48,14 @@ export const testSchema: SchemaData = {
 	rootFieldSchema,
 };
 
-export const onCreate = (tree: ISharedTree) => {
+export const onCreate = (tree: SharedTree) => {
 	tree.storedSchema.update(testSchema);
-	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
+	const field = tree.view.editor.sequenceField({ parent: undefined, field: rootFieldKey });
 	field.insert(0, singleTextCursor(initialTreeState));
 };
 
 export function validateAnchors(
-	tree: ISharedTree,
+	tree: ISharedTreeView,
 	anchors: ReadonlyMap<Anchor, [UpPath, Value]>,
 	checkPaths: boolean,
 ) {
@@ -71,7 +71,7 @@ export function validateAnchors(
 	}
 }
 
-export function createAnchors(tree: ISharedTree): Map<Anchor, [UpPath, Value]> {
+export function createAnchors(tree: ISharedTreeView): Map<Anchor, [UpPath, Value]> {
 	const anchors: Map<Anchor, [UpPath, Value]> = new Map();
 	const cursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, cursor);

@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Timer } from "@fluidframework/common-utils";
-import { LazyPromise } from "@fluidframework/core-utils";
+import { LazyPromise, Timer } from "@fluidframework/core-utils";
 import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import {
 	gcTreeKey,
@@ -13,11 +12,7 @@ import {
 	ISummarizeResult,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import {
-	ReadAndParseBlob,
-	createResponseError,
-	responseToException,
-} from "@fluidframework/runtime-utils";
+import { createResponseError, responseToException } from "@fluidframework/runtime-utils";
 import {
 	createChildLogger,
 	createChildMonitoringContext,
@@ -33,7 +28,7 @@ import {
 	RuntimeHeaders,
 } from "../containerRuntime";
 import { ClientSessionExpiredError } from "../error";
-import { RefreshSummaryResult } from "../summary";
+import { IRefreshSummaryResult } from "../summary";
 import { generateGCConfigs } from "./gcConfigs";
 import {
 	GCNodeType,
@@ -584,14 +579,17 @@ export class GarbageCollector implements IGarbageCollector {
 
 	/**
 	 * Runs the GC Mark phase. It does the following:
+	 *
 	 * 1. Marks all referenced nodes in this run by clearing tracking for them.
+	 *
 	 * 2. Marks unreferenced nodes in this run by starting tracking for them.
+	 *
 	 * 3. Calls the runtime to update nodes that were marked referenced.
 	 *
 	 * @param gcResult - The result of the GC run on the gcData.
 	 * @param allReferencedNodeIds - Nodes referenced in this GC run + referenced between previous and current GC run.
 	 * @param currentReferenceTimestampMs - The timestamp to be used for unreferenced nodes' timestamp.
-	 * @returns - A list of sweep ready nodes, i.e., nodes that ready to be deleted.
+	 * @returns A list of sweep ready nodes, i.e., nodes that ready to be deleted.
 	 */
 	private runMarkPhase(
 		gcResult: IGCResult,
@@ -650,7 +648,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 * @param sweepReadyNodes - List of nodes that are sweep ready.
 	 * @param currentReferenceTimestampMs - The timestamp to be used for unreferenced nodes' timestamp.
 	 * @param logger - The logger to be used to log any telemetry.
-	 * @returns - A list of nodes that have been deleted.
+	 * @returns A list of nodes that have been deleted.
 	 */
 	private runSweepPhase(
 		gcResult: IGCResult,
@@ -729,7 +727,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 * This function identifies nodes that were referenced since the last run.
 	 * If these nodes are currently unreferenced, they will be assigned new unreferenced state by the current run.
 	 *
-	 * @returns - a list of all nodes referenced from the last local summary until now.
+	 * @returns A list of all nodes referenced from the last local summary until now.
 	 */
 	private findAllNodesReferencedBetweenGCs(
 		currentGCData: IGarbageCollectionData,
@@ -847,40 +845,10 @@ export class GarbageCollector implements IGarbageCollector {
 	}
 
 	/**
-	 * Called to refresh the latest summary state. This happens when either a pending summary is acked or a snapshot
-	 * is downloaded and should be used to update the state.
+	 * Called to refresh the latest summary state. This happens when either a pending summary is acked.
 	 */
-	public async refreshLatestSummary(
-		proposalHandle: string | undefined,
-		result: RefreshSummaryResult,
-		readAndParseBlob: ReadAndParseBlob,
-	): Promise<void> {
-		const latestSnapshotData = await this.summaryStateTracker.refreshLatestSummary(
-			proposalHandle,
-			result,
-			readAndParseBlob,
-		);
-
-		// If the latest summary was updated but it was not tracked by this client, our state needs to be updated from
-		// this snapshot data.
-		if (this.shouldRunGC && result.latestSummaryUpdated && !result.wasSummaryTracked) {
-			// The current reference timestamp should be available if we are refreshing state from a snapshot. There has
-			// to be at least one op (summary op / ack, if nothing else) if a snapshot was taken.
-			const currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs();
-			if (currentReferenceTimestampMs === undefined) {
-				throw DataProcessingError.create(
-					"No reference timestamp when updating GC state from snapshot",
-					"refreshLatestSummary",
-					undefined,
-					{
-						proposalHandle,
-						summaryRefSeq: result.summaryRefSeq,
-						gcConfigs: JSON.stringify(this.configs),
-					},
-				);
-			}
-			this.updateStateFromSnapshotData(latestSnapshotData, currentReferenceTimestampMs);
-		}
+	public async refreshLatestSummary(result: IRefreshSummaryResult): Promise<void> {
+		return this.summaryStateTracker.refreshLatestSummary(result);
 	}
 
 	/**

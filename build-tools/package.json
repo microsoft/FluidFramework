@@ -44,12 +44,12 @@
 		"test:coverage": "c8 npm run test:mocha:report",
 		"test:mocha": "pnpm run -r --no-sort --stream --no-bail test:mocha --color",
 		"test:mocha:bail": "pnpm run -r --no-sort --stream test:mocha",
-		"test:mocha:report": "pnpm run -r --no-sort --stream --no-bail test:mocha:multireport -- --timeout 4s",
+		"test:mocha:report": "pnpm run -r --no-sort --stream --no-bail test:mocha:report -- --timeout 4s",
 		"tsc": "fluid-build --task tsc",
 		"tsc:fast": "fluid-build --root . --task tsc --worker",
 		"watch": "pnpm run -r --parallel tsc --watch"
 	},
-	"nyc": {
+	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [],
@@ -73,7 +73,6 @@
 		"@microsoft/api-extractor": "^7.36.1",
 		"c8": "^7.14.0",
 		"commitizen": "^4.3.0",
-		"concurrently": "^7.6.0",
 		"conventional-changelog-cli": "^2.2.2",
 		"conventional-changelog-conventionalcommits": "^5.0.0",
 		"copyfiles": "^2.4.1",

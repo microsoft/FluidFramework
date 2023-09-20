@@ -30,8 +30,10 @@ export {
 	FlushableBinderOptions,
 	FlushableDataBinder,
 	MatchPolicy,
+	SubtreePolicy,
 	BindSyntaxTree,
 	indexSymbol,
+	BindPolicy,
 	BindTree,
 	BindTreeDefault,
 	DownPath,
@@ -57,4 +59,4 @@ export {
 
 export { EditableTreeContext, getEditableTreeContext } from "./editableTreeContext";
 
-export { isPrimitive } from "./utilities";
+export { isPrimitive, treeStatusFromPath } from "./utilities";

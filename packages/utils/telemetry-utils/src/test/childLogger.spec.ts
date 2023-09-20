@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
 	LogLevel,
 } from "@fluidframework/core-interfaces";
-import { ChildLogger, createChildLogger } from "../logger";
+import { ChildLogger, createChildLogger, createMultiSinkLogger } from "../logger";
+import { MockLogger } from "../mockLogger";
 
 describe("ChildLogger", () => {
 	it("Properties & Getters Propagate", () => {
@@ -243,5 +244,30 @@ describe("ChildLogger", () => {
 		sent = false;
 		childLogger1.send({ category: "generic", eventName: "testEvent" }, LogLevel.verbose);
 		assert(!sent, "event should not be sent");
+	});
+
+	it("should be able to send events correctly according to loglevel if multisink logger is used inside childlogger", () => {
+		let sent = false;
+		const logger1: ITelemetryBaseLogger = {
+			send(event: ITelemetryBaseEvent): void {
+				if (event.eventName !== "testEvent") {
+					throw new Error("unexpected event");
+				}
+				sent = true;
+			},
+			minLogLevel: LogLevel.default,
+		};
+		const multiSinkLogger = createMultiSinkLogger({
+			loggers: [logger1, new MockLogger(LogLevel.error)],
+		});
+		const childLogger1 = createChildLogger({
+			logger: multiSinkLogger,
+		});
+
+		childLogger1.send({ category: "generic", eventName: "testEvent" }, LogLevel.verbose);
+		assert(!sent, "verbose event should not be sent");
+
+		childLogger1.send({ category: "generic", eventName: "testEvent" }, LogLevel.default);
+		assert(sent, "verbose event should be sent");
 	});
 });

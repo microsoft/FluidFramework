@@ -5,7 +5,8 @@
 
 /* eslint-disable no-bitwise */
 
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
 import {
 	addProperties,
@@ -21,6 +22,7 @@ import {
 	reservedRangeLabelsKey,
 	UnassignedSequenceNumber,
 	DetachedReferencePosition,
+	UniversalSequenceNumber,
 } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { LoggingError, UsageError } from "@fluidframework/telemetry-utils";
@@ -611,7 +613,7 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * All intervals which are part of this collection will be added to the index, and the index will automatically
 	 * be updated when this collection updates due to local or remote changes.
 	 *
-	 * @remarks - After attaching an index to an interval collection, applications should typically store this
+	 * @remarks After attaching an index to an interval collection, applications should typically store this
 	 * index somewhere in their in-memory data model for future reference and querying.
 	 */
 	attachIndex(index: IntervalIndex<TInterval>): void;
@@ -620,7 +622,7 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * All intervals which are part of this collection will be removed from the index, and updates to this collection
 	 * due to local or remote changes will no longer incur updates to the index.
 	 *
-	 * @returns - Return false if the target index cannot be found in the indexes, otherwise remove all intervals in the index and return true
+	 * @returns `false` if the target index cannot be found in the indexes, otherwise remove all intervals in the index and return `true`.
 	 */
 	detachIndex(index: IntervalIndex<TInterval>): boolean;
 	/**
@@ -636,8 +638,8 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * @param intervalType - type of the interval. All intervals are SlideOnRemove. Intervals may not be Transient.
 	 * @param props - properties of the interval
 	 * @param stickiness - {@link (IntervalStickiness:type)} to apply to the added interval.
-	 * @returns - the created interval
-	 * @remarks - See documentation on {@link SequenceInterval} for comments on interval endpoint semantics: there are subtleties
+	 * @returns The created interval
+	 * @remarks See documentation on {@link SequenceInterval} for comments on interval endpoint semantics: there are subtleties
 	 * with how the current half-open behavior is represented.
 	 */
 	add(
@@ -1068,6 +1070,10 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		);
 
 		if (interval) {
+			if (!this.isCollaborating && interval instanceof SequenceInterval) {
+				setSlideOnRemove(interval.start);
+				setSlideOnRemove(interval.end);
+			}
 			const serializedInterval = {
 				end: intEnd,
 				intervalType: type,
@@ -1151,8 +1157,11 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 		const interval = this.getIntervalById(id);
 		if (interval) {
-			// Pass Unassigned as the sequence number to indicate that this is a local op that is waiting for an ack.
-			const deltaProps = interval.addProperties(props, true, UnassignedSequenceNumber);
+			const deltaProps = interval.addProperties(
+				props,
+				true,
+				this.isCollaborating ? UnassignedSequenceNumber : UniversalSequenceNumber,
+			);
 			const serializedInterval: ISerializedInterval = interval.serialize();
 
 			// Emit a change op that will only change properties. Add the ID to
@@ -1188,6 +1197,10 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			if (!newInterval) {
 				return undefined;
 			}
+			if (!this.isCollaborating && newInterval instanceof SequenceInterval) {
+				setSlideOnRemove(newInterval.start);
+				setSlideOnRemove(newInterval.end);
+			}
 			const serializedInterval: SerializedIntervalDelta = interval.serialize();
 			serializedInterval.start = start;
 			serializedInterval.end = end;
@@ -1206,7 +1219,14 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		return undefined;
 	}
 
+	private get isCollaborating(): boolean {
+		return this.client?.getCollabWindow().collaborating ?? false;
+	}
+
 	private addPendingChange(id: string, serializedInterval: SerializedIntervalDelta) {
+		if (!this.isCollaborating) {
+			return;
+		}
 		if (serializedInterval.start !== undefined) {
 			this.addPendingChangeHelper(id, this.pendingChangesStart, serializedInterval);
 		}
@@ -1456,13 +1476,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		return value;
 	}
 
-	private setSlideOnRemove(lref: LocalReferencePosition) {
-		let refType = lref.refType;
-		refType = refType & ~ReferenceType.StayOnRemove;
-		refType = refType | ReferenceType.SlideOnRemove;
-		lref.refType = refType;
-	}
-
 	private ackInterval(interval: TInterval, op: ISequencedDocumentMessage) {
 		// Only SequenceIntervals need potential sliding
 		if (!(interval instanceof SequenceInterval)) {
@@ -1484,11 +1497,11 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		const hasPendingEndChange = this.hasPendingChangeEnd(id);
 
 		if (!hasPendingStartChange) {
-			this.setSlideOnRemove(interval.start);
+			setSlideOnRemove(interval.start);
 		}
 
 		if (!hasPendingEndChange) {
-			this.setSlideOnRemove(interval.end);
+			setSlideOnRemove(interval.end);
 		}
 
 		const needsStartUpdate = newStart !== undefined && !hasPendingStartChange;
@@ -1760,6 +1773,13 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 		return this.localCollection.endIntervalIndex.nextInterval(pos);
 	}
+}
+
+function setSlideOnRemove(lref: LocalReferencePosition) {
+	let refType = lref.refType;
+	refType = refType & ~ReferenceType.StayOnRemove;
+	refType = refType | ReferenceType.SlideOnRemove;
+	lref.refType = refType;
 }
 
 /**

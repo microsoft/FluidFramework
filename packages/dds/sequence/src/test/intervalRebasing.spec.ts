@@ -26,7 +26,7 @@ function constructClients(
 		);
 		const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 		const services: IChannelServices = {
-			deltaConnection: containerRuntime.createDeltaConnection(),
+			deltaConnection: dataStoreRuntime.createDeltaConnection(),
 			objectStorage: new MockStorage(),
 		};
 
