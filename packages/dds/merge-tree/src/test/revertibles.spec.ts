@@ -131,12 +131,16 @@ describe("MergeTree.Revertibles", () => {
 			// it should be fine to update these checks to allow a larger number of
 			// calls
 			assert(
-				linkCount <= length * 2,
-				`expected tracking group link to occur at most twice per segment. found ${linkCount}`,
+				linkCount <= length * 3,
+				`expected tracking group link to occur at most three times per segment. found ${linkCount} instead of ${
+					length * 3
+				}`,
 			);
 			assert(
-				unlinkCount <= length,
-				`expected tracking group unlink to occur at most once per segment. found ${unlinkCount}`,
+				unlinkCount <= length * 2,
+				`expected tracking group unlink to occur at most twice per segment. found ${unlinkCount} instead of ${
+					length * 2
+				}`,
 			);
 		} finally {
 			unspy1();

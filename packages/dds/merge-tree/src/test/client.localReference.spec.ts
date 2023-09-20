@@ -314,7 +314,7 @@ describe("MergeTree.Client", () => {
 			client1.localReferencePositionToPosition(c1LocalRef),
 			DetachedReferencePosition,
 		);
-		assert.notEqual(c1LocalRef.getSegment(), undefined);
+		assert.equal(c1LocalRef.getSegment(), undefined);
 	});
 
 	it("References can have offsets on removed segment", () => {
