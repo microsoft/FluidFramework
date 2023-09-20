@@ -5,7 +5,13 @@
 
 import { ITreeCursorSynchronous, forEachField, forEachNode } from "../../../core";
 import { FluidSerializableReadOnly } from "../../contextuallyTyped";
-import { EncodedChunk, version, EncodedTreeShape, EncodedNestedArray } from "./format";
+import {
+	EncodedChunk,
+	version,
+	EncodedTreeShape,
+	EncodedNestedArray,
+	validateFormat,
+} from "./format";
 import { ShapeIndex } from "./formatGeneric";
 
 /**
@@ -18,12 +24,14 @@ import { ShapeIndex } from "./formatGeneric";
  */
 export function uncompressedEncode(cursor: ITreeCursorSynchronous): EncodedChunk {
 	const rootField = encodeSequence(cursor);
-	return {
+	const encoded: EncodedChunk = {
 		version,
 		identifiers: [],
 		shapes: [{ c: anyTreeShape }, { a: anyArray }],
 		data: [arrayIndex, rootField],
 	};
+	validateFormat(encoded, EncodedChunk);
+	return encoded;
 }
 
 const treeIndex: ShapeIndex = 0;

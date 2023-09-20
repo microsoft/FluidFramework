@@ -27,6 +27,7 @@ import {
 	EncodedValueShape,
 	EncodedAnyShape,
 	EncodedNestedArray,
+	validateFormat,
 } from "./format";
 
 /**
@@ -44,7 +45,9 @@ export function compressedEncode(
 
 	// Populate buffer, including shape and identifier references
 	anyFieldEncoder.encodeField(cursor, cache, buffer);
-	return handleShapesAndIdentifiers(version, buffer);
+	const encoded: EncodedChunk = handleShapesAndIdentifiers(version, buffer);
+	validateFormat(encoded, EncodedChunk);
+	return encoded;
 }
 
 export type BufferFormat = BufferFormatGeneric<EncodedChunkShape>;
