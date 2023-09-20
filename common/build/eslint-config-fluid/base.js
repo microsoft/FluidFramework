@@ -87,7 +87,6 @@ module.exports = {
 		"@typescript-eslint/no-unnecessary-qualifier": "error",
 		"@typescript-eslint/no-unnecessary-type-arguments": "error",
 		"@typescript-eslint/no-unnecessary-type-assertion": "error",
-		"@typescript-eslint/no-use-before-declare": "off",
 		"@typescript-eslint/no-var-requires": "error",
 		"@typescript-eslint/object-curly-spacing": "off",
 		"@typescript-eslint/prefer-for-of": "error",
@@ -170,7 +169,6 @@ module.exports = {
 		//            significant performance regression [node 14 x64].
 		"unicorn/no-for-loop": "off",
 		"unicorn/no-new-buffer": "error",
-		"unicorn/no-unsafe-regex": "error",
 
 		// eslint
 		"arrow-body-style": "off",
@@ -246,7 +244,6 @@ module.exports = {
 			},
 			"ForInStatement",
 		],
-		"no-return-await": "error",
 		"no-sequences": "error",
 		"no-shadow": "off", // Superseded by @typescript-eslint/no-shadow
 		"no-sparse-arrays": "error",
@@ -267,7 +264,7 @@ module.exports = {
 		"one-var": ["error", "never"],
 		"padded-blocks": ["error", "never"],
 		"padding-line-between-statements": [
-			"error",
+			"off",
 			{
 				blankLine: "always",
 				prev: "*",

@@ -282,9 +282,6 @@
         "@typescript-eslint/no-unused-vars": [
             "off"
         ],
-        "@typescript-eslint/no-use-before-declare": [
-            "off"
-        ],
         "@typescript-eslint/no-use-before-define": [
             "off"
         ],
@@ -899,9 +896,6 @@
             },
             "ForInStatement"
         ],
-        "no-return-await": [
-            "error"
-        ],
         "no-self-assign": [
             "error"
         ],
@@ -1028,7 +1022,7 @@
             "never"
         ],
         "padding-line-between-statements": [
-            "error",
+            "off",
             {
                 "blankLine": "always",
                 "next": "return",
@@ -1341,9 +1335,6 @@
             "error"
         ],
         "unicorn/no-unreadable-iife": [
-            "error"
-        ],
-        "unicorn/no-unsafe-regex": [
             "error"
         ],
         "unicorn/no-unused-properties": [
