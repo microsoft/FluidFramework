@@ -8,10 +8,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable unicorn/consistent-function-scoping */
 /* eslint-disable unicorn/no-null */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import sinon from "sinon";
 import { v4 as uuid } from "uuid";
 import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/core-interfaces";

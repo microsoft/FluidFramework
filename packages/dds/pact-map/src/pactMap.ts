@@ -5,6 +5,8 @@
 
 /* eslint-disable unicorn/numeric-separators-style */
 
+// False positive: this is an import from the `events` package, not from Node.
+// eslint-disable-next-line unicorn/prefer-node-protocol
 import { EventEmitter } from "events";
 
 import { assert } from "@fluidframework/core-utils";

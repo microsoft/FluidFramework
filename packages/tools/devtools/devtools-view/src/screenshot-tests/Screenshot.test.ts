@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import Path from "path";
+import Path from "node:path";
 
 import { decodeComponentId, RPCs } from "@previewjs/api";
 import { createChromelessWorkspace } from "@previewjs/chromeless";

@@ -630,8 +630,7 @@ export class PerformanceEvent {
 			this.reportEvent("start");
 		}
 
-		// eslint-disable-next-line unicorn/no-null
-		if (typeof window === "object" && window != null && window.performance?.mark) {
+		if (typeof window === "object" && window?.performance?.mark) {
 			this.startMark = `${event.eventName}-start`;
 			window.performance.mark(this.startMark);
 		}
@@ -811,7 +810,7 @@ export const tagData = <
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 	Object.entries(values)
 		.filter((e) => e[1] !== undefined)
-		// eslint-disable-next-line unicorn/no-array-reduce, unicorn/prefer-object-from-entries
+		// eslint-disable-next-line unicorn/no-array-reduce
 		.reduce((pv, cv) => {
 			const [key, value] = cv;
 			// The ternary form is less legible in this case.

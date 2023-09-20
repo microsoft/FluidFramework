@@ -1829,11 +1829,11 @@ export namespace Utils {
 	 *
 	 * ```typescript
 	 * {
-	 *   entry: {},
-	 *   nested: {
-	 *     entry2: {}
-	 *     entry3: {}
-	 *   }
+	 * entry: {},
+	 * nested: {
+	 * entry2: {}
+	 * entry3: {}
+	 * }
 	 * }
 	 * ```
 	 *
@@ -1934,11 +1934,7 @@ export namespace Utils {
 				if (_isUserData(k)) {
 					thisLevel[k] = v;
 				} else {
-					if (v instanceof Map) {
-						thisLevel[k] = _convertMapToLevel(v);
-					} else {
-						thisLevel[k] = v;
-					}
+					thisLevel[k] = v instanceof Map ? _convertMapToLevel(v) : v;
 				}
 			}
 			return thisLevel;
@@ -1982,7 +1978,7 @@ export namespace Utils {
 				let nestedSubPath;
 				if (
 					changesetSegment.indexOf(".") !== -1 ||
-					(changesetSegment.length > 0 && changesetSegment[0] === '"')
+					(changesetSegment.length > 0 && changesetSegment.startsWith('"'))
 				) {
 					nestedSubPath = currentSubPaths;
 					const tokenized = PathHelper.tokenizePathString(changesetSegment);
@@ -1992,7 +1988,7 @@ export namespace Utils {
 						currentTokenizedPath.push(segment);
 						if (
 							in_options.escapeLeadingDoubleUnderscore &&
-							segment[0] === "_" &&
+							segment.startsWith("_") &&
 							segment[1] === "_"
 						) {
 							segment = `_${segment}`;
@@ -2016,7 +2012,7 @@ export namespace Utils {
 					currentTokenizedPath.push(changesetSegment);
 					if (
 						in_options.escapeLeadingDoubleUnderscore &&
-						changesetSegment[0] === "_" &&
+						changesetSegment.startsWith("_") &&
 						changesetSegment[1] === "_"
 					) {
 						changesetSegment = `_${changesetSegment}`;
@@ -2275,7 +2271,7 @@ export namespace Utils {
 				if (
 					contractedPathSegment &&
 					(lastSegment.indexOf(".") !== -1 ||
-						(lastSegment.length > 0 && lastSegment[0] === '"')) &&
+						(lastSegment.length > 0 && lastSegment.startsWith('"'))) &&
 					PathHelper.tokenizePathString(lastSegment).length > 1
 				) {
 					toPurge[context.getFullPath()] = {

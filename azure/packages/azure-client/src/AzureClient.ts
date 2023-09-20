@@ -261,7 +261,6 @@ export class AzureClient {
 			if (container.resolvedUrl === undefined) {
 				throw new Error("Resolved Url not available on attached container");
 			}
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return container.resolvedUrl.id;
 		};
 		const fluidContainer = new FluidContainer(container, rootDataObject);

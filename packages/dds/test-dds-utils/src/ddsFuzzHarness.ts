@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import path from "path";
-import { mkdirSync, readFileSync } from "fs";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
+import { mkdirSync, readFileSync } from "node:fs";
+import path from "node:path";
+
 import {
 	BaseFuzzTestState,
 	createFuzzDescribe,
