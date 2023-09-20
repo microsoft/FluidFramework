@@ -296,6 +296,9 @@ export class LazyMap<TSchema extends MapSchema>
 		makePropertyEnumerableOwn(this, "asObject", LazyMap.prototype);
 	}
 
+	/**
+	 * {@inheritDoc MapNode.has}
+	 */
 	public has(key: FieldKey): boolean {
 		return this.tryGetField(key) !== undefined;
 	}
