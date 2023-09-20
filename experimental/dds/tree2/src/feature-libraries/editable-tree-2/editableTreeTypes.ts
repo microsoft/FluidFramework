@@ -54,7 +54,7 @@ export interface Tree<TSchema = unknown> extends Iterable<Tree> {
 	 * Gets the {@link TreeStatus} of this tree.
 	 *
 	 * @remarks
-	 * For non-root fields, this is the the status of the parent node, since fields do not have a separate lifetime.
+	 * For non-root fields, this is the status of the parent node, since fields do not have a separate lifetime.
 	 */
 	treeStatus(): TreeStatus;
 }
