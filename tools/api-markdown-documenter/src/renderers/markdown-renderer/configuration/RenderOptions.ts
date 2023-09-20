@@ -48,9 +48,9 @@ import {
  *
  * @remarks
  *
- * Note: in order to be complete, this *must* include an entry for all types enumerated under {@link DocumentationNodeType}.
- *
- * We supply a suite of default renderers for all of these.
+ * The system supplies a suite of default renderers for all nodes of types {@link DocumentationNodeType}.
+ * For any other custom {@link DocumentationNode}s, renderers must be specified or the system will throw an error
+ * when rendering an unknown node kind.
  *
  * @public
  */
