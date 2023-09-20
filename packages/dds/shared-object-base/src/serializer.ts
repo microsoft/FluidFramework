@@ -185,7 +185,7 @@ export class FluidSerializer implements IFluidSerializer {
 	// Otherwise returns the original 'value'.  Used by 'encode()' and 'stringify()'.
 	private readonly encodeValue = (value: FluidSerializableReadOnly, bind: IFluidHandle) => {
 		// Detect if 'value' is an IFluidHandle.
-		// To help detect is the limitation of this old handle detection was impacting behavior, keep it around for now:
+		// To help detect if the limitation of this old handle detection was impacting behavior, keep it around for now:
 		const isHandleLegacy = (value as Partial<IFluidHandle>)?.IFluidHandle !== undefined;
 		const isHandle = isFluidHandle(value);
 		assert(isHandleLegacy === isHandle, "new isFluidHandle should not change existing policy.");
