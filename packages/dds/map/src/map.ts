@@ -116,6 +116,50 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	}
 
 	/**
+	 * Test API with comprehensive TSDoc documentation.
+	 *
+	 * @remarks
+	 * This API is designed to showcase all possible features of TSDoc and API Extractor.
+	 *
+	 * @defaultValue 'N/A'
+	 * @decorator TEST
+	 * @deprecated Use another API instead.
+	 * @eventProperty
+	 * @example
+	 * ```typescript
+	 * const result = testTSDocBellsAndWhistles<string>();
+	 * ```
+	 * @example
+	 * ```javascript
+	 * const result = testTSDocBellsAndWhistles();
+	 * ```
+	 *
+	 * @see {@link https://example.com | Example URL}
+	 * @override
+	 * @packageDocumentation
+	 * @param param1 - Description of the first parameter.
+	 * @privateRemarks
+	 * This is private and should not appear in public documentation.
+	 * @readonly
+	 * @returns Does not return anything.
+	 * @sealed
+	 * @see {@link https://example.com | Another Example URL}
+	 * @throws Throws an error if something goes wrong.
+	 * @typeParam T - A generic type parameter.
+	 * @experimental
+	 * @virtual
+	 *
+	 * Release Tags choose one
+	 * \@beta
+	 * \@internal
+	 * \@alpha
+	 * @public
+	 */
+	public testTSDocBellsAndWhistles1<T>(param1: string): void {
+		// function implementation goes here
+	}
+
+	/**
 	 * String representation for the class.
 	 */
 	public readonly [Symbol.toStringTag]: string = "SharedMap";

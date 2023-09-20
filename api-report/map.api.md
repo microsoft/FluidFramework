@@ -293,6 +293,8 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     get size(): number;
     // @internal (undocumented)
     protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
+    // @sealed @virtual @override @eventProperty @deprecated
+    testTSDocBellsAndWhistles1<T>(param1: string): void;
     values(): IterableIterator<any>;
 }
 

@@ -129,6 +129,9 @@ export { IUser }
 export { ScopeType }
 
 // @alpha @sealed @virtual @override @eventProperty @deprecated
-export function testTSDocBellsAndWhistles<T>(param1: string): void;
+export interface testTSDocBellsAndWhistles<T = unknown> {
+    // (undocumented)
+    bell: string;
+}
 
 ```
