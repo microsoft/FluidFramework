@@ -1344,7 +1344,8 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
     readonly asObject: {
         readonly [P in FieldKey]?: UnboxField<TSchema["mapFields"]>;
     };
-    get(key: FieldKey): TypedField<TSchema["mapFields"]>;
+    get(key: FieldKey): UnboxField<TSchema["mapFields"]>;
+    getBoxed(key: FieldKey): TypedField<TSchema["mapFields"]>;
 }
 
 // @alpha (undocumented)
