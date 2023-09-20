@@ -5,7 +5,7 @@
 
 export { Lumber } from "./lumber";
 export { LumberEventName } from "./lumberEventNames";
-export { Lumberjack } from "./lumberjack";
+export { Lumberjack, ILumberjackOptions } from "./lumberjack";
 export {
 	TestEngine1,
 	TestEngine2,
@@ -32,3 +32,9 @@ export {
 	BasePropertiesValidator,
 	LambdaSchemaValidator,
 } from "./schema";
+export {
+	ITelemetryContextProperties,
+	ITelemetryContext,
+	getGlobalTelemetryContext,
+	setGlobalTelemetryContext,
+} from "./telemetryContext";

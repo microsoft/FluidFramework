@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IsoBuffer } from '@fluidframework/common-utils';
+import { IsoBuffer } from '@fluid-internal/client-utils';
 import type { EditLog } from './EditLog';
 import type { ChangeInternal, EditChunkContents, FluidEditHandle } from './persisted-types';
 import type { SharedTree } from './SharedTree';

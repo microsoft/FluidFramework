@@ -4,7 +4,6 @@
  */
 
 // Used by public types, but not part of the desired API surface
-export { RecursiveTreeSchemaSpecification, RecursiveTreeSchema } from "./schemaBuilder";
 
 export { ObjectToMap, WithDefault, Unbrand, UnbrandList, ArrayToUnion } from "./typeUtils";
 
@@ -17,6 +16,9 @@ export {
 	StructSchemaSpecification,
 	MapSchemaSpecification,
 	LeafSchemaSpecification,
+	MapFieldSchema,
+	RecursiveTreeSchemaSpecification,
+	RecursiveTreeSchema,
 } from "./typedTreeSchema";
 
 export {

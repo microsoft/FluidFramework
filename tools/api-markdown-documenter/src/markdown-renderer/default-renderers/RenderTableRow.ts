@@ -35,13 +35,13 @@ function renderTableRowWithMarkdownSyntax(
 ): void {
 	writer.ensureNewLine(); // Ensure line break before new row
 	writer.write("| ");
-	for (let i = 0; i < node.children.length; i++) {
-		const child = node.children[i];
+	for (let childIndex = 0; childIndex < node.children.length; childIndex++) {
+		const child = node.children[childIndex];
 		renderNode(child, writer, {
 			...context,
 			insideTable: true,
 		});
-		writer.write(i === node.children.length - 1 ? " |" : " | ");
+		writer.write(childIndex === node.children.length - 1 ? " |" : " | ");
 	}
 	writer.ensureNewLine(); // Ensure line break after row
 }

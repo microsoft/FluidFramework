@@ -4,8 +4,9 @@
  */
 import * as path from "path";
 import * as ts from "typescript";
+import { sha256 } from "./hash";
 
-const defaultTscUtil = getTscUtil(ts);
+const defaultTscUtil = createTscUtil(ts);
 export const parseCommandLine = defaultTscUtil.parseCommandLine;
 export const findConfigFile = defaultTscUtil.findConfigFile;
 export const readConfigFile = defaultTscUtil.readConfigFile;
@@ -78,9 +79,11 @@ const incrementalOptions = [
 	"skipLibCheck",
 	"skipdefaultlibcheck",
 	"strict",
+	"strictBindCallApply",
+	"strictFunctionTypes",
 ].sort(); // sort it so that the result of the filter is sorted as well.
 
-export function filterIncrementalOptions(options: any) {
+function filterIncrementalOptions(options: any) {
 	const newOptions: any = {};
 	for (const key of incrementalOptions) {
 		if (options[key] !== undefined) {
@@ -90,11 +93,15 @@ export function filterIncrementalOptions(options: any) {
 	return newOptions;
 }
 
-export function convertToOptionsWithAbsolutePath(options: ts.CompilerOptions, cwd: string) {
+function convertOptionPaths(
+	options: ts.CompilerOptions,
+	base: string,
+	convert: (base: string, path: string) => string,
+) {
 	// Shallow clone 'CompilerOptions' before modifying.
 	const result = { ...options };
 
-	// Expand 'string' properties that potentially contain relative paths.
+	// Convert 'string' properties that potentially contain paths.
 	for (const key of [
 		"baseUrl",
 		"configFilePath",
@@ -105,28 +112,29 @@ export function convertToOptionsWithAbsolutePath(options: ts.CompilerOptions, cw
 	]) {
 		const value = result[key] as string;
 		if (value !== undefined) {
-			result[key] = path.resolve(cwd, value);
+			result[key] = convert(base, value);
 		}
 	}
 
-	// Expand 'string[]' properties that potentially contain relative paths.
+	// Convert 'string[]' properties that potentially contain paths.
 	for (const key of ["typeRoots"]) {
 		const value = result[key] as string[];
 		if (value !== undefined) {
 			// Note that this also shallow clones the array.
-			result[key] = value.map((relative) => path.resolve(cwd, relative));
+			result[key] = value.map((value) => convert(base, value));
 		}
 	}
 
 	return result;
 }
 
-// This is a duplicate of how tsc deal with case insenitive file system as keys (in tsBuildInfo)
+// This is a duplicate of how tsc deal with case insensitive file system as keys (in tsBuildInfo)
 function toLowerCase(x: string) {
 	return x.toLowerCase();
 }
 // eslint-disable-next-line no-useless-escape
 const fileNameLowerCaseRegExp = /[^\u0130\u0131\u00DFa-z0-9\\/:\-_\. ]+/g;
+
 function createGetCanonicalFileName(tsLib: typeof ts) {
 	return tsLib.sys.useCaseSensitiveFileNames
 		? (x: string) => x
@@ -135,10 +143,43 @@ function createGetCanonicalFileName(tsLib: typeof ts) {
 					? x.replace(fileNameLowerCaseRegExp, toLowerCase)
 					: x;
 }
-export const getCanonicalFileName = createGetCanonicalFileName(ts);
 
-export function getTscUtil(tsLib: typeof ts) {
+function createGetSourceFileVersion(tsLib: typeof ts) {
+	// The TypeScript compiler performs some light preprocessing of the source file
+	// text before calculating the file hashes that appear in *.tsbuildinfo.
+	//
+	// Our options are to either reach into the compiler internals, or duplicate
+	// this preprocessing in 'fluid-build'.  Both options are fragile, but since
+	// we're already calling into the TypeScript compiler, calling internals is
+	// convenient.
+	const maybeGetHash = tsLib["getSourceFileVersionAsHashFromText"];
+
+	if (!maybeGetHash) {
+		// This internal function is added 5.0+
+		if (parseInt(tsLib.versionMajorMinor.split(".")[0]) >= 5) {
+			console.warn(
+				`Warning: TypeScript compiler has changed.  Incremental builds likely broken.`,
+			);
+		}
+
+		// Return 'sha256' for compatibility with older versions of TypeScript while we're
+		// transitioning.
+		return sha256;
+	}
+
+	return (buffer: Buffer): string => {
+		return maybeGetHash(
+			{
+				createHash: sha256,
+			},
+			buffer.toString(),
+		);
+	};
+}
+
+function createTscUtil(tsLib: typeof ts) {
 	return {
+		tsLib,
 		parseCommandLine: (command: string) => {
 			// TODO: parse the command line for real, split space for now.
 			const args = command.split(" ");
@@ -177,7 +218,34 @@ export function getTscUtil(tsLib: typeof ts) {
 			}
 			return configFile.config;
 		},
-		convertToOptionsWithAbsolutePath,
+		filterIncrementalOptions,
+		convertOptionPaths,
 		getCanonicalFileName: createGetCanonicalFileName(tsLib),
+		getSourceFileVersion: createGetSourceFileVersion(tsLib),
 	};
+}
+
+export type TscUtil = ReturnType<typeof createTscUtil>;
+
+const tscUtilPathCache = new Map<string, TscUtil>();
+const tscUtilLibPathCache = new Map<string, TscUtil>();
+
+export function getTscUtils(path: string): TscUtil {
+	const tscUtilFromPath = tscUtilPathCache.get(path);
+	if (tscUtilFromPath) {
+		return tscUtilFromPath;
+	}
+
+	const tsPath = require.resolve("typescript", { paths: [path] });
+	const tscUtilFromLibPath = tscUtilLibPathCache.get(tsPath);
+	if (tscUtilFromLibPath) {
+		tscUtilPathCache.set(path, tscUtilFromLibPath);
+		return tscUtilFromLibPath;
+	}
+
+	const tsLib: typeof ts = require(tsPath);
+	const tscUtil = createTscUtil(tsLib);
+	tscUtilPathCache.set(path, tscUtil);
+	tscUtilLibPathCache.set(tsPath, tscUtil);
+	return tscUtil;
 }

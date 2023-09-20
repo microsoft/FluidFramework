@@ -6,7 +6,7 @@
 
 import { BaseSegment } from '@fluidframework/merge-tree';
 import { Client } from '@fluidframework/merge-tree';
-import { Deferred } from '@fluidframework/common-utils';
+import { Deferred } from '@fluidframework/core-utils';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
@@ -48,7 +48,7 @@ import { SharedObject } from '@fluidframework/shared-object-base';
 import { SlidingPreference } from '@fluidframework/merge-tree';
 import { SummarySerializer } from '@fluidframework/shared-object-base';
 import { TextSegment } from '@fluidframework/merge-tree';
-import { TypedEventEmitter } from '@fluidframework/common-utils';
+import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @alpha
 export function appendAddIntervalToRevertibles(interval: SequenceInterval, revertibles: SharedStringRevertible[]): SharedStringRevertible[];
@@ -144,25 +144,24 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval> ex
     attachIndex(index: IntervalIndex<TInterval>): void;
     change(id: string, start?: number, end?: number): TInterval | undefined;
     changeProperties(id: string, props: PropertySet): any;
-    // @deprecated (undocumented)
+    // (undocumented)
     CreateBackwardIteratorWithEndPosition(endPosition: number): Iterator<TInterval>;
-    // @deprecated (undocumented)
+    // (undocumented)
     CreateBackwardIteratorWithStartPosition(startPosition: number): Iterator<TInterval>;
-    // @deprecated (undocumented)
+    // (undocumented)
     CreateForwardIteratorWithEndPosition(endPosition: number): Iterator<TInterval>;
-    // @deprecated (undocumented)
+    // (undocumented)
     CreateForwardIteratorWithStartPosition(startPosition: number): Iterator<TInterval>;
     detachIndex(index: IntervalIndex<TInterval>): boolean;
-    // @deprecated (undocumented)
+    // (undocumented)
     findOverlappingIntervals(startPosition: number, endPosition: number): TInterval[];
-    // @deprecated
     gatherIterationResults(results: TInterval[], iteratesForward: boolean, start?: number, end?: number): void;
     // (undocumented)
     getIntervalById(id: string): TInterval | undefined;
     map(fn: (interval: TInterval) => void): void;
-    // @deprecated (undocumented)
+    // (undocumented)
     nextInterval(pos: number): TInterval | undefined;
-    // @deprecated (undocumented)
+    // (undocumented)
     previousInterval(pos: number): TInterval | undefined;
     removeIntervalById(id: string): TInterval | undefined;
 }
@@ -176,9 +175,9 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 
 // @public @sealed (undocumented)
 export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
-    // (undocumented)
+    // @deprecated (undocumented)
     compareEnds(a: TInterval, b: TInterval): number;
-    // (undocumented)
+    // @deprecated (undocumented)
     compareStarts?(a: TInterval, b: TInterval): number;
     // (undocumented)
     create(label: string, start: number | undefined, end: number | undefined, client: Client | undefined, intervalType: IntervalType, op?: ISequencedDocumentMessage, fromSnapshot?: boolean, stickiness?: IntervalStickiness): TInterval;

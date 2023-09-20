@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	IAudience,
 	IAudienceOwner,

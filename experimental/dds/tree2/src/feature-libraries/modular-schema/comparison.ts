@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { compareSets, fail } from "../../util";
 import {
 	TreeStoredSchema,
@@ -92,13 +92,7 @@ export function allowsValueSuperset(
 	original: ValueSchema | undefined,
 	superset: ValueSchema | undefined,
 ): boolean {
-	if (original === superset) {
-		return true;
-	}
-	if (original === undefined) {
-		return false;
-	}
-	return superset === ValueSchema.Serializable;
+	return original === superset;
 }
 
 /**

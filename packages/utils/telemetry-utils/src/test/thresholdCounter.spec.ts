@@ -20,15 +20,15 @@ class FakeTelemetryLogger implements ITelemetryLoggerExt {
 		assert.fail("Should not be called");
 	}
 
-	public sendTelemetryEvent(_event: ITelemetryGenericEvent, _error?: any) {
+	public sendTelemetryEvent(_event: ITelemetryGenericEvent, _error?: unknown): void {
 		assert.fail("Should not be called");
 	}
 
-	public sendErrorEvent(_event: ITelemetryErrorEvent, _error?: any) {
+	public sendErrorEvent(_event: ITelemetryErrorEvent, _error?: unknown): void {
 		assert.fail("Should not be called");
 	}
 
-	public sendPerformanceEvent(event: ITelemetryPerformanceEvent, _error?: any): void {
+	public sendPerformanceEvent(event: ITelemetryPerformanceEvent, _error?: unknown): void {
 		this.events.push(event);
 	}
 }

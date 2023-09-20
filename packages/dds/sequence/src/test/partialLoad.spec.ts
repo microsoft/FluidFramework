@@ -52,7 +52,7 @@ function generateSummaryTree(
 	// Connect the first SharedString.
 	const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 	const services1: IChannelServices = {
-		deltaConnection: containerRuntime1.createDeltaConnection(),
+		deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
 	const sharedString = new SharedString(
@@ -73,7 +73,7 @@ function generateSummaryTree(
 		SharedStringFactory.Attributes,
 	);
 	const services2: IChannelServices = {
-		deltaConnection: containerRuntime2.createDeltaConnection(),
+		deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
 	sharedString2.initializeLocal();
@@ -100,10 +100,9 @@ describe("SharedString Partial Load", () => {
 
 		const localDataStoreRuntime = new MockFluidDataStoreRuntime();
 		localDataStoreRuntime.options = options;
-		const localContainerRuntime =
-			containerRuntimeFactory.createContainerRuntime(localDataStoreRuntime);
+		containerRuntimeFactory.createContainerRuntime(localDataStoreRuntime);
 		const localServices = {
-			deltaConnection: localContainerRuntime.createDeltaConnection(),
+			deltaConnection: localDataStoreRuntime.createDeltaConnection(),
 			objectStorage: MockStorage.createFromSummary(summaryTree),
 		};
 		const localSharedString = new SharedString(
@@ -127,10 +126,9 @@ describe("SharedString Partial Load", () => {
 
 		const localDataStoreRuntime = new MockFluidDataStoreRuntime();
 		localDataStoreRuntime.options = options;
-		const localContainerRuntime =
-			containerRuntimeFactory.createContainerRuntime(localDataStoreRuntime);
+		containerRuntimeFactory.createContainerRuntime(localDataStoreRuntime);
 		const localServices = {
-			deltaConnection: localContainerRuntime.createDeltaConnection(),
+			deltaConnection: localDataStoreRuntime.createDeltaConnection(),
 			objectStorage: MockStorage.createFromSummary(summaryTree),
 		};
 		const localSharedString = new SharedString(
@@ -158,10 +156,9 @@ describe("SharedString Partial Load", () => {
 
 		const localDataStoreRuntime = new MockFluidDataStoreRuntime();
 		localDataStoreRuntime.options = options;
-		const localContainerRuntime =
-			containerRuntimeFactory.createContainerRuntime(localDataStoreRuntime);
+		containerRuntimeFactory.createContainerRuntime(localDataStoreRuntime);
 		const localServices = {
-			deltaConnection: localContainerRuntime.createDeltaConnection(),
+			deltaConnection: localDataStoreRuntime.createDeltaConnection(),
 			objectStorage: MockStorage.createFromSummary(summaryTree),
 		};
 		const localSharedString = new SharedString(
@@ -193,10 +190,9 @@ describe("SharedString Partial Load", () => {
 
 		const localDataStoreRuntime = new MockFluidDataStoreRuntime();
 		localDataStoreRuntime.options = options;
-		const localContainerRuntime =
-			containerRuntimeFactory.createContainerRuntime(localDataStoreRuntime);
+		containerRuntimeFactory.createContainerRuntime(localDataStoreRuntime);
 		const localServices = {
-			deltaConnection: localContainerRuntime.createDeltaConnection(),
+			deltaConnection: localDataStoreRuntime.createDeltaConnection(),
 			objectStorage: MockStorage.createFromSummary(summaryTree),
 		};
 		const localSharedString = new SharedString(
@@ -243,10 +239,9 @@ describe("SharedString Partial Load", () => {
 
 		const localDataStoreRuntime = new MockFluidDataStoreRuntime();
 		localDataStoreRuntime.options = options;
-		const localContainerRuntime =
-			containerRuntimeFactory.createContainerRuntime(localDataStoreRuntime);
+		containerRuntimeFactory.createContainerRuntime(localDataStoreRuntime);
 		const localServices = {
-			deltaConnection: localContainerRuntime.createDeltaConnection(),
+			deltaConnection: localDataStoreRuntime.createDeltaConnection(),
 			objectStorage: MockStorage.createFromSummary(summaryTree),
 		};
 		const localSharedString = new SharedString(
@@ -290,10 +285,9 @@ describe("SharedString Partial Load", () => {
 
 		const localDataStoreRuntime = new MockFluidDataStoreRuntime();
 		localDataStoreRuntime.options = options;
-		const localContainerRuntime =
-			containerRuntimeFactory.createContainerRuntime(localDataStoreRuntime);
+		containerRuntimeFactory.createContainerRuntime(localDataStoreRuntime);
 		const localServices = {
-			deltaConnection: localContainerRuntime.createDeltaConnection(),
+			deltaConnection: localDataStoreRuntime.createDeltaConnection(),
 			objectStorage: MockStorage.createFromSummary(summaryTree),
 		};
 		const localSharedString = new SharedString(

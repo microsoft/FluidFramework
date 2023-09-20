@@ -14,7 +14,8 @@ import {
 	getDocAttributesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils";
-import { stringToBuffer, Uint8ArrayToString, unreachableCase } from "@fluidframework/common-utils";
+import { stringToBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
+import { unreachableCase } from "@fluidframework/core-utils";
 import { getGitType } from "@fluidframework/protocol-base";
 import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";

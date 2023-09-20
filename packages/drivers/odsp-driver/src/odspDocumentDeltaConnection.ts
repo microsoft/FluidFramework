@@ -9,7 +9,8 @@ import {
 	IFluidErrorBase,
 	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils";
-import { assert, performance, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { performance, TypedEventEmitter } from "@fluid-internal/client-utils";
+import { assert, Deferred } from "@fluidframework/core-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import { OdspError } from "@fluidframework/odsp-driver-definitions";
@@ -21,12 +22,13 @@ import {
 	ISequencedDocumentMessage,
 	ISignalMessage,
 } from "@fluidframework/protocol-definitions";
-import { Socket, io as SocketIOClientStatic } from "socket.io-client";
+import { Socket } from "socket.io-client";
 import { v4 as uuid } from "uuid";
 import { createGenericNetworkError } from "@fluidframework/driver-utils";
 import { IOdspSocketError, IGetOpsResponse, IFlushOpsResponse } from "./contracts";
 import { EpochTracker } from "./epochTracker";
 import { errorObjectFromSocketError } from "./odspError";
+import { SocketIOClientStatic } from "./socketModule";
 import { pkgVersion } from "./packageVersion";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];

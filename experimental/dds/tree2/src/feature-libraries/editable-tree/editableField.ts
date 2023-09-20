@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	Anchor,
 	FieldKey,
@@ -11,7 +11,6 @@ import {
 	ITreeSubscriptionCursor,
 	FieldStoredSchema,
 	TreeStoredSchema,
-	ValueSchema,
 	mapCursorField,
 	CursorLocationType,
 	FieldAnchor,
@@ -404,7 +403,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		const parentAnchorNode = this.context.forest.anchors.locate(parentAnchor);
 
 		// As the "parentAnchor === undefined" case is handled above, parentAnchorNode should exist.
-		assert(parentAnchorNode !== undefined, "parentAnchorNode must exist.");
+		assert(parentAnchorNode !== undefined, 0x748 /* parentAnchorNode must exist. */);
 		return treeStatusFromPath(parentAnchorNode);
 	}
 
@@ -622,10 +621,7 @@ function unwrappedTree(
 		if (isPrimitiveValue(nodeValue)) {
 			return nodeValue;
 		}
-		assert(
-			nodeType.leafValue === ValueSchema.Serializable,
-			0x3c7 /* `undefined` values not allowed for primitive fields */,
-		);
+		fail("`undefined` values not allowed for primitive fields");
 	}
 
 	const primary = getPrimaryArrayKey(nodeType);

@@ -33,6 +33,8 @@ import { PlainTextNode } from "./PlainTextNode";
  * 	<li>Baz</li>
  * </ol>
  * ```
+ *
+ * @public
  */
 export class OrderedListNode
 	extends DocumentationParentNodeBase<SingleLineDocumentationNode>
