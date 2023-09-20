@@ -265,11 +265,7 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	 * TODO: This should run over fields in insertion order if we want to match the javascript foreach spec.
 	 */
 	forEach(
-		callbackFn: (
-			value: UnboxField<TSchema["mapFields"]>,
-			key: FieldKey,
-			map: MapNode<TSchema>,
-		) => void,
+		callbackFn: (value: UnboxField<TSchema["mapFields"]>, key: FieldKey, map: this) => void,
 		thisArg?: any,
 	): void;
 
@@ -470,6 +466,73 @@ export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
 	at(index: number): UnboxNodeUnion<TTypes>;
 
 	/**
+	 * Returns the index of the first occurrence of a value in the sequence, or -1 if it is not present.
+	 * @param searchElement - The element to search for.
+	 * @param fromIndex - The index at which to begin the search. If fromIndex is omitted, the search starts at index 0.
+	 */
+	indexOf(searchElement: UnboxNodeUnion<TTypes>, fromIndex?: number): number;
+
+	/**
+	 * Determines whether an sequence includes a certain element, returning true or false as appropriate.
+	 * @param searchElement - The element to search for.
+	 * @param fromIndex - The index at which to begin the search. If fromIndex is omitted, the search starts at index 0.
+	 */
+	includes(searchElement: UnboxNodeUnion<TTypes>, fromIndex?: number): boolean;
+
+	/**
+	 * Iterates the indices of the elements in the sequence.
+	 */
+	keys(): IterableIterator<number>;
+
+	/**
+	 * Iterates the values in the sequence.
+	 */
+	values(): IterableIterator<UnboxNodeUnion<TTypes>>;
+
+	/**
+	 * Iterates the elements in the sequence as tuples of index and element.
+	 */
+	entries(): IterableIterator<[number, UnboxNodeUnion<TTypes>]>;
+
+	/**
+	 * Executes a provided function once per each element in the sequence.
+	 * @param callbackFn - The function to run for each element.
+	 * @param thisArg - If present, `callbackFn` will be bound to `thisArg`.
+	 */
+	forEach(
+		callbackFn: (element: UnboxNodeUnion<TTypes>, key: FieldKey, sequence: this) => void,
+		thisArg?: any,
+	): void;
+
+	/**
+	 * Returns the value of the first element in the sequence where `predicate` is true, and undefined otherwise.
+	 * @param predicate - The predicate to run on each element.
+	 * @param thisArg - If present, `predicate` will be bound to `thisArg`.
+	 */
+	find(
+		predicate: (value: UnboxNodeUnion<TTypes>, index: number, obj: number[]) => boolean,
+		thisArg?: any,
+	): UnboxNodeUnion<TTypes> | undefined;
+	find<T extends UnboxNodeUnion<TTypes>>(
+		predicate: (element: UnboxNodeUnion<TTypes>, index: number, obj: number[]) => element is T,
+		thisArg?: any,
+	): T | undefined;
+
+	/**
+	 * Returns the value of the last element in the sequence where `predicate` is true, and undefined otherwise.
+	 * @param predicate - The predicate to run on each element.
+	 * @param thisArg - If present, `predicate` will be bound to `thisArg`.
+	 */
+	findLast(
+		predicate: (value: UnboxNodeUnion<TTypes>, index: number, obj: number[]) => boolean,
+		thisArg?: any,
+	): UnboxNodeUnion<TTypes> | undefined;
+	findLast<T extends UnboxNodeUnion<TTypes>>(
+		predicate: (element: UnboxNodeUnion<TTypes>, index: number, obj: number[]) => element is T,
+		thisArg?: any,
+	): T | undefined;
+
+	/**
 	 * Gets a boxed node of this field by its index.
 	 * Note that a node must exist at the given index.
 	 */
@@ -479,13 +542,15 @@ export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
 	 * Calls the provided callback function on each child of this sequence, and returns an array that contains the results.
 	 * @param callbackfn - A function that accepts the child, its index, and this field.
 	 */
-	map<U>(callbackfn: (value: UnboxNodeUnion<TTypes>, index: number, array: this) => U): U[];
+	map<U>(callbackfn: (value: UnboxNodeUnion<TTypes>, index: number, sequence: this) => U): U[];
 
 	/**
 	 * Calls the provided callback function on each child of this sequence, and returns an array that contains the results.
 	 * @param callbackfn - A function that accepts the child, its index, and this field.
 	 */
-	mapBoxed<U>(callbackfn: (value: TypedNodeUnion<TTypes>, index: number, array: this) => U): U[];
+	mapBoxed<U>(
+		callbackfn: (value: TypedNodeUnion<TTypes>, index: number, sequence: this) => U,
+	): U[];
 
 	readonly length: number;
 
