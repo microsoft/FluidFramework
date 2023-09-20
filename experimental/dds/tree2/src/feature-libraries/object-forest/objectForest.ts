@@ -30,7 +30,6 @@ import {
 	PathRootPrefix,
 	DeltaVisitor,
 	Value,
-	keyAsDetachedField,
 } from "../../core";
 import { brand, fail, assertValidIndex } from "../../util";
 import { CursorWithNode, SynchronousCursor } from "../treeCursorUtils";
@@ -225,14 +224,6 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 		return new Cursor(this);
 	}
 
-	public getDetachedFields(): DetachedField[] {
-		const fields: DetachedField[] = [];
-		for (const [key] of this.roots.fields) {
-			fields.push(keyAsDetachedField(key));
-		}
-		return fields;
-	}
-
 	public tryMoveCursorToNode(
 		destination: Anchor,
 		cursorToMove: ITreeSubscriptionCursor,
@@ -261,11 +252,6 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 		return TreeNavigationResult.Ok;
 	}
 
-	/**
-	 * Set `cursorToMove` to location described by path.
-	 * This is NOT a relative move: current position is discarded.
-	 * Path must point to existing node.
-	 */
 	public moveCursorToPath(
 		destination: UpPath | undefined,
 		cursorToMove: ITreeSubscriptionCursor,

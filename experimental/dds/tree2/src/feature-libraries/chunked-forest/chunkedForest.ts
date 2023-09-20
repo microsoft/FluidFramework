@@ -24,7 +24,6 @@ import {
 	rootFieldKey,
 	mapCursorField,
 	DeltaVisitor,
-	keyAsDetachedField,
 } from "../../core";
 import { brand, fail, getOrAddEmptyToMap } from "../../util";
 import { createEmitter } from "../../events";
@@ -267,14 +266,6 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 		);
 	}
 
-	public getDetachedFields(): DetachedField[] {
-		const fields: DetachedField[] = [];
-		for (const [key] of this.roots.fields) {
-			fields.push(keyAsDetachedField(key));
-		}
-		return fields;
-	}
-
 	public tryMoveCursorToNode(
 		destination: Anchor,
 		cursorToMove: ITreeSubscriptionCursor,
@@ -308,12 +299,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 		return TreeNavigationResult.Ok;
 	}
 
-	/**
-	 * Set `cursorToMove` to location described by path.
-	 * This is NOT a relative move: current position is discarded.
-	 * Path must point to existing node.
-	 */
-	private moveCursorToPath(
+	public moveCursorToPath(
 		destination: UpPath | undefined,
 		cursorToMove: ITreeSubscriptionCursor,
 	): void {

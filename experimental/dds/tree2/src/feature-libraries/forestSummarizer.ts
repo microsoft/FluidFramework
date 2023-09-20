@@ -20,7 +20,7 @@ import {
 	ITreeSubscriptionCursor,
 	JsonableTree,
 	mapCursorField,
-	moveToDetachedField,
+	mapCursorFields,
 } from "../core";
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
 import { jsonableTreeFromCursor, singleTextCursor } from "./treeTextCursor";
@@ -50,14 +50,11 @@ export class ForestSummarizer implements Summarizable {
 	 * @returns a snapshot of the forest's tree as a string.
 	 */
 	private getTreeString(stringify: SummaryElementStringifier): string {
-		const fields: [string, JsonableTree[]][] = [];
-		this.forest.getDetachedFields().forEach((detachedField) => {
-			moveToDetachedField(this.forest, this.cursor, detachedField);
-			fields.push([
-				this.cursor.getFieldKey(),
-				mapCursorField(this.cursor, jsonableTreeFromCursor),
-			]);
-		});
+		this.forest.moveCursorToPath(undefined, this.cursor);
+		const fields = mapCursorFields(this.cursor, (cursor) => [
+			this.cursor.getFieldKey(),
+			mapCursorField(cursor, jsonableTreeFromCursor),
+		]);
 		this.cursor.clear();
 		return stringify(fields);
 	}
