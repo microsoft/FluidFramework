@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { MockHandle, validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { RemoteFluidObjectHandle } from "../remoteObjectHandle";
-import { FluidSerializer, isFluidHandle } from "../serializer";
+import { FluidSerializableReadOnly, FluidSerializer, isFluidHandle } from "../serializer";
 import { makeJson, MockHandleContext } from "./utils";
 
 describe("FluidSerializer", () => {
@@ -33,6 +33,33 @@ describe("FluidSerializer", () => {
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return testCases;
+	}
+
+	// Type tests for FluidSerializableReadOnly
+	{
+		const allows: FluidSerializableReadOnly[] = [
+			[],
+			{},
+			5,
+			null,
+			"",
+			{ x: 5 },
+			[[]],
+			true,
+			new MockHandle(1),
+		];
+		const symbol: unique symbol = Symbol("test");
+
+		const use = (x: FluidSerializableReadOnly) => undefined;
+		// @ts-expect-error disallow undefined
+		use(undefined);
+		// @ts-expect-error disallow symbols
+		use(symbol);
+		// @ts-expect-error disallow symbols
+		use({ x: 5, [symbol]: 5 });
+
+		// Ideally this would be rejected, but it isn't due to TypeScript handling missing properties and existing properties set to undefined the same.
+		use({ x: undefined });
 	}
 
 	it("isFluidHandle", () => {
