@@ -9,10 +9,10 @@
 export class Deferred<T> {
 	private readonly p: Promise<T>;
 	private res: ((value: T | PromiseLike<T>) => void) | undefined;
-	private rej: ((reason?: any) => void) | undefined;
+	private rej: ((reason?: unknown) => void) | undefined;
 	private completed: boolean = false;
 
-	constructor() {
+	public constructor() {
 		this.p = new Promise<T>((resolve, reject) => {
 			this.res = resolve;
 			this.rej = reject;
@@ -51,6 +51,8 @@ export class Deferred<T> {
 	 *
 	 * @param value - the value to reject the promise with
 	 */
+	// TODO: Use `unknown` instead (API breaking)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
 	public reject(error: any): void {
 		if (this.rej !== undefined) {
 			this.completed = true;
