@@ -191,7 +191,7 @@ export interface TreeField extends Tree<FieldSchema>, Iterable<TreeNode> {
  */
 export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	/**
-	 * Returns the number of elements in the map.
+	 * The number of elements in the map.
 	 *
 	 * @remarks
 	 * All fields under a map implicitly exist, but `size` will count only the fields which contain one or more nodes.
@@ -237,8 +237,8 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 
 	/**
 	 * Executes a provided function once per each key/value pair in the map, in insertion order.
-	 * @param callbackFn - the function to run for each map entry
-	 * @param thisArg - if present, `callbackFn` will be bound to `thisArg`
+	 * @param callbackFn - The function to run for each map entry
+	 * @param thisArg - If present, `callbackFn` will be bound to `thisArg`
 	 */
 	forEach(
 		callbackFn: (
