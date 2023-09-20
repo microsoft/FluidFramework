@@ -18,6 +18,7 @@ import {
 	EncodedNestedArray,
 	EncodedTreeShape,
 	EncodedValueShape,
+	validateFormat,
 } from "./format";
 import {
 	ChunkDecoder,
@@ -40,6 +41,7 @@ import {
  * Decode `chunk` into a TreeChunk.
  */
 export function decode(chunk: EncodedChunk): TreeChunk {
+	validateFormat(chunk, EncodedChunk);
 	return genericDecode(
 		decoderLibrary,
 		new DecoderContext(chunk.identifiers, chunk.shapes),

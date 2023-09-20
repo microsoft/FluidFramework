@@ -14,7 +14,7 @@ import {
 import { FieldKind, FullSchemaPolicy, Multiplicity } from "../../modular-schema";
 import { fail } from "../../../util";
 import { fieldKinds } from "../../default-field-kinds";
-import { EncodedChunk, EncodedValueShape } from "./format";
+import { EncodedChunk, EncodedValueShape, validateFormat } from "./format";
 import {
 	EncoderCache,
 	FieldEncoder,
@@ -37,7 +37,9 @@ export function schemaCompressedEncode(
 	policy: FullSchemaPolicy,
 	cursor: ITreeCursorSynchronous,
 ): EncodedChunk {
-	return compressedEncode(cursor, buildCache(schema, policy));
+	const encoded: EncodedChunk = compressedEncode(cursor, buildCache(schema, policy));
+	validateFormat(encoded, EncodedChunk);
+	return encoded;
 }
 
 export function buildCache(schema: SchemaData, policy: FullSchemaPolicy): EncoderCache {
