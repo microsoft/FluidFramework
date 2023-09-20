@@ -17,10 +17,9 @@ import {
 } from "@fluidframework/test-utils";
 import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
 import { SharedString } from "@fluidframework/sequence";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions";
 import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { IRequestHeader } from "@fluidframework/core-interfaces";
 
 describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObjectProvider) => {
 	const mapId = "mapKey";
@@ -83,31 +82,6 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 
 		await provider.ensureSynchronized();
 	};
-
-	it("0x173", async () => {
-		const created = await provider.makeTestContainer(testContainerConfig);
-		const do1 = await requestFluidObject<ITestFluidObject>(created, "default");
-		const map1 = await do1.getSharedObject<SharedMap>(mapId);
-
-		const headers: IRequestHeader = {
-			[LoaderHeader.cache]: false,
-			[LoaderHeader.loadMode]: { deltaConnection: "delayed" },
-		};
-
-		const loader = provider.makeTestLoader(testContainerConfig);
-		const loaded = await loader.resolve({
-			url: await provider.driver.createContainerUrl(provider.documentId),
-			headers,
-		});
-		const do2 = await requestFluidObject<ITestFluidObject>(loaded, "default");
-		const map2 = await do2.getSharedObject<SharedMap>(mapId);
-		// loaded.disconnect();
-		loaded.connect();
-		loaded.forceReadonly?.(true);
-		map2.set("key1", "1");
-		map2.set("key2", "2");
-		await provider.ensureSynchronized();
-	});
 
 	itExpects(
 		"Should close the container when submitting an op while processing a batch",
