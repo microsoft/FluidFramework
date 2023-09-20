@@ -20,7 +20,7 @@ import { getReadonlyContext } from "./utils";
 const detachedField: FieldKey = brand("detached");
 const detachedFieldAnchor = { parent: undefined, fieldKey: detachedField };
 
-describe("lazyField", () => {
+describe("LazyField", () => {
 	it("LazyField implementations do not allow edits to detached trees", () => {
 		const builder = new SchemaBuilder("lazyTree");
 		builder.struct("empty", {});
@@ -63,5 +63,30 @@ describe("lazyField", () => {
 			() => valueField.setContent({}),
 			/only allowed on fields with TreeStatus.InDocument status/,
 		);
+	});
+});
+
+describe("LazyOptionalField", () => {
+	it("is", () => {
+		// TODO: extract common boilerplate
+		const builder = new SchemaBuilder("lazyField");
+		builder.struct("empty", {});
+		const schema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
+		const forest = forestWithContent({ schema, initialTree: {} });
+		const context = getReadonlyContext(forest, schema);
+		const cursor = context.forest.allocateCursor();
+		assert.equal(
+			forest.tryMoveCursorToField({ fieldKey: detachedField, parent: undefined }, cursor),
+			TreeNavigationResult.Ok,
+		);
+
+		const field = new LazyOptionalField(
+			context,
+			SchemaBuilder.fieldOptional(Any),
+			cursor,
+			detachedFieldAnchor,
+		);
+
+		assert(field.is(SchemaBuilder.fieldOptional(Any)));
 	});
 });
