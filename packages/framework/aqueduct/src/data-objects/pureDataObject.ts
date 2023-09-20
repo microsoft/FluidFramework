@@ -17,8 +17,7 @@ import {
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { AsyncFluidObjectProvider } from "@fluidframework/synthesize";
-// eslint-disable-next-line import/no-deprecated
-import { defaultFluidObjectRequestHandler } from "../request-handlers";
+import { create404Response } from "@fluidframework/runtime-utils";
 import { DataObjectTypes, IDataObjectProps } from "./types";
 
 /**
@@ -109,8 +108,9 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	 * 2. the request url is empty
 	 */
 	public async request(req: IRequest): Promise<IResponse> {
-		// eslint-disable-next-line import/no-deprecated
-		return defaultFluidObjectRequestHandler(this, req);
+		return req.url === "" || req.url === "/" || req.url.startsWith("/?")
+			? { mimeType: "fluid/object", status: 200, value: this }
+			: create404Response(req);
 	}
 
 	// #endregion IFluidRouter

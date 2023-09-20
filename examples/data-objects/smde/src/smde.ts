@@ -14,7 +14,6 @@ import {
 	IResponse,
 	IFluidHandle,
 } from "@fluidframework/core-interfaces";
-// eslint-disable-next-line import/no-deprecated
 import { FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { ReferenceType, reservedTileLabelsKey } from "@fluidframework/merge-tree";
@@ -102,7 +101,6 @@ export class SmdeFactory implements IFluidDataStoreFactory {
 	}
 
 	public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
-		// eslint-disable-next-line import/no-deprecated
 		const runtimeClass = mixinRequestHandler(async (request: IRequest) => {
 			const router = await routerP;
 			return router.request(request);

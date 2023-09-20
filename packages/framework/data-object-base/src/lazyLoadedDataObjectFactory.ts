@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { FluidObject, IProvideFluidRouter, IRequest } from "@fluidframework/core-interfaces";
+import { FluidObject, IRequest } from "@fluidframework/core-interfaces";
 import {
 	FluidDataStoreRuntime,
 	ISharedObjectRegistry,
-	// eslint-disable-next-line import/no-deprecated
 	mixinRequestHandler,
 } from "@fluidframework/datastore";
 import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
@@ -62,15 +61,14 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject>
 		context: IFluidDataStoreContext,
 		existing: boolean,
 	): Promise<FluidDataStoreRuntime> {
-		// eslint-disable-next-line import/no-deprecated
 		const runtimeClass = mixinRequestHandler(
 			async (request: IRequest, rt: FluidDataStoreRuntime) => {
-				const router: FluidObject<IProvideFluidRouter> = await rt.entryPoint.get();
+				const router = (await rt.entryPoint.get()) as T;
 				assert(
-					router.IFluidRouter !== undefined,
-					0x46d /* Data store runtime entryPoint is not an IFluidRouter */,
+					router.request !== undefined,
+					"Data store runtime entryPoint does not have request",
 				);
-				return router.IFluidRouter.request(request);
+				return router.request(request);
 			},
 		);
 

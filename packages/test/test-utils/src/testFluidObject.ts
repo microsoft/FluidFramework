@@ -15,7 +15,6 @@ import {
 import {
 	FluidObjectHandle,
 	FluidDataStoreRuntime,
-	// eslint-disable-next-line import/no-deprecated
 	mixinRequestHandler,
 } from "@fluidframework/datastore";
 import { SharedMap, ISharedMap } from "@fluidframework/map";
@@ -201,7 +200,6 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
 			}
 		}
 
-		// eslint-disable-next-line import/no-deprecated
 		const runtimeClass = mixinRequestHandler(
 			async (request: IRequest, rt: FluidDataStoreRuntime) => {
 				const maybeRouter: FluidObject<IProvideFluidRouter> = await rt.entryPoint.get();
