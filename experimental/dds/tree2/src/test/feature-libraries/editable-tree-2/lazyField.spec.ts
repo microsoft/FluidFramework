@@ -5,8 +5,8 @@
 
 import { strict as assert } from "assert";
 
-import { Any, SchemaBuilder } from "../../../feature-libraries";
-import { FieldKey, TreeNavigationResult } from "../../../core";
+import { Any, FieldKinds, SchemaBuilder } from "../../../feature-libraries";
+import { FieldKey, TreeNavigationResult, ValueSchema } from "../../../core";
 import { forestWithContent } from "../../utils";
 import { brand } from "../../../util";
 import {
@@ -80,6 +80,7 @@ describe("LazyOptionalField", () => {
 			TreeNavigationResult.Ok,
 		);
 
+		// The field we will be testing
 		const field = new LazyOptionalField(
 			context,
 			SchemaBuilder.fieldOptional(Any),
@@ -87,6 +88,18 @@ describe("LazyOptionalField", () => {
 			detachedFieldAnchor,
 		);
 
+		// Arbitrary leaf schema to test some cases with
+		const booleanLeafSchema = builder.leaf("bool", ValueSchema.Boolean);
+
+		// Positive cases
 		assert(field.is(SchemaBuilder.fieldOptional(Any)));
+		assert(field.is(SchemaBuilder.fieldRecursive(FieldKinds.optional, Any)));
+
+		// Negative cases
+		assert(!field.is(SchemaBuilder.fieldOptional()));
+		assert(!field.is(SchemaBuilder.fieldOptional(booleanLeafSchema)));
+		assert(!field.is(SchemaBuilder.fieldValue(Any)));
+		assert(!field.is(SchemaBuilder.fieldSequence(Any)));
+		assert(!field.is(SchemaBuilder.fieldRecursive(FieldKinds.optional, booleanLeafSchema)));
 	});
 });
