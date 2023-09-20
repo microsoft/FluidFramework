@@ -180,7 +180,7 @@ export interface TreeField extends Tree<FieldSchema>, Iterable<TreeNode> {
  * A {@link TreeNode} that behaves like a `Map<FieldKey, Field>` for a specific `Field` type.
  *
  * @remarks
- * Unlike TypeScript Map type, {@link MapNode.get} always provides a reference to any field looked up, even if its never been set.
+ * Unlike TypeScript Map type, {@link MapNode.get} always provides a reference to any field looked up, even if it has never been set.
  *
  * This means that, for example, a `MapNode` of {@link Sequence} fields will return an empty sequence when a previously unused key is looked up,
  * and that sequence can be used to insert new items into the field.
