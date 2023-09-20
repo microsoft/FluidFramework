@@ -108,7 +108,7 @@ export interface TreeNode extends Tree<TreeSchema> {
 
 	/**
 	 * Same as `this.schema.name`.
-	 * This is provided as a enumerable own property to aid with JavaScript object traversals of this data-structure.
+	 * This is provided as an enumerable own property to aid with JavaScript object traversals of this data-structure.
 	 * See [ReadMe](./README.md) for details.
 	 */
 	readonly type: TreeSchemaIdentifier;
