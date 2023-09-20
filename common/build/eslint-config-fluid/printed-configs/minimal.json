@@ -1,6 +1,7 @@
 {
     "env": {
         "browser": true,
+        "es2024": false,
         "es6": true,
         "node": true
     },
@@ -60,6 +61,9 @@
         "@typescript-eslint/ban-types": [
             "error"
         ],
+        "@typescript-eslint/block-spacing": [
+            "off"
+        ],
         "@typescript-eslint/brace-style": [
             "error",
             "1tbs",
@@ -105,8 +109,14 @@
         "@typescript-eslint/interface-name-prefix": [
             "off"
         ],
+        "@typescript-eslint/key-spacing": [
+            "off"
+        ],
         "@typescript-eslint/keyword-spacing": [
             "error"
+        ],
+        "@typescript-eslint/lines-around-comment": [
+            0
         ],
         "@typescript-eslint/member-delimiter-style": [
             "error",
@@ -141,7 +151,16 @@
         "@typescript-eslint/no-array-constructor": [
             "error"
         ],
+        "@typescript-eslint/no-base-to-string": [
+            "error"
+        ],
+        "@typescript-eslint/no-duplicate-enum-values": [
+            "error"
+        ],
         "@typescript-eslint/no-duplicate-imports": [
+            "error"
+        ],
+        "@typescript-eslint/no-duplicate-type-constituents": [
             "error"
         ],
         "@typescript-eslint/no-dynamic-delete": [
@@ -207,6 +226,9 @@
         "@typescript-eslint/no-parameter-properties": [
             "off"
         ],
+        "@typescript-eslint/no-redundant-type-constituents": [
+            "error"
+        ],
         "@typescript-eslint/no-require-imports": [
             "error"
         ],
@@ -243,6 +265,12 @@
         ],
         "@typescript-eslint/no-unsafe-call": [
             "off"
+        ],
+        "@typescript-eslint/no-unsafe-declaration-merging": [
+            "error"
+        ],
+        "@typescript-eslint/no-unsafe-enum-comparison": [
+            "error"
         ],
         "@typescript-eslint/no-unsafe-member-access": [
             "off"
@@ -645,6 +673,9 @@
         "max-lines": [
             "off"
         ],
+        "max-statements-per-line": [
+            "off"
+        ],
         "multiline-ternary": [
             "off"
         ],
@@ -725,9 +756,6 @@
         ],
         "no-empty-character-class": [
             "error"
-        ],
-        "no-empty-function": [
-            "off"
         ],
         "no-empty-pattern": [
             "error"
@@ -1166,9 +1194,6 @@
         "tsdoc/syntax": [
             "error"
         ],
-        "unicode-bom": [
-            "off"
-        ],
         "unicorn/better-regex": [
             "error"
         ],
@@ -1221,6 +1246,9 @@
             "off"
         ],
         "vue/array-bracket-spacing": [
+            "off"
+        ],
+        "vue/array-element-newline": [
             "off"
         ],
         "vue/arrow-spacing": [
@@ -1281,6 +1309,9 @@
             0
         ],
         "vue/multiline-html-element-content-newline": [
+            "off"
+        ],
+        "vue/multiline-ternary": [
             "off"
         ],
         "vue/mustache-interpolation-spacing": [
