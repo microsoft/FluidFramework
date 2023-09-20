@@ -110,6 +110,6 @@ const response = container.request(parsedResolvedUrl);
 | `request` and `IFluidRouter` on `IFluidDataStoreRuntime` and `FluidDataStoreRuntime` | 2.0.0-internal.6.0.0 |                      |
 | `request` and `IFluidRouter` on `IFluidDataStoreChannel`                             | 2.0.0-internal.6.0.0 |                      |
 | `getRootDataStore` on `IContainerRuntime` and `ContainerRuntime`                     | 2.0.0-internal.6.0.0 |                      |
-| `resolveHandle` on `IContainerRuntime` and `ContainerRuntime`                        | 2.0.0-internal.7.0.0 |                      |
-| `IFluidHandleContext` on `IContainerRuntimeBase` and `ContainerRuntime`              | 2.0.0-internal.7.0.0 |                      |
+| `resolveHandle` on `IContainerRuntime`                                               | 2.0.0-internal.7.0.0 |                      |
+| `IFluidHandleContext` on `IContainerRuntimeBase`                                     | 2.0.0-internal.7.0.0 |                      |
 <!-- prettier-ignore-end -->

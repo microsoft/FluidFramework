@@ -11,6 +11,7 @@ import {
 	IFluidRouter,
 	IRequest,
 	IResponse,
+	IProvideFluidHandleContext,
 } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
@@ -666,7 +667,12 @@ export const makeLegacySendBatchFn =
  */
 export class ContainerRuntime
 	extends TypedEventEmitter<IContainerRuntimeEvents & ISummarizerEvents>
-	implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider
+	implements
+		IContainerRuntime,
+		IRuntime,
+		ISummarizerRuntime,
+		ISummarizerInternalsProvider,
+		IProvideFluidHandleContext
 {
 	/**
 	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
@@ -952,9 +958,6 @@ export class ContainerRuntime
 
 	public idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
 
-	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
 	public get IFluidHandleContext(): IFluidHandleContext {
 		return this.handleContext;
 	}
@@ -1769,7 +1772,6 @@ export class ContainerRuntime
 	/**
 	 * Resolves URI representing handle
 	 * @param request - Request made to the handler.
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	public async resolveHandle(request: IRequest): Promise<IResponse> {
 		try {
