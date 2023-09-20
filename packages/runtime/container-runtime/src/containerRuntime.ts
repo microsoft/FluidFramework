@@ -851,9 +851,10 @@ export class ContainerRuntime
 		);
 
 		await runtime.blobManager.processStashedChanges();
-		// It's possible to have ops with a reference sequence number of 0. Op sequence numbers start
-		// at 1, so we won't see a replayed saved op with a sequence number of 0.
-		await runtime.pendingStateManager.applyStashedOpsAt(0);
+
+		// Apply stashed ops with a reference sequence number equal to the sequence number of the snapshot,
+		// or zero. This must be done before Container replays saved ops.
+		await runtime.pendingStateManager.applyStashedOpsAt(runtimeSequenceNumber ?? 0);
 
 		// Initialize the base state of the runtime before it's returned.
 		await runtime.initializeBaseState();
