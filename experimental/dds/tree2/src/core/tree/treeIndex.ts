@@ -164,6 +164,7 @@ export class TreeIndex {
 	 */
 	public loadData(data: string): void {
 		this.detachedNodeToField = decodeNestedMap(data);
+		// TODO: The root ID allocator may need to be updated to account for existing IDs.
 	}
 }
 
