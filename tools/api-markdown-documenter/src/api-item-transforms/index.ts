@@ -17,11 +17,11 @@ export {
 	getDefaultValueBlock,
 	getDeprecatedBlock,
 	getExampleBlocks,
-	getFilePathForApiItem,
 	getHeadingForApiItem,
 	getLinkForApiItem,
 	getModifiers,
 	getQualifiedApiItemName,
+	getReleaseTag,
 	getReturnsBlock,
 	getSeeBlocks,
 	getThrowsBlocks,
@@ -42,6 +42,6 @@ export {
 	type TransformApiItemWithChildren,
 	type TransformApiItemWithoutChildren,
 } from "./configuration";
-export { transformDocNode } from "./DocNodeTransforms";
+export { transformTsdocNode } from "./TsdocNodeTransforms";
 export { apiItemToDocument, apiItemToSections } from "./TransformApiItem";
 export { transformApiModel } from "./TransformApiModel";

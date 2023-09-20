@@ -8,10 +8,11 @@ import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
+import { IFluidHandle } from '@fluidframework/core-interfaces';
+import { IIdCompressor } from '@fluidframework/runtime-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { IsoBuffer } from '@fluid-internal/client-utils';
 import { OpSpaceCompressedId } from '@fluidframework/runtime-definitions';
-import { Serializable } from '@fluidframework/datastore-definitions';
 import { SessionSpaceCompressedId } from '@fluidframework/runtime-definitions';
 import { StableId } from '@fluidframework/runtime-definitions';
 import type { Static } from '@sinclair/typebox';
@@ -869,7 +870,7 @@ export type IdAllocator = (count?: number) => number;
 
 // @alpha (undocumented)
 export interface IDecoder<TDecoded, TEncoded> {
-    decode(obj: TEncoded): TDecoded;
+    decode(obj: TEncoded, idCompressor?: IIdCompressor): TDecoded;
 }
 
 // @alpha
@@ -908,7 +909,7 @@ export interface IEmitter<E extends Events<E>> {
 
 // @alpha (undocumented)
 export interface IEncoder<TDecoded, TEncoded> {
-    encode(obj: TDecoded): TEncoded;
+    encode(obj: TDecoded, idCompressor?: IIdCompressor): TEncoded;
 }
 
 // @alpha
@@ -980,8 +981,6 @@ export { InternalEditableTreeTypes }
 
 declare namespace InternalTypedSchemaTypes {
     export {
-        RecursiveTreeSchemaSpecification,
-        RecursiveTreeSchema,
         ObjectToMap,
         WithDefault,
         Unbrand,
@@ -996,6 +995,8 @@ declare namespace InternalTypedSchemaTypes {
         MapSchemaSpecification,
         LeafSchemaSpecification,
         MapFieldSchema,
+        RecursiveTreeSchemaSpecification,
+        RecursiveTreeSchema,
         FlexList,
         FlexListToNonLazyArray,
         ConstantFlexListToNonLazyArray,
@@ -1144,9 +1145,6 @@ export function isNeverField(policy: FullSchemaPolicy, originalData: SchemaData,
 
 // @alpha (undocumented)
 export function isPrimitive(schema: TreeStoredSchema): boolean;
-
-// @alpha (undocumented)
-export function isPrimitiveValue(nodeValue: Value): nodeValue is PrimitiveValue;
 
 // @alpha
 export interface ISubscribable<E extends Events<E>> {
@@ -1345,11 +1343,11 @@ type MapFieldSchema = FieldSchema<typeof FieldKinds.optional | typeof FieldKinds
 export interface MapNode<TSchema extends MapSchema> extends TreeNode {
     // (undocumented)
     [Symbol.iterator](): Iterator<TypedField<TSchema["mapFields"]>>;
-    // (undocumented)
     readonly asObject: {
         readonly [P in FieldKey]?: UnboxField<TSchema["mapFields"]>;
     };
-    get(key: FieldKey): TypedField<TSchema["mapFields"]>;
+    get(key: FieldKey): UnboxField<TSchema["mapFields"]>;
+    getBoxed(key: FieldKey): TypedField<TSchema["mapFields"]>;
 }
 
 // @alpha (undocumented)
@@ -1858,7 +1856,6 @@ export interface Sequence extends BrandedFieldKind<"Sequence", Multiplicity.Sequ
 export interface Sequence2<TTypes extends AllowedTypes> extends TreeField {
     // (undocumented)
     [Symbol.iterator](): Iterator<TypedNodeUnion<TTypes>>;
-    // (undocumented)
     readonly asArray: readonly UnboxNodeUnion<TTypes>[];
     at(index: number): UnboxNodeUnion<TTypes>;
     boxedAt(index: number): TypedNodeUnion<TTypes>;
@@ -2106,8 +2103,14 @@ export type TreeType = TreeSchemaIdentifier;
 export type TreeTypeSet = ReadonlySet<TreeSchemaIdentifier> | undefined;
 
 // @alpha
-export interface TreeValue extends Serializable {
-}
+export type TreeValue<TSchema extends ValueSchema = ValueSchema> = [
+    {
+    [ValueSchema.Number]: number;
+    [ValueSchema.String]: string;
+    [ValueSchema.Boolean]: boolean;
+    [ValueSchema.FluidHandle]: IFluidHandle;
+}[TSchema]
+][_InlineTrick];
 
 // @alpha
 type TypeArrayToTypedTreeArray<Mode extends ApiMode, T extends readonly TreeSchema[]> = [
@@ -2176,7 +2179,7 @@ type TypedValue<TValue extends ValueSchema> = {
     [ValueSchema.Number]: number;
     [ValueSchema.String]: string;
     [ValueSchema.Boolean]: boolean;
-    [ValueSchema.Serializable]: TreeValue;
+    [ValueSchema.FluidHandle]: IFluidHandle;
 }[TValue];
 
 // @alpha
@@ -2345,8 +2348,9 @@ export enum ValueSchema {
     // (undocumented)
     Boolean = 2,
     // (undocumented)
+    FluidHandle = 3,
+    // (undocumented)
     Number = 0,
-    Serializable = 3,
     // (undocumented)
     String = 1
 }

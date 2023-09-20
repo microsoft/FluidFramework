@@ -15,8 +15,6 @@ import {
 	ISummaryTreeWithStats,
 	IGarbageCollectionData,
 	IIdCompressor,
-	SessionSpaceCompressedId,
-	OpSpaceCompressedId,
 } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {

@@ -7,9 +7,11 @@ import { strict as assert } from "assert";
 import { compress } from "lz4js";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IsoBuffer } from "@fluid-internal/client-utils";
+import type { IEnvelope } from "@fluidframework/runtime-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { ContainerRuntimeMessage, ContainerMessageType } from "../..";
+import { ContainerMessageType } from "../..";
 import { OpDecompressor } from "../../opLifecycle";
+import type { InboundContainerRuntimeMessage } from "../../messageTypes";
 
 /**
  * Format of test messages generated in this test.
@@ -19,9 +21,13 @@ interface ITestMessageContents {
 }
 
 function generateCompressedBatchMessage(length: number): ISequencedDocumentMessage {
-	const batch: ContainerRuntimeMessage[] = [];
+	const batch: InboundContainerRuntimeMessage[] = [];
 	for (let i = 0; i < length; i++) {
-		batch.push({ contents: `value${i}`, type: ContainerMessageType.FluidDataStoreOp });
+		// Actual Op and contents aren't important. Values are not realistic.
+		batch.push({
+			type: ContainerMessageType.FluidDataStoreOp,
+			contents: `value${i}` as unknown as IEnvelope,
+		});
 	}
 
 	const contentsAsBuffer = new TextEncoder().encode(JSON.stringify(batch));

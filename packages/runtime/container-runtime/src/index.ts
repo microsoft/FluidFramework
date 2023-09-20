@@ -4,10 +4,6 @@
  */
 
 export {
-	ContainerMessageType,
-	ContainerRuntimeMessage,
-	IContainerRuntimeMessageCompatDetails,
-	CompatModeBehavior,
 	ISummaryRuntimeOptions,
 	ISummaryBaseConfiguration,
 	ISummaryConfigurationHeuristics,
@@ -28,6 +24,13 @@ export {
 	ICompressionRuntimeOptions,
 	CompressionAlgorithms,
 } from "./containerRuntime";
+export {
+	ContainerMessageType,
+	ContainerRuntimeMessage,
+	IContainerRuntimeMessageCompatDetails,
+	CompatModeBehavior,
+	RecentlyAddedContainerRuntimeMessageDetails,
+} from "./messageTypes";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry";
 export { IGCRuntimeOptions, IGCStats } from "./gc";
 export {
