@@ -4,7 +4,7 @@
 "@fluidframework/runtime-definitions": major
 ---
 
-resolveHandle and IFluidHandleContext deprecated on ContainerRuntime
+resolveHandle and IFluidHandleContext deprecated on IContainerRuntime
 
 The `resolveHandle(...)` and `get IFluidHandleContext()` methods have been deprecated on the following interfaces:
 
