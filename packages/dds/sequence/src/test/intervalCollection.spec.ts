@@ -1962,14 +1962,14 @@ describe("SharedString interval collections", () => {
 			assert.equal(interval1.end.slidingPreference, SlidingPreference.FORWARD);
 		});
 
-		it("can't add an interval with zero width range and none stickiness", () => {
+		it("can't add an interval with reversed sides", () => {
 			const collection = sharedString.getIntervalCollection("test");
 			sharedString.insertText(0, "abc");
 			assert.throws(
 				() => {
 					collection.add(
-						{ pos: 1, side: Side.Before },
 						{ pos: 1, side: Side.After },
+						{ pos: 1, side: Side.Before },
 						IntervalType.SlideOnRemove,
 						undefined,
 					);
@@ -1980,7 +1980,7 @@ describe("SharedString interval collections", () => {
 			assertIntervals(sharedString, collection, []);
 		});
 
-		it("can't change an interval to zero width range and none stickiness", () => {
+		it("can't change an interval to reversed sides", () => {
 			const collection = sharedString.getIntervalCollection("test");
 			sharedString.insertText(0, "abc");
 			const interval = collection.add(0, 1, IntervalType.SlideOnRemove);
@@ -1988,8 +1988,8 @@ describe("SharedString interval collections", () => {
 				() => {
 					collection.change(
 						interval.getIntervalId(),
-						{ pos: 1, side: Side.Before },
 						{ pos: 1, side: Side.After },
+						{ pos: 1, side: Side.Before },
 					);
 				},
 				UsageError,

@@ -243,14 +243,14 @@ describe("interval rebasing", () => {
 		clients[0].containerRuntime.connected = false;
 		const collection_1 = clients[0].sharedString.getIntervalCollection("comments");
 		const interval = collection_1.add(
-			{ pos: 0, side: Side.After },
 			0,
+			{ pos: 0, side: Side.After },
 			IntervalType.SlideOnRemove,
 			{
 				intervalId: "1",
 			},
 		);
-		assert.equal(interval.stickiness, IntervalStickiness.FULL);
+		assert.equal(interval.stickiness, IntervalStickiness.NONE);
 		clients[0].containerRuntime.connected = true;
 		containerRuntimeFactory.processAllMessages();
 		assertConsistent(clients);

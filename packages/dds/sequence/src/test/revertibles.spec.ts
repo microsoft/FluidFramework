@@ -1172,6 +1172,7 @@ describe("Sequence.Revertibles with stickiness", () => {
 			)
 			.getIntervalId();
 		sharedString.removeText(3, 6);
+		containerRuntimeFactory.processAllMessages();
 		collection.removeIntervalById(id);
 
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
@@ -1197,10 +1198,43 @@ describe("Sequence.Revertibles with stickiness", () => {
 			)
 			.getIntervalId();
 		sharedString.removeText(3, 6);
+		containerRuntimeFactory.processAllMessages();
 		collection.change(id, 1, 6);
 
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
 		assertIntervals(sharedString, collection, [{ start: 1, end: 6 }]);
+	});
+
+	it("reverts remove range that reverses endpoints", () => {
+		sharedString.insertText(0, "hello world");
+
+		sharedString.on("sequenceDelta", (op) => {
+			appendSharedStringDeltaToRevertibles(sharedString, op, revertibles);
+		});
+
+		const id = collection
+			.add(
+				{ pos: 4, side: Side.Before },
+				{ pos: 5, side: Side.After },
+				IntervalType.SlideOnRemove,
+			)
+			.getIntervalId();
+		sharedString.removeText(3, 6);
+		containerRuntimeFactory.processAllMessages();
+
+		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
+		const intervals = Array.from(collection);
+		assert.equal(intervals.length, 1, `wrong number of intervals ${intervals.length}`);
+		const int = intervals[0];
+		assert.equal(
+			int.stickiness,
+			IntervalStickiness.NONE,
+			`unexpected stickiness ${int.stickiness}`,
+		);
+		const start = sharedString.localReferencePositionToPosition(int.start);
+		const end = sharedString.localReferencePositionToPosition(int.end);
+		assert.equal(start, 4, `start is ${start}`);
+		assert.equal(end, 5, `end is ${end}`);
 	});
 
 	it("reverts stickiness on interval remove", () => {

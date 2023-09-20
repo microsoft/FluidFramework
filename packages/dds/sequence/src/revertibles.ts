@@ -403,8 +403,8 @@ function isValidRange(
 		end < string.getLength() &&
 		(start < end ||
 			(start === end &&
-				(startSlide === SlidingPreference.BACKWARD ||
-					endSlide !== SlidingPreference.BACKWARD)))
+				(startSlide === SlidingPreference.FORWARD ||
+					endSlide !== SlidingPreference.FORWARD)))
 	);
 }
 

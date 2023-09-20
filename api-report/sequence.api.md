@@ -674,7 +674,9 @@ export type SharedStringSegment = TextSegment | Marker;
 
 // @public
 export enum Side {
+    // (undocumented)
     After = 1,
+    // (undocumented)
     Before = 0
 }
 

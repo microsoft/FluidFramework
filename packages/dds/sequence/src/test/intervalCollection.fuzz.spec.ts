@@ -112,8 +112,8 @@ export function makeOperationGenerator(
 	function sides(state: ClientOpState, range: RangeSpec): { startSide: Side; endSide: Side } {
 		const startSide = state.random.pick([Side.Before, Side.After]);
 		const endSide =
-			range.start === range.end && startSide === Side.Before
-				? Side.Before
+			range.start === range.end && startSide === Side.After
+				? Side.After
 				: state.random.pick([Side.Before, Side.After]);
 		return { startSide, endSide };
 	}
@@ -266,8 +266,8 @@ describe("IntervalCollection fuzz testing", () => {
 		// on segments that can be zamboni'd.
 		// TODO:AB#5337: re-enable these seeds.
 		skip: [
-			2, 4, 9, 14, 16, 18, 22, 27, 29, 31, 32, 35, 43, 44, 45, 46, 48, 52, 53, 56, 58, 59, 60,
-			63, 69, 76, 80, 83, 85, 87, 88, 92, 95,
+			0, 1, 6, 7, 8, 9, 18, 20, 23, 27, 29, 32, 36, 39, 43, 45, 48, 49, 56, 57, 58, 61, 63, 69,
+			72, 75, 79, 81, 84, 86, 88, 92, 95, 96,
 		],
 		// TODO:AB#5338: IntervalCollection doesn't correctly handle edits made while detached. Once supported,
 		// this config should be enabled (deleting is sufficient: detached start is enabled by default)
@@ -299,7 +299,7 @@ describe("IntervalCollection no reconnect fuzz testing", () => {
 	createDDSFuzzSuite(noReconnectModel, {
 		...options,
 		// AB#4477: Same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477.
-		skip: [],
+		skip: [92],
 		// TODO:AB#5338: IntervalCollection doesn't correctly handle edits made while detached. Once supported,
 		// this config should be enabled (deleting is sufficient: detached start is enabled by default)
 		detachedStartOptions: {
@@ -320,7 +320,7 @@ describe("IntervalCollection fuzz testing with rebased batches", () => {
 	createDDSFuzzSuite(noReconnectWithRebaseModel, {
 		...defaultFuzzOptions,
 		// ADO:4477: Same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477.
-		skip: [31],
+		skip: [],
 		// TODO:AB#5338: IntervalCollection doesn't correctly handle edits made while detached. Once supported,
 		// this config should be enabled (deleting is sufficient: detached start is enabled by default)
 		detachedStartOptions: {

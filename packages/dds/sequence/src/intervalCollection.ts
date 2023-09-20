@@ -101,13 +101,7 @@ export interface InteriorSequencePlace {
  * @remarks See {@link SequencePlace} for additional context on usage.
  */
 export enum Side {
-	/**
-	 * Content inserted will be placed before the endpoint
-	 */
 	Before = 0,
-	/**
-	 * Content inserted will be placed after the endpoint
-	 */
 	After = 1,
 }
 
@@ -1184,17 +1178,12 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			"start and end cannot be undefined because they were not passed in as undefined",
 		);
 
-		const startIndex = this.getIndex(start);
-		const endIndex = this.getIndex(end);
+		const startIndex = this.getComparisonIndex(start);
+		const endIndex = this.getComparisonIndex(end);
 		if (startIndex !== undefined && endIndex !== undefined && startIndex > endIndex) {
 			throw new UsageError("interval start cannot be greater than end");
-		} else if (
-			startIndex !== undefined &&
-			startIndex === endIndex &&
-			startSide === Side.Before &&
-			endSide === Side.After
-		) {
-			throw new UsageError("interval startSide Before and endSide After at same position");
+		} else if (startIndex !== undefined && startIndex === endIndex && startSide > endSide) {
+			throw new UsageError("interval startSide After and endSide Before at same position");
 		}
 
 		const stickiness = computeStickinessFromSide(startPos, startSide, endPos, endSide);
@@ -1312,11 +1301,11 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		}
 	}
 
-	private getIndex(place: SequencePlace) {
+	private getComparisonIndex(place: SequencePlace) {
 		if (typeof place === "number") {
 			return place;
 		} else if (place === "start") {
-			return 0;
+			return -1;
 		} else if (place === "end") {
 			return this.client?.getLength();
 		}
@@ -1336,8 +1325,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			throw new LoggingError("Change API requires an ID that is a string");
 		}
 
-		const startIndex = this.getIndex(start);
-		const endIndex = this.getIndex(end);
+		const startIndex = this.getComparisonIndex(start);
+		const endIndex = this.getComparisonIndex(end);
 		if (startIndex !== undefined && endIndex !== undefined && startIndex > endIndex) {
 			throw new UsageError("interval start cannot be greater than end");
 		}
@@ -1345,15 +1334,16 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		const interval = this.getIntervalById(id);
 		if (interval) {
 			if (
+				typeof start !== "string" &&
 				startIndex !== undefined &&
 				startIndex === endIndex &&
 				interval instanceof SequenceInterval
 			) {
 				const newStartSide = typeof start === "object" ? start.side : interval.startSide;
 				const newEndSide = typeof end === "object" ? end.side : interval.endSide;
-				if (newStartSide === Side.Before && newEndSide === Side.After) {
+				if (newStartSide > newEndSide) {
 					throw new UsageError(
-						"interval startSide Before and endSide After at same position",
+						"interval startSide After and endSide Before at same position",
 					);
 				}
 			}
