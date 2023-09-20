@@ -266,8 +266,8 @@ describe("IntervalCollection fuzz testing", () => {
 		// on segments that can be zamboni'd.
 		// TODO:AB#5337: re-enable these seeds.
 		skip: [
-			0, 1, 6, 7, 8, 9, 18, 20, 23, 27, 29, 32, 36, 39, 43, 45, 48, 49, 56, 57, 58, 61, 63, 69,
-			72, 75, 79, 81, 84, 86, 88, 92, 95, 96,
+			0, 1, 6, 7, 8, 9, 18, 20, 23, 27, 29, 32, 36, 39, 43, 45, 48, 49, 56, 57, 58, 61, 63,
+			69, 72, 75, 79, 81, 84, 86, 88, 92, 95, 96,
 		],
 		// TODO:AB#5338: IntervalCollection doesn't correctly handle edits made while detached. Once supported,
 		// this config should be enabled (deleting is sufficient: detached start is enabled by default)
