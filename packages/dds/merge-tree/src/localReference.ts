@@ -372,7 +372,7 @@ export class LocalReferenceCollection {
 			const node = lref.getListNode();
 			node?.list?.remove(node);
 
-			lref.link(lref.getSegment(), lref.getOffset(), undefined);
+			lref.link(undefined, 0, undefined);
 			if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
 				this.hierRefCount--;
 			}
