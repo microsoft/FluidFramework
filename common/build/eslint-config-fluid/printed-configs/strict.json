@@ -101,10 +101,13 @@
             "error"
         ],
         "@typescript-eslint/consistent-type-exports": [
-            "off"
+            "error"
         ],
         "@typescript-eslint/consistent-type-imports": [
-            "off"
+            "error",
+            {
+                "fixStyle": "inline-type-imports"
+            }
         ],
         "@typescript-eslint/dot-notation": [
             "error"

@@ -302,10 +302,6 @@ module.exports = {
 		"use-isnan": "error",
 		"valid-typeof": "off",
 		"yoda": "off",
-
-		// TEMPORARY
-		"@typescript-eslint/consistent-type-exports": "off",
-		"@typescript-eslint/consistent-type-imports": "off",
 	},
 	overrides: [
 		{
@@ -328,10 +324,6 @@ module.exports = {
 			files: ["**/types/*validate*Previous*.ts"],
 			rules: {
 				"@typescript-eslint/comma-spacing": "off",
-
-				// Type validation files don't need to use export/import type syntax
-				"@typescript-eslint/consistent-type-exports": "off",
-				"@typescript-eslint/consistent-type-imports": "off",
 			},
 		},
 	],

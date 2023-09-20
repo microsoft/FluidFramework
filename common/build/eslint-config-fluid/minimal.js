@@ -195,6 +195,10 @@ module.exports = {
 		// Requires a lot of changes; enabled in the strict config
 		"@typescript-eslint/consistent-generic-constructors": "off",
 
+		// Off for minimal and recommended; enabled in the strict config
+		"@typescript-eslint/consistent-type-exports": "off",
+		"@typescript-eslint/consistent-type-imports": "off",
+
 		"func-call-spacing": "off", // Off because it conflicts with typescript-formatter
 		"no-empty": "off",
 		"no-void": "off",
@@ -397,6 +401,10 @@ module.exports = {
 				"@typescript-eslint/unbound-method": "off", // This rule has false positives in many of our test projects.
 				"import/no-nodejs-modules": "off", // Node libraries are OK for test files.
 				"import/no-deprecated": "off", // Deprecated APIs are OK to use in test files.
+
+				// Disabled for test files
+				"@typescript-eslint/consistent-type-exports": "off",
+				"@typescript-eslint/consistent-type-imports": "off",
 			},
 		},
 	],
