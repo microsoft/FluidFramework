@@ -507,7 +507,9 @@ With the string now being,
 ```
 
 Note that the endpoint continues to remain with the associated character, except
-when the character is removed.
+when the character is removed. When content containing endpoints are removed,
+After endpoints move backward and Before endpoints move forward to maintain their
+side value and inclusive/exclusive behavior.
 
 <!-- This line ends the content that is copied to the sequences.md README -->
 
