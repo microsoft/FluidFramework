@@ -2252,7 +2252,7 @@ class PropertyFactory {
 			return Promise.reject(new Error(MSG.FSS_BASEURL_WRONG));
 		}
 
-		if (in_options.url.slice(-1) !== "/") {
+		if (!in_options.url.endsWith("/")) {
 			in_options.url = in_options.url + "/";
 		}
 
