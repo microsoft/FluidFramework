@@ -127,21 +127,20 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 	const maxCacheableSummarySize: number =
 		config.get("restGitService:maxCacheableSummarySize") ?? 1_000_000_000; // default: 1gb
 
-	let isEphemeral: boolean = isEphemeralContainer;
+	let isEphemeral: boolean = false;
 	if (!ignoreEphemeralFlag) {
 		const isEphemeralKey: string = `isEphemeralContainer:${documentId}`;
-		// eslint-disable-next-line eqeqeq
-		if (isEphemeral != undefined) {
+		if (typeof(isEphemeralContainer) === "boolean") {
 			// If an isEphemeral flag was passed in, cache it
 			Lumberjack.info(
-				`Setting ${isEphemeralKey} to ${isEphemeral}`,
+				`Setting cache for ${isEphemeralKey} to ${isEphemeralContainer}.`,
 				getLumberBaseProperties(tenantId, documentId),
 			);
+			isEphemeral = isEphemeralContainer;
 			await cache?.set(isEphemeralKey, isEphemeral);
 		} else {
 			isEphemeral = await cache?.get(isEphemeralKey);
-			// eslint-disable-next-line eqeqeq
-			if (isEphemeral == undefined) {
+			if (typeof(isEphemeral) !== "boolean") {
 				// If isEphemeral was not in the cache, fetch the value from database
 				try {
 					const staticProps: IDocumentStaticProperties =
@@ -153,8 +152,6 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 				}
 			}
 		}
-	} else {
-		isEphemeral = false;
 	}
 	Lumberjack.info(
 		`Document is ephemeral? ${isEphemeral}`,
