@@ -106,4 +106,6 @@ const entryPoint = await container.getEntryPoint();
 | `request` and `IFluidRouter` on `IFluidDataStoreRuntime` and `FluidDataStoreRuntime` | 2.0.0-internal.6.0.0 |                      |
 | `request` and `IFluidRouter` on `IFluidDataStoreChannel`                             | 2.0.0-internal.6.0.0 |                      |
 | `getRootDataStore` on `IContainerRuntime` and `ContainerRuntime`                     | 2.0.0-internal.6.0.0 |                      |
+| `requestHandler` property in `ContainerRuntime.loadRuntime(...)`                     | 2.0.0-internal.7.0.0 |                      |
+| `RuntimeRequestHandler` and `RuntimeRequestHandlerBuilder`                           | 2.0.0-internal.7.0.0 |                      |
 <!-- prettier-ignore-end -->
