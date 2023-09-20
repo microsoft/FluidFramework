@@ -80,9 +80,9 @@ extends:
 
     preCG:
     - task: UseNode@1
-      displayName: Use Node 14.x
+      displayName: Use Node 18.x
       inputs:
-        version: 14.x
+        version: 18.x
     - task: Npm@1
       displayName: npm ci
       inputs:
