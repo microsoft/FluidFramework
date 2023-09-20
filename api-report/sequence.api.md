@@ -149,7 +149,15 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval> ex
     // (undocumented)
     readonly attached: boolean;
     attachIndex(index: IntervalIndex<TInterval>): void;
+    // @deprecated
     change(id: string, start?: number, end?: number): TInterval | undefined;
+    change({ id, start, end, props, }: {
+        id: string;
+        start?: number;
+        end?: number;
+        props?: PropertySet;
+    }): TInterval | undefined;
+    // @deprecated
     changeProperties(id: string, props: PropertySet): any;
     // (undocumented)
     CreateBackwardIteratorWithEndPosition(endPosition: number): Iterator<TInterval>;
