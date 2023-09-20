@@ -6,7 +6,7 @@
 /**
  * Message for the task.
  *
- * @deprecated - This was functionality related to RabbitMq which is not used anymore,
+ * @deprecated This was functionality related to RabbitMq which is not used anymore,
  * and will be removed in a future release.
  */
 export interface ITaskMessage {
@@ -47,7 +47,7 @@ export interface IAgentUploader {
 /**
  * Interface to implement the task sender.
  *
- * @deprecated - This was functionality related to RabbitMq which is not used anymore,
+ * @deprecated This was functionality related to RabbitMq which is not used anymore,
  * and will be removed in a future release.
  */
 export interface ITaskMessageSender {
@@ -75,7 +75,7 @@ export interface ITaskMessageSender {
 /**
  * Interface to implement the task receiver.
  *
- * @deprecated - This was functionality related to RabbitMq which is not used anymore,
+ * @deprecated This was functionality related to RabbitMq which is not used anymore,
  * and will be removed in a future release.
  */
 export interface ITaskMessageReceiver {

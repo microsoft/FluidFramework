@@ -6,7 +6,7 @@
 import { ITaskMessage, ITaskMessageSender } from "@fluidframework/server-services-core";
 
 /**
- * @deprecated - This was functionality related to RabbitMq which is not used anymore,
+ * @deprecated This was functionality related to RabbitMq which is not used anymore,
  * and will be removed in a future release.
  */
 
