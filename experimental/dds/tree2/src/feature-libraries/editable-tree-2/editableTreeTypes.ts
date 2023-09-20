@@ -203,6 +203,15 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	has(key: FieldKey): boolean;
 
 	/**
+	 * Get the value associated with `key`.
+	 * @param key - which map entry to look up.
+	 *
+	 * @privateRemarks
+	 * TODO: Consider changing the key type to `string` for easier use.
+	 */
+	get(key: FieldKey): UnboxField<TSchema["mapFields"]>;
+
+	/**
 	 * Get the field for `key`.
 	 * @param key - which map entry to look up.
 	 *
@@ -213,7 +222,7 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	 * @privateRemarks
 	 * TODO: Consider changing the key type to `string` for easier use.
 	 */
-	get(key: FieldKey): TypedField<TSchema["mapFields"]>;
+	getBoxed(key: FieldKey): TypedField<TSchema["mapFields"]>;
 
 	// TODO: Add `set` method when FieldKind provides a setter (and derive the type from it).
 	// set(key: FieldKey, content: FlexibleFieldContent<TSchema["mapFields"]>): void;

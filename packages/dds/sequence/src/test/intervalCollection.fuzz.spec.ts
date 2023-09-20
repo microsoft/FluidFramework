@@ -228,22 +228,17 @@ describe("IntervalCollection fuzz testing", () => {
 
 	createDDSFuzzSuite(model, {
 		...defaultFuzzOptions,
-		// AB#4477: Seed 12 is the same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477.
-		// The other failing seeds were added when updates of the msn on reconnects
-		// were introduced to skip seeds due to a bug in a sequence DDS causing a `0x54e` error to occur.
+		// AB#4477: Seed 20 and others with its call stack is the same root cause as skipped regression test in
+		// intervalCollection.spec.ts--search for 4477.
+		// The other failing seeds were added when the mocks were changed to properly update msn on reconnects.
+		// This exposed ways that `0x54e` can occur.
 		// The root cause of this bug is--roughly speaking--interval endpoints with StayOnRemove being placed
 		// on segments that can be zamboni'd.
 		// TODO:AB#5337: re-enable these seeds.
 		skip: [
-			3, 4, 9, 11, 12, 13, 19, 20, 32, 39, 41, 42, 43, 44, 45, 49, 52, 53, 55, 58, 61, 63, 74,
-			76, 79, 86, 91, 92, 94,
+			3, 4, 9, 10, 12, 14, 18, 19, 20, 25, 26, 31, 32, 33, 36, 41, 43, 46, 52, 53, 56, 57, 58,
+			59, 61, 62, 63, 70, 73, 77, 79, 88, 91, 93, 94,
 		],
-		// TODO:AB#5338: IntervalCollection doesn't correctly handle edits made while detached. Once supported,
-		// this config should be enabled (deleting is sufficient: detached start is enabled by default)
-		detachedStartOptions: {
-			enabled: false,
-			attachProbability: 0.2,
-		},
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
 	});
@@ -268,13 +263,7 @@ describe("IntervalCollection no reconnect fuzz testing", () => {
 	createDDSFuzzSuite(noReconnectModel, {
 		...options,
 		// AB#4477: Same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477.
-		skip: [80, 9, 12, 44],
-		// TODO:AB#5338: IntervalCollection doesn't correctly handle edits made while detached. Once supported,
-		// this config should be enabled (deleting is sufficient: detached start is enabled by default)
-		detachedStartOptions: {
-			enabled: false,
-			attachProbability: 0.2,
-		},
+		skip: [9, 12],
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
 	});
@@ -288,14 +277,9 @@ describe("IntervalCollection fuzz testing with rebased batches", () => {
 
 	createDDSFuzzSuite(noReconnectWithRebaseModel, {
 		...defaultFuzzOptions,
-		// ADO:4477: Same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477.
-		skip: [9, 12, 29],
-		// TODO:AB#5338: IntervalCollection doesn't correctly handle edits made while detached. Once supported,
-		// this config should be enabled (deleting is sufficient: detached start is enabled by default)
-		detachedStartOptions: {
-			enabled: false,
-			attachProbability: 0.2,
-		},
+		// AB#4477: Either the same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477,
+		// or 0x54e, see AB#5337 or comment on "default interval collection" fuzz suite.
+		skip: [12, 17, 25, 28, 30, 43, 44, 51, 52, 61, 73, 81, 84, 91, 93],
 		reconnectProbability: 0.0,
 		numberOfClients: 3,
 		clientJoinOptions: {
