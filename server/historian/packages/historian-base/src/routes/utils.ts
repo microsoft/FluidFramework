@@ -130,8 +130,9 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 	let isEphemeral: boolean = isEphemeralContainer;
 	if (!ignoreEphemeralFlag) {
 		const isEphemeralKey: string = `isEphemeralContainer:${documentId}`;
-		if (isEphemeral !== undefined && isEphemeral !== null) {
-			// If an isEphemeral flag was passed in, cache it in Redis
+		// eslint-disable-next-line eqeqeq
+		if (isEphemeral != undefined) {
+			// If an isEphemeral flag was passed in, cache it
 			Lumberjack.info(
 				`Setting ${isEphemeralKey} to ${isEphemeral}`,
 				getLumberBaseProperties(tenantId, documentId),
@@ -139,8 +140,9 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 			await cache?.set(isEphemeralKey, isEphemeral);
 		} else {
 			isEphemeral = await cache?.get(isEphemeralKey);
-			if (isEphemeral === null || isEphemeral === undefined) {
-				// If isEphemeral is still null/undefined fetch the value from database
+			// eslint-disable-next-line eqeqeq
+			if (isEphemeral == undefined) {
+				// If isEphemeral was not in the cache, fetch the value from database
 				try {
 					const staticProps: IDocumentStaticProperties =
 						await documentManager.readStaticProperties(tenantId, documentId);
