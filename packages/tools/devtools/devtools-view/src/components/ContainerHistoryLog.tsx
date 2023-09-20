@@ -83,24 +83,31 @@ export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.Reac
 	const getBackgroundColorForState = (state: string): string => {
 		switch (state) {
 			case "attached": {
+				// blue
 				return tokens.colorPaletteRoyalBlueBackground2;
-			} // blue
+			}
 			case "closed": {
+				// red
 				return tokens.colorPaletteRedBorder1;
-			} // red
+			}
 			case "connected": {
+				// green
 				return tokens.colorPaletteGreenBackground2;
-			} // green
+			}
 			case "disconnected": {
-				return tokens.colorPaletteDarkOrangeBorderActive;
-			} // orange
+				// orange
+        return tokens.colorPaletteDarkOrangeBorderActive;
+			}
 			case "disposed": {
-				return tokens.colorPaletteDarkRedBackground2;
-			} // dark red
+				// dark red
+        return tokens.colorPaletteDarkRedBackground2;
+			}
 			default: {
 				console.log("Unknown state type for container!");
-				return tokens.colorBrandBackgroundPressed;
-			} // black
+
+        // black
+        return tokens.colorBrandBackgroundPressed;
+			}
 		}
 	};
 
