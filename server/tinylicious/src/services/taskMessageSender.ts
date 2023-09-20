@@ -9,7 +9,6 @@ import { ITaskMessage, ITaskMessageSender } from "@fluidframework/server-service
  * @deprecated This was functionality related to RabbitMq which is not used anymore,
  * and will be removed in a future release.
  */
-
 export class TaskMessageSender implements ITaskMessageSender {
 	public initialize(): Promise<void> {
 		throw new Error("Method not implemented.");
