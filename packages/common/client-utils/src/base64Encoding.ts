@@ -12,7 +12,6 @@ import { IsoBuffer } from "./indexNode";
  * @internal
  */
 export const fromBase64ToUtf8 = (input: string): string =>
-	// eslint-disable-next-line unicorn/text-encoding-identifier-case
 	IsoBuffer.from(input, "base64").toString("utf-8");
 
 /**
@@ -35,7 +34,6 @@ export const fromUtf8ToBase64 = (input: string): string =>
 export const toUtf8 = (input: string, encoding: string): string => {
 	switch (encoding) {
 		case "utf8":
-		// eslint-disable-next-line unicorn/text-encoding-identifier-case
 		case "utf-8": {
 			return input;
 		}

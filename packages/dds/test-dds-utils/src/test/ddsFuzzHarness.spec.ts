@@ -866,6 +866,8 @@ describe("DDS Fuzz Harness", () => {
 				assert(fs.existsSync(path.join(jsonDir, "0.json")));
 				assert(fs.existsSync(path.join(jsonDir, "1.json")));
 				const contents: unknown = JSON.parse(
+					// Our ES target doesn't support JSON.parsing a Buffer directly
+					// eslint-disable-next-line unicorn/prefer-json-parse-buffer
 					fs.readFileSync(path.join(jsonDir, "0.json"), { encoding: "utf8" }),
 				);
 				assert.deepEqual(contents, [{ type: "attach" }, { clientId: "B", type: "noop" }]);

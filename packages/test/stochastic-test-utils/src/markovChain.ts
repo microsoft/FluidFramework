@@ -114,7 +114,7 @@ export class SpaceEfficientWordMarkovChain extends MarkovChain<string, string> {
 
 					const currentWordCount = initialChain[prevWord][word];
 					initialChain[prevWord][word] =
-						currentWordCount === undefined ? 1: currentWordCount + 1;
+						currentWordCount === undefined ? 1 : currentWordCount + 1;
 					prevWord = word;
 				}
 			}

@@ -96,17 +96,17 @@ export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.Reac
 			}
 			case "disconnected": {
 				// orange
-        return tokens.colorPaletteDarkOrangeBorderActive;
+				return tokens.colorPaletteDarkOrangeBorderActive;
 			}
 			case "disposed": {
 				// dark red
-        return tokens.colorPaletteDarkRedBackground2;
+				return tokens.colorPaletteDarkRedBackground2;
 			}
 			default: {
 				console.log("Unknown state type for container!");
 
-        // black
-        return tokens.colorBrandBackgroundPressed;
+				// black
+				return tokens.colorBrandBackgroundPressed;
 			}
 		}
 	};
