@@ -360,7 +360,7 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 		);
 	});
 
-	it.only("0x173", async () => {
+	it("0x173", async () => {
 		const mapId = "mapKey";
 		const testContainerConfig: ITestContainerConfig = {
 			fluidDataObjectType: DataObjectFactoryType.Test,
