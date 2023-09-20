@@ -27,7 +27,7 @@ import {
 	IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
 
-export interface IContainerRuntimeWithResolveHandler_Deprecated extends IContainerRuntime {
+export interface IContainerRuntimeWithResolveHandle_Deprecated extends IContainerRuntime {
 	readonly IFluidHandleContext: IFluidHandleContext;
 	resolveHandle(request: IRequest): Promise<IResponse>;
 }
