@@ -14,8 +14,9 @@
 	"module": "lib/index.js",
 	"types": "dist/index.d.ts",
 	"files": [
-		"dist",
-		"index.d.ts"
+		"dist/**/*",
+		"lib/**/*",
+		"dist/index.d.ts"
 	],
 	"scripts": {
 		"build": "fluid-build . --task build",
