@@ -55,6 +55,7 @@ export {
 	detachedFieldAsKey,
 	keyAsDetachedField,
 	visitDelta,
+	applyDelta,
 	setGenericTreeField,
 	DeltaVisitor,
 	PathVisitor,
@@ -81,6 +82,7 @@ export {
 	ProtoNodes,
 	CursorMarker,
 	isCursor,
+	getDetachedFieldContainingPath,
 } from "./tree";
 
 export {

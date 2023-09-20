@@ -1,6 +1,6 @@
 {
 	"name": "root",
-	"version": "2.0.0-internal.6.3.0",
+	"version": "2.0.0-internal.6.4.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -75,7 +75,7 @@
 		"test:benchmark:copyresults": "copyfiles --exclude \"**/node_modules/**\" \"**/benchmarkOutput/**\" benchmarkOutput",
 		"test:benchmark:report": "pnpm run -r --no-sort --stream --no-bail test:benchmark:report --reporterOptions reportDir=./benchmarkOutput",
 		"test:copyresults": "copyfiles --exclude \"**/node_modules/**\" \"**/nyc/**\" nyc",
-		"test:coverage": "c8 npm run test",
+		"test:coverage": "c8 npm test",
 		"test:fromroot": "mocha \"packages/**/dist/test/**/*.spec.js\" --exit",
 		"test:jest": "assign-test-ports && pnpm run -r --no-sort --stream --no-bail test:jest --color",
 		"test:jest:bail": "assign-test-ports && pnpm run -r --no-sort --stream test:jest",
@@ -158,7 +158,7 @@
 	},
 	"packageManager": "pnpm@7.33.5+sha512.4e499f22fffe5845aa8f9463e1386b2d72c3134e0ebef9409360ad844fef0290e82b479b32eb2ec0f30e56607e1820c22167829fd62656d41a8fd0cc4a0f4267",
 	"engines": {
-		"node": ">=16.16.0",
+		"node": ">=18.17.1",
 		"pnpm": "7"
 	},
 	"pnpm": {

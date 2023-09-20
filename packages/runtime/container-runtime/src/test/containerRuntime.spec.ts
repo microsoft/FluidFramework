@@ -44,12 +44,15 @@ import {
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import {
 	CompressionAlgorithms,
-	ContainerMessageType,
 	ContainerRuntime,
-	ContainerRuntimeMessage,
-	defaultPendingOpsWaitTimeoutMs,
 	IContainerRuntimeOptions,
+	defaultPendingOpsWaitTimeoutMs,
 } from "../containerRuntime";
+import {
+	ContainerMessageType,
+	type RecentlyAddedContainerRuntimeMessageDetails,
+	type OutboundContainerRuntimeMessage,
+} from "../messageTypes";
 import { IPendingMessageNew, PendingStateManager } from "../pendingStateManager";
 import { DataStores } from "../dataStores";
 import { ISummaryCancellationToken, neverCancelledSummaryToken } from "../summary";
@@ -1037,13 +1040,21 @@ describe("Runtime", () => {
 				});
 			});
 			it("process remote op with unrecognized type and 'Ignore' compat behavior", async () => {
-				const futureRuntimeMessage: ContainerRuntimeMessage = {
-					type: "FROM_THE_FUTURE" as ContainerMessageType,
+				const futureRuntimeMessage: RecentlyAddedContainerRuntimeMessageDetails &
+					Record<string, unknown> = {
+					type: "FROM_THE_FUTURE",
 					contents: "Hello",
 					compatDetails: { behavior: "Ignore" },
 				};
 
-				const packedOp: Partial<ISequencedDocumentMessage> = {
+				const packedOp: Omit<
+					ISequencedDocumentMessage,
+					| "term"
+					| "minimumSequenceNumber"
+					| "clientSequenceNumber"
+					| "referenceSequenceNumber"
+					| "timestamp"
+				> = {
 					contents: JSON.stringify(futureRuntimeMessage),
 					type: MessageType.Operation,
 					sequenceNumber: 123,
@@ -1053,12 +1064,19 @@ describe("Runtime", () => {
 			});
 
 			it("process remote op with unrecognized type and 'FailToProcess' compat behavior", async () => {
-				const futureRuntimeMessage: ContainerRuntimeMessage = {
-					type: "FROM_THE_FUTURE" as ContainerMessageType,
+				const futureRuntimeMessage = {
+					type: "FROM_THE_FUTURE",
 					contents: "Hello",
 				};
 
-				const packedOp: Partial<ISequencedDocumentMessage> = {
+				const packedOp: Omit<
+					ISequencedDocumentMessage,
+					| "term"
+					| "minimumSequenceNumber"
+					| "clientSequenceNumber"
+					| "referenceSequenceNumber"
+					| "timestamp"
+				> = {
 					type: MessageType.Operation,
 					contents: JSON.stringify(futureRuntimeMessage),
 					sequenceNumber: 123,
@@ -1077,13 +1095,21 @@ describe("Runtime", () => {
 			});
 
 			it("process remote op with unrecognized type and no compat behavior", async () => {
-				const futureRuntimeMessage: ContainerRuntimeMessage = {
-					type: "FROM_THE_FUTURE" as ContainerMessageType,
+				const futureRuntimeMessage: RecentlyAddedContainerRuntimeMessageDetails &
+					Record<string, unknown> = {
+					type: "FROM THE FUTURE",
 					contents: "Hello",
 					compatDetails: { behavior: "FailToProcess" },
 				};
 
-				const packedOp: Partial<ISequencedDocumentMessage> = {
+				const packedOp: Omit<
+					ISequencedDocumentMessage,
+					| "term"
+					| "minimumSequenceNumber"
+					| "clientSequenceNumber"
+					| "referenceSequenceNumber"
+					| "timestamp"
+				> = {
 					contents: JSON.stringify(futureRuntimeMessage),
 					type: MessageType.Operation,
 					sequenceNumber: 123,
@@ -1285,6 +1311,75 @@ describe("Runtime", () => {
 					existing: false,
 					registryEntries: [],
 				});
+
+				// The entryPoint should come from the provided initialization function.
+				const actualEntryPoint = await containerRuntime.getEntryPoint?.();
+				assert(actualEntryPoint !== undefined, "entryPoint was not initialized");
+				assert.deepEqual(
+					actualEntryPoint,
+					myEntryPoint,
+					"entryPoint does not match expected object",
+				);
+			});
+
+			// TODO: Remove this test in internal.7.0 when initializeEntryPoint becomes required AB#4992
+			it("loadRuntime only passed requestHandlers", async () => {
+				const myResponse: IResponse = {
+					mimeType: "fluid/object",
+					value: "hello!",
+					status: 200,
+				};
+
+				const containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext() as IContainerContext,
+					requestHandler: async (req, ctrRuntime) => myResponse,
+					existing: false,
+					registryEntries: [],
+				});
+
+				// Calling request on the runtime should use the request handler we passed in the runtime's constructor.
+				const responseFromRequestMethod = await containerRuntime.request({ url: "/" });
+				assert.deepEqual(
+					responseFromRequestMethod,
+					myResponse,
+					"request method in runtime did not return the expected object",
+				);
+
+				// The entryPoint should use the request handler we passed in the runtime's constructor
+				assert(containerRuntime.getEntryPoint !== undefined);
+				const actualEntryPoint = await containerRuntime.getEntryPoint?.();
+				assert.notStrictEqual(
+					actualEntryPoint,
+					undefined,
+					"entryPoint was not the expected object",
+				);
+			});
+
+			it("loadRuntime accepts both requestHandlers and entryPoint", async () => {
+				const myResponse: IResponse = {
+					mimeType: "fluid/object",
+					value: "hello!",
+					status: 200,
+				};
+				const myEntryPoint: FluidObject = {
+					myProp: "myValue",
+				};
+
+				const containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext() as IContainerContext,
+					requestHandler: async (req, ctrRuntime) => myResponse,
+					initializeEntryPoint: async (ctrRuntime) => myEntryPoint,
+					existing: false,
+					registryEntries: [],
+				});
+
+				// Calling request on the runtime should use the request handler we passed in the runtime's constructor.
+				const responseFromRequestMethod = await containerRuntime.request({ url: "/" });
+				assert.deepEqual(
+					responseFromRequestMethod,
+					myResponse,
+					"request method in runtime did not return the expected object",
+				);
 
 				// The entryPoint should come from the provided initialization function.
 				const actualEntryPoint = await containerRuntime.getEntryPoint?.();
@@ -1623,7 +1718,7 @@ describe("Runtime", () => {
 				// processing requires creation of data store context and runtime as well.
 				type ContainerRuntimeWithSubmit = Omit<ContainerRuntime, "submit"> & {
 					submit(
-						containerRuntimeMessage: ContainerRuntimeMessage,
+						containerRuntimeMessage: OutboundContainerRuntimeMessage,
 						localOpMetadata: unknown,
 						metadata: Record<string, unknown> | undefined,
 					): void;
@@ -1634,7 +1729,7 @@ describe("Runtime", () => {
 				containerRuntimeWithSubmit.submit(
 					{
 						type: ContainerMessageType.Rejoin,
-						contents: "something",
+						contents: undefined,
 					},
 					undefined,
 					undefined,

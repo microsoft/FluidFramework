@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties } from "./index";
+import { ITelemetryBaseProperties } from "./index";
 
 /**
  * Error types the Fluid Framework may report.
@@ -77,11 +77,12 @@ export interface IErrorBase extends Partial<Error> {
 	 * See {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/stack | Error.stack}
 	 */
 	readonly stack?: string;
+
 	/**
-	 * Returns all properties of this error object that are either safe to log
-	 * or not explicitly tagged as containing privacy-sensitive data.
+	 * Returns all properties of this error object that are fit for logging.
+	 * Some may be tagged to indicate they contain some kind of sensitive data.
 	 */
-	getTelemetryProperties?(): ITelemetryProperties;
+	getTelemetryProperties?(): ITelemetryBaseProperties;
 }
 
 /**
@@ -92,6 +93,9 @@ export interface IGenericError extends IErrorBase {
 	 * {@inheritDoc IErrorBase.errorType}
 	 */
 	readonly errorType: typeof FluidErrorTypes.genericError;
+
+	// TODO: Use `unknown` instead (API-Breaking)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	error?: any;
 }
 

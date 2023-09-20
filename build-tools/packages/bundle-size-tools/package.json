@@ -11,7 +11,6 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"main": "dist/index.js",
-	"module": "lib/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint && npm run build:docs",
@@ -19,7 +18,7 @@
 		"build:copy": "copyfiles -u 1 \"src/**/*.fsl\" dist",
 		"build:docs": "api-extractor run --local",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf --glob \"dist\" \"*.tsbuildinfo\"",
+		"clean": "rimraf --glob 'dist' '*.tsbuildinfo' '_api-extractor-temp'",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix",
 		"format": "npm run prettier:fix",

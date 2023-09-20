@@ -14,6 +14,12 @@
  * * Publicized examples - any libraries, sample applications, etc. we expect external consumers to use for reference.
  */
 module.exports = {
+	env: {
+		browser: true,
+		es6: true,
+		es2024: false,
+		node: true,
+	},
 	extends: ["./recommended.js"],
 	rules: {
 		/**
@@ -71,6 +77,21 @@ module.exports = {
 					{
 						allows: ["private", "private readonly", "public readonly", "readonly"],
 					},
+				],
+
+				/**
+				 * Requires that type-only exports be done using `export type`. Being explicit allows the TypeScript
+				 * `isolatedModules` flag to be used, and isolated modules are needed to adopt modern build tools like swc.
+				 */
+				"@typescript-eslint/consistent-type-exports": "error",
+
+				/**
+				 * Requires that type-only imports be done using `import type`. Being explicit allows the TypeScript
+				 * `isolatedModules` flag to be used, and isolated modules are needed to adopt modern build tools like swc.
+				 */
+				"@typescript-eslint/consistent-type-imports": [
+					"error",
+					{ fixStyle: "inline-type-imports" },
 				],
 			},
 		},

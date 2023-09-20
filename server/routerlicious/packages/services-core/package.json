@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-services-core",
-	"version": "2.0.0",
+	"version": "3.0.0",
 	"description": "Fluid server services core definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -16,7 +16,7 @@
 		"build": "npm run build:genver && concurrently npm:build:compile npm:lint",
 		"build:compile": "npm run tsc && npm run typetests:gen",
 		"build:genver": "gen-version",
-		"clean": "rimraf --glob \"dist\" \"lib\" \"*.tsbuildinfo\" \"*.build.log\"",
+		"clean": "rimraf --glob 'dist' 'lib' '*.tsbuildinfo' '*.build.log'",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -29,9 +29,9 @@
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
-		"@fluidframework/common-utils": "^1.1.1",
+		"@fluidframework/common-utils": "^3.0.0",
 		"@fluidframework/gitresources": "workspace:~",
-		"@fluidframework/protocol-definitions": "^2.1.0",
+		"@fluidframework/protocol-definitions": "^3.0.0",
 		"@fluidframework/server-services-client": "workspace:~",
 		"@fluidframework/server-services-telemetry": "workspace:~",
 		"@types/nconf": "^0.10.2",
