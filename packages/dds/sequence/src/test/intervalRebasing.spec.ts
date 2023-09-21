@@ -194,7 +194,7 @@ describe("interval rebasing", () => {
 		assertIntervals(
 			clients[1].sharedString,
 			clients[1].sharedString.getIntervalCollection("comments"),
-			[{ start: 0, end: 4 }],
+			[{ start: 0, end: 9 }],
 		);
 	});
 
@@ -226,7 +226,7 @@ describe("interval rebasing", () => {
 		// (B)-A
 		//     ^
 		// (B)-(A)-C
-		//
+		//         ^
 		clients[0].sharedString.insertText(0, "A");
 		clients[2].sharedString.insertText(0, "B");
 		const collection_0 = clients[2].sharedString.getIntervalCollection("comments");
@@ -252,8 +252,7 @@ describe("interval rebasing", () => {
 		assertIntervals(
 			clients[0].sharedString,
 			clients[0].sharedString.getIntervalCollection("comments"),
-			[{ start: -1, end: -1 }],
-			false,
+			[{ start: 0, end: 0 }],
 		);
 	});
 
@@ -285,6 +284,8 @@ describe("interval rebasing", () => {
 	});
 
 	it("changing interval endpoint while disconnected to segment also inserted while disconnected", () => {
+		// AC
+		// A-B-C
 		clients[0].sharedString.insertText(0, "AC");
 		containerRuntimeFactory.processAllMessages();
 		assertConsistent(clients);
@@ -304,6 +305,27 @@ describe("interval rebasing", () => {
 			clients[0].sharedString.getIntervalCollection("comments"),
 			[{ start: 1, end: 1 }],
 		);
+	});
+
+	it("delete and insert text into range containing interval while disconnected", async () => {
+		// 012
+		// (0)-x-12
+		const intervals = clients[0].sharedString.getIntervalCollection("comments");
+		clients[0].sharedString.insertText(0, "012");
+		intervals.add(0, 2, IntervalType.SlideOnRemove);
+		assertIntervals(clients[0].sharedString, intervals, [{ start: 0, end: 2 }]);
+
+		clients[0].containerRuntime.connected = false;
+		clients[0].sharedString.insertText(1, "x");
+		clients[0].sharedString.removeRange(0, 1);
+		clients[0].containerRuntime.connected = true;
+
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+
+		assert.equal(clients[0].sharedString.getText(), "x12");
+
+		assertIntervals(clients[0].sharedString, intervals, [{ start: 0, end: 2 }]);
 	});
 
 	it("is consistent for full stickiness", () => {
