@@ -9,12 +9,7 @@ import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { DetachedReferencePosition, PropertySet } from "@fluidframework/merge-tree";
 import { ISummaryBlob } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import {
-	IIntervalCollection,
-	IntervalType,
-	SequenceInterval,
-	SharedString,
-} from "@fluidframework/sequence";
+import { IIntervalCollection, SequenceInterval, SharedString } from "@fluidframework/sequence";
 // This is not in sequence's public API, but an e2e test in this file sniffs the summary.
 // eslint-disable-next-line import/no-internal-modules
 import { ISerializedIntervalCollectionV2 } from "@fluidframework/sequence/dist/intervalCollection.js";
@@ -70,8 +65,8 @@ function testIntervalOperations(intervalCollection: IIntervalCollection<Sequence
 	let interval: SequenceInterval | undefined;
 	let id;
 
-	intervalArray[0] = intervalCollection.add(0, 0, IntervalType.SlideOnRemove);
-	intervalArray[1] = intervalCollection.add(0, 0, IntervalType.SlideOnRemove);
+	intervalArray[0] = intervalCollection.add({ start: 0, end: 0 });
+	intervalArray[1] = intervalCollection.add({ start: 0, end: 0 });
 	assert.notStrictEqual(intervalArray[0], intervalArray[1], "Unique intervals not added");
 
 	id = intervalArray[0].getIntervalId();
@@ -90,15 +85,15 @@ function testIntervalOperations(intervalCollection: IIntervalCollection<Sequence
 	interval = intervalCollection.getIntervalById(id);
 	assert.strictEqual(interval, undefined, "Interval not removed");
 
-	intervalArray[0] = intervalCollection.add(0, 0, IntervalType.SlideOnRemove);
-	intervalArray[1] = intervalCollection.add(0, 1, IntervalType.SlideOnRemove);
-	intervalArray[2] = intervalCollection.add(0, 2, IntervalType.SlideOnRemove);
-	intervalArray[3] = intervalCollection.add(1, 0, IntervalType.SlideOnRemove);
-	intervalArray[4] = intervalCollection.add(1, 1, IntervalType.SlideOnRemove);
-	intervalArray[5] = intervalCollection.add(1, 2, IntervalType.SlideOnRemove);
-	intervalArray[6] = intervalCollection.add(2, 0, IntervalType.SlideOnRemove);
-	intervalArray[7] = intervalCollection.add(2, 1, IntervalType.SlideOnRemove);
-	intervalArray[8] = intervalCollection.add(2, 2, IntervalType.SlideOnRemove);
+	intervalArray[0] = intervalCollection.add({ start: 0, end: 0 });
+	intervalArray[1] = intervalCollection.add({ start: 0, end: 1 });
+	intervalArray[2] = intervalCollection.add({ start: 0, end: 2 });
+	intervalArray[3] = intervalCollection.add({ start: 1, end: 0 });
+	intervalArray[4] = intervalCollection.add({ start: 1, end: 1 });
+	intervalArray[5] = intervalCollection.add({ start: 1, end: 2 });
+	intervalArray[6] = intervalCollection.add({ start: 2, end: 0 });
+	intervalArray[7] = intervalCollection.add({ start: 2, end: 1 });
+	intervalArray[8] = intervalCollection.add({ start: 2, end: 2 });
 
 	let i: number;
 	let result;
@@ -289,7 +284,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 
 		it("replace all is included", async () => {
 			sharedString.insertText(3, ".");
-			intervals.add(0, 3, IntervalType.SlideOnRemove);
+			intervals.add({ start: 0, end: 3 });
 			assertIntervals([{ start: 0, end: 3 }]);
 
 			sharedString.replaceText(0, 3, `xxx`);
@@ -298,7 +293,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 
 		it("remove all yields empty range", async () => {
 			const len = sharedString.getLength();
-			intervals.add(0, len - 1, IntervalType.SlideOnRemove);
+			intervals.add({ start: 0, end: len - 1 });
 			assertIntervals([{ start: 0, end: len - 1 }]);
 
 			sharedString.removeRange(0, len);
@@ -307,7 +302,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 		});
 
 		it("replace before is excluded", async () => {
-			intervals.add(1, 2, IntervalType.SlideOnRemove);
+			intervals.add({ start: 1, end: 2 });
 			assertIntervals([{ start: 1, end: 2 }]);
 
 			sharedString.replaceText(0, 1, `x`);
@@ -315,7 +310,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 		});
 
 		it("insert at first position is excluded", async () => {
-			intervals.add(0, 2, IntervalType.SlideOnRemove);
+			intervals.add({ start: 0, end: 2 });
 			assertIntervals([{ start: 0, end: 2 }]);
 
 			sharedString.insertText(0, ".");
@@ -324,7 +319,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 
 		it("replace first is included", async () => {
 			sharedString.insertText(0, "012");
-			intervals.add(0, 2, IntervalType.SlideOnRemove);
+			intervals.add({ start: 0, end: 2 });
 			assertIntervals([{ start: 0, end: 2 }]);
 
 			sharedString.replaceText(0, 1, `x`);
@@ -333,7 +328,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 
 		it("replace last is included", async () => {
 			sharedString.insertText(0, "012");
-			intervals.add(0, 2, IntervalType.SlideOnRemove);
+			intervals.add({ start: 0, end: 2 });
 			assertIntervals([{ start: 0, end: 2 }]);
 
 			sharedString.replaceText(1, 2, `x`);
@@ -341,7 +336,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 		});
 
 		it("insert at last position is included", async () => {
-			intervals.add(0, 2, IntervalType.SlideOnRemove);
+			intervals.add({ start: 0, end: 2 });
 			assertIntervals([{ start: 0, end: 2 }]);
 
 			sharedString.insertText(2, ".");
@@ -349,7 +344,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 		});
 
 		it("insert after last position is excluded", async () => {
-			intervals.add(0, 2, IntervalType.SlideOnRemove);
+			intervals.add({ start: 0, end: 2 });
 			assertIntervals([{ start: 0, end: 2 }]);
 
 			sharedString.insertText(3, ".");
@@ -357,7 +352,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 		});
 
 		it("replace after", async () => {
-			intervals.add(0, 1, IntervalType.SlideOnRemove);
+			intervals.add({ start: 0, end: 1 });
 			assertIntervals([{ start: 0, end: 1 }]);
 
 			sharedString.replaceText(1, 2, `x`);
@@ -366,7 +361,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 
 		it("repeated replacement", async () => {
 			sharedString.insertText(0, "012");
-			intervals.add(0, 2, IntervalType.SlideOnRemove);
+			intervals.add({ start: 0, end: 2 });
 			assertIntervals([{ start: 0, end: 2 }]);
 
 			for (let j = 0; j < 10; j++) {
@@ -402,7 +397,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 
 			sharedString1.insertText(0, "0123456789");
 			const intervals1 = sharedString1.getIntervalCollection("intervals");
-			intervals1.add(1, 7, IntervalType.SlideOnRemove);
+			intervals1.add({ start: 1, end: 7 });
 			assertIntervalsHelper(sharedString1, intervals1, [{ start: 1, end: 7 }]);
 
 			// Load the Container that was created by the first client.
@@ -443,15 +438,15 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 			const intervalArray: any[] = [];
 			let interval: SequenceInterval;
 
-			intervalArray[0] = intervals1.add(0, 0, IntervalType.SlideOnRemove);
-			intervalArray[1] = intervals1.add(0, 1, IntervalType.SlideOnRemove);
-			intervalArray[2] = intervals1.add(0, 2, IntervalType.SlideOnRemove);
-			intervalArray[3] = intervals1.add(1, 0, IntervalType.SlideOnRemove);
-			intervalArray[4] = intervals1.add(1, 1, IntervalType.SlideOnRemove);
-			intervalArray[5] = intervals1.add(1, 2, IntervalType.SlideOnRemove);
-			intervalArray[6] = intervals1.add(2, 0, IntervalType.SlideOnRemove);
-			intervalArray[7] = intervals1.add(2, 1, IntervalType.SlideOnRemove);
-			intervalArray[8] = intervals1.add(2, 2, IntervalType.SlideOnRemove);
+			intervalArray[0] = intervals1.add({ start: 0, end: 0 });
+			intervalArray[1] = intervals1.add({ start: 0, end: 1 });
+			intervalArray[2] = intervals1.add({ start: 0, end: 2 });
+			intervalArray[3] = intervals1.add({ start: 1, end: 0 });
+			intervalArray[4] = intervals1.add({ start: 1, end: 1 });
+			intervalArray[5] = intervals1.add({ start: 1, end: 2 });
+			intervalArray[6] = intervals1.add({ start: 2, end: 0 });
+			intervalArray[7] = intervals1.add({ start: 2, end: 1 });
+			intervalArray[8] = intervals1.add({ start: 2, end: 2 });
 
 			// Load the Container that was created by the first client.
 			const container2 = await provider.loadTestContainer(testContainerConfig);
@@ -576,9 +571,9 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 			await provider.ensureSynchronized();
 
 			// Conflicting adds
-			interval1 = intervals1.add(0, 0, IntervalType.SlideOnRemove);
+			interval1 = intervals1.add({ start: 0, end: 0 });
 			id1 = interval1.getIntervalId();
-			interval2 = intervals2.add(0, 0, IntervalType.SlideOnRemove);
+			interval2 = intervals2.add({ start: 0, end: 0 });
 			id2 = interval2.getIntervalId();
 
 			await provider.ensureSynchronized();
@@ -624,16 +619,16 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 			);
 
 			// Conflicting removes + add
-			interval1 = intervals1.add(1, 1, IntervalType.SlideOnRemove);
+			interval1 = intervals1.add({ start: 1, end: 1 });
 			id1 = interval1.getIntervalId();
-			interval2 = intervals2.add(1, 1, IntervalType.SlideOnRemove);
+			interval2 = intervals2.add({ start: 1, end: 1 });
 			id2 = interval2.getIntervalId();
 
 			await provider.ensureSynchronized();
 
 			intervals2.removeIntervalById(id1);
 			intervals1.removeIntervalById(id2);
-			interval1 = intervals1.add(1, 1, IntervalType.SlideOnRemove);
+			interval1 = intervals1.add({ start: 1, end: 1 });
 			id1 = interval1.getIntervalId();
 
 			await provider.ensureSynchronized();
@@ -658,8 +653,8 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 				typeof intervals2.change === "function"
 			) {
 				// Conflicting changes
-				intervals1.change(id1, 1, 2);
-				intervals2.change(id1, 2, 1);
+				intervals1.change({ id: id1, start: 1, end: 2 });
+				intervals2.change({ id: id1, start: 2, end: 1 });
 
 				await provider.ensureSynchronized();
 
@@ -692,9 +687,9 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 					);
 				}
 
-				intervals1.change(id1, 4, 4);
+				intervals1.change({ id: id1, start: 4, end: 4 });
 				await provider.opProcessingController.processOutgoing();
-				intervals2.change(id1, 2, undefined);
+				intervals2.change({ id: id1, start: 2, end: undefined });
 				await provider.ensureSynchronized();
 
 				interval1 = intervals1.getIntervalById(id1);
@@ -713,9 +708,9 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 				);
 				assert.strictEqual(interval2?.end.getOffset(), 4, "Conflicting transparent change");
 
-				intervals1.change(id1, undefined, 3);
+				intervals1.change({ id: id1, start: undefined, end: 3 });
 				await provider.opProcessingController.processOutgoing();
-				intervals2.change(id1, undefined, 2);
+				intervals2.change({ id: id1, start: undefined, end: 2 });
 
 				await provider.ensureSynchronized();
 
@@ -735,10 +730,10 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 				);
 				assert.strictEqual(interval2?.end.getOffset(), 2, "Conflicting transparent change");
 			}
-
+			// updated to reflect deprecation of changeProperties
 			if (
-				typeof intervals1.changeProperties === "function" &&
-				typeof intervals2.changeProperties === "function"
+				typeof intervals1.change === "function" &&
+				typeof intervals2.change === "function"
 			) {
 				const assertPropertyChangedArg = (p: any, v: any, m: string) => {
 					// Check expected values of args passed to the propertyChanged event only if IntervalCollection
@@ -765,14 +760,14 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 						deltaArgs2 = propertyDeltas;
 					},
 				);
-				intervals1.changeProperties(id1, { prop1: "prop1" });
+				intervals1.change({ id: id1, props: { prop1: "prop1" } });
 				assertPropertyChangedArg(
 					deltaArgs1.prop1,
 					null,
 					"Mismatch in property-changed event arg 1",
 				);
 				await provider.opProcessingController.processOutgoing();
-				intervals2.changeProperties(id1, { prop2: "prop2" });
+				intervals2.change({ id: id1, props: { prop2: "prop2" } });
 				assertPropertyChangedArg(
 					deltaArgs2.prop2,
 					null,
@@ -814,14 +809,14 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 					"Mismatch in changed properties 4",
 				);
 
-				intervals1.changeProperties(id1, { prop1: "no" });
+				intervals1.change({ id: id1, props: { prop1: "no" } });
 				assertPropertyChangedArg(
 					deltaArgs1.prop1,
 					"prop1",
 					"Mismatch in property-changed event arg 5",
 				);
 				await provider.opProcessingController.processOutgoing();
-				intervals2.changeProperties(id1, { prop1: "yes" });
+				intervals2.change({ id: id1, props: { prop1: "yes" } });
 				assertPropertyChangedArg(
 					deltaArgs2.prop1,
 					"prop1",
@@ -861,14 +856,14 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 					"Mismatch in changed properties 8",
 				);
 
-				intervals1.changeProperties(id1, { prop1: "maybe" });
+				intervals1.change({ id: id1, props: { prop1: "maybe" } });
 				assertPropertyChangedArg(
 					deltaArgs1.prop1,
 					"yes",
 					"Mismatch in property-changed event arg 9",
 				);
 				await provider.opProcessingController.processOutgoing();
-				intervals2.changeProperties(id1, { prop1: null });
+				intervals2.change({ id: id1, props: { prop1: null } });
 				assertPropertyChangedArg(
 					deltaArgs2.prop1,
 					"yes",
@@ -1001,17 +996,25 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 
 			const comment1Text = SharedString.create(dataObject1.runtime);
 			comment1Text.insertText(0, "a comment...");
-			intervalCollection1.add(0, 3, IntervalType.SlideOnRemove, {
-				story: comment1Text.handle,
+			intervalCollection1.add({
+				start: 0,
+				end: 3,
+				props: {
+					story: comment1Text.handle,
+				},
 			});
 			const comment2Text = SharedString.create(dataObject1.runtime);
 			comment2Text.insertText(0, "another comment...");
-			intervalCollection1.add(5, 7, IntervalType.SlideOnRemove, {
-				story: comment2Text.handle,
+			intervalCollection1.add({
+				start: 5,
+				end: 7,
+				props: {
+					story: comment2Text.handle,
+				},
 			});
 			const nestedMap = SharedMap.create(dataObject1.runtime);
 			nestedMap.set("nestedKey", "nestedValue");
-			intervalCollection1.add(8, 9, IntervalType.SlideOnRemove, { story: nestedMap.handle });
+			intervalCollection1.add({ start: 8, end: 9, props: { story: nestedMap.handle } });
 			await provider.ensureSynchronized();
 
 			const serialized1 = Array.from(intervalCollection1);
