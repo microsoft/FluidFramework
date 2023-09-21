@@ -373,17 +373,22 @@ export function mapCursorField<T, TCursor extends ITreeCursor = ITreeCursor>(
 }
 
 /**
- * @param cursor - cursor at a field whose nodes will be visited.
- * @param f - For on each node.
- * If `f` moves cursor, it must put it back to where it was at the beginning of `f` before returning.
+ * @param cursor - The cursor at a field whose nodes will be visited.
+ * @param f - The function to run on each node.
+ * If `f` returns a value, the iteration will stop.
+ * If `f` moves `cursor`, it must put it back to where it was at the beginning of `f` before returning.
+ * @returns The value returned by `f` if iteration was stopped early, otherwise undefined.
  */
-export function forEachNode<TCursor extends ITreeCursor = ITreeCursor>(
+export function forEachNode<TCursor extends ITreeCursor = ITreeCursor, T = void>(
 	cursor: TCursor,
-	f: (cursor: TCursor) => void,
-): void {
+	f: (cursor: TCursor) => T,
+): T | undefined {
 	assert(cursor.mode === CursorLocationType.Fields, 0x3bd /* should be in fields */);
 	for (let inNodes = cursor.firstNode(); inNodes; inNodes = cursor.nextNode()) {
-		f(cursor);
+		const result = f(cursor);
+		if (result !== undefined) {
+			return result;
+		}
 	}
 }
 

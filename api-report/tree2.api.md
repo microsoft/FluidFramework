@@ -1345,7 +1345,7 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
         readonly [P in FieldKey]?: UnboxField<TSchema["mapFields"]>;
     };
     entries(): IterableIterator<[FieldKey, UnboxField<TSchema["mapFields"]>]>;
-    forEach(callbackFn: (value: UnboxField<TSchema["mapFields"]>, key: FieldKey, map: MapNode<TSchema>) => void, thisArg?: any): void;
+    forEach(callbackFn: (value: UnboxField<TSchema["mapFields"]>, key: FieldKey, map: this) => void): void;
     get(key: FieldKey): UnboxField<TSchema["mapFields"]>;
     getBoxed(key: FieldKey): TypedField<TSchema["mapFields"]>;
     has(key: FieldKey): boolean;
@@ -1863,12 +1863,30 @@ export interface Sequence2<TTypes extends AllowedTypes> extends TreeField {
     readonly asArray: readonly UnboxNodeUnion<TTypes>[];
     at(index: number): UnboxNodeUnion<TTypes>;
     boxedAt(index: number): TypedNodeUnion<TTypes>;
+    entries(): IterableIterator<[number, UnboxNodeUnion<TTypes>]>;
+    every(predicate: (value: UnboxNodeUnion<TTypes>, index: number, sequence: this) => boolean): boolean;
+    filter(predicate: (value: UnboxNodeUnion<TTypes>, index: number, sequence: this) => boolean): UnboxNodeUnion<TTypes>[];
+    find(predicate: (value: UnboxNodeUnion<TTypes>, index: number, sequence: this) => boolean): UnboxNodeUnion<TTypes> | undefined;
     // (undocumented)
+    find<T extends UnboxNodeUnion<TTypes>>(predicate: (element: UnboxNodeUnion<TTypes>, index: number, sequence: this) => element is T): T | undefined;
+    findIndex(predicate: (value: UnboxNodeUnion<TTypes>, index: number, sequence: this) => boolean): number;
+    findLast(predicate: (value: UnboxNodeUnion<TTypes>, index: number, sequence: this) => boolean): UnboxNodeUnion<TTypes> | undefined;
+    // (undocumented)
+    findLast<T extends UnboxNodeUnion<TTypes>>(predicate: (element: UnboxNodeUnion<TTypes>, index: number, sequence: this) => element is T): T | undefined;
+    findLastIndex(predicate: (value: UnboxNodeUnion<TTypes>, index: number, sequence: this) => boolean): number;
+    forEach(callbackFn: (element: UnboxNodeUnion<TTypes>, index: number, sequence: this) => void): void;
+    includes(searchElement: UnboxNodeUnion<TTypes>, fromIndex?: number): boolean;
+    indexOf(searchElement: UnboxNodeUnion<TTypes>, fromIndex?: number): number;
+    keys(): IterableIterator<number>;
     readonly length: number;
-    map<U>(callbackfn: (value: UnboxNodeUnion<TTypes>, index: number, array: this) => U): U[];
-    mapBoxed<U>(callbackfn: (value: TypedNodeUnion<TTypes>, index: number, array: this) => U): U[];
+    map<U>(callbackfn: (value: UnboxNodeUnion<TTypes>, index: number, sequence: this) => U): U[];
+    reduce(callbackfn: (previousValue: UnboxNodeUnion<TTypes>, currentValue: UnboxNodeUnion<TTypes>, currentIndex: number, sequence: this) => UnboxNodeUnion<TTypes>, initialValue?: UnboxNodeUnion<TTypes>): UnboxNodeUnion<TTypes>;
+    // (undocumented)
+    reduce<U>(callbackfn: (previousValue: U, currentValue: UnboxNodeUnion<TTypes>, currentIndex: number, sequence: this) => UnboxNodeUnion<TTypes>, initialValue: U): U;
     // (undocumented)
     replaceRange(index: number, count: number, content: Iterable<FlexibleNodeContent<TTypes>>): void;
+    some(predicate: (value: UnboxNodeUnion<TTypes>, index: number, sequence: this) => boolean): boolean;
+    values(): IterableIterator<UnboxNodeUnion<TTypes>>;
 }
 
 // @alpha (undocumented)

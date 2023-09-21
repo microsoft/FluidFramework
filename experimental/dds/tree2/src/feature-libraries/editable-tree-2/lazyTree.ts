@@ -298,6 +298,7 @@ export class LazyMap<TSchema extends MapSchema>
 
 	public get size(): number {
 		let fieldCount = 0;
+		// TODO: Make this more efficient by e.g. caching the size
 		forEachField(this[cursorSymbol], () => (fieldCount += 1));
 		return fieldCount;
 	}
@@ -329,17 +330,17 @@ export class LazyMap<TSchema extends MapSchema>
 	}
 
 	public forEach(
-		callbackFn: (
-			value: UnboxField<TSchema["mapFields"]>,
-			key: FieldKey,
-			map: MapNode<TSchema>,
-		) => void,
-		thisArg?: any,
+		callbackFn: (value: UnboxField<TSchema["mapFields"]>, key: FieldKey, map: this) => void,
 	): void {
-		const fn = thisArg !== undefined ? callbackFn.bind(thisArg) : callbackFn;
-		for (const [key, value] of this.entries()) {
-			fn(value, key, this);
-		}
+		forEachField(this[cursorSymbol], (cursor) =>
+			callbackFn(
+				unboxedField(this.context, this.schema.mapFields, cursor) as UnboxField<
+					TSchema["mapFields"]
+				>,
+				cursor.getFieldKey(),
+				this,
+			),
+		);
 	}
 
 	public has(key: FieldKey): boolean {

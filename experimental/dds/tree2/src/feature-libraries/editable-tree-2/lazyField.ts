@@ -17,6 +17,7 @@ import {
 	keyAsDetachedField,
 	rootField,
 	EmptyKey,
+	forEachNode,
 } from "../../core";
 import { FieldKind } from "../modular-schema";
 import { NewFieldContent, normalizeNewFieldContent } from "../contextuallyTyped";
@@ -190,63 +191,99 @@ export abstract class LazyField<TKind extends FieldKindTypes, TTypes extends All
 		);
 	}
 
-	public indexOf(searchElement: UnboxNodeUnion<TTypes>, fromIndex?: number | undefined): number {}
+	public indexOf(searchElement: UnboxNodeUnion<TTypes>, fromIndex = 0): number {
+		return (
+			forEachNode(this[cursorSymbol], (cursor) => {
+				if (cursor.fieldIndex >= fromIndex) {
+					const element = unboxedUnion(this.context, this.schema, cursor);
+					if (searchElement === element) {
+						return cursor.fieldIndex;
+					}
+				}
+			}) ?? -1
+		);
+	}
 
 	public includes(
 		searchElement: UnboxNodeUnion<TTypes>,
 		fromIndex?: number | undefined,
 	): boolean {
-		throw new Error("Method not implemented.");
+		return this.indexOf(searchElement, fromIndex) !== -1;
 	}
-	public keys(): IterableIterator<number> {
-		throw new Error("Method not implemented.");
-	}
-	public values(): IterableIterator<UnboxNodeUnion<TTypes>> {
-		throw new Error("Method not implemented.");
-	}
-	public entries(): IterableIterator<[number, UnboxNodeUnion<TTypes>]> {
-		throw new Error("Method not implemented.");
-	}
+
 	public forEach(
-		callbackFn: (element: UnboxNodeUnion<TTypes>, key: FieldKey, sequence: this) => void,
-		thisArg?: any,
+		callbackFn: (element: UnboxNodeUnion<TTypes>, index: number, sequence: this) => void,
 	): void {
-		throw new Error("Method not implemented.");
+		forEachNode(this[cursorSymbol], (cursor) => {
+			const element = unboxedUnion(this.context, this.schema, cursor);
+			callbackFn(element, cursor.fieldIndex, this);
+		});
 	}
+
 	public find(
 		predicate: (value: UnboxNodeUnion<TTypes>, index: number, sequence: this) => boolean,
-		thisArg?: any,
 	): UnboxNodeUnion<TTypes> | undefined;
 	public find<T extends UnboxNodeUnion<TTypes>>(
 		predicate: (element: UnboxNodeUnion<TTypes>, index: number, sequence: this) => element is T,
-		thisArg?: any,
 	): T | undefined;
-	public find(predicate: unknown, thisArg?: unknown): UnboxNodeUnion<TTypes> | T | undefined {
-		throw new Error("Method not implemented.");
+	public find<T extends UnboxNodeUnion<TTypes>>(
+		predicate: (element: UnboxNodeUnion<TTypes>, index: number, sequence: this) => element is T,
+	): T | undefined {
+		return forEachNode(this[cursorSymbol], (cursor) => {
+			const element = unboxedUnion(this.context, this.schema, cursor);
+			if (predicate(element, cursor.fieldIndex, this)) {
+				return element;
+			}
+		});
 	}
+
 	public findLast(
 		predicate: (value: UnboxNodeUnion<TTypes>, index: number, sequence: this) => boolean,
-		thisArg?: any,
 	): UnboxNodeUnion<TTypes> | undefined;
 	public findLast<T extends UnboxNodeUnion<TTypes>>(
 		predicate: (element: UnboxNodeUnion<TTypes>, index: number, sequence: this) => element is T,
-		thisArg?: any,
 	): T | undefined;
-	public findLast(predicate: unknown, thisArg?: unknown): UnboxNodeUnion<TTypes> | T | undefined {
-		throw new Error("Method not implemented.");
+	public findLast<T extends UnboxNodeUnion<TTypes>>(
+		predicate: (element: UnboxNodeUnion<TTypes>, index: number, sequence: this) => element is T,
+	): UnboxNodeUnion<TTypes> | T | undefined {
+		let lastElement: UnboxNodeUnion<TTypes> | undefined;
+		// TODO: Optimize when cursors can iterate backwards
+		forEachNode(this[cursorSymbol], (cursor) => {
+			const element = unboxedUnion(this.context, this.schema, cursor);
+			if (predicate(element, cursor.fieldIndex, this)) {
+				lastElement = element;
+			}
+		});
+		return lastElement;
 	}
+
 	public findIndex(
 		predicate: (value: UnboxNodeUnion<TTypes>, index: number, sequence: this) => boolean,
-		thisArg?: any,
 	): number {
-		throw new Error("Method not implemented.");
+		return (
+			forEachNode(this[cursorSymbol], (cursor) => {
+				const element = unboxedUnion(this.context, this.schema, cursor);
+				if (predicate(element, cursor.fieldIndex, this)) {
+					return cursor.fieldIndex;
+				}
+			}) ?? -1
+		);
 	}
+
 	public findLastIndex(
 		predicate: (value: UnboxNodeUnion<TTypes>, index: number, sequence: this) => boolean,
-		thisArg?: any,
 	): number {
-		throw new Error("Method not implemented.");
+		let lastIndex = -1;
+		// TODO: Optimize when cursors can iterate backwards
+		forEachNode(this[cursorSymbol], (cursor) => {
+			const element = unboxedUnion(this.context, this.schema, cursor);
+			if (predicate(element, cursor.fieldIndex, this)) {
+				lastIndex = cursor.fieldIndex;
+			}
+		});
+		return lastIndex;
 	}
+
 	public reduce(
 		callbackfn: (
 			previousValue: UnboxNodeUnion<TTypes>,
@@ -263,52 +300,87 @@ export abstract class LazyField<TKind extends FieldKindTypes, TTypes extends All
 			currentIndex: number,
 			sequence: this,
 		) => UnboxNodeUnion<TTypes>,
-		initialValue?: U | undefined,
+		initialValue: U | undefined,
 	): U;
-	public reduce(callbackfn: unknown, initialValue?: unknown): UnboxNodeUnion<TTypes> | U {
-		throw new Error("Method not implemented.");
-	}
-	public reduceRight(
-		callbackfn: (
-			previousValue: UnboxNodeUnion<TTypes>,
-			currentValue: UnboxNodeUnion<TTypes>,
-			currentIndex: number,
-			sequence: this,
-		) => UnboxNodeUnion<TTypes>,
-		initialValue?: UnboxNodeUnion<TTypes> | undefined,
-	): UnboxNodeUnion<TTypes>;
-	public reduceRight<U>(
+	public reduce<U>(
 		callbackfn: (
 			previousValue: U,
 			currentValue: UnboxNodeUnion<TTypes>,
 			currentIndex: number,
 			sequence: this,
-		) => UnboxNodeUnion<TTypes>,
+		) => U,
 		initialValue?: U | undefined,
-	): U;
-	public reduceRight(callbackfn: unknown, initialValue?: unknown): UnboxNodeUnion<TTypes> | U {
-		throw new Error("Method not implemented.");
-	}
-	public filter(
-		predicate: (value: UnboxNodeUnion<TTypes>, index: number, sequence: this) => boolean,
-		thisArg?: any,
-	): UnboxNodeUnion<TTypes>[] {
-		throw new Error("Method not implemented.");
-	}
-	public some(
-		predicate: (value: UnboxNodeUnion<TTypes>, index: number, sequence: this) => boolean,
-		thisArg?: any,
-	): boolean {
-		throw new Error("Method not implemented.");
-	}
-	public every(
-		predicate: (value: UnboxNodeUnion<TTypes>, index: number, sequence: this) => boolean,
-		thisArg?: any,
-	): boolean {
-		throw new Error("Method not implemented.");
+	): UnboxNodeUnion<TTypes> | U {
+		if (initialValue !== undefined) {
+			let accumulation: U = initialValue;
+			forEachNode(this[cursorSymbol], (cursor) => {
+				const element = unboxedUnion(this.context, this.schema, cursor);
+				accumulation = callbackfn(accumulation, element, cursor.fieldIndex, this);
+			});
+			return accumulation;
+		} else {
+			// Given the possible overloads: if initialValue === undefined, then U == UnboxNodeUnion<TTypes> and casts between the two are safe.
+			let accumulation: UnboxNodeUnion<TTypes> | undefined;
+			forEachNode(this[cursorSymbol], (cursor) => {
+				const element = unboxedUnion(this.context, this.schema, cursor);
+				accumulation =
+					accumulation !== undefined
+						? (callbackfn(
+								accumulation as U,
+								element,
+								cursor.fieldIndex,
+								this,
+						  ) as UnboxNodeUnion<TTypes>)
+						: element;
+			});
+			return accumulation ?? fail("Reduce called on empty sequence with no initial value");
+		}
 	}
 
-	public mapBoxed<U>(
+	public filter(
+		predicate: (value: UnboxNodeUnion<TTypes>, index: number, sequence: this) => boolean,
+	): UnboxNodeUnion<TTypes>[] {
+		const filteredElements: UnboxNodeUnion<TTypes>[] = [];
+		forEachNode(this[cursorSymbol], (cursor) => {
+			const element = unboxedUnion(this.context, this.schema, cursor);
+			if (predicate(element, cursor.fieldIndex, this)) {
+				filteredElements.push(element);
+			}
+		});
+		return filteredElements;
+	}
+
+	public some(
+		predicate: (value: UnboxNodeUnion<TTypes>, index: number, sequence: this) => boolean,
+	): boolean {
+		return (
+			forEachNode(this[cursorSymbol], (cursor) => {
+				const element = unboxedUnion(this.context, this.schema, cursor);
+				if (predicate(element, cursor.fieldIndex, this)) {
+					return true;
+				}
+			}) ?? false
+		);
+	}
+
+	public every(
+		predicate: (value: UnboxNodeUnion<TTypes>, index: number, sequence: this) => boolean,
+	): boolean {
+		return (
+			forEachNode(this[cursorSymbol], (cursor) => {
+				const element = unboxedUnion(this.context, this.schema, cursor);
+				if (!predicate(element, cursor.fieldIndex, this)) {
+					return false;
+				}
+			}) ?? true
+		);
+	}
+
+	/**
+	 * Calls the provided callback function on each child of this sequence, and returns an array that contains the results.
+	 * @param callbackfn - A function that accepts the child, its index, and this field.
+	 */
+	private mapBoxed<U>(
 		callbackfn: (value: TypedNodeUnion<TTypes>, index: number, array: this) => U,
 	): U[] {
 		return mapCursorField(this[cursorSymbol], (cursor) =>
@@ -318,6 +390,29 @@ export abstract class LazyField<TKind extends FieldKindTypes, TTypes extends All
 				this,
 			),
 		);
+	}
+
+	public *keys(): IterableIterator<number> {
+		const cursor = this[cursorSymbol];
+		let index = 0;
+		for (let node = cursor.firstNode(); node; node = cursor.nextNode()) {
+			yield index++;
+		}
+	}
+
+	public *values(): IterableIterator<UnboxNodeUnion<TTypes>> {
+		const cursor = this[cursorSymbol];
+		for (let node = cursor.firstNode(); node; node = cursor.nextNode()) {
+			yield unboxedUnion(this.context, this.schema, cursor);
+		}
+	}
+
+	public *entries(): IterableIterator<[number, UnboxNodeUnion<TTypes>]> {
+		const cursor = this[cursorSymbol];
+		let index = 0;
+		for (let node = cursor.firstNode(); node; node = cursor.nextNode()) {
+			yield [index++, unboxedUnion(this.context, this.schema, cursor)];
+		}
 	}
 
 	public [Symbol.iterator](): IterableIterator<TypedNodeUnion<TTypes>> {

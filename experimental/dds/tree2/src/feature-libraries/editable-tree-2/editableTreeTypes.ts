@@ -259,14 +259,12 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	/**
 	 * Executes a provided function once per each key/value pair in the map.
 	 * @param callbackFn - The function to run for each map entry
-	 * @param thisArg - If present, `callbackFn` will be bound to `thisArg`
 	 *
 	 * @privateRemarks
 	 * TODO: This should run over fields in insertion order if we want to match the javascript foreach spec.
 	 */
 	forEach(
 		callbackFn: (value: UnboxField<TSchema["mapFields"]>, key: FieldKey, map: this) => void,
-		thisArg?: any,
 	): void;
 
 	// TODO: Add `set` method when FieldKind provides a setter (and derive the type from it).
@@ -497,70 +495,54 @@ export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
 	/**
 	 * Executes a provided function once per each element in the sequence.
 	 * @param callbackFn - The function to run for each element.
-	 * @param thisArg - If present, `callbackFn` will be bound to `thisArg`.
 	 */
 	forEach(
-		callbackFn: (element: UnboxNodeUnion<TTypes>, key: FieldKey, sequence: this) => void,
-		thisArg?: any,
+		callbackFn: (element: UnboxNodeUnion<TTypes>, index: number, sequence: this) => void,
 	): void;
 
 	/**
 	 * Returns the value of the first element in the sequence where `predicate` is true, and undefined otherwise.
 	 * @param predicate - The predicate to run on each element.
-	 * @param thisArg - If present, `predicate` will be bound to `thisArg`.
 	 */
 	find(
 		predicate: (value: UnboxNodeUnion<TTypes>, index: number, sequence: this) => boolean,
-		thisArg?: any,
 	): UnboxNodeUnion<TTypes> | undefined;
 	find<T extends UnboxNodeUnion<TTypes>>(
 		predicate: (element: UnboxNodeUnion<TTypes>, index: number, sequence: this) => element is T,
-		thisArg?: any,
 	): T | undefined;
 
 	/**
 	 * Returns the value of the last element in the sequence where `predicate` is true, and undefined otherwise.
 	 * @param predicate - The predicate to run on each element.
-	 * @param thisArg - If present, `predicate` will be bound to `thisArg`.
 	 */
 	findLast(
 		predicate: (value: UnboxNodeUnion<TTypes>, index: number, sequence: this) => boolean,
-		thisArg?: any,
 	): UnboxNodeUnion<TTypes> | undefined;
 	findLast<T extends UnboxNodeUnion<TTypes>>(
 		predicate: (element: UnboxNodeUnion<TTypes>, index: number, sequence: this) => element is T,
-		thisArg?: any,
 	): T | undefined;
 
 	/**
 	 * Returns the index of the first element in the sequence where `predicate` is true, otherwise -1.
 	 * @param predicate - The predicate to run on each element.
-	 * @param thisArg - If present, `predicate` will be bound to `thisArg`.
 	 */
 	findIndex(
 		predicate: (value: UnboxNodeUnion<TTypes>, index: number, sequence: this) => boolean,
-		thisArg?: any,
 	): number;
 
 	/**
 	 * Returns the index of the last element in the sequence where `predicate` is true, otherwise -1.
 	 * @param predicate - The predicate to run on each element.
-	 * @param thisArg - If present, `predicate` will be bound to `thisArg`.
 	 */
 	findLastIndex(
 		predicate: (value: UnboxNodeUnion<TTypes>, index: number, sequence: this) => boolean,
-		thisArg?: any,
 	): number;
 
 	/**
 	 * Calls the provided callback function on each child of this sequence, and returns an array that contains the results.
 	 * @param callbackfn - A function that accepts the child, its index, and this field.
-	 * @param thisArg - If present, `callbackFn` will be bound to `thisArg`.
 	 */
-	map<U>(
-		callbackfn: (value: UnboxNodeUnion<TTypes>, index: number, sequence: this) => U,
-		thisArg?: any,
-	): U[];
+	map<U>(callbackfn: (value: UnboxNodeUnion<TTypes>, index: number, sequence: this) => U): U[];
 
 	/**
 	 * Calls the specified callback function for all the elements in the sequence.
@@ -586,64 +568,31 @@ export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
 			currentIndex: number,
 			sequence: this,
 		) => UnboxNodeUnion<TTypes>,
-		initialValue?: U,
-	): U;
-
-	/**
-	 * Calls the specified callback function for all the elements in the sequence, starting with the last element and working backwards.
-	 * The return value of the callback function is the accumulated result, and is provided as an argument in the next call to the callback function.
-	 * @param callbackfn - A function that accepts up to four arguments.
-	 * The reduce method calls the callbackfn function one time for each element in the array.
-	 * @param initialValue - If present, it is passed to the first call to the callbackfn.
-	 * Otherwise, the first element in the sequence will be used as the initial accumulator value and skipped as currentValue.
-	 */
-	reduceRight(
-		callbackfn: (
-			previousValue: UnboxNodeUnion<TTypes>,
-			currentValue: UnboxNodeUnion<TTypes>,
-			currentIndex: number,
-			sequence: this,
-		) => UnboxNodeUnion<TTypes>,
-		initialValue?: UnboxNodeUnion<TTypes>,
-	): UnboxNodeUnion<TTypes>;
-	reduceRight<U>(
-		callbackfn: (
-			previousValue: U,
-			currentValue: UnboxNodeUnion<TTypes>,
-			currentIndex: number,
-			sequence: this,
-		) => UnboxNodeUnion<TTypes>,
-		initialValue?: U,
+		initialValue: U,
 	): U;
 
 	/**
 	 * Returns the elements of the sequence that meet the condition specified in a callback function.
 	 * @param predicate - The predicate to run on each element.
-	 * @param thisArg - If present, `predicate` will be bound to `thisArg`.
 	 */
 	filter(
 		predicate: (value: UnboxNodeUnion<TTypes>, index: number, sequence: this) => boolean,
-		thisArg?: any,
 	): UnboxNodeUnion<TTypes>[];
 
 	/**
 	 * Returns true if any element of the sequence satisfies the given predicate.
 	 * @param predicate - The predicate to run on each element.
-	 * @param thisArg - If present, `predicate` will be bound to `thisArg`.
 	 */
 	some(
 		predicate: (value: UnboxNodeUnion<TTypes>, index: number, sequence: this) => boolean,
-		thisArg?: any,
 	): boolean;
 
 	/**
 	 * Returns true if every element of the sequence satisfies the given predicate.
 	 * @param predicate - The predicate to run on each element.
-	 * @param thisArg - If present, `predicate` will be bound to `thisArg`.
 	 */
 	every(
 		predicate: (value: UnboxNodeUnion<TTypes>, index: number, sequence: this) => boolean,
-		thisArg?: any,
 	): boolean;
 
 	/**
@@ -653,13 +602,8 @@ export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
 	boxedAt(index: number): TypedNodeUnion<TTypes>;
 
 	/**
-	 * Calls the provided callback function on each child of this sequence, and returns an array that contains the results.
-	 * @param callbackfn - A function that accepts the child, its index, and this field.
+	 * The number of nodes in this field
 	 */
-	mapBoxed<U>(
-		callbackfn: (value: TypedNodeUnion<TTypes>, index: number, sequence: this) => U,
-	): U[];
-
 	readonly length: number;
 
 	// TODO: more and/or better editing APIs. As is, this can't express moves.
