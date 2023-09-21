@@ -25,7 +25,7 @@ export interface IEndpointInRangeIndex<TInterval extends ISerializableInterval>
 	/**
 	 * @returns an array of all intervals contained in this collection whose endpoints locate in the range [start, end] (includes both ends)
 	 */
-	findIntervalsWithEndpointInRange(start: number, end: number);
+	findIntervalsWithEndpointInRange(start: number, end: number): TInterval[];
 }
 
 export class EndpointInRangeIndex<TInterval extends ISerializableInterval>
@@ -68,7 +68,7 @@ export class EndpointInRangeIndex<TInterval extends ISerializableInterval>
 		this.intervalTree.remove(interval);
 	}
 
-	public findIntervalsWithEndpointInRange(start: number, end: number) {
+	public findIntervalsWithEndpointInRange(start: number, end: number): TInterval[] {
 		if (start <= 0 || start > end || this.intervalTree.isEmpty()) {
 			return [];
 		}

@@ -106,7 +106,7 @@ export interface IEndpointIndex<TInterval extends ISerializableInterval> extends
 // @public
 export interface IEndpointInRangeIndex<TInterval extends ISerializableInterval> extends IntervalIndex<TInterval> {
     // (undocumented)
-    findIntervalsWithEndpointInRange(start: number, end: number): any;
+    findIntervalsWithEndpointInRange(start: number, end: number): TInterval[];
 }
 
 // @public (undocumented)
@@ -364,7 +364,7 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
 // @public
 export interface IStartpointInRangeIndex<TInterval extends ISerializableInterval> extends IntervalIndex<TInterval> {
     // (undocumented)
-    findIntervalsWithStartpointInRange(start: number, end: number): any;
+    findIntervalsWithStartpointInRange(start: number, end: number): TInterval[];
 }
 
 // @internal
@@ -443,7 +443,7 @@ export namespace SequenceIntervalIndexes {
         }, endSegoff: {
             segment: ISegment | undefined;
             offset: number | undefined;
-        }): any;
+        }): Iterable<SequenceInterval>;
     }
 }
 
