@@ -20,6 +20,7 @@ import {
 	decodeNestedMap,
 	deleteFromNestedMap,
 	encodeNestedMap,
+	idAllocatorFromMaxId,
 	populateNestedMap,
 	setInNestedMap,
 	tryGetFromNestedMap,
@@ -59,7 +60,7 @@ export class TreeIndex {
 
 	public constructor(
 		private readonly name: string,
-		private readonly rootIdAllocator: IdAllocator<ForestRootId>,
+		private rootIdAllocator: IdAllocator<ForestRootId>,
 	) {}
 
 	public clone(): TreeIndex {
@@ -156,15 +157,16 @@ export class TreeIndex {
 	}
 
 	public encode(): string {
-		return encodeNestedMap(this.detachedNodeToField);
+		return JSON.stringify({ data: encodeNestedMap(this.detachedNodeToField), id: this.rootIdAllocator() });
 	}
 
 	/**
 	 * Loads the tree index from the given string, this overrides any existing data.
 	 */
 	public loadData(data: string): void {
-		this.detachedNodeToField = decodeNestedMap(data);
-		// TODO: The root ID allocator may need to be updated to account for existing IDs.
+		const treeIndex: { data: string; id: number } = JSON.parse(data);
+		this.detachedNodeToField = decodeNestedMap(treeIndex.data);
+		this.rootIdAllocator = idAllocatorFromMaxId(treeIndex.id) as IdAllocator<ForestRootId>;
 	}
 }
 
