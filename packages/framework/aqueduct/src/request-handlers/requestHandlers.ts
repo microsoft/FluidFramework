@@ -20,7 +20,7 @@ import { RequestParser, create404Response } from "@fluidframework/runtime-utils"
  * When a request is received with a mountableView: true header, this request handler will reissue the request
  * without the header, and respond with a mountable view of the given class using the response.
  * @param MountableViewClass - The type of mountable view to use when responding
- * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+ * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
  */
 export const mountableViewRequestHandler = (
 	MountableViewClass: IFluidMountableViewClass,
@@ -62,7 +62,7 @@ export const mountableViewRequestHandler = (
  * Pipe through container request into internal request.
  * If request is empty and default url is provided, redirect request to such default url.
  * @param defaultRootId - optional default root data store ID to pass request in case request is empty.
- * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+ * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
  */
 export const defaultRouteRequestHandler = (defaultRootId: string) => {
 	return async (request: IRequest, runtime: IContainerRuntime) => {
@@ -87,7 +87,7 @@ export const defaultRouteRequestHandler = (defaultRootId: string) => {
  * 3. the request url starts with "/" and is followed by a query param, such as /?key=value
  *
  * Returns a 404 error for any other url.
- * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+ * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
  */
 export function defaultFluidObjectRequestHandler(
 	fluidObject: FluidObject,

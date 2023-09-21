@@ -56,7 +56,7 @@ export class BaseContainerRuntimeFactory
 	constructor(props: {
 		registryEntries: NamedFluidDataStoreRegistryEntries;
 		dependencyContainer?: IFluidDependencySynthesizer;
-		/** @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md */
+		/** @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md */
 		requestHandlers?: RuntimeRequestHandler[];
 		runtimeOptions?: IContainerRuntimeOptions;
 		provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;

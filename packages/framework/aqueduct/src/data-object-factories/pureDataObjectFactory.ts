@@ -59,12 +59,12 @@ async function createDataObject<
 	// request mixin in
 	runtimeClass = mixinRequestHandler(
 		async (request: IRequest, runtimeArg: FluidDataStoreRuntime) => {
-			const router = (await runtimeArg.entryPoint.get()) as TObj;
+			const dataObject = (await runtimeArg.entryPoint.get()) as TObj;
 			assert(
-				router.request !== undefined,
+				dataObject.request !== undefined,
 				"Data store runtime entryPoint does not have request",
 			);
-			return router.request(request);
+			return dataObject.request(request);
 		},
 		runtimeClass,
 	);
