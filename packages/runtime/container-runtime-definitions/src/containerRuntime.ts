@@ -27,6 +27,9 @@ import {
 	IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
 
+/**
+ * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+ */
 export interface IContainerRuntimeWithResolveHandle_Deprecated extends IContainerRuntime {
 	readonly IFluidHandleContext: IFluidHandleContext;
 	resolveHandle(request: IRequest): Promise<IResponse>;
@@ -102,7 +105,7 @@ export interface IContainerRuntime
 	/**
 	 * Resolves handle URI
 	 * @param request - request to resolve
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 * @deprecated Will be removed in future major release. Migrate all usage of resolveHandle to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	resolveHandle(request: IRequest): Promise<IResponse>;
 }
