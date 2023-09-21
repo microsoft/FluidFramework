@@ -125,7 +125,7 @@ export class FluidDataStoreRuntime
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.entryPoint}
 	 */
-	public readonly entryPoint?: IFluidHandle<FluidObject>;
+	public readonly entryPoint: IFluidHandle<FluidObject>;
 
 	/**
 	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
@@ -235,7 +235,7 @@ export class FluidDataStoreRuntime
 	 * @param dataStoreContext - Context object for the runtime.
 	 * @param sharedObjectRegistry - The registry of shared objects that this data store will be able to instantiate.
 	 * @param existing - Pass 'true' if loading this datastore from an existing file; pass 'false' otherwise.
-	 * @param initializeEntryPoint - Function to initialize the entryPoint object for the data store runtime. The
+	 * @param provideEntryPoint - Function to initialize the entryPoint object for the data store runtime. The
 	 * handle to this data store runtime will point to the object returned by this function. If this function is not
 	 * provided, the handle will be left undefined. This is here so we can start making handles a first-class citizen
 	 * and the primary way of interacting with some Fluid objects, and should be used if possible.
@@ -244,7 +244,7 @@ export class FluidDataStoreRuntime
 		private readonly dataStoreContext: IFluidDataStoreContext,
 		private readonly sharedObjectRegistry: ISharedObjectRegistry,
 		existing: boolean,
-		initializeEntryPoint?: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>,
+		provideEntryPoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>,
 	) {
 		super();
 
@@ -329,14 +329,11 @@ export class FluidDataStoreRuntime
 			});
 		}
 
-		if (initializeEntryPoint) {
-			const promise = new LazyPromise(async () => initializeEntryPoint(this));
-			this.entryPoint = new FluidObjectHandle<FluidObject>(
-				promise,
-				"",
-				this.objectsRoutingContext,
-			);
-		}
+		this.entryPoint = new FluidObjectHandle<FluidObject>(
+			new LazyPromise(async () => provideEntryPoint(this)),
+			"",
+			this.objectsRoutingContext,
+		);
 
 		this.attachListener();
 		this._attachState = dataStoreContext.attachState;

@@ -95,12 +95,15 @@ export class MapFactory implements IChannelFactory {
  */
 export class AttributableMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
 	/**
-	 * Create a new shared map.
-	 * @param runtime - The data store runtime that the new shared map belongs to.
-	 * @param id - Optional name of the shared map.
-	 * @returns Newly created shared map.
+	 * Create a new attributable map.
+	 *
+	 * @param runtime - The data store runtime that the new attributable map belongs to.
+	 * @param id - Optional name of the attributable map.
+	 *
+	 * @returns Newly created attributable map.
 	 *
 	 * @example
+	 *
 	 * To create a `AttributableMap`, call the static create method:
 	 *
 	 * ```typescript

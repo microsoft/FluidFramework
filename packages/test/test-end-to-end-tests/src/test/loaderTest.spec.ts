@@ -17,6 +17,7 @@ import {
 	requestResolvedObjectFromContainer,
 	waitContainerToCatchUp,
 } from "@fluidframework/container-loader";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
 // REVIEW: enable compat testing?
 describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
@@ -123,16 +124,17 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
 
-	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-		testSharedDataObjectFactory1,
-		[
+	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+		defaultFactory: testSharedDataObjectFactory1,
+		registryEntries: [
 			[testSharedDataObjectFactory1.type, Promise.resolve(testSharedDataObjectFactory1)],
 			[testSharedDataObjectFactory2.type, Promise.resolve(testSharedDataObjectFactory2)],
 			[testFactoryWithRequestHeaders.type, Promise.resolve(testFactoryWithRequestHeaders)],
 		],
-		undefined,
-		[innerRequestHandler],
-	);
+		requestHandlers: [innerRequestHandler],
+		// The requestResolvedObjectFromContainer expects the entryPoint to act as containerRuntime request router
+		provideEntryPoint: async (containerRuntime: IContainerRuntime) => containerRuntime,
+	});
 
 	beforeEach(async () => {
 		provider = getTestObjectProvider();
@@ -342,6 +344,8 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 		const newLoader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
 		const resolvedContainer = await newLoader.resolve({ url });
 		await waitContainerToCatchUp(resolvedContainer);
+		await provider.ensureSynchronized();
+
 		const response = await requestResolvedObjectFromContainer(resolvedContainer, headers);
 
 		assert.strictEqual(response.status, 200, "Did not return the correct status");

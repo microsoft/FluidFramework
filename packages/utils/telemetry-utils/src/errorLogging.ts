@@ -284,8 +284,15 @@ export function wrapErrorAndLog<T extends LoggingError>(
 	return newError;
 }
 
-function overwriteStack(error: IFluidErrorBase | LoggingError, stack: string): void {
-	// supposedly setting stack on an Error can throw.
+/**
+ * Attempts to overwrite the error's stack
+ *
+ * There have been reports of certain JS environments where overwriting stack will throw.
+ * If that happens, this adds the given stack as the telemetry property "stack2"
+ *
+ * @internal
+ */
+export function overwriteStack(error: IFluidErrorBase | LoggingError, stack: string): void {
 	try {
 		Object.assign(error, { stack });
 	} catch {
@@ -322,8 +329,8 @@ export function isTaggedTelemetryPropertyValue(
 
 /**
  * Filter serializable telemetry properties
- * @param x - any telemetry prop
- * @returns - as-is if x is primitive. returns stringified if x is an array of primitive.
+ * @param x - Any telemetry prop
+ * @returns As-is if x is primitive. returns stringified if x is an array of primitive.
  * otherwise returns null since this is what we support at the moment.
  */
 function filterValidTelemetryProps(x: unknown, key: string): TelemetryBaseEventPropertyType {
@@ -450,7 +457,7 @@ export class LoggingError
 	/**
 	 * Determines if a given object is an instance of a LoggingError
 	 * @param object - any object
-	 * @returns - true if the object is an instance of a LoggingError, false if not.
+	 * @returns true if the object is an instance of a LoggingError, false if not.
 	 */
 	public static typeCheck(object: unknown): object is LoggingError {
 		if (typeof object === "object" && object !== null) {

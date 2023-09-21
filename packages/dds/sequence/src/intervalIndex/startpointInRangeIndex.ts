@@ -4,7 +4,6 @@
  */
 
 import { Client, PropertyAction, RedBlackTree } from "@fluidframework/merge-tree";
-import { assert } from "@fluidframework/core-utils";
 import { IIntervalHelpers, ISerializableInterval, IntervalType } from "../intervals";
 import { IntervalIndex } from "./intervalIndex";
 import { HasComparisonOverride, compareOverrideables, forceCompare } from "./intervalIndexUtils";
@@ -32,12 +31,7 @@ class StartpointInRangeIndex<TInterval extends ISerializableInterval>
 		private readonly client: Client,
 	) {
 		this.intervalTree = new RedBlackTree<TInterval, TInterval>((a: TInterval, b: TInterval) => {
-			assert(
-				typeof helpers.compareStarts === "function",
-				0x6d1 /* compareStarts does not exist in the helpers */,
-			);
-
-			const compareStartsResult = helpers.compareStarts(a, b);
+			const compareStartsResult = a.compareStart(b);
 			if (compareStartsResult !== 0) {
 				return compareStartsResult;
 			}

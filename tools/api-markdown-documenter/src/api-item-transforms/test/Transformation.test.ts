@@ -48,11 +48,23 @@ const defaultPartialConfig: Omit<ApiItemTransformationConfiguration, "apiModel">
 	uriRoot: ".",
 };
 
+// Relative to dist/api-item-transforms/test
+const testDataDirectoryPath = Path.resolve(
+	__dirname,
+	"..",
+	"..",
+	"..",
+	"src",
+	"api-item-transforms",
+	"test",
+	"test-data",
+);
+
 /**
  * Generates an `ApiModel` from the API report file at the provided path.
  */
 function generateModel(testReportFileName: string): ApiModel {
-	const filePath = Path.resolve(__dirname, "test-data", testReportFileName);
+	const filePath = Path.resolve(testDataDirectoryPath, testReportFileName);
 
 	const apiModel = new ApiModel();
 	apiModel.loadPackage(filePath);
@@ -363,9 +375,9 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 		// The model-level doc in this case isn't particularly interesting, so we will skip evaluating it.
 
-		const expectedPackageDoc = new DocumentNode({
+		const expectedPackageDocument = new DocumentNode({
 			apiItemName: "test-package",
-			filePath: "test-package.md",
+			documentPath: "test-package",
 			children: [
 				new SectionNode(
 					[
@@ -399,11 +411,11 @@ describe("ApiItem to Documentation transformation tests", () => {
 				),
 			],
 		});
-		expect(documents[1]).to.deep.equal(expectedPackageDoc);
+		expect(documents[1]).to.deep.equal(expectedPackageDocument);
 
-		const expectedEntryPointADoc = new DocumentNode({
+		const expectedEntryPointADocument = new DocumentNode({
 			apiItemName: "entry-point-a",
-			filePath: "test-package/entry-point-a-entrypoint.md",
+			documentPath: "test-package/entry-point-a-entrypoint",
 			children: [
 				new SectionNode(
 					[
@@ -483,11 +495,11 @@ describe("ApiItem to Documentation transformation tests", () => {
 				),
 			],
 		});
-		expect(documents[2]).to.deep.equal(expectedEntryPointADoc);
+		expect(documents[2]).to.deep.equal(expectedEntryPointADocument);
 
-		const expectedEntryPointBDoc = new DocumentNode({
+		const expectedEntryPointBDocument = new DocumentNode({
 			apiItemName: "entry-point-b",
-			filePath: "test-package/entry-point-b-entrypoint.md",
+			documentPath: "test-package/entry-point-b-entrypoint",
 			children: [
 				new SectionNode(
 					[
@@ -563,6 +575,6 @@ describe("ApiItem to Documentation transformation tests", () => {
 				),
 			],
 		});
-		expect(documents[3]).to.deep.equal(expectedEntryPointBDoc);
+		expect(documents[3]).to.deep.equal(expectedEntryPointBDocument);
 	});
 });

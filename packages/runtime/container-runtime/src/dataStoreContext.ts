@@ -314,7 +314,9 @@ export abstract class FluidDataStoreContext
 			properties: {
 				all: tagCodeArtifacts({
 					fluidDataStoreId: this.id,
-					fullPackageName: this.pkg?.join("/"),
+					// The package name is a getter because `this.pkg` may not be initialized during construction.
+					// For data stores loaded from summary, it is initialized during data store realization.
+					fullPackageName: () => this.pkg?.join("/"),
 				}),
 			},
 		});
@@ -1199,7 +1201,7 @@ export class LocalDetachedFluidDataStoreContext
 		// of data store factories tends to construct the data object (at least kick off an async method that returns
 		// it); that code moved to the entryPoint initialization function, so we want to ensure it still executes
 		// before the data store is attached.
-		await dataStoreChannel.entryPoint?.get();
+		await dataStoreChannel.entryPoint.get();
 
 		if (await this.isRoot()) {
 			dataStoreChannel.makeVisibleAndAttachGraph();

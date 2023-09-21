@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { renderAlert } from "./RenderAlert";
 export { renderBlockQuote } from "./RenderBlockQuote";
 export { renderCodeSpan } from "./RenderCodeSpan";
 export { renderFencedCodeBlock } from "./RenderFencedCodeBlock";

@@ -203,6 +203,7 @@ declare function get_current_InterfaceDeclaration_IIntervalHelpers():
 declare function use_old_InterfaceDeclaration_IIntervalHelpers(
     use: TypeOnly<old.IIntervalHelpers<any>>);
 use_old_InterfaceDeclaration_IIntervalHelpers(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IIntervalHelpers());
 
 /*
@@ -1434,4 +1435,5 @@ declare function get_current_VariableDeclaration_sequenceIntervalHelpers():
 declare function use_old_VariableDeclaration_sequenceIntervalHelpers(
     use: TypeOnly<typeof old.sequenceIntervalHelpers>);
 use_old_VariableDeclaration_sequenceIntervalHelpers(
+    // @ts-expect-error compatibility expected to be broken
     get_current_VariableDeclaration_sequenceIntervalHelpers());

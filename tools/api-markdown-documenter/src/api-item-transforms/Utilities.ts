@@ -7,8 +7,8 @@ import { DocDeclarationReference } from "@microsoft/tsdoc";
 
 import { Link } from "../Link";
 import { DocumentNode, SectionNode } from "../documentation-domain";
-import { getFilePathForApiItem, getLinkForApiItem } from "./ApiItemUtilities";
-import { DocNodeTransformOptions } from "./DocNodeTransforms";
+import { getDocumentPathForApiItem, getLinkForApiItem } from "./ApiItemUtilities";
+import { TsdocNodeTransformOptions } from "./TsdocNodeTransforms";
 import { ApiItemTransformationConfiguration } from "./configuration";
 import { wrapInSection } from "./helpers";
 
@@ -46,21 +46,21 @@ export function createDocument(
 	return new DocumentNode({
 		apiItemName: documentItem.displayName,
 		children: contents,
-		filePath: getFilePathForApiItem(documentItem, config),
+		documentPath: getDocumentPathForApiItem(documentItem, config),
 		frontMatter,
 	});
 }
 
 /**
- * Create {@link DocNodeTransformOptions} for the provided context API item and the system config.
+ * Create {@link TsdocNodeTransformOptions} for the provided context API item and the system config.
  *
- * @param contextApiItem - See {@link DocNodeTransformOptions.contextApiItem}.
+ * @param contextApiItem - See {@link TsdocNodeTransformOptions.contextApiItem}.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
-export function getDocNodeTransformationOptions(
+export function getTsdocNodeTransformationOptions(
 	contextApiItem: ApiItem,
 	config: Required<ApiItemTransformationConfiguration>,
-): DocNodeTransformOptions {
+): TsdocNodeTransformOptions {
 	return {
 		contextApiItem,
 		resolveApiReference: (codeDestination): Link | undefined =>
@@ -72,7 +72,7 @@ export function getDocNodeTransformationOptions(
 /**
  * Resolves a symbolic link and creates a URL to the target.
  *
- * @param contextApiItem - See {@link DocNodeTransformOptions.contextApiItem}.
+ * @param contextApiItem - See {@link TsdocNodeTransformOptions.contextApiItem}.
  * @param codeDestination - The link reference target.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */

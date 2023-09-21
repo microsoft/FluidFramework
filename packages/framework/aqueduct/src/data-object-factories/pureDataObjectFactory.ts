@@ -59,17 +59,12 @@ async function createDataObject<
 	// request mixin in
 	runtimeClass = mixinRequestHandler(
 		async (request: IRequest, runtimeArg: FluidDataStoreRuntime) => {
-			const maybeRouter: FluidObject<IFluidRouter> | undefined =
-				await runtimeArg.entryPoint?.get();
+			const dataObject = (await runtimeArg.entryPoint.get()) as TObj;
 			assert(
-				maybeRouter !== undefined,
-				0x468 /* entryPoint should have been initialized by now */,
+				dataObject.request !== undefined,
+				"Data store runtime entryPoint does not have request",
 			);
-			assert(
-				maybeRouter?.IFluidRouter !== undefined,
-				0x469 /* Data store runtime entryPoint is not an IFluidRouter */,
-			);
-			return maybeRouter?.IFluidRouter.request(request);
+			return dataObject.request(request);
 		},
 		runtimeClass,
 	);
@@ -88,7 +83,7 @@ async function createDataObject<
 			// Without this I ran into issues with the load-existing flow not working correctly.
 			await instance.finishInitialization(true);
 			return instance;
-		} /* initializeEntryPoint */,
+		} /* provideEntryPoint */,
 	);
 
 	// Create object right away.

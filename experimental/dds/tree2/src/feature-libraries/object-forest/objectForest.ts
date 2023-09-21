@@ -22,7 +22,6 @@ import {
 	ITreeCursor,
 	CursorLocationType,
 	TreeSchemaIdentifier,
-	TreeValue,
 	MapTree,
 	getMapTreeField,
 	FieldAnchor,
@@ -30,6 +29,7 @@ import {
 	ForestEvents,
 	PathRootPrefix,
 	DeltaVisitor,
+	Value,
 } from "../../core";
 import { brand, fail, assertValidIndex } from "../../util";
 import { CursorWithNode, SynchronousCursor } from "../treeCursorUtils";
@@ -94,7 +94,7 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 	public acquireVisitor(): DeltaVisitor {
 		assert(
 			this.activeVisitor === undefined,
-			"Must release existing visitor before acquiring another",
+			0x76c /* Must release existing visitor before acquiring another */,
 		);
 		this.events.emit("beforeChange");
 
@@ -136,7 +136,7 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 				this.cursor.free();
 				assert(
 					this.forest.activeVisitor !== undefined,
-					"Multiple free calls for same visitor",
+					0x76d /* Multiple free calls for same visitor */,
 				);
 				this.forest.activeVisitor = undefined;
 				this.forest.events.emit("afterChange");
@@ -399,7 +399,7 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 		assert(this.innerCursor !== undefined, 0x43f /* Cursor must be current to be used */);
 		return this.innerCursor.type;
 	}
-	public get value(): TreeValue {
+	public get value(): Value {
 		assert(this.innerCursor !== undefined, 0x440 /* Cursor must be current to be used */);
 		return this.innerCursor.value;
 	}

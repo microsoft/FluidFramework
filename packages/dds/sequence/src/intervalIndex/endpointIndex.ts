@@ -29,8 +29,7 @@ class EndpointIndex<TInterval extends ISerializableInterval> implements IEndpoin
 		private readonly client: Client,
 		private readonly helpers: IIntervalHelpers<TInterval>,
 	) {
-		// eslint-disable-next-line @typescript-eslint/unbound-method
-		this.endIntervalTree = new RedBlackTree<TInterval, TInterval>(helpers.compareEnds);
+		this.endIntervalTree = new RedBlackTree<TInterval, TInterval>((a, b) => a.compareEnd(b));
 	}
 
 	public previousInterval(pos: number): TInterval | undefined {

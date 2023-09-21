@@ -17,7 +17,7 @@ import {
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { AsyncFluidObjectProvider } from "@fluidframework/synthesize";
-import { defaultFluidObjectRequestHandler } from "../request-handlers";
+import { create404Response } from "@fluidframework/runtime-utils";
 import { DataObjectTypes, IDataObjectProps } from "./types";
 
 /**
@@ -79,8 +79,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	}
 
 	public static async getDataObject(runtime: IFluidDataStoreRuntime) {
-		const obj = await runtime.entryPoint?.get();
-		assert(obj !== undefined, 0x0bc /* "The runtime's handle is not initialized yet!" */);
+		const obj = await runtime.entryPoint.get();
 		return obj as PureDataObject;
 	}
 
@@ -109,7 +108,9 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	 * 2. the request url is empty
 	 */
 	public async request(req: IRequest): Promise<IResponse> {
-		return defaultFluidObjectRequestHandler(this, req);
+		return req.url === "" || req.url === "/" || req.url.startsWith("/?")
+			? { mimeType: "fluid/object", status: 200, value: this }
+			: create404Response(req);
 	}
 
 	// #endregion IFluidRouter

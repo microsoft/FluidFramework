@@ -38,7 +38,11 @@ import {
 } from "@fluidframework/runtime-definitions";
 
 import { ContainerRuntime, TombstoneResponseHeaderKey } from "./containerRuntime";
-import { sendGCUnexpectedUsageEvent, sweepAttachmentBlobsKey, throwOnTombstoneLoadKey } from "./gc";
+import {
+	sendGCUnexpectedUsageEvent,
+	disableAttachmentBlobSweepKey,
+	throwOnTombstoneLoadKey,
+} from "./gc";
 import { Throttler, formExponentialFn, IThrottler } from "./throttler";
 import { summarizerClientType } from "./summary";
 import { IBlobMetadata } from "./metadata";
@@ -755,11 +759,11 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	 * Delete attachment blobs that are sweep ready.
 	 * @param sweepReadyBlobRoutes - The routes of blobs that are sweep ready and should be deleted. These routes will
 	 * be based off of local ids.
-	 * @returns - The routes of blobs that were deleted.
+	 * @returns The routes of blobs that were deleted.
 	 */
 	public deleteSweepReadyNodes(sweepReadyBlobRoutes: string[]): string[] {
 		// If sweep for attachment blobs is not enabled, return empty list indicating nothing is deleted.
-		if (this.mc.config.getBoolean(sweepAttachmentBlobsKey) !== true) {
+		if (this.mc.config.getBoolean(disableAttachmentBlobSweepKey) === true) {
 			return [];
 		}
 
@@ -918,7 +922,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		}
 	}
 
-	public async getPendingBlobs(waitBlobsToAttach?: boolean): Promise<IPendingBlobs | undefined> {
+	public async attachAndGetPendingBlobs(): Promise<IPendingBlobs | undefined> {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
 			{ eventName: "GetPendingBlobs" },
@@ -933,34 +937,32 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					for (const [id, entry] of this.pendingBlobs) {
 						if (!localBlobs.has(entry)) {
 							localBlobs.add(entry);
-							if (waitBlobsToAttach) {
-								if (!entry.opsent) {
-									this.sendBlobAttachOp(id, entry.storageId);
-								}
-								entry.handleP.resolve(this.getBlobHandle(id));
-								attachBlobsP.push(
-									new Promise<void>((resolve) => {
-										const onBlobAttached = (attachedEntry) => {
-											if (attachedEntry === entry) {
-												this.off("blobAttached", onBlobAttached);
-												resolve();
-											}
-										};
-										if (!entry.attached) {
-											this.on("blobAttached", onBlobAttached);
-										} else {
+							if (!entry.opsent) {
+								this.sendBlobAttachOp(id, entry.storageId);
+							}
+							entry.handleP.resolve(this.getBlobHandle(id));
+							attachBlobsP.push(
+								new Promise<void>((resolve) => {
+									const onBlobAttached = (attachedEntry) => {
+										if (attachedEntry === entry) {
+											this.off("blobAttached", onBlobAttached);
 											resolve();
 										}
-									}),
-								);
-							}
+									};
+									if (!entry.attached) {
+										this.on("blobAttached", onBlobAttached);
+									} else {
+										resolve();
+									}
+								}),
+							);
 						}
 					}
 					await Promise.all(attachBlobsP);
 				}
-				// another for is needed to correctly mark attach state
-				// future optimization won't add unattached blobs to the list
+
 				for (const [id, entry] of this.pendingBlobs) {
+					assert(entry.attached === true, "stashed blob should be attached");
 					blobs[id] = {
 						blob: bufferToString(entry.blob, "base64"),
 						storageId: entry.storageId,
@@ -970,7 +972,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 						uploadTime: entry.uploadTime,
 					};
 				}
-				return blobs;
+				return Object.keys(blobs).length > 0 ? blobs : undefined;
 			},
 		);
 	}

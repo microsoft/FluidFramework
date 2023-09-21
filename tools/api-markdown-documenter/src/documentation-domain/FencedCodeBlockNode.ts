@@ -28,6 +28,8 @@ import { createNodesFromPlainText } from "./Utilities";
  * 	const foo = "bar";
  * </code>
  * ```
+ *
+ * @public
  */
 export class FencedCodeBlockNode
 	extends DocumentationParentNodeBase

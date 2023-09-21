@@ -95,17 +95,6 @@ stages:
           # Disable colorization for tinylicious logs (not useful when printing to a file)
           logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
           logger__morganFormat: tiny
-        additionalSteps:
-
-        # Publish the tinylicious log
-        - task: PublishPipelineArtifact@1
-          displayName: Publish Artifact - Tinylicious Log
-          inputs:
-            # NOTE: this depends on knowledge of what the template does and where it puts things.
-            # If the template changes its logic, we might need to adjust this path.
-            targetPath: '${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}/tinylicious.log'
-            artifactName: 'tinyliciousLog'
-            publishLocation: 'pipeline'
 
   # stress tests frs
   - stage: stress_tests_frs
