@@ -95,6 +95,7 @@ declare function get_old_ClassDeclaration_CollaborationWindow():
 declare function use_current_ClassDeclaration_CollaborationWindow(
     use: TypeOnly<current.CollaborationWindow>);
 use_current_ClassDeclaration_CollaborationWindow(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_CollaborationWindow());
 
 /*

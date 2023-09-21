@@ -279,7 +279,7 @@ describe("interval rebasing", () => {
 		assertIntervals(
 			clients[0].sharedString,
 			clients[0].sharedString.getIntervalCollection("comments"),
-			[{ start: -1, end: -1 }],
+			[],
 		);
 	});
 

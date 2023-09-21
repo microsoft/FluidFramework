@@ -202,6 +202,7 @@ export class CollaborationWindow {
     collaborating: boolean;
     // (undocumented)
     currentSeq: number;
+    isConnected: boolean;
     // (undocumented)
     loadFrom(a: CollaborationWindow): void;
     // (undocumented)

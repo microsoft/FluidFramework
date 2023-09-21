@@ -884,12 +884,20 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			}
 		}
 
-		this.updateSeqNumbers(msg.minimumSequenceNumber, msg.sequenceNumber);
+		const collabWindow = this.getCollabWindow();
+
+		// if disconnected, don't increment minSeq to avoid zamboni deleting
+		// segments referenced by other structures while disconnected
+		this.updateSeqNumbers(
+			collabWindow.isConnected ? msg.minimumSequenceNumber : collabWindow.minSeq,
+			msg.sequenceNumber,
+		);
 	}
 
 	public updateSeqNumbers(min: number, seq: number) {
 		const collabWindow = this.getCollabWindow();
-		// Equal is fine here due to SharedSegmentSequence<>.snapshotContent() potentially updating with same #
+		// Equal is fine here due to SharedSegmentSequence<>.snapshotContent()
+		// potentially updating with same #
 		assert(
 			collabWindow.currentSeq <= seq,
 			0x038 /* "Incoming op sequence# < local collabWindow's currentSequence#" */,
@@ -1173,6 +1181,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				this.longClientId = longClientId;
 				this.clientNameToIds.put(longClientId, oldData);
 				this.shortClientIdMap[oldData] = longClientId;
+				this.getCollabWindow().isConnected = false;
 			}
 		}
 	}

@@ -841,6 +841,7 @@ export class MergeTree {
 		this.collabWindow.minSeq = minSeq;
 		this.collabWindow.collaborating = true;
 		this.collabWindow.currentSeq = currentSeq;
+		this.collabWindow.isConnected = true;
 		this.nodeUpdateLengthNewStructure(this.root, true);
 	}
 

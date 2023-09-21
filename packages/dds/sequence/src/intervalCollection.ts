@@ -964,27 +964,44 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		return true;
 	}
 
-	private rebaseLocalReferencePosition(ref: LocalReferencePosition, localSeq: number): number {
+	private rebasePositionWithSegmentSlide(
+		pos: number | "start" | "end",
+		seqNumberFrom: number,
+		localSeq: number,
+	): number | "start" | "end" | undefined {
 		if (!this.client) {
 			throw new LoggingError("mergeTree client must exist");
 		}
 
-		const segment1 = ref.getSegment();
-		const offset1 = ref.getOffset();
+		if (pos === "start" || pos === "end") {
+			return pos;
+		}
 
-		const { segment, offset } = getSlideToSegoff(
-			{ segment: segment1, offset: offset1 },
-			ref.slidingPreference,
+		const { clientId } = this.client.getCollabWindow();
+		const { segment, offset } = this.client.getContainingSegment(
+			pos,
+			{
+				referenceSequenceNumber: seqNumberFrom,
+				clientId: this.client.getLongClientId(clientId),
+			},
+			localSeq,
 		);
 
+		// if segment is undefined, it slid off the string
+		assert(segment !== undefined, 0x54e /* No segment found */);
+
+		const segoff = getSlideToSegoff({ segment, offset }) ?? segment;
+
 		// case happens when rebasing op, but concurrently entire string has been deleted
-		if (segment === undefined || offset === undefined) {
+		if (segoff.segment === undefined || segoff.offset === undefined) {
 			return DetachedReferencePosition;
 		}
 
-		assert(0 <= offset && offset < segment.cachedLength, 0x54f /* Invalid offset */);
-
-		return this.client.findReconnectionPosition(segment, localSeq) + offset;
+		assert(
+			offset !== undefined && 0 <= offset && offset < segment.cachedLength,
+			0x54f /* Invalid offset */,
+		);
+		return this.client.findReconnectionPosition(segoff.segment, localSeq) + segoff.offset;
 	}
 
 	private computeRebasedPositions(
@@ -1000,20 +1017,13 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			0x551 /* Failed to store pending serialized interval info for this localSeq. */,
 		);
 		const rebased = { ...original };
-		const { start, end, properties } = original;
-
-		const intervalId = properties?.intervalId;
-		assert(intervalId !== undefined, "expected interval to have id");
-		const interval = this.getIntervalById(intervalId);
-
-		if (interval instanceof SequenceInterval && start !== undefined) {
-			rebased.start = this.rebaseLocalReferencePosition(interval.start, 0);
+		const { start, end, sequenceNumber } = original;
+		if (start !== undefined) {
+			rebased.start = this.rebasePositionWithSegmentSlide(start, sequenceNumber, localSeq);
 		}
-
-		if (interval instanceof SequenceInterval && end !== undefined) {
-			rebased.end = this.rebaseLocalReferencePosition(interval.end, 0);
+		if (end !== undefined) {
+			rebased.end = this.rebasePositionWithSegmentSlide(end, sequenceNumber, localSeq);
 		}
-
 		return rebased;
 	}
 
@@ -1506,12 +1516,12 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		}
 
 		const { intervalType, properties, stickiness, startSide, endSide } = serializedInterval;
-		const intervalId = properties?.[reservedIntervalIdKey];
 
 		const { start: startRebased, end: endRebased } =
 			this.localSeqToRebasedInterval.get(localSeq) ?? this.computeRebasedPositions(localSeq);
 
-		const localInterval = this.getIntervalById(intervalId);
+		const intervalId = properties?.[reservedIntervalIdKey];
+		const localInterval = this.localCollection?.idIntervalIndex.getIntervalById(intervalId);
 
 		const rebased: SerializedIntervalDelta = {
 			start: startRebased,
@@ -1530,6 +1540,17 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		) {
 			this.removePendingChange(serializedInterval);
 			this.addPendingChange(intervalId, rebased);
+		}
+
+		// if the interval slid off the string, rebase the op to be a noop and delete the interval.
+		if (
+			startRebased === DetachedReferencePosition ||
+			endRebased === DetachedReferencePosition
+		) {
+			if (localInterval) {
+				this.localCollection?.removeExistingInterval(localInterval);
+			}
+			return undefined;
 		}
 
 		if (localInterval !== undefined) {

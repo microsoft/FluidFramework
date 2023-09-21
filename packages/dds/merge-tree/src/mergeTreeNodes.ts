@@ -702,6 +702,11 @@ export class IncrementalMapState<TContext> {
 export class CollaborationWindow {
 	clientId = LocalClientId;
 	collaborating = false;
+	/**
+	 * Whether or not this client is actively connected to other clients in the
+	 * current collaboration session
+	 */
+	isConnected = false;
 	// Lowest-numbered segment in window; no client can reference a state before this one
 	minSeq = 0;
 	// Highest-numbered segment in window and current
@@ -713,6 +718,7 @@ export class CollaborationWindow {
 	loadFrom(a: CollaborationWindow) {
 		this.clientId = a.clientId;
 		this.collaborating = a.collaborating;
+		this.isConnected = a.isConnected;
 		this.minSeq = a.minSeq;
 		this.currentSeq = a.currentSeq;
 	}
