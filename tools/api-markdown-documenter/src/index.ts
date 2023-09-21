@@ -27,6 +27,8 @@ export {
 	type DefaultDocumentationSuiteOptions,
 	type DocumentationSuiteOptions,
 	type DocumentBoundaries,
+	// TODO: remove this once utility APIs can be called with partial configs.
+	getApiItemTransformationConfigurationWithDefaults,
 	getDefaultValueBlock,
 	getDeprecatedBlock,
 	getExampleBlocks,
