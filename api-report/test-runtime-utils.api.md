@@ -204,7 +204,7 @@ export class MockDeltaConnection implements IDeltaConnection {
 export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents> implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
     constructor();
     // (undocumented)
-    get active(): boolean;
+    readonly active: boolean;
     // (undocumented)
     readonly clientDetails: IClientDetails;
     // (undocumented)
@@ -234,7 +234,7 @@ export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents> imp
     // (undocumented)
     lastSequenceNumber: number;
     // (undocumented)
-    get maxMessageSize(): number;
+    readonly maxMessageSize: number;
     // (undocumented)
     minimumSequenceNumber: number;
     // (undocumented)
