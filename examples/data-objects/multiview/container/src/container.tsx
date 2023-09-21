@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-deprecated
 import { BaseContainerRuntimeFactory, mountableViewRequestHandler } from "@fluidframework/aqueduct";
+// eslint-disable-next-line import/no-deprecated
 import { RuntimeRequestHandler } from "@fluidframework/request-handler";
 // eslint-disable-next-line import/no-deprecated
 import { RequestParser, requestFluidObject } from "@fluidframework/runtime-utils";
@@ -113,6 +115,7 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
 		super({
 			registryEntries,
 			requestHandlers: [
+				// eslint-disable-next-line import/no-deprecated
 				mountableViewRequestHandler(MountableView, [defaultViewRequestHandler]),
 			],
 			provideEntryPoint: () => {

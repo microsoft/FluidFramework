@@ -16,10 +16,11 @@ module.exports = {
 	env: {
 		browser: true,
 		es6: true,
+		es2024: false,
 		node: true,
 	},
 	extends: [
-		"./eslint7",
+		"./base",
 		"plugin:eslint-comments/recommended",
 		"plugin:import/errors",
 		"plugin:import/warnings",
@@ -370,7 +371,7 @@ module.exports = {
 		},
 		{
 			// Rules only for test files
-			files: ["*.spec.ts", "src/test/**"],
+			files: ["*.spec.ts", "*.test.ts", "**/test/**"],
 			rules: {
 				"@typescript-eslint/no-invalid-this": "off",
 				"@typescript-eslint/unbound-method": "off", // This rule has false positives in many of our test projects.

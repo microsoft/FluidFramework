@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-deprecated
 import { BaseContainerRuntimeFactory, mountableViewRequestHandler } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { RuntimeRequestHandler } from "@fluidframework/request-handler";
@@ -49,6 +50,7 @@ export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory 
 		super({
 			registryEntries: new Map([[dataStoreFactory.type, Promise.resolve(dataStoreFactory)]]),
 			requestHandlers: [
+				// eslint-disable-next-line import/no-deprecated
 				mountableViewRequestHandler(MountableView, [makeViewRequestHandler(viewCallback)]),
 			],
 			provideEntryPoint: async (containerRuntime: IContainerRuntime) => {

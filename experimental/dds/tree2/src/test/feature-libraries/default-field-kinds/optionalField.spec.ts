@@ -40,8 +40,6 @@ const nodeChange1 = changesetForChild("nodeChange1");
 const nodeChange2 = changesetForChild("nodeChange2");
 
 const failIdAllocator: IdAllocator = () => assert.fail("Should not allocate ids");
-const failChildComposer = (_: TaggedChange<NodeChangeset>[]) =>
-	assert.fail("Should not compose children");
 
 const failCrossFieldManager: CrossFieldManager = {
 	get: () => assert.fail("Should query CrossFieldManager"),
@@ -145,9 +143,13 @@ describe("optionalField", () => {
 
 	describe("optionalChangeRebaser", () => {
 		it("can be composed", () => {
+			const simpleChildComposer = (changes: TaggedChange<NodeChangeset>[]) => {
+				assert.equal(changes.length, 1);
+				return changes[0].change;
+			};
 			const composed = optionalChangeRebaser.compose(
 				[change1, change2],
-				failChildComposer,
+				simpleChildComposer,
 				failIdAllocator,
 				failCrossFieldManager,
 				defaultRevisionMetadataFromChanges([change1, change2]),
@@ -160,6 +162,7 @@ describe("optionalField", () => {
 					newContent: { set: testTree("tree2") },
 					wasEmpty: true,
 				},
+				childChanges: [[{ revision: change2.revision, localId: brand(2) }, nodeChange1]],
 			};
 
 			assert.deepEqual(composed, change1And2);
@@ -201,7 +204,7 @@ describe("optionalField", () => {
 
 			const expected: OptionalChangeset = {
 				fieldChange: { id: brand(1), wasEmpty: false },
-				childChange: nodeChange2,
+				childChanges: [["self", nodeChange2]],
 			};
 
 			const repair: NodeReviver = (revision: RevisionTag, index: number, count: number) => {
@@ -243,8 +246,8 @@ describe("optionalField", () => {
 			});
 
 			it("can rebase child change", () => {
-				const baseChange: OptionalChangeset = { childChange: nodeChange1 };
-				const changeToRebase: OptionalChangeset = { childChange: nodeChange2 };
+				const baseChange: OptionalChangeset = { childChanges: [["self", nodeChange1]] };
+				const changeToRebase: OptionalChangeset = { childChanges: [["self", nodeChange2]] };
 
 				const childRebaser = (
 					change: NodeChangeset | undefined,
@@ -255,7 +258,9 @@ describe("optionalField", () => {
 					return arbitraryChildChange;
 				};
 
-				const expected: OptionalChangeset = { childChange: arbitraryChildChange };
+				const expected: OptionalChangeset = {
+					childChanges: [["self", arbitraryChildChange]],
+				};
 
 				assert.deepEqual(
 					optionalChangeRebaser.rebase(
@@ -318,6 +323,52 @@ describe("optionalField", () => {
 				);
 
 				assert.deepEqual(changeToRebase3, changeToRebase);
+			});
+
+			it("can rebase child change (field change ↷ field change)", () => {
+				const baseChange: OptionalChangeset = {
+					fieldChange: {
+						id: brand(0),
+						wasEmpty: false,
+					},
+					childChanges: [["self", nodeChange1]],
+				};
+				const changeToRebase: OptionalChangeset = {
+					fieldChange: {
+						id: brand(1),
+						wasEmpty: false,
+						newContent: { set: { type: brand("value"), value: "X" } },
+					},
+					childChanges: [["self", nodeChange2]],
+				};
+
+				const childRebaser = (
+					change: NodeChangeset | undefined,
+					base: NodeChangeset | undefined,
+				): NodeChangeset | undefined => {
+					assert.deepEqual(change, nodeChange2);
+					assert.deepEqual(base, nodeChange1);
+					return arbitraryChildChange;
+				};
+
+				const expected: OptionalChangeset = {
+					fieldChange: {
+						id: brand(1),
+						wasEmpty: true,
+						newContent: { set: { type: brand("value"), value: "X" } },
+					},
+					childChanges: [[{ localId: brand(0) }, arbitraryChildChange]],
+				};
+
+				const actual = optionalChangeRebaser.rebase(
+					changeToRebase,
+					makeAnonChange(baseChange),
+					childRebaser,
+					failIdAllocator,
+					failCrossFieldManager,
+					defaultRevisionMetadataFromChanges([]),
+				);
+				assert.deepEqual(actual, expected);
 			});
 		});
 	});

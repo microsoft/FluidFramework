@@ -32,7 +32,7 @@ import {
 	SingleLineSpanNode,
 } from "../documentation-domain";
 import { ConfigurationBase } from "../ConfigurationBase";
-import { getDocNodeTransformationOptions } from "./Utilities";
+import { getTsdocNodeTransformationOptions } from "./Utilities";
 import { ApiItemTransformationConfiguration } from "./configuration";
 
 /**
@@ -54,19 +54,19 @@ import { ApiItemTransformationConfiguration } from "./configuration";
  *
  * @public
  */
-export function transformDocNode(
-	docNode: DocNode,
+export function transformTsdocNode(
+	node: DocNode,
 	contextApiItem: ApiItem,
 	config: Required<ApiItemTransformationConfiguration>,
 ): DocumentationNode | undefined {
-	const transformOptions = getDocNodeTransformationOptions(contextApiItem, config);
-	return _transformDocNode(docNode, transformOptions);
+	const transformOptions = getTsdocNodeTransformationOptions(contextApiItem, config);
+	return _transformTsdocNode(node, transformOptions);
 }
 
 /**
  * Options for {@link @microsoft/tsdoc#DocNode} transformations.
  */
-export interface DocNodeTransformOptions extends ConfigurationBase {
+export interface TsdocNodeTransformOptions extends ConfigurationBase {
 	/**
 	 * The API item with which the documentation node(s) are associated.
 	 */
@@ -94,29 +94,29 @@ export interface DocNodeTransformOptions extends ConfigurationBase {
  * @returns The transformed `DocNode`, if it was of a kind we support.
  * Else, an error will be logged, and `undefined` will be returned.
  */
-export function _transformDocNode(
+export function _transformTsdocNode(
 	node: DocNode,
-	options: DocNodeTransformOptions,
+	options: TsdocNodeTransformOptions,
 ): DocumentationNode | undefined {
 	switch (node.kind) {
 		case DocNodeKind.CodeSpan:
-			return transformDocCodeSpan(node as DocCodeSpan, options);
+			return transformTsdocCodeSpan(node as DocCodeSpan, options);
 		case DocNodeKind.EscapedText:
-			return transformDocEscapedText(node as DocEscapedText, options);
+			return transformTsdocEscapedText(node as DocEscapedText, options);
 		case DocNodeKind.FencedCode:
-			return transformDocFencedCode(node as DocFencedCode, options);
+			return transformTsdocFencedCode(node as DocFencedCode, options);
 		case DocNodeKind.HtmlStartTag:
-			return transformDocHtmlTag(node as DocHtmlStartTag, options);
+			return transformTsdocHtmlTag(node as DocHtmlStartTag, options);
 		case DocNodeKind.HtmlEndTag:
-			return transformDocHtmlTag(node as DocHtmlEndTag, options);
+			return transformTsdocHtmlTag(node as DocHtmlEndTag, options);
 		case DocNodeKind.LinkTag:
-			return transformDocLinkTag(node as DocLinkTag, options);
+			return transformTsdocLinkTag(node as DocLinkTag, options);
 		case DocNodeKind.Paragraph:
-			return transformDocParagraph(node as DocParagraph, options);
+			return transformTsdocParagraph(node as DocParagraph, options);
 		case DocNodeKind.PlainText:
-			return transformDocPlainText(node as DocPlainText, options);
+			return transformTsdocPlainText(node as DocPlainText, options);
 		case DocNodeKind.Section:
-			return transformDocSection(node as DocSection, options);
+			return transformTsdocSection(node as DocSection, options);
 		case DocNodeKind.SoftBreak:
 			return LineBreakNode.Singleton;
 		default:
@@ -128,9 +128,9 @@ export function _transformDocNode(
 /**
  * Converts a {@link @microsoft/tsdoc#DocCodeSpan} to a {@link CodeSpanNode}.
  */
-export function transformDocCodeSpan(
+export function transformTsdocCodeSpan(
 	node: DocCodeSpan,
-	options: DocNodeTransformOptions,
+	options: TsdocNodeTransformOptions,
 ): CodeSpanNode {
 	return CodeSpanNode.createFromPlainText(node.code.trim());
 }
@@ -138,9 +138,9 @@ export function transformDocCodeSpan(
 /**
  * Converts a {@link @microsoft/tsdoc#DocParagraph} to a {@link ParagraphNode}.
  */
-export function transformDocParagraph(
+export function transformTsdocParagraph(
 	node: DocParagraph,
-	options: DocNodeTransformOptions,
+	options: TsdocNodeTransformOptions,
 ): ParagraphNode {
 	return createParagraph(node.nodes, options);
 }
@@ -155,9 +155,9 @@ export function transformDocParagraph(
  * For that reason, their "section" concept gets mapped to a paragraph, rather than a section.
  * Consumers can wrap this in a section node as desired based on context.
  */
-export function transformDocSection(
+export function transformTsdocSection(
 	node: DocSection,
-	options: DocNodeTransformOptions,
+	options: TsdocNodeTransformOptions,
 ): ParagraphNode {
 	return createParagraph(node.nodes, options);
 }
@@ -165,9 +165,9 @@ export function transformDocSection(
 /**
  * Converts a {@link @microsoft/tsdoc#DocPlainText} to a {@link PlainTextNode}.
  */
-export function transformDocPlainText(
+export function transformTsdocPlainText(
 	node: DocPlainText,
-	options: DocNodeTransformOptions,
+	options: TsdocNodeTransformOptions,
 ): PlainTextNode {
 	return new PlainTextNode(node.text);
 }
@@ -175,9 +175,9 @@ export function transformDocPlainText(
 /**
  * Converts a {@link @microsoft/tsdoc#DocEscapedText} to a {@link PlainTextNode}.
  */
-export function transformDocEscapedText(
+export function transformTsdocEscapedText(
 	node: DocEscapedText,
-	options: DocNodeTransformOptions,
+	options: TsdocNodeTransformOptions,
 ): PlainTextNode {
 	return new PlainTextNode(node.encodedText, /* escaped: */ true);
 }
@@ -185,9 +185,9 @@ export function transformDocEscapedText(
 /**
  * Converts a {@link @microsoft/tsdoc#DocHtmlStartTag} | {@link @microsoft/tsdoc#DocHtmlEndTag} to a {@link PlainTextNode}.
  */
-export function transformDocHtmlTag(
+export function transformTsdocHtmlTag(
 	node: DocHtmlStartTag | DocHtmlEndTag,
-	options: DocNodeTransformOptions,
+	options: TsdocNodeTransformOptions,
 ): PlainTextNode {
 	return new PlainTextNode(node.emitAsHtml(), /* escaped: */ true);
 }
@@ -195,9 +195,9 @@ export function transformDocHtmlTag(
 /**
  * Converts a {@link @microsoft/tsdoc#DocPlainText} to a {@link PlainTextNode}.
  */
-export function transformDocFencedCode(
+export function transformTsdocFencedCode(
 	node: DocFencedCode,
-	options: DocNodeTransformOptions,
+	options: TsdocNodeTransformOptions,
 ): FencedCodeBlockNode {
 	return FencedCodeBlockNode.createFromPlainText(node.code.trim(), node.language);
 }
@@ -205,9 +205,9 @@ export function transformDocFencedCode(
 /**
  * Converts a {@link @microsoft/tsdoc#DocPlainText} to a {@link PlainTextNode}.
  */
-export function transformDocLinkTag(
+export function transformTsdocLinkTag(
 	input: DocLinkTag,
-	options: DocNodeTransformOptions,
+	options: TsdocNodeTransformOptions,
 ): SingleLineDocumentationNode {
 	if (input.codeDestination !== undefined) {
 		const link = options.resolveApiReference(input.codeDestination);
@@ -251,7 +251,7 @@ export function transformDocLinkTag(
  */
 function createParagraph(
 	children: readonly DocNode[],
-	options: DocNodeTransformOptions,
+	options: TsdocNodeTransformOptions,
 ): ParagraphNode {
 	// Note: transformChildren does some of its own cleanup on the initial transformed contents
 	let transformedChildren = transformChildren(children, options);
@@ -300,10 +300,10 @@ function createParagraph(
  */
 function transformChildren(
 	children: readonly DocNode[],
-	options: DocNodeTransformOptions,
+	options: TsdocNodeTransformOptions,
 ): DocumentationNode[] {
 	// Transform child items into Documentation domain
-	const transformedChildren = children.map((child) => _transformDocNode(child, options));
+	const transformedChildren = children.map((child) => _transformTsdocNode(child, options));
 
 	// Filter out `undefined` values resulting from transformation errors.
 	let filteredChildren = transformedChildren.filter(

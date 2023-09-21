@@ -95,10 +95,10 @@ export interface DataObjectTypes {
     OptionalProviders?: FluidObject;
 }
 
-// @public
+// @public @deprecated
 export function defaultFluidObjectRequestHandler(fluidObject: FluidObject, request: IRequest): IResponse;
 
-// @public
+// @public @deprecated
 export const defaultRouteRequestHandler: (defaultRootId: string) => (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse | undefined>;
 
 // @public @deprecated (undocumented)
@@ -128,7 +128,7 @@ export interface IRootDataObjectFactory extends IFluidDataStoreFactory {
     createRootInstance(rootDataStoreId: string, runtime: IContainerRuntime): Promise<IFluidRouter>;
 }
 
-// @public
+// @public @deprecated
 export const mountableViewRequestHandler: (MountableViewClass: IFluidMountableViewClass, handlers: RuntimeRequestHandler[]) => (request: RequestParser, runtime: IContainerRuntime) => Promise<IResponse>;
 
 // @public

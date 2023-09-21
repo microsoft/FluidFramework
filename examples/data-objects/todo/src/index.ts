@@ -6,6 +6,7 @@
 import {
 	BaseContainerRuntimeFactory,
 	// ContainerRuntimeFactoryWithDefaultDataStore,
+	// eslint-disable-next-line import/no-deprecated
 	mountableViewRequestHandler,
 } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
@@ -86,6 +87,7 @@ class TodoContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	constructor() {
 		super({
 			registryEntries: new Map([TodoFactory.registryEntry]),
+			// eslint-disable-next-line import/no-deprecated
 			requestHandlers: [mountableViewRequestHandler(MountableView, [todoRequestHandler])],
 			provideEntryPoint: async (containerRuntime: IContainerRuntime) => {
 				const entryPoint = await containerRuntime.getAliasedDataStoreEntryPoint(todoId);

@@ -12,7 +12,13 @@ import {
 	// Allow import from file being tested.
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/default-field-kinds/defaultFieldKinds";
-import { makeAnonChange, TaggedChange, mintRevisionTag, tagChange } from "../../../core";
+import {
+	makeAnonChange,
+	TaggedChange,
+	mintRevisionTag,
+	tagChange,
+	ChangesetLocalId,
+} from "../../../core";
 import { IdAllocator, brand } from "../../../util";
 import { defaultRevisionMetadataFromChanges, fakeTaggedRepair as fakeRepair } from "../../utils";
 // eslint-disable-next-line import/no-internal-modules
@@ -65,9 +71,9 @@ describe("defaultFieldKinds", () => {
 		const fieldHandler: FieldChangeHandler<OptionalChangeset, ValueFieldEditor> =
 			valueChangeHandler;
 
-		const childChange1: OptionalChangeset = { childChange: nodeChange1 };
-		const childChange2: OptionalChangeset = { childChange: nodeChange2 };
-		const childChange3: OptionalChangeset = { childChange: arbitraryChildChange };
+		const childChange1: OptionalChangeset = { childChanges: [["self", nodeChange1]] };
+		const childChange2: OptionalChangeset = { childChanges: [["self", nodeChange2]] };
+		const childChange3: OptionalChangeset = { childChanges: [["self", arbitraryChildChange]] };
 
 		const change1 = tagChange(
 			fieldHandler.editor.set(testTreeCursor("tree1"), brand(1)),
@@ -138,7 +144,12 @@ describe("defaultFieldKinds", () => {
 			);
 			assert.deepEqual(composition, {
 				fieldChange: { ...change1.change.fieldChange, revision: change1.revision },
-				childChange: nodeChange1,
+				childChanges: [
+					[
+						{ revision: change1.revision, localId: brand<ChangesetLocalId>(1) },
+						nodeChange1,
+					],
+				],
 			});
 
 			assert.deepEqual(
@@ -167,7 +178,7 @@ describe("defaultFieldKinds", () => {
 				failCrossFieldManager,
 			);
 
-			assert.deepEqual(inverted.childChange, nodeChange2);
+			assert.deepEqual(inverted.childChanges, [["self", nodeChange2]]);
 		});
 
 		it("can be rebased", () => {

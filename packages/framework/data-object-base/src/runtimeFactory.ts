@@ -7,6 +7,7 @@ import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { FluidObject } from "@fluidframework/core-interfaces";
+// eslint-disable-next-line import/no-deprecated
 import { RuntimeRequestHandler, buildRuntimeRequestHandler } from "@fluidframework/request-handler";
 import {
 	NamedFluidDataStoreRegistryEntries,
@@ -26,6 +27,7 @@ export class RuntimeFactory extends RuntimeFactoryHelper {
 	constructor(props: {
 		defaultStoreFactory: IFluidDataStoreFactory;
 		storeFactories: IFluidDataStoreFactory[];
+		/** @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md */
 		requestHandlers?: RuntimeRequestHandler[];
 		provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
 	}) {
@@ -56,6 +58,7 @@ export class RuntimeFactory extends RuntimeFactoryHelper {
 			context,
 			registryEntries: this.registry,
 			existing,
+			// eslint-disable-next-line import/no-deprecated
 			requestHandler: buildRuntimeRequestHandler(...this.requestHandlers),
 			provideEntryPoint: this.provideEntryPoint,
 		});

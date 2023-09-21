@@ -37,6 +37,7 @@ const isModelRequest = (request: IRequest): request is IModelRequest =>
  * ModelLoader contract.
  * @param modelMakerCallback - A callback that will produce the model for the container
  * @returns A request handler that can be provided to the container runtime factory
+ * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
  */
 export const makeModelRequestHandler = <ModelType>(
 	modelMakerCallback: ModelMakerCallback<ModelType>,

@@ -7,6 +7,7 @@ module.exports = {
 	env: {
 		browser: true,
 		es6: true,
+		es2024: false,
 		node: true,
 	},
 	extends: [
