@@ -72,6 +72,7 @@ export {
 	getTextAndMarkers,
 	IInterval,
 	IIntervalCollectionEvent,
+	IIntervalHelpers,
 	IJSONRunSegment,
 	IMapMessageLocalMetadata,
 	Interval,
