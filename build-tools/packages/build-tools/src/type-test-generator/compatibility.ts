@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-namespace */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 /**
@@ -25,10 +26,13 @@ type requireAssignableTo<_A extends B, B> = true;
  * This will strip some type branding information which ideally would be kept for stricter checking, but without it, const enums show up as breaking when unchanged.
  */
 export const typeOnly = `
+// See 'build-tools/src/type-test-generator/compatibility.ts' for more information.
 type TypeOnly<T> = T extends number
 	? number
 	: T extends string
 	? string
+	: T extends boolean | bigint | symbol
+	? T
 	: {
 			[P in keyof T]: TypeOnly<T[P]>;
 	  };
@@ -38,6 +42,8 @@ type TypeOnly<T> = T extends number
 	? number
 	: T extends string
 	? string
+	: T extends boolean | bigint | symbol
+	? T
 	: {
 			[P in keyof T]: TypeOnly<T[P]>;
 	  };
@@ -48,14 +54,12 @@ type TypeOnly<T> = T extends number
 
 // Non-Const enums
 
-// eslint-disable-next-line @typescript-eslint/no-namespace
 namespace Test1 {
 	export enum A {
 		y = 0,
 	}
 }
 
-// eslint-disable-next-line @typescript-eslint/no-namespace
 namespace Test2 {
 	export enum A {
 		x = 0,
@@ -80,14 +84,12 @@ namespace Test2 {
 
 // Const enums
 
-// eslint-disable-next-line @typescript-eslint/no-namespace
 namespace Test3 {
 	export const enum A {
 		y = 0,
 	}
 }
 
-// eslint-disable-next-line @typescript-eslint/no-namespace
 namespace Test4 {
 	export const enum A {
 		x = 0,
@@ -99,7 +101,6 @@ namespace Test4 {
 	}
 }
 
-// eslint-disable-next-line @typescript-eslint/no-namespace
 namespace Test5 {
 	export const enum A {
 		y = 0,
@@ -124,14 +125,12 @@ namespace Test5 {
 
 // Classes with protected members
 
-// eslint-disable-next-line @typescript-eslint/no-namespace
 namespace Test6 {
 	export class Foo {
 		protected x!: number;
 	}
 }
 
-// eslint-disable-next-line @typescript-eslint/no-namespace
 namespace Test7 {
 	export class Foo {
 		protected x!: number;
@@ -162,4 +161,37 @@ namespace Test7 {
 	type _check4 = requireAssignableTo<TypeOnly<Test6.Foo>, TypeOnly<Test7.Baz>>;
 	// but only in one direction:
 	type _check5 = requireAssignableTo<TypeOnly<Test7.Baz>, TypeOnly<Test6.Foo>>;
+}
+
+namespace Test_TypeOnly_Preserves_Primitives {
+	// Intersection ('&') with 'null' and 'undefined' results in 'never'.
+	// Just verify that the 'null' and 'undefined' values are preserved.
+	type _check_undefined1 = requireAssignableTo<TypeOnly<undefined>, undefined>;
+	type _check_undefined2 = requireAssignableTo<undefined, TypeOnly<undefined>>;
+
+	type _check_null1 = requireAssignableTo<TypeOnly<null>, null>;
+	type _check_null2 = requireAssignableTo<null, TypeOnly<null>>;
+
+	// Types that extend 'number' and 'string' are stripped to thier primitive types.
+	// (Nominal typing is erased.)
+	type brandedNumber = number & { brand: "Number" };
+	type _check_number1 = requireAssignableTo<TypeOnly<brandedNumber>, number>;
+	type _check_number2 = requireAssignableTo<number, TypeOnly<brandedNumber>>;
+
+	type brandedString = string & { brand: "String" };
+	type _check_string1 = requireAssignableTo<TypeOnly<brandedString>, string>;
+	type _check_string2 = requireAssignableTo<string, TypeOnly<brandedString>>;
+
+	// Other primitive types are preserved as-is.
+	type brandedBoolean = boolean & { brand: "Boolean" };
+	type _check_bool1 = requireAssignableTo<TypeOnly<brandedBoolean>, brandedBoolean>;
+	type _check_bool2 = requireAssignableTo<brandedBoolean, TypeOnly<brandedBoolean>>;
+
+	type brandedBigInt = bigint & { brand: "BigInt" };
+	type _check_bigint1 = requireAssignableTo<TypeOnly<brandedBigInt>, bigint>;
+	type _check_bigint2 = requireAssignableTo<brandedBigInt, TypeOnly<bigint>>;
+
+	type brandedSymbol = symbol & { brand: "Symbol" };
+	type _check_symbol1 = requireAssignableTo<TypeOnly<brandedSymbol>, symbol>;
+	type _check_symbol2 = requireAssignableTo<brandedSymbol, TypeOnly<symbol>>;
 }
