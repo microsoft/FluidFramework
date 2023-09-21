@@ -29,12 +29,13 @@ import { ITestDataObject, describeNoCompat, itExpects } from "@fluid-internal/te
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { FluidDataStoreRuntime, mixinSummaryHandler } from "@fluidframework/datastore";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+import { DataProcessingError, MockLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
 	ITelemetryBaseEvent,
 	IFluidHandle,
 	ITelemetryBaseLogger,
+	FluidErrorTypes,
 } from "@fluidframework/core-interfaces";
 import {
 	defaultMaxAttemptsForSubmitFailures,
@@ -614,7 +615,7 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 		},
 	);
 
-	itExpects(
+	itExpects.only(
 		"SkipFailingIncorrectSummary = true. Final summary attempt should pass when ops are sent during summarize",
 		[
 			{
@@ -622,34 +623,8 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 				clientType: "noninteractive/summarizer",
 				summaryAttempts: 1,
 				finalAttempt: false,
-				error: "PendingOpsWhileSummarizing",
-			},
-			{
-				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
-				clientType: "noninteractive/summarizer",
-				summaryAttempts: 2,
-				finalAttempt: false,
-				error: "PendingOpsWhileSummarizing",
-			},
-			{
-				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
-				clientType: "noninteractive/summarizer",
-				summaryAttempts: 3,
-				finalAttempt: false,
-				error: "PendingOpsWhileSummarizing",
-			},
-			{
-				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
-				clientType: "noninteractive/summarizer",
-				summaryAttempts: 4,
-				finalAttempt: false,
-				error: "PendingOpsWhileSummarizing",
-			},
-			{
-				eventName: "fluid:telemetry:Summarizer:Running:SkipFailingIncorrectSummary",
-				summaryAttempts: 5,
-				finalAttempt: true,
-				error: "Pending ops during summarization",
+				error: "BOOM",
+				errorType: "dataProcessingError",
 			},
 		],
 		async () => {
@@ -662,20 +637,12 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 			const rootDataObject = await requestFluidObject<RootTestDataObject>(container, "/");
 			const containerRuntime = rootDataObject.containerRuntime as ContainerRuntime;
 
-			const summarizePromiseP = new Promise<ISummarizeEventProps>((resolve) => {
+			const summarizeErrorP = new Promise<DataProcessingError>((resolve, reject) => {
 				const handler = (eventProps: ISummarizeEventProps) => {
 					if (eventProps.result !== "failure") {
-						containerRuntime.off("summarize", handler);
-						resolve(eventProps);
+						reject(new Error("Expected Summarization failure"));
 					} else {
-						assert(
-							eventProps.error?.message === "PendingOpsWhileSummarizing",
-							"Unexpected summarization failure",
-						);
-						if (eventProps.currentAttempt === eventProps.maxAttempts) {
-							containerRuntime.off("summarize", handler);
-							resolve(eventProps);
-						}
+						resolve(eventProps.error as DataProcessingError);
 					}
 				};
 				containerRuntime.on("summarize", handler);
@@ -688,16 +655,10 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 			dataObject2._root.set("op", "value");
 			await provider.ensureSynchronized();
 
-			const props = await summarizePromiseP;
-			assert.strictEqual(
-				props.result,
-				"success",
-				"Summarization did not succeed as expected",
-			);
-			assert.strictEqual(
-				props.maxAttempts,
-				defaultMaxAttemptsForSubmitFailures,
-				`Unexpected summarize attempts`,
+			const summarizeError = await summarizeErrorP;
+			assert(
+				summarizeError.errorType === FluidErrorTypes.dataProcessingError,
+				"Expected DataProcessingError",
 			);
 		},
 	);

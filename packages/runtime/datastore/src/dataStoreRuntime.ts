@@ -1182,7 +1182,9 @@ export const mixinSummaryHandler = (
 
 		async summarize(...args: any[]) {
 			const summary = await super.summarize(...args);
-			const content = await handler(this);
+			const content = await handler(this).catch((e: unknown) => {
+				throw DataProcessingError.wrapIfUnrecognized(e, "mixinSummaryHandler");
+			});
 			if (content !== undefined) {
 				this.addBlob(summary, content.path, content.content);
 			}
