@@ -14,9 +14,9 @@ import {
 	createDDSFuzzSuite,
 	DDSFuzzHarnessEvents,
 } from "@fluid-internal/test-dds-utils";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils";
-import { SharedTreeView } from "../../../shared-tree";
+import { ISharedTreeBranchView } from "../../../shared-tree";
 import { makeOpGenerator, EditGeneratorOpWeights, FuzzTestState } from "./fuzzEditGenerators";
 import {
 	applyFieldEdit,
@@ -31,7 +31,7 @@ import { Operation } from "./operationTypes";
  * This interface is meant to be used for tests that require you to store a branch of a tree
  */
 interface BranchedTreeFuzzTestState extends FuzzTestState {
-	branch?: SharedTreeView;
+	branch?: ISharedTreeBranchView;
 }
 
 const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, BranchedTreeFuzzTestState>({
@@ -52,13 +52,13 @@ const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, Branched
 	transaction: async (state, operation) => {
 		const { contents } = operation;
 		const tree = state.channel;
-		applyTransactionEdit(tree, contents);
+		applyTransactionEdit(tree.view, contents);
 		return state;
 	},
 	undoRedo: async (state, operation) => {
 		const { contents } = operation;
 		const tree = state.channel;
-		applyUndoRedoEdit(tree, contents);
+		applyUndoRedoEdit(tree.view, contents);
 		return state;
 	},
 	synchronizeTrees: async (state) => {
@@ -103,15 +103,15 @@ describe("Fuzz - composed vs individual changes", () => {
 		};
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: BranchedTreeFuzzTestState) => {
-			initialState.branch = initialState.clients[0].channel.fork();
+			initialState.branch = initialState.clients[0].channel.view.fork();
 			initialState.branch.transaction.start();
 		});
 		emitter.on("testEnd", (finalState: BranchedTreeFuzzTestState) => {
 			assert(finalState.branch !== undefined);
 			const childTreeView = toJsonableTree(finalState.branch);
 			finalState.branch.transaction.commit();
-			finalState.clients[0].channel.merge(finalState.branch);
-			validateTree(finalState.clients[0].channel, childTreeView);
+			finalState.clients[0].channel.view.merge(finalState.branch);
+			validateTree(finalState.clients[0].channel.view, childTreeView);
 		});
 		createDDSFuzzSuite(model, {
 			defaultTestCount: runsPerBatch,

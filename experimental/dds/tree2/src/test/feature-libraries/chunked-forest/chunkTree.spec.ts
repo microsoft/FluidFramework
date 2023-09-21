@@ -44,7 +44,7 @@ import {
 import { polygonTree, testData } from "./uniformChunkTestData";
 
 const builder = new SchemaBuilder("chunkTree");
-const leaf = builder.leaf("leaf", ValueSchema.Serializable);
+const leaf = builder.leaf("leaf", ValueSchema.Number);
 const empty = builder.struct("empty", {});
 const valueField = SchemaBuilder.fieldValue(leaf);
 const structValue = builder.struct("structValue", { x: valueField });

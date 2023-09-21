@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { isStableId } from "@fluidframework/container-runtime";
 import { StableId } from "@fluidframework/runtime-definitions";
 import { Brand, brandedStringType, generateStableId } from "../../util";

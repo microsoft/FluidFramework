@@ -1,6 +1,7 @@
 {
     "env": {
         "browser": true,
+        "es2024": false,
         "es6": true,
         "node": true
     },
@@ -62,6 +63,9 @@
         "@typescript-eslint/ban-types": [
             "error"
         ],
+        "@typescript-eslint/block-spacing": [
+            "off"
+        ],
         "@typescript-eslint/brace-style": [
             "error",
             "1tbs",
@@ -114,8 +118,14 @@
         "@typescript-eslint/interface-name-prefix": [
             "off"
         ],
+        "@typescript-eslint/key-spacing": [
+            "off"
+        ],
         "@typescript-eslint/keyword-spacing": [
             "error"
+        ],
+        "@typescript-eslint/lines-around-comment": [
+            0
         ],
         "@typescript-eslint/member-delimiter-style": [
             "error",
@@ -150,7 +160,16 @@
         "@typescript-eslint/no-array-constructor": [
             "error"
         ],
+        "@typescript-eslint/no-base-to-string": [
+            "error"
+        ],
+        "@typescript-eslint/no-duplicate-enum-values": [
+            "error"
+        ],
         "@typescript-eslint/no-duplicate-imports": [
+            "error"
+        ],
+        "@typescript-eslint/no-duplicate-type-constituents": [
             "error"
         ],
         "@typescript-eslint/no-dynamic-delete": [
@@ -216,6 +235,9 @@
         "@typescript-eslint/no-parameter-properties": [
             "off"
         ],
+        "@typescript-eslint/no-redundant-type-constituents": [
+            "error"
+        ],
         "@typescript-eslint/no-require-imports": [
             "error"
         ],
@@ -251,6 +273,12 @@
             "error"
         ],
         "@typescript-eslint/no-unsafe-call": [
+            "error"
+        ],
+        "@typescript-eslint/no-unsafe-declaration-merging": [
+            "error"
+        ],
+        "@typescript-eslint/no-unsafe-enum-comparison": [
             "error"
         ],
         "@typescript-eslint/no-unsafe-member-access": [
@@ -668,6 +696,9 @@
         "max-lines": [
             "off"
         ],
+        "max-statements-per-line": [
+            "off"
+        ],
         "multiline-ternary": [
             "off"
         ],
@@ -749,9 +780,6 @@
         "no-empty-character-class": [
             "error"
         ],
-        "no-empty-function": [
-            "off"
-        ],
         "no-empty-pattern": [
             "error"
         ],
@@ -831,6 +859,9 @@
                 "maxBOF": 0,
                 "maxEOF": 0
             }
+        ],
+        "no-negated-condition": [
+            "off"
         ],
         "no-nested-ternary": [
             "off"
@@ -1261,9 +1292,6 @@
         "tsdoc/syntax": [
             "error"
         ],
-        "unicode-bom": [
-            "off"
-        ],
         "unicorn/better-regex": [
             "error"
         ],
@@ -1302,9 +1330,6 @@
                     "pascalCase": true
                 }
             }
-        ],
-        "unicorn/import-index": [
-            "off"
         ],
         "unicorn/import-style": [
             "error"
@@ -1360,6 +1385,9 @@
         "unicorn/no-lonely-if": [
             "error"
         ],
+        "unicorn/no-negated-condition": [
+            "error"
+        ],
         "unicorn/no-nested-ternary": [
             "off"
         ],
@@ -1387,11 +1415,20 @@
         "unicorn/no-this-assignment": [
             "error"
         ],
+        "unicorn/no-typeof-undefined": [
+            "error"
+        ],
+        "unicorn/no-unnecessary-await": [
+            "error"
+        ],
         "unicorn/no-unreadable-array-destructuring": [
             "error"
         ],
+        "unicorn/no-unreadable-iife": [
+            "error"
+        ],
         "unicorn/no-unsafe-regex": [
-            "off"
+            "error"
         ],
         "unicorn/no-unused-properties": [
             "off"
@@ -1408,6 +1445,9 @@
         "unicorn/no-useless-spread": [
             "error"
         ],
+        "unicorn/no-useless-switch-case": [
+            "error"
+        ],
         "unicorn/no-useless-undefined": [
             "off"
         ],
@@ -1418,7 +1458,10 @@
             "error"
         ],
         "unicorn/numeric-separators-style": [
-            "error"
+            "error",
+            {
+                "onlyIfContainsSeparator": true
+            }
         ],
         "unicorn/prefer-add-event-listener": [
             "error"
@@ -1441,6 +1484,9 @@
         "unicorn/prefer-at": [
             "off"
         ],
+        "unicorn/prefer-blob-reading-methods": [
+            "error"
+        ],
         "unicorn/prefer-code-point": [
             "error"
         ],
@@ -1462,6 +1508,9 @@
         "unicorn/prefer-dom-node-text-content": [
             "error"
         ],
+        "unicorn/prefer-event-target": [
+            "off"
+        ],
         "unicorn/prefer-export-from": [
             "error"
         ],
@@ -1469,9 +1518,12 @@
             "error"
         ],
         "unicorn/prefer-json-parse-buffer": [
-            "error"
+            "off"
         ],
         "unicorn/prefer-keyboard-event-key": [
+            "error"
+        ],
+        "unicorn/prefer-logical-operator-over-ternary": [
             "error"
         ],
         "unicorn/prefer-math-trunc": [
@@ -1480,14 +1532,20 @@
         "unicorn/prefer-modern-dom-apis": [
             "error"
         ],
+        "unicorn/prefer-modern-math-apis": [
+            "error"
+        ],
         "unicorn/prefer-module": [
+            "error"
+        ],
+        "unicorn/prefer-native-coercion-functions": [
             "error"
         ],
         "unicorn/prefer-negative-index": [
             "error"
         ],
         "unicorn/prefer-node-protocol": [
-            "off"
+            "error"
         ],
         "unicorn/prefer-number-properties": [
             "error"
@@ -1513,6 +1571,9 @@
         "unicorn/prefer-set-has": [
             "error"
         ],
+        "unicorn/prefer-set-size": [
+            "error"
+        ],
         "unicorn/prefer-spread": [
             "error"
         ],
@@ -1535,7 +1596,7 @@
             "error"
         ],
         "unicorn/prefer-top-level-await": [
-            "off"
+            "error"
         ],
         "unicorn/prefer-type-error": [
             "error"
@@ -1558,8 +1619,14 @@
         "unicorn/string-content": [
             "off"
         ],
+        "unicorn/switch-case-braces": [
+            "error"
+        ],
         "unicorn/template-indent": [
-            "warn"
+            "off"
+        ],
+        "unicorn/text-encoding-identifier-case": [
+            "error"
         ],
         "unicorn/throw-new-error": [
             "error"
@@ -1577,6 +1644,9 @@
             "off"
         ],
         "vue/array-bracket-spacing": [
+            "off"
+        ],
+        "vue/array-element-newline": [
             "off"
         ],
         "vue/arrow-spacing": [
@@ -1637,6 +1707,9 @@
             0
         ],
         "vue/multiline-html-element-content-newline": [
+            "off"
+        ],
+        "vue/multiline-ternary": [
             "off"
         ],
         "vue/mustache-interpolation-spacing": [

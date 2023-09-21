@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { bufferToString } from "@fluidframework/common-utils";
+import { bufferToString } from "@fluid-internal/client-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { convertProtocolAndAppSummaryToSnapshotTree } from "../utils";
 

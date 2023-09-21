@@ -23,7 +23,6 @@ import {
 	runSweepKey,
 } from "./gcDefinitions";
 import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";
-import { tagAsCodeArtifact } from "./gcHelpers";
 
 type NodeUsageType = "Changed" | "Loaded" | "Revived";
 
@@ -183,7 +182,7 @@ export class GCTelemetryTracker {
 				{
 					eventName: `GC_Tombstone_${nodeType}_Revived`,
 					category: "generic",
-					url: tagAsCodeArtifact(id),
+					...tagCodeArtifacts({ url: id }),
 					gcTombstoneEnforcementAllowed: this.gcTombstoneEnforcementAllowed,
 				},
 				undefined /* packagePath */,

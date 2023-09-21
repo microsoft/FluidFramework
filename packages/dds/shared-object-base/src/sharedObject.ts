@@ -8,14 +8,15 @@ import { IFluidHandle, ITelemetryProperties } from "@fluidframework/core-interfa
 import {
 	ITelemetryLoggerExt,
 	createChildLogger,
+	DataProcessingError,
 	EventEmitterWithErrorHandling,
 	loggerToMonitoringContext,
 	MonitoringContext,
 	SampledTelemetryHelper,
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
-import { DataProcessingError } from "@fluidframework/container-utils";
-import { assert, EventEmitterEventType } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
+import { EventEmitterEventType } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import {
 	IChannelAttributes,

@@ -11,6 +11,7 @@ import { BrokenCompatTypes } from "../common/fluidRepo";
 import { PackageJson } from "../common/npmPackage";
 import { buildTestCase, TestCaseTypeData } from "../typeValidator/testGeneration";
 import { getFullTypeName, getNodeTypeData, TypeData } from "../typeValidator/typeData";
+import { typeOnly } from "./compatibility";
 
 // Do not check that file exists before opening:
 // Doing so is a time of use vs time of check issue so opening the file could fail anyway.
@@ -113,11 +114,8 @@ const testString: string[] = [
  */
 import * as old from "${previousPackageName}";
 import * as current from "../../index";
-
-type TypeOnly<T> = {
-    [P in keyof T]: TypeOnly<T[P]>;
-};
 `,
+	typeOnly,
 ];
 
 for (const oldTypeData of previousData) {

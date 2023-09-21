@@ -9,7 +9,8 @@ import {
 	PerformanceEvent,
 	numberFromString,
 } from "@fluidframework/telemetry-utils";
-import { assert, fromUtf8ToBase64, performance } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
+import { fromUtf8ToBase64, performance } from "@fluid-internal/client-utils";
 import { GenericNetworkError, NonRetryableError, RateLimiter } from "@fluidframework/driver-utils";
 import {
 	CorrelationIdHeaderName,
@@ -20,7 +21,7 @@ import {
 import fetch from "cross-fetch";
 import type { AxiosRequestConfig, AxiosRequestHeaders } from "axios";
 import safeStringify from "json-stringify-safe";
-import { RouterliciousErrorType, throwR11sNetworkError } from "./errorUtils";
+import { RouterliciousErrorTypes, throwR11sNetworkError } from "./errorUtils";
 import { ITokenProvider, ITokenResponse } from "./tokens";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { QueryStringType, RestWrapper } from "./restWrapperBase";
@@ -53,9 +54,9 @@ export interface IR11sResponse<T> {
 }
 
 /**
- * A utility function to create a r11s response without any additional props as we might not have them always.
- * @param content - response which is equivalent to content.
- * @returns - a r11s response without any extra props.
+ * A utility function to create a Routerlicious response without any additional props as we might not have them always.
+ * @param content - Response which is equivalent to content.
+ * @returns A Routerlicious response without any extra props.
  */
 export function createR11sResponseFromContent<T>(content: T): IR11sResponse<T> {
 	return {
@@ -146,7 +147,7 @@ export class RouterliciousRestWrapper extends RestWrapper {
 				// If there exists a self-signed SSL certificates error, throw a NonRetryableError
 				// TODO: instead of relying on string matching, filter error based on the error code like we do for websocket connections
 				const err = errorMessage.includes("failed, reason: self signed certificate")
-					? new NonRetryableError(errorMessage, RouterliciousErrorType.sslCertError, {
+					? new NonRetryableError(errorMessage, RouterliciousErrorTypes.sslCertError, {
 							driverVersion,
 					  })
 					: new GenericNetworkError(

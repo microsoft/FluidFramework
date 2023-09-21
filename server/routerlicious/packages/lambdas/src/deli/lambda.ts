@@ -68,7 +68,7 @@ import {
 } from "@fluidframework/server-services-telemetry";
 import { DocumentContext } from "@fluidframework/server-lambdas-driver";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { IEvent } from "@fluidframework/common-definitions";
+import { IEvent } from "../events";
 import {
 	logCommonSessionEndMetrics,
 	createSessionMetric,

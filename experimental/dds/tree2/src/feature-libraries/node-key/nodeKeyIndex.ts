@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { FieldKey, SchemaData, ValueSchema } from "../../core";
 import { FieldKinds } from "../default-field-kinds";
 import { EditableTree, EditableTreeContext, localNodeKeySymbol } from "../editable-tree";

@@ -47,11 +47,6 @@ describe("Schema Comparison", () => {
 		mapFields: anyField,
 	};
 
-	const anyLeaf: TreeStoredSchema = {
-		structFields: emptyMap,
-		leafValue: ValueSchema.Serializable,
-	};
-
 	const numberLeaf: TreeStoredSchema = {
 		structFields: emptyMap,
 		leafValue: ValueSchema.Number,
@@ -111,7 +106,7 @@ describe("Schema Comparison", () => {
 	}
 
 	it("isNeverField", () => {
-		const repo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
+		const repo = new InMemoryStoredSchemaRepository();
 		assert(isNeverField(defaultSchemaPolicy, repo, neverField));
 		updateTreeSchema(repo, brand("never"), neverTree);
 		const neverField2: FieldStoredSchema = fieldSchema(FieldKinds.value, [brand("never")]);
@@ -135,7 +130,7 @@ describe("Schema Comparison", () => {
 	});
 
 	it("isNeverTree", () => {
-		const repo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
+		const repo = new InMemoryStoredSchemaRepository();
 		assert(isNeverTree(defaultSchemaPolicy, repo, neverTree));
 		assert(
 			isNeverTree(defaultSchemaPolicy, repo, {
@@ -152,7 +147,6 @@ describe("Schema Comparison", () => {
 			false,
 		);
 		assert.equal(isNeverTree(defaultSchemaPolicy, repo, anyTreeWithoutValue), false);
-		assert.equal(isNeverTree(defaultSchemaPolicy, repo, anyLeaf), false);
 
 		assert(
 			allowsTreeSuperset(
@@ -170,7 +164,7 @@ describe("Schema Comparison", () => {
 	});
 
 	it("isNeverTreeRecursive", () => {
-		const repo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
+		const repo = new InMemoryStoredSchemaRepository();
 		const recursiveField = fieldSchema(FieldKinds.value, [brand("recursive")]);
 		const recursiveType = treeSchema({
 			mapFields: recursiveField,
@@ -180,7 +174,7 @@ describe("Schema Comparison", () => {
 	});
 
 	it("isNeverTreeRecursive non-never", () => {
-		const repo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
+		const repo = new InMemoryStoredSchemaRepository();
 		const recursiveField = fieldSchema(FieldKinds.value, [brand("recursive"), emptyTree.name]);
 		const recursiveType = treeSchema({
 			mapFields: recursiveField,
@@ -191,11 +185,8 @@ describe("Schema Comparison", () => {
 	});
 
 	it("allowsValueSuperset", () => {
-		testOrder(allowsValueSuperset, [ValueSchema.Boolean, ValueSchema.Serializable]);
-		testOrder(allowsValueSuperset, [ValueSchema.Number, ValueSchema.Serializable]);
-		testOrder(allowsValueSuperset, [ValueSchema.String, ValueSchema.Serializable]);
 		assert.equal(
-			getOrdering(ValueSchema.Serializable, undefined, allowsValueSuperset),
+			getOrdering(ValueSchema.FluidHandle, undefined, allowsValueSuperset),
 			Ordering.Incomparable,
 		);
 		assert.equal(
@@ -214,7 +205,7 @@ describe("Schema Comparison", () => {
 			ValueSchema.Boolean,
 			ValueSchema.Number,
 			ValueSchema.String,
-			ValueSchema.Serializable,
+			ValueSchema.FluidHandle,
 		]);
 	});
 
@@ -242,7 +233,7 @@ describe("Schema Comparison", () => {
 	});
 
 	it("allowsFieldSuperset", () => {
-		const repo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
+		const repo = new InMemoryStoredSchemaRepository();
 		updateTreeSchema(repo, brand("never"), neverTree);
 		updateTreeSchema(repo, emptyTree.name, emptyTree);
 		const neverField2: FieldStoredSchema = fieldSchema(FieldKinds.value, [brand("never")]);
@@ -277,7 +268,7 @@ describe("Schema Comparison", () => {
 	});
 
 	it("allowsTreeSuperset-no leaf values", () => {
-		const repo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
+		const repo = new InMemoryStoredSchemaRepository();
 		updateTreeSchema(repo, emptyTree.name, emptyTree);
 		const compare = (
 			a: TreeStoredSchema | undefined,
@@ -304,16 +295,16 @@ describe("Schema Comparison", () => {
 	});
 
 	it("allowsTreeSuperset-leaf values", () => {
-		const repo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
+		const repo = new InMemoryStoredSchemaRepository();
 		updateTreeSchema(repo, emptyTree.name, emptyTree);
 		const compare = (
 			a: TreeStoredSchema | undefined,
 			b: TreeStoredSchema | undefined,
 		): boolean => allowsTreeSuperset(defaultSchemaPolicy, repo, a, b);
-		testOrder(compare, [neverTree, numberLeaf, anyLeaf]);
+		testOrder(compare, [neverTree, numberLeaf]);
 		testPartialOrder(
 			compare,
-			[neverTree, neverTree2, undefined, anyLeaf, numberLeaf],
+			[neverTree, neverTree2, undefined, numberLeaf],
 			[[neverTree, neverTree2, undefined]],
 		);
 	});

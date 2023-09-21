@@ -27,7 +27,7 @@ import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/cont
 import { IContainer } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { stringToBuffer } from "@fluidframework/common-utils";
+import { stringToBuffer } from "@fluid-internal/client-utils";
 
 function getIdCompressor(dds: SharedObjectCore): IIdCompressor {
 	return (dds as any).runtime.idCompressor as IIdCompressor;

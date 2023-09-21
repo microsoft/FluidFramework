@@ -8,7 +8,7 @@ import {
 	IMessageRelayEvents,
 	IDevtoolsMessage,
 } from "@fluid-experimental/devtools-core";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 
 /**
  * Returns a direct response to the provided message.
