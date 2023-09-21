@@ -48,7 +48,7 @@ USAGE
 * [`flub run`](docs/run.md) - Generate a report from input bundle stats collected through the collect bundleStats command.
 * [`flub test-only-filter`](docs/test-only-filter.md) - FOR INTERNAL TESTING ONLY. This command is used only to test the common package filtering and selection logic that is used across the CLI. FOR INTERNAL TESTING ONLY.
 * [`flub typetests`](docs/typetests.md) - Updates configuration for type tests in package.json files. If the previous version changes after running preparation, then npm install must be run before building.
-* [`flub updates`](docs/updates.md)
+* [`flub updates`](docs/updates.md) - Updates the types in package.json based on the release flag
 
 <!-- commandsstop -->
 <!-- prettier-ignore-stop -->
