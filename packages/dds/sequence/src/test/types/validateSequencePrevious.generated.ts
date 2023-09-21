@@ -184,14 +184,26 @@ use_old_InterfaceDeclaration_IIntervalCollectionEvent(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IIntervalHelpers": {"forwardCompat": false}
+* "InterfaceDeclaration_IIntervalHelpers": {"forwardCompat": false}
 */
+declare function get_old_InterfaceDeclaration_IIntervalHelpers():
+    TypeOnly<old.IIntervalHelpers<any>>;
+declare function use_current_InterfaceDeclaration_IIntervalHelpers(
+    use: TypeOnly<current.IIntervalHelpers<any>>);
+use_current_InterfaceDeclaration_IIntervalHelpers(
+    get_old_InterfaceDeclaration_IIntervalHelpers());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IIntervalHelpers": {"backCompat": false}
+* "InterfaceDeclaration_IIntervalHelpers": {"backCompat": false}
 */
+declare function get_current_InterfaceDeclaration_IIntervalHelpers():
+    TypeOnly<current.IIntervalHelpers<any>>;
+declare function use_old_InterfaceDeclaration_IIntervalHelpers(
+    use: TypeOnly<old.IIntervalHelpers<any>>);
+use_old_InterfaceDeclaration_IIntervalHelpers(
+    get_current_InterfaceDeclaration_IIntervalHelpers());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1396,11 +1408,23 @@ use_old_FunctionDeclaration_revertSharedStringRevertibles(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_sequenceIntervalHelpers": {"forwardCompat": false}
+* "VariableDeclaration_sequenceIntervalHelpers": {"forwardCompat": false}
 */
+declare function get_old_VariableDeclaration_sequenceIntervalHelpers():
+    TypeOnly<typeof old.sequenceIntervalHelpers>;
+declare function use_current_VariableDeclaration_sequenceIntervalHelpers(
+    use: TypeOnly<typeof current.sequenceIntervalHelpers>);
+use_current_VariableDeclaration_sequenceIntervalHelpers(
+    get_old_VariableDeclaration_sequenceIntervalHelpers());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_sequenceIntervalHelpers": {"backCompat": false}
+* "VariableDeclaration_sequenceIntervalHelpers": {"backCompat": false}
 */
+declare function get_current_VariableDeclaration_sequenceIntervalHelpers():
+    TypeOnly<typeof current.sequenceIntervalHelpers>;
+declare function use_old_VariableDeclaration_sequenceIntervalHelpers(
+    use: TypeOnly<typeof old.sequenceIntervalHelpers>);
+use_old_VariableDeclaration_sequenceIntervalHelpers(
+    get_current_VariableDeclaration_sequenceIntervalHelpers());

@@ -122,15 +122,6 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"RemovedInterfaceDeclaration_IIntervalHelpers": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedVariableDeclaration_sequenceIntervalHelpers": {
-				"forwardCompat": false,
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

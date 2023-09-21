@@ -1,3 +1,4 @@
+/* eslint-disable import/no-deprecated */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -487,6 +488,9 @@ export const compareSequenceIntervalEnds = (a: SequenceInterval, b: SequenceInte
 export const compareSequenceIntervalStarts = (a: SequenceInterval, b: SequenceInterval): number =>
 	compareReferencePositions(a.start, b.start);
 
+/**
+ * @deprecated The methods within have substitutions
+ */
 export const sequenceIntervalHelpers: IIntervalHelpers<SequenceInterval> = {
 	compareEnds: compareSequenceIntervalEnds,
 	compareStarts: compareSequenceIntervalStarts,

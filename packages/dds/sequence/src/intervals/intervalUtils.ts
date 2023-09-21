@@ -167,6 +167,7 @@ export type CompressedSerializedInterval =
 
 /**
  * @sealed
+ * @deprecated The methods within have substitutions
  */
 export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 	/**

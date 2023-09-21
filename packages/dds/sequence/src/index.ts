@@ -26,6 +26,8 @@ export {
 	SequenceInterval,
 	SerializedIntervalDelta,
 	IntervalStickiness,
+	IIntervalHelpers,
+	sequenceIntervalHelpers,
 } from "./intervals";
 export {
 	DeserializeCallback,

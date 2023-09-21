@@ -173,6 +173,16 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
     (event: "propertyChanged", listener: (interval: TInterval, propertyDeltas: PropertySet, local: boolean, op: ISequencedDocumentMessage | undefined) => void): any;
 }
 
+// @public @sealed @deprecated (undocumented)
+export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
+    // @deprecated (undocumented)
+    compareEnds(a: TInterval, b: TInterval): number;
+    // @deprecated (undocumented)
+    compareStarts?(a: TInterval, b: TInterval): number;
+    // (undocumented)
+    create(label: string, start: number | undefined, end: number | undefined, client: Client | undefined, intervalType: IntervalType, op?: ISequencedDocumentMessage, fromSnapshot?: boolean, stickiness?: IntervalStickiness): TInterval;
+}
+
 // @public @deprecated (undocumented)
 export interface IJSONRunSegment<T> extends IJSONSegment {
     // (undocumented)
@@ -433,6 +443,9 @@ export class SequenceInterval implements ISerializableInterval {
     // @internal
     union(b: SequenceInterval): SequenceInterval;
 }
+
+// @public @deprecated (undocumented)
+export const sequenceIntervalHelpers: IIntervalHelpers<SequenceInterval>;
 
 // @public
 export namespace SequenceIntervalIndexes {
