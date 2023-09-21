@@ -202,7 +202,7 @@ function normalizeEntry(
 			let contents = entry.value.contents;
 			// If this blob has to be normalized or it's a GC blob, parse and sort the blob contents first.
 			if (
-				config?.blobsToNormalize?.includes(entry.path) ??
+				config?.blobsToNormalize?.includes(entry.path) ||
 				entry.path.startsWith(gcBlobPrefix)
 			) {
 				contents = getNormalizedBlobContent(contents, entry.path);
