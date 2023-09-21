@@ -467,14 +467,11 @@ export class ConnectionManager implements IConnectionManager {
 				this.logger.sendErrorEvent({ eventName: "ForceReadonlyPendingChanged" });
 			}
 
-			const [text, mode] =
-				this.readonly === true
-					? ["Force readonly", "read" as ConnectionMode]
-					: ["Force write", "write" as ConnectionMode];
+			const [text, mode] = readonly
+				? ["Force readonly", "read" as ConnectionMode]
+				: ["Force write", "write" as ConnectionMode];
 
-			if (this.readonly === true) {
-				this.props.readonlyChangeHandler(true);
-			}
+			this.props.readonlyChangeHandler(readonly);
 
 			if (this.disconnectFromDeltaStream({ text })) {
 				// reconnect if we disconnected from before.
