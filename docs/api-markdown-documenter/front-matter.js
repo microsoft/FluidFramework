@@ -6,7 +6,6 @@
 const {
 	createDocumentWriter,
 	getLinkForApiItem,
-	getMarkdownRenderersWithDefaults,
 	getUnscopedPackageName,
 	renderNodeAsMarkdown,
 	transformDocNode,
@@ -28,8 +27,6 @@ const generatedContentNotice =
  * @returns The JSON-formatted Hugo front-matter as a `string`.
  */
 function createHugoFrontMatter(apiItem, config, customRenderers) {
-	const renderers = getMarkdownRenderersWithDefaults(customRenderers);
-
 	function extractSummary() {
 		const summaryParagraph = transformDocNode(
 			apiItem.tsdocComment.summarySection,
@@ -43,7 +40,7 @@ function createHugoFrontMatter(apiItem, config, customRenderers) {
 
 		const documentWriter = createDocumentWriter();
 		renderNodeAsMarkdown(summaryParagraph, documentWriter, {
-			renderers,
+			customRenderers,
 		});
 		return documentWriter.getText().replace(/"/g, "'").trim();
 	}
