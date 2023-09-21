@@ -307,8 +307,6 @@ describe("DefaultVisualizers unit tests", () => {
 		sharedMatrix.insertCols(0, 3);
 		sharedMatrix.setCell(0, 0, "Hello");
 		sharedMatrix.setCell(0, 1, "World");
-		// False positive
-
 		sharedMatrix.setCell(0, 2, undefined);
 		sharedMatrix.setCell(1, 0, 1);
 		sharedMatrix.setCell(1, 1, true);
