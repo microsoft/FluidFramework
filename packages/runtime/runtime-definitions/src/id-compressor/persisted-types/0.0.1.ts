@@ -44,7 +44,3 @@ export interface IdCreationRange {
  * This value must *NOT* change without careful consideration to compatibility.
  */
 export const initialClusterCapacity = 512;
-
-export type IdCreationRangeWithStashedState = IdCreationRange & {
-	stashedState: SerializedIdCompressorWithOngoingSession;
-};
