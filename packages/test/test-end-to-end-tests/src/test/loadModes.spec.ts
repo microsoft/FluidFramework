@@ -386,9 +386,15 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 		const map2 = await do2.getSharedObject<SharedMap>(mapId);
 		map2.set("key1", "1");
 		map2.set("key2", "2");
-		loaded.forceReadonly?.(false);
 		await provider.ensureSynchronized();
 
+		// The container is in read-only mode, its changes haven't been sent
+		assert.strictEqual(map1.get("key1"), undefined);
+		assert.strictEqual(map1.get("key2"), undefined);
+
+		// The container's read-only mode is cleared, so the pending ops must be sent
+		loaded.forceReadonly?.(false);
+		await provider.ensureSynchronized();
 		assert.strictEqual(map1.get("key1"), "1");
 		assert.strictEqual(map1.get("key2"), "2");
 	});
