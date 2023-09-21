@@ -190,6 +190,124 @@ export abstract class LazyField<TKind extends FieldKindTypes, TTypes extends All
 		);
 	}
 
+	public indexOf(searchElement: UnboxNodeUnion<TTypes>, fromIndex?: number | undefined): number {}
+
+	public includes(
+		searchElement: UnboxNodeUnion<TTypes>,
+		fromIndex?: number | undefined,
+	): boolean {
+		throw new Error("Method not implemented.");
+	}
+	public keys(): IterableIterator<number> {
+		throw new Error("Method not implemented.");
+	}
+	public values(): IterableIterator<UnboxNodeUnion<TTypes>> {
+		throw new Error("Method not implemented.");
+	}
+	public entries(): IterableIterator<[number, UnboxNodeUnion<TTypes>]> {
+		throw new Error("Method not implemented.");
+	}
+	public forEach(
+		callbackFn: (element: UnboxNodeUnion<TTypes>, key: FieldKey, sequence: this) => void,
+		thisArg?: any,
+	): void {
+		throw new Error("Method not implemented.");
+	}
+	public find(
+		predicate: (value: UnboxNodeUnion<TTypes>, index: number, sequence: this) => boolean,
+		thisArg?: any,
+	): UnboxNodeUnion<TTypes> | undefined;
+	public find<T extends UnboxNodeUnion<TTypes>>(
+		predicate: (element: UnboxNodeUnion<TTypes>, index: number, sequence: this) => element is T,
+		thisArg?: any,
+	): T | undefined;
+	public find(predicate: unknown, thisArg?: unknown): UnboxNodeUnion<TTypes> | T | undefined {
+		throw new Error("Method not implemented.");
+	}
+	public findLast(
+		predicate: (value: UnboxNodeUnion<TTypes>, index: number, sequence: this) => boolean,
+		thisArg?: any,
+	): UnboxNodeUnion<TTypes> | undefined;
+	public findLast<T extends UnboxNodeUnion<TTypes>>(
+		predicate: (element: UnboxNodeUnion<TTypes>, index: number, sequence: this) => element is T,
+		thisArg?: any,
+	): T | undefined;
+	public findLast(predicate: unknown, thisArg?: unknown): UnboxNodeUnion<TTypes> | T | undefined {
+		throw new Error("Method not implemented.");
+	}
+	public findIndex(
+		predicate: (value: UnboxNodeUnion<TTypes>, index: number, sequence: this) => boolean,
+		thisArg?: any,
+	): number {
+		throw new Error("Method not implemented.");
+	}
+	public findLastIndex(
+		predicate: (value: UnboxNodeUnion<TTypes>, index: number, sequence: this) => boolean,
+		thisArg?: any,
+	): number {
+		throw new Error("Method not implemented.");
+	}
+	public reduce(
+		callbackfn: (
+			previousValue: UnboxNodeUnion<TTypes>,
+			currentValue: UnboxNodeUnion<TTypes>,
+			currentIndex: number,
+			sequence: this,
+		) => UnboxNodeUnion<TTypes>,
+		initialValue?: UnboxNodeUnion<TTypes> | undefined,
+	): UnboxNodeUnion<TTypes>;
+	public reduce<U>(
+		callbackfn: (
+			previousValue: U,
+			currentValue: UnboxNodeUnion<TTypes>,
+			currentIndex: number,
+			sequence: this,
+		) => UnboxNodeUnion<TTypes>,
+		initialValue?: U | undefined,
+	): U;
+	public reduce(callbackfn: unknown, initialValue?: unknown): UnboxNodeUnion<TTypes> | U {
+		throw new Error("Method not implemented.");
+	}
+	public reduceRight(
+		callbackfn: (
+			previousValue: UnboxNodeUnion<TTypes>,
+			currentValue: UnboxNodeUnion<TTypes>,
+			currentIndex: number,
+			sequence: this,
+		) => UnboxNodeUnion<TTypes>,
+		initialValue?: UnboxNodeUnion<TTypes> | undefined,
+	): UnboxNodeUnion<TTypes>;
+	public reduceRight<U>(
+		callbackfn: (
+			previousValue: U,
+			currentValue: UnboxNodeUnion<TTypes>,
+			currentIndex: number,
+			sequence: this,
+		) => UnboxNodeUnion<TTypes>,
+		initialValue?: U | undefined,
+	): U;
+	public reduceRight(callbackfn: unknown, initialValue?: unknown): UnboxNodeUnion<TTypes> | U {
+		throw new Error("Method not implemented.");
+	}
+	public filter(
+		predicate: (value: UnboxNodeUnion<TTypes>, index: number, sequence: this) => boolean,
+		thisArg?: any,
+	): UnboxNodeUnion<TTypes>[] {
+		throw new Error("Method not implemented.");
+	}
+	public some(
+		predicate: (value: UnboxNodeUnion<TTypes>, index: number, sequence: this) => boolean,
+		thisArg?: any,
+	): boolean {
+		throw new Error("Method not implemented.");
+	}
+	public every(
+		predicate: (value: UnboxNodeUnion<TTypes>, index: number, sequence: this) => boolean,
+		thisArg?: any,
+	): boolean {
+		throw new Error("Method not implemented.");
+	}
+
 	public mapBoxed<U>(
 		callbackfn: (value: TypedNodeUnion<TTypes>, index: number, array: this) => U,
 	): U[] {
