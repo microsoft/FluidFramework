@@ -390,8 +390,7 @@ export class FluidDataStoreRuntime
 			const id = parser.pathParts[0];
 
 			if (id === "_channels" || id === "_custom") {
-				// eslint-disable-next-line @typescript-eslint/return-await
-				return this.request(parser.createSubRequest(1));
+				return await this.request(parser.createSubRequest(1));
 			}
 
 			// Check for a data type reference first

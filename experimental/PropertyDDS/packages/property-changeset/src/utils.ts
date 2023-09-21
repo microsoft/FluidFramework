@@ -1829,10 +1829,10 @@ export namespace Utils {
 	 *
 	 * ```typescript
 	 * {
-	 * entry: {},
-	 * nested: {
-	 * entry2: {}
-	 * entry3: {}
+	 *   entry: {},
+	 *   nested: {
+	 *   entry2: {}
+	 *   entry3: {}
 	 * }
 	 * }
 	 * ```

@@ -727,7 +727,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
 		for (var i = 0; i < keys.length; i++) {
 			var key = keys[i];
 			var child = this._get(key);
-			flattenedRepresentation[key] = !child._isFlattenLeaf() ? child._flatten() : child;
+			flattenedRepresentation[key] = child._isFlattenLeaf() ? child : child._flatten();
 		}
 
 		flattenedRepresentation.propertyNode = this;
