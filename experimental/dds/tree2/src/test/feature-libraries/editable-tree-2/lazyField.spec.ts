@@ -7,15 +7,11 @@
 
 import { strict as assert } from "assert";
 
+import { Any, FieldKinds, SchemaBuilder } from "../../../feature-libraries";
 import {
-	AllowedTypes,
-	Any,
-	FieldKinds,
-	FieldSchema,
-	SchemaBuilder,
-} from "../../../feature-libraries";
-import {
+	FieldAnchor,
 	FieldKey,
+	IEditableForest,
 	ITreeSubscriptionCursor,
 	TreeNavigationResult,
 	ValueSchema,
@@ -31,7 +27,7 @@ import { Context } from "../../../feature-libraries/editable-tree-2/context";
 import { getReadonlyContext } from "./utils";
 
 const detachedField: FieldKey = brand("detached");
-const detachedFieldAnchor = { parent: undefined, fieldKey: detachedField };
+const detachedFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: detachedField };
 
 describe("LazyField", () => {
 	it("LazyField implementations do not allow edits to detached trees", () => {
@@ -79,48 +75,43 @@ describe("LazyField", () => {
 	});
 });
 
-describe("LazyOptionalField", () => {
-	describe("as", () => {
-		function initializeForest(): {
-			builder: SchemaBuilder;
-			context: Context;
-			cursor: ITreeSubscriptionCursor;
-		} {
-			const builder = new SchemaBuilder("lazyField");
-			builder.struct("empty", {});
-			const schema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
-			const forest = forestWithContent({ schema, initialTree: {} });
-			const context = getReadonlyContext(forest, schema);
-			const cursor = context.forest.allocateCursor();
-			return { builder, context, cursor };
-		}
+describe.only("LazyOptionalField", () => {
+	function initializeForest(builder: SchemaBuilder): {
+		context: Context;
+		cursor: ITreeSubscriptionCursor;
+		forest: IEditableForest;
+	} {
+		const rootNodeSchema = builder.struct("root", { root: SchemaBuilder.fieldOptional(Any) });
+		const schema = builder.intoDocumentSchema(
+			SchemaBuilder.field(FieldKinds.optional, rootNodeSchema),
+		);
+		const forest = forestWithContent({ schema, initialTree: {} });
+		const context = getReadonlyContext(forest, schema);
+		const cursor = context.forest.allocateCursor();
 
-		function createLazyOptionalField<TTypes extends AllowedTypes>(
-			fieldSchema: FieldSchema<typeof FieldKinds.optional, TTypes>,
-			context: Context,
-			cursor: ITreeSubscriptionCursor,
-		): LazyOptionalField<TTypes> {
-			assert.equal(
-				context.forest.tryMoveCursorToField(
-					{ fieldKey: detachedField, parent: undefined },
-					cursor,
-				),
-				TreeNavigationResult.Ok,
-			);
-
-			return new LazyOptionalField(context, fieldSchema, cursor, detachedFieldAnchor);
-		}
-
-		it("Any", () => {
-			const { builder, context, cursor } = initializeForest();
-			const field = createLazyOptionalField(
-				SchemaBuilder.fieldOptional(Any),
-				context,
+		assert.equal(
+			context.forest.tryMoveCursorToField(
+				{ fieldKey: detachedField, parent: undefined },
 				cursor,
-			);
+			),
+			TreeNavigationResult.Ok,
+		);
 
-			// Arbitrary leaf schema to test some cases with
+		return { context, cursor, forest };
+	}
+
+	describe("as", () => {
+		it("Any", () => {
+			const builder = new SchemaBuilder("test");
 			const booleanLeafSchema = builder.leaf("bool", ValueSchema.Boolean);
+			const { context, cursor } = initializeForest(builder);
+
+			const field = new LazyOptionalField(
+				context,
+				SchemaBuilder.fieldOptional(Any),
+				cursor,
+				detachedFieldAnchor,
+			);
 
 			// Positive cases
 			assert(field.is(SchemaBuilder.fieldOptional(Any)));
@@ -135,26 +126,23 @@ describe("LazyOptionalField", () => {
 		});
 
 		it("Boolean", () => {
-			const { builder, context, cursor } = initializeForest();
+			const builder = new SchemaBuilder("test");
 			const booleanLeafSchema = builder.leaf("bool", ValueSchema.Boolean);
-			const field = createLazyOptionalField(
-				SchemaBuilder.fieldOptional(booleanLeafSchema),
+			const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
+			const { context, cursor } = initializeForest(builder);
+
+			const field = new LazyOptionalField(
 				context,
+				SchemaBuilder.fieldOptional(booleanLeafSchema),
 				cursor,
+				detachedFieldAnchor,
 			);
 
-			// Arbitrary leaf schema to test some cases with
-			const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
-
 			// Positive cases
-			// assert(field.is(SchemaBuilder.fieldOptional(Any)));
 			assert(field.is(SchemaBuilder.fieldOptional(booleanLeafSchema)));
-			// assert(field.is(SchemaBuilder.fieldRecursive(FieldKinds.optional, Any)));
 			assert(field.is(SchemaBuilder.fieldRecursive(FieldKinds.optional, booleanLeafSchema)));
 
 			// Negative cases
-			// assert(!field.is(SchemaBuilder.fieldOptional()));
-			// assert.equal(field.is(SchemaBuilder.fieldOptional(numberLeafSchema)), false);
 			assert.equal(field.is(SchemaBuilder.fieldValue(Any)), false);
 			assert.equal(field.is(SchemaBuilder.fieldValue(booleanLeafSchema)), false);
 			assert.equal(field.is(SchemaBuilder.fieldValue(numberLeafSchema)), false);
@@ -165,6 +153,40 @@ describe("LazyOptionalField", () => {
 			// 	field.is(SchemaBuilder.fieldRecursive(FieldKinds.optional, numberLeafSchema)),
 			// 	false,
 			// );
+		});
+	});
+
+	describe("length", () => {
+		it("No value", () => {
+			const builder = new SchemaBuilder("test");
+			const { context, cursor } = initializeForest(builder);
+
+			const field = new LazyOptionalField(
+				context,
+				SchemaBuilder.fieldOptional(Any),
+				cursor,
+				detachedFieldAnchor,
+			);
+
+			assert.equal(field.length, 0);
+		});
+
+		it("With value", () => {
+			const builder = new SchemaBuilder("test");
+			const booleanLeafSchema = builder.leaf("bool", ValueSchema.Boolean);
+			const { context, cursor, forest } = initializeForest(builder);
+
+			const field = new LazyOptionalField(
+				context,
+				SchemaBuilder.fieldOptional(booleanLeafSchema),
+				cursor,
+				cursor.buildFieldAnchor(), // TODO
+			);
+
+			cursor.enterField(field.key);
+			field.setContent(true);
+
+			assert.equal(field.length, 1);
 		});
 	});
 });
