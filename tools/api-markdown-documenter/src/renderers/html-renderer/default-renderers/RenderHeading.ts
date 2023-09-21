@@ -32,6 +32,7 @@ export function renderHeading(
 	context: RenderContext,
 ): void {
 	const headingLevel = context.headingLevel;
+	const prettyFormatting = context.prettyFormatting !== false;
 
 	// HTML only supports heading levels up to 6. If our level is beyond that, we will render as simple
 	// bold text, with an accompanying anchor to ensure we can still link to the text.
@@ -41,20 +42,38 @@ export function renderHeading(
 		if (headingNode.id !== undefined) {
 			writer.write(` id="${headingNode.id}"`);
 		}
-		writer.writeLine(">");
-		writer.increaseIndent();
+		writer.write(">");
+
+		if (prettyFormatting) {
+			writer.ensureNewLine();
+			writer.increaseIndent();
+		}
+
 		renderNodes(headingNode.children, writer, context);
-		writer.ensureNewLine();
-		writer.decreaseIndent();
-		writer.writeLine(`</h${headingLevel}>`);
+
+		if (prettyFormatting) {
+			writer.ensureNewLine();
+			writer.decreaseIndent();
+		}
+
+		writer.write(`</h${headingLevel}>`);
+
+		if (prettyFormatting) {
+			writer.ensureNewLine();
+		}
 	} else {
 		if (headingNode.id !== undefined) {
-			renderAnchor(headingNode.id, writer);
+			renderAnchor(headingNode.id, writer, context);
+			if (prettyFormatting) {
+				writer.ensureNewLine();
+			}
 		}
 		renderNodes(headingNode.children, writer, {
 			...context,
 			bold: true,
 		});
-		writer.ensureNewLine();
+		if (prettyFormatting) {
+			writer.ensureNewLine();
+		}
 	}
 }
