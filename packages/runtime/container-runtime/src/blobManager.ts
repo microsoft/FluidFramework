@@ -136,6 +136,7 @@ interface PendingBlob {
 	attached?: boolean;
 	acked?: boolean;
 	abortSignal?: AbortSignal;
+	pendingStashed?: boolean;
 }
 
 export interface IPendingBlobs {
@@ -197,7 +198,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private readonly tombstonedBlobs: Set<string> = new Set();
 
 	private readonly sendBlobAttachOp: (localId: string, storageId?: string) => void;
-	private stashing: boolean;
 
 	constructor(
 		private readonly routeContext: IFluidHandleContext,
@@ -237,7 +237,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 		this.redirectTable = this.load(snapshot);
 
-		this.stashing = Object.keys(stashedBlobs).length > 0;
 		// Begin uploading stashed blobs from previous container instance
 		Object.entries(stashedBlobs).forEach(([localId, entry]) => {
 			const blob = stringToBuffer(entry.blob, "base64");
@@ -271,6 +270,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				attached,
 				acked,
 				opsent: true,
+				pendingStashed: true,
 			});
 		});
 
@@ -333,15 +333,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	}
 
 	public hasPendingStashedBlobs(): boolean {
-		if (
-			Array.from(this.pendingBlobs.values()).filter((e) => e.uploading === true).length > 0 &&
-			this.stashing
-		) {
-			this.stashing = false;
-			return true;
-		}
-		this.stashing = false;
-		return false;
+		return (
+			Array.from(this.pendingBlobs.values()).filter((e) => e.pendingStashed === true).length >
+			0
+		);
 	}
 	/**
 	 * Upload blobs added while offline. This must be completed before connecting and resubmitting ops.
@@ -573,7 +568,9 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				(this.opsInFlight.get(response.id) ?? []).concat(localId),
 			);
 		}
-
+		if (entry.pendingStashed) {
+			entry.pendingStashed = false;
+		}
 		return response;
 	}
 
