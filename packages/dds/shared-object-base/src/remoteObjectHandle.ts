@@ -94,7 +94,9 @@ export class RemoteFluidObjectHandle implements IFluidHandle {
 			const object: FluidObject<IFluidRouter> = await this.get();
 			const router = object.IFluidRouter;
 
-			return router !== undefined ? router.request(request) : create404Response(request);
+			return router !== undefined
+				? await router.request(request)
+				: create404Response(request);
 		} catch (error) {
 			return exceptionToResponse(error);
 		}

@@ -122,8 +122,7 @@ describe("OdspDocumentDeltaConnection tests", () => {
 		let connection: OdspDocumentDeltaConnection | undefined;
 		try {
 			connection = await mockSocket(socket as unknown as Socket, async () => {
-				// eslint-disable-next-line no-return-await
-				return await OdspDocumentDeltaConnection.create(
+				return OdspDocumentDeltaConnection.create(
 					tenantId,
 					documentId,
 					token,
