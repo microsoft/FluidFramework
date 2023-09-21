@@ -270,7 +270,8 @@ class ScheduleManagerCore {
 					message,
 					{
 						runtimeVersion: pkgVersion,
-						batchClientId: this.currentBatchClientId ?? "null",
+						batchClientId:
+							this.currentBatchClientId === null ? "null" : this.currentBatchClientId,
 						pauseSequenceNumber: this.pauseSequenceNumber,
 						localBatch: this.currentBatchClientId === this.getClientId(),
 						messageType: message.type,
@@ -304,7 +305,8 @@ class ScheduleManagerCore {
 		) {
 			throw new DataCorruptionError("OpBatchIncomplete", {
 				runtimeVersion: pkgVersion,
-				batchClientId: this.currentBatchClientId ?? "null",
+				batchClientId:
+					this.currentBatchClientId === null ? "null" : this.currentBatchClientId,
 				pauseSequenceNumber: this.pauseSequenceNumber,
 				localBatch: this.currentBatchClientId === this.getClientId(),
 				localMessage: message.clientId === this.getClientId(),
