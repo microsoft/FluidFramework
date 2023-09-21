@@ -173,18 +173,31 @@ namespace Test_TypeOnly_Preserves_Primitives {
 	type _check_null1 = requireAssignableTo<TypeOnly<null>, null>;
 	type _check_null2 = requireAssignableTo<null, TypeOnly<null>>;
 
-	// Types that extend 'number' and 'string' are stripped to their primitive types.
-	// (Nominal typing is erased.)
+	// Due to limitations of the current version of TypeOnly, brands on number are lost,
+	// but the number type is preserved:
 	type brandedNumber = number & { brand: "Number" };
 	type _check_number1 = requireAssignableTo<TypeOnly<brandedNumber>, number>;
-   // Due to limitations of the current version of TypeOnly, brands on primitives are lost:
-	type _check_number2 = requireAssignableTo<number, TypeOnly<brandedNumber>>;
+	type _check_number2 = requireAssignableTo<brandedNumber, TypeOnly<brandedNumber>>;
 
+	// Due to limitations of the current version of TypeOnly, brands on string are lost,
+	// but the string type is preserved:
 	type brandedString = string & { brand: "String" };
 	type _check_string1 = requireAssignableTo<TypeOnly<brandedString>, string>;
-	type _check_string2 = requireAssignableTo<string, TypeOnly<brandedString>>;
+	type _check_string2 = requireAssignableTo<brandedString, TypeOnly<brandedString>>;
 
-	// Other primitive types are preserved as-is.
+	// Due to limitations of the current version of TypeOnly, brands on unions involving
+	// 'string' or 'number' are lost, but the 'string | number' type is preserved:
+	type brandedNumberOrString = (number | string) & { brand: "NumberOrString" };
+	type _check_number_or_string1 = requireAssignableTo<
+		TypeOnly<brandedNumberOrString>,
+		number | string
+	>;
+	type _check_number_or_string2 = requireAssignableTo<
+		brandedNumberOrString,
+		TypeOnly<brandedNumberOrString>
+	>;
+
+	// Other branded primitive types are preserved.
 	type brandedBoolean = boolean & { brand: "Boolean" };
 	type _check_bool1 = requireAssignableTo<TypeOnly<brandedBoolean>, brandedBoolean>;
 	type _check_bool2 = requireAssignableTo<brandedBoolean, TypeOnly<brandedBoolean>>;
@@ -196,4 +209,17 @@ namespace Test_TypeOnly_Preserves_Primitives {
 	type brandedSymbol = symbol & { brand: "Symbol" };
 	type _check_symbol1 = requireAssignableTo<TypeOnly<brandedSymbol>, symbol>;
 	type _check_symbol2 = requireAssignableTo<brandedSymbol, TypeOnly<symbol>>;
+
+	// Unions of primitive types are preserved.
+	type union = undefined | null | boolean | number | bigint | string | symbol;
+	type _check_union1 = requireAssignableTo<TypeOnly<union>, union>;
+	type _check_union2 = requireAssignableTo<union, TypeOnly<union>>;
+
+	// Branded unions of primitive types are preserved, except for string and number,
+	// which are stripped to just 'string | number'.
+	type brandedUnion = (undefined | null | boolean | bigint | symbol) & {
+		brand: "Union";
+	};
+	type _check_union3 = requireAssignableTo<TypeOnly<brandedUnion>, brandedUnion>;
+	type _check_union4 = requireAssignableTo<brandedUnion, TypeOnly<brandedUnion>>;
 }
