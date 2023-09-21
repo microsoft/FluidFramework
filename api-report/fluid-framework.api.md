@@ -36,7 +36,6 @@ import { IFluidContainerEvents } from '@fluidframework/fluid-static';
 import { IInterval } from '@fluidframework/sequence';
 import { IIntervalCollection } from '@fluidframework/sequence';
 import { IIntervalCollectionEvent } from '@fluidframework/sequence';
-import { IIntervalHelpers } from '@fluidframework/sequence';
 import { IJSONRunSegment } from '@fluidframework/sequence';
 import { ILocalValue } from '@fluidframework/map';
 import { IMapMessageLocalMetadata } from '@fluidframework/sequence';
@@ -150,8 +149,6 @@ export { IInterval }
 export { IIntervalCollection }
 
 export { IIntervalCollectionEvent }
-
-export { IIntervalHelpers }
 
 export { IJSONRunSegment }
 
