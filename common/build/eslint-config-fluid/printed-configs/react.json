@@ -60,6 +60,9 @@
         "@typescript-eslint/ban-ts-comment": [
             "error"
         ],
+        "@typescript-eslint/ban-tslint-comment": [
+            "error"
+        ],
         "@typescript-eslint/ban-types": [
             "error"
         ],
@@ -73,12 +76,21 @@
                 "allowSingleLine": true
             }
         ],
+        "@typescript-eslint/class-literal-property-style": [
+            "error"
+        ],
         "@typescript-eslint/comma-dangle": [
             "off",
             "always-multiline"
         ],
         "@typescript-eslint/comma-spacing": [
             "error"
+        ],
+        "@typescript-eslint/consistent-generic-constructors": [
+            "off"
+        ],
+        "@typescript-eslint/consistent-indexed-object-style": [
+            "off"
         ],
         "@typescript-eslint/consistent-type-assertions": [
             "error",
@@ -89,6 +101,12 @@
         ],
         "@typescript-eslint/consistent-type-definitions": [
             "error"
+        ],
+        "@typescript-eslint/consistent-type-exports": [
+            "off"
+        ],
+        "@typescript-eslint/consistent-type-imports": [
+            "off"
         ],
         "@typescript-eslint/dot-notation": [
             "error"
@@ -160,11 +178,14 @@
         "@typescript-eslint/no-base-to-string": [
             "error"
         ],
+        "@typescript-eslint/no-confusing-non-null-assertion": [
+            "error"
+        ],
         "@typescript-eslint/no-duplicate-enum-values": [
             "error"
         ],
         "@typescript-eslint/no-duplicate-type-constituents": [
-            "error"
+            "off"
         ],
         "@typescript-eslint/no-dynamic-delete": [
             "error"
@@ -227,7 +248,7 @@
             "error"
         ],
         "@typescript-eslint/no-redundant-type-constituents": [
-            "error"
+            "off"
         ],
         "@typescript-eslint/no-require-imports": [
             "error"
@@ -270,7 +291,7 @@
             "error"
         ],
         "@typescript-eslint/no-unsafe-enum-comparison": [
-            "error"
+            "off"
         ],
         "@typescript-eslint/no-unsafe-member-access": [
             "error"
@@ -289,6 +310,9 @@
         ],
         "@typescript-eslint/no-var-requires": [
             "error"
+        ],
+        "@typescript-eslint/non-nullable-type-assertion-style": [
+            "off"
         ],
         "@typescript-eslint/object-curly-spacing": [
             "error",
@@ -318,6 +342,9 @@
         "@typescript-eslint/prefer-readonly": [
             "error"
         ],
+        "@typescript-eslint/prefer-string-starts-ends-with": [
+            "error"
+        ],
         "@typescript-eslint/promise-function-async": [
             "error"
         ],
@@ -337,6 +364,9 @@
         ],
         "@typescript-eslint/restrict-template-expressions": [
             "off"
+        ],
+        "@typescript-eslint/return-await": [
+            "error"
         ],
         "@typescript-eslint/semi": [
             "error",
@@ -615,7 +645,7 @@
             "error"
         ],
         "jsdoc/check-line-alignment": [
-            "error"
+            "warn"
         ],
         "jsdoc/check-tag-names": [
             "off"
@@ -767,6 +797,9 @@
         ],
         "no-empty-character-class": [
             "error"
+        ],
+        "no-empty-function": [
+            "off"
         ],
         "no-empty-pattern": [
             "error"
@@ -1301,7 +1334,7 @@
             "error"
         ],
         "unicorn/expiring-todo-comments": [
-            "error"
+            "off"
         ],
         "unicorn/explicit-length-check": [
             "error"

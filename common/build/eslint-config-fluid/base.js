@@ -14,8 +14,8 @@ module.exports = {
 		"eslint:recommended",
 		"plugin:eslint-comments/recommended",
 		"plugin:@typescript-eslint/eslint-recommended",
-		"plugin:@typescript-eslint/recommended",
-		"plugin:@typescript-eslint/recommended-requiring-type-checking",
+		"plugin:@typescript-eslint/recommended-type-checked",
+		"plugin:@typescript-eslint/stylistic-type-checked",
 		"plugin:import/errors",
 		"plugin:import/warnings",
 		"plugin:import/typescript",
@@ -102,9 +102,10 @@ module.exports = {
 				avoidEscape: true,
 			},
 		],
+		"@typescript-eslint/require-await": "off",
 		"@typescript-eslint/restrict-plus-operands": "error",
 		"@typescript-eslint/restrict-template-expressions": "off",
-		"@typescript-eslint/require-await": "off",
+		"@typescript-eslint/return-await": "error",
 		"@typescript-eslint/semi": ["error", "always"],
 		"@typescript-eslint/space-infix-ops": "error",
 		"@typescript-eslint/space-before-function-paren": [
@@ -169,6 +170,9 @@ module.exports = {
 		//            significant performance regression [node 14 x64].
 		"unicorn/no-for-loop": "off",
 		"unicorn/no-new-buffer": "error",
+
+		// The rule seems to crash on some of our code
+		"unicorn/expiring-todo-comments": "off",
 
 		// eslint
 		"arrow-body-style": "off",
@@ -314,6 +318,13 @@ module.exports = {
 				"@typescript-eslint/no-unsafe-assignment": "off",
 				"@typescript-eslint/no-unsafe-call": "off",
 				"@typescript-eslint/no-unsafe-member-access": "off",
+			},
+		},
+		{
+			// Rules only for type validation files
+			files: ["**/types/*validate*Previous*.ts"],
+			rules: {
+				"@typescript-eslint/comma-spacing": "off",
 			},
 		},
 	],
