@@ -197,7 +197,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private readonly tombstonedBlobs: Set<string> = new Set();
 
 	private readonly sendBlobAttachOp: (localId: string, storageId?: string) => void;
-	private loaded: boolean = false;
+	private stashing: boolean;
 
 	constructor(
 		private readonly routeContext: IFluidHandleContext,
@@ -237,6 +237,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 		this.redirectTable = this.load(snapshot);
 
+		this.stashing = Object.keys(stashedBlobs).length > 0;
 		// Begin uploading stashed blobs from previous container instance
 		Object.entries(stashedBlobs).forEach(([localId, entry]) => {
 			const blob = stringToBuffer(entry.blob, "base64");
@@ -334,12 +335,12 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	public hasPendingStashedBlobs(): boolean {
 		if (
 			Array.from(this.pendingBlobs.values()).filter((e) => e.uploading === true).length > 0 &&
-			!this.loaded
+			this.stashing
 		) {
-			this.loaded = true;
+			this.stashing = false;
 			return true;
 		}
-		this.loaded = true;
+		this.stashing = false;
 		return false;
 	}
 	/**
