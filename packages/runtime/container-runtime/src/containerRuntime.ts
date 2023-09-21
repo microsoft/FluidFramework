@@ -1732,7 +1732,7 @@ export class ContainerRuntime
 				return create404Response(request);
 			}
 			if (this.requestHandler !== undefined) {
-				return await this.requestHandler(parser, this);
+				return this.requestHandler(parser, this);
 			}
 
 			return create404Response(request);
@@ -1751,7 +1751,7 @@ export class ContainerRuntime
 			const id = requestParser.pathParts[0];
 
 			if (id === "_channels") {
-				return await this.resolveHandle(requestParser.createSubRequest(1));
+				return this.resolveHandle(requestParser.createSubRequest(1));
 			}
 
 			if (id === BlobManager.basePath && requestParser.isLeaf(2)) {
@@ -1772,7 +1772,7 @@ export class ContainerRuntime
 					subRequest.url.startsWith("/"),
 					0x126 /* "Expected createSubRequest url to include a leading slash" */,
 				);
-				return await dataStore.request(subRequest);
+				return dataStore.request(subRequest);
 			}
 
 			return create404Response(request);

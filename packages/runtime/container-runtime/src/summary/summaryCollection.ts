@@ -405,7 +405,7 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 	private handleSummaryAck(op: ISummaryAckMessage) {
 		const seq = op.contents.summaryProposal.summarySequenceNumber;
 		const summary = this.pendingSummaries.get(seq);
-		if (summary?.summaryOp === undefined) {
+		if (!summary || summary.summaryOp === undefined) {
 			// Summary ack without an op should be rare. We could fetch the
 			// reference sequence number from the snapshot, but instead we
 			// will not emit this ack. It should be the case that the summary
