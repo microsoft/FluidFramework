@@ -102,9 +102,10 @@ module.exports = {
 				avoidEscape: true,
 			},
 		],
+		"@typescript-eslint/require-await": "off",
 		"@typescript-eslint/restrict-plus-operands": "error",
 		"@typescript-eslint/restrict-template-expressions": "off",
-		"@typescript-eslint/require-await": "off",
+		"@typescript-eslint/return-await": "error",
 		"@typescript-eslint/semi": ["error", "always"],
 		"@typescript-eslint/space-infix-ops": "error",
 		"@typescript-eslint/space-before-function-paren": [

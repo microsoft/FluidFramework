@@ -356,6 +356,9 @@
         "@typescript-eslint/restrict-template-expressions": [
             "off"
         ],
+        "@typescript-eslint/return-await": [
+            "error"
+        ],
         "@typescript-eslint/semi": [
             "error",
             "always"
