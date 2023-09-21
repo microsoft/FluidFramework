@@ -51,8 +51,8 @@ import {
 	getSeeBlocks,
 	getThrowsBlocks,
 } from "../ApiItemUtilities";
-import { transformDocSection } from "../DocNodeTransforms";
-import { getDocNodeTransformationOptions } from "../Utilities";
+import { transformTsdocSection } from "../TsdocNodeTransforms";
+import { getTsdocNodeTransformationOptions } from "../Utilities";
 import { ApiItemTransformationConfiguration } from "../configuration";
 import { createParametersSummaryTable, createTypeParametersSummaryTable } from "./TableHelpers";
 
@@ -113,10 +113,10 @@ export function createSeeAlsoSection(
 		return undefined;
 	}
 
-	const docNodeTransformOptions = getDocNodeTransformationOptions(apiItem, config);
+	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
 
 	const contents = seeBlocks.map((seeBlock) =>
-		transformDocSection(seeBlock, docNodeTransformOptions),
+		transformTsdocSection(seeBlock, tsdocNodeTransformOptions),
 	);
 
 	return wrapInSection(contents, {
@@ -274,9 +274,16 @@ export function createTypeParametersSection(
 		return undefined;
 	}
 
-	const typeParamTable = createTypeParametersSummaryTable(typeParameters, contextApiItem, config);
+	const typeParametersTable = createTypeParametersSummaryTable(
+		typeParameters,
+		contextApiItem,
+		config,
+	);
 
-	return new SectionNode([typeParamTable], HeadingNode.createFromPlainText("Type Parameters"));
+	return new SectionNode(
+		[typeParametersTable],
+		HeadingNode.createFromPlainText("Type Parameters"),
+	);
 }
 
 /**
@@ -401,9 +408,9 @@ export function createSummaryParagraph(
 	apiItem: ApiItem,
 	config: Required<ApiItemTransformationConfiguration>,
 ): ParagraphNode | undefined {
-	const docNodeTransformOptions = getDocNodeTransformationOptions(apiItem, config);
+	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
 	return apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined
-		? transformDocSection(apiItem.tsdocComment.summarySection, docNodeTransformOptions)
+		? transformTsdocSection(apiItem.tsdocComment.summarySection, tsdocNodeTransformOptions)
 		: undefined;
 }
 
@@ -429,10 +436,15 @@ export function createRemarksSection(
 		return undefined;
 	}
 
-	const docNodeTransformOptions = getDocNodeTransformationOptions(apiItem, config);
+	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
 
 	return wrapInSection(
-		[transformDocSection(apiItem.tsdocComment.remarksBlock.content, docNodeTransformOptions)],
+		[
+			transformTsdocSection(
+				apiItem.tsdocComment.remarksBlock.content,
+				tsdocNodeTransformOptions,
+			),
+		],
 		{ title: "Remarks", id: `${getQualifiedApiItemName(apiItem)}-remarks` },
 	);
 }
@@ -457,10 +469,10 @@ export function createThrowsSection(
 		return undefined;
 	}
 
-	const docNodeTransformOptions = getDocNodeTransformationOptions(apiItem, config);
+	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
 
 	const paragraphs = throwsBlocks.map((throwsBlock) =>
-		transformDocSection(throwsBlock, docNodeTransformOptions),
+		transformTsdocSection(throwsBlock, tsdocNodeTransformOptions),
 	);
 
 	return wrapInSection(paragraphs, {
@@ -484,7 +496,7 @@ export function createDeprecationNoticeSection(
 	apiItem: ApiItem,
 	config: Required<ApiItemTransformationConfiguration>,
 ): ParagraphNode | undefined {
-	const docNodeTransformOptions = getDocNodeTransformationOptions(apiItem, config);
+	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
 
 	const deprecatedBlock = getDeprecatedBlock(apiItem);
 	if (deprecatedBlock === undefined) {
@@ -497,7 +509,7 @@ export function createDeprecationNoticeSection(
 			{ bold: true },
 		),
 		LineBreakNode.Singleton,
-		new SpanNode([transformDocSection(deprecatedBlock, docNodeTransformOptions)], {
+		new SpanNode([transformTsdocSection(deprecatedBlock, tsdocNodeTransformOptions)], {
 			italic: true,
 		}),
 	]);
@@ -550,7 +562,7 @@ export function createExamplesSection(
 /**
  * Represents a single {@link https://tsdoc.org/pages/tags/example/ | @example} comment block for a given API item.
  */
-export interface DocExampleProperties {
+export interface ExampleProperties {
 	/**
 	 * The API item the example doc content belongs to.
 	 */
@@ -582,7 +594,7 @@ export interface DocExampleProperties {
  * If the `@example` content has text on the first line (the same line as the `@example` tag), that text content is
  * treated as the example's "title", used in the heading text (and is not included in the content body).
  *
- * Otherwise, the heading is generated as "Example[ \<{@link DocExampleProperties.exampleNumber}\>]".
+ * Otherwise, the heading is generated as "Example[ \<{@link ExampleProperties.exampleNumber}\>]".
  *
  * @example Example comment with title "Foo"
  *
@@ -606,7 +618,7 @@ export interface DocExampleProperties {
  * ...
  * ```
  *
- * @example With no title and {@link DocExampleProperties.exampleNumber} provided
+ * @example With no title and {@link ExampleProperties.exampleNumber} provided
  *
  * An example comment without a title line, and `exampleNumber` value of `2` will generate content like
  * the following (expressed in Markdown, heading levels will vary):
@@ -624,15 +636,15 @@ export interface DocExampleProperties {
  * @returns The rendered {@link SectionNode}.
  */
 export function createExampleSection(
-	example: DocExampleProperties,
+	example: ExampleProperties,
 	config: Required<ApiItemTransformationConfiguration>,
 ): SectionNode {
 	const { logger } = config;
 
-	const docNodeTransformOptions = getDocNodeTransformationOptions(example.apiItem, config);
-	let exampleParagraph: DocumentationParentNode = transformDocSection(
+	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(example.apiItem, config);
+	let exampleParagraph: DocumentationParentNode = transformTsdocSection(
 		example.content,
-		docNodeTransformOptions,
+		tsdocNodeTransformOptions,
 	);
 
 	// Per TSDoc spec, if the `@example` comment has content on the same line as the tag,
@@ -837,7 +849,7 @@ export function createReturnsSection(
 	apiItem: ApiItem,
 	config: Required<ApiItemTransformationConfiguration>,
 ): SectionNode | undefined {
-	const docNodeTransformOptions = getDocNodeTransformationOptions(apiItem, config);
+	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
 
 	const children: DocumentationNode[] = [];
 
@@ -845,7 +857,7 @@ export function createReturnsSection(
 	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
 		const returnsBlock = getReturnsBlock(apiItem);
 		if (returnsBlock !== undefined) {
-			children.push(transformDocSection(returnsBlock, docNodeTransformOptions));
+			children.push(transformTsdocSection(returnsBlock, tsdocNodeTransformOptions));
 		}
 	}
 
