@@ -250,6 +250,9 @@ export interface FileSystemConfiguration {
 }
 
 // @public
+export function getApiItemTransformationConfigurationWithDefaults(inputOptions: ApiItemTransformationConfiguration): Required<ApiItemTransformationConfiguration>;
+
+// @public
 export function getDefaultValueBlock(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): DocSection | undefined;
 
 // @public
