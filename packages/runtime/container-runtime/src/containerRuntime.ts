@@ -87,7 +87,7 @@ import {
 	IIdCompressor,
 	IIdCompressorCore,
 	IdCreationRange,
-	IdCreationRangeWithStashedState,
+	SerializedIdCompressorWithOngoingSession,
 } from "@fluidframework/runtime-definitions";
 import {
 	addBlobToSummary,
@@ -188,7 +188,6 @@ import {
 	type InboundSequencedContainerRuntimeMessage,
 	type InboundSequencedContainerRuntimeMessageOrSystemMessage,
 	type ContainerRuntimeIdAllocationMessage,
-	type LocalContainerRuntimeIdAllocationMessage,
 	type LocalContainerRuntimeMessage,
 	type OutboundContainerRuntimeMessage,
 	type UnknownContainerRuntimeMessage,
@@ -208,15 +207,6 @@ function compatBehaviorAllowsMessageType(
 ): boolean {
 	// undefined defaults to same behavior as "FailToProcess"
 	return compatBehavior === "Ignore";
-}
-
-function prepareLocalContainerRuntimeIdAllocationMessageForTransit(
-	message: LocalContainerRuntimeIdAllocationMessage | ContainerRuntimeIdAllocationMessage,
-): asserts message is ContainerRuntimeIdAllocationMessage {
-	// Remove the stashedState from the op if it's a stashed op
-	if ("stashedState" in message.contents) {
-		delete message.contents.stashedState;
-	}
 }
 
 export interface ISummaryBaseConfiguration {
@@ -513,6 +503,10 @@ export interface IPendingRuntimeState {
 	 * Pending blobs from BlobManager
 	 */
 	pendingAttachmentBlobs?: IPendingBlobs;
+	/**
+	 * Pending idCompressor state
+	 */
+	pendingIdCompressorState?: SerializedIdCompressorWithOngoingSession;
 }
 
 const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconnects";
@@ -819,10 +813,16 @@ export class ContainerRuntime
 		let idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
 		if (idCompressorEnabled) {
 			const { IdCompressor, createSessionId } = await import("./id-compressor");
-			idCompressor =
-				serializedIdCompressor !== undefined
-					? IdCompressor.deserialize(serializedIdCompressor, createSessionId())
-					: IdCompressor.create(logger);
+
+			const pendingLocalState = context.pendingLocalState as IPendingRuntimeState;
+
+			if (pendingLocalState?.pendingIdCompressorState !== undefined) {
+				idCompressor = IdCompressor.deserialize(pendingLocalState.pendingIdCompressorState);
+			} else if (serializedIdCompressor !== undefined) {
+				idCompressor = IdCompressor.deserialize(serializedIdCompressor, createSessionId());
+			} else {
+				idCompressor = IdCompressor.create(logger);
+			}
 		}
 
 		const runtime = new containerRuntimeCtor(
@@ -1307,10 +1307,6 @@ export class ContainerRuntime
 		this.maxOpsSinceLastSummary = this.getMaxOpsSinceLastSummary();
 		this.initialSummarizerDelayMs = this.getInitialSummarizerDelayMs();
 
-		if (this.idCompressorEnabled) {
-			this.idCompressor = idCompressor;
-		}
-
 		this.maxConsecutiveReconnects =
 			this.mc.config.getNumber(maxConsecutiveReconnectsKey) ??
 			this.defaultMaxConsecutiveReconnects;
@@ -1327,6 +1323,10 @@ export class ContainerRuntime
 		}
 
 		const pendingRuntimeState = pendingLocalState as IPendingRuntimeState | undefined;
+
+		if (this.idCompressorEnabled) {
+			this.idCompressor = idCompressor;
+		}
 
 		const maxSnapshotCacheDurationMs = this._storage?.policies?.maximumCacheDurationMs;
 		if (
@@ -1965,20 +1965,6 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Updates the runtime's IdCompressor with the stashed state present in the given op. This is a bit of a
-	 * hack and is unnecessarily expensive. As it stands, every locally stashed op (all ops that get stored in
-	 * the PendingStateManager) will store their serialized representation locally until ack'd. Upon receiving
-	 * this stashed state, the IdCompressor blindly deserializes to the stashed state and assumes the session.
-	 * Technically only the last stashed state is needed to do this correctly, but we would have to write some
-	 * more hacky code to modify the batch before it gets sent out.
-	 * @param content - An IdAllocationOp with "stashedState", which is a representation of un-ack'd local state.
-	 */
-	private async applyStashedIdAllocationOp(op: IdCreationRangeWithStashedState) {
-		const { IdCompressor } = await import("./id-compressor");
-		this.idCompressor = IdCompressor.deserialize(op.stashedState);
-	}
-
-	/**
 	 * Parse an op's type and actual content from given serialized content
 	 * ! Note: this format needs to be in-line with what is set in the "ContainerRuntime.submit(...)" method
 	 */
@@ -2003,7 +1989,7 @@ export class ContainerRuntime
 					this.idCompressor !== undefined,
 					0x67b /* IdCompressor should be defined if enabled */,
 				);
-				return this.applyStashedIdAllocationOp(opContents.contents);
+				return;
 			case ContainerMessageType.Alias:
 			case ContainerMessageType.BlobAttach:
 				return;
@@ -3622,10 +3608,7 @@ export class ContainerRuntime
 				break;
 			case ContainerMessageType.Attach:
 			case ContainerMessageType.Alias:
-				this.submit(message, localOpMetadata);
-				break;
 			case ContainerMessageType.IdAllocation: {
-				prepareLocalContainerRuntimeIdAllocationMessageForTransit(message);
 				this.submit(message, localOpMetadata);
 				break;
 			}
@@ -3891,9 +3874,12 @@ export class ContainerRuntime
 					return; // no pending state to save
 				}
 
+				const pendingIdCompressorState = this.idCompressor?.serialize(true);
+
 				const pendingState: IPendingRuntimeState = {
 					pending,
 					pendingAttachmentBlobs,
+					pendingIdCompressorState,
 				};
 				event.end({
 					attachmentBlobsSize: Object.keys(pendingAttachmentBlobs ?? {}).length,
