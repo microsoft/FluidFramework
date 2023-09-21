@@ -16,6 +16,7 @@ import {
 	LumberEventName,
 	CommonProperties,
 } from "@fluidframework/server-services-telemetry";
+import { ConfigDumper } from "./configDumper";
 
 /**
  * Uses the provided factories to create and execute a runner.
@@ -25,7 +26,16 @@ export async function run<T extends IResources>(
 	resourceFactory: IResourcesFactory<T>,
 	runnerFactory: IRunnerFactory<T>,
 	logger: ILogger | undefined,
+	secretsList?: string[],
 ) {
+	if (config.get("config:dumpConfig")) {
+		const configDumper = new ConfigDumper(
+			JSON.parse(JSON.stringify(config.get())),
+			logger,
+			secretsList,
+		);
+		configDumper.dumpConfig();
+	}
 	const customizations = await (resourceFactory.customize
 		? resourceFactory.customize(config)
 		: undefined);
@@ -91,6 +101,7 @@ export function runService<T extends IResources>(
 	group: string,
 	configOrPath: nconf.Provider | string,
 	waitBeforeExitInMs?: number,
+	secretsList?: string[],
 ) {
 	const config =
 		typeof configOrPath === "string"
@@ -103,7 +114,7 @@ export function runService<T extends IResources>(
 
 	const waitInMs = waitBeforeExitInMs ?? 1000;
 	const runnerMetric = Lumberjack.newLumberMetric(LumberEventName.RunService);
-	const runningP = run(config, resourceFactory, runnerFactory, logger);
+	const runningP = run(config, resourceFactory, runnerFactory, logger, secretsList);
 
 	runningP
 		.then(async () => {

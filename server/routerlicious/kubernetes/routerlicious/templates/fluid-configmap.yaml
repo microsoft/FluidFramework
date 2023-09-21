@@ -19,6 +19,9 @@ data:
             "timestamp": false,
             "label": "winston"
         },
+        "config": {
+            "dumpConfig": true
+        },
         "mongo": {
             "operationsDbEndpoint": "{{ .Values.mongodb.operationsDbEndpoint }}",
             "globalDbEndpoint": "{{ .Values.mongodb.globalDbEndpoint }}",

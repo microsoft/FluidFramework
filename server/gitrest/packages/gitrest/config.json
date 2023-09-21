@@ -6,6 +6,9 @@
 		"level": "info",
 		"timestamp": true
 	},
+	"config": {
+		"dumpConfig": true
+	},
 	"requestSizeLimit": "1gb",
 	"storageDir": {
 		"baseDir": "/home/node/documents",

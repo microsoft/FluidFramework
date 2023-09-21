@@ -6,6 +6,9 @@
 		"level": "info",
 		"timestamp": true
 	},
+	"config": {
+		"dumpConfig": true
+	},
 	"riddler": "http://riddler:5000",
 	"requestSizeLimit": "1gb",
 	"ignoreEphemeralFlag": true,
