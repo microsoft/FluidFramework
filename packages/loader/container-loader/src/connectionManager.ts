@@ -27,6 +27,7 @@ import {
 	calculateMaxWaitTime,
 } from "@fluidframework/driver-utils";
 import {
+	ConnectionMode,
 	IClient,
 	IClientConfiguration,
 	IClientDetails,
@@ -40,7 +41,6 @@ import {
 	MessageType,
 	ScopeType,
 	ISequencedDocumentSystemMessage,
-	ConnectionMode,
 } from "@fluidframework/protocol-definitions";
 import {
 	formatTick,
