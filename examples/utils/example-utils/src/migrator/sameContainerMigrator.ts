@@ -51,6 +51,10 @@ export class SameContainerMigrator
 	 */
 	private _exportedData: unknown | undefined;
 	/**
+	 * Detached model used to import data. This is stored for retry scenarios.
+	 */
+	private _detachedModel: IDetachedModel<ISameContainerMigratableModel> | undefined;
+	/**
 	 * Transformed v1 data ready to be imported into the migrated model. This is stored for retry scenarios.
 	 */
 	private _transformedData: unknown | undefined;
@@ -113,18 +117,30 @@ export class SameContainerMigrator
 		this._exportedData = await this._pausedModel.exportData();
 	};
 
+	private readonly loadDetachedModel = async () => {
+		// It's possible that our modelLoader is older and doesn't understand the new acceptedVersion.
+		// Currently this fails the migration gracefully and emits an event so the app developer can know
+		// they're stuck. Ideally the app developer would find a way to acquire a new ModelLoader and move
+		// forward, or at least advise the end user to refresh the page or something.
+		// TODO: Does the app developer have everything they need to dispose gracefully when recovering with
+		// a new ModelLoader?
+
+		assert(this._acceptedVersion !== undefined, "this._acceptedVersion should be defined");
+		this._detachedModel = await this.modelLoader.createDetached(this._acceptedVersion);
+	};
+
 	private readonly generateTransformedData = async () => {
 		// TODO: Is there a reasonable way to validate at proposal time whether we'll be able to get the
 		// exported data into a format that the new model can import?  If we can determine it early, then
 		// clients with old ModelLoaders can use that opportunity to dispose early and try to get new
 		// ModelLoaders.
 
-		// TODO: How can we do this check before we create the detached model?
-		// if (detachedModel.model.migratedModel.supportsDataFormat(this._exportedData)) {
-		// 	// If the migrated model already supports the data format, go ahead with the migration.
-		// 	this._transformedData = this._exportedData;
-		// 	return;
-		// }
+		assert(this._detachedModel !== undefined, "this._detachedModel should be defined");
+		if (this._detachedModel.model.supportsDataFormat(this._exportedData) === true) {
+			// If the migrated model already supports the data format, go ahead with the migration.
+			this._transformedData = this._exportedData;
+			return;
+		}
 
 		if (this.dataTransformationCallback !== undefined) {
 			// Otherwise, try using the dataTransformationCallback if provided to get the exported data into
@@ -148,21 +164,12 @@ export class SameContainerMigrator
 		}
 	};
 
-	private readonly loadDetachedModelAndImportData = async () => {
-		// It's possible that our modelLoader is older and doesn't understand the new acceptedVersion.
-		// Currently this fails the migration gracefully and emits an event so the app developer can know
-		// they're stuck. Ideally the app developer would find a way to acquire a new ModelLoader and move
-		// forward, or at least advise the end user to refresh the page or something.
-		// TODO: Does the app developer have everything they need to dispose gracefully when recovering with
-		// a new ModelLoader?
-
-		assert(this._acceptedVersion !== undefined, "this._acceptedVersion should be defined");
-
-		const detachedModel = await this.modelLoader.createDetached(this._acceptedVersion);
-		await detachedModel.model.importData(this._transformedData);
-
+	private readonly importDataIntoDetachedModel = async () => {
+		assert(this._detachedModel !== undefined, "this._detachedModel should be defined");
+		assert(this._transformedData !== undefined, "this._transformedData should be defined");
+		await this._detachedModel.model.importData(this._transformedData);
 		// Store the detached model for later use and retry scenarios
-		this._preparedDetachedModel = detachedModel;
+		this._preparedDetachedModel = this._detachedModel;
 	};
 
 	private readonly getV2Summary = async () => {
@@ -238,14 +245,19 @@ export class SameContainerMigrator
 			await this.getExportedData();
 		}
 
+		console.log("Migration stage: loadDetachedModel");
+		if (this._detachedModel === undefined) {
+			await this.loadDetachedModel();
+		}
+
 		console.log("Migration stage: generateTransformedData");
 		if (this._transformedData === undefined) {
 			await this.generateTransformedData();
 		}
 
-		console.log("Migration stage: loadDetachedModelAndImportData");
+		console.log("Migration stage: importDataIntoDetachedModel");
 		if (this._preparedDetachedModel === undefined) {
-			await this.loadDetachedModelAndImportData();
+			await this.importDataIntoDetachedModel();
 		}
 
 		console.log("Migration stage: getV2Summary");
