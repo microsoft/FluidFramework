@@ -8,7 +8,6 @@ import { strict as assert, fail } from "assert";
 import { compareArrays } from "@fluidframework/core-utils";
 import { MockHandle } from "@fluidframework/test-runtime-utils";
 import {
-	decode,
 	readValue,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding";
@@ -27,8 +26,8 @@ import {
 	anyFieldEncoder,
 	anyNodeEncoder,
 	asNodesEncoder,
-	compressedEncode,
 	encodeValue,
+	makeCompressedCodec,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode";
 import { testTrees } from "../../../cursorTestSuite";
@@ -50,6 +49,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric";
 import { brand } from "../../../../util";
+import { typeboxValidator } from "../../../../external-utilities";
 import { checkFieldEncode, checkNodeEncode } from "./checkEncode";
 
 const anyNodeShape = new NodeShape(undefined, undefined, [], anyFieldEncoder);
@@ -70,9 +70,10 @@ describe("compressedEncode", () => {
 					(treeShaper: TreeShaper, field: FieldStoredSchema): FieldEncoder =>
 						anyFieldEncoder,
 				);
-				const result = compressedEncode(input, cache);
-				const decoded = decode(result);
-				const decodedJson = jsonableTreesFromFieldCursor(decoded.cursor());
+				const codec = makeCompressedCodec({ jsonValidator: typeboxValidator }, cache);
+				const result = codec.encode(input);
+				const decoded = codec.decode(result);
+				const decodedJson = jsonableTreesFromFieldCursor(decoded);
 				assert.deepEqual([jsonable], decodedJson);
 			});
 		}

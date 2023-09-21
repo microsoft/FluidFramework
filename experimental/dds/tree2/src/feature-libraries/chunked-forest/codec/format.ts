@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Static, TSchema, Type } from "@sinclair/typebox";
-import { assert } from "@fluidframework/core-utils";
-import { typeboxValidator } from "../../../external-utilities";
+import { Static, Type } from "@sinclair/typebox";
 import {
 	EncodedChunkGeneric,
 	IdentifierOrIndex,
@@ -14,33 +12,16 @@ import {
 	Count,
 } from "./formatGeneric";
 
-export const version = "unstable-development";
+export const version = 1.0;
 
 // Compatible versions used for format/version validation.
-// If a new version is created, be sure to remove incompatible versions from this set.
-const validVersions = new Set([version]);
+// TODO: A proper version update policy will need to be documented.
+export const validVersions = new Set([version]);
 
-const Versioned = Type.Object({
-	version: Type.String(),
+export const Versioned = Type.Object({
+	version: Type.Number(),
 });
 type Versioned = Static<typeof Versioned>;
-
-export const versionValidator = typeboxValidator.compile(Versioned);
-
-/**
- * Validates the version and format of encoded data against a given schema.
- *
- * @param encodedData - The data to validate.
- * @param schema - The TypeBox schema to validate against.
- */
-export function validateFormat<TEncoded>(encodedData: TEncoded, schema: TSchema) {
-	assert(versionValidator.check(encodedData), "Encoded data must be versioned.");
-	assert(validVersions.has(encodedData.version), "Encoded data version is unknown.");
-
-	// Compile the format schema and validate the data against it.
-	const formatValidator = typeboxValidator.compile(schema);
-	assert(formatValidator.check(encodedData), "schema failed validation.");
-}
 
 /**
  * Top level length is implied from length of data array.
