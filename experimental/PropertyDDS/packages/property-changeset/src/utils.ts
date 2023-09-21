@@ -890,7 +890,9 @@ export namespace Utils {
 						break;
 					case ArrayIteratorOperationTypes.REMOVE:
 						in_context._operationType = "remove";
-						for (i = 0; i < arrayIterator.opDescription.operation[1]; ++i) {
+						// WARNING: 'operation[1]' is 'string | number | genericArray'.  The cast to 'number'
+						//          preserves the JavaScript coercion behavior, which was permitted prior to TS5.
+						for (i = 0; i < (arrayIterator.opDescription.operation[1] as number); ++i) {
 							// For removals, we don't have a typeid and we use the ChangeSet of the removal operation as nested
 							// ChangeSet -- TODO: doing this is maybe not really nice here
 							processChange(
@@ -2074,7 +2076,9 @@ export namespace Utils {
 	 * The final ChangeSet will only include the paths in question starting from the root of
 	 * the ChangeSet.
 	 *
-	 * @example Given the following change set:
+	 * @example
+	 *
+	 * Given the following change set:
 	 *
 	 * ```json
 	 * 'insert': {
@@ -2104,7 +2108,7 @@ export namespace Utils {
 	 * Note: duplicate paths will be ignored including ones that encompasse other paths.
 	 *
 	 * @throws If a path given resolves into an array or set.
-	 * @returns - Filtered ChangeSet
+	 * @returns The filtered ChangeSet
 	 */
 	export function getFilteredChangeSetByPaths(
 		in_changeSet: SerializedChangeSet,
@@ -2381,7 +2385,9 @@ export namespace Utils {
 	 * The final ChangeSet will exclude the paths in question starting from the root of
 	 * the ChangeSet.
 	 *
-	 * @example Given the following change set:
+	 * @example
+	 *
+	 * Given the following change set:
 	 *
 	 * ```json
 	 * 'insert': {
@@ -2408,7 +2414,7 @@ export namespace Utils {
 	 * @param in_paths - List of paths to exclude. Note: duplicate paths will be ignored
 	 * including ones that encompasse other paths
 	 * @throws if a path given resolves into an array or set
-	 * @returns - Filtered ChangeSet
+	 * @returns Filtered ChangeSet
 	 */
 	export function excludePathsFromChangeSet(
 		in_changeSet: SerializedChangeSet,
@@ -2464,7 +2470,7 @@ export namespace Utils {
 	 * @param in_options - Set of options
 	 * @param in_options.includeOperation - Flag to include the operation
 	 * @param in_options.includeTypeidInfo - Flag to include the typeid info
-	 * @returns - Flat list of paths
+	 * @returns Flat list of paths
 	 */
 	export function extractPathsFromChangeSet(
 		in_changeSet: SerializedChangeSet,

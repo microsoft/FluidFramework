@@ -4,10 +4,11 @@
  */
 
 import { Signaler } from "@fluid-experimental/data-objects";
-import { IEvent } from "@fluidframework/common-definitions";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { IEvent } from "@fluidframework/core-interfaces";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { IContainer } from "@fluidframework/container-definitions";
 import { ITinyliciousAudience } from "@fluidframework/tinylicious-client";
-import { IFluidContainer, IMember } from "fluid-framework";
+import { IMember } from "fluid-framework";
 
 export interface IFocusTrackerEvents extends IEvent {
 	(event: "focusChanged", listener: () => void): void;
@@ -26,6 +27,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 	 * Local map of focus status for clients
 	 *
 	 * @example
+	 *
 	 * ```typescript
 	 * Map<userId, Map<clientid, hasFocus>>
 	 * ```
@@ -46,7 +48,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 	};
 
 	constructor(
-		container: IFluidContainer,
+		container: IContainer,
 		public readonly audience: ITinyliciousAudience,
 		private readonly signaler: Signaler,
 	) {

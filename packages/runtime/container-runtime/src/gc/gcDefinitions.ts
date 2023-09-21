@@ -17,15 +17,15 @@ import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	IContainerRuntimeMetadata,
 	ICreateContainerMetadata,
-	RefreshSummaryResult,
+	IRefreshSummaryResult,
 } from "../summary";
 
 export type GCVersion = number;
 
-/** The stable version of garbage collection in production. */
-export const stableGCVersion: GCVersion = 2;
-/** The current version of garbage collection. */
-export const currentGCVersion: GCVersion = 3;
+/** The stable/default version of GC Data */
+export const stableGCVersion: GCVersion = 3;
+/** The next version of GC Data, to bump to in case we need to regenerate all GC Data across all files. */
+export const nextGCVersion: GCVersion = 4;
 
 /**
  * This undocumented GC Option (on ContainerRuntime Options) allows an app to disable enforcing GC on old documents by incrementing this value
@@ -43,29 +43,28 @@ export const gcTombstoneGenerationOptionName = "gcTombstoneGeneration";
  */
 export const gcSweepGenerationOptionName = "gcSweepGeneration";
 
-// Feature gate key to turn GC on / off.
+/** Config key to turn GC on / off. */
 export const runGCKey = "Fluid.GarbageCollection.RunGC";
-// Feature gate key to turn GC sweep on / off.
+/** Config key to turn GC sweep on / off. */
 export const runSweepKey = "Fluid.GarbageCollection.RunSweep";
-// Feature gate key to turn GC test mode on / off.
+/** Config key to turn GC test mode on / off. */
 export const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
-// Feature gate key to expire a session after a set period of time.
+/** Config key to expire a session after a set period of time. Defaults to true. */
 export const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
-// Feature gate key to turn GC sweep log off.
+/** Config key to turn GC sweep log off. */
 export const disableSweepLogKey = "Fluid.GarbageCollection.DisableSweepLog";
-// Feature gate key to disable the tombstone feature, i.e., tombstone information is not read / written into summary.
+/** Config key to disable the tombstone feature, i.e., tombstone information is not read / written into summary. */
 export const disableTombstoneKey = "Fluid.GarbageCollection.DisableTombstone";
-// Feature gate to enable throwing an error when tombstone object is loaded (requested).
+/** Config key to enable throwing an error when tombstone object is loaded (requested). */
 export const throwOnTombstoneLoadKey = "Fluid.GarbageCollection.ThrowOnTombstoneLoad";
-// Feature gate to enable throwing an error when tombstone object is used (e.g. outgoing or incoming ops).
+/** Config key to enable throwing an error when tombstone object is used (e.g. outgoing or incoming ops). */
 export const throwOnTombstoneUsageKey = "Fluid.GarbageCollection.ThrowOnTombstoneUsage";
-// Feature gate to enable GC version upgrade.
-export const gcVersionUpgradeToV3Key = "Fluid.GarbageCollection.GCVersionUpgradeToV3";
-// Feature gate to enable GC sweep for datastores.
-// TODO: Remove Test from the flag when we are confident to turn on sweep
-export const sweepDatastoresKey = "Fluid.GarbageCollection.Test.SweepDataStores";
-// Feature gate to enable GC sweep for attachment blobs.
-export const sweepAttachmentBlobsKey = "Fluid.GarbageCollection.Test.SweepAttachmentBlobs";
+/** Config key to enable GC version upgrade. */
+export const gcVersionUpgradeToV4Key = "Fluid.GarbageCollection.GCVersionUpgradeToV4";
+/** Config key to disable GC sweep for datastores. */
+export const disableDatastoreSweepKey = "Fluid.GarbageCollection.DisableDataStoreSweep";
+/** Config key to disable GC sweep for attachment blobs. */
+export const disableAttachmentBlobSweepKey = "Fluid.GarbageCollection.DisableAttachmentBlobSweep";
 
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
@@ -228,11 +227,7 @@ export interface IGarbageCollector {
 	/** Returns the GC details generated from the base snapshot. */
 	getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
 	/** Called when the latest summary of the system has been refreshed. */
-	refreshLatestSummary(
-		proposalHandle: string | undefined,
-		result: RefreshSummaryResult,
-		readAndParseBlob: ReadAndParseBlob,
-	): Promise<void>;
+	refreshLatestSummary(result: IRefreshSummaryResult): Promise<void>;
 	/** Called when a node is updated. Used to detect and log when an inactive node is changed or loaded. */
 	nodeUpdated(
 		nodePath: string,
@@ -349,6 +344,8 @@ export interface IGarbageCollectorConfigs {
 	readonly sweepTimeoutMs: number | undefined;
 	/** The time after which an unreferenced node is inactive. */
 	readonly inactiveTimeoutMs: number;
+	/** It is easier for users to diagnose InactiveObject usage if we throw on load, which this option enables */
+	readonly throwOnInactiveLoad: boolean | undefined;
 	/** Tracks whether GC should run in test mode. In this mode, unreferenced objects are deleted immediately. */
 	readonly testMode: boolean;
 	/**

@@ -5,9 +5,8 @@
 import { strict as assert } from "assert";
 
 import {
-	Value,
 	FieldKey,
-	rootFieldKeySymbol,
+	rootFieldKey,
 	UpPath,
 	AnchorEvents,
 	AnchorNode,
@@ -16,7 +15,7 @@ import {
 	ProtoNodes,
 } from "../../../core";
 import { brand } from "../../../util";
-import { getField, on, singleTextCursor } from "../../../feature-libraries";
+import { getField, jsonableTreeFromCursor, on, singleTextCursor } from "../../../feature-libraries";
 import { IEmitter } from "../../../events";
 import {
 	fullSchemaData,
@@ -24,6 +23,7 @@ import {
 	getReadonlyEditableTreeContext,
 	setupForest,
 	addressSchema,
+	int32Schema,
 } from "./mockData";
 
 const fieldAddress: FieldKey = brand("address");
@@ -35,32 +35,11 @@ describe("editable-tree: event subscription", () => {
 		const unsubscribeChanging = address[on]("changing", (upPath: UpPath) => {
 			log.push(upPath);
 		});
-		const { emitter, node } = accessEmitters(
-			forest,
-			[rootFieldKeySymbol, 0],
-			[fieldAddress, 0],
-		);
+		const { emitter, node } = accessEmitters(forest, [rootFieldKey, 0], [fieldAddress, 0]);
 		emitter.emit("childrenChanging", node);
 		unsubscribeChanging();
 		emitter.emit("childrenChanging", node);
 		assert.deepEqual(log, [node]);
-	});
-
-	it("consumes value changing events with correct args", () => {
-		const { address, forest } = retrieveAddressNode();
-		const log: Map<Value, UpPath> = new Map();
-		const unsubscribeChanging = address[on]("changing", (upPath: UpPath, value: Value) => {
-			log.set(value, upPath);
-		});
-		const { emitter, node } = accessEmitters(
-			forest,
-			[rootFieldKeySymbol, 0],
-			[fieldAddress, 0],
-		);
-		emitter.emit("valueChanging", node, 122);
-		unsubscribeChanging();
-		emitter.emit("valueChanging", node, 123);
-		assert.deepEqual(log, new Map([[122, node]]));
 	});
 
 	it("consumes subtree changing events returning void, ie. no path visitor", () => {
@@ -69,11 +48,7 @@ describe("editable-tree: event subscription", () => {
 		const unsubscribeChanging = address[on]("subtreeChanging", (upPath: UpPath) => {
 			log.push(upPath);
 		});
-		const { emitter, node } = accessEmitters(
-			forest,
-			[rootFieldKeySymbol, 0],
-			[fieldAddress, 0],
-		);
+		const { emitter, node } = accessEmitters(forest, [rootFieldKey, 0], [fieldAddress, 0]);
 		emitter.emit("subtreeChanging", node);
 		unsubscribeChanging();
 		emitter.emit("subtreeChanging", node);
@@ -84,11 +59,7 @@ describe("editable-tree: event subscription", () => {
 		const { address, forest } = retrieveAddressNode();
 		const log: UpPath[] = [];
 		const visitLog: UpPath[] = [];
-		const { emitter, node } = accessEmitters(
-			forest,
-			[rootFieldKeySymbol, 0],
-			[fieldAddress, 0],
-		);
+		const { emitter, node } = accessEmitters(forest, [rootFieldKey, 0], [fieldAddress, 0]);
 		const unsubscribeChanging = address[on]("subtreeChanging", (upPath: UpPath) => {
 			log.push(upPath);
 			const visitor: PathVisitor = {
@@ -98,13 +69,20 @@ describe("editable-tree: event subscription", () => {
 					visitLog.push(path);
 				},
 				onInsert(path: UpPath, content: ProtoNodes): void {
-					assert.deepEqual(content[0].type, "Test:Address-1.0.0");
-					assert.deepEqual(content[0].value, { zip: "33428" });
-					assert.deepEqual(path, node);
-					visitLog.push(path);
-				},
-				onSetValue(path: UpPath, value: Value): void {
-					assert.equal(value, "xyz");
+					const jsonable = content.map(jsonableTreeFromCursor);
+					assert.deepEqual(jsonable, [
+						{
+							type: addressSchema.name,
+							fields: {
+								zip: [
+									{
+										type: int32Schema.name,
+										value: 33428,
+									},
+								],
+							},
+						},
+					]);
 					assert.deepEqual(path, node);
 					visitLog.push(path);
 				},
@@ -116,18 +94,24 @@ describe("editable-tree: event subscription", () => {
 		const insertContent = [
 			singleTextCursor({
 				type: addressSchema.name,
-				value: { zip: "33428" },
+				fields: {
+					zip: [
+						{
+							type: int32Schema.name,
+							value: 33428,
+						},
+					],
+				},
 			}),
 		];
 		visitors.forEach((visitor) => {
 			visitor.onDelete(node, 11);
 			visitor.onInsert(node, insertContent);
-			visitor.onSetValue(node, "xyz");
 		});
 		unsubscribeChanging();
 		emitter.emit("subtreeChanging", node);
 		assert.deepEqual(log, [node]);
-		assert.deepEqual(visitLog, [node, node, node]);
+		assert.deepEqual(visitLog, [node, node]);
 	});
 });
 
@@ -160,7 +144,7 @@ function accessEmitters(forest: IEditableForest, ...steps: [PathStep, ...PathSte
 
 function retrieveAddressNode() {
 	const forest = setupForest(fullSchemaData, personData);
-	const context = getReadonlyEditableTreeContext(forest);
+	const context = getReadonlyEditableTreeContext(forest, fullSchemaData);
 	const root = context.root.getNode(0);
 	const address = root[getField](fieldAddress).getNode(0);
 	return { address, forest };

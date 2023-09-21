@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { nodeKeySchema } from "../../../domains";
+import { nodeKeyField, nodeKeySchema, nodeKeyTreeSchema } from "../../../domains";
 import {
 	SchemaBuilder,
 	FieldKinds,
@@ -14,18 +14,19 @@ import {
 	localNodeKeySymbol,
 	createMockNodeKeyManager,
 	StableNodeKey,
+	nodeKeyFieldKey,
+	setField,
+	SchemaAware,
 } from "../../../feature-libraries";
-import { ISharedTreeView, createSharedTreeView } from "../../../shared-tree";
-import { compareSets } from "../../../util";
-import { SummarizeType, TestTreeProvider, initializeTestTree } from "../../utils";
-import { AllowedUpdateType, GlobalFieldKeySymbol, symbolFromKey } from "../../../core";
+import { ISharedTreeView } from "../../../shared-tree";
+import { brand } from "../../../util";
+import { SummarizeType, TestTreeProvider, initializeTestTree, viewWithContent } from "../../utils";
+import { AllowedUpdateType } from "../../../core";
 
-const { schema: nodeKeyLibrary, field: nodeKeyField, type: nodeKeyType } = nodeKeySchema();
-
-const builder = new SchemaBuilder("node key index tests", nodeKeyLibrary);
-const nodeSchema = builder.objectRecursive("node", {
-	local: { child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchema) },
-	global: [nodeKeyField],
+const builder = new SchemaBuilder("node key index tests", {}, nodeKeySchema);
+const nodeSchema = builder.structRecursive("node", {
+	...nodeKeyField,
+	child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchema),
 });
 const nodeSchemaData = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(nodeSchema));
 
@@ -33,15 +34,23 @@ const nodeSchemaData = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(no
 function contextualizeKey(
 	view: ISharedTreeView,
 	key: LocalNodeKey,
-): { [keySymbol: GlobalFieldKeySymbol]: StableNodeKey } {
+): { [nodeKeyFieldKey]: StableNodeKey } {
 	return {
-		[symbolFromKey(nodeKeyField.key)]: view.nodeKey.stabilize(key),
+		[nodeKeyFieldKey]: view.nodeKey.stabilize(key),
 	};
 }
 
 describe("Node Key Index", () => {
-	function createView(): ISharedTreeView {
-		return createSharedTreeView({ nodeKeyManager: createMockNodeKeyManager() });
+	function createView(
+		initialTree: SchemaAware.TypedField<
+			typeof nodeSchemaData.rootFieldSchema,
+			SchemaAware.ApiMode.Simple
+		>,
+	): ISharedTreeView {
+		return viewWithContent(
+			{ initialTree, schema: nodeSchemaData },
+			{ nodeKeyManager: createMockNodeKeyManager() },
+		);
 	}
 
 	function assertIds(tree: ISharedTreeView, ids: LocalNodeKey[]): void {
@@ -52,104 +61,83 @@ describe("Node Key Index", () => {
 			assert(node !== undefined);
 			assert.equal(node[localNodeKeySymbol], id);
 		}
-		assert(compareSets({ a: new Set(tree.nodeKey.map.keys()), b: new Set(ids) }));
+		assert.deepEqual(new Set(tree.nodeKey.map.keys()), new Set(ids));
 	}
 
 	it("can look up a node that was inserted", () => {
-		const view = createView();
+		const view = createView(undefined);
 		const key = view.nodeKey.generate();
-		const typedView = view.schematize({
-			initialTree: {
-				child: undefined,
-				...contextualizeKey(view, key),
-			},
-			schema: nodeSchemaData,
-			allowedSchemaModifications: AllowedUpdateType.None,
+		view.setContent({
+			child: undefined,
+			...contextualizeKey(view, key),
 		});
-		assertIds(typedView, [key]);
+		assertIds(view, [key]);
 	});
 
 	it("can look up multiple nodes that were inserted at once", () => {
-		const view = createView();
+		const view = createView(undefined);
 		const keys = [view.nodeKey.generate(), view.nodeKey.generate(), view.nodeKey.generate()];
-		const typedView = view.schematize({
-			initialTree: {
-				...contextualizeKey(view, keys[0]),
+		view.setContent({
+			...contextualizeKey(view, keys[0]),
+			child: {
+				...contextualizeKey(view, keys[1]),
 				child: {
-					...contextualizeKey(view, keys[1]),
-					child: {
-						...contextualizeKey(view, keys[2]),
-						child: undefined,
-					},
+					...contextualizeKey(view, keys[2]),
+					child: undefined,
 				},
 			},
-			schema: nodeSchemaData,
-			allowedSchemaModifications: AllowedUpdateType.None,
 		});
-		assertIds(typedView, keys);
+		assertIds(view, keys);
 	});
 
 	it("can look up multiple nodes that were inserted over time", () => {
-		const view = createView();
+		const view = createView(undefined);
 		const keyA = view.nodeKey.generate();
-		const typedView = view.schematize({
-			initialTree: {
-				...contextualizeKey(view, keyA),
-				child: undefined,
-			},
-			schema: nodeSchemaData,
-			allowedSchemaModifications: AllowedUpdateType.None,
+		view.setContent({
+			...contextualizeKey(view, keyA),
+			child: undefined,
 		});
 
-		const node = typedView.nodeKey.map.get(keyA);
+		const node = view.nodeKey.map.get(keyA);
 		assert(node !== undefined);
-		const keyB = typedView.nodeKey.generate();
-		node.child = { ...contextualizeKey(typedView, keyB) };
-		assertIds(typedView, [keyA, keyB]);
+		const keyB = view.nodeKey.generate();
+		node[setField](brand("child"), { ...contextualizeKey(view, keyB) });
+		assertIds(view, [keyA, keyB]);
 	});
 
 	it("forgets about nodes that are deleted", () => {
-		const view = createView();
-		const typedView = view.schematize({
-			initialTree: {
-				...contextualizeKey(view, view.nodeKey.generate()),
-				child: undefined,
-			},
-			schema: nodeSchemaData,
-			allowedSchemaModifications: AllowedUpdateType.None,
+		const view = createView(undefined);
+		view.setContent({
+			...contextualizeKey(view, view.nodeKey.generate()),
+			child: undefined,
 		});
-
-		typedView.root = undefined;
-		assertIds(typedView, []);
+		view.setContent(undefined);
+		assertIds(view, []);
 	});
 
 	it("fails if multiple nodes have the same key", () => {
-		const view = createView();
+		const view = createView(undefined);
 		const key = view.nodeKey.generate();
 		assert.throws(
 			() =>
-				view.schematize({
-					initialTree: {
+				view.setContent({
+					...contextualizeKey(view, key),
+					child: {
 						...contextualizeKey(view, key),
-						child: {
-							...contextualizeKey(view, key),
-							child: undefined,
-						},
+						child: undefined,
 					},
-					schema: nodeSchemaData,
-					allowedSchemaModifications: AllowedUpdateType.None,
 				}),
-			(e) => validateAssertionError(e, "Encountered duplicate node key"),
+			(e: Error) => validateAssertionError(e, "Encountered duplicate node key"),
 		);
 	});
 
 	it("can look up a node that was loaded from summary", async () => {
 		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 		const [tree] = provider.trees;
-		const key = tree.nodeKey.generate();
+		const key = tree.view.nodeKey.generate();
 		tree.schematize({
 			initialTree: {
-				...contextualizeKey(tree, key),
+				...contextualizeKey(tree.view, key),
 				child: undefined,
 			},
 			schema: nodeSchemaData,
@@ -160,125 +148,75 @@ describe("Node Key Index", () => {
 		await provider.summarize();
 		const tree2 = await provider.createTree();
 		await provider.ensureSynchronized();
-		assertIds(tree2, [tree2.nodeKey.localize(tree.nodeKey.stabilize(key))]);
-	});
-
-	it("errors on nodes which have keys, but are not in schema", () => {
-		// This is missing the global field on the node
-		const builder2 = new SchemaBuilder("node key index test", nodeKeyLibrary);
-		const nodeSchemaNoKey = builder2.objectRecursive("node", {
-			local: {
-				child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchemaNoKey),
-			},
-		});
-		const nodeSchemaDataNoKey = builder2.intoDocumentSchema(
-			SchemaBuilder.fieldOptional(nodeSchemaNoKey),
-		);
-
-		const view = createView();
-		assert.throws(
-			() =>
-				view.schematize({
-					initialTree: {
-						...contextualizeKey(view, view.nodeKey.generate()),
-						child: undefined,
-					},
-					schema: nodeSchemaDataNoKey,
-					allowedSchemaModifications: AllowedUpdateType.None,
-				}),
-			(e) => validateAssertionError(e, "Found node key that is not in schema"),
-		);
+		assertIds(tree2.view, [tree2.view.nodeKey.localize(tree.view.nodeKey.stabilize(key))]);
 	});
 
 	it("errors on nodes which have keys of the wrong type", () => {
 		assert.throws(
 			() =>
 				initializeTestTree(
-					createView(),
+					createView(undefined),
 					{
 						type: nodeSchema.name,
-						globalFields: {
-							[nodeKeyField.key]: [{ type: nodeKeyType, value: {} }],
+						fields: {
+							[nodeKeyFieldKey]: [{ type: nodeKeyTreeSchema.name, value: 5 }],
 						},
 					},
 					nodeSchemaData,
 				),
-			(e) => validateAssertionError(e, "Malformed value encountered in node key field"),
+			(e: Error) =>
+				validateAssertionError(e, "Malformed value encountered in node key field"),
 		);
 	});
 
 	it("errors on nodes which should have keys, but do not", () => {
-		const view = createView();
+		const view = createView(undefined);
 		assert.throws(
 			() =>
-				view.schematize({
-					initialTree: {
+				view.setContent(
+					// Wrong type: should need ts-expect-error once strongly typed.
+					{
 						child: undefined,
 					},
-					schema: nodeSchemaData,
-					allowedSchemaModifications: AllowedUpdateType.None,
-				}),
-			(e) => validateAssertionError(e, "Node key absent but required by schema"),
+				),
+			(e: Error) => validateAssertionError(e, "Node key absent but required by schema"),
 		);
 	});
 
-	it("is disabled if key field is not in the global schema", () => {
+	it("is disabled if node type is not in the tree schema", () => {
 		const builder2 = new SchemaBuilder("node key index test");
-		const nodeSchemaNoKey = builder2.objectRecursive("node", {
-			local: {
-				child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchemaNoKey),
-			},
+		const nodeSchemaNoKey = builder2.structRecursive("node", {
+			child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchemaNoKey),
 		});
 		// This is missing the global node key field
 		const nodeSchemaDataNoKey = builder2.intoDocumentSchema(
 			SchemaBuilder.fieldOptional(nodeSchemaNoKey),
 		);
-		assert(!nodeSchemaDataNoKey.globalFieldSchema.has(nodeKeyField.key));
+		assert(!nodeSchemaDataNoKey.treeSchema.has(nodeKeyTreeSchema.name));
 
-		const view = createView();
+		// TODO: avoid double initialization
+		const view = createView(undefined);
 		initializeTestTree(
 			view,
 			{
 				type: nodeSchema.name,
-				globalFields: {
-					[nodeKeyField.key]: [{ type: nodeKeyType, value: view.nodeKey.generate() }],
+				fields: {
+					[nodeKeyFieldKey]: [
+						{
+							type: nodeKeyTreeSchema.name,
+							value: view.nodeKey.generate() as unknown as number,
+						},
+					],
 				},
 			},
 			nodeSchemaDataNoKey,
 		);
 		assertIds(view, []);
-		const index = view.nodeKey.map as NodeKeyIndex<typeof nodeKeyField.key>;
-		assert(!NodeKeyIndex.keysAreInSchema(view.context.schema, index.fieldKey));
-	});
-
-	it("respects extra global fields", () => {
-		// This is missing the global node key field on the node, but has "extra global fields" enabled
-		const builder2 = new SchemaBuilder("node key index test", nodeKeyLibrary);
-		const nodeSchemaNoKey = builder2.objectRecursive("node", {
-			local: {
-				child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchemaNoKey),
-			},
-			extraGlobalFields: true,
-		});
-		const nodeSchemaDataNoKey = builder2.intoDocumentSchema(
-			SchemaBuilder.fieldOptional(nodeSchemaNoKey),
-		);
-
-		const view = createView();
-		const key = view.nodeKey.generate();
-		const typedView = view.schematize({
-			initialTree: {
-				...contextualizeKey(view, key),
-				child: undefined,
-			},
-			schema: nodeSchemaDataNoKey,
-			allowedSchemaModifications: AllowedUpdateType.None,
-		});
-		assertIds(typedView, [key]);
+		assert(!NodeKeyIndex.hasNodeKeyTreeSchema(view.context.schema));
 	});
 
 	it("is synchronized after each batch update", () => {
-		const view = createView();
+		const view = createView(undefined);
 		const key = view.nodeKey.generate();
 		let expectedIds: LocalNodeKey[] = [key];
 		let batches = 0;
@@ -287,94 +225,76 @@ describe("Node Key Index", () => {
 			batches += 1;
 		});
 
-		const typedView = view.schematize({
-			initialTree: {
-				...contextualizeKey(view, key),
-				child: undefined,
-			},
-			schema: nodeSchemaData,
-			allowedSchemaModifications: AllowedUpdateType.None,
+		view.setContent({
+			...contextualizeKey(view, key),
+			child: undefined,
 		});
 
 		expectedIds = [];
-		typedView.root = undefined;
+		view.setContent(undefined);
 		assert.equal(batches, 2);
 	});
 
 	// TODO: Schema changes are not yet fully hooked up to eventing. A schema change should probably trigger
 	it.skip("reacts to schema changes", () => {
 		// This is missing the global node key field on the node
-		const builder2 = new SchemaBuilder("node key index test", nodeKeyLibrary);
-		const nodeSchemaNoKey = builder2.objectRecursive("node", {
-			local: {
-				child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchemaNoKey),
-			},
+		const builder2 = new SchemaBuilder("node key index test", {}, nodeKeySchema);
+		const nodeSchemaNoKey = builder2.structRecursive("node", {
+			child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchemaNoKey),
 		});
 		const nodeSchemaDataNoKey = builder2.intoDocumentSchema(
 			SchemaBuilder.fieldOptional(nodeSchemaNoKey),
 		);
 
-		const view = createView();
+		const view = createView(undefined);
 		const key = view.nodeKey.generate();
-		const typedView = view.schematize({
-			initialTree: {
-				...contextualizeKey(view, key),
-				child: undefined,
-			},
-			schema: nodeSchemaData,
-			allowedSchemaModifications: AllowedUpdateType.None,
+		view.setContent({
+			...contextualizeKey(view, key),
+			child: undefined,
 		});
-		assertIds(typedView, [key]);
-		typedView.storedSchema.update(nodeSchemaDataNoKey);
-		assertIds(typedView, []);
-		typedView.storedSchema.update(nodeSchemaData);
-		assertIds(typedView, [key]);
+		assertIds(view, [key]);
+		view.storedSchema.update(nodeSchemaDataNoKey);
+		assertIds(view, []);
+		view.storedSchema.update(nodeSchemaData);
+		assertIds(view, [key]);
 	});
 
 	function describeForkingTests(prefork: boolean): void {
 		function getView(): ISharedTreeView {
-			const view = createView();
+			const view = createView(undefined);
 			return prefork ? view.fork() : view;
 		}
 		describe(`forking from ${prefork ? "a fork" : "the root"}`, () => {
 			it("does not mutate the base when mutating a fork", () => {
 				const view = getView();
 				const key = view.nodeKey.generate();
-				const typedView = view.schematize({
-					initialTree: {
-						...contextualizeKey(view, key),
-						child: undefined,
-					},
-					schema: nodeSchemaData,
-					allowedSchemaModifications: AllowedUpdateType.None,
+				view.setContent({
+					...contextualizeKey(view, key),
+					child: undefined,
 				});
 
-				const fork = typedView.fork();
-				fork.root = undefined;
-				assertIds(typedView, [key]);
+				const fork = view.fork();
+				fork.setContent(undefined);
+				assertIds(view, [key]);
 				assertIds(fork, []);
-				typedView.merge(fork);
-				assertIds(typedView, []);
+				view.merge(fork);
+				assertIds(view, []);
 			});
 
 			it("does not mutate the fork when mutating a base", () => {
 				const view = getView();
 				const key = view.nodeKey.generate();
-				const typedView = view.schematize({
-					initialTree: {
-						...contextualizeKey(view, key),
-						child: undefined,
-					},
-					schema: nodeSchemaData,
-					allowedSchemaModifications: AllowedUpdateType.None,
+				view.setContent({
+					...contextualizeKey(view, key),
+					child: undefined,
 				});
 
-				const fork = typedView.fork();
-				typedView.root = undefined;
-				assertIds(typedView, []);
+				const fork = view.fork();
+				view.setContent(undefined);
+				assertIds(view, []);
 				assertIds(fork, [key]);
-				typedView.merge(fork);
-				assertIds(typedView, []);
+				view.merge(fork);
+				assertIds(view, []);
 			});
 		});
 	}

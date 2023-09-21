@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/common-utils";
-import { UsageError } from "@fluidframework/container-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { UsageError } from "@fluidframework/telemetry-utils";
 import { List } from "./collections";
 import { EndOfTreeSegment } from "./endOfTreeSegment";
 import { LocalReferenceCollection, LocalReferencePosition } from "./localReference";
 import { IMergeTreeDeltaCallbackArgs } from "./mergeTreeDeltaCallback";
-import { ISegment, toRemovalInfo } from "./mergeTreeNodes";
+import { IMergeLeaf, ISegment, toRemovalInfo } from "./mergeTreeNodes";
 import { depthFirstNodeWalk } from "./mergeTreeNodeWalk";
 import { ITrackingGroup, Trackable, UnorderedTrackingGroup } from "./mergeTreeTracking";
 import { IJSONSegment, MergeTreeDeltaType, ReferenceType } from "./ops";
@@ -224,7 +224,9 @@ export function appendToMergeTreeDeltaRevertibles(
 			break;
 
 		default:
-			throw new UsageError(`Unsupported event delta type: ${deltaArgs.operation}`);
+			throw new UsageError("Unsupported event delta type", {
+				operation: deltaArgs.operation,
+			});
 	}
 }
 
@@ -297,7 +299,7 @@ function revertLocalRemove(
 
 		const props = tracked.properties as RemoveSegmentRefProperties;
 		driver.insertFromSpec(realPos, props.segSpec);
-		const insertSegment = mergeTreeWithRevert.getContainingSegment(
+		const insertSegment: IMergeLeaf | undefined = mergeTreeWithRevert.getContainingSegment(
 			realPos,
 			mergeTreeWithRevert.collabWindow.currentSeq,
 			mergeTreeWithRevert.collabWindow.clientId,

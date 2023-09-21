@@ -5,7 +5,7 @@
 
 import { LocalOrdererManager } from "@fluidframework/server-local-server";
 import { DocumentStorage } from "@fluidframework/server-services-shared";
-import { generateToken, Historian } from "@fluidframework/server-services-client";
+import { Historian } from "@fluidframework/server-services-client";
 import {
 	MongoDatabaseManager,
 	MongoManager,
@@ -20,10 +20,10 @@ import winston from "winston";
 import { TinyliciousResources } from "./resources";
 import {
 	PubSubPublisher,
-	TaskMessageSender,
 	TenantManager,
 	getDbFactory,
 	WebServerFactory,
+	StorageNameAllocator,
 } from "./services";
 
 const defaultTinyliciousPort = 7070;
@@ -39,9 +39,9 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
 		const collectionNames = config.get("mongo:collectionNames");
 
 		const tenantManager = new TenantManager(`http://localhost:${port}`);
+		const storageNameAllocator = new StorageNameAllocator(tenantManager);
 		const dbFactory = await getDbFactory(config);
 
-		const taskMessageSender = new TaskMessageSender();
 		const mongoManager = new MongoManager(dbFactory);
 		const databaseManager = new MongoDatabaseManager(
 			globalDbEnabled,
@@ -49,6 +49,7 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
 			null,
 			collectionNames.nodes,
 			collectionNames.documents,
+			collectionNames.checkpoints,
 			collectionNames.deltas,
 			collectionNames.scribeDeltas,
 		);
@@ -63,6 +64,7 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
 			tenantManager,
 			false,
 			opsCollection,
+			storageNameAllocator,
 		);
 		const io = new Server({
 			// enable compatibility with socket.io v2 clients
@@ -72,19 +74,23 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
 		const pubsub = new PubSubPublisher(io);
 		const webServerFactory = new WebServerFactory(io);
 
+		// This produces a static object with the merged settings from all the stores in the nconf Provider.
+		// It includes env variables that we probably don't need to pass to the LocalOrderManager, but small price to pay
+		// so we can apply configuration to the lambdas from the tinylicious config file.
+		// Note: using a Proxy doesn't work because this gets eventually lodash-merge()d with other objects, and that looks
+		// for the actual properties of an object, which won't trigger get() calls on the Proxy that we can forward to the
+		// nconf Provider.
+		const frozenConfig = config.get();
+
 		const orderManager = new LocalOrdererManager(
 			storage,
 			databaseManager,
-			tenantManager,
-			taskMessageSender,
-			config.get("foreman:permissions"),
-			generateToken,
 			async (tenantId: string) => {
 				const url = `http://localhost:${port}/repos/${encodeURIComponent(tenantId)}`;
 				return new Historian(url, false, false);
 			},
 			winston,
-			undefined /* serviceConfiguration */,
+			frozenConfig,
 			pubsub,
 		);
 

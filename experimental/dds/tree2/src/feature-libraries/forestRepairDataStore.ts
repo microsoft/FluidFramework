@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	AnchorSet,
+	applyDelta,
 	castCursorToSynchronous,
 	Delta,
 	EmptyKey,
@@ -21,13 +22,12 @@ import {
 	RepairDataStore,
 	RevisionTag,
 	SparseNode,
+	StoredSchemaRepository,
 	UpPath,
-	Value,
 } from "../core";
 import { chunkTree, TreeChunk, defaultChunkPolicy } from "./chunked-forest";
 
 interface RepairData {
-	value?: Map<RevisionTag, Value>;
 	node?: Map<RevisionTag, TreeChunk>;
 }
 type RepairDataNode = SparseNode<RepairData | undefined>;
@@ -119,19 +119,6 @@ export class ForestRepairDataStore<TChange> implements RepairDataStore<TChange> 
 		 * Restores the `cursor` to that same position before exiting.
 		 */
 		function visitModify(modify: Delta.HasModifications, node: RepairDataNode): void {
-			// Note that the check below returns true for properties that are present on the object even if they
-			// are set to `undefined`. This is leveraged here to represent the fact that the value should be set to
-			// `undefined` as opposed to leaving the value unchanged.
-			if (Object.prototype.hasOwnProperty.call(modify, "setValue")) {
-				if (node.data === undefined) {
-					node.data = repairDataFactory();
-				}
-				const value = cursor.value;
-				if (node.data.value === undefined) {
-					node.data.value = new Map();
-				}
-				node.data.value.set(revision, value);
-			}
 			if (modify.fields !== undefined) {
 				visitFieldMarks(modify.fields, node);
 			}
@@ -198,13 +185,6 @@ export class ForestRepairDataStore<TChange> implements RepairDataStore<TChange> 
 			return cursor;
 		});
 	}
-
-	public getValue(revision: RevisionTag, path: UpPath): Value {
-		const data = getDescendant(this.root, path).data;
-		const valueMap = data?.value;
-		assert(valueMap?.has(revision) === true, 0x47e /* No repair data found */);
-		return valueMap.get(revision);
-	}
 }
 
 export class ForestRepairDataStoreProvider<TChange> implements IRepairDataStoreProvider<TChange> {
@@ -212,17 +192,22 @@ export class ForestRepairDataStoreProvider<TChange> implements IRepairDataStoreP
 
 	public constructor(
 		private readonly forest: IEditableForest,
-		private readonly storedSchema: InMemoryStoredSchemaRepository,
+		// TODO: Its unclear what it means if this schema is modified, and why its separate from the one in the forest. Maybe this should be removed or replaced with SchemaData?
+		private readonly storedSchema: StoredSchemaRepository,
 		private readonly intoDelta: (change: TChange) => Delta.Root,
 	) {}
 
 	public freeze(): void {
-		this.frozenForest = this.forest.clone(this.storedSchema.clone(), new AnchorSet());
+		// TODO: ensure editing this clone of the schema does the right thing (probably error?).
+		this.frozenForest = this.forest.clone(
+			new InMemoryStoredSchemaRepository(this.storedSchema),
+			new AnchorSet(),
+		);
 	}
 
 	public applyChange(change: TChange): void {
 		if (this.frozenForest === undefined) {
-			this.forest.applyDelta(this.intoDelta(change));
+			applyDelta(this.intoDelta(change), this.forest);
 		}
 	}
 
@@ -236,7 +221,8 @@ export class ForestRepairDataStoreProvider<TChange> implements IRepairDataStoreP
 	}
 
 	public clone(forest?: IEditableForest): ForestRepairDataStoreProvider<TChange> {
-		const storedSchema = this.storedSchema.clone();
+		// TODO: ensure editing this clone of the schema does the right thing (probably error?).
+		const storedSchema = new InMemoryStoredSchemaRepository(this.storedSchema);
 		return new ForestRepairDataStoreProvider(
 			forest ?? this.forest.clone(storedSchema, new AnchorSet()),
 			storedSchema,

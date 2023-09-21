@@ -73,7 +73,7 @@ export class OrdererManager implements core.IOrdererManager {
 
 		if (tenant.orderer.url !== this.ordererUrl && !this.globalDbEnabled) {
 			Lumberjack.error(`Invalid ordering service endpoint`, { messageMetaData });
-			return Promise.reject(new Error("Invalid ordering service endpoint"));
+			throw new Error("Invalid ordering service endpoint");
 		}
 
 		switch (tenant.orderer.type) {
@@ -253,14 +253,10 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			false,
 		);
 
-		// Foreman agent uploader does not run locally.
-		// TODO: Make agent uploader run locally.
-		const foremanConfig = config.get("foreman");
-		const taskMessageSender = services.createMessageSender(
-			config.get("rabbitmq"),
-			foremanConfig,
-		);
-		await taskMessageSender.initialize();
+		const defaultTTLInSeconds = 864000;
+		const checkpointsTTLSeconds =
+			config.get("checkpoints:checkpointsTTLInSeconds") ?? defaultTTLInSeconds;
+		await checkpointsCollection.createTTLIndex({ _ts: 1 }, checkpointsTTLSeconds);
 
 		const nodeCollectionName = config.get("mongo:collectionNames:nodes");
 		const nodeManager = new NodeManager(operationsDbMongoManager, nodeCollectionName);
@@ -468,7 +464,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		// This wanst to create stuff
 		const port = utils.normalizePort(process.env.PORT || "3000");
 
-		const deltaService = new DeltaService(operationsDbMongoManager, tenantManager);
+		const deltaService = new DeltaService(opsCollection, tenantManager);
 		const documentDeleteService =
 			customizations?.documentDeleteService ?? new DocumentDeleteService();
 
@@ -486,7 +482,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		let socketTracker: core.IWebSocketTracker | undefined;
 		let tokenRevocationManager: core.ITokenRevocationManager | undefined;
 		if (tokenRevocationEnabled) {
-			socketTracker = new utils.WebSocketTracker();
+			socketTracker = customizations?.webSocketTracker ?? new utils.WebSocketTracker();
 			tokenRevocationManager =
 				customizations?.tokenRevocationManager ?? new utils.DummyTokenRevocationManager();
 			await tokenRevocationManager.initialize().catch((error) => {

@@ -15,7 +15,8 @@ import {
 	SharedIntervalCollection,
 	SharedIntervalCollectionFactory,
 } from "../sharedIntervalCollection";
-import { Interval, IIntervalCollection, IntervalType } from "../intervalCollection";
+import { IIntervalCollection } from "../intervalCollection";
+import { Interval, IntervalType } from "../intervals";
 
 const assertIntervals = (
 	intervalCollection: IIntervalCollection<Interval>,
@@ -69,7 +70,7 @@ function createConnectedIntervalCollection(
 	);
 	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
-		deltaConnection: containerRuntime.createDeltaConnection(),
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(undefined),
 	};
 	intervals.connect(services);

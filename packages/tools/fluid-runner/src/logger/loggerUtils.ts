@@ -4,17 +4,23 @@
  */
 
 import * as fs from "fs";
-import { ITelemetryLoggerExt, ChildLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { CSVFileLogger } from "./csvFileLogger";
 import { IFileLogger, ITelemetryOptions, OutputFormat } from "./fileLogger";
 import { JSONFileLogger } from "./jsonFileLogger";
 
 /**
- * Create a ITelemetryLoggerExt wrapped around provided IFileLogger
- * ! It is expected that all events be sent through the returned "logger" value
- * ! The "fileLogger" value should have its "close()" method called at the end of execution
- * Note: if an output format is not supplied, default is JSON
- * @returns - both the IFileLogger implementation and ITelemetryLoggerExt wrapper to be called
+ * Create an {@link @fluidframework/telemetry-utils#ITelemetryLoggerExt} wrapped around provided {@link IFileLogger}.
+ *
+ * @remarks
+ *
+ * It is expected that all events be sent through the returned "logger" value.
+ *
+ * The "fileLogger" value should have its "close()" method called at the end of execution.
+ *
+ * Note: if an output format is not supplied, default is JSON.
+ *
+ * @returns Both the `IFileLogger` implementation and `ITelemetryLoggerExt` wrapper to be called.
  */
 export function createLogger(
 	filePath: string,
@@ -25,8 +31,12 @@ export function createLogger(
 			? new CSVFileLogger(filePath, options?.eventsPerFlush, options?.defaultProps)
 			: new JSONFileLogger(filePath, options?.eventsPerFlush, options?.defaultProps);
 
-	const logger = ChildLogger.create(fileLogger, "LocalSnapshotRunnerApp", {
-		all: { Event_Time: () => Date.now() },
+	const logger = createChildLogger({
+		logger: fileLogger,
+		namespace: "LocalSnapshotRunnerApp",
+		properties: {
+			all: { Event_Time: () => Date.now() },
+		},
 	});
 
 	return { logger, fileLogger };

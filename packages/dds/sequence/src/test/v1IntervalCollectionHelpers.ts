@@ -9,7 +9,7 @@ import {
 	IChannelServices,
 	IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
-import { Client } from "@fluidframework/merge-tree";
+import { Client, compareReferencePositions } from "@fluidframework/merge-tree";
 import { DefaultMap } from "../defaultMap";
 import {
 	IValueFactory,
@@ -18,17 +18,18 @@ import {
 	IValueOperation,
 } from "../defaultMapInterfaces";
 import {
-	ISerializableInterval,
-	ISerializedInterval,
 	IntervalCollection,
-	SequenceInterval,
 	ISerializedIntervalCollectionV2,
-	IIntervalHelpers,
 	makeOpsMap,
-	createSequenceInterval,
-	compareSequenceIntervalEnds,
 	LocalIntervalCollection,
 } from "../intervalCollection";
+import {
+	ISerializableInterval,
+	ISerializedInterval,
+	SequenceInterval,
+	IIntervalHelpers,
+	createSequenceInterval,
+} from "../intervals";
 import { pkgVersion } from "../packageVersion";
 import { SharedString } from "../sharedString";
 
@@ -53,7 +54,8 @@ class V1SequenceIntervalCollectionFactory
 		raw: ISerializedInterval[] | ISerializedIntervalCollectionV2 = [],
 	): V1IntervalCollection<SequenceInterval> {
 		const helpers: IIntervalHelpers<SequenceInterval> = {
-			compareEnds: compareSequenceIntervalEnds,
+			compareEnds: (a: SequenceInterval, b: SequenceInterval) =>
+				compareReferencePositions(a.start, b.start),
 			create: createSequenceInterval,
 		};
 		return new V1IntervalCollection(helpers, true, emitter, raw, {});
@@ -134,7 +136,7 @@ export class SharedStringWithV1IntervalCollection extends SharedString {
 
 export class V1IntervalCollectionSharedStringFactory implements IChannelFactory {
 	// TODO rename back to https://graph.microsoft.com/types/mergeTree/string once paparazzi is able to dynamically
-	// load code
+	// load code (UPDATE: paparazzi is gone... anything to do here?)
 	public static Type = "https://graph.microsoft.com/types/mergeTree";
 
 	public static readonly Attributes: IChannelAttributes = {

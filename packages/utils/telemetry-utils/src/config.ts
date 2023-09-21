@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { Lazy } from "@fluidframework/common-utils";
-import { TelemetryDataTag } from "./logger";
+import { Lazy } from "@fluidframework/core-utils";
+import { createChildLogger, tagCodeArtifacts } from "./logger";
 import { ITelemetryLoggerExt } from "./telemetryTypes";
 
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
@@ -50,11 +50,12 @@ const NullConfigProvider: IConfigProviderBase = {
 export const inMemoryConfigProvider = (storage: Storage | undefined): IConfigProviderBase => {
 	if (storage !== undefined && storage !== null) {
 		return new CachedConfigProvider(undefined, {
-			getRawConfig: (name: string) => {
+			getRawConfig: (name: string): ConfigTypes | undefined => {
 				try {
 					return stronglyTypedParse(storage.getItem(name) ?? undefined)?.raw;
-				} catch {}
-				return undefined;
+				} catch {
+					return undefined;
+				}
 			},
 		});
 	}
@@ -104,7 +105,7 @@ function stronglyTypedParse(input: ConfigTypes): StronglyTypedValue | undefined 
 	// holds strings
 	if (typeof input === "string") {
 		try {
-			output = JSON.parse(input);
+			output = JSON.parse(input) as ConfigTypes;
 			// we succeeded in parsing, but we don't support parsing
 			// for any object as we can't do it type safely
 			// so in this case, the default return will be string
@@ -113,7 +114,9 @@ function stronglyTypedParse(input: ConfigTypes): StronglyTypedValue | undefined 
 			// a false sense of security by just
 			// casting.
 			defaultReturn = { raw: input, string: input };
-		} catch {}
+		} catch {
+			// No-op
+		}
 	}
 
 	if (output === undefined) {
@@ -144,7 +147,9 @@ function stronglyTypedParse(input: ConfigTypes): StronglyTypedValue | undefined 
 	return defaultReturn;
 }
 
-/** `sessionStorage` is undefined in some environments such as Node and web pages with session storage disabled */
+/**
+ * `sessionStorage` is undefined in some environments such as Node and web pages with session storage disabled.
+ */
 const safeSessionStorage = (): Storage | undefined => {
 	// For some configurations accessing "globalThis.sessionStorage" throws
 	// "'sessionStorage' property from 'Window': Access is denied for this document" rather than returning undefined.
@@ -222,11 +227,10 @@ export class CachedConfigProvider implements IConfigProvider {
 					this.logger?.send({
 						category: "generic",
 						eventName: "ConfigRead",
-						configName: { tag: TelemetryDataTag.CodeArtifact, value: name },
-						configValue: {
-							tag: TelemetryDataTag.CodeArtifact,
-							value: JSON.stringify(parsed),
-						},
+						...tagCodeArtifacts({
+							configName: name,
+							configValue: JSON.stringify(parsed),
+						}),
 					});
 					return parsed;
 				}
@@ -265,7 +269,7 @@ export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = ITele
 export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(
 	logger: L,
 	...configs: (IConfigProviderBase | undefined)[]
-) {
+): MonitoringContext<L> {
 	if (loggerIsMonitoringContext<L>(logger)) {
 		throw new Error("Logger is already a monitoring context");
 	}
@@ -286,4 +290,10 @@ export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemet
 function isConfigProviderBase(obj: unknown): obj is IConfigProviderBase {
 	const maybeConfig = obj as Partial<IConfigProviderBase> | undefined;
 	return typeof maybeConfig?.getRawConfig === "function";
+}
+
+export function createChildMonitoringContext(
+	props: Parameters<typeof createChildLogger>[0],
+): MonitoringContext {
+	return loggerToMonitoringContext(createChildLogger(props));
 }

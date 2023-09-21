@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, bufferToString } from '@fluidframework/common-utils';
+import { assert } from '@fluidframework/core-utils';
+import { bufferToString } from '@fluid-internal/client-utils';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import {
 	IFluidDataStoreRuntime,
@@ -20,10 +21,10 @@ import {
 	ISharedObjectEvents,
 	SharedObject,
 } from '@fluidframework/shared-object-base';
-import { ITelemetryProperties } from '@fluidframework/common-definitions';
+import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import {
 	ITelemetryLoggerExt,
-	ChildLogger,
+	createChildLogger,
 	ITelemetryLoggerPropertyBags,
 	PerformanceEvent,
 } from '@fluidframework/telemetry-utils';
@@ -547,12 +548,16 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		const historyPolicy = this.getHistoryPolicy(options);
 		this.summarizeHistory = historyPolicy.summarizeHistory;
 
-		this.logger = ChildLogger.create(runtime.logger, 'SharedTree', sharedTreeTelemetryProperties);
-		this.sequencedEditAppliedLogger = ChildLogger.create(
-			this.logger,
-			'SequencedEditApplied',
-			sharedTreeTelemetryProperties
-		);
+		this.logger = createChildLogger({
+			logger: runtime.logger,
+			namespace: 'SharedTree',
+			properties: sharedTreeTelemetryProperties,
+		});
+		this.sequencedEditAppliedLogger = createChildLogger({
+			logger: this.logger,
+			namespace: 'SequencedEditApplied',
+			properties: sharedTreeTelemetryProperties,
+		});
 
 		const attributionId = (options as SharedTreeOptions<WriteFormat.v0_1_1>).attributionId;
 		this.idCompressor = new IdCompressor(
@@ -742,7 +747,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 
 	/**
 	 * Initialize shared tree with a serialized summary. This is used for testing.
-	 * @returns - statistics about the loaded summary.
+	 * @returns Statistics about the loaded summary.
 	 * @internal
 	 */
 	public loadSerializedSummary(blobData: string): ITelemetryProperties {

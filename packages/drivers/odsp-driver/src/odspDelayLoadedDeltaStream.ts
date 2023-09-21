@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, performance } from "@fluidframework/common-utils";
+import { performance } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	IFluidErrorBase,
 	MonitoringContext,
@@ -25,10 +26,10 @@ import {
 	TokenFetchOptions,
 	HostStoragePolicy,
 	InstrumentedStorageTokenFetcher,
+	ISocketStorageDiscovery,
 	OdspErrorType,
 } from "@fluidframework/odsp-driver-definitions";
 import { hasFacetCodes } from "@fluidframework/odsp-doclib-utils";
-import { ISocketStorageDiscovery } from "./contractsPublic";
 import { IOdspCache } from "./odspCache";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
 import {

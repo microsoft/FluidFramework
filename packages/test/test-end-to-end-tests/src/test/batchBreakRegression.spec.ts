@@ -12,15 +12,15 @@ import {
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider, TestFluidObject, timeoutPromise } from "@fluidframework/test-utils";
 import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
-import { isILoggingError } from "@fluidframework/telemetry-utils";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { isFluidError, isILoggingError } from "@fluidframework/telemetry-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	ISequencedDocumentSystemMessage,
 } from "@fluidframework/protocol-definitions";
-import { DataProcessingError } from "@fluidframework/container-utils";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { FluidErrorTypes } from "@fluidframework/core-interfaces";
 
 /**
  * In all cases we end up with a permanently corrupt file.
@@ -45,7 +45,10 @@ type ProxyOverrides<T> = {
 		: OverrideFunction<T, P>;
 };
 
-function createFunctionOverrideProxy<T extends object>(obj: T, overrides: ProxyOverrides<T>): T {
+function createFunctionOverrideProxy<T extends Record<string, any>>(
+	obj: T,
+	overrides: ProxyOverrides<T>,
+): T {
 	return new Proxy(obj, {
 		get: (target: T, property: string) => {
 			const override = overrides[property as keyof T];
@@ -193,19 +196,19 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 			{
 				let batch = sentMessages[0];
 				if (batch.length === 1) {
-					const contents = JSON.parse(batch[0].contents);
+					const contents = JSON.parse(batch[0].contents as string);
 					assert.strictEqual(contents.type, "groupedBatch");
 					batch = contents.contents;
 				}
 
 				assert.strictEqual(batch.length, 11, "expected 11 messages");
 				assert.strictEqual(
-					batch[0].metadata?.batch,
+					(batch[0].metadata as { batch?: unknown } | undefined)?.batch,
 					true,
 					"first message should contain batch metadata",
 				);
 				assert.strictEqual(
-					batch[10].metadata?.batch,
+					(batch[10].metadata as { batch?: unknown } | undefined)?.batch,
 					false,
 					"last message should contain batch metadata",
 				);
@@ -228,13 +231,17 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 								submit: (ds) => (messages) => {
 									const newMessages = [...messages];
 									const batchStartIndex = newMessages.findIndex(
-										(m) => m.metadata?.batch === true,
+										(m) =>
+											(m.metadata as { batch?: unknown } | undefined)
+												?.batch === true,
 									);
 									if (batchStartIndex >= 0) {
 										newMessages[batchStartIndex] = {
 											...newMessages[batchStartIndex],
 											metadata: {
-												...newMessages[batchStartIndex].metadata,
+												// TODO: It's not clear if this shallow clone is required, as opposed to just setting "batch" to undefined.
+												// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+												...(newMessages[batchStartIndex].metadata as any),
 												batch: undefined,
 											},
 										};
@@ -268,13 +275,17 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 							submit: (ds) => (messages) => {
 								const newMessages = [...messages];
 								const batchEndIndex = newMessages.findIndex(
-									(m) => m.metadata?.batch === false,
+									(m) =>
+										(m.metadata as { batch?: unknown } | undefined)?.batch ===
+										false,
 								);
 								if (batchEndIndex >= 0) {
 									newMessages[batchEndIndex] = {
 										...newMessages[batchEndIndex],
 										metadata: {
-											...newMessages[batchEndIndex].metadata,
+											// TODO: It's not clear if this shallow clone is required, as opposed to just setting "batch" to undefined.
+											// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+											...(newMessages[batchEndIndex].metadata as any),
 											batch: undefined,
 										},
 									};
@@ -305,7 +316,9 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 							submit: (ds) => (messages) => {
 								const newMessages = [...messages];
 								const batchEndIndex = newMessages.findIndex(
-									(m) => m.metadata?.batch === false,
+									(m) =>
+										(m.metadata as { batch?: unknown } | undefined)?.batch ===
+										false,
 								);
 								if (batchEndIndex >= 1) {
 									ds.submit(newMessages.slice(0, batchEndIndex - 1));
@@ -341,7 +354,9 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 								submit: (ds) => (messages) => {
 									const newMessages = [...messages];
 									const batchEndIndex = newMessages.findIndex(
-										(m) => m.metadata?.batch === false,
+										(m) =>
+											(m.metadata as { batch?: unknown } | undefined)
+												?.batch === false,
 									);
 									if (batchEndIndex >= 1) {
 										// set reference seq number to below min seq so the server nacks the batch
@@ -363,7 +378,8 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 					assert.fail("expected error");
 				} catch (e) {
 					assert(isILoggingError(e), `${e}`);
-					assert(e instanceof DataProcessingError);
+					assert(isFluidError(e));
+					assert.strictEqual(e.errorType, FluidErrorTypes.dataProcessingError);
 				}
 			},
 		);
@@ -403,7 +419,9 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 											| ISequencedDocumentSystemMessage
 										)[] = [...args[1]];
 										const batchEndIndex = newMessages.findIndex(
-											(m) => m.metadata?.batch === false,
+											(m) =>
+												(m.metadata as { batch?: unknown } | undefined)
+													?.batch === false,
 										);
 										if (batchEndIndex >= 0) {
 											args[1] = newMessages
@@ -442,7 +460,8 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 					assert.fail("expected error");
 				} catch (e) {
 					assert(isILoggingError(e), `${e}`);
-					assert(e instanceof DataProcessingError);
+					assert(isFluidError(e));
+					assert(e.errorType === FluidErrorTypes.dataProcessingError);
 				}
 			},
 		);

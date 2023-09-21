@@ -9,15 +9,14 @@ import {
 	FieldKey,
 	mintRevisionTag,
 	initializeForest,
-	InMemoryStoredSchemaRepository,
 	RevisionTag,
-	rootFieldKeySymbol,
+	rootFieldKey,
 	UpPath,
+	applyDelta,
 } from "../../core";
 import { jsonNumber, jsonObject } from "../../domains";
 import {
 	buildForest,
-	defaultSchemaPolicy,
 	ForestRepairDataStore,
 	jsonableTreeFromCursor,
 	singleTextCursor,
@@ -31,14 +30,13 @@ const fooKey: FieldKey = brand("foo");
 
 const root: UpPath = {
 	parent: undefined,
-	parentField: rootFieldKeySymbol,
+	parentField: rootFieldKey,
 	parentIndex: 0,
 };
 
 describe("ForestRepairDataStore", () => {
 	it("Captures deleted nodes", () => {
-		const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
-		const forest = buildForest(schema);
+		const forest = buildForest();
 		const store = new ForestRepairDataStore(forest, mockIntoDelta);
 		const capture1 = [
 			{ type: jsonNumber.name, value: 1 },
@@ -62,7 +60,7 @@ describe("ForestRepairDataStore", () => {
 		initializeForest(forest, [singleTextCursor(data)]);
 		const delta1 = new Map([
 			[
-				rootFieldKeySymbol,
+				rootFieldKey,
 				[
 					{
 						type: Delta.MarkType.Modify,
@@ -83,10 +81,10 @@ describe("ForestRepairDataStore", () => {
 			],
 		]);
 		store.capture(delta1, revision1);
-		forest.applyDelta(delta1);
+		applyDelta(delta1, forest);
 		const delta2 = new Map([
 			[
-				rootFieldKeySymbol,
+				rootFieldKey,
 				[
 					{
 						type: Delta.MarkType.Modify,
@@ -112,74 +110,5 @@ describe("ForestRepairDataStore", () => {
 		const nodes2 = store.getNodes(revision2, root, fooKey, 0, 2);
 		const actual2 = nodes2.map(jsonableTreeFromCursor);
 		assert.deepEqual(actual2, capture2);
-	});
-
-	it("Captures overwritten values", () => {
-		const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
-		const forest = buildForest(schema);
-		const store = new ForestRepairDataStore(forest, mockIntoDelta);
-		const data = {
-			type: jsonObject.name,
-			fields: {
-				foo: [
-					{ type: jsonNumber.name },
-					{ type: jsonNumber.name, value: 1 },
-					{ type: jsonNumber.name, value: 2 },
-					{ type: jsonNumber.name, value: 3 },
-				],
-			},
-		};
-		initializeForest(forest, [singleTextCursor(data)]);
-		store.capture(
-			new Map([
-				[
-					rootFieldKeySymbol,
-					[
-						{
-							type: Delta.MarkType.Modify,
-							fields: new Map([
-								[
-									fooKey,
-									[
-										{
-											type: Delta.MarkType.Modify,
-											setValue: 40,
-										},
-										1,
-										{
-											type: Delta.MarkType.Modify,
-											setValue: 42,
-										},
-										{
-											type: Delta.MarkType.Modify,
-											setValue: undefined,
-										},
-									],
-								],
-							]),
-						},
-					],
-				],
-			]),
-			revision1,
-		);
-		const value0 = store.getValue(revision1, {
-			parent: root,
-			parentField: fooKey,
-			parentIndex: 0,
-		});
-		const value2 = store.getValue(revision1, {
-			parent: root,
-			parentField: fooKey,
-			parentIndex: 2,
-		});
-		const value3 = store.getValue(revision1, {
-			parent: root,
-			parentField: fooKey,
-			parentIndex: 3,
-		});
-		assert.equal(value0, undefined);
-		assert.equal(value2, 2);
-		assert.equal(value3, 3);
 	});
 });

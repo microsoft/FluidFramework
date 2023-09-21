@@ -40,6 +40,7 @@ export {
 	IDocument,
 	ICheckpoint,
 	IDocumentDetails,
+	IDocumentStaticProperties,
 	IDocumentStorage,
 	IScribe,
 } from "./document";
@@ -129,6 +130,8 @@ export {
 	ITaskMessageSender,
 } from "./taskMessages";
 export {
+	EncryptionKeyVersion,
+	IEncryptedTenantKeys,
 	ITenant,
 	ITenantConfig,
 	ITenantConfigManager,

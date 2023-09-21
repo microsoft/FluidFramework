@@ -5,9 +5,11 @@
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidSerializer, ValueType } from "@fluidframework/shared-object-base";
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
+// eslint-disable-next-line import/no-deprecated
 import { ISerializableValue, ISerializedValue, ISharedMapEvents } from "./interfaces";
 import {
 	IMapSetOperation,
@@ -65,6 +67,7 @@ export type IMapOperation = IMapKeyOperation | IMapClearOperation;
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse | JSON.parse}.
  */
 export interface IMapDataObjectSerializable {
+	// eslint-disable-next-line import/no-deprecated
 	[key: string]: ISerializableValue;
 }
 
@@ -514,7 +517,7 @@ export class AttributableMapKernel {
 		local: boolean,
 		localOpMetadata: unknown,
 	): boolean {
-		const op: IMapOperation = message.contents;
+		const op = message.contents as IMapOperation;
 		const handler = this.messageHandlers.get(op.type);
 		if (handler === undefined) {
 			return false;
@@ -650,6 +653,7 @@ export class AttributableMapKernel {
 	 * @param serializable - The remote information that we can convert into a real object
 	 * @returns The local value that was produced
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	private makeLocal(key: string, serializable: ISerializableValue): ILocalValue {
 		if (
 			serializable.type === ValueType[ValueType.Plain] ||
@@ -675,7 +679,7 @@ export class AttributableMapKernel {
 		local: boolean,
 		localOpMetadata: MapLocalOpMetadata,
 	): boolean {
-		const op: IMapKeyOperation = message.contents;
+		const op = message.contents as IMapKeyOperation;
 		if (this.pendingClearMessageIds.length > 0) {
 			if (local) {
 				assert(
@@ -773,7 +777,7 @@ export class AttributableMapKernel {
 		});
 		messageHandlers.set("delete", {
 			process: (message: ISequencedDocumentMessage, local, localOpMetadata) => {
-				const op: IMapDeleteOperation = message.contents;
+				const op = message.contents as IMapDeleteOperation;
 				if (!this.needProcessKeyOperation(message, local, localOpMetadata)) {
 					return;
 				}
@@ -792,7 +796,7 @@ export class AttributableMapKernel {
 		});
 		messageHandlers.set("set", {
 			process: (message: ISequencedDocumentMessage, local, localOpMetadata) => {
-				const op: IMapSetOperation = message.contents;
+				const op = message.contents as IMapSetOperation;
 				if (!this.needProcessKeyOperation(message, local, localOpMetadata)) {
 					return;
 				}

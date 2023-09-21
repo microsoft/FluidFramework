@@ -4,13 +4,13 @@
  */
 
 import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { stringToBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
+import { stringToBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
 import {
 	IDocumentStorageService,
 	ISummaryContext,
 	IDocumentStorageServicePolicies,
 } from "@fluidframework/driver-definitions";
-import { buildHierarchy } from "@fluidframework/protocol-base";
+import { buildGitTreeHierarchy } from "@fluidframework/protocol-base";
 import {
 	ICreateBlobResponse,
 	ISnapshotTreeEx,
@@ -125,7 +125,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
 				return response;
 			},
 		);
-		const tree = buildHierarchy(rawTree, this.blobsShaCache, true);
+		const tree = buildGitTreeHierarchy(rawTree, this.blobsShaCache, true);
 		await this.snapshotTreeCache?.put(this.getCacheKey(tree.id), {
 			id: requestVersion.id,
 			snapshotTree: tree,

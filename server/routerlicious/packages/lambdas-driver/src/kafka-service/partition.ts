@@ -25,7 +25,7 @@ import { Context } from "./context";
  */
 export class Partition extends EventEmitter {
 	private readonly q: QueueObject<IQueuedMessage>;
-	private lambdaP: Promise<IPartitionLambda> | undefined;
+	private lambdaP: Promise<IPartitionLambda> | Promise<void> | undefined;
 	private lambda: IPartitionLambda | undefined;
 	private readonly checkpointManager: CheckpointManager;
 	private readonly context: Context;
@@ -50,9 +50,10 @@ export class Partition extends EventEmitter {
 		this.q = queue((message: IQueuedMessage, callback) => {
 			try {
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const optionalPromise = this.lambda!.handler(message);
+				const optionalPromise = this.lambda!.handler(message)
+					?.then(callback as any)
+					.catch(callback);
 				if (optionalPromise) {
-					optionalPromise.then(callback as any).catch(callback);
 					return;
 				}
 
@@ -63,14 +64,14 @@ export class Partition extends EventEmitter {
 		}, 1);
 		this.q.pause();
 
-		this.lambdaP = factory.create(undefined, this.context);
-		this.lambdaP.then(
-			(lambda) => {
+		this.lambdaP = factory
+			.create(undefined, this.context)
+			.then((lambda) => {
 				this.lambda = lambda;
 				this.lambdaP = undefined;
 				this.q.resume();
-			},
-			(error) => {
+			})
+			.catch((error) => {
 				if (this.closed) {
 					return;
 				}
@@ -80,8 +81,7 @@ export class Partition extends EventEmitter {
 				};
 				this.emit("error", error, errorData);
 				this.q.kill();
-			},
-		);
+			});
 
 		this.q.error((error) => {
 			const errorData: IContextErrorData = {
@@ -96,7 +96,9 @@ export class Partition extends EventEmitter {
 			return;
 		}
 
-		void this.q.push(rawMessage);
+		this.q.push(rawMessage).catch((error) => {
+			Lumberjack.error("Error pushing raw message to queue in partition", undefined, error);
+		});
 	}
 
 	public close(closeType: LambdaCloseType): void {
@@ -116,14 +118,12 @@ export class Partition extends EventEmitter {
 		} else if (this.lambdaP) {
 			// asynchronously close the lambda since it's not created yet
 			this.lambdaP
-				.then(
-					(lambda) => {
-						lambda.close(closeType);
-					},
-					(error) => {
-						// Lambda never existed - no need to close
-					},
-				)
+				.then((lambda) => {
+					lambda.close(closeType);
+				})
+				.catch((error) => {
+					// Lambda never existed - no need to close
+				})
 				.finally(() => {
 					this.lambda = undefined;
 					this.lambdaP = undefined;

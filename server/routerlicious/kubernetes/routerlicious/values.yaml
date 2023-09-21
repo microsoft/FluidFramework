@@ -19,6 +19,7 @@ alfred:
   numberOfMessagesPerTrace: 100
   sessionStickinessDurationMs: 3600000
   enableConnectionCountLogging: false
+  ignoreEphemeralFlag: true
   throttling:
     perTenantGroup1:
         createDoc:
@@ -55,6 +56,7 @@ alfred:
   enforceServerGeneratedDocumentId: false
   socketIo:
     perMessageDeflate: true
+  getDeltasRequestMaxOpsRange: 2000
 
 storage:
   enableWholeSummaryUpload: false
@@ -62,6 +64,7 @@ storage:
 
 checkpoints:
   localCheckpointEnabled: false
+  checkpointsTTLInSeconds: 864000
   kafkaCheckpointOnReprocessingOp: false
 
 session:
@@ -86,7 +89,9 @@ scribe:
   name: scribe
   replicas: 8
   getDeltasViaAlfred: true
+  maxLogtailLength: 2000
   verifyLastOpPersistence: false
+  disableTransientTenantFiltering: true
   checkpointHeuristics:
     enable: false
     idleTime: 10000
@@ -109,7 +114,7 @@ zookeeper:
 
 system:
   httpServer:
-    connectionTimeout: 0
+    connectionTimeoutMs: 0
 
 usage:
   clientConnectivityCountingEnabled: false
@@ -118,6 +123,7 @@ usage:
 shared:
   transientTenants: []
   perTenantGroup1: []
+  runnerServerCloseTimeoutMs: 30000
 
 mongodb:
   operationsDbEndpoint: mongodb_url
@@ -169,3 +175,7 @@ ingress:
 error:
   track: true
   endpoint: "error_tracking_endpoint"
+
+lumberjack:
+  options:
+    enableGlobalTelemetryContext: true

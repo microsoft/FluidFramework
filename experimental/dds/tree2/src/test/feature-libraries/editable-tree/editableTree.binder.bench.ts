@@ -8,7 +8,7 @@ import {
 	BatchBindingContext,
 	BinderOptions,
 	BindingType,
-	BindTree,
+	BindPolicy,
 	compileSyntaxTree,
 	createBinderOptions,
 	createDataBinderBuffering,
@@ -23,17 +23,17 @@ import {
 	InvalidationBinderEvents,
 	InvalidationBindingContext,
 	OperationBinderEvents,
+	setField,
 } from "../../../feature-libraries";
 import { ViewEvents } from "../../../shared-tree";
-import { retrieveNodes } from "./editableTree.binder.spec";
+import { fieldPhones, retrieveNodes } from "./editableTree.binder.spec";
 
 describe("Data binder benchmarks", () => {
 	describe("Direct data binder", () => {
+		// TODO: Do not create shared trees during test enumeration.
 		const { tree, root, address } = retrieveNodes();
-		const bindTree: BindTree = compileSyntaxTree({ address: true });
-		const options: BinderOptions = createBinderOptions({
-			matchPolicy: "subtree",
-		});
+		const bindTree: BindPolicy = compileSyntaxTree({ address: true }, "subtree");
+		const options: BinderOptions = createBinderOptions({});
 		benchmark({
 			type: BenchmarkType.Measurement,
 			title: `Direct data binder: single insert callback`,
@@ -64,10 +64,9 @@ describe("Data binder benchmarks", () => {
 
 	describe("Invalidation data binder", () => {
 		const { tree, root, address } = retrieveNodes();
-		const bindTree: BindTree = compileSyntaxTree({ address: true });
+		const bindTree: BindPolicy = compileSyntaxTree({ address: true }, "subtree");
 		const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
 			autoFlushPolicy: "afterBatch",
-			matchPolicy: "subtree",
 		});
 		benchmark({
 			type: BenchmarkType.Measurement,
@@ -97,10 +96,9 @@ describe("Data binder benchmarks", () => {
 
 	describe("Buffering data binder", () => {
 		const { tree, root, address } = retrieveNodes();
-		const bindTree: BindTree = compileSyntaxTree({ address: true });
+		const bindTree: BindPolicy = compileSyntaxTree({ address: true }, "subtree");
 		const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
 			autoFlushPolicy: "afterBatch",
-			matchPolicy: "subtree",
 		});
 		benchmark({
 			type: BenchmarkType.Measurement,
@@ -131,10 +129,9 @@ describe("Data binder benchmarks", () => {
 	for (const listeners of [10, 50, 100, 500, 1000]) {
 		describe(`Buffering data binder, invoke ${listeners} listener of ${2 * listeners}`, () => {
 			const { tree, root, address } = retrieveNodes();
-			const bindTree: BindTree = compileSyntaxTree({ address: true });
+			const bindTree: BindPolicy = compileSyntaxTree({ address: true }, "subtree");
 			const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
 				autoFlushPolicy: "afterBatch",
-				matchPolicy: "subtree",
 			});
 			benchmark({
 				type: BenchmarkType.Measurement,
@@ -167,11 +164,11 @@ describe("Data binder benchmarks", () => {
 		});
 	}
 	describe("Buffering data binder, batched notification", () => {
+		// TODO: Do not create shared trees during test enumeration.
 		const { tree, root, address } = retrieveNodes();
-		const bindTree: BindTree = compileSyntaxTree({ address: true });
+		const bindTree: BindPolicy = compileSyntaxTree({ address: true }, "subtree");
 		const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
 			autoFlushPolicy: "afterBatch",
-			matchPolicy: "subtree",
 		});
 		benchmark({
 			type: BenchmarkType.Measurement,
@@ -204,7 +201,7 @@ function registerLoop(
 	listeners: number,
 	dataBinder: FlushableDataBinder<OperationBinderEvents>,
 	root: EditableTree,
-	bindTree: BindTree,
+	bindTree: BindPolicy,
 ) {
 	for (let i = 0; i < listeners; i++) {
 		dataBinder.register(
@@ -223,13 +220,13 @@ async function computeTime<T>(
 	dataBinder: DataBinder<OperationBinderEvents>,
 ) {
 	const before1 = state.timer.now();
-	address.phones = [111, 112];
+	address[setField](fieldPhones, [111, 112]);
 	await promise;
 	const after1 = state.timer.now();
 	const duration1 = state.timer.toSeconds(before1, after1);
 	dataBinder.unregisterAll();
 	const before2 = state.timer.now();
-	address.phones = [111, 112];
+	address[setField](fieldPhones, [111, 112]);
 	const after2 = state.timer.now();
 	const duration2 = state.timer.toSeconds(before2, after2);
 	return duration1 - duration2;

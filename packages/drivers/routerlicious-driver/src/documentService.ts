@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import * as api from "@fluidframework/driver-definitions";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import { RateLimiter, NetworkErrorBasic, canRetryOnError } from "@fluidframework/driver-utils";
 import { IClient } from "@fluidframework/protocol-definitions";
 import io from "socket.io-client";
@@ -27,7 +27,7 @@ import { pkgVersion as driverVersion } from "./packageVersion";
 import { GitManager } from "./gitManager";
 import { Historian } from "./historian";
 import { RestWrapper } from "./restWrapperBase";
-import { INormalizedWholeSummary } from "./contracts";
+import { INormalizedWholeSnapshot } from "./contracts";
 
 /**
  * Amount of time between discoveries within which we don't need to rediscover on re-connect.
@@ -67,7 +67,7 @@ export class DocumentService implements api.IDocumentService {
 		private readonly documentStorageServicePolicies: api.IDocumentStorageServicePolicies,
 		private readonly driverPolicies: IRouterliciousDriverPolicies,
 		private readonly blobCache: ICache<ArrayBufferLike>,
-		private readonly wholeSnapshotTreeCache: ICache<INormalizedWholeSummary>,
+		private readonly wholeSnapshotTreeCache: ICache<INormalizedWholeSnapshot>,
 		private readonly shreddedSummaryTreeCache: ICache<ISnapshotTreeVersion>,
 		private readonly discoverFluidResolvedUrl: () => Promise<api.IResolvedUrl>,
 		private storageRestWrapper: RouterliciousStorageRestWrapper,
@@ -221,7 +221,7 @@ export class DocumentService implements api.IDocumentService {
 										(errorMessage) =>
 											new NetworkErrorBasic(
 												`The Host-provided token fetcher threw an error`,
-												DriverErrorType.fetchTokenError,
+												DriverErrorTypes.fetchTokenError,
 												canRetryOnError(error),
 												{ errorMessage, driverVersion },
 											),

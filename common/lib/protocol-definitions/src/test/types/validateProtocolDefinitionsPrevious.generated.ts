@@ -371,7 +371,6 @@ declare function get_current_InterfaceDeclaration_IConnected():
 declare function use_old_InterfaceDeclaration_IConnected(
     use: TypeOnly<old.IConnected>);
 use_old_InterfaceDeclaration_IConnected(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IConnected());
 
 /*
@@ -420,7 +419,6 @@ declare function get_current_InterfaceDeclaration_IDocumentAttributes():
 declare function use_old_InterfaceDeclaration_IDocumentAttributes(
     use: TypeOnly<old.IDocumentAttributes>);
 use_old_InterfaceDeclaration_IDocumentAttributes(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDocumentAttributes());
 
 /*
@@ -470,18 +468,6 @@ declare function use_old_InterfaceDeclaration_IDocumentSystemMessage(
     use: TypeOnly<old.IDocumentSystemMessage>);
 use_old_InterfaceDeclaration_IDocumentSystemMessage(
     get_current_InterfaceDeclaration_IDocumentSystemMessage());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IHelpMessage": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IHelpMessage": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -602,18 +588,6 @@ declare function use_old_InterfaceDeclaration_IProtocolState(
     use: TypeOnly<old.IProtocolState>);
 use_old_InterfaceDeclaration_IProtocolState(
     get_current_InterfaceDeclaration_IProtocolState());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IQueueMessage": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IQueueMessage": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -805,7 +779,6 @@ declare function get_current_InterfaceDeclaration_ISequencedDocumentAugmentedMes
 declare function use_old_InterfaceDeclaration_ISequencedDocumentAugmentedMessage(
     use: TypeOnly<old.ISequencedDocumentAugmentedMessage>);
 use_old_InterfaceDeclaration_ISequencedDocumentAugmentedMessage(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISequencedDocumentAugmentedMessage());
 
 /*
@@ -830,7 +803,6 @@ declare function get_current_InterfaceDeclaration_ISequencedDocumentMessage():
 declare function use_old_InterfaceDeclaration_ISequencedDocumentMessage(
     use: TypeOnly<old.ISequencedDocumentMessage>);
 use_old_InterfaceDeclaration_ISequencedDocumentMessage(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISequencedDocumentMessage());
 
 /*
@@ -855,7 +827,6 @@ declare function get_current_InterfaceDeclaration_ISequencedDocumentSystemMessag
 declare function use_old_InterfaceDeclaration_ISequencedDocumentSystemMessage(
     use: TypeOnly<old.ISequencedDocumentSystemMessage>);
 use_old_InterfaceDeclaration_ISequencedDocumentSystemMessage(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISequencedDocumentSystemMessage());
 
 /*
@@ -1468,7 +1439,6 @@ declare function get_old_EnumDeclaration_MessageType():
 declare function use_current_EnumDeclaration_MessageType(
     use: TypeOnly<current.MessageType>);
 use_current_EnumDeclaration_MessageType(
-    // @ts-expect-error compatibility expected to be broken
     get_old_EnumDeclaration_MessageType());
 
 /*

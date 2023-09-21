@@ -13,6 +13,7 @@ import {
 	IStorageNameRetriever,
 	IThrottler,
 	IRevokedTokenChecker,
+	IDocumentManager,
 } from "@fluidframework/server-services-core";
 import {
 	IThrottleMiddlewareOptions,
@@ -22,7 +23,7 @@ import {
 import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
-import { ICache, ITenantService } from "../../services";
+import { ICache, IDenyList, ITenantService } from "../../services";
 import * as utils from "../utils";
 import { Constants } from "../../utils";
 
@@ -31,9 +32,11 @@ export function create(
 	tenantService: ITenantService,
 	storageNameRetriever: IStorageNameRetriever,
 	restTenantThrottlers: Map<string, IThrottler>,
+	documentManager: IDocumentManager,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
 	revokedTokenChecker?: IRevokedTokenChecker,
+	denyList?: IDenyList,
 ): Router {
 	const router: Router = Router();
 
@@ -52,8 +55,10 @@ export function create(
 			authorization,
 			tenantService,
 			storageNameRetriever,
+			documentManager,
 			cache,
 			asyncLocalStorage,
+			denyList,
 		});
 		return service.getRefs();
 	}
@@ -65,8 +70,10 @@ export function create(
 			authorization,
 			tenantService,
 			storageNameRetriever,
+			documentManager,
 			cache,
 			asyncLocalStorage,
+			denyList,
 		});
 		return service.getRef(ref);
 	}
@@ -82,8 +89,10 @@ export function create(
 			authorization,
 			tenantService,
 			storageNameRetriever,
+			documentManager,
 			cache,
 			asyncLocalStorage,
+			denyList,
 		});
 		return service.createRef(params);
 	}
@@ -100,8 +109,10 @@ export function create(
 			authorization,
 			tenantService,
 			storageNameRetriever,
+			documentManager,
 			cache,
 			asyncLocalStorage,
+			denyList,
 		});
 		return service.updateRef(ref, params);
 	}
@@ -113,8 +124,10 @@ export function create(
 			authorization,
 			tenantService,
 			storageNameRetriever,
+			documentManager,
 			cache,
 			asyncLocalStorage,
+			denyList,
 		});
 		return service.deleteRef(ref);
 	}

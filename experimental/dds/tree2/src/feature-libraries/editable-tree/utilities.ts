@@ -3,14 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { isStableId } from "@fluidframework/container-runtime";
-import { GlobalFieldKey, TreeStoredSchema, ValueSchema, symbolFromKey } from "../../core";
+import {
+	FieldKey,
+	TreeStoredSchema,
+	UpPath,
+	getDetachedFieldContainingPath,
+	rootField,
+} from "../../core";
 import { brand } from "../../util";
 import { valueSymbol } from "../contextuallyTyped";
-import { FieldKinds, forbidden } from "../defaultFieldKinds";
+import { FieldKinds } from "../default-field-kinds";
 import { StableNodeKey } from "../node-key";
-import { EditableTree, getField } from "./editableTreeTypes";
+import { getField } from "../untypedTree";
+import { EditableTree, TreeStatus } from "./editableTreeTypes";
 
 /**
  * @returns true iff `schema` trees should default to being viewed as just their value when possible.
@@ -26,11 +33,9 @@ export function isPrimitive(schema: TreeStoredSchema): boolean {
 	// TODO: use a separate `ITreeSchema` type, with metadata that determines if the type is primitive.
 	// Since the above is not done yet, use use a heuristic:
 	return (
-		schema.value !== ValueSchema.Nothing &&
-		schema.localFields.size === 0 &&
-		schema.globalFields.size === 0 &&
-		schema.extraGlobalFields === false &&
-		schema.extraLocalFields.kind.identifier === forbidden.identifier
+		schema.leafValue !== undefined &&
+		schema.structFields.size === 0 &&
+		schema.mapFields === undefined
 	);
 }
 
@@ -80,14 +85,13 @@ export function keyIsValidIndex(key: string | number, length: number): boolean {
  * @returns the {@link StableNodeKey} on `node`, or undefined if there is none.
  */
 export function getStableNodeKey(
-	nodeKeyFieldKey: GlobalFieldKey,
+	nodeKeyFieldKey: FieldKey,
 	node: EditableTree,
 ): StableNodeKey | undefined {
-	const nodeKeyFieldKeySymbol = symbolFromKey(nodeKeyFieldKey);
-	if (nodeKeyFieldKeySymbol in node) {
+	if (nodeKeyFieldKey in node) {
 		// Get the ID via a wrapped node rather than an unwrapped node (`node[nodeKeyFieldKeySymbol]`)
 		// so that the field kind can be checked
-		const field = node[getField](nodeKeyFieldKeySymbol);
+		const field = node[getField](nodeKeyFieldKey);
 		assert(
 			field.fieldSchema.kind.identifier === FieldKinds.nodeKey.identifier,
 			0x6df /* Invalid node key field kind */,
@@ -100,4 +104,17 @@ export function getStableNodeKey(
 		);
 		return brand(id);
 	}
+}
+
+/**
+ * Checks the path and returns the TreeStatus based on whether or not the detached field is the root field.
+ * TODO: Performance: This is a slow initial implementation which traverses the entire path up to the root of the tree.
+ * This should eventually be optimized.
+ * @param path - the path you want to check
+ * @returns the {@link TreeStatus} from the path provided.
+ */
+export function treeStatusFromPath(path: UpPath): TreeStatus {
+	return getDetachedFieldContainingPath(path) === rootField
+		? TreeStatus.InDocument
+		: TreeStatus.Removed;
 }

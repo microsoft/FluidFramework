@@ -24,6 +24,7 @@ describe("Hardware Stats", () => {
 		taggedLogger: mockLogger,
 		clientDetails: { capabilities: { interactive: true } },
 		updateDirtyContainerState: (dirty: boolean) => {},
+		getLoadedFromVersion: () => undefined,
 	};
 
 	const getDeviceSpecEvents = (): ITelemetryBaseEvent[] =>
@@ -49,6 +50,7 @@ describe("Hardware Stats", () => {
 			taggedLogger: mockLogger,
 			clientDetails: { capabilities: { interactive: true } },
 			updateDirtyContainerState: (dirty: boolean) => {},
+			getLoadedFromVersion: () => undefined,
 		};
 	});
 

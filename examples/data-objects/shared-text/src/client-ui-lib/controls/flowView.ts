@@ -8,7 +8,7 @@
 /* eslint-disable @typescript-eslint/strict-boolean-expressions */
 /* eslint-disable no-bitwise */
 
-import { performance } from "@fluidframework/common-utils";
+import { performance } from "@fluid-internal/client-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import * as types from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
@@ -3584,7 +3584,8 @@ export class FlowView extends ui.Component {
 		} else {
 			if (opCursorPos !== undefined) {
 				this.remotePresenceFromEdit(
-					event.opArgs.sequencedMessage!.clientId,
+					// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+					event.opArgs.sequencedMessage!.clientId as string,
 					event.opArgs.sequencedMessage!.referenceSequenceNumber,
 					opCursorPos,
 				);

@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
+import { fromUtf8ToBase64 } from "@fluid-internal/client-utils";
 import * as git from "@fluidframework/gitresources";
 import {
-	IWholeFlatSummary,
 	IWholeSummaryPayload,
 	IWriteSummaryResponse,
 } from "@fluidframework/server-services-client";
 import { QueryStringType, RestWrapper } from "./restWrapperBase";
 import { IR11sResponse } from "./restWrapper";
 import { IHistorian } from "./storageContracts";
+import { IWholeFlatSnapshot } from "./contracts";
 
 export interface ICredentials {
 	user: string;
@@ -65,7 +65,7 @@ export class Historian implements IHistorian {
 	): Promise<IR11sResponse<git.ICommitDetails[]>> {
 		return this.restWrapper
 			.get<git.ICommitDetails[]>(`/commits`, this.getQueryString({ count, sha }))
-			.catch((error) =>
+			.catch(async (error) =>
 				error.statusCode === 400 || error.statusCode === 404
 					? {
 							content: [],
@@ -98,8 +98,8 @@ export class Historian implements IHistorian {
 		);
 	}
 
-	public async getSummary(sha: string): Promise<IR11sResponse<IWholeFlatSummary>> {
-		return this.restWrapper.get<IWholeFlatSummary>(
+	public async getSnapshot(sha: string): Promise<IR11sResponse<IWholeFlatSnapshot>> {
+		return this.restWrapper.get<IWholeFlatSnapshot>(
 			`/git/summaries/${sha}`,
 			this.getQueryString(),
 		);

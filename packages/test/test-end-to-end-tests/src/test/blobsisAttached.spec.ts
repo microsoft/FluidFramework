@@ -16,8 +16,11 @@ import {
 	createAndAttachContainer,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
-import { stringToBuffer } from "@fluidframework/common-utils";
+import { stringToBuffer } from "@fluid-internal/client-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
+// eslint-disable-next-line import/no-internal-modules
+import { IPendingRuntimeState } from "@fluidframework/container-runtime/dist/test";
 import { MockDetachedBlobStorage, driverSupportsBlobs } from "./mockDetachedBlobStorage.js";
 
 const mapId = "map";
@@ -37,6 +40,10 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 		let provider: ITestObjectProvider;
 		let loader: IHostLoader;
 		let container: IContainer;
+
+		const runtimeOf = (dataObject: ITestFluidObject): ContainerRuntime =>
+			dataObject.context.containerRuntime as ContainerRuntime;
+
 		beforeEach(async () => {
 			provider = getTestObjectProvider();
 			loader = provider.makeTestLoader(testContainerConfig);
@@ -46,6 +53,48 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 				provider.driver.createCreateNewRequest(provider.documentId),
 			);
 			provider.updateDocumentId(container.resolvedUrl);
+		});
+
+		it("blob is aborted before uploading", async function () {
+			const testString = "this is a test string";
+			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
+			const ac = new AbortController();
+			ac.abort("abort test");
+			try {
+				await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"), ac.signal);
+				assert.fail("Should not succeed");
+			} catch (error: any) {
+				assert.strictEqual(error.status, undefined);
+				assert.strictEqual(error.uploadTime, undefined);
+				assert.strictEqual(error.acked, undefined);
+			}
+
+			const pendingState = (await runtimeOf(dataStore1).getPendingLocalState()) as
+				| IPendingRuntimeState
+				| undefined;
+			assert.strictEqual(pendingState?.pendingAttachmentBlobs, undefined);
+		});
+
+		it("blob is aborted after upload succeds", async function () {
+			const testString = "this is a test string";
+			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
+			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
+			const ac = new AbortController();
+			let blob: IFluidHandle<ArrayBufferLike>;
+			try {
+				blob = await dataStore1.runtime.uploadBlob(
+					stringToBuffer(testString, "utf-8"),
+					ac.signal,
+				);
+				ac.abort();
+				map.set("key", blob);
+			} catch (error: any) {
+				assert.fail("Should succeed");
+			}
+			const pendingState = (await runtimeOf(dataStore1).getPendingLocalState({
+				notifyImminentClosure: true,
+			})) as IPendingRuntimeState | undefined;
+			assert.strictEqual(pendingState?.pendingAttachmentBlobs, undefined);
 		});
 
 		it("blob is attached after usage in map", async function () {
@@ -70,6 +119,47 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 			assert.strictEqual(blob.isAttached, false);
 			directory.set(testKey, blob);
 			assert.strictEqual(blob.isAttached, true);
+		});
+
+		it("removes pending blob when waiting for blob to be attached", async function () {
+			const testString = "this is a test string";
+			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
+			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
+			const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
+			const pendingStateP: any = runtimeOf(dataStore1).getPendingLocalState({
+				notifyImminentClosure: true,
+			});
+			map.set("key", blob);
+			const pendingState = await pendingStateP;
+			assert.strictEqual(pendingState?.pendingAttachmentBlobs, undefined);
+		});
+
+		it("removes pending blob after attached and acked", async function () {
+			const testString = "this is a test string";
+			const testKey = "a blob";
+			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
+
+			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
+			const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
+			map.set(testKey, blob);
+			const pendingState = (await runtimeOf(dataStore1).getPendingLocalState()) as
+				| IPendingRuntimeState
+				| undefined;
+			assert.strictEqual(pendingState?.pendingAttachmentBlobs, undefined);
+		});
+
+		it("removes multiple pending blobs after attached and acked", async function () {
+			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
+			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
+			const lots = 10;
+			for (let i = 0; i < lots; i++) {
+				const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(`${i}`, "utf-8"));
+				map.set(`${i}`, blob);
+			}
+			const pendingState = (await runtimeOf(dataStore1).getPendingLocalState()) as
+				| IPendingRuntimeState
+				| undefined;
+			assert.strictEqual(pendingState?.pendingAttachmentBlobs, undefined);
 		});
 	});
 

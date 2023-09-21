@@ -16,7 +16,7 @@ module.exports = (env) => {
 			app: "./e2e-tests/app/app.tsx",
 		},
 		resolve: {
-			extensions: [".ts", ".tsx", ".js"],
+			extensions: [".js", ".jsx", ".ts", ".tsx"],
 		},
 		module: {
 			rules: [

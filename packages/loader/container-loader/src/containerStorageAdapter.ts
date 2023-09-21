@@ -5,7 +5,8 @@
 
 import { IDisposable } from "@fluidframework/core-interfaces";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { assert, bufferToString, stringToBuffer } from "@fluidframework/common-utils";
+import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
 import {
 	FetchSource,
@@ -229,6 +230,14 @@ class BlobOnlyStorage implements IDocumentStorageService {
 	}
 }
 
+// runtime will write a tree to the summary containing "attachment" type entries
+// which reference attachment blobs by ID, along with a blob containing the blob redirect table.
+// However, some drivers do not support the "attachment" type and will convert them to "blob" type
+// entries. We want to avoid saving these to reduce the size of stashed change blobs, but we
+// need to make sure the blob redirect table is saved.
+const blobsTreeName = ".blobs";
+const redirectTableBlobName = ".redirectTable";
+
 /**
  * Get blob contents of a snapshot tree from storage (or, ideally, cache)
  */
@@ -245,10 +254,15 @@ async function getBlobContentsFromTreeCore(
 	tree: ISnapshotTree,
 	blobs: ISerializableBlobContents,
 	storage: IDocumentStorageService,
+	root = true,
 ) {
 	const treePs: Promise<any>[] = [];
-	for (const subTree of Object.values(tree.trees)) {
-		treePs.push(getBlobContentsFromTreeCore(subTree, blobs, storage));
+	for (const [key, subTree] of Object.entries(tree.trees)) {
+		if (root && key === blobsTreeName) {
+			treePs.push(getBlobManagerTreeFromTree(subTree, blobs, storage));
+		} else {
+			treePs.push(getBlobContentsFromTreeCore(subTree, blobs, storage, false));
+		}
 	}
 	for (const id of Object.values(tree.blobs)) {
 		const blob = await storage.readBlob(id);
@@ -256,6 +270,18 @@ async function getBlobContentsFromTreeCore(
 		blobs[id] = bufferToString(blob, "utf8");
 	}
 	return Promise.all(treePs);
+}
+
+// save redirect table from .blobs tree but nothing else
+async function getBlobManagerTreeFromTree(
+	tree: ISnapshotTree,
+	blobs: ISerializableBlobContents,
+	storage: IDocumentStorageService,
+) {
+	const id = tree.blobs[redirectTableBlobName];
+	const blob = await storage.readBlob(id);
+	// ArrayBufferLike will not survive JSON.stringify()
+	blobs[id] = bufferToString(blob, "utf8");
 }
 
 /**
@@ -272,9 +298,14 @@ export function getBlobContentsFromTreeWithBlobContents(
 function getBlobContentsFromTreeWithBlobContentsCore(
 	tree: ISnapshotTreeWithBlobContents,
 	blobs: ISerializableBlobContents,
+	root = true,
 ) {
-	for (const subTree of Object.values(tree.trees)) {
-		getBlobContentsFromTreeWithBlobContentsCore(subTree, blobs);
+	for (const [key, subTree] of Object.entries(tree.trees)) {
+		if (root && key === blobsTreeName) {
+			getBlobManagerTreeFromTreeWithBlobContents(subTree, blobs);
+		} else {
+			getBlobContentsFromTreeWithBlobContentsCore(subTree, blobs, false);
+		}
 	}
 	for (const id of Object.values(tree.blobs)) {
 		const blob = tree.blobsContents[id];
@@ -282,4 +313,16 @@ function getBlobContentsFromTreeWithBlobContentsCore(
 		// ArrayBufferLike will not survive JSON.stringify()
 		blobs[id] = bufferToString(blob, "utf8");
 	}
+}
+
+// save redirect table from .blobs tree but nothing else
+function getBlobManagerTreeFromTreeWithBlobContents(
+	tree: ISnapshotTreeWithBlobContents,
+	blobs: ISerializableBlobContents,
+) {
+	const id = tree.blobs[redirectTableBlobName];
+	const blob = tree.blobsContents[id];
+	assert(blob !== undefined, 0x70f /* Blob must be present in blobsContents */);
+	// ArrayBufferLike will not survive JSON.stringify()
+	blobs[id] = bufferToString(blob, "utf8");
 }

@@ -7,6 +7,11 @@
 		"timestamp": true,
 		"label": "winston"
 	},
+	"lumberjack": {
+		"options": {
+			"enableGlobalTelemetryContext": true
+		}
+	},
 	"mongo": {
 		"operationsDbEndpoint": "mongodb://mongodb:27017",
 		"globalDbEndpoint": "mongodb://mongodb:27017",
@@ -54,8 +59,13 @@
 	},
 	"checkpoints": {
 		"localCheckpointEnabled": true,
+		"checkpointsTTLInSeconds": 864000,
 		"kafkaCheckpointOnReprocessingOp": false,
 		"ignoreCheckpointFlushException": false
+	},
+	"apiCounters": {
+		"fetchTenantKeyMetricMs": 60000,
+		"riddlerStorageRequestMetricMs": 60000
 	},
 	"alfred": {
 		"kafkaClientId": "alfred",
@@ -65,6 +75,7 @@
 		"numberOfMessagesPerTrace": 100,
 		"sessionStickinessDurationMs": 3600000,
 		"enableConnectionCountLogging": false,
+		"ignoreEphemeralFlag": true,
 		"throttling": {
 			"perTenantGroup1": {
 				"createDoc": "disabled",
@@ -118,7 +129,8 @@
 		},
 		"jwtTokenCache": {
 			"enable": true
-		}
+		},
+		"getDeltasRequestMaxOpsRange": 2000
 	},
 	"client": {
 		"type": "browser",
@@ -152,7 +164,8 @@
 		"getDeltasViaAlfred": true,
 		"verifyLastOpPersistence": false,
 		"restartOnCheckpointFailure": true,
-		"disableTransientTenantFiltering": true
+		"disableTransientTenantFiltering": true,
+		"maxLogtailLength": 2000
 	},
 	"system": {
 		"httpServer": {
@@ -168,7 +181,8 @@
 	},
 	"shared": {
 		"transientTenants": [],
-		"perTenantGroup1": []
+		"perTenantGroup1": [],
+		"runnerServerCloseTimeoutMs": 30000
 	},
 	"auth": {
 		"endpoint": "http://riddler:5000",
@@ -195,10 +209,6 @@
 		"serviceGraph": {
 			"group": "serviceGraph",
 			"topic": "deltas"
-		},
-		"foreman": {
-			"group": "foreman",
-			"topic": "deltas"
 		}
 	},
 	"scriptorium": {
@@ -217,24 +227,6 @@
 		"groupId": "copier",
 		"checkpointBatchSize": 1,
 		"checkpointTimeIntervalMsec": 1000
-	},
-	"foreman": {
-		"alfred": "http://alfred:3000",
-		"queues": ["paparazziQueue", "augloopQueue", "headlessQueue"],
-		"permissions": {
-			"paparazziQueue": ["snapshot", "spell", "intel", "translation"],
-			"augloopQueue": ["augmentation"],
-			"headlessQueue": [
-				"chain-snapshot",
-				"chain-intel",
-				"chain-translation",
-				"chain-spell",
-				"chain-cache"
-			]
-		}
-	},
-	"paparazzi": {
-		"queue": "paparazziQueue"
 	},
 	"rabbitmq": {
 		"connectionString": "amqp://rabbitmq"

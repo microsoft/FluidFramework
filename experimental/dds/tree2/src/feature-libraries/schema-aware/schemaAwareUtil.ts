@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Value, ValueSchema } from "../../core";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { Value, ValueSchema, PrimitiveValueSchema } from "../../core";
 import { areSafelyAssignable, isAssignableTo, requireTrue } from "../../util";
 import { PrimitiveValue } from "../contextuallyTyped";
 
@@ -12,18 +13,18 @@ import { PrimitiveValue } from "../contextuallyTyped";
  * @alpha
  */
 export type TypedValue<TValue extends ValueSchema> = {
-	[ValueSchema.Nothing]: undefined;
 	[ValueSchema.Number]: number;
 	[ValueSchema.String]: string;
 	[ValueSchema.Boolean]: boolean;
-	[ValueSchema.Serializable]: Value;
+	[ValueSchema.FluidHandle]: IFluidHandle;
 }[TValue];
 
 /**
- * {@link ValueSchema} for privative types.
+ * {@link ValueSchema} | undefined to allowed types for that schema.
  * @alpha
  */
-export type PrimitiveValueSchema = ValueSchema.Number | ValueSchema.String | ValueSchema.Boolean;
+export type TypedValueOrUndefined<TValue extends ValueSchema | undefined> =
+	TValue extends ValueSchema ? TypedValue<TValue> : undefined;
 
 {
 	type PrimitiveValue2 = TypedValue<PrimitiveValueSchema>;

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { ISnapshotContents } from "./odspPublicUtils";
@@ -84,8 +84,11 @@ function readOpsSection(node: NodeTypes) {
 	for (let i = 0; i < records.deltas.length; ++i) {
 		ops.push(JSON.parse(records.deltas.getString(i)));
 	}
+	// Due to a bug at service side, in an edge case service was serializing deltas even
+	// when there are no ops. So just make the code resilient to that bug. Service has also
+	// fixed that bug.
 	assert(
-		records.firstSequenceNumber.valueOf() === ops[0].sequenceNumber,
+		ops.length === 0 || records.firstSequenceNumber.valueOf() === ops[0].sequenceNumber,
 		0x280 /* "Validate first op seq number" */,
 	);
 	return ops;
@@ -212,7 +215,7 @@ function readSnapshotSection(node: NodeTypes) {
 /**
  * Converts snapshot from binary compact representation to tree/blobs/ops.
  * @param buffer - Compact snapshot to be parsed into tree/blobs/ops.
- * @returns - tree, blobs and ops from the snapshot.
+ * @returns Tree, blobs and ops from the snapshot.
  */
 export function parseCompactSnapshotResponse(
 	buffer: Uint8Array,

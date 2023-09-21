@@ -165,8 +165,8 @@ export class ScriptoriumLambda implements IPartitionLambda {
 			}
 		}
 
-		Promise.all(allProcessed).then(
-			() => {
+		Promise.all(allProcessed)
+			.then(() => {
 				this.current.clear();
 				status = ScriptoriumStatus.ProcessingComplete;
 				metric?.setProperty("timestampProcessingComplete", new Date().toISOString());
@@ -196,8 +196,8 @@ export class ScriptoriumLambda implements IPartitionLambda {
 
 				// continue with next batch
 				this.sendPending();
-			},
-			(error) => {
+			})
+			.catch((error) => {
 				// catches error if any of the promises failed in Promise.all, i.e. any of the ops failed to write to db
 				status = ScriptoriumStatus.ProcessingFailed;
 				metric?.setProperty("timestampProcessingFailed", new Date().toISOString());
@@ -206,8 +206,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 
 				// Restart scriptorium
 				this.context.error(error, { restart: true });
-			},
-		);
+			});
 	}
 
 	private logErrorTelemetry(

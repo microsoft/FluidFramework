@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/eslint-config-fluid",
-	"version": "2.0.0",
+	"version": "3.0.0",
 	"description": "Shareable ESLint config for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -12,7 +12,7 @@
 	"author": "Microsoft and contributors",
 	"main": "index.js",
 	"scripts": {
-		"build": "npm run print-config",
+		"build": "npm run print-config && npm run prettier",
 		"cleanup-printed-configs": "node ./scripts/cleanup-printed-configs.js ./printed-configs",
 		"format": "npm run prettier:fix",
 		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
@@ -26,30 +26,29 @@
 		"print-config:test": "eslint --config ./index.js --print-config ./src/test/file.ts > ./printed-configs/test.json"
 	},
 	"dependencies": {
-		"@rushstack/eslint-patch": "~1.1.0",
-		"@rushstack/eslint-plugin": "~0.8.5",
-		"@rushstack/eslint-plugin-security": "~0.2.5",
-		"@typescript-eslint/eslint-plugin": "~5.55.0",
-		"@typescript-eslint/parser": "~5.55.0",
-		"eslint-config-prettier": "~8.5.0",
+		"@rushstack/eslint-patch": "~1.4.0",
+		"@rushstack/eslint-plugin": "~0.13.0",
+		"@rushstack/eslint-plugin-security": "~0.7.0",
+		"@typescript-eslint/eslint-plugin": "~6.7.2",
+		"@typescript-eslint/parser": "~6.7.2",
+		"eslint-config-prettier": "~9.0.0",
 		"eslint-plugin-eslint-comments": "~3.2.0",
-		"eslint-plugin-import": "~2.25.4",
-		"eslint-plugin-jsdoc": "~39.3.0",
-		"eslint-plugin-promise": "~6.0.0",
-		"eslint-plugin-react": "~7.28.0",
+		"eslint-plugin-import": "~2.28.1",
+		"eslint-plugin-jsdoc": "~46.8.1",
+		"eslint-plugin-promise": "~6.1.1",
+		"eslint-plugin-react": "~7.33.2",
 		"eslint-plugin-react-hooks": "~4.6.0",
-		"eslint-plugin-tsdoc": "~0.2.14",
-		"eslint-plugin-unicorn": "~40.0.0",
-		"eslint-plugin-unused-imports": "~2.0.0"
+		"eslint-plugin-tsdoc": "~0.2.17",
+		"eslint-plugin-unicorn": "~48.0.1",
+		"eslint-plugin-unused-imports": "~3.0.0"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "^1.2.0",
-		"concurrently": "^6.2.0",
-		"eslint": "~8.6.0",
-		"node-jq": "^2.3.3",
-		"prettier": "~2.6.2",
+		"@fluidframework/build-common": "^2.0.0",
+		"concurrently": "^8.2.1",
+		"eslint": "~8.49.0",
+		"prettier": "~3.0.3",
 		"sort-json": "^2.0.1",
 		"typescript": "~4.5.5"
 	},
-	"packageManager": "pnpm@7.32.3+sha512.c28d73f0d82a6c4712a40b91aa43d7397e119b16f35e5e75fe9b7e8fd4f2fc6dfbb68bb3ffac3473a958bbafa7888b79ec384ad122537378089a3a2a19b9900e"
+	"packageManager": "pnpm@7.33.5+sha512.4e499f22fffe5845aa8f9463e1386b2d72c3134e0ebef9409360ad844fef0290e82b479b32eb2ec0f30e56607e1820c22167829fd62656d41a8fd0cc4a0f4267"
 }

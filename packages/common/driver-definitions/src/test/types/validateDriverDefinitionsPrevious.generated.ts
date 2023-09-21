@@ -64,6 +64,54 @@ use_old_EnumDeclaration_DriverErrorType(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_DriverErrorTypes": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_DriverErrorTypes():
+    TypeOnly<typeof old.DriverErrorTypes>;
+declare function use_current_VariableDeclaration_DriverErrorTypes(
+    use: TypeOnly<typeof current.DriverErrorTypes>);
+use_current_VariableDeclaration_DriverErrorTypes(
+    get_old_VariableDeclaration_DriverErrorTypes());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_DriverErrorTypes": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_DriverErrorTypes():
+    TypeOnly<typeof current.DriverErrorTypes>;
+declare function use_old_VariableDeclaration_DriverErrorTypes(
+    use: TypeOnly<typeof old.DriverErrorTypes>);
+use_old_VariableDeclaration_DriverErrorTypes(
+    get_current_VariableDeclaration_DriverErrorTypes());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_DriverErrorTypes": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_DriverErrorTypes():
+    TypeOnly<old.DriverErrorTypes>;
+declare function use_current_TypeAliasDeclaration_DriverErrorTypes(
+    use: TypeOnly<current.DriverErrorTypes>);
+use_current_TypeAliasDeclaration_DriverErrorTypes(
+    get_old_TypeAliasDeclaration_DriverErrorTypes());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_DriverErrorTypes": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_DriverErrorTypes():
+    TypeOnly<current.DriverErrorTypes>;
+declare function use_old_TypeAliasDeclaration_DriverErrorTypes(
+    use: TypeOnly<old.DriverErrorTypes>);
+use_old_TypeAliasDeclaration_DriverErrorTypes(
+    get_current_TypeAliasDeclaration_DriverErrorTypes());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "EnumDeclaration_DriverHeader": {"forwardCompat": false}
 */
 declare function get_old_EnumDeclaration_DriverHeader():
@@ -544,30 +592,6 @@ use_old_InterfaceDeclaration_IDriverHeader(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IFluidResolvedUrl": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IFluidResolvedUrl():
-    TypeOnly<old.IFluidResolvedUrl>;
-declare function use_current_InterfaceDeclaration_IFluidResolvedUrl(
-    use: TypeOnly<current.IFluidResolvedUrl>);
-use_current_InterfaceDeclaration_IFluidResolvedUrl(
-    get_old_InterfaceDeclaration_IFluidResolvedUrl());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IFluidResolvedUrl": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IFluidResolvedUrl():
-    TypeOnly<current.IFluidResolvedUrl>;
-declare function use_old_InterfaceDeclaration_IFluidResolvedUrl(
-    use: TypeOnly<old.IFluidResolvedUrl>);
-use_old_InterfaceDeclaration_IFluidResolvedUrl(
-    get_current_InterfaceDeclaration_IFluidResolvedUrl());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IGenericNetworkError": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IGenericNetworkError():
@@ -616,26 +640,26 @@ use_old_InterfaceDeclaration_ILocationRedirectionError(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_IResolvedUrl": {"forwardCompat": false}
+* "InterfaceDeclaration_IResolvedUrl": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_IResolvedUrl():
+declare function get_old_InterfaceDeclaration_IResolvedUrl():
     TypeOnly<old.IResolvedUrl>;
-declare function use_current_TypeAliasDeclaration_IResolvedUrl(
+declare function use_current_InterfaceDeclaration_IResolvedUrl(
     use: TypeOnly<current.IResolvedUrl>);
-use_current_TypeAliasDeclaration_IResolvedUrl(
-    get_old_TypeAliasDeclaration_IResolvedUrl());
+use_current_InterfaceDeclaration_IResolvedUrl(
+    get_old_InterfaceDeclaration_IResolvedUrl());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_IResolvedUrl": {"backCompat": false}
+* "InterfaceDeclaration_IResolvedUrl": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_IResolvedUrl():
+declare function get_current_InterfaceDeclaration_IResolvedUrl():
     TypeOnly<current.IResolvedUrl>;
-declare function use_old_TypeAliasDeclaration_IResolvedUrl(
+declare function use_old_InterfaceDeclaration_IResolvedUrl(
     use: TypeOnly<old.IResolvedUrl>);
-use_old_TypeAliasDeclaration_IResolvedUrl(
-    get_current_TypeAliasDeclaration_IResolvedUrl());
+use_old_InterfaceDeclaration_IResolvedUrl(
+    get_current_InterfaceDeclaration_IResolvedUrl());
 
 /*
 * Validate forward compat by using old type in place of current type

@@ -32,6 +32,7 @@ import {
 import {
 	basicChunkTree,
 	defaultChunkPolicy,
+	makeTreeChunker,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree";
 import { jsonRoot } from "../../../domains";
@@ -53,9 +54,10 @@ function bench(
 ) {
 	const schemaCollection = new SchemaBuilder(
 		"JsonCursor benchmark",
+		{},
 		jsonSchema,
 	).intoDocumentSchema(SchemaBuilder.fieldOptional(...jsonRoot));
-	const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, schemaCollection);
+	const schema = new InMemoryStoredSchemaRepository(schemaCollection);
 	for (const { name, getJson, dataConsumer } of data) {
 		describe(name, () => {
 			let json: JsonCompatible;
@@ -92,7 +94,7 @@ function bench(
 				[
 					"object-forest Cursor",
 					() => {
-						const forest = buildForest(schema);
+						const forest = buildForest();
 						initializeForest(forest, [singleTextCursor(encodedTree)]);
 						const cursor = forest.allocateCursor();
 						moveToDetachedField(forest, cursor);
@@ -113,7 +115,9 @@ function bench(
 				[
 					"chunked-forest Cursor",
 					() => {
-						const forest = buildChunkedForest(schema);
+						const forest = buildChunkedForest(
+							makeTreeChunker(schema, defaultSchemaPolicy),
+						);
 						initializeForest(forest, [singleTextCursor(encodedTree)]);
 						const cursor = forest.allocateCursor();
 						moveToDetachedField(forest, cursor);

@@ -5,12 +5,13 @@
 
 import { strict as assert } from "assert";
 import { IClient } from "@fluidframework/protocol-definitions";
+import { ISocketStorageDiscovery } from "@fluidframework/odsp-driver-definitions";
 import { stub, useFakeTimers, SinonFakeTimers } from "sinon";
 import * as odspDocumentDeltaConnection from "../odspDocumentDeltaConnection";
 import * as joinSession from "../vroom";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory";
 import { LocalPersistentCache } from "../odspCache";
-import { ISocketStorageDiscovery, OdspFluidDataStoreLocator } from "../contractsPublic";
+import { OdspFluidDataStoreLocator } from "../contractsPublic";
 import { createOdspUrl } from "../createOdspUrl";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { OdspDocumentService } from "../odspDocumentService";

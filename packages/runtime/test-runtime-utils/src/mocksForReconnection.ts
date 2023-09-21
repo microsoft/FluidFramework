@@ -5,16 +5,17 @@
 
 import { v4 as uuid } from "uuid";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	IMockContainerRuntimePendingMessage,
 	MockContainerRuntime,
 	MockContainerRuntimeFactory,
+	IMockContainerRuntimeOptions,
 	MockFluidDataStoreRuntime,
 } from "./mocks";
 
 /**
- * Specalized implementation of MockContainerRuntime for testing ops during reconnection.
+ * Specialized implementation of MockContainerRuntime for testing ops during reconnection.
  */
 export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 	/**
@@ -54,9 +55,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 		}
 
 		// Let the DDSes know that the connection state changed.
-		this.deltaConnections.forEach((dc) => {
-			dc.setConnectionState(this.connected);
-		});
+		this.dataStoreRuntime.setConnectionState(this.connected, this.clientId);
 	}
 
 	private _connected = true;
@@ -64,12 +63,13 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 	constructor(
 		dataStoreRuntime: MockFluidDataStoreRuntime,
 		factory: MockContainerRuntimeFactoryForReconnection,
+		runtimeOptions: IMockContainerRuntimeOptions = {},
 		overrides?: { minimumSequenceNumber?: number },
 	) {
-		super(dataStoreRuntime, factory, overrides);
+		super(dataStoreRuntime, factory, runtimeOptions, overrides);
 	}
 
-	public process(message: ISequencedDocumentMessage) {
+	override process(message: ISequencedDocumentMessage) {
 		if (this.connected) {
 			super.process(message);
 		} else {
@@ -77,7 +77,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 		}
 	}
 
-	public submit(messageContent: any, localOpMetadata: unknown) {
+	override submit(messageContent: any, localOpMetadata: unknown) {
 		// Submit messages only if we are connection, otherwise, just add it to the pending queue.
 		if (this.connected) {
 			return super.submit(messageContent, localOpMetadata);
@@ -96,25 +96,24 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 				pendingMessage !== undefined,
 				"this is impossible due to the above length check",
 			);
-			this.deltaConnections.forEach((dc) => {
-				dc.reSubmit(pendingMessage.content, pendingMessage.localOpMetadata);
-			});
+			this.dataStoreRuntime.reSubmit(pendingMessage.content, pendingMessage.localOpMetadata);
 			messageCount--;
 		}
 	}
 }
 
 /**
- * Specalized implementation of MockContainerRuntimeFactory for testing ops during reconnection.
+ * Specialized implementation of MockContainerRuntimeFactory for testing ops during reconnection.
  */
 export class MockContainerRuntimeFactoryForReconnection extends MockContainerRuntimeFactory {
-	public createContainerRuntime(
+	override createContainerRuntime(
 		dataStoreRuntime: MockFluidDataStoreRuntime,
 		overrides?: { minimumSequenceNumber?: number },
 	): MockContainerRuntimeForReconnection {
 		const containerRuntime = new MockContainerRuntimeForReconnection(
 			dataStoreRuntime,
 			this,
+			this.runtimeOptions,
 			overrides,
 		);
 		this.runtimes.push(containerRuntime);

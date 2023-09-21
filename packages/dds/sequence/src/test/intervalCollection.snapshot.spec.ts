@@ -12,13 +12,8 @@ import {
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
-import {
-	IIntervalCollection,
-	intervalLocatorFromEndpoint,
-	IntervalStickiness,
-	IntervalType,
-	SequenceInterval,
-} from "../intervalCollection";
+import { IIntervalCollection, intervalLocatorFromEndpoint } from "../intervalCollection";
+import { IntervalStickiness, IntervalType, SequenceInterval } from "../intervals";
 import { assertIntervals } from "./intervalUtils";
 
 async function loadSharedString(
@@ -30,7 +25,7 @@ async function loadSharedString(
 	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 	dataStoreRuntime.deltaManager.lastSequenceNumber = containerRuntimeFactory.sequenceNumber;
 	const services = {
-		deltaConnection: containerRuntime.createDeltaConnection(),
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: MockStorage.createFromSummary(summary),
 	};
 	const sharedString = new SharedString(dataStoreRuntime, id, SharedStringFactory.Attributes);
@@ -44,9 +39,9 @@ async function getSingleIntervalSummary(): Promise<{ summary: ISummaryTree; seq:
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	dataStoreRuntime.local = false;
 	dataStoreRuntime.options = { intervalStickinessEnabled: true };
-	const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+	containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
-		deltaConnection: containerRuntime1.createDeltaConnection(),
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
 	const sharedString = new SharedString(dataStoreRuntime, "", SharedStringFactory.Attributes);

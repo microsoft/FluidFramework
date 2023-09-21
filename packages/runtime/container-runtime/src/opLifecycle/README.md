@@ -51,6 +51,26 @@ and verifying that the following expectation changes won't have any effects:
 -   client sequence numbers on batch messages can only be used to order messages with the same sequenceNumber
 -   requires all ops to be processed by runtime layer (version "2.0.0-internal.1.2.0" or later https://github.com/microsoft/FluidFramework/pull/11832)
 
+Grouped batching may become problematic for batches which contain reentrant ops. This is the case when changes are made to a DDS inside a DDS 'onChanged' event handler. This means that the reentrant op will have a different reference sequence number than the rest of the ops in the batch, resulting in a different view of the state of the data model.
+
+Therefore, when grouped batching is enabled, all batches with reentrant ops are rebased to the current reference sequence number and resubmitted to the data stores so that all ops are in agreement about the state of the data model and ensure eventual consistency.
+
+### How to enable
+
+**This feature is disabled by default, currently considered experimental and not ready for production usage.**
+
+If all prerequisites in the previous section are met, enabling the feature can be done via the `IContainerRuntimeOptions` as following:
+
+```
+    const runtimeOptions: IContainerRuntimeOptions = {
+        (...)
+        enableGroupedBatching: true,
+        (...)
+    }
+```
+
+In case of emergency grouped batching can be disabled at runtime, using feature gates. If `"Fluid.ContainerRuntime.DisableGroupedBatching"` is set to `true`, it will disable grouped batching if enabled from `IContainerRuntimeOptions` in the code.
+
 ## Chunking for compression
 
 **Op chunking for compression targets payloads which exceed the max batch size after compression.** So, only payloads which are already compressed. By default, the feature is enabled.
@@ -192,8 +212,6 @@ On the receiving end, the client will accumulate chunks 1 and 2 and keep them in
 
 ## How grouped batching works
 
-**Note: There are plans to replace empty ops with something more efficient when doing grouped batching AB#4092**
-
 Given the following baseline batch:
 
 ```
@@ -203,68 +221,70 @@ Given the following baseline batch:
 +---------------+---------------+---------------+---------------+---------------+
 ```
 
-Compressed batch:
-
-```
-+--------------------+-----------------+-----------------+-----------------+-----------------+
-| Op 1               | Op 2            | Op 3            | Op 4            | Op 5            |
-| Contents: "abcde"  | Contents: empty | Contents: empty | Contents: empty | Contents: empty |
-| Compression: 'lz4' |                 |                 |                 |                 |
-+--------------------+-----------------+-----------------+-----------------+-----------------+
-```
-
 Grouped batch:
 
 ```
-+---------------------------------------------------------------------------------------------------------------------------------+
-| Op 1                   Contents: +--------------------+-----------------+-----------------+-----------------+-----------------+ |
-| SeqNum: 1                        | Op 1               | Op 2            | Op 3            | Op 4            | Op 5            | |
-| Type: "groupedBatch"             | Contents: "abcde"  | Contents: empty | Contents: empty | Contents: empty | Contents: empty | |
-|                                  | Compression: 'lz4' |                 |                 |                 |                 | |
-|                                  +--------------------+-----------------+-----------------+-----------------+-----------------+ |
-+---------------------------------------------------------------------------------------------------------------------------------+
++---------------------------------------------------------------------------------------------------------------------+
+| Op 1                   Contents: +----------------+---------------+---------------+---------------+---------------+ |
+| Type: "groupedBatch"             | Op 1           | Op 2          | Op 3          | Op 4          | Op 5          | |
+|                                  | Contents: "a"  | Contents: "b" | Contents: "c" | Contents: "d" | Contents: "e" | |
+|                                  +----------------+---------------+---------------+---------------+---------------+ |
++---------------------------------------------------------------------------------------------------------------------+
+```
+
+Compressed batch:
+
+```
++-------------------------------------------------------------------------------------------------------------------------+
+| Op 1                   Contents: +------------------------------------------------------------------------------------+ |
+| Compression: 'lz4'               | Type: "groupedBatch"                                                               | |
+|                                  | +----------------+---------------+---------------+---------------+---------------+ | |
+|                                  | | Op 1           | Op 2          | Op 3          | Op 4          | Op 5          | | |
+|                                  | | Contents: "a"  | Contents: "b" | Contents: "c" | Contents: "d" | Contents: "e" | | |
+|                                  | +----------------+---------------+---------------+---------------+---------------+ | |
+|                                  +------------------------------------------------------------------------------------+ |
++-------------------------------------------------------------------------------------------------------------------------+
 ```
 
 Can produce the following chunks:
 
 ```
-+-------------------------------------------------+
-| Chunk 1/2    Contents: +----------------------+ |
-| SeqNum: 1              |  +-----------------+ | |
-|                        |  | Contents: "abc" | | |
-|                        |  +-----------------+ | |
-|                        +----------------------+ |
-+-------------------------------------------------+
++------------------------------------------------+
+| Chunk 1/2    Contents: +---------------------+ |
+|                        | +-----------------+ | |
+|                        | | Contents: "abc" | | |
+|                        | +-----------------+ | |
+|                        +---------------------+ |
++------------------------------------------------+
 ```
 
 ```
-+--------------------------------------------------------------------------------------------------------------------------+
-| Chunk 2/2    Contents: +---------------------------------------------------------------------------------------------+ | |
-| SeqNum: 2              |  +----------------+-----------------+-----------------+-----------------+-----------------+ | | |
-|                        |  | Contents: "de" | Contents: empty | Contents: empty | Contents: empty | Contents: empty | | | |
-|                        |  +----------------+-----------------+-----------------+-----------------+-----------------+ | | |
-|                        +---------------------------------------------------------------------------------------------+ | |
-+--------------------------------------------------------------------------------------------------------------------------+
++-----------------------------------------------+
+| Chunk 2/2    Contents: +--------------------+ |
+|                        | +----------------+ | |
+|                        | | Contents: "de" | | |
+|                        | +----------------+ | |
+|                        +--------------------+ |
++-----------------------------------------------+
 ```
 
 -   Send to service
 -   Service acks ops sent
 -   Receive chunks from service
--   Recompile to the grouped batch step
+-   Recompile to the compression step
+
+Decompressed batch:
+
+```
++---------------------------------------------------------------------------------------------------------------------+
+| Op 1                   Contents: +----------------+---------------+---------------+---------------+---------------+ |
+| SeqNum: 2                        | Op 1           | Op 2            | Op 3        | Op 4          | Op 5          | |
+| Type: "groupedBatch"             | Contents: "a"  | Contents: "b" | Contents: "c" | Contents: "d" | Contents: "e" | |
+|                                  +----------------+---------------+---------------+---------------+---------------+ |
++---------------------------------------------------------------------------------------------------------------------+
+```
 
 Ungrouped batch:
-
-```
-+--------------------+-----------------+-----------------+-----------------+-----------------+
-| Op 1               | Op 2            | Op 3            | Op 4            | Op 5            |
-| Contents: "abcde"  | Contents: empty | Contents: empty | Contents: empty | Contents: empty |
-| SeqNum: 2          | SeqNum: 2       | SeqNum: 2       | SeqNum: 2       | SeqNum: 2       |
-| ClientSeqNum: 1    | ClientSeqNum: 2 | ClientSeqNum: 3 | ClientSeqNum: 4 | ClientSeqNum: 5 |
-| Compression: 'lz4' |                 |                 |                 |                 |
-+--------------------+-----------------+-----------------+-----------------+-----------------+
-```
-
-Uncompressed batch:
 
 ```
 +-----------------+-----------------+-----------------+-----------------+-----------------+

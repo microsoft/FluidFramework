@@ -85,6 +85,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 			this.documentDeltaConnectionsMap,
 			this.policies,
 			this.innerDocumentService,
+			logger,
 		);
 	}
 

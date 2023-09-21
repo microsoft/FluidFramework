@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TelemetryEventPropertyType } from "@fluidframework/common-definitions";
+import { TelemetryEventPropertyType } from "@fluidframework/core-interfaces";
 import {
 	SummaryTree,
 	ISummaryTree,
@@ -56,7 +56,8 @@ export interface ISummarizeResult {
  * the data store summaries are wrapped around an array of labels identified by pathPartsForChildren.
  *
  * @example
- * ```
+ *
+ * ```typescript
  * id:""
  * pathPartsForChildren: ["path1"]
  * stats: ...

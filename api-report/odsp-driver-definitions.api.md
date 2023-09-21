@@ -6,7 +6,7 @@
 
 import { DriverError } from '@fluidframework/driver-definitions';
 import { IDriverErrorBase } from '@fluidframework/driver-definitions';
-import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
+import { IResolvedUrl } from '@fluidframework/driver-definitions';
 
 // @public (undocumented)
 export type CacheContentType = "snapshot" | "ops";
@@ -61,7 +61,7 @@ export interface IEntry {
 // @public (undocumented)
 export interface IFileEntry {
     docId: string;
-    resolvedUrl: IFluidResolvedUrl;
+    resolvedUrl: IResolvedUrl;
 }
 
 // @public (undocumented)
@@ -81,7 +81,7 @@ export interface IOdspErrorAugmentations {
 }
 
 // @public (undocumented)
-export interface IOdspResolvedUrl extends IFluidResolvedUrl, IOdspUrlParts {
+export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
     // (undocumented)
     codeHint?: {
         containerPackageName?: string;
@@ -141,6 +141,18 @@ export interface IPersistedCache {
 }
 
 // @public
+export interface IProvideSessionAwareDriverFactory {
+    // (undocumented)
+    readonly IRelaySessionAwareDriverFactory: IRelaySessionAwareDriverFactory;
+}
+
+// @public
+export interface IRelaySessionAwareDriverFactory extends IProvideSessionAwareDriverFactory {
+    // (undocumented)
+    getRelayServiceSessionInfo(resolvedUrl: IResolvedUrl): Promise<ISocketStorageDiscovery | undefined>;
+}
+
+// @public
 export interface ISharingLink extends ISharingLinkKind {
     // (undocumented)
     webUrl: string;
@@ -169,12 +181,29 @@ export interface ISnapshotOptions {
 }
 
 // @public
+export interface ISocketStorageDiscovery {
+    // (undocumented)
+    deltaStorageUrl: string;
+    deltaStreamSocketUrl: string;
+    // (undocumented)
+    id: string;
+    refreshSessionDurationSeconds?: number;
+    // (undocumented)
+    runtimeTenantId?: string;
+    // (undocumented)
+    snapshotStorageUrl: string;
+    socketToken?: string;
+    // (undocumented)
+    tenantId: string;
+}
+
+// @public
 export const isTokenFromCache: (tokenResponse: string | TokenResponse | null) => boolean | undefined;
 
 // @public (undocumented)
 export type OdspError = IOdspError | (DriverError & IOdspErrorAugmentations);
 
-// @public
+// @public @deprecated
 export enum OdspErrorType {
     cannotCatchUp = "cannotCatchUp",
     fetchTimeout = "fetchTimeout",
@@ -186,6 +215,39 @@ export enum OdspErrorType {
     serviceReadOnly = "serviceReadOnly",
     snapshotTooBig = "snapshotTooBig"
 }
+
+// @public
+export const OdspErrorTypes: {
+    readonly outOfStorageError: "outOfStorageError";
+    readonly invalidFileNameError: "invalidFileNameError";
+    readonly snapshotTooBig: "snapshotTooBig";
+    readonly fetchTimeout: "fetchTimeout";
+    readonly fluidNotEnabled: "fluidNotEnabled";
+    readonly cannotCatchUp: "cannotCatchUp";
+    readonly serviceReadOnly: "serviceReadOnly";
+    readonly genericNetworkError: "genericNetworkError";
+    readonly authorizationError: "authorizationError";
+    readonly fileNotFoundOrAccessDeniedError: "fileNotFoundOrAccessDeniedError";
+    readonly offlineError: "offlineError";
+    readonly unsupportedClientProtocolVersion: "unsupportedClientProtocolVersion";
+    readonly writeError: "writeError";
+    readonly fetchFailure: "fetchFailure";
+    readonly fetchTokenError: "fetchTokenError";
+    readonly incorrectServerResponse: "incorrectServerResponse";
+    readonly fileOverwrittenInStorage: "fileOverwrittenInStorage";
+    readonly deltaStreamConnectionForbidden: "deltaStreamConnectionForbidden";
+    readonly locationRedirection: "locationRedirection"; /**
+    * SPO admin toggle: fluid service is not enabled.
+    */
+    readonly fluidInvalidSchema: "fluidInvalidSchema";
+    readonly fileIsLocked: "fileIsLocked";
+    readonly genericError: "genericError";
+    readonly throttlingError: "throttlingError";
+    readonly usageError: "usageError";
+};
+
+// @public (undocumented)
+export type OdspErrorTypes = typeof OdspErrorTypes[keyof typeof OdspErrorTypes];
 
 // @public
 export interface OdspResourceTokenFetchOptions extends TokenFetchOptions {

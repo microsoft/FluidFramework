@@ -2,8 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import path from "path";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
+import path from "node:path";
+
 import { Operation, SharedNothingFactory, baseModel } from "../sharedNothing";
 import { DDSFuzzModel, createDDSFuzzSuite } from "../../ddsFuzzHarness";
 
@@ -32,6 +33,7 @@ const model: DDSFuzzModel<SharedNothingFactory, Operation> = {
 
 createDDSFuzzSuite(model, {
 	defaultTestCount: 5,
+	detachedStartOptions: { enabled: false, attachProbability: 0 },
 	replay: 2,
 	// Note: this should point the replay to the source-controlled 2.json file in this directory.
 	saveFailures: { directory: path.join(__dirname, "../../../src/test/ddsSuiteCases") },

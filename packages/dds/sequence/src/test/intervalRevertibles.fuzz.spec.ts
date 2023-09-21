@@ -17,12 +17,13 @@ import {
 	DDSFuzzHarnessEvents,
 	DDSFuzzSuiteOptions,
 } from "@fluid-internal/test-dds-utils";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	IFluidDataStoreRuntime,
 	IChannelServices,
 	IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
+import { FlushMode } from "@fluidframework/runtime-definitions";
 import { SharedStringFactory } from "../sequenceFactory";
 import {
 	appendAddIntervalToRevertibles,
@@ -40,7 +41,7 @@ import {
 	makeReducer,
 	RevertibleSharedString,
 	isRevertibleSharedString,
-	OperationGenerationConfig,
+	IntervalOperationGenerationConfig,
 	RevertSharedStringRevertibles,
 } from "./intervalCollection.fuzzUtils";
 import { makeOperationGenerator } from "./intervalCollection.fuzz.spec";
@@ -83,9 +84,6 @@ emitter.on("clientCreate", (client) => {
 				appendAddIntervalToRevertibles(interval, channel.revertibles);
 			}
 		});
-		// Note: delete and change interval edits are disabled for now, and will be reenabled
-		// once bugs AB#4544 and AB#4543 (respectively) are resolved.
-
 		collection.on("deleteInterval", (interval, local, op) => {
 			if (local && !channel.isCurrentRevert) {
 				appendDeleteIntervalToRevertibles(channel, interval, channel.revertibles);
@@ -127,7 +125,7 @@ const intervalTestOptions: Partial<DDSFuzzSuiteOptions> = {
 		clientAddProbability: 0,
 	},
 	// Once the bugs are resolved, the test count will go back to being set at 100.
-	defaultTestCount: 10,
+	defaultTestCount: 100,
 	// Uncomment this line to replay a specific seed from its failure file:
 	// replay: 0,
 	saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
@@ -152,7 +150,7 @@ const optionsWithEmitter: Partial<DDSFuzzSuiteOptions> = {
 
 type ClientOpState = FuzzTestState;
 function operationGenerator(
-	optionsParam: OperationGenerationConfig,
+	optionsParam: IntervalOperationGenerationConfig,
 ): Generator<RevertOperation, ClientOpState> {
 	async function revertSharedStringRevertibles(
 		state: ClientOpState,
@@ -171,7 +169,7 @@ function operationGenerator(
 	};
 
 	assert(optionsParam.weights !== undefined);
-	const baseGenerator = makeOperationGenerator(optionsParam);
+	const baseGenerator = makeOperationGenerator(optionsParam, true);
 	return createWeightedGenerator<RevertOperation, ClientOpState>([
 		[revertSharedStringRevertibles, optionsParam.weights.revertWeight, hasRevertibles],
 		[baseGenerator, 1],
@@ -183,17 +181,18 @@ describe("IntervalCollection fuzz testing", () => {
 		workloadName: "interval collection with revertibles",
 		generatorFactory: () =>
 			take(
-				// Shortened op stream for now. Will be reset to 100 after bugs are resolved.
-				30,
+				100,
+				// Weights are explicitly defined here while bugs are being resolved. Once resolved,
+				// the weights in the defaultOptions parameter will be used.
 				operationGenerator({
 					weights: {
 						revertWeight: 2,
 						addText: 2,
-						removeRange: 0,
+						removeRange: 1,
 						addInterval: 2,
-						deleteInterval: 0,
-						changeInterval: 0,
-						changeProperties: 0,
+						deleteInterval: 2,
+						changeInterval: 2,
+						changeProperties: 2,
 					},
 				}),
 			),
@@ -206,6 +205,46 @@ describe("IntervalCollection fuzz testing", () => {
 	};
 
 	createDDSFuzzSuite(model, optionsWithEmitter);
+});
+
+describe("IntervalCollection fuzz testing with rebasing", () => {
+	const model: DDSFuzzModel<RevertibleFactory, RevertOperation, FuzzTestState> = {
+		workloadName: "interval collection with revertibles and rebasing",
+		generatorFactory: () =>
+			take(
+				100,
+				// Weights are explicitly defined here while bugs are being resolved. Once resolved,
+				// the weights in the defaultOptions parameter will be used.
+				operationGenerator({
+					weights: {
+						revertWeight: 2,
+						addText: 2,
+						removeRange: 1,
+						addInterval: 2,
+						deleteInterval: 2,
+						changeInterval: 2,
+						changeProperties: 2,
+					},
+				}),
+			),
+		reducer:
+			// makeReducer supports a param for logging output which tracks the provided intervalId over time:
+			// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
+			makeReducer(),
+		validateConsistency: assertEquivalentSharedStrings,
+		factory: new RevertibleFactory(),
+	};
+
+	createDDSFuzzSuite(model, {
+		...optionsWithEmitter,
+		rebaseProbability: 0.15,
+		containerRuntimeOptions: {
+			flushMode: FlushMode.TurnBased,
+			enableGroupedBatching: true,
+		},
+		// Skipped due to 0x54e, see AB#5337 or comment on "default interval collection" fuzz suite.
+		skip: [1, 4, 17, 21, 23, 27, 29, 30, 31, 32, 37, 41, 49, 51, 55, 69, 70, 86, 91, 93, 95],
+	});
 });
 
 describe.skip("minimize specific seed", () => {

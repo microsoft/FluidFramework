@@ -17,7 +17,13 @@
 	},
 	"git": {
 		"lib": {
-			"name": "nodegit"
+			"name": "isomorphic-git"
+		},
+		"filesystem": {
+			"name": "nodeFs"
+		},
+		"ephemeralfilesystem": {
+			"name": "redisFs"
 		},
 		"persistLatestFullSummary": false,
 		"repoPerDocEnabled": false,
@@ -25,6 +31,22 @@
 		"apiMetricsSamplingPeriod": 100,
 		"enableLowIoWrite": false,
 		"enableOptimizedInitialSummary": false,
-		"enableSlimGitInit": false
+		"enableSlimGitInit": false,
+		"enableRedisFsMetrics": true,
+		"redisApiMetricsSamplingPeriod": 0,
+		"enforceStrictPersistedFullSummaryReads": false
+	},
+	"redis": {
+		"host": "redis",
+		"port": 6379,
+		"connectTimeout": 10000,
+		"maxRetriesPerRequest": 20,
+		"enableAutoPipelining": false,
+		"enableOfflineQueue": true
+	},
+	"system": {
+		"httpServer": {
+			"connectionTimeoutMs": 0
+		}
 	}
 }

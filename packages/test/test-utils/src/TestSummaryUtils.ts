@@ -4,10 +4,10 @@
  */
 
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
 import {
-	IGCRuntimeOptions,
+	IOnDemandSummarizeOptions,
 	ISummarizer,
 	ISummaryRuntimeOptions,
 } from "@fluidframework/container-runtime";
@@ -18,8 +18,8 @@ import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider";
 import { mockConfigProvider } from "./TestConfigs";
 import { waitForContainerConnection } from "./containerUtils";
@@ -70,7 +70,7 @@ async function createSummarizerCore(
 const defaultSummaryOptions: ISummaryRuntimeOptions = {
 	summaryConfigOverrides: {
 		state: "disableHeuristics",
-		maxAckWaitTime: 10000,
+		maxAckWaitTime: 20000, // Some of the AFR tests take a long time to ack.
 		maxOpsSinceLastSummary: 7000,
 		initialSummarizerDelayMs: 0,
 	},
@@ -111,48 +111,25 @@ export async function createSummarizerFromFactory(
 /**
  * Creates a summarizer client from the given container and returns the summarizer client's IContainer and ISummarizer.
  * The ISummarizer can be used to generate on-demand summaries. The IContainer can be used to fetch data stores, etc.
+ *
+ * Can pass in a test config provider to enable/disable features.
  */
 export async function createSummarizer(
 	provider: ITestObjectProvider,
 	container: IContainer,
-	summaryVersion?: string,
-	gcOptions?: IGCRuntimeOptions,
-	configProvider: IConfigProviderBase = mockConfigProvider(),
-	logger?: ITelemetryBaseLogger,
-): Promise<{ container: IContainer; summarizer: ISummarizer }> {
-	const testContainerConfig: ITestContainerConfig = {
-		runtimeOptions: {
-			summaryOptions: defaultSummaryOptions,
-			gcOptions,
-		},
-		loaderProps: { configProvider, logger },
-	};
-	const loader = provider.makeTestLoader(testContainerConfig);
-	return createSummarizerCore(container, loader, summaryVersion);
-}
-
-/**
- * Creates a summarizer client from the given container and returns the summarizer client's IContainer and ISummarizer.
- * The ISummarizer can be used to generate on-demand summaries. The IContainer can be used to fetch data stores, etc.
- *
- * Can pass in a test config provider to enable/disable features.
- */
-export async function createSummarizerWithTestConfig(
-	provider: ITestObjectProvider,
-	container: IContainer,
-	config: ITestContainerConfig,
+	config?: ITestContainerConfig,
 	summaryVersion?: string,
 	logger?: ITelemetryBaseLogger,
 ): Promise<{ container: IContainer; summarizer: ISummarizer }> {
 	const testContainerConfig: ITestContainerConfig = {
 		...config,
 		runtimeOptions: {
-			...config.runtimeOptions,
-			summaryOptions: defaultSummaryOptions,
+			...config?.runtimeOptions,
+			summaryOptions: config?.runtimeOptions?.summaryOptions ?? defaultSummaryOptions,
 		},
 		loaderProps: {
-			...config.loaderProps,
-			configProvider: config.loaderProps?.configProvider ?? mockConfigProvider(),
+			...config?.loaderProps,
+			configProvider: config?.loaderProps?.configProvider ?? mockConfigProvider(),
 			logger,
 		},
 	};
@@ -163,13 +140,24 @@ export async function createSummarizerWithTestConfig(
 /**
  * Summarizes on demand and returns the summary tree, the version number and the reference sequence number of the
  * submitted summary.
+ *
+ * @param summarizer - The ISummarizer to use to summarize on demand
+ * @param inputs - Either the reason string or the full IOnDemandSummarizeOptions.
+ * Defaults to the reason "end-to-end test".
  */
-export async function summarizeNow(summarizer: ISummarizer, reason: string = "end-to-end test") {
-	const result = summarizer.summarizeOnDemand({ reason });
+export async function summarizeNow(
+	summarizer: ISummarizer,
+	inputs: string | IOnDemandSummarizeOptions = "end-to-end test",
+) {
+	const options: IOnDemandSummarizeOptions =
+		typeof inputs === "string" ? { reason: inputs } : inputs;
+	const result = summarizer.summarizeOnDemand(options);
 
 	const submitResult = await timeoutAwait(result.summarySubmitted);
 	if (!submitResult.success) {
-		submitResult.error.data = submitResult.data;
+		if (typeof submitResult.error !== "string") {
+			submitResult.error.data = submitResult.data;
+		}
 		throw submitResult.error;
 	}
 	assert(

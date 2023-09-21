@@ -9,7 +9,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { IntervalType } from "../intervalCollection";
+import { IntervalType } from "../intervals";
 import { SharedStringFactory } from "../sequenceFactory";
 import { SharedString } from "../sharedString";
 import { assertConsistent, Client } from "./intervalUtils";
@@ -27,7 +27,7 @@ function constructClients(
 		);
 		const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 		const services: IChannelServices = {
-			deltaConnection: containerRuntime.createDeltaConnection(),
+			deltaConnection: dataStoreRuntime.createDeltaConnection(),
 			objectStorage: new MockStorage(),
 		};
 

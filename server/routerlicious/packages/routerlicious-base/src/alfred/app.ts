@@ -23,6 +23,7 @@ import { DriverVersionHeaderName, IAlfredTenant } from "@fluidframework/server-s
 import {
 	alternativeMorganLoggerMiddleware,
 	bindCorrelationId,
+	bindTelemetryContext,
 	jsonMorganLoggerMiddleware,
 } from "@fluidframework/server-services-utils";
 import { RestLessServer } from "@fluidframework/server-services";
@@ -68,15 +69,20 @@ export function create(
 	app.set("trust proxy", 1);
 
 	app.use(compression());
+	app.use(bindTelemetryContext());
 	const loggerFormat = config.get("logger:morganFormat");
 	if (loggerFormat === "json") {
 		app.use(
 			jsonMorganLoggerMiddleware("alfred", (tokens, req, res) => {
-				return {
+				const additionalProperties: Record<string, any> = {
 					[HttpProperties.driverVersion]: tokens.req(req, res, DriverVersionHeaderName),
 					[BaseTelemetryProperties.tenantId]: getTenantIdFromRequest(req.params),
 					[BaseTelemetryProperties.documentId]: getIdFromRequest(req.params),
 				};
+				if (req.body?.isEphemeralContainer !== undefined) {
+					additionalProperties.isEphemeralContainer = req.body.isEphemeralContainer;
+				}
+				return additionalProperties;
 			}),
 		);
 	} else {

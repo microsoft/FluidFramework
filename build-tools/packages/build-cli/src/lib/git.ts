@@ -98,7 +98,7 @@ export class Repository {
 		localRef = "HEAD",
 	): Promise<string> {
 		const base = await this.gitClient
-			.fetch(["--all"]) // make sure we have the latest remote refs
+			.fetch([remote]) // make sure we have the latest remote refs
 			.raw("merge-base", `refs/remotes/${remote}/${branch}`, localRef);
 		return base;
 	}
@@ -187,16 +187,24 @@ export class Repository {
 	 * @returns An array of all commits between the base and head commits.
 	 */
 	public async revList(baseCommit: string, headCommit: string = "HEAD"): Promise<string[]> {
-		const result = await this.git.raw("rev-list", `${baseCommit}..${headCommit}`);
+		const result = await this.git.raw("rev-list", `${baseCommit}..${headCommit}`, "--reverse");
 		return result
 			.split(/\r?\n/)
 			.filter((value) => value !== null && value !== undefined && value !== "");
 	}
 
 	public async canMergeWithoutConflicts(commit: string): Promise<boolean> {
-		const mergeResult = await this.git.merge([commit, "--no-commit"]);
-		await this.git.merge(["--abort"]);
-		const canMerge = mergeResult.result === "success";
-		return canMerge;
+		let mergeResult;
+		try {
+			console.log(`Checking merge conflicts for: ${commit}`);
+			mergeResult = await this.git.merge([commit, "--no-commit", "--no-ff"]);
+			await this.git.merge(["--abort"]);
+		} catch {
+			console.log(`Merge conflicts exists for: ${commit}`);
+			await this.git.merge(["--abort"]);
+			return false;
+		}
+
+		return mergeResult.result === "success";
 	}
 }

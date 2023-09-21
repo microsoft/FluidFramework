@@ -20,7 +20,7 @@ describe('RevisionValueCache', () => {
 	it('cannot be created with a negative retention window', () => {
 		assert.throws(
 			() => new RevisionValueCache<DummyValue>(1, -1),
-			(e) => validateAssertionError(e, 'retentionWindowStart must be initialized >= 0')
+			(e: Error) => validateAssertionError(e, 'retentionWindowStart must be initialized >= 0')
 		);
 	});
 
@@ -28,7 +28,7 @@ describe('RevisionValueCache', () => {
 		const cache = new RevisionValueCache<DummyValue>(1, 0);
 		assert.throws(
 			() => cache.updateRetentionWindow(-1),
-			(e) => validateAssertionError(e, 'retention window boundary must not move backwards')
+			(e: Error) => validateAssertionError(e, 'retention window boundary must not move backwards')
 		);
 	});
 

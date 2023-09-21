@@ -55,7 +55,7 @@ describe("RemoteChannelContext Tests", () => {
 			);
 		assert.throws(
 			codeBlock,
-			(e) => validateAssertionError(e, "Channel context ID cannot contain slashes"),
+			(e: Error) => validateAssertionError(e, "Channel context ID cannot contain slashes"),
 			"Expected exception was not thrown",
 		);
 	});
