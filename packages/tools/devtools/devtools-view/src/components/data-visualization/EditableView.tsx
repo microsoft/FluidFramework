@@ -8,9 +8,9 @@ import React from "react";
 import {
 	Button,
 	Dropdown,
-	DropdownProps,
+	type DropdownProps,
 	Input,
-	InputOnChangeData,
+	type InputOnChangeData,
 	Option,
 	makeStyles,
 	shorthands,
@@ -18,16 +18,16 @@ import {
 } from "@fluentui/react-components";
 import {
 	DataEdit,
-	EditData,
+	type EditData,
 	EditType,
-	FluidObjectValueNode,
-	HasContainerKey,
+	type FluidObjectValueNode,
+	type HasContainerKey,
 } from "@fluid-experimental/devtools-core";
 
-import { Serializable } from "@fluidframework/datastore-definitions";
+import { type Serializable } from "@fluidframework/datastore-definitions";
 import { useMessageRelay } from "../../MessageRelayContext";
 import { TreeHeader } from "./TreeHeader";
-import { HasLabel } from "./CommonInterfaces";
+import { type HasLabel } from "./CommonInterfaces";
 
 /**
  * Input to {@link EditableView}

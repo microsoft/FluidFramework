@@ -6,7 +6,7 @@
 import {
 	Button,
 	Combobox,
-	ComboboxProps,
+	type ComboboxProps,
 	CounterBadge,
 	createTableColumn,
 	DataGrid,
@@ -16,11 +16,11 @@ import {
 	DataGridHeaderCell,
 	DataGridRow,
 	Dropdown,
-	DropdownProps,
+	type DropdownProps,
 	makeStyles,
 	Option,
 	shorthands,
-	TableColumnDefinition,
+	type TableColumnDefinition,
 	tokens,
 } from "@fluentui/react-components";
 import React, { useState, useRef } from "react";
@@ -29,9 +29,9 @@ import {
 	DevtoolsDisposed,
 	GetTelemetryHistory,
 	handleIncomingMessage,
-	InboundHandlers,
-	ISourcedDevtoolsMessage,
-	ITimestampedTelemetryEvent,
+	type InboundHandlers,
+	type ISourcedDevtoolsMessage,
+	type ITimestampedTelemetryEvent,
 	TelemetryHistory,
 	TelemetryEvent,
 } from "@fluid-experimental/devtools-core";

@@ -10,26 +10,26 @@
 
 import { SharedCell } from "@fluidframework/cell";
 import { SharedCounter } from "@fluidframework/counter";
-import { IDirectory, SharedDirectory, SharedMap } from "@fluidframework/map";
+import { type IDirectory, SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
 import {
 	SharedTreeFactory,
-	ISharedTree,
-	UntypedTree,
-	UntypedField,
+	type ISharedTree,
+	type UntypedTree,
+	type UntypedField,
 } from "@fluid-experimental/tree2";
-import { ISharedObject } from "@fluidframework/shared-object-base";
+import { type ISharedObject } from "@fluidframework/shared-object-base";
 import { EditType } from "../CommonInterfaces";
-import { VisualizeChildData, VisualizeSharedObject } from "./DataVisualization";
+import { type VisualizeChildData, type VisualizeSharedObject } from "./DataVisualization";
 import {
-	FluidObjectNode,
-	FluidObjectTreeNode,
-	FluidObjectValueNode,
-	FluidUnknownObjectNode,
+	type FluidObjectNode,
+	type FluidObjectTreeNode,
+	type FluidObjectValueNode,
+	type FluidUnknownObjectNode,
 	VisualNodeKind,
-	VisualChildNode,
-	VisualTreeNode,
+	type VisualChildNode,
+	type VisualTreeNode,
 } from "./VisualTree";
 
 /**

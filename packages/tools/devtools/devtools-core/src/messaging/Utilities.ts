@@ -4,7 +4,7 @@
  */
 
 import { devtoolsMessageSource } from "./Constants";
-import { IDevtoolsMessage, ISourcedDevtoolsMessage } from "./Messages";
+import { type IDevtoolsMessage, type ISourcedDevtoolsMessage } from "./Messages";
 
 /**
  * Posts the provided message to the window (globalThis).

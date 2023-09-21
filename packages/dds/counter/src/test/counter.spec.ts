@@ -4,16 +4,16 @@
  */
 
 import { strict as assert } from "node:assert";
-import { IChannelFactory } from "@fluidframework/datastore-definitions";
+import { type IChannelFactory } from "@fluidframework/datastore-definitions";
 import {
 	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
-	MockContainerRuntimeForReconnection,
+	type MockContainerRuntimeForReconnection,
 	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { ISharedCounter, SharedCounter } from "..";
+import { type ISharedCounter, SharedCounter } from "..";
 import { CounterFactory } from "../counterFactory";
 
 class TestSharedCounter extends SharedCounter {

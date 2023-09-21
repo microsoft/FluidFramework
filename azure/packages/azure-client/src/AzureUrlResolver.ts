@@ -2,8 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IRequest } from "@fluidframework/core-interfaces";
-import { DriverHeader, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
+import { type IRequest } from "@fluidframework/core-interfaces";
+import {
+	DriverHeader,
+	type IResolvedUrl,
+	type IUrlResolver,
+} from "@fluidframework/driver-definitions";
 
 /**
  * Implementation of {@link @fluidframework/driver-definitions#IUrlResolver} to resolve documents stored using the

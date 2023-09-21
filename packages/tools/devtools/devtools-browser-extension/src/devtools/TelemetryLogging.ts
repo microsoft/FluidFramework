@@ -3,10 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { AppInsightsCore, IExtendedConfiguration } from "@microsoft/1ds-core-js";
-import { PostChannel, IChannelConfiguration, IXHROverride } from "@microsoft/1ds-post-js";
-import { ITelemetryBaseLogger, ITelemetryBaseEvent } from "@fluid-experimental/devtools-view";
-import { ITaggedTelemetryPropertyType } from "@fluidframework/core-interfaces";
+import { AppInsightsCore, type IExtendedConfiguration } from "@microsoft/1ds-core-js";
+import { PostChannel, type IChannelConfiguration, type IXHROverride } from "@microsoft/1ds-post-js";
+import {
+	type ITelemetryBaseLogger,
+	type ITelemetryBaseEvent,
+} from "@fluid-experimental/devtools-view";
+import { type ITaggedTelemetryPropertyType } from "@fluidframework/core-interfaces";
 
 const extensionVersion = chrome.runtime.getManifest().version;
 

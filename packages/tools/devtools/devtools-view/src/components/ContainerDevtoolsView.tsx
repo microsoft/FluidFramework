@@ -6,20 +6,20 @@
 import {
 	Divider,
 	makeStyles,
-	SelectTabData,
-	SelectTabEvent,
+	type SelectTabData,
+	type SelectTabEvent,
 	shorthands,
 	Tab,
 	TabList,
-	TabValue,
+	type TabValue,
 } from "@fluentui/react-components";
 import {
-	ContainerDevtoolsFeatureFlags,
+	type ContainerDevtoolsFeatureFlags,
 	ContainerDevtoolsFeatures,
 	GetContainerDevtoolsFeatures,
-	HasContainerKey,
-	ISourcedDevtoolsMessage,
-	InboundHandlers,
+	type HasContainerKey,
+	type ISourcedDevtoolsMessage,
+	type InboundHandlers,
 	handleIncomingMessage,
 } from "@fluid-experimental/devtools-core";
 import React from "react";

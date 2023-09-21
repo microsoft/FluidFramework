@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedObject } from "@fluidframework/shared-object-base";
-import { Serializable } from "@fluidframework/datastore-definitions";
-import { EditType, HasFluidObjectId } from "../CommonInterfaces";
+import { type ISharedObject } from "@fluidframework/shared-object-base";
+import { type Serializable } from "@fluidframework/datastore-definitions";
+import { type EditType, type HasFluidObjectId } from "../CommonInterfaces";
 
 /**
  * Applies an edit to {@link @fluidframework/shared-object-base#ISharedObject}.

@@ -9,7 +9,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { Theme } from "@fluentui/react-components";
+import { type Theme } from "@fluentui/react-components";
 import React from "react";
 import {
 	Area,

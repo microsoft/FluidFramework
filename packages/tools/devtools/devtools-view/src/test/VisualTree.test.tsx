@@ -10,13 +10,13 @@ import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
-	IDevtoolsMessage,
+	type IDevtoolsMessage,
 	GetDataVisualization,
 	DataVisualization,
-	FluidObjectValueNode,
-	FluidObjectTreeNode,
-	FluidUnknownObjectNode,
-	UnknownObjectNode,
+	type FluidObjectValueNode,
+	type FluidObjectTreeNode,
+	type FluidUnknownObjectNode,
+	type UnknownObjectNode,
 	VisualNodeKind,
 } from "@fluid-experimental/devtools-core";
 import { UnknownDataView, FluidTreeView, UnknownFluidObjectView } from "../components";

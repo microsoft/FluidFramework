@@ -5,7 +5,7 @@
 
 import Path from "node:path";
 
-import { decodeComponentId, RPCs } from "@previewjs/api";
+import { decodeComponentId, type RPCs } from "@previewjs/api";
 import { createChromelessWorkspace } from "@previewjs/chromeless";
 import reactPlugin from "@previewjs/plugin-react";
 import { expect } from "chai";

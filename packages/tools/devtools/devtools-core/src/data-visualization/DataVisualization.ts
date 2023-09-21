@@ -8,26 +8,26 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
-	IDisposable,
-	IEvent,
-	IFluidHandle,
-	IFluidLoadable,
-	IProvideFluidHandle,
+	type IDisposable,
+	type IEvent,
+	type IFluidHandle,
+	type IFluidLoadable,
+	type IProvideFluidHandle,
 } from "@fluidframework/core-interfaces";
-import { ISharedObject } from "@fluidframework/shared-object-base";
+import { type ISharedObject } from "@fluidframework/shared-object-base";
 
-import { FluidObjectId } from "../CommonInterfaces";
+import { type FluidObjectId } from "../CommonInterfaces";
 import { visualizeUnknownSharedObject } from "./DefaultVisualizers";
 import {
 	createHandleNode,
-	FluidObjectNode,
+	type FluidObjectNode,
 	VisualNodeKind,
-	VisualChildNode,
-	Primitive,
-	RootHandleNode,
+	type VisualChildNode,
+	type Primitive,
+	type RootHandleNode,
 	unknownObjectNode,
 } from "./VisualTree";
-import { Edit, EditSharedObject, SharedObjectEdit } from "./DataEditing";
+import { type Edit, type EditSharedObject, type SharedObjectEdit } from "./DataEditing";
 
 // Ideas:
 // - Hold onto previous summary and only transmit diff?

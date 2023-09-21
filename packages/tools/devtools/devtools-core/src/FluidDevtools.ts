@@ -5,8 +5,8 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils";
 
-import { ContainerDevtoolsProps, ContainerDevtools } from "./ContainerDevtools";
-import { IContainerDevtools } from "./IContainerDevtools";
+import { type ContainerDevtoolsProps, ContainerDevtools } from "./ContainerDevtools";
+import { type IContainerDevtools } from "./IContainerDevtools";
 import {
 	ContainerList,
 	DevtoolsDisposed,
@@ -14,15 +14,15 @@ import {
 	GetContainerList,
 	GetDevtoolsFeatures,
 	handleIncomingWindowMessage,
-	InboundHandlers,
-	ISourcedDevtoolsMessage,
-	MessageLoggingOptions,
+	type InboundHandlers,
+	type ISourcedDevtoolsMessage,
+	type MessageLoggingOptions,
 	postMessagesToWindow,
 } from "./messaging";
-import { IFluidDevtools } from "./IFluidDevtools";
-import { DevtoolsFeatureFlags } from "./Features";
-import { DevtoolsLogger } from "./DevtoolsLogger";
-import { ContainerKey } from "./CommonInterfaces";
+import { type IFluidDevtools } from "./IFluidDevtools";
+import { type DevtoolsFeatureFlags } from "./Features";
+import { type DevtoolsLogger } from "./DevtoolsLogger";
+import { type ContainerKey } from "./CommonInterfaces";
 import { pkgVersion as devtoolsVersion } from "./packageVersion";
 
 /**

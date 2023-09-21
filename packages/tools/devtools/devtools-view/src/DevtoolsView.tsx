@@ -15,19 +15,19 @@ import {
 } from "@fluentui/react-components";
 import { ArrowSync24Regular } from "@fluentui/react-icons";
 
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
-	ContainerKey,
+	type ContainerKey,
 	ContainerList,
-	DevtoolsFeatureFlags,
+	type DevtoolsFeatureFlags,
 	DevtoolsFeatures,
 	GetContainerList,
 	GetDevtoolsFeatures,
 	handleIncomingMessage,
-	HasContainerKey,
-	InboundHandlers,
-	ISourcedDevtoolsMessage,
+	type HasContainerKey,
+	type InboundHandlers,
+	type ISourcedDevtoolsMessage,
 } from "@fluid-experimental/devtools-core";
 
 import {

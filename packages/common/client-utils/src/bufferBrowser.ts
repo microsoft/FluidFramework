@@ -22,6 +22,7 @@ export function Uint8ArrayToString(arr: Uint8Array, encoding?: string): string {
 			return base64js.fromByteArray(arr);
 		}
 		case "utf8":
+		// eslint-disable-next-line unicorn/text-encoding-identifier-case
 		case "utf-8":
 		case undefined: {
 			return new TextDecoder().decode(arr);
@@ -157,6 +158,7 @@ export class IsoBuffer extends Uint8Array {
 				return new IsoBuffer(encoded.buffer);
 			}
 			case "utf8":
+			// eslint-disable-next-line unicorn/text-encoding-identifier-case
 			case "utf-8":
 			case undefined: {
 				const encoded = new TextEncoder().encode(str);
