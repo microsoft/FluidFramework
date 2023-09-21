@@ -82,6 +82,10 @@ import {
  *
  * If the position is specified with a bare number, the side defaults to
  * `Side.Before`.
+ * 
+ * If a SequencePlace is relative to another position (e.g. endpoint of an interval or a search range),
+ * the Side value means it is exclusive if it is nearer to the other position and inclusive if it is farther.
+ * E.g. the start of a range with Side.After is exclusive of the character at the position.
  */
 export type SequencePlace = number | "start" | "end" | InteriorSequencePlace;
 
@@ -97,9 +101,6 @@ export interface InteriorSequencePlace {
 
 /**
  * Defines a side relative to a character in a sequence.
- * If it is toward the other interval endpoint, it is exclusive.
- * If it is away from the other interval endpoint, it is inclusive.
- * E.g. start + Side.After is exclusive of the character.
  *
  * @remarks See {@link SequencePlace} for additional context on usage.
  */
