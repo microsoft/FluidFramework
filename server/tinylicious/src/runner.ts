@@ -13,6 +13,7 @@ import {
 	DefaultMetricClient,
 	IRunner,
 } from "@fluidframework/server-services-core";
+// eslint-disable-next-line import/no-deprecated
 import { Deferred } from "@fluidframework/common-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
@@ -23,6 +24,8 @@ import * as app from "./app";
 
 export class TinyliciousRunner implements IRunner {
 	private server?: IWebServer;
+
+	// eslint-disable-next-line import/no-deprecated
 	private runningDeferred: Deferred<void>;
 
 	constructor(
@@ -39,6 +42,7 @@ export class TinyliciousRunner implements IRunner {
 		const version = process.env.npm_package_version;
 		winston.info(`Starting tinylicious@${version}`);
 
+		// eslint-disable-next-line import/no-deprecated
 		this.runningDeferred = new Deferred<void>();
 
 		// Make sure provided port is unoccupied
