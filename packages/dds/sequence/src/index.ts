@@ -19,7 +19,6 @@ export { IMapMessageLocalMetadata, IValueOpEmitter, SequenceOptions } from "./de
 export {
 	IInterval,
 	Interval,
-	IIntervalHelpers,
 	IntervalOpType,
 	IntervalType,
 	ISerializableInterval,
@@ -27,7 +26,6 @@ export {
 	SequenceInterval,
 	SerializedIntervalDelta,
 	IntervalStickiness,
-	sequenceIntervalHelpers,
 } from "./intervals";
 export {
 	DeserializeCallback,

@@ -4,7 +4,14 @@
  */
 
 import { Client, RedBlackTree } from "@fluidframework/merge-tree";
-import { IIntervalHelpers, ISerializableInterval, IntervalType } from "../intervals";
+import {
+	IIntervalHelpers,
+	ISerializableInterval,
+	IntervalType,
+	SequenceInterval,
+	sequenceIntervalHelpers,
+} from "../intervals";
+import { SharedString } from "../sharedString";
 import { IntervalIndex } from "./intervalIndex";
 
 export interface IEndpointIndex<TInterval extends ISerializableInterval>
@@ -22,7 +29,9 @@ export interface IEndpointIndex<TInterval extends ISerializableInterval>
 	nextInterval(pos: number): TInterval | undefined;
 }
 
-class EndpointIndex<TInterval extends ISerializableInterval> implements IEndpointIndex<TInterval> {
+export class EndpointIndex<TInterval extends ISerializableInterval>
+	implements IEndpointIndex<TInterval>
+{
 	private readonly endIntervalTree: RedBlackTree<TInterval, TInterval>;
 
 	constructor(
@@ -70,9 +79,7 @@ class EndpointIndex<TInterval extends ISerializableInterval> implements IEndpoin
 	}
 }
 
-export function createEndpointIndex<TInterval extends ISerializableInterval>(
-	client: Client,
-	helpers: IIntervalHelpers<TInterval>,
-): IEndpointIndex<TInterval> {
-	return new EndpointIndex<TInterval>(client, helpers);
+export function createEndpointIndex(sharedString: SharedString): IEndpointIndex<SequenceInterval> {
+	const client = (sharedString as unknown as { client: Client }).client;
+	return new EndpointIndex<SequenceInterval>(client, sequenceIntervalHelpers);
 }

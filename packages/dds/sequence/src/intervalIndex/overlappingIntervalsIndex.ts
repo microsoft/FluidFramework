@@ -4,8 +4,15 @@
  */
 
 import { Client } from "@fluidframework/merge-tree";
-import { IntervalType, IIntervalHelpers, ISerializableInterval } from "../intervals";
+import {
+	IntervalType,
+	IIntervalHelpers,
+	ISerializableInterval,
+	sequenceIntervalHelpers,
+	SequenceInterval,
+} from "../intervals";
 import { IntervalNode, IntervalTree } from "../intervalTree";
+import { SharedString } from "../sharedString";
 import { IntervalIndex } from "./intervalIndex";
 
 export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInterval>
@@ -154,9 +161,9 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 	}
 }
 
-export function createOverlappingIntervalsIndex<TInterval extends ISerializableInterval>(
-	client: Client,
-	helpers: IIntervalHelpers<TInterval>,
-): IOverlappingIntervalsIndex<TInterval> {
-	return new OverlappingIntervalsIndex<TInterval>(client, helpers);
+export function createOverlappingIntervalsIndex(
+	sharedString: SharedString,
+): IOverlappingIntervalsIndex<SequenceInterval> {
+	const client = (sharedString as unknown as { client: Client }).client;
+	return new OverlappingIntervalsIndex<SequenceInterval>(client, sequenceIntervalHelpers);
 }

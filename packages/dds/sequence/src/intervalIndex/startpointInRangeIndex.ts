@@ -5,7 +5,14 @@
 
 import { Client, PropertyAction, RedBlackTree } from "@fluidframework/merge-tree";
 import { assert } from "@fluidframework/core-utils";
-import { IIntervalHelpers, ISerializableInterval, IntervalType } from "../intervals";
+import {
+	IIntervalHelpers,
+	ISerializableInterval,
+	IntervalType,
+	SequenceInterval,
+	sequenceIntervalHelpers,
+} from "../intervals";
+import { SharedString } from "../sharedString";
 import { IntervalIndex } from "./intervalIndex";
 import { HasComparisonOverride, compareOverrideables, forceCompare } from "./intervalIndexUtils";
 
@@ -22,7 +29,7 @@ export interface IStartpointInRangeIndex<TInterval extends ISerializableInterval
 	findIntervalsWithStartpointInRange(start: number, end: number);
 }
 
-class StartpointInRangeIndex<TInterval extends ISerializableInterval>
+export class StartpointInRangeIndex<TInterval extends ISerializableInterval>
 	implements IStartpointInRangeIndex<TInterval>
 {
 	private readonly intervalTree;
@@ -101,9 +108,9 @@ class StartpointInRangeIndex<TInterval extends ISerializableInterval>
 	}
 }
 
-export function createStartpointInRangeIndex<TInterval extends ISerializableInterval>(
-	client: Client,
-	helpers: IIntervalHelpers<TInterval>,
-): IStartpointInRangeIndex<TInterval> {
-	return new StartpointInRangeIndex<TInterval>(client, helpers);
+export function createStartpointInRangeIndex(
+	sharedString: SharedString,
+): IStartpointInRangeIndex<SequenceInterval> {
+	const client = (sharedString as unknown as { client: Client }).client;
+	return new StartpointInRangeIndex<SequenceInterval>(client, sequenceIntervalHelpers);
 }

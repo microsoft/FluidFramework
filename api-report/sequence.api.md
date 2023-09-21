@@ -66,22 +66,22 @@ export function appendIntervalPropertyChangedToRevertibles(interval: SequenceInt
 export function appendSharedStringDeltaToRevertibles(string: SharedString, delta: SequenceDeltaEvent, revertibles: SharedStringRevertible[]): void;
 
 // @public (undocumented)
-export function createEndpointIndex<TInterval extends ISerializableInterval>(client: Client, helpers: IIntervalHelpers<TInterval>): IEndpointIndex<TInterval>;
+export function createEndpointIndex(sharedString: SharedString): IEndpointIndex<SequenceInterval>;
 
 // @public (undocumented)
-export function createEndpointInRangeIndex<TInterval extends ISerializableInterval>(client: Client, helpers: IIntervalHelpers<TInterval>): IEndpointInRangeIndex<TInterval>;
+export function createEndpointInRangeIndex(sharedString: SharedString): IEndpointInRangeIndex<SequenceInterval>;
 
 // @public (undocumented)
 export function createIdIntervalIndex<TInterval extends ISerializableInterval>(): IIdIntervalIndex<TInterval>;
 
 // @public (undocumented)
-export function createOverlappingIntervalsIndex<TInterval extends ISerializableInterval>(client: Client, helpers: IIntervalHelpers<TInterval>): IOverlappingIntervalsIndex<TInterval>;
+export function createOverlappingIntervalsIndex(sharedString: SharedString): IOverlappingIntervalsIndex<SequenceInterval>;
 
 // @public (undocumented)
 export function createOverlappingSequenceIntervalsIndex(sharedString: SharedString): SequenceIntervalIndexes.Overlapping;
 
 // @public (undocumented)
-export function createStartpointInRangeIndex<TInterval extends ISerializableInterval>(client: Client, helpers: IIntervalHelpers<TInterval>): IStartpointInRangeIndex<TInterval>;
+export function createStartpointInRangeIndex(sharedString: SharedString): IStartpointInRangeIndex<SequenceInterval>;
 
 // @public (undocumented)
 export type DeserializeCallback = (properties: PropertySet) => void;
@@ -171,16 +171,6 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
     (event: "changeInterval", listener: (interval: TInterval, previousInterval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined, slide: boolean) => void): any;
     (event: "addInterval" | "deleteInterval", listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined) => void): any;
     (event: "propertyChanged", listener: (interval: TInterval, propertyDeltas: PropertySet, local: boolean, op: ISequencedDocumentMessage | undefined) => void): any;
-}
-
-// @public @sealed (undocumented)
-export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
-    // @deprecated (undocumented)
-    compareEnds(a: TInterval, b: TInterval): number;
-    // @deprecated (undocumented)
-    compareStarts?(a: TInterval, b: TInterval): number;
-    // (undocumented)
-    create(label: string, start: number | undefined, end: number | undefined, client: Client | undefined, intervalType: IntervalType, op?: ISequencedDocumentMessage, fromSnapshot?: boolean, stickiness?: IntervalStickiness): TInterval;
 }
 
 // @public @deprecated (undocumented)
@@ -443,9 +433,6 @@ export class SequenceInterval implements ISerializableInterval {
     // @internal
     union(b: SequenceInterval): SequenceInterval;
 }
-
-// @public (undocumented)
-export const sequenceIntervalHelpers: IIntervalHelpers<SequenceInterval>;
 
 // @public
 export namespace SequenceIntervalIndexes {
