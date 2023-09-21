@@ -35,6 +35,13 @@ module.exports = {
 	},
 	plugins: ["unicorn"],
 	reportUnusedDisableDirectives: true,
+	ignorePatterns: [
+		// Don't lint generated files
+		"**/*.generated.*",
+
+		// Don't lint generated packageVersion files.
+		"**/packageVersion.ts",
+	],
 	rules: {
 		// Please keep entries alphabetized within a group
 

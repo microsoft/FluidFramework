@@ -10,6 +10,7 @@
         "SharedArrayBuffer": "readonly"
     },
     "ignorePatterns": [
+        "**/*.generated.*",
         "**/packageVersion.ts"
     ],
     "parserOptions": {
