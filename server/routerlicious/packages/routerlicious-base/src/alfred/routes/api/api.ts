@@ -141,7 +141,7 @@ export function create(
 	router.post(
 		"/:tenantId/:id/broadcast-signal",
 		validateRequestParams("tenantId", "id"),
-		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
+		throttle(perTenantGeneralThrottler, winston, tenantThrottleOptions),
 		verifyStorageToken(tenantManager, config),
 		async (request, response) => {
 			const tenantId = getParam(request.params, "tenantId");

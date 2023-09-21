@@ -22,34 +22,34 @@ alfred:
   ignoreEphemeralFlag: true
   throttling:
     perTenantGroup1:
-        createDoc:
-            maxPerMs: 1000000
-            maxBurst: 1000000
-            minCooldownIntervalInMs: 1000000
-            minThrottleIntervalInMs: 1000000
-            maxInMemoryCacheSize: 1000
-            maxInMemoryCacheAgeInMs: 60000
-            enableEnhancedTelemetry: false
-        getDeltas: disabled
-        getSession: disabled
-        socketConnections: disabled
-        submitOps: disabled
+      createDoc:
+        maxPerMs: 1000000
+        maxBurst: 1000000
+        minCooldownIntervalInMs: 1000000
+        minThrottleIntervalInMs: 1000000
+        maxInMemoryCacheSize: 1000
+        maxInMemoryCacheAgeInMs: 60000
+        enableEnhancedTelemetry: false
+      getDeltas: disabled
+      getSession: disabled
+      socketConnections: disabled
+      submitOps: disabled
     perTenant:
-        generalRestCall: disabled
-        createDoc: disabled
-        getDeltas: disabled
-        getSession: disabled
-        socketConnections: disabled
-        submitOps: disabled
-        submitSignal: disabled
+      generalRestCall: disabled
+      createDoc: disabled
+      getDeltas: disabled
+      getSession: disabled
+      socketConnections: disabled
+      submitOps: disabled
+      submitSignal: disabled
     perCluster:
-        createDoc:
-            maxPerInterval: 1000000
-            intervalInMs: 1000000
-        getDeltas: disabled
-        getSession: disabled
-        socketConnections: disabled
-        submitOps: disabled
+      createDoc:
+        maxPerInterval: 1000000
+        intervalInMs: 1000000
+      getDeltas: disabled
+      getSession: disabled
+      socketConnections: disabled
+      submitOps: disabled
   socketIoAdapter:
     enableCustomSocketIoAdapter: true
     shouldDisableDefaultNamespace: false
