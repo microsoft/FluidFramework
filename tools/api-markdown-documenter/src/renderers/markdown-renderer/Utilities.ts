@@ -1,0 +1,33 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { DocumentationNode } from "../../documentation-domain";
+import { DocumentWriter } from "../DocumentWriter";
+import {
+	RenderContext as HtmlRenderContext,
+	renderNode as renderNodeAsHtml,
+} from "../html-renderer";
+import { RenderContext as MarkdownRenderContext } from "./RenderContext";
+
+/**
+ * Renders the provided {@link DocumentationNode} using HTML syntax.
+ *
+ * @remarks Markdown supports inline HTML without any special translation, so we can just render HTML directly here.
+ */
+export function renderNodeWithHtmlSyntax<TNode extends DocumentationNode>(
+	node: TNode,
+	writer: DocumentWriter,
+	context: MarkdownRenderContext,
+): void {
+	renderNodeAsHtml(node, writer, translateContext(context));
+}
+
+/**
+ * Translates a {@link MarkdownRenderContext} to a {@link HtmlRenderContext} for rendering HTML content to a Markdown
+ * document.
+ */
+function translateContext(markdownContext: MarkdownRenderContext): HtmlRenderContext {
+	return markdownContext; // Markdown context is a superset of HTML context, so direct assignment is safe.
+}
