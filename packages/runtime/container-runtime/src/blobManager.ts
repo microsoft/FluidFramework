@@ -333,10 +333,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	}
 
 	public hasPendingStashedBlobs(): boolean {
-		return (
-			Array.from(this.pendingBlobs.values()).filter((e) => e.pendingStashed === true).length >
-			0
-		);
+		return Array.from(this.pendingBlobs.values()).some((e) => e.pendingStashed === true);
 	}
 	/**
 	 * Upload blobs added while offline. This must be completed before connecting and resubmitting ops.
@@ -344,7 +341,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	public async processStashedChanges() {
 		this.retryThrottler.cancel();
 		const pendingUploads = Array.from(this.pendingBlobs.values())
-			.filter((e) => e.uploading === true)
+			.filter((e) => e.pendingStashed === true)
 			.map(async (e) => e.uploadP);
 		await PerformanceEvent.timedExecAsync(
 			this.mc.logger,
@@ -568,9 +565,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				(this.opsInFlight.get(response.id) ?? []).concat(localId),
 			);
 		}
-		if (entry.pendingStashed) {
-			entry.pendingStashed = false;
-		}
 		return response;
 	}
 
@@ -624,6 +618,9 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			if (pendingEntry?.abortSignal?.aborted) {
 				this.deletePendingBlob(localId);
 				return;
+			}
+			if (pendingEntry?.pendingStashed) {
+				pendingEntry.pendingStashed = false;
 			}
 		}
 		assert(blobId !== undefined, 0x12a /* "Missing blob id on metadata" */);
