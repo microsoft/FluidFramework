@@ -15,13 +15,8 @@ import { SharedStringFactory } from "../sequenceFactory";
 import { createOverlappingSequenceIntervalsIndex } from "../intervalIndex";
 import { RandomIntervalOptions } from "./intervalIndexUtils";
 
-class TestSharedString extends SharedString {
-	// Expose the `client` to the public and keep other properties unchanged
-	public client;
-}
-
 function assertSequenceIntervalsEqual(
-	string: TestSharedString,
+	string: SharedString,
 	results: SequenceInterval[],
 	expected: { start: number; end: number }[] | SequenceInterval[],
 ): void {
@@ -59,15 +54,15 @@ describe("findOverlappingIntervalsBySegoff", () => {
 		}
 		return compareReferencePositions(a.end, b.end);
 	};
-	let testSharedString: TestSharedString;
+	let testSharedString: SharedString;
 	let dataStoreRuntime: MockFluidDataStoreRuntime;
 	let overlappingSequenceIntervalsIndex;
 	let collection;
 	let results;
 
 	const queryIntervalsByPositions = (start: number, end: number): Iterable<SequenceInterval> => {
-		const startSegOff = testSharedString.client.getContainingSegment(start);
-		const endSegOff = testSharedString.client.getContainingSegment(end);
+		const startSegOff = testSharedString.getContainingSegment(start);
+		const endSegOff = testSharedString.getContainingSegment(end);
 
 		const intervals = overlappingSequenceIntervalsIndex.findOverlappingIntervalsBySegoff(
 			startSegOff,
@@ -81,14 +76,13 @@ describe("findOverlappingIntervalsBySegoff", () => {
 	beforeEach(() => {
 		dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: "1" });
 		dataStoreRuntime.options = { intervalStickinessEnabled: true };
-		testSharedString = new TestSharedString(
+		testSharedString = new SharedString(
 			dataStoreRuntime,
 			"test-shared-string",
 			SharedStringFactory.Attributes,
 		);
-		overlappingSequenceIntervalsIndex = createOverlappingSequenceIntervalsIndex(
-			testSharedString.client,
-		);
+		overlappingSequenceIntervalsIndex =
+			createOverlappingSequenceIntervalsIndex(testSharedString);
 
 		testSharedString.initializeLocal();
 		collection = testSharedString.getIntervalCollection("test");
