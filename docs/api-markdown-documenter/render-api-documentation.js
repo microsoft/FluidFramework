@@ -5,11 +5,13 @@
 
 const {
 	DocumentationNodeType,
-	getApiItemTransformationConfigurationWithDefaults,
 	loadModel,
 	renderDocumentAsMarkdown,
 	transformApiModel,
 } = require("@fluid-tools/api-markdown-documenter");
+const {
+	getApiItemTransformationConfigurationWithDefaults,
+} = require("@fluid-tools/api-markdown-documenter/dist/api-item-transforms");
 const { ApiItemKind } = require("@microsoft/api-extractor-model");
 const { PackageName } = require("@rushstack/node-core-library");
 const fs = require("fs-extra");
@@ -93,7 +95,7 @@ async function renderApiDocumentation() {
 				throw error;
 			}
 
-			let filePath = path.join(apiDocsDirectoryPath, document.filePath);
+			let filePath = path.join(apiDocsDirectoryPath, `${document.documentPath}.md`);
 
 			try {
 				// Hugo uses a special file-naming syntax to represent documents with "child" documents in the same directory.

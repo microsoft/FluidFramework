@@ -8,7 +8,7 @@ const {
 	getLinkForApiItem,
 	getUnscopedPackageName,
 	renderNodeAsMarkdown,
-	transformDocNode,
+	transformTsdocNode,
 } = require("@fluid-tools/api-markdown-documenter");
 const { ApiItemKind } = require("@microsoft/api-extractor-model");
 const os = require("os");
@@ -28,7 +28,7 @@ const generatedContentNotice =
  */
 function createHugoFrontMatter(apiItem, config, customRenderers) {
 	function extractSummary() {
-		const summaryParagraph = transformDocNode(
+		const summaryParagraph = transformTsdocNode(
 			apiItem.tsdocComment.summarySection,
 			apiItem,
 			config,
