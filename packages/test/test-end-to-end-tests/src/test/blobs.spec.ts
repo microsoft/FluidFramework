@@ -613,7 +613,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 		await uploadP;
 	});
 
-	it.only("reconnection does not block ops when having pending blobs", async () => {
+	it("reconnection does not block ops when having pending blobs", async () => {
 		const container1 = await provider.makeTestContainer(testContainerConfig);
 		const dataStore1 = await requestFluidObject<ITestDataObject>(container1, "default");
 		const runtimeStorage = (container1 as any).runtime.storage;
