@@ -83,7 +83,7 @@ import {
  * If the position is specified with a bare number, the side defaults to
  * `Side.Before`.
  * 
- * If a SequencePlace is relative to another position (e.g. endpoint of an interval or a search range),
+ * If a SequencePlace is the endpoint of a range (e.g. start/end of an interval or search range),
  * the Side value means it is exclusive if it is nearer to the other position and inclusive if it is farther.
  * E.g. the start of a range with Side.After is exclusive of the character at the position.
  */
