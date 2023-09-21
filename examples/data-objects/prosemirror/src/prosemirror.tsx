@@ -13,6 +13,8 @@ import {
 	IResponse,
 	IFluidHandle,
 	FluidObject,
+	// eslint-disable-next-line import/no-deprecated
+	IFluidRouter,
 } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
@@ -70,7 +72,11 @@ function createTreeMarkerOps(
  * It has its own implementation of IFluidLoadable and does not extend PureDataObject / DataObject. This is
  * done intentionally to serve as an example of exposing the URL and handle via IFluidLoadable.
  */
-export class ProseMirror extends EventEmitter implements IFluidLoadable, IProvideRichTextEditor {
+export class ProseMirror
+	extends EventEmitter
+	// eslint-disable-next-line import/no-deprecated
+	implements IFluidLoadable, IFluidRouter, IProvideRichTextEditor
+{
 	public static async load(
 		runtime: IFluidDataStoreRuntime,
 		context: IFluidDataStoreContext,
@@ -89,6 +95,7 @@ export class ProseMirror extends EventEmitter implements IFluidLoadable, IProvid
 	public get IFluidLoadable() {
 		return this;
 	}
+	// eslint-disable-next-line import/no-deprecated
 	public get IFluidRouter() {
 		return this;
 	}

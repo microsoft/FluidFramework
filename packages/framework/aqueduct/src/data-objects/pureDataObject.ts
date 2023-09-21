@@ -9,6 +9,8 @@ import {
 	IEvent,
 	IFluidHandle,
 	IFluidLoadable,
+	// eslint-disable-next-line import/no-deprecated
+	IFluidRouter,
 	IProvideFluidHandle,
 	IRequest,
 	IResponse,
@@ -28,7 +30,8 @@ import { DataObjectTypes, IDataObjectProps } from "./types";
  */
 export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes>
 	extends TypedEventEmitter<I["Events"] & IEvent>
-	implements IFluidLoadable, IProvideFluidHandle
+	// eslint-disable-next-line import/no-deprecated
+	implements IFluidLoadable, IFluidRouter, IProvideFluidHandle
 {
 	/**
 	 * This is your FluidDataStoreRuntime object
@@ -57,8 +60,9 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 		return this.runtime.id;
 	}
 	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	public get IFluidRouter() {
 		return this;
 	}
@@ -99,10 +103,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 		(this.runtime as any)._dataObject = this;
 	}
 
-	// #region IFluidRouter
-
 	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 * Return this object if someone requests it directly
 	 * We will return this object in two scenarios:
 	 *
@@ -113,8 +114,6 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	public async request(req: IRequest): Promise<IResponse> {
 		return defaultFluidObjectRequestHandler(this, req);
 	}
-
-	// #endregion IFluidRouter
 
 	/**
 	 * Call this API to ensure PureDataObject is fully initialized.

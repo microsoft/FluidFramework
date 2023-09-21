@@ -124,7 +124,7 @@ export interface IConnectionDetails {
 }
 
 // @public
-export interface IContainer extends IEventProvider<IContainerEvents> {
+export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRouter {
     attach(request: IRequest): Promise<void>;
     readonly attachState: AttachState;
     readonly audience: IAudience;

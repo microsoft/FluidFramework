@@ -132,7 +132,7 @@ export interface IRootDataObjectFactory extends IFluidDataStoreFactory {
 export const mountableViewRequestHandler: (MountableViewClass: IFluidMountableViewClass, handlers: RuntimeRequestHandler[]) => (request: RequestParser, runtime: IContainerRuntime) => Promise<IResponse>;
 
 // @public
-export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes> extends TypedEventEmitter<I["Events"] & IEvent> implements IFluidLoadable, IProvideFluidHandle {
+export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes> extends TypedEventEmitter<I["Events"] & IEvent> implements IFluidLoadable, IFluidRouter, IProvideFluidHandle {
     constructor(props: IDataObjectProps<I>);
     protected readonly context: IFluidDataStoreContext;
     finishInitialization(existing: boolean): Promise<void>;
@@ -157,7 +157,6 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     protected initProps?: I["InitialState"];
     protected preInitialize(): Promise<void>;
     protected readonly providers: AsyncFluidObjectProvider<I["OptionalProviders"]>;
-    // @deprecated (undocumented)
     request(req: IRequest): Promise<IResponse>;
     protected readonly runtime: IFluidDataStoreRuntime;
 }

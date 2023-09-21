@@ -148,7 +148,7 @@ export interface IDataStore {
 	readonly entryPoint: IFluidHandle<FluidObject>;
 
 	/**
-	 * @deprecated - Requesting will not be supported in a future major release.
+	 * @deprecated Requesting will not be supported in a future major release.
 	 * Instead, access the objects within the DataStore using entryPoint, and then navigate from there using
 	 * app-specific logic (e.g. retrieving a handle from a DDS, or the entryPoint object could implement a request paradigm itself)
 	 *
@@ -198,7 +198,7 @@ export interface IContainerRuntimeBase
 
 	/**
 	 * Executes a request against the container runtime
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	request(request: IRequest): Promise<IResponse>;
 

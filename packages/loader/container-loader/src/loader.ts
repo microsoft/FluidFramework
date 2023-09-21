@@ -273,7 +273,7 @@ export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | 
  * With an already-resolved container, we can request a component directly, without loading the container again
  * @param container - a resolved container
  * @returns component on the container
- * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+ * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
  */
 export async function requestResolvedObjectFromContainer(
 	container: IContainer,

@@ -297,7 +297,7 @@ export interface IFluidPackageEnvironment {
     };
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const IFluidRouter: keyof IProvideFluidRouter;
 
 // @public @deprecated (undocumented)

@@ -292,7 +292,8 @@ export type ConnectionState =
 /**
  * The Host's view of a Container and its connection to storage
  */
-export interface IContainer extends IEventProvider<IContainerEvents> {
+// eslint-disable-next-line import/no-deprecated
+export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRouter {
 	/**
 	 * The Delta Manager supporting the op stream for this Container
 	 */
@@ -392,7 +393,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 
 	/**
-	 * @deprecated - Requesting will not be supported in a future major release.
+	 * @deprecated Requesting will not be supported in a future major release.
 	 * Instead, access the objects in a Fluid Container using entryPoint, and then navigate from there using
 	 * app-specific logic (e.g. retrieving handles from the entryPoint's DDSes, or a container's entryPoint object
 	 * could implement a request paradigm itself)
