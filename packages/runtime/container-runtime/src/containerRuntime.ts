@@ -856,9 +856,10 @@ export class ContainerRuntime
 		);
 
 		await runtime.blobManager.processStashedChanges();
-		// It's possible to have ops with a reference sequence number of 0. Op sequence numbers start
-		// at 1, so we won't see a replayed saved op with a sequence number of 0.
-		await runtime.pendingStateManager.applyStashedOpsAt(0);
+
+		// Apply stashed ops with a reference sequence number equal to the sequence number of the snapshot,
+		// or zero. This must be done before Container replays saved ops.
+		await runtime.pendingStateManager.applyStashedOpsAt(runtimeSequenceNumber ?? 0);
 
 		// Initialize the base state of the runtime before it's returned.
 		await runtime.initializeBaseState();
@@ -1792,7 +1793,10 @@ export class ContainerRuntime
 		return this.dataStores.aliases.get(maybeAlias) ?? maybeAlias;
 	}
 
-	private async getDataStoreFromRequest(id: string, request: IRequest): Promise<IFluidRouter> {
+	private async getDataStoreFromRequest(
+		id: string,
+		request: IRequest,
+	): Promise<IFluidDataStoreChannel> {
 		const headerData: RuntimeHeaderData = {};
 		if (typeof request.headers?.[RuntimeHeaders.wait] === "boolean") {
 			headerData.wait = request.headers[RuntimeHeaders.wait];
@@ -3878,17 +3882,17 @@ export class ContainerRuntime
 				if (this._orderSequentiallyCalls !== 0) {
 					throw new UsageError("can't get state during orderSequentially");
 				}
-				const pendingAttachmentBlobs = await this.blobManager.getPendingBlobs(
-					waitBlobsToAttach,
-				);
-				const pending = this.pendingStateManager.getLocalState();
-				if (!pendingAttachmentBlobs && !this.hasPendingMessages()) {
-					return; // no pending state to save
-				}
 				// Flush pending batch.
 				// getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
 				// to close current batch.
 				this.flush();
+				const pendingAttachmentBlobs = waitBlobsToAttach
+					? await this.blobManager.attachAndGetPendingBlobs()
+					: undefined;
+				const pending = this.pendingStateManager.getLocalState();
+				if (!pendingAttachmentBlobs && !this.hasPendingMessages()) {
+					return; // no pending state to save
+				}
 
 				const pendingState: IPendingRuntimeState = {
 					pending,
