@@ -27,7 +27,6 @@ import {
 	calculateMaxWaitTime,
 } from "@fluidframework/driver-utils";
 import {
-	ConnectionMode,
 	IClient,
 	IClientConfiguration,
 	IClientDetails,
@@ -41,6 +40,7 @@ import {
 	MessageType,
 	ScopeType,
 	ISequencedDocumentSystemMessage,
+	ConnectionMode,
 } from "@fluidframework/protocol-definitions";
 import {
 	formatTick,
@@ -467,9 +467,13 @@ export class ConnectionManager implements IConnectionManager {
 				this.logger.sendErrorEvent({ eventName: "ForceReadonlyPendingChanged" });
 			}
 
-			const text = this.readonly === true ? "Force readonly" : "Force write";
-			const mode = this.readonly === true ? "read" : "write";
+			const [text, mode] =
+				this.readonly === true
+					? ["Force readonly", "read" as ConnectionMode]
+					: ["Force write", "write" as ConnectionMode];
+
 			if (this.disconnectFromDeltaStream({ text })) {
+				// reconnect if we disconnected from before.
 				this.triggerConnect({ text }, mode);
 			}
 		}
