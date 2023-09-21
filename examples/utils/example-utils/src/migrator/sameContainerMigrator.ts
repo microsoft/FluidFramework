@@ -214,6 +214,7 @@ export class SameContainerMigrator
 		this._acceptedVersion = undefined;
 		this._pausedModel = undefined;
 		this._exportedData = undefined;
+		this._detachedModel = undefined;
 		this._transformedData = undefined;
 		this._preparedDetachedModel = undefined;
 	};
@@ -245,18 +246,16 @@ export class SameContainerMigrator
 			await this.getExportedData();
 		}
 
-		console.log("Migration stage: loadDetachedModel");
-		if (this._detachedModel === undefined) {
-			await this.loadDetachedModel();
-		}
-
-		console.log("Migration stage: generateTransformedData");
-		if (this._transformedData === undefined) {
-			await this.generateTransformedData();
-		}
-
-		console.log("Migration stage: importDataIntoDetachedModel");
+		// These stages are grouped together because we should not try to retry with a detached model that could have
+		// partially imported data.
 		if (this._preparedDetachedModel === undefined) {
+			console.log("Migration stage: loadDetachedModel");
+			await this.loadDetachedModel();
+
+			console.log("Migration stage: generateTransformedData");
+			await this.generateTransformedData();
+
+			console.log("Migration stage: importDataIntoDetachedModel");
 			await this.importDataIntoDetachedModel();
 		}
 
