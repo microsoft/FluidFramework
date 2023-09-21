@@ -1831,9 +1831,9 @@ export namespace Utils {
 	 * {
 	 *   entry: {},
 	 *   nested: {
-	 *   entry2: {}
-	 *   entry3: {}
-	 * }
+	 *     entry2: {}
+	 *     entry3: {}
+	 *   }
 	 * }
 	 * ```
 	 *
