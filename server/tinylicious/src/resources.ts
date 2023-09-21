@@ -18,7 +18,7 @@ export class TinyliciousResources implements core.IResources {
 		public mongoManager: core.MongoManager,
 		public port: any,
 		public webServerFactory: core.IWebServerFactory,
-		public collaborationSessionEventEmitter: TypedEventEmitter<ICollaborationSessionEvents>,
+		public collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	) {}
 
 	public async dispose(): Promise<void> {

@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { IDocumentStorage, MongoManager } from "@fluidframework/server-services-core";
 import { RestLessServer } from "@fluidframework/server-services-shared";
 import { json, urlencoded } from "body-parser";
@@ -26,7 +28,12 @@ const stream = split().on("data", (message) => {
 	winston.info(message);
 });
 
-export function create(config: Provider, storage: IDocumentStorage, mongoManager: MongoManager) {
+export function create(
+	config: Provider,
+	storage: IDocumentStorage,
+	mongoManager: MongoManager,
+	collaborationSessionEventEmitter: TypedEventEmitter<ICollaborationSessionEvents>,
+) {
 	// Maximum REST request size
 	const requestSize = config.get("alfred:restJsonSize");
 
@@ -56,7 +63,7 @@ export function create(config: Provider, storage: IDocumentStorage, mongoManager
 	app.use(urlencoded({ limit: requestSize, extended: false }));
 
 	// Bind routes
-	const routes = createRoutes(config, mongoManager, storage);
+	const routes = createRoutes(config, mongoManager, storage, collaborationSessionEventEmitter);
 
 	app.use(cors());
 	app.use(routes.storage);
