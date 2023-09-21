@@ -31,7 +31,7 @@ describe("typedTreeSchema", () => {
 	});
 
 	it("recursive without special functions", () => {
-		// Recursive helper function are needed but can be avoided due to issues covered in https://github.com/microsoft/TypeScript/issues/55758
+		// Recursive helper function are needed but can be avoided due to issues covered in https://github.com/microsoft/TypeScript/issues/55758.
 		// This workaround seems to only work for compile time, not for intellisense, which makes it not very useful in practice and hard to verify that it works.
 		const builder = new SchemaBuilder("test");
 
@@ -53,8 +53,10 @@ describe("typedTreeSchema", () => {
 		>;
 	});
 
+	// Slightly different variant of the above test
 	it("recursive without special functions2", () => {
 		// This function helps the TypeScript compiler imagine a world where it solves for types in a different order, and thus handles the cases we need.
+		// Some related information in https://github.com/microsoft/TypeScript/issues/55758.
 		function fixRecursiveReference<T extends AllowedTypes>(...types: T): void {}
 
 		const builder = new SchemaBuilder("test");
