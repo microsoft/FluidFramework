@@ -5,9 +5,9 @@
 import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
+import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
-import { ConnectionMode, ScopeType } from "@fluidframework/protocol-definitions";
+import { type ConnectionMode, ScopeType } from "@fluidframework/protocol-definitions";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
@@ -15,7 +15,7 @@ import { v4 as uuid } from "uuid";
 
 import { ConnectionState } from "@fluidframework/container-loader";
 import { AzureClient } from "../AzureClient";
-import { AzureLocalConnectionConfig } from "../interfaces";
+import { type AzureLocalConnectionConfig } from "../interfaces";
 
 function createAzureClient(scopes?: ScopeType[]): AzureClient {
 	const connectionProps: AzureLocalConnectionConfig = {

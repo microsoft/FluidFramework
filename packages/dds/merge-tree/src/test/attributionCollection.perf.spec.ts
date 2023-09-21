@@ -157,7 +157,7 @@ class TreeAttributionCollection implements IAttributionCollection<AttributionKey
 		assert(offset >= 0 && offset < this._length, "Requested offset should be valid");
 		const node = this.entries.floor(offset);
 		assert(node !== undefined, "Collection should have at least one entry");
-		return node.data === null ? undefined : node.data;
+		return node.data ?? undefined;
 	}
 
 	public get length(): number {

@@ -4,11 +4,11 @@
  */
 import React from "react";
 
-import { FluidObjectValueNode, HasContainerKey } from "@fluid-experimental/devtools-core";
+import type { FluidObjectValueNode, HasContainerKey } from "@fluid-experimental/devtools-core";
 import { useContainerFeaturesContext } from "../../ContainerFeatureFlagHelper";
 import { EditableView } from "./EditableView";
 
-import { DataVisualizationTreeProps } from "./CommonInterfaces";
+import type { DataVisualizationTreeProps } from "./CommonInterfaces";
 import { TreeItem } from "./TreeItem";
 import { TreeHeader } from "./TreeHeader";
 

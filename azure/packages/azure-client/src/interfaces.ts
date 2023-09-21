@@ -2,15 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { IMember, IServiceAudience } from "@fluidframework/fluid-static";
-import { IUser } from "@fluidframework/protocol-definitions";
-import { ITokenProvider } from "@fluidframework/routerlicious-driver";
-import { IConfigProviderBase } from "@fluidframework/telemetry-utils";
-import { ICompressionStorageConfig } from "@fluidframework/driver-utils";
+import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { type IMember, type IServiceAudience } from "@fluidframework/fluid-static";
+import { type IUser } from "@fluidframework/protocol-definitions";
+import { type ITokenProvider } from "@fluidframework/routerlicious-driver";
+import { type IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import { type ICompressionStorageConfig } from "@fluidframework/driver-utils";
 
 // Re-export so developers can build loggers without pulling in core-interfaces
-export { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+export type { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 
 /**
  * Props for initializing a new AzureClient instance

@@ -407,6 +407,7 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 			!this.heuristicRunnerMicroTaskExists
 		) {
 			this.heuristicRunnerMicroTaskExists = true;
+			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			Promise.resolve()
 				.then(() => {
 					this.heuristicRunner?.run();

@@ -290,6 +290,7 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 		}
 		externalDataSource.fetchData(externalTaskListId).then(
 			(response) => {
+				// eslint-disable-next-line @typescript-eslint/no-base-to-string
 				const responseBody = JSON.parse(response.body.toString()) as Record<
 					string | number | symbol,
 					unknown
