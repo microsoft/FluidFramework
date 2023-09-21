@@ -360,7 +360,7 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 		);
 	});
 
-	it("0x173", async () => {
+	it("forceReadonly works", async () => {
 		const mapId = "mapKey";
 		const testContainerConfig: ITestContainerConfig = {
 			fluidDataObjectType: DataObjectFactoryType.Test,
@@ -388,6 +388,9 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 		map2.set("key2", "2");
 		loaded.forceReadonly?.(false);
 		await provider.ensureSynchronized();
+
+		assert.strictEqual(map1.get("key1"), "1");
+		assert.strictEqual(map1.get("key2"), "2");
 	});
 
 	describe("Expected error cases", () => {

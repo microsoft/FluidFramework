@@ -1663,8 +1663,6 @@ export class ContainerRuntime
 				!readonly || !this.connected,
 				0x125 /* "Unsafe to transition to read-only state!" */,
 			);
-
-			this.replayPendingStates();
 		});
 
 		// logging hardware telemetry
