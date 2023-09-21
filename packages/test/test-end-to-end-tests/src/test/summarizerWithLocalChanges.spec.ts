@@ -156,6 +156,16 @@ const dataStoreFactory2 = new DataObjectFactory(
 	[],
 	mixinSummaryHandler(getDataObjectAndSendOps),
 );
+const dataStoreFactory3 = new DataObjectFactory(
+	"TestDataObject3",
+	TestDataObject2,
+	[],
+	[],
+	[],
+	mixinSummaryHandler(() => {
+		throw new Error("Mixed-in summary handler threw!");
+	}),
+);
 
 const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 	[rootDataObjectFactory.type, Promise.resolve(rootDataObjectFactory)],
@@ -615,7 +625,7 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 		},
 	);
 
-	itExpects.only(
+	itExpects(
 		"SkipFailingIncorrectSummary = true. Final summary attempt should pass when ops are sent during summarize",
 		[
 			{
@@ -623,8 +633,34 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 				clientType: "noninteractive/summarizer",
 				summaryAttempts: 1,
 				finalAttempt: false,
-				error: "BOOM",
-				errorType: "dataProcessingError",
+				error: "PendingOpsWhileSummarizing",
+			},
+			{
+				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
+				clientType: "noninteractive/summarizer",
+				summaryAttempts: 2,
+				finalAttempt: false,
+				error: "PendingOpsWhileSummarizing",
+			},
+			{
+				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
+				clientType: "noninteractive/summarizer",
+				summaryAttempts: 3,
+				finalAttempt: false,
+				error: "PendingOpsWhileSummarizing",
+			},
+			{
+				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
+				clientType: "noninteractive/summarizer",
+				summaryAttempts: 4,
+				finalAttempt: false,
+				error: "PendingOpsWhileSummarizing",
+			},
+			{
+				eventName: "fluid:telemetry:Summarizer:Running:SkipFailingIncorrectSummary",
+				summaryAttempts: 5,
+				finalAttempt: true,
+				error: "Pending ops during summarization",
 			},
 		],
 		async () => {
@@ -637,12 +673,20 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 			const rootDataObject = await requestFluidObject<RootTestDataObject>(container, "/");
 			const containerRuntime = rootDataObject.containerRuntime as ContainerRuntime;
 
-			const summarizeErrorP = new Promise<DataProcessingError>((resolve, reject) => {
+			const summarizePromiseP = new Promise<ISummarizeEventProps>((resolve) => {
 				const handler = (eventProps: ISummarizeEventProps) => {
 					if (eventProps.result !== "failure") {
-						reject(new Error("Expected Summarization failure"));
+						containerRuntime.off("summarize", handler);
+						resolve(eventProps);
 					} else {
-						resolve(eventProps.error as DataProcessingError);
+						assert(
+							eventProps.error?.message === "PendingOpsWhileSummarizing",
+							"Unexpected summarization failure",
+						);
+						if (eventProps.currentAttempt === eventProps.maxAttempts) {
+							containerRuntime.off("summarize", handler);
+							resolve(eventProps);
+						}
 					}
 				};
 				containerRuntime.on("summarize", handler);
@@ -655,11 +699,91 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 			dataObject2._root.set("op", "value");
 			await provider.ensureSynchronized();
 
-			const summarizeError = await summarizeErrorP;
-			assert(
-				summarizeError.errorType === FluidErrorTypes.dataProcessingError,
-				"Expected DataProcessingError",
+			const props = await summarizePromiseP;
+			assert.strictEqual(
+				props.result,
+				"success",
+				"Summarization did not succeed as expected",
 			);
+			assert.strictEqual(
+				props.maxAttempts,
+				defaultMaxAttemptsForSubmitFailures,
+				`Unexpected summarize attempts`,
+			);
+		},
+	);
+
+	//* ONLY
+	//* ONLY
+	//* ONLY
+	//* ONLY
+	//* ONLY
+	//* ONLY
+	//* ONLY
+	//* ONLY
+	//* ONLY
+	//* ONLY
+	itExpects.only(
+		"Errors thrown from mixinSummaryHandler are tagged as DataProcessingError",
+		[
+			{
+				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
+				clientType: "noninteractive/summarizer",
+				error: "Mixed-in summary handler threw!",
+				errorType: "dataProcessingError",
+			},
+		],
+		async () => {
+			const container = await createContainer(provider, false /* disableSummary */);
+			await waitForContainerConnection(container);
+
+			const rootDataObject = await requestFluidObject<RootTestDataObject>(container, "/");
+			// const containerRuntime = rootDataObject.containerRuntime as ContainerRuntime;
+
+			// const summarizeErrorP = new Promise<DataProcessingError>((resolve, reject) => {
+			// 	const handler = (eventProps: ISummarizeEventProps) => {
+			// 		if (eventProps.result !== "failure") {
+			// 			reject(new Error("Expected Summarization failure"));
+			// 		} else {
+			// 			resolve(eventProps.error as DataProcessingError);
+			// 		}
+			// 	};
+			// 	containerRuntime.on("summarize", handler);
+			// });
+			const { summarizer } = await createSummarizerFromFactory(
+				provider,
+				container,
+				rootDataObjectFactory,
+				undefined /* summaryVersion */,
+				undefined /* containerRuntimeFactoryType */,
+				registryStoreEntries,
+				undefined /* mockLogger */,
+				mockConfigProvider(settings),
+			);
+			await provider.ensureSynchronized();
+
+			await assert.rejects(
+				async () => {
+					await summarizeNow(summarizer);
+				},
+				(error: any) => {
+					return error.errorType === FluidErrorTypes.dataProcessingError;
+				},
+				"expected DataProcessingError",
+			);
+
+			// const dataObject3 = await dataStoreFactory3.createInstance(
+			// 	rootDataObject.containerRuntime,
+			// );
+			// rootDataObject._root.set("something", rootDataObject.handle);
+			// // dataObject3._root.set("op", "value");
+			// await provider.ensureSynchronized();
+
+			// const summarizeError = await summarizeErrorP;
+			// assert(
+			// 	summarizeError.errorType === FluidErrorTypes.dataProcessingError,
+			// 	"Expected DataProcessingError",
+			// );
 		},
 	);
 });
