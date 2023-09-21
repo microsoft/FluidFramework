@@ -9,7 +9,7 @@
 	},
 	"config": {
 		"dumpConfig": true
-  },
+	},
 	"lumberjack": {
 		"options": {
 			"enableGlobalTelemetryContext": true
