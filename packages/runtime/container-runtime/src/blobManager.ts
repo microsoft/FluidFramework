@@ -197,6 +197,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private readonly tombstonedBlobs: Set<string> = new Set();
 
 	private readonly sendBlobAttachOp: (localId: string, storageId?: string) => void;
+	private loaded: boolean = false;
 
 	constructor(
 		private readonly routeContext: IFluidHandleContext,
@@ -328,6 +329,18 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			acked: pending?.acked,
 			uploadTime: pending?.uploadTime,
 		});
+	}
+
+	public hasPendingStashedBlobs(): boolean {
+		if (
+			Array.from(this.pendingBlobs.values()).filter((e) => e.uploading === true).length > 0 &&
+			!this.loaded
+		) {
+			this.loaded = true;
+			return true;
+		}
+		this.loaded = true;
+		return false;
 	}
 	/**
 	 * Upload blobs added while offline. This must be completed before connecting and resubmitting ops.
