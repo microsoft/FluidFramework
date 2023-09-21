@@ -194,7 +194,6 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 		if (message.type === MessageType.Operation && !local) {
 			const op = message.contents as IIncrementOperation;
 
@@ -220,6 +219,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
 
 		// TODO: Clean up error code linter violations repo-wide.
 
+		// eslint-disable-next-line unicorn/numeric-separators-style
 		assert(counterOp.type === "increment", 0x3ec /* Op type is not increment */);
 
 		this.incrementCore(counterOp.incrementAmount);

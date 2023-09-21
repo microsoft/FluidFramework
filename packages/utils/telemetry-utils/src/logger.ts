@@ -810,7 +810,7 @@ export const tagData = <
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 	Object.entries(values)
 		.filter((e) => e[1] !== undefined)
-		// eslint-disable-next-line unicorn/no-array-reduce
+		// eslint-disable-next-line unicorn/no-array-reduce, unicorn/prefer-object-from-entries
 		.reduce((pv, cv) => {
 			const [key, value] = cv;
 			// The ternary form is less legible in this case.

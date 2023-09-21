@@ -205,6 +205,7 @@ ${JSON.stringify(actualEvents)}`);
 		if (inlineDetailsProp && details !== undefined) {
 			assert(
 				typeof details === "string",
+				// eslint-disable-next-line unicorn/numeric-separators-style
 				0x6c9 /* Details should a JSON stringified string if inlineDetailsProp is true */,
 			);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment

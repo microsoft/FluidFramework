@@ -8,6 +8,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable unicorn/consistent-function-scoping */
 /* eslint-disable unicorn/no-null */
 
 import { strict as assert } from "node:assert";

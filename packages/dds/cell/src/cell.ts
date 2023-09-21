@@ -300,7 +300,6 @@ export class SharedCell<T = any>
 			return;
 		}
 
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 		if (message.type === MessageType.Operation && !local) {
 			const op = message.contents as ICellOperation;
 			// update the attributor
