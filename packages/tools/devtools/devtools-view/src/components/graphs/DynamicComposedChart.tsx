@@ -36,7 +36,7 @@ export interface GraphDataSet {
 		xAxisDataKey: string;
 		yAxisDataKey: string;
 	};
-	data: { [key: string]: number | string }[];
+	data: Record<string, number | string>[];
 }
 
 /**
@@ -251,6 +251,7 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): React.Re
 	 */
 	const CustomizedYAxisTick = (yAxisProps: any): React.ReactElement => {
 		const { x, y, payload } = yAxisProps;
+		/* eslint-disable react/prop-types */
 		return (
 			<g>
 				<text x={x} y={y} textAnchor="end" fill={graphColorPalette.axisTick} fontSize={16}>
@@ -258,6 +259,7 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): React.Re
 				</text>
 			</g>
 		);
+		/* eslint-enable react/prop-types */
 	};
 
 	/**

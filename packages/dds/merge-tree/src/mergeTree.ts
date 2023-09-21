@@ -403,6 +403,7 @@ class HierMergeBlock extends MergeBlock implements IHierBlock {
 			strbuf += internedSpaces(indentCount);
 			strbuf += `${key}: `;
 			for (const item of stack.items) {
+				// eslint-disable-next-line @typescript-eslint/no-base-to-string
 				strbuf += `${item.toString()} `;
 			}
 			strbuf += "\n";
@@ -875,7 +876,7 @@ export class MergeTree {
 			const children = parent.children;
 			for (let childIndex = 0; childIndex < parent.childCount; childIndex++) {
 				const child = children[childIndex];
-				if ((prevParent && child === prevParent) || child === node) {
+				if ((prevParent && child === prevParent) ?? child === node) {
 					break;
 				}
 				totalOffset += this.nodeLength(child, refSeq, clientId, localSeq) ?? 0;
@@ -1566,7 +1567,7 @@ export class MergeTree {
 		}
 
 		if (
-			(!_segmentGroup.previousProps && previousProps) ||
+			(!_segmentGroup.previousProps && previousProps) ??
 			(_segmentGroup.previousProps && !previousProps)
 		) {
 			throw new Error("All segments in group should have previousProps or none");

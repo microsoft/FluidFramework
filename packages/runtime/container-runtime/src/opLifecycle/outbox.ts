@@ -66,7 +66,7 @@ export function getLongStack<T>(action: () => T, length: number = 50): T {
 	const errorObj = Error as any;
 	if (
 		(
-			Object.getOwnPropertyDescriptor(errorObj, "stackTraceLimit") ||
+			Object.getOwnPropertyDescriptor(errorObj, "stackTraceLimit") ??
 			Object.getOwnPropertyDescriptor(Object.getPrototypeOf(errorObj), "stackTraceLimit")
 		)?.writable !== true
 	) {

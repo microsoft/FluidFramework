@@ -33,9 +33,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 	protected readonly blobsShaCache = new Map<string, string>();
 	private readonly summaryTreeUploadManager: ISummaryUploadManager;
 
-	public get repositoryUrl(): string {
-		return "";
-	}
+	public readonly repositoryUrl: string = "";
 
 	constructor(
 		private readonly id: string,
@@ -51,6 +49,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		);
 	}
 
+	// eslint-disable-next-line @rushstack/no-new-null
 	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
 		const id = versionId ? versionId : this.id;
 		const commits = await this.manager.getCommits(id, count);
@@ -61,6 +60,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		}));
 	}
 
+	// eslint-disable-next-line @rushstack/no-new-null
 	public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTreeEx | null> {
 		let requestVersion = version;
 		if (!requestVersion) {

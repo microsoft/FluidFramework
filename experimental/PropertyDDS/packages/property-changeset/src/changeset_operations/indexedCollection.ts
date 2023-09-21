@@ -509,9 +509,9 @@ export namespace ChangeSetIndexedCollectionFunctions {
 
 				// Store the ChangeSet
 				if (in_changePrefix === "other") {
-					changesByKeys[key].change = !Array.isArray(in_collection)
-						? in_collection[key]
-						: key;
+					changesByKeys[key].change = Array.isArray(in_collection)
+						? key
+						: in_collection[key];
 				}
 			}
 		};

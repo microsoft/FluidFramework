@@ -26,6 +26,7 @@ export interface Edit {
 	 *
 	 * @remarks This is generally expected to be of type `EditType`. `string` is supported strictly for forward / backward compatibility. If "type" is undefined then it assumes the type of data.
 	 */
+	// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
 	type?: EditType | string;
 
 	/**

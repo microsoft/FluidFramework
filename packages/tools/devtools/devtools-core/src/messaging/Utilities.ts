@@ -41,6 +41,7 @@ export function postMessagesToWindow<TMessage extends IDevtoolsMessage>(
  *
  * @internal
  */
+// eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
 export interface InboundHandlers {
 	/**
 	 * Mapping from {@link IDevtoolsMessage."type"}s to a handler callback for that message type.

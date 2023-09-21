@@ -25,7 +25,7 @@ const fetchHttpXHROverride: IXHROverride = {
 		};
 		fetch(payload.urlString, requestInit)
 			.then((response) => {
-				const headerMap: { [key: string]: string } = {};
+				const headerMap: Record<string, string> = {};
 				// response.headers is not a run-of-the-mill array, it satisfies a particular interface that
 				// only has forEach, not a general iterator.
 				// eslint-disable-next-line unicorn/no-array-for-each

@@ -384,7 +384,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 	}
 
 	const handleCategoryChange: DropdownProps["onOptionSelect"] = (event, data) => {
-		const category = data.optionText === undefined ? "" : data.optionText;
+		const category = data.optionText ?? "";
 		setSelectedCategory(category);
 		const categories: string[] = [];
 		categories.push(category);
@@ -445,7 +445,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 			matchingOption = eventNameOptions.includes(data.optionText);
 		}
 		if (matchingOption) {
-			const search = data.optionText === undefined ? "" : data.optionText;
+			const search = data.optionText ?? "";
 			setCustomSearch(search);
 			usageLogger?.sendTelemetryEvent({
 				eventName: "TelemetryEventNameFilter",

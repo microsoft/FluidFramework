@@ -431,8 +431,8 @@ export class LocalReferenceCollection {
 		const offset = lref.getOffset();
 		const refsAtOffset = this.refsByOffset[offset];
 		if (
-			refsAtOffset?.before?.includes(listNode) ||
-			refsAtOffset?.at?.includes(listNode) ||
+			refsAtOffset?.before?.includes(listNode) ??
+			refsAtOffset?.at?.includes(listNode) ??
 			refsAtOffset?.after?.includes(listNode)
 		) {
 			return true;

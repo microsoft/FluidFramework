@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+// Indexed-object style is used to ease documentation.
+/* eslint-disable @typescript-eslint/consistent-indexed-object-style */
+
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	IDisposable,
@@ -257,9 +260,7 @@ export class DataVisualizerGraph
 		if (!this.visualizerNodes.has(sharedObject.id)) {
 			// Create visualizer node for the shared object
 			const visualizationFunction =
-				this.visualizers[sharedObject.attributes.type] === undefined
-					? visualizeUnknownSharedObject
-					: this.visualizers[sharedObject.attributes.type];
+				this.visualizers[sharedObject.attributes.type] ?? visualizeUnknownSharedObject;
 
 			// Create visualizer node for the shared object
 			const editorFunction = this.editors[sharedObject.attributes.type];

@@ -1001,7 +1001,7 @@ export abstract class BaseProperty {
 		var absolutePath = path.reverse().join("");
 
 		// We don't use the property path separator at the start of the path
-		if (absolutePath[0] === PROPERTY_PATH_DELIMITER) {
+		if (absolutePath.startsWith(PROPERTY_PATH_DELIMITER)) {
 			absolutePath = absolutePath.substr(1);
 		}
 		absolutePath = "/" + absolutePath;
