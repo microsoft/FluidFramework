@@ -57,10 +57,8 @@ module.exports = {
 		"@typescript-eslint/dot-notation": "error",
 		"@typescript-eslint/explicit-function-return-type": "off",
 		"@typescript-eslint/func-call-spacing": "off",
-		"@typescript-eslint/interface-name-prefix": "off",
 		"@typescript-eslint/keyword-spacing": "off",
 		"@typescript-eslint/member-delimiter-style": "off",
-		"@typescript-eslint/no-duplicate-imports": "error",
 		"@typescript-eslint/no-dynamic-delete": "error",
 		"@typescript-eslint/no-empty-function": "off",
 		"@typescript-eslint/no-empty-interface": "error",
@@ -74,7 +72,6 @@ module.exports = {
 		"@typescript-eslint/no-magic-numbers": "off",
 		"@typescript-eslint/no-misused-new": "error",
 		"@typescript-eslint/no-non-null-assertion": "error",
-		"@typescript-eslint/no-parameter-properties": "off",
 		"@typescript-eslint/no-require-imports": "error",
 		"@typescript-eslint/no-shadow": [
 			"error",
@@ -90,7 +87,6 @@ module.exports = {
 		"@typescript-eslint/no-unnecessary-qualifier": "error",
 		"@typescript-eslint/no-unnecessary-type-arguments": "error",
 		"@typescript-eslint/no-unnecessary-type-assertion": "error",
-		"@typescript-eslint/no-use-before-declare": "off",
 		"@typescript-eslint/no-var-requires": "error",
 		"@typescript-eslint/object-curly-spacing": "off",
 		"@typescript-eslint/prefer-for-of": "error",
@@ -173,7 +169,6 @@ module.exports = {
 		//            significant performance regression [node 14 x64].
 		"unicorn/no-for-loop": "off",
 		"unicorn/no-new-buffer": "error",
-		"unicorn/no-unsafe-regex": "error",
 
 		// eslint
 		"arrow-body-style": "off",
@@ -214,7 +209,7 @@ module.exports = {
 		"no-control-regex": "error",
 		"no-debugger": "off",
 		"no-duplicate-case": "error",
-		"no-duplicate-imports": "off", // Superseded by @typescript-eslint/no-duplicate-imports
+		"no-duplicate-imports": "off", // Doesn't work with TypeScript
 		"no-empty": "off",
 		"no-eval": "error",
 		"no-extra-semi": "off", // Superseded by @typescript-eslint/no-extra-semi
@@ -249,7 +244,6 @@ module.exports = {
 			},
 			"ForInStatement",
 		],
-		"no-return-await": "error",
 		"no-sequences": "error",
 		"no-shadow": "off", // Superseded by @typescript-eslint/no-shadow
 		"no-sparse-arrays": "error",
@@ -271,7 +265,6 @@ module.exports = {
 		"padded-blocks": ["error", "never"],
 		"padding-line-between-statements": [
 			"off",
-			"error",
 			{
 				blankLine: "always",
 				prev: "*",
