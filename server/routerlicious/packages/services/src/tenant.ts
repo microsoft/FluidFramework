@@ -18,7 +18,7 @@ import {
 	CommonProperties,
 	getLumberBaseProperties,
 } from "@fluidframework/server-services-telemetry";
-import { AxiosRequestHeaders } from "axios";
+import { RawAxiosRequestHeaders } from "axios";
 import { IsEphemeralContainer } from ".";
 
 export class Tenant implements core.ITenant {
@@ -109,7 +109,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 				password: generateToken(tenantId, documentId, key, null),
 				user: tenantId,
 			};
-			const headers: AxiosRequestHeaders = {
+			const headers: RawAxiosRequestHeaders = {
 				Authorization: getAuthorizationTokenFromCredentials(credentials),
 			};
 			if (storageName) {
