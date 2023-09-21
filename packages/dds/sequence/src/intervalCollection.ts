@@ -223,7 +223,7 @@ export function createIntervalIndex() {
 	const helpers: IIntervalHelpers<Interval> = {
 		create: createInterval,
 	};
-	const lc = new LocalIntervalCollection<Interval>(undefined as any as Client, "", helpers);
+	const lc = new LocalIntervalCollection<Interval>(undefined as any as Client, "", helpers, {});
 	return lc;
 }
 
@@ -238,6 +238,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 		private readonly client: Client,
 		private readonly label: string,
 		private readonly helpers: IIntervalHelpers<TInterval>,
+		private readonly options: Partial<SequenceOptions>,
 		/** Callback invoked each time one of the endpoints of an interval slides. */
 		private readonly onPositionChange?: (
 			interval: TInterval,
@@ -314,7 +315,16 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 		intervalType: IntervalType,
 		op?: ISequencedDocumentMessage,
 	): TInterval {
-		return this.helpers.create(this.label, start, end, this.client, intervalType, op);
+		return this.helpers.create(
+			this.label,
+			start,
+			end,
+			this.client,
+			intervalType,
+			op,
+			undefined,
+			this.options.mergeTreeReferencesCanSlideToEndpoint,
+		);
 	}
 
 	public addInterval(
@@ -376,9 +386,14 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 		op?: ISequencedDocumentMessage,
 		localSeq?: number,
 	) {
-		const newInterval = interval.modify(this.label, start, end, op, localSeq) as
-			| TInterval
-			| undefined;
+		const newInterval = interval.modify(
+			this.label,
+			start,
+			end,
+			op,
+			localSeq,
+			this.options.mergeTreeReferencesCanSlideToEndpoint,
+		) as TInterval | undefined;
 		if (newInterval) {
 			this.removeExistingInterval(interval);
 			this.add(newInterval);
@@ -1060,6 +1075,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			client,
 			label,
 			this.helpers,
+			this.options,
 			(interval, previousInterval) => this.emitChange(interval, previousInterval, true, true),
 		);
 		if (this.savedSerializedIntervals) {
@@ -1089,6 +1105,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 					intervalType,
 					undefined,
 					true,
+					this.options.mergeTreeReferencesCanSlideToEndpoint,
 				);
 				if (properties) {
 					interval.addProperties(properties);

@@ -138,7 +138,6 @@ export class SequenceInterval implements ISerializableInterval {
 		 */
 		public end: LocalReferencePosition,
 		public intervalType: IntervalType,
-		public useNewSlidingBehavior: boolean,
 		props?: PropertySet,
 		public readonly startSide: Side = Side.Before,
 		public readonly endSide: Side = Side.Before,
@@ -220,7 +219,6 @@ export class SequenceInterval implements ISerializableInterval {
 			this.start,
 			this.end,
 			this.intervalType,
-			this.useNewSlidingBehavior,
 			this.properties,
 			this.startSide,
 			this.endSide,
@@ -326,7 +324,6 @@ export class SequenceInterval implements ISerializableInterval {
 			newStart,
 			newEnd,
 			this.intervalType,
-			this.useNewSlidingBehavior,
 			undefined,
 			startSide,
 			endSide,
@@ -366,6 +363,7 @@ export class SequenceInterval implements ISerializableInterval {
 		end: SequencePlace | undefined,
 		op?: ISequencedDocumentMessage,
 		localSeq?: number,
+		useNewSlidingBehavior: boolean = false,
 	) {
 		const { startSide, endSide, startPos, endPos } = endpointPosAndSide(start, end);
 		const stickiness = computeStickinessFromSide(
@@ -394,7 +392,7 @@ export class SequenceInterval implements ISerializableInterval {
 				localSeq,
 				startReferenceSlidingPreference(stickiness),
 				startReferenceSlidingPreference(stickiness) === SlidingPreference.BACKWARD,
-				this.useNewSlidingBehavior,
+				useNewSlidingBehavior,
 			);
 			if (this.start.properties) {
 				startRef.addProperties(this.start.properties);
@@ -412,7 +410,7 @@ export class SequenceInterval implements ISerializableInterval {
 				localSeq,
 				endReferenceSlidingPreference(stickiness),
 				endReferenceSlidingPreference(stickiness) === SlidingPreference.FORWARD,
-				this.useNewSlidingBehavior,
+				useNewSlidingBehavior,
 			);
 			if (this.end.properties) {
 				endRef.addProperties(this.end.properties);
@@ -424,7 +422,6 @@ export class SequenceInterval implements ISerializableInterval {
 			startRef,
 			endRef,
 			this.intervalType,
-			this.useNewSlidingBehavior,
 			undefined,
 			startSide ?? this.startSide,
 			endSide ?? this.endSide,
@@ -629,7 +626,6 @@ export function createSequenceInterval(
 		startLref,
 		endLref,
 		intervalType,
-		useNewSlidingBehavior,
 		rangeProp,
 		startSide,
 		endSide,

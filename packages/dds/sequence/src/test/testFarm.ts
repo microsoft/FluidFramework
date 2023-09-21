@@ -117,7 +117,7 @@ function makeBookmarks(client: MergeTree.TestClient, bookmarkCount: number) {
 			);
 			lref1.addProperties({ [MergeTree.reservedRangeLabelsKey]: ["bookmark"] });
 			lref2.addProperties({ [MergeTree.reservedRangeLabelsKey]: ["bookmark"] });
-			bookmarks.push(new SequenceInterval(client, lref1, lref2, IntervalType.Simple, false));
+			bookmarks.push(new SequenceInterval(client, lref1, lref2, IntervalType.Simple));
 		} else {
 			i--;
 		}
@@ -628,7 +628,6 @@ export function TestPack(verbose = true) {
 								lrefPos1,
 								lrefPos2,
 								IntervalType.Simple,
-								false,
 							);
 						} else {
 							i--;
@@ -662,7 +661,6 @@ export function TestPack(verbose = true) {
 								lrefPos1,
 								lrefPos2,
 								IntervalType.Simple,
-								false,
 							);
 						} else {
 							i--;
