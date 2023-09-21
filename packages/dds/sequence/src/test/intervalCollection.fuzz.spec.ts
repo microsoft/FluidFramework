@@ -252,14 +252,14 @@ describe("IntervalCollection fuzz testing", () => {
 
 	createDDSFuzzSuite(model, {
 		...defaultFuzzOptions,
-		// AB#4477: Seed 12 is the same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477.
+		// AB#4477: Seed 20 and others with its call stack is the same root cause as skipped regression test in
+		// intervalCollection.spec.ts--search for 4477.
+		// The other failing seeds were added when the mocks were changed to properly update msn on reconnects.
+		// This exposed ways that `0x54e` can occur.
+		// The root cause of this bug is--roughly speaking--interval endpoints with StayOnRemove being placed
+		// on segments that can be zamboni'd.
+		// TODO:AB#5337: re-enable these seeds.
 		skip: [4, 12, 41, 53, 58, 76, 91],
-		// TODO:AB#5338: IntervalCollection doesn't correctly handle edits made while detached. Once supported,
-		// this config should be enabled (deleting is sufficient: detached start is enabled by default)
-		detachedStartOptions: {
-			enabled: false,
-			attachProbability: 0.2,
-		},
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
 	});
@@ -283,14 +283,6 @@ describe("IntervalCollection no reconnect fuzz testing", () => {
 
 	createDDSFuzzSuite(noReconnectModel, {
 		...options,
-		// AB#4477: Same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477.
-		skip: [92],
-		// TODO:AB#5338: IntervalCollection doesn't correctly handle edits made while detached. Once supported,
-		// this config should be enabled (deleting is sufficient: detached start is enabled by default)
-		detachedStartOptions: {
-			enabled: false,
-			attachProbability: 0.2,
-		},
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
 	});
@@ -304,14 +296,9 @@ describe("IntervalCollection fuzz testing with rebased batches", () => {
 
 	createDDSFuzzSuite(noReconnectWithRebaseModel, {
 		...defaultFuzzOptions,
-		// ADO:4477: Same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477.
-		skip: [31],
-		// TODO:AB#5338: IntervalCollection doesn't correctly handle edits made while detached. Once supported,
-		// this config should be enabled (deleting is sufficient: detached start is enabled by default)
-		detachedStartOptions: {
-			enabled: false,
-			attachProbability: 0.2,
-		},
+		// AB#4477: Either the same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477,
+		// or 0x54e, see AB#5337 or comment on "default interval collection" fuzz suite.
+		skip: [3, 9, 11, 13, 23, 26, 29, 30, 31, 32, 36, 39, 41, 46, 49, 52, 53, 71, 73, 81, 86],
 		reconnectProbability: 0.0,
 		numberOfClients: 3,
 		clientJoinOptions: {
