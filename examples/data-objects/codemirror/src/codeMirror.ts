@@ -4,6 +4,7 @@
  */
 
 import { EventEmitter } from "events";
+// eslint-disable-next-line import/no-deprecated
 import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
 import {
 	IFluidLoadable,
@@ -74,6 +75,7 @@ export class CodeMirrorComponent extends EventEmitter implements IFluidLoadable,
 	}
 
 	public async request(request: IRequest): Promise<IResponse> {
+		// eslint-disable-next-line import/no-deprecated
 		return defaultFluidObjectRequestHandler(this, request);
 	}
 
