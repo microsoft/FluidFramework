@@ -174,20 +174,20 @@ describe("SharedString interval collections", () => {
 			assertIntervals(sharedString, collection1, [{ start: 4, end: 4 }]);
 			assertIntervals(sharedString2, collection2, [{ start: 4, end: 4 }]);
 
-			collection2.change(intervalId, 1, 6);
+			collection2.change({ id: intervalId, start: 1, end: 6 });
 			sharedString.removeText(0, 2);
-			collection1.change(intervalId, 0, 5);
+			collection1.change({ id: intervalId, start: 0, end: 5 });
 
 			containerRuntimeFactory.processAllMessages();
 
 			assertIntervals(sharedString, collection1, [{ start: 0, end: 5 }]);
 			assertIntervals(sharedString2, collection2, [{ start: 0, end: 5 }]);
 
-			collection1.change(
-				intervalId,
-				sharedString.getLength() - 1,
-				sharedString.getLength() - 1,
-			);
+			collection1.change({
+				id: intervalId,
+				start: sharedString.getLength() - 1,
+				end: sharedString.getLength() - 1,
+			});
 
 			containerRuntimeFactory.processAllMessages();
 
@@ -588,7 +588,7 @@ describe("SharedString interval collections", () => {
 			sharedString.removeRange(1, 4);
 			const intervalId = interval.getIntervalId();
 			assert(intervalId);
-			collection1.change(intervalId, 1, 1);
+			collection1.change({ id: intervalId, start: 1, end: 1 });
 			containerRuntimeFactory.processAllMessages();
 			assert.equal(sharedString.getText(), "AYE");
 			assertIntervals(sharedString, collection1, [{ start: 2, end: 2 }]);
@@ -653,7 +653,7 @@ describe("SharedString interval collections", () => {
 			assertAllIntervals([{ start: -1, end: -1 }]);
 
 			const id = interval.getIntervalId() ?? assert.fail("expected interval to have id");
-			collection2.change(id, undefined, 2);
+			collection2.change({ id, start: undefined, end: 2 });
 			containerRuntimeFactory.processAllMessages();
 
 			assertAllIntervals([{ start: -1, end: 2 }]);
@@ -780,7 +780,7 @@ describe("SharedString interval collections", () => {
 
 			const intervalId = interval.getIntervalId();
 			assert(intervalId);
-			collection3.change(intervalId, 1, 3);
+			collection3.change({ id: intervalId, start: 1, end: 3 });
 
 			containerRuntimeFactory.processAllMessages();
 			assert.strictEqual(sharedString.getText(), "AXCD");
@@ -984,8 +984,8 @@ describe("SharedString interval collections", () => {
 			containerRuntimeFactory.processAllMessages();
 			const collection2 = sharedString2.getIntervalCollection("test");
 
-			collection2.change(id, 1, 1);
-			collection1.change(id, 2, 2);
+			collection2.change({ id, start: 1, end: 1 });
+			collection1.change({ id, start: 2, end: 2 });
 
 			assertIntervalEquals(sharedString2, collection2.getIntervalById(id), {
 				start: 1,
@@ -996,8 +996,8 @@ describe("SharedString interval collections", () => {
 				end: 2,
 			});
 
-			collection2.change(id, 3, 3);
-			collection1.change(id, 4, 4);
+			collection2.change({ id, start: 3, end: 3 });
+			collection1.change({ id, start: 4, end: 4 });
 			containerRuntimeFactory.processAllMessages();
 			assert.deepEqual(endpointsForCollection1, [
 				{ start: 0, end: 0 },
@@ -1277,7 +1277,7 @@ describe("SharedString interval collections", () => {
 			const interval1 = collection1.add({ start: 0, end: 1 });
 			const intervalId1 = interval1.getIntervalId();
 			assert(intervalId1);
-			collection1.change(intervalId1, 1, 4);
+			collection1.change({ id: intervalId1, start: 1, end: 4 });
 
 			const collection2: IIntervalCollection<SequenceInterval> =
 				sharedString2.getIntervalCollection("test2");
@@ -1345,7 +1345,7 @@ describe("SharedString interval collections", () => {
 			sharedString2.removeRange(4, 6);
 			const intervalId = interval.getIntervalId();
 			assert(intervalId);
-			collection1.change(intervalId, 1 /* only change start */);
+			collection1.change({ id: intervalId, start: 1 /* only change start */ });
 			sharedString2.insertText(2, "123");
 			containerRuntimeFactory.processAllMessages();
 			assert.equal(sharedString.getText(), "AB123CD");
@@ -1362,7 +1362,7 @@ describe("SharedString interval collections", () => {
 			const interval = collection2.add({ start: 3, end: 4 });
 			const intervalId = interval.getIntervalId();
 			assert(intervalId);
-			collection2.change(intervalId, 1, 5);
+			collection2.change({ id: intervalId, start: 1, end: 5 });
 
 			assert.equal(
 				containerRuntimeFactory.outstandingMessageCount,
@@ -1393,9 +1393,9 @@ describe("SharedString interval collections", () => {
 				containerRuntimeFactory.processAllMessages();
 				const id = interval.getIntervalId();
 				assert(id);
-				collection1.change(id, 1, 1);
-				collection1.changeProperties(id, { propName: "losing value" });
-				collection2.changeProperties(id, { propName: "winning value" });
+				collection1.change({ id, start: 1, end: 1 });
+				collection1.change({ id, props: { propName: "losing value" } });
+				collection2.change({ id, props: { propName: "winning value" } });
 				containerRuntimeFactory.processAllMessages();
 				assert.equal(collection1.getIntervalById(id)?.properties.propName, "winning value");
 				assert.equal(collection2.getIntervalById(id)?.properties.propName, "winning value");
@@ -1518,7 +1518,7 @@ describe("SharedString interval collections", () => {
 						sharedString.insertText(2, "llo he");
 						const newIntervalId = newInterval.getIntervalId();
 						assert(newIntervalId);
-						collection1.change(newIntervalId, start, end);
+						collection1.change({ id: newIntervalId, start, end });
 						// Previously would fail: rebase of the "add" op would cause "Mismatch in pending changes"
 						// assert to fire (since the pending change wasn't actually the addition of the interval;
 						// it was the change)
@@ -1546,7 +1546,7 @@ describe("SharedString interval collections", () => {
 						sharedString2.insertText(2, "llo he");
 						const newIntervalId = newInterval.getIntervalId();
 						assert(newIntervalId);
-						collection1.change(newIntervalId, start, end);
+						collection1.change({ id: newIntervalId, start, end });
 						containerRuntimeFactory.processAllMessages();
 						containerRuntime1.connected = true;
 						containerRuntimeFactory.processAllMessages();
@@ -1574,7 +1574,7 @@ describe("SharedString interval collections", () => {
 			// as the original problematic implementation did.
 			const intervalId = interval.getIntervalId();
 			assert(intervalId);
-			collection1.change(intervalId, 8, 9);
+			collection1.change({ id: intervalId, start: 8, end: 9 });
 			sharedString.removeRange(1, sharedString.getLength());
 			containerRuntime1.connected = true;
 			containerRuntimeFactory.processAllMessages();
@@ -1586,7 +1586,7 @@ describe("SharedString interval collections", () => {
 			containerRuntime1.connected = false;
 			const intervalId = interval.getIntervalId();
 			assert(intervalId);
-			collection1.changeProperties(intervalId, { foo: "prop" });
+			collection1.change({ id: intervalId, props: { foo: "prop" } });
 			containerRuntime1.connected = true;
 			containerRuntimeFactory.processAllMessages();
 			assertIntervals(sharedString, collection1, [{ start: 6, end: 8 }]);
@@ -1635,7 +1635,7 @@ describe("SharedString interval collections", () => {
 
 			const intervalId = interval.getIntervalId();
 			assert(intervalId);
-			collection1.change(intervalId, 5, 9); // " fri"
+			collection1.change({ id: intervalId, start: 5, end: 9 }); // " fri"
 			sharedString2.insertText(7, "amily its my f");
 			containerRuntimeFactory.processAllMessages();
 
@@ -1653,7 +1653,7 @@ describe("SharedString interval collections", () => {
 
 			const intervalId = interval.getIntervalId();
 			assert(intervalId);
-			collection1.change(intervalId, 5, 9); // " fri"
+			collection1.change({ id: intervalId, start: 5, end: 9 }); // " fri"
 			sharedString2.removeText(8, 10);
 			containerRuntimeFactory.processAllMessages();
 
@@ -1746,7 +1746,7 @@ describe("SharedString interval collections", () => {
 			const id = collection.add({ start: 1, end: 1 }).getIntervalId();
 			assert.throws(
 				() => {
-					collection.changeProperties(id, { [reservedRangeLabelsKey]: ["test2"] });
+					collection.change({ id, props: { [reservedRangeLabelsKey]: ["test2"] } });
 				},
 				LoggingError,
 				"The label property of an interval should not be modified once inserted to the collection",

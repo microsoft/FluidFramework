@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { TextSegment } from "@fluidframework/merge-tree";
 import { SharedString } from "../sharedString";
-import { IntervalType, SequenceInterval } from "../intervals";
+import { SequenceInterval } from "../intervals";
 import { IIntervalCollection } from "../intervalCollection";
 import { assertEquivalentSharedStrings } from "./intervalUtils";
 
@@ -56,14 +56,14 @@ describe("IntervalCollection detached", () => {
 	describe("interval created while detached", () => {
 		it("slides immediately on segment removal", () => {
 			sharedString.insertText(0, "0123");
-			const interval = collection.add(0, 2, IntervalType.SlideOnRemove);
+			const interval = collection.add({ start: 0, end: 2 });
 			sharedString.removeText(2, 3);
 			assert.equal((interval.end.getSegment() as TextSegment)?.text, "3");
 		});
 
 		it("synchronizes correctly on another client", async () => {
 			sharedString.insertText(0, "0123");
-			collection.add(0, 2, IntervalType.SlideOnRemove);
+			collection.add({ start: 0, end: 2 });
 			const { sharedString2, containerRuntimeFactory } =
 				await attachAndLoadSecondSharedString();
 
@@ -74,12 +74,12 @@ describe("IntervalCollection detached", () => {
 
 		it("can be changed by another client after attaching", async () => {
 			sharedString.insertText(0, "0123");
-			const interval = collection.add(0, 2, IntervalType.SlideOnRemove);
+			const interval = collection.add({ start: 0, end: 2 });
 			const { sharedString2, containerRuntimeFactory } =
 				await attachAndLoadSecondSharedString();
 
 			const collection2 = sharedString2.getIntervalCollection("intervals");
-			collection2.change(interval.getIntervalId(), 1, 1);
+			collection2.change({ id: interval.getIntervalId(), start: 1, end: 1 });
 			containerRuntimeFactory.processAllMessages();
 			assertEquivalentSharedStrings(sharedString, sharedString2);
 		});
@@ -88,8 +88,8 @@ describe("IntervalCollection detached", () => {
 	describe("interval changed while detached", () => {
 		it("slides immediately on segment removal", () => {
 			sharedString.insertText(0, "0123");
-			const interval = collection.add(0, 2, IntervalType.SlideOnRemove);
-			collection.change(interval.getIntervalId(), 0, 0);
+			const interval = collection.add({ start: 0, end: 2 });
+			collection.change({ id: interval.getIntervalId(), start: 0, end: 0 });
 			sharedString.removeText(0, 1);
 			assert.equal((interval.start.getSegment() as TextSegment)?.text, "123");
 			assert.equal((interval.end.getSegment() as TextSegment)?.text, "123");
@@ -97,8 +97,8 @@ describe("IntervalCollection detached", () => {
 
 		it("synchronizes correctly on another client", async () => {
 			sharedString.insertText(0, "0123");
-			const interval = collection.add(0, 2, IntervalType.SlideOnRemove);
-			collection.change(interval.getIntervalId(), 0, 0);
+			const interval = collection.add({ start: 0, end: 2 });
+			collection.change({ id: interval.getIntervalId(), start: 0, end: 0 });
 			const { sharedString2, containerRuntimeFactory } =
 				await attachAndLoadSecondSharedString();
 
@@ -109,13 +109,13 @@ describe("IntervalCollection detached", () => {
 
 		it("can be changed by another client after attaching", async () => {
 			sharedString.insertText(0, "0123");
-			const interval = collection.add(0, 2, IntervalType.SlideOnRemove);
-			collection.change(interval.getIntervalId(), 0, 0);
+			const interval = collection.add({ start: 0, end: 2 });
+			collection.change({ id: interval.getIntervalId(), start: 0, end: 0 });
 			const { sharedString2, containerRuntimeFactory } =
 				await attachAndLoadSecondSharedString();
 
 			const collection2 = sharedString2.getIntervalCollection("intervals");
-			collection2.change(interval.getIntervalId(), 1, 1);
+			collection2.change({ id: interval.getIntervalId(), start: 1, end: 1 });
 			containerRuntimeFactory.processAllMessages();
 			assertEquivalentSharedStrings(sharedString, sharedString2);
 		});
@@ -124,8 +124,8 @@ describe("IntervalCollection detached", () => {
 	describe("interval with properties changed while detached", () => {
 		it("synchronizes correctly on another client", async () => {
 			sharedString.insertText(0, "0123");
-			const interval = collection.add(0, 2, IntervalType.SlideOnRemove, { foo: "a1" });
-			collection.changeProperties(interval.getIntervalId(), { foo: "a2" });
+			const interval = collection.add({ start: 0, end: 2, props: { foo: "a1" } });
+			collection.change({ id: interval.getIntervalId(), props: { foo: "a2" } });
 			const { sharedString2, containerRuntimeFactory } =
 				await attachAndLoadSecondSharedString();
 
@@ -139,13 +139,13 @@ describe("IntervalCollection detached", () => {
 
 		it("can be changed by another client after attaching", async () => {
 			sharedString.insertText(0, "0123");
-			const interval = collection.add(0, 2, IntervalType.SlideOnRemove, { foo: "a1" });
-			collection.changeProperties(interval.getIntervalId(), { foo: "a2" });
+			const interval = collection.add({ start: 0, end: 2, props: { foo: "a1" } });
+			collection.change({ id: interval.getIntervalId(), props: { foo: "a2" } });
 			const { sharedString2, containerRuntimeFactory } =
 				await attachAndLoadSecondSharedString();
 
 			const collection2 = sharedString2.getIntervalCollection("intervals");
-			collection2.changeProperties(interval.getIntervalId(), { foo: "b1" });
+			collection2.change({ id: interval.getIntervalId(), props: { foo: "b1" } });
 			containerRuntimeFactory.processAllMessages();
 
 			assertEquivalentSharedStrings(sharedString, sharedString2);
@@ -159,7 +159,7 @@ describe("IntervalCollection detached", () => {
 	describe("intervals deleted while detached", () => {
 		it("aren't added to the remote client", async () => {
 			sharedString.insertText(0, "0123");
-			const interval = collection.add(0, 2, IntervalType.SlideOnRemove);
+			const interval = collection.add({ start: 0, end: 2 });
 			const id = interval.getIntervalId();
 			collection.removeIntervalById(id);
 			const { sharedString2 } = await attachAndLoadSecondSharedString();
