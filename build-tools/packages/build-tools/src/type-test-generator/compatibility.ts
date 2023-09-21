@@ -177,6 +177,7 @@ namespace Test_TypeOnly_Preserves_Primitives {
 	// (Nominal typing is erased.)
 	type brandedNumber = number & { brand: "Number" };
 	type _check_number1 = requireAssignableTo<TypeOnly<brandedNumber>, number>;
+   // Due to limitations of the current version of TypeOnly, brands on primitives are lost:
 	type _check_number2 = requireAssignableTo<number, TypeOnly<brandedNumber>>;
 
 	type brandedString = string & { brand: "String" };
