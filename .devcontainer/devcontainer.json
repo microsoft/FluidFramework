@@ -1,50 +1,34 @@
-# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
-# Licensed under the MIT License.
-# DisableDockerDetector "No feasible secure solution for OSS repos yet"
+// Fluid Development Container based on "docker-from-docker" template:
+// https://github.com/microsoft/vscode-dev-containers/blob/master/containers/docker-from-docker/.devcontainer/devcontainer.json
+// For format details, see https://aka.ms/vscode-remote/devcontainer.json
+{
+    "name": "Fluid",
+    "build": {
+        "dockerfile": "Dockerfile",
+        // Update 'NODE_VERSION' to pick a Node version: 10, 12, 14
+        "args": {
+            "NODE_VERSION": "12"
+        }
+    },
+    "runArgs": [ "--init" ],
+    "mounts": [ "source=/var/run/docker.sock,target=/var/run/docker-host.sock,type=bind" ],
+    "overrideCommand": false,
 
-FROM node:18.17.1-buster-slim AS base
+    // Add the IDs of extensions you want installed when the container is created.
+    "extensions": [
+        "dbaeumer.vscode-eslint",
+        "editorconfig.editorconfig",
+        "ms-azuretools.vscode-docker",
+        "mutantdino.resourcemonitor"
+    ],
 
-# Add Tini
-ENV TINI_VERSION v0.18.0
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
-RUN chmod +x /tini
+    // Forward port for Tinylicious
+    "forwardPorts": [ 7070 ],
 
-# Copy over and build the server
-WORKDIR /home/node/server
+    // Invoke 'nvm' to install our preferred version of node, per the '.nvmrc' file
+    // located at the root of the ${workspaceFolder}.
+    "postCreateCommand": ". /usr/local/share/nvm/nvm.sh; nvm install",
 
-COPY package*.json ./
-COPY pnpm*.yaml ./
-COPY scripts/*.* ./scripts/
-
-COPY packages/gitrest/package*.json packages/gitrest/
-COPY packages/gitrest-base/package*.json packages/gitrest-base/
-
-RUN corepack enable
-
-# Need to set the --unsafe-perm flag since we are doing the install as root. Consider adding an 'app' accout so we
-# can do the install as node but then switch to 'app' to run. As app we won't be able to write to installed files
-# and be able to change them.
-RUN pnpm install --unsafe-perm
-
-COPY . .
-RUN npm run build
-
-# Build that actually runs
-FROM base AS runner
-
-# Expose the port the app runs under
-EXPOSE 3000
-
-# GITHUB#162
-# To allow for ssh access to the repo (to clone locally) we share the volume within a k8s pod with a ssh service.
-# Mounted volumes with non-root users get tricky in this case. For now simply running as root for simplicity but
-# ideally the node user could gain write permissions to this volume.
-# Switch to the node user for security
-# USER node
-
-# Node wasn't designed to be run as PID 1. Tini is a tiny init wrapper. You can also set --init on docker later than
-# 1.13 but Kubernetes is at 1.12 so we prefer tini for now.
-ENTRYPOINT ["/tini", "--"]
-
-# And set the default command to start the server
-CMD ["node", "packages/gitrest/dist/www.js"]
+    // Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
+    "remoteUser": "node"
+}
