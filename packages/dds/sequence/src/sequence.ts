@@ -549,10 +549,12 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		const insertIndex: number = Math.max(start, end);
 
 		// Insert first, so local references can slide to the inserted seg if any
-		const insert = this.client.insertSegmentLocal(insertIndex, segment);
+		const insert = this.guardReentrancy(() =>
+			this.client.insertSegmentLocal(insertIndex, segment),
+		);
 		if (insert) {
 			if (start < end) {
-				this.client.removeRangeLocal(start, end);
+				this.removeRange(start, end);
 			}
 		}
 	}
