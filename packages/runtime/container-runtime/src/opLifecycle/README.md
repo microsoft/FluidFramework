@@ -369,4 +369,4 @@ stateDiagram-v2
 	end note
 ```
 
-Note that each component in the flow is pass-through. Which means that if an op type is not relevant for it, it will be ignored and pushed towards the next component. For example if an op is not compressed, the op decompressor will ignore it and return the same message which will then be passed through to the next component, etc..
+Note that each component in the flow is pass-through. Which means that if an op type is not relevant for it, it will be ignored and pushed towards the next component. For example if an op is not compressed, the op decompressor will ignore it and return the same message which will then be passed through to the next component, etc..  And likewise,  a "system op" originating outside the ContainerRuntime will pass through this flow entirely.
