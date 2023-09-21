@@ -101,7 +101,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
     // (undocumented)
     readBlob(blobId: string): Promise<ArrayBufferLike>;
     // (undocumented)
-    readonly repositoryUrl: string;
+    get repositoryUrl(): string;
     // (undocumented)
     uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
 }
