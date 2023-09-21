@@ -112,6 +112,7 @@ export class ScribeLambda implements IPartitionLambda {
 		private readonly disableTransientTenantFiltering: boolean,
 		private readonly restartOnCheckpointFailure: boolean,
 		private readonly kafkaCheckpointOnReprocessingOp: boolean,
+		private readonly isEphemeralContainer: boolean,
 	) {
 		this.lastOffset = scribe.logOffset;
 		this.setStateFromCheckpoint(scribe);
@@ -351,6 +352,7 @@ export class ScribeLambda implements IPartitionLambda {
 
 					if (
 						this.serviceConfiguration.scribe.generateServiceSummary &&
+						!this.isEphemeralContainer &&
 						enableServiceSummaryForTenant
 					) {
 						const operation = value.operation as ISequencedDocumentAugmentedMessage;

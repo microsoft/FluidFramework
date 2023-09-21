@@ -315,6 +315,7 @@ export class ScribeLambdaFactory
 			this.disableTransientTenantFiltering,
 			this.restartOnCheckpointFailure,
 			this.kafkaCheckpointOnReprocessingOp,
+			document.isEphemeralContainer ?? false,
 		);
 
 		await this.sendLambdaStartResult(tenantId, documentId, {
