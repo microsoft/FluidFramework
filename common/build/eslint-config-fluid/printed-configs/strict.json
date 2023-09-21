@@ -58,6 +58,9 @@
         "@typescript-eslint/ban-ts-comment": [
             "error"
         ],
+        "@typescript-eslint/ban-tslint-comment": [
+            "error"
+        ],
         "@typescript-eslint/ban-types": [
             "error"
         ],
@@ -71,11 +74,20 @@
                 "allowSingleLine": true
             }
         ],
+        "@typescript-eslint/class-literal-property-style": [
+            "error"
+        ],
         "@typescript-eslint/comma-dangle": [
             "off",
             "always-multiline"
         ],
         "@typescript-eslint/comma-spacing": [
+            "error"
+        ],
+        "@typescript-eslint/consistent-generic-constructors": [
+            "error"
+        ],
+        "@typescript-eslint/consistent-indexed-object-style": [
             "error"
         ],
         "@typescript-eslint/consistent-type-assertions": [
@@ -132,9 +144,6 @@
         "@typescript-eslint/indent": [
             "off"
         ],
-        "@typescript-eslint/interface-name-prefix": [
-            "off"
-        ],
         "@typescript-eslint/key-spacing": [
             "off"
         ],
@@ -180,14 +189,14 @@
         "@typescript-eslint/no-base-to-string": [
             "error"
         ],
+        "@typescript-eslint/no-confusing-non-null-assertion": [
+            "error"
+        ],
         "@typescript-eslint/no-duplicate-enum-values": [
             "error"
         ],
-        "@typescript-eslint/no-duplicate-imports": [
-            "error"
-        ],
         "@typescript-eslint/no-duplicate-type-constituents": [
-            "error"
+            "off"
         ],
         "@typescript-eslint/no-dynamic-delete": [
             "error"
@@ -249,17 +258,6 @@
         "@typescript-eslint/no-non-null-assertion": [
             "error"
         ],
-        "@typescript-eslint/no-parameter-properties": [
-            "warn",
-            {
-                "allows": [
-                    "private",
-                    "private readonly",
-                    "public readonly",
-                    "readonly"
-                ]
-            }
-        ],
         "@typescript-eslint/no-redundant-type-constituents": [
             "error"
         ],
@@ -318,14 +316,14 @@
         "@typescript-eslint/no-unused-vars": [
             "off"
         ],
-        "@typescript-eslint/no-use-before-declare": [
-            "off"
-        ],
         "@typescript-eslint/no-use-before-define": [
             "off"
         ],
         "@typescript-eslint/no-var-requires": [
             "error"
+        ],
+        "@typescript-eslint/non-nullable-type-assertion-style": [
+            "off"
         ],
         "@typescript-eslint/object-curly-spacing": [
             "error",
@@ -355,6 +353,9 @@
         "@typescript-eslint/prefer-readonly": [
             "error"
         ],
+        "@typescript-eslint/prefer-string-starts-ends-with": [
+            "error"
+        ],
         "@typescript-eslint/promise-function-async": [
             "error"
         ],
@@ -374,6 +375,9 @@
         ],
         "@typescript-eslint/restrict-template-expressions": [
             "off"
+        ],
+        "@typescript-eslint/return-await": [
+            "error"
         ],
         "@typescript-eslint/semi": [
             "error",
@@ -652,7 +656,7 @@
             "error"
         ],
         "jsdoc/check-line-alignment": [
-            "error"
+            "warn"
         ],
         "jsdoc/check-tag-names": [
             "off"
@@ -832,6 +836,9 @@
         "no-empty-character-class": [
             "error"
         ],
+        "no-empty-function": [
+            "off"
+        ],
         "no-empty-pattern": [
             "error"
         ],
@@ -962,9 +969,6 @@
             },
             "ForInStatement"
         ],
-        "no-return-await": [
-            "error"
-        ],
         "no-self-assign": [
             "error"
         ],
@@ -1092,7 +1096,6 @@
         ],
         "padding-line-between-statements": [
             "off",
-            "error",
             {
                 "blankLine": "always",
                 "next": "return",
@@ -1297,7 +1300,7 @@
             "error"
         ],
         "unicorn/expiring-todo-comments": [
-            "error"
+            "off"
         ],
         "unicorn/explicit-length-check": [
             "error"
@@ -1405,9 +1408,6 @@
             "error"
         ],
         "unicorn/no-unreadable-iife": [
-            "error"
-        ],
-        "unicorn/no-unsafe-regex": [
             "error"
         ],
         "unicorn/no-unused-properties": [

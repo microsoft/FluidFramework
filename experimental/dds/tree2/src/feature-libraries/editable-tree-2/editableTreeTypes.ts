@@ -54,7 +54,7 @@ export interface Tree<TSchema = unknown> extends Iterable<Tree> {
 	 * Gets the {@link TreeStatus} of this tree.
 	 *
 	 * @remarks
-	 * For non-root fields, this is the the status of the parent node, since fields do not have a separate lifetime.
+	 * For non-root fields, this is the status of the parent node, since fields do not have a separate lifetime.
 	 */
 	treeStatus(): TreeStatus;
 }
@@ -108,7 +108,7 @@ export interface TreeNode extends Tree<TreeSchema> {
 
 	/**
 	 * Same as `this.schema.name`.
-	 * This is provided as a enumerable own property to aid with JavaScript object traversals of this data-structure.
+	 * This is provided as an enumerable own property to aid with JavaScript object traversals of this data-structure.
 	 * See [ReadMe](./README.md) for details.
 	 */
 	readonly type: TreeSchemaIdentifier;
@@ -180,7 +180,7 @@ export interface TreeField extends Tree<FieldSchema>, Iterable<TreeNode> {
  * A {@link TreeNode} that behaves like a `Map<FieldKey, Field>` for a specific `Field` type.
  *
  * @remarks
- * Unlike TypeScript Map type, {@link MapNode.get} always provides a reference to any field looked up, even if its never been set.
+ * Unlike TypeScript Map type, {@link MapNode.get} always provides a reference to any field looked up, even if it has never been set.
  *
  * This means that, for example, a `MapNode` of {@link Sequence} fields will return an empty sequence when a previously unused key is looked up,
  * and that sequence can be used to insert new items into the field.
