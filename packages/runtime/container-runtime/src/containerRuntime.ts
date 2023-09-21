@@ -192,7 +192,6 @@ import {
 	type OutboundContainerRuntimeMessage,
 	type UnknownContainerRuntimeMessage,
 } from "./messageTypes";
-import { IdCompressor } from "./id-compressor";
 
 /**
  * Utility to implement compat behaviors given an unknown message type
@@ -813,12 +812,17 @@ export class ContainerRuntime
 			metadata?.idCompressorEnabled ?? runtimeOptions.enableRuntimeIdCompressor ?? false;
 		let idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
 		if (idCompressorEnabled) {
-			const { createSessionId } = await import("./id-compressor");
+			const { IdCompressor, createSessionId } = await import("./id-compressor");
 
-			idCompressor =
-				serializedIdCompressor !== undefined
-					? IdCompressor.deserialize(serializedIdCompressor, createSessionId())
-					: IdCompressor.create(logger);
+			const pendingLocalState = context.pendingLocalState as IPendingRuntimeState;
+
+			if (pendingLocalState?.pendingIdCompressorState !== undefined) {
+				idCompressor = IdCompressor.deserialize(pendingLocalState.pendingIdCompressorState);
+			} else if (serializedIdCompressor !== undefined) {
+				idCompressor = IdCompressor.deserialize(serializedIdCompressor, createSessionId());
+			} else {
+				idCompressor = IdCompressor.create(logger);
+			}
 		}
 
 		const runtime = new containerRuntimeCtor(
@@ -1321,10 +1325,7 @@ export class ContainerRuntime
 		const pendingRuntimeState = pendingLocalState as IPendingRuntimeState | undefined;
 
 		if (this.idCompressorEnabled) {
-			this.idCompressor =
-				pendingRuntimeState?.pendingIdCompressorState !== undefined
-					? IdCompressor.deserialize(pendingRuntimeState.pendingIdCompressorState)
-					: idCompressor;
+			this.idCompressor = idCompressor;
 		}
 
 		const maxSnapshotCacheDurationMs = this._storage?.policies?.maximumCacheDurationMs;
