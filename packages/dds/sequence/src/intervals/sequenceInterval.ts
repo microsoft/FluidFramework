@@ -4,6 +4,7 @@
  */
 
 /* eslint-disable no-bitwise */
+/* eslint-disable import/no-deprecated */
 
 import {
 	Client,
@@ -487,6 +488,9 @@ export const compareSequenceIntervalEnds = (a: SequenceInterval, b: SequenceInte
 export const compareSequenceIntervalStarts = (a: SequenceInterval, b: SequenceInterval): number =>
 	compareReferencePositions(a.start, b.start);
 
+/**
+ * @deprecated The methods within have substitutions
+ */
 export const sequenceIntervalHelpers: IIntervalHelpers<SequenceInterval> = {
 	compareEnds: compareSequenceIntervalEnds,
 	compareStarts: compareSequenceIntervalStarts,
