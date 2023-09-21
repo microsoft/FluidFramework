@@ -7,6 +7,7 @@
 		"types": ["node"],
 		"noImplicitAny": true,
 		"noUnusedLocals": false,
+		"downlevelIteration": true,
 	},
 	"include": ["src/**/*"],
 	"exclude": ["src/test/**/*"],

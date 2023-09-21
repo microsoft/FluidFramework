@@ -19,6 +19,7 @@ export default class ExecCommand extends PackageCommand<typeof ExecCommand> {
 	};
 
 	protected async processPackage(pkg: Package): Promise<void> {
+		// eslint-disable-next-line no-warning-comments
 		// TODO: The shell option should not need to be true. AB#4067
 		const result = await execa.command(this.args.cmd, {
 			cwd: pkg.directory,
