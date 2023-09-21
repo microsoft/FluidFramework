@@ -15,11 +15,8 @@ import {
 } from "../../../feature-libraries/editable-tree-2/lazyTree";
 import {
 	Any,
-	DefaultEditBuilder,
 	PrimitiveValue,
 	SchemaBuilder,
-	TypedSchemaCollection,
-	createMockNodeKeyManager,
 	isPrimitiveValue,
 	jsonableTreeFromCursor,
 	singleMapTreeCursor,
@@ -31,17 +28,11 @@ import {
 	bannedFieldNames,
 	fieldApiPrefixes,
 	validateStructFieldName,
+	assertAllowedValue,
 } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { Context } from "../../../feature-libraries/editable-tree-2/context";
-import {
-	FieldKey,
-	IEditableForest,
-	MapTree,
-	TreeNavigationResult,
-	TreeValue,
-	rootFieldKey,
-} from "../../../core";
+import { FieldKey, MapTree, TreeNavigationResult, TreeValue, rootFieldKey } from "../../../core";
 import { forestWithContent } from "../../utils";
 import { TreeContent } from "../../../shared-tree";
 import { RestrictiveReadonlyRecord, brand } from "../../../util";
@@ -56,12 +47,7 @@ import {
 import { visitIterableTree } from "../../../feature-libraries/editable-tree-2";
 import { testTrees, treeContentFromTestTree } from "../../testTrees";
 import { jsonSchema } from "../../../domains";
-
-function getReadonlyContext(forest: IEditableForest, schema: TypedSchemaCollection): Context {
-	// This will error if someone tries to call mutation methods on it
-	const dummyEditor = {} as unknown as DefaultEditBuilder;
-	return new Context(schema, forest, dummyEditor, createMockNodeKeyManager());
-}
+import { getReadonlyContext } from "./utils";
 
 function contextWithContentReadonly(content: TreeContent): Context {
 	const forest = forestWithContent(content);
@@ -221,7 +207,7 @@ function nodeToMapTree(node: TreeNode): MapTree {
 }
 
 function checkPropertyInvariants(root: Tree): void {
-	const treeValues = new Map<TreeValue, number>();
+	const treeValues = new Map<unknown, number>();
 	// Assert all nodes and fields traversed, and all values found.
 	// TODO: checking that unboxed fields and nodes were traversed is not fully implemented here.
 	visitIterableTree(root, (item) => {
@@ -253,6 +239,7 @@ function checkPropertyInvariants(root: Tree): void {
 
 		if (typeof child === "object") {
 			if (treeValues.has(child)) {
+				assertAllowedValue(child);
 				primitivesAndValues.set(child, (primitivesAndValues.get(child) ?? 0) + 1);
 				return Skip;
 			}
@@ -287,7 +274,7 @@ function checkPropertyInvariants(root: Tree): void {
 	// TODO: checking that unboxed fields and nodes were traversed is not fully implemented here.
 	visitIterableTree(root, (item) => {
 		if (!unboxable.has(Object.getPrototypeOf(item))) {
-			if (!primitivesAndValues.has(item) && !visited.has(item)) {
+			if (!primitivesAndValues.has(item as unknown as TreeValue) && !visited.has(item)) {
 				// Fields don't have stable object identity, so they can fail the above test.
 				// Nothing else should fail it.
 				assert(item instanceof LazyField);

@@ -37,9 +37,8 @@ import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { Deferred } from "@fluidframework/core-utils";
 import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import {
-	ContainerMessageType,
-	ContainerRuntimeMessage,
 	DefaultSummaryConfiguration,
+	type RecentlyAddedContainerRuntimeMessageDetails,
 } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
@@ -246,10 +245,13 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 			// Super rare corner case where you stash an op and then roll back to a previous runtime version that doesn't recognize it
 			(
 				d.context.containerRuntime as unknown as {
-					submit: (containerRuntimeMessage: ContainerRuntimeMessage) => void;
+					submit: (
+						containerRuntimeMessage: RecentlyAddedContainerRuntimeMessageDetails &
+							Record<string, any>,
+					) => void;
 				}
 			).submit({
-				type: "FUTURE_TYPE" as ContainerMessageType,
+				type: "FROM_THE_FUTURE",
 				contents: "Hello",
 				compatDetails: { behavior: "Ignore" },
 			});
@@ -1647,6 +1649,42 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		assert.strictEqual(counter2.value, 5);
 		// remote value is what we expect
 		assert.strictEqual(counter1.value, 5);
+	});
+
+	it("applies stashed ops with no saved ops", async function () {
+		// wait for summary
+		await new Promise<void>((resolve) =>
+			container1.on("op", (op) => {
+				if (op.type === "summaryAck") {
+					resolve();
+				}
+			}),
+		);
+
+		// avoid our join op being saved
+		const headers: IRequestHeader = { [LoaderHeader.loadMode]: { deltaConnection: "none" } };
+		const container: IContainerExperimental = await loader.resolve({ url, headers });
+		const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
+		const map = await dataStore.getSharedObject<SharedMap>(mapId);
+		// generate ops with RSN === summary SN
+		map.set(testKey, testValue);
+		const stashBlob = await container.closeAndGetPendingLocalState?.();
+		assert(stashBlob);
+		const pendingState = JSON.parse(stashBlob);
+		// make sure the container loaded from summary and we have no saved ops
+		assert.strictEqual(pendingState.savedOps.length, 0);
+		assert(
+			pendingState.pendingRuntimeState.pending.pendingStates[0].referenceSequenceNumber > 0,
+		);
+
+		// load container with pending ops, which should resend the op not sent by previous container
+		const container2 = await loader.resolve({ url }, stashBlob);
+		const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+		await waitForContainerConnection(container2);
+		await provider.ensureSynchronized();
+		assert.strictEqual(map1.get(testKey), testValue);
+		assert.strictEqual(map2.get(testKey), testValue);
 	});
 });
 

@@ -9,10 +9,10 @@ import { ValueSchema, AllowedUpdateType, storedEmptyFieldSchema } from "../../co
 
 const builder = new SchemaBuilder("Schematize Tree Tests");
 const root = builder.leaf("root", ValueSchema.Number);
-const schema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
+const schema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(root));
 
 const builderGeneralized = new SchemaBuilder("Schematize Tree Tests Generalized");
-const rootGeneralized = builderGeneralized.leaf("root", ValueSchema.Serializable);
+const rootGeneralized = builderGeneralized.leaf("root", ValueSchema.Number);
 const schemaGeneralized = builderGeneralized.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
 
 describe("sharedTreeView", () => {
@@ -49,7 +49,7 @@ describe("sharedTreeView", () => {
 			assert.throws(() => {
 				tree.schematize({
 					allowedSchemaModifications: AllowedUpdateType.None,
-					initialTree: "x",
+					initialTree: 5,
 					schema,
 				});
 			});
@@ -60,7 +60,7 @@ describe("sharedTreeView", () => {
 			tree.storedSchema.update(schema);
 			const schematized = tree.schematize({
 				allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
-				initialTree: "x",
+				initialTree: 5,
 				schema: schemaGeneralized,
 			});
 			// Initial tree should not be applied

@@ -88,8 +88,14 @@ export const EncodedOptionalChangeset = <Schema extends TSchema>(tNodeChange: Sc
 	Type.Object(
 		{
 			fieldChange: Type.Optional(EncodedOptionalFieldChange(tNodeChange)),
-			childChange: Type.Optional(tNodeChange),
-			deletedBy: Type.Optional(EncodedChangeAtomId),
+			childChanges: Type.Optional(
+				Type.Array(
+					Type.Tuple([
+						Type.Union([EncodedChangeAtomId, Type.Literal("self")]),
+						tNodeChange,
+					]),
+				),
+			),
 		},
 		noAdditionalProps,
 	);

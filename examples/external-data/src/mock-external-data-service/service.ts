@@ -51,7 +51,7 @@ export interface RegisterWebhookRequest extends express.Request {
 		 */
 		url: string;
 		/**
-		 * The id of the task list to subscribe to change notifications for
+		 * The ID of the task list to subscribe to change notifications for
 		 */
 		externalTaskListId: string;
 	};
@@ -68,7 +68,7 @@ export interface UnregisterWebhookRequest extends express.Request {
 		 */
 		url: string;
 		/**
-		 * The id of the task list to unsubscribe to change notifications for
+		 * The ID of the task list to unsubscribe to change notifications for
 		 */
 		externalTaskListId: string;
 	};
@@ -192,7 +192,11 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 			);
 		} catch (error) {
 			if (error instanceof ApiError) {
-				console.warn(formatLogMessage(error.message));
+				if (error.code >= 500) {
+					console.error(formatLogMessage(error.message));
+				} else {
+					console.warn(formatLogMessage(error.message));
+				}
 				result.status(error.code).json({ message: error.message });
 			} else {
 				console.error(error);
@@ -239,8 +243,8 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 				// 3a. Webhook exists but the provided subscriber is not subscribed with the webhook.
 				const resultMessage =
 					"Provided subscriberUrl does not have a webhook registered for the given externalTaskListId";
-				result.status(200).json({ message: resultMessage });
 				console.info(formatLogMessage(resultMessage));
+				result.status(200).json({ message: resultMessage });
 			} else {
 				// 3b. Webhook exists and the provided subcriber is currently subscribed to it.
 				webhook.removeSubscriber(subscriberUrl);

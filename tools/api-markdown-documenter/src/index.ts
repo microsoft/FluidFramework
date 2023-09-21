@@ -30,11 +30,11 @@ export {
 	getDefaultValueBlock,
 	getDeprecatedBlock,
 	getExampleBlocks,
-	getFilePathForApiItem,
 	getHeadingForApiItem,
 	getLinkForApiItem,
 	getModifiers,
 	getQualifiedApiItemName,
+	getReleaseTag,
 	getReturnsBlock,
 	getSeeBlocks,
 	getThrowsBlocks,
@@ -47,7 +47,7 @@ export {
 	type TransformApiItemWithChildren,
 	type TransformApiItemWithoutChildren,
 	transformApiModel,
-	transformDocNode,
+	transformTsdocNode,
 } from "./api-item-transforms";
 
 // We want to make sure the entirety of this domain is accessible.
@@ -82,5 +82,11 @@ export {
 } from "./Logging";
 
 // Convenience re-exports
-export type { ApiItem, ApiItemKind, ApiModel, ApiPackage } from "@microsoft/api-extractor-model";
+export type {
+	ApiItem,
+	ApiItemKind,
+	ApiModel,
+	ApiPackage,
+	ReleaseTag,
+} from "@microsoft/api-extractor-model";
 export { NewlineKind } from "@rushstack/node-core-library";

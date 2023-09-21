@@ -4,6 +4,7 @@
  */
 
 import { EventEmitter } from "events";
+// eslint-disable-next-line import/no-deprecated
 import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/core-utils";
 import {
@@ -67,6 +68,7 @@ export class SmdeDataObject extends EventEmitter implements IFluidLoadable, IFlu
 	}
 
 	public async request(request: IRequest): Promise<IResponse> {
+		// eslint-disable-next-line import/no-deprecated
 		return defaultFluidObjectRequestHandler(this, request);
 	}
 
@@ -113,6 +115,7 @@ export class SmdeFactory implements IFluidDataStoreFactory {
 				]),
 			),
 			existing,
+			async () => routerP,
 		);
 		const routerP = SmdeDataObject.load(runtime, existing);
 

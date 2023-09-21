@@ -101,7 +101,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // Warning: (ae-forgotten-export) The symbol "IBlobManagerLoadInfo" needs to be exported by the entry point index.d.ts
     //
     // @internal
-    protected constructor(context: IContainerContext, registry: IFluidDataStoreRegistry, metadata: IContainerRuntimeMetadata | undefined, electedSummarizerData: ISerializedElection | undefined, chunks: [string, string[]][], dataStoreAliasMap: [string, string][], runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>, containerScope: FluidObject, logger: ITelemetryLoggerExt, existing: boolean, blobManagerSnapshot: IBlobManagerLoadInfo, _storage: IDocumentStorageService, idCompressor: (IIdCompressor & IIdCompressorCore) | undefined, requestHandler?: ((request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>) | undefined, summaryConfiguration?: ISummaryConfiguration, initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>);
+    protected constructor(context: IContainerContext, registry: IFluidDataStoreRegistry, metadata: IContainerRuntimeMetadata | undefined, electedSummarizerData: ISerializedElection | undefined, chunks: [string, string[]][], dataStoreAliasMap: [string, string][], runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>, containerScope: FluidObject, logger: ITelemetryLoggerExt, existing: boolean, blobManagerSnapshot: IBlobManagerLoadInfo, _storage: IDocumentStorageService, idCompressor: (IIdCompressor & IIdCompressorCore) | undefined, provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>, requestHandler?: ((request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>) | undefined, summaryConfiguration?: ISummaryConfiguration);
     // (undocumented)
     protected addContainerStateToSummary(summaryTree: ISummaryTreeWithStats, fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext): void;
     addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
@@ -152,7 +152,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     getAudience(): IAudience;
     getCurrentReferenceTimestampMs(): number | undefined;
     // (undocumented)
-    getEntryPoint?(): Promise<FluidObject | undefined>;
+    getEntryPoint(): Promise<FluidObject>;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     getGCNodePackagePath(nodePath: string): Promise<readonly string[] | undefined>;
     // Warning: (ae-forgotten-export) The symbol "GCNodeType" needs to be exported by the entry point index.d.ts
@@ -184,7 +184,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
         containerScope?: FluidObject;
         containerRuntimeCtor?: typeof ContainerRuntime;
         requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
-        initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
+        provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
     }): Promise<ContainerRuntime>;
     // (undocumented)
     readonly logger: ITelemetryLoggerExt;
@@ -239,9 +239,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
-// @public
+// @internal @deprecated
 export interface ContainerRuntimeMessage {
-    // Warning: (ae-incompatible-release-tags) The symbol "compatDetails" is marked as @public, but its signature references "IContainerRuntimeMessageCompatDetails" which is marked as @internal
     compatDetails?: IContainerRuntimeMessageCompatDetails;
     contents: any;
     type: ContainerMessageType;
@@ -661,6 +660,11 @@ export type OpActionEventListener = (op: ISequencedDocumentMessage) => void;
 
 // @public (undocumented)
 export type OpActionEventName = MessageType.Summarize | MessageType.SummaryAck | MessageType.SummaryNack | "default";
+
+// @internal
+export interface RecentlyAddedContainerRuntimeMessageDetails {
+    compatDetails: IContainerRuntimeMessageCompatDetails;
+}
 
 // @public
 export enum RuntimeHeaders {

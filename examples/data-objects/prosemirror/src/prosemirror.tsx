@@ -6,6 +6,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { EventEmitter } from "events";
+// eslint-disable-next-line import/no-deprecated
 import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
 import {
 	IFluidLoadable,
@@ -15,6 +16,7 @@ import {
 	IFluidHandle,
 	FluidObject,
 } from "@fluidframework/core-interfaces";
+// eslint-disable-next-line import/no-deprecated
 import { FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
@@ -121,6 +123,7 @@ export class ProseMirror
 	}
 
 	public async request(request: IRequest): Promise<IResponse> {
+		// eslint-disable-next-line import/no-deprecated
 		return defaultFluidObjectRequestHandler(this, request);
 	}
 
@@ -161,6 +164,7 @@ export class ProseMirrorFactory implements IFluidDataStoreFactory {
 	}
 
 	public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
+		// eslint-disable-next-line import/no-deprecated
 		const runtimeClass = mixinRequestHandler(async (request: IRequest) => {
 			const router = await routerP;
 			return router.request(request);
@@ -175,6 +179,10 @@ export class ProseMirrorFactory implements IFluidDataStoreFactory {
 				]),
 			),
 			existing,
+			() => {
+				// TODO: AB#4993
+				throw new Error("TODO");
+			},
 		);
 		const routerP = ProseMirror.load(runtime, context, existing);
 

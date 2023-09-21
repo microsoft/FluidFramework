@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-deprecated
 import { BaseContainerRuntimeFactory, mountableViewRequestHandler } from "@fluidframework/aqueduct";
+// eslint-disable-next-line import/no-deprecated
 import { RuntimeRequestHandler } from "@fluidframework/request-handler";
 import { RequestParser, requestFluidObject } from "@fluidframework/runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
@@ -107,9 +109,17 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
 	constructor() {
 		// We'll use a MountableView so webpack-fluid-loader can display us,
 		// and add our default view request handler.
-		super(registryEntries, undefined, [
-			mountableViewRequestHandler(MountableView, [defaultViewRequestHandler]),
-		]);
+		super({
+			registryEntries,
+			requestHandlers: [
+				// eslint-disable-next-line import/no-deprecated
+				mountableViewRequestHandler(MountableView, [defaultViewRequestHandler]),
+			],
+			provideEntryPoint: () => {
+				// TODO: AB#4993
+				throw new Error("TODO");
+			},
+		});
 	}
 
 	/**

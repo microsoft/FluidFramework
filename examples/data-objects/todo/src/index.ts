@@ -6,6 +6,7 @@
 import {
 	BaseContainerRuntimeFactory,
 	// ContainerRuntimeFactoryWithDefaultDataStore,
+	// eslint-disable-next-line import/no-deprecated
 	mountableViewRequestHandler,
 } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
@@ -82,9 +83,18 @@ const todoRequestHandler = async (request: RequestParser, runtime: IContainerRun
 
 class TodoContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	constructor() {
-		super(new Map([TodoFactory.registryEntry]), undefined, [
-			mountableViewRequestHandler(MountableView, [todoRequestHandler]),
-		]);
+		super({
+			registryEntries: new Map([TodoFactory.registryEntry]),
+			// eslint-disable-next-line import/no-deprecated
+			requestHandlers: [mountableViewRequestHandler(MountableView, [todoRequestHandler])],
+			provideEntryPoint: async (containerRuntime: IContainerRuntime) => {
+				const entryPoint = await containerRuntime.getAliasedDataStoreEntryPoint(todoId);
+				if (entryPoint === undefined) {
+					throw new Error("default dataStore must exist");
+				}
+				return entryPoint.get();
+			},
+		});
 	}
 
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
