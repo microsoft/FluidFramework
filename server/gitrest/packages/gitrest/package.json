@@ -29,7 +29,6 @@
 		"@fluidframework/gitrest-base": "workspace:~",
 		"@fluidframework/server-services-shared": "^0.1040.1000-148023",
 		"@fluidframework/server-services-utils": "^0.1040.1000-148023",
-		"axios": "^0.26.0",
 		"body-parser": "^1.17.2",
 		"compression": "^1.7.3",
 		"cors": "^2.8.5",

@@ -979,8 +979,6 @@ export { InternalEditableTreeTypes }
 
 declare namespace InternalTypedSchemaTypes {
     export {
-        RecursiveTreeSchemaSpecification,
-        RecursiveTreeSchema,
         ObjectToMap,
         WithDefault,
         Unbrand,
@@ -995,6 +993,8 @@ declare namespace InternalTypedSchemaTypes {
         MapSchemaSpecification,
         LeafSchemaSpecification,
         MapFieldSchema,
+        RecursiveTreeSchemaSpecification,
+        RecursiveTreeSchema,
         FlexList,
         FlexListToNonLazyArray,
         ConstantFlexListToNonLazyArray,
@@ -1341,11 +1341,17 @@ type MapFieldSchema = FieldSchema<typeof FieldKinds.optional | typeof FieldKinds
 export interface MapNode<TSchema extends MapSchema> extends TreeNode {
     // (undocumented)
     [Symbol.iterator](): Iterator<TypedField<TSchema["mapFields"]>>;
-    // (undocumented)
     readonly asObject: {
         readonly [P in FieldKey]?: UnboxField<TSchema["mapFields"]>;
     };
-    get(key: FieldKey): TypedField<TSchema["mapFields"]>;
+    entries(): IterableIterator<[FieldKey, UnboxField<TSchema["mapFields"]>]>;
+    forEach(callbackFn: (value: UnboxField<TSchema["mapFields"]>, key: FieldKey, map: MapNode<TSchema>) => void, thisArg?: any): void;
+    get(key: FieldKey): UnboxField<TSchema["mapFields"]>;
+    getBoxed(key: FieldKey): TypedField<TSchema["mapFields"]>;
+    has(key: FieldKey): boolean;
+    keys(): IterableIterator<FieldKey>;
+    readonly size: number;
+    values(): IterableIterator<UnboxField<TSchema["mapFields"]>>;
 }
 
 // @alpha (undocumented)
@@ -1854,7 +1860,6 @@ export interface Sequence extends BrandedFieldKind<"Sequence", Multiplicity.Sequ
 export interface Sequence2<TTypes extends AllowedTypes> extends TreeField {
     // (undocumented)
     [Symbol.iterator](): Iterator<TypedNodeUnion<TTypes>>;
-    // (undocumented)
     readonly asArray: readonly UnboxNodeUnion<TTypes>[];
     at(index: number): UnboxNodeUnion<TTypes>;
     boxedAt(index: number): TypedNodeUnion<TTypes>;

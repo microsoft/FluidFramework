@@ -16,7 +16,7 @@
 
 export { BlockQuoteNode } from "./BlockQuoteNode";
 export { CodeSpanNode } from "./CodeSpanNode";
-export { DocumentNode, DocumentNodeProps } from "./DocumentNode";
+export { DocumentNode, DocumentNodeProperties as DocumentNodeProps } from "./DocumentNode";
 export {
 	DocumentationNode,
 	DocumentationLiteralNode,

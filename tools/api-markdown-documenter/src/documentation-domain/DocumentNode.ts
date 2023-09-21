@@ -12,7 +12,7 @@ import { SectionNode } from "./SectionNode";
  *
  * @public
  */
-export interface DocumentNodeProps {
+export interface DocumentNodeProperties {
 	/**
 	 * Name of the API item from which this document node was generated.
 	 */
@@ -48,7 +48,7 @@ export interface DocumentNodeProps {
  *
  * @public
  */
-export class DocumentNode implements UnistParent<SectionNode>, DocumentNodeProps {
+export class DocumentNode implements UnistParent<SectionNode>, DocumentNodeProperties {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
@@ -74,10 +74,10 @@ export class DocumentNode implements UnistParent<SectionNode>, DocumentNodeProps
 	 */
 	public readonly frontMatter?: string;
 
-	public constructor(props: DocumentNodeProps) {
-		this.apiItemName = props.apiItemName;
-		this.children = props.children;
-		this.documentPath = props.documentPath;
-		this.frontMatter = props.frontMatter;
+	public constructor(properties: DocumentNodeProperties) {
+		this.apiItemName = properties.apiItemName;
+		this.children = properties.children;
+		this.documentPath = properties.documentPath;
+		this.frontMatter = properties.frontMatter;
 	}
 }

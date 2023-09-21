@@ -22,13 +22,13 @@ import {
  * json benchmarks twitter.json - https://raw.githubusercontent.com/serde-rs/json-benchmark/master/data/twitter.json
  */
 // Shared tree keys that map to the type used by the Twitter type/dataset
-export namespace Twitter {
-	export namespace SharedTreeFieldKey {
-		export const statuses: FieldKey = brand("statuses");
-		export const retweetCount: FieldKey = brand("retweet_count");
-		export const favoriteCount: FieldKey = brand("favorite_count");
-	}
-}
+export const Twitter = {
+	SharedTreeFieldKey: {
+		statuses: brand<FieldKey>("statuses"),
+		retweetCount: brand<FieldKey>("retweet_count"),
+		favoriteCount: brand<FieldKey>("favorite_count"),
+	},
+};
 
 export interface Twitter {
 	statuses: TwitterStatus[];
