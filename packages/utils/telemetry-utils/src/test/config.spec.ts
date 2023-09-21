@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import {
 	CachedConfigProvider,
 	ConfigTypes,
@@ -222,7 +222,7 @@ describe("Config", () => {
 			// The point here is to use `getSetting`
 			// eslint-disable-next-line unicorn/no-null
 			const val = this.getSetting(name, null);
-			return val === null ? undefined : val;
+			return val ?? undefined;
 		}
 
 		getSetting<T extends SettingType>(

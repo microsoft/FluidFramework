@@ -12,6 +12,7 @@ import {
 	SlidingPreference,
 } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+
 /**
  * Basic interval abstraction
  */
@@ -105,7 +106,7 @@ export interface ISerializedInterval {
 	/**
 	 * Sequence number at which `start` and `end` should be interpreted
 	 *
-	 * @remarks - It's unclear that this is necessary to store here.
+	 * @remarks It's unclear that this is necessary to store here.
 	 * This should just be the refSeq on the op that modified the interval, which should be available via other means.
 	 * At the time of writing, it's not plumbed through to the reconnect/rebase code, however, which does need it.
 	 */
@@ -138,7 +139,7 @@ export interface ISerializableInterval extends IInterval {
 	 * Gets the id associated with this interval.
 	 * When the interval is used as part of an interval collection, this id can be used to modify or remove the
 	 * interval.
-	 * @remarks - This signature includes `undefined` strictly for backwards-compatibility reasons, as older versions
+	 * @remarks This signature includes `undefined` strictly for backwards-compatibility reasons, as older versions
 	 * of Fluid didn't always write interval ids.
 	 */
 	getIntervalId(): string | undefined;
@@ -166,6 +167,7 @@ export type CompressedSerializedInterval =
 
 /**
  * @sealed
+ * @deprecated The methods within have substitutions
  */
 export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 	/**

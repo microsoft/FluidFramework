@@ -761,7 +761,7 @@ export class MockRepairDataStore<TChange> implements RepairDataStore<TChange> {
 	}
 
 	public getValue(revision: RevisionTag, path: UpPath): Value {
-		return brand("MockRevivedValue");
+		return "MockRevivedValue";
 	}
 }
 
@@ -808,7 +808,7 @@ const assertDeepEqual = (a: any, b: any) => assert.deepEqual(a, b);
  *
  * Encoded data for JSON codecs within `family` will be validated using `typeboxValidator`.
  *
- * @privateRemarks - It is generally not valid to compare the decoded formats with assert.deepEqual,
+ * @privateRemarks It is generally not valid to compare the decoded formats with assert.deepEqual,
  * but since these round trip tests start with the decoded format (not the encoded format),
  * they require assert.deepEqual to be a valid comparison.
  * This can be problematic for some cases (for example edits containing cursors).

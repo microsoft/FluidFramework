@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
-import { Serializable } from "@fluidframework/datastore-definitions";
-import { AttributionKey } from "@fluidframework/runtime-definitions";
+import { type ISharedObject, type ISharedObjectEvents } from "@fluidframework/shared-object-base";
+import { type Serializable } from "@fluidframework/datastore-definitions";
+import { type AttributionKey } from "@fluidframework/runtime-definitions";
 
 /**
  * Events emitted by {@link ISharedCell}.
@@ -80,7 +80,7 @@ export interface ISharedCell<T = any> extends ISharedObject<ISharedCellEvents<T>
 	/**
 	 * Retrieves the cell value.
 	 *
-	 * @returns - the value of the cell
+	 * @returns The value of the cell
 	 */
 	get(): Serializable<T> | undefined;
 
@@ -94,7 +94,7 @@ export interface ISharedCell<T = any> extends ISharedObject<ISharedCellEvents<T>
 	/**
 	 * Checks whether cell is empty or not.
 	 *
-	 * @returns - `true` if the value of cell is `undefined`, `false` otherwise
+	 * @returns `true` if the value of cell is `undefined`, `false` otherwise
 	 */
 	empty(): boolean;
 

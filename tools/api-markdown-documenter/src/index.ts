@@ -24,19 +24,19 @@ export {
 	type ApiModifier,
 	type ApiModuleLike,
 	type ApiSignatureLike,
-	type CreateChildContentSections,
 	type DefaultDocumentationSuiteOptions,
 	type DocumentationSuiteOptions,
 	type DocumentBoundaries,
+	// TODO: remove this once utility APIs can be called with partial configs.
 	getApiItemTransformationConfigurationWithDefaults,
 	getDefaultValueBlock,
 	getDeprecatedBlock,
 	getExampleBlocks,
-	getFilePathForApiItem,
 	getHeadingForApiItem,
 	getLinkForApiItem,
 	getModifiers,
 	getQualifiedApiItemName,
+	getReleaseTag,
 	getReturnsBlock,
 	getSeeBlocks,
 	getThrowsBlocks,
@@ -49,7 +49,7 @@ export {
 	type TransformApiItemWithChildren,
 	type TransformApiItemWithoutChildren,
 	transformApiModel,
-	transformDocNode,
+	transformTsdocNode,
 } from "./api-item-transforms";
 
 // We want to make sure the entirety of this domain is accessible.
@@ -59,17 +59,23 @@ export * from "./documentation-domain";
 export {
 	createDocumentWriter,
 	DocumentWriter,
-	getMarkdownRenderersWithDefaults,
+	type HtmlRenderContext,
+	type HtmlRenderers,
+	type HtmlRenderConfiguration,
 	type MarkdownRenderContext,
 	type MarkdownRenderers,
-	type RenderDocumentationNode as RenderDocumentationNodeAsMarkdown,
 	type MarkdownRenderConfiguration,
+	renderDocumentAsHtml,
 	renderDocumentAsMarkdown,
+	renderNodeAsHtml,
 	renderNodeAsMarkdown,
+	renderNodesAsHtml,
 	renderNodesAsMarkdown,
-} from "./markdown-renderer";
+} from "./renderers";
+export { renderApiModelAsHtml, renderDocumentsAsHtml } from "./RenderHtml";
 export { renderApiModelAsMarkdown, renderDocumentsAsMarkdown } from "./RenderMarkdown";
 export type { ConfigurationBase } from "./ConfigurationBase";
+export type { FileSystemConfiguration } from "./FileSystemConfiguration";
 export type { Heading } from "./Heading";
 export type { Link, UrlTarget } from "./Link";
 export { loadModel } from "./LoadModel";
@@ -80,5 +86,12 @@ export {
 	verboseConsoleLogger,
 } from "./Logging";
 
-// Convenience re-exports of API model types
-export type { ApiItem, ApiItemKind, ApiModel, ApiPackage } from "@microsoft/api-extractor-model";
+// Convenience re-exports
+export type {
+	ApiItem,
+	ApiItemKind,
+	ApiModel,
+	ApiPackage,
+	ReleaseTag,
+} from "@microsoft/api-extractor-model";
+export { NewlineKind } from "@rushstack/node-core-library";

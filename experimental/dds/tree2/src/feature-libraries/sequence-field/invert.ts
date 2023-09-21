@@ -5,8 +5,8 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { ChangeAtomId, RevisionTag, TaggedChange } from "../../core";
-import { fail } from "../../util";
-import { CrossFieldManager, CrossFieldTarget, IdAllocator, NodeReviver } from "../modular-schema";
+import { IdAllocator, fail } from "../../util";
+import { CrossFieldManager, CrossFieldTarget, NodeReviver } from "../modular-schema";
 import {
 	Changeset,
 	Mark,

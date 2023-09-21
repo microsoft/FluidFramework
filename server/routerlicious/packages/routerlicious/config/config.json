@@ -9,6 +9,11 @@
 	},
 	"config": {
 		"dumpConfig": true
+  },
+	"lumberjack": {
+		"options": {
+			"enableGlobalTelemetryContext": true
+		}
 	},
 	"mongo": {
 		"operationsDbEndpoint": "mongodb://mongodb:27017",
@@ -198,10 +203,6 @@
 		"serviceGraph": {
 			"group": "serviceGraph",
 			"topic": "deltas"
-		},
-		"foreman": {
-			"group": "foreman",
-			"topic": "deltas"
 		}
 	},
 	"scriptorium": {
@@ -220,24 +221,6 @@
 		"groupId": "copier",
 		"checkpointBatchSize": 1,
 		"checkpointTimeIntervalMsec": 1000
-	},
-	"foreman": {
-		"alfred": "http://alfred:3000",
-		"queues": ["paparazziQueue", "augloopQueue", "headlessQueue"],
-		"permissions": {
-			"paparazziQueue": ["snapshot", "spell", "intel", "translation"],
-			"augloopQueue": ["augmentation"],
-			"headlessQueue": [
-				"chain-snapshot",
-				"chain-intel",
-				"chain-translation",
-				"chain-spell",
-				"chain-cache"
-			]
-		}
-	},
-	"paparazzi": {
-		"queue": "paparazziQueue"
 	},
 	"rabbitmq": {
 		"connectionString": "amqp://rabbitmq"

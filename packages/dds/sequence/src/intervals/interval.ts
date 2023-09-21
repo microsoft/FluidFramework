@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+/* eslint-disable import/no-deprecated */
 
 import {
 	ICombiningOp,
@@ -60,7 +61,7 @@ export class Interval implements ISerializableInterval {
 	 * Adds an auxiliary set of properties to this interval.
 	 * These properties can be recovered using `getAdditionalPropertySets`
 	 * @param props - set of properties to add
-	 * @remarks - This gets called as part of the default conflict resolver for `IIntervalCollection<Interval>`
+	 * @remarks This gets called as part of the default conflict resolver for `IIntervalCollection<Interval>`
 	 * (i.e. non-sequence-based interval collections). However, the additional properties don't get serialized.
 	 * This functionality seems half-baked.
 	 */

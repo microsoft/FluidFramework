@@ -4,6 +4,7 @@
  */
 
 /* eslint-disable no-bitwise */
+/* eslint-disable import/no-deprecated */
 
 import {
 	Client,
@@ -43,7 +44,7 @@ const reservedIntervalIdKey = "intervalId";
  * As such, when content is inserted into the middle of the interval, the interval expands to
  * include that content.
  *
- * @remarks - The endpoint's position should be treated exclusively to get reasonable behavior--i.e.
+ * @remarks The endpoint's position should be treated exclusively to get reasonable behavior--i.e.
  * an interval referring to "hello" in "hello world" should have a start position of 0 and an end
  * position of 5.
  *
@@ -74,12 +75,12 @@ export class SequenceInterval implements ISerializableInterval {
 		private readonly client: Client,
 		/**
 		 * Start endpoint of this interval.
-		 * @remarks - This endpoint can be resolved into a character position using the SharedString it's a part of.
+		 * @remarks This endpoint can be resolved into a character position using the SharedString it's a part of.
 		 */
 		public start: LocalReferencePosition,
 		/**
 		 * End endpoint of this interval.
-		 * @remarks - This endpoint can be resolved into a character position using the SharedString it's a part of.
+		 * @remarks This endpoint can be resolved into a character position using the SharedString it's a part of.
 		 */
 		public end: LocalReferencePosition,
 		public intervalType: IntervalType,
@@ -435,7 +436,7 @@ export function createSequenceInterval(
 		// All non-transient interval references must eventually be SlideOnRemove
 		// To ensure eventual consistency, they must start as StayOnRemove when
 		// pending (created locally and creation op is not acked)
-		if (op || fromSnapshot) {
+		if (op ?? fromSnapshot) {
 			beginRefType |= ReferenceType.SlideOnRemove;
 			endRefType |= ReferenceType.SlideOnRemove;
 		} else {
@@ -487,6 +488,9 @@ export const compareSequenceIntervalEnds = (a: SequenceInterval, b: SequenceInte
 export const compareSequenceIntervalStarts = (a: SequenceInterval, b: SequenceInterval): number =>
 	compareReferencePositions(a.start, b.start);
 
+/**
+ * @deprecated The methods within have substitutions
+ */
 export const sequenceIntervalHelpers: IIntervalHelpers<SequenceInterval> = {
 	compareEnds: compareSequenceIntervalEnds,
 	compareStarts: compareSequenceIntervalStarts,

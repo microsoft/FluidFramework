@@ -34,6 +34,15 @@ To get started with Routerlicious and the Fluid reference implementation, you mu
 "start:docker": "docker-compose -f server/docker-compose.yml up"
 ```
 
+In order to quickly change the specific docker images that are used for each component, you can set (`export VARIABLE_NAME=value`)
+the following environment variables before running the command above:
+
+- `REGISTRY_URL`: base URL for the docker registry where the images should be pulled from
+- `ALFRED_IMAGE_TAG`: tag for the docker image for the Alfred components.
+- `HISTORIAN_IMAGE_TAG`: tag for the docker image for the Historian components.
+
+If they're not set in the environment, defaults will be used for the latest stable published images.
+
 ### Developing the Reference Server
 
 For development, you'll also need to give docker access to your drive (Shared Drives). The instructions for local development are available in [Routerlicious](./routerlicious).

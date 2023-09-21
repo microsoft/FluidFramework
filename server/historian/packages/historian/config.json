@@ -10,6 +10,7 @@
 		"dumpConfig": true
 	},
 	"riddler": "http://riddler:5000",
+	"alfred": "http://alfred:3000",
 	"requestSizeLimit": "1gb",
 	"ignoreEphemeralFlag": true,
 	"redis": {
@@ -90,5 +91,10 @@
 	"storageUrl": "",
 	"tokenRevocation": {
 		"enable": false
+	},
+	"system": {
+		"httpServer": {
+			"connectionTimeoutMs": 0
+		}
 	}
 }

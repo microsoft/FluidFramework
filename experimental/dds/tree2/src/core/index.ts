@@ -82,6 +82,7 @@ export {
 	ProtoNodes,
 	CursorMarker,
 	isCursor,
+	getDetachedFieldContainingPath,
 } from "./tree";
 
 export {

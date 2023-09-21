@@ -46,5 +46,10 @@
 		"maxRetriesPerRequest": 20,
 		"enableAutoPipelining": false,
 		"enableOfflineQueue": true
+	},
+	"system": {
+		"httpServer": {
+			"connectionTimeoutMs": 0
+		}
 	}
 }

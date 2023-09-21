@@ -417,11 +417,11 @@ export function benchmarkArgumentsIsCustom(
 }
 
 /**
- * Tags and formats the provided Title from the supplied BenchmarkDescription to create a
+ * Tags and formats the provided Title from the supplied {@link BenchmarkDescription} to create a
  * tagged and formatted Title for the Reporter.
  *
- * @param args - see {@link BenchmarkDescription} and {@link Titled}
- * @returns - a formatted tagged title from the supplied BenchmarkDescription
+ * @param args - See {@link BenchmarkDescription} and {@link Titled}
+ * @returns A formatted tagged title from the supplied `BenchmarkDescription`.
  */
 export function qualifiedTitle(args: BenchmarkDescription & Titled): string {
 	const benchmarkTypeTag = BenchmarkType[args.type ?? BenchmarkType.Measurement];

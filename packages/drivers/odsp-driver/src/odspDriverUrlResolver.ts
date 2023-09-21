@@ -94,6 +94,8 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 			const filePath = searchParams.get("path");
 			const packageName = searchParams.get("containerPackageName");
 			const createLinkType = searchParams.get("createLinkType");
+			// false positive
+			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
 			if (!(fileName && siteURL && driveID && filePath !== null && filePath !== undefined)) {
 				throw new NonRetryableError(
 					"Proper new file params should be there!!",

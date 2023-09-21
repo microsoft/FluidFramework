@@ -752,10 +752,16 @@ export class SharedMatrix<T = any>
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
 	 */
 	protected applyStashedOp(content: any): unknown {
-		if (content.target === SnapshotPath.cols || content.target === SnapshotPath.rows) {
-			const op = content as IMergeTreeOp;
-			const currentVector = content.target === SnapshotPath.cols ? this.cols : this.rows;
-			const oppositeVector = content.target === SnapshotPath.cols ? this.rows : this.cols;
+		const parsedContent = parseHandles(content, this.serializer);
+		if (
+			parsedContent.target === SnapshotPath.cols ||
+			parsedContent.target === SnapshotPath.rows
+		) {
+			const op = parsedContent as IMergeTreeOp;
+			const currentVector =
+				parsedContent.target === SnapshotPath.cols ? this.cols : this.rows;
+			const oppositeVector =
+				parsedContent.target === SnapshotPath.cols ? this.rows : this.cols;
 			const metadata = currentVector.applyStashedOp(op);
 			const localSeq = currentVector.getCollabWindow().localSeq;
 			const oppositeWindow = oppositeVector.getCollabWindow();
@@ -770,9 +776,12 @@ export class SharedMatrix<T = any>
 
 			return metadata;
 		} else {
-			assert(content.type === MatrixOp.set, 0x2da /* "Unknown SharedMatrix 'op' type." */);
+			assert(
+				parsedContent.type === MatrixOp.set,
+				0x2da /* "Unknown SharedMatrix 'op' type." */,
+			);
 
-			const setOp = content as ISetOp<T>;
+			const setOp = parsedContent as ISetOp<T>;
 			const rowHandle = this.rows.getAllocatedHandle(setOp.row);
 			const colHandle = this.cols.getAllocatedHandle(setOp.col);
 			const rowsRefSeq = this.rows.getCollabWindow().currentSeq;
