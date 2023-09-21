@@ -167,9 +167,8 @@ export async function loadContainer(
 	const configProvider: IConfigProviderBase = {
 		getRawConfig: (name: string): ConfigTypes => settings[name],
 	};
-	// Enable GCVersionUpgradeToV3 feature. This is for the snapshot tests which are already using GC version 3
-	// but the default version was changed to 2. Once the default is 3, this will be removed.
-	settings["Fluid.GarbageCollection.GCVersionUpgradeToV3"] = true;
+	// This is to align with the snapshot tests which may upgrade GC Version before the default is changed.
+	settings["Fluid.GarbageCollection.GCVersionUpgradeToV4"] = false;
 
 	// Load the Fluid document while forcing summarizeProtocolTree option
 	const loader = new Loader({
