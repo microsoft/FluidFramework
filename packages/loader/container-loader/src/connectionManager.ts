@@ -472,6 +472,10 @@ export class ConnectionManager implements IConnectionManager {
 					? ["Force readonly", "read" as ConnectionMode]
 					: ["Force write", "write" as ConnectionMode];
 
+			if (this.readonly === true) {
+				this.props.readonlyChangeHandler(true);
+			}
+
 			if (this.disconnectFromDeltaStream({ text })) {
 				// reconnect if we disconnected from before.
 				this.triggerConnect({ text }, mode);
