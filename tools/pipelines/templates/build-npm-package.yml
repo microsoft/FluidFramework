@@ -120,6 +120,10 @@ parameters:
   type: object
   default: []
 
+- name: addtionalSteps
+  type: stepList
+  default: []
+
 
 variables:
   # We use 'chalk' to colorize output, which auto-detects color support in the
