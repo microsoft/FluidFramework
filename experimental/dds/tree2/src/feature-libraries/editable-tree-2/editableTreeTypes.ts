@@ -109,9 +109,8 @@ export interface TreeNode extends Tree<TreeSchema> {
 	/**
 	 * Same as `this.schema.name`.
 	 * This is provided as a enumerable own property to aid with JavaScript object traversals of this data-structure.
-	 * See [readme](./README.md) for details.
+	 * See [ReadMe](./README.md) for details.
 	 */
-	// TODO: do we want to leave this and other similar properties in the TypeScript API?
 	readonly type: TreeSchemaIdentifier;
 
 	[Symbol.iterator](): Iterator<TreeField>;
@@ -122,6 +121,8 @@ export interface TreeNode extends Tree<TreeSchema> {
  *
  * Fields are inherently part of their parent, and thus cannot be moved.
  * Instead their content can be moved, deleted or created.
+ *
+ * Editing operations are only valid on trees with the {@link TreeStatus#InDocument} `TreeStatus`.
  *
  * @remarks
  * Fields are used wherever an editable collection of nodes is required.
@@ -174,7 +175,50 @@ export interface TreeField extends Tree<FieldSchema>, Iterable<TreeNode> {
  * A node that behaves like a `Map<FieldKey, Field>` for a specific `Field` type.
  * @alpha
  */
+
+/**
+ * A {@link TreeNode} that behaves like a `Map<FieldKey, Field>` for a specific `Field` type.
+ *
+ * @remarks
+ * Unlike TypeScript Map type, {@link MapNode.get} always provides a reference to any field looked up, even if its never been set.
+ *
+ * This means that, for example, a `MapNode` of {@link Sequence} fields will return an empty sequence when a previously unused key is looked up,
+ * and that sequence can be used to insert new items into the field.
+ * Additionally empty fields (those containing no nodes) are not distinguished from fields which do not exist.
+ * This differs from JavaScript Maps which have a subtle distinction between storing undefined as a value in the map and deleting an entry from the map.
+ *
+ * @alpha
+ */
 export interface MapNode<TSchema extends MapSchema> extends TreeNode {
+	/**
+	 * The number of elements in the map.
+	 *
+	 * @remarks
+	 * All fields under a map implicitly exist, but `size` will count only the fields which contain one or more nodes.
+	 */
+	readonly size: number;
+
+	/**
+	 * Checks whether a value exists for the given key.
+	 * @param key - Which map entry to look up.
+	 *
+	 * @remarks
+	 * All fields under a map implicitly exist, but `has` will only return true if there are one or more nodes present in the given field.
+	 *
+	 * @privateRemarks
+	 * TODO: Consider changing the key type to `string` for easier use.
+	 */
+	has(key: FieldKey): boolean;
+
+	/**
+	 * Get the value associated with `key`.
+	 * @param key - which map entry to look up.
+	 *
+	 * @privateRemarks
+	 * TODO: Consider changing the key type to `string` for easier use.
+	 */
+	get(key: FieldKey): UnboxField<TSchema["mapFields"]>;
+
 	/**
 	 * Get the field for `key`.
 	 * @param key - which map entry to look up.
@@ -182,37 +226,101 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	 * @remarks
 	 * All fields under a map implicitly exist, so `get` can be called with any key and will always return a field.
 	 * Even if the field is empty, it will still be returned, and can be edited to insert content into the map.
+	 *
+	 * @privateRemarks
+	 * TODO: Consider changing the key type to `string` for easier use.
 	 */
-	get(key: FieldKey): TypedField<TSchema["mapFields"]>;
+	getBoxed(key: FieldKey): TypedField<TSchema["mapFields"]>;
+
+	/**
+	 * Returns an iterable of keys in the map.
+	 *
+	 * @remarks
+	 * All fields under a map implicitly exist, but `keys` will yield only the keys of fields which contain one or more nodes.
+	 */
+	keys(): IterableIterator<FieldKey>;
+
+	/**
+	 * Returns an iterable of values in the map.
+	 *
+	 * @remarks
+	 * All fields under a map implicitly exist, but `values` will yield only the fields containing one or more nodes.
+	 */
+	values(): IterableIterator<UnboxField<TSchema["mapFields"]>>;
+
+	/**
+	 * Returns an iterable of key, value pairs for every entry in the map.
+	 *
+	 * @remarks
+	 * All fields under a map implicitly exist, but `entries` will yield only the entries whose fields contain one or more nodes.
+	 */
+	entries(): IterableIterator<[FieldKey, UnboxField<TSchema["mapFields"]>]>;
+
+	/**
+	 * Executes a provided function once per each key/value pair in the map.
+	 * @param callbackFn - The function to run for each map entry
+	 * @param thisArg - If present, `callbackFn` will be bound to `thisArg`
+	 *
+	 * @privateRemarks
+	 * TODO: This should run over fields in insertion order if we want to match the javascript foreach spec.
+	 */
+	forEach(
+		callbackFn: (
+			value: UnboxField<TSchema["mapFields"]>,
+			key: FieldKey,
+			map: MapNode<TSchema>,
+		) => void,
+		thisArg?: any,
+	): void;
 
 	// TODO: Add `set` method when FieldKind provides a setter (and derive the type from it).
 	// set(key: FieldKey, content: FlexibleFieldContent<TSchema["mapFields"]>): void;
 
 	[Symbol.iterator](): Iterator<TypedField<TSchema["mapFields"]>>;
 
-	// TODO: JS object traversal docs
-	// Inclines only non-empty fields, like iteration.
+	/**
+	 * An enumerable own property which allows JavaScript object traversals to access {@link Sequence} content.
+	 * It is recommenced to NOT use this when possible (for performance and type safety reasons): instead use {@link MapNode.get} or iterate over fields with `Symbol.iterator`.
+	 * See [ReadMe](./README.md) for details.
+	 *
+	 * This object is not guaranteed to be kept up to date across edits and thus should not be held onto across edits.
+	 */
 	readonly asObject: {
 		readonly [P in FieldKey]?: UnboxField<TSchema["mapFields"]>;
 	};
 }
 
 /**
- * A {@link TreeNode} that wraps a single field.
+ * A {@link TreeNode} that wraps a single {@link TreeField} (which is placed under the {@link EmptyKey}).
  *
  * @remarks
  * FieldNodes unbox to their content, so in schema aware APIs which do unboxing, the FieldNode itself will be skipped over.
- * Mainly useful when a field (such as a sequence) is desired in a location where nodes are required (like the member of a union or the child of another field).
+ * This layer of field nodes is then omitted when using schema-aware APIs which do unboxing.
+ * Other than this unboxing, a FieldNode is identical to a struct node with a single field using the {@link EmptyKey}.
  *
+ * There are several use-cases where it makes sense to use a field node.
+ * Here are a few:
+ * - When it's necessary to differentiate between an empty sequence, and no sequence.
+ * One case where this is needed is encoding Json.
+ * - When polymorphism over {@link FieldSchema} (and not just a union of {@link AllowedTypes}) is required.
+ * For example when encoding a schema for a type like
+ * `Foo[] | Bar[]`, `Foo | Foo[]` or `Optional<Foo> | Optional<Bar>` (Where `Optional` is the Optional field kind, not TypeScript's `Optional`).
+ * Since this schema system only allows `|` of {@link TreeSchema} (and only when declaring a {@link FieldSchema}), see {@link SchemaBuilder.field},
+ * these aggregate types are most simply expressed by creating fieldNodes for the terms like `Foo[]`, and `Optional<Foo>`.
+ * Note that these are distinct from types like `(Foo | Bar)[]` and `Optional<Foo | Bar>` which can be expressed as single fields without extra nodes.
+ * - When a distinct merge identity is desired for a field.
+ * For example, if the application wants to be able to have an optional node or a sequence which it can pass around, edit and observe changes to,
+ * in some cases (like when the content is moved to a different parent) this can be more flexible if a field node is introduced
+ * to create a separate logical entity (node) which wraps the field.
+ * This can even be useful with value fields to wrap terminal nodes if a stable merge
+ * - When a field (such as a {@link Sequence}) is desired in a location where {@link TreeNode}s are required
+ * (like the member of a union or the child of another {@link TreeField}).
+ * This can is typically just a different perspective on one of the above cases.
  * For example:
  * `Sequence<Foo> | Sequence<Bar>` or `OptionalField<Sequence<Foo>>` can't be expressed as simple fields
  * (unlike `Sequence<Foo | Bar>` or `OptionalField<Foo>` which can be done as simple fields).
  * Instead {@link FieldNode}s can be use to achieve something similar, more like:
  * `FieldNode<Sequence<Foo>> | FieldNode<Sequence<Bar>>` or `OptionalField<FieldNode<Sequence<Foo>>>`.
- *
- * This extra layer of field nodes is then omitted when using schema-aware APIs which do unboxing.
- *
- * Other than this unboxing, a FieldNode is identical to a struct node with a single field using the {@link EmptyKey}.
  *
  * @alpha
  */
@@ -236,11 +344,23 @@ export interface FieldNode<TSchema extends FieldNodeSchema> extends TreeNode {
 }
 
 /**
- * A node that behaves like struct, providing properties to access its fields.
+ * A {@link TreeNode} that behaves like struct, providing properties to access its fields.
+ *
+ * Struct nodes consist of a finite collection of fields, each with their own (distinct) key and {@link FieldSchema}.
  *
  * @remarks
  * Struct nodes require complex typing, and have been split into two parts for implementation purposes.
- * See {@link StructTyped} for the schema aware extensions to this.
+ * See {@link StructTyped} for the schema aware extensions to this that provide access to the fields.
+ *
+ * These "Structs" resemble (and are named after) "Structs" from a wide variety of programming languages
+ * (Including Algol 68, C, Go, Rust, C# etc.).
+ * Struct nodes also somewhat resemble JavaScript objects: this analogy is less precise (objects don't have a fixed schema for example),
+ * which is why "Struct" nodes are named after "Structs" instead.
+ *
+ * Another common name for this abstraction is [record](https://en.wikipedia.org/wiki/Record_(computer_science)).
+ * The name "Record" is avoided (in favor of Struct) here because it has less precise connotations for most TypeScript developers.
+ * For example, TypeScript has a built in `Record` type, but it requires all of the fields to have the same type,
+ * putting its semantics half way between this library's "Struct" schema and {@link MapNode}.
  *
  * @alpha
  */
@@ -267,7 +387,7 @@ export interface Leaf<TSchema extends LeafSchema> extends TreeNode {
 }
 
 /**
- * A node that behaves like struct, providing properties to access its fields.
+ * A {@link TreeNode} that behaves like struct, providing properties to access its fields.
  *
  * @alpha
  */
@@ -326,10 +446,20 @@ export type FlexibleNodeContent<TTypes extends AllowedTypes> = SchemaAware.Allow
 >;
 
 /**
- * Field that stores a sequence of children.
+ * {@link TreeField} that stores a sequence of children.
+ *
+ * Sequence fields can contain an ordered sequence any number of {@link TreeNode}s which must be of the {@link AllowedTypes} from the {@link FieldSchema}).
  *
  * @remarks
  * Allows for concurrent editing based on index, adjusting the locations of indexes as needed so they apply to the same logical place in the sequence when rebased and merged.
+ *
+ * Edits to sequence fields are anchored relative to their surroundings, so concurrent edits can result in the indexes of nodes and edits getting shifted.
+ * To hold onto locations in sequence across an edit, use anchors.
+ *
+ * @privateRemarks
+ * TODO:
+ * Add anchor API that can actually hold onto locations in a sequence.
+ * Currently only nodes can be held onto with anchors, and this does not replicate the behavior implemented for editing.
  * @alpha
  */
 export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
@@ -368,7 +498,13 @@ export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
 
 	[Symbol.iterator](): Iterator<TypedNodeUnion<TTypes>>;
 
-	// TODO: JS object traversal docs
+	/**
+	 * An enumerable own property which allows JavaScript object traversals to access {@link Sequence} content.
+	 * It is recommenced to NOT use this when possible (for performance and type safety reasons): instead use {@link Sequence#at} or iterate over nodes with `Symbol.iterator`.
+	 * See [ReadMe](./README.md) for details.
+	 *
+	 * This array is not guaranteed to be kept up to date across edits and thus should not be held onto across edits.
+	 */
 	readonly asArray: readonly UnboxNodeUnion<TTypes>[];
 }
 
@@ -392,6 +528,13 @@ export interface RequiredField<TTypes extends AllowedTypes> extends TreeField {
  *
  * @remarks
  * Unboxes its content, so in schema aware APIs which do unboxing, the OptionalField itself will be skipped over and its content will be returned directly.
+ *
+ * @privateRemarks
+ * TODO: Document merge semitics
+ * TODO: Allow Optional fields to be used with last write wins OR first write wins merge resolution.
+ * TODO:
+ * Better centralize the documentation about what kinds of merge semantics are available for field kinds.
+ * Maybe link editor?
  * @alpha
  */
 export interface OptionalField<TTypes extends AllowedTypes> extends TreeField {

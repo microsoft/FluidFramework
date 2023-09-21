@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-services-utils",
-	"version": "2.0.0",
+	"version": "3.0.0",
 	"description": "Fluid server services shared utilities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -52,7 +52,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/protocol-definitions": "^2.1.0",
+		"@fluidframework/protocol-definitions": "^3.0.0",
 		"@fluidframework/server-services-client": "workspace:~",
 		"@fluidframework/server-services-core": "workspace:~",
 		"@fluidframework/server-services-telemetry": "workspace:~",

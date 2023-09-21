@@ -78,6 +78,7 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 		it("blob is aborted after upload succeds", async function () {
 			const testString = "this is a test string";
 			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
+			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
 			const ac = new AbortController();
 			let blob: IFluidHandle<ArrayBufferLike>;
 			try {
@@ -86,15 +87,14 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 					ac.signal,
 				);
 				ac.abort();
+				map.set("key", blob);
 			} catch (error: any) {
 				assert.fail("Should succeed");
 			}
-			const pendingState = (await runtimeOf(dataStore1).getPendingLocalState()) as
-				| IPendingRuntimeState
-				| undefined;
-			const acked = Object.values<any>(pendingState?.pendingAttachmentBlobs ?? {})[0].acked;
-			assert.strictEqual(blob.isAttached, false);
-			assert.strictEqual(acked, true);
+			const pendingState = (await runtimeOf(dataStore1).getPendingLocalState({
+				notifyImminentClosure: true,
+			})) as IPendingRuntimeState | undefined;
+			assert.strictEqual(pendingState?.pendingAttachmentBlobs, undefined);
 		});
 
 		it("blob is attached after usage in map", async function () {
@@ -121,16 +121,17 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 			assert.strictEqual(blob.isAttached, true);
 		});
 
-		it("blob is acked after upload", async function () {
+		it("removes pending blob when waiting for blob to be attached", async function () {
 			const testString = "this is a test string";
 			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
+			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
 			const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
-			const pendingState = (await runtimeOf(dataStore1).getPendingLocalState()) as
-				| IPendingRuntimeState
-				| undefined;
-			const acked = Object.values<any>(pendingState?.pendingAttachmentBlobs ?? {})[0].acked;
-			assert.strictEqual(blob.isAttached, false);
-			assert.strictEqual(acked, true);
+			const pendingStateP: any = runtimeOf(dataStore1).getPendingLocalState({
+				notifyImminentClosure: true,
+			});
+			map.set("key", blob);
+			const pendingState = await pendingStateP;
+			assert.strictEqual(pendingState?.pendingAttachmentBlobs, undefined);
 		});
 
 		it("removes pending blob after attached and acked", async function () {
