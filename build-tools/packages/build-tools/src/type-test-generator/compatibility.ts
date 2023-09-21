@@ -164,7 +164,8 @@ namespace Test7 {
 }
 
 namespace Test_TypeOnly_Preserves_Primitives {
-	// Intersection ('&') with 'null' and 'undefined' results in 'never'.
+	// The 'null' and 'undefined' values cannot be nominal typed (they are not
+	// valid enum values and intersection ('&') with 'null'/'undefined' -> 'never').
 	// Just verify that the 'null' and 'undefined' values are preserved.
 	type _check_undefined1 = requireAssignableTo<TypeOnly<undefined>, undefined>;
 	type _check_undefined2 = requireAssignableTo<undefined, TypeOnly<undefined>>;
@@ -172,7 +173,7 @@ namespace Test_TypeOnly_Preserves_Primitives {
 	type _check_null1 = requireAssignableTo<TypeOnly<null>, null>;
 	type _check_null2 = requireAssignableTo<null, TypeOnly<null>>;
 
-	// Types that extend 'number' and 'string' are stripped to thier primitive types.
+	// Types that extend 'number' and 'string' are stripped to their primitive types.
 	// (Nominal typing is erased.)
 	type brandedNumber = number & { brand: "Number" };
 	type _check_number1 = requireAssignableTo<TypeOnly<brandedNumber>, number>;
