@@ -172,28 +172,34 @@ If you would like to add rendering support for a custom `Documentation Domain` n
 
 If you would like to change any or all of this library's default rendering policies, you may simply override the default policies for the desired `type`s.
 
+## HTML Renderer
+
+This library now includes preview APIs for HTML rendering.
+
+Like the Markdown renderer, we offer a `renderApiModelAsHtml` function that operates in much the same way, but outputs `HTML`-formatted documents instead of Markdown.
+
+These APIs are still in preview, and may change without notice.
+Use at your own risk.
+
 ## Upcoming Work
 
--   Simplify input configurations
-    -   Separate configs for each pipeline segment
-    -   Clean up terminology ("policies" in particular is too vague - we should remove this)
 -   Add extensibility options for `DocNode` transformations
     -   If a consumer has a custom tsdoc config associated with their API-Extractor setup, this will be needed.
 
 ### Known Bugs
 
--   Example titles are not respected. See TSDoc [@example spec](https://tsdoc.org/pages/tags/example/) - text on the same line as the tag should be treated as the example title.
 -   Types that extend or implement types with generic parameters result in signatures rendered with missing closing `>`s.
 
 ### Documentation Improvements
 
 -   Intro sandbox (api report)
--   Extensibility examples (maybe use the AlertNode concept, once we move it out of the library and into the FluidFramework website build)
+-   Extensibility examples (maybe use the "AlertNode" concept used by the fluidframework.com build)
 
 ### Styling Improvements
 
 -   Fix links to the same file (only need heading component, not file path)
     -   This will require plumbing down a context document item, so we can easily determine if the document to which the link is being generated is the same as the document being linked to.
+-   Update exported utilities to accept partial configs, rather than needing the user to provide a complete configuration.
 -   Config options for parsing TSDoc block comment contents as Markdown (and don't escape the contents)?
 -   Add support for Table Cell alignment
 

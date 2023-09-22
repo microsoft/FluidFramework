@@ -12,6 +12,7 @@ import {
 	IFluidRouter,
 	IRequest,
 	IResponse,
+	IProvideFluidHandleContext,
 } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
@@ -634,7 +635,12 @@ type MessageWithContext =
  */
 export class ContainerRuntime
 	extends TypedEventEmitter<IContainerRuntimeEvents & ISummarizerEvents>
-	implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider
+	implements
+		IContainerRuntime,
+		IRuntime,
+		ISummarizerRuntime,
+		ISummarizerInternalsProvider,
+		IProvideFluidHandleContext
 {
 	/**
 	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
@@ -1780,8 +1786,10 @@ export class ContainerRuntime
 		return this.dataStores.aliases.get(maybeAlias) ?? maybeAlias;
 	}
 
-	// eslint-disable-next-line import/no-deprecated
-	private async getDataStoreFromRequest(id: string, request: IRequest): Promise<IFluidRouter> {
+	private async getDataStoreFromRequest(
+		id: string,
+		request: IRequest,
+	): Promise<IFluidDataStoreChannel> {
 		const headerData: RuntimeHeaderData = {};
 		if (typeof request.headers?.[RuntimeHeaders.wait] === "boolean") {
 			headerData.wait = request.headers[RuntimeHeaders.wait];

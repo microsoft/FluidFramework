@@ -92,6 +92,11 @@ module.exports = {
 		"unicorn/template-indent": "off",
 
 		/**
+		 * The rule seems to crash on some of our code
+		 */
+		"unicorn/expiring-todo-comments": "off",
+
+		/**
 		 * Disallows the `any` type.
 		 * Using the `any` type defeats the purpose of using TypeScript.
 		 * When `any` is used, all compiler type checks around that value are ignored.

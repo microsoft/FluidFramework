@@ -106,7 +106,7 @@ export class Timer implements ITimer {
 
 	private runningState: IRunningTimerState | undefined;
 
-	constructor(
+	public constructor(
 		private readonly defaultTimeout: number,
 		private readonly defaultHandler: () => void,
 		private readonly getCurrentTick: () => number = (): number => Date.now(),
@@ -248,7 +248,7 @@ export class PromiseTimer implements IPromiseTimer {
 		return this.timer.hasTimer;
 	}
 
-	constructor(defaultTimeout: number, defaultHandler: () => void) {
+	public constructor(defaultTimeout: number, defaultHandler: () => void) {
 		this.timer = new Timer(defaultTimeout, () => this.wrapHandler(defaultHandler));
 	}
 
