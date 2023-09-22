@@ -49,7 +49,9 @@
 		"cache-dir": "nyc/.cache",
 		"exclude": [
 			"src/test/**/*.ts",
-			"dist/tsc/test/**/*.js"
+			"dist/tsc/test/**/*.js",
+			"dist/e2e-tests/**",
+			"dist/bundle/**"
 		],
 		"exclude-after-remap": false,
 		"include": [
