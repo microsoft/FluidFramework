@@ -620,7 +620,8 @@ export function configureWebSocketServices(
 			// Set up listener to forward signal to clients in the collaboration session when the broadcast-signal endpoint is called
 			collaborationSessionEventEmitter?.on(
 				"broadcastSignal",
-				(broadcastSignal: IBroadcastSignalEventPayload) => async () => {
+				// eslint-disable-next-line @typescript-eslint/no-misused-promises
+				async (broadcastSignal: IBroadcastSignalEventPayload) => {
 					const { signalRoom, signalContent } = broadcastSignal;
 
 					// No-op if the room (collab session) that signal came in from is different
