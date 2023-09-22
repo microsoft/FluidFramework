@@ -94,6 +94,8 @@ export class ForestSummarizer implements Summarizable {
 		if (await services.contains(treeBlobKey)) {
 			const treeBuffer = await services.readBlob(treeBlobKey);
 			const treeBufferString = bufferToString(treeBuffer, "utf8");
+			// TODO: this code is parsing data without an optional validator, this should be defined in a typebox schema as part of the 
+			// forest summary format.
 			const fields = parse(treeBufferString) as [FieldKey, JsonableTree[]][];
 
 			const delta: [FieldKey, Delta.Insert[]][] = fields.map(([fieldKey, content]) => {
