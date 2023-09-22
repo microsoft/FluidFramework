@@ -620,43 +620,47 @@ export function configureWebSocketServices(
 			// Set up listener to forward signal to clients in the collaboration session when the broadcast-signal endpoint is called
 			collaborationSessionEventEmitter?.on(
 				"broadcastSignal",
-				(broadcastSignal: IBroadcastSignalEventPayload) => async () => {
-					const { signalRoom, signalContent } = broadcastSignal;
+				(broadcastSignal: IBroadcastSignalEventPayload) => {
+					void (async () => {
+						const { signalRoom, signalContent } = broadcastSignal;
 
-					// No-op if the room (collab session) that signal came in from is different
-					// than the current room. We reuse websockets so there could be multiple rooms
-					// that we are sending the signal to, and we don't want to do that.
-					if (
-						signalRoom.documentId === room.documentId &&
-						signalRoom.tenantId === room.tenantId
-					) {
-						try {
-							const contents = JSON.parse(signalContent) as IRuntimeSignalEnvelope;
-							const runtimeMessage = createRuntimeMessage(contents);
+						// No-op if the room (collab session) that signal came in from is different
+						// than the current room. We reuse websockets so there could be multiple rooms
+						// that we are sending the signal to, and we don't want to do that.
+						if (
+							signalRoom.documentId === room.documentId &&
+							signalRoom.tenantId === room.tenantId
+						) {
+							try {
+								const contents = JSON.parse(
+									signalContent,
+								) as IRuntimeSignalEnvelope;
+								const runtimeMessage = createRuntimeMessage(contents);
 
-							socket
-								.emitToRoom(getRoomId(signalRoom), "signal", runtimeMessage)
-								.catch((error: any) => {
-									const errorMsg = `Failed to broadcast signal from external API.`;
-									Lumberjack.error(
-										errorMsg,
-										getLumberBaseProperties(
-											signalRoom.documentId,
-											signalRoom.tenantId,
-										),
-										error,
-									);
-								});
-						} catch (error) {
-							const errorMsg = `broadcast-signal conent body is malformed`;
-							return handleServerError(
-								logger,
-								errorMsg,
-								claims.documentId,
-								claims.tenantId,
-							);
+								socket
+									.emitToRoom(getRoomId(signalRoom), "signal", runtimeMessage)
+									.catch((error: any) => {
+										const errorMsg = `Failed to broadcast signal from external API.`;
+										Lumberjack.error(
+											errorMsg,
+											getLumberBaseProperties(
+												signalRoom.documentId,
+												signalRoom.tenantId,
+											),
+											error,
+										);
+									});
+							} catch (error) {
+								const errorMsg = `broadcast-signal conent body is malformed`;
+								return handleServerError(
+									logger,
+									errorMsg,
+									claims.documentId,
+									claims.tenantId,
+								);
+							}
 						}
-					}
+					})();
 				},
 			);
 
