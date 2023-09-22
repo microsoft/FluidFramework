@@ -15,7 +15,6 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { ILoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { DriverHeader } from "@fluidframework/driver-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { FluidObject, IFluidHandleContext, IRequest } from "@fluidframework/core-interfaces";
 import { ISummaryConfiguration } from "../containerRuntime";
 import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator";
@@ -123,11 +122,8 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 		};
 
 		const resolvedContainer = await loader.resolve(request);
-		const fluidObject: FluidObject<ISummarizer> | undefined = resolvedContainer.getEntryPoint
-			? await resolvedContainer.getEntryPoint?.()
-			: await requestFluidObject<FluidObject<ISummarizer>>(resolvedContainer, {
-					url: "_summarizer",
-			  });
+		const fluidObject: FluidObject<ISummarizer> | undefined =
+			await resolvedContainer.getEntryPoint?.();
 		if (fluidObject?.ISummarizer === undefined) {
 			throw new UsageError("Fluid object does not implement ISummarizer");
 		}

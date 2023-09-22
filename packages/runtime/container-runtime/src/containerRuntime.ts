@@ -21,7 +21,7 @@ import {
 	ICriticalContainerError,
 	AttachState,
 	ILoaderOptions,
-	LoaderHeader,
+	ILoader,
 } from "@fluidframework/container-definitions";
 import {
 	IContainerRuntime,
@@ -45,7 +45,6 @@ import {
 	UsageError,
 } from "@fluidframework/telemetry-utils";
 import {
-	DriverHeader,
 	FetchSource,
 	IDocumentStorageService,
 	ISummaryContext,
@@ -97,7 +96,6 @@ import {
 	create404Response,
 	exceptionToResponse,
 	GCDataBuilder,
-	requestFluidObject,
 	seqFromTree,
 	calculateStats,
 	TelemetryContext,
@@ -141,7 +139,6 @@ import {
 	IConnectableRuntime,
 	IGeneratedSummaryStats,
 	ISubmitSummaryOptions,
-	ISummarizer,
 	ISummarizerInternalsProvider,
 	ISummarizerRuntime,
 	IRefreshSummaryAckOptions,
@@ -1585,7 +1582,7 @@ export class ContainerRuntime
 					this, // IConnectedState
 					this.summaryCollection,
 					this.logger,
-					this.formRequestSummarizerFn(loader),
+					this.formCreateSummarizerFn(loader),
 					new Throttler(
 						60 * 1000, // 60 sec delay window
 						30 * 1000, // 30 sec max delay
@@ -3930,35 +3927,15 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * * Forms a function that will request a Summarizer.
-	 * @param loaderRouter - the loader acting as an IFluidRouter
-	 * */
-	private formRequestSummarizerFn(loaderRouter: IFluidRouter) {
+	 * Forms a function that will create and retrieve a Summarizer.
+	 */
+	private formCreateSummarizerFn(loader: ILoader) {
 		return async () => {
-			const request: IRequest = {
-				headers: {
-					[LoaderHeader.cache]: false,
-					[LoaderHeader.clientDetails]: {
-						capabilities: { interactive: false },
-						type: summarizerClientType,
-					},
-					[DriverHeader.summarizingClient]: true,
-					[LoaderHeader.reconnect]: false,
-				},
-				url: "/_summarizer",
-			};
-
-			const fluidObject = await requestFluidObject<FluidObject<ISummarizer>>(
-				loaderRouter,
-				request,
-			);
-			const summarizer = fluidObject.ISummarizer;
-
-			if (!summarizer) {
-				throw new UsageError("Fluid object does not implement ISummarizer");
+			const absoluteUrl = await this.getAbsoluteUrl("");
+			if (absoluteUrl === undefined) {
+				throw new Error("absoluteUrl could not be resolved for creating summarizer");
 			}
-
-			return summarizer;
+			return Summarizer.create(loader, absoluteUrl);
 		};
 	}
 
