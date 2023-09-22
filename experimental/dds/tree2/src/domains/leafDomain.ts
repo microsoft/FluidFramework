@@ -6,7 +6,9 @@
 import { SchemaBuilder } from "../feature-libraries";
 import { ValueSchema } from "../core";
 
-// https://en.wikipedia.org/wiki/Reverse_domain_name_notation
+/**
+ * Names in this domain follow https://en.wikipedia.org/wiki/Reverse_domain_name_notation, and are versioned.
+ */
 const builder = new SchemaBuilder("Leaf");
 
 /**
