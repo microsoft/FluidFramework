@@ -19,6 +19,7 @@ alfred:
   numberOfMessagesPerTrace: 100
   sessionStickinessDurationMs: 3600000
   enableConnectionCountLogging: false
+  ignoreEphemeralFlag: true
   throttling:
     restCallsPerTenant:
       generalRestCall:
@@ -106,7 +107,7 @@ zookeeper:
 
 system:
   httpServer:
-    connectionTimeout: 0
+    connectionTimeoutMs: 0
 
 usage:
   clientConnectivityCountingEnabled: false
@@ -114,6 +115,7 @@ usage:
 
 shared:
   transientTenants: []
+  runnerServerCloseTimeoutMs: 30000
 
 mongodb:
   operationsDbEndpoint: mongodb_url
@@ -165,3 +167,7 @@ ingress:
 error:
   track: true
   endpoint: "error_tracking_endpoint"
+
+lumberjack:
+  options:
+    enableGlobalTelemetryContext: true

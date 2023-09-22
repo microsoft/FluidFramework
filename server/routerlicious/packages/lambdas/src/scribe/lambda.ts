@@ -210,7 +210,7 @@ export class ScribeLambda implements IPartitionLambda {
 
 				if (msnChanged) {
 					// When the MSN changes we can process up to it to save space
-					this.processFromPending(this.minSequenceNumber);
+					this.processFromPending(this.minSequenceNumber, message);
 				}
 
 				this.clearCache = false;
@@ -233,7 +233,7 @@ export class ScribeLambda implements IPartitionLambda {
 							protocolState: this.protocolHandler.getProtocolState(),
 							pendingOps: this.pendingMessages.toArray(),
 						};
-						this.processFromPending(value.operation.referenceSequenceNumber);
+						this.processFromPending(value.operation.referenceSequenceNumber, message);
 
 						// When external, only process the op if the protocol state advances.
 						// This eliminates the corner case where we have
@@ -408,6 +408,8 @@ export class ScribeLambda implements IPartitionLambda {
 									ex,
 								);
 							} else {
+								// Throwing error here leads to document being marked as corrupt in document partition
+								this.isDocumentCorrupt = true;
 								throw ex;
 							}
 						}
@@ -516,7 +518,7 @@ export class ScribeLambda implements IPartitionLambda {
 	// Advances the protocol state up to 'target' sequence number. Having an exception while running this code
 	// is crucial and the document is essentially corrupted at this point. We should start logging this and
 	// have a better understanding of all failure modes.
-	private processFromPending(target: number) {
+	private processFromPending(target: number, queuedMessage: IQueuedMessage) {
 		while (
 			this.pendingMessages.length > 0 &&
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -538,7 +540,7 @@ export class ScribeLambda implements IPartitionLambda {
 				}
 			} catch (error) {
 				// We should mark the document as corrupt here
-				this.markDocumentAsCorrupt(message);
+				this.markDocumentAsCorrupt(queuedMessage);
 				this.context.log?.error(`Protocol error ${error}`, {
 					messageMetaData: {
 						documentId: this.documentId,
@@ -598,15 +600,28 @@ export class ScribeLambda implements IPartitionLambda {
 			this.pendingCheckpointOffset = queuedMessage;
 			return;
 		}
-
+		let databaseCheckpointFailed = false;
 		this.pendingP = clearCache
 			? this.checkpointManager.delete(this.protocolHead, true)
-			: this.writeCheckpoint(checkpoint);
+			: this.writeCheckpoint(checkpoint).catch((error) => {
+					databaseCheckpointFailed = true;
+					Lumberjack.error(
+						`Error writing database checkpoint.`,
+						getLumberBaseProperties(this.documentId, this.tenantId),
+						error,
+					);
+			  });
 		this.pendingP
 			.then(() => {
 				this.pendingP = undefined;
-				if (!skipKafkaCheckpoint) {
+				if (!skipKafkaCheckpoint && !databaseCheckpointFailed) {
 					this.context.checkpoint(queuedMessage, this.restartOnCheckpointFailure);
+				} else if (databaseCheckpointFailed) {
+					Lumberjack.info(
+						`Skipping kafka checkpoint due to database checkpoint failure.`,
+						getLumberBaseProperties(this.documentId, this.tenantId),
+					);
+					databaseCheckpointFailed = false;
 				}
 				const pendingScribe = this.pendingCheckpointScribe;
 				const pendingOffset = this.pendingCheckpointOffset;
@@ -806,7 +821,10 @@ export class ScribeLambda implements IPartitionLambda {
 
 			// verify that the current scribe message matches the message that started this timer
 			// same implementation as in Deli
-			if (initialScribeCheckpointMessage === this.checkpointInfo.currentCheckpointMessage) {
+			if (
+				initialScribeCheckpointMessage === this.checkpointInfo.currentCheckpointMessage &&
+				!this.isDocumentCorrupt
+			) {
 				this.checkpoint(CheckpointReason.IdleTime);
 				if (initialScribeCheckpointMessage) {
 					this.checkpointCore(

@@ -83,7 +83,6 @@ declare function get_current_ClassDeclaration_DevtoolsLogger():
 declare function use_old_ClassDeclaration_DevtoolsLogger(
     use: TypeOnly<old.DevtoolsLogger>);
 use_old_ClassDeclaration_DevtoolsLogger(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_DevtoolsLogger());
 
 /*
@@ -108,7 +107,6 @@ declare function get_current_InterfaceDeclaration_DevtoolsProps():
 declare function use_old_InterfaceDeclaration_DevtoolsProps(
     use: TypeOnly<old.DevtoolsProps>);
 use_old_InterfaceDeclaration_DevtoolsProps(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_DevtoolsProps());
 
 /*
@@ -158,30 +156,6 @@ declare function use_old_InterfaceDeclaration_IDevtools(
     use: TypeOnly<old.IDevtools>);
 use_old_InterfaceDeclaration_IDevtools(
     get_current_InterfaceDeclaration_IDevtools());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_VisualizeSharedObject": {"forwardCompat": false}
-*/
-declare function get_old_TypeAliasDeclaration_VisualizeSharedObject():
-    TypeOnly<old.VisualizeSharedObject>;
-declare function use_current_TypeAliasDeclaration_VisualizeSharedObject(
-    use: TypeOnly<current.VisualizeSharedObject>);
-use_current_TypeAliasDeclaration_VisualizeSharedObject(
-    get_old_TypeAliasDeclaration_VisualizeSharedObject());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_VisualizeSharedObject": {"backCompat": false}
-*/
-declare function get_current_TypeAliasDeclaration_VisualizeSharedObject():
-    TypeOnly<current.VisualizeSharedObject>;
-declare function use_old_TypeAliasDeclaration_VisualizeSharedObject(
-    use: TypeOnly<old.VisualizeSharedObject>);
-use_old_TypeAliasDeclaration_VisualizeSharedObject(
-    get_current_TypeAliasDeclaration_VisualizeSharedObject());
 
 /*
 * Validate forward compat by using old type in place of current type

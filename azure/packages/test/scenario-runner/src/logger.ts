@@ -5,22 +5,19 @@
 import crypto from "crypto";
 import fs from "fs";
 
-import { IEvent, ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-import { TypedEventEmitter, assert } from "@fluidframework/common-utils";
-import { LazyPromise } from "@fluidframework/core-utils";
+import { IEvent, ITelemetryBaseEvent, ITelemetryLogger } from "@fluidframework/core-interfaces";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { assert, LazyPromise } from "@fluidframework/core-utils";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 
-import { ITelemetryLogger } from "@fluidframework/core-interfaces";
 import { pkgName, pkgVersion } from "./packageVersion";
-import { ScenarioRunnerTelemetryEventNames } from "./utils";
+import { ScenarioRunnerTelemetryEventNames, getAzureClientConnectionConfigFromEnv } from "./utils";
 
 export interface LoggerConfig {
 	scenarioName?: string;
 	namespace?: string;
 	runId?: string;
-	endpoint?: string;
-	region?: string;
 }
 
 export interface IScenarioRunnerTelemetryEvents extends IEvent {
@@ -66,6 +63,7 @@ class ScenarioRunnerLogger implements ITelemetryBufferedLogger {
 			const schema = [...this.schema].sort((a, b) => b[1] - a[1]).map((v) => v[0]);
 			const data = logs.reduce(
 				(file, event) =>
+					// eslint-disable-next-line @typescript-eslint/no-base-to-string
 					`${file}\n${schema.reduce((line, k) => `${line}${event[k] ?? ""},`, "")}`,
 				schema.join(","),
 			);
@@ -154,6 +152,7 @@ export async function getLogger(
 	if (transformEvents) {
 		baseLogger.transformEvents(transformEvents);
 	}
+	const connectionConfig = getAzureClientConnectionConfigFromEnv();
 	return createChildLogger({
 		logger: baseLogger,
 		namespace: config.namespace,
@@ -161,8 +160,8 @@ export async function getLogger(
 			all: {
 				runId: config.runId,
 				scenarioName: config.scenarioName,
-				endpoint: config.endpoint,
-				region: config.region,
+				endpoint: connectionConfig.endpoint,
+				region: connectionConfig.region,
 			},
 		},
 	});

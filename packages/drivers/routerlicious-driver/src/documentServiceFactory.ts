@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { getW3CData } from "@fluidframework/driver-base";
 import {
 	FiveDaysMs,
@@ -22,7 +22,10 @@ import {
 	RateLimiter,
 } from "@fluidframework/driver-utils";
 import { createChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { ISession } from "@fluidframework/server-services-client";
+import {
+	ISession,
+	convertSummaryTreeToWholeSummaryTree,
+} from "@fluidframework/server-services-client";
 import { DocumentService } from "./documentService";
 import { IRouterliciousDriverPolicies } from "./policies";
 import { ITokenProvider } from "./tokens";
@@ -32,7 +35,6 @@ import {
 	toInstrumentedR11sOrdererTokenFetcher,
 	toInstrumentedR11sStorageTokenFetcher,
 } from "./restWrapper";
-import { convertSummaryToCreateNewSummary } from "./createNewUtils";
 import { parseFluidUrl, replaceDocumentIdInPath, getDiscoveredFluidResolvedUrl } from "./urlUtils";
 import { ICache, InMemoryCache, NullCache } from "./cache";
 import { pkgVersion as driverVersion } from "./packageVersion";
@@ -51,6 +53,7 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
 	enableRestLess: true,
 	enableInternalSummaryCaching: true,
 	enableLongPollingDowngrade: true,
+	isEphemeralContainer: false,
 };
 
 /**
@@ -142,6 +145,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 				details: JSON.stringify({
 					enableDiscovery: this.driverPolicies.enableDiscovery,
 					sequenceNumber: documentAttributes.sequenceNumber,
+					isEphemeralContainer: this.driverPolicies.isEphemeralContainer,
 				}),
 			},
 			async (event) => {
@@ -150,11 +154,13 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 					await ordererRestWrapper.post<
 						{ id: string; token?: string; session?: ISession } | string
 					>(`/documents/${tenantId}`, {
-						summary: convertSummaryToCreateNewSummary(appSummary),
+						summary: convertSummaryTreeToWholeSummaryTree(undefined, appSummary),
 						sequenceNumber: documentAttributes.sequenceNumber,
 						values: quorumValues,
 						enableDiscovery: this.driverPolicies.enableDiscovery,
 						generateToken: this.tokenProvider.documentPostCreateCallback !== undefined,
+						isEphemeralContainer: this.driverPolicies.isEphemeralContainer,
+						enableAnyBinaryBlobOnFirstSummary: true,
 					})
 				).content;
 

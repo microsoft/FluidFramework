@@ -5,7 +5,6 @@
 
 import { Invariant } from "../../util";
 import { ReadonlyRepairDataStore } from "../repair";
-import { AnchorSet } from "../tree";
 import type { RevisionTag } from "./types";
 
 /**
@@ -84,11 +83,6 @@ export interface ChangeRebaser<TChangeset> {
 	 * - `rebase(compose([]), a)` is equal to `compose([])`.
 	 */
 	rebase(change: TChangeset, over: TaggedChange<TChangeset>): TChangeset;
-
-	// TODO: we are forcing a single AnchorSet implementation, but also making ChangeRebaser deal depend on/use it.
-	// This isn't ideal, but it might be fine?
-	// Performance and implications for custom Anchor types (ex: Place anchors) aren't clear.
-	rebaseAnchors(anchors: AnchorSet, over: TChangeset): void;
 }
 
 /**

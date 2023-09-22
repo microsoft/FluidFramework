@@ -20,6 +20,7 @@ data:
         },
         "requestSizeLimit": "1gb",
         "riddler": "{{ .Values.historian.riddler }}",
+        "ignoreEphemeralFlag": {{ .Values.historian.ignoreEphemeralFlag }},
         "redis": {
             "host": "{{ .Values.historian.redis.url }}",
             "port": "{{ .Values.historian.redis.port }}",
@@ -50,5 +51,10 @@ data:
         "restGitService": {
             "disableGitCache": {{ .Values.historian.restGitService.disableGitCache }}
         },
-        "storageUrl": "{{ .Values.historian.storageUrl }}"
+        "storageUrl": "{{ .Values.historian.storageUrl }}",
+        "system": {
+            "httpServer": {
+                "connectionTimeoutMs": {{ .Values.historian.system.httpServer.connectionTimeoutMs }}
+            }
+        }
     }

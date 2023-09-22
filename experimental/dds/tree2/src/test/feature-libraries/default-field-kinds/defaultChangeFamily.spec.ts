@@ -5,27 +5,25 @@
 
 import { strict as assert } from "assert";
 import {
-	AnchorSet,
 	Delta,
 	FieldKey,
 	mintRevisionTag,
 	IForestSubscription,
 	initializeForest,
-	InMemoryStoredSchemaRepository,
 	ITreeCursorSynchronous,
 	JsonableTree,
 	mapCursorField,
 	moveToDetachedField,
-	rootFieldKeySymbol,
+	rootFieldKey,
 	TaggedChange,
 	UpPath,
+	applyDelta,
 } from "../../../core";
 import { jsonNumber, jsonObject, jsonString } from "../../../domains";
 import {
 	DefaultChangeFamily,
 	DefaultChangeset,
 	DefaultEditBuilder,
-	defaultSchemaPolicy,
 	buildForest,
 	singleTextCursor,
 	jsonableTreeFromCursor,
@@ -39,7 +37,7 @@ const defaultChangeFamily = new DefaultChangeFamily({ jsonValidator: noopValidat
 const defaultIntoDelta = (change: ModularChangeset) => defaultChangeFamily.intoDelta(change);
 const family = defaultChangeFamily;
 
-const rootKey = rootFieldKeySymbol;
+const rootKey = rootFieldKey;
 const fooKey = brand<FieldKey>("foo");
 const barKey = brand<FieldKey>("bar");
 
@@ -110,25 +108,20 @@ function initializeEditableForest(data?: JsonableTree): {
 	changes: TaggedChange<DefaultChangeset>[];
 	deltas: Delta.Root[];
 } {
-	const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
-	const forest = buildForest(schema);
+	const forest = buildForest();
 	if (data !== undefined) {
 		initializeForest(forest, [singleTextCursor(data)]);
 	}
 	let currentRevision = mintRevisionTag();
 	const changes: TaggedChange<DefaultChangeset>[] = [];
 	const deltas: Delta.Root[] = [];
-	const builder = new DefaultEditBuilder(
-		family,
-		(change) => {
-			changes.push({ revision: currentRevision, change });
-			const delta = defaultChangeFamily.intoDelta(change);
-			deltas.push(delta);
-			forest.applyDelta(delta);
-			currentRevision = mintRevisionTag();
-		},
-		new AnchorSet(),
-	);
+	const builder = new DefaultEditBuilder(family, (change) => {
+		changes.push({ revision: currentRevision, change });
+		const delta = defaultChangeFamily.intoDelta(change);
+		deltas.push(delta);
+		applyDelta(delta, forest);
+		currentRevision = mintRevisionTag();
+	});
 	return {
 		forest,
 		builder,

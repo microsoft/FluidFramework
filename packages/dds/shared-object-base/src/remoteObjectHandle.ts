@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { RuntimeHeaders } from "@fluidframework/container-runtime";
 import {
 	IFluidHandle,
@@ -27,6 +27,9 @@ import {
  * IFluidHandle can be retrieved by calling `get` on it.
  */
 export class RemoteFluidObjectHandle implements IFluidHandle {
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
 	public get IFluidRouter() {
 		return this;
 	}
@@ -83,12 +86,17 @@ export class RemoteFluidObjectHandle implements IFluidHandle {
 		handle.attachGraph();
 	}
 
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		try {
 			const object: FluidObject<IFluidRouter> = await this.get();
 			const router = object.IFluidRouter;
 
-			return router !== undefined ? router.request(request) : create404Response(request);
+			return router === undefined
+				? create404Response(request)
+				: await router.request(request);
 		} catch (error) {
 			return exceptionToResponse(error);
 		}

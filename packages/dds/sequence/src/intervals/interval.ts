@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+/* eslint-disable import/no-deprecated */
 
 import {
 	ICombiningOp,
@@ -11,7 +12,7 @@ import {
 	reservedRangeLabelsKey,
 } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IIntervalHelpers, ISerializableInterval, ISerializedInterval } from "./intervalUtils";
 
 const reservedIntervalIdKey = "intervalId";
@@ -28,7 +29,7 @@ export class Interval implements ISerializableInterval {
 	public auxProps: PropertySet[] | undefined;
 	/**
 	 * {@inheritDoc ISerializableInterval.propertyManager}
-	 * @deprecated - This API was never intended to be public and will be marked internal in a future release.
+	 * @internal
 	 */
 	public propertyManager: PropertiesManager;
 	constructor(public start: number, public end: number, props?: PropertySet) {
@@ -60,7 +61,7 @@ export class Interval implements ISerializableInterval {
 	 * Adds an auxiliary set of properties to this interval.
 	 * These properties can be recovered using `getAdditionalPropertySets`
 	 * @param props - set of properties to add
-	 * @remarks - This gets called as part of the default conflict resolver for `IIntervalCollection<Interval>`
+	 * @remarks This gets called as part of the default conflict resolver for `IIntervalCollection<Interval>`
 	 * (i.e. non-sequence-based interval collections). However, the additional properties don't get serialized.
 	 * This functionality seems half-baked.
 	 */
@@ -144,7 +145,7 @@ export class Interval implements ISerializableInterval {
 
 	/**
 	 * {@inheritDoc IInterval.union}
-	 * @deprecated - This API was never intended to be public and will be marked internal in a future release.
+	 * @internal
 	 */
 	public union(b: Interval) {
 		return new Interval(
@@ -160,7 +161,7 @@ export class Interval implements ISerializableInterval {
 
 	/**
 	 * {@inheritDoc ISerializableInterval.addProperties}
-	 * @deprecated - This API was never intended to be public and will be marked internal in a future release.
+	 * @internal
 	 */
 	public addProperties(
 		newProps: PropertySet,
@@ -182,7 +183,7 @@ export class Interval implements ISerializableInterval {
 
 	/**
 	 * {@inheritDoc IInterval.modify}
-	 * @deprecated - This API was never intended to be public and will be marked internal in a future release.
+	 * @internal
 	 */
 	public modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage) {
 		const startPos = start ?? this.start;

@@ -3,24 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
+import { fromUtf8ToBase64, TypedEventEmitter } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
 import { IClient, IClientJoin, ScopeType } from "@fluidframework/protocol-definitions";
 import {
-	BasicRestWrapper,
-	validateTokenClaimsExpiration,
-} from "@fluidframework/server-services-client";
+	IBroadcastSignalEventPayload,
+	ICollaborationSessionEvents,
+	IRoom,
+} from "@fluidframework/server-lambdas";
+import { BasicRestWrapper } from "@fluidframework/server-services-client";
 import * as core from "@fluidframework/server-services-core";
 import {
-	validateTokenClaims,
 	throttle,
 	IThrottleMiddlewareOptions,
 	getParam,
 	getCorrelationId,
 	getBooleanFromConfig,
 	verifyToken,
+	verifyStorageToken,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
+import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
 import { Request, Router } from "express";
 import sillyname from "sillyname";
 import { Provider } from "nconf";
@@ -44,6 +47,7 @@ export function create(
 	tenantThrottlers: Map<string, core.IThrottler>,
 	jwtTokenCache?: core.ICache,
 	revokedTokenChecker?: core.IRevokedTokenChecker,
+	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 ): Router {
 	const router: Router = Router();
 
@@ -132,6 +136,26 @@ export function create(
 		},
 	);
 
+	router.post(
+		"/:tenantId/:id/broadcast-signal",
+		validateRequestParams("tenantId", "id"),
+		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
+		verifyStorageToken(tenantManager, config),
+		async (request, response) => {
+			const tenantId = getParam(request.params, "tenantId");
+			const documentId = getParam(request.params, "id");
+			const signalContent = getParam(request.body, "singalContent");
+			try {
+				const signalRoom: IRoom = { tenantId, documentId };
+				const payload: IBroadcastSignalEventPayload = { signalRoom, signalContent };
+				collaborationSessionEventEmitter.emit("broadcast-signal", payload);
+				response.status(200).send("OK");
+			} catch (error) {
+				response.status(500).send(error);
+			}
+		},
+	);
+
 	return router;
 }
 
@@ -166,8 +190,12 @@ function sendJoin(
 	};
 
 	const joinMessage = craftClientJoinMessage(tenantId, documentId, clientDetail);
-	// eslint-disable-next-line @typescript-eslint/no-floating-promises
-	producer.send([joinMessage], tenantId, documentId);
+	producer.send([joinMessage], tenantId, documentId).catch((err) => {
+		const lumberjackProperties = {
+			...getLumberBaseProperties(documentId, tenantId),
+		};
+		Lumberjack.error("Error sending join message to producer", lumberjackProperties, err);
+	});
 }
 
 function sendLeave(
@@ -177,8 +205,12 @@ function sendLeave(
 	producer: core.IProducer,
 ) {
 	const leaveMessage = craftClientLeaveMessage(tenantId, documentId, clientId);
-	// eslint-disable-next-line @typescript-eslint/no-floating-promises
-	producer.send([leaveMessage], tenantId, documentId);
+	producer.send([leaveMessage], tenantId, documentId).catch((err) => {
+		const lumberjackProperties = {
+			...getLumberBaseProperties(documentId, tenantId),
+		};
+		Lumberjack.error("Error sending leave message to producer", lumberjackProperties, err);
+	});
 }
 
 function sendOp(
@@ -199,8 +231,12 @@ function sendOp(
 			JSON.stringify(content),
 			clientSequenceNumber++,
 		);
-		// eslint-disable-next-line @typescript-eslint/no-floating-promises
-		producer.send([opMessage], tenantId, documentId);
+		producer.send([opMessage], tenantId, documentId).catch((err) => {
+			const lumberjackProperties = {
+				...getLumberBaseProperties(documentId, tenantId),
+			};
+			Lumberjack.error("Error sending op to producer", lumberjackProperties, err);
+		});
 	}
 }
 
@@ -248,37 +284,18 @@ async function verifyTokenWrapper(
 	if (!documentId) {
 		throw new Error("Missing documentId in request.");
 	}
-	const claims = validateTokenClaims(token, documentId, tenantId);
-	if (isTokenExpiryEnabled) {
-		validateTokenClaimsExpiration(claims, maxTokenLifetimeSec);
-	}
 
-	if (!tokenCacheEnabled && revokedTokenChecker && claims.jti) {
-		const tokenRevoked = await revokedTokenChecker.isTokenRevoked(
-			tenantId,
-			documentId,
-			claims.jti,
-		);
-		if (tokenRevoked) {
-			throw new Error("Permission denied. Token is revoked.");
-		}
-	}
-
-	if (tokenCacheEnabled && tokenCache) {
-		const options = {
-			requireDocumentId: true,
-			requireTokenExpiryCheck: isTokenExpiryEnabled,
-			maxTokenLifetimeSec,
-			ensureSingleUseToken: false,
-			singleUseTokenCache: undefined,
-			enableTokenCache: tokenCacheEnabled,
-			tokenCache,
-			revokedTokenChecker,
-		};
-		return verifyToken(tenantId, documentId, token, tenantManager, options);
-	}
-
-	return tenantManager.verifyToken(claims.tenantId, token);
+	const options = {
+		requireDocumentId: true,
+		requireTokenExpiryCheck: isTokenExpiryEnabled,
+		maxTokenLifetimeSec,
+		ensureSingleUseToken: false,
+		singleUseTokenCache: undefined,
+		enableTokenCache: tokenCacheEnabled,
+		tokenCache,
+		revokedTokenChecker,
+	};
+	return verifyToken(tenantId, documentId, token, tenantManager, options);
 }
 
 async function checkDocumentExistence(

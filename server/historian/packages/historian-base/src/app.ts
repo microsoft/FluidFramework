@@ -8,6 +8,7 @@ import {
 	IStorageNameRetriever,
 	IThrottler,
 	IRevokedTokenChecker,
+	IDocumentManager,
 } from "@fluidframework/server-services-core";
 import { json, urlencoded } from "body-parser";
 import compression from "compression";
@@ -23,8 +24,8 @@ import {
 import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-services-telemetry";
 import { RestLessServer } from "@fluidframework/server-services-shared";
 import * as routes from "./routes";
-import { ICache, ITenantService } from "./services";
-import { getDocumentIdFromRequest, getTenantIdFromRequest } from "./utils";
+import { ICache, IDenyList, ITenantService } from "./services";
+import { Constants, getDocumentIdFromRequest, getTenantIdFromRequest } from "./utils";
 
 export function create(
 	config: nconf.Provider,
@@ -32,9 +33,11 @@ export function create(
 	storageNameRetriever: IStorageNameRetriever,
 	restTenantThrottlers: Map<string, IThrottler>,
 	restClusterThrottlers: Map<string, IThrottler>,
+	documentManager: IDocumentManager,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
 	revokedTokenChecker?: IRevokedTokenChecker,
+	denyList?: IDenyList,
 ) {
 	// Express app configuration
 	const app: express.Express = express();
@@ -57,7 +60,7 @@ export function create(
 		app.use(
 			jsonMorganLoggerMiddleware("historian", (tokens, req, res) => {
 				const tenantId = getTenantIdFromRequest(req.params);
-				return {
+				const additionalProperties: Record<string, any> = {
 					[HttpProperties.driverVersion]: tokens.req(req, res, DriverVersionHeaderName),
 					[BaseTelemetryProperties.tenantId]: tenantId,
 					[BaseTelemetryProperties.documentId]: getDocumentIdFromRequest(
@@ -65,6 +68,12 @@ export function create(
 						req.get("Authorization"),
 					),
 				};
+				if (req.get(Constants.IsEphemeralContainer) !== undefined) {
+					additionalProperties.isEphemeralContainer = req.get(
+						Constants.IsEphemeralContainer,
+					);
+				}
+				return additionalProperties;
 			}),
 		);
 	} else {
@@ -84,9 +93,11 @@ export function create(
 		storageNameRetriever,
 		restTenantThrottlers,
 		restClusterThrottlers,
+		documentManager,
 		cache,
 		asyncLocalStorage,
 		revokedTokenChecker,
+		denyList,
 	);
 	app.use(apiRoutes.git.blobs);
 	app.use(apiRoutes.git.refs);

@@ -4,10 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { AllowedUpdateType, FieldKey, UpPath, getDepth } from "../../../core";
+import { FieldKey, UpPath, getDepth } from "../../../core";
 import {
-	ContextuallyTypedNodeData,
 	getField,
 	BindPath,
 	BindingType,
@@ -34,17 +32,21 @@ import {
 	BindSyntaxTree,
 	indexSymbol,
 	compileSyntaxTree,
-	BindTree,
 	InvalidationBindingContext,
+	setField,
+	BindPolicy,
+	isEditableTree,
 } from "../../../feature-libraries";
 import { brand } from "../../../util";
-import { ISharedTreeView, SharedTreeFactory, ViewEvents } from "../../../shared-tree";
-import { fullSchemaData, personData } from "./mockData";
+import { ViewEvents } from "../../../shared-tree";
+import { viewWithContent } from "../../utils";
+import { ComplexPhone, Phones, fullSchemaData, personData } from "./mockData";
 
 export const fieldAddress: FieldKey = brand("address");
 export const fieldZip: FieldKey = brand("zip");
 export const fieldStreet: FieldKey = brand("street");
 export const fieldPhones: FieldKey = brand("phones");
+export const fieldPrefix: FieldKey = brand("prefix");
 export const fieldSequencePhones: FieldKey = brand("sequencePhones");
 
 describe("editable-tree: data binder", () => {
@@ -153,7 +155,7 @@ describe("editable-tree: data binder", () => {
 					zip: true,
 				},
 			};
-			const insertTree: BindTree = compileSyntaxTree(insertSyntaxTree);
+			const insertTree: BindPolicy = compileSyntaxTree(insertSyntaxTree);
 			const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
 				autoFlushPolicy: "afterBatch",
 			});
@@ -182,6 +184,112 @@ describe("editable-tree: data binder", () => {
 			assert.deepEqual(log, []);
 		});
 
+		it("registers to root, enables autoFlush, matches subtree with maxDepth: 1", () => {
+			const { tree, root, address } = retrieveNodes();
+			const insertSyntaxTree: BindSyntaxTree = {
+				address: true,
+			};
+			const insertTree: BindPolicy = compileSyntaxTree(insertSyntaxTree, { maxDepth: 1 }); // subtree policy
+			const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
+				autoFlushPolicy: "afterBatch",
+			});
+			const dataBinder: FlushableDataBinder<OperationBinderEvents> =
+				createDataBinderBuffering(tree.events, options);
+			const log: DownPath[] = [];
+			dataBinder.register(
+				root,
+				BindingType.Insert,
+				[insertTree],
+				({ path, content }: InsertBindingContext) => {
+					const downPath: DownPath = toDownPath(path);
+					log.push(downPath);
+				},
+			);
+			address.zip = "33428";
+			assert.deepEqual(log, [
+				[
+					{ field: fieldAddress, index: 0 },
+					{ field: fieldZip, index: 1 },
+				],
+			]);
+			dataBinder.unregisterAll();
+			log.length = 0;
+			address.zip = "92629";
+			assert.deepEqual(log, []);
+		});
+
+		it("registers to root, enables autoFlush, matches changes to immediate children (ie. zip), disregards deep nested changes (ie. phone prefix)", () => {
+			const { tree, root, address } = retrieveNodes();
+			const complexPhone = (address.phones as Phones)[2] as ComplexPhone;
+			const insertSyntaxTree: BindSyntaxTree = {
+				address: true,
+			};
+			const insertTree: BindPolicy = compileSyntaxTree(insertSyntaxTree, { maxDepth: 1 }); // subtree policy
+			const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
+				autoFlushPolicy: "afterBatch",
+			});
+			const dataBinder: FlushableDataBinder<OperationBinderEvents> =
+				createDataBinderBuffering(tree.events, options);
+			const log: DownPath[] = [];
+			dataBinder.register(
+				root,
+				BindingType.Insert,
+				[insertTree],
+				({ path, content }: InsertBindingContext) => {
+					const downPath: DownPath = toDownPath(path);
+					log.push(downPath);
+				},
+			);
+			address.zip = "33428";
+			complexPhone.prefix = "+49";
+			assert.deepEqual(log, [
+				[
+					{ field: fieldAddress, index: 0 },
+					{ field: fieldZip, index: 1 },
+				],
+			]);
+			dataBinder.unregisterAll();
+		});
+
+		it("registers to root, enables autoFlush, matches both: changes to immediate children (ie. zip) & deep, level 3 nested changes (ie. phone prefix)", () => {
+			const { tree, root, address } = retrieveNodes();
+			const complexPhone = (address.phones as Phones)[2] as ComplexPhone;
+			const insertSyntaxTree: BindSyntaxTree = {
+				address: true,
+			};
+			const insertTree: BindPolicy = compileSyntaxTree(insertSyntaxTree, { maxDepth: 3 }); // subtree policy
+			const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
+				autoFlushPolicy: "afterBatch",
+			});
+			const dataBinder: FlushableDataBinder<OperationBinderEvents> =
+				createDataBinderBuffering(tree.events, options);
+			const log: DownPath[] = [];
+			dataBinder.register(
+				root,
+				BindingType.Insert,
+				[insertTree],
+				({ path, content }: InsertBindingContext) => {
+					const downPath: DownPath = toDownPath(path);
+					log.push(downPath);
+				},
+			);
+			address.zip = "33428";
+			complexPhone.prefix = "+49";
+			assert.deepEqual(log, [
+				[
+					{ field: fieldAddress, index: 0 },
+					{ field: fieldZip, index: 1 },
+				],
+				[
+					{ field: fieldAddress, index: 0 },
+					{ field: fieldPhones, index: 0 },
+					{ field: "", index: 2 },
+					{ field: fieldPrefix, index: 1 },
+				],
+			]);
+			dataBinder.unregisterAll();
+		});
+
 		it("registers to root, explicit flush, matches paths with any index, bind tree with multiple terminals", () => {
 			const { tree, root, address } = retrieveNodes();
 			// the syntax tree explicits multiple paths in a compact form
@@ -192,7 +300,7 @@ describe("editable-tree: data binder", () => {
 					phones: true,
 				},
 			};
-			const insertTree: BindTree = compileSyntaxTree(insertSyntaxTree);
+			const insertTree: BindPolicy = compileSyntaxTree(insertSyntaxTree, "path");
 			const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
 				autoFlush: false,
 				autoFlushPolicy: "afterBatch",
@@ -211,7 +319,7 @@ describe("editable-tree: data binder", () => {
 			);
 			address.zip = "33428";
 			address.street = "street xyz";
-			address.sequencePhones = ["112", "911"]; // should not trigger binder
+			address[setField](fieldSequencePhones, ["112", "911"]); // should not trigger binder
 			dataBinder.flush();
 			// phones should not trigger binder as not modified even though specified in binding tree
 			// sequencePhones should not trigger binder as not specified in binding tree
@@ -245,8 +353,8 @@ describe("editable-tree: data binder", () => {
 					street: true,
 				},
 			};
-			const insertTree1: BindTree = compileSyntaxTree(insertSyntaxTree1);
-			const insertTree2: BindTree = compileSyntaxTree(insertSyntaxTree2);
+			const insertTree1: BindPolicy = compileSyntaxTree(insertSyntaxTree1);
+			const insertTree2: BindPolicy = compileSyntaxTree(insertSyntaxTree2);
 			const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
 				autoFlush: false,
 				autoFlushPolicy: "afterBatch",
@@ -275,7 +383,7 @@ describe("editable-tree: data binder", () => {
 			);
 			address.zip = "33428";
 			address.street = "street xyz";
-			address.sequencePhones = ["112", "911"]; // should not trigger binder
+			address[setField](fieldSequencePhones, ["112", "911"]); // should not trigger binder
 			dataBinder.flush();
 			// zip should be logged by log1
 			assert.deepEqual(log1, [
@@ -312,8 +420,8 @@ describe("editable-tree: data binder", () => {
 					street: true,
 				},
 			};
-			const insertTree1: BindTree = compileSyntaxTree(insertSyntaxTree1);
-			const insertTree2: BindTree = compileSyntaxTree(insertSyntaxTree2);
+			const insertTree1: BindPolicy = compileSyntaxTree(insertSyntaxTree1);
+			const insertTree2: BindPolicy = compileSyntaxTree(insertSyntaxTree2);
 			const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
 				autoFlush: false,
 				autoFlushPolicy: "afterBatch",
@@ -342,7 +450,7 @@ describe("editable-tree: data binder", () => {
 			);
 			address.zip = "33428";
 			address.street = "street xyz";
-			address.sequencePhones = ["112", "911"]; // should not trigger binder
+			address[setField](fieldSequencePhones, ["112", "911"]); // should not trigger binder
 			dataBinder.flush();
 			// zip should be logged by log1
 			assert.deepEqual(log1, [
@@ -371,10 +479,9 @@ describe("editable-tree: data binder", () => {
 			const insertSyntaxTree: BindSyntaxTree = {
 				address: true,
 			};
-			const insertTree: BindTree = compileSyntaxTree(insertSyntaxTree);
+			const insertTree: BindPolicy = compileSyntaxTree(insertSyntaxTree, "subtree");
 			const prescribeOrder = [fieldZip, fieldStreet, fieldPhones, fieldSequencePhones];
 			const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
-				matchPolicy: "subtree",
 				autoFlush: false,
 				autoFlushPolicy: "afterBatch",
 				sortFn: (a: VisitorBindingContext, b: VisitorBindingContext) => {
@@ -395,8 +502,8 @@ describe("editable-tree: data binder", () => {
 					log.push(downPath);
 				},
 			);
-			address.phones = [111, 112];
-			address.sequencePhones = ["111", "112"];
+			address[setField](fieldPhones, ["111", "112"]);
+			address[setField](fieldSequencePhones, ["111", "112"]);
 			address.zip = "33428";
 			address.street = "street 1";
 			// manual flush
@@ -434,7 +541,7 @@ describe("editable-tree: data binder", () => {
 			assert.deepEqual(log, expectedLog);
 			dataBinder.unregisterAll();
 			log.length = 0;
-			address.sequencePhones = ["114", "115"];
+			address[setField](fieldSequencePhones, ["114", "115"]);
 			assert.deepEqual(log, []);
 		});
 
@@ -443,9 +550,8 @@ describe("editable-tree: data binder", () => {
 			const syntaxTree: BindSyntaxTree = {
 				address: true,
 			};
-			const bindTree: BindTree = compileSyntaxTree(syntaxTree);
+			const bindTree: BindPolicy = compileSyntaxTree(syntaxTree, { maxDepth: 10 });
 			const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
-				matchPolicy: "subtree",
 				autoFlush: false,
 				autoFlushPolicy: "afterBatch",
 				sortFn: compareBinderEventsDeleteFirst,
@@ -471,8 +577,8 @@ describe("editable-tree: data binder", () => {
 					log.push({ ...downPath, type: BindingType.Delete });
 				},
 			);
-			address.phones = [111, 112];
-			address.sequencePhones = ["111", "112"];
+			address[setField](fieldPhones, [111, 112]);
+			address[setField](fieldSequencePhones, ["111", "112"]);
 			address.zip = "33428";
 			address.street = "street 1";
 			// manual flush
@@ -570,7 +676,7 @@ describe("editable-tree: data binder", () => {
 			assert.deepEqual(log, expectedLog);
 			dataBinder.unregisterAll();
 			log.length = 0;
-			address.sequencePhones = ["114", "115"];
+			address[setField](fieldSequencePhones, ["114", "115"]);
 			assert.deepEqual(log, []);
 		});
 
@@ -579,7 +685,7 @@ describe("editable-tree: data binder", () => {
 			const syntaxTree: BindSyntaxTree = {
 				address: true,
 			};
-			const bindTree: BindTree = compileSyntaxTree(syntaxTree);
+			const bindTree: BindPolicy = compileSyntaxTree(syntaxTree, { maxDepth: 10 });
 			const compareBinderEventsCustom = (
 				a: VisitorBindingContext,
 				b: VisitorBindingContext,
@@ -595,7 +701,6 @@ describe("editable-tree: data binder", () => {
 			);
 			// merge sort policy because javascript native is not stable
 			const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
-				matchPolicy: "subtree",
 				autoFlush: false,
 				autoFlushPolicy: "afterBatch",
 				sortFn: sortPipeline,
@@ -624,9 +729,9 @@ describe("editable-tree: data binder", () => {
 			// changes in random order
 			address.zip = "33428";
 			address.street = "street 1";
-			address.phones = [111, 112];
+			address[setField](fieldPhones, [111, 112]);
 			address.zip = "92629"; // zip twice
-			address.sequencePhones = ["111", "112"];
+			address[setField](fieldSequencePhones, ["111", "112"]);
 			// manual flush
 			dataBinder.flush();
 			const expectedLog = [
@@ -744,7 +849,7 @@ describe("editable-tree: data binder", () => {
 			assert.deepEqual(log, expectedLog);
 			dataBinder.unregisterAll();
 			log.length = 0;
-			address.sequencePhones = ["114", "115"];
+			address[setField](fieldSequencePhones, ["114", "115"]);
 			assert.deepEqual(log, []);
 		});
 
@@ -753,9 +858,8 @@ describe("editable-tree: data binder", () => {
 			const syntaxTree: BindSyntaxTree = {
 				address: true,
 			};
-			const bindTree: BindTree = compileSyntaxTree(syntaxTree);
+			const bindTree: BindPolicy = compileSyntaxTree(syntaxTree, "subtree");
 			const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
-				matchPolicy: "subtree",
 				autoFlush: false,
 				autoFlushPolicy: "afterBatch",
 				sortFn: compareBinderEventsDeleteFirst,
@@ -796,8 +900,8 @@ describe("editable-tree: data binder", () => {
 					log.push(batch);
 				},
 			);
-			address.phones = [111, 112];
-			address.sequencePhones = ["111", "112"];
+			address[setField](fieldPhones, [111, 112]);
+			address[setField](fieldSequencePhones, ["111", "112"]);
 			address.zip = "33428";
 			address.street = "street 1";
 			// manual flush
@@ -899,7 +1003,7 @@ describe("editable-tree: data binder", () => {
 			assert.deepEqual(log, expectedLog);
 			dataBinder.unregisterAll();
 			log.length = 0;
-			address.sequencePhones = ["114", "115"];
+			address[setField](fieldSequencePhones, ["114", "115"]);
 			assert.deepEqual(log, []);
 		});
 
@@ -908,15 +1012,14 @@ describe("editable-tree: data binder", () => {
 			const syntaxTree: BindSyntaxTree = {
 				address: true,
 			};
-			const bindTree: BindTree = compileSyntaxTree(syntaxTree);
+			const bindTree: BindPolicy = compileSyntaxTree(syntaxTree, { maxDepth: 10 });
 			const batchSyntaxTree: BindSyntaxTree = {
 				address: {
 					zip: true,
 				},
 			};
-			const batchBindTree: BindTree = compileSyntaxTree(batchSyntaxTree);
+			const batchBindTree: BindPolicy = compileSyntaxTree(batchSyntaxTree);
 			const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
-				matchPolicy: "subtree",
 				autoFlush: false,
 				autoFlushPolicy: "afterBatch",
 				sortFn: compareBinderEventsDeleteFirst,
@@ -959,8 +1062,8 @@ describe("editable-tree: data binder", () => {
 					batchLog.push(batch);
 				},
 			);
-			address.phones = [111, 112];
-			address.sequencePhones = ["111", "112"];
+			address[setField](fieldPhones, [111, 112]);
+			address[setField](fieldSequencePhones, ["111", "112"]);
 			address.zip = "33428";
 			address.street = "street 1";
 			// manual flush
@@ -1069,7 +1172,7 @@ describe("editable-tree: data binder", () => {
 			assert.deepEqual(incrLog, expectedIncrLog);
 			dataBinder.unregisterAll();
 			incrLog.length = 0;
-			address.sequencePhones = ["114", "115"];
+			address[setField](fieldSequencePhones, ["114", "115"]);
 			assert.deepEqual(incrLog, []);
 		});
 	});
@@ -1078,10 +1181,9 @@ describe("editable-tree: data binder", () => {
 		it("registers to root, enables autoFlush, matches paths with subtree policy and any index.", () => {
 			const { tree, root, address } = retrieveNodes();
 			const syntaxTree: BindSyntaxTree = { address: true };
-			const bindTree: BindTree = compileSyntaxTree(syntaxTree);
+			const bindTree: BindPolicy = compileSyntaxTree(syntaxTree, { maxDepth: 10 });
 			const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
 				autoFlushPolicy: "afterBatch",
-				matchPolicy: "subtree",
 			});
 			const dataBinder: FlushableDataBinder<InvalidationBinderEvents> =
 				createDataBinderInvalidating(tree.events, options);
@@ -1094,11 +1196,11 @@ describe("editable-tree: data binder", () => {
 					invalidationCount++;
 				},
 			);
-			address.phones = [111, 112];
+			address[setField](fieldPhones, [111, 112]);
 			assert.equal(invalidationCount, 1);
 			dataBinder.unregisterAll();
 			invalidationCount = 0;
-			address.phones = [113, 114];
+			address[setField](fieldPhones, [113, 114]);
 			assert.equal(invalidationCount, 0);
 		});
 		it("registers to root, enables autoFlush, matches paths with path policy and any index. multiple callbacks", () => {
@@ -1113,11 +1215,10 @@ describe("editable-tree: data binder", () => {
 					street: true,
 				},
 			};
-			const bindTree1: BindTree = compileSyntaxTree(syntaxTree1);
-			const bindTree2: BindTree = compileSyntaxTree(syntaxTree2);
+			const bindTree1: BindPolicy = compileSyntaxTree(syntaxTree1);
+			const bindTree2: BindPolicy = compileSyntaxTree(syntaxTree2);
 			const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
 				autoFlushPolicy: "afterBatch",
-				matchPolicy: "path",
 			});
 			const dataBinder: FlushableDataBinder<InvalidationBinderEvents> =
 				createDataBinderInvalidating(tree.events, options);
@@ -1157,10 +1258,8 @@ describe("editable-tree: data binder", () => {
 		it("registers to root, enables autoFlush, matches paths with subtree policy and any index.", () => {
 			const { tree, root, address } = retrieveNodes();
 			const syntaxTree: BindSyntaxTree = { address: true };
-			const bindTree: BindTree = compileSyntaxTree(syntaxTree);
-			const options: BinderOptions = createBinderOptions({
-				matchPolicy: "subtree",
-			});
+			const bindTree: BindPolicy = compileSyntaxTree(syntaxTree, { maxDepth: 10 });
+			const options: BinderOptions = createBinderOptions({});
 			const dataBinder: DataBinder<OperationBinderEvents> = createDataBinderDirect(
 				tree.events,
 				options,
@@ -1175,7 +1274,7 @@ describe("editable-tree: data binder", () => {
 					log.push(downPath);
 				},
 			);
-			address.phones = [111, 112];
+			address[setField](fieldPhones, [111, 112]);
 			assert.deepEqual(log, [
 				[
 					{ field: fieldAddress, index: 0 },
@@ -1188,10 +1287,8 @@ describe("editable-tree: data binder", () => {
 			assert.deepEqual(log, []);
 		});
 		it("registers to root, enables autoFlush, matches paths with subtree policy and any index. Triggers step === undefined in getListeners.accumulateMatching", () => {
-			const { tree, root, address } = retrieveNodes();
-			const options: BinderOptions = createBinderOptions({
-				matchPolicy: "subtree",
-			});
+			const { tree, root } = retrieveNodes();
+			const options: BinderOptions = createBinderOptions({});
 			const dataBinder: DataBinder<OperationBinderEvents> = createDataBinderDirect(
 				tree.events,
 				options,
@@ -1201,7 +1298,7 @@ describe("editable-tree: data binder", () => {
 			dataBinder.register(
 				root,
 				BindingType.Insert,
-				[compileSyntaxTree({ address: true })],
+				[compileSyntaxTree({ address: true }, { maxDepth: 10 })],
 				(insertContext: InsertBindingContext) => {
 					const downPath: BindPath = toDownPath(insertContext.path);
 					addrLog.push(downPath);
@@ -1216,8 +1313,10 @@ describe("editable-tree: data binder", () => {
 					phonesLog.push(downPath);
 				},
 			);
-			root[getField](fieldAddress).content = { zip: "33428", phones: ["12345"] };
-			address.phones = [111, 112];
+			root[setField](fieldAddress, { zip: "33428", phones: ["12345"] });
+			const address = root.address;
+			assert(isEditableTree(address));
+			address[setField](fieldPhones, [111, 112]);
 			address.zip = "66566";
 			assert.deepEqual(addrLog, [
 				[{ field: fieldAddress, index: 1 }],
@@ -1245,9 +1344,7 @@ describe("editable-tree: data binder", () => {
 		});
 		it("registers to root, enables autoFlush, matches paths with exact path policy and any index. Parents are not notified when children modified", () => {
 			const { tree, root, address } = retrieveNodes();
-			const options: BinderOptions = createBinderOptions({
-				matchPolicy: "path",
-			});
+			const options: BinderOptions = createBinderOptions({});
 			const dataBinder: DataBinder<OperationBinderEvents> = createDataBinderDirect(
 				tree.events,
 				options,
@@ -1283,7 +1380,7 @@ describe("editable-tree: data binder", () => {
 					zipLog.push(downPath);
 				},
 			);
-			address.phones = [111, 112];
+			address[setField](fieldPhones, [111, 112]);
 			address.zip = "66566";
 			assert.deepEqual(addrLog, []);
 			assert.deepEqual(phonesLog, [
@@ -1311,21 +1408,14 @@ describe("editable-tree: data binder", () => {
 });
 
 export function retrieveNodes() {
-	const tree = treeView(personData);
+	const tree = viewWithContent({
+		initialTree: personData,
+		schema: fullSchemaData,
+	});
 	const root = tree.context.root.getNode(0);
 	const address = root[getField](fieldAddress).getNode(0);
 	const phones = address[getField](fieldSequencePhones);
 	return { tree, root, address, phones };
-}
-
-function treeView(initialData: ContextuallyTypedNodeData): ISharedTreeView {
-	const factory = new SharedTreeFactory();
-	const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
-	return tree.schematize({
-		allowedSchemaModifications: AllowedUpdateType.None,
-		initialTree: initialData,
-		schema: fullSchemaData,
-	});
 }
 
 export function compareBinderEventsDeleteFirst(

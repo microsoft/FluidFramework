@@ -7,11 +7,13 @@
 /* eslint-disable no-bitwise */
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable guard-for-in */
+/* eslint-disable @typescript-eslint/no-base-to-string */
 /* eslint-disable @typescript-eslint/no-for-in-array */
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 
 import path from "path";
-import { assert, Trace } from "@fluidframework/common-utils";
+import { Trace } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 // eslint-disable-next-line import/no-internal-modules
 import * as MergeTree from "@fluidframework/merge-tree/dist/test/";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -576,9 +578,9 @@ export function TestPack(verbose = true) {
 							} else if (segoff1.segment.ordinal > segoff2.segment.ordinal) {
 								ordErrors++;
 								console.log(
-									`reverse ordinals ${MergeTree.ordinalToArray(
+									`reverse ordinals ${ordinalToArray(
 										segoff1.segment.ordinal,
-									)} > ${MergeTree.ordinalToArray(segoff2.segment.ordinal)}`,
+									)} > ${ordinalToArray(segoff2.segment.ordinal)}`,
 								);
 								console.log(
 									`segments ${segoff1.segment.toString()} ${segoff2.segment.toString()}`,
@@ -1816,4 +1818,14 @@ if (clientServerTest) {
 	} else {
 		testPack.clientServer(undefined, 100000);
 	}
+}
+
+function ordinalToArray(ord: string) {
+	const a: number[] = [];
+	if (ord) {
+		for (let i = 0, len = ord.length; i < len; i++) {
+			a.push(ord.charCodeAt(i));
+		}
+	}
+	return a;
 }

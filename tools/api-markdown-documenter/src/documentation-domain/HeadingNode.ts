@@ -29,6 +29,8 @@ import { PlainTextNode } from "./PlainTextNode";
  * ```html
  * <h1>Documentation 101</h1>
  * ```
+ *
+ * @public
  */
 export class HeadingNode
 	extends DocumentationParentNodeBase<SingleLineDocumentationNode>

@@ -4,7 +4,7 @@
  */
 
 import { Delta, makeAnonChange, tagChange, TaggedChange } from "../../core";
-import { brand, fail } from "../../util";
+import { brand, fail, IdAllocator } from "../../util";
 import { CrossFieldManager } from "./crossFieldQueries";
 import {
 	FieldChangeHandler,
@@ -12,7 +12,6 @@ import {
 	NodeChangeComposer,
 	NodeChangeInverter,
 	NodeChangeRebaser,
-	IdAllocator,
 	RevisionMetadataSource,
 } from "./fieldChangeHandler";
 import { FieldKind, Multiplicity } from "./fieldKind";
@@ -86,7 +85,10 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			return [{ index, nodeChange: change }];
 		},
 	},
-	intoDelta: (change: GenericChangeset, deltaFromChild: ToDelta): Delta.MarkList => {
+	intoDelta: (
+		{ change }: TaggedChange<GenericChangeset>,
+		deltaFromChild: ToDelta,
+	): Delta.MarkList => {
 		let nodeIndex = 0;
 		const delta: Delta.Mark[] = [];
 		for (const { index, nodeChange } of change) {

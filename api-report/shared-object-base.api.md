@@ -4,15 +4,15 @@
 
 ```ts
 
-import { EventEmitterEventType } from '@fluidframework/common-utils';
+import { EventEmitterEventType } from '@fluid-internal/client-utils';
 import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
-import { IErrorEvent } from '@fluidframework/common-definitions';
-import { IEventProvider } from '@fluidframework/common-definitions';
-import { IEventThisPlaceHolder } from '@fluidframework/common-definitions';
+import { IErrorEvent } from '@fluidframework/core-interfaces';
+import { IEventProvider } from '@fluidframework/core-interfaces';
+import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
 import { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';

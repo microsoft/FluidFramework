@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
@@ -72,6 +72,7 @@ export class FileSnapshotReader
 			return this.docTree;
 		}
 		if (versionRequested.treeId !== FileSnapshotReader.FileStorageVersionTreeId) {
+			// eslint-disable-next-line @typescript-eslint/no-base-to-string
 			throw new Error(`Unknown version id: ${versionRequested}`);
 		}
 

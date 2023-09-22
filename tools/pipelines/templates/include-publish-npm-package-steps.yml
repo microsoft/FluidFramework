@@ -39,7 +39,6 @@ steps:
           echo Generating .npmrc for ${{ parameters.feedName }}
           echo "@fluidframework:registry=${{ parameters.feedName }}" >> ./.npmrc
           echo "@fluid-example:registry=${{ parameters.feedName }}" >> ./.npmrc
-          echo "@fluid-msinternal:registry=${{ parameters.feedName }}" >> ./.npmrc
           echo "@fluid-internal:registry=${{ parameters.devFeedName }}" >> ./.npmrc
           echo "@fluid-experimental:registry=${{ parameters.feedName }}" >> ./.npmrc
           echo "@fluid-tools:registry=${{ parameters.feedName }}" >> ./.npmrc
@@ -51,12 +50,14 @@ steps:
           echo "@fluidframework:registry=${{ parameters.feedName }}" >> ./.npmrc
           echo "@fluid-experimental:registry=${{ parameters.feedName }}" >> ./.npmrc
           echo "@fluid-tools:registry=${{ parameters.feedName }}" >> ./.npmrc
+          echo "@fluid-internal:registry=${{ parameters.feedName }}" >> ./.npmrc
           echo "always-auth=true" >> ./.npmrc
           cat .npmrc
-          echo Deleting @fluid-internal packages
-          rm -f fluid-internal-*
-          echo Deleting @fluid-msinternal packages
-          rm -f fluid-msinternal-*
+          echo Deleting @fluid-internal packages except fluid-internal-client-utils package
+          for packageName in $(ls fluid-internal-*.tgz | grep -v fluid-internal-client-utils-*.tgz)
+          do
+            rm -f $packageName
+          done
           echo Deleting @fluid-example packages
           rm -f fluid-example-*
     ${{ if eq(parameters.namespace, false) }}:
@@ -141,6 +142,51 @@ steps:
                   exit 1
                 fi
             else
+              feedId=$(grep -oP '_packaging/\K[^/]+(?=/npm/)' publish_log)
+
+              if [[ $release == "release" && $feedId == "build" ]]; then
+                packageVersion=$(grep -oP 'npm notice version:\s+\K[^\s]+' publish_log)
+                
+                if [ "${{ parameters.artifactPath }}" == "scoped" ]; then
+                  scopes=("fluidframework" "fluid-tools" "fluid-internal" "fluid-experimental")
+                  for scope in "${scopes[@]}"; do
+                      if [[ "$packageName" == "$scope"* ]]; then
+                          packageName="@${packageName/$scope-/$scope/}"
+                      fi
+                  done
+                fi
+
+                baseURL="${${{ parameters.feedName }}%/registry/}"
+                feedPromotionUrl="${baseURL/_packaging/_apis/packaging/feeds}"
+
+                response=$(curl -f -s -X PATCH \
+                  -H "Content-Type: application/json" \
+                  -H "Accept: application/json" \
+                  -u ":$(System.AccessToken)" \
+                  -d '{
+                        "views": {
+                          "op": "add",
+                          "path": "/views/-",
+                          "value": "Release"
+                        }
+                      }' \
+                      "$feedPromotionUrl"
+                  )
+                
+                curlExitStatus=$?
+                
+                if echo "$response" | grep -q '"success":"false"'; then
+                  reason="${response#*\"reason\":\"}"
+                  reason="${reason%%\"*}"
+                  echo "Failed to promote package to Release view"
+                  echo "Error reason: $reason"
+                  exit 1
+                elif [ $curlExitStatus -ne 0 ]; then
+                  echo "Failed to promote package due to curl error"
+                  exit 1
+                fi
+              fi
+              
               rm publish_log
               break
             fi

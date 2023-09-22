@@ -9,15 +9,14 @@ import {
 	FieldKey,
 	mintRevisionTag,
 	initializeForest,
-	InMemoryStoredSchemaRepository,
 	RevisionTag,
-	rootFieldKeySymbol,
+	rootFieldKey,
 	UpPath,
+	applyDelta,
 } from "../../core";
 import { jsonNumber, jsonObject } from "../../domains";
 import {
 	buildForest,
-	defaultSchemaPolicy,
 	ForestRepairDataStore,
 	jsonableTreeFromCursor,
 	singleTextCursor,
@@ -31,14 +30,13 @@ const fooKey: FieldKey = brand("foo");
 
 const root: UpPath = {
 	parent: undefined,
-	parentField: rootFieldKeySymbol,
+	parentField: rootFieldKey,
 	parentIndex: 0,
 };
 
 describe("ForestRepairDataStore", () => {
 	it("Captures deleted nodes", () => {
-		const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
-		const forest = buildForest(schema);
+		const forest = buildForest();
 		const store = new ForestRepairDataStore(forest, mockIntoDelta);
 		const capture1 = [
 			{ type: jsonNumber.name, value: 1 },
@@ -62,7 +60,7 @@ describe("ForestRepairDataStore", () => {
 		initializeForest(forest, [singleTextCursor(data)]);
 		const delta1 = new Map([
 			[
-				rootFieldKeySymbol,
+				rootFieldKey,
 				[
 					{
 						type: Delta.MarkType.Modify,
@@ -83,10 +81,10 @@ describe("ForestRepairDataStore", () => {
 			],
 		]);
 		store.capture(delta1, revision1);
-		forest.applyDelta(delta1);
+		applyDelta(delta1, forest);
 		const delta2 = new Map([
 			[
-				rootFieldKeySymbol,
+				rootFieldKey,
 				[
 					{
 						type: Delta.MarkType.Modify,

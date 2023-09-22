@@ -19,6 +19,11 @@ data:
             "timestamp": false,
             "label": "winston"
         },
+        "lumberjack": {
+            "options": {
+                "enableGlobalTelemetryContext": {{ .Values.lumberjack.options.enableGlobalTelemetryContext }}
+            }
+        },
         "mongo": {
             "operationsDbEndpoint": "{{ .Values.mongodb.operationsDbEndpoint }}",
             "globalDbEndpoint": "{{ .Values.mongodb.globalDbEndpoint }}",
@@ -74,7 +79,8 @@ data:
             "kafkaCheckpointOnReprocessingOp": {{ .Values.checkpoints.kafkaCheckpointOnReprocessingOp }}
         },
         "apiCounters": {
-            "fetchTenantKeyMetricMs": 60000
+            "fetchTenantKeyMetricMs": 60000,
+            "riddlerStorageRequestMetricMs": 60000
         },
         "alfred": {
             "kafkaClientId": "{{ template "alfred.fullname" . }}",
@@ -83,6 +89,7 @@ data:
             "numberOfMessagesPerTrace": {{ .Values.alfred.numberOfMessagesPerTrace }},
             "sessionStickinessDurationMs": {{ .Values.alfred.sessionStickinessDurationMs }},
             "enableConnectionCountLogging": {{ .Values.alfred.enableConnectionCountLogging }},
+            "ignoreEphemeralFlag": {{ .Values.alfred.ignoreEphemeralFlag }},
             "throttling": {
                 "restCallsPerTenant": {
                     "generalRestCall": {{ toJson .Values.alfred.throttling.restCallsPerTenant.generalRestCall }},
@@ -157,7 +164,7 @@ data:
         },
         "system": {
             "httpServer": {
-                "connectionTimeout": {{ .Values.system.httpServer.connectionTimeout }}
+                "connectionTimeoutMs": {{ .Values.system.httpServer.connectionTimeoutMs }}
             },
             "topics": {
                 "send": "{{ .Values.kafka.topics.deltas }}"
@@ -168,7 +175,8 @@ data:
             "signalUsageCountingEnabled": {{ .Values.usage.signalUsageCountingEnabled }}
         },
         "shared": {
-            "transientTenants": {{ toJson .Values.shared.transientTenants }}
+            "transientTenants": {{ toJson .Values.shared.transientTenants }},
+            "runnerServerCloseTimeoutMs": {{ .Values.shared.runnerServerCloseTimeoutMs }}
         },
         "auth": {
             "endpoint": "http://{{ template "riddler.fullname" . }}",
@@ -196,9 +204,6 @@ data:
             "checkpointBatchSize": 1,
             "checkpointTimeIntervalMsec": 1000,
             "restartOnCheckpointFailure": {{ .Values.scriptorium.restartOnCheckpointFailure }}
-        },
-        "paparazzi": {
-            "queue": "paparazziQueue"
         },
         "rabbitmq": {
             "connectionString": "{{ .Values.rabbitmq.connectionString }}"

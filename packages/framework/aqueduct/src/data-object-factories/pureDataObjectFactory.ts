@@ -28,7 +28,7 @@ import {
 	IFluidDependencySynthesizer,
 } from "@fluidframework/synthesize";
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IDataObjectProps, PureDataObject, DataObjectTypes } from "../data-objects";
 /*
  * Useful interface in places where it's useful to do type erasure for PureDataObject generic
@@ -74,9 +74,10 @@ async function createDataObject<
 		runtimeClass,
 	);
 
-	// Create a new runtime for our data store
+	// Create a new runtime for our data store, as if via new FluidDataStoreRuntime,
+	// but using the runtimeClass that's been augmented with mixins
 	// The runtime is what Fluid uses to create DDS' and route to your data store
-	const runtime: FluidDataStoreRuntime = new runtimeClass(
+	const runtime: FluidDataStoreRuntime = new runtimeClass( // calls new FluidDataStoreRuntime(...)
 		context,
 		sharedObjectRegistry,
 		existing,
@@ -87,7 +88,7 @@ async function createDataObject<
 			// Without this I ran into issues with the load-existing flow not working correctly.
 			await instance.finishInitialization(true);
 			return instance;
-		},
+		} /* initializeEntryPoint */,
 	);
 
 	// Create object right away.

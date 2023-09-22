@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Timer } from "@fluidframework/common-utils";
-import { LazyPromise } from "@fluidframework/core-utils";
-import { ClientSessionExpiredError, DataProcessingError } from "@fluidframework/container-utils";
-import { IRequestHeader } from "@fluidframework/core-interfaces";
+import { LazyPromise, Timer } from "@fluidframework/core-utils";
+import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import {
 	gcTreeKey,
 	IGarbageCollectionData,
@@ -14,17 +12,23 @@ import {
 	ISummarizeResult,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
+import { createResponseError, responseToException } from "@fluidframework/runtime-utils";
 import {
 	createChildLogger,
 	createChildMonitoringContext,
+	DataProcessingError,
 	ITelemetryLoggerExt,
 	MonitoringContext,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
 
-import { RuntimeHeaders } from "../containerRuntime";
-import { RefreshSummaryResult } from "../summary";
+import {
+	AllowInactiveRequestHeaderKey,
+	InactiveResponseHeaderKey,
+	RuntimeHeaders,
+} from "../containerRuntime";
+import { ClientSessionExpiredError } from "../error";
+import { IRefreshSummaryResult } from "../summary";
 import { generateGCConfigs } from "./gcConfigs";
 import {
 	GCNodeType,
@@ -283,15 +287,13 @@ export class GarbageCollector implements IGarbageCollector {
 			return { gcData: { gcNodes }, usedRoutes };
 		});
 
-		// Log all the GC options and the state determined by the garbage collector. This is interesting only for the
-		// summarizer client since it is the only one that runs GC. It also helps keep the telemetry less noisy.
-		if (this.isSummarizerClient) {
-			this.mc.logger.sendTelemetryEvent({
-				eventName: "GarbageCollectorLoaded",
-				gcConfigs: JSON.stringify(this.configs),
-				gcOptions: JSON.stringify(createParams.gcOptions),
-			});
-		}
+		// Log all the GC options and the state determined by the garbage collector.
+		// This is useful even for interactive clients since they track unreferenced nodes and log errors.
+		this.mc.logger.sendTelemetryEvent({
+			eventName: "GarbageCollectorLoaded",
+			gcConfigs: JSON.stringify(this.configs),
+			gcOptions: JSON.stringify(createParams.gcOptions),
+		});
 	}
 
 	/**
@@ -575,14 +577,17 @@ export class GarbageCollector implements IGarbageCollector {
 
 	/**
 	 * Runs the GC Mark phase. It does the following:
+	 *
 	 * 1. Marks all referenced nodes in this run by clearing tracking for them.
+	 *
 	 * 2. Marks unreferenced nodes in this run by starting tracking for them.
+	 *
 	 * 3. Calls the runtime to update nodes that were marked referenced.
 	 *
 	 * @param gcResult - The result of the GC run on the gcData.
 	 * @param allReferencedNodeIds - Nodes referenced in this GC run + referenced between previous and current GC run.
 	 * @param currentReferenceTimestampMs - The timestamp to be used for unreferenced nodes' timestamp.
-	 * @returns - A list of sweep ready nodes, i.e., nodes that ready to be deleted.
+	 * @returns A list of sweep ready nodes, i.e., nodes that ready to be deleted.
 	 */
 	private runMarkPhase(
 		gcResult: IGCResult,
@@ -641,7 +646,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 * @param sweepReadyNodes - List of nodes that are sweep ready.
 	 * @param currentReferenceTimestampMs - The timestamp to be used for unreferenced nodes' timestamp.
 	 * @param logger - The logger to be used to log any telemetry.
-	 * @returns - A list of nodes that have been deleted.
+	 * @returns A list of nodes that have been deleted.
 	 */
 	private runSweepPhase(
 		gcResult: IGCResult,
@@ -720,7 +725,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 * This function identifies nodes that were referenced since the last run.
 	 * If these nodes are currently unreferenced, they will be assigned new unreferenced state by the current run.
 	 *
-	 * @returns - a list of all nodes referenced from the last local summary until now.
+	 * @returns A list of all nodes referenced from the last local summary until now.
 	 */
 	private findAllNodesReferencedBetweenGCs(
 		currentGCData: IGarbageCollectionData,
@@ -838,45 +843,15 @@ export class GarbageCollector implements IGarbageCollector {
 	}
 
 	/**
-	 * Called to refresh the latest summary state. This happens when either a pending summary is acked or a snapshot
-	 * is downloaded and should be used to update the state.
+	 * Called to refresh the latest summary state. This happens when either a pending summary is acked.
 	 */
-	public async refreshLatestSummary(
-		proposalHandle: string | undefined,
-		result: RefreshSummaryResult,
-		readAndParseBlob: ReadAndParseBlob,
-	): Promise<void> {
-		const latestSnapshotData = await this.summaryStateTracker.refreshLatestSummary(
-			proposalHandle,
-			result,
-			readAndParseBlob,
-		);
-
-		// If the latest summary was updated but it was not tracked by this client, our state needs to be updated from
-		// this snapshot data.
-		if (this.shouldRunGC && result.latestSummaryUpdated && !result.wasSummaryTracked) {
-			// The current reference timestamp should be available if we are refreshing state from a snapshot. There has
-			// to be at least one op (summary op / ack, if nothing else) if a snapshot was taken.
-			const currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs();
-			if (currentReferenceTimestampMs === undefined) {
-				throw DataProcessingError.create(
-					"No reference timestamp when updating GC state from snapshot",
-					"refreshLatestSummary",
-					undefined,
-					{
-						proposalHandle,
-						summaryRefSeq: result.summaryRefSeq,
-						gcConfigs: JSON.stringify(this.configs),
-					},
-				);
-			}
-			this.updateStateFromSnapshotData(latestSnapshotData, currentReferenceTimestampMs);
-		}
+	public async refreshLatestSummary(result: IRefreshSummaryResult): Promise<void> {
+		return this.summaryStateTracker.refreshLatestSummary(result);
 	}
 
 	/**
 	 * Called when a node with the given id is updated. If the node is inactive, log an error.
-	 * @param nodePath - The id of the node that changed.
+	 * @param nodePath - The path of the node that changed.
 	 * @param reason - Whether the node was loaded or changed.
 	 * @param timestampMs - The timestamp when the node changed.
 	 * @param packagePath - The package path of the node. This may not be available if the node hasn't been loaded yet.
@@ -893,6 +868,7 @@ export class GarbageCollector implements IGarbageCollector {
 			return;
 		}
 
+		// This will log if appropriate
 		this.telemetryTracker.nodeUsed({
 			id: nodePath,
 			usageType: reason,
@@ -904,6 +880,29 @@ export class GarbageCollector implements IGarbageCollector {
 			lastSummaryTime: this.getLastSummaryTimestampMs(),
 			viaHandle: requestHeaders?.[RuntimeHeaders.viaHandle],
 		});
+
+		// Unless this is a Loaded event, we're done after telemetry tracking
+		if (reason !== "Loaded") {
+			return;
+		}
+
+		// We may throw when loading an Inactive object, depending on these preconditions
+		const shouldThrowOnInactiveLoad =
+			!this.isSummarizerClient &&
+			this.configs.throwOnInactiveLoad === true &&
+			requestHeaders?.[AllowInactiveRequestHeaderKey] !== true;
+		const state = this.unreferencedNodesState.get(nodePath)?.state;
+
+		if (shouldThrowOnInactiveLoad && state === "Inactive") {
+			const request: IRequest = { url: nodePath };
+			const error = responseToException(
+				createResponseError(404, "Object is inactive", request, {
+					[InactiveResponseHeaderKey]: true,
+				}),
+				request,
+			);
+			throw error;
+		}
 	}
 
 	/**

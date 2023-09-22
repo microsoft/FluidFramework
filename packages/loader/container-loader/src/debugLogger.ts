@@ -8,7 +8,7 @@ import {
 	ITelemetryBaseLogger,
 	ITelemetryProperties,
 } from "@fluidframework/core-interfaces";
-import { performance } from "@fluidframework/common-utils";
+import { performance } from "@fluid-internal/client-utils";
 import { debug as registerDebug, IDebugger } from "debug";
 import {
 	ITelemetryLoggerExt,
@@ -108,6 +108,7 @@ export class DebugLogger implements ITelemetryBaseLogger {
 		}
 
 		// Print multi-line.
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		logger(`${name} ${payload} ${tick} ${stack}`);
 	}
 }

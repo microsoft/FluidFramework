@@ -4,9 +4,9 @@
  */
 import React from "react";
 import { tokens } from "@fluentui/react-components";
-import { ThemeContext } from "../../ThemeHelper";
-import { ThemeOption } from "../SettingsView";
-import { HasLabel } from "./CommonInterfaces";
+
+import { ThemeContext, ThemeOption } from "../../ThemeHelper";
+import { type HasLabel } from "./CommonInterfaces";
 
 /**
  * Input props to {@link TreeHeader}

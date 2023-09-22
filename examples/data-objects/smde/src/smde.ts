@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IFluidLoadable, IFluidHandle } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, FluidObjectHandle } from "@fluidframework/datastore";
 import { ISharedMap, SharedMap } from "@fluidframework/map";

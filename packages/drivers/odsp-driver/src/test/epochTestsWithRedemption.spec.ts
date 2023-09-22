@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { Deferred } from "@fluidframework/common-utils";
+import { Deferred } from "@fluidframework/core-utils";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { IOdspResolvedUrl, IEntry, snapshotKey } from "@fluidframework/odsp-driver-definitions";
@@ -56,7 +56,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
 				docId: hashedDocumentId,
 				resolvedUrl,
 			},
-			logger,
+			logger.toTelemetryLogger(),
 		);
 	});
 

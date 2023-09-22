@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
-import { FieldKey } from "../tree";
+import { assert } from "@fluidframework/core-utils";
+import { FieldKey } from "../schema-stored";
 import { topDownPath, UpPath } from "./pathTree";
 
 /**

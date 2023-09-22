@@ -20,6 +20,7 @@ export {
 	mapCursorField,
 	mapCursorFields,
 	forEachNode,
+	forEachNodeInSubtree,
 	forEachField,
 	ITreeCursorSynchronous,
 	PathRootPrefix,
@@ -29,12 +30,6 @@ export {
 	isCursor,
 } from "./cursor";
 export { ProtoNodes } from "./delta";
-export {
-	GlobalFieldKeySymbol,
-	keyFromSymbol,
-	symbolFromKey,
-	symbolIsFieldKey,
-} from "./globalFieldKeySymbol";
 export { getMapTreeField, MapTree } from "./mapTree";
 export {
 	clonePath,
@@ -44,25 +39,22 @@ export {
 	FieldUpPath,
 	compareUpPaths,
 	compareFieldUpPaths,
+	getDetachedFieldContainingPath,
 	UpPathDefault,
 } from "./pathTree";
 export {
 	FieldMapObject,
-	FieldScope,
 	GenericFieldsNode,
 	genericTreeDeleteIfEmpty,
 	genericTreeKeys,
 	GenericTreeNode,
 	getGenericTreeField,
-	isGlobalFieldKey,
 	JsonableTree,
-	scopeFromKey,
 	setGenericTreeField,
 } from "./treeTextFormat";
 export { EncodedJsonableTree } from "./persistedTreeTextFormat";
 export {
 	EmptyKey,
-	FieldKey,
 	TreeType,
 	ChildLocation,
 	DetachedField,
@@ -74,11 +66,9 @@ export {
 	keyAsDetachedField,
 	rootFieldKey,
 	NodeData,
-	rootFieldKeySymbol,
 	rootField,
-	isLocalKey,
 } from "./types";
-export { DeltaVisitor, visitDelta } from "./visitDelta";
+export { DeltaVisitor, visitDelta, applyDelta } from "./visitDelta";
 export { PathVisitor } from "./visitPath";
 
 // Split this up into separate import and export for compatibility with API-Extractor.

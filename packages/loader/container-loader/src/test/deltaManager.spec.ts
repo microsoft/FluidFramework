@@ -92,7 +92,7 @@ describe("Loader", () => {
 
 				await new Promise((resolve) => {
 					deltaManager.on("connect", resolve);
-					deltaManager.connect({ reason: "test" });
+					deltaManager.connect({ reason: { text: "test" } });
 				});
 			}
 
@@ -454,13 +454,22 @@ describe("Loader", () => {
 				it("Should override readonly", async () => {
 					await startDeltaManager();
 
-					assert.strictEqual(deltaManager.readOnlyInfo.readonly, false);
+					// TS 5.1.6: Workaround 'TS2339: Property 'readonly' does not exist on type 'never'.'
+					//
+					//           After observering that 'forceReadonly' has been asserted to be both true and
+					//           false, TypeScript coerces 'connectionManager' to 'never'.  Wrapping the
+					//           assertion in lambda avoids this.
+					const assertReadonlyIs = (expected: boolean) => {
+						assert.strictEqual(deltaManager.readOnlyInfo.readonly, expected);
+					};
+
+					assertReadonlyIs(false);
 
 					deltaManager.connectionManager.forceReadonly(true);
-					assert.strictEqual(deltaManager.readOnlyInfo.readonly, true);
+					assertReadonlyIs(true);
 
 					deltaManager.connectionManager.forceReadonly(false);
-					assert.strictEqual(deltaManager.readOnlyInfo.readonly, false);
+					assertReadonlyIs(false);
 				});
 
 				it("Should raise readonly event when container was not readonly", async () => {
@@ -493,7 +502,7 @@ describe("Loader", () => {
 
 			it("Closed abort reason should be passed fetch abort signal", async () => {
 				const mockLogger = new MockLogger();
-				await startDeltaManager(undefined, mockLogger, () => ({
+				await startDeltaManager(undefined, mockLogger.toTelemetryLogger(), () => ({
 					fetchMessages: (
 						_from: number,
 						_to: number | undefined,
