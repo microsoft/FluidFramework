@@ -259,7 +259,7 @@ describe("IntervalCollection fuzz testing", () => {
 		// The root cause of this bug is--roughly speaking--interval endpoints with StayOnRemove being placed
 		// on segments that can be zamboni'd.
 		// TODO:AB#5337: re-enable these seeds.
-		skip: [4, 12, 41, 53, 58, 76, 91],
+		skip: [13],
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
 	});
