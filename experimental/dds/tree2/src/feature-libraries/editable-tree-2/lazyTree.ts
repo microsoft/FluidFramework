@@ -191,7 +191,7 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 		});
 	}
 
-	public [Symbol.iterator](): IterableIterator<TreeField> {
+	public boxedIterator(): IterableIterator<TreeField> {
 		return mapCursorFields(this[cursorSymbol], (cursor) =>
 			makeField(this.context, getFieldSchema(cursor.getFieldKey(), this.schema), cursor),
 		).values();
@@ -373,8 +373,19 @@ export class LazyMap<TSchema extends MapSchema>
 	// 	}
 	// }
 
-	public [Symbol.iterator](): IterableIterator<TypedField<TSchema["mapFields"]>> {
-		return super[Symbol.iterator]() as IterableIterator<TypedField<TSchema["mapFields"]>>;
+	public override boxedIterator(): IterableIterator<TypedField<TSchema["mapFields"]>> {
+		return super.boxedIterator() as IterableIterator<TypedField<TSchema["mapFields"]>>;
+	}
+
+	public [Symbol.iterator](): IterableIterator<UnboxField<TSchema["mapFields"], "notEmpty">> {
+		return mapCursorFields(
+			this[cursorSymbol],
+			(cursor) =>
+				unboxedField(this.context, this.schema.mapFields, cursor) as UnboxField<
+					TSchema["mapFields"],
+					"notEmpty"
+				>,
+		)[Symbol.iterator]();
 	}
 
 	public get asObject(): {

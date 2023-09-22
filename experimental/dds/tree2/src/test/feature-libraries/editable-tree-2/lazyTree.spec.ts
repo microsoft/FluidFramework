@@ -191,7 +191,7 @@ describe("lazyTree", () => {
 
 function fieldToMapTree(field: TreeField): MapTree[] {
 	const results: MapTree[] = [];
-	for (const child of field) {
+	for (const child of field.boxedIterator()) {
 		results.push(nodeToMapTree(child));
 	}
 	return results;
@@ -199,7 +199,7 @@ function fieldToMapTree(field: TreeField): MapTree[] {
 
 function nodeToMapTree(node: TreeNode): MapTree {
 	const fields: Map<FieldKey, MapTree[]> = new Map();
-	for (const field of node) {
+	for (const field of node.boxedIterator()) {
 		fields.set(field.key, fieldToMapTree(field));
 	}
 
@@ -210,12 +210,16 @@ function checkPropertyInvariants(root: Tree): void {
 	const treeValues = new Map<unknown, number>();
 	// Assert all nodes and fields traversed, and all values found.
 	// TODO: checking that unboxed fields and nodes were traversed is not fully implemented here.
-	visitIterableTree(root, (item) => {
-		if (item instanceof LazyLeaf) {
-			const value = item.value;
-			treeValues.set(value, (treeValues.get(value) ?? 0) + 1);
-		}
-	});
+	visitIterableTree(
+		root,
+		(tree) => tree.boxedIterator(),
+		(item) => {
+			if (item instanceof LazyLeaf) {
+				const value = item.value;
+				treeValues.set(value, (treeValues.get(value) ?? 0) + 1);
+			}
+		},
+	);
 
 	// TODO: generic typed traverse first, collect leaves use in asserts.
 	// TODO: add extra items needed to traverse map nodes and in leaves.
@@ -272,15 +276,19 @@ function checkPropertyInvariants(root: Tree): void {
 
 	// Assert all nodes and fields traversed, and all values found.
 	// TODO: checking that unboxed fields and nodes were traversed is not fully implemented here.
-	visitIterableTree(root, (item) => {
-		if (!unboxable.has(Object.getPrototypeOf(item))) {
-			if (!primitivesAndValues.has(item as unknown as TreeValue) && !visited.has(item)) {
-				// Fields don't have stable object identity, so they can fail the above test.
-				// Nothing else should fail it.
-				assert(item instanceof LazyField);
+	visitIterableTree(
+		root,
+		(tree) => tree.boxedIterator(),
+		(item) => {
+			if (!unboxable.has(Object.getPrototypeOf(item))) {
+				if (!primitivesAndValues.has(item as unknown as TreeValue) && !visited.has(item)) {
+					// Fields don't have stable object identity, so they can fail the above test.
+					// Nothing else should fail it.
+					assert(item instanceof LazyField);
+				}
 			}
-		}
-	});
+		},
+	);
 
 	assert.deepEqual(primitivesAndValues, treeValues);
 }

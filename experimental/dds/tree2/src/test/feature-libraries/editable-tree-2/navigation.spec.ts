@@ -51,6 +51,8 @@ function test(root: TreeField): void {
 	visitBipartiteIterableTreeWithState(
 		root,
 		0,
+		(field) => field.boxedIterator(),
+		(node) => node.boxedIterator(),
 		(field: TreeField, n) => n,
 		(node: TreeNode, n) => {
 			depth = Math.max(n, depth);
@@ -62,6 +64,8 @@ function test(root: TreeField): void {
 	visitBipartiteIterableTreeWithState(
 		root,
 		undefined,
+		(field) => field.boxedIterator(),
+		(node) => node.boxedIterator(),
 		(field: TreeField, parent: UpPath | undefined): FieldUpPath => ({
 			parent,
 			field: field.key,

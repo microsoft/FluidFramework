@@ -202,8 +202,12 @@ export abstract class LazyField<TKind extends FieldKindTypes, TTypes extends All
 		);
 	}
 
-	public [Symbol.iterator](): IterableIterator<TypedNodeUnion<TTypes>> {
+	public boxedIterator(): IterableIterator<TypedNodeUnion<TTypes>> {
 		return this.mapBoxed((x) => x)[Symbol.iterator]();
+	}
+
+	public [Symbol.iterator](): IterableIterator<UnboxNodeUnion<TTypes>> {
+		return this.map((x) => x)[Symbol.iterator]();
 	}
 
 	public treeStatus(): TreeStatus {

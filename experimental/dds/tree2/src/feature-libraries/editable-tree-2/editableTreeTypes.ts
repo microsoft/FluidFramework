@@ -38,7 +38,7 @@ import { TreeContext } from "./context";
  *
  * @alpha
  */
-export interface Tree<TSchema = unknown> extends Iterable<Tree> {
+export interface Tree<TSchema = unknown> {
 	/**
 	 * Schema for this entity.
 	 * If well-formed, it must follow this schema.
@@ -57,6 +57,14 @@ export interface Tree<TSchema = unknown> extends Iterable<Tree> {
 	 * For non-root fields, this is the status of the parent node, since fields do not have a separate lifetime.
 	 */
 	treeStatus(): TreeStatus;
+
+	/**
+	 * Iterate through all nodes/fields in this node/field.
+	 *
+	 * @remarks
+	 * Concurrent modification is forbidden.
+	 */
+	boxedIterator(): IterableIterator<Tree>;
 }
 
 /**
@@ -113,7 +121,13 @@ export interface TreeNode extends Tree<TreeSchema> {
 	 */
 	readonly type: TreeSchemaIdentifier;
 
-	[Symbol.iterator](): Iterator<TreeField>;
+	/**
+	 * Iterate through all fields in the node.
+	 *
+	 * @remarks
+	 * This node may not be mutated during iteration.
+	 */
+	boxedIterator(): IterableIterator<TreeField>;
 }
 
 /**
@@ -136,7 +150,7 @@ export interface TreeNode extends Tree<TreeSchema> {
  *
  * @alpha
  */
-export interface TreeField extends Tree<FieldSchema>, Iterable<TreeNode> {
+export interface TreeField extends Tree<FieldSchema> {
 	/**
 	 * The `FieldKey` this field is under.
 	 * Defines what part of its parent this field makes up.
@@ -154,7 +168,13 @@ export interface TreeField extends Tree<FieldSchema>, Iterable<TreeNode> {
 	 */
 	is<TSchema extends FieldSchema>(schema: TSchema): this is TypedField<TSchema>;
 
-	[Symbol.iterator](): Iterator<TreeNode>;
+	/**
+	 * Iterate through all nodes in the field.
+	 *
+	 * @remarks
+	 * This field may not be mutated during iteration.
+	 */
+	boxedIterator(): IterableIterator<TreeNode>;
 
 	/**
 	 * Check if this field is the same as a different field.
@@ -276,7 +296,15 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	// TODO: Add `set` method when FieldKind provides a setter (and derive the type from it).
 	// set(key: FieldKey, content: FlexibleFieldContent<TSchema["mapFields"]>): void;
 
-	[Symbol.iterator](): Iterator<TypedField<TSchema["mapFields"]>>;
+	/**
+	 * Iterate through all fields in the map.
+	 *
+	 * @remarks
+	 * The map may not be mutated during iteration.
+	 */
+	boxedIterator(): IterableIterator<TypedField<TSchema["mapFields"]>>;
+
+	[Symbol.iterator](): IterableIterator<UnboxField<TSchema["mapFields"], "notEmpty">>;
 
 	/**
 	 * An enumerable own property which allows JavaScript object traversals to access {@link Sequence} content.
@@ -496,7 +524,15 @@ export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
 		content: Iterable<FlexibleNodeContent<TTypes>>,
 	): void;
 
-	[Symbol.iterator](): Iterator<TypedNodeUnion<TTypes>>;
+	/**
+	 * Iterate through all nodes in the sequence.
+	 *
+	 * @remarks
+	 * This sequence may not be mutated during iteration.
+	 */
+	boxedIterator(): IterableIterator<TypedNodeUnion<TTypes>>;
+
+	[Symbol.iterator](): IterableIterator<UnboxNodeUnion<TTypes>>;
 
 	/**
 	 * An enumerable own property which allows JavaScript object traversals to access {@link Sequence} content.
@@ -625,10 +661,11 @@ export type TypedNode<TSchema extends TreeSchema> = TSchema extends LeafSchema
  * Recursively unboxes that content (then its content etc.) as well if the node union does unboxing.
  * @alpha
  */
-export type UnboxField<TSchema extends FieldSchema> = UnboxFieldInner<
-	TSchema["kind"],
-	TSchema["allowedTypes"]
->;
+export type UnboxField<
+	TSchema extends FieldSchema,
+	// If "notEmpty", then optional fields will unbox to their content (not their content | undefined)
+	Emptiness extends "maybeEmpty" | "notEmpty" = "maybeEmpty",
+> = UnboxFieldInner<TSchema["kind"], TSchema["allowedTypes"], Emptiness>;
 
 /**
  * Helper for implementing {@link InternalEditableTreeTypes#UnboxField}.
@@ -637,12 +674,13 @@ export type UnboxField<TSchema extends FieldSchema> = UnboxFieldInner<
 export type UnboxFieldInner<
 	Kind extends FieldKindTypes,
 	TTypes extends AllowedTypes,
+	Emptiness extends "maybeEmpty" | "notEmpty",
 > = Kind extends typeof FieldKinds.sequence
 	? Sequence<TTypes>
 	: Kind extends typeof FieldKinds.value
 	? UnboxNodeUnion<TTypes>
 	: Kind extends typeof FieldKinds.optional
-	? UnboxNodeUnion<TTypes> | undefined
+	? UnboxNodeUnion<TTypes> | (Emptiness extends "notEmpty" ? never : undefined)
 	: // TODO: forbidden and nodeKey
 	  unknown;
 

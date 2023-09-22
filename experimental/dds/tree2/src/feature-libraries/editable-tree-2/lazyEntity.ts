@@ -82,7 +82,13 @@ export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
 		makePropertyNotEnumerable(this, anchorSymbol);
 	}
 
-	public abstract [Symbol.iterator](): Iterator<Tree>;
+	/**
+	 * Iterate through all nodes/fields in this node/field.
+	 *
+	 * @remarks
+	 * Concurrent modification is forbidden.
+	 */
+	public abstract boxedIterator(): IterableIterator<Tree>;
 
 	public abstract treeStatus(): TreeStatus;
 
