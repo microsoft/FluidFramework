@@ -495,10 +495,6 @@ stages:
                   echo "always-auth=true" >> ./.npmrc
                   cat .npmrc
 
-                  echo Generating .env
-                  echo "DEVTOOLS_TELEMETRY_TOKEN=$(devtools-telemetry-key)" >> ./packages/tools/devtools/devtools-browser-extension/.env
-                  cat ./packages/tools/devtools/devtools-browser-extension/.env
-
             - task: npmAuthenticate@0
               displayName: 'npm authenticate (internal feed)'
               inputs:
@@ -621,3 +617,6 @@ stages:
         namespace: ${{ parameters.namespace }}
         tagName: ${{ parameters.tagName }}
         publishNonScopedPackages: ${{ variables.publishNonScopedPackages }}
+
+  # Run additional Steps
+  - ${{ parameters.additionalSteps }}

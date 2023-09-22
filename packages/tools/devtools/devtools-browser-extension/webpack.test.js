@@ -48,7 +48,7 @@ module.exports = (env) => {
 				process: "process/browser",
 			}),
 			new Dotenv({
-				path: "./dev-example.env",
+				path: "./.env",
 				systemvars: true,
 			}),
 			new HtmlWebpackPlugin({

@@ -83,8 +83,10 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 			httpXHROverride: fetchHttpXHROverride,
 		};
 
-		// The instrumentation key is passed in via the webpack config, which is set up to inject it into the
-		// environment variable DEVTOOL_TELEMETRY_TOKEN. If it's not present, we'll just use an empty string.
+		// NOTE: this doesn't really use environment variables at runtime.
+		// The dotenv-webpack plugin for webpack does a search-and-replace for `process.env.<variable-name>`
+		// and replaces them with inlined values if the corresponding variables exist in the environment
+		// at bundle time, or `undefined` if not.
 		const instrumentationKey = process.env.DEVTOOLS_TELEMETRY_TOKEN ?? "";
 
 		// Configure App insights core to send to collector
