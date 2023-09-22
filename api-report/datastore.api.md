@@ -30,7 +30,7 @@ import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
-import { VisibilityState as VisibilityState_2 } from '@fluidframework/runtime-definitions';
+import { VisibilityState } from '@fluidframework/runtime-definitions';
 
 // @public (undocumented)
 export enum DataStoreMessageType {
@@ -125,7 +125,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
     // (undocumented)
-    visibilityState: VisibilityState_2;
+    visibilityState: VisibilityState;
     waitAttached(): Promise<void>;
 }
 

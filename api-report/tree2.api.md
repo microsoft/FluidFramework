@@ -1219,7 +1219,17 @@ export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree;
 // @alpha (undocumented)
 export const jsonArray: TreeSchema<"Json.Array", {
 structFields: {
-"": FieldSchema<Sequence, [any, any, TreeSchema<"Json.Number", {
+"": FieldSchema<Sequence, [() => TreeSchema<"Json.Object", {
+mapFields: FieldSchema<Optional, [any, () => TreeSchema<"Json.Array", any>, TreeSchema<"Json.Number", {
+leafValue: ValueSchema.Number;
+}>, TreeSchema<"Json.String", {
+leafValue: ValueSchema.String;
+}>, TreeSchema<"Json.Null", {
+structFields: {};
+}>, TreeSchema<"Json.Boolean", {
+leafValue: ValueSchema.Boolean;
+}>]>;
+}>, () => TreeSchema<"Json.Array", any>, TreeSchema<"Json.Number", {
 leafValue: ValueSchema.Number;
 }>, TreeSchema<"Json.String", {
 leafValue: ValueSchema.String;
@@ -1261,9 +1271,9 @@ leafValue: ValueSchema.Number;
 
 // @alpha (undocumented)
 export const jsonObject: TreeSchema<"Json.Object", {
-mapFields: FieldSchema<Optional, [any, () => TreeSchema<"Json.Array", {
+mapFields: FieldSchema<Optional, [() => TreeSchema<"Json.Object", any>, () => TreeSchema<"Json.Array", {
 structFields: {
-"": FieldSchema<Sequence, [any, any, TreeSchema<"Json.Number", {
+"": FieldSchema<Sequence, [() => TreeSchema<"Json.Object", any>, any, TreeSchema<"Json.Number", {
 leafValue: ValueSchema.Number;
 }>, TreeSchema<"Json.String", {
 leafValue: ValueSchema.String;
