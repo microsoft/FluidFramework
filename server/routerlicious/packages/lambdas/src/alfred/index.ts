@@ -11,7 +11,9 @@ import {
 	IConnected,
 	IDocumentMessage,
 	INack,
+	ISignalClient,
 	ISignalMessage,
+	ITokenClaims,
 	NackErrorType,
 	ScopeType,
 } from "@fluidframework/protocol-definitions";
@@ -65,15 +67,20 @@ const getMessageMetadata = (documentId: string, tenantId: string) => ({
 	tenantId,
 });
 
-const handleServerError = async (
+const handleServerErrorAndConvertToNetworkError = (
 	logger: core.ILogger,
 	errorMessage: string,
 	documentId: string,
 	tenantId: string,
-) => {
-	logger.error(errorMessage, { messageMetaData: getMessageMetadata(documentId, tenantId) });
-	Lumberjack.error(errorMessage, getLumberBaseProperties(documentId, tenantId));
-	throw new NetworkError(500, "Failed to connect client to document.");
+	error: any,
+): NetworkError => {
+	const errMsgWithPrefix = `Connect Cerver Error - ${errorMessage}`;
+	logger.error(errMsgWithPrefix, { messageMetaData: getMessageMetadata(documentId, tenantId) });
+	Lumberjack.error(errMsgWithPrefix, getLumberBaseProperties(documentId, tenantId), error);
+	return new NetworkError(
+		500,
+		"Failed to connect client to document. Check correlation Id for details.",
+	);
 };
 
 const getSocketConnectThrottleId = (tenantId: string) => `${tenantId}_OpenSocketConn`;
@@ -109,6 +116,22 @@ function selectProtocolVersion(connectVersions: string[]): string | undefined {
 			}
 		}
 	}
+	return undefined;
+}
+
+function checkVersion(versions: string[]): [string[], string] {
+	// Iterate over the version ranges provided by the client and select the best one that works
+	const connectVersions = versions ? versions : ["^0.1.0"];
+	const version = selectProtocolVersion(connectVersions);
+	if (!version) {
+		throw new NetworkError(
+			400,
+			`Unsupported client protocol. Server: ${protocolVersions}. Client: ${JSON.stringify(
+				connectVersions,
+			)}`,
+		);
+	}
+	return [connectVersions, version];
 }
 
 /**
@@ -206,6 +229,26 @@ function checkThrottleAndUsage(
 	}
 }
 
+enum ConnectDocumentStage {
+	ConnectDocumentStarted = "ConnectDocumentStarted",
+	VersionsChecked = "VersionsChecked",
+	ThrottleChecked = "ThrottleChecked",
+	TokenVerified = "TokenVerified",
+	RoomJoined = "RoomJoined",
+	ClientsRetrieved = "ClientsRetrieved",
+	MessageClientCreated = "MessageClientCreated",
+	MessageClientAdded = "MessageClientAdded",
+	TokenExpirySet = "TokenExpirySet",
+	MessageClientConnected = "MessageClientConnected",
+	SocketTrackerAppended = "SocketTrackerAppended",
+	SignalListenerSetUp = "SignalListenerSetUp",
+	JoinOpEmitted = "JoinOpEmitted",
+}
+
+const hasWriteAccess = (scopes: string[]) => canWrite(scopes) || canSummarize(scopes);
+const isWriter = (scopes: string[], mode: ConnectionMode) =>
+	hasWriteAccess(scopes) ? mode === "write" : false;
+
 export function configureWebSocketServices(
 	webSocketServer: core.IWebSocketServer,
 	orderManager: core.IOrdererManager,
@@ -252,12 +295,6 @@ export function configureWebSocketServices(
 
 		const connectionCountLogger = new ConnectionCountLogger(process.env.NODE_NAME, cache);
 
-		const hasWriteAccess = (scopes: string[]) => canWrite(scopes) || canSummarize(scopes);
-
-		function isWriter(scopes: string[], mode: ConnectionMode): boolean {
-			return hasWriteAccess(scopes) ? mode === "write" : false;
-		}
-
 		function clearExpirationTimer() {
 			if (expirationTimer !== undefined) {
 				clearTimeout(expirationTimer);
@@ -272,400 +309,287 @@ export function configureWebSocketServices(
 			}, mSecUntilExpiration);
 		}
 
-		async function connectDocument(message: IConnect): Promise<IConnectedClient> {
-			const startTime = Date.now();
-			const throttleErrorPerCluster = checkThrottleAndUsage(
-				connectThrottlerPerCluster,
-				getSocketConnectThrottleId("connectDoc"),
-				message.tenantId,
-				logger,
+		async function connectOrderer(
+			tenantId: string,
+			documentId: string,
+			clientId: string,
+			messageClient: IClient,
+			metricProperties: Record<string, any>,
+			startTime: number,
+			claims: ITokenClaims,
+			clients: ISignalClient[],
+			version: string,
+		): Promise<IConnected> {
+			const connectDocumentOrdererConnectionMetric = Lumberjack.newLumberMetric(
+				LumberEventName.ConnectDocumentOrdererConnection,
+				metricProperties,
 			);
-			if (throttleErrorPerCluster) {
-				// eslint-disable-next-line @typescript-eslint/no-throw-literal
-				throw throttleErrorPerCluster;
-			}
-			const throttleErrorPerTenant = checkThrottleAndUsage(
-				connectThrottlerPerTenant,
-				getSocketConnectThrottleId(message.tenantId),
-				message.tenantId,
-				logger,
-			);
-			if (throttleErrorPerTenant) {
-				// eslint-disable-next-line @typescript-eslint/no-throw-literal
-				throw throttleErrorPerTenant;
-			}
-
-			if (!message.token) {
-				throw new NetworkError(403, "Must provide an authorization token");
-			}
-
-			// Validate token signature and claims, and check if it's revoked
-			const token = message.token;
-			const claims = validateTokenClaims(token, message.id, message.tenantId);
-			try {
-				if (revokedTokenChecker && claims.jti) {
-					const isTokenRevoked: boolean = await revokedTokenChecker.isTokenRevoked(
-						claims.tenantId,
-						claims.documentId,
-						claims.jti,
-					);
-					if (isTokenRevoked) {
-						throw new core.TokenRevokedError(
-							403,
-							"Permission denied. Token has been revoked",
-							false /* canRetry */,
-							true /* isFatal */,
-						);
-					}
-				}
-				await tenantManager.verifyToken(claims.tenantId, token);
-			} catch (error) {
-				if (isNetworkError(error)) {
-					throw error;
-				}
-				// We don't understand the error, so it is likely an internal service error.
-				const errMsg = `Could not verify connect document token. Error: ${safeStringify(
-					error,
-					undefined,
-					2,
-				)}`;
-				return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
-			}
-
-			const clientId = generateClientId();
-
-			const room: IRoom = {
-				tenantId: claims.tenantId,
-				documentId: claims.documentId,
-			};
-
-			try {
-				// Subscribe to channels.
-				await Promise.all([
-					socket.join(getRoomId(room)),
-					socket.join(`client#${clientId}`),
-				]);
-			} catch (err) {
-				const errMsg = `Could not subscribe to channels. Error: ${safeStringify(
-					err,
-					undefined,
-					2,
-				)}`;
-				return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
-			}
-
-			const lumberjackProperties = {
-				...getLumberBaseProperties(claims.documentId, claims.tenantId),
-				[CommonProperties.clientId]: clientId,
-			};
-
-			const connectDocumentGetClientsMetric = Lumberjack.newLumberMetric(
-				LumberEventName.ConnectDocumentGetClients,
-				lumberjackProperties,
-			);
-			const clients = await clientManager
-				.getClients(claims.tenantId, claims.documentId)
-				.then((response) => {
-					connectDocumentGetClientsMetric.success(
-						"Successfully got clients from client manager",
-					);
-					return response;
-				})
+			const orderer = await orderManager
+				.getOrderer(tenantId, documentId)
 				.catch(async (err) => {
-					const errMsg = `Failed to get clients. Error: ${safeStringify(
-						err,
-						undefined,
-						2,
-					)}`;
-					connectDocumentGetClientsMetric.error(
-						"Failed to get clients during connectDocument",
-						err,
-					);
-					return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
-				});
-
-			if (clients.length > maxNumberOfClientsPerDocument) {
-				throw new NetworkError(
-					429,
-					"Too Many Clients Connected to Document",
-					true /* canRetry */,
-					false /* isFatal */,
-					5 * 60 * 1000 /* retryAfterMs (5 min) */,
-				);
-			}
-
-			const connectedTimestamp = Date.now();
-
-			// Todo: should all the client details come from the claims???
-			// we are still trusting the users permissions and type here.
-			const messageClient: Partial<IClient> = message.client ? message.client : {};
-			const isSummarizer = messageClient.details?.type === summarizerClientType;
-			messageClient.user = claims.user;
-			messageClient.scopes = claims.scopes;
-
-			// 1. Do not give SummaryWrite scope to clients that are not summarizers.
-			// 2. Store connection timestamp for all clients but the summarizer.
-			// Connection timestamp is used (inside socket disconnect event) to
-			// calculate the client connection time (i.e. for billing).
-			if (!isSummarizer) {
-				messageClient.scopes = claims.scopes.filter(
-					(scope) => scope !== ScopeType.SummaryWrite,
-				);
-				connectionTimeMap.set(clientId, connectedTimestamp);
-			}
-
-			// back-compat: remove cast to any once new definition of IClient comes through.
-			(messageClient as any).timestamp = connectedTimestamp;
-
-			// Cache the scopes.
-			scopeMap.set(clientId, messageClient.scopes);
-
-			// Join the room to receive signals.
-			roomMap.set(clientId, room);
-
-			// increment connection count after the client is added to the room.
-			// excluding summarizer for total client count.
-			if (!isSummarizer) {
-				connectionCountLogger.incrementConnectionCount();
-			}
-
-			// Iterate over the version ranges provided by the client and select the best one that works
-			const connectVersions = message.versions ? message.versions : ["^0.1.0"];
-			const version = selectProtocolVersion(connectVersions);
-			if (!version) {
-				throw new NetworkError(
-					400,
-					`Unsupported client protocol. Server: ${protocolVersions}. Client: ${JSON.stringify(
-						connectVersions,
-					)}`,
-				);
-			}
-
-			const connectDocumentAddClientMetric = Lumberjack.newLumberMetric(
-				LumberEventName.ConnectDocumentAddClient,
-				lumberjackProperties,
-			);
-			try {
-				await clientManager.addClient(
-					claims.tenantId,
-					claims.documentId,
-					clientId,
-					messageClient as IClient,
-				);
-				connectDocumentAddClientMetric.success("Successfully added client");
-			} catch (err) {
-				const errMsg = `Could not add client. Error: ${safeStringify(err, undefined, 2)}`;
-				connectDocumentAddClientMetric.error(
-					"Error adding client during connectDocument",
-					err,
-				);
-				return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
-			}
-
-			if (isTokenExpiryEnabled) {
-				const lifeTimeMSec = validateTokenClaimsExpiration(claims, maxTokenLifetimeSec);
-				setExpirationTimer(lifeTimeMSec);
-			}
-
-			let connectedMessage: IConnected;
-			if (isWriter(messageClient.scopes, message.mode)) {
-				const connectDocumentOrdererConnectionMetric = Lumberjack.newLumberMetric(
-					LumberEventName.ConnectDocumentOrdererConnection,
-					lumberjackProperties,
-				);
-				const orderer = await orderManager
-					.getOrderer(claims.tenantId, claims.documentId)
-					.catch(async (err) => {
-						const errMsg = `Failed to get orderer manager. Error: ${safeStringify(
-							err,
-							undefined,
-							2,
-						)}`;
-						connectDocumentOrdererConnectionMetric.error(
-							"Failed to get orderer manager",
-							err,
-						);
-						return handleServerError(
-							logger,
-							errMsg,
-							claims.documentId,
-							claims.tenantId,
-						);
-					});
-
-				const connection = await orderer
-					.connect(socket, clientId, messageClient as IClient)
-					.catch(async (err) => {
-						const errMsg = `Failed to connect to orderer. Error: ${safeStringify(
-							err,
-							undefined,
-							2,
-						)}`;
-						connectDocumentOrdererConnectionMetric.error(
-							"Failed to connect to orderer",
-							err,
-						);
-						return handleServerError(
-							logger,
-							errMsg,
-							claims.documentId,
-							claims.tenantId,
-						);
-					});
-
-				// Eventually we will send disconnect reason as headers to client.
-				connection.once("error", (error) => {
-					const messageMetaData = getMessageMetadata(
-						connection.documentId,
-						connection.tenantId,
-					);
-
-					logger.error(
-						`Disconnecting socket on connection error: ${safeStringify(
-							error,
-							undefined,
-							2,
-						)}`,
-						{ messageMetaData },
-					);
-					Lumberjack.error(
-						`Disconnecting socket on connection error`,
-						getLumberBaseProperties(connection.documentId, connection.tenantId),
-						error,
-					);
-					clearExpirationTimer();
-					socket.disconnect(true);
-				});
-
-				let clientJoinMessageServerMetadata: any;
-				if (
-					core.DefaultServiceConfiguration.enableTraces &&
-					sampleMessages(numberOfMessagesPerTrace)
-				) {
-					clientJoinMessageServerMetadata = {
-						connectDocumentStartTime: startTime,
-					};
-				}
-				connection.connect(clientJoinMessageServerMetadata).catch(async (err) => {
-					const errMsg = `Failed to connect to the orderer connection. Error: ${safeStringify(
+					const errMsg = `Failed to get orderer manager. Error: ${safeStringify(
 						err,
 						undefined,
 						2,
 					)}`;
 					connectDocumentOrdererConnectionMetric.error(
-						"Failed to establish orderer connection",
+						"Failed to get orderer manager",
 						err,
 					);
-					return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
+					throw handleServerErrorAndConvertToNetworkError(
+						logger,
+						errMsg,
+						documentId,
+						tenantId,
+						err,
+					);
 				});
 
-				connectionsMap.set(clientId, connection);
-				if (connectionsMap.size > 1) {
-					Lumberjack.info(
-						`Same socket is having multiple connections, connection number=${connectionsMap.size}`,
-						getLumberBaseProperties(connection.documentId, connection.tenantId),
+			const connection = await orderer
+				.connect(socket, clientId, messageClient)
+				.catch(async (err) => {
+					const errMsg = `Failed to connect to orderer. Error: ${safeStringify(
+						err,
+						undefined,
+						2,
+					)}`;
+					connectDocumentOrdererConnectionMetric.error(
+						"Failed to connect to orderer",
+						err,
 					);
-				}
+					throw handleServerErrorAndConvertToNetworkError(
+						logger,
+						errMsg,
+						documentId,
+						tenantId,
+						err,
+					);
+				});
 
-				connectDocumentOrdererConnectionMetric.success(
-					"Successfully established orderer connection",
+			// Eventually we will send disconnect reason as headers to client.
+			connection.once("error", (error) => {
+				const messageMetaData = getMessageMetadata(
+					connection.documentId,
+					connection.tenantId,
 				);
 
-				connectedMessage = {
-					claims,
-					clientId,
-					existing: true,
-					maxMessageSize: connection.maxMessageSize,
-					mode: "write",
-					serviceConfiguration: {
-						blockSize: connection.serviceConfiguration.blockSize,
-						maxMessageSize: connection.serviceConfiguration.maxMessageSize,
-					},
-					initialClients: clients,
-					initialMessages: [],
-					initialSignals: [],
-					supportedVersions: protocolVersions,
-					version,
-				};
-			} else {
-				connectedMessage = {
-					claims,
-					clientId,
-					existing: true,
-					maxMessageSize: 1024, // Readonly client can't send ops.
-					mode: "read",
-					serviceConfiguration: {
-						blockSize: core.DefaultServiceConfiguration.blockSize,
-						maxMessageSize: core.DefaultServiceConfiguration.maxMessageSize,
-					},
-					initialClients: clients,
-					initialMessages: [],
-					initialSignals: [],
-					supportedVersions: protocolVersions,
-					version,
+				logger.error(
+					`Disconnecting socket on connection error: ${safeStringify(
+						error,
+						undefined,
+						2,
+					)}`,
+					{ messageMetaData },
+				);
+				Lumberjack.error(
+					`Disconnecting socket on connection error`,
+					getLumberBaseProperties(connection.documentId, connection.tenantId),
+					error,
+				);
+				clearExpirationTimer();
+				socket.disconnect(true);
+			});
+
+			let clientJoinMessageServerMetadata: any;
+			if (
+				core.DefaultServiceConfiguration.enableTraces &&
+				sampleMessages(numberOfMessagesPerTrace)
+			) {
+				clientJoinMessageServerMetadata = {
+					connectDocumentStartTime: startTime,
 				};
 			}
+			connection.connect(clientJoinMessageServerMetadata).catch(async (err) => {
+				const errMsg = `Failed to connect to the orderer connection. Error: ${safeStringify(
+					err,
+					undefined,
+					2,
+				)}`;
+				connectDocumentOrdererConnectionMetric.error(
+					"Failed to establish orderer connection",
+					err,
+				);
+				throw handleServerErrorAndConvertToNetworkError(
+					logger,
+					errMsg,
+					documentId,
+					tenantId,
+					err,
+				);
+			});
 
-			// back-compat: remove cast to any once new definition of IConnected comes through.
-			(connectedMessage as any).timestamp = connectedTimestamp;
+			connectionsMap.set(clientId, connection);
+			if (connectionsMap.size > 1) {
+				Lumberjack.info(
+					`Same socket is having multiple connections, connection number=${connectionsMap.size}`,
+					getLumberBaseProperties(connection.documentId, connection.tenantId),
+				);
+			}
 
+			connectDocumentOrdererConnectionMetric.success(
+				"Successfully established orderer connection",
+			);
+
+			return composeConnectedMessage(
+				claims,
+				clientId,
+				connection.maxMessageSize,
+				"write",
+				connection.serviceConfiguration.blockSize,
+				connection.serviceConfiguration.maxMessageSize,
+				clients,
+				version,
+			);
+		}
+
+		function trackSocket(tenantId: string, documentId: string, claims: ITokenClaims) {
 			// Track socket and tokens for this connection
 			if (socketTracker && claims.jti) {
 				socketTracker.addSocketForToken(
-					core.createCompositeTokenId(message.tenantId, message.id, claims.jti),
+					core.createCompositeTokenId(tenantId, documentId, claims.jti),
 					socket,
 				);
 			}
+		}
 
-			// Set up listener to forward signal to clients in the collaboration session when the broadcast-signal endpoint is called
-			collaborationSessionEventEmitter?.on(
-				"broadcastSignal",
-				// eslint-disable-next-line @typescript-eslint/no-misused-promises
-				async (broadcastSignal: IBroadcastSignalEventPayload) => {
-					const { signalRoom, signalContent } = broadcastSignal;
-
-					// No-op if the room (collab session) that signal came in from is different
-					// than the current room. We reuse websockets so there could be multiple rooms
-					// that we are sending the signal to, and we don't want to do that.
-					if (
-						signalRoom.documentId === room.documentId &&
-						signalRoom.tenantId === room.tenantId
-					) {
-						try {
-							const contents = JSON.parse(signalContent) as IRuntimeSignalEnvelope;
-							const runtimeMessage = createRuntimeMessage(contents);
-
-							socket
-								.emitToRoom(getRoomId(signalRoom), "signal", runtimeMessage)
-								.catch((error: any) => {
-									const errorMsg = `Failed to broadcast signal from external API.`;
-									Lumberjack.error(
-										errorMsg,
-										getLumberBaseProperties(
-											signalRoom.documentId,
-											signalRoom.tenantId,
-										),
-										error,
-									);
-								});
-						} catch (error) {
-							const errorMsg = `broadcast-signal conent body is malformed`;
-							return handleServerError(
-								logger,
-								errorMsg,
-								claims.documentId,
-								claims.tenantId,
-							);
-						}
-					}
-				},
+		async function connectDocument(
+			message: IConnect,
+			properties: Record<string, any>,
+		): Promise<IConnectedClient> {
+			let connectDocumentStage = ConnectDocumentStage.ConnectDocumentStarted;
+			const startTime = Date.now();
+			const connectMetric = Lumberjack.newLumberMetric(
+				LumberEventName.ConnectDocument,
+				properties,
 			);
+			let tenantId = message.tenantId;
+			let documentId = message.id;
+			let uncaughtError: any;
+			try {
+				const [connectVersions, version] = checkVersion(message.versions);
+				connectDocumentStage = ConnectDocumentStage.VersionsChecked;
 
-			return {
-				connection: connectedMessage,
-				connectVersions,
-				details: messageClient as IClient,
-			};
+				checkThrottle(tenantId);
+				connectDocumentStage = ConnectDocumentStage.ThrottleChecked;
+
+				const claims = await checkToken(message.token, tenantId, documentId);
+				// check token validate tenantId/documentId for consistent, throw 403 if now.
+				// Following change tenantId/documentId from claims, just in case future code changes that we can remember to use the ones from claim.
+				tenantId = claims.tenantId;
+				documentId = claims.documentId;
+				connectDocumentStage = ConnectDocumentStage.TokenVerified;
+
+				const [clientId, room] = await joinRoomAndSubscribeToChannel(
+					tenantId,
+					documentId,
+					socket,
+				);
+				connectDocumentStage = ConnectDocumentStage.RoomJoined;
+
+				const subMetricProperties = {
+					...getLumberBaseProperties(documentId, tenantId),
+					[CommonProperties.clientId]: clientId,
+				};
+				const clients = await retrieveClients(tenantId, documentId, subMetricProperties);
+				connectDocumentStage = ConnectDocumentStage.ClientsRetrieved;
+
+				const connectedTimestamp = Date.now();
+				const messageClient = createMessageClientAndJoinRoom(
+					message.client,
+					claims,
+					room,
+					clientId,
+					connectedTimestamp,
+				);
+				connectDocumentStage = ConnectDocumentStage.MessageClientCreated;
+
+				await addMessageClientToClientManager(
+					tenantId,
+					documentId,
+					clientId,
+					messageClient,
+					subMetricProperties,
+				);
+				connectDocumentStage = ConnectDocumentStage.MessageClientAdded;
+
+				if (isTokenExpiryEnabled) {
+					const lifeTimeMSec = validateTokenClaimsExpiration(claims, maxTokenLifetimeSec);
+					setExpirationTimer(lifeTimeMSec);
+				}
+				connectDocumentStage = ConnectDocumentStage.TokenExpirySet;
+
+				const isWriterClient = isWriter(messageClient.scopes ?? [], message.mode);
+				connectMetric.setProperty("IsWriterClient", isWriterClient);
+				const connectedMessage = isWriterClient
+					? await connectOrderer(
+							tenantId,
+							documentId,
+							clientId,
+							messageClient as IClient,
+							subMetricProperties,
+							startTime,
+							claims,
+							clients,
+							version,
+					  )
+					: composeConnectedMessage(
+							claims,
+							clientId,
+							1024,
+							"read",
+							core.DefaultServiceConfiguration.blockSize,
+							core.DefaultServiceConfiguration.maxMessageSize,
+							clients,
+							version,
+					  );
+				// back-compat: remove cast to any once new definition of IConnected comes through.
+				(connectedMessage as any).timestamp = connectedTimestamp;
+				connectDocumentStage = ConnectDocumentStage.MessageClientConnected;
+
+				trackSocket(tenantId, documentId, claims);
+				connectDocumentStage = ConnectDocumentStage.SocketTrackerAppended;
+
+				setUpSignalListenerForRoomBroadcasting(room, documentId, tenantId);
+				connectDocumentStage = ConnectDocumentStage.SignalListenerSetUp;
+
+				const result = {
+					connection: connectedMessage,
+					connectVersions,
+					details: messageClient as IClient,
+				};
+
+				socket.emitToRoom(
+					getRoomId(room),
+					"signal",
+					createRoomJoinMessage(result.connection.clientId, result.details),
+				);
+				connectDocumentStage = ConnectDocumentStage.JoinOpEmitted;
+
+				connectMetric.setProperties({
+					[CommonProperties.clientId]: result.connection.clientId,
+					[CommonProperties.clientCount]: result.connection.initialClients.length + 1,
+					[CommonProperties.clientType]: result.details.details.type,
+				});
+
+				return {
+					connection: connectedMessage,
+					connectVersions,
+					details: messageClient as IClient,
+				};
+			} catch (err) {
+				uncaughtError = err;
+				throw err;
+			} finally {
+				connectMetric.setProperty("ConnectDocumentStage", connectDocumentStage);
+				if (!uncaughtError) {
+					connectMetric.success(`Connect document successful`);
+				} else {
+					if (uncaughtError.code !== undefined) {
+						connectMetric.setProperty(CommonProperties.errorCode, uncaughtError.code);
+					}
+					connectMetric.error(`Connect document failed`, uncaughtError);
+				}
+			}
 		}
 
 		async function disconnectDocument() {
@@ -763,18 +687,144 @@ export function configureWebSocketServices(
 			await Promise.all(removeAndStoreP);
 		}
 
+		function createMessageClientAndJoinRoom(
+			client: IClient,
+			claims: ITokenClaims,
+			room: IRoom,
+			clientId: string,
+			connectedTimestamp: number,
+		): Partial<IClient> {
+			// Todo should all the client details come from the claims???
+			// we are still trusting the users permissions and type here.
+			const messageClient: Partial<IClient> = client ?? {};
+			messageClient.user = claims.user;
+			messageClient.scopes = claims.scopes;
+			const isSummarizer = messageClient.details?.type === summarizerClientType;
+
+			// 1. Do not give SummaryWrite scope to clients that are not summarizers.
+			// 2. Store connection timestamp for all clients but the summarizer.
+			// Connection timestamp is used (inside socket disconnect event) to
+			// calculate the client connection time (i.e. for billing).
+			if (!isSummarizer) {
+				messageClient.scopes = claims.scopes.filter(
+					(scope) => scope !== ScopeType.SummaryWrite,
+				);
+				connectionTimeMap.set(clientId, connectedTimestamp);
+			}
+
+			// back-compat: remove cast to any once new definition of IClient comes through.
+			(messageClient as any).timestamp = connectedTimestamp;
+
+			// Cache the scopes.
+			scopeMap.set(clientId, messageClient.scopes);
+
+			// Join the room to receive signals.
+			roomMap.set(clientId, room);
+
+			// increment connection count after the client is added to the room.
+			// excluding summarizer for total client count.
+			if (!isSummarizer) {
+				connectionCountLogger.incrementConnectionCount();
+			}
+			return messageClient;
+		}
+
+		async function addMessageClientToClientManager(
+			tenantId: string,
+			documentId: string,
+			clientId: string,
+			messageClient: Partial<IClient>,
+			metricProperties: { clientId: string; tenantId: string; documentId: string },
+		) {
+			const connectDocumentAddClientMetric = Lumberjack.newLumberMetric(
+				LumberEventName.ConnectDocumentAddClient,
+				metricProperties,
+			);
+			try {
+				await clientManager.addClient(
+					tenantId,
+					documentId,
+					clientId,
+					messageClient as IClient,
+				);
+				connectDocumentAddClientMetric.success("Successfully added client");
+			} catch (err) {
+				const errMsg = `Could not add client. Error: ${safeStringify(err, undefined, 2)}`;
+				connectDocumentAddClientMetric.error(
+					"Error adding client during connectDocument",
+					err,
+				);
+				throw handleServerErrorAndConvertToNetworkError(
+					logger,
+					errMsg,
+					documentId,
+					tenantId,
+					err,
+				);
+			}
+		}
+
+		function setUpSignalListenerForRoomBroadcasting(
+			room: IRoom,
+			documentId: string,
+			tenantId: string,
+		) {
+			collaborationSessionEventEmitter?.on(
+				"broadcastSignal",
+				// eslint-disable-next-line @typescript-eslint/no-misused-promises
+				async (broadcastSignal: IBroadcastSignalEventPayload) => {
+					const { signalRoom, signalContent } = broadcastSignal;
+
+					// No-op if the room (collab session) that signal came in from is different
+					// than the current room. We reuse websockets so there could be multiple rooms
+					// that we are sending the signal to, and we don't want to do that.
+					if (
+						signalRoom.documentId === room.documentId &&
+						signalRoom.tenantId === room.tenantId
+					) {
+						try {
+							const contents = JSON.parse(signalContent) as IRuntimeSignalEnvelope;
+							const runtimeMessage = createRuntimeMessage(contents);
+
+							socket
+								.emitToRoom(getRoomId(signalRoom), "signal", runtimeMessage)
+								.catch((error: any) => {
+									const errorMsg = `Failed to broadcast signal from external API.`;
+									Lumberjack.error(
+										errorMsg,
+										getLumberBaseProperties(
+											signalRoom.documentId,
+											signalRoom.tenantId,
+										),
+										error,
+									);
+								});
+						} catch (error) {
+							const errorMsg = `broadcast-signal content body is malformed`;
+							throw handleServerErrorAndConvertToNetworkError(
+								logger,
+								errorMsg,
+								documentId,
+								tenantId,
+								error,
+							);
+						}
+					}
+				},
+			);
+		}
+
 		// Note connect is a reserved socket.io word so we use connect_document to represent the connect request
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		socket.on("connect_document", async (connectionMessage: IConnect) => {
 			const userAgentInfo = parseRelayUserAgent(connectionMessage.relayUserAgent);
 			const driverVersion: string | undefined = userAgentInfo.driverVersion;
-			const connectMetric = Lumberjack.newLumberMetric(LumberEventName.ConnectDocument);
 			const baseLumberjackProperties = getLumberBaseProperties(
 				connectionMessage.id,
 				connectionMessage.tenantId,
 			);
 			const correlationId = uuid();
-			connectMetric.setProperties({
+			const properties = {
 				...baseLumberjackProperties,
 				[CommonProperties.clientDriverVersion]: driverVersion,
 				[CommonProperties.connectionCount]: connectionsMap.size,
@@ -783,41 +833,18 @@ export function configureWebSocketServices(
 				),
 				[CommonProperties.roomClients]: JSON.stringify(Array.from(roomMap.keys())),
 				[BaseTelemetryProperties.correlationId]: correlationId,
-			});
+			};
 
 			connectDocumentP = getGlobalTelemetryContext().bindPropertiesAsync(
 				{ correlationId, ...baseLumberjackProperties },
 				async () =>
-					connectDocument(connectionMessage)
+					connectDocument(connectionMessage, properties)
 						.then((message) => {
 							socket.emit("connect_document_success", message.connection);
-							const room = roomMap.get(message.connection.clientId);
-							if (room) {
-								socket.emitToRoom(
-									getRoomId(room),
-									"signal",
-									createRoomJoinMessage(
-										message.connection.clientId,
-										message.details,
-									),
-								);
-							}
-
-							connectMetric.setProperties({
-								[CommonProperties.clientId]: message.connection.clientId,
-								[CommonProperties.clientCount]:
-									message.connection.initialClients.length + 1,
-								[CommonProperties.clientType]: message.details.details?.type,
-							});
-							connectMetric.success(`Connect document successful`);
 						})
 						.catch((error) => {
 							socket.emit("connect_document_error", error);
 							clearExpirationTimer();
-							if (error?.code !== undefined) {
-								connectMetric.setProperty(CommonProperties.errorCode, error.code);
-							}
-							connectMetric.error(`Connect document failed`, error);
 						})
 						.finally(() => {
 							connectDocumentComplete = true;
@@ -1119,6 +1146,152 @@ export function configureWebSocketServices(
 			}
 		});
 	});
+
+	function checkThrottle(tenantId: string): void {
+		const throttleErrorPerCluster = checkThrottleAndUsage(
+			connectThrottlerPerCluster,
+			getSocketConnectThrottleId("connectDoc"),
+			tenantId,
+			logger,
+		);
+		if (throttleErrorPerCluster) {
+			// eslint-disable-next-line @typescript-eslint/no-throw-literal
+			throw throttleErrorPerCluster;
+		}
+		const throttleErrorPerTenant = checkThrottleAndUsage(
+			connectThrottlerPerTenant,
+			getSocketConnectThrottleId(tenantId),
+			tenantId,
+			logger,
+		);
+		if (throttleErrorPerTenant) {
+			// eslint-disable-next-line @typescript-eslint/no-throw-literal
+			throw throttleErrorPerTenant;
+		}
+	}
+
+	async function checkToken(
+		token: string | null,
+		tenantId: string,
+		documentId: string,
+	): Promise<ITokenClaims> {
+		if (!token) {
+			throw new NetworkError(403, "Must provide an authorization token");
+		}
+		const claims = validateTokenClaims(token, documentId, tenantId);
+		try {
+			if (revokedTokenChecker && claims.jti) {
+				const isTokenRevoked: boolean = await revokedTokenChecker.isTokenRevoked(
+					claims.tenantId,
+					claims.documentId,
+					claims.jti,
+				);
+				if (isTokenRevoked) {
+					throw new core.TokenRevokedError(
+						403,
+						"Permission denied. Token has been revoked",
+						false /* canRetry */,
+						true /* isFatal */,
+					);
+				}
+			}
+			await tenantManager.verifyToken(claims.tenantId, token);
+			return claims;
+		} catch (error: any) {
+			if (isNetworkError(error)) {
+				throw error;
+			}
+			// We don't understand the error, so it is likely an internal service error.
+			const errMsg = `Could not verify connect document token. Error: ${safeStringify(
+				error,
+				undefined,
+				2,
+			)}`;
+			throw handleServerErrorAndConvertToNetworkError(
+				logger,
+				errMsg,
+				claims.documentId,
+				claims.tenantId,
+				error,
+			);
+		}
+	}
+
+	async function joinRoomAndSubscribeToChannel(
+		tenantId: string,
+		documentId: string,
+		socket: core.IWebSocket,
+	): Promise<[string, IRoom]> {
+		const clientId = generateClientId();
+
+		const room: IRoom = {
+			tenantId,
+			documentId,
+		};
+
+		try {
+			// Subscribe to channels.
+			await Promise.all([socket.join(getRoomId(room)), socket.join(`client#${clientId}`)]);
+			return [clientId, room];
+		} catch (err) {
+			const errMsg = `Could not subscribe to channels. Error: ${safeStringify(
+				err,
+				undefined,
+				2,
+			)}`;
+			throw handleServerErrorAndConvertToNetworkError(
+				logger,
+				errMsg,
+				documentId,
+				tenantId,
+				err,
+			);
+		}
+	}
+
+	async function retrieveClients(
+		tenantId: string,
+		documentId: string,
+		metricProperties: Record<string, any>,
+	): Promise<ISignalClient[]> {
+		const connectDocumentGetClientsMetric = Lumberjack.newLumberMetric(
+			LumberEventName.ConnectDocumentGetClients,
+			metricProperties,
+		);
+		const clients = await clientManager
+			.getClients(tenantId, documentId)
+			.then((response) => {
+				connectDocumentGetClientsMetric.success(
+					"Successfully got clients from client manager",
+				);
+				return response;
+			})
+			.catch(async (err) => {
+				const errMsg = `Failed to get clients. Error: ${safeStringify(err, undefined, 2)}`;
+				connectDocumentGetClientsMetric.error(
+					"Failed to get clients during connectDocument",
+					err,
+				);
+				throw handleServerErrorAndConvertToNetworkError(
+					logger,
+					errMsg,
+					documentId,
+					tenantId,
+					err,
+				);
+			});
+
+		if (clients.length > maxNumberOfClientsPerDocument) {
+			throw new NetworkError(
+				429,
+				"Too Many Clients Connected to Document",
+				true /* canRetry */,
+				false /* isFatal */,
+				5 * 60 * 1000 /* retryAfterMs (5 min) */,
+			);
+		}
+		return clients;
+	}
 }
 
 function addAlfredTrace(
@@ -1158,4 +1331,33 @@ function addAlfredTrace(
 
 function sampleMessages(numberOfMessagesPerTrace: number): boolean {
 	return getRandomInt(numberOfMessagesPerTrace) === 0;
+}
+
+function composeConnectedMessage(
+	claims: ITokenClaims,
+	clientId: string,
+	messageSize: number,
+	mode: "read" | "write",
+	serviceConfigurationBlockSize: number,
+	serviceConfigurationMaxMessageSize: number,
+	clients: ISignalClient[],
+	version: string,
+): IConnected {
+	const connectedMessage: IConnected = {
+		claims,
+		clientId,
+		existing: false,
+		maxMessageSize: messageSize,
+		mode,
+		serviceConfiguration: {
+			blockSize: serviceConfigurationBlockSize,
+			maxMessageSize: serviceConfigurationMaxMessageSize,
+		},
+		initialClients: clients,
+		initialMessages: [],
+		initialSignals: [],
+		supportedVersions: protocolVersions,
+		version,
+	};
+	return connectedMessage;
 }
