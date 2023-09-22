@@ -487,6 +487,63 @@ export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
 	 */
 	mapBoxed<U>(callbackfn: (value: TypedNodeUnion<TTypes>, index: number, array: this) => U): U[];
 
+	/**
+	 * Calls the specified callback function for all the elements in the sequence.
+	 * The return value of the callback function is the accumulated result, and is provided as an argument in the next call to the callback function.
+	 * @param callbackfn - A function that accepts up to four arguments.
+	 * The reduce method calls the callbackfn function one time for each element in the array.
+	 * @param initialValue - If present, it is passed to the first call to the callbackfn.
+	 * Otherwise, the first element in the sequence will be used as the initial accumulator value and skipped as currentValue.
+	 */
+	reduce(
+		callbackfn: (
+			previousValue: UnboxNodeUnion<TTypes>,
+			currentValue: UnboxNodeUnion<TTypes>,
+			currentIndex: number,
+			sequence: this,
+		) => UnboxNodeUnion<TTypes>,
+		initialValue?: UnboxNodeUnion<TTypes>,
+	): UnboxNodeUnion<TTypes>;
+	reduce<U>(
+		callbackfn: (
+			previousValue: U,
+			currentValue: UnboxNodeUnion<TTypes>,
+			currentIndex: number,
+			sequence: this,
+		) => UnboxNodeUnion<TTypes>,
+		initialValue: U,
+	): U;
+
+	/**
+	 * Calls the specified callback function for all the elements in the sequence.
+	 * The return value of the callback function is the accumulated result, and is provided as an argument in the next call to the callback function.
+	 * @param callbackfn - A function that accepts up to four arguments.
+	 * The reduce method calls the callbackfn function one time for each element in the array.
+	 * @param initialValue - If present, it is passed to the first call to the callbackfn.
+	 * Otherwise, the first element in the sequence will be used as the initial accumulator value and skipped as currentValue.
+	 */
+	reduceBoxed(
+		callbackfn: (
+			previousValue: TypedNodeUnion<TTypes>,
+			currentValue: TypedNodeUnion<TTypes>,
+			currentIndex: number,
+			sequence: this,
+		) => TypedNodeUnion<TTypes>,
+		initialValue?: TypedNodeUnion<TTypes>,
+	): TypedNodeUnion<TTypes>;
+	reduceBoxed<U>(
+		callbackfn: (
+			previousValue: U,
+			currentValue: TypedNodeUnion<TTypes>,
+			currentIndex: number,
+			sequence: this,
+		) => TypedNodeUnion<TTypes>,
+		initialValue: U,
+	): U;
+
+	/**
+	 * The number of elements in this sequence.
+	 */
 	readonly length: number;
 
 	// TODO: more and/or better editing APIs. As is, this can't express moves.
@@ -499,13 +556,22 @@ export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
 	[Symbol.iterator](): Iterator<TypedNodeUnion<TTypes>>;
 
 	/**
-	 * An enumerable own property which allows JavaScript object traversals to access {@link Sequence} content.
-	 * It is recommenced to NOT use this when possible (for performance and type safety reasons): instead use {@link Sequence#at} or iterate over nodes with `Symbol.iterator`.
-	 * See [ReadMe](./README.md) for details.
+	 * Provides a copy of this sequence's data as an array.
 	 *
+	 * @remarks
 	 * This array is not guaranteed to be kept up to date across edits and thus should not be held onto across edits.
+	 * This also serves as an enumerable own property which allows JavaScript object traversals to access {@link Sequence} content.
+	 * See [ReadMe](./README.md) for details.
 	 */
 	readonly asArray: readonly UnboxNodeUnion<TTypes>[];
+
+	/**
+	 * Provides a copy of this sequence's data as an array of nodes.
+	 *
+	 * @remarks
+	 * This array is not guaranteed to be kept up to date across edits and thus should not be held onto across edits.
+	 */
+	readonly asBoxedArray: readonly TypedNodeUnion<TTypes>[];
 }
 
 /**

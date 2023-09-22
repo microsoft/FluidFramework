@@ -17,6 +17,7 @@ import {
 	keyAsDetachedField,
 	rootField,
 	EmptyKey,
+	forEachNode,
 } from "../../core";
 import { FieldKind } from "../modular-schema";
 import { NewFieldContent, normalizeNewFieldContent } from "../contextuallyTyped";
@@ -202,6 +203,64 @@ export abstract class LazyField<TKind extends FieldKindTypes, TTypes extends All
 		);
 	}
 
+	public reduce<U>(
+		callbackfn: (
+			previousValue: U,
+			currentValue: UnboxNodeUnion<TTypes>,
+			currentIndex: number,
+			sequence: this,
+		) => U,
+		initialValue?: U | undefined,
+	): UnboxNodeUnion<TTypes> | U {
+		return this.reduceImpl(
+			callbackfn,
+			(cursor) => unboxedUnion(this.context, this.schema, cursor),
+			initialValue,
+		);
+	}
+
+	public reduceBoxed<U>(
+		callbackfn: (
+			previousValue: U,
+			currentValue: TypedNodeUnion<TTypes>,
+			currentIndex: number,
+			sequence: this,
+		) => U,
+		initialValue?: U | undefined,
+	): TypedNodeUnion<TTypes> | U {
+		return this.reduceImpl(
+			callbackfn,
+			(cursor) => unboxedUnion(this.context, this.schema, cursor),
+			initialValue,
+		);
+	}
+
+	private reduceImpl<Accumulation, T>(
+		callbackfn: (
+			previousValue: Accumulation,
+			currentValue: T,
+			currentIndex: number,
+			sequence: this,
+		) => Accumulation,
+		getCurrentValue: (cursor: ITreeSubscriptionCursor) => T,
+		initialValue?: Accumulation,
+	): T | Accumulation {
+		let accumulation = initialValue;
+		forEachNode(this[cursorSymbol], (cursor) => {
+			const element = getCurrentValue(cursor);
+			accumulation =
+				accumulation !== undefined
+					? callbackfn(
+							accumulation as unknown as Accumulation,
+							element,
+							cursor.fieldIndex,
+							this,
+					  ) // Cast: it is assumed that if initialValue === undefined, then U == T
+					: (element as unknown as Accumulation);
+		});
+		return accumulation ?? fail("Reduce called on an empty sequence with no initial value");
+	}
+
 	public [Symbol.iterator](): IterableIterator<TypedNodeUnion<TTypes>> {
 		return this.mapBoxed((x) => x)[Symbol.iterator]();
 	}
@@ -277,6 +336,10 @@ export class LazySequence<TTypes extends AllowedTypes>
 
 	public get asArray(): readonly UnboxNodeUnion<TTypes>[] {
 		return this.map((x) => x);
+	}
+
+	public get asBoxedArray(): readonly TypedNodeUnion<TTypes>[] {
+		return this.mapBoxed((x) => x);
 	}
 }
 

@@ -1861,12 +1861,18 @@ export interface Sequence2<TTypes extends AllowedTypes> extends TreeField {
     // (undocumented)
     [Symbol.iterator](): Iterator<TypedNodeUnion<TTypes>>;
     readonly asArray: readonly UnboxNodeUnion<TTypes>[];
+    readonly asBoxedArray: readonly TypedNodeUnion<TTypes>[];
     at(index: number): UnboxNodeUnion<TTypes>;
     boxedAt(index: number): TypedNodeUnion<TTypes>;
-    // (undocumented)
     readonly length: number;
     map<U>(callbackfn: (value: UnboxNodeUnion<TTypes>, index: number, array: this) => U): U[];
     mapBoxed<U>(callbackfn: (value: TypedNodeUnion<TTypes>, index: number, array: this) => U): U[];
+    reduce(callbackfn: (previousValue: UnboxNodeUnion<TTypes>, currentValue: UnboxNodeUnion<TTypes>, currentIndex: number, sequence: this) => UnboxNodeUnion<TTypes>, initialValue?: UnboxNodeUnion<TTypes>): UnboxNodeUnion<TTypes>;
+    // (undocumented)
+    reduce<U>(callbackfn: (previousValue: U, currentValue: UnboxNodeUnion<TTypes>, currentIndex: number, sequence: this) => UnboxNodeUnion<TTypes>, initialValue: U): U;
+    reduceBoxed(callbackfn: (previousValue: TypedNodeUnion<TTypes>, currentValue: TypedNodeUnion<TTypes>, currentIndex: number, sequence: this) => TypedNodeUnion<TTypes>, initialValue?: TypedNodeUnion<TTypes>): TypedNodeUnion<TTypes>;
+    // (undocumented)
+    reduceBoxed<U>(callbackfn: (previousValue: U, currentValue: TypedNodeUnion<TTypes>, currentIndex: number, sequence: this) => TypedNodeUnion<TTypes>, initialValue: U): U;
     // (undocumented)
     replaceRange(index: number, count: number, content: Iterable<FlexibleNodeContent<TTypes>>): void;
 }
