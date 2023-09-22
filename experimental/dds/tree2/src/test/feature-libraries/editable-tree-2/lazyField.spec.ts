@@ -11,10 +11,9 @@ import { Any, FieldKinds, SchemaBuilder } from "../../../feature-libraries";
 import {
 	FieldAnchor,
 	FieldKey,
-	IEditableForest,
-	ITreeSubscriptionCursor,
 	TreeNavigationResult,
 	ValueSchema,
+	rootFieldKey,
 } from "../../../core";
 import { forestWithContent } from "../../utils";
 import { brand } from "../../../util";
@@ -23,11 +22,11 @@ import {
 	LazySequence,
 	LazyValueField,
 } from "../../../feature-libraries/editable-tree-2/lazyField";
-import { Context } from "../../../feature-libraries/editable-tree-2/context";
 import { getReadonlyContext } from "./utils";
 
 const detachedField: FieldKey = brand("detached");
 const detachedFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: detachedField };
+const rootFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: rootFieldKey };
 
 describe("LazyField", () => {
 	it("LazyField implementations do not allow edits to detached trees", () => {
@@ -38,7 +37,7 @@ describe("LazyField", () => {
 		const context = getReadonlyContext(forest, schema);
 		const cursor = context.forest.allocateCursor();
 		assert.equal(
-			forest.tryMoveCursorToField({ fieldKey: detachedField, parent: undefined }, cursor),
+			forest.tryMoveCursorToField(detachedFieldAnchor, cursor),
 			TreeNavigationResult.Ok,
 		);
 		const sequenceField = new LazySequence(
@@ -76,35 +75,21 @@ describe("LazyField", () => {
 });
 
 describe.only("LazyOptionalField", () => {
-	function initializeForest(builder: SchemaBuilder): {
-		context: Context;
-		cursor: ITreeSubscriptionCursor;
-		forest: IEditableForest;
-	} {
-		const rootNodeSchema = builder.struct("root", { root: SchemaBuilder.fieldOptional(Any) });
-		const schema = builder.intoDocumentSchema(
-			SchemaBuilder.field(FieldKinds.optional, rootNodeSchema),
-		);
-		const forest = forestWithContent({ schema, initialTree: {} });
-		const context = getReadonlyContext(forest, schema);
-		const cursor = context.forest.allocateCursor();
-
-		assert.equal(
-			context.forest.tryMoveCursorToField(
-				{ fieldKey: detachedField, parent: undefined },
-				cursor,
-			),
-			TreeNavigationResult.Ok,
-		);
-
-		return { context, cursor, forest };
-	}
-
 	describe("as", () => {
 		it("Any", () => {
 			const builder = new SchemaBuilder("test");
 			const booleanLeafSchema = builder.leaf("bool", ValueSchema.Boolean);
-			const { context, cursor } = initializeForest(builder);
+			const rootSchema = SchemaBuilder.fieldOptional(builder.struct("rootNode", {}));
+			const schema = builder.intoDocumentSchema(rootSchema);
+			const forest = forestWithContent({ schema, initialTree: {} });
+
+			const context = getReadonlyContext(forest, schema);
+			const cursor = context.forest.allocateCursor();
+
+			assert.equal(
+				context.forest.tryMoveCursorToField(detachedFieldAnchor, cursor),
+				TreeNavigationResult.Ok,
+			);
 
 			const field = new LazyOptionalField(
 				context,
@@ -129,7 +114,17 @@ describe.only("LazyOptionalField", () => {
 			const builder = new SchemaBuilder("test");
 			const booleanLeafSchema = builder.leaf("bool", ValueSchema.Boolean);
 			const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
-			const { context, cursor } = initializeForest(builder);
+			const rootSchema = SchemaBuilder.fieldOptional(builder.struct("rootNode", {}));
+			const schema = builder.intoDocumentSchema(rootSchema);
+			const forest = forestWithContent({ schema, initialTree: {} });
+
+			const context = getReadonlyContext(forest, schema);
+			const cursor = context.forest.allocateCursor();
+
+			assert.equal(
+				context.forest.tryMoveCursorToField(detachedFieldAnchor, cursor),
+				TreeNavigationResult.Ok,
+			);
 
 			const field = new LazyOptionalField(
 				context,
@@ -159,13 +154,24 @@ describe.only("LazyOptionalField", () => {
 	describe("length", () => {
 		it("No value", () => {
 			const builder = new SchemaBuilder("test");
-			const { context, cursor } = initializeForest(builder);
+			const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
+			const rootSchema = SchemaBuilder.fieldOptional(numberLeafSchema);
+			const schema = builder.intoDocumentSchema(rootSchema);
+			const forest = forestWithContent({ schema, initialTree: undefined });
+
+			const context = getReadonlyContext(forest, schema);
+			const cursor = context.forest.allocateCursor();
+
+			assert.equal(
+				context.forest.tryMoveCursorToField(rootFieldAnchor, cursor),
+				TreeNavigationResult.Ok,
+			);
 
 			const field = new LazyOptionalField(
 				context,
 				SchemaBuilder.fieldOptional(Any),
 				cursor,
-				detachedFieldAnchor,
+				rootFieldAnchor,
 			);
 
 			assert.equal(field.length, 0);
@@ -173,18 +179,25 @@ describe.only("LazyOptionalField", () => {
 
 		it("With value", () => {
 			const builder = new SchemaBuilder("test");
-			const booleanLeafSchema = builder.leaf("bool", ValueSchema.Boolean);
-			const { context, cursor, forest } = initializeForest(builder);
+			const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
+			const rootSchema = SchemaBuilder.fieldOptional(numberLeafSchema);
+			const schema = builder.intoDocumentSchema(rootSchema);
+			const forest = forestWithContent({ schema, initialTree: 42 });
+
+			const context = getReadonlyContext(forest, schema);
+			const cursor = context.forest.allocateCursor();
+
+			assert.equal(
+				context.forest.tryMoveCursorToField(rootFieldAnchor, cursor),
+				TreeNavigationResult.Ok,
+			);
 
 			const field = new LazyOptionalField(
 				context,
-				SchemaBuilder.fieldOptional(booleanLeafSchema),
+				SchemaBuilder.fieldOptional(numberLeafSchema),
 				cursor,
-				cursor.buildFieldAnchor(), // TODO
+				rootFieldAnchor,
 			);
-
-			cursor.enterField(field.key);
-			field.setContent(true);
 
 			assert.equal(field.length, 1);
 		});
