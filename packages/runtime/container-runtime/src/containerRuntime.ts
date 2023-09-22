@@ -855,8 +855,6 @@ export class ContainerRuntime
 			initializeEntryPoint,
 		);
 
-		await runtime.blobManager.processStashedChanges();
-
 		// Apply stashed ops with a reference sequence number equal to the sequence number of the snapshot,
 		// or zero. This must be done before Container replays saved ops.
 		await runtime.pendingStateManager.applyStashedOpsAt(runtimeSequenceNumber ?? 0);
@@ -2045,6 +2043,30 @@ export class ContainerRuntime
 				eventName: "UnsuccessfulConnectedTransition",
 			});
 			// Don't propagate "disconnected" event because we didn't propagate the previous "connected" event
+			return;
+		}
+
+		// If there are stashed blobs in the pending state, we need to delay
+		// propagation of the "connected" event until we have uploaded them to
+		// ensure we don't submit ops referencing a blob that has not been uploaded
+		const connecting = connected && !this._connected;
+		if (connecting && this.blobManager.hasPendingStashedBlobs()) {
+			assert(
+				!this.delayConnectClientId,
+				"Connect event delay must be canceled before subsequent connect event",
+			);
+			assert(!!clientId, "Must have clientId when connecting");
+			this.delayConnectClientId = clientId;
+			this.blobManager.processStashedChanges().then(
+				() => {
+					// make sure we didn't reconnect before the promise resolved
+					if (this.delayConnectClientId === clientId && !this.disposed) {
+						this.delayConnectClientId = undefined;
+						this.setConnectionStateCore(connected, clientId);
+					}
+				},
+				(error) => this.closeFn(error),
+			);
 			return;
 		}
 
