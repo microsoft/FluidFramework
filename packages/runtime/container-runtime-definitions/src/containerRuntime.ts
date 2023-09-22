@@ -8,6 +8,7 @@ import {
 	IEventProvider,
 	IRequest,
 	IResponse,
+	// eslint-disable-next-line import/no-deprecated
 	IFluidRouter,
 	FluidObject,
 	IFluidHandle,
@@ -68,6 +69,7 @@ export interface IContainerRuntime
 	 * @param wait - True if you want to wait for it.
 	 * @deprecated - Use getAliasedDataStoreEntryPoint instead to get an aliased data store's entry point.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
 
 	/**

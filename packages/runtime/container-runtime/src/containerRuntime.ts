@@ -8,6 +8,7 @@ import {
 	FluidObject,
 	IFluidHandle,
 	IFluidHandleContext,
+	// eslint-disable-next-line import/no-deprecated
 	IFluidRouter,
 	IRequest,
 	IResponse,
@@ -98,6 +99,7 @@ import {
 	create404Response,
 	exceptionToResponse,
 	GCDataBuilder,
+	// eslint-disable-next-line import/no-deprecated
 	requestFluidObject,
 	seqFromTree,
 	calculateStats,
@@ -2336,6 +2338,7 @@ export class ContainerRuntime
 	 * @param wait - True if you want to wait for it.
 	 * @deprecated - Use getAliasedDataStoreEntryPoint instead to get an aliased data store's entry point.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter> {
 		return this.getRootDataStoreChannel(id, wait);
 	}
@@ -3928,6 +3931,7 @@ export class ContainerRuntime
 	 * * Forms a function that will request a Summarizer.
 	 * @param loaderRouter - the loader acting as an IFluidRouter
 	 * */
+	// eslint-disable-next-line import/no-deprecated
 	private formRequestSummarizerFn(loaderRouter: IFluidRouter) {
 		return async () => {
 			const request: IRequest = {
@@ -3943,6 +3947,7 @@ export class ContainerRuntime
 				url: "/_summarizer",
 			};
 
+			// eslint-disable-next-line import/no-deprecated
 			const fluidObject = await requestFluidObject<FluidObject<ISummarizer>>(
 				loaderRouter,
 				request,

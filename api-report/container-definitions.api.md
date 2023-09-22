@@ -149,6 +149,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     readonly isDirty: boolean;
     proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>;
     readonly readOnlyInfo: ReadOnlyInfo;
+    // @deprecated (undocumented)
     request(request: {
         url: "/";
         headers?: undefined;

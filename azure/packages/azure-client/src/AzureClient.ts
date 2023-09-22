@@ -19,6 +19,7 @@ import {
 } from "@fluidframework/fluid-static";
 import { IClient, SummaryType } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+// eslint-disable-next-line import/no-deprecated
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import { IConfigProviderBase } from "@fluidframework/telemetry-utils";
@@ -163,6 +164,7 @@ export class AzureClient {
 		url.searchParams.append("tenantId", encodeURIComponent(getTenantId(this.props.connection)));
 		url.searchParams.append("containerId", encodeURIComponent(id));
 		const container = await loader.resolve({ url: url.href });
+		// eslint-disable-next-line import/no-deprecated
 		const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");
 		const fluidContainer = new FluidContainer(container, rootDataObject);
 		const services = this.getContainerServices(container);
@@ -248,6 +250,7 @@ export class AzureClient {
 			getTenantId(connection),
 		);
 
+		// eslint-disable-next-line import/no-deprecated
 		const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");
 
 		/**
