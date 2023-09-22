@@ -74,6 +74,7 @@ describe("LazyField", () => {
 	});
 });
 
+// TODO: no only
 describe.only("LazyOptionalField", () => {
 	describe("as", () => {
 		it("Any", () => {
@@ -149,6 +150,8 @@ describe.only("LazyOptionalField", () => {
 			// 	false,
 			// );
 		});
+
+		// TODO: what other cases are interesting?
 	});
 
 	describe("length", () => {
@@ -201,5 +204,73 @@ describe.only("LazyOptionalField", () => {
 
 			assert.equal(field.length, 1);
 		});
+	});
+
+	describe("map", () => {
+		it("number", () => {
+			const builder = new SchemaBuilder("test");
+			const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
+			const rootSchema = SchemaBuilder.fieldOptional(numberLeafSchema);
+			const schema = builder.intoDocumentSchema(rootSchema);
+			const forest = forestWithContent({ schema, initialTree: 42 });
+
+			const context = getReadonlyContext(forest, schema);
+			const cursor = context.forest.allocateCursor();
+
+			assert.equal(
+				context.forest.tryMoveCursorToField(rootFieldAnchor, cursor),
+				TreeNavigationResult.Ok,
+			);
+
+			const field = new LazyOptionalField(
+				context,
+				SchemaBuilder.fieldOptional(numberLeafSchema),
+				cursor,
+				rootFieldAnchor,
+			);
+
+			assert.deepEqual(
+				field.map((value) => value),
+				[42],
+			);
+		});
+
+		// TODOs:
+		// * other primitives
+		// * Non-primitive
+	});
+
+	describe("mapBoxed", () => {
+		it("number", () => {
+			const builder = new SchemaBuilder("test");
+			const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
+			const rootSchema = SchemaBuilder.fieldOptional(numberLeafSchema);
+			const schema = builder.intoDocumentSchema(rootSchema);
+			const forest = forestWithContent({ schema, initialTree: 42 });
+
+			const context = getReadonlyContext(forest, schema);
+			const cursor = context.forest.allocateCursor();
+
+			assert.equal(
+				context.forest.tryMoveCursorToField(rootFieldAnchor, cursor),
+				TreeNavigationResult.Ok,
+			);
+
+			const field = new LazyOptionalField(
+				context,
+				SchemaBuilder.fieldOptional(numberLeafSchema),
+				cursor,
+				rootFieldAnchor,
+			);
+
+			const mapResult = field.mapBoxed((value) => value);
+			assert.equal(mapResult.length, 1);
+			assert.equal(mapResult[0].type, "number");
+			assert.equal(mapResult[0].value, 42);
+		});
+
+		// TODOs:
+		// * other primitives
+		// * Non-primitive
 	});
 });
