@@ -108,13 +108,10 @@ parameters:
   type: string
   default: 'npm ci --unsafe-perm'
 
-- name: preBuildSteps
+- name: additionalBuildSteps
   type: stepList
   default: []
 
-- name: postBuildSteps
-  type: stepList
-  default: []
 
 # The semver range constraint to use for interdependencies; that is, dependencies on other packages within the release
 # group
@@ -283,9 +280,6 @@ stages:
               buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
               tagName: ${{ parameters.tagName }}
               interdependencyRange: ${{ parameters.interdependencyRange }}
-
-        # Run pre-build Steps
-        - ${{ parameters.preBuildSteps }}
         
         # Build
         - ${{ if ne(parameters.taskBuild, 'false') }}:
@@ -295,9 +289,6 @@ stages:
               command: 'custom'
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run ${{ parameters.taskBuild }}'
-        
-        # Run post-build Steps
-        - ${{ parameters.postBuildSteps }}
 
         # Lint
         - ${{ if ne(parameters.taskLint, false) }}:
@@ -597,6 +588,10 @@ stages:
                 echo "##vso[task.logissue type=error]Build should not create extraneous files"
                 exit -1;
               fi
+
+      # Job - Additional build steps
+      - job: addtional build
+        - ${{ parameters.additionalBuildSteps }}
 
       # Job - Component detection
       - ${{ if eq(variables.componentDetection, true) }}:
