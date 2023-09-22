@@ -1,17 +1,17 @@
-`flub updates`
-==============
+`flub setReleaseTagForPublishing`
+=================================
 
-Updates the types in package.json based on the release flag
+Updates the types in package.json based on the release flag. This command is intended for use in publishing pipelines and may not be intended for regular developer use.
 
-* [`flub updates packageTypes`](#flub-updates-packagetypes)
+* [`flub setReleaseTagForPublishing`](#flub-setreleasetagforpublishing)
 
-## `flub updates packageTypes`
+## `flub setReleaseTagForPublishing`
 
-Updates the types in package.json based on the release flag
+Updates the types in package.json based on the release flag. This command is intended for use in publishing pipelines and may not be intended for regular developer use.
 
 ```
 USAGE
-  $ flub updates packageTypes [-v | --quiet] [--concurrency <value>] [--all | --dir <value> | --packages | -g
+  $ flub setReleaseTagForPublishing [-v | --quiet] [--concurrency <value>] [--all | --dir <value> | --packages | -g
     client|server|azure|build-tools|gitrest|historian|all | --releaseGroupRoot
     client|server|azure|build-tools|gitrest|historian|all] [--private] [--scope <value> | --skipScope <value>] [--types
     <value>]
@@ -49,5 +49,8 @@ PACKAGE FILTER FLAGS
                           excluded. Cannot be used with --scope.
 
 DESCRIPTION
-  Updates the types in package.json based on the release flag
+  Updates the types in package.json based on the release flag. This command is intended for use in publishing pipelines
+  and may not be intended for regular developer use.
 ```
+
+_See code: [src/commands/setReleaseTagForPublishing.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/setReleaseTagForPublishing.ts)_
