@@ -70,7 +70,7 @@
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@fluidframework/undo-redo": "workspace:~",
-		"@microsoft/api-extractor": "^7.34.4",
+		"@microsoft/api-extractor": "^7.37.0",
 		"@types/chai": "^4.0.0",
 		"@types/lru-cache": "^5.1.0",
 		"@types/mocha": "^9.1.1",
@@ -89,7 +89,7 @@
 		"moment": "^2.21.0",
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",
-		"typescript": "~4.5.5"
+		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
 		"disabled": true,

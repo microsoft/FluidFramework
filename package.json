@@ -138,7 +138,7 @@
 		"@fluidframework/eslint-config-fluid": "^2.1.0",
 		"@fluidframework/test-tools": "^0.2.158186",
 		"@microsoft/api-documenter": "^7.21.6",
-		"@microsoft/api-extractor": "^7.34.4",
+		"@microsoft/api-extractor": "^7.37.0",
 		"@octokit/core": "^4.0.5",
 		"auto-changelog": "^2.4.0",
 		"c8": "^7.7.1",
@@ -154,7 +154,7 @@
 		"rimraf": "^4.4.0",
 		"run-script-os": "^1.1.6",
 		"syncpack": "^9.8.4",
-		"typescript": "~4.5.5"
+		"typescript": "~5.1.6"
 	},
 	"packageManager": "pnpm@7.33.5+sha512.4e499f22fffe5845aa8f9463e1386b2d72c3134e0ebef9409360ad844fef0290e82b479b32eb2ec0f30e56607e1820c22167829fd62656d41a8fd0cc4a0f4267",
 	"engines": {
