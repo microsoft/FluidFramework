@@ -29,7 +29,7 @@ describe("FencedCodeBlock Markdown rendering tests", () => {
 		);
 		const result = testRender(input, { insideTable: true });
 
-		const expected = ["<code>", "  console.log('hello world');", "</code>", ""].join("\n");
+		const expected = ["<code>", "console.log('hello world');", "</code>"].join("");
 
 		expect(result).to.equal(expected);
 	});

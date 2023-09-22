@@ -22,7 +22,6 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { ILoaderOptions } from "@fluidframework/container-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { ILoadTestConfig } from "./testConfigFile";
-import { LeaderElection } from "./leaderElection";
 
 export interface IRunConfig {
 	runId: number;
@@ -515,9 +514,6 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 			this.runtime,
 			this.context.containerRuntime,
 		);
-
-		const leaderElection = new LeaderElection(this.runtime);
-		leaderElection.setupLeaderElection();
 
 		// At every moment, we want half the client to be concurrent writers, and start and stop
 		// in a rotation fashion for every cycle.

@@ -69,7 +69,7 @@ describe("Span Markdown rendering tests", () => {
 			const node3 = new PlainTextNode(text2);
 			const span = new SpanNode([node1, node2, node3], formatting);
 			expect(testRender(span, { insideTable: true })).to.equal(
-				`<span><b><i>This is some text.</i></b> \n<br>\n<b><i>${text2}</i></b></span>`,
+				`<span><b><i>This is some text.</i></b> <br><b><i>${text2}</i></b></span>`,
 			);
 		});
 	});

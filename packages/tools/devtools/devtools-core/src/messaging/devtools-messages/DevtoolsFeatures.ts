@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { DevtoolsFeatureFlags } from "../../Features";
-import { IDevtoolsMessage } from "../Messages";
+import { type DevtoolsFeatureFlags } from "../../Features";
+import { type IDevtoolsMessage } from "../Messages";
 
 /**
  * Encapsulates types and logic related to {@link DevtoolsFeatures.Message}.

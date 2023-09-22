@@ -83,9 +83,7 @@ type SiblingsOrKey<TNode> = readonly TNode[] | readonly FieldKey[];
  */
 export abstract class SynchronousCursor {
 	public readonly [CursorMarker] = true;
-	public get pending(): false {
-		return false;
-	}
+	public readonly pending = false;
 
 	public skipPendingFields(): boolean {
 		return true;
@@ -353,9 +351,7 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 		return this.fieldIndex;
 	}
 
-	public get chunkLength(): number {
-		return 1;
-	}
+	public readonly chunkLength = 1;
 }
 
 /**

@@ -57,6 +57,5 @@ module.exports = {
 		"quote-props": "off",
 		"tsdoc/syntax": "off",
 		"unicorn/better-regex": "off",
-		"unicorn/no-unsafe-regex": "off",
 	},
 };

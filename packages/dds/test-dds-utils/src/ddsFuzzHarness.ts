@@ -654,7 +654,7 @@ export function mixinSynchronization<
 	const { validationStrategy } = options;
 	let generatorFactory: () => Generator<TOperation | Synchronize, TState>;
 	switch (validationStrategy.type) {
-		case "random":
+		case "random": {
 			// passing 1 here causes infinite loops. passing close to 1 is wasteful
 			// as synchronization + eventual consistency validation should be idempotent.
 			// 0.5 is arbitrary but there's no reason anyone should want a probability near this.
@@ -670,8 +670,9 @@ export function mixinSynchronization<
 						: baseGenerator(state);
 			};
 			break;
+		}
 
-		case "fixedInterval":
+		case "fixedInterval": {
 			generatorFactory = (): Generator<TOperation | Synchronize, TState> => {
 				const baseGenerator = model.generatorFactory();
 				return interleave<TOperation | Synchronize, TState>(
@@ -686,8 +687,9 @@ export function mixinSynchronization<
 				);
 			};
 			break;
+		}
 
-		case "partialSynchronization":
+		case "partialSynchronization": {
 			// passing 1 here causes infinite loops. passing close to 1 is wasteful
 			// as synchronization + eventual consistency validation should be idempotent.
 			// 0.5 is arbitrary but there's no reason anyone should want a probability near this.
@@ -715,8 +717,10 @@ export function mixinSynchronization<
 				};
 			};
 			break;
-		default:
+		}
+		default: {
 			unreachableCase(validationStrategy);
+		}
 	}
 
 	const isSynchronizeOp = (op: BaseOperation): op is Synchronize => op.type === "synchronize";

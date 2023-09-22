@@ -4,32 +4,35 @@
  */
 import {
 	AttachState,
-	IContainer,
-	IFluidModuleWithDetails,
+	type IContainer,
+	type IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
-import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
+import {
+	type IDocumentServiceFactory,
+	type IUrlResolver,
+} from "@fluidframework/driver-definitions";
 import { applyStorageCompression } from "@fluidframework/driver-utils";
 import {
-	ContainerSchema,
+	type ContainerSchema,
 	DOProviderContainerRuntimeFactory,
 	FluidContainer,
-	IFluidContainer,
-	IRootDataObject,
+	type IFluidContainer,
+	type IRootDataObject,
 } from "@fluidframework/fluid-static";
-import { IClient, SummaryType } from "@fluidframework/protocol-definitions";
+import { type IClient, SummaryType } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
-import { IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import { type IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { AzureAudience } from "./AzureAudience";
 import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver";
 import {
-	AzureClientProps,
-	AzureConnectionConfig,
-	AzureContainerServices,
-	AzureContainerVersion,
-	AzureGetVersionsOptions,
+	type AzureClientProps,
+	type AzureConnectionConfig,
+	type AzureContainerServices,
+	type AzureContainerVersion,
+	type AzureGetVersionsOptions,
 } from "./interfaces";
 import { isAzureRemoteConnectionConfig } from "./utils";
 

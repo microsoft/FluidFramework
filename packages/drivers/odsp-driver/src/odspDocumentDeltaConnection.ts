@@ -549,7 +549,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			// If so, there it most likely does not need these ops (otherwise it already asked for them)
 			// Also we may have deleted entry in this.getOpsMap due to too many requests and too slow response.
 			// But not processing such result may push us into infinite loop of fast requests and dropping all responses
-			if (data !== undefined || result.nonce.indexOf(this.requestOpsNoncePrefix) === 0) {
+			if (data !== undefined || result.nonce.startsWith(this.requestOpsNoncePrefix)) {
 				this.getOpsMap.delete(result.nonce);
 				const common = {
 					eventName: "GetOps",
