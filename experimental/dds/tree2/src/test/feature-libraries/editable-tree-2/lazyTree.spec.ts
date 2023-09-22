@@ -89,17 +89,20 @@ describe("lazyTree", () => {
 		);
 
 		const existingProperties = collectPropertyNames(struct);
-
-		// Ensure all existing properties are banned as field names:
-		// Note that this currently also ensure that there are no names that are unnecessary banned:
-		// this restriction may need to be relaxed in the future to reserve names so they can be used in the API later as a non breaking change.
-		assert.deepEqual(bannedFieldNames, new Set(existingProperties));
+		const existingPropertiesExtended = new Set(existingProperties);
 
 		for (const name of existingProperties) {
 			for (const prefix of fieldApiPrefixes) {
 				// Ensure properties won't collide with prefixed field name based properties.
-				// This could be less strict.
-				assert(!name.startsWith(prefix));
+				if (name.startsWith(prefix)) {
+					// If the property does have a reserved prefix, that's okay as long as the rest of name after the prefix is also banned.
+					const bannedName = name.substring(prefix.length);
+					const lowercaseBannedName = `${bannedName[0].toLowerCase()}${bannedName.substring(
+						1,
+					)}`;
+					assert(bannedFieldNames.has(lowercaseBannedName));
+					existingPropertiesExtended.add(lowercaseBannedName);
+				}
 			}
 
 			const errors: string[] = [];
@@ -107,6 +110,11 @@ describe("lazyTree", () => {
 			validateStructFieldName(name, () => "test", errors);
 			assert(errors.length > 0);
 		}
+
+		// Ensure all existing properties are banned as field names:
+		// Note that this currently also ensure that there are no names that are unnecessary banned:
+		// this restriction may need to be relaxed in the future to reserve names so they can be used in the API later as a non breaking change.
+		assert.deepEqual(bannedFieldNames, new Set(existingPropertiesExtended));
 	});
 
 	describe("struct", () => {

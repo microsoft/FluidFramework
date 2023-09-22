@@ -266,9 +266,11 @@ export function validateField(
  * Reserved field names to avoid collisions with the API.
  */
 export const bannedFieldNames = new Set([
+	"boxedIterator",
 	"constructor",
 	"context",
 	"is",
+	"iterator",
 	"on",
 	"parentField",
 	"schema",
