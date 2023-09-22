@@ -7,7 +7,7 @@ import { AllowedTypes, FieldKinds, SchemaBuilder } from "../../feature-libraries
 import { requireAssignableTo } from "../../util";
 import * as leaf from "../leafDomain";
 
-const builder = new SchemaBuilder("Json Domain");
+const builder = new SchemaBuilder("Json Domain", {}, leaf.library);
 
 /**
  * @alpha
