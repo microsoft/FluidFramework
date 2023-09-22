@@ -2527,7 +2527,7 @@ export class ContainerRuntime
 				return false;
 			}
 		} else if (type === ContainerMessageType.FluidDataStoreOp) {
-			const envelope = contents as IEnvelope;
+			const envelope = contents;
 			if (envelope.address === agentSchedulerId) {
 				return false;
 			}
@@ -3669,7 +3669,7 @@ export class ContainerRuntime
 			case ContainerMessageType.FluidDataStoreOp:
 				// For operations, call rollbackDataStoreOp which will find the right store
 				// and trigger rollback on it.
-				this.dataStores.rollbackDataStoreOp(contents as IEnvelope, localOpMetadata);
+				this.dataStores.rollbackDataStoreOp(contents, localOpMetadata);
 				break;
 			default:
 				// Don't check message.compatDetails because this is for rolling back a local op so the type will be known
