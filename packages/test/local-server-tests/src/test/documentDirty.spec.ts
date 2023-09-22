@@ -386,8 +386,8 @@ describe("Document Dirty", () => {
 
 				container.forceReadonly?.(false);
 				assert(
-					container.connectionState === ConnectionState.Connected,
-					"Setting readonly to false should not cause disconnection",
+					container.connectionState !== ConnectionState.Connected,
+					"Setting readonly to false should cause disconnection",
 				);
 
 				// Document should still be dirty right after turning off force readonly
@@ -416,8 +416,8 @@ describe("Document Dirty", () => {
 
 				container.forceReadonly?.(false);
 				assert(
-					container.connectionState === ConnectionState.Connected,
-					"Setting readonly to false should not cause disconnection",
+					container.connectionState !== ConnectionState.Connected,
+					"Setting readonly to false should cause disconnection",
 				);
 
 				// Document should still be dirty right after turning off force readonly
