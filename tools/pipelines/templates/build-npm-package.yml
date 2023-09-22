@@ -108,6 +108,14 @@ parameters:
   type: string
   default: 'npm ci --unsafe-perm'
 
+- name: preBuildSteps
+  type: stepList
+  default: []
+
+- name: postBuildSteps
+  type: stepList
+  default: []
+
 # The semver range constraint to use for interdependencies; that is, dependencies on other packages within the release
 # group
 - name: interdependencyRange
@@ -119,11 +127,6 @@ parameters:
 - name: checks
   type: object
   default: []
-
-- name: addtionalSteps
-  type: stepList
-  default: []
-
 
 variables:
   # We use 'chalk' to colorize output, which auto-detects color support in the
@@ -281,6 +284,9 @@ stages:
               tagName: ${{ parameters.tagName }}
               interdependencyRange: ${{ parameters.interdependencyRange }}
 
+        # Run pre-build Steps
+        - ${{ parameters.preBuildSteps }}
+        
         # Build
         - ${{ if ne(parameters.taskBuild, 'false') }}:
           - task: Npm@1
@@ -289,6 +295,9 @@ stages:
               command: 'custom'
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run ${{ parameters.taskBuild }}'
+        
+        # Run post-build Steps
+        - ${{ parameters.postBuildSteps }}
 
         # Lint
         - ${{ if ne(parameters.taskLint, false) }}:
@@ -474,7 +483,7 @@ stages:
             # Auth to internal feed
             - task: Bash@3
               name: Initialize
-              displayName: Initialize .npmrc and .env for telemetry logger
+              displayName: Initialize .npmrc for telemetry logger
               inputs:
                 targetType: 'inline'
                 workingDirectory: ${{ variables.toolAbsolutePath }}
@@ -617,6 +626,3 @@ stages:
         namespace: ${{ parameters.namespace }}
         tagName: ${{ parameters.tagName }}
         publishNonScopedPackages: ${{ variables.publishNonScopedPackages }}
-
-  # Run additional Steps
-  - ${{ parameters.additionalSteps }}

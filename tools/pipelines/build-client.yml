@@ -139,7 +139,7 @@ extends:
     - syncpack:versions
     - check:versions
     - prettier
-    additionalSteps:
+    preBuildSteps:
       - task: Bash@3
         displayName: Inject devtools telemetry logger token
         inputs:
@@ -147,14 +147,7 @@ extends:
             echo Generating .env
             echo "DEVTOOLS_TELEMETRY_TOKEN=$(devtools-telemetry-key)" >> ./packages/tools/devtools/devtools-browser-extension/.env
             cat ./packages/tools/devtools/devtools-browser-extension/.env
-            
-      - task: Npm@1
-        displayName: Build devtools
-        inputs:
-          command: 'custom'
-          workingDir: ./packages/tools/devtools/
-          customCommand: 'run build'
-      
+    postBuildSteps:
       - task: PublishPipelineArtifact@1
         displayName: Publish Artifact - Test Files
         inputs:
