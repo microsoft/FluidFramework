@@ -14,6 +14,7 @@ import {
 	IRequest,
 	IResponse,
 	FluidObject,
+	IFluidHandleContext,
 } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
@@ -178,9 +179,7 @@ export interface IDataStore {
  * A reduced set of functionality of IContainerRuntime that a data store context/data store runtime will need
  * TODO: this should be merged into IFluidDataStoreContext
  */
-export interface IContainerRuntimeBase
-	extends IEventProvider<IContainerRuntimeBaseEvents>,
-		IProvideFluidHandleContext {
+export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents> {
 	readonly logger: ITelemetryBaseLogger;
 	readonly clientDetails: IClientDetails;
 
@@ -246,6 +245,11 @@ export interface IContainerRuntimeBase
 	 * Returns the current audience.
 	 */
 	getAudience(): IAudience;
+
+	/**
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
+	readonly IFluidHandleContext: IFluidHandleContext;
 }
 
 /**
