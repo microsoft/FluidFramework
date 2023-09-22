@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { IGCTestProvider, runGCTests } from "@fluid-internal/test-dds-utils";
 import {
 	MockFluidDataStoreRuntime,
