@@ -77,7 +77,7 @@ export function appendSharedStringDeltaToRevertibles(string: SharedString, delta
 export type ChangeArgs = (PositionSpec | AbsentSpec) & PropertyDeltaSpec;
 
 // @public (undocumented)
-export function createEndpointIndex<TInterval extends ISerializableInterval>(client: Client, helpers: IIntervalHelpers<TInterval>): IEndpointIndex<TInterval>;
+export function createEndpointIndex(sharedString: SharedString): IEndpointIndex<SequenceInterval>;
 
 // @public (undocumented)
 export function createEndpointInRangeIndex(sharedString: SharedString): IEndpointInRangeIndex<SequenceInterval>;
