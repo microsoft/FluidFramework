@@ -251,6 +251,7 @@ export class ScribeLambda implements IPartitionLambda {
 									this.lastClientSummaryHead,
 									scribeCheckpoint,
 									this.pendingCheckpointMessages.toArray(),
+									this.isEphemeralContainer,
 								);
 
 								// This block is only executed if the writer is not external. For an external writer,
