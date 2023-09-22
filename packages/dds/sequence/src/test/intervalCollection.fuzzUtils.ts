@@ -214,12 +214,11 @@ export function makeReducer(
 		},
 		changeInterval: async ({ channel }, { id, start, end, collectionName }) => {
 			const collection = channel.getIntervalCollection(collectionName);
-			collection.change({ id, start, end });
+			collection.change(id, { start, end });
 		},
-		// might be illegal to leave this but i feel like it'll work
 		changeProperties: async ({ channel }, { id, properties, collectionName }) => {
 			const collection = channel.getIntervalCollection(collectionName);
-			collection.change({ id, props: { ...properties } });
+			collection.change(id, { props: { ...properties } });
 		},
 		revertSharedStringRevertibles: async ({ channel }, { editsToRevert }) => {
 			assert(isRevertibleSharedString(channel));

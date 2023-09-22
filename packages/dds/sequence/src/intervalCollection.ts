@@ -600,6 +600,22 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 		) => void,
 	);
 }
+export interface PositionSpec {
+	// only optional for now - remove once main/next converge
+	start?: number;
+	end?: number;
+}
+
+export interface PropertyDeltaSpec {
+	props?: PropertySet;
+}
+
+export interface AbsentSpec {
+	start?: never;
+	end?: never;
+}
+
+export type ChangeArgs = (PositionSpec | AbsentSpec) & PropertyDeltaSpec;
 
 /**
  * Collection of intervals that supports addition, modification, removal, and efficient spatial querying.
@@ -698,19 +714,11 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * @param id - Id of the interval to change
 	 * @param start - New start value, if defined. `undefined` signifies this endpoint should be left unchanged.
 	 * @param end - New end value, if defined. `undefined` signifies this endpoint should be left unchanged.
+	 * @param props - Property set to apply to the interval. Shallow merging is used between any existing properties
+	 * and `prop`, i.e. the interval will end up with a property object equivalent to `{ ...oldProps, ...props }`.
 	 * @returns the interval that was changed, if it existed in the collection.
 	 */
-	change({
-		id,
-		start,
-		end,
-		props,
-	}: {
-		id: string;
-		start?: number;
-		end?: number;
-		props?: PropertySet;
-	}): TInterval | undefined;
+	change(id: string, args: ChangeArgs): TInterval | undefined;
 
 	attachDeserializer(onDeserialize: DeserializeCallback): void;
 	/**
@@ -1205,45 +1213,20 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	 */
 	public change(id: string, start?: number, end?: number);
 
-	public change({
-		id,
-		start,
-		end,
-		props,
-	}: {
-		id: string;
-		start?: number;
-		end?: number;
-		props?: PropertySet;
-	});
+	public change(id: string, args: ChangeArgs);
 
-	public change(
-		idOrOptions:
-			| string
-			| {
-					id: string;
-					start?: number;
-					end?: number;
-					props?: PropertySet;
-			  },
-		start?: number,
-		end?: number,
-	): TInterval | undefined {
+	public change(id: string, start?: number | ChangeArgs, end?: number): TInterval | undefined {
 		if (!this.localCollection) {
 			throw new LoggingError("Attach must be called before accessing intervals");
 		}
-
-		let id: string;
 		let intStart: number | undefined;
 		let intEnd: number | undefined;
 		let properties: PropertySet | undefined;
-		if (typeof idOrOptions !== "string") {
-			id = idOrOptions.id;
-			intStart = idOrOptions.start;
-			intEnd = idOrOptions.end;
-			properties = idOrOptions.props;
+		if (typeof start !== "number" && start !== undefined) {
+			intStart = start.start;
+			intEnd = start.end;
+			properties = start.props;
 		} else {
-			id = idOrOptions;
 			intStart = start;
 			intEnd = end;
 		}

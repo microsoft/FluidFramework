@@ -152,7 +152,7 @@ describe("IntervalCollection snapshotting", () => {
 		});
 
 		it("reloaded interval can be changed", async () => {
-			collection.change({ id, start: 1, end: 3 });
+			collection.change(id, { start: 1, end: 3 });
 			assertIntervals(sharedString, collection, [{ start: 1, end: 3 }]);
 			assertIntervals(sharedString2, collection2, [{ start: 0, end: 2 }]);
 			containerRuntimeFactory.processAllMessages();
