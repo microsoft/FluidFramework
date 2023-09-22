@@ -9,7 +9,7 @@ import { PackageCommand } from "../BasePackageCommand";
 import * as fs from "fs";
 
 /**
- * A enum defining the four release types
+ * A type defining the four release types
  */
 type UpdatePackageJsonType = "alpha" | "beta" | "public";
 
@@ -50,7 +50,7 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 		const apiExtractorConfigExists = fs.existsSync(apiExtractorConfigFilePath);
 
 		updatePackageJsonFile(pkg.directory, (json) => {
-			const types: string | undefined = json.types;
+			const types: string | undefined = json.types ?? json.typings;
 
 			if (types === undefined) {
 				return;

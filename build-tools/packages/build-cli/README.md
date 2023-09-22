@@ -49,7 +49,6 @@ USAGE
 * [`flub setReleaseTagForPublishing`](docs/setReleaseTagForPublishing.md) - Updates the types in package.json based on the release flag. This command is intended for use in publishing pipelines and may not be intended for regular developer use.
 * [`flub test-only-filter`](docs/test-only-filter.md) - FOR INTERNAL TESTING ONLY. This command is used only to test the common package filtering and selection logic that is used across the CLI. FOR INTERNAL TESTING ONLY.
 * [`flub typetests`](docs/typetests.md) - Updates configuration for type tests in package.json files. If the previous version changes after running preparation, then npm install must be run before building.
-* [`flub updates`](docs/updates.md) - Updates the types in package.json based on the release flag
 
 <!-- commandsstop -->
 <!-- prettier-ignore-stop -->
