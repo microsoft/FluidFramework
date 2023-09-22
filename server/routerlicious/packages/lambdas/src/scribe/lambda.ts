@@ -36,6 +36,7 @@ import {
 	Lumber,
 	LumberEventName,
 	Lumberjack,
+	CommonProperties,
 } from "@fluidframework/server-services-telemetry";
 import Deque from "double-ended-queue";
 import * as _ from "lodash";
@@ -500,11 +501,17 @@ export class ScribeLambda implements IPartitionLambda {
 				"Scribe session metric already completed. Creating a new one.",
 				getLumberBaseProperties(this.documentId, this.tenantId),
 			);
+			const isEphemeralContainer: boolean =
+				this.scribeSessionMetric?.properties.get("isEphemeralContainer") ?? false;
 			this.scribeSessionMetric = createSessionMetric(
 				this.tenantId,
 				this.documentId,
 				LumberEventName.ScribeSessionResult,
 				this.serviceConfiguration,
+			);
+			this.scribeSessionMetric?.setProperty(
+				CommonProperties.isEphemeralContainer,
+				isEphemeralContainer,
 			);
 		}
 
