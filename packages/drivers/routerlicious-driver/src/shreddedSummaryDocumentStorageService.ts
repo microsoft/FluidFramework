@@ -40,9 +40,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
 	private readonly blobCache: ICache<ArrayBufferLike> | undefined;
 	private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion> | undefined;
 
-	public get repositoryUrl(): string {
-		return "";
-	}
+	public readonly repositoryUrl = "";
 
 	private async getSummaryUploadManager(): Promise<ISummaryUploadManager> {
 		const manager = await this.getStorageManager();

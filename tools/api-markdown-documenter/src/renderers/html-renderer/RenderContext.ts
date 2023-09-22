@@ -30,6 +30,20 @@ export interface RenderContext extends TextFormatting {
 	 * {@link DocumentationNodeType}.
 	 */
 	customRenderers?: Renderers;
+
+	/**
+	 * Whether or not "pretty" (i.e. multi-line with indentation) formatting is allowed.
+	 *
+	 * @remarks
+	 *
+	 * If allowed, rendering will do its best to present content in an easy-to-read, hierarchical manner,
+	 * with line-breaks and indentation.
+	 *
+	 * If not allowed, all contents will be written to a single line.
+	 *
+	 * @defaultValue `true`
+	 */
+	prettyFormatting?: boolean;
 }
 
 /**

@@ -855,8 +855,6 @@ export class ContainerRuntime
 			initializeEntryPoint,
 		);
 
-		await runtime.blobManager.processStashedChanges();
-
 		// Apply stashed ops with a reference sequence number equal to the sequence number of the snapshot,
 		// or zero. This must be done before Container replays saved ops.
 		await runtime.pendingStateManager.applyStashedOpsAt(runtimeSequenceNumber ?? 0);
@@ -1793,7 +1791,10 @@ export class ContainerRuntime
 		return this.dataStores.aliases.get(maybeAlias) ?? maybeAlias;
 	}
 
-	private async getDataStoreFromRequest(id: string, request: IRequest): Promise<IFluidRouter> {
+	private async getDataStoreFromRequest(
+		id: string,
+		request: IRequest,
+	): Promise<IFluidDataStoreChannel> {
 		const headerData: RuntimeHeaderData = {};
 		if (typeof request.headers?.[RuntimeHeaders.wait] === "boolean") {
 			headerData.wait = request.headers[RuntimeHeaders.wait];
@@ -2042,6 +2043,30 @@ export class ContainerRuntime
 				eventName: "UnsuccessfulConnectedTransition",
 			});
 			// Don't propagate "disconnected" event because we didn't propagate the previous "connected" event
+			return;
+		}
+
+		// If there are stashed blobs in the pending state, we need to delay
+		// propagation of the "connected" event until we have uploaded them to
+		// ensure we don't submit ops referencing a blob that has not been uploaded
+		const connecting = connected && !this._connected;
+		if (connecting && this.blobManager.hasPendingStashedBlobs()) {
+			assert(
+				!this.delayConnectClientId,
+				"Connect event delay must be canceled before subsequent connect event",
+			);
+			assert(!!clientId, "Must have clientId when connecting");
+			this.delayConnectClientId = clientId;
+			this.blobManager.processStashedChanges().then(
+				() => {
+					// make sure we didn't reconnect before the promise resolved
+					if (this.delayConnectClientId === clientId && !this.disposed) {
+						this.delayConnectClientId = undefined;
+						this.setConnectionStateCore(connected, clientId);
+					}
+				},
+				(error) => this.closeFn(error),
+			);
 			return;
 		}
 
@@ -2923,19 +2948,15 @@ export class ContainerRuntime
 
 		assert(this.outbox.isEmpty, 0x3d1 /* Can't trigger summary in the middle of a batch */);
 
+		// We close the summarizer and download a new snapshot and reload the container
 		let latestSnapshotVersionId: string | undefined;
-		if (refreshLatestAck) {
-			const latestSnapshotInfo = await this.refreshLatestSummaryAckFromServer(
+		if (refreshLatestAck === true) {
+			return this.prefetchLatestSummaryThenClose(
 				createChildLogger({
 					logger: summaryNumberLogger,
 					properties: { all: { safeSummary: true } },
 				}),
 			);
-			const latestSnapshotRefSeq = latestSnapshotInfo.latestSnapshotRefSeq;
-			latestSnapshotVersionId = latestSnapshotInfo.latestSnapshotVersionId;
-
-			// We might need to catch up to the latest summary's reference sequence number before pausing.
-			await this.waitForDeltaManagerToCatchup(latestSnapshotRefSeq, summaryNumberLogger);
 		}
 
 		// If there are pending (unacked ops), the summary will not be eventual consistent and it may even be
@@ -3680,26 +3701,6 @@ export class ContainerRuntime
 		}
 	}
 
-	private async waitForDeltaManagerToCatchup(
-		latestSnapshotRefSeq: number,
-		summaryLogger: ITelemetryLoggerExt,
-	): Promise<void> {
-		if (latestSnapshotRefSeq > this.deltaManager.lastSequenceNumber) {
-			// We need to catch up to the latest summary's reference sequence number before proceeding.
-			await PerformanceEvent.timedExecAsync(
-				summaryLogger,
-				{
-					eventName: "WaitingForSeq",
-					lastSequenceNumber: this.deltaManager.lastSequenceNumber,
-					targetSequenceNumber: latestSnapshotRefSeq,
-					lastKnownSeqNumber: this.deltaManager.lastKnownSeqNumber,
-				},
-				async () => waitForSeq(this.deltaManager, latestSnapshotRefSeq),
-				{ start: true, end: true, cancel: "error" }, // definitely want start event
-			);
-		}
-	}
-
 	/** Implementation of ISummarizerInternalsProvider.refreshLatestSummaryAck */
 	public async refreshLatestSummaryAck(options: IRefreshSummaryAckOptions) {
 		const { proposalHandle, ackHandle, summaryRefSeq, summaryLogger } = options;
@@ -3763,16 +3764,19 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Fetches the latest snapshot from storage and uses it to refresh SummarizerNode's
-	 * internal state as it should be considered the latest summary ack.
+	 * Fetches the latest snapshot from storage to refresh the cache as a performance optimization and closes the
+	 * summarizer to reload from new state.
 	 * @param summaryLogger - logger to use when fetching snapshot from storage
-	 * @returns downloaded snapshot's reference sequence number
+	 * @returns a generic summarization error
 	 */
-	private async refreshLatestSummaryAckFromServer(
+	private async prefetchLatestSummaryThenClose(
 		summaryLogger: ITelemetryLoggerExt,
-	): Promise<{ latestSnapshotRefSeq: number; latestSnapshotVersionId: string | undefined }> {
+	): Promise<IBaseSummarizeResult> {
 		const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
-		const { versionId, latestSnapshotRefSeq } = await this.fetchSnapshotFromStorage(
+
+		// This is a performance optimization as the same parent is likely to be elected again, and would use its
+		// cache to fetch the snapshot instead of the network.
+		await this.fetchSnapshotFromStorage(
 			summaryLogger,
 			{
 				eventName: "RefreshLatestSummaryFromServerFetch",
@@ -3783,7 +3787,12 @@ export class ContainerRuntime
 
 		await this.closeStaleSummarizer("RefreshLatestSummaryFromServerFetch");
 
-		return { latestSnapshotRefSeq, latestSnapshotVersionId: versionId };
+		return {
+			stage: "base",
+			error: "summary state stale - Unsupported option 'refreshLatestAck'",
+			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+			minimumSequenceNumber: this.deltaManager.minimumSequenceNumber,
+		};
 	}
 
 	private async closeStaleSummarizer(codePath: string): Promise<void> {
@@ -3836,7 +3845,7 @@ export class ContainerRuntime
 				const versions = await this.storage.getVersions(
 					versionId,
 					1,
-					"refreshLatestSummaryAckFromServer",
+					"prefetchLatestSummaryBeforeClose",
 					versionId === null ? FetchSource.noCache : undefined,
 				);
 				assert(
@@ -3986,30 +3995,3 @@ export class ContainerRuntime
 		return killSwitch !== true && this.runtimeOptions.enableGroupedBatching;
 	}
 }
-
-/**
- * Wait for a specific sequence number. Promise should resolve when we reach that number,
- * or reject if closed.
- */
-const waitForSeq = async (
-	deltaManager: IDeltaManager<Pick<ISequencedDocumentMessage, "sequenceNumber">, unknown>,
-	targetSeq: number,
-): Promise<void> =>
-	new Promise<void>((resolve, reject) => {
-		// TODO: remove cast to any when actual event is determined
-		deltaManager.on("closed" as any, reject);
-		deltaManager.on("disposed" as any, reject);
-
-		// If we already reached target sequence number, simply resolve the promise.
-		if (deltaManager.lastSequenceNumber >= targetSeq) {
-			resolve();
-		} else {
-			const handleOp = (message: Pick<ISequencedDocumentMessage, "sequenceNumber">) => {
-				if (message.sequenceNumber >= targetSeq) {
-					resolve();
-					deltaManager.off("op", handleOp);
-				}
-			};
-			deltaManager.on("op", handleOp);
-		}
-	});

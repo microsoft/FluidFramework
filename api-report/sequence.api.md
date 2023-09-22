@@ -80,19 +80,19 @@ export type ChangeArgs = (PositionSpec | AbsentSpec) & PropertyDeltaSpec;
 export function createEndpointIndex<TInterval extends ISerializableInterval>(client: Client, helpers: IIntervalHelpers<TInterval>): IEndpointIndex<TInterval>;
 
 // @public (undocumented)
-export function createEndpointInRangeIndex<TInterval extends ISerializableInterval>(helpers: IIntervalHelpers<TInterval>, client: Client): IEndpointInRangeIndex<TInterval>;
+export function createEndpointInRangeIndex(sharedString: SharedString): IEndpointInRangeIndex<SequenceInterval>;
 
 // @public (undocumented)
 export function createIdIntervalIndex<TInterval extends ISerializableInterval>(): IIdIntervalIndex<TInterval>;
 
 // @public (undocumented)
-export function createOverlappingIntervalsIndex<TInterval extends ISerializableInterval>(client: Client, helpers: IIntervalHelpers<TInterval>): IOverlappingIntervalsIndex<TInterval>;
+export function createOverlappingIntervalsIndex(sharedString: SharedString): IOverlappingIntervalsIndex<SequenceInterval>;
 
 // @public (undocumented)
-export function createOverlappingSequenceIntervalsIndex(client: Client): SequenceIntervalIndexes.Overlapping;
+export function createOverlappingSequenceIntervalsIndex(sharedString: SharedString): SequenceIntervalIndexes.Overlapping;
 
 // @public (undocumented)
-export function createStartpointInRangeIndex<TInterval extends ISerializableInterval>(helpers: IIntervalHelpers<TInterval>, client: Client): IStartpointInRangeIndex<TInterval>;
+export function createStartpointInRangeIndex(sharedString: SharedString): IStartpointInRangeIndex<SequenceInterval>;
 
 // @public (undocumented)
 export type DeserializeCallback = (properties: PropertySet) => void;
@@ -117,7 +117,7 @@ export interface IEndpointIndex<TInterval extends ISerializableInterval> extends
 // @public
 export interface IEndpointInRangeIndex<TInterval extends ISerializableInterval> extends IntervalIndex<TInterval> {
     // (undocumented)
-    findIntervalsWithEndpointInRange(start: number, end: number): any;
+    findIntervalsWithEndpointInRange(start: number, end: number): TInterval[];
 }
 
 // @public (undocumented)
@@ -194,7 +194,7 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
     (event: "propertyChanged", listener: (interval: TInterval, propertyDeltas: PropertySet, local: boolean, op: ISequencedDocumentMessage | undefined) => void): any;
 }
 
-// @public @sealed (undocumented)
+// @public @sealed @deprecated (undocumented)
 export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
     // @deprecated (undocumented)
     compareEnds(a: TInterval, b: TInterval): number;
@@ -395,7 +395,7 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
 // @public
 export interface IStartpointInRangeIndex<TInterval extends ISerializableInterval> extends IntervalIndex<TInterval> {
     // (undocumented)
-    findIntervalsWithStartpointInRange(start: number, end: number): any;
+    findIntervalsWithStartpointInRange(start: number, end: number): TInterval[];
 }
 
 // @internal
@@ -479,7 +479,7 @@ export class SequenceInterval implements ISerializableInterval {
     union(b: SequenceInterval): SequenceInterval;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const sequenceIntervalHelpers: IIntervalHelpers<SequenceInterval>;
 
 // @public
@@ -491,7 +491,7 @@ export namespace SequenceIntervalIndexes {
         }, endSegoff: {
             segment: ISegment | undefined;
             offset: number | undefined;
-        }): any;
+        }): Iterable<SequenceInterval>;
     }
 }
 

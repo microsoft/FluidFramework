@@ -33,7 +33,7 @@ type WorkingState = "working" | "done" | "canceled";
 export class ParallelRequests<T> {
 	private latestRequested: number;
 	private nextToDeliver: number;
-	private readonly results: Map<number, T[]> = new Map();
+	private readonly results = new Map<number, T[]>();
 	private workingState: WorkingState = "working";
 	private requestsInFlight = 0;
 	private readonly endEvent = new Deferred<void>();

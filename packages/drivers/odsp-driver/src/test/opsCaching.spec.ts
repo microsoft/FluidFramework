@@ -391,7 +391,7 @@ describe("OdspDeltaStorageWithCache", () => {
 		const storageOps = createOps(fromTotal + opsFromSnapshot + opsFromCache, opsFromStorage);
 
 		let totalOps = opsFromSnapshot + opsFromCache + (cacheOnly ? 0 : opsFromStorage);
-		const actualTo = toTotal === undefined ? fromTotal + totalOps : toTotal;
+		const actualTo = toTotal ?? fromTotal + totalOps;
 		assert(actualTo <= fromTotal + totalOps); // code will deadlock if that's not the case
 		const askingOps = actualTo - fromTotal;
 		totalOps = Math.min(totalOps, askingOps);

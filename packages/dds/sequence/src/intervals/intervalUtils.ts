@@ -12,6 +12,7 @@ import {
 	SlidingPreference,
 } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+
 /**
  * Basic interval abstraction
  */
@@ -166,6 +167,7 @@ export type CompressedSerializedInterval =
 
 /**
  * @sealed
+ * @deprecated The methods within have substitutions
  */
 export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 	/**

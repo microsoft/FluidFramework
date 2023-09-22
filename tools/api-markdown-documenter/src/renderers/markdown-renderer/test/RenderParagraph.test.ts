@@ -27,7 +27,7 @@ describe("ParagraphNode Markdown rendering tests", () => {
 
 	describe("Table context", () => {
 		it("Empty paragraph", () => {
-			expect(testRender(ParagraphNode.Empty, { insideTable: true })).to.equal("<p>\n</p>\n");
+			expect(testRender(ParagraphNode.Empty, { insideTable: true })).to.equal("<p></p>");
 		});
 
 		it("Simple paragraph", () => {
@@ -37,7 +37,7 @@ describe("ParagraphNode Markdown rendering tests", () => {
 			const input = new ParagraphNode([new PlainTextNode(text1), new PlainTextNode(text2)]);
 			const result = testRender(input, { insideTable: true });
 
-			const expected = ["<p>", `  ${text1}${text2}`, "</p>", ""].join("\n");
+			const expected = ["<p>", `${text1}${text2}`, "</p>"].join("");
 			expect(result).to.equal(expected);
 		});
 	});
