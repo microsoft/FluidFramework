@@ -4,6 +4,7 @@
  */
 
 /* eslint-disable no-bitwise */
+/* eslint-disable import/no-deprecated */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
@@ -55,13 +56,13 @@ import {
 	createInterval,
 } from "./intervals";
 import {
+	EndpointIndex,
 	IEndpointIndex,
 	IIdIntervalIndex,
 	IOverlappingIntervalsIndex,
 	IntervalIndex,
-	createEndpointIndex,
+	OverlappingIntervalsIndex,
 	createIdIntervalIndex,
-	createOverlappingIntervalsIndex,
 } from "./intervalIndex";
 
 /**
@@ -245,9 +246,9 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 			previousInterval: TInterval,
 		) => void,
 	) {
-		this.overlappingIntervalsIndex = createOverlappingIntervalsIndex(client, helpers);
+		this.overlappingIntervalsIndex = new OverlappingIntervalsIndex(client, helpers);
 		this.idIntervalIndex = createIdIntervalIndex<TInterval>();
-		this.endIntervalIndex = createEndpointIndex(client, helpers);
+		this.endIntervalIndex = new EndpointIndex(client, helpers);
 		this.indexes = new Set([
 			this.overlappingIntervalsIndex,
 			this.idIntervalIndex,

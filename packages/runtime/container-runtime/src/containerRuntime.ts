@@ -8,9 +8,11 @@ import {
 	FluidObject,
 	IFluidHandle,
 	IFluidHandleContext,
+	// eslint-disable-next-line import/no-deprecated
 	IFluidRouter,
 	IRequest,
 	IResponse,
+	IProvideFluidHandleContext,
 } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
@@ -97,6 +99,7 @@ import {
 	create404Response,
 	exceptionToResponse,
 	GCDataBuilder,
+	// eslint-disable-next-line import/no-deprecated
 	requestFluidObject,
 	seqFromTree,
 	calculateStats,
@@ -632,7 +635,12 @@ type MessageWithContext =
  */
 export class ContainerRuntime
 	extends TypedEventEmitter<IContainerRuntimeEvents & ISummarizerEvents>
-	implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider
+	implements
+		IContainerRuntime,
+		IRuntime,
+		ISummarizerRuntime,
+		ISummarizerInternalsProvider,
+		IProvideFluidHandleContext
 {
 	/**
 	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
@@ -1778,7 +1786,10 @@ export class ContainerRuntime
 		return this.dataStores.aliases.get(maybeAlias) ?? maybeAlias;
 	}
 
-	private async getDataStoreFromRequest(id: string, request: IRequest): Promise<IFluidRouter> {
+	private async getDataStoreFromRequest(
+		id: string,
+		request: IRequest,
+	): Promise<IFluidDataStoreChannel> {
 		const headerData: RuntimeHeaderData = {};
 		if (typeof request.headers?.[RuntimeHeaders.wait] === "boolean") {
 			headerData.wait = request.headers[RuntimeHeaders.wait];
@@ -2327,6 +2338,7 @@ export class ContainerRuntime
 	 * @param wait - True if you want to wait for it.
 	 * @deprecated - Use getAliasedDataStoreEntryPoint instead to get an aliased data store's entry point.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter> {
 		return this.getRootDataStoreChannel(id, wait);
 	}
@@ -3919,6 +3931,7 @@ export class ContainerRuntime
 	 * * Forms a function that will request a Summarizer.
 	 * @param loaderRouter - the loader acting as an IFluidRouter
 	 * */
+	// eslint-disable-next-line import/no-deprecated
 	private formRequestSummarizerFn(loaderRouter: IFluidRouter) {
 		return async () => {
 			const request: IRequest = {
@@ -3934,6 +3947,7 @@ export class ContainerRuntime
 				url: "/_summarizer",
 			};
 
+			// eslint-disable-next-line import/no-deprecated
 			const fluidObject = await requestFluidObject<FluidObject<ISummarizer>>(
 				loaderRouter,
 				request,

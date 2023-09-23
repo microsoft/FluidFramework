@@ -11,6 +11,7 @@ import {
 import { ILoaderProps, Loader } from "@fluidframework/container-loader";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import type { IRequest, IResponse } from "@fluidframework/core-interfaces";
+// eslint-disable-next-line import/no-deprecated
 import { create404Response, requestFluidObject } from "@fluidframework/runtime-utils";
 import type { IDetachedModel, IModelLoader, ModelMakerCallback } from "./interfaces";
 
@@ -100,6 +101,7 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 			url: modelUrl,
 			headers: { containerRef: container },
 		};
+		// eslint-disable-next-line import/no-deprecated
 		return requestFluidObject<ModelType>(container, request);
 	}
 

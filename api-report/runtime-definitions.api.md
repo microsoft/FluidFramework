@@ -15,6 +15,7 @@ import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
+import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IProvideFluidHandleContext } from '@fluidframework/core-interfaces';
@@ -115,7 +116,7 @@ export interface IAttachMessage {
 }
 
 // @public
-export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents>, IProvideFluidHandleContext {
+export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents> {
     // (undocumented)
     readonly clientDetails: IClientDetails;
     createDataStore(pkg: string | string[]): Promise<IDataStore>;
@@ -125,9 +126,12 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAudience(): IAudience;
     getQuorum(): IQuorumClients;
+    // @deprecated (undocumented)
+    readonly IFluidHandleContext: IFluidHandleContext;
     // (undocumented)
     readonly logger: ITelemetryBaseLogger;
     orderSequentially(callback: () => void): void;
+    // @deprecated
     request(request: IRequest): Promise<IResponse>;
     submitSignal(type: string, content: any): void;
     // (undocumented)
@@ -151,6 +155,7 @@ export interface IDataStore {
     readonly entryPoint: IFluidHandle<FluidObject>;
     // @deprecated (undocumented)
     readonly IFluidRouter: IFluidRouter;
+    // @deprecated (undocumented)
     request(request: {
         url: "/";
         headers?: undefined;
@@ -206,7 +211,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
     makeVisibleAndAttachGraph(): void;
     process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     processSignal(message: any, local: boolean): void;
-    // @deprecated (undocumented)
+    // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     reSubmit(type: string, content: any, localOpMetadata: unknown): any;
     rollback?(type: string, content: any, localOpMetadata: unknown): void;

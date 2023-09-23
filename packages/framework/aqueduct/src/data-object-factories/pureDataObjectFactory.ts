@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-deprecated
 import { IRequest, IFluidRouter, FluidObject } from "@fluidframework/core-interfaces";
 import {
 	FluidDataStoreRuntime,
@@ -34,6 +35,7 @@ import { IDataObjectProps, PureDataObject, DataObjectTypes } from "../data-objec
  * Useful interface in places where it's useful to do type erasure for PureDataObject generic
  */
 export interface IRootDataObjectFactory extends IFluidDataStoreFactory {
+	// eslint-disable-next-line import/no-deprecated
 	createRootInstance(rootDataStoreId: string, runtime: IContainerRuntime): Promise<IFluidRouter>;
 }
 

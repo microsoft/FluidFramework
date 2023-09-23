@@ -124,7 +124,7 @@ export class Loader implements IHostLoader {
 // @public
 export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot: IQuorumSnapshot, sendProposal: (key: string, value: any) => number) => IProtocolHandler;
 
-// @public
+// @public @deprecated
 export function requestResolvedObjectFromContainer(container: IContainer, headers?: IRequestHeader): Promise<IResponse>;
 
 // @public

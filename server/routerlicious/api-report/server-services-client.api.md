@@ -19,13 +19,14 @@ import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { ITree } from '@fluidframework/gitresources';
 import { ITreeEntry } from '@fluidframework/protocol-definitions';
 import { IUser } from '@fluidframework/protocol-definitions';
+import { RawAxiosRequestHeaders } from 'axios';
 import * as resources from '@fluidframework/gitresources';
 import { ScopeType } from '@fluidframework/protocol-definitions';
 import { SummaryObject } from '@fluidframework/protocol-definitions';
 
 // @public (undocumented)
 export class BasicRestWrapper extends RestWrapper {
-    constructor(baseurl?: string, defaultQueryString?: Record<string, unknown>, maxBodyLength?: number, maxContentLength?: number, defaultHeaders?: AxiosRequestHeaders, axios?: AxiosInstance, refreshDefaultQueryString?: () => Record<string, unknown>, refreshDefaultHeaders?: () => AxiosRequestHeaders, getCorrelationId?: () => string | undefined);
+    constructor(baseurl?: string, defaultQueryString?: Record<string, unknown>, maxBodyLength?: number, maxContentLength?: number, defaultHeaders?: RawAxiosRequestHeaders, axios?: AxiosInstance, refreshDefaultQueryString?: () => Record<string, unknown>, refreshDefaultHeaders?: () => RawAxiosRequestHeaders, getCorrelationId?: () => string | undefined);
     // (undocumented)
     protected request<T>(requestConfig: AxiosRequestConfig, statusCode: number, canRetry?: boolean): Promise<T>;
 }
@@ -560,19 +561,19 @@ export abstract class RestWrapper {
     // (undocumented)
     protected defaultQueryString: Record<string, unknown>;
     // (undocumented)
-    delete<T>(url: string, queryString?: Record<string, unknown>, headers?: AxiosRequestHeaders, additionalOptions?: Partial<Omit<AxiosRequestConfig, "baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url">>): Promise<T>;
+    delete<T>(url: string, queryString?: Record<string, unknown>, headers?: RawAxiosRequestHeaders, additionalOptions?: Partial<Omit<AxiosRequestConfig, "baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url">>): Promise<T>;
     // (undocumented)
     protected generateQueryString(queryStringValues: Record<string, unknown>): string;
     // (undocumented)
-    get<T>(url: string, queryString?: Record<string, unknown>, headers?: AxiosRequestHeaders, additionalOptions?: Partial<Omit<AxiosRequestConfig, "baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url">>): Promise<T>;
+    get<T>(url: string, queryString?: Record<string, unknown>, headers?: RawAxiosRequestHeaders, additionalOptions?: Partial<Omit<AxiosRequestConfig, "baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url">>): Promise<T>;
     // (undocumented)
     protected readonly maxBodyLength: number;
     // (undocumented)
     protected readonly maxContentLength: number;
     // (undocumented)
-    patch<T>(url: string, requestBody: any, queryString?: Record<string, unknown>, headers?: AxiosRequestHeaders, additionalOptions?: Partial<Omit<AxiosRequestConfig, "baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url">>): Promise<T>;
+    patch<T>(url: string, requestBody: any, queryString?: Record<string, unknown>, headers?: RawAxiosRequestHeaders, additionalOptions?: Partial<Omit<AxiosRequestConfig, "baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url">>): Promise<T>;
     // (undocumented)
-    post<T>(url: string, requestBody: any, queryString?: Record<string, unknown>, headers?: AxiosRequestHeaders, additionalOptions?: Partial<Omit<AxiosRequestConfig, "baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url">>): Promise<T>;
+    post<T>(url: string, requestBody: any, queryString?: Record<string, unknown>, headers?: RawAxiosRequestHeaders, additionalOptions?: Partial<Omit<AxiosRequestConfig, "baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url">>): Promise<T>;
     // (undocumented)
     protected abstract request<T>(options: AxiosRequestConfig, statusCode: number): Promise<T>;
 }

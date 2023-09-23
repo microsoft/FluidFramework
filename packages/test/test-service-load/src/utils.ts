@@ -17,6 +17,7 @@ import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definit
 import { IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
+// eslint-disable-next-line import/no-deprecated
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
@@ -223,6 +224,7 @@ export async function initialize(
 			testDriver.type === "odsp",
 			"attachment blobs in detached container not supported on this service",
 		);
+		// eslint-disable-next-line import/no-deprecated
 		const ds = await requestFluidObject<ILoadTest>(container, "/");
 		const dsm = await ds.detached({ testConfig, verbose, random, logger });
 		await Promise.all(

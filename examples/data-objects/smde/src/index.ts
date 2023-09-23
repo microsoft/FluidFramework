@@ -12,6 +12,7 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { buildRuntimeRequestHandler } from "@fluidframework/request-handler";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	requestFluidObject,
 	RequestParser,
 	RuntimeFactoryHelper,
@@ -33,6 +34,7 @@ const viewRequestHandler = async (request: RequestParser, runtime: IContainerRun
 			url: ``,
 			headers: request.headers,
 		});
+		// eslint-disable-next-line import/no-deprecated
 		const smdeDataObject = await requestFluidObject<SmdeDataObject>(
 			await runtime.getRootDataStore(defaultComponentId),
 			objectRequest,

@@ -95,17 +95,25 @@ const entryPoint = await container.getEntryPoint();
 ## Status
 
 <!-- prettier-ignore-start -->
-| API                                                                                  | Deprecated in        | Removed in           |
-| ------------------------------------------------------------------------------------ | -------------------- | -------------------- |
-| `IContainer.request` (except calling with "/")                                       | 2.0.0-internal.6.0.0 |                      |
-| `IDataStore.request` (except calling with "/")                                       | 2.0.0-internal.6.0.0 |                      |
-| `IContainer.IFluidRouter`                                                            | 2.0.0-internal.6.0.0 |                      |
-| `IDataStore.IFluidRouter`                                                            | 2.0.0-internal.6.0.0 |                      |
-| `request` and `IFluidRouter` on `ILoader` and `Loader`                               | 2.0.0-internal.6.0.0 |                      |
-| `request` and `IFluidRouter` on `IRuntime` and `ContainerRuntime`                    | 2.0.0-internal.6.0.0 |                      |
-| `request` and `IFluidRouter` on `IFluidDataStoreRuntime` and `FluidDataStoreRuntime` | 2.0.0-internal.6.0.0 |                      |
-| `request` and `IFluidRouter` on `IFluidDataStoreChannel`                             | 2.0.0-internal.6.0.0 |                      |
-| `getRootDataStore` on `IContainerRuntime` and `ContainerRuntime`                     | 2.0.0-internal.6.0.0 |                      |
-| `requestHandler` property in `ContainerRuntime.loadRuntime(...)`                     | 2.0.0-internal.7.0.0 |                      |
-| `RuntimeRequestHandler` and `RuntimeRequestHandlerBuilder`                           | 2.0.0-internal.7.0.0 |                      |
+| API                                                                                          | Deprecated in        | Removed in           |
+| -------------------------------------------------------------------------------------------- | -------------------- | -------------------- |
+| `IContainer.request` (except calling with "/")                                               | 2.0.0-internal.6.0.0 |                      |
+| `IDataStore.request` (except calling with "/")                                               | 2.0.0-internal.6.0.0 |                      |
+| `IContainer.IFluidRouter`                                                                    | 2.0.0-internal.6.0.0 |                      |
+| `IDataStore.IFluidRouter`                                                                    | 2.0.0-internal.6.0.0 |                      |
+| `request` and `IFluidRouter` on `ILoader` and `Loader`                                       | 2.0.0-internal.6.0.0 |                      |
+| `request` and `IFluidRouter` on `IRuntime` and `ContainerRuntime`                            | 2.0.0-internal.6.0.0 |                      |
+| `request` and `IFluidRouter` on `IFluidDataStoreRuntime` and `FluidDataStoreRuntime`         | 2.0.0-internal.6.0.0 |                      |
+| `request` and `IFluidRouter` on `IFluidDataStoreChannel`                                     | 2.0.0-internal.6.0.0 |                      |
+| `getRootDataStore` on `IContainerRuntime` and `ContainerRuntime`                             | 2.0.0-internal.6.0.0 |                      |
+| `resolveHandle` on `IContainerRuntime`                                                       | 2.0.0-internal.7.0.0 |                      |
+| `IFluidHandleContext` on `IContainerRuntimeBase`                                             | 2.0.0-internal.7.0.0 |                      |
+| `requestHandler` property in `ContainerRuntime.loadRuntime(...)`                             | 2.0.0-internal.7.0.0 |                      |
+| `RuntimeRequestHandler` and `RuntimeRequestHandlerBuilder`                                   | 2.0.0-internal.7.0.0 |                      |
+| `request` and `IFluidRouter` on `IContainer` and `Container`                                 | 2.0.0-internal.7.0.0 |                      |
+| `request` and `IFluidRouter` on `IDataStore`                                                 | 2.0.0-internal.7.0.0 |                      |
+| `IFluidRouter` and `IProvideFluidRouter`                                                     | 2.0.0-internal.7.0.0 |                      |
+| `requestFluidObject`                                                                         | 2.0.0-internal.7.0.0 |                      |
+| `requestResolvedObjectFromContainer`                                                         | 2.0.0-internal.7.0.0 |                      |
+| `getDefaultObjectFromContainer`, `getObjectWithIdFromContainer` and `getObjectFromContainer` | 2.0.0-internal.7.0.0 |                      |
 <!-- prettier-ignore-end -->

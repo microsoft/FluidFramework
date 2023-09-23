@@ -34,10 +34,6 @@ import {
 	MapSchema,
 	SchemaBuilder,
 	StructSchema,
-	schemaIsFieldNode,
-	schemaIsLeaf,
-	schemaIsMap,
-	schemaIsStruct,
 } from "../../../feature-libraries";
 
 describe("editableTreeTypes", () => {
@@ -137,33 +133,6 @@ describe("editableTreeTypes", () => {
 		// TODO: add shorthand setters
 		// struct.setFoo(undefined);
 	}
-
-	it("schema is", () => {
-		assert(schemaIsLeaf(jsonBoolean));
-		assert(!schemaIsFieldNode(jsonBoolean));
-		assert(!schemaIsStruct(jsonBoolean));
-		assert(!schemaIsMap(jsonBoolean));
-
-		assert(!schemaIsLeaf(jsonArray));
-		assert(schemaIsFieldNode(jsonArray));
-		assert(!schemaIsStruct(jsonArray));
-		assert(!schemaIsMap(jsonArray));
-
-		assert(!schemaIsLeaf(jsonObject));
-		assert(!schemaIsFieldNode(jsonObject));
-		assert(!schemaIsStruct(jsonObject));
-		assert(schemaIsMap(jsonObject));
-
-		assert(!schemaIsLeaf(emptyStruct));
-		assert(!schemaIsFieldNode(emptyStruct));
-		assert(schemaIsStruct(emptyStruct));
-		assert(!schemaIsMap(emptyStruct));
-
-		assert(!schemaIsLeaf(basicStruct));
-		assert(!schemaIsFieldNode(basicStruct));
-		assert(schemaIsStruct(basicStruct));
-		assert(!schemaIsMap(basicStruct));
-	});
 
 	{
 		type _1 = requireAssignableTo<typeof jsonBoolean, LeafSchema>;

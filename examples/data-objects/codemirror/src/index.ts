@@ -12,6 +12,7 @@ import { buildRuntimeRequestHandler } from "@fluidframework/request-handler";
 // eslint-disable-next-line import/no-deprecated
 import { mountableViewRequestHandler } from "@fluidframework/aqueduct";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	requestFluidObject,
 	RequestParser,
 	RuntimeFactoryHelper,
@@ -36,6 +37,7 @@ const viewRequestHandler = async (request: RequestParser, runtime: IContainerRun
 			url: ``,
 			headers: request.headers,
 		});
+		// eslint-disable-next-line import/no-deprecated
 		const codeMirror = await requestFluidObject<CodeMirrorComponent>(
 			await runtime.getRootDataStore(defaultComponentId),
 			objectRequest,

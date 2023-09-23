@@ -8,10 +8,11 @@ import { EventEmitter } from "events";
 import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
 import {
 	IFluidLoadable,
-	IFluidRouter,
 	IRequest,
 	IResponse,
 	IFluidHandle,
+	// eslint-disable-next-line import/no-deprecated
+	IFluidRouter,
 } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
@@ -30,6 +31,7 @@ import { PresenceManager } from "./presence";
  * It has its own implementation of IFluidLoadable and does not extend PureDataObject / DataObject. This is
  * done intentionally to serve as an example of exposing the URL and handle via IFluidLoadable.
  */
+// eslint-disable-next-line import/no-deprecated
 export class CodeMirrorComponent extends EventEmitter implements IFluidLoadable, IFluidRouter {
 	public static async load(
 		runtime: IFluidDataStoreRuntime,
@@ -45,6 +47,7 @@ export class CodeMirrorComponent extends EventEmitter implements IFluidLoadable,
 	public get IFluidLoadable() {
 		return this;
 	}
+	// eslint-disable-next-line import/no-deprecated
 	public get IFluidRouter() {
 		return this;
 	}
