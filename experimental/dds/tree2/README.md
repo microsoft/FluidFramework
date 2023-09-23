@@ -11,7 +11,7 @@ Notable consideration that early adopters should be wary of:
     Current estimate for LTS is April 2024.
 -   SharedTree currently has unbounded memory growth:
     -   Removed content is retained forever.
-    -   Accessing an `EditableField` object (from its parent, e.g., with `getField`) in a loop, it will leak unbounded memory.
+    -   Accessing an `EditableField` object (from its parent, e.g., with `getField`) in a loop will leak unbounded memory.
 -   All changes are atomized by the `visitDelta` function. This means that, when inserting/removing/moving 2 contiguous nodes, the `visitDelta` function will call the `DeltaVisitor` twice (once for each node) instead of once for both nodes. Change notification consumers that are downstream from the `DeltaVisitor` will therefore also see those changes as atomized.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
