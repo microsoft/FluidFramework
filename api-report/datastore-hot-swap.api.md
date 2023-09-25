@@ -14,9 +14,9 @@ import { ISharedObjectRegistry } from '@fluidframework/datastore';
 import { ISummarizerNodeWithGC } from '@fluidframework/runtime-definitions';
 
 // @public
-export class HotSwapFluidDataStoreRuntime extends FluidDataStoreRuntime {
+export class UnsafeHotSwapFluidDataStoreRuntime extends FluidDataStoreRuntime {
     // (undocumented)
-    [".UNSAFE_reAttachChannel"](channel: IChannel): void;
+    [".UNSAFE_reattachChannel"](channel: IChannel): void;
     // (undocumented)
     [".UNSAFE_replaceChannel"](id: string, channelFactory: IChannelFactory): IChannel;
     // Warning: (ae-forgotten-export) The symbol "IModifiableFluidDataStoreContext" needs to be exported by the entry point index.d.ts

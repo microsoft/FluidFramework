@@ -46,7 +46,7 @@ import {
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/datastore";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { HotSwapFluidDataStoreRuntime } from "../hotSwapDataStoreRuntime";
+import { UnsafeHotSwapFluidDataStoreRuntime } from "../hotSwapDataStoreRuntime";
 import { IModifiableFluidDataStoreContext } from "../types";
 
 class MockSummarizerNode implements ISummarizerNodeWithGC {
@@ -215,8 +215,9 @@ describe("FluidDataStoreRuntime Tests", () => {
 		context: IModifiableFluidDataStoreContext,
 		registry: ISharedObjectRegistry,
 		entrypointInitializationFn?: (rt: IFluidDataStoreRuntime) => Promise<FluidObject>,
-	): HotSwapFluidDataStoreRuntime {
-		return new HotSwapFluidDataStoreRuntime(
+	): UnsafeHotSwapFluidDataStoreRuntime {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+		return new UnsafeHotSwapFluidDataStoreRuntime(
 			context,
 			registry,
 			/* existing */ false,
@@ -316,6 +317,7 @@ describe("FluidDataStoreRuntime Tests", () => {
 	it("createChannel rejects ids with slashes", async () => {
 		const dataStoreRuntime = createRuntime(dataStoreContext, sharedObjectRegistry);
 		const invalidId = "beforeSlash/afterSlash";
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		const codeBlock = (): IChannel => dataStoreRuntime.createChannel(invalidId, "SomeType");
 		assert.throws(
 			codeBlock,

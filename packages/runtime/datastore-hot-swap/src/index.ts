@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { HotSwapFluidDataStoreRuntime } from "./hotSwapDataStoreRuntime";
+export { UnsafeHotSwapFluidDataStoreRuntime } from "./hotSwapDataStoreRuntime";

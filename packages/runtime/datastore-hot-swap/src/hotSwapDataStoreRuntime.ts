@@ -14,12 +14,9 @@ import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/da
 import { ILocalChannelContext, IModifiableFluidDataStoreContext } from "./types";
 
 /**
- * The concept of this class is to scope changes only necessary to data migration here.
- *
- * This class enables replacing channels. Deleting channels is risky. We can achieve
- * very similar results by removing all the handles and deleting all the data.
+ * DO NOT USE THIS CLASS DIRECTLY.
  */
-export class HotSwapFluidDataStoreRuntime extends FluidDataStoreRuntime {
+export class UnsafeHotSwapFluidDataStoreRuntime extends FluidDataStoreRuntime {
 	private readonly replacedContexts: Map<string, ILocalChannelContext> = new Map();
 	public constructor(
 		private readonly modifiableDataStoreContext: IModifiableFluidDataStoreContext,

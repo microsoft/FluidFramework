@@ -28,10 +28,10 @@ import {
 	ISharedTree as ISharedTree2,
 } from "@fluid-experimental/tree2";
 import { IContainerRuntimeOptions, ContainerRuntime } from "@fluidframework/container-runtime";
-import { HotSwapFluidDataStoreRuntime } from "@fluid-experimental/datastore-hot-swap";
+import { UnsafeHotSwapFluidDataStoreRuntime } from "@fluid-experimental/datastore-hot-swap";
 
 export class MigratorDataObject<I extends DataObjectTypes = DataObjectTypes> extends DataObject<I> {
-	private readonly hotSwapRuntime: HotSwapFluidDataStoreRuntime;
+	private readonly hotSwapRuntime: UnsafeHotSwapFluidDataStoreRuntime;
 
 	public get _root(): ISharedDirectory {
 		return this.root;
@@ -48,7 +48,7 @@ export class MigratorDataObject<I extends DataObjectTypes = DataObjectTypes> ext
 	public constructor(props: IDataObjectProps<I>) {
 		super(props);
 		assert((props.runtime as any).replaceChannel !== undefined, "expected migrator runtime");
-		this.hotSwapRuntime = props.runtime as HotSwapFluidDataStoreRuntime;
+		this.hotSwapRuntime = props.runtime as UnsafeHotSwapFluidDataStoreRuntime;
 	}
 
 	// Deleting DDSes is dangerous it's best just to replace
@@ -83,7 +83,7 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 		[SharedTree.getFactory()],
 		[],
 		undefined,
-		HotSwapFluidDataStoreRuntime,
+		UnsafeHotSwapFluidDataStoreRuntime,
 	);
 
 	const dataObjectFactoryV2 = new DataObjectFactory(
@@ -92,7 +92,7 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 		[new NewSharedTreeFactory()],
 		[],
 		undefined,
-		HotSwapFluidDataStoreRuntime,
+		UnsafeHotSwapFluidDataStoreRuntime,
 	);
 
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
