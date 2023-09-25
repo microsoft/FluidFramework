@@ -13,7 +13,7 @@ import { uncompressedEncode } from "./uncompressedEncode";
 
 export function makeUncompressedCodec({
 	jsonValidator: validator,
-}: ICodecOptions): IJsonCodec<ITreeCursorSynchronous, EncodedChunk> {
+}: ICodecOptions): IJsonCodec<ITreeCursorSynchronous> {
 	const versionedValidator = validator.compile(Versioned);
 	const formatValidator = validator.compile(EncodedChunk);
 	return {

@@ -60,7 +60,7 @@ const onlyTypeShape = new NodeShape(undefined, false, [], undefined);
 
 const constantFooShape = new NodeShape(brand("foo"), false, [], undefined);
 
-describe.only("compressedEncode", () => {
+describe("compressedEncode", () => {
 	// This is a good smoke test for compressedEncode,
 	// but also provides good coverage of anyNodeEncoder, anyFieldEncoder as well as AnyShape which they are built on.
 	describe("test trees", () => {

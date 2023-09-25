@@ -16,7 +16,7 @@ import { schemaCompressedEncode } from "./schemaBasedEncoding";
 export function makeCompressedCodec(
 	{ jsonValidator: validator }: ICodecOptions,
 	cache: EncoderCache,
-): IJsonCodec<ITreeCursorSynchronous, EncodedChunk> {
+): IJsonCodec<ITreeCursorSynchronous> {
 	const versionedValidator = validator.compile(Versioned);
 	const formatValidator = validator.compile(EncodedChunk);
 	return {
@@ -45,7 +45,7 @@ export function makeSchemaCompressedCodec(
 	{ jsonValidator: validator }: ICodecOptions,
 	schema: SchemaData,
 	policy: FullSchemaPolicy,
-): IJsonCodec<ITreeCursorSynchronous, EncodedChunk> {
+): IJsonCodec<ITreeCursorSynchronous> {
 	const versionedValidator = validator.compile(Versioned);
 	const formatValidator = validator.compile(EncodedChunk);
 	return {
