@@ -298,7 +298,9 @@ export class LazyMap<TSchema extends MapSchema>
 
 	public get size(): number {
 		let fieldCount = 0;
-		forEachField(this[cursorSymbol], () => (fieldCount += 1));
+		forEachField(this[cursorSymbol], () => {
+			fieldCount += 1;
+		});
 		return fieldCount;
 	}
 

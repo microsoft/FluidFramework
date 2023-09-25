@@ -8,6 +8,9 @@ import { FieldKey } from "../schema-stored";
 import { FieldUpPath, UpPath } from "./pathTree";
 import { TreeType, Value } from "./types";
 
+export const Stop = Symbol("Stop");
+export type Stop = typeof Stop;
+
 /**
  * A symbol for marking an object as an {@link ITreeCursor}.
  *
@@ -341,16 +344,19 @@ export function mapCursorFields<T, TCursor extends ITreeCursor = ITreeCursor>(
 
 /**
  * @param cursor - cursor at a node whose fields will be visited.
- * @param f - For on each field.
+ * @param f - A function to run for each field.
+ * If `f` returns `Stop`, the iteration will end.
  * If `f` moves cursor, it must put it back to where it was at the beginning of `f` before returning.
  */
 export function forEachField<TCursor extends ITreeCursor = ITreeCursor>(
 	cursor: TCursor,
-	f: (cursor: TCursor) => void,
+	f: (cursor: TCursor) => void | Stop,
 ): void {
 	assert(cursor.mode === CursorLocationType.Nodes, 0x411 /* should be in nodes */);
 	for (let inField = cursor.firstField(); inField; inField = cursor.nextField()) {
-		f(cursor);
+		if (f(cursor) === Stop) {
+			return;
+		}
 	}
 }
 
@@ -374,16 +380,19 @@ export function mapCursorField<T, TCursor extends ITreeCursor = ITreeCursor>(
 
 /**
  * @param cursor - cursor at a field whose nodes will be visited.
- * @param f - For on each node.
+ * @param f - A function to run for each node.
+ * If `f` returns `Stop`, the iteration will end.
  * If `f` moves cursor, it must put it back to where it was at the beginning of `f` before returning.
  */
 export function forEachNode<TCursor extends ITreeCursor = ITreeCursor>(
 	cursor: TCursor,
-	f: (cursor: TCursor) => void,
+	f: (cursor: TCursor) => void | Stop,
 ): void {
 	assert(cursor.mode === CursorLocationType.Fields, 0x3bd /* should be in fields */);
 	for (let inNodes = cursor.firstNode(); inNodes; inNodes = cursor.nextNode()) {
-		f(cursor);
+		if (f(cursor) === Stop) {
+			return;
+		}
 	}
 }
 

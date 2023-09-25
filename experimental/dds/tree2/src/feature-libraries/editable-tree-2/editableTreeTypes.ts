@@ -23,6 +23,15 @@ import { TreeStatus } from "../editable-tree";
 import { TreeContext } from "./context";
 
 /**
+ * An object returned during an iteration that indicates the iteration should stop after returning the wrapped value.
+ *
+ * @alpha
+ */
+export class Stop<T> {
+	public constructor(public readonly value: T) {}
+}
+
+/**
  * Part of a tree.
  * Iterates over children.
  *
@@ -490,8 +499,8 @@ export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
 	/**
 	 * Calls the specified callback function for all the elements in the sequence.
 	 * The return value of the callback function is the accumulated result, and is provided as an argument in the next call to the callback function.
-	 * @param callbackfn - A function that accepts up to four arguments.
-	 * The reduce method calls the callbackfn function one time for each element in the array.
+	 * @param callbackfn - An accumulation function to be called on each element.
+	 * The reduce method calls the callbackfn function one time for each element in the sequence, or until the callbackfn returns {@link Stop}.
 	 * @param initialValue - If present, it is passed to the first call to the callbackfn.
 	 * Otherwise, the first element in the sequence will be used as the initial accumulator value and skipped as currentValue.
 	 */
@@ -501,7 +510,7 @@ export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
 			currentValue: UnboxNodeUnion<TTypes>,
 			currentIndex: number,
 			sequence: this,
-		) => UnboxNodeUnion<TTypes>,
+		) => UnboxNodeUnion<TTypes> | Stop<UnboxNodeUnion<TTypes>>,
 		initialValue?: UnboxNodeUnion<TTypes>,
 	): UnboxNodeUnion<TTypes>;
 	reduce<U>(
@@ -510,15 +519,15 @@ export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
 			currentValue: UnboxNodeUnion<TTypes>,
 			currentIndex: number,
 			sequence: this,
-		) => UnboxNodeUnion<TTypes>,
+		) => U | Stop<U>,
 		initialValue: U,
 	): U;
 
 	/**
 	 * Calls the specified callback function for all the elements in the sequence.
 	 * The return value of the callback function is the accumulated result, and is provided as an argument in the next call to the callback function.
-	 * @param callbackfn - A function that accepts up to four arguments.
-	 * The reduce method calls the callbackfn function one time for each element in the array.
+	 * @param callbackfn - An accumulation function to be called on each element.
+	 * The reduce method calls the callbackfn function one time for each element in the sequence, or until the callbackfn returns {@link Stop}.
 	 * @param initialValue - If present, it is passed to the first call to the callbackfn.
 	 * Otherwise, the first element in the sequence will be used as the initial accumulator value and skipped as currentValue.
 	 */
@@ -528,7 +537,7 @@ export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
 			currentValue: TypedNodeUnion<TTypes>,
 			currentIndex: number,
 			sequence: this,
-		) => TypedNodeUnion<TTypes>,
+		) => TypedNodeUnion<TTypes> | Stop<TypedNodeUnion<TTypes>>,
 		initialValue?: TypedNodeUnion<TTypes>,
 	): TypedNodeUnion<TTypes>;
 	reduceBoxed<U>(
@@ -537,7 +546,7 @@ export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
 			currentValue: TypedNodeUnion<TTypes>,
 			currentIndex: number,
 			sequence: this,
-		) => TypedNodeUnion<TTypes>,
+		) => U | Stop<U>,
 		initialValue: U,
 	): U;
 

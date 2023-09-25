@@ -1867,12 +1867,12 @@ export interface Sequence2<TTypes extends AllowedTypes> extends TreeField {
     readonly length: number;
     map<U>(callbackfn: (value: UnboxNodeUnion<TTypes>, index: number, array: this) => U): U[];
     mapBoxed<U>(callbackfn: (value: TypedNodeUnion<TTypes>, index: number, array: this) => U): U[];
-    reduce(callbackfn: (previousValue: UnboxNodeUnion<TTypes>, currentValue: UnboxNodeUnion<TTypes>, currentIndex: number, sequence: this) => UnboxNodeUnion<TTypes>, initialValue?: UnboxNodeUnion<TTypes>): UnboxNodeUnion<TTypes>;
+    reduce(callbackfn: (previousValue: UnboxNodeUnion<TTypes>, currentValue: UnboxNodeUnion<TTypes>, currentIndex: number, sequence: this) => UnboxNodeUnion<TTypes> | Stop<UnboxNodeUnion<TTypes>>, initialValue?: UnboxNodeUnion<TTypes>): UnboxNodeUnion<TTypes>;
     // (undocumented)
-    reduce<U>(callbackfn: (previousValue: U, currentValue: UnboxNodeUnion<TTypes>, currentIndex: number, sequence: this) => UnboxNodeUnion<TTypes>, initialValue: U): U;
-    reduceBoxed(callbackfn: (previousValue: TypedNodeUnion<TTypes>, currentValue: TypedNodeUnion<TTypes>, currentIndex: number, sequence: this) => TypedNodeUnion<TTypes>, initialValue?: TypedNodeUnion<TTypes>): TypedNodeUnion<TTypes>;
+    reduce<U>(callbackfn: (previousValue: U, currentValue: UnboxNodeUnion<TTypes>, currentIndex: number, sequence: this) => U | Stop<U>, initialValue: U): U;
+    reduceBoxed(callbackfn: (previousValue: TypedNodeUnion<TTypes>, currentValue: TypedNodeUnion<TTypes>, currentIndex: number, sequence: this) => TypedNodeUnion<TTypes> | Stop<TypedNodeUnion<TTypes>>, initialValue?: TypedNodeUnion<TTypes>): TypedNodeUnion<TTypes>;
     // (undocumented)
-    reduceBoxed<U>(callbackfn: (previousValue: U, currentValue: TypedNodeUnion<TTypes>, currentIndex: number, sequence: this) => TypedNodeUnion<TTypes>, initialValue: U): U;
+    reduceBoxed<U>(callbackfn: (previousValue: U, currentValue: TypedNodeUnion<TTypes>, currentIndex: number, sequence: this) => U | Stop<U>, initialValue: U): U;
     // (undocumented)
     replaceRange(index: number, count: number, content: Iterable<FlexibleNodeContent<TTypes>>): void;
 }
@@ -1930,6 +1930,13 @@ type Skip = number;
 
 // @alpha
 export type StableNodeKey = Brand<StableId, "Stable Node Key">;
+
+// @alpha
+export class Stop<T> {
+    constructor(value: T);
+    // (undocumented)
+    readonly value: T;
+}
 
 // @alpha
 export interface StoredSchemaRepository extends Dependee, ISubscribable<SchemaEvents>, SchemaData {

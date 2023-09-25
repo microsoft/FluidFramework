@@ -18,6 +18,7 @@ import {
 	rootField,
 	EmptyKey,
 	forEachNode,
+	Stop as StopCursor,
 } from "../../core";
 import { FieldKind } from "../modular-schema";
 import { NewFieldContent, normalizeNewFieldContent } from "../contextuallyTyped";
@@ -50,6 +51,7 @@ import {
 	TreeField,
 	TreeNode,
 	RequiredField,
+	Stop,
 } from "./editableTreeTypes";
 import { makeTree } from "./lazyTree";
 import {
@@ -209,7 +211,7 @@ export abstract class LazyField<TKind extends FieldKindTypes, TTypes extends All
 			currentValue: UnboxNodeUnion<TTypes>,
 			currentIndex: number,
 			sequence: this,
-		) => U,
+		) => U | Stop<U>,
 		initialValue?: U | undefined,
 	): UnboxNodeUnion<TTypes> | U {
 		return this.reduceImpl(
@@ -225,12 +227,12 @@ export abstract class LazyField<TKind extends FieldKindTypes, TTypes extends All
 			currentValue: TypedNodeUnion<TTypes>,
 			currentIndex: number,
 			sequence: this,
-		) => U,
+		) => U | Stop<U>,
 		initialValue?: U | undefined,
 	): TypedNodeUnion<TTypes> | U {
 		return this.reduceImpl(
 			callbackfn,
-			(cursor) => unboxedUnion(this.context, this.schema, cursor),
+			(cursor) => makeTree(this.context, cursor) as TypedNodeUnion<TTypes>,
 			initialValue,
 		);
 	}
@@ -241,22 +243,24 @@ export abstract class LazyField<TKind extends FieldKindTypes, TTypes extends All
 			currentValue: T,
 			currentIndex: number,
 			sequence: this,
-		) => Accumulation,
+		) => Accumulation | Stop<Accumulation>,
 		getCurrentValue: (cursor: ITreeSubscriptionCursor) => T,
 		initialValue?: Accumulation,
 	): T | Accumulation {
-		let accumulation = initialValue;
+		let accumulation: Accumulation | undefined = initialValue;
 		forEachNode(this[cursorSymbol], (cursor) => {
 			const element = getCurrentValue(cursor);
-			accumulation =
+			const result =
 				accumulation !== undefined
-					? callbackfn(
-							accumulation as unknown as Accumulation,
-							element,
-							cursor.fieldIndex,
-							this,
-					  ) // Cast: it is assumed that if initialValue === undefined, then U == T
-					: (element as unknown as Accumulation);
+					? callbackfn(accumulation, element, cursor.fieldIndex, this)
+					: (element as unknown as Accumulation); // Cast: it is assumed that if initialValue === undefined, then T == Accumulation
+
+			if (result instanceof Stop) {
+				accumulation = result.value;
+				return StopCursor;
+			} else {
+				accumulation = result;
+			}
 		});
 		return accumulation ?? fail("Reduce called on an empty sequence with no initial value");
 	}

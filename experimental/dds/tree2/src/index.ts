@@ -288,6 +288,7 @@ export {
 	LeafSchema,
 	MapSchema,
 	StructSchema,
+	Stop,
 } from "./feature-libraries";
 
 export {

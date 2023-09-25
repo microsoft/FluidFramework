@@ -83,6 +83,7 @@ export {
 	CursorMarker,
 	isCursor,
 	getDetachedFieldContainingPath,
+	Stop,
 } from "./tree";
 
 export {

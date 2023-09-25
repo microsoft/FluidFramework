@@ -28,6 +28,7 @@ export {
 	inCursorNode,
 	CursorMarker,
 	isCursor,
+	Stop,
 } from "./cursor";
 export { ProtoNodes } from "./delta";
 export { getMapTreeField, MapTree } from "./mapTree";
