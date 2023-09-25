@@ -16,23 +16,15 @@ const alertNodeType = "Alert";
 /**
  * An highlighted notice about nearby content for the user.
  *
- * @example Markdown
+ * @remarks {@link renderAlertNode} demonstrates how the contents are rendered to take advantage of Hugo's `callout` syntax.
+ *
+ * @example Example rendering output (in Hugo Markdown)
  *
  * ```md
- * > [TIP]: Unit tests are super useful!
- * >
- * > More details about unit tests...
- * ```
+ * {{% callout TIP Unit tests are super useful! %}}
  *
- * @example HTML
- *
- * ```html
- * <blockquote>
- * 	<b>[TIP]: Unit tests are super useful!</b>
- * 	<br>
- * 	<br>
- * 	More details about unit tests...
- * </blockquote>
+ * More details about unit testing...
+ * {{% /callout %}}
  * ```
  *
  * @public
