@@ -48,10 +48,10 @@ export function isEmpty<T>(change: Changeset<T>): boolean {
 	return change.length === 0;
 }
 
-export function isNewAttach<TNodeChange>(
-	mark: Mark<TNodeChange>,
-): mark is CellMark<NewAttach, TNodeChange> {
-	return isNewAttachEffect(mark) || (markIsTransient(mark) && isNewAttachEffect(mark.attach));
+export function isNewAttach(effect: MarkEffect): effect is NewAttach {
+	return (
+		isNewAttachEffect(effect) || (isTransientEffect(effect) && isNewAttachEffect(effect.attach))
+	);
 }
 
 function isNewAttachEffect(effect: MarkEffect): effect is NewAttach {
@@ -64,16 +64,12 @@ export function isGenerativeMark<TNodeChange>(
 	return mark.type === "Insert" || mark.type === "Revive";
 }
 
-export function isAttach<TNodeChange>(
-	mark: Mark<TNodeChange>,
-): mark is CellMark<Attach, TNodeChange> {
-	return isNewAttach(mark) || isReattach(mark);
+export function isAttach(effect: MarkEffect): effect is Attach {
+	return isNewAttach(effect) || isReattach(effect);
 }
 
-export function isReattach<TNodeChange>(
-	mark: Mark<TNodeChange>,
-): mark is CellMark<Reattach, TNodeChange> {
-	return mark.type === "Revive" || mark.type === "ReturnTo";
+export function isReattach(effect: MarkEffect): effect is Reattach {
+	return effect.type === "Revive" || effect.type === "ReturnTo";
 }
 
 export function isActiveReattach<TNodeChange>(
@@ -142,11 +138,11 @@ export function getOutputCellId(
 	metadata: RevisionMetadataSource | undefined,
 ): CellId | undefined {
 	if (markEmptiesCells(mark)) {
-		assert(isDetachMark(mark), 0x750 /* Only detaches can empty cells */);
+		assert(isDetach(mark), 0x750 /* Only detaches can empty cells */);
 		return getDetachCellId(mark, revision, metadata);
 	} else if (markFillsCells(mark)) {
 		return undefined;
-	} else if (markIsTransient(mark)) {
+	} else if (isTransientEffect(mark)) {
 		return getDetachCellId(mark.detach, revision, metadata);
 	}
 
@@ -255,8 +251,8 @@ export function markHasCellEffect(mark: Mark<unknown>): boolean {
 	return areInputCellsEmpty(mark) !== areOutputCellsEmpty(mark);
 }
 
-export function markIsTransient<T>(mark: Mark<T>): mark is CellMark<TransientEffect, T> {
-	return mark.type === "Transient";
+export function isTransientEffect(effect: MarkEffect): effect is TransientEffect {
+	return effect.type === "Transient";
 }
 
 /**
@@ -368,9 +364,7 @@ export function areOverlappingIdRanges(
 	return (id2 <= id1 && id1 <= lastId2) || (id1 <= id2 && id2 <= lastId1);
 }
 
-export function isDetachMark<TNodeChange>(
-	mark: Mark<TNodeChange> | undefined,
-): mark is CellMark<Detach, TNodeChange> {
+export function isDetach(mark: MarkEffect | undefined): mark is Detach {
 	const type = mark?.type;
 	return type === "Delete" || type === "MoveOut" || type === "ReturnFrom";
 }
@@ -418,102 +412,126 @@ function areMergeableCellIds(
  * @returns `true` iff the function was able to mutate `lhs` to include the effects of `rhs`.
  * When `false` is returned, `lhs` is left untouched.
  */
-export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean {
+export function tryMergeMarks<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): Mark<T> | undefined {
 	if (rhs.type !== lhs.type) {
-		return false;
+		return undefined;
 	}
 
 	if (!areMergeableCellIds(lhs.cellId, lhs.count, rhs.cellId)) {
-		return false;
-	}
-
-	if (
-		isDetachMark(lhs) &&
-		isDetachMark(rhs) &&
-		!areMergeableCellIds(getOverrideCellId(lhs), lhs.count, getOverrideCellId(rhs))
-	) {
-		return false;
+		return undefined;
 	}
 
 	if (rhs.changes !== undefined || lhs.changes !== undefined) {
-		return false;
+		return undefined;
+	}
+
+	const mergedEffect = tryMergeEffects(lhs, rhs, lhs.count);
+	if (mergedEffect === undefined) {
+		return undefined;
+	}
+
+	return { ...lhs, ...mergedEffect, count: lhs.count + rhs.count };
+}
+
+function tryMergeEffects(
+	lhs: MarkEffect,
+	rhs: MarkEffect,
+	lhsCount: number,
+): MarkEffect | undefined {
+	if (lhs.type !== rhs.type) {
+		return undefined;
+	}
+
+	if (rhs.type === NoopMarkType) {
+		return lhs;
+	}
+
+	if (rhs.type === "Transient") {
+		const lhsTransient = lhs as TransientEffect;
+		const attach = tryMergeEffects(lhsTransient.attach, rhs.attach, lhsCount);
+		const detach = tryMergeEffects(lhsTransient.detach, rhs.detach, lhsCount);
+		if (attach === undefined || detach === undefined) {
+			return undefined;
+		}
+
+		assert(
+			isAttach(attach) && isDetach(detach),
+			"Merged marks should be same type as input marks",
+		);
+		return { ...lhsTransient, attach, detach };
+	}
+
+	if ((lhs as HasRevisionTag).revision !== rhs.revision) {
+		return undefined;
+	}
+
+	if (
+		isDetach(lhs) &&
+		isDetach(rhs) &&
+		!areMergeableCellIds(getOverrideCellId(lhs), lhsCount, getOverrideCellId(rhs))
+	) {
+		return undefined;
 	}
 
 	const type = rhs.type;
-	if (type === NoopMarkType) {
-		lhs.count += rhs.count;
-		return true;
-	}
-
-	if (type === "Transient") {
-		// TODO
-		return false;
-	}
-
-	if (rhs.revision !== (lhs as HasRevisionTag).revision) {
-		return false;
-	}
-
 	switch (type) {
 		case "Insert": {
-			const lhsInsert = lhs as CellMark<Insert, T>;
-			lhsInsert.content.push(...rhs.content);
-			lhsInsert.count += rhs.count;
-			return true;
+			const lhsInsert = lhs as Insert;
+			return {
+				...lhsInsert,
+				content: [...lhsInsert.content, ...rhs.content],
+			};
 		}
 		case "MoveIn": {
-			const lhsMoveIn = lhs as CellMark<MoveIn, T>;
+			const lhsMoveIn = lhs as MoveIn;
 			if (
 				lhsMoveIn.isSrcConflicted === rhs.isSrcConflicted &&
-				(lhsMoveIn.id as number) + lhsMoveIn.count === rhs.id
+				(lhsMoveIn.id as number) + lhsCount === rhs.id
 			) {
-				lhsMoveIn.count += rhs.count;
-				return true;
+				return lhsMoveIn;
 			}
 			break;
 		}
 		case "ReturnTo": {
-			const lhsReturnTo = lhs as CellMark<ReturnTo, T>;
+			const lhsReturnTo = lhs as ReturnTo;
 			if (
 				lhsReturnTo.inverseOf === rhs.inverseOf &&
 				lhsReturnTo.isSrcConflicted === rhs.isSrcConflicted &&
-				(lhsReturnTo.id as number) + lhsReturnTo.count === rhs.id
+				(lhsReturnTo.id as number) + lhsCount === rhs.id
 			) {
-				lhsReturnTo.count += rhs.count;
-				return true;
+				return lhsReturnTo;
 			}
 			break;
 		}
 		case "Delete": {
-			const lhsDetach = lhs as CellMark<Detach, T>;
-			if ((lhsDetach.id as number) + lhsDetach.count === rhs.id) {
-				lhsDetach.count += rhs.count;
-				return true;
+			const lhsDetach = lhs as Detach;
+			if ((lhsDetach.id as number) + lhsCount === rhs.id) {
+				return lhsDetach;
 			}
 			break;
 		}
 		case "MoveOut":
 		case "ReturnFrom": {
-			const lhsMoveOut = lhs as CellMark<MoveOut | ReturnFrom, T>;
-			if ((lhsMoveOut.id as number) + lhsMoveOut.count === rhs.id) {
-				lhsMoveOut.count += rhs.count;
-				return true;
+			const lhsMoveOut = lhs as MoveOut;
+			if ((lhsMoveOut.id as number) + lhsCount === rhs.id) {
+				return lhsMoveOut;
 			}
 			break;
 		}
 		case "Revive": {
-			const lhsRevive = lhs as CellMark<Revive, T>;
+			const lhsRevive = lhs as Revive;
 			if (lhsRevive.inverseOf === rhs.inverseOf) {
-				lhsRevive.content.push(...rhs.content);
-				lhsRevive.count += rhs.count;
-				return true;
+				return { ...lhsRevive, content: [...lhsRevive.content, ...rhs.content] };
 			}
 			break;
 		}
-		default:
+		case "Placeholder":
 			break;
+		default:
+			unreachableCase(type);
 	}
-	return false;
+
+	return undefined;
 }
 
 /**
@@ -542,7 +560,7 @@ export class DetachedNodeTracker {
 		for (const mark of change.change) {
 			const inputLength: number = getInputLength(mark);
 			if (markEmptiesCells(mark)) {
-				assert(isDetachMark(mark), 0x70d /* Only detach marks should empty cells */);
+				assert(isDetach(mark), 0x70d /* Only detach marks should empty cells */);
 				const newNodes: Map<number, CellId> = new Map();
 				const after = index + inputLength;
 				for (const [k, v] of this.nodes) {

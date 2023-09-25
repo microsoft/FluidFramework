@@ -50,7 +50,7 @@ export {
 	areComposable,
 	areRebasable,
 	getInputLength,
-	isDetachMark,
+	isDetach as isDetachMark,
 	isReattach,
 	DetachedNodeTracker,
 	newCrossFieldTable,

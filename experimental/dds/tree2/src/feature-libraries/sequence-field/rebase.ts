@@ -17,7 +17,7 @@ import {
 } from "../modular-schema";
 import {
 	getInputLength,
-	isDetachMark,
+	isDetach,
 	isNewAttach,
 	cloneMark,
 	areInputCellsEmpty,
@@ -158,7 +158,7 @@ function rebaseMarkList<TNodeChange>(
 		// then add `baseMark` to `lineageEntries` so that `rebasedMark` does not get an entry for `baseMark`.
 		// `rebasedMark` should already have a detach event for `baseMark`.
 		if (markEmptiesCells(baseMark)) {
-			assert(isDetachMark(baseMark), 0x709 /* Only detach marks should empty cells */);
+			assert(isDetach(baseMark), 0x709 /* Only detach marks should empty cells */);
 			const detachId = getDetachCellId(baseMark, baseRevision, metadata);
 			assert(detachId.revision !== undefined, 0x74a /* Detach ID should have a revision */);
 			addLineageToRecipients(
@@ -172,7 +172,7 @@ function rebaseMarkList<TNodeChange>(
 
 		if (areInputCellsEmpty(rebasedMark)) {
 			if (markEmptiesCells(baseMark)) {
-				assert(isDetachMark(baseMark), 0x74b /* Only detaches empty cells */);
+				assert(isDetach(baseMark), 0x74b /* Only detaches empty cells */);
 				if (baseMark.type === "MoveOut" || baseMark.detachIdOverride === undefined) {
 					setMarkAdjacentCells(rebasedMark, detachBlock);
 				}
@@ -189,7 +189,7 @@ function rebaseMarkList<TNodeChange>(
 		factory.push(rebasedMark);
 
 		if (markEmptiesCells(baseMark)) {
-			assert(isDetachMark(baseMark), 0x70a /* Only detach marks should empty cells */);
+			assert(isDetach(baseMark), 0x70a /* Only detach marks should empty cells */);
 			const detachId = getDetachCellId(baseMark, baseRevision, metadata);
 			if (detachId.revision === getIntention(baseRevision, metadata) ?? baseRevision) {
 				addIdRange(detachBlock, { id: baseMark.id, count: baseMark.count });
@@ -399,7 +399,7 @@ function rebaseMark<TNodeChange>(
 				);
 			}
 		}
-		assert(isDetachMark(baseMark), 0x70b /* Only detach marks should empty cells */);
+		assert(isDetach(baseMark), 0x70b /* Only detach marks should empty cells */);
 		const baseCellId = getDetachCellId(baseMark, baseRevision, metadata);
 		rebasedMark = makeDetachedMark(rebasedMark, cloneCellId(baseCellId));
 	} else if (markFillsCells(baseMark)) {

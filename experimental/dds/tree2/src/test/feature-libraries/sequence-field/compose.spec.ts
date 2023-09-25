@@ -135,21 +135,8 @@ describe("SequenceField - Compose", () => {
 		const actual = compose([insert, del, modify], revInfos);
 		const expected = [
 			Mark.transient(
-				Mark.insert(
-					[{ type: brand("Node"), value: 0 }],
-					{ revision: tag1, localId: brand(0) },
-					{ revision: tag1 },
-				),
-				Mark.delete(1, brand(1), { revision: tag2 }),
-				// { changes },
-			),
-			Mark.transient(
-				Mark.insert(
-					[{ type: brand("Node"), value: 1 }],
-					{ revision: tag1, localId: brand(1) },
-					{ revision: tag1 },
-				),
-				Mark.delete(1, brand(2), { revision: tag2 }),
+				Mark.insert(2, { revision: tag1, localId: brand(0) }, { revision: tag1 }),
+				Mark.delete(2, brand(1), { revision: tag2 }),
 			),
 		];
 		assert.deepEqual(actual, expected);

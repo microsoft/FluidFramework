@@ -46,14 +46,14 @@ import {
 	areInputCellsEmpty,
 	compareLineages,
 	isNewAttach,
-	isDetachMark,
+	isDetach,
 	markHasCellEffect,
 	withNodeChange,
 	getMarkMoveId,
 	withRevision,
 	markEmptiesCells,
 	splitMark,
-	markIsTransient,
+	isTransientEffect,
 	isGenerativeMark,
 	areOverlappingIdRanges,
 	getInputCellId,
@@ -173,10 +173,10 @@ function composeMarks<TNodeChange>(
 ): Mark<TNodeChange> {
 	const nodeChange = composeChildChanges(baseMark.changes, newMark.changes, newRev, composeChild);
 
-	if (markIsTransient(newMark)) {
+	if (isTransientEffect(newMark)) {
 		return withNodeChange(baseMark, nodeChange);
 	}
-	if (markIsTransient(baseMark)) {
+	if (isTransientEffect(baseMark)) {
 		if (markFillsCells(newMark)) {
 			const originalAttach = withNodeChange(
 				{ ...baseMark.attach, cellId: baseMark.cellId, count: baseMark.count },
@@ -187,11 +187,7 @@ function composeMarks<TNodeChange>(
 		}
 		// Noop and Placeholder marks must be muted because the node they target has been deleted.
 		// Detach marks must be muted because the cell is empty.
-		if (
-			newMark.type === NoopMarkType ||
-			newMark.type === "Placeholder" ||
-			isDetachMark(newMark)
-		) {
+		if (newMark.type === NoopMarkType || newMark.type === "Placeholder" || isDetach(newMark)) {
 			assert(
 				newMark.cellId !== undefined,
 				0x718 /* Invalid node-targeting mark after transient */,
@@ -290,7 +286,7 @@ function composeMarks<TNodeChange>(
 
 		if (isMoveMark(baseMark)) {
 			assert(
-				isAttach(baseMark) && isDetachMark(newMark),
+				isAttach(baseMark) && isDetach(newMark),
 				"Marks with cell effects targeting empty cells must be an attach and detach",
 			);
 

@@ -4,7 +4,7 @@
  */
 
 import { Mark, MarkList } from "./format";
-import { isNoopMark, tryExtendMark } from "./utils";
+import { isNoopMark, tryMergeMarks as tryMergeMarks } from "./utils";
 
 /**
  * Helper class for constructing an offset list of marks that...
@@ -42,7 +42,9 @@ export class MarkListFactory<TNodeChange> {
 			}
 			const prev = this.list[this.list.length - 1];
 			if (prev !== undefined && prev.type === mark.type) {
-				if (tryExtendMark(prev, mark)) {
+				const merged = tryMergeMarks(prev, mark);
+				if (merged !== undefined) {
+					this.list.splice(this.list.length - 1, 1, merged);
 					return;
 				}
 			}

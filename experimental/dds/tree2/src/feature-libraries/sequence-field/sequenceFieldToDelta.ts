@@ -13,7 +13,7 @@ import {
 	areInputCellsEmpty,
 	areOutputCellsEmpty,
 	getEffectiveNodeChanges,
-	markIsTransient,
+	isTransientEffect,
 } from "./utils";
 
 export type ToDelta<TNodeChange> = (child: TNodeChange) => Delta.Modify;
@@ -54,7 +54,7 @@ function cellDeltaFromMark<TNodeChange>(
 	} else if (
 		areInputCellsEmpty(mark) &&
 		areOutputCellsEmpty(mark) &&
-		(!markIsTransient(mark) || ignoreTransient)
+		(!isTransientEffect(mark) || ignoreTransient)
 	) {
 		// The cell starting and ending empty means the cell content has not changed,
 		// unless transient content was inserted/attached.
