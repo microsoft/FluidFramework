@@ -49,6 +49,16 @@ export enum DataStoreMessageType {
 
 // @public
 export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
+    // Warning: (ae-forgotten-export) The symbol "IChannelContext" needs to be exported by the entry point index.d.ts
+    //
+    // @internal (undocumented)
+    protected [".UNSAFE_addChannelContext"](id: string, context: IChannelContext): void;
+    // Warning: (ae-forgotten-export) The symbol "LocalChannelContext" needs to be exported by the entry point index.d.ts
+    //
+    // @internal (undocumented)
+    protected [".UNSAFE_createLocalChannelContext"](id: string, type: string, sharedObjectRegistry: ISharedObjectRegistry): LocalChannelContext;
+    // @internal (undocumented)
+    protected [".UNSAFE_localDeleteChannelContext"]: (id: string) => void;
     constructor(dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean, initializeEntryPoint?: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>);
     // (undocumented)
     get absolutePath(): string;
@@ -70,16 +80,8 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     get clientId(): string | undefined;
     // (undocumented)
     get connected(): boolean;
-    // Warning: (ae-forgotten-export) The symbol "IChannelContext" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    protected readonly contexts: Map<string, IChannelContext>;
     // (undocumented)
     createChannel(id: string | undefined, type: string): IChannel;
-    // Warning: (ae-forgotten-export) The symbol "LocalChannelContext" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    protected createLocalChannelContext(id: string, type: string, sharedObjectRegistry: ISharedObjectRegistry): LocalChannelContext;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
@@ -133,8 +135,6 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     get routeContext(): IFluidHandleContext;
     // (undocumented)
     setConnectionState(connected: boolean, clientId?: string): void;
-    // (undocumented)
-    protected readonly sharedObjectRegistry: ISharedObjectRegistry;
     // (undocumented)
     submitMessage(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;
     // (undocumented)

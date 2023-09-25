@@ -53,11 +53,12 @@ export class MigratorDataObject<I extends DataObjectTypes = DataObjectTypes> ext
 
 	// Deleting DDSes is dangerous it's best just to replace
 	public replaceChannel(channel: IChannel, factory: IChannelFactory) {
-		return this.hotSwapRuntime.replaceChannel(channel.id, factory);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+		return this.hotSwapRuntime[".UNSAFE_replaceChannel"](channel.id, factory);
 	}
 
 	public reAttachChannel(channel: IChannel) {
-		this.hotSwapRuntime.reAttachChannel(channel);
+		this.hotSwapRuntime[".UNSAFE_reattachChannel"](channel);
 	}
 
 	protected async initializingFirstTime(): Promise<void> {

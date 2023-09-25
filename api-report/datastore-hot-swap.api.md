@@ -15,12 +15,12 @@ import { ISummarizerNodeWithGC } from '@fluidframework/runtime-definitions';
 
 // @public
 export class HotSwapFluidDataStoreRuntime extends FluidDataStoreRuntime {
+    // (undocumented)
+    [".UNSAFE_reAttachChannel"](channel: IChannel): void;
+    // (undocumented)
+    [".UNSAFE_replaceChannel"](id: string, channelFactory: IChannelFactory): IChannel;
     // Warning: (ae-forgotten-export) The symbol "IModifiableFluidDataStoreContext" needs to be exported by the entry point index.d.ts
-    constructor(modifiableDataStoreContext: IModifiableFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean, initializeEntryPoint?: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>);
-    // (undocumented)
-    reAttachChannel(channel: IChannel): void;
-    // (undocumented)
-    replaceChannel(id: string, channelFactory: IChannelFactory): IChannel;
+    constructor(modifiableDataStoreContext: IModifiableFluidDataStoreContext, _sharedObjectRegistry: ISharedObjectRegistry, existing: boolean, initializeEntryPoint?: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>);
 }
 
 // (No @packageDocumentation comment for this package)

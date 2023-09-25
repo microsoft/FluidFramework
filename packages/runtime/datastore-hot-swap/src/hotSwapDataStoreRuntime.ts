@@ -23,38 +23,36 @@ export class HotSwapFluidDataStoreRuntime extends FluidDataStoreRuntime {
 	private readonly replacedContexts: Map<string, ILocalChannelContext> = new Map();
 	public constructor(
 		private readonly modifiableDataStoreContext: IModifiableFluidDataStoreContext,
-		sharedObjectRegistry: ISharedObjectRegistry,
+		private readonly _sharedObjectRegistry: ISharedObjectRegistry,
 		existing: boolean,
 		initializeEntryPoint?: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>,
 	) {
-		super(modifiableDataStoreContext, sharedObjectRegistry, existing, initializeEntryPoint);
+		super(modifiableDataStoreContext, _sharedObjectRegistry, existing, initializeEntryPoint);
 	}
 
 	// Returns a detached channel
-	public replaceChannel(id: string, channelFactory: IChannelFactory): IChannel {
-		assert(this.contexts.has(id), "channel to be replaced should exist!");
+	public [".UNSAFE_replaceChannel"](id: string, channelFactory: IChannelFactory): IChannel {
 		// Local channels don't have summarizer nodes.
 		if (this.modifiableDataStoreContext.summarizerNode.getChild(id) !== undefined) {
 			this.modifiableDataStoreContext.summarizerNode.deleteChild(id);
 		}
-		this.contexts.delete(id);
+		this[".UNSAFE_localDeleteChannelContext"](id);
 		const interceptRegistry = new InterceptSharedObjectRegistry(
-			this.sharedObjectRegistry,
+			this._sharedObjectRegistry,
 			channelFactory,
 		);
-		const context: ILocalChannelContext = this.createLocalChannelContext(
+		const context: ILocalChannelContext = this[".UNSAFE_createLocalChannelContext"](
 			id,
 			channelFactory.type,
 			interceptRegistry,
 		);
-		this.contexts.set(id, context);
+		this[".UNSAFE_addChannelContext"](id, context);
 		this.replacedContexts.set(id, context);
 		return context.channel;
 	}
 
-	public reAttachChannel(channel: IChannel): void {
+	public [".UNSAFE_reattachChannel"](channel: IChannel): void {
 		this.verifyNotClosed();
-		assert(this.contexts.has(channel.id), "The replaced channel context have been created!");
 		const context = this.replacedContexts.get(channel.id);
 		assert(context !== undefined, "The replaced channel context should have been replaced!");
 		context.makeVisible();

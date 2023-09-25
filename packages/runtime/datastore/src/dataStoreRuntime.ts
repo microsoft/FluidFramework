@@ -185,7 +185,7 @@ export class FluidDataStoreRuntime
 		return this._disposed;
 	}
 
-	protected readonly contexts = new Map<string, IChannelContext>();
+	private readonly contexts = new Map<string, IChannelContext>();
 	private readonly pendingAttach = new Set<string>();
 
 	private readonly deferredAttached = new Deferred<void>();
@@ -242,7 +242,7 @@ export class FluidDataStoreRuntime
 	 */
 	public constructor(
 		private readonly dataStoreContext: IFluidDataStoreContext,
-		protected readonly sharedObjectRegistry: ISharedObjectRegistry,
+		private readonly sharedObjectRegistry: ISharedObjectRegistry,
 		existing: boolean,
 		initializeEntryPoint?: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>,
 	) {
@@ -325,6 +325,7 @@ export class FluidDataStoreRuntime
 					);
 				}
 
+				// Wondering if there should be an assert/telemetry checking to see if the context already exists
 				this.contexts.set(path, channelContext);
 			});
 		}
@@ -438,7 +439,7 @@ export class FluidDataStoreRuntime
 		assert(!this.contexts.has(id), 0x179 /* "createChannel() with existing ID" */);
 		this.notBoundedChannelContextSet.add(id);
 		const context = this.createLocalChannelContext(id, type, this.sharedObjectRegistry);
-		this.contexts.set(id, context);
+		this.addChannelContext(id, context);
 
 		// Channels (DDS) should not be created in summarizer client.
 		this.identifyLocalChangeInSummarizer("DDSCreatedInSummarizer", id, type);
@@ -446,7 +447,19 @@ export class FluidDataStoreRuntime
 		return context.channel;
 	}
 
-	protected createLocalChannelContext(
+	private addChannelContext(id: string, context: IChannelContext) {
+		assert(!this.contexts.has(id), "Adding an existing channel!");
+		this.contexts.set(id, context);
+	}
+
+	/**
+	 * @internal
+	 */
+	protected [".UNSAFE_addChannelContext"](id: string, context: IChannelContext) {
+		this.addChannelContext(id, context);
+	}
+
+	private createLocalChannelContext(
 		id: string,
 		type: string,
 		sharedObjectRegistry: ISharedObjectRegistry,
@@ -465,6 +478,25 @@ export class FluidDataStoreRuntime
 				this.addedGCOutboundReference(srcHandle, outboundHandle),
 		);
 	}
+
+	/**
+	 * @internal
+	 */
+	protected [".UNSAFE_createLocalChannelContext"](
+		id: string,
+		type: string,
+		sharedObjectRegistry: ISharedObjectRegistry,
+	) {
+		return this.createLocalChannelContext(id, type, sharedObjectRegistry);
+	}
+
+	/**
+	 * @internal
+	 */
+	protected [".UNSAFE_localDeleteChannelContext"] = (id: string) => {
+		assert(this.contexts.has(id), "Removing a non-existent channel!");
+		this.contexts.delete(id);
+	};
 
 	/**
 	 * Binds a channel with the runtime. If the runtime is attached we will attach the channel right away.
@@ -638,7 +670,7 @@ export class FluidDataStoreRuntime
 							attachMessage,
 							summarizerNodeParams,
 						);
-						this.contexts.set(id, remoteChannelContext);
+						this.addChannelContext(id, remoteChannelContext);
 					}
 					break;
 				}
@@ -1009,6 +1041,7 @@ export class FluidDataStoreRuntime
 					summarizerNodeParams,
 				);
 				this.pendingAttach.add(attachMessage.id);
+				// Wondering if there should be an assert/telemetry checking to see if the context already exists
 				this.contexts.set(attachMessage.id, context);
 				return;
 			}
