@@ -280,7 +280,7 @@ stages:
               buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
               tagName: ${{ parameters.tagName }}
               interdependencyRange: ${{ parameters.interdependencyRange }}
-        
+  
         # Build
         - ${{ if ne(parameters.taskBuild, 'false') }}:
           - task: Npm@1
