@@ -42,6 +42,22 @@ export {
 	type TransformApiItemWithChildren,
 	type TransformApiItemWithoutChildren,
 } from "./configuration";
-export { transformTsdocNode } from "./TsdocNodeTransforms";
+export {
+	createBreadcrumbParagraph,
+	createDeprecationNoticeSection,
+	createExampleSection,
+	createExamplesSection,
+	createParametersSection,
+	createRemarksSection,
+	createReturnsSection,
+	createSeeAlsoSection,
+	createSignatureSection,
+	createSummaryParagraph,
+	createThrowsSection,
+	createTypeParametersSection,
+	type ExampleProperties,
+} from "./helpers";
+export { transformTsdocNode, type TsdocNodeTransformOptions } from "./TsdocNodeTransforms";
 export { apiItemToDocument, apiItemToSections } from "./TransformApiItem";
 export { transformApiModel } from "./TransformApiModel";
+export { getTsdocNodeTransformationOptions } from "./Utilities";

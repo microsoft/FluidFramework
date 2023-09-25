@@ -25,6 +25,7 @@ import { ApiPropertyItem } from '@microsoft/api-extractor-model';
 import { ApiTypeAlias } from '@microsoft/api-extractor-model';
 import { ApiVariable } from '@microsoft/api-extractor-model';
 import type { Data } from 'unist';
+import { DocDeclarationReference } from '@microsoft/tsdoc';
 import { DocNode } from '@microsoft/tsdoc';
 import { DocSection } from '@microsoft/tsdoc';
 import { IndentedWriter as DocumentWriter } from '@microsoft/api-documenter/lib/utils/IndentedWriter';
@@ -33,6 +34,7 @@ import { NewlineKind } from '@rushstack/node-core-library';
 import type { Node as Node_2 } from 'unist';
 import type { Parent } from 'unist';
 import { ReleaseTag } from '@microsoft/api-extractor-model';
+import { TypeParameter } from '@microsoft/api-extractor-model';
 
 // @public
 export type ApiFunctionLike = ApiConstructSignature | ApiConstructor | ApiFunction | ApiMethod | ApiMethodSignature;
@@ -113,7 +115,43 @@ export interface ConfigurationBase {
 }
 
 // @public
+export function createBreadcrumbParagraph(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): ParagraphNode;
+
+// @public
+export function createDeprecationNoticeSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): ParagraphNode | undefined;
+
+// @public
 export function createDocumentWriter(): DocumentWriter;
+
+// @public
+export function createExampleSection(example: ExampleProperties, config: Required<ApiItemTransformationConfiguration>): SectionNode;
+
+// @public
+export function createExamplesSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
+
+// @public
+export function createParametersSection(apiFunctionLike: ApiFunctionLike, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
+
+// @public
+export function createRemarksSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
+
+// @public
+export function createReturnsSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
+
+// @public
+export function createSeeAlsoSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
+
+// @public
+export function createSignatureSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
+
+// @public
+export function createSummaryParagraph(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): ParagraphNode | undefined;
+
+// @public
+export function createThrowsSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
+
+// @public
+export function createTypeParametersSection(typeParameters: readonly TypeParameter[], contextApiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
 
 // @public
 export const defaultConsoleLogger: Logger;
@@ -235,6 +273,16 @@ export interface DocumentNodeProps {
 export { DocumentWriter }
 
 // @public
+export function doesItemRequireOwnDocument(apiItem: ApiItem, documentBoundaries: DocumentBoundaries): boolean;
+
+// @public
+export interface ExampleProperties {
+    apiItem: ApiItem;
+    content: DocSection;
+    exampleNumber?: number;
+}
+
+// @public
 export class FencedCodeBlockNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {
     constructor(children: DocumentationNode[], language?: string);
     static createFromPlainText(text: string, language?: string): FencedCodeBlockNode;
@@ -284,6 +332,9 @@ export function getSeeBlocks(apiItem: ApiItem): DocSection[] | undefined;
 
 // @public
 export function getThrowsBlocks(apiItem: ApiItem): DocSection[] | undefined;
+
+// @public
+export function getTsdocNodeTransformationOptions(contextApiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): TsdocNodeTransformOptions;
 
 // @public
 export function getUnscopedPackageName(apiPackage: ApiPackage): string;
@@ -587,6 +638,12 @@ export function transformApiModel(transformConfig: ApiItemTransformationConfigur
 
 // @public
 export function transformTsdocNode(node: DocNode, contextApiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): DocumentationNode | undefined;
+
+// @public
+export interface TsdocNodeTransformOptions extends ConfigurationBase {
+    readonly contextApiItem: ApiItem;
+    readonly resolveApiReference: (codeDestination: DocDeclarationReference) => Link | undefined;
+}
 
 // @public
 export class UnorderedListNode extends DocumentationParentNodeBase<SingleLineDocumentationNode> implements MultiLineDocumentationNode {
