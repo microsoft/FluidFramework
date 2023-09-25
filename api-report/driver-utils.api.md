@@ -350,7 +350,7 @@ export class RetryableError<T extends string> extends NetworkErrorBasic<T> {
 }
 
 // @public (undocumented)
-export function runWithRetry<T>(api: (cancel?: AbortSignal) => Promise<T>, fetchCallName: string, logger: ITelemetryLoggerExt, progress: IProgress): Promise<T>;
+export function runWithRetry<T>(api: (cancel?: AbortSignal) => Promise<T>, fetchCallName: string, logger: ITelemetryLoggerExt, progress: IProgress, beforeErrorThrow?: () => void): Promise<T>;
 
 // @public (undocumented)
 export function streamFromMessages(messagesArg: Promise<ISequencedDocumentMessage[]>): IStream<ISequencedDocumentMessage[]>;

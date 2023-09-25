@@ -37,6 +37,7 @@ import {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 
+import { runWithRetry } from "@fluidframework/driver-utils";
 import { ContainerRuntime, TombstoneResponseHeaderKey } from "./containerRuntime";
 import {
 	sendGCUnexpectedUsageEvent,
@@ -492,17 +493,16 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private async uploadBlob(
 		localId: string,
 		blob: ArrayBufferLike,
-		errorCount?: number,
 	): Promise<ICreateBlobResponse | void> {
-		return PerformanceEvent.timedExecAsync(
-			this.mc.logger,
-			{ eventName: "createBlob" },
+		return runWithRetry(
 			async () => this.getStorage().createBlob(blob),
-			{ end: true, cancel: this.runtime.connected ? "error" : "generic" },
-		).then(
-			(response) => this.onUploadResolve(localId, response),
-			async (err) => this.onUploadReject(localId, err, errorCount ?? 1),
-		);
+			"createBlob",
+			this.mc.logger,
+			{
+				cancel: this.pendingBlobs.get(localId)?.abortSignal,
+			},
+			() => !this.pendingBlobs.get(localId)?.opsent && this.deletePendingBlob(localId),
+		).then((response) => this.onUploadResolve(localId, response));
 	}
 
 	/**
@@ -567,25 +567,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			);
 		}
 		return response;
-	}
-
-	private async onUploadReject(localId: string, error: any, count: number) {
-		const entry = this.pendingBlobs.get(localId);
-		assert(!!entry, 0x387 /* Must have pending blob entry for blob which failed to upload */);
-		if (entry.abortSignal?.aborted === true && !entry.opsent) {
-			this.deletePendingBlob(localId);
-			return;
-		}
-		this.mc.logger.sendTelemetryEvent({
-			eventName: "BlobUploadRejected",
-			localId,
-			error,
-			errorCount: count,
-		});
-		entry.uploadP = this.retryThrottler
-			.getDelay()
-			.then(async () => this.uploadBlob(localId, entry.blob, count + 1));
-		return entry.uploadP;
 	}
 
 	/**
