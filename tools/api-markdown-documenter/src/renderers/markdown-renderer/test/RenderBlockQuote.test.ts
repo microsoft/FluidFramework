@@ -38,7 +38,7 @@ describe("BlockQuote Markdown rendering tests", () => {
 	describe("Table context", () => {
 		it("Empty BlockQuote", () => {
 			expect(testRender(BlockQuoteNode.Empty, { insideTable: true })).to.equal(
-				"<blockquote>\n</blockquote>\n",
+				"<blockquote></blockquote>",
 			);
 		});
 
@@ -53,12 +53,11 @@ describe("BlockQuote Markdown rendering tests", () => {
 
 			const expected = [
 				"<blockquote>",
-				"  Here's a block quote. It sure is something!",
-				"  <br>",
-				"  -BlockQuote",
+				"Here's a block quote. It sure is something!",
+				"<br>",
+				"-BlockQuote",
 				"</blockquote>",
-				"",
-			].join("\n");
+			].join("");
 
 			expect(result).to.equal(expected);
 		});

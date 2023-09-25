@@ -32,14 +32,14 @@ export function extractPackageIdentifierDetails(
 
 	// Two @ symbols === the package has a version. Use alternative RegEx.
 	if (packageString.indexOf("@") !== packageString.lastIndexOf("@")) {
-		// eslint-disable-next-line @typescript-eslint/prefer-regexp-exec,unicorn/no-unsafe-regex
+		// eslint-disable-next-line @typescript-eslint/prefer-regexp-exec, unicorn/no-unsafe-regex
 		const componentsWithVersion = packageString.match(/(@(.*)\/)?((.*)@(.*))/);
 		if (componentsWithVersion === null || componentsWithVersion.length !== 6) {
 			throw new Error("Invalid package");
 		}
 		[fullId, , scope, nameAndVersion, name, version] = componentsWithVersion;
 	} else {
-		// eslint-disable-next-line @typescript-eslint/prefer-regexp-exec,unicorn/no-unsafe-regex
+		// eslint-disable-next-line @typescript-eslint/prefer-regexp-exec, unicorn/no-unsafe-regex
 		const componentsWithoutVersion = packageString.match(/(@(.*)\/)?((.*))/);
 		if (componentsWithoutVersion === null || componentsWithoutVersion.length !== 5) {
 			throw new Error("Invalid package");

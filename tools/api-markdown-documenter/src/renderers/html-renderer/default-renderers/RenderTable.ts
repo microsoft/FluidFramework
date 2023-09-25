@@ -4,8 +4,8 @@
  */
 import type { TableNode } from "../../../documentation-domain";
 import type { DocumentWriter } from "../../DocumentWriter";
-import { renderNode, renderNodes } from "../Render";
 import type { RenderContext } from "../RenderContext";
+import { renderContentsUnderTag } from "../Utilities";
 
 /**
  * Renders a {@link TableNode} as HTML.
@@ -17,28 +17,37 @@ import type { RenderContext } from "../RenderContext";
  * @remarks Will render as HTML when in an HTML context, or within another table context.
  */
 export function renderTable(node: TableNode, writer: DocumentWriter, context: RenderContext): void {
-	writer.writeLine("<table>");
-	writer.increaseIndent();
+	const prettyFormatting = context.prettyFormatting !== false;
+
+	if (prettyFormatting) {
+		writer.ensureNewLine(); // Ensure line break before table tag
+	}
+
+	writer.write("<table>");
+
+	if (prettyFormatting) {
+		writer.ensureNewLine();
+		writer.increaseIndent();
+	}
 
 	// Write header row if one was specified
 	if (node.headerRow !== undefined) {
-		writer.writeLine("<thead>");
-		writer.increaseIndent();
-		renderNode(node.headerRow, writer, context);
-		writer.ensureNewLine(); // Ensure line break header row contents
-		writer.decreaseIndent();
-		writer.writeLine("</thead>");
+		renderContentsUnderTag([node.headerRow], "thead", writer, context);
 	}
 
 	// Write child contents under `tbody` element if the table has any
 	if (node.hasChildren) {
-		writer.writeLine("<tbody>");
-		writer.increaseIndent();
-		renderNodes(node.children, writer, context);
-		writer.decreaseIndent();
-		writer.writeLine("</tbody>");
+		renderContentsUnderTag(node.children, "tbody", writer, context);
 	}
 
-	writer.decreaseIndent();
-	writer.writeLine("</table>");
+	if (prettyFormatting) {
+		writer.ensureNewLine();
+		writer.decreaseIndent();
+	}
+
+	writer.write("</table>");
+
+	if (prettyFormatting) {
+		writer.ensureNewLine(); // Ensure line break before table tag
+	}
 }

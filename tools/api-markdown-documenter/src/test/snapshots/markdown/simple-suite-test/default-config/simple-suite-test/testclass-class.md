@@ -86,7 +86,7 @@ Here are some remarks about the constructor
 | Parameter | Type | Description |
 | --- | --- | --- |
 | privateProperty | number | See [TestAbstractClass](./simple-suite-test/testabstractclass-class)'s constructor. |
-| protectedProperty | [TestEnum](./simple-suite-test#testenum-enum) | See [protectedProperty](./simple-suite-test/testabstractclass-class#protectedproperty-property). |
+| protectedProperty | [TestEnum](./simple-suite-test#testenum-enum) | <p>Some notes about the parameter.</p><p>See <a href='./simple-suite-test/testabstractclass-class#protectedproperty-property'>protectedProperty</a>.</p> |
 | testClassProperty | TTypeParameterB | See [testClassProperty](./simple-suite-test/testclass-class#testclassproperty-property). |
 | testClassEventProperty | () =&gt; void | See [testClassEventProperty](./simple-suite-test/testclass-class#testclasseventproperty-property). |
 

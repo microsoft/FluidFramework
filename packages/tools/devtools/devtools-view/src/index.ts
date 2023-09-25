@@ -16,9 +16,10 @@
  * @packageDocumentation
  */
 
-export { DevtoolsPanel, DevtoolsPanelProps } from "./DevtoolsPanel";
+export type { DevtoolsPanelProps } from "./DevtoolsPanel";
+export { DevtoolsPanel } from "./DevtoolsPanel";
 export { WindowMessageRelay } from "./WindowMessageRelay";
 
 // Convenience re-exports
-export { IMessageRelay } from "@fluid-experimental/devtools-core";
-export { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+export type { IMessageRelay } from "@fluid-experimental/devtools-core";
+export type { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";

@@ -212,7 +212,7 @@ export class DataStores implements IDisposable {
 
 	public async waitIfPendingAlias(maybeAlias: string): Promise<AliasResult> {
 		const pendingAliasPromise = this.pendingAliases.get(maybeAlias);
-		return pendingAliasPromise === undefined ? "Success" : pendingAliasPromise;
+		return pendingAliasPromise ?? "Success";
 	}
 
 	public processAttachMessage(message: ISequencedDocumentMessage, local: boolean) {

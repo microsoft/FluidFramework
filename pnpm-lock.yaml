@@ -6716,14 +6716,12 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.1.0
-      '@fluidframework/gitresources': ^1.0.1
       '@fluidframework/merge-tree': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence-previous': npm:@fluidframework/sequence@2.0.0-internal.6.3.0
-      '@fluidframework/server-services-client': ^1.0.1
       '@fluidframework/shared-object-base': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
@@ -6766,10 +6764,8 @@ importers:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.22.0_@types+node@16.18.38
       '@fluidframework/eslint-config-fluid': 2.1.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/gitresources': 1.0.1
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/sequence-previous': /@fluidframework/sequence/2.0.0-internal.6.3.0
-      '@fluidframework/server-services-client': 1.0.1
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor': 7.34.9_@types+node@16.18.38
       '@types/diff': 3.5.5
@@ -7396,7 +7392,6 @@ importers:
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.1.0
-      '@fluidframework/gitresources': ^1.0.1
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/odsp-doclib-utils': workspace:~
       '@fluidframework/odsp-driver-definitions': workspace:~
@@ -7432,7 +7427,6 @@ importers:
       '@fluidframework/driver-base': link:../driver-base
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/gitresources': 1.0.1
       '@fluidframework/odsp-doclib-utils': link:../../utils/odsp-doclib-utils
       '@fluidframework/odsp-driver-definitions': link:../odsp-driver-definitions
       '@fluidframework/protocol-base': 1.0.1
@@ -9069,7 +9063,6 @@ importers:
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.1.0
       '@fluidframework/mocha-test-setup': workspace:~
-      '@fluidframework/protocol-base': ^1.0.1
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
@@ -9101,7 +9094,6 @@ importers:
       '@fluidframework/datastore-definitions': link:../datastore-definitions
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/protocol-base': 1.0.1
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/runtime-definitions': link:../runtime-definitions
       '@fluidframework/runtime-utils': link:../runtime-utils

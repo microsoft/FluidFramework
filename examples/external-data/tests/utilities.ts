@@ -11,10 +11,10 @@ import { Server } from "node:http";
 export async function closeServer(server: Server): Promise<void> {
 	await new Promise<void>((resolve, reject) => {
 		server.close((error) => {
-			if (error !== undefined) {
-				reject(error);
-			} else {
+			if (error === undefined) {
 				resolve();
+			} else {
+				reject(error);
 			}
 		});
 	});

@@ -373,14 +373,13 @@ function generateTwitterStatus(
 		const inReplyToStatusId = getRandomNumberString(random, 18, 18);
 		twitterStatus.in_reply_to_status_id =
 			inReplyToStatusId !== null ? Number(inReplyToStatusId) : null;
-		twitterStatus.in_reply_to_status_id_str =
-			inReplyToStatusId !== null ? inReplyToStatusId : null;
+		twitterStatus.in_reply_to_status_id_str = inReplyToStatusId ?? null;
 	}
 	if (shouldAddInReplyToUserIdAndScreenName) {
 		const inReplyToUserId = getRandomNumberString(random, 10, 10);
 		twitterStatus.in_reply_to_user_id =
 			inReplyToUserId !== null ? Number(inReplyToUserId) : null;
-		twitterStatus.in_reply_to_user_id_str = inReplyToUserId !== null ? inReplyToUserId : null;
+		twitterStatus.in_reply_to_user_id_str = inReplyToUserId ?? null;
 		twitterStatus.in_reply_to_screen_name = getRandomEnglishString(random, false, 6, 30);
 	}
 
