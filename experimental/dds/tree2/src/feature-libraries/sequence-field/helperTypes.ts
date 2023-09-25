@@ -11,8 +11,8 @@ import {
 	Mark,
 	NewAttach,
 	Revive,
-	Transient,
 	CellMark,
+	TransientEffect,
 } from "./format";
 
 export type EmptyInputCellMark<TNodeChange> = Mark<TNodeChange> & DetachedCellMark;
@@ -29,8 +29,4 @@ export interface DetachedCellMark extends HasMarkFields {
 
 export type GenerativeMark<TNodeChange> = CellMark<Insert | Revive, TNodeChange>;
 
-export type TransientMark<TNodeChange> = GenerativeMark<TNodeChange> & Transient;
-
-export type EmptyOutputCellMark<TNodeChange> =
-	| TransientMark<TNodeChange>
-	| CellMark<Detach, TNodeChange>;
+export type EmptyOutputCellMark<TNodeChange> = CellMark<Detach | TransientEffect, TNodeChange>;

@@ -56,12 +56,13 @@ import {
 	markIsTransient,
 	isGenerativeMark,
 	areOverlappingIdRanges,
-	getDetachCellId,
 	getInputCellId,
 	isAttach,
 	getOutputCellId,
+	markFillsCells,
+	extractMarkEffect,
 } from "./utils";
-import { GenerativeMark, EmptyInputCellMark } from "./helperTypes";
+import { EmptyInputCellMark } from "./helperTypes";
 
 /**
  * @alpha
@@ -176,14 +177,13 @@ function composeMarks<TNodeChange>(
 		return withNodeChange(baseMark, nodeChange);
 	}
 	if (markIsTransient(baseMark)) {
-		if (isGenerativeMark(newMark)) {
-			// TODO: Make `withNodeChange` preserve type information so we don't need to cast here
-			const nonTransient = withNodeChange(
-				baseMark,
+		if (markFillsCells(newMark)) {
+			const originalAttach = withNodeChange(
+				{ ...baseMark.attach, cellId: baseMark.cellId, count: baseMark.count },
 				nodeChange,
-			) as GenerativeMark<TNodeChange>;
-			delete nonTransient.transientDetach;
-			return nonTransient;
+			);
+
+			return originalAttach;
 		}
 		// Noop and Placeholder marks must be muted because the node they target has been deleted.
 		// Detach marks must be muted because the cell is empty.
@@ -226,7 +226,11 @@ function composeMarks<TNodeChange>(
 		} else if (isNoopMark(newMark)) {
 			return withNodeChange(baseMark, nodeChange);
 		}
-		return createNoopMark(newMark.count, nodeChange, getInputCellId(baseMark, undefined));
+		return createNoopMark(
+			newMark.count,
+			nodeChange,
+			getInputCellId(baseMark, undefined, undefined),
+		);
 	} else if (!markHasCellEffect(baseMark)) {
 		return withRevision(withNodeChange(newMark, nodeChange), newRev);
 	} else if (!markHasCellEffect(newMark)) {
@@ -294,9 +298,10 @@ function composeMarks<TNodeChange>(
 			// TODO: Add revision information the marks
 			const composed: CellMark<TransientEffect, TNodeChange> = {
 				type: "Transient",
+				cellId: baseMark.cellId,
 				count: baseMark.count,
-				attach: baseMark,
-				detach: newMark,
+				attach: extractMarkEffect(baseMark),
+				detach: extractMarkEffect(withRevision(newMark, newRev)),
 			};
 
 			if (baseMark.cellId !== undefined) {
@@ -326,15 +331,13 @@ function composeMarks<TNodeChange>(
 
 		assert(isDeleteMark(newMark), 0x71c /* Unexpected mark type */);
 		assert(isGenerativeMark(baseMark), 0x71d /* Expected generative mark */);
-		const newMarkRevision = newMark.revision ?? newRev;
-		assert(newMarkRevision !== undefined, 0x71e /* Unable to compose anonymous marks */);
 		return withNodeChange(
 			{
-				...baseMark,
-				transientDetach: {
-					revision: newMarkRevision,
-					localId: newMark.id,
-				},
+				type: "Transient",
+				cellId: baseMark.cellId,
+				count: baseMark.count,
+				attach: extractMarkEffect(baseMark),
+				detach: extractMarkEffect(withRevision(newMark, newRev)),
 			},
 			nodeChange,
 		);
@@ -576,38 +579,23 @@ export class ComposeQueue<T> {
 			const length = getOutputLength(baseMark);
 			return this.dequeueBase(length);
 		} else if (areOutputCellsEmpty(baseMark) && areInputCellsEmpty(newMark)) {
-			let baseCellId: ChangeAtomId;
-			if (markIsTransient(baseMark)) {
-				baseCellId = baseMark.transientDetach;
-			} else if (markEmptiesCells(baseMark)) {
-				assert(isDetachMark(baseMark), 0x694 /* Only detach marks can empty cells */);
-				const baseRevision = baseMark.revision ?? this.baseMarks.revision;
-				const baseIntention = getIntention(baseRevision, this.revisionMetadata);
-				if (baseRevision === undefined || baseIntention === undefined) {
-					// The base revision always be defined except when squashing changes into a transaction.
-					// In the future, we want to support reattaches in the new change here.
-					// We will need to be able to order the base mark relative to the new mark by looking at the lineage of the new mark
-					// (which will be obtained by rebasing the reattach over interim changes
-					// (which requires the local changes to have a revision tag))
-					assert(
-						isNewAttach(newMark),
-						0x695 /* TODO: Assign revision tags to each change in a transaction */,
-					);
-					return this.dequeueNew();
-				}
-				baseCellId = getDetachCellId(baseMark, baseIntention);
-			} else if (baseMark.type === "MoveIn") {
-				const baseRevision = baseMark.revision ?? this.baseMarks.revision;
-				const baseIntention = getIntention(baseRevision, this.revisionMetadata);
-				assert(baseIntention !== undefined, 0x706 /* Base mark must have an intention */);
-				baseCellId = { revision: baseIntention, localId: baseMark.id };
-			} else {
+			const baseCellId: ChangeAtomId =
+				getOutputCellId(baseMark, this.baseMarks.revision, this.revisionMetadata) ??
+				fail("Expected defined output ID");
+
+			if (markEmptiesCells(baseMark) && baseCellId.revision === undefined) {
+				// The base revision always be defined except when squashing changes into a transaction.
+				// In the future, we want to support reattaches in the new change here.
+				// We will need to be able to order the base mark relative to the new mark by looking at the lineage of the new mark
+				// (which will be obtained by rebasing the reattach over interim changes
+				// (which requires the local changes to have a revision tag))
 				assert(
-					areInputCellsEmpty(baseMark),
-					0x696 /* Mark with empty output must either be a detach or also have input empty */,
+					isNewAttach(newMark),
+					0x695 /* TODO: Assign revision tags to each change in a transaction */,
 				);
-				baseCellId = baseMark.cellId;
+				return this.dequeueNew();
 			}
+
 			const cmp = compareCellPositions(
 				baseCellId,
 				baseMark,
@@ -853,7 +841,7 @@ function compareCellPositions(
 	newIntention: RevisionTag | undefined,
 	cancelledInserts: Set<RevisionTag>,
 ): number {
-	const newCellId = getInputCellId(newMark, newIntention);
+	const newCellId = getInputCellId(newMark, newIntention, undefined);
 	assert(newCellId !== undefined, 0x71f /* Should have cell ID */);
 	if (baseCellId.revision === newCellId.revision) {
 		if (isNewAttach(newMark)) {

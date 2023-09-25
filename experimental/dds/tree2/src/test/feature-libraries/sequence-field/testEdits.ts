@@ -17,6 +17,7 @@ import {
 } from "../../../core";
 import { TestChange } from "../../testChange";
 import { composeAnonChanges, composeAnonChangesShallow } from "./utils";
+import { Attach } from "../../../feature-libraries/sequence-field";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const tag: RevisionTag = mintRevisionTag();
@@ -382,6 +383,21 @@ function createModifyMark<TChange>(
 	return mark;
 }
 
+function createTransientMark<TChange>(
+	attach: SF.CellMark<SF.Attach, TChange>,
+	detach: SF.CellMark<SF.Detach, TChange>,
+	overrides?: Partial<SF.CellMark<SF.TransientEffect, TChange>>,
+): SF.CellMark<SF.TransientEffect, TChange> {
+	return {
+		type: "Transient",
+		cellId: attach.cellId,
+		count: attach.count,
+		attach: SF.extractMarkEffect(attach),
+		detach: SF.extractMarkEffect(detach),
+		...overrides,
+	};
+}
+
 function overrideCellId<TMark extends SF.HasMarkFields<unknown>>(
 	cellId: SF.CellId,
 	mark: TMark,
@@ -400,6 +416,7 @@ export const MarkMaker = {
 	moveIn: createMoveInMark,
 	returnFrom: createReturnFromMark,
 	returnTo: createReturnToMark,
+	transient: createTransientMark,
 };
 
 export const ChangeMaker = {

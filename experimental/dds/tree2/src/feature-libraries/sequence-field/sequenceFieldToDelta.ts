@@ -69,9 +69,6 @@ function cellDeltaFromMark<TNodeChange>(
 					type: Delta.MarkType.Insert,
 					content: cursors,
 				};
-				if (mark.transientDetach !== undefined) {
-					insertMark.isTransient = true;
-				}
 				return [insertMark];
 			}
 			case "MoveIn":
@@ -108,15 +105,37 @@ function cellDeltaFromMark<TNodeChange>(
 					type: Delta.MarkType.Insert,
 					content: mark.content,
 				};
-				if (mark.transientDetach !== undefined) {
-					insertMark.isTransient = true;
-				}
 				return [insertMark];
+			}
+			case "Transient": {
+				const attachType = mark.attach.type;
+				switch (attachType) {
+					case "Insert":
+						return [
+							{
+								type: Delta.MarkType.Insert,
+								content: mark.attach.content.map(singleTextCursor),
+								isTransient: true,
+							},
+						];
+					case "Revive":
+						return [
+							{
+								type: Delta.MarkType.Insert,
+								content: mark.attach.content,
+								isTransient: true,
+							},
+						];
+					case "MoveIn":
+					case "ReturnTo":
+						// TODO: Support transient move-ins.
+						return [0];
+					default:
+						unreachableCase(attachType);
+				}
 			}
 			case "Placeholder":
 				fail("Should not have placeholders in a changeset being converted to delta");
-			case "Transient":
-				fail("XXX");
 			default:
 				unreachableCase(type);
 		}

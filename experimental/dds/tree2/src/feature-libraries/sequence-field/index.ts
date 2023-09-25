@@ -32,6 +32,7 @@ export {
 	HasLineage,
 	IdRange,
 	CellMark,
+	TransientEffect,
 } from "./format";
 export {
 	SequenceFieldChangeHandler,
@@ -56,6 +57,7 @@ export {
 	newMoveEffectTable,
 	CrossFieldTable,
 	cloneMark,
+	extractMarkEffect,
 } from "./utils";
 export {
 	isMoveMark,

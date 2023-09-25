@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { ChangeAtomId, RevisionTag, TaggedChange } from "../../core";
 import { fail } from "../../util";
 import { CrossFieldManager, CrossFieldTarget, IdAllocator, NodeReviver } from "../modular-schema";
@@ -23,6 +23,7 @@ import {
 	areInputCellsEmpty,
 	getDetachCellId,
 	getInputLength,
+	getOutputCellId,
 	isConflictedReattach,
 	isReattachConflicted,
 	splitMark,
@@ -106,7 +107,8 @@ function invertMark<TNodeChange>(
 	invertChild: NodeChangeInverter<TNodeChange>,
 	crossFieldManager: CrossFieldManager<TNodeChange>,
 ): Mark<TNodeChange>[] {
-	switch (mark.type) {
+	const type = mark.type;
+	switch (type) {
 		case NoopMarkType: {
 			const inverse = { ...mark };
 			if (mark.changes !== undefined) {
@@ -121,34 +123,15 @@ function invertMark<TNodeChange>(
 		}
 		case "Insert": {
 			assert(mark.cellId !== undefined, 0x72c /* Insert marks must have a cellId */);
-			if (mark.transientDetach !== undefined) {
-				assert(revision !== undefined, 0x720 /* Unable to revert to undefined revision */);
-				return [
-					withNodeChange(
-						{
-							type: "Revive",
-							cellId: {
-								revision: mark.transientDetach.revision ?? revision,
-								localId: mark.transientDetach.localId,
-							},
-							content: reviver(revision, inputIndex, mark.content.length),
-							count: mark.content.length,
-							inverseOf: mark.revision ?? revision,
-							transientDetach: {
-								revision: mark.cellId.revision ?? revision,
-								localId: mark.cellId.localId,
-							},
-						},
-						invertNodeChange(mark.changes, inputIndex, invertChild),
-					),
-				];
-			} else {
-				const inverse = withNodeChange(
-					{ type: "Delete", count: mark.content.length, id: mark.cellId.localId },
-					invertNodeChange(mark.changes, inputIndex, invertChild),
-				);
-				return [inverse];
-			}
+			const inverse = withNodeChange(
+				{
+					type: "Delete",
+					count: mark.content.length,
+					id: mark.cellId.localId,
+				},
+				invertNodeChange(mark.changes, inputIndex, invertChild),
+			);
+			return [inverse];
 		}
 		case "Delete": {
 			assert(revision !== undefined, 0x5a1 /* Unable to revert to undefined revision */);
@@ -180,32 +163,6 @@ function invertMark<TNodeChange>(
 					0x707 /* Active reattach should have a detach event */,
 				);
 
-				if (mark.transientDetach !== undefined) {
-					assert(
-						revision !== undefined,
-						0x721 /* Unable to revert to undefined revision */,
-					);
-					return [
-						withNodeChange(
-							{
-								type: "Revive",
-								cellId: {
-									revision: mark.transientDetach.revision ?? revision,
-									localId: mark.transientDetach.localId,
-								},
-								content: reviver(revision, inputIndex, mark.count),
-								count: mark.count,
-								inverseOf: mark.revision ?? revision,
-								transientDetach: {
-									revision: mark.revision ?? revision,
-									localId: mark.cellId.localId,
-								},
-							},
-							invertNodeChange(mark.changes, inputIndex, invertChild),
-						),
-					];
-				}
-
 				const deleteMark: CellMark<Delete, TNodeChange> = {
 					type: "Delete",
 					count: mark.count,
@@ -219,30 +176,15 @@ function invertMark<TNodeChange>(
 				);
 				return [inverse];
 			}
-			return mark.transientDetach !== undefined
-				? invertMark(
-						{
-							type: "Delete",
-							count: mark.count,
-							revision: mark.transientDetach.revision ?? revision,
-							changes: mark.changes,
-							id: mark.transientDetach.localId,
-						},
-						inputIndex,
-						revision,
-						reviver,
-						invertChild,
-						crossFieldManager,
-				  )
-				: [
-						invertNodeChangeOrSkip(
-							mark.count,
-							mark.changes,
-							inputIndex,
-							invertChild,
-							mark.cellId,
-						),
-				  ];
+			return [
+				invertNodeChangeOrSkip(
+					mark.count,
+					mark.changes,
+					inputIndex,
+					invertChild,
+					mark.cellId,
+				),
+			];
 		}
 		case "MoveOut":
 		case "ReturnFrom": {
@@ -272,6 +214,7 @@ function invertMark<TNodeChange>(
 			const cellId = getDetachCellId(
 				mark,
 				mark.revision ?? revision ?? fail("Revision must be defined"),
+				undefined,
 			) ?? {
 				revision: mark.revision ?? revision ?? fail("Revision must be defined"),
 				localId: mark.id,
@@ -314,8 +257,21 @@ function invertMark<TNodeChange>(
 
 			return applyMovedChanges(invertedMark, revision, crossFieldManager);
 		}
+		case "Transient": {
+			return [
+				invertNodeChangeOrSkip(
+					mark.count,
+					mark.changes,
+					inputIndex,
+					invertChild,
+					getOutputCellId(mark, revision, undefined),
+				),
+			];
+		}
+		case "Placeholder":
+			fail("Should not invert placeholder marks");
 		default:
-			fail("Not implemented");
+			unreachableCase(type);
 	}
 }
 

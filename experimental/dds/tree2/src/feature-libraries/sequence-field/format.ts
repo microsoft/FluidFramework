@@ -179,25 +179,13 @@ export interface HasRevisionTag {
 }
 export const HasRevisionTag = Type.Object({ revision: Type.Optional(RevisionTagSchema) });
 
-export interface Transient {
-	/**
-	 * The details of the change that deletes the transient content.
-	 */
-	transientDetach: ChangeAtomId;
-}
-export const Transient = Type.Object({ detachedBy: EncodedChangeAtomId });
-
-export type CanBeTransient = Partial<Transient>;
-export const CanBeTransient = Type.Partial(Transient);
-
-export interface Insert extends HasRevisionTag, CanBeTransient {
+export interface Insert extends HasRevisionTag {
 	type: "Insert";
 	content: ProtoNode[];
 }
 export const Insert = Type.Composite(
 	[
 		HasRevisionTag,
-		CanBeTransient,
 		Type.Object({
 			type: Type.Literal("Insert"),
 			content: Type.Array(ProtoNode),
@@ -266,7 +254,7 @@ export const MoveOut = Type.Composite(
 	noAdditionalProps,
 );
 
-export interface Revive extends HasReattachFields, HasRevisionTag, CanBeTransient {
+export interface Revive extends HasReattachFields, HasRevisionTag {
 	type: "Revive";
 	content: ITreeCursorSynchronous[];
 }
@@ -274,7 +262,6 @@ export const Revive = Type.Composite(
 	[
 		HasReattachFields,
 		HasRevisionTag,
-		CanBeTransient,
 		Type.Object({
 			type: Type.Literal("Revive"),
 			content: Type.Array(ProtoNode),
