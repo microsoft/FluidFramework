@@ -7,6 +7,8 @@ import { Package, updatePackageJsonFile } from "@fluidframework/build-tools";
 import path from "node:path";
 import { PackageCommand } from "../../BasePackageCommand";
 import * as fs from "fs";
+// eslint-disable-next-line node/no-missing-import
+import type { PackageJson } from "type-fest";
 
 interface PackageTypesList {
 	packagesUpdated: string[];
@@ -38,6 +40,7 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 				}
 				throw new Error(`Invalid release type: ${input}`);
 			},
+			required: true,
 		})(),
 		...PackageCommand.flags,
 	};
@@ -54,11 +57,9 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 
 	protected async processPackage(pkg: Package): Promise<void> {
 		let packageUpdate: boolean = false;
-		// Define paths to api-extractor.json
-		const apiExtractorConfigFilePath = path.join(pkg.directory, "api-extractor.json");
 
-		// Check if api-extractor.json exists in the package directory
-		const apiExtractorConfigExists = fs.existsSync(apiExtractorConfigFilePath);
+		const apiExtractorConfigExists = checkApiExtractorConfigExists(pkg);
+
 		updatePackageJsonFile(pkg.directory, (json) => {
 			const types: string | undefined = json.types ?? json.typings;
 
@@ -67,36 +68,19 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 			}
 
 			const [typesFolder] = types.split("/");
-
 			const includesAlphaBeta: boolean = types.includes("alpha") || types.includes("beta");
 
 			if (apiExtractorConfigExists) {
-				// Read the content of api-extractor.json
-				const apiExtractorConfig: string = fs.readFileSync(
-					apiExtractorConfigFilePath,
-					"utf-8",
+				packageUpdate = handleApiExtractorConfig(
+					this.flags.types as ReleaseTag,
+					pkg,
+					json,
+					typesFolder,
+					includesAlphaBeta,
 				);
-
-				if (this.flags.types !== "public" && apiExtractorConfig.includes("dtsRollup")) {
-					const config: boolean = apiExtractorConfig.includes(
-						`${this.flags.types}TrimmedFilePath`,
-					);
-
-					if (config) {
-						json.types = `${typesFolder}/${pkg.nameUnscoped}-${this.flags.types}.d.ts`;
-						packageUpdate = true;
-					}
-				} else if (includesAlphaBeta) {
-					json.types = `${typesFolder}/index.d.ts`;
-					packageUpdate = true;
-				}
-
-				if (packageUpdate) {
-					this.packageList.packagesUpdated.push(pkg.name);
-				} else {
-					this.packageList.packagesNotUpdated.push(pkg.name);
-				}
 			}
+
+			updatePackageLists(this.packageList, packageUpdate, pkg);
 		});
 	}
 
@@ -112,4 +96,47 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 
 		return this.packageList;
 	}
+}
+
+function checkApiExtractorConfigExists(pkg: Package): boolean {
+	const apiExtractorConfigFilePath = path.join(pkg.directory, "api-extractor.json");
+	return fs.existsSync(apiExtractorConfigFilePath);
+}
+
+function handleApiExtractorConfig(
+	releaseType: ReleaseTag,
+	pkg: Package,
+	json: PackageJson,
+	typesFolder: string,
+	includesAlphaBeta: boolean,
+): boolean {
+	const apiExtractorConfigFilePath = path.join(pkg.directory, "api-extractor.json");
+	const apiExtractorConfig: string = fs.readFileSync(apiExtractorConfigFilePath, "utf-8");
+
+	if (releaseType !== "public" && apiExtractorConfig.includes("dtsRollup")) {
+		const config: boolean = apiExtractorConfig.includes(`${releaseType}TrimmedFilePath`);
+
+		if (config) {
+			json.types = `${typesFolder}/${pkg.nameUnscoped}-${releaseType}.d.ts`;
+			return true;
+		}
+	} else if (includesAlphaBeta) {
+		json.types = `${typesFolder}/index.d.ts`;
+		return true;
+	}
+
+	return false;
+}
+
+function updatePackageLists(
+	packageList: PackageTypesList,
+	packageUpdate: boolean,
+	pkg: Package,
+): PackageTypesList {
+	if (packageUpdate) {
+		packageList.packagesUpdated.push(pkg.name);
+	} else {
+		packageList.packagesNotUpdated.push(pkg.name);
+	}
+	return packageList;
 }
