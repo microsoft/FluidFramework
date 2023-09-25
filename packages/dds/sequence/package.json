@@ -141,6 +141,9 @@
 			"TypeAliasDeclaration_SharedStringRevertible": {
 				"forwardCompat": false
 			},
+			"InterfaceDeclaration_SequenceOptions": {
+				"forwardCompat": false
+			},
 			"VariableDeclaration_sequenceIntervalHelpers": {
 				"backCompat": false
 			},

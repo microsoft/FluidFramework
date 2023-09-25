@@ -52,6 +52,7 @@ export interface IInterval {
 		end: SequencePlace | undefined,
 		op?: ISequencedDocumentMessage,
 		localSeq?: number,
+		useNewSlidingBehavior?: boolean,
 	): IInterval | undefined;
 	/**
 	 * @returns whether this interval overlaps with `b`.
@@ -215,6 +216,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 		intervalType: IntervalType,
 		op?: ISequencedDocumentMessage,
 		fromSnapshot?: boolean,
+		useNewSlidingBehavior?: boolean,
 	): TInterval;
 }
 
