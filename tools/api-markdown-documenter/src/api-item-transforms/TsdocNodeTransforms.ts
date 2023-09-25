@@ -65,8 +65,6 @@ export function transformTsdocNode(
 
 /**
  * Options for {@link @microsoft/tsdoc#DocNode} transformations.
- *
- * @public
  */
 export interface TsdocNodeTransformOptions extends ConfigurationBase {
 	/**

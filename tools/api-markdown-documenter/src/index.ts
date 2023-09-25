@@ -54,7 +54,6 @@ export {
 	getReturnsBlock,
 	getSeeBlocks,
 	getThrowsBlocks,
-	getTsdocNodeTransformationOptions,
 	getUnscopedPackageName,
 	type HierarchyBoundaries,
 	isDeprecated,
@@ -65,7 +64,6 @@ export {
 	type TransformApiItemWithoutChildren,
 	transformApiModel,
 	transformTsdocNode,
-	type TsdocNodeTransformOptions,
 } from "./api-item-transforms";
 
 // We want to make sure the entirety of this domain is accessible.

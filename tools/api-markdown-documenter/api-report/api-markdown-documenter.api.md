@@ -25,7 +25,6 @@ import { ApiPropertyItem } from '@microsoft/api-extractor-model';
 import { ApiTypeAlias } from '@microsoft/api-extractor-model';
 import { ApiVariable } from '@microsoft/api-extractor-model';
 import type { Data } from 'unist';
-import { DocDeclarationReference } from '@microsoft/tsdoc';
 import { DocNode } from '@microsoft/tsdoc';
 import { DocSection } from '@microsoft/tsdoc';
 import { IndentedWriter as DocumentWriter } from '@microsoft/api-documenter/lib/utils/IndentedWriter';
@@ -334,9 +333,6 @@ export function getSeeBlocks(apiItem: ApiItem): DocSection[] | undefined;
 export function getThrowsBlocks(apiItem: ApiItem): DocSection[] | undefined;
 
 // @public
-export function getTsdocNodeTransformationOptions(contextApiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): TsdocNodeTransformOptions;
-
-// @public
 export function getUnscopedPackageName(apiPackage: ApiPackage): string;
 
 // @public
@@ -638,12 +634,6 @@ export function transformApiModel(transformConfig: ApiItemTransformationConfigur
 
 // @public
 export function transformTsdocNode(node: DocNode, contextApiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): DocumentationNode | undefined;
-
-// @public
-export interface TsdocNodeTransformOptions extends ConfigurationBase {
-    readonly contextApiItem: ApiItem;
-    readonly resolveApiReference: (codeDestination: DocDeclarationReference) => Link | undefined;
-}
 
 // @public
 export class UnorderedListNode extends DocumentationParentNodeBase<SingleLineDocumentationNode> implements MultiLineDocumentationNode {

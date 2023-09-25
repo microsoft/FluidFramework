@@ -57,7 +57,6 @@ export {
 	createTypeParametersSection,
 	type ExampleProperties,
 } from "./helpers";
-export { transformTsdocNode, type TsdocNodeTransformOptions } from "./TsdocNodeTransforms";
+export { transformTsdocNode } from "./TsdocNodeTransforms";
 export { apiItemToDocument, apiItemToSections } from "./TransformApiItem";
 export { transformApiModel } from "./TransformApiModel";
-export { getTsdocNodeTransformationOptions } from "./Utilities";

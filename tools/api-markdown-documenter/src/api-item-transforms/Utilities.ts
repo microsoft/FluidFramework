@@ -56,8 +56,6 @@ export function createDocument(
  *
  * @param contextApiItem - See {@link TsdocNodeTransformOptions.contextApiItem}.
  * @param config - See {@link ApiItemTransformationConfiguration}.
- *
- * @public
  */
 export function getTsdocNodeTransformationOptions(
 	contextApiItem: ApiItem,
