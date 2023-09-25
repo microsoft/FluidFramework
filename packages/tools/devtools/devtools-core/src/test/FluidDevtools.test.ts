@@ -12,7 +12,7 @@ import {
 	initializeDevtools,
 	useAfterDisposeErrorText,
 } from "../FluidDevtools";
-import { ContainerDevtoolsProps } from "../ContainerDevtools";
+import { type ContainerDevtoolsProps } from "../ContainerDevtools";
 import { createMockContainer } from "./Utilities";
 
 // TODOs:

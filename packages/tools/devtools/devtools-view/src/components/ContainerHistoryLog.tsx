@@ -22,7 +22,7 @@ import {
 	Attach20Regular,
 	LockClosed20Filled,
 } from "@fluentui/react-icons";
-import { ConnectionStateChangeLogEntry } from "@fluid-experimental/devtools-core";
+import { type ConnectionStateChangeLogEntry } from "@fluid-experimental/devtools-core";
 
 import { ThemeContext, ThemeOption } from "../ThemeHelper";
 import { LabelCellLayout } from "./utility-components";
@@ -33,19 +33,25 @@ import { LabelCellLayout } from "./utility-components";
 function setThemeStyle(themeName: string, state: string): string {
 	if (themeName === ThemeOption.HighContrast) {
 		switch (state) {
-			case "attached":
+			case "attached": {
 				return "#FFF";
-			case "closed":
+			}
+			case "closed": {
 				return "#000";
-			case "connected":
+			}
+			case "connected": {
 				return "#FFF";
-			case "disconnected":
+			}
+			case "disconnected": {
 				return "#000";
-			case "disposed":
+			}
+			case "disposed": {
 				return "#000";
-			default:
+			}
+			default: {
 				console.log("Unknown state type for container!");
 				return "";
+			}
 		}
 	}
 	return "";
@@ -76,19 +82,32 @@ export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.Reac
 
 	const getBackgroundColorForState = (state: string): string => {
 		switch (state) {
-			case "attached":
-				return tokens.colorPaletteRoyalBlueBackground2; // blue
-			case "closed":
-				return tokens.colorPaletteRedBorder1; // red
-			case "connected":
-				return tokens.colorPaletteGreenBackground2; // green
-			case "disconnected":
-				return tokens.colorPaletteDarkOrangeBorderActive; // orange
-			case "disposed":
-				return tokens.colorPaletteDarkRedBackground2; // dark red
-			default:
+			case "attached": {
+				// blue
+				return tokens.colorPaletteRoyalBlueBackground2;
+			}
+			case "closed": {
+				// red
+				return tokens.colorPaletteRedBorder1;
+			}
+			case "connected": {
+				// green
+				return tokens.colorPaletteGreenBackground2;
+			}
+			case "disconnected": {
+				// orange
+				return tokens.colorPaletteDarkOrangeBorderActive;
+			}
+			case "disposed": {
+				// dark red
+				return tokens.colorPaletteDarkRedBackground2;
+			}
+			default: {
 				console.log("Unknown state type for container!");
-				return tokens.colorBrandBackgroundPressed; // black
+
+				// black
+				return tokens.colorBrandBackgroundPressed;
+			}
 		}
 	};
 
@@ -124,19 +143,25 @@ export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.Reac
 
 					const getStateIcon = (state: string): React.ReactElement => {
 						switch (state) {
-							case "attached":
+							case "attached": {
 								return <Attach20Regular />;
-							case "closed":
+							}
+							case "closed": {
 								return <LockClosed20Filled />;
-							case "connected":
+							}
+							case "connected": {
 								return <PlugConnected20Regular />;
-							case "disconnected":
+							}
+							case "disconnected": {
 								return <PlugDisconnected20Regular />;
-							case "disposed":
+							}
+							case "disposed": {
 								return <ErrorCircle20Regular />;
-							default:
+							}
+							default: {
 								console.log("Unknown state type for container!");
 								return <Warning20Regular />;
+							}
 						}
 					};
 

@@ -404,6 +404,7 @@ class HierMergeBlock extends MergeBlock implements IHierBlock {
 			strbuf += internedSpaces(indentCount);
 			strbuf += `${key}: `;
 			for (const item of stack.items) {
+				// eslint-disable-next-line @typescript-eslint/no-base-to-string
 				strbuf += `${item.toString()} `;
 			}
 			strbuf += "\n";

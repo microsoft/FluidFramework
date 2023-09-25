@@ -5,13 +5,13 @@
 import React from "react";
 import { Divider } from "@fluentui/react-components";
 import {
-	ConnectionStateChangeLogEntry,
+	type ConnectionStateChangeLogEntry,
 	ContainerStateHistory,
 	GetContainerState,
 	handleIncomingMessage,
-	HasContainerKey,
-	ISourcedDevtoolsMessage,
-	InboundHandlers,
+	type HasContainerKey,
+	type ISourcedDevtoolsMessage,
+	type InboundHandlers,
 } from "@fluid-experimental/devtools-core";
 import { useMessageRelay } from "../MessageRelayContext";
 import { ContainerHistoryLog } from "./ContainerHistoryLog";
