@@ -14,14 +14,8 @@ import {
 } from "../../core";
 import { JsonCompatible } from "../../util";
 import { CursorAdapter, isPrimitiveValue, singleStackTreeCursor } from "../../feature-libraries";
-import {
-	jsonArray,
-	jsonBoolean,
-	jsonNull,
-	jsonNumber,
-	jsonObject,
-	jsonString,
-} from "./jsonDomainSchema";
+import * as leaf from "../leafDomain";
+import { jsonArray, jsonNull, jsonObject } from "./jsonDomainSchema";
 
 const adapter: CursorAdapter<JsonCompatible> = {
 	value: (node: JsonCompatible) =>
@@ -33,11 +27,11 @@ const adapter: CursorAdapter<JsonCompatible> = {
 
 		switch (type) {
 			case "number":
-				return jsonNumber.name;
+				return leaf.number.name;
 			case "string":
-				return jsonString.name;
+				return leaf.string.name;
 			case "boolean":
-				return jsonBoolean.name;
+				return leaf.boolean.name;
 			default:
 				if (node === null) {
 					return jsonNull.name;
@@ -112,9 +106,9 @@ export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible {
 	const type = reader.type;
 
 	switch (type) {
-		case jsonNumber.name:
-		case jsonBoolean.name:
-		case jsonString.name:
+		case leaf.number.name:
+		case leaf.boolean.name:
+		case leaf.string.name:
 			assert(isPrimitiveValue(reader.value), 0x41f /* expected a primitive value */);
 			return reader.value as JsonCompatible;
 		case jsonArray.name: {
