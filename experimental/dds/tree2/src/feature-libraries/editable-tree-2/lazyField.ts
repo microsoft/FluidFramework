@@ -46,8 +46,8 @@ import {
 	UnboxField,
 	UnboxNode,
 	UnboxNodeUnion,
-	UntypedField,
-	UntypedTree,
+	TreeField,
+	TreeNode,
 	RequiredField,
 } from "./editableTreeTypes";
 import { makeTree } from "./lazyTree";
@@ -66,7 +66,7 @@ export function makeField(
 	context: Context,
 	schema: FieldSchema,
 	cursor: ITreeSubscriptionCursor,
-): UntypedField {
+): TreeField {
 	const fieldAnchor = cursor.buildFieldAnchor();
 
 	const field = new (kindToClass.get(schema.kind) ?? fail("missing field implementation"))(
@@ -95,7 +95,7 @@ export function makeField(
  */
 export abstract class LazyField<TKind extends FieldKindTypes, TTypes extends AllowedTypes>
 	extends LazyEntity<FieldSchema<TKind, TTypes>, FieldAnchor>
-	implements UntypedField
+	implements TreeField
 {
 	public readonly key: FieldKey;
 
@@ -118,7 +118,7 @@ export abstract class LazyField<TKind extends FieldKindTypes, TTypes extends All
 			"Narrowing must be done to a kind that exists in this context",
 		);
 
-		if (schema.kind !== schema.kind) {
+		if (schema.kind !== this.schema.kind) {
 			return false;
 		}
 		if (schema.types === undefined) {
@@ -130,7 +130,7 @@ export abstract class LazyField<TKind extends FieldKindTypes, TTypes extends All
 		return compareSets({ a: this.schema.types, b: schema.types });
 	}
 
-	public isSameAs(other: UntypedField): boolean {
+	public isSameAs(other: TreeField): boolean {
 		assert(
 			other.context === this.context,
 			"Content from different editable trees should not be used together",
@@ -142,7 +142,7 @@ export abstract class LazyField<TKind extends FieldKindTypes, TTypes extends All
 		return normalizeNewFieldContent(this.context, this.schema, content);
 	}
 
-	public get parent(): UntypedTree | undefined {
+	public get parent(): TreeNode | undefined {
 		if (this[anchorSymbol].parent === undefined) {
 			return undefined;
 		}
@@ -228,6 +228,18 @@ export abstract class LazyField<TKind extends FieldKindTypes, TTypes extends All
 	public getFieldPath(): FieldUpPath {
 		return this[cursorSymbol].getFieldPath();
 	}
+
+	/**
+	 * Returns the path to this field to use for editing. Throws iff this path is not {@link TreeStatus#InDocument}.
+	 * This path is not valid to hold onto across edits: this must be recalled for each edit.
+	 */
+	public getFieldPathForEditing(): FieldUpPath {
+		assert(
+			this.treeStatus() === TreeStatus.InDocument,
+			"Editing only allowed on fields with TreeStatus.InDocument status",
+		);
+		return this.getFieldPath();
+	}
 }
 
 export class LazySequence<TTypes extends AllowedTypes>
@@ -246,7 +258,7 @@ export class LazySequence<TTypes extends AllowedTypes>
 	}
 
 	private sequenceEditor(): SequenceFieldEditBuilder {
-		const fieldPath = this[cursorSymbol].getFieldPath();
+		const fieldPath = this.getFieldPathForEditing();
 		const fieldEditor = this.context.editor.sequenceField(fieldPath);
 		return fieldEditor;
 	}
@@ -284,7 +296,7 @@ export class LazyValueField<TTypes extends AllowedTypes>
 	}
 
 	private valueFieldEditor(): ValueFieldEditBuilder {
-		const fieldPath = this[cursorSymbol].getFieldPath();
+		const fieldPath = this.getFieldPathForEditing();
 		const fieldEditor = this.context.editor.valueField(fieldPath);
 		return fieldEditor;
 	}
@@ -321,7 +333,7 @@ export class LazyOptionalField<TTypes extends AllowedTypes>
 	}
 
 	private optionalEditor(): OptionalFieldEditBuilder {
-		const fieldPath = this[cursorSymbol].getFieldPath();
+		const fieldPath = this.getFieldPathForEditing();
 		const fieldEditor = this.context.editor.optionalField(fieldPath);
 		return fieldEditor;
 	}

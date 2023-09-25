@@ -69,7 +69,7 @@ export const bufferToString = (blob: ArrayBufferLike, encoding: string): string 
  *
  * @internal
  */
-export function isArrayBuffer(obj: any): obj is ArrayBuffer {
+export function isArrayBuffer(obj: unknown): obj is ArrayBuffer {
 	const maybe = obj as (Partial<ArrayBuffer> & Partial<Uint8Array>) | undefined;
 	return (
 		obj instanceof ArrayBuffer ||
@@ -100,23 +100,33 @@ export class IsoBuffer extends Uint8Array {
 	}
 
 	/**
+	 * Static constructor
 	 * @param value - (string | ArrayBuffer)
 	 * @param encodingOrOffset - (string | number)
 	 * @param length - (number)
+	 *
+	 * @privateRemarks TODO: Use actual types
 	 */
-	static from(value, encodingOrOffset?, length?): IsoBuffer {
+	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
+	static from(value: any, encodingOrOffset?: any, length?: any): IsoBuffer {
 		if (typeof value === "string") {
 			return IsoBuffer.fromString(value, encodingOrOffset as string | undefined);
 			// Capture any typed arrays, including Uint8Array (and thus - IsoBuffer!)
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		} else if (value !== null && typeof value === "object" && isArrayBuffer(value.buffer)) {
 			// The version of the from function for the node buffer, which takes a buffer or typed array
 			// as first parameter, does not have any offset or length parameters. Those are just silently
 			// ignored and not taken into account
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
 			return IsoBuffer.fromArrayBuffer(value.buffer, value.byteOffset, value.byteLength);
 		} else if (isArrayBuffer(value)) {
-			return IsoBuffer.fromArrayBuffer(value, encodingOrOffset as number | undefined, length);
+			return IsoBuffer.fromArrayBuffer(
+				value,
+				encodingOrOffset as number | undefined,
+				length as number,
+			);
 		} else {
-			throw new TypeError();
+			throw new TypeError("Input value was neither a string nor an ArrayBuffer.");
 		}
 	}
 
@@ -133,7 +143,7 @@ export class IsoBuffer extends Uint8Array {
 			validLength < 0 ||
 			validLength + offset > arrayBuffer.byteLength
 		) {
-			throw new RangeError();
+			throw new RangeError("Invalid range specified.");
 		}
 
 		return new IsoBuffer(arrayBuffer, offset, validLength);
@@ -158,7 +168,7 @@ export class IsoBuffer extends Uint8Array {
 		}
 	}
 
-	static isBuffer(obj: any): boolean {
+	static isBuffer(obj: unknown): boolean {
 		throw new Error("unimplemented");
 	}
 

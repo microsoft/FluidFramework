@@ -305,26 +305,30 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 					? taggableProp
 					: { value: taggableProp, tag: undefined };
 			switch (tag) {
-				case undefined:
+				case undefined: {
 					// No tag means we can log plainly
 					newEvent[key] = value;
 					break;
+				}
 				case "PackageData": // For back-compat
-				case TelemetryDataTag.CodeArtifact:
+				case TelemetryDataTag.CodeArtifact: {
 					// For Microsoft applications, CodeArtifact is safe for now
 					// (we don't load 3P code in 1P apps)
 					newEvent[key] = value;
 					break;
-				case TelemetryDataTag.UserData:
+				}
+				case TelemetryDataTag.UserData: {
 					// Strip out anything tagged explicitly as UserData.
 					// Alternate strategy would be to hash these props
 					newEvent[key] = "REDACTED (UserData)";
 					break;
-				default:
+				}
+				default: {
 					// If we encounter a tag we don't recognize
 					// then we must assume we should scrub.
 					newEvent[key] = "REDACTED (unknown tag)";
 					break;
+				}
 			}
 		}
 		this.logger.send(newEvent);
@@ -404,11 +408,7 @@ export class ChildLogger extends TelemetryLogger {
 			return child;
 		}
 
-		return new ChildLogger(
-			baseLogger ? baseLogger : { send(): void {} },
-			namespace,
-			properties,
-		);
+		return new ChildLogger(baseLogger ?? { send(): void {} }, namespace, properties);
 	}
 
 	private constructor(
@@ -489,7 +489,7 @@ export class MultiSinkLogger extends TelemetryLogger {
 		loggers: ITelemetryBaseLogger[] = [],
 		tryInheritProperties?: true,
 	) {
-		let realProperties = properties !== undefined ? { ...properties } : undefined;
+		let realProperties = properties === undefined ? undefined : { ...properties };
 		if (tryInheritProperties === true) {
 			const merge = (realProperties ??= {});
 			loggers
@@ -630,8 +630,7 @@ export class PerformanceEvent {
 			this.reportEvent("start");
 		}
 
-		// eslint-disable-next-line unicorn/no-null
-		if (typeof window === "object" && window != null && window.performance?.mark) {
+		if (typeof window === "object" && window?.performance?.mark) {
 			this.startMark = `${event.eventName}-start`;
 			window.performance.mark(this.startMark);
 		}
@@ -769,17 +768,20 @@ function convertToBasePropertyTypeUntagged(
 		case "string":
 		case "number":
 		case "boolean":
-		case "undefined":
+		case "undefined": {
 			return x;
-		case "object":
+		}
+		case "object": {
 			// We assume this is an array or flat object based on the input types
 			return JSON.stringify(x);
-		default:
+		}
+		default: {
 			// should never reach this case based on the input types
 			console.error(
 				`convertToBasePropertyTypeUntagged: INVALID PROPERTY (typed as ${typeof x})`,
 			);
 			return `INVALID PROPERTY (typed as ${typeof x})`;
+		}
 	}
 }
 
@@ -811,6 +813,8 @@ export const tagData = <
 		// eslint-disable-next-line unicorn/no-array-reduce, unicorn/prefer-object-from-entries
 		.reduce((pv, cv) => {
 			const [key, value] = cv;
+			// The ternary form is less legible in this case.
+			// eslint-disable-next-line unicorn/prefer-ternary
 			if (typeof value === "function") {
 				// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 				pv[key] = () => {

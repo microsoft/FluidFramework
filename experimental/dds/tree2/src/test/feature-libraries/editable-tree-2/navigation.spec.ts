@@ -9,10 +9,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/editable-tree-2/navigation";
 
-import {
-	UntypedField2 as UntypedField,
-	UntypedTree2 as UntypedTree,
-} from "../../../feature-libraries";
+import { TreeField, TreeNode } from "../../../feature-libraries";
 import { FieldUpPath, UpPath } from "../../../core";
 
 /**
@@ -48,14 +45,14 @@ function visitIterableTreeRecursive<T extends Iterable<T>>(
 }
 
 // Examples
-function test(root: UntypedField): void {
+function test(root: TreeField): void {
 	// Count depth in nodes:
 	let depth = 0;
 	visitBipartiteIterableTreeWithState(
 		root,
 		0,
-		(field: UntypedField, n) => n,
-		(node: UntypedTree, n) => {
+		(field: TreeField, n) => n,
+		(node: TreeNode, n) => {
 			depth = Math.max(n, depth);
 			return n + 1;
 		},
@@ -65,11 +62,11 @@ function test(root: UntypedField): void {
 	visitBipartiteIterableTreeWithState(
 		root,
 		undefined,
-		(field: UntypedField, parent: UpPath | undefined): FieldUpPath => ({
+		(field: TreeField, parent: UpPath | undefined): FieldUpPath => ({
 			parent,
 			field: field.key,
 		}),
-		(node: UntypedTree, parent: FieldUpPath): UpPath => ({
+		(node: TreeNode, parent: FieldUpPath): UpPath => ({
 			parent: parent.parent,
 			parentField: parent.field,
 			parentIndex: node.parentField.index,

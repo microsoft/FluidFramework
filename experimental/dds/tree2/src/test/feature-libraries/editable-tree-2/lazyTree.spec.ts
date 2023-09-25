@@ -15,33 +15,24 @@ import {
 } from "../../../feature-libraries/editable-tree-2/lazyTree";
 import {
 	Any,
-	DefaultEditBuilder,
 	PrimitiveValue,
 	SchemaBuilder,
-	TypedSchemaCollection,
-	createMockNodeKeyManager,
 	isPrimitiveValue,
 	jsonableTreeFromCursor,
 	singleMapTreeCursor,
 	typeNameSymbol,
-	UntypedEntity,
-	UntypedField2 as UntypedField,
-	UntypedTree2 as UntypedTree,
+	Tree,
+	TreeField,
+	TreeNode,
 	Skip,
 	bannedFieldNames,
 	fieldApiPrefixes,
 	validateStructFieldName,
+	assertAllowedValue,
 } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { Context } from "../../../feature-libraries/editable-tree-2/context";
-import {
-	FieldKey,
-	IEditableForest,
-	MapTree,
-	TreeNavigationResult,
-	TreeValue,
-	rootFieldKey,
-} from "../../../core";
+import { FieldKey, MapTree, TreeNavigationResult, TreeValue, rootFieldKey } from "../../../core";
 import { forestWithContent } from "../../utils";
 import { TreeContent } from "../../../shared-tree";
 import { RestrictiveReadonlyRecord, brand } from "../../../util";
@@ -56,12 +47,7 @@ import {
 import { visitIterableTree } from "../../../feature-libraries/editable-tree-2";
 import { testTrees, treeContentFromTestTree } from "../../testTrees";
 import { jsonSchema } from "../../../domains";
-
-function getReadonlyContext(forest: IEditableForest, schema: TypedSchemaCollection): Context {
-	// This will error if someone tries to call mutation methods on it
-	const dummyEditor = {} as unknown as DefaultEditBuilder;
-	return new Context(schema, forest, dummyEditor, createMockNodeKeyManager());
-}
+import { getReadonlyContext } from "./utils";
 
 function contextWithContentReadonly(content: TreeContent): Context {
 	const forest = forestWithContent(content);
@@ -203,7 +189,7 @@ describe("lazyTree", () => {
 	});
 });
 
-function fieldToMapTree(field: UntypedField): MapTree[] {
+function fieldToMapTree(field: TreeField): MapTree[] {
 	const results: MapTree[] = [];
 	for (const child of field) {
 		results.push(nodeToMapTree(child));
@@ -211,7 +197,7 @@ function fieldToMapTree(field: UntypedField): MapTree[] {
 	return results;
 }
 
-function nodeToMapTree(node: UntypedTree): MapTree {
+function nodeToMapTree(node: TreeNode): MapTree {
 	const fields: Map<FieldKey, MapTree[]> = new Map();
 	for (const field of node) {
 		fields.set(field.key, fieldToMapTree(field));
@@ -220,8 +206,8 @@ function nodeToMapTree(node: UntypedTree): MapTree {
 	return { fields, type: node.type, value: node.value };
 }
 
-function checkPropertyInvariants(root: UntypedEntity): void {
-	const treeValues = new Map<TreeValue, number>();
+function checkPropertyInvariants(root: Tree): void {
+	const treeValues = new Map<unknown, number>();
 	// Assert all nodes and fields traversed, and all values found.
 	// TODO: checking that unboxed fields and nodes were traversed is not fully implemented here.
 	visitIterableTree(root, (item) => {
@@ -253,6 +239,7 @@ function checkPropertyInvariants(root: UntypedEntity): void {
 
 		if (typeof child === "object") {
 			if (treeValues.has(child)) {
+				assertAllowedValue(child);
 				primitivesAndValues.set(child, (primitivesAndValues.get(child) ?? 0) + 1);
 				return Skip;
 			}
@@ -287,7 +274,7 @@ function checkPropertyInvariants(root: UntypedEntity): void {
 	// TODO: checking that unboxed fields and nodes were traversed is not fully implemented here.
 	visitIterableTree(root, (item) => {
 		if (!unboxable.has(Object.getPrototypeOf(item))) {
-			if (!primitivesAndValues.has(item) && !visited.has(item)) {
+			if (!primitivesAndValues.has(item as unknown as TreeValue) && !visited.has(item)) {
 				// Fields don't have stable object identity, so they can fail the above test.
 				// Nothing else should fail it.
 				assert(item instanceof LazyField);

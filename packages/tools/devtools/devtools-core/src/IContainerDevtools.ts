@@ -2,10 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IDisposable } from "@fluidframework/core-interfaces";
+import { type IDisposable } from "@fluidframework/core-interfaces";
 
-import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
-import { HasContainerKey } from "./CommonInterfaces";
+import { type AudienceChangeLogEntry, type ConnectionStateChangeLogEntry } from "./Logs";
+import { type HasContainerKey } from "./CommonInterfaces";
 
 // TODOs:
 // - Data recording configuration (what things the user wishes to subscribe to)

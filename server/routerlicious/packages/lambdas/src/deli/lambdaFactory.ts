@@ -31,6 +31,7 @@ import {
 	LumberEventName,
 	Lumberjack,
 	getLumberBaseProperties,
+	CommonProperties,
 } from "@fluidframework/server-services-telemetry";
 import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionValid } from "../utils";
 import { DeliLambda } from "./lambda";
@@ -126,6 +127,11 @@ export class DeliLambdaFactory
 					return new NoOpLambda(context);
 				}
 			}
+
+			sessionMetric?.setProperty(
+				CommonProperties.isEphemeralContainer,
+				document?.isEphemeralContainer ?? false,
+			);
 
 			gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
 		} catch (error) {

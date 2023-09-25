@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-services-client",
-	"version": "2.0.0",
+	"version": "3.0.0",
 	"description": "Fluid server isomorphic services for communicating with Fluid",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -58,11 +58,11 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/common-utils": "^1.1.1",
+		"@fluidframework/common-utils": "^3.0.0",
 		"@fluidframework/gitresources": "workspace:~",
 		"@fluidframework/protocol-base": "workspace:~",
-		"@fluidframework/protocol-definitions": "^2.1.0",
-		"axios": "^0.26.0",
+		"@fluidframework/protocol-definitions": "^3.0.0",
+		"axios": "^1.5.0",
 		"crc-32": "1.2.0",
 		"debug": "^4.1.1",
 		"json-stringify-safe": "^5.0.1",

@@ -122,6 +122,8 @@ export {
 	jsonSchema,
 	nodeKeyField,
 	nodeKeySchema,
+	leaf,
+	testRecursiveDomain,
 } from "./domains";
 
 export {
@@ -158,7 +160,6 @@ export {
 	EditableTreeOrPrimitive,
 	EditableTree,
 	EditableField,
-	isPrimitiveValue,
 	isPrimitive,
 	getPrimaryField,
 	typeSymbol,
@@ -267,6 +268,28 @@ export {
 	SchemaLintConfiguration,
 	TreeStatus,
 	treeStatus,
+	FieldNode,
+	FlexibleFieldContent,
+	FlexibleNodeContent,
+	InternalEditableTreeTypes,
+	Leaf,
+	MapNode,
+	OptionalField,
+	RequiredField,
+	Sequence2,
+	Struct,
+	StructTyped,
+	TreeContext,
+	TypedField,
+	TypedNode,
+	TypedNodeUnion,
+	Tree,
+	TreeField,
+	TreeNode,
+	FieldNodeSchema,
+	LeafSchema,
+	MapSchema,
+	StructSchema,
 } from "./feature-libraries";
 
 export {

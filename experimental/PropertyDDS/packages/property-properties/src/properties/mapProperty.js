@@ -198,11 +198,9 @@ export class MapProperty extends IndexedCollectionBaseProperty {
 		var result = {};
 		for (var i = 0; i < ids.length; i++) {
 			var child = this.get(ids[i]);
-			if (child.isPrimitiveType()) {
-				result[ids[i]] = this.get(ids[i]).getValue();
-			} else {
-				result[ids[i]] = child.getValues();
-			}
+			result[ids[i]] = child.isPrimitiveType()
+				? this.get(ids[i]).getValue()
+				: child.getValues();
 		}
 		return result;
 	}

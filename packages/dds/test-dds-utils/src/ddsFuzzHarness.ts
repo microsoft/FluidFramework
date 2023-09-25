@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import path from "path";
-import { mkdirSync, readFileSync } from "fs";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
+import { mkdirSync, readFileSync } from "node:fs";
+import path from "node:path";
+
 import {
 	BaseFuzzTestState,
 	createFuzzDescribe,
@@ -84,6 +85,7 @@ export interface AddClient {
 
 export interface Synchronize {
 	type: "synchronize";
+	clients?: string[];
 }
 
 interface HasWorkloadName {
@@ -304,7 +306,9 @@ export interface DDSFuzzSuiteOptions {
 	 */
 	validationStrategy:
 		| { type: "random"; probability: number }
-		| { type: "fixedInterval"; interval: number };
+		| { type: "fixedInterval"; interval: number }
+		// WIP: This validation strategy still currently synchronizes all clients.
+		| { type: "partialSynchronization"; probability: number; clientProbability: number };
 	parseOperations: (serialized: string) => BaseOperation[];
 
 	/**
@@ -648,7 +652,7 @@ export function mixinSynchronization<
 	const { validationStrategy } = options;
 	let generatorFactory: () => Generator<TOperation | Synchronize, TState>;
 	switch (validationStrategy.type) {
-		case "random":
+		case "random": {
 			// passing 1 here causes infinite loops. passing close to 1 is wasteful
 			// as synchronization + eventual consistency validation should be idempotent.
 			// 0.5 is arbitrary but there's no reason anyone should want a probability near this.
@@ -664,8 +668,9 @@ export function mixinSynchronization<
 						: baseGenerator(state);
 			};
 			break;
+		}
 
-		case "fixedInterval":
+		case "fixedInterval": {
 			generatorFactory = (): Generator<TOperation | Synchronize, TState> => {
 				const baseGenerator = model.generatorFactory();
 				return interleave<TOperation | Synchronize, TState>(
@@ -680,12 +685,45 @@ export function mixinSynchronization<
 				);
 			};
 			break;
-		default:
+		}
+
+		case "partialSynchronization": {
+			// passing 1 here causes infinite loops. passing close to 1 is wasteful
+			// as synchronization + eventual consistency validation should be idempotent.
+			// 0.5 is arbitrary but there's no reason anyone should want a probability near this.
+			assert(
+				validationStrategy.probability < 0.5,
+				"Use a lower synchronization probability.",
+			);
+			generatorFactory = (): Generator<TOperation | Synchronize, TState> => {
+				const baseGenerator = model.generatorFactory();
+				return async (state: TState): Promise<TOperation | Synchronize | typeof done> => {
+					if (!state.isDetached && state.random.bool(validationStrategy.probability)) {
+						const selectedClients = new Set(
+							state.clients
+								.filter((client) => client.containerRuntime.connected)
+								.filter(() =>
+									state.random.bool(validationStrategy.clientProbability),
+								)
+								.map((client) => client.containerRuntime.clientId),
+						);
+
+						return { type: "synchronize", clients: [...selectedClients] };
+					} else {
+						return baseGenerator(state);
+					}
+				};
+			};
+			break;
+		}
+		default: {
 			unreachableCase(validationStrategy);
+		}
 	}
 
 	const isSynchronizeOp = (op: BaseOperation): op is Synchronize => op.type === "synchronize";
 	const reducer: Reducer<TOperation | Synchronize, TState> = async (state, operation) => {
+		// TODO: Only synchronize listed clients if specified
 		if (isSynchronizeOp(operation)) {
 			const connectedClients = state.clients.filter(
 				(client) => client.containerRuntime.connected,

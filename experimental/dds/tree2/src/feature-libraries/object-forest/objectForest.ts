@@ -22,7 +22,6 @@ import {
 	ITreeCursor,
 	CursorLocationType,
 	TreeSchemaIdentifier,
-	TreeValue,
 	MapTree,
 	getMapTreeField,
 	FieldAnchor,
@@ -30,6 +29,7 @@ import {
 	ForestEvents,
 	PathRootPrefix,
 	DeltaVisitor,
+	Value,
 } from "../../core";
 import { brand, fail, assertValidIndex } from "../../util";
 import { CursorWithNode, SynchronousCursor } from "../treeCursorUtils";
@@ -399,7 +399,7 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 		assert(this.innerCursor !== undefined, 0x43f /* Cursor must be current to be used */);
 		return this.innerCursor.type;
 	}
-	public get value(): TreeValue {
+	public get value(): Value {
 		assert(this.innerCursor !== undefined, 0x440 /* Cursor must be current to be used */);
 		return this.innerCursor.value;
 	}
