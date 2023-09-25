@@ -87,7 +87,7 @@
 		"@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@2.0.0-internal.6.3.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
-		"@microsoft/api-extractor": "^7.34.4",
+		"@microsoft/api-extractor": "^7.37.0",
 		"@types/diff": "^3.5.1",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^16.18.38",
@@ -102,7 +102,7 @@
 		"moment": "^2.21.0",
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",
-		"typescript": "~4.5.5"
+		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
 		"broken": {}

@@ -219,7 +219,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
     updateUsedRoutes(usedRoutes: string[]): void;
     // (undocumented)
-    readonly visibilityState: VisibilityState_2;
+    readonly visibilityState: VisibilityState;
 }
 
 // @public
@@ -518,15 +518,14 @@ export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telem
 export const totalBlobSizePropertyName = "TotalBlobSize";
 
 // @public
-const VisibilityState_2: {
+export const VisibilityState: {
     NotVisible: string;
     LocallyVisible: string;
     GloballyVisible: string;
 };
 
 // @public (undocumented)
-type VisibilityState_2 = typeof VisibilityState_2[keyof typeof VisibilityState_2];
-export { VisibilityState_2 as VisibilityState }
+export type VisibilityState = typeof VisibilityState[keyof typeof VisibilityState];
 
 // (No @packageDocumentation comment for this package)
 
