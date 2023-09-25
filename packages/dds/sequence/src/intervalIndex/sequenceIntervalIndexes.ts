@@ -27,6 +27,6 @@ export namespace SequenceIntervalIndexes {
 		findOverlappingIntervalsBySegoff(
 			startSegoff: { segment: ISegment | undefined; offset: number | undefined },
 			endSegoff: { segment: ISegment | undefined; offset: number | undefined },
-		);
+		): Iterable<SequenceInterval>;
 	}
 }

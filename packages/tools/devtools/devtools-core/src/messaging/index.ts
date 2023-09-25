@@ -38,14 +38,13 @@ export {
 	GetContainerList,
 	GetDevtoolsFeatures,
 } from "./devtools-messages";
-export { ISourcedDevtoolsMessage, IDevtoolsMessage } from "./Messages";
-export { IMessageRelay, IMessageRelayEvents } from "./MessageRelay";
+export type { ISourcedDevtoolsMessage, IDevtoolsMessage } from "./Messages";
+export type { IMessageRelay, IMessageRelayEvents } from "./MessageRelay";
 export { GetTelemetryHistory, TelemetryEvent, TelemetryHistory } from "./telemetry-messages";
+export type { InboundHandlers, MessageLoggingOptions } from "./Utilities";
 export {
 	handleIncomingMessage,
 	handleIncomingWindowMessage,
-	InboundHandlers,
 	isDevtoolsMessage,
-	MessageLoggingOptions,
 	postMessagesToWindow,
 } from "./Utilities";

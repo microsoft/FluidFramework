@@ -2,8 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import path from "path";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
+import path from "node:path";
+
 import { Operation, SharedNothingFactory, baseModel } from "../sharedNothing";
 import { DDSFuzzModel, createDDSFuzzSuite } from "../../ddsFuzzHarness";
 

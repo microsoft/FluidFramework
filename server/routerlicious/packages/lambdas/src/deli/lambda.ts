@@ -835,11 +835,17 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 				"Session metric already completed. Creating a new one.",
 				getLumberBaseProperties(this.documentId, this.tenantId),
 			);
+			const isEphemeralContainer: boolean =
+				this.sessionMetric?.properties.get(CommonProperties.isEphemeralContainer) ?? false;
 			this.sessionMetric = createSessionMetric(
 				this.tenantId,
 				this.documentId,
 				LumberEventName.SessionResult,
 				this.serviceConfiguration,
+			);
+			this.sessionMetric?.setProperty(
+				CommonProperties.isEphemeralContainer,
+				isEphemeralContainer,
 			);
 		}
 
