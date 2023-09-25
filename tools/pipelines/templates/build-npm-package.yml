@@ -589,8 +589,6 @@ stages:
                 exit -1;
               fi
 
-      # Job - Additional build steps
-      - job: addtional build
         - ${{ parameters.additionalBuildSteps }}
 
       # Job - Component detection
