@@ -20,6 +20,6 @@ steps:
       # Output installed node versions
       n ls
       # Use the specified node version
-      sudo n ${{ parameters.version }}
+      sudo n ${{ parameters.version }} || { echo "Failed to use the configured node version" ; exit 1; }
       # Output the node version
       echo "Using node $(node --version)"
