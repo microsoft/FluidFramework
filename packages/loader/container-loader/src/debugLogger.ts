@@ -108,6 +108,7 @@ export class DebugLogger implements ITelemetryBaseLogger {
 		}
 
 		// Print multi-line.
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		logger(`${name} ${payload} ${tick} ${stack}`);
 	}
 }

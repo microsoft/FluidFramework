@@ -10,6 +10,7 @@ import {
 	IFluidHandle,
 	IFluidLoadable,
 	FluidObject,
+	// eslint-disable-next-line import/no-deprecated
 	IFluidRouter,
 } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
@@ -42,6 +43,7 @@ export const rootDataStoreRequestHandler = async (
 	const requestParser = RequestParser.create(request);
 	const id = requestParser.pathParts[0];
 	const wait = typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
+	// eslint-disable-next-line import/no-deprecated
 	let rootDataStore: IFluidRouter;
 	try {
 		// getRootDataStore currently throws if the data store is not found
@@ -50,7 +52,7 @@ export const rootDataStoreRequestHandler = async (
 		return undefined; // continue search
 	}
 	try {
-		return rootDataStore.IFluidRouter.request(requestParser.createSubRequest(1));
+		return await rootDataStore.IFluidRouter.request(requestParser.createSubRequest(1));
 	} catch (error) {
 		return { status: 500, mimeType: "fluid/object", value: error };
 	}

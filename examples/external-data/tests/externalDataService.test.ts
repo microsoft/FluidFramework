@@ -76,6 +76,7 @@ describe("mock-external-data-service", () => {
 
 	async function getCurrentExternalData(): Promise<ITaskData> {
 		const fetchResponse = await externalDataSource!.fetchData(externalTaskListId);
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		const responseBody = JSON.parse(fetchResponse.body.toString()) as Record<
 			string | number | symbol,
 			unknown

@@ -101,13 +101,13 @@ export function defaultFluidObjectRequestHandler(fluidObject: FluidObject, reque
 // @public @deprecated
 export const defaultRouteRequestHandler: (defaultRootId: string) => (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse | undefined>;
 
-// @public
+// @public @deprecated (undocumented)
 export function getDefaultObjectFromContainer<T = FluidObject>(container: IContainer): Promise<T>;
 
-// @public
+// @public @deprecated (undocumented)
 export function getObjectFromContainer<T = FluidObject>(path: string, container: IContainer): Promise<T>;
 
-// @public
+// @public @deprecated (undocumented)
 export function getObjectWithIdFromContainer<T = FluidObject>(id: string, container: IContainer): Promise<T>;
 
 // @public (undocumented)
@@ -146,7 +146,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     get IFluidHandle(): IFluidHandle<this>;
     // (undocumented)
     get IFluidLoadable(): this;
-    // (undocumented)
+    // @deprecated (undocumented)
     get IFluidRouter(): this;
     initializeInternal(existing: boolean): Promise<void>;
     // (undocumented)

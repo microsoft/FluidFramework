@@ -477,7 +477,7 @@ function amendComposeI<TNodeChange>(
 export class ComposeQueue<T> {
 	private readonly baseMarks: MarkQueue<T>;
 	private readonly newMarks: MarkQueue<T>;
-	private readonly cancelledInserts: Set<RevisionTag> = new Set();
+	private readonly cancelledInserts = new Set<RevisionTag>();
 
 	public constructor(
 		baseRevision: RevisionTag | undefined,

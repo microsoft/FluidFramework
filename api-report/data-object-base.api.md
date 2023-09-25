@@ -40,7 +40,7 @@ export abstract class LazyLoadedDataObject<TRoot extends ISharedObject = IShared
     get IFluidHandle(): IFluidHandle<this>;
     // (undocumented)
     get IFluidLoadable(): this;
-    // (undocumented)
+    // @deprecated (undocumented)
     get IFluidRouter(): this;
     // (undocumented)
     get IProvideFluidHandle(): this;

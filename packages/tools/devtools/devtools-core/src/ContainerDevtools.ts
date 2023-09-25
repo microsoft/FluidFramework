@@ -3,23 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { IAudience, IContainer } from "@fluidframework/container-definitions";
-import { IFluidLoadable } from "@fluidframework/core-interfaces";
-import { IClient } from "@fluidframework/protocol-definitions";
+import { type IAudience, type IContainer } from "@fluidframework/container-definitions";
+import { type IFluidLoadable } from "@fluidframework/core-interfaces";
+import { type IClient } from "@fluidframework/protocol-definitions";
 
-import { ContainerKey, FluidObjectId, HasContainerKey } from "./CommonInterfaces";
+import { type ContainerKey, type FluidObjectId, type HasContainerKey } from "./CommonInterfaces";
 import { ContainerStateChangeKind } from "./Container";
-import { ContainerStateMetadata } from "./ContainerMetadata";
+import { type ContainerStateMetadata } from "./ContainerMetadata";
 import {
 	DataVisualizerGraph,
 	defaultVisualizers,
 	defaultEditors,
-	FluidObjectNode,
-	RootHandleNode,
-	SharedObjectEdit,
+	type FluidObjectNode,
+	type RootHandleNode,
+	type SharedObjectEdit,
 } from "./data-visualization";
-import { IContainerDevtools } from "./IContainerDevtools";
-import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
+import { type IContainerDevtools } from "./IContainerDevtools";
+import { type AudienceChangeLogEntry, type ConnectionStateChangeLogEntry } from "./Logs";
 import {
 	AudienceSummary,
 	CloseContainer,
@@ -36,15 +36,15 @@ import {
 	GetDataVisualization,
 	GetRootDataVisualizations,
 	handleIncomingWindowMessage,
-	IDevtoolsMessage,
-	InboundHandlers,
-	ISourcedDevtoolsMessage,
-	MessageLoggingOptions,
+	type IDevtoolsMessage,
+	type InboundHandlers,
+	type ISourcedDevtoolsMessage,
+	type MessageLoggingOptions,
 	postMessagesToWindow,
 	RootDataVisualizations,
 } from "./messaging";
-import { AudienceClientMetadata } from "./AudienceMetadata";
-import { ContainerDevtoolsFeatureFlags } from "./Features";
+import { type AudienceClientMetadata } from "./AudienceMetadata";
+import { type ContainerDevtoolsFeatureFlags } from "./Features";
 
 /**
  * Properties for registering a {@link @fluidframework/container-definitions#IContainer} with the Devtools.
