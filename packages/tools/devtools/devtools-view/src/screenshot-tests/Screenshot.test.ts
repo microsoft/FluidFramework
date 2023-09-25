@@ -5,7 +5,7 @@
 
 import Path from "node:path";
 
-import { decodeComponentId, RPCs } from "@previewjs/api";
+import { decodeComponentId, type RPCs } from "@previewjs/api";
 import { createChromelessWorkspace } from "@previewjs/chromeless";
 import reactPlugin from "@previewjs/plugin-react";
 import { expect } from "chai";
@@ -50,12 +50,16 @@ const defaultViewports: Viewport[] = [{ width: 400, height: 600 }];
 function colorSchemeFromTheme(theme: ThemeOption): "dark" | "light" | "no-preference" {
 	switch (theme) {
 		case ThemeOption.Dark:
-		case ThemeOption.HighContrast: // Ensure we run high-contrast in dark mode
+		case ThemeOption.HighContrast: {
+			// Ensure we run high-contrast in dark mode
 			return "dark";
-		case ThemeOption.Light:
+		}
+		case ThemeOption.Light: {
 			return "light";
-		default:
+		}
+		default: {
 			return "no-preference";
+		}
 	}
 }
 
@@ -65,10 +69,12 @@ function colorSchemeFromTheme(theme: ThemeOption): "dark" | "light" | "no-prefer
  */
 function forcedColorsFromTheme(theme: ThemeOption): "active" | "none" {
 	switch (theme) {
-		case ThemeOption.HighContrast:
+		case ThemeOption.HighContrast: {
 			return "active";
-		default:
+		}
+		default: {
 			return "none";
+		}
 	}
 }
 
@@ -238,6 +244,7 @@ async function generateTestSuite(): Promise<void> {
 /**
  * Asynchronously generate test suite, then run it.
  */
+// eslint-disable-next-line unicorn/prefer-top-level-await
 generateTestSuite().then(
 	() => {
 		// Execute generated test suite

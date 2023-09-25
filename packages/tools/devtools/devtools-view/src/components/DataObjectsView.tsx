@@ -9,10 +9,10 @@ import {
 	RootDataVisualizations,
 	GetRootDataVisualizations,
 	handleIncomingMessage,
-	HasContainerKey,
-	ISourcedDevtoolsMessage,
-	InboundHandlers,
-	RootHandleNode,
+	type HasContainerKey,
+	type ISourcedDevtoolsMessage,
+	type InboundHandlers,
+	type RootHandleNode,
 } from "@fluid-experimental/devtools-core";
 
 import { useMessageRelay } from "../MessageRelayContext";
