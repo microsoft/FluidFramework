@@ -22,7 +22,7 @@ export function makeCompressedCodec(
 	return {
 		encode: (data: ITreeCursorSynchronous) => {
 			const encoded = compressedEncode(data, cache);
-			assert(versionedValidator.check(encoded), "Encoded schema should be versioned");
+			assert(versionedValidator.check(encoded), "Encoded schema should be versioned.");
 			assert(formatValidator.check(encoded), "Encoded schema should validate");
 			return encoded;
 		},
