@@ -39,6 +39,7 @@ export class TinyliciousRunner implements IRunner {
 		private readonly tenantManager: ITenantManager,
 		private readonly storage: IDocumentStorage,
 		private readonly mongoManager: MongoManager,
+		// eslint-disable-next-line import/no-deprecated
 		private readonly collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	) {}
 
