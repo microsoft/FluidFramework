@@ -180,15 +180,6 @@ export interface ISharedObjectRegistry {
 }
 
 // @public
-export class MigratorFluidDataStoreRuntime extends FluidDataStoreRuntime {
-    constructor(dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean, initializeEntryPoint?: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>);
-    // (undocumented)
-    reAttachChannel(channel: IChannel): void;
-    // (undocumented)
-    replaceChannel(id: string, channelFactory: IChannelFactory): IChannel;
-}
-
-// @public
 export const mixinRequestHandler: (requestHandler: (request: IRequest, runtime: FluidDataStoreRuntime) => Promise<IResponse>, Base?: typeof FluidDataStoreRuntime) => typeof FluidDataStoreRuntime;
 
 // @public

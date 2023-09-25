@@ -9915,6 +9915,7 @@ importers:
   packages/test/test-end-to-end-tests:
     specifiers:
       '@fluid-experimental/attributor': workspace:~
+      '@fluid-experimental/datastore-hot-swap': workspace:~
       '@fluid-experimental/sequence-deprecated': workspace:~
       '@fluid-experimental/tree': workspace:~
       '@fluid-experimental/tree2': workspace:~
@@ -9986,6 +9987,7 @@ importers:
       uuid: ^9.0.0
     dependencies:
       '@fluid-experimental/attributor': link:../../framework/attributor
+      '@fluid-experimental/datastore-hot-swap': link:../../runtime/datastore-hot-swap
       '@fluid-experimental/sequence-deprecated': link:../../../experimental/dds/sequence-deprecated
       '@fluid-experimental/tree': link:../../../experimental/dds/tree
       '@fluid-experimental/tree2': link:../../../experimental/dds/tree2

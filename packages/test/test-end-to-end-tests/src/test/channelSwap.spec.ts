@@ -21,7 +21,6 @@ import {
 import { IChannel, IChannelFactory } from "@fluidframework/datastore-definitions";
 import { ISharedDirectory } from "@fluidframework/map";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { MigratorFluidDataStoreRuntime } from "@fluidframework/datastore";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedTree } from "@fluid-experimental/tree";
 import {
@@ -29,9 +28,10 @@ import {
 	ISharedTree as ISharedTree2,
 } from "@fluid-experimental/tree2";
 import { IContainerRuntimeOptions, ContainerRuntime } from "@fluidframework/container-runtime";
+import { HotSwapFluidDataStoreRuntime } from "@fluid-experimental/datastore-hot-swap";
 
 export class MigratorDataObject<I extends DataObjectTypes = DataObjectTypes> extends DataObject<I> {
-	private readonly migratorRuntime: MigratorFluidDataStoreRuntime;
+	private readonly hotSwapRuntime: HotSwapFluidDataStoreRuntime;
 
 	public get _root(): ISharedDirectory {
 		return this.root;
@@ -48,16 +48,16 @@ export class MigratorDataObject<I extends DataObjectTypes = DataObjectTypes> ext
 	public constructor(props: IDataObjectProps<I>) {
 		super(props);
 		assert((props.runtime as any).replaceChannel !== undefined, "expected migrator runtime");
-		this.migratorRuntime = props.runtime as MigratorFluidDataStoreRuntime;
+		this.hotSwapRuntime = props.runtime as HotSwapFluidDataStoreRuntime;
 	}
 
 	// Deleting DDSes is dangerous it's best just to replace
 	public replaceChannel(channel: IChannel, factory: IChannelFactory) {
-		return this.migratorRuntime.replaceChannel(channel.id, factory);
+		return this.hotSwapRuntime.replaceChannel(channel.id, factory);
 	}
 
 	public reAttachChannel(channel: IChannel) {
-		this.migratorRuntime.reAttachChannel(channel);
+		this.hotSwapRuntime.reAttachChannel(channel);
 	}
 
 	protected async initializingFirstTime(): Promise<void> {
@@ -82,7 +82,7 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 		[SharedTree.getFactory()],
 		[],
 		undefined,
-		MigratorFluidDataStoreRuntime,
+		HotSwapFluidDataStoreRuntime,
 	);
 
 	const dataObjectFactoryV2 = new DataObjectFactory(
@@ -91,7 +91,7 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 		[new NewSharedTreeFactory()],
 		[],
 		undefined,
-		MigratorFluidDataStoreRuntime,
+		HotSwapFluidDataStoreRuntime,
 	);
 
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
