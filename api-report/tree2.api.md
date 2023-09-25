@@ -1864,11 +1864,12 @@ export interface Sequence2<TTypes extends AllowedTypes> extends TreeField {
     readonly asArray: readonly UnboxNodeUnion<TTypes>[];
     at(index: number): UnboxNodeUnion<TTypes>;
     boxedAt(index: number): TypedNodeUnion<TTypes>;
+    // (undocumented)
     boxedIterator(): IterableIterator<TypedNodeUnion<TTypes>>;
     // (undocumented)
     readonly length: number;
-    map<U>(callbackfn: (value: UnboxNodeUnion<TTypes>, index: number, array: this) => U): U[];
-    mapBoxed<U>(callbackfn: (value: TypedNodeUnion<TTypes>, index: number, array: this) => U): U[];
+    map<U>(callbackfn: (value: UnboxNodeUnion<TTypes>, index: number) => U): U[];
+    mapBoxed<U>(callbackfn: (value: TypedNodeUnion<TTypes>, index: number) => U): U[];
     // (undocumented)
     replaceRange(index: number, count: number, content: Iterable<FlexibleNodeContent<TTypes>>): void;
 }

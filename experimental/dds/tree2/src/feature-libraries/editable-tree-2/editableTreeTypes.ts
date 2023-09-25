@@ -62,7 +62,7 @@ export interface Tree<TSchema = unknown> {
 	 * Iterate through all nodes/fields in this node/field.
 	 *
 	 * @remarks
-	 * Concurrent modification is forbidden.
+	 * No mutations to the current view of the shared tree are permitted during iteration.
 	 */
 	boxedIterator(): IterableIterator<Tree>;
 }
@@ -125,7 +125,7 @@ export interface TreeNode extends Tree<TreeSchema> {
 	 * Iterate through all fields in the node.
 	 *
 	 * @remarks
-	 * This node may not be mutated during iteration.
+	 * No mutations to the current view of the shared tree are permitted during iteration.
 	 */
 	boxedIterator(): IterableIterator<TreeField>;
 }
@@ -172,7 +172,7 @@ export interface TreeField extends Tree<FieldSchema> {
 	 * Iterate through all nodes in the field.
 	 *
 	 * @remarks
-	 * This field may not be mutated during iteration.
+	 * No mutations to the current view of the shared tree are permitted during iteration.
 	 */
 	boxedIterator(): IterableIterator<TreeNode>;
 
@@ -300,7 +300,8 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	 * Iterate through all fields in the map.
 	 *
 	 * @remarks
-	 * The map may not be mutated during iteration.
+	 * No mutations to the current view of the shared tree are permitted during iteration.
+	 * To iterate over the unboxed values of the map, use `Symbol.Iterator()`.
 	 */
 	boxedIterator(): IterableIterator<TypedField<TSchema["mapFields"]>>;
 
@@ -505,15 +506,15 @@ export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
 
 	/**
 	 * Calls the provided callback function on each child of this sequence, and returns an array that contains the results.
-	 * @param callbackfn - A function that accepts the child, its index, and this field.
+	 * @param callbackfn - A function that accepts the child and its index.
 	 */
-	map<U>(callbackfn: (value: UnboxNodeUnion<TTypes>, index: number, array: this) => U): U[];
+	map<U>(callbackfn: (value: UnboxNodeUnion<TTypes>, index: number) => U): U[];
 
 	/**
 	 * Calls the provided callback function on each child of this sequence, and returns an array that contains the results.
-	 * @param callbackfn - A function that accepts the child, its index, and this field.
+	 * @param callbackfn - A function that accepts the child and its index.
 	 */
-	mapBoxed<U>(callbackfn: (value: TypedNodeUnion<TTypes>, index: number, array: this) => U): U[];
+	mapBoxed<U>(callbackfn: (value: TypedNodeUnion<TTypes>, index: number) => U): U[];
 
 	readonly length: number;
 
@@ -524,12 +525,6 @@ export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
 		content: Iterable<FlexibleNodeContent<TTypes>>,
 	): void;
 
-	/**
-	 * Iterate through all nodes in the sequence.
-	 *
-	 * @remarks
-	 * This sequence may not be mutated during iteration.
-	 */
 	boxedIterator(): IterableIterator<TypedNodeUnion<TTypes>>;
 
 	[Symbol.iterator](): IterableIterator<UnboxNodeUnion<TTypes>>;
