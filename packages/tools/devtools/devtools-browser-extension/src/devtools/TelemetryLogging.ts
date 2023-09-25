@@ -87,8 +87,6 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 
 		// Configure App insights core to send to collector
 		const coreConfig: IExtendedConfiguration = {
-			// A non-empty instrumentation key needs to provided for the logger to do anything.
-			// AB#5167 tracks how to inject one at build time to keep it out of source control.
 			instrumentationKey,
 			loggingLevelConsole: 0, // Do not log to console
 			disableDbgExt: true, // Small perf optimization
