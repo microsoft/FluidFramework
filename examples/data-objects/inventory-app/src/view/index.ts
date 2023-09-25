@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { HookView } from "./hookView";
+export { MainView } from "./mainView";

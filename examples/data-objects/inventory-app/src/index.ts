@@ -9,9 +9,14 @@ import React from "react";
 import { InventoryList, InventoryListFactory } from "./inventoryList";
 export { InventoryList, InventoryListFactory } from "./inventoryList";
 
-import { HookView } from "./view";
+import { MainView } from "./view";
 
 export const fluidExport = new ContainerViewRuntimeFactory(
 	InventoryListFactory,
-	(model: InventoryList) => React.createElement(HookView, { tree: model.sharedTreeForHook }),
+	(model: InventoryList) =>
+		React.createElement(MainView, {
+			legacySharedTree: model.legacySharedTree,
+			sharedTree: model.sharedTree,
+			sharedTreeForHook: model.sharedTreeForHook,
+		}),
 );
