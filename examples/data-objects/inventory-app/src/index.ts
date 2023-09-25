@@ -13,5 +13,5 @@ import { HookView } from "./view";
 
 export const fluidExport = new ContainerViewRuntimeFactory(
 	InventoryListFactory,
-	(model: InventoryList) => React.createElement(HookView, { tree: model.tree }),
+	(model: InventoryList) => React.createElement(HookView, { tree: model.sharedTreeForHook }),
 );

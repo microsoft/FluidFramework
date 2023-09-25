@@ -7,28 +7,62 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { ISharedTree, SharedTreeFactory } from "@fluid-experimental/tree2";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 
-const treeKey = "tree";
+const legacySharedTreeKey = "legacySharedTree";
+const sharedTreeKey = "sharedTree";
+const sharedTreeForHookKey = "sharedTreeForHook";
 
 export class InventoryList extends DataObject {
-	private _tree: ISharedTree | undefined;
+	private _legacySharedTree: ISharedTree | undefined;
+	private _sharedTree: ISharedTree | undefined;
+	private _sharedTreeForHook: ISharedTree | undefined;
 
-	public get tree(): ISharedTree {
+	public get legacySharedTree(): ISharedTree {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return this._tree!;
+		return this._legacySharedTree!;
+	}
+
+	public get sharedTree(): ISharedTree {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		return this._sharedTree!;
+	}
+
+	public get sharedTreeForHook(): ISharedTree {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		return this._sharedTreeForHook!;
 	}
 
 	protected async initializingFirstTime() {
-		this._tree = this.runtime.createChannel(
+		this._legacySharedTree = this.runtime.createChannel(
 			undefined,
 			new SharedTreeFactory().type,
 		) as ISharedTree;
 
-		this.root.set(treeKey, this.tree.handle);
+		this._sharedTree = this.runtime.createChannel(
+			undefined,
+			new SharedTreeFactory().type,
+		) as ISharedTree;
+
+		this._sharedTreeForHook = this.runtime.createChannel(
+			undefined,
+			new SharedTreeFactory().type,
+		) as ISharedTree;
+
+		this.root.set(legacySharedTreeKey, this.legacySharedTree.handle);
+		this.root.set(sharedTreeKey, this.sharedTree.handle);
+		this.root.set(sharedTreeForHookKey, this.sharedTreeForHook.handle);
 	}
 
 	protected async initializingFromExisting() {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		this._tree = await this.root.get<IFluidHandle<ISharedTree>>(treeKey)!.get();
+		this._legacySharedTree = await this.root
+			.get<IFluidHandle<ISharedTree>>(legacySharedTreeKey)!
+			.get();
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		this._sharedTree = await this.root.get<IFluidHandle<ISharedTree>>(sharedTreeKey)!.get();
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		this._sharedTreeForHook = await this.root
+			.get<IFluidHandle<ISharedTree>>(sharedTreeForHookKey)!
+			.get();
 	}
 
 	protected async hasInitialized() {}
