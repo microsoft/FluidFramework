@@ -177,7 +177,6 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 			new NewSharedTreeFactory(),
 		) as ISharedTree2;
 
-		// instead of storing the handle, we just call handle.attachGraph() which is equivalent.
 		await provider.ensureSynchronized();
 		const preAttachSequenceNumber = dataObject.containerRuntime.deltaManager.lastSequenceNumber;
 		dataObject.reAttachChannel(newChannel);
