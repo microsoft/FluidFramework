@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import {
 	makeUncompressedCodec,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/uncompressedEncode";
+} from "../../../../feature-libraries/chunked-forest/codec/uncompressedCodecs";
 import { testTrees } from "../../../cursorTestSuite";
 import {
 	fieldCursorFromJsonableTrees,

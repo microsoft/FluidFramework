@@ -12,6 +12,7 @@ import {
 	Count,
 } from "./formatGeneric";
 
+// TODO: Versions from here and schemaIndexFormat.ts should eventually be deduplicated into one version.
 export const version = 1.0;
 
 // Compatible versions used for format/version validation.

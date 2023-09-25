@@ -27,7 +27,6 @@ import {
 	anyNodeEncoder,
 	asNodesEncoder,
 	encodeValue,
-	makeCompressedCodec,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode";
 import { testTrees } from "../../../cursorTestSuite";
@@ -43,6 +42,10 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/format";
 import {
+	makeCompressedCodec,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../../feature-libraries/chunked-forest/codec/compressedCodecs";
+import {
 	BufferFormat,
 	IdentifierToken,
 	handleShapesAndIdentifiers,
@@ -57,7 +60,7 @@ const onlyTypeShape = new NodeShape(undefined, false, [], undefined);
 
 const constantFooShape = new NodeShape(brand("foo"), false, [], undefined);
 
-describe("compressedEncode", () => {
+describe.only("compressedEncode", () => {
 	// This is a good smoke test for compressedEncode,
 	// but also provides good coverage of anyNodeEncoder, anyFieldEncoder as well as AnyShape which they are built on.
 	describe("test trees", () => {

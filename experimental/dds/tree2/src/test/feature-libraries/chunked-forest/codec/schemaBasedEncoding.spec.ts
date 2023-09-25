@@ -10,12 +10,14 @@ import { SchemaBuilder, defaultSchemaPolicy } from "../../../../feature-librarie
 import {
 	buildCache,
 	fieldShaper,
-	makeSchemaCompressedCodec,
 	oneFromSet,
 	treeShaper,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/schemaBasedEncoding";
-
+import {
+	makeSchemaCompressedCodec,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../../feature-libraries/chunked-forest/codec/compressedCodecs";
 import {
 	AnyShape,
 	EncoderCache,

@@ -14,7 +14,6 @@ import {
 	forEachNode,
 } from "../../../core";
 import { fail, getOrCreate } from "../../../util";
-import { ICodecOptions, IJsonCodec } from "../../../codec";
 import {
 	BufferFormat as BufferFormatGeneric,
 	Shape as ShapeGeneric,
@@ -28,10 +27,7 @@ import {
 	EncodedValueShape,
 	EncodedAnyShape,
 	EncodedNestedArray,
-	Versioned,
-	validVersions,
 } from "./format";
-import { decode } from "./chunkDecoding";
 
 /**
  * Encode data from `cursor` in into an `EncodedChunk`.
@@ -476,33 +472,4 @@ class LazyFieldEncoder implements FieldEncoder {
 	public get shape(): Shape {
 		return this.encoder.shape;
 	}
-}
-
-export function makeCompressedCodec(
-	{ jsonValidator: validator }: ICodecOptions,
-	cache: EncoderCache,
-): IJsonCodec<ITreeCursorSynchronous, string> {
-	const versionedValidator = validator.compile(Versioned);
-	const formatValidator = validator.compile(EncodedChunk);
-	return {
-		encode: (data: ITreeCursorSynchronous) => {
-			const encoded = compressedEncode(data, cache);
-			assert(versionedValidator.check(encoded), "Encoded schema should be versioned");
-			assert(formatValidator.check(encoded), "Encoded schema should validate");
-			return JSON.stringify(encoded);
-		},
-		decode: (data: string): ITreeCursorSynchronous => {
-			const parsed = JSON.parse(data);
-			if (!versionedValidator.check(parsed)) {
-				fail("invalid serialized schema: did not have a version");
-			}
-			if (!formatValidator.check(parsed)) {
-				if (validVersions.has(parsed.version)) {
-					fail("Unexpected version for schema");
-				}
-				fail("Serialized schema failed validation");
-			}
-			return decode(parsed).cursor();
-		},
-	};
 }
