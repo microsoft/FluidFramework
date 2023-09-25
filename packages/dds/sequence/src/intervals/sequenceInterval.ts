@@ -364,6 +364,7 @@ export class SequenceInterval implements ISerializableInterval {
 		end: SequencePlace | undefined,
 		op?: ISequencedDocumentMessage,
 		localSeq?: number,
+		useNewSlidingBehavior: boolean = false,
 	) {
 		const { startSide, endSide, startPos, endPos } = endpointPosAndSide(start, end);
 		const stickiness = computeStickinessFromSide(
@@ -392,6 +393,7 @@ export class SequenceInterval implements ISerializableInterval {
 				localSeq,
 				startReferenceSlidingPreference(stickiness),
 				startReferenceSlidingPreference(stickiness) === SlidingPreference.BACKWARD,
+				useNewSlidingBehavior,
 			);
 			if (this.start.properties) {
 				startRef.addProperties(this.start.properties);
@@ -409,6 +411,7 @@ export class SequenceInterval implements ISerializableInterval {
 				localSeq,
 				endReferenceSlidingPreference(stickiness),
 				endReferenceSlidingPreference(stickiness) === SlidingPreference.FORWARD,
+				useNewSlidingBehavior,
 			);
 			if (this.end.properties) {
 				endRef.addProperties(this.end.properties);
@@ -504,6 +507,7 @@ function createPositionReference(
 	localSeq?: number,
 	slidingPreference?: SlidingPreference,
 	exclusive: boolean = false,
+	useNewSlidingBehavior: boolean = false,
 ): LocalReferencePosition {
 	let segoff;
 
@@ -519,7 +523,7 @@ function createPositionReference(
 				referenceSequenceNumber: op.referenceSequenceNumber,
 				clientId: op.clientId,
 			});
-			segoff = getSlideToSegoff(segoff);
+			segoff = getSlideToSegoff(segoff, undefined, useNewSlidingBehavior);
 		}
 	} else {
 		assert(
@@ -552,6 +556,7 @@ export function createSequenceInterval(
 	intervalType: IntervalType,
 	op?: ISequencedDocumentMessage,
 	fromSnapshot?: boolean,
+	useNewSlidingBehavior: boolean = false,
 ): SequenceInterval {
 	const { startPos, startSide, endPos, endSide } = endpointPosAndSide(
 		start ?? "start",
@@ -596,6 +601,7 @@ export function createSequenceInterval(
 		undefined,
 		startReferenceSlidingPreference(stickiness),
 		startReferenceSlidingPreference(stickiness) === SlidingPreference.BACKWARD,
+		useNewSlidingBehavior,
 	);
 
 	const endLref = createPositionReference(
@@ -607,6 +613,7 @@ export function createSequenceInterval(
 		undefined,
 		endReferenceSlidingPreference(stickiness),
 		endReferenceSlidingPreference(stickiness) === SlidingPreference.FORWARD,
+		useNewSlidingBehavior,
 	);
 
 	const rangeProp = {

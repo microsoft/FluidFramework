@@ -224,7 +224,7 @@ export function createIntervalIndex() {
 	const helpers: IIntervalHelpers<Interval> = {
 		create: createInterval,
 	};
-	const lc = new LocalIntervalCollection<Interval>(undefined as any as Client, "", helpers);
+	const lc = new LocalIntervalCollection<Interval>(undefined as any as Client, "", helpers, {});
 	return lc;
 }
 
@@ -239,6 +239,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 		private readonly client: Client,
 		private readonly label: string,
 		private readonly helpers: IIntervalHelpers<TInterval>,
+		private readonly options: Partial<SequenceOptions>,
 		/** Callback invoked each time one of the endpoints of an interval slides. */
 		private readonly onPositionChange?: (
 			interval: TInterval,
@@ -315,7 +316,16 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 		intervalType: IntervalType,
 		op?: ISequencedDocumentMessage,
 	): TInterval {
-		return this.helpers.create(this.label, start, end, this.client, intervalType, op);
+		return this.helpers.create(
+			this.label,
+			start,
+			end,
+			this.client,
+			intervalType,
+			op,
+			undefined,
+			this.options.mergeTreeReferencesCanSlideToEndpoint,
+		);
 	}
 
 	public addInterval(
@@ -377,9 +387,14 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 		op?: ISequencedDocumentMessage,
 		localSeq?: number,
 	) {
-		const newInterval = interval.modify(this.label, start, end, op, localSeq) as
-			| TInterval
-			| undefined;
+		const newInterval = interval.modify(
+			this.label,
+			start,
+			end,
+			op,
+			localSeq,
+			this.options.mergeTreeReferencesCanSlideToEndpoint,
+		) as TInterval | undefined;
 		if (newInterval) {
 			this.removeExistingInterval(interval);
 			this.add(newInterval);
@@ -992,7 +1007,12 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		// if segment is undefined, it slid off the string
 		assert(segment !== undefined, 0x54e /* No segment found */);
 
-		const segoff = getSlideToSegoff({ segment, offset }) ?? segment;
+		const segoff =
+			getSlideToSegoff(
+				{ segment, offset },
+				undefined,
+				this.options.mergeTreeReferencesCanSlideToEndpoint,
+			) ?? segment;
 
 		// case happens when rebasing op, but concurrently entire string has been deleted
 		if (segoff.segment === undefined || segoff.offset === undefined) {
@@ -1056,6 +1076,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			client,
 			label,
 			this.helpers,
+			this.options,
 			(interval, previousInterval) => this.emitChange(interval, previousInterval, true, true),
 		);
 		if (this.savedSerializedIntervals) {
@@ -1085,6 +1106,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 					intervalType,
 					undefined,
 					true,
+					this.options.mergeTreeReferencesCanSlideToEndpoint,
 				);
 				if (properties) {
 					interval.addProperties(properties);
@@ -1603,7 +1625,11 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		if (segoff.segment?.localRefs?.has(lref) !== true) {
 			return undefined;
 		}
-		const newSegoff = getSlideToSegoff(segoff);
+		const newSegoff = getSlideToSegoff(
+			segoff,
+			undefined,
+			this.options.mergeTreeReferencesCanSlideToEndpoint,
+		);
 		const value: { segment: ISegment | undefined; offset: number | undefined } | undefined =
 			segoff.segment === newSegoff.segment && segoff.offset === newSegoff.offset
 				? undefined
