@@ -7,6 +7,9 @@
 
 import { strict as assert } from "assert";
 
+// import { IFluidHandle } from "@fluidframework/core-interfaces";
+// import { MockHandle } from "@fluidframework/test-runtime-utils";
+
 import {
 	type AllowedTypes,
 	Any,
@@ -40,6 +43,9 @@ import { getReadonlyContext } from "./utils";
 const detachedField: FieldKey = brand("detached");
 const detachedFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: detachedField };
 const rootFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: rootFieldKey };
+
+// Mocks the ID representing a Fluid handle for test-purposes.
+// const mockFluidHandle = new MockHandle(5) as IFluidHandle;
 
 describe("LazyField", () => {
 	it("LazyField implementations do not allow edits to detached trees", () => {
@@ -228,20 +234,47 @@ describe.only("LazyOptionalField", () => {
 		});
 	});
 
+	function createPrimitiveField(
+		kind: ValueSchema,
+		initialTree?:
+			| SchemaAware.TypedField<FieldSchema, SchemaAware.ApiMode.Flexible>
+			| readonly ITreeCursorSynchronous[],
+	): LazyOptionalField<
+		[
+			TreeSchema<
+				"leaf",
+				{
+					leafValue: ValueSchema;
+				}
+			>,
+		]
+	> {
+		const builder = new SchemaBuilder("test");
+		const leafSchema = builder.leaf("leaf", kind);
+		const rootSchema = SchemaBuilder.fieldOptional(leafSchema);
+
+		const { context, cursor } = createSingleValueTree(builder, rootSchema, initialTree);
+
+		return new LazyOptionalField(
+			context,
+			SchemaBuilder.fieldOptional(leafSchema),
+			cursor,
+			rootFieldAnchor,
+		);
+	}
+
 	describe("map", () => {
-		it("number", () => {
-			const builder = new SchemaBuilder("test");
-			const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
-			const rootSchema = SchemaBuilder.fieldOptional(numberLeafSchema);
+		it("boolean", () => {
+			const field = createPrimitiveField(ValueSchema.Boolean, false);
 
-			const { context, cursor } = createSingleValueTree(builder, rootSchema, 42);
-
-			const field = new LazyOptionalField(
-				context,
-				SchemaBuilder.fieldOptional(numberLeafSchema),
-				cursor,
-				rootFieldAnchor,
+			assert.deepEqual(
+				field.map((value) => value),
+				[false],
 			);
+		});
+
+		it("number", () => {
+			const field = createPrimitiveField(ValueSchema.Number, 42);
 
 			assert.deepEqual(
 				field.map((value) => value),
@@ -249,42 +282,30 @@ describe.only("LazyOptionalField", () => {
 			);
 		});
 
+		it("string", () => {
+			const field = createPrimitiveField(ValueSchema.String, "Hello world");
+
+			assert.deepEqual(
+				field.map((value) => value),
+				["Hello world"],
+			);
+		});
+
+		// TODO: current types don't allow fluid handle
+		// it("Fluid Handle", () => {
+		// 	const field = createPrimitiveField(ValueSchema.FluidHandle, mockFluidHandle);
+
+		// 	assert.deepEqual(
+		// 		field.map((value) => value),
+		// 		[mockFluidHandle],
+		// 	);
+		// });
+
 		// TODOs:
-		// * other primitives
 		// * Non-primitive
 	});
 
 	describe("mapBoxed", () => {
-		function createPrimitiveField(
-			kind: ValueSchema,
-			initialTree?:
-				| SchemaAware.TypedField<FieldSchema, SchemaAware.ApiMode.Flexible>
-				| readonly ITreeCursorSynchronous[]
-				| ITreeCursorSynchronous,
-		): LazyOptionalField<
-			[
-				TreeSchema<
-					"leaf",
-					{
-						leafValue: ValueSchema;
-					}
-				>,
-			]
-		> {
-			const builder = new SchemaBuilder("test");
-			const leafSchema = builder.leaf("leaf", kind);
-			const rootSchema = SchemaBuilder.fieldOptional(leafSchema);
-
-			const { context, cursor } = createSingleValueTree(builder, rootSchema, initialTree);
-
-			return new LazyOptionalField(
-				context,
-				SchemaBuilder.fieldOptional(leafSchema),
-				cursor,
-				rootFieldAnchor,
-			);
-		}
-
 		it("number", () => {
 			const field = createPrimitiveField(ValueSchema.Number, 42);
 
@@ -301,8 +322,24 @@ describe.only("LazyOptionalField", () => {
 			assert.equal(mapResult[0].value, true);
 		});
 
+		it("string", () => {
+			const field = createPrimitiveField(ValueSchema.String, "Hello world");
+
+			const mapResult = field.mapBoxed((value) => value);
+			assert.equal(mapResult.length, 1);
+			assert.equal(mapResult[0].value, "Hello world");
+		});
+
+		// TODO: current types don't allow fluid handle
+		// it("Fluid Handle", () => {
+		// 	const field = createPrimitiveField(ValueSchema.FluidHandle, mockFluidHandle);
+
+		// 	const mapResult = field.mapBoxed((value) => value);
+		// 	assert.equal(mapResult.length, 1);
+		// 	assert.equal(mapResult[0].value, mockFluidHandle);
+		// });
+
 		// TODOs:
-		// * other primitives
 		// * Non-primitive
 	});
 });
