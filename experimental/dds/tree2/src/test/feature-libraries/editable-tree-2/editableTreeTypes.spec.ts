@@ -204,20 +204,21 @@ describe("editableTreeTypes", () => {
 		}
 	}
 
-	type Basic1 = TypedNode<typeof basicStruct>;
-	type Basic2 = TypedNode<typeof basicFieldNode>;
+	// Two different simple node types to compare and test with.
+	type BasicStruct = TypedNode<typeof basicStruct>;
+	type BasicFieldNode = TypedNode<typeof basicFieldNode>;
 	{
-		type _1 = requireFalse<isAssignableTo<Basic1, Basic2>>;
-		type _2 = requireFalse<isAssignableTo<Basic2, Basic1>>;
+		type _1 = requireFalse<isAssignableTo<BasicStruct, BasicFieldNode>>;
+		type _2 = requireFalse<isAssignableTo<BasicFieldNode, BasicStruct>>;
 	}
 
 	// Basic unit test for TreeNode.is type narrowing.
 	function nodeIs(node: TreeNode): void {
 		if (node.is(basicStruct)) {
-			type _1 = requireAssignableTo<typeof node, Basic1>;
+			type _1 = requireAssignableTo<typeof node, BasicStruct>;
 		}
 		if (node.is(basicFieldNode)) {
-			type _1 = requireAssignableTo<typeof node, Basic2>;
+			type _1 = requireAssignableTo<typeof node, BasicFieldNode>;
 		}
 	}
 
@@ -231,12 +232,12 @@ describe("editableTreeTypes", () => {
 		// Direct
 		{
 			type UnionBasic1 = TypedNodeUnion<[typeof basicStruct]>;
-			type _1 = requireTrue<areSafelyAssignable<UnionBasic1, Basic1>>;
+			type _1 = requireTrue<areSafelyAssignable<UnionBasic1, BasicStruct>>;
 		}
 		// Lazy
 		{
 			type _1 = requireTrue<
-				areSafelyAssignable<TypedNodeUnion<[() => typeof basicStruct]>, Basic1>
+				areSafelyAssignable<TypedNodeUnion<[() => typeof basicStruct]>, BasicStruct>
 			>;
 		}
 		// Union
@@ -244,7 +245,7 @@ describe("editableTreeTypes", () => {
 			type _1 = requireTrue<
 				areSafelyAssignable<
 					TypedNodeUnion<[typeof basicStruct, typeof basicFieldNode]>,
-					Basic1 | Basic2
+					BasicStruct | BasicFieldNode
 				>
 			>;
 		}
@@ -272,12 +273,12 @@ describe("editableTreeTypes", () => {
 		// Direct
 		{
 			type UnionBasic1 = UnboxNodeUnion<[typeof basicStruct]>;
-			type _1 = requireTrue<areSafelyAssignable<UnionBasic1, Basic1>>;
+			type _1 = requireTrue<areSafelyAssignable<UnionBasic1, BasicStruct>>;
 		}
 		// Lazy
 		{
 			type _1 = requireTrue<
-				areSafelyAssignable<UnboxNodeUnion<[() => typeof basicStruct]>, Basic1>
+				areSafelyAssignable<UnboxNodeUnion<[() => typeof basicStruct]>, BasicStruct>
 			>;
 		}
 		// Union
@@ -285,7 +286,7 @@ describe("editableTreeTypes", () => {
 			type _1 = requireTrue<
 				areSafelyAssignable<
 					UnboxNodeUnion<[typeof basicStruct, typeof basicFieldNode]>,
-					Basic1 | Basic2
+					BasicStruct | BasicFieldNode
 				>
 			>;
 		}
