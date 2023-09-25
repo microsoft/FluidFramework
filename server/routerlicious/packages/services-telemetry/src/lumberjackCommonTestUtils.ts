@@ -9,6 +9,7 @@ import {
 	ILumberjackEngine,
 	ILumberjackSchemaValidator,
 	ILumberjackSchemaValidationResult,
+	ILumberFormatter,
 } from "./resources";
 
 // TestLumberjack allows us to run unit tests on Lumberjack by
@@ -35,4 +36,8 @@ export class TestEngine1 implements ILumberjackEngine {
 
 export class TestEngine2 implements ILumberjackEngine {
 	public emit(lumber: Lumber) {}
+}
+
+export class TestFormatter implements ILumberFormatter {
+	public transform(lumber: Lumber) {};
 }

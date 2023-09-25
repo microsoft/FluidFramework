@@ -13,6 +13,8 @@ import {
 	ILumberjackSchemaValidator,
 	Lumberjack,
 	ILumberjackOptions,
+	ILumberFormatter,
+	SanitizationLumberFormatter,
 } from "@fluidframework/server-services-telemetry";
 import { WinstonLumberjackEngine } from "./winstonLumberjackEngine";
 import { configureGlobalContext } from "./globalContext";

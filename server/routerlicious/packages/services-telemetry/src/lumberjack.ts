@@ -11,6 +11,7 @@ import {
 	ILumberjackEngine,
 	ILumberjackSchemaValidator,
 	handleError,
+	ILumberFormatter,
 } from "./resources";
 import { getGlobal, getGlobalTelemetryContext } from "./telemetryContext";
 
@@ -36,6 +37,7 @@ export class Lumberjack {
 	private readonly _engineList: ILumberjackEngine[] = [];
 	private _schemaValidators: ILumberjackSchemaValidator[] | undefined;
 	private _options: ILumberjackOptions = defaultLumberjackOptions;
+	private _formatters?: ILumberFormatter[];
 	private _isSetupCompleted: boolean = false;
 	protected static _staticOptions: ILumberjackOptions = defaultLumberjackOptions;
 	protected static _instance: Lumberjack | undefined;
@@ -67,9 +69,10 @@ export class Lumberjack {
 		engines: ILumberjackEngine[],
 		schemaValidators?: ILumberjackSchemaValidator[],
 		options?: Partial<ILumberjackOptions>,
+		formatters?: ILumberFormatter[],
 	) {
 		const newInstance = new Lumberjack();
-		newInstance.setup(engines, schemaValidators, options);
+		newInstance.setup(engines, schemaValidators, options, formatters);
 		return newInstance;
 	}
 
@@ -77,9 +80,10 @@ export class Lumberjack {
 		engines: ILumberjackEngine[],
 		schemaValidators?: ILumberjackSchemaValidator[],
 		options?: Partial<ILumberjackOptions>,
+		formatters?: ILumberFormatter[],
 	) {
 		this.options = options;
-		this.instance.setup(engines, schemaValidators, options);
+		this.instance.setup(engines, schemaValidators, options, formatters);
 	}
 
 	public static newLumberMetric<T extends string = LumberEventName>(
@@ -130,6 +134,7 @@ export class Lumberjack {
 		engines: ILumberjackEngine[],
 		schemaValidators?: ILumberjackSchemaValidator[],
 		options?: Partial<ILumberjackOptions>,
+		formatters?: ILumberFormatter[],
 	) {
 		if (this._isSetupCompleted) {
 			handleError(
@@ -155,6 +160,7 @@ export class Lumberjack {
 			...defaultLumberjackOptions,
 			...options,
 		};
+		this._formatters = formatters;
 		this._isSetupCompleted = true;
 	}
 
@@ -192,6 +198,7 @@ export class Lumberjack {
 			this._engineList,
 			this._schemaValidators,
 			lumberProperties,
+			this._formatters,
 		);
 
 		if (level === LogLevel.Warning || level === LogLevel.Error) {

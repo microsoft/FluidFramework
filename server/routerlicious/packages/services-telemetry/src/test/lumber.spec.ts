@@ -8,7 +8,7 @@ import Sinon from "sinon";
 import { Lumber } from "../lumber";
 import { LumberEventName } from "../lumberEventNames";
 import * as resources from "../resources";
-import { TestEngine1, TestSchemaValidator } from "../lumberjackCommonTestUtils";
+import { TestEngine1, TestFormatter, TestSchemaValidator } from "../lumberjackCommonTestUtils";
 
 describe("Lumber", () => {
 	beforeEach(() => {
@@ -119,6 +119,7 @@ describe("Lumber", () => {
 			resources.LumberType.Metric,
 			[],
 			undefined,
+			undefined,
 			originalMapProperties,
 		);
 
@@ -202,5 +203,25 @@ describe("Lumber", () => {
 		assert.strictEqual(lumber.successful, true);
 		assert.strictEqual(handleErrorStub.calledOnce, true);
 		assert.strictEqual(engineEmitStub.calledOnce, true);
+	});
+
+	it("Makes sure transform is called if formatters are provided.", () => {
+		const formatter = new TestFormatter();
+		const errorMessage = "Error Message";
+		const engine = new TestEngine1();
+		const error = new Error("SampleError");
+		const formaterTransformStub = Sinon.stub(formatter, "transform");
+		const lumber = new Lumber(
+			LumberEventName.UnitTestEvent,
+			resources.LumberType.Log,
+			[engine],
+			undefined,
+			[formatter],
+		);
+
+		lumber.error(errorMessage, error);
+
+		assert.strictEqual(lumber.successful, true);
+		assert.strictEqual(formaterTransformStub.calledOnce, true);
 	});
 });
