@@ -23,6 +23,8 @@ import { IFluidErrorBase } from "./fluidErrorBase";
 
 /**
  * Generic wrapper for an unrecognized/uncategorized error object
+ *
+ * @internal
  */
 export class GenericError extends LoggingError implements IGenericError, IFluidErrorBase {
 	readonly errorType = FluidErrorTypes.genericError;
@@ -43,6 +45,8 @@ export class GenericError extends LoggingError implements IGenericError, IFluidE
 
 /**
  * Error indicating an API is being used improperly resulting in an invalid operation.
+ *
+ * @internal
  */
 export class UsageError extends LoggingError implements IUsageError, IFluidErrorBase {
 	readonly errorType = FluidErrorTypes.usageError;
@@ -55,6 +59,8 @@ export class UsageError extends LoggingError implements IUsageError, IFluidError
 /**
  * DataCorruptionError indicates that we encountered definitive evidence that the data at rest
  * backing this container is corrupted, and this container would never be expected to load properly again
+ *
+ * @internal
  */
 export class DataCorruptionError extends LoggingError implements IErrorBase, IFluidErrorBase {
 	readonly errorType = FluidErrorTypes.dataCorruptionError;
@@ -73,6 +79,8 @@ export class DataCorruptionError extends LoggingError implements IErrorBase, IFl
  * The error will often originate in the dataStore or DDS implementation that is responding to incoming changes.
  * This differs from {@link DataCorruptionError} in that this may be a transient error that will not repro in another
  * client or session.
+ *
+ * @internal
  */
 export class DataProcessingError extends LoggingError implements IErrorBase, IFluidErrorBase {
 	/**

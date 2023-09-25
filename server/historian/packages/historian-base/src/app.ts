@@ -8,6 +8,7 @@ import {
 	IStorageNameRetriever,
 	IThrottler,
 	IRevokedTokenChecker,
+	IDocumentManager,
 } from "@fluidframework/server-services-core";
 import { json, urlencoded } from "body-parser";
 import compression from "compression";
@@ -32,6 +33,7 @@ export function create(
 	storageNameRetriever: IStorageNameRetriever,
 	restTenantThrottlers: Map<string, IThrottler>,
 	restClusterThrottlers: Map<string, IThrottler>,
+	documentManager: IDocumentManager,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
 	revokedTokenChecker?: IRevokedTokenChecker,
@@ -91,6 +93,7 @@ export function create(
 		storageNameRetriever,
 		restTenantThrottlers,
 		restClusterThrottlers,
+		documentManager,
 		cache,
 		asyncLocalStorage,
 		revokedTokenChecker,

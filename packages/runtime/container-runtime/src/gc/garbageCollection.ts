@@ -287,15 +287,13 @@ export class GarbageCollector implements IGarbageCollector {
 			return { gcData: { gcNodes }, usedRoutes };
 		});
 
-		// Log all the GC options and the state determined by the garbage collector. This is interesting only for the
-		// summarizer client since it is the only one that runs GC. It also helps keep the telemetry less noisy.
-		if (this.isSummarizerClient) {
-			this.mc.logger.sendTelemetryEvent({
-				eventName: "GarbageCollectorLoaded",
-				gcConfigs: JSON.stringify(this.configs),
-				gcOptions: JSON.stringify(createParams.gcOptions),
-			});
-		}
+		// Log all the GC options and the state determined by the garbage collector.
+		// This is useful even for interactive clients since they track unreferenced nodes and log errors.
+		this.mc.logger.sendTelemetryEvent({
+			eventName: "GarbageCollectorLoaded",
+			gcConfigs: JSON.stringify(this.configs),
+			gcOptions: JSON.stringify(createParams.gcOptions),
+		});
 	}
 
 	/**

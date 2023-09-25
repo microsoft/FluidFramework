@@ -118,7 +118,7 @@ export abstract class LazyField<TKind extends FieldKindTypes, TTypes extends All
 			"Narrowing must be done to a kind that exists in this context",
 		);
 
-		if (schema.kind !== schema.kind) {
+		if (schema.kind !== this.schema.kind) {
 			return false;
 		}
 		if (schema.types === undefined) {

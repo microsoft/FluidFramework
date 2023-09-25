@@ -3,10 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { AppInsightsCore, IExtendedConfiguration } from "@microsoft/1ds-core-js";
-import { PostChannel, IChannelConfiguration, IXHROverride } from "@microsoft/1ds-post-js";
-import { ITelemetryBaseLogger, ITelemetryBaseEvent } from "@fluid-experimental/devtools-view";
-import { ITaggedTelemetryPropertyType } from "@fluidframework/core-interfaces";
+import { AppInsightsCore, type IExtendedConfiguration } from "@microsoft/1ds-core-js";
+import { PostChannel, type IChannelConfiguration, type IXHROverride } from "@microsoft/1ds-post-js";
+import {
+	type ITelemetryBaseLogger,
+	type ITelemetryBaseEvent,
+} from "@fluid-experimental/devtools-view";
+import { type ITaggedTelemetryPropertyType } from "@fluidframework/core-interfaces";
 
 const extensionVersion = chrome.runtime.getManifest().version;
 
@@ -25,7 +28,7 @@ const fetchHttpXHROverride: IXHROverride = {
 		};
 		fetch(payload.urlString, requestInit)
 			.then((response) => {
-				const headerMap: { [key: string]: string } = {};
+				const headerMap: Record<string, string> = {};
 				// response.headers is not a run-of-the-mill array, it satisfies a particular interface that
 				// only has forEach, not a general iterator.
 				// eslint-disable-next-line unicorn/no-array-for-each

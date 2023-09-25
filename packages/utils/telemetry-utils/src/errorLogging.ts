@@ -27,6 +27,8 @@ const isRegularObject = (value: unknown): boolean => {
 
 /**
  * Inspect the given error for common "safe" props and return them.
+ *
+ * @internal
  */
 export function extractLogSafeErrorProperties(
 	error: unknown,
@@ -95,6 +97,8 @@ function copyProps(
 
 /**
  * Metadata to annotate an error object when annotating or normalizing it
+ *
+ * @internal
  */
 export interface IFluidErrorAnnotations {
 	/**
@@ -121,6 +125,8 @@ function patchLegacyError(
  * @returns A valid Fluid Error with any provided annotations applied
  * @param error - The error to normalize
  * @param annotations - Annotations to apply to the normalized error
+ *
+ * @internal
  */
 export function normalizeError(
 	error: unknown,
@@ -190,6 +196,8 @@ let stackPopulatedOnCreation: boolean | undefined;
  * For such cases it's better to not read stack property right away, but rather delay it until / if it's needed
  * Some browsers will populate stack right away, others require throwing Error, so we do auto-detection on the fly.
  * @returns Error object that has stack populated.
+ *
+ * @internal
  */
 export function generateErrorWithStack(): Error {
 	const err = new Error("<<generated stack>>");
@@ -209,6 +217,12 @@ export function generateErrorWithStack(): Error {
 	}
 }
 
+/**
+ * Generate a stack at this callsite as if an error were thrown from here.
+ * @returns the callstack (does not throw)
+ *
+ * @internal
+ */
 export function generateStack(): string | undefined {
 	return generateErrorWithStack().stack;
 }
@@ -219,6 +233,8 @@ export function generateStack(): string | undefined {
  * @param innerError - An error from untrusted/unknown origins
  * @param newErrorFn - callback that will create a new error given the original error's message
  * @returns A new error object "wrapping" the given error
+ *
+ * @internal
  */
 export function wrapError<T extends LoggingError>(
 	innerError: unknown,
@@ -258,6 +274,8 @@ export function wrapError<T extends LoggingError>(
  * The same as wrapError, but also logs the innerError, including the wrapping error's instance ID.
  *
  * @typeParam T - The kind of wrapper error to create.
+ *
+ * @internal
  */
 export function wrapErrorAndLog<T extends LoggingError>(
 	innerError: unknown,
@@ -304,6 +322,8 @@ export function overwriteStack(error: IFluidErrorBase | LoggingError, stack: str
  * True for any error object that is an (optionally normalized) external error
  * False for any error we created and raised within the FF codebase via LoggingError base class,
  * or wrapped in a well-known error type
+ *
+ * @internal
  */
 export function isExternalError(error: unknown): boolean {
 	// LoggingErrors are an internal FF error type. However, an external error can be converted
@@ -351,12 +371,15 @@ function isTelemetryEventPropertyValue(x: unknown): x is TelemetryBaseEventPrope
 		case "string":
 		case "number":
 		case "boolean":
-		case "undefined":
+		case "undefined": {
 			return true;
-		default:
+		}
+		default: {
 			return false;
+		}
 	}
 }
+
 /**
  * Walk an object's enumerable properties to find those fit for telemetry.
  */
@@ -371,14 +394,12 @@ function getValidTelemetryProps(obj: object, keysToOmit: Set<string>): ITelemetr
 			| Tagged<TelemetryEventPropertyTypeExt>;
 
 		// ensure only valid props get logged, since props of logging error could be in any shape
-		if (isTaggedTelemetryPropertyValue(val)) {
-			props[key] = {
-				value: filterValidTelemetryProps(val.value, key),
-				tag: val.tag,
-			};
-		} else {
-			props[key] = filterValidTelemetryProps(val, key);
-		}
+		props[key] = isTaggedTelemetryPropertyValue(val)
+			? {
+					value: filterValidTelemetryProps(val.value, key),
+					tag: val.tag,
+			  }
+			: filterValidTelemetryProps(val, key);
 	}
 	return props;
 }
@@ -389,6 +410,8 @@ function getValidTelemetryProps(obj: object, keysToOmit: Set<string>): ITelemetr
  * Avoids runtime errors with circular references.
  * Not ideal, as will cut values that are not necessarily circular references.
  * Could be improved by implementing Node's util.inspect() for browser (minus all the coloring code)
+ *
+ * @internal
  */
 // TODO: Use `unknown` instead (API breaking change)
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -412,6 +435,8 @@ export const getCircularReplacer = (): ((key: string, value: unknown) => any) =>
  * will be logged in accordance with their tag, if present.
  *
  * PLEASE take care to avoid setting sensitive data on this object without proper tagging!
+ *
+ * @internal
  */
 export class LoggingError
 	extends Error
@@ -494,8 +519,16 @@ export class LoggingError
 
 /**
  * The Error class used when normalizing an external error
+ *
+ * @internal
  */
 export const NORMALIZED_ERROR_TYPE = "genericError";
+
+/**
+ * Subclass of LoggingError returned by normalizeError
+ *
+ * @internal
+ */
 class NormalizedLoggingError extends LoggingError {
 	// errorType "genericError" is used as a default value throughout the code.
 	// Note that this matches ContainerErrorType/DriverErrorType's genericError

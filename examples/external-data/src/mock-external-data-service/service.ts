@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Server } from "http";
+import { Server } from "node:http";
 
 import cors from "cors";
 import express from "express";
@@ -290,6 +290,7 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 		}
 		externalDataSource.fetchData(externalTaskListId).then(
 			(response) => {
+				// eslint-disable-next-line @typescript-eslint/no-base-to-string
 				const responseBody = JSON.parse(response.body.toString()) as Record<
 					string | number | symbol,
 					unknown

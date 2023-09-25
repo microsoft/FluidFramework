@@ -4,6 +4,7 @@
  */
 
 /* eslint-disable no-bitwise */
+/* eslint-disable import/no-deprecated */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
@@ -22,6 +23,7 @@ import {
 	reservedRangeLabelsKey,
 	UnassignedSequenceNumber,
 	DetachedReferencePosition,
+	UniversalSequenceNumber,
 } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { LoggingError, UsageError } from "@fluidframework/telemetry-utils";
@@ -53,13 +55,13 @@ import {
 	createInterval,
 } from "./intervals";
 import {
+	EndpointIndex,
 	IEndpointIndex,
 	IIdIntervalIndex,
 	IOverlappingIntervalsIndex,
 	IntervalIndex,
-	createEndpointIndex,
+	OverlappingIntervalsIndex,
 	createIdIntervalIndex,
-	createOverlappingIntervalsIndex,
 } from "./intervalIndex";
 
 const reservedIntervalIdKey = "intervalId";
@@ -138,9 +140,9 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 			previousInterval: TInterval,
 		) => void,
 	) {
-		this.overlappingIntervalsIndex = createOverlappingIntervalsIndex(client, helpers);
+		this.overlappingIntervalsIndex = new OverlappingIntervalsIndex(client, helpers);
 		this.idIntervalIndex = createIdIntervalIndex<TInterval>();
-		this.endIntervalIndex = createEndpointIndex(client, helpers);
+		this.endIntervalIndex = new EndpointIndex(client, helpers);
 		this.indexes = new Set([
 			this.overlappingIntervalsIndex,
 			this.idIntervalIndex,
@@ -997,6 +999,10 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		);
 
 		if (interval) {
+			if (!this.isCollaborating && interval instanceof SequenceInterval) {
+				setSlideOnRemove(interval.start);
+				setSlideOnRemove(interval.end);
+			}
 			const serializedInterval = {
 				end,
 				intervalType,
@@ -1080,8 +1086,11 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 		const interval = this.getIntervalById(id);
 		if (interval) {
-			// Pass Unassigned as the sequence number to indicate that this is a local op that is waiting for an ack.
-			const deltaProps = interval.addProperties(props, true, UnassignedSequenceNumber);
+			const deltaProps = interval.addProperties(
+				props,
+				true,
+				this.isCollaborating ? UnassignedSequenceNumber : UniversalSequenceNumber,
+			);
 			const serializedInterval: ISerializedInterval = interval.serialize();
 
 			// Emit a change op that will only change properties. Add the ID to
@@ -1117,6 +1126,10 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			if (!newInterval) {
 				return undefined;
 			}
+			if (!this.isCollaborating && newInterval instanceof SequenceInterval) {
+				setSlideOnRemove(newInterval.start);
+				setSlideOnRemove(newInterval.end);
+			}
 			const serializedInterval: SerializedIntervalDelta = interval.serialize();
 			serializedInterval.start = start;
 			serializedInterval.end = end;
@@ -1135,7 +1148,14 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		return undefined;
 	}
 
+	private get isCollaborating(): boolean {
+		return this.client?.getCollabWindow().collaborating ?? false;
+	}
+
 	private addPendingChange(id: string, serializedInterval: SerializedIntervalDelta) {
+		if (!this.isCollaborating) {
+			return;
+		}
 		if (serializedInterval.start !== undefined) {
 			this.addPendingChangeHelper(id, this.pendingChangesStart, serializedInterval);
 		}
@@ -1385,13 +1405,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		return value;
 	}
 
-	private setSlideOnRemove(lref: LocalReferencePosition) {
-		let refType = lref.refType;
-		refType = refType & ~ReferenceType.StayOnRemove;
-		refType = refType | ReferenceType.SlideOnRemove;
-		lref.refType = refType;
-	}
-
 	private ackInterval(interval: TInterval, op: ISequencedDocumentMessage) {
 		// Only SequenceIntervals need potential sliding
 		if (!(interval instanceof SequenceInterval)) {
@@ -1413,11 +1426,11 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		const hasPendingEndChange = this.hasPendingChangeEnd(id);
 
 		if (!hasPendingStartChange) {
-			this.setSlideOnRemove(interval.start);
+			setSlideOnRemove(interval.start);
 		}
 
 		if (!hasPendingEndChange) {
-			this.setSlideOnRemove(interval.end);
+			setSlideOnRemove(interval.end);
 		}
 
 		const needsStartUpdate = newStart !== undefined && !hasPendingStartChange;
@@ -1689,6 +1702,13 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 		return this.localCollection.endIntervalIndex.nextInterval(pos);
 	}
+}
+
+function setSlideOnRemove(lref: LocalReferencePosition) {
+	let refType = lref.refType;
+	refType = refType & ~ReferenceType.StayOnRemove;
+	refType = refType | ReferenceType.SlideOnRemove;
+	lref.refType = refType;
 }
 
 /**

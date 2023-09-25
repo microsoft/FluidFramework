@@ -148,7 +148,7 @@ export function create(
 			try {
 				const signalRoom: IRoom = { tenantId, documentId };
 				const payload: IBroadcastSignalEventPayload = { signalRoom, signalContent };
-				collaborationSessionEventEmitter.emit("broadcast-signal", payload);
+				collaborationSessionEventEmitter.emit("broadcastSignal", payload);
 				response.status(200).send("OK");
 			} catch (error) {
 				response.status(500).send(error);
