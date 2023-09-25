@@ -20,6 +20,11 @@ steps:
       # Output installed node versions
       n ls
       # Use the specified node version
-      sudo n ${{ parameters.version }} || { echo "Failed to use the configured node version" ; exit 1; }
+      sudo n ${{ parameters.version }}
       # Output the node version
-      echo "Using node $(node --version)"
+      version = $(node --version)
+      echo "Using node ${version}"
+      if [ $version != v${{ parameters.version }} ]; then
+        echo "Could not configure the required node version ${configuredVersion}";
+        exit 1;
+      fi
