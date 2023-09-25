@@ -492,6 +492,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private async uploadBlob(
 		localId: string,
 		blob: ArrayBufferLike,
+		errorCount?: number,
 	): Promise<ICreateBlobResponse | void> {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
@@ -500,7 +501,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			{ end: true, cancel: this.runtime.connected ? "error" : "generic" },
 		).then(
 			(response) => this.onUploadResolve(localId, response),
-			async (err) => this.onUploadReject(localId, err),
+			async (err) => this.onUploadReject(localId, err, errorCount ?? 1),
 		);
 	}
 
@@ -568,23 +569,23 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		return response;
 	}
 
-	private async onUploadReject(localId: string, error: any) {
+	private async onUploadReject(localId: string, error: any, count: number) {
 		const entry = this.pendingBlobs.get(localId);
 		assert(!!entry, 0x387 /* Must have pending blob entry for blob which failed to upload */);
 		if (entry.abortSignal?.aborted === true && !entry.opsent) {
 			this.deletePendingBlob(localId);
 			return;
 		}
-		if (!this.runtime.connected) {
-			// we are probably not connected to storage but start another upload request in case we are
-			entry.uploadP = this.retryThrottler
-				.getDelay()
-				.then(async () => this.uploadBlob(localId, entry.blob));
-			return entry.uploadP;
-		} else {
-			entry.handleP.reject(error);
-			throw error;
-		}
+		this.mc.logger.sendTelemetryEvent({
+			eventName: "BlobUploadRejected",
+			localId,
+			error,
+			errorCount: count,
+		});
+		entry.uploadP = this.retryThrottler
+			.getDelay()
+			.then(async () => this.uploadBlob(localId, entry.blob, count + 1));
+		return entry.uploadP;
 	}
 
 	/**
