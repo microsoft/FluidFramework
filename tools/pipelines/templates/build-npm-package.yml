@@ -112,7 +112,6 @@ parameters:
   type: stepList
   default: []
 
-
 # The semver range constraint to use for interdependencies; that is, dependencies on other packages within the release
 # group
 - name: interdependencyRange
