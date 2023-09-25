@@ -9,9 +9,9 @@ import React from "react";
 import { InventoryList, InventoryListFactory } from "./inventoryList";
 export { InventoryList, InventoryListFactory } from "./inventoryList";
 
-import { MainView } from "./view/inventoryList";
+import { HookView } from "./view";
 
 export const fluidExport = new ContainerViewRuntimeFactory(
 	InventoryListFactory,
-	(model: InventoryList) => React.createElement(MainView, { tree: model.tree }),
+	(model: InventoryList) => React.createElement(HookView, { tree: model.tree }),
 );
