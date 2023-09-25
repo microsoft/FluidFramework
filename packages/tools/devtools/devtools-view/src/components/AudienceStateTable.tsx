@@ -23,7 +23,7 @@ import {
 	clientModeTooltipText,
 	clientScopesTooltipText,
 } from "./TooltipTexts";
-import { TransformedAudienceStateData } from "./AudienceView";
+import { type TransformedAudienceStateData } from "./AudienceView";
 import { LabelCellLayout } from "./utility-components";
 
 const audienceStateStyle = makeStyles({

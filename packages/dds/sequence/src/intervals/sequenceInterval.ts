@@ -583,7 +583,7 @@ export function createSequenceInterval(
 		// All non-transient interval references must eventually be SlideOnRemove
 		// To ensure eventual consistency, they must start as StayOnRemove when
 		// pending (created locally and creation op is not acked)
-		if (op || fromSnapshot) {
+		if (op ?? fromSnapshot) {
 			beginRefType |= ReferenceType.SlideOnRemove;
 			endRefType |= ReferenceType.SlideOnRemove;
 		} else {

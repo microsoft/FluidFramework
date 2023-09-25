@@ -195,7 +195,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 
 	private get(index: number): AttributionKey | undefined {
 		const key = this.keys[index];
-		return key !== null ? key : undefined;
+		return key ?? undefined;
 	}
 
 	public get length(): number {

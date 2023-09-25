@@ -371,10 +371,12 @@ function isTelemetryEventPropertyValue(x: unknown): x is TelemetryBaseEventPrope
 		case "string":
 		case "number":
 		case "boolean":
-		case "undefined":
+		case "undefined": {
 			return true;
-		default:
+		}
+		default: {
 			return false;
+		}
 	}
 }
 
@@ -392,14 +394,12 @@ function getValidTelemetryProps(obj: object, keysToOmit: Set<string>): ITelemetr
 			| Tagged<TelemetryEventPropertyTypeExt>;
 
 		// ensure only valid props get logged, since props of logging error could be in any shape
-		if (isTaggedTelemetryPropertyValue(val)) {
-			props[key] = {
-				value: filterValidTelemetryProps(val.value, key),
-				tag: val.tag,
-			};
-		} else {
-			props[key] = filterValidTelemetryProps(val, key);
-		}
+		props[key] = isTaggedTelemetryPropertyValue(val)
+			? {
+					value: filterValidTelemetryProps(val.value, key),
+					tag: val.tag,
+			  }
+			: filterValidTelemetryProps(val, key);
 	}
 	return props;
 }
