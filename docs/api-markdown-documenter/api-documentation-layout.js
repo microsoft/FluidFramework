@@ -9,18 +9,13 @@ const {
 	getDeprecatedBlock,
 	getHeadingForApiItem,
 	getReleaseTag,
+	transformTsdocNode,
 } = require("@fluid-tools/api-markdown-documenter");
 
 // TODO: import from root
 const {
 	doesItemRequireOwnDocument,
 } = require("@fluid-tools/api-markdown-documenter/dist/api-item-transforms");
-const {
-	getTsdocNodeTransformationOptions,
-} = require("@fluid-tools/api-markdown-documenter/dist/api-item-transforms/Utilities");
-const {
-	transformTsdocSection,
-} = require("@fluid-tools/api-markdown-documenter/dist/api-item-transforms/TsdocNodeTransforms");
 const {
 	createExamplesSection,
 	createRemarksSection,
@@ -147,11 +142,7 @@ function createDeprecationNoticeSection(apiItem, config) {
 		return undefined;
 	}
 
-	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
-	const transformedDeprecatedBlock = transformTsdocSection(
-		deprecatedBlock,
-		tsdocNodeTransformOptions,
-	);
+	const transformedDeprecatedBlock = transformTsdocNode(deprecatedBlock, apiItem, config);
 
 	return new AlertNode(
 		[transformedDeprecatedBlock],
