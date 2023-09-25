@@ -47,7 +47,10 @@ export class MigratorDataObject<I extends DataObjectTypes = DataObjectTypes> ext
 
 	public constructor(props: IDataObjectProps<I>) {
 		super(props);
-		assert((props.runtime as any).replaceChannel !== undefined, "expected migrator runtime");
+		assert(
+			(props.runtime as any)[".UNSAFE_replaceChannel"] !== undefined,
+			"expected migrator runtime",
+		);
 		this.hotSwapRuntime = props.runtime as UnsafeHotSwapFluidDataStoreRuntime;
 	}
 
@@ -68,7 +71,7 @@ export class MigratorDataObject<I extends DataObjectTypes = DataObjectTypes> ext
 	}
 }
 
-describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvider) => {
+describeNoCompat("Hot Swap Channels", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 
 	const runtimeOptions: IContainerRuntimeOptions = {
