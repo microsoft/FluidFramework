@@ -196,7 +196,7 @@ describe("editableTreeTypes", () => {
 
 		// Schema for TypedNode which only different in name are distinguished
 		{
-			// TODO: Fis this. Might be fixed when moving to class based schema builder. Otherwise add strongly typed named to nodes.
+			// TODO: Fix this. Might be fixed when moving to class based schema builder. Otherwise add strongly typed named to nodes.
 			// @ts-expect-error TODO: fix this and remove expected error.
 			type _1 = requireFalse<isAssignableTo<Empty1, Empty2>>;
 			// @ts-expect-error TODO: fix this and remove expected error.
