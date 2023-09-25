@@ -143,6 +143,7 @@ extends:
       - task: Bash@3
         displayName: Inject devtools telemetry logger token
         inputs:
+          targetType: 'inline'
           script: |
             echo Generating .env
             echo "DEVTOOLS_TELEMETRY_TOKEN=$(devtools-telemetry-key)" >> ./packages/tools/devtools/devtools-browser-extension/.env
