@@ -1725,6 +1725,7 @@ export class ContainerRuntime
 				return create404Response(request);
 			}
 			if (this.requestHandler !== undefined) {
+				// eslint-disable-next-line @typescript-eslint/return-await
 				return this.requestHandler(parser, this);
 			}
 
@@ -1744,6 +1745,7 @@ export class ContainerRuntime
 			const id = requestParser.pathParts[0];
 
 			if (id === "_channels") {
+				// eslint-disable-next-line @typescript-eslint/return-await
 				return this.resolveHandle(requestParser.createSubRequest(1));
 			}
 
@@ -1765,6 +1767,7 @@ export class ContainerRuntime
 					subRequest.url.startsWith("/"),
 					0x126 /* "Expected createSubRequest url to include a leading slash" */,
 				);
+				// eslint-disable-next-line @typescript-eslint/return-await
 				return dataStore.request(subRequest);
 			}
 

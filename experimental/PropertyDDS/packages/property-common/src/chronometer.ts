@@ -125,6 +125,7 @@ let impl:
 if (typeof process !== "undefined" && typeof process.hrtime !== "undefined") {
 	impl = implementations.node;
 } else if (
+	// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- optional chain is not logically equivalent in this case
 	typeof window !== "undefined" &&
 	typeof window.performance !== "undefined" &&
 	typeof window.performance.now !== "undefined"
