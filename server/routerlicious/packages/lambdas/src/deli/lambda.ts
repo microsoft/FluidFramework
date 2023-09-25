@@ -836,7 +836,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 				getLumberBaseProperties(this.documentId, this.tenantId),
 			);
 			const isEphemeralContainer: boolean =
-				this.sessionMetric?.properties.get("isEphemeralContainer") ?? false;
+				this.sessionMetric?.properties.get(CommonProperties.isEphemeralContainer) ?? false;
 			this.sessionMetric = createSessionMetric(
 				this.tenantId,
 				this.documentId,

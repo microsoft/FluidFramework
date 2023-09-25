@@ -502,7 +502,8 @@ export class ScribeLambda implements IPartitionLambda {
 				getLumberBaseProperties(this.documentId, this.tenantId),
 			);
 			const isEphemeralContainer: boolean =
-				this.scribeSessionMetric?.properties.get("isEphemeralContainer") ?? false;
+				this.scribeSessionMetric?.properties.get(CommonProperties.isEphemeralContainer) ??
+				false;
 			this.scribeSessionMetric = createSessionMetric(
 				this.tenantId,
 				this.documentId,
