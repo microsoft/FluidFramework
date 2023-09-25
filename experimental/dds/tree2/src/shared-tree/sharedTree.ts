@@ -13,7 +13,7 @@ import {
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { ICodecOptions, noopValidator } from "../codec";
-import { InMemoryStoredSchemaRepository, TreeIndexSummarizer, makeTreeIndex } from "../core";
+import { InMemoryStoredSchemaRepository, makeTreeIndex } from "../core";
 import { SharedTreeCore } from "../shared-tree-core";
 import {
 	defaultSchemaPolicy,
@@ -30,6 +30,7 @@ import {
 	FieldSchema,
 	buildChunkedForest,
 	makeTreeChunker,
+	TreeIndexSummarizer,
 } from "../feature-libraries";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import { JsonCompatibleReadOnly, brand } from "../util";
@@ -123,7 +124,7 @@ export class SharedTree
 		const removedTreesSummarizer = new TreeIndexSummarizer(removedTrees);
 		const changeFamily = new DefaultChangeFamily(options);
 		super(
-			[schemaSummarizer, forestSummarizer, removedTreesSummarizer],
+			[schemaSummarizer, removedTreesSummarizer, forestSummarizer],
 			changeFamily,
 			options,
 			id,
