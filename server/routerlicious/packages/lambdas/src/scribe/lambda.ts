@@ -95,6 +95,8 @@ export class ScribeLambda implements IPartitionLambda {
 	private noActiveClients: boolean = false;
 	private globalCheckpointOnly: boolean = false;
 
+	private databaseCheckpointFailed = false;
+
 	constructor(
 		protected readonly context: IContext,
 		protected tenantId: string,
@@ -611,45 +613,61 @@ export class ScribeLambda implements IPartitionLambda {
 			this.pendingCheckpointOffset = queuedMessage;
 			return;
 		}
-		let databaseCheckpointFailed = false;
+
+		const lumberjackProperties = getLumberBaseProperties(this.documentId, this.tenantId);
+
 		this.pendingP = clearCache
-			? this.checkpointManager.delete(this.protocolHead, true)
-			: this.writeCheckpoint(checkpoint).catch((error) => {
-					databaseCheckpointFailed = true;
-					Lumberjack.error(
-						`Error writing database checkpoint.`,
-						getLumberBaseProperties(this.documentId, this.tenantId),
-						error,
-					);
-			  });
-		this.pendingP
-			.then(() => {
-				this.pendingP = undefined;
-				if (!skipKafkaCheckpoint && !databaseCheckpointFailed) {
-					this.context.checkpoint(queuedMessage, this.restartOnCheckpointFailure);
-				} else if (databaseCheckpointFailed) {
-					Lumberjack.info(
-						`Skipping kafka checkpoint due to database checkpoint failure.`,
-						getLumberBaseProperties(this.documentId, this.tenantId),
-					);
-					databaseCheckpointFailed = false;
-				}
-				const pendingScribe = this.pendingCheckpointScribe;
-				const pendingOffset = this.pendingCheckpointOffset;
-				if (pendingScribe && pendingOffset) {
-					this.pendingCheckpointScribe = undefined;
-					this.pendingCheckpointOffset = undefined;
-					this.checkpointCore(pendingScribe, pendingOffset, clearCache);
-				}
-			})
-			.catch((error) => {
-				const message = "Checkpoint error";
-				Lumberjack.error(
-					message,
-					getLumberBaseProperties(this.documentId, this.tenantId),
-					error,
-				);
-			});
+			? this.checkpointManager
+					.delete(this.protocolHead, true)
+					.catch((error) => {
+						Lumberjack.error(
+							`Failed to delete checkpoint.`,
+							lumberjackProperties,
+							error,
+						);
+					})
+					.then(() => {
+						this.continueCheckpoint(queuedMessage, skipKafkaCheckpoint, clearCache);
+					})
+			: this.writeCheckpoint(checkpoint)
+					.catch((error) => {
+						this.databaseCheckpointFailed = true;
+						Lumberjack.error(
+							`Error writing database checkpoint.`,
+							getLumberBaseProperties(this.documentId, this.tenantId),
+							error,
+						);
+					})
+					.then(() => {
+						this.continueCheckpoint(queuedMessage, skipKafkaCheckpoint, clearCache);
+					});
+	}
+
+	/**
+	 * Submits context checkpoint if database checkpoint was successful
+	 */
+	private continueCheckpoint(
+		queuedMessage: IQueuedMessage,
+		skipKafkaCheckpoint: boolean,
+		clearCache: boolean,
+	) {
+		this.pendingP = undefined;
+		if (!skipKafkaCheckpoint && !this.databaseCheckpointFailed) {
+			this.context.checkpoint(queuedMessage, this.restartOnCheckpointFailure);
+		} else if (this.databaseCheckpointFailed) {
+			Lumberjack.info(
+				`Skipping kafka checkpoint due to database checkpoint failure.`,
+				getLumberBaseProperties(this.documentId, this.tenantId),
+			);
+			this.databaseCheckpointFailed = false;
+		}
+		const pendingScribe = this.pendingCheckpointScribe;
+		const pendingOffset = this.pendingCheckpointOffset;
+		if (pendingScribe && pendingOffset) {
+			this.pendingCheckpointScribe = undefined;
+			this.pendingCheckpointOffset = undefined;
+			this.checkpointCore(pendingScribe, pendingOffset, clearCache);
+		}
 	}
 
 	private async writeCheckpoint(checkpoint: IScribe) {
