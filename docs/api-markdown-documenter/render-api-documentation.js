@@ -16,7 +16,7 @@ const fs = require("fs-extra");
 const path = require("path");
 
 const { alertNodeType } = require("./alert-node");
-const { createDefaultLayout } = require("./create-default-layout");
+const { layoutContent } = require("./api-documentation-layout");
 const { renderAlertNode, renderBlockQuoteNode, renderTableNode } = require("./custom-renderers");
 const { createHugoFrontMatter } = require("./front-matter");
 
@@ -48,7 +48,7 @@ async function renderApiDocumentation() {
 		newlineKind: "lf",
 		uriRoot: "/docs/apis",
 		includeTopLevelDocumentHeading: false, // This will be added automatically by Hugo
-		createDefaultLayout,
+		createDefaultLayout: layoutContent,
 		packageFilterPolicy: (apiPackage) => {
 			// Skip `@fluid-internal` packages
 			const packageName = apiPackage.displayName;

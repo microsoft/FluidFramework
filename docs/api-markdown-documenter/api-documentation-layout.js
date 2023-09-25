@@ -64,7 +64,7 @@ const { AlertNode } = require("./alert-node");
  *
  * @returns An array of sections describing the layout. See {@link @fluid-tools/api-markdown-documenter#ApiItemTransformationConfiguration.createDefaultLayout}.
  */
-function createDefaultLayout(apiItem, itemSpecificContent, config) {
+function layoutContent(apiItem, itemSpecificContent, config) {
 	const sections = [];
 
 	// Render summary comment (if any)
@@ -161,5 +161,5 @@ function createDeprecationNoticeSection(apiItem, config) {
 }
 
 module.exports = {
-	createDefaultLayout,
+	layoutContent,
 };
