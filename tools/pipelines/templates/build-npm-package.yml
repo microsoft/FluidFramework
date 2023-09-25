@@ -181,6 +181,7 @@ stages:
               echo "
               Pipeline Variables:
                 releaseBuild=$(releaseBuildVar)
+                releaseAlphaBetaBuild=${{ variables.releaseAlphaBetaBuild }}
 
               Override Parameters:
                 publishOverride=${{ parameters.publishOverride }}
@@ -281,32 +282,22 @@ stages:
               tagName: ${{ parameters.tagName }}
               interdependencyRange: ${{ parameters.interdependencyRange }}
 
-        # Generate rollups
-        - ${{ if or(eq(parameters.releaseBuildOverride, 'prerelease - alpha'), eq(parameters.releaseBuildOverride, 'prerelease - beta')) }}:
+        # Generate rollups and update package.json types to alpha/beta
+        - ${{ if or(eq(variables.releaseAlphaBetaBuild, 'alpha'), eq(variables.releaseAlphaBetaBuild, 'beta')) }}:
           - task: Npm@1
             displayName: npm run ${{ parameters.taskGenerateRollups }}
             inputs: 
               command: 'custom'
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run ${{ parameters.taskGenerateRollups }}'
-        
-        # Update package.json types to alpha
-        - ${{ if (eq(parameters.releaseBuildOverride, 'prerelease - alpha') }}:
-          - task: Npm@1
-            displayName: Set package.json types to alpha
+
+          - task: Bash@3
+            displayName: Set package.json types to ${{ variables.releaseAlphaBetaBuild }}
             inputs:
-              command: 'custom'
+              targetType: 'inline'
               workingDir: ${{ parameters.buildDirectory }}
-              customCommand: 'pnpm exec flub release setDtsTypes -g ${{ parameters.tagName }} --types alpha --json | jq -c > alpha-types.json'
-        
-        # Update package.json types to beta
-        - ${{ if (eq(parameters.releaseBuildOverride, 'prerelease - beta') }}:
-          - task: Npm@1
-            displayName: Set package.json types to beta
-            inputs:
-              command: 'custom'
-              workingDir: ${{ parameters.buildDirectory }}
-              customCommand: 'pnpm exec flub release setDtsTypes -g ${{ parameters.tagName }} --types beta --json | jq -c > beta-types.json'
+              script: | 
+                flub release setDtsTypes -g ${{ parameters.tagName }} --types ${{ variables.releaseAlphaBetaBuild }} --json | jq -c > ${{ variables.releaseAlphaBetaBuild }}-types.json
 
         # Build
         - ${{ if ne(parameters.taskBuild, 'false') }}:
@@ -459,14 +450,15 @@ stages:
               artifactName: 'test-files'
               publishLocation: 'pipeline'
         
-        # Point types back to default
-        - ${{ if or(eq(parameters.releaseBuildOverride, 'prerelease - alpha'), eq(parameters.releaseBuildOverride, 'prerelease - beta')) }}:
-          - task: Npm@1
-            displayName: Revert types to default
-            inputs: 
-              command: 'custom'
-              workingDir: ${{ parameters.buildDirectory }}
-              customCommand: 'pnpm exec flub release setDtsTypes -g ${{ parameters.tagName }} --types public --json | jq -c > public-types.json'
+          # Point types back to default
+          - ${{ if or(eq(variables.releaseAlphaBetaBuild, 'alpha'), eq(variables.releaseAlphaBetaBuild, 'beta')) }}:
+            - task: Bash@3
+              displayName: Revert types to default
+              inputs: 
+                targetType: 'inline'
+                workingDir: ${{ parameters.buildDirectory }}
+                script: | 
+                  flub release setDtsTypes -g ${{ parameters.tagName }} --types public --json | jq -c > public-types.json
 
         # Collect/publish/run bundle analysis
         - ${{ if eq(parameters.taskBundleAnalysis, true) }}:

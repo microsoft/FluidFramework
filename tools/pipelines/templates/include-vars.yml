@@ -101,3 +101,6 @@ variables:
 - ${{ if ne(parameters.releaseBuildOverride, 'none') }}:
   - name: release
     value: ${{ parameters.releaseBuildOverride }}
+- ${{ if or(eq(parameters.releaseBuildOverride, 'alpha'), eq(parameters.releaseBuildOverride, 'beta')) }}:
+  - name: releaseAlphaBetaBuild
+    value: ${{ parameters.releaseBuildOverride }}
