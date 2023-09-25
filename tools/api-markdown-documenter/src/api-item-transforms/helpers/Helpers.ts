@@ -540,7 +540,7 @@ export function createDeprecationNoticeSection(
  *
  * @remarks
  *
- * Each example will be displayed under its own heading. See {@link createExampleSection} for more details.
+ * Each example will be displayed under its own heading.
  *
  * If there is only 1 example comment, all example headings will be parented under a top level "Examples" heading.
  *
@@ -582,10 +582,8 @@ export function createExamplesSection(
 
 /**
  * Represents a single {@link https://tsdoc.org/pages/tags/example/ | @example} comment block for a given API item.
- *
- * @public
  */
-export interface ExampleProperties {
+interface ExampleProperties {
 	/**
 	 * The API item the example doc content belongs to.
 	 */
@@ -657,10 +655,8 @@ export interface ExampleProperties {
  * @param config - See {@link ApiItemTransformationConfiguration}.
  *
  * @returns The rendered {@link SectionNode}.
- *
- * @public
  */
-export function createExampleSection(
+function createExampleSection(
 	example: ExampleProperties,
 	config: Required<ApiItemTransformationConfiguration>,
 ): SectionNode {

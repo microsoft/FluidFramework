@@ -24,23 +24,10 @@ export {
 	type ApiModifier,
 	type ApiModuleLike,
 	type ApiSignatureLike,
-	createBreadcrumbParagraph,
-	createDeprecationNoticeSection,
-	createExampleSection,
-	createExamplesSection,
-	createParametersSection,
-	createRemarksSection,
-	createReturnsSection,
-	createSeeAlsoSection,
-	createSignatureSection,
-	createSummaryParagraph,
-	createThrowsSection,
-	createTypeParametersSection,
 	type DefaultDocumentationSuiteOptions,
 	type DocumentationSuiteOptions,
 	type DocumentBoundaries,
 	doesItemRequireOwnDocument,
-	type ExampleProperties,
 	// TODO: remove this once utility APIs can be called with partial configs.
 	getApiItemTransformationConfigurationWithDefaults,
 	getDefaultValueBlock,
@@ -99,6 +86,32 @@ export {
 	type Logger,
 	verboseConsoleLogger,
 } from "./Logging";
+
+// #region Scoped exports
+
+// This pattern is required to scope the utilities in a way that API-Extractor supports.
+/* eslint-disable unicorn/prefer-export-from */
+
+// Export layout-related utilities (for use in writing custom transformations)
+import * as LayoutUtilities from "./LayoutUtilities";
+export {
+	/**
+	 * Utilities related to generating {@link DocumentationNode} content for {@link @microsoft/api-extractor-model#ApiItem}s.
+	 *
+	 * @remarks
+	 *
+	 * These are intended to be useful when injecting custom `ApiItem` transformation behaviors via {@link ApiItemTransformationConfiguration}.
+	 *
+	 * @public
+	 */
+	LayoutUtilities,
+};
+
+/* eslint-enable unicorn/prefer-export-from */
+
+// #endregion
+
+// #region Convenience re-exports
 
 // Convenience re-exports
 export type {

@@ -45,7 +45,6 @@ export {
 export {
 	createBreadcrumbParagraph,
 	createDeprecationNoticeSection,
-	createExampleSection,
 	createExamplesSection,
 	createParametersSection,
 	createRemarksSection,
@@ -55,7 +54,6 @@ export {
 	createSummaryParagraph,
 	createThrowsSection,
 	createTypeParametersSection,
-	type ExampleProperties,
 } from "./helpers";
 export { transformTsdocNode } from "./TsdocNodeTransforms";
 export { apiItemToDocument, apiItemToSections } from "./TransformApiItem";

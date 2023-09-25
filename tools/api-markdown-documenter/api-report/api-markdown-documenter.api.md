@@ -114,43 +114,40 @@ export interface ConfigurationBase {
 }
 
 // @public
-export function createBreadcrumbParagraph(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): ParagraphNode;
+function createBreadcrumbParagraph(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): ParagraphNode;
 
 // @public
-export function createDeprecationNoticeSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): ParagraphNode | undefined;
+function createDeprecationNoticeSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): ParagraphNode | undefined;
 
 // @public
 export function createDocumentWriter(): DocumentWriter;
 
 // @public
-export function createExampleSection(example: ExampleProperties, config: Required<ApiItemTransformationConfiguration>): SectionNode;
+function createExamplesSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
 
 // @public
-export function createExamplesSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
+function createParametersSection(apiFunctionLike: ApiFunctionLike, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
 
 // @public
-export function createParametersSection(apiFunctionLike: ApiFunctionLike, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
+function createRemarksSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
 
 // @public
-export function createRemarksSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
+function createReturnsSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
 
 // @public
-export function createReturnsSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
+function createSeeAlsoSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
 
 // @public
-export function createSeeAlsoSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
+function createSignatureSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
 
 // @public
-export function createSignatureSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
+function createSummaryParagraph(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): ParagraphNode | undefined;
 
 // @public
-export function createSummaryParagraph(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): ParagraphNode | undefined;
+function createThrowsSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
 
 // @public
-export function createThrowsSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
-
-// @public
-export function createTypeParametersSection(typeParameters: readonly TypeParameter[], contextApiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
+function createTypeParametersSection(typeParameters: readonly TypeParameter[], contextApiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
 
 // @public
 export const defaultConsoleLogger: Logger;
@@ -275,13 +272,6 @@ export { DocumentWriter }
 export function doesItemRequireOwnDocument(apiItem: ApiItem, documentBoundaries: DocumentBoundaries): boolean;
 
 // @public
-export interface ExampleProperties {
-    apiItem: ApiItem;
-    content: DocSection;
-    exampleNumber?: number;
-}
-
-// @public
 export class FencedCodeBlockNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {
     constructor(children: DocumentationNode[], language?: string);
     static createFromPlainText(text: string, language?: string): FencedCodeBlockNode;
@@ -395,6 +385,23 @@ export function isReadonly(apiItem: ApiItem): boolean;
 
 // @public
 export function isStatic(apiItem: ApiItem): boolean;
+
+declare namespace LayoutUtilities {
+    export {
+        createBreadcrumbParagraph,
+        createDeprecationNoticeSection,
+        createExamplesSection,
+        createParametersSection,
+        createRemarksSection,
+        createReturnsSection,
+        createSeeAlsoSection,
+        createSignatureSection,
+        createSummaryParagraph,
+        createThrowsSection,
+        createTypeParametersSection
+    }
+}
+export { LayoutUtilities }
 
 // @public
 export class LineBreakNode implements MultiLineDocumentationNode {
