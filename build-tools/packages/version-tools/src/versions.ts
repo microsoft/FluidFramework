@@ -20,6 +20,8 @@ export function getSimpleVersion(
 	argBuildNum: string,
 	argRelease: boolean,
 	patch: boolean,
+	isBeta?: boolean,
+	isAlpha?: boolean,
 ) {
 	// Azure DevOp passes in the build number as $(buildNum).$(buildAttempt).
 	// Get the Build number and ignore the attempt number.
@@ -32,7 +34,11 @@ export function getSimpleVersion(
 			);
 		}
 
-		if (!argRelease) {
+		if (isBeta) {
+			version = changePreReleaseIdentifier(version, "dev-beta");
+		} else if (isAlpha) {
+			version = changePreReleaseIdentifier(version, "dev-alpha");
+		} else if (!argRelease) {
 			version = changePreReleaseIdentifier(version, "dev");
 		}
 	}

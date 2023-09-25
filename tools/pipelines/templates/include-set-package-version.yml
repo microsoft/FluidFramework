@@ -101,6 +101,7 @@ steps:
       echo VERSION_RELEASE=$VERSION_RELEASE
       echo VERSION_PATCH=$VERSION_PATCH
       echo VERSION_INCLUDE_INTERNAL_VERSIONS=$VERSION_INCLUDE_INTERNAL_VERSIONS
+      echo VERSION_TAGNAME=$VERSION_TAGNAME
 
       # Generate the build version. Sets the environment variables version, codeVersion, and isLatest.
       # These are referenced in following steps prefixed by this task name. E.g. SetVersion.version

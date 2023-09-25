@@ -34,7 +34,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 		}),
 		release: Flags.string({
 			description: "Indicates the build is a release build.",
-			options: ["release", "prerelease", "none"],
+			options: ["release", "prerelease", "prerelease - alpha", "prerelease - beta", "none"],
 			env: "VERSION_RELEASE",
 		}),
 		patch: Flags.string({
@@ -71,6 +71,8 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 	public async run(): Promise<void> {
 		const flags = this.flags;
 		const isRelease = flags.release === "release";
+		const isBeta = flags.release === "prerelease - beta";
+		const isAlpha = flags.release === "prerelease - alpha";
 		const useSimplePatchVersion = flags.patch?.toLowerCase() === "true";
 		const useTestVersion = flags.testBuild?.toLowerCase() === "true";
 		const shouldIncludeInternalVersions =
@@ -107,6 +109,8 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 			flags.build,
 			isRelease,
 			useSimplePatchVersion,
+			isBeta,
+			isAlpha,
 		);
 		const version = useTestVersion ? `0.0.0-${flags.build}-test` : simpleVersion;
 		this.log(`version=${version}`);
