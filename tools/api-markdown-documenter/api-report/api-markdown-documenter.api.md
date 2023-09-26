@@ -329,6 +329,7 @@ export interface HtmlRenderConfiguration extends ConfigurationBase {
 export interface HtmlRenderContext extends TextFormatting {
     customRenderers?: HtmlRenderers;
     headingLevel: number;
+    prettyFormatting?: boolean;
 }
 
 // @alpha

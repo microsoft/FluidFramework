@@ -64,7 +64,7 @@ function renderHeadingWithMarkdownSyntax(
 		}
 	} else {
 		if (headingNode.id !== undefined) {
-			renderAnchor(headingNode.id, writer);
+			renderAnchor(headingNode.id, writer, context);
 		}
 		renderNodes(headingNode.children, writer, { ...context, bold: true });
 	}
