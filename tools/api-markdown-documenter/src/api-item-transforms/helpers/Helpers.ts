@@ -463,6 +463,7 @@ export function createRemarksSection(
 export function createThrowsSection(
 	apiItem: ApiItem,
 	config: Required<ApiItemTransformationConfiguration>,
+	title: string = "Throws",
 ): SectionNode | undefined {
 	const throwsBlocks = getThrowsBlocks(apiItem);
 	if (throwsBlocks === undefined || throwsBlocks.length === 0) {
@@ -476,7 +477,7 @@ export function createThrowsSection(
 	);
 
 	return wrapInSection(paragraphs, {
-		title: "Throws",
+		title,
 		id: `${getQualifiedApiItemName(apiItem)}-throws`,
 	});
 }
