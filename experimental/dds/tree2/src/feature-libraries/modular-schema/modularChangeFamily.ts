@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ICodecFamily, ICodecOptions } from "../../codec";
 import {
 	ChangeFamily,
 	EditBuilder,
 	ChangeRebaser,
 	FieldKindIdentifier,
-	AnchorSet,
 	Delta,
 	FieldKey,
 	UpPath,
@@ -21,24 +20,30 @@ import {
 	makeAnonChange,
 	ChangeFamilyEditor,
 	FieldUpPath,
+	ChangesetLocalId,
 } from "../../core";
-import { brand, getOrAddEmptyToMap, Mutable } from "../../util";
+import {
+	brand,
+	getOrAddEmptyToMap,
+	IdAllocationState,
+	IdAllocator,
+	idAllocatorFromMaxId,
+	idAllocatorFromState,
+	Mutable,
+} from "../../util";
 import { dummyRepairDataStore } from "../fakeRepairDataStore";
+import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
 import {
 	CrossFieldManager,
 	CrossFieldMap,
 	CrossFieldQuerySet,
 	CrossFieldTarget,
-	IdAllocationState,
 	addCrossFieldQuery,
 	getFirstFromCrossFieldMap,
-	idAllocatorFromMaxId,
-	idAllocatorFromState,
 	setInCrossFieldMap,
 } from "./crossFieldQueries";
 import {
 	FieldChangeHandler,
-	IdAllocator,
 	RevisionMetadataSource,
 	NodeExistenceState,
 } from "./fieldChangeHandler";
@@ -47,7 +52,6 @@ import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./g
 import { GenericChangeset } from "./genericFieldKindTypes";
 import { makeModularChangeCodecFamily } from "./modularChangeCodecs";
 import {
-	ChangesetLocalId,
 	FieldChange,
 	FieldChangeMap,
 	FieldChangeset,
@@ -293,7 +297,10 @@ export class ModularChangeFamily
 			return makeModularChangeset(new Map());
 		}
 
-		const idState: IdAllocationState = { maxId: brand(change.change.maxId ?? -1) };
+		const idState: IdAllocationState = { maxId: change.change.maxId ?? -1 };
+		// This idState is used for the whole of the IdAllocator's lifetime, which allows
+		// this function to read the updated idState.maxId after more IDs are allocated.
+		// TODO: add a getMax function to IdAllocator to make for a clearer contract.
 		const genId: IdAllocator = idAllocatorFromState(idState);
 		const crossFieldTable = newCrossFieldTable<InvertData>();
 		const resolvedRepairStore = repairStore ?? dummyRepairDataStore;
@@ -433,7 +440,7 @@ export class ModularChangeFamily
 		over: TaggedChange<ModularChangeset>,
 	): ModularChangeset {
 		const maxId = Math.max(change.maxId ?? -1, over.change.maxId ?? -1);
-		const idState: IdAllocationState = { maxId: brand(maxId) };
+		const idState: IdAllocationState = { maxId };
 		const genId: IdAllocator = idAllocatorFromState(idState);
 		const crossFieldTable: RebaseTable = {
 			...newCrossFieldTable<FieldChange>(),
@@ -711,17 +718,14 @@ export class ModularChangeFamily
 		return rebasedChange;
 	}
 
-	public rebaseAnchors(anchors: AnchorSet, over: ModularChangeset): void {
-		anchors.applyDelta(this.intoDelta(over));
-	}
-
 	public intoDelta(change: ModularChangeset): Delta.Root {
 		// Return an empty delta for changes with constraint violations
 		if ((change.constraintViolationCount ?? 0) > 0) {
 			return new Map();
 		}
 
-		return this.intoDeltaImpl(change.fieldChanges);
+		const idAllocator = MemoizedIdRangeAllocator.fromNextId();
+		return this.intoDeltaImpl(change.fieldChanges, undefined, idAllocator);
 	}
 
 	/**
@@ -730,35 +734,42 @@ export class ModularChangeFamily
 	 * @param path - The path of the node being altered by the change as defined by the input context.
 	 * Undefined for the root and for nodes that do not exist in the input context.
 	 */
-	private intoDeltaImpl(change: FieldChangeMap): Delta.Root {
+	private intoDeltaImpl(
+		change: FieldChangeMap,
+		revision: RevisionTag | undefined,
+		idAllocator: MemoizedIdRangeAllocator,
+	): Delta.Root {
 		const delta: Map<FieldKey, Delta.MarkList> = new Map();
 		for (const [field, fieldChange] of change) {
+			const fieldRevision = fieldChange.revision ?? revision;
 			const deltaField = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).intoDelta(
-				fieldChange.change,
-				(childChange): Delta.Modify => this.deltaFromNodeChange(childChange),
+				tagChange(fieldChange.change, fieldRevision),
+				(childChange): Delta.Modify =>
+					this.deltaFromNodeChange(tagChange(childChange, fieldRevision), idAllocator),
+				idAllocator,
 			);
 			delta.set(field, deltaField);
 		}
 		return delta;
 	}
 
-	private deltaFromNodeChange(change: NodeChangeset): Delta.Modify {
+	private deltaFromNodeChange(
+		{ change, revision }: TaggedChange<NodeChangeset>,
+		idAllocator: MemoizedIdRangeAllocator,
+	): Delta.Modify {
 		const modify: Mutable<Delta.Modify> = {
 			type: Delta.MarkType.Modify,
 		};
 
 		if (change.fieldChanges !== undefined) {
-			modify.fields = this.intoDeltaImpl(change.fieldChanges);
+			modify.fields = this.intoDeltaImpl(change.fieldChanges, revision, idAllocator);
 		}
 
 		return modify;
 	}
 
-	public buildEditor(
-		changeReceiver: (change: ModularChangeset) => void,
-		anchors: AnchorSet,
-	): ModularEditBuilder {
-		return new ModularEditBuilder(this, changeReceiver, anchors);
+	public buildEditor(changeReceiver: (change: ModularChangeset) => void): ModularEditBuilder {
+		return new ModularEditBuilder(this, changeReceiver);
 	}
 }
 
@@ -995,9 +1006,8 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	public constructor(
 		family: ChangeFamily<ChangeFamilyEditor, ModularChangeset>,
 		changeReceiver: (change: ModularChangeset) => void,
-		anchors: AnchorSet,
 	) {
-		super(family, changeReceiver, anchors);
+		super(family, changeReceiver);
 		this.idAllocator = idAllocatorFromMaxId();
 	}
 
@@ -1053,7 +1063,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	}
 
 	public generateId(count?: number): ChangesetLocalId {
-		return this.idAllocator(count);
+		return brand(this.idAllocator(count));
 	}
 
 	private buildChangeMap(

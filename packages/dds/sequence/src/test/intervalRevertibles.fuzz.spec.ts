@@ -17,7 +17,7 @@ import {
 	DDSFuzzHarnessEvents,
 	DDSFuzzSuiteOptions,
 } from "@fluid-internal/test-dds-utils";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	IFluidDataStoreRuntime,
 	IChannelServices,
@@ -155,17 +155,17 @@ function operationGenerator(
 	async function revertSharedStringRevertibles(
 		state: ClientOpState,
 	): Promise<RevertSharedStringRevertibles> {
-		assert(isRevertibleSharedString(state.channel));
+		assert(isRevertibleSharedString(state.client.channel));
 		return {
 			type: "revertSharedStringRevertibles",
 			// grab a random number of edits to revert
-			editsToRevert: state.random.integer(1, state.channel.revertibles.length),
+			editsToRevert: state.random.integer(1, state.client.channel.revertibles.length),
 		};
 	}
 
-	const hasRevertibles = ({ channel }: ClientOpState): boolean => {
-		assert(isRevertibleSharedString(channel));
-		return channel.revertibles.length > 0;
+	const hasRevertibles = ({ client }: ClientOpState): boolean => {
+		assert(isRevertibleSharedString(client.channel));
+		return client.channel.revertibles.length > 0;
 	};
 
 	assert(optionsParam.weights !== undefined);
@@ -242,6 +242,8 @@ describe("IntervalCollection fuzz testing with rebasing", () => {
 			flushMode: FlushMode.TurnBased,
 			enableGroupedBatching: true,
 		},
+		// Skipped due to 0x54e, see AB#5337 or comment on "default interval collection" fuzz suite.
+		skip: [1, 4, 17, 21, 23, 27, 29, 30, 31, 32, 37, 41, 49, 51, 55, 69, 70, 86, 91, 93, 95],
 	});
 });
 

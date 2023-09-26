@@ -55,6 +55,7 @@ export {
 	detachedFieldAsKey,
 	keyAsDetachedField,
 	visitDelta,
+	applyDelta,
 	setGenericTreeField,
 	DeltaVisitor,
 	PathVisitor,
@@ -65,6 +66,7 @@ export {
 	topDownPath,
 	compareFieldUpPaths,
 	forEachNode,
+	forEachNodeInSubtree,
 	forEachField,
 	PathRootPrefix,
 	isSkipMark,
@@ -80,6 +82,7 @@ export {
 	ProtoNodes,
 	CursorMarker,
 	isCursor,
+	getDetachedFieldContainingPath,
 } from "./tree";
 
 export {
@@ -102,8 +105,6 @@ export {
 	FieldKeySchema,
 	TreeSchemaIdentifier,
 	TreeSchemaIdentifierSchema,
-	NamedTreeSchema,
-	Named,
 	FieldStoredSchema,
 	ValueSchema,
 	PrimitiveValueSchema,
@@ -124,6 +125,7 @@ export {
 	SchemaEvents,
 	forbiddenFieldKindIdentifier,
 	storedEmptyFieldSchema,
+	cloneSchemaData,
 } from "./schema-stored";
 
 export { ChangeFamily, ChangeFamilyEditor, EditBuilder } from "./change-family";
@@ -137,6 +139,8 @@ export {
 	isRevisionTag,
 	RevisionTag,
 	RevisionTagSchema,
+	ChangesetLocalId,
+	ChangeAtomId,
 	TaggedChange,
 	makeAnonChange,
 	tagChange,

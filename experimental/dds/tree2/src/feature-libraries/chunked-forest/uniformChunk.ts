@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
-import { compareArrays } from "@fluidframework/core-utils";
+import { assert, compareArrays } from "@fluidframework/core-utils";
 import {
 	FieldKey,
 	TreeSchemaIdentifier,
@@ -448,9 +447,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		return this.nodeInfo(CursorLocationType.Nodes).parentIndex;
 	}
 
-	public get chunkStart(): number {
-		return 0;
-	}
+	public readonly chunkStart: number = 0;
 
 	public get chunkLength(): number {
 		return this.nodeInfo(CursorLocationType.Nodes).topLevelLength;

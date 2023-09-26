@@ -15,10 +15,10 @@ import { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "./telemetryTypes
  * @param condition - The condition to attest too
  * @param logger - The logger to log with
  * @param event - The string or event to log
- * @returns - The outcome of the condition
+ * @returns The outcome of the condition
  */
 export function logIfFalse(
-	condition: any,
+	condition: unknown,
 	logger: ITelemetryBaseLogger,
 	event: string | ITelemetryGenericEvent,
 ): condition is true {

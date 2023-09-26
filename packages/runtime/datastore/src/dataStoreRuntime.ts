@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
+	DataProcessingError,
 	ITelemetryLoggerExt,
 	generateStack,
 	LoggingError,
@@ -11,6 +13,7 @@ import {
 	raiseConnectedEvent,
 	createChildMonitoringContext,
 	tagCodeArtifacts,
+	UsageError,
 } from "@fluidframework/telemetry-utils";
 import {
 	FluidObject,
@@ -19,15 +22,13 @@ import {
 	IRequest,
 	IResponse,
 } from "@fluidframework/core-interfaces";
-import { LazyPromise } from "@fluidframework/core-utils";
+import { assert, Deferred, LazyPromise, unreachableCase } from "@fluidframework/core-utils";
 import {
 	IAudience,
 	IDeltaManager,
 	AttachState,
 	ILoaderOptions,
 } from "@fluidframework/container-definitions";
-import { DataProcessingError, UsageError } from "@fluidframework/container-utils";
-import { assert, Deferred, TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import {
 	IClientDetails,
@@ -383,16 +384,13 @@ export class FluidDataStoreRuntime
 		return this.request(request);
 	}
 
-	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		try {
 			const parser = RequestParser.create(request);
 			const id = parser.pathParts[0];
 
 			if (id === "_channels" || id === "_custom") {
-				return this.request(parser.createSubRequest(1));
+				return await this.request(parser.createSubRequest(1));
 			}
 
 			// Check for a data type reference first

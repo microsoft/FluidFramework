@@ -2,10 +2,23 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { JsonableTree, fieldSchema, SchemaData, rootFieldKey } from "../../../core";
+import { strict as assert } from "assert";
+import {
+	JsonableTree,
+	fieldSchema,
+	SchemaData,
+	rootFieldKey,
+	moveToDetachedField,
+	Anchor,
+	UpPath,
+	Value,
+	clonePath,
+	compareUpPaths,
+	forEachNodeInSubtree,
+} from "../../../core";
 import { FieldKinds, singleTextCursor } from "../../../feature-libraries";
 import { brand } from "../../../util";
-import { ISharedTree } from "../../../shared-tree";
+import { SharedTree, ISharedTreeView } from "../../../shared-tree";
 import { namedTreeSchema } from "../../utils";
 
 export const initialTreeState: JsonableTree = {
@@ -35,8 +48,39 @@ export const testSchema: SchemaData = {
 	rootFieldSchema,
 };
 
-export const onCreate = (tree: ISharedTree) => {
+export const onCreate = (tree: SharedTree) => {
 	tree.storedSchema.update(testSchema);
-	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
+	const field = tree.view.editor.sequenceField({ parent: undefined, field: rootFieldKey });
 	field.insert(0, singleTextCursor(initialTreeState));
 };
+
+export function validateAnchors(
+	tree: ISharedTreeView,
+	anchors: ReadonlyMap<Anchor, [UpPath, Value]>,
+	checkPaths: boolean,
+) {
+	for (const [anchor, [path, value]] of anchors) {
+		const cursor = tree.forest.allocateCursor();
+		tree.forest.tryMoveCursorToNode(anchor, cursor);
+		assert.equal(cursor.value, value);
+		if (checkPaths) {
+			const actualPath = tree.locate(anchor);
+			assert(compareUpPaths(actualPath, path));
+		}
+		cursor.free();
+	}
+}
+
+export function createAnchors(tree: ISharedTreeView): Map<Anchor, [UpPath, Value]> {
+	const anchors: Map<Anchor, [UpPath, Value]> = new Map();
+	const cursor = tree.forest.allocateCursor();
+	moveToDetachedField(tree.forest, cursor);
+	forEachNodeInSubtree(cursor, (c) => {
+		const anchor = c.buildAnchor();
+		const path = tree.locate(anchor);
+		assert(path !== undefined);
+		return anchors.set(anchor, [clonePath(path), c.value]);
+	});
+	cursor.free();
+	return anchors;
+}

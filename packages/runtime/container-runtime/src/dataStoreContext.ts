@@ -17,8 +17,8 @@ import {
 	AttachState,
 	ILoaderOptions,
 } from "@fluidframework/container-definitions";
-import { assert, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
-import { LazyPromise } from "@fluidframework/core-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { assert, Deferred, LazyPromise } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobTreeEntry, readAndParse } from "@fluidframework/driver-utils";
 import {
@@ -57,6 +57,9 @@ import {
 import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import {
 	createChildMonitoringContext,
+	DataCorruptionError,
+	DataProcessingError,
+	extractSafePropertiesFromMessage,
 	generateStack,
 	ITelemetryLoggerExt,
 	LoggingError,
@@ -64,12 +67,6 @@ import {
 	tagCodeArtifacts,
 	ThresholdCounter,
 } from "@fluidframework/telemetry-utils";
-import {
-	DataCorruptionError,
-	DataProcessingError,
-	extractSafePropertiesFromMessage,
-} from "@fluidframework/container-utils";
-
 import {
 	dataStoreAttributesBlobName,
 	hasIsolatedChannels,
@@ -317,7 +314,9 @@ export abstract class FluidDataStoreContext
 			properties: {
 				all: tagCodeArtifacts({
 					fluidDataStoreId: this.id,
-					fullPackageName: this.pkg?.join("/"),
+					// The package name is a getter because `this.pkg` may not be initialized during construction.
+					// For data stores loaded from summary, it is initialized during data store realization.
+					fullPackageName: () => this.pkg?.join("/"),
 				}),
 			},
 		});

@@ -29,7 +29,7 @@ import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions'
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
-import { TypedEventEmitter } from '@fluidframework/common-utils';
+import { TypedEventEmitter } from '@fluid-internal/client-utils';
 import { VisibilityState as VisibilityState_2 } from '@fluidframework/runtime-definitions';
 
 // @public (undocumented)
@@ -106,7 +106,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // (undocumented)
     processSignal(message: IInboundSignalMessage, local: boolean): void;
-    // @deprecated (undocumented)
+    // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
     resolveHandle(request: IRequest): Promise<IResponse>;

@@ -76,6 +76,8 @@ export interface IRuntime extends IDisposable {
 	/**
 	 * Processes the given signal
 	 */
+	// TODO: use `unknown` instead (API breaking)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	processSignal(message: any, local: boolean);
 
 	/**
@@ -147,14 +149,21 @@ export interface IContainerContext {
 	readonly storage: IDocumentStorageService;
 	readonly connected: boolean;
 	readonly baseSnapshot: ISnapshotTree | undefined;
-	/** @deprecated Please use submitBatchFn & submitSummaryFn */
+	/**
+	 * @deprecated Please use submitBatchFn & submitSummaryFn
+	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
-	/** @returns clientSequenceNumber of last message in a batch */
+	/**
+	 * @returns clientSequenceNumber of last message in a batch
+	 */
 	readonly submitBatchFn: (batch: IBatchMessage[], referenceSequenceNumber?: number) => number;
 	readonly submitSummaryFn: (
 		summaryOp: ISummaryContent,
 		referenceSequenceNumber?: number,
 	) => number;
+	// TODO: use `unknown` instead (API breaking)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	readonly submitSignalFn: (contents: any) => void;
 	readonly disposeFn?: (error?: ICriticalContainerError) => void;
 	readonly closeFn: (error?: ICriticalContainerError) => void;
@@ -197,6 +206,17 @@ export interface IContainerContext {
 	updateDirtyContainerState(dirty: boolean): void;
 
 	readonly supportedFeatures?: ReadonlyMap<string, unknown>;
+
+	/**
+	 * WARNING: this id is meant for telemetry usages ONLY, not recommended for other consumption
+	 * This id is not supposed to be exposed anywhere else. It is dependant on usage or drivers
+	 * and scenarios which can change in the future.
+	 * @deprecated 2.0.0-internal.5.2.0 - The docId is already logged by the {@link IContainerContext.taggedLogger} for
+	 * telemetry purposes, so this is generally unnecessary for telemetry.
+	 * If the id is needed for other purposes it should be passed to the consumer explicitly.
+	 * This member will be removed in the 2.0.0-internal.7.0.0 release.
+	 */
+	readonly id: string;
 }
 
 export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";

@@ -16,10 +16,11 @@ module.exports = {
 	env: {
 		browser: true,
 		es6: true,
+		es2024: false,
 		node: true,
 	},
 	extends: [
-		"./eslint7",
+		"./base",
 		"plugin:eslint-comments/recommended",
 		"plugin:import/errors",
 		"plugin:import/warnings",
@@ -102,7 +103,9 @@ module.exports = {
 		"@typescript-eslint/dot-notation": "error",
 		"@typescript-eslint/no-non-null-assertion": "error",
 		"@typescript-eslint/no-unnecessary-type-assertion": "error",
+
 		"eqeqeq": ["error", "smart"],
+		"import/no-deprecated": "error",
 		"max-len": [
 			"error",
 			{
@@ -146,7 +149,6 @@ module.exports = {
 			},
 		],
 		"unicorn/no-new-buffer": "error",
-		"unicorn/no-unsafe-regex": "error",
 		"unicorn/prefer-switch": "error",
 		"unicorn/prefer-ternary": "error",
 		"unicorn/prefer-type-error": "error",
@@ -166,7 +168,6 @@ module.exports = {
 		"@typescript-eslint/indent": "off",
 		"@typescript-eslint/member-ordering": "off",
 		"@typescript-eslint/no-explicit-any": "off",
-		"@typescript-eslint/no-parameter-properties": "off",
 		"@typescript-eslint/no-unused-vars": "off",
 		"@typescript-eslint/no-use-before-define": "off",
 		"@typescript-eslint/typedef": "off",
@@ -175,6 +176,28 @@ module.exports = {
 		 * Disabled because we want to encourage documenting different events separately.
 		 */
 		"@typescript-eslint/unified-signatures": "off",
+
+		// Requires a lot of changes
+		"@typescript-eslint/no-duplicate-type-constituents": "off",
+
+		// Lots of false positives
+		"@typescript-eslint/non-nullable-type-assertion-style": "off",
+
+		// Requires breaking changes; enabled in the strict config
+		"@typescript-eslint/consistent-indexed-object-style": "off",
+
+		// Requires a lot of changes; enabled in the strict config
+		"@typescript-eslint/no-unsafe-enum-comparison": "off",
+
+		// Requires a lot of changes; enabled in the strict config
+		"@typescript-eslint/no-redundant-type-constituents": "off",
+
+		// Requires a lot of changes; enabled in the strict config
+		"@typescript-eslint/consistent-generic-constructors": "off",
+
+		// Off for minimal and recommended; enabled in the strict config
+		"@typescript-eslint/consistent-type-exports": "off",
+		"@typescript-eslint/consistent-type-imports": "off",
 
 		"func-call-spacing": "off", // Off because it conflicts with typescript-formatter
 		"no-empty": "off",
@@ -260,8 +283,11 @@ module.exports = {
 		/**
 		 * Ensures consistent line formatting in JSDoc/TSDoc comments
 		 * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-check-alignment>
+		 *
+		 * TODO: This is temporarily set to "warn" because there are a lot of false positives with code blocks in
+		 * particular.
 		 */
-		"jsdoc/check-line-alignment": "error",
+		"jsdoc/check-line-alignment": "warn",
 
 		/**
 		 * The syntax this validates does not accommodate the syntax used by API-Extractor
@@ -369,20 +395,16 @@ module.exports = {
 		},
 		{
 			// Rules only for test files
-			files: ["*.spec.ts", "src/test/**"],
+			files: ["*.spec.ts", "*.test.ts", "**/test/**"],
 			rules: {
 				"@typescript-eslint/no-invalid-this": "off",
 				"@typescript-eslint/unbound-method": "off", // This rule has false positives in many of our test projects.
 				"import/no-nodejs-modules": "off", // Node libraries are OK for test files.
-			},
-		},
-		{
-			// Rules only for type validation files
-			files: ["**/types/*validate*Previous*.ts"],
-			rules: {
-				"@typescript-eslint/comma-spacing": "off",
+				"import/no-deprecated": "off", // Deprecated APIs are OK to use in test files.
+
+				// Disabled for test files
+				"@typescript-eslint/consistent-type-exports": "off",
 				"@typescript-eslint/consistent-type-imports": "off",
-				"max-lines": "off",
 			},
 		},
 	],

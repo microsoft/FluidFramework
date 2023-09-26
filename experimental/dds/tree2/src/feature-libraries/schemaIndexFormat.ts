@@ -4,20 +4,19 @@
  */
 
 import { ObjectOptions, Static, Type } from "@sinclair/typebox";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	FieldKindIdentifierSchema,
 	FieldStoredSchema,
 	FieldKey,
 	FieldKeySchema,
-	Named,
 	SchemaData,
 	TreeStoredSchema,
 	TreeSchemaIdentifier,
 	TreeSchemaIdentifierSchema,
 	ValueSchema,
 } from "../core";
-import { brand, fail } from "../util";
+import { brand, fail, Named } from "../util";
 import { ICodecOptions, IJsonCodec } from "../codec";
 
 const version = "1.0.0" as const;

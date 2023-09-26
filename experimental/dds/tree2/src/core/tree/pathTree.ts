@@ -4,6 +4,7 @@
  */
 
 import { FieldKey } from "../schema-stored";
+import { DetachedField, keyAsDetachedField } from "./types";
 
 /**
  * Identical to {@link UpPathDefault}, but a duplicate declaration is needed to make the default type parameter compile.
@@ -46,11 +47,12 @@ export interface UpPath<TParent = UpPathDefault> {
  * See {@link UpPath}.
  * @alpha
  */
-export interface FieldUpPath {
+export interface FieldUpPath<TUpPath extends UpPath = UpPath> {
 	/**
 	 * The parent, or undefined in the case where this path is to a detached sequence.
 	 */
-	readonly parent: UpPath | undefined;
+	readonly parent: TUpPath | undefined;
+
 	/**
 	 * The Field to which this path points.
 	 * Note that if `parent` returns `undefined`, this key  corresponds to a detached sequence.
@@ -140,4 +142,21 @@ export function compareFieldUpPaths(a: FieldUpPath, b: FieldUpPath): boolean {
 		return false;
 	}
 	return compareUpPaths(a.parent, b.parent);
+}
+
+/**
+ * Checks whether or not a given path is parented under the root field.
+ * @param path - the path you want to check.
+ * @returns the {@link DetachedField} which contains the path.
+ */
+export function getDetachedFieldContainingPath(path: UpPath): DetachedField {
+	let currentPath = path;
+	while (currentPath !== undefined) {
+		if (currentPath.parent === undefined) {
+			return keyAsDetachedField(currentPath.parentField);
+		} else {
+			currentPath = currentPath.parent;
+		}
+	}
+	return keyAsDetachedField(path.parentField);
 }

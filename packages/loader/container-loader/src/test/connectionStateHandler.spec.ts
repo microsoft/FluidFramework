@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	IClient,
 	IClientConfiguration,
@@ -138,6 +138,7 @@ describe("ConnectionStateHandler Tests", () => {
 			{ members: [], proposals: [], values: [] }, // quorumSnapshot
 			(key, value) => 0, // sendProposal
 			new Audience(),
+			(clientId: string) => false, // shouldClientHaveLeft
 		);
 		shouldClientJoinWrite = false;
 		handlerInputs = {

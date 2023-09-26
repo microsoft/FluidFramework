@@ -29,7 +29,7 @@ export interface OpAttributionKey {
 /**
  * AttributionKey associated with content that was inserted while the container was in a detached state.
  *
- * @remarks - Retrieving an {@link AttributionInfo} from content associated with detached attribution keys
+ * @remarks Retrieving an {@link AttributionInfo} from content associated with detached attribution keys
  * is currently unsupported, as applications can effectively modify content anonymously while detached.
  * The runtime has no mechanism for reliably obtaining the user. It would be reasonable to start supporting
  * this functionality if the host provided additional context to their attributor or attach calls.
@@ -42,7 +42,7 @@ export interface DetachedAttributionKey {
 	/**
 	 * Arbitrary discriminator associated with content inserted while detached.
 	 *
-	 * @remarks - For now, the runtime assumes all content created while detached is associated
+	 * @remarks For now, the runtime assumes all content created while detached is associated
 	 * with the same user/timestamp.
 	 * We could weaken this assumption in the future with further API support and
 	 * allow arbitrary strings or numbers as part of this key.

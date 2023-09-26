@@ -12,11 +12,11 @@ import {
 } from "@fluidframework/test-driver-definitions";
 import { Loader, ConnectionState, IContainerExperimental } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { IRequestHeader } from "@fluidframework/core-interfaces";
+import { IRequestHeader, LogLevel } from "@fluidframework/core-interfaces";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { getRetryDelayFromError } from "@fluidframework/driver-utils";
-import { assert, delay } from "@fluidframework/common-utils";
+import { assert, delay } from "@fluidframework/core-utils";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
@@ -92,12 +92,15 @@ async function main() {
 	// this makes runners repeatable, but ensures each runner
 	// will get its own set of randoms
 	const random = makeRandom(seed, runId);
-	const logger = await createLogger({
-		runId,
-		driverType: driver,
-		driverEndpointName: endpoint,
-		profile: profileName,
-	});
+	const logger = await createLogger(
+		{
+			runId,
+			driverType: driver,
+			driverEndpointName: endpoint,
+			profile: profileName,
+		},
+		random.pick([LogLevel.verbose, LogLevel.default]),
+	);
 
 	// this will enabling capturing the full stack for errors
 	// since this is test capturing the full stack is worth it
@@ -216,6 +219,15 @@ async function runnerProcess(
 
 			// Construct the loader
 			runConfig.loaderConfig = loaderOptions[runConfig.runId % loaderOptions.length];
+			runConfig.logger.sendTelemetryEvent({
+				eventName: "RunConfigOptions",
+				details: JSON.stringify({
+					loaderOptions: runConfig.loaderConfig,
+					containerOptions: containerOptions[runConfig.runId % containerOptions.length],
+					logLevel: runConfig.logger.minLogLevel,
+					configurations: configurations[runConfig.runId % configurations.length],
+				}),
+			});
 			const loader = new Loader({
 				urlResolver: testDriver.createUrlResolver(),
 				documentServiceFactory,
@@ -231,20 +243,8 @@ async function runnerProcess(
 				},
 			});
 
-			let stashedOps = stashedOpP ? await stashedOpP : undefined;
+			const stashedOps = stashedOpP ? await stashedOpP : undefined;
 			stashedOpP = undefined; // delete to avoid reuse
-
-			// temp fix for #15538: remove clientId from empty stash blobs
-			if (stashedOps !== undefined) {
-				const parsed = JSON.parse(stashedOps);
-				if (
-					parsed.pendingRuntimeState.pending === undefined &&
-					Object.keys(parsed.pendingRuntimeState.pendingAttachmentBlobs).length === 0
-				) {
-					parsed.clientId = undefined;
-					stashedOps = JSON.stringify(parsed);
-				}
-			}
 
 			container = await loader.resolve({ url, headers }, stashedOps);
 

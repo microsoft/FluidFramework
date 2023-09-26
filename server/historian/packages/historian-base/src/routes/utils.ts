@@ -9,8 +9,13 @@ import { decode } from "jsonwebtoken";
 import * as nconf from "nconf";
 import { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { NetworkError } from "@fluidframework/server-services-client";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { IStorageNameRetriever, IRevokedTokenChecker } from "@fluidframework/server-services-core";
+import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
+import {
+	IStorageNameRetriever,
+	IRevokedTokenChecker,
+	IDocumentManager,
+	IDocumentStaticProperties,
+} from "@fluidframework/server-services-core";
 import {
 	ICache,
 	ITenantService,
@@ -38,8 +43,8 @@ export function handleResponse<T>(
 	successStatus: number = 200,
 	onSuccess: (value: T) => void = () => {},
 ) {
-	resultP.then(
-		(result) => {
+	resultP
+		.then((result) => {
 			if (allowClientCache === true) {
 				response.setHeader("Cache-Control", "public, max-age=31536000");
 			} else if (allowClientCache === false) {
@@ -55,8 +60,8 @@ export function handleResponse<T>(
 			onSuccess(result);
 			// Express' json call below will set the content-length.
 			response.status(successStatus).json(result);
-		},
-		(error) => {
+		})
+		.catch((error) => {
 			// Only log unexpected errors on the assumption that explicitly thrown
 			// NetworkErrors have additional logging in place at the source.
 			if (error instanceof Error && error?.name === "NetworkError") {
@@ -69,8 +74,7 @@ export function handleResponse<T>(
 				Lumberjack.error("Unexpected error when processing HTTP Request", undefined, error);
 				response.status(errorStatus ?? 400).json("Internal Server Error");
 			}
-		},
-	);
+		});
 }
 
 export class createGitServiceArgs {
@@ -79,13 +83,13 @@ export class createGitServiceArgs {
 	authorization: string;
 	tenantService: ITenantService;
 	storageNameRetriever: IStorageNameRetriever;
+	documentManager: IDocumentManager;
 	cache?: ICache;
 	asyncLocalStorage?: AsyncLocalStorage<string>;
 	initialUpload?: boolean = false;
 	storageName?: string;
 	allowDisabledTenant?: boolean = false;
 	isEphemeralContainer?: boolean = false;
-	ignoreEphemeralFlag?: boolean = true;
 	denyList?: IDenyList;
 }
 
@@ -96,13 +100,13 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 		authorization,
 		tenantService,
 		storageNameRetriever,
+		documentManager,
 		cache,
 		asyncLocalStorage,
 		initialUpload,
 		storageName,
 		allowDisabledTenant,
 		isEphemeralContainer,
-		ignoreEphemeralFlag,
 		denyList,
 	} = createArgs;
 	const token = parseToken(tenantId, authorization);
@@ -119,18 +123,45 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 	const customData: ITenantCustomDataExternal = details.customData;
 	const writeToExternalStorage = !!customData?.externalStorageData;
 	const storageUrl = config.get("storageUrl") as string | undefined;
+	const ignoreEphemeralFlag: boolean = config.get("ignoreEphemeralFlag");
 	const maxCacheableSummarySize: number =
 		config.get("restGitService:maxCacheableSummarySize") ?? 1_000_000_000; // default: 1gb
 
-	let isEphemeral = isEphemeralContainer;
+	let isEphemeral: boolean = false;
 	if (!ignoreEphemeralFlag) {
-		if (isEphemeralContainer !== undefined) {
-			await cache.set(`isEphemeral:${documentId}`, isEphemeralContainer);
+		const isEphemeralKey: string = `isEphemeralContainer:${documentId}`;
+		if (typeof isEphemeralContainer === "boolean") {
+			// If an isEphemeral flag was passed in, cache it
+			Lumberjack.info(
+				`Setting cache for ${isEphemeralKey} to ${isEphemeralContainer}.`,
+				getLumberBaseProperties(documentId, tenantId),
+			);
+			isEphemeral = isEphemeralContainer;
+			await cache?.set(isEphemeralKey, isEphemeral);
 		} else {
-			isEphemeral = await cache.get(`isEphemeral:${documentId}`);
-			// Todo: If isEphemeral is still undefined fetch the value from database
+			isEphemeral = await cache?.get(isEphemeralKey);
+			if (typeof isEphemeral !== "boolean") {
+				// If isEphemeral was not in the cache, fetch the value from database
+				try {
+					const staticProps: IDocumentStaticProperties =
+						await documentManager.readStaticProperties(tenantId, documentId);
+					isEphemeral = staticProps?.isEphemeralContainer ?? false;
+					await cache?.set(isEphemeralKey, isEphemeral); // Cache the value from the static data
+				} catch (e) {
+					Lumberjack.error(
+						`Failed to retrieve static data from document when checking isEphemeral flag.`,
+						getLumberBaseProperties(documentId, tenantId),
+					);
+					isEphemeral = false;
+				}
+			}
 		}
 	}
+	Lumberjack.info(
+		`Document is ephemeral? ${isEphemeral}`,
+		getLumberBaseProperties(documentId, tenantId),
+	);
+
 	const calculatedStorageName =
 		initialUpload && storageName
 			? storageName

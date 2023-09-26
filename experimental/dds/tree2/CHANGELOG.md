@@ -1,5 +1,48 @@
 # @fluid-experimental/tree2
 
+## 2.0.0-internal.6.3.0
+
+### Minor Changes
+
+-   Decouple Forest and Schema. ([#17139](https://github.com/microsoft/FluidFramework/issues/17139)) [c6b69f5c19](https://github.com/microsoft/FluidFramework/commits/c6b69f5c1957ceda7bebe6a31a570b49505e298b)
+
+    Forest no longer exports the schema, nor invalidates when schema changes.
+
+## 2.0.0-internal.6.2.0
+
+### Minor Changes
+
+-   Remove use of @fluidframework/common-definitions ([#16638](https://github.com/microsoft/FluidFramework/issues/16638)) [a8c81509c9](https://github.com/microsoft/FluidFramework/commits/a8c81509c9bf09cfb2092ebcf7265205f9eb6dbf)
+
+    The **@fluidframework/common-definitions** package is being deprecated, so the following interfaces and types are now
+    imported from the **@fluidframework/core-interfaces** package:
+
+    -   interface IDisposable
+    -   interface IErrorEvent
+    -   interface IErrorEvent
+    -   interface IEvent
+    -   interface IEventProvider
+    -   interface ILoggingError
+    -   interface ITaggedTelemetryPropertyType
+    -   interface ITelemetryBaseEvent
+    -   interface ITelemetryBaseLogger
+    -   interface ITelemetryErrorEvent
+    -   interface ITelemetryGenericEvent
+    -   interface ITelemetryLogger
+    -   interface ITelemetryPerformanceEvent
+    -   interface ITelemetryProperties
+    -   type ExtendEventProvider
+    -   type IEventThisPlaceHolder
+    -   type IEventTransformer
+    -   type ReplaceIEventThisPlaceHolder
+    -   type ReplaceIEventThisPlaceHolder
+    -   type TelemetryEventCategory
+    -   type TelemetryEventPropertyType
+
+## 2.0.0-internal.6.1.0
+
+Dependency updates only.
+
 ## 2.0.0-internal.6.0.0
 
 ### Major Changes

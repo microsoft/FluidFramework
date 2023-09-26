@@ -34,17 +34,17 @@ import {
 	Delta,
 	IForestSubscription,
 	StoredSchemaRepository,
+	applyDelta,
 } from "../../../core";
-import { jsonSchema, jsonRoot, jsonObject } from "../../../domains";
+import { jsonObject } from "../../../domains";
 import {
 	ForestRepairDataStore,
-	SchemaBuilder,
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
 	singleTextCursor,
 } from "../../../feature-libraries";
 import { testForest } from "../../forestTestSuite";
-import { mockIntoDelta } from "../../utils";
+import { jsonSequenceRootSchema, mockIntoDelta } from "../../utils";
 
 const chunkers: [string, (schema: StoredSchemaRepository) => IChunker][] = [
 	[
@@ -103,10 +103,6 @@ const chunkers: [string, (schema: StoredSchemaRepository) => IChunker][] = [
 	],
 ];
 
-const jsonDocumentSchema = new SchemaBuilder("jsonDocumentSchema", jsonSchema).intoDocumentSchema(
-	SchemaBuilder.fieldSequence(...jsonRoot),
-);
-
 describe("ChunkedForest", () => {
 	for (const [name, chunker] of chunkers) {
 		describe(name, () => {
@@ -118,10 +114,7 @@ describe("ChunkedForest", () => {
 
 			it("doesn't copy data when capturing and restoring repair data", () => {
 				const initialState: JsonableTree = { type: jsonObject.name };
-				const schema = new InMemoryStoredSchemaRepository(
-					defaultSchemaPolicy,
-					jsonDocumentSchema,
-				);
+				const schema = new InMemoryStoredSchemaRepository(jsonSequenceRootSchema);
 				const forest = buildChunkedForest(chunker(schema));
 				const chunk = basicChunkTree(singleTextCursor(initialState), basicOnlyChunkPolicy);
 
@@ -148,7 +141,7 @@ describe("ChunkedForest", () => {
 				// Captured reference owns a ref count making it shared.
 				assert(chunk.isShared());
 				// Delete from forest, removing the forest's ref, making chunk not shared again.
-				forest.applyDelta(delta);
+				applyDelta(delta, forest);
 				assert(!chunk.isShared());
 				compareForest(forest, []);
 

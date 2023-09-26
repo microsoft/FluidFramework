@@ -37,6 +37,7 @@ import {
 	getLumberBaseProperties,
 	LumberEventName,
 	Lumberjack,
+	CommonProperties,
 } from "@fluidframework/server-services-telemetry";
 import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionValid } from "../utils";
 import { CheckpointManager } from "./checkpointManager";
@@ -157,6 +158,11 @@ export class ScribeLambdaFactory
 				}
 			}
 
+			scribeSessionMetric?.setProperty(
+				CommonProperties.isEphemeralContainer,
+				document?.isEphemeralContainer ?? false,
+			);
+
 			gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
 			summaryReader = new SummaryReader(
 				tenantId,
@@ -212,7 +218,16 @@ export class ScribeLambdaFactory
 				"scribe",
 				document,
 			)) as IScribe;
-			opMessages = await this.getOpMessages(documentId, tenantId, lastCheckpoint);
+
+			try {
+				opMessages = await this.getOpMessages(documentId, tenantId, lastCheckpoint);
+			} catch (error) {
+				Lumberjack.error(
+					`Error getting pending messages after last checkpoint.`,
+					lumberProperties,
+					error,
+				);
+			}
 		}
 
 		if (lastCheckpoint.isCorrupt) {
@@ -306,6 +321,7 @@ export class ScribeLambdaFactory
 			this.disableTransientTenantFiltering,
 			this.restartOnCheckpointFailure,
 			this.kafkaCheckpointOnReprocessingOp,
+			document.isEphemeralContainer ?? false,
 		);
 
 		await this.sendLambdaStartResult(tenantId, documentId, {

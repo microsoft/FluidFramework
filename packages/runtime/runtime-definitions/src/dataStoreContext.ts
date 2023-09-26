@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import {
+	IEvent,
+	IEventProvider,
 	ITelemetryBaseLogger,
 	IDisposable,
 	IFluidRouter,
@@ -363,9 +364,6 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 */
 	readonly entryPoint?: IFluidHandle<FluidObject>;
 
-	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
 	request(request: IRequest): Promise<IResponse>;
 
 	/**

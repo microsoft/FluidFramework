@@ -1,5 +1,61 @@
 # @fluidframework/sequence
 
+## 2.0.0-internal.6.3.0
+
+### Minor Changes
+
+-   deprecate compareStarts and compareEnds on IIntervalHelpers ([#17127](https://github.com/microsoft/FluidFramework/issues/17127)) [a830eca757](https://github.com/microsoft/FluidFramework/commits/a830eca7571cfb230abe5b9443ba5c5fc44671e0)
+
+    these functions will be removed in a future version. use the methods IInterval.compareStart and IInterval.compareEnd respectively instead
+
+## 2.0.0-internal.6.2.0
+
+### Minor Changes
+
+-   Deprecate getStackContext and associated NestBegin/End ([#16877](https://github.com/microsoft/FluidFramework/issues/16877)) [8e743fe1dd](https://github.com/microsoft/FluidFramework/commits/8e743fe1dde9adb3a1240971987d3abd51ab2fbe)
+
+    Deprecate SharedSegmentSequence.getStackContext and Client.getStackContext (and the enums ReferenceType.NestBegin and NestEnd they use).
+    This functionality is unused, poorly tested, and incurs performance overhead.
+
+-   Remove use of @fluidframework/common-definitions ([#16638](https://github.com/microsoft/FluidFramework/issues/16638)) [a8c81509c9](https://github.com/microsoft/FluidFramework/commits/a8c81509c9bf09cfb2092ebcf7265205f9eb6dbf)
+
+    The **@fluidframework/common-definitions** package is being deprecated, so the following interfaces and types are now
+    imported from the **@fluidframework/core-interfaces** package:
+
+    -   interface IDisposable
+    -   interface IErrorEvent
+    -   interface IErrorEvent
+    -   interface IEvent
+    -   interface IEventProvider
+    -   interface ILoggingError
+    -   interface ITaggedTelemetryPropertyType
+    -   interface ITelemetryBaseEvent
+    -   interface ITelemetryBaseLogger
+    -   interface ITelemetryErrorEvent
+    -   interface ITelemetryGenericEvent
+    -   interface ITelemetryLogger
+    -   interface ITelemetryPerformanceEvent
+    -   interface ITelemetryProperties
+    -   type ExtendEventProvider
+    -   type IEventThisPlaceHolder
+    -   type IEventTransformer
+    -   type ReplaceIEventThisPlaceHolder
+    -   type ReplaceIEventThisPlaceHolder
+    -   type TelemetryEventCategory
+    -   type TelemetryEventPropertyType
+
+-   Deprecate SharedSequence, SubSequence, and IJSONRunSegment ([#16829](https://github.com/microsoft/FluidFramework/issues/16829)) [0cf2b6d909](https://github.com/microsoft/FluidFramework/commits/0cf2b6d9098c7ef4234b66c5d7d169192db40d15)
+
+    The types SharedSequence, SubSequence, and IJSONRunSegment are being deprecated and moved.
+
+    They are now, and will continue to be exposed from the @fluid-experimental/sequence-deprecated package.
+
+    New usages of these types should not be added, but they may be necessary for migration.
+
+## 2.0.0-internal.6.1.0
+
+Dependency updates only.
+
 ## 2.0.0-internal.6.0.0
 
 ### Major Changes

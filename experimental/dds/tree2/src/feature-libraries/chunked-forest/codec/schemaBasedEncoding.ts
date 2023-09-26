@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/common-utils";
+import { unreachableCase } from "@fluidframework/core-utils";
 import {
 	FieldStoredSchema,
 	ITreeCursorSynchronous,
@@ -11,9 +11,9 @@ import {
 	TreeSchemaIdentifier,
 	ValueSchema,
 } from "../../../core";
-import { FullSchemaPolicy, Multiplicity } from "../../modular-schema";
+import { FieldKind, FullSchemaPolicy, Multiplicity } from "../../modular-schema";
 import { fail } from "../../../util";
-import { getFieldKind } from "../../contextuallyTyped";
+import { fieldKinds } from "../../default-field-kinds";
 import { EncodedChunk, EncodedValueShape } from "./format";
 import {
 	EncoderCache,
@@ -48,6 +48,13 @@ export function buildCache(schema: SchemaData, policy: FullSchemaPolicy): Encode
 			fieldShaper(treeHandler, field, cache),
 	);
 	return cache;
+}
+
+export function getFieldKind(fieldSchema: FieldStoredSchema): FieldKind {
+	// TODO:
+	// This module currently is assuming use of defaultFieldKinds.
+	// The field kinds should instead come from a view schema registry thats provided somewhere.
+	return fieldKinds.get(fieldSchema.kind.identifier) ?? fail("missing field kind");
 }
 
 /**
@@ -117,7 +124,7 @@ function valueShapeFromSchema(schema: ValueSchema | undefined): undefined | Enco
 		case ValueSchema.Number:
 		case ValueSchema.String:
 		case ValueSchema.Boolean:
-		case ValueSchema.Serializable:
+		case ValueSchema.FluidHandle:
 			return true;
 		default:
 			unreachableCase(schema);

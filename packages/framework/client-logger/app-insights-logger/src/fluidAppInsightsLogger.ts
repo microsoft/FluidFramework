@@ -3,11 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ApplicationInsights } from "@microsoft/applicationinsights-web";
-import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { type ApplicationInsights } from "@microsoft/applicationinsights-web";
+import {
+	type ITelemetryBaseEvent,
+	type ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 
 /**
- * An implementation of {@link @fluidframework/common-definitions#ITelemetryBaseLogger | ITelemetryBaseLogger}
+ * An implementation of {@link @fluidframework/core-interfaces#ITelemetryBaseLogger | ITelemetryBaseLogger}
  * that routes Fluid telemetry events to Azure App Insights using the App Insights trackEvent API.
  * The provided ApplicationInsights instance MUST be initialized with client.loadAppInsights()
  * or else logging will not occur.
