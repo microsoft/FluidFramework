@@ -42,7 +42,7 @@ export interface IEventSampler<> {
 	/**
 	 * @returns true if the event should be sampled or false if not
 	 */
-	sample?: () => boolean | undefined;
+	sample: () => boolean | undefined;
 }
 
 /**
@@ -78,34 +78,22 @@ export function createSampledLogger(
 	const sampledLogger = {
 		send: (event: ITelemetryBaseEvent) => {
 			// if sampling is disabled, log all events. Otherwise, use the eventSampler to determine if the event should be logged.
-			if (
-				isSamplingDisabled ||
-				(!isSamplingDisabled && eventSampler?.sample !== undefined && eventSampler.sample())
-			) {
+			if (isSamplingDisabled || (!isSamplingDisabled && eventSampler?.sample())) {
 				logger.send(event);
 			}
 		},
 		sendTelemetryEvent: (event: ITelemetryGenericEventExt) => {
-			if (
-				isSamplingDisabled ||
-				(!isSamplingDisabled && eventSampler?.sample !== undefined && eventSampler.sample())
-			) {
+			if (isSamplingDisabled || (!isSamplingDisabled && eventSampler?.sample())) {
 				logger.sendTelemetryEvent(event);
 			}
 		},
 		sendErrorEvent: (event: ITelemetryGenericEventExt) => {
-			if (
-				isSamplingDisabled ||
-				(!isSamplingDisabled && eventSampler?.sample !== undefined && eventSampler.sample())
-			) {
+			if (isSamplingDisabled || (!isSamplingDisabled && eventSampler?.sample())) {
 				logger.sendErrorEvent(event);
 			}
 		},
 		sendPerformanceEvent: (event: ITelemetryGenericEventExt) => {
-			if (
-				isSamplingDisabled ||
-				(!isSamplingDisabled && eventSampler?.sample !== undefined && eventSampler.sample())
-			) {
+			if (isSamplingDisabled || (!isSamplingDisabled && eventSampler?.sample())) {
 				logger.sendPerformanceEvent(event);
 			}
 		},
