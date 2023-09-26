@@ -250,7 +250,7 @@ describe.only("LazyOptionalField", () => {
 	/**
 	 * Creates a single-node, primitive tree, and returns a field associated with that node.
 	 */
-	function createPrimitiveField(
+	function createLeafField(
 		kind: ValueSchema,
 		initialTree?:
 			| SchemaAware.TypedField<FieldSchema, SchemaAware.ApiMode.Flexible>
@@ -303,7 +303,7 @@ describe.only("LazyOptionalField", () => {
 
 	describe("map", () => {
 		it("boolean", () => {
-			const field = createPrimitiveField(ValueSchema.Boolean, false);
+			const field = createLeafField(ValueSchema.Boolean, false);
 
 			assert.deepEqual(
 				field.map((value) => value),
@@ -312,7 +312,7 @@ describe.only("LazyOptionalField", () => {
 		});
 
 		it("number", () => {
-			const field = createPrimitiveField(ValueSchema.Number, 42);
+			const field = createLeafField(ValueSchema.Number, 42);
 
 			assert.deepEqual(
 				field.map((value) => value),
@@ -321,7 +321,7 @@ describe.only("LazyOptionalField", () => {
 		});
 
 		it("string", () => {
-			const field = createPrimitiveField(ValueSchema.String, "Hello world");
+			const field = createLeafField(ValueSchema.String, "Hello world");
 
 			assert.deepEqual(
 				field.map((value) => value),
@@ -340,7 +340,7 @@ describe.only("LazyOptionalField", () => {
 		// });
 
 		it("No value", () => {
-			const field = createPrimitiveField(ValueSchema.Number, undefined);
+			const field = createLeafField(ValueSchema.Number, undefined);
 
 			assert.deepEqual(
 				field.map((value) => value),
@@ -366,7 +366,7 @@ describe.only("LazyOptionalField", () => {
 
 	describe("mapBoxed", () => {
 		it("number", () => {
-			const field = createPrimitiveField(ValueSchema.Number, 42);
+			const field = createLeafField(ValueSchema.Number, 42);
 
 			const mapResult = field.mapBoxed((value) => value);
 			assert.equal(mapResult.length, 1);
@@ -374,7 +374,7 @@ describe.only("LazyOptionalField", () => {
 		});
 
 		it("boolean", () => {
-			const field = createPrimitiveField(ValueSchema.Boolean, true);
+			const field = createLeafField(ValueSchema.Boolean, true);
 
 			const mapResult = field.mapBoxed((value) => value);
 			assert.equal(mapResult.length, 1);
@@ -382,7 +382,7 @@ describe.only("LazyOptionalField", () => {
 		});
 
 		it("string", () => {
-			const field = createPrimitiveField(ValueSchema.String, "Hello world");
+			const field = createLeafField(ValueSchema.String, "Hello world");
 
 			const mapResult = field.mapBoxed((value) => value);
 			assert.equal(mapResult.length, 1);
@@ -399,7 +399,7 @@ describe.only("LazyOptionalField", () => {
 		// });
 
 		it("No value", () => {
-			const field = createPrimitiveField(ValueSchema.String, undefined);
+			const field = createLeafField(ValueSchema.String, undefined);
 
 			const mapResult = field.mapBoxed((value) => value);
 			assert.deepEqual(mapResult, []);
