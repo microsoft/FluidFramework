@@ -760,10 +760,9 @@ export class Container
 		this.urlResolver = urlResolver;
 		this.serviceFactory = documentServiceFactory;
 		this.codeLoader = codeLoader;
-		// Warning: this is only a shallow clone. Mutation of any individual loader option will mutate it for
-		// all clients that were loaded from the same loader (including summarizer clients).
-		// Tracking alternative ways to handle this in AB#4129.
-		this.options = { ...options };
+		// Note: structuredClone will be available in TypeScriptv4.7
+		// currently using the type declaration file structuredClone.d.ts as a placeholder
+		this.options = structuredClone(options);
 		this.scope = scope;
 		this.detachedBlobStorage = detachedBlobStorage;
 		this.protocolHandlerBuilder =
