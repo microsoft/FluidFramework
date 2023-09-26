@@ -57,8 +57,8 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 		}
 
 		const filterOptions = parsePackageFilterFlags(this.flags);
-		const pnpmListResults: ListItem[] = await pnpmList(releaseGroup.repoPath);
-		const filtered = filterPackages(pnpmListResults, filterOptions)
+		const packageList: ListItem[] = await pnpmList(releaseGroup.repoPath);
+		const filtered = filterPackages(packageList, filterOptions)
 			.reverse()
 			.filter((item) => {
 				const config = context.rootFluidBuildConfig?.policy?.packageNames;
