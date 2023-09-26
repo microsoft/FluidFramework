@@ -5,7 +5,8 @@
 
 import { IDisposable } from "@fluidframework/core-interfaces";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { assert, bufferToString, stringToBuffer } from "@fluidframework/common-utils";
+import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
 import {
 	FetchSource,

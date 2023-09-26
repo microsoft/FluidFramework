@@ -5,7 +5,7 @@
 
 import {
 	devtoolsMessageSource,
-	ISourcedDevtoolsMessage,
+	type ISourcedDevtoolsMessage,
 	isDevtoolsMessage,
 } from "@fluid-experimental/devtools-core";
 

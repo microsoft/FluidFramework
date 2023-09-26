@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/common-utils";
+import { unreachableCase } from "@fluidframework/core-utils";
 import {
 	FieldStoredSchema,
 	ITreeCursorSynchronous,
@@ -124,7 +124,7 @@ function valueShapeFromSchema(schema: ValueSchema | undefined): undefined | Enco
 		case ValueSchema.Number:
 		case ValueSchema.String:
 		case ValueSchema.Boolean:
-		case ValueSchema.Serializable:
+		case ValueSchema.FluidHandle:
 			return true;
 		default:
 			unreachableCase(schema);

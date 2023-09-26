@@ -4,6 +4,16 @@
  */
 // jest.config.js
 module.exports = {
+	reporters: [
+		"default",
+		[
+			"jest-junit",
+			{
+				outputDirectory: "nyc",
+				outputName: "jest-junit-report.xml",
+			},
+		],
+	],
 	// The glob patterns Jest uses to detect test files
 	testMatch: ["/**/dist/test/*.spec.js"],
 

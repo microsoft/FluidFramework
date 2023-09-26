@@ -298,6 +298,7 @@ export class Layout extends EventEmitter {
 			"  pushFormat(%o,pos=%d,%s,start=%d,end=%d,depth=%d)",
 			formatter,
 			this.position,
+			// eslint-disable-next-line @typescript-eslint/no-base-to-string
 			segment.toString(),
 			this.startOffset,
 			this.endOffset,

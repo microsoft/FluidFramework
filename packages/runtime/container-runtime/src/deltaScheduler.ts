@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLoggerExt, formatTick } from "@fluidframework/telemetry-utils";
-import { performance } from "@fluidframework/common-utils";
+import { performance } from "@fluid-internal/client-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 

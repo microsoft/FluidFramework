@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IsoBuffer, assert } from '@fluidframework/common-utils';
+import { assert } from '@fluidframework/core-utils';
+import { IsoBuffer } from '@fluid-internal/client-utils';
 import { assertWithMessage, fail } from './Common';
 import { EditLog } from './EditLog';
 import { convertTreeNodes, newEdit } from './EditUtilities';

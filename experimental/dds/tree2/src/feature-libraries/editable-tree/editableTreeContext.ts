@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	IEditableForest,
 	moveToDetachedField,
@@ -125,12 +125,13 @@ export class ProxyContext implements EditableTreeContext {
 	 */
 	public constructor(
 		public readonly forest: IEditableForest,
+		public readonly schema: SchemaData,
 		public readonly editor: DefaultEditBuilder,
 		public readonly nodeKeys: NodeKeyManager,
 		public readonly nodeKeyFieldKey?: FieldKey,
 	) {
 		this.eventUnregister = [
-			this.forest.on("beforeDelta", () => {
+			this.forest.on("beforeChange", () => {
 				this.prepareForEdit();
 			}),
 		];
@@ -193,10 +194,6 @@ export class ProxyContext implements EditableTreeContext {
 		return proxifiedField;
 	}
 
-	public get schema(): SchemaData {
-		return this.forest.schema;
-	}
-
 	public on<K extends keyof ForestEvents>(eventName: K, listener: ForestEvents[K]): () => void {
 		return this.forest.on(eventName, listener);
 	}
@@ -215,9 +212,10 @@ export class ProxyContext implements EditableTreeContext {
  */
 export function getEditableTreeContext(
 	forest: IEditableForest,
+	schema: SchemaData,
 	editor: DefaultEditBuilder,
 	nodeKeyManager: NodeKeyManager,
 	nodeKeyFieldKey?: FieldKey,
 ): EditableTreeContext {
-	return new ProxyContext(forest, editor, nodeKeyManager, nodeKeyFieldKey);
+	return new ProxyContext(forest, schema, editor, nodeKeyManager, nodeKeyFieldKey);
 }

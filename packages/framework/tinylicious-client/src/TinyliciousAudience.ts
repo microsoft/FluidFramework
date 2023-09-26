@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ServiceAudience } from "@fluidframework/fluid-static";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { ITinyliciousAudience, TinyliciousMember, TinyliciousUser } from "./interfaces";

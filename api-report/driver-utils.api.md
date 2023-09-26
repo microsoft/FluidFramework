@@ -4,7 +4,6 @@
 
 ```ts
 
-import { DriverErrorType } from '@fluidframework/driver-definitions';
 import { FetchSource } from '@fluidframework/driver-definitions';
 import { IAttachment } from '@fluidframework/protocol-definitions';
 import { IAuthorizationError } from '@fluidframework/driver-definitions';
@@ -118,7 +117,7 @@ export function createGenericNetworkError(message: string, retryInfo: {
 }, props: DriverErrorTelemetryProps): ThrottlingError | GenericNetworkError;
 
 // @public (undocumented)
-export const createWriteError: (message: string, props: DriverErrorTelemetryProps) => NonRetryableError<DriverErrorType.writeError>;
+export const createWriteError: (message: string, props: DriverErrorTelemetryProps) => NonRetryableError<"writeError">;
 
 // @public (undocumented)
 export class DeltaStreamConnectionForbiddenError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {

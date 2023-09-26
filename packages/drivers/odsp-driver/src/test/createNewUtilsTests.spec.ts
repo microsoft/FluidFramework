@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import * as api from "@fluidframework/protocol-definitions";
-import { bufferToString } from "@fluidframework/common-utils";
+import { bufferToString } from "@fluid-internal/client-utils";
 import {
 	IFileEntry,
 	IOdspResolvedUrl,

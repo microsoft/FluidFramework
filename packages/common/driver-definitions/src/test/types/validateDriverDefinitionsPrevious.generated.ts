@@ -64,6 +64,54 @@ use_old_EnumDeclaration_DriverErrorType(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_DriverErrorTypes": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_DriverErrorTypes():
+    TypeOnly<typeof old.DriverErrorTypes>;
+declare function use_current_VariableDeclaration_DriverErrorTypes(
+    use: TypeOnly<typeof current.DriverErrorTypes>);
+use_current_VariableDeclaration_DriverErrorTypes(
+    get_old_VariableDeclaration_DriverErrorTypes());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_DriverErrorTypes": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_DriverErrorTypes():
+    TypeOnly<typeof current.DriverErrorTypes>;
+declare function use_old_VariableDeclaration_DriverErrorTypes(
+    use: TypeOnly<typeof old.DriverErrorTypes>);
+use_old_VariableDeclaration_DriverErrorTypes(
+    get_current_VariableDeclaration_DriverErrorTypes());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_DriverErrorTypes": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_DriverErrorTypes():
+    TypeOnly<old.DriverErrorTypes>;
+declare function use_current_TypeAliasDeclaration_DriverErrorTypes(
+    use: TypeOnly<current.DriverErrorTypes>);
+use_current_TypeAliasDeclaration_DriverErrorTypes(
+    get_old_TypeAliasDeclaration_DriverErrorTypes());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_DriverErrorTypes": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_DriverErrorTypes():
+    TypeOnly<current.DriverErrorTypes>;
+declare function use_old_TypeAliasDeclaration_DriverErrorTypes(
+    use: TypeOnly<old.DriverErrorTypes>);
+use_old_TypeAliasDeclaration_DriverErrorTypes(
+    get_current_TypeAliasDeclaration_DriverErrorTypes());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "EnumDeclaration_DriverHeader": {"forwardCompat": false}
 */
 declare function get_old_EnumDeclaration_DriverHeader():

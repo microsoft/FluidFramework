@@ -11,6 +11,7 @@ import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeLoaderCompat } from "@fluid-internal/test-version-utils";
 import { ITable } from "../table.js";
 import { TableDocument } from "../document.js";
+// eslint-disable-next-line import/no-internal-modules
 import { createTableWithInterception } from "../interception/index.js";
 
 describeLoaderCompat("Table Document with Interception", (getTestObjectProvider) => {
@@ -229,6 +230,7 @@ describeLoaderCompat("Table Document with Interception", (getTestObjectProvider)
 				tableDocumentWithInterception.setCellValue(cell.row, cell.col, cell.value);
 			} catch (error: any) {
 				assert.strictEqual(
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 					error.message,
 					"Interception wrapper method called recursively from the interception callback",
 					"We should have caught an assert in setCellValue because it detects an infinite recursion",

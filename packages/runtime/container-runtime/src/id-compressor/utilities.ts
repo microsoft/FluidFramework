@@ -4,7 +4,7 @@
  */
 
 /* eslint-disable no-bitwise */
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { SessionId, StableId } from "@fluidframework/runtime-definitions";
 import { v4 } from "uuid";
 import { LocalCompressedId, NumericUuid } from "./identifiers";

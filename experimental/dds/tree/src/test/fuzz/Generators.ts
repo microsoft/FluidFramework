@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IsoBuffer } from '@fluidframework/common-utils';
+import { IsoBuffer } from '@fluid-internal/client-utils';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import {
 	AcceptanceCondition,
@@ -425,7 +425,8 @@ export function makeOpGenerator(passedConfig: OperationGenerationConfig): AsyncG
 			collaboratorsMatches((count) => count < maximumCollaborators),
 		],
 		[leaveGenerator, config.leaveWeight, atLeastOneClient],
-		[makeEditGenerator(config.editConfig, config.joinConfig, true), config.stashWeight, atLeastOneActiveClient],
+		// TODO:#5357: Re-enable stashed ops tests
+		// [makeEditGenerator(config.editConfig, config.joinConfig, true), config.stashWeight, atLeastOneActiveClient],
 		[{ type: 'synchronize' }, config.synchronizeWeight, atLeastOneClient],
 	];
 	return createWeightedAsyncGenerator(opWeights);

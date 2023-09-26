@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { FieldKey, MapTree, ITreeCursor, CursorLocationType, mapCursorField } from "../core";
 import { CursorAdapter, CursorWithNode, singleStackTreeCursor } from "./treeCursorUtils";
 

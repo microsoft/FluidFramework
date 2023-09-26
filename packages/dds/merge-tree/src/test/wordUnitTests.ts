@@ -8,7 +8,7 @@
 
 import path from "path";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
-import { Trace } from "@fluidframework/common-utils";
+import { Trace } from "@fluid-internal/client-utils";
 import { ReferenceType } from "../ops";
 import { createMap, extend, MapLike } from "../properties";
 import { ReferencePosition } from "../referencePositions";

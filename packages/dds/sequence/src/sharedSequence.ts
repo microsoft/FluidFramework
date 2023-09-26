@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { BaseSegment, IJSONSegment, ISegment, PropertySet } from "@fluidframework/merge-tree";
 import {
 	IChannelAttributes,

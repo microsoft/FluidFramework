@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	IdCreationRange,
 	SerializedIdCompressorWithNoSession,

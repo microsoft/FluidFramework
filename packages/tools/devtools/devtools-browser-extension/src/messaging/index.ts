@@ -4,12 +4,11 @@
  */
 
 export { extensionMessageSource } from "./Constants";
-export {
-	devToolsInitMessageType,
+export type {
 	DevToolsInitMessageData,
 	DevToolsInitMessage,
-	devToolsInitAcknowledgementType,
 	DevToolsInitAcknowledgement,
 } from "./Messages";
-export { TypedPortConnection } from "./TypedPortConnection";
+export { devToolsInitMessageType, devToolsInitAcknowledgementType } from "./Messages";
+export type { TypedPortConnection } from "./TypedPortConnection";
 export { postMessageToPort, relayMessageToPort } from "./Utilities";

@@ -56,7 +56,8 @@ export interface ISummarizeResult {
  * the data store summaries are wrapped around an array of labels identified by pathPartsForChildren.
  *
  * @example
- * ```
+ *
+ * ```typescript
  * id:""
  * pathPartsForChildren: ["path1"]
  * stats: ...

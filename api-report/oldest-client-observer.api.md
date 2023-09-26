@@ -8,7 +8,7 @@ import { AttachState } from '@fluidframework/container-definitions';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
-import { TypedEventEmitter } from '@fluidframework/common-utils';
+import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @public
 export interface IOldestClientObservable extends IEventProvider<IOldestClientObservableEvents> {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	FieldKey,
 	FieldStoredSchema,
@@ -466,7 +466,7 @@ export function uniformChunkFromCursor(
 	// TODO:
 	// This could have a fast path for consuming already uniformly chunked data with matching shape.
 
-	const values: TreeValue = [];
+	const values: TreeValue[] = [];
 	let topLevelLength = 1;
 	while (topLevelLength <= maxTopLevelLength) {
 		insertValues(cursor, shape, values);

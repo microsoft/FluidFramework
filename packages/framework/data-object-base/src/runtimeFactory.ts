@@ -47,8 +47,8 @@ export class RuntimeFactory extends RuntimeFactoryHelper {
 		const runtime: ContainerRuntime = await ContainerRuntime.loadRuntime({
 			context,
 			registryEntries: this.registry,
-			requestHandler: buildRuntimeRequestHandler(...this.requestHandlers),
 			existing,
+			requestHandler: buildRuntimeRequestHandler(...this.requestHandlers),
 			initializeEntryPoint: this.initializeEntryPoint,
 		});
 

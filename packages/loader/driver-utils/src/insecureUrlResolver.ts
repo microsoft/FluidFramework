@@ -4,7 +4,7 @@
  */
 
 import { parse } from "url";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, IUrlResolver, DriverHeader } from "@fluidframework/driver-definitions";
 import Axios from "axios";
@@ -48,7 +48,7 @@ export class InsecureUrlResolver implements IUrlResolver {
 		// service using our bearer token.
 		if (this.isForNodeTest) {
 			const [, documentId, tmpRelativePath] = parsedUrl.pathname.substr(1).split("/");
-			const relativePath = tmpRelativePath === undefined ? "" : tmpRelativePath;
+			const relativePath = tmpRelativePath ?? "";
 			return this.resolveHelper(documentId, relativePath, parsedUrl.search);
 		} else if (parsedUrl.host === window.location.host) {
 			const fullPath = parsedUrl.pathname.substr(1);

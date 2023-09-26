@@ -63,7 +63,7 @@ export function getApiRoot(origin: string): string;
 export function getHashedDocumentId(driveId: string, itemId: string): Promise<string>;
 
 // @public
-export function getLocatorFromOdspUrl(url: URL): OdspFluidDataStoreLocator | undefined;
+export function getLocatorFromOdspUrl(url: URL, requireFluidSignature?: boolean): OdspFluidDataStoreLocator | undefined;
 
 // @public
 export function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefined>;

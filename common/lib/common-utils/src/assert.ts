@@ -12,6 +12,8 @@
  * A number should not be specified manually: use a string.
  * Before a release, policy-check should be run, which will convert any asserts still using strings to
  * use numbered error codes instead.
+ *
+ * @deprecated Moved to the `@fluidframework/core-utils` package.
  */
 export function assert(condition: boolean, message: string | number): asserts condition {
 	if (!condition) {

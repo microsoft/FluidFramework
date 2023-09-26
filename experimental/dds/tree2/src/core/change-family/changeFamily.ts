@@ -5,10 +5,10 @@
 
 import { ICodecFamily } from "../../codec";
 import { ChangeRebaser } from "../rebase";
-import { AnchorSet, Delta } from "../tree";
+import { Delta } from "../tree";
 
 export interface ChangeFamily<TEditor extends ChangeFamilyEditor, TChange> {
-	buildEditor(changeReceiver: (change: TChange) => void, anchorSet: AnchorSet): TEditor;
+	buildEditor(changeReceiver: (change: TChange) => void): TEditor;
 
 	/**
 	 * @param change - The change to convert into a delta.

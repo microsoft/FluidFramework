@@ -11,11 +11,13 @@ import {
 	buildCache,
 	fieldShaper,
 	oneFromSet,
-	schemaCompressedEncode,
 	treeShaper,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/schemaBasedEncoding";
-
+import {
+	makeSchemaCompressedCodec,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../../feature-libraries/chunked-forest/codec/compressedCodecs";
 import {
 	AnyShape,
 	EncoderCache,
@@ -29,10 +31,10 @@ import { brand } from "../../../../util";
 import { NodeShape } from "../../../../feature-libraries/chunked-forest/codec/nodeShape";
 // eslint-disable-next-line import/no-internal-modules
 import { IdentifierToken } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric";
-import { assertChunkCursorEquals, fieldCursorFromJsonableTrees } from "../fieldCursorTestUtilities";
-// eslint-disable-next-line import/no-internal-modules
-import { decode } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding";
-import { checkFieldEncode, checkNodeEncode } from "./checkEncode";
+import {
+	fieldCursorFromJsonableTrees,
+	jsonableTreesFromFieldCursor,
+} from "../fieldCursorTestUtilities";
 import {
 	hasOptionalField,
 	library,
@@ -41,7 +43,9 @@ import {
 	numericMap,
 	recursiveType,
 	testTrees,
-} from "./testTrees";
+} from "../../../testTrees";
+import { typeboxValidator } from "../../../../external-utilities";
+import { checkFieldEncode, checkNodeEncode } from "./checkEncode";
 
 const anyNodeShape = new NodeShape(undefined, undefined, [], anyFieldEncoder);
 const onlyTypeShape = new NodeShape(undefined, false, [], undefined);
@@ -227,23 +231,24 @@ describe("schemaBasedEncoding", () => {
 	});
 
 	describe("test trees", () => {
-		for (const { name, schema, treeFactory, schemaData } of testTrees) {
+		for (const { name, treeFactory, schemaData } of testTrees) {
 			it(name, () => {
 				const tree = treeFactory();
 				// Check with checkFieldEncode
 				const cache = buildCache(schemaData, defaultSchemaPolicy);
 				checkFieldEncode(anyFieldEncoder, cache, tree);
 
-				// End to end test
-				const encoded = schemaCompressedEncode(
+				const codec = makeSchemaCompressedCodec(
+					{ jsonValidator: typeboxValidator },
 					schemaData,
 					defaultSchemaPolicy,
-					fieldCursorFromJsonableTrees(tree),
 				);
-				const json = JSON.stringify(encoded);
-				const parsed = JSON.parse(json);
-				const result = decode(parsed);
-				assertChunkCursorEquals(result, tree);
+				// End to end test
+				const encoded = codec.encode(fieldCursorFromJsonableTrees(tree));
+				const result = codec.decode(encoded);
+				const resultTree = jsonableTreesFromFieldCursor(result);
+				assert.deepEqual(resultTree, tree);
+				assert.equal(resultTree.length, tree.length);
 			});
 		}
 	});

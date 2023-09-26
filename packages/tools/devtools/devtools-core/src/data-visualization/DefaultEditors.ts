@@ -11,9 +11,9 @@
 import { SharedCounter } from "@fluidframework/counter";
 import { SharedString } from "@fluidframework/sequence";
 
-import { ISharedObject } from "@fluidframework/shared-object-base";
+import { type ISharedObject } from "@fluidframework/shared-object-base";
 import { SharedCell } from "@fluidframework/cell";
-import { Edit, EditSharedObject } from "./DataEditing";
+import { type Edit, type EditSharedObject } from "./DataEditing";
 
 /**
  * Default {@link EditSharedObject} for {@link SharedCell}.

@@ -12,7 +12,7 @@ import {
 import { CompatKind, driver, r11sEndpointName, tenantIndex } from "../compatOptions.cjs";
 import { configList, mochaGlobalSetup } from "./compatConfig.js";
 import { getVersionedTestObjectProviderFromApis } from "./compatUtils.js";
-import { baseVersion } from "./baseVersion.js";
+import { testBaseVersion } from "./baseVersion.js";
 import {
 	getContainerRuntimeApi,
 	getDataRuntimeApi,
@@ -41,13 +41,19 @@ function createCompatSuite(
 			describe(config.name, function () {
 				let provider: TestObjectProvider;
 				let resetAfterEach: boolean;
-				const dataRuntimeApi = getDataRuntimeApi(baseVersion, config.dataRuntime);
+				const dataRuntimeApi = getDataRuntimeApi(
+					testBaseVersion(config.dataRuntime),
+					config.dataRuntime,
+				);
 				const apis: CompatApis = {
-					containerRuntime: getContainerRuntimeApi(baseVersion, config.containerRuntime),
+					containerRuntime: getContainerRuntimeApi(
+						testBaseVersion(config.containerRuntime),
+						config.containerRuntime,
+					),
 					dataRuntime: dataRuntimeApi,
 					dds: dataRuntimeApi.dds,
-					driver: getDriverApi(baseVersion, config.driver),
-					loader: getLoaderApi(baseVersion, config.loader),
+					driver: getDriverApi(testBaseVersion(config.driver), config.driver),
+					loader: getLoaderApi(testBaseVersion(config.loader), config.loader),
 				};
 
 				before(async function () {

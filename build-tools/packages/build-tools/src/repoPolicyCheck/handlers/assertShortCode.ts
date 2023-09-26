@@ -39,7 +39,7 @@ const assertionFunctions: ReadonlyMap<string, number> = new Map([["assert", 1]])
  * This includes both functions named "assert" and ones named "fail"
  * all the functions which is the message parameter
  * @param sourceFile - The file to get the assert message parameters for.
- * @returns - an array of all the assert message parameters
+ * @returns An array of all the assert message parameters
  */
 function getAssertMessageParams(sourceFile: SourceFile): Node[] {
 	const calls = sourceFile.getDescendantsOfKind(SyntaxKind.CallExpression);

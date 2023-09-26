@@ -31,7 +31,7 @@ stages:
       namespace: ${{ parameters.namespace }}
       devFeedName: $(ado-feeds-test) # Comes from the ado-feeds variable group
       feedName: $(ado-feeds-test) # Comes from the ado-feeds variable group
-      official: false
+      feedKind: internal-test
       environment: test-package-build-feed
       pool: ${{ parameters.pool }}
       publishNonScopedPackages: ${{ parameters.publishNonScopedPackages }}
@@ -48,7 +48,7 @@ stages:
       namespace: ${{ parameters.namespace }}
       devFeedName: $(ado-feeds-dev) # Comes from the ado-feeds variable group
       feedName: $(ado-feeds-build) # Comes from the ado-feeds variable group
-      official: false
+      feedKind: internal
       environment: package-build-feed
       pool: ${{ parameters.pool }}
       publishNonScopedPackages: ${{ parameters.publishNonScopedPackages }}
@@ -67,7 +67,7 @@ stages:
       # using the `dev` registry is safe.
       devFeedName: $(ado-feeds-dev) # Comes from the ado-feeds variable group
       feedName: https://registry.npmjs.org
-      official: true
+      feedKind: official
       environment: package-npmjs-feed
       pool: ${{ parameters.pool }}
       publishNonScopedPackages: ${{ parameters.publishNonScopedPackages }}

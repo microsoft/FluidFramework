@@ -4,7 +4,7 @@
  */
 
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { stringToBuffer } from "@fluidframework/common-utils";
+import { stringToBuffer } from "@fluid-internal/client-utils";
 import { INormalizedWholeSnapshot, IWholeFlatSnapshot, IWholeFlatSnapshotTree } from "./contracts";
 
 /**

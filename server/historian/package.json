@@ -31,7 +31,7 @@
 		"test": "pnpm run -r --stream --no-bail --no-sort test",
 		"tsc": "pnpm run -r --stream tsc"
 	},
-	"nyc": {
+	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [],
@@ -54,12 +54,10 @@
 		"@types/cors": "^2.8.4",
 		"@types/debug": "^4.1.5",
 		"@types/lodash": "^4.14.119",
-		"@types/mocha": "^10.0.0",
 		"@types/nconf": "0.0.37",
 		"@types/redis": "^2.8.10",
 		"@types/supertest": "^2.0.7",
 		"async": "^3.2.2",
-		"concurrently": "^7.5.0",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.27.0",
 		"eslint-plugin-eslint-comments": "~3.1.2",
@@ -70,8 +68,6 @@
 		"eslint-plugin-unicorn": "~40.0.0",
 		"eslint-plugin-unused-imports": "~2.0.0",
 		"lerna": "5.6.2",
-		"mocha": "^10.1.0",
-		"nyc": "^15.1.0",
 		"rimraf": "^3.0.2",
 		"run-script-os": "^1.1.5",
 		"supertest": "^3.3.0",
@@ -84,7 +80,7 @@
 			"@yarnpkg/parsers is a transitive dependency of lerna via nx, but versions >3.0.0-rc.48.1 require node 18, while we use 16."
 		],
 		"overrides": {
-			"@types/node": "^16.18.16",
+			"@types/node": "^18.17.1",
 			"nx>@yarnpkg/parsers": "3.0.0-rc.48.1",
 			"qs": "^6.11.0",
 			"socket.io-parser": "^4.2.1"

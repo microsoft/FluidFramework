@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { IChannelFactory } from "@fluidframework/datastore-definitions";
+import { strict as assert } from "node:assert";
+import { type IChannelFactory } from "@fluidframework/datastore-definitions";
 import {
 	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
-	MockContainerRuntimeForReconnection,
+	type MockContainerRuntimeForReconnection,
 	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { ISharedCounter, SharedCounter } from "..";
+import { type ISharedCounter, SharedCounter } from "..";
 import { CounterFactory } from "../counterFactory";
 
 class TestSharedCounter extends SharedCounter {
@@ -37,7 +37,7 @@ describe("SharedCounter", () => {
 		describe("constructor", () => {
 			it("Can create a counter with default value", () => {
 				assert.ok(testCounter, "Count not create the SharedCounter");
-				assert.equal(testCounter.value, 0, "The defaul value is incorrect");
+				assert.equal(testCounter.value, 0, "The default value is incorrect");
 			});
 		});
 
@@ -62,7 +62,9 @@ describe("SharedCounter", () => {
 							"The increment amount in the first event is incorrect",
 						);
 						assert.equal(newValue, 10, "The new value in the first event is incorrect");
-					} else if (!fired2) {
+					} else if (fired2) {
+						assert.fail("incremented event fired too many times");
+					} else {
 						fired2 = true;
 						assert.equal(
 							incrementAmount,
@@ -70,8 +72,6 @@ describe("SharedCounter", () => {
 							"The increment amount in the second event is incorrect",
 						);
 						assert.equal(newValue, 7, "The new value in the second event is incorrect");
-					} else {
-						assert.fail("incremented event fired too many times");
 					}
 				});
 
@@ -128,20 +128,20 @@ describe("SharedCounter", () => {
 
 			// Connect the first SharedCounter.
 			dataStoreRuntime.local = false;
-			const containerRuntime1 =
-				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 			const services1 = {
-				deltaConnection: containerRuntime1.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 			testCounter.connect(services1);
 
 			// Create and connect a second SharedCounter.
 			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-			const containerRuntime2 =
-				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 			const services2 = {
-				deltaConnection: containerRuntime2.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 
@@ -179,7 +179,9 @@ describe("SharedCounter", () => {
 							"The increment amount in the first event is incorrect",
 						);
 						assert.equal(newValue, 10, "The new value in the first event is incorrect");
-					} else if (!fired2) {
+					} else if (fired2) {
+						assert.fail("incremented event fired too many times");
+					} else {
 						fired2 = true;
 						assert.equal(
 							incrementAmount,
@@ -187,8 +189,6 @@ describe("SharedCounter", () => {
 							"The increment amount in the second event is incorrect",
 						);
 						assert.equal(newValue, 7, "The new value in the second event is incorrect");
-					} else {
-						assert.fail("incremented event fired too many times");
 					}
 				});
 
@@ -216,7 +216,7 @@ describe("SharedCounter", () => {
 			dataStoreRuntime.local = false;
 			containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 			const services1 = {
-				deltaConnection: containerRuntime1.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 			testCounter.connect(services1);
@@ -225,7 +225,7 @@ describe("SharedCounter", () => {
 			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
 			containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 			const services2 = {
-				deltaConnection: containerRuntime2.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 

@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import fs from "fs";
 import nodePath from "path";
 import { ReplayArgs, ReplayTool } from "@fluid-internal/replay-tool";
-import { Deferred } from "@fluidframework/common-utils";
+import { Deferred } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { pkgVersion } from "./packageVersion";
 import { validateSnapshots } from "./validateSnapshots";

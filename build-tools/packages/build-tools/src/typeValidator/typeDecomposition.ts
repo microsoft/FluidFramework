@@ -70,7 +70,7 @@ function mergeResults(
  * type, etc. (ts-morph doesn't expose this fn on TypeChecker and it gets verbose to use inline)
  * @param typeChecker - TypeChecker object from the type's TS project to get the type string
  * @param type - Type node to get string representation
- * @returns - The type as a string
+ * @returns The type as a string
  */
 export function typeToString(typeChecker: TypeChecker, type: Type): string {
 	return typeChecker.compilerObject.typeToString(type.compilerType);
@@ -92,7 +92,7 @@ export function typeToString(typeChecker: TypeChecker, type: Type): string {
  * TODO: handle index types, splat, rest
  * @param checker - The TypeChecker object from the node's TS project for getting type names
  * @param node - The type node to decompose
- * @returns - DecompositionResult for the type
+ * @returns DecompositionResult for the type
  */
 export function decomposeType(checker: TypeChecker, node: Type): DecompositionResult {
 	const result = {
@@ -150,7 +150,7 @@ export function decomposeType(checker: TypeChecker, node: Type): DecompositionRe
  * @param checker - The TypeChecker object from the node's TS project for getting type names
  * @param nodes - The type nodes to decompose
  * @param separator - String separator used to merge the results of the decomposition
- * @returns - Combined DecompositionResult for the types
+ * @returns Combined DecompositionResult for the types
  */
 export function decomposeTypes(
 	checker: TypeChecker,

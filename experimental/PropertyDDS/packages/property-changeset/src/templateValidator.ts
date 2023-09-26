@@ -9,6 +9,10 @@
  * versioning (semver) errors and warn about incorrect versioning practices.
  */
 
+// There are lots of violations in this file.
+/* eslint-disable @typescript-eslint/no-base-to-string */
+/* eslint-disable jsdoc/check-line-alignment */
+
 import Ajv from "ajv";
 import ajvKeywords from "ajv-keywords";
 
@@ -98,7 +102,7 @@ const _extractTypeid = function (typeidOrReference: string) {
 	}
 	const reference = "Reference<";
 	let result = typeidOrReference || "";
-	const isReference = result.indexOf(reference) === 0;
+	const isReference = result.startsWith(reference);
 	if (isReference) {
 		result = typeidOrReference.substring(reference.length, typeidOrReference.length - 1);
 	}

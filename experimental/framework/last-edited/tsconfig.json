@@ -4,7 +4,6 @@
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./dist",
-		"types": ["mocha"],
 	},
 	"include": ["src/**/*"],
 }

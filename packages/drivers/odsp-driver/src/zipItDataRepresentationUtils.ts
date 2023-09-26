@@ -8,7 +8,8 @@
  * https://microsoft.sharepoint-df.com/:w:/t/ODSPFileStore/ER06b64K_XdDjEyAKl-UT60BJiId39SCVkYSyo_2pvH9gQ?e=KYQ0c5
  */
 
-import { assert, Uint8ArrayToArrayBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
+import { Uint8ArrayToArrayBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { NonRetryableError } from "@fluidframework/driver-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";

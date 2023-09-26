@@ -21,12 +21,7 @@ import sillyname from "sillyname";
 import request from "supertest";
 import * as app from "../app";
 import { ExternalStorageManager } from "../externalStorageManager";
-import {
-	Constants,
-	IsomorphicGitManagerFactory,
-	NodeFsManagerFactory,
-	NodegitRepositoryManagerFactory,
-} from "../utils";
+import { Constants, IsomorphicGitManagerFactory, NodeFsManagerFactory } from "../utils";
 import * as testUtils from "./utils";
 
 // TODO: (issue logged): replace email & name
@@ -128,29 +123,11 @@ function getStorageRoutingHeaderValue(tenantId: string, documentId: string) {
 }
 
 function normalizeMessage(gitLibrary: testUtils.gitLibType, message: string) {
-	// isomorphic-git automatically adds a new line character at the end of commit
-	// messages and tag annotation messages. It's something we cannot control. Because
-	// of that, the SHA/OIDs could be different in nodegit vs isomorphic-git. To counter
-	// that, we "normalize" the message so that those used with nodegit also include
-	// the new line character, making the content exactly the same as for isomorphic-git.
-	if (gitLibrary === "nodegit") {
-		return `${message}\n`;
-	}
 	// For isomorphic-git, we keep the message as is.
 	return message;
 }
 
 const testModes: testUtils.ITestMode[] = [
-	{
-		name: "Using NodeGit as RepoManager with repoPerDoc enabled",
-		gitLibrary: "nodegit",
-		repoPerDocEnabled: true,
-	},
-	{
-		name: "Using NodeGit as RepoManager with repoPerDoc disabled",
-		gitLibrary: "nodegit",
-		repoPerDocEnabled: false,
-	},
 	{
 		name: "Using isomorphic-git as RepoManager with repoPerDoc enabled",
 		gitLibrary: "isomorphic-git",
@@ -210,15 +187,6 @@ testModes.forEach((mode) => {
 		const fileSystemManagerFactory = new NodeFsManagerFactory();
 		const externalStorageManager = new ExternalStorageManager(testUtils.defaultProvider);
 		const getRepoManagerFactory = (testMode: testUtils.ITestMode) => {
-			if (testMode.gitLibrary === "nodegit") {
-				return new NodegitRepositoryManagerFactory(
-					testUtils.defaultProvider.get("storageDir"),
-					fileSystemManagerFactory,
-					externalStorageManager,
-					testMode.repoPerDocEnabled,
-				);
-			}
-
 			// The other possibility is isomorphic-git.
 			return new IsomorphicGitManagerFactory(
 				testUtils.defaultProvider.get("storageDir"),

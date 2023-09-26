@@ -22,6 +22,8 @@ import {
 	ITenantManager,
 	LambdaCloseType,
 	MongoManager,
+	requestWithRetry,
+	runWithRetry,
 } from "@fluidframework/server-services-core";
 import { defaultHash, IGitManager } from "@fluidframework/server-services-client";
 import {
@@ -29,6 +31,7 @@ import {
 	LumberEventName,
 	Lumberjack,
 	getLumberBaseProperties,
+	CommonProperties,
 } from "@fluidframework/server-services-telemetry";
 import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionValid } from "../utils";
 import { DeliLambda } from "./lambda";
@@ -124,6 +127,11 @@ export class DeliLambdaFactory
 					return new NoOpLambda(context);
 				}
 			}
+
+			sessionMetric?.setProperty(
+				CommonProperties.isEphemeralContainer,
+				document?.isEphemeralContainer ?? false,
+			);
 
 			gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
 		} catch (error) {
@@ -225,6 +233,38 @@ export class DeliLambdaFactory
 					closeType === LambdaCloseType.ActivityTimeout ||
 					closeType === LambdaCloseType.Error
 				) {
+					if (document?.isEphemeralContainer) {
+						// Call to historian to delete summaries
+						await requestWithRetry(
+							async () => gitManager.deleteSummary(false),
+							"deliLambda_onClose" /* callName */,
+							getLumberBaseProperties(documentId, tenantId) /* telemetryProperties */,
+							(error) => true /* shouldRetry */,
+							3 /* maxRetries */,
+						);
+
+						// Delete the document metadata
+						await runWithRetry(
+							async () =>
+								this.documentRepository.deleteOne({
+									documentId,
+									tenantId,
+								}),
+							"deleteDocMetadata",
+							3 /* maxRetries */,
+							1000 /* retryAfterMs */,
+							getLumberBaseProperties(documentId, tenantId),
+							(error) => error.code === 11000 /* shouldIgnoreError */,
+							(error) => true /* shouldRetry */,
+						);
+
+						Lumberjack.info(
+							`Successfully cleaned up ephemeral container`,
+							getLumberBaseProperties(documentId, tenantId),
+						);
+
+						return;
+					}
 					const filter = { documentId, tenantId, session: { $exists: true } };
 					const data = {
 						"session.isSessionAlive": false,
@@ -234,6 +274,7 @@ export class DeliLambdaFactory
 					await this.documentRepository.updateOne(filter, data, undefined);
 					const message = `Marked session alive and active as false for closeType:
                         ${JSON.stringify(closeType)}`;
+
 					context.log?.info(message, { messageMetaData });
 					Lumberjack.info(message, getLumberBaseProperties(documentId, tenantId));
 				}

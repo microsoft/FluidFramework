@@ -51,8 +51,13 @@ export class Redis {
 		}
 	}
 
-	public async delete(key: string): Promise<boolean> {
-		const result = await this.client.del(this.getKey(key));
+	public async delete(key: string, appendPrefixToKey = true): Promise<boolean> {
+		// If 'appendPrefixToKey' is true, we prepend a prefix to the 'key' parameter.
+		// This is useful in scenarios where we want to consistently manage keys with a common prefix,
+		// If 'appendPrefixToKey' is false, we assume that the 'key' parameter with prefix is already passed in by the caller,
+		// and no additional prefix needs to be added.
+		const keyToDelete = appendPrefixToKey ? this.getKey(key) : key;
+		const result = await this.client.del(keyToDelete);
 		// The DEL API in Redis returns the number of keys that were removed.
 		// We always call Redis DEL with one key only, so we expect a result equal to 1
 		// to indicate that the key was removed. 0 would indicate that the key does not exist.

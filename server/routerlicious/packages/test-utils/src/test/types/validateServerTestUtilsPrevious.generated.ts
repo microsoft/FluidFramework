@@ -407,6 +407,7 @@ declare function get_old_ClassDeclaration_TestNotImplementedDocumentRepository()
 declare function use_current_ClassDeclaration_TestNotImplementedDocumentRepository(
     use: TypeOnly<current.TestNotImplementedDocumentRepository>);
 use_current_ClassDeclaration_TestNotImplementedDocumentRepository(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_TestNotImplementedDocumentRepository());
 
 /*

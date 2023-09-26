@@ -10,7 +10,7 @@ import { IMessageRelayEvents } from '@fluid-experimental/devtools-core';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { default as React_2 } from 'react';
-import { TypedEventEmitter } from '@fluidframework/common-utils';
+import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @public
 export function DevtoolsPanel(props: DevtoolsPanelProps): React_2.ReactElement;

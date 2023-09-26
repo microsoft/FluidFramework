@@ -8,7 +8,7 @@ import {
 	StableId,
 	OpSpaceCompressedId,
 } from "@fluidframework/runtime-definitions";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	IdCompressor,
 	numericUuidFromStableId,

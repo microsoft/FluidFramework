@@ -11,5 +11,5 @@ import { testForest } from "../forestTestSuite";
 
 testForest({
 	suiteName: "object-forest",
-	factory: (schema) => buildForest(schema),
+	factory: (schema) => buildForest(),
 });

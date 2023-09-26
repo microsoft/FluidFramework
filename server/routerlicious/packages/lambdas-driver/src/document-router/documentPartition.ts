@@ -18,7 +18,7 @@ import { DocumentContext } from "./documentContext";
 
 export class DocumentPartition {
 	private readonly q: QueueObject<IQueuedMessage>;
-	private readonly lambdaP: Promise<IPartitionLambda>;
+	private readonly lambdaP: Promise<IPartitionLambda> | Promise<void>;
 	private lambda: IPartitionLambda | undefined;
 	private corrupt = false;
 	private closed = false;
@@ -78,8 +78,8 @@ export class DocumentPartition {
 		});
 
 		// Create the lambda to handle the document messages
-		this.lambdaP = factory.create(documentConfig, context, this.updateActivityTime.bind(this));
-		this.lambdaP
+		this.lambdaP = factory
+			.create(documentConfig, context, this.updateActivityTime.bind(this))
 			.then((lambda) => {
 				this.lambda = lambda;
 				this.q.resume();

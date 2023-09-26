@@ -4,7 +4,7 @@
  */
 
 import { resolve } from 'path';
-import { assert } from '@fluidframework/common-utils';
+import { assert } from '@fluidframework/core-utils';
 import { v5 as uuidv5 } from 'uuid';
 import { expect } from 'chai';
 import { LocalServerTestDriver } from '@fluid-internal/test-drivers';
@@ -173,7 +173,7 @@ export function setUpTestSharedTree(
 		};
 		factory = SharedTree.getFactory(writeFormat ?? WriteFormat.v0_1_1, options);
 	}
-	const tree = factory.create(componentRuntime, id === undefined ? 'testSharedTree' : id);
+	const tree = factory.create(componentRuntime, id ?? 'testSharedTree');
 
 	if (options.allowInvalid === undefined || !options.allowInvalid) {
 		tree.on(SharedTreeDiagnosticEvent.DroppedInvalidEdit, () => fail('unexpected invalid edit'));
@@ -199,7 +199,7 @@ export function setUpTestSharedTree(
 	} else {
 		const containerRuntime = newContainerRuntimeFactory.createContainerRuntime(componentRuntime);
 		const services = {
-			deltaConnection: containerRuntime.createDeltaConnection(),
+			deltaConnection: componentRuntime.createDeltaConnection(),
 			objectStorage: new MockStorage(undefined),
 		};
 		tree.connect(services);

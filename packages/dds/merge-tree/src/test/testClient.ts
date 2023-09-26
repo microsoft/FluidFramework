@@ -14,7 +14,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { MockStorage } from "@fluidframework/test-runtime-utils";
-import { Trace } from "@fluidframework/common-utils";
+import { Trace } from "@fluid-internal/client-utils";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
 import { Client } from "../client";
 import { List } from "../collections";
@@ -28,9 +28,10 @@ import { TextSegment } from "../textSegment";
 import { getSlideToSegoff, MergeTree } from "../mergeTree";
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
 import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
-import { walkAllChildSegments } from "../mergeTreeNodeWalk";
-import { DetachedReferencePosition } from "../referencePositions";
+import { backwardExcursion, forwardExcursion, walkAllChildSegments } from "../mergeTreeNodeWalk";
+import { DetachedReferencePosition, refHasTileLabel } from "../referencePositions";
 import { MergeTreeRevertibleDriver } from "../revertibles";
+import { ReferencePosition } from "..";
 import { TestSerializer } from "./testSerializer";
 import { nodeOrdinalsHaveIntegrity } from "./testUtils";
 
@@ -514,6 +515,45 @@ export class TestClient extends Client {
 				this.maxWindowTime = elapsed;
 			}
 		}
+	}
+
+	slowSearchForMarker(
+		startPos: number,
+		markerLabel: string,
+		forwards = true,
+	): ReferencePosition | undefined {
+		let foundMarker: Marker | undefined;
+
+		const { segment } = this.getContainingSegment(startPos);
+		const segWithParent: IMergeLeaf = segment as IMergeLeaf;
+
+		if (Marker.is(segWithParent)) {
+			if (refHasTileLabel(segWithParent, markerLabel)) {
+				foundMarker = segWithParent;
+			}
+		} else {
+			if (forwards) {
+				forwardExcursion(segWithParent, (seg) => {
+					if (Marker.is(seg)) {
+						if (refHasTileLabel(seg, markerLabel)) {
+							foundMarker = seg;
+							return false;
+						}
+					}
+				});
+			} else {
+				backwardExcursion(segWithParent, (seg) => {
+					if (Marker.is(seg)) {
+						if (refHasTileLabel(seg, markerLabel)) {
+							foundMarker = seg;
+							return false;
+						}
+					}
+				});
+			}
+		}
+
+		return foundMarker;
 	}
 }
 

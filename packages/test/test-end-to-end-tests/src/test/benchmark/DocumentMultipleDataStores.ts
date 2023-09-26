@@ -23,12 +23,24 @@ import {
 	assertDocumentTypeInfo,
 	isDocumentMultipleDataStoresInfo,
 } from "@fluid-internal/test-version-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+	ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils";
 import {
 	IDocumentLoaderAndSummarizer,
 	IDocumentProps,
 	ISummarizeResult,
 } from "./DocumentCreator.js";
+
+const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+	getRawConfig: (name: string): ConfigTypes => settings[name],
+});
+
+const featureGates = {
+	"Fluid.Driver.Odsp.TestOverride.DisableSnapshotCache": true,
+};
 
 // Tests usually make use of the default data object provided by the test object provider.
 // However, it only creates a single DDS and in these tests we create multiple (3) DDSes per data store.
@@ -183,6 +195,7 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 	public async initializeDocument(): Promise<void> {
 		this._mainContainer = await this.props.provider.createContainer(this.runtimeFactory, {
 			logger: this.props.logger,
+			configProvider: configProvider(featureGates),
 		});
 		this.props.provider.updateDocumentId(this._mainContainer.resolvedUrl);
 		this.mainDataStore = await requestFluidObject<TestDataObject>(this._mainContainer, "/");
@@ -211,7 +224,7 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 
 		const loader = this.props.provider.createLoader(
 			[[this.props.provider.defaultCodeDetails, this.runtimeFactory]],
-			{ logger: this.props.logger },
+			{ logger: this.props.logger, configProvider: configProvider(featureGates) },
 		);
 		const container2 = await loader.resolve(request);
 		return container2;
@@ -239,6 +252,7 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 				undefined,
 				undefined,
 				this.logger,
+				configProvider(featureGates),
 			);
 
 		const newSummaryVersion = await this.waitForSummary(summarizerClient);

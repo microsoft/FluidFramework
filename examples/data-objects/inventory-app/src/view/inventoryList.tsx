@@ -27,7 +27,7 @@ const schemaPolicy = {
 };
 
 export const MainView: React.FC<{ tree: ISharedTree }> = ({ tree }) => {
-	const root: RootField = useTree(tree, schemaPolicy);
+	const root: RootField = useTree(tree.view, schemaPolicy);
 	// TODO: value fields like `root` which always contain exactly one value should have a nicer API for accessing that child, like `.child`.
 	const inventory: Inventory = root[0];
 

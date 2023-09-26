@@ -4,6 +4,8 @@
  */
 
 export interface IRequestHeader {
+	// TODO: Use `unknown` instead (API-Breaking)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	[index: string]: any;
 }
 
@@ -15,7 +17,11 @@ export interface IRequest {
 export interface IResponse {
 	mimeType: string;
 	status: number;
+	// TODO: Use `unknown` instead (API-Breaking)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	value: any;
+	// TODO: Use `unknown` instead (API-Breaking)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	headers?: { [key: string]: any };
 	stack?: string;
 }

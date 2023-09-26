@@ -19,7 +19,7 @@ export const compareArrays = <T>(
 	comparator: (leftItem: T, rightItem: T, index: number) => boolean = (
 		leftItem: T,
 		rightItem: T,
-	) => Object.is(leftItem, rightItem),
+	): boolean => Object.is(leftItem, rightItem),
 ): boolean => {
 	// PERF: 'for-loop' and 'Array.every()' tied.
 	//       '===' and 'Object.is()' tied.

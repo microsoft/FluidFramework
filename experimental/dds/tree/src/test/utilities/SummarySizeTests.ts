@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IsoBuffer } from '@fluidframework/common-utils';
+import { IsoBuffer } from '@fluid-internal/client-utils';
 import { TestObjectProvider } from '@fluidframework/test-utils';
 import { expect } from 'chai';
 import { fail } from '../../Common';

@@ -69,7 +69,6 @@ export class FluidPackageCheck {
 
 	/**
 	 * Verify that all packages with 'test' scripts require the 'mocha-test-setup' package
-	 * and have --unhandled-rejections=strict flag so to failed test with unhandled rejection
 	 */
 	private static checkTestScripts(pkg: Package, fix: boolean) {
 		let fixed = false;

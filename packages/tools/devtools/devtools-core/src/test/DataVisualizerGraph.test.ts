@@ -9,14 +9,14 @@ import { SharedCell } from "@fluidframework/cell";
 import { SharedCounter } from "@fluidframework/counter";
 import { SharedMap } from "@fluidframework/map";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { IFluidLoadable } from "@fluidframework/core-interfaces";
+import { type IFluidLoadable } from "@fluidframework/core-interfaces";
 
 import {
 	createHandleNode,
 	defaultVisualizers,
 	DataVisualizerGraph,
-	FluidObjectTreeNode,
-	FluidObjectValueNode,
+	type FluidObjectTreeNode,
+	type FluidObjectValueNode,
 	VisualNodeKind,
 	defaultEditors,
 } from "../data-visualization";

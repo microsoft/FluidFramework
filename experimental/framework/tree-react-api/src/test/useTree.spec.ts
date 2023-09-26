@@ -21,7 +21,7 @@ describe("useTree()", () => {
 	function createLocalTree(id: string): ISharedTreeView {
 		const factory = new SharedTreeFactory();
 		const tree = factory.create(new MockFluidDataStoreRuntime(), id);
-		return tree;
+		return tree.view;
 	}
 
 	// Mock 'React.setState()'

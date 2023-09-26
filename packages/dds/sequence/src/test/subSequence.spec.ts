@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+/* eslint-disable @typescript-eslint/no-base-to-string */
+
+import { assert } from "@fluidframework/core-utils";
 import { Serializable } from "@fluidframework/datastore-definitions";
 import {
 	createInsertSegmentOp,

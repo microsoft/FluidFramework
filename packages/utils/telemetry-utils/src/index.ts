@@ -31,6 +31,7 @@ export {
 	LoggingError,
 	NORMALIZED_ERROR_TYPE,
 	normalizeError,
+	overwriteStack,
 	wrapError,
 	wrapErrorAndLog,
 } from "./errorLogging";
@@ -77,4 +78,5 @@ export {
 	ITelemetryLoggerExt,
 	ITaggedTelemetryPropertyTypeExt,
 	ITelemetryPropertiesExt,
+	TelemetryEventCategory,
 } from "./telemetryTypes";

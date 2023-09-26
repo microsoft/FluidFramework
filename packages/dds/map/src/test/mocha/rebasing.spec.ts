@@ -45,7 +45,7 @@ describe("Rebasing", () => {
 				containerRuntime1 =
 					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 				const services1 = {
-					deltaConnection: containerRuntime1.createDeltaConnection(),
+					deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 					objectStorage: new MockStorage(),
 				};
 				map1 = new SharedMap("shared-map-1", dataStoreRuntime1, MapFactory.Attributes);
@@ -55,7 +55,7 @@ describe("Rebasing", () => {
 				containerRuntime2 =
 					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 				const services2 = {
-					deltaConnection: containerRuntime2.createDeltaConnection(),
+					deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 					objectStorage: new MockStorage(),
 				};
 				map2 = new SharedMap("shared-map-2", dataStoreRuntime2, MapFactory.Attributes);
@@ -107,7 +107,7 @@ describe("Rebasing", () => {
 				containerRuntime1 =
 					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 				const services1 = {
-					deltaConnection: containerRuntime1.createDeltaConnection(),
+					deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 					objectStorage: new MockStorage(),
 				};
 				dir1 = new SharedDirectory(
@@ -122,7 +122,7 @@ describe("Rebasing", () => {
 				containerRuntime2 =
 					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 				const services2 = {
-					deltaConnection: containerRuntime2.createDeltaConnection(),
+					deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 					objectStorage: new MockStorage(),
 				};
 				dir2 = new SharedDirectory(

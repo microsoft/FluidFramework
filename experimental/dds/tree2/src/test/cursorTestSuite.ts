@@ -30,31 +30,33 @@ import { brand } from "../util";
 import { expectEqualFieldPaths, expectEqualPaths } from "./utils";
 
 const schemaBuilder = new SchemaBuilder("Cursor Test Suite");
-const leaf = schemaBuilder.leaf("Leaf", ValueSchema.Serializable);
+const leafString = schemaBuilder.leaf("string", ValueSchema.String);
+const leafBoolean = schemaBuilder.leaf("boolean", ValueSchema.Boolean);
+const leafNumber = schemaBuilder.leaf("number", ValueSchema.Number);
 export const emptySchema = schemaBuilder.struct("Empty Struct", {});
 const emptySchema2 = schemaBuilder.struct("Empty Struct 2", {});
 const emptySchema3 = schemaBuilder.struct("Empty Struct 3", {});
 export const mapSchema = schemaBuilder.map("Map", SchemaBuilder.fieldSequence(Any));
 // Struct with fixed shape
 export const structSchema = schemaBuilder.struct("struct", {
-	child: SchemaBuilder.fieldValue(leaf),
+	child: SchemaBuilder.fieldValue(leafNumber),
 });
 
 export const testTreeSchema = schemaBuilder.intoDocumentSchema(SchemaBuilder.fieldSequence(Any));
 
 export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 	["minimal", { type: emptySchema.name }],
-	["true boolean", { type: leaf.name, value: true }],
-	["false boolean", { type: leaf.name, value: false }],
-	["integer", { type: leaf.name, value: Number.MIN_SAFE_INTEGER - 1 }],
-	["string", { type: leaf.name, value: "test" }],
-	["string with escaped characters", { type: leaf.name, value: '\\"\b\f\n\r\t' }],
-	["string with emoticon", { type: leaf.name, value: "😀" }],
+	["true boolean", { type: leafBoolean.name, value: true }],
+	["false boolean", { type: leafBoolean.name, value: false }],
+	["integer", { type: leafNumber.name, value: Number.MIN_SAFE_INTEGER - 1 }],
+	["string", { type: leafString.name, value: "test" }],
+	["string with escaped characters", { type: leafString.name, value: '\\"\b\f\n\r\t' }],
+	["string with emoticon", { type: leafString.name, value: "😀" }],
 	[
 		"field",
 		{
 			type: mapSchema.name,
-			fields: { x: [{ type: emptySchema.name }, { type: leaf.name, value: 6 }] },
+			fields: { x: [{ type: emptySchema.name }, { type: leafNumber.name, value: 6 }] },
 		},
 	],
 	[
@@ -91,7 +93,7 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 					{
 						type: mapSchema.name,
 						fields: {
-							c: [{ type: leaf.name, value: 6 }],
+							c: [{ type: leafNumber.name, value: 6 }],
 						},
 					},
 				],
@@ -122,7 +124,7 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 			fields: {
 				child: [
 					{
-						type: leaf.name,
+						type: leafNumber.name,
 						value: 1,
 					},
 				],
@@ -141,7 +143,7 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 						fields: {
 							child: [
 								{
-									type: leaf.name,
+									type: leafNumber.name,
 									value: 1,
 								},
 							],
@@ -164,7 +166,7 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 					{ type: emptySchema3.name },
 					{ type: emptySchema3.name },
 					{ type: emptySchema3.name },
-					{ type: leaf.name, value: 1 },
+					{ type: leafNumber.name, value: 1 },
 					{ type: emptySchema3.name },
 				],
 			},
@@ -510,7 +512,7 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 				it("first node in a root field", () => {
 					const cursor = factory({
 						type: mapSchema.name,
-						fields: { key: [{ type: leaf.name, value: 0 }] },
+						fields: { key: [{ type: leafNumber.name, value: 0 }] },
 					});
 					cursor.enterField(brand("key"));
 					cursor.firstNode();
@@ -526,8 +528,8 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 						type: mapSchema.name,
 						fields: {
 							key: [
-								{ type: leaf.name, value: 0 },
-								{ type: leaf.name, value: 1 },
+								{ type: leafNumber.name, value: 0 },
+								{ type: leafNumber.name, value: 1 },
 							],
 						},
 					});

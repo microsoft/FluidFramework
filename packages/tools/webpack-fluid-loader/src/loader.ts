@@ -5,7 +5,7 @@
 
 import sillyname from "sillyname";
 import { v4 as uuid } from "uuid";
-import { assert, Deferred } from "@fluidframework/common-utils";
+import { assert, Deferred } from "@fluidframework/core-utils";
 import {
 	AttachState,
 	IFluidCodeResolver,
@@ -60,6 +60,7 @@ export interface IDockerRouteOptions extends IBaseRouteOptions {
 	tenantSecret?: string;
 	bearerSecret?: string;
 	enableWholeSummaryUpload?: boolean;
+	isEphemeralContainer?: boolean;
 }
 
 export interface IRouterliciousRouteOptions extends IBaseRouteOptions {
@@ -70,6 +71,7 @@ export interface IRouterliciousRouteOptions extends IBaseRouteOptions {
 	tenantSecret?: string;
 	bearerSecret?: string;
 	enableWholeSummaryUpload?: boolean;
+	isEphemeralContainer?: boolean;
 }
 
 export interface ITinyliciousRouteOptions extends IBaseRouteOptions {

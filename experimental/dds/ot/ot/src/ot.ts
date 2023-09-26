@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, bufferToString } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
+import { bufferToString } from "@fluid-internal/client-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	IChannelAttributes,

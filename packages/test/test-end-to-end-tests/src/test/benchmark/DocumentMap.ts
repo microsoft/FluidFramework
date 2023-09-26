@@ -15,7 +15,12 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+	ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils";
+
 import {
 	CompressionAlgorithms,
 	ContainerRuntime,
@@ -33,6 +38,15 @@ import {
 	IDocumentProps,
 	ISummarizeResult,
 } from "./DocumentCreator.js";
+
+const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+	getRawConfig: (name: string): ConfigTypes => settings[name],
+});
+
+const featureGates = {
+	"Fluid.Driver.Odsp.TestOverride.DisableSnapshotCache": true,
+};
+
 const defaultDataStoreId = "default";
 const mapId = "mapId";
 const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
@@ -190,7 +204,7 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 	public async initializeDocument() {
 		const loader = this.props.provider.createLoader(
 			[[this.props.provider.defaultCodeDetails, this.runtimeFactory]],
-			{ logger: this.props.logger },
+			{ logger: this.props.logger, configProvider: configProvider(featureGates) },
 		);
 		this._mainContainer = await loader.createDetachedContainer(
 			this.props.provider.defaultCodeDetails,
@@ -223,7 +237,7 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 		};
 		const loader = this.props.provider.createLoader(
 			[[this.props.provider.defaultCodeDetails, this.runtimeFactory]],
-			{ logger: this.props.logger },
+			{ logger: this.props.logger, configProvider: configProvider(featureGates) },
 		);
 		const container2 = await loader.resolve(request);
 
@@ -260,6 +274,7 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 					undefined,
 					undefined,
 					this.logger,
+					configProvider(featureGates),
 				);
 
 			const newSummaryVersion = await this.waitForSummary(summarizerClient);
@@ -272,8 +287,8 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 				summarizer: summarizerClient,
 				summaryVersion: newSummaryVersion,
 			};
-		} catch (_error: any) {
-			throw new Error(`Error Summarizing`);
+		} catch (error: any) {
+			throw new Error(`Error Summarizing ${error}`);
 		}
 	}
 }

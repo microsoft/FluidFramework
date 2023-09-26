@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { fromBase64ToUtf8 } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
 	IContainerPackageInfo,

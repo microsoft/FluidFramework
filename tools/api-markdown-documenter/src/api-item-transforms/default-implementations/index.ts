@@ -7,7 +7,7 @@
  * Default {@link @microsoft/api-extractor-model#ApiItem} transformation implementations.
  */
 
-export { createSectionWithChildContent } from "./CreateSectionWithChildContent";
+export { createDefaultLayout } from "./CreateDefaultLayout";
 export { transformApiClass } from "./TransformApiClass";
 export { transformApiEntryPoint } from "./TransformApiEntryPoint";
 export { transformApiEnum } from "./TransformApiEnum";

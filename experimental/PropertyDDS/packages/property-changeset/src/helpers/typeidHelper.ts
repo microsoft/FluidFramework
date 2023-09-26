@@ -96,7 +96,7 @@ export namespace TypeIdHelper {
 	 */
 	export function extractContext(in_typeid: string | undefined): ExtractedContext {
 		const bracketIndex = in_typeid.indexOf("<");
-		if (bracketIndex !== -1 && in_typeid[in_typeid.length - 1] === ">") {
+		if (bracketIndex !== -1 && in_typeid.endsWith(">")) {
 			let typeid = in_typeid.substr(bracketIndex + 1, in_typeid.length - bracketIndex - 2);
 			let context = in_typeid.substr(0, bracketIndex);
 

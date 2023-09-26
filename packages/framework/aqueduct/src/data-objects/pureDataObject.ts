@@ -4,7 +4,8 @@
  */
 
 import type { EventEmitter } from "events";
-import { assert, EventForwarder } from "@fluidframework/common-utils";
+import { EventForwarder } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	IEvent,
 	IEventProvider,

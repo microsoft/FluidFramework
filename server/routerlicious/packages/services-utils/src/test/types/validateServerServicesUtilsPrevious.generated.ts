@@ -156,6 +156,7 @@ declare function get_current_InterfaceDeclaration_IWinstonConfig():
 declare function use_old_InterfaceDeclaration_IWinstonConfig(
     use: TypeOnly<old.IWinstonConfig>);
 use_old_InterfaceDeclaration_IWinstonConfig(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IWinstonConfig());
 
 /*

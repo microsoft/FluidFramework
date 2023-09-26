@@ -8,13 +8,10 @@
  *
  * @remarks Any given {@link DocumentationNode} implementation will specify a unique value as
  * its {@link DocumentationNode."type"}.
+ *
+ * @public
  */
 export enum DocumentationNodeType {
-	/**
-	 * See {@link AlertNode}
-	 */
-	Alert = "Alert",
-
 	/**
 	 * See {@link BlockQuoteNode}
 	 */

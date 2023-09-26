@@ -17,7 +17,7 @@ const {
 const { DeterministicRandomGenerator } = require("@fluid-experimental/property-common");
 const _ = require("lodash");
 const { PropertyFactory } = require("@fluid-experimental/property-properties");
-const { assert } = require("@fluidframework/common-utils");
+const { assert } = require("@fluidframework/core-utils");
 const { SharedPropertyTree } = require("@fluid-experimental/property-dds");
 const createMhs = require("../utils/create_mhs");
 const { generateGUID } = require("@fluid-experimental/property-common").GuidUtils;

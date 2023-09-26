@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
+import { fromUtf8ToBase64 } from "@fluid-internal/client-utils";
 import * as git from "@fluidframework/gitresources";
 import {
 	IWholeSummaryPayload,
@@ -65,7 +65,7 @@ export class Historian implements IHistorian {
 	): Promise<IR11sResponse<git.ICommitDetails[]>> {
 		return this.restWrapper
 			.get<git.ICommitDetails[]>(`/commits`, this.getQueryString({ count, sha }))
-			.catch((error) =>
+			.catch(async (error) =>
 				error.statusCode === 400 || error.statusCode === 404
 					? {
 							content: [],

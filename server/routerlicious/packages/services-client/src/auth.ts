@@ -12,7 +12,7 @@ import { NetworkError } from "./error";
 /**
  * Validates a JWT token to authorize routerlicious.
  * Throws NetworkError if claims are invalid.
- * @returns - decoded claims.
+ * @returns The decoded claims.
  */
 export function validateTokenClaims(
 	token: string,

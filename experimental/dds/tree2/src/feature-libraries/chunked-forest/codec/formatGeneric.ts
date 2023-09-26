@@ -37,7 +37,7 @@ export const unionOptions: ObjectOptions = {
 
 const EncodedChunkBase = Type.Object(
 	{
-		version: Type.String(),
+		version: Type.Number(),
 		identifiers: Type.Array(Type.String()),
 		// TreeValues mixed with indexes into "shapes" and occasional lengths (for specific shapes that require them).
 		data: Type.Array(Type.Any()),
@@ -51,7 +51,7 @@ const EncodedChunkBase = Type.Object(
  * @param shape - schema for union of shape format, see {@link DiscriminatedUnionDispatcher}.
  */
 export const EncodedChunkGeneric = <TShapeSchema extends TSchema>(
-	version: string,
+	version: number,
 	shape: TShapeSchema,
 ) =>
 	Type.Composite(

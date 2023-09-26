@@ -6,7 +6,7 @@
 
 import { DataCorruptionError } from '@fluidframework/telemetry-utils';
 import { DataProcessingError } from '@fluidframework/telemetry-utils';
-import { EventForwarder } from '@fluidframework/common-utils';
+import { EventForwarder } from '@fluid-internal/client-utils';
 import { extractSafePropertiesFromMessage } from '@fluidframework/telemetry-utils';
 import { GenericError } from '@fluidframework/telemetry-utils';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';

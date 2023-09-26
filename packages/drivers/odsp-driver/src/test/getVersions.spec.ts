@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { IOdspResolvedUrl, ICacheEntry } from "@fluidframework/odsp-driver-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { delay } from "@fluidframework/common-utils";
+import { delay } from "@fluidframework/core-utils";
 import { EpochTracker, defaultCacheExpiryTimeoutMs } from "../epochTracker";
 import {
 	IOdspSnapshot,

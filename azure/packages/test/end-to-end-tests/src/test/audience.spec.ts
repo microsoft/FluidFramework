@@ -10,6 +10,7 @@ import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
+import { ConnectionState } from "@fluidframework/container-loader";
 import { createAzureClient } from "./AzureClientFactory";
 import { waitForMember } from "./utils";
 
@@ -36,10 +37,12 @@ describe("Fluid audience", () => {
 		const { container, services } = await client.createContainer(schema);
 		const containerId = await container.attach();
 
-		await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-			durationMs: connectTimeoutMs,
-			errorMsg: "container connect() timeout",
-		});
+		if (container.connectionState !== ConnectionState.Connected) {
+			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+				durationMs: connectTimeoutMs,
+				errorMsg: "container connect() timeout",
+			});
+		}
 
 		assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
 		assert.strictEqual(
@@ -66,10 +69,12 @@ describe("Fluid audience", () => {
 		const { container, services } = await client.createContainer(schema);
 		const containerId = await container.attach();
 
-		await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-			durationMs: connectTimeoutMs,
-			errorMsg: "container connect() timeout",
-		});
+		if (container.connectionState !== ConnectionState.Connected) {
+			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+				durationMs: connectTimeoutMs,
+				errorMsg: "container connect() timeout",
+			});
+		}
 
 		assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
 		assert.strictEqual(
@@ -109,10 +114,12 @@ describe("Fluid audience", () => {
 		const { container } = await client.createContainer(schema);
 		const containerId = await container.attach();
 
-		await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-			durationMs: connectTimeoutMs,
-			errorMsg: "container connect() timeout",
-		});
+		if (container.connectionState !== ConnectionState.Connected) {
+			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+				durationMs: connectTimeoutMs,
+				errorMsg: "container connect() timeout",
+			});
+		}
 
 		const client2 = createAzureClient("test-user-id-2", "test-user-name-2");
 		const { services: servicesGet } = await client2.getContainer(containerId, schema);

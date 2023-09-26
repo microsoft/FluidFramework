@@ -6,6 +6,7 @@ import child_process from "child_process";
 import commander from "commander";
 import {
 	AzureClient,
+	// eslint-disable-next-line import/no-deprecated
 	AzureFunctionTokenProvider,
 	AzureLocalConnectionConfig,
 	AzureRemoteConnectionConfig,
@@ -63,7 +64,9 @@ export function createAzureTokenProvider(
 	fnUrl: string,
 	userID?: string,
 	userName?: string,
+	// eslint-disable-next-line import/no-deprecated
 ): AzureFunctionTokenProvider {
+	// eslint-disable-next-line import/no-deprecated
 	return new AzureFunctionTokenProvider(`${fnUrl}/api/GetFrsToken`, {
 		userId: userID ?? "foo",
 		userName: userName ?? "bar",
@@ -91,7 +94,7 @@ export function getAzureClientConnectionConfigFromEnv(): AzureClientConnectionCo
 		region: process.env.azure__fluid__relay__service__region,
 	};
 	const type =
-		partialConfig.tenantId && (partialConfig.key || partialConfig.functionUrl)
+		partialConfig.tenantId && (partialConfig.key ?? partialConfig.functionUrl)
 			? "remote"
 			: "local";
 	const useSecureTokenProvider = partialConfig.functionUrl !== undefined && !partialConfig.key;

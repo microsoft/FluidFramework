@@ -109,11 +109,10 @@ export function extend<T>(
 				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 				delete base[key];
 			} else {
-				if (combiningOp && combiningOp.name !== "rewrite") {
-					base[key] = combine(combiningOp, base[key], v, seq);
-				} else {
-					base[key] = v;
-				}
+				base[key] =
+					combiningOp && combiningOp.name !== "rewrite"
+						? combine(combiningOp, base[key], v, seq)
+						: v;
 			}
 		}
 	}

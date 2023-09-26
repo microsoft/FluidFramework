@@ -47,13 +47,13 @@ function assertMapsAreEquivalent(a: ISharedMap, b: ISharedMap) {
 	}
 }
 
-const reducer = combineReducers<Operation, DDSFuzzTestState<MapFactory>>({
-	clear: ({ channel }) => channel.clear(),
-	setKey: ({ channel }, { key, value }) => {
-		channel.set(key, value);
+const reducer = combineReducers<Operation, State>({
+	clear: ({ client }) => client.channel.clear(),
+	setKey: ({ client }, { key, value }) => {
+		client.channel.set(key, value);
 	},
-	deleteKey: ({ channel }, { key }) => {
-		channel.delete(key);
+	deleteKey: ({ client }, { key }) => {
+		client.channel.delete(key);
 	},
 });
 

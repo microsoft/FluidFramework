@@ -4,7 +4,7 @@
  */
 
 import React from "react";
-import { IMessageRelay } from "@fluid-experimental/devtools-core";
+import { type IMessageRelay } from "@fluid-experimental/devtools-core";
 
 /**
  * Context for accessing a shared {@link @fluid-experimental/devtools-core#IMessageRelay} for communicating with the webpage.

@@ -93,4 +93,29 @@ export class ClientManager<TData = unknown> {
 			taskListClients.delete(client);
 		}
 	}
+
+	/**
+	 * De-registers the provided subscriber URL from future notifications for all existing tasks it is subscribed to.
+	 * @returns A list of task list ID's that no longer have any client sessions mapped to them.
+	 */
+	public removeAllClientTaskListRegistrations(client: ClientSessionUrl): string[] {
+		const clientTaskListIds = this._clientMapping.get(client);
+		const emptyTaskListRegistrationIds: string[] = [];
+		if (clientTaskListIds !== undefined) {
+			for (const taskListId of clientTaskListIds) {
+				const taskListClients = this._taskListMapping.get(taskListId);
+				// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
+				if (taskListClients !== undefined && taskListClients.has(client)) {
+					taskListClients.delete(client);
+					if (taskListClients.size === 0) {
+						emptyTaskListRegistrationIds.push(taskListId);
+						this._taskListMapping.delete(taskListId);
+					}
+				}
+			}
+			clientTaskListIds.clear();
+		}
+
+		return emptyTaskListRegistrationIds;
+	}
 }

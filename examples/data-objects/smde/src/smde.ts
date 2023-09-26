@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	IFluidLoadable,
 	IFluidRouter,

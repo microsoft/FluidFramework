@@ -22,6 +22,7 @@ export class ReplayUrlResolver implements IUrlResolver {
 
 	public async resolve(request: IRequest): Promise<IResolvedUrl> {
 		if (!this.cache.has(request.url)) {
+			// eslint-disable-next-line @typescript-eslint/no-base-to-string
 			throw new Error(`ContainerUrlResolver can't resolve ${request}`);
 		}
 		return this.cache.get(request.url);

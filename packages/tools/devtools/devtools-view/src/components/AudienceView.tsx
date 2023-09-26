@@ -8,11 +8,11 @@ import {
 	AudienceSummary,
 	GetAudienceSummary,
 	handleIncomingMessage,
-	HasContainerKey,
-	IDevtoolsMessage,
-	InboundHandlers,
+	type HasContainerKey,
+	type IDevtoolsMessage,
+	type InboundHandlers,
 } from "@fluid-experimental/devtools-core";
-import { IClient } from "@fluidframework/protocol-definitions";
+import { type IClient } from "@fluidframework/protocol-definitions";
 import { useMessageRelay } from "../MessageRelayContext";
 import { AudienceStateTable } from "./AudienceStateTable";
 import { AudienceHistoryTable } from "./AudienceHistoryTable";

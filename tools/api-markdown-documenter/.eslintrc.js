@@ -21,6 +21,17 @@ module.exports = {
 			},
 		],
 
+		// Useful for developer accessibility
+		"unicorn/prevent-abbreviations": [
+			"error",
+			{
+				allowList: {
+					// Industry-standard index variable name.
+					i: true,
+				},
+			},
+		],
+
 		"unicorn/prefer-module": "off",
 		"unicorn/prefer-negative-index": "off",
 		"unicorn/no-array-push-push": "off",

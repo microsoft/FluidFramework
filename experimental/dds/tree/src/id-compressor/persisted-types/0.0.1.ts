@@ -150,8 +150,10 @@ export interface SerializedIdCompressorWithOngoingSession extends SerializedIdCo
  * A range is composed of local IDs that were generated. Some of these may have overrides.
  *
  * @example
+ *
  * Suppose an IdCompressor generated a sequence of local IDs as follows:
- * ```
+ *
+ * ```typescripot
  * compressor.generateLocalId()
  * compressor.generateLocalId('0093cf29-9454-4034-8940-33b1077b41c3')
  * compressor.generateLocalId()
@@ -160,8 +162,10 @@ export interface SerializedIdCompressorWithOngoingSession extends SerializedIdCo
  * compressor.generateLocalId()
  * compressor.takeNextCreationRange()
  * ```
+ *
  * This would result in the following range:
- * ```
+ *
+ * ```typescript
  * {
  *     first: localId1,
  *     last: localId6,

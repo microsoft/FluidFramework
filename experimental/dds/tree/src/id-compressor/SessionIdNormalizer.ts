@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/restrict-plus-operands */
 
-import { assert } from '@fluidframework/common-utils';
+import { assert } from '@fluidframework/core-utils';
 import { compareFiniteNumbers, compareFiniteNumbersReversed, fail, Mutable } from '../Common';
 import { FinalCompressedId, LocalCompressedId, SessionSpaceCompressedId } from '../Identifiers';
 import { AppendOnlyDoublySortedMap } from './AppendOnlySortedMap';

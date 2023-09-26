@@ -4,7 +4,7 @@
  */
 
 import { TAnySchema } from "@sinclair/typebox";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { FieldKey, FieldKindIdentifier } from "../../core";
 import { brand, fail, JsonCompatibleReadOnly, Mutable } from "../../util";
 import {

@@ -47,7 +47,7 @@ describe("SharedString", () => {
 			dataStoreRuntime1.local = true;
 		});
 
-		// Creates a new SharedString and loads it from the passed snaphost tree.
+		// Creates a new SharedString and loads it from the passed snapshot tree.
 		async function CreateStringAndCompare(summaryTree: ISummaryTree): Promise<void> {
 			const services: IChannelServices = {
 				deltaConnection: new MockEmptyDeltaConnection(),
@@ -203,7 +203,7 @@ describe("SharedString", () => {
 			assert.equal(
 				simpleMarker?.properties?.markerSimpleType,
 				"markerKeyValue",
-				"markerSimpleType is incorrrect",
+				"markerSimpleType is incorrect",
 			);
 
 			// Insert a tile marker.
@@ -385,7 +385,7 @@ describe("SharedString", () => {
 			const containerRuntime2 =
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 			const services2: IChannelServices = {
-				deltaConnection: containerRuntime2.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 				objectStorage: MockStorage.createFromSummary(
 					sharedString.getAttachSummary().summary,
 				),
@@ -403,7 +403,7 @@ describe("SharedString", () => {
 			const containerRuntime1 =
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1 = {
-				deltaConnection: containerRuntime1.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(undefined),
 			};
 			sharedString.connect(services1);
@@ -452,7 +452,7 @@ describe("SharedString", () => {
 			const containerRuntime1 =
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1 = {
-				deltaConnection: containerRuntime1.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 			sharedString.initializeLocal();
@@ -463,7 +463,7 @@ describe("SharedString", () => {
 			const containerRuntime2 =
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 			const services2 = {
-				deltaConnection: containerRuntime2.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 
@@ -563,7 +563,7 @@ describe("SharedString", () => {
 				);
 			}
 
-			// Annote the properties.
+			// Annotate the properties.
 			const colorProps = { color: "green" };
 			sharedString.annotateRange(6, text.length, colorProps);
 
@@ -596,12 +596,12 @@ describe("SharedString", () => {
 				assert.equal(
 					marker.properties.markerSimpleType,
 					simpleKey,
-					"markerSimpleType is incorrrect",
+					"markerSimpleType is incorrect",
 				);
 				assert.equal(
 					marker.properties.referenceTileLabels[0],
 					label,
-					"markerSimpleType is incorrrect",
+					"markerSimpleType is incorrect",
 				);
 			};
 
@@ -670,7 +670,7 @@ describe("SharedString", () => {
 			// Connect the first SharedString.
 			containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1: IChannelServices = {
-				deltaConnection: containerRuntime1.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 			sharedString.initializeLocal();
@@ -685,7 +685,7 @@ describe("SharedString", () => {
 				SharedStringFactory.Attributes,
 			);
 			const services2: IChannelServices = {
-				deltaConnection: containerRuntime2.createDeltaConnection(),
+				deltaConnection: runtime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 			sharedString2.initializeLocal();

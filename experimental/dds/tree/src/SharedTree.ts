@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, bufferToString } from '@fluidframework/common-utils';
+import { assert } from '@fluidframework/core-utils';
+import { bufferToString } from '@fluid-internal/client-utils';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import {
 	IFluidDataStoreRuntime,
@@ -746,7 +747,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 
 	/**
 	 * Initialize shared tree with a serialized summary. This is used for testing.
-	 * @returns - statistics about the loaded summary.
+	 * @returns Statistics about the loaded summary.
 	 * @internal
 	 */
 	public loadSerializedSummary(blobData: string): ITelemetryProperties {

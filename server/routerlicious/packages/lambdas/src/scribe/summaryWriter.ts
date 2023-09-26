@@ -89,9 +89,10 @@ export class SummaryWriter implements ISummaryWriter {
 		lastSummaryHead: string | undefined,
 		checkpoint: IScribe,
 		pendingOps: ISequencedOperationMessage[],
+		isEphemeralContainer?: boolean,
 	): Promise<ISummaryWriteResponse> {
 		const clientSummaryMetric = Lumberjack.newLumberMetric(LumberEventName.ClientSummary);
-		this.setSummaryProperties(clientSummaryMetric, op);
+		this.setSummaryProperties(clientSummaryMetric, op, isEphemeralContainer);
 		const content = JSON.parse(op.contents as string) as ISummaryContent;
 		try {
 			// The summary must reference the existing summary to be valid. This guards against accidental sends of
@@ -395,9 +396,10 @@ export class SummaryWriter implements ISummaryWriter {
 		currentProtocolHead: number,
 		checkpoint: IScribe,
 		pendingOps: ISequencedOperationMessage[],
+		isEphemeralContainer?: boolean,
 	): Promise<string | false> {
 		const serviceSummaryMetric = Lumberjack.newLumberMetric(LumberEventName.ServiceSummary);
-		this.setSummaryProperties(serviceSummaryMetric, op);
+		this.setSummaryProperties(serviceSummaryMetric, op, isEphemeralContainer);
 		try {
 			const existingRef = await requestWithRetry(
 				async () => this.summaryStorage.getRef(encodeURIComponent(this.documentId)),
@@ -571,12 +573,14 @@ export class SummaryWriter implements ISummaryWriter {
 	private setSummaryProperties(
 		summaryMetric: Lumber<LumberEventName.ClientSummary | LumberEventName.ServiceSummary>,
 		op: ISequencedDocumentAugmentedMessage,
+		isEphemeralContainer?: boolean,
 	) {
 		summaryMetric.setProperties(getLumberBaseProperties(this.documentId, this.tenantId));
 		summaryMetric.setProperties({
 			[CommonProperties.clientId]: op.clientId,
 			[CommonProperties.sequenceNumber]: op.sequenceNumber,
 			[CommonProperties.minSequenceNumber]: op.minimumSequenceNumber,
+			[CommonProperties.isEphemeralContainer]: isEphemeralContainer ?? false,
 		});
 	}
 

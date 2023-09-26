@@ -5,7 +5,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 import { deflate, inflate } from "pako";
 import { compress, decompress } from "lz4js";
-import { bufferToString, stringToBuffer } from "@fluidframework/common-utils";
+import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,

@@ -7,7 +7,7 @@ import {
 	FluidErrorTypes,
 	IGenericError,
 	IErrorBase,
-	ITelemetryProperties,
+	ITelemetryBaseProperties,
 	IUsageError,
 } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -23,6 +23,8 @@ import { IFluidErrorBase } from "./fluidErrorBase";
 
 /**
  * Generic wrapper for an unrecognized/uncategorized error object
+ *
+ * @internal
  */
 export class GenericError extends LoggingError implements IGenericError, IFluidErrorBase {
 	readonly errorType = FluidErrorTypes.genericError;
@@ -33,17 +35,23 @@ export class GenericError extends LoggingError implements IGenericError, IFluidE
 	 * @param error - inner error object
 	 * @param props - Telemetry props to include when the error is logged
 	 */
-	constructor(message: string, readonly error?: any, props?: ITelemetryProperties) {
+	// TODO: Use `unknown` instead (API breaking change because error is not just an input parameter, but a public member of the class)
+	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
+	constructor(message: string, public readonly error?: any, props?: ITelemetryBaseProperties) {
 		// Don't try to log the inner error
 		super(message, props, new Set(["error"]));
 	}
 }
 
-/** Error indicating an API is being used improperly resulting in an invalid operation. */
+/**
+ * Error indicating an API is being used improperly resulting in an invalid operation.
+ *
+ * @internal
+ */
 export class UsageError extends LoggingError implements IUsageError, IFluidErrorBase {
 	readonly errorType = FluidErrorTypes.usageError;
 
-	constructor(message: string, props?: ITelemetryProperties) {
+	constructor(message: string, props?: ITelemetryBaseProperties) {
 		super(message, { ...props, usageError: true });
 	}
 }
@@ -51,12 +59,14 @@ export class UsageError extends LoggingError implements IUsageError, IFluidError
 /**
  * DataCorruptionError indicates that we encountered definitive evidence that the data at rest
  * backing this container is corrupted, and this container would never be expected to load properly again
+ *
+ * @internal
  */
 export class DataCorruptionError extends LoggingError implements IErrorBase, IFluidErrorBase {
 	readonly errorType = FluidErrorTypes.dataCorruptionError;
 	readonly canRetry = false;
 
-	constructor(message: string, props: ITelemetryProperties) {
+	constructor(message: string, props: ITelemetryBaseProperties) {
 		super(message, { ...props, dataProcessingError: 1 });
 	}
 }
@@ -69,6 +79,8 @@ export class DataCorruptionError extends LoggingError implements IErrorBase, IFl
  * The error will often originate in the dataStore or DDS implementation that is responding to incoming changes.
  * This differs from {@link DataCorruptionError} in that this may be a transient error that will not repro in another
  * client or session.
+ *
+ * @internal
  */
 export class DataProcessingError extends LoggingError implements IErrorBase, IFluidErrorBase {
 	/**
@@ -78,8 +90,8 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
 
 	public readonly canRetry = false;
 
-	private constructor(errorMessage: string) {
-		super(errorMessage);
+	private constructor(errorMessage: string, props?: ITelemetryBaseProperties) {
+		super(errorMessage, props);
 	}
 
 	/**
@@ -89,8 +101,8 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
 		errorMessage: string,
 		dataProcessingCodepath: string,
 		sequencedMessage?: ISequencedDocumentMessage,
-		props: ITelemetryProperties = {},
-	) {
+		props: ITelemetryBaseProperties = {},
+	): IFluidErrorBase {
 		const dataProcessingError = DataProcessingError.wrapIfUnrecognized(
 			errorMessage,
 			dataProcessingCodepath,
@@ -181,7 +193,14 @@ export const extractSafePropertiesFromMessage = (
 			| "timestamp"
 		>
 	>,
-) => ({
+): {
+	messageClientId: string | undefined;
+	messageSequenceNumber: number | undefined;
+	messageClientSequenceNumber: number | undefined;
+	messageReferenceSequenceNumber: number | undefined;
+	messageMinimumSequenceNumber: number | undefined;
+	messageTimestamp: number | undefined;
+} => ({
 	messageClientId: messageLike.clientId === null ? "null" : messageLike.clientId,
 	messageSequenceNumber: messageLike.sequenceNumber,
 	messageClientSequenceNumber: messageLike.clientSequenceNumber,

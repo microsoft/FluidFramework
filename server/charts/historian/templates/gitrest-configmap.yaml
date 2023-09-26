@@ -58,5 +58,10 @@ data:
             "maxRetriesPerRequest": "{{ .Values.gitrest.redis.maxRetriesPerRequest }}",
             "enableAutoPipelining": "{{ .Values.gitrest.redis.enableAutoPipelining }}",
             "enableOfflineQueue": "{{ .Values.gitrest.redis.enableOfflineQueue }}"
+        },
+        "system": {
+            "httpServer": {
+                "connectionTimeoutMs": {{ .Values.gitrest.system.httpServer.connectionTimeoutMs }}
+            }
         }
     }

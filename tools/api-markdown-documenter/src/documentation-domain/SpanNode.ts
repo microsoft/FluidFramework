@@ -36,6 +36,8 @@ import { createNodesFromPlainText } from "./Utilities";
  * 	</i>
  * </span>
  * ```
+ *
+ * @public
  */
 export class SpanNode<
 	TDocumentationNode extends DocumentationNode = DocumentationNode,
@@ -73,6 +75,8 @@ export class SpanNode<
 
 /**
  * A {@link SpanNode} that contractually fits on a single line.
+ *
+ * @public
  */
 export class SingleLineSpanNode
 	extends SpanNode<SingleLineDocumentationNode>

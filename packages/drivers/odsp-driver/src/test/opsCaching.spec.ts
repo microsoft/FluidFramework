@@ -6,7 +6,7 @@ import { strict as assert } from "assert";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IStream } from "@fluidframework/driver-definitions";
-import { delay } from "@fluidframework/common-utils";
+import { delay } from "@fluidframework/core-utils";
 import { OdspDeltaStorageWithCache } from "../odspDeltaStorageService";
 import { OpsCache, ICache, IMessage, CacheEntry } from "../opsCaching";
 import { OdspDocumentStorageService } from "../odspDocumentStorageManager";
@@ -391,7 +391,7 @@ describe("OdspDeltaStorageWithCache", () => {
 		const storageOps = createOps(fromTotal + opsFromSnapshot + opsFromCache, opsFromStorage);
 
 		let totalOps = opsFromSnapshot + opsFromCache + (cacheOnly ? 0 : opsFromStorage);
-		const actualTo = toTotal === undefined ? fromTotal + totalOps : toTotal;
+		const actualTo = toTotal ?? fromTotal + totalOps;
 		assert(actualTo <= fromTotal + totalOps); // code will deadlock if that's not the case
 		const askingOps = actualTo - fromTotal;
 		totalOps = Math.min(totalOps, askingOps);

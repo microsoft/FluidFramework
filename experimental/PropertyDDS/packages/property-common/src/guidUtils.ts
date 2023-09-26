@@ -105,7 +105,7 @@ const isBase64 = (GUID: string): boolean => GUID.length === 22;
  *
  * @param a - unsigned int32 value
  * @param b - unsigned int32 value
- * @returns - result of unsigned integer multiplication
+ * @returns The result of the unsigned integer multiplication.
  */
 function multiply_uint32(a: number, b: number): number {
 	let n = a;

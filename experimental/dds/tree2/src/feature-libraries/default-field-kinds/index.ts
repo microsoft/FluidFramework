@@ -10,7 +10,6 @@ export {
 	Sequence,
 	NodeKeyFieldKind,
 	Forbidden,
-	FieldKindTypes,
 	fieldKinds,
 } from "./defaultFieldKinds";
 

@@ -7,7 +7,7 @@
 import { AsyncFluidObjectProvider } from '@fluidframework/synthesize';
 import { ContainerRuntime } from '@fluidframework/container-runtime';
 import type { EventEmitter } from 'events';
-import { EventForwarder } from '@fluidframework/common-utils';
+import { EventForwarder } from '@fluid-internal/client-utils';
 import { FluidDataStoreRuntime } from '@fluidframework/datastore';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { FluidObjectSymbolProvider } from '@fluidframework/synthesize';

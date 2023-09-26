@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { ISnapshotContents } from "./odspPublicUtils";
@@ -215,7 +215,7 @@ function readSnapshotSection(node: NodeTypes) {
 /**
  * Converts snapshot from binary compact representation to tree/blobs/ops.
  * @param buffer - Compact snapshot to be parsed into tree/blobs/ops.
- * @returns - tree, blobs and ops from the snapshot.
+ * @returns Tree, blobs and ops from the snapshot.
  */
 export function parseCompactSnapshotResponse(
 	buffer: Uint8Array,

@@ -80,13 +80,14 @@ export class BaseContainerRuntimeFactory
 			);
 			scope.IFluidDependencySynthesizer = dc;
 		}
+
 		return ContainerRuntime.loadRuntime({
 			context,
-			requestHandler: buildRuntimeRequestHandler(...this.requestHandlers),
 			existing,
 			runtimeOptions: this.runtimeOptions,
 			registryEntries: this.registryEntries,
 			containerScope: scope,
+			requestHandler: buildRuntimeRequestHandler(...this.requestHandlers),
 			initializeEntryPoint: this.initializeEntryPoint,
 		});
 	}

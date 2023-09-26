@@ -57,7 +57,7 @@ export function generateToken(
 	lifetime: number = 60 * 60,
 	ver: string = "1.0",
 ): string {
-	let userClaim = user ? user : generateUser();
+	let userClaim = user ?? generateUser();
 	if (userClaim.id === "" || userClaim.id === undefined) {
 		userClaim = generateUser();
 	}

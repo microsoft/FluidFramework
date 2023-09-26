@@ -53,5 +53,4 @@ export {
 	IsomorphicGitManagerFactory,
 	IsomorphicGitRepositoryManager,
 } from "./isomorphicgitManager";
-export { NodegitRepositoryManager, NodegitRepositoryManagerFactory } from "./nodegitManager";
 export { RedisFsConfig, RedisFsManager } from "./redisFs";

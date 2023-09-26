@@ -58,16 +58,20 @@ export interface OptionalChangeset {
 	fieldChange?: OptionalFieldChange;
 
 	/**
-	 * Changes to the node which were in the field before this changeset is applied, or the node deleted in this field in the given revision
-	 */
-	childChange?: NodeChangeset;
-
-	/**
-	 * The change that the node `childChange` is referring to was deleted by.
-	 * If undefined, `childChange` refers to the node currently in this field.
+	 * Changes to nodes which occupied this field prior to this changeset at some point.
 	 *
-	 * This representation is sufficient for representing changes to the node present before this changeset and
-	 * after this changeset, but not for changes to nodes that existed only transiently in a transaction.
+	 * `deletedBy` refers to the revision which deleted the node (via a `fieldChange`, replacing the contents of the field
+	 * and thus resetting any nested changes).
+	 * "self" is a sentinel value for the revision of the current changeset.
+	 * Thus, the childChange for "self" refers to:
+	 * - the node this changeset removes, if it involves a field change
+	 * - the node currently occupying this field, if it does not involve a field change
+	 *
+	 * @privateRemarks - Indexing by the revision which deleted the node rather than the one that inserted the node is necessary to support rebase.
+	 * Consider rebasing an OptionalChangeset with changes to the 'start' node over one which also has a fieldChange. This would require naming the
+	 * original base revision (as 'start' no longer semantically refers to the correct place).
+	 *
+	 * TODO: This isn't really `deletedBy` as it is so much `contentBefore`, i.e. similar semantics to how childChange worked before.
 	 */
-	deletedBy?: ChangeAtomId;
+	childChanges?: [deletedBy: ChangeAtomId | "self", childChange: NodeChangeset][];
 }

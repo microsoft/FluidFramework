@@ -6,6 +6,16 @@
 module.exports = {
 	preset: "ts-jest",
 	roots: ["<rootDir>/src"],
+	reporters: [
+		"default",
+		[
+			"jest-junit",
+			{
+				outputDirectory: "nyc",
+				outputName: "jest-junit-report.xml",
+			},
+		],
+	],
 	transform: {
 		"^.+\\.tsx?$": "ts-jest",
 	},

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { VisualNode, VisualNodeBase } from "@fluid-experimental/devtools-core";
-import { Serializable } from "@fluidframework/datastore-definitions";
+import { type VisualNode, type VisualNodeBase } from "@fluid-experimental/devtools-core";
+import { type Serializable } from "@fluidframework/datastore-definitions";
 
 /**
  * Base interface used in passing key of the child node from Record {@link VisualTree}.

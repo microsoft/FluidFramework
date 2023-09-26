@@ -17,7 +17,7 @@
 	},
 	"git": {
 		"lib": {
-			"name": "nodegit"
+			"name": "isomorphic-git"
 		},
 		"filesystem": {
 			"name": "nodeFs"
@@ -43,5 +43,10 @@
 		"maxRetriesPerRequest": 20,
 		"enableAutoPipelining": false,
 		"enableOfflineQueue": true
+	},
+	"system": {
+		"httpServer": {
+			"connectionTimeoutMs": 0
+		}
 	}
 }

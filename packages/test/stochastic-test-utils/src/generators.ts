@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { unreachableCase } from "@fluidframework/common-utils";
+import { unreachableCase } from "@fluidframework/core-utils";
 import {
 	AcceptanceCondition,
 	AsyncGenerator,
@@ -22,6 +22,7 @@ import {
  * chosen for a particular input state.
  *
  * @example
+ *
  * ```typescript
  * const modifyGenerator = ({ random, list }) => {
  *     return { type: "modify", index: random.integer(0, list.length - 1) };
@@ -172,6 +173,7 @@ export enum ExitBehavior {
  * provided, instead exits as soon as the next element it would produce is `done`.
  *
  * @example
+ *
  * ```typescript
  * // Assume gen1 produces 1, 2, 3, ... and gen2 produces "a", "b", "c", ...
  * interleave(gen1, gen2) // 1, a, 2, b, 3, c, ...
@@ -263,6 +265,7 @@ export function repeat<T, TState = void>(t: T): Generator<T, TState> {
  * chosen for a particular input state.
  *
  * @example
+ *
  * ```typescript
  * const modifyGenerator = async ({ random, list }) => {
  *     return { type: "modify", index: random.integer(0, list.length - 1) };

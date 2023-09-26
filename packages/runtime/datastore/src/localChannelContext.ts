@@ -15,9 +15,8 @@ import {
 	ISummarizeResult,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { assert } from "@fluidframework/common-utils";
+import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { Lazy, LazyPromise } from "@fluidframework/core-utils";
 import {
 	ChannelServiceEndpoints,
 	createChannelServiceEndpoints,

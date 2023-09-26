@@ -151,7 +151,7 @@ export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComp
 	 * Load the code module (package) that is capable to interact with the document.
 	 *
 	 * @param source - Code proposal that articulates the current schema the document is written in.
-	 * @returns - Code module entry point along with the code details associated with it.
+	 * @returns Code module entry point along with the code details associated with it.
 	 */
 	load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }

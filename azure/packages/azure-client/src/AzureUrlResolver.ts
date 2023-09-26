@@ -2,8 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IRequest } from "@fluidframework/core-interfaces";
-import { DriverHeader, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
+import { type IRequest } from "@fluidframework/core-interfaces";
+import {
+	DriverHeader,
+	type IResolvedUrl,
+	type IUrlResolver,
+} from "@fluidframework/driver-definitions";
 
 /**
  * Implementation of {@link @fluidframework/driver-definitions#IUrlResolver} to resolve documents stored using the
@@ -79,7 +83,7 @@ function decodeAzureUrl(urlString: string): {
 	const storageUrlDecoded = decodeURIComponent(storageUrl);
 	const tenantIdDecoded = decodeURIComponent(tenantId);
 	const containerId = searchParams.get("containerId");
-	const containerIdDecoded = containerId !== null ? decodeURIComponent(containerId) : undefined;
+	const containerIdDecoded = containerId === null ? undefined : decodeURIComponent(containerId);
 	return {
 		ordererUrl,
 		storageUrl: storageUrlDecoded,

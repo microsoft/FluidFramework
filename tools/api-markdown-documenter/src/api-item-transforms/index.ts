@@ -17,11 +17,11 @@ export {
 	getDefaultValueBlock,
 	getDeprecatedBlock,
 	getExampleBlocks,
-	getFilePathForApiItem,
 	getHeadingForApiItem,
 	getLinkForApiItem,
 	getModifiers,
 	getQualifiedApiItemName,
+	getReleaseTag,
 	getReturnsBlock,
 	getSeeBlocks,
 	getThrowsBlocks,
@@ -32,18 +32,16 @@ export {
 	isStatic,
 } from "./ApiItemUtilities";
 export {
-	ApiItemTransformationConfiguration,
-	ApiItemTransformationOptions,
-	CreateChildContentSections,
-	// Consumers should not use this, it exists externally for documentation purposes only.
+	type ApiItemTransformationConfiguration,
+	type ApiItemTransformationOptions,
 	type DefaultDocumentationSuiteOptions,
-	DocumentationSuiteOptions,
-	DocumentBoundaries,
+	type DocumentationSuiteOptions,
+	type DocumentBoundaries,
 	getApiItemTransformationConfigurationWithDefaults,
-	HierarchyBoundaries,
-	TransformApiItemWithChildren,
-	TransformApiItemWithoutChildren,
+	type HierarchyBoundaries,
+	type TransformApiItemWithChildren,
+	type TransformApiItemWithoutChildren,
 } from "./configuration";
-export { transformDocNode } from "./DocNodeTransforms";
+export { transformTsdocNode } from "./TsdocNodeTransforms";
 export { apiItemToDocument, apiItemToSections } from "./TransformApiItem";
 export { transformApiModel } from "./TransformApiModel";

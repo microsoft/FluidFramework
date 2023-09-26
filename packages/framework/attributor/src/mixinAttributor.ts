@@ -20,7 +20,8 @@ import {
 import { addSummarizeResultToSummary, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
-import { assert, bufferToString, unreachableCase } from "@fluidframework/common-utils";
+import { bufferToString } from "@fluid-internal/client-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	createChildLogger,
 	loggerToMonitoringContext,
@@ -69,12 +70,12 @@ export interface IRuntimeAttributor extends IProvideRuntimeAttributor {
 	get(key: AttributionKey): AttributionInfo;
 
 	/**
-	 * @returns - Whether any AttributionInfo exists for the provided key.
+	 * @returns Whether any AttributionInfo exists for the provided key.
 	 */
 	has(key: AttributionKey): boolean;
 
 	/**
-	 * @returns - Whether the runtime is currently tracking attribution information for the loaded container.
+	 * @returns Whether the runtime is currently tracking attribution information for the loaded container.
 	 * See {@link mixinAttributor} for more details on when this happens.
 	 */
 	readonly isEnabled: boolean;

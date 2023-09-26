@@ -83,7 +83,7 @@ It may either be empty or full.
 The contents of a (full) cell may be arbitrarily large or small (though a specific data model may constrain this in practice).
 
 > Note: the model does not prescribe for the cells to be explicitly reified.
-> While some cells may be represented at runtime some of the time, they are primarily a conceptual artefact.
+> While some cells may be represented at runtime some of the time, they are primarily a conceptual artifact.
 > An application would not have explicit access to the cell, and is likely not aware of the concept in the first place.
 
 A cell may be annotated with forwarding information that specifies a target destination cell.
@@ -204,7 +204,7 @@ The merge resolution logic can now exclude the possibility of having to merge op
 
 Since the merge resolution logic is specialized to each field kind, merge resolution logic becomes extensible: we can introduce new kind of fields with associated merge logic.
 This allows us to support new kinds of fields in the future, but more importantly it means that we can migrate from a less desirable set of merge semantics to a more desirable one.
-This dramatically reduces the negative impact of starting out with suboptimal the merge semantics in early SharedTree releases because we can implement better ones later on and offer them as new kinds of fields.
+This dramatically reduces the negative impact of starting out with suboptimal merge semantics in early SharedTree releases because we can implement better ones later on and offer them as new kinds of fields.
 
 ### Changeset Format
 

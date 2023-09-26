@@ -49,7 +49,7 @@ export interface StoredSchemaRepository extends Dependee, ISubscribable<SchemaEv
  * StoredSchemaRepository for in memory use:
  * not hooked up to Fluid (does not create Fluid ops when editing).
  */
-export class InMemoryStoredSchemaRepository<TPolicy = unknown>
+export class InMemoryStoredSchemaRepository
 	extends SimpleDependee
 	implements StoredSchemaRepository
 {
@@ -68,20 +68,13 @@ export class InMemoryStoredSchemaRepository<TPolicy = unknown>
 	 * Combined with support for such namespaces in the allowed sets in the schema objects,
 	 * that might provide a decent alternative to mapFields (which is a bit odd).
 	 */
-	public constructor(public readonly policy: TPolicy, data?: SchemaData) {
+	public constructor(data?: SchemaData) {
 		super("StoredSchemaRepository");
-		this.data = {
-			treeSchema: new Map(data?.treeSchema ?? []),
-			rootFieldSchema: data?.rootFieldSchema ?? storedEmptyFieldSchema,
-		};
+		this.data = cloneSchemaData(data ?? defaultSchemaData);
 	}
 
 	public on<K extends keyof SchemaEvents>(eventName: K, listener: SchemaEvents[K]): () => void {
 		return this.events.on(eventName, listener);
-	}
-
-	public clone(): InMemoryStoredSchemaRepository {
-		return new InMemoryStoredSchemaRepository(this.policy, this.data);
 	}
 
 	public get rootFieldSchema(): FieldStoredSchema {
@@ -106,11 +99,23 @@ export class InMemoryStoredSchemaRepository<TPolicy = unknown>
 	}
 }
 
-interface MutableSchemaData extends SchemaData {
+export interface MutableSchemaData extends SchemaData {
 	rootFieldSchema: FieldStoredSchema;
 	treeSchema: Map<TreeSchemaIdentifier, TreeStoredSchema>;
 }
 
 export function schemaDataIsEmpty(data: SchemaData): boolean {
 	return data.treeSchema.size === 0;
+}
+
+export const defaultSchemaData: SchemaData = {
+	treeSchema: new Map(),
+	rootFieldSchema: storedEmptyFieldSchema,
+};
+
+export function cloneSchemaData(data: SchemaData): MutableSchemaData {
+	return {
+		treeSchema: new Map(data?.treeSchema ?? []),
+		rootFieldSchema: data?.rootFieldSchema ?? storedEmptyFieldSchema,
+	};
 }

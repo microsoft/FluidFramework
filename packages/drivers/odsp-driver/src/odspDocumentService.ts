@@ -8,7 +8,7 @@ import {
 	createChildMonitoringContext,
 	MonitoringContext,
 } from "@fluidframework/telemetry-utils";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
@@ -257,7 +257,7 @@ export class OdspDocumentService implements IDocumentService {
 	 * This dynamically imports the module for loading the delta connection. In many cases the delta stream, is not
 	 * required during the critical load flow. So this way we don't have to bundle this in the initial bundle and can
 	 * import this later on when required.
-	 * @returns - delta stream object.
+	 * @returns The delta stream object.
 	 */
 	private async getDelayLoadedDeltaStream() {
 		assert(this.odspSocketModuleLoaded === false, 0x507 /* Should be loaded only once */);

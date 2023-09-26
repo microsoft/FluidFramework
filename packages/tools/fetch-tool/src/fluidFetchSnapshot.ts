@@ -6,7 +6,7 @@
 import fs from "fs";
 import util from "util";
 
-import { bufferToString, stringToBuffer } from "@fluidframework/common-utils";
+import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { IDocumentService, IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ISnapshotTree, IVersion } from "@fluidframework/protocol-definitions";
 

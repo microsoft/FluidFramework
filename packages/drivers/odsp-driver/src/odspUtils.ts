@@ -12,7 +12,8 @@ import {
 	NonRetryableError,
 	NetworkErrorBasic,
 } from "@fluidframework/driver-utils";
-import { assert, performance } from "@fluidframework/common-utils";
+import { performance } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	ITelemetryLoggerExt,
 	PerformanceEvent,
@@ -440,6 +441,7 @@ export function buildOdspShareLinkReqParams(
 	}
 	const scope = (shareLinkType as ISharingLinkKind).scope;
 	if (!scope) {
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		return `createLinkType=${shareLinkType}`;
 	}
 	let shareLinkRequestParams = `createLinkScope=${scope}`;

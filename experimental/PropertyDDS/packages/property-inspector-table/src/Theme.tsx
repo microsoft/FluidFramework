@@ -9,7 +9,6 @@ import { createTheme } from "@material-ui/core/styles";
 import { ToggleButtonClassKey } from "@material-ui/lab/ToggleButton";
 
 declare module "@material-ui/core/styles/overrides" {
-	// tslint:disable-next-line
 	interface ComponentNameToClassKey {
 		MuiToggleButton: ToggleButtonClassKey;
 	}

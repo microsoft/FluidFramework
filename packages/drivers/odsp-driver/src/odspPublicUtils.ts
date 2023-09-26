@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { hashFile, IsoBuffer } from "@fluidframework/common-utils";
+import { hashFile, IsoBuffer } from "@fluid-internal/client-utils";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 
 export async function getHashedDocumentId(driveId: string, itemId: string): Promise<string> {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/common-utils";
+import { unreachableCase } from "@fluidframework/core-utils";
 import { Mark, MarkType, Root, Skip } from "./delta";
 
 export const emptyDelta: Root<never> = new Map();

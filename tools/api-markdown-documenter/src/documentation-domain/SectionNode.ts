@@ -32,6 +32,8 @@ import { HeadingNode } from "./HeadingNode";
  * 	Section contents...
  * </section>
  * ```
+ *
+ * @public
  */
 export class SectionNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {
 	/**

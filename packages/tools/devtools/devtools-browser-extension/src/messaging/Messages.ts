@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISourcedDevtoolsMessage } from "@fluid-experimental/devtools-core";
+import { type ISourcedDevtoolsMessage } from "@fluid-experimental/devtools-core";
 
 /**
  * {@link DevToolsInitMessage} {@link @fluid-experimental/devtools-core#ISourcedDevtoolsMessage."type"}

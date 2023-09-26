@@ -18,9 +18,7 @@ import { appSchemaData, ClientsField } from "./schema";
 const treeKey = "treeKey";
 
 export class Bubblebench extends DataObject {
-	public static get Name() {
-		return "@fluid-example/bubblebench-sharedtree";
-	}
+	public static readonly Name = "@fluid-example/bubblebench-sharedtree";
 
 	private view: ISharedTreeView | undefined;
 	private _appState: AppState | undefined;

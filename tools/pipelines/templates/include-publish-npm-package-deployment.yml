@@ -7,8 +7,8 @@ parameters:
 - name: namespace
   type: boolean
 
-- name: official
-  type: boolean
+- name: feedKind
+  type: string
 
 - name: feedName
   type: string
@@ -63,7 +63,7 @@ jobs:
               devFeedName: ${{ parameters.devFeedName }}
               feedName: ${{ parameters.feedName }}
               customEndPoint: ${{ parameters.customEndPoint }}
-              official: ${{ parameters.official }}
+              feedKind: ${{ parameters.feedKind }}
               publishFlags: ${{ parameters.publishFlags }}
           - ${{ if eq(parameters.publishNonScopedPackages, true) }}:
             - template: include-publish-npm-package-steps.yml
@@ -72,7 +72,7 @@ jobs:
                 artifactPath: non-scoped
                 devFeedName: ${{ parameters.devFeedName }}
                 feedName: ${{ parameters.feedName }}
-                official: ${{ parameters.official }}
+                feedKind: ${{ parameters.feedKind }}
                 customEndPoint: ${{ parameters.customEndPoint }}
                 publishFlags: ${{ parameters.publishFlags }}
           - template: include-git-tag-steps.yml

@@ -4,7 +4,7 @@
  */
 import { strict as assert } from "assert";
 import { IEvent } from "@fluidframework/core-interfaces";
-import { IsoBuffer, TypedEventEmitter } from "@fluidframework/common-utils";
+import { IsoBuffer, TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IChannelAttributes, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/protocol-definitions";
 import {
@@ -230,8 +230,9 @@ describe("SharedTreeCore", () => {
 		const runtime = new MockFluidDataStoreRuntime();
 		const tree = new TestSharedTreeCore(runtime);
 		const factory = new MockContainerRuntimeFactory();
+		factory.createContainerRuntime(runtime);
 		tree.connect({
-			deltaConnection: factory.createContainerRuntime(runtime).createDeltaConnection(),
+			deltaConnection: runtime.createDeltaConnection(),
 			objectStorage: new MockStorage(),
 		});
 
@@ -255,8 +256,9 @@ describe("SharedTreeCore", () => {
 		const runtime = new MockFluidDataStoreRuntime();
 		const tree = new TestSharedTreeCore(runtime);
 		const factory = new MockContainerRuntimeFactory();
+		factory.createContainerRuntime(runtime);
 		tree.connect({
-			deltaConnection: factory.createContainerRuntime(runtime).createDeltaConnection(),
+			deltaConnection: runtime.createDeltaConnection(),
 			objectStorage: new MockStorage(),
 		});
 

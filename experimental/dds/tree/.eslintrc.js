@@ -23,6 +23,7 @@ module.exports = {
 		'@typescript-eslint/no-shadow': 'off',
 		'no-shadow': 'off',
 		'@typescript-eslint/no-unsafe-return': 'off',
+		'import/no-deprecated': 'off',
 	},
 	overrides: [
 		{

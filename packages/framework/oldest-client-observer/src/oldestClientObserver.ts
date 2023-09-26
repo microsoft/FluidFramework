@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IQuorumClients } from "@fluidframework/protocol-definitions";
 import {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltaConnection, IDeltaHandler } from "@fluidframework/datastore-definitions";
 import { DataProcessingError } from "@fluidframework/telemetry-utils";

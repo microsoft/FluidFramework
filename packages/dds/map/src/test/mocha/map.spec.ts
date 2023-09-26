@@ -29,7 +29,7 @@ function createConnectedMap(id: string, runtimeFactory: MockContainerRuntimeFact
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
-		deltaConnection: containerRuntime.createDeltaConnection(),
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
 	const map = new SharedMap(id, dataStoreRuntime, MapFactory.Attributes);
@@ -65,7 +65,7 @@ describe("Map", () => {
 				map.set("testKey", "testValue");
 				map.set("testKey2", "testValue2");
 				assert.equal(map.get("testKey"), "testValue", "could not retrieve set key 1");
-				assert.equal(map.get("testKey2"), "testValue2", "could not retreive set key 2");
+				assert.equal(map.get("testKey2"), "testValue2", "could not retrieve set key 2");
 			});
 
 			it("should fire correct map events", async () => {
@@ -141,7 +141,6 @@ describe("Map", () => {
 					map.set(undefined as unknown as string, "one");
 				}, "Should throw for key of undefined");
 				assert.throws(() => {
-					// eslint-disable-next-line unicorn/no-null
 					map.set(null as unknown as string, "two");
 				}, "Should throw for key of null");
 			});
@@ -358,7 +357,7 @@ describe("Map", () => {
 				const services2 = MockSharedObjectServices.createFromSummary(
 					map1.getAttachSummary().summary,
 				);
-				services2.deltaConnection = containerRuntime2.createDeltaConnection();
+				services2.deltaConnection = dataStoreRuntime2.createDeltaConnection();
 
 				const map2 = new SharedMap("testMap2", dataStoreRuntime2, MapFactory.Attributes);
 				await map2.load(services2);
@@ -368,7 +367,7 @@ describe("Map", () => {
 				const containerRuntime1 =
 					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 				const services1 = {
-					deltaConnection: containerRuntime1.createDeltaConnection(),
+					deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 					objectStorage: new MockStorage(undefined),
 				};
 				map1.connect(services1);
@@ -378,7 +377,7 @@ describe("Map", () => {
 				assert.equal(map2.get(key), value, "The second map does not have the key");
 
 				// Set a new value for the same key in the second SharedMap.
-				const newValue = "newvalue";
+				const newValue = "newValue";
 				map2.set(key, newValue);
 
 				// Process the message.
@@ -401,10 +400,10 @@ describe("Map", () => {
 				let metadata = map1.testApplyStashedOp(op);
 				assert.equal(metadata.type, "add");
 				assert.equal(metadata.pendingMessageId, 0);
-				const editmetadata = map1.testApplyStashedOp(op) as IMapKeyEditLocalOpMetadata;
-				assert.equal(editmetadata.type, "edit");
-				assert.equal(editmetadata.pendingMessageId, 1);
-				assert.equal(editmetadata.previousValue.value, "value");
+				const editMetadata = map1.testApplyStashedOp(op) as IMapKeyEditLocalOpMetadata;
+				assert.equal(editMetadata.type, "edit");
+				assert.equal(editMetadata.pendingMessageId, 1);
+				assert.equal(editMetadata.previousValue.value, "value");
 				const serializable2: ISerializableValue = { type: "Plain", value: "value2" };
 				const op2: IMapSetOperation = { type: "set", key: "key2", value: serializable2 };
 				metadata = map1.testApplyStashedOp(op2);
@@ -546,15 +545,11 @@ describe("Map", () => {
 
 					containerRuntimeFactory.processAllMessages();
 
-					/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
-
 					const retrieved = map1.get("object");
 					const retrievedSubMap: unknown = await retrieved.subMapHandle.get();
 					assert.equal(retrievedSubMap, subMap, "could not get nested map 1");
 					const retrievedSubMap2: unknown = await retrieved.nestedObj.subMap2Handle.get();
 					assert.equal(retrievedSubMap2, subMap2, "could not get nested map 2");
-
-					/* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
 				});
 
 				it("Shouldn't clear value remotely if there is pending set", () => {

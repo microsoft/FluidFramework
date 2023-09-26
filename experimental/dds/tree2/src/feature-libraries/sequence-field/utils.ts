@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { ChangeAtomId, ChangesetLocalId, RevisionTag, TaggedChange } from "../../core";
 import { brand, fail, getFirstFromRangeMap, getOrAddEmptyToMap, RangeMap } from "../../util";
 import {
@@ -117,7 +117,7 @@ export function getOutputCellId(
 	revision: RevisionTag | undefined,
 ): CellId | undefined {
 	if (markEmptiesCells(mark)) {
-		assert(isDetachMark(mark), "Only detaches can empty cells");
+		assert(isDetachMark(mark), 0x750 /* Only detaches can empty cells */);
 		return getDetachCellId(mark, revision);
 	} else if (markFillsCells(mark)) {
 		return undefined;

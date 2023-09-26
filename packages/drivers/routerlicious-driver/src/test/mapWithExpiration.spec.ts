@@ -300,6 +300,7 @@ describe("MapWithExpiration", () => {
 
 	it("toString", () => {
 		const map = new MapWithExpiration<number, string>(0);
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		assert.equal(map.toString(), "[object Map]");
 	});
 });

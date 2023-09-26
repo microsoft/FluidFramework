@@ -7,6 +7,7 @@ module.exports = {
 	extends: [require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"],
 	rules: {
 		"@typescript-eslint/strict-boolean-expressions": "off", // requires strictNullChecks=true in tsconfig
+		"import/no-deprecated": "off", // This package tests deprecated DDSes like SparseMatrix
 		"import/no-nodejs-modules": "off",
 	},
 	settings: {

@@ -5,7 +5,8 @@
 
 import { decompress } from "lz4js";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { assert, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
+import { IsoBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { CompressionAlgorithms } from "../containerRuntime";
@@ -49,14 +50,6 @@ export class OpDecompressor {
 		) {
 			// Beginning of a compressed batch
 			assert(this.activeBatch === false, 0x4b8 /* shouldn't have multiple active batches */);
-			if (message.compression) {
-				// lz4 is the only supported compression algorithm for now
-				assert(
-					message.compression === CompressionAlgorithms.lz4,
-					0x4b9 /* lz4 is currently the only supported compression algorithm */,
-				);
-			}
-
 			this.activeBatch = true;
 
 			const contents = IsoBuffer.from(

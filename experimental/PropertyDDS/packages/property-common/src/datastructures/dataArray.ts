@@ -41,7 +41,7 @@ class BaseDataArray {
 
 	/**
 	 * Get the value at an index. If no index is passed, return zeroth item.
-	 * @param in_idx -  The specific item in the data array.
+	 * @param in_idx - The specific item in the data array.
 	 * @returns The value at that index.
 	 */
 	getValue(in_idx = 0): any {

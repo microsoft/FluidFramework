@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ChangeAtomId, makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../core";
-import { asMutable, brand, fail } from "../../util";
+import { asMutable, brand, fail, IdAllocator } from "../../util";
 import {
 	CrossFieldManager,
 	CrossFieldTarget,
 	getIntention,
-	IdAllocator,
 	RevisionMetadataSource,
 } from "../modular-schema";
 import { Changeset, Mark, MarkList, MoveId, NoopMarkType, CellId, NoopMark } from "./format";
@@ -478,7 +477,7 @@ function amendComposeI<TNodeChange>(
 export class ComposeQueue<T> {
 	private readonly baseMarks: MarkQueue<T>;
 	private readonly newMarks: MarkQueue<T>;
-	private readonly cancelledInserts: Set<RevisionTag> = new Set();
+	private readonly cancelledInserts = new Set<RevisionTag>();
 
 	public constructor(
 		baseRevision: RevisionTag | undefined,

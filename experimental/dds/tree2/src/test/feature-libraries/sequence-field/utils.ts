@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
-	IdAllocator,
-	idAllocatorFromMaxId,
+	MemoizedIdRangeAllocator,
 	RevisionInfo,
 	revisionMetadataSourceFromInfo,
 	SequenceField as SF,
@@ -19,7 +18,7 @@ import {
 	defaultRevisionMetadataFromChanges,
 	fakeTaggedRepair as fakeRepair,
 } from "../../utils";
-import { brand, fail } from "../../../util";
+import { brand, fail, IdAllocator, idAllocatorFromMaxId } from "../../../util";
 import { TestChangeset } from "./testEdits";
 
 export function composeAnonChanges(changes: TestChangeset[]): TestChangeset {
@@ -163,7 +162,11 @@ export function checkDeltaEquality(actual: TestChangeset, expected: TestChangese
 }
 
 export function toDelta(change: TestChangeset): Delta.MarkList {
-	return SF.sequenceFieldToDelta(change, TestChange.toDelta);
+	return SF.sequenceFieldToDelta(
+		makeAnonChange(change),
+		TestChange.toDelta,
+		MemoizedIdRangeAllocator.fromNextId(),
+	);
 }
 
 export function getMaxId(...changes: SF.Changeset<unknown>[]): ChangesetLocalId | undefined {

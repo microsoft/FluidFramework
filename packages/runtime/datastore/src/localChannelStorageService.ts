@@ -4,7 +4,7 @@
  */
 
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
-import { stringToBuffer } from "@fluidframework/common-utils";
+import { stringToBuffer } from "@fluid-internal/client-utils";
 import { IBlob, ITree, TreeEntry } from "@fluidframework/protocol-definitions";
 import { listBlobsAtTreePath } from "@fluidframework/runtime-utils";
 

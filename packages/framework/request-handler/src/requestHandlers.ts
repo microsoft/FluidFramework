@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	IResponse,
 	IRequest,
@@ -48,7 +48,7 @@ export const rootDataStoreRequestHandler = async (
 		return undefined; // continue search
 	}
 	try {
-		return rootDataStore.IFluidRouter.request(requestParser.createSubRequest(1));
+		return await rootDataStore.IFluidRouter.request(requestParser.createSubRequest(1));
 	} catch (error) {
 		return { status: 500, mimeType: "fluid/object", value: error };
 	}

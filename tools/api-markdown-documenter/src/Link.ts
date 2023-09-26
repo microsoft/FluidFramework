@@ -5,12 +5,30 @@
 
 /**
  * Represents the target URL of a link.
+ *
  * @remarks Can be fully realized, a heading ID, relative file path, etc.
+ *
+ * @public
  */
 export type UrlTarget = string;
 
 /**
  * Represents a link to some documentation element.
+ *
+ * @example Markdown
+ *
+ * ```md
+ * [Fluid Framework](https://fluidframework.com/)
+ * ```
+ *
+ * @example HTML
+ *
+ * ```html
+ * <a href="https://fluidframework.com/">Fluid Framework</a>
+ * ```
+ *
+ *
+ * @public
  */
 export interface Link {
 	/**

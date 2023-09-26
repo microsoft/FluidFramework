@@ -51,5 +51,10 @@ data:
         "restGitService": {
             "disableGitCache": {{ .Values.historian.restGitService.disableGitCache }}
         },
-        "storageUrl": "{{ .Values.historian.storageUrl }}"
+        "storageUrl": "{{ .Values.historian.storageUrl }}",
+        "system": {
+            "httpServer": {
+                "connectionTimeoutMs": {{ .Values.historian.system.httpServer.connectionTimeoutMs }}
+            }
+        }
     }

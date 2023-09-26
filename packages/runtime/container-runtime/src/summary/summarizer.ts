@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import { Deferred } from "@fluidframework/common-utils";
+import { Deferred } from "@fluidframework/core-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	ITelemetryLoggerExt,
 	createChildLogger,
@@ -34,6 +34,8 @@ import {
 	ISummarizeResults,
 	IEnqueueSummarizeOptions,
 	EnqueueSummarizeResult,
+	ISummarizerEvents,
+	ISummarizeEventProps,
 } from "./summarizerTypes";
 import { SummarizeHeuristicData } from "./summarizerHeuristics";
 import { SummarizeResultBuilder } from "./summaryGenerator";
@@ -65,7 +67,7 @@ export const createSummarizingWarning = (errorMessage: string, logged: boolean) 
  * It is the main entry point for summary work.
  * It is created only by summarizing container (i.e. one with clientType === "summarizer")
  */
-export class Summarizer extends EventEmitter implements ISummarizer {
+export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements ISummarizer {
 	public get ISummarizer() {
 		return this;
 	}
@@ -214,7 +216,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 	 * Should we try to run a last summary for the given stop reason?
 	 * Currently only allows "parentNotConnected"
 	 * @param stopReason - SummarizerStopReason
-	 * @returns - true if the stop reason can run a last summary
+	 * @returns `true` if the stop reason can run a last summary, otherwise `false`.
 	 */
 	public static stopReasonCanRunLastSummary(stopReason: SummarizerStopReason): boolean {
 		return stopReason === "parentNotConnected";
@@ -229,7 +231,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 	 * @param onBehalfOf - ID of the client that requested that the summarizer start
 	 * @param runCoordinator - cancellation token
 	 * @param newConfig - Summary configuration to override the existing config when invoking the RunningSummarizer.
-	 * @returns - Promise that is fulfilled when the RunningSummarizer is ready
+	 * @returns A promise that is fulfilled when the RunningSummarizer is ready.
 	 */
 	private async start(
 		onBehalfOf: string,
@@ -281,10 +283,14 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 			this.runtime,
 		);
 		this.runningSummarizer = runningSummarizer;
+		this.runningSummarizer.on("summarize", this.handleSummarizeEvent);
 		this.starting = false;
-
 		return runningSummarizer;
 	}
+
+	private readonly handleSummarizeEvent = (eventProps: ISummarizeEventProps) => {
+		this.emit("summarize", eventProps);
+	};
 
 	/**
 	 * Disposes of resources after running.  This cleanup will
@@ -298,6 +304,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 
 		this._disposed = true;
 		if (this.runningSummarizer) {
+			this.runningSummarizer.off("summarize", this.handleSummarizeEvent);
 			this.runningSummarizer.dispose();
 			this.runningSummarizer = undefined;
 		}

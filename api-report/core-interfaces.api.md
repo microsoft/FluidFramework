@@ -39,7 +39,7 @@ export interface IDisposable {
 // @public
 export interface IErrorBase extends Partial<Error> {
     readonly errorType: string;
-    getTelemetryProperties?(): ITelemetryProperties;
+    getTelemetryProperties?(): ITelemetryBaseProperties;
     readonly message: string;
     readonly name?: string;
     readonly stack?: string;
@@ -326,7 +326,7 @@ export interface IGenericError extends IErrorBase {
 
 // @public
 export interface ILoggingError extends Error {
-    getTelemetryProperties(): ITelemetryProperties;
+    getTelemetryProperties(): ITelemetryBaseProperties;
 }
 
 // @public @deprecated (undocumented)
@@ -399,9 +399,9 @@ export interface IResponse {
 export const isFluidCodeDetails: (details: unknown) => details is Readonly<IFluidCodeDetails>;
 
 // @public @deprecated
-export const isFluidPackage: (pkg: any) => pkg is Readonly<IFluidPackage>;
+export const isFluidPackage: (pkg: unknown) => pkg is Readonly<IFluidPackage>;
 
-// @public
+// @public @deprecated (undocumented)
 export interface ITaggedTelemetryPropertyType {
     // (undocumented)
     tag: string;
@@ -410,7 +410,7 @@ export interface ITaggedTelemetryPropertyType {
 }
 
 // @public
-export interface ITelemetryBaseEvent extends ITelemetryProperties {
+export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
     // (undocumented)
     category: string;
     // (undocumented)
@@ -426,12 +426,15 @@ export interface ITelemetryBaseLogger {
 }
 
 // @public
+export type ITelemetryBaseProperties = ITelemetryProperties;
+
+// @public @deprecated
 export interface ITelemetryErrorEvent extends ITelemetryProperties {
     // (undocumented)
     eventName: string;
 }
 
-// @public
+// @public @deprecated
 export interface ITelemetryGenericEvent extends ITelemetryProperties {
     // (undocumented)
     category?: TelemetryEventCategory;
@@ -439,24 +442,24 @@ export interface ITelemetryGenericEvent extends ITelemetryProperties {
     eventName: string;
 }
 
-// @public
+// @public @deprecated
 export interface ITelemetryLogger extends ITelemetryBaseLogger {
     send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
     sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
-    sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any, logLevel?: LogLevel.verbose | LogLevel.default): void;
-    sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any, logLevel?: LogLevel.verbose | LogLevel.default): void;
+    sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any, logLevel?: typeof LogLevel.verbose | typeof LogLevel.default): void;
+    sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any, logLevel?: typeof LogLevel.verbose | typeof LogLevel.default): void;
 }
 
-// @public
+// @public @deprecated
 export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
     // (undocumented)
     duration?: number;
 }
 
-// @public
+// @public @deprecated
 export interface ITelemetryProperties {
     // (undocumented)
-    [index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
+    [index: string]: TelemetryEventPropertyType | Tagged<TelemetryEventPropertyType>;
 }
 
 // @public
@@ -472,14 +475,14 @@ export interface IUsageError extends IErrorBase {
 }
 
 // @public
-export const enum LogLevel {
-    // (undocumented)
-    default = 10,
-    // (undocumented)
-    error = 20,
-    // (undocumented)
-    verbose = 0
-}
+export const LogLevel: {
+    readonly verbose: 10;
+    readonly default: 20;
+    readonly error: 30;
+};
+
+// @public
+export type LogLevel = typeof LogLevel[keyof typeof LogLevel];
 
 // @public
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {
@@ -487,9 +490,20 @@ export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any
 } : L;
 
 // @public
-export type TelemetryEventCategory = "generic" | "error" | "performance";
+export interface Tagged<V, T extends string = string> {
+    // (undocumented)
+    tag: T;
+    // (undocumented)
+    value: V;
+}
 
 // @public
+export type TelemetryBaseEventPropertyType = TelemetryEventPropertyType;
+
+// @public @deprecated
+export type TelemetryEventCategory = "generic" | "error" | "performance";
+
+// @public @deprecated
 export type TelemetryEventPropertyType = string | number | boolean | undefined;
 
 // @public

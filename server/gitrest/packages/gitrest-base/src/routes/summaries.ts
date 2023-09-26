@@ -220,13 +220,14 @@ async function deleteSummary(
 	if (!repoPerDocEnabled) {
 		throw new NetworkError(501, "Not Implemented");
 	}
-	const lumberjackProperties = {
+	const lumberjackProperties: Record<string, any> = {
 		...getLumberjackBasePropertiesFromRepoManagerParams(repoManagerParams),
 		[BaseGitRestTelemetryProperties.repoPerDocEnabled]: repoPerDocEnabled,
 		[BaseGitRestTelemetryProperties.softDelete]: softDelete,
 	};
 	// In repo-per-doc model, the repoManager's path represents the directory that contains summary data.
 	const summaryFolderPath = repoManager.path;
+	lumberjackProperties.summaryFolderPath = summaryFolderPath;
 	Lumberjack.info(`Deleting summary`, lumberjackProperties);
 
 	try {

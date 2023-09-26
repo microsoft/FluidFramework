@@ -4,7 +4,6 @@
  */
 
 /* eslint max-nested-callbacks: 0 */
-/* eslint-disable unicorn/no-unsafe-regex */
 
 /**
  * @fileoverview In this file, we will test the functions exported by guid_utils.js
@@ -165,6 +164,7 @@ const test16fromAndTo64 = function (base64, base16) {
 };
 
 describe("Base16", function () {
+	// eslint-disable-next-line unicorn/no-unsafe-regex
 	testGuid(/^[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}$/i, false);
 	testInitialization("492b176c-bdc9-0dec-7c70-087a6a7bdac2", false);
 	testCorrectness("893fa0d4-c767-4133-829f-27434bf38cc8", "893fa0d4-c?767-4133-829f-27434b-8");

@@ -18,6 +18,16 @@ module.exports = {
 	transform: {
 		"^.+\\.ts?$": "ts-jest",
 	},
+	reporters: [
+		"default",
+		[
+			"jest-junit",
+			{
+				outputDirectory: "nyc",
+				outputName: "jest-junit-report.xml",
+			},
+		],
+	],
 	testTimeout: 30_000,
 	testRegex: "(/__tests__/.*|(\\.|/)(test|spec))\\.ts?$",
 	testPathIgnorePatterns: ["/node_modules/", "dist"],

@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import {
 	IDeltaService,
 	IDocumentStorage,
@@ -39,6 +41,7 @@ export function create(
 	documentDeleteService: IDocumentDeleteService,
 	tokenRevocationManager?: ITokenRevocationManager,
 	revokedTokenChecker?: IRevokedTokenChecker,
+	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 ) {
 	return {
 		api: api.create(
@@ -55,6 +58,7 @@ export function create(
 			documentDeleteService,
 			tokenRevocationManager,
 			revokedTokenChecker,
+			collaborationSessionEventEmitter,
 		),
 	};
 }

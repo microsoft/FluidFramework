@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { stringToBuffer } from "@fluidframework/common-utils";
+import { stringToBuffer } from "@fluid-internal/client-utils";
 import { LazyPromise } from "@fluidframework/core-utils";
 import { AttachState, ContainerErrorType } from "@fluidframework/container-definitions";
 import {

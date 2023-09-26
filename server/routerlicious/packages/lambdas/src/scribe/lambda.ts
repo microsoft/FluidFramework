@@ -36,6 +36,7 @@ import {
 	Lumber,
 	LumberEventName,
 	Lumberjack,
+	CommonProperties,
 } from "@fluidframework/server-services-telemetry";
 import Deque from "double-ended-queue";
 import * as _ from "lodash";
@@ -112,6 +113,7 @@ export class ScribeLambda implements IPartitionLambda {
 		private readonly disableTransientTenantFiltering: boolean,
 		private readonly restartOnCheckpointFailure: boolean,
 		private readonly kafkaCheckpointOnReprocessingOp: boolean,
+		private readonly isEphemeralContainer: boolean,
 	) {
 		this.lastOffset = scribe.logOffset;
 		this.setStateFromCheckpoint(scribe);
@@ -250,6 +252,7 @@ export class ScribeLambda implements IPartitionLambda {
 									this.lastClientSummaryHead,
 									scribeCheckpoint,
 									this.pendingCheckpointMessages.toArray(),
+									this.isEphemeralContainer,
 								);
 
 								// This block is only executed if the writer is not external. For an external writer,
@@ -351,6 +354,7 @@ export class ScribeLambda implements IPartitionLambda {
 
 					if (
 						this.serviceConfiguration.scribe.generateServiceSummary &&
+						!this.isEphemeralContainer &&
 						enableServiceSummaryForTenant
 					) {
 						const operation = value.operation as ISequencedDocumentAugmentedMessage;
@@ -497,11 +501,18 @@ export class ScribeLambda implements IPartitionLambda {
 				"Scribe session metric already completed. Creating a new one.",
 				getLumberBaseProperties(this.documentId, this.tenantId),
 			);
+			const isEphemeralContainer: boolean =
+				this.scribeSessionMetric?.properties.get(CommonProperties.isEphemeralContainer) ??
+				false;
 			this.scribeSessionMetric = createSessionMetric(
 				this.tenantId,
 				this.documentId,
 				LumberEventName.ScribeSessionResult,
 				this.serviceConfiguration,
+			);
+			this.scribeSessionMetric?.setProperty(
+				CommonProperties.isEphemeralContainer,
+				isEphemeralContainer,
 			);
 		}
 

@@ -46,35 +46,45 @@ export interface ITestDriver {
 	readonly version: string;
 
 	/**
-	 * Creates a document service factory targetting the server
+	 * Creates a document service factory targetting the server that corresponds to this driver.
 	 */
 	createDocumentServiceFactory(): IDocumentServiceFactory;
 
 	/**
-	 * Creates a url resolver targetting the server
+	 * Creates a url resolver targetting the server that corresponds to this driver.
 	 */
 	createUrlResolver(): IUrlResolver;
 
 	/**
-	 * Creates a create new request based on the test id.
+	 * Creates a 'create new' request appropriate for the server that corresponds to this driver.
+	 *
+	 * @remarks
 	 * Repeated calls with the same test id will return the same request.
 	 * The test id may not map directly to any specific Fluid Framework concept.
 	 * If you need more control you should disambiguate the driver based on its
-	 * type, this should only be done it absolutely necessary for complex scenarios
+	 * type; this should only be done it absolutely necessary for complex scenarios
 	 * as the test may not work against all supported servers if done.
+	 *
+	 * @param testId - If passed in, implementations should use it in the generated request, which should
+	 * also be consistent every time for a given value of this parameter.
 	 */
 	createCreateNewRequest(testId?: string): IRequest;
 
 	/**
 	 * Creates a container url that can be resolved by the url resolver for this driver.
-	 * Repeated calls with the same test id will return the same test id.
+	 *
+	 * @remarks
+	 * Repeated calls with the same test id will return the same container url.
 	 * The test id may not map directly to any specific Fluid Framework concept.
 	 * If you need more control you should disambiguate the driver based on its
-	 * type, this should only be done it absolutely necessary for complex scenarios
+	 * type; this should only be done if absolutely necessary for complex scenarios
 	 * as the test may not work against all supported servers if done.
-	 * UPDATE/To help with disambiguating the container the caller can pass an optional
-	 * resolved URL associated with a container created earlier. The specific driver
-	 * will use it as an additional hint when resolving the container URL.
+	 *
+	 * @param testId - If passed in, implementations should use it in generated url, which should
+	 * also be consistent every time for a given value of this parameter.
+	 * @param containerUrl - Implementations can use this to help disambiguate the container.
+	 * E.g. if passed a value from a container created earlier, the driver can us it as a hint
+	 * when resolving the container  URL.
 	 */
 	createContainerUrl(testId: string, containerUrl?: IResolvedUrl): Promise<string>;
 }

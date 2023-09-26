@@ -21,7 +21,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../feature-libraries/modular-schema";
 import { brand, fail } from "../util";
-import { Delta, FieldKindIdentifier, FieldStoredSchema, TreeTypeSet } from "../core";
+import { Delta, FieldKindIdentifier, FieldStoredSchema, TaggedChange, TreeTypeSet } from "../core";
 import { jsonNumber } from "../domains";
 
 export const counterCodecFamily: ICodecFamily<number> = makeCodecFamily([
@@ -55,7 +55,7 @@ export const counterHandle: FieldChangeHandler<number> = {
 	}),
 	codecsFactory: () => counterCodecFamily,
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
-	intoDelta: (change: number, deltaFromChild: ToDelta): Delta.MarkList => [
+	intoDelta: ({ change }: TaggedChange<number>, deltaFromChild: ToDelta): Delta.MarkList => [
 		{
 			type: Delta.MarkType.Modify,
 			fields: new Map([

@@ -93,6 +93,7 @@ export class ReferenceMapProperty extends StringMapProperty {
 	 * Returns an object with all the nested path values.
 	 *
 	 * @example
+	 *
 	 * ```javascript
 	 * {
 	 *   'firstPath': '/path',

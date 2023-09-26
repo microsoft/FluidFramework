@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/telemetry-utils";
 import { List } from "./collections";
 import { EndOfTreeSegment } from "./endOfTreeSegment";
@@ -224,7 +224,9 @@ export function appendToMergeTreeDeltaRevertibles(
 			break;
 
 		default:
-			throw new UsageError(`Unsupported event delta type: ${deltaArgs.operation}`);
+			throw new UsageError("Unsupported event delta type", {
+				operation: deltaArgs.operation,
+			});
 	}
 }
 

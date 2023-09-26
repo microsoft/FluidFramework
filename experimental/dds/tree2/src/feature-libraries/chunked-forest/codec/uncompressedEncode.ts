@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ITreeCursorSynchronous, TreeValue, forEachField, forEachNode } from "../../../core";
+import { ITreeCursorSynchronous, forEachField, forEachNode } from "../../../core";
+import { FluidSerializableReadOnly } from "../../contextuallyTyped";
 import { EncodedChunk, version, EncodedTreeShape, EncodedNestedArray } from "./format";
 import { ShapeIndex } from "./formatGeneric";
 
@@ -35,8 +36,8 @@ const anyTreeShape: EncodedTreeShape = {
 
 const anyArray: EncodedNestedArray = treeIndex;
 
-function encodeSequence(cursor: ITreeCursorSynchronous): TreeValue[] {
-	const data: TreeValue[] = [];
+function encodeSequence(cursor: ITreeCursorSynchronous): FluidSerializableReadOnly[] {
+	const data: FluidSerializableReadOnly[] = [];
 	forEachNode(cursor, () => {
 		data.push(cursor.type);
 		const value = cursor.value;
@@ -44,7 +45,7 @@ function encodeSequence(cursor: ITreeCursorSynchronous): TreeValue[] {
 		if (value !== undefined) {
 			data.push(value);
 		}
-		const local: TreeValue[] = [];
+		const local: FluidSerializableReadOnly[] = [];
 		forEachField(cursor, () => {
 			const key = cursor.getFieldKey();
 			local.push(key, encodeSequence(cursor));

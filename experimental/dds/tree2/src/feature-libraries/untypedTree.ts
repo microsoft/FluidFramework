@@ -286,7 +286,6 @@ export interface EditableTreeEvents {
 	 * Raised when a specific EditableTree node is changing.
 	 * This includes its fields.
 	 * @param upPath - the path corresponding to the location of the node being changed, upward.
-	 * @param value - the new value stored in the node.
 	 */
 	changing(upPath: UpPath): void;
 

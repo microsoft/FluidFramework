@@ -165,6 +165,7 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 		// The double nested gets are required for lazy loading the provider resolution
 		if (typeof provider === "function") {
 			return {
+				// eslint-disable-next-line @typescript-eslint/promise-function-async
 				get() {
 					if (provider && typeof provider === "function") {
 						return Promise.resolve(this[IFluidDependencySynthesizer])

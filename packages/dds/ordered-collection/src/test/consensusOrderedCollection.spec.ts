@@ -20,9 +20,9 @@ import { acquireAndComplete, waitAcquireAndComplete } from "../testUtils";
 
 function createConnectedCollection(id: string, runtimeFactory: MockContainerRuntimeFactory) {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
+	runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services: IChannelServices = {
-		deltaConnection: containerRuntime.createDeltaConnection(),
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
 
@@ -44,7 +44,7 @@ function createCollectionForReconnection(
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services: IChannelServices = {
-		deltaConnection: containerRuntime.createDeltaConnection(),
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
 

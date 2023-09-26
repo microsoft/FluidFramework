@@ -172,5 +172,5 @@ export function transformApiInterface(
 		}
 	}
 
-	return config.createChildContentSections(apiInterface, childSections, config);
+	return config.createDefaultLayout(apiInterface, childSections, config);
 }

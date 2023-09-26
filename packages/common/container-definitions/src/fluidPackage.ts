@@ -63,8 +63,10 @@ export interface IFluidPackage {
  * Check if the package.json defines a Fluid package
  * @param pkg - the package json data to check if it is a Fluid package.
  */
-export const isFluidPackage = (pkg: any): pkg is Readonly<IFluidPackage> =>
-	typeof pkg === "object" && typeof pkg?.name === "string" && typeof pkg?.fluid === "object";
+export const isFluidPackage = (pkg: unknown): pkg is Readonly<IFluidPackage> =>
+	typeof pkg === "object" &&
+	typeof (pkg as Partial<IFluidPackage>)?.name === "string" &&
+	typeof (pkg as Partial<IFluidPackage>)?.fluid === "object";
 
 /**
  * Package manager configuration. Provides a key value mapping of config values

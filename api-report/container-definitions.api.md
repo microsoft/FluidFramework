@@ -475,13 +475,13 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
 }
 
 // @public
-export const isFluidBrowserPackage: (maybePkg: any) => maybePkg is Readonly<IFluidBrowserPackage>;
+export const isFluidBrowserPackage: (maybePkg: unknown) => maybePkg is Readonly<IFluidBrowserPackage>;
 
 // @public (undocumented)
 export const isFluidCodeDetails: (details: unknown) => details is Readonly<IFluidCodeDetails>;
 
 // @public
-export const isFluidPackage: (pkg: any) => pkg is Readonly<IFluidPackage>;
+export const isFluidPackage: (pkg: unknown) => pkg is Readonly<IFluidPackage>;
 
 // @public
 export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {

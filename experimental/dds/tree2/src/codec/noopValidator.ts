@@ -8,7 +8,7 @@ import { JsonValidator } from "./codec";
 
 /**
  * A {@link JsonValidator} implementation which performs no validation and accepts all data as valid.
- * @privateRemarks - Having this as an option unifies opting out of validation with selection of
+ * @privateRemarks Having this as an option unifies opting out of validation with selection of
  * validators, simplifying code performing validation.
  * @alpha
  */

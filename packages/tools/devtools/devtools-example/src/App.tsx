@@ -3,38 +3,38 @@
  * Licensed under the MIT License.
  */
 import {
-	BrandVariants,
+	type BrandVariants,
 	createLightTheme,
 	FluentProvider,
 	makeStyles,
 	shorthands,
 	Spinner,
 	Text,
-	Theme,
+	type Theme,
 } from "@fluentui/react-components";
 import React from "react";
 
 import {
-	ContainerKey,
+	type ContainerKey,
 	DevtoolsLogger,
-	HasContainerKey,
-	IFluidDevtools,
+	type HasContainerKey,
+	type IFluidDevtools,
 	initializeDevtools,
 } from "@fluid-experimental/devtools-core";
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
-import { SharedCounter } from "@fluidframework/counter";
-import { SessionStorageModelLoader } from "@fluid-example/example-utils";
-import { SharedMatrix } from "@fluidframework/matrix";
-import { SharedString } from "@fluidframework/sequence";
+import { type SharedCounter } from "@fluidframework/counter";
+import { type SessionStorageModelLoader } from "@fluid-example/example-utils";
+import { type SharedMatrix } from "@fluidframework/matrix";
+import { type SharedString } from "@fluidframework/sequence";
 import {
-	ContainerInfo,
+	type ContainerInfo,
 	createLoader,
 	createContainer,
 	loadExistingContainer,
 } from "./ClientUtilities";
 import { CounterWidget, EmojiGrid } from "./widgets";
-import { IAppModel } from "./Container";
-import { AppData } from "./FluidObject";
+import { type IAppModel } from "./Container";
+import { type AppData } from "./FluidObject";
 
 const sharedContainerKey: ContainerKey = "Shared Container";
 const privateContainerKey: ContainerKey = "Private Container";

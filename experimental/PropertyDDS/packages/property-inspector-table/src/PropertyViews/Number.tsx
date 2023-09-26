@@ -42,7 +42,7 @@ export const NumberView: React.FunctionComponent<NumberProps> = (props) => {
 		onSubmit,
 		classes,
 		readOnly,
-		...restProps // tslint:disable-line:trailing-comma
+		...restProps
 	} = props;
 
 	const value = getPropertyValue(

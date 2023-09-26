@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+// False positive: this is an import from the `events` package, not from Node.
+// eslint-disable-next-line unicorn/prefer-node-protocol
 import { EventEmitter } from "events";
 import { IClient } from "@fluidframework/protocol-definitions";
 

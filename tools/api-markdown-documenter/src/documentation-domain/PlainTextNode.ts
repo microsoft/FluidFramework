@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { DocumentationLiteralNode, SingleLineDocumentationNode } from "./DocumentationNode";
+import { DocumentationLiteralNodeBase, SingleLineDocumentationNode } from "./DocumentationNode";
 import { DocumentationNodeType } from "./DocumentationNodeType";
 
 /**
@@ -14,9 +14,12 @@ import { DocumentationNodeType } from "./DocumentationNodeType";
  *
  * To include line breaks in your text, use {@link LineBreakNode} in a container node like
  * {@link SpanNode} or {@link ParagraphNode}.
+ *
+ * @public
  */
 export class PlainTextNode
-	implements DocumentationLiteralNode<string>, SingleLineDocumentationNode
+	extends DocumentationLiteralNodeBase<string>
+	implements SingleLineDocumentationNode
 {
 	/**
 	 * Static singleton representing an empty Plain Text node.
@@ -34,22 +37,26 @@ export class PlainTextNode
 	public readonly singleLine = true;
 
 	/**
-	 * The text to display.
-	 *
-	 * @remarks Must not contain newline characters.
-	 */
-	public readonly value: string;
-
-	/**
 	 * Whether or not the text content has already been escaped.
 	 */
 	public readonly escaped: boolean;
 
-	public constructor(value: string, escaped?: boolean) {
-		if (value.includes("\n")) {
+	/**
+	 * The text to display.
+	 *
+	 * @remarks Must not contain newline characters.
+	 */
+	public get text(): string {
+		return this.value;
+	}
+
+	public constructor(text: string, escaped?: boolean) {
+		super(text);
+
+		if (text.includes("\n")) {
 			throw new Error("Invalid value: Plain text nodes may not contain newline characters");
 		}
-		this.value = value;
+
 		this.escaped = escaped ?? false;
 	}
 }

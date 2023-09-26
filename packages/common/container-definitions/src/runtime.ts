@@ -76,6 +76,8 @@ export interface IRuntime extends IDisposable {
 	/**
 	 * Processes the given signal
 	 */
+	// TODO: use `unknown` instead (API breaking)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	processSignal(message: any, local: boolean);
 
 	/**
@@ -147,14 +149,21 @@ export interface IContainerContext {
 	readonly storage: IDocumentStorageService;
 	readonly connected: boolean;
 	readonly baseSnapshot: ISnapshotTree | undefined;
-	/** @deprecated Please use submitBatchFn & submitSummaryFn */
+	/**
+	 * @deprecated Please use submitBatchFn & submitSummaryFn
+	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
-	/** @returns clientSequenceNumber of last message in a batch */
+	/**
+	 * @returns clientSequenceNumber of last message in a batch
+	 */
 	readonly submitBatchFn: (batch: IBatchMessage[], referenceSequenceNumber?: number) => number;
 	readonly submitSummaryFn: (
 		summaryOp: ISummaryContent,
 		referenceSequenceNumber?: number,
 	) => number;
+	// TODO: use `unknown` instead (API breaking)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	readonly submitSignalFn: (contents: any) => void;
 	readonly disposeFn?: (error?: ICriticalContainerError) => void;
 	readonly closeFn: (error?: ICriticalContainerError) => void;

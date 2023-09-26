@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 import { ChildProcess } from "child_process";
-import { TypedEventEmitter, delay } from "@fluidframework/common-utils";
+import { delay } from "@fluidframework/core-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	IRunConfig,
 	IRunner,

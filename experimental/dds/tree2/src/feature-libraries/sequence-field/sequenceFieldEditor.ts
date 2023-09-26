@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { jsonableTreeFromCursor } from "../treeTextCursor";
 import { ChangesetLocalId, ITreeCursor } from "../../core";
 import { FieldEditor, NodeReviver } from "../modular-schema";

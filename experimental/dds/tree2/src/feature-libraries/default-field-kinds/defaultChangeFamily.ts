@@ -7,7 +7,6 @@ import { ICodecFamily, ICodecOptions } from "../../codec";
 import {
 	ChangeFamily,
 	ChangeRebaser,
-	AnchorSet,
 	Delta,
 	UpPath,
 	ITreeCursor,
@@ -49,11 +48,8 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
 		return this.modularFamily.intoDelta(change);
 	}
 
-	public buildEditor(
-		changeReceiver: (change: DefaultChangeset) => void,
-		anchorSet: AnchorSet,
-	): DefaultEditBuilder {
-		return new DefaultEditBuilder(this, changeReceiver, anchorSet);
+	public buildEditor(changeReceiver: (change: DefaultChangeset) => void): DefaultEditBuilder {
+		return new DefaultEditBuilder(this, changeReceiver);
 	}
 }
 
@@ -115,9 +111,8 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 	public constructor(
 		family: ChangeFamily<ChangeFamilyEditor, DefaultChangeset>,
 		changeReceiver: (change: DefaultChangeset) => void,
-		anchors: AnchorSet,
 	) {
-		this.modularBuilder = new ModularEditBuilder(family, changeReceiver, anchors);
+		this.modularBuilder = new ModularEditBuilder(family, changeReceiver);
 	}
 
 	public enterTransaction(): void {

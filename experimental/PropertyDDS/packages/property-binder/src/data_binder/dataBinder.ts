@@ -164,6 +164,7 @@ const _popUserData = function (in_context: Utils.TraversalContext) {
  * These data bindings are notified of the modification and removal of the underlying property.
  *
  * @example
+ *
  * ```typescript
  * const databinder = new DataBinder(propertyTree);
  * databinder.defineDataBinding(...);
@@ -2576,6 +2577,7 @@ export class DataBinder {
 	 * before they begin to be built.
 	 *
 	 * @example
+	 *
 	 * ```javascript
 	 * // Register a generator for runtime representations for the Dog Property
 	 * myDataBinder.defineRepresentation('PETSTORE', 'Types:Dog-1.0.0', (property) => new DogRepresentation());

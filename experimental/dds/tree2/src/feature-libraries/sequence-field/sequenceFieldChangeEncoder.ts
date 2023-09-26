@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/common-utils";
+import { unreachableCase } from "@fluidframework/core-utils";
 import { Type } from "@sinclair/typebox";
 import { JsonCompatible, JsonCompatibleReadOnly, fail } from "../../util";
 import { IJsonCodec, makeCodecFamily } from "../../codec";

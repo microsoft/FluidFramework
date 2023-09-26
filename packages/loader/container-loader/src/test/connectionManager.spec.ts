@@ -8,7 +8,7 @@ import {
 	MockDocumentDeltaConnection,
 	MockDocumentService,
 } from "@fluid-internal/test-loader-utils";
-import { Deferred } from "@fluidframework/common-utils";
+import { Deferred } from "@fluidframework/core-utils";
 import {
 	DriverErrorType,
 	IAnyDriverError,

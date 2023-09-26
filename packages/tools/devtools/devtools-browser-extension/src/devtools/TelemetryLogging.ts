@@ -3,10 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { AppInsightsCore, IExtendedConfiguration } from "@microsoft/1ds-core-js";
-import { PostChannel, IChannelConfiguration, IXHROverride } from "@microsoft/1ds-post-js";
-import { ITelemetryBaseLogger, ITelemetryBaseEvent } from "@fluid-experimental/devtools-view";
-import { ITaggedTelemetryPropertyType } from "@fluidframework/core-interfaces";
+import { AppInsightsCore, type IExtendedConfiguration } from "@microsoft/1ds-core-js";
+import { PostChannel, type IChannelConfiguration, type IXHROverride } from "@microsoft/1ds-post-js";
+import {
+	type ITelemetryBaseLogger,
+	type ITelemetryBaseEvent,
+} from "@fluid-experimental/devtools-view";
+import { type ITaggedTelemetryPropertyType } from "@fluidframework/core-interfaces";
+import { formatDevtoolsScriptMessageForLogging } from "./Logging";
 
 const extensionVersion = chrome.runtime.getManifest().version;
 
@@ -25,7 +29,7 @@ const fetchHttpXHROverride: IXHROverride = {
 		};
 		fetch(payload.urlString, requestInit)
 			.then((response) => {
-				const headerMap: { [key: string]: string } = {};
+				const headerMap: Record<string, string> = {};
 				// response.headers is not a run-of-the-mill array, it satisfies a particular interface that
 				// only has forEach, not a general iterator.
 				// eslint-disable-next-line unicorn/no-array-for-each
@@ -75,11 +79,15 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 			httpXHROverride: fetchHttpXHROverride,
 		};
 
+		// NOTE: this doesn't really use environment variables at runtime.
+		// The dotenv-webpack plugin for webpack does a search-and-replace for `process.env.<variable-name>`
+		// and replaces them with inlined values if the corresponding variables exist in the environment
+		// at bundle time, or `undefined` if not.
+		const instrumentationKey = process.env.DEVTOOLS_TELEMETRY_TOKEN ?? "";
+
 		// Configure App insights core to send to collector
 		const coreConfig: IExtendedConfiguration = {
-			// A non-empty instrumentation key needs to provided for the logger to do anything.
-			// AB#5167 tracks how to inject one at build time to keep it out of source control.
-			instrumentationKey: "",
+			instrumentationKey,
 			loggingLevelConsole: 0, // Do not log to console
 			disableDbgExt: true, // Small perf optimization
 			extensions: [
@@ -95,6 +103,7 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 		if ((coreConfig.instrumentationKey ?? "") !== "") {
 			this.enabled = true;
 			this.appInsightsCore.initialize(coreConfig, []);
+			console.log(formatDevtoolsScriptMessageForLogging(`Injected telemetry token.`));
 		}
 	}
 

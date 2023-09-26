@@ -4,7 +4,7 @@
  */
 
 import { ObjectOptions, Static, Type } from "@sinclair/typebox";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	FieldKindIdentifierSchema,
 	FieldStoredSchema,

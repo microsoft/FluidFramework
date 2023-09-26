@@ -8,7 +8,7 @@ import nconf from "nconf";
 import rimrafCallback from "rimraf";
 import { IStorageDirectoryConfig } from "../utils";
 
-export type gitLibType = "nodegit" | "isomorphic-git";
+export type gitLibType = "isomorphic-git";
 export interface ITestMode {
 	name: string;
 	gitLibrary: gitLibType;
@@ -33,7 +33,7 @@ export const defaultProvider = new nconf.Provider({}).use("memory").defaults({
 	},
 	git: {
 		lib: {
-			name: "nodegit",
+			name: "isomorphic-git",
 		},
 		persistLatestFullSummary: false,
 		enableLowIoWrite: false,

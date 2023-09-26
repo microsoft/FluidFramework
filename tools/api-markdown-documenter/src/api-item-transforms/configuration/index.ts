@@ -17,7 +17,6 @@ export {
 } from "./DocumentationSuiteOptions";
 export {
 	ApiItemTransformationOptions,
-	CreateChildContentSections,
 	getApiItemTransformationOptionsWithDefaults,
 	TransformApiItemWithChildren,
 	TransformApiItemWithoutChildren,

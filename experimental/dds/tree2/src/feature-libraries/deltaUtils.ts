@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/common-utils";
+import { unreachableCase } from "@fluidframework/core-utils";
 import { Delta, FieldKey, isSkipMark } from "../core";
 import { Mutable } from "../util";
 

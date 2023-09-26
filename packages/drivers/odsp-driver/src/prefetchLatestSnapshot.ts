@@ -4,7 +4,8 @@
  */
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { assert, Deferred, performance } from "@fluidframework/common-utils";
+import { performance } from "@fluid-internal/client-utils";
+import { assert, Deferred } from "@fluidframework/core-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import {
 	IOdspResolvedUrl,
@@ -50,7 +51,7 @@ import { OdspDocumentServiceFactory } from "./odspDocumentServiceFactory";
  * @param snapshotFormatFetchType - Snapshot format to fetch.
  * @param odspDocumentServiceFactory - factory to access the non persistent cache and store the prefetch promise.
  *
- * @returns - True if the snapshot is cached, false otherwise.
+ * @returns `true` if the snapshot is cached, `false` otherwise.
  */
 export async function prefetchLatestSnapshot(
 	resolvedUrl: IResolvedUrl,

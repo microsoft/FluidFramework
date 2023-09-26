@@ -9,7 +9,9 @@ module.exports = {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
 	rules: {
+		"@typescript-eslint/prefer-nullish-coalescing": "off", // requires strictNullChecks
 		"@typescript-eslint/strict-boolean-expressions": "off",
+		"import/no-deprecated": "off", // This package as a whole is deprecated so it uses deprecated APIs
 	},
 	settings: {
 		"import/resolver": {

@@ -56,7 +56,7 @@ import { IUser } from '@fluidframework/protocol-definitions';
 import { MessageType } from '@fluidframework/protocol-definitions';
 import { ReadOnlyInfo } from '@fluidframework/container-definitions';
 import { ScopeType } from '@fluidframework/protocol-definitions';
-import { TypedEventEmitter } from '@fluidframework/common-utils';
+import { TypedEventEmitter } from '@fluid-internal/client-utils';
 import { VisibilityState as VisibilityState_2 } from '@fluidframework/runtime-definitions';
 
 // @public
@@ -103,11 +103,11 @@ export class MockContainerRuntime {
     clientId: string;
     // (undocumented)
     protected clientSequenceNumber: number;
-    // (undocumented)
+    // @deprecated (undocumented)
     createDeltaConnection(): MockDeltaConnection;
     // (undocumented)
     protected readonly dataStoreRuntime: MockFluidDataStoreRuntime;
-    // (undocumented)
+    // @deprecated (undocumented)
     protected readonly deltaConnections: MockDeltaConnection[];
     // (undocumented)
     dirty(): void;

@@ -19,7 +19,7 @@ import {
 	ISignalMessage,
 	ITokenClaims,
 } from "@fluidframework/protocol-definitions";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 
 // This is coppied from alfred.  Probably should clean this up.
 const DefaultServiceConfiguration: IClientConfiguration = {

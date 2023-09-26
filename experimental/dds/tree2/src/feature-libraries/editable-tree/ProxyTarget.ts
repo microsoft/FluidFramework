@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	Anchor,
 	TreeNavigationResult,
@@ -54,7 +54,7 @@ export abstract class ProxyTarget<T extends Anchor | FieldAnchor> {
 		if (this.lazyCursor.state !== ITreeSubscriptionCursorState.Current) {
 			assert(
 				this.lazyCursor.state === ITreeSubscriptionCursorState.Cleared,
-				"Unset cursor should be in cleared state",
+				0x749 /* Unset cursor should be in cleared state */,
 			);
 			assert(
 				this.anchor !== undefined,

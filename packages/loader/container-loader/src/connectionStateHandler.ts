@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryProperties, TelemetryEventCategory } from "@fluidframework/core-interfaces";
-import { assert, Timer } from "@fluidframework/common-utils";
+import { assert, Timer } from "@fluidframework/core-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { ISequencedClient, IClient } from "@fluidframework/protocol-definitions";
 import {

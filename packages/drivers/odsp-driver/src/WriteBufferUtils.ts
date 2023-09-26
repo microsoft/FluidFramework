@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, IsoBuffer } from "@fluidframework/common-utils";
+import { IsoBuffer } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	BlobCore,
 	codeToBytesMap,

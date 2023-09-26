@@ -4,13 +4,13 @@
  */
 
 import {
-	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelServices,
-	IChannelFactory,
+	type IChannelAttributes,
+	type IFluidDataStoreRuntime,
+	type IChannelServices,
+	type IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import { PactMap } from "./pactMap";
-import { IPactMap } from "./interfaces";
+import { type IPactMap } from "./interfaces";
 import { pkgVersion } from "./packageVersion";
 
 /**
