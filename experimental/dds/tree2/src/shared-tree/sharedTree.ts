@@ -124,7 +124,7 @@ export class SharedTree
 		const removedTreesSummarizer = new TreeIndexSummarizer(removedTrees);
 		const changeFamily = new DefaultChangeFamily(options);
 		super(
-			[schemaSummarizer, removedTreesSummarizer, forestSummarizer],
+			[schemaSummarizer, forestSummarizer, removedTreesSummarizer],
 			changeFamily,
 			options,
 			id,

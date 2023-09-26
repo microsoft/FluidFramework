@@ -22,21 +22,21 @@
                         }
                     }
                 },
-                "TreeIndex": {
-                    "type": 1,
-                    "tree": {
-                        "TreeIndexBlob": {
-                            "type": 2,
-                            "content": "{\"data\":\"[]\",\"id\":0}"
-                        }
-                    }
-                },
                 "Forest": {
                     "type": 1,
                     "tree": {
                         "ForestTree": {
                             "type": 2,
                             "content": "[]"
+                        }
+                    }
+                },
+                "TreeIndex": {
+                    "type": 1,
+                    "tree": {
+                        "TreeIndexBlob": {
+                            "type": 2,
+                            "content": "{\"data\":\"[]\",\"id\":0}"
                         }
                     }
                 }

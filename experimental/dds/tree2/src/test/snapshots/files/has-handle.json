@@ -22,21 +22,21 @@
                         }
                     }
                 },
-                "TreeIndex": {
-                    "type": 1,
-                    "tree": {
-                        "TreeIndexBlob": {
-                            "type": 2,
-                            "content": "{\"data\":\"[]\",\"id\":1}"
-                        }
-                    }
-                },
                 "Forest": {
                     "type": 1,
                     "tree": {
                         "ForestTree": {
                             "type": 2,
                             "content": "[[\"rootFieldKey\",[{\"type\":\"Handle\",\"value\":{\"type\":\"__fluid_handle__\",\"url\":\"/test/test\"}}]]]"
+                        }
+                    }
+                },
+                "TreeIndex": {
+                    "type": 1,
+                    "tree": {
+                        "TreeIndexBlob": {
+                            "type": 2,
+                            "content": "{\"data\":\"[]\",\"id\":1}"
                         }
                     }
                 }
