@@ -533,6 +533,7 @@ export function createDeprecationNoticeSection(
 export function createExamplesSection(
 	apiItem: ApiItem,
 	config: Required<ApiItemTransformationConfiguration>,
+	title: string = "Examples",
 ): SectionNode | undefined {
 	const exampleBlocks = getExampleBlocks(apiItem);
 
@@ -554,7 +555,7 @@ export function createExamplesSection(
 	}
 
 	return wrapInSection(exampleSections, {
-		title: "Examples",
+		title,
 		id: `${getQualifiedApiItemName(apiItem)}-examples`,
 	});
 }
