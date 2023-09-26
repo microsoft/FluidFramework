@@ -25,6 +25,9 @@ import {
 	FieldUpPath,
 	PathRootPrefix,
 	ValueSchema,
+	forEachField,
+	forEachNode,
+	Stop,
 } from "../core";
 import { brand } from "../util";
 import { expectEqualFieldPaths, expectEqualPaths } from "./utils";
@@ -694,6 +697,21 @@ function checkTraversal(cursor: ITreeCursor, expectedPath: UpPath | undefined) {
 		checkFieldTraversal(cursor, { parent: path, field: key });
 	}
 
+	// Check iteration via forEach
+	const fieldLengthsIterator = fieldLengths[Symbol.iterator]();
+	forEachField(cursor, (c) => {
+		assert.equal(c.mode, CursorLocationType.Fields);
+		const next = fieldLengthsIterator.next();
+		assert(next.done !== true);
+		const [key, length] = next.value;
+		assert.equal(c.getFieldKey(), key);
+		assert.equal(c.getFieldLength(), length);
+	});
+	assert.equal(cursor.mode, CursorLocationType.Nodes);
+	assert.equal(fieldLengthsIterator.next().done, true);
+	forEachField(cursor, () => Stop);
+	assert.equal(cursor.mode, CursorLocationType.Nodes);
+
 	// Add some fields which should be empty to check:
 	for (const key of testKeys) {
 		if (!fieldLengths.has(key)) {
@@ -701,7 +719,7 @@ function checkTraversal(cursor: ITreeCursor, expectedPath: UpPath | undefined) {
 		}
 	}
 
-	// Cheek field access by key
+	// Check field access by key
 	for (const [key, length] of fieldLengths) {
 		assert.equal(cursor.mode, CursorLocationType.Nodes);
 		cursor.enterField(key);
@@ -804,6 +822,17 @@ export function checkFieldTraversal(cursor: ITreeCursor, expectedPath: FieldUpPa
 		cursor.enterNode(index);
 		assert(!cursor.seekNodes(Number.NEGATIVE_INFINITY));
 	}
+
+	// Check iteration via forEach
+	let forEachIterationCount = 0;
+	forEachNode(cursor, (c) => {
+		assert.equal(c.mode, CursorLocationType.Nodes);
+		forEachIterationCount += 1;
+	});
+	assert.equal(cursor.mode, CursorLocationType.Fields);
+	assert.equal(forEachIterationCount, expectedFieldLength);
+	forEachNode(cursor, () => Stop);
+	assert.equal(cursor.mode, CursorLocationType.Fields);
 
 	// skipPendingFields should have no effect since not pending
 	assert(cursor.skipPendingFields());

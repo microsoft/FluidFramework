@@ -355,6 +355,7 @@ export function forEachField<TCursor extends ITreeCursor = ITreeCursor>(
 	assert(cursor.mode === CursorLocationType.Nodes, 0x411 /* should be in nodes */);
 	for (let inField = cursor.firstField(); inField; inField = cursor.nextField()) {
 		if (f(cursor) === Stop) {
+			cursor.exitField();
 			return;
 		}
 	}
@@ -391,6 +392,7 @@ export function forEachNode<TCursor extends ITreeCursor = ITreeCursor>(
 	assert(cursor.mode === CursorLocationType.Fields, 0x3bd /* should be in fields */);
 	for (let inNodes = cursor.firstNode(); inNodes; inNodes = cursor.nextNode()) {
 		if (f(cursor) === Stop) {
+			cursor.exitNode();
 			return;
 		}
 	}

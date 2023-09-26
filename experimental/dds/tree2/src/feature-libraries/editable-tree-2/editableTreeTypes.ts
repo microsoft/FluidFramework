@@ -569,7 +569,7 @@ export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
 	 *
 	 * @remarks
 	 * This array is not guaranteed to be kept up to date across edits and thus should not be held onto across edits.
-	 * This also serves as an enumerable own property which allows JavaScript object traversals to access {@link Sequence} content.
+	 * This serves as an enumerable own property which allows JavaScript object traversals to access {@link Sequence} content.
 	 * See [ReadMe](./README.md) for details.
 	 */
 	readonly asArray: readonly UnboxNodeUnion<TTypes>[];
