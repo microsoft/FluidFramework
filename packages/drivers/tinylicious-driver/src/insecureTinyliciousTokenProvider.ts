@@ -48,7 +48,8 @@ export class InsecureTinyliciousTokenProvider implements ITokenProvider {
 	): string {
 		// Current time in seconds
 		const now = Math.round(Date.now() / 1000);
-		const user = { id: uuid(), name: getRandomName() };
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+		const user = { id: uuid(), name: getRandomName() as string };
 
 		const claims: ITokenClaims = {
 			documentId: documentId ?? "",
