@@ -139,7 +139,7 @@ function initializeTreeWithContent<Kind extends FieldKind, Types extends Allowed
 	};
 }
 
-describe.only("LazyOptionalField", () => {
+describe("LazyOptionalField", () => {
 	describe("as", () => {
 		it("Any", () => {
 			const builder = new SchemaBuilder("test");
