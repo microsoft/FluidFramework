@@ -152,23 +152,34 @@ function* factoryPermutations<T extends IDocumentServiceFactory>(create: () => T
 		// Certain behavior (like driver caches) are per factory instance, and by reusing it we hit those code paths
 		// At the same time we want to test newly created factory.
 		let documentServiceFactory: T = factoryReused;
-		let headers: IRequestHeader = {};
+		let headers: IRequestHeader = { deltaConnection: "none" };
 		switch (counter % 5) {
 			default:
 			case 0:
 				documentServiceFactory = create();
 				break;
 			case 1:
-				headers = { [LoaderHeader.loadMode]: { opsBeforeReturn: "cached" } };
+				headers = {
+					[LoaderHeader.loadMode]: { opsBeforeReturn: "cached", deltaConnection: "none" },
+				};
 				break;
 			case 2:
-				headers = { [LoaderHeader.loadMode]: { opsBeforeReturn: "all" } };
+				headers = {
+					[LoaderHeader.loadMode]: {
+						opsBeforeReturn: "cached",
+						deltaConnection: "delayed",
+					},
+				};
 				break;
 			case 3:
-				headers = { [LoaderHeader.loadMode]: { deltaConnection: "none" } };
+				headers = {
+					[LoaderHeader.loadMode]: { opsBeforeReturn: "all", deltaConnection: "none" },
+				};
 				break;
 			case 4:
-				headers = { [LoaderHeader.loadMode]: { deltaConnection: "delayed" } };
+				headers = {
+					[LoaderHeader.loadMode]: { opsBeforeReturn: "all", deltaConnection: "delayed" },
+				};
 				break;
 		}
 		yield { documentServiceFactory, headers };
