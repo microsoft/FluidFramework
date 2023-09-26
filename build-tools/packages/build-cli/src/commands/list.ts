@@ -13,12 +13,11 @@ import {
 	packageMayChooseToPublishToNPM,
 	packageMustPublishToInternalFeedOnly,
 	packageMustPublishToNPM,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import/no-internal-modules -- the policy-related stuff will eventually be moved into this package
 } from "@fluidframework/build-tools/dist/repoPolicyCheck/handlers/npmPackages";
 
 interface ListItem extends PnpmListEntry {
 	tarball?: string;
-	feeds?: string[];
 }
 
 /**
