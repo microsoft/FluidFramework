@@ -26,10 +26,7 @@ const schemaPolicy = {
 };
 
 export const SharedTreeView: React.FC<{ tree: ISharedTree }> = ({ tree }) => {
-	const typedTree = React.useMemo<ISharedTreeView>(
-		() => tree.view.schematize(schemaPolicy),
-		[tree.view],
-	);
+	const typedTree = React.useMemo<ISharedTreeView>(() => tree.schematize(schemaPolicy), [tree]);
 	const [invalidations, setInvalidations] = React.useState(0);
 	React.useEffect(() => {
 		return typedTree.events.on("afterBatch", () => {
