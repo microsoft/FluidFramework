@@ -75,7 +75,7 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 				switch (this.flags.feed) {
 					case "official": {
 						if (official === false) {
-							this.log(`official ${official}: ${item.name}`);
+							this.verbose(`official ${official}: ${item.name}`);
 						}
 						return official;
 					}
@@ -84,7 +84,7 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 					case "internal-test": {
 						const result = official || internal;
 						if (result === false) {
-							this.log(`internal ${result}: ${item.name}`);
+							this.verbose(`internal ${result}: ${item.name}`);
 						}
 						return result;
 					}
