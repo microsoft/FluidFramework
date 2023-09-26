@@ -123,7 +123,7 @@ function createDeprecationNoticeSection(apiItem: ApiItem, config: Required<ApiIt
 export function createDocumentWriter(): DocumentWriter;
 
 // @public
-function createExamplesSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
+function createExamplesSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>, headingText?: string): SectionNode | undefined;
 
 // @public
 function createParametersSection(apiFunctionLike: ApiFunctionLike, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
@@ -144,7 +144,7 @@ function createSignatureSection(apiItem: ApiItem, config: Required<ApiItemTransf
 function createSummaryParagraph(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): ParagraphNode | undefined;
 
 // @public
-function createThrowsSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
+function createThrowsSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>, headingText?: string): SectionNode | undefined;
 
 // @public
 function createTypeParametersSection(typeParameters: readonly TypeParameter[], contextApiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
