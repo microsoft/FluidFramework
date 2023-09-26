@@ -45,27 +45,8 @@ export function createMultiSinkLogger(props: {
     tryInheritProperties?: true;
 }): ITelemetryLoggerExt;
 
-// @public
-export function createSampledLoggerExt(logger: ITelemetryLoggerExt, eventSampler: {
-    poll: () => boolean;
-}): {
-    send: (event: ITelemetryBaseEvent) => void;
-    sendTelemetryEvent: (event: ITelemetryGenericEventExt) => void;
-    sendErrorEvent: (event: ITelemetryGenericEventExt) => void;
-    sendPerformanceEvent: (event: ITelemetryGenericEventExt) => void;
-    eventSampler: {
-        poll: () => boolean;
-    };
-};
-
-// @public
-export const createSystematicEventSampler: (options: {
-    samplingRate: number;
-    defaultState?: {
-        eventCount: number;
-    };
-    autoIncrementCounter?: boolean;
-}) => SystematicEventSampler;
+// @internal
+export function createSampledLogger(logger: ITelemetryLoggerExt, eventSampler?: IEventSampler): ISampledTelemetryLogger;
 
 // @public (undocumented)
 export const disconnectedEventName = "disconnected";
@@ -126,6 +107,12 @@ export interface IConfigProviderBase {
     getRawConfig(name: string): ConfigTypes;
 }
 
+// @internal
+export interface IEventSampler {
+    // (undocumented)
+    sample?: () => boolean | undefined;
+}
+
 // @public
 export interface IFluidErrorAnnotations {
     props?: ITelemetryProperties;
@@ -150,6 +137,14 @@ export interface IPerformanceEventMarkers {
     end?: true;
     // (undocumented)
     start?: true;
+}
+
+// @internal
+export interface ISampledTelemetryLogger extends ITelemetryLoggerExt {
+    // (undocumented)
+    eventSampler?: IEventSampler;
+    // (undocumented)
+    isSamplingDisabled: boolean;
 }
 
 // @public
@@ -326,16 +321,6 @@ export class SampledTelemetryHelper implements IDisposable {
 
 // @public
 export const sessionStorageConfigProvider: Lazy<IConfigProviderBase>;
-
-// @public (undocumented)
-export interface SystematicEventSampler {
-    // (undocumented)
-    poll: () => boolean;
-    // (undocumented)
-    state: {
-        eventCount: number;
-    };
-}
 
 // @public (undocumented)
 export const tagCodeArtifacts: <T extends Record<string, TelemetryEventPropertyTypeExt>>(values: T) => { [P in keyof T]: {

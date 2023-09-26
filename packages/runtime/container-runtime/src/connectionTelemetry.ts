@@ -4,10 +4,11 @@
  */
 
 import {
+	IEventSampler,
+	ISampledTelemetryLogger,
 	ITelemetryLoggerExt,
 	createChildLogger,
-	createSampledLoggerExt,
-	createSystematicEventSampler,
+	createSampledLogger,
 	formatTick,
 } from "@fluidframework/telemetry-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
@@ -59,6 +60,8 @@ class OpPerfTelemetry {
 	// Collab window tracking. This is timestamp of %1000 message.
 	private sequenceNumberForMsnTracking: number | undefined;
 	private msnTrackingTimestamp: number = 0;
+	// To track round trip time for every %500 client message.
+	private clientSequenceNumberForLatencyStatistics: number | undefined;
 	// Performance Data to be reported for ops round trips and processing.
 	private readonly latencyStatistics = new Map<
 		number,
@@ -77,6 +80,7 @@ class OpPerfTelemetry {
 	private readonly logger: ITelemetryLoggerExt;
 
 	private static readonly OP_LATENCY_SAMPLE_RATE = 500;
+	private readonly opLatencyLogger: ISampledTelemetryLogger;
 
 	private static readonly DELTA_LATENCY_SAMPLE_RATE = 100;
 	private readonly deltaLatencyLogger: ITelemetryLoggerExt;
@@ -88,13 +92,29 @@ class OpPerfTelemetry {
 	) {
 		this.logger = createChildLogger({ logger, namespace: "OpPerf" });
 
-		this.deltaLatencyLogger = createSampledLoggerExt(
-			logger,
-			createSystematicEventSampler({
-				samplingRate: OpPerfTelemetry.DELTA_LATENCY_SAMPLE_RATE,
-				autoIncrementCounter: true,
-			}),
-		);
+		const deltaLatencyEventSampler: IEventSampler = (() => {
+			const state = {
+				eventCount: -1,
+			};
+			return {
+				sample: () => {
+					state.eventCount++;
+					const shouldSample =
+						state.eventCount % OpPerfTelemetry.DELTA_LATENCY_SAMPLE_RATE === 0;
+					if (shouldSample) {
+						state.eventCount = 0;
+					}
+					return shouldSample;
+				},
+			};
+		})();
+
+		this.deltaLatencyLogger = createSampledLogger(logger, deltaLatencyEventSampler);
+
+		// The SampledLogger here is used get access to the isSamplingDisabled property dervied from
+		// telemetry config properties. The actual sampling logic for op messages happens outside this SampledLogger
+		// due to complexity of the different asynchronus scenarios of the op message lifecycle.
+		this.opLatencyLogger = createSampledLogger(logger);
 
 		this.deltaManager.on("pong", (latency) => this.recordPingTime(latency));
 		this.deltaManager.on("submitOp", (message) => this.beforeOpSubmit(message));
@@ -116,6 +136,7 @@ class OpPerfTelemetry {
 		});
 		this.deltaManager.on("disconnect", () => {
 			this.sequenceNumberForMsnTracking = undefined;
+			this.clientSequenceNumberForLatencyStatistics = undefined;
 			this.connectionOpSeqNumber = undefined;
 			this.firstConnection = false;
 			this.latencyStatistics.clear();
@@ -125,7 +146,7 @@ class OpPerfTelemetry {
 			for (const msg of messages) {
 				if (
 					msg.type === MessageType.Operation &&
-					msg.clientSequenceNumber % OpPerfTelemetry.OP_LATENCY_SAMPLE_RATE === 0
+					this.clientSequenceNumberForLatencyStatistics === msg.clientSequenceNumber
 				) {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const latencyStats = this.latencyStatistics.get(msg.clientSequenceNumber)!;
@@ -161,7 +182,8 @@ class OpPerfTelemetry {
 			if (
 				this.clientId === message.clientId &&
 				message.type === MessageType.Operation &&
-				message.clientSequenceNumber % OpPerfTelemetry.OP_LATENCY_SAMPLE_RATE === 0
+				(this.opLatencyLogger.isSamplingDisabled ||
+					this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber)
 			) {
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const latencyStats = this.latencyStatistics.get(message.clientSequenceNumber)!;
@@ -229,11 +251,16 @@ class OpPerfTelemetry {
 
 	private beforeOpSubmit(message: IDocumentMessage) {
 		// start with first client op and measure latency every 500 client ops
-		if (message.clientSequenceNumber % OpPerfTelemetry.OP_LATENCY_SAMPLE_RATE === 0) {
+		if (
+			this.opLatencyLogger.isSamplingDisabled ||
+			(this.clientSequenceNumberForLatencyStatistics === undefined &&
+				message.clientSequenceNumber % OpPerfTelemetry.OP_LATENCY_SAMPLE_RATE === 1)
+		) {
 			assert(
 				this.latencyStatistics.get(message.clientSequenceNumber) === undefined,
 				"Existing op perf data for client sequence number",
 			);
+			this.clientSequenceNumberForLatencyStatistics = message.clientSequenceNumber;
 			this.latencyStatistics.set(message.clientSequenceNumber, {
 				opProcessingTimes: {
 					submitOpEventTime: Date.now(),
@@ -273,8 +300,9 @@ class OpPerfTelemetry {
 		}
 
 		if (
-			this.clientId === message.clientId &&
-			message.clientSequenceNumber % OpPerfTelemetry.OP_LATENCY_SAMPLE_RATE === 0
+			this.opLatencyLogger.isSamplingDisabled ||
+			(this.clientId === message.clientId &&
+				this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber)
 		) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const latencyData = this.latencyStatistics.get(message.clientSequenceNumber)!;
@@ -298,7 +326,7 @@ class OpPerfTelemetry {
 			// The threshold could be adjusted, but ideally it stays  workload-agnostic, as service
 			// performance impacts all workloads relying on service.
 			const category = duration > latencyThreshold ? "error" : "performance";
-			this.logger.sendPerformanceEvent({
+			this.opLatencyLogger.sendPerformanceEvent({
 				eventName: "OpRoundtripTime",
 				sequenceNumber,
 				referenceSequenceNumber: message.referenceSequenceNumber,
@@ -309,6 +337,7 @@ class OpPerfTelemetry {
 					this.deltaManager.lastSequenceNumber - this.deltaManager.minimumSequenceNumber,
 				...latencyData.opPerfData,
 			});
+			this.clientSequenceNumberForLatencyStatistics = undefined;
 			this.latencyStatistics.delete(message.clientSequenceNumber);
 		}
 	}
