@@ -13,7 +13,7 @@ import { strict as assert } from "assert";
 import {
 	type AllowedTypes,
 	Any,
-	type FieldKindTypes,
+	type FieldKind,
 	FieldKinds,
 	FieldSchema,
 	SchemaAware,
@@ -93,7 +93,7 @@ describe("LazyField", () => {
 	});
 });
 
-function createSingleValueTree<Kind extends FieldKindTypes, Types extends AllowedTypes>(
+function createSingleValueTree<Kind extends FieldKind, Types extends AllowedTypes>(
 	builder: SchemaBuilder,
 	rootSchema: FieldSchema<Kind, Types>,
 	initialTree?:
