@@ -67,6 +67,9 @@ export interface IFluidSerializer {
  * but instead mostly restricts access to it.
  *
  * See also {@link isFluidHandle}.
+ *
+ * Warning: Objects with a key "type" and value "__fluid_handle__" will not round trip correctly through `FluidSerializer`
+ * (due to decodeValue's use of isSerializedHandle causing them to be wrongly parsed as handles) and should be avoided.
  * @public
  */
 export type FluidSerializableReadOnly =
@@ -81,6 +84,8 @@ export type FluidSerializableReadOnly =
 
 /**
  * Check if a value in {@link FluidSerializableReadOnly} data is an {@link @fluidframework/core-interfaces#IFluidHandle}.
+ *
+ * Warning: Non-IFluidHandle objects with a key "IFluidHandle" used to be unconditionally interpreted as IFluidHandle and currently assert.
  *
  * @remarks
  * This is sound to use on data that is actually valid Json + IFluidHandles (but not on `unknown` data)
