@@ -133,7 +133,8 @@ export class CheckpointContext {
 		const isLocal =
 			globalCheckpointOnly === true
 				? false
-				: localCheckpointEnabled && checkpoint.reason !== CheckpointReason.NoClients;
+				: localCheckpointEnabled === true &&
+				  checkpoint.reason !== CheckpointReason.NoClients;
 
 		if (checkpoint.clear) {
 			updateP = this.checkpointManager.deleteCheckpoint(checkpoint, isLocal);
