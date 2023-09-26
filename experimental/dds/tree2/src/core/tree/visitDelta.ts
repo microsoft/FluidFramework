@@ -500,10 +500,6 @@ function catalogAttachPassRootChanges(mark: Exclude<Delta.Mark, number>, config:
 				fields = mark.fields;
 				if (mark.detachId !== undefined) {
 					const count = mark.content.length;
-					// The tree index entry may conflict when loading from a summary.
-					// Specifically, if a forest summary contains repair data and the tree index has
-					// not yet been loaded, the tree index used here will not have the correct entry and
-					// may conflict.
 					const { root: rootDestination } = config.treeIndex.getOrCreateEntry(
 						mark.detachId,
 						count,
