@@ -10,6 +10,9 @@ parameters:
 - name: official
   type: boolean
 
+- name: testFeed
+  type: boolean
+
 - name: feedName
   type: string
 
@@ -64,6 +67,7 @@ jobs:
               feedName: ${{ parameters.feedName }}
               customEndPoint: ${{ parameters.customEndPoint }}
               official: ${{ parameters.official }}
+              testFeed: ${{ parameters.testFeed }}
               publishFlags: ${{ parameters.publishFlags }}
           - ${{ if eq(parameters.publishNonScopedPackages, true) }}:
             - template: include-publish-npm-package-steps.yml
@@ -73,6 +77,7 @@ jobs:
                 devFeedName: ${{ parameters.devFeedName }}
                 feedName: ${{ parameters.feedName }}
                 official: ${{ parameters.official }}
+                testFeed: ${{ parameters.testFeed }}
                 customEndPoint: ${{ parameters.customEndPoint }}
                 publishFlags: ${{ parameters.publishFlags }}
           - template: include-git-tag-steps.yml

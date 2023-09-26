@@ -13,6 +13,7 @@ export interface PnpmListEntry {
 	version: string;
 	path: string;
 	private: boolean;
+	tarball?: string;
 }
 
 /**

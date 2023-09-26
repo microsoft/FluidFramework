@@ -14,7 +14,10 @@ parameters:
   type: string
 
 - name: official
-  type: string
+  type: boolean
+
+- name: testFeed
+  type: boolean
 
 - name: artifactPath
   type: string
@@ -26,6 +29,18 @@ parameters:
 - name: customEndPoint
   type: string
   default:
+
+variables:
+  - ${{ if eq(parameters.official, true) }}:
+    - name: feed
+      value: official
+  - ${{ if eq(parameters.official, false) }}:
+    - ${{ if eq(parameters.testFeed, false) }}:
+      - name: feed
+        value: internal
+    - ${{ if eq(parameters.testFeed, true) }}:
+      - name: feed
+        value: internal-test
 
 steps:
 - task: Bash@3
@@ -53,13 +68,6 @@ steps:
           echo "@fluid-internal:registry=${{ parameters.feedName }}" >> ./.npmrc
           echo "always-auth=true" >> ./.npmrc
           cat .npmrc
-          echo Deleting @fluid-internal packages except fluid-internal-client-utils package
-          for packageName in $(ls fluid-internal-*.tgz | grep -v fluid-internal-client-utils-*.tgz)
-          do
-            rm -f $packageName
-          done
-          echo Deleting @fluid-example packages
-          rm -f fluid-example-*
     ${{ if eq(parameters.namespace, false) }}:
       script: |
         echo Generating .npmrc for ${{ parameters.feedName }}
@@ -88,8 +96,8 @@ steps:
       echo Tag: $tag
       cp .npmrc ~/.npmrc
       maximumRetryIfNetworkError=3
-      if [[ -f $(Pipeline.Workspace)/pack/packagePublishOrder.txt ]]; then
-        packages=$(cat $(Pipeline.Workspace)/pack/packagePublishOrder.txt)
+      if [[ -f $(Pipeline.Workspace)/pack/packagePublishOrder-${{ variables.feed }}.txt ]]; then
+        packages=$(cat $(Pipeline.Workspace)/pack/packagePublishOrder-${{ variables.feed }}.txt)
         sorted=true
       else
         packages=*.tgz
@@ -146,7 +154,7 @@ steps:
 
               if [[ $release == "release" && $feedId == "build" ]]; then
                 packageVersion=$(grep -oP 'npm notice version:\s+\K[^\s]+' publish_log)
-                
+
                 if [ "${{ parameters.artifactPath }}" == "scoped" ]; then
                   scopes=("fluidframework" "fluid-tools" "fluid-internal" "fluid-experimental")
                   for scope in "${scopes[@]}"; do
@@ -172,9 +180,9 @@ steps:
                       }' \
                       "$feedPromotionUrl"
                   )
-                
+
                 curlExitStatus=$?
-                
+
                 if echo "$response" | grep -q '"success":"false"'; then
                   reason="${response#*\"reason\":\"}"
                   reason="${reason%%\"*}"
@@ -186,7 +194,7 @@ steps:
                   exit 1
                 fi
               fi
-              
+
               rm publish_log
               break
             fi

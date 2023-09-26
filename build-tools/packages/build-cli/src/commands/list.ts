@@ -3,12 +3,23 @@
  * Licensed under the MIT License.
  */
 import { Flags } from "@oclif/core";
-import execa from "execa";
 
 import { BaseCommand } from "../base";
 import { filterPackages, parsePackageFilterFlags } from "../filter";
 import { filterFlags, releaseGroupFlag } from "../flags";
 import { PnpmListEntry, pnpmList } from "../pnpm";
+import {
+	packageMayChooseToPublishToInternalFeedOnly,
+	packageMayChooseToPublishToNPM,
+	packageMustPublishToInternalFeedOnly,
+	packageMustPublishToNPM,
+	// eslint-disable-next-line import/no-internal-modules
+} from "@fluidframework/build-tools/dist/repoPolicyCheck/handlers/npmPackages";
+
+interface ListItem extends PnpmListEntry {
+	tarball?: string;
+	feeds?: string[];
+}
 
 /**
  * Lists all the packages in a release group in topological order.
@@ -24,6 +35,11 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 	static flags = {
 		releaseGroup: releaseGroupFlag({ required: true }),
 		...filterFlags,
+		feed: Flags.string({
+			description: "Filter the resulting packages to those that should be published to ",
+			options: ["official", "internal", "internal-test"],
+			required: false,
+		}),
 		tarball: Flags.boolean({
 			description:
 				"Return packed tarball names (without extension) instead of package names. @-signs will be removed from the name, and slashes are replaced with dashes.",
@@ -31,9 +47,10 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 		}),
 	};
 
-	public async run(): Promise<PnpmListEntry[]> {
+	public async run(): Promise<ListItem[]> {
 		const context = await this.getContext();
 		const releaseGroup = context.repo.releaseGroups.get(this.flags.releaseGroup);
+
 		if (releaseGroup === undefined) {
 			this.error(`Can't find release group: ${this.flags.releaseGroup}`, { exit: 1 });
 		}
@@ -42,15 +59,50 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 		const pnpmListResults = await pnpmList(releaseGroup.repoPath);
 		const filtered = filterPackages(pnpmListResults, filterOptions)
 			.reverse()
+			.filter((item) => {
+				const config = context.rootFluidBuildConfig?.policy?.packageNames;
+				if (config === undefined) {
+					this.error(`No fluid-build package name policy config found.`);
+				}
+				const official =
+					packageMustPublishToNPM(item.name, config) ||
+					packageMayChooseToPublishToNPM(item.name, config);
+
+				const internal =
+					packageMustPublishToInternalFeedOnly(item.name, config) ||
+					packageMayChooseToPublishToInternalFeedOnly(item.name, config);
+
+				switch (this.flags.feed) {
+					case "official": {
+						if (official === false) {
+							this.log(`official ${official}: ${item.name}`);
+						}
+						return official;
+					}
+
+					case "internal":
+					case "internal-test": {
+						const result = official || internal;
+						if (result === false) {
+							this.log(`internal ${result}: ${item.name}`);
+						}
+						return result;
+					}
+
+					default: {
+						return true;
+					}
+				}
+			})
 			.map((item) => {
 				// pnpm returns absolute paths, but repo relative is more useful
 				item.path = context.repo.relativeToRepo(item.path);
+				item.tarball = item.name.replaceAll("@", "").replaceAll("/", "-");
 
-				// Calculate and set the tarball name if the tarball flag is set
-				item.name =
-					this.flags.tarball === true
-						? item.name.replaceAll("@", "").replaceAll("/", "-")
-						: item.name;
+				// Set the tarball name if the tarball flag is set
+				if (this.flags.tarball === true) {
+					item.name = item.tarball;
+				}
 				return item;
 			});
 
