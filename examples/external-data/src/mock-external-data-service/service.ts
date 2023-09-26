@@ -239,6 +239,7 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 			}
 
 			// 3. Webhook exists, attempt to remove the subscriber from the webhook
+			// eslint-disable-next-line unicorn/no-negated-condition -- ignoring so the code doesn't have to be re-ordered
 			if (!webhook.subscribers.includes(subscriberUrl)) {
 				// 3a. Webhook exists but the provided subscriber is not subscribed with the webhook.
 				const resultMessage =
