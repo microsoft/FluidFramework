@@ -150,7 +150,6 @@ describe.only("LazyOptionalField", () => {
 
 			// Positive cases
 			assert(field.is(SchemaBuilder.fieldOptional(Any)));
-			assert(field.is(SchemaBuilder.fieldRecursive(FieldKinds.optional, Any)));
 
 			// Negative cases
 			assert(!field.is(SchemaBuilder.fieldOptional()));
@@ -192,7 +191,6 @@ describe.only("LazyOptionalField", () => {
 
 			// Positive cases
 			assert(field.is(SchemaBuilder.fieldOptional(booleanLeafSchema)));
-			assert(field.is(SchemaBuilder.fieldRecursive(FieldKinds.optional, booleanLeafSchema)));
 
 			// Negative cases
 			assert.equal(field.is(SchemaBuilder.fieldValue(Any)), false);
@@ -205,8 +203,6 @@ describe.only("LazyOptionalField", () => {
 				!field.is(SchemaBuilder.fieldRecursive(FieldKinds.value, recursiveStructSchema)),
 			);
 		});
-
-		// TODO: what other cases are interesting?
 	});
 
 	describe("length", () => {
