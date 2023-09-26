@@ -313,7 +313,7 @@ export class FieldSchema<Kind extends FieldKind = FieldKind, Types = AllowedType
 	protected _typeCheck?: MakeNominal;
 
 	/**
-	 * @param kind - The [kind](https://en.wikipedia.org/wiki/Kind_(type_theory)) of this field.
+	 * @param kind - The {@link https://en.wikipedia.org/wiki/Kind_(type_theory) | kind} of this field.
 	 * Determine the multiplicity, viewing and editing APIs as well as the merge resolution policy.
 	 * @param allowedTypes - What types of tree nodes are allowed in this field.
 	 */
