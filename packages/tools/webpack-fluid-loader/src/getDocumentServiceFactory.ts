@@ -13,7 +13,6 @@ import { OdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
 import { HostStoragePolicy, IPersistedCache } from "@fluidframework/odsp-driver-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { getRandomName } from "@fluid-internal/client-utils";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 
 import { v4 as uuid } from "uuid";
@@ -29,9 +28,12 @@ export function getDocumentServiceFactory(
 	odspPersistantCache?: IPersistedCache,
 	odspHostStoragePolicy?: HostStoragePolicy,
 ): IDocumentServiceFactory {
+	const userId = uuid();
+	const userName = userId.match(/^([\da-f]{8})-([\da-f]{4})/); // userName takes the first two segments of the userId.
+
 	const getUser = (): IDevServerUser => ({
-		id: uuid(),
-		name: getRandomName(),
+		id: userId,
+		name: userName,
 	});
 
 	let routerliciousTokenProvider: InsecureTokenProvider;

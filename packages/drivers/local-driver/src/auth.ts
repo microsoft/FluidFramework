@@ -49,7 +49,7 @@ export function generateToken(
 
 export function generateUser(): IUser {
 	const userId = uuid();
-	const userName = userId.match(/^([\da-f]{8})-([\da-f]{4})/); // userName takes the first two segments of the userId. 
+	const userName = userId.match(/^([\da-f]{8})-([\da-f]{4})/); // userName takes the first two segments of the userId.
 
 	const randomUser = {
 		id: userId,

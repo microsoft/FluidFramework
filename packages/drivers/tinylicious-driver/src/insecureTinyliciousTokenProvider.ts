@@ -45,9 +45,9 @@ export class InsecureTinyliciousTokenProvider implements ITokenProvider {
 		lifetime: number = 60 * 60,
 		ver: string = "1.0",
 	): string {
-		const userId = uuid(); 
-		const userName = userId.match(/^([\da-f]{8})-([\da-f]{4})/); // userName takes the first two segments of the userId. 
-		
+		const userId = uuid();
+		const userName = userId.match(/^([\da-f]{8})-([\da-f]{4})/); // userName takes the first two segments of the userId.
+
 		// Current time in seconds
 		const now = Math.round(Date.now() / 1000);
 		const user = { id: userId, name: userName };
