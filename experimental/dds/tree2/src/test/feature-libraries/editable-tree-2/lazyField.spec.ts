@@ -23,7 +23,6 @@ import {
 import {
 	FieldAnchor,
 	FieldKey,
-	type IEditableForest,
 	type ITreeCursorSynchronous,
 	type ITreeSubscriptionCursor,
 	rootFieldKey,
@@ -38,7 +37,7 @@ import {
 	LazySequence,
 	LazyValueField,
 } from "../../../feature-libraries/editable-tree-2/lazyField";
-import { getReadonlyContext } from "./utils";
+import { contextWithContentReadonly, getReadonlyContext } from "./utils";
 
 const detachedField: FieldKey = brand("detached");
 const detachedFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: detachedField };
@@ -110,16 +109,14 @@ function createSingleValueTree<Kind extends FieldKind, Types extends AllowedType
 ): {
 	context: Context;
 	cursor: ITreeSubscriptionCursor;
-	forest: IEditableForest;
 } {
 	const schema = builder.intoDocumentSchema(rootSchema);
-	const forest = forestWithContent({ schema, initialTree });
 
-	const context = getReadonlyContext(forest, schema);
+	const context = contextWithContentReadonly({ schema, initialTree });
+
 	const cursor = initializeCursor(context, rootFieldAnchor);
 
 	return {
-		forest,
 		context,
 		cursor,
 	};
