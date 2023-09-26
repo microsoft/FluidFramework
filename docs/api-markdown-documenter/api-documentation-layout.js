@@ -11,7 +11,9 @@ const {
 	getHeadingForApiItem,
 	getReleaseTag,
 	LayoutUtilities,
+	SectionNode,
 	transformTsdocNode,
+	HeadingNode,
 } = require("@fluid-tools/api-markdown-documenter");
 
 const { AlertNode } = require("./alert-node");
@@ -53,21 +55,21 @@ function layoutContent(apiItem, itemSpecificContent, config) {
 	// Render summary comment (if any)
 	const summary = LayoutUtilities.createSummaryParagraph(apiItem, config);
 	if (summary !== undefined) {
-		sections.push(LayoutUtilities.wrapInSection([summary]));
+		sections.push(new SectionNode([summary]));
 	}
 
 	// Render deprecation notice (if any)
-	const deprecationNotice = LayoutUtilities.createDeprecationNoticeSection(apiItem, config);
+	const deprecationNotice = createDeprecationNoticeSection(apiItem, config);
 	if (deprecationNotice !== undefined) {
-		sections.push(LayoutUtilities.wrapInSection([deprecationNotice]));
+		sections.push(new SectionNode([deprecationNotice]));
 	}
 
 	// Render alpha/beta notice if applicable
 	const releaseTag = getReleaseTag(apiItem);
 	if (releaseTag === ReleaseTag.Alpha) {
-		sections.push(LayoutUtilities.wrapInSection([alphaWarningSpan]));
+		sections.push(new SectionNode([alphaWarningSpan]));
 	} else if (releaseTag === ReleaseTag.Beta) {
-		sections.push(LayoutUtilities.wrapInSection([betaWarningSpan]));
+		sections.push(new SectionNode([betaWarningSpan]));
 	}
 
 	// Render signature (if any)
@@ -110,7 +112,12 @@ function layoutContent(apiItem, itemSpecificContent, config) {
 	// Document items have their headings handled specially.
 	return doesItemRequireOwnDocument(apiItem, config.documentBoundaries)
 		? sections
-		: [LayoutUtilities.wrapInSection(sections, getHeadingForApiItem(apiItem, config))];
+		: [
+				new SectionNode(
+					sections,
+					HeadingNode.createFromPlainTextHeading(getHeadingForApiItem(apiItem, config)),
+				),
+		  ];
 }
 
 /**
