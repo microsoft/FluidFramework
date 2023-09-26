@@ -74,7 +74,6 @@
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.50.0",
-		"eslint-config-prettier": "~9.0.0",
 		"mocha": "^10.2.0",
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",
