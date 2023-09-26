@@ -60,7 +60,10 @@ export class HTTPError extends Error {
 		const stack = this.stack === undefined ? "" : String(this.stack);
 
 		const isFirefox =
-			typeof window?.navigator?.userAgent !== "undefined" &&
+			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- optional chain causes a test failure
+			typeof window !== "undefined" &&
+			typeof window.navigator !== "undefined" &&
+			typeof window.navigator.userAgent !== "undefined" &&
 			window.navigator.userAgent.toLowerCase().includes("firefox");
 
 		return isFirefox ? `${this.message}, stack:${stack}` : `stack:${stack}`;
