@@ -457,12 +457,14 @@ export function createRemarksSection(
  *
  * @param apiItem - The API item whose `@throws` documentation will be rendered.
  * @param config - See {@link ApiItemTransformationConfiguration}.
+ * @param headingText - The text to use for the heading in the throws section. Defaults to "Throws".
  *
  * @returns The doc section if the API item had any `@throws` comments, otherwise `undefined`.
  */
 export function createThrowsSection(
 	apiItem: ApiItem,
 	config: Required<ApiItemTransformationConfiguration>,
+	headingText: string = "Throws",
 ): SectionNode | undefined {
 	const throwsBlocks = getThrowsBlocks(apiItem);
 	if (throwsBlocks === undefined || throwsBlocks.length === 0) {
@@ -476,7 +478,7 @@ export function createThrowsSection(
 	);
 
 	return wrapInSection(paragraphs, {
-		title: "Throws",
+		title: headingText,
 		id: `${getQualifiedApiItemName(apiItem)}-throws`,
 	});
 }
@@ -527,12 +529,14 @@ export function createDeprecationNoticeSection(
  *
  * @param apiItem - The API item whose `@example` documentation will be rendered.
  * @param config - See {@link ApiItemTransformationConfiguration}.
+ * @param headingText - The text to use for the heading in the examples section. Defaults to "Examples".
  *
  * @returns The doc section if the API item had any `@example` comment blocks, otherwise `undefined`.
  */
 export function createExamplesSection(
 	apiItem: ApiItem,
 	config: Required<ApiItemTransformationConfiguration>,
+	headingText: string = "Examples",
 ): SectionNode | undefined {
 	const exampleBlocks = getExampleBlocks(apiItem);
 
@@ -554,7 +558,7 @@ export function createExamplesSection(
 	}
 
 	return wrapInSection(exampleSections, {
-		title: "Examples",
+		title: headingText,
 		id: `${getQualifiedApiItemName(apiItem)}-examples`,
 	});
 }
