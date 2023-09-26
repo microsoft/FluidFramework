@@ -13,16 +13,20 @@ import {
 	ITreeCursorSynchronous,
 	ITreeSubscriptionCursor,
 	TreeNavigationResult,
+	ValueSchema,
 	rootFieldKey,
 } from "../../../core";
 import {
 	AllowedTypes,
 	FieldKind,
 	FieldSchema,
+	Optional,
 	SchemaAware,
 	SchemaBuilder,
+	TreeSchema,
 } from "../../../feature-libraries";
 import { Context } from "../../../feature-libraries/editable-tree-2/context";
+import { unboxedField } from "../../../feature-libraries/editable-tree-2/unboxed";
 import { forestWithContent } from "../../utils";
 import { getReadonlyContext } from "./utils";
 
@@ -60,8 +64,40 @@ function createSingleValueTree<Kind extends FieldKind, Types extends AllowedType
 
 describe.only("unboxed unit tests", () => {
 	describe("unboxedField", () => {
-		it("Optional field with no value", () => {
-			console.log("TODO");
+		describe("Optional", () => {
+			function createPrimitiveTree(
+				kind: ValueSchema,
+				initialTree: any,
+			): {
+				schema: FieldSchema<Optional, [TreeSchema<"leaf">]>;
+				context: Context;
+				cursor: ITreeSubscriptionCursor;
+			} {
+				const builder = new SchemaBuilder("test");
+				const leafSchema = builder.leaf("leaf", kind);
+				const rootSchema = SchemaBuilder.fieldOptional(leafSchema);
+
+				const { context, cursor } = createSingleValueTree(builder, rootSchema, initialTree);
+
+				return {
+					schema: rootSchema,
+					context,
+					cursor,
+				};
+			}
+
+			it("No value", () => {
+				const { schema, context, cursor } = createPrimitiveTree(
+					ValueSchema.Number,
+					undefined,
+				);
+				assert.equal(unboxedField(context, schema, cursor), undefined);
+			});
+
+			it("Number", () => {
+				const { schema, context, cursor } = createPrimitiveTree(ValueSchema.Number, 42);
+				assert.equal(unboxedField(context, schema, cursor), 42);
+			});
 		});
 
 		// TODO cases:
