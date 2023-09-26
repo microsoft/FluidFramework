@@ -234,14 +234,13 @@ Updates the .d.ts types that are included in the `types` field in package.json. 
 
 ```
 USAGE
-  $ flub release setDtsTypes [-v | --quiet] [--concurrency <value>] [--all | --dir <value> | --packages | -g
-    client|server|azure|build-tools|gitrest|historian|all | --releaseGroupRoot
+  $ flub release setDtsTypes --types <value> [-v | --quiet] [--concurrency <value>] [--all | --dir <value> | --packages |
+    -g client|server|azure|build-tools|gitrest|historian|all | --releaseGroupRoot
     client|server|azure|build-tools|gitrest|historian|all] [--private] [--scope <value> | --skipScope <value>] [--json]
-    [--types <value>]
 
 FLAGS
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
-  --types=<value>        Which .d.ts types to include in the published package.
+  --types=<value>        (required) Which .d.ts types to include in the published package.
 
 PACKAGE SELECTION FLAGS
   -g, --releaseGroup=<option>...  Run on all child packages within the specified release groups. This does not include

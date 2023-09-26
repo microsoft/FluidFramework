@@ -6,13 +6,22 @@ import { Flags, Config } from "@oclif/core";
 import { Package, updatePackageJsonFile } from "@fluidframework/build-tools";
 import path from "node:path";
 import { PackageCommand } from "../../BasePackageCommand";
-import * as fs from "fs";
 // eslint-disable-next-line node/no-missing-import
 import type { PackageJson } from "type-fest";
+import { ExtractorConfig } from "@microsoft/api-extractor";
+import { CommandLogger } from "../../logging";
 
 interface PackageTypesList {
 	packagesUpdated: string[];
 	packagesNotUpdated: string[];
+}
+
+interface UpdateConfig {
+	pkg: Package;
+	releaseType: string;
+	json: PackageJson;
+	typesFolder: string;
+	includesAlphaBeta: boolean;
 }
 
 const knownReleaseTag = ["alpha", "beta", "public"] as const;
@@ -58,8 +67,6 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 	protected async processPackage(pkg: Package): Promise<void> {
 		let packageUpdate: boolean = false;
 
-		const apiExtractorConfigExists = checkApiExtractorConfigExists(pkg);
-
 		updatePackageJsonFile(pkg.directory, (json) => {
 			const types: string | undefined = json.types ?? json.typings;
 
@@ -70,15 +77,15 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 			const [typesFolder] = types.split("/");
 			const includesAlphaBeta: boolean = types.includes("alpha") || types.includes("beta");
 
-			if (apiExtractorConfigExists) {
-				packageUpdate = handleApiExtractorConfig(
-					this.flags.types as ReleaseTag,
-					pkg,
-					json,
-					typesFolder,
-					includesAlphaBeta,
-				);
-			}
+			const config: UpdateConfig = {
+				pkg,
+				releaseType: this.flags.types as ReleaseTag,
+				json,
+				typesFolder,
+				includesAlphaBeta,
+			};
+
+			packageUpdate = updatePackageJsonTypes(config, this.logger);
 
 			updatePackageLists(this.packageList, packageUpdate, pkg);
 		});
@@ -98,33 +105,38 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 	}
 }
 
-function checkApiExtractorConfigExists(pkg: Package): boolean {
-	const apiExtractorConfigFilePath = path.join(pkg.directory, "api-extractor.json");
-	return fs.existsSync(apiExtractorConfigFilePath);
-}
+function updatePackageJsonTypes(config: UpdateConfig, log: CommandLogger): boolean {
+	const apiExtractorConfigFilePath = path.join(config.pkg.directory, "api-extractor.json");
+	let loadFile;
+	try {
+		loadFile = ExtractorConfig.loadFile(apiExtractorConfigFilePath);
+		const dtsRollupEnabled = loadFile.dtsRollup?.enabled;
+		if (dtsRollupEnabled !== undefined && dtsRollupEnabled) {
+			log.log(`Config exists: ${JSON.stringify(config.pkg.directory)}`);
 
-function handleApiExtractorConfig(
-	releaseType: ReleaseTag,
-	pkg: Package,
-	json: PackageJson,
-	typesFolder: string,
-	includesAlphaBeta: boolean,
-): boolean {
-	const apiExtractorConfigFilePath = path.join(pkg.directory, "api-extractor.json");
-	const apiExtractorConfig: string = fs.readFileSync(apiExtractorConfigFilePath, "utf-8");
+			const alpha = loadFile.dtsRollup?.alphaTrimmedFilePath;
+			const beta = loadFile.dtsRollup?.betaTrimmedFilePath;
 
-	if (releaseType !== "public" && apiExtractorConfig.includes("dtsRollup")) {
-		const config: boolean = apiExtractorConfig.includes(`${releaseType}TrimmedFilePath`);
+			if (config.releaseType === "alpha" && alpha !== undefined) {
+				config.json.types = `${config.typesFolder}/${config.pkg.nameUnscoped}-alpha.d.ts`;
+				return true;
+			}
 
-		if (config) {
-			json.types = `${typesFolder}/${pkg.nameUnscoped}-${releaseType}.d.ts`;
-			return true;
+			if (config.releaseType === "beta" && beta !== undefined) {
+				config.json.types = `${config.typesFolder}/${config.pkg.nameUnscoped}-beta.d.ts`;
+				return true;
+			}
+
+			if (config.releaseType === "public" && config.includesAlphaBeta) {
+				config.json.types = `${config.typesFolder}/index.d.ts`;
+				return true;
+			}
 		}
-	} else if (includesAlphaBeta) {
-		json.types = `${typesFolder}/index.d.ts`;
-		return true;
+	} catch {
+		if (loadFile === undefined) {
+			log.log(`Config not exists: ${JSON.stringify(config.pkg.directory)}`);
+		}
 	}
-
 	return false;
 }
 
