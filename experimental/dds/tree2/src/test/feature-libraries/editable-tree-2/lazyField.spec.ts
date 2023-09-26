@@ -47,6 +47,16 @@ const rootFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: rootFieldKey
 // Mocks the ID representing a Fluid handle for test-purposes.
 // const mockFluidHandle = new MockHandle(5) as IFluidHandle;
 
+/**
+ * Creates a cursor from the provided `context` and moves it to the provided `anchor`.
+ */
+function initializeCursor(context: Context, anchor: FieldAnchor): ITreeSubscriptionCursor {
+	const cursor = context.forest.allocateCursor();
+
+	assert.equal(context.forest.tryMoveCursorToField(anchor, cursor), TreeNavigationResult.Ok);
+	return cursor;
+}
+
 describe("LazyField", () => {
 	it("LazyField implementations do not allow edits to detached trees", () => {
 		const builder = new SchemaBuilder("lazyTree");
@@ -54,11 +64,8 @@ describe("LazyField", () => {
 		const schema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
 		const forest = forestWithContent({ schema, initialTree: {} });
 		const context = getReadonlyContext(forest, schema);
-		const cursor = context.forest.allocateCursor();
-		assert.equal(
-			forest.tryMoveCursorToField(detachedFieldAnchor, cursor),
-			TreeNavigationResult.Ok,
-		);
+		const cursor = initializeCursor(context, detachedFieldAnchor);
+
 		const sequenceField = new LazySequence(
 			context,
 			SchemaBuilder.fieldSequence(Any),
@@ -109,12 +116,7 @@ function createSingleValueTree<Kind extends FieldKind, Types extends AllowedType
 	const forest = forestWithContent({ schema, initialTree });
 
 	const context = getReadonlyContext(forest, schema);
-	const cursor = context.forest.allocateCursor();
-
-	assert.equal(
-		context.forest.tryMoveCursorToField(rootFieldAnchor, cursor),
-		TreeNavigationResult.Ok,
-	);
+	const cursor = initializeCursor(context, rootFieldAnchor);
 
 	return {
 		forest,
