@@ -6716,14 +6716,12 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.1.0
-      '@fluidframework/gitresources': ^1.0.1
       '@fluidframework/merge-tree': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence-previous': npm:@fluidframework/sequence@2.0.0-internal.6.3.0
-      '@fluidframework/server-services-client': ^1.0.1
       '@fluidframework/shared-object-base': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
@@ -6766,10 +6764,8 @@ importers:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.24.0-192663_@types+node@16.18.38
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
-      '@fluidframework/gitresources': 1.0.1
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/sequence-previous': /@fluidframework/sequence/2.0.0-internal.6.3.0
-      '@fluidframework/server-services-client': 1.0.1
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor': 7.37.0_@types+node@16.18.38
       '@types/diff': 3.5.5
@@ -7396,7 +7392,6 @@ importers:
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.1.0
-      '@fluidframework/gitresources': ^1.0.1
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/odsp-doclib-utils': workspace:~
       '@fluidframework/odsp-driver-definitions': workspace:~
@@ -7432,7 +7427,6 @@ importers:
       '@fluidframework/driver-base': link:../driver-base
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/gitresources': 1.0.1
       '@fluidframework/odsp-doclib-utils': link:../../utils/odsp-doclib-utils
       '@fluidframework/odsp-driver-definitions': link:../odsp-driver-definitions
       '@fluidframework/protocol-base': 1.0.1
@@ -9027,7 +9021,6 @@ importers:
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.1.0
       '@fluidframework/mocha-test-setup': workspace:~
-      '@fluidframework/protocol-base': ^1.0.1
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
@@ -9058,7 +9051,6 @@ importers:
       '@fluidframework/datastore-definitions': link:../datastore-definitions
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/protocol-base': 1.0.1
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/runtime-definitions': link:../runtime-definitions
       '@fluidframework/runtime-utils': link:../runtime-utils
@@ -11605,7 +11597,7 @@ packages:
       '@babel/helper-validator-option': 7.22.5
       browserslist: 4.21.10
       lru-cache: 5.1.1
-      semver: 6.3.0
+      semver: 6.3.1
     dev: true
 
   /@babel/helper-compilation-targets/7.21.5_@babel+core@7.22.10:
@@ -11619,7 +11611,7 @@ packages:
       '@babel/helper-validator-option': 7.22.5
       browserslist: 4.21.10
       lru-cache: 5.1.1
-      semver: 6.3.0
+      semver: 6.3.1
     dev: true
 
   /@babel/helper-compilation-targets/7.22.10:
@@ -11682,7 +11674,7 @@ packages:
       '@babel/core': 7.21.8
       '@babel/helper-annotate-as-pure': 7.18.6
       regexpu-core: 5.3.2
-      semver: 6.3.0
+      semver: 6.3.1
     dev: true
 
   /@babel/helper-create-regexp-features-plugin/7.21.8_@babel+core@7.22.10:
@@ -11694,7 +11686,7 @@ packages:
       '@babel/core': 7.22.10
       '@babel/helper-annotate-as-pure': 7.18.6
       regexpu-core: 5.3.2
-      semver: 6.3.0
+      semver: 6.3.1
     dev: true
 
   /@babel/helper-define-polyfill-provider/0.1.5_@babel+core@7.21.8:
@@ -11710,7 +11702,7 @@ packages:
       debug: 4.3.4
       lodash.debounce: 4.0.8
       resolve: 1.22.4
-      semver: 6.3.0
+      semver: 6.3.1
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -11728,7 +11720,7 @@ packages:
       debug: 4.3.4
       lodash.debounce: 4.0.8
       resolve: 1.22.4
-      semver: 6.3.0
+      semver: 6.3.1
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -11744,7 +11736,7 @@ packages:
       debug: 4.3.4
       lodash.debounce: 4.0.8
       resolve: 1.22.6
-      semver: 6.3.0
+      semver: 6.3.1
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -11760,7 +11752,7 @@ packages:
       debug: 4.3.4
       lodash.debounce: 4.0.8
       resolve: 1.22.6
-      semver: 6.3.0
+      semver: 6.3.1
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -14177,7 +14169,7 @@ packages:
       outdent: 0.5.0
       prettier: 2.8.8
       resolve-from: 5.0.0
-      semver: 5.7.1
+      semver: 5.7.2
     dev: true
 
   /@changesets/assemble-release-plan/5.2.3:
@@ -14188,7 +14180,7 @@ packages:
       '@changesets/get-dependents-graph': 1.3.5
       '@changesets/types': 5.2.1
       '@manypkg/get-packages': 1.1.3
-      semver: 5.7.1
+      semver: 5.7.2
     dev: true
 
   /@changesets/changelog-git/0.1.14:
@@ -14261,7 +14253,7 @@ packages:
       '@manypkg/get-packages': 1.1.3
       chalk: 2.4.2
       fs-extra: 7.0.1
-      semver: 5.7.1
+      semver: 5.7.2
     dev: true
 
   /@changesets/get-release-plan/3.0.16:
@@ -14765,14 +14757,14 @@ packages:
     resolution: {integrity: sha512-q3zaKmH79+gO5t0EwR2ghSVbJqP3nnNNXx3o/rp+v6LKVZaxRZYMWgw2ESR2gF8rI7TWSeKkGVfBime2mVbDoQ==}
     dependencies:
       '@fluentui/set-version': 8.2.11
-      tslib: 2.6.0
+      tslib: 2.6.2
     dev: false
 
   /@fluentui/dom-utilities/2.2.11:
     resolution: {integrity: sha512-2tXfg7/9PXu9nfU72/P3o3waHEFEQtHUfQbVexUaYqNNAxMj6sOfsqpUx4vd5nPgO+grSWrl+spqlLN2yej51w==}
     dependencies:
       '@fluentui/set-version': 8.2.11
-      tslib: 2.6.0
+      tslib: 2.6.2
     dev: false
 
   /@fluentui/font-icons-mdl2/8.5.17_q5o373oqrklnndq2vhekyuzhxi:
@@ -14781,7 +14773,7 @@ packages:
       '@fluentui/set-version': 8.2.11
       '@fluentui/style-utilities': 8.9.17_q5o373oqrklnndq2vhekyuzhxi
       '@fluentui/utilities': 8.13.18_q5o373oqrklnndq2vhekyuzhxi
-      tslib: 2.6.0
+      tslib: 2.6.2
     transitivePeerDependencies:
       - '@types/react'
       - react
@@ -14799,13 +14791,13 @@ packages:
       '@fluentui/utilities': 8.13.18_q5o373oqrklnndq2vhekyuzhxi
       '@types/react': 17.0.52
       react: 17.0.2
-      tslib: 2.6.0
+      tslib: 2.6.2
     dev: false
 
   /@fluentui/keyboard-key/0.4.11:
     resolution: {integrity: sha512-TVB/EloWado9AVp1niChgcdDOQAHGP5B30Dinmtfe7zi8OnstwPoxwFP6dHJDdpLQ6ZEUTaEHViSzvewl7Chag==}
     dependencies:
-      tslib: 2.6.0
+      tslib: 2.6.2
     dev: false
 
   /@fluentui/keyboard-keys/9.0.3:
@@ -14818,14 +14810,14 @@ packages:
     resolution: {integrity: sha512-vIiFv7WtXTPz0Sx6h1NpzqrwDN7yef7aQwqFl46yov72BodiAQMTazBl2A/z76IanBPklJmaTquFT9Uydlp/Dg==}
     dependencies:
       '@fluentui/set-version': 8.2.11
-      tslib: 2.6.0
+      tslib: 2.6.2
     dev: false
 
   /@fluentui/merge-styles/8.5.12:
     resolution: {integrity: sha512-ZnUo0YuMP7AYi68dkknFqVxopIAgbrUnqR/MZlemmRvBYyy1SMj1WQeHcoiLFA8mF8YKn7B+jxQgJbN2bfcrRw==}
     dependencies:
       '@fluentui/set-version': 8.2.11
-      tslib: 2.6.0
+      tslib: 2.6.2
     dev: false
 
   /@fluentui/priority-overflow/9.1.4:
@@ -15214,7 +15206,7 @@ packages:
       '@fluentui/utilities': 8.13.18_q5o373oqrklnndq2vhekyuzhxi
       '@types/react': 17.0.52
       react: 17.0.2
-      tslib: 2.6.0
+      tslib: 2.6.2
     dev: false
 
   /@fluentui/react-hooks/8.6.24_q5o373oqrklnndq2vhekyuzhxi:
@@ -16009,7 +16001,7 @@ packages:
       '@fluentui/set-version': 8.2.11
       '@types/react': 17.0.52
       react: 17.0.2
-      tslib: 2.6.0
+      tslib: 2.6.2
     dev: false
 
   /@fluentui/react/8.109.4_74b3ggvk3akyhuq4eydyx3fqim:
@@ -16043,13 +16035,13 @@ packages:
   /@fluentui/set-version/8.2.11:
     resolution: {integrity: sha512-UI03tysau/adBO1a3q4uFZWQ3lfkiFcAWIFng4k5odWcCokfCm5IxA0urKqj5W5JRYdyoBUaq8QbcNGkFB4dCw==}
     dependencies:
-      tslib: 2.6.0
+      tslib: 2.6.2
     dev: false
 
   /@fluentui/set-version/8.2.9:
     resolution: {integrity: sha512-fpWo4DLt8K4spNip2YhNZlGnSKIa5F9hL/wQBE0EPei6+HEeRO2slXfHohOO5v1lIkfLPcpAh/Lzs2iuxzw/lw==}
     dependencies:
-      tslib: 2.6.0
+      tslib: 2.6.2
     dev: false
 
   /@fluentui/style-utilities/8.9.10_q5o373oqrklnndq2vhekyuzhxi:
@@ -16060,7 +16052,7 @@ packages:
       '@fluentui/theme': 2.6.35_q5o373oqrklnndq2vhekyuzhxi
       '@fluentui/utilities': 8.13.18_q5o373oqrklnndq2vhekyuzhxi
       '@microsoft/load-themed-styles': 1.10.295
-      tslib: 2.6.0
+      tslib: 2.6.2
     transitivePeerDependencies:
       - '@types/react'
       - react
@@ -16074,7 +16066,7 @@ packages:
       '@fluentui/theme': 2.6.35_q5o373oqrklnndq2vhekyuzhxi
       '@fluentui/utilities': 8.13.18_q5o373oqrklnndq2vhekyuzhxi
       '@microsoft/load-themed-styles': 1.10.295
-      tslib: 2.6.0
+      tslib: 2.6.2
     transitivePeerDependencies:
       - '@types/react'
       - react
@@ -16091,7 +16083,7 @@ packages:
       '@fluentui/utilities': 8.13.18_q5o373oqrklnndq2vhekyuzhxi
       '@types/react': 17.0.52
       react: 17.0.2
-      tslib: 2.6.0
+      tslib: 2.6.2
     dev: false
 
   /@fluentui/theme/2.6.35_q5o373oqrklnndq2vhekyuzhxi:
@@ -16105,7 +16097,7 @@ packages:
       '@fluentui/utilities': 8.13.18_q5o373oqrklnndq2vhekyuzhxi
       '@types/react': 17.0.52
       react: 17.0.2
-      tslib: 2.6.0
+      tslib: 2.6.2
     dev: false
 
   /@fluentui/tokens/1.0.0-alpha.8:
@@ -16125,7 +16117,7 @@ packages:
       '@fluentui/set-version': 8.2.11
       '@types/react': 17.0.52
       react: 17.0.2
-      tslib: 2.6.0
+      tslib: 2.6.2
     dev: false
 
   /@fluentui/utilities/8.13.18_q5o373oqrklnndq2vhekyuzhxi:
@@ -16139,7 +16131,7 @@ packages:
       '@fluentui/set-version': 8.2.11
       '@types/react': 17.0.52
       react: 17.0.2
-      tslib: 2.6.0
+      tslib: 2.6.2
     dev: false
 
   /@fluid-experimental/attributable-map/2.0.0-internal.6.3.0:
@@ -16639,7 +16631,7 @@ packages:
       isomorphic-fetch: 3.0.0
       nconf: 0.12.0
       sillyname: 0.1.0
-      uuid: 9.0.0
+      uuid: 9.0.1
       webpack-dev-server: 4.6.0_nwcuyijzf6l5chuh7xhtrzgjly
     transitivePeerDependencies:
       - '@types/express'
@@ -16666,7 +16658,7 @@ packages:
       '@fluidframework/runtime-definitions': 2.0.0-internal.6.3.3
       '@fluidframework/runtime-utils': 2.0.0-internal.6.3.3
       '@fluidframework/telemetry-utils': 2.0.0-internal.6.3.3
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -16689,7 +16681,7 @@ packages:
       '@fluidframework/runtime-utils': 2.0.0-internal.6.3.3
       '@fluidframework/synthesize': 2.0.0-internal.6.3.3
       '@fluidframework/view-interfaces': 2.0.0-internal.6.3.3
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -16771,7 +16763,7 @@ packages:
     dependencies:
       '@fluidframework/protocol-definitions': 1.2.0
       jsrsasign: 10.8.6
-      uuid: 9.0.0
+      uuid: 9.0.1
     dev: true
 
   /@fluidframework/build-common/2.0.0:
@@ -17392,8 +17384,8 @@ packages:
       double-ended-queue: 2.1.0-0
       events: 3.3.0
       lodash: 4.17.21
-      url: 0.11.0
-      uuid: 9.0.0
+      url: 0.11.3
+      uuid: 9.0.1
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -17416,7 +17408,7 @@ packages:
       events: 3.3.0
       lodash: 4.17.21
       url: 0.11.3
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -17460,7 +17452,7 @@ packages:
       events: 3.3.0
       lz4js: 0.2.0
       sorted-btree: 1.8.1
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -17485,7 +17477,7 @@ packages:
       events: 3.3.0
       lz4js: 0.2.0
       sorted-btree: 1.8.1
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -17510,7 +17502,7 @@ packages:
       events: 3.3.0
       lz4js: 0.2.0
       sorted-btree: 1.8.1
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -17625,7 +17617,7 @@ packages:
       '@fluidframework/runtime-utils': 2.0.0-internal.6.3.3
       '@fluidframework/telemetry-utils': 2.0.0-internal.6.3.3
       lodash: 4.17.21
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -17648,7 +17640,7 @@ packages:
       '@fluidframework/runtime-utils': 2.0.0-internal.6.3.3
       '@fluidframework/telemetry-utils': 2.0.0-internal.6.3.3
       lodash: 4.17.21
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -17671,7 +17663,7 @@ packages:
       '@fluidframework/runtime-utils': 2.0.0-internal.6.3.3_debug@4.3.4
       '@fluidframework/telemetry-utils': 2.0.0-internal.6.3.3
       lodash: 4.17.21
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -17776,8 +17768,8 @@ packages:
       '@fluidframework/telemetry-utils': 2.0.0-internal.6.3.3
       axios: 0.26.1
       lz4js: 0.2.0
-      url: 0.11.0
-      uuid: 9.0.0
+      url: 0.11.3
+      uuid: 9.0.1
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -17797,7 +17789,7 @@ packages:
       axios: 0.26.1
       lz4js: 0.2.0
       url: 0.11.3
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -17817,7 +17809,7 @@ packages:
       axios: 0.26.1_debug@4.3.4
       lz4js: 0.2.0
       url: 0.11.3
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -17974,7 +17966,7 @@ packages:
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.6.3.3
       '@fluidframework/shared-object-base': 2.0.0-internal.6.3.3
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -17999,8 +17991,8 @@ packages:
       '@fluidframework/telemetry-utils': 2.0.0-internal.6.3.3
       events: 3.3.0
       jsrsasign: 10.8.6
-      url: 0.11.0
-      uuid: 9.0.0
+      url: 0.11.3
+      uuid: 9.0.1
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -18029,7 +18021,7 @@ packages:
       events: 3.3.0
       jsrsasign: 10.8.6
       url: 0.11.3
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -18058,7 +18050,7 @@ packages:
       events: 3.3.0
       jsrsasign: 10.8.6
       url: 0.11.3
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -18232,7 +18224,7 @@ packages:
       '@fluidframework/driver-utils': 2.0.0-internal.6.3.3
       '@fluidframework/odsp-driver-definitions': 2.0.0-internal.6.3.3
       '@fluidframework/telemetry-utils': 2.0.0-internal.6.3.3
-      node-fetch: 2.6.11
+      node-fetch: 2.7.0
     transitivePeerDependencies:
       - debug
       - encoding
@@ -18249,7 +18241,7 @@ packages:
       '@fluidframework/driver-utils': 2.0.0-internal.6.3.3
       '@fluidframework/odsp-driver-definitions': 2.0.0-internal.6.3.3
       '@fluidframework/telemetry-utils': 2.0.0-internal.6.3.3
-      node-fetch: 2.6.11
+      node-fetch: 2.7.0
     transitivePeerDependencies:
       - debug
       - encoding
@@ -18266,7 +18258,7 @@ packages:
       '@fluidframework/driver-utils': 2.0.0-internal.6.3.3_debug@4.3.4
       '@fluidframework/odsp-driver-definitions': 2.0.0-internal.6.3.3
       '@fluidframework/telemetry-utils': 2.0.0-internal.6.3.3
-      node-fetch: 2.6.11
+      node-fetch: 2.7.0
     transitivePeerDependencies:
       - debug
       - encoding
@@ -18300,9 +18292,9 @@ packages:
       '@fluidframework/protocol-base': 1.0.1
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/telemetry-utils': 2.0.0-internal.6.3.3
-      node-fetch: 2.6.11
-      socket.io-client: 4.6.1
-      uuid: 9.0.0
+      node-fetch: 2.7.0
+      socket.io-client: 4.7.2
+      uuid: 9.0.1
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -18378,7 +18370,7 @@ packages:
       '@fluidframework/runtime-definitions': 2.0.0-internal.6.3.3
       '@fluidframework/runtime-utils': 2.0.0-internal.6.3.3
       '@fluidframework/shared-object-base': 2.0.0-internal.6.3.3
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -18512,11 +18504,11 @@ packages:
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/server-services-client': 1.0.1
       '@fluidframework/telemetry-utils': 2.0.0-internal.6.3.3
-      cross-fetch: 3.1.6
+      cross-fetch: 3.1.8
       json-stringify-safe: 5.0.1
-      socket.io-client: 4.6.1
+      socket.io-client: 4.7.2
       url-parse: 1.5.10
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -18543,7 +18535,7 @@ packages:
       json-stringify-safe: 5.0.1
       socket.io-client: 4.7.2
       url-parse: 1.5.10
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -18570,7 +18562,7 @@ packages:
       json-stringify-safe: 5.0.1
       socket.io-client: 4.7.2
       url-parse: 1.5.10
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -18587,7 +18579,7 @@ packages:
       '@fluidframework/driver-definitions': 2.0.0-internal.6.3.3
       '@fluidframework/protocol-definitions': 1.2.0
       nconf: 0.12.0
-      url: 0.11.0
+      url: 0.11.3
     dev: true
 
   /@fluidframework/routerlicious-urlresolver/2.0.0-internal.6.3.3:
@@ -18686,7 +18678,7 @@ packages:
       '@fluidframework/runtime-utils': 2.0.0-internal.6.3.3
       '@fluidframework/shared-object-base': 2.0.0-internal.6.3.3
       '@fluidframework/telemetry-utils': 2.0.0-internal.6.3.3
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -18890,7 +18882,7 @@ packages:
       serialize-error: 8.1.0
       socket.io: 4.6.1
       socket.io-adapter: 2.5.2
-      socket.io-parser: 4.2.2
+      socket.io-parser: 4.2.4
       uuid: 8.3.2
       winston: 3.8.2
     transitivePeerDependencies:
@@ -18963,7 +18955,7 @@ packages:
       '@fluidframework/runtime-definitions': 2.0.0-internal.6.3.3
       '@fluidframework/runtime-utils': 2.0.0-internal.6.3.3
       '@fluidframework/telemetry-utils': 2.0.0-internal.6.3.3
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -19062,7 +19054,7 @@ packages:
       '@fluidframework/protocol-definitions': 1.2.0
       debug: 4.3.4
       events: 3.3.0
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -19076,7 +19068,7 @@ packages:
       '@fluidframework/protocol-definitions': 1.2.0
       debug: 4.3.4
       events: 3.3.0
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -19087,7 +19079,7 @@ packages:
       '@fluidframework/core-interfaces': 2.0.0-internal.6.3.3
       '@fluidframework/driver-definitions': 2.0.0-internal.6.3.3
       '@fluidframework/protocol-definitions': 1.2.0
-      uuid: 9.0.0
+      uuid: 9.0.1
     dev: true
 
   /@fluidframework/test-driver-definitions/2.0.0-internal.6.3.3:
@@ -19117,7 +19109,7 @@ packages:
       axios: 0.26.1
       events: 3.3.0
       jsrsasign: 10.8.6
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -19144,7 +19136,7 @@ packages:
       axios: 0.26.1
       events: 3.3.0
       jsrsasign: 10.8.6
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -19171,7 +19163,7 @@ packages:
       axios: 0.26.1_debug@4.3.4
       events: 3.3.0
       jsrsasign: 10.8.6
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -19211,7 +19203,7 @@ packages:
       '@fluidframework/test-runtime-utils': 2.0.0-internal.6.3.3_debug@4.3.4
       best-random: 1.0.3
       debug: 4.3.4
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - bufferutil
       - encoding
@@ -19234,7 +19226,7 @@ packages:
       '@fluidframework/routerlicious-driver': 2.0.0-internal.6.3.3
       '@fluidframework/runtime-utils': 2.0.0-internal.6.3.3
       '@fluidframework/tinylicious-driver': 2.0.0-internal.6.3.3
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -19253,7 +19245,7 @@ packages:
       '@fluidframework/routerlicious-driver': 2.0.0-internal.6.3.3
       '@fluidframework/server-services-client': 1.0.1
       jsrsasign: 10.8.6
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -19272,7 +19264,7 @@ packages:
       '@fluidframework/routerlicious-driver': 2.0.0-internal.6.3.3
       '@fluidframework/server-services-client': 1.0.1
       jsrsasign: 10.8.6
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -19397,7 +19389,7 @@ packages:
     dependencies:
       '@griffel/core': 1.14.1
       react: 17.0.2
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@griffel/style-types/1.0.1:
@@ -21181,7 +21173,7 @@ packages:
       '@octokit/request-error': 2.1.0
       '@octokit/types': 6.41.0
       is-plain-object: 5.0.0
-      node-fetch: 2.6.11
+      node-fetch: 2.7.0
       universal-user-agent: 6.0.0
     transitivePeerDependencies:
       - encoding
@@ -26153,7 +26145,7 @@ packages:
       '@babel/compat-data': 7.22.9
       '@babel/core': 7.21.8
       '@babel/helper-define-polyfill-provider': 0.3.3_@babel+core@7.21.8
-      semver: 6.3.0
+      semver: 6.3.1
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -26166,7 +26158,7 @@ packages:
       '@babel/compat-data': 7.22.9
       '@babel/core': 7.22.10
       '@babel/helper-define-polyfill-provider': 0.3.3_@babel+core@7.22.10
-      semver: 6.3.0
+      semver: 6.3.1
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -28367,6 +28359,7 @@ packages:
       node-fetch: 2.6.11
     transitivePeerDependencies:
       - encoding
+    dev: false
 
   /cross-fetch/3.1.8:
     resolution: {integrity: sha512-cvA+JwZoU0Xq+h6WkMvAUqPEYy92Obet6UdKLfW60qn99ftItKjB5T+BkyWOFWe2pUyfQ+IJHmpOTznqk1M6Kg==}
@@ -35938,7 +35931,7 @@ packages:
       canonicalize: 1.0.8
       rdf-canonize: 1.2.0
       request: 2.88.2
-      semver: 5.7.1
+      semver: 5.7.2
       xmldom: 0.1.19
     dev: true
 
@@ -36226,7 +36219,7 @@ packages:
     dependencies:
       abort-controller: 3.0.0
       ky: 0.12.0
-      node-fetch: 2.6.11
+      node-fetch: 2.7.0
     transitivePeerDependencies:
       - encoding
     dev: true
@@ -39227,7 +39220,7 @@ packages:
       got: 6.7.1
       registry-auth-token: 3.4.0
       registry-url: 3.1.0
-      semver: 5.7.1
+      semver: 5.7.2
     dev: true
 
   /package-json/8.1.0:
@@ -42329,7 +42322,7 @@ packages:
     resolution: {integrity: sha512-gL8F8L4ORwsS0+iQ34yCYv///jsOq0ZL7WP55d1HnJ32o7tyFYEFQZQA22mrLIacZdU6xecaBBZ+uEiffGNyXw==}
     engines: {node: '>=0.10.0'}
     dependencies:
-      semver: 5.7.1
+      semver: 5.7.2
     dev: true
 
   /semver-diff/4.0.0:
@@ -42833,7 +42826,6 @@ packages:
       debug: 4.3.4
     transitivePeerDependencies:
       - supports-color
-    dev: true
 
   /socket.io/4.6.1:
     resolution: {integrity: sha512-KMcaAi4l/8+xEjkRICl6ak8ySoxsYG+gG6/XfRCPJPQ/haCRIJBTL4wIl8YCsmtaBovcAXGLOShyVWQ/FG8GZA==}
@@ -42844,7 +42836,7 @@ packages:
       debug: 4.3.4
       engine.io: 6.4.2
       socket.io-adapter: 2.5.2
-      socket.io-parser: 4.2.2
+      socket.io-parser: 4.2.4
     transitivePeerDependencies:
       - bufferutil
       - supports-color
