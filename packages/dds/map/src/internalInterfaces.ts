@@ -108,9 +108,9 @@ export interface IMapKeyDeleteLocalOpMetadata {
 	previousValue: ILocalValue;
 
 	/**
-	 * All associated pending message id's, or its position at `ackedInsertedKeys`
+	 * All associated pending message id's, or its position at `ackedInsertedKeys`, or both
 	 */
-	previousPos: number | number[];
+	previousPos: (number | number[])[];
 }
 
 /**

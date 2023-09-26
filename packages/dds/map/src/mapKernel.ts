@@ -132,7 +132,7 @@ function createKeyLocalOpMetadata(
 	op: IMapKeyOperation,
 	pendingMessageId: number,
 	previousValue?: ILocalValue,
-	previousPos?: number | number[],
+	previousPos?: (number | number[])[],
 ): MapKeyLocalOpMetadata {
 	const localMetadata: MapKeyLocalOpMetadata = previousValue
 		? previousPos
@@ -199,6 +199,13 @@ export class MapKernel {
 	 * Object to store the message Id's for all set op's
 	 */
 	private readonly pendingSetOps: Map<string, number[]> = new Map();
+
+	/**
+	 * Entries that have been deleted locally but not yet ack'd from the server. This maintains the record
+	 * of delete op that are pending or yet to be acked from server. This is maintained just to track the locally
+	 * deleted entries and the count of deleted times.
+	 */
+	private readonly pendingDeleteTracker: Map<string, number> = new Map();
 
 	/**
 	 * Create a new shared map kernel.
@@ -432,15 +439,21 @@ export class MapKernel {
 			return previousValue !== undefined;
 		}
 
+		// Update the unack'd deletion record
+		this.incrementLocalDeletionCount(key);
+
 		// Remove the key from ack'd insertions or all associated local pending set op's, it depends on
 		// whether the key is already ack'd or not
-		let previousPos: number | number[];
+		const previousPos: (number | number[])[] = [];
+
 		if (this.ackedInsertedKeys.includes(key)) {
-			previousPos = this.ackedInsertedKeys.indexOf(key);
-			this.ackedInsertedKeys.splice(previousPos, 1);
-		} else if (this.pendingSetOps.has(key)) {
+			const pos = this.ackedInsertedKeys.indexOf(key);
+			previousPos.push(pos);
+			this.ackedInsertedKeys.splice(pos, 1);
+		}
+		if (this.pendingSetOps.has(key)) {
 			const pendingSetOp = this.pendingSetOps.get(key) as number[];
-			previousPos = [...pendingSetOp];
+			previousPos.push([...pendingSetOp]);
 			this.localInsertedKeys.remove(pendingSetOp[0]);
 			this.pendingSetOps.delete(key);
 		}
@@ -449,7 +462,7 @@ export class MapKernel {
 			key,
 			type: "delete",
 		};
-		this.submitMapKeyMessage(op, previousValue);
+		this.submitMapKeyMessage(op, previousValue, previousPos);
 
 		return previousValue !== undefined;
 	}
@@ -642,14 +655,16 @@ export class MapKernel {
 				localOpMetadata.previousPos !== undefined
 			) {
 				this.setCore(op.key as string, localOpMetadata.previousValue, true);
+				this.decrementLocalDeletionCount(op.key);
 
-				if (typeof localOpMetadata.previousPos === "number") {
-					// It indicates the deleted key was an ack'd key, we need to insert it back to the acked keys queue
-					this.ackedInsertedKeys.splice(localOpMetadata.previousPos, 0, op.key);
-				} else {
-					// It indicates the deleted key was not ack'd yet, we need to insert it back to localInsertedKeys and pendingSetOps
-					this.localInsertedKeys.put(localOpMetadata.previousPos[0], op.key);
-					this.pendingSetOps.set(op.key, localOpMetadata.previousPos);
+				for (const pos of localOpMetadata.previousPos) {
+					if (typeof pos === "number") {
+						// It indicates the deleted key was an ack'd key, we need to insert it back to the acked keys queue
+						this.ackedInsertedKeys.splice(pos, 0, op.key);
+					} else {
+						this.localInsertedKeys.put(pos[0], op.key);
+						this.pendingSetOps.set(op.key, pos);
+					}
 				}
 			} else {
 				throw new Error("Cannot rollback without previous value or preivous position");
@@ -812,10 +827,15 @@ export class MapKernel {
 						const index = this.ackedInsertedKeys.indexOf(op.key);
 						this.ackedInsertedKeys.splice(index, 1);
 					}
+					this.decrementLocalDeletionCount(op.key);
 				}
 			} else {
 				// We do not process the remote message at this moment, but it is possible to impact the order of ack'd keys
-				if (op.type === "set" && !this.ackedInsertedKeys.includes(op.key)) {
+				if (
+					op.type === "set" &&
+					!this.ackedInsertedKeys.includes(op.key) &&
+					!this.pendingDeleteTracker.has(op.key)
+				) {
 					this.ackedInsertedKeys.push(op.key);
 				} else if (op.type === "delete" && this.ackedInsertedKeys.includes(op.key)) {
 					const index = this.ackedInsertedKeys.indexOf(op.key);
@@ -879,6 +899,7 @@ export class MapKernel {
 					return;
 				}
 				this.clearCore(local);
+				this.localInsertedKeys.clear();
 			},
 			submit: (op: IMapClearOperation, localOpMetadata: IMapClearLocalOpMetadata) => {
 				assert(
@@ -989,6 +1010,19 @@ export class MapKernel {
 		return pendingMessageId;
 	}
 
+	private incrementLocalDeletionCount(key: string): void {
+		const count = this.pendingDeleteTracker.get(key) ?? 0;
+		this.pendingDeleteTracker.set(key, count + 1);
+	}
+
+	private decrementLocalDeletionCount(key: string): void {
+		const count = this.pendingDeleteTracker.get(key) ?? 0;
+		this.pendingDeleteTracker.set(key, count - 1);
+		if (count <= 1) {
+			this.pendingDeleteTracker.delete(key);
+		}
+	}
+
 	private updatePendingSetOps(op: IMapKeyOperation, pendingMessageId: number): void {
 		// Store the messageId, for the creation order of unack'd keys
 		if (op.type === "set") {
@@ -1015,7 +1049,7 @@ export class MapKernel {
 	private submitMapKeyMessage(
 		op: IMapKeyOperation,
 		previousValue?: ILocalValue,
-		previousPos?: number,
+		previousPos?: (number | number[])[],
 	): void {
 		const localMetadata = createKeyLocalOpMetadata(
 			op,

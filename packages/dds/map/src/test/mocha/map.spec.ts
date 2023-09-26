@@ -905,11 +905,11 @@ describe("Map", () => {
 
 				containerRuntimeFactory.processSomeMessages(2);
 				assert.deepEqual(Array.from(map1.keys()), ["1"]);
-				assert.deepEqual(Array.from(map2.keys()), ["1", "2", "3"]);
+				assert.deepEqual(Array.from(map2.keys()), ["2", "1", "3"]);
 
 				containerRuntimeFactory.processSomeMessages(1);
 				assert.deepEqual(Array.from(map1.keys()), ["1", "2"]);
-				assert.deepEqual(Array.from(map2.keys()), ["1", "2", "3"]);
+				assert.deepEqual(Array.from(map2.keys()), ["2", "1", "3"]);
 
 				containerRuntimeFactory.processSomeMessages(1);
 				assert.deepEqual(Array.from(map1.keys()), ["2"]);
