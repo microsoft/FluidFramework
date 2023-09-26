@@ -114,11 +114,11 @@ export {
 // #region Convenience re-exports
 
 // Convenience re-exports
-export type {
-	ApiItem,
-	ApiItemKind,
-	ApiModel,
-	ApiPackage,
+export {
+	type ApiItem,
+	type ApiItemKind,
+	type ApiModel,
+	type ApiPackage,
 	ReleaseTag,
 } from "@microsoft/api-extractor-model";
 export { NewlineKind } from "@rushstack/node-core-library";

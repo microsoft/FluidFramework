@@ -8,7 +8,10 @@
 import { strict as assert } from "assert";
 
 // import { IFluidHandle } from "@fluidframework/core-interfaces";
-// import { MockHandle } from "@fluidframework/test-runtime-utils";
+import {
+	// MockHandle,
+	validateAssertionError,
+} from "@fluidframework/test-runtime-utils";
 
 import {
 	type AllowedTypes,
@@ -87,15 +90,27 @@ describe("LazyField", () => {
 		cursor.free();
 		assert.throws(
 			() => sequenceField.replaceRange(0, 1, []),
-			/only allowed on fields with TreeStatus.InDocument status/,
+			(e: Error) =>
+				validateAssertionError(
+					e,
+					/only allowed on fields with TreeStatus.InDocument status/,
+				),
 		);
 		assert.throws(
 			() => optionalField.setContent(undefined),
-			/only allowed on fields with TreeStatus.InDocument status/,
+			(e: Error) =>
+				validateAssertionError(
+					e,
+					/only allowed on fields with TreeStatus.InDocument status/,
+				),
 		);
 		assert.throws(
 			() => valueField.setContent({}),
-			/only allowed on fields with TreeStatus.InDocument status/,
+			(e: Error) =>
+				validateAssertionError(
+					e,
+					/only allowed on fields with TreeStatus.InDocument status/,
+				),
 		);
 	});
 });
