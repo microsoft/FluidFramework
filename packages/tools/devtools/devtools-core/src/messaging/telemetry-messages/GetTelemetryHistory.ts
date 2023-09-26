@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDevtoolsMessage } from "../Messages";
+import { type IDevtoolsMessage } from "../Messages";
 
 /**
  * Encapsulates types and logic related to {@link GetTelemetryHistory.Message}.

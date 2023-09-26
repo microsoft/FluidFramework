@@ -6,10 +6,10 @@
 /* eslint-disable unicorn/prefer-code-point */
 /* eslint-disable unicorn/prefer-module */
 
-import fs from "fs";
-import http from "http";
-import { AddressInfo } from "net";
-import path from "path";
+import fs from "node:fs";
+import http from "node:http";
+import { AddressInfo } from "node:net";
+import path from "node:path";
 import rewire from "rewire";
 
 import * as HashNode from "../../hashFileNode";
@@ -95,7 +95,7 @@ async function evaluateBrowserGitHash(file: Buffer): Promise<string> {
 	// Add the prefix for git hashing
 	const size = file.byteLength;
 	const filePrefix = `blob ${size.toString()}${String.fromCharCode(0)}`;
-	const prefixBuffer = Buffer.from(filePrefix, "utf-8");
+	const prefixBuffer = Buffer.from(filePrefix, "utf8");
 	const hashBuffer = Buffer.concat([prefixBuffer, file], prefixBuffer.length + file.length);
 	return evaluateBrowserHash(hashBuffer);
 }

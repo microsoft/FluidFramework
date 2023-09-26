@@ -21,7 +21,6 @@ import {
 import { FieldKind } from "../modular-schema";
 import { NewFieldContent, normalizeNewFieldContent } from "../contextuallyTyped";
 import {
-	FieldKindTypes,
 	FieldKinds,
 	OptionalFieldEditBuilder,
 	SequenceFieldEditBuilder,
@@ -93,7 +92,7 @@ export function makeField(
  * A Proxy target, which together with a `fieldProxyHandler` implements a basic access to
  * the nodes of {@link EditableField} by means of the cursors.
  */
-export abstract class LazyField<TKind extends FieldKindTypes, TTypes extends AllowedTypes>
+export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedTypes>
 	extends LazyEntity<FieldSchema<TKind, TTypes>, FieldAnchor>
 	implements TreeField
 {
@@ -118,7 +117,7 @@ export abstract class LazyField<TKind extends FieldKindTypes, TTypes extends All
 			"Narrowing must be done to a kind that exists in this context",
 		);
 
-		if (schema.kind !== schema.kind) {
+		if (schema.kind !== this.schema.kind) {
 			return false;
 		}
 		if (schema.types === undefined) {
@@ -406,7 +405,7 @@ function unboxedTree<TSchema extends TreeSchema>(
  */
 function unboxedUnion<TTypes extends AllowedTypes>(
 	context: Context,
-	schema: FieldSchema<FieldKindTypes, TTypes>,
+	schema: FieldSchema<FieldKind, TTypes>,
 	cursor: ITreeSubscriptionCursor,
 ): UnboxNodeUnion<TTypes> {
 	const type = oneFromSet(schema.types);

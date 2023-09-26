@@ -6716,14 +6716,12 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.1.0
-      '@fluidframework/gitresources': ^1.0.1
       '@fluidframework/merge-tree': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence-previous': npm:@fluidframework/sequence@2.0.0-internal.6.3.0
-      '@fluidframework/server-services-client': ^1.0.1
       '@fluidframework/shared-object-base': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
@@ -6766,10 +6764,8 @@ importers:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.22.0_@types+node@16.18.38
       '@fluidframework/eslint-config-fluid': 2.1.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/gitresources': 1.0.1
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/sequence-previous': /@fluidframework/sequence/2.0.0-internal.6.3.0
-      '@fluidframework/server-services-client': 1.0.1
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor': 7.34.9_@types+node@16.18.38
       '@types/diff': 3.5.5
@@ -7396,7 +7392,6 @@ importers:
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.1.0
-      '@fluidframework/gitresources': ^1.0.1
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/odsp-doclib-utils': workspace:~
       '@fluidframework/odsp-driver-definitions': workspace:~
@@ -7432,7 +7427,6 @@ importers:
       '@fluidframework/driver-base': link:../driver-base
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/gitresources': 1.0.1
       '@fluidframework/odsp-doclib-utils': link:../../utils/odsp-doclib-utils
       '@fluidframework/odsp-driver-definitions': link:../odsp-driver-definitions
       '@fluidframework/protocol-base': 1.0.1
@@ -9069,7 +9063,6 @@ importers:
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.1.0
       '@fluidframework/mocha-test-setup': workspace:~
-      '@fluidframework/protocol-base': ^1.0.1
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
@@ -9101,7 +9094,6 @@ importers:
       '@fluidframework/datastore-definitions': link:../datastore-definitions
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/protocol-base': 1.0.1
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/runtime-definitions': link:../runtime-definitions
       '@fluidframework/runtime-utils': link:../runtime-utils
@@ -10432,6 +10424,7 @@ importers:
       copy-webpack-plugin: ^11.0.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
+      dotenv-webpack: ^7.0.3
       eslint: ~8.6.0
       eslint-config-prettier: ~8.5.0
       eslint-plugin-chai-expect: ~3.0.0
@@ -10508,6 +10501,7 @@ importers:
       copy-webpack-plugin: 11.0.0_webpack@5.83.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
+      dotenv-webpack: 7.1.1_webpack@5.83.0
       eslint: 8.6.0
       eslint-config-prettier: 8.5.0_eslint@8.6.0
       eslint-plugin-chai-expect: 3.0.0_eslint@8.6.0
@@ -28689,8 +28683,24 @@ packages:
       is-obj: 2.0.0
     dev: true
 
+  /dotenv-defaults/2.0.2:
+    resolution: {integrity: sha512-iOIzovWfsUHU91L5i8bJce3NYK5JXeAwH50Jh6+ARUdLiiGlYWfGw6UkzsYqaXZH/hjE/eCd/PlfM/qqyK0AMg==}
+    dependencies:
+      dotenv: 8.6.0
+    dev: true
+
   /dotenv-expand/5.1.0:
     resolution: {integrity: sha512-YXQl1DSa4/PQyRfgrv6aoNjhasp/p4qs9FjJ4q4cQk+8m4r6k4ZSiEyytKG8f8W9gi8WsQtIObNmKd+tMzNTmA==}
+    dev: true
+
+  /dotenv-webpack/7.1.1_webpack@5.83.0:
+    resolution: {integrity: sha512-xw/19VqHDkXALtBOJAnnrSU/AZDIQRXczAmJyp0lZv6SH2aBLzUTl96W1MVryJZ7okZ+djZS4Gj4KlZ0xP7deA==}
+    engines: {node: '>=10'}
+    peerDependencies:
+      webpack: ^4 || ^5 || ^5.82.0
+    dependencies:
+      dotenv-defaults: 2.0.2
+      webpack: 5.83.0_webpack-cli@4.10.0
     dev: true
 
   /dotenv/8.6.0:

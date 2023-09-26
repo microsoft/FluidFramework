@@ -4,6 +4,7 @@
  */
 
 /* eslint-disable no-bitwise */
+/* eslint-disable import/no-deprecated */
 
 import {
 	Client,
@@ -435,7 +436,7 @@ export function createSequenceInterval(
 		// All non-transient interval references must eventually be SlideOnRemove
 		// To ensure eventual consistency, they must start as StayOnRemove when
 		// pending (created locally and creation op is not acked)
-		if (op || fromSnapshot) {
+		if (op ?? fromSnapshot) {
 			beginRefType |= ReferenceType.SlideOnRemove;
 			endRefType |= ReferenceType.SlideOnRemove;
 		} else {
@@ -487,6 +488,9 @@ export const compareSequenceIntervalEnds = (a: SequenceInterval, b: SequenceInte
 export const compareSequenceIntervalStarts = (a: SequenceInterval, b: SequenceInterval): number =>
 	compareReferencePositions(a.start, b.start);
 
+/**
+ * @deprecated The methods within have substitutions
+ */
 export const sequenceIntervalHelpers: IIntervalHelpers<SequenceInterval> = {
 	compareEnds: compareSequenceIntervalEnds,
 	compareStarts: compareSequenceIntervalStarts,

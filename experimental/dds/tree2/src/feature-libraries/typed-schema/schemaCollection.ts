@@ -5,9 +5,9 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { Adapters, TreeAdapter, TreeSchemaIdentifier } from "../../core";
-import { FullSchemaPolicy } from "../modular-schema";
+import { FieldKind, FullSchemaPolicy } from "../modular-schema";
 import { capitalize, fail, requireAssignableTo } from "../../util";
-import { defaultSchemaPolicy, FieldKinds, FieldKindTypes } from "../default-field-kinds";
+import { defaultSchemaPolicy, FieldKinds } from "../default-field-kinds";
 import {
 	FieldSchema,
 	TreeSchema,
@@ -190,7 +190,7 @@ export function validateViewSchemaCollection(
 				() => `Map fields of "${identifier}" schema from library "${tree.builder.name}"`,
 				errors,
 			);
-			if ((tree.mapFields.kind as FieldKindTypes) === FieldKinds.value) {
+			if ((tree.mapFields.kind as FieldKind) === FieldKinds.value) {
 				errors.push(
 					`Map fields of "${identifier}" schema from library "${tree.builder.name}" has kind "value". This is invalid since it requires all possible field keys to have a value under them.`,
 				);
