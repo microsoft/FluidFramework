@@ -15,14 +15,20 @@ import {
 	TreeNavigationResult,
 	rootFieldKey,
 } from "../../../core";
-import { AllowedTypes, FieldSchema, SchemaAware, SchemaBuilder } from "../../../feature-libraries";
+import {
+	AllowedTypes,
+	FieldKind,
+	FieldSchema,
+	SchemaAware,
+	SchemaBuilder,
+} from "../../../feature-libraries";
 import { Context } from "../../../feature-libraries/editable-tree-2/context";
 import { forestWithContent } from "../../utils";
 import { getReadonlyContext } from "./utils";
 
 const rootFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: rootFieldKey };
 
-function createSingleValueTree<Kind extends FieldKindTypes, Types extends AllowedTypes>(
+function createSingleValueTree<Kind extends FieldKind, Types extends AllowedTypes>(
 	builder: SchemaBuilder,
 	rootSchema: FieldSchema<Kind, Types>,
 	initialTree?:
