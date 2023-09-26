@@ -103,9 +103,7 @@ describe("Sampling", () => {
 	/**
 	 * Creates an event sampler that uses a systematic approach to sampling (Sampling every nth event)
 	 */
-	const createSystematicEventSampler: (options: { samplingRate: number }) => IEventSampler = (
-		options,
-	) => {
+	function createSystematicEventSampler(options: { samplingRate: number }): IEventSampler {
 		const state = {
 			eventCount: -1,
 		};
@@ -119,7 +117,7 @@ describe("Sampling", () => {
 				return shouldSample;
 			},
 		};
-	};
+	}
 
 	beforeEach(() => {
 		events = [];

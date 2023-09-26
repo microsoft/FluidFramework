@@ -153,7 +153,7 @@ export interface IConfigProviderBase {
 // @internal
 export interface IEventSampler {
     // (undocumented)
-    sample?: () => boolean | undefined;
+    sample: () => boolean | undefined;
 }
 
 // @internal
