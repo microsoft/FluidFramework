@@ -22,11 +22,8 @@ export function makeCompressedCodec(
 	return {
 		encode: (data: ITreeCursorSynchronous) => {
 			const encoded = compressedEncode(data, cache);
-			assert(
-				versionedValidator.check(encoded),
-				0x788 /* Encoded schema should be versioned */,
-			);
-			assert(formatValidator.check(encoded), 0x789 /* Encoded schema should validate */);
+			assert(versionedValidator.check(encoded), "Encoded schema should be versioned");
+			assert(formatValidator.check(encoded), "Encoded schema should validate");
 			return encoded;
 		},
 		decode: (data: EncodedChunk): ITreeCursorSynchronous => {
@@ -54,12 +51,9 @@ export function makeSchemaCompressedCodec(
 	return {
 		encode: (data: ITreeCursorSynchronous) => {
 			const encoded = schemaCompressedEncode(schema, policy, data);
-			assert(
-				versionedValidator.check(encoded),
-				0x78a /* Encoded schema should be versioned */,
-			);
-			assert(formatValidator.check(encoded), 0x78b /* Encoded schema should validate */);
-			assert(encoded.version !== undefined, 0x78c /*  */);
+			assert(versionedValidator.check(encoded), "Encoded schema should be versioned");
+			assert(formatValidator.check(encoded), "Encoded schema should validate");
+			assert(encoded.version !== undefined, "");
 			return encoded;
 		},
 		decode: (data: EncodedChunk): ITreeCursorSynchronous => {
