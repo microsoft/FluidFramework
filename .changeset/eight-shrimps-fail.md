@@ -2,7 +2,7 @@
 "@fluid-tools/api-markdown-documenter": minor
 ---
 
-Don't include file extension in paths in Documentation Domain
+api-markdown-documenter: Don't include file extension in paths in Documentation Domain
 
 The Documentation Domain layer of the system is not intended to know anything about files on disk. It has a concept of abstract documentation hierarchy, which maps to file system structure, but that is as close as it gets.
 

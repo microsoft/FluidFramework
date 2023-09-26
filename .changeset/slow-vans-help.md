@@ -2,7 +2,7 @@
 "@fluid-tools/api-markdown-documenter": minor
 ---
 
-Enable `unicorn/prevent-abbreviations` eslint rule
+api-markdown-documenter: Enable `unicorn/prevent-abbreviations` eslint rule
 
 Enabled rule to enhance developer accessibility. Rule details: https://github.com/sindresorhus/eslint-plugin-unicorn/blob/main/docs/rules/prevent-abbreviations.md
 

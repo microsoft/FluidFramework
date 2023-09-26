@@ -2,7 +2,7 @@
 "@fluid-tools/api-markdown-documenter": minor
 ---
 
-Add (alpha) HTML rendering APIs
+api-markdown-documenter: Add (alpha) HTML rendering APIs
 
 Adds capabilities for rendering API docs as HTML in addition to Markdown.
 
