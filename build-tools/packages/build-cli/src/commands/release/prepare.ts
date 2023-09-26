@@ -48,6 +48,7 @@ async function checkDepsInstalled(
 ): Promise<CheckResult> {
 	const packagesToCheck = rgOrPkg instanceof MonoRepo ? rgOrPkg.packages : [rgOrPkg];
 
+	// eslint-disable-next-line @typescript-eslint/no-misused-promises -- The usage appears correct so mayeb a false positive
 	const checkDeps: async.AsyncBooleanIterator<Package> = async (
 		pkg: Package,
 	): Promise<boolean> => {
