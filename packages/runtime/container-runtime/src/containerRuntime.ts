@@ -2053,9 +2053,9 @@ export class ContainerRuntime
 		if (connecting && this.blobManager.hasPendingStashedBlobs()) {
 			assert(
 				!this.delayConnectClientId,
-				"Connect event delay must be canceled before subsequent connect event",
+				0x791 /* Connect event delay must be canceled before subsequent connect event */,
 			);
-			assert(!!clientId, "Must have clientId when connecting");
+			assert(!!clientId, 0x792 /* Must have clientId when connecting */);
 			this.delayConnectClientId = clientId;
 			this.blobManager.processStashedChanges().then(
 				() => {

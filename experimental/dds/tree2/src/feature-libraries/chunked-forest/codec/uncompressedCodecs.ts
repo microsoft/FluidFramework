@@ -19,8 +19,11 @@ export function makeUncompressedCodec({
 	return {
 		encode: (data: ITreeCursorSynchronous) => {
 			const encoded = uncompressedEncode(data);
-			assert(versionedValidator.check(encoded), "Encoded schema should be versioned");
-			assert(formatValidator.check(encoded), "Encoded schema should validate");
+			assert(
+				versionedValidator.check(encoded),
+				0x78e /* Encoded schema should be versioned */,
+			);
+			assert(formatValidator.check(encoded), 0x78f /* Encoded schema should validate */);
 			return encoded;
 		},
 		decode: (data: EncodedChunk): ITreeCursorSynchronous => {
