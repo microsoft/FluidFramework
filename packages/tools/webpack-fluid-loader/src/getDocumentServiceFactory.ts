@@ -13,7 +13,7 @@ import { OdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
 import { HostStoragePolicy, IPersistedCache } from "@fluidframework/odsp-driver-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { getRandomName } from "@fluidframework/server-services-client";
+import { getRandomName } from "@fluid-internal/client-utils";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 
 import { v4 as uuid } from "uuid";

@@ -6,7 +6,7 @@
 import { ITokenClaims, IUser, ScopeType } from "@fluidframework/protocol-definitions";
 import { KJUR as jsrsasign } from "jsrsasign";
 import { v4 as uuid } from "uuid";
-import { getRandomName } from "@fluidframework/server-services-client";
+import { getRandomName } from "@fluid-internal/client-utils";
 
 /**
  * Generates a JWT token to authorize against. We do not use the implementation in
