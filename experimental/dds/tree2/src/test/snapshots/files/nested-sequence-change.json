@@ -22,6 +22,15 @@
                         }
                     }
                 },
+                "TreeIndex": {
+                    "type": 1,
+                    "tree": {
+                        "TreeIndexBlob": {
+                            "type": 2,
+                            "content": "{\"data\":\"[]\",\"id\":2}"
+                        }
+                    }
+                },
                 "Forest": {
                     "type": 1,
                     "tree": {
