@@ -5,7 +5,7 @@
 
 import { ScopeType, ITokenClaims } from "@fluidframework/protocol-definitions";
 import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
-import { getRandomName } from "@fluidframework/server-services-client";
+import { getRandomName } from "@fluid-internal/client-utils";
 import { KJUR as jsrsasign } from "jsrsasign";
 import { v4 as uuid } from "uuid";
 

@@ -50,6 +50,9 @@ export const fromBase64ToUtf8: (input: string) => string;
 export const fromUtf8ToBase64: (input: string) => string;
 
 // @internal
+export function getRandomName(connector?: string, capitalize?: boolean): string;
+
+// @internal
 export function gitHashFile(file: IsoBuffer): Promise<string>;
 
 // @internal
