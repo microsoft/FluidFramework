@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// TODO: import from our library
 const { ReleaseTag } = require("@microsoft/api-extractor-model");
 const {
 	doesItemRequireOwnDocument,
