@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import generateStupidName from "sillyname";
+import { generateStupidName } from "sillyname";
 
 /**
  * Utility function for generating a random name.
