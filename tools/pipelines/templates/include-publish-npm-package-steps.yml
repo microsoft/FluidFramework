@@ -16,9 +16,6 @@ parameters:
 - name: official
   type: boolean
 
-# - name: testFeed
-#   type: boolean
-
 - name: feedKind
   type: string
 
@@ -32,18 +29,6 @@ parameters:
 - name: customEndPoint
   type: string
   default:
-
-# variables:
-# - ${{ if eq(parameters.official, true) }}:
-#   - name: feed
-#     value: official
-# - ${{ if eq(parameters.official, false) }}:
-#   - ${{ if eq(parameters.testFeed, false) }}:
-#     - name: feed
-#       value: internal
-#   - ${{ if eq(parameters.testFeed, true) }}:
-#     - name: feed
-#       value: internal-test
 
 steps:
 - task: Bash@3
