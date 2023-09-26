@@ -16,8 +16,11 @@ parameters:
 - name: official
   type: boolean
 
-- name: testFeed
-  type: boolean
+# - name: testFeed
+#   type: boolean
+
+- name: feedKind
+  type: string
 
 - name: artifactPath
   type: string
@@ -30,17 +33,17 @@ parameters:
   type: string
   default:
 
-variables:
-  - ${{ if eq(parameters.official, true) }}:
-    - name: feed
-      value: official
-  - ${{ if eq(parameters.official, false) }}:
-    - ${{ if eq(parameters.testFeed, false) }}:
-      - name: feed
-        value: internal
-    - ${{ if eq(parameters.testFeed, true) }}:
-      - name: feed
-        value: internal-test
+# variables:
+# - ${{ if eq(parameters.official, true) }}:
+#   - name: feed
+#     value: official
+# - ${{ if eq(parameters.official, false) }}:
+#   - ${{ if eq(parameters.testFeed, false) }}:
+#     - name: feed
+#       value: internal
+#   - ${{ if eq(parameters.testFeed, true) }}:
+#     - name: feed
+#       value: internal-test
 
 steps:
 - task: Bash@3
@@ -96,8 +99,8 @@ steps:
       echo Tag: $tag
       cp .npmrc ~/.npmrc
       maximumRetryIfNetworkError=3
-      if [[ -f $(Pipeline.Workspace)/pack/packagePublishOrder-${{ variables.feed }}.txt ]]; then
-        packages=$(cat $(Pipeline.Workspace)/pack/packagePublishOrder-${{ variables.feed }}.txt)
+      if [[ -f $(Pipeline.Workspace)/pack/packagePublishOrder-${{ parameters.feedKind }}.txt ]]; then
+        packages=$(cat $(Pipeline.Workspace)/pack/packagePublishOrder-${{ parameters.feedKind }}.txt)
         sorted=true
       else
         packages=*.tgz
