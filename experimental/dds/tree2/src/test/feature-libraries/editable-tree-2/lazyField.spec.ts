@@ -348,7 +348,7 @@ describe.only("LazyOptionalField", () => {
 			);
 		});
 
-		it("Non-primitive field", () => {
+		it("Struct", () => {
 			const input = {
 				foo: true,
 				bar: 42,
@@ -405,7 +405,7 @@ describe.only("LazyOptionalField", () => {
 			assert.deepEqual(mapResult, []);
 		});
 
-		it("Non-primitive field", () => {
+		it("Struct", () => {
 			const input = {
 				foo: true,
 				bar: 42,
