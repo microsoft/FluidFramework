@@ -234,23 +234,43 @@ describe.only("LazyOptionalField", () => {
 		});
 	});
 
+	/**
+	 * Creates a single-node, primitive tree, and returns a field associated with that node.
+	 */
 	function createPrimitiveField(
 		kind: ValueSchema,
 		initialTree?:
 			| SchemaAware.TypedField<FieldSchema, SchemaAware.ApiMode.Flexible>
-			| readonly ITreeCursorSynchronous[],
-	): LazyOptionalField<
-		[
-			TreeSchema<
-				"leaf",
-				{
-					leafValue: ValueSchema;
-				}
-			>,
-		]
-	> {
+			| readonly ITreeCursorSynchronous[]
+			| ITreeCursorSynchronous,
+	): LazyOptionalField<[TreeSchema<"leaf">]> {
 		const builder = new SchemaBuilder("test");
 		const leafSchema = builder.leaf("leaf", kind);
+		const rootSchema = SchemaBuilder.fieldOptional(leafSchema);
+
+		const { context, cursor } = createSingleValueTree(builder, rootSchema, initialTree);
+
+		return new LazyOptionalField(
+			context,
+			SchemaBuilder.fieldOptional(leafSchema),
+			cursor,
+			rootFieldAnchor,
+		);
+	}
+
+	function createStructField(
+		initialTree?:
+			| SchemaAware.TypedField<FieldSchema, SchemaAware.ApiMode.Flexible>
+			| readonly ITreeCursorSynchronous[]
+			| ITreeCursorSynchronous,
+	): LazyOptionalField<[TreeSchema<"struct">]> {
+		const builder = new SchemaBuilder("test");
+		const booleanLeafSchema = builder.leaf("bool", ValueSchema.Boolean);
+		const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
+		const leafSchema = builder.struct("struct", {
+			foo: SchemaBuilder.fieldValue(booleanLeafSchema),
+			bar: SchemaBuilder.fieldOptional(numberLeafSchema),
+		});
 		const rootSchema = SchemaBuilder.fieldOptional(leafSchema);
 
 		const { context, cursor } = createSingleValueTree(builder, rootSchema, initialTree);
@@ -310,8 +330,20 @@ describe.only("LazyOptionalField", () => {
 			);
 		});
 
-		// TODOs:
-		// * Non-primitive
+		it("Non-primitive field", () => {
+			const input = {
+				foo: true,
+				bar: 42,
+			};
+			const field = createStructField(input);
+
+			const mapResult = field.map((value) => value);
+
+			assert.equal(mapResult.length, 1);
+			assert.notEqual(mapResult[0], undefined);
+			assert.equal((mapResult[0] as any).foo, true);
+			assert.equal((mapResult[0] as any).bar, 42);
+		});
 	});
 
 	describe("mapBoxed", () => {
@@ -355,7 +387,19 @@ describe.only("LazyOptionalField", () => {
 			assert.deepEqual(mapResult, []);
 		});
 
-		// TODOs:
-		// * Non-primitive
+		it("Non-primitive field", () => {
+			const input = {
+				foo: true,
+				bar: 42,
+			};
+			const field = createStructField(input);
+
+			const mapResult = field.mapBoxed((value) => value);
+
+			assert.equal(mapResult.length, 1);
+			assert.notEqual(mapResult[0], undefined);
+			assert.equal((mapResult[0] as any).foo, input.foo);
+			assert.equal((mapResult[0] as any).bar, input.bar);
+		});
 	});
 });
