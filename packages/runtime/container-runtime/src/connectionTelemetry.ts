@@ -84,7 +84,7 @@ class OpPerfTelemetry {
 	private readonly opLatencyLogger: ISampledTelemetryLogger;
 
 	private static readonly DELTA_LATENCY_SAMPLE_RATE = 100;
-	private readonly deltaLatencyLogger: ITelemetryLoggerExt;
+	private readonly deltaLatencyLogger: ISampledTelemetryLogger;
 
 	public constructor(
 		private clientId: string | undefined,
