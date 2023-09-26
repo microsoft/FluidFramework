@@ -17,7 +17,6 @@ import {
 } from "../../../core";
 import { TestChange } from "../../testChange";
 import { composeAnonChanges, composeAnonChangesShallow } from "./utils";
-import { Attach } from "../../../feature-libraries/sequence-field";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const tag: RevisionTag = mintRevisionTag();

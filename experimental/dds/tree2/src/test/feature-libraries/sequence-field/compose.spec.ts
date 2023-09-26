@@ -20,7 +20,6 @@ import { TestChange } from "../../testChange";
 import { fakeTaggedRepair as fakeRepair } from "../../utils";
 import { cases, ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
 import { compose, composeNoVerify, shallowCompose } from "./utils";
-import { extractMarkEffect } from "../../../feature-libraries/sequence-field";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const tag1: RevisionTag = mintRevisionTag();
