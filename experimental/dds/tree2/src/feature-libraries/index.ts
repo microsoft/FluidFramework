@@ -247,3 +247,7 @@ export {
 // Split into separate import and export for compatibility with API-Extractor.
 import * as SchemaAware from "./schema-aware";
 export { SchemaAware };
+
+// Split into separate import and export for compatibility with API-Extractor.
+import * as schemaBuilder2 from "./schemaBuilder2";
+export { schemaBuilder2 };
