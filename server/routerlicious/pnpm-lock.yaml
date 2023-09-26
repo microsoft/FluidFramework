@@ -542,6 +542,7 @@ importers:
       '@fluidframework/server-services-ordering-kafkanode': workspace:~
       '@fluidframework/server-services-ordering-rdkafka': workspace:~
       '@fluidframework/server-services-ordering-zookeeper': workspace:~
+      '@fluidframework/server-services-shared': workspace:~
       '@fluidframework/server-services-telemetry': workspace:~
       '@fluidframework/server-services-utils': workspace:~
       '@fluidframework/server-test-utils': workspace:~
@@ -602,6 +603,7 @@ importers:
       '@fluidframework/server-services-ordering-kafkanode': link:../services-ordering-kafkanode
       '@fluidframework/server-services-ordering-rdkafka': link:../services-ordering-rdkafka
       '@fluidframework/server-services-ordering-zookeeper': link:../services-ordering-zookeeper
+      '@fluidframework/server-services-shared': link:../services-shared
       '@fluidframework/server-services-telemetry': link:../services-telemetry
       '@fluidframework/server-services-utils': link:../services-utils
       body-parser: 1.20.2
