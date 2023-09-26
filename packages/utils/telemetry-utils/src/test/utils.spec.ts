@@ -108,8 +108,9 @@ describe("Sampling", () => {
 		const state = {
 			eventCount: -1,
 		};
+
 		return {
-			sample: () => {
+			sample: (): boolean => {
 				state.eventCount++;
 				const shouldSample = state.eventCount % options.samplingRate === 0;
 				if (shouldSample) {
@@ -213,6 +214,7 @@ describe("Sampling", () => {
 		let exampleAppDataBoolean1 = true;
 		let exampleAppDataModeString = "ready";
 
+		/* eslint-disable unicorn/consistent-function-scoping */
 		const shouldSampleEvent = (
 			appNumber1: number,
 			appNumber2: number,
@@ -224,6 +226,7 @@ describe("Sampling", () => {
 
 			return shouldSample;
 		};
+		/* eslint-enable */
 
 		const customEventSampler: IEventSampler = {
 			sample: () =>
