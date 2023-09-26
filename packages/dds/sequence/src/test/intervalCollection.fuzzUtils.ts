@@ -202,17 +202,14 @@ export function makeReducer(
 		};
 
 	const reducer = combineReducers<Operation | RevertOperation, ClientOpState>({
-		addText: async ({ channel }, { index, content }) => {
-			channel.insertText(index, content);
+		addText: async ({ client }, { index, content }) => {
+			client.channel.insertText(index, content);
 		},
-		removeRange: async ({ channel }, { start, end }) => {
-			channel.removeRange(start, end);
+		removeRange: async ({ client }, { start, end }) => {
+			client.channel.removeRange(start, end);
 		},
-		addInterval: async (
-			{ channel },
-			{ start, end, collectionName, id, startSide, endSide },
-		) => {
-			const collection = channel.getIntervalCollection(collectionName);
+		addInterval: async ({ client }, { start, end, collectionName, id, startSide, endSide }) => {
+			const collection = client.channel.getIntervalCollection(collectionName);
 			collection.add(
 				{ pos: start, side: startSide },
 				{ pos: end, side: endSide },
@@ -220,27 +217,27 @@ export function makeReducer(
 				{ intervalId: id },
 			);
 		},
-		deleteInterval: async ({ channel }, { id, collectionName }) => {
-			const collection = channel.getIntervalCollection(collectionName);
+		deleteInterval: async ({ client }, { id, collectionName }) => {
+			const collection = client.channel.getIntervalCollection(collectionName);
 			collection.removeIntervalById(id);
 		},
 		changeInterval: async (
-			{ channel },
+			{ client },
 			{ id, start, end, collectionName, startSide, endSide },
 		) => {
-			const collection = channel.getIntervalCollection(collectionName);
+			const collection = client.channel.getIntervalCollection(collectionName);
 			collection.change(id, { pos: start, side: startSide }, { pos: end, side: endSide });
 		},
-		changeProperties: async ({ channel }, { id, properties, collectionName }) => {
-			const collection = channel.getIntervalCollection(collectionName);
+		changeProperties: async ({ client }, { id, properties, collectionName }) => {
+			const collection = client.channel.getIntervalCollection(collectionName);
 			collection.changeProperties(id, { ...properties });
 		},
-		revertSharedStringRevertibles: async ({ channel }, { editsToRevert }) => {
-			assert(isRevertibleSharedString(channel));
-			channel.isCurrentRevert = true;
-			const few = channel.revertibles.splice(-editsToRevert, editsToRevert);
-			revertSharedStringRevertibles(channel, few);
-			channel.isCurrentRevert = false;
+		revertSharedStringRevertibles: async ({ client }, { editsToRevert }) => {
+			assert(isRevertibleSharedString(client.channel));
+			client.channel.isCurrentRevert = true;
+			const few = client.channel.revertibles.splice(-editsToRevert, editsToRevert);
+			revertSharedStringRevertibles(client.channel, few);
+			client.channel.isCurrentRevert = false;
 		},
 	});
 
@@ -253,27 +250,27 @@ export function createSharedStringGeneratorOperations(
 	const options = { ...defaultSharedStringOperationGenerationConfig, ...(optionsParam ?? {}) };
 
 	// All subsequent helper functions are generators; note that they don't actually apply any operations.
-	function startPosition({ random, channel }: ClientOpState): number {
-		return random.integer(0, Math.max(0, channel.getLength() - 1));
+	function startPosition({ random, client }: ClientOpState): number {
+		return random.integer(0, Math.max(0, client.channel.getLength() - 1));
 	}
 
 	function exclusiveRange(state: ClientOpState): RangeSpec {
 		const start = startPosition(state);
-		const end = state.random.integer(start + 1, state.channel.getLength());
+		const end = state.random.integer(start + 1, state.client.channel.getLength());
 		return { start, end };
 	}
 
 	function exclusiveRangeLeaveChar(state: ClientOpState): RangeSpec {
-		const start = state.random.integer(0, state.channel.getLength() - 2);
-		const end = state.random.integer(start + 1, state.channel.getLength() - 1);
+		const start = state.random.integer(0, state.client.channel.getLength() - 2);
+		const end = state.random.integer(start + 1, state.client.channel.getLength() - 1);
 		return { start, end };
 	}
 
 	async function addText(state: ClientOpState): Promise<AddText> {
-		const { random, channel } = state;
+		const { random, client } = state;
 		return {
 			type: "addText",
-			index: random.integer(0, channel.getLength()),
+			index: random.integer(0, client.channel.getLength()),
 			content: random.string(random.integer(0, options.maxInsertLength)),
 		};
 	}
@@ -288,8 +285,8 @@ export function createSharedStringGeneratorOperations(
 
 	const lengthSatisfies =
 		(criteria: (length: number) => boolean): AcceptanceCondition<ClientOpState> =>
-		({ channel }) =>
-			criteria(channel.getLength());
+		({ client }) =>
+			criteria(client.channel.getLength());
 	const hasNonzeroLength = lengthSatisfies((length) => length > 0);
 	const isShorterThanMaxLength = lengthSatisfies((length) => length < options.maxStringLength);
 

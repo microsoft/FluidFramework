@@ -73,7 +73,7 @@ export const makeFieldEditGenerator = (
 		...opWeights,
 	};
 	function fieldEditGenerator(state: FuzzTestState): FieldEditTypes {
-		const tree = state.channel;
+		const tree = state.client.channel;
 		// generate edit for that specific tree
 		const { fieldPath, fieldKey, count } = getExistingFieldPath(tree.view, state.random);
 		assert(fieldPath.parent !== undefined);
@@ -208,7 +208,7 @@ export const makeEditGenerator = (
 				delete: passedOpWeights.delete,
 			}),
 			sumWeights([passedOpWeights.delete, passedOpWeights.insert]),
-			({ channel }) => containsAtLeastOneNode(channel.view),
+			({ client }) => containsAtLeastOneNode(client.channel.view),
 		],
 	]);
 
@@ -236,8 +236,12 @@ export const makeTransactionEditGenerator = (
 
 	const transactionBoundaryType = createWeightedGenerator<FuzzTransactionType, FuzzTestState>([
 		[start, passedOpWeights.start],
-		[commit, passedOpWeights.commit, ({ channel }) => transactionsInProgress(channel.view)],
-		[abort, passedOpWeights.abort, ({ channel }) => transactionsInProgress(channel.view)],
+		[
+			commit,
+			passedOpWeights.commit,
+			({ client }) => transactionsInProgress(client.channel.view),
+		],
+		[abort, passedOpWeights.abort, ({ client }) => transactionsInProgress(client.channel.view)],
 	]);
 
 	return (state) => {
