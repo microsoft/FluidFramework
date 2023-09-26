@@ -44,6 +44,7 @@
 		"@types/jest": "29.5.3",
 		"@types/node": "^16.18.38",
 		"eslint": "~8.50.0",
+		"eslint-config-prettier": "~9.0.0",
 		"jest": "^29.6.2",
 		"jest-junit": "^10.0.0",
 		"prettier": "~2.6.2",
