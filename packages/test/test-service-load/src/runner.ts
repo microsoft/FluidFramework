@@ -20,6 +20,7 @@ import { assert, delay } from "@fluidframework/core-utils";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
+import { generatePairwiseOptions } from "@fluid-internal/test-pairwise-generator";
 import { ILoadTest, IRunConfig } from "./loadTestDataStore";
 import { createCodeLoader, createLogger, createTestDriver, getProfile, safeExit } from "./utils";
 import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
@@ -145,43 +146,30 @@ async function main() {
 function* factoryPermutations<T extends IDocumentServiceFactory>(create: () => T) {
 	let counter = 0;
 	const factoryReused = create();
-
-	while (true) {
-		counter++;
+	const loadModes = generatePairwiseOptions<
+		{ opsBeforeReturn: undefined | "sequenceNumber" | "cached" | "all" } & {
+			deltaConnection: undefined | "none" | "delayed";
+		} & {
+			reuseFactory: boolean;
+		}
+	>({
 		// Switch between creating new factory vs. reusing factory.
 		// Certain behavior (like driver caches) are per factory instance, and by reusing it we hit those code paths
 		// At the same time we want to test newly created factory.
-		let documentServiceFactory: T = factoryReused;
-		let headers: IRequestHeader = { deltaConnection: "none" };
-		switch (counter % 5) {
-			default:
-			case 0:
-				documentServiceFactory = create();
-				break;
-			case 1:
-				headers = {
-					[LoaderHeader.loadMode]: { opsBeforeReturn: "cached", deltaConnection: "none" },
-				};
-				break;
-			case 2:
-				headers = {
-					[LoaderHeader.loadMode]: {
-						opsBeforeReturn: "cached",
-						deltaConnection: "delayed",
-					},
-				};
-				break;
-			case 3:
-				headers = {
-					[LoaderHeader.loadMode]: { opsBeforeReturn: "all", deltaConnection: "none" },
-				};
-				break;
-			case 4:
-				headers = {
-					[LoaderHeader.loadMode]: { opsBeforeReturn: "all", deltaConnection: "delayed" },
-				};
-				break;
-		}
+		reuseFactory: [true, false],
+		opsBeforeReturn: [undefined, "cached", "all"],
+		deltaConnection: ["none", "delayed"],
+	});
+
+	while (true) {
+		const loadMode = loadModes[counter++ % loadModes.length];
+		const documentServiceFactory: T = loadMode.reuseFactory ? factoryReused : create();
+		const headers: IRequestHeader = {
+			[LoaderHeader.loadMode]: {
+				opsBeforeReturn: loadMode.opsBeforeReturn,
+				deltaConnection: loadMode.deltaConnection,
+			},
+		};
 		yield { documentServiceFactory, headers };
 	}
 }
