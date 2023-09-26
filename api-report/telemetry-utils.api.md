@@ -156,7 +156,7 @@ export interface IEventSampler {
     sample?: () => boolean | undefined;
 }
 
-// @public
+// @internal
 export interface IFluidErrorAnnotations {
     props?: ITelemetryBaseProperties;
 }
@@ -190,7 +190,7 @@ export interface ISampledTelemetryLogger extends ITelemetryLoggerExt {
     isSamplingDisabled: boolean;
 }
 
-// @public
+// @internal
 export function isExternalError(error: unknown): boolean;
 
 // @public
