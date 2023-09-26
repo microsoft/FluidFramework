@@ -103,6 +103,7 @@ describe("Sampling", () => {
 	/**
 	 * Creates an event sampler that uses a systematic approach to sampling (Sampling every nth event)
 	 */
+	// eslint-disable-next-line unicorn/consistent-function-scoping
 	function createSystematicEventSampler(options: { samplingRate: number }): IEventSampler {
 		const state = {
 			eventCount: -1,
@@ -217,14 +218,14 @@ describe("Sampling", () => {
 			appNumber2: number,
 			appBoolean1: boolean,
 			appMode: string,
-		) => {
+		): boolean => {
 			const shouldSample =
 				appNumber1 < 1 && appNumber2 > 1 && appBoolean1 === true && appMode === "ready";
 
 			return shouldSample;
 		};
 
-		const customEventSampler = {
+		const customEventSampler: IEventSampler = {
 			sample: () =>
 				shouldSampleEvent(
 					exampleAppDataNumber1,
