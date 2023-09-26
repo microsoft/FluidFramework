@@ -527,13 +527,14 @@ export function createDeprecationNoticeSection(
  *
  * @param apiItem - The API item whose `@example` documentation will be rendered.
  * @param config - See {@link ApiItemTransformationConfiguration}.
+ * @param headingText - The text to use for the heading in the examples section. Defaults to "Examples".
  *
  * @returns The doc section if the API item had any `@example` comment blocks, otherwise `undefined`.
  */
 export function createExamplesSection(
 	apiItem: ApiItem,
 	config: Required<ApiItemTransformationConfiguration>,
-	title: string = "Examples",
+	headingText: string = "Examples",
 ): SectionNode | undefined {
 	const exampleBlocks = getExampleBlocks(apiItem);
 
@@ -555,7 +556,7 @@ export function createExamplesSection(
 	}
 
 	return wrapInSection(exampleSections, {
-		title,
+		title: headingText,
 		id: `${getQualifiedApiItemName(apiItem)}-examples`,
 	});
 }
