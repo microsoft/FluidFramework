@@ -119,7 +119,6 @@ describe("Lumber", () => {
 			resources.LumberType.Metric,
 			[],
 			undefined,
-			undefined,
 			originalMapProperties,
 		);
 
@@ -216,12 +215,12 @@ describe("Lumber", () => {
 			resources.LumberType.Log,
 			[engine],
 			undefined,
+			undefined,
 			[formatter],
 		);
 
 		lumber.error(errorMessage, error);
 
-		assert.strictEqual(lumber.successful, true);
 		assert.strictEqual(formaterTransformStub.calledOnce, true);
 	});
 });

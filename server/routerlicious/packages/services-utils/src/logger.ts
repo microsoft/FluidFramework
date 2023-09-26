@@ -13,8 +13,6 @@ import {
 	ILumberjackSchemaValidator,
 	Lumberjack,
 	ILumberjackOptions,
-	ILumberFormatter,
-	SanitizationLumberFormatter,
 } from "@fluidframework/server-services-telemetry";
 import { WinstonLumberjackEngine } from "./winstonLumberjackEngine";
 import { configureGlobalContext } from "./globalContext";
@@ -77,6 +75,7 @@ const defaultLumberjackConfig: ILumberjackConfig = {
 	schemaValidator: undefined,
 	options: {
 		enableGlobalTelemetryContext: false,
+		enableSanitization: false,
 	},
 };
 function configureLumberjackLogging(config: ILumberjackConfig) {

@@ -39,5 +39,5 @@ export class TestEngine2 implements ILumberjackEngine {
 }
 
 export class TestFormatter implements ILumberFormatter {
-	public transform(lumber: Lumber) {};
+	public transform(lumber: Lumber) {}
 }

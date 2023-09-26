@@ -14,12 +14,15 @@ import {
 	ILumberFormatter,
 } from "./resources";
 import { getGlobal, getGlobalTelemetryContext } from "./telemetryContext";
+import { SanitizationLumberFormatter } from "./lumberFormatters";
 
 export interface ILumberjackOptions {
 	enableGlobalTelemetryContext: boolean;
+	enableSanitization?: boolean;
 }
 const defaultLumberjackOptions: ILumberjackOptions = {
 	enableGlobalTelemetryContext: false,
+	enableSanitization: false,
 };
 
 export const getGlobalLumberjackInstance = () =>
@@ -69,10 +72,9 @@ export class Lumberjack {
 		engines: ILumberjackEngine[],
 		schemaValidators?: ILumberjackSchemaValidator[],
 		options?: Partial<ILumberjackOptions>,
-		formatters?: ILumberFormatter[],
 	) {
 		const newInstance = new Lumberjack();
-		newInstance.setup(engines, schemaValidators, options, formatters);
+		newInstance.setup(engines, schemaValidators, options);
 		return newInstance;
 	}
 
@@ -80,10 +82,9 @@ export class Lumberjack {
 		engines: ILumberjackEngine[],
 		schemaValidators?: ILumberjackSchemaValidator[],
 		options?: Partial<ILumberjackOptions>,
-		formatters?: ILumberFormatter[],
 	) {
 		this.options = options;
-		this.instance.setup(engines, schemaValidators, options, formatters);
+		this.instance.setup(engines, schemaValidators, options);
 	}
 
 	public static newLumberMetric<T extends string = LumberEventName>(
@@ -134,7 +135,6 @@ export class Lumberjack {
 		engines: ILumberjackEngine[],
 		schemaValidators?: ILumberjackSchemaValidator[],
 		options?: Partial<ILumberjackOptions>,
-		formatters?: ILumberFormatter[],
 	) {
 		if (this._isSetupCompleted) {
 			handleError(
@@ -160,7 +160,13 @@ export class Lumberjack {
 			...defaultLumberjackOptions,
 			...options,
 		};
-		this._formatters = formatters;
+
+		const lumberFormatters: ILumberFormatter[] = [];
+		if (this._options.enableSanitization) {
+			lumberFormatters.push(new SanitizationLumberFormatter());
+		}
+		this._formatters = lumberFormatters;
+
 		this._isSetupCompleted = true;
 	}
 

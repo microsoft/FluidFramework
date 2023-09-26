@@ -19,16 +19,20 @@ export class SanitizationLumberFormatter implements ILumberFormatter {
 		/session[._-]?id/i,
 	];
 
-	private readonly redactedStr = "[LUMBER_REDACTED]"
+	private readonly redactedStr = "[LUMBER_REDACTED]";
 
 	public transform(lumber: Lumber<string>): void {
 		if (lumber.logLevel === LogLevel.Error && lumber.exception) {
 			Object.keys(lumber.exception).forEach((keyStr, value) => {
 				if (typeof value === "object" && value !== null) {
-					this.transform(value); 
-				} else if (this.sensitiveKeys.some(regex => regex.test(keyStr))) {
+					this.transform(value);
+				} else if (this.sensitiveKeys.some((regex) => regex.test(keyStr))) {
 					lumber[keyStr] = this.redactedStr;
-					Lumberjack.warning("Detected sensitve data in logs", { DetectedSecret: keyStr }, null);
+					Lumberjack.warning(
+						"Detected sensitve data in logs",
+						{ DetectedSecret: keyStr },
+						null,
+					);
 				}
 			});
 		}

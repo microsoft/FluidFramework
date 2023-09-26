@@ -9,8 +9,6 @@ import {
 	ILumberjackEngine,
 	ILumberjackSchemaValidator,
 	Lumberjack,
-	ILumberFormatter,
-	SanitizationLumberFormatter,
 } from "@fluidframework/server-services-telemetry";
 
 /**
@@ -44,11 +42,6 @@ export function configureGitRestLogging(configOrPath: Provider | string) {
 			| ILumberjackSchemaValidator[]
 			| undefined;
 
-		const lumberFormatters: ILumberFormatter[] = []; 
-		if (lumberjackConfig?.sanitize) {
-			lumberFormatters.push(new SanitizationLumberFormatter());
-		}
-		
-		Lumberjack.setup(engineList, schemaValidatorList, lumberFormatters);
+		Lumberjack.setup(engineList, schemaValidatorList);
 	}
 }

@@ -9,8 +9,6 @@ import {
 	ILumberjackEngine,
 	ILumberjackSchemaValidator,
 	Lumberjack,
-	ILumberFormatter,
-	SanitizationLumberFormatter,
 } from "@fluidframework/server-services-telemetry";
 
 /**
@@ -43,12 +41,6 @@ export function configureHistorianLogging(configOrPath: Provider | string) {
 		const schemaValidatorList = lumberjackConfig?.schemaValidator as
 			| ILumberjackSchemaValidator[]
 			| undefined;
-
-
-		const lumberFormatters: ILumberFormatter[] = []; 
-		if (lumberjackConfig?.sanitize) {
-			lumberFormatters.push(new SanitizationLumberFormatter());
-		}
 
 		Lumberjack.setup(engineList, schemaValidatorList);
 	}
