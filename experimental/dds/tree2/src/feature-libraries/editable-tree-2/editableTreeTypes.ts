@@ -18,8 +18,9 @@ import {
 	StructSchema,
 } from "../typed-schema";
 import { EditableTreeEvents } from "../untypedTree";
-import { FieldKindTypes, FieldKinds } from "../default-field-kinds";
+import { FieldKinds } from "../default-field-kinds";
 import { TreeStatus } from "../editable-tree";
+import { FieldKind } from "../modular-schema";
 import { TreeContext } from "./context";
 
 /**
@@ -561,7 +562,7 @@ export type TypedField<TSchema extends FieldSchema> = TypedFieldInner<
  * @alpha
  */
 export type TypedFieldInner<
-	Kind extends FieldKindTypes,
+	Kind extends FieldKind,
 	Types extends AllowedTypes,
 > = Kind extends typeof FieldKinds.sequence
 	? Sequence<Types>
@@ -635,7 +636,7 @@ export type UnboxField<TSchema extends FieldSchema> = UnboxFieldInner<
  * @alpha
  */
 export type UnboxFieldInner<
-	Kind extends FieldKindTypes,
+	Kind extends FieldKind,
 	TTypes extends AllowedTypes,
 > = Kind extends typeof FieldKinds.sequence
 	? Sequence<TTypes>

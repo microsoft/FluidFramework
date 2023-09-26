@@ -21,8 +21,8 @@ import {
 	Named,
 	requireAssignableTo,
 } from "../../util";
-import { FieldKindTypes, FieldKinds } from "../default-field-kinds";
-import { FullSchemaPolicy } from "../modular-schema";
+import { FieldKinds } from "../default-field-kinds";
+import { FieldKind, FullSchemaPolicy } from "../modular-schema";
 import { LazyItem, normalizeFlexList } from "./flexList";
 import { ObjectToMap, WithDefault, objectToMapTyped } from "./typeUtils";
 
@@ -304,7 +304,7 @@ export type TreeSchemaSpecification = [
  * This can include policy for how to use this schema for "view" purposes, and well as how to expose editing APIs.
  * @sealed @alpha
  */
-export class FieldSchema<Kind extends FieldKindTypes = FieldKindTypes, Types = AllowedTypes> {
+export class FieldSchema<Kind extends FieldKind = FieldKind, Types = AllowedTypes> {
 	/**
 	 * Schema for a field which must always be empty.
 	 */
