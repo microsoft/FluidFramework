@@ -4,9 +4,8 @@
  */
 
 import * as React from "react";
-import { AllowedUpdateType, ISharedTree } from "@fluid-experimental/tree2";
-import { useTree } from "@fluid-experimental/tree-react-api";
-import { Inventory, RootField, schema } from "../schema";
+import { AllowedUpdateType, ISharedTree, ISharedTreeView } from "@fluid-experimental/tree2";
+import { Inventory, schema } from "../schema";
 import { Counter } from "./counter";
 
 const schemaPolicy = {
@@ -27,10 +26,19 @@ const schemaPolicy = {
 };
 
 export const SharedTreeView: React.FC<{ tree: ISharedTree }> = ({ tree }) => {
-	const root: RootField = useTree(tree.view, schemaPolicy);
-	// TODO: value fields like `root` which always contain exactly one value should have a nicer API for accessing that child, like `.child`.
-	const inventory: Inventory = root[0];
+	const typedTree = React.useMemo<ISharedTreeView>(
+		() => tree.view.schematize(schemaPolicy),
+		[tree.view],
+	);
+	const [invalidations, setInvalidations] = React.useState(0);
+	React.useEffect(() => {
+		return typedTree.events.on("afterBatch", () => {
+			setInvalidations(invalidations + 1);
+		});
+	});
+	const root = typedTree.context.root;
 
+	const inventory: Inventory = root[0] as unknown as Inventory;
 	const counters: JSX.Element[] = [];
 
 	for (const part of inventory.parts) {
