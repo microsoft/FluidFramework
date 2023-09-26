@@ -19,6 +19,7 @@ import {
 	SchemaAware,
 	SchemaBuilder,
 	TreeSchema,
+	type TypedSchemaCollection,
 } from "../../../feature-libraries";
 import {
 	FieldAnchor,
@@ -100,8 +101,7 @@ describe("LazyField", () => {
 });
 
 function createSingleValueTree<Kind extends FieldKind, Types extends AllowedTypes>(
-	builder: SchemaBuilder,
-	rootSchema: FieldSchema<Kind, Types>,
+	schema: TypedSchemaCollection,
 	initialTree?:
 		| SchemaAware.TypedField<FieldSchema, SchemaAware.ApiMode.Flexible>
 		| readonly ITreeCursorSynchronous[]
@@ -110,10 +110,7 @@ function createSingleValueTree<Kind extends FieldKind, Types extends AllowedType
 	context: Context;
 	cursor: ITreeSubscriptionCursor;
 } {
-	const schema = builder.intoDocumentSchema(rootSchema);
-
 	const context = contextWithContentReadonly({ schema, initialTree });
-
 	const cursor = initializeCursor(context, rootFieldAnchor);
 
 	return {
@@ -127,12 +124,10 @@ describe("LazyOptionalField", () => {
 		it("Any", () => {
 			const builder = new SchemaBuilder("test");
 			const booleanLeafSchema = builder.leaf("bool", ValueSchema.Boolean);
+			const rootSchema = SchemaBuilder.fieldOptional(builder.struct("struct", {}));
+			const schema = builder.intoDocumentSchema(rootSchema);
 
-			const { context, cursor } = createSingleValueTree(
-				builder,
-				SchemaBuilder.fieldOptional(builder.struct("struct", {})),
-				{},
-			);
+			const { context, cursor } = createSingleValueTree(schema, {});
 
 			const field = new LazyOptionalField(
 				context,
@@ -157,12 +152,10 @@ describe("LazyOptionalField", () => {
 			const builder = new SchemaBuilder("test");
 			const booleanLeafSchema = builder.leaf("bool", ValueSchema.Boolean);
 			const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
+			const rootSchema = SchemaBuilder.fieldOptional(builder.struct("struct", {}));
+			const schema = builder.intoDocumentSchema(rootSchema);
 
-			const { context, cursor } = createSingleValueTree(
-				builder,
-				SchemaBuilder.fieldOptional(builder.struct("struct", {})),
-				{},
-			);
+			const { context, cursor } = createSingleValueTree(schema, {});
 
 			assert.equal(
 				context.forest.tryMoveCursorToField(detachedFieldAnchor, cursor),
@@ -201,8 +194,9 @@ describe("LazyOptionalField", () => {
 			const builder = new SchemaBuilder("test");
 			const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
 			const rootSchema = SchemaBuilder.fieldOptional(numberLeafSchema);
+			const schema = builder.intoDocumentSchema(rootSchema);
 
-			const { context, cursor } = createSingleValueTree(builder, rootSchema, undefined);
+			const { context, cursor } = createSingleValueTree(schema, undefined);
 
 			const field = new LazyOptionalField(
 				context,
@@ -218,8 +212,9 @@ describe("LazyOptionalField", () => {
 			const builder = new SchemaBuilder("test");
 			const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
 			const rootSchema = SchemaBuilder.fieldOptional(numberLeafSchema);
+			const schema = builder.intoDocumentSchema(rootSchema);
 
-			const { context, cursor } = createSingleValueTree(builder, rootSchema, 42);
+			const { context, cursor } = createSingleValueTree(schema, 42);
 
 			const field = new LazyOptionalField(
 				context,
@@ -245,8 +240,9 @@ describe("LazyOptionalField", () => {
 		const builder = new SchemaBuilder("test");
 		const leafSchema = builder.leaf("leaf", kind);
 		const rootSchema = SchemaBuilder.fieldOptional(leafSchema);
+		const schema = builder.intoDocumentSchema(rootSchema);
 
-		const { context, cursor } = createSingleValueTree(builder, rootSchema, initialTree);
+		const { context, cursor } = createSingleValueTree(schema, initialTree);
 
 		return new LazyOptionalField(
 			context,
@@ -273,8 +269,9 @@ describe("LazyOptionalField", () => {
 			bar: SchemaBuilder.fieldOptional(numberLeafSchema),
 		});
 		const rootSchema = SchemaBuilder.fieldOptional(leafSchema);
+		const schema = builder.intoDocumentSchema(rootSchema);
 
-		const { context, cursor } = createSingleValueTree(builder, rootSchema, initialTree);
+		const { context, cursor } = createSingleValueTree(schema, initialTree);
 
 		return new LazyOptionalField(
 			context,
