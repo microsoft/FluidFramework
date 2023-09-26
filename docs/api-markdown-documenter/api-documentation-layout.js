@@ -124,7 +124,7 @@ function layoutContent(apiItem, itemSpecificContent, config) {
  * Renders a section containing the {@link https://tsdoc.org/pages/tags/deprecated/ | @deprecated} notice documentation
  * of the provided API item if it is annotated as `@deprecated`.
  *
- * @remarks Displayed as a simple note box containing the deprecation notice comment.
+ * @remarks Displayed as a Hugo-formatted alert. See {@link AlertNode} and {@link renderAlertNode}.
  *
  * @param {@microsoft/api-extractor-model#ApiItem} apiItem - The API item being rendered.
  * @param {@fluid-tools/api-markdown-documenter#ApiItemTransformationConfiguration} config - Transformation configuration.
