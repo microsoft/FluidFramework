@@ -34,6 +34,7 @@ import { pkgVersion } from "./packageVersion";
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 const feature_get_ops = "api_get_ops";
 const feature_flush_ops = "api_flush_ops";
+const feature_submit_signals_v2 = "submit_signals_v2";
 
 export interface FlushResult {
 	lastPersistedSequenceNumber?: number;
@@ -293,8 +294,11 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			relayUserAgent: [client.details.environment, ` driverVersion:${pkgVersion}`].join(";"),
 		};
 
+		connectMessage.supportedFeatures = {
+			[feature_submit_signals_v2]: true,
+		};
+
 		// Reference to this client supporting get_ops flow.
-		connectMessage.supportedFeatures = {};
 		if (mc.config.getBoolean("Fluid.Driver.Odsp.GetOpsEnabled") !== false) {
 			connectMessage.supportedFeatures[feature_get_ops] = true;
 		}
@@ -722,7 +726,16 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	 * @param message - signal to submit
 	 */
 	public submitSignal(message: IDocumentMessage): void {
-		this.emitMessages("submitSignal", [[message]]);
+		this.submitSignals({ content: message });
+	}
+
+	/**
+	 * Submits signals to the server
+	 *
+	 * @param signals - signals to submit
+	 */
+	public submitSignals(signals: ISentSignalMessage | ISentSignalMessage[]): void {
+		this.emitMessages("submitSignal", Array.isArray(signals) ? signals : [signals]);
 	}
 
 	/**

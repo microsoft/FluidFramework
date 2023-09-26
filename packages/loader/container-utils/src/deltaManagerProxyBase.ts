@@ -110,6 +110,10 @@ export class DeltaManagerProxyBase
 		return this.deltaManager.submitSignal(content);
 	}
 
+	public submitSignals(signals: ISentSignalMessage | ISentSignalMessage[]): void {
+		return this.deltaManager.submitSignals(signals);
+	}
+
 	public flush(): void {
 		return this.deltaManager.flush();
 	}

@@ -337,6 +337,15 @@ export class DocumentDeltaConnection
 	}
 
 	/**
+	 * Submits signals to the server
+	 *
+	 * @param signals - signals to submit
+	 */
+	public submitSignals(signals: ISentSignalMessage | ISentSignalMessage[]): void {
+		throw new Error("Not implemented");
+	}
+
+	/**
 	 * Disconnect from the websocket and close the websocket too.
 	 */
 	private closeSocket(error: IAnyDriverError) {
