@@ -239,17 +239,16 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 			}
 
 			// 3. Webhook exists, attempt to remove the subscriber from the webhook
-			// eslint-disable-next-line unicorn/no-negated-condition -- ignoring so the code doesn't have to be re-ordered
-			if (!webhook.subscribers.includes(subscriberUrl)) {
-				// 3a. Webhook exists but the provided subscriber is not subscribed with the webhook.
-				const resultMessage =
-					"Provided subscriberUrl does not have a webhook registered for the given externalTaskListId";
+			if (webhook.subscribers.includes(subscriberUrl)) {
+				// 3a. Webhook exists and the provided subcriber is currently subscribed to it.
+				webhook.removeSubscriber(subscriberUrl);
+				const resultMessage = `Unregistered webhook notification for externalTaskListId ${externalTaskListId} at subscriberUrl: "${subscriberUrl}".`;
 				console.info(formatLogMessage(resultMessage));
 				result.status(200).json({ message: resultMessage });
 			} else {
-				// 3b. Webhook exists and the provided subcriber is currently subscribed to it.
-				webhook.removeSubscriber(subscriberUrl);
-				const resultMessage = `Unregistered webhook notification for externalTaskListId ${externalTaskListId} at subscriberUrl: "${subscriberUrl}".`;
+				// 3b. Webhook exists but the provided subscriber is not subscribed with the webhook.
+				const resultMessage =
+					"Provided subscriberUrl does not have a webhook registered for the given externalTaskListId";
 				console.info(formatLogMessage(resultMessage));
 				result.status(200).json({ message: resultMessage });
 			}
