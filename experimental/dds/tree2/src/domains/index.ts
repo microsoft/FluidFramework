@@ -17,3 +17,9 @@ export {
 } from "./json";
 
 export { nodeKeyField, nodeKeySchema, nodeKeyTreeSchema } from "./nodeKey";
+
+import * as leaf from "./leafDomain";
+export { leaf };
+
+import * as testRecursiveDomain from "./testRecursiveDomain";
+export { testRecursiveDomain };
