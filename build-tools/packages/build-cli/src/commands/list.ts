@@ -53,6 +53,7 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 		const releaseGroup = context.repo.releaseGroups.get(this.flags.releaseGroup);
 
 		if (releaseGroup === undefined) {
+			// exits the process
 			this.error(`Can't find release group: ${this.flags.releaseGroup}`, { exit: 1 });
 		}
 
@@ -63,8 +64,10 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 			.filter((item) => {
 				const config = context.rootFluidBuildConfig?.policy?.packageNames;
 				if (config === undefined) {
+					// exits the process
 					this.error(`No fluid-build package name policy config found.`);
 				}
+
 				const official =
 					packageMustPublishToNPM(item.name, config) ||
 					packageMayChooseToPublishToNPM(item.name, config);
@@ -75,19 +78,12 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 
 				switch (this.flags.feed) {
 					case "official": {
-						if (official === false) {
-							this.verbose(`official ${official}: ${item.name}`);
-						}
 						return official;
 					}
 
 					case "internal":
 					case "internal-test": {
-						const result = official || internal;
-						if (result === false) {
-							this.verbose(`internal ${result}: ${item.name}`);
-						}
-						return result;
+						return official || internal;
 					}
 
 					default: {
