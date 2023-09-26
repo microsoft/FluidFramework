@@ -6,25 +6,13 @@
 // TODO: import from our library
 const { ReleaseTag } = require("@microsoft/api-extractor-model");
 const {
+	doesItemRequireOwnDocument,
 	getDeprecatedBlock,
 	getHeadingForApiItem,
 	getReleaseTag,
+	LayoutUtilities,
 	transformTsdocNode,
 } = require("@fluid-tools/api-markdown-documenter");
-
-// TODO: import from root
-const {
-	doesItemRequireOwnDocument,
-} = require("@fluid-tools/api-markdown-documenter/dist/api-item-transforms");
-const {
-	createExamplesSection,
-	createRemarksSection,
-	createSeeAlsoSection,
-	createSignatureSection,
-	createSummaryParagraph,
-	createThrowsSection,
-	wrapInSection,
-} = require("@fluid-tools/api-markdown-documenter/dist/api-item-transforms/helpers");
 
 const { AlertNode } = require("./alert-node");
 
@@ -63,39 +51,39 @@ function layoutContent(apiItem, itemSpecificContent, config) {
 	const sections = [];
 
 	// Render summary comment (if any)
-	const summary = createSummaryParagraph(apiItem, config);
+	const summary = LayoutUtilities.createSummaryParagraph(apiItem, config);
 	if (summary !== undefined) {
-		sections.push(wrapInSection([summary]));
+		sections.push(LayoutUtilities.wrapInSection([summary]));
 	}
 
 	// Render deprecation notice (if any)
-	const deprecationNotice = createDeprecationNoticeSection(apiItem, config);
+	const deprecationNotice = LayoutUtilities.createDeprecationNoticeSection(apiItem, config);
 	if (deprecationNotice !== undefined) {
-		sections.push(wrapInSection([deprecationNotice]));
+		sections.push(LayoutUtilities.wrapInSection([deprecationNotice]));
 	}
 
 	// Render alpha/beta notice if applicable
 	const releaseTag = getReleaseTag(apiItem);
 	if (releaseTag === ReleaseTag.Alpha) {
-		sections.push(wrapInSection([alphaWarningSpan]));
+		sections.push(LayoutUtilities.wrapInSection([alphaWarningSpan]));
 	} else if (releaseTag === ReleaseTag.Beta) {
-		sections.push(wrapInSection([betaWarningSpan]));
+		sections.push(LayoutUtilities.wrapInSection([betaWarningSpan]));
 	}
 
 	// Render signature (if any)
-	const signature = createSignatureSection(apiItem, config);
+	const signature = LayoutUtilities.createSignatureSection(apiItem, config);
 	if (signature !== undefined) {
 		sections.push(signature);
 	}
 
 	// Render @remarks content (if any)
-	const renderedRemarks = createRemarksSection(apiItem, config);
+	const renderedRemarks = LayoutUtilities.createRemarksSection(apiItem, config);
 	if (renderedRemarks !== undefined) {
 		sections.push(renderedRemarks);
 	}
 
 	// Render examples (if any)
-	const renderedExamples = createExamplesSection(apiItem, config);
+	const renderedExamples = LayoutUtilities.createExamplesSection(apiItem, config);
 	if (renderedExamples !== undefined) {
 		sections.push(renderedExamples);
 	}
@@ -107,13 +95,13 @@ function layoutContent(apiItem, itemSpecificContent, config) {
 	}
 
 	// Render @throws content (if any)
-	const renderedThrows = createThrowsSection(apiItem, config);
+	const renderedThrows = LayoutUtilities.createThrowsSection(apiItem, config);
 	if (renderedThrows !== undefined) {
 		sections.push(renderedThrows);
 	}
 
 	// Render @see content (if any)
-	const renderedSeeAlso = createSeeAlsoSection(apiItem, config);
+	const renderedSeeAlso = LayoutUtilities.createSeeAlsoSection(apiItem, config);
 	if (renderedSeeAlso !== undefined) {
 		sections.push(renderedSeeAlso);
 	}
@@ -122,7 +110,7 @@ function layoutContent(apiItem, itemSpecificContent, config) {
 	// Document items have their headings handled specially.
 	return doesItemRequireOwnDocument(apiItem, config.documentBoundaries)
 		? sections
-		: [wrapInSection(sections, getHeadingForApiItem(apiItem, config))];
+		: [LayoutUtilities.wrapInSection(sections, getHeadingForApiItem(apiItem, config))];
 }
 
 /**
