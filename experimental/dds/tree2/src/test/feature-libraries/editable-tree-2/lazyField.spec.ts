@@ -123,8 +123,7 @@ function createSingleValueTree<Kind extends FieldKindTypes, Types extends Allowe
 	};
 }
 
-// TODO: no only
-describe.only("LazyOptionalField", () => {
+describe("LazyOptionalField", () => {
 	describe("as", () => {
 		it("Any", () => {
 			const builder = new SchemaBuilder("test");
