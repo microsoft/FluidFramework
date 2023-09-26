@@ -80,7 +80,9 @@ data:
         },
         "apiCounters": {
             "fetchTenantKeyMetricMs": 60000,
-            "riddlerStorageRequestMetricMs": 60000
+            "riddlerStorageRequestMetricMs": 60000,
+            "deliCheckpointMetricMs": 60000,
+            "scribeCheckpointMetricMs": 60000
         },
         "alfred": {
             "kafkaClientId": "{{ template "alfred.fullname" . }}",

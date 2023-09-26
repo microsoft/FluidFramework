@@ -68,6 +68,7 @@ export class DeliLambdaFactory
 		private readonly serviceConfiguration: IServiceConfiguration,
 		private readonly restartOnCheckpointFailure: boolean,
 		private readonly kafkaCheckpointOnReprocessingOp: boolean,
+		private readonly deliCheckpointMetricInterval: number,
 	) {
 		super();
 	}
@@ -225,6 +226,7 @@ export class DeliLambdaFactory
 			this.checkpointService,
 			this.restartOnCheckpointFailure,
 			this.kafkaCheckpointOnReprocessingOp,
+			this.deliCheckpointMetricInterval,
 		);
 
 		deliLambda.on("close", (closeType) => {

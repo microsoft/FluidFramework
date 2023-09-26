@@ -158,6 +158,8 @@ export async function deliCreate(
 		localCheckpointEnabled,
 	);
 
+	const deliCheckpointMetricInterval: number = config.get("apiCounters:deliCheckpointMetricMs");
+
 	return new DeliLambdaFactory(
 		operationsDbManager,
 		documentRepository,
@@ -170,6 +172,7 @@ export async function deliCreate(
 		serviceConfiguration,
 		restartOnCheckpointFailure,
 		kafkaCheckpointOnReprocessingOp,
+		deliCheckpointMetricInterval,
 	);
 }
 

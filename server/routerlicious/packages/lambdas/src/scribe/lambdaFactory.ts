@@ -86,6 +86,7 @@ export class ScribeLambdaFactory
 		private readonly restartOnCheckpointFailure: boolean,
 		private readonly kafkaCheckpointOnReprocessingOp: boolean,
 		private readonly maxLogtailLength: number,
+		private readonly scribeCheckpointMetricInterval: number,
 	) {
 		super();
 	}
@@ -322,6 +323,7 @@ export class ScribeLambdaFactory
 			this.restartOnCheckpointFailure,
 			this.kafkaCheckpointOnReprocessingOp,
 			document.isEphemeralContainer ?? false,
+			this.scribeCheckpointMetricInterval,
 		);
 
 		await this.sendLambdaStartResult(tenantId, documentId, {

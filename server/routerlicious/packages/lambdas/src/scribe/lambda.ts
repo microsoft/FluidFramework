@@ -38,6 +38,7 @@ import {
 	Lumberjack,
 	CommonProperties,
 } from "@fluidframework/server-services-telemetry";
+import { IApiCounters, InMemoryApiCounters } from "@fluidframework/server-services-utils";
 import Deque from "double-ended-queue";
 import * as _ from "lodash";
 import {
@@ -95,6 +96,11 @@ export class ScribeLambda implements IPartitionLambda {
 	private noActiveClients: boolean = false;
 	private globalCheckpointOnly: boolean = false;
 
+	// Initialize api counter for checkpoint metric
+	private readonly apiCounter: IApiCounters = new InMemoryApiCounters(
+		Object.values(CheckpointReason),
+	);
+
 	constructor(
 		protected readonly context: IContext,
 		protected tenantId: string,
@@ -114,10 +120,18 @@ export class ScribeLambda implements IPartitionLambda {
 		private readonly restartOnCheckpointFailure: boolean,
 		private readonly kafkaCheckpointOnReprocessingOp: boolean,
 		private readonly isEphemeralContainer: boolean,
+		private readonly scribeCheckpointMetricInterval: number,
 	) {
 		this.lastOffset = scribe.logOffset;
 		this.setStateFromCheckpoint(scribe);
 		this.pendingMessages = new Deque<ISequencedDocumentMessage>(messages);
+		setInterval(() => {
+			if (!this.apiCounter.countersAreActive) {
+				return;
+			}
+			Lumberjack.info("Scribe checkpoint api counters", this.apiCounter.getCounters());
+			this.apiCounter.resetAllCounters();
+		}, this.scribeCheckpointMetricInterval);
 	}
 
 	public async handler(message: IQueuedMessage) {
@@ -475,17 +489,7 @@ export class ScribeLambda implements IPartitionLambda {
 		this.checkpointCore(checkpoint, message, this.clearCache, skipKafkaCheckpoint);
 		this.lastOffset = message.offset;
 		const reason = CheckpointReason[checkpointReason];
-		const checkpointResult = `Writing checkpoint. Reason: ${reason}`;
-		const lumberjackProperties = {
-			...getLumberBaseProperties(this.documentId, this.tenantId),
-			checkpointReason: reason,
-			lastOffset: this.lastOffset,
-			scribeCheckpointOffset: this.checkpointInfo.currentCheckpointMessage?.offset,
-			scribeCheckpointPartition: this.checkpointInfo.currentCheckpointMessage?.partition,
-			kafkaCheckpointOffset: this.checkpointInfo.currentKafkaCheckpointMessage?.offset,
-			kafkaCheckpointPartition: this.checkpointInfo.currentKafkaCheckpointMessage?.partition,
-		};
-		Lumberjack.info(checkpointResult, lumberjackProperties);
+		this.apiCounter.incrementCounter(reason);
 	}
 
 	public close(closeType: LambdaCloseType) {
@@ -843,20 +847,8 @@ export class ScribeLambda implements IPartitionLambda {
 						initialScribeCheckpointMessage,
 						this.clearCache,
 					);
-					const checkpointResult = `Writing checkpoint. Reason: IdleTime`;
-					const lumberjackProperties = {
-						...getLumberBaseProperties(this.documentId, this.tenantId),
-						checkpointReason: "IdleTime",
-						lastOffset: initialScribeCheckpointMessage.offset,
-						deliCheckpointOffset: this.checkpointInfo.currentCheckpointMessage?.offset,
-						deliCheckpointPartition:
-							this.checkpointInfo.currentCheckpointMessage?.partition,
-						kafkaCheckpointOffset:
-							this.checkpointInfo.currentKafkaCheckpointMessage?.offset,
-						kafkaCheckpointPartition:
-							this.checkpointInfo.currentKafkaCheckpointMessage?.partition,
-					};
-					Lumberjack.info(checkpointResult, lumberjackProperties);
+					const reason = CheckpointReason[CheckpointReason.IdleTime];
+					this.apiCounter.incrementCounter(reason);
 				}
 			}
 		}, this.serviceConfiguration.scribe.checkpointHeuristics.idleTime);

@@ -152,6 +152,8 @@ export async function scribeCreate(
 		localCheckpointEnabled,
 	);
 
+	const scribeCheckpointMetricInterval: number = config.get("apiCounters:scribeCheckpointMetricMs");
+
 	return new ScribeLambdaFactory(
 		operationsDbManager,
 		documentRepository,
@@ -169,6 +171,7 @@ export async function scribeCreate(
 		restartOnCheckpointFailure,
 		kafkaCheckpointOnReprocessingOp,
 		maxLogtailLength,
+		scribeCheckpointMetricInterval,
 	);
 }
 

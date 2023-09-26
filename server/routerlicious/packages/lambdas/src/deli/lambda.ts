@@ -66,6 +66,7 @@ import {
 	Lumberjack,
 	SessionState,
 } from "@fluidframework/server-services-telemetry";
+import { IApiCounters, InMemoryApiCounters } from "@fluidframework/server-services-utils";
 import { DocumentContext } from "@fluidframework/server-lambdas-driver";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IEvent } from "../events";
@@ -264,6 +265,10 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		rawMessagesSinceCheckpoint: 0,
 	};
 
+	private readonly apiCounter: IApiCounters = new InMemoryApiCounters(
+		Object.values(CheckpointReason),
+	);
+
 	private noActiveClients: boolean;
 
 	private globalCheckpointOnly;
@@ -295,6 +300,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		private readonly checkpointService: ICheckpointService,
 		private readonly restartOnCheckpointFailure: boolean,
 		private readonly kafkaCheckpointOnReprocessingOp: boolean,
+		private readonly deliCheckpointMetricInterval: number,
 		private readonly sequencedSignalClients: Map<string, ISequencedSignalClient> = new Map(),
 	) {
 		super();
@@ -360,6 +366,15 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			context,
 			this.checkpointService,
 		);
+		
+		// Emit api counter every certain interval.
+		setInterval(() => {
+			if (!this.apiCounter.countersAreActive) {
+				return;
+			}
+			Lumberjack.info("Deli checkpoint api counters", this.apiCounter.getCounters());
+			this.apiCounter.resetAllCounters();
+		}, this.deliCheckpointMetricInterval);
 
 		// start the activity idle timer when created
 		this.setActivityIdleTimer();
@@ -1980,9 +1995,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 						Lumberjack.error("Error writing checkpoint", lumberjackProperties, error);
 					});
 				const checkpointReason = CheckpointReason[checkpointParams.reason];
-				lumberjackProperties.checkpointReason = checkpointReason;
-				const checkpointResult = `Writing checkpoint. Reason: ${checkpointReason}`;
-				Lumberjack.info(checkpointResult, lumberjackProperties);
+				this.apiCounter.incrementCounter(checkpointReason);
 			})
 			.catch((error) => {
 				const errorMsg = `Could not send message to scriptorium`;
