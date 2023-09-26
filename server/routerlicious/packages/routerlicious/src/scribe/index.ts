@@ -152,7 +152,9 @@ export async function scribeCreate(
 		localCheckpointEnabled,
 	);
 
-	const scribeCheckpointMetricInterval: number = config.get("apiCounters:scribeCheckpointMetricMs");
+	const scribeCheckpointMetricInterval: number = config.get(
+		"apiCounters:scribeCheckpointMetricMs",
+	);
 
 	return new ScribeLambdaFactory(
 		operationsDbManager,

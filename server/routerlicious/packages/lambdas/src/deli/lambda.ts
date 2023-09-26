@@ -366,7 +366,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			context,
 			this.checkpointService,
 		);
-		
+
 		// Emit api counter every certain interval.
 		setInterval(() => {
 			if (!this.apiCounter.countersAreActive) {
