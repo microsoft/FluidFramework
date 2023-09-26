@@ -301,6 +301,15 @@ describe.only("LazyOptionalField", () => {
 		// 	);
 		// });
 
+		it("No value", () => {
+			const field = createPrimitiveField(ValueSchema.Number, undefined);
+
+			assert.deepEqual(
+				field.map((value) => value),
+				[],
+			);
+		});
+
 		// TODOs:
 		// * Non-primitive
 	});
@@ -338,6 +347,13 @@ describe.only("LazyOptionalField", () => {
 		// 	assert.equal(mapResult.length, 1);
 		// 	assert.equal(mapResult[0].value, mockFluidHandle);
 		// });
+
+		it("No value", () => {
+			const field = createPrimitiveField(ValueSchema.String, undefined);
+
+			const mapResult = field.mapBoxed((value) => value);
+			assert.deepEqual(mapResult, []);
+		});
 
 		// TODOs:
 		// * Non-primitive
