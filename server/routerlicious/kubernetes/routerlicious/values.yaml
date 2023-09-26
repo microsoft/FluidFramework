@@ -171,3 +171,6 @@ error:
 lumberjack:
   options:
     enableGlobalTelemetryContext: true
+
+config:
+  configDumpEnabled: true

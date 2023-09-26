@@ -34,7 +34,6 @@ export class ConfigDumper {
 			this.logger?.info(`Service config: ${JSON.stringify(this.config)}`);
 		} catch (err) {
 			Lumberjack.error(`Log sanitization failed.`, undefined, err);
-			throw err;
 		}
 	}
 }

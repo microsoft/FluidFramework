@@ -28,7 +28,7 @@ export async function run<T extends IResources>(
 	logger: ILogger | undefined,
 	secretsList?: string[],
 ) {
-	if (config.get("config:dumpConfig")) {
+	if (config.get("config:configDumpEnabled")) {
 		const configDumper = new ConfigDumper(
 			JSON.parse(JSON.stringify(config.get())),
 			logger,

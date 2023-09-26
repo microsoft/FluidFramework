@@ -7,7 +7,7 @@
 		"timestamp": true
 	},
 	"config": {
-		"dumpConfig": true
+		"configDumpEnabled": true
 	},
 	"requestSizeLimit": "1gb",
 	"storageDir": {

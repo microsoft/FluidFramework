@@ -20,7 +20,7 @@ data:
             "label": "winston"
         },
         "config": {
-            "dumpConfig": true
+            "configDumpEnabled": {{ .Values.config.configDumpEnabled }}
         },
         "lumberjack": {
             "options": {

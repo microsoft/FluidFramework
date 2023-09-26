@@ -7,7 +7,7 @@
 		"timestamp": true
 	},
 	"config": {
-		"dumpConfig": true
+		"configDumpEnabled": true
 	},
 	"riddler": "http://riddler:5000",
 	"alfred": "http://alfred:3000",
