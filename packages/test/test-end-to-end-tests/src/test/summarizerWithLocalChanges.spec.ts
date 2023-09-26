@@ -715,17 +715,7 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 		},
 	);
 
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	itExpects.only(
+	itExpects(
 		"Errors thrown from mixinSummaryHandler are tagged as DataProcessingError",
 		[
 			{
