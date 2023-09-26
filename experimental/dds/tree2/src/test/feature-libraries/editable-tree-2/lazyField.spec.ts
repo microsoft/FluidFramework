@@ -257,6 +257,9 @@ describe("LazyOptionalField", () => {
 		);
 	}
 
+	/**
+	 * Creates a single-node, struct tree, and returns a field associated with that node.
+	 */
 	function createStructField(
 		initialTree?:
 			| SchemaAware.TypedField<FieldSchema, SchemaAware.ApiMode.Flexible>
