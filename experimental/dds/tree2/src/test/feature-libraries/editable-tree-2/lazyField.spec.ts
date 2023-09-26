@@ -124,11 +124,18 @@ function initializeTreeWithContent<Kind extends FieldKind, Types extends Allowed
 	};
 }
 
-describe("LazyOptionalField", () => {
+describe.only("LazyOptionalField", () => {
 	describe("as", () => {
 		it("Any", () => {
 			const builder = new SchemaBuilder("test");
 			const booleanLeafSchema = builder.leaf("bool", ValueSchema.Boolean);
+			const recursiveStructSchema = builder.structRecursive("recursiveStruct", {
+				flag: SchemaBuilder.fieldValue(booleanLeafSchema),
+				child: SchemaBuilder.fieldRecursive(
+					FieldKinds.optional,
+					() => recursiveStructSchema,
+				),
+			});
 			const rootSchema = SchemaBuilder.fieldOptional(builder.struct("struct", {}));
 			const schema = builder.intoDocumentSchema(rootSchema);
 
@@ -150,13 +157,22 @@ describe("LazyOptionalField", () => {
 			assert(!field.is(SchemaBuilder.fieldOptional(booleanLeafSchema)));
 			assert(!field.is(SchemaBuilder.fieldValue(Any)));
 			assert(!field.is(SchemaBuilder.fieldSequence(Any)));
-			assert(!field.is(SchemaBuilder.fieldRecursive(FieldKinds.optional, booleanLeafSchema)));
+			assert(
+				!field.is(SchemaBuilder.fieldRecursive(FieldKinds.value, recursiveStructSchema)),
+			);
 		});
 
 		it("Boolean", () => {
 			const builder = new SchemaBuilder("test");
 			const booleanLeafSchema = builder.leaf("bool", ValueSchema.Boolean);
 			const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
+			const recursiveStructSchema = builder.structRecursive("recursiveStruct", {
+				flag: SchemaBuilder.fieldValue(booleanLeafSchema),
+				child: SchemaBuilder.fieldRecursive(
+					FieldKinds.optional,
+					() => recursiveStructSchema,
+				),
+			});
 			const rootSchema = SchemaBuilder.fieldOptional(builder.struct("struct", {}));
 			const schema = builder.intoDocumentSchema(rootSchema);
 
@@ -185,10 +201,9 @@ describe("LazyOptionalField", () => {
 			assert.equal(field.is(SchemaBuilder.fieldSequence(Any)), false);
 			assert.equal(field.is(SchemaBuilder.fieldSequence(booleanLeafSchema)), false);
 			assert.equal(field.is(SchemaBuilder.fieldSequence(numberLeafSchema)), false);
-			// assert.equal(
-			// 	field.is(SchemaBuilder.fieldRecursive(FieldKinds.optional, numberLeafSchema)),
-			// 	false,
-			// );
+			assert(
+				!field.is(SchemaBuilder.fieldRecursive(FieldKinds.value, recursiveStructSchema)),
+			);
 		});
 
 		// TODO: what other cases are interesting?
