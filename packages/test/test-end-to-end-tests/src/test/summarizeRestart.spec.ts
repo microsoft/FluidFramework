@@ -57,7 +57,7 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 			{
 				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
 				category: "generic",
-				error: "disconnected",
+				error: "summary state stale - Unsupported option 'refreshLatestAck'",
 			},
 		],
 		async () => {
@@ -188,7 +188,7 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 			{
 				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
 				category: "generic",
-				error: "disconnected",
+				error: "summary state stale - Unsupported option 'refreshLatestAck'",
 			},
 		],
 		async () => {
