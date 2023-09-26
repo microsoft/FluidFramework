@@ -6,7 +6,6 @@
 import { ITokenClaims, IUser, ScopeType } from "@fluidframework/protocol-definitions";
 import { KJUR as jsrsasign } from "jsrsasign";
 import { v4 as uuid } from "uuid";
-import { getRandomName } from "@fluid-internal/client-utils";
 
 /**
  * Generates a JWT token to authorize against. We do not use the implementation in
@@ -49,9 +48,12 @@ export function generateToken(
 }
 
 export function generateUser(): IUser {
+	const userId = uuid();
+	const userName = userId.match(/^([\da-f]{8})-([\da-f]{4})/); // userName takes the first two segments of the userId. 
+
 	const randomUser = {
-		id: uuid(),
-		name: getRandomName(" ", true),
+		id: userId,
+		name: userName,
 	};
 
 	return randomUser;
