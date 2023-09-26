@@ -5,15 +5,10 @@
 
 import { strict as assert } from "node:assert";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-<<<<<<< HEAD
 import { IEventSampler, createSampledLogger, logIfFalse } from "../utils";
-import { TelemetryDataTag, tagData } from "../logger";
+import { TelemetryDataTag, tagCodeArtifacts, tagData } from "../logger";
 import { ConfigTypes, IConfigProviderBase, mixinMonitoringContext } from "../config";
 import { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "../telemetryTypes";
-=======
-import { logIfFalse } from "../utils";
-import { TelemetryDataTag, tagCodeArtifacts, tagData } from "../logger";
->>>>>>> b1ecc2900bf6c64209909e74fb0ab94a31442fe6
 
 class TestLogger implements ITelemetryBaseLogger {
 	send(event: ITelemetryBaseEvent): void {
@@ -286,7 +281,6 @@ describe("Sampling", () => {
 			);
 		}
 	});
-
 });
 
 describe("tagCodeArtifacts", () => {

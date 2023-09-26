@@ -52,9 +52,9 @@ export function createMultiSinkLogger(props: {
 }): ITelemetryLoggerExt;
 
 // @internal
-<<<<<<< HEAD
 export function createSampledLogger(logger: ITelemetryLoggerExt, eventSampler?: IEventSampler): ISampledTelemetryLogger;
-=======
+
+// @internal
 export class DataCorruptionError extends LoggingError implements IErrorBase, IFluidErrorBase {
     constructor(message: string, props: ITelemetryBaseProperties);
     // (undocumented)
@@ -71,7 +71,6 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
     readonly errorType: "dataProcessingError";
     static wrapIfUnrecognized(originalError: unknown, dataProcessingCodepath: string, messageLike?: Partial<Pick<ISequencedDocumentMessage, "clientId" | "sequenceNumber" | "clientSequenceNumber" | "referenceSequenceNumber" | "minimumSequenceNumber" | "timestamp">>): IFluidErrorBase;
 }
->>>>>>> b1ecc2900bf6c64209909e74fb0ab94a31442fe6
 
 // @public (undocumented)
 export const disconnectedEventName = "disconnected";
@@ -184,7 +183,6 @@ export interface IPerformanceEventMarkers {
 }
 
 // @internal
-<<<<<<< HEAD
 export interface ISampledTelemetryLogger extends ITelemetryLoggerExt {
     // (undocumented)
     eventSampler?: IEventSampler;
@@ -193,10 +191,7 @@ export interface ISampledTelemetryLogger extends ITelemetryLoggerExt {
 }
 
 // @public
-export function isExternalError(e: any): boolean;
-=======
 export function isExternalError(error: unknown): boolean;
->>>>>>> b1ecc2900bf6c64209909e74fb0ab94a31442fe6
 
 // @public
 export function isFluidError(error: unknown): error is IFluidErrorBase;
