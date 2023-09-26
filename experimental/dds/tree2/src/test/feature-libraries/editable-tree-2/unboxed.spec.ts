@@ -8,15 +8,19 @@
 import { strict as assert } from "node:assert";
 
 import {
+	FieldAnchor,
 	IEditableForest,
 	ITreeCursorSynchronous,
 	ITreeSubscriptionCursor,
 	TreeNavigationResult,
+	rootFieldKey,
 } from "../../../core";
 import { AllowedTypes, FieldSchema, SchemaAware, SchemaBuilder } from "../../../feature-libraries";
 import { Context } from "../../../feature-libraries/editable-tree-2/context";
 import { forestWithContent } from "../../utils";
 import { getReadonlyContext } from "./utils";
+
+const rootFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: rootFieldKey };
 
 function createSingleValueTree<Kind extends FieldKindTypes, Types extends AllowedTypes>(
 	builder: SchemaBuilder,
