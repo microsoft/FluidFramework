@@ -22,9 +22,7 @@ interface IGroupedMessage {
 	compression?: string;
 }
 
-function isGroupContents(
-	opContents: IGroupedBatchMessageContents | { type?: unknown } | undefined,
-): opContents is IGroupedBatchMessageContents {
+function isGroupContents(opContents: any): opContents is IGroupedBatchMessageContents {
 	return opContents?.type === OpGroupingManager.groupedBatchOp;
 }
 
@@ -74,11 +72,11 @@ export class OpGroupingManager {
 	}
 
 	public ungroupOp(op: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
-		if (!isGroupContents(op.contents)) {
+		if (!isGroupContents(op.contents as any)) {
 			return [op];
 		}
 
-		const messages = op.contents.contents;
+		const messages: any[] = (op.contents as { contents: unknown[] }).contents;
 		let fakeCsn = 1;
 		return messages.map((subMessage) => ({
 			...op,

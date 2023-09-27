@@ -39,7 +39,7 @@
 		"@fluidframework/odsp-driver": "workspace:~",
 		"@fluidframework/odsp-driver-definitions": "workspace:~",
 		"@fluidframework/odsp-urlresolver": "workspace:~",
-		"@fluidframework/protocol-definitions": "^1.1.0",
+		"@fluidframework/protocol-definitions": "^3.0.0",
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/routerlicious-urlresolver": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
