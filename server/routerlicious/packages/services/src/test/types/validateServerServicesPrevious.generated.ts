@@ -64,6 +64,30 @@ use_old_ClassDeclaration_ClientManager(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_ConnectionNotAvailableMode": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_ConnectionNotAvailableMode():
+    TypeOnly<old.ConnectionNotAvailableMode>;
+declare function use_current_TypeAliasDeclaration_ConnectionNotAvailableMode(
+    use: TypeOnly<current.ConnectionNotAvailableMode>);
+use_current_TypeAliasDeclaration_ConnectionNotAvailableMode(
+    get_old_TypeAliasDeclaration_ConnectionNotAvailableMode());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_ConnectionNotAvailableMode": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_ConnectionNotAvailableMode():
+    TypeOnly<current.ConnectionNotAvailableMode>;
+declare function use_old_TypeAliasDeclaration_ConnectionNotAvailableMode(
+    use: TypeOnly<old.ConnectionNotAvailableMode>);
+use_old_TypeAliasDeclaration_ConnectionNotAvailableMode(
+    get_current_TypeAliasDeclaration_ConnectionNotAvailableMode());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_DeltaManager": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_DeltaManager():
@@ -84,6 +108,30 @@ declare function use_old_ClassDeclaration_DeltaManager(
     use: TypeOnly<old.DeltaManager>);
 use_old_ClassDeclaration_DeltaManager(
     get_current_ClassDeclaration_DeltaManager());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_DocumentManager": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_DocumentManager():
+    TypeOnly<old.DocumentManager>;
+declare function use_current_ClassDeclaration_DocumentManager(
+    use: TypeOnly<current.DocumentManager>);
+use_current_ClassDeclaration_DocumentManager(
+    get_old_ClassDeclaration_DocumentManager());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_DocumentManager": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_DocumentManager():
+    TypeOnly<current.DocumentManager>;
+declare function use_old_ClassDeclaration_DocumentManager(
+    use: TypeOnly<old.DocumentManager>);
+use_old_ClassDeclaration_DocumentManager(
+    get_current_ClassDeclaration_DocumentManager());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -228,6 +276,30 @@ declare function use_old_InterfaceDeclaration_ISocketIoRedisSubscriptionConnecti
     use: TypeOnly<old.ISocketIoRedisSubscriptionConnection>);
 use_old_InterfaceDeclaration_ISocketIoRedisSubscriptionConnection(
     get_current_InterfaceDeclaration_ISocketIoRedisSubscriptionConnection());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_IsEphemeralContainer": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_IsEphemeralContainer():
+    TypeOnly<typeof old.IsEphemeralContainer>;
+declare function use_current_VariableDeclaration_IsEphemeralContainer(
+    use: TypeOnly<typeof current.IsEphemeralContainer>);
+use_current_VariableDeclaration_IsEphemeralContainer(
+    get_old_VariableDeclaration_IsEphemeralContainer());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_IsEphemeralContainer": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_IsEphemeralContainer():
+    TypeOnly<typeof current.IsEphemeralContainer>;
+declare function use_old_VariableDeclaration_IsEphemeralContainer(
+    use: TypeOnly<typeof old.IsEphemeralContainer>);
+use_old_VariableDeclaration_IsEphemeralContainer(
+    get_current_VariableDeclaration_IsEphemeralContainer());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -479,7 +551,6 @@ declare function get_old_ClassDeclaration_SecretManager():
 declare function use_current_ClassDeclaration_SecretManager(
     use: TypeOnly<current.SecretManager>);
 use_current_ClassDeclaration_SecretManager(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SecretManager());
 
 /*
@@ -569,6 +640,30 @@ use_old_ClassDeclaration_SocketIoWebServerFactory(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_StorageNameRetriever": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_StorageNameRetriever():
+    TypeOnly<old.StorageNameRetriever>;
+declare function use_current_ClassDeclaration_StorageNameRetriever(
+    use: TypeOnly<current.StorageNameRetriever>);
+use_current_ClassDeclaration_StorageNameRetriever(
+    get_old_ClassDeclaration_StorageNameRetriever());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_StorageNameRetriever": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_StorageNameRetriever():
+    TypeOnly<current.StorageNameRetriever>;
+declare function use_old_ClassDeclaration_StorageNameRetriever(
+    use: TypeOnly<old.StorageNameRetriever>);
+use_old_ClassDeclaration_StorageNameRetriever(
+    get_current_ClassDeclaration_StorageNameRetriever());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_Tenant": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_Tenant():
@@ -600,7 +695,6 @@ declare function get_old_ClassDeclaration_TenantManager():
 declare function use_current_ClassDeclaration_TenantManager(
     use: TypeOnly<current.TenantManager>);
 use_current_ClassDeclaration_TenantManager(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_TenantManager());
 
 /*
@@ -902,6 +996,30 @@ declare function use_old_VariableDeclaration_defaultErrorMessage(
     use: TypeOnly<typeof old.defaultErrorMessage>);
 use_old_VariableDeclaration_defaultErrorMessage(
     get_current_VariableDeclaration_defaultErrorMessage());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_getBooleanParam": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_getBooleanParam():
+    TypeOnly<typeof old.getBooleanParam>;
+declare function use_current_FunctionDeclaration_getBooleanParam(
+    use: TypeOnly<typeof current.getBooleanParam>);
+use_current_FunctionDeclaration_getBooleanParam(
+    get_old_FunctionDeclaration_getBooleanParam());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_getBooleanParam": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_getBooleanParam():
+    TypeOnly<typeof current.getBooleanParam>;
+declare function use_old_FunctionDeclaration_getBooleanParam(
+    use: TypeOnly<typeof old.getBooleanParam>);
+use_old_FunctionDeclaration_getBooleanParam(
+    get_current_FunctionDeclaration_getBooleanParam());
 
 /*
 * Validate forward compat by using old type in place of current type

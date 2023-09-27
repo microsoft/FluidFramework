@@ -82,7 +82,7 @@
 		"@fluidframework/build-common": "^2.0.0",
 		"@fluidframework/build-tools": "^0.22.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/server-memory-orderer-previous": "npm:@fluidframework/server-memory-orderer@0.1040.1000",
+		"@fluidframework/server-memory-orderer-previous": "npm:@fluidframework/server-memory-orderer@2.0.0",
 		"@types/mocha": "^10.0.1",
 		"@types/uuid": "^9.0.2",
 		"c8": "^7.7.1",
@@ -95,13 +95,6 @@
 		"webpack": "^5.82.0"
 	},
 	"typeValidation": {
-		"broken": {
-			"ClassDeclaration_LocalOrderer": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_ILocalOrdererSetup": {
-				"forwardCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

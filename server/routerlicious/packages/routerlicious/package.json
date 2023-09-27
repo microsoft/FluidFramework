@@ -64,7 +64,7 @@
 		"@fluidframework/build-tools": "^0.22.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/server-local-server": "workspace:~",
-		"@fluidframework/server-routerlicious-previous": "npm:@fluidframework/server-routerlicious@0.1040.1000",
+		"@fluidframework/server-routerlicious-previous": "npm:@fluidframework/server-routerlicious@2.0.0",
 		"@fluidframework/server-test-utils": "workspace:~",
 		"@types/nconf": "^0.10.2",
 		"@types/node": "^18.17.1",

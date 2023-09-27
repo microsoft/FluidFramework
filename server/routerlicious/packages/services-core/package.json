@@ -45,7 +45,7 @@
 		"@fluidframework/build-common": "^2.0.0",
 		"@fluidframework/build-tools": "^0.22.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/server-services-core-previous": "npm:@fluidframework/server-services-core@0.1040.1000",
+		"@fluidframework/server-services-core-previous": "npm:@fluidframework/server-services-core@2.0.0",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.27.0",
 		"prettier": "~2.6.2",
@@ -61,48 +61,6 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"InterfaceDeclaration_IDeliState": {
-				"backCompat": false
-			},
-			"RemovedInterfaceDeclaration_IPartitionConfig": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_IPartitionLambdaConfig": {
-				"backCompat": false
-			},
-			"RemovedInterfaceDeclaration_IPartitionWithEpoch": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"InterfaceDeclaration_IDatabaseManager": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_MongoDatabaseManager": {
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_ISecretManager": {
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_ITokenRevocationResponse": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_ITokenRevocationManager": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_IScribe": {
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_ISequencedOperationMessage": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_IDocumentRepository": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_MongoDocumentRepository": {
-				"forwardCompat": false
-			}
-		}
+		"broken": {}
 	}
 }
