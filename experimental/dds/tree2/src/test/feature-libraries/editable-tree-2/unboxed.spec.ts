@@ -32,6 +32,16 @@ import { getReadonlyContext } from "./utils";
 
 const rootFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: rootFieldKey };
 
+/**
+ * Creates a cursor from the provided `context` and moves it to the provided `anchor`.
+ */
+function initializeCursor(context: Context, anchor: FieldAnchor): ITreeSubscriptionCursor {
+	const cursor = context.forest.allocateCursor();
+
+	assert.equal(context.forest.tryMoveCursorToField(anchor, cursor), TreeNavigationResult.Ok);
+	return cursor;
+}
+
 function createSingleValueTree<Kind extends FieldKind, Types extends AllowedTypes>(
 	builder: SchemaBuilder,
 	rootSchema: FieldSchema<Kind, Types>,
