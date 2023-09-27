@@ -131,6 +131,8 @@ function initializeTreeWithContent<Kind extends FieldKind, Types extends Allowed
 describe("LazyOptionalField", () => {
 	describe("as", () => {
 		it("Any", () => {
+			// #region Tree and schema initialization
+
 			const builder = new SchemaBuilder("test");
 			const booleanLeafSchema = builder.leaf("bool", ValueSchema.Boolean);
 			const recursiveStructSchema = builder.structRecursive("recursiveStruct", {
@@ -144,6 +146,8 @@ describe("LazyOptionalField", () => {
 			const schema = builder.intoDocumentSchema(rootSchema);
 
 			const { context, cursor } = initializeTreeWithContent({ schema, initialTree: {} });
+
+			// #endregion
 
 			const field = new LazyOptionalField(
 				context,
@@ -165,7 +169,9 @@ describe("LazyOptionalField", () => {
 			);
 		});
 
-		it("Boolean", () => {
+		it("Primitive", () => {
+			// #region Tree and schema initialization
+
 			const builder = new SchemaBuilder("test");
 			const booleanLeafSchema = builder.leaf("bool", ValueSchema.Boolean);
 			const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
@@ -181,10 +187,7 @@ describe("LazyOptionalField", () => {
 
 			const { context, cursor } = initializeTreeWithContent({ schema, initialTree: {} });
 
-			assert.equal(
-				context.forest.tryMoveCursorToField(detachedFieldAnchor, cursor),
-				TreeNavigationResult.Ok,
-			);
+			// #endregion
 
 			const field = new LazyOptionalField(
 				context,
@@ -197,12 +200,58 @@ describe("LazyOptionalField", () => {
 			assert(field.is(SchemaBuilder.fieldOptional(booleanLeafSchema)));
 
 			// Negative cases
-			assert.equal(field.is(SchemaBuilder.fieldValue(Any)), false);
-			assert.equal(field.is(SchemaBuilder.fieldValue(booleanLeafSchema)), false);
-			assert.equal(field.is(SchemaBuilder.fieldValue(numberLeafSchema)), false);
-			assert.equal(field.is(SchemaBuilder.fieldSequence(Any)), false);
-			assert.equal(field.is(SchemaBuilder.fieldSequence(booleanLeafSchema)), false);
-			assert.equal(field.is(SchemaBuilder.fieldSequence(numberLeafSchema)), false);
+			assert(!field.is(SchemaBuilder.fieldValue(Any)));
+			assert(!field.is(SchemaBuilder.fieldValue(booleanLeafSchema)));
+			assert(!field.is(SchemaBuilder.fieldValue(numberLeafSchema)));
+			assert(!field.is(SchemaBuilder.fieldSequence(Any)));
+			assert(!field.is(SchemaBuilder.fieldSequence(booleanLeafSchema)));
+			assert(!field.is(SchemaBuilder.fieldSequence(numberLeafSchema)));
+			assert(
+				!field.is(SchemaBuilder.fieldRecursive(FieldKinds.value, recursiveStructSchema)),
+			);
+		});
+
+		it("Struct", () => {
+			// #region Tree and schema initialization
+
+			const builder = new SchemaBuilder("test");
+			const booleanLeafSchema = builder.leaf("bool", ValueSchema.Boolean);
+			const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
+			const structLeafSchema = builder.struct("struct", {
+				foo: SchemaBuilder.fieldValue(booleanLeafSchema),
+				bar: SchemaBuilder.fieldOptional(numberLeafSchema),
+			});
+			const recursiveStructSchema = builder.structRecursive("recursiveStruct", {
+				flag: SchemaBuilder.fieldValue(booleanLeafSchema),
+				child: SchemaBuilder.fieldRecursive(
+					FieldKinds.optional,
+					() => recursiveStructSchema,
+				),
+			});
+			const rootSchema = SchemaBuilder.fieldOptional(structLeafSchema);
+			const schema = builder.intoDocumentSchema(rootSchema);
+
+			const { context, cursor } = initializeTreeWithContent({ schema, initialTree: {} });
+
+			// #endregion
+
+			const field = new LazyOptionalField(
+				context,
+				SchemaBuilder.fieldOptional(structLeafSchema),
+				cursor,
+				detachedFieldAnchor,
+			);
+
+			// Positive cases
+			assert(field.is(SchemaBuilder.fieldOptional(structLeafSchema)));
+
+			// Negative cases
+			assert(!field.is(SchemaBuilder.fieldValue(Any)));
+			assert(!field.is(SchemaBuilder.fieldValue(structLeafSchema)));
+			assert(!field.is(SchemaBuilder.fieldValue(booleanLeafSchema)));
+			assert(!field.is(SchemaBuilder.fieldSequence(Any)));
+			assert(!field.is(SchemaBuilder.fieldSequence(structLeafSchema)));
+			assert(!field.is(SchemaBuilder.fieldSequence(booleanLeafSchema)));
 			assert(
 				!field.is(SchemaBuilder.fieldRecursive(FieldKinds.value, recursiveStructSchema)),
 			);
