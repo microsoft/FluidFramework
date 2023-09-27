@@ -249,10 +249,16 @@ export interface DocumentationSuiteOptions {
 export type DocumentBoundaries = ApiMemberKind[];
 
 // @public
+export interface DocumentItemMetadata {
+    readonly apiItemKind: string;
+    readonly apiItemName: string;
+    readonly packageName: string | undefined;
+}
+
+// @public
 export class DocumentNode implements Parent<SectionNode>, DocumentNodeProps {
     constructor(properties: DocumentNodeProps);
     readonly children: SectionNode[];
-    // Warning: (ae-forgotten-export) The symbol "DocumentItemMetadata" needs to be exported by the entry point index.d.ts
     readonly documentItemMetadata: DocumentItemMetadata;
     readonly documentPath: string;
     readonly frontMatter?: string;

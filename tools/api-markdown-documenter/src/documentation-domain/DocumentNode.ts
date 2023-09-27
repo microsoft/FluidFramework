@@ -43,8 +43,10 @@ export interface DocumentNodeProperties {
  *
  * @remarks
  * `DocumentItemMetadata` aids in tracing a documentation node to its API, useful for cross-referencing and integrations.
+ *
+ * @public
  */
-interface DocumentItemMetadata {
+export interface DocumentItemMetadata {
 	/**
 	 * Name of the original API, e.g., class or function, from which this documentation node is derived.
 	 */
