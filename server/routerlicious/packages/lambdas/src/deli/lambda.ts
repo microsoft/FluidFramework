@@ -1794,10 +1794,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	}
 
 	private setApiCounterTimer() {
-		if (
-			!this.serviceConfiguration.deliCheckpointMetricInterval ||
-			this.serviceConfiguration.deliCheckpointMetricInterval <= 0
-		) {
+		if (!this.serviceConfiguration.deliCheckpointMetricInterval) {
 			return;
 		}
 		this.clearApiCounterTimer();
@@ -2015,7 +2012,9 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 						Lumberjack.error("Error writing checkpoint", lumberjackProperties, error);
 					});
 				const checkpointReason = CheckpointReason[checkpointParams.reason];
-				this.apiCounter.incrementCounter(checkpointReason);
+				if (this.serviceConfiguration.deliCheckpointMetricInterval > 0) {
+					this.apiCounter.incrementCounter(checkpointReason);
+				}
 			})
 			.catch((error) => {
 				const errorMsg = `Could not send message to scriptorium`;

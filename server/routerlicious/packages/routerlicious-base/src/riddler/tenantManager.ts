@@ -18,8 +18,12 @@ import {
 	ICollection,
 } from "@fluidframework/server-services-core";
 import { isNetworkError, NetworkError } from "@fluidframework/server-services-client";
-import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
-import { IApiCounters, InMemoryApiCounters } from "@fluidframework/server-services-utils";
+import {
+	BaseTelemetryProperties,
+	IApiCounters,
+	InMemoryApiCounters,
+	Lumberjack,
+} from "@fluidframework/server-services-telemetry";
 import * as jwt from "jsonwebtoken";
 import * as _ from "lodash";
 import * as winston from "winston";

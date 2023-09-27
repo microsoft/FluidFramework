@@ -486,7 +486,9 @@ export class ScribeLambda implements IPartitionLambda {
 		this.checkpointCore(checkpoint, message, this.clearCache, skipKafkaCheckpoint);
 		this.lastOffset = message.offset;
 		const reason = CheckpointReason[checkpointReason];
-		this.apiCounter.incrementCounter(reason);
+		if (this.serviceConfiguration.scribeCheckpointMetricInterval > 0) {
+			this.apiCounter.incrementCounter(reason);
+		}
 	}
 
 	public close(closeType: LambdaCloseType) {
@@ -818,10 +820,7 @@ export class ScribeLambda implements IPartitionLambda {
 	}
 
 	private setApiCounterTimer() {
-		if (
-			!this.serviceConfiguration.scribeCheckpointMetricInterval ||
-			this.serviceConfiguration.scribeCheckpointMetricInterval <= 0
-		) {
+		if (!this.serviceConfiguration.scribeCheckpointMetricInterval) {
 			return;
 		}
 		this.clearApiCounterTimer();
@@ -869,7 +868,9 @@ export class ScribeLambda implements IPartitionLambda {
 						this.clearCache,
 					);
 					const reason = CheckpointReason[CheckpointReason.IdleTime];
-					this.apiCounter.incrementCounter(reason);
+					if (this.serviceConfiguration.scribeCheckpointMetricInterval > 0) {
+						this.apiCounter.incrementCounter(reason);
+					}
 				}
 			}
 		}, this.serviceConfiguration.scribe.checkpointHeuristics.idleTime);

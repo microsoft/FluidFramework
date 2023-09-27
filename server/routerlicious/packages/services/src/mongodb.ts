@@ -16,10 +16,10 @@ import {
 } from "mongodb";
 import {
 	BaseTelemetryProperties,
+	InMemoryApiCounters,
 	Lumberjack,
 	LumberEventName,
 } from "@fluidframework/server-services-telemetry";
-import { InMemoryApiCounters } from "@fluidframework/server-services-utils";
 import { MongoErrorRetryAnalyzer } from "./mongoExceptionRetryRules";
 
 const MaxFetchSize = 2000;
