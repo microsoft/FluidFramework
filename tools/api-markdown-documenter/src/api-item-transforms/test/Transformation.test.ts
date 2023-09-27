@@ -419,9 +419,9 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 		const expectedEntryPointADocument = new DocumentNode({
 			documentItemMetadata: {
-				apiItemName: "entry-point-a-package",
-				apiItemKind: ApiItemKind.Package,
-				packageName: "entry-point-a-package",
+				apiItemName: "entry-point-a",
+				apiItemKind: ApiItemKind.EntryPoint,
+				packageName: "test-package",
 			},
 			documentPath: "test-package/entry-point-a-entrypoint",
 			children: [
@@ -507,9 +507,9 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 		const expectedEntryPointBDocument = new DocumentNode({
 			documentItemMetadata: {
-				apiItemName: "entry-point-b-package",
-				apiItemKind: ApiItemKind.Package,
-				packageName: "entry-point-b-package",
+				apiItemName: "entry-point-b",
+				apiItemKind: ApiItemKind.EntryPoint,
+				packageName: "test-package",
 			},
 			documentPath: "test-package/entry-point-b-entrypoint",
 			children: [
