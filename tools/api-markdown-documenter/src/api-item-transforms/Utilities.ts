@@ -16,29 +16,7 @@ import { TsdocNodeTransformOptions } from "./TsdocNodeTransforms";
 import { ApiItemTransformationConfiguration } from "./configuration";
 import { wrapInSection } from "./helpers";
 
-/**
- * Helper function to generate the front matter based on the provided configuration.
- */
-function generateFrontMatter(
-	documentItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
-): string | undefined {
-	if (config.frontMatter === undefined) {
-		return undefined;
-	}
 
-	if (typeof config.frontMatter === "string") {
-		return config.frontMatter;
-	}
-
-	if (typeof config.frontMatter !== "function") {
-		throw new TypeError(
-			"Invalid `frontMatter` configuration provided. Must be either a string or a function.",
-		);
-	}
-
-	return config.frontMatter(documentItem);
-}
 
 /**
  * Creates a {@link DocumentNode} representing the provided API item.
@@ -47,7 +25,7 @@ function generateFrontMatter(
  * @param sections - An array of sections to be included in the document.
  * @param config - The transformation configuration for the API item.
  *
- * @returns A DocumentNode representing the constructed document.
+ * @returns A {@link DocumentNode} representing the constructed document.
  */
 export function createDocument(
 	documentItem: ApiItem,
@@ -82,6 +60,8 @@ export function createDocument(
  *
  * @param contextApiItem - See {@link TsdocNodeTransformOptions.contextApiItem}.
  * @param config - See {@link ApiItemTransformationConfiguration}.
+ * 
+ * @returns An option for {@link @microsoft/tsdoc#DocNode} transformations
  */
 export function getTsdocNodeTransformationOptions(
 	contextApiItem: ApiItem,
@@ -93,6 +73,30 @@ export function getTsdocNodeTransformationOptions(
 			resolveSymbolicLink(contextApiItem, codeDestination, config),
 		logger: config.logger,
 	};
+}
+
+/**
+ * Helper function to generate the front matter based on the provided configuration.
+ */
+function generateFrontMatter(
+	documentItem: ApiItem,
+	config: Required<ApiItemTransformationConfiguration>,
+): string | undefined {
+	if (config.frontMatter === undefined) {
+		return undefined;
+	}
+
+	if (typeof config.frontMatter === "string") {
+		return config.frontMatter;
+	}
+
+	if (typeof config.frontMatter !== "function") {
+		throw new TypeError(
+			"Invalid `frontMatter` configuration provided. Must be either a string or a function.",
+		);
+	}
+
+	return config.frontMatter(documentItem);
 }
 
 /**
