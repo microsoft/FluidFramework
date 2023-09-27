@@ -17,7 +17,11 @@ import { renderDocument } from "../Render";
 describe("Document Markdown rendering tests", () => {
 	it("Renders a simple document", () => {
 		const document = new DocumentNode({
-			apiItemName: "Foo",
+			documentItemMetadata: {
+				apiItemName: "Foo-package",
+				apiItemKind: "Foo-kind",
+				packageName: "Foo-package",
+			},
 			children: [
 				new SectionNode(
 					[

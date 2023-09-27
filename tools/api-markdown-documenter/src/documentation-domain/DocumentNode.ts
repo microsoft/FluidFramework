@@ -14,9 +14,9 @@ import { SectionNode } from "./SectionNode";
  */
 export interface DocumentNodeProperties {
 	/**
-	 * Name of the API item from which this document node was generated.
+	 * Metadata for the document
 	 */
-	readonly apiItemName: string;
+	readonly documentItemMetadata: DocumentItemMetadata;
 
 	/**
 	 * Child nodes.
@@ -39,6 +39,18 @@ export interface DocumentNodeProperties {
 }
 
 /**
+ * {@link DocumentNode} construction properties.
+ */
+interface DocumentItemMetadata {
+	/**
+	 * Name of the API item from which this document node was generated.
+	 */
+	readonly apiItemName: string;
+	readonly apiItemKind: string;
+	readonly packageName: string | undefined;
+}
+
+/**
  * Represents the root of a document.
  *
  * @remarks
@@ -55,27 +67,27 @@ export class DocumentNode implements UnistParent<SectionNode>, DocumentNodePrope
 	public readonly type = DocumentationNodeType.Document;
 
 	/**
-	 * {@inheritDoc DocumentNodeProps.apiItemName}
+	 * {@inheritDoc DocumentNodeProperties.documentItemMetadata}
 	 */
-	public readonly apiItemName: string;
+	public readonly documentItemMetadata: DocumentItemMetadata;
 
 	/**
-	 * {@inheritDoc DocumentNodeProps.children}
+	 * {@inheritDoc DocumentNodeProperties.children}
 	 */
 	public readonly children: SectionNode[];
 
 	/**
-	 * {@inheritDoc DocumentNodeProps.documentPath}
+	 * {@inheritDoc DocumentNodeProperties.documentPath}
 	 */
 	public readonly documentPath: string;
 
 	/**
-	 * {@inheritDoc DocumentNodeProps.frontMatter}
+	 * {@inheritDoc DocumentNodeProperties.frontMatter}
 	 */
 	public readonly frontMatter?: string;
 
 	public constructor(properties: DocumentNodeProperties) {
-		this.apiItemName = properties.apiItemName;
+		this.documentItemMetadata = properties.documentItemMetadata;
 		this.children = properties.children;
 		this.documentPath = properties.documentPath;
 		this.frontMatter = properties.frontMatter;
