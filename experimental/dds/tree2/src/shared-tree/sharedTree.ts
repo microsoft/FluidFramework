@@ -114,17 +114,21 @@ export class SharedTree
 		telemetryContextPrefix: string,
 	) {
 		const options = { ...defaultSharedTreeOptions, ...optionsParam };
-		const schema = new InMemoryStoredSchemaRepository();
+		const schemaEditable = new SchemaEditor(
+			new InMemoryStoredSchemaRepository(),
+			(op) => this.submitLocalMessage(op),
+			options,
+		);
 		const forest =
 			options.forest === ForestType.Optimized
-				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy))
+				? buildChunkedForest(makeTreeChunker(schemaEditable, defaultSchemaPolicy))
 				: buildForest();
-		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);
+		const schemaSummarizer = new SchemaSummarizer(runtime, schemaEditable, options);
 		const forestSummarizer = new ForestSummarizer(forest);
 		const changeFamily = new DefaultChangeFamily(options);
 		const repairProvider = new ForestRepairDataStoreProvider(
 			forest,
-			schema,
+			schemaEditable,
 			(change: ModularChangeset) => changeFamily.intoDelta(change),
 		);
 		super(
@@ -137,15 +141,12 @@ export class SharedTree
 			attributes,
 			telemetryContextPrefix,
 		);
-		this.storedSchema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op), options);
+		this.storedSchema = schemaEditable;
 		this.nodeKeyIndex = new NodeKeyIndex(brand(nodeKeyFieldKey));
 		this._events = createEmitter<ViewEvents>();
 		this.view = createSharedTreeView({
 			branch: this.getLocalBranch(),
-			// TODO:
-			// This passes in a version of schema thats not wrapped with the editor.
-			// This allows editing schema on the view without sending ops, which is incorrect behavior.
-			schema,
+			schema: schemaEditable,
 			forest,
 			repairProvider,
 			nodeKeyManager: createNodeKeyManager(this.runtime.idCompressor),
