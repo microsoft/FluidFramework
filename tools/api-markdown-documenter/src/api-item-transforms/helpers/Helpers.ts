@@ -65,6 +65,8 @@ import { createParametersSummaryTable, createTypeParametersSummaryTable } from "
  * @param config - See {@link ApiItemTransformationConfiguration}.
  *
  * @returns The doc section if there was any signature content to render, otherwise `undefined`.
+ *
+ * @public
  */
 export function createSignatureSection(
 	apiItem: ApiItem,
@@ -103,6 +105,8 @@ export function createSignatureSection(
  * @param config - See {@link ApiItemTransformationConfiguration}.
  *
  * @returns The doc section if there was any signature content to render, otherwise `undefined`.
+ *
+ * @public
  */
 export function createSeeAlsoSection(
 	apiItem: ApiItem,
@@ -264,6 +268,8 @@ function createHeritageTypeListSpan(
  * @param config - See {@link ApiItemTransformationConfiguration}.
  *
  * @returns The doc section if any type parameters were provided, otherwise `undefined`.
+ *
+ * @public
  */
 export function createTypeParametersSection(
 	typeParameters: readonly TypeParameter[],
@@ -351,6 +357,8 @@ export function createExcerptSpanWithHyperlinks(
  *
  * @param apiItem - The API item whose ancestory will be used to generate the breadcrumb.
  * @param config - See {@link ApiItemTransformationConfiguration}.
+ *
+ * @public
  */
 export function createBreadcrumbParagraph(
 	apiItem: ApiItem,
@@ -403,6 +411,11 @@ export const betaWarningSpan = SpanNode.createFromPlainText(betaWarningText, { b
 
 /**
  * Renders a section containing the API item's summary comment if it has one.
+ *
+ * @param apiItem - The API item whose summary documentation will be rendered.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
+ *
+ * @public
  */
 export function createSummaryParagraph(
 	apiItem: ApiItem,
@@ -424,6 +437,8 @@ export function createSummaryParagraph(
  * @param config - See {@link ApiItemTransformationConfiguration}.
  *
  * @returns The doc section if the API item had a `@remarks` comment, otherwise `undefined`.
+ *
+ * @public
  */
 export function createRemarksSection(
 	apiItem: ApiItem,
@@ -457,12 +472,16 @@ export function createRemarksSection(
  *
  * @param apiItem - The API item whose `@throws` documentation will be rendered.
  * @param config - See {@link ApiItemTransformationConfiguration}.
+ * @param headingText - The text to use for the heading in the throws section. Defaults to "Throws".
  *
  * @returns The doc section if the API item had any `@throws` comments, otherwise `undefined`.
+ *
+ * @public
  */
 export function createThrowsSection(
 	apiItem: ApiItem,
 	config: Required<ApiItemTransformationConfiguration>,
+	headingText: string = "Throws",
 ): SectionNode | undefined {
 	const throwsBlocks = getThrowsBlocks(apiItem);
 	if (throwsBlocks === undefined || throwsBlocks.length === 0) {
@@ -476,7 +495,7 @@ export function createThrowsSection(
 	);
 
 	return wrapInSection(paragraphs, {
-		title: "Throws",
+		title: headingText,
 		id: `${getQualifiedApiItemName(apiItem)}-throws`,
 	});
 }
@@ -491,6 +510,8 @@ export function createThrowsSection(
  * @param config - See {@link ApiItemTransformationConfiguration}.
  *
  * @returns The doc section if the API item had a `@remarks` comment, otherwise `undefined`.
+ *
+ * @public
  */
 export function createDeprecationNoticeSection(
 	apiItem: ApiItem,
@@ -521,18 +542,22 @@ export function createDeprecationNoticeSection(
  *
  * @remarks
  *
- * Each example will be displayed under its own heading. See {@link createExampleSection} for more details.
+ * Each example will be displayed under its own heading.
  *
  * If there is only 1 example comment, all example headings will be parented under a top level "Examples" heading.
  *
  * @param apiItem - The API item whose `@example` documentation will be rendered.
  * @param config - See {@link ApiItemTransformationConfiguration}.
+ * @param headingText - The text to use for the heading in the examples section. Defaults to "Examples".
  *
  * @returns The doc section if the API item had any `@example` comment blocks, otherwise `undefined`.
+ *
+ * @public
  */
 export function createExamplesSection(
 	apiItem: ApiItem,
 	config: Required<ApiItemTransformationConfiguration>,
+	headingText: string = "Examples",
 ): SectionNode | undefined {
 	const exampleBlocks = getExampleBlocks(apiItem);
 
@@ -554,7 +579,7 @@ export function createExamplesSection(
 	}
 
 	return wrapInSection(exampleSections, {
-		title: "Examples",
+		title: headingText,
 		id: `${getQualifiedApiItemName(apiItem)}-examples`,
 	});
 }
@@ -562,7 +587,7 @@ export function createExamplesSection(
 /**
  * Represents a single {@link https://tsdoc.org/pages/tags/example/ | @example} comment block for a given API item.
  */
-export interface ExampleProperties {
+interface ExampleProperties {
 	/**
 	 * The API item the example doc content belongs to.
 	 */
@@ -635,7 +660,7 @@ export interface ExampleProperties {
  *
  * @returns The rendered {@link SectionNode}.
  */
-export function createExampleSection(
+function createExampleSection(
 	example: ExampleProperties,
 	config: Required<ApiItemTransformationConfiguration>,
 ): SectionNode {
@@ -816,6 +841,8 @@ function stripTitleFromParagraph(
  * @param config - See {@link ApiItemTransformationConfiguration}.
  *
  * @returns The doc section if the item had any parameters, otherwise `undefined`.
+ *
+ * @public
  */
 export function createParametersSection(
 	apiFunctionLike: ApiFunctionLike,
@@ -844,6 +871,8 @@ export function createParametersSection(
  * @param config - See {@link ApiItemTransformationConfiguration}.
  *
  * @returns The doc section if the API item had a `@returns` comment, otherwise `undefined`.
+ *
+ * @public
  */
 export function createReturnsSection(
 	apiItem: ApiItem,

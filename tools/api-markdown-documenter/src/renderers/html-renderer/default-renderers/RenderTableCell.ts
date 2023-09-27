@@ -4,8 +4,8 @@
  */
 import { TableCellKind, type TableCellNode } from "../../../documentation-domain";
 import type { DocumentWriter } from "../../DocumentWriter";
-import { renderNodes } from "../Render";
 import type { RenderContext } from "../RenderContext";
+import { renderContentsUnderTag } from "../Utilities";
 
 /**
  * Renders a {@link TableCellNode} as HTML.
@@ -19,11 +19,10 @@ export function renderTableCell(
 	writer: DocumentWriter,
 	context: RenderContext,
 ): void {
-	writer.ensureNewLine(); // Ensure line break before cell tag
-	writer.writeLine(node.cellKind === TableCellKind.Header ? "<th>" : "<td>");
-	writer.increaseIndent();
-	renderNodes(node.children, writer, context);
-	writer.ensureNewLine(); // Ensure line break after content
-	writer.decreaseIndent();
-	writer.writeLine(node.cellKind === TableCellKind.Header ? "</th>" : "</td>");
+	renderContentsUnderTag(
+		node.children,
+		node.cellKind === TableCellKind.Header ? "th" : "td",
+		writer,
+		context,
+	);
 }

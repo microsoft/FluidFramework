@@ -63,6 +63,7 @@
 		"@fluidframework/server-services-ordering-kafkanode": "workspace:~",
 		"@fluidframework/server-services-ordering-rdkafka": "workspace:~",
 		"@fluidframework/server-services-ordering-zookeeper": "workspace:~",
+		"@fluidframework/server-services-shared": "workspace:~",
 		"@fluidframework/server-services-telemetry": "workspace:~",
 		"@fluidframework/server-services-utils": "workspace:~",
 		"body-parser": "^1.17.1",

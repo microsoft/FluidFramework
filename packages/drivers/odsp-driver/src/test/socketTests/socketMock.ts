@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { v4 as uuid } from "uuid";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
@@ -121,7 +122,7 @@ export class ClientSocketMock extends TypedEventEmitter<SocketMockEvents> {
 						{
 							const iConnected: IConnected = this.mockSocketConnectResponse
 								.connect_document.connectMessage ?? {
-								clientId: "clientId",
+								clientId: uuid(),
 								existing: true,
 								initialClients: [],
 								initialMessages: [],

@@ -16,6 +16,7 @@ function getFilepath(name: string): string {
 	return path.join(dirPath, `${name}.json`);
 }
 
+// TODO: The generated test trees should eventually be updated to use the chunked-forest.
 describe("Summary snapshot", () => {
 	// Only run this test when you want to regenerate the snapshot.
 	if (regenerateSnapshots) {

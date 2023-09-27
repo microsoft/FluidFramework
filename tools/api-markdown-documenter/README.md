@@ -199,6 +199,7 @@ Use at your own risk.
 
 -   Fix links to the same file (only need heading component, not file path)
     -   This will require plumbing down a context document item, so we can easily determine if the document to which the link is being generated is the same as the document being linked to.
+-   Update exported utilities to accept partial configs, rather than needing the user to provide a complete configuration.
 -   Config options for parsing TSDoc block comment contents as Markdown (and don't escape the contents)?
 -   Add support for Table Cell alignment
 
