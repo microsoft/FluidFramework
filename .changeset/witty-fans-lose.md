@@ -3,6 +3,6 @@
 "@fluidframework/sequence": major
 ---
 
-remove the mergeTreeUseNewLengthCalculations flag
+sequence: Remove the mergeTreeUseNewLengthCalculations flag
 
-removes the mergeTreeUseNewLengthCalculations flag, which was enabled by default in 6.0.0
+The `mergeTreeUseNewLengthCalculations` flag has been removed, because the feature was enabled by default in 2.0.0-internal.6.0.0.

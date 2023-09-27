@@ -2,7 +2,7 @@
 "@fluidframework/telemetry-utils": major
 ---
 
-Remove @fluidframework/container-utils package
+@fluidframework/container-utils package removed
 
 All members of the **@fluidframework/container-utils** package have been deprecated and the package is now removed.
 
