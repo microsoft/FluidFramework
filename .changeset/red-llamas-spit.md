@@ -1,5 +1,5 @@
 ---
-"@fluidframework/container-utils": major
+"@fluidframework/telemetry-utils": major
 ---
 
 Remove @fluidframework/container-utils package
