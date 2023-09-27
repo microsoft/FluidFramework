@@ -207,6 +207,8 @@ describe("LazyOptionalField", () => {
 				!field.is(SchemaBuilder.fieldRecursive(FieldKinds.value, recursiveStructSchema)),
 			);
 		});
+
+		// TODO: Fluid Handle test
 	});
 
 	describe("length", () => {
@@ -355,6 +357,8 @@ describe("LazyOptionalField", () => {
 			assert.equal((mapResult[0] as any).foo, true);
 			assert.equal((mapResult[0] as any).bar, 42);
 		});
+
+		// TODO: Fluid Handle test
 	});
 
 	describe("mapBoxed", () => {
@@ -403,5 +407,7 @@ describe("LazyOptionalField", () => {
 			assert.equal((mapResult[0] as any).foo, input.foo);
 			assert.equal((mapResult[0] as any).bar, input.bar);
 		});
+
+		// TODO: Fluid Handle test
 	});
 });
