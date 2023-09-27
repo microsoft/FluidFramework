@@ -129,7 +129,7 @@ function initializeTreeWithContent<Kind extends FieldKind, Types extends Allowed
 }
 
 describe("LazyOptionalField", () => {
-	describe("as", () => {
+	describe("is", () => {
 		it("Any", () => {
 			// #region Tree and schema initialization
 
