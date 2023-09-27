@@ -24,6 +24,7 @@ import {
 	SchemaAware,
 	SchemaBuilder,
 	TreeSchema,
+	TypedSchemaCollection,
 } from "../../../feature-libraries";
 import { Context } from "../../../feature-libraries/editable-tree-2/context";
 import { unboxedField } from "../../../feature-libraries/editable-tree-2/unboxed";
@@ -40,6 +41,30 @@ function initializeCursor(context: Context, anchor: FieldAnchor): ITreeSubscript
 
 	assert.equal(context.forest.tryMoveCursorToField(anchor, cursor), TreeNavigationResult.Ok);
 	return cursor;
+}
+
+/**
+ * Initializes a test tree, context, and cursor, and moves the cursor to the tree's root.
+ *
+ * @returns The initialized context and cursor.
+ */
+function initializeTreeWithContent<Kind extends FieldKind, Types extends AllowedTypes>(
+	schema: TypedSchemaCollection,
+	initialTree?:
+		| SchemaAware.TypedField<FieldSchema, SchemaAware.ApiMode.Flexible>
+		| readonly ITreeCursorSynchronous[]
+		| ITreeCursorSynchronous,
+): {
+	context: Context;
+	cursor: ITreeSubscriptionCursor;
+} {
+	const context = contextWithContentReadonly({ schema, initialTree });
+	const cursor = initializeCursor(context, rootFieldAnchor);
+
+	return {
+		context,
+		cursor,
+	};
 }
 
 function createSingleValueTree<Kind extends FieldKind, Types extends AllowedTypes>(
