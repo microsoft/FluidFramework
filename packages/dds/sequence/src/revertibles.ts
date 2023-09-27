@@ -115,12 +115,18 @@ export function appendDeleteIntervalToRevertibles(
 	interval: SequenceInterval,
 	revertibles: SharedStringRevertible[],
 ) {
-	const startSeg = interval.start.getSegment() as SharedStringSegment;
+	const startSeg = interval.start.getSegment() as SharedStringSegment | undefined;
+	if (!startSeg) {
+		return;
+	}
 	const startType =
 		startSeg.removedSeq !== undefined
 			? ReferenceType.SlideOnRemove | ReferenceType.RangeBegin
 			: ReferenceType.StayOnRemove | ReferenceType.RangeBegin;
-	const endSeg = interval.end.getSegment() as SharedStringSegment;
+	const endSeg = interval.end.getSegment() as SharedStringSegment | undefined;
+	if (!endSeg) {
+		return;
+	}
 	const endType =
 		endSeg.removedSeq !== undefined
 			? ReferenceType.SlideOnRemove | ReferenceType.RangeEnd

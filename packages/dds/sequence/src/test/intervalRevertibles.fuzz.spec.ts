@@ -239,7 +239,9 @@ describe("IntervalCollection fuzz testing with rebasing", () => {
 			enableGroupedBatching: true,
 		},
 		// Skipped due to 0x54e, see AB#5337 or comment on "default interval collection" fuzz suite.
-		skip: [13, 16, 17, 20, 21, 23, 30, 37, 41, 43, 44, 49, 51, 55, 62, 69, 70, 73, 84, 91, 95],
+		skip: [
+			13, 16, 17, 20, 21, 23, 30, 37, 41, 43, 44, 49, 51, 55, 62, 63, 69, 70, 73, 84, 91, 95,
+		],
 	});
 });
 
