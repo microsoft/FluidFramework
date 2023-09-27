@@ -26,7 +26,7 @@
 		"good-fences": "gf",
 		"lint": "npm run prettier && npm run good-fences && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"mocha": "mocha dist/**/*.test.js --exit",
+		"mocha": "mocha dist/tsc/test/**/*.test.js --exit",
 		"prettier": "prettier --check . --ignore-path ../../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../../.prettierignore",
 		"rebuild": "npm run clean && npm run build",
@@ -49,12 +49,14 @@
 		"cache-dir": "nyc/.cache",
 		"exclude": [
 			"src/test/**/*.ts",
-			"dist/test/**/*.js"
+			"dist/tsc/test/**/*.js",
+			"dist/e2e-tests/**",
+			"dist/bundle/**"
 		],
 		"exclude-after-remap": false,
 		"include": [
 			"src/**/*.ts",
-			"dist/**/*.js"
+			"dist/tsc/**/*.js"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [
@@ -113,6 +115,7 @@
 		"copy-webpack-plugin": "^11.0.0",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
+		"dotenv-webpack": "^7.0.3",
 		"eslint": "~8.6.0",
 		"eslint-config-prettier": "~8.5.0",
 		"eslint-plugin-chai-expect": "~3.0.0",
