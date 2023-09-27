@@ -38,7 +38,7 @@ const generateFrontMatter = (
 	}
 
 	return config.frontMatter(documentItem);
-}
+};
 
 /**
  * Creates a {@link DocumentNode} representing the provided API item.
@@ -46,7 +46,7 @@ const generateFrontMatter = (
  * @param documentItem - The API item to be documented.
  * @param sections - An array of sections to be included in the document.
  * @param config - The transformation configuration for the API item.
- * 
+ *
  * @returns A DocumentNode representing the constructed document.
  */
 export function createDocument(
