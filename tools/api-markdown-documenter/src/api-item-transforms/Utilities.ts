@@ -16,8 +16,6 @@ import { TsdocNodeTransformOptions } from "./TsdocNodeTransforms";
 import { ApiItemTransformationConfiguration } from "./configuration";
 import { wrapInSection } from "./helpers";
 
-
-
 /**
  * Creates a {@link DocumentNode} representing the provided API item.
  *
@@ -60,7 +58,7 @@ export function createDocument(
  *
  * @param contextApiItem - See {@link TsdocNodeTransformOptions.contextApiItem}.
  * @param config - See {@link ApiItemTransformationConfiguration}.
- * 
+ *
  * @returns An option for {@link @microsoft/tsdoc#DocNode} transformations
  */
 export function getTsdocNodeTransformationOptions(
