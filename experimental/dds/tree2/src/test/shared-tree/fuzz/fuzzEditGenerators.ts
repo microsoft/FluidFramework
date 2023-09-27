@@ -110,7 +110,7 @@ export const makeEditGenerator = (
 	};
 
 	const insert = (state: FuzzTestState): FieldEditTypes => {
-		const tree = state.channel;
+		const tree = state.client.channel;
 		const fieldInfo = selectTreeField(tree.view, state.random);
 		switch (fieldInfo.type) {
 			case "optional":
@@ -149,7 +149,7 @@ export const makeEditGenerator = (
 		isNonEmptyField(fieldInfo) && fieldInfo.type !== "value";
 
 	const deleteContent = (state: FuzzTestState): FieldEditTypes => {
-		const tree = state.channel;
+		const tree = state.client.channel;
 		const fieldInfo = selectTreeField(tree.view, state.random, deletableFieldFilter);
 		switch (fieldInfo.type) {
 			case "optional": {
@@ -198,8 +198,8 @@ export const makeEditGenerator = (
 		[
 			deleteContent,
 			weights.delete,
-			({ channel, random }) =>
-				trySelectTreeField(channel.view, random, deletableFieldFilter) !==
+			({ client, random }) =>
+				trySelectTreeField(client.channel.view, random, deletableFieldFilter) !==
 				"no-valid-fields",
 		],
 	]);
