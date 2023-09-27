@@ -139,7 +139,7 @@ export function isFluidHandle(value: undefined | FluidSerializableReadOnly): val
 	const getMember = (value as Partial<IFluidHandle>).get;
 	assert(
 		(typeof getMember === "function") === isHandle,
-		"Fluid handle detection via get method should match detection via IFluidHandle field",
+		0x76e /* Fluid handle detection via get method should match detection via IFluidHandle field */,
 	);
 	return isHandle;
 }
@@ -147,7 +147,7 @@ export function isFluidHandle(value: undefined | FluidSerializableReadOnly): val
 export function assertAllowedValue(
 	value: undefined | FluidSerializableReadOnly,
 ): asserts value is Value {
-	assert(isPrimitiveValue(value) || isFluidHandle(value), "invalid value");
+	assert(isPrimitiveValue(value) || isFluidHandle(value), 0x76f /* invalid value */);
 }
 
 /**

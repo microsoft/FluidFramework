@@ -22,7 +22,10 @@ export function makePropertyEnumerableOwn<T extends object>(
 	key: keyof T,
 	from: object,
 ): void {
-	assert(Object.getOwnPropertyDescriptor(target, key) === undefined, "preexisting property");
+	assert(
+		Object.getOwnPropertyDescriptor(target, key) === undefined,
+		0x776 /* preexisting property */,
+	);
 
 	const descriptor = Object.getOwnPropertyDescriptor(from, key) ?? fail("missing property");
 	Object.defineProperty(target, key, { ...descriptor, enumerable: true });
@@ -44,7 +47,7 @@ export function makePrivatePropertyNotEnumerable(
 ): void {
 	assert(
 		Object.getOwnPropertyDescriptor(target, key)?.enumerable === true,
-		"missing property or not enumerable",
+		0x777 /* missing property or not enumerable */,
 	);
 	Object.defineProperty(target, key, { enumerable: false });
 }
@@ -106,16 +109,16 @@ export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
 		if (this.#lazyCursor.state !== ITreeSubscriptionCursorState.Current) {
 			assert(
 				this.#lazyCursor.state === ITreeSubscriptionCursorState.Cleared,
-				"Unset cursor should be in cleared state",
+				0x778 /* Unset cursor should be in cleared state */,
 			);
 			assert(
 				this[anchorSymbol] !== undefined,
-				"EditableTree should have an anchor if it does not have a cursor",
+				0x779 /* EditableTree should have an anchor if it does not have a cursor */,
 			);
 			const result = this[tryMoveCursorToAnchorSymbol](this[anchorSymbol], this.#lazyCursor);
 			assert(
 				result === TreeNavigationResult.Ok,
-				"It is invalid to access an EditableTree node which no longer exists",
+				0x77a /* It is invalid to access an EditableTree node which no longer exists */,
 			);
 			this.context.withCursors.add(this);
 		}

@@ -18,8 +18,9 @@ import {
 	StructSchema,
 } from "../typed-schema";
 import { EditableTreeEvents } from "../untypedTree";
-import { FieldKindTypes, FieldKinds } from "../default-field-kinds";
+import { FieldKinds } from "../default-field-kinds";
 import { TreeStatus } from "../editable-tree";
+import { FieldKind } from "../modular-schema";
 import { TreeContext } from "./context";
 
 /**
@@ -138,7 +139,7 @@ export interface TreeNode extends Tree<TreeSchema> {
  * 1. To hold the children of non-leaf {@link TreeNode}s.
  * 2. As the root of a {@link Tree}.
  *
- * Down-casting (via {@link TreeField#is}) is required to access Schema-Aware APIs, including editing.
+ * Down-casting (via {@link TreeField.is}) is required to access Schema-Aware APIs, including editing.
  * All content in the tree is accessible without down-casting, but if the schema is known,
  * the schema aware API may be more ergonomic.
  *
@@ -580,7 +581,7 @@ export type TypedField<TSchema extends FieldSchema> = TypedFieldInner<
  * @alpha
  */
 export type TypedFieldInner<
-	Kind extends FieldKindTypes,
+	Kind extends FieldKind,
 	Types extends AllowedTypes,
 > = Kind extends typeof FieldKinds.sequence
 	? Sequence<Types>
@@ -655,7 +656,7 @@ export type UnboxField<
  * @alpha
  */
 export type UnboxFieldInner<
-	Kind extends FieldKindTypes,
+	Kind extends FieldKind,
 	TTypes extends AllowedTypes,
 	Emptiness extends "maybeEmpty" | "notEmpty",
 > = Kind extends typeof FieldKinds.sequence

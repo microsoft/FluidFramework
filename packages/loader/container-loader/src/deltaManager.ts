@@ -368,7 +368,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		assert(this.connectionManager.connected, 0x238 /* "called only in connected state" */);
 
 		const pendingSorted = this.pending.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
-		this.logger.sendErrorEvent({
+		this.logger.sendTelemetryEvent({
 			...event,
 			// This directly tells us if fetching ops is in flight, and thus likely the reason of
 			// stalled op processing

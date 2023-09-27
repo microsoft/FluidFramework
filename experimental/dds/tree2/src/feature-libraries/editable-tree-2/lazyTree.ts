@@ -71,7 +71,7 @@ export function makeTree(context: Context, cursor: ITreeSubscriptionCursor): Laz
 	const cached = anchorNode.slots.get(lazyTreeSlot);
 	if (cached !== undefined) {
 		context.forest.anchors.forget(anchor);
-		assert(cached.context === context, "contexts must match");
+		assert(cached.context === context, 0x782 /* contexts must match */);
 		return cached;
 	}
 	const schema = context.schema.treeSchema.get(cursor.type) ?? fail("missing schema");
@@ -135,14 +135,14 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 	) {
 		super(context, schema, cursor, anchor);
 		this.#anchorNode = anchorNode;
-		assert(cursor.mode === CursorLocationType.Nodes, "must be in nodes mode");
+		assert(cursor.mode === CursorLocationType.Nodes, 0x783 /* must be in nodes mode */);
 
 		anchorNode.slots.set(lazyTreeSlot, this);
 		this.#removeDeleteCallback = anchorNode.on("afterDelete", cleanupTree);
 
 		assert(
 			this.context.schema.treeSchema.get(this.schema.name) !== undefined,
-			"There is no explicit schema for this node type. Ensure that the type is correct and the schema for it was added to the SchemaData",
+			0x784 /* There is no explicit schema for this node type. Ensure that the type is correct and the schema for it was added to the SchemaData */,
 		);
 
 		// Setup JS Object API:
@@ -156,7 +156,7 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 	): this is TypedNode<TSchemaInner> {
 		assert(
 			this.context.schema.treeSchema.get(schema.name) === schema,
-			"Narrowing must be done to a schema that exists in this context",
+			0x785 /* Narrowing must be done to a schema that exists in this context */,
 		);
 		return (this.schema as TreeSchema) === schema;
 	}
@@ -200,11 +200,11 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 	public get parentField(): { readonly parent: TreeField; readonly index: number } {
 		const cursor = this[cursorSymbol];
 		const index = this.#anchorNode.parentIndex;
-		assert(cursor.fieldIndex === index, "mismatched indexes");
+		assert(cursor.fieldIndex === index, 0x786 /* mismatched indexes */);
 		const key = this.#anchorNode.parentField;
 
 		cursor.exitNode();
-		assert(key === cursor.getFieldKey(), "mismatched keys");
+		assert(key === cursor.getFieldKey(), 0x787 /* mismatched keys */);
 		let fieldSchema: FieldSchema;
 
 		// Check if the current node is in a detached sequence.

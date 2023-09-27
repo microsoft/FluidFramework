@@ -21,12 +21,21 @@ import {
 	TypedNode,
 	TreeField,
 	RequiredField,
+	TreeNode,
+	TypedNodeUnion,
+	UnboxNodeUnion,
 	MapNode,
 	TypedField,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/editable-tree-2/editableTreeTypes";
 import { jsonSequenceRootSchema } from "../../utils";
-import { isAssignableTo, requireAssignableTo, requireFalse, requireTrue } from "../../../util";
+import {
+	areSafelyAssignable,
+	isAssignableTo,
+	requireAssignableTo,
+	requireFalse,
+	requireTrue,
+} from "../../../util";
 import { EmptyKey } from "../../../core";
 import {
 	FieldKinds,
@@ -191,5 +200,135 @@ describe("editableTreeTypes", () => {
 		type _2 = requireFalse<isAssignableTo<typeof basicStruct, FieldNodeSchema>>;
 		type _3 = requireFalse<isAssignableTo<typeof basicStruct, MapSchema>>;
 		type _4 = requireTrue<isAssignableTo<typeof basicStruct, StructSchema>>;
+	}
+
+	function nominalTyping(): void {
+		const builder2 = new SchemaBuilder("test");
+		const emptyStruct1 = builder2.struct("empty1", {});
+		const emptyStruct2 = builder2.struct("empty2", {});
+
+		// Schema for types which only different in name are distinguished
+		{
+			type _1 = requireFalse<isAssignableTo<typeof emptyStruct1, typeof emptyStruct2>>;
+			type _2 = requireFalse<isAssignableTo<typeof emptyStruct2, typeof emptyStruct1>>;
+		}
+		type Empty1 = TypedNode<typeof emptyStruct1>;
+		type Empty2 = TypedNode<typeof emptyStruct2>;
+
+		// Schema for TypedNode which only different in name are distinguished
+		{
+			// TODO: Fix this. Might be fixed when moving to class based schema builder. Otherwise add strongly typed named to nodes.
+			// @ts-expect-error TODO: fix this and remove expected error.
+			type _1 = requireFalse<isAssignableTo<Empty1, Empty2>>;
+			// @ts-expect-error TODO: fix this and remove expected error.
+			type _2 = requireFalse<isAssignableTo<Empty2, Empty1>>;
+		}
+	}
+
+	// Two different simple node types to compare and test with.
+	type BasicStruct = TypedNode<typeof basicStruct>;
+	type BasicFieldNode = TypedNode<typeof basicFieldNode>;
+	{
+		type _1 = requireFalse<isAssignableTo<BasicStruct, BasicFieldNode>>;
+		type _2 = requireFalse<isAssignableTo<BasicFieldNode, BasicStruct>>;
+	}
+
+	// Basic unit test for TreeNode.is type narrowing.
+	function nodeIs(node: TreeNode): void {
+		if (node.is(basicStruct)) {
+			type _1 = requireAssignableTo<typeof node, BasicStruct>;
+		}
+		if (node.is(basicFieldNode)) {
+			type _1 = requireAssignableTo<typeof node, BasicFieldNode>;
+		}
+	}
+
+	// TypedNodeUnion
+	{
+		// Any
+		{
+			type _1 = requireTrue<areSafelyAssignable<TypedNodeUnion<[Any]>, TreeNode>>;
+		}
+
+		// Direct
+		{
+			type UnionBasic1 = TypedNodeUnion<[typeof basicStruct]>;
+			type _1 = requireTrue<areSafelyAssignable<UnionBasic1, BasicStruct>>;
+		}
+		// Lazy
+		{
+			type _1 = requireTrue<
+				areSafelyAssignable<TypedNodeUnion<[() => typeof basicStruct]>, BasicStruct>
+			>;
+		}
+		// Union
+		{
+			type _1 = requireTrue<
+				areSafelyAssignable<
+					TypedNodeUnion<[typeof basicStruct, typeof basicFieldNode]>,
+					BasicStruct | BasicFieldNode
+				>
+			>;
+		}
+		// Recursive
+		{
+			type _1 = requireTrue<
+				areSafelyAssignable<TypedNodeUnion<[typeof recursiveStruct]>, Recursive>
+			>;
+		}
+		// Recursive Lazy
+		{
+			type _1 = requireTrue<
+				areSafelyAssignable<TypedNodeUnion<[() => typeof recursiveStruct]>, Recursive>
+			>;
+		}
+	}
+
+	// UnboxNodeUnion
+	{
+		// Any
+		{
+			type _1 = requireTrue<areSafelyAssignable<UnboxNodeUnion<[Any]>, TreeNode>>;
+		}
+
+		// Direct
+		{
+			type UnionBasic1 = UnboxNodeUnion<[typeof basicStruct]>;
+			type _1 = requireTrue<areSafelyAssignable<UnionBasic1, BasicStruct>>;
+		}
+		// Lazy
+		{
+			type _1 = requireTrue<
+				areSafelyAssignable<UnboxNodeUnion<[() => typeof basicStruct]>, BasicStruct>
+			>;
+		}
+		// Union
+		{
+			type _1 = requireTrue<
+				areSafelyAssignable<
+					UnboxNodeUnion<[typeof basicStruct, typeof basicFieldNode]>,
+					BasicStruct | BasicFieldNode
+				>
+			>;
+		}
+		// Unboxed FieldNode
+		{
+			type UnboxedFieldNode = UnboxNodeUnion<[typeof basicFieldNode]>;
+			// TODO: areSafelyAssignable doesn't seem to work in this case. Revisit this once on TS 5 and TypeCheck is updated for it.
+			type _1 = requireAssignableTo<UnboxedFieldNode, TreeNode | undefined>;
+			type _2 = requireAssignableTo<TreeNode | undefined, UnboxedFieldNode>;
+		}
+		// Recursive
+		{
+			type _1 = requireTrue<
+				areSafelyAssignable<UnboxNodeUnion<[typeof recursiveStruct]>, Recursive>
+			>;
+		}
+		// Recursive Lazy
+		{
+			type _1 = requireTrue<
+				areSafelyAssignable<UnboxNodeUnion<[() => typeof recursiveStruct]>, Recursive>
+			>;
+		}
 	}
 });
