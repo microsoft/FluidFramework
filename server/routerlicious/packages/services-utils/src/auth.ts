@@ -25,7 +25,11 @@ import type {
 } from "@fluidframework/server-services-core";
 import type { RequestHandler, Request, Response } from "express";
 import type { Provider } from "nconf";
-import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+	getGlobalTelemetryContext,
+	getLumberBaseProperties,
+	Lumberjack,
+} from "@fluidframework/server-services-telemetry";
 import { getBooleanFromConfig, getNumberFromConfig } from "./configUtils";
 
 /**
@@ -287,7 +291,10 @@ export function verifyStorageToken(
 				tenantManager,
 				moreOptions,
 			);
-			return next();
+			return getGlobalTelemetryContext().bindPropertiesAsync(
+				{ tenantId, documentId },
+				async () => next(),
+			);
 		} catch (error) {
 			if (isNetworkError(error)) {
 				return respondWithNetworkError(res, error);
