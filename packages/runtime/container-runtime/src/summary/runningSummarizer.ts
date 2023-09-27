@@ -308,7 +308,8 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 						// latest version with which we will refresh the state. However in case of single commit
 						// summary, we might me missing a summary ack, so in that case we are still fine as the
 						// code in `submitSummary` function in container runtime, will refresh the latest state
-						// by calling `refreshLatestSummaryAckFromServer` and we will be fine.
+						// by calling `prefetchLatestSummaryThenClose`. We will load the next summarizer from the
+						// updated state and be fine.
 						const isIgnoredError =
 							isFluidError(error) &&
 							error.errorType === DriverErrorTypes.fileNotFoundOrAccessDeniedError;
@@ -407,6 +408,7 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 			!this.heuristicRunnerMicroTaskExists
 		) {
 			this.heuristicRunnerMicroTaskExists = true;
+			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			Promise.resolve()
 				.then(() => {
 					this.heuristicRunner?.run();

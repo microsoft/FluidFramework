@@ -5,7 +5,7 @@
 
 // Normally we would put tests in the test directory.
 // However in this case,
-// its important that the tests are run with the same compiler settings this library is being used with,
+// it's important that the tests are run with the same compiler settings this library is being used with,
 // since this library does not work for some configurations (ex: with strictNullChecks disabled).
 // Since the tests don't generate any JS: they only produce types,
 // importing them here gets us the validation of the compiler settings we want, with no JS size overhead.

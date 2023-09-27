@@ -7,6 +7,7 @@
 import { BaseContainerRuntimeFactory, mountableViewRequestHandler } from "@fluidframework/aqueduct";
 // eslint-disable-next-line import/no-deprecated
 import { RuntimeRequestHandler } from "@fluidframework/request-handler";
+// eslint-disable-next-line import/no-deprecated
 import { RequestParser, requestFluidObject } from "@fluidframework/runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { MountableView } from "@fluidframework/view-adapters";
@@ -42,6 +43,7 @@ const createAndAttachCoordinate = async (
 	const simpleCoordinateComponentRuntime =
 		aliasResult === "Success" ? dataStore : await runtime.getRootDataStore(name);
 
+	// eslint-disable-next-line import/no-deprecated
 	return requestFluidObject<ICoordinate>(simpleCoordinateComponentRuntime, "/");
 };
 
@@ -55,6 +57,7 @@ async function requestObjectStoreFromId<T>(
 		url: ``,
 		headers: request.headers,
 	});
+	// eslint-disable-next-line import/no-deprecated
 	return requestFluidObject<T>(await runtime.getRootDataStore(id), coordinateRequest);
 }
 
@@ -164,6 +167,7 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
 			aliasResult === "Success"
 				? dataStore
 				: await runtime.getRootDataStore(constellationComponentName);
+		// eslint-disable-next-line import/no-deprecated
 		const constellationComponent = await requestFluidObject<Constellation>(component, "/");
 
 		// Add a few stars

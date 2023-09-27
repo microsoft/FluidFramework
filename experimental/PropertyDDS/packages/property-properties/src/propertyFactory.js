@@ -2237,6 +2237,7 @@ class PropertyFactory {
 	async initializeSchemaStore(in_options) {
 		// https://regex101.com/r/TlgGJp/2
 		var regexBaseUrl =
+			// eslint-disable-next-line unicorn/no-unsafe-regex
 			/^(https?:)?\/\/((.[-a-zA-Z0-9@:%_+~#=.]{2,256}){1,2}\.[a-z]{2,6}|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(:\d{1,5})?(\/[-a-zA-Z0-9@:%_+.~#?&/=]*)*$/;
 
 		if (
@@ -2252,7 +2253,7 @@ class PropertyFactory {
 			return Promise.reject(new Error(MSG.FSS_BASEURL_WRONG));
 		}
 
-		if (in_options.url.slice(-1) !== "/") {
+		if (!in_options.url.endsWith("/")) {
 			in_options.url = in_options.url + "/";
 		}
 

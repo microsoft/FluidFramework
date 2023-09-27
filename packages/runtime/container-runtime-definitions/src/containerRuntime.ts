@@ -8,9 +8,11 @@ import {
 	IEventProvider,
 	IRequest,
 	IResponse,
+	// eslint-disable-next-line import/no-deprecated
 	IFluidRouter,
 	FluidObject,
 	IFluidHandle,
+	IFluidHandleContext,
 } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -25,6 +27,14 @@ import {
 	IFluidDataStoreContextDetached,
 	IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
+
+/**
+ * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+ */
+export interface IContainerRuntimeWithResolveHandle_Deprecated extends IContainerRuntime {
+	readonly IFluidHandleContext: IFluidHandleContext;
+	resolveHandle(request: IRequest): Promise<IResponse>;
+}
 
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
 	(event: "dirty" | "disconnected" | "dispose" | "saved" | "attached", listener: () => void);
@@ -59,6 +69,7 @@ export interface IContainerRuntime
 	 * @param wait - True if you want to wait for it.
 	 * @deprecated - Use getAliasedDataStoreEntryPoint instead to get an aliased data store's entry point.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
 
 	/**
@@ -96,6 +107,7 @@ export interface IContainerRuntime
 	/**
 	 * Resolves handle URI
 	 * @param request - request to resolve
+	 * @deprecated Will be removed in future major release. Migrate all usage of resolveHandle to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	resolveHandle(request: IRequest): Promise<IResponse>;
 }

@@ -404,6 +404,7 @@ class HierMergeBlock extends MergeBlock implements IHierBlock {
 			strbuf += internedSpaces(indentCount);
 			strbuf += `${key}: `;
 			for (const item of stack.items) {
+				// eslint-disable-next-line @typescript-eslint/no-base-to-string
 				strbuf += `${item.toString()} `;
 			}
 			strbuf += "\n";
@@ -563,6 +564,7 @@ function getSlideToSegment(
 	segment: ISegment | undefined,
 	slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
 	cache?: Map<ISegment, { seg?: ISegment }>,
+	useNewSlidingBehavior: boolean = false,
 ): [ISegment | undefined, "start" | "end" | undefined] {
 	if (!segment || !isRemovedAndAcked(segment) || segment.endpointType !== undefined) {
 		return [segment, undefined];
@@ -594,10 +596,21 @@ function getSlideToSegment(
 		return [result.seg, undefined];
 	}
 
-	if (slidingPreference === SlidingPreference.BACKWARD) {
-		forwardExcursion(segment, goFurtherToFindSlideToSegment);
-	} else {
-		backwardExcursion(segment, goFurtherToFindSlideToSegment);
+	// in the new sliding behavior, we don't look in the opposite direction
+	// if we fail to find a segment to slide to in the right direction.
+	//
+	// in other words, rather than going `forward ?? backward ?? detached` (or
+	// `backward ?? forward ?? detached`), we would slide `forward ?? detached`
+	// or `backward ?? detached`
+	//
+	// in both of these cases detached may be substituted for one of the special
+	// endpoint segments, if such behavior is enabled
+	if (!useNewSlidingBehavior) {
+		if (slidingPreference === SlidingPreference.BACKWARD) {
+			forwardExcursion(segment, goFurtherToFindSlideToSegment);
+		} else {
+			backwardExcursion(segment, goFurtherToFindSlideToSegment);
+		}
 	}
 
 	let maybeEndpoint: "start" | "end" | undefined;
@@ -620,11 +633,17 @@ function getSlideToSegment(
 export function getSlideToSegoff(
 	segoff: { segment: ISegment | undefined; offset: number | undefined },
 	slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
+	useNewSlidingBehavior: boolean = false,
 ) {
 	if (segoff.segment === undefined) {
 		return segoff;
 	}
-	const [segment, _] = getSlideToSegment(segoff.segment, slidingPreference);
+	const [segment, _] = getSlideToSegment(
+		segoff.segment,
+		slidingPreference,
+		undefined,
+		useNewSlidingBehavior,
+	);
 	if (segment === segoff.segment) {
 		return segoff;
 	}
@@ -1058,6 +1077,7 @@ export class MergeTree {
 				slidingPreference === SlidingPreference.FORWARD
 					? forwardSegmentCache
 					: backwardSegmentCache,
+				this.options?.mergeTreeReferencesCanSlideToEndpoint,
 			);
 			const slideIsForward =
 				slideToSegment === undefined ? false : slideToSegment.ordinal > segment.ordinal;

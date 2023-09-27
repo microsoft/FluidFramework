@@ -139,9 +139,7 @@ export class Signaler
 		return this._signaler;
 	}
 
-	public static get Name() {
-		return "@fluid-example/signaler";
-	}
+	public static readonly Name = "@fluid-example/signaler";
 
 	public static readonly factory = new DataObjectFactory(Signaler.Name, Signaler, [], {});
 

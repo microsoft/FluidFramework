@@ -9,7 +9,7 @@ import React from "react";
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 
-import { AudienceHistoryTable, TransformedAudienceHistoryData } from "../components";
+import { AudienceHistoryTable, type TransformedAudienceHistoryData } from "../components";
 
 describe("AudienceHistoryTable component tests", () => {
 	async function getTableBodyRows(): Promise<HTMLCollection> {

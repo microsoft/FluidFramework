@@ -8,6 +8,7 @@ import { BaseContainerRuntimeFactory, mountableViewRequestHandler } from "@fluid
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { RuntimeRequestHandler } from "@fluidframework/request-handler";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+// eslint-disable-next-line import/no-deprecated
 import { requestFluidObject, RequestParser } from "@fluidframework/runtime-utils";
 import { MountableView } from "@fluidframework/view-adapters";
 
@@ -24,6 +25,7 @@ const makeViewRequestHandler =
 				headers: request.headers,
 			});
 			// TODO type the requestFluidObject
+			// eslint-disable-next-line import/no-deprecated
 			const fluidObject = await requestFluidObject<T>(
 				await runtime.getRootDataStore(dataStoreId),
 				objectRequest,

@@ -284,7 +284,7 @@ export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | u
 export function getSlideToSegoff(segoff: {
     segment: ISegment | undefined;
     offset: number | undefined;
-}, slidingPreference?: SlidingPreference): {
+}, slidingPreference?: SlidingPreference, useNewSlidingBehavior?: boolean): {
     segment: ISegment | undefined;
     offset: number | undefined;
 };

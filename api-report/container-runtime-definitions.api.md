@@ -16,6 +16,7 @@ import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
+import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
@@ -44,6 +45,7 @@ export interface IContainerRuntime extends IProvideFluidDataStoreRegistry, ICont
     readonly isDirty: boolean;
     // (undocumented)
     readonly options: ILoaderOptions;
+    // @deprecated
     resolveHandle(request: IRequest): Promise<IResponse>;
     // (undocumented)
     readonly scope: FluidObject;
@@ -60,6 +62,14 @@ export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
     (event: "dirty" | "disconnected" | "dispose" | "saved" | "attached", listener: () => void): any;
     // (undocumented)
     (event: "connected", listener: (clientId: string) => void): any;
+}
+
+// @public @deprecated (undocumented)
+export interface IContainerRuntimeWithResolveHandle_Deprecated extends IContainerRuntime {
+    // (undocumented)
+    readonly IFluidHandleContext: IFluidHandleContext;
+    // (undocumented)
+    resolveHandle(request: IRequest): Promise<IResponse>;
 }
 
 // (No @packageDocumentation comment for this package)

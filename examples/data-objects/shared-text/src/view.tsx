@@ -30,6 +30,7 @@ class SharedTextView {
 			return;
 		}
 
+		// eslint-disable-next-line @typescript-eslint/no-floating-promises
 		this.initializeUI(element).catch(debug);
 		this.uiInitialized = true;
 	}

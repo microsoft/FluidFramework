@@ -173,7 +173,7 @@ export function setUpTestSharedTree(
 		};
 		factory = SharedTree.getFactory(writeFormat ?? WriteFormat.v0_1_1, options);
 	}
-	const tree = factory.create(componentRuntime, id === undefined ? 'testSharedTree' : id);
+	const tree = factory.create(componentRuntime, id ?? 'testSharedTree');
 
 	if (options.allowInvalid === undefined || !options.allowInvalid) {
 		tree.on(SharedTreeDiagnosticEvent.DroppedInvalidEdit, () => fail('unexpected invalid edit'));

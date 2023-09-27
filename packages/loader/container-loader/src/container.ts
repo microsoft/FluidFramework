@@ -15,6 +15,7 @@ import {
 	TelemetryEventCategory,
 	IRequest,
 	IResponse,
+	// eslint-disable-next-line import/no-deprecated
 	IFluidRouter,
 	FluidObject,
 	LogLevel,
@@ -121,7 +122,6 @@ import { ConnectionManager } from "./connectionManager";
 import { ConnectionState } from "./connectionState";
 import {
 	IProtocolHandler,
-	OnlyValidTermValue,
 	ProtocolHandler,
 	ProtocolHandlerBuilder,
 	protocolHandlerShouldProcessSignal,
@@ -359,7 +359,6 @@ export interface IPendingContainerState {
 	 */
 	savedOps: ISequencedDocumentMessage[];
 	url: string;
-	term: number;
 	clientId?: string;
 }
 
@@ -595,6 +594,10 @@ export class Container
 		return this._deltaManager.connectionManager.connectionMode;
 	}
 
+	/**
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
+	// eslint-disable-next-line import/no-deprecated
 	public get IFluidRouter(): IFluidRouter {
 		return this;
 	}
@@ -1137,7 +1140,6 @@ export class Container
 					snapshotBlobs: this.baseSnapshotBlobs,
 					savedOps: this.savedOps,
 					url: this.resolvedUrl.url,
-					term: OnlyValidTermValue,
 					// no need to save this if there is no pending runtime state
 					clientId: pendingRuntimeState !== undefined ? this.clientId : undefined,
 				};
@@ -1319,6 +1321,9 @@ export class Container
 		);
 	}
 
+	/**
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
 	public async request(path: IRequest): Promise<IResponse> {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
@@ -1774,7 +1779,6 @@ export class Container
 	private async createDetached(codeDetails: IFluidCodeDetails) {
 		const attributes: IDocumentAttributes = {
 			sequenceNumber: detachedContainerRefSeqNumber,
-			term: OnlyValidTermValue,
 			minimumSequenceNumber: 0,
 		};
 
@@ -1840,7 +1844,6 @@ export class Container
 			return {
 				minimumSequenceNumber: 0,
 				sequenceNumber: 0,
-				term: OnlyValidTermValue,
 			};
 		}
 

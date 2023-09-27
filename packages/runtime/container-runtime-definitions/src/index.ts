@@ -7,4 +7,5 @@ export {
 	IContainerRuntime,
 	IContainerRuntimeBaseWithCombinedEvents,
 	IContainerRuntimeEvents,
+	IContainerRuntimeWithResolveHandle_Deprecated,
 } from "./containerRuntime";
