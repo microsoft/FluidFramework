@@ -98,8 +98,11 @@ export class ScribeLambda implements IPartitionLambda {
 
 	// Initialize api counter for checkpoint metric
 	private readonly apiCounter: IApiCounters = new InMemoryApiCounters(
-		Object.values(CheckpointReason),
+		Object.values(CheckpointReason).filter((v) => isNaN(Number(v))) as string[],
 	);
+
+	// Set interval handler for api counter.
+	private apiCounterIntervalId: any;
 
 	constructor(
 		protected readonly context: IContext,
@@ -125,13 +128,7 @@ export class ScribeLambda implements IPartitionLambda {
 		this.lastOffset = scribe.logOffset;
 		this.setStateFromCheckpoint(scribe);
 		this.pendingMessages = new Deque<ISequencedDocumentMessage>(messages);
-		setInterval(() => {
-			if (!this.apiCounter.countersAreActive) {
-				return;
-			}
-			Lumberjack.info("Scribe checkpoint api counters", this.apiCounter.getCounters());
-			this.apiCounter.resetAllCounters();
-		}, this.scribeCheckpointMetricInterval);
+		this.setApiCounterTimer();
 	}
 
 	public async handler(message: IQueuedMessage) {
@@ -817,6 +814,27 @@ export class ScribeLambda implements IPartitionLambda {
 		if (this.checkpointInfo.idleTimer !== undefined) {
 			clearTimeout(this.checkpointInfo.idleTimer);
 			this.checkpointInfo.idleTimer = undefined;
+		}
+	}
+
+	private setApiCounterTimer() {
+		if (!this.scribeCheckpointMetricInterval || this.scribeCheckpointMetricInterval <= 0) {
+			return;
+		}
+		this.clearApiCounterTimer();
+		this.apiCounterIntervalId = setInterval(() => {
+			if (!this.apiCounter.countersAreActive) {
+				return;
+			}
+			Lumberjack.info("Scribe checkpoint api counters", this.apiCounter.getCounters());
+			this.apiCounter.resetAllCounters();
+		}, this.scribeCheckpointMetricInterval);
+	}
+
+	private clearApiCounterTimer() {
+		if (this.apiCounterIntervalId !== undefined) {
+			clearInterval(this.apiCounterIntervalId);
+			this.apiCounterIntervalId = undefined;
 		}
 	}
 

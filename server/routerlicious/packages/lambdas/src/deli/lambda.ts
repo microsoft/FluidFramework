@@ -250,6 +250,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
 	private activityIdleTimer: any;
 	private readClientIdleTimer: any;
+	private apiCounterIntervalId: any;
 	private noopEvent: any;
 
 	/**
@@ -266,7 +267,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	};
 
 	private readonly apiCounter: IApiCounters = new InMemoryApiCounters(
-		Object.values(CheckpointReason),
+		Object.values(CheckpointReason).filter((v) => isNaN(Number(v))) as string[],
 	);
 
 	private noActiveClients: boolean;
@@ -368,13 +369,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		);
 
 		// Emit api counter every certain interval.
-		setInterval(() => {
-			if (!this.apiCounter.countersAreActive) {
-				return;
-			}
-			Lumberjack.info("Deli checkpoint api counters", this.apiCounter.getCounters());
-			this.apiCounter.resetAllCounters();
-		}, this.deliCheckpointMetricInterval);
+		this.setApiCounterTimer();
 
 		// start the activity idle timer when created
 		this.setActivityIdleTimer();
@@ -725,6 +720,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		this.clearCheckpointIdleTimer();
 		this.clearOpIdleTimer();
 		this.clearOpMaxTimeTimer();
+		this.clearApiCounterTimer();
 
 		this.emit("close", closeType);
 		this.removeAllListeners();
@@ -1794,6 +1790,27 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		if (this.activityIdleTimer !== undefined) {
 			clearTimeout(this.activityIdleTimer);
 			this.activityIdleTimer = undefined;
+		}
+	}
+
+	private setApiCounterTimer() {
+		if (!this.deliCheckpointMetricInterval || this.deliCheckpointMetricInterval <= 0) {
+			return;
+		}
+		this.clearApiCounterTimer();
+		this.apiCounterIntervalId = setInterval(() => {
+			if (!this.apiCounter.countersAreActive) {
+				return;
+			}
+			Lumberjack.info("Deli checkpoint api counters", this.apiCounter.getCounters());
+			this.apiCounter.resetAllCounters();
+		}, this.deliCheckpointMetricInterval);
+	}
+
+	private clearApiCounterTimer() {
+		if (this.apiCounterIntervalId !== undefined) {
+			clearInterval(this.apiCounterIntervalId);
+			this.apiCounterIntervalId = undefined;
 		}
 	}
 
