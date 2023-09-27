@@ -733,7 +733,7 @@ export class PerformanceEvent {
 	private static shouldReport(event: ITelemetryGenericEvent, sampleThreshold: number): boolean {
 		const eventKey = `.${event.category}.${event.eventName}`;
 		const hitCount = PerformanceEvent.eventHits.get(eventKey) ?? 0;
-		PerformanceEvent.eventHits.set(eventKey, hitCount + 1);
+		PerformanceEvent.eventHits.set(eventKey, hitCount >= sampleThreshold ? 1 : hitCount + 1);
 		return hitCount % sampleThreshold === 0;
 	}
 }
