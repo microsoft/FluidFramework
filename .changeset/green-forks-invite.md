@@ -6,6 +6,6 @@
 "@fluidframework/routerlicious-driver": major
 ---
 
-Blob aggregation: remove dead concepts and code
+routerlicious-driver: remove dead blob aggregation concepts and code
 
 Dead concepts blob aggregation like `aggregateBlobsSmallerThanBytes` and `minBlobSize` have been removed.
