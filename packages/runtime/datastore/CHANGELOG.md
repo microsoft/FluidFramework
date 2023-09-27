@@ -1,5 +1,13 @@
 # @fluidframework/datastore
 
+## 2.0.0-internal.6.4.0
+
+### Minor Changes
+
+-   Some stack traces are improved ([#17380](https://github.com/microsoft/FluidFramework/issues/17380)) [34f2808ee9](https://github.com/microsoft/FluidFramework/commits/34f2808ee9764aef21b990f8b48860d9e3ce27a5)
+
+    Some stack traces have been improved and might now include frames for async functions that weren't previously included.
+
 ## 2.0.0-internal.6.3.0
 
 Dependency updates only.
