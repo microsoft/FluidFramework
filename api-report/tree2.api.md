@@ -1376,12 +1376,12 @@ type MapFieldSchema = FieldSchema<typeof FieldKinds.optional | typeof FieldKinds
 
 // @alpha
 export interface MapNode<TSchema extends MapSchema> extends TreeNode {
+    [boxedIterator](): IterableIterator<TypedField<TSchema["mapFields"]>>;
     // (undocumented)
     [Symbol.iterator](): IterableIterator<UnboxField<TSchema["mapFields"], "notEmpty">>;
     readonly asObject: {
         readonly [P in FieldKey]?: UnboxField<TSchema["mapFields"]>;
     };
-    boxedIterator(): IterableIterator<TypedField<TSchema["mapFields"]>>;
     entries(): IterableIterator<[FieldKey, UnboxField<TSchema["mapFields"]>]>;
     forEach(callbackFn: (value: UnboxField<TSchema["mapFields"]>, key: FieldKey, map: MapNode<TSchema>) => void, thisArg?: any): void;
     get(key: FieldKey): UnboxField<TSchema["mapFields"]>;
@@ -1931,12 +1931,12 @@ export interface Sequence extends BrandedFieldKind<"Sequence", Multiplicity.Sequ
 // @alpha
 export interface Sequence2<TTypes extends AllowedTypes> extends TreeField {
     // (undocumented)
+    [boxedIterator](): IterableIterator<TypedNodeUnion<TTypes>>;
+    // (undocumented)
     [Symbol.iterator](): IterableIterator<UnboxNodeUnion<TTypes>>;
     readonly asArray: readonly UnboxNodeUnion<TTypes>[];
     at(index: number): UnboxNodeUnion<TTypes>;
     boxedAt(index: number): TypedNodeUnion<TTypes>;
-    // (undocumented)
-    boxedIterator(): IterableIterator<TypedNodeUnion<TTypes>>;
     // (undocumented)
     readonly length: number;
     map<U>(callbackfn: (value: UnboxNodeUnion<TTypes>, index: number) => U): U[];
@@ -2073,7 +2073,7 @@ export enum TransactionResult {
 
 // @alpha
 export interface Tree<TSchema = unknown> {
-    boxedIterator(): IterableIterator<Tree>;
+    [boxedIterator](): IterableIterator<Tree>;
     readonly context: TreeContext;
     readonly schema: TSchema;
     treeStatus(): TreeStatus;
@@ -2107,7 +2107,7 @@ export interface TreeDataContext {
 // @alpha
 export interface TreeField extends Tree<FieldSchema> {
     // (undocumented)
-    boxedIterator(): IterableIterator<TreeNode>;
+    [boxedIterator](): IterableIterator<TreeNode>;
     is<TSchema extends FieldSchema>(schema: TSchema): this is TypedField<TSchema>;
     isSameAs(other: TreeField): boolean;
     readonly key: FieldKey;
@@ -2132,7 +2132,7 @@ export const enum TreeNavigationResult {
 // @alpha
 export interface TreeNode extends Tree<TreeSchema> {
     // (undocumented)
-    boxedIterator(): IterableIterator<TreeField>;
+    [boxedIterator](): IterableIterator<TreeField>;
     is<TSchema extends TreeSchema>(schema: TSchema): this is TypedNode<TSchema>;
     // (undocumented)
     on<K extends keyof EditableTreeEvents>(eventName: K, listener: EditableTreeEvents[K]): () => void;

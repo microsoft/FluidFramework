@@ -44,7 +44,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/editable-tree-2/lazyField";
 // eslint-disable-next-line import/no-internal-modules
-import { visitIterableTree } from "../../../feature-libraries/editable-tree-2";
+import { boxedIterator, visitIterableTree } from "../../../feature-libraries/editable-tree-2";
 import { testTrees, treeContentFromTestTree } from "../../testTrees";
 import { jsonSchema } from "../../../domains";
 import { getReadonlyContext } from "./utils";
@@ -199,7 +199,7 @@ describe("lazyTree", () => {
 
 function fieldToMapTree(field: TreeField): MapTree[] {
 	const results: MapTree[] = [];
-	for (const child of field.boxedIterator()) {
+	for (const child of field[boxedIterator]()) {
 		results.push(nodeToMapTree(child));
 	}
 	return results;
@@ -207,7 +207,7 @@ function fieldToMapTree(field: TreeField): MapTree[] {
 
 function nodeToMapTree(node: TreeNode): MapTree {
 	const fields: Map<FieldKey, MapTree[]> = new Map();
-	for (const field of node.boxedIterator()) {
+	for (const field of node[boxedIterator]()) {
 		fields.set(field.key, fieldToMapTree(field));
 	}
 
@@ -220,7 +220,7 @@ function checkPropertyInvariants(root: Tree): void {
 	// TODO: checking that unboxed fields and nodes were traversed is not fully implemented here.
 	visitIterableTree(
 		root,
-		(tree) => tree.boxedIterator(),
+		(tree) => tree[boxedIterator](),
 		(item) => {
 			if (item instanceof LazyLeaf) {
 				const value = item.value;
@@ -286,7 +286,7 @@ function checkPropertyInvariants(root: Tree): void {
 	// TODO: checking that unboxed fields and nodes were traversed is not fully implemented here.
 	visitIterableTree(
 		root,
-		(tree) => tree.boxedIterator(),
+		(tree) => tree[boxedIterator](),
 		(item) => {
 			if (!unboxable.has(Object.getPrototypeOf(item))) {
 				if (!primitivesAndValues.has(item as unknown as TreeValue) && !visited.has(item)) {

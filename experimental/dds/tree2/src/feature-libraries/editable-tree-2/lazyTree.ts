@@ -50,6 +50,7 @@ import {
 	UnboxField,
 	TreeField,
 	TreeNode,
+	boxedIterator,
 } from "./editableTreeTypes";
 import { makeField, unboxedField } from "./lazyField";
 import {
@@ -191,7 +192,7 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 		});
 	}
 
-	public boxedIterator(): IterableIterator<TreeField> {
+	public [boxedIterator](): IterableIterator<TreeField> {
 		return mapCursorFields(this[cursorSymbol], (cursor) =>
 			makeField(this.context, getFieldSchema(cursor.getFieldKey(), this.schema), cursor),
 		).values();
@@ -373,8 +374,8 @@ export class LazyMap<TSchema extends MapSchema>
 	// 	}
 	// }
 
-	public override boxedIterator(): IterableIterator<TypedField<TSchema["mapFields"]>> {
-		return super.boxedIterator() as IterableIterator<TypedField<TSchema["mapFields"]>>;
+	public override [boxedIterator](): IterableIterator<TypedField<TSchema["mapFields"]>> {
+		return super[boxedIterator]() as IterableIterator<TypedField<TSchema["mapFields"]>>;
 	}
 
 	public [Symbol.iterator](): IterableIterator<UnboxField<TSchema["mapFields"], "notEmpty">> {

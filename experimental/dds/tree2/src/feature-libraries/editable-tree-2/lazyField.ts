@@ -48,6 +48,7 @@ import {
 	TreeField,
 	TreeNode,
 	RequiredField,
+	boxedIterator,
 } from "./editableTreeTypes";
 import { makeTree } from "./lazyTree";
 import {
@@ -186,10 +187,10 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 	}
 
 	public mapBoxed<U>(callbackfn: (value: TypedNodeUnion<TTypes>, index: number) => U): U[] {
-		return Array.from(this.boxedIterator(), callbackfn);
+		return Array.from(this[boxedIterator](), callbackfn);
 	}
 
-	public boxedIterator(): IterableIterator<TypedNodeUnion<TTypes>> {
+	public [boxedIterator](): IterableIterator<TypedNodeUnion<TTypes>> {
 		return iterateCursorField(
 			this[cursorSymbol],
 			(cursor) => makeTree(this.context, cursor) as TypedNodeUnion<TTypes>,

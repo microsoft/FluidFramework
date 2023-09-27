@@ -24,6 +24,11 @@ import { FieldKind } from "../modular-schema";
 import { TreeContext } from "./context";
 
 /**
+ * Allows boxed iteration of a tree/field
+ */
+export const boxedIterator = Symbol();
+
+/**
  * Part of a tree.
  * Iterates over children.
  *
@@ -65,7 +70,7 @@ export interface Tree<TSchema = unknown> {
 	 * @remarks
 	 * No mutations to the current view of the shared tree are permitted during iteration.
 	 */
-	boxedIterator(): IterableIterator<Tree>;
+	[boxedIterator](): IterableIterator<Tree>;
 }
 
 /**
@@ -122,7 +127,7 @@ export interface TreeNode extends Tree<TreeSchema> {
 	 */
 	readonly type: TreeSchemaIdentifier;
 
-	boxedIterator(): IterableIterator<TreeField>;
+	[boxedIterator](): IterableIterator<TreeField>;
 }
 
 /**
@@ -163,7 +168,7 @@ export interface TreeField extends Tree<FieldSchema> {
 	 */
 	is<TSchema extends FieldSchema>(schema: TSchema): this is TypedField<TSchema>;
 
-	boxedIterator(): IterableIterator<TreeNode>;
+	[boxedIterator](): IterableIterator<TreeNode>;
 
 	/**
 	 * Check if this field is the same as a different field.
@@ -292,7 +297,7 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	 * No mutations to the current view of the shared tree are permitted during iteration.
 	 * To iterate over the unboxed values of the map, use `Symbol.Iterator()`.
 	 */
-	boxedIterator(): IterableIterator<TypedField<TSchema["mapFields"]>>;
+	[boxedIterator](): IterableIterator<TypedField<TSchema["mapFields"]>>;
 
 	[Symbol.iterator](): IterableIterator<UnboxField<TSchema["mapFields"], "notEmpty">>;
 
@@ -514,7 +519,7 @@ export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
 		content: Iterable<FlexibleNodeContent<TTypes>>,
 	): void;
 
-	boxedIterator(): IterableIterator<TypedNodeUnion<TTypes>>;
+	[boxedIterator](): IterableIterator<TypedNodeUnion<TTypes>>;
 
 	[Symbol.iterator](): IterableIterator<UnboxNodeUnion<TTypes>>;
 
