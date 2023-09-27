@@ -5,7 +5,7 @@
 "@fluidframework/request-handler": major
 ---
 
-requestHandlers are deprecated
+container-runtime: requestHandlers are deprecated
 
 The concept of `requestHandlers` has been deprecated. Please migrate all usage of the following APIs to the new `entryPoint` pattern:
 
