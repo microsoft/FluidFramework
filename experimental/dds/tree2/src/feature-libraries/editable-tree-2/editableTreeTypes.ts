@@ -131,7 +131,7 @@ export interface TreeNode extends Tree<TreeSchema> {
  * 1. To hold the children of non-leaf {@link TreeNode}s.
  * 2. As the root of a {@link Tree}.
  *
- * Down-casting (via {@link TreeField#is}) is required to access Schema-Aware APIs, including editing.
+ * Down-casting (via {@link TreeField.is}) is required to access Schema-Aware APIs, including editing.
  * All content in the tree is accessible without down-casting, but if the schema is known,
  * the schema aware API may be more ergonomic.
  *
