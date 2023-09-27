@@ -65,47 +65,64 @@ function initializeTreeWithContent<Kind extends FieldKind, Types extends Allowed
 	};
 }
 
+/**
+ * Creates a tree whose root node contains a single leaf field.
+ */
+function createLeafTree(
+	kind: ValueSchema,
+	initialTree: any,
+): {
+	treeSchema: FieldSchema<Optional, [TreeSchema<"leaf">]>;
+	context: Context;
+	cursor: ITreeSubscriptionCursor;
+} {
+	const builder = new SchemaBuilder("test");
+	const leafSchema = builder.leaf("leaf", kind);
+	const rootSchema = SchemaBuilder.fieldOptional(leafSchema);
+	const schema = builder.intoDocumentSchema(rootSchema);
+
+	const { context, cursor } = initializeTreeWithContent(schema, initialTree);
+
+	return {
+		treeSchema: rootSchema,
+		context,
+		cursor,
+	};
+}
+
 describe.only("unboxed unit tests", () => {
 	describe("unboxedField", () => {
 		describe("Optional", () => {
-			function createPrimitiveTree(
-				kind: ValueSchema,
-				initialTree: any,
-			): {
-				schema: FieldSchema<Optional, [TreeSchema<"leaf">]>;
-				context: Context;
-				cursor: ITreeSubscriptionCursor;
-			} {
-				const builder = new SchemaBuilder("test");
-				const leafSchema = builder.leaf("leaf", kind);
-				const rootSchema = SchemaBuilder.fieldOptional(leafSchema);
-				const schema = builder.intoDocumentSchema(rootSchema);
-
-				const { context, cursor } = initializeTreeWithContent(schema, initialTree);
-
-				return {
-					schema: rootSchema,
-					context,
-					cursor,
-				};
-			}
-
 			it("No value", () => {
-				const { schema, context, cursor } = createPrimitiveTree(
+				const { treeSchema, context, cursor } = createLeafTree(
 					ValueSchema.Number,
 					undefined,
 				);
-				assert.equal(unboxedField(context, schema, cursor), undefined);
+				assert.equal(unboxedField(context, treeSchema, cursor), undefined);
+			});
+
+			it("Boolean", () => {
+				const { treeSchema, context, cursor } = createLeafTree(ValueSchema.Boolean, true);
+				assert.equal(unboxedField(context, treeSchema, cursor), true);
 			});
 
 			it("Number", () => {
-				const { schema, context, cursor } = createPrimitiveTree(ValueSchema.Number, 42);
-				assert.equal(unboxedField(context, schema, cursor), 42);
+				const { treeSchema, context, cursor } = createLeafTree(ValueSchema.Number, 42);
+				assert.equal(unboxedField(context, treeSchema, cursor), 42);
 			});
+
+			it("String", () => {
+				const { treeSchema, context, cursor } = createLeafTree(
+					ValueSchema.String,
+					"Hello world",
+				);
+				assert.equal(unboxedField(context, treeSchema, cursor), "Hello world");
+			});
+
+			// TODO: Fluid Handle
 		});
 
 		// TODO cases:
-		// * primitives
 		// * struct
 		// * union?
 	});
