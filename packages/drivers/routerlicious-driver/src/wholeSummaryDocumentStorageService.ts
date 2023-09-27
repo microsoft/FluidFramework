@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import {
+	ITelemetryLoggerExt,
+	MonitoringContext,
+	PerformanceEvent,
+} from "@fluidframework/telemetry-utils";
 import { performance, stringToBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import { getW3CData, promiseRaceWithWinner } from "@fluidframework/driver-base";
@@ -36,6 +40,7 @@ import { convertWholeFlatSnapshotToSnapshotTreeAndBlobs } from "./r11sSnapshotPa
 const latestSnapshotId: string = "latest";
 
 export class WholeSummaryDocumentStorageService implements IDocumentStorageService {
+	private readonly mc: MonitoringContext;
 	private firstVersionsCall: boolean = true;
 
 	public readonly repositoryUrl = "";
@@ -60,7 +65,11 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 			disableCache && this.noCacheGitManager !== undefined
 				? this.noCacheGitManager
 				: this.manager,
-	) {}
+	) {
+		this.mc = createChildMonitoringContext({
+			logger,
+		});
+	}
 
 	// eslint-disable-next-line @rushstack/no-new-null
 	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
@@ -205,6 +214,9 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 				});
 				return response;
 			},
+			undefined, // workers
+			undefined, // recordHeapSize
+			this.mc.config.getNumber("Fluid.Driver.ReadBlobTelemetrySampling"),
 		);
 		const bufferValue = stringToBuffer(blob.content, blob.encoding);
 

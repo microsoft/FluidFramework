@@ -185,6 +185,7 @@ export async function initialize(
 	const globalConfigurations: Record<string, ConfigTypes> = {
 		"Fluid.SharedObject.DdsCallbacksTelemetrySampling": 10000,
 		"Fluid.SharedObject.OpProcessingTelemetrySampling": 10000,
+		"Fluid.Driver.ReadBlobTelemetrySampling": 100,
 	};
 
 	const minLogLevel = random.pick([LogLevel.verbose, LogLevel.default]);

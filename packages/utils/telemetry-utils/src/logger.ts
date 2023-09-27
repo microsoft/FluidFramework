@@ -571,8 +571,9 @@ export class PerformanceEvent {
 		event: ITelemetryGenericEvent,
 		markers?: IPerformanceEventMarkers,
 		recordHeapSize: boolean = false,
+		emitLogs: boolean = true,
 	): PerformanceEvent {
-		return new PerformanceEvent(logger, event, markers, recordHeapSize);
+		return new PerformanceEvent(logger, event, markers, recordHeapSize, emitLogs);
 	}
 
 	public static timedExec<T>(
@@ -580,8 +581,15 @@ export class PerformanceEvent {
 		event: ITelemetryGenericEvent,
 		callback: (event: PerformanceEvent) => T,
 		markers?: IPerformanceEventMarkers,
+		sampleThreshold: number = 1,
 	): T {
-		const perfEvent = PerformanceEvent.start(logger, event, markers);
+		const perfEvent = PerformanceEvent.start(
+			logger,
+			event,
+			markers,
+			undefined, // recordHeapSize
+			PerformanceEvent.shouldReport(event, sampleThreshold),
+		);
 		try {
 			const ret = callback(perfEvent);
 			perfEvent.autoEnd();
@@ -598,8 +606,15 @@ export class PerformanceEvent {
 		callback: (event: PerformanceEvent) => Promise<T>,
 		markers?: IPerformanceEventMarkers,
 		recordHeapSize?: boolean,
+		sampleThreshold: number = 1,
 	): Promise<T> {
-		const perfEvent = PerformanceEvent.start(logger, event, markers, recordHeapSize);
+		const perfEvent = PerformanceEvent.start(
+			logger,
+			event,
+			markers,
+			recordHeapSize,
+			PerformanceEvent.shouldReport(event, sampleThreshold),
+		);
 		try {
 			const ret = await callback(perfEvent);
 			perfEvent.autoEnd();
@@ -624,6 +639,7 @@ export class PerformanceEvent {
 		event: ITelemetryGenericEvent,
 		private readonly markers: IPerformanceEventMarkers = { end: true, cancel: "generic" },
 		private readonly recordHeapSize: boolean = false,
+		private readonly emitLogs: boolean = true,
 	) {
 		this.event = { ...event };
 		if (this.markers.start) {
@@ -686,6 +702,10 @@ export class PerformanceEvent {
 			return;
 		}
 
+		if (!this.emitLogs) {
+			return;
+		}
+
 		const event: ITelemetryPerformanceEvent = { ...this.event, ...props };
 		event.eventName = `${event.eventName}_${eventNameSuffix}`;
 		if (eventNameSuffix !== "start") {
@@ -707,6 +727,14 @@ export class PerformanceEvent {
 		}
 
 		this.logger.sendPerformanceEvent(event, error);
+	}
+
+	private static readonly eventHits = new Map<string, number>();
+	private static shouldReport(event: ITelemetryGenericEvent, sampleThreshold: number): boolean {
+		const eventKey = `.${event.category}.${event.eventName}`;
+		const hitCount = PerformanceEvent.eventHits.get(eventKey) ?? 0;
+		PerformanceEvent.eventHits.set(eventKey, hitCount + 1);
+		return hitCount % sampleThreshold === 0;
 	}
 }
 
