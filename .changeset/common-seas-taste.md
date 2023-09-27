@@ -3,7 +3,7 @@
 "@fluidframework/data-object-base": major
 ---
 
-ContainerRuntimeFactory constructors have changed
+aqueduct: ContainerRuntimeFactory constructors have changed
 
 The following class constructors have been changed to allow for better flexible in arguments passed:
 

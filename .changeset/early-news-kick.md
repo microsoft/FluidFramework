@@ -7,7 +7,7 @@
 "@fluidframework/odsp-driver-definitions": major
 ---
 
-Handle DriverErrorType.outOfStorage error from driver and load the container in readonly mode.
+container-loader: Load container in readonly mode when driver throws DriverErrorType.outOfStorage
 
 Handle DriverErrorType.outOfStorage error from driver and load the container in readonly mode. Currently there is no
 handling and when the join session throws this error, the container will get closed. With this we use NoDeltaStream

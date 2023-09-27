@@ -4,7 +4,7 @@
 "@fluidframework/runtime-definitions": minor
 ---
 
-Upcoming: The type of the logger property/param in various APIs will be changing
+UPCOMING: The type of the logger property/param in various APIs will be changing
 
 -   @fluidframework/runtime-definitions
     -   `IFluidDataStoreRuntime.logger` will be re-typed as `ITelemetryBaseLogger`

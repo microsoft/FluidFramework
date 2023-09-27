@@ -58,7 +58,7 @@
 "@fluid-tools/webpack-fluid-loader": major
 ---
 
-Dependencies on Fluid server packages updated to 2.0.1
+Server upgrade: dependencies on Fluid server packages updated to 2.0.1
 
 Dependencies on the following Fluid server package have been updated to version 2.0.1:
 
