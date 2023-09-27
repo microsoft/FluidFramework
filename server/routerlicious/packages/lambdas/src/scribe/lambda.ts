@@ -612,17 +612,19 @@ export class ScribeLambda implements IPartitionLambda {
 			return;
 		}
 		let databaseCheckpointFailed = false;
-		this.pendingP = clearCache
-			? this.checkpointManager.delete(this.protocolHead, true)
-			: this.writeCheckpoint(checkpoint).catch((error) => {
-					databaseCheckpointFailed = true;
-					Lumberjack.error(
-						`Error writing database checkpoint.`,
-						getLumberBaseProperties(this.documentId, this.tenantId),
-						error,
-					);
-			  });
-		this.pendingP
+
+		this.pendingP = (
+			clearCache
+				? this.checkpointManager.delete(this.protocolHead, true)
+				: this.writeCheckpoint(checkpoint).catch((error) => {
+						databaseCheckpointFailed = true;
+						Lumberjack.error(
+							`Error writing database checkpoint.`,
+							getLumberBaseProperties(this.documentId, this.tenantId),
+							error,
+						);
+				  })
+		)
 			.then(() => {
 				this.pendingP = undefined;
 				if (!skipKafkaCheckpoint && !databaseCheckpointFailed) {
