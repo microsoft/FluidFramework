@@ -37,7 +37,7 @@ export const primitives = [number, boolean, string] as const;
  * Types allowed as roots of Json content.
  * @alpha
  */
-export const all = [primitives, ...primitives] as const;
+export const all = [handle, ...primitives] as const;
 
 /**
  * @alpha

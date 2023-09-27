@@ -106,7 +106,9 @@
 			"**/dist/test/**/*.js",
 			"experimental/examples/**",
 			"experimental/PropertyDDS/examples/**",
-			"**/*.bundle.js"
+			"**/*.bundle.js",
+			"packages/tools/devtools/devtools-browser-extension/dist/e2e-tests/**",
+			"packages/tools/devtools/devtools-browser-extension/dist/bundle/**"
 		],
 		"exclude-after-remap": false,
 		"extension": [
