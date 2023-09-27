@@ -8,7 +8,7 @@
 		"label": "winston"
 	},
 	"config": {
-		"configDumpEnabled": true
+		"configDumpEnabled": false
 	},
 	"lumberjack": {
 		"options": {

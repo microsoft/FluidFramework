@@ -29,11 +29,7 @@ export async function run<T extends IResources>(
 	secretsList?: string[],
 ) {
 	if (config.get("config:configDumpEnabled")) {
-		const configDumper = new ConfigDumper(
-			JSON.parse(JSON.stringify(config.get())),
-			logger,
-			secretsList,
-		);
+		const configDumper = new ConfigDumper(config.get(), logger, secretsList);
 		configDumper.dumpConfig();
 	}
 	const customizations = await (resourceFactory.customize

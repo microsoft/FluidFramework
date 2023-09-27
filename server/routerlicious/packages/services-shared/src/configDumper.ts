@@ -15,7 +15,7 @@ export class ConfigDumper {
 
 	// Check library for issues/malware
 	constructor(config: Record<string, any>, logger: ILogger | undefined, secretsList?: string[]) {
-		this.config = config;
+		this.config = JSON.parse(JSON.stringify(config));
 		if (secretsList !== undefined) {
 			this.secretsList = this.secretsList.concat(secretsList);
 		}
