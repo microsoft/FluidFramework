@@ -194,7 +194,6 @@ export {
 	Sequence,
 	NodeKeyFieldKind,
 	Forbidden,
-	FieldKindTypes,
 	DefaultChangeset,
 	DefaultChangeFamily,
 	DefaultEditBuilder,

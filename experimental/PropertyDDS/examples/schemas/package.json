@@ -30,11 +30,11 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.22.0",
+		"@fluidframework/build-tools": "0.24.0-192663",
 		"eslint": "~8.6.0",
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",
-		"typescript": "~4.5.5"
+		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
 		"disabled": true,

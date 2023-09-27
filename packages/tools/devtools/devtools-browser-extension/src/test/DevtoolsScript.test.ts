@@ -7,7 +7,7 @@ import { expect } from "chai";
 import Proxyquire from "proxyquire";
 import { createSandbox } from "sinon";
 
-import { Globals } from "../Globals";
+import { type Globals } from "../Globals";
 import { stubGlobals } from "./Utilities";
 
 const proxyquire = Proxyquire.noCallThru();

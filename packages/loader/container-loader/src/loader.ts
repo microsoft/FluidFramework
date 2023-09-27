@@ -17,6 +17,7 @@ import {
 import {
 	ITelemetryBaseLogger,
 	FluidObject,
+	// eslint-disable-next-line import/no-deprecated
 	IFluidRouter,
 	IRequest,
 	IRequestHeader,
@@ -64,6 +65,7 @@ export class RelativeLoader implements ILoader {
 	/**
 	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	public get IFluidRouter(): IFluidRouter {
 		return this;
 	}
@@ -271,6 +273,7 @@ export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | 
  * With an already-resolved container, we can request a component directly, without loading the container again
  * @param container - a resolved container
  * @returns component on the container
+ * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
  */
 export async function requestResolvedObjectFromContainer(
 	container: IContainer,
@@ -283,6 +286,7 @@ export async function requestResolvedObjectFromContainer(
 		throw new Error(`Invalid URL ${container.resolvedUrl.url}`);
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	const entryPoint: FluidObject<IFluidRouter> | undefined = await container.getEntryPoint?.();
 	const router = entryPoint?.IFluidRouter ?? container.IFluidRouter;
 
@@ -345,6 +349,7 @@ export class Loader implements IHostLoader {
 	/**
 	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	public get IFluidRouter(): IFluidRouter {
 		return this;
 	}

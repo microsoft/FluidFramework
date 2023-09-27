@@ -6,6 +6,7 @@ import {
 	BaseContainerRuntimeFactory,
 	DataObject,
 	DataObjectFactory,
+	// eslint-disable-next-line import/no-deprecated
 	defaultRouteRequestHandler,
 } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
@@ -167,6 +168,7 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
 		);
 		super({
 			registryEntries: [rootDataObjectFactory.registryEntry],
+			// eslint-disable-next-line import/no-deprecated
 			requestHandlers: [defaultRouteRequestHandler(rootDataStoreId)],
 			// temporary workaround to disable message batching until the message batch size issue is resolved
 			// resolution progress is tracked by the Feature 465 work item in AzDO

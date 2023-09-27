@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+/* eslint-disable import/no-deprecated */
 
 import {
 	ICombiningOp,
@@ -247,7 +248,5 @@ export function createInterval(label: string, start: SequencePlace, end: Sequenc
 }
 
 export const intervalHelpers: IIntervalHelpers<Interval> = {
-	compareEnds: (a: Interval, b: Interval) => a.end - b.end,
-	compareStarts: (a: Interval, b: Interval) => a.start - b.start,
 	create: createInterval,
 };

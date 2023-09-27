@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ITimestampedTelemetryEvent } from "../../TelemetryMetadata";
-import { IDevtoolsMessage } from "../Messages";
+import { type ITimestampedTelemetryEvent } from "../../TelemetryMetadata";
+import { type IDevtoolsMessage } from "../Messages";
 
 /**
  * Encapsulates types and logic related to {@link TelemetryHistory.Message}.

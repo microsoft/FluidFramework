@@ -11,6 +11,7 @@ import {
 import { ILoaderProps, Loader } from "@fluidframework/container-loader";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import type { IRequest, IResponse } from "@fluidframework/core-interfaces";
+// eslint-disable-next-line import/no-deprecated
 import { create404Response, requestFluidObject } from "@fluidframework/runtime-utils";
 import type { IDetachedModel, IModelLoader, ModelMakerCallback } from "./interfaces";
 
@@ -36,6 +37,7 @@ const isModelRequest = (request: IRequest): request is IModelRequest =>
  * ModelLoader contract.
  * @param modelMakerCallback - A callback that will produce the model for the container
  * @returns A request handler that can be provided to the container runtime factory
+ * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
  */
 export const makeModelRequestHandler = <ModelType>(
 	modelMakerCallback: ModelMakerCallback<ModelType>,
@@ -99,6 +101,7 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 			url: modelUrl,
 			headers: { containerRef: container },
 		};
+		// eslint-disable-next-line import/no-deprecated
 		return requestFluidObject<ModelType>(container, request);
 	}
 

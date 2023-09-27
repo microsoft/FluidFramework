@@ -32,6 +32,7 @@ import { IIdCompressor } from '@fluidframework/runtime-definitions';
 import { IIdCompressorCore } from '@fluidframework/runtime-definitions';
 import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
+import { IProvideFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
@@ -94,7 +95,7 @@ export enum ContainerMessageType {
 }
 
 // @public
-export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents & ISummarizerEvents> implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider {
+export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents & ISummarizerEvents> implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider, IProvideFluidHandleContext {
     // Warning: (ae-forgotten-export) The symbol "IContainerRuntimeMetadata" needs to be exported by the entry point index.d.ts
     // Warning: (ae-forgotten-export) The symbol "ISerializedElection" needs to be exported by the entry point index.d.ts
     // Warning: (ae-forgotten-export) The symbol "IBlobManagerLoadInfo" needs to be exported by the entry point index.d.ts

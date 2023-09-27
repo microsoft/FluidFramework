@@ -39,6 +39,7 @@ export interface ISummaryWriter {
 		lastSummaryHead: string | undefined,
 		checkpoint: IScribe,
 		pendingOps: ISequencedOperationMessage[],
+		isEphemeralContainer?: boolean,
 	): Promise<ISummaryWriteResponse>;
 
 	writeServiceSummary(
@@ -46,6 +47,7 @@ export interface ISummaryWriter {
 		currentProtocolHead: number,
 		checkpoint: IScribe,
 		pendingOps: ISequencedOperationMessage[],
+		isEphemeralContainer?: boolean,
 	): Promise<string | false>;
 
 	isExternal: boolean;

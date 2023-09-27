@@ -9,6 +9,7 @@ import {
 	ITelemetryLogger,
 	IDisposable,
 	IFluidHandleContext,
+	// eslint-disable-next-line import/no-deprecated
 	IFluidRouter,
 	IFluidHandle,
 	FluidObject,
@@ -143,5 +144,6 @@ export interface IFluidDataStoreRuntime
 	/**
 	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	readonly IFluidRouter: IFluidRouter;
 }

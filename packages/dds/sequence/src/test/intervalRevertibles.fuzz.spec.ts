@@ -142,12 +142,6 @@ const intervalTestOptions: Partial<DDSFuzzSuiteOptions> = {
 const optionsWithEmitter: Partial<DDSFuzzSuiteOptions> = {
 	...intervalTestOptions,
 	emitter,
-	// TODO:AB#5338: IntervalCollection doesn't correctly handle edits made while detached. Once supported,
-	// this config should be enabled (deleting is sufficient: detached start is enabled by default)
-	detachedStartOptions: {
-		enabled: false,
-		attachProbability: 0.2,
-	},
 };
 
 type ClientOpState = FuzzTestState;
@@ -157,17 +151,17 @@ function operationGenerator(
 	async function revertSharedStringRevertibles(
 		state: ClientOpState,
 	): Promise<RevertSharedStringRevertibles> {
-		assert(isRevertibleSharedString(state.channel));
+		assert(isRevertibleSharedString(state.client.channel));
 		return {
 			type: "revertSharedStringRevertibles",
 			// grab a random number of edits to revert
-			editsToRevert: state.random.integer(1, state.channel.revertibles.length),
+			editsToRevert: state.random.integer(1, state.client.channel.revertibles.length),
 		};
 	}
 
-	const hasRevertibles = ({ channel }: ClientOpState): boolean => {
-		assert(isRevertibleSharedString(channel));
-		return channel.revertibles.length > 0;
+	const hasRevertibles = ({ client }: ClientOpState): boolean => {
+		assert(isRevertibleSharedString(client.channel));
+		return client.channel.revertibles.length > 0;
 	};
 
 	assert(optionsParam.weights !== undefined);
@@ -244,6 +238,8 @@ describe("IntervalCollection fuzz testing with rebasing", () => {
 			flushMode: FlushMode.TurnBased,
 			enableGroupedBatching: true,
 		},
+		// Skipped due to 0x54e, see AB#5337 or comment on "default interval collection" fuzz suite.
+		skip: [13, 16, 17, 20, 21, 23, 30, 37, 41, 43, 44, 49, 51, 55, 62, 69, 70, 73, 84, 91, 95],
 	});
 });
 

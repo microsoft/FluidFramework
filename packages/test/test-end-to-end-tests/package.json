@@ -46,10 +46,9 @@
 		"test:realsvc:routerlicious": "npm run test:realsvc:r11s",
 		"test:realsvc:routerlicious:report": "npm run test:realsvc:r11s --",
 		"test:realsvc:run": "mocha dist/test --config src/test/.mocharc.cjs --exclude dist/test/benchmark/**/* --verbose",
-		"test:realsvc:t9s": "start-server-and-test start:tinylicious:test 7070 test:realsvc:tinylicious:run",
-		"test:realsvc:tinylicious": "npm run test:realsvc:t9s",
-		"test:realsvc:tinylicious:report": "npm run test:realsvc:t9s",
-		"test:realsvc:tinylicious:report:full": "cross-env fluid__test__backCompat=FULL npm run test:realsvc:t9s",
+		"test:realsvc:tinylicious": "start-server-and-test start:tinylicious:test 7070 test:realsvc:tinylicious:run",
+		"test:realsvc:tinylicious:report": "npm run test:realsvc:tinylicious",
+		"test:realsvc:tinylicious:report:full": "cross-env fluid__test__backCompat=FULL npm run test:realsvc:tinylicious",
 		"test:realsvc:tinylicious:run": "npm run test:realsvc:run -- --driver=t9s --timeout=5s",
 		"test:realsvc:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:realsvc"
 	},
@@ -103,7 +102,7 @@
 		"@fluidframework/odsp-doclib-utils": "workspace:~",
 		"@fluidframework/odsp-driver-definitions": "workspace:~",
 		"@fluidframework/ordered-collection": "workspace:~",
-		"@fluidframework/protocol-definitions": "^1.1.0",
+		"@fluidframework/protocol-definitions": "^3.0.0",
 		"@fluidframework/register-collection": "workspace:~",
 		"@fluidframework/request-handler": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
@@ -120,14 +119,14 @@
 		"semver": "^7.5.3",
 		"sinon": "^7.4.2",
 		"start-server-and-test": "^1.11.7",
-		"tinylicious": "^1.0.0",
+		"tinylicious": "^2.0.1",
 		"url": "^0.11.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.22.0",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.22.0",
+		"@fluidframework/build-tools": "0.24.0-192663",
 		"@fluidframework/eslint-config-fluid": "^2.1.0",
 		"@types/mocha": "^9.1.1",
 		"@types/nock": "^9.3.0",
@@ -143,7 +142,7 @@
 		"nock": "^13.3.3",
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",
-		"typescript": "~4.5.5"
+		"typescript": "~5.1.6"
 	},
 	"fluidBuild": {
 		"tasks": {

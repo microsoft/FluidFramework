@@ -198,7 +198,7 @@ export async function verifyToken(
 			});
 
 			if (cachedToken) {
-				Lumberjack.info("Token cache hit", logProperties);
+				Lumberjack.verbose("Token cache hit", logProperties);
 				if (options.ensureSingleUseToken) {
 					throw new NetworkError(403, "Access token has already been used.");
 				}
@@ -210,7 +210,7 @@ export async function verifyToken(
 
 		// Update token cache
 		if ((options.enableTokenCache || options.ensureSingleUseToken) && options.tokenCache) {
-			Lumberjack.info("Token cache miss", logProperties);
+			Lumberjack.verbose("Token cache miss", logProperties);
 			const tokenCacheKey = token;
 			options.tokenCache
 				.set(

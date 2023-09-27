@@ -281,8 +281,9 @@ describe("PropertyDDS", () => {
 
 					// Get the number from the previous entry
 					const previous = array.get(insertPosition - 1) as string;
-					const entryNumber =
-						previous[0] === "B" ? 1 : Number.parseInt(previous[1], 10) + 1;
+					const entryNumber = previous.startsWith("B")
+						? 1
+						: Number.parseInt(previous[1], 10) + 1;
 					insertString = `C${entryNumber}`;
 
 					CCount++;
