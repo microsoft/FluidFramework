@@ -425,21 +425,7 @@ export class ConnectionManager implements IConnectionManager {
 	}
 
 	/**
-	 * Sends signal to runtime (and data stores) to be read-only.
-	 * Hosts may have read only views, indicating to data stores that no edits are allowed.
-	 * This is independent from this._readonlyPermissions (permissions) and this.connectionMode
-	 * (server can return "write" mode even when asked for "read")
-	 * Leveraging same "readonly" event as runtime & data stores should behave the same in such case
-	 * as in read-only permissions.
-	 * But this.active can be used by some DDSes to figure out if ops can be sent
-	 * (for example, read-only view still participates in code proposals / upgrades decisions)
-	 *
-	 * Forcing Readonly does not prevent DDS from generating ops. It is up to user code to honour
-	 * the readonly flag. If ops are generated, they will accumulate locally and not be sent. If
-	 * there are pending in the outbound queue, it will stop sending until force readonly is
-	 * cleared.
-	 *
-	 * @param readonly - set or clear force readonly.
+	 * {@inheritDoc Container.forceReadonly}
 	 */
 	public forceReadonly(readonly: boolean) {
 		if (readonly !== this._forceReadonly) {
