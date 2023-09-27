@@ -40,9 +40,9 @@
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
-		"@fluidframework/protocol-definitions": "^1.1.0",
+		"@fluidframework/protocol-definitions": "^3.0.0",
 		"@fluidframework/routerlicious-driver": "workspace:~",
-		"@fluidframework/server-services-client": "^1.0.1",
+		"@fluidframework/server-services-client": "^2.0.1",
 		"jsrsasign": "^10.5.25",
 		"uuid": "^9.0.0"
 	},

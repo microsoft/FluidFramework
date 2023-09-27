@@ -43,6 +43,7 @@ declare function get_current_ClassDeclaration_FileDeltaStorageService():
 declare function use_old_ClassDeclaration_FileDeltaStorageService(
     use: TypeOnly<old.FileDeltaStorageService>);
 use_old_ClassDeclaration_FileDeltaStorageService(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_FileDeltaStorageService());
 
 /*
@@ -259,4 +260,5 @@ declare function get_current_ClassDeclaration_Replayer():
 declare function use_old_ClassDeclaration_Replayer(
     use: TypeOnly<old.Replayer>);
 use_old_ClassDeclaration_Replayer(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_Replayer());
