@@ -58,27 +58,27 @@
 "@fluid-tools/webpack-fluid-loader": major
 ---
 
-Dependencies on Fluid server packages updated to 2.0.1
+Server upgrade: dependencies on Fluid server packages updated to 2.0.1
 
 Dependencies on the following Fluid server package have been updated to version 2.0.1:
 
-@fluidframework/gitresources: 2.0.1
-@fluidframework/server-kafka-orderer: 2.0.1
-@fluidframework/server-lambdas: 2.0.1
-@fluidframework/server-lambdas-driver: 2.0.1
-@fluidframework/server-local-server: 2.0.1
-@fluidframework/server-memory-orderer: 2.0.1
-@fluidframework/protocol-base: 2.0.1
-@fluidframework/server-routerlicious: 2.0.1
-@fluidframework/server-routerlicious-base: 2.0.1
-@fluidframework/server-services: 2.0.1
-@fluidframework/server-services-client: 2.0.1
-@fluidframework/server-services-core: 2.0.1
-@fluidframework/server-services-ordering-kafkanode: 2.0.1
-@fluidframework/server-services-ordering-rdkafka: 2.0.1
-@fluidframework/server-services-ordering-zookeeper: 2.0.1
-@fluidframework/server-services-shared: 2.0.1
-@fluidframework/server-services-telemetry: 2.0.1
-@fluidframework/server-services-utils: 2.0.1
-@fluidframework/server-test-utils: 2.0.1
-tinylicious: 2.0.1
+- @fluidframework/gitresources: 2.0.1
+- @fluidframework/server-kafka-orderer: 2.0.1
+- @fluidframework/server-lambdas: 2.0.1
+- @fluidframework/server-lambdas-driver: 2.0.1
+- @fluidframework/server-local-server: 2.0.1
+- @fluidframework/server-memory-orderer: 2.0.1
+- @fluidframework/protocol-base: 2.0.1
+- @fluidframework/server-routerlicious: 2.0.1
+- @fluidframework/server-routerlicious-base: 2.0.1
+- @fluidframework/server-services: 2.0.1
+- @fluidframework/server-services-client: 2.0.1
+- @fluidframework/server-services-core: 2.0.1
+- @fluidframework/server-services-ordering-kafkanode: 2.0.1
+- @fluidframework/server-services-ordering-rdkafka: 2.0.1
+- @fluidframework/server-services-ordering-zookeeper: 2.0.1
+- @fluidframework/server-services-shared: 2.0.1
+- @fluidframework/server-services-telemetry: 2.0.1
+- @fluidframework/server-services-utils: 2.0.1
+- @fluidframework/server-test-utils: 2.0.1
+- tinylicious: 2.0.1
