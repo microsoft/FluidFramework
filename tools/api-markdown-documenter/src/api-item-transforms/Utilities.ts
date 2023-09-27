@@ -19,10 +19,10 @@ import { wrapInSection } from "./helpers";
 /**
  * Helper function to generate the front matter based on the provided configuration.
  */
-const generateFrontMatter = (
+function generateFrontMatter(
 	documentItem: ApiItem,
 	config: Required<ApiItemTransformationConfiguration>,
-): string | undefined => {
+): string | undefined {
 	if (config.frontMatter === undefined) {
 		return undefined;
 	}
@@ -38,7 +38,7 @@ const generateFrontMatter = (
 	}
 
 	return config.frontMatter(documentItem);
-};
+}
 
 /**
  * Creates a {@link DocumentNode} representing the provided API item.
