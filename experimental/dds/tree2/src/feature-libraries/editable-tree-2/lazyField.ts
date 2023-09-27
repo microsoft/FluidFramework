@@ -247,22 +247,32 @@ export abstract class LazyField<TKind extends FieldKindTypes, TTypes extends All
 		getCurrentValue: (cursor: ITreeSubscriptionCursor) => T,
 		initialValue?: Accumulation,
 	): T | Accumulation {
-		let accumulation: Accumulation | undefined = initialValue;
+		let accumulation = initialValue;
 		forEachNode(this[cursorSymbol], (cursor) => {
 			const element = getCurrentValue(cursor);
-			const result =
-				accumulation !== undefined
-					? callbackfn(accumulation, element, cursor.fieldIndex, this)
-					: (element as unknown as Accumulation); // Cast: it is assumed that if initialValue === undefined, then T == Accumulation
-
-			if (result instanceof Stop) {
-				accumulation = result.value;
-				return StopCursor;
+			if (cursor.fieldIndex === 0 && arguments.length < 3) {
+				accumulation = element as unknown as Accumulation; // Cast: if no initial value is passed, then assume T == Accumulation
 			} else {
+				// Cast: we assume that `accumulation` has been assigned a meaningful value (although we don't assume it isn't undefined)
+				const result = callbackfn(
+					accumulation as Accumulation,
+					element,
+					cursor.fieldIndex,
+					this,
+				);
+				if (result instanceof Stop) {
+					accumulation = result.value;
+					return StopCursor;
+				}
 				accumulation = result;
 			}
 		});
-		return accumulation ?? fail("Reduce called on an empty sequence with no initial value");
+		if (accumulation === undefined) {
+			return arguments.length >= 3
+				? (accumulation as Accumulation)
+				: fail("Reduce called on an empty sequence with no initial value");
+		}
+		return accumulation;
 	}
 
 	public [Symbol.iterator](): IterableIterator<TypedNodeUnion<TTypes>> {
