@@ -99,11 +99,17 @@ class ChildChangeMap<T> implements IChildChangeMap<T> {
 		for (const changeId of this.keys()) {
 			if (changeId === "self") {
 				const entry = this.nestedMapData.tryGet("self", undefined);
-				assert(entry !== undefined, "Entry should not be undefined when iterating keys.");
+				assert(
+					entry !== undefined,
+					0x770 /* Entry should not be undefined when iterating keys. */,
+				);
 				entries.push(["self", entry]);
 			} else {
 				const entry = this.nestedMapData.tryGet(changeId.localId, changeId.revision);
-				assert(entry !== undefined, "Entry should not be undefined when iterating keys.");
+				assert(
+					entry !== undefined,
+					0x771 /* Entry should not be undefined when iterating keys. */,
+				);
 				entries.push([changeId, entry]);
 			}
 		}
@@ -187,7 +193,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			if (fieldChange !== undefined) {
 				assert(
 					fieldChange.newContent !== undefined,
-					"after node must be defined to receive changes",
+					0x772 /* after node must be defined to receive changes */,
 				);
 				fieldChange.newContent.changes = composeChild(currentChildNodeChanges);
 			} else {
