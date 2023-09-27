@@ -123,7 +123,6 @@ export class ScribeLambda implements IPartitionLambda {
 		private readonly restartOnCheckpointFailure: boolean,
 		private readonly kafkaCheckpointOnReprocessingOp: boolean,
 		private readonly isEphemeralContainer: boolean,
-		private readonly scribeCheckpointMetricInterval: number,
 	) {
 		this.lastOffset = scribe.logOffset;
 		this.setStateFromCheckpoint(scribe);
@@ -818,7 +817,10 @@ export class ScribeLambda implements IPartitionLambda {
 	}
 
 	private setApiCounterTimer() {
-		if (!this.scribeCheckpointMetricInterval || this.scribeCheckpointMetricInterval <= 0) {
+		if (
+			!this.serviceConfiguration.scribeCheckpointMetricInterval ||
+			this.serviceConfiguration.scribeCheckpointMetricInterval <= 0
+		) {
 			return;
 		}
 		this.clearApiCounterTimer();
@@ -828,7 +830,7 @@ export class ScribeLambda implements IPartitionLambda {
 			}
 			Lumberjack.info("Scribe checkpoint api counters", this.apiCounter.getCounters());
 			this.apiCounter.resetAllCounters();
-		}, this.scribeCheckpointMetricInterval);
+		}, this.serviceConfiguration.scribeCheckpointMetricInterval);
 	}
 
 	private clearApiCounterTimer() {

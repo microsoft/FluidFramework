@@ -146,10 +146,12 @@ export async function deliCreate(
 
 	const externalOrdererUrl: string = config.get("worker:serverUrl");
 	const enforceDiscoveryFlow: boolean = config.get("worker:enforceDiscoveryFlow");
+	const deliCheckpointMetricInterval: number = config.get("apiCounters:deliCheckpointMetricMs");
 	const serviceConfiguration: core.IServiceConfiguration = {
 		...core.DefaultServiceConfiguration,
 		externalOrdererUrl,
 		enforceDiscoveryFlow,
+		deliCheckpointMetricInterval,
 	};
 
 	const checkpointService = new core.CheckpointService(
@@ -157,8 +159,6 @@ export async function deliCreate(
 		documentRepository,
 		localCheckpointEnabled,
 	);
-
-	const deliCheckpointMetricInterval: number = config.get("apiCounters:deliCheckpointMetricMs");
 
 	return new DeliLambdaFactory(
 		operationsDbManager,
@@ -172,7 +172,6 @@ export async function deliCreate(
 		serviceConfiguration,
 		restartOnCheckpointFailure,
 		kafkaCheckpointOnReprocessingOp,
-		deliCheckpointMetricInterval,
 	);
 }
 

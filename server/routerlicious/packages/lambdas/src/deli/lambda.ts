@@ -301,7 +301,6 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		private readonly checkpointService: ICheckpointService,
 		private readonly restartOnCheckpointFailure: boolean,
 		private readonly kafkaCheckpointOnReprocessingOp: boolean,
-		private readonly deliCheckpointMetricInterval: number,
 		private readonly sequencedSignalClients: Map<string, ISequencedSignalClient> = new Map(),
 	) {
 		super();
@@ -1794,7 +1793,10 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	}
 
 	private setApiCounterTimer() {
-		if (!this.deliCheckpointMetricInterval || this.deliCheckpointMetricInterval <= 0) {
+		if (
+			!this.serviceConfiguration.deliCheckpointMetricInterval ||
+			this.serviceConfiguration.deliCheckpointMetricInterval <= 0
+		) {
 			return;
 		}
 		this.clearApiCounterTimer();
@@ -1804,7 +1806,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			}
 			Lumberjack.info("Deli checkpoint api counters", this.apiCounter.getCounters());
 			this.apiCounter.resetAllCounters();
-		}, this.deliCheckpointMetricInterval);
+		}, this.serviceConfiguration.deliCheckpointMetricInterval);
 	}
 
 	private clearApiCounterTimer() {
