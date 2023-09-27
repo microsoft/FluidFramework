@@ -266,7 +266,7 @@ describe("IntervalCollection fuzz testing", () => {
 		// TODO:AB#5337: re-enable these seeds.
 		skip: [
 			1, 2, 4, 9, 10, 11, 12, 14, 16, 19, 21, 23, 24, 26, 27, 32, 33, 39, 40, 43, 44, 45, 46,
-			47, 48, 50, 51, 53, 55, 62, 69, 71, 72, 73, 74, 81, 82, 84, 86, 88, 89, 93, 95, 96,
+			47, 48, 50, 51, 53, 55, 62, 63, 69, 71, 72, 73, 74, 81, 82, 84, 86, 88, 89, 93, 95, 96,
 		],
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
