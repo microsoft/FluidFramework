@@ -16,7 +16,7 @@
 "@fluidframework/test-utils": major
 ---
 
-container-runtime: provideEntryPoint is required
+test-utils: provideEntryPoint is required
 
 The optional `provideEntryPoint` method has become required on a number of constructors. A value will need to be provided to the following classes:
 
