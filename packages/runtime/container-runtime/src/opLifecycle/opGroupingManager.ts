@@ -72,11 +72,11 @@ export class OpGroupingManager {
 	}
 
 	public ungroupOp(op: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
-		if (!isGroupContents(op.contents as any)) {
+		if (!isGroupContents(op.contents)) {
 			return [op];
 		}
 
-		const messages: any[] = (op.contents as { contents: unknown[] }).contents;
+		const messages = op.contents.contents;
 		let fakeCsn = 1;
 		return messages.map((subMessage) => ({
 			...op,
