@@ -105,7 +105,7 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 		fieldAnchor: FieldAnchor,
 	) {
 		super(context, schema, cursor, fieldAnchor);
-		assert(cursor.mode === CursorLocationType.Fields, "must be in fields mode");
+		assert(cursor.mode === CursorLocationType.Fields, 0x77b /* must be in fields mode */);
 		this.key = cursor.getFieldKey();
 
 		makePropertyNotEnumerable(this, "key");
@@ -114,7 +114,7 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 	public is<TSchema extends FieldSchema>(schema: TSchema): this is TypedField<TSchema> {
 		assert(
 			this.context.schema.policy.fieldKinds.get(schema.kind.identifier) === schema.kind,
-			"Narrowing must be done to a kind that exists in this context",
+			0x77c /* Narrowing must be done to a kind that exists in this context */,
 		);
 
 		if (schema.kind !== this.schema.kind) {
@@ -132,7 +132,7 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 	public isSameAs(other: TreeField): boolean {
 		assert(
 			other.context === this.context,
-			"Content from different editable trees should not be used together",
+			0x77d /* Content from different editable trees should not be used together */,
 		);
 		return this.key === other.key && this.parent === other.parent;
 	}
@@ -220,7 +220,7 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 		const parentAnchorNode = this.context.forest.anchors.locate(parentAnchor);
 
 		// As the "parentAnchor === undefined" case is handled above, parentAnchorNode should exist.
-		assert(parentAnchorNode !== undefined, "parentAnchorNode must exist.");
+		assert(parentAnchorNode !== undefined, 0x77e /* parentAnchorNode must exist. */);
 		return treeStatusFromPath(parentAnchorNode);
 	}
 
@@ -235,7 +235,7 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 	public getFieldPathForEditing(): FieldUpPath {
 		assert(
 			this.treeStatus() === TreeStatus.InDocument,
-			"Editing only allowed on fields with TreeStatus.InDocument status",
+			0x77f /* Editing only allowed on fields with TreeStatus.InDocument status */,
 		);
 		return this.getFieldPath();
 	}
@@ -311,7 +311,7 @@ export class LazyValueField<TTypes extends AllowedTypes>
 	public setContent(newContent: FlexibleNodeContent<TTypes>): void {
 		const content = this.normalizeNewContent(newContent);
 		const fieldEditor = this.valueFieldEditor();
-		assert(content.length === 1, "value field content should normalize to one item");
+		assert(content.length === 1, 0x780 /* value field content should normalize to one item */);
 		fieldEditor.set(content[0]);
 	}
 }
@@ -348,7 +348,10 @@ export class LazyOptionalField<TTypes extends AllowedTypes>
 	public setContent(newContent: FlexibleNodeContent<TTypes> | undefined): void {
 		const content = this.normalizeNewContent(newContent);
 		const fieldEditor = this.optionalEditor();
-		assert(content.length <= 1, "optional field content should normalize at most one item");
+		assert(
+			content.length <= 1,
+			0x781 /* optional field content should normalize at most one item */,
+		);
 		fieldEditor.set(content.length === 0 ? undefined : content[0], this.length === 0);
 	}
 }

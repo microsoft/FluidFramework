@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 
+import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { Any, SchemaBuilder } from "../../../feature-libraries";
 import { FieldKey, TreeNavigationResult } from "../../../core";
 import { forestWithContent } from "../../utils";
@@ -53,15 +54,27 @@ describe("lazyField", () => {
 		cursor.free();
 		assert.throws(
 			() => sequenceField.replaceRange(0, 1, []),
-			/only allowed on fields with TreeStatus.InDocument status/,
+			(e: Error) =>
+				validateAssertionError(
+					e,
+					/only allowed on fields with TreeStatus.InDocument status/,
+				),
 		);
 		assert.throws(
 			() => optionalField.setContent(undefined),
-			/only allowed on fields with TreeStatus.InDocument status/,
+			(e: Error) =>
+				validateAssertionError(
+					e,
+					/only allowed on fields with TreeStatus.InDocument status/,
+				),
 		);
 		assert.throws(
 			() => valueField.setContent({}),
-			/only allowed on fields with TreeStatus.InDocument status/,
+			(e: Error) =>
+				validateAssertionError(
+					e,
+					/only allowed on fields with TreeStatus.InDocument status/,
+				),
 		);
 	});
 });

@@ -36,7 +36,7 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 /**
  * Whether the package is known to be a publicly published package for general use.
  */
-function packageMustPublishToNPM(name: string, config: PackageNamePolicyConfig): boolean {
+export function packageMustPublishToNPM(name: string, config: PackageNamePolicyConfig): boolean {
 	const mustPublish = config.mustPublish.npm;
 
 	if (mustPublish === undefined) {
@@ -60,7 +60,7 @@ function packageMustPublishToNPM(name: string, config: PackageNamePolicyConfig):
  * Note that packages published to NPM will also be published internally, however.
  * This should be a minimal set required for legacy compat of internal partners or internal CI requirements.
  */
-function packageMustPublishToInternalFeedOnly(
+export function packageMustPublishToInternalFeedOnly(
 	name: string,
 	config: PackageNamePolicyConfig,
 ): boolean {
@@ -86,7 +86,10 @@ function packageMustPublishToInternalFeedOnly(
  * Whether the package has the option to publicly publish if it chooses.
  * For example, an experimental package may choose to remain unpublished until it's ready for customers to try it out.
  */
-function packageMayChooseToPublishToNPM(name: string, config: PackageNamePolicyConfig): boolean {
+export function packageMayChooseToPublishToNPM(
+	name: string,
+	config: PackageNamePolicyConfig,
+): boolean {
 	const mayPublish = config.mayPublish.npm;
 
 	if (mayPublish === undefined) {
@@ -108,7 +111,7 @@ function packageMayChooseToPublishToNPM(name: string, config: PackageNamePolicyC
 /**
  * Whether the package has the option to publish to an internal feed if it chooses.
  */
-function packageMayChooseToPublishToInternalFeedOnly(
+export function packageMayChooseToPublishToInternalFeedOnly(
 	name: string,
 	config: PackageNamePolicyConfig,
 ): boolean {
@@ -134,7 +137,7 @@ function packageMayChooseToPublishToInternalFeedOnly(
  * If we haven't explicitly OK'd the package scope to publish in one of the categories above, it must be marked
  * private to prevent publishing.
  */
-function packageMustBePrivate(name: string, root: string): boolean {
+export function packageMustBePrivate(name: string, root: string): boolean {
 	const config = getFluidBuildConfig(root).policy?.packageNames;
 
 	if (config === undefined) {
@@ -153,7 +156,7 @@ function packageMustBePrivate(name: string, root: string): boolean {
 /**
  * If we know a package needs to publish somewhere, then it must not be marked private to allow publishing.
  */
-function packageMustNotBePrivate(name: string, root: string): boolean {
+export function packageMustNotBePrivate(name: string, root: string): boolean {
 	const config = getFluidBuildConfig(root).policy?.packageNames;
 
 	if (config === undefined) {
