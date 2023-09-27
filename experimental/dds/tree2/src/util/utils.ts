@@ -247,6 +247,16 @@ export function isJsonObject(
 	return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+export function assertValidRangeIndices(
+	startIndex: number,
+	endIndex: number,
+	array: { readonly length: number },
+) {
+	assertValidIndex(startIndex, array, false);
+	assertValidIndex(endIndex, array, true);
+	assert(endIndex > startIndex, "Removal indices are malformed.");
+}
+
 export function assertValidIndex(
 	index: number,
 	array: { readonly length: number },
