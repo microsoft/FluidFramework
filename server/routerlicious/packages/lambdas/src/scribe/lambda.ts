@@ -33,12 +33,13 @@ import {
 } from "@fluidframework/server-services-core";
 import {
 	getLumberBaseProperties,
+	IApiCounters,
+	InMemoryApiCounters,
 	Lumber,
 	LumberEventName,
 	Lumberjack,
 	CommonProperties,
 } from "@fluidframework/server-services-telemetry";
-import { IApiCounters, InMemoryApiCounters } from "@fluidframework/server-services-utils";
 import Deque from "double-ended-queue";
 import * as _ from "lodash";
 import {

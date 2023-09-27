@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export { IApiCounters, InMemoryApiCounters } from "./apiCounters";
 export { Lumber } from "./lumber";
 export { LumberEventName } from "./lumberEventNames";
 export { Lumberjack, ILumberjackOptions } from "./lumberjack";

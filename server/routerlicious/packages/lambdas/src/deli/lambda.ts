@@ -61,12 +61,13 @@ import {
 import {
 	CommonProperties,
 	getLumberBaseProperties,
+	IApiCounters,
+	InMemoryApiCounters,
 	Lumber,
 	LumberEventName,
 	Lumberjack,
 	SessionState,
 } from "@fluidframework/server-services-telemetry";
-import { IApiCounters, InMemoryApiCounters } from "@fluidframework/server-services-utils";
 import { DocumentContext } from "@fluidframework/server-lambdas-driver";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IEvent } from "../events";
