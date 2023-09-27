@@ -250,7 +250,7 @@ export type DocumentBoundaries = ApiMemberKind[];
 
 // @public
 export interface DocumentItemMetadata {
-    readonly apiItemKind: string;
+    readonly apiItemKind: ApiItemKind;
     readonly apiItemName: string;
     readonly packageName: string | undefined;
 }
