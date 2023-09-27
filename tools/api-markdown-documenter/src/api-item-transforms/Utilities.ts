@@ -41,7 +41,13 @@ const generateFrontMatter = (
 }
 
 /**
- * Helper function for creating a {@link DocumentNode} for an API item and its generated documentation contents.
+ * Creates a {@link DocumentNode} representing the provided API item.
+ *
+ * @param documentItem - The API item to be documented.
+ * @param sections - An array of sections to be included in the document.
+ * @param config - The transformation configuration for the API item.
+ * 
+ * @returns A DocumentNode representing the constructed document.
  */
 export function createDocument(
 	documentItem: ApiItem,
