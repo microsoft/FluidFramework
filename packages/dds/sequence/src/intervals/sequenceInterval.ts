@@ -567,7 +567,7 @@ export function createSequenceInterval(
 			endPos !== undefined &&
 			startSide !== undefined &&
 			endSide !== undefined,
-		"start and end cannot be undefined because they were not passed in as undefined",
+		0x794 /* start and end cannot be undefined because they were not passed in as undefined */,
 	);
 	const stickiness = computeStickinessFromSide(startPos, startSide, endPos, endSide);
 	let beginRefType = ReferenceType.RangeBegin;
