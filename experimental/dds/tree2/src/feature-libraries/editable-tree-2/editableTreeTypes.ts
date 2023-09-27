@@ -59,7 +59,7 @@ export interface Tree<TSchema = unknown> {
 	treeStatus(): TreeStatus;
 
 	/**
-	 * Iterate through all nodes/fields in this node/field.
+	 * Iterate through all nodes/fields in this field/node.
 	 *
 	 * @remarks
 	 * No mutations to the current view of the shared tree are permitted during iteration.
@@ -121,12 +121,6 @@ export interface TreeNode extends Tree<TreeSchema> {
 	 */
 	readonly type: TreeSchemaIdentifier;
 
-	/**
-	 * Iterate through all fields in the node.
-	 *
-	 * @remarks
-	 * No mutations to the current view of the shared tree are permitted during iteration.
-	 */
 	boxedIterator(): IterableIterator<TreeField>;
 }
 
@@ -168,12 +162,6 @@ export interface TreeField extends Tree<FieldSchema> {
 	 */
 	is<TSchema extends FieldSchema>(schema: TSchema): this is TypedField<TSchema>;
 
-	/**
-	 * Iterate through all nodes in the field.
-	 *
-	 * @remarks
-	 * No mutations to the current view of the shared tree are permitted during iteration.
-	 */
 	boxedIterator(): IterableIterator<TreeNode>;
 
 	/**
