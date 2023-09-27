@@ -395,7 +395,7 @@ export function encodeValue(
 		}
 	} else {
 		if (shape === true) {
-			assert(value !== undefined, "required value must not be missing");
+			assert(value !== undefined, 0x78d /* required value must not be missing */);
 			outputBuffer.push(value);
 		} else if (shape === false) {
 			assert(value === undefined, 0x73f /* incompatible value shape: expected no value */);
