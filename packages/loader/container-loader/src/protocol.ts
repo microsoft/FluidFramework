@@ -73,7 +73,7 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
 	): IProcessMessageResult {
 		// Check and report if we're getting messages from a clientId that we previously
 		// flagged as shouldHaveLeft, or from a client that's not in the quorum but should be
-		if (message.clientId !== null) {
+		if (message.clientId != null) {
 			const client = this.quorum.getMember(message.clientId);
 
 			if (client === undefined && message.type !== MessageType.ClientJoin) {
