@@ -577,7 +577,7 @@ const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator });
 
 export function validateTreeConsistency(treeA: ISharedTree, treeB: ISharedTree): void {
 	// TODO: validate other aspects of these trees are consistent, for example their collaboration window information.
-	validateViewConsistency(treeA.view, treeB.view);
+	validateViewConsistency(treeA.view, treeB.view, `id: ${treeA.id} vs id: ${treeB.id}`);
 }
 
 function contentToJsonableTree(content: TreeContent): JsonableTree[] {
@@ -593,11 +593,21 @@ export function validateTreeContent(tree: ISharedTreeView, content: TreeContent)
 	assert.deepEqual(schemaCodec.encode(tree.storedSchema), schemaCodec.encode(content.schema));
 }
 
-export function validateViewConsistency(treeA: ISharedTreeView, treeB: ISharedTreeView): void {
-	assert.deepEqual(toJsonableTree(treeA), toJsonableTree(treeB));
+export function validateViewConsistency(
+	treeA: ISharedTreeView,
+	treeB: ISharedTreeView,
+	idDifferentiator: string | undefined = undefined,
+): void {
+	console.log(JSON.stringify(toJsonableTree(treeA)));
+	assert.deepEqual(
+		toJsonableTree(treeA),
+		toJsonableTree(treeB),
+		`Inconsistent json representation: ${idDifferentiator}`,
+	);
 	assert.deepEqual(
 		schemaCodec.encode(treeA.storedSchema),
 		schemaCodec.encode(treeB.storedSchema),
+		`Inconsistent schema: ${idDifferentiator}`,
 	);
 }
 

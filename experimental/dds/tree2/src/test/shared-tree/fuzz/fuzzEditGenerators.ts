@@ -9,7 +9,7 @@ import {
 	done,
 	IRandom,
 	createWeightedGenerator,
-	Weights,
+	BaseFuzzTestState,
 } from "@fluid-internal/stochastic-test-utils";
 import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import { ISharedTreeView, SharedTreeFactory } from "../../../shared-tree";
@@ -18,6 +18,7 @@ import {
 	CursorLocationType,
 	FieldKey,
 	FieldUpPath,
+	JsonableTree,
 	moveToDetachedField,
 	UpPath,
 } from "../../../core";
@@ -26,12 +27,14 @@ import {
 	FieldEditTypes,
 	FuzzDelete,
 	FuzzInsert,
+	FuzzSet,
 	FuzzTransactionType,
 	FuzzUndoRedoType,
 	Operation,
 	OptionalFieldEdit,
 	RedoOp,
 	SequenceFieldEdit,
+	Synchronize,
 	TransactionAbortOp,
 	TransactionBoundary,
 	TransactionCommitOp,
@@ -41,6 +44,15 @@ import {
 	UndoRedo,
 	ValueFieldEdit,
 } from "./operationTypes";
+import { FuzzNode, fuzzNode, fuzzSchema } from "./fuzzUtils";
+import {
+	FieldSchema,
+	OptionalField,
+	StructTyped,
+	TreeField,
+	TreeNode,
+} from "../../../feature-libraries";
+import { unreachableCase } from "@fluidframework/core-utils";
 
 export type FuzzTestState = DDSFuzzTestState<SharedTreeFactory>;
 
@@ -65,160 +77,143 @@ const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
 	synchronizeTrees: 0,
 };
 
-export const makeFieldEditGenerator = (
-	opWeights: Partial<EditGeneratorOpWeights>,
-): Generator<FieldEdit, FuzzTestState> => {
-	const passedOpWeights = {
+export const makeEditGenerator = (
+	opWeightsArg: Partial<EditGeneratorOpWeights>,
+): Generator<TreeEdit, FuzzTestState> => {
+	const weights = {
 		...defaultEditGeneratorOpWeights,
-		...opWeights,
+		...opWeightsArg,
 	};
-	function fieldEditGenerator(state: FuzzTestState): FieldEditTypes {
-		const tree = state.client.channel;
-		// generate edit for that specific tree
-		const { fieldPath, fieldKey, count } = getExistingFieldPath(tree.view, state.random);
-		assert(fieldPath.parent !== undefined);
 
-		switch (fieldKey) {
-			case sequenceFieldKey: {
-				const opWeightRatio =
-					passedOpWeights.insert / (passedOpWeights.delete + passedOpWeights.insert);
-				const opType =
-					count === 0 && state.random.bool(opWeightRatio) ? "insert" : "delete";
-				switch (opType) {
-					case "insert":
-						return generateSequenceFieldInsertOp(
-							fieldPath,
-							fieldKey,
-							state.random.integer(0, count),
-							state.random,
-						);
-					case "delete":
-						return generateSequenceFieldDeleteOp(fieldPath, state.random, count);
-					default:
-						break;
-				}
+	const jsonableTree = (state: FuzzTestState): JsonableTree => {
+		if (state.random.bool(0.3)) {
+			return {
+				type: brand("com.fluidframework.leaf.number"),
+				value: state.random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
+			};
+		} else {
+			return {
+				type: brand("Fuzz node"),
+				fields: {
+					requiredF: [
+						{
+							type: brand("com.fluidframework.leaf.number"),
+							value: state.random.integer(
+								Number.MIN_SAFE_INTEGER,
+								Number.MAX_SAFE_INTEGER,
+							),
+						},
+					],
+				},
+			};
+		}
+	};
+
+	const insert = (state: FuzzTestState): FieldEditTypes => {
+		const tree = state.channel;
+		const fieldInfo = selectTreeField(tree.view, state.random);
+		switch (fieldInfo.type) {
+			case "optional":
+			case "value": {
+				const { type: fieldType, content: field } = fieldInfo;
+				const contents: FuzzSet = {
+					type: "set",
+					fieldPath: fieldUpPathFromField(field),
+					value: jsonableTree(state),
+				};
+				return {
+					type: fieldType,
+					edit: contents,
+				};
 			}
-			case valueFieldKey: {
-				return generateValueFieldDeleteOp(fieldPath);
-			}
-			case optionalFieldKey: {
-				const opWeightRatio =
-					passedOpWeights.insert / (passedOpWeights.delete + passedOpWeights.insert);
-				const opType =
-					count === 0 && state.random.bool(opWeightRatio) ? "insert" : "delete";
-				switch (opType) {
-					case "insert":
-						return generateSequenceFieldInsertOp(
-							fieldPath,
-							fieldKey,
-							state.random.integer(0, count),
-							state.random,
-						);
-					case "delete":
-						return generateOptionaFieldDeleteOp(fieldPath);
-					default:
-						break;
-				}
+			case "sequence": {
+				const { content: field } = fieldInfo;
+				const contents: FuzzInsert = {
+					type: "insert",
+					fieldPath: fieldUpPathFromField(field),
+					index: state.random.integer(0, field.length),
+					// TODO: generate insertion of multiple pieces of content at once
+					value: jsonableTree(state),
+				};
+				return {
+					type: "sequence",
+					edit: contents,
+				};
 			}
 			default:
-				// default case returns a sequence field edit for now.
-				return generateSequenceFieldInsertOp(
-					fieldPath,
-					fieldKey,
-					state.random.integer(0, count),
-					state.random,
-				);
+				fail(`Invalid field type: ${(fieldInfo as { type: unknown }).type}`);
 		}
-	}
-
-	function generateDeleteEdit(
-		fieldPath: FieldUpPath,
-		count: number,
-		nodeIndex: number,
-	): FuzzDelete {
-		const firstNode: UpPath = {
-			parent: fieldPath.parent,
-			parentField: fieldPath.field,
-			parentIndex: nodeIndex,
-		};
-		return {
-			type: "delete",
-			firstNode,
-			count,
-		};
-	}
-
-	function generateSequenceFieldDeleteOp(
-		fieldPath: FieldUpPath,
-		random: IRandom,
-		count: number,
-	): SequenceFieldEdit {
-		const nodeIndex = random.integer(0, count - 1);
-		const rangeSize = random.integer(1, count - nodeIndex);
-		const contents = generateDeleteEdit(fieldPath, rangeSize, nodeIndex);
-		return { type: "sequence", edit: contents };
-	}
-
-	function generateValueFieldDeleteOp(fieldPath: FieldUpPath): ValueFieldEdit {
-		const contents = generateDeleteEdit(fieldPath, 1, 0);
-		return { type: "value", edit: contents };
-	}
-
-	function generateOptionaFieldDeleteOp(fieldPath: FieldUpPath): OptionalFieldEdit {
-		const contents = generateDeleteEdit(fieldPath, 1, 0);
-		return { type: "optional", edit: contents };
-	}
-
-	function generateSequenceFieldInsertOp(
-		fieldPath: FieldUpPath,
-		fieldKey: FieldKey,
-		fieldIndex: number,
-		random: IRandom,
-	): SequenceFieldEdit {
-		const contents: FuzzInsert = {
-			type: "insert",
-			parent: fieldPath.parent,
-			field: fieldKey,
-			index: fieldIndex,
-			value: random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
-		};
-		return {
-			type: "sequence",
-			edit: contents,
-		};
-	}
-
-	return (state) => ({
-		type: "fieldEdit",
-		change: fieldEditGenerator(state),
-	});
-};
-
-export const makeEditGenerator = (
-	opWeights: Partial<EditGeneratorOpWeights>,
-): Generator<TreeEdit, FuzzTestState> => {
-	const passedOpWeights = {
-		...defaultEditGeneratorOpWeights,
-		...opWeights,
 	};
-	const fieldEdit = createWeightedGenerator<FieldEdit, FuzzTestState>([
+
+	const deletableFieldFilter: FieldFilter = (fieldInfo) =>
+		isNonEmptyField(fieldInfo) && fieldInfo.type !== "value";
+
+	const deleteContent = (state: FuzzTestState): FieldEditTypes => {
+		const tree = state.channel;
+		const fieldInfo = selectTreeField(tree.view, state.random, deletableFieldFilter);
+		switch (fieldInfo.type) {
+			case "optional": {
+				const { content: field } = fieldInfo;
+				const { content } = field;
+				assert(
+					content !== undefined,
+					"Optional field should have content for it to be selected for deletion",
+				);
+
+				return {
+					type: "optional",
+					edit: {
+						type: "delete",
+						firstNode: upPathFromNode(content),
+						count: 1,
+					},
+				};
+			}
+			case "sequence": {
+				const { content: field } = fieldInfo;
+
+				assert(
+					field.length > 0,
+					"Sequence field should have content for it to be selected for deletion",
+				);
+				const start = state.random.integer(0, field.length - 1);
+				// TODO: Magic number here. Generally we want to limit deletions to be relatively small.
+				const count = state.random.integer(1, Math.min(3, field.length - start));
+				return {
+					type: "sequence",
+					edit: {
+						type: "delete",
+						firstNode: upPathFromNode(field.at(start)),
+						count,
+					},
+				};
+			}
+			default:
+				fail(`Invalid field type for deletion of content: ${fieldInfo.type}`);
+		}
+	};
+
+	const fieldEdit = createWeightedGenerator<FieldEditTypes, FuzzTestState>([
+		[insert, weights.insert],
 		[
-			makeFieldEditGenerator({
-				insert: passedOpWeights.insert,
-				delete: passedOpWeights.delete,
-			}),
-			sumWeights([passedOpWeights.delete, passedOpWeights.insert]),
-			({ client }) => containsAtLeastOneNode(client.channel.view),
+			deleteContent,
+			weights.delete,
+			({ channel, random }) =>
+				trySelectTreeField(channel.view, random, deletableFieldFilter) !==
+				"no-valid-fields",
 		],
 	]);
 
 	return (state) => {
-		const contents = fieldEdit(state);
-		return contents === done
+		const change = fieldEdit(state);
+		return change === done
 			? done
 			: {
 					type: "edit",
-					contents,
+					contents: {
+						type: "fieldEdit",
+						change,
+					},
 			  };
 	};
 };
@@ -273,7 +268,6 @@ export const makeUndoRedoEditGenerator = (
 
 	return (state) => {
 		const contents = undoRedoType(state);
-
 		return contents === done
 			? done
 			: {
@@ -284,39 +278,37 @@ export const makeUndoRedoEditGenerator = (
 };
 
 export function makeOpGenerator(
-	opWeights: Partial<EditGeneratorOpWeights> = defaultEditGeneratorOpWeights,
+	weightsArg: Partial<EditGeneratorOpWeights> = defaultEditGeneratorOpWeights,
 ): AsyncGenerator<Operation, DDSFuzzTestState<SharedTreeFactory>> {
-	const passedOpWeights = {
+	const weights = {
 		...defaultEditGeneratorOpWeights,
-		...opWeights,
+		...weightsArg,
 	};
-	const generatorWeights: Weights<Operation, FuzzTestState> = [];
-	if (sumWeights([passedOpWeights.delete, passedOpWeights.insert]) > 0) {
-		generatorWeights.push([
-			makeEditGenerator(passedOpWeights),
-			sumWeights([passedOpWeights.delete, passedOpWeights.insert]),
-		]);
-	}
-	if (sumWeights([passedOpWeights.abort, passedOpWeights.commit, passedOpWeights.start]) > 0) {
-		generatorWeights.push([
-			makeTransactionEditGenerator(passedOpWeights),
-			sumWeights([passedOpWeights.abort, passedOpWeights.commit, passedOpWeights.start]),
-		]);
-	}
-	if (sumWeights([passedOpWeights.undo, passedOpWeights.redo]) > 0) {
-		generatorWeights.push([
-			makeUndoRedoEditGenerator(passedOpWeights),
-			sumWeights([passedOpWeights.undo, passedOpWeights.redo]),
-		]);
-	}
-	if (passedOpWeights.synchronizeTrees > 0) {
-		generatorWeights.push([{ type: "synchronizeTrees" }, passedOpWeights.synchronizeTrees]);
-	}
-	const generatorAssumingTreeIsSelected = createWeightedGenerator<Operation, FuzzTestState>(
-		generatorWeights,
+	// note: 'delete' is a JS keyword so isn't shorthanded in this destructure.
+	const { insert, abort, commit, start, undo, redo } = weights;
+	const editWeight = sumWeights([weights.delete, insert]);
+	const transactionWeight = sumWeights([abort, commit, start]);
+	const undoRedoWeight = sumWeights([undo, redo]);
+
+	const syncGenerator = createWeightedGenerator<Operation, FuzzTestState>(
+		(
+			[
+				[() => makeEditGenerator(weights), editWeight],
+				[() => makeTransactionEditGenerator(weights), transactionWeight],
+				[() => makeUndoRedoEditGenerator(weights), undoRedoWeight],
+				[
+					(): Synchronize => ({
+						type: "synchronizeTrees",
+					}),
+					weights.synchronizeTrees,
+				],
+			] as const
+		)
+			.filter(([, weight]) => weight > 0)
+			.map(([f, weight]) => [f(), weight]),
 	);
 	return async (state) => {
-		return generatorAssumingTreeIsSelected(state);
+		return syncGenerator(state);
 	};
 }
 
@@ -330,118 +322,263 @@ function sumWeights(values: (number | undefined)[]): number {
 	return sum;
 }
 
-const moves = {
-	field: ["enterNode", "nextField"],
-	nodes: ["stop", "firstField"],
-};
-
-const sequenceFieldKey: FieldKey = brand("sequenceField");
-const valueFieldKey: FieldKey = brand("valueField");
-const optionalFieldKey: FieldKey = brand("optionalField");
-
 export interface FieldPathWithCount {
 	fieldPath: FieldUpPath;
 	fieldKey: FieldKey;
 	count: number;
 }
 
-/**
- *
- * @param tree - tree to find path from
- * @param random - IRandom object to to generate random indices/values
- * @returns an existing path to a fieldPath with the number of nodes under that field.
- *
- * This function starts at the root of the tree, and traverses through the tree by selecting a
- * random move to perform every iteration (firstfield, nextfield, firstnode, nextnode, etc.)
- * Once the move 'stop' is picked, the fieldPath of the most recent valid cursor location is returned
- * TODO: provide the statistical properties of this function.
- */
-function getExistingFieldPath(tree: ISharedTreeView, random: IRandom): FieldPathWithCount {
-	const cursor = tree.forest.allocateCursor();
-	moveToDetachedField(tree.forest, cursor);
-	const firstNode = cursor.firstNode();
-	assert(firstNode, "tree must contain at least one node");
-	const firstPath = cursor.getPath();
-	assert(firstPath !== undefined, "firstPath must be defined");
-	let path: UpPath = firstPath;
-	const firstField = cursor.firstField();
-	let currentField = cursor.getFieldKey();
-	let currentFieldPath = cursor.getFieldPath();
-	let fieldNodes: number = cursor.getFieldLength();
-	if (!firstField) {
-		// no fields, return the rootnode
-		cursor.free();
-		return {
-			fieldPath: currentFieldPath,
-			fieldKey: currentField,
-			count: fieldNodes,
-		};
-	}
-	currentField = cursor.getFieldKey();
-	currentFieldPath = cursor.getFieldPath();
-	fieldNodes = cursor.getFieldLength();
-	let nodeIndex: number = 0;
+function upPathFromNode(node: TreeNode): UpPath {
+	const parentField = node.parentField.parent;
 
-	let currentMove = random.pick(moves.field);
-	assert(cursor.mode === CursorLocationType.Fields);
-
-	while (currentMove !== "stop") {
-		switch (currentMove) {
-			case "enterNode":
-				if (fieldNodes > 0) {
-					nodeIndex = random.integer(0, fieldNodes - 1);
-					cursor.enterNode(nodeIndex);
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					path = cursor.getPath()!;
-					currentMove = random.pick(moves.nodes);
-				} else {
-					// if the node does not exist, return the most recently entered node
-					cursor.free();
-					return {
-						fieldPath: currentFieldPath,
-						fieldKey: currentField,
-						count: fieldNodes,
-					};
-				}
-				break;
-			case "firstField":
-				if (cursor.firstField()) {
-					currentMove = random.pick(moves.field);
-					fieldNodes = cursor.getFieldLength();
-					currentField = cursor.getFieldKey();
-					currentFieldPath = cursor.getFieldPath();
-				} else {
-					currentMove = "stop";
-				}
-				break;
-			case "nextField":
-				if (cursor.nextField()) {
-					currentMove = random.pick(moves.field);
-					fieldNodes = cursor.getFieldLength();
-					currentField = cursor.getFieldKey();
-					currentFieldPath = cursor.getFieldPath();
-				} else {
-					currentMove = "stop";
-				}
-				break;
-			default:
-				fail(`Unexpected move ${currentMove}`);
-		}
-	}
-	cursor.free();
 	return {
-		fieldPath: currentFieldPath,
-		fieldKey: currentField,
-		count: fieldNodes,
+		parent: parentField.parent ? upPathFromNode(parentField.parent) : undefined,
+		parentField: parentField.key,
+		parentIndex: node.parentField.index,
 	};
 }
 
-function containsAtLeastOneNode(tree: ISharedTreeView): boolean {
-	const cursor = tree.forest.allocateCursor();
-	moveToDetachedField(tree.forest, cursor);
-	const firstNode = cursor.firstNode();
-	cursor.free();
-	return firstNode;
+function fieldUpPathFromField(field: TreeField): FieldUpPath {
+	return {
+		parent: field.parent ? upPathFromNode(field.parent) : undefined,
+		field: field.key,
+	};
+}
+
+type FuzzField =
+	| {
+			type: "optional";
+			content: FuzzNode["boxedOptionalF"];
+	  }
+	| {
+			type: "sequence";
+			content: FuzzNode["boxedSequenceF"];
+	  }
+	| {
+			type: "value";
+			content: FuzzNode["boxedRequiredF"];
+	  };
+
+type FieldFilter = (field: FuzzField) => boolean;
+
+const isNonEmptyField: FieldFilter = (field) =>
+	field.content !== undefined && (field.type !== "sequence" || field.content.length > 0);
+
+function selectField(
+	node: FuzzNode,
+	random: IRandom,
+	filter: FieldFilter = () => true,
+): FuzzField | "no-valid-fields" {
+	// TODO: could use same shuffle technique as below here.
+	const alreadyPickedOptions = new Set<string>();
+	const optional = (): FuzzField | "no-valid-fields" => {
+		const field = { type: "optional", content: node.boxedOptionalF } as const;
+		if (filter(field)) {
+			return field;
+		} else {
+			alreadyPickedOptions.add("optional");
+			return "no-valid-fields";
+		}
+	};
+
+	const value = (): FuzzField | "no-valid-fields" => {
+		const field = { type: "value", content: node.boxedRequiredF } as const;
+		if (filter(field)) {
+			return field;
+		} else {
+			alreadyPickedOptions.add("value");
+			return "no-valid-fields";
+		}
+	};
+
+	const sequence = (): FuzzField | "no-valid-fields" => {
+		const field = { type: "sequence", content: node.boxedSequenceF } as const;
+		if (filter(field)) {
+			return field;
+		} else {
+			alreadyPickedOptions.add("sequence");
+			return "no-valid-fields";
+		}
+	};
+
+	const child = (state: { random: IRandom }): FuzzField | "no-valid-fields" => {
+		const childNodes: FuzzNode[] = [];
+		if (node.optionalF?.is(fuzzNode)) {
+			childNodes.push(node.optionalF);
+		}
+		if (node.requiredF?.is(fuzzNode)) {
+			childNodes.push(node.requiredF);
+		}
+		node.sequenceF.map((child) => {
+			if (child.is(fuzzNode)) {
+				childNodes.push(child);
+			}
+		});
+		random.shuffle(childNodes);
+		for (const child of childNodes) {
+			const result = selectField(child, random, filter);
+			if (result !== "no-valid-fields") {
+				return result;
+			}
+		}
+		alreadyPickedOptions.add("child");
+		return "no-valid-fields";
+	};
+
+	const hasNotAlreadySelected = (name: string) => () => !alreadyPickedOptions.has(name);
+	const generator = createWeightedGenerator<FuzzField | "no-valid-fields", BaseFuzzTestState>([
+		[optional, 1, hasNotAlreadySelected("optional")],
+		[value, 1, hasNotAlreadySelected("value")],
+		[sequence, 1, hasNotAlreadySelected("sequence")],
+		[child, 4, hasNotAlreadySelected("child")],
+		["no-valid-fields", 1, () => alreadyPickedOptions.size === 4],
+	]);
+	let result: FuzzField | "no-valid-fields" | typeof done = "no-valid-fields";
+	do {
+		result = generator({ random });
+	} while (result === "no-valid-fields" && alreadyPickedOptions.size < 4);
+	assert(result !== done, "createWeightedGenerators should never return done");
+	return result;
+	// do {
+	// 	const fieldType = random.pick([...candidateSelections]);
+	// 	switch (fieldType) {
+	// 		case "optional": {
+	// 			const field = { type: "optional", content: node.boxedOptionalF } as const;
+	// 			if (filter(field)) {
+	// 				return field;
+	// 			} else {
+	// 				candidateSelections.delete("optional");
+	// 			}
+	// 			break;
+	// 		}
+	// 		case "value": {
+	// 			const field = { type: "value", content: node.boxedRequiredF } as const;
+	// 			if (filter(field)) {
+	// 				return field;
+	// 			} else {
+	// 				candidateSelections.delete("value");
+	// 			}
+	// 			break;
+	// 		}
+	// 		case "sequence": {
+	// 			const field = { type: "sequence", content: node.boxedSequenceF } as const;
+	// 			if (filter(field)) {
+	// 				return field;
+	// 			} else {
+	// 				candidateSelections.delete("sequence");
+	// 			}
+	// 			break;
+	// 		}
+	// 		case "child": {
+	// 			const childNodes: FuzzNode[] = [];
+	// 			if (node.optionalF?.is(fuzzNode)) {
+	// 				childNodes.push(node.optionalF);
+	// 			}
+	// 			if (node.requiredF?.is(fuzzNode)) {
+	// 				childNodes.push(node.requiredF);
+	// 			}
+	// 			node.sequenceF.map((child) => {
+	// 				if (child.is(fuzzNode)) {
+	// 					childNodes.push(child);
+	// 				}
+	// 			});
+	// 			random.shuffle(childNodes);
+	// 			for (const child of childNodes) {
+	// 				const result = selectField(child, random, filter);
+	// 				if (result !== "no-valid-fields") {
+	// 					return result;
+	// 				}
+	// 			}
+	// 			candidateSelections.delete("child");
+	// 			break;
+	// 		}
+	// 		default:
+	// 			fail(`Unexpected field type ${fieldType}`);
+	// 	}
+	// } while (candidateSelections.size > 0);
+
+	// return "no-valid-fields";
+}
+
+const cachedEditableTreeSymbol = Symbol();
+const getEditableTree = (tree: ISharedTreeView) => {
+	if ((tree as any)[cachedEditableTreeSymbol] === undefined) {
+		(tree as any)[cachedEditableTreeSymbol] = tree.editableTree2(fuzzSchema);
+	}
+
+	return (tree as any)[cachedEditableTreeSymbol];
+};
+
+function trySelectTreeField(
+	tree: ISharedTreeView,
+	random: IRandom,
+	filter: FieldFilter = () => true,
+): FuzzField | "no-valid-fields" {
+	// TODO: Type here should be specifiable without this.
+	const foo = tree.editableTree2(fuzzSchema);
+	const editable: typeof foo = getEditableTree(tree);
+	const options = random.bool(0.1) ? ["root", "child"] : ["child", "root"];
+
+	// const root = (): FuzzField | "no-valid-fields" => {
+	// 	const field = { type: "value", content: node.boxedRequiredF } as const;
+	// 	if (filter(field)) {
+	// 		return field;
+	// 	} else {
+	// 		alreadyPickedOptions.add("value");
+	// 		return "no-valid-fields";
+	// 	}
+	// };
+
+	// const child = (): FuzzField | "no-valid-fields" => {
+	// 	if (editable.content?.is(fuzzNode)) {
+	// 		const result = selectField(editable.content, random, filter);
+	// 		if (result !== "no-valid-fields") {
+	// 			return result;
+	// 		}
+	// 	}
+	// };
+
+	// do {
+	// 	result = generator({ random });
+	// } while (result === "no-valid-fields" && alreadyPickedOptions.size < 4);
+	// assert(result !== done, "createWeightedGenerators should never return done");
+	// return result;
+
+	for (const option of options) {
+		switch (option) {
+			case "root": {
+				// TODO: 'as const' here doesn't work since optional field allowing only FuzzNodes isn't assignable to
+				// optional field allowing that plus primitives.
+				const field = { type: "optional", content: editable } as any;
+				if (filter(field)) {
+					return field;
+				}
+				break;
+			}
+			case "child": {
+				if (editable.content?.is(fuzzNode)) {
+					const result = selectField(editable.content, random, filter);
+					if (result !== "no-valid-fields") {
+						return result;
+					}
+				}
+
+				break;
+			}
+		}
+	}
+
+	return "no-valid-fields";
+}
+
+function selectTreeField(
+	tree: ISharedTreeView,
+	random: IRandom,
+	filter: FieldFilter = () => true,
+): FuzzField {
+	const result = trySelectTreeField(tree, random, filter);
+	assert(result !== "no-valid-fields", "No valid fields found");
+	return result;
 }
 
 function transactionsInProgress(tree: ISharedTreeView) {

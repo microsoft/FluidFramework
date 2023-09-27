@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey, UpPath } from "../../../core";
+import { FieldKey, FieldUpPath, JsonableTree, UpPath } from "../../../core";
 
 export type Operation = TreeOperation | Synchronize;
 
@@ -33,10 +33,16 @@ export interface FieldEdit {
 
 export interface FuzzInsert {
 	type: "insert";
-	parent: UpPath | undefined;
-	field: FieldKey;
+	fieldPath: FieldUpPath;
 	index: number;
-	value: number;
+	value: JsonableTree;
+}
+
+export interface FuzzSet {
+	type: "set";
+	fieldPath: FieldUpPath;
+	// Note: optional fields 'setting' undefined are modeled as deletes.
+	value: JsonableTree;
 }
 
 export type FieldEditTypes = SequenceFieldEdit | ValueFieldEdit | OptionalFieldEdit;
@@ -48,12 +54,12 @@ export interface SequenceFieldEdit {
 
 export interface ValueFieldEdit {
 	type: "value";
-	edit: FuzzDelete;
+	edit: FuzzSet;
 }
 
 export interface OptionalFieldEdit {
 	type: "optional";
-	edit: FuzzInsert | FuzzDelete;
+	edit: FuzzSet | FuzzDelete;
 }
 
 export interface FuzzDelete extends NodeRangePath {

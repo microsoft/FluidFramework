@@ -3,17 +3,19 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import { combineReducersAsync } from "@fluid-internal/stochastic-test-utils";
 import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import { singleTextCursor } from "../../../feature-libraries";
-import { brand, fail } from "../../../util";
+import { fail } from "../../../util";
 import { validateTreeConsistency } from "../../utils";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../../shared-tree";
-import { FieldUpPath } from "../../../core";
+import { FieldUpPath, TreeNavigationResult } from "../../../core";
 import {
 	FieldEdit,
 	FuzzDelete,
 	FuzzFieldChange,
+	FuzzSet,
 	FuzzTransactionType,
 	FuzzUndoRedoType,
 	Operation,
@@ -87,11 +89,8 @@ export function applyFieldEdit(tree: ISharedTreeView, fieldEdit: FieldEdit): voi
 function applySequenceFieldEdit(tree: ISharedTreeView, change: FuzzFieldChange): void {
 	switch (change.type) {
 		case "insert": {
-			const field = tree.editor.sequenceField({ parent: change.parent, field: change.field });
-			field.insert(
-				change.index,
-				singleTextCursor({ type: brand("Test"), value: change.value }),
-			);
+			const field = tree.editor.sequenceField(change.fieldPath);
+			field.insert(change.index, singleTextCursor(change.value));
 			break;
 		}
 		case "delete": {
@@ -107,24 +106,39 @@ function applySequenceFieldEdit(tree: ISharedTreeView, change: FuzzFieldChange):
 	}
 }
 
-function applyValueFieldEdit(tree: ISharedTreeView, change: FuzzDelete): void {
-	const fieldPath: FieldUpPath = {
-		parent: change.firstNode?.parent,
-		field: change.firstNode?.parentField,
-	};
-	const field = tree.editor.sequenceField(fieldPath);
-	field.delete(change.firstNode?.parentIndex, change.count);
+function applyValueFieldEdit(tree: ISharedTreeView, change: FuzzSet): void {
+	const field = tree.editor.valueField(change.fieldPath);
+	field.set(singleTextCursor(change.value));
 }
 
-function applyOptionalFieldEdit(tree: ISharedTreeView, change: FuzzFieldChange): void {
+function applyOptionalFieldEdit(tree: ISharedTreeView, change: FuzzSet | FuzzDelete): void {
 	switch (change.type) {
-		case "insert": {
-			const fieldPath: FieldUpPath = {
-				parent: change.parent,
-				field: change.field,
-			};
-			const field = tree.editor.optionalField(fieldPath);
-			field.set(singleTextCursor({ type: brand("Test"), value: change.value }), false);
+		case "set": {
+			const field = tree.editor.optionalField(change.fieldPath);
+			const { forest } = tree;
+			const anchors = (forest as any).anchors;
+			const cursor = forest.allocateCursor();
+			let wasEmpty: boolean;
+			if (change.fieldPath.parent === undefined) {
+				const result = forest.tryMoveCursorToField(
+					{ parent: undefined, fieldKey: change.fieldPath.field },
+					cursor,
+				);
+				assert(result === TreeNavigationResult.Ok, "Should have successfully navigated");
+				wasEmpty = cursor.getFieldLength() === 0;
+			} else {
+				const anchor = anchors.track(change.fieldPath.parent);
+				const result = forest.tryMoveCursorToField(
+					{ parent: anchor, fieldKey: change.fieldPath.field },
+					cursor,
+				);
+				assert(result === TreeNavigationResult.Ok, "Should have successfully navigated");
+				wasEmpty = cursor.getFieldLength() === 0;
+				anchors.forget(anchor);
+			}
+
+			cursor.free();
+			field.set(singleTextCursor(change.value), wasEmpty);
 			break;
 		}
 		case "delete": {
@@ -133,7 +147,8 @@ function applyOptionalFieldEdit(tree: ISharedTreeView, change: FuzzFieldChange):
 				field: change.firstNode?.parentField,
 			};
 			const field = tree.editor.optionalField(fieldPath);
-			field.set(undefined, true);
+			// Note: we're assuming that the field is currently set.
+			field.set(undefined, false);
 			break;
 		}
 		default:

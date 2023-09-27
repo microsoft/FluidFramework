@@ -16,42 +16,33 @@ import {
 	compareUpPaths,
 	forEachNodeInSubtree,
 } from "../../../core";
-import { FieldKinds, singleTextCursor } from "../../../feature-libraries";
-import { brand } from "../../../util";
+import { FieldKinds, SchemaBuilder, StructTyped } from "../../../feature-libraries";
 import { SharedTree, ISharedTreeView } from "../../../shared-tree";
-import { namedTreeSchema } from "../../utils";
+import * as leaf from "../../../domains/leafDomain";
 
-export const initialTreeState: JsonableTree = {
-	type: brand("Node"),
-	fields: {
-		foo: [
-			{ type: brand("Number"), value: 0 },
-			{ type: brand("Number"), value: 1 },
-			{ type: brand("Number"), value: 2 },
-		],
-		foo2: [
-			{ type: brand("Number"), value: 3 },
-			{ type: brand("Number"), value: 4 },
-			{ type: brand("Number"), value: 5 },
-		],
-	},
-};
-
-const rootFieldSchema = fieldSchema(FieldKinds.value);
-const rootNodeSchema = namedTreeSchema({
-	name: "TestValue",
-	mapFields: fieldSchema(FieldKinds.sequence),
+const builder = new SchemaBuilder("Tree2 Fuzz", {}, leaf.library);
+export const fuzzNode = builder.structRecursive("Fuzz node", {
+	requiredF: SchemaBuilder.fieldRecursive(FieldKinds.value, () => fuzzNode, ...leaf.primitives),
+	optionalF: SchemaBuilder.fieldRecursive(
+		FieldKinds.optional,
+		() => fuzzNode,
+		...leaf.primitives,
+	),
+	sequenceF: SchemaBuilder.fieldRecursive(
+		FieldKinds.sequence,
+		() => fuzzNode,
+		...leaf.primitives,
+	),
 });
 
-export const testSchema: SchemaData = {
-	treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
-	rootFieldSchema,
-};
+export type FuzzNodeSchema = typeof fuzzNode;
+
+export type FuzzNode = StructTyped<FuzzNodeSchema>;
+
+export const fuzzSchema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(fuzzNode));
 
 export const onCreate = (tree: SharedTree) => {
-	tree.storedSchema.update(testSchema);
-	const field = tree.view.editor.sequenceField({ parent: undefined, field: rootFieldKey });
-	field.insert(0, singleTextCursor(initialTreeState));
+	tree.storedSchema.update(fuzzSchema);
 };
 
 export function validateAnchors(

@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import path from "path";
 import { AsyncGenerator, takeAsync } from "@fluid-internal/stochastic-test-utils";
 import {
 	DDSFuzzModel,
@@ -15,7 +16,7 @@ import { UpPath, Anchor, Value } from "../../../core";
 import { SharedTreeTestFactory, validateTree } from "../../utils";
 import { makeOpGenerator, EditGeneratorOpWeights, FuzzTestState } from "./fuzzEditGenerators";
 import { fuzzReducer } from "./fuzzEditReducers";
-import { onCreate, initialTreeState, createAnchors, validateAnchors } from "./fuzzUtils";
+import { onCreate, createAnchors, validateAnchors } from "./fuzzUtils";
 import { Operation } from "./operationTypes";
 
 interface AbortFuzzTestState extends FuzzTestState {
@@ -44,7 +45,7 @@ describe("Fuzz - anchor stability", () => {
 			Operation,
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
-			workloadName: "SharedTree",
+			workloadName: "anchors",
 			factory: new SharedTreeTestFactory(onCreate),
 			generatorFactory: () => generator,
 			reducer: fuzzReducer,
@@ -62,7 +63,9 @@ describe("Fuzz - anchor stability", () => {
 			// aborts any transactions that may still be in progress
 			const tree = finalState.clients[0].channel.view;
 			tree.transaction.abort();
-			validateTree(tree, [initialTreeState]);
+			// TODO: Might want to still use some initial state here, as that might
+			// yield more interesting undo/redo scenarios.
+			validateTree(tree, []);
 			const anchors = finalState.anchors;
 			assert(anchors !== undefined, "Anchors should be defined");
 			validateAnchors(finalState.clients[0].channel.view, anchors[0], true);
@@ -119,6 +122,9 @@ describe("Fuzz - anchor stability", () => {
 			detachedStartOptions: { enabled: false, attachProbability: 1 },
 			numberOfClients: 2,
 			emitter,
+			saveFailures: {
+				directory: path.join(__dirname, "../../../../src/test/shared-tree/fuzz/failures"),
+			},
 		});
 	});
 });
