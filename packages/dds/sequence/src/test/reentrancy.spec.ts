@@ -17,7 +17,6 @@ import {
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { SharedString } from "../sharedString";
 import { resetReentrancyLogCounter } from "../sequence";
-// import { IntervalType } from "../intervals";
 
 describe("SharedString op-reentrancy", () => {
 	/**
