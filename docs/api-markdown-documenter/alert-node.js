@@ -14,7 +14,8 @@ const {
 const alertNodeType = "Alert";
 
 /**
- * An highlighted notice about nearby content for the user.
+ * A block of content representing a notice that should be highlighted for the user.
+ * E.g., a tip or warning for the reader about the described API.
  *
  * @remarks {@link renderAlertNode} demonstrates how the contents are rendered to take advantage of Hugo's `callout` syntax.
  *
