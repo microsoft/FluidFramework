@@ -4,12 +4,12 @@
  */
 import { Flags } from "@oclif/core";
 import { Package, updatePackageJsonFile } from "@fluidframework/build-tools";
-import path from "node:path";
 import { PackageCommand } from "../../BasePackageCommand";
 // eslint-disable-next-line node/no-missing-import
 import type { PackageJson } from "type-fest";
 import { ExtractorConfig } from "@microsoft/api-extractor";
 import { CommandLogger } from "../../logging";
+import path from "node:path";
 
 /**
  * Represents a list of package categorized into two arrays
@@ -28,30 +28,26 @@ interface PackageTypesList {
 /**
  * Represents a configuration object for updating a package.
  */
-interface UpdateConfig {
+interface ReleaseTagConfig {
 	/**
 	 * The package to be updated.
 	 */
 	pkg: Package;
 	/**
-	 * The type of release for the package (e.g., "alpha", "beta", "public").
+	 * ExtractorConfig represents api-extractor.json config file.
+	 */
+	extractorConfig: ExtractorConfig;
+	/**
+	 * The type of release for the package (e.g., "alpha", "beta", "public", "default").
 	 */
 	releaseType: ReleaseTag;
 	/**
 	 * The JSON data for the package.
 	 */
 	json: PackageJson;
-	/**
-	 * The first part of the split string, representing the folder name.
-	 */
-	typesFolder: string;
-	/**
-	 * A boolean value indicating whether alpha/beta keyword is included.
-	 */
-	includesAlphaBeta: boolean;
 }
 
-const knownReleaseTag = ["alpha", "beta", "public"] as const;
+const knownReleaseTag = ["alpha", "beta", "public", "default"] as const;
 
 type ReleaseTag = typeof knownReleaseTag[number];
 
@@ -70,13 +66,13 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 	static readonly flags = {
 		types: Flags.custom<ReleaseTag>({
 			description: "Which .d.ts types to include in the published package.",
+			required: true,
 			parse: async (input) => {
 				if (isReleaseTag(input)) {
 					return input;
 				}
 				throw new Error(`Invalid release type: ${input}`);
 			},
-			required: true,
 		})(),
 		...PackageCommand.flags,
 	};
@@ -102,15 +98,21 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 				return;
 			}
 
-			const [typesFolder] = types.split("/");
-			const includesAlphaBeta: boolean = types.includes("alpha") || types.includes("beta");
+			const configOptions = ExtractorConfig.tryLoadForFolder({
+				startingFolder: pkg.directory,
+			});
+			if (configOptions === undefined) {
+				this.verbose(`No api-extractor config found for ${pkg.name}. Skipping.`);
+				return;
+			}
+			const extractorConfig = ExtractorConfig.prepare(configOptions);
+			this.log(pkg.directory);
 
-			const config: UpdateConfig = {
+			const config: ReleaseTagConfig = {
 				pkg,
+				extractorConfig,
 				releaseType: this.flags.types as ReleaseTag,
 				json,
-				typesFolder,
-				includesAlphaBeta,
 			};
 
 			packageUpdate = updatePackageJsonTypes(config, this.logger);
@@ -139,39 +141,52 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
  * @param log - The logger used for logging verbose information.
  * @returns true if the update was successful, false otherwise.
  */
-function updatePackageJsonTypes(config: UpdateConfig, log: CommandLogger): boolean {
-	const apiExtractorConfigFilePath = path.join(config.pkg.directory, "api-extractor.json");
-	let loadFile;
+function updatePackageJsonTypes(config: ReleaseTagConfig, log: CommandLogger): boolean {
+	let packageUpdate = false;
 	try {
-		loadFile = ExtractorConfig.loadFile(apiExtractorConfigFilePath);
-		const dtsRollupEnabled = loadFile.dtsRollup?.enabled;
-		if (dtsRollupEnabled === true) {
-			log.verbose(`Config exists: ${JSON.stringify(config.pkg.directory)}`);
+		if (config.extractorConfig.rollupEnabled === true) {
+			switch (config.releaseType) {
+				case "alpha": {
+					config.json.types = path.relative(
+						config.pkg.directory,
+						config.extractorConfig.alphaTrimmedFilePath,
+					);
+					packageUpdate = true;
+					break;
+				}
 
-			const alpha = loadFile.dtsRollup?.alphaTrimmedFilePath;
-			const beta = loadFile.dtsRollup?.betaTrimmedFilePath;
+				case "beta": {
+					config.json.types = path.relative(
+						config.pkg.directory,
+						config.extractorConfig.betaTrimmedFilePath,
+					);
+					packageUpdate = true;
+					break;
+				}
 
-			if (config.releaseType === "alpha" && alpha !== "") {
-				config.json.types = `${config.typesFolder}/${config.pkg.nameUnscoped}-alpha.d.ts`;
-				return true;
-			}
+				case "public": {
+					config.json.types = path.relative(
+						config.pkg.directory,
+						config.extractorConfig.publicTrimmedFilePath,
+					);
+					packageUpdate = true;
+					break;
+				}
 
-			if (config.releaseType === "beta" && beta !== "") {
-				config.json.types = `${config.typesFolder}/${config.pkg.nameUnscoped}-beta.d.ts`;
-				return true;
-			}
-
-			if (config.releaseType === "public" && config.includesAlphaBeta) {
-				config.json.types = `${config.typesFolder}/index.d.ts`;
-				return true;
+				default: {
+					config.json.types = path.relative(
+						config.pkg.directory,
+						config.extractorConfig.untrimmedFilePath,
+					);
+					packageUpdate = true;
+					break;
+				}
 			}
 		}
 	} catch {
-		if (loadFile === undefined) {
-			log.verbose(`Config not exists: ${JSON.stringify(config.pkg.directory)}`);
-		}
+		log.verbose(`Unable to update types: ${JSON.stringify(config.extractorConfig)}`);
 	}
-	return false;
+	return packageUpdate;
 }
 
 /**
