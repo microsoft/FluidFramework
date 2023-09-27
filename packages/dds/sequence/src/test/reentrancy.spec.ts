@@ -4,7 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
+import {
+	LocalReferenceCollection,
+	MergeTreeDeltaType,
+	ReferenceType,
+} from "@fluidframework/merge-tree";
 import {
 	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
@@ -13,6 +17,7 @@ import {
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { SharedString } from "../sharedString";
 import { resetReentrancyLogCounter } from "../sequence";
+// import { IntervalType } from "../intervals";
 
 describe("SharedString op-reentrancy", () => {
 	/**
@@ -111,6 +116,44 @@ describe("SharedString op-reentrancy", () => {
 
 			for (const str of [sharedString, sharedString2]) {
 				assert.equal(str.getText(), "abce");
+			}
+		});
+
+		it("remains consistent when deleting reference pos in reentrant callback", () => {
+			sharedString.insertText(0, "abcX");
+			const { segment } = sharedString.getContainingSegment(0);
+			assert(segment);
+			segment.localRefs ??= new LocalReferenceCollection(segment);
+			const localRef = segment.localRefs.createLocalRef(
+				0,
+				ReferenceType.SlideOnRemove,
+				undefined,
+			);
+
+			containerRuntimeFactory.processAllMessages();
+
+			sharedString.on("sequenceDelta", ({ deltaOperation, isLocal }, target) => {
+				if (deltaOperation === MergeTreeDeltaType.INSERT && isLocal) {
+					const { segment: segment2 } = target.getContainingSegment(0);
+					assert(segment2);
+					assert.equal(segment, segment2);
+					assert(segment2.localRefs);
+					segment2.localRefs.removeLocalRef(localRef);
+				}
+			});
+
+			sharedString.insertText(4, "e");
+			containerRuntimeFactory.processAllMessages();
+
+			for (const str of [sharedString, sharedString2]) {
+				str.walkSegments((seg) => {
+					if (!seg.localRefs) {
+						return false;
+					}
+					assert.equal(seg.localRefs.empty, true);
+					assert.equal(seg.localRefs.has(localRef), false);
+					return false;
+				});
 			}
 		});
 
