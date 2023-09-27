@@ -116,7 +116,7 @@ describe("LazyField", () => {
 });
 
 /**
- * Initializes the tree, context, and cursor, and moves the cursor to the tree root.
+ * Initializes a test tree, context, and cursor, and moves the cursor to the tree's root.
  *
  * @returns The initialized context and cursor.
  */
