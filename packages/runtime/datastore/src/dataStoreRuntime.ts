@@ -1183,14 +1183,16 @@ export const mixinSummaryHandler = (
 		async summarize(...args: any[]) {
 			const summary = await super.summarize(...args);
 
-			// Any error coming from app-provided handler should be marked as DataProcessingError
-			const content = await handler(this).catch((e: unknown) => {
+			try {
+				const content = await handler(this);
+				if (content !== undefined) {
+					this.addBlob(summary, content.path, content.content);
+				}
+			} catch (e) {
+				// Any error coming from app-provided handler should be marked as DataProcessingError
 				throw DataProcessingError.wrapIfUnrecognized(e, "mixinSummaryHandler");
-			});
-
-			if (content !== undefined) {
-				this.addBlob(summary, content.path, content.content);
 			}
+
 			return summary;
 		}
 	} as typeof FluidDataStoreRuntime;
