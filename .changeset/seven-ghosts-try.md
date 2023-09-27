@@ -1,6 +1,5 @@
 ---
 "@fluidframework/container-loader": major
-"@fluid-experimental/tree": major
 ---
 
 container-loader: Containers will connect in read-mode by default
