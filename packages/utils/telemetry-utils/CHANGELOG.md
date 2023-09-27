@@ -1,5 +1,19 @@
 # @fluidframework/telemetry-utils
 
+## 2.0.0-internal.6.4.0
+
+### Minor Changes
+
+-   Upcoming: The type of the logger property/param in various APIs will be changing ([#17350](https://github.com/microsoft/FluidFramework/issues/17350)) [27284bcda3](https://github.com/microsoft/FluidFramework/commits/27284bcda3d63cc4306cf76806f8a075db0db60f)
+
+    -   @fluidframework/runtime-definitions
+        -   `IFluidDataStoreRuntime.logger` will be re-typed as `ITelemetryBaseLogger`
+    -   @fluidframework/odsp-driver
+        -   `protected OdspDocumentServiceFactoryCore.createDocumentServiceCore`'s parameter `odspLogger` will be re-typed as `ITelemetryLoggerExt`
+        -   `protected LocalOdspDocumentServiceFactory.createDocumentServiceCore`'s parameter `odspLogger` will be re-typed as `ITelemetryLoggerExt`
+
+    Additionally, several of @fluidframework/telemetry-utils's exports are being marked as internal and should not be consumed outside of other FF packages.
+
 ## 2.0.0-internal.6.3.0
 
 ### Minor Changes
