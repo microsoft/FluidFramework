@@ -1,5 +1,17 @@
 # @fluid-experimental/tree2
 
+## 2.0.0-internal.6.4.0
+
+### Minor Changes
+
+-   tree2: Replace ValueSchema.Serializable with FluidHandle ([#17306](https://github.com/microsoft/FluidFramework/issues/17306)) [99b1f7192e](https://github.com/microsoft/FluidFramework/commits/99b1f7192ec9fed19e2a76d9251c3fd123ae90e0)
+
+    Replace ValueSchema.Serializable with FluidHandle, removing support for arbitrary objects as tree values and preventing "any" type from Serializable from infecting TreeValue.
+
+-   tree2: Restrict struct field names to avoid collisions with schema2 names ([#17089](https://github.com/microsoft/FluidFramework/issues/17089)) [8f8294188f](https://github.com/microsoft/FluidFramework/commits/8f8294188f554e6cc708d6cbbde4ea1dd2e52728)
+
+    Struct field names are now restricted to avoid collisions with schema2 names.
+
 ## 2.0.0-internal.6.3.0
 
 ### Minor Changes
