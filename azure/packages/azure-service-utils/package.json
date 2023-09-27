@@ -36,15 +36,15 @@
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
-		"@fluidframework/protocol-definitions": "^1.0.0",
+		"@fluidframework/protocol-definitions": "^3.0.0",
 		"jsrsasign": "^10.5.25",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.22.0",
+		"@fluid-tools/build-cli": "^0.24.0",
 		"@fluidframework/azure-service-utils-previous": "npm:@fluidframework/azure-service-utils@2.0.0-internal.6.3.0",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "0.24.0-192663",
+		"@fluidframework/build-tools": "^0.24.0",
 		"@fluidframework/eslint-config-fluid": "^3.0.0",
 		"@microsoft/api-extractor": "^7.37.0",
 		"@types/jsrsasign": "^8.0.8",

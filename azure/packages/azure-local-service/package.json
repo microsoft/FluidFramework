@@ -33,11 +33,11 @@
 		"tsc": "tsc"
 	},
 	"dependencies": {
-		"tinylicious": "^1.0.0"
+		"tinylicious": "^2.0.1"
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "0.24.0-192663",
+		"@fluidframework/build-tools": "^0.24.0",
 		"@fluidframework/eslint-config-fluid": "^3.0.0",
 		"@microsoft/api-extractor": "^7.37.0",
 		"copyfiles": "^2.4.1",
