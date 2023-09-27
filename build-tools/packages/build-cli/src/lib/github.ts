@@ -127,7 +127,7 @@ export async function createPullRequest(
 }
 
 // list commits on a pull request
-export async function listCommitsPullRequest(
+export async function listPullRequestCommits(
 	pr: {
 		token: string;
 		owner: string;
@@ -173,7 +173,7 @@ export async function mergePullRequest(
 			commit_message: pr.description,
 			merge_method: pr.mergeStrategy,
 		});
-		log.log(`Squashed pull request`);
+		log.log("Squashed pull request");
 		return squash.status;
 	} catch (error: any) {
 		log.log(`Error: ${JSON.stringify(error.response.data.message)}`);
@@ -204,7 +204,7 @@ export async function getPullRequestInfo(
 	return response;
 }
 
-export async function createComment(
+export async function createPullRequestComment(
 	pr: {
 		token: string;
 		owner: string;
@@ -228,6 +228,6 @@ export async function createComment(
 		},
 	);
 
-	log?.log(`PR comment created`);
+	log?.log("PR comment created");
 	return response;
 }

@@ -14,14 +14,14 @@ import {
 } from "../../lib";
 import { CommandLogger } from "../../logging";
 
-interface CommitData {
+interface ICommitData {
 	sha: string;
 	commit: {
 		message: string;
 	};
 }
 
-interface PullRequestWithComment {
+interface IPullRequestDetails {
 	token: string;
 	owner: string;
 	repo: string;
@@ -29,7 +29,7 @@ interface PullRequestWithComment {
 	comment: string;
 }
 
-interface PullRequestWithDetails {
+interface IPullRequestMergeStrategy {
 	title: string;
 	description: string;
 	mergeStrategy: MergeStrategy;
@@ -82,7 +82,7 @@ export default class MergePullRequest extends BaseCommand<typeof MergePullReques
 		[this.owner, this.repo] = context.originRemotePartialUrl.split("/");
 		this.log(`owner: ${this.owner} and repo: ${this.repo}`);
 
-		const prComment: PullRequestWithComment = {
+		const prComment: IPullRequestDetails = {
 			token: flags.pat,
 			owner: this.owner,
 			repo: this.repo,
@@ -129,13 +129,13 @@ export default class MergePullRequest extends BaseCommand<typeof MergePullReques
 				this.gitRepo,
 				this.logger,
 			);
-			this.log(`Merge Pull Request`);
+			this.log("Merge Pull Request");
 		}
 	}
 
 	protected override async catch(err: Error & { exitCode?: number }): Promise<any> {
 		this.log(`Cannot merge pull request: ${err}`);
-		const comment: PullRequestWithComment = {
+		const comment: IPullRequestDetails = {
 			token: this.flags.pat,
 			owner: this.owner,
 			repo: this.repo,
@@ -147,10 +147,10 @@ export default class MergePullRequest extends BaseCommand<typeof MergePullReques
 }
 
 async function getMergeStrategy(
-	prComment: PullRequestWithComment,
+	prComment: IPullRequestDetails,
 	automationTitle: string,
 	log: CommandLogger,
-): Promise<PullRequestWithDetails> {
+): Promise<IPullRequestMergeStrategy> {
 	let mergeStrategy = MergeStrategy.Squash;
 
 	// create comment on the pr
@@ -188,7 +188,7 @@ async function getMergeStrategy(
 }
 
 async function filterCommits(
-	commitDataArray: CommitData[],
+	commitDataArray: ICommitData[],
 	branch: string,
 	automationTitle: string,
 	gitRepo: Repository,
