@@ -251,22 +251,10 @@ export type DocumentBoundaries = ApiMemberKind[];
 // @public
 export class DocumentNode implements Parent<SectionNode>, DocumentNodeProps {
     constructor(properties: DocumentNodeProps);
-    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: The package "@fluid-tools/api-markdown-documenter" does not have an export "DocumentNodeProperties"
-    //
-    // (undocumented)
     readonly children: SectionNode[];
     // Warning: (ae-forgotten-export) The symbol "DocumentItemMetadata" needs to be exported by the entry point index.d.ts
-    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: The package "@fluid-tools/api-markdown-documenter" does not have an export "DocumentNodeProperties"
-    //
-    // (undocumented)
     readonly documentItemMetadata: DocumentItemMetadata;
-    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: The package "@fluid-tools/api-markdown-documenter" does not have an export "DocumentNodeProperties"
-    //
-    // (undocumented)
     readonly documentPath: string;
-    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: The package "@fluid-tools/api-markdown-documenter" does not have an export "DocumentNodeProperties"
-    //
-    // (undocumented)
     readonly frontMatter?: string;
     readonly type = DocumentationNodeType.Document;
 }

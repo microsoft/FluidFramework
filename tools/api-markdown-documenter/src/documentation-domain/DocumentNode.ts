@@ -39,14 +39,25 @@ export interface DocumentNodeProperties {
 }
 
 /**
- * {@link DocumentNode} construction properties.
+ * Metadata of a {@link DocumentNode} in terms of its API.
+ *
+ * @remarks
+ * `DocumentItemMetadata` aids in tracing a documentation node to its API, useful for cross-referencing and integrations.
  */
 interface DocumentItemMetadata {
 	/**
-	 * Name of the API item from which this document node was generated.
+	 * Name of the original API, e.g., class or function, from which this documentation node is derived.
 	 */
 	readonly apiItemName: string;
+
+	/**
+	 * Category or type of the API like 'class' or 'function'.
+	 */
 	readonly apiItemKind: string;
+
+	/**
+	 * Originating package name for the API.
+	 */
 	readonly packageName: string | undefined;
 }
 
@@ -67,22 +78,22 @@ export class DocumentNode implements UnistParent<SectionNode>, DocumentNodePrope
 	public readonly type = DocumentationNodeType.Document;
 
 	/**
-	 * {@inheritDoc DocumentNodeProperties.documentItemMetadata}
+	 * {@inheritDoc DocumentNodeProps.documentItemMetadata}
 	 */
 	public readonly documentItemMetadata: DocumentItemMetadata;
 
 	/**
-	 * {@inheritDoc DocumentNodeProperties.children}
+	 * {@inheritDoc DocumentNodeProps.children}
 	 */
 	public readonly children: SectionNode[];
 
 	/**
-	 * {@inheritDoc DocumentNodeProperties.documentPath}
+	 * {@inheritDoc DocumentNodeProps.documentPath}
 	 */
 	public readonly documentPath: string;
 
 	/**
-	 * {@inheritDoc DocumentNodeProperties.frontMatter}
+	 * {@inheritDoc DocumentNodeProps.frontMatter}
 	 */
 	public readonly frontMatter?: string;
 
