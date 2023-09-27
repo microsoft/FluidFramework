@@ -7,11 +7,8 @@
 
 import { strict as assert } from "assert";
 
-// import { IFluidHandle } from "@fluidframework/core-interfaces";
-import {
-	// MockHandle,
-	validateAssertionError,
-} from "@fluidframework/test-runtime-utils";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { MockHandle, validateAssertionError } from "@fluidframework/test-runtime-utils";
 
 import { TreeContent } from "../../../shared-tree";
 import {
@@ -48,7 +45,7 @@ const detachedFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: detached
 const rootFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: rootFieldKey };
 
 // Mocks the ID representing a Fluid handle for test-purposes.
-// const mockFluidHandle = new MockHandle(5) as IFluidHandle;
+const mockFluidHandle = new MockHandle(5) as IFluidHandle;
 
 /**
  * Creates a cursor from the provided `context` and moves it to the provided `anchor`.
@@ -339,15 +336,14 @@ describe("LazyOptionalField", () => {
 			);
 		});
 
-		// TODO: current types don't allow fluid handle
-		// it("Fluid Handle", () => {
-		// 	const field = createPrimitiveField(ValueSchema.FluidHandle, mockFluidHandle);
+		it("Fluid Handle", () => {
+			const field = createLeafField(ValueSchema.FluidHandle, mockFluidHandle as any);
 
-		// 	assert.deepEqual(
-		// 		field.map((value) => value),
-		// 		[mockFluidHandle],
-		// 	);
-		// });
+			assert.deepEqual(
+				field.map((value) => value),
+				[mockFluidHandle],
+			);
+		});
 
 		it("No value", () => {
 			const field = createLeafField(ValueSchema.Number, undefined);
@@ -399,14 +395,13 @@ describe("LazyOptionalField", () => {
 			assert.equal(mapResult[0].value, "Hello world");
 		});
 
-		// TODO: current types don't allow fluid handle
-		// it("Fluid Handle", () => {
-		// 	const field = createPrimitiveField(ValueSchema.FluidHandle, mockFluidHandle);
+		it("Fluid Handle", () => {
+			const field = createLeafField(ValueSchema.FluidHandle, mockFluidHandle as any);
 
-		// 	const mapResult = field.mapBoxed((value) => value);
-		// 	assert.equal(mapResult.length, 1);
-		// 	assert.equal(mapResult[0].value, mockFluidHandle);
-		// });
+			const mapResult = field.mapBoxed((value) => value);
+			assert.equal(mapResult.length, 1);
+			assert.equal(mapResult[0].value, mockFluidHandle);
+		});
 
 		it("No value", () => {
 			const field = createLeafField(ValueSchema.String, undefined);
