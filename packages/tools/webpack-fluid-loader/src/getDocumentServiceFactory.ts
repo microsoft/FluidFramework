@@ -29,7 +29,7 @@ export function getDocumentServiceFactory(
 	odspHostStoragePolicy?: HostStoragePolicy,
 ): IDocumentServiceFactory {
 	const userId = uuid();
-	const userName = userId.match(/^([\da-f]{8})-([\da-f]{4})/); // userName takes the first two segments of the userId.
+	const userName = userId.match(/^([\da-f]{8})-([\da-f]{4})/); // Just use the first two segments of the (fake) userId as a fake name.
 
 	const getUser = (): IDevServerUser => ({
 		id: userId,

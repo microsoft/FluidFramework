@@ -46,7 +46,7 @@ export class InsecureTinyliciousTokenProvider implements ITokenProvider {
 		ver: string = "1.0",
 	): string {
 		const userId = uuid();
-		const userName = userId.match(/^([\da-f]{8})-([\da-f]{4})/); // userName takes the first two segments of the userId.
+		const userName = userId.match(/^([\da-f]{8})-([\da-f]{4})/); // Just use the first two segments of the (fake) userId as a fake name.
 
 		// Current time in seconds
 		const now = Math.round(Date.now() / 1000);
