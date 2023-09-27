@@ -36,7 +36,7 @@
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
-		"@fluidframework/protocol-definitions": "^1.1.0",
+		"@fluidframework/protocol-definitions": "^3.0.0",
 		"@fluidframework/replay-driver": "workspace:~"
 	},
 	"devDependencies": {
@@ -62,6 +62,13 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_FileDeltaStorageService": {
+				"backCompat": false
+			},
+			"ClassDeclaration_Replayer": {
+				"backCompat": false
+			}
+		}
 	}
 }

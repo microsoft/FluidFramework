@@ -122,7 +122,6 @@ import { ConnectionManager } from "./connectionManager";
 import { ConnectionState } from "./connectionState";
 import {
 	IProtocolHandler,
-	OnlyValidTermValue,
 	ProtocolHandler,
 	ProtocolHandlerBuilder,
 	protocolHandlerShouldProcessSignal,
@@ -360,7 +359,6 @@ export interface IPendingContainerState {
 	 */
 	savedOps: ISequencedDocumentMessage[];
 	url: string;
-	term: number;
 	clientId?: string;
 }
 
@@ -1142,7 +1140,6 @@ export class Container
 					snapshotBlobs: this.baseSnapshotBlobs,
 					savedOps: this.savedOps,
 					url: this.resolvedUrl.url,
-					term: OnlyValidTermValue,
 					// no need to save this if there is no pending runtime state
 					clientId: pendingRuntimeState !== undefined ? this.clientId : undefined,
 				};
@@ -1782,7 +1779,6 @@ export class Container
 	private async createDetached(codeDetails: IFluidCodeDetails) {
 		const attributes: IDocumentAttributes = {
 			sequenceNumber: detachedContainerRefSeqNumber,
-			term: OnlyValidTermValue,
 			minimumSequenceNumber: 0,
 		};
 
@@ -1848,7 +1844,6 @@ export class Container
 			return {
 				minimumSequenceNumber: 0,
 				sequenceNumber: 0,
-				term: OnlyValidTermValue,
 			};
 		}
 

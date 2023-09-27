@@ -70,7 +70,7 @@
 		"@fluidframework/datastore": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
-		"@fluidframework/protocol-definitions": "^1.1.0",
+		"@fluidframework/protocol-definitions": "^3.0.0",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
@@ -113,6 +113,36 @@
 		"broken": {
 			"ClassDeclaration_ContainerRuntime": {
 				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IAckedSummary": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IAckSummaryResult": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IBroadcastSummaryResult": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ISummaryOpMessage": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ISummaryNackMessage": {
+				"backCompat": false
+			},
+			"ClassDeclaration_Summarizer": {
+				"backCompat": false
+			},
+			"ClassDeclaration_SummaryCollection": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ISummarizerRuntime": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_INackSummaryResult": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ISummaryAckMessage": {
 				"backCompat": false
 			}
 		}
