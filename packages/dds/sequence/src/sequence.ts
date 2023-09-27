@@ -425,12 +425,13 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 	/**
 	 * Walk the underlying segments of the sequence.
-	 * The walked segments may extend beyond the range
-	 * if the segments cross the ranges start or end boundaries.
-	 * Set split range to true to ensure only segments within the
-	 * range are walked.
+	 * The walked segments may extend beyond the range if the segments cross the
+	 * ranges start or end boundaries.
 	 *
-	 * @param handler - The function to handle each segment
+	 * Set split range to true to ensure only segments within the range are walked.
+	 *
+	 * @param handler - The function to handle each segment. Traversal ends if
+	 * this function returns true.
 	 * @param start - Optional. The start of range walk.
 	 * @param end - Optional. The end of range walk
 	 * @param accum - Optional. An object that will be passed to the handler for accumulation

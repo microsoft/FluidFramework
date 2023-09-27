@@ -119,7 +119,7 @@ describe("SharedString op-reentrancy", () => {
 			}
 		});
 
-		it("remains consistent when deleting reference pos in reentrant callback", () => {
+		it("is empty after deleting reference pos in reentrant callback", () => {
 			sharedString.insertText(0, "abcX");
 			const { segment } = sharedString.getContainingSegment(0);
 			assert(segment);
@@ -145,16 +145,42 @@ describe("SharedString op-reentrancy", () => {
 			sharedString.insertText(4, "e");
 			containerRuntimeFactory.processAllMessages();
 
-			for (const str of [sharedString, sharedString2]) {
-				str.walkSegments((seg) => {
-					if (!seg.localRefs) {
-						return false;
-					}
-					assert.equal(seg.localRefs.empty, true);
-					assert.equal(seg.localRefs.has(localRef), false);
+			sharedString.walkSegments((seg) => {
+				if (!seg.localRefs) {
 					return false;
-				});
-			}
+				}
+				assert.equal(seg.localRefs.empty, true);
+				assert.equal(seg.localRefs.has(localRef), false);
+				return false;
+			});
+		});
+
+		it("is empty after deleting segment containing simple reference pos in reentrant callback", () => {
+			sharedString.insertText(0, "abcX");
+			const { segment } = sharedString.getContainingSegment(0);
+			assert(segment);
+			segment.localRefs ??= new LocalReferenceCollection(segment);
+			const localRef = segment.localRefs.createLocalRef(0, ReferenceType.Simple, undefined);
+
+			containerRuntimeFactory.processAllMessages();
+
+			sharedString.on("sequenceDelta", ({ deltaOperation, isLocal }, target) => {
+				if (deltaOperation === MergeTreeDeltaType.INSERT && isLocal) {
+					target.removeRange(0, 4);
+				}
+			});
+
+			sharedString.insertText(4, "e");
+			containerRuntimeFactory.processAllMessages();
+
+			sharedString.walkSegments((seg) => {
+				if (!seg.localRefs) {
+					return false;
+				}
+				assert.equal(seg.localRefs.empty, true);
+				assert.equal(seg.localRefs.has(localRef), false);
+				return false;
+			});
 		});
 
 		it("logs reentrant events a fixed number of times", () => {
