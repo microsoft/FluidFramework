@@ -7,6 +7,7 @@ import {
 	ITelemetryLoggerExt,
 	MonitoringContext,
 	PerformanceEvent,
+	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import { performance, stringToBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";

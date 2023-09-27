@@ -88,6 +88,31 @@ describe("PerformanceEvent", () => {
 			assert.equal(logger.eventsLogged, 4);
 		});
 
+		it("No sampling by default", async () => {
+			await Promise.all(
+				Array.from({ length: 100 }).map(async (_) =>
+					PerformanceEvent.timedExecAsync(
+						logger,
+						{ eventName: "TestingAsync" },
+						asyncCallback,
+						{ start: true, end: true, cancel: "generic" },
+						true,
+					),
+				),
+			);
+
+			Array.from({ length: 100 }).map((_) =>
+				PerformanceEvent.timedExec(logger, { eventName: "TestingSync" }, callback, {
+					start: true,
+					end: true,
+					cancel: "generic",
+				}),
+			);
+
+			assert.equal(callbackCalls, 200);
+			assert.equal(logger.eventsLogged, 200 * 2);
+		});
+
 		it("Sampling for async", async () => {
 			await Promise.all(
 				Array.from({ length: 100 }).map(async (_) =>
