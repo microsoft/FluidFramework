@@ -4,6 +4,7 @@
  */
 import type { Parent as UnistParent } from "unist";
 
+import { ApiItemKind } from "@microsoft/api-extractor-model";
 import { DocumentationNodeType } from "./DocumentationNodeType";
 import { SectionNode } from "./SectionNode";
 
@@ -55,10 +56,11 @@ export interface DocumentItemMetadata {
 	/**
 	 * Category or type of the API like 'class' or 'function'.
 	 */
-	readonly apiItemKind: string;
+	readonly apiItemKind: ApiItemKind;
 
 	/**
 	 * Originating package name for the API.
+	 * @remarks documents corresponding to an entity that doesn't belong to a package (e.g. an ApiModel) will not have this field set.
 	 */
 	readonly packageName: string | undefined;
 }
