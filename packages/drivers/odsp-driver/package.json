@@ -68,8 +68,8 @@
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/odsp-doclib-utils": "workspace:~",
 		"@fluidframework/odsp-driver-definitions": "workspace:~",
-		"@fluidframework/protocol-base": "^1.0.1",
-		"@fluidframework/protocol-definitions": "^1.1.0",
+		"@fluidframework/protocol-base": "^2.0.1",
+		"@fluidframework/protocol-definitions": "^3.0.0",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"node-fetch": "^2.6.9",
 		"socket.io-client": "^4.6.1",
@@ -102,6 +102,13 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_ISnapshotContents": {
+				"backCompat": false
+			},
+			"ClassDeclaration_Replayer": {
+				"backCompat": false
+			}
+		}
 	}
 }

@@ -102,7 +102,7 @@
 		"@fluidframework/odsp-doclib-utils": "workspace:~",
 		"@fluidframework/odsp-driver-definitions": "workspace:~",
 		"@fluidframework/ordered-collection": "workspace:~",
-		"@fluidframework/protocol-definitions": "^1.1.0",
+		"@fluidframework/protocol-definitions": "^3.0.0",
 		"@fluidframework/register-collection": "workspace:~",
 		"@fluidframework/request-handler": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
@@ -119,7 +119,7 @@
 		"semver": "^7.5.3",
 		"sinon": "^7.4.2",
 		"start-server-and-test": "^1.11.7",
-		"tinylicious": "^1.0.0",
+		"tinylicious": "^2.0.1",
 		"url": "^0.11.0",
 		"uuid": "^9.0.0"
 	},

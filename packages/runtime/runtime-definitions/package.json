@@ -35,7 +35,7 @@
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/protocol-definitions": "^1.1.0"
+		"@fluidframework/protocol-definitions": "^3.0.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.24.0",
