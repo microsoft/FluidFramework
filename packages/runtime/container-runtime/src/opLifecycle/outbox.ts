@@ -87,6 +87,7 @@ export class Outbox {
 	private readonly attachFlowBatch: BatchManager;
 	private readonly mainBatch: BatchManager;
 	private readonly blobAttachBatch: BatchManager;
+	private readonly idAllocationBatch: BatchManager;
 	private readonly defaultAttachFlowSoftLimitInBytes = 320 * 1024;
 	private batchRebasesToReport = 5;
 	private rebasing = false;
@@ -112,6 +113,7 @@ export class Outbox {
 		this.attachFlowBatch = new BatchManager({ hardLimit, softLimit });
 		this.mainBatch = new BatchManager({ hardLimit });
 		this.blobAttachBatch = new BatchManager({ hardLimit });
+		this.idAllocationBatch = new BatchManager({ hardLimit });
 	}
 
 	public get messageCount(): number {
@@ -228,6 +230,12 @@ export class Outbox {
 		}
 	}
 
+	public submitIdAllocation(message: BatchMessage) {
+		this.maybeFlushPartialBatch();
+
+		this.addMessageToBatchManager(this.idAllocationBatch, message);
+	}
+
 	private addMessageToBatchManager(batchManager: BatchManager, message: BatchMessage) {
 		if (
 			!batchManager.push(
@@ -256,6 +264,7 @@ export class Outbox {
 	}
 
 	private flushAll() {
+		this.flushInternal(this.idAllocationBatch);
 		this.flushInternal(this.attachFlowBatch);
 		this.flushInternal(this.blobAttachBatch, true /* disableGroupedBatching */);
 		this.flushInternal(this.mainBatch);

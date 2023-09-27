@@ -3383,7 +3383,7 @@ export class ContainerRuntime
 			}
 
 			if (idAllocationBatchMessage !== undefined) {
-				this.outbox.submit(idAllocationBatchMessage);
+				this.outbox.submitIdAllocation(idAllocationBatchMessage);
 			}
 		}
 	}
