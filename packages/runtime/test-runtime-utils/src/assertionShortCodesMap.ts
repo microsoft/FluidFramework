@@ -228,8 +228,6 @@ export const shortCodeMap = {
 	"0x11e": "client is undefined",
 	"0x11f": "requesting unknown blobs",
 	"0x120": "Undefined latency statistics (op send time)",
-	"0x124": "inconsistent readonly property/event state",
-	"0x125": "Unsafe to transition to read-only state!",
 	"0x126": "Expected createSubRequest url to include a leading slash",
 	"0x127": "dirty document event not set on replay",
 	"0x12a": "Missing blob id on metadata",

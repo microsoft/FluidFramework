@@ -4,7 +4,7 @@
 "@fluidframework/aqueduct": major
 ---
 
-Various request related APIs have been deprecated
+DEPRECATED: container-loader: Various request related APIs have been deprecated
 
 Please remove all calls to the following functions and instead use the new `entryPoint` pattern:
 

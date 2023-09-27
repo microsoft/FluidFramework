@@ -2,7 +2,7 @@
 "@fluidframework/core-interfaces": major
 ---
 
-IFluidRouter and IProvideFluidRouter deprecated
+DEPRECATED: core-interfaces: IFluidRouter and IProvideFluidRouter deprecated
 
 `IFluidRouter` and `IProvideFluidRouter` have been deprecated. Please remove all usages of these interfaces and migrate to the new `entryPoint` pattern.
 

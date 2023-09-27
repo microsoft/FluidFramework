@@ -5,7 +5,7 @@
 "@fluidframework/runtime-definitions": major
 ---
 
-IContainer's and IDataStore's IFluidRouter capabilities are deprecated
+container-definitions: IContainer's and IDataStore's IFluidRouter capabilities are deprecated
 
 `IFluidRouter` and `request({ url: "/" })` on `IContainer` and `IDataStore` are deprecated and will be removed in a future major release. Please migrate all usage to the appropriate `getEntryPoint()` or `entryPoint` APIs.
 

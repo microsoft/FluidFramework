@@ -22,10 +22,15 @@ import {
 	createDocumentId,
 	LoaderContainerTracker,
 	ITestObjectProvider,
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { ContainerRuntime, ISummarizer, Summarizer } from "@fluidframework/container-runtime";
+import { SharedMap } from "@fluidframework/map";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 const counterKey = "count";
 
@@ -350,6 +355,45 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 			container2.deltaManager.lastSequenceNumber,
 			"container2 should still be at the specified sequence number",
 		);
+	});
+
+	it("forceReadonly works", async () => {
+		const mapId = "mapKey";
+		const testContainerConfig: ITestContainerConfig = {
+			fluidDataObjectType: DataObjectFactoryType.Test,
+			registry: [[mapId, SharedMap.getFactory()]],
+		};
+		const created = await provider.makeTestContainer(testContainerConfig);
+		const do1 = await requestFluidObject<ITestFluidObject>(created, "default");
+		const map1 = await do1.getSharedObject<SharedMap>(mapId);
+
+		const headers: IRequestHeader = {
+			[LoaderHeader.cache]: false,
+			[LoaderHeader.loadMode]: { deltaConnection: "delayed" },
+		};
+
+		const loader = provider.makeTestLoader(testContainerConfig);
+		const loaded = await loader.resolve({
+			url: await provider.driver.createContainerUrl(provider.documentId),
+			headers,
+		});
+		const do2 = await requestFluidObject<ITestFluidObject>(loaded, "default");
+		loaded.connect();
+		loaded.forceReadonly?.(true);
+		const map2 = await do2.getSharedObject<SharedMap>(mapId);
+		map2.set("key1", "1");
+		map2.set("key2", "2");
+		await provider.ensureSynchronized();
+
+		// The container is in read-only mode, its changes haven't been sent
+		assert.strictEqual(map1.get("key1"), undefined);
+		assert.strictEqual(map1.get("key2"), undefined);
+
+		// The container's read-only mode is cleared, so the pending ops must be sent
+		loaded.forceReadonly?.(false);
+		await provider.ensureSynchronized();
+		assert.strictEqual(map1.get("key1"), "1");
+		assert.strictEqual(map1.get("key2"), "2");
 	});
 
 	describe("Expected error cases", () => {
