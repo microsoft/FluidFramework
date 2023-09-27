@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils";
 import { Adapters, TreeSchemaIdentifier, ValueSchema } from "../core";
 import { RestrictiveReadonlyRecord } from "../util";
-import { FieldKindTypes, FieldKinds } from "./default-field-kinds";
+import { FieldKinds } from "./default-field-kinds";
 import {
 	SchemaLibraryData,
 	SchemaLintConfiguration,
@@ -19,6 +19,7 @@ import {
 	RecursiveTreeSchema,
 	FlexList,
 } from "./typed-schema";
+import { FieldKind } from "./modular-schema";
 
 // TODO: tests and examples for this file
 
@@ -197,7 +198,7 @@ export class SchemaBuilder {
 	 * @privateRemarks
 	 * TODO: since this APi surface is using classes, maybe just have users do `new FieldSchema` instead?
 	 */
-	public static field<Kind extends FieldKindTypes, T extends AllowedTypes>(
+	public static field<Kind extends FieldKind, T extends AllowedTypes>(
 		kind: Kind,
 		...allowedTypes: T
 	): FieldSchema<Kind, T> {
@@ -249,7 +250,7 @@ export class SchemaBuilder {
 	 * TODO: Try and find a way to provide a more specific type without triggering the above error.
 	 */
 	public static fieldRecursive<
-		Kind extends FieldKindTypes,
+		Kind extends FieldKind,
 		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
 		T extends FlexList<RecursiveTreeSchema>,
 	>(kind: Kind, ...allowedTypes: T): FieldSchema<Kind, T> {
@@ -286,7 +287,7 @@ export class SchemaBuilder {
 	 *
 	 * May only be called once after adding content to builder is complete.
 	 */
-	public intoDocumentSchema<Kind extends FieldKindTypes, Types extends AllowedTypes>(
+	public intoDocumentSchema<Kind extends FieldKind, Types extends AllowedTypes>(
 		root: FieldSchema<Kind, Types>,
 	): TypedSchemaCollection<FieldSchema<Kind, Types>> {
 		this.finalize();

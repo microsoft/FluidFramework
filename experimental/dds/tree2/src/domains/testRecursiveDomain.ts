@@ -14,7 +14,7 @@ import { AllowedTypes, FieldKinds, SchemaBuilder } from "../feature-libraries";
 import { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../util";
 import * as leaf from "./leafDomain";
 
-const builder = new SchemaBuilder("Json Domain", {}, leaf.library);
+const builder = new SchemaBuilder("Test Recursive Domain", {}, leaf.library);
 
 /**
  * @alpha
@@ -48,4 +48,4 @@ type _1 = requireTrue<
 /**
  * @alpha
  */
-export const jsonSchema = builder.intoLibrary();
+export const library = builder.intoLibrary();
