@@ -156,8 +156,9 @@ export const MonacoView: React.FC<IMonacoViewProps> = (props: IMonacoViewProps) 
 								break;
 							}
 
-							default:
+							default: {
 								break;
+							}
 						}
 					}
 				}

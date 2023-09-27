@@ -175,7 +175,7 @@ importers:
       '@types/supertest': ^2.0.7
       '@types/uuid': ^3.4.4
       async: ^3.2.2
-      axios: ^0.26.0
+      axios: ^1.5.0
       axios-mock-adapter: ^1.19.0
       body-parser: ^1.17.2
       c8: ^7.7.1
@@ -215,7 +215,7 @@ importers:
       '@fluidframework/server-services-shared': 2.0.0-191276
       '@fluidframework/server-services-telemetry': 2.0.0-191276
       '@fluidframework/server-services-utils': 2.0.0-191276
-      axios: 0.26.1_debug@4.3.4
+      axios: 1.5.0_debug@4.3.4
       body-parser: 1.20.2
       compression: 1.7.4
       cors: 2.8.5
@@ -244,7 +244,7 @@ importers:
       '@types/supertest': 2.0.12
       '@types/uuid': 3.4.10
       async: 3.2.4
-      axios-mock-adapter: 1.21.4_axios@0.26.1
+      axios-mock-adapter: 1.21.4_axios@1.5.0
       c8: 7.14.0
       concurrently: 8.2.1
       eslint: 8.27.0
@@ -4936,7 +4936,6 @@ packages:
 
   /asynckit/0.4.0:
     resolution: {integrity: sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==}
-    dev: true
 
   /at-least-node/1.0.0:
     resolution: {integrity: sha512-+q/t7Ekv1EDY2l6Gda6LLiX14rU9TV20Wa3ofeQmwPFZbOMo9DXrLbOjFaaclkXKWidIaopwAObQDqwWtGUjqg==}
@@ -4968,12 +4967,12 @@ packages:
       xml2js: 0.5.0
     dev: true
 
-  /axios-mock-adapter/1.21.4_axios@0.26.1:
+  /axios-mock-adapter/1.21.4_axios@1.5.0:
     resolution: {integrity: sha512-ztnENm28ONAKeRXC/6SUW6pcsaXbThKq93MRDRAA47LYTzrGSDoO/DCr1NHz7jApEl95DrBoGPvZ0r9xtSbjqw==}
     peerDependencies:
       axios: '>= 0.17.0'
     dependencies:
-      axios: 0.26.1_debug@4.3.4
+      axios: 1.5.0_debug@4.3.4
       fast-deep-equal: 3.1.3
       is-buffer: 2.0.5
     dev: true
@@ -4985,8 +4984,8 @@ packages:
     transitivePeerDependencies:
       - debug
 
-  /axios/1.4.0:
-    resolution: {integrity: sha512-S4XCWMEmzvo64T9GfvQDOXgYRDJ/wsSZc7Jvdgx5u1sd0JwsuPLqb3SYmusag+edF6ziyMensPVqLTSc1PiSEA==}
+  /axios/1.5.0:
+    resolution: {integrity: sha512-D4DdjDo5CY50Qms0qGQTTw6Q44jl7zRwY7bthds06pUGfChBCTcQs+N743eFWGEd6pRTMd6A+I87aWyFV5wiZQ==}
     dependencies:
       follow-redirects: 1.15.2
       form-data: 4.0.0
@@ -4994,6 +4993,15 @@ packages:
     transitivePeerDependencies:
       - debug
     dev: true
+
+  /axios/1.5.0_debug@4.3.4:
+    resolution: {integrity: sha512-D4DdjDo5CY50Qms0qGQTTw6Q44jl7zRwY7bthds06pUGfChBCTcQs+N743eFWGEd6pRTMd6A+I87aWyFV5wiZQ==}
+    dependencies:
+      follow-redirects: 1.15.2_debug@4.3.4
+      form-data: 4.0.0
+      proxy-from-env: 1.1.0
+    transitivePeerDependencies:
+      - debug
 
   /azure-devops-node-api/11.2.0:
     resolution: {integrity: sha512-XdiGPhrpaT5J8wdERRKs5g8E0Zy1pvOYTli7z9E8nmOn3YGp4FhtjhrOyFmX/8veWCwdI69mCHKJw6l+4J/bHA==}
@@ -5787,7 +5795,6 @@ packages:
     engines: {node: '>= 0.8'}
     dependencies:
       delayed-stream: 1.0.0
-    dev: true
 
   /command-line-args/4.0.7:
     resolution: {integrity: sha512-aUdPvQRAyBvQd2n7jXcsMDz68ckBJELXNzBybCHOibUWEg0mWTnaYCSRU8h9R+aNRSvDihJtssSRCiDRpLaezA==}
@@ -6410,7 +6417,6 @@ packages:
   /delayed-stream/1.0.0:
     resolution: {integrity: sha512-ZySD7Nf91aLB0RxL4KGrKHBXl7Eds1DAmEdcoVawXnLD7SDhpNgtuII2aAkg7a7QS41jxPSZ17p4VdGnMHk3MQ==}
     engines: {node: '>=0.4.0'}
-    dev: true
 
   /delegates/1.0.0:
     resolution: {integrity: sha512-bd2L678uiWATM6m5Z1VzNCErI3jiGzt6HGY8OVICs40JQq/HALfbyNJmp0UDakEY4pMMaN0Ly5om/B1VI/+xfQ==}
@@ -7685,7 +7691,6 @@ packages:
       asynckit: 0.4.0
       combined-stream: 1.0.8
       mime-types: 2.1.35
-    dev: true
 
   /formidable/1.2.6:
     resolution: {integrity: sha512-KcpbcpuLNOwrEjnbpMC0gS+X8ciDoZE1kkqzat4a8vrprf+s9pKNQ/QIwWfbfs4ltgmFl3MD177SNTkve3BwGQ==}
@@ -10890,7 +10895,7 @@ packages:
       '@yarnpkg/lockfile': 1.1.0
       '@yarnpkg/parsers': 3.0.0-rc.48.1
       '@zkochan/js-yaml': 0.0.6
-      axios: 1.4.0
+      axios: 1.5.0
       chalk: 4.1.2
       cli-cursor: 3.1.0
       cli-spinners: 2.6.1
@@ -11761,7 +11766,6 @@ packages:
 
   /proxy-from-env/1.1.0:
     resolution: {integrity: sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg==}
-    dev: true
 
   /pseudomap/1.0.2:
     resolution: {integrity: sha512-b/YwNhb8lk1Zz2+bXXpS/LK9OisiZZ1SNsSLxN1x2OXVEhW2Ckr/7mWE5vrC1ZTiJlD9g19jWszTmJsB+oEpFQ==}

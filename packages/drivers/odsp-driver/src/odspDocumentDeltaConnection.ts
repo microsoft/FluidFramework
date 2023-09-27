@@ -129,27 +129,32 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
 		// Server sends this event when it wants to disconnect a particular client in which case the client id would
 		// be present or if it wants to disconnect all the clients. The server always closes the socket in case all
 		// clients needs to be disconnected. So fully remove the socket reference in this case.
-		socket.on("server_disconnect", (socketError: IOdspSocketError, clientId?: string) => {
-			// Treat all errors as recoverable, and rely on joinSession / reconnection flow to
-			// filter out retryable vs. non-retryable cases.
-			const error = errorObjectFromSocketError(socketError, "server_disconnect");
-			error.addTelemetryProperties({ disconnectClientId: clientId });
-			error.canRetry = true;
-
-			// see comment in disconnected() getter
-			// Setting it here to ensure socket reuse does not happen if new request to connect
-			// comes in from "disconnect" listener below, before we close socket.
-			this.isPendingInitialConnection = false;
-
-			if (clientId === undefined) {
-				// We could first raise "disconnect" event, but that may result in socket reuse due to
-				// new connection comming in. So, it's better to have more explicit flow to make it impossible.
-				this.closeSocket(error);
-			} else {
-				this.emit("disconnect", error, clientId);
-			}
-		});
+		socket.on("server_disconnect", this.serverDisconnectEventHandler);
 	}
+
+	private readonly serverDisconnectEventHandler = (
+		socketError: IOdspSocketError,
+		clientId?: string,
+	) => {
+		// Treat all errors as recoverable, and rely on joinSession / reconnection flow to
+		// filter out retryable vs. non-retryable cases.
+		const error = errorObjectFromSocketError(socketError, "server_disconnect");
+		error.addTelemetryProperties({ disconnectClientId: clientId });
+		error.canRetry = true;
+
+		// see comment in disconnected() getter
+		// Setting it here to ensure socket reuse does not happen if new request to connect
+		// comes in from "disconnect" listener below, before we close socket.
+		this.isPendingInitialConnection = false;
+
+		if (clientId === undefined) {
+			// We could first raise "disconnect" event, but that may result in socket reuse due to
+			// new connection comming in. So, it's better to have more explicit flow to make it impossible.
+			this.closeSocket(error);
+		} else {
+			this.emit("disconnect", error, clientId);
+		}
+	};
 
 	private clearTimer() {
 		if (this.delayDeleteTimeout !== undefined) {
@@ -163,6 +168,7 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
 			return;
 		}
 
+		this._socket.off("server_disconnect", this.serverDisconnectEventHandler);
 		this.clearTimer();
 
 		assert(
@@ -536,14 +542,14 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 
 		this.socketReference!.on("disconnect", this.disconnectHandler);
 
-		this.socket.on("get_ops_response", (result: IGetOpsResponse) => {
+		this.addTrackedListener("get_ops_response", (result: IGetOpsResponse) => {
 			const messages = result.messages;
 			const data = this.getOpsMap.get(result.nonce);
 			// Due to socket multiplexing, this client may not have asked for any data
 			// If so, there it most likely does not need these ops (otherwise it already asked for them)
 			// Also we may have deleted entry in this.getOpsMap due to too many requests and too slow response.
 			// But not processing such result may push us into infinite loop of fast requests and dropping all responses
-			if (data !== undefined || result.nonce.indexOf(this.requestOpsNoncePrefix) === 0) {
+			if (data !== undefined || result.nonce.startsWith(this.requestOpsNoncePrefix)) {
 				this.getOpsMap.delete(result.nonce);
 				const common = {
 					eventName: "GetOps",
@@ -571,7 +577,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			}
 		});
 
-		this.socket.on("flush_ops_response", (result: IFlushOpsResponse) => {
+		this.addTrackedListener("flush_ops_response", (result: IFlushOpsResponse) => {
 			if (this.flushOpNonce === result.nonce) {
 				const seq = result.lastPersistedSequenceNumber;
 				let category: "generic" | "error" = "generic";

@@ -3,28 +3,31 @@
  * Licensed under the MIT License.
  */
 
+// Indexed-object style is used to ease documentation.
+/* eslint-disable @typescript-eslint/consistent-indexed-object-style */
+
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
-	IDisposable,
-	IEvent,
-	IFluidHandle,
-	IFluidLoadable,
-	IProvideFluidHandle,
+	type IDisposable,
+	type IEvent,
+	type IFluidHandle,
+	type IFluidLoadable,
+	type IProvideFluidHandle,
 } from "@fluidframework/core-interfaces";
-import { ISharedObject } from "@fluidframework/shared-object-base";
+import { type ISharedObject } from "@fluidframework/shared-object-base";
 
-import { FluidObjectId } from "../CommonInterfaces";
+import { type FluidObjectId } from "../CommonInterfaces";
 import { visualizeUnknownSharedObject } from "./DefaultVisualizers";
 import {
 	createHandleNode,
-	FluidObjectNode,
+	type FluidObjectNode,
 	VisualNodeKind,
-	VisualChildNode,
-	Primitive,
-	RootHandleNode,
+	type VisualChildNode,
+	type Primitive,
+	type RootHandleNode,
 	unknownObjectNode,
 } from "./VisualTree";
-import { Edit, EditSharedObject, SharedObjectEdit } from "./DataEditing";
+import { type Edit, type EditSharedObject, type SharedObjectEdit } from "./DataEditing";
 
 // Ideas:
 // - Hold onto previous summary and only transmit diff?
@@ -212,17 +215,17 @@ export class DataVisualizerGraph
 		const result: Record<string, RootHandleNode> = {};
 		await Promise.all(
 			rootDataEntries.map(async ([key, value]) => {
-				if (value.handle !== undefined) {
+				if (value.handle === undefined) {
+					console.error(
+						`Container data includes a non-Fluid object under key ${key}. Cannot visualize!`,
+					);
+					result[key] = unknownObjectNode;
+				} else {
 					const fluidObjectId = await this.registerVisualizerForHandle(value.handle);
 					result[key] =
 						fluidObjectId === undefined
 							? unknownObjectNode
 							: createHandleNode(fluidObjectId);
-				} else {
-					console.error(
-						`Container data includes a non-Fluid object under key ${key}. Cannot visualize!`,
-					);
-					result[key] = unknownObjectNode;
 				}
 			}),
 		);
@@ -257,9 +260,7 @@ export class DataVisualizerGraph
 		if (!this.visualizerNodes.has(sharedObject.id)) {
 			// Create visualizer node for the shared object
 			const visualizationFunction =
-				this.visualizers[sharedObject.attributes.type] !== undefined
-					? this.visualizers[sharedObject.attributes.type]
-					: visualizeUnknownSharedObject;
+				this.visualizers[sharedObject.attributes.type] ?? visualizeUnknownSharedObject;
 
 			// Create visualizer node for the shared object
 			const editorFunction = this.editors[sharedObject.attributes.type];

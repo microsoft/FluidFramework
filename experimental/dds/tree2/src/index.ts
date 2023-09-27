@@ -122,6 +122,8 @@ export {
 	jsonSchema,
 	nodeKeyField,
 	nodeKeySchema,
+	leaf,
+	testRecursiveDomain,
 } from "./domains";
 
 export {
@@ -205,7 +207,6 @@ export {
 	UnwrappedUntypedTree,
 	UntypedTreeOrPrimitive,
 	SchemaBuilder,
-	FieldKindTypes,
 	AllowedTypes,
 	TreeSchema,
 	BrandedFieldKind,

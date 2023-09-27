@@ -4,8 +4,8 @@
  */
 import type { ParagraphNode } from "../../../documentation-domain";
 import type { DocumentWriter } from "../../DocumentWriter";
-import { renderNodes } from "../Render";
 import type { RenderContext } from "../RenderContext";
+import { renderContentsUnderTag } from "../Utilities";
 
 /**
  * Renders a {@link ParagraphNode} as HTML.
@@ -19,11 +19,5 @@ export function renderParagraph(
 	writer: DocumentWriter,
 	context: RenderContext,
 ): void {
-	writer.ensureNewLine(); // Ensure line break before paragraph
-	writer.writeLine("<p>");
-	writer.increaseIndent();
-	renderNodes(node.children, writer, context);
-	writer.ensureNewLine(); // Ensure line break after content
-	writer.decreaseIndent();
-	writer.writeLine("</p>");
+	renderContentsUnderTag(node.children, "p", writer, context);
 }

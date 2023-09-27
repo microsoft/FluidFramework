@@ -29,9 +29,7 @@ describe("OrderedListNode Markdown rendering tests", () => {
 
 	describe("Table context", () => {
 		it("Empty list", () => {
-			expect(testRender(OrderedListNode.Empty, { insideTable: true })).to.equal(
-				"<ol>\n</ol>\n",
-			);
+			expect(testRender(OrderedListNode.Empty, { insideTable: true })).to.equal("<ol></ol>");
 		});
 
 		it("Simple list", () => {
@@ -44,18 +42,17 @@ describe("OrderedListNode Markdown rendering tests", () => {
 
 			const expected = [
 				"<ol>",
-				"  <li>",
-				`    ${text1}`,
-				"  </li>",
-				"  <li>",
-				`    ${text2}`,
-				"  </li>",
-				"  <li>",
-				`    ${text3}`,
-				"  </li>",
+				"<li>",
+				`${text1}`,
+				"</li>",
+				"<li>",
+				`${text2}`,
+				"</li>",
+				"<li>",
+				`${text3}`,
+				"</li>",
 				"</ol>",
-				"",
-			].join("\n");
+			].join("");
 
 			expect(result).to.equal(expected);
 		});

@@ -218,8 +218,3 @@ export const FieldKinds: {
 	readonly nodeKey: NodeKeyFieldKind;
 	readonly forbidden: Forbidden;
 } = { value, optional, sequence, nodeKey, forbidden };
-
-/**
- * @alpha
- */
-export type FieldKindTypes = typeof FieldKinds[keyof typeof FieldKinds];
