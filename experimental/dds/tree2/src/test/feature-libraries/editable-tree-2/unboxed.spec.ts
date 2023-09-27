@@ -29,7 +29,7 @@ import {
 import { Context } from "../../../feature-libraries/editable-tree-2/context";
 import { unboxedField } from "../../../feature-libraries/editable-tree-2/unboxed";
 import { forestWithContent } from "../../utils";
-import { getReadonlyContext } from "./utils";
+import { contextWithContentReadonly, getReadonlyContext } from "./utils";
 
 const rootFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: rootFieldKey };
 
