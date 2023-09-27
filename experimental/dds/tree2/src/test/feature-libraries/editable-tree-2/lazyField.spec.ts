@@ -259,7 +259,7 @@ describe("LazyOptionalField", () => {
 	});
 
 	/**
-	 * Creates a single-node, primitive tree, and returns a field associated with that node.
+	 * Creates a tree whose root has a single leaf field, and returns that field.
 	 */
 	function createLeafField(
 		kind: ValueSchema,
@@ -284,7 +284,7 @@ describe("LazyOptionalField", () => {
 	}
 
 	/**
-	 * Creates a single-node, struct tree, and returns a field associated with that node.
+	 * Creates a tree whose root has a single struct field, and returns that field.
 	 */
 	function createStructField(
 		initialTree?:
