@@ -611,6 +611,7 @@ export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
 
 	/**
 	 * Moves the specified items to the desired location within the sequence.
+	 * @param index - The index to move the items to.
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
 	 * @param source - The source sequence to move items out of.
