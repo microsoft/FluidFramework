@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/devtools-view",
-	"version": "2.0.0-internal.6.4.0",
+	"version": "2.0.0-internal.7.1.0",
 	"private": true,
 	"description": "Contains a visualization suite for use alongside the Fluid Devtools",
 	"homepage": "https://fluidframework.com",
@@ -55,7 +55,7 @@
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/protocol-definitions": "^1.1.0",
+		"@fluidframework/protocol-definitions": "^3.0.0",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"react": "^17.0.1",
 		"react-dom": "^17.0.1",
@@ -65,14 +65,14 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.22.0",
+		"@fluidframework/build-tools": "^0.24.0",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^2.1.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
-		"@microsoft/api-extractor": "^7.34.4",
+		"@microsoft/api-extractor": "^7.37.0",
 		"@previewjs/api": "^13.0.0",
 		"@previewjs/chromeless": "^7.0.3",
 		"@previewjs/core": "^23.0.0",
@@ -112,7 +112,7 @@
 		"rimraf": "^4.4.0",
 		"simple-git": "^3.19.1",
 		"ts-jest": "^29.1.1",
-		"typescript": "~4.5.5",
+		"typescript": "~5.1.6",
 		"vite": "^4.4.3"
 	},
 	"fluid": {

@@ -44,6 +44,13 @@ export interface IModelLoader<ModelType> {
 	 * @param id - the id of the container to load
 	 */
 	loadExisting(id: string): Promise<ModelType>;
+
+	/**
+	 * Load a model for the container with the given id.
+	 * @param id - the id of the container to load
+	 * @param sequenceNumber - the sequence number we want to load to and pause at
+	 */
+	loadExistingPaused(id: string, sequenceNumber: number): Promise<ModelType>;
 }
 
 /**

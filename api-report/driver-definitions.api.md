@@ -42,6 +42,7 @@ export enum DriverErrorType {
     incorrectServerResponse = "incorrectServerResponse",
     locationRedirection = "locationRedirection",
     offlineError = "offlineError",
+    outOfStorageError = "outOfStorageError",
     throttlingError = "throttlingError",
     // (undocumented)
     unsupportedClientProtocolVersion = "unsupportedClientProtocolVersion",
@@ -65,6 +66,7 @@ export const DriverErrorTypes: {
     readonly locationRedirection: "locationRedirection";
     readonly fluidInvalidSchema: "fluidInvalidSchema";
     readonly fileIsLocked: "fileIsLocked";
+    readonly outOfStorageError: "outOfStorageError";
     readonly genericError: "genericError";
     readonly throttlingError: "throttlingError";
     readonly usageError: "usageError";
@@ -210,13 +212,12 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
 export interface IDocumentStorageServicePolicies {
     readonly caching?: LoaderCachingPolicy;
     readonly maximumCacheDurationMs?: FiveDaysMs;
-    readonly minBlobSize?: number;
 }
 
 // @public
 export interface IDriverBasicError extends IDriverErrorBase {
     // (undocumented)
-    readonly errorType: DriverErrorType.genericError | DriverErrorType.fileNotFoundOrAccessDeniedError | DriverErrorType.offlineError | DriverErrorType.unsupportedClientProtocolVersion | DriverErrorType.writeError | DriverErrorType.fetchFailure | DriverErrorType.fetchTokenError | DriverErrorType.incorrectServerResponse | DriverErrorType.fileOverwrittenInStorage | DriverErrorType.fluidInvalidSchema | DriverErrorType.usageError | DriverErrorType.fileIsLocked;
+    readonly errorType: DriverErrorType.genericError | DriverErrorType.fileNotFoundOrAccessDeniedError | DriverErrorType.offlineError | DriverErrorType.unsupportedClientProtocolVersion | DriverErrorType.writeError | DriverErrorType.fetchFailure | DriverErrorType.fetchTokenError | DriverErrorType.incorrectServerResponse | DriverErrorType.fileOverwrittenInStorage | DriverErrorType.fluidInvalidSchema | DriverErrorType.usageError | DriverErrorType.fileIsLocked | DriverErrorType.outOfStorageError;
     // (undocumented)
     readonly statusCode?: number;
 }

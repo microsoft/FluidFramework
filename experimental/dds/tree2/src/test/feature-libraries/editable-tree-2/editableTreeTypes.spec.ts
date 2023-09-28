@@ -24,6 +24,9 @@ import {
 	TreeNode,
 	TypedNodeUnion,
 	UnboxNodeUnion,
+	MapNode,
+	TypedField,
+	boxedIterator,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/editable-tree-2/editableTreeTypes";
 import { jsonSequenceRootSchema } from "../../utils";
@@ -43,6 +46,7 @@ import {
 	MapSchema,
 	SchemaBuilder,
 	StructSchema,
+	TreeSchema,
 } from "../../../feature-libraries";
 
 describe("editableTreeTypes", () => {
@@ -141,6 +145,24 @@ describe("editableTreeTypes", () => {
 		// Shorthand for the above.
 		// TODO: add shorthand setters
 		// struct.setFoo(undefined);
+	}
+
+	function iteratorsExample(mixed: Mixed): void {
+		const unboxedListIteration: number[] = [...mixed.sequence];
+		const boxedListIteration: TypedNode<typeof jsonNumber>[] = [
+			...mixed.sequence[boxedIterator](),
+		];
+
+		const optionalNumberField = SchemaBuilder.fieldOptional(jsonNumber);
+		const mapSchema = undefined as unknown as TreeSchema<
+			"MapIteration",
+			{ mapFields: typeof optionalNumberField }
+		>;
+		const mapNode = undefined as unknown as MapNode<typeof mapSchema>;
+		const unboxedMapIteration: number[] = [...mapNode];
+		const boxedMapIteration: TypedField<typeof optionalNumberField>[] = [
+			...mapNode[boxedIterator](),
+		];
 	}
 
 	{

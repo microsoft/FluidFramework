@@ -15,6 +15,7 @@ import {
 	TelemetryEventCategory,
 	IRequest,
 	IResponse,
+	// eslint-disable-next-line import/no-deprecated
 	IFluidRouter,
 	FluidObject,
 	LogLevel,
@@ -121,7 +122,6 @@ import { ConnectionManager } from "./connectionManager";
 import { ConnectionState } from "./connectionState";
 import {
 	IProtocolHandler,
-	OnlyValidTermValue,
 	ProtocolHandler,
 	ProtocolHandlerBuilder,
 	protocolHandlerShouldProcessSignal,
@@ -359,7 +359,6 @@ export interface IPendingContainerState {
 	 */
 	savedOps: ISequencedDocumentMessage[];
 	url: string;
-	term: number;
 	clientId?: string;
 }
 
@@ -595,6 +594,10 @@ export class Container
 		return this._deltaManager.connectionManager.connectionMode;
 	}
 
+	/**
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
+	// eslint-disable-next-line import/no-deprecated
 	public get IFluidRouter(): IFluidRouter {
 		return this;
 	}
@@ -1151,7 +1154,6 @@ export class Container
 					snapshotBlobs: this.baseSnapshotBlobs,
 					savedOps: this.savedOps,
 					url: this.resolvedUrl.url,
-					term: OnlyValidTermValue,
 					// no need to save this if there is no pending runtime state
 					clientId: pendingRuntimeState !== undefined ? this.clientId : undefined,
 				};
@@ -1333,6 +1335,9 @@ export class Container
 		);
 	}
 
+	/**
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
 	public async request(path: IRequest): Promise<IResponse> {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
@@ -1551,18 +1556,15 @@ export class Container
 			this.client.details.type === summarizerClientType,
 		);
 
-		// Ideally we always connect as "read" by default.
-		// Currently that works with SPO & r11s, because we get "write" connection when connecting to non-existing file.
-		// We should not rely on it by (one of them will address the issue, but we need to address both)
-		// 1) switching create new flow to one where we create file by posting snapshot
-		// 2) Fixing quorum workflows (have retry logic)
-		// That all said, "read" does not work with memorylicious workflows (that opens two simultaneous
-		// connections to same file) in two ways:
-		// A) creation flow breaks (as one of the clients "sees" file as existing, and hits #2 above)
-		// B) Once file is created, transition from view-only connection to write does not work - some bugs to be fixed.
+		// Except in cases where it has stashed ops or requested by feature gate, the container will connect in "read" mode
+		const mode =
+			this.mc.config.getBoolean("Fluid.Container.ForceWriteConnection") === true ||
+			(pendingLocalState?.savedOps.length ?? 0) > 0
+				? "write"
+				: "read";
 		const connectionArgs: IConnectionArgs = {
 			reason: { text: "DocumentOpen" },
-			mode: "write",
+			mode,
 			fetchOpsFromStorage: false,
 		};
 
@@ -1791,7 +1793,6 @@ export class Container
 	private async createDetached(codeDetails: IFluidCodeDetails) {
 		const attributes: IDocumentAttributes = {
 			sequenceNumber: detachedContainerRefSeqNumber,
-			term: OnlyValidTermValue,
 			minimumSequenceNumber: 0,
 		};
 
@@ -1857,7 +1858,6 @@ export class Container
 			return {
 				minimumSequenceNumber: 0,
 				sequenceNumber: 0,
-				term: OnlyValidTermValue,
 			};
 		}
 
@@ -2287,7 +2287,10 @@ export class Container
 
 	private processRemoteMessage(message: ISequencedDocumentMessage) {
 		if (this.offlineLoadEnabled) {
-			this.savedOps.push({ ...message, metadata: { ...message.metadata, savedOp: true } });
+			this.savedOps.push({
+				...message,
+				metadata: { ...(message.metadata as Record<string, unknown>), savedOp: true },
+			});
 		}
 		const local = this.clientId === message.clientId;
 
