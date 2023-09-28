@@ -573,7 +573,7 @@ export class PerformanceEvent {
 	 * @param markers - See {@link IPerformanceEventMarkers}
 	 * @param recordHeapSize - whether or not to also record memory performance
 	 * @param emitLogs - should this instance emit logs. If set to false, logs will not be emitted to the logger,
-	 * but measurements will still be performed
+	 * but measurements will still be performed and any specified markers will be generated.
 	 * @returns An instance of {@link PerformanceEvent}
 	 */
 	public static start(
