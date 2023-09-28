@@ -52,7 +52,7 @@ describe("lazyField", () => {
 		);
 		cursor.free();
 		assert.throws(
-			() => sequenceField.replaceRange(0, 1, []),
+			() => sequenceField.insertAt(0, [1]),
 			/only allowed on fields with TreeStatus.InDocument status/,
 		);
 		assert.throws(
