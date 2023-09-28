@@ -91,6 +91,12 @@ import {
 	initializeForest,
 	AllowedUpdateType,
 	IEditableForest,
+	DeltaVisitor,
+	TreeIndex,
+	AnnouncedVisitor,
+	applyDelta,
+	makeTreeIndex,
+	announceDelta,
 } from "../core";
 import { JsonCompatible, Named, brand, makeArray } from "../util";
 import { ICodecFamily, withSchemaValidation } from "../codec";
@@ -908,3 +914,19 @@ export const wrongSchemaConfig: InitializeAndSchematizeConfiguration<
 	allowedSchemaModifications: AllowedUpdateType.None,
 	initialTree: [],
 };
+
+export function applyTestDelta(
+	delta: Delta.Root,
+	deltaProcessor: { acquireVisitor: () => DeltaVisitor },
+	treeIndex?: TreeIndex,
+): void {
+	applyDelta(delta, deltaProcessor, treeIndex ?? makeTreeIndex());
+}
+
+export function announceTestDelta(
+	delta: Delta.Root,
+	deltaProcessor: { acquireVisitor: () => AnnouncedVisitor },
+	treeIndex?: TreeIndex,
+): void {
+	announceDelta(delta, deltaProcessor, treeIndex ?? makeTreeIndex());
+}

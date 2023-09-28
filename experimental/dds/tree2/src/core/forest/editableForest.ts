@@ -14,6 +14,7 @@ import {
 	rootFieldKey,
 	DeltaVisitor,
 	applyDelta,
+	makeTreeIndex,
 } from "../tree";
 import { IForestSubscription, ITreeSubscriptionCursor } from "./forest";
 
@@ -55,7 +56,7 @@ export function initializeForest(
 ): void {
 	assert(forest.isEmpty, 0x747 /* forest must be empty */);
 	const insert: Delta.Insert = { type: Delta.MarkType.Insert, content };
-	applyDelta(new Map([[rootFieldKey, [insert]]]), forest);
+	applyDelta(new Map([[rootFieldKey, [insert]]]), forest, makeTreeIndex("init"));
 }
 
 // TODO: Types below here may be useful for input into edit building APIs, but are no longer used here directly.

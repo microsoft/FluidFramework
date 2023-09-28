@@ -16,7 +16,6 @@ import {
 	UpPath,
 	clonePath,
 	rootFieldKey,
-	announceDelta,
 	DetachedRangeUpPath,
 	ReplaceKind,
 	RangeUpPath,
@@ -26,7 +25,7 @@ import {
 	getDetachedFieldContainingPath,
 } from "../../core";
 import { brand } from "../../util";
-import { expectEqualPaths } from "../utils";
+import { announceTestDelta, expectEqualPaths } from "../utils";
 import { jsonString } from "../../domains";
 
 const fieldFoo: FieldKey = brand("foo");
@@ -71,7 +70,7 @@ describe("AnchorSet", () => {
 		};
 
 		const delta = new Map([[rootFieldKey, [1, moveOut, 1, moveIn]]]);
-		announceDelta(delta, anchors);
+		announceTestDelta(delta, anchors);
 		checkEquality(anchors.locate(anchor0), makePath([rootFieldKey, 0]));
 		checkEquality(anchors.locate(anchor1), makePath([rootFieldKey, 2]));
 		checkEquality(anchors.locate(anchor2), makePath([rootFieldKey, 1]));
@@ -86,7 +85,7 @@ describe("AnchorSet", () => {
 			content: [node, node].map(singleTextCursor),
 		};
 
-		announceDelta(makeDelta(insert, makePath([fieldFoo, 4])), anchors);
+		announceTestDelta(makeDelta(insert, makePath([fieldFoo, 4])), anchors);
 
 		checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 7], [fieldBar, 4]));
 		checkEquality(anchors.locate(anchor2), makePath([fieldFoo, 3], [fieldBaz, 2]));
@@ -117,7 +116,7 @@ describe("AnchorSet", () => {
 			detachId,
 		};
 
-		announceDelta(makeDelta(deleteMark, makePath([fieldFoo, 4])), anchors);
+		announceTestDelta(makeDelta(deleteMark, makePath([fieldFoo, 4])), anchors);
 		checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 4], [fieldBar, 4]));
 		checkEquality(anchors.locate(anchor2), path2);
 		checkRemoved(anchors.locate(anchor3));
@@ -176,7 +175,7 @@ describe("AnchorSet", () => {
 			detachId,
 		};
 
-		announceDelta(makeDelta(deleteMark, makePath([fieldFoo, 5])), anchors);
+		announceTestDelta(makeDelta(deleteMark, makePath([fieldFoo, 5])), anchors);
 		checkRemoved(anchors.locate(anchor4));
 		checkRemoved(anchors.locate(anchor1));
 		assert.doesNotThrow(() => anchors.forget(anchor4));
@@ -187,14 +186,14 @@ describe("AnchorSet", () => {
 		assert.throws(() => anchors.locate(anchor1));
 
 		checkEquality(anchors.locate(anchor2), path2);
-		announceDelta(makeDelta(deleteMark, makePath([fieldFoo, 3])), anchors);
+		announceTestDelta(makeDelta(deleteMark, makePath([fieldFoo, 3])), anchors);
 		checkRemoved(anchors.locate(anchor2));
 		assert.doesNotThrow(() => anchors.forget(anchor2));
 		assert.throws(() => anchors.locate(anchor2));
 
 		// The index of anchor3 has changed from 4 to 3 because of the deletion of the node at index 3.
 		checkEquality(anchors.locate(anchor3), makePath([fieldFoo, 3]));
-		announceDelta(makeDelta(deleteMark, makePath([fieldFoo, 3])), anchors);
+		announceTestDelta(makeDelta(deleteMark, makePath([fieldFoo, 3])), anchors);
 		checkRemoved(anchors.locate(anchor3));
 		assert.doesNotThrow(() => anchors.forget(anchor3));
 		assert.throws(() => anchors.locate(anchor3));
@@ -220,7 +219,7 @@ describe("AnchorSet", () => {
 		};
 
 		const delta = new Map([[fieldFoo, [3, moveOut, 1, modify]]]);
-		announceDelta(delta, anchors);
+		announceTestDelta(delta, anchors);
 		checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 4], [fieldBar, 5]));
 		checkEquality(
 			anchors.locate(anchor2),
@@ -304,7 +303,7 @@ describe("AnchorSet", () => {
 		};
 
 		log.expect([]);
-		announceDelta(new Map([[rootFieldKey, [0, deleteMark]]]), anchors);
+		announceTestDelta(new Map([[rootFieldKey, [0, deleteMark]]]), anchors);
 
 		log.expect([
 			["root childrenChange", 1],
@@ -325,7 +324,7 @@ describe("AnchorSet", () => {
 			type: Delta.MarkType.Insert,
 			content: [singleTextCursor({ type: jsonString.name, value: "x" })],
 		};
-		announceDelta(new Map([[rootFieldKey, [deleteMark, insertMark]]]), anchors);
+		announceTestDelta(new Map([[rootFieldKey, [deleteMark, insertMark]]]), anchors);
 
 		log.expect([
 			["root childrenChange", 2],
@@ -333,12 +332,15 @@ describe("AnchorSet", () => {
 		]);
 		log.clear();
 
-		announceDelta(makeDelta(insertMark, makePath([rootFieldKey, 0], [fieldFoo, 5])), anchors);
+		announceTestDelta(
+			makeDelta(insertMark, makePath([rootFieldKey, 0], [fieldFoo, 5])),
+			anchors,
+		);
 
 		log.expect([["root treeChange", 1]]);
 		log.clear();
 
-		announceDelta(new Map([[rootFieldKey, [0, deleteMark]]]), anchors);
+		announceTestDelta(new Map([[rootFieldKey, [0, deleteMark]]]), anchors);
 		log.expect([
 			["root childrenChange", 1],
 			["root treeChange", 1],
@@ -362,7 +364,10 @@ describe("AnchorSet", () => {
 		};
 		const log = new UnorderedTestLogger();
 		const anchors = new AnchorSet();
-		announceDelta(makeDelta(insertMark, makePath([rootFieldKey, 0], [fieldFoo, 3])), anchors);
+		announceTestDelta(
+			makeDelta(insertMark, makePath([rootFieldKey, 0], [fieldFoo, 3])),
+			anchors,
+		);
 		const anchor0 = anchors.track(makePath([rootFieldKey, 0]));
 		const node0 = anchors.locate(anchor0) ?? assert.fail();
 		const pathVisitor: PathVisitor = {
@@ -439,26 +444,38 @@ describe("AnchorSet", () => {
 			},
 		};
 		const unsubscribePathVisitor = node0.on("subtreeChanging", (n: AnchorNode) => pathVisitor);
-		announceDelta(makeDelta(insertMark, makePath([rootFieldKey, 0], [fieldFoo, 4])), anchors);
+		announceTestDelta(
+			makeDelta(insertMark, makePath([rootFieldKey, 0], [fieldFoo, 4])),
+			anchors,
+		);
 		log.expect([
 			["visitSubtreeChange.beforeAttach-src:Temp-0[0, 1]-dst:foo[4]", 1],
 			["visitSubtreeChange.afterAttach-src:Temp-0[0]-dst:foo[4, 5]", 1],
 		]);
 		log.clear();
-		announceDelta(makeDelta(replaceMark, makePath([rootFieldKey, 0], [fieldFoo, 5])), anchors);
+		announceTestDelta(
+			makeDelta(replaceMark, makePath([rootFieldKey, 0], [fieldFoo, 5])),
+			anchors,
+		);
 		log.expect([
 			["visitSubtreeChange.beforeReplace-old:foo[5, 6]-new:Temp-0[0, 1]-kind:0", 1],
 			["visitSubtreeChange.afterReplace-old:Temp-1[0, 1]-new:foo[5, 6]-kind:0", 1],
 		]);
 		log.clear();
-		announceDelta(makeDelta(deleteMark, makePath([rootFieldKey, 0], [fieldFoo, 5])), anchors);
+		announceTestDelta(
+			makeDelta(deleteMark, makePath([rootFieldKey, 0], [fieldFoo, 5])),
+			anchors,
+		);
 		log.expect([
 			["visitSubtreeChange.beforeDetach-src:foo[5, 6]-dst:Temp-0[0]", 1],
 			["visitSubtreeChange.afterDetach-src:foo[5]-dst:Temp-0[0, 1]", 1],
 		]);
 		log.clear();
 		unsubscribePathVisitor();
-		announceDelta(makeDelta(insertMark, makePath([rootFieldKey, 0], [fieldFoo, 4])), anchors);
+		announceTestDelta(
+			makeDelta(insertMark, makePath([rootFieldKey, 0], [fieldFoo, 4])),
+			anchors,
+		);
 		log.expect([]);
 	});
 });

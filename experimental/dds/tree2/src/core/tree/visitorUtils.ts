@@ -18,20 +18,20 @@ export function makeTreeIndex(prefix: string = "Temp"): TreeIndex {
 export function applyDelta(
 	delta: Delta.Root,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor },
-	treeIndex?: TreeIndex,
+	treeIndex: TreeIndex,
 ): void {
 	const visitor = deltaProcessor.acquireVisitor();
-	visitDelta(delta, visitor, treeIndex ?? makeTreeIndex());
+	visitDelta(delta, visitor, treeIndex);
 	visitor.free();
 }
 
 export function announceDelta(
 	delta: Delta.Root,
 	deltaProcessor: { acquireVisitor: () => AnnouncedVisitor },
-	treeIndex?: TreeIndex,
+	treeIndex: TreeIndex,
 ): void {
 	const visitor = announceVisitor(deltaProcessor.acquireVisitor());
-	visitDelta(delta, visitor, treeIndex ?? makeTreeIndex());
+	visitDelta(delta, visitor, treeIndex);
 	visitor.free();
 }
 
