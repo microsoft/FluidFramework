@@ -8,7 +8,6 @@ import {
 	FieldKey,
 	TreeNavigationResult,
 	ITreeSubscriptionCursor,
-	mapCursorField,
 	CursorLocationType,
 	FieldAnchor,
 	inCursorNode,
@@ -16,6 +15,7 @@ import {
 	ITreeCursor,
 	keyAsDetachedField,
 	rootField,
+	iterateCursorField,
 } from "../../core";
 import { FieldKind } from "../modular-schema";
 import { NewFieldContent, normalizeNewFieldContent } from "../contextuallyTyped";
@@ -39,6 +39,7 @@ import {
 	TreeField,
 	TreeNode,
 	RequiredField,
+	boxedIterator,
 } from "./editableTreeTypes";
 import { makeTree } from "./lazyTree";
 import {
@@ -173,28 +174,25 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 		) as TypedNodeUnion<TTypes>;
 	}
 
-	public map<U>(
-		callbackfn: (value: UnboxNodeUnion<TTypes>, index: number, array: this) => U,
-	): U[] {
-		return mapCursorField(this[cursorSymbol], (cursor) =>
-			callbackfn(unboxedUnion(this.context, this.schema, cursor), cursor.fieldIndex, this),
+	public map<U>(callbackfn: (value: UnboxNodeUnion<TTypes>, index: number) => U): U[] {
+		return Array.from(this, callbackfn);
+	}
+
+	public mapBoxed<U>(callbackfn: (value: TypedNodeUnion<TTypes>, index: number) => U): U[] {
+		return Array.from(this[boxedIterator](), callbackfn);
+	}
+
+	public [boxedIterator](): IterableIterator<TypedNodeUnion<TTypes>> {
+		return iterateCursorField(
+			this[cursorSymbol],
+			(cursor) => makeTree(this.context, cursor) as TypedNodeUnion<TTypes>,
 		);
 	}
 
-	public mapBoxed<U>(
-		callbackfn: (value: TypedNodeUnion<TTypes>, index: number, array: this) => U,
-	): U[] {
-		return mapCursorField(this[cursorSymbol], (cursor) =>
-			callbackfn(
-				makeTree(this.context, cursor) as TypedNodeUnion<TTypes>,
-				cursor.fieldIndex,
-				this,
-			),
+	public [Symbol.iterator](): IterableIterator<UnboxNodeUnion<TTypes>> {
+		return iterateCursorField(this[cursorSymbol], (cursor) =>
+			unboxedUnion(this.context, this.schema, cursor),
 		);
-	}
-
-	public [Symbol.iterator](): IterableIterator<TypedNodeUnion<TTypes>> {
-		return this.mapBoxed((x) => x)[Symbol.iterator]();
 	}
 
 	public treeStatus(): TreeStatus {

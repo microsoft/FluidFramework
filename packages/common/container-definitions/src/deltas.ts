@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, IEventProvider, IEvent, IErrorEvent } from "@fluidframework/core-interfaces";
+import {
+	IDisposable,
+	IEventProvider,
+	IEvent,
+	IErrorEvent,
+	IErrorBase,
+} from "@fluidframework/core-interfaces";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import {
 	IClientConfiguration,
@@ -115,7 +121,13 @@ export interface IDeltaManagerEvents extends IEvent {
 	 *
 	 * - `readonly`: Whether or not the delta manager is now read-only.
 	 */
-	(event: "readonly", listener: (readonly: boolean) => void);
+	(
+		event: "readonly",
+		listener: (
+			readonly: boolean,
+			readonlyConnectionReason?: { reason: string; error?: IErrorBase },
+		) => void,
+	);
 }
 
 /**

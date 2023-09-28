@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-query-service",
-	"version": "2.0.0-internal.6.4.0",
+	"version": "2.0.0-internal.7.1.0",
 	"private": true,
 	"description": "Moira service",
 	"homepage": "https://fluidframework.com",
@@ -82,7 +82,7 @@
 		"@fluidframework/local-driver": "workspace:~",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/server-local-server": "^1.0.1",
+		"@fluidframework/server-local-server": "^2.0.1",
 		"@fluidframework/test-utils": "workspace:~",
 		"aws-sdk": "2.547.0",
 		"c8": "^7.7.1",
@@ -112,7 +112,7 @@
 		"sinon": "^7.4.2",
 		"sinon-chai": "3.3.0",
 		"stats-percentile": "3.1.0",
-		"typescript": "~4.5.5",
+		"typescript": "~5.1.6",
 		"wait-on": "3.2.0",
 		"yargs": "13.2.2"
 	},
