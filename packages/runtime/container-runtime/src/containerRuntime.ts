@@ -2210,10 +2210,9 @@ export class ContainerRuntime
 
 				// Don't re-finalize the range if we're processing a "savedOp" in
 				// stashed ops flow. The compressor is stashed with these ops already processed.
-				const metadata = messageWithContext.message.metadata as
-					| IIdAllocationMetadata
-					| undefined;
-				if (metadata?.savedOp !== true) {
+				if (
+					(messageWithContext.message.metadata as IIdAllocationMetadata)?.savedOp !== true
+				) {
 					this.idCompressor.finalizeCreationRange(messageWithContext.message.contents);
 				}
 				break;
