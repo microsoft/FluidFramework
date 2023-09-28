@@ -35,6 +35,8 @@ historian:
   system:
     httpServer:
       connectionTimeoutMs: 0
+  config:
+    configDumpEnabled: false
 
 gitrest:
   name: gitrest
@@ -70,6 +72,8 @@ gitrest:
   system:
     httpServer:
       connectionTimeoutMs: 0
+  config:
+    configDumpEnabled: false
 
 gitssh:
   name: gitssh

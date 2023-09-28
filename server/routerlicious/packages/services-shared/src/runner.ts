@@ -26,12 +26,7 @@ export async function run<T extends IResources>(
 	resourceFactory: IResourcesFactory<T>,
 	runnerFactory: IRunnerFactory<T>,
 	logger: ILogger | undefined,
-	secretsList?: string[],
 ) {
-	if (config.get("config:configDumpEnabled")) {
-		const configDumper = new ConfigDumper(config.get(), logger, secretsList);
-		configDumper.dumpConfig();
-	}
 	const customizations = await (resourceFactory.customize
 		? resourceFactory.customize(config)
 		: undefined);
@@ -97,7 +92,7 @@ export function runService<T extends IResources>(
 	group: string,
 	configOrPath: nconf.Provider | string,
 	waitBeforeExitInMs?: number,
-	secretsList?: string[],
+	secretNamesToRedactInConfigDump?: string[],
 ) {
 	const config =
 		typeof configOrPath === "string"
@@ -108,9 +103,18 @@ export function runService<T extends IResources>(
 					.use("memory")
 			: configOrPath;
 
+	const configDumpEnabled = (config.get("config:configDumpEnabled") as boolean) ?? false;
+	if (configDumpEnabled) {
+		const configDumper = new ConfigDumper(
+			config.get(),
+			logger,
+			secretNamesToRedactInConfigDump,
+		);
+		configDumper.dumpConfig();
+	}
 	const waitInMs = waitBeforeExitInMs ?? 1000;
 	const runnerMetric = Lumberjack.newLumberMetric(LumberEventName.RunService);
-	const runningP = run(config, resourceFactory, runnerFactory, logger, secretsList);
+	const runningP = run(config, resourceFactory, runnerFactory, logger);
 
 	runningP
 		.then(async () => {

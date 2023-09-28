@@ -173,4 +173,4 @@ lumberjack:
     enableGlobalTelemetryContext: true
 
 config:
-  configDumpEnabled: true
+  configDumpEnabled: false

@@ -18,6 +18,9 @@ data:
             "level": "verbose",
             "timestamp": false
         },
+        "config": {
+            "configDumpEnabled": {{ .Values.config.configDumpEnabled }}
+        },
         "requestSizeLimit": "1gb",
         "riddler": "{{ .Values.historian.riddler }}",
         "ignoreEphemeralFlag": {{ .Values.historian.ignoreEphemeralFlag }},
