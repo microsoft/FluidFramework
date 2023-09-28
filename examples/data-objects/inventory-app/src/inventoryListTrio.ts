@@ -4,7 +4,13 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { SharedTree as LegacySharedTree } from "@fluid-experimental/tree";
+import {
+	BuildNode,
+	Change,
+	SharedTree as LegacySharedTree,
+	StablePlace,
+	TraitLabel,
+} from "@fluid-experimental/tree";
 import { ISharedTree, SharedTreeFactory } from "@fluid-experimental/tree2";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 
@@ -43,8 +49,23 @@ export class InventoryListTrio extends DataObject {
 	protected async initializingFirstTime() {
 		const legacySharedTree = this.runtime.createChannel(
 			undefined,
-			new SharedTreeFactory().type,
-		) as ISharedTree;
+			LegacySharedTree.getFactory().type,
+		) as LegacySharedTree;
+
+		// Add the two parts to the LegacySharedTree
+		const node: BuildNode = {
+			definition: "Node",
+			identifier: legacySharedTree.generateNodeId(),
+		};
+		legacySharedTree.applyEdit(
+			Change.insertTree(
+				node,
+				StablePlace.atStartOf({
+					parent: legacySharedTree.currentView.root,
+					label: "foo" as TraitLabel,
+				}),
+			),
+		);
 
 		const sharedTree = this.runtime.createChannel(
 			undefined,
@@ -64,7 +85,7 @@ export class InventoryListTrio extends DataObject {
 	protected async hasInitialized() {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const legacySharedTree = await this.root
-			.get<IFluidHandle<ISharedTree>>(legacySharedTreeKey)!
+			.get<IFluidHandle<LegacySharedTree>>(legacySharedTreeKey)!
 			.get();
 		this._legacySharedTreeInventoryList = new LegacySharedTreeInventoryList(legacySharedTree);
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
