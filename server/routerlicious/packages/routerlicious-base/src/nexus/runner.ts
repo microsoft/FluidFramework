@@ -108,18 +108,24 @@ export class NexusRunner implements IRunner {
 		httpServer.on("error", (error) => this.onError(error));
 		httpServer.on("listening", () => this.onListening());
 		httpServer.on("upgrade", (req, socket, initialMsgBuffer) => {
-			Lumberjack.info(`WS: Upgraded http request connections: ${socket.server._connections}`);
-			socket.on("error", (error) => {
-				Lumberjack.error(
-					"WS: error",
-					{
-						bytesRead: socket.bytesRead,
-						bytesWritten: socket.bytesWritten,
-						error: error.toString(),
-					},
-					error,
-				);
-			});
+		    Lumberjack.info(`WS: Upgraded http request connections: ${socket.server._connections}`);
+		    socket.on("close", (hadError: boolean) => {
+			Lumberjack.error(
+			    `WS: socket closed. ${socket.server._connections}`,
+			    { hadError: hadError.toString() }
+			);
+		    });
+		    socket.on("error", (error) => {
+			Lumberjack.error(
+			    "WS: error",
+			    {
+				bytesRead: socket.bytesRead,
+				bytesWritten: socket.bytesWritten,
+				error: error.toString(),
+			    },
+			    error,
+			);
+		    });
 		});
 
 		// Start token manager
