@@ -476,7 +476,7 @@ export type FlexibleNodeContent<TTypes extends AllowedTypes> = SchemaAware.Allow
  * CheckTypesOverlap\<number | boolean, string | object\> = never
  * @alpha
  */
-export type CheckTypesOverlap<T, TCheck> = Extract<T, TCheck> extends never ? never : T;
+export type CheckTypesOverlap<T, TCheck> = [Extract<T, TCheck> extends never ? never : T][0];
 
 /**
  * {@link TreeField} that stores a sequence of children.

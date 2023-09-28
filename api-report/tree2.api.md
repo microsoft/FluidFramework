@@ -254,7 +254,7 @@ export function brandOpaque<T extends BrandedType<any, string>>(value: isAny<Val
 export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
 
 // @alpha
-export type CheckTypesOverlap<T, TCheck> = Extract<T, TCheck> extends never ? never : T;
+export type CheckTypesOverlap<T, TCheck> = [Extract<T, TCheck> extends never ? never : T][0];
 
 // @alpha
 export type ChildCollection = FieldKey | RootField;
