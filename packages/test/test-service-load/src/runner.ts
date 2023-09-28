@@ -11,6 +11,7 @@ import {
 	DriverEndpoint,
 } from "@fluidframework/test-driver-definitions";
 import { Loader, ConnectionState, IContainerExperimental } from "@fluidframework/container-loader";
+// eslint-disable-next-line import/no-deprecated
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IRequestHeader, LogLevel } from "@fluidframework/core-interfaces";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
@@ -254,6 +255,7 @@ async function runnerProcess(
 			container = await loader.resolve({ url, headers }, stashedOps);
 
 			container.connect();
+			// eslint-disable-next-line import/no-deprecated
 			const test = await requestFluidObject<ILoadTest>(container, "/");
 
 			// Retain old behavior of runtime being disposed on container close

@@ -8,9 +8,11 @@ import {
 	FluidObject,
 	IFluidHandle,
 	IFluidHandleContext,
+	// eslint-disable-next-line import/no-deprecated
 	IFluidRouter,
 	IRequest,
 	IResponse,
+	IProvideFluidHandleContext,
 } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
@@ -97,6 +99,7 @@ import {
 	create404Response,
 	exceptionToResponse,
 	GCDataBuilder,
+	// eslint-disable-next-line import/no-deprecated
 	requestFluidObject,
 	seqFromTree,
 	calculateStats,
@@ -632,7 +635,12 @@ type MessageWithContext =
  */
 export class ContainerRuntime
 	extends TypedEventEmitter<IContainerRuntimeEvents & ISummarizerEvents>
-	implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider
+	implements
+		IContainerRuntime,
+		IRuntime,
+		ISummarizerRuntime,
+		ISummarizerInternalsProvider,
+		IProvideFluidHandleContext
 {
 	/**
 	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
@@ -669,10 +677,15 @@ export class ContainerRuntime
 			context,
 			registryEntries,
 			existing: existingFlag,
-			requestHandler,
 			runtimeOptions,
 			containerScope,
 			containerRuntimeCtor,
+			requestHandler,
+			provideEntryPoint: () => {
+				throw new UsageError(
+					"ContainerRuntime.load is deprecated and should no longer be used",
+				);
+			},
 		});
 	}
 
@@ -688,7 +701,7 @@ export class ContainerRuntime
 	 * - containerScope - runtime services provided with context
 	 * - containerRuntimeCtor - Constructor to use to create the ContainerRuntime instance.
 	 * This allows mixin classes to leverage this method to define their own async initializer.
-	 * - initializeEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
+	 * - provideEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
 	 * This object should provide all the functionality that the Container is expected to provide to the loader layer.
 	 */
 	public static async loadRuntime(params: {
@@ -698,29 +711,20 @@ export class ContainerRuntime
 		runtimeOptions?: IContainerRuntimeOptions;
 		containerScope?: FluidObject;
 		containerRuntimeCtor?: typeof ContainerRuntime;
+		/** @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md */
 		requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
-		initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
+		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
 	}): Promise<ContainerRuntime> {
 		const {
 			context,
 			registryEntries,
 			existing,
 			requestHandler,
+			provideEntryPoint,
 			runtimeOptions = {},
 			containerScope = {},
 			containerRuntimeCtor = ContainerRuntime,
 		} = params;
-
-		const initializeEntryPoint =
-			params.initializeEntryPoint ??
-			(async (containerRuntime: IContainerRuntime) => ({
-				get IFluidRouter() {
-					return this;
-				},
-				async request(req) {
-					return containerRuntime.request(req);
-				},
-			}));
 
 		// If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
 		// back-compat: Remove the TaggedLoggerAdapter fallback once all the host are using loader > 0.45
@@ -850,9 +854,9 @@ export class ContainerRuntime
 			blobManagerSnapshot,
 			context.storage,
 			idCompressor,
+			provideEntryPoint,
 			requestHandler,
 			undefined, // summaryConfiguration
-			initializeEntryPoint,
 		);
 
 		// Apply stashed ops with a reference sequence number equal to the sequence number of the snapshot,
@@ -876,17 +880,6 @@ export class ContainerRuntime
 
 	public get storage(): IDocumentStorageService {
 		return this._storage;
-	}
-
-	/** @deprecated - The functionality is no longer exposed publicly */
-	public get reSubmitFn() {
-		return (
-			type: ContainerMessageType,
-			contents: any,
-			localOpMetadata: unknown,
-			opMetadata: Record<string, unknown> | undefined,
-		) => this.reSubmitCore({ type, contents }, localOpMetadata, opMetadata);
-		// Note: compatDetails is not included in this deprecated API
 	}
 
 	private readonly submitFn: (
@@ -1140,6 +1133,7 @@ export class ContainerRuntime
 		blobManagerSnapshot: IBlobManagerLoadInfo,
 		private readonly _storage: IDocumentStorageService,
 		idCompressor: (IIdCompressor & IIdCompressorCore) | undefined,
+		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
 		private readonly requestHandler?: (
 			request: IRequest,
 			runtime: IContainerRuntime,
@@ -1150,7 +1144,6 @@ export class ContainerRuntime
 			// the runtime configuration overrides
 			...runtimeOptions.summaryOptions?.summaryConfigOverrides,
 		},
-		initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
 	) {
 		super();
 
@@ -1642,7 +1635,7 @@ export class ContainerRuntime
 				);
 				return this._summarizer;
 			}
-			return initializeEntryPoint?.(this);
+			return provideEntryPoint(this);
 		});
 	}
 
@@ -1753,10 +1746,10 @@ export class ContainerRuntime
 	/**
 	 * {@inheritDoc @fluidframework/container-definitions#IRuntime.getEntryPoint}
 	 */
-	public async getEntryPoint?(): Promise<FluidObject | undefined> {
+	public async getEntryPoint(): Promise<FluidObject> {
 		return this.entryPoint;
 	}
-	private readonly entryPoint: LazyPromise<FluidObject | undefined>;
+	private readonly entryPoint: LazyPromise<FluidObject>;
 
 	private internalId(maybeAlias: string): string {
 		return this.dataStores.aliases.get(maybeAlias) ?? maybeAlias;
@@ -2338,6 +2331,7 @@ export class ContainerRuntime
 	 * @param wait - True if you want to wait for it.
 	 * @deprecated - Use getAliasedDataStoreEntryPoint instead to get an aliased data store's entry point.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter> {
 		return this.getRootDataStoreChannel(id, wait);
 	}
@@ -2526,7 +2520,7 @@ export class ContainerRuntime
 				return false;
 			}
 		} else if (type === ContainerMessageType.FluidDataStoreOp) {
-			const envelope = contents as IEnvelope;
+			const envelope = contents;
 			if (envelope.address === agentSchedulerId) {
 				return false;
 			}
@@ -3664,7 +3658,7 @@ export class ContainerRuntime
 			case ContainerMessageType.FluidDataStoreOp:
 				// For operations, call rollbackDataStoreOp which will find the right store
 				// and trigger rollback on it.
-				this.dataStores.rollbackDataStoreOp(contents as IEnvelope, localOpMetadata);
+				this.dataStores.rollbackDataStoreOp(contents, localOpMetadata);
 				break;
 			default:
 				// Don't check message.compatDetails because this is for rolling back a local op so the type will be known
@@ -3914,6 +3908,7 @@ export class ContainerRuntime
 	 * * Forms a function that will request a Summarizer.
 	 * @param loaderRouter - the loader acting as an IFluidRouter
 	 * */
+	// eslint-disable-next-line import/no-deprecated
 	private formRequestSummarizerFn(loaderRouter: IFluidRouter) {
 		return async () => {
 			const request: IRequest = {
@@ -3929,6 +3924,7 @@ export class ContainerRuntime
 				url: "/_summarizer",
 			};
 
+			// eslint-disable-next-line import/no-deprecated
 			const fluidObject = await requestFluidObject<FluidObject<ISummarizer>>(
 				loaderRouter,
 				request,

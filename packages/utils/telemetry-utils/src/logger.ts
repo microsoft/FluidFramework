@@ -566,6 +566,16 @@ export interface IPerformanceEventMarkers {
  * Helper class to log performance events
  */
 export class PerformanceEvent {
+	/**
+	 * Creates an instance of {@link PerformanceEvent} and starts measurements
+	 * @param logger - the logger to be used for publishing events
+	 * @param event - the logging event details which will be published with the performance measurements
+	 * @param markers - See {@link IPerformanceEventMarkers}
+	 * @param recordHeapSize - whether or not to also record memory performance
+	 * @param emitLogs - should this instance emit logs. If set to false, logs will not be emitted to the logger,
+	 * but measurements will still be performed and any specified markers will be generated.
+	 * @returns An instance of {@link PerformanceEvent}
+	 */
 	public static start(
 		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
@@ -576,6 +586,21 @@ export class PerformanceEvent {
 		return new PerformanceEvent(logger, event, markers, recordHeapSize, emitLogs);
 	}
 
+	/**
+	 * Measure a synchronous task
+	 * @param logger - the logger to be used for publishing events
+	 * @param event - the logging event details which will be published with the performance measurements
+	 * @param callback - the task to be executed and measured
+	 * @param markers - See {@link IPerformanceEventMarkers}
+	 * @param sampleThreshold - events with the same name and category will be sent to the logger
+	 * only when we hit this many executions of the task. If unspecified, all events will be sent.
+	 * @returns The results of the executed task
+	 *
+	 * @remarks Note that if the "same" event (category + eventName) would be emitted by different
+	 * tasks (`callback`), `sampleThreshold` is still applied only based on the event's category + eventName,
+	 * so executing either of the tasks will increase the internal counter and they
+	 * effectively "share" the sampling rate for the event.
+	 */
 	public static timedExec<T>(
 		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
@@ -600,6 +625,22 @@ export class PerformanceEvent {
 		}
 	}
 
+	/**
+	 * Measure an asynchronous task
+	 * @param logger - the logger to be used for publishing events
+	 * @param event - the logging event details which will be published with the performance measurements
+	 * @param callback - the task to be executed and measured
+	 * @param markers - See {@link IPerformanceEventMarkers}
+	 * @param recordHeapSize - whether or not to also record memory performance
+	 * @param sampleThreshold - events with the same name and category will be sent to the logger
+	 * only when we hit this many executions of the task. If unspecified, all events will be sent.
+	 * @returns The results of the executed task
+	 *
+	 * @remarks Note that if the "same" event (category + eventName) would be emitted by different
+	 * tasks (`callback`), `sampleThreshold` is still applied only based on the event's category + eventName,
+	 * so executing either of the tasks will increase the internal counter and they
+	 * effectively "share" the sampling rate for the event.
+	 */
 	public static async timedExecAsync<T>(
 		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
