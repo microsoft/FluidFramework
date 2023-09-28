@@ -67,12 +67,12 @@ function initializeTreeWithContent<Kind extends FieldKind, Types extends Allowed
 }
 
 /**
- * Creates a tree whose root node contains a single leaf field.
+ * Creates a tree whose root node contains a single (optional) leaf field.
  * Also initializes a cursor and moves that cursor to the tree's root.
  *
  * @returns The initialized tree, cursor, and associated context.
  */
-function createLeafTree(
+function createOptionalLeafTree(
 	kind: ValueSchema,
 	initialTree:
 		| SchemaAware.TypedField<FieldSchema, SchemaAware.ApiMode.Flexible>
@@ -101,7 +101,7 @@ describe("unboxed unit tests", () => {
 	describe("unboxedField", () => {
 		describe("Optional", () => {
 			it("No value", () => {
-				const { treeSchema, context, cursor } = createLeafTree(
+				const { treeSchema, context, cursor } = createOptionalLeafTree(
 					ValueSchema.Number,
 					undefined,
 				);
@@ -109,17 +109,23 @@ describe("unboxed unit tests", () => {
 			});
 
 			it("Boolean", () => {
-				const { treeSchema, context, cursor } = createLeafTree(ValueSchema.Boolean, true);
+				const { treeSchema, context, cursor } = createOptionalLeafTree(
+					ValueSchema.Boolean,
+					true,
+				);
 				assert.equal(unboxedField(context, treeSchema, cursor), true);
 			});
 
 			it("Number", () => {
-				const { treeSchema, context, cursor } = createLeafTree(ValueSchema.Number, 42);
+				const { treeSchema, context, cursor } = createOptionalLeafTree(
+					ValueSchema.Number,
+					42,
+				);
 				assert.equal(unboxedField(context, treeSchema, cursor), 42);
 			});
 
 			it("String", () => {
-				const { treeSchema, context, cursor } = createLeafTree(
+				const { treeSchema, context, cursor } = createOptionalLeafTree(
 					ValueSchema.String,
 					"Hello world",
 				);
@@ -206,7 +212,22 @@ describe("unboxed unit tests", () => {
 	});
 
 	describe("unboxedTree", () => {
-		// TODO
+		describe("Struct", () => {
+			// Simple
+			// Recursive
+		});
+
+		describe("Map", () => {
+			// Empty
+			// Single type
+			// Multi-type
+		});
+
+		describe("List", () => {
+			// Empty
+			// Single
+			// Multi
+		});
 	});
 	describe("unboxedUnion", () => {
 		// TODO
