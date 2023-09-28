@@ -322,7 +322,7 @@ export function validateTokenScopeClaims(expectedScopes: string): RequestHandler
 		try {
 			claims = decode(token) as ITokenClaims;
 		} catch {
-			throw new NetworkError(401, "Invalid token");
+			return respondWithNetworkError(response, new NetworkError(401, "Invalid token."));
 		}
 
 		if (!claims) {

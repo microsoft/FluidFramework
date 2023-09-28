@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { performance } from "perf_hooks";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	ConnectionMode,
@@ -62,9 +63,10 @@ function getRoomId(room: IRoom) {
 	return `${room.tenantId}/${room.documentId}`;
 }
 
-const getMessageMetadata = (documentId: string, tenantId: string) => ({
+const getMessageMetadata = (documentId: string, tenantId: string, correlationId?: string) => ({
 	documentId,
 	tenantId,
+	correlationId,
 });
 
 const handleServerErrorAndConvertToNetworkError = (
@@ -74,12 +76,15 @@ const handleServerErrorAndConvertToNetworkError = (
 	tenantId: string,
 	error: any,
 ): NetworkError => {
-	const errMsgWithPrefix = `Connect Cerver Error - ${errorMessage}`;
-	logger.error(errMsgWithPrefix, { messageMetaData: getMessageMetadata(documentId, tenantId) });
+	const errMsgWithPrefix = `Connect Server Error - ${errorMessage}`;
+	const correlationId = getGlobalTelemetryContext().getProperties().correlationId;
+	logger.error(errMsgWithPrefix, {
+		messageMetaData: getMessageMetadata(documentId, tenantId, correlationId),
+	});
 	Lumberjack.error(errMsgWithPrefix, getLumberBaseProperties(documentId, tenantId), error);
 	return new NetworkError(
 		500,
-		"Failed to connect client to document. Check correlation Id for details.",
+		`Failed to connect client to document. Check correlation Id ${correlationId} for details.`,
 	);
 };
 
@@ -121,14 +126,12 @@ function selectProtocolVersion(connectVersions: string[]): string | undefined {
 
 function checkVersion(versions: string[]): [string[], string] {
 	// Iterate over the version ranges provided by the client and select the best one that works
-	const connectVersions = versions ? versions : ["^0.1.0"];
+	const connectVersions = versions || ["^0.1.0"];
 	const version = selectProtocolVersion(connectVersions);
 	if (!version) {
 		throw new NetworkError(
 			400,
-			`Unsupported client protocol. Server: ${protocolVersions}. Client: ${JSON.stringify(
-				connectVersions,
-			)}`,
+			`Unsupported client protocol. Server: ${protocolVersions}. Client: ${connectVersions}`,
 		);
 	}
 	return [connectVersions, version];
@@ -247,7 +250,7 @@ enum ConnectDocumentStage {
 
 const hasWriteAccess = (scopes: string[]) => canWrite(scopes) || canSummarize(scopes);
 const isWriter = (scopes: string[], mode: ConnectionMode) =>
-	hasWriteAccess(scopes) ? mode === "write" : false;
+	hasWriteAccess(scopes) && mode === "write";
 
 export function configureWebSocketServices(
 	webSocketServer: core.IWebSocketServer,
@@ -456,42 +459,50 @@ export function configureWebSocketServices(
 			message: IConnect,
 			properties: Record<string, any>,
 		): Promise<IConnectedClient> {
-			let connectDocumentStage = ConnectDocumentStage.ConnectDocumentStarted;
+			const connectionTrace = [{ stage: ConnectDocumentStage.ConnectDocumentStarted, ts: 0 }];
+			let stampedTS = performance.now();
+			function stampStage(stage: ConnectDocumentStage) {
+				const stampingTS: number = performance.now();
+				connectionTrace.push({ stage, ts: stampingTS - stampedTS });
+				stampedTS = stampingTS;
+			}
 			const startTime = Date.now();
+
 			const connectMetric = Lumberjack.newLumberMetric(
 				LumberEventName.ConnectDocument,
 				properties,
 			);
+
 			let tenantId = message.tenantId;
 			let documentId = message.id;
 			let uncaughtError: any;
 			try {
 				const [connectVersions, version] = checkVersion(message.versions);
-				connectDocumentStage = ConnectDocumentStage.VersionsChecked;
+				stampStage(ConnectDocumentStage.VersionsChecked);
 
 				checkThrottle(tenantId);
-				connectDocumentStage = ConnectDocumentStage.ThrottleChecked;
+				stampStage(ConnectDocumentStage.ThrottleChecked);
 
 				const claims = await checkToken(message.token, tenantId, documentId);
 				// check token validate tenantId/documentId for consistent, throw 403 if now.
 				// Following change tenantId/documentId from claims, just in case future code changes that we can remember to use the ones from claim.
 				tenantId = claims.tenantId;
 				documentId = claims.documentId;
-				connectDocumentStage = ConnectDocumentStage.TokenVerified;
+				stampStage(ConnectDocumentStage.TokenVerified);
 
 				const [clientId, room] = await joinRoomAndSubscribeToChannel(
 					tenantId,
 					documentId,
 					socket,
 				);
-				connectDocumentStage = ConnectDocumentStage.RoomJoined;
+				stampStage(ConnectDocumentStage.RoomJoined);
 
 				const subMetricProperties = {
 					...getLumberBaseProperties(documentId, tenantId),
 					[CommonProperties.clientId]: clientId,
 				};
 				const clients = await retrieveClients(tenantId, documentId, subMetricProperties);
-				connectDocumentStage = ConnectDocumentStage.ClientsRetrieved;
+				stampStage(ConnectDocumentStage.ClientsRetrieved);
 
 				const connectedTimestamp = Date.now();
 				const messageClient = createMessageClientAndJoinRoom(
@@ -501,7 +512,7 @@ export function configureWebSocketServices(
 					clientId,
 					connectedTimestamp,
 				);
-				connectDocumentStage = ConnectDocumentStage.MessageClientCreated;
+				stampStage(ConnectDocumentStage.MessageClientCreated);
 
 				await addMessageClientToClientManager(
 					tenantId,
@@ -510,13 +521,13 @@ export function configureWebSocketServices(
 					messageClient,
 					subMetricProperties,
 				);
-				connectDocumentStage = ConnectDocumentStage.MessageClientAdded;
+				stampStage(ConnectDocumentStage.MessageClientAdded);
 
 				if (isTokenExpiryEnabled) {
 					const lifeTimeMSec = validateTokenClaimsExpiration(claims, maxTokenLifetimeSec);
 					setExpirationTimer(lifeTimeMSec);
 				}
-				connectDocumentStage = ConnectDocumentStage.TokenExpirySet;
+				stampStage(ConnectDocumentStage.TokenExpirySet);
 
 				const isWriterClient = isWriter(messageClient.scopes ?? [], message.mode);
 				connectMetric.setProperty("IsWriterClient", isWriterClient);
@@ -544,13 +555,13 @@ export function configureWebSocketServices(
 					  );
 				// back-compat: remove cast to any once new definition of IConnected comes through.
 				(connectedMessage as any).timestamp = connectedTimestamp;
-				connectDocumentStage = ConnectDocumentStage.MessageClientConnected;
+				stampStage(ConnectDocumentStage.MessageClientConnected);
 
 				trackSocket(tenantId, documentId, claims);
-				connectDocumentStage = ConnectDocumentStage.SocketTrackerAppended;
+				stampStage(ConnectDocumentStage.SocketTrackerAppended);
 
 				setUpSignalListenerForRoomBroadcasting(room, documentId, tenantId);
-				connectDocumentStage = ConnectDocumentStage.SignalListenerSetUp;
+				stampStage(ConnectDocumentStage.SignalListenerSetUp);
 
 				const result = {
 					connection: connectedMessage,
@@ -563,7 +574,7 @@ export function configureWebSocketServices(
 					"signal",
 					createRoomJoinMessage(result.connection.clientId, result.details),
 				);
-				connectDocumentStage = ConnectDocumentStage.JoinOpEmitted;
+				stampStage(ConnectDocumentStage.JoinOpEmitted);
 
 				connectMetric.setProperties({
 					[CommonProperties.clientId]: result.connection.clientId,
@@ -580,7 +591,7 @@ export function configureWebSocketServices(
 				uncaughtError = err;
 				throw err;
 			} finally {
-				connectMetric.setProperty("ConnectDocumentStage", connectDocumentStage);
+				connectMetric.setProperty("connectTrace", connectionTrace);
 				if (!uncaughtError) {
 					connectMetric.success(`Connect document successful`);
 				} else {
