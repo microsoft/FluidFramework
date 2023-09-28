@@ -143,7 +143,10 @@ describe.only("unboxed unit tests", () => {
 
 				assert(result !== undefined);
 				assert.equal(result.foo, "Hello world");
-				assert.deepEqual(result.bar, [true, false, true]);
+				assert.equal(result.bar.length, 3);
+				assert.equal(result.bar.at(0), true);
+				assert.equal(result.bar.at(1), false);
+				assert.equal(result.bar.at(2), true);
 			});
 		});
 
