@@ -263,6 +263,11 @@ export interface IDb {
 
 	on(event: IDbEvents, listener: (...args: any[]) => void);
 
+	/**
+	 * Get a reference to a MongoDB collection, or create one if it doesn't exist.
+	 * @param name - collection name
+	 * @param dbName - database name where collection located
+	 */
 	collection<T>(name: string, dbName?: string): ICollection<T>;
 
 	/**
