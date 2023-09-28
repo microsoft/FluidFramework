@@ -197,9 +197,6 @@ describe.only("unboxed unit tests", () => {
 				assert.equal(result.value, true);
 			});
 		});
-
-		// TODO cases:
-		// * union?
 	});
 
 	describe("unboxedTree", () => {
