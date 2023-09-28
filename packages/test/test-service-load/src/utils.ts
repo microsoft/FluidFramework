@@ -18,7 +18,7 @@ import { IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ConfigTypes, createChildLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITelemetryBufferedLogger,
 	ITestDriver,
@@ -178,15 +178,9 @@ export async function initialize(
 
 	const loaderOptions = random.pick(generateLoaderOptions(seed, optionsOverride?.loader));
 	const containerOptions = random.pick(generateRuntimeOptions(seed, optionsOverride?.container));
-	const testConfigurations = random.pick(
+	const configurations = random.pick(
 		generateConfigurations(seed, optionsOverride?.configurations),
 	);
-	// The following configs are not combined and if specified, they will override individual test-specific configs
-	const globalConfigurations: Record<string, ConfigTypes> = {
-		"Fluid.SharedObject.DdsCallbacksTelemetrySampling": 10000,
-		"Fluid.SharedObject.OpProcessingTelemetrySampling": 10000,
-		"Fluid.Driver.ReadBlobTelemetrySampling": 100,
-	};
 
 	const minLogLevel = random.pick([LogLevel.verbose, LogLevel.default]);
 	const logger = await createLogger(
@@ -204,7 +198,7 @@ export async function initialize(
 		details: JSON.stringify({
 			loaderOptions,
 			containerOptions,
-			configurations: { ...testConfigurations, ...globalConfigurations },
+			configurations,
 			logLevel: minLogLevel,
 		}),
 	});
@@ -218,8 +212,8 @@ export async function initialize(
 		options: loaderOptions,
 		detachedBlobStorage: new MockDetachedBlobStorage(),
 		configProvider: {
-			getRawConfig(name: string): ConfigTypes {
-				return testConfigurations[name] ?? globalConfigurations[name];
+			getRawConfig(name) {
+				return configurations[name];
 			},
 		},
 	});
