@@ -8,6 +8,7 @@ import { ConfigTypes } from '@fluidframework/telemetry-utils';
 import { ContainerRuntime } from '@fluidframework/container-runtime';
 import { ContainerRuntimeFactoryWithDefaultDataStore } from '@fluidframework/aqueduct';
 import { FluidDataStoreRuntime } from '@fluidframework/datastore';
+import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { ICodeDetailsLoader } from '@fluidframework/container-definitions';
 import { IConfigProviderBase } from '@fluidframework/telemetry-utils';
@@ -58,6 +59,16 @@ export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFacto
 
 // @public
 export function createAndAttachContainer(source: IFluidCodeDetails, loader: IHostLoader, attachRequest: IRequest): Promise<IContainer>;
+
+// @public
+export const createContainerRuntimeFactoryWithDefaultDataStore: (Base: typeof ContainerRuntimeFactoryWithDefaultDataStore | undefined, ctorArgs: {
+    defaultFactory: IFluidDataStoreFactory;
+    registryEntries: NamedFluidDataStoreRegistryEntries;
+    dependencyContainer?: any;
+    requestHandlers?: RuntimeRequestHandler[] | undefined;
+    runtimeOptions?: IContainerRuntimeOptions | undefined;
+    provideEntryPoint?: ((runtime: IContainerRuntime) => Promise<FluidObject>) | undefined;
+}) => ContainerRuntimeFactoryWithDefaultDataStore;
 
 // @public (undocumented)
 export const createDocumentId: () => string;
@@ -152,7 +163,6 @@ export interface ITestContainerConfig {
     loaderProps?: Partial<ILoaderProps>;
     registry?: ChannelFactoryRegistry;
     runtimeOptions?: IContainerRuntimeOptions;
-    simulateReadConnectionUsingDelay?: boolean;
 }
 
 // @public (undocumented)

@@ -6,6 +6,7 @@
 import { ModelContainerRuntimeFactory } from "@fluid-example/example-utils";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import type { IContainer } from "@fluidframework/container-definitions";
+// eslint-disable-next-line import/no-deprecated
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { AppData } from "./FluidObject";
 
@@ -48,6 +49,7 @@ export class RuntimeFactory extends ModelContainerRuntimeFactory<IAppModel> {
 		runtime: IContainerRuntime,
 		container: IContainer,
 	): Promise<IAppModel> {
+		// eslint-disable-next-line import/no-deprecated
 		const collaborativeObj = await requestFluidObject<AppData>(
 			await runtime.getRootDataStore(collaborativeObjId),
 			"",

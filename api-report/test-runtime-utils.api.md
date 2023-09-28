@@ -57,7 +57,7 @@ import { MessageType } from '@fluidframework/protocol-definitions';
 import { ReadOnlyInfo } from '@fluidframework/container-definitions';
 import { ScopeType } from '@fluidframework/protocol-definitions';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
-import { VisibilityState as VisibilityState_2 } from '@fluidframework/runtime-definitions';
+import { VisibilityState } from '@fluidframework/runtime-definitions';
 
 // @public
 export interface IInsecureUser extends IUser {
@@ -310,8 +310,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     baseSnapshot: ISnapshotTree | undefined;
     // (undocumented)
-    bindToContext(): void;
-    // (undocumented)
     clientDetails: IClientDetails;
     // (undocumented)
     clientId: string | undefined;
@@ -422,7 +420,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     ensureNoDataModelChanges<T>(callback: () => T): T;
     // (undocumented)
-    readonly entryPoint?: IFluidHandle<FluidObject>;
+    readonly entryPoint: IFluidHandle<FluidObject>;
     // (undocumented)
     readonly existing: boolean;
     // (undocumented)
@@ -499,7 +497,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
     // (undocumented)
-    get visibilityState(): VisibilityState_2;
+    get visibilityState(): VisibilityState;
     // (undocumented)
     waitAttached(): Promise<void>;
 }
