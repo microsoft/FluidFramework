@@ -306,7 +306,7 @@ export class LazySequence<TTypes extends AllowedTypes>
 		sourceEnd: number,
 		source?: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
 	): void {
-		this.moveToIndexI(0, sourceStart, sourceEnd, source);
+		this._moveToIndex(0, sourceStart, sourceEnd, source);
 	}
 
 	public moveToEnd(sourceStart: number, sourceEnd: number): void;
@@ -320,7 +320,7 @@ export class LazySequence<TTypes extends AllowedTypes>
 		sourceEnd: number,
 		source?: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
 	): void {
-		this.moveToIndexI(this.length, sourceStart, sourceEnd, source);
+		this._moveToIndex(this.length, sourceStart, sourceEnd, source);
 	}
 
 	public moveToIndex(index: number, sourceStart: number, sourceEnd: number): void;
@@ -336,10 +336,10 @@ export class LazySequence<TTypes extends AllowedTypes>
 		sourceEnd: number,
 		source?: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
 	): void {
-		this.moveToIndexI(index, sourceStart, sourceEnd, source);
+		this._moveToIndex(index, sourceStart, sourceEnd, source);
 	}
 
-	private moveToIndexI<TTypesSource extends AllowedTypes>(
+	private _moveToIndex<TTypesSource extends AllowedTypes>(
 		index: number,
 		sourceStart: number,
 		sourceEnd: number,
