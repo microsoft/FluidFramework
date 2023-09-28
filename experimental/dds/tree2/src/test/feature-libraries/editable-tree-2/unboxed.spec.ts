@@ -68,14 +68,16 @@ function initializeTreeWithContent<Kind extends FieldKind, Types extends Allowed
 
 /**
  * Creates a tree whose root node contains a single leaf field.
- *
  * Also initializes a cursor and moves that cursor to the tree's root.
  *
  * @returns The initialized tree, cursor, and associated context.
  */
 function createLeafTree(
 	kind: ValueSchema,
-	initialTree: any, // TODO
+	initialTree:
+		| SchemaAware.TypedField<FieldSchema, SchemaAware.ApiMode.Flexible>
+		| readonly ITreeCursorSynchronous[]
+		| ITreeCursorSynchronous,
 ): {
 	treeSchema: FieldSchema<Optional, [TreeSchema<"leaf">]>;
 	context: Context;
