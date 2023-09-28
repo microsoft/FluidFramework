@@ -10,8 +10,8 @@ import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { ICreateBlobResponse } from '@fluidframework/protocol-definitions';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
-import { IErrorEvent } from '@fluidframework/common-definitions';
-import { IEventProvider } from '@fluidframework/common-definitions';
+import { IErrorEvent } from '@fluidframework/core-interfaces';
+import { IEventProvider } from '@fluidframework/core-interfaces';
 import { INack } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -27,7 +27,7 @@ import { IVersion } from '@fluidframework/protocol-definitions';
 // @public (undocumented)
 export type DriverError = IThrottlingWarning | IGenericNetworkError | IAuthorizationError | ILocationRedirectionError | IDriverBasicError;
 
-// @public
+// @public @deprecated
 export enum DriverErrorType {
     authorizationError = "authorizationError",
     deltaStreamConnectionForbidden = "deltaStreamConnectionForbidden",
@@ -42,12 +42,38 @@ export enum DriverErrorType {
     incorrectServerResponse = "incorrectServerResponse",
     locationRedirection = "locationRedirection",
     offlineError = "offlineError",
+    outOfStorageError = "outOfStorageError",
     throttlingError = "throttlingError",
     // (undocumented)
     unsupportedClientProtocolVersion = "unsupportedClientProtocolVersion",
     usageError = "usageError",
     writeError = "writeError"
 }
+
+// @public
+export const DriverErrorTypes: {
+    readonly genericNetworkError: "genericNetworkError";
+    readonly authorizationError: "authorizationError";
+    readonly fileNotFoundOrAccessDeniedError: "fileNotFoundOrAccessDeniedError";
+    readonly offlineError: "offlineError";
+    readonly unsupportedClientProtocolVersion: "unsupportedClientProtocolVersion";
+    readonly writeError: "writeError";
+    readonly fetchFailure: "fetchFailure";
+    readonly fetchTokenError: "fetchTokenError";
+    readonly incorrectServerResponse: "incorrectServerResponse";
+    readonly fileOverwrittenInStorage: "fileOverwrittenInStorage";
+    readonly deltaStreamConnectionForbidden: "deltaStreamConnectionForbidden";
+    readonly locationRedirection: "locationRedirection";
+    readonly fluidInvalidSchema: "fluidInvalidSchema";
+    readonly fileIsLocked: "fileIsLocked";
+    readonly outOfStorageError: "outOfStorageError";
+    readonly genericError: "genericError";
+    readonly throttlingError: "throttlingError";
+    readonly usageError: "usageError";
+};
+
+// @public (undocumented)
+export type DriverErrorTypes = typeof DriverErrorTypes[keyof typeof DriverErrorTypes];
 
 // @public
 export enum DriverHeader {
@@ -186,13 +212,12 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
 export interface IDocumentStorageServicePolicies {
     readonly caching?: LoaderCachingPolicy;
     readonly maximumCacheDurationMs?: FiveDaysMs;
-    readonly minBlobSize?: number;
 }
 
 // @public
 export interface IDriverBasicError extends IDriverErrorBase {
     // (undocumented)
-    readonly errorType: DriverErrorType.genericError | DriverErrorType.fileNotFoundOrAccessDeniedError | DriverErrorType.offlineError | DriverErrorType.unsupportedClientProtocolVersion | DriverErrorType.writeError | DriverErrorType.fetchFailure | DriverErrorType.fetchTokenError | DriverErrorType.incorrectServerResponse | DriverErrorType.fileOverwrittenInStorage | DriverErrorType.fluidInvalidSchema | DriverErrorType.usageError | DriverErrorType.fileIsLocked;
+    readonly errorType: DriverErrorType.genericError | DriverErrorType.fileNotFoundOrAccessDeniedError | DriverErrorType.offlineError | DriverErrorType.unsupportedClientProtocolVersion | DriverErrorType.writeError | DriverErrorType.fetchFailure | DriverErrorType.fetchTokenError | DriverErrorType.incorrectServerResponse | DriverErrorType.fileOverwrittenInStorage | DriverErrorType.fluidInvalidSchema | DriverErrorType.usageError | DriverErrorType.fileIsLocked | DriverErrorType.outOfStorageError;
     // (undocumented)
     readonly statusCode?: number;
 }
@@ -200,6 +225,7 @@ export interface IDriverBasicError extends IDriverErrorBase {
 // @public
 export interface IDriverErrorBase {
     canRetry: boolean;
+    endpointReached?: boolean;
     readonly errorType: DriverErrorType;
     readonly message: string;
     online?: string;
@@ -211,23 +237,6 @@ export interface IDriverHeader {
     [DriverHeader.summarizingClient]: boolean;
     // (undocumented)
     [DriverHeader.createNew]: any;
-}
-
-// @public @deprecated (undocumented)
-export interface IFluidResolvedUrl {
-    // (undocumented)
-    endpoints: {
-        [name: string]: string;
-    };
-    id: string;
-    // (undocumented)
-    tokens: {
-        [name: string]: string;
-    };
-    // (undocumented)
-    type: "fluid";
-    // (undocumented)
-    url: string;
 }
 
 // @public (undocumented)
@@ -247,7 +256,21 @@ export interface ILocationRedirectionError extends IDriverErrorBase {
 }
 
 // @public (undocumented)
-export type IResolvedUrl = IFluidResolvedUrl;
+export interface IResolvedUrl {
+    // (undocumented)
+    endpoints: {
+        [name: string]: string;
+    };
+    id: string;
+    // (undocumented)
+    tokens: {
+        [name: string]: string;
+    };
+    // (undocumented)
+    type: "fluid";
+    // (undocumented)
+    url: string;
+}
 
 // @public
 export interface IStream<T> {

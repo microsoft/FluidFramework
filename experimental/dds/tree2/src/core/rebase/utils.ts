@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ReadonlyRepairDataStore, IRepairDataStoreProvider } from "../repair";
 import { fail } from "../../util";
 import { ChangeRebaser, TaggedChange, tagRollbackInverse } from "./changeRebaser";
@@ -301,6 +301,8 @@ export function rebaseBranch<TChange>(
  * @param sourceHead - the head of the branch that `change` is based on
  * @param targetHead - the branch to rebase `change` onto
  * @returns the rebased change
+ *
+ * @remarks inverses will be cached.
  */
 export function rebaseChange<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
@@ -319,7 +321,7 @@ export function rebaseChange<TChange>(
 		(newChange, branchCommit) =>
 			changeRebaser.rebase(
 				newChange,
-				inverseFromCommit(changeRebaser, branchCommit, branchCommit.repairData),
+				inverseFromCommit(changeRebaser, branchCommit, branchCommit.repairData, true),
 			),
 		change,
 	);
@@ -339,12 +341,14 @@ function inverseFromCommit<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
 	commit: GraphCommit<TChange>,
 	repairData?: ReadonlyRepairDataStore,
+	cache?: boolean,
 ): TaggedChange<TChange> {
-	return tagRollbackInverse(
-		changeRebaser.invert(commit, true, repairData),
-		mintRevisionTag(),
-		commit.revision,
-	);
+	const inverse = commit.inverse ?? changeRebaser.invert(commit, true, repairData);
+	if (cache === true && commit.inverse === undefined) {
+		commit.inverse = inverse;
+	}
+
+	return tagRollbackInverse(inverse, mintRevisionTag(), commit.revision);
 }
 
 /**
@@ -375,8 +379,10 @@ export function findAncestor<T extends { parent?: T }>(
  * but otherwise including `descendant`).
  * @param predicate - a function which will be evaluated on every ancestor of `descendant` until it returns true.
  * @returns the closest ancestor of `descendant` that satisfies `predicate`, or `undefined` if no such ancestor exists.
+ *
  * @example
- * ```ts
+ *
+ * ```typescript
  * interface Parented {
  *   id: string;
  *   parent?: Parented;
@@ -407,9 +413,10 @@ export function findAncestor<T extends { parent?: T }>(
 	}
 	for (let cur = d; cur !== undefined; cur = cur.parent) {
 		if (predicate(cur)) {
+			path?.reverse();
 			return cur;
 		}
-		path?.unshift(cur);
+		path?.push(cur);
 	}
 
 	if (path !== undefined) {
@@ -425,8 +432,10 @@ export function findAncestor<T extends { parent?: T }>(
  * @param descendantB - another descendant. If an empty `path` array is included, it will be populated
  * with the chain of commits from the ancestor to `descendantB` (not including the ancestor).
  * @returns the common ancestor of `descendantA` and `descendantB`, or `undefined` if no such ancestor exists.
+ *
  * @example
- * ```ts
+ *
+ * ```typescript
  * interface Parented {
  *   parent?: Parented;
  * }
@@ -465,31 +474,36 @@ export function findCommonAncestor<T extends { parent?: T }>(
 		return a;
 	}
 
+	const reversePaths = () => {
+		pathA?.reverse();
+		pathB?.reverse();
+	};
+
 	const visited = new Set();
 	while (a !== undefined || b !== undefined) {
 		if (a !== undefined) {
 			if (visited.has(a)) {
 				if (pathB !== undefined) {
-					const indexInPathB = pathB.findIndex((r) => Object.is(r, a));
-					pathB.splice(0, indexInPathB + 1);
+					pathB.length = pathB.findIndex((r) => Object.is(r, a));
 				}
+				reversePaths();
 				return a;
 			}
 			visited.add(a);
-			pathA?.unshift(a);
+			pathA?.push(a);
 			a = a.parent;
 		}
 
 		if (b !== undefined) {
 			if (visited.has(b)) {
 				if (pathA !== undefined) {
-					const indexInPathA = pathA.findIndex((r) => Object.is(r, b));
-					pathA.splice(0, indexInPathA + 1);
+					pathA.length = pathA.findIndex((r) => Object.is(r, b));
 				}
+				reversePaths();
 				return b;
 			}
 			visited.add(b);
-			pathB?.unshift(b);
+			pathB?.push(b);
 			b = b.parent;
 		}
 	}

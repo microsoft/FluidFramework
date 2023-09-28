@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { Uint8ArrayToString } from "@fluidframework/common-utils";
+import { Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ReadBuffer } from "../ReadBufferUtils";
 import { TreeBuilderSerializer } from "../WriteBufferUtils";
@@ -70,7 +70,10 @@ describe("Tree Representation tests", () => {
 	function validate(length = -1) {
 		const buffer = builder.serialize();
 		assert.strictEqual(buffer.length, length, "buffer size not equal");
-		const builder2 = TreeBuilder.load(new ReadBuffer(buffer), logger).builder;
+		const builder2 = TreeBuilder.load(
+			new ReadBuffer(buffer),
+			logger.toTelemetryLogger(),
+		).builder;
 		compareNodes(builder, builder2);
 	}
 

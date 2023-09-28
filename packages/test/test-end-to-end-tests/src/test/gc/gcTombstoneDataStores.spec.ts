@@ -25,9 +25,10 @@ import {
 	itExpects,
 	TestDataObjectType,
 } from "@fluid-internal/test-version-utils";
-import { delay, stringToBuffer } from "@fluidframework/common-utils";
-import { IContainer, IErrorBase, LoaderHeader } from "@fluidframework/container-definitions";
-import { IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { stringToBuffer } from "@fluid-internal/client-utils";
+import { delay } from "@fluidframework/core-utils";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { IErrorBase, IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
@@ -50,11 +51,6 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 
 	const testContainerConfig: ITestContainerConfig = {
 		runtimeOptions: {
-			summaryOptions: {
-				summaryConfigOverrides: {
-					state: "disabled",
-				},
-			},
 			gcOptions: { inactiveTimeoutMs: 0 },
 		},
 		loaderProps: { configProvider: mockConfigProvider(settings) },
@@ -101,9 +97,11 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 		return createSummarizer(
 			provider,
 			container,
+			{
+				...testContainerConfig,
+				loaderProps: { configProvider: mockConfigProvider(settings) },
+			},
 			summaryVersion,
-			testContainerConfig.runtimeOptions?.gcOptions,
-			mockConfigProvider(settings),
 		);
 	};
 	const summarize = async (summarizer: ISummarizer) => {
@@ -853,13 +851,10 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 			const mainDataStoreUrl = `/${mainDataStore._context.id}`;
 			await waitForContainerConnection(mainContainer);
 
-			const { summarizer } = await createSummarizer(
-				provider,
-				mainContainer,
-				undefined /* summaryVersion */,
-				testContainerConfig.runtimeOptions?.gcOptions,
-				mockConfigProvider(settings),
-			);
+			const { summarizer } = await createSummarizer(provider, mainContainer, {
+				...testContainerConfig,
+				loaderProps: { configProvider: mockConfigProvider(settings) },
+			});
 
 			// Create couple of data stores.
 			const newDataStore = await requestFluidObject<ITestDataObject>(
@@ -910,13 +905,10 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 			const mainDataStoreUrl = `/${mainDataStore._context.id}`;
 			await waitForContainerConnection(mainContainer);
 
-			const { summarizer } = await createSummarizer(
-				provider,
-				mainContainer,
-				undefined /* summaryVersion */,
-				testContainerConfig.runtimeOptions?.gcOptions,
-				mockConfigProvider(settings),
-			);
+			const { summarizer } = await createSummarizer(provider, mainContainer, {
+				...testContainerConfig,
+				loaderProps: { configProvider: mockConfigProvider(settings) },
+			});
 
 			// Upload an attachment blobs and mark it referenced.
 			const blobContents = "Blob contents";
@@ -986,9 +978,11 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				const { summarizer } = await createSummarizer(
 					provider,
 					mainContainer,
-					undefined /* summaryVersion */,
-					testContainerConfig.runtimeOptions?.gcOptions,
-					mockConfigProvider(settings),
+					{
+						...testContainerConfig,
+						loaderProps: { configProvider: mockConfigProvider(settings) },
+					},
+					undefined,
 					mockLogger,
 				);
 
@@ -1098,13 +1092,10 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 			);
 			await waitForContainerConnection(mainContainer);
 
-			const { summarizer } = await createSummarizer(
-				provider,
-				mainContainer,
-				undefined /* summaryVersion */,
-				testContainerConfig.runtimeOptions?.gcOptions,
-				mockConfigProvider(settings),
-			);
+			const { summarizer } = await createSummarizer(provider, mainContainer, {
+				...testContainerConfig,
+				loaderProps: { configProvider: mockConfigProvider(settings) },
+			});
 
 			// Create a data store.
 			const newDataStore = await requestFluidObject<ITestDataObject>(
@@ -1169,13 +1160,10 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				const mainDataStoreUrl = `/${mainDataStore._context.id}`;
 				await waitForContainerConnection(mainContainer);
 
-				const { summarizer } = await createSummarizer(
-					provider,
-					mainContainer,
-					undefined /* summaryVersion */,
-					testContainerConfig.runtimeOptions?.gcOptions,
-					mockConfigProvider(settings),
-				);
+				const { summarizer } = await createSummarizer(provider, mainContainer, {
+					...testContainerConfig,
+					loaderProps: { configProvider: mockConfigProvider(settings) },
+				});
 
 				// Create a data store and mark it referenced.
 				const newDataStore = await requestFluidObject<ITestDataObject>(

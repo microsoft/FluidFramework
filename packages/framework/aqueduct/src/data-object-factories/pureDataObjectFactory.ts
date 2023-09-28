@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-deprecated
 import { IRequest, IFluidRouter, FluidObject } from "@fluidframework/core-interfaces";
 import {
 	FluidDataStoreRuntime,
@@ -28,12 +29,13 @@ import {
 	IFluidDependencySynthesizer,
 } from "@fluidframework/synthesize";
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IDataObjectProps, PureDataObject, DataObjectTypes } from "../data-objects";
 /*
  * Useful interface in places where it's useful to do type erasure for PureDataObject generic
  */
 export interface IRootDataObjectFactory extends IFluidDataStoreFactory {
+	// eslint-disable-next-line import/no-deprecated
 	createRootInstance(rootDataStoreId: string, runtime: IContainerRuntime): Promise<IFluidRouter>;
 }
 
@@ -59,24 +61,20 @@ async function createDataObject<
 	// request mixin in
 	runtimeClass = mixinRequestHandler(
 		async (request: IRequest, runtimeArg: FluidDataStoreRuntime) => {
-			const maybeRouter: FluidObject<IFluidRouter> | undefined =
-				await runtimeArg.entryPoint?.get();
+			const dataObject = (await runtimeArg.entryPoint.get()) as TObj;
 			assert(
-				maybeRouter !== undefined,
-				0x468 /* entryPoint should have been initialized by now */,
+				dataObject.request !== undefined,
+				0x795 /* Data store runtime entryPoint does not have request */,
 			);
-			assert(
-				maybeRouter?.IFluidRouter !== undefined,
-				0x469 /* Data store runtime entryPoint is not an IFluidRouter */,
-			);
-			return maybeRouter?.IFluidRouter.request(request);
+			return dataObject.request(request);
 		},
 		runtimeClass,
 	);
 
-	// Create a new runtime for our data store
+	// Create a new runtime for our data store, as if via new FluidDataStoreRuntime,
+	// but using the runtimeClass that's been augmented with mixins
 	// The runtime is what Fluid uses to create DDS' and route to your data store
-	const runtime: FluidDataStoreRuntime = new runtimeClass(
+	const runtime: FluidDataStoreRuntime = new runtimeClass( // calls new FluidDataStoreRuntime(...)
 		context,
 		sharedObjectRegistry,
 		existing,
@@ -87,7 +85,7 @@ async function createDataObject<
 			// Without this I ran into issues with the load-existing flow not working correctly.
 			await instance.finishInitialization(true);
 			return instance;
-		},
+		} /* provideEntryPoint */,
 	);
 
 	// Create object right away.

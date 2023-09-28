@@ -35,26 +35,12 @@ export const refGetRangeLabels = (refPos: ReferencePosition): string[] | undefin
 
 export function refHasTileLabel(refPos: ReferencePosition, label: string): boolean {
 	const tileLabels = refGetTileLabels(refPos);
-	if (tileLabels) {
-		for (const refLabel of tileLabels) {
-			if (label === refLabel) {
-				return true;
-			}
-		}
-	}
-	return false;
+	return tileLabels?.includes(label) ?? false;
 }
 
 export function refHasRangeLabel(refPos: ReferencePosition, label: string): boolean {
 	const rangeLabels = refGetRangeLabels(refPos);
-	if (rangeLabels) {
-		for (const refLabel of rangeLabels) {
-			if (label === refLabel) {
-				return true;
-			}
-		}
-	}
-	return false;
+	return rangeLabels?.includes(label) ?? false;
 }
 export function refHasTileLabels(refPos: ReferencePosition): boolean {
 	return refGetTileLabels(refPos) !== undefined;
@@ -70,7 +56,7 @@ export function refHasRangeLabels(refPos: ReferencePosition): boolean {
  */
 export interface ReferencePosition {
 	/**
-	 * @returns - Properties associated with this reference
+	 * @returns Properties associated with this reference
 	 */
 	properties?: PropertySet;
 
@@ -89,7 +75,9 @@ export interface ReferencePosition {
 
 	/**
 	 * Gets the offset for this reference position within its associated segment.
+	 *
 	 * @example
+	 *
 	 * If a merge-tree has 3 leaf segments ["hello", " ", "world"] and a ReferencePosition refers to the "l"
 	 * in "world", that reference's offset would be 3 as "l" is the character at index 3 within "world".
 	 */
@@ -98,7 +86,7 @@ export interface ReferencePosition {
 	/**
 	 * @param newProps - Properties to add to this reference.
 	 * @param op - Combining semantics for changed properties. By default, property changes are last-write-wins.
-	 * @remarks - Note that merge-tree does not broadcast changes to other clients. It is up to the consumer
+	 * @remarks Note that merge-tree does not broadcast changes to other clients. It is up to the consumer
 	 * to ensure broadcast happens if that is desired.
 	 */
 	addProperties(newProps: PropertySet, op?: ICombiningOp): void;

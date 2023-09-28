@@ -5,15 +5,17 @@
 
 import { strict as assert } from "assert";
 import {
+	AcceptanceCondition,
 	combineReducersAsync as combineReducers,
 	AsyncReducer as Reducer,
 } from "@fluid-internal/stochastic-test-utils";
 import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
-import { IntervalStickiness, IntervalType } from "../intervalCollection";
+import { IntervalType } from "../intervals";
 import { revertSharedStringRevertibles, SharedStringRevertible } from "../revertibles";
 import { SharedStringFactory } from "../sequenceFactory";
 import { SharedString } from "../sharedString";
+import { Side } from "../intervalCollection";
 
 export type RevertibleSharedString = SharedString & {
 	revertibles: SharedStringRevertible[];
@@ -51,12 +53,15 @@ export interface AddInterval extends IntervalCollectionSpec, RangeSpec {
 	// what happened to an interval over the course of its lifetime based on the history
 	// file, which is useful for debugging test failures.
 	id: string;
-	stickiness: IntervalStickiness;
+	startSide: Side;
+	endSide: Side;
 }
 
-export interface ChangeInterval extends IntervalCollectionSpec, Partial<RangeSpec> {
+export interface ChangeInterval extends IntervalCollectionSpec, RangeSpec {
 	type: "changeInterval";
 	id: string;
+	startSide: Side;
+	endSide: Side;
 }
 
 export interface DeleteInterval extends IntervalCollectionSpec {
@@ -96,41 +101,56 @@ export type RevertOperation = OperationWithRevert | TextOperation;
 
 export type FuzzTestState = DDSFuzzTestState<SharedStringFactory>;
 
-export interface OperationGenerationConfig {
+export interface SharedStringOperationGenerationConfig {
 	/**
 	 * Maximum length of the SharedString (locally) before no further AddText operations are generated.
 	 * Note due to concurrency, during test execution the actual length of the string may exceed this.
 	 */
 	maxStringLength?: number;
+	maxInsertLength?: number;
+	weights?: {
+		addText: number;
+		removeRange: number;
+	};
+}
+
+export interface IntervalOperationGenerationConfig extends SharedStringOperationGenerationConfig {
 	/**
 	 * Maximum number of intervals (locally) before no further AddInterval operations are generated.
 	 * Note due to concurrency, during test execution the actual number of intervals may exceed this.
 	 */
 	maxIntervals?: number;
-	maxInsertLength?: number;
 	intervalCollectionNamePool?: string[];
 	propertyNamePool?: string[];
 	validateInterval?: number;
-	weights?: RevertibleWeights;
+	weights?: RevertibleWeights & SharedStringOperationGenerationConfig["weights"];
 }
 
-export const defaultOperationGenerationConfig: Required<OperationGenerationConfig> = {
-	maxStringLength: 1000,
-	maxIntervals: 100,
-	maxInsertLength: 10,
-	intervalCollectionNamePool: ["comments"],
-	propertyNamePool: ["prop1", "prop2", "prop3"],
-	validateInterval: 100,
-	weights: {
-		revertWeight: 2,
-		addText: 2,
-		removeRange: 1,
-		addInterval: 2,
-		deleteInterval: 2,
-		changeInterval: 2,
-		changeProperties: 2,
-	},
-};
+export const defaultSharedStringOperationGenerationConfig: Required<SharedStringOperationGenerationConfig> =
+	{
+		maxStringLength: 1000,
+		maxInsertLength: 10,
+		weights: {
+			addText: 2,
+			removeRange: 1,
+		},
+	};
+export const defaultIntervalOperationGenerationConfig: Required<IntervalOperationGenerationConfig> =
+	{
+		...defaultSharedStringOperationGenerationConfig,
+		maxIntervals: 100,
+		intervalCollectionNamePool: ["comments"],
+		propertyNamePool: ["prop1", "prop2", "prop3"],
+		validateInterval: 100,
+		weights: {
+			...defaultSharedStringOperationGenerationConfig.weights,
+			revertWeight: 2,
+			addInterval: 2,
+			deleteInterval: 2,
+			changeInterval: 2,
+			changeProperties: 2,
+		},
+	};
 
 export interface LoggingInfo {
 	/** id of the interval to track over time */
@@ -182,36 +202,103 @@ export function makeReducer(
 		};
 
 	const reducer = combineReducers<Operation | RevertOperation, ClientOpState>({
-		addText: async ({ channel }, { index, content }) => {
-			channel.insertText(index, content);
+		addText: async ({ client }, { index, content }) => {
+			client.channel.insertText(index, content);
 		},
-		removeRange: async ({ channel }, { start, end }) => {
-			channel.removeRange(start, end);
+		removeRange: async ({ client }, { start, end }) => {
+			client.channel.removeRange(start, end);
 		},
-		addInterval: async ({ channel }, { start, end, collectionName, id }) => {
-			const collection = channel.getIntervalCollection(collectionName);
-			collection.add(start, end, IntervalType.SlideOnRemove, { intervalId: id });
+		addInterval: async ({ client }, { start, end, collectionName, id, startSide, endSide }) => {
+			const collection = client.channel.getIntervalCollection(collectionName);
+			collection.add(
+				{ pos: start, side: startSide },
+				{ pos: end, side: endSide },
+				IntervalType.SlideOnRemove,
+				{ intervalId: id },
+			);
 		},
-		deleteInterval: async ({ channel }, { id, collectionName }) => {
-			const collection = channel.getIntervalCollection(collectionName);
+		deleteInterval: async ({ client }, { id, collectionName }) => {
+			const collection = client.channel.getIntervalCollection(collectionName);
 			collection.removeIntervalById(id);
 		},
-		changeInterval: async ({ channel }, { id, start, end, collectionName }) => {
-			const collection = channel.getIntervalCollection(collectionName);
-			collection.change(id, start, end);
+		changeInterval: async (
+			{ client },
+			{ id, start, end, collectionName, startSide, endSide },
+		) => {
+			const collection = client.channel.getIntervalCollection(collectionName);
+			collection.change(id, { pos: start, side: startSide }, { pos: end, side: endSide });
 		},
-		changeProperties: async ({ channel }, { id, properties, collectionName }) => {
-			const collection = channel.getIntervalCollection(collectionName);
+		changeProperties: async ({ client }, { id, properties, collectionName }) => {
+			const collection = client.channel.getIntervalCollection(collectionName);
 			collection.changeProperties(id, { ...properties });
 		},
-		revertSharedStringRevertibles: async ({ channel }, { editsToRevert }) => {
-			assert(isRevertibleSharedString(channel));
-			channel.isCurrentRevert = true;
-			const few = channel.revertibles.splice(-editsToRevert, editsToRevert);
-			revertSharedStringRevertibles(channel, few);
-			channel.isCurrentRevert = false;
+		revertSharedStringRevertibles: async ({ client }, { editsToRevert }) => {
+			assert(isRevertibleSharedString(client.channel));
+			client.channel.isCurrentRevert = true;
+			const few = client.channel.revertibles.splice(-editsToRevert, editsToRevert);
+			revertSharedStringRevertibles(client.channel, few);
+			client.channel.isCurrentRevert = false;
 		},
 	});
 
 	return withLogging(reducer);
+}
+
+export function createSharedStringGeneratorOperations(
+	optionsParam?: SharedStringOperationGenerationConfig,
+) {
+	const options = { ...defaultSharedStringOperationGenerationConfig, ...(optionsParam ?? {}) };
+
+	// All subsequent helper functions are generators; note that they don't actually apply any operations.
+	function startPosition({ random, client }: ClientOpState): number {
+		return random.integer(0, Math.max(0, client.channel.getLength() - 1));
+	}
+
+	function exclusiveRange(state: ClientOpState): RangeSpec {
+		const start = startPosition(state);
+		const end = state.random.integer(start + 1, state.client.channel.getLength());
+		return { start, end };
+	}
+
+	function exclusiveRangeLeaveChar(state: ClientOpState): RangeSpec {
+		const start = state.random.integer(0, state.client.channel.getLength() - 2);
+		const end = state.random.integer(start + 1, state.client.channel.getLength() - 1);
+		return { start, end };
+	}
+
+	async function addText(state: ClientOpState): Promise<AddText> {
+		const { random, client } = state;
+		return {
+			type: "addText",
+			index: random.integer(0, client.channel.getLength()),
+			content: random.string(random.integer(0, options.maxInsertLength)),
+		};
+	}
+
+	async function removeRange(state: ClientOpState): Promise<RemoveRange> {
+		return { type: "removeRange", ...exclusiveRange(state) };
+	}
+
+	async function removeRangeLeaveChar(state: ClientOpState): Promise<RemoveRange> {
+		return { type: "removeRange", ...exclusiveRangeLeaveChar(state) };
+	}
+
+	const lengthSatisfies =
+		(criteria: (length: number) => boolean): AcceptanceCondition<ClientOpState> =>
+		({ client }) =>
+			criteria(client.channel.getLength());
+	const hasNonzeroLength = lengthSatisfies((length) => length > 0);
+	const isShorterThanMaxLength = lengthSatisfies((length) => length < options.maxStringLength);
+
+	return {
+		startPosition,
+		exclusiveRange,
+		exclusiveRangeLeaveChar,
+		addText,
+		removeRange,
+		removeRangeLeaveChar,
+		lengthSatisfies,
+		hasNonzeroLength,
+		isShorterThanMaxLength,
+	};
 }

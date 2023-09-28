@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { bufferToString } from "@fluidframework/common-utils";
+import { bufferToString } from "@fluid-internal/client-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import {
 	ContainerRuntime,
@@ -350,12 +350,10 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 			const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 				[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
 			]);
-			const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-				dataStoreFactory1,
-				registryStoreEntries,
-				undefined,
-				[],
-			);
+			const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+				defaultFactory: dataStoreFactory1,
+				registryEntries: registryStoreEntries,
+			});
 
 			// Create a container for the first client.
 			const container1 = await provider.createContainer(runtimeFactory);
@@ -479,7 +477,8 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 				.catch(() => {});
 
 			const summarizeTelemetryEvents = mockLogger.events.filter(
-				(event) => event.eventName === "fluid:telemetry:SummarizeTelemetry",
+				(event) =>
+					event.eventName === "fluid:telemetry:ContainerRuntime:SummarizeTelemetry",
 			);
 			assert.strictEqual(
 				summarizeTelemetryEvents.length,
@@ -515,7 +514,10 @@ describeNoCompat("SingleCommit Summaries Tests", (getTestObjectProvider) => {
 		};
 	});
 
-	it("Non single commit summary/Match last summary ackHandle  with current summary parent", async () => {
+	it("Non single commit summary/Match last summary ackHandle  with current summary parent", async function () {
+		if (provider.driver.type === "odsp") {
+			this.skip();
+		}
 		const { summarizer } = await createMainContainerAndSummarizer(provider);
 
 		// Summarize
@@ -555,7 +557,10 @@ describeNoCompat("SingleCommit Summaries Tests", (getTestObjectProvider) => {
 		);
 	});
 
-	it("Non single commit summary/Last summary should be discarded due to missing SummaryOp", async () => {
+	it("Non single commit summary/Last summary should be discarded due to missing SummaryOp", async function () {
+		if (provider.driver.type === "odsp") {
+			this.skip();
+		}
 		const { mainContainer, summarizer } = await createMainContainerAndSummarizer(provider);
 
 		// Summarize

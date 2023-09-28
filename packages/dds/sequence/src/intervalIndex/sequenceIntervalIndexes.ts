@@ -4,7 +4,7 @@
  */
 
 import { ISegment } from "@fluidframework/merge-tree";
-import { SequenceInterval } from "../intervalCollection";
+import { SequenceInterval } from "../intervals";
 import { IOverlappingIntervalsIndex } from "./overlappingIntervalsIndex";
 
 /**
@@ -27,6 +27,6 @@ export namespace SequenceIntervalIndexes {
 		findOverlappingIntervalsBySegoff(
 			startSegoff: { segment: ISegment | undefined; offset: number | undefined },
 			endSegoff: { segment: ISegment | undefined; offset: number | undefined },
-		);
+		): Iterable<SequenceInterval>;
 	}
 }

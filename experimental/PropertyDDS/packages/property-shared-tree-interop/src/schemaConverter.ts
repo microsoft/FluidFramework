@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	fail,
 	FieldKinds,
 	FieldSchema,
 	ValueSchema,
 	SchemaBuilder,
-	FieldKindTypes,
+	FieldKind,
 	Any,
 	TreeSchema,
 	LazyTreeSchema,
@@ -130,7 +130,10 @@ function buildTreeSchema(
 				return cache.treeSchema;
 			}
 			if (PropertyFactory.inheritsFrom(typeid, nodePropertyType)) {
-				assert(!fields.has(nodePropertyField), "name collision for nodePropertyField");
+				assert(
+					!fields.has(nodePropertyField),
+					0x712 /* name collision for nodePropertyField */,
+				);
 				fields.set(nodePropertyField, SchemaBuilder.fieldValue(nodePropertySchema));
 			}
 			const fieldsObject = mapToObject(fields);
@@ -273,13 +276,13 @@ function buildPrimitiveSchema(
 	return treeSchema;
 }
 
-function buildFieldSchema<Kind extends FieldKindTypes = FieldKindTypes>(
+function buildFieldSchema<Kind extends FieldKind = FieldKind>(
 	builder: SchemaBuilder,
 	treeSchemaMap: Map<string, LazyTreeSchema>,
 	allChildrenByType: InheritingChildrenByType,
 	fieldKind: Kind,
 	...fieldTypes: readonly string[]
-): FieldSchema {
+): FieldSchema<Kind> {
 	const allowedTypes: Set<LazyTreeSchema> = new Set();
 	let isAny = false;
 	for (const typeid of fieldTypes) {
@@ -319,12 +322,16 @@ const builtinLibrary = builtinBuilder.intoLibrary();
  * the PropertyDDS schema inheritances / dependencies starting from
  * the root schema or built-in node property schemas.
  */
-export function convertPropertyToSharedTreeSchema<Kind extends FieldKindTypes = FieldKindTypes>(
+export function convertPropertyToSharedTreeSchema<Kind extends FieldKind = FieldKind>(
 	rootFieldKind: Kind,
 	allowedRootTypes: Any | ReadonlySet<string>,
 	extraTypes?: ReadonlySet<string>,
 ) {
-	const builder = new SchemaBuilder("PropertyDDS to SharedTree schema builder", builtinLibrary);
+	const builder = new SchemaBuilder(
+		"PropertyDDS to SharedTree schema builder",
+		{},
+		builtinLibrary,
+	);
 	const allChildrenByType = getAllInheritingChildrenTypes();
 	const treeSchemaMap: Map<string, LazyTreeSchema> = new Map();
 

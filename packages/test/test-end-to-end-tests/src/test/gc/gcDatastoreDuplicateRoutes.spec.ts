@@ -60,6 +60,7 @@ describeNoCompat("GC Data Store Duplicates", (getTestObjectProvider) => {
 		const { summarizer: summarizer2 } = await createSummarizer(
 			provider,
 			mainContainer,
+			undefined,
 			summaryResult.summaryVersion,
 		);
 		summaryResult = await waitForSummary(summarizer2);
@@ -89,6 +90,7 @@ describeNoCompat("GC Data Store Duplicates", (getTestObjectProvider) => {
 		const { summarizer: summarizer2 } = await createSummarizer(
 			provider,
 			mainContainer,
+			undefined,
 			summaryResult.summaryVersion,
 		);
 

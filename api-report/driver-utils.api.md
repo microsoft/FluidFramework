@@ -4,7 +4,6 @@
 
 ```ts
 
-import { DriverErrorType } from '@fluidframework/driver-definitions';
 import { FetchSource } from '@fluidframework/driver-definitions';
 import { IAttachment } from '@fluidframework/protocol-definitions';
 import { IAuthorizationError } from '@fluidframework/driver-definitions';
@@ -90,14 +89,14 @@ export class BlobTreeEntry {
 // @public
 export function buildSnapshotTree(entries: ITreeEntry[], blobMap: Map<string, ArrayBufferLike>): ISnapshotTree;
 
+// @public
+export function calculateMaxWaitTime(error: unknown): number;
+
 // @public (undocumented)
 export function canBeCoalescedByService(message: ISequencedDocumentMessage | IDocumentMessage): boolean;
 
 // @public
 export const canRetryOnError: (error: any) => boolean;
-
-// @internal @deprecated
-export function combineAppAndProtocolSummary(appSummary: ISummaryTree, protocolSummary: ISummaryTree): CombinedAppAndProtocolSummary;
 
 // @internal
 export interface CombinedAppAndProtocolSummary extends ISummaryTree {
@@ -118,7 +117,7 @@ export function createGenericNetworkError(message: string, retryInfo: {
 }, props: DriverErrorTelemetryProps): ThrottlingError | GenericNetworkError;
 
 // @public (undocumented)
-export const createWriteError: (message: string, props: DriverErrorTelemetryProps) => NonRetryableError<DriverErrorType.writeError>;
+export const createWriteError: (message: string, props: DriverErrorTelemetryProps) => NonRetryableError<"writeError">;
 
 // @public (undocumented)
 export class DeltaStreamConnectionForbiddenError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
@@ -301,7 +300,6 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
     // (undocumented)
     get policies(): {
         caching: LoaderCachingPolicy;
-        minBlobSize?: number | undefined;
         maximumCacheDurationMs?: 432000000 | undefined;
     } | undefined;
     // (undocumented)

@@ -2,9 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert } from "@fluidframework/common-utils";
-import { Lazy } from "@fluidframework/core-utils";
-import { fromInternalScheme, isInternalVersionScheme } from "@fluid-tools/version-tools";
+import { assert, Lazy } from "@fluidframework/core-utils";
+import { fromInternalScheme } from "@fluid-tools/version-tools";
 import {
 	CompatKind,
 	compatKind,
@@ -16,7 +15,7 @@ import {
 } from "../compatOptions.cjs";
 import { ensurePackageInstalled } from "./testApi.js";
 import { pkgVersion } from "./packageVersion.js";
-import { baseVersion } from "./baseVersion.js";
+import { baseVersion, codeVersion, testBaseVersion } from "./baseVersion.js";
 
 /*
  * Generate configuration combinations for a particular compat version
@@ -152,20 +151,10 @@ const genBackCompatConfig = (compatVersion: number): CompatConfig[] => {
 
 const genFullBackCompatConfig = (): CompatConfig[] => {
 	const _configList: CompatConfig[] = [];
-	// This will need to be updated once we move beyond 2.0.0-internal.x.y.z
-	// Extract the major version of the package published, in this case it's the x in 2.0.0-internal.x.y.z.
-	// This first if statement turns the internal version to x.y.z
-	let version: string = pkgVersion;
-	// This grabs the code version to find the backwards compatible options.
-	const codeVersion = process.env.SETVERSION_CODEVERSION;
-	if (codeVersion !== undefined && isInternalVersionScheme(codeVersion, true, true)) {
-		version = codeVersion;
-	}
 
-	const [, semverInternal] = fromInternalScheme(version, true, true);
+	const [, semverInternal] = fromInternalScheme(codeVersion, true, true);
 
 	assert(semverInternal !== undefined, "Unexpected pkg version");
-	// Get the major version from x.y.z. Note: sometimes it's x.y.z.a as we append build version to the package version
 	const greatestMajor = semverInternal.major;
 	// This makes the assumption N and N-1 scenarios are already fully tested thus skipping 0 and -1.
 	// This loop goes as far back as 2.0.0.internal.1.y.z.
@@ -269,11 +258,12 @@ export async function mochaGlobalSetup() {
 	}
 
 	// Make sure we wait for all before returning, even if one of them has error.
-	const installP = Array.from(versions.values()).map(async (value) =>
-		ensurePackageInstalled(baseVersion, value, reinstall),
-	);
+	const installP = Array.from(versions.values()).map(async (value) => {
+		const version = testBaseVersion(value);
+		return ensurePackageInstalled(version, value, reinstall);
+	});
 
-	let error: unknown | undefined;
+	let error: unknown;
 	for (const p of installP) {
 		try {
 			await p;
@@ -282,6 +272,7 @@ export async function mochaGlobalSetup() {
 		}
 	}
 	if (error) {
+		// eslint-disable-next-line @typescript-eslint/no-throw-literal -- rethrowing the originally caught value
 		throw error;
 	}
 }

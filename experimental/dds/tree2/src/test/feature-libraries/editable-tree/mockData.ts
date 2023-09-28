@@ -17,24 +17,22 @@ import {
 	ContextuallyTypedNodeData,
 	buildForest,
 	cursorsFromContextualData,
-	defaultSchemaPolicy,
 	getEditableTreeContext,
 	FieldSchema,
 	SchemaBuilder,
 	Any,
-	GlobalFieldSchema,
 	TypedSchemaCollection,
 	createMockNodeKeyManager,
 } from "../../../feature-libraries";
 import {
 	ValueSchema,
-	LocalFieldKey,
+	FieldKey,
 	EmptyKey,
 	JsonableTree,
 	IEditableForest,
-	SchemaDataAndPolicy,
 	InMemoryStoredSchemaRepository,
 	initializeForest,
+	SchemaData,
 } from "../../../core";
 import { brand, Brand } from "../../../util";
 
@@ -142,8 +140,7 @@ export type Address = EditableTree &
 		},
 		"editable-tree.Test:Address-1.0.0"
 	>;
-export type Friends = EditableTree &
-	Brand<Record<LocalFieldKey, string>, "editable-tree.Map<String>">;
+export type Friends = EditableTree & Brand<Record<FieldKey, string>, "editable-tree.Map<String>">;
 
 export type Person = EditableTree &
 	Brand<
@@ -241,26 +238,31 @@ export function getPerson(): Person {
  * Create schema supporting all type defined in this file, with the specified root field.
  */
 export function buildTestSchema<T extends FieldSchema>(rootField: T) {
-	return new SchemaBuilder("buildTestSchema", personSchemaLibrary).intoDocumentSchema(rootField);
+	return new SchemaBuilder("buildTestSchema", {}, personSchemaLibrary).intoDocumentSchema(
+		rootField,
+	);
 }
 
-export function getReadonlyEditableTreeContext(forest: IEditableForest): EditableTreeContext {
+export function getReadonlyEditableTreeContext(
+	forest: IEditableForest,
+	schema: SchemaData,
+): EditableTreeContext {
 	// This will error if someone tries to call mutation methods on it
 	const dummyEditor = {} as unknown as DefaultEditBuilder;
-	return getEditableTreeContext(forest, dummyEditor, createMockNodeKeyManager());
+	return getEditableTreeContext(forest, schema, dummyEditor, createMockNodeKeyManager());
 }
 
-export function setupForest<T extends GlobalFieldSchema>(
+export function setupForest<T extends FieldSchema>(
 	schema: TypedSchemaCollection<T>,
 	data: ContextuallyTypedNodeData | undefined,
 ): IEditableForest {
-	const schemaRepo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, schema);
-	const forest = buildForest(schemaRepo);
+	const schemaRepo = new InMemoryStoredSchemaRepository(schema);
+	const forest = buildForest();
 	const root = cursorsFromContextualData(
 		{
 			schema: schemaRepo,
 		},
-		schema.root.schema,
+		schema.rootFieldSchema,
 		data,
 	);
 	initializeForest(forest, root);
@@ -273,11 +275,11 @@ export function buildTestTree(
 ): EditableTreeContext {
 	const schema = buildTestSchema(rootField);
 	const forest = setupForest(schema, data);
-	const context = getReadonlyEditableTreeContext(forest);
+	const context = getReadonlyEditableTreeContext(forest, schema);
 	return context;
 }
 
-export function buildTestPerson(): readonly [SchemaDataAndPolicy, Person] {
+export function buildTestPerson(): readonly [SchemaData, Person] {
 	const context = buildTestTree(personData);
 	return [context.schema, context.unwrappedRoot as Person];
 }

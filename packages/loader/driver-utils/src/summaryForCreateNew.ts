@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
 import {
 	ISummaryTree,
 	SummaryType,
@@ -44,36 +43,6 @@ export function isCombinedAppAndProtocolSummary(
 		return false;
 	}
 	return true;
-}
-
-/**
- * Combine the app summary and protocol summary in 1 tree.
- * @param appSummary - Summary of the app.
- * @param protocolSummary - Summary of the protocol.
- * @internal
- *
- * @deprecated 2.0.0-internal.3.4.0 - Not intended for public use.  Will be moved to container-loader and no longer exported in an upcoming release.
- */
-export function combineAppAndProtocolSummary(
-	appSummary: ISummaryTree,
-	protocolSummary: ISummaryTree,
-): CombinedAppAndProtocolSummary {
-	assert(
-		!isCombinedAppAndProtocolSummary(appSummary),
-		0x5a8 /* app summary is already a combined tree! */,
-	);
-	assert(
-		!isCombinedAppAndProtocolSummary(protocolSummary),
-		0x5a9 /* protocol summary is already a combined tree! */,
-	);
-	const createNewSummary: CombinedAppAndProtocolSummary = {
-		type: SummaryType.Tree,
-		tree: {
-			".protocol": protocolSummary,
-			".app": appSummary,
-		},
-	};
-	return createNewSummary;
 }
 
 /**

@@ -23,6 +23,19 @@ You can run this example using the following steps:
 
 <!-- AUTO-GENERATED-CONTENT:END -->
 
+This package uses pm2 to setup a cross-package hot reloading solution.
+When you run `pnpm run start` it will start multiple processes with pm2.
+pm2 is configured using the [pm2 ecosystem file](./pm2.ecosystem.config.js) and [pm2's offical documentation](https://pm2.keymetrics.io/docs/usage/quick-start/).
+Here are a few helpful commands:
+
+-   `pm2 list <name of app in pm2.ecosystem.config.js>` Shows all currently running processes managed by pm2 and the status they are in.
+-   `pm2 log <name of app in pm2.ecosystem.config.js>` Shows the typical logs for a given process, what you'd expect to see if you started the app without pm2.
+-   `pm2 delete <name of app in pm2.ecosystem.config.js>` Deletes a specific process managed by pm2
+-   `pm2 delete all` Deletes all the processes managed by pm2
+
+`pnpm run stop` will stop all the processes managed by pm2.
+Use it when you're done testing this application so no processes are left in the background re-compiling the projects on every change.
+
 ### Test
 
 To run the tests, first ensure you have followed the [build](#build) steps above.

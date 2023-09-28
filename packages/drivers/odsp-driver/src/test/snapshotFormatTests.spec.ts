@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { stringToBuffer } from "@fluidframework/common-utils";
+import { stringToBuffer } from "@fluid-internal/client-utils";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { parseCompactSnapshotResponse } from "../compactSnapshotParser";
 import { convertToCompactSnapshot } from "../compactSnapshotWriter";
@@ -103,7 +103,6 @@ const ops: ISequencedDocumentMessage[] = [
 		minimumSequenceNumber: 0,
 		referenceSequenceNumber: -1,
 		sequenceNumber: 1,
-		term: 1,
 		timestamp: 1623883807452,
 		type: "join",
 	},
@@ -114,7 +113,6 @@ const ops: ISequencedDocumentMessage[] = [
 		minimumSequenceNumber: 0,
 		referenceSequenceNumber: -1,
 		sequenceNumber: 2,
-		term: 1,
 		timestamp: 1623883811928,
 		type: "join",
 	},
@@ -131,7 +129,7 @@ describe("Snapshot Format Conversion Tests", () => {
 		};
 		const logger = new MockLogger();
 		const compactSnapshot = convertToCompactSnapshot(snapshotContents);
-		const result = parseCompactSnapshotResponse(compactSnapshot, logger);
+		const result = parseCompactSnapshotResponse(compactSnapshot, logger.toTelemetryLogger());
 		assert.deepStrictEqual(result.snapshotTree, snapshotTree, "Tree structure should match");
 		assert.deepStrictEqual(result.blobs, blobs, "Blobs content should match");
 		assert.deepStrictEqual(result.ops, ops, "Ops should match");
@@ -161,7 +159,7 @@ describe("Snapshot Format Conversion Tests", () => {
 		};
 		const logger = new MockLogger();
 		const compactSnapshot = convertToCompactSnapshot(snapshotContents);
-		const result = parseCompactSnapshotResponse(compactSnapshot, logger);
+		const result = parseCompactSnapshotResponse(compactSnapshot, logger.toTelemetryLogger());
 		assert.deepStrictEqual(result.snapshotTree, snapshotTree, "Tree structure should match");
 		assert.deepStrictEqual(result.blobs, blobs, "Blobs content should match");
 		assert.deepStrictEqual(result.ops, [], "Ops should match");

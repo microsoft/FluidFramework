@@ -10,7 +10,6 @@ export {
 	Sequence,
 	NodeKeyFieldKind,
 	Forbidden,
-	FieldKindTypes,
 	fieldKinds,
 } from "./defaultFieldKinds";
 
@@ -24,4 +23,4 @@ export {
 	SequenceFieldEditBuilder,
 } from "./defaultChangeFamily";
 
-export { defaultSchemaPolicy, emptyField, neverField, neverTree } from "./defaultSchema";
+export { defaultSchemaPolicy } from "./defaultSchema";

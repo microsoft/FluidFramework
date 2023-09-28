@@ -6,7 +6,8 @@
 import { strict as assert } from "assert";
 import { MockContainerRuntimeForReconnection } from "@fluidframework/test-runtime-utils";
 import { SharedString } from "../sharedString";
-import { IIntervalCollection, SequenceInterval } from "../intervalCollection";
+import { IIntervalCollection } from "../intervalCollection";
+import { SequenceInterval } from "../intervals";
 
 export interface Client {
 	sharedString: SharedString;
@@ -56,6 +57,27 @@ export function assertEquivalentSharedStrings(a: SharedString, b: SharedString) 
 			assert(intervalId);
 			const otherInterval = collection2.getIntervalById(intervalId);
 			assert(otherInterval);
+			assert.equal(
+				interval.startSide,
+				otherInterval.startSide,
+				"interval start side not equal",
+			);
+			assert.equal(interval.endSide, otherInterval.endSide, "interval end side not equal");
+			assert.equal(
+				interval.stickiness,
+				otherInterval.stickiness,
+				"interval stickiness not equal",
+			);
+			assert.equal(
+				interval.start.slidingPreference,
+				otherInterval.start.slidingPreference,
+				"start sliding preference not equal",
+			);
+			assert.equal(
+				interval.end.slidingPreference,
+				otherInterval.end.slidingPreference,
+				"end sliding preference not equal",
+			);
 			const firstStart = a.localReferencePositionToPosition(interval.start);
 			const otherStart = b.localReferencePositionToPosition(otherInterval.start);
 			assert.equal(

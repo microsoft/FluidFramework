@@ -12,7 +12,13 @@ export {
 	ConfigTypes,
 	loggerToMonitoringContext,
 } from "./config";
-export { DebugLogger, createDebugLogger } from "./debugLogger";
+export {
+	DataCorruptionError,
+	DataProcessingError,
+	extractSafePropertiesFromMessage,
+	GenericError,
+	UsageError,
+} from "./error";
 export {
 	extractLogSafeErrorProperties,
 	generateErrorWithStack,
@@ -25,6 +31,7 @@ export {
 	LoggingError,
 	NORMALIZED_ERROR_TYPE,
 	normalizeError,
+	overwriteStack,
 	wrapError,
 	wrapErrorAndLog,
 } from "./errorLogging";
@@ -42,15 +49,13 @@ export {
 	isValidLegacyError,
 } from "./fluidErrorBase";
 export {
-	BaseTelemetryNullLogger,
-	ChildLogger,
+	eventNamespaceSeparator,
 	createChildLogger,
 	createMultiSinkLogger,
 	formatTick,
 	IPerformanceEventMarkers,
 	ITelemetryLoggerPropertyBag,
 	ITelemetryLoggerPropertyBags,
-	MultiSinkLogger,
 	numberFromString,
 	PerformanceEvent,
 	TaggedLoggerAdapter,
@@ -58,9 +63,7 @@ export {
 	tagCodeArtifacts,
 	TelemetryDataTag,
 	TelemetryEventPropertyTypes,
-	TelemetryLogger,
 	TelemetryNullLogger,
-	TelemetryUTLogger,
 } from "./logger";
 export { MockLogger } from "./mockLogger";
 export { ThresholdCounter } from "./thresholdCounter";
@@ -75,4 +78,5 @@ export {
 	ITelemetryLoggerExt,
 	ITaggedTelemetryPropertyTypeExt,
 	ITelemetryPropertiesExt,
+	TelemetryEventCategory,
 } from "./telemetryTypes";

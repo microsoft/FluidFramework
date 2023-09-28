@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
+import { type ISharedObject, type ISharedObjectEvents } from "@fluidframework/shared-object-base";
 
 /**
  * IPactMapEvents are the events fired by an IPactMap.
@@ -13,6 +13,23 @@ export interface IPactMapEvents extends ISharedObjectEvents {
 	 * Notifies when a new value goes pending or has been accepted.
 	 */
 	(event: "pending" | "accepted", listener: (key: string) => void);
+}
+
+/**
+ * Details of the accepted pact.
+ */
+export interface IAcceptedPact<T> {
+	/**
+	 * The accepted value of the given type or undefined (typically in case of delete).
+	 */
+	value: T | undefined;
+
+	/**
+	 * The sequence number when the value was accepted.
+	 *
+	 * For values set in detached state, it will be 0.
+	 */
+	acceptedSequenceNumber: number;
 }
 
 /**
@@ -30,6 +47,12 @@ export interface IPactMap<T = unknown> extends ISharedObject<IPactMapEvents> {
 	 * @param key - The key to retrieve from
 	 */
 	get(key: string): T | undefined;
+
+	/**
+	 * Gets the accepted value and details for the given key.
+	 * @param key - The key to retrieve from
+	 */
+	getWithDetails(key: string): IAcceptedPact<T> | undefined;
 
 	/**
 	 * Returns whether there is a pending value for the given key.  Can be used to distinguish a pending delete vs.

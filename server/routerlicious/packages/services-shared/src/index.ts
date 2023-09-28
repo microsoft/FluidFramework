@@ -6,7 +6,9 @@
 export {
 	containsPathTraversal,
 	defaultErrorMessage,
+	getBooleanParam,
 	handleResponse,
+	IsEphemeralContainer,
 	validateRequestParams,
 } from "./http";
 export {
@@ -17,6 +19,7 @@ export {
 } from "./redisSocketIoAdapter";
 export { decodeHeader, RestLessServer } from "./restLessServer";
 export { run, runService } from "./runner";
+export { runnerHttpServerStop } from "./runnerUtils";
 export { DocumentStorage } from "./storage";
 export {
 	BasicWebServerFactory,

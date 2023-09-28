@@ -3,14 +3,17 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils";
+import { FieldKey } from "../schema-stored";
 import {
 	AnchorSet,
-	FieldKey,
 	DetachedField,
 	Delta,
 	Anchor,
 	ITreeCursorSynchronous,
-	rootFieldKeySymbol,
+	rootFieldKey,
+	DeltaVisitor,
+	applyDelta,
 } from "../tree";
 import { IForestSubscription, ITreeSubscriptionCursor } from "./forest";
 
@@ -30,16 +33,29 @@ export interface IEditableForest extends IForestSubscription {
 	readonly anchors: AnchorSet;
 
 	/**
-	 * Applies the supplied Delta to the forest.
-	 * Does NOT update anchors.
+	 * @returns a visitor that can be used to mutate the forest.
+	 *
+	 * Mutating the forest does NOT update anchors.
+	 * The visitor must be released after use.
+	 * It is invalid to acquire a visitor without releasing the previous one.
 	 */
-	applyDelta(delta: Delta.Root): void;
+	acquireVisitor(): DeltaVisitor;
 }
 
-export function initializeForest(forest: IEditableForest, content: ITreeCursorSynchronous[]): void {
-	// TODO: maybe assert forest is empty?
+/**
+ * Sets the contents of the forest via delta.
+ * Requires the fores starts empty.
+ *
+ * @remarks
+ * This does not perform an edit: it updates the forest content as if there was an edit that did that.
+ */
+export function initializeForest(
+	forest: IEditableForest,
+	content: readonly ITreeCursorSynchronous[],
+): void {
+	assert(forest.isEmpty, 0x747 /* forest must be empty */);
 	const insert: Delta.Insert = { type: Delta.MarkType.Insert, content };
-	forest.applyDelta(new Map([[rootFieldKeySymbol, [insert]]]));
+	applyDelta(new Map([[rootFieldKey, [insert]]]), forest);
 }
 
 // TODO: Types below here may be useful for input into edit building APIs, but are no longer used here directly.
@@ -63,7 +79,7 @@ export function isFieldLocation(range: FieldLocation | DetachedField): range is 
 }
 
 /**
- * Wrapper around DetachedField that can be detected at runtime.
+ * Location of a field within a tree that is not a detached/root field.
  * @alpha
  */
 export interface FieldLocation {

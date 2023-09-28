@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { jsonString } from "../../domains";
 import { singleTextCursor } from "../../feature-libraries";
-import { FieldKey, Delta, DeltaVisitor, visitDelta, rootFieldKeySymbol } from "../../core";
+import { FieldKey, Delta, DeltaVisitor, visitDelta, rootFieldKey } from "../../core";
 import { brand } from "../../util";
 import { deepFreeze } from "../utils";
 
@@ -219,18 +219,18 @@ describe("visit", () => {
 			moveId,
 		};
 
-		const delta = new Map([[rootFieldKeySymbol, [1, moveOut, 1, moveIn]]]);
+		const delta = new Map([[rootFieldKey, [1, moveOut, 1, moveIn]]]);
 
 		const expected: VisitScript = [
-			["enterField", rootFieldKeySymbol],
+			["enterField", rootFieldKey],
 			["onMoveOut", 1, 1, moveId],
 
 			// TODO: optimize out needless exit then enter
-			["exitField", rootFieldKeySymbol],
-			["enterField", rootFieldKeySymbol],
+			["exitField", rootFieldKey],
+			["enterField", rootFieldKey],
 
 			["onMoveIn", 2, 1, moveId],
-			["exitField", rootFieldKeySymbol],
+			["exitField", rootFieldKey],
 		];
 
 		testVisit(delta, expected);

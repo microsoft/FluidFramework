@@ -15,17 +15,8 @@ import {
 	webLightTheme,
 } from "@fluentui/react-components";
 
-import { ThemeContext } from "../ThemeHelper";
+import { ThemeOption, useThemeContext } from "../ThemeHelper";
 import { useTelemetryOptIn } from "../TelemetryUtils";
-
-/**
- * An enum with options for the DevTools themes.
- */
-export const enum ThemeOption {
-	Light = "Light",
-	Dark = "Dark",
-	HighContrast = "High Contrast",
-}
 
 const useStyles = makeStyles({
 	root: {
@@ -66,9 +57,11 @@ const useStyles = makeStyles({
 });
 /**
  * Settings page for the devtools.
+ *
+ * @remarks {@link ThemeContext} must be set in order to use this component.
  */
 export function SettingsView(): React.ReactElement {
-	const { themeInfo, setTheme } = React.useContext(ThemeContext) ?? {};
+	const { themeInfo, setTheme } = useThemeContext();
 
 	const styles = useStyles();
 	const [optedIn, setOptedIn] = useTelemetryOptIn();
@@ -82,30 +75,34 @@ export function SettingsView(): React.ReactElement {
 		},
 	): void {
 		switch (option.optionValue) {
-			case ThemeOption.Light:
+			case ThemeOption.Light: {
 				setTheme({
 					name: ThemeOption.Light,
 					theme: webLightTheme,
 				});
 				break;
-			case ThemeOption.Dark:
+			}
+			case ThemeOption.Dark: {
 				setTheme({
 					name: ThemeOption.Dark,
 					theme: webDarkTheme,
 				});
 				break;
-			case ThemeOption.HighContrast:
+			}
+			case ThemeOption.HighContrast: {
 				setTheme({
 					name: ThemeOption.HighContrast,
 					theme: teamsHighContrastTheme,
 				});
 				break;
-			default:
+			}
+			default: {
 				setTheme({
 					name: ThemeOption.Dark,
 					theme: webDarkTheme,
 				});
 				break;
+			}
 		}
 	}
 

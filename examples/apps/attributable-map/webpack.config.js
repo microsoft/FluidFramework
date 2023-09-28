@@ -40,6 +40,9 @@ module.exports = (env) => {
 				new HtmlWebpackPlugin({
 					template: "./src/index.html",
 				}),
+				new webpack.ProvidePlugin({
+					process: "process/browser",
+				}),
 			],
 		},
 		isProduction ? require("./webpack.prod") : require("./webpack.dev"),

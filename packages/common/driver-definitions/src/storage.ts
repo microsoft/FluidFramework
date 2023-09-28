@@ -3,8 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IEventProvider, IErrorEvent } from "@fluidframework/common-definitions";
-import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import {
+	IDisposable,
+	IEventProvider,
+	IErrorEvent,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import {
 	ConnectionMode,
 	IClient,
@@ -109,12 +113,6 @@ export interface IDocumentStorageServicePolicies {
 	 * Should the Loader implement any sort of pre-fetching or caching mechanism?
 	 */
 	readonly caching?: LoaderCachingPolicy;
-
-	/**
-	 * If this policy is provided, it tells runtime on ideal size for blobs.
-	 * Blobs that are smaller than that size should be aggregated into bigger blobs.
-	 */
-	readonly minBlobSize?: number;
 
 	/**
 	 * IMPORTANT: This policy MUST be set to 5 days and PROPERLY ENFORCED for drivers that are used

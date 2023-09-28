@@ -4,10 +4,10 @@
  */
 
 import BTree from 'sorted-btree';
-import { TypedEventEmitter, assert } from '@fluidframework/common-utils';
-import type { IEvent } from '@fluidframework/common-definitions';
+import { TypedEventEmitter } from '@fluid-internal/client-utils';
+import { assert, compareArrays } from '@fluidframework/core-utils';
+import type { IEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
-import { compareArrays } from '@fluidframework/core-utils';
 import { fail } from './Common';
 import type { EditId } from './Identifiers';
 import type { StringInterner } from './StringInterner';
@@ -222,10 +222,10 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	private readonly sequencedEdits: Edit<TChange>[] = [];
 	private readonly localEdits: Edit<TChange>[] = [];
 
-	private readonly allEditIds: Map<EditId, OrderedEditId> = new Map();
+	private readonly allEditIds = new Map<EditId, OrderedEditId>();
 	private _earliestAvailableEditIndex = 0;
-	private readonly _editAddedHandlers: Set<EditAddedHandler<TChange>> = new Set();
-	private readonly _editEvictionHandlers: Set<EditEvictionHandler> = new Set();
+	private readonly _editAddedHandlers = new Set<EditAddedHandler<TChange>>();
+	private readonly _editEvictionHandlers = new Set<EditEvictionHandler>();
 
 	/**
 	 * @returns The index of the earliest edit stored in this log.

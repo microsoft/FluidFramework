@@ -19,7 +19,6 @@ export {
 
 export {
 	EmptyKey,
-	FieldKey,
 	TreeType,
 	Value,
 	TreeValue,
@@ -39,10 +38,6 @@ export {
 	Delta,
 	rootFieldKey,
 	rootField,
-	FieldScope,
-	GlobalFieldKeySymbol,
-	symbolFromKey,
-	keyFromSymbol,
 	ITreeCursor,
 	CursorLocationType,
 	ITreeCursorSynchronous,
@@ -53,17 +48,16 @@ export {
 	getGenericTreeField,
 	genericTreeDeleteIfEmpty,
 	getDepth,
-	symbolIsFieldKey,
 	mapCursorField,
 	mapCursorFields,
-	isGlobalFieldKey,
+	iterateCursorField,
 	getMapTreeField,
 	MapTree,
 	detachedFieldAsKey,
 	keyAsDetachedField,
 	visitDelta,
+	applyDelta,
 	setGenericTreeField,
-	rootFieldKeySymbol,
 	DeltaVisitor,
 	PathVisitor,
 	SparseNode,
@@ -71,9 +65,9 @@ export {
 	compareUpPaths,
 	clonePath,
 	topDownPath,
-	isLocalKey,
 	compareFieldUpPaths,
 	forEachNode,
+	forEachNodeInSubtree,
 	forEachField,
 	PathRootPrefix,
 	isSkipMark,
@@ -89,6 +83,7 @@ export {
 	ProtoNodes,
 	CursorMarker,
 	isCursor,
+	getDetachedFieldContainingPath,
 } from "./tree";
 
 export {
@@ -107,14 +102,10 @@ export {
 } from "./forest";
 
 export {
-	LocalFieldKey,
-	LocalFieldKeySchema,
-	GlobalFieldKey,
-	GlobalFieldKeySchema,
+	FieldKey,
+	FieldKeySchema,
 	TreeSchemaIdentifier,
 	TreeSchemaIdentifierSchema,
-	NamedTreeSchema,
-	Named,
 	FieldStoredSchema,
 	ValueSchema,
 	PrimitiveValueSchema,
@@ -125,18 +116,17 @@ export {
 	FieldKindSpecifier,
 	TreeTypeSet,
 	SchemaData,
-	SchemaPolicy,
-	SchemaDataAndPolicy,
 	InMemoryStoredSchemaRepository,
 	schemaDataIsEmpty,
 	fieldSchema,
-	lookupTreeSchema,
-	lookupGlobalFieldSchema,
 	TreeSchemaBuilder,
 	emptyMap,
 	emptySet,
 	treeSchema,
 	SchemaEvents,
+	forbiddenFieldKindIdentifier,
+	storedEmptyFieldSchema,
+	cloneSchemaData,
 } from "./schema-stored";
 
 export { ChangeFamily, ChangeFamilyEditor, EditBuilder } from "./change-family";
@@ -150,6 +140,8 @@ export {
 	isRevisionTag,
 	RevisionTag,
 	RevisionTagSchema,
+	ChangesetLocalId,
+	ChangeAtomId,
 	TaggedChange,
 	makeAnonChange,
 	tagChange,
@@ -167,10 +159,8 @@ export {
 
 export {
 	Adapters,
-	ViewSchemaData,
 	AdaptedViewSchema,
 	Compatibility,
-	FieldAdapter,
 	TreeAdapter,
 	AllowedUpdateType,
 } from "./schema-view";

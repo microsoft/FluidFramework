@@ -9,8 +9,9 @@ import {
 	PerformanceEvent,
 	numberFromString,
 } from "@fluidframework/telemetry-utils";
-import { assert, fromUtf8ToBase64, performance } from "@fluidframework/common-utils";
-import { RateLimiter } from "@fluidframework/driver-utils";
+import { assert } from "@fluidframework/core-utils";
+import { fromUtf8ToBase64, performance } from "@fluid-internal/client-utils";
+import { GenericNetworkError, NonRetryableError, RateLimiter } from "@fluidframework/driver-utils";
 import {
 	CorrelationIdHeaderName,
 	DriverVersionHeaderName,
@@ -20,7 +21,7 @@ import {
 import fetch from "cross-fetch";
 import type { AxiosRequestConfig, AxiosRequestHeaders } from "axios";
 import safeStringify from "json-stringify-safe";
-import { throwR11sNetworkError } from "./errorUtils";
+import { RouterliciousErrorTypes, throwR11sNetworkError } from "./errorUtils";
 import { ITokenProvider, ITokenResponse } from "./tokens";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { QueryStringType, RestWrapper } from "./restWrapperBase";
@@ -53,9 +54,9 @@ export interface IR11sResponse<T> {
 }
 
 /**
- * A utility function to create a r11s response without any additional props as we might not have them always.
- * @param content - response which is equivalent to content.
- * @returns - a r11s response without any extra props.
+ * A utility function to create a Routerlicious response without any additional props as we might not have them always.
+ * @param content - Response which is equivalent to content.
+ * @returns A Routerlicious response without any extra props.
  */
 export function createR11sResponseFromContent<T>(content: T): IR11sResponse<T> {
 	return {
@@ -75,6 +76,7 @@ function headersToMap(headers: Headers) {
 }
 
 export function getPropsToLogFromResponse(headers: {
+	// eslint-disable-next-line @rushstack/no-new-null
 	get: (id: string) => string | undefined | null;
 }) {
 	interface LoggingHeader {
@@ -137,9 +139,24 @@ export class RouterliciousRestWrapper extends RestWrapper {
 			const result = await fetch(...fetchRequestConfig).catch(async (error) => {
 				// Browser Fetch throws a TypeError on network error, `node-fetch` throws a FetchError
 				const isNetworkError = ["TypeError", "FetchError"].includes(error?.name);
-				throwR11sNetworkError(
-					isNetworkError ? `NetworkError: ${error.message}` : safeStringify(error),
-				);
+				const errorMessage = isNetworkError
+					? `NetworkError: ${error.message}`
+					: safeStringify(error);
+				// If a service is temporarily down or a browser resource limit is reached, RestWrapper will throw
+				// a network error with no status code (e.g. err:ERR_CONN_REFUSED or err:ERR_FAILED) and
+				// the error message will start with NetworkError as defined in restWrapper.ts
+				// If there exists a self-signed SSL certificates error, throw a NonRetryableError
+				// TODO: instead of relying on string matching, filter error based on the error code like we do for websocket connections
+				const err = errorMessage.includes("failed, reason: self signed certificate")
+					? new NonRetryableError(errorMessage, RouterliciousErrorTypes.sslCertError, {
+							driverVersion,
+					  })
+					: new GenericNetworkError(
+							errorMessage,
+							errorMessage.startsWith("NetworkError"),
+							{ driverVersion },
+					  );
+				throw err;
 			});
 			return {
 				response: result,
@@ -167,6 +184,7 @@ export class RouterliciousRestWrapper extends RestWrapper {
 			return {
 				content: result,
 				headers,
+				// eslint-disable-next-line @typescript-eslint/no-base-to-string
 				requestUrl: fetchRequestConfig[0].toString(),
 				propsToLog: {
 					...getPropsToLogFromResponse(headers),

@@ -5,7 +5,6 @@
 
 import { ITelemetryGenericEvent } from "@fluidframework/core-interfaces";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
-import { packagePathToTelemetryProperty } from "@fluidframework/runtime-utils";
 import {
 	generateStack,
 	ITelemetryLoggerExt,
@@ -24,7 +23,6 @@ import {
 	runSweepKey,
 } from "./gcDefinitions";
 import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";
-import { tagAsCodeArtifact } from "./gcHelpers";
 
 type NodeUsageType = "Changed" | "Loaded" | "Revived";
 
@@ -184,7 +182,7 @@ export class GCTelemetryTracker {
 				{
 					eventName: `GC_Tombstone_${nodeType}_Revived`,
 					category: "generic",
-					url: tagAsCodeArtifact(id),
+					...tagCodeArtifacts({ url: id }),
 					gcTombstoneEnforcementAllowed: this.gcTombstoneEnforcementAllowed,
 				},
 				undefined /* packagePath */,
@@ -211,7 +209,7 @@ export class GCTelemetryTracker {
 				const { id: taggedId, fromId: taggedFromId, ...otherProps } = eventProps;
 				const event = {
 					eventName: `${state}Object_${nodeUsageProps.usageType}`,
-					pkg: packagePathToTelemetryProperty(nodeUsageProps.packagePath),
+					pkg: tagCodeArtifacts({ pkg: nodeUsageProps.packagePath?.join("/") }).pkg,
 					stack: generateStack(),
 					id: taggedId,
 					fromId: taggedFromId,

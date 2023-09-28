@@ -18,6 +18,16 @@ export interface IDocumentDetails {
 	value: IDocument;
 }
 
+export interface IDocumentStaticProperties {
+	// Schema version
+	version: string;
+	createTime: number;
+	documentId: string;
+	tenantId: string;
+	storageName?: string;
+	isEphemeralContainer?: boolean;
+}
+
 export interface IDocumentStorage {
 	getDocument(tenantId: string, documentId: string): Promise<IDocument>;
 
@@ -42,6 +52,7 @@ export interface IDocumentStorage {
 		deltaStreamUrl: string,
 		values: [string, ICommittedProposal][],
 		enableDiscovery: boolean,
+		isEphemeralContainer: boolean,
 	): Promise<IDocumentDetails>;
 }
 
@@ -115,6 +126,9 @@ export interface IScribe {
 
 	// Refs of the service summaries generated since the last client generated summary.
 	validParentSummaries: string[] | undefined;
+
+	// Is document corrupted?
+	isCorrupt: boolean;
 }
 
 export interface IDocument {
@@ -144,6 +158,8 @@ export interface IDocument {
 
 	// name of the storage to save the document durable artifacts
 	storageName?: string;
+
+	isEphemeralContainer?: boolean;
 }
 
 export interface ICheckpoint {

@@ -2,10 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IDisposable } from "@fluidframework/core-interfaces";
+import { type IDisposable } from "@fluidframework/core-interfaces";
 
-import { ContainerDevtoolsProps } from "./ContainerDevtools";
-import { ContainerKey } from "./CommonInterfaces";
+import { type ContainerDevtoolsProps } from "./ContainerDevtools";
+import { type ContainerKey } from "./CommonInterfaces";
 
 /**
  * Fluid Devtools. A single, global instance is used to generate and communicate stats associated with the general Fluid
@@ -18,7 +18,7 @@ import { ContainerKey } from "./CommonInterfaces";
  *
  * The lifetime of the associated singleton is bound by that of the Window (globalThis), and it will be automatically
  * disposed of on Window unload.
- * If you wish to dispose of it earlier, you may call its {@link @fluidframework/common-definitions#IDisposable.dispose} method.
+ * If you wish to dispose of it earlier, you may call its {@link @fluidframework/core-interfaces#IDisposable.dispose} method.
  *
  * @public
  */

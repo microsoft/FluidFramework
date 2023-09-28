@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 import { ICombiningOp, IMergeTreeAnnotateMsg } from "./ops";
 import { combine, createMap, MapLike, PropertySet } from "./properties";
@@ -30,7 +30,7 @@ export class PropertiesManager {
 	}
 
 	public ackPendingProperties(annotateOp: IMergeTreeAnnotateMsg) {
-		const rewrite = !!annotateOp.combiningOp && annotateOp.combiningOp.name === "rewrite";
+		const rewrite = annotateOp.combiningOp?.name === "rewrite";
 		this.decrementPendingCounts(rewrite, annotateOp.props);
 	}
 
@@ -65,9 +65,7 @@ export class PropertiesManager {
 		collaborating: boolean = false,
 		rollback: PropertiesRollback = PropertiesRollback.None,
 	): PropertySet | undefined {
-		if (!this.pendingKeyUpdateCount) {
-			this.pendingKeyUpdateCount = createMap<number>();
-		}
+		this.pendingKeyUpdateCount ??= createMap<number>();
 
 		// There are outstanding local rewrites, so block all non-local changes
 		if (

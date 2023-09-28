@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import React from "react";
 
 import {
@@ -12,33 +13,33 @@ import {
 	tokens,
 	Tooltip,
 } from "@fluentui/react-components";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { Link, MessageBar, MessageBarType, initializeIcons } from "@fluentui/react";
-
 import { ArrowSync24Regular } from "@fluentui/react-icons";
 
+import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
-	ContainerKey,
+	type ContainerKey,
 	ContainerList,
-	DevtoolsFeature,
-	DevtoolsFeatureFlags,
+	type DevtoolsFeatureFlags,
 	DevtoolsFeatures,
 	GetContainerList,
 	GetDevtoolsFeatures,
 	handleIncomingMessage,
-	HasContainerKey,
-	InboundHandlers,
-	ISourcedDevtoolsMessage,
+	type HasContainerKey,
+	type InboundHandlers,
+	type ISourcedDevtoolsMessage,
 } from "@fluid-experimental/devtools-core";
+
 import {
 	ContainerDevtoolsView,
-	TelemetryView,
 	LandingView,
-	SettingsView,
-	Waiting,
 	MenuSection,
 	MenuItem,
+	NoDevtoolsErrorBar,
+	OpLatencyView,
+	SettingsView,
+	TelemetryView,
+	Waiting,
 } from "./components";
 import { useMessageRelay } from "./MessageRelayContext";
 import {
@@ -106,6 +107,17 @@ interface HomeMenuSelection {
 }
 
 /**
+ * Indicates that the currently selected menu option is the Op Latency view
+ * @see {@link MenuSection} for other possible options.
+ */
+interface OpLatencyMenuSelection {
+	/**
+	 * String to differentiate between different types of options in menu.
+	 */
+	type: "opLatencyMenuSelection";
+}
+
+/**
  * Discriminated union type for all the selectable options in the menu.
  * Each specific type should contain any additional information it requires.
  * E.g. {@link ContainerMenuSelection} represents that the menu option for a Container
@@ -115,7 +127,8 @@ type MenuSelection =
 	| TelemetryMenuSelection
 	| ContainerMenuSelection
 	| SettingsMenuSelection
-	| HomeMenuSelection;
+	| HomeMenuSelection
+	| OpLatencyMenuSelection;
 
 const useDevtoolsStyles = makeStyles({
 	root: {
@@ -127,19 +140,6 @@ const useDevtoolsStyles = makeStyles({
 		"> *": {
 			textOverflow: "ellipsis",
 		},
-	},
-	icon: {
-		"& .ms-MessageBar-icon": {
-			marginTop: "10px",
-		},
-	},
-	retryButton: {
-		marginLeft: "5px",
-	},
-	debugNote: {
-		fontWeight: "normal",
-		marginTop: "0px",
-		marginBottom: "0px",
 	},
 });
 
@@ -178,7 +178,6 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 	const [isMessageDismissed, setIsMessageDismissed] = React.useState(false);
 	const queryTimeoutInMilliseconds = 30_000; // 30 seconds
 	const messageRelay = useMessageRelay();
-	const styles = useDevtoolsStyles();
 
 	const consoleLogger = React.useMemo(
 		() => new ConsoleVerboseLogger(usageTelemetryLogger),
@@ -212,7 +211,7 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 				});
 
 				newTopLevelLogger.sendTelemetryEvent({
-					eventName: "Connection established with Devtools in the application.",
+					eventName: "DevtoolsConnected",
 				});
 
 				setTopLevelLogger(newTopLevelLogger);
@@ -258,7 +257,6 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 		setQueryTimedOut(false);
 		messageRelay.postMessage(getSupportedFeaturesMessage);
 	}
-	initializeIcons();
 
 	return (
 		<LoggerContext.Provider value={topLevelLogger}>
@@ -268,39 +266,10 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 						<>
 							{!queryTimedOut && <Waiting />}
 							{queryTimedOut && !isMessageDismissed && (
-								<MessageBar
-									messageBarType={MessageBarType.error}
-									isMultiline={true}
-									onDismiss={(): void => setIsMessageDismissed(true)}
-									dismissButtonAriaLabel="Close"
-									className={styles.icon}
-								>
-									It seems that Fluid Devtools has not been initialized in the
-									current tab, or it did not respond in a timely manner.
-									<Tooltip
-										content="Retry communicating with Fluid Devtools in the current tab."
-										relationship="description"
-									>
-										<Button
-											className={styles.retryButton}
-											size="small"
-											onClick={retryQuery}
-										>
-											Try again
-										</Button>
-									</Tooltip>
-									<br />
-									<h4 className={styles.debugNote}>
-										Need help? Please refer to our
-										<Link
-											href="https://aka.ms/fluid/devtool/docs"
-											target="_blank"
-										>
-											documentation page
-										</Link>{" "}
-										for guidance on getting the extension working.{" "}
-									</h4>
-								</MessageBar>
+								<NoDevtoolsErrorBar
+									dismiss={(): void => setIsMessageDismissed(true)}
+									retrySearch={(): void => retryQuery()}
+								/>
 							)}
 							<_DevtoolsView supportedFeatures={{}} />
 						</>
@@ -418,11 +387,11 @@ function View(props: ViewProps): React.ReactElement {
 
 	let view: React.ReactElement;
 	switch (menuSelection?.type) {
-		case "telemetryMenuSelection":
+		case "telemetryMenuSelection": {
 			view = <TelemetryView />;
 			break;
-		case "containerMenuSelection":
-			// eslint-disable-next-line no-case-declarations
+		}
+		case "containerMenuSelection": {
 			const container: ContainerKey | undefined = containers?.find(
 				(containerKey) => containerKey === menuSelection.containerKey,
 			);
@@ -433,15 +402,23 @@ function View(props: ViewProps): React.ReactElement {
 					<ContainerDevtoolsView containerKey={menuSelection.containerKey} />
 				);
 			break;
-		case "settingsMenuSelection":
+		}
+		case "settingsMenuSelection": {
 			view = <SettingsView />;
 			break;
-		case "homeMenuSelection":
+		}
+		case "homeMenuSelection": {
 			view = <LandingView />;
 			break;
-		default:
+		}
+		case "opLatencyMenuSelection": {
+			view = <OpLatencyView />;
+			break;
+		}
+		default: {
 			view = <LandingView />;
 			break;
+		}
 	}
 
 	return <div className={styles.root}>{view}</div>;
@@ -547,6 +524,14 @@ function Menu(props: MenuProps): React.ReactElement {
 		});
 	}
 
+	function onOpLatencyClicked(): void {
+		setSelection({ type: "opLatencyMenuSelection" });
+		usageLogger?.sendTelemetryEvent({
+			eventName: "Navigation",
+			details: { target: "Menu_OpLatency" },
+		});
+	}
+
 	const menuSections: React.ReactElement[] = [];
 
 	menuSections.push(
@@ -564,7 +549,7 @@ function Menu(props: MenuProps): React.ReactElement {
 	);
 
 	// Display the Telemetry menu section only if the corresponding Devtools instance supports telemetry messaging.
-	if (supportedFeatures[DevtoolsFeature.Telemetry] === true) {
+	if (supportedFeatures.telemetry === true) {
 		menuSections.push(
 			<MenuSection header="Telemetry" key="telemetry-menu-section">
 				<MenuItem
@@ -573,6 +558,16 @@ function Menu(props: MenuProps): React.ReactElement {
 					onClick={onTelemetryClicked}
 				/>
 			</MenuSection>,
+		);
+	}
+
+	if (supportedFeatures.opLatencyTelemetry === true) {
+		menuSections.push(
+			<MenuSection
+				header="Op Latency"
+				key="op-latency-menu-section"
+				onHeaderClick={onOpLatencyClicked}
+			/>,
 		);
 	}
 

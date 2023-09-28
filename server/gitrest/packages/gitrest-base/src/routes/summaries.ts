@@ -4,37 +4,39 @@
  */
 
 import {
+	isNetworkError,
 	IWholeFlatSummary,
 	IWholeSummaryPayload,
 	IWriteSummaryResponse,
 	NetworkError,
-	isNetworkError,
 } from "@fluidframework/server-services-client";
 import { handleResponse } from "@fluidframework/server-services-shared";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Router } from "express";
 import { Provider } from "nconf";
 import {
-	getExternalWriterParams,
-	IExternalWriterConfig,
-	IRepositoryManagerFactory,
-	latestSummarySha,
-	GitWholeSummaryManager,
-	retrieveLatestFullSummaryFromStorage,
-	persistLatestFullSummaryInStorage,
-	isContainerSummary,
-	IRepositoryManager,
-	IFileSystemManager,
-	IFileSystemManagerFactory,
-	Constants,
-	getRepoManagerParamsFromRequest,
-	logAndThrowApiError,
 	BaseGitRestTelemetryProperties,
-	IRepoManagerParams,
+	checkSoftDeleted,
+	Constants,
+	getExternalWriterParams,
+	getFilesystemManagerFactory,
 	getLumberjackBasePropertiesFromRepoManagerParams,
 	getRepoManagerFromWriteAPI,
-	checkSoftDeleted,
+	getRepoManagerParamsFromRequest,
 	getSoftDeletedMarkerPath,
+	GitWholeSummaryManager,
+	IExternalWriterConfig,
+	IFileSystemManager,
+	IFileSystemManagerFactories,
+	IRepoManagerParams,
+	IRepositoryManager,
+	IRepositoryManagerFactory,
+	isContainerSummary,
+	latestSummarySha,
+	logAndThrowApiError,
+	persistLatestFullSummaryInStorage,
+	retrieveLatestFullSummaryFromStorage,
+	SystemErrors,
 } from "../utils";
 
 function getFullSummaryDirectory(repoManager: IRepositoryManager, documentId: string): string {
@@ -48,6 +50,7 @@ async function getSummary(
 	repoManagerParams: IRepoManagerParams,
 	externalWriterConfig?: IExternalWriterConfig,
 	persistLatestFullSummary = false,
+	enforceStrictPersistedFullSummaryReads = false,
 ): Promise<IWholeFlatSummary> {
 	const lumberjackProperties = {
 		...getLumberjackBasePropertiesFromRepoManagerParams(repoManagerParams),
@@ -72,6 +75,17 @@ async function getSummary(
 				lumberjackProperties,
 				error,
 			);
+			if (enforceStrictPersistedFullSummaryReads) {
+				if (isNetworkError(error) && error.code === 413) {
+					throw error;
+				}
+				if (
+					typeof (error as any).code === "string" &&
+					(error as any).code === SystemErrors.EFBIG.code
+				) {
+					throw new NetworkError(413, "Full summary too large.");
+				}
+			}
 		}
 	}
 
@@ -206,13 +220,14 @@ async function deleteSummary(
 	if (!repoPerDocEnabled) {
 		throw new NetworkError(501, "Not Implemented");
 	}
-	const lumberjackProperties = {
+	const lumberjackProperties: Record<string, any> = {
 		...getLumberjackBasePropertiesFromRepoManagerParams(repoManagerParams),
 		[BaseGitRestTelemetryProperties.repoPerDocEnabled]: repoPerDocEnabled,
 		[BaseGitRestTelemetryProperties.softDelete]: softDelete,
 	};
 	// In repo-per-doc model, the repoManager's path represents the directory that contains summary data.
 	const summaryFolderPath = repoManager.path;
+	lumberjackProperties.summaryFolderPath = summaryFolderPath;
 	Lumberjack.info(`Deleting summary`, lumberjackProperties);
 
 	try {
@@ -251,7 +266,7 @@ async function deleteSummary(
 
 export function create(
 	store: Provider,
-	fileSystemManagerFactory: IFileSystemManagerFactory,
+	fileSystemManagerFactories: IFileSystemManagerFactories,
 	repoManagerFactory: IRepositoryManagerFactory,
 ): Router {
 	const router: Router = Router();
@@ -260,6 +275,8 @@ export function create(
 	const enableOptimizedInitialSummary: boolean =
 		store.get("git:enableOptimizedInitialSummary") ?? false;
 	const repoPerDocEnabled: boolean = store.get("git:repoPerDocEnabled") ?? false;
+	const enforceStrictPersistedFullSummaryReads: boolean =
+		store.get("git:enforceStrictPersistedFullSummaryReads") ?? false;
 
 	/**
 	 * Retrieves a summary.
@@ -283,6 +300,10 @@ export function create(
 		const resultP = repoManagerFactory
 			.open(repoManagerParams)
 			.then(async (repoManager) => {
+				const fileSystemManagerFactory = getFilesystemManagerFactory(
+					fileSystemManagerFactories,
+					repoManagerParams.isEphemeralContainer,
+				);
 				const fsManager = fileSystemManagerFactory.create(
 					repoManagerParams.fileSystemManagerParams,
 				);
@@ -299,6 +320,7 @@ export function create(
 					repoManagerParams,
 					getExternalWriterParams(request.query?.config as string | undefined),
 					persistLatestFullSummary,
+					enforceStrictPersistedFullSummaryReads,
 				);
 			})
 			.catch((error) => logAndThrowApiError(error, request, repoManagerParams));
@@ -319,6 +341,14 @@ export function create(
 				: typeof request.query.initial === "boolean"
 				? request.query.initial
 				: request.query.initial === "true";
+
+		const lumberjackProperties = {
+			...getLumberjackBasePropertiesFromRepoManagerParams(repoManagerParams),
+			[BaseGitRestTelemetryProperties.repoPerDocEnabled]: repoPerDocEnabled,
+			[BaseGitRestTelemetryProperties.isInitial]: isInitialSummary,
+		};
+		Lumberjack.info("Received request to create a summary", lumberjackProperties);
+
 		if (
 			!repoManagerParams.storageRoutingId?.tenantId ||
 			!repoManagerParams.storageRoutingId?.documentId
@@ -343,6 +373,10 @@ export function create(
 				repoManagerParams,
 				repoPerDocEnabled,
 				optimizeForInitialSummary,
+			);
+			const fileSystemManagerFactory = getFilesystemManagerFactory(
+				fileSystemManagerFactories,
+				repoManagerParams.isEphemeralContainer,
 			);
 			const fsManager = fileSystemManagerFactory.create(
 				repoManagerParams.fileSystemManagerParams,
@@ -394,6 +428,10 @@ export function create(
 		const resultP = repoManagerFactory
 			.open(repoManagerParams)
 			.then(async (repoManager) => {
+				const fileSystemManagerFactory = getFilesystemManagerFactory(
+					fileSystemManagerFactories,
+					repoManagerParams.isEphemeralContainer,
+				);
 				const fsManager = fileSystemManagerFactory.create(
 					repoManagerParams.fileSystemManagerParams,
 				);

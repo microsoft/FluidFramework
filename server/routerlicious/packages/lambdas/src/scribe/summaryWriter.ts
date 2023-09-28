@@ -58,6 +58,7 @@ export class SummaryWriter implements ISummaryWriter {
 		private readonly lastSummaryMessages: ISequencedDocumentMessage[],
 		private readonly getDeltasViaAlfred: boolean,
 		private readonly maxRetriesOnError: number = 6,
+		private readonly maxLogtailLength: number = 2000,
 	) {
 		this.lumberProperties = getLumberBaseProperties(this.documentId, this.tenantId);
 	}
@@ -88,9 +89,10 @@ export class SummaryWriter implements ISummaryWriter {
 		lastSummaryHead: string | undefined,
 		checkpoint: IScribe,
 		pendingOps: ISequencedOperationMessage[],
+		isEphemeralContainer?: boolean,
 	): Promise<ISummaryWriteResponse> {
 		const clientSummaryMetric = Lumberjack.newLumberMetric(LumberEventName.ClientSummary);
-		this.setSummaryProperties(clientSummaryMetric, op);
+		this.setSummaryProperties(clientSummaryMetric, op, isEphemeralContainer);
 		const content = JSON.parse(op.contents as string) as ISummaryContent;
 		try {
 			// The summary must reference the existing summary to be valid. This guards against accidental sends of
@@ -394,9 +396,10 @@ export class SummaryWriter implements ISummaryWriter {
 		currentProtocolHead: number,
 		checkpoint: IScribe,
 		pendingOps: ISequencedOperationMessage[],
+		isEphemeralContainer?: boolean,
 	): Promise<string | false> {
 		const serviceSummaryMetric = Lumberjack.newLumberMetric(LumberEventName.ServiceSummary);
-		this.setSummaryProperties(serviceSummaryMetric, op);
+		this.setSummaryProperties(serviceSummaryMetric, op, isEphemeralContainer);
 		try {
 			const existingRef = await requestWithRetry(
 				async () => this.summaryStorage.getRef(encodeURIComponent(this.documentId)),
@@ -570,21 +573,31 @@ export class SummaryWriter implements ISummaryWriter {
 	private setSummaryProperties(
 		summaryMetric: Lumber<LumberEventName.ClientSummary | LumberEventName.ServiceSummary>,
 		op: ISequencedDocumentAugmentedMessage,
+		isEphemeralContainer?: boolean,
 	) {
 		summaryMetric.setProperties(getLumberBaseProperties(this.documentId, this.tenantId));
 		summaryMetric.setProperties({
 			[CommonProperties.clientId]: op.clientId,
 			[CommonProperties.sequenceNumber]: op.sequenceNumber,
 			[CommonProperties.minSequenceNumber]: op.minimumSequenceNumber,
+			[CommonProperties.isEphemeralContainer]: isEphemeralContainer ?? false,
 		});
 	}
 
 	private async generateLogtailEntries(
-		from: number,
-		to: number,
+		gt: number,
+		lt: number,
 		pending: ISequencedOperationMessage[],
 		lastSummaryMessages: ISequencedDocumentMessage[] | undefined,
 	): Promise<ITreeEntry[]> {
+		let to = lt;
+		const from = gt;
+		const LogtailRequestedLength = to - from - 1;
+
+		if (LogtailRequestedLength > this.maxLogtailLength) {
+			Lumberjack.warning(`Limiting logtail length`, this.lumberProperties);
+			to = from + this.maxLogtailLength + 1;
+		}
 		const logTail = await this.getLogTail(from, to, pending);
 
 		// Some ops would be missing if we switch cluster during routing.

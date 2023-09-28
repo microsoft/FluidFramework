@@ -15,7 +15,7 @@ describe("diceRoller", () => {
 
 	beforeEach(async () => {
 		await page.goto(globals.PATH, { waitUntil: "load" });
-		await page.waitFor(() => window["fluidStarted"]);
+		await page.waitForFunction(() => window["fluidStarted"]);
 	});
 
 	it("loads and there's a button with Roll", async () => {

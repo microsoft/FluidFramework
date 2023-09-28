@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt, TelemetryDataTag } from "@fluidframework/telemetry-utils";
-import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { ITelemetryLoggerExt, TelemetryDataTag, UsageError } from "@fluidframework/telemetry-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { UsageError } from "@fluidframework/container-utils";
 import { FluidObject, IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import {
 	AliasResult,
@@ -161,14 +160,17 @@ class DataStore implements IDataStore {
 		return "Success";
 	}
 
-	async request(request: IRequest): Promise<IResponse> {
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
+	public async request(request: IRequest): Promise<IResponse> {
 		return this.fluidDataStoreChannel.request(request);
 	}
 
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#IDataStore.entryPoint}
 	 */
-	get entryPoint(): IFluidHandle<FluidObject> | undefined {
+	get entryPoint(): IFluidHandle<FluidObject> {
 		return this.fluidDataStoreChannel.entryPoint;
 	}
 
@@ -182,6 +184,9 @@ class DataStore implements IDataStore {
 		this.pendingAliases = datastores.pendingAliases;
 	}
 
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
 	public get IFluidRouter() {
 		return this.fluidDataStoreChannel;
 	}

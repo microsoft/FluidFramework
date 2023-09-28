@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
+import { FieldKey } from "../schema-stored";
 import { FieldUpPath, UpPath } from "./pathTree";
-import { FieldKey, TreeType, Value } from "./types";
+import { TreeType, Value } from "./types";
 
 /**
  * A symbol for marking an object as an {@link ITreeCursor}.
@@ -37,6 +38,7 @@ export interface ITreeCursor {
 	 * Marks this object as a cursor.
 	 */
 	readonly [CursorMarker]: true;
+
 	/**
 	 * What kind of place the cursor is at.
 	 * Determines which operations are allowed.
@@ -371,6 +373,23 @@ export function mapCursorField<T, TCursor extends ITreeCursor = ITreeCursor>(
 }
 
 /**
+ * @param cursor - The tree whose field will be visited.
+ * @param f - Builds output from field member, which will be selected in cursor when cursor is provided.
+ * If `f` moves cursor, it must put it back to where it was at the beginning of `f` before returning.
+ * @returns An iterable of `T` resulting from applying `f` to each item of the current field on `cursor`.
+ * Yields nothing if an empty array if the field is empty or not present (which are considered the same).
+ */
+export function* iterateCursorField<T, TCursor extends ITreeCursor = ITreeCursor>(
+	cursor: TCursor,
+	f: (cursor: TCursor) => T,
+): IterableIterator<T> {
+	assert(cursor.mode === CursorLocationType.Fields, "should be in fields");
+	for (let inNodes = cursor.firstNode(); inNodes; inNodes = cursor.nextNode()) {
+		yield f(cursor);
+	}
+}
+
+/**
  * @param cursor - cursor at a field whose nodes will be visited.
  * @param f - For on each node.
  * If `f` moves cursor, it must put it back to where it was at the beginning of `f` before returning.
@@ -382,6 +401,29 @@ export function forEachNode<TCursor extends ITreeCursor = ITreeCursor>(
 	assert(cursor.mode === CursorLocationType.Fields, 0x3bd /* should be in fields */);
 	for (let inNodes = cursor.firstNode(); inNodes; inNodes = cursor.nextNode()) {
 		f(cursor);
+	}
+}
+
+/**
+ * @param cursor - cursor at a field or node.
+ * @param f - Function to invoke for each node.
+ * If `f` moves the cursor, it must put it back to where it was at the beginning of `f` before returning.
+ *
+ * Invokes `f` on each node in the subtree rooted at the current field or node.
+ * Traversal is pre-order.
+ * If the cursor is at a node, `f` will be invoked on that node.
+ *
+ * Returns the `cursor` to its initial position.
+ */
+export function forEachNodeInSubtree<TCursor extends ITreeCursor = ITreeCursor>(
+	cursor: TCursor,
+	f: (cursor: TCursor) => void,
+): void {
+	if (cursor.mode === CursorLocationType.Nodes) {
+		f(cursor);
+		forEachField(cursor, (c) => forEachNodeInSubtree(c, f));
+	} else {
+		forEachNode(cursor, (c) => forEachNodeInSubtree(c, f));
 	}
 }
 

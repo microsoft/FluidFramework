@@ -61,13 +61,12 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
 	};
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
-	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-		dataObjectFactory,
-		[[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
-		undefined,
-		[innerRequestHandler],
+	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+		defaultFactory: dataObjectFactory,
+		registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
+		requestHandlers: [innerRequestHandler],
 		runtimeOptions,
-	);
+	});
 
 	let mainContainer: IContainer;
 	let mainDataStore: TestDataObject;
@@ -98,7 +97,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
 			if (
 				event.eventName === "fluid:telemetry:Summarizer:Running:Summarize_generate" &&
 				event.referenceSequenceNumber
-					? event.referenceSequenceNumber >= sequenceNumber
+					? (event.referenceSequenceNumber as number) >= sequenceNumber
 					: false
 			) {
 				return event;

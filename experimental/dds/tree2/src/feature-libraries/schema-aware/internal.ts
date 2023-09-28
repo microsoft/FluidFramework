@@ -21,7 +21,7 @@ export {
 	EmptyObject,
 } from "./schemaAware";
 
-export { ValuesOf, TypedValue } from "./schemaAwareUtil";
+export { ValuesOf, TypedValue, TypedValueOrUndefined } from "./schemaAwareUtil";
 
 export { PrimitiveValueSchema } from "../../core";
 

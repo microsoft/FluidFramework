@@ -1,0 +1,291 @@
+id: 
+name: GitOps.PullRequestIssueManagement
+description: GitOps.PullRequestIssueManagement primitive
+owner: 
+resource: repository
+disabled: false
+where: 
+configuration:
+  resourceManagementConfiguration:
+    scheduledSearches:
+    - description: 
+      frequencies:
+      - hourly:
+          hour: 3
+      filters:
+      - hasLabel:
+          label: 'resolution: not an issue'
+      - isIssue
+      - isOpen
+      - noActivitySince:
+          days: 1
+      actions:
+      - addReply:
+          reply: "This issue has been marked as being beyond the support scope of Fluid Frameworks's issue board. It will now be closed automatically for house-keeping purposes. "
+      - closeIssue
+    - description: 
+      frequencies:
+      - hourly:
+          hour: 6
+      filters:
+      - isOpen
+      - hasLabel:
+          label: 'resolution: by design'
+      - noActivitySince:
+          days: 3
+      actions:
+      - addReply:
+          reply: "Because this issue is marked as \"by design\" and has not had activity for over 3 days, we're automatically closing it for house-keeping purposes. "
+      - closeIssue
+    - description: 
+      frequencies:
+      - hourly:
+          hour: 3
+      filters:
+      - isOpen
+      - hasLabel:
+          label: "resolution: won't fix"
+      - noActivitySince:
+          days: 3
+      actions:
+      - addReply:
+          reply: "Because this issue is marked as \"won't fix\" and has not had activity for over 3 days, we're automatically closing it for house-keeping purposes. "
+      - closeIssue
+    - description: 
+      frequencies:
+      - hourly:
+          hour: 6
+      filters:
+      - isOpen
+      - hasLabel:
+          label: "resolution: can't repro"
+      - noActivitySince:
+          days: 3
+      actions:
+      - addReply:
+          reply: "Because this issue is marked as \"can't repro\" and has not had activity for over 3 days, we're automatically closing it for house-keeping purposes. "
+      - closeIssue
+    - description: 
+      frequencies:
+      - hourly:
+          hour: 6
+      filters:
+      - isOpen
+      - isIssue
+      - hasLabel:
+          label: 'needs: more information'
+      - isNotLabeledWith:
+          label: 'status: no recent activity'
+      - noActivitySince:
+          days: 2
+      actions:
+      - addReply:
+          reply: This issue has been automatically marked as stale because it has marked as requiring more information but has not had any activity for **2 days**. It will be closed if no further activity occurs **within 8 days of this comment**. Thank you for your contributions to Fluid Framework!
+      - addLabel:
+          label: 'Status: No Recent Activity'
+    - description: 
+      frequencies:
+      - hourly:
+          hour: 3
+      filters:
+      - isIssue
+      - isOpen
+      - hasLabel:
+          label: 'status: no recent activity'
+      - noActivitySince:
+          days: 8
+      actions:
+      - closeIssue
+    - description: 
+      frequencies:
+      - hourly:
+          hour: 6
+      filters:
+      - isOpen
+      - hasLabel:
+          label: 'resolution: duplicate'
+      - noActivitySince:
+          days: 3
+      actions:
+      - addReply:
+          reply: "Because this issue is marked as \"duplicate\" and has not had activity for over 3 days, we're automatically closing it for house-keeping purposes. "
+      - closeIssue
+    - description: 
+      frequencies:
+      - hourly:
+          hour: 12
+      filters:
+      - isOpen
+      - isIssue
+      - noActivitySince:
+          days: 180
+      - isNotLabeledWith:
+          label: epic
+      - isNotPartOfMilestone:
+          milestone: Future
+      - isNotPartOfMilestone:
+          milestone: Next
+      actions:
+      - addLabel:
+          label: 'status: stale'
+      - addReply:
+          reply: This issue has been automatically marked as stale because it has had no activity for 180 days. It will be closed if no further activity occurs **within 8 days of this comment**. Thank you for your contributions to Fluid Framework!
+    - description: 
+      frequencies:
+      - hourly:
+          hour: 12
+      filters:
+      - isOpen
+      - isPullRequest
+      - noActivitySince:
+          days: 60
+      actions:
+      - addLabel:
+          label: 'status: stale'
+      - addReply:
+          reply: This PR has been automatically marked as stale because it has had no activity for 60 days. It will be closed if no further activity occurs **within 8 days of this comment**. Thank you for your contributions to Fluid Framework!
+    - description: 
+      frequencies:
+      - hourly:
+          hour: 12
+      filters:
+      - isOpen
+      - hasLabel:
+          label: 'status: stale'
+      - noActivitySince:
+          days: 8
+      actions:
+      - closeIssue
+    eventResponderTasks:
+    - if:
+      - payloadType: Issue_Comment
+      then:
+      - cleanEmailReply
+      description: 
+    - if:
+      - payloadType: Pull_Request
+      - hasLabel:
+          label: 'msftbot: merge-next'
+      then:
+      - enableAutoMerge:
+          mergeMethod: Squash
+      description: 
+    - if:
+      - payloadType: Pull_Request
+      - labelRemoved:
+          label: 'msftbot: merge-next'
+      then:
+      - disableAutoMerge
+      description: 
+    - if:
+      - payloadType: Issues
+      - not:
+          isAction:
+            action: Closed
+      - hasLabel:
+          label: 'status: no recent activity'
+      - not:
+          labelAdded:
+            label: 'status: no recent activity'
+      then:
+      - removeLabel:
+          label: 'status: no recent activity'
+      description: 
+    - if:
+      - payloadType: Issue_Comment
+      - hasLabel:
+          label: 'status: no recent activity'
+      then:
+      - removeLabel:
+          label: 'status: no recent activity'
+      description: 
+    - if:
+      - payloadType: Issues
+      - labelAdded:
+          label: question
+      - not:
+          hasLabel:
+            label: 'resolution: not an issue'
+      then:
+      - addReply:
+          reply: >-
+            The Fluid Framework issue queue is meant to capture bug reports and feature requests. 
+
+            It is best to ask questions in the "Discussions" section of the FluidFramework GitHub repo so that the entire community can contribute and learn from the question.
+      - addLabel:
+          label: 'resolution: not an issue'
+      description: 
+    - if:
+      - payloadType: Pull_Request
+      - not:
+          isAction:
+            action: Closed
+      - hasLabel:
+          label: 'status: stale'
+      - not:
+          labelAdded:
+            label: 'status: stale'
+      then:
+      - removeLabel:
+          label: 'status: stale'
+      description: 
+    - if:
+      - payloadType: Issue_Comment
+      - hasLabel:
+          label: 'status: stale'
+      then:
+      - removeLabel:
+          label: 'status: stale'
+      description: 
+    - if:
+      - payloadType: Issues
+      - not:
+          isAction:
+            action: Closed
+      - hasLabel:
+          label: 'status: stale'
+      - not:
+          labelAdded:
+            label: 'status: stale'
+      then:
+      - removeLabel:
+          label: 'status: stale'
+      description: 
+    - if:
+      - payloadType: Issue_Comment
+      - hasLabel:
+          label: 'status: stale'
+      then:
+      - removeLabel:
+          label: 'status: stale'
+      description: 
+    - if:
+      - payloadType: Issues
+      - activitySenderHasAssociation:
+          association: None
+      then:
+      - addLabel:
+          label: community-contribution
+      description: 
+    - if:
+      - payloadType: Issues
+      - hasLabel:
+          label: api deprecation
+      - isAssignedToSomeone
+      then:
+      - assignTo:
+          users:
+          - ${issueAuthor}
+      description: 
+    - if:
+      - payloadType: Issues
+      - hasLabel:
+          label: api deprecation
+      - not: isAssignedToSomeone
+      - isOpen
+      then:
+      - addLabel:
+          label: triage
+      description: 
+onFailure: 
+onSuccess: 

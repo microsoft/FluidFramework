@@ -37,6 +37,7 @@ import {
 	getLumberBaseProperties,
 	LumberEventName,
 	Lumberjack,
+	CommonProperties,
 } from "@fluidframework/server-services-telemetry";
 import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionValid } from "../utils";
 import { CheckpointManager } from "./checkpointManager";
@@ -61,6 +62,7 @@ const DefaultScribe: IScribe = {
 	sequenceNumber: 0,
 	lastSummarySequenceNumber: 0,
 	validParentSummaries: undefined,
+	isCorrupt: false,
 };
 
 export class ScribeLambdaFactory
@@ -83,6 +85,7 @@ export class ScribeLambdaFactory
 		private readonly checkpointService: ICheckpointService,
 		private readonly restartOnCheckpointFailure: boolean,
 		private readonly kafkaCheckpointOnReprocessingOp: boolean,
+		private readonly maxLogtailLength: number,
 	) {
 		super();
 	}
@@ -124,6 +127,14 @@ export class ScribeLambdaFactory
 				(error) => true /* shouldRetry */,
 			)) as IDocument;
 
+			if (JSON.parse(document.scribe)?.isCorrupt) {
+				Lumberjack.info(
+					`Received attempt to connect to a corrupted document.`,
+					lumberProperties,
+				);
+				return new NoOpLambda(context);
+			}
+
 			if (!isDocumentValid(document)) {
 				// Document sessions can be joined (via Alfred) after a document is functionally deleted.
 				// If the document doesn't exist or is marked for deletion then we trivially accept every message.
@@ -146,6 +157,11 @@ export class ScribeLambdaFactory
 					return new NoOpLambda(context);
 				}
 			}
+
+			scribeSessionMetric?.setProperty(
+				CommonProperties.isEphemeralContainer,
+				document?.isEphemeralContainer ?? false,
+			);
 
 			gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
 			summaryReader = new SummaryReader(
@@ -202,7 +218,21 @@ export class ScribeLambdaFactory
 				"scribe",
 				document,
 			)) as IScribe;
-			opMessages = await this.getOpMessages(documentId, tenantId, lastCheckpoint);
+
+			try {
+				opMessages = await this.getOpMessages(documentId, tenantId, lastCheckpoint);
+			} catch (error) {
+				Lumberjack.error(
+					`Error getting pending messages after last checkpoint.`,
+					lumberProperties,
+					error,
+				);
+			}
+		}
+
+		if (lastCheckpoint.isCorrupt) {
+			Lumberjack.info(`Attempt to connect to a corrupted document.`, lumberProperties);
+			return new NoOpLambda(context);
 		}
 
 		// Filter and keep ops after protocol state
@@ -244,6 +274,7 @@ export class ScribeLambdaFactory
 			this.enableWholeSummaryUpload,
 			lastSummaryMessages,
 			this.getDeltasViaAlfred,
+			this.maxLogtailLength,
 		);
 		const checkpointManager = new CheckpointManager(
 			context,
@@ -290,6 +321,7 @@ export class ScribeLambdaFactory
 			this.disableTransientTenantFiltering,
 			this.restartOnCheckpointFailure,
 			this.kafkaCheckpointOnReprocessingOp,
+			document.isEphemeralContainer ?? false,
 		);
 
 		await this.sendLambdaStartResult(tenantId, documentId, {
@@ -318,7 +350,7 @@ export class ScribeLambdaFactory
 				tenantId,
 				documentId,
 				lastCheckpoint.protocolState.sequenceNumber,
-				undefined,
+				lastCheckpoint.protocolState.sequenceNumber + this.maxLogtailLength + 1,
 				"scribe",
 			);
 		}
