@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/azure-service-utils",
-	"version": "2.0.0-internal.6.4.0",
+	"version": "2.0.0-internal.7.1.0",
 	"description": "Helper service-side utilities for connecting to Azure Fluid Relay service",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -36,17 +36,17 @@
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
-		"@fluidframework/protocol-definitions": "^1.0.0",
+		"@fluidframework/protocol-definitions": "^3.0.0",
 		"jsrsasign": "^10.5.25",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.22.0",
-		"@fluidframework/azure-service-utils-previous": "npm:@fluidframework/azure-service-utils@2.0.0-internal.6.3.0",
+		"@fluid-tools/build-cli": "^0.24.0",
+		"@fluidframework/azure-service-utils-previous": "npm:@fluidframework/azure-service-utils@2.0.0-internal.7.0.0",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.22.0",
+		"@fluidframework/build-tools": "^0.24.0",
 		"@fluidframework/eslint-config-fluid": "^2.1.0",
-		"@microsoft/api-extractor": "^7.34.4",
+		"@microsoft/api-extractor": "^7.37.0",
 		"@types/jsrsasign": "^8.0.8",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.6.0",
@@ -54,7 +54,7 @@
 		"eslint-plugin-jsdoc": "~39.3.0",
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",
-		"typescript": "~4.5.5"
+		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
 		"broken": {}

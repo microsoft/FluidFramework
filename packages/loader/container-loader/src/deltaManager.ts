@@ -50,7 +50,6 @@ import {
 	IConnectionStateChangeReason,
 } from "./contracts";
 import { DeltaQueue } from "./deltaQueue";
-import { OnlyValidTermValue } from "./protocol";
 import { ThrottlingWarning } from "./error";
 
 export interface IConnectionArgs {
@@ -412,8 +411,12 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			connectHandler: (connection: IConnectionDetailsInternal) =>
 				this.connectHandler(connection),
 			pongHandler: (latency: number) => this.emit("pong", latency),
-			readonlyChangeHandler: (readonly?: boolean) =>
-				safeRaiseEvent(this, this.logger, "readonly", readonly),
+			readonlyChangeHandler: (
+				readonly?: boolean,
+				readonlyConnectionReason?: IConnectionStateChangeReason,
+			) => {
+				safeRaiseEvent(this, this.logger, "readonly", readonly, readonlyConnectionReason);
+			},
 			establishConnectionHandler: (reason: IConnectionStateChangeReason) =>
 				this.establishingConnection(reason),
 			cancelConnectionHandler: (reason: IConnectionStateChangeReason) =>
@@ -1058,11 +1061,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			this.lastProcessedSequenceNumber <= this.lastObservedSeqNumber,
 			0x267 /* "lastObservedSeqNumber should be updated first" */,
 		);
-
-		// Back-compat for older server with no term
-		if (message.term === undefined) {
-			message.term = OnlyValidTermValue;
-		}
 
 		if (this.handler === undefined) {
 			throw new Error("Attempted to process an inbound message without a handler attached");

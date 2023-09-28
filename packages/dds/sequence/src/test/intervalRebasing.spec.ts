@@ -3,15 +3,17 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { IntervalType } from "../intervals";
 import { SharedStringFactory } from "../sequenceFactory";
 import { SharedString } from "../sharedString";
+import { IntervalStickiness, IntervalType } from "../intervals";
+import { Side } from "../intervalCollection";
 import { assertConsistent, Client } from "./intervalUtils";
 
 function constructClients(
@@ -20,6 +22,9 @@ function constructClients(
 ): [Client, Client, Client] {
 	return Array.from({ length: numClients }, (_, index) => {
 		const dataStoreRuntime = new MockFluidDataStoreRuntime();
+		dataStoreRuntime.options = {
+			intervalStickinessEnabled: true,
+		};
 		const sharedString = new SharedString(
 			dataStoreRuntime,
 			String.fromCharCode(index + 65),
@@ -157,6 +162,98 @@ describe("interval rebasing", () => {
 			intervalId: "2",
 		});
 
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+	});
+
+	it("is consistent for full stickiness", () => {
+		clients[0].sharedString.insertText(0, "A");
+		clients[0].sharedString.insertText(0, "BC");
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+		const collection_1 = clients[1].sharedString.getIntervalCollection("comments");
+		const interval1 = collection_1.add("start", "end", IntervalType.SlideOnRemove, {
+			intervalId: "2",
+		});
+		assert.equal(interval1.stickiness, IntervalStickiness.FULL);
+		clients[0].sharedString.removeRange(0, 1);
+		clients[1].sharedString.removeRange(0, 3);
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+	});
+
+	it("slides two refs on same segment to different segments", () => {
+		clients[0].sharedString.insertText(0, "AB");
+		clients[0].sharedString.insertText(0, "C");
+		const collection_1 = clients[0].sharedString.getIntervalCollection("comments");
+		const interval1 = collection_1.add(
+			{ pos: 0, side: Side.After },
+			"end",
+			IntervalType.SlideOnRemove,
+			{
+				intervalId: "1",
+			},
+		);
+		assert.equal(interval1.stickiness, IntervalStickiness.FULL);
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+		clients[2].sharedString.removeRange(1, 2);
+		const collection_2 = clients[1].sharedString.getIntervalCollection("comments");
+		const interval2 = collection_2.add(
+			"start",
+			{ pos: 2, side: Side.Before },
+			IntervalType.SlideOnRemove,
+			{
+				intervalId: "2",
+			},
+		);
+		assert.equal(interval2.stickiness, IntervalStickiness.FULL);
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+	});
+
+	it("maintains sliding preference on references after ack", () => {
+		clients[1].sharedString.insertText(0, "ABC");
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+		clients[0].sharedString.removeRange(0, 1);
+		clients[0].sharedString.insertText(0, "D");
+		const collection_1 = clients[1].sharedString.getIntervalCollection("comments");
+		collection_1.add({ pos: 0, side: Side.After }, 1, IntervalType.SlideOnRemove, {
+			intervalId: "1",
+		});
+		clients[2].sharedString.removeRange(1, 2);
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+	});
+
+	it("maintains sliding preference on references after reconnect with special endpoint segment", () => {
+		clients[0].sharedString.insertText(0, "D");
+		clients[0].containerRuntime.connected = false;
+		const collection_1 = clients[0].sharedString.getIntervalCollection("comments");
+		const interval = collection_1.add("start", 0, IntervalType.SlideOnRemove, {
+			intervalId: "1",
+		});
+		assert.equal(interval.stickiness, IntervalStickiness.FULL);
+		clients[0].containerRuntime.connected = true;
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+	});
+
+	it("maintains sliding preference on references after reconnect", () => {
+		clients[0].sharedString.insertText(0, "D");
+		clients[0].containerRuntime.connected = false;
+		const collection_1 = clients[0].sharedString.getIntervalCollection("comments");
+		const interval = collection_1.add(
+			{ pos: 0, side: Side.After },
+			0,
+			IntervalType.SlideOnRemove,
+			{
+				intervalId: "1",
+			},
+		);
+		assert.equal(interval.stickiness, IntervalStickiness.FULL);
+		clients[0].containerRuntime.connected = true;
 		containerRuntimeFactory.processAllMessages();
 		assertConsistent(clients);
 	});
