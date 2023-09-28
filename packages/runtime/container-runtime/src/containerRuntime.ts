@@ -2209,11 +2209,15 @@ export class ContainerRuntime
 				this.blobManager.processBlobAttachOp(messageWithContext.message, local);
 				break;
 			case ContainerMessageType.IdAllocation:
+				console.log(messageWithContext.message.contents);
 				assert(
 					this.idCompressor !== undefined,
 					0x67c /* IdCompressor should be defined if enabled */,
 				);
-				this.idCompressor.finalizeCreationRange(messageWithContext.message.contents);
+
+				if (messageWithContext.message.metadata?.savedOp !== true) {
+					this.idCompressor.finalizeCreationRange(messageWithContext.message.contents);
+				}
 				break;
 			case ContainerMessageType.ChunkedOp:
 			case ContainerMessageType.Rejoin:

@@ -2287,7 +2287,7 @@ export class Container
 
 	private processRemoteMessage(message: ISequencedDocumentMessage) {
 		if (this.offlineLoadEnabled) {
-			this.savedOps.push(message);
+			this.savedOps.push({ ...message, metadata: { ...message.metadata, savedOp: true } });
 		}
 		const local = this.clientId === message.clientId;
 
