@@ -220,8 +220,8 @@ export class LocalReferenceCollection {
 	}
 
 	/**
-	 * This is the number of references that have a special tag in their
-	 * properties, typically Tile or Range.
+	 * This is the number of references whose reference type is one of the
+	 * hierarchical reference types, that is: NestBegin, NestEnd, or Tile.
 	 *
 	 * @remarks This method should only be called by mergeTree.
 	 * @internal
