@@ -220,6 +220,9 @@ export class LocalReferenceCollection {
 	}
 
 	/**
+	 * This is the number of references that have a special tag in their
+	 * properties, typically Tile or Range.
+	 *
 	 * @remarks This method should only be called by mergeTree.
 	 * @internal
 	 */
@@ -280,31 +283,6 @@ export class LocalReferenceCollection {
 			},
 		};
 		return iterator;
-	}
-
-	/**
-	 * @remarks This method should only be called by mergeTree.
-	 * @internal
-	 */
-	public clear() {
-		this.refCount = 0;
-		this.hierRefCount = 0;
-		const detachSegments = (refs: List<LocalReference> | undefined) => {
-			if (refs) {
-				for (const r of refs) {
-					this.removeLocalRef(r.data);
-				}
-			}
-		};
-		for (let i = 0; i < this.refsByOffset.length; i++) {
-			const refsAtOffset = this.refsByOffset[i];
-			if (refsAtOffset) {
-				detachSegments(refsAtOffset.before);
-				detachSegments(refsAtOffset.at);
-				detachSegments(refsAtOffset.after);
-				this.refsByOffset[i] = undefined;
-			}
-		}
 	}
 
 	/**

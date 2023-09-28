@@ -129,6 +129,8 @@ describe("SharedString op-reentrancy", () => {
 				undefined,
 			);
 
+			assert.notEqual(localRef.getSegment(), undefined);
+
 			containerRuntimeFactory.processAllMessages();
 
 			sharedString.on("sequenceDelta", ({ deltaOperation, isLocal }, target) => {
@@ -152,6 +154,9 @@ describe("SharedString op-reentrancy", () => {
 				assert.equal(seg.localRefs.has(localRef), false);
 				return false;
 			});
+
+			assert.equal(localRef.getSegment(), undefined);
+			assert.equal(localRef.getOffset(), 0);
 		});
 
 		it("is empty after deleting segment containing simple reference pos in reentrant callback", () => {
@@ -160,6 +165,8 @@ describe("SharedString op-reentrancy", () => {
 			assert(segment);
 			segment.localRefs ??= new LocalReferenceCollection(segment);
 			const localRef = segment.localRefs.createLocalRef(0, ReferenceType.Simple, undefined);
+
+			assert.notEqual(localRef.getSegment(), undefined);
 
 			containerRuntimeFactory.processAllMessages();
 
@@ -180,6 +187,9 @@ describe("SharedString op-reentrancy", () => {
 				assert.equal(seg.localRefs.has(localRef), false);
 				return false;
 			});
+
+			assert.equal(localRef.getSegment(), undefined);
+			assert.equal(localRef.getOffset(), 0);
 		});
 
 		it("logs reentrant events a fixed number of times", () => {

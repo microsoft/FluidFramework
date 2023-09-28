@@ -257,8 +257,6 @@ describe("IntervalCollection fuzz testing", () => {
 
 	createDDSFuzzSuite(model, {
 		...defaultFuzzOptions,
-		// AB#4477: Seed 20 and others with its call stack is the same root cause as skipped regression test in
-		// intervalCollection.spec.ts--search for 4477.
 		// The other failing seeds were added when the mocks were changed to properly update msn on reconnects.
 		// This exposed ways that `0x54e` can occur.
 		// The root cause of this bug is--roughly speaking--interval endpoints with StayOnRemove being placed
@@ -304,8 +302,7 @@ describe("IntervalCollection fuzz testing with rebased batches", () => {
 
 	createDDSFuzzSuite(noReconnectWithRebaseModel, {
 		...defaultFuzzOptions,
-		// AB#4477: Either the same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477,
-		// or 0x54e, see AB#5337 or comment on "default interval collection" fuzz suite.
+		// 0x54e: See AB#5337 or comment on "default interval collection" fuzz suite.
 		skip: [3, 9, 11, 13, 23, 26, 29, 30, 31, 32, 36, 39, 41, 46, 49, 52, 53, 71, 73, 81, 86],
 		reconnectProbability: 0.0,
 		numberOfClients: 3,
