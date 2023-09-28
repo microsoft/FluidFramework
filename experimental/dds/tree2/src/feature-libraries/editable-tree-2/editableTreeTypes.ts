@@ -469,7 +469,11 @@ export type FlexibleNodeContent<TTypes extends AllowedTypes> = SchemaAware.Allow
 >;
 
 /**
- * Type to ensures two types overlap in some way.
+ * Type to ensures two types overlap in at least one way.
+ * It evaluates to the input type if this is true, and never otherwise.
+ * Examples:
+ * CheckTypesOverlap\<number | boolean, number | object\> = number | boolean
+ * CheckTypesOverlap\<number | boolean, string | object\> = never
  * @alpha
  */
 export type CheckTypesOverlap<T, TCheck> = Extract<T, TCheck> extends never ? never : T;
