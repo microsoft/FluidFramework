@@ -97,7 +97,7 @@ function createLeafTree(
 	};
 }
 
-describe.only("unboxed unit tests", () => {
+describe("unboxed unit tests", () => {
 	describe("unboxedField", () => {
 		describe("Optional", () => {
 			it("No value", () => {
