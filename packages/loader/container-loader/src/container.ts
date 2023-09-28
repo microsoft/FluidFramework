@@ -777,8 +777,6 @@ export class Container
 		this.urlResolver = urlResolver;
 		this.serviceFactory = documentServiceFactory;
 		this.codeLoader = codeLoader;
-		// Note: structuredClone will be available in TypeScriptv4.7
-		// currently using the type declaration file structuredClone.d.ts as a placeholder
 		this.options = structuredClone(options);
 		this.scope = scope;
 		this.detachedBlobStorage = detachedBlobStorage;
