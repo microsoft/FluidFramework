@@ -52,7 +52,7 @@ import {
 	TreeNode,
 	boxedIterator,
 } from "./editableTreeTypes";
-import { makeField, unboxedField } from "./lazyField";
+import { makeField } from "./lazyField";
 import {
 	LazyEntity,
 	cursorSymbol,
@@ -61,6 +61,7 @@ import {
 	makePropertyEnumerableOwn,
 	tryMoveCursorToAnchorSymbol,
 } from "./lazyEntity";
+import { unboxedField } from "./unboxed";
 
 const lazyTreeSlot = anchorSlot<LazyTree>();
 
