@@ -26,7 +26,14 @@ import {
 	SequenceFieldEditBuilder,
 	ValueFieldEditBuilder,
 } from "../default-field-kinds";
-import { assertValidIndex, compareSets, disposeSymbol, fail, oneFromSet } from "../../util";
+import {
+	assertValidIndex,
+	compareSets,
+	disposeSymbol,
+	fail,
+	oneFromSet,
+	assertValidRangeIndices,
+} from "../../util";
 import {
 	AllowedTypes,
 	FieldSchema,
@@ -35,7 +42,6 @@ import {
 	schemaIsLeaf,
 } from "../typed-schema";
 import { TreeStatus, treeStatusFromPath } from "../editable-tree";
-import { assertValidRangeIndices } from "../../util/utils";
 import { Context } from "./context";
 import {
 	FlexibleNodeContent,
