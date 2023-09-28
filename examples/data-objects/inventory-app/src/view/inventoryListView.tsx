@@ -7,7 +7,9 @@ import * as React from "react";
 import { IInventoryList } from "../interfaces";
 import { Counter } from "./counter";
 
-export const SharedTreeView: React.FC<{ inventoryList: IInventoryList }> = ({ inventoryList }) => {
+export const InventoryListView: React.FC<{ inventoryList: IInventoryList }> = ({
+	inventoryList,
+}) => {
 	const [parts, setParts] = React.useState(inventoryList.getParts());
 	React.useEffect(() => {
 		const updateParts = () => setParts(inventoryList.getParts());
