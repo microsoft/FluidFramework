@@ -4,6 +4,7 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { SharedTree as LegacySharedTree } from "@fluid-experimental/tree";
 import { ISharedTree, SharedTreeFactory } from "@fluid-experimental/tree2";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 
@@ -79,6 +80,6 @@ export class InventoryListTrio extends DataObject {
 export const InventoryListTrioFactory = new DataObjectFactory(
 	"@fluid-experimental/inventory-list",
 	InventoryListTrio,
-	[new SharedTreeFactory()],
+	[LegacySharedTree.getFactory(), new SharedTreeFactory()],
 	{},
 );

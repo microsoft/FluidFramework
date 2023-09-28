@@ -1872,6 +1872,7 @@ importers:
   examples/data-objects/inventory-app:
     specifiers:
       '@fluid-example/example-utils': workspace:~
+      '@fluid-experimental/tree': workspace:~
       '@fluid-experimental/tree-react-api': workspace:~
       '@fluid-experimental/tree2': workspace:~
       '@fluid-tools/webpack-fluid-loader': workspace:~
@@ -1908,6 +1909,7 @@ importers:
       webpack-merge: ^5.8.0
     dependencies:
       '@fluid-example/example-utils': link:../../utils/example-utils
+      '@fluid-experimental/tree': link:../../../experimental/dds/tree
       '@fluid-experimental/tree-react-api': link:../../../experimental/framework/tree-react-api
       '@fluid-experimental/tree2': link:../../../experimental/dds/tree2
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
