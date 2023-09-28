@@ -18,6 +18,7 @@ import {
 import {
 	AllowedTypes,
 	FieldKind,
+	FieldKinds,
 	FieldSchema,
 	Optional,
 	SchemaAware,
@@ -154,7 +155,7 @@ describe.only("unboxed unit tests", () => {
 				const stringLeafSchema = builder.leaf("string", ValueSchema.String);
 				const structSchema = builder.structRecursive("struct", {
 					name: SchemaBuilder.fieldValue(stringLeafSchema),
-					child: SchemaBuilder.fieldRecursive(() => structSchema),
+					child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => structSchema),
 				});
 				const rootSchema = SchemaBuilder.fieldOptional(structSchema);
 				const schema = builder.intoDocumentSchema(rootSchema);
@@ -162,7 +163,7 @@ describe.only("unboxed unit tests", () => {
 				const initialTree = {
 					name: "Foo",
 					child: {
-						name: "Foo",
+						name: "Bar",
 						child: undefined,
 					},
 				};
@@ -173,7 +174,7 @@ describe.only("unboxed unit tests", () => {
 
 				assert(result !== undefined);
 				assert.equal(result.name, "Foo");
-				assert.notEqual(result.child, undefined);
+				assert(result.child !== undefined);
 				assert.equal(result.child.name, "Bar");
 				assert.equal(result.child.child, undefined);
 			});
