@@ -9,6 +9,7 @@ import {
 	IBroadcastSignalEventPayload,
 	ICollaborationSessionEvents,
 	IRoom,
+	IRuntimeSignalEnvelope,
 } from "@fluidframework/server-lambdas";
 import { IDocumentStorage, MongoManager } from "@fluidframework/server-services-core";
 import { Router } from "express";
@@ -37,17 +38,23 @@ export function create(
 	router.post("/:tenantId/:id/broadcast-signal", (request, response) => {
 		const tenantId = getParam(request.params, "tenantId");
 		const documentId = getParam(request.params, "id");
-		// This endpoint simply passes on signalContent as a blackbox so we don't
-		// do any validation on it here
-		const signalContent = getParam(request.body, "signalContent");
 
 		try {
-			const signalRoom: IRoom = { tenantId, documentId };
-			const payload: IBroadcastSignalEventPayload = { signalRoom, signalContent };
-			collaborationSessionEventEmitter?.emit("broadcastSignal", payload);
-			response.status(200).send("OK");
+			const signalContent = JSON.parse(
+				getParam(request.body, "signalContent"),
+			) as IRuntimeSignalEnvelope;
+			try {
+				const signalRoom: IRoom = { tenantId, documentId };
+				const payload: IBroadcastSignalEventPayload = { signalRoom, signalContent };
+				collaborationSessionEventEmitter.emit("broadcastSignal", payload);
+				response.status(200).send("OK");
+			} catch (error) {
+				response.status(500).send(error);
+			}
 		} catch (error) {
-			response.status(500).send(error);
+			response
+				.status(400)
+				.send(`signalContent should contain 'content' and 'type' keys. Error: ${error}`);
 		}
 	});
 
