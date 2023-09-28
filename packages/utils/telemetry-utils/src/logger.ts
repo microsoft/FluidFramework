@@ -567,7 +567,7 @@ export interface IPerformanceEventMarkers {
  */
 export class PerformanceEvent {
 	/**
-	 * Creates an instance of {@link PerformanceEvent} and start measurements
+	 * Creates an instance of {@link PerformanceEvent} and starts measurements
 	 * @param logger - the logger to be used for publishing events
 	 * @param event - the logging event details which will be published with the performance measurements
 	 * @param markers - See {@link IPerformanceEventMarkers}
