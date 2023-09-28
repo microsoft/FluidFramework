@@ -16,7 +16,10 @@ import * as base64js from "base64-js";
  *
  * @internal
  */
-export function Uint8ArrayToString(arr: Uint8Array, encoding?: string): string {
+export function Uint8ArrayToString(
+	arr: Uint8Array,
+	encoding?: "utf8" | "utf-8" | "base64",
+): string {
 	switch (encoding) {
 		case "base64": {
 			return base64js.fromByteArray(arr);
@@ -52,8 +55,10 @@ export const stringToBuffer = (input: string, encoding: string): ArrayBufferLike
  *
  * @internal
  */
-export const bufferToString = (blob: ArrayBufferLike, encoding: string): string =>
-	IsoBuffer.from(blob).toString(encoding);
+export const bufferToString = (
+	blob: ArrayBufferLike,
+	encoding: "utf8" | "utf-8" | "base64",
+): string => IsoBuffer.from(blob).toString(encoding);
 
 /**
  * Determines if an object is an array buffer.
@@ -95,7 +100,7 @@ export class IsoBuffer extends Uint8Array {
 	 *
 	 * @param encoding - The encoding to use.
 	 */
-	public toString(encoding?: string): string {
+	public toString(encoding?: "utf8" | "utf-8" | "base64"): string {
 		return Uint8ArrayToString(this, encoding);
 	}
 

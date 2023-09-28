@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/stochastic-test-utils",
-	"version": "2.0.0-internal.6.4.0",
+	"version": "2.0.0-internal.7.1.0",
 	"description": "Utilities for stochastic tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -61,7 +61,7 @@
 	"devDependencies": {
 		"@fluid-tools/benchmark": "^0.48.0",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.22.0",
+		"@fluidframework/build-tools": "^0.24.0",
 		"@fluidframework/eslint-config-fluid": "^2.1.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@types/mocha": "^9.1.1",
@@ -78,7 +78,7 @@
 		"prettier": "~2.6.2",
 		"random-js": "^1.0.8",
 		"rimraf": "^4.4.0",
-		"typescript": "~4.5.5"
+		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
 		"disabled": true,
