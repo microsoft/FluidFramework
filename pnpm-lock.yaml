@@ -18181,15 +18181,6 @@ packages:
       '@fluidframework/protocol-definitions': 3.0.0
       events: 3.3.0
 
-  /@fluidframework/protocol-base/2.0.0-181438:
-    resolution: {integrity: sha512-NuXp267Zqa0rnOPH/BwO+I6lPWeqAbnay92OthQmK0pQTcLR2r7huTsY1w+5zFXNmm4fkLmxzENd2PE92Sqs9w==}
-    dependencies:
-      '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/gitresources': 2.0.0-181438
-      '@fluidframework/protocol-definitions': 1.2.0
-      events: 3.3.0
-    dev: false
-
   /@fluidframework/protocol-definitions/1.2.0:
     resolution: {integrity: sha512-2/GoupA8mjHD8gcjyn4SedqJStKlQAZxga5PtDBoh+xHsuugQRhsAHJCX+8tdqbSK4ZOo9z8iq/vWKVLUi5Dzw==}
     dependencies:
