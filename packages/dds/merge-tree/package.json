@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/merge-tree",
-	"version": "2.0.0-internal.6.4.0",
+	"version": "2.0.0-internal.7.1.0",
 	"description": "Merge tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -70,7 +70,7 @@
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
-		"@fluidframework/protocol-definitions": "^1.1.0",
+		"@fluidframework/protocol-definitions": "^3.0.0",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
@@ -80,14 +80,14 @@
 		"@fluid-internal/stochastic-test-utils": "workspace:~",
 		"@fluid-internal/test-pairwise-generator": "workspace:~",
 		"@fluid-tools/benchmark": "^0.48.0",
-		"@fluid-tools/build-cli": "^0.22.0",
+		"@fluid-tools/build-cli": "^0.24.0",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.22.0",
+		"@fluidframework/build-tools": "^0.24.0",
 		"@fluidframework/eslint-config-fluid": "^2.1.0",
-		"@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@2.0.0-internal.6.3.0",
+		"@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@2.0.0-internal.7.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
-		"@microsoft/api-extractor": "^7.34.4",
+		"@microsoft/api-extractor": "^7.37.0",
 		"@types/diff": "^3.5.1",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^16.18.38",
@@ -102,7 +102,7 @@
 		"moment": "^2.21.0",
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",
-		"typescript": "~4.5.5"
+		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
 		"broken": {}

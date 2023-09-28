@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-binder",
-	"version": "2.0.0-internal.6.4.0",
+	"version": "2.0.0-internal.7.1.0",
 	"description": "Data Binder for Fluid PropertyDDS",
 	"keywords": [],
 	"homepage": "https://fluidframework.com",
@@ -79,7 +79,7 @@
 		"@babel/plugin-transform-runtime": "^7.2.0",
 		"@babel/preset-env": "^7.2.0",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.22.0",
+		"@fluidframework/build-tools": "^0.24.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@types/jest": "29.5.3",
@@ -107,7 +107,7 @@
 		"rimraf": "^4.4.0",
 		"source-map-loader": "^2.0.0",
 		"typedoc": "^0.12.0",
-		"typescript": "~4.5.5",
+		"typescript": "~5.1.6",
 		"webpack": "^5.82.0"
 	},
 	"fluidBuild": {
