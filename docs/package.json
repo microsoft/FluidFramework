@@ -39,7 +39,7 @@
 		"start": "hugo server"
 	},
 	"dependencies": {
-		"@fluid-tools/api-markdown-documenter": "^0.7.1",
+		"@fluid-tools/api-markdown-documenter": "^0.8.3",
 		"@fluid-tools/markdown-magic": "file:../tools/markdown-magic",
 		"@fluidframework/build-common": "^2.0.0",
 		"@microsoft/api-extractor-model": "^7.27.3",
