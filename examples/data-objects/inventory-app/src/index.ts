@@ -6,15 +6,14 @@
 import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
 import React from "react";
 
-import { InventoryListTrio, InventoryListTrioFactory } from "./inventoryList";
-
+import { InventoryListTrio, InventoryListTrioFactory } from "./inventoryListTrio";
 import { MainView } from "./view";
 
 export const fluidExport = new ContainerViewRuntimeFactory(
 	InventoryListTrioFactory,
 	(model: InventoryListTrio) =>
 		React.createElement(MainView, {
-			legacySharedTree: model.legacySharedTree,
+			legacySharedTreeInventoryList: model.legacySharedTreeInventoryList,
 			sharedTreeInventoryList: model.sharedTreeInventoryList,
 			sharedTreeForHook: model.sharedTreeForHook,
 		}),
