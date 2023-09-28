@@ -624,7 +624,9 @@ export function configureWebSocketServices(
 				// eslint-disable-next-line @typescript-eslint/no-misused-promises
 				async (broadcastSignal: IBroadcastSignalEventPayload) => {
 					try {
-						const { signalRoom, signalContent } = broadcastSignal;
+						const signalRoom = broadcastSignal.signalRoom;
+						const signalContent =
+							broadcastSignal.signalContent as IRuntimeSignalEnvelope;
 
 						// No-op if the room (collab session) that signal came in from is different
 						// than the current room. We reuse websockets so there could be multiple rooms
