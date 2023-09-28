@@ -207,7 +207,6 @@ export {
 	UnwrappedUntypedTree,
 	UntypedTreeOrPrimitive,
 	SchemaBuilder,
-	FieldKindTypes,
 	AllowedTypes,
 	TreeSchema,
 	BrandedFieldKind,

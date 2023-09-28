@@ -19,11 +19,11 @@ import {
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import { IConfigProviderBase } from "@fluidframework/telemetry-utils";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider";
 import { mockConfigProvider } from "./TestConfigs";
 import { waitForContainerConnection } from "./containerUtils";
 import { timeoutAwait } from "./timeoutUtils";
+import { createContainerRuntimeFactoryWithDefaultDataStore } from "./testContainerRuntimeFactoryWithDefaultDataStore";
 
 const summarizerClientType = "summarizer";
 
@@ -52,11 +52,8 @@ async function createSummarizerCore(
 	const summarizerContainer = await loader.resolve(request);
 	await waitForContainerConnection(summarizerContainer);
 
-	const fluidObject: FluidObject<ISummarizer> | undefined = summarizerContainer.getEntryPoint
-		? await summarizerContainer.getEntryPoint?.()
-		: await requestFluidObject<FluidObject<ISummarizer>>(summarizerContainer, {
-				url: "_summarizer",
-		  });
+	const fluidObject: FluidObject<ISummarizer> | undefined =
+		await summarizerContainer.getEntryPoint();
 	if (fluidObject?.ISummarizer === undefined) {
 		throw new Error("Fluid object does not implement ISummarizer");
 	}
@@ -93,12 +90,16 @@ export async function createSummarizerFromFactory(
 ): Promise<{ container: IContainer; summarizer: ISummarizer }> {
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
-	const runtimeFactory = new containerRuntimeFactoryType(
-		dataStoreFactory,
-		registryEntries ?? [[dataStoreFactory.type, Promise.resolve(dataStoreFactory)]],
-		undefined,
-		[innerRequestHandler],
-		{ summaryOptions: defaultSummaryOptions },
+	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
+		containerRuntimeFactoryType,
+		{
+			defaultFactory: dataStoreFactory,
+			registryEntries: registryEntries ?? [
+				[dataStoreFactory.type, Promise.resolve(dataStoreFactory)],
+			],
+			requestHandlers: [innerRequestHandler],
+			runtimeOptions: { summaryOptions: defaultSummaryOptions },
+		},
 	);
 
 	const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]], {

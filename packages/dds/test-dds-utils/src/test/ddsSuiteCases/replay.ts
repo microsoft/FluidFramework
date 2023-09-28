@@ -24,7 +24,7 @@ const model: DDSFuzzModel<SharedNothingFactory, Operation> = {
 	generatorFactory: () => generatorUnreachable,
 	reducer: async (state, op) => {
 		assert.deepEqual(op, expectedOps[currentIndex]);
-		assert.equal(state.channel.id, expectedOps[currentIndex].clientId);
+		assert.equal(state.client.channel.id, expectedOps[currentIndex].clientId);
 		// Note: the above checks failing if currentIndex goes out of bounds is part of the
 		// current spec for `replay`: it avoids running other fuzz test seeds/configurations.
 		currentIndex++;

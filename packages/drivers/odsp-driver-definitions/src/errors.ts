@@ -17,11 +17,6 @@ export const OdspErrorTypes = {
 	...DriverErrorTypes,
 
 	/**
-	 * Storage is out of space
-	 */
-	outOfStorageError: "outOfStorageError",
-
-	/**
 	 * Invalid file name (at creation of the file)
 	 */
 	invalidFileNameError: "invalidFileNameError",
@@ -59,6 +54,11 @@ export const OdspErrorTypes = {
 	 * So to preserve integrity of the data, the data becomes readonly.
 	 */
 	serviceReadOnly: "serviceReadOnly",
+
+	/**
+	 * Due to organizational policies, you can't access server resources from the current network location.
+	 */
+	blockedIPAddress: "blockedIPAddress",
 } as const;
 export type OdspErrorTypes = typeof OdspErrorTypes[keyof typeof OdspErrorTypes];
 
@@ -117,6 +117,11 @@ export enum OdspErrorType {
 	 * So to preserve integrity of the data, the data becomes readonly.
 	 */
 	serviceReadOnly = "serviceReadOnly",
+
+	/**
+	 * Due to organizational policies, you can't access server resources from the current network location.
+	 */
+	blockedIPAddress = "blockedIPAddress",
 }
 
 export interface IOdspErrorAugmentations {
