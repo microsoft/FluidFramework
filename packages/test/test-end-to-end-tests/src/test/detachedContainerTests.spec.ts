@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { SharedCell } from "@fluidframework/cell";
 import { Deferred } from "@fluidframework/core-utils";
-import { AttachState, IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { AttachState, IContainer } from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
@@ -817,7 +817,8 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 				if (runtimeMessage === false) {
 					return;
 				}
-				const envelope = message.contents.contents.content;
+
+				const envelope = (message.contents as any).contents.content;
 				assert.strictEqual(
 					envelope.address,
 					sparseMatrixId,
@@ -903,24 +904,6 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 
 		await containerP;
 		await defPromise.promise;
-	});
-
-	// TODO: remove this test when caching is removed (AB#5046)
-	it("Load attached container from cache and check if they are same", async () => {
-		loader.services.options.cache = true;
-		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-
-		// Now attach the container and get the sub dataStore.
-		await container.attach(request);
-
-		// Create a new request url from the resolvedUrl of the first container.
-		assert(container.resolvedUrl);
-		const requestUrl2 = await provider.urlResolver.getAbsoluteUrl(container.resolvedUrl, "");
-		const container2 = await loader.resolve({
-			url: requestUrl2,
-			headers: { [LoaderHeader.cache]: true },
-		});
-		assert.strictEqual(container, container2, "Both containers should be same");
 	});
 });
 

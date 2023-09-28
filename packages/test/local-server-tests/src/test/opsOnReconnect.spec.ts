@@ -64,16 +64,15 @@ describe("Ops on Reconnect", () => {
 		const dataObject2Factory = createDataStoreFactory("dataObject2", factory);
 		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 			runtime.IFluidHandleContext.resolveHandle(request);
-		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
+		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory,
-			[
+			registryEntries: [
 				[defaultFactory.type, Promise.resolve(defaultFactory)],
 				[dataObject2Factory.type, Promise.resolve(dataObject2Factory)],
 			],
-			undefined,
-			[innerRequestHandler],
+			requestHandlers: [innerRequestHandler],
 			runtimeOptions,
-		);
+		});
 
 		const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);
 

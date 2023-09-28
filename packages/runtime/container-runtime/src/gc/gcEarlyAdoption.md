@@ -78,7 +78,7 @@ For this to work, you must disable the `Fluid.GarbageCollection.ThrowOnTombstone
 
 When a Tombstoned object (via `handle.get()`) fails to load, the 404 response error object has an `underlyingResponseHeaders` with the
 `isTombstoned` flag set to true: i.e. `error.underlyingResponseHeaders?.isTombstoned === true`. In this case,
-you may turn around and use `IContainerRuntime.resolveHandle` with `allowTombstone: true` in `IRequest.headers` to request
+you may turn around and use `IContainerRuntimeWithResolveHandle_Deprecated.resolveHandle` with `allowTombstone: true` in `IRequest.headers` to request
 the object again - this time it will succeed.
 
 To be very clear once again - This path uses deprecated APIs (`resolveHandle`) and comes with no guarantees of support.
