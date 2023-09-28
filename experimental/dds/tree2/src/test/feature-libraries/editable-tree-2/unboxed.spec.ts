@@ -17,6 +17,7 @@ import {
 } from "../../../core";
 import {
 	AllowedTypes,
+	Any,
 	FieldKind,
 	FieldKinds,
 	FieldSchema,
@@ -27,7 +28,8 @@ import {
 	TypedSchemaCollection,
 } from "../../../feature-libraries";
 import { Context } from "../../../feature-libraries/editable-tree-2/context";
-import { unboxedField } from "../../../feature-libraries/editable-tree-2/unboxed";
+import { unboxedField, unboxedTree } from "../../../feature-libraries/editable-tree-2/unboxed";
+import { brand } from "../../../util";
 import { contextWithContentReadonly } from "./utils";
 
 const rootFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: rootFieldKey };
@@ -223,15 +225,85 @@ describe.only("unboxed unit tests", () => {
 
 		describe("Map", () => {
 			it("Empty", () => {
-				// TODO
+				const builder = new SchemaBuilder("test");
+				const mapSchema = builder.map("map", SchemaBuilder.fieldOptional(Any));
+				const rootSchema = SchemaBuilder.fieldOptional(mapSchema);
+				const schema = builder.intoDocumentSchema(rootSchema);
+
+				const { context, cursor } = initializeTreeWithContent(schema, {});
+				cursor.enterField(brand("map"));
+
+				const result = unboxedTree(context, mapSchema, cursor);
+				assert.equal(result.size, 0);
 			});
 
 			it("Single type", () => {
-				// TODO
+				const builder = new SchemaBuilder("test");
+				const stringLeafSchema = builder.leaf("string", ValueSchema.String);
+				const mapSchema = builder.map("map", SchemaBuilder.fieldOptional(stringLeafSchema));
+				const rootSchema = SchemaBuilder.fieldOptional(mapSchema);
+				const schema = builder.intoDocumentSchema(rootSchema);
+
+				const { context, cursor } = initializeTreeWithContent(schema, {
+					foo: "Hello",
+					bar: "world",
+				});
+				cursor.enterField(brand("map"));
+
+				const result = unboxedTree(context, mapSchema, cursor);
+				assert.equal(result.size, 2);
+				assert.equal(result.get(brand("foo")), "Hello");
+				assert.equal(result.get(brand("bar")), "world");
 			});
 
 			it("Multi-type", () => {
-				// TODO
+				const builder = new SchemaBuilder("test");
+				const stringLeafSchema = builder.leaf("string", ValueSchema.String);
+				const booleanLeafSchema = builder.leaf("boolean", ValueSchema.Boolean);
+				const mapSchema = builder.map(
+					"map",
+					SchemaBuilder.fieldOptional(stringLeafSchema, booleanLeafSchema),
+				);
+				const rootSchema = SchemaBuilder.fieldOptional(mapSchema);
+				const schema = builder.intoDocumentSchema(rootSchema);
+
+				const { context, cursor } = initializeTreeWithContent(schema, {
+					foo: "Hello world",
+					bar: true,
+				});
+				cursor.enterField(brand("map"));
+
+				const result = unboxedTree(context, mapSchema, cursor);
+				assert.equal(result.size, 2);
+				assert.equal(result.get(brand("foo")), "Hello world");
+				assert.equal(result.get(brand("bar")), true);
+			});
+
+			it("Recursive", () => {
+				const builder = new SchemaBuilder("test");
+				const stringLeafSchema = builder.leaf("string", ValueSchema.String);
+				const booleanLeafSchema = builder.leaf("boolean", ValueSchema.Boolean);
+				const mapSchema = builder.mapRecursive(
+					"map",
+					SchemaBuilder.fieldRecursive(FieldKinds.optional, [
+						stringLeafSchema,
+						booleanLeafSchema,
+						() => mapSchema,
+					]),
+				);
+				const rootSchema = SchemaBuilder.fieldOptional(mapSchema);
+				const schema = builder.intoDocumentSchema(rootSchema);
+
+				const { context, cursor } = initializeTreeWithContent(schema, {
+					foo: "Hello world",
+					bar: true,
+				});
+				cursor.enterField(brand("map"));
+
+				const result = unboxedTree(context, mapSchema, cursor);
+				assert.equal(result.size, 2);
+				assert.equal(result.get(brand("foo")), "Hello world");
+				assert.equal(result.get(brand("bar")), true);
 			});
 		});
 
@@ -239,10 +311,16 @@ describe.only("unboxed unit tests", () => {
 			it("Empty", () => {
 				// TODO
 			});
+
 			it("Single Element", () => {
 				// TODO
 			});
+
 			it("Multiple Elements", () => {
+				// TODO
+			});
+
+			it("Recursive", () => {
 				// TODO
 			});
 		});
