@@ -8,16 +8,17 @@ import { ISharedTree } from "@fluid-experimental/tree2";
 import { HookView } from "./hookView";
 import { LegacySharedTreeView } from "./legacySharedTreeView";
 import { SharedTreeView } from "./sharedTreeView";
+import { IInventoryList } from "../inventoryList";
 
 interface IMainViewProps {
 	legacySharedTree: ISharedTree;
-	sharedTree: ISharedTree;
+	sharedTreeInventoryList: IInventoryList;
 	sharedTreeForHook: ISharedTree;
 }
 
 export const MainView: React.FC<IMainViewProps> = ({
 	legacySharedTree,
-	sharedTree,
+	sharedTreeInventoryList,
 	sharedTreeForHook,
 }) => {
 	return (
@@ -25,7 +26,7 @@ export const MainView: React.FC<IMainViewProps> = ({
 			<h1>Using legacy SharedTree:</h1>
 			<LegacySharedTreeView tree={legacySharedTree} />
 			<h1>Using SharedTree:</h1>
-			<SharedTreeView tree={sharedTree} />
+			<SharedTreeView inventoryList={sharedTreeInventoryList} />
 			<h1>Using SharedTree with useTree hook:</h1>
 			<HookView tree={sharedTreeForHook} />
 		</div>

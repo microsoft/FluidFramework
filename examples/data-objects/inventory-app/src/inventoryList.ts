@@ -4,16 +4,82 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { ISharedTree, SharedTreeFactory } from "@fluid-experimental/tree2";
+import { AllowedUpdateType, ISharedTree, SharedTreeFactory } from "@fluid-experimental/tree2";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { TypedEmitter } from "tiny-typed-emitter";
+
+import { Inventory, schema } from "./schema";
 
 const legacySharedTreeKey = "legacySharedTree";
 const sharedTreeKey = "sharedTree";
 const sharedTreeForHookKey = "sharedTreeForHook";
 
-export class InventoryList extends DataObject {
+const schemaPolicy = {
+	schema,
+	initialTree: {
+		parts: [
+			{
+				name: "nut",
+				quantity: 0,
+			},
+			{
+				name: "bolt",
+				quantity: 0,
+			},
+		],
+	},
+	allowedSchemaModifications: AllowedUpdateType.None,
+};
+
+export interface IPart {
+	name: string;
+	quantity: number;
+	increment: () => void;
+	decrement: () => void;
+}
+
+export interface IInventoryListEvents {
+	inventoryChanged: () => void;
+}
+
+export interface IInventoryList extends TypedEmitter<IInventoryListEvents> {
+	getParts: () => IPart[];
+}
+
+class SharedTreeInventoryList extends TypedEmitter<IInventoryListEvents> implements IInventoryList {
+	private readonly _inventory: Inventory;
+	// Feels bad to give out the whole ISharedTree.  Should I just pass an ISharedTreeView?
+	public constructor(tree: ISharedTree) {
+		super();
+
+		const sharedTreeView = tree.schematize(schemaPolicy);
+		this._inventory = sharedTreeView.context.root[0] as unknown as Inventory;
+		sharedTreeView.events.on("afterBatch", () => {
+			this.emit("inventoryChanged");
+		});
+	}
+
+	public getParts() {
+		const parts: IPart[] = [];
+		for (const part of this._inventory.parts) {
+			parts.push({
+				name: part.name,
+				quantity: part.quantity,
+				increment: () => {
+					part.quantity++;
+				},
+				decrement: () => {
+					part.quantity--;
+				},
+			});
+		}
+		return parts;
+	}
+}
+
+export class InventoryListTrio extends DataObject {
 	private _legacySharedTree: ISharedTree | undefined;
-	private _sharedTree: ISharedTree | undefined;
+	private _sharedTreeInventoryList: IInventoryList | undefined;
 	private _sharedTreeForHook: ISharedTree | undefined;
 
 	public get legacySharedTree(): ISharedTree {
@@ -21,9 +87,12 @@ export class InventoryList extends DataObject {
 		return this._legacySharedTree!;
 	}
 
-	public get sharedTree(): ISharedTree {
+	public get sharedTreeInventoryList() {
+		if (this._sharedTreeInventoryList === undefined) {
+			throw new Error("Not initialized properly");
+		}
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return this._sharedTree!;
+		return this._sharedTreeInventoryList!;
 	}
 
 	public get sharedTreeForHook(): ISharedTree {
@@ -32,45 +101,44 @@ export class InventoryList extends DataObject {
 	}
 
 	protected async initializingFirstTime() {
-		this._legacySharedTree = this.runtime.createChannel(
+		const legacySharedTree = this.runtime.createChannel(
 			undefined,
 			new SharedTreeFactory().type,
 		) as ISharedTree;
 
-		this._sharedTree = this.runtime.createChannel(
+		const sharedTree = this.runtime.createChannel(
 			undefined,
 			new SharedTreeFactory().type,
 		) as ISharedTree;
 
-		this._sharedTreeForHook = this.runtime.createChannel(
+		const sharedTreeForHook = this.runtime.createChannel(
 			undefined,
 			new SharedTreeFactory().type,
 		) as ISharedTree;
 
-		this.root.set(legacySharedTreeKey, this.legacySharedTree.handle);
-		this.root.set(sharedTreeKey, this.sharedTree.handle);
-		this.root.set(sharedTreeForHookKey, this.sharedTreeForHook.handle);
+		this.root.set(legacySharedTreeKey, legacySharedTree.handle);
+		this.root.set(sharedTreeKey, sharedTree.handle);
+		this.root.set(sharedTreeForHookKey, sharedTreeForHook.handle);
 	}
 
-	protected async initializingFromExisting() {
+	protected async hasInitialized() {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		this._legacySharedTree = await this.root
 			.get<IFluidHandle<ISharedTree>>(legacySharedTreeKey)!
 			.get();
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		this._sharedTree = await this.root.get<IFluidHandle<ISharedTree>>(sharedTreeKey)!.get();
+		const sharedTree = await this.root.get<IFluidHandle<ISharedTree>>(sharedTreeKey)!.get();
+		this._sharedTreeInventoryList = new SharedTreeInventoryList(sharedTree);
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		this._sharedTreeForHook = await this.root
 			.get<IFluidHandle<ISharedTree>>(sharedTreeForHookKey)!
 			.get();
 	}
-
-	protected async hasInitialized() {}
 }
 
-export const InventoryListFactory = new DataObjectFactory(
+export const InventoryListTrioFactory = new DataObjectFactory(
 	"@fluid-experimental/inventory-list",
-	InventoryList,
+	InventoryListTrio,
 	[new SharedTreeFactory()],
 	{},
 );

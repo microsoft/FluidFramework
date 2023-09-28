@@ -4,48 +4,29 @@
  */
 
 import * as React from "react";
-import { AllowedUpdateType, ISharedTree, ISharedTreeView } from "@fluid-experimental/tree2";
-import { Inventory, schema } from "../schema";
 import { Counter } from "./counter";
+import { IInventoryList } from "../inventoryList";
 
-const schemaPolicy = {
-	schema,
-	initialTree: {
-		parts: [
-			{
-				name: "nut",
-				quantity: 0,
-			},
-			{
-				name: "bolt",
-				quantity: 0,
-			},
-		],
-	},
-	allowedSchemaModifications: AllowedUpdateType.None,
-};
-
-export const SharedTreeView: React.FC<{ tree: ISharedTree }> = ({ tree }) => {
-	const typedTree = React.useMemo<ISharedTreeView>(() => tree.schematize(schemaPolicy), [tree]);
-	const [invalidations, setInvalidations] = React.useState(0);
+export const SharedTreeView: React.FC<{ inventoryList: IInventoryList }> = ({ inventoryList }) => {
+	const [parts, setParts] = React.useState(inventoryList.getParts());
 	React.useEffect(() => {
-		return typedTree.events.on("afterBatch", () => {
-			setInvalidations(invalidations + 1);
-		});
-	});
-	const root = typedTree.context.root;
+		const updateParts = () => setParts(inventoryList.getParts());
+		inventoryList.on("inventoryChanged", updateParts);
+		return () => {
+			inventoryList.off("inventoryChanged", updateParts);
+		};
+	}, [inventoryList]);
 
-	const inventory: Inventory = root[0] as unknown as Inventory;
 	const counters: JSX.Element[] = [];
 
-	for (const part of inventory.parts) {
+	for (const part of parts) {
 		counters.push(
 			<Counter
 				key={part.name}
 				title={part.name}
 				count={part.quantity}
-				onDecrement={() => part.quantity--}
-				onIncrement={() => part.quantity++}
+				onDecrement={part.decrement}
+				onIncrement={part.increment}
 			></Counter>,
 		);
 	}

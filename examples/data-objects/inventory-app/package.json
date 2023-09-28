@@ -45,7 +45,8 @@
 		"@fluid-experimental/tree2": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
-		"react": "^17.0.1"
+		"react": "^17.0.1",
+		"tiny-typed-emitter": "^2.1.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/webpack-fluid-loader": "workspace:~",
