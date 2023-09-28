@@ -40,20 +40,24 @@ export function create(
 		const documentId = getParam(request.params, "id");
 		// This endpoint simply passes on signalContent as a blackbox so we don't
 		// do any validation on it here
-		let signalContent = getParam(request.body, "signalContent");
 		try {
-			signalContent = JSON.parse(signalContent) as IRuntimeSignalEnvelope;
+			const signalContent = JSON.parse(
+				getParam(request.body, "signalContent"),
+			) as IRuntimeSignalEnvelope;
+			try {
+				const signalRoom: IRoom = { tenantId, documentId };
+				const payload: IBroadcastSignalEventPayload = { signalRoom, signalContent };
+				collaborationSessionEventEmitter.emit("broadcastSignal", payload);
+				response.status(200).send("OK");
+			} catch (error) {
+				response.status(500).send(error);
+			}
 		} catch (error) {
-			response.status(400).send(`signalContent should contain 'content' and 'type' keys. Error: ${error}`);
-		}
-		
-		try {
-			const signalRoom: IRoom = { tenantId, documentId };
-			const payload: IBroadcastSignalEventPayload = { signalRoom, signalContent };
-			collaborationSessionEventEmitter?.emit("broadcastSignal", payload);
-			response.status(200).send("OK");
-		} catch (error) {
-			response.status(500).send(error);
+			response
+				.status(400)
+				.send(
+					`signalContent should contain 'content' and 'type' keys. Error: ${error}`,
+				);
 		}
 	});
 

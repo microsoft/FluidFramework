@@ -8,6 +8,7 @@ export {
 	IBroadcastSignalEventPayload,
 	ICollaborationSessionEvents,
 	IRoom,
+	IRuntimeSignalEnvelope,
 } from "./alfred";
 export { BroadcasterLambda, BroadcasterLambdaFactory } from "./broadcaster";
 export { CopierLambda, CopierLambdaFactory } from "./copier";

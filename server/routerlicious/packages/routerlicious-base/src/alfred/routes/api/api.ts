@@ -10,6 +10,7 @@ import {
 	IBroadcastSignalEventPayload,
 	ICollaborationSessionEvents,
 	IRoom,
+	IRuntimeSignalEnvelope,
 } from "@fluidframework/server-lambdas";
 import { BasicRestWrapper } from "@fluidframework/server-services-client";
 import * as core from "@fluidframework/server-services-core";
@@ -144,14 +145,24 @@ export function create(
 		async (request, response) => {
 			const tenantId = getParam(request.params, "tenantId");
 			const documentId = getParam(request.params, "id");
-			const signalContent = getParam(request.body, "singalContent");
 			try {
-				const signalRoom: IRoom = { tenantId, documentId };
-				const payload: IBroadcastSignalEventPayload = { signalRoom, signalContent };
-				collaborationSessionEventEmitter.emit("broadcastSignal", payload);
-				response.status(200).send("OK");
+				const signalContent = JSON.parse(
+					getParam(request.body, "signalContent"),
+				) as IRuntimeSignalEnvelope;
+				try {
+					const signalRoom: IRoom = { tenantId, documentId };
+					const payload: IBroadcastSignalEventPayload = { signalRoom, signalContent };
+					collaborationSessionEventEmitter.emit("broadcastSignal", payload);
+					response.status(200).send("OK");
+				} catch (error) {
+					response.status(500).send(error);
+				}
 			} catch (error) {
-				response.status(500).send(error);
+				response
+					.status(400)
+					.send(
+						`signalContent should contain 'content' and 'type' keys. Error: ${error}`,
+					);
 			}
 		},
 	);
