@@ -20,6 +20,7 @@ export {
 	StructTyped,
 	TypedNode,
 	TypedNodeUnion,
+	boxedIterator,
 } from "./editableTreeTypes";
 
 export {
