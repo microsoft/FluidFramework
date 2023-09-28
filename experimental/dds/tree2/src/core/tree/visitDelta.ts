@@ -63,7 +63,7 @@ export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor, treeIndex: 
 			for (let i = 0; i < insert.content.length; i += 1) {
 				const root: ForestRootId = brand(firstRoot + i);
 				const field = treeIndex.toFieldKey(root);
-				visitor.create(insert.content.slice(i, i + 1), field);
+				visitor.create([insert.content[i]], field);
 			}
 		}
 		for (const [root, modifications] of rootChanges) {
