@@ -3372,7 +3372,7 @@ export class ContainerRuntime
 					contents: JSON.stringify(idAllocationMessage),
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 					metadata: undefined,
-					localOpMetadata: this.idCompressor?.serialize(true),
+					localOpMetadata: undefined,
 					type: ContainerMessageType.IdAllocation,
 				};
 			}
