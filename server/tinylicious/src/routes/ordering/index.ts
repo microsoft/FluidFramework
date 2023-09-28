@@ -9,6 +9,7 @@ import {
 	IBroadcastSignalEventPayload,
 	ICollaborationSessionEvents,
 	IRoom,
+	IRuntimeSignalEnvelope,
 } from "@fluidframework/server-lambdas";
 import { IDocumentStorage, MongoManager } from "@fluidframework/server-services-core";
 import { Router } from "express";
@@ -39,8 +40,13 @@ export function create(
 		const documentId = getParam(request.params, "id");
 		// This endpoint simply passes on signalContent as a blackbox so we don't
 		// do any validation on it here
-		const signalContent = getParam(request.body, "signalContent");
-
+		let signalContent = getParam(request.body, "signalContent");
+		try {
+			signalContent = JSON.parse(signalContent) as IRuntimeSignalEnvelope;
+		} catch (error) {
+			response.status(400).send(error);
+		}
+		
 		try {
 			const signalRoom: IRoom = { tenantId, documentId };
 			const payload: IBroadcastSignalEventPayload = { signalRoom, signalContent };

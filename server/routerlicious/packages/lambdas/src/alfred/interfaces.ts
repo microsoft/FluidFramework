@@ -56,7 +56,7 @@ export interface IBroadcastSignalEventPayload {
 	/**
 	 * Content of the runtime signal introduced from the broadcast-signal endpoint.
 	 */
-	signalContent: string;
+	signalContent: unknown;
 }
 
 /**

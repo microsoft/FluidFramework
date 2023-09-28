@@ -46,6 +46,7 @@ import {
 	generateClientId,
 	IRuntimeSignalEnvelope,
 } from "../utils";
+export { IRuntimeSignalEnvelope } from "../utils";
 import {
 	IBroadcastSignalEventPayload,
 	ICollaborationSessionEvents,
@@ -622,18 +623,17 @@ export function configureWebSocketServices(
 				"broadcastSignal",
 				// eslint-disable-next-line @typescript-eslint/no-misused-promises
 				async (broadcastSignal: IBroadcastSignalEventPayload) => {
-					const { signalRoom, signalContent } = broadcastSignal;
+					try {
+						const { signalRoom, signalContent } = broadcastSignal;
 
-					// No-op if the room (collab session) that signal came in from is different
-					// than the current room. We reuse websockets so there could be multiple rooms
-					// that we are sending the signal to, and we don't want to do that.
-					if (
-						signalRoom.documentId === room.documentId &&
-						signalRoom.tenantId === room.tenantId
-					) {
-						try {
-							const contents = JSON.parse(signalContent) as IRuntimeSignalEnvelope;
-							const runtimeMessage = createRuntimeMessage(contents);
+						// No-op if the room (collab session) that signal came in from is different
+						// than the current room. We reuse websockets so there could be multiple rooms
+						// that we are sending the signal to, and we don't want to do that.
+						if (
+							signalRoom.documentId === room.documentId &&
+							signalRoom.tenantId === room.tenantId
+						) {
+							const runtimeMessage = createRuntimeMessage(signalContent);
 
 							socket
 								.emitToRoom(getRoomId(signalRoom), "signal", runtimeMessage)
@@ -648,15 +648,15 @@ export function configureWebSocketServices(
 										error,
 									);
 								});
-						} catch (error) {
-							const errorMsg = `broadcast-signal conent body is malformed`;
-							return handleServerError(
-								logger,
-								errorMsg,
-								claims.documentId,
-								claims.tenantId,
-							);
 						}
+					} catch (error) {
+						const errorMsg = `Broadcast-signal failed with: ${error}`;
+						return handleServerError(
+							logger,
+							errorMsg,
+							claims.documentId,
+							claims.tenantId,
+						);
 					}
 				},
 			);
