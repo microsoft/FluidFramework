@@ -44,7 +44,7 @@ export function create(
 		try {
 			signalContent = JSON.parse(signalContent) as IRuntimeSignalEnvelope;
 		} catch (error) {
-			response.status(400).send(error);
+			response.status(400).send(`signalContent should contain 'content' and 'type' keys. Error: ${error}`);
 		}
 		
 		try {
