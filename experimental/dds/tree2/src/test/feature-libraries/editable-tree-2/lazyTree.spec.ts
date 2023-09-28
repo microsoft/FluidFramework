@@ -30,11 +30,8 @@ import {
 	validateStructFieldName,
 	assertAllowedValue,
 } from "../../../feature-libraries";
-// eslint-disable-next-line import/no-internal-modules
-import { Context } from "../../../feature-libraries/editable-tree-2/context";
 import { FieldKey, MapTree, TreeNavigationResult, TreeValue, rootFieldKey } from "../../../core";
 import { forestWithContent } from "../../utils";
-import { TreeContent } from "../../../shared-tree";
 import { RestrictiveReadonlyRecord, brand } from "../../../util";
 import {
 	LazyField,
@@ -47,12 +44,7 @@ import {
 import { visitIterableTree } from "../../../feature-libraries/editable-tree-2";
 import { testTrees, treeContentFromTestTree } from "../../testTrees";
 import { jsonSchema } from "../../../domains";
-import { getReadonlyContext } from "./utils";
-
-function contextWithContentReadonly(content: TreeContent): Context {
-	const forest = forestWithContent(content);
-	return getReadonlyContext(forest, content.schema);
-}
+import { contextWithContentReadonly, getReadonlyContext } from "./utils";
 
 function collectPropertyNames(obj: object): Set<string> {
 	if (obj == null) {
