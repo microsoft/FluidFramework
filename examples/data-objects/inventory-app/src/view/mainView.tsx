@@ -5,10 +5,10 @@
 
 import * as React from "react";
 import { ISharedTree } from "@fluid-experimental/tree2";
+import { IInventoryList } from "../interfaces";
 import { HookView } from "./hookView";
 import { LegacySharedTreeView } from "./legacySharedTreeView";
 import { SharedTreeView } from "./sharedTreeView";
-import { IInventoryList } from "../inventoryList";
 
 interface IMainViewProps {
 	legacySharedTree: ISharedTree;

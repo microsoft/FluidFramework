@@ -4,8 +4,8 @@
  */
 
 import * as React from "react";
+import { IInventoryList } from "../interfaces";
 import { Counter } from "./counter";
-import { IInventoryList } from "../inventoryList";
 
 export const SharedTreeView: React.FC<{ inventoryList: IInventoryList }> = ({ inventoryList }) => {
 	const [parts, setParts] = React.useState(inventoryList.getParts());
