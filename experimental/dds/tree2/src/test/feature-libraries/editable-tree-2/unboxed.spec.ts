@@ -213,20 +213,38 @@ describe.only("unboxed unit tests", () => {
 
 	describe("unboxedTree", () => {
 		describe("Struct", () => {
-			// Simple
-			// Recursive
+			it("Simple", () => {
+				// TODO
+			});
+			it("Recursive", () => {
+				// TODO
+			});
 		});
 
 		describe("Map", () => {
-			// Empty
-			// Single type
-			// Multi-type
+			it("Empty", () => {
+				// TODO
+			});
+
+			it("Single type", () => {
+				// TODO
+			});
+
+			it("Multi-type", () => {
+				// TODO
+			});
 		});
 
 		describe("List", () => {
-			// Empty
-			// Single
-			// Multi
+			it("Empty", () => {
+				// TODO
+			});
+			it("Single Element", () => {
+				// TODO
+			});
+			it("Multiple Elements", () => {
+				// TODO
+			});
 		});
 	});
 	describe("unboxedUnion", () => {
