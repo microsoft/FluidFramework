@@ -17,6 +17,7 @@ import {
 	canDeleteDoc,
 	TokenRevokeScopeType,
 	DocDeleteScopeType,
+	getGlobalTimeoutContext,
 } from "@fluidframework/server-services-client";
 import type {
 	ICache,
@@ -291,6 +292,8 @@ export function verifyStorageToken(
 				tenantManager,
 				moreOptions,
 			);
+			// Riddler is known to take too long sometimes. Check timeout before continuing.
+			getGlobalTimeoutContext().checkTimeout();
 			return getGlobalTelemetryContext().bindPropertiesAsync(
 				{ tenantId, documentId },
 				async () => next(),

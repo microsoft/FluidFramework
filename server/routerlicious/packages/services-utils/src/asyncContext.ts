@@ -9,8 +9,7 @@ import {
 	ITelemetryContext,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
-import { NetworkError } from "@fluidframework/server-services-client";
-import { ITimeoutContext, ITimeoutContextProperties } from "./timeoutContext";
+import { NetworkError, ITimeoutContext } from "@fluidframework/server-services-client";
 
 export class AsyncLocalStorageContextProvider<T> {
 	private readonly asyncLocalStorage = new AsyncLocalStorage<T>();
@@ -69,6 +68,16 @@ export class AsyncLocalStorageTelemetryContext implements ITelemetryContext {
 	}
 }
 
+interface ITimeoutContextProperties {
+	/**
+	 * When the action started in milliseconds since epoch.
+	 */
+	startTime: number;
+	/**
+	 * How long the given action is allowed to take before timing out, in milliseconds.
+	 */
+	maxDurationMs: number;
+}
 /**
  * AsyncLocalStorage based TimeoutContext implementation.
  * Callbacks are executed within an AsyncContext containing timeout info.

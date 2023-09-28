@@ -13,12 +13,7 @@ export {
 	bindTelemetryContext,
 	getTelemetryContextPropertiesWithHttpInfo,
 } from "./telemetryContext";
-export {
-	ITimeoutContext,
-	bindTimeoutContext,
-	getGlobalTimeoutContext,
-	setGlobalTimeoutContext,
-} from "./timeoutContext";
+export { bindTimeoutContext } from "./timeoutContext";
 export {
 	generateToken,
 	generateUser,
