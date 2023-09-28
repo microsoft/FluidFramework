@@ -11,7 +11,7 @@ interface IDiceRollerViewProps {
     model: IDiceRoller;
 }
 
-export const DiceRollerView: React.FC<IDiceRollerViewProps> = (props: IDiceRollerViewProps) => {
+export const DiceRollerView = (props: IDiceRollerViewProps) => {
     const [diceValue, setDiceValue] = React.useState(props.model.value);
 
     React.useEffect(() => {
@@ -28,7 +28,7 @@ export const DiceRollerView: React.FC<IDiceRollerViewProps> = (props: IDiceRolle
     }, [props.model]);
 
     // Unicode 0x2680-0x2685 are the sides of a dice (⚀⚁⚂⚃⚄⚅)
-    const diceChar = String.fromCodePoint(0x267F + diceValue);
+    const diceChar = String.fromCodePoint(0x267f + diceValue);
 
     return (
         <div>

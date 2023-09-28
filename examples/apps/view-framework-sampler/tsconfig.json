@@ -8,6 +8,7 @@
         "module": "esnext",
         "outDir": "dist",
         "jsx": "react",
+        "skipLibCheck": true,
         "types": [
             "jest",
             "puppeteer",
