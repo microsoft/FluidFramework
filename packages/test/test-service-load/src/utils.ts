@@ -297,7 +297,7 @@ export async function safeExit(code: number, url: string, runId?: number) {
 }
 
 /**
- *  Global feature gates for all tests. They can be overwritten by individual test configs.
+ * Global feature gates for all tests. They can be overwritten by individual test configs.
  */
 export const globalConfigurations: Record<string, ConfigTypes> = {
 	"Fluid.SharedObject.DdsCallbacksTelemetrySampling": 10000,
