@@ -83,12 +83,12 @@ const ExternalDataDebugView: React.FC<IExternalDataDebugViewProps> = (
 		pollForServiceUpdates(externalData, setExternalData).catch(console.error);
 
 		// HACK: Poll every 3 seconds
-		const timer = setInterval(() => {
-			pollForServiceUpdates(externalData, setExternalData).catch(console.error);
-		}, 3000);
+		// const timer = setInterval(() => {
+		// 	pollForServiceUpdates(externalData, setExternalData).catch(console.error);
+		// }, 3000);
 
 		return (): void => {
-			clearInterval(timer);
+			// clearInterval(timer);
 		};
 	}, [externalData, setExternalData]);
 	const parsedExternalData = isEqual(externalData, {})
