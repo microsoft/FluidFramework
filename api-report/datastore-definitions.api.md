@@ -105,7 +105,7 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     ensureNoDataModelChanges<T>(callback: () => T): T;
-    readonly entryPoint?: IFluidHandle<FluidObject>;
+    readonly entryPoint: IFluidHandle<FluidObject>;
     getAudience(): IAudience;
     getChannel(id: string): Promise<IChannel>;
     getQuorum(): IQuorumClients;

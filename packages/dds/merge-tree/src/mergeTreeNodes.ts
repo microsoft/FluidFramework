@@ -132,6 +132,16 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
 	readonly type: string;
 	readonly segmentGroups: SegmentGroupCollection;
 	readonly trackingCollection: TrackingGroupCollection;
+	/**
+	 * Whether or not this segment is a special segment denoting the start or
+	 * end of the tree
+	 *
+	 * Endpoint segments are imaginary segments positioned immediately before or
+	 * after the tree. These segments cannot be referenced by regular operations
+	 * and exist primarily as a bucket for local references to slide onto during
+	 * deletion of regular segments.
+	 */
+	readonly endpointType?: "start" | "end";
 
 	/**
 	 * The length of the contents of the node.
@@ -147,10 +157,11 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
 	 *
 	 * @alpha
 	 *
-	 * @remarks - There are plans to make the shape of the data stored extensible in a couple ways:
+	 * @remarks There are plans to make the shape of the data stored extensible in a couple ways:
 	 *
 	 * 1. Injection of custom attribution information associated with the segment (ex: copy-paste of
 	 * content but keeping the old attribution information).
+	 *
 	 * 2. Storage of multiple "channels" of information (ex: track property changes separately from insertion,
 	 * or only attribute certain property modifications, etc.)
 	 */
@@ -207,7 +218,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
 	 *
 	 * @param segmentGroup - Pending segment group associated with this op.
 	 * @param opArgs - Information about the op that was acked
-	 * @returns - true if the op modifies the segment, otherwise false.
+	 * @returns `true` if the op modifies the segment, otherwise `false`.
 	 * The only current false case is overlapping remove, where a segment is removed
 	 * by a previously sequenced operation before the current operation is acked.
 	 * @throws - error if the segment state doesn't match segment group or op.
@@ -342,7 +353,7 @@ export class MergeNode implements IMergeNodeCommon {
 	ordinal: string = "";
 	cachedLength: number = 0;
 
-	isLeaf() {
+	isLeaf(): this is ISegment {
 		return false;
 	}
 }

@@ -6,6 +6,7 @@ import { FluidObject } from "@fluidframework/core-interfaces";
 import { IContainer } from "@fluidframework/container-definitions";
 
 /**
+ * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
  * Helper function for getting the default Fluid Object from a Container. This function only works for
  * Containers that support "/" request.
  *
@@ -31,6 +32,7 @@ export async function getDefaultObjectFromContainer<T = FluidObject>(
 }
 
 /**
+ * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
  * Helper function for getting as Fluid Object from a Container given a Unique Id. This function only works for
  * Containers that support getting FluidObjects via request.
  *
@@ -58,6 +60,7 @@ export async function getObjectWithIdFromContainer<T = FluidObject>(
 }
 
 /**
+ * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
  * Helper function for getting a Fluid Object from a Container given a path/url. This function only works for
  * Containers that support getting FluidObjects via request.
  *

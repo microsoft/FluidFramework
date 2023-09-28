@@ -18,10 +18,6 @@ import { DetachedReferencePosition } from "./referencePositions";
 import { MergeTree, findRootMergeBlock } from "./mergeTree";
 
 /**
- * Revertibles are new and require the option
- * mergeTreeUseNewLengthCalculations to be set as true on the underlying merge tree
- * in order to function correctly.
- *
  * @alpha
  */
 export type MergeTreeDeltaRevertible =
@@ -64,10 +60,6 @@ interface RemoveSegmentRefProperties {
 }
 
 /**
- * Revertibles are new and require the option
- * mergeTreeUseNewLengthCalculations to be set as true on the underlying merge tree
- * in order to function correctly.
- *
  * @alpha
  */
 export interface MergeTreeRevertibleDriver {
@@ -198,9 +190,6 @@ function appendLocalAnnotateToRevertibles(
 }
 
 /**
- * Revertibles are new and require the option
- * mergeTreeUseNewLengthCalculations to be set as true on the underlying merge tree
- * in order to function correctly.
  * @alpha
  */
 export function appendToMergeTreeDeltaRevertibles(
@@ -224,14 +213,13 @@ export function appendToMergeTreeDeltaRevertibles(
 			break;
 
 		default:
-			throw new UsageError(`Unsupported event delta type: ${deltaArgs.operation}`);
+			throw new UsageError("Unsupported event delta type", {
+				operation: deltaArgs.operation,
+			});
 	}
 }
 
 /**
- * Revertibles are new and require the option
- * mergeTreeUseNewLengthCalculations to be set as true on the underlying merge tree
- * in order to function correctly.
  * @alpha
  */
 export function discardMergeTreeDeltaRevertible(revertibles: MergeTreeDeltaRevertible[]) {
@@ -394,9 +382,6 @@ function getPosition(mergeTreeWithRevert: MergeTreeWithRevert, segment: ISegment
 }
 
 /**
- * Revertibles are new and require the option
- * mergeTreeUseNewLengthCalculations to be set as true on the underlying merge tree
- * in order to function correctly.
  * @alpha
  */
 export function revertMergeTreeDeltaRevertibles(

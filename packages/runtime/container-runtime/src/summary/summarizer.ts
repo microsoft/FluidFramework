@@ -15,6 +15,7 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { ILoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { DriverHeader } from "@fluidframework/driver-definitions";
+// eslint-disable-next-line import/no-deprecated
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { FluidObject, IFluidHandleContext, IRequest } from "@fluidframework/core-interfaces";
 import { ISummaryConfiguration } from "../containerRuntime";
@@ -125,7 +126,8 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 		const resolvedContainer = await loader.resolve(request);
 		const fluidObject: FluidObject<ISummarizer> | undefined = resolvedContainer.getEntryPoint
 			? await resolvedContainer.getEntryPoint?.()
-			: await requestFluidObject<FluidObject<ISummarizer>>(resolvedContainer, {
+			: // eslint-disable-next-line import/no-deprecated
+			  await requestFluidObject<FluidObject<ISummarizer>>(resolvedContainer, {
 					url: "_summarizer",
 			  });
 		if (fluidObject?.ISummarizer === undefined) {
@@ -216,7 +218,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 	 * Should we try to run a last summary for the given stop reason?
 	 * Currently only allows "parentNotConnected"
 	 * @param stopReason - SummarizerStopReason
-	 * @returns - true if the stop reason can run a last summary
+	 * @returns `true` if the stop reason can run a last summary, otherwise `false`.
 	 */
 	public static stopReasonCanRunLastSummary(stopReason: SummarizerStopReason): boolean {
 		return stopReason === "parentNotConnected";
@@ -231,7 +233,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 	 * @param onBehalfOf - ID of the client that requested that the summarizer start
 	 * @param runCoordinator - cancellation token
 	 * @param newConfig - Summary configuration to override the existing config when invoking the RunningSummarizer.
-	 * @returns - Promise that is fulfilled when the RunningSummarizer is ready
+	 * @returns A promise that is fulfilled when the RunningSummarizer is ready.
 	 */
 	private async start(
 		onBehalfOf: string,

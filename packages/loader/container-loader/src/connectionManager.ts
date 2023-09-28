@@ -16,6 +16,8 @@ import {
 	IDocumentService,
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
+	// eslint-disable-next-line import/no-deprecated
+	DriverErrorType,
 } from "@fluidframework/driver-definitions";
 import {
 	canRetryOnError,
@@ -45,6 +47,7 @@ import {
 import {
 	formatTick,
 	GenericError,
+	isFluidError,
 	ITelemetryLoggerExt,
 	normalizeError,
 	UsageError,
@@ -112,7 +115,15 @@ class NoDeltaStream
 		blockSize: 0,
 	};
 	checkpointSequenceNumber?: number | undefined = undefined;
-	constructor(public readonly storageOnlyReason?: string) {
+	/**
+	 * Connection which is not connected to socket.
+	 * @param storageOnlyReason - Reason on why the connection to delta stream is not allowed.
+	 * @param readonlyConnectionReason - reason/error if any which lead to using NoDeltaStream.
+	 */
+	constructor(
+		public readonly storageOnlyReason?: string,
+		public readonly readonlyConnectionReason?: IConnectionStateChangeReason,
+	) {
 		super();
 	}
 	submit(messages: IDocumentMessage[]): void {
@@ -409,7 +420,7 @@ export class ConnectionManager implements IConnectionManager {
 			// Notify everyone we are in read-only state.
 			// Useful for data stores in case we hit some critical error,
 			// to switch to a mode where user edits are not accepted
-			this.set_readonlyPermissions(true, oldReadonlyValue);
+			this.set_readonlyPermissions(true, oldReadonlyValue, disconnectReason);
 		}
 	}
 
@@ -432,21 +443,7 @@ export class ConnectionManager implements IConnectionManager {
 	}
 
 	/**
-	 * Sends signal to runtime (and data stores) to be read-only.
-	 * Hosts may have read only views, indicating to data stores that no edits are allowed.
-	 * This is independent from this._readonlyPermissions (permissions) and this.connectionMode
-	 * (server can return "write" mode even when asked for "read")
-	 * Leveraging same "readonly" event as runtime & data stores should behave the same in such case
-	 * as in read-only permissions.
-	 * But this.active can be used by some DDSes to figure out if ops can be sent
-	 * (for example, read-only view still participates in code proposals / upgrades decisions)
-	 *
-	 * Forcing Readonly does not prevent DDS from generating ops. It is up to user code to honour
-	 * the readonly flag. If ops are generated, they will accumulate locally and not be sent. If
-	 * there are pending in the outbound queue, it will stop sending until force readonly is
-	 * cleared.
-	 *
-	 * @param readonly - set or clear force readonly.
+	 * {@inheritDoc Container.forceReadonly}
 	 */
 	public forceReadonly(readonly: boolean) {
 		if (readonly !== this._forceReadonly) {
@@ -487,10 +484,11 @@ export class ConnectionManager implements IConnectionManager {
 	private set_readonlyPermissions(
 		newReadonlyValue: boolean,
 		oldReadonlyValue: boolean | undefined,
+		readonlyConnectionReason?: IConnectionStateChangeReason,
 	) {
 		this._readonlyPermissions = newReadonlyValue;
 		if (oldReadonlyValue !== this.readonly) {
-			this.props.readonlyChangeHandler(this.readonly);
+			this.props.readonlyChangeHandler(this.readonly, readonlyConnectionReason);
 		}
 	}
 
@@ -589,7 +587,23 @@ export class ConnectionManager implements IConnectionManager {
 				}
 			} catch (origError: any) {
 				if (isDeltaStreamConnectionForbiddenError(origError)) {
-					connection = new NoDeltaStream(origError.storageOnlyReason);
+					connection = new NoDeltaStream(origError.storageOnlyReason, {
+						text: origError.message,
+						error: origError,
+					});
+					requestedMode = "read";
+					break;
+				} else if (
+					isFluidError(origError) &&
+					// eslint-disable-next-line import/no-deprecated
+					origError.errorType === DriverErrorType.outOfStorageError
+				) {
+					// If we get out of storage error from calling joinsession, then use the NoDeltaStream object so
+					// that user can at least load the container.
+					connection = new NoDeltaStream(undefined, {
+						text: origError.message,
+						error: origError,
+					});
 					requestedMode = "read";
 					break;
 				}
@@ -805,7 +819,11 @@ export class ConnectionManager implements IConnectionManager {
 			0x0e8 /* "readonly perf with write connection" */,
 		);
 
-		this.set_readonlyPermissions(readonly, oldReadonlyValue);
+		this.set_readonlyPermissions(
+			readonly,
+			oldReadonlyValue,
+			isNoDeltaStreamConnection(connection) ? connection.readonlyConnectionReason : undefined,
+		);
 
 		if (this._disposed) {
 			// Raise proper events, Log telemetry event and close connection.

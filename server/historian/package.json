@@ -31,7 +31,7 @@
 		"test": "pnpm run -r --stream --no-bail --no-sort test",
 		"tsc": "pnpm run -r --stream tsc"
 	},
-	"nyc": {
+	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [],

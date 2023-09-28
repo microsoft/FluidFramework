@@ -36,7 +36,7 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 /**
  * Whether the package is known to be a publicly published package for general use.
  */
-function packageMustPublishToNPM(name: string, config: PackageNamePolicyConfig): boolean {
+export function packageMustPublishToNPM(name: string, config: PackageNamePolicyConfig): boolean {
 	const mustPublish = config.mustPublish.npm;
 
 	if (mustPublish === undefined) {
@@ -60,7 +60,7 @@ function packageMustPublishToNPM(name: string, config: PackageNamePolicyConfig):
  * Note that packages published to NPM will also be published internally, however.
  * This should be a minimal set required for legacy compat of internal partners or internal CI requirements.
  */
-function packageMustPublishToInternalFeedOnly(
+export function packageMustPublishToInternalFeedOnly(
 	name: string,
 	config: PackageNamePolicyConfig,
 ): boolean {
@@ -86,7 +86,10 @@ function packageMustPublishToInternalFeedOnly(
  * Whether the package has the option to publicly publish if it chooses.
  * For example, an experimental package may choose to remain unpublished until it's ready for customers to try it out.
  */
-function packageMayChooseToPublishToNPM(name: string, config: PackageNamePolicyConfig): boolean {
+export function packageMayChooseToPublishToNPM(
+	name: string,
+	config: PackageNamePolicyConfig,
+): boolean {
 	const mayPublish = config.mayPublish.npm;
 
 	if (mayPublish === undefined) {
@@ -108,7 +111,7 @@ function packageMayChooseToPublishToNPM(name: string, config: PackageNamePolicyC
 /**
  * Whether the package has the option to publish to an internal feed if it chooses.
  */
-function packageMayChooseToPublishToInternalFeedOnly(
+export function packageMayChooseToPublishToInternalFeedOnly(
 	name: string,
 	config: PackageNamePolicyConfig,
 ): boolean {
@@ -134,7 +137,7 @@ function packageMayChooseToPublishToInternalFeedOnly(
  * If we haven't explicitly OK'd the package scope to publish in one of the categories above, it must be marked
  * private to prevent publishing.
  */
-function packageMustBePrivate(name: string, root: string): boolean {
+export function packageMustBePrivate(name: string, root: string): boolean {
 	const config = getFluidBuildConfig(root).policy?.packageNames;
 
 	if (config === undefined) {
@@ -153,7 +156,7 @@ function packageMustBePrivate(name: string, root: string): boolean {
 /**
  * If we know a package needs to publish somewhere, then it must not be marked private to allow publishing.
  */
-function packageMustNotBePrivate(name: string, root: string): boolean {
+export function packageMustNotBePrivate(name: string, root: string): boolean {
 	const config = getFluidBuildConfig(root).policy?.packageNames;
 
 	if (config === undefined) {
@@ -746,6 +749,9 @@ export const handlers: Handler[] = [
 		name: "npm-package-json-test-scripts",
 		match,
 		handler: (file, root) => {
+			// This rules enforces that if the package have test files (in 'src/test', excluding 'src/test/types'),
+			// or mocha/jest dependencies, it should have a test scripts so that the pipeline will pick it up
+
 			let json;
 
 			try {
@@ -793,6 +799,9 @@ export const handlers: Handler[] = [
 		name: "npm-package-json-test-scripts-split",
 		match,
 		handler: (file, root) => {
+			// This rule enforces that because the pipeline split running these test in different steps, each project
+			// has the split set up property (into test:mocha, test:jest and test:realsvc). Release groups that don't
+			// have splits in the pipeline is excluded in the "handlerExclusions" in the fluidBuild.config.cjs
 			let json;
 
 			try {
@@ -838,8 +847,8 @@ export const handlers: Handler[] = [
 		name: "npm-package-json-script-mocha-config",
 		match,
 		handler: (file, root) => {
+			// This rule enforces that mocha will use a config file and setup both the console, json and xml reporters.
 			let json;
-
 			try {
 				json = JSON.parse(readFile(file));
 			} catch (err) {
@@ -876,6 +885,7 @@ export const handlers: Handler[] = [
 		name: "npm-package-json-script-jest-config",
 		match,
 		handler: (file, root) => {
+			// This rule enforces that jest will use a config file and setup both the default (console) and junit reporters.
 			let json;
 
 			try {
@@ -930,4 +940,140 @@ export const handlers: Handler[] = [
 			}
 		},
 	},
+	{
+		name: "npm-package-json-esm",
+		match,
+		handler: (file, root) => {
+			// This rule enforces that we have a module field in the package iff we have a ESM build
+			// So that tools like webpack will pack up the right version.
+			let json;
+
+			try {
+				json = JSON.parse(readFile(file));
+			} catch (err) {
+				return "Error parsing JSON file: " + file;
+			}
+
+			const scripts = json.scripts;
+			if (scripts === undefined) {
+				return undefined;
+			}
+			// Using the heuristic that our package use "build:esnext" or "tsc:esnext" to indicate
+			// that it has a ESM build.
+			const esnextScriptsNames = ["build:esnext", "tsc:esnext"];
+			const hasBuildEsNext = esnextScriptsNames.some((name) => scripts[name] !== undefined);
+			const hasModuleOutput = json.module !== undefined;
+
+			if (hasBuildEsNext) {
+				if (!hasModuleOutput) {
+					return "Missing 'module' field in package.json for ESM build";
+				}
+			} else {
+				// If we don't have a separate esnext build, it's still ok to have the "module"
+				// field if it is the same as "main"
+				if (hasModuleOutput && json.main !== json.module) {
+					return "Missing ESM build script while package.json has 'module' field";
+				}
+			}
+		},
+	},
+	{
+		name: "npm-package-json-clean-script",
+		match,
+		handler: (file, root) => {
+			// This rule enforces the "clean" script will delete all the build and test output
+			let json;
+
+			try {
+				json = JSON.parse(readFile(file));
+			} catch (err) {
+				return "Error parsing JSON file: " + file;
+			}
+
+			const scripts = json.scripts;
+			if (scripts === undefined) {
+				return undefined;
+			}
+
+			const cleanScript = scripts.clean;
+			if (cleanScript) {
+				// Ignore clean scripts that are root of the release group
+				if (cleanScript.startsWith("pnpm")) {
+					return undefined;
+				}
+
+				// Enforce clean script prefix
+				if (!cleanScript.startsWith("rimraf --glob ")) {
+					return "'clean' script should start with 'rimraf --glob'";
+				}
+			}
+
+			const missing = missingCleanDirectories(scripts);
+
+			if (missing.length !== 0) {
+				return `'clean' script missing the following:${missing
+					.map((i) => `\n\t${i}`)
+					.join("")}`;
+			}
+
+			const clean = scripts["clean"];
+			if (clean && clean.startsWith("rimraf ")) {
+				if (clean.includes('"')) {
+					return "'clean' script using double quotes instead of single quotes";
+				}
+
+				if (!clean.includes("'")) {
+					return "'clean' script rimraf argument should have single quotes";
+				}
+			}
+		},
+		resolver: (file, root) => {
+			const result: { resolved: boolean; message?: string } = { resolved: true };
+			updatePackageJsonFile(path.dirname(file), (json) => {
+				const missing = missingCleanDirectories(json.scripts);
+				const clean = json.scripts["clean"] ?? "rimraf --glob";
+				if (clean.startsWith("rimraf --glob")) {
+					result.resolved = false;
+					result.message =
+						"Unable to fix 'clean' script that doesn't start with 'rimraf --glob'";
+				}
+				if (missing.length === 0) {
+					return;
+				}
+				json.scripts["clean"] = `${clean} ${missing.map((name) => `'${name}'`).join(" ")}`;
+			});
+
+			return result;
+		},
+	},
 ];
+
+function missingCleanDirectories(scripts: any) {
+	const expectedClean: string[] = [];
+
+	if (scripts["tsc"]) {
+		expectedClean.push("dist");
+	}
+
+	// Using the heuristic that our package use "build:esnext" or "tsc:esnext" to indicate
+	// that it has a ESM build.
+	const esnextScriptsNames = ["build:esnext", "tsc:esnext"];
+	const hasBuildEsNext = esnextScriptsNames.some((name) => scripts[name] !== undefined);
+	if (hasBuildEsNext) {
+		expectedClean.push("lib");
+	}
+
+	if (scripts["build"]?.startsWith("fluid-build")) {
+		expectedClean.push("*.tsbuildinfo");
+		expectedClean.push("*.build.log");
+	}
+
+	if (scripts["build:docs"]) {
+		expectedClean.push("_api-extractor-temp");
+	}
+
+	if (scripts["test"] && !scripts["test"].startsWith("echo")) {
+		expectedClean.push("nyc");
+	}
+	return expectedClean.filter((name) => !scripts.clean?.includes(name));
+}
