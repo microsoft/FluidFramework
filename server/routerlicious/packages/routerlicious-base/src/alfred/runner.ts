@@ -135,16 +135,16 @@ export class AlfredRunner implements IRunner {
 		httpServer.on("error", (error) => this.onError(error));
 		httpServer.on("listening", () => this.onListening());
 		httpServer.on("upgrade", (req, socket, initialMsgBuffer) => {
-		    Lumberjack.info(`WS: Upgraded http request connections: ${socket.server._connections}`);
+		    Lumberjack.info(`WS: Upgraded http request. Current connections: [${socket.server._connections}]`);
 		    socket.on("close", (hadError: boolean) => {
-			Lumberjack.error(
-			    `WS: socket closed. ${socket.server._connections}`,
+			Lumberjack.info(
+			    `WS: socket closed. Current connections [${socket.server._connections}]`,
 			    { hadError: hadError.toString() }
 			);
 		    });
 		    socket.on("error", (error) => {
 			Lumberjack.error(
-			    "WS: error",
+			    `WS: error. Current connections [${socket.server._connections}]`,
 			    {
 				bytesRead: socket.bytesRead,
 				bytesWritten: socket.bytesWritten,
