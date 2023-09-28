@@ -319,7 +319,7 @@ export class FieldSchema<Kind extends FieldKind = FieldKind, Types = AllowedType
 	 */
 	public constructor(public readonly kind: Kind, public readonly allowedTypes: Types) {}
 
-	// TODO: cache the result of this getter
+	// TODO:#5702 cache the result of this getter
 	public get types(): TreeTypeSet {
 		return allowedTypesToTypeSet(this.allowedTypes as unknown as AllowedTypes);
 	}
