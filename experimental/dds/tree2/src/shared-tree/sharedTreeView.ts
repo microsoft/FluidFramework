@@ -14,8 +14,6 @@ import {
 	IEditableForest,
 	InMemoryStoredSchemaRepository,
 	assertIsRevisionTag,
-	UndoRedoManager,
-	LocalCommitSource,
 	schemaDataIsEmpty,
 	applyDelta,
 } from "../core";
@@ -155,28 +153,6 @@ export interface ISharedTreeView extends AnchorLocator {
 	readonly editor: IDefaultEditBuilder;
 
 	/**
-	 * Undoes the last completed transaction made by the client.
-	 *
-	 * @remarks
-	 * Calling this does nothing if there are no transactions in the
-	 * undo stack.
-	 *
-	 * It is invalid to call it while a transaction is open (this will be supported in the future).
-	 */
-	undo(): void;
-
-	/**
-	 * Redoes the last completed undo made by the client.
-	 *
-	 * @remarks
-	 * Calling this does nothing if there are no transactions in the
-	 * redo stack. New local transactions will not clear the redo stack.
-	 *
-	 * It is invalid to call it while a transaction is open (this will be supported in the future).
-	 */
-	redo(): void;
-
-	/**
 	 * A collection of functions for managing transactions.
 	 */
 	readonly transaction: ITransaction;
@@ -297,7 +273,6 @@ export function createSharedTreeView(args?: {
 		new ForestRepairDataStoreProvider(forest, schema, (change) =>
 			changeFamily.intoDelta(change),
 		);
-	const undoRedoManager = UndoRedoManager.create(changeFamily);
 	const branch =
 		args?.branch ??
 		new SharedTreeBranch(
@@ -307,7 +282,6 @@ export function createSharedTreeView(args?: {
 			},
 			changeFamily,
 			repairDataStoreProvider,
-			undoRedoManager,
 		);
 	const nodeKeyManager = args?.nodeKeyManager ?? createNodeKeyManager();
 	const context = getEditableTreeContext(
@@ -455,14 +429,6 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		localize: (key) => this.nodeKeyManager.localizeNodeKey(key),
 		map: this.nodeKeyIndex,
 	};
-
-	public undo() {
-		this.branch.undo();
-	}
-
-	public redo() {
-		this.branch.redo();
-	}
 
 	public schematize<TRoot extends FieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,

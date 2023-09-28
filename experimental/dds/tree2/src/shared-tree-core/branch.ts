@@ -19,6 +19,7 @@ import {
 	LocalCommitSource,
 	rebaseBranch,
 	RevisionTag,
+	findCommonAncestor,
 } from "../core";
 import { EventEmitter, ISubscribable } from "../events";
 import { TransactionStack } from "./transactionStack";
@@ -94,6 +95,8 @@ export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TCha
 
 	/**
 	 * Fired when a revertible change is made to this branch.
+	 * 
+	 * TODO pass a revertible to the event
 	 */
 	revertible(type: LocalCommitSource): void;
 
@@ -125,14 +128,11 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 * @param changeFamily - determines the set of changes that this branch can commit
 	 * @param repairDataStoreProvider - an optional provider of {@link RepairDataStore}s to use when generating
 	 * repair data. This must be provided in order to use features that require repair data such as undo/redo or constraints.
-	 * @param undoRedoManager - an optional {@link UndoRedoManager} to manage the undo/redo operations of this
-	 * branch. This must be provided in order to use the `undo` and `redo` methods of this branch.
 	 */
 	public constructor(
 		private head: GraphCommit<TChange>,
 		public readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		public repairDataStoreProvider?: IRepairDataStoreProvider<TChange>,
-		private readonly undoRedoManager?: UndoRedoManager<TChange, TEditor>,
 	) {
 		super();
 		this.editor = this.changeFamily.buildEditor((change) =>
@@ -184,9 +184,10 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		this.transactions.repairStore?.capture(change, this.head.revision);
 
-		// If this is not part of a transaction, add it to the undo commit tree
+		// If this is not part of a transaction, emit a revertible event
 		if (undoRedoType !== undefined && !this.isTransacting()) {
-			this.undoRedoManager?.trackCommit(this.head, undoRedoType);
+			// TODO remove local commit source and pass a revertible
+			// TODO only do this when undo is enabled
 			this.emit("revertible", undoRedoType);
 		}
 
@@ -269,12 +270,11 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			repairData,
 		});
 
-		// If this transaction is not nested, add it to the undo commit tree and capture its repair data
+		// If this transaction is not nested, emit a revertible event
 		if (!this.isTransacting()) {
-			if (this.undoRedoManager !== undefined) {
-				this.undoRedoManager.trackCommit(this.head, LocalCommitSource.Default);
-				this.emit("revertible", LocalCommitSource.Default);
-			}
+			// TODO return revertible
+			// TODO only do this when undo is enabled
+			this.emit("revertible", LocalCommitSource.Default);
 		}
 
 		// If there is still an ongoing transaction (because this transaction was nested inside of an outer transaction)
@@ -347,28 +347,57 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		return [startCommit, commits, repairStore];
 	}
 
+	// TODO does this need to be a public api? we might be able to return this as a the "revert" method of the revertible
+	public revert(commit: GraphCommit<TChange>): [change: TChange, newCommit: GraphCommit<TChange>] | undefined {
+		assert(!this.isTransacting(), "Undo is not yet supported during transactions");
+
+		let change = this.changeFamily.rebaser.invert(
+			tagChange(commit.change, commit.revision),
+			false,
+			commit.repairData,
+		);
+
+		const headCommit = this.getHead();
+		// Rebase the inverted change onto any commits that occurred after the undoable commits.
+		if (commit.revision !== headCommit.revision) {
+			const pathAfterUndoable: GraphCommit<TChange>[] = [];
+			const ancestor = findCommonAncestor([commit], [headCommit, pathAfterUndoable]);
+			assert(
+				ancestor === commit,
+				0x677 /* The head commit should be based off the undoable commit. */,
+			);
+			change = pathAfterUndoable.reduce(
+				(a, b) => this.changeFamily.rebaser.rebase(a, b),
+				change,
+			);
+		}
+
+		// TODO remove local commit source
+		return this.applyChange(change, mintRevisionTag(), LocalCommitSource.Undo);
+	}
+
 	/**
 	 * Undoes the last change made by the client. If there is no change to undo then this method has no effect.
 	 * This method will error if no {@link UndoRedoManager} was provided when this branch was constructed.
 	 * It is invalid to call this method while a transaction is open (this will be supported in the future).
 	 * @returns the change to this branch and the new head commit, or undefined if there was nothing to undo
 	 */
-	public undo(): [change: TChange, newCommit: GraphCommit<TChange>] | undefined {
-		assert(
-			this.undoRedoManager !== undefined,
-			0x686 /* Must construct branch with an `UndoRedoManager` in order to undo. */,
-		);
-		// TODO: allow this once it becomes possible to compose the changesets created by edits made
-		// within transactions and edits that represent completed transactions.
-		assert(!this.isTransacting(), 0x66a /* Undo is not yet supported during transactions */);
+	// public undo(): [change: TChange, newCommit: GraphCommit<TChange>] | undefined {
+	// 	assert(
+	// 		this.undoRedoManager !== undefined,
+	// 		0x686 /* Must construct branch with an `UndoRedoManager` in order to undo. */,
+	// 	);
+	// 	// TODO: allow this once it becomes possible to compose the changesets created by edits made
+	// 	// within transactions and edits that represent completed transactions.
+	// 	assert(!this.isTransacting(), 0x66a /* Undo is not yet supported during transactions */);
 
-		const undoChange = this.undoRedoManager?.undo(this.getHead());
-		if (undoChange !== undefined) {
-			return this.applyChange(undoChange, mintRevisionTag(), LocalCommitSource.Undo);
-		}
+	// 	const undoChange = this.undoRedoManager?.undo(this.getHead());
+	// 	if (undoChange !== undefined) {
+	// 		return this.applyChange(undoChange, mintRevisionTag(), LocalCommitSource.Undo);
+	// 	}
 
-		return undefined;
-	}
+	// 	return undefined;
+	// }
 
 	/**
 	 * Redoes the last change made by the client. If there is no change to redo then this method has no effect.
@@ -376,22 +405,22 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 * It is invalid to call this method while a transaction is open (this will be supported in the future).
 	 * @returns the change to this branch and the new head commit, or undefined if there was nothing to redo
 	 */
-	public redo(): [change: TChange, newCommit: GraphCommit<TChange>] | undefined {
-		assert(
-			this.undoRedoManager !== undefined,
-			0x687 /* Must construct branch with an `UndoRedoManager` in order to redo. */,
-		);
-		// TODO: allow this once it becomes possible to compose the changesets created by edits made
-		// within transactions and edits that represent completed transactions.
-		assert(!this.isTransacting(), 0x67e /* Redo is not yet supported during transactions */);
+	// public redo(): [change: TChange, newCommit: GraphCommit<TChange>] | undefined {
+	// 	assert(
+	// 		this.undoRedoManager !== undefined,
+	// 		0x687 /* Must construct branch with an `UndoRedoManager` in order to redo. */,
+	// 	);
+	// 	// TODO: allow this once it becomes possible to compose the changesets created by edits made
+	// 	// within transactions and edits that represent completed transactions.
+	// 	assert(!this.isTransacting(), 0x67e /* Redo is not yet supported during transactions */);
 
-		const redoChange = this.undoRedoManager?.redo(this.getHead());
-		if (redoChange !== undefined) {
-			return this.applyChange(redoChange, mintRevisionTag(), LocalCommitSource.Redo);
-		}
+	// 	const redoChange = this.undoRedoManager?.redo(this.getHead());
+	// 	if (redoChange !== undefined) {
+	// 		return this.applyChange(redoChange, mintRevisionTag(), LocalCommitSource.Redo);
+	// 	}
 
-		return undefined;
-	}
+	// 	return undefined;
+	// }
 
 	/**
 	 * Spawn a new branch that is based off of the current state of this branch.
@@ -409,7 +438,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			this.head,
 			this.changeFamily,
 			repairDataStoreProvider ?? this.repairDataStoreProvider?.clone(),
-			this.undoRedoManager?.clone(),
 		);
 		this.emit("fork", fork);
 		return fork;
@@ -449,14 +477,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const [newHead, change, { deletedSourceCommits, targetCommits, sourceCommits }] =
 			rebaseResult;
 
-		if (this.undoRedoManager !== undefined) {
-			// TODO: We probably can rebase a revertible branch onto a non-revertible branch.
-			assert(
-				branch.undoRedoManager !== undefined,
-				0x688 /* Cannot rebase a revertible branch onto a non-revertible branch */,
-			);
-			this.undoRedoManager.updateAfterRebase(sourceCommits, branch.undoRedoManager);
-		}
 		this.head = newHead;
 		const newCommits = targetCommits.concat(sourceCommits);
 		this.emit("change", {
@@ -497,21 +517,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		// Compute the net change to this branch
 		const [newHead, _, { sourceCommits }] = rebaseResult;
 
-		if (this.undoRedoManager !== undefined) {
-			// TODO: We probably can merge a non-revertible branch into a revertible branch.
-			assert(
-				branch.undoRedoManager !== undefined,
-				0x689 /* Cannot merge a non-revertible branch into a revertible branch */,
-			);
-			this.undoRedoManager.updateAfterMerge(sourceCommits, branch.undoRedoManager);
-
-			for (const commit of sourceCommits) {
-				const type = this.undoRedoManager.getCommitType(commit.revision);
-				if (type !== undefined) {
-					this.emit("revertible", type);
-				}
-			}
-		}
 		this.head = newHead;
 		const change = this.changeFamily.rebaser.compose(sourceCommits);
 		this.emit("change", {

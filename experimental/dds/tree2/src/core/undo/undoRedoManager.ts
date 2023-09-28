@@ -244,7 +244,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 /**
  * Represents a commit that can be undone.
  */
-export interface ReversibleCommit<TChange> {
+interface ReversibleCommit<TChange> {
 	/* The commit to undo */
 	commit: GraphCommit<TChange>;
 	/* The next undoable commit. */
@@ -256,7 +256,7 @@ export interface ReversibleCommit<TChange> {
  *
  * @alpha
  */
-export enum LocalCommitSource {
+enum LocalCommitSource {
 	/** A typical local commit */
 	Default,
 	/** A commit that is the result of an undo. */
