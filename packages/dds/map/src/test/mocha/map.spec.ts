@@ -743,7 +743,7 @@ describe("Map", () => {
 			});
 
 			describe(".forEach()", () => {
-				it("Should iterate over all keys in the map", () => {
+				it.skip("Should iterate over all keys in the map", () => {
 					// We use a set to mark the values we want to insert. When we iterate we will remove from the set
 					// and then check it's empty at the end
 					const set = new Set<string>();

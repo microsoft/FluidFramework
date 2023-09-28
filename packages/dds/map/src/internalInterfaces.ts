@@ -108,9 +108,9 @@ export interface IMapKeyDeleteLocalOpMetadata {
 	previousValue: ILocalValue;
 
 	/**
-	 * All associated pending message id's, or its position at `ackedInsertedKeys`, or both
+	 * All associated pending message id's of a local set op, or the insertion index of an ack'd key, or both
 	 */
-	previousPos: (number | number[])[];
+	previousIndex: (number | number[])[];
 }
 
 /**
@@ -133,14 +133,19 @@ export interface IMapClearLocalOpMetadata {
 	previousMap?: Map<string, ILocalValue>;
 
 	/**
-	 * All existing keys have been ack'd
+	 * The creation index of ack'd keys
 	 */
-	previousAckedInsertedKeys?: string[];
+	previousAckedKeysTracker?: Map<string, number>;
 
 	/**
 	 * All pending message id's for unack'd set op's
 	 */
-	previousPendingSetOps?: Map<string, number[]>;
+	previousPendingSetTracker?: Map<string, number[]>;
+
+	/**
+	 * The pending delete count for the keys
+	 */
+	previousPendingDeleteTracker?: Map<string, number>;
 }
 
 /**
