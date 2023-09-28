@@ -106,7 +106,6 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 				return;
 			}
 			const extractorConfig = ExtractorConfig.prepare(configOptions);
-			this.log(pkg.directory);
 
 			const config: ReleaseTagConfig = {
 				pkg,
@@ -137,7 +136,7 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 
 /**
  * Updates the types/typing field in package.json.
- * @param config - The update configuration specifying the package, release type, JSON data, types folder, and inclusion of alpha/beta releases.
+ * @param config - An interface specifying the package, extractor config, release type, JSON data
  * @param log - The logger used for logging verbose information.
  * @returns true if the update was successful, false otherwise.
  */
