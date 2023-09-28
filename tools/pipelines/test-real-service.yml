@@ -198,7 +198,9 @@ stages:
                 BUILD_ID: $(Build.BuildId)
                 ADO_API_TOKEN: $(System.AccessToken)
                 PIPELINE: 'EndToEndTests'
-            -task: Bash@3
+
+            # Retrieve E2E test pass rate
+            - task: Bash@3
               displayName: Retrieve test pass rate
               inputs:
                 targetType: 'inline'
