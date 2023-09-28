@@ -44,5 +44,5 @@ export const getGlobalTimeoutContext = () =>
 
 export const setGlobalTimeoutContext = (timeoutContext: ITimeoutContext) => {
 	if (!getGlobal()) return;
-	getGlobal().telemetryContext = timeoutContext;
+	getGlobal().timeoutContext = timeoutContext;
 };
