@@ -205,7 +205,6 @@ stages:
                 workingDirectory: $(toolAbsolutePath)
                 script: |
                   echo: "creating output folder"
-                  
                   mkdir -p ${{ variables.testWorkspace }}/passRateOutput
                   echo "Executing curl command ..."
                   echo  'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$(Build.BuildId)/timeline"'

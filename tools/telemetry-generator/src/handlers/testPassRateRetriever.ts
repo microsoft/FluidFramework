@@ -3,15 +3,6 @@
  * Licensed under the MIT License.
  */
 
-interface ParsedTestResult {
-	stageName: string;
-	totalTime: number;
-	passedTests: number;
-	failedTests: number;
-	totalTests: number;
-	passRate: number;
-}
-
 module.exports = function handler(fileData, logger) {
 	// - fileData is a JSON object obtained by calling JSON.parse() on the contents of a file.
 	// In this particular handler, we are using the timeline and metrics REST API to retrieve the test pass rate of the pipeline:
