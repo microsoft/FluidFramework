@@ -226,7 +226,6 @@ describe("DeltaStorageService", () => {
 							minimumSequenceNumber: 1,
 							referenceSequenceNumber: 1,
 							sequenceNumber: from,
-							term: 1,
 							type: "dds",
 							timestamp: Date.now(),
 						},

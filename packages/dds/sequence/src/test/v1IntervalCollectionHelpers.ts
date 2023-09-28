@@ -9,7 +9,7 @@ import {
 	IChannelServices,
 	IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
-import { Client, compareReferencePositions } from "@fluidframework/merge-tree";
+import { Client } from "@fluidframework/merge-tree";
 import { DefaultMap } from "../defaultMap";
 import {
 	IValueFactory,
@@ -54,8 +54,6 @@ class V1SequenceIntervalCollectionFactory
 		raw: ISerializedInterval[] | ISerializedIntervalCollectionV2 = [],
 	): V1IntervalCollection<SequenceInterval> {
 		const helpers: IIntervalHelpers<SequenceInterval> = {
-			compareEnds: (a: SequenceInterval, b: SequenceInterval) =>
-				compareReferencePositions(a.start, b.start),
 			create: createSequenceInterval,
 		};
 		return new V1IntervalCollection(helpers, true, emitter, raw, {});

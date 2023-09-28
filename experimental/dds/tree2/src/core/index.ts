@@ -57,6 +57,7 @@ export {
 	getDepth,
 	mapCursorField,
 	mapCursorFields,
+	iterateCursorField,
 	getMapTreeField,
 	MapTree,
 	detachedFieldAsKey,

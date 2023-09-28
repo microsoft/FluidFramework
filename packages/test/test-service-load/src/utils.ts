@@ -17,8 +17,9 @@ import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definit
 import { IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
+// eslint-disable-next-line import/no-deprecated
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { ConfigTypes, createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITelemetryBufferedLogger,
 	ITestDriver,
@@ -178,9 +179,14 @@ export async function initialize(
 
 	const loaderOptions = random.pick(generateLoaderOptions(seed, optionsOverride?.loader));
 	const containerOptions = random.pick(generateRuntimeOptions(seed, optionsOverride?.container));
-	const configurations = random.pick(
+	const testConfigurations = random.pick(
 		generateConfigurations(seed, optionsOverride?.configurations),
 	);
+	// The following configs are not combined and if specified, they will override individual test-specific configs
+	const globalConfigurations: Record<string, ConfigTypes> = {
+		"Fluid.SharedObject.DdsCallbacksTelemetrySampling": 10000,
+		"Fluid.SharedObject.OpProcessingTelemetrySampling": 10000,
+	};
 
 	const minLogLevel = random.pick([LogLevel.verbose, LogLevel.default]);
 	const logger = await createLogger(
@@ -198,7 +204,7 @@ export async function initialize(
 		details: JSON.stringify({
 			loaderOptions,
 			containerOptions,
-			configurations,
+			configurations: { ...testConfigurations, ...globalConfigurations },
 			logLevel: minLogLevel,
 		}),
 	});
@@ -212,8 +218,8 @@ export async function initialize(
 		options: loaderOptions,
 		detachedBlobStorage: new MockDetachedBlobStorage(),
 		configProvider: {
-			getRawConfig(name) {
-				return configurations[name];
+			getRawConfig(name: string): ConfigTypes {
+				return testConfigurations[name] ?? globalConfigurations[name];
 			},
 		},
 	});
@@ -224,6 +230,7 @@ export async function initialize(
 			testDriver.type === "odsp",
 			"attachment blobs in detached container not supported on this service",
 		);
+		// eslint-disable-next-line import/no-deprecated
 		const ds = await requestFluidObject<ILoadTest>(container, "/");
 		const dsm = await ds.detached({ testConfig, verbose, random, logger });
 		await Promise.all(

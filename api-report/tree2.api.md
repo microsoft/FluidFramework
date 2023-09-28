@@ -1274,7 +1274,17 @@ export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree;
 // @alpha (undocumented)
 export const jsonArray: TreeSchema<"Json.Array", {
 structFields: {
-"": FieldSchema<Sequence, [any, any, TreeSchema<"com.fluidframework.leaf.number", {
+"": FieldSchema<Sequence, [() => TreeSchema<"Json.Object", {
+mapFields: FieldSchema<Optional, [any, () => TreeSchema<"Json.Array", any>, TreeSchema<"com.fluidframework.leaf.number", {
+leafValue: import("../..").ValueSchema.Number;
+}>, TreeSchema<"com.fluidframework.leaf.boolean", {
+leafValue: import("../..").ValueSchema.Boolean;
+}>, TreeSchema<"com.fluidframework.leaf.string", {
+leafValue: import("../..").ValueSchema.String;
+}>, TreeSchema<"Json.Null", {
+structFields: {};
+}>]>;
+}>, () => TreeSchema<"Json.Array", any>, TreeSchema<"com.fluidframework.leaf.number", {
 leafValue: import("../..").ValueSchema.Number;
 }>, TreeSchema<"com.fluidframework.leaf.boolean", {
 leafValue: import("../..").ValueSchema.Boolean;
@@ -1316,9 +1326,9 @@ leafValue: import("../..").ValueSchema.Number;
 
 // @alpha (undocumented)
 export const jsonObject: TreeSchema<"Json.Object", {
-mapFields: FieldSchema<Optional, [any, () => TreeSchema<"Json.Array", {
+mapFields: FieldSchema<Optional, [() => TreeSchema<"Json.Object", any>, () => TreeSchema<"Json.Array", {
 structFields: {
-"": FieldSchema<Sequence, [any, any, TreeSchema<"com.fluidframework.leaf.number", {
+"": FieldSchema<Sequence, [() => TreeSchema<"Json.Object", any>, any, TreeSchema<"com.fluidframework.leaf.number", {
 leafValue: import("../..").ValueSchema.Number;
 }>, TreeSchema<"com.fluidframework.leaf.boolean", {
 leafValue: import("../..").ValueSchema.Boolean;
@@ -1413,8 +1423,9 @@ type MapFieldSchema = FieldSchema<typeof FieldKinds.optional | typeof FieldKinds
 
 // @alpha
 export interface MapNode<TSchema extends MapSchema> extends TreeNode {
+    [boxedIterator](): IterableIterator<TypedField<TSchema["mapFields"]>>;
     // (undocumented)
-    [Symbol.iterator](): Iterator<TypedField<TSchema["mapFields"]>>;
+    [Symbol.iterator](): IterableIterator<UnboxField<TSchema["mapFields"], "notEmpty">>;
     readonly asObject: {
         readonly [P in FieldKey]?: UnboxField<TSchema["mapFields"]>;
     };
@@ -2022,14 +2033,16 @@ export interface Sequence extends BrandedFieldKind<"Sequence", Multiplicity.Sequ
 // @alpha
 export interface Sequence2<TTypes extends AllowedTypes> extends TreeField {
     // (undocumented)
-    [Symbol.iterator](): Iterator<TypedNodeUnion<TTypes>>;
+    [boxedIterator](): IterableIterator<TypedNodeUnion<TTypes>>;
+    // (undocumented)
+    [Symbol.iterator](): IterableIterator<UnboxNodeUnion<TTypes>>;
     readonly asArray: readonly UnboxNodeUnion<TTypes>[];
     at(index: number): UnboxNodeUnion<TTypes>;
     boxedAt(index: number): TypedNodeUnion<TTypes>;
     // (undocumented)
     readonly length: number;
-    map<U>(callbackfn: (value: UnboxNodeUnion<TTypes>, index: number, array: this) => U): U[];
-    mapBoxed<U>(callbackfn: (value: TypedNodeUnion<TTypes>, index: number, array: this) => U): U[];
+    map<U>(callbackfn: (value: UnboxNodeUnion<TTypes>, index: number) => U): U[];
+    mapBoxed<U>(callbackfn: (value: TypedNodeUnion<TTypes>, index: number) => U): U[];
     // (undocumented)
     replaceRange(index: number, count: number, content: Iterable<FlexibleNodeContent<TTypes>>): void;
 }
@@ -2161,7 +2174,8 @@ export enum TransactionResult {
 }
 
 // @alpha
-export interface Tree<TSchema = unknown> extends Iterable<Tree> {
+export interface Tree<TSchema = unknown> {
+    [boxedIterator](): IterableIterator<Tree>;
     readonly context: TreeContext;
     readonly schema: TSchema;
     treeStatus(): TreeStatus;
@@ -2193,9 +2207,9 @@ export interface TreeDataContext {
 }
 
 // @alpha
-export interface TreeField extends Tree<FieldSchema>, Iterable<TreeNode> {
+export interface TreeField extends Tree<FieldSchema> {
     // (undocumented)
-    [Symbol.iterator](): Iterator<TreeNode>;
+    [boxedIterator](): IterableIterator<TreeNode>;
     is<TSchema extends FieldSchema>(schema: TSchema): this is TypedField<TSchema>;
     isSameAs(other: TreeField): boolean;
     readonly key: FieldKey;
@@ -2220,7 +2234,7 @@ export const enum TreeNavigationResult {
 // @alpha
 export interface TreeNode extends Tree<TreeSchema> {
     // (undocumented)
-    [Symbol.iterator](): Iterator<TreeField>;
+    [boxedIterator](): IterableIterator<TreeField>;
     is<TSchema extends TreeSchema>(schema: TSchema): this is TypedNode<TSchema>;
     // (undocumented)
     on<K extends keyof EditableTreeEvents>(eventName: K, listener: EditableTreeEvents[K]): () => void;
@@ -2373,10 +2387,10 @@ export const typeNameSymbol: unique symbol;
 export const typeSymbol: unique symbol;
 
 // @alpha
-type UnboxField<TSchema extends FieldSchema> = UnboxFieldInner<TSchema["kind"], TSchema["allowedTypes"]>;
+type UnboxField<TSchema extends FieldSchema, Emptiness extends "maybeEmpty" | "notEmpty" = "maybeEmpty"> = UnboxFieldInner<TSchema["kind"], TSchema["allowedTypes"], Emptiness>;
 
 // @alpha
-type UnboxFieldInner<Kind extends FieldKind, TTypes extends AllowedTypes> = Kind extends typeof FieldKinds.sequence ? Sequence2<TTypes> : Kind extends typeof FieldKinds.value ? UnboxNodeUnion<TTypes> : Kind extends typeof FieldKinds.optional ? UnboxNodeUnion<TTypes> | undefined : unknown;
+type UnboxFieldInner<Kind extends FieldKind, TTypes extends AllowedTypes, Emptiness extends "maybeEmpty" | "notEmpty"> = Kind extends typeof FieldKinds.sequence ? Sequence2<TTypes> : Kind extends typeof FieldKinds.value ? UnboxNodeUnion<TTypes> : Kind extends typeof FieldKinds.optional ? UnboxNodeUnion<TTypes> | (Emptiness extends "notEmpty" ? never : undefined) : unknown;
 
 // @alpha
 type UnboxNode<TSchema extends TreeSchema> = TSchema extends LeafSchema ? SchemaAware.InternalTypes.TypedValue<TSchema["leafValue"]> : TSchema extends MapSchema ? MapNode<TSchema> : TSchema extends FieldNodeSchema ? UnboxField<TSchema["structFieldsObject"][""]> : TSchema extends StructSchema ? StructTyped<TSchema> : unknown;
