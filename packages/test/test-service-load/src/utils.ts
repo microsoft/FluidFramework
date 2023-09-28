@@ -18,7 +18,11 @@ import { IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ConfigTypes, createChildLogger } from "@fluidframework/telemetry-utils";
+import {
+	ConfigTypes,
+	createChildLogger,
+	IConfigProviderBase,
+} from "@fluidframework/telemetry-utils";
 import {
 	ITelemetryBufferedLogger,
 	ITestDriver,
@@ -178,15 +182,9 @@ export async function initialize(
 
 	const loaderOptions = random.pick(generateLoaderOptions(seed, optionsOverride?.loader));
 	const containerOptions = random.pick(generateRuntimeOptions(seed, optionsOverride?.container));
-	const testConfigurations = random.pick(
+	const configurations = random.pick(
 		generateConfigurations(seed, optionsOverride?.configurations),
 	);
-	// The following configs are not combined and if specified, they will override individual test-specific configs
-	const globalConfigurations: Record<string, ConfigTypes> = {
-		"Fluid.SharedObject.DdsCallbacksTelemetrySampling": 10000,
-		"Fluid.SharedObject.OpProcessingTelemetrySampling": 10000,
-		"Fluid.Driver.ReadBlobTelemetrySampling": 100,
-	};
 
 	const minLogLevel = random.pick([LogLevel.verbose, LogLevel.default]);
 	const logger = await createLogger(
@@ -204,7 +202,7 @@ export async function initialize(
 		details: JSON.stringify({
 			loaderOptions,
 			containerOptions,
-			configurations: { ...testConfigurations, ...globalConfigurations },
+			configurations: { ...globalConfigurations, ...configurations },
 			logLevel: minLogLevel,
 		}),
 	});
@@ -217,11 +215,7 @@ export async function initialize(
 		logger,
 		options: loaderOptions,
 		detachedBlobStorage: new MockDetachedBlobStorage(),
-		configProvider: {
-			getRawConfig(name: string): ConfigTypes {
-				return testConfigurations[name] ?? globalConfigurations[name];
-			},
-		},
+		configProvider: configProvider(configurations),
 	});
 
 	const container: IContainer = await loader.createDetachedContainer(codeDetails);
@@ -301,3 +295,26 @@ export async function safeExit(code: number, url: string, runId?: number) {
 
 	process.exit(code);
 }
+
+/**
+ *  Global feature gates for all tests. They can be overwritten by individual test configs.
+ */
+export const globalConfigurations: Record<string, ConfigTypes> = {
+	"Fluid.SharedObject.DdsCallbacksTelemetrySampling": 10000,
+	"Fluid.SharedObject.OpProcessingTelemetrySampling": 10000,
+	"Fluid.Driver.ReadBlobTelemetrySampling": 100,
+};
+
+/**
+ * Config provider to be used for managing feature gates in the stress tests.
+ * It will return values based on the configs supplied as parameters if they are not found
+ * in the global test configuration {@link globalConfigurations}.
+ *
+ * @param configs - the supplied configs
+ * @returns - an instance of a config provider
+ */
+export const configProvider = (configs: Record<string, ConfigTypes>): IConfigProviderBase => {
+	return {
+		getRawConfig: (name: string): ConfigTypes => globalConfigurations[name] ?? configs[name],
+	};
+};
