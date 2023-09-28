@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-deprecated
 import { BaseContainerRuntimeFactory, mountableViewRequestHandler } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { RuntimeRequestHandler } from "@fluidframework/request-handler";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+// eslint-disable-next-line import/no-deprecated
 import { requestFluidObject, RequestParser } from "@fluidframework/runtime-utils";
 import { MountableView } from "@fluidframework/view-adapters";
 
@@ -23,6 +25,7 @@ const makeViewRequestHandler =
 				headers: request.headers,
 			});
 			// TODO type the requestFluidObject
+			// eslint-disable-next-line import/no-deprecated
 			const fluidObject = await requestFluidObject<T>(
 				await runtime.getRootDataStore(dataStoreId),
 				objectRequest,
@@ -44,9 +47,22 @@ export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory 
 	) {
 		// We'll use a MountableView so webpack-fluid-loader can display us,
 		// and add our default view request handler.
-		super(new Map([[dataStoreFactory.type, Promise.resolve(dataStoreFactory)]]), undefined, [
-			mountableViewRequestHandler(MountableView, [makeViewRequestHandler(viewCallback)]),
-		]);
+		super({
+			registryEntries: new Map([[dataStoreFactory.type, Promise.resolve(dataStoreFactory)]]),
+			requestHandlers: [
+				// eslint-disable-next-line import/no-deprecated
+				mountableViewRequestHandler(MountableView, [makeViewRequestHandler(viewCallback)]),
+			],
+			provideEntryPoint: async (containerRuntime: IContainerRuntime) => {
+				const entryPoint = await containerRuntime.getAliasedDataStoreEntryPoint(
+					dataStoreId,
+				);
+				if (entryPoint === undefined) {
+					throw new Error("default dataStore must exist");
+				}
+				return entryPoint.get();
+			},
+		});
 	}
 
 	/**

@@ -750,16 +750,15 @@ const LoadTestDataStoreInstantiationFactory = new DataObjectFactory(
 const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 	runtime.IFluidHandleContext.resolveHandle(request);
 
-export const createFluidExport = (options: IContainerRuntimeOptions) =>
-	new ContainerRuntimeFactoryWithDefaultDataStore(
-		LoadTestDataStoreInstantiationFactory,
-		new Map([
+export const createFluidExport = (runtimeOptions: IContainerRuntimeOptions) =>
+	new ContainerRuntimeFactoryWithDefaultDataStore({
+		defaultFactory: LoadTestDataStoreInstantiationFactory,
+		registryEntries: new Map([
 			[
 				LoadTestDataStore.DataStoreName,
 				Promise.resolve(LoadTestDataStoreInstantiationFactory),
 			],
 		]),
-		undefined,
-		[innerRequestHandler],
-		options,
-	);
+		requestHandlers: [innerRequestHandler],
+		runtimeOptions,
+	});

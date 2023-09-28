@@ -6,6 +6,7 @@ import {
 	BaseContainerRuntimeFactory,
 	DataObject,
 	DataObjectFactory,
+	// eslint-disable-next-line import/no-deprecated
 	defaultRouteRequestHandler,
 } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
@@ -123,7 +124,7 @@ export class RootDataObject
 		const factory = dataObjectClass.factory;
 		const packagePath = [...this.context.packagePath, factory.type];
 		const dataStore = await this.context.containerRuntime.createDataStore(packagePath);
-		const entryPoint = await dataStore.entryPoint?.get();
+		const entryPoint = await dataStore.entryPoint.get();
 		return entryPoint as unknown as T;
 	}
 
@@ -165,14 +166,23 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
 			{},
 			registryEntries,
 		);
-		super(
-			[rootDataObjectFactory.registryEntry],
-			undefined,
-			[defaultRouteRequestHandler(rootDataStoreId)],
+		super({
+			registryEntries: [rootDataObjectFactory.registryEntry],
+			// eslint-disable-next-line import/no-deprecated
+			requestHandlers: [defaultRouteRequestHandler(rootDataStoreId)],
 			// temporary workaround to disable message batching until the message batch size issue is resolved
 			// resolution progress is tracked by the Feature 465 work item in AzDO
-			{ flushMode: FlushMode.Immediate },
-		);
+			runtimeOptions: { flushMode: FlushMode.Immediate },
+			provideEntryPoint: async (containerRuntime: IContainerRuntime) => {
+				const entryPoint = await containerRuntime.getAliasedDataStoreEntryPoint(
+					rootDataStoreId,
+				);
+				if (entryPoint === undefined) {
+					throw new Error(`default dataStore [${rootDataStoreId}] must exist`);
+				}
+				return entryPoint.get();
+			},
+		});
 		this.rootDataObjectFactory = rootDataObjectFactory;
 		this.initialObjects = schema.initialObjects;
 	}
