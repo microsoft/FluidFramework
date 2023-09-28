@@ -178,13 +178,34 @@ describe.only("unboxed unit tests", () => {
 				assert.equal(result.child.name, "Bar");
 				assert.equal(result.child.child, undefined);
 			});
+
+			it("Union", () => {
+				const builder = new SchemaBuilder("test");
+				const stringLeafSchema = builder.leaf("string", ValueSchema.String);
+				const booleanLeafSchema = builder.leaf("boolean", ValueSchema.Boolean);
+				const rootSchema = SchemaBuilder.fieldOptional(stringLeafSchema, booleanLeafSchema);
+				const schema = builder.intoDocumentSchema(rootSchema);
+
+				const initialTree = true;
+
+				const { context, cursor } = initializeTreeWithContent(schema, initialTree);
+
+				const result = unboxedField(context, rootSchema, cursor);
+
+				assert(result !== undefined);
+				assert.equal(result.type, "boolean");
+				assert.equal(result.value, true);
+			});
 		});
 
 		// TODO cases:
-		// * struct
 		// * union?
 	});
 
-	describe("unboxedTree", () => {});
-	describe("unboxedUnion", () => {});
+	describe("unboxedTree", () => {
+		// TODO
+	});
+	describe("unboxedUnion", () => {
+		// TODO
+	});
 });
