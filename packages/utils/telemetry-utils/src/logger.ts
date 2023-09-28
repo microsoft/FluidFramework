@@ -597,7 +597,7 @@ export class PerformanceEvent {
 	 * @returns The results of the executed task
 	 *
 	 * @remarks Note that if the "same" event (category + eventName) would be emitted by different
-	 * tasks (`callback`), `sampleThreshold` is still applied only based on the event's category + eventName, 
+	 * tasks (`callback`), `sampleThreshold` is still applied only based on the event's category + eventName,
 	 * so executing either of the tasks will increase the internal counter and they
 	 * effectively "share" the sampling rate for the event.
 	 */
@@ -635,6 +635,11 @@ export class PerformanceEvent {
 	 * @param sampleThreshold - events with the same name and category will be sent to the logger
 	 * only when we hit this many executions of the task. If unspecified, all events will be sent.
 	 * @returns The results of the executed task
+	 *
+	 * @remarks Note that if the "same" event (category + eventName) would be emitted by different
+	 * tasks (`callback`), `sampleThreshold` is still applied only based on the event's category + eventName,
+	 * so executing either of the tasks will increase the internal counter and they
+	 * effectively "share" the sampling rate for the event.
 	 */
 	public static async timedExecAsync<T>(
 		logger: ITelemetryLoggerExt,
