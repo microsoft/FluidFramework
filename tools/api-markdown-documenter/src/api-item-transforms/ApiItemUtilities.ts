@@ -512,10 +512,22 @@ export function doesItemKindRequireOwnDocument(
 /**
  * Determines whether or not the specified API item is one that should be rendered to its own document.
  *
- * @remarks This is based on the item's `kind`. See {@link doesItemKindRequireOwnDocument}.
+ * @remarks
+ *
+ * This is essentially a wrapper around {@link DocumentationSuiteOptions.hierarchyBoundaries}, but also enforces
+ * system-wide invariants.
+ *
+ * Namely...
+ *
+ * - `Package` items are *always* rendered to their own documents, regardless of the specified boundaries.
+ *
+ * - `EntryPoint` items are *never* rendered to their own documents (as they are completely ignored by this system),
+ * regardless of the specified boundaries.
  *
  * @param apiItem - The API being queried.
  * @param documentBoundaries - See {@link DocumentBoundaries}
+ *
+ * @public
  */
 export function doesItemRequireOwnDocument(
 	apiItem: ApiItem,
@@ -529,7 +541,9 @@ export function doesItemRequireOwnDocument(
  * in the resulting documentation suite.
  * I.e. whether or not child item documents should be generated under a sub-directory adjacent to the item in question.
  *
- * @remarks This is essentially a wrapper around {@link DocumentationSuiteOptions.hierarchyBoundaries}, but also enforces
+ * @remarks
+ *
+ * This is essentially a wrapper around {@link DocumentationSuiteOptions.hierarchyBoundaries}, but also enforces
  * system-wide invariants.
  *
  * Namely...

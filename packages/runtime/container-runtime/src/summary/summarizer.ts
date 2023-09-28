@@ -15,6 +15,7 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { ILoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { DriverHeader } from "@fluidframework/driver-definitions";
+// eslint-disable-next-line import/no-deprecated
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { FluidObject, IFluidHandleContext, IRequest } from "@fluidframework/core-interfaces";
 import { ISummaryConfiguration } from "../containerRuntime";
@@ -125,7 +126,8 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 		const resolvedContainer = await loader.resolve(request);
 		const fluidObject: FluidObject<ISummarizer> | undefined = resolvedContainer.getEntryPoint
 			? await resolvedContainer.getEntryPoint?.()
-			: await requestFluidObject<FluidObject<ISummarizer>>(resolvedContainer, {
+			: // eslint-disable-next-line import/no-deprecated
+			  await requestFluidObject<FluidObject<ISummarizer>>(resolvedContainer, {
 					url: "_summarizer",
 			  });
 		if (fluidObject?.ISummarizer === undefined) {

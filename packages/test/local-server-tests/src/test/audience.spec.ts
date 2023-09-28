@@ -32,9 +32,10 @@ describe("Audience correctness", () => {
 		"default",
 	);
 
-	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(factory, [
-		[factory.type, Promise.resolve(factory)],
-	]);
+	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+		defaultFactory: factory,
+		registryEntries: [[factory.type, Promise.resolve(factory)]],
+	});
 
 	/**
 	 * Function to wait for a client with the given clientId to be added to the audience of the given container.
