@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
 import { MockDocumentDeltaConnection } from "@fluid-internal/test-loader-utils";
-import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
+import { IErrorBase, IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import {
 	ContainerErrorType,
 	IPendingLocalState,
@@ -55,7 +55,10 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { DeltaStreamConnectionForbiddenError } from "@fluidframework/driver-utils";
+import {
+	DeltaStreamConnectionForbiddenError,
+	NonRetryableError,
+} from "@fluidframework/driver-utils";
 import { Deferred } from "@fluidframework/core-utils";
 
 const id = "fluid-test://localhost/containerTest";
@@ -625,6 +628,51 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		assert(
 			await readOnlyPromise.promise,
 			"DeltaManager should send readonly event on DeltaStreamConnectionForbidden error",
+		);
+	});
+
+	it("OutOfStorageError sends deltamanager readonly event", async () => {
+		const documentServiceFactory = provider.documentServiceFactory;
+
+		const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
+		mockFactory.createDocumentService = async (resolvedUrl) => {
+			const service = await documentServiceFactory.createDocumentService(resolvedUrl);
+			const realDeltaStream = service.connectToDeltaStream;
+			service.connectToDeltaStream = async (client) => {
+				throw new NonRetryableError(
+					"outOfStorageError",
+					DriverErrorType.outOfStorageError,
+					{ driverVersion: "1" },
+				);
+			};
+			return service;
+		};
+		const container = await loadContainer(
+			{ documentServiceFactory: mockFactory },
+			{ [LoaderHeader.loadMode]: { deltaConnection: "none" } },
+		);
+
+		const readOnlyPromise = new Deferred<boolean>();
+		container.deltaManager.on(
+			"readonly",
+			(
+				readonly?: boolean,
+				readonlyConnectionReason?: { reason: string; error?: IErrorBase },
+			) => {
+				assert(readonly, "Readonly should be true");
+				assert.strictEqual(
+					readonlyConnectionReason?.error?.errorType,
+					DriverErrorType.outOfStorageError,
+					"Error should be outOfStorageError",
+				);
+				readOnlyPromise.resolve(true);
+			},
+		);
+
+		container.connect();
+		assert(
+			await readOnlyPromise.promise,
+			"DeltaManager should send readonly event on Out of storage error",
 		);
 	});
 

@@ -124,6 +124,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 		const resolvedContainer = await loader.resolve(request);
 		const fluidObject: FluidObject<ISummarizer> | undefined =
 			await resolvedContainer.getEntryPoint?.();
+
 		if (fluidObject?.ISummarizer === undefined) {
 			throw new UsageError("Fluid object does not implement ISummarizer");
 		}

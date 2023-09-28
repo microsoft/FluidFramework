@@ -12,6 +12,12 @@
  * For packages whose APIs are intended for wide use, the "Strict" configuration should be used instead.
  */
 module.exports = {
+	env: {
+		browser: true,
+		es6: true,
+		es2024: false,
+		node: true,
+	},
 	extends: ["./minimal.js", "plugin:unicorn/recommended"],
 	plugins: ["eslint-plugin-tsdoc"],
 	rules: {
@@ -63,6 +69,32 @@ module.exports = {
 		"unicorn/numeric-separators-style": ["error", { onlyIfContainsSeparator: true }],
 
 		"unicorn/prevent-abbreviations": "off",
+
+		/**
+		 * Disabled because we don't yet target a ES version that includes .at().
+		 */
+		"unicorn/prefer-at": "off",
+
+		/**
+		 * Disabled because we use EventEmitter everywhere today and changing it will be a bigger change outside of lint
+		 * rules.
+		 */
+		"unicorn/prefer-event-target": "off",
+
+		/**
+		 * Disabled because we don't yet target a ES version that includes string.replaceAll.
+		 */
+		"unicorn/prefer-string-replace-all": "off",
+
+		/**
+		 * Disabled because we will lean on the formatter (i.e. prettier) to enforce indentation policy.
+		 */
+		"unicorn/template-indent": "off",
+
+		/**
+		 * The rule seems to crash on some of our code
+		 */
+		"unicorn/expiring-todo-comments": "off",
 
 		/**
 		 * Disallows the `any` type.

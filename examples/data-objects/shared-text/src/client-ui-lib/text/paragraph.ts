@@ -442,11 +442,8 @@ export function getListCacheInfo(
 					const indentLevel = tile.properties!.indentLevel;
 					const precedingItemCount = precedingTile.listCache!.itemCounts[indentLevel];
 					const itemCounts = precedingTile.listCache!.itemCounts.slice();
-					if (indentLevel < itemCounts.length) {
-						itemCounts[indentLevel] = precedingItemCount + 1;
-					} else {
-						itemCounts[indentLevel] = 1;
-					}
+					itemCounts[indentLevel] =
+						indentLevel < itemCounts.length ? precedingItemCount + 1 : 1;
 					// eslint-disable-next-line @typescript-eslint/restrict-plus-operands
 					for (let i = indentLevel + 1; i < itemCounts.length; i++) {
 						itemCounts[i] = 0;

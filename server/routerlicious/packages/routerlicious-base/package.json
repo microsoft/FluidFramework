@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-routerlicious-base",
-	"version": "2.0.0",
+	"version": "3.0.0",
 	"description": "Fluid server base classes for routerlicious",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -63,6 +63,7 @@
 		"@fluidframework/server-services-ordering-kafkanode": "workspace:~",
 		"@fluidframework/server-services-ordering-rdkafka": "workspace:~",
 		"@fluidframework/server-services-ordering-zookeeper": "workspace:~",
+		"@fluidframework/server-services-shared": "workspace:~",
 		"@fluidframework/server-services-telemetry": "workspace:~",
 		"@fluidframework/server-services-utils": "workspace:~",
 		"body-parser": "^1.17.1",

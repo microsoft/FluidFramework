@@ -167,6 +167,7 @@ declare function get_old_VariableDeclaration_DefaultServiceConfiguration():
 declare function use_current_VariableDeclaration_DefaultServiceConfiguration(
     use: TypeOnly<typeof current.DefaultServiceConfiguration>);
 use_current_VariableDeclaration_DefaultServiceConfiguration(
+    // @ts-expect-error compatibility expected to be broken
     get_old_VariableDeclaration_DefaultServiceConfiguration());
 
 /*
@@ -648,6 +649,7 @@ declare function get_old_InterfaceDeclaration_IDeliServerConfiguration():
 declare function use_current_InterfaceDeclaration_IDeliServerConfiguration(
     use: TypeOnly<current.IDeliServerConfiguration>);
 use_current_InterfaceDeclaration_IDeliServerConfiguration(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IDeliServerConfiguration());
 
 /*
@@ -1202,6 +1204,7 @@ declare function get_old_InterfaceDeclaration_IOrdererConnection():
 declare function use_current_InterfaceDeclaration_IOrdererConnection(
     use: TypeOnly<current.IOrdererConnection>);
 use_current_InterfaceDeclaration_IOrdererConnection(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IOrdererConnection());
 
 /*
@@ -1854,6 +1857,7 @@ declare function get_old_InterfaceDeclaration_IServerConfiguration():
 declare function use_current_InterfaceDeclaration_IServerConfiguration(
     use: TypeOnly<current.IServerConfiguration>);
 use_current_InterfaceDeclaration_IServerConfiguration(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IServerConfiguration());
 
 /*
@@ -1878,6 +1882,7 @@ declare function get_old_InterfaceDeclaration_IServiceConfiguration():
 declare function use_current_InterfaceDeclaration_IServiceConfiguration(
     use: TypeOnly<current.IServiceConfiguration>);
 use_current_InterfaceDeclaration_IServiceConfiguration(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IServiceConfiguration());
 
 /*
