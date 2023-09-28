@@ -252,9 +252,9 @@ export function assertValidRangeIndices(
 	endIndex: number,
 	array: { readonly length: number },
 ) {
+	assert(endIndex > startIndex, "Range indices are malformed.");
 	assertValidIndex(startIndex, array, false);
 	assertValidIndex(endIndex, array, true);
-	assert(endIndex > startIndex, "Removal indices are malformed.");
 }
 
 export function assertValidIndex(

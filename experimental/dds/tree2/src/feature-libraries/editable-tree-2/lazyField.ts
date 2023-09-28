@@ -269,21 +269,18 @@ export class LazySequence<TTypes extends AllowedTypes>
 		return fieldEditor;
 	}
 
-	public insertAt(
-		index: number,
-		value: FlexibleNodeContent<TTypes> | FlexibleNodeContent<TTypes>[],
-	): void {
+	public insertAt(index: number, value: FlexibleNodeContent<TTypes>[]): void {
 		const fieldEditor = this.sequenceEditor();
 		const content = this.normalizeNewContent(Array.isArray(value) ? value : [value]);
 		assertValidIndex(index, this, true);
 		fieldEditor.insert(index, content);
 	}
 
-	public insertAtStart(value: FlexibleNodeContent<TTypes> | FlexibleNodeContent<TTypes>[]): void {
+	public insertAtStart(value: FlexibleNodeContent<TTypes>[]): void {
 		this.insertAt(0, value);
 	}
 
-	public insertAtEnd(value: FlexibleNodeContent<TTypes> | FlexibleNodeContent<TTypes>[]): void {
+	public insertAtEnd(value: FlexibleNodeContent<TTypes>[]): void {
 		this.insertAt(this.length, value);
 	}
 
@@ -296,87 +293,84 @@ export class LazySequence<TTypes extends AllowedTypes>
 		const fieldEditor = this.sequenceEditor();
 		const { length } = this;
 		const removeStart = start ?? 0;
-		const removeEnd = end ?? length;
+		const removeEnd = Math.min(length, end ?? length);
 		assertValidRangeIndices(removeStart, removeEnd, this);
 		fieldEditor.delete(removeStart, removeEnd - removeStart);
 	}
 
-	public moveToStart(sourceStartIndex: number, sourceEndIndex: number): void;
+	public moveToStart(sourceStart: number, sourceEnd: number): void;
 	public moveToStart<TTypesSource extends AllowedTypes>(
-		sourceStartIndex: number,
-		sourceEndIndex: number,
+		sourceStart: number,
+		sourceEnd: number,
 		source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
 	): void;
 	public moveToStart<TTypesSource extends AllowedTypes>(
-		sourceStartIndex: number,
-		sourceEndIndex: number,
+		sourceStart: number,
+		sourceEnd: number,
 		source?: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
 	): void {
-		this.moveToIndexI(0, sourceStartIndex, sourceEndIndex, source);
+		this.moveToIndexI(0, sourceStart, sourceEnd, source);
 	}
 
-	public moveToEnd(sourceStartIndex: number, sourceEndIndex: number): void;
+	public moveToEnd(sourceStart: number, sourceEnd: number): void;
 	public moveToEnd<TTypesSource extends AllowedTypes>(
-		sourceStartIndex: number,
-		sourceEndIndex: number,
+		sourceStart: number,
+		sourceEnd: number,
 		source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
 	): void;
 	public moveToEnd<TTypesSource extends AllowedTypes>(
-		sourceStartIndex: number,
-		sourceEndIndex: number,
+		sourceStart: number,
+		sourceEnd: number,
 		source?: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
 	): void {
-		this.moveToIndexI(this.length, sourceStartIndex, sourceEndIndex, source);
+		this.moveToIndexI(this.length, sourceStart, sourceEnd, source);
 	}
 
-	public moveToIndex(index: number, sourceStartIndex: number, sourceEndIndex: number): void;
+	public moveToIndex(index: number, sourceStart: number, sourceEnd: number): void;
 	public moveToIndex<TTypesSource extends AllowedTypes>(
 		index: number,
-		sourceStartIndex: number,
-		sourceEndIndex: number,
+		sourceStart: number,
+		sourceEnd: number,
 		source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
 	): void;
 	public moveToIndex<TTypesSource extends AllowedTypes>(
 		index: number,
-		sourceStartIndex: number,
-		sourceEndIndex: number,
+		sourceStart: number,
+		sourceEnd: number,
 		source?: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
 	): void {
-		this.moveToIndexI(index, sourceStartIndex, sourceEndIndex, source);
+		this.moveToIndexI(index, sourceStart, sourceEnd, source);
 	}
 
 	private moveToIndexI<TTypesSource extends AllowedTypes>(
 		index: number,
-		sourceStartIndex: number,
-		sourceEndIndex: number,
+		sourceStart: number,
+		sourceEnd: number,
 		source?: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
 	): void {
 		const sourceField = source !== undefined ? (this.isSameAs(source) ? this : source) : this;
-		assertValidRangeIndices(sourceStartIndex, sourceEndIndex, sourceField);
+		assertValidRangeIndices(sourceStart, sourceEnd, sourceField);
 		if (this.schema.types !== undefined && sourceField !== this) {
-			for (let i = sourceStartIndex; i < sourceEndIndex; i++) {
-				const sourceNode = sourceField.at(sourceStartIndex);
+			for (let i = sourceStart; i < sourceEnd; i++) {
+				const sourceNode = sourceField.at(sourceStart);
 				if (!this.schema.types.has(sourceNode.schema.name)) {
 					throw new Error("Type in source sequence is not allowed in destination.");
 				}
 			}
 		}
-		const count = sourceEndIndex - sourceStartIndex;
+		const count = sourceEnd - sourceStart;
 		let destinationIndex = index;
 		if (sourceField === this) {
 			destinationIndex -= count;
 		}
 		assertValidIndex(destinationIndex, this, true);
 		// TODO: determine support for move across different sequence types
-		assert(
-			source instanceof LazySequence,
-			"Move between two different sequence types not supported.",
-		);
+		assert(source instanceof LazySequence, "Unsupported sequence implementation.");
 		const sourceFieldPath = (sourceField as LazySequence<TTypesSource>).getFieldPath();
 		const destinationFieldPath = this.getFieldPath();
 		this.context.editor.move(
 			sourceFieldPath,
-			sourceStartIndex,
+			sourceStart,
 			count,
 			destinationFieldPath,
 			destinationIndex,
