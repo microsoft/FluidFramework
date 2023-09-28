@@ -19,7 +19,7 @@ data:
             "timestamp": false
         },
         "config": {
-            "configDumpEnabled": {{ .Values.config.configDumpEnabled }}
+            "configDumpEnabled": {{ .Values.gitrest.config.configDumpEnabled }}
         },
         "requestSizeLimit": "1gb",
         "storageDir": {

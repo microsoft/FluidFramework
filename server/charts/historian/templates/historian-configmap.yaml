@@ -19,7 +19,7 @@ data:
             "timestamp": false
         },
         "config": {
-            "configDumpEnabled": {{ .Values.config.configDumpEnabled }}
+            "configDumpEnabled": {{ .Values.historian.config.configDumpEnabled }}
         },
         "requestSizeLimit": "1gb",
         "riddler": "{{ .Values.historian.riddler }}",
