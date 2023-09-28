@@ -70,7 +70,7 @@ function initializeTreeWithContent<Kind extends FieldKind, Types extends Allowed
  */
 function createLeafTree(
 	kind: ValueSchema,
-	initialTree: any,
+	initialTree: any, // TODO
 ): {
 	treeSchema: FieldSchema<Optional, [TreeSchema<"leaf">]>;
 	context: Context;
@@ -120,6 +120,31 @@ describe.only("unboxed unit tests", () => {
 			});
 
 			// TODO: Fluid Handle
+
+			it("Struct", () => {
+				const builder = new SchemaBuilder("test");
+				const stringLeafSchema = builder.leaf("string", ValueSchema.String);
+				const booleanLeafSchema = builder.leaf("boolean", ValueSchema.Boolean);
+				const structSchema = builder.struct("struct", {
+					foo: SchemaBuilder.fieldValue(stringLeafSchema),
+					bar: SchemaBuilder.fieldSequence(booleanLeafSchema),
+				});
+				const rootSchema = SchemaBuilder.fieldOptional(structSchema);
+				const schema = builder.intoDocumentSchema(rootSchema);
+
+				const initialTree = {
+					foo: "Hello world",
+					bar: [true, false, true],
+				};
+
+				const { context, cursor } = initializeTreeWithContent(schema, initialTree);
+
+				const result = unboxedField(context, rootSchema, cursor);
+
+				assert(result !== undefined);
+				assert.equal(result.foo, "Hello world");
+				assert.deepEqual(result.bar, [true, false, true]);
+			});
 		});
 
 		// TODO cases:
