@@ -28,14 +28,16 @@ import {
 	TableHeaderRowNode,
 	TableNode,
 } from "../../documentation-domain";
-import { ApiFunctionLike, ApiModifier, injectSeparator } from "../../utilities";
 import {
+	ApiFunctionLike,
+	ApiModifier,
 	getDefaultValueBlock,
-	getLinkForApiItem,
 	getModifiers,
 	getReleaseTag,
+	injectSeparator,
 	isDeprecated,
-} from "../ApiItemTransformUtilities";
+} from "../../utilities";
+import { getLinkForApiItem } from "../ApiItemTransformUtilities";
 import { transformTsdocSection } from "../TsdocNodeTransforms";
 import { getTsdocNodeTransformationOptions } from "../Utilities";
 import { ApiItemTransformationConfiguration } from "../configuration";

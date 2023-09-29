@@ -9,19 +9,8 @@
 
 export {
 	doesItemRequireOwnDocument,
-	getDefaultValueBlock,
-	getDeprecatedBlock,
-	getExampleBlocks,
 	getHeadingForApiItem,
 	getLinkForApiItem,
-	getModifiers,
-	getReleaseTag,
-	getReturnsBlock,
-	getThrowsBlocks,
-	isDeprecated,
-	isOptional,
-	isReadonly,
-	isStatic,
 } from "./ApiItemTransformUtilities";
 export {
 	type ApiItemTransformationConfiguration,

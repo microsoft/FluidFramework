@@ -42,16 +42,16 @@ import {
 	injectSeparator,
 	getQualifiedApiItemName,
 	getSeeBlocks,
+	getThrowsBlocks,
+	getDeprecatedBlock,
+	getExampleBlocks,
+	getReturnsBlock,
 } from "../../utilities";
 import {
 	doesItemKindRequireOwnDocument,
 	doesItemRequireOwnDocument,
 	getAncestralHierarchy,
-	getDeprecatedBlock,
-	getExampleBlocks,
 	getLinkForApiItem,
-	getReturnsBlock,
-	getThrowsBlocks,
 } from "../ApiItemTransformUtilities";
 import { transformTsdocSection } from "../TsdocNodeTransforms";
 import { getTsdocNodeTransformationOptions } from "../Utilities";
