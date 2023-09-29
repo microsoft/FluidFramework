@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { SharedTree as LegacySharedTree } from "@fluid-experimental/tree";
+import {
+	Change,
+	SharedTree as LegacySharedTree,
+	SharedTreeEvent,
+	TraitLabel,
+} from "@fluid-experimental/tree";
 import { TypedEmitter } from "tiny-typed-emitter";
 
 import { IInventoryList, IInventoryListEvents, IPart } from "./interfaces";
@@ -17,30 +22,35 @@ export class LegacySharedTreeInventoryList
 {
 	// private readonly _inventory: Inventory;
 	// Feels bad to give out the whole LegacySharedTree.  Is there something more scoped to pass (root or something)?
-	public constructor(tree: LegacySharedTree) {
+	public constructor(private readonly tree: LegacySharedTree) {
 		super();
 
-		// const sharedTreeView = tree.schematize(schemaPolicy);
-		// this._inventory = sharedTreeView.context.root[0] as unknown as Inventory;
-		// sharedTreeView.events.on("afterBatch", () => {
-		// 	this.emit("inventoryChanged");
-		// });
+		tree.on(SharedTreeEvent.EditCommitted, () => {
+			this.emit("inventoryChanged");
+		});
 	}
 
 	public getParts() {
 		const parts: IPart[] = [];
-		// for (const part of this._inventory.parts) {
-		// 	parts.push({
-		// 		name: part.name,
-		// 		quantity: part.quantity,
-		// 		increment: () => {
-		// 			part.quantity++;
-		// 		},
-		// 		decrement: () => {
-		// 			part.quantity--;
-		// 		},
-		// 	});
-		// }
+		const rootNode = this.tree.currentView.getViewNode(this.tree.currentView.root);
+		const partsNode = this.tree.currentView.getViewNode(
+			rootNode.traits.get("parts" as TraitLabel)![0],
+		);
+		for (const [partLabel, [partQuantityNodeId]] of partsNode.traits) {
+			const partQuantityNode = this.tree.currentView.getViewNode(partQuantityNodeId);
+			const quantity = partQuantityNode.payload as number;
+			const part: IPart = {
+				name: partLabel,
+				quantity,
+				increment: () => {
+					this.tree.applyEdit(Change.setPayload(partQuantityNodeId, quantity + 1));
+				},
+				decrement: () => {
+					this.tree.applyEdit(Change.setPayload(partQuantityNodeId, quantity - 1));
+				},
+			};
+			parts.push(part);
+		}
 		return parts;
 	}
 }

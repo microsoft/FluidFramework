@@ -5,8 +5,9 @@
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import {
-	BuildNode,
 	Change,
+	ChangeNode,
+	Definition,
 	SharedTree as LegacySharedTree,
 	StablePlace,
 	TraitLabel,
@@ -21,6 +22,12 @@ import { LegacySharedTreeInventoryList } from "./legacySharedTreeInventoryList";
 const legacySharedTreeKey = "legacySharedTree";
 const sharedTreeKey = "sharedTree";
 const sharedTreeForHookKey = "sharedTreeForHook";
+
+export const enum NodeKind {
+	scalar = "s",
+	object = "o",
+	array = "a",
+}
 
 export class InventoryListTrio extends DataObject {
 	private _legacySharedTreeInventoryList: IInventoryList | undefined;
@@ -52,17 +59,34 @@ export class InventoryListTrio extends DataObject {
 			LegacySharedTree.getFactory().type,
 		) as LegacySharedTree;
 
-		// Add the two parts to the LegacySharedTree
-		const node: BuildNode = {
-			definition: "Node",
+		const inventoryNode: ChangeNode = {
 			identifier: legacySharedTree.generateNodeId(),
+			definition: NodeKind.array as Definition,
+			traits: {
+				nuts: [
+					{
+						identifier: legacySharedTree.generateNodeId(),
+						definition: NodeKind.scalar as Definition,
+						traits: {},
+						payload: 0,
+					},
+				],
+				bolts: [
+					{
+						identifier: legacySharedTree.generateNodeId(),
+						definition: NodeKind.scalar as Definition,
+						traits: {},
+						payload: 0,
+					},
+				],
+			},
 		};
 		legacySharedTree.applyEdit(
 			Change.insertTree(
-				node,
+				inventoryNode,
 				StablePlace.atStartOf({
 					parent: legacySharedTree.currentView.root,
-					label: "foo" as TraitLabel,
+					label: "parts" as TraitLabel,
 				}),
 			),
 		);
