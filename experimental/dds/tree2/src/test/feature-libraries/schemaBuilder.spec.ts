@@ -91,3 +91,14 @@ describe("intoDocumentSchema", () => {
 		assert.equal(schema.treeSchema.get(brand("leaf")), leafSchema);
 	});
 });
+
+describe("intoLibrary", () => {
+	it("Simple", () => {
+		const schemaBuilder = new SchemaBuilder("test");
+		const leafSchema = schemaBuilder.leaf("leaf", ValueSchema.Boolean);
+		const schema = schemaBuilder.intoLibrary();
+
+		assert.equal(schema.treeSchema.size, 1); // "leaf"
+		assert.equal(schema.treeSchema.get(brand("leaf")), leafSchema);
+	});
+});
