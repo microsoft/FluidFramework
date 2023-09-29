@@ -5,13 +5,8 @@
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import {
-	Change,
-	ChangeNode,
-	Definition,
 	SharedTree as LegacySharedTree,
 	SharedTreeFactory as LegacySharedTreeFactory,
-	StablePlace,
-	TraitLabel,
 } from "@fluid-experimental/tree";
 import { ISharedTree, SharedTreeFactory } from "@fluid-experimental/tree2";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -53,38 +48,9 @@ export class InventoryListTrio extends DataObject {
 			undefined,
 			LegacySharedTree.getFactory().type,
 		) as LegacySharedTree;
-
-		const inventoryNode: ChangeNode = {
-			identifier: legacySharedTree.generateNodeId(),
-			definition: "array" as Definition,
-			traits: {
-				nuts: [
-					{
-						identifier: legacySharedTree.generateNodeId(),
-						definition: "scalar" as Definition,
-						traits: {},
-						payload: 0,
-					},
-				],
-				bolts: [
-					{
-						identifier: legacySharedTree.generateNodeId(),
-						definition: "scalar" as Definition,
-						traits: {},
-						payload: 0,
-					},
-				],
-			},
-		};
-		legacySharedTree.applyEdit(
-			Change.insertTree(
-				inventoryNode,
-				StablePlace.atStartOf({
-					parent: legacySharedTree.currentView.root,
-					label: "parts" as TraitLabel,
-				}),
-			),
-		);
+		// Would probably be more normal to encapsulate this initialization into the normal lifecycle methods
+		// of an individual data object for a single inventory list.
+		LegacySharedTreeInventoryList.initializeLegacySharedTreeForInventory(legacySharedTree);
 
 		const sharedTree = this.runtime.createChannel(
 			undefined,
@@ -117,8 +83,10 @@ export class InventoryListTrio extends DataObject {
 	}
 }
 
-LegacySharedTreeFactory.Type = "foobar";
-(LegacySharedTreeFactory.Attributes as any).type = "foobar";
+// Hack to allow us to register both LegacySharedTree and new SharedTree at the same time.
+// By default they have the same type of "SharedTree" and would collide.
+LegacySharedTreeFactory.Type = "LegacySharedTree";
+(LegacySharedTreeFactory.Attributes as any).type = "LegacySharedTree";
 
 export const InventoryListTrioFactory = new DataObjectFactory(
 	"@fluid-experimental/inventory-list",
