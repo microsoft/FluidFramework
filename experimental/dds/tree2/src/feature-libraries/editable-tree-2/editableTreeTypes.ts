@@ -469,6 +469,16 @@ export type FlexibleNodeContent<TTypes extends AllowedTypes> = SchemaAware.Allow
 >;
 
 /**
+ * Type to ensures two types overlap in at least one way.
+ * It evaluates to the input type if this is true, and never otherwise.
+ * Examples:
+ * CheckTypesOverlap\<number | boolean, number | object\> = number | boolean
+ * CheckTypesOverlap\<number | boolean, string | object\> = never
+ * @alpha
+ */
+export type CheckTypesOverlap<T, TCheck> = [Extract<T, TCheck> extends never ? never : T][0];
+
+/**
  * {@link TreeField} that stores a sequence of children.
  *
  * Sequence fields can contain an ordered sequence any number of {@link TreeNode}s which must be of the {@link AllowedTypes} from the {@link FieldSchema}).
@@ -512,11 +522,120 @@ export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
 
 	readonly length: number;
 
-	// TODO: more and/or better editing APIs. As is, this can't express moves.
-	replaceRange(
+	/**
+	 * Inserts new item(s) at a specified location.
+	 * @param index - The index at which to insert `value`.
+	 * @param value - The content to insert.
+	 * @throws Throws if any of the input indices are invalid.
+	 */
+	insertAt(index: number, value: FlexibleNodeContent<TTypes>[]): void;
+
+	/**
+	 * Inserts new item(s) at the start of the sequence.
+	 * @param value - The content to insert.
+	 * @throws Throws if any of the input indices are invalid.
+	 */
+	insertAtStart(value: FlexibleNodeContent<TTypes>[]): void;
+
+	/**
+	 * Inserts new item(s) at the end of the sequence.
+	 * @param value - The content to insert.
+	 * @throws Throws if any of the input indices are invalid.
+	 */
+	insertAtEnd(value: FlexibleNodeContent<TTypes>[]): void;
+
+	/**
+	 * Removes the item at the specified location.
+	 * @param index - The index at which to remove the item.
+	 * @throws Throws if any of the input indices are invalid.
+	 */
+	removeAt(index: number): void;
+
+	/**
+	 * Removes all items between the specified indices.
+	 * @param start - The starting index of the range to remove (inclusive). Defaults to the start of the sequence.
+	 * @param end - The ending index of the range to remove (exclusive).
+	 * @throws Throws if any of the input indices are invalid.
+	 * If `end` is not supplied or is greater than the length of the sequence, all items after `start` are deleted.
+	 */
+	removeRange(start?: number, end?: number): void;
+
+	/**
+	 * Moves the specified items to the start of the sequence.
+	 * @param sourceStart - The starting index of the range to move (inclusive).
+	 * @param sourceEnd - The ending index of the range to move (exclusive)
+	 * @throws Throws if any of the input indices are invalid.
+	 * @remarks
+	 * All indices are relative to the sequence excluding the nodes being moved.
+	 */
+	moveToStart(sourceStart: number, sourceEnd: number): void;
+
+	/**
+	 * Moves the specified items to the start of the sequence.
+	 * @param sourceStart - The starting index of the range to move (inclusive).
+	 * @param sourceEnd - The ending index of the range to move (exclusive)
+	 * @param source - The source sequence to move items out of.
+	 * @throws Throws if the types of any of the items being moved are not allowed in the destination sequence or if the input indices are invalid.
+	 * @remarks
+	 * All indices are relative to the sequence excluding the nodes being moved.
+	 */
+	moveToStart<TTypesSource extends AllowedTypes>(
+		sourceStart: number,
+		sourceEnd: number,
+		source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
+	): void;
+
+	/**
+	 * Moves the specified items to the end of the sequence.
+	 * @param sourceStart - The starting index of the range to move (inclusive).
+	 * @param sourceEnd - The ending index of the range to move (exclusive)
+	 * @throws Throws if any of the input indices are invalid.
+	 * @remarks
+	 * All indices are relative to the sequence excluding the nodes being moved.
+	 */
+	moveToEnd(sourceStart: number, sourceEnd: number): void;
+
+	/**
+	 * Moves the specified items to the end of the sequence.
+	 * @param sourceStart - The starting index of the range to move (inclusive).
+	 * @param sourceEnd - The ending index of the range to move (exclusive)
+	 * @param source - The source sequence to move items out of.
+	 * @throws Throws if the types of any of the items being moved are not allowed in the destination sequence or if the input indices are invalid.
+	 * @remarks
+	 * All indices are relative to the sequence excluding the nodes being moved.
+	 */
+	moveToEnd<TTypesSource extends AllowedTypes>(
+		sourceStart: number,
+		sourceEnd: number,
+		source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
+	): void;
+
+	/**
+	 * Moves the specified items to the desired location within the sequence.
+	 * @param index - The index to move the items to.
+	 * @param sourceStart - The starting index of the range to move (inclusive).
+	 * @param sourceEnd - The ending index of the range to move (exclusive)
+	 * @throws Throws if any of the input indices are invalid.
+	 * @remarks
+	 * All indices are relative to the sequence excluding the nodes being moved.
+	 */
+	moveToIndex(index: number, sourceStart: number, sourceEnd: number): void;
+
+	/**
+	 * Moves the specified items to the desired location within the sequence.
+	 * @param index - The index to move the items to.
+	 * @param sourceStart - The starting index of the range to move (inclusive).
+	 * @param sourceEnd - The ending index of the range to move (exclusive)
+	 * @param source - The source sequence to move items out of.
+	 * @throws Throws if the types of any of the items being moved are not allowed in the destination sequence or if the input indices are invalid.
+	 * @remarks
+	 * All indices are relative to the sequence excluding the nodes being moved.
+	 */
+	moveToIndex<TTypesSource extends AllowedTypes>(
 		index: number,
-		count: number,
-		content: Iterable<FlexibleNodeContent<TTypes>>,
+		sourceStart: number,
+		sourceEnd: number,
+		source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
 	): void;
 
 	[boxedIterator](): IterableIterator<TypedNodeUnion<TTypes>>;
