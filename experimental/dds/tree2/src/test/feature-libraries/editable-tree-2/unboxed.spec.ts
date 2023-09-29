@@ -26,9 +26,14 @@ import {
 	SchemaBuilder,
 	TreeSchema,
 	TypedSchemaCollection,
+	ValueFieldKind,
 } from "../../../feature-libraries";
 import { Context } from "../../../feature-libraries/editable-tree-2/context";
-import { unboxedField, unboxedTree } from "../../../feature-libraries/editable-tree-2/unboxed";
+import {
+	unboxedField,
+	unboxedTree,
+	unboxedUnion,
+} from "../../../feature-libraries/editable-tree-2/unboxed";
 import { brand } from "../../../util";
 import { contextWithContentReadonly } from "./utils";
 
@@ -99,9 +104,40 @@ function createOptionalLeafTree(
 	};
 }
 
-describe.only("unboxed unit tests", () => {
+/**
+ * Creates a tree whose root node contains a single (value) leaf field.
+ * Also initializes a cursor and moves that cursor to the tree's root field.
+ *
+ * @returns The initialized tree, cursor, and associated context.
+ */
+function createValueLeafTree(
+	kind: ValueSchema,
+	initialTree:
+		| SchemaAware.TypedField<FieldSchema, SchemaAware.ApiMode.Flexible>
+		| readonly ITreeCursorSynchronous[]
+		| ITreeCursorSynchronous,
+): {
+	treeSchema: FieldSchema<ValueFieldKind, [TreeSchema<"leaf">]>;
+	context: Context;
+	cursor: ITreeSubscriptionCursor;
+} {
+	const builder = new SchemaBuilder("test");
+	const leafSchema = builder.leaf("leaf", kind);
+	const rootSchema = SchemaBuilder.field(FieldKinds.value, leafSchema);
+	const schema = builder.intoDocumentSchema(rootSchema);
+
+	const { context, cursor } = initializeTreeWithContent(schema, initialTree);
+
+	return {
+		treeSchema: rootSchema,
+		context,
+		cursor,
+	};
+}
+
+describe("unboxed unit tests", () => {
 	describe("unboxedField", () => {
-		describe("Optional", () => {
+		describe("Optional field", () => {
 			it("No value", () => {
 				const { treeSchema, context, cursor } = createOptionalLeafTree(
 					ValueSchema.Number,
@@ -210,6 +246,14 @@ describe.only("unboxed unit tests", () => {
 				assert.equal(unboxed.type, "boolean");
 				assert.equal(unboxed.value, true);
 			});
+		});
+
+		describe("Value field", () => {
+			// TODO
+		});
+
+		describe("Sequence field", () => {
+			// TODO
 		});
 	});
 
@@ -402,6 +446,28 @@ describe.only("unboxed unit tests", () => {
 		});
 	});
 	describe("unboxedUnion", () => {
-		// TODO
+		it("Single-type value", () => {
+			const { treeSchema, context, cursor } = createOptionalLeafTree(
+				ValueSchema.String,
+				"Hello world",
+			);
+			assert.equal(unboxedUnion(context, treeSchema, cursor), "Hello world");
+		});
+
+		it("Multi-type value", () => {
+			// TODO
+		});
+
+		it("Single type optional", () => {
+			const { treeSchema, context, cursor } = createOptionalLeafTree(
+				ValueSchema.Boolean,
+				true,
+			);
+			assert.equal(unboxedUnion(context, treeSchema, cursor), true);
+		});
+
+		it("Multi-type optional", () => {
+			// TODO
+		});
 	});
 });
