@@ -254,6 +254,9 @@ export function brandOpaque<T extends BrandedType<any, string>>(value: isAny<Val
 export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
 
 // @alpha
+export type CheckTypesOverlap<T, TCheck> = [Extract<T, TCheck> extends never ? never : T][0];
+
+// @alpha
 export type ChildCollection = FieldKey | RootField;
 
 // @alpha
@@ -1948,12 +1951,21 @@ export interface Sequence2<TTypes extends AllowedTypes> extends TreeField {
     readonly asArray: readonly UnboxNodeUnion<TTypes>[];
     at(index: number): UnboxNodeUnion<TTypes>;
     boxedAt(index: number): TypedNodeUnion<TTypes>;
+    insertAt(index: number, value: FlexibleNodeContent<TTypes>[]): void;
+    insertAtEnd(value: FlexibleNodeContent<TTypes>[]): void;
+    insertAtStart(value: FlexibleNodeContent<TTypes>[]): void;
     // (undocumented)
     readonly length: number;
     map<U>(callbackfn: (value: UnboxNodeUnion<TTypes>, index: number) => U): U[];
     mapBoxed<U>(callbackfn: (value: TypedNodeUnion<TTypes>, index: number) => U): U[];
-    // (undocumented)
-    replaceRange(index: number, count: number, content: Iterable<FlexibleNodeContent<TTypes>>): void;
+    moveToEnd(sourceStart: number, sourceEnd: number): void;
+    moveToEnd<TTypesSource extends AllowedTypes>(sourceStart: number, sourceEnd: number, source: Sequence2<CheckTypesOverlap<TTypesSource, TTypes>>): void;
+    moveToIndex(index: number, sourceStart: number, sourceEnd: number): void;
+    moveToIndex<TTypesSource extends AllowedTypes>(index: number, sourceStart: number, sourceEnd: number, source: Sequence2<CheckTypesOverlap<TTypesSource, TTypes>>): void;
+    moveToStart(sourceStart: number, sourceEnd: number): void;
+    moveToStart<TTypesSource extends AllowedTypes>(sourceStart: number, sourceEnd: number, source: Sequence2<CheckTypesOverlap<TTypesSource, TTypes>>): void;
+    removeAt(index: number): void;
+    removeRange(start?: number, end?: number): void;
 }
 
 // @alpha (undocumented)
