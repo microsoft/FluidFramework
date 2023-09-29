@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/fetch-tool",
-	"version": "2.0.0-internal.6.4.0",
+	"version": "2.0.0-internal.7.1.0",
 	"description": "Console tool to fetch Fluid data from relay service",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -39,23 +39,23 @@
 		"@fluidframework/odsp-driver": "workspace:~",
 		"@fluidframework/odsp-driver-definitions": "workspace:~",
 		"@fluidframework/odsp-urlresolver": "workspace:~",
-		"@fluidframework/protocol-definitions": "^1.1.0",
+		"@fluidframework/protocol-definitions": "^3.0.0",
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/routerlicious-urlresolver": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/tool-utils": "workspace:~"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.22.0",
-		"@fluid-tools/fetch-tool-previous": "npm:@fluid-tools/fetch-tool@2.0.0-internal.6.3.0",
+		"@fluid-tools/build-cli": "^0.24.0",
+		"@fluid-tools/fetch-tool-previous": "npm:@fluid-tools/fetch-tool@2.0.0-internal.7.0.0",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.22.0",
+		"@fluidframework/build-tools": "^0.24.0",
 		"@fluidframework/eslint-config-fluid": "^2.1.0",
 		"@types/node": "^16.18.38",
 		"eslint": "~8.6.0",
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",
-		"typescript": "~4.5.5"
+		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
 		"broken": {}

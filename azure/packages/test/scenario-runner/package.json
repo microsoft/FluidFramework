@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/azure-scenario-runner",
-	"version": "2.0.0-internal.6.4.0",
+	"version": "2.0.0-internal.7.1.0",
 	"description": "Azure client end to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -83,13 +83,13 @@
 		"mocha": "^10.2.0",
 		"sinon": "^7.4.2",
 		"start-server-and-test": "^1.11.7",
-		"tinylicious": "^1.0.0",
+		"tinylicious": "^2.0.1",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.22.0",
+		"@fluid-tools/build-cli": "^0.24.0",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.22.0",
+		"@fluidframework/build-tools": "^0.24.0",
 		"@fluidframework/eslint-config-fluid": "^2.1.0",
 		"@types/js-yaml": "^4.0.5",
 		"@types/mocha": "^9.1.1",
@@ -101,7 +101,7 @@
 		"nock": "^13.3.3",
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",
-		"typescript": "~4.5.5"
+		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
 		"disabled": true,
