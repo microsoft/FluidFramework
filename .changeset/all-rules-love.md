@@ -5,7 +5,7 @@
 Deprecation of the type parameter in IntervalCollection's add method, deprecation of changeProperties, and updates to the signatures of IntervalColletcion add and change.
 
 The type parameter is being removed from IntervalCollection.add. The new usage requires calling add with an object containing each of the desired parameters.
-Example: add({start: 0, end: 1, props: { a: b }, stickiness: IntervalStickiness.END}).
+Example: add({start: 0, end: 1, props: { a: b }}).
 
 The signature of IntervalCollection.change is also being updated to an object containing the desired parameters, instead of the existing list of parameters. In addition, changeProperties will be removed, so in order to change the properties of an interval, the change method (with the updated signature) will be used. The id of the intevral is not included in the object passed to change, but is instead passed as the first parameter to change.
 Examples:
