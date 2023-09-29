@@ -577,8 +577,7 @@ export function createSequenceInterval(
 		endRefType = ReferenceType.Transient;
 	} else {
 		if (intervalType === IntervalType.Nest) {
-			beginRefType = ReferenceType.NestBegin;
-			endRefType = ReferenceType.NestEnd;
+			throw new UsageError("Nest type intervals are not supported.");
 		}
 		// All non-transient interval references must eventually be SlideOnRemove
 		// To ensure eventual consistency, they must start as StayOnRemove when

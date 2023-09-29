@@ -145,8 +145,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     };
     // (undocumented)
     getShortClientId(longClientId: string): number;
-    // @deprecated (undocumented)
-    getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap;
     // (undocumented)
     insertAtReferencePositionLocal(refPos: ReferencePosition, segment: ISegment): IMergeTreeInsertMsg | undefined;
     // (undocumented)
@@ -539,9 +537,6 @@ export interface IMergeTreeTextHelper {
     getText(refSeq: number, clientId: number, placeholder: string, start?: number, end?: number): string;
 }
 
-// @public (undocumented)
-export function internedSpaces(n: number): string;
-
 // @internal (undocumented)
 export interface IRBAugmentation<TKey, TData> {
     // (undocumented)
@@ -860,9 +855,6 @@ export interface QProperty<TKey, TData> {
     key?: TKey;
 }
 
-// @public (undocumented)
-export type RangeStackMap = MapLike<Stack<ReferencePosition>>;
-
 // @internal (undocumented)
 export const RBColor: {
     readonly RED: 0;
@@ -957,10 +949,6 @@ export interface ReferencePosition {
 
 // @public
 export enum ReferenceType {
-    // @deprecated (undocumented)
-    NestBegin = 2,
-    // @deprecated (undocumented)
-    NestEnd = 4,
     // (undocumented)
     RangeBegin = 16,
     // (undocumented)
@@ -974,16 +962,7 @@ export enum ReferenceType {
 }
 
 // @public (undocumented)
-export const refGetRangeLabels: (refPos: ReferencePosition) => string[] | undefined;
-
-// @public (undocumented)
 export const refGetTileLabels: (refPos: ReferencePosition) => string[] | undefined;
-
-// @public (undocumented)
-export function refHasRangeLabel(refPos: ReferencePosition, label: string): boolean;
-
-// @public (undocumented)
-export function refHasRangeLabels(refPos: ReferencePosition): boolean;
 
 // @public (undocumented)
 export function refHasTileLabel(refPos: ReferencePosition, label: string): boolean;

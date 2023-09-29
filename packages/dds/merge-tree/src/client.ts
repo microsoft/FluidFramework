@@ -62,7 +62,7 @@ import { SnapshotLegacy } from "./snapshotlegacy";
 import { SnapshotLoader } from "./snapshotLoader";
 import { IMergeTreeTextHelper } from "./textSegment";
 import { SnapshotV1 } from "./snapshotV1";
-import { ReferencePosition, RangeStackMap, DetachedReferencePosition } from "./referencePositions";
+import { ReferencePosition, DetachedReferencePosition } from "./referencePositions";
 import { MergeTree } from "./mergeTree";
 import { MergeTreeTextHelper } from "./MergeTreeTextHelper";
 import { walkAllChildSegments } from "./mergeTreeNodeWalk";
@@ -1050,17 +1050,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		const loader = new SnapshotLoader(runtime, this, this._mergeTree, this.logger, serializer);
 
 		return loader.initialize(storage);
-	}
-
-	/**
-	 * @deprecated - this functionality is no longer supported and will be removed
-	 */
-	getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap {
-		return this._mergeTree.getStackContext(
-			startPos,
-			this.getCollabWindow().clientId,
-			rangeLabels,
-		);
 	}
 
 	private getLocalSequenceNumber() {
