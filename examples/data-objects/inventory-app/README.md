@@ -1,6 +1,6 @@
 # @fluid-example/inventory-app
 
-Minimal sample demonstrating use of the SharedTree API.
+Minimal sample demonstrating use of the legacy SharedTree and new SharedTree API. Includes both direct usage as well as leveraging a custom React hook to bind a view to the new SharedTree.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_EXAMPLE_GETTING_STARTED_SECTION:usesTinylicious=FALSE) -->
 

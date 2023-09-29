@@ -13,7 +13,7 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 const sharedTreeKey = "sharedTree";
 
 /**
- * Adapts a given ISharedTree into the interface we want to use for an inventory list, IInventoyrList.
+ * An inventory list implemented using SharedTree.
  */
 export class SharedTreeInventoryList extends DataObject implements IInventoryListUntyped {
 	private _inventory: Inventory | undefined;

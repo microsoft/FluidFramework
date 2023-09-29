@@ -20,7 +20,7 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 const legacySharedTreeKey = "legacySharedTree";
 
 /**
- * Adapts a given LegacySharedTree into the interface we want to use for an inventory list, IInventoryList.
+ * An inventory list implemented using LegacySharedTree.
  */
 export class LegacySharedTreeInventoryList extends DataObject implements IInventoryListUntyped {
 	private _tree: LegacySharedTree | undefined;

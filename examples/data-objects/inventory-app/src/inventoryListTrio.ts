@@ -15,6 +15,10 @@ const legacySharedTreeInventoryListKey = "legacySharedTreeInventoryList";
 const sharedTreeInventoryListKey = "sharedTreeInventoryList";
 const sharedTreeForHookKey = "sharedTreeForHook";
 
+/**
+ * A DataObject providing three approaches to inventory lists - both LegacySharedTree and SharedTree
+ * contained within DataObjects, as well as SharedTree used directly by the view in a custom React hook.
+ */
 export class InventoryListTrio extends DataObject {
 	private _legacySharedTreeInventoryList: IInventoryListUntyped | undefined;
 	private _sharedTreeInventoryList: IInventoryListUntyped | undefined;
