@@ -81,7 +81,7 @@ export {
 import * as ApiItemUtilities from "./ApiItemUtilitiesModule";
 
 // Export layout-related utilities (for use in writing custom transformations)
-import * as LayoutUtilities from "./LayoutUtilities";
+import * as LayoutUtilities from "./LayoutUtilitiesModule";
 
 export {
 	/**
