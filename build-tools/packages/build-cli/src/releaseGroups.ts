@@ -15,12 +15,16 @@
  */
 export type ReleasePackage = string;
 
-const knownReleaseGroups = ["build-tools", "client", "server", "gitrest", "historian"] as const;
-
 /**
  * An array of known release groups.
  */
-export const KnownReleaseGroups = knownReleaseGroups;
+export const knownReleaseGroups = [
+	"build-tools",
+	"client",
+	"server",
+	"gitrest",
+	"historian",
+] as const;
 
 /**
  * A type that represents release groups.
