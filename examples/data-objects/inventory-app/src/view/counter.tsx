@@ -22,7 +22,7 @@ export const Counter = ({
 	onDecrement,
 }: ICounterProps): React.ReactElement => (
 	<div className="counter">
-		<h2>{title}</h2>
+		<div>{title}</div>
 		<div className="counter_spinner">
 			<button onClick={onDecrement} disabled={!(count > 0)}>
 				-

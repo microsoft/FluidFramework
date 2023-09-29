@@ -45,7 +45,7 @@ export class LegacySharedTreeInventoryList extends DataObject implements IInvent
 			// to matter what is used here though.  Is there a better way to omit the definition here?
 			definition: "array" as Definition,
 			traits: {
-				nuts: [
+				nut: [
 					{
 						identifier: legacySharedTree.generateNodeId(),
 						definition: "scalar" as Definition,
@@ -53,7 +53,7 @@ export class LegacySharedTreeInventoryList extends DataObject implements IInvent
 						payload: 0,
 					},
 				],
-				bolts: [
+				bolt: [
 					{
 						identifier: legacySharedTree.generateNodeId(),
 						definition: "scalar" as Definition,
@@ -98,6 +98,8 @@ export class LegacySharedTreeInventoryList extends DataObject implements IInvent
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			rootNode.traits.get("parts" as TraitLabel)![0],
 		);
+		// REV: This seems to iterate in reverse order?  Not sure why it swaps the entries as compared to how
+		// it was created.
 		for (const [partLabel, [partQuantityNodeId]] of partsNode.traits) {
 			const partQuantityNode = this.tree.currentView.getViewNode(partQuantityNodeId);
 			const quantity = partQuantityNode.payload as number;

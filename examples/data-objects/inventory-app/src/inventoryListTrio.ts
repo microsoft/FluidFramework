@@ -46,6 +46,7 @@ export class InventoryListTrio extends DataObject {
 	protected async initializingFirstTime() {
 		const legacySharedTreeInventoryList =
 			await legacySharedTreeInventoryListFactory.createChildInstance(this.context);
+
 		const sharedTreeInventoryList = await sharedTreeInventoryListFactory.createChildInstance(
 			this.context,
 		);

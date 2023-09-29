@@ -30,8 +30,8 @@ export const HookView: React.FC<{ tree: ISharedTree }> = ({ tree }) => {
 
 	return (
 		<div>
-			<h1>Inventory:</h1>
-			{counters}
+			<div style={{ textDecoration: "underline" }}>Inventory:</div>
+			<div style={{ marginLeft: "10px" }}>{counters}</div>
 		</div>
 	);
 };
