@@ -20,19 +20,18 @@ module.exports = function handler(fileData, logger) {
 	} else {
 		console.log("BUILD_ID not defined.");
 	}
-	const currentContext = fileData.currentContext;
 	const resultSummary = fileData.resultSummary.resultSummaryByRunState.Completed;
 
-	const stageName = currentContext.stageReference.stageName;
-	const passedTests: number = resultSummary.aggregatedResultDetailsByOutcome.Passed?.count;
-	const failedTests: number = resultSummary.aggregatedResultDetailsByOutcome.Failed?.count;
-	const passRate = passedTests / (passedTests + failedTests);
+	const passedTests: number = resultSummary.aggregatedResultDetailsByOutcome.Passed?.count ?? 0;
+	const failedTests: number = resultSummary.aggregatedResultDetailsByOutcome.Failed?.count ?? 0;
+	const totalTests = passedTests + failedTests;
+	const passRate = totalTests !== 0 ? passedTests / totalTests : 0;
 
 	logger.send({
 		category: "performance",
 		eventName: "TestPassRate",
 		benchmarkType: "PipelineInfo",
-		stageName,
+		stageName: fileData.currentContext.stageReference.stageName,
 		passedTests,
 		failedTests,
 		totalTests: resultSummary.totalTestCount,

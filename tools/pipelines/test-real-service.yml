@@ -222,3 +222,7 @@ stages:
                   done
                   pwd
                   ls -laR ${{ variables.testWorkspace }}/passRateOutput/
+              env:
+                BUILD_ID: $(Build.BuildId)
+                ADO_API_TOKEN: $(System.AccessToken)
+                PIPELINE: 'EndToEndTests'
