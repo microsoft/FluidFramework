@@ -446,28 +446,69 @@ describe("unboxed unit tests", () => {
 		});
 	});
 	describe("unboxedUnion", () => {
-		it("Single-type value", () => {
-			const { fieldSchema, context, cursor } = createValueLeafTree(
-				ValueSchema.String,
-				"Hello world",
-			);
-			assert.equal(unboxedUnion(context, fieldSchema, cursor), "Hello world");
+		describe("Value field", () => {
+			it("Single type", () => {
+				const { fieldSchema, context, cursor } = createValueLeafTree(
+					ValueSchema.String,
+					"Hello world",
+				);
+
+				// TODO: if we don't do this, unboxedUnion returns undefined, rather than failing. Expected?
+				cursor.firstNode(); // Root node field has 1 node; move into it
+
+				assert.equal(unboxedUnion(context, fieldSchema, cursor), "Hello world");
+			});
+
+			it("Union type", () => {
+				const builder = new SchemaBuilder("test");
+				const stringLeafSchema = builder.leaf("string", ValueSchema.String);
+				const fluidHandleLeafSchema = builder.leaf("handle", ValueSchema.FluidHandle);
+				const rootSchema = SchemaBuilder.field(
+					FieldKinds.value,
+					stringLeafSchema,
+					fluidHandleLeafSchema,
+				);
+				const schema = builder.intoDocumentSchema(rootSchema);
+
+				const { context, cursor } = initializeTreeWithContent(schema, "Hello world");
+				cursor.firstNode(); // Root node field has 1 node; move into it
+
+				const unboxed = unboxedUnion(context, rootSchema, cursor);
+				assert.equal(unboxed.type, "string");
+				assert.equal(unboxed.value, "Hello world");
+			});
 		});
 
-		it("Multi-type value", () => {
-			// TODO
-		});
+		describe("Optional field", () => {
+			it("Single type", () => {
+				const { fieldSchema, context, cursor } = createOptionalLeafTree(
+					ValueSchema.Boolean,
+					true,
+				);
 
-		it("Single type optional", () => {
-			const { fieldSchema, context, cursor } = createOptionalLeafTree(
-				ValueSchema.Boolean,
-				true,
-			);
-			assert.equal(unboxedUnion(context, fieldSchema, cursor), true);
-		});
+				// TODO: if we don't do this, unboxedUnion returns undefined, rather than failing. Expected?
+				cursor.firstNode(); // Root node field has 1 node; move into it
 
-		it("Multi-type optional", () => {
-			// TODO
+				assert.equal(unboxedUnion(context, fieldSchema, cursor), true);
+			});
+
+			it("Union type", () => {
+				const builder = new SchemaBuilder("test");
+				const stringLeafSchema = builder.leaf("string", ValueSchema.String);
+				const fluidHandleLeafSchema = builder.leaf("handle", ValueSchema.FluidHandle);
+				const rootSchema = SchemaBuilder.fieldOptional(
+					stringLeafSchema,
+					fluidHandleLeafSchema,
+				);
+				const schema = builder.intoDocumentSchema(rootSchema);
+
+				const { context, cursor } = initializeTreeWithContent(schema, "Hello world");
+				cursor.firstNode(); // Root node field has 1 node; move into it
+
+				const unboxed = unboxedUnion(context, rootSchema, cursor);
+				assert.equal(unboxed.type, "string");
+				assert.equal(unboxed.value, "Hello world");
+			});
 		});
 	});
 });
