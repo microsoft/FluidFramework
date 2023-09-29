@@ -108,6 +108,10 @@
 		"broken": {
 			"InterfaceDeclaration_IMergeTreeDeltaOpArgs": {
 				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IIntegerRange": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}

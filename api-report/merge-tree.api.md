@@ -362,14 +362,6 @@ export interface IConsensusValue {
     value: any;
 }
 
-// @internal @deprecated
-export interface IIntegerRange {
-    // (undocumented)
-    end: number;
-    // (undocumented)
-    start: number;
-}
-
 // @public (undocumented)
 export interface IJSONMarkerSegment extends IJSONSegment {
     // (undocumented)
