@@ -355,8 +355,8 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 */
 	protected submitLocalMessage(
 		content: any,
-		localOpMetadata: unknown = undefined,
-		rootMetadata?: unknown,
+		localOpMetadata: unknown,
+		rootMetadata: unknown,
 	): void {
 		this.verifyNotClosed();
 		if (this.isAttached()) {

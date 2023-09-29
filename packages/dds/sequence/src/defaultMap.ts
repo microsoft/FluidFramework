@@ -133,7 +133,7 @@ export class DefaultMap<T> {
 		private readonly submitMessage: (
 			op: any,
 			localOpMetadata: IMapMessageLocalMetadata,
-			rootMetadata?: unknown,
+			rootMetadata: unknown,
 		) => void,
 		private readonly type: IValueType<T>,
 		private readonly options?: Partial<SequenceOptions>,

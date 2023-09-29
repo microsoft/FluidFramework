@@ -365,8 +365,8 @@ describe("Op Size", () => {
 		const oldSubmitLocalMessage = (tree as any).submitLocalMessage.bind(tree);
 		function submitLocalMessage(
 			content: any,
-			localOpMetadata: unknown = undefined,
-			rootMetadata?: unknown,
+			localOpMetadata: unknown,
+			rootMetadata: unknown,
 		): void {
 			resultArray.push(content);
 			oldSubmitLocalMessage(content, localOpMetadata);

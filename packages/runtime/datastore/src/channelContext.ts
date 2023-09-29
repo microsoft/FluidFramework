@@ -75,7 +75,7 @@ export interface ChannelServiceEndpoints {
 
 export function createChannelServiceEndpoints(
 	connected: boolean,
-	submitFn: (content: any, localOpMetadata: unknown, rootMetadata?: unknown) => void,
+	submitFn: (content: any, localOpMetadata: unknown, rootMetadata: unknown) => void,
 	dirtyFn: () => void,
 	addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
 	storageService: IDocumentStorageService,

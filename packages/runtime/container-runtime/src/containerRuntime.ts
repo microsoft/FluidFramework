@@ -3428,8 +3428,8 @@ export class ContainerRuntime
 	public submitDataStoreOp(
 		id: string,
 		contents: any,
-		localOpMetadata: unknown = undefined,
-		rootMetadata?: unknown,
+		localOpMetadata: unknown,
+		rootMetadata: unknown,
 	): void {
 		//* TODO: Apply rootMetadata to the envelope
 		const envelope: IEnvelope = {
@@ -3447,7 +3447,7 @@ export class ContainerRuntime
 	public submitDataStoreAliasOp(
 		contents: any,
 		localOpMetadata: unknown,
-		rootMetadata?: unknown,
+		rootMetadata: unknown,
 	): void {
 		const aliasMessage = contents as IDataStoreAliasMessage;
 		if (!isDataStoreAliasMessage(aliasMessage)) {

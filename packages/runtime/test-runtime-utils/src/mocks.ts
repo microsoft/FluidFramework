@@ -65,7 +65,7 @@ export class MockDeltaConnection implements IDeltaConnection {
 		private readonly submitFn: (
 			messageContent: any,
 			localOpMetadata: unknown,
-			rootMetadata?: unknown,
+			rootMetadata: unknown,
 		) => number,
 		private readonly dirtyFn: () => void,
 	) {}
@@ -75,7 +75,7 @@ export class MockDeltaConnection implements IDeltaConnection {
 		handler.setConnectionState(this.connected);
 	}
 
-	public submit(messageContent: any, localOpMetadata: unknown, rootMetadata?: unknown): number {
+	public submit(messageContent: any, localOpMetadata: unknown, rootMetadata: unknown): number {
 		return this.submitFn(messageContent, localOpMetadata, rootMetadata);
 	}
 
@@ -198,7 +198,7 @@ export class MockContainerRuntime {
 		return deltaConnection;
 	}
 
-	public submit(messageContent: any, localOpMetadata: unknown, rootMetadata?: unknown): number {
+	public submit(messageContent: any, localOpMetadata: unknown, rootMetadata: unknown): number {
 		const clientSequenceNumber = this.clientSequenceNumber;
 		const message = {
 			content: messageContent,
@@ -730,7 +730,7 @@ export class MockFluidDataStoreRuntime
 	private submitMessageInternal(
 		messageContent: any,
 		localOpMetadata: unknown,
-		rootMetadata?: unknown,
+		rootMetadata: unknown,
 	): number {
 		assert(
 			this.containerRuntime !== undefined,

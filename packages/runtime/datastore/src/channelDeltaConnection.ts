@@ -25,7 +25,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 		public readonly submit: (
 			content: any,
 			localOpMetadata: unknown,
-			rootMetadata?: unknown,
+			rootMetadata: unknown,
 		) => void,
 		public readonly dirty: () => void,
 		public readonly addedGCOutboundReference: (

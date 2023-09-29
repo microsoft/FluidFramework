@@ -861,7 +861,7 @@ export class FluidDataStoreRuntime
 		type: DataStoreMessageType,
 		content: any,
 		localOpMetadata: unknown,
-		rootMetadata?: unknown,
+		rootMetadata: unknown,
 	) {
 		this.submit(type, content, localOpMetadata, rootMetadata);
 	}
@@ -920,7 +920,7 @@ export class FluidDataStoreRuntime
 		address: string,
 		contents: any,
 		localOpMetadata: unknown,
-		rootMetadata?: unknown,
+		rootMetadata: unknown,
 	) {
 		const envelope: IEnvelope = { address, contents };
 		this.submit(DataStoreMessageType.ChannelOp, envelope, localOpMetadata, rootMetadata);
@@ -929,8 +929,8 @@ export class FluidDataStoreRuntime
 	private submit(
 		type: DataStoreMessageType,
 		content: any,
-		localOpMetadata: unknown = undefined,
-		rootMetadata?: unknown,
+		localOpMetadata: unknown,
+		rootMetadata: unknown,
 	): void {
 		this.verifyNotClosed();
 		this.dataStoreContext.submitMessage(type, content, localOpMetadata, rootMetadata);

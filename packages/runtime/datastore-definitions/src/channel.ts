@@ -173,7 +173,7 @@ export interface IDeltaConnection {
 	 * and not sent to the server. It will be provided back when this message is acknowledged by the server. It will
 	 * also be provided back when asked to resubmit the message.
 	 */
-	submit(messageContent: any, localOpMetadata: unknown, rootMetadata?: unknown): void;
+	submit(messageContent: any, localOpMetadata: unknown, rootMetadata: unknown): void;
 
 	/**
 	 * Attaches a message handler to the delta connection

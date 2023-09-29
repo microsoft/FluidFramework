@@ -183,7 +183,7 @@ export class MapKernel {
 		private readonly submitMessage: (
 			op: unknown,
 			localOpMetadata: unknown,
-			rootMetadata?: unknown,
+			rootMetadata: unknown,
 		) => void,
 		private readonly isAttached: () => boolean,
 		private readonly eventEmitter: TypedEventEmitter<ISharedMapEvents>,

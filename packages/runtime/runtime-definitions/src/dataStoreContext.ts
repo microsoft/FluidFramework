@@ -462,7 +462,7 @@ export interface IFluidDataStoreContext
 		type: string,
 		content: any,
 		localOpMetadata: unknown,
-		rootMetadata?: unknown,
+		rootMetadata: unknown,
 	): void;
 
 	/**

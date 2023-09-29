@@ -624,7 +624,7 @@ export class SharedDirectory
 	public submitDirectoryMessage(
 		op: IDirectoryOperation,
 		localOpMetadata: unknown,
-		rootMetadata?: unknown,
+		rootMetadata: unknown,
 	): void {
 		this.submitLocalMessage(op, localOpMetadata, rootMetadata);
 	}

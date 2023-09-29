@@ -101,7 +101,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 		type: string,
 		content: any,
 		localOpMetadata: unknown,
-		rootMetadata?: unknown,
+		rootMetadata: unknown,
 	): void {
 		throw new Error("Method not implemented.");
 	}

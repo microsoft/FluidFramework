@@ -257,7 +257,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     get size(): number;
     subdirectories(): IterableIterator<[string, IDirectory]>;
     // @internal
-    submitDirectoryMessage(op: IDirectoryOperation, localOpMetadata: unknown, rootMetadata?: unknown): void;
+    submitDirectoryMessage(op: IDirectoryOperation, localOpMetadata: unknown, rootMetadata: unknown): void;
     // @internal (undocumented)
     protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     values(): IterableIterator<any>;
