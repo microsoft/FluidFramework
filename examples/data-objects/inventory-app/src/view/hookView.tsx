@@ -4,27 +4,10 @@
  */
 
 import * as React from "react";
-import { AllowedUpdateType, ISharedTree } from "@fluid-experimental/tree2";
+import { ISharedTree } from "@fluid-experimental/tree2";
 import { useTree } from "@fluid-experimental/tree-react-api";
-import { Inventory, RootField, schema } from "../schema";
+import { Inventory, RootField, schemaPolicy } from "../schema";
 import { Counter } from "./counter";
-
-const schemaPolicy = {
-	schema,
-	initialTree: {
-		parts: [
-			{
-				name: "nut",
-				quantity: 0,
-			},
-			{
-				name: "bolt",
-				quantity: 0,
-			},
-		],
-	},
-	allowedSchemaModifications: AllowedUpdateType.None,
-};
 
 export const HookView: React.FC<{ tree: ISharedTree }> = ({ tree }) => {
 	const root: RootField = useTree(tree.view, schemaPolicy);

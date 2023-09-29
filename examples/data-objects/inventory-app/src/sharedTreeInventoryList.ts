@@ -3,31 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { AllowedUpdateType, ISharedTree, SharedTreeFactory } from "@fluid-experimental/tree2";
+import { ISharedTree, SharedTreeFactory } from "@fluid-experimental/tree2";
 
 import { IInventoryListUntyped, IPart } from "./interfaces";
-import { Inventory, schema } from "./schema";
+import { Inventory, schemaPolicy } from "./schema";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 
 const sharedTreeKey = "sharedTree";
-
-const schemaPolicy = {
-	schema,
-	initialTree: {
-		parts: [
-			{
-				name: "nut",
-				quantity: 0,
-			},
-			{
-				name: "bolt",
-				quantity: 0,
-			},
-		],
-	},
-	allowedSchemaModifications: AllowedUpdateType.None,
-};
 
 /**
  * Adapts a given ISharedTree into the interface we want to use for an inventory list, IInventoyrList.
