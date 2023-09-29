@@ -249,10 +249,17 @@ export interface DocumentationSuiteOptions {
 export type DocumentBoundaries = ApiMemberKind[];
 
 // @public
+export interface DocumentItemMetadata {
+    readonly apiItemKind: ApiItemKind;
+    readonly apiItemName: string;
+    readonly packageName: string | undefined;
+}
+
+// @public
 export class DocumentNode implements Parent<SectionNode>, DocumentNodeProps {
     constructor(properties: DocumentNodeProps);
-    readonly apiItemName: string;
     readonly children: SectionNode[];
+    readonly documentItemMetadata: DocumentItemMetadata;
     readonly documentPath: string;
     readonly frontMatter?: string;
     readonly type = DocumentationNodeType.Document;
@@ -260,8 +267,8 @@ export class DocumentNode implements Parent<SectionNode>, DocumentNodeProps {
 
 // @public
 export interface DocumentNodeProps {
-    readonly apiItemName: string;
     readonly children: SectionNode[];
+    readonly documentItemMetadata: DocumentItemMetadata;
     readonly documentPath: string;
     readonly frontMatter?: string;
 }
