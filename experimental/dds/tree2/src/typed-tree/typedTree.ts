@@ -25,26 +25,43 @@ import {
 } from "../shared-tree";
 
 /**
+ * Configuration to specialize a Tree DDS for a particular use.
  * @alpha
  */
 export interface TypedTreeOptions<TRoot extends FieldSchema = FieldSchema>
 	extends SharedTreeOptions,
-		InitializeAndSchematizeConfiguration<TRoot> {}
+		InitializeAndSchematizeConfiguration<TRoot> {
+	/**
+	 * Name appended to {@link @fluidframework/datastore-definitions#IChannelFactory."type"} to identify this factory configuration.
+	 * @privateRemarks
+	 * TODO: evaluate if this design is a good idea, or if "subtype" should be removed.
+	 * TODO: evaluate if schematize should be separated from DDS construction.
+	 */
+	readonly subtype: string;
+}
 
 /**
  * A channel factory that creates a {@link TreeField}.
  * @alpha
  */
 export class TypedTreeFactory<TRoot extends FieldSchema = FieldSchema> implements IChannelFactory {
-	public type: string = "SharedTree";
+	public readonly type: string;
+	public readonly attributes: IChannelAttributes;
 
-	public attributes: IChannelAttributes = {
-		type: this.type,
-		snapshotFormatVersion: "0.0.0",
-		packageVersion: "0.0.0",
-	};
+	public constructor(private readonly options: TypedTreeOptions<TRoot>) {
+		/**
+		 * TODO:
+		 * Either allow particular factory configurations to customize this string (for example `SharedTree:${configurationName}`),
+		 * and/or schematize as a separate step, after the tree is loaded/created.
+		 */
+		this.type = `SharedTree:${options.subtype}`;
 
-	public constructor(private readonly options: TypedTreeOptions<TRoot>) {}
+		this.attributes = {
+			type: this.type,
+			snapshotFormatVersion: "0.0.0",
+			packageVersion: "0.0.0",
+		};
+	}
 
 	public async load(
 		runtime: IFluidDataStoreRuntime,
@@ -56,7 +73,7 @@ export class TypedTreeFactory<TRoot extends FieldSchema = FieldSchema> implement
 		await tree.load(services);
 		const view = tree.schematize(this.options);
 		const root = view.editableTree2(this.options.schema);
-		return new ChannelWrapper(tree, root);
+		return new ChannelWrapperWithRoot(tree, root);
 	}
 
 	public create(
@@ -65,20 +82,22 @@ export class TypedTreeFactory<TRoot extends FieldSchema = FieldSchema> implement
 	): IChannel & { readonly root: TypedField<TRoot> } {
 		const tree = new SharedTree(id, runtime, this.attributes, this.options, "SharedTree");
 		tree.initializeLocal();
+		// TODO: Once various issues with schema editing are fixed separate initialize from schematize, and explicitly do both here.
 		const view = tree.schematize(this.options);
 		const root = view.editableTree2(this.options.schema);
-		return new ChannelWrapper(tree, root);
+		return new ChannelWrapperWithRoot(tree, root);
 	}
 }
 
 /**
- * IChannel wrapper that exposes a "root".
+ * IChannel wrapper.
+ * Subclass to add specific functionality.
  *
  * @remarks
  * This is handy when an implementing IChannelFactory and it's desirable to return a type that's derived from another IChannel implementation.
  */
-export class ChannelWrapper<T> implements IChannel {
-	public constructor(private readonly inner: IChannel, public readonly root: T) {}
+class ChannelWrapper implements IChannel {
+	public constructor(private readonly inner: IChannel) {}
 
 	public get id(): string {
 		return this.inner.id;
@@ -127,5 +146,14 @@ export class ChannelWrapper<T> implements IChannel {
 
 	public get IFluidLoadable(): IFluidLoadable {
 		return this.inner.IFluidLoadable;
+	}
+}
+
+/**
+ * IChannel wrapper that exposes a "root".
+ */
+class ChannelWrapperWithRoot<T> extends ChannelWrapper {
+	public constructor(inner: IChannel, public readonly root: T) {
+		super(inner);
 	}
 }

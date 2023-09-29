@@ -21,6 +21,7 @@ describe("TypedTree", () => {
 			allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
 			initialTree: 1,
 			schema,
+			subtype: "test",
 		});
 		const root = factory.create(new MockFluidDataStoreRuntime(), "the tree").root;
 		root.setContent(root.content + 1);
