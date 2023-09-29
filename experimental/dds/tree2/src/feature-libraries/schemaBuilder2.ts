@@ -6,8 +6,8 @@
 /* eslint-disable import/no-internal-modules */
 
 import { assert } from "@fluidframework/core-utils";
-import { Adapters, TreeSchemaIdentifier, TreeTypeSet, ValueSchema } from "../core";
-import { MakeNominal, RestrictiveReadonlyRecord } from "../util";
+import { Adapters, FieldKey, TreeSchemaIdentifier, TreeTypeSet, ValueSchema } from "../core";
+import { MakeNominal, RestrictiveReadonlyRecord, objectToMap } from "../util";
 import { SchemaLibraryData, SchemaLintConfiguration, schemaLintDefault } from "./typed-schema";
 import { FieldKind, FullSchemaPolicy } from "./modular-schema";
 import { FieldKinds } from "./default-field-kinds";
@@ -117,13 +117,20 @@ export class SchemaBuilder<
 	public struct<Name extends TName, T extends RestrictiveReadonlyRecord<string, FieldSchema>>(
 		name: Name,
 		t: T,
-	): Holder<{ identifier: `${TScope}.${TName}`; structFields: T }> {
+	): Holder<{
+		identifier: `${TScope}.${TName}` & TreeSchemaIdentifier;
+		structFieldsObject: T;
+		structFields: ReadonlyMap<FieldKey, FieldSchema>;
+	}> {
 		const identifier = this.scoped(name);
+		const map = objectToMap<FieldKey, FieldSchema>(t);
 		const schema = class {
 			public static readonly identifier = identifier;
-			public static readonly structFields = t;
+			public static readonly structFieldsObject = t;
+			public static readonly structFields = map;
 			public readonly identifier = identifier;
-			public readonly structFields = t;
+			public readonly structFieldsObject = t;
+			public readonly structFields = map;
 			public constructor(dummy: never) {}
 		};
 		this.addNodeSchema(schema);
@@ -133,13 +140,18 @@ export class SchemaBuilder<
 	public structRecursive<Name extends TName, T>(
 		name: Name,
 		t: T,
-	): Holder<{ identifier: `${TScope}.${Name}`; structFields: T }> {
+	): Holder<{
+		identifier: `${TScope}.${Name}` & TreeSchemaIdentifier;
+		structFieldsObject: T;
+		structFields: ReadonlyMap<FieldKey, FieldSchema>;
+	}> {
 		return this.struct(
 			name,
 			t as unknown as RestrictiveReadonlyRecord<string, FieldSchema>,
 		) as unknown as Holder<{
-			identifier: `${TScope}.${Name}`;
-			structFields: T;
+			identifier: `${TScope}.${Name}` & TreeSchemaIdentifier;
+			structFieldsObject: T;
+			structFields: ReadonlyMap<FieldKey, FieldSchema>;
 		}>;
 	}
 
@@ -149,7 +161,7 @@ export class SchemaBuilder<
 	public map<Name extends TName, T extends MapFieldSchema>(
 		name: Name,
 		fieldSchema: T,
-	): Holder<{ identifier: `${TScope}.${Name}`; mapFields: T }> {
+	): Holder<{ identifier: `${TScope}.${Name}` & TreeSchemaIdentifier; mapFields: T }> {
 		const identifier = this.scoped(name);
 		const schema = class {
 			public static readonly identifier = identifier;
@@ -165,9 +177,9 @@ export class SchemaBuilder<
 	public mapRecursive<Name extends TName, T>(
 		name: Name,
 		fieldSchema: T,
-	): Holder<{ identifier: `${TScope}.${Name}`; mapFields: T }> {
+	): Holder<{ identifier: `${TScope}.${Name}` & TreeSchemaIdentifier; mapFields: T }> {
 		return this.map(name, fieldSchema as unknown as MapFieldSchema) as unknown as Holder<{
-			identifier: `${TScope}.${Name}`;
+			identifier: `${TScope}.${Name}` & TreeSchemaIdentifier;
 			mapFields: T;
 		}>;
 	}
@@ -304,7 +316,8 @@ export interface LeafSchema extends TreeSchemaBase {
  * @alpha
  */
 export interface StructSchema extends TreeSchemaBase {
-	readonly structFields: RestrictiveReadonlyRecord<string, FieldSchema>;
+	readonly structFieldsObject: RestrictiveReadonlyRecord<string, FieldSchema>;
+	readonly structFields: ReadonlyMap<FieldKey, FieldSchema>;
 }
 
 /**

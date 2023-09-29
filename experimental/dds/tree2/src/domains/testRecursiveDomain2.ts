@@ -10,46 +10,48 @@
  * Currently we do not have tooling in place to test this in our test suite, and exporting these types here is a temporary crutch to aid in diagnosing this issue.
  */
 
-// import { AllowedTypes, FieldKinds, SchemaBuilder, schemaBuilder2 } from "../feature-libraries";
-// import { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../util";
-// import * as leaf from "./leafDomain2";
+import { FieldKinds, schemaBuilder2 } from "../feature-libraries";
+import { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../util";
 
-// const builder = new schemaBuilder2.SchemaBuilder({
-// 	scope: "com.fluidframework.test",
-// 	fieldKinds: FieldKinds,
-// 	libraries: [leaf.library],
-// });
+const builder = new schemaBuilder2.SchemaBuilder({
+	scope: "com.fluidframework.test",
+	fieldKinds: FieldKinds,
+});
 
-// /**
-//  * @alpha
-//  */
-// export const recursiveStruct = builder.structRecursive("recursiveStruct", {
-// 	recursive: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => recursiveStruct),
-// 	number: SchemaBuilder.fieldValue(leaf.number),
-// });
+export class Empty extends builder.struct("empty", {}) {}
 
-// // Some related information in https://github.com/microsoft/TypeScript/issues/55758.
-// function fixRecursiveReference<T extends AllowedTypes>(...types: T): void {}
+const _x: schemaBuilder2.StructSchema = Empty;
 
-// const recursiveReference = () => recursiveStruct2;
-// fixRecursiveReference(recursiveReference);
+/**
+ * @alpha
+ */
+export class RecursiveStruct extends builder.structRecursive("recursiveStruct", {
+	recursive: builder.fieldRecursive.optional(() => RecursiveStruct),
+	number: builder.field.value(Empty),
+}) {}
 
-// /**
-//  * @alpha
-//  */
-// export const recursiveStruct2 = builder.struct("recursiveStruct2", {
-// 	recursive: SchemaBuilder.field(FieldKinds.optional, recursiveReference),
-// 	number: SchemaBuilder.fieldValue(leaf.number),
-// });
+// Some related information in https://github.com/microsoft/TypeScript/issues/55758.
+function fixRecursiveReference<T extends schemaBuilder2.AllowedTypes>(...types: T): void {}
 
-// type _0 = requireFalse<isAny<typeof recursiveStruct2>>;
-// type _1 = requireTrue<
-// 	areSafelyAssignable<
-// 		typeof recursiveStruct2,
-// 		ReturnType<typeof recursiveStruct2.structFieldsObject.recursive.allowedTypes[0]>
-// 	>
-// >;
-// /**
-//  * @alpha
-//  */
+const recursiveReference = () => RecursiveStruct2;
+fixRecursiveReference(recursiveReference);
+
+/**
+ * @alpha
+ */
+export class RecursiveStruct2 extends builder.struct("recursiveStruct2", {
+	recursive: builder.field.optional(recursiveReference),
+	number: builder.field.value(Empty),
+}) {}
+
+type _0 = requireFalse<isAny<typeof RecursiveStruct2>>;
+type _1 = requireTrue<
+	areSafelyAssignable<
+		typeof RecursiveStruct2,
+		ReturnType<typeof RecursiveStruct2.structFieldsObject.recursive.allowedTypes[0]>
+	>
+>;
+/**
+ * @alpha
+ */
 // export const jsonSchema = builder.intoLibrary();
