@@ -112,7 +112,7 @@ describe("mock-customer-service", () => {
 			port: customerServicePort,
 			externalDataServiceWebhookRegistrationUrl: `http://localhost:${externalDataServicePort}/register-for-webhook`,
 			externalDataServiceWebhookUnregistrationUrl: `http://localhost:${externalDataServicePort}/unregister-webhook`,
-			fluidServiceUrl: `http://localhost:${localServicePort}/broadcast-signal`,
+			fluidServiceUrl: `http://localhost:${localServicePort}`,
 		});
 	});
 

@@ -18,17 +18,19 @@ import { assertValidTaskData, ITaskData } from "../model-interface";
 function echoExternalDataWebhookToFluid(
 	taskData: ITaskData,
 	fluidServiceUrl: string,
-	containerUrl: string,
 	externalTaskListId: string,
+	tenantId: string,
+	documentId: string,
 ): void {
 	console.log(
-		`CUSTOMER SERVICE: External data has been updated. Notifying Fluid Service at ${fluidServiceUrl}`,
-	);
+		`CUSTOMER SERVICE: External data has been updated. Notifying Fluid Service at ${fluidServiceUrl}`);
+
+	const fluidService = `${fluidServiceUrl}/${tenantId}/${documentId}/broadcast-signal`;
 
 	// TODO: we will need to add details (like ContainerId) to the message body or the url,
 	// so this message body format will evolve
-	const messageBody = JSON.stringify({ taskData, containerUrl, externalTaskListId });
-	fetch(fluidServiceUrl, {
+	const messageBody = JSON.stringify({ taskData, externalTaskListId });
+	fetch(fluidService, {
 		method: "POST",
 		headers: {
 			"Access-Control-Allow-Origin": "*",
@@ -192,11 +194,13 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 				),
 			);
 			for (const containerUrl of containerUrls) {
+				const [ tenantId, documentId ] = containerUrl.split("/");
 				echoExternalDataWebhookToFluid(
 					taskData,
 					fluidServiceUrl,
-					containerUrl,
 					externalTaskListId,
+					tenantId,
+					documentId
 				);
 			}
 			result.send();
