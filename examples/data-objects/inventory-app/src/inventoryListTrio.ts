@@ -14,7 +14,7 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IInventoryList, IInventoryListUntyped } from "./interfaces";
 // import { SharedTreeInventoryList } from "./sharedTreeInventoryList";
 import { LegacySharedTreeInventoryList } from "./legacySharedTreeInventoryList";
-import { sharedTreeInventoryListDOFactory } from "./sharedTreeInventoryListDO";
+import { sharedTreeInventoryListFactory } from "./sharedTreeInventoryList";
 
 const legacySharedTreeKey = "legacySharedTree";
 const sharedTreeKey = "sharedTree";
@@ -53,13 +53,7 @@ export class InventoryListTrio extends DataObject {
 		// of an individual data object for a single inventory list.
 		LegacySharedTreeInventoryList.initializeLegacySharedTreeForInventory(legacySharedTree);
 
-		// const sharedTree = this.runtime.createChannel(
-		// 	undefined,
-		// 	new SharedTreeFactory().type,
-		// ) as ISharedTree;
-		const sharedTreeDO = await sharedTreeInventoryListDOFactory.createChildInstance(
-			this.context,
-		);
+		const sharedTree = await sharedTreeInventoryListFactory.createChildInstance(this.context);
 
 		const sharedTreeForHook = this.runtime.createChannel(
 			undefined,
@@ -67,7 +61,7 @@ export class InventoryListTrio extends DataObject {
 		) as ISharedTree;
 
 		this.root.set(legacySharedTreeKey, legacySharedTree.handle);
-		this.root.set(sharedTreeKey, sharedTreeDO.handle);
+		this.root.set(sharedTreeKey, sharedTree.handle);
 		this.root.set(sharedTreeForHookKey, sharedTreeForHook.handle);
 	}
 
@@ -100,5 +94,5 @@ export const InventoryListTrioFactory = new DataObjectFactory(
 	InventoryListTrio,
 	[LegacySharedTree.getFactory(), new SharedTreeFactory()],
 	{},
-	new Map([sharedTreeInventoryListDOFactory.registryEntry]),
+	new Map([sharedTreeInventoryListFactory.registryEntry]),
 );

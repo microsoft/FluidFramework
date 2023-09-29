@@ -3,11 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { AllowedUpdateType, ISharedTree } from "@fluid-experimental/tree2";
-import { TypedEmitter } from "tiny-typed-emitter";
+import { AllowedUpdateType, ISharedTree, SharedTreeFactory } from "@fluid-experimental/tree2";
 
-import { IInventoryList, IInventoryListEvents, IPart } from "./interfaces";
+import { IInventoryListUntyped, IPart } from "./interfaces";
 import { Inventory, schema } from "./schema";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+
+const sharedTreeKey = "sharedTree";
 
 const schemaPolicy = {
 	schema,
@@ -29,16 +32,36 @@ const schemaPolicy = {
 /**
  * Adapts a given ISharedTree into the interface we want to use for an inventory list, IInventoyrList.
  */
-export class SharedTreeInventoryList
-	extends TypedEmitter<IInventoryListEvents>
-	implements IInventoryList
-{
-	private readonly _inventory: Inventory;
-	// Feels bad to give out the whole ISharedTree.  Should I just pass an ISharedTreeView?
-	public constructor(tree: ISharedTree) {
-		super();
+export class SharedTreeInventoryList extends DataObject implements IInventoryListUntyped {
+	private _inventory: Inventory | undefined;
+	private get inventory() {
+		if (this._inventory === undefined) {
+			throw new Error("Not initialized properly");
+		}
+		return this._inventory;
+	}
 
-		const sharedTreeView = tree.schematize(schemaPolicy);
+	/**
+	 * initializingFirstTime is run only once by the first client to create the DataObject.  Here we use it to
+	 * initialize the state of the DataObject.
+	 */
+	protected async initializingFirstTime() {
+		const sharedTree = this.runtime.createChannel(
+			undefined,
+			new SharedTreeFactory().type,
+		) as ISharedTree;
+		// I think it's important to schematize here so the schema gets written before we attach the ST?
+		sharedTree.schematize(schemaPolicy);
+		this.root.set(sharedTreeKey, sharedTree.handle);
+	}
+
+	/**
+	 * hasInitialized is run by each client as they load the DataObject.  Here we use it to set up usage of the
+	 * DataObject, by registering an event listener for dice rolls.
+	 */
+	protected async hasInitialized() {
+		const sharedTree = await this.root.get<IFluidHandle<ISharedTree>>(sharedTreeKey)!.get();
+		const sharedTreeView = sharedTree.schematize(schemaPolicy);
 		this._inventory = sharedTreeView.context.root[0] as unknown as Inventory;
 		sharedTreeView.events.on("afterBatch", () => {
 			this.emit("inventoryChanged");
@@ -47,7 +70,7 @@ export class SharedTreeInventoryList
 
 	public getParts() {
 		const parts: IPart[] = [];
-		for (const part of this._inventory.parts) {
+		for (const part of this.inventory.parts) {
 			parts.push({
 				name: part.name,
 				quantity: part.quantity,
@@ -62,3 +85,10 @@ export class SharedTreeInventoryList
 		return parts;
 	}
 }
+
+export const sharedTreeInventoryListFactory = new DataObjectFactory(
+	"shared-tree-inventory-list",
+	SharedTreeInventoryList,
+	[new SharedTreeFactory()],
+	{},
+);
