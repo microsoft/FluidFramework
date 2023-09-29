@@ -1734,7 +1734,13 @@ export class ContainerRuntime
 					subRequest.url.startsWith("/"),
 					0x126 /* "Expected createSubRequest url to include a leading slash" */,
 				);
-				return dataStore.request(subRequest);
+				return subRequest.url === "/"
+					? {
+							mimeType: "fluid/object",
+							status: 200,
+							value: await dataStore.entryPoint.get(),
+					  }
+					: dataStore.request(subRequest);
 			}
 
 			return create404Response(request);

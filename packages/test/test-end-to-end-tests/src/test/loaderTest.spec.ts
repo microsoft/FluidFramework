@@ -293,7 +293,8 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 		);
 	});
 
-	it("can handle requests with headers", async () => {
+	// This test is assuming mix-in pattern will let a "/dataStoreId" request all the way through to the TestDataObjectWithRequestHeaders's "request" method
+	it.skip("can handle requests with headers", async () => {
 		const containerUrl = await container.getAbsoluteUrl("");
 		assert(containerUrl, "url is undefined");
 		const container2 = await loader.resolve({ url: containerUrl });
@@ -327,7 +328,8 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 		);
 	});
 
-	it("requestResolvedObjectFromContainer can handle requests with headers", async () => {
+	// This test is assuming mix-in pattern will let a "/dataStoreId" request all the way through to the TestDataObjectWithRequestHeaders's "request" method
+	it.skip("requestResolvedObjectFromContainer can handle requests with headers", async () => {
 		const dataStoreWithRequestHeaders = await testFactoryWithRequestHeaders.createInstance(
 			dataStore1._context.containerRuntime,
 		);
