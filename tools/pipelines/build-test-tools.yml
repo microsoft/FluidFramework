@@ -76,4 +76,3 @@ extends:
     taskLint: false
     taskTest:
     - test
-    buildNumberInPatch: true
