@@ -174,7 +174,12 @@ module.exports = {
 
 			mustPublish: {
 				// These packages will always be published to npm.
-				npm: ["@fluidframework", "fluid-framework", "tinylicious"],
+				npm: [
+					"@fluidframework",
+					"fluid-framework",
+					"tinylicious",
+					"@fluid-internal/client-utils",
+				],
 				// A list of packages known to be an internally published package but not to npm. Note that packages published
 				// to npm will also be published internally, however. This should be a minimal set required for legacy compat of
 				// internal partners or internal CI requirements.

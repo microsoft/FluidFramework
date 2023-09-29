@@ -72,10 +72,6 @@
 					"Client-Utils",
 					"Protocol-Definitions"
 				]
-			},
-			"Container-Utils": {
-				"packages": ["@fluidframework/container-utils"],
-				"deps": ["Telemetry-Utils", "Container-Definitions", "Client-Utils"]
 			}
 		}
 	},
@@ -88,17 +84,11 @@
 			},
 			"Loader": {
 				"dirs": ["packages/loader/"],
-				"deps": ["Container-Definitions", "Driver-Utils", "Client-Utils", "Container-Utils"]
+				"deps": ["Container-Definitions", "Driver-Utils", "Client-Utils"]
 			},
 			"Runtime": {
 				"dirs": ["experimental/dds/", "packages/dds/", "packages/runtime/"],
-				"deps": [
-					"Container-Definitions",
-					"Container-Utils",
-					"Core-Utils",
-					"Client-Utils",
-					"Driver-Utils"
-				]
+				"deps": ["Container-Definitions", "Core-Utils", "Client-Utils", "Driver-Utils"]
 			},
 			"Framework": {
 				"packages": ["@fluid-experimental/data-objects", "@fluidframework/fluid-static"],

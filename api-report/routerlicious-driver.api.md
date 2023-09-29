@@ -33,7 +33,6 @@ export class DocumentPostCreateError extends Error {
 
 // @public (undocumented)
 export interface IRouterliciousDriverPolicies {
-    aggregateBlobsSmallerThanBytes: number | undefined;
     enableDiscovery: boolean;
     enableInternalSummaryCaching: boolean;
     enableLongPollingDowngrade: boolean;
@@ -95,6 +94,7 @@ export const RouterliciousErrorTypes: {
     readonly locationRedirection: "locationRedirection";
     readonly fluidInvalidSchema: "fluidInvalidSchema";
     readonly fileIsLocked: "fileIsLocked";
+    readonly outOfStorageError: "outOfStorageError";
     readonly genericError: "genericError";
     readonly throttlingError: "throttlingError";
     readonly usageError: "usageError";

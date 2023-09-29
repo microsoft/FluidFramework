@@ -194,7 +194,6 @@ export {
 	Sequence,
 	NodeKeyFieldKind,
 	Forbidden,
-	FieldKindTypes,
 	DefaultChangeset,
 	DefaultChangeFamily,
 	DefaultEditBuilder,
@@ -243,6 +242,8 @@ export {
 	TreeField,
 	TreeNode,
 	getTreeContext,
+	boxedIterator,
+	CheckTypesOverlap,
 } from "./editable-tree-2";
 
 // Split into separate import and export for compatibility with API-Extractor.

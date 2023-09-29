@@ -18,6 +18,10 @@ export async function runnerHttpServerStop(
 	uncaughtException: any | undefined,
 ): Promise<void> {
 	try {
+		runnerMetric.setProperties({
+			caller,
+			runnerServerCloseTimeoutMs,
+		});
 		// Close the underlying server and then resolve the runner once closed
 		await promiseTimeout(runnerServerCloseTimeoutMs, server.close());
 		if (caller === "uncaughtException") {

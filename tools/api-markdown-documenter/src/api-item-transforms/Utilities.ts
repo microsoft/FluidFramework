@@ -7,44 +7,46 @@ import { DocDeclarationReference } from "@microsoft/tsdoc";
 
 import { Link } from "../Link";
 import { DocumentNode, SectionNode } from "../documentation-domain";
-import { getDocumentPathForApiItem, getLinkForApiItem } from "./ApiItemUtilities";
+import {
+	getDocumentPathForApiItem,
+	getLinkForApiItem,
+	getUnscopedPackageName,
+} from "./ApiItemUtilities";
 import { TsdocNodeTransformOptions } from "./TsdocNodeTransforms";
 import { ApiItemTransformationConfiguration } from "./configuration";
 import { wrapInSection } from "./helpers";
 
 /**
- * Helper function for creating a {@link DocumentNode} for an API item and its generated documentation contents.
+ * Creates a {@link DocumentNode} representing the provided API item.
+ *
+ * @param documentItem - The API item to be documented.
+ * @param sections - An array of sections to be included in the document.
+ * @param config - The transformation configuration for the API item.
+ *
+ * @returns A {@link DocumentNode} representing the constructed document.
  */
 export function createDocument(
 	documentItem: ApiItem,
 	sections: SectionNode[],
 	config: Required<ApiItemTransformationConfiguration>,
 ): DocumentNode {
-	let contents: SectionNode[] = sections;
+	const associatedPackage = documentItem.getAssociatedPackage();
+	const packageName =
+		associatedPackage === undefined ? undefined : getUnscopedPackageName(associatedPackage);
 
-	// If a top-level heading was requested, we will wrap our document sections in a root section
-	// with the appropriate heading to ensure hierarchy is adjusted appropriately.
-	if (config.includeTopLevelDocumentHeading) {
-		contents = [wrapInSection(sections, { title: config.getHeadingTextForItem(documentItem) })];
-	}
+	// Wrap sections in a root section if top-level heading is requested.
+	const contents = config.includeTopLevelDocumentHeading
+		? [wrapInSection(sections, { title: config.getHeadingTextForItem(documentItem) })]
+		: sections;
 
-	// Generate front-matter (if specified in configuration)
-	let frontMatter: string | undefined;
-	if (config.frontMatter !== undefined) {
-		if (typeof config.frontMatter === "string") {
-			frontMatter = config.frontMatter;
-		} else {
-			if (typeof config.frontMatter !== "function") {
-				throw new TypeError(
-					"Invalid `frontMatter` configuration provided. Must be either a string or a function.",
-				);
-			}
-			frontMatter = config.frontMatter(documentItem);
-		}
-	}
+	const frontMatter = generateFrontMatter(documentItem, config);
 
 	return new DocumentNode({
-		apiItemName: documentItem.displayName,
+		documentItemMetadata: {
+			apiItemName: documentItem.displayName,
+			apiItemKind: documentItem.kind,
+			packageName,
+		},
 		children: contents,
 		documentPath: getDocumentPathForApiItem(documentItem, config),
 		frontMatter,
@@ -56,6 +58,8 @@ export function createDocument(
  *
  * @param contextApiItem - See {@link TsdocNodeTransformOptions.contextApiItem}.
  * @param config - See {@link ApiItemTransformationConfiguration}.
+ *
+ * @returns An option for {@link @microsoft/tsdoc#DocNode} transformations
  */
 export function getTsdocNodeTransformationOptions(
 	contextApiItem: ApiItem,
@@ -67,6 +71,30 @@ export function getTsdocNodeTransformationOptions(
 			resolveSymbolicLink(contextApiItem, codeDestination, config),
 		logger: config.logger,
 	};
+}
+
+/**
+ * Helper function to generate the front matter based on the provided configuration.
+ */
+function generateFrontMatter(
+	documentItem: ApiItem,
+	config: Required<ApiItemTransformationConfiguration>,
+): string | undefined {
+	if (config.frontMatter === undefined) {
+		return undefined;
+	}
+
+	if (typeof config.frontMatter === "string") {
+		return config.frontMatter;
+	}
+
+	if (typeof config.frontMatter !== "function") {
+		throw new TypeError(
+			"Invalid `frontMatter` configuration provided. Must be either a string or a function.",
+		);
+	}
+
+	return config.frontMatter(documentItem);
 }
 
 /**
