@@ -38,6 +38,7 @@ import {
 } from "./summarizerTypes";
 import { SummarizeHeuristicData } from "./summarizerHeuristics";
 import { SummarizeResultBuilder } from "./summaryGenerator";
+import { responseToException } from "@fluidframework/runtime-utils";
 
 const summarizingError = "summarizingError";
 
@@ -121,10 +122,20 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 			url,
 		};
 
-		// TODO: What happens with old loader and container? Do we need to keep calling request? (I think so)
 		const resolvedContainer = await loader.resolve(request);
-		const fluidObject: FluidObject<ISummarizer> | undefined =
-			await resolvedContainer.getEntryPoint?.();
+		let fluidObject: FluidObject<ISummarizer> | undefined;
+
+		// Older containers may not have the "getEntryPoint" API
+		// ! This check will need to stay until LTS of loader moves past 2.0.0-internal.7.0.0
+		if (resolvedContainer.getEntryPoint !== undefined) {
+			fluidObject = await resolvedContainer.getEntryPoint();
+		} else {
+			const response = await resolvedContainer.request({ url: "_summarizer" });
+			if (response.status !== 200 || response.mimeType !== "fluid/object") {
+				throw responseToException(response, request);
+			}
+			fluidObject = response.value;
+		}
 
 		if (fluidObject?.ISummarizer === undefined) {
 			throw new UsageError("Fluid object does not implement ISummarizer");
