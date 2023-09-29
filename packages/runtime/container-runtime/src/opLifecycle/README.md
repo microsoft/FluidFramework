@@ -24,7 +24,7 @@ By default, the runtime is configured with a max batch size of `716800` bytes, w
 
 ### How batching works
 
-Batching in the context of Fluid ops is a way in which the framework groups ops and sends them to the server in a single payload, afterwards the ops will be broadcasted in the same order to other clients. Additional logic and validation ensure that batches do not interleave and they are processed in isolation. This means two things:
+Batching in the context of Fluid ops is a way in which the framework groups ops and sends them to the server in a single payload. Afterwards the ops will be broadcasted in the same order to all the other connected clients. Additional logic and validation ensure that batches do not interleave and they are processed in isolation. This means two things:
 
 -   A client will always start sending a new batch only after finishing a batch. Batches will never be sent interleaved or nested.
 -   When receiving a batch of ops, the client will process it in isolation without interleaving it with other batches or ops from other clients
@@ -48,10 +48,12 @@ export enum FlushMode {
 
 What this means is that `FlushMode.Immediate` will send each op it its own payload to the server, while `FlushMode.TurnBased` will accumulate all ops in a single JS turn and send them together in the same payload. Technically, `FlushMode.Immediate` can be simulated with `FlushMode.TurnBased` by calling any async API immediately after producing each op. Therefore, for all intents and purposes, `FlushMode.Immediate` enables all batches sent to the server to have only one op.
 
-**By default, Fluid uses FlushMode.TurnBased** as:
+**By default, Fluid uses `FlushMode.TurnBased`** as:
 
 -   it is more efficient from an I/O perspective (batching ops overall decrease the number of payloads sent to the server)
--   reduces concurrency related bugs as it ensures that all ops are generated within the same JS turn and then applied by all clients within a single JS turn. Clients using the same pattern can safely assume ops will be applied exactly as they are observed locally.
+-   reduces concurrency related bugs, as it ensures that all ops are generated within the same JS turn and then applied by all clients within a single JS turn. Clients using the same pattern can safely assume ops will be applied exactly as they are observed locally.
+
+As `FlushMode.TurnBased` accumulates ops, it is the most vulnerable to run into the 1MB socket limit.
 
 ## Compression
 
