@@ -3442,11 +3442,7 @@ export class ContainerRuntime
 		);
 	}
 
-	public submitDataStoreAliasOp(
-		contents: any,
-		localOpMetadata: unknown,
-		rootMetadata: unknown,
-	): void {
+	public submitDataStoreAliasOp(contents: any, localOpMetadata: unknown): void {
 		const aliasMessage = contents as IDataStoreAliasMessage;
 		if (!isDataStoreAliasMessage(aliasMessage)) {
 			throw new UsageError("malformedDataStoreAliasMessage");
