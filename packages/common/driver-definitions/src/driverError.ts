@@ -98,6 +98,11 @@ export const DriverErrorTypes = {
 	 * File is locked for read/write by storage, e.g. whole collection is locked and access denied.
 	 */
 	fileIsLocked: "fileIsLocked",
+
+	/**
+	 * Storage is out of space
+	 */
+	outOfStorageError: "outOfStorageError",
 } as const;
 export type DriverErrorTypes = typeof DriverErrorTypes[keyof typeof DriverErrorTypes];
 
@@ -204,6 +209,11 @@ export enum DriverErrorType {
 	 * File is locked for read/write by storage, e.g. whole collection is locked and access denied.
 	 */
 	fileIsLocked = "fileIsLocked",
+
+	/**
+	 * Storage is out of space
+	 */
+	outOfStorageError = "outOfStorageError",
 }
 
 /**
@@ -290,7 +300,8 @@ export interface IDriverBasicError extends IDriverErrorBase {
 		| DriverErrorType.fileOverwrittenInStorage
 		| DriverErrorType.fluidInvalidSchema
 		| DriverErrorType.usageError
-		| DriverErrorType.fileIsLocked;
+		| DriverErrorType.fileIsLocked
+		| DriverErrorType.outOfStorageError;
 	readonly statusCode?: number;
 }
 

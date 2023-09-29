@@ -205,6 +205,7 @@ export type OdspError = IOdspError | (DriverError & IOdspErrorAugmentations);
 
 // @public @deprecated
 export enum OdspErrorType {
+    blockedIPAddress = "blockedIPAddress",
     cannotCatchUp = "cannotCatchUp",
     fetchTimeout = "fetchTimeout",
     // (undocumented)
@@ -218,13 +219,13 @@ export enum OdspErrorType {
 
 // @public
 export const OdspErrorTypes: {
-    readonly outOfStorageError: "outOfStorageError";
     readonly invalidFileNameError: "invalidFileNameError";
     readonly snapshotTooBig: "snapshotTooBig";
     readonly fetchTimeout: "fetchTimeout";
     readonly fluidNotEnabled: "fluidNotEnabled";
     readonly cannotCatchUp: "cannotCatchUp";
     readonly serviceReadOnly: "serviceReadOnly";
+    readonly blockedIPAddress: "blockedIPAddress";
     readonly genericNetworkError: "genericNetworkError";
     readonly authorizationError: "authorizationError";
     readonly fileNotFoundOrAccessDeniedError: "fileNotFoundOrAccessDeniedError";
@@ -236,11 +237,10 @@ export const OdspErrorTypes: {
     readonly incorrectServerResponse: "incorrectServerResponse";
     readonly fileOverwrittenInStorage: "fileOverwrittenInStorage";
     readonly deltaStreamConnectionForbidden: "deltaStreamConnectionForbidden";
-    readonly locationRedirection: "locationRedirection"; /**
-    * SPO admin toggle: fluid service is not enabled.
-    */
+    readonly locationRedirection: "locationRedirection";
     readonly fluidInvalidSchema: "fluidInvalidSchema";
     readonly fileIsLocked: "fileIsLocked";
+    readonly outOfStorageError: "outOfStorageError";
     readonly genericError: "genericError";
     readonly throttlingError: "throttlingError";
     readonly usageError: "usageError";

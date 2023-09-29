@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/undo-redo",
-	"version": "2.0.0-internal.6.4.0",
+	"version": "2.0.0-internal.7.1.0",
 	"description": "Undo Redo",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -66,14 +66,14 @@
 		"events": "^3.1.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.22.0",
+		"@fluid-tools/build-cli": "^0.24.0",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.22.0",
+		"@fluidframework/build-tools": "^0.24.0",
 		"@fluidframework/eslint-config-fluid": "^2.1.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
-		"@fluidframework/undo-redo-previous": "npm:@fluidframework/undo-redo@2.0.0-internal.6.3.0",
-		"@microsoft/api-extractor": "^7.34.4",
+		"@fluidframework/undo-redo-previous": "npm:@fluidframework/undo-redo@2.0.0-internal.7.0.0",
+		"@microsoft/api-extractor": "^7.37.0",
 		"@types/diff": "^3.5.1",
 		"@types/events": "^3.0.0",
 		"@types/mocha": "^9.1.1",
@@ -89,7 +89,7 @@
 		"moment": "^2.21.0",
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",
-		"typescript": "~4.5.5"
+		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
 		"broken": {}

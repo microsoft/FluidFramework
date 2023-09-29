@@ -267,23 +267,11 @@ export interface IGCRuntimeOptions {
 	 * GC has mark phase and sweep phase. In mark phase, unreferenced objects are identified
 	 * and marked as such in the summary. This option enables the mark phase.
 	 * In sweep phase, unreferenced objects are eventually deleted from the container if they meet certain conditions.
-	 * Sweep phase can be enabled via the "sweepAllowed" option.
+	 * Sweep phase can be enabled using the "gcSweepGeneration" option.
 	 *
 	 * Note: This setting is persisted in the container's summary and cannot be changed.
 	 */
 	gcAllowed?: boolean;
-
-	/**
-	 * @deprecated -  @see gcSweepGenerationOptionName and @see GCFeatureMatrix.sweepGeneration
-	 *
-	 * Flag that if true, enables GC's sweep phase for a new container.
-	 *
-	 * This will allow GC to eventually delete unreferenced objects from the container.
-	 * This flag should only be set to true if "gcAllowed" is true.
-	 *
-	 * Note: This setting is persisted in the container's summary and cannot be changed.
-	 */
-	sweepAllowed?: boolean;
 
 	/**
 	 * Flag that if true, will disable garbage collection for the session.

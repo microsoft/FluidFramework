@@ -79,7 +79,7 @@ export class Context implements TreeContext, IDisposable {
 		for (const target of this.withCursors) {
 			target[prepareForEditSymbol]();
 		}
-		assert(this.withCursors.size === 0, "prepareForEdit should remove all cursors");
+		assert(this.withCursors.size === 0, 0x773 /* prepareForEdit should remove all cursors */);
 	}
 
 	public [disposeSymbol](): void {
@@ -99,8 +99,8 @@ export class Context implements TreeContext, IDisposable {
 		for (const target of this.withAnchors) {
 			target[disposeSymbol]();
 		}
-		assert(this.withCursors.size === 0, "free should remove all cursors");
-		assert(this.withAnchors.size === 0, "free should remove all anchors");
+		assert(this.withCursors.size === 0, 0x774 /* free should remove all cursors */);
+		assert(this.withAnchors.size === 0, 0x775 /* free should remove all anchors */);
 	}
 
 	public get root(): TreeField {

@@ -13,7 +13,7 @@ parameters:
 - name: devFeedName
   type: string
 
-- name: official
+- name: feedKind
   type: string
 
 - name: artifactPath
@@ -34,7 +34,7 @@ steps:
     targetType: 'inline'
     workingDirectory: $(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}
     ${{ if eq(parameters.namespace, true) }}:
-      ${{ if eq(parameters.official, false) }}:
+      ${{ if ne(parameters.feedKind, 'official') }}:
         script: |
           echo Generating .npmrc for ${{ parameters.feedName }}
           echo "@fluidframework:registry=${{ parameters.feedName }}" >> ./.npmrc
@@ -44,7 +44,7 @@ steps:
           echo "@fluid-tools:registry=${{ parameters.feedName }}" >> ./.npmrc
           echo "always-auth=true" >> ./.npmrc
           cat .npmrc
-      ${{ if eq(parameters.official, true) }}:
+      ${{ if eq(parameters.feedKind, 'official') }}:
         script: |
           echo Generating .npmrc for ${{ parameters.feedName }}
           echo "@fluidframework:registry=${{ parameters.feedName }}" >> ./.npmrc
@@ -53,13 +53,6 @@ steps:
           echo "@fluid-internal:registry=${{ parameters.feedName }}" >> ./.npmrc
           echo "always-auth=true" >> ./.npmrc
           cat .npmrc
-          echo Deleting @fluid-internal packages except fluid-internal-client-utils package
-          for packageName in $(ls fluid-internal-*.tgz | grep -v fluid-internal-client-utils-*.tgz)
-          do
-            rm -f $packageName
-          done
-          echo Deleting @fluid-example packages
-          rm -f fluid-example-*
     ${{ if eq(parameters.namespace, false) }}:
       script: |
         echo Generating .npmrc for ${{ parameters.feedName }}
@@ -88,8 +81,8 @@ steps:
       echo Tag: $tag
       cp .npmrc ~/.npmrc
       maximumRetryIfNetworkError=3
-      if [[ -f $(Pipeline.Workspace)/pack/packagePublishOrder.txt ]]; then
-        packages=$(cat $(Pipeline.Workspace)/pack/packagePublishOrder.txt)
+      if [[ -f $(Pipeline.Workspace)/pack/packagePublishOrder-${{ parameters.feedKind }}.txt ]]; then
+        packages=$(cat $(Pipeline.Workspace)/pack/packagePublishOrder-${{ parameters.feedKind }}.txt)
         sorted=true
       else
         packages=*.tgz
@@ -146,7 +139,7 @@ steps:
 
               if [[ $release == "release" && $feedId == "build" ]]; then
                 packageVersion=$(grep -oP 'npm notice version:\s+\K[^\s]+' publish_log)
-                
+
                 if [ "${{ parameters.artifactPath }}" == "scoped" ]; then
                   scopes=("fluidframework" "fluid-tools" "fluid-internal" "fluid-experimental")
                   for scope in "${scopes[@]}"; do
@@ -172,9 +165,9 @@ steps:
                       }' \
                       "$feedPromotionUrl"
                   )
-                
+
                 curlExitStatus=$?
-                
+
                 if echo "$response" | grep -q '"success":"false"'; then
                   reason="${response#*\"reason\":\"}"
                   reason="${reason%%\"*}"
@@ -186,7 +179,7 @@ steps:
                   exit 1
                 fi
               fi
-              
+
               rm publish_log
               break
             fi

@@ -263,7 +263,6 @@ describe("DDS Fuzz Harness", () => {
 											// `mixinClientSelection`. To keep this test simple, we do that manually
 											// here instead.
 											state.client = state.clients[0];
-											state.channel = state.client.channel;
 											return {
 												type: "changeConnectionState",
 												connected: false,
@@ -358,7 +357,6 @@ describe("DDS Fuzz Harness", () => {
 								state: DDSFuzzTestState<SharedNothingFactory>,
 							): Promise<ChangeConnectionState> => {
 								state.client = state.clients[0];
-								state.channel = state.client.channel;
 								return {
 									type: "changeConnectionState",
 									connected: false,
@@ -411,11 +409,11 @@ describe("DDS Fuzz Harness", () => {
 					...baseModel,
 					generatorFactory: () =>
 						takeAsync(30, async (state: DDSFuzzTestState<SharedNothingFactory>) => {
-							generatorSelectionCounts.increment(state.channel.id);
+							generatorSelectionCounts.increment(state.client.channel.id);
 							return { type: "noop" };
 						}),
-					reducer: async ({ channel }) => {
-						reducerSelectionCounts.increment(channel.id);
+					reducer: async ({ client }) => {
+						reducerSelectionCounts.increment(client.channel.id);
 					},
 				},
 				options,
