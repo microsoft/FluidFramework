@@ -84,9 +84,9 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 			return;
 		}
 
-		const storageService = await service.connectToStorage();
+		const storageServiceP = service.connectToStorage();
 		const retriableStorage = (this._storageService = new RetriableDocumentStorageService(
-			storageService,
+			storageServiceP,
 			this.logger,
 		));
 
@@ -100,6 +100,7 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 			);
 		}
 
+		const storageService = await storageServiceP;
 		// ensure we did not lose that policy in the process of wrapping
 		assert(
 			storageService.policies?.minBlobSize === this._storageService.policies?.minBlobSize,

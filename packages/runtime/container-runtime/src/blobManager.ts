@@ -501,8 +501,14 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			{
 				cancel: this.pendingBlobs.get(localId)?.abortSignal,
 			},
-			() => !this.pendingBlobs.get(localId)?.opsent && this.deletePendingBlob(localId),
-		).then((response) => this.onUploadResolve(localId, response));
+		)
+			.then((response) => this.onUploadResolve(localId, response))
+			.catch((err) => {
+				if (!this.pendingBlobs.get(localId)?.opsent) {
+					this.deletePendingBlob(localId);
+				}
+				throw err;
+			});
 	}
 
 	/**

@@ -48,7 +48,6 @@ export async function runWithRetry<T>(
 	fetchCallName: string,
 	logger: ITelemetryLoggerExt,
 	progress: IProgress,
-	beforeErrorThrow?: () => void,
 ): Promise<T> {
 	let result: T | undefined;
 	let success = false;
@@ -72,7 +71,6 @@ export async function runWithRetry<T>(
 					},
 					err,
 				);
-				beforeErrorThrow?.();
 				throw err;
 			}
 
@@ -88,7 +86,6 @@ export async function runWithRetry<T>(
 					},
 					err,
 				);
-				beforeErrorThrow?.();
 				throw new NonRetryableError(
 					"runWithRetry was Aborted",
 					DriverErrorTypes.genericError,
