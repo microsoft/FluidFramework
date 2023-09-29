@@ -86,7 +86,7 @@ function createOptionalLeafTree(
 		| readonly ITreeCursorSynchronous[]
 		| ITreeCursorSynchronous,
 ): {
-	treeSchema: FieldSchema<Optional, [TreeSchema<"leaf">]>;
+	fieldSchema: FieldSchema<Optional, [TreeSchema<"leaf">]>;
 	context: Context;
 	cursor: ITreeSubscriptionCursor;
 } {
@@ -98,7 +98,7 @@ function createOptionalLeafTree(
 	const { context, cursor } = initializeTreeWithContent(schema, initialTree);
 
 	return {
-		treeSchema: rootSchema,
+		fieldSchema: rootSchema,
 		context,
 		cursor,
 	};
@@ -117,7 +117,7 @@ function createValueLeafTree(
 		| readonly ITreeCursorSynchronous[]
 		| ITreeCursorSynchronous,
 ): {
-	treeSchema: FieldSchema<ValueFieldKind, [TreeSchema<"leaf">]>;
+	fieldSchema: FieldSchema<ValueFieldKind, [TreeSchema<"leaf">]>;
 	context: Context;
 	cursor: ITreeSubscriptionCursor;
 } {
@@ -129,7 +129,7 @@ function createValueLeafTree(
 	const { context, cursor } = initializeTreeWithContent(schema, initialTree);
 
 	return {
-		treeSchema: rootSchema,
+		fieldSchema: rootSchema,
 		context,
 		cursor,
 	};
@@ -139,35 +139,35 @@ describe("unboxed unit tests", () => {
 	describe("unboxedField", () => {
 		describe("Optional field", () => {
 			it("No value", () => {
-				const { treeSchema, context, cursor } = createOptionalLeafTree(
+				const { fieldSchema, context, cursor } = createOptionalLeafTree(
 					ValueSchema.Number,
 					undefined,
 				);
-				assert.equal(unboxedField(context, treeSchema, cursor), undefined);
+				assert.equal(unboxedField(context, fieldSchema, cursor), undefined);
 			});
 
 			it("Boolean", () => {
-				const { treeSchema, context, cursor } = createOptionalLeafTree(
+				const { fieldSchema, context, cursor } = createOptionalLeafTree(
 					ValueSchema.Boolean,
 					true,
 				);
-				assert.equal(unboxedField(context, treeSchema, cursor), true);
+				assert.equal(unboxedField(context, fieldSchema, cursor), true);
 			});
 
 			it("Number", () => {
-				const { treeSchema, context, cursor } = createOptionalLeafTree(
+				const { fieldSchema, context, cursor } = createOptionalLeafTree(
 					ValueSchema.Number,
 					42,
 				);
-				assert.equal(unboxedField(context, treeSchema, cursor), 42);
+				assert.equal(unboxedField(context, fieldSchema, cursor), 42);
 			});
 
 			it("String", () => {
-				const { treeSchema, context, cursor } = createOptionalLeafTree(
+				const { fieldSchema, context, cursor } = createOptionalLeafTree(
 					ValueSchema.String,
 					"Hello world",
 				);
-				assert.equal(unboxedField(context, treeSchema, cursor), "Hello world");
+				assert.equal(unboxedField(context, fieldSchema, cursor), "Hello world");
 			});
 
 			// TODO: Fluid Handle
@@ -447,11 +447,11 @@ describe("unboxed unit tests", () => {
 	});
 	describe("unboxedUnion", () => {
 		it("Single-type value", () => {
-			const { treeSchema, context, cursor } = createOptionalLeafTree(
+			const { fieldSchema, context, cursor } = createOptionalLeafTree(
 				ValueSchema.String,
 				"Hello world",
 			);
-			assert.equal(unboxedUnion(context, treeSchema, cursor), "Hello world");
+			assert.equal(unboxedUnion(context, fieldSchema, cursor), "Hello world");
 		});
 
 		it("Multi-type value", () => {
@@ -459,11 +459,11 @@ describe("unboxed unit tests", () => {
 		});
 
 		it("Single type optional", () => {
-			const { treeSchema, context, cursor } = createOptionalLeafTree(
+			const { fieldSchema, context, cursor } = createOptionalLeafTree(
 				ValueSchema.Boolean,
 				true,
 			);
-			assert.equal(unboxedUnion(context, treeSchema, cursor), true);
+			assert.equal(unboxedUnion(context, fieldSchema, cursor), true);
 		});
 
 		it("Multi-type optional", () => {
