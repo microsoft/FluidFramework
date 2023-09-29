@@ -393,7 +393,12 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 * @param localOpMetadata - The local metadata associated with the original message.
 	 */
 	protected reSubmitCore(content: any, localOpMetadata: unknown) {
-		this.submitLocalMessage(content, localOpMetadata);
+		//* TODO: If it's possible to generically "roundtrip" content through makeHandlesSerializable, do that
+		//* Otherwise we'll have to plumb rootMetadata down to provide whatever is needed here, or make this abstract.
+		//* this.submitLocalMessage(content, localOpMetadata, ???);
+		throw new Error(
+			"reSubmitCore must be overridden in order to correctly compute rootMetadata",
+		);
 	}
 
 	/**
