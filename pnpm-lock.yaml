@@ -7746,7 +7746,6 @@ importers:
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/routerlicious-driver': workspace:~
-      '@fluidframework/server-services-client': ^2.0.1
       '@fluidframework/test-tools': ^0.2.158186
       '@fluidframework/tinylicious-driver-previous': npm:@fluidframework/tinylicious-driver@2.0.0-internal.7.0.0
       '@microsoft/api-extractor': ^7.37.0
@@ -7769,7 +7768,6 @@ importers:
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/protocol-definitions': 3.0.0
       '@fluidframework/routerlicious-driver': link:../routerlicious-driver
-      '@fluidframework/server-services-client': 2.0.1
       jsrsasign: 10.8.6
       uuid: 9.0.0
     devDependencies:
@@ -11073,7 +11071,6 @@ importers:
       '@fluidframework/routerlicious-driver': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/server-local-server': ^2.0.1
-      '@fluidframework/server-services-client': ^2.0.1
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
       '@fluidframework/tool-utils': workspace:~
@@ -11120,7 +11117,6 @@ importers:
       '@fluidframework/routerlicious-driver': link:../../drivers/routerlicious-driver
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/server-local-server': 2.0.1
-      '@fluidframework/server-services-client': 2.0.1
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@fluidframework/tool-utils': link:../../utils/tool-utils
