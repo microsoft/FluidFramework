@@ -51,7 +51,7 @@ import { ITreeCursorSynchronous } from "./cursor";
  * format):
  *
  * 1. All marks that apply to field elements are represented in a single linear structure where marks that affect later
- * element of the document field appear after marks that affect earlier elements of the document field.
+ * elements of the document field appear after marks that affect earlier elements of the document field.
  *
  * If the marks were not ordered in this fashion then a consumer would need to backtrack within the document field.
  *
@@ -68,19 +68,19 @@ import { ITreeCursorSynchronous } from "./cursor";
  * 2. `MoveIn` marks in inserted portions of the document are inlined in their corresponding `ProtoField`.
  *
  * If the MoveIn marks were represented in a separate sub-structure (like they are under moved-in portions of the tree)
- * then the representation would forced to describe the path to them (in the form field keys and field offsets) from
- * the root of the inserted portion of the tree.
+ * then the representation would be forced to describe the path to them (in the form of field keys and field offsets)
+ * from the root of the inserted portion of the tree.
  * This would have two adverse effects:
  * - It would make the format less terse since this same path information would be redundant (it is already included in
  * the ProtoTree).
- * - It would lead the consumer of the format first build the inserted subtree, then traverse it again from its root to
- * apply the relevant `MoveIn` marks.
+ * - It would lead the consumer of the format to first build the inserted subtree, then traverse it again from its root
+ * to apply the relevant `MoveIn` marks.
  *
  *
  * 3. Modifications of deleted and moved-out nodes are represented using modify marks within `Delete` and `MoveOut`
  * marks.
  * This is in opposition to a structure where the fact that a modified node is being deleted or moved-out would
- * be represented a `Modify` mark like so:
+ * be represented by a `Modify` mark like so:
  * ```typescript
  * interface ModifyAndDelete {
  *   type: typeof MarkType.ModifyAndDelete;
