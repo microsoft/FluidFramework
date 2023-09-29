@@ -14,7 +14,7 @@ import {
 } from "@fluid-experimental/tree";
 
 import { IInventoryListUntyped, IPart } from "./interfaces";
-import { DataObject } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 
 const legacySharedTreeKey = "legacySharedTree";
@@ -22,7 +22,7 @@ const legacySharedTreeKey = "legacySharedTree";
 /**
  * Adapts a given LegacySharedTree into the interface we want to use for an inventory list, IInventoryList.
  */
-export class LegacySharedTreeInventoryList extends DataObject implements IInventoryListUntyped {
+export class LegacySharedTreeInventoryListDO extends DataObject implements IInventoryListUntyped {
 	private _tree: LegacySharedTree | undefined;
 	private get tree() {
 		if (this._tree === undefined) {
@@ -157,3 +157,10 @@ export class LegacySharedTreeInventoryList extends DataObject implements IInvent
 		return parts;
 	}
 }
+
+export const legacySharedTreeInventoryListFactory = new DataObjectFactory(
+	"legacy-shared-tree-inventory-list",
+	LegacySharedTreeInventoryListDO,
+	[LegacySharedTree.getFactory()],
+	{},
+);
