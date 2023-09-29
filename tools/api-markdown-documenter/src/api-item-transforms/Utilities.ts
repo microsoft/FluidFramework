@@ -11,7 +11,7 @@ import {
 	getDocumentPathForApiItem,
 	getLinkForApiItem,
 	getUnscopedPackageName,
-} from "./ApiItemUtilities";
+} from "./ApiItemTransformUtilities";
 import { TsdocNodeTransformOptions } from "./TsdocNodeTransforms";
 import { ApiItemTransformationConfiguration } from "./configuration";
 import { wrapInSection } from "./helpers";

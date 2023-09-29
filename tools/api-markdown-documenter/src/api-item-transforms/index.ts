@@ -30,7 +30,7 @@ export {
 	isOptional,
 	isReadonly,
 	isStatic,
-} from "./ApiItemUtilities";
+} from "./ApiItemTransformUtilities";
 export {
 	type ApiItemTransformationConfiguration,
 	type ApiItemTransformationOptions,

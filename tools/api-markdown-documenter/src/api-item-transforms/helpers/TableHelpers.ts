@@ -37,7 +37,7 @@ import {
 	getModifiers,
 	getReleaseTag,
 	isDeprecated,
-} from "../ApiItemUtilities";
+} from "../ApiItemTransformUtilities";
 import { transformTsdocSection } from "../TsdocNodeTransforms";
 import { getTsdocNodeTransformationOptions } from "../Utilities";
 import { ApiItemTransformationConfiguration } from "../configuration";

@@ -9,7 +9,7 @@ import {
 	doesItemRequireOwnDocument,
 	getHeadingForApiItem,
 	getReleaseTag,
-} from "../ApiItemUtilities";
+} from "../ApiItemTransformUtilities";
 import { ApiItemTransformationConfiguration } from "../configuration";
 import {
 	alphaWarningSpan,
