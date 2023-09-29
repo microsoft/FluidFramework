@@ -115,6 +115,17 @@ describe("SharedString interval collections", () => {
 		);
 	});
 
+	function checkIntervalChange() {
+		const collection = sharedString.getIntervalCollection("test");
+		const interval = collection.add({ start: 0, end: 0 });
+		const intervalId = interval.getIntervalId();
+		assert(intervalId);
+		// @ts-expect-error - require passing both interval endpoints
+		collection.change(intervalId, { start: 1, end: undefined });
+		// @ts-expect-error - require passing both interval endpoints
+		collection.change(intervalId, { start: undefined, end: 1 });
+	}
+
 	describe("in a connected state with a remote SharedString", () => {
 		let sharedString2: SharedString;
 		let containerRuntimeFactory: MockContainerRuntimeFactory;
