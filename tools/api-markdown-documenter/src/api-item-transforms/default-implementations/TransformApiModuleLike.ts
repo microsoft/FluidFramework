@@ -15,9 +15,10 @@ import {
 } from "@microsoft/api-extractor-model";
 
 import { SectionNode } from "../../documentation-domain";
-import { ApiModuleLike, filterByKind } from "../ApiItemTransformUtilities";
+import { filterByKind } from "../ApiItemTransformUtilities";
 import { ApiItemTransformationConfiguration } from "../configuration";
 import { createChildDetailsSection, createMemberTables } from "../helpers";
+import { ApiModuleLike } from "../../utilities";
 
 /**
  * Default documentation transform for module-like API items (packages, namespaces).

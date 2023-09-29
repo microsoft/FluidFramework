@@ -17,13 +17,8 @@
 // - bundle helper libraries as module (namespace) exports?
 
 export {
-	type ApiFunctionLike,
 	type ApiItemTransformationConfiguration,
 	type ApiItemTransformationOptions,
-	type ApiMemberKind,
-	type ApiModifier,
-	type ApiModuleLike,
-	type ApiSignatureLike,
 	type DefaultDocumentationSuiteOptions,
 	type DocumentationSuiteOptions,
 	type DocumentBoundaries,
@@ -36,12 +31,9 @@ export {
 	getHeadingForApiItem,
 	getLinkForApiItem,
 	getModifiers,
-	getQualifiedApiItemName,
 	getReleaseTag,
 	getReturnsBlock,
-	getSeeBlocks,
 	getThrowsBlocks,
-	getUnscopedPackageName,
 	type HierarchyBoundaries,
 	isDeprecated,
 	isOptional,
@@ -86,6 +78,16 @@ export {
 	type Logger,
 	verboseConsoleLogger,
 } from "./Logging";
+export {
+	type ApiFunctionLike,
+	type ApiMemberKind,
+	type ApiModifier,
+	type ApiModuleLike,
+	type ApiSignatureLike,
+	getQualifiedApiItemName,
+	getSeeBlocks,
+	getUnscopedPackageName,
+} from "./utilities";
 
 // #region Scoped exports
 

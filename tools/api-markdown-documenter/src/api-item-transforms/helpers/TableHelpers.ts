@@ -28,10 +28,8 @@ import {
 	TableHeaderRowNode,
 	TableNode,
 } from "../../documentation-domain";
-import { injectSeparator } from "../../utilities";
+import { ApiFunctionLike, ApiModifier, injectSeparator } from "../../utilities";
 import {
-	ApiFunctionLike,
-	ApiModifier,
 	getDefaultValueBlock,
 	getLinkForApiItem,
 	getModifiers,

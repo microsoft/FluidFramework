@@ -14,9 +14,10 @@ import {
 } from "@microsoft/api-extractor-model";
 
 import { SectionNode } from "../../documentation-domain";
-import { ApiModifier, filterByKind, isStatic } from "../ApiItemTransformUtilities";
+import { filterByKind, isStatic } from "../ApiItemTransformUtilities";
 import { ApiItemTransformationConfiguration } from "../configuration";
 import { createChildDetailsSection, createMemberTables } from "../helpers";
+import { ApiModifier } from "../../utilities";
 
 /**
  * Default documentation transform for `Class` items.

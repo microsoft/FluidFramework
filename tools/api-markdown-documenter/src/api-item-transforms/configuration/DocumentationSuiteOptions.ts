@@ -12,13 +12,8 @@ import {
 	ReleaseTag,
 } from "@microsoft/api-extractor-model";
 
-import {
-	ApiMemberKind,
-	getQualifiedApiItemName,
-	getReleaseTag,
-	getUnscopedPackageName,
-	releaseTagToString,
-} from "../ApiItemTransformUtilities";
+import { ApiMemberKind, getQualifiedApiItemName, getUnscopedPackageName } from "../../utilities";
+import { getReleaseTag, releaseTagToString } from "../ApiItemTransformUtilities";
 
 /**
  * List of item kinds for which separate documents should be generated.

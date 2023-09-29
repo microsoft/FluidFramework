@@ -8,11 +8,6 @@
  */
 
 export {
-	ApiFunctionLike,
-	ApiMemberKind,
-	ApiModuleLike,
-	ApiSignatureLike,
-	ApiModifier,
 	doesItemRequireOwnDocument,
 	getDefaultValueBlock,
 	getDeprecatedBlock,
@@ -20,12 +15,9 @@ export {
 	getHeadingForApiItem,
 	getLinkForApiItem,
 	getModifiers,
-	getQualifiedApiItemName,
 	getReleaseTag,
 	getReturnsBlock,
-	getSeeBlocks,
 	getThrowsBlocks,
-	getUnscopedPackageName,
 	isDeprecated,
 	isOptional,
 	isReadonly,
