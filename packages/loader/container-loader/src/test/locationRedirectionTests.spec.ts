@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { DriverErrorType, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
-import { resolveWithLocationRedirectionHandling } from "../resolveWithLocationRedirection";
+import { resolveWithLocationRedirectionHandling } from "../location-redirection-utilities";
 
 describe("Location Redirection Handling Tests", () => {
 	it("Should handle/retry location redirection error", async () => {

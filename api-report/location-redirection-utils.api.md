@@ -4,8 +4,8 @@
 
 ```ts
 
-import { isLocationRedirectionError } from '@fluidframework/driver-utils';
-import { resolveWithLocationRedirectionHandling } from '@fluidframework/driver-utils';
+import { isLocationRedirectionError } from '@fluidframework/container-loader';
+import { resolveWithLocationRedirectionHandling } from '@fluidframework/container-loader';
 
 export { isLocationRedirectionError }
 
