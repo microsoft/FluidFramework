@@ -121,6 +121,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 			url,
 		};
 
+		// TODO: What happens with old loader and container? Do we need to keep calling request? (I think so)
 		const resolvedContainer = await loader.resolve(request);
 		const fluidObject: FluidObject<ISummarizer> | undefined =
 			await resolvedContainer.getEntryPoint?.();
