@@ -8,7 +8,6 @@ import {
 	FieldKey,
 	TreeNavigationResult,
 	ITreeSubscriptionCursor,
-	mapCursorField,
 	CursorLocationType,
 	FieldAnchor,
 	inCursorNode,
@@ -16,7 +15,7 @@ import {
 	ITreeCursor,
 	keyAsDetachedField,
 	rootField,
-	EmptyKey,
+	iterateCursorField,
 } from "../../core";
 import { FieldKind } from "../modular-schema";
 import { NewFieldContent, normalizeNewFieldContent } from "../contextuallyTyped";
@@ -26,14 +25,8 @@ import {
 	SequenceFieldEditBuilder,
 	ValueFieldEditBuilder,
 } from "../default-field-kinds";
-import { compareSets, disposeSymbol, fail, oneFromSet } from "../../util";
-import {
-	AllowedTypes,
-	FieldSchema,
-	TreeSchema,
-	schemaIsFieldNode,
-	schemaIsLeaf,
-} from "../typed-schema";
+import { compareSets, disposeSymbol, fail } from "../../util";
+import { AllowedTypes, FieldSchema } from "../typed-schema";
 import { TreeStatus, treeStatusFromPath } from "../editable-tree";
 import { Context } from "./context";
 import {
@@ -42,12 +35,11 @@ import {
 	Sequence,
 	TypedField,
 	TypedNodeUnion,
-	UnboxField,
-	UnboxNode,
 	UnboxNodeUnion,
 	TreeField,
 	TreeNode,
 	RequiredField,
+	boxedIterator,
 } from "./editableTreeTypes";
 import { makeTree } from "./lazyTree";
 import {
@@ -60,6 +52,7 @@ import {
 	makePropertyNotEnumerable,
 	tryMoveCursorToAnchorSymbol,
 } from "./lazyEntity";
+import { unboxedUnion } from "./unboxed";
 
 export function makeField(
 	context: Context,
@@ -181,28 +174,25 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 		) as TypedNodeUnion<TTypes>;
 	}
 
-	public map<U>(
-		callbackfn: (value: UnboxNodeUnion<TTypes>, index: number, array: this) => U,
-	): U[] {
-		return mapCursorField(this[cursorSymbol], (cursor) =>
-			callbackfn(unboxedUnion(this.context, this.schema, cursor), cursor.fieldIndex, this),
+	public map<U>(callbackfn: (value: UnboxNodeUnion<TTypes>, index: number) => U): U[] {
+		return Array.from(this, callbackfn);
+	}
+
+	public mapBoxed<U>(callbackfn: (value: TypedNodeUnion<TTypes>, index: number) => U): U[] {
+		return Array.from(this[boxedIterator](), callbackfn);
+	}
+
+	public [boxedIterator](): IterableIterator<TypedNodeUnion<TTypes>> {
+		return iterateCursorField(
+			this[cursorSymbol],
+			(cursor) => makeTree(this.context, cursor) as TypedNodeUnion<TTypes>,
 		);
 	}
 
-	public mapBoxed<U>(
-		callbackfn: (value: TypedNodeUnion<TTypes>, index: number, array: this) => U,
-	): U[] {
-		return mapCursorField(this[cursorSymbol], (cursor) =>
-			callbackfn(
-				makeTree(this.context, cursor) as TypedNodeUnion<TTypes>,
-				cursor.fieldIndex,
-				this,
-			),
+	public [Symbol.iterator](): IterableIterator<UnboxNodeUnion<TTypes>> {
+		return iterateCursorField(this[cursorSymbol], (cursor) =>
+			unboxedUnion(this.context, this.schema, cursor),
 		);
-	}
-
-	public [Symbol.iterator](): IterableIterator<TypedNodeUnion<TTypes>> {
-		return this.mapBoxed((x) => x)[Symbol.iterator]();
 	}
 
 	public treeStatus(): TreeStatus {
@@ -377,76 +367,3 @@ const builderList: [FieldKind, Builder][] = [
 ];
 
 const kindToClass: ReadonlyMap<FieldKind, Builder> = new Map(builderList);
-
-/**
- * See {@link UnboxNode} for documentation on what unwrapping this performs.
- */
-function unboxedTree<TSchema extends TreeSchema>(
-	context: Context,
-	schema: TSchema,
-	cursor: ITreeSubscriptionCursor,
-): UnboxNode<TSchema> {
-	if (schemaIsLeaf(schema)) {
-		return cursor.value as UnboxNode<TSchema>;
-	}
-	if (schemaIsFieldNode(schema)) {
-		cursor.enterField(EmptyKey);
-		const primaryField = makeField(
-			context,
-			schema.structFields.get(EmptyKey) ?? fail("invalid schema"),
-			cursor,
-		);
-		cursor.exitField();
-		return primaryField as UnboxNode<TSchema>;
-	}
-
-	return makeTree(context, cursor) as UnboxNode<TSchema>;
-}
-
-/**
- * See {@link UnboxNodeUnion} for documentation on what unwrapping this performs.
- */
-function unboxedUnion<TTypes extends AllowedTypes>(
-	context: Context,
-	schema: FieldSchema<FieldKind, TTypes>,
-	cursor: ITreeSubscriptionCursor,
-): UnboxNodeUnion<TTypes> {
-	const type = oneFromSet(schema.types);
-	if (type !== undefined) {
-		return unboxedTree(
-			context,
-			context.schema.treeSchema.get(type) ?? fail("missing schema"),
-			cursor,
-		) as UnboxNodeUnion<TTypes>;
-	}
-	return makeTree(context, cursor) as UnboxNodeUnion<TTypes>;
-}
-
-/**
- * @param context - the common context of the field.
- * @param schema - the FieldStoredSchema of the field.
- * @param cursor - the cursor, which must point to the field being proxified.
- */
-export function unboxedField<TSchema extends FieldSchema>(
-	context: Context,
-	schema: TSchema,
-	cursor: ITreeSubscriptionCursor,
-): UnboxField<TSchema> {
-	const kind = schema.kind;
-	if (kind === FieldKinds.value) {
-		return inCursorNode(cursor, 0, (innerCursor) =>
-			unboxedUnion(context, schema, innerCursor),
-		) as UnboxField<TSchema>;
-	}
-	if (kind === FieldKinds.optional) {
-		if (cursor.getFieldLength() === 0) {
-			return undefined as UnboxField<TSchema>;
-		}
-		return inCursorNode(cursor, 0, (innerCursor) =>
-			unboxedUnion(context, schema, innerCursor),
-		) as UnboxField<TSchema>;
-	}
-
-	// TODO: forbidden and nodeKey
-	return makeField(context, schema, cursor) as UnboxField<TSchema>;
-}
