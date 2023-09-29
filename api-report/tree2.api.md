@@ -4,6 +4,7 @@
 
 ```ts
 
+import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
@@ -2288,6 +2289,28 @@ export interface TypedSchemaCollection<T extends FieldSchema = FieldSchema> {
     readonly rootFieldSchema: T;
     // (undocumented)
     readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
+}
+
+// @alpha
+export class TypedTreeFactory<TRoot extends FieldSchema = FieldSchema> implements IChannelFactory {
+    constructor(options: TypedTreeOptions<TRoot>);
+    // (undocumented)
+    readonly attributes: IChannelAttributes;
+    // (undocumented)
+    create(runtime: IFluidDataStoreRuntime, id: string): IChannel & {
+        readonly root: TypedField<TRoot>;
+    };
+    // (undocumented)
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, channelAttributes: Readonly<IChannelAttributes>): Promise<IChannel & {
+        readonly root: TypedField<TRoot>;
+    }>;
+    // (undocumented)
+    readonly type: string;
+}
+
+// @alpha
+export interface TypedTreeOptions<TRoot extends FieldSchema = FieldSchema> extends SharedTreeOptions, InitializeAndSchematizeConfiguration<TRoot> {
+    readonly subtype: string;
 }
 
 // @alpha
