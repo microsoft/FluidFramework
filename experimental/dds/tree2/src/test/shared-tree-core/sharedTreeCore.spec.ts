@@ -38,10 +38,10 @@ import {
 } from "../../feature-libraries";
 import { brand } from "../../util";
 import { ISubscribable } from "../../events";
-import { TestSharedTreeCore } from "./utils";
 import { SharedTreeTestFactory } from "../utils";
-import { ISharedTree, InitializeAndSchematizeConfiguration } from "../../shared-tree";
+import { InitializeAndSchematizeConfiguration } from "../../shared-tree";
 import { leaf } from "../../domains";
+import { TestSharedTreeCore } from "./utils";
 
 describe("SharedTreeCore", () => {
 	describe("emits", () => {
