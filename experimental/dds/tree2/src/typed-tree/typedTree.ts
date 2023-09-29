@@ -75,7 +75,7 @@ export class TypedTreeFactory<TRoot extends FieldSchema = FieldSchema> implement
  * IChannel wrapper that exposes a "root".
  *
  * @remarks
- * This is handy when an implementing IChannelFactory, and want to return a type thats derived from another IChannel implementation.
+ * This is handy when an implementing IChannelFactory and it's desirable to return a type that's derived from another IChannel implementation.
  */
 export class ChannelWrapper<T> implements IChannel {
 	public constructor(private readonly inner: IChannel, public readonly root: T) {}
