@@ -46,7 +46,9 @@ export class SharedTreeInventoryList extends DataObject implements IInventoryLis
 			undefined,
 			new SharedTreeFactory().type,
 		) as ISharedTree;
-		// I think it's important to schematize here so the schema gets written before we attach the ST?
+		// REV: I think it's a good practice to schematize here so the schema gets written before we attach the ST?
+		// AFAICT there's no negative impact from calling schematize a second time in hasInitialized and this way
+		// the initial attach snapshot has the right schema too.
 		sharedTree.schematize(schemaPolicy);
 		this.root.set(sharedTreeKey, sharedTree.handle);
 	}
@@ -55,6 +57,8 @@ export class SharedTreeInventoryList extends DataObject implements IInventoryLis
 		const sharedTree = await this.root.get<IFluidHandle<ISharedTree>>(sharedTreeKey)!.get();
 		const sharedTreeView = sharedTree.schematize(schemaPolicy);
 		this._inventory = sharedTreeView.context.root[0] as unknown as Inventory;
+		// REV: Similar to comment on LegacySharedTree, this event feels overly-broad for what I'm looking for.
+		// Also I personally find the deviation from standard EventEmitter here unintuitive and inconvenient.
 		sharedTreeView.events.on("afterBatch", () => {
 			this.emit("inventoryChanged");
 		});
@@ -67,6 +71,12 @@ export class SharedTreeInventoryList extends DataObject implements IInventoryLis
 				name: part.name,
 				quantity: part.quantity,
 				increment: () => {
+					// REV: Copied from the HookView - this is clever but surprising/unintuitive that it works IMO.
+					// It doesn't hint that this is actually making an edit that will result in an op, but instead
+					// looks like it's just modifying a local value.  As opposed to something like e.g.
+					// part.quantity.set(part.quantity.value + 1)
+					// Consider that a similar approach would be wrong for other DDSs e.g.
+					// someSharedMap.get("quantity")++
 					part.quantity++;
 				},
 				decrement: () => {

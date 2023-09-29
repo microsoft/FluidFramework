@@ -11,8 +11,8 @@ import { IInventoryListUntyped } from "./interfaces";
 import { sharedTreeInventoryListFactory } from "./sharedTreeInventoryList";
 import { legacySharedTreeInventoryListFactory } from "./legacySharedTreeInventoryList";
 
-const legacySharedTreeKey = "legacySharedTree";
-const sharedTreeKey = "sharedTree";
+const legacySharedTreeInventoryListKey = "legacySharedTreeInventoryList";
+const sharedTreeInventoryListKey = "sharedTreeInventoryList";
 const sharedTreeForHookKey = "sharedTreeForHook";
 
 export class InventoryListTrio extends DataObject {
@@ -40,29 +40,30 @@ export class InventoryListTrio extends DataObject {
 	}
 
 	protected async initializingFirstTime() {
-		const legacySharedTree = await legacySharedTreeInventoryListFactory.createChildInstance(
+		const legacySharedTreeInventoryList =
+			await legacySharedTreeInventoryListFactory.createChildInstance(this.context);
+		const sharedTreeInventoryList = await sharedTreeInventoryListFactory.createChildInstance(
 			this.context,
 		);
-		const sharedTree = await sharedTreeInventoryListFactory.createChildInstance(this.context);
 
 		const sharedTreeForHook = this.runtime.createChannel(
 			undefined,
 			new SharedTreeFactory().type,
 		) as ISharedTree;
 
-		this.root.set(legacySharedTreeKey, legacySharedTree.handle);
-		this.root.set(sharedTreeKey, sharedTree.handle);
+		this.root.set(legacySharedTreeInventoryListKey, legacySharedTreeInventoryList.handle);
+		this.root.set(sharedTreeInventoryListKey, sharedTreeInventoryList.handle);
 		this.root.set(sharedTreeForHookKey, sharedTreeForHook.handle);
 	}
 
 	protected async hasInitialized() {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		this._legacySharedTreeInventoryList = await this.root
-			.get<IFluidHandle<IInventoryListUntyped>>(legacySharedTreeKey)!
+			.get<IFluidHandle<IInventoryListUntyped>>(legacySharedTreeInventoryListKey)!
 			.get();
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		this._sharedTreeInventoryList = await this.root
-			.get<IFluidHandle<IInventoryListUntyped>>(sharedTreeKey)!
+			.get<IFluidHandle<IInventoryListUntyped>>(sharedTreeInventoryListKey)!
 			.get();
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		this._sharedTreeForHook = await this.root
@@ -71,6 +72,9 @@ export class InventoryListTrio extends DataObject {
 	}
 }
 
+// REV: One interesting challenge is that SharedTree and LegacySharedTree have the same Type ("SharedTree")
+// This means we can't register both under the same DataObjectFactory since they'll collide.  I dodge
+// that constraint here by burying them in individual DataObjectFactories but it's a little annoying.
 export const InventoryListTrioFactory = new DataObjectFactory(
 	"@fluid-experimental/inventory-list",
 	InventoryListTrio,

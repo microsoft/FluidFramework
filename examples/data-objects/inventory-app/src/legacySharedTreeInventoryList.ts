@@ -26,7 +26,7 @@ export class LegacySharedTreeInventoryList extends DataObject implements IInvent
 	private _tree: LegacySharedTree | undefined;
 	private get tree() {
 		if (this._tree === undefined) {
-			throw new Error("Not properly initialized");
+			throw new Error("Not initialized properly");
 		}
 		return this._tree;
 	}
@@ -37,15 +37,12 @@ export class LegacySharedTreeInventoryList extends DataObject implements IInvent
 			LegacySharedTree.getFactory().type,
 		) as LegacySharedTree;
 
-		const rootNode = legacySharedTree.currentView.getViewNode(
-			legacySharedTree.currentView.root,
-		);
-		if (rootNode.traits.size !== 0) {
-			throw new Error("This tree is already initialized!");
-		}
-
+		// Initialize the inventory with two parts at zero quantity
+		// REV: Is ChangeNode appropriate here? Or should I use some other type (BuildNode?)?
 		const inventoryNode: ChangeNode = {
 			identifier: legacySharedTree.generateNodeId(),
+			// REV: This is based on the Definition casting from Bubblebench, it doesn't really seem
+			// to matter what is used here though.  Is there a better way to omit the definition here?
 			definition: "array" as Definition,
 			traits: {
 				nuts: [
@@ -84,13 +81,18 @@ export class LegacySharedTreeInventoryList extends DataObject implements IInvent
 			.get<IFluidHandle<LegacySharedTree>>(legacySharedTreeKey)!
 			.get();
 
+		// REV: I see the tsdoc for EditCommitted recommends using a Checkout instead but that seems
+		// like overkill (plus I don't see how it relates exactly).  Is there a better way to just observe
+		// that the scalars are changing and raise "inventoryChanged"?
 		this._tree.on(SharedTreeEvent.EditCommitted, () => {
 			this.emit("inventoryChanged");
 		});
 	}
 
+	// REV: Lots of casts and non-null assertions below - is there a more type-confident way to do this?
 	public getParts() {
 		const parts: IPart[] = [];
+		// REV: Seems strange that this.tree.currentView.rootNode is private.
 		const rootNode = this.tree.currentView.getViewNode(this.tree.currentView.root);
 		const partsNode = this.tree.currentView.getViewNode(
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -99,9 +101,17 @@ export class LegacySharedTreeInventoryList extends DataObject implements IInvent
 		for (const [partLabel, [partQuantityNodeId]] of partsNode.traits) {
 			const partQuantityNode = this.tree.currentView.getViewNode(partQuantityNodeId);
 			const quantity = partQuantityNode.payload as number;
+			// REV: It would probably be preferable to have a durable IPart that raises individual
+			// "quantityChanged" events rather than eventing/refreshing on a whole-tree basis.  Is
+			// there a good way to listen for tree edits under a specific node?  Is the partQuantityNode
+			// reference durable across tree changes?
 			const part: IPart = {
 				name: partLabel,
 				quantity,
+				// REV: These implementations are flimsy - they rely on getParts() being called to get
+				// fresh parts after each "inventoryChanged" or else the callbacks will be stale.
+				// Probably would be better to re-acquire the quantity upon invocation (see question
+				// above about what is durable across tree changes).
 				increment: () => {
 					this.tree.applyEdit(Change.setPayload(partQuantityNodeId, quantity + 1));
 				},
