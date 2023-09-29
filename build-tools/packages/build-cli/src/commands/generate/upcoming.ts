@@ -89,7 +89,10 @@ export default class GenerateUpcomingCommand extends BaseCommand<typeof Generate
 		const contents = `${header}\n\n${intro}\n\n${body}`;
 		const outputPath = path.join(context.repo.resolvedRoot, flags.out);
 		this.info(`Writing output file: ${outputPath}`);
-		await writeFile(outputPath, prettier(contents, { proseWrap: "never", parser: "markdown" }));
+		await writeFile(
+			outputPath,
+			await prettier(contents, { proseWrap: "never", parser: "markdown" }),
+		);
 
 		return contents;
 	}
