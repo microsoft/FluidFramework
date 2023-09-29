@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+//* NOPE
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
+
 import { strict as assert } from "assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";

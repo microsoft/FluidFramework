@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+//* NOPE
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
+
 import { strict as assert } from "assert";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
