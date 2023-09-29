@@ -66,7 +66,6 @@ export class LegacySharedTreeInventoryList
 		);
 	}
 
-	// private readonly _inventory: Inventory;
 	// Feels bad to give out the whole LegacySharedTree.  Is there something more scoped to pass (root or something)?
 	public constructor(private readonly tree: LegacySharedTree) {
 		super();
