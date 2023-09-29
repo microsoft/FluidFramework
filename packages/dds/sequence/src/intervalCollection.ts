@@ -1201,7 +1201,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 				endPos !== undefined &&
 				startSide !== undefined &&
 				endSide !== undefined,
-			"start and end cannot be undefined because they were not passed in as undefined",
+			0x793 /* start and end cannot be undefined because they were not passed in as undefined */,
 		);
 
 		const stickiness = computeStickinessFromSide(startPos, startSide, endPos, endSide);

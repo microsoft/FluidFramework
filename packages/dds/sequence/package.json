@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/sequence",
-	"version": "2.0.0-internal.7.0.0",
+	"version": "2.0.0-internal.7.1.0",
 	"description": "Distributed sequence",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -90,7 +90,7 @@
 		"@fluidframework/build-tools": "^0.24.0",
 		"@fluidframework/eslint-config-fluid": "^3.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.0.0-internal.6.3.0",
+		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.0.0-internal.7.0.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.37.0",
 		"@types/diff": "^3.5.1",
@@ -120,34 +120,6 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"InterfaceDeclaration_ISerializedInterval": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_IntervalLocator": {
-				"forwardCompat": false
-			},
-			"TypeAliasDeclaration_IntervalRevertible": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_SequenceInterval": {
-				"forwardCompat": false
-			},
-			"TypeAliasDeclaration_SerializedIntervalDelta": {
-				"backCompat": false
-			},
-			"TypeAliasDeclaration_SharedStringRevertible": {
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_SequenceOptions": {
-				"forwardCompat": false
-			},
-			"VariableDeclaration_sequenceIntervalHelpers": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_IIntervalHelpers": {
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

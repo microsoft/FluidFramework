@@ -115,7 +115,6 @@ declare function get_current_InterfaceDeclaration_ISnapshotContents():
 declare function use_old_InterfaceDeclaration_ISnapshotContents(
     use: TypeOnly<old.ISnapshotContents>);
 use_old_InterfaceDeclaration_ISnapshotContents(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISnapshotContents());
 
 /*

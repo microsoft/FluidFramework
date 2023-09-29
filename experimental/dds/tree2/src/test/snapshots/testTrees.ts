@@ -174,5 +174,11 @@ export function generateTestTrees(): { name: string; tree: () => ISharedTree }[]
 				return tree;
 			},
 		},
+		{
+			name: "empty-root",
+			tree: () => {
+				return generateCompleteTree([], 0, 0);
+			},
+		},
 	].map(({ name, tree }) => ({ name, tree: () => useDeterministicStableId(tree) }));
 }

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/test-version-utils",
-	"version": "2.0.0-internal.7.0.0",
+	"version": "2.0.0-internal.7.1.0",
 	"description": "End to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -98,8 +98,8 @@
 		"c8": "^7.7.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.50.0",
-		"eslint-import-resolver-typescript": "^3.5.5",
-		"eslint-plugin-import": "~2.25.4",
+		"eslint-import-resolver-typescript": "^3.6.1",
+		"eslint-plugin-import": "~2.28.1",
 		"mocha": "^10.2.0",
 		"mocha-json-output-reporter": "^2.0.1",
 		"mocha-multi-reporters": "^1.5.1",
