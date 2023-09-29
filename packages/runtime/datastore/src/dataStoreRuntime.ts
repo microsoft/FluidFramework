@@ -910,7 +910,13 @@ export class FluidDataStoreRuntime
 			type: channel.attributes.type,
 		};
 		this.pendingAttach.add(channel.id);
-		this.submit(DataStoreMessageType.Attach, message);
+		//* UNDO: no rootMetadata needed for DataStore Attach message for now
+		this.submit(
+			DataStoreMessageType.Attach,
+			message,
+			/* localOpMetadata: */ undefined,
+			/* rootMetadata: */ undefined,
+		);
 
 		const context = this.contexts.get(channel.id) as LocalChannelContextBase;
 		context.makeVisible();
@@ -960,7 +966,7 @@ export class FluidDataStoreRuntime
 			}
 			case DataStoreMessageType.Attach:
 				// For Attach messages, just submit them again.
-				this.submit(type, content, localOpMetadata);
+				this.submit(type, content, localOpMetadata, /* rootMetadata: */ undefined); //* UNDO: no rootMetadata needed for DataStore Attach message for now
 				break;
 			default:
 				unreachableCase(type);
