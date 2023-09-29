@@ -28,6 +28,7 @@ import { IStreamResult } from '@fluidframework/driver-definitions';
 import { ISummaryContext } from '@fluidframework/driver-definitions';
 import { ISummaryHandle } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryErrorEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { ITelemetryProperties } from '@fluidframework/core-interfaces';
@@ -224,6 +225,9 @@ export interface IProgress {
 // @internal
 export function isCombinedAppAndProtocolSummary(summary: ISummaryTree | undefined): summary is CombinedAppAndProtocolSummary;
 
+// @public
+export function isLocationRedirectionError(error: any): error is ILocationRedirectionError;
+
 // @public (undocumented)
 export function isOnline(): OnlineStatus;
 
@@ -340,6 +344,9 @@ export function readAndParse<T>(storage: Pick<IDocumentStorageService, "readBlob
 
 // @public
 export function requestOps(get: (from: number, to: number, telemetryProps: ITelemetryProperties) => Promise<IDeltasFetchResult>, concurrency: number, fromTotal: number, toTotal: number | undefined, payloadSize: number, logger: ITelemetryLoggerExt, signal?: AbortSignal, scenarioName?: string): IStream<ISequencedDocumentMessage[]>;
+
+// @public
+export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger): Promise<T>;
 
 // @public (undocumented)
 export class RetryableError<T extends string> extends NetworkErrorBasic<T> {

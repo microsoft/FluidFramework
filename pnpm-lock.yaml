@@ -8799,6 +8799,7 @@ importers:
       '@fluidframework/build-tools': ^0.24.0
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/driver-definitions': workspace:~
+      '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.1.0
       '@fluidframework/location-redirection-utils-previous': npm:@fluidframework/location-redirection-utils@2.0.0-internal.7.0.0
       '@fluidframework/mocha-test-setup': workspace:~
@@ -8821,6 +8822,7 @@ importers:
     dependencies:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
+      '@fluidframework/driver-utils': link:../driver-utils
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
     devDependencies:
       '@fluid-tools/build-cli': 0.24.0_@types+node@16.18.38

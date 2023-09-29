@@ -40,6 +40,11 @@ export {
 export { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 export { RateLimiter } from "./rateLimiter";
 export { readAndParse } from "./readAndParse";
+export {
+	isLocationRedirectionError,
+	resolveWithLocationRedirectionHandling,
+} from "./resolveWithLocationRedirection";
+
 export { calculateMaxWaitTime, IProgress, runWithRetry } from "./runWithRetry";
 export {
 	CombinedAppAndProtocolSummary,
