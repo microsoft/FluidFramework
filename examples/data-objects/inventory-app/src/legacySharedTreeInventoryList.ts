@@ -31,49 +31,6 @@ export class LegacySharedTreeInventoryList extends DataObject implements IInvent
 		return this._tree;
 	}
 
-	// This is kind of playing the role of "schematize" from new SharedTree.
-	// The tree it sets up here matches what it expects to see in getParts().
-	// If LegacySharedTreeInventoryList were a full DataObject, maybe this would just live in
-	// initializingFirstTime().
-	public static initializeLegacySharedTreeForInventory(tree: LegacySharedTree) {
-		const rootNode = tree.currentView.getViewNode(tree.currentView.root);
-		if (rootNode.traits.size !== 0) {
-			throw new Error("This tree is already initialized!");
-		}
-
-		const inventoryNode: ChangeNode = {
-			identifier: tree.generateNodeId(),
-			definition: "array" as Definition,
-			traits: {
-				nuts: [
-					{
-						identifier: tree.generateNodeId(),
-						definition: "scalar" as Definition,
-						traits: {},
-						payload: 0,
-					},
-				],
-				bolts: [
-					{
-						identifier: tree.generateNodeId(),
-						definition: "scalar" as Definition,
-						traits: {},
-						payload: 0,
-					},
-				],
-			},
-		};
-		tree.applyEdit(
-			Change.insertTree(
-				inventoryNode,
-				StablePlace.atStartOf({
-					parent: tree.currentView.root,
-					label: "parts" as TraitLabel,
-				}),
-			),
-		);
-	}
-
 	protected async initializingFirstTime() {
 		const legacySharedTree = this.runtime.createChannel(
 			undefined,
