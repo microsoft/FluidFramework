@@ -305,7 +305,7 @@ export type IntervalStickiness = typeof IntervalStickiness[keyof typeof Interval
 
 // @public (undocumented)
 export enum IntervalType {
-    // (undocumented)
+    // @deprecated (undocumented)
     Nest = 1,
     // (undocumented)
     Simple = 0,
