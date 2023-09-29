@@ -9,7 +9,7 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import { IInventoryListUntyped } from "./interfaces";
 import { sharedTreeInventoryListFactory } from "./sharedTreeInventoryList";
-import { legacySharedTreeInventoryListFactory } from "./legacySharedTreeInventoryListDO";
+import { legacySharedTreeInventoryListFactory } from "./legacySharedTreeInventoryList";
 
 const legacySharedTreeKey = "legacySharedTree";
 const sharedTreeKey = "sharedTree";

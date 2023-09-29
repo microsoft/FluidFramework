@@ -12,17 +12,25 @@ import {
 	StablePlace,
 	TraitLabel,
 } from "@fluid-experimental/tree";
-import { TypedEmitter } from "tiny-typed-emitter";
 
-import { IInventoryList, IInventoryListEvents, IPart } from "./interfaces";
+import { IInventoryListUntyped, IPart } from "./interfaces";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+
+const legacySharedTreeKey = "legacySharedTree";
 
 /**
  * Adapts a given LegacySharedTree into the interface we want to use for an inventory list, IInventoryList.
  */
-export class LegacySharedTreeInventoryList
-	extends TypedEmitter<IInventoryListEvents>
-	implements IInventoryList
-{
+export class LegacySharedTreeInventoryList extends DataObject implements IInventoryListUntyped {
+	private _tree: LegacySharedTree | undefined;
+	private get tree() {
+		if (this._tree === undefined) {
+			throw new Error("Not properly initialized");
+		}
+		return this._tree;
+	}
+
 	// This is kind of playing the role of "schematize" from new SharedTree.
 	// The tree it sets up here matches what it expects to see in getParts().
 	// If LegacySharedTreeInventoryList were a full DataObject, maybe this would just live in
@@ -66,11 +74,60 @@ export class LegacySharedTreeInventoryList
 		);
 	}
 
-	// Feels bad to give out the whole LegacySharedTree.  Is there something more scoped to pass (root or something)?
-	public constructor(private readonly tree: LegacySharedTree) {
-		super();
+	protected async initializingFirstTime() {
+		const legacySharedTree = this.runtime.createChannel(
+			undefined,
+			LegacySharedTree.getFactory().type,
+		) as LegacySharedTree;
 
-		tree.on(SharedTreeEvent.EditCommitted, () => {
+		const rootNode = legacySharedTree.currentView.getViewNode(
+			legacySharedTree.currentView.root,
+		);
+		if (rootNode.traits.size !== 0) {
+			throw new Error("This tree is already initialized!");
+		}
+
+		const inventoryNode: ChangeNode = {
+			identifier: legacySharedTree.generateNodeId(),
+			definition: "array" as Definition,
+			traits: {
+				nuts: [
+					{
+						identifier: legacySharedTree.generateNodeId(),
+						definition: "scalar" as Definition,
+						traits: {},
+						payload: 0,
+					},
+				],
+				bolts: [
+					{
+						identifier: legacySharedTree.generateNodeId(),
+						definition: "scalar" as Definition,
+						traits: {},
+						payload: 0,
+					},
+				],
+			},
+		};
+		legacySharedTree.applyEdit(
+			Change.insertTree(
+				inventoryNode,
+				StablePlace.atStartOf({
+					parent: legacySharedTree.currentView.root,
+					label: "parts" as TraitLabel,
+				}),
+			),
+		);
+
+		this.root.set(legacySharedTreeKey, legacySharedTree.handle);
+	}
+
+	protected async hasInitialized() {
+		this._tree = await this.root
+			.get<IFluidHandle<LegacySharedTree>>(legacySharedTreeKey)!
+			.get();
+
+		this._tree.on(SharedTreeEvent.EditCommitted, () => {
 			this.emit("inventoryChanged");
 		});
 	}
@@ -100,3 +157,10 @@ export class LegacySharedTreeInventoryList
 		return parts;
 	}
 }
+
+export const legacySharedTreeInventoryListFactory = new DataObjectFactory(
+	"legacy-shared-tree-inventory-list",
+	LegacySharedTreeInventoryList,
+	[LegacySharedTree.getFactory()],
+	{},
+);
