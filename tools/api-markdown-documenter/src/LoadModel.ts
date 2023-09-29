@@ -22,7 +22,7 @@ import { Logger } from "./Logging";
  *
  * @remarks
  *
- * The resulting `ApiModel` can be passed to {@link transformApiModel} or {@link renderApiModelAsMarkdown}
+ * The resulting `ApiModel` can be passed to {@link transformApiModel} or to one of the bundled renderers
  * to generate API documentation for the model and its packages.
  *
  * @param reportsDirectoryPath - Path to the directory containing the API reports.
