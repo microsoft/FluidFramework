@@ -198,7 +198,7 @@ export class SharedTreeFactory implements IChannelFactory {
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
 	 */
-	public static Type = 'LegacySharedTree';
+	public static Type = 'SharedTree';
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.attributes}

@@ -9,6 +9,7 @@ import {
 	ChangeNode,
 	Definition,
 	SharedTree as LegacySharedTree,
+	SharedTreeFactory as LegacySharedTreeFactory,
 	StablePlace,
 	TraitLabel,
 } from "@fluid-experimental/tree";
@@ -22,12 +23,6 @@ import { LegacySharedTreeInventoryList } from "./legacySharedTreeInventoryList";
 const legacySharedTreeKey = "legacySharedTree";
 const sharedTreeKey = "sharedTree";
 const sharedTreeForHookKey = "sharedTreeForHook";
-
-export const enum NodeKind {
-	scalar = "s",
-	object = "o",
-	array = "a",
-}
 
 export class InventoryListTrio extends DataObject {
 	private _legacySharedTreeInventoryList: IInventoryList | undefined;
@@ -61,12 +56,12 @@ export class InventoryListTrio extends DataObject {
 
 		const inventoryNode: ChangeNode = {
 			identifier: legacySharedTree.generateNodeId(),
-			definition: NodeKind.array as Definition,
+			definition: "array" as Definition,
 			traits: {
 				nuts: [
 					{
 						identifier: legacySharedTree.generateNodeId(),
-						definition: NodeKind.scalar as Definition,
+						definition: "scalar" as Definition,
 						traits: {},
 						payload: 0,
 					},
@@ -74,7 +69,7 @@ export class InventoryListTrio extends DataObject {
 				bolts: [
 					{
 						identifier: legacySharedTree.generateNodeId(),
-						definition: NodeKind.scalar as Definition,
+						definition: "scalar" as Definition,
 						traits: {},
 						payload: 0,
 					},
@@ -121,6 +116,9 @@ export class InventoryListTrio extends DataObject {
 			.get();
 	}
 }
+
+LegacySharedTreeFactory.Type = "foobar";
+(LegacySharedTreeFactory.Attributes as any).type = "foobar";
 
 export const InventoryListTrioFactory = new DataObjectFactory(
 	"@fluid-experimental/inventory-list",
