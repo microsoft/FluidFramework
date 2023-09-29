@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { Context, Logger, Package } from "@fluidframework/build-tools";
+import { Context, Package } from "@fluidframework/build-tools";
 import path from "node:path";
 import { filterFlags, selectionFlags } from "./flags";
-import { ReleaseGroup, knownReleaseGroups } from "./releaseGroups";
+import { KnownReleaseGroups, ReleaseGroup } from "./releaseGroups";
 
 /**
  * The criteria that should be used for selecting package-like objects from a collection.
@@ -20,12 +20,12 @@ export interface PackageSelectionCriteria {
 	/**
 	 * An array of release groups whose packages are selected.
 	 */
-	releaseGroups: ReleaseGroup[];
+	releaseGroups: (ReleaseGroup | string)[];
 
 	/**
 	 * An array of release groups whose root packages are selected.
 	 */
-	releaseGroupRoots: ReleaseGroup[];
+	releaseGroupRoots: (ReleaseGroup | string)[];
 
 	/**
 	 * If set, only selects the single package in this directory.
@@ -38,8 +38,8 @@ export interface PackageSelectionCriteria {
  */
 export const AllPackagesSelectionCriteria: PackageSelectionCriteria = {
 	independentPackages: true,
-	releaseGroups: [...knownReleaseGroups],
-	releaseGroupRoots: [...knownReleaseGroups],
+	releaseGroups: [...KnownReleaseGroups],
+	releaseGroupRoots: [...KnownReleaseGroups],
 	directory: undefined,
 };
 
@@ -156,7 +156,7 @@ const selectPackagesFromContext = (
 	if (selection.independentPackages === true) {
 		for (const pkg of context.independentPackages) {
 			selected.push(
-				Package.load(pkg.packageJsonFileName, pkg.group, undefined, {
+				Package.load(pkg.packageJsonFileName, pkg.group, pkg.monoRepo, {
 					kind: "independentPackage",
 				}),
 			);
@@ -180,17 +180,9 @@ const selectPackagesFromContext = (
 		if (packages.length === 0) {
 			continue;
 		}
-		const { monoRepo } = packages[0];
-		if (monoRepo === undefined) {
-			throw new Error(
-				`Package is supposed to be a release group root but cannot find release group: ${rg}`,
-			);
-		}
-
-		const loadedPackage: PackageWithKind = Package.loadDir(monoRepo.repoPath, rg, monoRepo, {
-			kind: "releaseGroupRootPackage",
-		});
-		selected.push(loadedPackage);
+		const dir = packages[0].directory;
+		const pkg = Package.loadDir(dir, rg);
+		selected.push(Package.loadDir(dir, rg, pkg.monoRepo, { kind: "releaseGroupRootPackage" }));
 	}
 
 	return selected;

@@ -6,11 +6,13 @@
 
 import { run } from '@oclif/core';
 
-// @internal
-export const knownReleaseGroups: readonly ["build-tools", "client", "server", "gitrest", "historian"];
+// @public
+export const KnownReleaseGroups: readonly ["build-tools", "client", "server", "gitrest", "historian"];
 
+// Warning: (ae-forgotten-export) The symbol "knownReleaseGroups" needs to be exported by the entry point index.d.ts
+//
 // @internal
-export type ReleaseGroup = typeof knownReleaseGroups[number] | string;
+export type ReleaseGroup = typeof knownReleaseGroups[number];
 
 // @internal
 export type ReleasePackage = string;

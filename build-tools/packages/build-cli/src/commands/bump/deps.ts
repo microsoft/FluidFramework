@@ -215,7 +215,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 						context,
 						flags.releaseGroup ?? flags.package, // if undefined the whole repo will be checked
 						depsToUpdate,
-						rgOrPackage instanceof MonoRepo ? rgOrPackage.name : undefined,
+						rgOrPackage instanceof MonoRepo ? rgOrPackage.releaseGroup : undefined,
 						/* prerelease */ flags.prerelease,
 						/* writeChanges */ !flags.testMode,
 						this.logger,
@@ -224,7 +224,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 						context,
 						flags.releaseGroup ?? flags.package, // if undefined the whole repo will be checked
 						depsToUpdate,
-						rgOrPackage instanceof MonoRepo ? rgOrPackage.name : undefined,
+						rgOrPackage instanceof MonoRepo ? rgOrPackage.releaseGroup : undefined,
 						flags.updateType,
 						/* prerelease */ flags.prerelease,
 						/* writeChanges */ !flags.testMode,
@@ -244,8 +244,8 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 				...new Set(
 					updatedPackages
 						.filter((p) => p.monoRepo !== undefined)
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						.map((p) => p.monoRepo!.kind),
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unsafe-return
+						.map((p) => p.monoRepo!.releaseGroup),
 				),
 			];
 
