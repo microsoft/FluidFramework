@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 import { Flags } from "@oclif/core";
-import { Package, updatePackageJsonFile } from "@fluidframework/build-tools";
+import { Package, updatePackageJsonFile, PackageJson } from "@fluidframework/build-tools";
 import { PackageCommand } from "../../BasePackageCommand";
-// eslint-disable-next-line node/no-missing-import
-import type { PackageJson } from "type-fest";
 import { ExtractorConfig } from "@microsoft/api-extractor";
 import { CommandLogger } from "../../logging";
 import path from "node:path";
+import { strict as assert } from "node:assert";
 
 /**
  * Represents a list of package categorized into two arrays
@@ -25,34 +24,12 @@ interface PackageTypesList {
 	packagesNotUpdated: string[];
 }
 
-/**
- * Represents a configuration object for updating a package.
- */
-interface ReleaseTagConfig {
-	/**
-	 * The package to be updated.
-	 */
-	pkg: Package;
-	/**
-	 * ExtractorConfig represents api-extractor.json config file.
-	 */
-	extractorConfig: ExtractorConfig;
-	/**
-	 * The type of release for the package (e.g., "alpha", "beta", "public", "default").
-	 */
-	releaseType: ReleaseTag;
-	/**
-	 * The JSON data for the package.
-	 */
-	json: PackageJson;
-}
+const knownDtsKinds = ["alpha", "beta", "public", "untrimmed"] as const;
 
-const knownReleaseTag = ["alpha", "beta", "public", "default"] as const;
+type DtsKind = typeof knownDtsKinds[number];
 
-type ReleaseTag = typeof knownReleaseTag[number];
-
-function isReleaseTag(str: string | undefined): str is ReleaseTag {
-	return str === undefined ? false : knownReleaseTag.includes(str as any);
+function isDtsKind(str: string | undefined): str is DtsKind {
+	return str === undefined ? false : knownDtsKinds.includes(str as any);
 }
 
 export default class SetReleaseTagPublishingCommand extends PackageCommand<
@@ -64,11 +41,11 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 	static readonly enableJsonFlag = true;
 
 	static readonly flags = {
-		types: Flags.custom<ReleaseTag>({
+		types: Flags.custom<DtsKind>({
 			description: "Which .d.ts types to include in the published package.",
 			required: true,
 			parse: async (input) => {
-				if (isReleaseTag(input)) {
+				if (isDtsKind(input)) {
 					return input;
 				}
 				throw new Error(`Invalid release type: ${input}`);
@@ -77,24 +54,25 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 		...PackageCommand.flags,
 	};
 
-	private packageList!: PackageTypesList;
-
-	// Override the init method to initialize packageList
-	public async init() {
-		await super.init();
-		this.packageList = {
-			packagesNotUpdated: [],
-			packagesUpdated: [],
-		};
-	}
+	private readonly packageList: PackageTypesList = {
+		packagesNotUpdated: [],
+		packagesUpdated: [],
+	};
 
 	protected async processPackage(pkg: Package): Promise<void> {
-		let packageUpdate: boolean = false;
+		let packageUpdated: boolean = false;
 
 		updatePackageJsonFile(pkg.directory, (json) => {
+			if (json.types !== undefined && json.typings !== undefined) {
+				throw new Error(
+					"Both 'types' and 'typings' fields are defined in the package.json. Only one should be used.",
+				);
+			}
+
 			const types: string | undefined = json.types ?? json.typings;
 
 			if (types === undefined) {
+				this.verbose("Neither 'types' nor 'typings' field is defined in the package.json.");
 				return;
 			}
 
@@ -106,17 +84,20 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 				return;
 			}
 			const extractorConfig = ExtractorConfig.prepare(configOptions);
+			assert(this.flags.types !== undefined, "--types flag must be provided.");
 
-			const config: ReleaseTagConfig = {
-				pkg,
+			packageUpdated = updatePackageJsonTypes(
+				pkg.directory,
 				extractorConfig,
-				releaseType: this.flags.types as ReleaseTag,
+				this.flags.types,
 				json,
-			};
+				this.logger,
+			);
 
-			packageUpdate = updatePackageJsonTypes(config, this.logger);
-
-			updatePackageLists(this.packageList, packageUpdate, pkg);
+			const updatedPackageList = packageUpdated
+				? this.packageList.packagesUpdated.push(pkg.name)
+				: this.packageList.packagesNotUpdated.push(pkg.name);
+			return updatedPackageList;
 		});
 	}
 
@@ -124,10 +105,8 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 		// Calls processPackage on all packages.
 		await super.run();
 
-		const flags = this.flags;
-
 		if (this.packageList.packagesUpdated.length === 0) {
-			this.log(`No updates in package.json for ${flags.types} release tag`);
+			this.log(`No updates in package.json for ${this.flags.types} release tag`);
 		}
 
 		return this.packageList;
@@ -140,71 +119,50 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
  * @param log - The logger used for logging verbose information.
  * @returns true if the update was successful, false otherwise.
  */
-function updatePackageJsonTypes(config: ReleaseTagConfig, log: CommandLogger): boolean {
-	let packageUpdate = false;
+function updatePackageJsonTypes(
+	directory: string,
+	extractorConfig: ExtractorConfig,
+	dTsType: DtsKind,
+	json: PackageJson,
+	log: CommandLogger,
+): boolean {
+	let packageUpdated = false;
 	try {
-		if (config.extractorConfig.rollupEnabled === true) {
-			switch (config.releaseType) {
+		if (extractorConfig.rollupEnabled === true) {
+			packageUpdated = true;
+			switch (dTsType) {
 				case "alpha": {
-					config.json.types = path.relative(
-						config.pkg.directory,
-						config.extractorConfig.alphaTrimmedFilePath,
-					);
-					packageUpdate = true;
+					if (extractorConfig.alphaTrimmedFilePath === "") {
+						packageUpdated = false;
+						throw new Error("alphaTrimmedFilePath is empty");
+					}
+
+					json.types = path.relative(directory, extractorConfig.alphaTrimmedFilePath);
 					break;
 				}
 
 				case "beta": {
-					config.json.types = path.relative(
-						config.pkg.directory,
-						config.extractorConfig.betaTrimmedFilePath,
-					);
-					packageUpdate = true;
+					json.types = path.relative(directory, extractorConfig.betaTrimmedFilePath);
 					break;
 				}
 
 				case "public": {
-					config.json.types = path.relative(
-						config.pkg.directory,
-						config.extractorConfig.publicTrimmedFilePath,
-					);
-					packageUpdate = true;
+					json.types = path.relative(directory, extractorConfig.publicTrimmedFilePath);
+					break;
+				}
+
+				case "untrimmed": {
+					json.types = path.relative(directory, extractorConfig.untrimmedFilePath);
 					break;
 				}
 
 				default: {
-					config.json.types = path.relative(
-						config.pkg.directory,
-						config.extractorConfig.untrimmedFilePath,
-					);
-					packageUpdate = true;
-					break;
+					log.errorLog(`${dTsType} is not a valid value.`);
 				}
 			}
 		}
 	} catch {
-		log.verbose(`Unable to update types: ${JSON.stringify(config.extractorConfig)}`);
+		log.verbose(`Unable to update types: ${JSON.stringify(extractorConfig)}`);
 	}
-	return packageUpdate;
-}
-
-/**
- * Updates a package types list based on whether a package was updated or not.
- *
- * @param packageList - The package types list to be updated.
- * @param packageUpdate - A boolean indicating whether the package was updated.
- * @param pkg - The package being processed.
- * @returns The updated package types list.
- */
-function updatePackageLists(
-	packageList: PackageTypesList,
-	packageUpdate: boolean,
-	pkg: Package,
-): PackageTypesList {
-	if (packageUpdate) {
-		packageList.packagesUpdated.push(pkg.name);
-	} else {
-		packageList.packagesNotUpdated.push(pkg.name);
-	}
-	return packageList;
+	return packageUpdated;
 }
