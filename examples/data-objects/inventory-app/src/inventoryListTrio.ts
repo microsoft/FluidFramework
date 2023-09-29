@@ -14,6 +14,7 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IInventoryList } from "./interfaces";
 import { SharedTreeInventoryList } from "./sharedTreeInventoryList";
 import { LegacySharedTreeInventoryList } from "./legacySharedTreeInventoryList";
+import { sharedTreeInventoryListDOFactory } from "./sharedTreeInventoryListDO";
 
 const legacySharedTreeKey = "legacySharedTree";
 const sharedTreeKey = "sharedTree";
@@ -93,4 +94,5 @@ export const InventoryListTrioFactory = new DataObjectFactory(
 	InventoryListTrio,
 	[LegacySharedTree.getFactory(), new SharedTreeFactory()],
 	{},
+	new Map([sharedTreeInventoryListDOFactory.registryEntry]),
 );

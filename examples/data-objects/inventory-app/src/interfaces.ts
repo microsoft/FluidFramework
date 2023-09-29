@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import EventEmitter from "events";
 import { TypedEmitter } from "tiny-typed-emitter";
 
 export interface IPart {
@@ -18,4 +19,9 @@ export interface IInventoryListEvents {
 
 export interface IInventoryList extends TypedEmitter<IInventoryListEvents> {
 	getParts: () => IPart[];
+}
+
+export interface IInventoryListUntyped extends EventEmitter {
+	getParts: () => IPart[];
+	on(event: "inventoryChanged", listener: () => void): this;
 }
