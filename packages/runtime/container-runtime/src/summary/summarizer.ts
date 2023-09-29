@@ -16,6 +16,7 @@ import {
 import { ILoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import { FluidObject, IFluidHandleContext, IRequest } from "@fluidframework/core-interfaces";
+import { responseToException } from "@fluidframework/runtime-utils";
 import { ISummaryConfiguration } from "../containerRuntime";
 import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator";
 import { summarizerClientType } from "./summarizerClientElection";
@@ -38,7 +39,6 @@ import {
 } from "./summarizerTypes";
 import { SummarizeHeuristicData } from "./summarizerHeuristics";
 import { SummarizeResultBuilder } from "./summaryGenerator";
-import { responseToException } from "@fluidframework/runtime-utils";
 
 const summarizingError = "summarizingError";
 
