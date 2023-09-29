@@ -82,7 +82,7 @@ describe("LazyField", () => {
 		);
 		cursor.free();
 		assert.throws(
-			() => sequenceField.replaceRange(0, 1, []),
+			() => sequenceField.insertAt(0, [1]),
 			(e: Error) =>
 				validateAssertionError(
 					e,
