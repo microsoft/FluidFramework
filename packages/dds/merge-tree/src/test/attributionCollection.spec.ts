@@ -296,8 +296,7 @@ describe("AttributionCollection", () => {
 	});
 
 	describe("serializeAttributionCollections and populateAttributionCollections round-trip", () => {
-		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-		const seg = (length: number): ISegment => ({ cachedLength: length } as ISegment);
+		const seg = (length: number): ISegment => ({ cachedLength: length } as any as ISegment);
 		const testCases: {
 			name: string;
 			blob: SerializedAttributionCollection;

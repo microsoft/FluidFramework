@@ -597,8 +597,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 
 		// start and end are guaranteed to be non-null here, otherwise we throw above.
-		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-		return { start, end } as IIntegerRange;
+		return { start: start!, end: end! };
 	}
 
 	/**
