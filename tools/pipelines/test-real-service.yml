@@ -202,27 +202,14 @@ stages:
             # Retrieve E2E test pass rate
             - task: Bash@3
               displayName: Retrieve test pass rate
-              inputs:
-                targetType: 'inline'
-                workingDirectory: $(toolAbsolutePath)
-                script: |
-                  echo: "creating output folder"
-                  mkdir -p ${{ variables.testWorkspace }}/passRateOutput
-                  echo "Executing curl command ..."
-                  echo  'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$(Build.BuildId)/timeline"'
-                  curl -u ":$(System.AccessToken)" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$(Build.BuildId)/timeline\?api-version\=6.0-preview.1" > ${{ variables.testWorkspace }}/passRateOutput/output.json
-                  pwd;
-                  ls -laR ${{ variables.testWorkspace }}/passRateOutput/output.json;
-                  stages=($(jq -r '.records[] | select(.type == "Stage") | .identifier' ${{ variables.testWorkspace }}/passRateOutput/output.json))
-                  mkdir -p ${{ variables.testWorkspace }}/stageFiles
-                  for stage in "${stages[@]}"; do
-                    echo "Fetching data for stage: $stage"
-                    curl -s -u ":$(System.AccessToken)" "https://vstmr.dev.azure.com/fluidframework/internal/_apis/testresults/metrics?pipelineId=$(Build.BuildId)&stageName=$(stage)&api-version=7.1-preview.1 > "${{ variables.testWorkspace }}/stageFiles/${stage}.json"
-                    node --require @ff-internal/aria-logger bin/run --handlerModule $(Build.SourcesDirectory)/tools/telemetry-generator/dist/handlers/testPassRate.js --dir '${{ variables.testWorkspace }}/timingOutput/${stage}.json'
-                  done
-                  pwd
-                  ls -laR ${{ variables.testWorkspace }}/passRateOutput/
               env:
                 BUILD_ID: $(Build.BuildId)
                 ADO_API_TOKEN: $(System.AccessToken)
+                TEST_WORKSPACE: ${{ variables.testWorkspace }}
+                BUILD_SOURCES_DIRECTORY: $(Build.SourcesDirectory)
                 PIPELINE: 'EndToEndTests'
+              inputs:
+                targetType: 'filePath'
+                workingDirectory: ${{ parameters.buildDirectory }}
+                filePath: $(Build.SourcesDirectory)/scripts/get-test-pass-rate.sh
+              
