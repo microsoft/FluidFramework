@@ -361,7 +361,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 		this.verifyNotClosed();
 		if (this.isAttached()) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.services!.deltaConnection.submit(content, localOpMetadata);
+			this.services!.deltaConnection.submit(content, localOpMetadata, rootMetadata);
 		}
 	}
 

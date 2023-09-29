@@ -626,7 +626,7 @@ export class SharedDirectory
 		localOpMetadata: unknown,
 		rootMetadata?: unknown,
 	): void {
-		this.submitLocalMessage(op, localOpMetadata, /* rootMetadata */ undefined);
+		this.submitLocalMessage(op, localOpMetadata, rootMetadata);
 	}
 
 	/**

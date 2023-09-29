@@ -863,7 +863,7 @@ export class FluidDataStoreRuntime
 		localOpMetadata: unknown,
 		rootMetadata?: unknown,
 	) {
-		this.submit(type, content, localOpMetadata);
+		this.submit(type, content, localOpMetadata, rootMetadata);
 	}
 
 	public submitSignal(type: string, content: any) {

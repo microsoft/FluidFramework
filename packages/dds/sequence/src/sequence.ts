@@ -257,7 +257,8 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		this.intervalCollections = new DefaultMap(
 			this.serializer,
 			this.handle,
-			(op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
+			(op, localOpMetadata, rootMetadata) =>
+				this.submitLocalMessage(op, localOpMetadata, rootMetadata),
 			new SequenceIntervalCollectionValueType(),
 			dataStoreRuntime.options,
 		);

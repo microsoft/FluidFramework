@@ -76,7 +76,7 @@ export class MockDeltaConnection implements IDeltaConnection {
 	}
 
 	public submit(messageContent: any, localOpMetadata: unknown, rootMetadata?: unknown): number {
-		return this.submitFn(messageContent, localOpMetadata);
+		return this.submitFn(messageContent, localOpMetadata, rootMetadata);
 	}
 
 	public dirty(): void {
@@ -628,8 +628,8 @@ export class MockFluidDataStoreRuntime
 	private readonly deltaConnections: MockDeltaConnection[] = [];
 	public createDeltaConnection(): MockDeltaConnection {
 		const deltaConnection = new MockDeltaConnection(
-			(messageContent: any, localOpMetadata: unknown) =>
-				this.submitMessageInternal(messageContent, localOpMetadata),
+			(messageContent: any, localOpMetadata: unknown, rootMetadata) =>
+				this.submitMessageInternal(messageContent, localOpMetadata, rootMetadata),
 			() => this.setChannelDirty(),
 		);
 		this.deltaConnections.push(deltaConnection);
@@ -736,7 +736,7 @@ export class MockFluidDataStoreRuntime
 			this.containerRuntime !== undefined,
 			"The container runtime has not been initialized",
 		);
-		return this.containerRuntime.submit(messageContent, localOpMetadata);
+		return this.containerRuntime.submit(messageContent, localOpMetadata, rootMetadata);
 	}
 
 	private setChannelDirty(): void {

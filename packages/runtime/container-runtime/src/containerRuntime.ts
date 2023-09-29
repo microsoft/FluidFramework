@@ -3503,7 +3503,6 @@ export class ContainerRuntime
 		containerRuntimeMessage: OutboundContainerRuntimeMessage,
 		localOpMetadata: unknown = undefined,
 		metadata: Record<string, unknown> | undefined = undefined,
-		rootMetadata?: unknown,
 	): void {
 		this.verifyNotClosed();
 		this.verifyCanSubmitOps();
