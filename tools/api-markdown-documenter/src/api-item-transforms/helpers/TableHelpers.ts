@@ -437,7 +437,7 @@ export function createPropertiesTable(
 		(apiItem) => getModifiers(apiItem, options?.modifiersToOmit).length > 0,
 	);
 	const hasDefaultValues = apiProperties.some(
-		(apiItem) => getDefaultValueBlock(apiItem, config) !== undefined,
+		(apiItem) => getDefaultValueBlock(apiItem, config.logger) !== undefined,
 	);
 
 	const headerRowCells: TableHeaderCellNode[] = [
@@ -617,7 +617,7 @@ export function createDefaultValueCell(
 ): TableBodyCellNode {
 	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
 
-	const defaultValueSection = getDefaultValueBlock(apiItem, config);
+	const defaultValueSection = getDefaultValueBlock(apiItem, config.logger);
 
 	if (defaultValueSection === undefined) {
 		return TableBodyCellNode.Empty;

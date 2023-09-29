@@ -297,7 +297,7 @@ export interface FileSystemConfiguration {
 export function getApiItemTransformationConfigurationWithDefaults(inputOptions: ApiItemTransformationConfiguration): Required<ApiItemTransformationConfiguration>;
 
 // @public
-export function getDefaultValueBlock(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): DocSection | undefined;
+export function getDefaultValueBlock(apiItem: ApiItem, logger?: Logger): DocSection | undefined;
 
 // @public
 export function getDeprecatedBlock(apiItem: ApiItem): DocSection | undefined;

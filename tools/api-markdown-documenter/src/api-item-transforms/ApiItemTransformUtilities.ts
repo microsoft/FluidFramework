@@ -18,6 +18,7 @@ import { DocSection, StandardTags } from "@microsoft/tsdoc";
 
 import { Heading } from "../Heading";
 import { Link } from "../Link";
+import { Logger } from "../Logging";
 import { ApiModifier, getQualifiedApiItemName } from "../utilities";
 import {
 	ApiItemTransformationConfiguration,
@@ -561,7 +562,7 @@ function getCustomBlockSectionsForMultiInstanceTags(
 function getCustomBlockSectionForSingleInstanceTag(
 	apiItem: ApiItem,
 	tagName: string,
-	config: Required<ApiItemTransformationConfiguration>,
+	logger?: Logger,
 ): DocSection | undefined {
 	const blocks = getCustomBlockSectionsForMultiInstanceTags(apiItem, tagName);
 	if (blocks === undefined) {
@@ -569,7 +570,7 @@ function getCustomBlockSectionForSingleInstanceTag(
 	}
 
 	if (blocks.length > 1) {
-		config.logger.error(
+		logger?.error(
 			`API item ${apiItem.displayName} has multiple "${tagName}" comment blocks. This is not supported.`,
 		);
 	}
@@ -608,20 +609,17 @@ export function getThrowsBlocks(apiItem: ApiItem): DocSection[] | undefined {
  * if it has one.
  *
  * @param apiItem - The API item whose documentation is being queried.
- * @param config - See {@link ApiItemTransformationConfiguration}
+ * @param logger - Optional receiver of system log data.
  *
  * @returns The `@defaultValue` comment block section, if the API item has one. Otherwise, `undefined`.
  *
  * @public
  */
-export function getDefaultValueBlock(
-	apiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
-): DocSection | undefined {
+export function getDefaultValueBlock(apiItem: ApiItem, logger?: Logger): DocSection | undefined {
 	return getCustomBlockSectionForSingleInstanceTag(
 		apiItem,
 		StandardTags.defaultValue.tagName,
-		config,
+		logger,
 	);
 }
 
