@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @rushstack/no-new-null */
-
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	AttributionKey,
@@ -29,6 +27,7 @@ export interface SequenceOffsets {
 	 * @remarks We use null here rather than undefined as round-tripping through JSON converts
 	 * undefineds to null anyway
 	 */
+	// eslint-disable-next-line @rushstack/no-new-null
 	seqs: (number | AttributionKey | null)[];
 	posBreakpoints: number[];
 }
@@ -46,7 +45,9 @@ export interface SerializedAttributionCollection extends SequenceOffsets {
  * @internal
  */
 export interface IAttributionCollectionSpec<T> {
+	// eslint-disable-next-line @rushstack/no-new-null
 	root: Iterable<{ offset: number; key: T | null }>;
+	// eslint-disable-next-line @rushstack/no-new-null
 	channels?: { [name: string]: Iterable<{ offset: number; key: T | null }> };
 	length: number;
 }
@@ -124,7 +125,9 @@ export interface IAttributionCollection<T> {
 
 // note: treats null and undefined as equivalent
 export function areEqualAttributionKeys(
+	// eslint-disable-next-line @rushstack/no-new-null
 	a: AttributionKey | null | undefined,
+	// eslint-disable-next-line @rushstack/no-new-null
 	b: AttributionKey | null | undefined,
 ): boolean {
 	if (!a && !b) {
@@ -162,6 +165,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		return Object.entries(this.channels ?? {});
 	}
 
+	// eslint-disable-next-line @rushstack/no-new-null
 	public constructor(private _length: number, baseEntry?: AttributionKey | null) {
 		if (baseEntry !== undefined) {
 			this.offsets.push(0);
