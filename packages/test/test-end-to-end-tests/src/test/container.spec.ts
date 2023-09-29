@@ -148,7 +148,9 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			mockFactory.createDocumentService = async (resolvedUrl) => {
 				const service = await documentServiceFactory.createDocumentService(resolvedUrl);
 				// Issue typescript-eslint/typescript-eslint #1256
-				service.connectToStorage = async () => Promise.reject(new Error("expectedFailure"));
+				service.connectToStorage = () => {
+					throw new Error("expectedFailure");
+				};
 				return service;
 			};
 

@@ -79,7 +79,7 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 		this.disposed = true;
 	}
 
-	public async connectToService(service: IDocumentService): Promise<void> {
+	public connectToService(service: IDocumentService): void {
 		if (!(this._storageService instanceof BlobOnlyStorage)) {
 			return;
 		}

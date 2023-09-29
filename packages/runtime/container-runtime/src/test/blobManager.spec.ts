@@ -108,17 +108,19 @@ export class MockRuntime
 				if (this.processing) {
 					return this.storage.createBlob(blob);
 				}
-				const P = this.processBlobsP.promise.then(async () => {
-					if (!this.connected && this.attachState === AttachState.Attached) {
-						this.unprocessedBlobs.delete(blob);
-						throw new Error(
-							"fake error due to having no connection to storage service",
-						);
-					} else {
-						this.unprocessedBlobs.delete(blob);
-						return this.storage.createBlob(blob);
-					}
-				});
+				const P = this.processBlobsP.promise
+					.then(async () => {
+						if (!this.connected && this.attachState === AttachState.Attached) {
+							this.unprocessedBlobs.delete(blob);
+							throw new Error(
+								"fake error due to having no connection to storage service",
+							);
+						} else {
+							this.unprocessedBlobs.delete(blob);
+							return this.storage.createBlob(blob);
+						}
+					})
+					.catch(() => {});
 				this.unprocessedBlobs.add(blob);
 				this.emit("blob");
 				this.blobPs.push(P.catch(() => {}));

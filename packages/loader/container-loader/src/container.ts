@@ -1264,7 +1264,7 @@ export class Container
 							}, // progress
 						);
 					}
-					await this.storageAdapter.connectToService(this.service);
+					this.storageAdapter.connectToService(this.service);
 
 					if (hasAttachmentBlobs) {
 						// upload blobs to storage
@@ -1574,14 +1574,7 @@ export class Container
 			this.connectToDeltaStream(connectionArgs);
 		}
 
-		if (!pendingLocalState) {
-			await this.storageAdapter.connectToService(this.service);
-		} else {
-			// if we have pendingLocalState we can load without storage; don't wait for connection
-			this.storageAdapter.connectToService(this.service).catch((error) => {
-				this.close(error);
-			});
-		}
+		this.storageAdapter.connectToService(this.service);
 
 		this._attachState = AttachState.Attached;
 
