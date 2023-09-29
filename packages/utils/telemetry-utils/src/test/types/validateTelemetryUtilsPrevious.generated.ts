@@ -1368,6 +1368,30 @@ use_old_FunctionDeclaration_numberFromString(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_overwriteStack": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_overwriteStack():
+    TypeOnly<typeof old.overwriteStack>;
+declare function use_current_FunctionDeclaration_overwriteStack(
+    use: TypeOnly<typeof current.overwriteStack>);
+use_current_FunctionDeclaration_overwriteStack(
+    get_old_FunctionDeclaration_overwriteStack());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_overwriteStack": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_overwriteStack():
+    TypeOnly<typeof current.overwriteStack>;
+declare function use_old_FunctionDeclaration_overwriteStack(
+    use: TypeOnly<typeof old.overwriteStack>);
+use_old_FunctionDeclaration_overwriteStack(
+    get_current_FunctionDeclaration_overwriteStack());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_raiseConnectedEvent": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_raiseConnectedEvent():

@@ -289,6 +289,7 @@ export {
 	LeafSchema,
 	MapSchema,
 	StructSchema,
+	CheckTypesOverlap,
 } from "./feature-libraries";
 
 export {
