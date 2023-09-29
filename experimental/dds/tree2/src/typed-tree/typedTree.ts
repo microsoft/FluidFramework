@@ -153,7 +153,10 @@ class ChannelWrapper implements IChannel {
  * IChannel wrapper that exposes a "root".
  */
 class ChannelWrapperWithRoot<T> extends ChannelWrapper {
-	public constructor(inner: IChannel, public readonly root: T) {
+	public constructor(
+		inner: IChannel,
+		public readonly root: T,
+	) {
 		super(inner);
 	}
 }

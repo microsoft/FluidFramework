@@ -16,7 +16,7 @@ importers:
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       eslint-config-prettier: ~8.5.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^2.6.2
       typescript: ~4.5.5
       typescript-formatter: 7.1.0
@@ -34,7 +34,7 @@ importers:
       copyfiles: 2.4.1
       eslint: 8.6.0
       eslint-config-prettier: 8.5.0_eslint@8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 2.7.1
       typescript: 4.5.5
       typescript-formatter: 7.1.0_typescript@4.5.5
@@ -7211,6 +7211,12 @@ packages:
   /prettier/2.6.2:
     resolution: {integrity: sha512-PkUpF+qoXTqhOeWL9fu7As8LXsIUZ1WYaJiY/a7McAQzxjk82OF0tibkFXVCDImZtWxbvojFjerkiLb0/q8mew==}
     engines: {node: '>=10.13.0'}
+    hasBin: true
+    dev: true
+
+  /prettier/3.0.3:
+    resolution: {integrity: sha512-L/4pUDMxcNa8R/EthV08Zt42WBO4h1rarVtK0K+QJG0X187OLo7l699jWw0GKuwzkPQ//jMFA/8Xm6Fh3J/DAg==}
+    engines: {node: '>=14'}
     hasBin: true
     dev: true
 

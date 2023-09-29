@@ -56,7 +56,7 @@ export const MergeTreeDeltaType = {
 	GROUP: 3,
 } as const;
 
-export type MergeTreeDeltaType = typeof MergeTreeDeltaType[keyof typeof MergeTreeDeltaType];
+export type MergeTreeDeltaType = (typeof MergeTreeDeltaType)[keyof typeof MergeTreeDeltaType];
 
 export interface IMergeTreeDelta {
 	/**

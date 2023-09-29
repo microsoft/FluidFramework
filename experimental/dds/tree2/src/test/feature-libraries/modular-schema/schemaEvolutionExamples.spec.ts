@@ -30,7 +30,10 @@ import { brand } from "../../../util";
 import { allowsFieldSuperset, allowsTreeSuperset } from "../../../feature-libraries/modular-schema";
 
 class TestSchemaRepository extends InMemoryStoredSchemaRepository {
-	public constructor(public readonly policy: FullSchemaPolicy, data?: SchemaData) {
+	public constructor(
+		public readonly policy: FullSchemaPolicy,
+		data?: SchemaData,
+	) {
 		super(data);
 	}
 

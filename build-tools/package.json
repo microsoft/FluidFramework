@@ -79,7 +79,7 @@
 		"cz-conventional-changelog": "^3.3.0",
 		"cz-customizable": "^7.0.0",
 		"inquirer": "^8.2.5",
-		"prettier": "~2.6.2",
+		"prettier": "~3.0.3",
 		"rimraf": "^4.4.1",
 		"run-script-os": "^1.1.6",
 		"syncpack": "^9.8.6",

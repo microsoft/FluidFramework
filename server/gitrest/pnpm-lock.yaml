@@ -93,7 +93,7 @@ importers:
       isomorphic-git: ^1.14.0
       json-stringify-safe: ^5.0.1
       nconf: ^0.11.4
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^3.0.2
       sillyname: ^0.1.0
       supertest: ^3.4.2
@@ -130,7 +130,7 @@ importers:
       async: 3.2.4
       concurrently: 8.2.1
       eslint: 8.27.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 3.0.2
       sillyname: 0.1.0
       supertest: 3.4.2
@@ -182,7 +182,7 @@ importers:
       mocha: ^10.1.0
       nconf: ^0.11.4
       object-sizeof: ^1.6.3
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^3.0.2
       sillyname: ^0.1.0
       split: ^1.0.0
@@ -213,7 +213,7 @@ importers:
       memfs: 3.4.13
       nconf: 0.11.4
       object-sizeof: 1.6.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       split: 1.0.1
       uuid: 3.4.0
       winston: 3.8.2
@@ -10134,6 +10134,13 @@ packages:
   /prettier/2.6.2:
     resolution: {integrity: sha512-PkUpF+qoXTqhOeWL9fu7As8LXsIUZ1WYaJiY/a7McAQzxjk82OF0tibkFXVCDImZtWxbvojFjerkiLb0/q8mew==}
     engines: {node: '>=10.13.0'}
+    hasBin: true
+    dev: true
+
+  /prettier/3.0.3:
+    resolution: {integrity: sha512-L/4pUDMxcNa8R/EthV08Zt42WBO4h1rarVtK0K+QJG0X187OLo7l699jWw0GKuwzkPQ//jMFA/8Xm6Fh3J/DAg==}
+    engines: {node: '>=14'}
+    hasBin: true
 
   /pretty-bytes/5.6.0:
     resolution: {integrity: sha512-FFw039TmrBqFK8ma/7OL3sDz/VytdtJr044/QUJtH0wK9lb9jLq9tJyIxUwtQJHwar2BqtiA4iCWSwo9JLkzFg==}

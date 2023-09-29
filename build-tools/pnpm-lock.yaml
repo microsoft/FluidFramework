@@ -25,7 +25,7 @@ importers:
       cz-conventional-changelog: ^3.3.0
       cz-customizable: ^7.0.0
       inquirer: ^8.2.5
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.1
       run-script-os: ^1.1.6
       syncpack: ^9.8.6
@@ -47,7 +47,7 @@ importers:
       cz-conventional-changelog: 3.3.0
       cz-customizable: 7.0.0
       inquirer: 8.2.5
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       run-script-os: 1.1.6
       syncpack: 9.8.6
@@ -115,7 +115,7 @@ importers:
       node-fetch: ^2.6.9
       npm-check-updates: ^16.10.15
       oclif: ^3.9.1
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       prompts: ^2.4.2
       read-pkg-up: ^7.0.1
       rimraf: ^4.4.1
@@ -160,7 +160,7 @@ importers:
       node-fetch: 2.6.9
       npm-check-updates: 16.10.15
       oclif: 3.9.1_vliugzio5c6rxk3co27b7rq74a
-      prettier: 2.6.2
+      prettier: 3.0.3
       prompts: 2.4.2
       read-pkg-up: 7.0.1
       semver: 7.5.4
@@ -250,7 +250,7 @@ importers:
       lodash.merge: ^4.6.2
       minimatch: ^7.4.6
       mocha: ^10.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       replace-in-file: ^6.3.5
       rimraf: ^4.4.1
       semver: ^7.5.4
@@ -311,7 +311,7 @@ importers:
       concurrently: 8.2.1
       eslint: 8.6.0
       mocha: 10.2.0
-      prettier: 2.6.2
+      prettier: 3.0.3
 
   packages/bundle-size-tools:
     specifiers:
@@ -332,7 +332,7 @@ importers:
       jszip: ^3.10.1
       msgpack-lite: ^0.1.26
       pako: ^2.1.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.1
       typescript: ~5.1.6
       webpack: ^5.88.1
@@ -357,7 +357,7 @@ importers:
       eslint-plugin-import: 2.25.4_eslint@8.6.0
       eslint-plugin-unicorn: 40.0.0_eslint@8.6.0
       eslint-plugin-unused-imports: 2.0.0_eslint@8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
 
   packages/readme-command:
@@ -382,7 +382,7 @@ importers:
       eslint-config-oclif-typescript: ^1.0.3
       eslint-config-prettier: ~8.5.0
       oclif: ^3.9.1
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.1
       semver: ^7.5.4
       ts-node: ^10.9.1
@@ -411,7 +411,7 @@ importers:
       eslint-config-oclif: 4.0.0_eslint@8.6.0
       eslint-config-oclif-typescript: 1.0.3_qvtltsyn3reahc7lgycismcfiq
       eslint-config-prettier: 8.5.0_eslint@8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       ts-node: 10.9.1_vliugzio5c6rxk3co27b7rq74a
       tslib: 2.6.0
@@ -449,7 +449,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.29.4
       oclif: ^3.9.1
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.1
       semver: ^7.5.4
       table: ^6.8.1
@@ -490,7 +490,7 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       oclif: 3.9.1_vliugzio5c6rxk3co27b7rq74a
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       ts-node: 10.9.1_vliugzio5c6rxk3co27b7rq74a
       tslib: 2.6.0
@@ -8782,6 +8782,12 @@ packages:
   /prettier/2.6.2:
     resolution: {integrity: sha512-PkUpF+qoXTqhOeWL9fu7As8LXsIUZ1WYaJiY/a7McAQzxjk82OF0tibkFXVCDImZtWxbvojFjerkiLb0/q8mew==}
     engines: {node: '>=10.13.0'}
+    hasBin: true
+    dev: true
+
+  /prettier/3.0.3:
+    resolution: {integrity: sha512-L/4pUDMxcNa8R/EthV08Zt42WBO4h1rarVtK0K+QJG0X187OLo7l699jWw0GKuwzkPQ//jMFA/8Xm6Fh3J/DAg==}
+    engines: {node: '>=14'}
     hasBin: true
 
   /pretty-bytes/5.6.0:

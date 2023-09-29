@@ -262,7 +262,7 @@ export const IntervalStickiness = {
  *
  * @internal
  */
-export type IntervalStickiness = typeof IntervalStickiness[keyof typeof IntervalStickiness];
+export type IntervalStickiness = (typeof IntervalStickiness)[keyof typeof IntervalStickiness];
 
 export function startReferenceSlidingPreference(stickiness: IntervalStickiness): SlidingPreference {
 	// if any start stickiness, prefer sliding backwards

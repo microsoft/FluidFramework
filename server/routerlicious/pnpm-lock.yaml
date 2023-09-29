@@ -20,7 +20,7 @@ importers:
       copyfiles: ^2.4.1
       lerna: 5.6.2
       mocha: ^10.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       run-script-os: ^1.1.5
       typescript: ~4.5.5
@@ -35,7 +35,7 @@ importers:
       copyfiles: 2.4.1
       lerna: 5.6.2
       mocha: 10.2.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       run-script-os: 1.1.6
       typescript: 4.5.5
@@ -49,7 +49,7 @@ importers:
       '@fluidframework/gitresources-previous': npm:@fluidframework/gitresources@0.1040.1000
       concurrently: ^8.2.1
       eslint: ~8.27.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~4.5.5
     devDependencies:
@@ -60,7 +60,7 @@ importers:
       '@fluidframework/gitresources-previous': /@fluidframework/gitresources/0.1040.1000
       concurrently: 8.2.1
       eslint: 8.27.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 4.5.5
 
@@ -76,7 +76,7 @@ importers:
       '@types/node': ^18.17.1
       concurrently: ^8.2.1
       eslint: ~8.27.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
@@ -91,7 +91,7 @@ importers:
       '@types/node': 18.17.6
       concurrently: 8.2.1
       eslint: 8.27.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 4.5.5
 
@@ -134,7 +134,7 @@ importers:
       lodash: ^4.17.21
       mocha: ^10.2.0
       nconf: ^0.12.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       semver: ^7.5.3
       sha.js: ^2.4.11
@@ -186,7 +186,7 @@ importers:
       concurrently: 8.2.1
       eslint: 8.27.0
       mocha: 10.2.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 9.2.4
       source-map-loader: 0.2.4
@@ -219,7 +219,7 @@ importers:
       lodash: ^4.17.21
       mocha: ^10.2.0
       nconf: ^0.12.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       serialize-error: ^8.1.0
       typescript: ~4.5.5
@@ -249,7 +249,7 @@ importers:
       concurrently: 8.2.1
       eslint: 8.27.0
       mocha: 10.2.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 4.5.5
 
@@ -282,7 +282,7 @@ importers:
       jsrsasign: ^10.5.25
       mocha: ^10.2.0
       nock: ^13.3.3
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^9.2.3
       ts-loader: ^9.3.0
@@ -320,7 +320,7 @@ importers:
       eslint: 8.27.0
       mocha: 10.2.0
       nock: 13.3.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 9.2.4
       ts-loader: 9.4.3_aam6bgwztwmbak2ixire2krhwa
@@ -358,7 +358,7 @@ importers:
       events: ^3.1.0
       lodash: ^4.17.21
       mocha: ^10.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       sillyname: ^0.1.0
       typescript: ~4.5.5
@@ -398,7 +398,7 @@ importers:
       concurrently: 8.2.1
       eslint: 8.27.0
       mocha: 10.2.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 4.5.5
       webpack: 5.87.0
@@ -423,7 +423,7 @@ importers:
       eslint: ~8.27.0
       events: ^3.1.0
       mocha: ^10.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
@@ -446,7 +446,7 @@ importers:
       copyfiles: 2.4.1
       eslint: 8.27.0
       mocha: 10.2.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 4.5.5
 
@@ -481,7 +481,7 @@ importers:
       express: ^4.17.3
       ioredis: ^5.2.3
       nconf: ^0.12.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~4.5.5
       winston: ^3.6.0
@@ -517,7 +517,7 @@ importers:
       '@types/node': 18.17.6
       concurrently: 8.2.1
       eslint: 8.27.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 4.5.5
 
@@ -579,7 +579,7 @@ importers:
       lodash: ^4.17.21
       mocha: ^10.2.0
       nconf: ^0.12.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       serialize-error: ^8.1.0
       sillyname: ^0.1.0
@@ -652,7 +652,7 @@ importers:
       concurrently: 8.2.1
       eslint: 8.27.0
       mocha: 10.2.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 9.2.4
       supertest: 3.4.2
@@ -697,7 +697,7 @@ importers:
       mocha: ^10.2.0
       mongodb: 4.17.0
       nconf: ^0.12.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       redis-commands: ^1.7.0
       rimraf: ^4.4.0
       sinon: ^9.2.3
@@ -749,7 +749,7 @@ importers:
       eslint: 8.27.0
       ioredis-mock: 8.7.0_nevjj6jngqp4qe6g7n3cd7su4y
       mocha: 10.2.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       redis-commands: 1.7.0
       rimraf: 4.4.1
       sinon: 9.2.4
@@ -784,7 +784,7 @@ importers:
       jsrsasign: ^10.5.25
       jwt-decode: ^3.0.0
       mocha: ^10.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       querystring: ^0.2.0
       rimraf: ^4.4.0
       sillyname: ^0.1.0
@@ -822,7 +822,7 @@ importers:
       copyfiles: 2.4.1
       eslint: 8.27.0
       mocha: 10.2.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 4.5.5
 
@@ -845,7 +845,7 @@ importers:
       eslint: ~8.27.0
       events: ^3.1.0
       nconf: ^0.12.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
@@ -867,7 +867,7 @@ importers:
       '@fluidframework/server-services-core-previous': /@fluidframework/server-services-core/0.1040.1000
       concurrently: 8.2.1
       eslint: 8.27.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 4.5.5
 
@@ -892,7 +892,7 @@ importers:
       events: ^3.1.0
       kafka-node: ^5.0.0
       nconf: ^0.12.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       sillyname: ^0.1.0
       sinon: ^9.2.3
@@ -919,7 +919,7 @@ importers:
       '@types/sinon': 9.0.11
       concurrently: 8.2.1
       eslint: 8.27.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 9.2.4
       typescript: 4.5.5
@@ -946,7 +946,7 @@ importers:
       events: ^3.1.0
       nconf: ^0.12.0
       node-rdkafka: ^2.16.1
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       sillyname: ^0.1.0
       sinon: ^9.2.3
@@ -974,7 +974,7 @@ importers:
       '@types/sinon': 9.0.11
       concurrently: 8.2.1
       eslint: 8.27.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 9.2.4
       typescript: 4.5.5
@@ -994,7 +994,7 @@ importers:
       '@types/sinon': ^9.0.9
       concurrently: ^8.2.1
       eslint: ~8.27.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^9.2.3
       typescript: ~4.5.5
@@ -1015,7 +1015,7 @@ importers:
       '@types/sinon': 9.0.11
       concurrently: 8.2.1
       eslint: 8.27.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 9.2.4
       typescript: 4.5.5
@@ -1055,7 +1055,7 @@ importers:
       mocha: ^10.2.0
       nconf: ^0.12.0
       notepack.io: ^2.3.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       querystring: ^0.2.0
       rimraf: ^4.4.0
       serialize-error: ^8.1.0
@@ -1108,7 +1108,7 @@ importers:
       eslint: 8.27.0
       express: 4.18.2
       mocha: 10.2.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       supertest: 3.4.2
       typescript: 4.5.5
@@ -1131,7 +1131,7 @@ importers:
       json-stringify-safe: ^5.0.1
       mocha: ^10.2.0
       path-browserify: ^1.0.1
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       serialize-error: ^8.1.0
       sinon: ^9.2.3
@@ -1157,7 +1157,7 @@ importers:
       concurrently: 8.2.1
       eslint: 8.27.0
       mocha: 10.2.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 9.2.4
       typescript: 4.5.5
@@ -1196,7 +1196,7 @@ importers:
       mocha: ^10.2.0
       morgan: ^1.8.1
       nconf: ^0.12.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       serialize-error: ^8.1.0
       sillyname: ^0.1.0
@@ -1246,7 +1246,7 @@ importers:
       concurrently: 8.2.1
       eslint: 8.27.0
       mocha: 10.2.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       supertest: 3.4.2
       typescript: 4.5.5
@@ -1278,7 +1278,7 @@ importers:
       events: ^3.1.0
       lodash: ^4.17.21
       mocha: ^10.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^9.2.3
       string-hash: ^1.1.3
@@ -1313,7 +1313,7 @@ importers:
       concurrently: 8.2.1
       eslint: 8.27.0
       mocha: 10.2.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 9.2.4
       typescript: 4.5.5
@@ -13313,6 +13313,12 @@ packages:
   /prettier/2.6.2:
     resolution: {integrity: sha512-PkUpF+qoXTqhOeWL9fu7As8LXsIUZ1WYaJiY/a7McAQzxjk82OF0tibkFXVCDImZtWxbvojFjerkiLb0/q8mew==}
     engines: {node: '>=10.13.0'}
+    hasBin: true
+    dev: true
+
+  /prettier/3.0.3:
+    resolution: {integrity: sha512-L/4pUDMxcNa8R/EthV08Zt42WBO4h1rarVtK0K+QJG0X187OLo7l699jWw0GKuwzkPQ//jMFA/8Xm6Fh3J/DAg==}
+    engines: {node: '>=14'}
     hasBin: true
     dev: true
 
