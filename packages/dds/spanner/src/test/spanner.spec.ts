@@ -3,19 +3,12 @@
  * Licensed under the MIT License.
  */
 
-// import { strict as assert } from "node:assert";
+import { strict as assert } from "node:assert";
 // import { type IGCTestProvider, runGCTests } from "@fluid-internal/test-dds-utils";
-// import {
-// 	MockFluidDataStoreRuntime,
-// 	MockContainerRuntimeFactory,
-// 	MockContainerRuntimeFactoryForReconnection,
-// 	type MockContainerRuntimeForReconnection,
-// 	MockStorage,
-// 	MockSharedObjectServices,
-// } from "@fluidframework/test-runtime-utils";
-// import { SharedCell } from "@fluidframework/cell";
-// import { SharedMap } from "@fluidframework/map";
-// import { Spanner } from "../spanner";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { SharedCell } from "@fluidframework/cell";
+import { SharedMap } from "@fluidframework/map";
+import { Spanner } from "../spanner";
 
 // const cellFactory = SharedCell.getFactory();
 
@@ -58,6 +51,19 @@
 // 	cell.connect(services);
 // 	return { cell, containerRuntime };
 // }
+
+describe("Spanner", () => {
+	it("can create a Spanner", () => {
+		const mockFluidRuntime = new MockFluidDataStoreRuntime();
+		const spanner = new Spanner(
+			"spanner",
+			mockFluidRuntime,
+			SharedCell.getFactory(),
+			SharedMap.getFactory().create(mockFluidRuntime, "spanner") as SharedMap,
+		);
+		assert.ok(spanner, "Could not create a Spanner");
+	});
+});
 
 // describe("Cell", () => {
 // 	describe("Detached state", () => {
