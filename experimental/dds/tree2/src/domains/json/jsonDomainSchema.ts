@@ -4,20 +4,22 @@
  */
 
 import { AllowedTypes, FieldKinds, SchemaBuilder } from "../../feature-libraries";
-import { ValueSchema } from "../../core";
 import { requireAssignableTo } from "../../util";
+import * as leaf from "../leafDomain";
 
-const builder = new SchemaBuilder("Json Domain");
-
-/**
- * @alpha
- */
-export const jsonNumber = builder.leaf("Json.Number", ValueSchema.Number);
+const builder = new SchemaBuilder("Json Domain", {}, leaf.library);
 
 /**
  * @alpha
+ * @deprecated Use leaf.number
  */
-export const jsonString = builder.leaf("Json.String", ValueSchema.String);
+export const jsonNumber = leaf.number;
+
+/**
+ * @alpha
+ * @deprecated Use leaf.string
+ */
+export const jsonString = leaf.string;
 
 /**
  * @alpha
@@ -26,10 +28,11 @@ export const jsonNull = builder.struct("Json.Null", {});
 
 /**
  * @alpha
+ * @deprecated Use leaf.boolean
  */
-export const jsonBoolean = builder.leaf("Json.Boolean", ValueSchema.Boolean);
+export const jsonBoolean = leaf.boolean;
 
-const jsonPrimitives = [jsonNumber, jsonString, jsonNull, jsonBoolean] as const;
+const jsonPrimitives = [...leaf.primitives, jsonNull] as const;
 
 /**
  * Types allowed as roots of Json content.

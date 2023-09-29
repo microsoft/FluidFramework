@@ -12,7 +12,7 @@ import {
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
-import { IIntervalCollection, intervalLocatorFromEndpoint } from "../intervalCollection";
+import { IIntervalCollection, intervalLocatorFromEndpoint, Side } from "../intervalCollection";
 import { IntervalStickiness, SequenceInterval } from "../intervals";
 import { assertIntervals } from "./intervalUtils";
 
@@ -38,7 +38,9 @@ async function getSingleIntervalSummary(): Promise<{ summary: ISummaryTree; seq:
 	const containerRuntimeFactory = new MockContainerRuntimeFactory();
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	dataStoreRuntime.local = false;
-	dataStoreRuntime.options = { intervalStickinessEnabled: true };
+	dataStoreRuntime.options = {
+		intervalStickinessEnabled: true,
+	};
 	containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
@@ -52,16 +54,14 @@ async function getSingleIntervalSummary(): Promise<{ summary: ISummaryTree; seq:
 	collection.add({ start: 0, end: 2 });
 	const collectionStartSticky = sharedString.getIntervalCollection("start-sticky");
 	const startStickyInterval = collectionStartSticky.add({
-		start: 0,
-		end: 2,
-		stickiness: IntervalStickiness.START,
+		start: { pos: 0, side: Side.After },
+		end: { pos: 2, side: Side.After },
 	});
 	assert.equal(startStickyInterval.stickiness, IntervalStickiness.START);
 	const collectionEndSticky = sharedString.getIntervalCollection("end-sticky");
 	const endStickyInterval = collectionEndSticky.add({
-		start: 0,
-		end: 2,
-		stickiness: IntervalStickiness.END,
+		start: { pos: 0, side: Side.Before },
+		end: { pos: 2, side: Side.Before },
 	});
 	assert.equal(endStickyInterval.stickiness, IntervalStickiness.END);
 	containerRuntimeFactory.processAllMessages();

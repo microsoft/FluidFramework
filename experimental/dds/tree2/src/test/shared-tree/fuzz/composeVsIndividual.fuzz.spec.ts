@@ -51,13 +51,13 @@ const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, Branched
 	},
 	transaction: async (state, operation) => {
 		const { contents } = operation;
-		const tree = state.channel;
+		const tree = state.client.channel;
 		applyTransactionEdit(tree.view, contents);
 		return state;
 	},
 	undoRedo: async (state, operation) => {
 		const { contents } = operation;
-		const tree = state.channel;
+		const tree = state.client.channel;
 		applyUndoRedoEdit(tree.view, contents);
 		return state;
 	},

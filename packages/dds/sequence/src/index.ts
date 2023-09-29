@@ -39,6 +39,9 @@ export {
 	intervalLocatorFromEndpoint,
 	PositionSpec,
 	PropertyDeltaSpec,
+	Side,
+	InteriorSequencePlace,
+	SequencePlace,
 } from "./intervalCollection";
 export {
 	IntervalIndex,

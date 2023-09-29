@@ -149,8 +149,8 @@ jobs:
               condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
         # Verify if the tinylicious log exists
         - task: Bash@3
-          displayName: Validate Tinylicious Log 
-          inputs: 
+          displayName: Validate Tinylicious Log
+          inputs:
             targetType: 'inline'
             workingDirectory: ${{ parameters.buildDirectory }}
             script: |
@@ -162,7 +162,7 @@ jobs:
           displayName: Publish Artifact - Tinylicious Log
           inputs:
             targetPath: '${{ parameters.buildDirectory }}/packages/test/test-end-to-end-tests/tinylicious.log'
-            artifactName: 'tinyliciousLog_${{ parameters.stageName }}'
+            artifactName: 'tinyliciousLog_${{ parameters.stageName }}_attempt-$(System.JobAttempt)'
             publishLocation: 'pipeline'
           condition: and(failed(), eq(variables['logExists'], 'true'), contains('${{ taskTestStep }}', 'tinylicious'))
           continueOnError: true
