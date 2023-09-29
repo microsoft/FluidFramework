@@ -210,6 +210,6 @@ stages:
                 PIPELINE: 'EndToEndTests'
               inputs:
                 targetType: 'filePath'
-                workingDirectory: ${{ parameters.buildDirectory }}
+                workingDirectory: $(toolAbsolutePath)
                 filePath: $(Build.SourcesDirectory)/scripts/get-test-pass-rate.sh
               
