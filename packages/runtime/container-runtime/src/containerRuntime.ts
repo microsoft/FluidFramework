@@ -3439,8 +3439,6 @@ export class ContainerRuntime
 		this.submit(
 			{ type: ContainerMessageType.FluidDataStoreOp, contents: envelope },
 			localOpMetadata,
-			/* metadata */ undefined,
-			rootMetadata,
 		);
 	}
 
