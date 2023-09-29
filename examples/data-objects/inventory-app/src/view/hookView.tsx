@@ -6,11 +6,11 @@
 import * as React from "react";
 import { ISharedTree } from "@fluid-experimental/tree2";
 import { useTree } from "@fluid-experimental/tree-react-api";
-import { Inventory, RootField, schemaPolicy } from "../schema";
+import { Inventory, schemaPolicy } from "../schema";
 import { Counter } from "./counter";
 
 export const HookView: React.FC<{ tree: ISharedTree }> = ({ tree }) => {
-	const root: RootField = useTree(tree.view, schemaPolicy);
+	const root = useTree(tree.view, schemaPolicy);
 	// TODO: value fields like `root` which always contain exactly one value should have a nicer API for accessing that child, like `.child`.
 	const inventory: Inventory = root[0];
 

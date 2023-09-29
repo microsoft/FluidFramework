@@ -38,6 +38,9 @@ export class SharedTreeInventoryList extends DataObject implements IInventoryLis
 
 	protected async hasInitialized() {
 		const sharedTree = await this.root.get<IFluidHandle<ISharedTree>>(sharedTreeKey)!.get();
+		// REV: Ultimately we just have to cast to Inventory below anyway, and the schema is set upon creation
+		// So I'm not sure what this call to schematize is supposed to accomplish exactly.  I see that
+		// sharedTree.view is deprecated but that would seem more natural if we have to cast anyway?
 		const sharedTreeView = sharedTree.schematize(schemaPolicy);
 		this._inventory = sharedTreeView.context.root[0] as unknown as Inventory;
 		// REV: Similar to comment on LegacySharedTree, this event feels overly-broad for what I'm looking for.
