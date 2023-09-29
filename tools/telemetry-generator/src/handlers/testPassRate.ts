@@ -3,12 +3,15 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * This handler uses the timeline and metrics REST APIs to retrieve the test pass rate of the pipeline:
+ * Ex. https://dev.azure.com/fluidframework/internal/_apis/build/builds/<buildId>/timeline?api-version=7.1-preview.1
+ * Ex. https://vstmr.dev.azure.com/fluidframework/internal/_apis/testresults/metrics?pipelineId=<buildId>&stageName=<stageName>&api-version=7.1-preview.1
+ * @param fileData - A JSON object obtained by calling JSON.parse() on the contents of a file.
+ * @param logger - An ITelemetryBufferedLogger. Call its send() method to write the output telemetry events.
+ */
 module.exports = function handler(fileData, logger) {
-	// - fileData is a JSON object obtained by calling JSON.parse() on the contents of a file.
-	// In this particular handler, we are using the timeline and metrics REST API to retrieve the test pass rate of the pipeline:
-	// Ex. https://dev.azure.com/fluidframework/internal/_apis/build/builds/<buildId>/timeline?api-version=6.0-preview.1
-	// - logger is an ITelemetryBufferedLogger. Call its send() method to write the output telemetry
-	//   events.
+
 	if (fileData.records?.length === undefined || fileData.records?.length === 0) {
 		console.log(`could not locate records info`);
 	}

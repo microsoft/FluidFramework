@@ -214,11 +214,11 @@ stages:
                   pwd;
                   ls -laR ${{ variables.testWorkspace }}/passRateOutput/output.json;
                   stages=($(jq -r '.records[] | select(.type == "Stage") | .identifier' ${{ variables.testWorkspace }}/passRateOutput/output.json))
-                  printf "%s\n" "${stages[@]}" > ${{ variables.testWorkspace }}/passRateOutput/stages.txt
+                  mkdir -p ${{ variables.testWorkspace }}/stageFiles
                   for stage in "${stages[@]}"; do
                     echo "Fetching data for stage: $stage"
-                    curl -s -u ":$(System.AccessToken)" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$(Build.BuildId)/timeline?api-version=6.0-preview.1" > "${{ variables.testWorkspace }}/passRateOutput/${stage}.json"
-                    node --require @ff-internal/aria-logger bin/run --handlerModule $(Build.SourcesDirectory)/tools/telemetry-generator/dist/handlers/testPassRateRetriever.js --dir "$stageFile"
+                    curl -s -u ":$(System.AccessToken)" "https://vstmr.dev.azure.com/fluidframework/internal/_apis/testresults/metrics?pipelineId=$(Build.BuildId)&stageName=$(stage)&api-version=7.1-preview.1 > "${{ variables.testWorkspace }}/stageFiles/${stage}.json"
+                    node --require @ff-internal/aria-logger bin/run --handlerModule $(Build.SourcesDirectory)/tools/telemetry-generator/dist/handlers/testPassRate.js --dir '${{ variables.testWorkspace }}/timingOutput/${stage}.json'
                   done
                   pwd
                   ls -laR ${{ variables.testWorkspace }}/passRateOutput/
