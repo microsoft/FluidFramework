@@ -25,7 +25,7 @@ importers:
       cz-conventional-changelog: ^3.3.0
       cz-customizable: ^7.0.0
       inquirer: ^8.2.5
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.1
       run-script-os: ^1.1.6
       syncpack: ^9.8.6
@@ -47,7 +47,7 @@ importers:
       cz-conventional-changelog: 3.3.0
       cz-customizable: 7.0.0
       inquirer: 8.2.5
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       run-script-os: 1.1.6
       syncpack: 9.8.6
@@ -115,7 +115,7 @@ importers:
       node-fetch: ^2.6.9
       npm-check-updates: ^16.10.15
       oclif: ^3.9.1
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       prompts: ^2.4.2
       read-pkg-up: ^7.0.1
       rimraf: ^4.4.1
@@ -160,7 +160,7 @@ importers:
       node-fetch: 2.6.9
       npm-check-updates: 16.10.15
       oclif: 3.9.1_vliugzio5c6rxk3co27b7rq74a
-      prettier: 2.6.2
+      prettier: 3.0.3
       prompts: 2.4.2
       read-pkg-up: 7.0.1
       semver: 7.5.4
@@ -250,7 +250,7 @@ importers:
       lodash.merge: ^4.6.2
       minimatch: ^7.4.6
       mocha: ^10.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       replace-in-file: ^6.3.5
       rimraf: ^4.4.1
       semver: ^7.5.4
@@ -311,7 +311,7 @@ importers:
       concurrently: 8.2.1
       eslint: 8.6.0
       mocha: 10.2.0
-      prettier: 2.6.2
+      prettier: 3.0.3
 
   packages/bundle-size-tools:
     specifiers:
@@ -332,7 +332,7 @@ importers:
       jszip: ^3.10.1
       msgpack-lite: ^0.1.26
       pako: ^2.1.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.1
       typescript: ~5.1.6
       webpack: ^5.88.1
@@ -357,7 +357,7 @@ importers:
       eslint-plugin-import: 2.25.4_eslint@8.6.0
       eslint-plugin-unicorn: 40.0.0_eslint@8.6.0
       eslint-plugin-unused-imports: 2.0.0_eslint@8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
 
   packages/readme-command:
@@ -382,7 +382,7 @@ importers:
       eslint-config-oclif-typescript: ^1.0.3
       eslint-config-prettier: ~8.5.0
       oclif: ^3.9.1
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.1
       semver: ^7.5.4
       ts-node: ^10.9.1
@@ -411,7 +411,7 @@ importers:
       eslint-config-oclif: 4.0.0_eslint@8.6.0
       eslint-config-oclif-typescript: 1.0.3_qvtltsyn3reahc7lgycismcfiq
       eslint-config-prettier: 8.5.0_eslint@8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       ts-node: 10.9.1_vliugzio5c6rxk3co27b7rq74a
       tslib: 2.6.0
@@ -449,7 +449,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.29.4
       oclif: ^3.9.1
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.1
       semver: ^7.5.4
       table: ^6.8.1
@@ -490,7 +490,7 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       oclif: 3.9.1_vliugzio5c6rxk3co27b7rq74a
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       ts-node: 10.9.1_vliugzio5c6rxk3co27b7rq74a
       tslib: 2.6.0
@@ -863,8 +863,8 @@ packages:
       - '@swc/wasm'
     dev: true
 
-  /@commitlint/load/17.7.1:
-    resolution: {integrity: sha512-S/QSOjE1ztdogYj61p6n3UbkUvweR17FQ0zDbNtoTLc+Hz7vvfS7ehoTMQ27hPSjVBpp7SzEcOQu081RLjKHJQ==}
+  /@commitlint/load/17.7.2:
+    resolution: {integrity: sha512-XA7WTnsjHZ4YH6ZYsrnxgLdXzriwMMq+utZUET6spbOEEIPBCDLdOQXS26P+v3TTO4hUHOEhzUquaBv3jbBixw==}
     engines: {node: '>=v14'}
     requiresBuild: true
     dependencies:
@@ -872,15 +872,15 @@ packages:
       '@commitlint/execute-rule': 17.4.0
       '@commitlint/resolve-extends': 17.6.7
       '@commitlint/types': 17.4.4
-      '@types/node': 20.4.7
+      '@types/node': 20.5.1
       chalk: 4.1.2
       cosmiconfig: 8.2.0
-      cosmiconfig-typescript-loader: 4.2.0_mrt2wnih5zjrgf7emf6zukdxaq
+      cosmiconfig-typescript-loader: 4.2.0_2i75q7fwhwfiv6j6cyvrfuvxre
       lodash.isplainobject: 4.0.6
       lodash.merge: 4.6.2
       lodash.uniq: 4.5.0
       resolve-from: 5.0.0
-      ts-node: 10.9.1_dvq55o6ihfzbtkatyu52wpt2ee
+      ts-node: 10.9.1_nlfdnzsudxdzt42qyp5hqbr53u
       typescript: 5.1.6
     transitivePeerDependencies:
       - '@swc/core'
@@ -2502,8 +2502,8 @@ packages:
   /@types/node/15.14.9:
     resolution: {integrity: sha512-qjd88DrCxupx/kJD5yQgZdcYKZKSIGBVDIBE1/LTGcNm3d2Np/jxojkdePDdfnBHJc5W7vSMpbJ1aB7p/Py69A==}
 
-  /@types/node/20.4.7:
-    resolution: {integrity: sha512-bUBrPjEry2QUTsnuEjzjbS7voGWCc30W0qzgMf90GPeDGFRakvrz47ju+oqDAKCXLUCe39u57/ORMl/O/04/9g==}
+  /@types/node/20.5.1:
+    resolution: {integrity: sha512-4tT2UrL5LBqDwoed9wZ6N3umC4Yhz3W3FloMmiiG4JwmUJWpie0c7lcnUNd4gtMKuDEO4wRVS8B6Xa0uMRsMKg==}
     dev: true
     optional: true
 
@@ -4217,7 +4217,7 @@ packages:
   /core-util-is/1.0.3:
     resolution: {integrity: sha512-ZQBvi1DcpJ4GDqanjucZ2Hj3wEO5pZDS89BWbkcrvdxksJorwUDDZamX9ldFkp9aw2lmBDLgkObEA4DWNJ9FYQ==}
 
-  /cosmiconfig-typescript-loader/4.2.0_mrt2wnih5zjrgf7emf6zukdxaq:
+  /cosmiconfig-typescript-loader/4.2.0_2i75q7fwhwfiv6j6cyvrfuvxre:
     resolution: {integrity: sha512-NkANeMnaHrlaSSlpKGyvn2R4rqUDeE/9E5YHx+b4nwo0R8dZyAqcih8/gxpCZvqWP9Vf6xuLpMSzSgdVEIM78g==}
     engines: {node: '>=12', npm: '>=6'}
     peerDependencies:
@@ -4229,9 +4229,9 @@ packages:
       '@types/node':
         optional: true
     dependencies:
-      '@types/node': 20.4.7
+      '@types/node': 20.5.1
       cosmiconfig: 8.2.0
-      ts-node: 10.9.1_dvq55o6ihfzbtkatyu52wpt2ee
+      ts-node: 10.9.1_nlfdnzsudxdzt42qyp5hqbr53u
       typescript: 5.1.6
     dev: true
     optional: true
@@ -4319,7 +4319,7 @@ packages:
       longest: 2.0.1
       word-wrap: 1.2.3
     optionalDependencies:
-      '@commitlint/load': 17.7.1
+      '@commitlint/load': 17.7.2
     transitivePeerDependencies:
       - '@swc/core'
       - '@swc/wasm'
@@ -8783,6 +8783,12 @@ packages:
     resolution: {integrity: sha512-PkUpF+qoXTqhOeWL9fu7As8LXsIUZ1WYaJiY/a7McAQzxjk82OF0tibkFXVCDImZtWxbvojFjerkiLb0/q8mew==}
     engines: {node: '>=10.13.0'}
     hasBin: true
+    dev: true
+
+  /prettier/3.0.3:
+    resolution: {integrity: sha512-L/4pUDMxcNa8R/EthV08Zt42WBO4h1rarVtK0K+QJG0X187OLo7l699jWw0GKuwzkPQ//jMFA/8Xm6Fh3J/DAg==}
+    engines: {node: '>=14'}
+    hasBin: true
 
   /pretty-bytes/5.6.0:
     resolution: {integrity: sha512-FFw039TmrBqFK8ma/7OL3sDz/VytdtJr044/QUJtH0wK9lb9jLq9tJyIxUwtQJHwar2BqtiA4iCWSwo9JLkzFg==}
@@ -10135,7 +10141,7 @@ packages:
       '@ts-morph/common': 0.18.1
       code-block-writer: 11.0.3
 
-  /ts-node/10.9.1_dvq55o6ihfzbtkatyu52wpt2ee:
+  /ts-node/10.9.1_nlfdnzsudxdzt42qyp5hqbr53u:
     resolution: {integrity: sha512-NtVysVPkxxrwFGUUxGYhfux8k78pQB3JqYBXlLRZgdGUqTO5wU/UyHop5p70iEbGhB7q5KmiZiU0Y3KlJrScEw==}
     hasBin: true
     peerDependencies:
@@ -10156,7 +10162,7 @@ packages:
       '@tsconfig/node12': 1.0.11
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.3
-      '@types/node': 20.4.7
+      '@types/node': 20.5.1
       acorn: 8.8.0
       acorn-walk: 8.2.0
       arg: 4.1.3
