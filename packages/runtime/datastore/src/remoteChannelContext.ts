@@ -48,7 +48,7 @@ export class RemoteChannelContext implements IChannelContext {
 		runtime: IFluidDataStoreRuntime,
 		dataStoreContext: IFluidDataStoreContext,
 		storageService: IDocumentStorageService,
-		submitFn: (content: any, localOpMetadata: unknown) => void,
+		submitFn: (content: any, localOpMetadata: unknown, rootMetadata?: unknown) => void,
 		dirtyFn: (address: string) => void,
 		addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
 		private readonly id: string,

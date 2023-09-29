@@ -75,7 +75,7 @@ export interface ChannelServiceEndpoints {
 
 export function createChannelServiceEndpoints(
 	connected: boolean,
-	submitFn: (content: any, localOpMetadata: unknown) => void,
+	submitFn: (content: any, localOpMetadata: unknown, rootMetadata?: unknown) => void,
 	dirtyFn: () => void,
 	addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
 	storageService: IDocumentStorageService,
@@ -85,7 +85,8 @@ export function createChannelServiceEndpoints(
 ): ChannelServiceEndpoints {
 	const deltaConnection = new ChannelDeltaConnection(
 		connected,
-		(message, localOpMetadata) => submitFn(message, localOpMetadata),
+		(message, localOpMetadata, rootMetadata) =>
+			submitFn(message, localOpMetadata, rootMetadata),
 		dirtyFn,
 		addedGCOutboundReferenceFn,
 	);

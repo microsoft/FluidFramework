@@ -117,7 +117,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     setConnectionState(connected: boolean, clientId?: string): void;
     // (undocumented)
-    submitMessage(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;
+    submitMessage(type: DataStoreMessageType, content: any, localOpMetadata: unknown, rootMetadata?: unknown): void;
     // (undocumented)
     submitSignal(type: string, content: any): void;
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;

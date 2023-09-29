@@ -1418,7 +1418,11 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	}
 
 	/** A type-safe `submitLocalMessage` wrapper to enforce op format */
-	private submitOp(content: SharedTreeOp | SharedTreeOp_0_0_2, localOpMetadata: unknown = undefined): void {
+	private submitOp(
+		content: SharedTreeOp | SharedTreeOp_0_0_2,
+		localOpMetadata: unknown = undefined,
+		rootMetadata?: unknown
+	): void {
 		assert(
 			compareSummaryFormatVersions(content.version, this.writeFormat) === 0,
 			0x631 /* Attempted to submit op of wrong version */

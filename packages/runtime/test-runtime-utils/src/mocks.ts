@@ -62,7 +62,11 @@ export class MockDeltaConnection implements IDeltaConnection {
 	public handler: IDeltaHandler | undefined;
 
 	constructor(
-		private readonly submitFn: (messageContent: any, localOpMetadata: unknown) => number,
+		private readonly submitFn: (
+			messageContent: any,
+			localOpMetadata: unknown,
+			rootMetadata?: unknown,
+		) => number,
 		private readonly dirtyFn: () => void,
 	) {}
 
@@ -71,7 +75,7 @@ export class MockDeltaConnection implements IDeltaConnection {
 		handler.setConnectionState(this.connected);
 	}
 
-	public submit(messageContent: any, localOpMetadata: unknown): number {
+	public submit(messageContent: any, localOpMetadata: unknown, rootMetadata?: unknown): number {
 		return this.submitFn(messageContent, localOpMetadata);
 	}
 
@@ -194,7 +198,7 @@ export class MockContainerRuntime {
 		return deltaConnection;
 	}
 
-	public submit(messageContent: any, localOpMetadata: unknown): number {
+	public submit(messageContent: any, localOpMetadata: unknown, rootMetadata?: unknown): number {
 		const clientSequenceNumber = this.clientSequenceNumber;
 		const message = {
 			content: messageContent,
@@ -723,7 +727,11 @@ export class MockFluidDataStoreRuntime
 		return null;
 	}
 
-	private submitMessageInternal(messageContent: any, localOpMetadata: unknown): number {
+	private submitMessageInternal(
+		messageContent: any,
+		localOpMetadata: unknown,
+		rootMetadata?: unknown,
+	): number {
 		assert(
 			this.containerRuntime !== undefined,
 			"The container runtime has not been initialized",

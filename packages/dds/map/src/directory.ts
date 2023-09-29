@@ -621,7 +621,11 @@ export class SharedDirectory
 	 * this op while it has not been ack'd. This will be sent when we receive this op back from the server.
 	 * @internal
 	 */
-	public submitDirectoryMessage(op: IDirectoryOperation, localOpMetadata: unknown): void {
+	public submitDirectoryMessage(
+		op: IDirectoryOperation,
+		localOpMetadata: unknown,
+		rootMetadata?: unknown,
+	): void {
 		this.submitLocalMessage(op, localOpMetadata);
 	}
 

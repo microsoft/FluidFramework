@@ -22,7 +22,11 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 
 	constructor(
 		private _connected: boolean,
-		public readonly submit: (content: any, localOpMetadata: unknown) => void,
+		public readonly submit: (
+			content: any,
+			localOpMetadata: unknown,
+			rootMetadata?: unknown,
+		) => void,
 		public readonly dirty: () => void,
 		public readonly addedGCOutboundReference: (
 			srcHandle: IFluidHandle,

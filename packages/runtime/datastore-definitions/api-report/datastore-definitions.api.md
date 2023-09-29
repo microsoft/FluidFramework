@@ -79,7 +79,7 @@ export interface IDeltaConnection {
     // (undocumented)
     connected: boolean;
     dirty(): void;
-    submit(messageContent: any, localOpMetadata: unknown): void;
+    submit(messageContent: any, localOpMetadata: unknown, rootMetadata?: unknown): void;
 }
 
 // @public

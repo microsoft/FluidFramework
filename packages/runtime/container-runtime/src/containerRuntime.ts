@@ -3429,7 +3429,9 @@ export class ContainerRuntime
 		id: string,
 		contents: any,
 		localOpMetadata: unknown = undefined,
+		rootMetadata?: unknown,
 	): void {
+		//* TODO: Apply rootMetadata to the envelope
 		const envelope: IEnvelope = {
 			address: id,
 			contents,
@@ -3437,10 +3439,16 @@ export class ContainerRuntime
 		this.submit(
 			{ type: ContainerMessageType.FluidDataStoreOp, contents: envelope },
 			localOpMetadata,
+			/* metadata */ undefined,
+			rootMetadata,
 		);
 	}
 
-	public submitDataStoreAliasOp(contents: any, localOpMetadata: unknown): void {
+	public submitDataStoreAliasOp(
+		contents: any,
+		localOpMetadata: unknown,
+		rootMetadata?: unknown,
+	): void {
 		const aliasMessage = contents as IDataStoreAliasMessage;
 		if (!isDataStoreAliasMessage(aliasMessage)) {
 			throw new UsageError("malformedDataStoreAliasMessage");
@@ -3495,6 +3503,7 @@ export class ContainerRuntime
 		containerRuntimeMessage: OutboundContainerRuntimeMessage,
 		localOpMetadata: unknown = undefined,
 		metadata: Record<string, unknown> | undefined = undefined,
+		rootMetadata?: unknown,
 	): void {
 		this.verifyNotClosed();
 		this.verifyCanSubmitOps();

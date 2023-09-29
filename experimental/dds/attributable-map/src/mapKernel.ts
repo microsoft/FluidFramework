@@ -191,7 +191,11 @@ export class AttributableMapKernel {
 	public constructor(
 		private readonly serializer: IFluidSerializer,
 		private readonly handle: IFluidHandle,
-		private readonly submitMessage: (op: unknown, localOpMetadata: unknown) => void,
+		private readonly submitMessage: (
+			op: unknown,
+			localOpMetadata: unknown,
+			rootMetadata?: unknown,
+		) => void,
 		private readonly isAttached: () => boolean,
 		private readonly eventEmitter: TypedEventEmitter<ISharedMapEvents>,
 	) {

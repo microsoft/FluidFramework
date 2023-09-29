@@ -97,7 +97,12 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 		return undefined as any as IAudience;
 	}
 
-	public submitMessage(type: string, content: any, localOpMetadata: unknown): void {
+	public submitMessage(
+		type: string,
+		content: any,
+		localOpMetadata: unknown,
+		rootMetadata?: unknown,
+	): void {
 		throw new Error("Method not implemented.");
 	}
 

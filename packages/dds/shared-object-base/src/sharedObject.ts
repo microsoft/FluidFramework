@@ -344,6 +344,8 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 */
 	protected abstract onDisconnect();
 
+	//* TODO: Add doc comments for rootMetadata throughout
+
 	/**
 	 * Submits a message by the local client to the runtime.
 	 * @param content - Content of the message
@@ -351,7 +353,11 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 * and not sent to the server. This will be sent back when this message is received back from the server. This is
 	 * also sent if we are asked to resubmit the message.
 	 */
-	protected submitLocalMessage(content: any, localOpMetadata: unknown = undefined): void {
+	protected submitLocalMessage(
+		content: any,
+		localOpMetadata: unknown = undefined,
+		rootMetadata?: unknown,
+	): void {
 		this.verifyNotClosed();
 		if (this.isAttached()) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion

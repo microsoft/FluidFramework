@@ -296,8 +296,8 @@ export class FluidDataStoreRuntime
 						this.dataStoreContext,
 						this.dataStoreContext.storage,
 						this.logger,
-						(content, localOpMetadata) =>
-							this.submitChannelOp(path, content, localOpMetadata),
+						(content, localOpMetadata, rootMetadata) =>
+							this.submitChannelOp(path, content, localOpMetadata, rootMetadata),
 						(address: string) => this.setChannelDirty(address),
 						(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
 							this.addedGCOutboundReference(srcHandle, outboundHandle),
@@ -317,8 +317,8 @@ export class FluidDataStoreRuntime
 						this,
 						dataStoreContext,
 						dataStoreContext.storage,
-						(content, localOpMetadata) =>
-							this.submitChannelOp(path, content, localOpMetadata),
+						(content, localOpMetadata, rootMetadata) =>
+							this.submitChannelOp(path, content, localOpMetadata, rootMetadata),
 						(address: string) => this.setChannelDirty(address),
 						(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
 							this.addedGCOutboundReference(srcHandle, outboundHandle),
@@ -449,7 +449,8 @@ export class FluidDataStoreRuntime
 			this.dataStoreContext,
 			this.dataStoreContext.storage,
 			this.logger,
-			(content, localOpMetadata) => this.submitChannelOp(id, content, localOpMetadata),
+			(content, localOpMetadata, rootMetadata) =>
+				this.submitChannelOp(id, content, localOpMetadata, rootMetadata),
 			(address: string) => this.setChannelDirty(address),
 			(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
 				this.addedGCOutboundReference(srcHandle, outboundHandle),
@@ -576,8 +577,8 @@ export class FluidDataStoreRuntime
 			this,
 			this.dataStoreContext,
 			this.dataStoreContext.storage,
-			(content, localContentMetadata) =>
-				this.submitChannelOp(attachMessage.id, content, localContentMetadata),
+			(content, localContentMetadata, rootMetadata) =>
+				this.submitChannelOp(attachMessage.id, content, localContentMetadata, rootMetadata),
 			(address: string) => this.setChannelDirty(address),
 			(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
 				this.addedGCOutboundReference(srcHandle, outboundHandle),
@@ -856,7 +857,12 @@ export class FluidDataStoreRuntime
 		return summaryBuilder.getSummaryTree();
 	}
 
-	public submitMessage(type: DataStoreMessageType, content: any, localOpMetadata: unknown) {
+	public submitMessage(
+		type: DataStoreMessageType,
+		content: any,
+		localOpMetadata: unknown,
+		rootMetadata?: unknown,
+	) {
 		this.submit(type, content, localOpMetadata);
 	}
 
@@ -910,18 +916,24 @@ export class FluidDataStoreRuntime
 		context.makeVisible();
 	}
 
-	private submitChannelOp(address: string, contents: any, localOpMetadata: unknown) {
+	private submitChannelOp(
+		address: string,
+		contents: any,
+		localOpMetadata: unknown,
+		rootMetadata?: unknown,
+	) {
 		const envelope: IEnvelope = { address, contents };
-		this.submit(DataStoreMessageType.ChannelOp, envelope, localOpMetadata);
+		this.submit(DataStoreMessageType.ChannelOp, envelope, localOpMetadata, rootMetadata);
 	}
 
 	private submit(
 		type: DataStoreMessageType,
 		content: any,
 		localOpMetadata: unknown = undefined,
+		rootMetadata?: unknown,
 	): void {
 		this.verifyNotClosed();
-		this.dataStoreContext.submitMessage(type, content, localOpMetadata);
+		this.dataStoreContext.submitMessage(type, content, localOpMetadata, rootMetadata);
 	}
 
 	/**
