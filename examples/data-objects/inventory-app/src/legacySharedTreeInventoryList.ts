@@ -12,10 +12,10 @@ import {
 	StablePlace,
 	TraitLabel,
 } from "@fluid-experimental/tree";
-
-import { IInventoryListUntyped, IPart } from "./interfaces";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+
+import { IInventoryListUntyped, IPart } from "./interfaces";
 
 const legacySharedTreeKey = "legacySharedTree";
 
@@ -77,6 +77,7 @@ export class LegacySharedTreeInventoryList extends DataObject implements IInvent
 	}
 
 	protected async hasInitialized() {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		this._tree = await this.root
 			.get<IFluidHandle<LegacySharedTree>>(legacySharedTreeKey)!
 			.get();

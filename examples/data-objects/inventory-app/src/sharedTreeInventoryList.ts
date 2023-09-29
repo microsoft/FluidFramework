@@ -4,11 +4,11 @@
  */
 
 import { ISharedTree, SharedTreeFactory } from "@fluid-experimental/tree2";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import { IInventoryListUntyped, IPart } from "./interfaces";
 import { Inventory, schemaPolicy } from "./schema";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
 
 const sharedTreeKey = "sharedTree";
 
@@ -37,6 +37,7 @@ export class SharedTreeInventoryList extends DataObject implements IInventoryLis
 	}
 
 	protected async hasInitialized() {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const sharedTree = await this.root.get<IFluidHandle<ISharedTree>>(sharedTreeKey)!.get();
 		// REV: Ultimately we just have to cast to Inventory below anyway, and the schema is set upon creation
 		// So I'm not sure what this call to schematize is supposed to accomplish exactly.  I see that
