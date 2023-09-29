@@ -41,10 +41,6 @@ export class SharedTreeInventoryList extends DataObject implements IInventoryLis
 		return this._inventory;
 	}
 
-	/**
-	 * initializingFirstTime is run only once by the first client to create the DataObject.  Here we use it to
-	 * initialize the state of the DataObject.
-	 */
 	protected async initializingFirstTime() {
 		const sharedTree = this.runtime.createChannel(
 			undefined,
@@ -55,10 +51,6 @@ export class SharedTreeInventoryList extends DataObject implements IInventoryLis
 		this.root.set(sharedTreeKey, sharedTree.handle);
 	}
 
-	/**
-	 * hasInitialized is run by each client as they load the DataObject.  Here we use it to set up usage of the
-	 * DataObject, by registering an event listener for dice rolls.
-	 */
 	protected async hasInitialized() {
 		const sharedTree = await this.root.get<IFluidHandle<ISharedTree>>(sharedTreeKey)!.get();
 		const sharedTreeView = sharedTree.schematize(schemaPolicy);
