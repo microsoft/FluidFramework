@@ -29,7 +29,9 @@ export function getPackageInfo(): PackageInfo[] {
 		const info: PackageInfo[] = JSON.parse(child.stdout);
 		if (!Array.isArray(info)) {
 			// eslint-disable-next-line unicorn/prefer-type-error
-			throw new Error(`stdin input was not package array. Spawn result: ${JSON.stringify(child)}`);
+			throw new Error(
+				`stdin input was not package array. Spawn result: ${JSON.stringify(child)}`,
+			);
 		}
 		return info;
 	} catch (error) {
