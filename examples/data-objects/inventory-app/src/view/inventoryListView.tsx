@@ -4,12 +4,12 @@
  */
 
 import * as React from "react";
-import { IInventoryList } from "../interfaces";
+import { IInventoryList, IInventoryListUntyped } from "../interfaces";
 import { Counter } from "./counter";
 
-export const InventoryListView: React.FC<{ inventoryList: IInventoryList }> = ({
-	inventoryList,
-}) => {
+export const InventoryListView: React.FC<{
+	inventoryList: IInventoryList | IInventoryListUntyped;
+}> = ({ inventoryList }) => {
 	const [parts, setParts] = React.useState(inventoryList.getParts());
 	React.useEffect(() => {
 		const updateParts = () => setParts(inventoryList.getParts());

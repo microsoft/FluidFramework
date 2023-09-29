@@ -50,6 +50,8 @@ export class SharedTreeInventoryListDO extends DataObject implements IInventoryL
 			undefined,
 			new SharedTreeFactory().type,
 		) as ISharedTree;
+		// I think it's important to schematize here so the schema gets written before we attach the ST?
+		sharedTree.schematize(schemaPolicy);
 		this.root.set(sharedTreeKey, sharedTree.handle);
 	}
 

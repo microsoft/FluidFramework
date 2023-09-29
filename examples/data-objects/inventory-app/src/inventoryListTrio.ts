@@ -11,8 +11,8 @@ import {
 import { ISharedTree, SharedTreeFactory } from "@fluid-experimental/tree2";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 
-import { IInventoryList } from "./interfaces";
-import { SharedTreeInventoryList } from "./sharedTreeInventoryList";
+import { IInventoryList, IInventoryListUntyped } from "./interfaces";
+// import { SharedTreeInventoryList } from "./sharedTreeInventoryList";
 import { LegacySharedTreeInventoryList } from "./legacySharedTreeInventoryList";
 import { sharedTreeInventoryListDOFactory } from "./sharedTreeInventoryListDO";
 
@@ -22,7 +22,7 @@ const sharedTreeForHookKey = "sharedTreeForHook";
 
 export class InventoryListTrio extends DataObject {
 	private _legacySharedTreeInventoryList: IInventoryList | undefined;
-	private _sharedTreeInventoryList: IInventoryList | undefined;
+	private _sharedTreeInventoryList: IInventoryListUntyped | undefined;
 	private _sharedTreeForHook: ISharedTree | undefined;
 
 	public get legacySharedTreeInventoryList() {
@@ -53,10 +53,13 @@ export class InventoryListTrio extends DataObject {
 		// of an individual data object for a single inventory list.
 		LegacySharedTreeInventoryList.initializeLegacySharedTreeForInventory(legacySharedTree);
 
-		const sharedTree = this.runtime.createChannel(
-			undefined,
-			new SharedTreeFactory().type,
-		) as ISharedTree;
+		// const sharedTree = this.runtime.createChannel(
+		// 	undefined,
+		// 	new SharedTreeFactory().type,
+		// ) as ISharedTree;
+		const sharedTreeDO = await sharedTreeInventoryListDOFactory.createChildInstance(
+			this.context,
+		);
 
 		const sharedTreeForHook = this.runtime.createChannel(
 			undefined,
@@ -64,7 +67,7 @@ export class InventoryListTrio extends DataObject {
 		) as ISharedTree;
 
 		this.root.set(legacySharedTreeKey, legacySharedTree.handle);
-		this.root.set(sharedTreeKey, sharedTree.handle);
+		this.root.set(sharedTreeKey, sharedTreeDO.handle);
 		this.root.set(sharedTreeForHookKey, sharedTreeForHook.handle);
 	}
 
@@ -75,8 +78,11 @@ export class InventoryListTrio extends DataObject {
 			.get();
 		this._legacySharedTreeInventoryList = new LegacySharedTreeInventoryList(legacySharedTree);
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const sharedTree = await this.root.get<IFluidHandle<ISharedTree>>(sharedTreeKey)!.get();
-		this._sharedTreeInventoryList = new SharedTreeInventoryList(sharedTree);
+		// const sharedTree = await this.root.get<IFluidHandle<ISharedTree>>(sharedTreeKey)!.get();
+		// this._sharedTreeInventoryList = new SharedTreeInventoryList(sharedTree);
+		this._sharedTreeInventoryList = await this.root
+			.get<IFluidHandle<IInventoryListUntyped>>(sharedTreeKey)!
+			.get();
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		this._sharedTreeForHook = await this.root
 			.get<IFluidHandle<ISharedTree>>(sharedTreeForHookKey)!
