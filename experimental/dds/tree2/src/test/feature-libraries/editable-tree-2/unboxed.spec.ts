@@ -447,7 +447,7 @@ describe("unboxed unit tests", () => {
 	});
 	describe("unboxedUnion", () => {
 		it("Single-type value", () => {
-			const { fieldSchema, context, cursor } = createOptionalLeafTree(
+			const { fieldSchema, context, cursor } = createValueLeafTree(
 				ValueSchema.String,
 				"Hello world",
 			);
