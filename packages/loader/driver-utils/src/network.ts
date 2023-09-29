@@ -181,16 +181,7 @@ export function createGenericNetworkError(
  * I.e. asserts or unexpected exceptions in our code result in container failure.
  * @param error - The error to inspect for ability to retry
  */
-export const canRetryOnError = (error: any): boolean => {
-	if (error?.canRetry === true) {
-		return true;
-	}
-	if (error?.error?.canRetry === true) {
-		console.log("DEBUG123");
-		return true;
-	}
-	return false;
-}; // error?.error?.canRetry === true || error?.canRetry === true;
+export const canRetryOnError = (error: any): boolean => error?.canRetry === true;
 
 /** Check retryAfterSeconds property on error */
 export const getRetryDelaySecondsFromError = (error: any): number | undefined =>
