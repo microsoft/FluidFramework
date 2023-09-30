@@ -8,7 +8,7 @@
 import { assert } from "@fluidframework/core-utils";
 import { Adapters, FieldKey, TreeSchemaIdentifier, TreeTypeSet, ValueSchema } from "../core";
 import { MakeNominal, RestrictiveReadonlyRecord, objectToMap } from "../util";
-import { SchemaLibraryData, SchemaLintConfiguration, schemaLintDefault } from "./typed-schema";
+import { SchemaLintConfiguration, schemaLintDefault } from "./typed-schema";
 import { FieldKind, FullSchemaPolicy } from "./modular-schema";
 import { FieldKinds } from "./default-field-kinds";
 import { Any } from "./typed-schema/typedTreeSchema";
@@ -28,7 +28,7 @@ export class SchemaBuilder<
 > {
 	private readonly lintConfiguration: SchemaLintConfiguration;
 	private readonly libraries: Set<SchemaLibraryData>;
-	// private finalized: boolean = false;
+	private finalized: boolean = false;
 	private readonly treeSchema: Map<TreeSchemaIdentifier, TreeSchema> = new Map();
 	private readonly adapters: Adapters = {};
 	public readonly scope: TScope;
@@ -38,11 +38,12 @@ export class SchemaBuilder<
 		) => FieldSchema<TFieldKinds[Property], TTypes>;
 	};
 
-	public readonly fieldRecursive: {
-		readonly [Property in keyof TFieldKinds]: <TTypes extends unknown[]>(
-			...types: TTypes
-		) => FieldSchema<TFieldKinds[Property], TTypes>;
-	};
+	// Unneeded due to use of fixRecursiveReference
+	// public readonly fieldRecursive: {
+	// 	readonly [Property in keyof TFieldKinds]: <TTypes extends unknown[]>(
+	// 		...types: TTypes
+	// 	) => FieldSchema<TFieldKinds[Property], TTypes>;
+	// };
 
 	public get name(): string {
 		return this.scope;
@@ -79,7 +80,7 @@ export class SchemaBuilder<
 				...types: TTypes
 			) => FieldSchema<TFieldKinds[Property], TTypes>;
 		};
-		this.fieldRecursive = this.field as any;
+		// this.fieldRecursive = this.field as any;
 	}
 
 	protected scoped<Name extends TName>(name: Name): `${TScope}.${Name}` & TreeSchemaIdentifier {
@@ -137,24 +138,6 @@ export class SchemaBuilder<
 		return schema;
 	}
 
-	public structRecursive<Name extends TName, T>(
-		name: Name,
-		t: T,
-	): Holder<{
-		identifier: `${TScope}.${Name}` & TreeSchemaIdentifier;
-		structFieldsObject: T;
-		structFields: ReadonlyMap<FieldKey, FieldSchema>;
-	}> {
-		return this.struct(
-			name,
-			t as unknown as RestrictiveReadonlyRecord<string, FieldSchema>,
-		) as unknown as Holder<{
-			identifier: `${TScope}.${Name}` & TreeSchemaIdentifier;
-			structFieldsObject: T;
-			structFields: ReadonlyMap<FieldKey, FieldSchema>;
-		}>;
-	}
-
 	/**
 	 * Define (and add to this library) a {@link TreeSchema} for a {@link MapNode}.
 	 */
@@ -174,16 +157,6 @@ export class SchemaBuilder<
 		return schema;
 	}
 
-	public mapRecursive<Name extends TName, T>(
-		name: Name,
-		fieldSchema: T,
-	): Holder<{ identifier: `${TScope}.${Name}` & TreeSchemaIdentifier; mapFields: T }> {
-		return this.map(name, fieldSchema as unknown as MapFieldSchema) as unknown as Holder<{
-			identifier: `${TScope}.${Name}` & TreeSchemaIdentifier;
-			mapFields: T;
-		}>;
-	}
-
 	/**
 	 * Define (and add to this library) a {@link TreeSchema} for a {@link FieldNode}.
 	 *
@@ -193,25 +166,32 @@ export class SchemaBuilder<
 	 * TODO: Write and link document outlining field vs node data model and the separation of concerns related to that.
 	 * TODO: Maybe find a better name for this.
 	 */
-	// public fieldNode<Name extends TName, T extends FieldSchema>(
-	// 	name: Name,
-	// 	t: T,
-	// ): TreeSchema<`${TScope}.${Name}`, { structFields: { [""]: T } }> {
-	// 	const schema = new TreeSchema(this, this.scoped(name), { structFields: { [""]: t } });
-	// 	this.addNodeSchema(schema);
-	// 	return schema;
-	// }
+	public fieldNode<Name extends TName, T extends FieldSchema>(
+		name: Name,
+		fieldSchema: T,
+	): Holder<{ identifier: `${TScope}.${Name}` & TreeSchemaIdentifier; fieldSchema: T }> {
+		const identifier = this.scoped(name);
+		const schema = class {
+			public static readonly identifier = identifier;
+			public static readonly fieldSchema = fieldSchema;
+			public readonly identifier = identifier;
+			public readonly fieldSchema = fieldSchema;
+			public constructor(dummy: never) {}
+		};
+		this.addNodeSchema(schema);
+		return schema;
+	}
 
-	// private finalizeCommon(): void {
-	// 	assert(!this.finalized, "SchemaBuilder can only be finalized once.");
-	// 	this.finalized = true;
-	// 	this.libraries.add({
-	// 		name: this.name,
-	// 		rootFieldSchema: undefined,
-	// 		treeSchema: this.treeSchema,
-	// 		adapters: this.adapters,
-	// 	});
-	// }
+	private finalizeCommon(): void {
+		assert(!this.finalized, "SchemaBuilder can only be finalized once.");
+		this.finalized = true;
+		this.libraries.add({
+			name: this.name,
+			rootFieldSchema: undefined,
+			treeSchema: this.treeSchema,
+			adapters: this.adapters,
+		});
+	}
 
 	// /**
 	//  * Produce SchemaLibraries which capture the content added to this builder, as well as any additional SchemaLibraries that were added to it.
@@ -275,16 +255,6 @@ export interface SchemaLibrary extends TypedSchemaCollection {
  * @alpha
  */
 export type Holder<T> = T & (new (dummy: never) => T);
-
-const b = new SchemaBuilder({ scope: "com.fluidframework.test", fieldKinds: FieldKinds });
-
-/**
- * @alpha
- */
-export class TestMap extends b.mapRecursive(
-	"cool",
-	b.fieldRecursive.value(() => TestMap),
-) {}
 
 /**
  * @alpha
@@ -408,3 +378,34 @@ export function allowedTypesIsAny(t: AllowedTypes): t is [Any] {
  * @alpha
  */
 export type MapFieldSchema = FieldSchema<typeof FieldKinds.optional | typeof FieldKinds.sequence>;
+
+/**
+ * Schema data collected by a single SchemaBuilder (does not include referenced libraries).
+ * @alpha
+ */
+export interface SchemaLibraryData {
+	readonly name: string;
+	readonly rootFieldSchema?: FieldSchema;
+	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
+	readonly adapters: Adapters;
+}
+
+/**
+ * Pass recursive {@link AllowedTypes} to this to nudge the compiler into inferring types correctly.
+ * This works around a [TypeScript Limitation](https://github.com/microsoft/TypeScript/issues/55758).
+ *
+ * Usage:
+ * ```typescript
+ * const childTypes = () => MyNode;
+ * fixRecursiveReference(childTypes);
+ * export class MyNode extends builder.map("Node", builder.field.optional(childTypes)) {}
+ * ```
+ *
+ * That is the same as the more concise:
+ * ```typescript
+ * export class MyNode extends builder.map("Node", builder.field.optional(() => MyNode)) {}
+ * ```
+ *
+ * Except that this version fails to compile.
+ */
+export function fixRecursiveReference<T extends AllowedTypes>(...types: T): void {}

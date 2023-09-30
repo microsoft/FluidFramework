@@ -20,37 +20,25 @@ const builder = new schemaBuilder2.SchemaBuilder({
 
 export class Empty extends builder.struct("empty", {}) {}
 
-const _x: schemaBuilder2.StructSchema = Empty;
+const recursiveReference = () => RecursiveStruct;
+schemaBuilder2.fixRecursiveReference(recursiveReference);
 
 /**
  * @alpha
  */
-export class RecursiveStruct extends builder.structRecursive("recursiveStruct", {
-	recursive: builder.fieldRecursive.optional(() => RecursiveStruct),
-	number: builder.field.value(Empty),
-}) {}
-
-// Some related information in https://github.com/microsoft/TypeScript/issues/55758.
-function fixRecursiveReference<T extends schemaBuilder2.AllowedTypes>(...types: T): void {}
-
-const recursiveReference = () => RecursiveStruct2;
-fixRecursiveReference(recursiveReference);
-
-/**
- * @alpha
- */
-export class RecursiveStruct2 extends builder.struct("recursiveStruct2", {
+export class RecursiveStruct extends builder.struct("recursiveStruct2", {
 	recursive: builder.field.optional(recursiveReference),
 	number: builder.field.value(Empty),
 }) {}
 
-type _0 = requireFalse<isAny<typeof RecursiveStruct2>>;
+type _0 = requireFalse<isAny<typeof RecursiveStruct>>;
 type _1 = requireTrue<
 	areSafelyAssignable<
-		typeof RecursiveStruct2,
-		ReturnType<typeof RecursiveStruct2.structFieldsObject.recursive.allowedTypes[0]>
+		typeof RecursiveStruct,
+		ReturnType<typeof RecursiveStruct.structFieldsObject.recursive.allowedTypes[0]>
 	>
 >;
+
 /**
  * @alpha
  */
