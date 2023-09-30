@@ -38,6 +38,7 @@ describe("object-forest", () => {
 			visitor.exitField(rootFieldKey);
 			visitor.free();
 		});
+
 		it("detaching content from the detached field it is being transferred to", () => {
 			const forest = buildForest();
 			initializeForest(forest, [singleJsonCursor(content)]);
@@ -50,6 +51,7 @@ describe("object-forest", () => {
 			visitor.exitField(rootFieldKey);
 			visitor.free();
 		});
+
 		it("replacing content by transferring to and from the same detached field", () => {
 			const forest = buildForest();
 			initializeForest(forest, [singleJsonCursor(content)]);

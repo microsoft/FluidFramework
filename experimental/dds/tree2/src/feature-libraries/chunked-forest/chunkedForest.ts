@@ -171,10 +171,11 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 				assertValidRange(source, sourceField);
 				const newField = sourceField.splice(source.start, source.end - source.start);
 
-				if (sourceField.length === 0) {
-					parent.mutableChunk.fields.delete(parent.key);
-				}
 				if (destination !== undefined) {
+					assert(
+						!this.forest.roots.fields.has(destination),
+						"Destination must be a new empty detached field",
+					);
 					if (newField.length > 0) {
 						this.forest.roots.fields.set(destination, newField);
 					}
@@ -182,6 +183,11 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 					for (const child of newField) {
 						child.referenceRemoved();
 					}
+				}
+				// This check is performed after the transfer to ensure that the field is not removed in scenarios
+				// where the source and destination are the same.
+				if (sourceField.length === 0) {
+					parent.mutableChunk.fields.delete(parent.key);
 				}
 			},
 			replace(
