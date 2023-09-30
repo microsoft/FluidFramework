@@ -208,7 +208,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     get storage(): IDocumentStorageService;
     // (undocumented)
-    submitDataStoreAliasOp(contents: any, localOpMetadata: unknown, rootMetadata: unknown): void;
+    submitDataStoreAliasOp(contents: any, localOpMetadata: unknown): void;
     // (undocumented)
     submitDataStoreOp(id: string, contents: any, localOpMetadata: unknown, rootMetadata: unknown): void;
     // (undocumented)
