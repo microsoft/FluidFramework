@@ -23,7 +23,7 @@ export class SanitizationLumberFormatter implements ILumberFormatter {
 	public transform(lumber: Lumber<string>): void {
 		if (lumber.logLevel === LogLevel.Error && lumber.exception) {
 			const sensitiveKeys = new Set<string>();
-			
+
 			this.redactException(lumber.exception, sensitiveKeys);
 
 			if (sensitiveKeys.size > 0) {
