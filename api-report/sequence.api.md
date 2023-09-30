@@ -305,8 +305,6 @@ export type IntervalStickiness = typeof IntervalStickiness[keyof typeof Interval
 // @public (undocumented)
 export enum IntervalType {
     // (undocumented)
-    Nest = 1,
-    // (undocumented)
     Simple = 0,
     SlideOnRemove = 2,
     // @internal

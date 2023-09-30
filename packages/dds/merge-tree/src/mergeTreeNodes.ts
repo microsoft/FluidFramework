@@ -751,6 +751,7 @@ export function debugMarkerToString(marker: Marker): string {
 			lbuf += tileLabel;
 		}
 	}
+
 	let pbuf = "";
 	if (marker.properties) {
 		pbuf += JSON.stringify(marker.properties, (key, value) => {

@@ -80,7 +80,6 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
 		switch (markerType) {
 			case ReferenceType.Tile:
 				const kind = refGetTileLabels(segment)[0] as DocSegmentKind;
-
 				assert(tilesAndRanges.has(kind), `Unknown tile/range label.`);
 
 				return kind;
