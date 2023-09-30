@@ -7,7 +7,6 @@ import {
 	Logger,
 	MonoRepo,
 	Package,
-	VersionBag,
 	VersionDetails,
 	updatePackageJsonFile,
 } from "@fluidframework/build-tools";

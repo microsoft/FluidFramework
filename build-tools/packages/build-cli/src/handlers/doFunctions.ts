@@ -11,7 +11,6 @@ import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
 import { bumpVersionScheme, detectVersionScheme } from "@fluid-tools/version-tools";
 
 import {
-	bumpReleaseGroup,
 	difference,
 	getPreReleaseDependencies,
 	npmCheckUpdates,

@@ -14,8 +14,6 @@ import prompts from "prompts";
 
 import { BaseCommand } from "../../base";
 import { Repository, getDefaultBumpTypeForBranch } from "../../lib";
-import GenerateUpcomingCommand from "./upcoming";
-import { ReleaseGroup } from "../../releaseGroups";
 
 /**
  * If more than this number of packages are changed relative to the selected branch, the user will be prompted to select

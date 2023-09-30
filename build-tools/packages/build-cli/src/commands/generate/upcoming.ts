@@ -10,7 +10,7 @@ import { format as prettier } from "prettier";
 
 import { BaseCommand } from "../../base";
 import { releaseGroupFlag } from "../../flags";
-import { DEFAULT_CHANGESET_PATH, getDisplayDate, loadChangesets } from "../../lib";
+import { DEFAULT_CHANGESET_PATH, loadChangesets } from "../../lib";
 
 const DEFAULT_FILE = "UPCOMING.md";
 
