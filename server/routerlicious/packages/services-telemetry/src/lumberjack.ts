@@ -14,7 +14,7 @@ import {
 	ILumberFormatter,
 } from "./resources";
 import { getGlobal, getGlobalTelemetryContext } from "./telemetryContext";
-import { SanitizationLumberFormatter } from "./lumberFormatters";
+import { SanitizationLumberFormatter } from "./sanitizationLumberFormatter";
 
 export interface ILumberjackOptions {
 	enableGlobalTelemetryContext: boolean;

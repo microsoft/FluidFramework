@@ -40,4 +40,4 @@ export {
 	getGlobalTelemetryContext,
 	setGlobalTelemetryContext,
 } from "./telemetryContext";
-export { SanitizationLumberFormatter } from "./lumberFormatters";
+export { SanitizationLumberFormatter } from "./sanitizationLumberFormatter";

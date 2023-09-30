@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { Lumberjack } from "./lumberjack";
 import { ILumberFormatter, LogLevel } from "./resources";
 import { Lumber } from "./lumber";
 
@@ -23,18 +22,24 @@ export class SanitizationLumberFormatter implements ILumberFormatter {
 
 	public transform(lumber: Lumber<string>): void {
 		if (lumber.logLevel === LogLevel.Error && lumber.exception) {
-			Object.keys(lumber.exception).forEach((keyStr, value) => {
-				if (typeof value === "object" && value !== null) {
-					this.transform(value);
-				} else if (this.sensitiveKeys.some((regex) => regex.test(keyStr))) {
-					lumber[keyStr] = this.redactedStr;
-					Lumberjack.warning(
-						"Detected sensitve data in logs",
-						{ DetectedSecret: keyStr },
-						null,
-					);
-				}
-			});
+			const sensitiveKeys = new Set<string>();
+			
+			this.redactException(lumber.exception, sensitiveKeys);
+
+			if (sensitiveKeys.size > 0) {
+				lumber.setProperty("SensitiveDataDetected", sensitiveKeys);
+			}
 		}
+	}
+
+	private redactException(exception: Error, sensitiveKeys: Set<string>): void {
+		Object.keys(exception).forEach((keyStr, value) => {
+			if (typeof value === "object" && value !== null) {
+				this.redactException(value, sensitiveKeys);
+			} else if (this.sensitiveKeys.some((regex) => regex.test(keyStr))) {
+				exception[keyStr] = this.redactedStr;
+				sensitiveKeys.add(keyStr);
+			}
+		});
 	}
 }
