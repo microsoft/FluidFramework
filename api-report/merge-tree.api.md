@@ -531,7 +531,7 @@ export interface IMergeTreeTextHelper {
     getText(refSeq: number, clientId: number, placeholder: string, start?: number, end?: number): string;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export function internedSpaces(n: number): string;
 
 // @internal (undocumented)
@@ -852,7 +852,7 @@ export interface QProperty<TKey, TData> {
     key?: TKey;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export type RangeStackMap = MapLike<Stack<ReferencePosition>>;
 
 // @internal (undocumented)
@@ -965,16 +965,16 @@ export enum ReferenceType {
     Transient = 256
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const refGetRangeLabels: (refPos: ReferencePosition) => string[] | undefined;
 
 // @public (undocumented)
 export const refGetTileLabels: (refPos: ReferencePosition) => string[] | undefined;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export function refHasRangeLabel(refPos: ReferencePosition, label: string): boolean;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export function refHasRangeLabels(refPos: ReferencePosition): boolean;
 
 // @public (undocumented)
