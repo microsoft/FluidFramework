@@ -129,11 +129,13 @@ describe("SharedString interval collections", () => {
 
 			// Connect the first SharedString.
 			dataStoreRuntime1.local = false;
-			dataStoreRuntime1.options = { intervalStickinessEnabled: true };
+			dataStoreRuntime1.options = {
+				intervalStickinessEnabled: true,
+			};
 			const containerRuntime1 =
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1 = {
-				deltaConnection: containerRuntime1.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 			sharedString.initializeLocal();
@@ -143,9 +145,11 @@ describe("SharedString interval collections", () => {
 			const dataStoreRuntime2 = new MockFluidDataStoreRuntime({ clientId: "2" });
 			const containerRuntime2 =
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-			dataStoreRuntime2.options = { intervalStickinessEnabled: true };
+			dataStoreRuntime2.options = {
+				intervalStickinessEnabled: true,
+			};
 			const services2 = {
-				deltaConnection: containerRuntime2.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 
@@ -792,7 +796,7 @@ describe("SharedString interval collections", () => {
 			const containerRuntime1 =
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1: IChannelServices = {
-				deltaConnection: containerRuntime1.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 			sharedString.initializeLocal();
@@ -807,7 +811,7 @@ describe("SharedString interval collections", () => {
 				SharedStringFactory.Attributes,
 			);
 			const services2: IChannelServices = {
-				deltaConnection: containerRuntime2.createDeltaConnection(),
+				deltaConnection: runtime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 			sharedString2.initializeLocal();
@@ -1181,7 +1185,7 @@ describe("SharedString interval collections", () => {
 			// Connect the first SharedString.
 			containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1: IChannelServices = {
-				deltaConnection: containerRuntime1.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 			sharedString.initializeLocal();
@@ -1196,7 +1200,7 @@ describe("SharedString interval collections", () => {
 				SharedStringFactory.Attributes,
 			);
 			const services2: IChannelServices = {
-				deltaConnection: containerRuntime2.createDeltaConnection(),
+				deltaConnection: runtime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 			sharedString2.initializeLocal();

@@ -26,7 +26,7 @@ import {
 	tagCodeArtifacts,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils";
-import { Timer } from "@fluidframework/common-utils";
+import { Timer } from "@fluidframework/core-utils";
 import {
 	concatGarbageCollectionStates,
 	GarbageCollector,
@@ -46,14 +46,12 @@ import {
 	GCVersion,
 	disableSweepLogKey,
 	stableGCVersion,
-	tagAsCodeArtifact,
 	IGarbageCollectionSnapshotData,
 } from "../../gc";
 import {
 	dataStoreAttributesBlobName,
 	IContainerRuntimeMetadata,
 	metadataBlobName,
-	RefreshSummaryResult,
 } from "../../summary";
 import { pkgVersion } from "../../packageVersion";
 import { configProvider } from "./gcUnitTestHelpers";
@@ -78,10 +76,7 @@ describe("Garbage Collection Tests", () => {
 	const sweepTimeoutMs = defaultSessionExpiryDurationMs + defaultSnapshotCacheExpiryMs + oneDayMs;
 	// Nodes in the reference graph.
 	const nodes: string[] = ["/node1", "/node2", "/node3", "/node4"];
-
 	const testPkgPath = ["testPkg"];
-	// The package data is tagged in the telemetry event.
-	const eventPkg = tagAsCodeArtifact(testPkgPath.join("/"));
 
 	let injectedSettings: Record<string, ConfigTypes> = {};
 	let mockLogger: MockLogger;
@@ -319,29 +314,25 @@ describe("Garbage Collection Tests", () => {
 					{
 						eventName: loadedEventName,
 						timeout,
-						...tagCodeArtifacts({ id: nodes[2] }),
-						pkg: eventPkg,
+						...tagCodeArtifacts({ id: nodes[2], pkg: testPkgPath.join("/") }),
 						createContainerRuntimeVersion: pkgVersion,
 					},
 					{
 						eventName: changedEventName,
 						timeout,
-						...tagCodeArtifacts({ id: nodes[2] }),
-						pkg: eventPkg,
+						...tagCodeArtifacts({ id: nodes[2], pkg: testPkgPath.join("/") }),
 						createContainerRuntimeVersion: pkgVersion,
 					},
 					{
 						eventName: loadedEventName,
 						timeout,
-						...tagCodeArtifacts({ id: nodes[3] }),
-						pkg: eventPkg,
+						...tagCodeArtifacts({ id: nodes[3], pkg: testPkgPath.join("/") }),
 						createContainerRuntimeVersion: pkgVersion,
 					},
 					{
 						eventName: changedEventName,
 						timeout,
-						...tagCodeArtifacts({ id: nodes[3] }),
-						pkg: eventPkg,
+						...tagCodeArtifacts({ id: nodes[3], pkg: testPkgPath.join("/") }),
 						createContainerRuntimeVersion: pkgVersion,
 					},
 				);
@@ -359,8 +350,11 @@ describe("Garbage Collection Tests", () => {
 						{
 							eventName: revivedEventName,
 							timeout,
-							pkg: eventPkg,
-							...tagCodeArtifacts({ id: nodes[3], fromId: nodes[1] }),
+							...tagCodeArtifacts({
+								id: nodes[3],
+								fromId: nodes[1],
+								pkg: testPkgPath.join("/"),
+							}),
 						},
 					],
 					"revived event not generated as expected",
@@ -405,8 +399,11 @@ describe("Garbage Collection Tests", () => {
 						{
 							eventName: revivedEventName,
 							timeout,
-							pkg: eventPkg,
-							...tagCodeArtifacts({ id: nodes[2], fromId: nodes[1] }),
+							...tagCodeArtifacts({
+								id: nodes[2],
+								fromId: nodes[1],
+								pkg: testPkgPath.join("/"),
+							}),
 						},
 					],
 					"revived event not logged as expected",
@@ -447,14 +444,12 @@ describe("Garbage Collection Tests", () => {
 					{
 						eventName: loadedEventName,
 						timeout,
-						...tagCodeArtifacts({ id: nodes[3] }),
-						pkg: eventPkg,
+						...tagCodeArtifacts({ id: nodes[3], pkg: testPkgPath.join("/") }),
 					},
 					{
 						eventName: changedEventName,
 						timeout,
-						...tagCodeArtifacts({ id: nodes[3] }),
-						pkg: eventPkg,
+						...tagCodeArtifacts({ id: nodes[3], pkg: testPkgPath.join("/") }),
 					},
 				);
 				mockLogger.assertMatch(
@@ -535,14 +530,12 @@ describe("Garbage Collection Tests", () => {
 						{
 							eventName: loadedEventName,
 							timeout,
-							...tagCodeArtifacts({ id: nodes[3] }),
-							pkg: eventPkg,
+							...tagCodeArtifacts({ id: nodes[3], pkg: testPkgPath.join("/") }),
 						},
 						{
 							eventName: changedEventName,
 							timeout,
-							...tagCodeArtifacts({ id: nodes[3] }),
-							pkg: eventPkg,
+							...tagCodeArtifacts({ id: nodes[3], pkg: testPkgPath.join("/") }),
 						},
 					],
 					"all events not generated as expected",
@@ -557,8 +550,11 @@ describe("Garbage Collection Tests", () => {
 						{
 							eventName: revivedEventName,
 							timeout,
-							pkg: eventPkg,
-							...tagCodeArtifacts({ id: nodes[3], fromId: nodes[2] }),
+							...tagCodeArtifacts({
+								id: nodes[3],
+								fromId: nodes[2],
+								pkg: testPkgPath.join("/"),
+							}),
 						},
 					],
 					"revived event not generated as expected",
@@ -616,14 +612,12 @@ describe("Garbage Collection Tests", () => {
 						{
 							eventName: loadedEventName,
 							timeout,
-							...tagCodeArtifacts({ id: nodes[3] }),
-							pkg: eventPkg,
+							...tagCodeArtifacts({ id: nodes[3], pkg: testPkgPath.join("/") }),
 						},
 						{
 							eventName: changedEventName,
 							timeout,
-							...tagCodeArtifacts({ id: nodes[3] }),
-							pkg: eventPkg,
+							...tagCodeArtifacts({ id: nodes[3], pkg: testPkgPath.join("/") }),
 						},
 					],
 					"all events not generated as expected",
@@ -638,8 +632,11 @@ describe("Garbage Collection Tests", () => {
 						{
 							eventName: revivedEventName,
 							timeout,
-							pkg: eventPkg,
-							...tagCodeArtifacts({ id: nodes[3], fromId: nodes[2] }),
+							...tagCodeArtifacts({
+								id: nodes[3],
+								fromId: nodes[2],
+								pkg: testPkgPath.join("/"),
+							}),
 						},
 					],
 					"revived event not generated as expected",
@@ -706,9 +703,9 @@ describe("Garbage Collection Tests", () => {
 							{
 								eventName: deleteEventName,
 								timeout,
-								id: tagAsCodeArtifact(
-									JSON.stringify([nodes[1], nodes[2], nodes[3]]),
-								),
+								...tagCodeArtifacts({
+									id: JSON.stringify([nodes[1], nodes[2], nodes[3]]),
+								}),
 							},
 						],
 						"sweep ready event not generated as expected",
@@ -731,20 +728,17 @@ describe("Garbage Collection Tests", () => {
 						{
 							eventName: loadedEventName,
 							timeout,
-							...tagCodeArtifacts({ id: nodes[3] }),
-							pkg: eventPkg,
+							...tagCodeArtifacts({ id: nodes[3], pkg: testPkgPath.join("/") }),
 						},
 						{
 							eventName: changedEventName,
 							timeout,
-							...tagCodeArtifacts({ id: nodes[1] }),
-							pkg: eventPkg,
+							...tagCodeArtifacts({ id: nodes[1], pkg: testPkgPath.join("/") }),
 						},
 						{
 							eventName: changedEventName,
 							timeout,
-							...tagCodeArtifacts({ id: nodes[2] }),
-							pkg: eventPkg,
+							...tagCodeArtifacts({ id: nodes[2], pkg: testPkgPath.join("/") }),
 						},
 					],
 					"all events not generated as expected",
@@ -1098,12 +1092,10 @@ describe("Garbage Collection Tests", () => {
 				"Deleted nodes state should be a handle",
 			);
 
-			const refreshSummaryResult: RefreshSummaryResult = {
-				latestSummaryUpdated: true,
-				wasSummaryTracked: true,
-				summaryRefSeq: 0,
-			};
-			await garbageCollector.refreshLatestSummary(refreshSummaryResult);
+			await garbageCollector.refreshLatestSummary({
+				isSummaryTracked: true,
+				isSummaryNewer: true,
+			});
 
 			// Run GC and summarize again. The whole GC summary should now be a summary handle.
 			await garbageCollector.collectGarbage({});
@@ -1698,11 +1690,9 @@ describe("Garbage Collection Tests", () => {
 			checkGCSummaryType(tree1, SummaryType.Tree, "first");
 
 			await garbageCollector.refreshLatestSummary({
-				wasSummaryTracked: true,
-				latestSummaryUpdated: true,
-				summaryRefSeq: 0,
+				isSummaryTracked: true,
+				isSummaryNewer: true,
 			});
-
 			await garbageCollector.collectGarbage({});
 			const tree2 = garbageCollector.summarize(fullTree, trackState);
 

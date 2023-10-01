@@ -118,8 +118,8 @@ export class Collection<T> {
 	}
 
 	/**
-	 * Return the last item in the collection, null if empty
-	 * @returns - last item, or undefined if empty
+	 * Return the last item in the collection, undefined if empty
+	 * @returns The last item, or undefined if empty
 	 * */
 	getLastItem(): T | undefined {
 		const index = _.last(this._order);

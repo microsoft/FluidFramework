@@ -113,7 +113,7 @@ export type PromiseCacheExpiry = {
 // @public
 export interface PromiseCacheOptions {
     expiry?: PromiseCacheExpiry;
-    removeOnError?: (e: any) => boolean;
+    removeOnError?: (error: any) => boolean;
 }
 
 // @public

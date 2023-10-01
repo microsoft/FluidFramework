@@ -402,39 +402,41 @@ character "b", what happens when we insert text on either side of it? In the
 below diagrams, we represent an interval by putting a caret directly underneath
 the characters it contains.
 
-##### Original string:
+#### Example
 
-```
+##### Original string
+
+```typescript
 abc
  ^
 ```
 
-##### No stickiness:
+##### No stickiness
 
-```
+```typescript
 aXbYc
   ^
 ```
 
 The interval does not expand to include the newly inserted characters `X` and `Y`.
 
-##### Start stickiness:
+##### Start stickiness
 
-```
+```typescript
 aXbYc
  ^^
 ```
 
-##### End stickiness:
+##### End stickiness
 
-```
+```typescript
 aXbYc
   ^^
 ```
 
-##### Full stickiness:
+##### Full stickiness
 
-```
+```typescript
 aXbYc
  ^^^
 ```
@@ -451,7 +453,9 @@ end of the sequence respectively.
 
 By placing the endpoints of an interval either before or after a character, it
 is possible to make the endpoints inclusive or exclusive. An exclusive endpoint
-in a given direction implies stickiness in that direction.
+in a given direction implies stickiness in that direction. Whether an endpoint
+is inclusive or exclusive depends on both the Side and if it is the start or the
+end.
 
 Given the string "ABCD":
 
@@ -485,7 +489,7 @@ string.removeRange(1, 2);
 The start point of the interval will slide to the position immediately before
 "C", and the same will be true.
 
-```
+```typescript
 {start} - A[- C -]D - {end}
 ```
 
@@ -498,9 +502,16 @@ string.insertText(1, "EFG");
 
 With the string now being,
 
-```
+```typescript
 {start} - A[- E - F - G - C -]D - {end}
 ```
+
+Note that the endpoint continues to remain with the associated character, except
+when the character is removed. When content containing endpoints is removed,
+`After` endpoints move backward and `Before` endpoints move forward to maintain their
+side value and inclusive/exclusive behavior.
+
+<!-- This line ends the content that is copied to the sequences.md README -->
 
 ## SharedString
 
@@ -575,6 +586,8 @@ For further reading on attribution, see the [@fluid-experimental/attributor READ
 
 There are plans to make attribution policies more flexible, for example tracking attribution of property changes separately from segment insertion.
 
+<!-- This line begins the content that is copied to the string.md README -->
+
 ### Examples
 
 -   Rich Text Editor Implementations
@@ -590,6 +603,8 @@ There are plans to make attribution policies more flexible, for example tracking
 -   Plain Text Editor Implementations
     -   [collaborativeTextArea](https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/react-inputs/src/CollaborativeTextArea.tsx)
     -   [collaborativeInput](https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/react-inputs/src/CollaborativeInput.tsx)
+
+<!-- This line ends the content that is copied to the string.md README -->
 
 [sharedmap]: https://fluidframework.com/docs/data-structures/map/
 [sharedstring]: https://github.com/microsoft/FluidFramework/blob/main/packages/dds/sequence/src/sharedString.ts

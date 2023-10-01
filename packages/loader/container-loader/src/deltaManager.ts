@@ -16,7 +16,8 @@ import {
 	IDeltaManagerEvents,
 	IDeltaQueue,
 } from "@fluidframework/container-definitions";
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	DataProcessingError,
 	extractSafePropertiesFromMessage,
@@ -31,7 +32,7 @@ import {
 import {
 	IDocumentDeltaStorageService,
 	IDocumentService,
-	DriverErrorType,
+	DriverErrorTypes,
 } from "@fluidframework/driver-definitions";
 import {
 	IDocumentMessage,
@@ -49,7 +50,6 @@ import {
 	IConnectionStateChangeReason,
 } from "./contracts";
 import { DeltaQueue } from "./deltaQueue";
-import { OnlyValidTermValue } from "./protocol";
 import { ThrottlingWarning } from "./error";
 
 export interface IConnectionArgs {
@@ -367,7 +367,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		assert(this.connectionManager.connected, 0x238 /* "called only in connected state" */);
 
 		const pendingSorted = this.pending.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
-		this.logger.sendErrorEvent({
+		this.logger.sendTelemetryEvent({
 			...event,
 			// This directly tells us if fetching ops is in flight, and thus likely the reason of
 			// stalled op processing
@@ -946,7 +946,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 							// pre-0.58 error message: twoMessagesWithSameSeqNumAndDifferentPayload
 							"Found two messages with the same sequenceNumber but different payloads. Likely to be a " +
 								"service issue",
-							DriverErrorType.fileOverwrittenInStorage,
+							DriverErrorTypes.fileOverwrittenInStorage,
 							{
 								clientId: this.connectionManager.clientId,
 								sequenceNumber: message.sequenceNumber,
@@ -1061,11 +1061,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			this.lastProcessedSequenceNumber <= this.lastObservedSeqNumber,
 			0x267 /* "lastObservedSeqNumber should be updated first" */,
 		);
-
-		// Back-compat for older server with no term
-		if (message.term === undefined) {
-			message.term = OnlyValidTermValue;
-		}
 
 		if (this.handler === undefined) {
 			throw new Error("Attempted to process an inbound message without a handler attached");

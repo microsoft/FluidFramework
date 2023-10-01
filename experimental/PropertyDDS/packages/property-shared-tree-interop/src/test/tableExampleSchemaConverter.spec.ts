@@ -17,19 +17,28 @@ import { convertPropertyToSharedTreeSchema as convertSchema } from "../schemaCon
 const tableTypeName: TreeSchemaIdentifier = brand("Test:Table-1.0.0");
 
 function registerPropertySchemas() {
+	// TODO: add support for custom field keys (that differ from the API name), then enable this case to test them.
+	// PropertyFactory.register({
+	// 	typeid: "Test:BannedNames",
+	// 	properties: [
+	// 		{ id: "value", typeid: "Uint64" },
+	// 		{ id: "setValue", typeid: "Uint64" },
+	// 	],
+	// });
+
 	PropertyFactory.register({
 		typeid: "Test:Cell-1.0.0",
-		properties: [{ id: "value", typeid: "Uint64" }],
+		properties: [{ id: "data", typeid: "Uint64" }],
 	});
 
 	PropertyFactory.register({
 		typeid: "Test:RowProperty-1.0.0",
-		properties: [{ id: "value", typeid: "String" }],
+		properties: [{ id: "data", typeid: "String" }],
 	});
 
 	PropertyFactory.register({
 		typeid: "Test:RowInfo-1.0.0",
-		properties: [{ id: "value", typeid: "Uint64" }],
+		properties: [{ id: "data", typeid: "Uint64" }],
 	});
 
 	PropertyFactory.register({
@@ -148,7 +157,7 @@ describe("LlsSchemaConverter", () => {
 		const infoType = fullSchemaData.treeSchema.get(brand("Test:RowInfo-1.0.0"));
 		assert(infoType !== undefined);
 
-		const uint64 = infoType.structFields.get(brand("value"));
+		const uint64 = infoType.structFields.get(brand("data"));
 		assert(uint64 !== undefined);
 		assert(uint64.types !== undefined);
 		expect(uint64.types.has(brand("Uint64"))).toBeTruthy();

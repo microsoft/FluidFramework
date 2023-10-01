@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { bufferToString } from "@fluidframework/common-utils";
+import { bufferToString } from "@fluid-internal/client-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import {
 	ContainerRuntime,
@@ -350,12 +350,10 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 			const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 				[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
 			]);
-			const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-				dataStoreFactory1,
-				registryStoreEntries,
-				undefined,
-				[],
-			);
+			const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+				defaultFactory: dataStoreFactory1,
+				registryEntries: registryStoreEntries,
+			});
 
 			// Create a container for the first client.
 			const container1 = await provider.createContainer(runtimeFactory);

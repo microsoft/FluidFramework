@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ISerializableInterval } from "../intervals";
 import { IntervalIndex } from "./intervalIndex";
 
@@ -19,7 +19,7 @@ export interface IIdIntervalIndex<TInterval extends ISerializableInterval>
 class IdIntervalIndex<TInterval extends ISerializableInterval>
 	implements IIdIntervalIndex<TInterval>, Iterable<TInterval>
 {
-	private readonly intervalIdMap: Map<string, TInterval> = new Map();
+	private readonly intervalIdMap = new Map<string, TInterval>();
 
 	public add(interval: TInterval) {
 		const id = interval.getIntervalId();

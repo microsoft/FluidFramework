@@ -2,11 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ServiceAudience } from "@fluidframework/fluid-static";
-import { IClient } from "@fluidframework/protocol-definitions";
+import { type IClient } from "@fluidframework/protocol-definitions";
 
-import { AzureMember, AzureUser, IAzureAudience } from "./interfaces";
+import { type AzureMember, type AzureUser, type IAzureAudience } from "./interfaces";
 
 /**
  * Azure-specific {@link @fluidframework/fluid-static#ServiceAudience} implementation.

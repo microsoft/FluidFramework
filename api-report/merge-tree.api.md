@@ -13,7 +13,7 @@ import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
-import { TypedEventEmitter } from '@fluidframework/common-utils';
+import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @public (undocumented)
 export function addProperties(oldProps: PropertySet | undefined, newProps: PropertySet, op?: ICombiningOp, seq?: number): PropertySet;
@@ -296,7 +296,7 @@ export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | u
 export function getSlideToSegoff(segoff: {
     segment: ISegment | undefined;
     offset: number | undefined;
-}, slidingPreference?: SlidingPreference): {
+}, slidingPreference?: SlidingPreference, useNewSlidingBehavior?: boolean): {
     segment: ISegment | undefined;
     offset: number | undefined;
 };
@@ -566,6 +566,7 @@ export interface IMergeTreeTextHelper {
     getText(refSeq: number, clientId: number, placeholder: string, start?: number, end?: number): string;
 }
 
+<<<<<<< HEAD
 // @public
 export interface IMoveInfo {
     localMovedSeq?: number;
@@ -652,6 +653,9 @@ export interface InsertContext {
 }
 
 // @public (undocumented)
+=======
+// @public @deprecated (undocumented)
+>>>>>>> 550e869e96ca6ee0a01b3e203ea4c64b860dd1c9
 export function internedSpaces(n: number): string;
 
 // @internal (undocumented)
@@ -973,7 +977,7 @@ export interface QProperty<TKey, TData> {
     key?: TKey;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export type RangeStackMap = MapLike<Stack<ReferencePosition>>;
 
 // @internal (undocumented)
@@ -1086,16 +1090,16 @@ export enum ReferenceType {
     Transient = 256
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const refGetRangeLabels: (refPos: ReferencePosition) => string[] | undefined;
 
 // @public (undocumented)
 export const refGetTileLabels: (refPos: ReferencePosition) => string[] | undefined;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export function refHasRangeLabel(refPos: ReferencePosition, label: string): boolean;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export function refHasRangeLabels(refPos: ReferencePosition): boolean;
 
 // @public (undocumented)

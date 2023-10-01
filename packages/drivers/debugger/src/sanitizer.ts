@@ -19,7 +19,7 @@
  */
 
 import * as Validator from "jsonschema";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	attachContentsSchema,
@@ -331,8 +331,10 @@ export class Sanitizer {
 	 * @param excludedKeys - object keys for which to skip replacement when not in fullScrub
 	 */
 	replaceObject(
+		// eslint-disable-next-line @rushstack/no-new-null
 		input: object | null,
 		excludedKeys: Set<string> = this.defaultExcludedKeys,
+		// eslint-disable-next-line @rushstack/no-new-null
 	): object | null {
 		// File might contain actual nulls
 		if (input === null || input === undefined) {

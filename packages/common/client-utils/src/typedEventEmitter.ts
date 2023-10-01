@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+// False positive: this is an import from the `events` package, not from Node.
+// eslint-disable-next-line unicorn/prefer-node-protocol
 import { EventEmitter } from "events";
 import {
 	IEvent,
@@ -19,6 +21,7 @@ import {
  *
  * @internal
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type EventEmitterEventType = EventEmitter extends { on(event: infer E, listener: any) }
 	? E
 	: never;
@@ -34,11 +37,13 @@ export type TypedEventTransform<TThis, TEvent> =
 	TransformedEvent<
 		TThis,
 		"newListener" | "removeListener",
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		Parameters<(event: string, listener: (...args: any[]) => void) => void>
 	> &
 		// Expose all the events provides by TEvent
 		IEventTransformer<TThis, TEvent & IEvent> &
 		// Add the default overload so this is covertable to EventEmitter regardless of environment
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		TransformedEvent<TThis, EventEmitterEventType, any[]>;
 
 /**

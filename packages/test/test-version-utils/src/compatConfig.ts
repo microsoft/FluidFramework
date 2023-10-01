@@ -2,8 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert } from "@fluidframework/common-utils";
-import { Lazy } from "@fluidframework/core-utils";
+import { assert, Lazy } from "@fluidframework/core-utils";
 import { fromInternalScheme } from "@fluid-tools/version-tools";
 import {
 	CompatKind,
@@ -273,6 +272,7 @@ export async function mochaGlobalSetup() {
 		}
 	}
 	if (error) {
+		// eslint-disable-next-line @typescript-eslint/no-throw-literal -- rethrowing the originally caught value
 		throw error;
 	}
 }

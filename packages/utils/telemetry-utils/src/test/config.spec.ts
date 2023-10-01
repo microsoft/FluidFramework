@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { MockLogger } from "@fluidframework/telemetry-utils-previous";
+import { strict as assert } from "node:assert";
 import {
 	CachedConfigProvider,
 	ConfigTypes,
@@ -12,6 +11,7 @@ import {
 	inMemoryConfigProvider,
 } from "../config";
 import { TelemetryDataTag } from "../logger";
+import { MockLogger } from "../mockLogger";
 
 const getMockStore = (settings: Record<string, string>): Storage => {
 	const ops: string[] = [];
@@ -222,7 +222,7 @@ describe("Config", () => {
 			// The point here is to use `getSetting`
 			// eslint-disable-next-line unicorn/no-null
 			const val = this.getSetting(name, null);
-			return val === null ? undefined : val;
+			return val ?? undefined;
 		}
 
 		getSetting<T extends SettingType>(

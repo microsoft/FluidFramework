@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-deprecated
 import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
 import {
 	IRequest,
@@ -23,7 +24,7 @@ import {
 	IFluidDataStoreChannel,
 } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ITestFluidObject } from "./interfaces";
 
 /**
@@ -94,6 +95,7 @@ export class TestFluidObject implements ITestFluidObject {
 	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	public async request(request: IRequest): Promise<IResponse> {
+		// eslint-disable-next-line import/no-deprecated
 		return defaultFluidObjectRequestHandler(this, request);
 	}
 
@@ -134,6 +136,7 @@ export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFacto
  * Fluid object so that it can create a shared object for each.
  *
  * @example
+ *
  * The following will create a Fluid object that creates and loads a SharedString and SharedDirectory.
  * It will add SparseMatrix to the data store's factory so that it can be created later.
  *
@@ -152,7 +155,7 @@ export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFacto
  * sharedDir = testFluidObject.getSharedObject<SharedDirectory>("sharedDirectory");
  * ```
  *
- * @privateRemarks - Beware that using this class generally forfeits some compatibility coverage
+ * @privateRemarks Beware that using this class generally forfeits some compatibility coverage
  * `describeCompat` aims to provide:
  * `SharedMap`s always reference the current version of SharedMap.
  * AB#4670 tracks improving this situation.
@@ -199,10 +202,9 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
 
 		const runtimeClass = mixinRequestHandler(
 			async (request: IRequest, rt: FluidDataStoreRuntime) => {
-				const maybeRouter: FluidObject<IProvideFluidRouter> | undefined =
-					await rt.entryPoint?.get();
+				const maybeRouter: FluidObject<IProvideFluidRouter> = await rt.entryPoint.get();
 				assert(
-					maybeRouter?.IFluidRouter !== undefined,
+					maybeRouter.IFluidRouter !== undefined,
 					"entryPoint should have been initialized by now",
 				);
 				return maybeRouter.IFluidRouter.request(request);

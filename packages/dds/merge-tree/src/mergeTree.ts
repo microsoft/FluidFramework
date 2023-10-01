@@ -8,8 +8,8 @@
 
 /* eslint-disable @typescript-eslint/prefer-optional-chain, no-bitwise */
 
-import { assert } from "@fluidframework/common-utils";
-import { UsageError } from "@fluidframework/telemetry-utils";
+import { assert } from "@fluidframework/core-utils";
+import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils";
 import { IAttributionCollectionSerializer } from "./attributionCollection";
 import { Comparer, Heap, List, ListNode, Stack } from "./collections";
 import {
@@ -38,6 +38,7 @@ import {
 	IncrementalExecOp,
 	IncrementalMapState,
 	InsertContext,
+	// eslint-disable-next-line import/no-deprecated
 	internedSpaces,
 	IRemovalInfo,
 	ISegment,
@@ -75,8 +76,11 @@ import {
 	refTypeIncludesFlag,
 	ReferencePosition,
 	DetachedReferencePosition,
+	// eslint-disable-next-line import/no-deprecated
 	RangeStackMap,
+	// eslint-disable-next-line import/no-deprecated
 	refHasRangeLabel,
+	// eslint-disable-next-line import/no-deprecated
 	refGetRangeLabels,
 	refGetTileLabels,
 	refHasTileLabel,
@@ -170,11 +174,13 @@ interface IReferenceSearchInfo {
 interface IMarkerSearchRangeInfo {
 	mergeTree: MergeTree;
 	rangeLabels: string[];
+	// eslint-disable-next-line import/no-deprecated
 	stacks: RangeStackMap;
 }
 
 function applyLeafRangeMarker(marker: Marker, searchInfo: IMarkerSearchRangeInfo) {
 	for (const rangeLabel of searchInfo.rangeLabels) {
+		// eslint-disable-next-line import/no-deprecated
 		if (refHasRangeLabel(marker, rangeLabel)) {
 			let currentStack = searchInfo.stacks[rangeLabel];
 			if (currentStack === undefined) {
@@ -291,6 +297,7 @@ function addTileIfNotPresent(tile: ReferencePosition, tiles: object) {
 	}
 }
 
+// eslint-disable-next-line import/no-deprecated
 function applyStackDelta(currentStackMap: RangeStackMap, deltaStackMap: RangeStackMap) {
 	// eslint-disable-next-line guard-for-in, no-restricted-syntax
 	for (const label in deltaStackMap) {
@@ -339,6 +346,7 @@ function addNodeReferences(
 	node: IMergeNode,
 	rightmostTiles: MapLike<ReferencePosition>,
 	leftmostTiles: MapLike<ReferencePosition>,
+	// eslint-disable-next-line import/no-deprecated
 	rangeStacks: RangeStackMap,
 ) {
 	function updateRangeInfo(label: string, refPos: ReferencePosition) {
@@ -364,6 +372,7 @@ function addNodeReferences(
 					addTileIfNotPresent(segment, leftmostTiles);
 				}
 				if (segment.refType & (ReferenceType.NestBegin | ReferenceType.NestEnd)) {
+					// eslint-disable-next-line import/no-deprecated
 					const rangeLabels = refGetRangeLabels(segment);
 					if (rangeLabels) {
 						for (const label of rangeLabels) {
@@ -384,6 +393,7 @@ function addNodeReferences(
 							addTileIfNotPresent(lref, leftmostTiles);
 						}
 						if (lref.refType & (ReferenceType.NestBegin | ReferenceType.NestEnd)) {
+							// eslint-disable-next-line import/no-deprecated
 							for (const label of refGetRangeLabels(lref)!) {
 								updateRangeInfo(label, lref);
 							}
@@ -432,9 +442,11 @@ class HierMergeBlock extends MergeBlock implements IHierBlock {
 		// eslint-disable-next-line guard-for-in, no-restricted-syntax
 		for (const key in this.rangeStacks) {
 			const stack = this.rangeStacks[key];
+			// eslint-disable-next-line import/no-deprecated
 			strbuf += internedSpaces(indentCount);
 			strbuf += `${key}: `;
 			for (const item of stack.items) {
+				// eslint-disable-next-line @typescript-eslint/no-base-to-string
 				strbuf += `${item.toString()} `;
 			}
 			strbuf += "\n";
@@ -596,6 +608,7 @@ function getSlideToSegment(
 	segment: ISegment | undefined,
 	slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
 	cache?: Map<ISegment, { seg?: ISegment }>,
+	useNewSlidingBehavior: boolean = false,
 ): [ISegment | undefined, "start" | "end" | undefined] {
 	if (
 		!segment ||
@@ -631,10 +644,21 @@ function getSlideToSegment(
 		return [result.seg, undefined];
 	}
 
-	if (slidingPreference === SlidingPreference.BACKWARD) {
-		forwardExcursion(segment, goFurtherToFindSlideToSegment);
-	} else {
-		backwardExcursion(segment, goFurtherToFindSlideToSegment);
+	// in the new sliding behavior, we don't look in the opposite direction
+	// if we fail to find a segment to slide to in the right direction.
+	//
+	// in other words, rather than going `forward ?? backward ?? detached` (or
+	// `backward ?? forward ?? detached`), we would slide `forward ?? detached`
+	// or `backward ?? detached`
+	//
+	// in both of these cases detached may be substituted for one of the special
+	// endpoint segments, if such behavior is enabled
+	if (!useNewSlidingBehavior) {
+		if (slidingPreference === SlidingPreference.BACKWARD) {
+			forwardExcursion(segment, goFurtherToFindSlideToSegment);
+		} else {
+			backwardExcursion(segment, goFurtherToFindSlideToSegment);
+		}
 	}
 
 	let maybeEndpoint: "start" | "end" | undefined;
@@ -651,17 +675,23 @@ function getSlideToSegment(
 /**
  * Returns the position to slide a reference to if a slide is required.
  * @param segoff - The segment and offset to slide from
- * @returns - segment and offset to slide the reference to
+ * @returns segment and offset to slide the reference to
  * @internal
  */
 export function getSlideToSegoff(
 	segoff: { segment: ISegment | undefined; offset: number | undefined },
 	slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
+	useNewSlidingBehavior: boolean = false,
 ) {
 	if (segoff.segment === undefined) {
 		return segoff;
 	}
-	const [segment, _] = getSlideToSegment(segoff.segment, slidingPreference);
+	const [segment, _] = getSlideToSegment(
+		segoff.segment,
+		slidingPreference,
+		undefined,
+		useNewSlidingBehavior,
+	);
 	if (segment === segoff.segment) {
 		return segoff;
 	}
@@ -1010,13 +1040,17 @@ export class MergeTree {
 	 * preference. Relative order between references that slide backward and those
 	 * that slide forward is not preserved, even in the case when they slide to
 	 * the same segment.
-	 * @remarks -
+	 *
+	 * @remarks
+	 *
 	 * 1. Preserving the order of the references is a useful property for reference-based undo/redo
 	 * (see revertibles.ts).
+	 *
 	 * 2. For use cases which necessitate eventual consistency across clients,
 	 * this method should only be called with segments for which the current client sequence number is
 	 * max(remove segment sequence number, add reference sequence number).
 	 * See `packages\dds\merge-tree\REFERENCEPOSITIONS.md`
+	 *
 	 * @param segments - An array of (not necessarily contiguous) segments with increasing ordinals.
 	 */
 	private slideAckedRemovedSegmentReferences(segments: ISegment[]) {
@@ -1129,6 +1163,7 @@ export class MergeTree {
 				slidingPreference === SlidingPreference.FORWARD
 					? forwardSegmentCache
 					: backwardSegmentCache,
+				this.options?.mergeTreeReferencesCanSlideToEndpoint,
 			);
 			const slideIsForward =
 				slideToSegment === undefined ? false : slideToSegment.ordinal > segment.ordinal;
@@ -1940,7 +1975,10 @@ export class MergeTree {
 				});
 
 				if (newSegment.parent === undefined) {
-					throw new UsageError("MergeTree insert failed", {
+					// Indicates an attempt to insert past the end of the merge-tree's content.
+					const errorConstructor =
+						localSeq !== undefined ? UsageError : DataProcessingError;
+					throw new errorConstructor("MergeTree insert failed", {
 						currentSeq: this.collabWindow.currentSeq,
 						minSeq: this.collabWindow.minSeq,
 						segSeq: newSegment.seq,

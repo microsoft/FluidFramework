@@ -2,7 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Deferred, bufferToString, assert } from "@fluidframework/common-utils";
+import { assert, Deferred } from "@fluidframework/core-utils";
+import { bufferToString } from "@fluid-internal/client-utils";
 import { LoggingError, createChildLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
@@ -484,7 +485,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	}
 
 	/**
-	 * @returns - The most recent sequence number which has been acked by the server and processed by this
+	 * @returns The most recent sequence number which has been acked by the server and processed by this
 	 * SharedSegmentSequence.
 	 */
 	public getCurrentSeq() {
@@ -521,6 +522,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * @returns An iterable object that enumerates the IntervalCollection labels.
 	 *
 	 * @example
+	 *
 	 * ```typescript
 	 * const iter = this.getIntervalCollectionKeys();
 	 * for (key of iter)
@@ -736,7 +738,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
 	 */
 	protected applyStashedOp(content: any): unknown {
-		return this.client.applyStashedOp(content);
+		return this.client.applyStashedOp(parseHandles(content, this.serializer));
 	}
 
 	private summarizeMergeTree(serializer: IFluidSerializer): ISummaryTreeWithStats {

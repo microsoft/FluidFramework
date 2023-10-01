@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import {
 	DocumentServiceFactoryCompressionAdapter,
@@ -16,7 +16,7 @@ import {
  * must be enabled by setting the config to true or by passing a compression config object.
  * @param documentServiceFactory - The document service factory to apply compression to.
  * @param config - The compression configuration.
- * @returns - The document service factory possibly with compression applied.
+ * @returns The document service factory possibly with compression applied.
  */
 export function applyStorageCompression(
 	documentServiceFactory: IDocumentServiceFactory,
@@ -43,7 +43,7 @@ export function applyStorageCompression(
  * This method applies compression to the given document service factory.
  * @param documentServiceFactory - The document service factory to apply compression to.
  * @param config - The compression configuration.
- * @returns - The document service factory with compression applied.
+ * @returns The document service factory with compression applied.
  */
 function applyStorageCompressionInternal(
 	constructor: new (

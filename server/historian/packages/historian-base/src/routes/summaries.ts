@@ -13,6 +13,7 @@ import {
 	IStorageNameRetriever,
 	IThrottler,
 	IRevokedTokenChecker,
+	IDocumentManager,
 } from "@fluidframework/server-services-core";
 import {
 	IThrottleMiddlewareOptions,
@@ -33,6 +34,7 @@ export function create(
 	storageNameRetriever: IStorageNameRetriever,
 	restTenantThrottlers: Map<string, IThrottler>,
 	restClusterThrottlers: Map<string, IThrottler>,
+	documentManager: IDocumentManager,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
 	revokedTokenChecker?: IRevokedTokenChecker,
@@ -97,6 +99,7 @@ export function create(
 			authorization,
 			tenantService,
 			storageNameRetriever,
+			documentManager,
 			cache,
 			asyncLocalStorage,
 			denyList,
@@ -119,12 +122,12 @@ export function create(
 			authorization,
 			tenantService,
 			storageNameRetriever,
+			documentManager,
 			cache,
 			asyncLocalStorage,
 			initialUpload: initial,
 			storageName,
 			isEphemeralContainer,
-			ignoreEphemeralFlag,
 			denyList,
 		});
 		return service.createSummary(params, initial);
@@ -141,6 +144,7 @@ export function create(
 			authorization,
 			tenantService,
 			storageNameRetriever,
+			documentManager,
 			cache,
 			asyncLocalStorage,
 			allowDisabledTenant: true,

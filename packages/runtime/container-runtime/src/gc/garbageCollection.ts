@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Timer } from "@fluidframework/common-utils";
-import { LazyPromise } from "@fluidframework/core-utils";
+import { LazyPromise, Timer } from "@fluidframework/core-utils";
 import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import {
 	gcTreeKey,
@@ -29,7 +28,7 @@ import {
 	RuntimeHeaders,
 } from "../containerRuntime";
 import { ClientSessionExpiredError } from "../error";
-import { RefreshSummaryResult } from "../summary";
+import { IRefreshSummaryResult } from "../summary";
 import { generateGCConfigs } from "./gcConfigs";
 import {
 	GCNodeType,
@@ -288,15 +287,13 @@ export class GarbageCollector implements IGarbageCollector {
 			return { gcData: { gcNodes }, usedRoutes };
 		});
 
-		// Log all the GC options and the state determined by the garbage collector. This is interesting only for the
-		// summarizer client since it is the only one that runs GC. It also helps keep the telemetry less noisy.
-		if (this.isSummarizerClient) {
-			this.mc.logger.sendTelemetryEvent({
-				eventName: "GarbageCollectorLoaded",
-				gcConfigs: JSON.stringify(this.configs),
-				gcOptions: JSON.stringify(createParams.gcOptions),
-			});
-		}
+		// Log all the GC options and the state determined by the garbage collector.
+		// This is useful even for interactive clients since they track unreferenced nodes and log errors.
+		this.mc.logger.sendTelemetryEvent({
+			eventName: "GarbageCollectorLoaded",
+			gcConfigs: JSON.stringify(this.configs),
+			gcOptions: JSON.stringify(createParams.gcOptions),
+		});
 	}
 
 	/**
@@ -580,14 +577,17 @@ export class GarbageCollector implements IGarbageCollector {
 
 	/**
 	 * Runs the GC Mark phase. It does the following:
+	 *
 	 * 1. Marks all referenced nodes in this run by clearing tracking for them.
+	 *
 	 * 2. Marks unreferenced nodes in this run by starting tracking for them.
+	 *
 	 * 3. Calls the runtime to update nodes that were marked referenced.
 	 *
 	 * @param gcResult - The result of the GC run on the gcData.
 	 * @param allReferencedNodeIds - Nodes referenced in this GC run + referenced between previous and current GC run.
 	 * @param currentReferenceTimestampMs - The timestamp to be used for unreferenced nodes' timestamp.
-	 * @returns - A list of sweep ready nodes, i.e., nodes that ready to be deleted.
+	 * @returns A list of sweep ready nodes, i.e., nodes that ready to be deleted.
 	 */
 	private runMarkPhase(
 		gcResult: IGCResult,
@@ -646,7 +646,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 * @param sweepReadyNodes - List of nodes that are sweep ready.
 	 * @param currentReferenceTimestampMs - The timestamp to be used for unreferenced nodes' timestamp.
 	 * @param logger - The logger to be used to log any telemetry.
-	 * @returns - A list of nodes that have been deleted.
+	 * @returns A list of nodes that have been deleted.
 	 */
 	private runSweepPhase(
 		gcResult: IGCResult,
@@ -725,7 +725,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 * This function identifies nodes that were referenced since the last run.
 	 * If these nodes are currently unreferenced, they will be assigned new unreferenced state by the current run.
 	 *
-	 * @returns - a list of all nodes referenced from the last local summary until now.
+	 * @returns A list of all nodes referenced from the last local summary until now.
 	 */
 	private findAllNodesReferencedBetweenGCs(
 		currentGCData: IGarbageCollectionData,
@@ -843,10 +843,9 @@ export class GarbageCollector implements IGarbageCollector {
 	}
 
 	/**
-	 * Called to refresh the latest summary state. This happens when either a pending summary is acked or a snapshot
-	 * is downloaded and should be used to update the state.
+	 * Called to refresh the latest summary state. This happens when either a pending summary is acked.
 	 */
-	public async refreshLatestSummary(result: RefreshSummaryResult): Promise<void> {
+	public async refreshLatestSummary(result: IRefreshSummaryResult): Promise<void> {
 		return this.summaryStateTracker.refreshLatestSummary(result);
 	}
 

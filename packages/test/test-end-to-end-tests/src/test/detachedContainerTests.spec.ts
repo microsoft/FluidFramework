@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { SharedCell } from "@fluidframework/cell";
-import { Deferred } from "@fluidframework/common-utils";
+import { Deferred } from "@fluidframework/core-utils";
 import { AttachState, IContainer } from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
@@ -817,7 +817,8 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 				if (runtimeMessage === false) {
 					return;
 				}
-				const envelope = message.contents.contents.content;
+
+				const envelope = (message.contents as any).contents.content;
 				assert.strictEqual(
 					envelope.address,
 					sparseMatrixId,

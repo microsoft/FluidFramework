@@ -126,11 +126,38 @@ module.exports = {
 		],
 		// Exclusion per handler
 		handlerExclusions: {
+			"html-copyright-file-header": [
+				// Tests generate HTML "snapshot" artifacts
+				"tools/api-markdown-documenter/src/test/snapshots/.*",
+			],
 			"npm-package-json-script-clean": [
 				// eslint-config-fluid's build step generate printed configs that are checked in. No need to clean
 				"common/build/eslint-config-fluid/package.json",
 				// markdown-magic's build step update the README.md file that are checked in. No need to clean.
 				"tools/markdown-magic/package.json",
+			],
+			"npm-package-json-script-mocha-config": [
+				// these doesn't use mocha config for reporters yet.
+				"server/",
+				"build-tools/",
+				"common/lib/common-utils/package.json",
+			],
+			"npm-package-json-test-scripts": [
+				"common/build/eslint-config-fluid/package.json",
+				"packages/test/mocha-test-setup/package.json",
+				"examples/apps/attributable-map/package.json",
+			],
+			"npm-package-json-test-scripts-split": [
+				"server/",
+				"tools/",
+				"package.json",
+				"packages/test/test-service-load/package.json",
+			],
+			"npm-package-json-clean-script": [
+				// this package has a irregular build pattern, so our clean script rule doesn't apply.
+				"tools/markdown-magic",
+				// getKeys has a fake tsconfig.json to make ./eslintrc.cjs work, but we don't need clean script
+				"tools/getkeys",
 			],
 		},
 		packageNames: {
@@ -147,7 +174,12 @@ module.exports = {
 
 			mustPublish: {
 				// These packages will always be published to npm.
-				npm: ["@fluidframework", "fluid-framework", "tinylicious"],
+				npm: [
+					"@fluidframework",
+					"fluid-framework",
+					"tinylicious",
+					"@fluid-internal/client-utils",
+				],
 				// A list of packages known to be an internally published package but not to npm. Note that packages published
 				// to npm will also be published internally, however. This should be a minimal set required for legacy compat of
 				// internal partners or internal CI requirements.
@@ -178,6 +210,7 @@ module.exports = {
 				["prettier", "prettier"],
 				["webpack", "webpack"],
 				["nyc", "nyc"],
+				["c8", "c8"],
 				["gf", "good-fences"],
 				["cross-env", "cross-env"],
 				["flub", "@fluid-tools/build-cli"],

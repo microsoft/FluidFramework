@@ -36,11 +36,17 @@ import { NamedFluidDataStoreRegistryEntry } from '@fluidframework/runtime-defini
 import { RequestParser } from '@fluidframework/runtime-utils';
 import { RuntimeFactoryHelper } from '@fluidframework/runtime-utils';
 import { RuntimeRequestHandler } from '@fluidframework/request-handler';
-import { TypedEventEmitter } from '@fluidframework/common-utils';
+import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @public
 export class BaseContainerRuntimeFactory extends RuntimeFactoryHelper implements IProvideFluidDataStoreRegistry {
-    constructor(registryEntries: NamedFluidDataStoreRegistryEntries, dependencyContainer?: IFluidDependencySynthesizer | undefined, requestHandlers?: RuntimeRequestHandler[], runtimeOptions?: IContainerRuntimeOptions | undefined, initializeEntryPoint?: ((runtime: IContainerRuntime) => Promise<FluidObject>) | undefined);
+    constructor(props: {
+        registryEntries: NamedFluidDataStoreRegistryEntries;
+        dependencyContainer?: IFluidDependencySynthesizer;
+        requestHandlers?: RuntimeRequestHandler[];
+        runtimeOptions?: IContainerRuntimeOptions;
+        provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+    });
     protected containerHasInitialized(runtime: IContainerRuntime): Promise<void>;
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
     // (undocumented)
@@ -55,7 +61,14 @@ export class BaseContainerRuntimeFactory extends RuntimeFactoryHelper implements
 
 // @public
 export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRuntimeFactory {
-    constructor(defaultFactory: IFluidDataStoreFactory, registryEntries: NamedFluidDataStoreRegistryEntries, dependencyContainer?: IFluidDependencySynthesizer, requestHandlers?: RuntimeRequestHandler[], runtimeOptions?: IContainerRuntimeOptions, initializeEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>);
+    constructor(props: {
+        defaultFactory: IFluidDataStoreFactory;
+        registryEntries: NamedFluidDataStoreRegistryEntries;
+        dependencyContainer?: IFluidDependencySynthesizer;
+        requestHandlers?: RuntimeRequestHandler[];
+        runtimeOptions?: IContainerRuntimeOptions;
+        provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
+    });
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
     // (undocumented)
     static readonly defaultDataStoreId = "default";
@@ -82,19 +95,19 @@ export interface DataObjectTypes {
     OptionalProviders?: FluidObject;
 }
 
-// @public
+// @public @deprecated
 export function defaultFluidObjectRequestHandler(fluidObject: FluidObject, request: IRequest): IResponse;
 
-// @public
+// @public @deprecated
 export const defaultRouteRequestHandler: (defaultRootId: string) => (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse | undefined>;
 
-// @public
+// @public @deprecated (undocumented)
 export function getDefaultObjectFromContainer<T = FluidObject>(container: IContainer): Promise<T>;
 
-// @public
+// @public @deprecated (undocumented)
 export function getObjectFromContainer<T = FluidObject>(path: string, container: IContainer): Promise<T>;
 
-// @public
+// @public @deprecated (undocumented)
 export function getObjectWithIdFromContainer<T = FluidObject>(id: string, container: IContainer): Promise<T>;
 
 // @public (undocumented)
@@ -115,7 +128,7 @@ export interface IRootDataObjectFactory extends IFluidDataStoreFactory {
     createRootInstance(rootDataStoreId: string, runtime: IContainerRuntime): Promise<IFluidRouter>;
 }
 
-// @public
+// @public @deprecated
 export const mountableViewRequestHandler: (MountableViewClass: IFluidMountableViewClass, handlers: RuntimeRequestHandler[]) => (request: RequestParser, runtime: IContainerRuntime) => Promise<IResponse>;
 
 // @public
@@ -133,7 +146,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     get IFluidHandle(): IFluidHandle<this>;
     // (undocumented)
     get IFluidLoadable(): this;
-    // (undocumented)
+    // @deprecated (undocumented)
     get IFluidRouter(): this;
     initializeInternal(existing: boolean): Promise<void>;
     // (undocumented)

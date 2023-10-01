@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
@@ -157,9 +157,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 		return this._snapshotSequenceNumber;
 	}
 
-	public get repositoryUrl(): string {
-		return "";
-	}
+	public readonly repositoryUrl = "";
 
 	public abstract createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse>;
 

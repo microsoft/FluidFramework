@@ -4,6 +4,7 @@
  */
 
 /* eslint-disable no-bitwise */
+/* eslint-disable import/no-deprecated */
 
 import {
 	Client,
@@ -23,7 +24,7 @@ import {
 	refTypeIncludesFlag,
 	reservedRangeLabelsKey,
 } from "@fluidframework/merge-tree";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { UsageError } from "@fluidframework/telemetry-utils";
 import {
@@ -78,8 +79,8 @@ function maxSide(sideA: Side, sideB: Side): Side {
  * As such, when content is inserted into the middle of the interval, the interval expands to
  * include that content.
  *
- * @remarks - The endpoints' positions should be treated exclusively to get
- * reasonable behavior--i.e. an interval referring to "hello" in "hello world"
+ * @remarks The endpoints' positions should be treated exclusively to get
+ * reasonable behavior. E.g., an interval referring to "hello" in "hello world"
  * should have a start position of 0 and an end position of 5.
  *
  * To see why, consider what happens if "llo wor" is removed from the string to make "held".
@@ -129,12 +130,12 @@ export class SequenceInterval implements ISerializableInterval {
 		private readonly client: Client,
 		/**
 		 * Start endpoint of this interval.
-		 * @remarks - This endpoint can be resolved into a character position using the SharedString it's a part of.
+		 * @remarks This endpoint can be resolved into a character position using the SharedString it's a part of.
 		 */
 		public start: LocalReferencePosition,
 		/**
 		 * End endpoint of this interval.
-		 * @remarks - This endpoint can be resolved into a character position using the SharedString it's a part of.
+		 * @remarks This endpoint can be resolved into a character position using the SharedString it's a part of.
 		 */
 		public end: LocalReferencePosition,
 		public intervalType: IntervalType,
@@ -363,6 +364,7 @@ export class SequenceInterval implements ISerializableInterval {
 		end: SequencePlace | undefined,
 		op?: ISequencedDocumentMessage,
 		localSeq?: number,
+		useNewSlidingBehavior: boolean = false,
 	) {
 		const { startSide, endSide, startPos, endPos } = endpointPosAndSide(start, end);
 		const stickiness = computeStickinessFromSide(
@@ -391,6 +393,7 @@ export class SequenceInterval implements ISerializableInterval {
 				localSeq,
 				startReferenceSlidingPreference(stickiness),
 				startReferenceSlidingPreference(stickiness) === SlidingPreference.BACKWARD,
+				useNewSlidingBehavior,
 			);
 			if (this.start.properties) {
 				startRef.addProperties(this.start.properties);
@@ -408,6 +411,7 @@ export class SequenceInterval implements ISerializableInterval {
 				localSeq,
 				endReferenceSlidingPreference(stickiness),
 				endReferenceSlidingPreference(stickiness) === SlidingPreference.FORWARD,
+				useNewSlidingBehavior,
 			);
 			if (this.end.properties) {
 				endRef.addProperties(this.end.properties);
@@ -503,6 +507,7 @@ function createPositionReference(
 	localSeq?: number,
 	slidingPreference?: SlidingPreference,
 	exclusive: boolean = false,
+	useNewSlidingBehavior: boolean = false,
 ): LocalReferencePosition {
 	let segoff;
 
@@ -518,7 +523,7 @@ function createPositionReference(
 				referenceSequenceNumber: op.referenceSequenceNumber,
 				clientId: op.clientId,
 			});
-			segoff = getSlideToSegoff(segoff);
+			segoff = getSlideToSegoff(segoff, undefined, useNewSlidingBehavior);
 		}
 	} else {
 		assert(
@@ -551,6 +556,7 @@ export function createSequenceInterval(
 	intervalType: IntervalType,
 	op?: ISequencedDocumentMessage,
 	fromSnapshot?: boolean,
+	useNewSlidingBehavior: boolean = false,
 ): SequenceInterval {
 	const { startPos, startSide, endPos, endSide } = endpointPosAndSide(
 		start ?? "start",
@@ -561,7 +567,7 @@ export function createSequenceInterval(
 			endPos !== undefined &&
 			startSide !== undefined &&
 			endSide !== undefined,
-		"start and end cannot be undefined because they were not passed in as undefined",
+		0x794 /* start and end cannot be undefined because they were not passed in as undefined */,
 	);
 	const stickiness = computeStickinessFromSide(startPos, startSide, endPos, endSide);
 	let beginRefType = ReferenceType.RangeBegin;
@@ -577,7 +583,7 @@ export function createSequenceInterval(
 		// All non-transient interval references must eventually be SlideOnRemove
 		// To ensure eventual consistency, they must start as StayOnRemove when
 		// pending (created locally and creation op is not acked)
-		if (op || fromSnapshot) {
+		if (op ?? fromSnapshot) {
 			beginRefType |= ReferenceType.SlideOnRemove;
 			endRefType |= ReferenceType.SlideOnRemove;
 		} else {
@@ -595,6 +601,7 @@ export function createSequenceInterval(
 		undefined,
 		startReferenceSlidingPreference(stickiness),
 		startReferenceSlidingPreference(stickiness) === SlidingPreference.BACKWARD,
+		useNewSlidingBehavior,
 	);
 
 	const endLref = createPositionReference(
@@ -606,6 +613,7 @@ export function createSequenceInterval(
 		undefined,
 		endReferenceSlidingPreference(stickiness),
 		endReferenceSlidingPreference(stickiness) === SlidingPreference.FORWARD,
+		useNewSlidingBehavior,
 	);
 
 	const rangeProp = {
@@ -626,14 +634,9 @@ export function createSequenceInterval(
 	return ival;
 }
 
-export const compareSequenceIntervalEnds = (a: SequenceInterval, b: SequenceInterval): number =>
-	compareReferencePositions(a.end, b.end);
-
-export const compareSequenceIntervalStarts = (a: SequenceInterval, b: SequenceInterval): number =>
-	compareReferencePositions(a.start, b.start);
-
+/**
+ * @deprecated The methods within have substitutions
+ */
 export const sequenceIntervalHelpers: IIntervalHelpers<SequenceInterval> = {
-	compareEnds: compareSequenceIntervalEnds,
-	compareStarts: compareSequenceIntervalStarts,
 	create: createSequenceInterval,
 };

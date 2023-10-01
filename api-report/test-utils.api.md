@@ -8,6 +8,7 @@ import { ConfigTypes } from '@fluidframework/telemetry-utils';
 import { ContainerRuntime } from '@fluidframework/container-runtime';
 import { ContainerRuntimeFactoryWithDefaultDataStore } from '@fluidframework/aqueduct';
 import { FluidDataStoreRuntime } from '@fluidframework/datastore';
+import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { ICodeDetailsLoader } from '@fluidframework/container-definitions';
 import { IConfigProviderBase } from '@fluidframework/telemetry-utils';
@@ -30,6 +31,7 @@ import { IFluidModuleWithDetails } from '@fluidframework/container-definitions';
 import { IHostLoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { ILoaderProps } from '@fluidframework/container-loader';
+import { IOnDemandSummarizeOptions } from '@fluidframework/container-runtime';
 import { IProvideFluidCodeDetailsComparer } from '@fluidframework/container-definitions';
 import { IProvideFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
@@ -57,6 +59,16 @@ export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFacto
 
 // @public
 export function createAndAttachContainer(source: IFluidCodeDetails, loader: IHostLoader, attachRequest: IRequest): Promise<IContainer>;
+
+// @public
+export const createContainerRuntimeFactoryWithDefaultDataStore: (Base: typeof ContainerRuntimeFactoryWithDefaultDataStore | undefined, ctorArgs: {
+    defaultFactory: IFluidDataStoreFactory;
+    registryEntries: NamedFluidDataStoreRegistryEntries;
+    dependencyContainer?: any;
+    requestHandlers?: RuntimeRequestHandler[] | undefined;
+    runtimeOptions?: IContainerRuntimeOptions | undefined;
+    provideEntryPoint?: ((runtime: IContainerRuntime) => Promise<FluidObject>) | undefined;
+}) => ContainerRuntimeFactoryWithDefaultDataStore;
 
 // @public (undocumented)
 export const createDocumentId: () => string;
@@ -151,7 +163,6 @@ export interface ITestContainerConfig {
     loaderProps?: Partial<ILoaderProps>;
     registry?: ChannelFactoryRegistry;
     runtimeOptions?: IContainerRuntimeOptions;
-    simulateReadConnectionUsingDelay?: boolean;
 }
 
 // @public (undocumented)
@@ -230,7 +241,7 @@ export const mockConfigProvider: (settings?: Record<string, ConfigTypes>) => ICo
 export const retryWithEventualValue: <T>(callback: () => Promise<T>, check: (value: T) => boolean, defaultValue: T, maxTries?: number, backOffMs?: number) => Promise<T>;
 
 // @public
-export function summarizeNow(summarizer: ISummarizer, reason?: string): Promise<{
+export function summarizeNow(summarizer: ISummarizer, inputs?: string | IOnDemandSummarizeOptions): Promise<{
     summaryTree: ISummaryTree;
     summaryVersion: string;
     summaryRefSeq: number;

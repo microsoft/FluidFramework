@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/devtools-browser-extension",
-	"version": "2.0.0-internal.7.0.0",
+	"version": "2.0.0-internal.8.0.0",
 	"private": true,
 	"description": "A browser extension for visualizing Fluid Framework stats and operations",
 	"homepage": "https://fluidframework.com",
@@ -17,7 +17,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:test": "tsc --project ./e2e-tests/tsconfig.json",
 		"build:webpack": "npm run webpack",
-		"clean": "rimraf --glob \"coverage\" \"dist\" \"nyc\" \"*.tsbuildinfo\" \"*.build.log\" --glob",
+		"clean": "rimraf --glob 'coverage' 'dist' 'nyc' '*.tsbuildinfo' '*.build.log' --glob",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
 		"format": "npm run prettier:fix",
@@ -26,13 +26,13 @@
 		"good-fences": "gf",
 		"lint": "npm run prettier && npm run good-fences && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"mocha": "mocha dist/**/*.test.js --exit",
+		"mocha": "mocha dist/tsc/test/**/*.test.js --exit",
 		"prettier": "prettier --check . --ignore-path ../../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../../.prettierignore",
 		"rebuild": "npm run clean && npm run build",
 		"start:client:test": "webpack serve --config webpack.test.js",
 		"test": "concurrently npm:test:mocha npm:test:jest",
-		"test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
+		"test:coverage": "c8 npm test",
 		"test:end-to-end": "npm run test:jest",
 		"test:jest": "jest",
 		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",
@@ -44,17 +44,19 @@
 		"webpack": "webpack",
 		"webpack:dev": "webpack --env development"
 	},
-	"nyc": {
+	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
 			"src/test/**/*.ts",
-			"dist/test/**/*.js"
+			"dist/tsc/test/**/*.js",
+			"dist/e2e-tests/**",
+			"dist/bundle/**"
 		],
 		"exclude-after-remap": false,
 		"include": [
 			"src/**/*.ts",
-			"dist/**/*.js"
+			"dist/tsc/**/*.js"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [
@@ -68,8 +70,9 @@
 		"@fluentui/react": "^8.109.4",
 		"@fluid-experimental/devtools-core": "workspace:~",
 		"@fluid-experimental/devtools-view": "workspace:~",
-		"@fluidframework/common-utils": "^1.1.1",
+		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/core-utils": "workspace:~",
 		"@microsoft/1ds-core-js": "^3.2.13",
 		"@microsoft/1ds-post-js": "^3.2.13",
 		"react": "^17.0.1",
@@ -81,7 +84,7 @@
 		"@fluid-experimental/react-inputs": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.23.0",
+		"@fluidframework/build-tools": "^0.24.0",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
@@ -90,7 +93,7 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
-		"@microsoft/api-extractor": "^7.34.4",
+		"@microsoft/api-extractor": "^7.37.0",
 		"@types/chai": "^4.0.0",
 		"@types/chrome": "0.0.232",
 		"@types/expect-puppeteer": "2.2.1",
@@ -106,11 +109,13 @@
 		"@types/react-dom": "^17.0.18",
 		"@types/sinon": "^7.0.13",
 		"@types/sinon-chrome": "^2.2.11",
+		"c8": "^7.7.1",
 		"chai": "^4.2.0",
-		"concurrently": "^7.6.0",
+		"concurrently": "^8.2.1",
 		"copy-webpack-plugin": "^11.0.0",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
+		"dotenv-webpack": "^7.0.3",
 		"eslint": "~8.6.0",
 		"eslint-config-prettier": "~8.5.0",
 		"eslint-plugin-chai-expect": "~3.0.0",
@@ -124,7 +129,6 @@
 		"jsdom": "^16.7.0",
 		"jsdom-global": "^3.0.2",
 		"mocha": "^10.2.0",
-		"nyc": "^15.1.0",
 		"prettier": "~2.6.2",
 		"proxyquire": "^2.1.3",
 		"puppeteer": "^17.1.3",
@@ -134,7 +138,7 @@
 		"start-server-and-test": "^1.11.7",
 		"ts-jest": "^29.1.1",
 		"ts-loader": "^9.3.0",
-		"typescript": "~4.5.5",
+		"typescript": "~5.1.6",
 		"webpack": "^5.82.0",
 		"webpack-cli": "^4.9.2"
 	},
@@ -146,16 +150,8 @@
 					"webpack"
 				],
 				"script": false
-			},
-			"webpack": [
-				"@fluid-experimental/devtools-core#tsc",
-				"@fluid-experimental/devtools-view#tsc"
-			]
+			}
 		}
-	},
-	"jest-junit": {
-		"outputDirectory": "nyc",
-		"outputName": "jest-junit-report.xml"
 	},
 	"typeValidation": {
 		"disabled": true,

@@ -5,6 +5,7 @@
 
 import { TreeValue } from "../../../core";
 import { fail } from "../../../util";
+import { FluidSerializableReadOnly } from "../../contextuallyTyped";
 import { EncodedChunkGeneric } from "./formatGeneric";
 import {
 	Counter,
@@ -33,10 +34,10 @@ export class IdentifierToken {
  * These buffers are mutated after construction if they contain identifiers or shapes.
  */
 export type BufferFormat<TEncodedShape> = (
-	| TreeValue
+	| FluidSerializableReadOnly
 	| Shape<TEncodedShape>
 	| IdentifierToken
-	| BufferFormat<TEncodedShape>[]
+	| BufferFormat<TEncodedShape>
 )[];
 
 /**
@@ -47,7 +48,7 @@ export type BufferFormat<TEncodedShape> = (
  * Note that this modifies `buffer` to avoid having to copy it.
  */
 export function handleShapesAndIdentifiers<TEncodedShape>(
-	version: string,
+	version: number,
 	buffer: BufferFormat<TEncodedShape>,
 	identifierFilter: CounterFilter<string> = jsonMinimizingFilter,
 ): EncodedChunkGeneric<TEncodedShape> {

@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+/* eslint-disable import/no-deprecated */
 
 import {
 	ICombiningOp,
@@ -11,7 +12,7 @@ import {
 	reservedRangeLabelsKey,
 } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/telemetry-utils";
 import { SequencePlace } from "../intervalCollection";
 import { IIntervalHelpers, ISerializableInterval, ISerializedInterval } from "./intervalUtils";
@@ -62,7 +63,7 @@ export class Interval implements ISerializableInterval {
 	 * Adds an auxiliary set of properties to this interval.
 	 * These properties can be recovered using `getAdditionalPropertySets`
 	 * @param props - set of properties to add
-	 * @remarks - This gets called as part of the default conflict resolver for `IIntervalCollection<Interval>`
+	 * @remarks This gets called as part of the default conflict resolver for `IIntervalCollection<Interval>`
 	 * (i.e. non-sequence-based interval collections). However, the additional properties don't get serialized.
 	 * This functionality seems half-baked.
 	 */
@@ -247,7 +248,5 @@ export function createInterval(label: string, start: SequencePlace, end: Sequenc
 }
 
 export const intervalHelpers: IIntervalHelpers<Interval> = {
-	compareEnds: (a: Interval, b: Interval) => a.end - b.end,
-	compareStarts: (a: Interval, b: Interval) => a.start - b.start,
 	create: createInterval,
 };

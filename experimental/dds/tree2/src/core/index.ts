@@ -50,11 +50,13 @@ export {
 	getDepth,
 	mapCursorField,
 	mapCursorFields,
+	iterateCursorField,
 	getMapTreeField,
 	MapTree,
 	detachedFieldAsKey,
 	keyAsDetachedField,
 	visitDelta,
+	applyDelta,
 	setGenericTreeField,
 	DeltaVisitor,
 	PathVisitor,
@@ -81,6 +83,7 @@ export {
 	ProtoNodes,
 	CursorMarker,
 	isCursor,
+	getDetachedFieldContainingPath,
 } from "./tree";
 
 export {
@@ -123,6 +126,7 @@ export {
 	SchemaEvents,
 	forbiddenFieldKindIdentifier,
 	storedEmptyFieldSchema,
+	cloneSchemaData,
 } from "./schema-stored";
 
 export { ChangeFamily, ChangeFamilyEditor, EditBuilder } from "./change-family";

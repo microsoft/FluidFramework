@@ -4,6 +4,7 @@
  */
 
 /* eslint-disable @typescript-eslint/consistent-type-assertions, no-bitwise */
+/* eslint-disable @typescript-eslint/no-base-to-string */
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
@@ -11,7 +12,7 @@ import { strict as assert } from "assert";
 import fs from "fs";
 import path from "path";
 import { IRandom, makeRandom } from "@fluid-internal/stochastic-test-utils";
-import { Trace } from "@fluidframework/common-utils";
+import { Trace } from "@fluid-internal/client-utils";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import JsDiff from "diff";

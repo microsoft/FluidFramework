@@ -5,7 +5,8 @@
 
 import { strict as assert } from "assert";
 import sinon from "sinon";
-import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { Deferred } from "@fluidframework/core-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import {
 	IDocumentMessage,
@@ -93,8 +94,6 @@ describe("Summary Manager", () => {
 		minimumSequenceNumber: 5,
 		referenceSequenceNumber: 5,
 		sequenceNumber: 6,
-		// "term" was an experimental feature that is being removed.  The only safe value to use is 1.
-		term: 1,
 		timestamp: 6,
 		type: MessageType.Summarize,
 		contents: {

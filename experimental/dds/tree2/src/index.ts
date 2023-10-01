@@ -24,6 +24,7 @@ export {
 	RootField,
 	ChildCollection,
 	ChildLocation,
+	DeltaVisitor,
 	FieldMapObject,
 	NodeData,
 	GenericTreeNode,
@@ -91,6 +92,7 @@ export {
 	JsonCompatibleObject,
 	NestedMap,
 	fail,
+	IdAllocator,
 	TransactionResult,
 	BrandedKey,
 	BrandedMapSubset,
@@ -120,10 +122,11 @@ export {
 	jsonSchema,
 	nodeKeyField,
 	nodeKeySchema,
+	leaf,
+	testRecursiveDomain,
 } from "./domains";
 
 export {
-	IdAllocator,
 	MemoizedIdRangeAllocator,
 	IdRange,
 	ModularChangeset,
@@ -157,7 +160,6 @@ export {
 	EditableTreeOrPrimitive,
 	EditableTree,
 	EditableField,
-	isPrimitiveValue,
 	isPrimitive,
 	getPrimaryField,
 	typeSymbol,
@@ -205,7 +207,6 @@ export {
 	UnwrappedUntypedTree,
 	UntypedTreeOrPrimitive,
 	SchemaBuilder,
-	FieldKindTypes,
 	AllowedTypes,
 	TreeSchema,
 	BrandedFieldKind,
@@ -237,8 +238,10 @@ export {
 	FlushableBinderOptions,
 	FlushableDataBinder,
 	MatchPolicy,
+	SubtreePolicy,
 	BindSyntaxTree,
 	indexSymbol,
+	BindPolicy,
 	BindTree,
 	BindTreeDefault,
 	DownPath,
@@ -264,6 +267,29 @@ export {
 	SchemaLintConfiguration,
 	TreeStatus,
 	treeStatus,
+	FieldNode,
+	FlexibleFieldContent,
+	FlexibleNodeContent,
+	InternalEditableTreeTypes,
+	Leaf,
+	MapNode,
+	OptionalField,
+	RequiredField,
+	Sequence2,
+	Struct,
+	StructTyped,
+	TreeContext,
+	TypedField,
+	TypedNode,
+	TypedNodeUnion,
+	Tree,
+	TreeField,
+	TreeNode,
+	FieldNodeSchema,
+	LeafSchema,
+	MapSchema,
+	StructSchema,
+	CheckTypesOverlap,
 } from "./feature-libraries";
 
 export {
@@ -295,6 +321,8 @@ export type {
 } from "./codec";
 export { noopValidator } from "./codec";
 export { typeboxValidator } from "./external-utilities";
+
+export { TypedTreeFactory, TypedTreeOptions } from "./typed-tree";
 
 // Below here are things that are used by the above, but not part of the desired API surface.
 import * as InternalTypes from "./internal";

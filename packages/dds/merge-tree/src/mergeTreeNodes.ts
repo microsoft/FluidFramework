@@ -7,7 +7,7 @@
 
 /* eslint-disable @typescript-eslint/prefer-optional-chain */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
 import { IAttributionCollection } from "./attributionCollection";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
@@ -21,8 +21,10 @@ import { PartialSequenceLengths } from "./partialLengths";
 import { clone, createMap, MapLike, PropertySet } from "./properties";
 import {
 	refTypeIncludesFlag,
+	// eslint-disable-next-line import/no-deprecated
 	RangeStackMap,
 	ReferencePosition,
+	// eslint-disable-next-line import/no-deprecated
 	refGetRangeLabels,
 	refGetTileLabels,
 } from "./referencePositions";
@@ -91,6 +93,7 @@ export interface IHierBlock extends IMergeBlock {
 	hierToString(indentCount: number): string;
 	rightmostTiles: MapLike<ReferencePosition>;
 	leftmostTiles: MapLike<ReferencePosition>;
+	// eslint-disable-next-line import/no-deprecated
 	rangeStacks: RangeStackMap;
 }
 
@@ -231,10 +234,11 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	 *
 	 * @alpha
 	 *
-	 * @remarks - There are plans to make the shape of the data stored extensible in a couple ways:
+	 * @remarks There are plans to make the shape of the data stored extensible in a couple ways:
 	 *
 	 * 1. Injection of custom attribution information associated with the segment (ex: copy-paste of
 	 * content but keeping the old attribution information).
+	 *
 	 * 2. Storage of multiple "channels" of information (ex: track property changes separately from insertion,
 	 * or only attribute certain property modifications, etc.)
 	 */
@@ -291,7 +295,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	 *
 	 * @param segmentGroup - Pending segment group associated with this op.
 	 * @param opArgs - Information about the op that was acked
-	 * @returns - true if the op modifies the segment, otherwise false.
+	 * @returns `true` if the op modifies the segment, otherwise `false`.
 	 * The only current false case is overlapping remove, where a segment is removed
 	 * by a previously sequenced operation before the current operation is acked.
 	 * @throws - error if the segment state doesn't match segment group or op.
@@ -822,6 +826,9 @@ export const compareNumbers = (a: number, b: number) => a - b;
 export const compareStrings = (a: string, b: string) => a.localeCompare(b);
 
 const indentStrings = ["", " ", "  "];
+/**
+ * @deprecated This functionality is deprecated and will be removed in a future release.
+ */
 export function internedSpaces(n: number) {
 	if (indentStrings[n] === undefined) {
 		indentStrings[n] = "";
@@ -881,6 +888,7 @@ export function debugMarkerToString(marker: Marker): string {
 			lbuf += tileLabel;
 		}
 	}
+	// eslint-disable-next-line import/no-deprecated
 	const rangeLabels = refGetRangeLabels(marker);
 	if (rangeLabels) {
 		let rangeKind = "begin";

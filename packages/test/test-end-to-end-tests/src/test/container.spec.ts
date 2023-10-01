@@ -59,7 +59,7 @@ import {
 	DeltaStreamConnectionForbiddenError,
 	NonRetryableError,
 } from "@fluidframework/driver-utils";
-import { Deferred } from "@fluidframework/common-utils";
+import { Deferred } from "@fluidframework/core-utils";
 
 const id = "fluid-test://localhost/containerTest";
 const testRequest: IRequest = { url: id };

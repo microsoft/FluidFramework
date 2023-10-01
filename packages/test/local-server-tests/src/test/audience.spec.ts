@@ -32,9 +32,10 @@ describe("Audience correctness", () => {
 		"default",
 	);
 
-	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(factory, [
-		[factory.type, Promise.resolve(factory)],
-	]);
+	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+		defaultFactory: factory,
+		registryEntries: [[factory.type, Promise.resolve(factory)]],
+	});
 
 	/**
 	 * Function to wait for a client with the given clientId to be added to the audience of the given container.
@@ -62,7 +63,7 @@ describe("Audience correctness", () => {
 		}
 	}
 
-	it.skip("second client should see first client in audience when it connects immediately after", async () => {
+	it("second client should see first client in audience when it connects immediately after", async () => {
 		const codeLoader: ICodeDetailsLoader = {
 			// The code loader we pass to a loader just needs to ensure we get the runtime factory for our desired container
 			// so we don't need to use the code details parameter in this case.

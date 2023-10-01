@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { UsageError } from "@fluidframework/telemetry-utils";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
@@ -316,6 +317,7 @@ export class DirectoryFactory implements IChannelFactory {
  * {@inheritDoc ISharedDirectory}
  *
  * @example
+ *
  * ```typescript
  * mySharedDirectory.createSubDirectory("a").createSubDirectory("b").createSubDirectory("c").set("foo", val1);
  * const mySubDir = mySharedDirectory.getWorkingDirectory("/a/b/c");
@@ -752,7 +754,7 @@ export class SharedDirectory
 	/**
 	 * This checks if there is pending delete op for local delete for a any subdir in the relative path.
 	 * @param relativePath - path of sub directory.
-	 * @returns - true if there is pending delete.
+	 * @returns `true` if there is pending delete, `false` otherwise.
 	 */
 	private isSubDirectoryDeletePending(relativePath: string): boolean {
 		const absolutePath = this.makeAbsolute(relativePath);
@@ -1281,7 +1283,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 	/**
 	 * @returns A sequenceNumber which should be used for local changes.
-	 * @remarks - While detached, 0 is used rather than -1 to represent a change which should be universally known (as opposed to known
+	 * @remarks While detached, 0 is used rather than -1 to represent a change which should be universally known (as opposed to known
 	 * only by the local client). This ensures that if the directory is later attached, none of its data needs to be updated (the values
 	 * last set while detached will now be known to any new client, until they are changed).
 	 * TODO: Convert these conventions to named constants. The semantics used here match those for merge-tree.
@@ -1351,7 +1353,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	/**
 	 * This checks if there is pending delete op for local delete for a given child subdirectory.
 	 * @param subDirName - directory name.
-	 * @returns - true if there is pending delete.
+	 * @returns true if there is pending delete.
 	 */
 	public isSubDirectoryDeletePending(subDirName: string): boolean {
 		if (this.pendingDeleteSubDirectoriesTracker.has(subDirName)) {
@@ -2350,7 +2352,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * @param local - Whether the message originated from the local client
 	 * @param seq - Sequence number at which this directory is created
 	 * @param clientId - Id of client which created this directory.
-	 * @returns - True if is newly created, false if it already existed.
+	 * @returns True if is newly created, false if it already existed.
 	 */
 	private createSubDirectoryCore(
 		subdirName: string,
