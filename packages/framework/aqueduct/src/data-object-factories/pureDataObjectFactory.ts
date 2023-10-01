@@ -64,7 +64,7 @@ async function createDataObject<
 			const dataObject = (await runtimeArg.entryPoint.get()) as TObj;
 			assert(
 				dataObject.request !== undefined,
-				"Data store runtime entryPoint does not have request",
+				0x795 /* Data store runtime entryPoint does not have request */,
 			);
 			return dataObject.request(request);
 		},

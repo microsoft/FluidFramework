@@ -292,8 +292,6 @@ export class LocalOrderer implements IOrderer {
 					undefined,
 					undefined,
 					checkpointService,
-					true,
-					true,
 				);
 			},
 		);

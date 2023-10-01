@@ -62,6 +62,7 @@ import { SnapshotLegacy } from "./snapshotlegacy";
 import { SnapshotLoader } from "./snapshotLoader";
 import { IMergeTreeTextHelper } from "./textSegment";
 import { SnapshotV1 } from "./snapshotV1";
+// eslint-disable-next-line import/no-deprecated
 import { ReferencePosition, RangeStackMap, DetachedReferencePosition } from "./referencePositions";
 import { MergeTree } from "./mergeTree";
 import { MergeTreeTextHelper } from "./MergeTreeTextHelper";
@@ -1063,6 +1064,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	/**
 	 * @deprecated - this functionality is no longer supported and will be removed
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap {
 		return this._mergeTree.getStackContext(
 			startPos,

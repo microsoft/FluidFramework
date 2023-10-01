@@ -66,7 +66,7 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject>
 				const router = (await rt.entryPoint.get()) as T;
 				assert(
 					router.request !== undefined,
-					"Data store runtime entryPoint does not have request",
+					0x796 /* Data store runtime entryPoint does not have request */,
 				);
 				return router.request(request);
 			},
