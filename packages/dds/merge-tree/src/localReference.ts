@@ -354,6 +354,7 @@ export class LocalReferenceCollection {
 
 			lref.link(undefined, 0, undefined);
 
+			// eslint-disable-next-line import/no-deprecated
 			if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
 				this.hierRefCount--;
 			}

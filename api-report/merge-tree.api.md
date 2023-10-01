@@ -659,14 +659,12 @@ export class LocalReferenceCollection {
     // @internal
     append(other: LocalReferenceCollection): void;
     // @internal (undocumented)
-    clear(): void;
-    // @internal (undocumented)
     createLocalRef(offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
     // @internal (undocumented)
     get empty(): boolean;
     // @internal
     has(lref: ReferencePosition): boolean;
-    // @internal (undocumented)
+    // @internal
     hierRefCount: number;
     // @internal (undocumented)
     isAfterTombstone(lref: LocalReferencePosition): boolean;
