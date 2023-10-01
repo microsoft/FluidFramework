@@ -2133,8 +2133,6 @@ export class MergeTree {
 			undefined,
 		);
 
-		next.wasMovedOnInsert = segment.wasMovedOnInsert;
-
 		return { next };
 	};
 

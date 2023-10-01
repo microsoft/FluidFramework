@@ -93,6 +93,8 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     readonly trackingCollection: TrackingGroupCollection;
     // (undocumented)
     abstract readonly type: string;
+    // (undocumented)
+    wasMovedOnInsert?: boolean | undefined;
 }
 
 // Warning: (ae-forgotten-export) The symbol "IClientEvents" needs to be exported by the entry point index.d.ts
@@ -566,7 +568,6 @@ export interface IMergeTreeTextHelper {
     getText(refSeq: number, clientId: number, placeholder: string, start?: number, end?: number): string;
 }
 
-<<<<<<< HEAD
 // @public
 export interface IMoveInfo {
     localMovedSeq?: number;
@@ -652,10 +653,7 @@ export interface InsertContext {
     structureChange?: boolean;
 }
 
-// @public (undocumented)
-=======
 // @public @deprecated (undocumented)
->>>>>>> 550e869e96ca6ee0a01b3e203ea4c64b860dd1c9
 export function internedSpaces(n: number): string;
 
 // @internal (undocumented)

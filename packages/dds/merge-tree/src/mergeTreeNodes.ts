@@ -196,8 +196,9 @@ export function toMoveInfo(maybe: Partial<IMoveInfo> | undefined): IMoveInfo | u
 	assert(
 		maybe?.movedClientIds === undefined &&
 			maybe?.movedSeq === undefined &&
-			maybe?.movedSeqs === undefined,
-		"movedClientIds, movedSeq, and movedSeqs should all be either set or not set",
+			maybe?.movedSeqs === undefined &&
+			maybe?.wasMovedOnInsert === undefined,
+		"movedClientIds, movedSeq, wasMovedOnInsert, and movedSeqs should all be either set or not set",
 	);
 }
 
@@ -494,6 +495,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 	public movedSeq?: number;
 	public movedSeqs?: number[];
 	public movedClientIds?: number[];
+	public wasMovedOnInsert?: boolean | undefined;
 	public readonly segmentGroups: SegmentGroupCollection = new SegmentGroupCollection(this);
 	public readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(this);
 	/**
@@ -545,6 +547,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 		b.movedClientIds = this.movedClientIds?.slice();
 		b.movedSeq = this.movedSeq;
 		b.movedSeqs = this.movedSeqs;
+		b.wasMovedOnInsert = this.wasMovedOnInsert;
 		b.seq = this.seq;
 		b.attribution = this.attribution?.clone();
 	}
@@ -642,6 +645,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 				leafSegment.movedSeq = this.movedSeq;
 				leafSegment.movedSeqs = this.movedSeqs?.slice();
 				leafSegment.localMovedSeq = this.localMovedSeq;
+				leafSegment.wasMovedOnInsert = this.wasMovedOnInsert;
 				this.segmentGroups.copyTo(leafSegment);
 				this.trackingCollection.copyTo(leafSegment);
 				if (this.localRefs) {

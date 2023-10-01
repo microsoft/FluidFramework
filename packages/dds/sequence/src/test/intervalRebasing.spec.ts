@@ -126,25 +126,6 @@ describe("interval rebasing", () => {
 		assertConsistent(clients);
 	});
 
-	// todo: at the moment this can only be reproduced in the sequence tests because
-	// the obliterate tests have changed how they handle refSeq calculations. in the
-	// future this test may move or be removed
-	it.skip("...", () => {
-		// (A-C-B)
-
-		clients[0].sharedString.insertText(0, "AB"); // (1)
-		containerRuntimeFactory.processAllMessages();
-		assertConsistent(clients);
-		clients[0].sharedString.insertText(1, "C"); // (2)
-		clients[1].sharedString.obliterateRange(0, 2); // (3)
-		clients[1].containerRuntime.connected = false;
-		containerRuntimeFactory.processAllMessages();
-		assertConsistent(clients);
-		clients[1].containerRuntime.connected = true;
-		containerRuntimeFactory.processAllMessages();
-		assertConsistent(clients);
-	});
-
 	it("handles basic interval sliding for obliterate", () => {
 		// A-(BC)
 
@@ -158,7 +139,7 @@ describe("interval rebasing", () => {
 		assertConsistent(clients);
 	});
 
-	it.skip("reference is -1 for obliterated segment", () => {
+	it("reference is -1 for obliterated segment", () => {
 		// (L-PC-F)
 
 		clients[1].sharedString.insertText(0, "F");

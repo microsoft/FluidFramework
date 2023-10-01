@@ -81,10 +81,10 @@ export function createRemoveRangeOp(start: number, end: number): IMergeTreeRemov
 }
 
 /**
- * Creates the op to remove a range
+ * Creates the op to obliterate a range
  *
- * @param start - The inclusive start of the range to remove
- * @param end - The exclusive end of the range to remove
+ * @param start - The inclusive start of the range to obliterate
+ * @param end - The exclusive end of the range to obliterate
  */
 export function createObliterateRangeOp(start: number, end: number): IMergeTreeObliterateMsg {
 	return {
