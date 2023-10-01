@@ -27,7 +27,7 @@
                     "tree": {
                         "ForestTree": {
                             "type": 2,
-                            "content": "[{\"type\":\"SeqMap\",\"fields\":{\"foo\":[{\"type\":\"SeqMap\"}]}}]"
+                            "content": "[[\"rootFieldKey\",[{\"type\":\"SeqMap\",\"fields\":{\"foo\":[{\"type\":\"SeqMap\"}]}}]]]"
                         }
                     }
                 }

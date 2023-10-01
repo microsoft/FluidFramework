@@ -26,6 +26,9 @@ export const refGetTileLabels = (refPos: ReferencePosition): string[] | undefine
 		? (refPos.properties[reservedTileLabelsKey] as string[])
 		: undefined;
 
+/**
+ * @deprecated This functionality is deprecated and will be removed in a future release.
+ */
 export const refGetRangeLabels = (refPos: ReferencePosition): string[] | undefined =>
 	// eslint-disable-next-line no-bitwise
 	refTypeIncludesFlag(refPos, ReferenceType.NestBegin | ReferenceType.NestEnd) &&
@@ -38,13 +41,21 @@ export function refHasTileLabel(refPos: ReferencePosition, label: string): boole
 	return tileLabels?.includes(label) ?? false;
 }
 
+/**
+ * @deprecated This functionality is deprecated and will be removed in a future release.
+ */
 export function refHasRangeLabel(refPos: ReferencePosition, label: string): boolean {
 	const rangeLabels = refGetRangeLabels(refPos);
 	return rangeLabels?.includes(label) ?? false;
 }
+
 export function refHasTileLabels(refPos: ReferencePosition): boolean {
 	return refGetTileLabels(refPos) !== undefined;
 }
+
+/**
+ * @deprecated This functionality is deprecated and will be removed in a future release.
+ */
 export function refHasRangeLabels(refPos: ReferencePosition): boolean {
 	return refGetRangeLabels(refPos) !== undefined;
 }
@@ -93,6 +104,9 @@ export interface ReferencePosition {
 	isLeaf(): this is ISegment;
 }
 
+/**
+ * @deprecated This functionality is deprecated and will be removed in a future release.
+ */
 export type RangeStackMap = MapLike<Stack<ReferencePosition>>;
 
 export const DetachedReferencePosition = -1;

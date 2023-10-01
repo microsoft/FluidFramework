@@ -102,6 +102,23 @@
 			},
 			"ClassDeclaration_MongoDocumentRepository": {
 				"forwardCompat": false
+			},
+			"VariableDeclaration_DefaultServiceConfiguration": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IServerConfiguration": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IServiceConfiguration": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IDeliServerConfiguration": {
+				"forwardCompat": false,
+				"backCompat": true
+			},
+			"InterfaceDeclaration_IOrdererConnection": {
+				"forwardCompat": false,
+				"backCompat": true
 			}
 		}
 	}
