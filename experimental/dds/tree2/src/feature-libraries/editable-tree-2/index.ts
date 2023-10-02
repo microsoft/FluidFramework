@@ -21,6 +21,7 @@ export {
 	TypedNode,
 	TypedNodeUnion,
 	boxedIterator,
+	CheckTypesOverlap,
 } from "./editableTreeTypes";
 
 export {

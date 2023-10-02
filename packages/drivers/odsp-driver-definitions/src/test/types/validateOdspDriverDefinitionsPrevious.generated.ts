@@ -552,6 +552,54 @@ use_old_EnumDeclaration_OdspErrorType(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_OdspErrorTypes": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_OdspErrorTypes():
+    TypeOnly<typeof old.OdspErrorTypes>;
+declare function use_current_VariableDeclaration_OdspErrorTypes(
+    use: TypeOnly<typeof current.OdspErrorTypes>);
+use_current_VariableDeclaration_OdspErrorTypes(
+    get_old_VariableDeclaration_OdspErrorTypes());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_OdspErrorTypes": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_OdspErrorTypes():
+    TypeOnly<typeof current.OdspErrorTypes>;
+declare function use_old_VariableDeclaration_OdspErrorTypes(
+    use: TypeOnly<typeof old.OdspErrorTypes>);
+use_old_VariableDeclaration_OdspErrorTypes(
+    get_current_VariableDeclaration_OdspErrorTypes());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_OdspErrorTypes": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_OdspErrorTypes():
+    TypeOnly<old.OdspErrorTypes>;
+declare function use_current_TypeAliasDeclaration_OdspErrorTypes(
+    use: TypeOnly<current.OdspErrorTypes>);
+use_current_TypeAliasDeclaration_OdspErrorTypes(
+    get_old_TypeAliasDeclaration_OdspErrorTypes());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_OdspErrorTypes": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_OdspErrorTypes():
+    TypeOnly<current.OdspErrorTypes>;
+declare function use_old_TypeAliasDeclaration_OdspErrorTypes(
+    use: TypeOnly<old.OdspErrorTypes>);
+use_old_TypeAliasDeclaration_OdspErrorTypes(
+    get_current_TypeAliasDeclaration_OdspErrorTypes());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_OdspResourceTokenFetchOptions": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_OdspResourceTokenFetchOptions():
