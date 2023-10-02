@@ -82,10 +82,6 @@ export const IntervalOpType = {
 
 export enum IntervalType {
 	Simple = 0x0,
-	/**
-	 * @deprecated - this functionality is no longer supported and will be removed
-	 */
-	Nest = 0x1,
 
 	/**
 	 * SlideOnRemove indicates that the ends of the interval will slide if the segment

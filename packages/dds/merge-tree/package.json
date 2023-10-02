@@ -105,6 +105,30 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedFunctionDeclaration_internedSpaces": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedVariableDeclaration_refGetRangeLabels": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_refHasRangeLabel": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_refHasRangeLabels": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"ClassDeclaration_Client": {
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_RangeStackMap": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

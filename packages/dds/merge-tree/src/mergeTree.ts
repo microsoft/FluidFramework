@@ -37,8 +37,6 @@ import {
 	IncrementalExecOp,
 	IncrementalMapState,
 	InsertContext,
-	// eslint-disable-next-line import/no-deprecated
-	internedSpaces,
 	IRemovalInfo,
 	ISegment,
 	ISegmentAction,
@@ -74,12 +72,6 @@ import {
 	refTypeIncludesFlag,
 	ReferencePosition,
 	DetachedReferencePosition,
-	// eslint-disable-next-line import/no-deprecated
-	RangeStackMap,
-	// eslint-disable-next-line import/no-deprecated
-	refHasRangeLabel,
-	// eslint-disable-next-line import/no-deprecated
-	refGetRangeLabels,
 	refGetTileLabels,
 	refHasTileLabel,
 } from "./referencePositions";
@@ -138,67 +130,6 @@ interface IReferenceSearchInfo {
 	tileLabel: string;
 	tilePrecedesPos?: boolean;
 	tile?: ReferencePosition;
-}
-
-interface IMarkerSearchRangeInfo {
-	mergeTree: MergeTree;
-	rangeLabels: string[];
-	// eslint-disable-next-line import/no-deprecated
-	stacks: RangeStackMap;
-}
-
-function applyLeafRangeMarker(marker: Marker, searchInfo: IMarkerSearchRangeInfo) {
-	for (const rangeLabel of searchInfo.rangeLabels) {
-		// eslint-disable-next-line import/no-deprecated
-		if (refHasRangeLabel(marker, rangeLabel)) {
-			let currentStack = searchInfo.stacks[rangeLabel];
-			if (currentStack === undefined) {
-				currentStack = new Stack<Marker>();
-				searchInfo.stacks[rangeLabel] = currentStack;
-			}
-			applyRangeReference(currentStack, marker);
-		}
-	}
-}
-
-function recordRangeLeaf(
-	segment: ISegment,
-	segpos: number,
-	refSeq: number,
-	clientId: number,
-	start: number | undefined,
-	end: number | undefined,
-	searchInfo: IMarkerSearchRangeInfo,
-) {
-	if (Marker.is(segment)) {
-		if (segment.refType & (ReferenceType.NestBegin | ReferenceType.NestEnd)) {
-			applyLeafRangeMarker(segment, searchInfo);
-		}
-	}
-	return false;
-}
-
-function rangeShift(
-	node: IMergeNode,
-	segpos: number,
-	refSeq: number,
-	clientId: number,
-	offset: number | undefined,
-	end: number | undefined,
-	searchInfo: IMarkerSearchRangeInfo,
-) {
-	if (node.isLeaf()) {
-		const seg = node;
-		if ((searchInfo.mergeTree.localNetLength(seg) ?? 0) > 0 && Marker.is(seg)) {
-			if (seg.refType & (ReferenceType.NestBegin | ReferenceType.NestEnd)) {
-				applyLeafRangeMarker(seg, searchInfo);
-			}
-		}
-	} else {
-		const block = <IHierBlock>node;
-		applyStackDelta(searchInfo.stacks, block.rangeStacks);
-	}
-	return true;
 }
 
 function recordTileStart(
@@ -266,41 +197,6 @@ function addTileIfNotPresent(tile: ReferencePosition, tiles: object) {
 	}
 }
 
-// eslint-disable-next-line import/no-deprecated
-function applyStackDelta(currentStackMap: RangeStackMap, deltaStackMap: RangeStackMap) {
-	// eslint-disable-next-line guard-for-in, no-restricted-syntax
-	for (const label in deltaStackMap) {
-		const deltaStack = deltaStackMap[label];
-		if (!deltaStack.empty()) {
-			let currentStack = currentStackMap[label];
-			if (currentStack === undefined) {
-				currentStack = new Stack<ReferencePosition>();
-				currentStackMap[label] = currentStack;
-			}
-			for (const delta of deltaStack.items) {
-				applyRangeReference(currentStack, delta);
-			}
-		}
-	}
-}
-
-function applyRangeReference(stack: Stack<ReferencePosition>, delta: ReferencePosition) {
-	if (refTypeIncludesFlag(delta, ReferenceType.NestBegin)) {
-		stack.push(delta);
-		return true;
-	} else {
-		// Assume delta is end reference
-		const top = stack.top();
-		// TODO: match end with begin
-		if (top && refTypeIncludesFlag(top, ReferenceType.NestBegin)) {
-			stack.pop();
-		} else {
-			stack.push(delta);
-		}
-		return false;
-	}
-}
-
 /**
  * Reference types which have special bookkeeping within the merge tree (in {@link HierMergeBlock}s)
  * and thus require updating path lengths when changed.
@@ -308,24 +204,14 @@ function applyRangeReference(stack: Stack<ReferencePosition>, delta: ReferencePo
  * TODO:AB#4069: This functionality is old and not well-tested. It's not clear how much of it is needed--
  * we should better test the parts that are necessary and remove the rest.
  */
-const hierRefTypes = ReferenceType.NestBegin | ReferenceType.NestEnd | ReferenceType.Tile;
+const hierRefTypes = ReferenceType.Tile;
 
 function addNodeReferences(
 	mergeTree: MergeTree,
 	node: IMergeNode,
 	rightmostTiles: MapLike<ReferencePosition>,
 	leftmostTiles: MapLike<ReferencePosition>,
-	// eslint-disable-next-line import/no-deprecated
-	rangeStacks: RangeStackMap,
 ) {
-	function updateRangeInfo(label: string, refPos: ReferencePosition) {
-		let stack = rangeStacks[label];
-		if (stack === undefined) {
-			stack = new Stack<ReferencePosition>();
-			rangeStacks[label] = stack;
-		}
-		applyRangeReference(stack, refPos);
-	}
 	if (node.isLeaf()) {
 		const segment = node;
 		if ((mergeTree.localNetLength(segment) ?? 0) > 0) {
@@ -340,15 +226,6 @@ function addNodeReferences(
 					addTile(segment, rightmostTiles);
 					addTileIfNotPresent(segment, leftmostTiles);
 				}
-				if (segment.refType & (ReferenceType.NestBegin | ReferenceType.NestEnd)) {
-					// eslint-disable-next-line import/no-deprecated
-					const rangeLabels = refGetRangeLabels(segment);
-					if (rangeLabels) {
-						for (const label of rangeLabels) {
-							updateRangeInfo(label, segment);
-						}
-					}
-				}
 			} else {
 				const baseSegment = node as BaseSegment;
 				if (
@@ -361,19 +238,12 @@ function addNodeReferences(
 							addTile(lref, rightmostTiles);
 							addTileIfNotPresent(lref, leftmostTiles);
 						}
-						if (lref.refType & (ReferenceType.NestBegin | ReferenceType.NestEnd)) {
-							// eslint-disable-next-line import/no-deprecated
-							for (const label of refGetRangeLabels(lref)!) {
-								updateRangeInfo(label, lref);
-							}
-						}
 					}
 				}
 			}
 		}
 	} else {
-		const block = <IHierBlock>node;
-		applyStackDelta(rangeStacks, block.rangeStacks);
+		const block = node as IHierBlock;
 		extend(rightmostTiles, block.rightmostTiles);
 		extendIfUndefined(leftmostTiles, block.leftmostTiles);
 	}
@@ -393,34 +263,15 @@ function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | undefine
 class HierMergeBlock extends MergeBlock implements IHierBlock {
 	public rightmostTiles: MapLike<ReferencePosition>;
 	public leftmostTiles: MapLike<ReferencePosition>;
-	public rangeStacks: MapLike<Stack<ReferencePosition>>;
 
 	constructor(childCount: number) {
 		super(childCount);
 		this.rightmostTiles = createMap<ReferencePosition>();
 		this.leftmostTiles = createMap<ReferencePosition>();
-		this.rangeStacks = createMap<Stack<ReferencePosition>>();
 	}
 
 	public hierBlock() {
 		return this;
-	}
-
-	public hierToString(indentCount: number) {
-		let strbuf = "";
-		// eslint-disable-next-line guard-for-in, no-restricted-syntax
-		for (const key in this.rangeStacks) {
-			const stack = this.rangeStacks[key];
-			// eslint-disable-next-line import/no-deprecated
-			strbuf += internedSpaces(indentCount);
-			strbuf += `${key}: `;
-			for (const item of stack.items) {
-				// eslint-disable-next-line @typescript-eslint/no-base-to-string
-				strbuf += `${item.toString()} `;
-			}
-			strbuf += "\n";
-		}
-		return strbuf;
 	}
 }
 
@@ -1303,26 +1154,6 @@ export class MergeTree {
 			return offset + this.getPosition(seg, refSeq, clientId);
 		}
 		return DetachedReferencePosition;
-	}
-
-	/**
-	 * @deprecated - this functionality is no longer supported and will be removed
-	 */
-	public getStackContext(startPos: number, clientId: number, rangeLabels: string[]) {
-		const searchInfo: IMarkerSearchRangeInfo = {
-			mergeTree: this,
-			stacks: createMap<Stack<Marker>>(),
-			rangeLabels,
-		};
-
-		this.search(
-			startPos,
-			UniversalSequenceNumber,
-			clientId,
-			{ leaf: recordRangeLeaf, shift: rangeShift },
-			searchInfo,
-		);
-		return searchInfo.stacks;
 	}
 
 	// TODO: filter function
@@ -2590,7 +2421,6 @@ export class MergeTree {
 		if (hierBlock) {
 			hierBlock.rightmostTiles = createMap<Marker>();
 			hierBlock.leftmostTiles = createMap<Marker>();
-			hierBlock.rangeStacks = {};
 		}
 		for (let i = 0; i < block.childCount; i++) {
 			const child = block.children[i];
@@ -2600,13 +2430,7 @@ export class MergeTree {
 				len += nodeLength;
 			}
 			if (hierBlock) {
-				addNodeReferences(
-					this,
-					child,
-					hierBlock.rightmostTiles,
-					hierBlock.leftmostTiles,
-					hierBlock.rangeStacks,
-				);
+				addNodeReferences(this, child, hierBlock.rightmostTiles, hierBlock.leftmostTiles);
 			}
 		}
 
