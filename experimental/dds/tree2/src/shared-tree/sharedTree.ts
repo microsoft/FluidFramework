@@ -243,7 +243,7 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
  * @alpha
  */
 export class SharedTreeFactory implements IChannelFactory {
-	public type: string = "SharedTree2";
+	public type: string = "https://graph.microsoft.com/types/tree";
 
 	public attributes: IChannelAttributes = {
 		type: this.type,
