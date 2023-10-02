@@ -138,25 +138,33 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 
 		const branchName = await context.gitRepo.getCurrentBranchName();
 
-		if (args.package_or_release_group === MonoRepoKind.Server && branchName !== "next") {
-			const { confirmed } = await prompts({
-				type: "confirm",
-				name: "confirmed",
-				message: `Server releases should be consumed in the ${chalk.bold(
-					"next",
-				)} branch only. The current branch is ${branchName}. Are you sure you want to continue?`,
-				initial: false,
-				onState: (state: any) => {
-					// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-					if (state.aborted) {
-						process.nextTick(() => this.exit(0));
-					}
-				},
-			});
+		if (args.package_or_release_group === MonoRepoKind.Server) {
+			if (branchName !== "next") {
+				const { confirmed } = await prompts({
+					type: "confirm",
+					name: "confirmed",
+					message: `Server releases should be consumed in the ${chalk.bold(
+						"next",
+					)} branch only. The current branch is ${branchName}. Are you sure you want to continue?`,
+					initial: false,
+					onState: (state: any) => {
+						// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+						if (state.aborted) {
+							process.nextTick(() => this.exit(0));
+						}
+					},
+				});
 
-			if (confirmed !== true) {
-				this.info("Cancelled");
-				this.exit(0);
+				if (confirmed !== true) {
+					this.info("Cancelled");
+					this.exit(0);
+				}
+			}
+
+			if (flags.updateType !== "patch" && flags.updateType !== "minor") {
+				this.warning(
+					"Ensure the client release notes indicate that server dependencies have been bumped to a new major version.",
+				);
 			}
 		}
 
