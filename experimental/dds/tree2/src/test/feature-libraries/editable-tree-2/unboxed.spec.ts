@@ -417,32 +417,42 @@ describe("unboxed unit tests", () => {
 				assert.equal(bar.value, true);
 			});
 
-			// it("Recursive", () => {
-			// 	const builder = new SchemaBuilder("test");
-			// 	const stringLeafSchema = builder.leaf("string", ValueSchema.String);
-			// 	const booleanLeafSchema = builder.leaf("boolean", ValueSchema.Boolean);
-			// 	const mapSchema = builder.mapRecursive(
-			// 		"map",
-			// 		SchemaBuilder.fieldRecursive(FieldKinds.optional, [
-			// 			stringLeafSchema,
-			// 			booleanLeafSchema,
-			// 			() => mapSchema,
-			// 		]),
-			// 	);
-			// 	const rootSchema = SchemaBuilder.fieldOptional(mapSchema);
-			// 	const schema = builder.intoDocumentSchema(rootSchema);
+			it("Recursive", () => {
+				const builder = new SchemaBuilder("test");
+				const stringLeafSchema = builder.leaf("string", ValueSchema.String);
+				const booleanLeafSchema = builder.leaf("boolean", ValueSchema.Boolean);
+				const mapSchema = builder.mapRecursive(
+					"map",
+					SchemaBuilder.fieldRecursive(
+						FieldKinds.optional,
+						stringLeafSchema,
+						booleanLeafSchema,
+						() => mapSchema,
+					),
+				);
+				const rootSchema = SchemaBuilder.fieldOptional(mapSchema);
+				const schema = builder.intoDocumentSchema(rootSchema);
 
-			// 	const { context, cursor } = initializeTreeWithContent(schema, {
-			// 		foo: "Hello world",
-			// 		bar: true,
-			// 	});
-			// cursor.firstNode(); // Root node field has 1 node; move into it
+				const { context, cursor } = initializeTreeWithContent(schema, {
+					foo: "Hello world",
+					bar: true,
+				});
+				cursor.firstNode(); // Root node field has 1 node; move into it
 
-			// 	const unboxed = unboxedTree(context, mapSchema, cursor);
-			// 	assert.equal(unboxed.size, 2);
-			// 	assert.equal(unboxed.get(brand("foo")), "Hello world");
-			// 	assert.equal(unboxed.get(brand("bar")), true);
-			// });
+				const unboxed = unboxedTree(context, mapSchema, cursor);
+				assert.equal(unboxed.size, 2);
+
+				// Map value type is not known, so nodes will not be unboxed.
+				const fooEntry = unboxed.get(brand("foo"));
+				assert(fooEntry !== undefined);
+				assert.equal(fooEntry.type, "string");
+				assert.equal(fooEntry.value, "Hello world");
+
+				const barEntry = unboxed.get(brand("bar"));
+				assert(barEntry !== undefined);
+				assert.equal(barEntry.type, "boolean");
+				assert.equal(barEntry.value, true);
+			});
 		});
 	});
 	describe("unboxedUnion", () => {
