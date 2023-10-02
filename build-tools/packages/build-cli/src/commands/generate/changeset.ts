@@ -317,9 +317,6 @@ async function createChangesetFile(
 	packages: Map<Package, VersionBumpType>,
 	body?: string,
 ): Promise<string> {
-	// const [firstPackage] = packages.keys();
-	// const releaseGroup = firstPackage.monoRepo;
-
 	const changesetID = humanId({ separator: "-", capitalize: false });
 	const changesetPath = path.join(rootPath, ".changeset", `${changesetID}.md`);
 	const changesetContent = await createChangesetContent(packages, body);
