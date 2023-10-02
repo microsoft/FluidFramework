@@ -6,11 +6,11 @@
 import { strict as assert } from "assert";
 import { combineReducersAsync } from "@fluid-internal/stochastic-test-utils";
 import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
-import { singleTextCursor } from "../../../feature-libraries";
+import { TreeField, TreeNode, singleTextCursor, toDownPath } from "../../../feature-libraries";
 import { fail } from "../../../util";
 import { validateTreeConsistency } from "../../utils";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../../shared-tree";
-import { FieldUpPath, TreeNavigationResult } from "../../../core";
+import { FieldUpPath } from "../../../core";
 import {
 	FieldEdit,
 	FuzzDelete,
@@ -20,6 +20,7 @@ import {
 	FuzzUndoRedoType,
 	Operation,
 } from "./operationTypes";
+import { fuzzNode, fuzzSchema } from "./fuzzUtils";
 
 export const fuzzReducer = combineReducersAsync<Operation, DDSFuzzTestState<SharedTreeFactory>>({
 	edit: async (state, operation) => {
@@ -114,31 +115,36 @@ function applyValueFieldEdit(tree: ISharedTreeView, change: FuzzSet): void {
 function applyOptionalFieldEdit(tree: ISharedTreeView, change: FuzzSet | FuzzDelete): void {
 	switch (change.type) {
 		case "set": {
-			const field = tree.editor.optionalField(change.fieldPath);
-			const { forest } = tree;
-			const anchors = (forest as any).anchors;
-			const cursor = forest.allocateCursor();
-			let wasEmpty: boolean;
-			if (change.fieldPath.parent === undefined) {
-				const result = forest.tryMoveCursorToField(
-					{ parent: undefined, fieldKey: change.fieldPath.field },
-					cursor,
+			const rootField = tree.editableTree2(fuzzSchema);
+			if (change.fieldPath.parent !== undefined) {
+				const topDown = toDownPath(change.fieldPath.parent);
+				const { field } = topDown.reduce<{
+					field: TreeField;
+					containedNode: TreeNode | undefined;
+				}>(
+					({ containedNode }, nextStep) => {
+						const childField = containedNode?.tryGetField(nextStep.field);
+						if (childField?.is(fuzzNode.structFieldsObject.sequenceF)) {
+							assert(nextStep.index !== undefined);
+							return {
+								field: childField,
+								containedNode: childField.at(nextStep.index),
+							};
+						} else if (
+							childField?.is(fuzzNode.structFieldsObject.optionalF) ||
+							childField?.is(fuzzNode.structFieldsObject.requiredF)
+						) {
+							return { field: childField, containedNode: childField.content };
+						}
+						fail(`Unexpected field type: ${childField?.key}`);
+					},
+					{ field: rootField, containedNode: rootField.content },
 				);
-				assert(result === TreeNavigationResult.Ok, "Should have successfully navigated");
-				wasEmpty = cursor.getFieldLength() === 0;
+				assert(field.is(fuzzNode.structFieldsObject.optionalF));
+				field.setContent(singleTextCursor(change.value) as any);
 			} else {
-				const anchor = anchors.track(change.fieldPath.parent);
-				const result = forest.tryMoveCursorToField(
-					{ parent: anchor, fieldKey: change.fieldPath.field },
-					cursor,
-				);
-				assert(result === TreeNavigationResult.Ok, "Should have successfully navigated");
-				wasEmpty = cursor.getFieldLength() === 0;
-				anchors.forget(anchor);
+				rootField.setContent(singleTextCursor(change.value) as any);
 			}
-
-			cursor.free();
-			field.set(singleTextCursor(change.value), wasEmpty);
 			break;
 		}
 		case "delete": {
@@ -148,6 +154,7 @@ function applyOptionalFieldEdit(tree: ISharedTreeView, change: FuzzSet | FuzzDel
 			};
 			const field = tree.editor.optionalField(fieldPath);
 			// Note: we're assuming that the field is currently set.
+			// This is only safe because the fuzz generator guarantees it.
 			field.set(undefined, false);
 			break;
 		}

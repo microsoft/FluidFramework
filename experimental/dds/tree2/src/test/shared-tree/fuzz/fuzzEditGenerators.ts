@@ -86,6 +86,7 @@ export const makeEditGenerator = (
 	};
 
 	const jsonableTree = (state: FuzzTestState): JsonableTree => {
+		// Heuristics around what type of tree we insert could be made customizable to tend toward trees of certain characteristics.
 		if (state.random.bool(0.3)) {
 			return {
 				type: brand("com.fluidframework.leaf.number"),
@@ -132,7 +133,6 @@ export const makeEditGenerator = (
 					type: "insert",
 					fieldPath: fieldUpPathFromField(field),
 					index: state.random.integer(0, field.length),
-					// TODO: generate insertion of multiple pieces of content at once
 					value: jsonableTree(state),
 				};
 				return {
@@ -155,6 +155,8 @@ export const makeEditGenerator = (
 			case "optional": {
 				const { content: field } = fieldInfo;
 				const { content } = field;
+				// Note: if we ever decide to generate deletes for currently empty optional fields, the logic
+				// in the reducer needs to be adjusted (it hard-codes `wasEmpty` to `false`).
 				assert(
 					content !== undefined,
 					"Optional field should have content for it to be selected for deletion",
@@ -369,7 +371,6 @@ function selectField(
 	random: IRandom,
 	filter: FieldFilter = () => true,
 ): FuzzField | "no-valid-fields" {
-	// TODO: could use same shuffle technique as below here.
 	const alreadyPickedOptions = new Set<string>();
 	const optional = (): FuzzField | "no-valid-fields" => {
 		const field = { type: "optional", content: node.boxedOptionalF } as const;
@@ -436,70 +437,12 @@ function selectField(
 	let result: FuzzField | "no-valid-fields" | typeof done = "no-valid-fields";
 	do {
 		result = generator({ random });
+		assert(result !== done, "createWeightedGenerators should never return done");
 	} while (result === "no-valid-fields" && alreadyPickedOptions.size < 4);
-	assert(result !== done, "createWeightedGenerators should never return done");
 	return result;
-	// do {
-	// 	const fieldType = random.pick([...candidateSelections]);
-	// 	switch (fieldType) {
-	// 		case "optional": {
-	// 			const field = { type: "optional", content: node.boxedOptionalF } as const;
-	// 			if (filter(field)) {
-	// 				return field;
-	// 			} else {
-	// 				candidateSelections.delete("optional");
-	// 			}
-	// 			break;
-	// 		}
-	// 		case "value": {
-	// 			const field = { type: "value", content: node.boxedRequiredF } as const;
-	// 			if (filter(field)) {
-	// 				return field;
-	// 			} else {
-	// 				candidateSelections.delete("value");
-	// 			}
-	// 			break;
-	// 		}
-	// 		case "sequence": {
-	// 			const field = { type: "sequence", content: node.boxedSequenceF } as const;
-	// 			if (filter(field)) {
-	// 				return field;
-	// 			} else {
-	// 				candidateSelections.delete("sequence");
-	// 			}
-	// 			break;
-	// 		}
-	// 		case "child": {
-	// 			const childNodes: FuzzNode[] = [];
-	// 			if (node.optionalF?.is(fuzzNode)) {
-	// 				childNodes.push(node.optionalF);
-	// 			}
-	// 			if (node.requiredF?.is(fuzzNode)) {
-	// 				childNodes.push(node.requiredF);
-	// 			}
-	// 			node.sequenceF.map((child) => {
-	// 				if (child.is(fuzzNode)) {
-	// 					childNodes.push(child);
-	// 				}
-	// 			});
-	// 			random.shuffle(childNodes);
-	// 			for (const child of childNodes) {
-	// 				const result = selectField(child, random, filter);
-	// 				if (result !== "no-valid-fields") {
-	// 					return result;
-	// 				}
-	// 			}
-	// 			candidateSelections.delete("child");
-	// 			break;
-	// 		}
-	// 		default:
-	// 			fail(`Unexpected field type ${fieldType}`);
-	// 	}
-	// } while (candidateSelections.size > 0);
-
-	// return "no-valid-fields";
 }
 
+// Avoid calling editableTree2 more than once per tree view due to AB#5677: it crashes otherwise.
 const cachedEditableTreeSymbol = Symbol();
 const getEditableTree = (tree: ISharedTreeView) => {
 	if ((tree as any)[cachedEditableTreeSymbol] === undefined) {
