@@ -6,7 +6,6 @@
 import { ICache } from "@fluidframework/server-services-core";
 import { IRedisParameters } from "@fluidframework/server-services-utils";
 import * as Redis from "ioredis";
-import * as winston from "winston";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 /**
@@ -25,12 +24,10 @@ export class RedisCache implements ICache {
 			this.prefix = parameters.prefix;
 		} else {
 			this.prefix = "";
-			winston.warn("A prefix for RedisCache was not included in the parameters.");
 			Lumberjack.warning("A prefix for RedisCache was not included in the parameters.");
 		}
 
 		client.on("error", (err) => {
-			winston.error("Error with Redis:", err);
 			Lumberjack.error("Error with Redis", undefined, err);
 		});
 	}
