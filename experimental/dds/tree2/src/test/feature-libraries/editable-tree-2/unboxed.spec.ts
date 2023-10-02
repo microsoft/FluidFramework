@@ -443,7 +443,6 @@ describe("unboxed unit tests", () => {
 						bar: true,
 					},
 				];
-
 				const { context, cursor } = initializeTreeWithContent(schema, initialTree);
 
 				const unboxed = unboxedField(context, rootSchema, cursor);
@@ -482,7 +481,6 @@ describe("unboxed unit tests", () => {
 						},
 					},
 				];
-
 				const { context, cursor } = initializeTreeWithContent(schema, initialTree);
 
 				const unboxed = unboxedField(context, rootSchema, cursor);
@@ -499,6 +497,34 @@ describe("unboxed unit tests", () => {
 				assert(item1.child !== undefined);
 				assert.equal(item1.child.name, "Baz");
 				assert.equal(item1.child.child, undefined);
+			});
+
+			it("Union", () => {
+				const builder = new SchemaBuilder("test");
+				const stringLeafSchema = builder.leaf("string", ValueSchema.String);
+				const booleanLeafSchema = builder.leaf("boolean", ValueSchema.Boolean);
+				const rootSchema = SchemaBuilder.fieldSequence(stringLeafSchema, booleanLeafSchema);
+				const schema = builder.intoDocumentSchema(rootSchema);
+
+				const initialTree = ["Hello", true, "world"];
+				const { context, cursor } = initializeTreeWithContent(schema, initialTree);
+
+				const unboxed = unboxedField(context, rootSchema, cursor);
+
+				assert.equal(unboxed.length, 3);
+
+				// Field type is not known, so nodes will not be unboxed
+				const item0 = unboxed.at(0);
+				assert.equal(item0.type, "string");
+				assert.equal(item0.value, "Hello");
+
+				const item1 = unboxed.at(1);
+				assert.equal(item1.type, "boolean");
+				assert.equal(item1.value, true);
+
+				const item2 = unboxed.at(2);
+				assert.equal(item2.type, "string");
+				assert.equal(item2.value, "world");
 			});
 		});
 	});
