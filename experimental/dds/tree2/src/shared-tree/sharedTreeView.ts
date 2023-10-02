@@ -421,7 +421,7 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		public readonly events: ISubscribable<ViewEvents> &
 			IEmitter<ViewEvents> &
 			HasListeners<ViewEvents>,
-		removedTrees?: TreeIndex,
+		private readonly removedTrees: TreeIndex = makeTreeIndex("repair"),
 	) {
 		this.removedTrees = removedTrees ?? makeTreeIndex();
 		branch.on("change", (event) => {
