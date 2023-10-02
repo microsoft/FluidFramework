@@ -22,8 +22,12 @@ ENV TINI_VERSION v0.18.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
 
+# There are some packages outside the routerlicious folder that we need to build, so
+WORKDIR /usr/src
+COPY --from=root tools/changelog-generator-wrapper/package*.json tools/changelog-generator-wrapper/
+
 # Copy over and build the server
-WORKDIR /usr/src/server
+WORKDIR /usr/src/server/routerlicious
 
 # Copy over the package and package-lock and install prior to the other code to optimize Docker's file system cache on rebuilds
 COPY package*.json ./
@@ -61,7 +65,7 @@ RUN pnpm install --unsafe-perm
 COPY . .
 
 # Switch to the server folder and build
-WORKDIR /usr/src/server
+WORKDIR /usr/src/server/routerlicious
 RUN npm run ci:build
 
 # Build that alfred uses

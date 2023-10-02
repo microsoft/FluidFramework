@@ -86,6 +86,11 @@ parameters:
   type: object
   default: []
 
+# Any additional build arguments to pass to the docker build command.
+- name: additionalBuildArguments
+  type: string
+  default: ""
+
 trigger: none
 
 variables:
@@ -277,7 +282,7 @@ stages:
           command: build
           dockerFile: ${{ parameters.buildDirectory }}/Dockerfile
           buildContext: ${{ parameters.buildDirectory }}
-          arguments: --target base
+          arguments: --target base ${{ parameters.additionalBuildArguments }}
           tags: |
             $(containerTagSuffix)
 
@@ -365,6 +370,7 @@ stages:
         command: build
         dockerFile: ${{ parameters.buildDirectory }}/Dockerfile
         buildContext: ${{ parameters.buildDirectory }}
+        arguments: ${{ parameters.additionalBuildArguments }}
         tags: |
           $(containerTagSuffix)
           ${{ variables.latestContainerTagSuffix }}
