@@ -591,7 +591,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 			free() {
 				assert(
 					this.anchorSet.activeVisitor !== undefined,
-					"Multiple free calls for same visitor",
+					0x768 /* Multiple free calls for same visitor */,
 				);
 				this.anchorSet.activeVisitor = undefined;
 			},
