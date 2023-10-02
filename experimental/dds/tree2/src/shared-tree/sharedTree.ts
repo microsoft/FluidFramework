@@ -243,7 +243,7 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
  * @alpha
  */
 export class SharedTreeFactory implements IChannelFactory {
-	public type: string = "SharedTree";
+	public type: string = "SharedTree2";
 
 	public attributes: IChannelAttributes = {
 		type: this.type,
