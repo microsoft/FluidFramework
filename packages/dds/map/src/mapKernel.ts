@@ -1035,6 +1035,7 @@ export class MapKernel {
 				// We don't reuse the metadata pendingMessageId but send a new one on each submit.
 				const previousValue = this.deleteCore(op.key, true);
 				const previousIndex = this.deleteKeysIndex(op.key);
+				this.incrementLocalDeletionCount(op.key);
 				const messageId = this.getMapKeyMessageId(op);
 				this.updatePendingSetIds(op, messageId);
 				return createKeyLocalOpMetadata(op, messageId, previousValue, previousIndex);
