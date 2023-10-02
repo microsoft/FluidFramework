@@ -598,7 +598,6 @@ export function validateViewConsistency(
 	treeB: ISharedTreeView,
 	idDifferentiator: string | undefined = undefined,
 ): void {
-	console.log(JSON.stringify(toJsonableTree(treeA)));
 	assert.deepEqual(
 		toJsonableTree(treeA),
 		toJsonableTree(treeB),

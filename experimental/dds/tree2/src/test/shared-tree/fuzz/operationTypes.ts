@@ -41,7 +41,10 @@ export interface FuzzInsert {
 export interface FuzzSet {
 	type: "set";
 	fieldPath: FieldUpPath;
-	// Note: optional fields 'setting' undefined are modeled as deletes.
+	/**
+	 * @privateRemarks - Optional fields use {@link FuzzDelete} to mean "delete the field's contents" rather than
+	 * a `FuzzSet` with undefined value, hence why this property is required.
+	 */
 	value: JsonableTree;
 }
 
