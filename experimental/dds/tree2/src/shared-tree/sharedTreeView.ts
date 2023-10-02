@@ -448,16 +448,6 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		});
 	}
 
-	protected logRemovedTrees() {
-		for (const { field, id } of this.removedTrees.entries()) {
-			const cursor = this.forest.allocateCursor();
-			moveToDetachedField(this.forest, cursor, brand(field));
-			const copy = mapCursorField(cursor, jsonableTreeFromCursor);
-			cursor.free();
-			console.log(`${field}: ${id.major}.${id.minor} `, copy);
-		}
-	}
-
 	private readonly removedTrees: TreeIndex;
 
 	public get rootEvents(): ISubscribable<AnchorSetRootEvents> {
