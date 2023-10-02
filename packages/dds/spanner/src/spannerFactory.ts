@@ -9,8 +9,10 @@ import {
 	type IChannelServices,
 	type IChannelFactory,
 } from "@fluidframework/datastore-definitions";
+import { DataProcessingError } from "@fluidframework/telemetry-utils";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import { Spanner } from "./spanner";
+import { SpannerChannelServices } from "./spannerChannelServices";
 
 /**
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link Spanner}.
@@ -48,14 +50,31 @@ export class SpannerFactory<TOld extends SharedObject, TNew extends SharedObject
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<Spanner<TOld, TNew>> {
+		// delta connection intercept generated here
+		const spannerServices = new SpannerChannelServices(services);
+
+		// who should do the loading? For now I'll do it here
 		let oldChannel: TOld | undefined;
 		let newChannel: TNew | undefined;
 		if (attributesMatch(attributes, this.oldFactory.attributes)) {
-			oldChannel = (await this.oldFactory.load(runtime, id, services, attributes)) as TOld;
+			oldChannel = (await this.oldFactory.load(
+				runtime,
+				id,
+				spannerServices,
+				attributes,
+			)) as TOld;
 		} else if (attributesMatch(attributes, this.newFactory.attributes)) {
-			newChannel = (await this.newFactory.load(runtime, id, services, attributes)) as TNew;
+			newChannel = (await this.newFactory.load(
+				runtime,
+				id,
+				spannerServices,
+				attributes,
+			)) as TNew;
 		} else {
-			throw new Error("Channel attributes do not match either factory");
+			throw DataProcessingError.create(
+				"Channel attributes do not match either factory",
+				"SpannerFactory.load",
+			);
 		}
 		const channelSwap = new Spanner<TOld, TNew>(
 			id,
@@ -64,7 +83,7 @@ export class SpannerFactory<TOld extends SharedObject, TNew extends SharedObject
 			oldChannel,
 			newChannel,
 		);
-		channelSwap.load(services);
+		channelSwap.load(spannerServices);
 		return channelSwap;
 	}
 

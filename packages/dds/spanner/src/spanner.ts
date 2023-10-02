@@ -10,8 +10,6 @@ import {
 	IChannelAttributes,
 	IChannelFactory,
 	IChannelServices,
-	IDeltaConnection,
-	IDeltaHandler,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import {
@@ -22,34 +20,9 @@ import {
 } from "@fluidframework/runtime-definitions";
 
 import { SharedObject } from "@fluidframework/shared-object-base";
+import { SpannerHandle } from "./spannerHandle";
+import { SpannerChannelServices } from "./spannerChannelServices";
 
-interface IHackableDeltaConnection extends IDeltaConnection {
-	_handler: IDeltaHandler | undefined;
-}
-
-class SwappableHandle<TOld extends SharedObject, TNew extends SharedObject>
-	implements IFluidHandle<TOld | TNew>
-{
-	public constructor(private readonly value: Spanner<TOld, TNew>) {}
-	public get absolutePath(): string {
-		return this.value.target.handle.absolutePath;
-	}
-	public get isAttached(): boolean {
-		return this.value.target.handle.isAttached;
-	}
-	public attachGraph(): void {
-		return this.value.target.handle.attachGraph();
-	}
-	public async get(): Promise<TOld | TNew> {
-		return (await this.value.target.handle.get()) as TOld | TNew;
-	}
-	public bind(handle: IFluidHandle): void {
-		this.value.target.handle.bind(handle);
-	}
-	public get IFluidHandle(): IFluidHandle<TOld | TNew> {
-		return this.value.target.handle.IFluidHandle as IFluidHandle<TOld | TNew>;
-	}
-}
 /**
  * A channel that can swap Distributed Data Structures (DDS)
  */
@@ -63,17 +36,20 @@ export class Spanner<TOld extends SharedObject, TNew extends SharedObject> imple
 	) {
 		assert(newSharedObject !== undefined || oldSharedObject !== undefined, "Must provide one");
 	}
-	private services?: IChannelServices;
+
+	private services?: SpannerChannelServices;
 
 	public get target(): TOld | TNew {
 		const sharedObject = this.newSharedObject ?? this.oldSharedObject;
 		assert(sharedObject !== undefined, "Must provide one");
 		return sharedObject;
 	}
+
 	public get attributes(): IChannelAttributes {
 		return this.target.attributes;
 	}
-	public readonly handle: IFluidHandle<TOld | TNew> = new SwappableHandle(this);
+
+	public readonly handle: IFluidHandle<TOld | TNew> = new SpannerHandle(this);
 
 	public get IFluidLoadable(): IFluidLoadable {
 		return this;
@@ -109,22 +85,25 @@ export class Spanner<TOld extends SharedObject, TNew extends SharedObject> imple
 			incrementalSummaryContext,
 		);
 	}
+
 	public isAttached(): boolean {
 		return this.target.isAttached();
 	}
+
 	public connect(services: IChannelServices): void {
-		this.services = services;
+		assert(this.services === undefined, "Can only connect once");
+		this.services = new SpannerChannelServices(services);
 		this.target.connect(services);
 	}
 
-	public load(services: IChannelServices): void {
+	public load(services: SpannerChannelServices): void {
+		assert(this.services === undefined, "Can only connect once");
 		this.services = services;
 	}
 
 	public reconnect(): void {
 		assert(this.services !== undefined, "Must connect before reconnecting");
 		assert(this.newSharedObject !== undefined, "Can only reconnect the new shared object!");
-		(this.services.deltaConnection as unknown as IHackableDeltaConnection)._handler = undefined;
 		this.newSharedObject.connect(this.services);
 	}
 

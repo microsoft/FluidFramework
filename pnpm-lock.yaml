@@ -6941,9 +6941,10 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.1.0
       '@fluidframework/map': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
-      '@fluidframework/protocol-definitions': ^1.1.0
+      '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/shared-object-base': workspace:~
+      '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
       '@microsoft/api-extractor': ^7.37.0
       '@types/mocha': ^9.1.1
@@ -6965,9 +6966,10 @@ importers:
       '@fluidframework/datastore': link:../../runtime/datastore
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/protocol-definitions': 1.2.0
+      '@fluidframework/protocol-definitions': 3.0.0
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/shared-object-base': link:../shared-object-base
+      '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
     devDependencies:
       '@fluid-internal/test-dds-utils': link:../test-dds-utils
       '@fluid-tools/build-cli': 0.24.0_@types+node@16.18.53
@@ -17185,10 +17187,6 @@ packages:
       - supports-color
     dev: true
 
-  /@fluidframework/common-definitions/0.20.1:
-    resolution: {integrity: sha512-KaoQ7w2MDH5OeRKVatL5yVOCFg+9wD6bLSLFh1/TV1EZM46l49iBqO7UVjUtPE6BIm0jvvOzJXULGVSpzokX3g==}
-    dev: false
-
   /@fluidframework/common-definitions/1.0.0:
     resolution: {integrity: sha512-t0jm6u4RX77Fn3rnoxDmavzo26y/JBsNIz5iptnamBgUTOo37i7wXr9VPB8+AjCEd3kcXPyFEoNa8zIEvgOekQ==}
 
@@ -17889,12 +17887,6 @@ packages:
       '@fluidframework/gitresources': 2.0.1
       '@fluidframework/protocol-definitions': 3.0.0
       events: 3.3.0
-
-  /@fluidframework/protocol-definitions/1.2.0:
-    resolution: {integrity: sha512-2/GoupA8mjHD8gcjyn4SedqJStKlQAZxga5PtDBoh+xHsuugQRhsAHJCX+8tdqbSK4ZOo9z8iq/vWKVLUi5Dzw==}
-    dependencies:
-      '@fluidframework/common-definitions': 0.20.1
-    dev: false
 
   /@fluidframework/protocol-definitions/3.0.0:
     resolution: {integrity: sha512-FUIw5B5aTVJ831zAvsNUzKGFCkPoswmUeeYfZtVlq2wRpO2Ffm28TYhbkrAGFOtCd0BiByJDho6Oo+iZbNBgUA==}
