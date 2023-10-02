@@ -151,7 +151,10 @@ export interface IMapClearLocalOpMetadata {
 /**
  * Metadata for a local operation associated with a specific key entry in the map.
  */
-export type MapKeyLocalOpMetadata = IMapKeyEditLocalOpMetadata | IMapKeyAddLocalOpMetadata;
+export type MapKeyLocalOpMetadata =
+	| IMapKeyEditLocalOpMetadata
+	| IMapKeyAddLocalOpMetadata
+	| IMapKeyDeleteLocalOpMetadata;
 
 /**
  * Metadata for a local operation.

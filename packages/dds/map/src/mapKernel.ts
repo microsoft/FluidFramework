@@ -309,61 +309,6 @@ export class MapKernel {
 		};
 	}
 
-	/*
-	public entries(): IterableIterator<[string, any]> {
-		let localEntriesIterator;
-		let iterator: IterableIterator<[string, any]>;
-
-		if (!this.isAttached()) {
-			localEntriesIterator = this.data.entries();
-			iterator = {
-				next(): IteratorResult<[string, unknown]> {
-					const nextVal = localEntriesIterator.next();
-					return nextVal.done
-						? { value: undefined, done: true }
-						: // Unpack the stored value
-						  { value: [nextVal.value[0], nextVal.value[1]], done: false };
-				},
-				[Symbol.iterator](): IterableIterator<[string, unknown]> {
-					return this;
-				},
-			};
-			return iterator;
-		}
-
-		const keys = this.getKeysInCreationOrder();
-		localEntriesIterator = {
-			index: 0,
-			map: this.data,
-			next(): IteratorResult<[string, any]> {
-				if (this.index < keys.length) {
-					const key = keys[this.index++];
-					const localValue = this.map.get(key);
-					return { value: [key, localValue], done: false };
-				}
-				return { value: undefined, done: true };
-			},
-			[Symbol.iterator](): IterableIterator<[string, any]> {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-				return this;
-			},
-		};
-
-		iterator = {
-			next(): IteratorResult<[string, unknown]> {
-				const nextVal = localEntriesIterator.next();
-				return nextVal.done
-					? { value: undefined, done: true }
-					: // Unpack the stored value
-					  { value: [nextVal.value[0], nextVal.value[1]], done: false };
-			},
-			[Symbol.iterator](): IterableIterator<[string, unknown]> {
-				return this;
-			},
-		};
-		return iterator;
-	} */
-
 	/**
 	 * Get an iterator over the values in this map.
 	 * @returns The iterator
@@ -408,60 +353,6 @@ export class MapKernel {
 		};
 	}
 
-	/*
-	public values(): IterableIterator<any> {
-		let localValuesIterator;
-		let iterator: IterableIterator<any>;
-		if (!this.isAttached()) {
-			localValuesIterator = this.data.values();
-			iterator = {
-				next(): IteratorResult<unknown> {
-					const nextVal = localValuesIterator.next();
-					return nextVal.done
-						? { value: undefined, done: true }
-						: // Unpack the stored value
-						  { value: nextVal.value.value as unknown, done: false };
-				},
-				[Symbol.iterator](): IterableIterator<unknown> {
-					return this;
-				},
-			};
-			return iterator;
-		}
-
-		const keys = this.getKeysInCreationOrder();
-		localValuesIterator = {
-			index: 0,
-			map: this.data,
-			next(): IteratorResult<any> {
-				if (this.index < keys.length) {
-					const key = keys[this.index++];
-					const localValue = this.map.get(key);
-					return { value: localValue, done: false };
-				}
-				return { value: undefined, done: true };
-			},
-			[Symbol.iterator](): IterableIterator<any> {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-				return this;
-			},
-		};
-
-		iterator = {
-			next(): IteratorResult<any> {
-				const nextVal = localValuesIterator.next();
-				return nextVal.done
-					? { value: undefined, done: true }
-					: // Unpack the stored value
-					  { value: nextVal.value.value, done: false };
-			},
-			[Symbol.iterator](): IterableIterator<any> {
-				return this;
-			},
-		};
-		return iterator;
-	} */
-
 	/**
 	 * Get an iterator over the entries in this map.
 	 * @returns The iterator
@@ -501,14 +392,6 @@ export class MapKernel {
 			ackedKeys.push(node.data);
 			return true;
 		}, localKeys);
-		/*
-		const action: PropertyAction<number, string> = (node) => {
-			if (!this.ackedKeysTracker.has(node.data)) {
-				localKeys.push(node.data);
-			}
-			return true;
-		};
-		this.localKeysIndex.mapRange(action, localKeys); */
 
 		const keys = [...ackedKeys, ...localKeys];
 
@@ -566,7 +449,10 @@ export class MapKernel {
 			type: "set",
 			value: serializableValue,
 		};
-		this.submitMapKeyMessage(op, previousValue);
+
+		const messageId = this.getMapKeyMessageId(op);
+		this.updatePendingSetIds(op, messageId);
+		this.submitMapKeyMessage(op, messageId, previousValue);
 	}
 
 	/**
@@ -591,34 +477,37 @@ export class MapKernel {
 
 		// Remove the key from ack'd insertions or all associated local pending set op's, it depends on
 		// whether the key is already ack'd or not
-		const previousIndex: (number | number[])[] = [];
-
-		/*
-		if (this.ackedKeysIndex.includes(key)) {
-			const pos = this.ackedKeysIndex.indexOf(key);
-			previousPos.push(pos);
-			this.ackedKeysIndex.splice(pos, 1);
-		} */
-		if (this.ackedKeysTracker.has(key)) {
-			const pos = this.ackedKeysTracker.get(key) as number;
-			previousIndex.push(pos);
-			this.ackedKeysTracker.delete(key);
-			this.ackedKeysIndex.remove(pos);
-		}
-		if (this.pendingSetTracker.has(key)) {
-			const pendingSetOp = this.pendingSetTracker.get(key) as number[];
-			previousIndex.push([...pendingSetOp]);
-			this.localKeysIndex.remove(pendingSetOp[0]);
-			this.pendingSetTracker.delete(key);
-		}
+		const previousIndex = this.deleteKeysIndex(key);
 
 		const op: IMapDeleteOperation = {
 			key,
 			type: "delete",
 		};
-		this.submitMapKeyMessage(op, previousValue, previousIndex);
+
+		const messageId = this.getMapKeyMessageId(op);
+		this.updatePendingSetIds(op, messageId);
+		this.submitMapKeyMessage(op, messageId, previousValue, previousIndex);
 
 		return previousValue !== undefined;
+	}
+
+	private deleteKeysIndex(key: string): (number | number[])[] {
+		const previousIndex: (number | number[])[] = [];
+
+		if (this.ackedKeysTracker.has(key)) {
+			const index = this.ackedKeysTracker.get(key) as number;
+			previousIndex.push(index);
+			this.ackedKeysTracker.delete(key);
+			this.ackedKeysIndex.remove(index);
+		}
+		if (this.pendingSetTracker.has(key)) {
+			const pendingSetIds = this.pendingSetTracker.get(key) as number[];
+			previousIndex.push([...pendingSetIds]);
+			this.localKeysIndex.remove(pendingSetIds[0]);
+			this.pendingSetTracker.delete(key);
+		}
+
+		return previousIndex;
 	}
 
 	/**
@@ -635,20 +524,12 @@ export class MapKernel {
 
 		// If we are not attached, don't submit the op.
 		if (!this.isAttached()) {
-			this.clearAckedKeysIndices();
+			this.clearAckedKeysIndex();
 			return;
 		}
 
-		// Backup the data related to the insertion order maintaining
-		const ackedKeysTrackerCopy = new Map(this.ackedKeysTracker);
-		const pendingSetTrackerCopy = new Map(this.pendingSetTracker);
-		const pendingDeleteTrackerCopy = new Map(this.pendingDeleteTracker);
-
-		// Empty the data (has been backed-up)
-		this.clearAckedKeysIndices();
-		this.localKeysIndex.clear();
-		this.pendingSetTracker.clear();
-		this.pendingDeleteTracker.clear();
+		const { ackedKeysTrackerCopy, pendingSetTrackerCopy, pendingDeleteTrackerCopy } =
+			this.clearKeysIndex();
 
 		const op: IMapClearOperation = {
 			type: "clear",
@@ -660,6 +541,21 @@ export class MapKernel {
 			pendingSetTrackerCopy,
 			pendingDeleteTrackerCopy,
 		);
+	}
+
+	private clearKeysIndex() {
+		// Backup the data related to the insertion order maintaining
+		const ackedKeysTrackerCopy = new Map(this.ackedKeysTracker);
+		const pendingSetTrackerCopy = new Map(this.pendingSetTracker);
+		const pendingDeleteTrackerCopy = new Map(this.pendingDeleteTracker);
+
+		// Empty the data (has been backed-up)
+		this.clearAckedKeysIndex();
+		this.localKeysIndex.clear();
+		this.pendingSetTracker.clear();
+		this.pendingDeleteTracker.clear();
+
+		return { ackedKeysTrackerCopy, pendingSetTrackerCopy, pendingDeleteTrackerCopy };
 	}
 
 	/**
@@ -817,9 +713,9 @@ export class MapKernel {
 
 				// Remove the associated pending message id from the pendingSetTracker, it will not
 				// exist in localKeysIndex since it is an "edit" operation
-				const pendingSetOp = this.pendingSetTracker.get(op.key);
-				const index = pendingSetOp?.indexOf(localOpMetadata.pendingMessageId) as number;
-				pendingSetOp?.splice(index, 1);
+				const pendingSetIds = this.pendingSetTracker.get(op.key);
+				const index = pendingSetIds?.indexOf(localOpMetadata.pendingMessageId) as number;
+				pendingSetIds?.splice(index, 1);
 			} else if (
 				localOpMetadata.type === "delete" &&
 				localOpMetadata.previousValue !== undefined &&
@@ -1017,18 +913,18 @@ export class MapKernel {
 	private ackPendingSetOp(op: IMapKeyOperation, pendingMessageId?: number): void {
 		// If the message id of the "earliest" existing pending op matches the current pendingMessageId,
 		// we need to ack this op
-		const pendingSetOp = this.pendingSetTracker.get(op.key);
-		if (pendingSetOp !== undefined && pendingSetOp[0] === pendingMessageId) {
+		const pendingSetIds = this.pendingSetTracker.get(op.key);
+		if (pendingSetIds !== undefined && pendingSetIds[0] === pendingMessageId) {
 			this.addAckedKeyIndex(op.key);
-			pendingSetOp.shift();
-			if (pendingSetOp.length === 0) {
+			pendingSetIds.shift();
+			if (pendingSetIds.length === 0) {
 				this.pendingSetTracker.delete(op.key);
 			}
 			// re-order the local inserted keys
 			if (this.localKeysIndex.get(pendingMessageId) !== undefined) {
 				this.localKeysIndex.remove(pendingMessageId);
-				if (pendingSetOp.length > 0) {
-					this.localKeysIndex.put(pendingSetOp[0], op.key);
+				if (pendingSetIds.length > 0) {
+					this.localKeysIndex.put(pendingSetIds[0], op.key);
 				}
 			}
 		}
@@ -1050,7 +946,7 @@ export class MapKernel {
 		}
 	}
 
-	private clearAckedKeysIndices(): void {
+	private clearAckedKeysIndex(): void {
 		this.ackedKeysTracker.clear();
 		this.ackedKeysIndex.clear();
 	}
@@ -1063,7 +959,6 @@ export class MapKernel {
 		const messageHandlers = new Map<string, IMapMessageHandler>();
 		messageHandlers.set("clear", {
 			process: (op: IMapClearOperation, local, localOpMetadata) => {
-				// Clear the current acked keys
 
 				if (local) {
 					assert(
@@ -1075,12 +970,10 @@ export class MapKernel {
 						pendingClearMessageId === localOpMetadata.pendingMessageId,
 						0x2fb /* pendingMessageId does not match */,
 					);
-					// this.localKeysIndex.clear();
-					// this.pendingSetTracker.clear();
-					// this.pendingDeleteTracker.clear();
+
 					return;
 				}
-				this.clearAckedKeysIndices();
+				this.clearAckedKeysIndex();
 
 				if (this.pendingKeys.size > 0) {
 					this.clearExceptPendingKeys();
@@ -1111,10 +1004,20 @@ export class MapKernel {
 				);
 			},
 			applyStashedOp: (op: IMapClearOperation) => {
-				const copy = new Map<string, ILocalValue>(this.data);
+				const dataCopy = new Map<string, ILocalValue>(this.data);
 				this.clearCore(true);
+
+				const { ackedKeysTrackerCopy, pendingSetTrackerCopy, pendingDeleteTrackerCopy } =
+					this.clearKeysIndex();
 				// We don't reuse the metadata pendingMessageId but send a new one on each submit.
-				return createClearLocalOpMetadata(op, this.getMapClearMessageId(), copy);
+				return createClearLocalOpMetadata(
+					op,
+					this.getMapClearMessageId(),
+					dataCopy,
+					ackedKeysTrackerCopy,
+					pendingSetTrackerCopy,
+					pendingDeleteTrackerCopy,
+				);
 			},
 		});
 		messageHandlers.set("delete", {
@@ -1132,9 +1035,10 @@ export class MapKernel {
 			applyStashedOp: (op: IMapDeleteOperation) => {
 				// We don't reuse the metadata pendingMessageId but send a new one on each submit.
 				const previousValue = this.deleteCore(op.key, true);
-				// Adjust the keys order if the deleted key is already ack'd
-				// this.removeAckedKeyIndex(op.key);
-				return createKeyLocalOpMetadata(op, this.getMapKeyMessageId(op), previousValue);
+				const previousIndex = this.deleteKeysIndex(op.key);
+				const messageId = this.getMapKeyMessageId(op);
+				this.updatePendingSetIds(op, messageId);
+				return createKeyLocalOpMetadata(op, messageId, previousValue, previousIndex);
 			},
 		});
 		messageHandlers.set("set", {
@@ -1156,9 +1060,9 @@ export class MapKernel {
 				// We don't reuse the metadata pendingMessageId but send a new one on each submit.
 				const context = this.makeLocal(op.key, op.value);
 				const previousValue = this.setCore(op.key, context, true);
-				// Adjust the keys order if it is a fresh acked insertion
-				// this.addAckedKeyIndex(op.key);
-				return createKeyLocalOpMetadata(op, this.getMapKeyMessageId(op), previousValue);
+				const messageId = this.getMapKeyMessageId(op);
+				this.updatePendingSetIds(op, messageId);
+				return createKeyLocalOpMetadata(op, messageId, previousValue);
 			},
 		});
 
@@ -1202,7 +1106,7 @@ export class MapKernel {
 			this.pendingKeys.set(op.key, [pendingMessageId]);
 		}
 
-		this.updatePendingSetOps(op, pendingMessageId);
+		// this.updatePendingSetIds(op, pendingMessageId);
 
 		return pendingMessageId;
 	}
@@ -1220,7 +1124,7 @@ export class MapKernel {
 		}
 	}
 
-	private updatePendingSetOps(op: IMapKeyOperation, pendingMessageId: number): void {
+	private updatePendingSetIds(op: IMapKeyOperation, pendingMessageId: number): void {
 		// Store the messageId, for the creation order of unack'd keys
 		if (op.type === "set") {
 			if (!this.pendingSetTracker.has(op.key)) {
@@ -1245,15 +1149,11 @@ export class MapKernel {
 	 */
 	private submitMapKeyMessage(
 		op: IMapKeyOperation,
+		messageId: number,
 		previousValue?: ILocalValue,
 		previousIndex?: (number | number[])[],
 	): void {
-		const localMetadata = createKeyLocalOpMetadata(
-			op,
-			this.getMapKeyMessageId(op),
-			previousValue,
-			previousIndex,
-		);
+		const localMetadata = createKeyLocalOpMetadata(op, messageId, previousValue, previousIndex);
 		this.submitMessage(op, localMetadata);
 	}
 
@@ -1302,6 +1202,7 @@ export class MapKernel {
 
 		// We don't reuse the metadata pendingMessageId but send a new one on each submit.
 		const pendingMessageId = this.getMapKeyMessageId(op);
+		this.updatePendingSetIds(op, pendingMessageId);
 
 		const localMetadata =
 			localOpMetadata.type === "edit"
@@ -1319,11 +1220,6 @@ export class MapKernel {
 						previousIndex: localOpMetadata.previousIndex,
 				  };
 
-		/*
-		const localMetadata =
-			localOpMetadata.type === "edit"
-				? { type: "edit", pendingMessageId, previousValue: localOpMetadata.previousValue }
-				: { type: "add", pendingMessageId }; */
 		this.submitMessage(op, localMetadata);
 	}
 }

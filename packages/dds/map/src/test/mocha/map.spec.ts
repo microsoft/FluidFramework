@@ -20,6 +20,7 @@ import {
 	IMapClearOperation,
 	IMapKeyEditLocalOpMetadata,
 	IMapClearLocalOpMetadata,
+	IMapKeyDeleteLocalOpMetadata,
 } from "../../internalInterfaces";
 import { MapFactory, SharedMap } from "../../map";
 import { createConnectedMap, createLocalMap, TestSharedMap } from "./mapUtils";
@@ -386,8 +387,8 @@ describe("Map", () => {
 				assert.equal(metadata.type, "add");
 				assert.equal(metadata.pendingMessageId, 2);
 				const op3: IMapDeleteOperation = { type: "delete", key: "key2" };
-				metadata = map1.testApplyStashedOp(op3) as IMapKeyEditLocalOpMetadata;
-				assert.equal(metadata.type, "edit");
+				metadata = map1.testApplyStashedOp(op3) as IMapKeyDeleteLocalOpMetadata;
+				assert.equal(metadata.type, "delete");
 				assert.equal(metadata.pendingMessageId, 3);
 				assert.equal(metadata.previousValue.value, "value2");
 				const op4: IMapClearOperation = { type: "clear" };

@@ -9,6 +9,7 @@ import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
+	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { MapFactory, SharedMap } from "../../map";
@@ -72,6 +73,26 @@ describe("Map Iteration Order", () => {
 			map.set("1", 3);
 
 			assert.deepEqual(Array.from(map.keys()), ["2", "1"]);
+		});
+
+		it.skip("serialize/load", async () => {
+			map.set("2", 1);
+			map.set("1", 2);
+			map.set("4", 5);
+
+			const containerRuntimeFactory = new MockContainerRuntimeFactory();
+			const dataStoreRuntime = new MockFluidDataStoreRuntime();
+			const containerRuntime =
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+			const services = MockSharedObjectServices.createFromSummary(
+				map.getAttachSummary().summary,
+			);
+			services.deltaConnection = dataStoreRuntime.createDeltaConnection();
+
+			const loadedMap = new SharedMap("loadedMap", dataStoreRuntime, MapFactory.Attributes);
+			await loadedMap.load(services);
+
+			assert.deepEqual(Array.from(loadedMap.keys()), ["2", "1", "4"]);
 		});
 	});
 
