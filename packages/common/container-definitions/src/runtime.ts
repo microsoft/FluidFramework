@@ -211,7 +211,6 @@ export interface IContainerContext {
 	 * @deprecated 2.0.0-internal.5.2.0 - The docId is already logged by the {@link IContainerContext.taggedLogger} for
 	 * telemetry purposes, so this is generally unnecessary for telemetry.
 	 * If the id is needed for other purposes it should be passed to the consumer explicitly.
-	 * This member will be removed in the 2.0.0-internal.7.0.0 release.
 	 */
 	readonly id: string;
 }
