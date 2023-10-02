@@ -249,7 +249,111 @@ describe("unboxed unit tests", () => {
 		});
 
 		describe("Value field", () => {
-			// TODO
+			it("Boolean", () => {
+				const { fieldSchema, context, cursor } = createValueLeafTree(
+					ValueSchema.Boolean,
+					true,
+				);
+				assert.equal(unboxedField(context, fieldSchema, cursor), true);
+			});
+
+			it("Number", () => {
+				const { fieldSchema, context, cursor } = createValueLeafTree(
+					ValueSchema.Number,
+					42,
+				);
+				assert.equal(unboxedField(context, fieldSchema, cursor), 42);
+			});
+
+			it("String", () => {
+				const { fieldSchema, context, cursor } = createValueLeafTree(
+					ValueSchema.String,
+					"Hello world",
+				);
+				assert.equal(unboxedField(context, fieldSchema, cursor), "Hello world");
+			});
+
+			// TODO: Fluid Handle
+
+			it("Struct", () => {
+				const builder = new SchemaBuilder("test");
+				const stringLeafSchema = builder.leaf("string", ValueSchema.String);
+				const booleanLeafSchema = builder.leaf("boolean", ValueSchema.Boolean);
+				const structSchema = builder.struct("struct", {
+					foo: SchemaBuilder.fieldValue(stringLeafSchema),
+					bar: SchemaBuilder.fieldSequence(booleanLeafSchema),
+				});
+				const rootSchema = SchemaBuilder.field(FieldKinds.value, structSchema);
+				const schema = builder.intoDocumentSchema(rootSchema);
+
+				const initialTree = {
+					foo: "Hello world",
+					bar: [true, false, true],
+				};
+
+				const { context, cursor } = initializeTreeWithContent(schema, initialTree);
+
+				const unboxed = unboxedField(context, rootSchema, cursor);
+
+				assert(unboxed !== undefined);
+				assert.equal(unboxed.foo, "Hello world");
+				assert.equal(unboxed.bar.length, 3);
+				assert.equal(unboxed.bar.at(0), true);
+				assert.equal(unboxed.bar.at(1), false);
+				assert.equal(unboxed.bar.at(2), true);
+			});
+
+			it("Recursive struct", () => {
+				const builder = new SchemaBuilder("test");
+				const stringLeafSchema = builder.leaf("string", ValueSchema.String);
+				const structSchema = builder.structRecursive("struct", {
+					name: SchemaBuilder.fieldValue(stringLeafSchema),
+					child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => structSchema),
+				});
+				const rootSchema = SchemaBuilder.field(FieldKinds.value, structSchema);
+				const schema = builder.intoDocumentSchema(rootSchema);
+
+				const initialTree = {
+					name: "Foo",
+					child: {
+						name: "Bar",
+						child: undefined,
+					},
+				};
+
+				const { context, cursor } = initializeTreeWithContent(schema, initialTree);
+
+				const unboxed = unboxedField(context, rootSchema, cursor);
+
+				assert(unboxed !== undefined);
+				assert.equal(unboxed.name, "Foo");
+				assert(unboxed.child !== undefined);
+				assert.equal(unboxed.child.name, "Bar");
+				assert.equal(unboxed.child.child, undefined);
+			});
+
+			it("Union", () => {
+				const builder = new SchemaBuilder("test");
+				const stringLeafSchema = builder.leaf("string", ValueSchema.String);
+				const booleanLeafSchema = builder.leaf("boolean", ValueSchema.Boolean);
+				const rootSchema = SchemaBuilder.field(
+					FieldKinds.optional,
+					stringLeafSchema,
+					booleanLeafSchema,
+				);
+				const schema = builder.intoDocumentSchema(rootSchema);
+
+				const initialTree = true;
+
+				const { context, cursor } = initializeTreeWithContent(schema, initialTree);
+
+				const unboxed = unboxedField(context, rootSchema, cursor);
+
+				// Field type is not known, so node will not be unboxed
+				assert(unboxed !== undefined);
+				assert.equal(unboxed.type, "boolean");
+				assert.equal(unboxed.value, true);
+			});
 		});
 
 		describe("Sequence field", () => {
