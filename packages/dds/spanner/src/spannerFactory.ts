@@ -84,7 +84,7 @@ export class SpannerFactory<TOld extends SharedObject, TNew extends SharedObject
 			oldChannel,
 			newChannel,
 		);
-		channelSwap.load(spannerServices, channelSwap.migrate);
+		channelSwap.load(spannerServices);
 		return channelSwap;
 	}
 

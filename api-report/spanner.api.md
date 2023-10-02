@@ -8,11 +8,15 @@ import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
+import { IChannelStorageService } from '@fluidframework/datastore-definitions';
+import { IDeltaConnection } from '@fluidframework/datastore-definitions';
+import { IDeltaHandler } from '@fluidframework/datastore-definitions';
 import { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
+import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
@@ -36,10 +40,18 @@ export class Spanner<TOld extends SharedObject, TNew extends SharedObject> imple
     get IFluidLoadable(): IFluidLoadable;
     // (undocumented)
     isAttached(): boolean;
+    // Warning: (ae-forgotten-export) The symbol "SpannerChannelServices" needs to be exported by the entry point index.d.ts
+    //
     // (undocumented)
-    load(services: IChannelServices): void;
+    load(services: SpannerChannelServices): void;
+    // (undocumented)
+    migrate: (oldSharedObject: TOld, newSharedObject: TNew) => void;
+    // (undocumented)
+    processMigrateOp(message: ISequencedDocumentMessage): boolean;
     // (undocumented)
     reconnect(): void;
+    // (undocumented)
+    submitMigrateOp(): void;
     // (undocumented)
     summarize(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined): Promise<ISummaryTreeWithStats>;
     // (undocumented)
