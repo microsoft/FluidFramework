@@ -11,10 +11,6 @@
 
 import {
 	MakeNominal,
-	Covariant,
-	Contravariant,
-	Bivariant,
-	Invariant,
 	requireTrue,
 	requireFalse,
 	isAssignableTo,
@@ -50,40 +46,33 @@ declare class Derived2 extends Nominal1 {
 
 declare class Generic<_T> {}
 
-declare class GenericCovariant<T> {
-	protected _typeCheck?: Covariant<T>;
+declare class GenericCovariant<out _T> {
+	protected _typeCheck?: MakeNominal;
 }
 
-declare class GenericContravariant<T> {
-	protected _typeCheck?: Contravariant<T>;
+declare class GenericContravariant<in _T> {
+	protected _typeCheck?: MakeNominal;
 }
 
-declare class GenericBivariant<T> {
-	protected _typeCheck?: Bivariant<T>;
+declare class GenericInvariant<in out _T> {
+	protected _typeCheck?: MakeNominal;
 }
 
-declare class GenericInvariant<T> {
-	protected _typeCheck?: Invariant<T>;
+declare class GenericMulti<in out _T, out _K> {
+	protected _typeCheck?: MakeNominal;
 }
 
-declare class GenericMulti<T, K> {
-	protected _typeCheck?: Invariant<T> & Covariant<K>;
+interface GenericCovariantInterface<out _T> {
+
 }
 
-interface GenericCovariantInterface<T> {
-	_typeCheck?: Covariant<T>;
+interface GenericContravariantInterface<in _T> {
 }
 
-interface GenericContravariantInterface<T> {
-	_typeCheck?: Contravariant<T>;
-}
 
-interface GenericBivariantInterface<T> {
-	_typeCheck?: Bivariant<T>;
-}
 
-interface GenericInvariantInterface<T> {
-	_typeCheck?: Invariant<T>;
+interface GenericInvariantInterface<in out _T> {
+
 }
 
 // Check that interface can be implemented without needing extra members
@@ -140,10 +129,6 @@ export type EnforceTypeCheckTests =
 	| requireFalse<isAssignableTo<GenericContravariant<Derived1>, GenericContravariant<Nominal1>>>
 	| requireTrue<isAssignableTo<GenericContravariant<Nominal1>, GenericContravariant<Derived1>>>
 
-	// test Bivariant
-	| requireFalse<isAssignableTo<GenericBivariant<Nominal1>, GenericBivariant<Nominal2>>>
-	| requireTrue<isAssignableTo<GenericBivariant<Derived1>, GenericBivariant<Nominal1>>>
-	| requireTrue<isAssignableTo<GenericBivariant<Nominal1>, GenericBivariant<Derived1>>>
 
 	// test Invariant
 	| requireFalse<isAssignableTo<GenericInvariant<Nominal1>, GenericInvariant<Nominal2>>>
@@ -184,17 +169,6 @@ export type EnforceTypeCheckTests =
 				GenericContravariantInterface<Nominal1>,
 				GenericContravariantInterface<Derived1>
 			>
-	  >
-
-	// test Bivariant Interface
-	| requireFalse<
-			isAssignableTo<GenericBivariantInterface<Nominal1>, GenericBivariantInterface<Nominal2>>
-	  >
-	| requireTrue<
-			isAssignableTo<GenericBivariantInterface<Derived1>, GenericBivariantInterface<Nominal1>>
-	  >
-	| requireTrue<
-			isAssignableTo<GenericBivariantInterface<Nominal1>, GenericBivariantInterface<Derived1>>
 	  >
 
 	// test Invariant Interface
@@ -242,9 +216,14 @@ export type EnforceTypeCheckTests =
 	| requireFalse<isStrictSubset<[1, true], [1, true]>>
 	| requireFalse<isStrictSubset<1 | 2, 1>>;
 
-// negative tests (should not build: enable these to check that tests are actually working)
-// type _falseIsTrue = requireTrue<false>;
-// type _trueIsFalse = requireFalse<true>;
-// type _emptyNotAssignable = requireFalse<isAssignableTo<Empty1, Empty2>>;
-// type _numberAssignableToString = requireTrue<isAssignableTo<number, string>>;
-// type _anyNotAny = requireFalse<isAny<any>>;
+// negative tests (should not build)
+// @ts-expect-error negative test
+type _falseIsTrue = requireTrue<false>;
+// @ts-expect-error negative test
+type _trueIsFalse = requireFalse<true>;
+// @ts-expect-error negative test
+type _emptyNotAssignable = requireFalse<isAssignableTo<Empty1, Empty2>>;
+// @ts-expect-error negative test
+type _numberAssignableToString = requireTrue<isAssignableTo<number, string>>;
+// @ts-expect-error negative test
+type _anyNotAny = requireFalse<isAny<any>>;

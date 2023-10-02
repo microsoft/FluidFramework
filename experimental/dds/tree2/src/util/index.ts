@@ -32,7 +32,6 @@ export { OffsetList, OffsetListFactory } from "./offsetList";
 export { TransactionResult } from "./transactionResult";
 export {
 	areSafelyAssignable,
-	Bivariant,
 	Contravariant,
 	Covariant,
 	eitherIsAny,
