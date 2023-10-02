@@ -376,6 +376,17 @@ export interface HtmlRenderContext extends TextFormatting {
     prettyFormatting?: boolean;
 }
 
+declare namespace HtmlRenderer {
+    export {
+        renderApiModelAsHtml as renderApiModel,
+        renderDocumentsAsHtml as renderDocuments,
+        renderDocument,
+        renderNode,
+        renderNodes
+    }
+}
+export { HtmlRenderer }
+
 // @alpha
 export interface HtmlRenderers {
     [documentationNodeKind: string]: (node: DocumentationNode, writer: DocumentWriter, context: HtmlRenderContext) => void;
@@ -465,6 +476,17 @@ export interface MarkdownRenderContext extends TextFormatting {
     readonly insideTable?: boolean;
 }
 
+declare namespace MarkdownRenderer {
+    export {
+        renderApiModelAsMarkdown as renderApiModel,
+        renderDocumentsAsMarkdown as renderDocuments,
+        renderDocument_2 as renderDocument,
+        renderNode_2 as renderNode,
+        renderNodes_2 as renderNodes
+    }
+}
+export { MarkdownRenderer }
+
 // @public
 export interface MarkdownRenderers {
     [documentationNodeKind: string]: (node: DocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext) => void;
@@ -509,34 +531,34 @@ export class PlainTextNode extends DocumentationLiteralNodeBase<string> implemen
 export { ReleaseTag }
 
 // @alpha
-export function renderApiModelAsHtml(transformConfig: Omit<ApiItemTransformationConfiguration, "logger">, renderConfig: Omit<HtmlRenderConfiguration, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
+function renderApiModelAsHtml(transformConfig: Omit<ApiItemTransformationConfiguration, "logger">, renderConfig: Omit<HtmlRenderConfiguration, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
 
 // @public
-export function renderApiModelAsMarkdown(transformConfig: Omit<ApiItemTransformationConfiguration, "logger">, renderConfig: Omit<MarkdownRenderConfiguration, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
+function renderApiModelAsMarkdown(transformConfig: Omit<ApiItemTransformationConfiguration, "logger">, renderConfig: Omit<MarkdownRenderConfiguration, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
 
 // @alpha
-export function renderDocumentAsHtml(document: DocumentNode, config: HtmlRenderConfiguration): string;
+function renderDocument(document: DocumentNode, config: HtmlRenderConfiguration): string;
 
 // @public
-export function renderDocumentAsMarkdown(document: DocumentNode, config: MarkdownRenderConfiguration): string;
+function renderDocument_2(document: DocumentNode, config: MarkdownRenderConfiguration): string;
 
 // @alpha
-export function renderDocumentsAsHtml(documents: DocumentNode[], renderConfig: Omit<HtmlRenderConfiguration, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
+function renderDocumentsAsHtml(documents: DocumentNode[], renderConfig: Omit<HtmlRenderConfiguration, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
 
 // @public
-export function renderDocumentsAsMarkdown(documents: DocumentNode[], renderConfig: Omit<MarkdownRenderConfiguration, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
+function renderDocumentsAsMarkdown(documents: DocumentNode[], renderConfig: Omit<MarkdownRenderConfiguration, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
 
 // @alpha
-export function renderNodeAsHtml(node: DocumentationNode, writer: DocumentWriter, context: HtmlRenderContext): void;
+function renderNode(node: DocumentationNode, writer: DocumentWriter, context: HtmlRenderContext): void;
 
 // @public
-export function renderNodeAsMarkdown(node: DocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext): void;
+function renderNode_2(node: DocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext): void;
 
 // @alpha
-export function renderNodesAsHtml(children: DocumentationNode[], writer: DocumentWriter, childContext: HtmlRenderContext): void;
+function renderNodes(children: DocumentationNode[], writer: DocumentWriter, childContext: HtmlRenderContext): void;
 
 // @public
-export function renderNodesAsMarkdown(children: DocumentationNode[], writer: DocumentWriter, childContext: MarkdownRenderContext): void;
+function renderNodes_2(children: DocumentationNode[], writer: DocumentWriter, childContext: MarkdownRenderContext): void;
 
 // @public
 export class SectionNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {
