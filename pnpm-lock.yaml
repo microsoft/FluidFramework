@@ -7321,6 +7321,7 @@ importers:
       '@types/jsrsasign': ^8.0.8
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
+      '@types/uuid': ^9.0.2
       c8: ^7.7.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
@@ -7367,6 +7368,7 @@ importers:
       '@types/jsrsasign': 8.0.13
       '@types/mocha': 9.1.1
       '@types/node': 16.18.38
+      '@types/uuid': 9.0.2
       c8: 7.13.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -7746,7 +7748,6 @@ importers:
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/routerlicious-driver': workspace:~
-      '@fluidframework/server-services-client': ^2.0.1
       '@fluidframework/test-tools': ^0.2.158186
       '@fluidframework/tinylicious-driver-previous': npm:@fluidframework/tinylicious-driver@2.0.0-internal.7.0.0
       '@microsoft/api-extractor': ^7.37.0
@@ -7769,7 +7770,6 @@ importers:
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/protocol-definitions': 3.0.0
       '@fluidframework/routerlicious-driver': link:../routerlicious-driver
-      '@fluidframework/server-services-client': 2.0.1
       jsrsasign: 10.8.6
       uuid: 9.0.0
     devDependencies:
@@ -8797,6 +8797,7 @@ importers:
       '@fluid-tools/build-cli': ^0.24.0
       '@fluidframework/build-common': ^2.0.0
       '@fluidframework/build-tools': ^0.24.0
+      '@fluidframework/container-loader': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.1.0
@@ -8819,6 +8820,7 @@ importers:
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
+      '@fluidframework/container-loader': link:../container-loader
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
@@ -11073,7 +11075,6 @@ importers:
       '@fluidframework/routerlicious-driver': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/server-local-server': ^2.0.1
-      '@fluidframework/server-services-client': ^2.0.1
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
       '@fluidframework/tool-utils': workspace:~
@@ -11082,6 +11083,7 @@ importers:
       '@types/fs-extra': ^9.0.11
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
+      '@types/uuid': ^9.0.2
       axios: ^0.26.0
       buffer: ^6.0.3
       c8: ^7.7.1
@@ -11120,7 +11122,6 @@ importers:
       '@fluidframework/routerlicious-driver': link:../../drivers/routerlicious-driver
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/server-local-server': 2.0.1
-      '@fluidframework/server-services-client': 2.0.1
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@fluidframework/tool-utils': link:../../utils/tool-utils
@@ -11144,6 +11145,7 @@ importers:
       '@types/fs-extra': 9.0.13
       '@types/mocha': 9.1.1
       '@types/node': 16.18.38
+      '@types/uuid': 9.0.2
       c8: 7.13.0
       cross-env: 7.0.3
       eslint: 8.6.0
