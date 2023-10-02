@@ -16,11 +16,12 @@ module.exports = {
 				allowList: {
 					// Industry-standard index variable name.
 					i: true,
-
-					// Existing export - renaming would be a breaking change.
-					// Leaving this alone for now, but this can be reconsidered in the future.
-					AzureClientProps: true,
 				},
+				ignore: [
+					// "props" has become something of an industry standard abbreviation for "properties".
+					// Allow names to include "props" / "Props".
+					"[pP]rops",
+				],
 			},
 		],
 	},
