@@ -42,13 +42,15 @@ export interface ICache {
 	 * Increments key value by 1. If the key does not exist, its value will be first set to 0 and then incremented.
 	 *
 	 * @param key - Key to increment value for.
+	 * @param prefixOverride - Prefix to append to the key, handled by the implementation if left undefined. Empty string will not add any prefix to the key.
 	 */
-	incr?(key: string): Promise<number>;
+	incr?(key: string, prefixOverride?: string): Promise<number>;
 
 	/**
 	 * Decrements key value by 1. If the key does not exist, its value will be first set to 0 and then decremented.
 	 *
 	 * @param key - Key to decrement value for.
+	 * @param prefixOverride - Prefix to append to the key, handled by the implementation if left undefined. Empty string will not add any prefix to the key.
 	 */
-	decr?(key: string): Promise<number>;
+	decr?(key: string, prefixOverride?: string): Promise<number>;
 }

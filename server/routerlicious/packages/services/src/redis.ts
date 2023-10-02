@@ -60,14 +60,14 @@ export class RedisCache implements ICache {
 			const result = await this.client.del(keyToDelete);
 			return result === 1;
 		} catch (error) {
-			Lumberjack.error(`Error deleting from cache.`, undefined, error);
+			Lumberjack.error(`Error deleting ${key} from cache.`, undefined, error);
 			return false;
 		}
 	}
 
-	public async incr(key: string): Promise<number> {
+	public async incr(key: string, prefixOverride?: string): Promise<number> {
 		try {
-			const incrKey: string = this.getKey(key);
+			const incrKey: string = this.getKey(key, prefixOverride);
 			return this.client.incr(incrKey);
 		} catch (error) {
 			Lumberjack.error(
@@ -79,9 +79,9 @@ export class RedisCache implements ICache {
 		}
 	}
 
-	public async decr(key: string): Promise<number> {
+	public async decr(key: string, prefixOverride?: string): Promise<number> {
 		try {
-			const decrKey: string = this.getKey(key);
+			const decrKey: string = this.getKey(key, prefixOverride);
 			return this.client.decr(decrKey);
 		} catch (error) {
 			Lumberjack.error(
