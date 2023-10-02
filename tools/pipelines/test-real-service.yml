@@ -167,10 +167,6 @@ stages:
     condition: always()
     dependsOn:
       - e2e_local_server
-      - e2e_tinylicious
-      - e2e_routerlicious
-      - e2e_frs
-      - e2e_odsp
 
     jobs:
       - template: templates/include-test-perf-benchmarks.yml

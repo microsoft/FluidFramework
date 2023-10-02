@@ -8,10 +8,11 @@ echo BUILD_SOURCES_DIRECTORY=$BUILD_SOURCES_DIRECTORY
 
 echo "Creating output folder"
 mkdir -p "$TEST_WORKSPACE/passRateOutput"
-apt-get install -y jq
+sudo apt-get install -y jq
 echo "Executing curl command ..."
 echo "curl -u ':<REDACTED>' 'https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline'"
-curl -s -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline?api-version=6.0-preview.1" > "$TEST_WORKSPACE/passRateOutput/output.json"
+response=$(curl -s -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline?api-version=6.0-preview.1" > "$TEST_WORKSPACE/passRateOutput/output.json")
+echo "$response"
 pwd;
 ls -laR "$TEST_WORKSPACE/passRateOutput/output.json"
 stages=($(jq -r '.records[] | select(.type == "Stage") | .identifier' "$TEST_WORKSPACE/passRateOutput/output.json"))
