@@ -7,12 +7,14 @@ import { Package, FluidRepo } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { command as execCommand } from "execa";
 import { readFile, writeFile } from "fs/promises";
+import * as semver from "semver";
 import { CleanOptions } from "simple-git";
 
 import { BaseCommand } from "../../base";
 import { releaseGroupFlag } from "../../flags";
 import { Repository } from "../../lib";
 import { isReleaseGroup } from "../../releaseGroups";
+import { fromInternalScheme, isInternalVersionScheme } from "@fluid-tools/version-tools";
 
 async function replaceInFile(search: string, replace: string, path: string): Promise<void> {
 	const content = await readFile(path, "utf8");
@@ -44,10 +46,20 @@ export default class GenerateChangeLogCommand extends BaseCommand<typeof Generat
 	private repo?: Repository;
 
 	private async processPackage(pkg: Package): Promise<void> {
-		const { directory } = pkg;
-		const version = this.flags.version ?? pkg.version;
+		const { directory, version: pkgVersion } = pkg;
 
-		await replaceInFile("## 2.0.0\n", `## ${version}\n`, `${directory}/CHANGELOG.md`);
+    // This is the version that the changesets tooling calculates by default. It does a semver major bump on the current
+    // version.
+		const changesetsCalculatedVersion = isInternalVersionScheme(pkgVersion)
+			? fromInternalScheme(pkgVersion)[0].version
+			: semver.inc(pkgVersion, "major");
+		const version = this.flags.version ?? pkgVersion;
+
+		await replaceInFile(
+			`## ${changesetsCalculatedVersion}\n`,
+			`## ${version}\n`,
+			`${directory}/CHANGELOG.md`,
+		);
 		await replaceInFile(
 			`## ${version}\n\n## `,
 			`## ${version}\n\nDependency updates only.\n\n## `,
@@ -66,7 +78,14 @@ export default class GenerateChangeLogCommand extends BaseCommand<typeof Generat
 			this.error("ReleaseGroup is possibly 'undefined'");
 		}
 
-		await execCommand("pnpm exec changeset version", { cwd: gitRoot });
+		const monorepo =
+			releaseGroup === undefined ? undefined : context.repo.releaseGroups.get(releaseGroup);
+		if (monorepo === undefined) {
+			this.error(`Release group ${releaseGroup} not found in repo config`, { exit: 1 });
+		}
+
+		const execDir = monorepo?.directory ?? gitRoot;
+		await execCommand("pnpm exec changeset version", { cwd: execDir });
 
 		const packagesToCheck = isReleaseGroup(releaseGroup)
 			? context.packagesInReleaseGroup(releaseGroup)
@@ -79,10 +98,10 @@ export default class GenerateChangeLogCommand extends BaseCommand<typeof Generat
 			this.error(`Error installing dependencies for: ${releaseGroup}`);
 		}
 
-		this.repo = new Repository({ baseDir: gitRoot });
+		this.repo = new Repository({ baseDir: execDir });
 
 		// git add the deleted changesets
-		await this.repo.gitClient.add(".changeset");
+		await this.repo.gitClient.add(".changeset/**");
 
 		// git restore the package.json files that were changed by changeset version
 		await this.repo.gitClient.raw("restore", "**package.json");
