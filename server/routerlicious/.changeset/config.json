@@ -9,11 +9,7 @@
 		}
 	],
 	"commit": false,
-	"fixed": [
-		[
-			"@fluidframework/*"
-		]
-	],
+	"fixed": [["@fluidframework/*"]],
 	"linked": [],
 	"access": "public",
 	"baseBranch": "main",
