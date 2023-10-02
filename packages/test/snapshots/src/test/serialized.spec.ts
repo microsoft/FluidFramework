@@ -24,28 +24,28 @@ import { ConsensusRegisterCollection } from "@fluidframework/register-collection
 import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/ordered-collection";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
+import { getTestContent, skipOrFailIfTestContentMissing } from "../testContent";
 
 describe(`Container Serialization Backwards Compatibility`, () => {
 	const loaderContainerTracker = new LoaderContainerTracker();
-	let filename: string;
-	const contentFolder = "content/serializedContainerTestContent";
+	const contentFolder = getTestContent("serializedContainerTestContent");
 
 	// Ideally we would have each test call this.skip() but in this case they're created dynamically
 	// based on the contents of the folder which might or might not exist, so this is the alternative
 	// I came up with.
-	if (!fs.existsSync(contentFolder)) {
-		it(`Skipping dynamic tests in this suite - test collateral folder (${contentFolder}) doesn't exist`, function () {
-			this.skip();
+	if (!contentFolder.exists) {
+		it(`dynamic tests in this suite - test collateral folder (${contentFolder.path}) doesn't exist`, function () {
+			skipOrFailIfTestContentMissing(this, contentFolder);
 		});
 		return;
 	}
 
-	for (filename of recurseFiles(contentFolder)) {
-		tests();
+	for (const filename of recurseFiles(contentFolder.path)) {
+		tests(filename);
 	}
 
-	function tests(): void {
-		const filenameShort = filename.slice(contentFolder.length + 1);
+	function tests(filename: string): void {
+		const filenameShort = filename.slice(contentFolder.path.length + 1);
 		it(`Rehydrate container from ${filenameShort} and check contents before attach`, async () => {
 			const snapshotTree = fs.readFileSync(filename, "utf8");
 
