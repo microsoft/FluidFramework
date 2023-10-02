@@ -728,7 +728,7 @@ export interface AbsentSpec {
 	end?: never;
 }
 
-export type ChangeArgs = (PositionSpec | AbsentSpec) & PropertyDeltaSpec;
+export type ChangeArgs = { start: number; end: number; props?: PropertySet; } | { props: PropertySet; };
 
 // solely for type checking in the implementations of add and change - will be removed once
 // deprecated signatures are removed
@@ -849,7 +849,6 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * @param start - interval start position (inclusive)
 	 * @param end - interval end position (exclusive)
 	 * @param props - properties of the interval
-	 * @param stickiness - {@link (IntervalStickiness:type)} to apply to the added interval.
 	 * @returns - the created interval
 	 * @remarks - See documentation on {@link SequenceInterval} for comments on interval endpoint semantics: there are subtleties
 	 * with how the current half-open behavior is represented.
