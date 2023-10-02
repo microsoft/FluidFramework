@@ -37,20 +37,10 @@ describe("FluidSerializer", () => {
 
 	// Type tests for FluidSerializableReadOnly
 	{
-		const allows: FluidSerializableReadOnly[] = [
-			[],
-			{},
-			5,
-			null,
-			"",
-			{ x: 5 },
-			[[]],
-			true,
-			new MockHandle(1),
-		];
+		const use = (x: FluidSerializableReadOnly) => undefined;
+		[[], {}, 5, null, "", { x: 5 }, [[]], true, new MockHandle(1)].map(use);
 		const symbol: unique symbol = Symbol("test");
 
-		const use = (x: FluidSerializableReadOnly) => undefined;
 		// @ts-expect-error disallow undefined
 		use(undefined);
 		// @ts-expect-error disallow symbols
