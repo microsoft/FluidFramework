@@ -34,7 +34,7 @@ export class RedisCache implements ICache {
 
 	public async get<T>(key: string, prefixOverride?: string): Promise<T> {
 		let stringValue: string = await this.client.get(this.getKey(key, prefixOverride));
-		if (typeof(stringValue) !== "string") {
+		if (typeof stringValue !== "string") {
 			// This is for backwards compat, incase a non-string value was previously stored in redis
 			stringValue = JSON.stringify(stringValue);
 		}
