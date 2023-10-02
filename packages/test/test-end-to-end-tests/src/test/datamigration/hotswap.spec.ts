@@ -69,7 +69,7 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 		provider = getTestObjectProvider();
 	});
 
-	const originalValue = "123";
+	const originalValue = "456";
 	const migrateKey = "key";
 	const newKey = "other";
 	const newValue = "value";
@@ -78,7 +78,7 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 		const container1 = await provider.createContainer(oldRuntimeFactory);
 		const testObj1 = await requestFluidObject<TestDataObject>(container1, "/");
 		const cell1 = testObj1.getSharedObject<SharedCell>();
-		cell1.set(originalValue);
+		cell1.set("123");
 		container1.close();
 
 		const container2 = await provider.loadContainer(newRuntimeFactory);
@@ -90,7 +90,7 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 		const swappable3 = testObj3.getSharedObject<Spanner<SharedCell, SharedMap>>();
 
 		await provider.ensureSynchronized();
-		(swappable2.target as SharedCell).set("456");
+		(swappable2.target as SharedCell).set(originalValue);
 		await provider.ensureSynchronized();
 
 		// Hot swap
