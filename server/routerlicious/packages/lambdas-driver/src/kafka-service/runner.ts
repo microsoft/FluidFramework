@@ -72,7 +72,7 @@ export class KafkaRunner implements IRunner {
 
 			this.runnerMetric.setProperties(lumberProperties);
 
-			if (errorData.errorLabel) {
+			if (errorData?.errorLabel) {
 				this.runnerMetric.setProperty("errorLabel", errorData.errorLabel);
 			}
 
