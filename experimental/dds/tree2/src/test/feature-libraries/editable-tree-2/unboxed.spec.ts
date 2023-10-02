@@ -422,6 +422,42 @@ describe("unboxed unit tests", () => {
 			});
 
 			// TODO: Fluid Handle
+
+			it("Struct", () => {
+				const builder = new SchemaBuilder("test");
+				const stringLeafSchema = builder.leaf("string", ValueSchema.String);
+				const booleanLeafSchema = builder.leaf("boolean", ValueSchema.Boolean);
+				const structSchema = builder.struct("struct", {
+					foo: SchemaBuilder.fieldValue(stringLeafSchema),
+					bar: SchemaBuilder.fieldOptional(booleanLeafSchema),
+				});
+				const rootSchema = SchemaBuilder.fieldSequence(structSchema);
+				const schema = builder.intoDocumentSchema(rootSchema);
+
+				const initialTree = [
+					{
+						foo: "Hello",
+					},
+					{
+						foo: "world",
+						bar: true,
+					},
+				];
+
+				const { context, cursor } = initializeTreeWithContent(schema, initialTree);
+
+				const unboxed = unboxedField(context, rootSchema, cursor);
+
+				assert.equal(unboxed.length, 2);
+
+				const item0 = unboxed.at(0);
+				assert.equal(item0.foo, "Hello");
+				assert.equal(item0.bar, undefined);
+
+				const item1 = unboxed.at(1);
+				assert.equal(item1.foo, "world");
+				assert.equal(item1.bar, true);
+			});
 		});
 	});
 
