@@ -4,8 +4,8 @@
  */
 
 import {
+	BuildNode,
 	Change,
-	ChangeNode,
 	Definition,
 	SharedTree as LegacySharedTree,
 	SharedTreeEvent,
@@ -38,24 +38,18 @@ export class LegacySharedTreeInventoryList extends DataObject implements IInvent
 		) as LegacySharedTree;
 
 		// Initialize the inventory with two parts at zero quantity
-		// REV: Is ChangeNode appropriate here? Or should I use some other type (BuildNode?)?
-		const inventoryNode: ChangeNode = {
-			identifier: legacySharedTree.generateNodeId(),
+		const inventoryNode: BuildNode = {
 			definition: "inventory" as Definition,
 			traits: {
 				nut: [
 					{
-						identifier: legacySharedTree.generateNodeId(),
 						definition: "part" as Definition,
-						traits: {},
 						payload: 0,
 					},
 				],
 				bolt: [
 					{
-						identifier: legacySharedTree.generateNodeId(),
 						definition: "part" as Definition,
-						traits: {},
 						payload: 0,
 					},
 				],
