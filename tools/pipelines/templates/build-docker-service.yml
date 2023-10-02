@@ -147,6 +147,7 @@ stages:
 
 - stage: build
   displayName: Build Stage
+  dependsOn: [] # this stage doesn't depend on preceding stage
   jobs:
   - job: build
     displayName: Build Container - ${{ parameters.containerName }}
