@@ -156,6 +156,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 					restart: false,
 					errorLabel: "rdkafkaProducer:connection.failure",
 				});
+				this.connect();
 			} catch (err) {
 				Lumberjack.error(
 					"Error encountered when handling producer connection.failure",
@@ -163,8 +164,6 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 					err,
 				);
 			}
-
-			this.connect();
 		});
 
 		producer.on("event.error", (error) => {
