@@ -17,7 +17,7 @@ export {
 	neverCancelledSummaryToken,
 	RunWhileConnectedCoordinator,
 } from "./runWhileConnectedCoordinator";
-export { Summarizer } from "./summarizer";
+export { Summarizer, summarizerRequestUrl } from "./summarizer";
 export {
 	ISummarizerClientElection,
 	ISummarizerClientElectionEvents,

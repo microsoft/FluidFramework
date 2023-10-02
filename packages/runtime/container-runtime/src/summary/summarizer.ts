@@ -62,6 +62,8 @@ export class SummarizingWarning
 export const createSummarizingWarning = (errorMessage: string, logged: boolean) =>
 	new SummarizingWarning(errorMessage, logged);
 
+export const summarizerRequestUrl = "_summarizer";
+
 /**
  * Summarizer is responsible for coordinating when to generate and send summaries.
  * It is the main entry point for summary work.
@@ -130,7 +132,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 		if (resolvedContainer.getEntryPoint !== undefined) {
 			fluidObject = await resolvedContainer.getEntryPoint();
 		} else {
-			const response = await resolvedContainer.request({ url: "_summarizer" });
+			const response = await resolvedContainer.request({ url: summarizerRequestUrl });
 			if (response.status !== 200 || response.mimeType !== "fluid/object") {
 				throw responseToException(response, request);
 			}

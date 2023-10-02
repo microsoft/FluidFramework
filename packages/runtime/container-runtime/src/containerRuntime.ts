@@ -153,6 +153,7 @@ import {
 	EnqueueSummarizeResult,
 	ISummarizerEvents,
 	IBaseSummarizeResult,
+	summarizerRequestUrl,
 } from "./summary";
 import { formExponentialFn, Throttler } from "./throttler";
 import {
@@ -1679,7 +1680,7 @@ export class ContainerRuntime
 			const parser = RequestParser.create(request);
 			const id = parser.pathParts[0];
 
-			if (id === "_summarizer" && parser.pathParts.length === 1) {
+			if (id === summarizerRequestUrl && parser.pathParts.length === 1) {
 				if (this._summarizer !== undefined) {
 					return {
 						status: 200,
