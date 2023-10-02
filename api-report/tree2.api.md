@@ -321,13 +321,13 @@ export interface ContextuallyTypedNodeDataObject {
 }
 
 // @alpha
-interface Contravariant<T> {
+interface Contravariant<in T> {
     // (undocumented)
     _removeCovariance?: (_: T) => void;
 }
 
 // @alpha
-interface Covariant<T> {
+interface Covariant<out T> {
     // (undocumented)
     _removeContravariance?: T;
 }
@@ -1103,7 +1103,7 @@ export class InvalidationToken {
 }
 
 // @alpha
-interface Invariant<T> extends Contravariant<T>, Covariant<T> {
+interface Invariant<in out T> extends Contravariant<T>, Covariant<T> {
 }
 
 // @alpha
