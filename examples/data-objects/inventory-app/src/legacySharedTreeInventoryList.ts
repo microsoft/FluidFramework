@@ -41,14 +41,12 @@ export class LegacySharedTreeInventoryList extends DataObject implements IInvent
 		// REV: Is ChangeNode appropriate here? Or should I use some other type (BuildNode?)?
 		const inventoryNode: ChangeNode = {
 			identifier: legacySharedTree.generateNodeId(),
-			// REV: This is based on the Definition casting from Bubblebench, it doesn't really seem
-			// to matter what is used here though.  Is there a better way to omit the definition here?
-			definition: "array" as Definition,
+			definition: "inventory" as Definition,
 			traits: {
 				nut: [
 					{
 						identifier: legacySharedTree.generateNodeId(),
-						definition: "scalar" as Definition,
+						definition: "part" as Definition,
 						traits: {},
 						payload: 0,
 					},
@@ -56,7 +54,7 @@ export class LegacySharedTreeInventoryList extends DataObject implements IInvent
 				bolt: [
 					{
 						identifier: legacySharedTree.generateNodeId(),
-						definition: "scalar" as Definition,
+						definition: "part" as Definition,
 						traits: {},
 						payload: 0,
 					},
