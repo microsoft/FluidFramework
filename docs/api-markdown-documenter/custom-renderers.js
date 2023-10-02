@@ -4,7 +4,8 @@
  */
 
 const {
-	renderNodeAsMarkdown,
+	renderNodeAsHtml,
+	renderNodesAsHtml,
 	renderNodesAsMarkdown,
 } = require("@fluid-tools/api-markdown-documenter");
 
@@ -61,7 +62,6 @@ function renderTableNode(tableNode, writer, context) {
 	const childContext = {
 		...context,
 		insideTable: true,
-		insideHtml: true,
 	};
 	writer.writeLine(`<table class="table table-striped table-hover">`);
 	writer.increaseIndent();
@@ -70,7 +70,8 @@ function renderTableNode(tableNode, writer, context) {
 	if (tableNode.headerRow !== undefined) {
 		writer.writeLine("<thead>");
 		writer.increaseIndent();
-		renderNodeAsMarkdown(tableNode.headerRow, writer, childContext);
+		// Render header row as HTML, since we have opted to render the entire table as HTML
+		renderNodeAsHtml(tableNode.headerRow, writer, childContext);
 		writer.ensureNewLine(); // Ensure line break header row contents
 		writer.decreaseIndent();
 		writer.writeLine("</thead>");
@@ -80,7 +81,8 @@ function renderTableNode(tableNode, writer, context) {
 	if (tableNode.hasChildren) {
 		writer.writeLine("<tbody>");
 		writer.increaseIndent();
-		renderNodesAsMarkdown(tableNode.children, writer, childContext);
+		// Render body rows as HTML, since we have opted to render the entire table as HTML
+		renderNodesAsHtml(tableNode.children, writer, childContext);
 		writer.decreaseIndent();
 		writer.writeLine("</tbody>");
 	}

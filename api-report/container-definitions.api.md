@@ -140,7 +140,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     // @alpha
     forceReadonly?(readonly: boolean): any;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
-    getEntryPoint?(): Promise<FluidObject | undefined>;
+    getEntryPoint(): Promise<FluidObject | undefined>;
     getLoadedCodeDetails(): IFluidCodeDetails | undefined;
     getQuorum(): IQuorumClients;
     getSpecifiedCodeDetails(): IFluidCodeDetails | undefined;
@@ -149,6 +149,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     readonly isDirty: boolean;
     proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>;
     readonly readOnlyInfo: ReadOnlyInfo;
+    // @deprecated (undocumented)
     request(request: {
         url: "/";
         headers?: undefined;
@@ -271,7 +272,10 @@ export interface IDeltaManagerEvents extends IEvent {
     (event: "pong", listener: (latency: number) => void): any;
     (event: "connect", listener: (details: IConnectionDetails, opsBehind?: number) => void): any;
     (event: "disconnect", listener: (reason: string, error?: IAnyDriverError) => void): any;
-    (event: "readonly", listener: (readonly: boolean) => void): any;
+    (event: "readonly", listener: (readonly: boolean, readonlyConnectionReason?: {
+        reason: string;
+        error?: IErrorBase;
+    }) => void): any;
 }
 
 // @public
@@ -451,7 +455,7 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
 // @public
 export interface IRuntime extends IDisposable {
     createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
-    getEntryPoint?(): Promise<FluidObject | undefined>;
+    getEntryPoint(): Promise<FluidObject | undefined>;
     getPendingLocalState(props?: {
         notifyImminentClosure?: boolean;
     }): unknown;
@@ -475,13 +479,13 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
 }
 
 // @public
-export const isFluidBrowserPackage: (maybePkg: any) => maybePkg is Readonly<IFluidBrowserPackage>;
+export const isFluidBrowserPackage: (maybePkg: unknown) => maybePkg is Readonly<IFluidBrowserPackage>;
 
 // @public (undocumented)
 export const isFluidCodeDetails: (details: unknown) => details is Readonly<IFluidCodeDetails>;
 
 // @public
-export const isFluidPackage: (pkg: any) => pkg is Readonly<IFluidPackage>;
+export const isFluidPackage: (pkg: unknown) => pkg is Readonly<IFluidPackage>;
 
 // @public
 export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {

@@ -150,6 +150,11 @@ export async function deliCreate(
 		...core.DefaultServiceConfiguration,
 		externalOrdererUrl,
 		enforceDiscoveryFlow,
+		deli: {
+			...core.DefaultServiceConfiguration.deli,
+			restartOnCheckpointFailure,
+			kafkaCheckpointOnReprocessingOp,
+		},
 	};
 
 	const checkpointService = new core.CheckpointService(
@@ -168,8 +173,6 @@ export async function deliCreate(
 		undefined,
 		reverseProducer,
 		serviceConfiguration,
-		restartOnCheckpointFailure,
-		kafkaCheckpointOnReprocessingOp,
 	);
 }
 

@@ -107,7 +107,7 @@ zookeeper:
 
 system:
   httpServer:
-    connectionTimeout: 0
+    connectionTimeoutMs: 0
 
 usage:
   clientConnectivityCountingEnabled: false
@@ -167,3 +167,7 @@ ingress:
 error:
   track: true
   endpoint: "error_tracking_endpoint"
+
+lumberjack:
+  options:
+    enableGlobalTelemetryContext: true

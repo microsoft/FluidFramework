@@ -1,6 +1,6 @@
 {
 	"name": "root",
-	"version": "2.0.0-internal.6.4.0",
+	"version": "2.0.0-internal.7.1.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -51,10 +51,10 @@
 		"layer-check": "flub check layers --info layerInfo.json",
 		"lint": "npm run syncpack:deps && npm run syncpack:versions && npm run prettier:root && npm run build:eslint",
 		"lint:fix": "npm run syncpack:deps:fix && npm run syncpack:versions:fix && npm run prettier:root:fix && pnpm run -r --no-sort --stream lint:fix",
-		"policy-check": "flub check policy",
+		"policy-check": "flub check policy --excludeHandler npm-package-json-script-jest-config",
 		"policy-check-help": "echo Detect (and error on) policy-check violations, like package.json sorting, copyright headers etc. Excludes assert-short-code. Run the check or \"pnpm flub check policy --listHandlers\" for a full list.",
 		"policy-check:asserts": "flub check policy --handler assert-short-codes --fix && pretty-quick",
-		"policy-check:fix": "flub check policy --excludeHandler assert-short-codes --fix",
+		"policy-check:fix": "flub check policy --excludeHandler assert-short-codes --excludeHandler npm-package-json-script-jest-config --fix",
 		"policy-check:fix-help": "echo Fix policy-check violations excludes assert-short-code/",
 		"prettier": "npm run prettier:root && pnpm run -r --no-sort --stream prettier",
 		"prettier:fix": "npm run prettier:root:fix && pnpm run -r --no-sort --stream prettier:fix",
@@ -106,7 +106,9 @@
 			"**/dist/test/**/*.js",
 			"experimental/examples/**",
 			"experimental/PropertyDDS/examples/**",
-			"**/*.bundle.js"
+			"**/*.bundle.js",
+			"packages/tools/devtools/devtools-browser-extension/dist/e2e-tests/**",
+			"packages/tools/devtools/devtools-browser-extension/dist/bundle/**"
 		],
 		"exclude-after-remap": false,
 		"extension": [
@@ -132,13 +134,13 @@
 	"devDependencies": {
 		"@changesets/cli": "^2.26.1",
 		"@fluid-internal/changelog-generator-wrapper": "file:tools/changelog-generator-wrapper",
-		"@fluid-tools/build-cli": "^0.22.0",
+		"@fluid-tools/build-cli": "^0.24.0",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.22.0",
+		"@fluidframework/build-tools": "^0.24.0",
 		"@fluidframework/eslint-config-fluid": "^2.1.0",
 		"@fluidframework/test-tools": "^0.2.158186",
 		"@microsoft/api-documenter": "^7.21.6",
-		"@microsoft/api-extractor": "^7.34.4",
+		"@microsoft/api-extractor": "^7.37.0",
 		"@octokit/core": "^4.0.5",
 		"auto-changelog": "^2.4.0",
 		"c8": "^7.7.1",
@@ -154,7 +156,7 @@
 		"rimraf": "^4.4.0",
 		"run-script-os": "^1.1.6",
 		"syncpack": "^9.8.4",
-		"typescript": "~4.5.5"
+		"typescript": "~5.1.6"
 	},
 	"packageManager": "pnpm@7.33.5+sha512.4e499f22fffe5845aa8f9463e1386b2d72c3134e0ebef9409360ad844fef0290e82b479b32eb2ec0f30e56607e1820c22167829fd62656d41a8fd0cc4a0f4267",
 	"engines": {

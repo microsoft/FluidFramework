@@ -10,7 +10,7 @@ import {
 	FieldSchema,
 	ValueSchema,
 	SchemaBuilder,
-	FieldKindTypes,
+	FieldKind,
 	Any,
 	TreeSchema,
 	LazyTreeSchema,
@@ -276,7 +276,7 @@ function buildPrimitiveSchema(
 	return treeSchema;
 }
 
-function buildFieldSchema<Kind extends FieldKindTypes = FieldKindTypes>(
+function buildFieldSchema<Kind extends FieldKind = FieldKind>(
 	builder: SchemaBuilder,
 	treeSchemaMap: Map<string, LazyTreeSchema>,
 	allChildrenByType: InheritingChildrenByType,
@@ -322,7 +322,7 @@ const builtinLibrary = builtinBuilder.intoLibrary();
  * the PropertyDDS schema inheritances / dependencies starting from
  * the root schema or built-in node property schemas.
  */
-export function convertPropertyToSharedTreeSchema<Kind extends FieldKindTypes = FieldKindTypes>(
+export function convertPropertyToSharedTreeSchema<Kind extends FieldKind = FieldKind>(
 	rootFieldKind: Kind,
 	allowedRootTypes: Any | ReadonlySet<string>,
 	extraTypes?: ReadonlySet<string>,

@@ -17,7 +17,7 @@ import { NodeKeyManager } from "../node-key";
 import { FieldGenerator } from "../contextuallyTyped";
 import { TypedSchemaCollection } from "../typed-schema";
 import { disposeSymbol, IDisposable } from "../../util";
-import { UntypedField } from "./editableTreeTypes";
+import { TreeField } from "./editableTreeTypes";
 import { makeField } from "./lazyField";
 import { LazyEntity, prepareForEditSymbol } from "./lazyEntity";
 
@@ -30,7 +30,7 @@ export interface TreeContext extends ISubscribable<ForestEvents> {
 	/**
 	 * Gets the root field of the tree.
 	 */
-	get root(): UntypedField;
+	get root(): TreeField;
 
 	/**
 	 * Schema used within this context.
@@ -79,7 +79,7 @@ export class Context implements TreeContext, IDisposable {
 		for (const target of this.withCursors) {
 			target[prepareForEditSymbol]();
 		}
-		assert(this.withCursors.size === 0, "prepareForEdit should remove all cursors");
+		assert(this.withCursors.size === 0, 0x773 /* prepareForEdit should remove all cursors */);
 	}
 
 	public [disposeSymbol](): void {
@@ -99,11 +99,11 @@ export class Context implements TreeContext, IDisposable {
 		for (const target of this.withAnchors) {
 			target[disposeSymbol]();
 		}
-		assert(this.withCursors.size === 0, "free should remove all cursors");
-		assert(this.withAnchors.size === 0, "free should remove all anchors");
+		assert(this.withCursors.size === 0, 0x774 /* free should remove all cursors */);
+		assert(this.withAnchors.size === 0, 0x775 /* free should remove all anchors */);
 	}
 
-	public get root(): UntypedField {
+	public get root(): TreeField {
 		const cursor = this.forest.allocateCursor();
 		moveToDetachedField(this.forest, cursor);
 		const field = makeField(this, this.schema.rootFieldSchema, cursor);

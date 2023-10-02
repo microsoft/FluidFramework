@@ -4,22 +4,22 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
-	IChannelFactory,
-	IChannelAttributes,
+	type IFluidDataStoreRuntime,
+	type IChannelStorageService,
+	type IChannelFactory,
+	type IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { type ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import {
 	createSingleBlobSummary,
-	IFluidSerializer,
+	type IFluidSerializer,
 	SharedObject,
 } from "@fluidframework/shared-object-base";
 import { CounterFactory } from "./counterFactory";
-import { ISharedCounter, ISharedCounterEvents } from "./interfaces";
+import { type ISharedCounter, type ISharedCounterEvents } from "./interfaces";
 
 /**
  * Describes the operation (op) format for incrementing the {@link SharedCounter}.
@@ -198,12 +198,14 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
 			const op = message.contents as IIncrementOperation;
 
 			switch (op.type) {
-				case "increment":
+				case "increment": {
 					this.incrementCore(op.incrementAmount);
 					break;
+				}
 
-				default:
+				default: {
 					throw new Error("Unknown operation");
+				}
 			}
 		}
 	}
@@ -216,6 +218,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
 		const counterOp = op as IIncrementOperation;
 
 		// TODO: Clean up error code linter violations repo-wide.
+
 		// eslint-disable-next-line unicorn/numeric-separators-style
 		assert(counterOp.type === "increment", 0x3ec /* Op type is not increment */);
 

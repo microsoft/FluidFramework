@@ -340,6 +340,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		refType: ReferenceType,
 		properties: PropertySet | undefined,
 		slidingPreference?: SlidingPreference,
+		canSlideToEndpoint?: boolean,
 	): LocalReferencePosition {
 		return this.client.createLocalReferencePosition(
 			segment,
@@ -347,6 +348,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			refType,
 			properties,
 			slidingPreference,
+			canSlideToEndpoint,
 		);
 	}
 
@@ -705,7 +707,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
 	 */
 	protected applyStashedOp(content: any): unknown {
-		return this.client.applyStashedOp(content);
+		return this.client.applyStashedOp(parseHandles(content, this.serializer));
 	}
 
 	private summarizeMergeTree(serializer: IFluidSerializer): ISummaryTreeWithStats {

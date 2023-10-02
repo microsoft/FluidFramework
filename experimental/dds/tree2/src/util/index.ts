@@ -76,6 +76,7 @@ export {
 	disposeSymbol,
 	IDisposable,
 	capitalize,
+	assertValidRangeIndices,
 } from "./utils";
 export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting";
 
@@ -99,3 +100,10 @@ export {
 } from "./brandedMap";
 
 export { getFirstFromRangeMap, RangeEntry, RangeMap, setInRangeMap } from "./rangeMap";
+
+export {
+	IdAllocator,
+	idAllocatorFromMaxId,
+	idAllocatorFromState,
+	IdAllocationState,
+} from "./idAllocator";

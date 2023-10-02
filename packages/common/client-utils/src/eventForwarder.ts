@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+// False positive: this is an import from the `events` package, not from Node.
+// eslint-disable-next-line unicorn/prefer-node-protocol
 import { EventEmitter } from "events";
 import { IDisposable, IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 import { TypedEventEmitter } from "./typedEventEmitter";
@@ -89,7 +91,7 @@ export class EventForwarder<TEvent = IEvent>
 					this.forwardingEvents.set(event, sources);
 				}
 				if (!sources.has(source)) {
-					const listener = (...args: any[]): boolean => this.emit(event, ...args);
+					const listener = (...args: unknown[]): boolean => this.emit(event, ...args);
 					sources.set(source, () => source.off(event, listener));
 					source.on(event, listener);
 				}

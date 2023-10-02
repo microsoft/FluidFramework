@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import path from "path";
-import { mkdirSync, readFileSync } from "fs";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
+import { mkdirSync, readFileSync } from "node:fs";
+import path from "node:path";
+
 import {
 	BaseFuzzTestState,
 	createFuzzDescribe,
@@ -53,8 +54,6 @@ export interface DDSFuzzTestState<TChannelFactory extends IChannelFactory>
 	clients: Client<TChannelFactory>[];
 	// Client which was selected to perform an operation on
 	client: Client<TChannelFactory>;
-	// dds which was selected to perform an operation on. will be the same as client.channel
-	channel: ReturnType<TChannelFactory["create"]>;
 	isDetached: boolean;
 }
 
@@ -86,6 +85,7 @@ export interface AddClient {
 
 export interface Synchronize {
 	type: "synchronize";
+	clients?: string[];
 }
 
 interface HasWorkloadName {
@@ -306,7 +306,9 @@ export interface DDSFuzzSuiteOptions {
 	 */
 	validationStrategy:
 		| { type: "random"; probability: number }
-		| { type: "fixedInterval"; interval: number };
+		| { type: "fixedInterval"; interval: number }
+		// WIP: This validation strategy still currently synchronizes all clients.
+		| { type: "partialSynchronization"; probability: number; clientProbability: number };
 	parseOperations: (serialized: string) => BaseOperation[];
 
 	/**
@@ -473,7 +475,7 @@ export function mixinReconnect<
 		return async (state): Promise<TOperation | ChangeConnectionState | typeof done> => {
 			const baseOp = baseGenerator(state);
 			if (!state.isDetached && state.random.bool(options.reconnectProbability)) {
-				const client = state.clients.find((c) => c.channel.id === state.channel.id);
+				const client = state.clients.find((c) => c.channel.id === state.client.channel.id);
 				assert(client !== undefined);
 				return {
 					type: "changeConnectionState",
@@ -604,7 +606,7 @@ export function mixinRebase<
 		return async (state): Promise<TOperation | TriggerRebase | typeof done> => {
 			const baseOp = baseGenerator(state);
 			if (state.random.bool(options.rebaseProbability)) {
-				const client = state.clients.find((c) => c.channel.id === state.channel.id);
+				const client = state.clients.find((c) => c.channel.id === state.client.channel.id);
 				assert(client !== undefined);
 				return {
 					type: "rebase",
@@ -650,7 +652,7 @@ export function mixinSynchronization<
 	const { validationStrategy } = options;
 	let generatorFactory: () => Generator<TOperation | Synchronize, TState>;
 	switch (validationStrategy.type) {
-		case "random":
+		case "random": {
 			// passing 1 here causes infinite loops. passing close to 1 is wasteful
 			// as synchronization + eventual consistency validation should be idempotent.
 			// 0.5 is arbitrary but there's no reason anyone should want a probability near this.
@@ -666,8 +668,9 @@ export function mixinSynchronization<
 						: baseGenerator(state);
 			};
 			break;
+		}
 
-		case "fixedInterval":
+		case "fixedInterval": {
 			generatorFactory = (): Generator<TOperation | Synchronize, TState> => {
 				const baseGenerator = model.generatorFactory();
 				return interleave<TOperation | Synchronize, TState>(
@@ -682,12 +685,45 @@ export function mixinSynchronization<
 				);
 			};
 			break;
-		default:
+		}
+
+		case "partialSynchronization": {
+			// passing 1 here causes infinite loops. passing close to 1 is wasteful
+			// as synchronization + eventual consistency validation should be idempotent.
+			// 0.5 is arbitrary but there's no reason anyone should want a probability near this.
+			assert(
+				validationStrategy.probability < 0.5,
+				"Use a lower synchronization probability.",
+			);
+			generatorFactory = (): Generator<TOperation | Synchronize, TState> => {
+				const baseGenerator = model.generatorFactory();
+				return async (state: TState): Promise<TOperation | Synchronize | typeof done> => {
+					if (!state.isDetached && state.random.bool(validationStrategy.probability)) {
+						const selectedClients = new Set(
+							state.clients
+								.filter((client) => client.containerRuntime.connected)
+								.filter(() =>
+									state.random.bool(validationStrategy.clientProbability),
+								)
+								.map((client) => client.containerRuntime.clientId),
+						);
+
+						return { type: "synchronize", clients: [...selectedClients] };
+					} else {
+						return baseGenerator(state);
+					}
+				};
+			};
+			break;
+		}
+		default: {
 			unreachableCase(validationStrategy);
+		}
 	}
 
 	const isSynchronizeOp = (op: BaseOperation): op is Synchronize => op.type === "synchronize";
 	const reducer: Reducer<TOperation | Synchronize, TState> = async (state, operation) => {
+		// TODO: Only synchronize listed clients if specified
 		if (isSynchronizeOp(operation)) {
 			const connectedClients = state.clients.filter(
 				(client) => client.containerRuntime.connected,
@@ -750,7 +786,6 @@ export function mixinClientSelection<
 			const client = state.random.pick(state.clients);
 			const baseOp = await baseGenerator({
 				...state,
-				channel: client.channel,
 				client,
 			});
 			return baseOp === done
@@ -768,10 +803,7 @@ export function mixinClientSelection<
 			(c) => c.containerRuntime.clientId === operation.clientId,
 		);
 		assert(client !== undefined);
-		return model.reducer(
-			{ ...state, channel: client.channel, client },
-			operation as TOperation,
-		);
+		return model.reducer({ ...state, client }, operation as TOperation);
 	};
 	return {
 		...model,
@@ -911,10 +943,6 @@ export async function runTestForSeed<
 		summarizerClient,
 		containerRuntimeFactory,
 		random,
-		// These properties should always be injected into the state by the mixed in reducer/generator
-		// for any user code. We initialize them to proxies which throw errors on any property access
-		// to catch bugs in that setup.
-		channel: makeUnreachableCodePathProxy("channel"),
 		client: makeUnreachableCodePathProxy("client"),
 		isDetached: startDetached,
 	};

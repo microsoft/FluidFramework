@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import {
+	ITelemetryLoggerExt,
+	MonitoringContext,
+	PerformanceEvent,
+	createChildMonitoringContext,
+} from "@fluidframework/telemetry-utils";
 import { performance, stringToBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import { getW3CData, promiseRaceWithWinner } from "@fluidframework/driver-base";
@@ -36,11 +41,10 @@ import { convertWholeFlatSnapshotToSnapshotTreeAndBlobs } from "./r11sSnapshotPa
 const latestSnapshotId: string = "latest";
 
 export class WholeSummaryDocumentStorageService implements IDocumentStorageService {
+	private readonly mc: MonitoringContext;
 	private firstVersionsCall: boolean = true;
 
-	public get repositoryUrl(): string {
-		return "";
-	}
+	public readonly repositoryUrl = "";
 
 	private async getSummaryUploadManager(): Promise<ISummaryUploadManager> {
 		const manager = await this.getStorageManager();
@@ -62,8 +66,13 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 			disableCache && this.noCacheGitManager !== undefined
 				? this.noCacheGitManager
 				: this.manager,
-	) {}
+	) {
+		this.mc = createChildMonitoringContext({
+			logger,
+		});
+	}
 
+	// eslint-disable-next-line @rushstack/no-new-null
 	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
 		if (versionId !== this.id && versionId !== null) {
 			// Blobs/Trees in this scenario will never have multiple versions, so return versionId as is
@@ -153,6 +162,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 		}));
 	}
 
+	// eslint-disable-next-line @rushstack/no-new-null
 	public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
 		let requestVersion = version;
 		if (!requestVersion) {
@@ -205,6 +215,9 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 				});
 				return response;
 			},
+			undefined, // workers
+			undefined, // recordHeapSize
+			this.mc.config.getNumber("Fluid.Driver.ReadBlobTelemetrySampling"),
 		);
 		const bufferValue = stringToBuffer(blob.content, blob.encoding);
 
