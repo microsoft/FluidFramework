@@ -118,4 +118,4 @@ extends:
     checks:
     - prettier
     - check:versions
-    additionalBuildArguments: --build-context root=../..
+    additionalBuildArguments: --build-context root=.
