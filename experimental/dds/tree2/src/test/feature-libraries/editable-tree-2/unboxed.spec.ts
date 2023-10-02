@@ -24,6 +24,7 @@ import {
 	Optional,
 	SchemaAware,
 	SchemaBuilder,
+	Sequence,
 	TreeSchema,
 	TypedSchemaCollection,
 	ValueFieldKind,
@@ -124,6 +125,37 @@ function createValueLeafTree(
 	const builder = new SchemaBuilder("test");
 	const leafSchema = builder.leaf("leaf", kind);
 	const rootSchema = SchemaBuilder.field(FieldKinds.value, leafSchema);
+	const schema = builder.intoDocumentSchema(rootSchema);
+
+	const { context, cursor } = initializeTreeWithContent(schema, initialTree);
+
+	return {
+		fieldSchema: rootSchema,
+		context,
+		cursor,
+	};
+}
+
+/**
+ * Creates a tree whose root node contains a single (value) leaf field.
+ * Also initializes a cursor and moves that cursor to the tree's root field.
+ *
+ * @returns The initialized tree, cursor, and associated context.
+ */
+function createSequenceLeafTree(
+	kind: ValueSchema,
+	initialTree:
+		| SchemaAware.TypedField<FieldSchema, SchemaAware.ApiMode.Flexible>
+		| readonly ITreeCursorSynchronous[]
+		| ITreeCursorSynchronous,
+): {
+	fieldSchema: FieldSchema<Sequence, [TreeSchema<"leaf">]>;
+	context: Context;
+	cursor: ITreeSubscriptionCursor;
+} {
+	const builder = new SchemaBuilder("test");
+	const leafSchema = builder.leaf("leaf", kind);
+	const rootSchema = SchemaBuilder.fieldSequence(leafSchema);
 	const schema = builder.intoDocumentSchema(rootSchema);
 
 	const { context, cursor } = initializeTreeWithContent(schema, initialTree);
@@ -357,7 +389,39 @@ describe("unboxed unit tests", () => {
 		});
 
 		describe("Sequence field", () => {
-			// TODO
+			it("Boolean", () => {
+				const { fieldSchema, context, cursor } = createSequenceLeafTree(
+					ValueSchema.Boolean,
+					[true, false, true],
+				);
+
+				const unboxed = unboxedField(context, fieldSchema, cursor);
+				assert.deepEqual(unboxed.asArray, [true, false, true]);
+			});
+
+			it("Number", () => {
+				const { fieldSchema, context, cursor } = createSequenceLeafTree(
+					ValueSchema.Number,
+					[1, 1, 2, 3, 5],
+				);
+
+				const unboxed = unboxedField(context, fieldSchema, cursor);
+
+				assert.deepEqual(unboxed.asArray, [1, 1, 2, 3, 5]);
+			});
+
+			it("String", () => {
+				const { fieldSchema, context, cursor } = createSequenceLeafTree(
+					ValueSchema.String,
+					["Hello", "world"],
+				);
+
+				const unboxed = unboxedField(context, fieldSchema, cursor);
+
+				assert.deepEqual(unboxed.asArray, ["Hello", "world"]);
+			});
+
+			// TODO: Fluid Handle
 		});
 	});
 
