@@ -92,6 +92,9 @@ export function announceVisitor(visitor: AnnouncedVisitor): DeltaVisitor {
  * @alpha
  */
 export interface AnnouncedVisitor extends DeltaVisitor {
+	/**
+	 * A hook that is called after all nodes have been created.
+	 */
 	afterCreate(content: Delta.ProtoNodes, destination: FieldKey): void;
 	beforeDestroy(field: FieldKey, count: number): void;
 	beforeAttach(source: FieldKey, count: number, destination: PlaceIndex): void;
