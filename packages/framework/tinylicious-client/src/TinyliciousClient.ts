@@ -15,6 +15,7 @@ import {
 	InsecureTinyliciousTokenProvider,
 	InsecureTinyliciousUrlResolver,
 } from "@fluidframework/tinylicious-driver";
+// eslint-disable-next-line import/no-deprecated
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ContainerSchema,
@@ -70,6 +71,7 @@ export class TinyliciousClient {
 			config: {},
 		});
 
+		// eslint-disable-next-line import/no-deprecated
 		const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");
 
 		/**
@@ -109,6 +111,7 @@ export class TinyliciousClient {
 	}> {
 		const loader = this.createLoader(containerSchema);
 		const container = await loader.resolve({ url: id });
+		// eslint-disable-next-line import/no-deprecated
 		const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");
 		const fluidContainer = new FluidContainer(container, rootDataObject);
 		const services = this.getContainerServices(container);

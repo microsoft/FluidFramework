@@ -5,7 +5,7 @@
 
 import { AsyncLocalStorage } from "async_hooks";
 import * as querystring from "querystring";
-import type { AxiosRequestHeaders } from "axios";
+import type { RawAxiosRequestHeaders } from "axios";
 import * as git from "@fluidframework/gitresources";
 import {
 	IGetRefParamsExternal,
@@ -66,7 +66,7 @@ export class RestGitService {
 		private readonly isEphemeralContainer?: boolean,
 		private readonly maxCacheableSummarySize?: number,
 	) {
-		const defaultHeaders: AxiosRequestHeaders =
+		const defaultHeaders: RawAxiosRequestHeaders =
 			storageName !== undefined
 				? {
 						"User-Agent": userAgent,
@@ -110,7 +110,7 @@ export class RestGitService {
 			undefined,
 			undefined,
 			undefined,
-			defaultHeaders,
+			defaultHeaders as any,
 			undefined,
 			undefined,
 			undefined,

@@ -33,6 +33,7 @@ import { NewlineKind } from '@rushstack/node-core-library';
 import type { Node as Node_2 } from 'unist';
 import type { Parent } from 'unist';
 import { ReleaseTag } from '@microsoft/api-extractor-model';
+import { TypeParameter } from '@microsoft/api-extractor-model';
 
 // @public
 export type ApiFunctionLike = ApiConstructSignature | ApiConstructor | ApiFunction | ApiMethod | ApiMethodSignature;
@@ -113,7 +114,40 @@ export interface ConfigurationBase {
 }
 
 // @public
+function createBreadcrumbParagraph(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): ParagraphNode;
+
+// @public
+function createDeprecationNoticeSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): ParagraphNode | undefined;
+
+// @public
 export function createDocumentWriter(): DocumentWriter;
+
+// @public
+function createExamplesSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>, headingText?: string): SectionNode | undefined;
+
+// @public
+function createParametersSection(apiFunctionLike: ApiFunctionLike, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
+
+// @public
+function createRemarksSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
+
+// @public
+function createReturnsSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
+
+// @public
+function createSeeAlsoSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
+
+// @public
+function createSignatureSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
+
+// @public
+function createSummaryParagraph(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): ParagraphNode | undefined;
+
+// @public
+function createThrowsSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>, headingText?: string): SectionNode | undefined;
+
+// @public
+function createTypeParametersSection(typeParameters: readonly TypeParameter[], contextApiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
 
 // @public
 export const defaultConsoleLogger: Logger;
@@ -215,10 +249,17 @@ export interface DocumentationSuiteOptions {
 export type DocumentBoundaries = ApiMemberKind[];
 
 // @public
-export class DocumentNode implements Parent<SectionNode>, DocumentNodeProps {
-    constructor(props: DocumentNodeProps);
+export interface DocumentItemMetadata {
+    readonly apiItemKind: ApiItemKind;
     readonly apiItemName: string;
+    readonly packageName: string | undefined;
+}
+
+// @public
+export class DocumentNode implements Parent<SectionNode>, DocumentNodeProps {
+    constructor(properties: DocumentNodeProps);
     readonly children: SectionNode[];
+    readonly documentItemMetadata: DocumentItemMetadata;
     readonly documentPath: string;
     readonly frontMatter?: string;
     readonly type = DocumentationNodeType.Document;
@@ -226,13 +267,16 @@ export class DocumentNode implements Parent<SectionNode>, DocumentNodeProps {
 
 // @public
 export interface DocumentNodeProps {
-    readonly apiItemName: string;
     readonly children: SectionNode[];
+    readonly documentItemMetadata: DocumentItemMetadata;
     readonly documentPath: string;
     readonly frontMatter?: string;
 }
 
 export { DocumentWriter }
+
+// @public
+export function doesItemRequireOwnDocument(apiItem: ApiItem, documentBoundaries: DocumentBoundaries): boolean;
 
 // @public
 export class FencedCodeBlockNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {
@@ -248,6 +292,9 @@ export interface FileSystemConfiguration {
     readonly newlineKind?: NewlineKind;
     outputDirectoryPath: string;
 }
+
+// @public
+export function getApiItemTransformationConfigurationWithDefaults(inputOptions: ApiItemTransformationConfiguration): Required<ApiItemTransformationConfiguration>;
 
 // @public
 export function getDefaultValueBlock(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): DocSection | undefined;
@@ -315,6 +362,36 @@ export class HorizontalRuleNode implements MultiLineDocumentationNode {
     readonly type = DocumentationNodeType.HorizontalRule;
 }
 
+// @alpha
+export interface HtmlRenderConfiguration extends ConfigurationBase {
+    readonly customRenderers?: HtmlRenderers;
+    readonly language?: string;
+    readonly startingHeadingLevel?: number;
+}
+
+// @alpha
+export interface HtmlRenderContext extends TextFormatting {
+    customRenderers?: HtmlRenderers;
+    headingLevel: number;
+    prettyFormatting?: boolean;
+}
+
+declare namespace HtmlRenderer {
+    export {
+        renderApiModelAsHtml as renderApiModel,
+        renderDocumentsAsHtml as renderDocuments,
+        renderDocument,
+        renderNode,
+        renderNodes
+    }
+}
+export { HtmlRenderer }
+
+// @alpha
+export interface HtmlRenderers {
+    [documentationNodeKind: string]: (node: DocumentationNode, writer: DocumentWriter, context: HtmlRenderContext) => void;
+}
+
 // @public
 export function isDeprecated(apiItem: ApiItem): boolean;
 
@@ -326,6 +403,23 @@ export function isReadonly(apiItem: ApiItem): boolean;
 
 // @public
 export function isStatic(apiItem: ApiItem): boolean;
+
+declare namespace LayoutUtilities {
+    export {
+        createBreadcrumbParagraph,
+        createDeprecationNoticeSection,
+        createExamplesSection,
+        createParametersSection,
+        createRemarksSection,
+        createReturnsSection,
+        createSeeAlsoSection,
+        createSignatureSection,
+        createSummaryParagraph,
+        createThrowsSection,
+        createTypeParametersSection
+    }
+}
+export { LayoutUtilities }
 
 // @public
 export class LineBreakNode implements MultiLineDocumentationNode {
@@ -366,7 +460,7 @@ export interface Logger {
 }
 
 // @public
-export type LoggingFunction = (message: string | Error, ...args: unknown[]) => void;
+export type LoggingFunction = (message: string | Error, ...parameters: unknown[]) => void;
 
 // @public
 export interface MarkdownRenderConfiguration extends ConfigurationBase {
@@ -379,13 +473,23 @@ export interface MarkdownRenderContext extends TextFormatting {
     customRenderers?: MarkdownRenderers;
     headingLevel: number;
     readonly insideCodeBlock?: boolean;
-    readonly insideHtml?: boolean;
     readonly insideTable?: boolean;
 }
 
+declare namespace MarkdownRenderer {
+    export {
+        renderApiModelAsMarkdown as renderApiModel,
+        renderDocumentsAsMarkdown as renderDocuments,
+        renderDocument_2 as renderDocument,
+        renderNode_2 as renderNode,
+        renderNodes_2 as renderNodes
+    }
+}
+export { MarkdownRenderer }
+
 // @public
 export interface MarkdownRenderers {
-    [documentationNodeKind: string]: RenderDocumentationNodeAsMarkdown;
+    [documentationNodeKind: string]: (node: DocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext) => void;
 }
 
 // @public
@@ -426,23 +530,35 @@ export class PlainTextNode extends DocumentationLiteralNodeBase<string> implemen
 
 export { ReleaseTag }
 
-// @public
-export function renderApiModelAsMarkdown(transformConfig: Omit<ApiItemTransformationConfiguration, "logger">, renderConfig: Omit<MarkdownRenderConfiguration, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
+// @alpha
+function renderApiModelAsHtml(transformConfig: Omit<ApiItemTransformationConfiguration, "logger">, renderConfig: Omit<HtmlRenderConfiguration, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
 
 // @public
-export function renderDocumentAsMarkdown(document: DocumentNode, config: MarkdownRenderConfiguration): string;
+function renderApiModelAsMarkdown(transformConfig: Omit<ApiItemTransformationConfiguration, "logger">, renderConfig: Omit<MarkdownRenderConfiguration, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
+
+// @alpha
+function renderDocument(document: DocumentNode, config: HtmlRenderConfiguration): string;
 
 // @public
-export type RenderDocumentationNodeAsMarkdown<TDocumentationNode extends DocumentationNode = DocumentationNode> = (node: TDocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext) => void;
+function renderDocument_2(document: DocumentNode, config: MarkdownRenderConfiguration): string;
+
+// @alpha
+function renderDocumentsAsHtml(documents: DocumentNode[], renderConfig: Omit<HtmlRenderConfiguration, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
 
 // @public
-export function renderDocumentsAsMarkdown(documents: DocumentNode[], renderConfig: Omit<MarkdownRenderConfiguration, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
+function renderDocumentsAsMarkdown(documents: DocumentNode[], renderConfig: Omit<MarkdownRenderConfiguration, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
+
+// @alpha
+function renderNode(node: DocumentationNode, writer: DocumentWriter, context: HtmlRenderContext): void;
 
 // @public
-export function renderNodeAsMarkdown(node: DocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext): void;
+function renderNode_2(node: DocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext): void;
+
+// @alpha
+function renderNodes(children: DocumentationNode[], writer: DocumentWriter, childContext: HtmlRenderContext): void;
 
 // @public
-export function renderNodesAsMarkdown(children: DocumentationNode[], writer: DocumentWriter, childContext: MarkdownRenderContext): void;
+function renderNodes_2(children: DocumentationNode[], writer: DocumentWriter, childContext: MarkdownRenderContext): void;
 
 // @public
 export class SectionNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {
@@ -553,7 +669,7 @@ export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (apiItem
 export function transformApiModel(transformConfig: ApiItemTransformationConfiguration): DocumentNode[];
 
 // @public
-export function transformDocNode(docNode: DocNode, contextApiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): DocumentationNode | undefined;
+export function transformTsdocNode(node: DocNode, contextApiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): DocumentationNode | undefined;
 
 // @public
 export class UnorderedListNode extends DocumentationParentNodeBase<SingleLineDocumentationNode> implements MultiLineDocumentationNode {

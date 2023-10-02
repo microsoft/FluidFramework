@@ -48,7 +48,7 @@ export type BufferFormat<TEncodedShape> = (
  * Note that this modifies `buffer` to avoid having to copy it.
  */
 export function handleShapesAndIdentifiers<TEncodedShape>(
-	version: string,
+	version: number,
 	buffer: BufferFormat<TEncodedShape>,
 	identifierFilter: CounterFilter<string> = jsonMinimizingFilter,
 ): EncodedChunkGeneric<TEncodedShape> {

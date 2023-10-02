@@ -424,7 +424,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 * Called when we get an ack from the server for a summary we've just sent. Updates the reference state of this node
 	 * from the state in the pending summary queue.
 	 * @param proposalHandle - Handle for the current proposal.
-	 * @param referenceSequenceNumber -  reference sequence number of sent summary.
+	 * @param referenceSequenceNumber - Reference sequence number of sent summary.
 	 */
 	protected refreshLatestSummaryFromPending(
 		proposalHandle: string,

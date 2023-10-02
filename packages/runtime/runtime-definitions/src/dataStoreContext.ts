@@ -8,12 +8,14 @@ import {
 	IEventProvider,
 	ITelemetryBaseLogger,
 	IDisposable,
+	// eslint-disable-next-line import/no-deprecated
 	IFluidRouter,
 	IProvideFluidHandleContext,
 	IFluidHandle,
 	IRequest,
 	IResponse,
 	FluidObject,
+	IFluidHandleContext,
 } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
@@ -142,19 +144,17 @@ export interface IDataStore {
 
 	/**
 	 * Exposes a handle to the root object / entryPoint of the data store. Use this as the primary way of interacting
-	 * with it. If this property is undefined (meaning that exposing the entryPoint hasn't been implemented in a
-	 * particular scenario) fall back to the current approach of requesting the root object through the request pattern.
-	 *
-	 * @remarks The plan is that eventually the data store will stop providing IFluidRouter functionality, this property
-	 * will become non-optional and return an IFluidHandle (no undefined) and will become the only way to access
-	 * the data store's entryPoint.
+	 * with it.
 	 */
-	readonly entryPoint?: IFluidHandle<FluidObject>;
+	readonly entryPoint: IFluidHandle<FluidObject>;
 
 	/**
+	 * @deprecated Requesting will not be supported in a future major release.
+	 * Instead, access the objects within the DataStore using entryPoint, and then navigate from there using
+	 * app-specific logic (e.g. retrieving a handle from a DDS, or the entryPoint object could implement a request paradigm itself)
+	 *
 	 * IMPORTANT: This overload is provided for back-compat where IDataStore.request(\{ url: "/" \}) is already implemented and used.
 	 * The functionality it can provide (if the DataStore implementation is built for it) is redundant with @see {@link IDataStore.entryPoint}.
-	 * Once that API is mandatory on IDataStore, this overload will be deprecated.
 	 *
 	 * Refer to Removing-IFluidRouter.md for details on migrating from the request pattern to using entryPoint.
 	 *
@@ -170,9 +170,6 @@ export interface IDataStore {
 	 * Instead, access the objects within the DataStore using entryPoint, and then navigate from there using
 	 * app-specific logic (e.g. retrieving a handle from a DDS, or the entryPoint object could implement a request paradigm itself)
 	 *
-	 * NOTE: IDataStore.request(\{url: "/"\}) is not yet deprecated. If and only if the DataStore implementation supports it,
-	 * that overload may be used as a proxy for getting the entryPoint until {@link IDataStore.entryPoint} is mandatory.
-	 *
 	 * Refer to Removing-IFluidRouter.md for details on migrating from the request pattern to using entryPoint.
 	 */
 	request(request: IRequest): Promise<IResponse>;
@@ -180,6 +177,7 @@ export interface IDataStore {
 	/**
 	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	readonly IFluidRouter: IFluidRouter;
 }
 
@@ -187,9 +185,7 @@ export interface IDataStore {
  * A reduced set of functionality of IContainerRuntime that a data store context/data store runtime will need
  * TODO: this should be merged into IFluidDataStoreContext
  */
-export interface IContainerRuntimeBase
-	extends IEventProvider<IContainerRuntimeBaseEvents>,
-		IProvideFluidHandleContext {
+export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents> {
 	readonly logger: ITelemetryBaseLogger;
 	readonly clientDetails: IClientDetails;
 
@@ -201,6 +197,7 @@ export interface IContainerRuntimeBase
 
 	/**
 	 * Executes a request against the container runtime
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	request(request: IRequest): Promise<IResponse>;
 
@@ -255,6 +252,11 @@ export interface IContainerRuntimeBase
 	 * Returns the current audience.
 	 */
 	getAudience(): IAudience;
+
+	/**
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
+	readonly IFluidHandleContext: IFluidHandleContext;
 }
 
 /**
@@ -354,24 +356,16 @@ export interface IFluidDataStoreChannel extends IDisposable {
 
 	/**
 	 * Exposes a handle to the root object / entryPoint of the component. Use this as the primary way of interacting
-	 * with the component. If this property is undefined (meaning that exposing the entryPoint hasn't been implemented
-	 * in a particular scenario) fall back to the current approach of requesting the root object through the request
-	 * pattern.
-	 *
-	 * @remarks The plan is that eventually the component will stop providing IFluidRouter functionality, this property
-	 * will become non-optional and return an IFluidHandle (no undefined) and will become the only way to access
-	 * the component's entryPoint.
+	 * with the component.
 	 */
-	readonly entryPoint?: IFluidHandle<FluidObject>;
+	readonly entryPoint: IFluidHandle<FluidObject>;
 
-	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
 	request(request: IRequest): Promise<IResponse>;
 
 	/**
 	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	readonly IFluidRouter: IFluidRouter;
 }
 
@@ -472,12 +466,6 @@ export interface IFluidDataStoreContext
 	 * @param content - Content of the signal.
 	 */
 	submitSignal(type: string, content: any): void;
-
-	/**
-	 * @deprecated To be removed in favor of makeVisible.
-	 * Register the runtime to the container
-	 */
-	bindToContext(): void;
 
 	/**
 	 * Called to make the data store locally visible in the container. This happens automatically for root data stores

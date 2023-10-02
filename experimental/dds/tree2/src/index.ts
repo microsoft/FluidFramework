@@ -122,6 +122,8 @@ export {
 	jsonSchema,
 	nodeKeyField,
 	nodeKeySchema,
+	leaf,
+	testRecursiveDomain,
 } from "./domains";
 
 export {
@@ -205,7 +207,6 @@ export {
 	UnwrappedUntypedTree,
 	UntypedTreeOrPrimitive,
 	SchemaBuilder,
-	FieldKindTypes,
 	AllowedTypes,
 	TreeSchema,
 	BrandedFieldKind,
@@ -288,6 +289,7 @@ export {
 	LeafSchema,
 	MapSchema,
 	StructSchema,
+	CheckTypesOverlap,
 } from "./feature-libraries";
 
 export {
@@ -319,6 +321,8 @@ export type {
 } from "./codec";
 export { noopValidator } from "./codec";
 export { typeboxValidator } from "./external-utilities";
+
+export { TypedTreeFactory, TypedTreeOptions } from "./typed-tree";
 
 // Below here are things that are used by the above, but not part of the desired API surface.
 import * as InternalTypes from "./internal";

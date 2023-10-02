@@ -17,8 +17,13 @@ import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definit
 import { IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
+// eslint-disable-next-line import/no-deprecated
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import {
+	ConfigTypes,
+	createChildLogger,
+	IConfigProviderBase,
+} from "@fluidframework/telemetry-utils";
 import {
 	ITelemetryBufferedLogger,
 	ITestDriver,
@@ -98,6 +103,7 @@ class FileLogger implements ITelemetryBufferedLogger {
 			const schema = [...this.schema].sort((a, b) => b[1] - a[1]).map((v) => v[0]);
 			const data = logs.reduce(
 				(file, event) =>
+					// eslint-disable-next-line @typescript-eslint/no-base-to-string
 					`${file}\n${schema.reduce((line, k) => `${line}${event[k] ?? ""},`, "")}`,
 				schema.join(","),
 			);
@@ -197,7 +203,7 @@ export async function initialize(
 		details: JSON.stringify({
 			loaderOptions,
 			containerOptions,
-			configurations,
+			configurations: { ...globalConfigurations, ...configurations },
 			logLevel: minLogLevel,
 		}),
 	});
@@ -210,11 +216,7 @@ export async function initialize(
 		logger,
 		options: loaderOptions,
 		detachedBlobStorage: new MockDetachedBlobStorage(),
-		configProvider: {
-			getRawConfig(name) {
-				return configurations[name];
-			},
-		},
+		configProvider: configProvider(configurations),
 	});
 
 	const container: IContainer = await loader.createDetachedContainer(codeDetails);
@@ -223,6 +225,7 @@ export async function initialize(
 			testDriver.type === "odsp",
 			"attachment blobs in detached container not supported on this service",
 		);
+		// eslint-disable-next-line import/no-deprecated
 		const ds = await requestFluidObject<ILoadTest>(container, "/");
 		const dsm = await ds.detached({ testConfig, verbose, random, logger });
 		await Promise.all(
@@ -294,3 +297,26 @@ export async function safeExit(code: number, url: string, runId?: number) {
 
 	process.exit(code);
 }
+
+/**
+ * Global feature gates for all tests. They can be overwritten by individual test configs.
+ */
+export const globalConfigurations: Record<string, ConfigTypes> = {
+	"Fluid.SharedObject.DdsCallbacksTelemetrySampling": 10000,
+	"Fluid.SharedObject.OpProcessingTelemetrySampling": 10000,
+	"Fluid.Driver.ReadBlobTelemetrySampling": 100,
+};
+
+/**
+ * Config provider to be used for managing feature gates in the stress tests.
+ * It will return values based on the configs supplied as parameters if they are not found
+ * in the global test configuration {@link globalConfigurations}.
+ *
+ * @param configs - the supplied configs
+ * @returns - an instance of a config provider
+ */
+export const configProvider = (configs: Record<string, ConfigTypes>): IConfigProviderBase => {
+	return {
+		getRawConfig: (name: string): ConfigTypes => globalConfigurations[name] ?? configs[name],
+	};
+};

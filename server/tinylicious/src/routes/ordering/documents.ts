@@ -59,7 +59,8 @@ export function create(storage: IDocumentStorage): Router {
 			`http://${request.hostname}`,
 			`http://${request.hostname}`,
 			values,
-			false,
+			false /* enableDiscovery */,
+			false /* isEphemeralContainer */,
 		);
 
 		createP.then(

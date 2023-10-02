@@ -111,7 +111,7 @@ export function valueSchemaAllows<TSchema extends ValueSchema>(
 export function assertAllowedValue(
 	value: undefined | FluidSerializableReadOnly,
 ): asserts value is Value {
-	assert(isPrimitiveValue(value) || isFluidHandle(value), "invalid value");
+	assert(isPrimitiveValue(value) || isFluidHandle(value), 0x76f /* invalid value */);
 }
 
 /**
