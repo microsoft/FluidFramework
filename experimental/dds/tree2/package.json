@@ -107,7 +107,7 @@
 		"diff": "^3.5.0",
 		"easy-table": "^1.1.1",
 		"eslint": "~8.6.0",
-		"eslint-config-prettier": "~8.5.0",
+		"eslint-config-prettier": "~9.0.0",
 		"good-fences": "^1.1.1",
 		"mocha": "^10.2.0",
 		"mocha-json-output-reporter": "^2.0.1",

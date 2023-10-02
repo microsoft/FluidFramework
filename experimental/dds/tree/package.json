@@ -82,7 +82,7 @@
 		"easy-table": "^1.1.1",
 		"env-cmd": "^10.1.0",
 		"eslint": "~8.6.0",
-		"eslint-config-prettier": "~8.5.0",
+		"eslint-config-prettier": "~9.0.0",
 		"mocha": "^10.2.0",
 		"mocha-json-output-reporter": "^2.0.1",
 		"mocha-multi-reporters": "^1.5.1",
