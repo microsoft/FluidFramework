@@ -25,7 +25,7 @@ function getFileLocations(): [string, string] {
 	// Relative to this generated js file being executed
 	workerPath = nodePath.join(__dirname, "..", workerPath);
 	assert(
-		fs.existsSync(workerPath) && testCollateral.exists,
+		fs.existsSync(workerPath),
 		`Cannot find worker js or test content file: ${workerPath}, ${testCollateral.path}`,
 	);
 	return [testCollateral.path, workerPath];

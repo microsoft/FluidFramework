@@ -9593,6 +9593,7 @@ importers:
       '@fluidframework/sequence': link:../../dds/sequence
       '@fluidframework/server-local-server': 2.0.1
       '@fluidframework/test-utils': link:../test-utils
+      mocha: 10.2.0
     devDependencies:
       '@fluid-tools/build-cli': 0.24.0_@types+node@16.18.38
       '@fluidframework/build-common': 2.0.0
@@ -9604,7 +9605,6 @@ importers:
       c8: 7.13.0
       cross-env: 7.0.3
       eslint: 8.6.0
-      mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
