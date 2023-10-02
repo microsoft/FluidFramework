@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { Mutable, brand, extractFromOpaque, makeArray } from "../../util";
 import { FieldKey } from "../schema-stored";
 import * as Delta from "./delta";
@@ -43,7 +43,7 @@ import { ReplaceKind } from "./visitPath";
 export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor, treeIndex: TreeIndex): void {
 	const modsToMovedTrees: Map<Delta.MoveId, Delta.FieldMarks> = new Map();
 	const insertToRootId: Map<Delta.Insert, ForestRootId> = new Map();
-	const creations: Map<Delta.Insert, ForestRootId> = new Map();
+	const creations: Set<Delta.Insert> = new Set();
 	const rootChanges: Map<ForestRootId, Delta.FieldMarks> = new Map();
 	const rootTransfers: RootTransfers = new Map();
 	const detachConfig: PassConfig = {
@@ -58,8 +58,10 @@ export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor, treeIndex: 
 	};
 	visitFieldMarks(delta, visitor, detachConfig);
 	while (creations.size > 0 || rootChanges.size > 0 || rootTransfers.size > 0) {
-		for (const [insert, firstRoot] of creations) {
+		for (const insert of creations) {
 			creations.delete(insert);
+			const firstRoot = insertToRootId.get(insert);
+			assert(firstRoot !== undefined, "Expected to find a root ID for the creation");
 			for (let i = 0; i < insert.content.length; i += 1) {
 				const root: ForestRootId = brand(firstRoot + i);
 				const field = treeIndex.toFieldKey(root);
@@ -191,7 +193,7 @@ interface PassConfig {
 	 * The new trees that need to be created.
 	 * Only used in the detach pass.
 	 */
-	readonly creations: Map<Delta.Insert, ForestRootId>;
+	readonly creations: Set<Delta.Insert>;
 	/**
 	 * Nested changes that need to be applied to detached roots.
 	 * In the detach pass, this is used for:
@@ -230,7 +232,7 @@ function ensureCreation(mark: Delta.Insert, config: PassConfig): ForestRootId {
 	}
 	const { root } = config.treeIndex.createEntry(undefined, mark.content.length);
 	config.insertToRootId.set(mark, root);
-	config.creations.set(mark, root);
+	config.creations.add(mark);
 	return root;
 }
 

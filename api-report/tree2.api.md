@@ -110,7 +110,6 @@ export function anchorSlot<TContent>(): AnchorSlot<TContent>;
 export interface AnnouncedVisitor extends DeltaVisitor {
     // (undocumented)
     afterAttach(source: FieldKey, destination: Range_2): void;
-    // (undocumented)
     afterCreate(content: Delta.ProtoNodes, destination: FieldKey): void;
     // (undocumented)
     afterDetach(source: PlaceIndex, count: number, destination: FieldKey): void;
