@@ -43,13 +43,13 @@ export class LegacySharedTreeInventoryList extends DataObject implements IInvent
 			traits: {
 				nut: [
 					{
-						definition: "part" as Definition,
+						definition: "quantity" as Definition,
 						payload: 0,
 					},
 				],
 				bolt: [
 					{
-						definition: "part" as Definition,
+						definition: "quantity" as Definition,
 						payload: 0,
 					},
 				],
