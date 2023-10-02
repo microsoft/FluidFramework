@@ -248,4 +248,31 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 			`Failed to migrate values original: ${originalValue}, migrated: ${migratedValueMap1}`,
 		);
 	});
+
+	it("Hot swap can happen on migrate op", async () => {
+		const container = await provider.loadContainer(runtimeFactory2);
+		const testObj = await requestFluidObject<TestDataObject>(container, "/");
+		const spanner = testObj.createSpanner();
+		(spanner.target as SharedCell).set(originalValue);
+
+		await provider.ensureSynchronized();
+		spanner.migrate = (cell, map) => {
+			map.set(migrateKey, cell.get());
+		};
+
+		// Hot swap
+		spanner.submitMigrateOp();
+
+		// Send ops
+		await provider.ensureSynchronized();
+		assert(
+			spanner.target.attributes.type === SharedMap.getFactory().type,
+			"should have migrated to a shared map",
+		);
+		const migratedValueMap1 = (spanner.target as SharedMap).get(migrateKey);
+		assert(
+			migratedValueMap1 === originalValue,
+			`Failed to migrate values original: ${originalValue}, migrated: ${migratedValueMap1}`,
+		);
+	});
 });

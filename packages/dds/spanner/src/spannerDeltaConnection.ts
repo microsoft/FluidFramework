@@ -6,6 +6,7 @@
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import { IDeltaConnection, IDeltaHandler } from "@fluidframework/datastore-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { SpannerDeltaHandler } from "./spannerDeltaHandler";
 
 /**
@@ -19,8 +20,12 @@ export class SpannerDeltaConnection implements IDeltaConnection {
 		return this.deltaConnection.connected;
 	}
 
+	public migrate = (message: ISequencedDocumentMessage): boolean => {
+		return false;
+	};
+
 	// Should we be adding some metadata here?
-	public submit(messageContent: never, localOpMetadata: unknown): void {
+	public submit(messageContent: unknown, localOpMetadata: unknown): void {
 		this.deltaConnection.submit(messageContent, localOpMetadata);
 	}
 	public attach(handler: IDeltaHandler): void {
@@ -29,7 +34,7 @@ export class SpannerDeltaConnection implements IDeltaConnection {
 			this._handler.attach(handler);
 			this.dirty();
 		} else {
-			this._handler = new SpannerDeltaHandler(handler);
+			this._handler = new SpannerDeltaHandler(handler, (message) => this.migrate(message));
 			this.deltaConnection.attach(this._handler);
 		}
 	}

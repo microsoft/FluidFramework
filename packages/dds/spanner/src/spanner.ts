@@ -18,10 +18,17 @@ import {
 	IExperimentalIncrementalSummaryContext,
 	IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 import { SharedObject } from "@fluidframework/shared-object-base";
 import { SpannerHandle } from "./spannerHandle";
 import { SpannerChannelServices } from "./spannerChannelServices";
+
+interface IHotSwapOp {
+	type: "hotSwap";
+	oldAttributes: IChannelAttributes;
+	newAttributes: IChannelAttributes;
+}
 
 /**
  * A channel that can swap Distributed Data Structures (DDS)
@@ -93,6 +100,8 @@ export class Spanner<TOld extends SharedObject, TNew extends SharedObject> imple
 	public connect(services: IChannelServices): void {
 		assert(this.services === undefined, "Can only connect once");
 		this.services = new SpannerChannelServices(services);
+		this.services.deltaConnection.migrate = (message: ISequencedDocumentMessage): boolean =>
+			this.processMigrateOp(message);
 		this.target.connect(this.services);
 	}
 
@@ -110,4 +119,38 @@ export class Spanner<TOld extends SharedObject, TNew extends SharedObject> imple
 	public getGCData(fullGC?: boolean | undefined): IGarbageCollectionData {
 		return this.target.getGCData(fullGC);
 	}
+
+	public submitMigrateOp(): void {
+		// Will need to add some sort of error handling here to check for data processing errors
+		if (this.isAttached()) {
+			assert(this.services !== undefined, "Must be connected before submitting");
+			assert(
+				this.oldSharedObject !== undefined,
+				"Should be migrating from old shared object!",
+			);
+			assert(
+				this.newSharedObject === undefined,
+				"Should be migrating to a new shared object!",
+			);
+			const op: IHotSwapOp = {
+				type: "hotSwap",
+				oldAttributes: this.oldSharedObject.attributes,
+				newAttributes: this.newFactory.attributes,
+			};
+			this.services.deltaConnection.submit(op, undefined);
+		}
+	}
+
+	public processMigrateOp(message: ISequencedDocumentMessage): boolean {
+		const contents = message.contents as IHotSwapOp;
+		if (contents.type === "hotSwap") {
+			const { new: newSharedObject, old: oldSharedObject } = this.swap();
+			this.migrate(oldSharedObject, newSharedObject);
+			this.reconnect();
+			return true;
+		}
+		return false;
+	}
+
+	public migrate: (oldSharedObject: TOld, newSharedObject: TNew) => void = () => {};
 }

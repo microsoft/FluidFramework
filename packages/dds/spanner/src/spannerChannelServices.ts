@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	IChannelServices,
-	IChannelStorageService,
-	IDeltaConnection,
-} from "@fluidframework/datastore-definitions";
+import { IChannelServices, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { SpannerDeltaConnection } from "./spannerDeltaConnection";
 
 /**
@@ -19,6 +15,6 @@ export class SpannerChannelServices implements IChannelServices {
 		this.deltaConnection = new SpannerDeltaConnection(channelServices.deltaConnection);
 		this.objectStorage = channelServices.objectStorage;
 	}
-	public readonly deltaConnection: IDeltaConnection;
+	public readonly deltaConnection: SpannerDeltaConnection;
 	public readonly objectStorage: IChannelStorageService;
 }

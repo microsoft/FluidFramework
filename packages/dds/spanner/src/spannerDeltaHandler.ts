@@ -13,7 +13,14 @@ import { IDeltaHandler } from "@fluidframework/datastore-definitions";
  */
 export class SpannerDeltaHandler implements IDeltaHandler {
 	private newHandler: IDeltaHandler | undefined;
-	public constructor(private readonly oldHandler: IDeltaHandler) {}
+	public constructor(
+		private readonly oldHandler: IDeltaHandler,
+		public readonly migrateFunction: (
+			message: ISequencedDocumentMessage,
+			local: boolean,
+			localOpMetadata: unknown,
+		) => boolean,
+	) {}
 	private get handler(): IDeltaHandler {
 		return this.newHandler ?? this.oldHandler;
 	}
@@ -23,6 +30,9 @@ export class SpannerDeltaHandler implements IDeltaHandler {
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
+		if (this.migrateFunction(message, local, localOpMetadata)) {
+			return;
+		}
 		return this.handler.process(message, local, localOpMetadata);
 	}
 	public setConnectionState(connected: boolean): void {

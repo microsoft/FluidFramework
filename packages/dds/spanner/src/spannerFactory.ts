@@ -13,6 +13,7 @@ import { DataProcessingError } from "@fluidframework/telemetry-utils";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import { Spanner } from "./spanner";
 import { SpannerChannelServices } from "./spannerChannelServices";
+import { attributesMatch } from "./utils";
 
 /**
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link Spanner}.
@@ -83,7 +84,7 @@ export class SpannerFactory<TOld extends SharedObject, TNew extends SharedObject
 			oldChannel,
 			newChannel,
 		);
-		channelSwap.load(spannerServices);
+		channelSwap.load(spannerServices, channelSwap.migrate);
 		return channelSwap;
 	}
 
@@ -94,15 +95,4 @@ export class SpannerFactory<TOld extends SharedObject, TNew extends SharedObject
 		const oldChannel = this.oldFactory.create(runtime, id) as TOld;
 		return new Spanner<TOld, TNew>(id, runtime, this.newFactory, oldChannel);
 	}
-}
-
-function attributesMatch(
-	attributes1: IChannelAttributes,
-	attributes2: IChannelAttributes,
-): boolean {
-	return (
-		attributes1.type === attributes2.type &&
-		attributes1.packageVersion === attributes2.packageVersion &&
-		attributes1.snapshotFormatVersion === attributes2.snapshotFormatVersion
-	);
 }
