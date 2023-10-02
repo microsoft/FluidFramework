@@ -20,33 +20,10 @@ import {
 	IMapClearOperation,
 	IMapKeyEditLocalOpMetadata,
 	IMapClearLocalOpMetadata,
-	MapLocalOpMetadata,
+	IMapKeyDeleteLocalOpMetadata,
 } from "../../internalInterfaces";
 import { MapFactory, SharedMap } from "../../map";
-import { IMapOperation } from "../../mapKernel";
-
-function createConnectedMap(id: string, runtimeFactory: MockContainerRuntimeFactory): SharedMap {
-	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
-	const services = {
-		deltaConnection: dataStoreRuntime.createDeltaConnection(),
-		objectStorage: new MockStorage(),
-	};
-	const map = new SharedMap(id, dataStoreRuntime, MapFactory.Attributes);
-	map.connect(services);
-	return map;
-}
-
-function createLocalMap(id: string): SharedMap {
-	const map = new SharedMap(id, new MockFluidDataStoreRuntime(), MapFactory.Attributes);
-	return map;
-}
-
-class TestSharedMap extends SharedMap {
-	public testApplyStashedOp(content: IMapOperation): MapLocalOpMetadata {
-		return this.applyStashedOp(content) as MapLocalOpMetadata;
-	}
-}
+import { createConnectedMap, createLocalMap, TestSharedMap } from "./mapUtils";
 
 describe("Map", () => {
 	describe("Local state", () => {
@@ -410,8 +387,8 @@ describe("Map", () => {
 				assert.equal(metadata.type, "add");
 				assert.equal(metadata.pendingMessageId, 2);
 				const op3: IMapDeleteOperation = { type: "delete", key: "key2" };
-				metadata = map1.testApplyStashedOp(op3) as IMapKeyEditLocalOpMetadata;
-				assert.equal(metadata.type, "edit");
+				metadata = map1.testApplyStashedOp(op3) as IMapKeyDeleteLocalOpMetadata;
+				assert.equal(metadata.type, "delete");
 				assert.equal(metadata.pendingMessageId, 3);
 				assert.equal(metadata.previousValue.value, "value2");
 				const op4: IMapClearOperation = { type: "clear" };
@@ -851,6 +828,133 @@ describe("Map", () => {
 					assert.equal(map1.size, 0);
 					assert.equal(map2.size, 0);
 				});
+			});
+		});
+
+		describe("Iteration Order", () => {
+			it("Iteration test 1", () => {
+				map1.set("1", 1);
+				map2.set("2", 1);
+				map1.set("2", 2);
+				map1.set("3", 1);
+
+				assert.deepEqual(Array.from(map1.keys()), ["1", "2", "3"]);
+				assert.deepEqual(Array.from(map2.keys()), ["2"]);
+
+				containerRuntimeFactory.processSomeMessages(1);
+				assert.deepEqual(Array.from(map1.keys()), ["1", "2", "3"]);
+				assert.deepEqual(Array.from(map2.keys()), ["1", "2"]);
+
+				containerRuntimeFactory.processSomeMessages(1);
+				assert.deepEqual(Array.from(map1.keys()), ["1", "2", "3"]);
+				assert.deepEqual(Array.from(map2.keys()), ["1", "2"]);
+
+				containerRuntimeFactory.processSomeMessages(2);
+				assert.deepEqual(Array.from(map1.keys()), ["1", "2", "3"]);
+				assert.deepEqual(Array.from(map2.keys()), ["1", "2", "3"]);
+			});
+
+			it("Iteration test 2", () => {
+				map1.set("1", 1);
+				map2.set("2", 1);
+				map1.set("2", 2);
+				map1.set("3", 1);
+				map1.delete("2");
+
+				assert.deepEqual(Array.from(map1.keys()), ["1", "3"]);
+				assert.deepEqual(Array.from(map2.keys()), ["2"]);
+
+				containerRuntimeFactory.processAllMessages();
+				assert.deepEqual(Array.from(map1.keys()), ["1", "3"]);
+				assert.deepEqual(Array.from(map2.keys()), ["1", "3"]);
+			});
+
+			it("Iteration Test 3", () => {
+				map1.set("1", 1);
+				map2.set("1", 2);
+				map2.set("2", 3);
+				map2.delete("1");
+				map2.set("1", 4);
+				map2.set("3", 5);
+
+				assert.deepEqual(Array.from(map1.keys()), ["1"]);
+				assert.deepEqual(Array.from(map2.keys()), ["2", "1", "3"]);
+
+				containerRuntimeFactory.processSomeMessages(2);
+				assert.deepEqual(Array.from(map1.keys()), ["1"]);
+				assert.deepEqual(Array.from(map2.keys()), ["2", "1", "3"]);
+
+				containerRuntimeFactory.processSomeMessages(1);
+				assert.deepEqual(Array.from(map1.keys()), ["1", "2"]);
+				assert.deepEqual(Array.from(map2.keys()), ["2", "1", "3"]);
+
+				containerRuntimeFactory.processSomeMessages(1);
+				assert.deepEqual(Array.from(map1.keys()), ["2"]);
+				assert.deepEqual(Array.from(map2.keys()), ["2", "1", "3"]);
+
+				containerRuntimeFactory.processSomeMessages(1);
+				assert.deepEqual(Array.from(map1.keys()), ["2", "1"]);
+				assert.deepEqual(Array.from(map2.keys()), ["2", "1", "3"]);
+
+				containerRuntimeFactory.processSomeMessages(1);
+				assert.deepEqual(Array.from(map1.keys()), ["2", "1", "3"]);
+				assert.deepEqual(Array.from(map2.keys()), ["2", "1", "3"]);
+			});
+
+			it("Iteration Test 4", () => {
+				map2.set("1", 2);
+				map2.set("2", 3);
+				map2.delete("1");
+				map2.set("1", 4);
+				map2.set("3", 5);
+				map1.set("1", 1);
+
+				assert.deepEqual(Array.from(map1.keys()), ["1"]);
+				assert.deepEqual(Array.from(map2.keys()), ["2", "1", "3"]);
+
+				containerRuntimeFactory.processSomeMessages(2);
+				assert.deepEqual(Array.from(map1.keys()), ["1", "2"]);
+				assert.deepEqual(Array.from(map2.keys()), ["2", "1", "3"]);
+
+				containerRuntimeFactory.processSomeMessages(1);
+				assert.deepEqual(Array.from(map1.keys()), ["2", "1"]);
+				assert.deepEqual(Array.from(map2.keys()), ["2", "1", "3"]);
+
+				containerRuntimeFactory.processSomeMessages(1);
+				assert.deepEqual(Array.from(map1.keys()), ["2", "1"]);
+				assert.deepEqual(Array.from(map2.keys()), ["2", "1", "3"]);
+
+				containerRuntimeFactory.processSomeMessages(1);
+				assert.deepEqual(Array.from(map1.keys()), ["2", "1", "3"]);
+				assert.deepEqual(Array.from(map2.keys()), ["2", "1", "3"]);
+
+				containerRuntimeFactory.processSomeMessages(1);
+				assert.deepEqual(Array.from(map1.keys()), ["2", "1", "3"]);
+				assert.deepEqual(Array.from(map2.keys()), ["2", "1", "3"]);
+			});
+
+			it("Iteration Clean Test 5", () => {
+				map1.set("1", 1);
+				containerRuntimeFactory.processSomeMessages(1);
+				assert.deepEqual(Array.from(map1.keys()), ["1"]);
+				assert.deepEqual(Array.from(map2.keys()), ["1"]);
+
+				map2.delete("4");
+				map2.delete("5");
+				map2.delete("6");
+
+				map1.delete("2");
+
+				map2.set("5", 1);
+
+				map1.set("3", 1);
+
+				map1.clear();
+
+				containerRuntimeFactory.processAllMessages();
+
+				assert.deepEqual(Array.from(map1.keys()), []);
+				assert.deepEqual(Array.from(map2.keys()), []);
 			});
 		});
 	});
