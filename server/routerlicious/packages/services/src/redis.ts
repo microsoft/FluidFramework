@@ -35,7 +35,7 @@ export class RedisCache implements ICache {
 	public async get<T>(key: string, prefixOverride?: string): Promise<T> {
 		let stringValue: string = await this.client.get(this.getKey(key, prefixOverride));
 		if (typeof stringValue !== "string") {
-			// This is for backwards compat, incase a non-string value was previously stored in redis
+			// This is for backwards compat, just in case a non-string value was previously stored in redis
 			stringValue = JSON.stringify(stringValue);
 		}
 		return JSON.parse(stringValue) as T;
@@ -59,23 +59,23 @@ export class RedisCache implements ICache {
 	}
 
 	public async delete(key: string, prefixOverride?: string): Promise<boolean> {
+		const keyToDelete: string = this.getKey(key, prefixOverride);
 		try {
-			const keyToDelete: string = this.getKey(key, prefixOverride);
 			const result = await this.client.del(keyToDelete);
 			return result === 1;
 		} catch (error) {
-			Lumberjack.error(`Error deleting ${key} from cache.`, undefined, error);
+			Lumberjack.error(`Error deleting ${keyToDelete} from cache.`, undefined, error);
 			return false;
 		}
 	}
 
 	public async incr(key: string, prefixOverride?: string): Promise<number> {
+		const incrKey: string = this.getKey(key, prefixOverride);
 		try {
-			const incrKey: string = this.getKey(key, prefixOverride);
 			return this.client.incr(incrKey);
 		} catch (error) {
 			Lumberjack.error(
-				`Error while incrementing counter for ${key} in redis.`,
+				`Error while incrementing counter for ${incrKey} in redis.`,
 				undefined,
 				error,
 			);
@@ -84,12 +84,12 @@ export class RedisCache implements ICache {
 	}
 
 	public async decr(key: string, prefixOverride?: string): Promise<number> {
+		const decrKey: string = this.getKey(key, prefixOverride);
 		try {
-			const decrKey: string = this.getKey(key, prefixOverride);
 			return this.client.decr(decrKey);
 		} catch (error) {
 			Lumberjack.error(
-				`Error while decrementing counter for ${key} in redis.`,
+				`Error while decrementing counter for ${decrKey} in redis.`,
 				undefined,
 				error,
 			);
