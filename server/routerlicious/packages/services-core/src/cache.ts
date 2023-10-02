@@ -53,4 +53,14 @@ export interface ICache {
 	 * @param prefixOverride - Prefix to append to the key, handled by the implementation if left undefined. Empty string will not add any prefix to the key.
 	 */
 	decr?(key: string, prefixOverride?: string): Promise<number>;
+
+	/**
+	 * Get a list of keys that have a given prefix.
+	 * This method will get a list of all keys that begin with keyPrefix, additionally prepending this cache's key prefix.
+	 * In other words, the method will fetch all keys that have the following pattern (prefix or prefixOverride):keyPrefix*
+	 *
+	 * @param keyPrefix - Prefix for the keys to get.
+	 * @param prefixOverride - Prefix to append to key. Empty string will not add any prefix to the key.
+	 */
+	keysByPrefix?(keyPrefix: string, prefixOverride?: string): Promise<string[]>;
 }
