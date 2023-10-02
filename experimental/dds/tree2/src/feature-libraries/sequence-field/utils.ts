@@ -143,7 +143,7 @@ export function getOutputCellId(
 	} else if (markFillsCells(mark)) {
 		return undefined;
 	} else if (isTransientEffect(mark)) {
-		return getDetachCellId(mark.detach, revision, metadata);
+		return getDetachCellId(mark.detach, mark.revision ?? revision, metadata);
 	}
 
 	return getInputCellId(mark, revision, metadata);
@@ -177,6 +177,13 @@ function getOverrideCellId(mark: Detach): CellId | undefined {
 
 export function cloneMark<TMark extends Mark<TNodeChange>, TNodeChange>(mark: TMark): TMark {
 	const clone = { ...mark };
+	if (clone.type === "Transient") {
+		clone.attach = { ...clone.attach };
+		clone.detach = { ...clone.detach };
+		if (clone.attach.type === "Insert" || clone.attach.type === "Revive") {
+			clone.attach.content = [...clone.attach.content];
+		}
+	}
 	if (clone.type === "Insert" || clone.type === "Revive") {
 		clone.content = [...clone.content];
 	}

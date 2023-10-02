@@ -32,6 +32,7 @@ export const cases: {
 	revive: TestChangeset;
 	move: TestChangeset;
 	return: TestChangeset;
+	transient_insert: TestChangeset;
 } = {
 	no_change: [],
 	insert: createInsertChangeset(1, 2, 1),
@@ -44,6 +45,10 @@ export const cases: {
 	revive: createReviveChangeset(2, 2, { revision: tag, localId: brand(0) }),
 	move: createMoveChangeset(1, 2, 2),
 	return: createReturnChangeset(1, 3, 0, { revision: tag, localId: brand(0) }),
+	transient_insert: [
+		{ count: 1 },
+		createTransientMark(createInsertMark(2, brand(1)), createDeleteMark(2, brand(2))),
+	],
 };
 
 function createInsertChangeset(

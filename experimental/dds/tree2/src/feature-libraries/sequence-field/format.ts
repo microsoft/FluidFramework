@@ -338,7 +338,7 @@ export interface MovePlaceholder extends HasRevisionTag, HasMoveId {
 	type: "Placeholder";
 }
 
-export interface TransientEffect {
+export interface TransientEffect extends HasRevisionTag {
 	type: "Transient";
 	attach: Attach;
 	detach: Detach;

@@ -173,6 +173,7 @@ function composeMarks<TNodeChange>(
 	const nodeChange = composeChildChanges(baseMark.changes, newMark.changes, newRev, composeChild);
 
 	if (isTransientEffect(newMark)) {
+		// BUG: This must be wrong, as composing an empty mark with a transient mark would result in an empty mark.
 		return withNodeChange(baseMark, nodeChange);
 	}
 	if (isTransientEffect(baseMark)) {
@@ -398,8 +399,7 @@ function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
 	revision: RevisionTag | undefined,
 	composeChild: NodeChangeComposer<TNodeChange>,
 ): TMark {
-	if (isNoopMark(mark) || mark.type === "Transient") {
-		// A composite mark has already been composed.
+	if (isNoopMark(mark)) {
 		return mark;
 	}
 
@@ -412,10 +412,7 @@ function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
 		asMutable(cloned.cellId).revision = revision;
 	}
 
-	assert(
-		!isNoopMark(cloned) && cloned.type !== "Transient",
-		0x4de /* Cloned should be same type as input mark */,
-	);
+	assert(!isNoopMark(cloned), 0x4de /* Cloned should be same type as input mark */);
 	if (revision !== undefined && cloned.revision === undefined) {
 		cloned.revision = revision;
 	}
