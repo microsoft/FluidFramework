@@ -93,7 +93,7 @@ export class Spanner<TOld extends SharedObject, TNew extends SharedObject> imple
 	public connect(services: IChannelServices): void {
 		assert(this.services === undefined, "Can only connect once");
 		this.services = new SpannerChannelServices(services);
-		this.target.connect(services);
+		this.target.connect(this.services);
 	}
 
 	public load(services: SpannerChannelServices): void {

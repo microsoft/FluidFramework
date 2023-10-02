@@ -32,6 +32,15 @@ class TestDataObject extends DataObject {
 		this.channel = cell;
 	}
 
+	public createSpanner<TOld extends SharedCell, TNew extends SharedMap>(): Spanner<TOld, TNew> {
+		const spanner = this.runtime.createChannel(
+			"spanner",
+			SharedCell.getFactory().type,
+		) as Spanner<TOld, TNew>;
+		this.root.set("spanner", spanner.handle);
+		return spanner;
+	}
+
 	public async hasInitialized(): Promise<void> {
 		const cell = await this.runtime.getChannel("cell");
 		this.channel = cell;
@@ -216,5 +225,27 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 		const spanner2 = testObj2.getSharedObject<Spanner<SharedMap, SharedMap>>();
 		const map2 = spanner2.target;
 		assert(map2.get(migrateKey) === originalValue, "Failed to summarize hot swap");
+	});
+
+	it("Can create a channel and hot swap it within the same container", async () => {
+		const container = await provider.loadContainer(runtimeFactory2);
+		const testObj = await requestFluidObject<TestDataObject>(container, "/");
+		const spanner = testObj.createSpanner();
+		(spanner.target as SharedCell).set(originalValue);
+
+		await provider.ensureSynchronized();
+
+		// Hot swap
+		const { new: map, old: cell } = spanner.swap();
+		map.set(migrateKey, cell.get());
+		spanner.reconnect();
+
+		// Send ops
+		await provider.ensureSynchronized();
+		const migratedValueMap1 = map.get(migrateKey);
+		assert(
+			migratedValueMap1 === originalValue,
+			`Failed to migrate values original: ${originalValue}, migrated: ${migratedValueMap1}`,
+		);
 	});
 });
