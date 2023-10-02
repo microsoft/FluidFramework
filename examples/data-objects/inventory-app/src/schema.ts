@@ -5,21 +5,17 @@
 
 import {
 	AllowedUpdateType,
+	leaf,
 	FieldKinds,
 	SchemaAware,
 	SchemaBuilder,
-	ValueSchema,
 } from "@fluid-experimental/tree2";
 
-const builder = new SchemaBuilder("inventory app");
-// REV: I'm not sure why this is necessary...
-const float64 = builder.leaf("number", ValueSchema.Number);
-const string = builder.leaf("string", ValueSchema.String);
+const builder = new SchemaBuilder("inventory app", undefined, leaf.library);
 
 const part = builder.struct("Contoso:Part-1.0.0", {
-	// REV: ...e.g. why this isn't just SchemaBuilder.field(FieldKinds.value, ValueSchema.String)
-	name: SchemaBuilder.field(FieldKinds.value, string),
-	quantity: SchemaBuilder.field(FieldKinds.value, float64),
+	name: SchemaBuilder.field(FieldKinds.value, leaf.string),
+	quantity: SchemaBuilder.field(FieldKinds.value, leaf.number),
 });
 
 // REV: Building this up as a series of builder invocations makes it hard to read the schema.
