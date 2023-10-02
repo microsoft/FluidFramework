@@ -9,6 +9,7 @@ import { ExtractorConfig } from "@microsoft/api-extractor";
 import { CommandLogger } from "../../logging";
 import path from "node:path";
 import { strict as assert } from "node:assert";
+import * as fs from "fs";
 
 /**
  * Represents a list of package categorized into two arrays
@@ -60,8 +61,6 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 	};
 
 	protected async processPackage(pkg: Package): Promise<void> {
-		let packageUpdated: boolean = false;
-
 		updatePackageJsonFile(pkg.directory, (json) => {
 			if (json.types !== undefined && json.typings !== undefined) {
 				throw new Error(
@@ -86,7 +85,7 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 			const extractorConfig = ExtractorConfig.prepare(configOptions);
 			assert(this.flags.types !== undefined, "--types flag must be provided.");
 
-			packageUpdated = updatePackageJsonTypes(
+			const packageUpdated = updatePackageJsonTypes(
 				pkg.directory,
 				extractorConfig,
 				this.flags.types,
@@ -115,8 +114,6 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 
 /**
  * Updates the types/typing field in package.json.
- * @param config - An interface specifying the package, extractor config, release type, JSON data
- * @param log - The logger used for logging verbose information.
  * @returns true if the update was successful, false otherwise.
  */
 function updatePackageJsonTypes(
@@ -126,43 +123,60 @@ function updatePackageJsonTypes(
 	json: PackageJson,
 	log: CommandLogger,
 ): boolean {
-	let packageUpdated = false;
 	try {
 		if (extractorConfig.rollupEnabled === true) {
-			packageUpdated = true;
+			let filePath = "";
+
 			switch (dTsType) {
-				case "alpha": {
-					if (extractorConfig.alphaTrimmedFilePath === "") {
-						packageUpdated = false;
-						throw new Error("alphaTrimmedFilePath is empty");
-					}
-
-					json.types = path.relative(directory, extractorConfig.alphaTrimmedFilePath);
+				case "alpha":
+					filePath = extractorConfig.alphaTrimmedFilePath;
 					break;
-				}
-
-				case "beta": {
-					json.types = path.relative(directory, extractorConfig.betaTrimmedFilePath);
+				case "beta":
+					filePath = extractorConfig.betaTrimmedFilePath;
 					break;
-				}
-
-				case "public": {
-					json.types = path.relative(directory, extractorConfig.publicTrimmedFilePath);
+				case "public":
+					filePath = extractorConfig.publicTrimmedFilePath;
 					break;
-				}
-
-				case "untrimmed": {
-					json.types = path.relative(directory, extractorConfig.untrimmedFilePath);
+				case "untrimmed":
+					filePath = extractorConfig.untrimmedFilePath;
 					break;
-				}
-
-				default: {
+				default:
 					log.errorLog(`${dTsType} is not a valid value.`);
+					break;
+			}
+
+			if (filePath) {
+				if (json.typings !== undefined) {
+					json.typings = calculateRelativePath(filePath, directory);
+					return true;
 				}
+				assert(json.types !== undefined, "`types` field is undefined");
+				json.types = calculateRelativePath(filePath, directory);
+				return true;
 			}
 		}
 	} catch {
-		log.verbose(`Unable to update types: ${JSON.stringify(extractorConfig)}`);
+		log.verbose(`Unable to update types: ${JSON.stringify(extractorConfig.projectFolder)}`);
 	}
-	return packageUpdated;
+	return false;
+}
+
+/**
+ * Calculates the relative path from a given file path to a target directory while
+ * ensuring that the file path and the target directory have the same parent folder.
+ * If the parent folders do not match, an error is thrown.
+ *
+ * @param filePath - The file path to calculate the relative path for.
+ * @param directory - The target directory to which the relative path should be calculated.
+ * @returns The calculated relative path from 'directory' to 'filePath'.
+ * @throws Error if the file path does not exists.
+ */
+function calculateRelativePath(filePath: string, directory: string): string {
+	if (!fs.existsSync(filePath)) {
+		throw new Error(`${filePath} path does not exists`);
+	}
+
+	const relativePath = path.relative(directory, filePath);
+
+	return relativePath;
 }
