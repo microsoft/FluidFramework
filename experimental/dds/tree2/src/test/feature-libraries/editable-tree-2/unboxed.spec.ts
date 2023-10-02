@@ -458,6 +458,48 @@ describe("unboxed unit tests", () => {
 				assert.equal(item1.foo, "world");
 				assert.equal(item1.bar, true);
 			});
+
+			it("Recursive struct", () => {
+				const builder = new SchemaBuilder("test");
+				const stringLeafSchema = builder.leaf("string", ValueSchema.String);
+				const structSchema = builder.structRecursive("struct", {
+					name: SchemaBuilder.fieldValue(stringLeafSchema),
+					child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => structSchema),
+				});
+				const rootSchema = SchemaBuilder.fieldSequence(structSchema);
+				const schema = builder.intoDocumentSchema(rootSchema);
+
+				const initialTree = [
+					{
+						name: "Foo",
+						child: undefined,
+					},
+					{
+						name: "Bar",
+						child: {
+							name: "Baz",
+							child: undefined,
+						},
+					},
+				];
+
+				const { context, cursor } = initializeTreeWithContent(schema, initialTree);
+
+				const unboxed = unboxedField(context, rootSchema, cursor);
+
+				assert(unboxed !== undefined);
+				assert.equal(unboxed.length, 2);
+
+				const item0 = unboxed.at(0);
+				assert.equal(item0.name, "Foo");
+				assert.equal(item0.child, undefined);
+
+				const item1 = unboxed.at(1);
+				assert.equal(item1.name, "Bar");
+				assert(item1.child !== undefined);
+				assert.equal(item1.child.name, "Baz");
+				assert.equal(item1.child.child, undefined);
+			});
 		});
 	});
 
