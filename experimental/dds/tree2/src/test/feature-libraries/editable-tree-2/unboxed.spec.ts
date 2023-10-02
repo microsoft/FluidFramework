@@ -137,7 +137,7 @@ function createValueLeafTree(
 }
 
 /**
- * Creates a tree whose root node contains a single (value) leaf field.
+ * Creates a tree whose root node contains a single (sequence) leaf field.
  * Also initializes a cursor and moves that cursor to the tree's root field.
  *
  * @returns The initialized tree, cursor, and associated context.
