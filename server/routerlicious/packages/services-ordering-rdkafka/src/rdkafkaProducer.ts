@@ -150,15 +150,28 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 		 */
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		producer.on("connection.failure", async (error) => {
-			await this.close(true);
-
-			this.error(error);
+			try {
+				await this.close(true);
+				this.error(error, {
+					restart: false,
+					errorLabel: "rdkafkaProducer:connection.failure",
+				});
+			} catch (err) {
+				Lumberjack.error(
+					"Error encountered when handling producer connection.failure",
+					undefined,
+					err,
+				);
+			}
 
 			this.connect();
 		});
 
 		producer.on("event.error", (error) => {
-			this.handleError(producer, error).catch((handleErrorError) => {
+			this.handleError(producer, error, {
+				restart: false,
+				errorLabel: "rdkafkaProducer:event.error",
+			}).catch((handleErrorError) => {
 				Lumberjack.error(
 					"Error encountered when handling producer event.error",
 					undefined,
@@ -366,6 +379,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 							restart: true,
 							tenantId: boxcar.tenantId,
 							documentId: boxcar.documentId,
+							errorLabel: "rdkafkaProducer:producer.produce",
 						}).catch((error) => {
 							Lumberjack.error(
 								"Error encountered when handling producer error in sendBoxcar()",
@@ -400,6 +414,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 				restart: true,
 				tenantId: boxcar.tenantId,
 				documentId: boxcar.documentId,
+				errorLabel: "rdkafkaProducer:sendBoxcar",
 			}).catch((error) => {
 				Lumberjack.error(
 					"Error encountered when handling producer error in sendBoxcar() catch block",
