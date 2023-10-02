@@ -1943,20 +1943,14 @@ export interface Sequence extends BrandedFieldKind<"Sequence", Multiplicity.Sequ
 }
 
 // @alpha
-export interface Sequence2<TTypes extends AllowedTypes> extends TreeField {
+export interface Sequence2<TTypes extends AllowedTypes> extends TreeField, ReadonlyArray<UnboxNodeUnion<TTypes>> {
     // (undocumented)
     [boxedIterator](): IterableIterator<TypedNodeUnion<TTypes>>;
-    // (undocumented)
-    [Symbol.iterator](): IterableIterator<UnboxNodeUnion<TTypes>>;
-    readonly asArray: readonly UnboxNodeUnion<TTypes>[];
     at(index: number): UnboxNodeUnion<TTypes>;
     boxedAt(index: number): TypedNodeUnion<TTypes>;
-    insertAt(index: number, value: FlexibleNodeContent<TTypes>[]): void;
-    insertAtEnd(value: FlexibleNodeContent<TTypes>[]): void;
-    insertAtStart(value: FlexibleNodeContent<TTypes>[]): void;
-    // (undocumented)
-    readonly length: number;
-    map<U>(callbackfn: (value: UnboxNodeUnion<TTypes>, index: number) => U): U[];
+    insertAt(index: number, value: readonly FlexibleNodeContent<TTypes>[]): void;
+    insertAtEnd(value: readonly FlexibleNodeContent<TTypes>[]): void;
+    insertAtStart(value: readonly FlexibleNodeContent<TTypes>[]): void;
     mapBoxed<U>(callbackfn: (value: TypedNodeUnion<TTypes>, index: number) => U): U[];
     moveToEnd(sourceStart: number, sourceEnd: number): void;
     moveToEnd<TTypesSource extends AllowedTypes>(sourceStart: number, sourceEnd: number, source: Sequence2<CheckTypesOverlap<TTypesSource, TTypes>>): void;

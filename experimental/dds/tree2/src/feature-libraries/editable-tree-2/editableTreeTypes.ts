@@ -495,7 +495,9 @@ export type CheckTypesOverlap<T, TCheck> = [Extract<T, TCheck> extends never ? n
  * Currently only nodes can be held onto with anchors, and this does not replicate the behavior implemented for editing.
  * @alpha
  */
-export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
+export interface Sequence<TTypes extends AllowedTypes>
+	extends TreeField,
+		ReadonlyArray<UnboxNodeUnion<TTypes>> {
 	/**
 	 * Gets a node of this field by its index with unboxing.
 	 * Note that a node must exist at the given index.
@@ -512,15 +514,7 @@ export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
 	 * Calls the provided callback function on each child of this sequence, and returns an array that contains the results.
 	 * @param callbackfn - A function that accepts the child and its index.
 	 */
-	map<U>(callbackfn: (value: UnboxNodeUnion<TTypes>, index: number) => U): U[];
-
-	/**
-	 * Calls the provided callback function on each child of this sequence, and returns an array that contains the results.
-	 * @param callbackfn - A function that accepts the child and its index.
-	 */
 	mapBoxed<U>(callbackfn: (value: TypedNodeUnion<TTypes>, index: number) => U): U[];
-
-	readonly length: number;
 
 	/**
 	 * Inserts new item(s) at a specified location.
@@ -528,21 +522,21 @@ export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
 	 * @param value - The content to insert.
 	 * @throws Throws if any of the input indices are invalid.
 	 */
-	insertAt(index: number, value: FlexibleNodeContent<TTypes>[]): void;
+	insertAt(index: number, value: readonly FlexibleNodeContent<TTypes>[]): void;
 
 	/**
 	 * Inserts new item(s) at the start of the sequence.
 	 * @param value - The content to insert.
 	 * @throws Throws if any of the input indices are invalid.
 	 */
-	insertAtStart(value: FlexibleNodeContent<TTypes>[]): void;
+	insertAtStart(value: readonly FlexibleNodeContent<TTypes>[]): void;
 
 	/**
 	 * Inserts new item(s) at the end of the sequence.
 	 * @param value - The content to insert.
 	 * @throws Throws if any of the input indices are invalid.
 	 */
-	insertAtEnd(value: FlexibleNodeContent<TTypes>[]): void;
+	insertAtEnd(value: readonly FlexibleNodeContent<TTypes>[]): void;
 
 	/**
 	 * Removes the item at the specified location.
@@ -639,17 +633,6 @@ export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
 	): void;
 
 	[boxedIterator](): IterableIterator<TypedNodeUnion<TTypes>>;
-
-	[Symbol.iterator](): IterableIterator<UnboxNodeUnion<TTypes>>;
-
-	/**
-	 * An enumerable own property which allows JavaScript object traversals to access {@link Sequence} content.
-	 * It is recommenced to NOT use this when possible (for performance and type safety reasons): instead use {@link Sequence#at} or iterate over nodes with `Symbol.iterator`.
-	 * See [ReadMe](./README.md) for details.
-	 *
-	 * This array is not guaranteed to be kept up to date across edits and thus should not be held onto across edits.
-	 */
-	readonly asArray: readonly UnboxNodeUnion<TTypes>[];
 }
 
 /**

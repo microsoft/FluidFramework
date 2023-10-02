@@ -250,11 +250,71 @@ export class LazySequence<TTypes extends AllowedTypes>
 	) {
 		super(context, schema, cursor, fieldAnchor);
 
-		makePropertyEnumerableOwn(this, "asArray", LazySequence.prototype);
-	}
+		return new Proxy(this, {
+			get: (target, key) => {
+				if (typeof key === "string") {
+					const asNumber = Number(key);
 
-	public get asArray(): readonly UnboxNodeUnion<TTypes>[] {
-		return this.map((x) => x);
+					if (Number.isInteger(asNumber)) {
+						return 0 <= asNumber && asNumber < target.length
+							? target.at(asNumber)
+							: undefined;
+					}
+				}
+
+				return Reflect.get(target, key);
+			},
+			set: (target, key, newValue) => {
+				if (typeof key === "string") {
+					const asNumber = Number(key);
+
+					if (Number.isInteger(asNumber)) {
+						// For MVP, we disallow set.
+						return false;
+					}
+				}
+
+				return Reflect.set(target, key, newValue);
+			},
+			has: (target, key) => {
+				if (typeof key === "string") {
+					const asNumber = Number(key);
+					if (Number.isInteger(asNumber)) {
+						return 0 <= asNumber && asNumber < target.length;
+					}
+				}
+
+				return Reflect.has(target, key);
+			},
+			ownKeys: (target) => {
+				return Array.from({ length: target.length }, (_, index) => `${index}`);
+			},
+			getOwnPropertyDescriptor: (target, key) => {
+				if (typeof key === "string") {
+					const asNumber = Number(key);
+					if (Number.isInteger(asNumber)) {
+						if (0 <= asNumber && asNumber < target.length) {
+							return {
+								value: target.at(asNumber),
+								// For MVP, disallow set.
+								writable: false,
+								enumerable: true,
+								configurable: true,
+							};
+						}
+					} else if (key === "length") {
+						return {
+							value: target.length,
+							// For MVP, length is readonly.
+							writable: false,
+							enumerable: false,
+							configurable: false,
+						};
+					}
+				}
+				return undefined;
+			},
+		});
 	}
 
 	private sequenceEditor(): SequenceFieldEditBuilder {
@@ -263,18 +323,18 @@ export class LazySequence<TTypes extends AllowedTypes>
 		return fieldEditor;
 	}
 
-	public insertAt(index: number, value: FlexibleNodeContent<TTypes>[]): void {
+	public insertAt(index: number, value: readonly FlexibleNodeContent<TTypes>[]): void {
 		const fieldEditor = this.sequenceEditor();
 		const content = this.normalizeNewContent(Array.isArray(value) ? value : [value]);
 		assertValidIndex(index, this, true);
 		fieldEditor.insert(index, content);
 	}
 
-	public insertAtStart(value: FlexibleNodeContent<TTypes>[]): void {
+	public insertAtStart(value: readonly FlexibleNodeContent<TTypes>[]): void {
 		this.insertAt(0, value);
 	}
 
-	public insertAtEnd(value: FlexibleNodeContent<TTypes>[]): void {
+	public insertAtEnd(value: readonly FlexibleNodeContent<TTypes>[]): void {
 		this.insertAt(this.length, value);
 	}
 
@@ -370,6 +430,215 @@ export class LazySequence<TTypes extends AllowedTypes>
 			destinationIndex,
 		);
 	}
+
+	public override toString(): string {
+		return Array.prototype.toString.call(this);
+	}
+
+	public override toLocaleString(): string {
+		return Array.prototype.toLocaleString.call(this);
+	}
+
+	public concat(...items: ConcatArray<UnboxNodeUnion<TTypes>>[]): UnboxNodeUnion<TTypes>[];
+	public concat(
+		...items: (UnboxNodeUnion<TTypes> | ConcatArray<UnboxNodeUnion<TTypes>>)[]
+	): UnboxNodeUnion<TTypes>[] {
+		return Array.prototype.concat.apply(this, items) as UnboxNodeUnion<TTypes>[];
+	}
+
+	public join(separator?: string): string {
+		return Array.prototype.join.call(this, separator);
+	}
+
+	public slice(start?: number, end?: number): UnboxNodeUnion<TTypes>[] {
+		return Array.prototype.slice.call(this, start, end) as UnboxNodeUnion<TTypes>[];
+	}
+
+	public indexOf(searchElement: UnboxNodeUnion<TTypes>, fromIndex?: number): number {
+		return Array.prototype.indexOf.call(this, searchElement, fromIndex);
+	}
+
+	public lastIndexOf(searchElement: UnboxNodeUnion<TTypes>, fromIndex?: number): number {
+		// eslint-disable-next-line prefer-rest-params -- arguments.length distinguishes overloads
+		return Array.prototype.lastIndexOf.apply(this, arguments as any);
+	}
+
+	public every<S extends UnboxNodeUnion<TTypes>>(
+		predicate: (
+			value: UnboxNodeUnion<TTypes>,
+			index: number,
+			array: readonly UnboxNodeUnion<TTypes>[],
+		) => value is S,
+		thisArg?: any,
+	): this is readonly S[];
+
+	public every(
+		predicate: (
+			value: UnboxNodeUnion<TTypes>,
+			index: number,
+			array: readonly UnboxNodeUnion<TTypes>[],
+		) => unknown,
+		thisArg?: any,
+	): boolean {
+		return Array.prototype.every.call(this, predicate, thisArg);
+	}
+
+	public some(
+		predicate: (
+			value: UnboxNodeUnion<TTypes>,
+			index: number,
+			array: readonly UnboxNodeUnion<TTypes>[],
+		) => unknown,
+		thisArg?: any,
+	): boolean {
+		return Array.prototype.some.call(this, predicate, thisArg);
+	}
+
+	public forEach(
+		callbackfn: (
+			value: UnboxNodeUnion<TTypes>,
+			index: number,
+			array: readonly UnboxNodeUnion<TTypes>[],
+		) => void,
+		thisArg?: any,
+	): void {
+		return Array.prototype.forEach.call(this, callbackfn, thisArg);
+	}
+
+	public override map<U>(
+		callbackfn: (
+			value: UnboxNodeUnion<TTypes>,
+			index: number,
+			array: readonly UnboxNodeUnion<TTypes>[],
+		) => U,
+		thisArg?: any,
+	): U[] {
+		return Array.prototype.map.call(this, callbackfn, thisArg) as U[];
+	}
+
+	public filter<S extends UnboxNodeUnion<TTypes>>(
+		predicate: (
+			value: UnboxNodeUnion<TTypes>,
+			index: number,
+			array: readonly UnboxNodeUnion<TTypes>[],
+		) => value is S,
+		thisArg?: any,
+	): UnboxNodeUnion<TTypes>[];
+
+	public filter(
+		predicate: (
+			value: UnboxNodeUnion<TTypes>,
+			index: number,
+			array: readonly UnboxNodeUnion<TTypes>[],
+		) => unknown,
+		thisArg?: any,
+	): UnboxNodeUnion<TTypes>[] {
+		return Array.prototype.filter.call(this, predicate, thisArg) as UnboxNodeUnion<TTypes>[];
+	}
+
+	public find<S extends UnboxNodeUnion<TTypes>>(
+		predicate: (
+			value: UnboxNodeUnion<TTypes>,
+			index: number,
+			obj: readonly UnboxNodeUnion<TTypes>[],
+		) => value is S,
+		thisArg?: any,
+	): S | undefined;
+
+	public find(
+		predicate: (
+			value: UnboxNodeUnion<TTypes>,
+			index: number,
+			obj: readonly UnboxNodeUnion<TTypes>[],
+		) => unknown,
+		thisArg?: any,
+	): UnboxNodeUnion<TTypes> | undefined {
+		return Array.prototype.find.call(this, predicate, thisArg) as
+			| UnboxNodeUnion<TTypes>
+			| undefined;
+	}
+
+	public findIndex(
+		predicate: (
+			value: UnboxNodeUnion<TTypes>,
+			index: number,
+			obj: readonly UnboxNodeUnion<TTypes>[],
+		) => unknown,
+		thisArg?: any,
+	): number {
+		return Array.prototype.findIndex.call(this, predicate, thisArg);
+	}
+
+	public reduce<U>(
+		callbackfn: (
+			previousValue: U,
+			currentValue: UnboxNodeUnion<TTypes>,
+			currentIndex: number,
+			array: readonly UnboxNodeUnion<TTypes>[],
+		) => U,
+		initialValue?: U,
+	): U {
+		// eslint-disable-next-line prefer-rest-params -- arguments.length distinguishes overloads
+		return Array.prototype.reduce.apply(this, arguments as any) as U;
+	}
+
+	public reduceRight<U>(
+		callbackfn: (
+			previousValue: U,
+			currentValue: UnboxNodeUnion<TTypes>,
+			currentIndex: number,
+			array: readonly UnboxNodeUnion<TTypes>[],
+		) => U,
+		initialValue?: U,
+	): U {
+		// eslint-disable-next-line prefer-rest-params -- arguments.length distinguishes overloads
+		return Array.prototype.reduceRight.apply(this, arguments as any) as U;
+	}
+
+	/**
+	 * Returns an iterable of key, value pairs for every entry in the array
+	 */
+	public entries(): IterableIterator<[number, UnboxNodeUnion<TTypes>]> {
+		return Array.prototype.entries.call(this) as IterableIterator<
+			[number, UnboxNodeUnion<TTypes>]
+		>;
+	}
+
+	public keys(): IterableIterator<number> {
+		return Array.prototype.keys.call(this);
+	}
+
+	public values(): IterableIterator<UnboxNodeUnion<TTypes>> {
+		return Array.prototype.values.call(this) as IterableIterator<UnboxNodeUnion<TTypes>>;
+	}
+
+	public includes(searchElement: UnboxNodeUnion<TTypes>, fromIndex?: number): boolean {
+		return Array.prototype.includes.call(this, searchElement, fromIndex);
+	}
+
+	public flatMap<U, This = undefined>(
+		callback: (
+			this: This,
+			value: UnboxNodeUnion<TTypes>,
+			index: number,
+			array: UnboxNodeUnion<TTypes>[],
+		) => U | readonly U[],
+		thisArg?: This,
+	): U[] {
+		return Array.prototype.flatMap.call(this, callback as any, thisArg) as U[];
+	}
+
+	public flat<A, D extends number = 1>(this: A, depth?: D): FlatArray<A, D>[] {
+		return Array.prototype.flat.call(this, depth) as FlatArray<A, D>[];
+	}
+
+	public get [Symbol.unscopables](): {
+		[K in keyof (readonly any[])]?: boolean;
+	} {
+		return Array.prototype[Symbol.unscopables];
+	}
+
+	readonly [n: number]: UnboxNodeUnion<TTypes>;
 }
 
 export class LazyValueField<TTypes extends AllowedTypes>
