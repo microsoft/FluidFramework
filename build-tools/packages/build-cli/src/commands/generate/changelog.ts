@@ -4,6 +4,7 @@
  */
 
 import { Package, FluidRepo } from "@fluidframework/build-tools";
+import { fromInternalScheme, isInternalVersionScheme } from "@fluid-tools/version-tools";
 import { Flags } from "@oclif/core";
 import { command as execCommand } from "execa";
 import { readFile, writeFile } from "fs/promises";
@@ -14,7 +15,6 @@ import { BaseCommand } from "../../base";
 import { releaseGroupFlag } from "../../flags";
 import { Repository } from "../../lib";
 import { isReleaseGroup } from "../../releaseGroups";
-import { fromInternalScheme, isInternalVersionScheme } from "@fluid-tools/version-tools";
 
 async function replaceInFile(search: string, replace: string, path: string): Promise<void> {
 	const content = await readFile(path, "utf8");
@@ -48,21 +48,26 @@ export default class GenerateChangeLogCommand extends BaseCommand<typeof Generat
 	private async processPackage(pkg: Package): Promise<void> {
 		const { directory, version: pkgVersion } = pkg;
 
-    // This is the version that the changesets tooling calculates by default. It does a semver major bump on the current
-    // version.
+		// This is the version that the changesets tooling calculates by default. It does a semver major bump on the current
+		// version. We search for that version in the generated changelog and replace it with the one that we want.
+		// For internal versions, bumping the semver major is the same as just taking the public version from the internal
+		// version and using it directly.
 		const changesetsCalculatedVersion = isInternalVersionScheme(pkgVersion)
 			? fromInternalScheme(pkgVersion)[0].version
 			: semver.inc(pkgVersion, "major");
-		const version = this.flags.version ?? pkgVersion;
+		const versionToUse = this.flags.version ?? pkgVersion;
 
+		// Replace the changeset version with the correct version.
 		await replaceInFile(
 			`## ${changesetsCalculatedVersion}\n`,
-			`## ${version}\n`,
+			`## ${versionToUse}\n`,
 			`${directory}/CHANGELOG.md`,
 		);
+
+		// For changelogs that had no changesets applied to them, add in a 'dependency updates only' section.
 		await replaceInFile(
-			`## ${version}\n\n## `,
-			`## ${version}\n\nDependency updates only.\n\n## `,
+			`## ${versionToUse}\n\n## `,
+			`## ${versionToUse}\n\nDependency updates only.\n\n## `,
 			`${directory}/CHANGELOG.md`,
 		);
 	}

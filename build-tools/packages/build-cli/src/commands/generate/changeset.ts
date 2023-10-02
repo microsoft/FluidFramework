@@ -117,7 +117,10 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 		}
 
 		if (empty) {
-			const emptyFile = await createChangesetFile(monorepo.directory ?? context.gitRepo.resolvedRoot, new Map());
+			const emptyFile = await createChangesetFile(
+				monorepo.directory ?? context.gitRepo.resolvedRoot,
+				new Map(),
+			);
 			// eslint-disable-next-line @typescript-eslint/no-shadow
 			const changesetPath = path.relative(context.gitRepo.resolvedRoot, emptyFile);
 			this.logHr();
@@ -318,11 +321,7 @@ async function createChangesetFile(
 	// const releaseGroup = firstPackage.monoRepo;
 
 	const changesetID = humanId({ separator: "-", capitalize: false });
-	const changesetPath = path.join(
-		rootPath,
-		".changeset",
-		`${changesetID}.md`,
-	);
+	const changesetPath = path.join(rootPath, ".changeset", `${changesetID}.md`);
 	const changesetContent = await createChangesetContent(packages, body);
 	await writeFile(
 		changesetPath,
