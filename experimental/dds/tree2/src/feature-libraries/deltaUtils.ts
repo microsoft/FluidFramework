@@ -102,7 +102,7 @@ function mapOldContent<TIn, TOut>(
 	input: HasOldContent<TIn>,
 	func: (tree: TIn) => TOut,
 ): HasOldContent<TOut> {
-	const hasOldContent: { oldContent?: OldContent<TOut> } = {};
+	const hasOldContent: HasOldContent<TOut> = {};
 	if (input.oldContent !== undefined) {
 		hasOldContent.oldContent = { detachId: input.oldContent.detachId };
 		if (input.oldContent.fields !== undefined) {
