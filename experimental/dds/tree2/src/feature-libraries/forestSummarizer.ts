@@ -20,7 +20,6 @@ import {
 	IEditableForest,
 	ITreeCursorSynchronous,
 	ITreeSubscriptionCursor,
-	JsonableTree,
 	mapCursorField,
 	mapCursorFields,
 	SchemaData,
@@ -124,7 +123,10 @@ export class ForestSummarizer implements Summarizable {
 			// forest summary format.
 			const fields = parse(treeBufferString) as [FieldKey, EncodedChunk][];
 			const delta: [FieldKey, Delta.Insert[]][] = fields.map(([fieldKey, content]) => {
-				const jsonableTree = jsonableTreesFromFieldCursor(decode(content).cursor());
+				const jsonableTree = mapCursorField(
+					decode(content).cursor(),
+					jsonableTreeFromCursor,
+				);
 				const insert: Delta.Insert = {
 					type: Delta.MarkType.Insert,
 					content: jsonableTree.map(singleTextCursor),
@@ -136,10 +138,6 @@ export class ForestSummarizer implements Summarizable {
 			applyDelta(new Map(delta), this.forest);
 		}
 	}
-}
-
-export function jsonableTreesFromFieldCursor(cursor: ITreeCursorSynchronous): JsonableTree[] {
-	return mapCursorField(cursor, jsonableTreeFromCursor);
 }
 
 function encodeSummary(
