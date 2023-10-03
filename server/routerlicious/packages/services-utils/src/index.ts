@@ -9,7 +9,11 @@ export {
 	getCorrelationId,
 	getCorrelationIdWithHttpFallback,
 } from "./asyncLocalStorage";
-export { bindTelemetryContext, getTelemetryContextPropertiesWithHttpInfo } from "./asyncContext";
+export {
+	bindTelemetryContext,
+	getTelemetryContextPropertiesWithHttpInfo,
+} from "./telemetryContext";
+export { bindTimeoutContext } from "./timeoutContext";
 export {
 	generateToken,
 	generateUser,
