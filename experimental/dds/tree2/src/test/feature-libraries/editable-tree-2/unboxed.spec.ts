@@ -429,18 +429,16 @@ describe.only("unboxed unit tests", () => {
 		});
 
 		it("Multi-type", () => {
-			const builder = new SchemaBuilder("test");
-			const stringLeafSchema = builder.leaf("string", ValueSchema.String);
-			const fluidHandleLeafSchema = builder.leaf("handle", ValueSchema.FluidHandle);
-			const rootSchema = SchemaBuilder.fieldOptional(stringLeafSchema, fluidHandleLeafSchema);
-			const schema = builder.intoDocumentSchema(rootSchema);
+			const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+			const fieldSchema = SchemaBuilder.fieldOptional(leafDomain.string, leafDomain.handle);
+			const schema = builder.intoDocumentSchema(fieldSchema);
 
 			const { context, cursor } = initializeTreeWithContent(schema, "Hello world");
 			cursor.enterNode(0); // Root node field has 1 node; move into it
 
 			// Type is not known based on schema, so node will not be unboxed.
-			const unboxed = unboxedUnion(context, rootSchema, cursor);
-			assert.equal(unboxed.type, "string");
+			const unboxed = unboxedUnion(context, fieldSchema, cursor);
+			assert.equal(unboxed.type, "com.fluidframework.leaf.string");
 			assert.equal(unboxed.value, "Hello world");
 		});
 	});
