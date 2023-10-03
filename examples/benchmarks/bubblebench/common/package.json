@@ -71,7 +71,7 @@
 		"@fluidframework/build-tools": "^0.24.0",
 		"@fluidframework/eslint-config-fluid": "^2.1.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@fluidframework/test-tools": "^0.2.158186",
+		"@fluidframework/test-tools": "^1.0.195075",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^16.18.38",
 		"@types/react": "^17.0.44",
