@@ -340,7 +340,7 @@ describe.only("LazyField", () => {
 		 *
 		 * @returns The root node's field.
 		 */
-		function createOptionalStructLeafTree(
+		function createOptionalStructTree(
 			initialTree?:
 				| SchemaAware.TypedField<FieldSchema, SchemaAware.ApiMode.Flexible>
 				| readonly ITreeCursorSynchronous[]
@@ -388,7 +388,7 @@ describe.only("LazyField", () => {
 					foo: true,
 					bar: 42,
 				};
-				const field = createOptionalStructLeafTree(input);
+				const field = createOptionalStructTree(input);
 
 				const mapResult = field.map((value) => value);
 
@@ -420,7 +420,7 @@ describe.only("LazyField", () => {
 					foo: true,
 					bar: 42,
 				};
-				const field = createOptionalStructLeafTree(input);
+				const field = createOptionalStructTree(input);
 
 				const mapResult = field.mapBoxed((value) => value);
 
@@ -597,7 +597,7 @@ describe.only("LazyField", () => {
 		/**
 		 * Creates a tree whose root has a single struct field, and returns that field.
 		 */
-		function createValueStructLeafTree(
+		function createValueStructTree(
 			initialTree?:
 				| SchemaAware.TypedField<FieldSchema, SchemaAware.ApiMode.Flexible>
 				| readonly ITreeCursorSynchronous[]
@@ -631,7 +631,7 @@ describe.only("LazyField", () => {
 					foo: true,
 					bar: 42,
 				};
-				const field = createValueStructLeafTree(input);
+				const field = createValueStructTree(input);
 
 				const mapResult = field.map((value) => value);
 
@@ -656,7 +656,7 @@ describe.only("LazyField", () => {
 					foo: true,
 					bar: 42,
 				};
-				const field = createValueStructLeafTree(input);
+				const field = createValueStructTree(input);
 
 				const mapResult = field.mapBoxed((value) => value);
 
