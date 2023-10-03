@@ -13,6 +13,7 @@ console.log("Starting fetch")
 const apiUrl = `https://dev.azure.com/fluidframework/internal/_apis/build/builds/${BUILD_ID}/timeline?api-version=7.1-preview.2`;
 if (!fs.existsSync(`${TEST_WORKSPACE}/stageFiles`)) {
     fs.mkdirSync(`${TEST_WORKSPACE}/stageFiles`, { recursive: true });
+    console.log("Folder created");
 }
 
 let stages = [];
@@ -21,8 +22,12 @@ fetch(apiUrl, {
         'Authorization': `Basic ${ADO_API_TOKEN}`
     }
 })
-.then(response => response.json())
+.then(response => {
+    console.log(response);
+    return response.json();
+})
 .then(data => {
+    console.log("Saving stage names");
     // Extract and save all stage names
     stages = data.records.filter(record => record.type === "Stage").map(record => record.identifier);
     console.log(stages);
