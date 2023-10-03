@@ -8,6 +8,8 @@
         "module": "esnext",
         "outDir": "dist",
         "jsx": "react",
+        // Added because upgrading to node 18 caused a bunch of typecheck errors
+        "skipLibCheck": true,
         "types": [
             "jest",
             "puppeteer",
