@@ -106,8 +106,8 @@ export class LegacySharedTreeInventoryList extends DataObject implements IInvent
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			.getViewNode(rootNode.traits.get("inventory" as TraitLabel)![0])
 			.traits.get("parts" as TraitLabel)!;
-		// REV: This seems to iterate in reverse order?  Not sure why it swaps the entries as compared to how
-		// it was created.
+		// REV: This is not a stable/controlled ordering - if we want to control the order, we might add
+		// another node under the partNode that specifies some payload to order on.
 		for (const partNodeId of partsNodeIds) {
 			const partNode = this.tree.currentView.getViewNode(partNodeId);
 
