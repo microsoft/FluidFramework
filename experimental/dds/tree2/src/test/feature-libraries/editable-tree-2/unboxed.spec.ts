@@ -103,37 +103,6 @@ function createOptionalLeafTree(
 }
 
 /**
- * Creates a tree whose root node contains a single (value) leaf field.
- * Also initializes a cursor and moves that cursor to the tree's root field.
- *
- * @returns The initialized tree, cursor, and associated context.
- */
-function createValueLeafTree(
-	kind: ValueSchema,
-	initialTree:
-		| SchemaAware.TypedField<FieldSchema, SchemaAware.ApiMode.Flexible>
-		| readonly ITreeCursorSynchronous[]
-		| ITreeCursorSynchronous,
-): {
-	fieldSchema: FieldSchema<ValueFieldKind, [TreeSchema<"leaf">]>;
-	context: Context;
-	cursor: ITreeSubscriptionCursor;
-} {
-	const builder = new SchemaBuilder("test");
-	const leafSchema = builder.leaf("leaf", kind);
-	const rootSchema = SchemaBuilder.field(FieldKinds.value, leafSchema);
-	const schema = builder.intoDocumentSchema(rootSchema);
-
-	const { context, cursor } = initializeTreeWithContent({ schema, initialTree });
-
-	return {
-		fieldSchema: rootSchema,
-		context,
-		cursor,
-	};
-}
-
-/**
  * Creates a tree whose root node contains a single (sequence) leaf field.
  * Also initializes a cursor and moves that cursor to the tree's root field.
  *
@@ -175,7 +144,7 @@ describe.only("unboxed unit tests", () => {
 				assert.equal(unboxedField(context, fieldSchema, cursor), undefined);
 			});
 
-			it("With value", () => {
+			it("With value (leaf)", () => {
 				const { fieldSchema, context, cursor } = createOptionalLeafTree(
 					ValueSchema.Number,
 					42,
@@ -184,9 +153,35 @@ describe.only("unboxed unit tests", () => {
 			});
 		});
 
-		it("Value field", () => {
-			const { fieldSchema, context, cursor } = createValueLeafTree(ValueSchema.Boolean, true);
-			assert.equal(unboxedField(context, fieldSchema, cursor), true);
+		it("Value field (struct)", () => {
+			const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+			const structSchema = builder.structRecursive("struct", {
+				name: SchemaBuilder.fieldValue(leafDomain.string),
+				child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => structSchema),
+			});
+			const rootSchema = SchemaBuilder.fieldOptional(structSchema);
+			const schema = builder.intoDocumentSchema(rootSchema);
+
+			const initialTree = {
+				name: "Foo",
+				child: {
+					name: "Bar",
+					child: undefined,
+				},
+			};
+
+			const { context, cursor } = initializeTreeWithContent({ schema, initialTree });
+
+			const unboxed = unboxedField(context, rootSchema, cursor);
+			assert(unboxed !== undefined);
+			assert.equal(unboxed.type, "struct");
+			assert.equal(unboxed.name, "Foo");
+
+			const unboxedChild = unboxed.child;
+			assert(unboxedChild !== undefined);
+			assert.equal(unboxedChild.type, "struct");
+			assert.equal(unboxedChild.name, "Bar");
+			assert.equal(unboxedChild.child, undefined);
 		});
 
 		it("Sequence field", () => {
@@ -295,13 +290,17 @@ describe.only("unboxed unit tests", () => {
 		});
 
 		it("Single type", () => {
-			const { fieldSchema, context, cursor } = createValueLeafTree(
-				ValueSchema.String,
-				"Hello world",
-			);
+			const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+			const fieldSchema = SchemaBuilder.fieldValue(leafDomain.boolean);
+			const schema = builder.intoDocumentSchema(fieldSchema);
+
+			const { context, cursor } = initializeTreeWithContent({
+				schema,
+				initialTree: false,
+			});
 			cursor.enterNode(0); // Root node field has 1 node; move into it
 
-			assert.equal(unboxedUnion(context, fieldSchema, cursor), "Hello world");
+			assert.equal(unboxedUnion(context, fieldSchema, cursor), false);
 		});
 
 		it("Multi-type", () => {
