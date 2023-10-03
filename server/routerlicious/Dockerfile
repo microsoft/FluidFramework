@@ -1,7 +1,9 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-FROM node:14.19.1-stretch-slim AS base
+# DisableDockerDetector "No feasible secure solution for OSS repos yet"
+
+FROM node:18.17.1-buster-slim AS base
 
 # node-gyp dependencies
 RUN apt-get update && apt-get install -y \
