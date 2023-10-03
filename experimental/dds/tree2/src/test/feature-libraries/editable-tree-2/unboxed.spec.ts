@@ -9,10 +9,8 @@ import { strict as assert } from "node:assert";
 
 import {
 	FieldAnchor,
-	ITreeCursorSynchronous,
 	ITreeSubscriptionCursor,
 	TreeNavigationResult,
-	ValueSchema,
 	rootFieldKey,
 } from "../../../core";
 import { leaf as leafDomain } from "../../../domains";
@@ -21,13 +19,7 @@ import {
 	Any,
 	FieldKind,
 	FieldKinds,
-	FieldSchema,
-	Optional,
-	SchemaAware,
 	SchemaBuilder,
-	Sequence,
-	TreeSchema,
-	ValueFieldKind,
 } from "../../../feature-libraries";
 import { Context } from "../../../feature-libraries/editable-tree-2/context";
 import {
@@ -71,84 +63,32 @@ function initializeTreeWithContent<Kind extends FieldKind, Types extends Allowed
 	};
 }
 
-/**
- * Creates a tree whose root node contains a single (optional) leaf field.
- * Also initializes a cursor and moves that cursor to the tree's root field.
- *
- * @returns The initialized tree, cursor, and associated context.
- */
-function createOptionalLeafTree(
-	kind: ValueSchema,
-	initialTree:
-		| SchemaAware.TypedField<FieldSchema, SchemaAware.ApiMode.Flexible>
-		| readonly ITreeCursorSynchronous[]
-		| ITreeCursorSynchronous,
-): {
-	fieldSchema: FieldSchema<Optional, [TreeSchema<"leaf">]>;
-	context: Context;
-	cursor: ITreeSubscriptionCursor;
-} {
-	const builder = new SchemaBuilder("test");
-	const leafSchema = builder.leaf("leaf", kind);
-	const rootSchema = SchemaBuilder.fieldOptional(leafSchema);
-	const schema = builder.intoDocumentSchema(rootSchema);
-
-	const { context, cursor } = initializeTreeWithContent({ schema, initialTree });
-
-	return {
-		fieldSchema: rootSchema,
-		context,
-		cursor,
-	};
-}
-
-/**
- * Creates a tree whose root node contains a single (sequence) leaf field.
- * Also initializes a cursor and moves that cursor to the tree's root field.
- *
- * @returns The initialized tree, cursor, and associated context.
- */
-function createSequenceLeafTree(
-	kind: ValueSchema,
-	initialTree:
-		| SchemaAware.TypedField<FieldSchema, SchemaAware.ApiMode.Flexible>
-		| readonly ITreeCursorSynchronous[]
-		| ITreeCursorSynchronous,
-): {
-	fieldSchema: FieldSchema<Sequence, [TreeSchema<"leaf">]>;
-	context: Context;
-	cursor: ITreeSubscriptionCursor;
-} {
-	const builder = new SchemaBuilder("test");
-	const leafSchema = builder.leaf("leaf", kind);
-	const rootSchema = SchemaBuilder.fieldSequence(leafSchema);
-	const schema = builder.intoDocumentSchema(rootSchema);
-
-	const { context, cursor } = initializeTreeWithContent({ schema, initialTree });
-
-	return {
-		fieldSchema: rootSchema,
-		context,
-		cursor,
-	};
-}
-
 describe.only("unboxed unit tests", () => {
 	describe("unboxedField", () => {
 		describe("Optional field", () => {
 			it("No value", () => {
-				const { fieldSchema, context, cursor } = createOptionalLeafTree(
-					ValueSchema.Number,
-					undefined,
-				);
+				const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+				const fieldSchema = SchemaBuilder.fieldOptional(leafDomain.number);
+				const schema = builder.intoDocumentSchema(fieldSchema);
+
+				const { context, cursor } = initializeTreeWithContent({
+					schema,
+					initialTree: undefined,
+				});
+
 				assert.equal(unboxedField(context, fieldSchema, cursor), undefined);
 			});
 
 			it("With value (leaf)", () => {
-				const { fieldSchema, context, cursor } = createOptionalLeafTree(
-					ValueSchema.Number,
-					42,
-				);
+				const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+				const fieldSchema = SchemaBuilder.fieldOptional(leafDomain.number);
+				const schema = builder.intoDocumentSchema(fieldSchema);
+
+				const { context, cursor } = initializeTreeWithContent({
+					schema,
+					initialTree: 42,
+				});
+
 				assert.equal(unboxedField(context, fieldSchema, cursor), 42);
 			});
 		});
@@ -159,8 +99,8 @@ describe.only("unboxed unit tests", () => {
 				name: SchemaBuilder.fieldValue(leafDomain.string),
 				child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => structSchema),
 			});
-			const rootSchema = SchemaBuilder.fieldOptional(structSchema);
-			const schema = builder.intoDocumentSchema(rootSchema);
+			const fieldSchema = SchemaBuilder.fieldOptional(structSchema);
+			const schema = builder.intoDocumentSchema(fieldSchema);
 
 			const initialTree = {
 				name: "Foo",
@@ -172,7 +112,7 @@ describe.only("unboxed unit tests", () => {
 
 			const { context, cursor } = initializeTreeWithContent({ schema, initialTree });
 
-			const unboxed = unboxedField(context, rootSchema, cursor);
+			const unboxed = unboxedField(context, fieldSchema, cursor);
 			assert(unboxed !== undefined);
 			assert.equal(unboxed.type, "struct");
 			assert.equal(unboxed.name, "Foo");
@@ -185,10 +125,14 @@ describe.only("unboxed unit tests", () => {
 		});
 
 		it("Sequence field", () => {
-			const { fieldSchema, context, cursor } = createSequenceLeafTree(ValueSchema.String, [
-				"Hello",
-				"world",
-			]);
+			const builder = new SchemaBuilder("test");
+			const fieldSchema = SchemaBuilder.fieldSequence(leafDomain.string);
+			const schema = builder.intoDocumentSchema(fieldSchema);
+
+			const { context, cursor } = initializeTreeWithContent({
+				schema,
+				initialTree: ["Hello", "world"],
+			});
 
 			const unboxed = unboxedField(context, fieldSchema, cursor);
 
