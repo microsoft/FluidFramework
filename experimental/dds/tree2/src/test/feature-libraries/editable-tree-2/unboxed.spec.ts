@@ -199,6 +199,20 @@ describe.only("unboxed unit tests", () => {
 
 			assert.deepEqual(unboxed.asArray, ["Hello", "world"]);
 		});
+
+		it("Schema: Any", () => {
+			const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+			const fieldSchema = SchemaBuilder.fieldOptional(Any);
+			const schema = builder.intoDocumentSchema(fieldSchema);
+
+			const { context, cursor } = initializeTreeWithContent({ schema, initialTree: 42 });
+
+			// Type is not known based on schema, so node will not be unboxed.
+			const unboxed = unboxedField(context, fieldSchema, cursor);
+			assert(unboxed !== undefined);
+			assert.equal(unboxed.type, "com.fluidframework.leaf.number");
+			assert.equal(unboxed.value, 42);
+		});
 	});
 
 	describe("unboxedTree", () => {
