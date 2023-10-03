@@ -257,7 +257,7 @@ export enum SummaryEncodeType {
 export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
 	jsonValidator: noopValidator,
 	forest: ForestType.Reference,
-	summaryEncodeType: SummaryEncodeType.Compressed,
+	summaryEncodeType: SummaryEncodeType.Uncompressed,
 };
 
 /**

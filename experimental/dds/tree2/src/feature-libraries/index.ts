@@ -173,6 +173,10 @@ export {
 	buildChunkedForest,
 	defaultChunkPolicy,
 	makeTreeChunker,
+	decode,
+	uncompressedEncode,
+	schemaCompressedEncode,
+	EncodedChunk,
 } from "./chunked-forest";
 
 export {

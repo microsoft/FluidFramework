@@ -6,11 +6,19 @@
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { brand, useDeterministicStableId } from "../../util";
 import { AllowedUpdateType, FieldKey, UpPath, ValueSchema, rootFieldKey } from "../../core";
-import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../shared-tree";
+import {
+	ISharedTree,
+	ISharedTreeView,
+	SharedTreeFactory,
+	SummaryEncodeType,
+} from "../../shared-tree";
 import { Any, FieldKinds, SchemaBuilder, singleTextCursor } from "../../feature-libraries";
 import { typeboxValidator } from "../../external-utilities";
 
-const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
+const factory = new SharedTreeFactory({
+	jsonValidator: typeboxValidator,
+	summaryEncodeType: SummaryEncodeType.Compressed,
+});
 
 const builder = new SchemaBuilder("test trees");
 const rootNodeSchema = builder.map("TestInner", SchemaBuilder.fieldSequence(Any));

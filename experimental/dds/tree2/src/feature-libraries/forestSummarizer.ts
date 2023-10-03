@@ -25,13 +25,10 @@ import {
 	SchemaData,
 } from "../core";
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
-import { SummaryEncodeType } from "../shared-tree/sharedTree";
+import { SummaryEncodeType } from "../shared-tree";
 import { jsonableTreeFromCursor, singleTextCursor } from "./treeTextCursor";
 import { FullSchemaPolicy } from "./modular-schema";
-import { EncodedChunk } from "./chunked-forest/codec/format";
-import { schemaCompressedEncode } from "./chunked-forest/codec/schemaBasedEncoding";
-import { uncompressedEncode } from "./chunked-forest/codec/uncompressedEncode";
-import { decode } from "./chunked-forest/codec/chunkDecoding";
+import { decode, schemaCompressedEncode, uncompressedEncode, EncodedChunk } from "./chunked-forest";
 
 /**
  * The storage key for the blob in the summary containing tree data

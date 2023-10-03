@@ -1,0 +1,14 @@
+{
+	"tags": [
+		"chunked-forest-codec"
+	],
+	"exports": [
+		"index"
+	],
+	"imports": [
+		"util",
+		"core",
+		"feature-libraries",
+		"codec"
+	]
+}
