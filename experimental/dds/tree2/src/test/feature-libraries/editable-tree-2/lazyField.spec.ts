@@ -128,335 +128,631 @@ function initializeTreeWithContent<Kind extends FieldKind, Types extends Allowed
 	};
 }
 
-describe("LazyOptionalField", () => {
-	describe("is", () => {
-		it("Any", () => {
-			// #region Tree and schema initialization
+describe.only("LazyField unit tests", () => {
+	describe("LazyOptionalField", () => {
+		describe("is", () => {
+			it("Any", () => {
+				// #region Tree and schema initialization
 
-			const builder = new SchemaBuilder("test");
-			const booleanLeafSchema = builder.leaf("bool", ValueSchema.Boolean);
-			const recursiveStructSchema = builder.structRecursive("recursiveStruct", {
-				flag: SchemaBuilder.fieldValue(booleanLeafSchema),
-				child: SchemaBuilder.fieldRecursive(
-					FieldKinds.optional,
-					() => recursiveStructSchema,
-				),
+				const builder = new SchemaBuilder("test");
+				const booleanLeafSchema = builder.leaf("bool", ValueSchema.Boolean);
+				const recursiveStructSchema = builder.structRecursive("recursiveStruct", {
+					flag: SchemaBuilder.fieldValue(booleanLeafSchema),
+					child: SchemaBuilder.fieldRecursive(
+						FieldKinds.optional,
+						() => recursiveStructSchema,
+					),
+				});
+				const rootSchema = SchemaBuilder.fieldOptional(builder.struct("struct", {}));
+				const schema = builder.intoDocumentSchema(rootSchema);
+
+				const { context, cursor } = initializeTreeWithContent({ schema, initialTree: {} });
+
+				// #endregion
+
+				const field = new LazyOptionalField(
+					context,
+					SchemaBuilder.fieldOptional(Any),
+					cursor,
+					detachedFieldAnchor,
+				);
+
+				// Positive cases
+				assert(field.is(SchemaBuilder.fieldOptional(Any)));
+
+				// Negative cases
+				assert(!field.is(SchemaBuilder.fieldOptional()));
+				assert(!field.is(SchemaBuilder.fieldOptional(booleanLeafSchema)));
+				assert(!field.is(SchemaBuilder.fieldValue(Any)));
+				assert(!field.is(SchemaBuilder.fieldSequence(Any)));
+				assert(
+					!field.is(
+						SchemaBuilder.fieldRecursive(FieldKinds.value, recursiveStructSchema),
+					),
+				);
 			});
-			const rootSchema = SchemaBuilder.fieldOptional(builder.struct("struct", {}));
-			const schema = builder.intoDocumentSchema(rootSchema);
 
-			const { context, cursor } = initializeTreeWithContent({ schema, initialTree: {} });
+			it("Primitive", () => {
+				// #region Tree and schema initialization
 
-			// #endregion
+				const builder = new SchemaBuilder("test");
+				const booleanLeafSchema = builder.leaf("bool", ValueSchema.Boolean);
+				const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
+				const recursiveStructSchema = builder.structRecursive("recursiveStruct", {
+					flag: SchemaBuilder.fieldValue(booleanLeafSchema),
+					child: SchemaBuilder.fieldRecursive(
+						FieldKinds.optional,
+						() => recursiveStructSchema,
+					),
+				});
+				const rootSchema = SchemaBuilder.fieldOptional(builder.struct("struct", {}));
+				const schema = builder.intoDocumentSchema(rootSchema);
 
-			const field = new LazyOptionalField(
-				context,
-				SchemaBuilder.fieldOptional(Any),
-				cursor,
-				detachedFieldAnchor,
-			);
+				const { context, cursor } = initializeTreeWithContent({ schema, initialTree: {} });
 
-			// Positive cases
-			assert(field.is(SchemaBuilder.fieldOptional(Any)));
+				// #endregion
 
-			// Negative cases
-			assert(!field.is(SchemaBuilder.fieldOptional()));
-			assert(!field.is(SchemaBuilder.fieldOptional(booleanLeafSchema)));
-			assert(!field.is(SchemaBuilder.fieldValue(Any)));
-			assert(!field.is(SchemaBuilder.fieldSequence(Any)));
-			assert(
-				!field.is(SchemaBuilder.fieldRecursive(FieldKinds.value, recursiveStructSchema)),
-			);
+				const field = new LazyOptionalField(
+					context,
+					SchemaBuilder.fieldOptional(booleanLeafSchema),
+					cursor,
+					detachedFieldAnchor,
+				);
+
+				// Positive cases
+				assert(field.is(SchemaBuilder.fieldOptional(booleanLeafSchema)));
+
+				// Negative cases
+				assert(!field.is(SchemaBuilder.fieldValue(Any)));
+				assert(!field.is(SchemaBuilder.fieldValue(booleanLeafSchema)));
+				assert(!field.is(SchemaBuilder.fieldValue(numberLeafSchema)));
+				assert(!field.is(SchemaBuilder.fieldSequence(Any)));
+				assert(!field.is(SchemaBuilder.fieldSequence(booleanLeafSchema)));
+				assert(!field.is(SchemaBuilder.fieldSequence(numberLeafSchema)));
+				assert(
+					!field.is(
+						SchemaBuilder.fieldRecursive(FieldKinds.value, recursiveStructSchema),
+					),
+				);
+			});
+
+			it("Struct", () => {
+				// #region Tree and schema initialization
+
+				const builder = new SchemaBuilder("test");
+				const booleanLeafSchema = builder.leaf("bool", ValueSchema.Boolean);
+				const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
+				const structLeafSchema = builder.struct("struct", {
+					foo: SchemaBuilder.fieldValue(booleanLeafSchema),
+					bar: SchemaBuilder.fieldOptional(numberLeafSchema),
+				});
+				const recursiveStructSchema = builder.structRecursive("recursiveStruct", {
+					flag: SchemaBuilder.fieldValue(booleanLeafSchema),
+					child: SchemaBuilder.fieldRecursive(
+						FieldKinds.optional,
+						() => recursiveStructSchema,
+					),
+				});
+				const rootSchema = SchemaBuilder.fieldOptional(structLeafSchema);
+				const schema = builder.intoDocumentSchema(rootSchema);
+
+				const { context, cursor } = initializeTreeWithContent({ schema, initialTree: {} });
+
+				// #endregion
+
+				const field = new LazyOptionalField(
+					context,
+					SchemaBuilder.fieldOptional(structLeafSchema),
+					cursor,
+					detachedFieldAnchor,
+				);
+
+				// Positive cases
+				assert(field.is(SchemaBuilder.fieldOptional(structLeafSchema)));
+
+				// Negative cases
+				assert(!field.is(SchemaBuilder.fieldValue(Any)));
+				assert(!field.is(SchemaBuilder.fieldValue(structLeafSchema)));
+				assert(!field.is(SchemaBuilder.fieldValue(booleanLeafSchema)));
+				assert(!field.is(SchemaBuilder.fieldSequence(Any)));
+				assert(!field.is(SchemaBuilder.fieldSequence(structLeafSchema)));
+				assert(!field.is(SchemaBuilder.fieldSequence(booleanLeafSchema)));
+				assert(
+					!field.is(
+						SchemaBuilder.fieldRecursive(FieldKinds.value, recursiveStructSchema),
+					),
+				);
+			});
+
+			// TODO: Fluid Handle test
 		});
 
-		it("Primitive", () => {
-			// #region Tree and schema initialization
+		describe("length", () => {
+			it("No value", () => {
+				const builder = new SchemaBuilder("test");
+				const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
+				const rootSchema = SchemaBuilder.fieldOptional(numberLeafSchema);
+				const schema = builder.intoDocumentSchema(rootSchema);
 
-			const builder = new SchemaBuilder("test");
-			const booleanLeafSchema = builder.leaf("bool", ValueSchema.Boolean);
-			const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
-			const recursiveStructSchema = builder.structRecursive("recursiveStruct", {
-				flag: SchemaBuilder.fieldValue(booleanLeafSchema),
-				child: SchemaBuilder.fieldRecursive(
-					FieldKinds.optional,
-					() => recursiveStructSchema,
-				),
+				const { context, cursor } = initializeTreeWithContent({
+					schema,
+					initialTree: undefined,
+				});
+
+				const field = new LazyOptionalField(
+					context,
+					SchemaBuilder.fieldOptional(Any),
+					cursor,
+					rootFieldAnchor,
+				);
+
+				assert.equal(field.length, 0);
 			});
-			const rootSchema = SchemaBuilder.fieldOptional(builder.struct("struct", {}));
-			const schema = builder.intoDocumentSchema(rootSchema);
 
-			const { context, cursor } = initializeTreeWithContent({ schema, initialTree: {} });
+			it("With value", () => {
+				const builder = new SchemaBuilder("test");
+				const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
+				const rootSchema = SchemaBuilder.fieldOptional(numberLeafSchema);
+				const schema = builder.intoDocumentSchema(rootSchema);
 
-			// #endregion
+				const { context, cursor } = initializeTreeWithContent({ schema, initialTree: 42 });
 
-			const field = new LazyOptionalField(
-				context,
-				SchemaBuilder.fieldOptional(booleanLeafSchema),
-				cursor,
-				detachedFieldAnchor,
-			);
+				const field = new LazyOptionalField(
+					context,
+					SchemaBuilder.fieldOptional(numberLeafSchema),
+					cursor,
+					rootFieldAnchor,
+				);
 
-			// Positive cases
-			assert(field.is(SchemaBuilder.fieldOptional(booleanLeafSchema)));
-
-			// Negative cases
-			assert(!field.is(SchemaBuilder.fieldValue(Any)));
-			assert(!field.is(SchemaBuilder.fieldValue(booleanLeafSchema)));
-			assert(!field.is(SchemaBuilder.fieldValue(numberLeafSchema)));
-			assert(!field.is(SchemaBuilder.fieldSequence(Any)));
-			assert(!field.is(SchemaBuilder.fieldSequence(booleanLeafSchema)));
-			assert(!field.is(SchemaBuilder.fieldSequence(numberLeafSchema)));
-			assert(
-				!field.is(SchemaBuilder.fieldRecursive(FieldKinds.value, recursiveStructSchema)),
-			);
+				assert.equal(field.length, 1);
+			});
 		});
 
-		it("Struct", () => {
-			// #region Tree and schema initialization
-
+		/**
+		 * Creates a tree whose root node contains a single (optional) leaf field.
+		 * Also initializes a cursor and moves that cursor to the tree's root field.
+		 *
+		 * @returns The root node's field.
+		 */
+		function createOptionalLeafTree(
+			kind: ValueSchema,
+			initialTree?:
+				| SchemaAware.TypedField<FieldSchema, SchemaAware.ApiMode.Flexible>
+				| readonly ITreeCursorSynchronous[]
+				| ITreeCursorSynchronous,
+		): LazyOptionalField<[TreeSchema<"leaf">]> {
 			const builder = new SchemaBuilder("test");
-			const booleanLeafSchema = builder.leaf("bool", ValueSchema.Boolean);
-			const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
-			const structLeafSchema = builder.struct("struct", {
-				foo: SchemaBuilder.fieldValue(booleanLeafSchema),
-				bar: SchemaBuilder.fieldOptional(numberLeafSchema),
-			});
-			const recursiveStructSchema = builder.structRecursive("recursiveStruct", {
-				flag: SchemaBuilder.fieldValue(booleanLeafSchema),
-				child: SchemaBuilder.fieldRecursive(
-					FieldKinds.optional,
-					() => recursiveStructSchema,
-				),
-			});
-			const rootSchema = SchemaBuilder.fieldOptional(structLeafSchema);
+			const leafSchema = builder.leaf("leaf", kind);
+			const rootSchema = SchemaBuilder.fieldOptional(leafSchema);
 			const schema = builder.intoDocumentSchema(rootSchema);
 
-			const { context, cursor } = initializeTreeWithContent({ schema, initialTree: {} });
+			const { context, cursor } = initializeTreeWithContent({ schema, initialTree });
 
-			// #endregion
-
-			const field = new LazyOptionalField(
+			return new LazyOptionalField(
 				context,
-				SchemaBuilder.fieldOptional(structLeafSchema),
-				cursor,
-				detachedFieldAnchor,
-			);
-
-			// Positive cases
-			assert(field.is(SchemaBuilder.fieldOptional(structLeafSchema)));
-
-			// Negative cases
-			assert(!field.is(SchemaBuilder.fieldValue(Any)));
-			assert(!field.is(SchemaBuilder.fieldValue(structLeafSchema)));
-			assert(!field.is(SchemaBuilder.fieldValue(booleanLeafSchema)));
-			assert(!field.is(SchemaBuilder.fieldSequence(Any)));
-			assert(!field.is(SchemaBuilder.fieldSequence(structLeafSchema)));
-			assert(!field.is(SchemaBuilder.fieldSequence(booleanLeafSchema)));
-			assert(
-				!field.is(SchemaBuilder.fieldRecursive(FieldKinds.value, recursiveStructSchema)),
-			);
-		});
-
-		// TODO: Fluid Handle test
-	});
-
-	describe("length", () => {
-		it("No value", () => {
-			const builder = new SchemaBuilder("test");
-			const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
-			const rootSchema = SchemaBuilder.fieldOptional(numberLeafSchema);
-			const schema = builder.intoDocumentSchema(rootSchema);
-
-			const { context, cursor } = initializeTreeWithContent({
-				schema,
-				initialTree: undefined,
-			});
-
-			const field = new LazyOptionalField(
-				context,
-				SchemaBuilder.fieldOptional(Any),
+				SchemaBuilder.fieldOptional(leafSchema),
 				cursor,
 				rootFieldAnchor,
 			);
+		}
 
-			assert.equal(field.length, 0);
+		/**
+		 * Creates a tree whose root node contains a single (optional) leaf field.
+		 * Also initializes a cursor and moves that cursor to the tree's root field.
+		 *
+		 * @returns The root node's field.
+		 */
+		function createOptionalStructLeafTree(
+			initialTree?:
+				| SchemaAware.TypedField<FieldSchema, SchemaAware.ApiMode.Flexible>
+				| readonly ITreeCursorSynchronous[]
+				| ITreeCursorSynchronous,
+		): LazyOptionalField<[TreeSchema<"struct">]> {
+			const builder = new SchemaBuilder("test");
+			const booleanLeafSchema = builder.leaf("bool", ValueSchema.Boolean);
+			const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
+			const leafSchema = builder.struct("struct", {
+				foo: SchemaBuilder.fieldValue(booleanLeafSchema),
+				bar: SchemaBuilder.fieldOptional(numberLeafSchema),
+			});
+			const rootSchema = SchemaBuilder.fieldOptional(leafSchema);
+			const schema = builder.intoDocumentSchema(rootSchema);
+
+			const { context, cursor } = initializeTreeWithContent({ schema, initialTree });
+
+			return new LazyOptionalField(
+				context,
+				SchemaBuilder.fieldOptional(leafSchema),
+				cursor,
+				rootFieldAnchor,
+			);
+		}
+
+		describe("map", () => {
+			it("boolean", () => {
+				const field = createOptionalLeafTree(ValueSchema.Boolean, false);
+
+				assert.deepEqual(
+					field.map((value) => value),
+					[false],
+				);
+			});
+
+			it("number", () => {
+				const field = createOptionalLeafTree(ValueSchema.Number, 42);
+
+				assert.deepEqual(
+					field.map((value) => value),
+					[42],
+				);
+			});
+
+			it("string", () => {
+				const field = createOptionalLeafTree(ValueSchema.String, "Hello world");
+
+				assert.deepEqual(
+					field.map((value) => value),
+					["Hello world"],
+				);
+			});
+
+			it("No value", () => {
+				const field = createOptionalLeafTree(ValueSchema.Number, undefined);
+
+				assert.deepEqual(
+					field.map((value) => value),
+					[],
+				);
+			});
+
+			it("Struct", () => {
+				const input = {
+					foo: true,
+					bar: 42,
+				};
+				const field = createOptionalStructLeafTree(input);
+
+				const mapResult = field.map((value) => value);
+
+				assert.equal(mapResult.length, 1);
+				assert.notEqual(mapResult[0], undefined);
+				assert.equal((mapResult[0] as any).foo, true);
+				assert.equal((mapResult[0] as any).bar, 42);
+			});
+
+			// TODO: Fluid Handle test
 		});
 
-		it("With value", () => {
+		describe("mapBoxed", () => {
+			it("number", () => {
+				const field = createOptionalLeafTree(ValueSchema.Number, 42);
+
+				const mapResult = field.mapBoxed((value) => value);
+				assert.equal(mapResult.length, 1);
+				assert.equal(mapResult[0].value, 42);
+			});
+
+			it("boolean", () => {
+				const field = createOptionalLeafTree(ValueSchema.Boolean, true);
+
+				const mapResult = field.mapBoxed((value) => value);
+				assert.equal(mapResult.length, 1);
+				assert.equal(mapResult[0].value, true);
+			});
+
+			it("string", () => {
+				const field = createOptionalLeafTree(ValueSchema.String, "Hello world");
+
+				const mapResult = field.mapBoxed((value) => value);
+				assert.equal(mapResult.length, 1);
+				assert.equal(mapResult[0].value, "Hello world");
+			});
+
+			it("No value", () => {
+				const field = createOptionalLeafTree(ValueSchema.String, undefined);
+
+				const mapResult = field.mapBoxed((value) => value);
+				assert.deepEqual(mapResult, []);
+			});
+
+			it("Struct", () => {
+				const input = {
+					foo: true,
+					bar: 42,
+				};
+				const field = createOptionalStructLeafTree(input);
+
+				const mapResult = field.mapBoxed((value) => value);
+
+				assert.equal(mapResult.length, 1);
+				assert.notEqual(mapResult[0], undefined);
+				assert.equal((mapResult[0] as any).foo, input.foo);
+				assert.equal((mapResult[0] as any).bar, input.bar);
+			});
+
+			// TODO: Fluid Handle test
+		});
+	});
+
+	describe("LazyValueField", () => {
+		describe("is", () => {
+			it("Any", () => {
+				// #region Tree and schema initialization
+
+				const builder = new SchemaBuilder("test");
+				const booleanLeafSchema = builder.leaf("bool", ValueSchema.Boolean);
+				const recursiveStructSchema = builder.structRecursive("recursiveStruct", {
+					flag: SchemaBuilder.fieldValue(booleanLeafSchema),
+					child: SchemaBuilder.fieldRecursive(
+						FieldKinds.optional,
+						() => recursiveStructSchema,
+					),
+				});
+				const rootSchema = SchemaBuilder.fieldValue(booleanLeafSchema);
+				const schema = builder.intoDocumentSchema(rootSchema);
+
+				const { context, cursor } = initializeTreeWithContent({
+					schema,
+					initialTree: true,
+				});
+
+				// #endregion
+
+				const field = new LazyValueField(
+					context,
+					SchemaBuilder.fieldValue(Any),
+					cursor,
+					detachedFieldAnchor,
+				);
+
+				// Positive cases
+				assert(field.is(SchemaBuilder.fieldValue(Any)));
+
+				// Negative cases
+				assert(!field.is(SchemaBuilder.fieldOptional()));
+				assert(!field.is(SchemaBuilder.fieldOptional(booleanLeafSchema)));
+				assert(!field.is(SchemaBuilder.fieldSequence(Any)));
+				assert(
+					!field.is(
+						SchemaBuilder.fieldRecursive(FieldKinds.value, recursiveStructSchema),
+					),
+				);
+				assert(!field.is(SchemaBuilder.fieldOptional(Any)));
+			});
+
+			it("Primitive", () => {
+				// #region Tree and schema initialization
+
+				const builder = new SchemaBuilder("test");
+				const booleanLeafSchema = builder.leaf("bool", ValueSchema.Boolean);
+				const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
+				const recursiveStructSchema = builder.structRecursive("recursiveStruct", {
+					flag: SchemaBuilder.fieldValue(booleanLeafSchema),
+					child: SchemaBuilder.fieldRecursive(
+						FieldKinds.optional,
+						() => recursiveStructSchema,
+					),
+				});
+				const rootSchema = SchemaBuilder.fieldValue(booleanLeafSchema);
+				const schema = builder.intoDocumentSchema(rootSchema);
+
+				const { context, cursor } = initializeTreeWithContent({
+					schema,
+					initialTree: false,
+				});
+
+				// #endregion
+
+				const field = new LazyValueField(context, rootSchema, cursor, detachedFieldAnchor);
+
+				// Positive cases
+				assert(field.is(SchemaBuilder.fieldValue(booleanLeafSchema)));
+
+				// Negative cases
+				assert(!field.is(SchemaBuilder.fieldValue(Any)));
+				assert(!field.is(SchemaBuilder.fieldOptional(Any)));
+				assert(!field.is(SchemaBuilder.fieldOptional(numberLeafSchema)));
+				assert(!field.is(SchemaBuilder.fieldSequence(Any)));
+				assert(!field.is(SchemaBuilder.fieldSequence(booleanLeafSchema)));
+				assert(!field.is(SchemaBuilder.fieldSequence(numberLeafSchema)));
+				assert(
+					field.is(SchemaBuilder.fieldRecursive(FieldKinds.value, recursiveStructSchema)),
+				); // TODO: this is wrong
+				assert(!field.is(SchemaBuilder.fieldOptional(booleanLeafSchema)));
+			});
+
+			it("Struct", () => {
+				// #region Tree and schema initialization
+
+				const builder = new SchemaBuilder("test");
+				const booleanLeafSchema = builder.leaf("bool", ValueSchema.Boolean);
+				const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
+				const structLeafSchema = builder.struct("struct", {
+					foo: SchemaBuilder.fieldValue(booleanLeafSchema),
+					bar: SchemaBuilder.fieldOptional(numberLeafSchema),
+				});
+				const recursiveStructSchema = builder.structRecursive("recursiveStruct", {
+					flag: SchemaBuilder.fieldValue(booleanLeafSchema),
+					child: SchemaBuilder.fieldRecursive(
+						FieldKinds.optional,
+						() => recursiveStructSchema,
+					),
+				});
+				const rootSchema = SchemaBuilder.fieldValue(structLeafSchema);
+				const schema = builder.intoDocumentSchema(rootSchema);
+
+				const { context, cursor } = initializeTreeWithContent({
+					schema,
+					initialTree: {
+						foo: false,
+					},
+				});
+
+				// #endregion
+
+				const field = new LazyValueField(context, rootSchema, cursor, detachedFieldAnchor);
+
+				// Positive cases
+				assert(field.is(SchemaBuilder.fieldValue(structLeafSchema)));
+
+				// Negative cases
+				assert(field.is(SchemaBuilder.fieldValue(booleanLeafSchema))); // TODO: this is wrong
+				assert(!field.is(SchemaBuilder.fieldSequence(Any)));
+				assert(!field.is(SchemaBuilder.fieldSequence(structLeafSchema)));
+				assert(!field.is(SchemaBuilder.fieldSequence(booleanLeafSchema)));
+				assert(
+					field.is(SchemaBuilder.fieldRecursive(FieldKinds.value, recursiveStructSchema)),
+				); // TODO: this is wrong
+				assert(!field.is(SchemaBuilder.fieldOptional(structLeafSchema)));
+			});
+
+			// TODO: Fluid Handle test
+		});
+
+		it("length", () => {
 			const builder = new SchemaBuilder("test");
 			const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
-			const rootSchema = SchemaBuilder.fieldOptional(numberLeafSchema);
+			const rootSchema = SchemaBuilder.fieldValue(numberLeafSchema);
 			const schema = builder.intoDocumentSchema(rootSchema);
 
 			const { context, cursor } = initializeTreeWithContent({ schema, initialTree: 42 });
 
-			const field = new LazyOptionalField(
-				context,
-				SchemaBuilder.fieldOptional(numberLeafSchema),
-				cursor,
-				rootFieldAnchor,
-			);
+			const field = new LazyValueField(context, rootSchema, cursor, rootFieldAnchor);
 
 			assert.equal(field.length, 1);
 		});
-	});
 
-	/**
-	 * Creates a tree whose root has a single leaf field, and returns that field.
-	 */
-	function createLeafField(
-		kind: ValueSchema,
-		initialTree?:
-			| SchemaAware.TypedField<FieldSchema, SchemaAware.ApiMode.Flexible>
-			| readonly ITreeCursorSynchronous[]
-			| ITreeCursorSynchronous,
-	): LazyOptionalField<[TreeSchema<"leaf">]> {
-		const builder = new SchemaBuilder("test");
-		const leafSchema = builder.leaf("leaf", kind);
-		const rootSchema = SchemaBuilder.fieldOptional(leafSchema);
-		const schema = builder.intoDocumentSchema(rootSchema);
+		/**
+		 * Creates a tree whose root has a single leaf field, and returns that field.
+		 */
+		function createValueLeafTree(
+			kind: ValueSchema,
+			initialTree?:
+				| SchemaAware.TypedField<FieldSchema, SchemaAware.ApiMode.Flexible>
+				| readonly ITreeCursorSynchronous[]
+				| ITreeCursorSynchronous,
+		): LazyValueField<[TreeSchema<"leaf">]> {
+			const builder = new SchemaBuilder("test");
+			const leafSchema = builder.leaf("leaf", kind);
+			const rootSchema = SchemaBuilder.fieldValue(leafSchema);
+			const schema = builder.intoDocumentSchema(rootSchema);
 
-		const { context, cursor } = initializeTreeWithContent({ schema, initialTree });
+			const { context, cursor } = initializeTreeWithContent({ schema, initialTree });
 
-		return new LazyOptionalField(
-			context,
-			SchemaBuilder.fieldOptional(leafSchema),
-			cursor,
-			rootFieldAnchor,
-		);
-	}
+			return new LazyValueField(context, rootSchema, cursor, rootFieldAnchor);
+		}
 
-	/**
-	 * Creates a tree whose root has a single struct field, and returns that field.
-	 */
-	function createStructField(
-		initialTree?:
-			| SchemaAware.TypedField<FieldSchema, SchemaAware.ApiMode.Flexible>
-			| readonly ITreeCursorSynchronous[]
-			| ITreeCursorSynchronous,
-	): LazyOptionalField<[TreeSchema<"struct">]> {
-		const builder = new SchemaBuilder("test");
-		const booleanLeafSchema = builder.leaf("bool", ValueSchema.Boolean);
-		const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
-		const leafSchema = builder.struct("struct", {
-			foo: SchemaBuilder.fieldValue(booleanLeafSchema),
-			bar: SchemaBuilder.fieldOptional(numberLeafSchema),
-		});
-		const rootSchema = SchemaBuilder.fieldOptional(leafSchema);
-		const schema = builder.intoDocumentSchema(rootSchema);
+		/**
+		 * Creates a tree whose root has a single struct field, and returns that field.
+		 */
+		function createValueStructLeafTree(
+			initialTree?:
+				| SchemaAware.TypedField<FieldSchema, SchemaAware.ApiMode.Flexible>
+				| readonly ITreeCursorSynchronous[]
+				| ITreeCursorSynchronous,
+		): LazyValueField<[TreeSchema<"struct">]> {
+			const builder = new SchemaBuilder("test");
+			const booleanLeafSchema = builder.leaf("bool", ValueSchema.Boolean);
+			const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
+			const leafSchema = builder.struct("struct", {
+				foo: SchemaBuilder.fieldValue(booleanLeafSchema),
+				bar: SchemaBuilder.fieldOptional(numberLeafSchema),
+			});
+			const rootSchema = SchemaBuilder.fieldValue(leafSchema);
+			const schema = builder.intoDocumentSchema(rootSchema);
 
-		const { context, cursor } = initializeTreeWithContent({ schema, initialTree });
+			const { context, cursor } = initializeTreeWithContent({ schema, initialTree });
 
-		return new LazyOptionalField(
-			context,
-			SchemaBuilder.fieldOptional(leafSchema),
-			cursor,
-			rootFieldAnchor,
-		);
-	}
+			return new LazyValueField(context, rootSchema, cursor, rootFieldAnchor);
+		}
 
-	describe("map", () => {
-		it("boolean", () => {
-			const field = createLeafField(ValueSchema.Boolean, false);
+		describe("map", () => {
+			it("boolean", () => {
+				const field = createValueLeafTree(ValueSchema.Boolean, false);
 
-			assert.deepEqual(
-				field.map((value) => value),
-				[false],
-			);
-		});
+				assert.deepEqual(
+					field.map((value) => value),
+					[false],
+				);
+			});
 
-		it("number", () => {
-			const field = createLeafField(ValueSchema.Number, 42);
+			it("number", () => {
+				const field = createValueLeafTree(ValueSchema.Number, 42);
 
-			assert.deepEqual(
-				field.map((value) => value),
-				[42],
-			);
-		});
+				assert.deepEqual(
+					field.map((value) => value),
+					[42],
+				);
+			});
 
-		it("string", () => {
-			const field = createLeafField(ValueSchema.String, "Hello world");
+			it("string", () => {
+				const field = createValueLeafTree(ValueSchema.String, "Hello world");
 
-			assert.deepEqual(
-				field.map((value) => value),
-				["Hello world"],
-			);
-		});
+				assert.deepEqual(
+					field.map((value) => value),
+					["Hello world"],
+				);
+			});
 
-		it("No value", () => {
-			const field = createLeafField(ValueSchema.Number, undefined);
+			it("Struct", () => {
+				const input = {
+					foo: true,
+					bar: 42,
+				};
+				const field = createValueStructLeafTree(input);
 
-			assert.deepEqual(
-				field.map((value) => value),
-				[],
-			);
+				const mapResult = field.map((value) => value);
+
+				assert.equal(mapResult.length, 1);
+				assert.notEqual(mapResult[0], undefined);
+				assert.equal((mapResult[0] as any).foo, true);
+				assert.equal((mapResult[0] as any).bar, 42);
+			});
+
+			// TODO: Fluid Handle test
 		});
 
-		it("Struct", () => {
-			const input = {
-				foo: true,
-				bar: 42,
-			};
-			const field = createStructField(input);
+		describe("mapBoxed", () => {
+			it("number", () => {
+				const field = createValueLeafTree(ValueSchema.Number, 42);
 
-			const mapResult = field.map((value) => value);
+				const mapResult = field.mapBoxed((value) => value);
+				assert.equal(mapResult.length, 1);
+				assert.equal(mapResult[0].value, 42);
+			});
 
-			assert.equal(mapResult.length, 1);
-			assert.notEqual(mapResult[0], undefined);
-			assert.equal((mapResult[0] as any).foo, true);
-			assert.equal((mapResult[0] as any).bar, 42);
+			it("boolean", () => {
+				const field = createValueLeafTree(ValueSchema.Boolean, true);
+
+				const mapResult = field.mapBoxed((value) => value);
+				assert.equal(mapResult.length, 1);
+				assert.equal(mapResult[0].value, true);
+			});
+
+			it("string", () => {
+				const field = createValueLeafTree(ValueSchema.String, "Hello world");
+
+				const mapResult = field.mapBoxed((value) => value);
+				assert.equal(mapResult.length, 1);
+				assert.equal(mapResult[0].value, "Hello world");
+			});
+
+			it("Struct", () => {
+				const input = {
+					foo: true,
+					bar: 42,
+				};
+				const field = createValueStructLeafTree(input);
+
+				const mapResult = field.mapBoxed((value) => value);
+
+				assert.equal(mapResult.length, 1);
+				assert.notEqual(mapResult[0], undefined);
+				assert.equal((mapResult[0] as any).foo, input.foo);
+				assert.equal((mapResult[0] as any).bar, input.bar);
+			});
+
+			// TODO: Fluid Handle test
 		});
-
-		// TODO: Fluid Handle test
-	});
-
-	describe("mapBoxed", () => {
-		it("number", () => {
-			const field = createLeafField(ValueSchema.Number, 42);
-
-			const mapResult = field.mapBoxed((value) => value);
-			assert.equal(mapResult.length, 1);
-			assert.equal(mapResult[0].value, 42);
-		});
-
-		it("boolean", () => {
-			const field = createLeafField(ValueSchema.Boolean, true);
-
-			const mapResult = field.mapBoxed((value) => value);
-			assert.equal(mapResult.length, 1);
-			assert.equal(mapResult[0].value, true);
-		});
-
-		it("string", () => {
-			const field = createLeafField(ValueSchema.String, "Hello world");
-
-			const mapResult = field.mapBoxed((value) => value);
-			assert.equal(mapResult.length, 1);
-			assert.equal(mapResult[0].value, "Hello world");
-		});
-
-		it("No value", () => {
-			const field = createLeafField(ValueSchema.String, undefined);
-
-			const mapResult = field.mapBoxed((value) => value);
-			assert.deepEqual(mapResult, []);
-		});
-
-		it("Struct", () => {
-			const input = {
-				foo: true,
-				bar: 42,
-			};
-			const field = createStructField(input);
-
-			const mapResult = field.mapBoxed((value) => value);
-
-			assert.equal(mapResult.length, 1);
-			assert.notEqual(mapResult[0], undefined);
-			assert.equal((mapResult[0] as any).foo, input.foo);
-			assert.equal((mapResult[0] as any).bar, input.bar);
-		});
-
-		// TODO: Fluid Handle test
 	});
 });
