@@ -178,31 +178,13 @@ describe("unboxed unit tests", () => {
 				assert.equal(unboxedField(context, fieldSchema, cursor), undefined);
 			});
 
-			it("Boolean", () => {
-				const { fieldSchema, context, cursor } = createOptionalLeafTree(
-					ValueSchema.Boolean,
-					true,
-				);
-				assert.equal(unboxedField(context, fieldSchema, cursor), true);
-			});
-
-			it("Number", () => {
+			it("Primitive", () => {
 				const { fieldSchema, context, cursor } = createOptionalLeafTree(
 					ValueSchema.Number,
 					42,
 				);
 				assert.equal(unboxedField(context, fieldSchema, cursor), 42);
 			});
-
-			it("String", () => {
-				const { fieldSchema, context, cursor } = createOptionalLeafTree(
-					ValueSchema.String,
-					"Hello world",
-				);
-				assert.equal(unboxedField(context, fieldSchema, cursor), "Hello world");
-			});
-
-			// TODO: Fluid Handle
 
 			it("Struct", () => {
 				const builder = new SchemaBuilder("test");
@@ -281,31 +263,13 @@ describe("unboxed unit tests", () => {
 		});
 
 		describe("Value field", () => {
-			it("Boolean", () => {
+			it("Primitive", () => {
 				const { fieldSchema, context, cursor } = createValueLeafTree(
 					ValueSchema.Boolean,
 					true,
 				);
 				assert.equal(unboxedField(context, fieldSchema, cursor), true);
 			});
-
-			it("Number", () => {
-				const { fieldSchema, context, cursor } = createValueLeafTree(
-					ValueSchema.Number,
-					42,
-				);
-				assert.equal(unboxedField(context, fieldSchema, cursor), 42);
-			});
-
-			it("String", () => {
-				const { fieldSchema, context, cursor } = createValueLeafTree(
-					ValueSchema.String,
-					"Hello world",
-				);
-				assert.equal(unboxedField(context, fieldSchema, cursor), "Hello world");
-			});
-
-			// TODO: Fluid Handle
 
 			it("Struct", () => {
 				const builder = new SchemaBuilder("test");
@@ -389,28 +353,7 @@ describe("unboxed unit tests", () => {
 		});
 
 		describe("Sequence field", () => {
-			it("Boolean", () => {
-				const { fieldSchema, context, cursor } = createSequenceLeafTree(
-					ValueSchema.Boolean,
-					[true, false, true],
-				);
-
-				const unboxed = unboxedField(context, fieldSchema, cursor);
-				assert.deepEqual(unboxed.asArray, [true, false, true]);
-			});
-
-			it("Number", () => {
-				const { fieldSchema, context, cursor } = createSequenceLeafTree(
-					ValueSchema.Number,
-					[1, 1, 2, 3, 5],
-				);
-
-				const unboxed = unboxedField(context, fieldSchema, cursor);
-
-				assert.deepEqual(unboxed.asArray, [1, 1, 2, 3, 5]);
-			});
-
-			it("String", () => {
+			it("Primitive", () => {
 				const { fieldSchema, context, cursor } = createSequenceLeafTree(
 					ValueSchema.String,
 					["Hello", "world"],
@@ -420,8 +363,6 @@ describe("unboxed unit tests", () => {
 
 				assert.deepEqual(unboxed.asArray, ["Hello", "world"]);
 			});
-
-			// TODO: Fluid Handle
 
 			it("Struct", () => {
 				const builder = new SchemaBuilder("test");
