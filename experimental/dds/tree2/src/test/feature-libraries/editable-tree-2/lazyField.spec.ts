@@ -338,6 +338,15 @@ describe("LazyField", () => {
 		 * Creates a tree whose root node contains a single (optional) leaf field.
 		 * Also initializes a cursor and moves that cursor to the tree's root field.
 		 *
+		 * @remarks Struct format:
+		 *
+		 * ```typescript
+		 * {
+		 * 	foo: boolean;
+		 * 	bar: number;
+		 * }
+		 * ```
+		 *
 		 * @returns The root node's field.
 		 */
 		function createOptionalStructTree(
@@ -579,7 +588,10 @@ describe("LazyField", () => {
 		});
 
 		/**
-		 * Creates a tree whose root has a single leaf field, and returns that field.
+		 * Creates a tree whose root node contains a single (required) leaf field.
+		 * Also initializes a cursor and moves that cursor to the tree's root field.
+		 *
+		 * @returns The root node's field.
 		 */
 		function createValueLeafTree(
 			kind: ValueSchema,
@@ -599,7 +611,19 @@ describe("LazyField", () => {
 		}
 
 		/**
-		 * Creates a tree whose root has a single struct field, and returns that field.
+		 * Creates a tree whose root node contains a single (required) leaf field.
+		 * Also initializes a cursor and moves that cursor to the tree's root field.
+		 *
+		 * @remarks Struct format:
+		 *
+		 * ```typescript
+		 * {
+		 * 	foo: boolean;
+		 * 	bar: number;
+		 * }
+		 * ```
+		 *
+		 * @returns The root node's field.
 		 */
 		function createValueStructTree(
 			initialTree?:
