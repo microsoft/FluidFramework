@@ -30,15 +30,11 @@ export {
 	sequenceIntervalHelpers,
 } from "./intervals";
 export {
-	AbsentSpec,
 	DeserializeCallback,
-	ChangeArgs,
 	IIntervalCollectionEvent,
 	IIntervalCollection,
 	IntervalLocator,
 	intervalLocatorFromEndpoint,
-	PositionSpec,
-	PropertyDeltaSpec,
 	Side,
 	InteriorSequencePlace,
 	SequencePlace,

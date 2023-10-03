@@ -224,14 +224,11 @@ export function makeReducer(
 			{ id, start, end, collectionName, startSide, endSide },
 		) => {
 			const collection = client.channel.getIntervalCollection(collectionName);
-			collection.change(id, {
-				start: { pos: start, side: startSide },
-				end: { pos: end, side: endSide },
-			});
+			collection.change(id, { pos: start, side: startSide }, { pos: end, side: endSide });
 		},
 		changeProperties: async ({ client }, { id, properties, collectionName }) => {
 			const collection = client.channel.getIntervalCollection(collectionName);
-			collection.change(id, { ...properties });
+			collection.changeProperties(id, { ...properties });
 		},
 		revertSharedStringRevertibles: async ({ client }, { editsToRevert }) => {
 			assert(isRevertibleSharedString(client.channel));

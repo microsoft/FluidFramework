@@ -50,14 +50,6 @@ import { SummarySerializer } from '@fluidframework/shared-object-base';
 import { TextSegment } from '@fluidframework/merge-tree';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
-// @public (undocumented)
-export interface AbsentSpec {
-    // (undocumented)
-    end?: never;
-    // (undocumented)
-    start?: never;
-}
-
 // @alpha
 export function appendAddIntervalToRevertibles(interval: SequenceInterval, revertibles: SharedStringRevertible[]): SharedStringRevertible[];
 
@@ -72,9 +64,6 @@ export function appendIntervalPropertyChangedToRevertibles(interval: SequenceInt
 
 // @alpha
 export function appendSharedStringDeltaToRevertibles(string: SharedString, delta: SequenceDeltaEvent, revertibles: SharedStringRevertible[]): void;
-
-// @public (undocumented)
-export type ChangeArgs = (PositionSpec | AbsentSpec) & PropertyDeltaSpec;
 
 // @public (undocumented)
 export function createEndpointIndex(sharedString: SharedString): IEndpointIndex<SequenceInterval>;
@@ -159,10 +148,7 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval> ex
     // (undocumented)
     readonly attached: boolean;
     attachIndex(index: IntervalIndex<TInterval>): void;
-    // @deprecated
     change(id: string, start: SequencePlace, end: SequencePlace): TInterval | undefined;
-    change(id: string, args: ChangeArgs): TInterval | undefined;
-    // @deprecated
     changeProperties(id: string, props: PropertySet): any;
     // (undocumented)
     CreateBackwardIteratorWithEndPosition(endPosition: number): Iterator<TInterval>;
@@ -407,20 +393,6 @@ export interface IStartpointInRangeIndex<TInterval extends ISerializableInterval
 // @internal
 export interface IValueOpEmitter {
     emit(opName: string, previousValue: any, params: any, localOpMetadata: IMapMessageLocalMetadata): void;
-}
-
-// @public (undocumented)
-export interface PositionSpec {
-    // (undocumented)
-    end: SequencePlace;
-    // (undocumented)
-    start: SequencePlace;
-}
-
-// @public (undocumented)
-export interface PropertyDeltaSpec {
-    // (undocumented)
-    props?: PropertySet;
 }
 
 // @alpha

@@ -449,7 +449,7 @@ function revertLocalChange(
 	const end = string.localReferencePositionToPosition(revertible.end);
 	const endSlidePos = getSlidePosition(string, revertible.end, end);
 	if (isValidRange(startSlidePos, endSlidePos, string)) {
-		collection.change(id, { start: startSlidePos, end: endSlidePos });
+		collection.change(id, startSlidePos, endSlidePos);
 	}
 
 	string.removeLocalReferencePosition(revertible.start);
@@ -463,7 +463,7 @@ function revertLocalPropertyChanged(
 	const label = revertible.interval.properties.referenceRangeLabels[0];
 	const id = getUpdatedIdFromInterval(revertible.interval);
 	const newProps = revertible.propertyDeltas;
-	string.getIntervalCollection(label).change(id, { props: newProps });
+	string.getIntervalCollection(label).changeProperties(id, newProps);
 }
 
 function newPosition(offset: number | undefined, restoredRanges: SortedRangeSet) {
@@ -538,7 +538,7 @@ function revertLocalSequenceRemove(
 				newEndpointPosition(intervalInfo.endOffset, restoredRanges, sharedString) ??
 				sharedString.localReferencePositionToPosition(interval.end);
 			if (start <= end) {
-				intervalCollection.change(intervalId, { start, end });
+				intervalCollection.change(intervalId, start, end);
 			}
 		}
 	});
