@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils";
 import {
 	FieldStoredSchema,
 	FieldKindIdentifier,
@@ -11,7 +12,6 @@ import {
 	FieldKindSpecifier,
 	TreeTypeSet,
 } from "../../core";
-import { brand } from "../../util";
 import { isNeverField } from "./comparison";
 import { FieldChangeHandler, FieldEditor } from "./fieldChangeHandler";
 
@@ -28,12 +28,45 @@ import { FieldChangeHandler, FieldEditor } from "./fieldChangeHandler";
  * These policies include the data encoding, change encoding, change rebase and change application.
  *
  * @sealed @alpha
+ * @privateRemarks
+ * This being @sealed is for users of this package.
+ * This package itself may provide implementations.
+ * This pattern was picked instead of an interface since we do not have a convention for how to mark interfaces as only allowed to be implemented by the package declaring them,
+ * and using a class also gets stronger. (nominal) typing for objects which will be down cast.
  */
-export class FieldKind<
-	TEditor extends FieldEditor<any> = FieldEditor<any>,
+export abstract class FieldKind<
+	TName extends string = string,
 	TMultiplicity extends Multiplicity = Multiplicity,
 > implements FieldKindSpecifier
 {
+	/**
+	 * @param identifier - Globally scoped identifier.
+	 * @param multiplicity - bound on the number of children that fields of this kind may have.
+	 * TODO: consider replacing with numeric upper and lower bounds.
+	 */
+	protected constructor(
+		public readonly identifier: TName & FieldKindIdentifier,
+		public readonly multiplicity: TMultiplicity,
+	) {}
+}
+
+/**
+ * Functionality for FieldKinds that is stable,
+ * meaning that it can not change in any measurable way without providing a new identifier.
+ *
+ * It is assumed that this information and policy is available on all clients interacting with a document
+ * using the identifier.
+ *
+ * This must contain enough information to process remote edits to this FieldKind consistently with all clients.
+ * All behavior must be deterministic, and not change across versions of the app/library.
+ *
+ * These policies include the data encoding, change encoding, change rebase and change application.
+ */
+export class FieldKindWithEditor<
+	TEditor extends FieldEditor<any> = FieldEditor<any>,
+	TMultiplicity extends Multiplicity = Multiplicity,
+	TName extends string = string,
+> extends FieldKind<TName, TMultiplicity> {
 	/**
 	 * @param identifier - Globally scoped identifier.
 	 * @param multiplicity - bound on the number of children that fields of this kind may have.
@@ -50,15 +83,17 @@ export class FieldKind<
 	 * provide a chance to handle them.
 	 */
 	public constructor(
-		public readonly identifier: FieldKindIdentifier,
-		public readonly multiplicity: TMultiplicity,
+		identifier: TName,
+		multiplicity: TMultiplicity,
 		public readonly changeHandler: FieldChangeHandler<any, TEditor>,
 		private readonly allowsTreeSupersetOf: (
 			originalTypes: TreeTypeSet,
 			superset: FieldStoredSchema,
 		) => boolean,
 		public readonly handlesEditsFrom: ReadonlySet<FieldKindIdentifier>,
-	) {}
+	) {
+		super(identifier as TName & FieldKindIdentifier, multiplicity);
+	}
 
 	/**
 	 * @returns true iff `superset` permits a (non-strict) superset of the subtrees
@@ -80,6 +115,18 @@ export class FieldKind<
 	}
 }
 
+/**
+ * Downcasts to FieldKindWithEditor.
+ */
+export function withEditor<
+	TName extends string = string,
+	TMultiplicity extends Multiplicity = Multiplicity,
+>(
+	kind: FieldKind<TName, TMultiplicity>,
+): FieldKindWithEditor<FieldEditor<any>, TMultiplicity, TName> {
+	assert(kind instanceof FieldKindWithEditor, "kind must be FieldKindWithEditor");
+	return kind as FieldKindWithEditor<FieldEditor<any>, TMultiplicity, TName>;
+}
 /**
  * Policy from the app for interpreting the stored schema.
  * The app must ensure consistency for all users of the document.
@@ -145,35 +192,4 @@ export enum Multiplicity {
 	 * See storedEmptyFieldSchema for a constant, reusable field using Forbidden.
 	 */
 	Forbidden,
-}
-
-/**
- * @alpha
- */
-export type BrandedFieldKind<
-	TName extends string,
-	TMultiplicity extends Multiplicity,
-	TEditor extends FieldEditor<any>,
-> = FieldKind<TEditor, TMultiplicity> & {
-	identifier: TName & FieldKindIdentifier;
-};
-
-export function brandedFieldKind<
-	TName extends string,
-	TMultiplicity extends Multiplicity,
-	TEditor extends FieldEditor<any>,
->(
-	identifier: TName,
-	multiplicity: TMultiplicity,
-	changeHandler: FieldChangeHandler<any, TEditor>,
-	allowsTreeSupersetOf: (originalTypes: TreeTypeSet, superset: FieldStoredSchema) => boolean,
-	handlesEditsFrom: ReadonlySet<FieldKindIdentifier>,
-): BrandedFieldKind<TName, TMultiplicity, TEditor> {
-	return new FieldKind<TEditor, TMultiplicity>(
-		brand(identifier),
-		multiplicity,
-		changeHandler,
-		allowsTreeSupersetOf,
-		handlesEditsFrom,
-	) as BrandedFieldKind<TName, TMultiplicity, TEditor>;
 }

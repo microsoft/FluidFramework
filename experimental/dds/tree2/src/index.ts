@@ -127,27 +127,6 @@ export {
 } from "./domains";
 
 export {
-	MemoizedIdRangeAllocator,
-	IdRange,
-	ModularChangeset,
-	EditDescription,
-	FieldChangeHandler,
-	FieldEditor,
-	FieldChangeRebaser,
-	NodeChangeset,
-	FieldChangeMap,
-	FieldChangeset,
-	FieldChange,
-	ToDelta,
-	NodeReviver,
-	NodeChangeComposer,
-	NodeChangeInverter,
-	NodeChangeRebaser,
-	CrossFieldManager,
-	CrossFieldTarget,
-	RevisionIndexer,
-	RevisionMetadataSource,
-	RevisionInfo,
 	FieldKind,
 	Multiplicity,
 	isNeverField,
@@ -190,7 +169,6 @@ export {
 	CursorAdapter,
 	CursorWithNode,
 	parentField,
-	HasFieldChanges,
 	EditableTreeEvents,
 	on,
 	InternalTypedSchemaTypes,
@@ -209,7 +187,6 @@ export {
 	SchemaBuilder,
 	AllowedTypes,
 	TreeSchema,
-	BrandedFieldKind,
 	ValueFieldKind,
 	Optional,
 	Sequence,
@@ -308,17 +285,7 @@ export {
 	ForestType,
 } from "./shared-tree";
 
-export type {
-	IBinaryCodec,
-	ICodecFamily,
-	ICodecOptions,
-	IDecoder,
-	IEncoder,
-	IJsonCodec,
-	IMultiFormatCodec,
-	JsonValidator,
-	SchemaValidationFunction,
-} from "./codec";
+export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec";
 export { noopValidator } from "./codec";
 export { typeboxValidator } from "./external-utilities";
 
