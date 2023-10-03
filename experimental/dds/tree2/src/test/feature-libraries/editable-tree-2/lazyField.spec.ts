@@ -334,45 +334,6 @@ describe("LazyField", () => {
 			);
 		}
 
-		/**
-		 * Creates a tree whose root node contains a single (optional) leaf field.
-		 * Also initializes a cursor and moves that cursor to the tree's root field.
-		 *
-		 * @remarks Struct format:
-		 *
-		 * ```typescript
-		 * {
-		 * 	foo: boolean;
-		 * 	bar: number;
-		 * }
-		 * ```
-		 *
-		 * @returns The root node's field.
-		 */
-		function createOptionalStructTree(
-			initialTree?:
-				| SchemaAware.TypedField<FieldSchema, SchemaAware.ApiMode.Flexible>
-				| readonly ITreeCursorSynchronous[]
-				| ITreeCursorSynchronous,
-		): LazyOptionalField<[TreeSchema<"struct">]> {
-			const builder = new SchemaBuilder("test", undefined, leafDomain.library);
-			const leafSchema = builder.struct("struct", {
-				foo: SchemaBuilder.fieldValue(leafDomain.boolean),
-				bar: SchemaBuilder.fieldOptional(leafDomain.number),
-			});
-			const rootSchema = SchemaBuilder.fieldOptional(leafSchema);
-			const schema = builder.intoDocumentSchema(rootSchema);
-
-			const { context, cursor } = initializeTreeWithContent({ schema, initialTree });
-
-			return new LazyOptionalField(
-				context,
-				SchemaBuilder.fieldOptional(leafSchema),
-				cursor,
-				rootFieldAnchor,
-			);
-		}
-
 		describe("map", () => {
 			it("No value", () => {
 				const field = createOptionalLeafTree(ValueSchema.Number, undefined);
@@ -393,18 +354,34 @@ describe("LazyField", () => {
 			});
 
 			it("Struct field", () => {
-				const input = {
-					foo: true,
-					bar: 42,
-				};
-				const field = createOptionalStructTree(input);
+				const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+				const leafSchema = builder.struct("struct", {
+					foo: SchemaBuilder.fieldValue(leafDomain.boolean),
+					bar: SchemaBuilder.fieldOptional(leafDomain.number),
+				});
+				const rootSchema = SchemaBuilder.fieldOptional(leafSchema);
+				const schema = builder.intoDocumentSchema(rootSchema);
+
+				const { context, cursor } = initializeTreeWithContent({
+					schema,
+					initialTree: {
+						foo: true,
+						bar: 42,
+					},
+				});
+
+				const field = new LazyOptionalField(
+					context,
+					SchemaBuilder.fieldOptional(leafSchema),
+					cursor,
+					rootFieldAnchor,
+				);
 
 				const mapResult = field.map((value) => value);
 
 				assert.equal(mapResult.length, 1);
-				assert.notEqual(mapResult[0], undefined);
-				assert.equal((mapResult[0] as any).foo, true);
-				assert.equal((mapResult[0] as any).bar, 42);
+				assert.equal(mapResult[0].foo, true);
+				assert.equal(mapResult[0].bar, 42);
 			});
 		});
 
@@ -425,18 +402,34 @@ describe("LazyField", () => {
 			});
 
 			it("Struct field", () => {
-				const input = {
-					foo: true,
-					bar: 42,
-				};
-				const field = createOptionalStructTree(input);
+				const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+				const leafSchema = builder.struct("struct", {
+					foo: SchemaBuilder.fieldValue(leafDomain.boolean),
+					bar: SchemaBuilder.fieldOptional(leafDomain.number),
+				});
+				const rootSchema = SchemaBuilder.fieldOptional(leafSchema);
+				const schema = builder.intoDocumentSchema(rootSchema);
+
+				const { context, cursor } = initializeTreeWithContent({
+					schema,
+					initialTree: {
+						foo: false,
+						bar: 42,
+					},
+				});
+
+				const field = new LazyOptionalField(
+					context,
+					SchemaBuilder.fieldOptional(leafSchema),
+					cursor,
+					rootFieldAnchor,
+				);
 
 				const mapResult = field.mapBoxed((value) => value);
 
 				assert.equal(mapResult.length, 1);
-				assert.notEqual(mapResult[0], undefined);
-				assert.equal((mapResult[0] as any).foo, input.foo);
-				assert.equal((mapResult[0] as any).bar, input.bar);
+				assert.equal(mapResult[0].foo, false);
+				assert.equal(mapResult[0].bar, 42);
 			});
 		});
 	});
@@ -606,40 +599,6 @@ describe("LazyField", () => {
 			return new LazyValueField(context, rootSchema, cursor, rootFieldAnchor);
 		}
 
-		/**
-		 * Creates a tree whose root node contains a single (required) leaf field.
-		 * Also initializes a cursor and moves that cursor to the tree's root field.
-		 *
-		 * @remarks Struct format:
-		 *
-		 * ```typescript
-		 * {
-		 * 	foo: boolean;
-		 * 	bar: number;
-		 * }
-		 * ```
-		 *
-		 * @returns The root node's field.
-		 */
-		function createValueStructTree(
-			initialTree?:
-				| SchemaAware.TypedField<FieldSchema, SchemaAware.ApiMode.Flexible>
-				| readonly ITreeCursorSynchronous[]
-				| ITreeCursorSynchronous,
-		): LazyValueField<[TreeSchema<"struct">]> {
-			const builder = new SchemaBuilder("test", undefined, leafDomain.library);
-			const leafSchema = builder.struct("struct", {
-				foo: SchemaBuilder.fieldValue(leafDomain.boolean),
-				bar: SchemaBuilder.fieldOptional(leafDomain.number),
-			});
-			const rootSchema = SchemaBuilder.fieldValue(leafSchema);
-			const schema = builder.intoDocumentSchema(rootSchema);
-
-			const { context, cursor } = initializeTreeWithContent({ schema, initialTree });
-
-			return new LazyValueField(context, rootSchema, cursor, rootFieldAnchor);
-		}
-
 		describe("map", () => {
 			it("Primitive field", () => {
 				const field = createValueLeafTree(ValueSchema.String, "Hello world");
@@ -651,18 +610,29 @@ describe("LazyField", () => {
 			});
 
 			it("Struct field", () => {
-				const input = {
-					foo: true,
-					bar: 42,
-				};
-				const field = createValueStructTree(input);
+				const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+				const leafSchema = builder.struct("struct", {
+					foo: SchemaBuilder.fieldValue(leafDomain.boolean),
+					bar: SchemaBuilder.fieldOptional(leafDomain.number),
+				});
+				const rootSchema = SchemaBuilder.fieldValue(leafSchema);
+				const schema = builder.intoDocumentSchema(rootSchema);
+
+				const { context, cursor } = initializeTreeWithContent({
+					schema,
+					initialTree: {
+						foo: true,
+						bar: 42,
+					},
+				});
+
+				const field = new LazyValueField(context, rootSchema, cursor, rootFieldAnchor);
 
 				const mapResult = field.map((value) => value);
 
 				assert.equal(mapResult.length, 1);
-				assert.notEqual(mapResult[0], undefined);
-				assert.equal((mapResult[0] as any).foo, true);
-				assert.equal((mapResult[0] as any).bar, 42);
+				assert.equal(mapResult[0].foo, true);
+				assert.equal(mapResult[0].bar, 42);
 			});
 		});
 
@@ -676,18 +646,29 @@ describe("LazyField", () => {
 			});
 
 			it("Struct field", () => {
-				const input = {
-					foo: true,
-					bar: 42,
-				};
-				const field = createValueStructTree(input);
+				const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+				const leafSchema = builder.struct("struct", {
+					foo: SchemaBuilder.fieldValue(leafDomain.boolean),
+					bar: SchemaBuilder.fieldOptional(leafDomain.number),
+				});
+				const rootSchema = SchemaBuilder.fieldValue(leafSchema);
+				const schema = builder.intoDocumentSchema(rootSchema);
+
+				const { context, cursor } = initializeTreeWithContent({
+					schema,
+					initialTree: {
+						foo: false,
+						bar: 42,
+					},
+				});
+
+				const field = new LazyValueField(context, rootSchema, cursor, rootFieldAnchor);
 
 				const mapResult = field.mapBoxed((value) => value);
 
 				assert.equal(mapResult.length, 1);
-				assert.notEqual(mapResult[0], undefined);
-				assert.equal((mapResult[0] as any).foo, input.foo);
-				assert.equal((mapResult[0] as any).bar, input.bar);
+				assert.equal(mapResult[0].foo, false);
+				assert.equal(mapResult[0].bar, 42);
 			});
 		});
 	});
