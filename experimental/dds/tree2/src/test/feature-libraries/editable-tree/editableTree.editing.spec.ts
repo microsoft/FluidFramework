@@ -346,42 +346,6 @@ describe("editable-tree: editing", () => {
 		// (person.age as EditableTree)[on]("afterChange", (event) => {
 		// 	afterChangeAgeCount++;
 		// });
-		(person.address as EditableTree)[on]("beforeChange", (event) => {
-			beforeChangeAddressCount++;
-		});
-		(person.address as EditableTree)[on]("subtreeChanging", (event) => {
-			// TODO: this fails because subtreeChanging is emitted twice, one for each pass of the delta visit, and on the
-			// second time both before and after could have fired already.
-			// assert.strictEqual(
-			// 	beforeChangeAddressCount,
-			// 	afterChangeAddressCount + 1,
-			// 	"address subtreeChanging",
-			// );
-		});
-		(person.address as EditableTree)[on]("afterChange", (event) => {
-			afterChangeAddressCount++;
-		});
-		// TODO: can't register event handlers on person.address.zip ?
-		// TypeError: person.address.zip[feature_libraries_1.on] is not a function
-		// ((person.address as EditableTree).zip as EditableTree)[on]("beforeChange", (event) => {
-		// 	beforeChangeZipCount++;
-		// });
-		// ((person.address as EditableTree).zip as EditableTree)[on]("subtreeChanging", (event) => {
-		// 	// TODO: this fails because subtreeChanging is emitted twice, one for each pass of the delta visit, and on the
-		// 	// second time both before and after could have fired already.
-		// 	// assert.strictEqual(
-		// 	// 	beforeChangeZipCount,
-		// 	// 	afterChangeZipCount + 1,
-		// 	// 	"zip subtreeChanging",
-		// 	// );
-		// });
-		// ((person.address as EditableTree).zip as EditableTree)[on]("afterChange", (event) => {
-		// 	afterChangeZipCount++;
-		// });
-
-		// Validate initial state pre-test
-		// assert.strictEqual(beforeChangeZipCount, 0);
-		// assert.strictEqual(afterChangeZipCount, 0);
 
 		{
 			assert.strictEqual(beforeChangePersonCount, 0);
@@ -392,6 +356,8 @@ describe("editable-tree: editing", () => {
 			assert.strictEqual(beforeChangePersonCount, 1);
 			assert.strictEqual(afterChangePersonCount, 1);
 
+			// Replace optional address.
+			// This lets us put listeners on it.
 			person.address = {
 				zip: "99999",
 				street: "foo",
@@ -401,21 +367,39 @@ describe("editable-tree: editing", () => {
 			assert.strictEqual(beforeChangePersonCount, 2);
 			assert.strictEqual(afterChangePersonCount, 2);
 
-			// // create sequence field
-			// person.address.sequencePhones = brand(["999"]);
+			person.address[on]("beforeChange", (event) => {
+				beforeChangeAddressCount++;
+			});
+			person.address[on]("subtreeChanging", (event) => {
+				// TODO: this fails because subtreeChanging is emitted twice, one for each pass of the delta visit, and on the
+				// second time both before and after could have fired already.
+				// assert.strictEqual(
+				// 	beforeChangeAddressCount,
+				// 	afterChangeAddressCount + 1,
+				// 	"address subtreeChanging",
+				// );
+			});
+			person.address[on]("afterChange", (event) => {
+				afterChangeAddressCount++;
+			});
 
-			// assert.strictEqual(beforeChangeZipCount, 0);
-			// assert.strictEqual(afterChangeZipCount, 0);
-			const zip = brand<Int32>(123);
-			// replace value field
-			person.address.zip = zip;
-			// assert.strictEqual(beforeChangeZipCount, 1);
-			// assert.strictEqual(afterChangeZipCount, 1);
+			// Replace zip in address
+
+			assert.strictEqual(beforeChangePersonCount, 2);
+			assert.strictEqual(afterChangePersonCount, 2);
+			assert.strictEqual(beforeChangeAddressCount, 0);
+			assert.strictEqual(afterChangeAddressCount, 0);
+
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			person.address!.zip = brand<Int32>(123);
 
 			assert.strictEqual(beforeChangePersonCount, 3);
 			assert.strictEqual(afterChangePersonCount, 3);
+			assert.strictEqual(beforeChangeAddressCount, 1);
+			assert.strictEqual(afterChangeAddressCount, 1);
 
-			// Update the whole address again
+			// Update the whole address again.
+			// Note that this replaces the address Node, so the previous one won't get its listeners fired.
 			person.address = {
 				zip: "99999",
 				street: "foo",
@@ -424,44 +408,16 @@ describe("editable-tree: editing", () => {
 
 			assert.strictEqual(beforeChangePersonCount, 4);
 			assert.strictEqual(afterChangePersonCount, 4);
+			assert.strictEqual(beforeChangeAddressCount, 1);
+			assert.strictEqual(afterChangeAddressCount, 1);
 
 			// Verify final counts
 			// - 4 fired the root (person) (changed person.address twice, person.age once, person.address.zip once)
-			// - 1 fired for person.age // TODO: can't register events on it?
-			// - 1 fired for person.address // TODO: can't register events on it?
-			// - 1 fired for person.address.zip // TODO: can't register events on it?
+			// - 1 fired for person.address. Replacing that node doesn't fire listeners on it.
 			assert.strictEqual(beforeChangePersonCount, 4);
 			assert.strictEqual(afterChangePersonCount, 4);
-			// assert.strictEqual(beforeChangeAgeCount, 1);
-			// assert.strictEqual(afterChangeAgeCount, 1);
-			assert.strictEqual(beforeChangeAddressCount, 0);
-			assert.strictEqual(afterChangeAddressCount, 0);
-			// assert.strictEqual(beforeChangeZipCount, 1);
-			// assert.strictEqual(afterChangeZipCount, 1);
-
-			// // replace sequence field
-			// person.address.sequencePhones = brand(["111"]);
-			// // replace array (optional field with primary sequence field)
-			// person.address.phones = brand(["54321"]);
-			// assert(person.address.phones !== undefined);
-			// const simplePhones: SimplePhones = brand(["555"]);
-			// // create node as array (node has a primary field)
-			// person.address.phones[1] = simplePhones;
-			// // create primitive node
-			// person.address.phones[2] = brand(3);
-
-			// // replace node
-			// person.address.phones[1] = {
-			// 	[typeNameSymbol]: complexPhoneSchema.name,
-			// 	number: "123",
-			// 	prefix: "456",
-			// 	extraPhones: ["1234567"],
-			// } as unknown as ComplexPhone; // TODO: fix up these strong types to reflect unwrapping
-			// assert.deepEqual(clone(person.address.phones, { lossy: true }), {
-			// 	"0": "54321",
-			// 	"1": { number: "123", prefix: "456", extraPhones: { "0": "1234567" } },
-			// 	"2": 3,
-			// });
+			assert.strictEqual(beforeChangeAddressCount, 1);
+			assert.strictEqual(afterChangeAddressCount, 1);
 		}
 	});
 
