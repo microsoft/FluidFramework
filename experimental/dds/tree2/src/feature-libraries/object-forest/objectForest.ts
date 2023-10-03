@@ -147,9 +147,11 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 				this.detachEdit(source, destination);
 			},
 			/**
-			 * Attaches the range into the current field by transferring it from the given source path.
+			 * Attaches the nodes from the given source field into the current field.
 			 * Does not invalidate dependents.
 			 * @param source - The the range to be attached.
+			 * @param count - The number of nodes being attached.
+			 * Expected to match the number of nodes in the source detached field.
 			 * @param destination - The index in the current field at which to attach the content.
 			 */
 			attachEdit(source: FieldKey, count: number, destination: PlaceIndex): void {
