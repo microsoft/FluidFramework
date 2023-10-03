@@ -412,6 +412,7 @@ describe.only("unboxed unit tests", () => {
 			const { context, cursor } = initializeTreeWithContent(schema, 42);
 			cursor.enterNode(0); // Root node field has 1 node; move into it
 
+			// Type is not known based on schema, so node will not be unboxed.
 			const unboxed = unboxedUnion(context, fieldSchema, cursor);
 			assert.equal(unboxed.type, "com.fluidframework.leaf.number");
 			assert.equal(unboxed.value, 42);
@@ -422,7 +423,6 @@ describe.only("unboxed unit tests", () => {
 				ValueSchema.String,
 				"Hello world",
 			);
-
 			cursor.enterNode(0); // Root node field has 1 node; move into it
 
 			assert.equal(unboxedUnion(context, fieldSchema, cursor), "Hello world");
@@ -438,6 +438,7 @@ describe.only("unboxed unit tests", () => {
 			const { context, cursor } = initializeTreeWithContent(schema, "Hello world");
 			cursor.enterNode(0); // Root node field has 1 node; move into it
 
+			// Type is not known based on schema, so node will not be unboxed.
 			const unboxed = unboxedUnion(context, rootSchema, cursor);
 			assert.equal(unboxed.type, "string");
 			assert.equal(unboxed.value, "Hello world");
