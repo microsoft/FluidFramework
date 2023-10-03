@@ -46,7 +46,7 @@ export function createProducer(
 			if (errorData?.restart) {
 				Lumberjack.error(
 					"Kafka Producer emitted an error that is configured to restart the process.",
-					{ errorLabel: errorData.errorLabel },
+					{ errorLabel: errorData?.errorLabel },
 					error,
 				);
 				throw new Error(error);
@@ -57,7 +57,7 @@ export function createProducer(
 				winston.error(inspect(error));
 				Lumberjack.error(
 					"Kafka Producer emitted an error that is not configured to restart the process.",
-					{ errorLabel: errorData.errorLabel },
+					{ errorLabel: errorData?.errorLabel },
 					error,
 				);
 			}
