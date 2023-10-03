@@ -114,7 +114,8 @@ extends:
     lint: true
     test: ci:test
     docs: true
-    containerBaseDir: /usr/src/server
+    containerBaseDir: /usr/src/server/routerlicious
     checks:
     - prettier
     - check:versions
+    additionalBuildArguments: --build-context root=.
