@@ -31,6 +31,7 @@ importers:
       lerna: 5.6.2
       lorem-ipsum: ^1.0.6
       mocha: ^10.1.0
+      prettier: ~3.0.3
       rimraf: ^3.0.2
       run-script-os: ^1.1.5
       sillyname: ^0.1.0
@@ -59,6 +60,7 @@ importers:
       lerna: 5.6.2
       lorem-ipsum: 1.0.6
       mocha: 10.2.0
+      prettier: 3.0.3
       rimraf: 3.0.2
       run-script-os: 1.1.6
       sillyname: 0.1.0
