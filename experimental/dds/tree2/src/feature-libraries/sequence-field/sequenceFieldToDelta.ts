@@ -71,14 +71,11 @@ function cellDeltaFromMark<TNodeChange>(
 				};
 				if (mark.transientDetach !== undefined) {
 					const majorForTransient = mark.transientDetach.revision ?? revision;
-					const hasMajor: { major?: RevisionTag } = {};
+					const detachId: Delta.DetachedNodeId = { minor: mark.transientDetach.localId };
 					if (majorForTransient !== undefined) {
-						hasMajor.major = majorForTransient;
+						detachId.major = majorForTransient;
 					}
-					insertMark.detachId = {
-						...hasMajor,
-						minor: mark.transientDetach.localId,
-					};
+					insertMark.detachId = detachId;
 				}
 				return [insertMark];
 			}

@@ -37,13 +37,10 @@ type Major = string | number | undefined;
 type Minor = number;
 
 /**
- * The tree index records detached field ids and associates them with a change atom ID.
+ * The tree index records detached field IDs and associates them with a change atom ID.
  */
 export class DetachedFieldIndex {
-	private detachedNodeToField: NestedMap<Major, Minor, Entry> = new Map<
-		Major,
-		Map<Minor, Entry>
-	>();
+	private detachedNodeToField: NestedMap<Major, Minor, Entry> = new Map();
 
 	/**
 	 * @param name - A name for the index, used as a prefix for the generated field keys.
@@ -103,9 +100,7 @@ export class DetachedFieldIndex {
 	 * Returns undefined if no such id is known to the index.
 	 */
 	public tryGetEntry(id: Delta.DetachedNodeId): Entry | undefined {
-		const entry = tryGetFromNestedMap(this.detachedNodeToField, id.major, id.minor);
-		// console.log(this.tag, "tryGetEntry", id.major, id.minor, entry);
-		return entry;
+		return tryGetFromNestedMap(this.detachedNodeToField, id.major, id.minor);
 	}
 
 	/**
@@ -127,7 +122,6 @@ export class DetachedFieldIndex {
 	}
 
 	public deleteEntry(nodeId: Delta.DetachedNodeId): void {
-		// console.log(this.tag, "deleteEntry", nodeId.major, nodeId.minor);
 		const found = deleteFromNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor);
 		assert(found, "Unable to delete unknown entry");
 	}
@@ -141,7 +135,6 @@ export class DetachedFieldIndex {
 		const entry = { field, root };
 
 		if (nodeId !== undefined) {
-			// console.log(this.tag, "createEntry", nodeId.major, nodeId.minor, entry);
 			setInNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor, entry);
 		}
 		return entry;
