@@ -692,14 +692,6 @@ export interface OptionalField<TTypes extends AllowedTypes> extends TreeField {
 // #region Typed
 
 /**
- * The strongly typed {@link Tree} API for a given schema.
- * @alpha
- */
-export type Typed<TSchema extends FieldSchema | TreeSchema> = TSchema extends FieldSchema
-	? TypedField<TSchema>
-	: TypedNode<Assume<TSchema, TreeSchema>>;
-
-/**
  * Schema aware specialization of {@link TreeField}.
  * @alpha
  */

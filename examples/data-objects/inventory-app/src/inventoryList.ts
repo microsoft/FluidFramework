@@ -25,10 +25,10 @@ const factory = new TypedTreeFactory({
 				name: "nut",
 				quantity: 0,
 			},
-			// {
-			// 	name: "bolt",
-			// 	quantity: 0,
-			// },
+			{
+				name: "bolt",
+				quantity: 0,
+			},
 		],
 	},
 	allowedSchemaModifications: AllowedUpdateType.None,

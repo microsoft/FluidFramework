@@ -52,13 +52,13 @@ export function useTree<TRoot extends FieldSchema>(
 export function useTreeContext(document: TreeContext): void {
 	// This proof-of-concept implementation allocates a state variable this is modified
 	// when the tree changes to trigger re-render.
-	const [invalidations, setInvalidations] = React.useState(0);
+	const [, setInvalidations] = React.useState(0);
 
 	// Register for tree deltas when the component mounts
 	React.useEffect(() => {
 		// Returns the cleanup function to be invoked when the component unmounts.
 		return document.on("afterChange", () => {
-			setInvalidations(invalidations + 1);
+			setInvalidations((invalidations) => invalidations + 1);
 		});
 	}, [document]);
 }
@@ -70,15 +70,15 @@ export function useTreeContext(document: TreeContext): void {
 export function useSubtree(tree: TreeNode): void {
 	// This proof-of-concept implementation allocates a state variable this is modified
 	// when the tree changes to trigger re-render.
-	const [invalidations, setInvalidations] = React.useState(0);
+	const [, setInvalidations] = React.useState(0);
 
 	// Register for tree deltas when the component mounts
 	React.useEffect(() => {
 		// Returns the cleanup function to be invoked when the component unmounts.
 		return tree.on("subtreeChanging", () => {
-			setInvalidations(invalidations + 1);
+			setInvalidations((invalidations) => invalidations + 1);
 		});
-	}, [tree, setInvalidations, invalidations]);
+	}, [tree, setInvalidations]);
 }
 
 // TODO: schematize component which shows error (with proper invalidation), or passes tree to sub componet.
