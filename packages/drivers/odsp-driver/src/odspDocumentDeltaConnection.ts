@@ -119,7 +119,10 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
 		return this._socket;
 	}
 
-	public constructor(public readonly key: string, socket: Socket) {
+	public constructor(
+		public readonly key: string,
+		socket: Socket,
+	) {
 		super();
 
 		this._socket = socket;

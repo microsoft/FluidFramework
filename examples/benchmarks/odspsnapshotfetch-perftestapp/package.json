@@ -59,7 +59,7 @@
 		"css-loader": "^1.0.0",
 		"eslint": "~8.6.0",
 		"fs-extra": "^9.1.0",
-		"prettier": "~2.6.2",
+		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"source-map-loader": "^2.0.0",
 		"style-loader": "^1.0.0",

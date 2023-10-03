@@ -75,7 +75,7 @@ export const ContainerErrorTypes: {
 };
 
 // @public (undocumented)
-export type ContainerErrorTypes = typeof ContainerErrorTypes[keyof typeof ContainerErrorTypes];
+export type ContainerErrorTypes = (typeof ContainerErrorTypes)[keyof typeof ContainerErrorTypes];
 
 // @public
 export interface ContainerWarning extends IErrorBase {

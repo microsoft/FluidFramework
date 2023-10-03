@@ -80,7 +80,7 @@
 		"concurrently": "^8.2.1",
 		"eslint": "~8.27.0",
 		"mocha": "^10.2.0",
-		"prettier": "~2.6.2",
+		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"sinon": "^9.2.3",
 		"typescript": "~4.5.5"
