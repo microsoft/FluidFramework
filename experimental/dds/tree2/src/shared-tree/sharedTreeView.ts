@@ -20,8 +20,6 @@ import {
 	combineVisitors,
 	visitDelta,
 	TreeIndex,
-	moveToDetachedField,
-	mapCursorField,
 	announceVisitor,
 	makeTreeIndex,
 } from "../core";
@@ -44,7 +42,6 @@ import {
 	LocalNodeKey,
 	nodeKeyFieldKey,
 	FieldSchema,
-	jsonableTreeFromCursor,
 	TypedSchemaCollection,
 	getTreeContext,
 	TypedField,
@@ -423,7 +420,6 @@ export class SharedTreeView implements ISharedTreeBranchView {
 			HasListeners<ViewEvents>,
 		private readonly removedTrees: TreeIndex = makeTreeIndex("repair"),
 	) {
-		this.removedTrees = removedTrees ?? makeTreeIndex();
 		branch.on("change", (event) => {
 			if (event.change !== undefined) {
 				const delta = this.changeFamily.intoDelta(event.change);
@@ -447,8 +443,6 @@ export class SharedTreeView implements ISharedTreeBranchView {
 			this.events.emit("revertible", type);
 		});
 	}
-
-	private readonly removedTrees: TreeIndex;
 
 	public get rootEvents(): ISubscribable<AnchorSetRootEvents> {
 		return this.forest.anchors;

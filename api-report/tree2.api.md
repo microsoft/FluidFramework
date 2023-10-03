@@ -270,6 +270,12 @@ abstract class BrandedType<ValueType, Name extends string> {
 export function brandOpaque<T extends BrandedType<any, string>>(value: isAny<ValueFromBranded<T>> extends true ? never : ValueFromBranded<T>): BrandedType<ValueFromBranded<T>, NameFromBranded<T>>;
 
 // @alpha
+interface CanReplaceContent<TTree = ProtoNode> {
+    // (undocumented)
+    readonly oldContent?: OldContent<TTree>;
+}
+
+// @alpha
 export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
 
 // @alpha
@@ -448,10 +454,12 @@ declare namespace Delta {
         MarkList,
         Skip,
         HasModifications,
+        CanReplaceContent,
         Modify,
         Remove,
         MoveOut,
         MoveIn,
+        OldContent,
         Insert,
         Restore,
         MoveId,
@@ -992,13 +1000,9 @@ export interface InitializeAndSchematizeConfiguration<TRoot extends FieldSchema 
 type _InlineTrick = 0;
 
 // @alpha
-interface Insert<TTree = ProtoNode> extends HasModifications<TTree> {
+interface Insert<TTree = ProtoNode> extends HasModifications<TTree>, CanReplaceContent<TTree> {
     readonly content: readonly TTree[];
     readonly detachId?: DetachedNodeId;
-    readonly oldContent?: {
-        readonly fields?: FieldMarks<TTree>;
-        readonly detachId: DetachedNodeId;
-    };
     // (undocumented)
     readonly type: typeof MarkType.Insert;
 }
@@ -1661,6 +1665,12 @@ export interface ObservingDependent extends Dependent {
 }
 
 // @alpha
+interface OldContent<TTree = ProtoNode> {
+    readonly detachId: DetachedNodeId;
+    readonly fields?: FieldMarks<TTree>;
+}
+
+// @alpha
 export const on: unique symbol;
 
 // @alpha
@@ -1857,17 +1867,13 @@ type RequiredFields<T> = [
 ][_InlineTrick];
 
 // @alpha
-interface Restore<TTree = ProtoNode> {
+interface Restore<TTree = ProtoNode> extends CanReplaceContent<TTree> {
     readonly count: number;
     readonly fields?: FieldMarks<TTree>;
     // (undocumented)
     readonly newContent: {
         readonly restoreId: DetachedNodeId;
         readonly detachId?: DetachedNodeId;
-    };
-    readonly oldContent?: {
-        readonly fields?: FieldMarks<TTree>;
-        readonly detachId: DetachedNodeId;
     };
     // (undocumented)
     readonly type: typeof MarkType.Restore;
