@@ -101,7 +101,7 @@
 		"@types/uuid": "^8.3.0",
 		"concurrently": "^7.6.0",
 		"eslint": "~8.6.0",
-		"nock": "^10.0.1",
+		"nock": "^13.3.3",
 		"nyc": "^15.1.0",
 		"prettier": "~2.6.2",
 		"rimraf": "^2.6.2",
