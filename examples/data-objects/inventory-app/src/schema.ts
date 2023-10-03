@@ -34,6 +34,10 @@ const schema = builder.intoDocumentSchema(rootField);
 
 export type Inventory = SchemaAware.TypedNode<typeof inventory>;
 
+// REV: As the type indicates, this is two things - the schema (used both on initial creation as well
+// as future loads) and the initial values (used only on initial creation).  I'm not clear why these two
+// need to be combined, as opposed to making a call to tree.schematize() followed by a tree.initialize()
+// on initial creation?
 export const schemaPolicy: InitializeAndSchematizeConfiguration<typeof rootField> = {
 	schema,
 	initialTree: {
