@@ -25,6 +25,7 @@ fetch(apiUrl, {
         stages.forEach(stage => {
             if(stage =="runAfterAll") return;
             console.log(`Fetching data for stage: ${stage}`);
+            // Fetch test rate data for each stage.
             const stageApiUrl = `https://vstmr.dev.azure.com/fluidframework/internal/_apis/testresults/metrics?pipelineId=${BUILD_ID}&stageName=${stage}&api-version=7.1-preview.1`;
             fetch(stageApiUrl, {
                 headers: {
