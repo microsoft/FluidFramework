@@ -406,8 +406,6 @@ describe("LazyField", () => {
 				assert.equal((mapResult[0] as any).foo, true);
 				assert.equal((mapResult[0] as any).bar, 42);
 			});
-
-			// TODO: Map field
 		});
 
 		describe("mapBoxed", () => {
@@ -440,8 +438,6 @@ describe("LazyField", () => {
 				assert.equal((mapResult[0] as any).foo, input.foo);
 				assert.equal((mapResult[0] as any).bar, input.bar);
 			});
-
-			// TODO: Map field
 		});
 	});
 
@@ -668,8 +664,6 @@ describe("LazyField", () => {
 				assert.equal((mapResult[0] as any).foo, true);
 				assert.equal((mapResult[0] as any).bar, 42);
 			});
-
-			// TODO: Map field
 		});
 
 		describe("mapBoxed", () => {
@@ -695,8 +689,6 @@ describe("LazyField", () => {
 				assert.equal((mapResult[0] as any).foo, input.foo);
 				assert.equal((mapResult[0] as any).bar, input.bar);
 			});
-
-			// TODO: Map field
 		});
 	});
 });
