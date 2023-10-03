@@ -74,7 +74,7 @@ function initializeTreeWithContent<Kind extends FieldKind, Types extends Allowed
 	};
 }
 
-describe.only("LazyField", () => {
+describe("LazyField", () => {
 	it("LazyField implementations do not allow edits to detached trees", () => {
 		const builder = new SchemaBuilder("lazyTree");
 		builder.struct("empty", {});
