@@ -24,7 +24,7 @@ By default, the runtime is configured with a max batch size of `716800` bytes, w
 
 ### How batching works
 
-Batching in the context of Fluid ops is a way in which the framework groups ops and sends them to the server in a single payload. Afterwards the ops will be broadcasted in the same order to all the other connected clients. Additional logic and validation ensure that batches do not interleave and they are processed in isolation. This means two things:
+Batching in the context of Fluid ops is a way in which the framework accumulates and applies ops. A batch is a group of ops accumulated within a single JS turn, which will be broadcasted in the same order to all the other connected clients and applied synchronously. Additional logic and validation ensure that batches do not interleave and they are processed in isolation. This means two things:
 
 -   A client will always start sending a new batch only after finishing a batch. Batches will never be sent interleaved or nested.
 -   When receiving a batch of ops, the client will process it in isolation without interleaving it with other batches or ops from other clients
@@ -46,12 +46,12 @@ export enum FlushMode {
 }
 ```
 
-What this means is that `FlushMode.Immediate` will send each op it its own payload to the server, while `FlushMode.TurnBased` will accumulate all ops in a single JS turn and send them together in the same payload. Technically, `FlushMode.Immediate` can be simulated with `FlushMode.TurnBased` by calling any async API immediately after producing each op. Therefore, for all intents and purposes, `FlushMode.Immediate` enables all batches sent to the server to have only one op.
+What this means is that `FlushMode.Immediate` will send each op in its own payload to the server, while `FlushMode.TurnBased` will accumulate all ops in a single JS turn and send them together in the same payload. Technically, `FlushMode.Immediate` can be simulated with `FlushMode.TurnBased` by calling any async API immediately after producing each op. Therefore, for all intents and purposes, `FlushMode.Immediate` enables all batches sent to the server to have only one op.
 
 **By default, Fluid uses `FlushMode.TurnBased`** as:
 
 -   it is more efficient from an I/O perspective (batching ops overall decrease the number of payloads sent to the server)
--   reduces concurrency related bugs, as it ensures that all ops are generated within the same JS turn and then applied by all clients within a single JS turn. Clients using the same pattern can safely assume ops will be applied exactly as they are observed locally.
+-   reduces concurrency related bugs, as it ensures that all ops generated within the same JS turn are also applied by all other clients within a single JS turn. Clients using the same pattern can safely assume ops will be applied exactly as they are observed locally. The alternative would be for ops to be both produced and applied with interruptions (which may involve processing input or rendering), invalidating the state based off which the changes were produced.
 
 As `FlushMode.TurnBased` accumulates ops, it is the most vulnerable to run into the 1MB socket limit.
 
@@ -64,10 +64,7 @@ As `FlushMode.TurnBased` accumulates ops, it is the most vulnerable to run into 
 -   `minimumBatchSizeInBytes` – the minimum size of the batch for which compression should kick in. If the payload is too small, compression may not yield too many benefits. To target the original 1MB issue, a good value here would be to match the default maxBatchSizeInBytes (972800), however, experimentally, a good lower value could be at around 614400 bytes. Setting this value to `Number.POSITIVE_INFINITY` will disable compression.
 -   `compressionAlgorithm` – currently, only `lz4` is supported.
 
-### Notes
-
--   Compression is relevant for both `FlushMode.TurnBased` and `FlushMode.Immediate` as it only targets the contents of the ops and not the number of ops in a batch.
--   Compression is opaque to the server and implementations of the Fluid protocol do not need to alter their behavior to support this client feature.
+Compression is relevant for both `FlushMode.TurnBased` and `FlushMode.Immediate` as it only targets the contents of the ops and not the number of ops in a batch. Compression is opaque to the server and implementations of the Fluid protocol do not need to alter their behavior to support this client feature.
 
 ## Grouped batching
 
@@ -111,10 +108,7 @@ If all prerequisites in the previous section are met, enabling the feature can b
 
 In case of emergency grouped batching can be disabled at runtime, using feature gates. If `"Fluid.ContainerRuntime.DisableGroupedBatching"` is set to `true`, it will disable grouped batching if enabled from `IContainerRuntimeOptions` in the code.
 
-### Notes
-
--   Grouped batching is only relevant for `FlushMode.TurnBased` as it only targets the number of ops in a batch.
--   Grouped batching is opaque to the server and implementations of the Fluid protocol do not need to alter their behavior to support this client feature.
+Grouped batching is only relevant for `FlushMode.TurnBased` as it only targets the number of ops in a batch. Grouped batching is opaque to the server and implementations of the Fluid protocol do not need to alter their behavior to support this client feature.
 
 ## Chunking for compression
 
@@ -124,10 +118,7 @@ The `IContainerRuntimeOptions.chunkSizeInBytes` property is the only configurati
 
 This config would govern chunking compressed batches only. We will not be enabling chunking across all types of ops/batches but **only when compression is enabled and when the batch is compressed**, and its payload size is more than `IContainerRuntimeOptions.chunkSizeInBytes`.
 
-### Notes
-
--   Chunking is relevant for both `FlushMode.TurnBased` and `FlushMode.Immediate` as it only targets the contents of the ops and not the number of ops in a batch.
--   Chunking is opaque to the server and implementations of the Fluid protocol do not need to alter their behavior to support this client feature.
+Chunking is relevant for both `FlushMode.TurnBased` and `FlushMode.Immediate` as it only targets the contents of the ops and not the number of ops in a batch. Chunking is opaque to the server and implementations of the Fluid protocol do not need to alter their behavior to support this client feature.
 
 ## Disabling in case of emergency
 
@@ -181,9 +172,9 @@ To enable grouped batching:
 
 ## Note about performance and latency
 
-In terms of performance and impact on latency, Fluid does not make any guarantees or provide benchmarks as the effects of compression/chunking/grouped batching are coupled with the nature of the payloads and the configured `FlushMode`. Therefore, customers must perform the required measurements and adjust the settings according to their scenarios.
+In terms of performance and impact on latency, the results greatly depend on payload size, payload structure, network speed and CPU speed. Therefore, customers must perform the required measurements and adjust the settings according to their scenarios.
 
-In general, compression offers a trade-off between higher compute costs, lower bandwidth consumption and lower storage requirements, while chunking slightly increases latency due to the overhead of splitting an op, sending the chunks and reconstructing them on each client. Grouped batching heavily decreases the number of ops observed by the server (therefore decreasing the odds of throttling) and slightly decreases the bandwidth requirements as it merges all the ops in a batch into a single op and also eliminates the op envelope overhead.
+In general, compression offers a trade-off between higher compute costs, lower bandwidth consumption and lower storage requirements, while chunking slightly increases latency due to the overhead of splitting an op, sending the chunks and reconstructing them on each client. Grouped batching heavily decreases the number of ops observed by the server and slightly decreases the bandwidth requirements as it merges all the ops in a batch into a single op and also eliminates the op envelope overhead.
 
 ## How it works
 
