@@ -8,12 +8,13 @@ const BUILD_SOURCES_DIRECTORY = process.env.BUILD_SOURCES_DIRECTORY;
 
 // Create output folder - Note: This requires Node.js fs module
 const fs = require('fs');
-
+console.log("Starting fetch")
 // Fetch data from Timeline API
 const apiUrl = `https://dev.azure.com/fluidframework/internal/_apis/build/builds/${BUILD_ID}/timeline?api-version=7.1-preview.2`;
 if (!fs.existsSync(`${TEST_WORKSPACE}/stageFiles`)) {
     fs.mkdirSync(`${TEST_WORKSPACE}/stageFiles`, { recursive: true });
 }
+
 let stages = [];
 fetch(apiUrl, {
     headers: {
