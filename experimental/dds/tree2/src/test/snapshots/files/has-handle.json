@@ -27,7 +27,7 @@
                     "tree": {
                         "ForestTree": {
                             "type": 2,
-                            "content": "[[\"rootFieldKey\",[{\"type\":\"Handle\",\"value\":{\"type\":\"__fluid_handle__\",\"url\":\"/test/test\"}}]]]"
+                            "content": "[[\"rootFieldKey\",{\"version\":1,\"identifiers\":[],\"shapes\":[{\"c\":{\"type\":\"Handle\",\"value\":true,\"fields\":[]}}],\"data\":[0,{\"type\":\"__fluid_handle__\",\"url\":\"/test/test\"}]}]]"
                         }
                     }
                 }
