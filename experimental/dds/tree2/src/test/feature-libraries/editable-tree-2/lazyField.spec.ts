@@ -279,6 +279,23 @@ describe("LazyField", () => {
 			});
 		});
 
+		it("boxedAt", () => {
+			const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+			const rootSchema = SchemaBuilder.fieldOptional(leafDomain.string);
+			const schema = builder.intoDocumentSchema(rootSchema);
+
+			const { context, cursor } = initializeTreeWithContent({
+				schema,
+				initialTree: "Hello world",
+			});
+
+			const field = new LazyOptionalField(context, rootSchema, cursor, rootFieldAnchor);
+
+			const boxedResult = field.boxedAt(0);
+			assert.equal(boxedResult.type, leafDomain.string.name);
+			assert.equal(boxedResult.value, "Hello world");
+		});
+
 		describe("length", () => {
 			it("No value", () => {
 				const builder = new SchemaBuilder("test", undefined, leafDomain.library);
@@ -590,6 +607,23 @@ describe("LazyField", () => {
 
 				assert.equal(field.at(0), 42);
 			});
+		});
+
+		it("boxedAt", () => {
+			const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+			const rootSchema = SchemaBuilder.fieldValue(leafDomain.string);
+			const schema = builder.intoDocumentSchema(rootSchema);
+
+			const { context, cursor } = initializeTreeWithContent({
+				schema,
+				initialTree: "Hello world",
+			});
+
+			const field = new LazyValueField(context, rootSchema, cursor, rootFieldAnchor);
+
+			const boxedResult = field.boxedAt(0);
+			assert.equal(boxedResult.type, leafDomain.string.name);
+			assert.equal(boxedResult.value, "Hello world");
 		});
 
 		it("length", () => {
