@@ -145,7 +145,11 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 		// undefined because there's a default value for the flag.
 		const usedBranchFlag = this.argv.includes("--branch") || this.argv.includes("-b");
 		if (!usedBranchFlag) {
-			const { packages: usedBranchPackages } = await repo.getChangedSinceRef(branch, remote, context);
+			const { packages: usedBranchPackages } = await repo.getChangedSinceRef(
+				branch,
+				remote,
+				context,
+			);
 
 			if (usedBranchPackages.length > BRANCH_PROMPT_LIMIT) {
 				const answer = await prompts({
