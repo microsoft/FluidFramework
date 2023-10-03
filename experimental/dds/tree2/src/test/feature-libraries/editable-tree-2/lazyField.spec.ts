@@ -397,8 +397,6 @@ describe.only("LazyField", () => {
 				assert.equal((mapResult[0] as any).foo, true);
 				assert.equal((mapResult[0] as any).bar, 42);
 			});
-
-			// TODO: Fluid Handle test
 		});
 
 		describe("mapBoxed", () => {
@@ -431,8 +429,6 @@ describe.only("LazyField", () => {
 				assert.equal((mapResult[0] as any).foo, input.foo);
 				assert.equal((mapResult[0] as any).bar, input.bar);
 			});
-
-			// TODO: Fluid Handle test
 		});
 	});
 
@@ -644,8 +640,6 @@ describe.only("LazyField", () => {
 				assert.equal((mapResult[0] as any).foo, true);
 				assert.equal((mapResult[0] as any).bar, 42);
 			});
-
-			// TODO: Fluid Handle test
 		});
 
 		describe("mapBoxed", () => {
@@ -671,8 +665,6 @@ describe.only("LazyField", () => {
 				assert.equal((mapResult[0] as any).foo, input.foo);
 				assert.equal((mapResult[0] as any).bar, input.bar);
 			});
-
-			// TODO: Fluid Handle test
 		});
 	});
 });
