@@ -66,15 +66,7 @@ export {
 	type MarkdownRenderContext,
 	type MarkdownRenderers,
 	type MarkdownRenderConfiguration,
-	renderDocumentAsHtml,
-	renderDocumentAsMarkdown,
-	renderNodeAsHtml,
-	renderNodeAsMarkdown,
-	renderNodesAsHtml,
-	renderNodesAsMarkdown,
 } from "./renderers";
-export { renderApiModelAsHtml, renderDocumentsAsHtml } from "./RenderHtml";
-export { renderApiModelAsMarkdown, renderDocumentsAsMarkdown } from "./RenderMarkdown";
 export type { ConfigurationBase } from "./ConfigurationBase";
 export type { FileSystemConfiguration } from "./FileSystemConfiguration";
 export type { Heading } from "./Heading";
@@ -94,6 +86,11 @@ export {
 
 // Export layout-related utilities (for use in writing custom transformations)
 import * as LayoutUtilities from "./LayoutUtilities";
+
+// Export renderers
+import * as HtmlRenderer from "./HtmlRendererModule";
+import * as MarkdownRenderer from "./MarkdownRendererModule";
+
 export {
 	/**
 	 * Utilities related to generating {@link DocumentationNode} content for {@link @microsoft/api-extractor-model#ApiItem}s.
@@ -105,6 +102,18 @@ export {
 	 * @public
 	 */
 	LayoutUtilities,
+	/**
+	 * Functionality for rendering {@link DocumentationNode}s as HTML.
+	 *
+	 * @alpha
+	 */
+	HtmlRenderer,
+	/**
+	 * Functionality for rendering {@link DocumentationNode}s as Markdown.
+	 *
+	 * @public
+	 */
+	MarkdownRenderer,
 };
 
 /* eslint-enable unicorn/prefer-export-from */

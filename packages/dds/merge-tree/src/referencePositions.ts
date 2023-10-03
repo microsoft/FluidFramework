@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { Stack } from "./collections";
 import { SlidingPreference } from "./localReference";
 import { ISegment } from "./mergeTreeNodes";
 import { ReferenceType, ICombiningOp } from "./ops";
-import { PropertySet, MapLike } from "./properties";
+import { PropertySet } from "./properties";
 
 export const reservedTileLabelsKey = "referenceTileLabels";
 export const reservedRangeLabelsKey = "referenceRangeLabels";
@@ -26,38 +25,13 @@ export const refGetTileLabels = (refPos: ReferencePosition): string[] | undefine
 		? (refPos.properties[reservedTileLabelsKey] as string[])
 		: undefined;
 
-/**
- * @deprecated This functionality is deprecated and will be removed in a future release.
- */
-export const refGetRangeLabels = (refPos: ReferencePosition): string[] | undefined =>
-	// eslint-disable-next-line no-bitwise
-	refTypeIncludesFlag(refPos, ReferenceType.NestBegin | ReferenceType.NestEnd) &&
-	refPos.properties
-		? (refPos.properties[reservedRangeLabelsKey] as string[])
-		: undefined;
-
 export function refHasTileLabel(refPos: ReferencePosition, label: string): boolean {
 	const tileLabels = refGetTileLabels(refPos);
 	return tileLabels?.includes(label) ?? false;
 }
 
-/**
- * @deprecated This functionality is deprecated and will be removed in a future release.
- */
-export function refHasRangeLabel(refPos: ReferencePosition, label: string): boolean {
-	const rangeLabels = refGetRangeLabels(refPos);
-	return rangeLabels?.includes(label) ?? false;
-}
-
 export function refHasTileLabels(refPos: ReferencePosition): boolean {
 	return refGetTileLabels(refPos) !== undefined;
-}
-
-/**
- * @deprecated This functionality is deprecated and will be removed in a future release.
- */
-export function refHasRangeLabels(refPos: ReferencePosition): boolean {
-	return refGetRangeLabels(refPos) !== undefined;
 }
 
 /**
@@ -103,11 +77,6 @@ export interface ReferencePosition {
 	addProperties(newProps: PropertySet, op?: ICombiningOp): void;
 	isLeaf(): this is ISegment;
 }
-
-/**
- * @deprecated This functionality is deprecated and will be removed in a future release.
- */
-export type RangeStackMap = MapLike<Stack<ReferencePosition>>;
 
 export const DetachedReferencePosition = -1;
 
