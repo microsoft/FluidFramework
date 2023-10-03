@@ -6,7 +6,6 @@
 import {
 	BuildNode,
 	Change,
-	Definition,
 	SharedTree as LegacySharedTree,
 	SharedTreeEvent,
 	StablePlace,
@@ -37,20 +36,35 @@ export class LegacySharedTreeInventoryList extends DataObject implements IInvent
 			LegacySharedTree.getFactory().type,
 		) as LegacySharedTree;
 
-		// Initialize the inventory with two parts at zero quantity
 		const inventoryNode: BuildNode = {
-			definition: "inventory" as Definition,
+			definition: "inventory",
 			traits: {
-				nut: [
+				parts: [
 					{
-						definition: "quantity" as Definition,
-						payload: 0,
+						definition: "part",
+						traits: {
+							name: {
+								definition: "name",
+								payload: "nut",
+							},
+							quantity: {
+								definition: "quantity",
+								payload: 0,
+							},
+						},
 					},
-				],
-				bolt: [
 					{
-						definition: "quantity" as Definition,
-						payload: 0,
+						definition: "part",
+						traits: {
+							name: {
+								definition: "name",
+								payload: "bolt",
+							},
+							quantity: {
+								definition: "quantity",
+								payload: 0,
+							},
+						},
 					},
 				],
 			},
@@ -60,7 +74,7 @@ export class LegacySharedTreeInventoryList extends DataObject implements IInvent
 				inventoryNode,
 				StablePlace.atStartOf({
 					parent: legacySharedTree.currentView.root,
-					label: "parts" as TraitLabel,
+					label: "inventory" as TraitLabel,
 				}),
 			),
 		);
@@ -87,31 +101,42 @@ export class LegacySharedTreeInventoryList extends DataObject implements IInvent
 		const parts: IPart[] = [];
 		// REV: Seems strange that this.tree.currentView.rootNode is private.
 		const rootNode = this.tree.currentView.getViewNode(this.tree.currentView.root);
-		const partsNode = this.tree.currentView.getViewNode(
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const partsNodeIds = this.tree.currentView
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			rootNode.traits.get("parts" as TraitLabel)![0],
-		);
+			.getViewNode(rootNode.traits.get("inventory" as TraitLabel)![0])
+			.traits.get("parts" as TraitLabel)!;
 		// REV: This seems to iterate in reverse order?  Not sure why it swaps the entries as compared to how
 		// it was created.
-		for (const [partLabel, [partQuantityNodeId]] of partsNode.traits) {
-			const partQuantityNode = this.tree.currentView.getViewNode(partQuantityNodeId);
-			const quantity = partQuantityNode.payload as number;
+		for (const partNodeId of partsNodeIds) {
+			const partNode = this.tree.currentView.getViewNode(partNodeId);
+
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const nameNodeId = partNode.traits.get("name" as TraitLabel)![0];
+			const nameNode = this.tree.currentView.getViewNode(nameNodeId);
+			const name = nameNode.payload as string;
+
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const quantityNodeId = partNode.traits.get("quantity" as TraitLabel)![0];
+			const quantityNode = this.tree.currentView.getViewNode(quantityNodeId);
+			const quantity = quantityNode.payload as number;
+
 			// REV: It would probably be preferable to have a durable IPart that raises individual
 			// "quantityChanged" events rather than eventing/refreshing on a whole-tree basis.  Is
 			// there a good way to listen for tree edits under a specific node?  Is the partQuantityNode
 			// reference durable across tree changes?
 			const part: IPart = {
-				name: partLabel,
+				name,
 				quantity,
 				// REV: These implementations are flimsy - they rely on getParts() being called to get
 				// fresh parts after each "inventoryChanged" or else the callbacks will be stale.
 				// Probably would be better to re-acquire the quantity upon invocation (see question
 				// above about what is durable across tree changes).
 				increment: () => {
-					this.tree.applyEdit(Change.setPayload(partQuantityNodeId, quantity + 1));
+					this.tree.applyEdit(Change.setPayload(quantityNodeId, quantity + 1));
 				},
 				decrement: () => {
-					this.tree.applyEdit(Change.setPayload(partQuantityNodeId, quantity - 1));
+					this.tree.applyEdit(Change.setPayload(quantityNodeId, quantity - 1));
 				},
 			};
 			parts.push(part);

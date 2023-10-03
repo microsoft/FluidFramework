@@ -11,6 +11,7 @@ import {
 	SchemaBuilder,
 } from "@fluid-experimental/tree2";
 
+// By importing the leaf library we don't have to define our own string and number types.
 const builder = new SchemaBuilder("inventory app", undefined, leaf.library);
 
 const part = builder.struct("Contoso:Part-1.0.0", {
