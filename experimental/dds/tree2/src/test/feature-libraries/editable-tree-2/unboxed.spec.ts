@@ -27,7 +27,6 @@ import {
 	SchemaBuilder,
 	Sequence,
 	TreeSchema,
-	TypedSchemaCollection,
 	ValueFieldKind,
 } from "../../../feature-libraries";
 import { Context } from "../../../feature-libraries/editable-tree-2/context";
@@ -36,6 +35,7 @@ import {
 	unboxedTree,
 	unboxedUnion,
 } from "../../../feature-libraries/editable-tree-2/unboxed";
+import { type TreeContent } from "../../../shared-tree";
 import { brand } from "../../../util";
 import { contextWithContentReadonly } from "./utils";
 
@@ -57,16 +57,12 @@ function initializeCursor(context: Context, anchor: FieldAnchor): ITreeSubscript
  * @returns The initialized context and cursor.
  */
 function initializeTreeWithContent<Kind extends FieldKind, Types extends AllowedTypes>(
-	schema: TypedSchemaCollection,
-	initialTree?:
-		| SchemaAware.TypedField<FieldSchema, SchemaAware.ApiMode.Flexible>
-		| readonly ITreeCursorSynchronous[]
-		| ITreeCursorSynchronous,
+	treeContent: TreeContent,
 ): {
 	context: Context;
 	cursor: ITreeSubscriptionCursor;
 } {
-	const context = contextWithContentReadonly({ schema, initialTree });
+	const context = contextWithContentReadonly(treeContent);
 	const cursor = initializeCursor(context, rootFieldAnchor);
 
 	return {
@@ -97,7 +93,7 @@ function createOptionalLeafTree(
 	const rootSchema = SchemaBuilder.fieldOptional(leafSchema);
 	const schema = builder.intoDocumentSchema(rootSchema);
 
-	const { context, cursor } = initializeTreeWithContent(schema, initialTree);
+	const { context, cursor } = initializeTreeWithContent({ schema, initialTree });
 
 	return {
 		fieldSchema: rootSchema,
@@ -128,7 +124,7 @@ function createValueLeafTree(
 	const rootSchema = SchemaBuilder.field(FieldKinds.value, leafSchema);
 	const schema = builder.intoDocumentSchema(rootSchema);
 
-	const { context, cursor } = initializeTreeWithContent(schema, initialTree);
+	const { context, cursor } = initializeTreeWithContent({ schema, initialTree });
 
 	return {
 		fieldSchema: rootSchema,
@@ -159,7 +155,7 @@ function createSequenceLeafTree(
 	const rootSchema = SchemaBuilder.fieldSequence(leafSchema);
 	const schema = builder.intoDocumentSchema(rootSchema);
 
-	const { context, cursor } = initializeTreeWithContent(schema, initialTree);
+	const { context, cursor } = initializeTreeWithContent({ schema, initialTree });
 
 	return {
 		fieldSchema: rootSchema,
@@ -216,8 +212,11 @@ describe.only("unboxed unit tests", () => {
 				const rootSchema = SchemaBuilder.fieldOptional(structSchema);
 				const schema = builder.intoDocumentSchema(rootSchema);
 
-				const { context, cursor } = initializeTreeWithContent(schema, {
-					foo: "Hello world",
+				const { context, cursor } = initializeTreeWithContent({
+					schema,
+					initialTree: {
+						foo: "Hello world",
+					},
 				});
 				cursor.enterNode(0); // Root node field has 1 node; move into it
 
@@ -234,8 +233,11 @@ describe.only("unboxed unit tests", () => {
 				const rootSchema = SchemaBuilder.fieldOptional(structSchema);
 				const schema = builder.intoDocumentSchema(rootSchema);
 
-				const { context, cursor } = initializeTreeWithContent(schema, {
-					foo: "Hello world",
+				const { context, cursor } = initializeTreeWithContent({
+					schema,
+					initialTree: {
+						foo: "Hello world",
+					},
 				});
 				cursor.enterNode(0); // Root node field has 1 node; move into it
 
@@ -262,7 +264,7 @@ describe.only("unboxed unit tests", () => {
 					},
 				};
 
-				const { context, cursor } = initializeTreeWithContent(schema, initialTree);
+				const { context, cursor } = initializeTreeWithContent({ schema, initialTree });
 				cursor.enterNode(0); // Root node field has 1 node; move into it
 
 				const unboxed = unboxedTree(context, structSchema, cursor);
@@ -281,7 +283,7 @@ describe.only("unboxed unit tests", () => {
 				const rootSchema = SchemaBuilder.fieldOptional(mapSchema);
 				const schema = builder.intoDocumentSchema(rootSchema);
 
-				const { context, cursor } = initializeTreeWithContent(schema, {});
+				const { context, cursor } = initializeTreeWithContent({ schema, initialTree: {} });
 				cursor.enterNode(0); // Root node field has 1 node; move into it
 
 				const unboxed = unboxedTree(context, mapSchema, cursor);
@@ -295,9 +297,12 @@ describe.only("unboxed unit tests", () => {
 				const rootSchema = SchemaBuilder.fieldOptional(mapSchema);
 				const schema = builder.intoDocumentSchema(rootSchema);
 
-				const { context, cursor } = initializeTreeWithContent(schema, {
-					foo: "Hello",
-					bar: "world",
+				const { context, cursor } = initializeTreeWithContent({
+					schema,
+					initialTree: {
+						foo: "Hello",
+						bar: "world",
+					},
 				});
 				cursor.enterNode(0); // Root node field has 1 node; move into it
 
@@ -314,9 +319,12 @@ describe.only("unboxed unit tests", () => {
 				const rootSchema = SchemaBuilder.fieldOptional(mapSchema);
 				const schema = builder.intoDocumentSchema(rootSchema);
 
-				const { context, cursor } = initializeTreeWithContent(schema, {
-					foo: "Hello",
-					bar: "world",
+				const { context, cursor } = initializeTreeWithContent({
+					schema,
+					initialTree: {
+						foo: "Hello",
+						bar: "world",
+					},
 				});
 				cursor.enterNode(0); // Root node field has 1 node; move into it
 
@@ -345,9 +353,12 @@ describe.only("unboxed unit tests", () => {
 				const rootSchema = SchemaBuilder.fieldOptional(mapSchema);
 				const schema = builder.intoDocumentSchema(rootSchema);
 
-				const { context, cursor } = initializeTreeWithContent(schema, {
-					foo: "Hello world",
-					bar: true,
+				const { context, cursor } = initializeTreeWithContent({
+					schema,
+					initialTree: {
+						foo: "Hello world",
+						bar: true,
+					},
 				});
 				cursor.enterNode(0); // Root node field has 1 node; move into it
 
@@ -381,9 +392,12 @@ describe.only("unboxed unit tests", () => {
 				const rootSchema = SchemaBuilder.fieldOptional(mapSchema);
 				const schema = builder.intoDocumentSchema(rootSchema);
 
-				const { context, cursor } = initializeTreeWithContent(schema, {
-					foo: "Hello world",
-					bar: true,
+				const { context, cursor } = initializeTreeWithContent({
+					schema,
+					initialTree: {
+						foo: "Hello world",
+						bar: true,
+					},
 				});
 				cursor.enterNode(0); // Root node field has 1 node; move into it
 
@@ -409,7 +423,7 @@ describe.only("unboxed unit tests", () => {
 			const fieldSchema = SchemaBuilder.fieldOptional(Any);
 			const schema = builder.intoDocumentSchema(fieldSchema);
 
-			const { context, cursor } = initializeTreeWithContent(schema, 42);
+			const { context, cursor } = initializeTreeWithContent({ schema, initialTree: 42 });
 			cursor.enterNode(0); // Root node field has 1 node; move into it
 
 			// Type is not known based on schema, so node will not be unboxed.
@@ -433,7 +447,10 @@ describe.only("unboxed unit tests", () => {
 			const fieldSchema = SchemaBuilder.fieldOptional(leafDomain.string, leafDomain.handle);
 			const schema = builder.intoDocumentSchema(fieldSchema);
 
-			const { context, cursor } = initializeTreeWithContent(schema, "Hello world");
+			const { context, cursor } = initializeTreeWithContent({
+				schema,
+				initialTree: "Hello world",
+			});
 			cursor.enterNode(0); // Root node field has 1 node; move into it
 
 			// Type is not known based on schema, so node will not be unboxed.
