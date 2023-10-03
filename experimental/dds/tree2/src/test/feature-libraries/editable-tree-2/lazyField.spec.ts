@@ -53,7 +53,27 @@ function initializeCursor(context: Context, anchor: FieldAnchor): ITreeSubscript
 	return cursor;
 }
 
-describe("LazyField", () => {
+/**
+ * Initializes a test tree, context, and cursor, and moves the cursor to the tree's root.
+ *
+ * @returns The initialized context and cursor.
+ */
+function initializeTreeWithContent<Kind extends FieldKind, Types extends AllowedTypes>(
+	treeContent: TreeContent,
+): {
+	context: Context;
+	cursor: ITreeSubscriptionCursor;
+} {
+	const context = contextWithContentReadonly(treeContent);
+	const cursor = initializeCursor(context, rootFieldAnchor);
+
+	return {
+		context,
+		cursor,
+	};
+}
+
+describe.only("LazyField", () => {
 	it("LazyField implementations do not allow edits to detached trees", () => {
 		const builder = new SchemaBuilder("lazyTree");
 		builder.struct("empty", {});
@@ -106,29 +126,7 @@ describe("LazyField", () => {
 				),
 		);
 	});
-});
 
-/**
- * Initializes a test tree, context, and cursor, and moves the cursor to the tree's root.
- *
- * @returns The initialized context and cursor.
- */
-function initializeTreeWithContent<Kind extends FieldKind, Types extends AllowedTypes>(
-	treeContent: TreeContent,
-): {
-	context: Context;
-	cursor: ITreeSubscriptionCursor;
-} {
-	const context = contextWithContentReadonly(treeContent);
-	const cursor = initializeCursor(context, rootFieldAnchor);
-
-	return {
-		context,
-		cursor,
-	};
-}
-
-describe.only("LazyField unit tests", () => {
 	describe("LazyOptionalField", () => {
 		describe("is", () => {
 			it("Any", () => {
