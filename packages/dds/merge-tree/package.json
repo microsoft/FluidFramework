@@ -106,6 +106,10 @@
 	},
 	"typeValidation": {
 		"broken": {
+			"RemovedInterfaceDeclaration_IIntegerRange": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
 			"RemovedFunctionDeclaration_internedSpaces": {
 				"forwardCompat": false,
 				"backCompat": false

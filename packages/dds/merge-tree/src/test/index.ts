@@ -71,7 +71,6 @@ export {
 	ICombiningOp,
 	IConsensusInfo,
 	IConsensusValue,
-	IIntegerRange,
 	IJSONMarkerSegment,
 	IJSONSegment,
 	IJSONTextSegment,

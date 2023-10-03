@@ -4,7 +4,6 @@
  */
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-/* eslint-disable @typescript-eslint/consistent-type-assertions */
 
 /* eslint-disable @typescript-eslint/prefer-optional-chain, no-bitwise */
 
@@ -166,11 +165,12 @@ function tileShift(
 			}
 		}
 	} else {
-		const block = <IHierBlock>node;
+		const block = node as IHierBlock;
 		const marker = searchInfo.tilePrecedesPos
-			? <Marker>block.rightmostTiles[searchInfo.tileLabel]
-			: <Marker>block.leftmostTiles[searchInfo.tileLabel];
+			? block.rightmostTiles[searchInfo.tileLabel]
+			: block.leftmostTiles[searchInfo.tileLabel];
 		if (marker !== undefined) {
+			assert(marker.isLeaf() && Marker.is(marker), "Object returned is not a valid marker");
 			searchInfo.tile = marker;
 		}
 	}
@@ -527,7 +527,7 @@ export class MergeTree {
 		zamboniSegments: true,
 	};
 
-	private static readonly theUnfinishedNode = <IMergeBlock>{ childCount: -1 };
+	private static readonly theUnfinishedNode = { childCount: -1 } as unknown as IMergeBlock;
 
 	public readonly collabWindow = new CollaborationWindow();
 
@@ -1194,7 +1194,7 @@ export class MergeTree {
 		if (searchInfo.tile) {
 			let pos: number;
 			if (searchInfo.tile.isLeaf()) {
-				const marker = <Marker>searchInfo.tile;
+				const marker = searchInfo.tile as Marker;
 				pos = this.getPosition(marker, UniversalSequenceNumber, clientId);
 			} else {
 				const localRef = searchInfo.tile;
@@ -1245,7 +1245,7 @@ export class MergeTree {
 						foundMarker = seg;
 					}
 				} else {
-					const block = <IHierBlock>seg;
+					const block = seg as IHierBlock;
 					const marker = forwards
 						? block.leftmostTiles[markerLabel]
 						: block.rightmostTiles[markerLabel];
@@ -1456,7 +1456,7 @@ export class MergeTree {
 				segments: [],
 				localSeq,
 				refSeq: this.collabWindow.currentSeq,
-			} as SegmentGroup;
+			} as any as SegmentGroup;
 			if (previousProps) {
 				_segmentGroup.previousProps = [];
 			}

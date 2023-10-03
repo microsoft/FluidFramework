@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-base-to-string */
-
 import { assert } from "@fluidframework/core-utils";
 import { Serializable } from "@fluidframework/datastore-definitions";
 import {

@@ -337,26 +337,14 @@ use_old_InterfaceDeclaration_IConsensusValue(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IIntegerRange": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IIntegerRange": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IIntegerRange():
-    TypeOnly<old.IIntegerRange>;
-declare function use_current_InterfaceDeclaration_IIntegerRange(
-    use: TypeOnly<current.IIntegerRange>);
-use_current_InterfaceDeclaration_IIntegerRange(
-    get_old_InterfaceDeclaration_IIntegerRange());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IIntegerRange": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IIntegerRange": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IIntegerRange():
-    TypeOnly<current.IIntegerRange>;
-declare function use_old_InterfaceDeclaration_IIntegerRange(
-    use: TypeOnly<old.IIntegerRange>);
-use_old_InterfaceDeclaration_IIntegerRange(
-    get_current_InterfaceDeclaration_IIntegerRange());
 
 /*
 * Validate forward compat by using old type in place of current type
