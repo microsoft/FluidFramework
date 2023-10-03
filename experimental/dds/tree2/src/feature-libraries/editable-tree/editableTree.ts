@@ -266,6 +266,20 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 				);
 				return unsubscribeFromSubtreeChange;
 			}
+			case "beforeChange": {
+				const unsubscribeFromChildrenBeforeChange = this.anchorNode.on(
+					"beforeChange",
+					(anchorNode: AnchorNode) => listener(anchorNode),
+				);
+				return unsubscribeFromChildrenBeforeChange;
+			}
+			case "afterChange": {
+				const unsubscribeFromChildrenAfterChange = this.anchorNode.on(
+					"afterChange",
+					(anchorNode: AnchorNode) => listener(anchorNode),
+				);
+				return unsubscribeFromChildrenAfterChange;
+			}
 			default:
 				unreachableCase(eventName);
 		}

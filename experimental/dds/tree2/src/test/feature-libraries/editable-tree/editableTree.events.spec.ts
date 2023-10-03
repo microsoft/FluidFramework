@@ -59,6 +59,22 @@ describe("editable-tree: event subscription", () => {
 		assert.deepEqual(log, [node]);
 	});
 
+	// it.only("new events", () => {
+	// 	const { address, forest } = retrieveAddressNode();
+	// 	let beforeChangeCount = 0;
+	// 	let afterChangeCount = 0;
+	// 	const unsubscribeBeforeChange = address[on]("beforeChange", () => {
+	// 		beforeChangeCount++;
+	// 	});
+	// 	const unsubscribeAfterChange = address[on]("afterChange", () => {
+	// 		afterChangeCount++;
+	// 	});
+	// 	const context = getReadonlyEditableTreeContext(forest, fullSchemaData);
+	// 	const root = context.root.getNode(0);
+	// 	const zipNode = root[getField](fieldAddress).getNode(0)[getField](brand("zip")).getNode(0);
+	// 	zipNode = 33428;
+	// });
+
 	it("consumes subtree changing events returning path visitor", () => {
 		const { address, forest } = retrieveAddressNode();
 		const log: UpPath[] = [];

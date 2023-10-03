@@ -24,6 +24,7 @@ import {
 	treeStatus,
 	TreeStatus,
 	FieldSchema,
+	on,
 } from "../../../feature-libraries";
 import { viewWithContent } from "../../utils";
 import {
@@ -299,6 +300,168 @@ describe("editable-tree: editing", () => {
 				"1": { number: "123", prefix: "456", extraPhones: { "0": "1234567" } },
 				"2": 3,
 			});
+		}
+	});
+
+	it.only("events on nodes", () => {
+		const tree = viewWithContent({ schema: fullSchemaData, initialTree: getPerson() });
+		const person = tree.root as EditableTree;
+
+		let beforeChangePersonCount = 0;
+		let afterChangePersonCount = 0;
+		let beforeChangeAddressCount = 0;
+		let afterChangeAddressCount = 0;
+		// let beforeChangeAgeCount = 0;
+		// let afterChangeAgeCount = 0;
+		// let beforeChangeZipCount = 0;
+		// let afterChangeZipCount = 0;
+
+		person[on]("beforeChange", (event) => {
+			beforeChangePersonCount++;
+		});
+		person[on]("subtreeChanging", (event) => {
+			// TODO: this fails because subtreeChanging is emitted twice, one for each pass of the delta visit, and on the
+			// second time both before and after could have fired already.
+			// assert.strictEqual(
+			// 	beforeChangePersonCount,
+			// 	afterChangePersonCount + 1,
+			// 	"person subtreeChanging",
+			// );
+		});
+		person[on]("afterChange", (event) => {
+			afterChangePersonCount++;
+		});
+		// (person.age as EditableTree)[on]("beforeChange", (event) => {
+		// 	beforeChangeAgeCount++;
+		// });
+		// (person.age as EditableTree)[on]("subtreeChanging", (event) => {
+		// 	// TODO: this fails because subtreeChanging is emitted twice, one for each pass of the delta visit, and on the
+		// 	// second time both before and after could have fired already.
+		// 	// assert.strictEqual(
+		// 	// 	beforeChangeAgeCount,
+		// 	// 	afterChangeAgeCount + 1,
+		// 	// 	"age subtreeChanging",
+		// 	// );
+		// });
+		// (person.age as EditableTree)[on]("afterChange", (event) => {
+		// 	afterChangeAgeCount++;
+		// });
+		(person.address as EditableTree)[on]("beforeChange", (event) => {
+			beforeChangeAddressCount++;
+		});
+		(person.address as EditableTree)[on]("subtreeChanging", (event) => {
+			// TODO: this fails because subtreeChanging is emitted twice, one for each pass of the delta visit, and on the
+			// second time both before and after could have fired already.
+			// assert.strictEqual(
+			// 	beforeChangeAddressCount,
+			// 	afterChangeAddressCount + 1,
+			// 	"address subtreeChanging",
+			// );
+		});
+		(person.address as EditableTree)[on]("afterChange", (event) => {
+			afterChangeAddressCount++;
+		});
+		// TODO: can't register event handlers on person.address.zip ?
+		// TypeError: person.address.zip[feature_libraries_1.on] is not a function
+		// ((person.address as EditableTree).zip as EditableTree)[on]("beforeChange", (event) => {
+		// 	beforeChangeZipCount++;
+		// });
+		// ((person.address as EditableTree).zip as EditableTree)[on]("subtreeChanging", (event) => {
+		// 	// TODO: this fails because subtreeChanging is emitted twice, one for each pass of the delta visit, and on the
+		// 	// second time both before and after could have fired already.
+		// 	// assert.strictEqual(
+		// 	// 	beforeChangeZipCount,
+		// 	// 	afterChangeZipCount + 1,
+		// 	// 	"zip subtreeChanging",
+		// 	// );
+		// });
+		// ((person.address as EditableTree).zip as EditableTree)[on]("afterChange", (event) => {
+		// 	afterChangeZipCount++;
+		// });
+
+		// Validate initial state pre-test
+		// assert.strictEqual(beforeChangeZipCount, 0);
+		// assert.strictEqual(afterChangeZipCount, 0);
+
+		{
+			assert.strictEqual(beforeChangePersonCount, 0);
+			assert.strictEqual(afterChangePersonCount, 0);
+
+			person.age = brand<Int32>(32);
+
+			assert.strictEqual(beforeChangePersonCount, 1);
+			assert.strictEqual(afterChangePersonCount, 1);
+
+			person.address = {
+				zip: "99999",
+				street: "foo",
+				phones: [12345],
+			} as unknown as Address; // TODO: fix up these strong types to reflect unwrapping
+
+			assert.strictEqual(beforeChangePersonCount, 2);
+			assert.strictEqual(afterChangePersonCount, 2);
+
+			// // create sequence field
+			// person.address.sequencePhones = brand(["999"]);
+
+			// assert.strictEqual(beforeChangeZipCount, 0);
+			// assert.strictEqual(afterChangeZipCount, 0);
+			const zip = brand<Int32>(123);
+			// replace value field
+			person.address.zip = zip;
+			// assert.strictEqual(beforeChangeZipCount, 1);
+			// assert.strictEqual(afterChangeZipCount, 1);
+
+			assert.strictEqual(beforeChangePersonCount, 3);
+			assert.strictEqual(afterChangePersonCount, 3);
+
+			// Update the whole address again
+			person.address = {
+				zip: "99999",
+				street: "foo",
+				phones: [12345],
+			} as unknown as Address; // TODO: fix up these strong types to reflect unwrapping
+
+			assert.strictEqual(beforeChangePersonCount, 4);
+			assert.strictEqual(afterChangePersonCount, 4);
+
+			// Verify final counts
+			// - 4 fired the root (person) (changed person.address twice, person.age once, person.address.zip once)
+			// - 1 fired for person.age // TODO: can't register events on it?
+			// - 1 fired for person.address // TODO: can't register events on it?
+			// - 1 fired for person.address.zip // TODO: can't register events on it?
+			assert.strictEqual(beforeChangePersonCount, 4);
+			assert.strictEqual(afterChangePersonCount, 4);
+			// assert.strictEqual(beforeChangeAgeCount, 1);
+			// assert.strictEqual(afterChangeAgeCount, 1);
+			assert.strictEqual(beforeChangeAddressCount, 0);
+			assert.strictEqual(afterChangeAddressCount, 0);
+			// assert.strictEqual(beforeChangeZipCount, 1);
+			// assert.strictEqual(afterChangeZipCount, 1);
+
+			// // replace sequence field
+			// person.address.sequencePhones = brand(["111"]);
+			// // replace array (optional field with primary sequence field)
+			// person.address.phones = brand(["54321"]);
+			// assert(person.address.phones !== undefined);
+			// const simplePhones: SimplePhones = brand(["555"]);
+			// // create node as array (node has a primary field)
+			// person.address.phones[1] = simplePhones;
+			// // create primitive node
+			// person.address.phones[2] = brand(3);
+
+			// // replace node
+			// person.address.phones[1] = {
+			// 	[typeNameSymbol]: complexPhoneSchema.name,
+			// 	number: "123",
+			// 	prefix: "456",
+			// 	extraPhones: ["1234567"],
+			// } as unknown as ComplexPhone; // TODO: fix up these strong types to reflect unwrapping
+			// assert.deepEqual(clone(person.address.phones, { lossy: true }), {
+			// 	"0": "54321",
+			// 	"1": { number: "123", prefix: "456", extraPhones: { "0": "1234567" } },
+			// 	"2": 3,
+			// });
 		}
 	});
 
