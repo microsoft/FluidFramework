@@ -125,7 +125,7 @@ describe.only("unboxed unit tests", () => {
 		});
 
 		it("Sequence field", () => {
-			const builder = new SchemaBuilder("test");
+			const builder = new SchemaBuilder("test", undefined, leafDomain.library);
 			const fieldSchema = SchemaBuilder.fieldSequence(leafDomain.string);
 			const schema = builder.intoDocumentSchema(fieldSchema);
 
