@@ -543,7 +543,7 @@ describe("unboxed unit tests", () => {
 				const { context, cursor } = initializeTreeWithContent(schema, {
 					foo: "Hello world",
 				});
-				cursor.firstNode(); // Root node field has 1 node; move into it
+				cursor.enterNode(0); // Root node field has 1 node; move into it
 
 				const unboxed = unboxedTree(context, structSchema, cursor);
 				assert.equal(unboxed.foo, "Hello world");
@@ -561,7 +561,7 @@ describe("unboxed unit tests", () => {
 				const { context, cursor } = initializeTreeWithContent(schema, {
 					foo: "Hello world",
 				});
-				cursor.firstNode(); // Root node field has 1 node; move into it
+				cursor.enterNode(0); // Root node field has 1 node; move into it
 
 				const unboxed = unboxedTree(context, structSchema, cursor);
 				assert.equal(unboxed.foo.type, "string");
@@ -587,7 +587,7 @@ describe("unboxed unit tests", () => {
 				};
 
 				const { context, cursor } = initializeTreeWithContent(schema, initialTree);
-				cursor.firstNode(); // Root node field has 1 node; move into it
+				cursor.enterNode(0); // Root node field has 1 node; move into it
 
 				const unboxed = unboxedTree(context, structSchema, cursor);
 
@@ -606,7 +606,7 @@ describe("unboxed unit tests", () => {
 				const schema = builder.intoDocumentSchema(rootSchema);
 
 				const { context, cursor } = initializeTreeWithContent(schema, {});
-				cursor.firstNode(); // Root node field has 1 node; move into it
+				cursor.enterNode(0); // Root node field has 1 node; move into it
 
 				const unboxed = unboxedTree(context, mapSchema, cursor);
 				assert.equal(unboxed.size, 0);
@@ -623,7 +623,7 @@ describe("unboxed unit tests", () => {
 					foo: "Hello",
 					bar: "world",
 				});
-				cursor.firstNode(); // Root node field has 1 node; move into it
+				cursor.enterNode(0); // Root node field has 1 node; move into it
 
 				const unboxed = unboxedTree(context, mapSchema, cursor);
 				assert.equal(unboxed.size, 2);
@@ -642,7 +642,7 @@ describe("unboxed unit tests", () => {
 					foo: "Hello",
 					bar: "world",
 				});
-				cursor.firstNode(); // Root node field has 1 node; move into it
+				cursor.enterNode(0); // Root node field has 1 node; move into it
 
 				const unboxed = unboxedTree(context, mapSchema, cursor);
 				assert.equal(unboxed.size, 2);
@@ -673,7 +673,7 @@ describe("unboxed unit tests", () => {
 					foo: "Hello world",
 					bar: true,
 				});
-				cursor.firstNode(); // Root node field has 1 node; move into it
+				cursor.enterNode(0); // Root node field has 1 node; move into it
 
 				const unboxed = unboxedTree(context, mapSchema, cursor);
 				assert.equal(unboxed.size, 2);
@@ -709,7 +709,7 @@ describe("unboxed unit tests", () => {
 					foo: "Hello world",
 					bar: true,
 				});
-				cursor.firstNode(); // Root node field has 1 node; move into it
+				cursor.enterNode(0); // Root node field has 1 node; move into it
 
 				const unboxed = unboxedTree(context, mapSchema, cursor);
 				assert.equal(unboxed.size, 2);
@@ -736,7 +736,7 @@ describe("unboxed unit tests", () => {
 				);
 
 				// TODO: if we don't do this, unboxedUnion returns undefined, rather than failing. Expected?
-				cursor.firstNode(); // Root node field has 1 node; move into it
+				cursor.enterNode(0); // Root node field has 1 node; move into it
 
 				assert.equal(unboxedUnion(context, fieldSchema, cursor), "Hello world");
 			});
@@ -753,7 +753,7 @@ describe("unboxed unit tests", () => {
 				const schema = builder.intoDocumentSchema(rootSchema);
 
 				const { context, cursor } = initializeTreeWithContent(schema, "Hello world");
-				cursor.firstNode(); // Root node field has 1 node; move into it
+				cursor.enterNode(0); // Root node field has 1 node; move into it
 
 				const unboxed = unboxedUnion(context, rootSchema, cursor);
 				assert.equal(unboxed.type, "string");
@@ -769,7 +769,7 @@ describe("unboxed unit tests", () => {
 				);
 
 				// TODO: if we don't do this, unboxedUnion returns undefined, rather than failing. Expected?
-				cursor.firstNode(); // Root node field has 1 node; move into it
+				cursor.enterNode(0); // Root node field has 1 node; move into it
 
 				assert.equal(unboxedUnion(context, fieldSchema, cursor), true);
 			});
@@ -785,7 +785,7 @@ describe("unboxed unit tests", () => {
 				const schema = builder.intoDocumentSchema(rootSchema);
 
 				const { context, cursor } = initializeTreeWithContent(schema, "Hello world");
-				cursor.firstNode(); // Root node field has 1 node; move into it
+				cursor.enterNode(0); // Root node field has 1 node; move into it
 
 				const unboxed = unboxedUnion(context, rootSchema, cursor);
 				assert.equal(unboxed.type, "string");
