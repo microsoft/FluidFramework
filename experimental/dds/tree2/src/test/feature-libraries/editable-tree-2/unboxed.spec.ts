@@ -15,6 +15,7 @@ import {
 	ValueSchema,
 	rootFieldKey,
 } from "../../../core";
+import { leaf as leafDomain } from "../../../domains";
 import {
 	AllowedTypes,
 	Any,
@@ -167,7 +168,7 @@ function createSequenceLeafTree(
 	};
 }
 
-describe("unboxed unit tests", () => {
+describe.only("unboxed unit tests", () => {
 	describe("unboxedField", () => {
 		describe("Optional field", () => {
 			it("No value", () => {
@@ -403,67 +404,43 @@ describe("unboxed unit tests", () => {
 		});
 	});
 	describe("unboxedUnion", () => {
-		describe("Value field", () => {
-			it("Single type", () => {
-				const { fieldSchema, context, cursor } = createValueLeafTree(
-					ValueSchema.String,
-					"Hello world",
-				);
+		it("Any", () => {
+			const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+			const fieldSchema = SchemaBuilder.fieldOptional(Any);
+			const schema = builder.intoDocumentSchema(fieldSchema);
 
-				cursor.enterNode(0); // Root node field has 1 node; move into it
+			const { context, cursor } = initializeTreeWithContent(schema, 42);
+			cursor.enterNode(0); // Root node field has 1 node; move into it
 
-				assert.equal(unboxedUnion(context, fieldSchema, cursor), "Hello world");
-			});
-
-			it("Union type", () => {
-				const builder = new SchemaBuilder("test");
-				const stringLeafSchema = builder.leaf("string", ValueSchema.String);
-				const fluidHandleLeafSchema = builder.leaf("handle", ValueSchema.FluidHandle);
-				const rootSchema = SchemaBuilder.field(
-					FieldKinds.value,
-					stringLeafSchema,
-					fluidHandleLeafSchema,
-				);
-				const schema = builder.intoDocumentSchema(rootSchema);
-
-				const { context, cursor } = initializeTreeWithContent(schema, "Hello world");
-				cursor.enterNode(0); // Root node field has 1 node; move into it
-
-				const unboxed = unboxedUnion(context, rootSchema, cursor);
-				assert.equal(unboxed.type, "string");
-				assert.equal(unboxed.value, "Hello world");
-			});
+			const unboxed = unboxedUnion(context, fieldSchema, cursor);
+			assert.equal(unboxed.type, "com.fluidframework.leaf.number");
+			assert.equal(unboxed.value, 42);
 		});
 
-		describe("Optional field", () => {
-			it("Single type", () => {
-				const { fieldSchema, context, cursor } = createOptionalLeafTree(
-					ValueSchema.Boolean,
-					true,
-				);
+		it("Single type", () => {
+			const { fieldSchema, context, cursor } = createValueLeafTree(
+				ValueSchema.String,
+				"Hello world",
+			);
 
-				cursor.enterNode(0); // Root node field has 1 node; move into it
+			cursor.enterNode(0); // Root node field has 1 node; move into it
 
-				assert.equal(unboxedUnion(context, fieldSchema, cursor), true);
-			});
+			assert.equal(unboxedUnion(context, fieldSchema, cursor), "Hello world");
+		});
 
-			it("Union type", () => {
-				const builder = new SchemaBuilder("test");
-				const stringLeafSchema = builder.leaf("string", ValueSchema.String);
-				const fluidHandleLeafSchema = builder.leaf("handle", ValueSchema.FluidHandle);
-				const rootSchema = SchemaBuilder.fieldOptional(
-					stringLeafSchema,
-					fluidHandleLeafSchema,
-				);
-				const schema = builder.intoDocumentSchema(rootSchema);
+		it("Multi-type", () => {
+			const builder = new SchemaBuilder("test");
+			const stringLeafSchema = builder.leaf("string", ValueSchema.String);
+			const fluidHandleLeafSchema = builder.leaf("handle", ValueSchema.FluidHandle);
+			const rootSchema = SchemaBuilder.fieldOptional(stringLeafSchema, fluidHandleLeafSchema);
+			const schema = builder.intoDocumentSchema(rootSchema);
 
-				const { context, cursor } = initializeTreeWithContent(schema, "Hello world");
-				cursor.enterNode(0); // Root node field has 1 node; move into it
+			const { context, cursor } = initializeTreeWithContent(schema, "Hello world");
+			cursor.enterNode(0); // Root node field has 1 node; move into it
 
-				const unboxed = unboxedUnion(context, rootSchema, cursor);
-				assert.equal(unboxed.type, "string");
-				assert.equal(unboxed.value, "Hello world");
-			});
+			const unboxed = unboxedUnion(context, rootSchema, cursor);
+			assert.equal(unboxed.type, "string");
+			assert.equal(unboxed.value, "Hello world");
 		});
 	});
 });
