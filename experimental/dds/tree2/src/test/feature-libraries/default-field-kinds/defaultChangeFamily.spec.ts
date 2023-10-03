@@ -18,7 +18,7 @@ import {
 	TaggedChange,
 	UpPath,
 	applyDelta,
-	makeTreeIndex,
+	makeDetachedFieldIndex,
 } from "../../../core";
 import { jsonNumber, jsonObject, jsonString } from "../../../domains";
 import {
@@ -114,13 +114,13 @@ function initializeEditableForest(data?: JsonableTree): {
 	let currentRevision = mintRevisionTag();
 	const changes: TaggedChange<DefaultChangeset>[] = [];
 	const deltas: Delta.Root[] = [];
-	const treeIndex = makeTreeIndex();
+	const detachedFieldIndex = makeDetachedFieldIndex();
 	const builder = new DefaultEditBuilder(family, (change) => {
 		const taggedChange = { revision: currentRevision, change };
 		changes.push(taggedChange);
 		const delta = defaultChangeFamily.intoDelta(taggedChange);
 		deltas.push(delta);
-		applyDelta(delta, forest, treeIndex);
+		applyDelta(delta, forest, detachedFieldIndex);
 		currentRevision = mintRevisionTag();
 	});
 	return {

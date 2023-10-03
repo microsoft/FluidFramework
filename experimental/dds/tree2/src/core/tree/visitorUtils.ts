@@ -7,31 +7,31 @@ import { IdAllocator, idAllocatorFromMaxId } from "../../util";
 import { FieldKey } from "../schema-stored";
 import * as Delta from "./delta";
 import { PlaceIndex, Range } from "./pathTree";
-import { ForestRootId, TreeIndex } from "./treeIndex";
+import { ForestRootId, DetachedFieldIndex } from "./detachedFieldIndex";
 import { ReplaceKind } from "./visitPath";
 import { DeltaVisitor, visitDelta } from "./visitDelta";
 
-export function makeTreeIndex(prefix: string = "Temp"): TreeIndex {
-	return new TreeIndex(prefix, idAllocatorFromMaxId() as IdAllocator<ForestRootId>);
+export function makeDetachedFieldIndex(prefix: string = "Temp"): DetachedFieldIndex {
+	return new DetachedFieldIndex(prefix, idAllocatorFromMaxId() as IdAllocator<ForestRootId>);
 }
 
 export function applyDelta(
 	delta: Delta.Root,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor },
-	treeIndex: TreeIndex,
+	detachedFieldIndex: DetachedFieldIndex,
 ): void {
 	const visitor = deltaProcessor.acquireVisitor();
-	visitDelta(delta, visitor, treeIndex);
+	visitDelta(delta, visitor, detachedFieldIndex);
 	visitor.free();
 }
 
 export function announceDelta(
 	delta: Delta.Root,
 	deltaProcessor: { acquireVisitor: () => AnnouncedVisitor },
-	treeIndex: TreeIndex,
+	detachedFieldIndex: DetachedFieldIndex,
 ): void {
 	const visitor = announceVisitor(deltaProcessor.acquireVisitor());
-	visitDelta(delta, visitor, treeIndex);
+	visitDelta(delta, visitor, detachedFieldIndex);
 	visitor.free();
 }
 

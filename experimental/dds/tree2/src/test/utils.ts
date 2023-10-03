@@ -92,10 +92,10 @@ import {
 	AllowedUpdateType,
 	IEditableForest,
 	DeltaVisitor,
-	TreeIndex,
+	DetachedFieldIndex,
 	AnnouncedVisitor,
 	applyDelta,
-	makeTreeIndex,
+	makeDetachedFieldIndex,
 	announceDelta,
 } from "../core";
 import { JsonCompatible, Named, brand, makeArray } from "../util";
@@ -918,15 +918,15 @@ export const wrongSchemaConfig: InitializeAndSchematizeConfiguration<
 export function applyTestDelta(
 	delta: Delta.Root,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor },
-	treeIndex?: TreeIndex,
+	detachedFieldIndex?: DetachedFieldIndex,
 ): void {
-	applyDelta(delta, deltaProcessor, treeIndex ?? makeTreeIndex());
+	applyDelta(delta, deltaProcessor, detachedFieldIndex ?? makeDetachedFieldIndex());
 }
 
 export function announceTestDelta(
 	delta: Delta.Root,
 	deltaProcessor: { acquireVisitor: () => AnnouncedVisitor },
-	treeIndex?: TreeIndex,
+	detachedFieldIndex?: DetachedFieldIndex,
 ): void {
-	announceDelta(delta, deltaProcessor, treeIndex ?? makeTreeIndex());
+	announceDelta(delta, deltaProcessor, detachedFieldIndex ?? makeDetachedFieldIndex());
 }

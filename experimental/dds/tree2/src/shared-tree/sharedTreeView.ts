@@ -19,9 +19,9 @@ import {
 	schemaDataIsEmpty,
 	combineVisitors,
 	visitDelta,
-	TreeIndex,
+	DetachedFieldIndex,
 	announceVisitor,
-	makeTreeIndex,
+	makeDetachedFieldIndex,
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import {
@@ -287,7 +287,7 @@ export function createSharedTreeView(args?: {
 	nodeKeyManager?: NodeKeyManager;
 	nodeKeyIndex?: NodeKeyIndex;
 	events?: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>;
-	removedTrees?: TreeIndex;
+	removedTrees?: DetachedFieldIndex;
 }): ISharedTreeView {
 	const schema = args?.schema ?? new InMemoryStoredSchemaRepository();
 	const forest = args?.forest ?? buildForest();
@@ -418,7 +418,7 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		public readonly events: ISubscribable<ViewEvents> &
 			IEmitter<ViewEvents> &
 			HasListeners<ViewEvents>,
-		private readonly removedTrees: TreeIndex = makeTreeIndex("repair"),
+		private readonly removedTrees: DetachedFieldIndex = makeDetachedFieldIndex("repair"),
 	) {
 		branch.on("change", (event) => {
 			if (event.change !== undefined) {

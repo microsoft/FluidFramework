@@ -83,7 +83,7 @@ export {
 	applyDelta,
 	combineVisitors,
 	announceVisitor,
-	makeTreeIndex,
+	makeDetachedFieldIndex,
 } from "./visitorUtils";
 export { PathVisitor, ReplaceKind } from "./visitPath";
 
@@ -95,4 +95,4 @@ export { SparseNode, getDescendant } from "./sparseTree";
 
 export { isSkipMark, emptyDelta } from "./deltaUtil";
 
-export { TreeIndex, ForestRootId } from "./treeIndex";
+export { DetachedFieldIndex, ForestRootId } from "./detachedFieldIndex";

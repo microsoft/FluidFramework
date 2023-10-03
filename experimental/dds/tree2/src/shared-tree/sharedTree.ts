@@ -13,7 +13,7 @@ import {
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { ICodecOptions, noopValidator } from "../codec";
-import { InMemoryStoredSchemaRepository, makeTreeIndex } from "../core";
+import { InMemoryStoredSchemaRepository, makeDetachedFieldIndex } from "../core";
 import { SharedTreeCore } from "../shared-tree-core";
 import {
 	defaultSchemaPolicy,
@@ -30,7 +30,7 @@ import {
 	FieldSchema,
 	buildChunkedForest,
 	makeTreeChunker,
-	TreeIndexSummarizer,
+	DetachedFieldIndexSummarizer,
 } from "../feature-libraries";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import { JsonCompatibleReadOnly, brand } from "../util";
@@ -118,10 +118,10 @@ export class SharedTree
 			options.forest === ForestType.Optimized
 				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy))
 				: buildForest();
-		const removedTrees = makeTreeIndex();
+		const removedTrees = makeDetachedFieldIndex("repair");
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);
 		const forestSummarizer = new ForestSummarizer(forest);
-		const removedTreesSummarizer = new TreeIndexSummarizer(removedTrees);
+		const removedTreesSummarizer = new DetachedFieldIndexSummarizer(removedTrees);
 		const changeFamily = new DefaultChangeFamily(options);
 		super(
 			[schemaSummarizer, forestSummarizer, removedTreesSummarizer],

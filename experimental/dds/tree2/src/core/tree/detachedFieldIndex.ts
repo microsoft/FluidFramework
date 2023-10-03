@@ -39,7 +39,7 @@ type Minor = number;
 /**
  * The tree index records detached field ids and associates them with a change atom ID.
  */
-export class TreeIndex {
+export class DetachedFieldIndex {
 	private detachedNodeToField: NestedMap<Major, Minor, Entry> = new Map<
 		Major,
 		Map<Minor, Entry>
@@ -50,8 +50,8 @@ export class TreeIndex {
 		private rootIdAllocator: IdAllocator<ForestRootId>,
 	) {}
 
-	public clone(): TreeIndex {
-		const clone = new TreeIndex(this.name, this.rootIdAllocator);
+	public clone(): DetachedFieldIndex {
+		const clone = new DetachedFieldIndex(this.name, this.rootIdAllocator);
 		populateNestedMap(this.detachedNodeToField, clone.detachedNodeToField);
 		return clone;
 	}
@@ -154,8 +154,10 @@ export class TreeIndex {
 	 * Loads the tree index from the given string, this overrides any existing data.
 	 */
 	public loadData(data: string): void {
-		const treeIndex: { data: string; id: number } = JSON.parse(data);
-		this.detachedNodeToField = decodeNestedMap(treeIndex.data);
-		this.rootIdAllocator = idAllocatorFromMaxId(treeIndex.id) as IdAllocator<ForestRootId>;
+		const detachedFieldIndex: { data: string; id: number } = JSON.parse(data);
+		this.detachedNodeToField = decodeNestedMap(detachedFieldIndex.data);
+		this.rootIdAllocator = idAllocatorFromMaxId(
+			detachedFieldIndex.id,
+		) as IdAllocator<ForestRootId>;
 	}
 }

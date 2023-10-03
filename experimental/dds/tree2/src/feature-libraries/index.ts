@@ -246,4 +246,4 @@ export {
 import * as SchemaAware from "./schema-aware";
 export { SchemaAware };
 
-export { TreeIndexSummarizer } from "./treeIndexSummarizer";
+export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer";

@@ -67,7 +67,7 @@ export {
 	announceVisitor,
 	announceDelta,
 	applyDelta,
-	makeTreeIndex,
+	makeDetachedFieldIndex,
 	setGenericTreeField,
 	DeltaVisitor,
 	AnnouncedVisitor,
@@ -96,7 +96,7 @@ export {
 	ProtoNodes,
 	CursorMarker,
 	isCursor,
-	TreeIndex,
+	DetachedFieldIndex,
 	ForestRootId,
 	getDetachedFieldContainingPath,
 } from "./tree";

@@ -11,21 +11,21 @@ import {
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { bufferToString } from "@fluid-internal/client-utils";
-import { TreeIndex } from "../core";
+import { DetachedFieldIndex } from "../core";
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
 
 /**
  * The storage key for the blob in the summary containing schema data
  */
-const treeIndexBlobKey = "TreeIndexBlob";
+const detachedFieldIndexBlobKey = "DetachedFieldIndexBlob";
 
 /**
  * Provides methods for summarizing and loading a tree index.
  */
-export class TreeIndexSummarizer implements Summarizable {
-	public readonly key = "TreeIndex";
+export class DetachedFieldIndexSummarizer implements Summarizable {
+	public readonly key = "DetachedFieldIndex";
 
-	public constructor(private readonly treeIndex: TreeIndex) {}
+	public constructor(private readonly detachedFieldIndex: DetachedFieldIndex) {}
 
 	public getAttachSummary(
 		stringify: SummaryElementStringifier,
@@ -33,7 +33,7 @@ export class TreeIndexSummarizer implements Summarizable {
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTreeWithStats {
-		return createSingleBlobSummary(treeIndexBlobKey, this.treeIndex.encode());
+		return createSingleBlobSummary(detachedFieldIndexBlobKey, this.detachedFieldIndex.encode());
 	}
 
 	public async summarize(
@@ -42,7 +42,7 @@ export class TreeIndexSummarizer implements Summarizable {
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummaryTreeWithStats> {
-		return createSingleBlobSummary(treeIndexBlobKey, this.treeIndex.encode());
+		return createSingleBlobSummary(detachedFieldIndexBlobKey, this.detachedFieldIndex.encode());
 	}
 
 	public getGCData(fullGC?: boolean): IGarbageCollectionData {
@@ -59,10 +59,10 @@ export class TreeIndexSummarizer implements Summarizable {
 		services: IChannelStorageService,
 		parse: SummaryElementParser,
 	): Promise<void> {
-		if (await services.contains(treeIndexBlobKey)) {
-			const treeIndexBuffer = await services.readBlob(treeIndexBlobKey);
-			const treeBufferString = bufferToString(treeIndexBuffer, "utf8");
-			this.treeIndex.loadData(treeBufferString);
+		if (await services.contains(detachedFieldIndexBlobKey)) {
+			const detachedFieldIndexBuffer = await services.readBlob(detachedFieldIndexBlobKey);
+			const treeBufferString = bufferToString(detachedFieldIndexBuffer, "utf8");
+			this.detachedFieldIndex.loadData(treeBufferString);
 		}
 	}
 }
