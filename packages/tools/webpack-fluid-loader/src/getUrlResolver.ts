@@ -51,7 +51,7 @@ export function getUrlResolver(
 				return new InsecureUrlResolver(
 					"",
 					options.discoveryEndpoint,
-					"http://dummy-historian",
+					"https://dummy-historian",
 					options.tenantId,
 					options.bearerSecret ?? "",
 				);
