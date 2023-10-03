@@ -10,6 +10,7 @@ import {
 	IFluidHandle,
 	IFluidLoadable,
 	FluidObject,
+	// eslint-disable-next-line import/no-deprecated
 	IFluidRouter,
 } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
@@ -21,6 +22,7 @@ import { RequestParser } from "@fluidframework/runtime-utils";
  * if it does not apply. These handlers are called in series, so there may be other handlers before or after.
  * A handler should only return error if the request is for a route the handler owns, and there is a problem with
  * the route, or fulling the specific request.
+ * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
  */
 export type RuntimeRequestHandler = (
 	request: RequestParser,
@@ -32,6 +34,7 @@ export type RuntimeRequestHandler = (
  * @param request - the request for the root data store.  The first path part must be the data store's ID.
  * @param runtime - the container runtime
  * @returns the result of the request
+ * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
  */
 export const rootDataStoreRequestHandler = async (
 	request: IRequest,
@@ -40,6 +43,7 @@ export const rootDataStoreRequestHandler = async (
 	const requestParser = RequestParser.create(request);
 	const id = requestParser.pathParts[0];
 	const wait = typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
+	// eslint-disable-next-line import/no-deprecated
 	let rootDataStore: IFluidRouter;
 	try {
 		// getRootDataStore currently throws if the data store is not found
@@ -48,12 +52,13 @@ export const rootDataStoreRequestHandler = async (
 		return undefined; // continue search
 	}
 	try {
-		return rootDataStore.IFluidRouter.request(requestParser.createSubRequest(1));
+		return await rootDataStore.IFluidRouter.request(requestParser.createSubRequest(1));
 	} catch (error) {
 		return { status: 500, mimeType: "fluid/object", value: error };
 	}
 };
 
+/** @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md */
 export const createFluidObjectResponse = (
 	fluidObject: FluidObject,
 ): { status: 200; mimeType: "fluid/object"; value: FluidObject } => {
@@ -92,6 +97,7 @@ class LegacyUriHandle<T = FluidObject & IFluidLoadable> implements IFluidHandle<
 	}
 }
 
+/** @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md */
 export function handleFromLegacyUri<T = FluidObject & IFluidLoadable>(
 	uri: string,
 	runtime: IContainerRuntimeBase,

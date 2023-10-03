@@ -247,6 +247,22 @@ export function isJsonObject(
 	return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+/**
+ * Verifies that the supplied indices are valid within the supplied array.
+ * @param startIndex - The starting index in the range. Must be in [0, length).
+ * @param endIndex - The ending index in the range. Must be within (start, length].
+ * @param array - The array the indices refer to
+ */
+export function assertValidRangeIndices(
+	startIndex: number,
+	endIndex: number,
+	array: { readonly length: number },
+) {
+	assert(endIndex > startIndex, "Range indices are malformed.");
+	assertValidIndex(startIndex, array, false);
+	assertValidIndex(endIndex, array, true);
+}
+
 export function assertValidIndex(
 	index: number,
 	array: { readonly length: number },

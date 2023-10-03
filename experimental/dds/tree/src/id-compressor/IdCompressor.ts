@@ -892,7 +892,7 @@ export class IdCompressor {
 	}
 
 	private static isStableInversionKey(inversionKey: InversionKey): inversionKey is StableId {
-		return inversionKey.charAt(0) !== nonStableOverridePrefix;
+		return !inversionKey.startsWith(nonStableOverridePrefix);
 	}
 
 	/**
@@ -1086,9 +1086,7 @@ export class IdCompressor {
 			// `localOverrides`s. Otherwise, it is a sequential allocation from the session UUID and can simply be negated and
 			// added to that UUID to obtain the stable ID associated with it.
 			const localOverride = this.localOverrides?.get(id);
-			return localOverride !== undefined
-				? localOverride
-				: stableIdFromNumericUuid(this.localSession.sessionUuid, idOffset - 1);
+			return localOverride ?? stableIdFromNumericUuid(this.localSession.sessionUuid, idOffset - 1);
 		}
 	}
 

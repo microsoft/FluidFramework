@@ -15,11 +15,8 @@ import {
 } from "../../../feature-libraries/editable-tree-2/lazyTree";
 import {
 	Any,
-	DefaultEditBuilder,
 	PrimitiveValue,
 	SchemaBuilder,
-	TypedSchemaCollection,
-	createMockNodeKeyManager,
 	isPrimitiveValue,
 	jsonableTreeFromCursor,
 	singleMapTreeCursor,
@@ -33,18 +30,8 @@ import {
 	validateStructFieldName,
 	assertAllowedValue,
 } from "../../../feature-libraries";
-// eslint-disable-next-line import/no-internal-modules
-import { Context } from "../../../feature-libraries/editable-tree-2/context";
-import {
-	FieldKey,
-	IEditableForest,
-	MapTree,
-	TreeNavigationResult,
-	TreeValue,
-	rootFieldKey,
-} from "../../../core";
+import { FieldKey, MapTree, TreeNavigationResult, TreeValue, rootFieldKey } from "../../../core";
 import { forestWithContent } from "../../utils";
-import { TreeContent } from "../../../shared-tree";
 import { RestrictiveReadonlyRecord, brand } from "../../../util";
 import {
 	LazyField,
@@ -54,20 +41,10 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/editable-tree-2/lazyField";
 // eslint-disable-next-line import/no-internal-modules
-import { visitIterableTree } from "../../../feature-libraries/editable-tree-2";
+import { boxedIterator, visitIterableTree } from "../../../feature-libraries/editable-tree-2";
 import { testTrees, treeContentFromTestTree } from "../../testTrees";
 import { jsonSchema } from "../../../domains";
-
-function getReadonlyContext(forest: IEditableForest, schema: TypedSchemaCollection): Context {
-	// This will error if someone tries to call mutation methods on it
-	const dummyEditor = {} as unknown as DefaultEditBuilder;
-	return new Context(schema, forest, dummyEditor, createMockNodeKeyManager());
-}
-
-function contextWithContentReadonly(content: TreeContent): Context {
-	const forest = forestWithContent(content);
-	return getReadonlyContext(forest, content.schema);
-}
+import { contextWithContentReadonly, getReadonlyContext } from "./utils";
 
 function collectPropertyNames(obj: object): Set<string> {
 	if (obj == null) {
@@ -104,17 +81,20 @@ describe("lazyTree", () => {
 		);
 
 		const existingProperties = collectPropertyNames(struct);
-
-		// Ensure all existing properties are banned as field names:
-		// Note that this currently also ensure that there are no names that are unnecessary banned:
-		// this restriction may need to be relaxed in the future to reserve names so they can be used in the API later as a non breaking change.
-		assert.deepEqual(bannedFieldNames, new Set(existingProperties));
+		const existingPropertiesExtended = new Set(existingProperties);
 
 		for (const name of existingProperties) {
 			for (const prefix of fieldApiPrefixes) {
 				// Ensure properties won't collide with prefixed field name based properties.
-				// This could be less strict.
-				assert(!name.startsWith(prefix));
+				if (name.startsWith(prefix)) {
+					// If the property does have a reserved prefix, that's okay as long as the rest of name after the prefix is also banned.
+					const bannedName = name.substring(prefix.length);
+					const lowercaseBannedName = `${bannedName[0].toLowerCase()}${bannedName.substring(
+						1,
+					)}`;
+					assert(bannedFieldNames.has(lowercaseBannedName));
+					existingPropertiesExtended.add(lowercaseBannedName);
+				}
 			}
 
 			const errors: string[] = [];
@@ -122,6 +102,11 @@ describe("lazyTree", () => {
 			validateStructFieldName(name, () => "test", errors);
 			assert(errors.length > 0);
 		}
+
+		// Ensure all existing properties are banned as field names:
+		// Note that this currently also ensure that there are no names that are unnecessary banned:
+		// this restriction may need to be relaxed in the future to reserve names so they can be used in the API later as a non breaking change.
+		assert.deepEqual(bannedFieldNames, new Set(existingPropertiesExtended));
 	});
 
 	describe("struct", () => {
@@ -206,7 +191,7 @@ describe("lazyTree", () => {
 
 function fieldToMapTree(field: TreeField): MapTree[] {
 	const results: MapTree[] = [];
-	for (const child of field) {
+	for (const child of field[boxedIterator]()) {
 		results.push(nodeToMapTree(child));
 	}
 	return results;
@@ -214,7 +199,7 @@ function fieldToMapTree(field: TreeField): MapTree[] {
 
 function nodeToMapTree(node: TreeNode): MapTree {
 	const fields: Map<FieldKey, MapTree[]> = new Map();
-	for (const field of node) {
+	for (const field of node[boxedIterator]()) {
 		fields.set(field.key, fieldToMapTree(field));
 	}
 
@@ -225,12 +210,16 @@ function checkPropertyInvariants(root: Tree): void {
 	const treeValues = new Map<unknown, number>();
 	// Assert all nodes and fields traversed, and all values found.
 	// TODO: checking that unboxed fields and nodes were traversed is not fully implemented here.
-	visitIterableTree(root, (item) => {
-		if (item instanceof LazyLeaf) {
-			const value = item.value;
-			treeValues.set(value, (treeValues.get(value) ?? 0) + 1);
-		}
-	});
+	visitIterableTree(
+		root,
+		(tree) => tree[boxedIterator](),
+		(item) => {
+			if (item instanceof LazyLeaf) {
+				const value = item.value;
+				treeValues.set(value, (treeValues.get(value) ?? 0) + 1);
+			}
+		},
+	);
 
 	// TODO: generic typed traverse first, collect leaves use in asserts.
 	// TODO: add extra items needed to traverse map nodes and in leaves.
@@ -287,15 +276,19 @@ function checkPropertyInvariants(root: Tree): void {
 
 	// Assert all nodes and fields traversed, and all values found.
 	// TODO: checking that unboxed fields and nodes were traversed is not fully implemented here.
-	visitIterableTree(root, (item) => {
-		if (!unboxable.has(Object.getPrototypeOf(item))) {
-			if (!primitivesAndValues.has(item as unknown as TreeValue) && !visited.has(item)) {
-				// Fields don't have stable object identity, so they can fail the above test.
-				// Nothing else should fail it.
-				assert(item instanceof LazyField);
+	visitIterableTree(
+		root,
+		(tree) => tree[boxedIterator](),
+		(item) => {
+			if (!unboxable.has(Object.getPrototypeOf(item))) {
+				if (!primitivesAndValues.has(item as unknown as TreeValue) && !visited.has(item)) {
+					// Fields don't have stable object identity, so they can fail the above test.
+					// Nothing else should fail it.
+					assert(item instanceof LazyField);
+				}
 			}
-		}
-	});
+		},
+	);
 
 	assert.deepEqual(primitivesAndValues, treeValues);
 }

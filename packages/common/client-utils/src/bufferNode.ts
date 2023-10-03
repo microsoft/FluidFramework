@@ -11,7 +11,7 @@
  * @internal
  */
 export declare class Buffer extends Uint8Array {
-	toString(encoding?: string): string;
+	toString(encoding?: "utf8" | "utf-8" | "base64"): string;
 
 	/**
 	 * Static constructor
@@ -46,9 +46,13 @@ export type IsoBuffer = Buffer;
  *
  * @internal
  */
-export function Uint8ArrayToString(arr: Uint8Array, encoding?: string): string {
-	// Make this check because Buffer.from(arr) will always do a buffer copy
-	return Buffer.isBuffer(arr) ? arr.toString(encoding) : Buffer.from(arr).toString(encoding);
+export function Uint8ArrayToString(
+	arr: Uint8Array,
+	encoding?: "utf8" | "utf-8" | "base64",
+): string {
+	// Buffer extends Uint8Array.  Therefore, 'arr' may already be a Buffer, in
+	// which case we can avoid copying the Uint8Array into a new Buffer instance.
+	return (Buffer.isBuffer(arr) ? arr : Buffer.from(arr)).toString(encoding);
 }
 
 /**
@@ -76,5 +80,7 @@ export function stringToBuffer(input: string, encoding: string): ArrayBufferLike
  *
  * @internal
  */
-export const bufferToString = (blob: ArrayBufferLike, encoding: string): string =>
-	IsoBuffer.from(blob).toString(encoding);
+export const bufferToString = (
+	blob: ArrayBufferLike,
+	encoding: "utf8" | "utf-8" | "base64",
+): string => IsoBuffer.from(blob).toString(encoding);

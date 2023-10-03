@@ -1,5 +1,0 @@
-{
-	"tags": ["markdown-renderer"],
-	"exports": ["index"],
-	"imports": ["common", "documentation-domain", "utilities"]
-}

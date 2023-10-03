@@ -138,13 +138,11 @@ export {
 } from "./modular-schema";
 
 export {
-	SchemaBuilder,
 	TreeSchema,
 	AllowedTypes,
 	FieldSchema,
 	TypedSchemaCollection,
 	Any,
-	SchemaLibrary,
 	SchemaLibraryData,
 	LazyTreeSchema,
 	InternalTypedSchemaTypes,
@@ -162,6 +160,7 @@ export {
 	fieldApiPrefixes,
 	validateStructFieldName,
 } from "./typed-schema";
+export { SchemaBuilder, SchemaLibrary } from "./schemaBuilder";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
 
@@ -195,7 +194,6 @@ export {
 	Sequence,
 	NodeKeyFieldKind,
 	Forbidden,
-	FieldKindTypes,
 	DefaultChangeset,
 	DefaultChangeFamily,
 	DefaultEditBuilder,
@@ -244,6 +242,8 @@ export {
 	TreeField,
 	TreeNode,
 	getTreeContext,
+	boxedIterator,
+	CheckTypesOverlap,
 } from "./editable-tree-2";
 
 // Split into separate import and export for compatibility with API-Extractor.

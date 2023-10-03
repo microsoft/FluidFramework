@@ -266,7 +266,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
 	private noActiveClients: boolean;
 
-	private globalCheckpointOnly;
+	private globalCheckpointOnly: boolean = false;
 
 	private closed: boolean = false;
 
@@ -292,9 +292,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		private readonly serviceConfiguration: IServiceConfiguration,
 		private sessionMetric: Lumber<LumberEventName.SessionResult> | undefined,
 		private readonly sessionStartMetric: Lumber<LumberEventName.StartSessionResult> | undefined,
-		private readonly checkpointService: ICheckpointService,
-		private readonly restartOnCheckpointFailure: boolean,
-		private readonly kafkaCheckpointOnReprocessingOp: boolean,
+		private readonly checkpointService: ICheckpointService | undefined,
 		private readonly sequencedSignalClients: Map<string, ISequencedSignalClient> = new Map(),
 	) {
 		super();
@@ -438,16 +436,16 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			try {
 				if (
 					this.checkpointInfo.currentKafkaCheckpointMessage &&
-					this.kafkaCheckpointOnReprocessingOp
+					this.serviceConfiguration.deli.kafkaCheckpointOnReprocessingOp
 				) {
 					this.context.checkpoint(
 						this.checkpointInfo.currentKafkaCheckpointMessage,
-						this.restartOnCheckpointFailure,
+						this.serviceConfiguration.deli.restartOnCheckpointFailure,
 					);
 				}
 				reprocessOpsMetric.setProperty(
 					"kafkaCheckpointOnReprocessingOp",
-					this.kafkaCheckpointOnReprocessingOp,
+					this.serviceConfiguration.deli.kafkaCheckpointOnReprocessingOp,
 				);
 				reprocessOpsMetric.success(`Successfully reprocessed repeating ops.`);
 			} catch (error) {
@@ -835,11 +833,17 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 				"Session metric already completed. Creating a new one.",
 				getLumberBaseProperties(this.documentId, this.tenantId),
 			);
+			const isEphemeralContainer: boolean =
+				this.sessionMetric?.properties.get(CommonProperties.isEphemeralContainer) ?? false;
 			this.sessionMetric = createSessionMetric(
 				this.tenantId,
 				this.documentId,
 				LumberEventName.SessionResult,
 				this.serviceConfiguration,
+			);
+			this.sessionMetric?.setProperty(
+				CommonProperties.isEphemeralContainer,
+				isEphemeralContainer,
 			);
 		}
 
@@ -1967,7 +1971,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 				this.checkpointContext
 					.checkpoint(
 						checkpointParams,
-						this.restartOnCheckpointFailure,
+						this.serviceConfiguration.deli.restartOnCheckpointFailure,
 						globalCheckpointOnly,
 					)
 					.catch((error) => {
