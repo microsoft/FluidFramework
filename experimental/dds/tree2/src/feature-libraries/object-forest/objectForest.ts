@@ -165,8 +165,9 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 				const currentField = getMapTreeField(parent, key, true);
 				assertValidIndex(destination, currentField, true);
 				const sourceField = getMapTreeField(this.forest.roots, source, false);
+				assert(sourceField !== undefined, "Attach source field must exist");
 				assert(
-					sourceField !== undefined && sourceField.length === count,
+					sourceField.length === count,
 					"Attach must consume all nodes in source field",
 				);
 				// TODO: this will fail for very large insertions due to argument limits.
