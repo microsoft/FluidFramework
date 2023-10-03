@@ -74,6 +74,7 @@ export const counterHandle: FieldChangeHandler<number> = {
 							oldContent: {
 								detachId: {
 									major: revision,
+									// This is an arbitrary number for testing.
 									minor: 424242,
 								},
 							},

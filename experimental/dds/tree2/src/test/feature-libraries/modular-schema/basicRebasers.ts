@@ -91,6 +91,7 @@ export const valueHandler: FieldChangeHandler<ValueChangeset> = {
 						oldContent: {
 							detachId: {
 								major: revision,
+								// This is an arbitrary number for testing.
 								minor: 424242,
 							},
 						},
