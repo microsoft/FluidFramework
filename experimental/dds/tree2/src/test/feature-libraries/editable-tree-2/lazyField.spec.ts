@@ -734,4 +734,227 @@ describe("LazyField", () => {
 			});
 		});
 	});
+
+	describe("LazySequence", () => {
+		it("is", () => {
+			// #region Tree and schema initialization
+
+			const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+			const recursiveStructSchema = builder.structRecursive("recursiveStruct", {
+				flag: SchemaBuilder.fieldValue(leafDomain.boolean),
+				child: SchemaBuilder.fieldRecursive(
+					FieldKinds.optional,
+					() => recursiveStructSchema,
+				),
+			});
+			const rootSchema = SchemaBuilder.fieldOptional(builder.struct("struct", {}));
+			const schema = builder.intoDocumentSchema(rootSchema);
+
+			const { context, cursor } = initializeTreeWithContent({ schema, initialTree: {} });
+
+			// #endregion
+
+			// #region Sequence<Any>
+
+			const anySequence = new LazySequence(
+				context,
+				SchemaBuilder.fieldSequence(Any),
+				cursor,
+				detachedFieldAnchor,
+			);
+
+			// Positive cases
+			assert(anySequence.is(SchemaBuilder.fieldSequence(Any)));
+
+			// Negative cases
+			assert(!anySequence.is(SchemaBuilder.fieldOptional()));
+			assert(!anySequence.is(SchemaBuilder.fieldOptional(Any)));
+			assert(!anySequence.is(SchemaBuilder.fieldOptional(leafDomain.boolean)));
+			assert(!anySequence.is(SchemaBuilder.fieldValue()));
+			assert(!anySequence.is(SchemaBuilder.fieldValue(Any)));
+			assert(!anySequence.is(SchemaBuilder.fieldValue(leafDomain.boolean)));
+			assert(!anySequence.is(SchemaBuilder.fieldSequence(leafDomain.boolean)));
+			assert(!anySequence.is(SchemaBuilder.fieldSequence()));
+			assert(
+				!anySequence.is(
+					SchemaBuilder.fieldRecursive(FieldKinds.value, recursiveStructSchema),
+				),
+			);
+
+			// #endregion
+
+			// #region Sequence<Primitive>
+
+			const primitiveSequence = new LazySequence(
+				context,
+				SchemaBuilder.fieldSequence(leafDomain.boolean),
+				cursor,
+				detachedFieldAnchor,
+			);
+
+			// Positive cases
+			assert(primitiveSequence.is(SchemaBuilder.fieldSequence(leafDomain.boolean)));
+
+			// Negative cases
+			assert(!primitiveSequence.is(SchemaBuilder.fieldOptional()));
+			assert(!primitiveSequence.is(SchemaBuilder.fieldOptional(Any)));
+			assert(!primitiveSequence.is(SchemaBuilder.fieldOptional(leafDomain.boolean)));
+			assert(!primitiveSequence.is(SchemaBuilder.fieldValue()));
+			assert(!primitiveSequence.is(SchemaBuilder.fieldValue(Any)));
+			assert(!primitiveSequence.is(SchemaBuilder.fieldValue(leafDomain.boolean)));
+			assert(
+				!primitiveSequence.is(
+					SchemaBuilder.fieldRecursive(FieldKinds.value, recursiveStructSchema),
+				),
+			);
+
+			// #endregion
+		});
+
+		describe("at", () => {
+			it("Unboxes", () => {
+				const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+				const rootSchema = SchemaBuilder.fieldSequence(leafDomain.number);
+				const schema = builder.intoDocumentSchema(rootSchema);
+
+				const { context, cursor } = initializeTreeWithContent({
+					schema,
+					initialTree: [37, 42],
+				});
+
+				const sequence = new LazySequence(context, rootSchema, cursor, rootFieldAnchor);
+
+				assert.equal(sequence.length, 2);
+				assert.equal(sequence.at(0), 37);
+				assert.equal(sequence.at(1), 42);
+			});
+		});
+
+		it("boxedAt", () => {
+			const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+			const rootSchema = SchemaBuilder.fieldSequence(leafDomain.string);
+			const schema = builder.intoDocumentSchema(rootSchema);
+
+			const { context, cursor } = initializeTreeWithContent({
+				schema,
+				initialTree: ["Hello", "world"],
+			});
+
+			const sequence = new LazySequence(context, rootSchema, cursor, rootFieldAnchor);
+
+			const boxedResult0 = sequence.boxedAt(0);
+			assert.equal(boxedResult0.type, leafDomain.string.name);
+			assert.equal(boxedResult0.value, "Hello");
+
+			const boxedResult1 = sequence.boxedAt(1);
+			assert.equal(boxedResult1.type, leafDomain.string.name);
+			assert.equal(boxedResult1.value, "world");
+		});
+
+		describe("length", () => {
+			it("Empty", () => {
+				const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+				const rootSchema = SchemaBuilder.fieldSequence(leafDomain.number);
+				const schema = builder.intoDocumentSchema(rootSchema);
+
+				const { context, cursor } = initializeTreeWithContent({
+					schema,
+					initialTree: [],
+				});
+
+				const sequence = new LazySequence(context, rootSchema, cursor, rootFieldAnchor);
+
+				assert.equal(sequence.length, 0);
+			});
+
+			it("Non-empty", () => {
+				const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+				const rootSchema = SchemaBuilder.fieldSequence(leafDomain.number);
+				const schema = builder.intoDocumentSchema(rootSchema);
+
+				const { context, cursor } = initializeTreeWithContent({
+					schema,
+					initialTree: [37, 42],
+				});
+
+				const sequence = new LazySequence(context, rootSchema, cursor, rootFieldAnchor);
+
+				assert.equal(sequence.length, 2);
+			});
+		});
+
+		describe("map", () => {
+			it("Empty", () => {
+				const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+				const rootSchema = SchemaBuilder.fieldSequence(leafDomain.boolean);
+				const schema = builder.intoDocumentSchema(rootSchema);
+
+				const { context, cursor } = initializeTreeWithContent({
+					schema,
+					initialTree: [],
+				});
+
+				const sequence = new LazySequence(context, rootSchema, cursor, rootFieldAnchor);
+
+				const mapResult = sequence.map((value) => value);
+				assert.equal(mapResult.length, 0);
+			});
+
+			it("Non-empty", () => {
+				const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+				const rootSchema = SchemaBuilder.fieldSequence(leafDomain.boolean);
+				const schema = builder.intoDocumentSchema(rootSchema);
+
+				const { context, cursor } = initializeTreeWithContent({
+					schema,
+					initialTree: [true, false],
+				});
+
+				const sequence = new LazySequence(context, rootSchema, cursor, rootFieldAnchor);
+
+				const mapResult = sequence.map((value) => value);
+				assert.equal(mapResult.length, 2);
+				assert.equal(mapResult[0], true);
+				assert.equal(mapResult[1], false);
+			});
+		});
+
+		describe("mapBoxed", () => {
+			it("Empty", () => {
+				const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+				const rootSchema = SchemaBuilder.fieldSequence(leafDomain.boolean);
+				const schema = builder.intoDocumentSchema(rootSchema);
+
+				const { context, cursor } = initializeTreeWithContent({
+					schema,
+					initialTree: [],
+				});
+
+				const sequence = new LazySequence(context, rootSchema, cursor, rootFieldAnchor);
+
+				const mapResult = sequence.mapBoxed((value) => value);
+				assert.equal(mapResult.length, 0);
+			});
+
+			it("Non-empty", () => {
+				const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+				const rootSchema = SchemaBuilder.fieldSequence(leafDomain.boolean);
+				const schema = builder.intoDocumentSchema(rootSchema);
+
+				const { context, cursor } = initializeTreeWithContent({
+					schema,
+					initialTree: [true, false],
+				});
+
+				const sequence = new LazySequence(context, rootSchema, cursor, rootFieldAnchor);
+
+				const mapResult = sequence.mapBoxed((value) => value);
+				assert.equal(mapResult.length, 2);
+				assert.equal(mapResult[0].type, leafDomain.boolean.name);
+				assert.equal(mapResult[0].value, true);
+				assert.equal(mapResult[1].type, leafDomain.boolean.name);
+				assert.equal(mapResult[1].value, false);
+			});
+		});
+	});
 });
