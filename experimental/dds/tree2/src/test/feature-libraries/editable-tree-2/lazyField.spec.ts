@@ -845,5 +845,41 @@ describe("LazyField", () => {
 				assert.equal(mapResult[1].value, false);
 			});
 		});
+
+		describe("asArray", () => {
+			it("Empty", () => {
+				const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+				const rootSchema = SchemaBuilder.fieldSequence(leafDomain.string);
+				const schema = builder.intoDocumentSchema(rootSchema);
+
+				const { context, cursor } = initializeTreeWithContent({
+					schema,
+					initialTree: [],
+				});
+
+				const sequence = new LazySequence(context, rootSchema, cursor, rootFieldAnchor);
+
+				const array = sequence.asArray;
+				assert.equal(array.length, 0);
+			});
+
+			it("Non-empty", () => {
+				const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+				const rootSchema = SchemaBuilder.fieldSequence(leafDomain.string);
+				const schema = builder.intoDocumentSchema(rootSchema);
+
+				const { context, cursor } = initializeTreeWithContent({
+					schema,
+					initialTree: ["Hello", "world"],
+				});
+
+				const sequence = new LazySequence(context, rootSchema, cursor, rootFieldAnchor);
+
+				const array = sequence.asArray;
+				assert.equal(array.length, 2);
+				assert.equal(array[0], "Hello");
+				assert.equal(array[1], "world");
+			});
+		});
 	});
 });
