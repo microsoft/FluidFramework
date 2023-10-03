@@ -365,33 +365,6 @@ describe.only("LazyField", () => {
 		}
 
 		describe("map", () => {
-			it("boolean", () => {
-				const field = createOptionalLeafTree(ValueSchema.Boolean, false);
-
-				assert.deepEqual(
-					field.map((value) => value),
-					[false],
-				);
-			});
-
-			it("number", () => {
-				const field = createOptionalLeafTree(ValueSchema.Number, 42);
-
-				assert.deepEqual(
-					field.map((value) => value),
-					[42],
-				);
-			});
-
-			it("string", () => {
-				const field = createOptionalLeafTree(ValueSchema.String, "Hello world");
-
-				assert.deepEqual(
-					field.map((value) => value),
-					["Hello world"],
-				);
-			});
-
 			it("No value", () => {
 				const field = createOptionalLeafTree(ValueSchema.Number, undefined);
 
@@ -401,7 +374,16 @@ describe.only("LazyField", () => {
 				);
 			});
 
-			it("Struct", () => {
+			it("Primitive value", () => {
+				const field = createOptionalLeafTree(ValueSchema.Boolean, false);
+
+				assert.deepEqual(
+					field.map((value) => value),
+					[false],
+				);
+			});
+
+			it("Struct value", () => {
 				const input = {
 					foo: true,
 					bar: 42,
@@ -420,30 +402,6 @@ describe.only("LazyField", () => {
 		});
 
 		describe("mapBoxed", () => {
-			it("number", () => {
-				const field = createOptionalLeafTree(ValueSchema.Number, 42);
-
-				const mapResult = field.mapBoxed((value) => value);
-				assert.equal(mapResult.length, 1);
-				assert.equal(mapResult[0].value, 42);
-			});
-
-			it("boolean", () => {
-				const field = createOptionalLeafTree(ValueSchema.Boolean, true);
-
-				const mapResult = field.mapBoxed((value) => value);
-				assert.equal(mapResult.length, 1);
-				assert.equal(mapResult[0].value, true);
-			});
-
-			it("string", () => {
-				const field = createOptionalLeafTree(ValueSchema.String, "Hello world");
-
-				const mapResult = field.mapBoxed((value) => value);
-				assert.equal(mapResult.length, 1);
-				assert.equal(mapResult[0].value, "Hello world");
-			});
-
 			it("No value", () => {
 				const field = createOptionalLeafTree(ValueSchema.String, undefined);
 
@@ -451,7 +409,15 @@ describe.only("LazyField", () => {
 				assert.deepEqual(mapResult, []);
 			});
 
-			it("Struct", () => {
+			it("Primitive value", () => {
+				const field = createOptionalLeafTree(ValueSchema.Number, 42);
+
+				const mapResult = field.mapBoxed((value) => value);
+				assert.equal(mapResult.length, 1);
+				assert.equal(mapResult[0].value, 42);
+			});
+
+			it("Struct value", () => {
 				const input = {
 					foo: true,
 					bar: 42,
@@ -655,25 +621,7 @@ describe.only("LazyField", () => {
 		}
 
 		describe("map", () => {
-			it("boolean", () => {
-				const field = createValueLeafTree(ValueSchema.Boolean, false);
-
-				assert.deepEqual(
-					field.map((value) => value),
-					[false],
-				);
-			});
-
-			it("number", () => {
-				const field = createValueLeafTree(ValueSchema.Number, 42);
-
-				assert.deepEqual(
-					field.map((value) => value),
-					[42],
-				);
-			});
-
-			it("string", () => {
+			it("Primitive value", () => {
 				const field = createValueLeafTree(ValueSchema.String, "Hello world");
 
 				assert.deepEqual(
@@ -682,7 +630,7 @@ describe.only("LazyField", () => {
 				);
 			});
 
-			it("Struct", () => {
+			it("Struct value", () => {
 				const input = {
 					foo: true,
 					bar: 42,
@@ -701,7 +649,7 @@ describe.only("LazyField", () => {
 		});
 
 		describe("mapBoxed", () => {
-			it("number", () => {
+			it("Primitive value", () => {
 				const field = createValueLeafTree(ValueSchema.Number, 42);
 
 				const mapResult = field.mapBoxed((value) => value);
@@ -709,23 +657,7 @@ describe.only("LazyField", () => {
 				assert.equal(mapResult[0].value, 42);
 			});
 
-			it("boolean", () => {
-				const field = createValueLeafTree(ValueSchema.Boolean, true);
-
-				const mapResult = field.mapBoxed((value) => value);
-				assert.equal(mapResult.length, 1);
-				assert.equal(mapResult[0].value, true);
-			});
-
-			it("string", () => {
-				const field = createValueLeafTree(ValueSchema.String, "Hello world");
-
-				const mapResult = field.mapBoxed((value) => value);
-				assert.equal(mapResult.length, 1);
-				assert.equal(mapResult[0].value, "Hello world");
-			});
-
-			it("Struct", () => {
+			it("Struct value", () => {
 				const input = {
 					foo: true,
 					bar: 42,
