@@ -130,7 +130,7 @@ describe.only("LazyField", () => {
 
 	describe("LazyOptionalField", () => {
 		describe("is", () => {
-			it("Any", () => {
+			it("Field schema: Any", () => {
 				// #region Tree and schema initialization
 
 				const builder = new SchemaBuilder("test", undefined, leafDomain.library);
@@ -170,7 +170,7 @@ describe.only("LazyField", () => {
 				);
 			});
 
-			it("Primitive", () => {
+			it("Field schema: Primitive", () => {
 				// #region Tree and schema initialization
 
 				const builder = new SchemaBuilder("test", undefined, leafDomain.library);
@@ -214,7 +214,7 @@ describe.only("LazyField", () => {
 				);
 			});
 
-			it("Struct", () => {
+			it("Field schema: Struct", () => {
 				// #region Tree and schema initialization
 
 				const builder = new SchemaBuilder("test", undefined, leafDomain.library);
@@ -438,7 +438,7 @@ describe.only("LazyField", () => {
 
 	describe("LazyValueField", () => {
 		describe("is", () => {
-			it("Any", () => {
+			it("Field schema: Any", () => {
 				// #region Tree and schema initialization
 
 				const builder = new SchemaBuilder("test", undefined, leafDomain.library);
@@ -481,7 +481,7 @@ describe.only("LazyField", () => {
 				assert(!field.is(SchemaBuilder.fieldOptional(Any)));
 			});
 
-			it("Primitive", () => {
+			it("Field schema: Primitive", () => {
 				// #region Tree and schema initialization
 
 				const builder = new SchemaBuilder("test", undefined, leafDomain.library);
@@ -520,7 +520,7 @@ describe.only("LazyField", () => {
 				assert(!field.is(SchemaBuilder.fieldOptional(leafDomain.boolean)));
 			});
 
-			it("Struct", () => {
+			it("Field schema: Struct", () => {
 				// #region Tree and schema initialization
 
 				const builder = new SchemaBuilder("test", undefined, leafDomain.library);
