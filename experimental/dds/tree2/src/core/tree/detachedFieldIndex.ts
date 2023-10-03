@@ -45,6 +45,10 @@ export class DetachedFieldIndex {
 		Map<Minor, Entry>
 	>();
 
+	/**
+	 * @param name - A name for the index, used as a prefix for the generated field keys.
+	 * @param rootIdAllocator - An ID allocator used to generate unique field keys.
+	 */
 	public constructor(
 		private readonly name: string,
 		private rootIdAllocator: IdAllocator<ForestRootId>,
