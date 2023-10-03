@@ -209,7 +209,7 @@ stages:
                 workingDirectory: $(toolAbsolutePath)
                 script: |
                   echo "Fetching pass rate data and saving into JSON files"
-                  node "$BUILD_SOURCESDIRECTORY/scripts/get-test-pass-rate.js"
+                  node "$BUILD_SOURCESDIRECTORY/scripts/get-test-pass-rate.mjs"
                   echo "Files created. Now running handler"
                   node --require @ff-internal/aria-logger bin/run --handlerModule "$BUILD_SOURCESDIRECTORY/tools/telemetry-generator/dist/handlers/testPassRate.js" --dir "$TEST_WORKSPACE/stageFiles"
                 
