@@ -205,7 +205,9 @@ stages:
                 BUILD_SOURCES_DIRECTORY: $(Build.SourcesDirectory)
                 PIPELINE: 'EndToEndTests'
               inputs:
-                targetType: 'filePath'
+                targetType: 'inline'
                 workingDirectory: $(toolAbsolutePath)
-                filePath: $(Build.SourcesDirectory)/scripts/get-test-pass-rate.sh
-              
+                script: |
+                  node $(Build.SourcesDirectory)/scripts/get-test-pass-rate.js
+                  node --require @ff-internal/aria-logger bin/run --handlerModule "$BUILD_SOURCESDIRECTORY/tools/telemetry-generator/dist/handlers/testPassRate.js" --dir "$TEST_WORKSPACE/stageFiles"
+                
