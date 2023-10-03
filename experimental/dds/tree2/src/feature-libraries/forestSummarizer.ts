@@ -1,3 +1,4 @@
+/* eslint-disable import/no-internal-modules */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -17,13 +18,21 @@ import {
 	Delta,
 	FieldKey,
 	IEditableForest,
+	ITreeCursorSynchronous,
 	ITreeSubscriptionCursor,
 	JsonableTree,
 	mapCursorField,
 	mapCursorFields,
+	SchemaData,
 } from "../core";
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
+import { SummaryEncodeType } from "../shared-tree/sharedTree";
 import { jsonableTreeFromCursor, singleTextCursor } from "./treeTextCursor";
+import { FullSchemaPolicy } from "./modular-schema";
+import { EncodedChunk } from "./chunked-forest/codec/format";
+import { schemaCompressedEncode } from "./chunked-forest/codec/schemaBasedEncoding";
+import { uncompressedEncode } from "./chunked-forest/codec/uncompressedEncode";
+import { decode } from "./chunked-forest/codec/chunkDecoding";
 
 /**
  * The storage key for the blob in the summary containing tree data
@@ -38,8 +47,20 @@ export class ForestSummarizer implements Summarizable {
 
 	private readonly cursor: ITreeSubscriptionCursor;
 
-	public constructor(private readonly forest: IEditableForest) {
+	private readonly schema: SchemaData;
+	private readonly policy: FullSchemaPolicy;
+	private readonly encodeType: SummaryEncodeType;
+
+	public constructor(
+		private readonly forest: IEditableForest,
+		schema: SchemaData,
+		policy: FullSchemaPolicy,
+		encodeType: SummaryEncodeType = SummaryEncodeType.Compressed,
+	) {
 		this.cursor = this.forest.allocateCursor();
+		this.schema = schema;
+		this.policy = policy;
+		this.encodeType = encodeType;
 	}
 
 	/**
@@ -53,7 +74,12 @@ export class ForestSummarizer implements Summarizable {
 		this.forest.moveCursorToPath(undefined, this.cursor);
 		const fields = mapCursorFields(this.cursor, (cursor) => [
 			this.cursor.getFieldKey(),
-			mapCursorField(cursor, jsonableTreeFromCursor),
+			encodeSummary(
+				cursor as ITreeCursorSynchronous,
+				this.schema,
+				this.policy,
+				this.encodeType,
+			),
 		]);
 		this.cursor.clear();
 		return stringify(fields);
@@ -96,12 +122,12 @@ export class ForestSummarizer implements Summarizable {
 			const treeBufferString = bufferToString(treeBuffer, "utf8");
 			// TODO: this code is parsing data without an optional validator, this should be defined in a typebox schema as part of the
 			// forest summary format.
-			const fields = parse(treeBufferString) as [FieldKey, JsonableTree[]][];
-
+			const fields = parse(treeBufferString) as [FieldKey, EncodedChunk][];
 			const delta: [FieldKey, Delta.Insert[]][] = fields.map(([fieldKey, content]) => {
+				const jsonableTree = jsonableTreesFromFieldCursor(decode(content).cursor());
 				const insert: Delta.Insert = {
 					type: Delta.MarkType.Insert,
-					content: content.map(singleTextCursor),
+					content: jsonableTree.map(singleTextCursor),
 				};
 				return [fieldKey, [insert]];
 			});
@@ -109,5 +135,25 @@ export class ForestSummarizer implements Summarizable {
 			assert(this.forest.isEmpty, "forest must be empty");
 			applyDelta(new Map(delta), this.forest);
 		}
+	}
+}
+
+export function jsonableTreesFromFieldCursor(cursor: ITreeCursorSynchronous): JsonableTree[] {
+	return mapCursorField(cursor, jsonableTreeFromCursor);
+}
+
+function encodeSummary(
+	cursor: ITreeCursorSynchronous,
+	schema: SchemaData,
+	policy: FullSchemaPolicy,
+	encodeType: SummaryEncodeType,
+): EncodedChunk {
+	switch (encodeType) {
+		case SummaryEncodeType.Compressed:
+			return schemaCompressedEncode(schema, policy, cursor);
+		case SummaryEncodeType.Uncompressed:
+			return uncompressedEncode(cursor);
+		default:
+			return schemaCompressedEncode(schema, policy, cursor);
 	}
 }

@@ -120,7 +120,12 @@ export class SharedTree
 				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy))
 				: buildForest();
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);
-		const forestSummarizer = new ForestSummarizer(forest);
+		const forestSummarizer = new ForestSummarizer(
+			forest,
+			schema,
+			defaultSchemaPolicy,
+			options.summaryEncodeType,
+		);
 		const changeFamily = new DefaultChangeFamily(options);
 		const repairProvider = new ForestRepairDataStoreProvider(
 			forest,
@@ -217,6 +222,7 @@ export interface SharedTreeOptions extends Partial<ICodecOptions> {
 	 * The {@link ForestType} indicating which forest type should be created for the SharedTree.
 	 */
 	forest?: ForestType;
+	summaryEncodeType?: SummaryEncodeType;
 }
 
 /**
@@ -234,9 +240,24 @@ export enum ForestType {
 	Optimized = 1,
 }
 
+/**
+ * Used to distinguish the type of encoding method applied to the tree summary.
+ */
+export enum SummaryEncodeType {
+	/**
+	 * Uses {@link schemaCompressedEncode}
+	 */
+	Compressed = 0,
+	/**
+	 * Uses {@link uncompressedEncode}
+	 */
+	Uncompressed = 1,
+}
+
 export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
 	jsonValidator: noopValidator,
 	forest: ForestType.Reference,
+	summaryEncodeType: SummaryEncodeType.Compressed,
 };
 
 /**
