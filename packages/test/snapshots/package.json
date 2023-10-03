@@ -77,7 +77,8 @@
 		"@fluidframework/replay-driver": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/server-local-server": "^2.0.1",
-		"@fluidframework/test-utils": "workspace:~"
+		"@fluidframework/test-utils": "workspace:~",
+		"mocha": "^10.2.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.24.0",
@@ -90,7 +91,6 @@
 		"c8": "^7.7.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.6.0",
-		"mocha": "^10.2.0",
 		"mocha-json-output-reporter": "^2.0.1",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",

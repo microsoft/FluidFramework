@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { TypedTreeFactory, TypedTreeOptions } from "./typedTree";
+export { TypedTreeFactory, TypedTreeOptions, TypedTreeChannel } from "./typedTree";

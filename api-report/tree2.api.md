@@ -2292,18 +2292,19 @@ export interface TypedSchemaCollection<T extends FieldSchema = FieldSchema> {
 }
 
 // @alpha
+export type TypedTreeChannel<TRoot extends FieldSchema = FieldSchema> = IChannel & {
+    readonly root: TypedField<TRoot>;
+};
+
+// @alpha
 export class TypedTreeFactory<TRoot extends FieldSchema = FieldSchema> implements IChannelFactory {
     constructor(options: TypedTreeOptions<TRoot>);
     // (undocumented)
     readonly attributes: IChannelAttributes;
     // (undocumented)
-    create(runtime: IFluidDataStoreRuntime, id: string): IChannel & {
-        readonly root: TypedField<TRoot>;
-    };
+    create(runtime: IFluidDataStoreRuntime, id: string): TypedTreeChannel<TRoot>;
     // (undocumented)
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, channelAttributes: Readonly<IChannelAttributes>): Promise<IChannel & {
-        readonly root: TypedField<TRoot>;
-    }>;
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, channelAttributes: Readonly<IChannelAttributes>): Promise<TypedTreeChannel<TRoot>>;
     // (undocumented)
     readonly type: string;
 }
