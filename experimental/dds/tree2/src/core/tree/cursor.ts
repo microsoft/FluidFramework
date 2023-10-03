@@ -88,7 +88,7 @@ export interface ITreeCursor {
 	 * If there is no remaining field to iterate to,
 	 * returns false and navigates up to the parent setting the mode to `Nodes`.
 	 *
-	 * Order of fields is only guaranteed to be consistent thorough a single iteration.
+	 * Order of fields is only guaranteed to be consistent through a single iteration.
 	 *
 	 * If skipPending, skip past fields which are currently pending.
 	 * This can be used to skip to the end of a large number of consecutive pending fields.
@@ -113,7 +113,7 @@ export interface ITreeCursor {
 	 * If there are no remaining field to iterate to,
 	 * returns false and navigates up to the parent setting the mode to `Nodes`.
 	 *
-	 * Order of fields is only guaranteed to be consistent thorough a single iteration.
+	 * Order of fields is only guaranteed to be consistent through a single iteration.
 	 *
 	 * Allowed when `mode` is `Fields`.
 	 */
@@ -451,7 +451,7 @@ export function castCursorToSynchronous(cursor: ITreeCursor): ITreeCursorSynchro
 
 /**
  * Runs `f` inside of field `field` on `cursor`.
- * @param cursor - Cursor whoso field to enter and exit. Must be in `nodes` mode.
+ * @param cursor - Cursor whose field to enter and exit. Must be in `nodes` mode.
  * @param field - Field to enter.
  * @param f - Callback to run when in field.
  * @returns return value of `f`
