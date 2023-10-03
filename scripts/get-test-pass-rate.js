@@ -5,7 +5,8 @@ const BUILD_ID = process.env.BUILD_ID;
 const ADO_API_TOKEN = process.env.ADO_API_TOKEN;
 const TEST_WORKSPACE = process.env.TEST_WORKSPACE;
 const BUILD_SOURCES_DIRECTORY = process.env.BUILD_SOURCES_DIRECTORY;
-
+console.log(BUILD_ID);
+console.log(TEST_WORKSPACE);
 // Create output folder - Note: This requires Node.js fs module
 const fs = require('fs');
 console.log("Starting fetch")
