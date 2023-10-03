@@ -5,8 +5,9 @@
 
 import {
 	AllowedUpdateType,
-	leaf,
+	InitializeAndSchematizeConfiguration,
 	FieldKinds,
+	leaf,
 	SchemaAware,
 	SchemaBuilder,
 } from "@fluid-experimental/tree2";
@@ -33,7 +34,7 @@ const schema = builder.intoDocumentSchema(rootField);
 
 export type Inventory = SchemaAware.TypedNode<typeof inventory>;
 
-export const schemaPolicy = {
+export const schemaPolicy: InitializeAndSchematizeConfiguration<typeof rootField> = {
 	schema,
 	initialTree: {
 		parts: [
