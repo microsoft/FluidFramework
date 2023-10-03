@@ -77,8 +77,8 @@ export async function deliCreate(
 
 	// eslint-disable-next-line @typescript-eslint/await-thenable
 	const collection = await db.collection<core.IDocument>(documentsCollectionName);
-	// eslint-disable-next-line @typescript-eslint/await-thenable
 	const localCollection =
+		// eslint-disable-next-line @typescript-eslint/await-thenable
 		await operationsDb.collection<core.ICheckpoint>(checkpointsCollectionName);
 	const documentRepository =
 		customizations?.documentRepository ?? new core.MongoDocumentRepository(collection);
