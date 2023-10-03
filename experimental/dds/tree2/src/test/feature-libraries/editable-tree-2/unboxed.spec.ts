@@ -735,7 +735,6 @@ describe("unboxed unit tests", () => {
 					"Hello world",
 				);
 
-				// TODO: if we don't do this, unboxedUnion returns undefined, rather than failing. Expected?
 				cursor.enterNode(0); // Root node field has 1 node; move into it
 
 				assert.equal(unboxedUnion(context, fieldSchema, cursor), "Hello world");
@@ -768,7 +767,6 @@ describe("unboxed unit tests", () => {
 					true,
 				);
 
-				// TODO: if we don't do this, unboxedUnion returns undefined, rather than failing. Expected?
 				cursor.enterNode(0); // Root node field has 1 node; move into it
 
 				assert.equal(unboxedUnion(context, fieldSchema, cursor), true);
