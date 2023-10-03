@@ -1,10 +1,6 @@
 {
-	"tags": [
-		"feature-libraries"
-	],
-	"exports": [
-		"index"
-	],
+	"tags": ["feature-libraries"],
+	"exports": ["index"],
 	"imports": [
 		"codec",
 		"events",
