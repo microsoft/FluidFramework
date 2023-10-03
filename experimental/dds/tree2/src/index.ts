@@ -306,6 +306,7 @@ export {
 	InitializeAndSchematizeConfiguration,
 	SchemaConfiguration,
 	ForestType,
+	SummaryEncodeType,
 } from "./shared-tree";
 
 export type {

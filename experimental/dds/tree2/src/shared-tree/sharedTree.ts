@@ -242,14 +242,15 @@ export enum ForestType {
 
 /**
  * Used to distinguish the type of encoding method applied to the tree summary.
+ * @alpha
  */
 export enum SummaryEncodeType {
 	/**
-	 * Uses {@link schemaCompressedEncode}
+	 * Optimized for encoded size and encoding performance.
 	 */
 	Compressed = 0,
 	/**
-	 * Uses {@link uncompressedEncode}
+	 * Simple uncompressed encoding, which does not use polymorphism, identifier deduplication or schema based compression.
 	 */
 	Uncompressed = 1,
 }

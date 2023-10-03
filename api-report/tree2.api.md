@@ -2066,6 +2066,12 @@ export interface SubtreePolicy {
     maxDepth: number;
 }
 
+// @alpha
+export enum SummaryEncodeType {
+    Compressed = 0,
+    Uncompressed = 1
+}
+
 // @alpha (undocumented)
 export interface TaggedChange<TChangeset> {
     // (undocumented)
