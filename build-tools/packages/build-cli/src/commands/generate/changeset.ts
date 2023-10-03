@@ -16,6 +16,7 @@ import { BaseCommand } from "../../base";
 import { Repository, getDefaultBumpTypeForBranch } from "../../lib";
 import GenerateUpcomingCommand from "./upcoming";
 import { ReleaseGroup } from "../../releaseGroups";
+import { releaseGroupFlag } from "../../flags";
 
 /**
  * If more than this number of packages are changed relative to the selected branch, the user will be prompted to select
@@ -56,6 +57,7 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 	static enableJsonFlag = true;
 
 	static flags = {
+		releaseGroup: releaseGroupFlag(),
 		branch: Flags.string({
 			char: "b",
 			description: `The branch to compare the current changes against. The current changes will be compared with this branch to populate the list of changed packages. ${chalk.bold(
@@ -65,6 +67,7 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 		}),
 		empty: Flags.boolean({
 			description: `Create an empty changeset file. If this flag is used, all other flags are ignored. A new, randomly named changeset file will be created every time --empty is used.`,
+			dependsOn: ["releaseGroup"],
 		}),
 		all: Flags.boolean({
 			description: `Include ALL packages, including examples and other unpublished packages.`,
@@ -104,11 +107,20 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 		changesetPath?: string;
 	}> {
 		const context = await this.getContext();
-		const { all, empty, uiMode } = this.flags;
+		const { all, empty, releaseGroup, uiMode } = this.flags;
 		let { branch } = this.flags;
 
+		const monorepo =
+			releaseGroup === undefined ? undefined : context.repo.releaseGroups.get(releaseGroup);
+		if (monorepo === undefined) {
+			this.error(`Release group ${releaseGroup} not found in repo config`, { exit: 1 });
+		}
+
 		if (empty) {
-			const emptyFile = await createChangesetFile(context.gitRepo.resolvedRoot, new Map());
+			const emptyFile = await createChangesetFile(
+				monorepo.directory ?? context.gitRepo.resolvedRoot,
+				new Map(),
+			);
 			// eslint-disable-next-line @typescript-eslint/no-shadow
 			const changesetPath = path.relative(context.gitRepo.resolvedRoot, emptyFile);
 			this.logHr();
@@ -133,9 +145,9 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 		// undefined because there's a default value for the flag.
 		const usedBranchFlag = this.argv.includes("--branch") || this.argv.includes("-b");
 		if (!usedBranchFlag) {
-			const { packages } = await repo.getChangedSinceRef(branch, remote, context);
+			const { packages: usedBranchPackages } = await repo.getChangedSinceRef(branch, remote, context);
 
-			if (packages.length > BRANCH_PROMPT_LIMIT) {
+			if (usedBranchPackages.length > BRANCH_PROMPT_LIMIT) {
 				const answer = await prompts({
 					type: "select",
 					name: "selectedBranch",
@@ -152,58 +164,61 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 		}
 
 		const {
-			packages: changedPackages,
+			packages,
 			files: changedFiles,
 			releaseGroups: changedReleaseGroups,
 		} = await repo.getChangedSinceRef(branch, remote, context);
 
 		this.verbose(`release groups: ${changedReleaseGroups.join(", ")}`);
-		this.verbose(`packages: ${changedPackages.map((p) => p.name).join(", ")}`);
+		this.verbose(`packages: ${packages.map((p) => p.name).join(", ")}`);
 		this.verbose(`files: ${changedFiles.join(", ")}`);
+
+		const changedPackages = packages.filter((pkg) => {
+			const inReleaseGroup = pkg.monoRepo?.name === releaseGroup;
+			if (!inReleaseGroup) {
+				this.warning(
+					`${pkg.name}: Ignoring changed package because it is not in the ${releaseGroup} release group.`,
+				);
+			}
+			return inReleaseGroup;
+		});
 
 		if (changedFiles.length === 0) {
 			this.error(`No changes when compared to ${branch}.`, { exit: 1 });
 		}
 
-		if (changedPackages.length === 0) {
+		if (packages.length === 0) {
 			this.error(`No changed packages when compared to ${branch}.`, { exit: 1 });
 		}
 
-		if (changedReleaseGroups.length > 1) {
-			this.warning(
-				`More than one release group changed when compared to ${branch}. Is this expected?`,
+		if (changedReleaseGroups.length > 1 && releaseGroup === undefined) {
+			this.error(
+				`More than one release group changed when compared to ${branch} (${changedReleaseGroups.join(
+					", ",
+				)}). You must specify which release group you're creating a changeset for using the --releaseGroup flag.`,
 			);
 		}
 
 		const choices: Choice[] = [];
 
-		// Handle changed release groups first so they show up in the list first.
-		for (const rgName of changedReleaseGroups) {
-			const rg = context.repo.releaseGroups.get(rgName);
-			if (rg === undefined) {
-				this.error(`Release group ${rgName} not found in repo config`, { exit: 1 });
-			}
+		// Handle the selected release group first so it shows up in the list first.
+		choices.push(
+			{ title: `${chalk.bold(monorepo.name)}`, heading: true, disabled: true },
+			...monorepo.packages
+				.filter((pkg) => (all ? true : isIncludedByDefault(pkg)))
+				.sort((a, b) => packageComparer(a, b, changedPackages))
+				.map((pkg) => {
+					const changed = changedPackages.some((cp) => cp.name === pkg.name);
+					return {
+						title: changed ? `${pkg.name} ${chalk.red.bold("(changed)")}` : pkg.name,
+						value: pkg,
+						selected: changed,
+					};
+				}),
+			// Next list independent packages in a group
+			{ title: chalk.bold("Independent Packages"), heading: true, disabled: true },
+		);
 
-			choices.push(
-				{ title: `${chalk.bold(rg.kind)}`, heading: true, disabled: true },
-				...rg.packages
-					.filter((pkg) => (all ? true : isIncludedByDefault(pkg)))
-					.sort((a, b) => packageComparer(a, b, changedPackages))
-					.map((pkg) => {
-						const changed = changedPackages.some((cp) => cp.name === pkg.name);
-						return {
-							title: changed
-								? `${pkg.name} ${chalk.red.bold("(changed)")}`
-								: pkg.name,
-							value: pkg,
-							selected: changed,
-						};
-					}),
-			);
-		}
-
-		// Next list independent packages in a group
-		choices.push({ title: chalk.bold("Independent Packages"), heading: true, disabled: true });
 		for (const pkg of context.independentPackages) {
 			if (!all && !isIncludedByDefault(pkg)) {
 				continue;
@@ -218,7 +233,7 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 
 		// Finally list the remaining (unchanged) release groups and their packages
 		for (const rg of context.repo.releaseGroups.values()) {
-			if (!changedReleaseGroups.includes(rg.kind)) {
+			if (rg.name !== releaseGroup) {
 				choices.push(
 					{ title: `${chalk.bold(rg.kind)}`, heading: true, disabled: true },
 					...rg.packages
@@ -277,10 +292,10 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 
 		const response = await prompts(questions);
 		const selectedPackages: Package[] = response.selectedPackages;
-		const bumpType = getDefaultBumpTypeForBranch(branch) ?? "minor";
+		const bumpType = getDefaultBumpTypeForBranch(branch, releaseGroup) ?? "minor";
 
 		const newFile = await createChangesetFile(
-			context.gitRepo.resolvedRoot,
+			monorepo.directory ?? context.gitRepo.resolvedRoot,
 			new Map(selectedPackages.map((p) => [p, bumpType])),
 			`${response.summary.trim()}\n\n${response.description}`,
 		);
