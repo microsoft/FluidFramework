@@ -9,8 +9,11 @@ const BUILD_SOURCES_DIRECTORY = process.env.BUILD_SOURCES_DIRECTORY;
 // Create output folder - Note: This requires Node.js fs module
 const fs = require('fs');
 
-// Fetch data from API
+// Fetch data from Timeline API
 const apiUrl = `https://dev.azure.com/fluidframework/internal/_apis/build/builds/${BUILD_ID}/timeline?api-version=7.1-preview.2`;
+if (!fs.existsSync(`${TEST_WORKSPACE}/stageFiles`)) {
+    fs.mkdirSync(`${TEST_WORKSPACE}/stageFiles`, { recursive: true });
+}
 let stages = [];
 fetch(apiUrl, {
     headers: {
@@ -19,6 +22,7 @@ fetch(apiUrl, {
 })
 .then(response => response.json())
 .then(data => {
+    // Extract and save all stage names
     stages = data.records.filter(record => record.type === "Stage").map(record => record.identifier);
     console.log(stages);
 }).then(()=>{
@@ -35,7 +39,7 @@ fetch(apiUrl, {
             .then(response => response.json()
             )
             .then(stageData => {
-                console.log(stageData);
+                //Save the API data to a JSON file.
                 fs.writeFileSync(`${TEST_WORKSPACE}/stageFiles/${stage}.json`, JSON.stringify(stageData));
             });
         })
@@ -43,6 +47,3 @@ fetch(apiUrl, {
 )
 .catch(error => console.error('Error:', error));
 
-if (!fs.existsSync(`${TEST_WORKSPACE}/stageFiles`)) {
-    fs.mkdirSync(`${TEST_WORKSPACE}/stageFiles`, { recursive: true });
-}
