@@ -4,7 +4,10 @@
  */
 
 import { EventEmitter } from "events";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import {
+    DataObject,
+    DataObjectFactory,
+} from "@fluidframework/aqueduct";
 import { IValueChanged } from "@fluidframework/map";
 import React from "react";
 
@@ -34,7 +37,7 @@ export interface IDiceRollerViewProps {
     model: IDiceRoller;
 }
 
-export const DiceRollerView = (props: IDiceRollerViewProps) => {
+export const DiceRollerView: React.FC<IDiceRollerViewProps> = (props: IDiceRollerViewProps) => {
     const [diceValue, setDiceValue] = React.useState(props.model.value);
 
     React.useEffect(() => {
@@ -48,7 +51,7 @@ export const DiceRollerView = (props: IDiceRollerViewProps) => {
     }, [props.model]);
 
     // Unicode 0x2680-0x2685 are the sides of a dice (⚀⚁⚂⚃⚄⚅)
-    const diceChar = String.fromCodePoint(0x267f + diceValue);
+    const diceChar = String.fromCodePoint(0x267F + diceValue);
 
     return (
         <div>
@@ -62,9 +65,7 @@ export const DiceRollerView = (props: IDiceRollerViewProps) => {
  * The DiceRoller is our implementation of the IDiceRoller interface.
  */
 export class DiceRoller extends DataObject implements IDiceRoller {
-    public static get Name() {
-        return "@fluid-example/dice-roller";
-    }
+    public static get Name() { return "@fluid-example/dice-roller"; }
 
     public static readonly factory = new DataObjectFactory(
         DiceRoller.Name,
