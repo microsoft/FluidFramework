@@ -46,7 +46,6 @@ import {
 	generateClientId,
 	IRuntimeSignalEnvelope,
 } from "../utils";
-export { IRuntimeSignalEnvelope } from "../utils";
 import {
 	IBroadcastSignalEventPayload,
 	ICollaborationSessionEvents,
@@ -652,12 +651,11 @@ export function configureWebSocketServices(
 								});
 						}
 					} catch (error) {
-						const errorMsg = `Broadcast-signal failed with: ${error}`;
-						return handleServerError(
-							logger,
+						const errorMsg = `Unexpected error handling broadcastSignal event`;
+						Lumberjack.error(
 							errorMsg,
-							claims.documentId,
-							claims.tenantId,
+							getLumberBaseProperties(claims.documentId, claims.tenantId),
+							error,
 						);
 					}
 				},
