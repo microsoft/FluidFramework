@@ -52,6 +52,7 @@ stages:
       namespace: ${{ parameters.namespace }}
       feedUrl: $(ado-feeds-build) # Comes from the ado-feeds variable group
       feedKind: internal-build
+      # Environment should match the condition for publish_npm_internal_dev
       environment: package-build-feed
       pool: ${{ parameters.pool }}
       publishNonScopedPackages: ${{ parameters.publishNonScopedPackages }}
@@ -69,7 +70,8 @@ stages:
       namespace: ${{ parameters.namespace }}
       feedUrl: $(ado-feeds-dev) # Comes from the ado-feeds variable group
       feedKind: internal-dev
-      environment: test-package-build-feed
+      # Environment should match the condition for publish_npm_internal_build
+      environment: package-build-feed
       pool: ${{ parameters.pool }}
       publishNonScopedPackages: ${{ parameters.publishNonScopedPackages }}
 
