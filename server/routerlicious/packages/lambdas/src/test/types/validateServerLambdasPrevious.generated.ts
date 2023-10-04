@@ -155,7 +155,6 @@ declare function get_current_ClassDeclaration_DeliLambda():
 declare function use_old_ClassDeclaration_DeliLambda(
     use: TypeOnly<old.DeliLambda>);
 use_old_ClassDeclaration_DeliLambda(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_DeliLambda());
 
 /*
@@ -185,26 +184,26 @@ use_old_ClassDeclaration_DeliLambdaFactory(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_ForemanLambda": {"forwardCompat": false}
+* "InterfaceDeclaration_IBroadcastSignalEventPayload": {"forwardCompat": false}
 */
+declare function get_old_InterfaceDeclaration_IBroadcastSignalEventPayload():
+    TypeOnly<old.IBroadcastSignalEventPayload>;
+declare function use_current_InterfaceDeclaration_IBroadcastSignalEventPayload(
+    use: TypeOnly<current.IBroadcastSignalEventPayload>);
+use_current_InterfaceDeclaration_IBroadcastSignalEventPayload(
+    get_old_InterfaceDeclaration_IBroadcastSignalEventPayload());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_ForemanLambda": {"backCompat": false}
+* "InterfaceDeclaration_IBroadcastSignalEventPayload": {"backCompat": false}
 */
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_ForemanLambdaFactory": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_ForemanLambdaFactory": {"backCompat": false}
-*/
+declare function get_current_InterfaceDeclaration_IBroadcastSignalEventPayload():
+    TypeOnly<current.IBroadcastSignalEventPayload>;
+declare function use_old_InterfaceDeclaration_IBroadcastSignalEventPayload(
+    use: TypeOnly<old.IBroadcastSignalEventPayload>);
+use_old_InterfaceDeclaration_IBroadcastSignalEventPayload(
+    get_current_InterfaceDeclaration_IBroadcastSignalEventPayload());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -252,8 +251,31 @@ declare function get_current_InterfaceDeclaration_ICheckpointParams():
 declare function use_old_InterfaceDeclaration_ICheckpointParams(
     use: TypeOnly<old.ICheckpointParams>);
 use_old_InterfaceDeclaration_ICheckpointParams(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ICheckpointParams());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ICollaborationSessionEvents": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ICollaborationSessionEvents():
+    TypeOnly<old.ICollaborationSessionEvents>;
+declare function use_current_InterfaceDeclaration_ICollaborationSessionEvents(
+    use: TypeOnly<current.ICollaborationSessionEvents>);
+use_current_InterfaceDeclaration_ICollaborationSessionEvents(
+    get_old_InterfaceDeclaration_ICollaborationSessionEvents());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ICollaborationSessionEvents": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ICollaborationSessionEvents():
+    TypeOnly<current.ICollaborationSessionEvents>;
+declare function use_old_InterfaceDeclaration_ICollaborationSessionEvents(
+    use: TypeOnly<old.ICollaborationSessionEvents>);
+use_old_InterfaceDeclaration_ICollaborationSessionEvents(
+    get_current_InterfaceDeclaration_ICollaborationSessionEvents());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -325,7 +347,6 @@ declare function get_current_InterfaceDeclaration_ILatestSummaryState():
 declare function use_old_InterfaceDeclaration_ILatestSummaryState(
     use: TypeOnly<old.ILatestSummaryState>);
 use_old_InterfaceDeclaration_ILatestSummaryState(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ILatestSummaryState());
 
 /*
@@ -351,6 +372,30 @@ declare function use_old_InterfaceDeclaration_IPendingMessageReader(
     use: TypeOnly<old.IPendingMessageReader>);
 use_old_InterfaceDeclaration_IPendingMessageReader(
     get_current_InterfaceDeclaration_IPendingMessageReader());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IRoom": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IRoom():
+    TypeOnly<old.IRoom>;
+declare function use_current_InterfaceDeclaration_IRoom(
+    use: TypeOnly<current.IRoom>);
+use_current_InterfaceDeclaration_IRoom(
+    get_old_InterfaceDeclaration_IRoom());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IRoom": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IRoom():
+    TypeOnly<current.IRoom>;
+declare function use_old_InterfaceDeclaration_IRoom(
+    use: TypeOnly<old.IRoom>);
+use_old_InterfaceDeclaration_IRoom(
+    get_current_InterfaceDeclaration_IRoom());
 
 /*
 * Validate forward compat by using old type in place of current type

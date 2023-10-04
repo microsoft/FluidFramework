@@ -184,6 +184,30 @@ use_old_InterfaceDeclaration_ISocketIoRedisSubscriptionConnection(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_IsEphemeralContainer": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_IsEphemeralContainer():
+    TypeOnly<typeof old.IsEphemeralContainer>;
+declare function use_current_VariableDeclaration_IsEphemeralContainer(
+    use: TypeOnly<typeof current.IsEphemeralContainer>);
+use_current_VariableDeclaration_IsEphemeralContainer(
+    get_old_VariableDeclaration_IsEphemeralContainer());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_IsEphemeralContainer": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_IsEphemeralContainer():
+    TypeOnly<typeof current.IsEphemeralContainer>;
+declare function use_old_VariableDeclaration_IsEphemeralContainer(
+    use: TypeOnly<typeof old.IsEphemeralContainer>);
+use_old_VariableDeclaration_IsEphemeralContainer(
+    get_current_VariableDeclaration_IsEphemeralContainer());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_RedisSocketIoAdapter": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_RedisSocketIoAdapter():
@@ -420,6 +444,30 @@ declare function use_old_VariableDeclaration_defaultErrorMessage(
     use: TypeOnly<typeof old.defaultErrorMessage>);
 use_old_VariableDeclaration_defaultErrorMessage(
     get_current_VariableDeclaration_defaultErrorMessage());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_getBooleanParam": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_getBooleanParam():
+    TypeOnly<typeof old.getBooleanParam>;
+declare function use_current_FunctionDeclaration_getBooleanParam(
+    use: TypeOnly<typeof current.getBooleanParam>);
+use_current_FunctionDeclaration_getBooleanParam(
+    get_old_FunctionDeclaration_getBooleanParam());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_getBooleanParam": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_getBooleanParam():
+    TypeOnly<typeof current.getBooleanParam>;
+declare function use_old_FunctionDeclaration_getBooleanParam(
+    use: TypeOnly<typeof old.getBooleanParam>);
+use_old_FunctionDeclaration_getBooleanParam(
+    get_current_FunctionDeclaration_getBooleanParam());
 
 /*
 * Validate forward compat by using old type in place of current type

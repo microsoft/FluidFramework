@@ -20,7 +20,7 @@ importers:
       '@fluidframework/build-common': ^2.0.0
       '@fluidframework/build-tools': ^0.24.0
       '@fluidframework/eslint-config-fluid': ^2.1.0
-      '@fluidframework/test-tools': ^0.2.158186
+      '@fluidframework/test-tools': ^1.0.195075
       '@microsoft/api-documenter': ^7.21.6
       '@microsoft/api-extractor': ^7.37.0
       '@octokit/core': ^4.0.5
@@ -33,7 +33,7 @@ importers:
       eslint: ~8.6.0
       jest: ^29.6.2
       mocha: ^10.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       pretty-quick: ^3.1.3
       rimraf: ^4.4.0
       run-script-os: ^1.1.6
@@ -46,7 +46,7 @@ importers:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.24.0
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
-      '@fluidframework/test-tools': 0.2.158186
+      '@fluidframework/test-tools': 1.0.195075
       '@microsoft/api-documenter': 7.22.5
       '@microsoft/api-extractor': 7.37.0
       '@octokit/core': 4.2.0
@@ -59,8 +59,8 @@ importers:
       eslint: 8.6.0
       jest: 29.6.2
       mocha: 10.2.0
-      prettier: 2.6.2
-      pretty-quick: 3.1.3_prettier@2.6.2
+      prettier: 3.0.3
+      pretty-quick: 3.1.3_prettier@3.0.3
       rimraf: 4.4.1
       run-script-os: 1.1.6
       syncpack: 9.8.6
@@ -99,10 +99,10 @@ importers:
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
-      eslint-config-prettier: ~8.5.0
+      eslint-config-prettier: ~9.0.0
       eslint-plugin-jsdoc: ~39.3.0
       mocha: ^10.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       start-server-and-test: ^1.11.7
       typescript: ~5.1.6
@@ -140,10 +140,10 @@ importers:
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
-      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-config-prettier: 9.0.0_eslint@8.6.0
       eslint-plugin-jsdoc: 39.3.25_eslint@8.6.0
       mocha: 10.2.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       start-server-and-test: 1.15.5
       typescript: 5.1.6
@@ -159,7 +159,7 @@ importers:
       eslint: ~8.6.0
       eslint-plugin-jsdoc: ~39.3.0
       forever: ^4.0.3
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       tinylicious: ^2.0.1
       ts-node: ^10.9.1
@@ -175,7 +175,7 @@ importers:
       eslint: 8.6.0
       eslint-plugin-jsdoc: 39.3.25_eslint@8.6.0
       forever: 4.0.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       ts-node: 10.9.1_typescript@5.1.6
       typescript: 5.1.6
@@ -192,10 +192,10 @@ importers:
       '@types/jsrsasign': ^8.0.8
       copyfiles: ^2.4.1
       eslint: ~8.6.0
-      eslint-config-prettier: ~8.5.0
+      eslint-config-prettier: ~9.0.0
       eslint-plugin-jsdoc: ~39.3.0
       jsrsasign: ^10.5.25
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
       uuid: ^9.0.0
@@ -213,9 +213,9 @@ importers:
       '@types/jsrsasign': 8.0.13
       copyfiles: 2.4.1
       eslint: 8.6.0
-      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-config-prettier: 9.0.0_eslint@8.6.0
       eslint-plugin-jsdoc: 39.3.25_eslint@8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -234,7 +234,7 @@ importers:
       '@fluidframework/server-local-server': ^2.0.1
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
-      '@fluidframework/test-tools': ^0.2.158186
+      '@fluidframework/test-tools': ^1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -253,7 +253,7 @@ importers:
       jest-environment-puppeteer: ^4.3.0
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       process: ^0.11.10
       puppeteer: ^17.1.3
       rimraf: ^4.4.0
@@ -287,7 +287,7 @@ importers:
       '@fluidframework/local-driver': link:../../../packages/drivers/local-driver
       '@fluidframework/server-local-server': 2.0.1
       '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
-      '@fluidframework/test-tools': 0.2.158186
+      '@fluidframework/test-tools': 1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -302,13 +302,13 @@ importers:
       jest-environment-puppeteer: 4.4.0
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       process: 0.11.10
       puppeteer: 17.1.3
       rimraf: 4.4.1
       start-server-and-test: 1.15.5
       tinylicious: 2.0.1
-      ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
+      ts-jest: 29.1.1_tndnqa5xo6u3ff2xboqc6b3zs4
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
       typescript: 5.1.6
       webpack: 5.83.0_webpack-cli@4.10.0
@@ -347,7 +347,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       nock: ^13.3.3
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^7.4.2
       start-server-and-test: ^1.11.7
@@ -374,7 +374,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       sinon: 7.5.0
       start-server-and-test: 1.15.5
       tinylicious: 2.0.1
@@ -427,7 +427,7 @@ importers:
       js-yaml: ^4.1.0
       mocha: ^10.2.0
       nock: ^13.3.3
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^7.4.2
       start-server-and-test: ^1.11.7
@@ -472,7 +472,7 @@ importers:
       c8: 7.13.0
       eslint: 8.6.0
       nock: 13.3.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -492,7 +492,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.1.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
-      '@fluidframework/test-tools': ^0.2.3074
+      '@fluidframework/test-tools': ^1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -504,7 +504,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       process: ^0.11.10
       puppeteer: ^17.1.3
       rimraf: ^4.4.0
@@ -531,7 +531,7 @@ importers:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.24.0_2wska3rv6ra5ajbmktsvyxwga4
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
-      '@fluidframework/test-tools': 0.2.158186
+      '@fluidframework/test-tools': 1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -543,11 +543,11 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       process: 0.11.10
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
+      ts-jest: 29.1.1_tndnqa5xo6u3ff2xboqc6b3zs4
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
       typescript: 5.1.6
       webpack: 5.83.0_webpack-cli@4.10.0
@@ -569,7 +569,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.1.0
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
-      '@fluidframework/test-tools': ^0.2.158186
+      '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/test-utils': workspace:~
       '@fluidframework/view-interfaces': workspace:~
       '@types/expect-puppeteer': 2.2.1
@@ -586,7 +586,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       process: ^0.11.10
       puppeteer: ^17.1.3
       react: ^17.0.1
@@ -619,7 +619,7 @@ importers:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.24.0_2wska3rv6ra5ajbmktsvyxwga4
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
-      '@fluidframework/test-tools': 0.2.158186
+      '@fluidframework/test-tools': 1.0.195075
       '@fluidframework/test-utils': link:../../../packages/test/test-utils
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
@@ -634,11 +634,11 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       process: 0.11.10
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
+      ts-jest: 29.1.1_tndnqa5xo6u3ff2xboqc6b3zs4
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
       typescript: 5.1.6
       webpack: 5.83.0_webpack-cli@4.10.0
@@ -658,7 +658,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.1.0
       '@fluidframework/runtime-utils': workspace:~
-      '@fluidframework/test-tools': ^0.2.158186
+      '@fluidframework/test-tools': ^1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -672,7 +672,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       process: ^0.11.10
       puppeteer: ^17.1.3
       react: ^17.0.1
@@ -704,7 +704,7 @@ importers:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.24.0_2wska3rv6ra5ajbmktsvyxwga4
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
-      '@fluidframework/test-tools': 0.2.158186
+      '@fluidframework/test-tools': 1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -717,11 +717,11 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       process: 0.11.10
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
+      ts-jest: 29.1.1_tndnqa5xo6u3ff2xboqc6b3zs4
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
       typescript: 5.1.6
       webpack: 5.83.0_webpack-cli@4.10.0
@@ -751,7 +751,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.1.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
-      '@fluidframework/test-tools': ^0.2.158186
+      '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/view-adapters': workspace:~
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
@@ -771,7 +771,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       process: ^0.11.10
       prop-types: ^15.8.1
       puppeteer: ^17.1.3
@@ -822,7 +822,7 @@ importers:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.24.0_2wska3rv6ra5ajbmktsvyxwga4
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
-      '@fluidframework/test-tools': 0.2.158186
+      '@fluidframework/test-tools': 1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -841,7 +841,7 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       process: 0.11.10
       puppeteer: 17.1.3
       rimraf: 4.4.1
@@ -870,7 +870,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.1.0
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/runtime-utils': workspace:~
-      '@fluidframework/test-tools': ^0.2.158186
+      '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/tinylicious-client': workspace:~
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
@@ -884,7 +884,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       process: ^0.11.10
       puppeteer: ^17.1.3
       rimraf: ^4.4.0
@@ -912,7 +912,7 @@ importers:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.24.0_2wska3rv6ra5ajbmktsvyxwga4
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
-      '@fluidframework/test-tools': 0.2.158186
+      '@fluidframework/test-tools': 1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -924,10 +924,10 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
+      ts-jest: 29.1.1_tndnqa5xo6u3ff2xboqc6b3zs4
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
       typescript: 5.1.6
       webpack: 5.83.0_webpack-cli@4.10.0
@@ -951,7 +951,7 @@ importers:
       '@fluidframework/request-handler': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/task-manager': workspace:~
-      '@fluidframework/test-tools': ^0.2.158186
+      '@fluidframework/test-tools': ^1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -965,7 +965,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       process: ^0.11.10
       puppeteer: ^17.1.3
       rimraf: ^4.4.0
@@ -995,7 +995,7 @@ importers:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.24.0_2wska3rv6ra5ajbmktsvyxwga4
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
-      '@fluidframework/test-tools': 0.2.158186
+      '@fluidframework/test-tools': 1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -1008,11 +1008,11 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       process: 0.11.10
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
+      ts-jest: 29.1.1_tndnqa5xo6u3ff2xboqc6b3zs4
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
       typescript: 5.1.6
       webpack: 5.83.0_webpack-cli@4.10.0
@@ -1033,7 +1033,7 @@ importers:
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.1.0
       '@fluidframework/map': workspace:~
-      '@fluidframework/test-tools': ^0.2.158186
+      '@fluidframework/test-tools': ^1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -1046,7 +1046,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       react: ^17.0.1
       rimraf: ^4.4.0
@@ -1071,7 +1071,7 @@ importers:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.24.0_2wska3rv6ra5ajbmktsvyxwga4
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
-      '@fluidframework/test-tools': 0.2.158186
+      '@fluidframework/test-tools': 1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -1084,10 +1084,10 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
+      ts-jest: 29.1.1_tndnqa5xo6u3ff2xboqc6b3zs4
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
       typescript: 5.1.6
       webpack: 5.83.0_webpack-cli@4.10.0
@@ -1108,7 +1108,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.1.0
       '@fluidframework/map': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
-      '@fluidframework/test-tools': ^0.2.158186
+      '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/view-interfaces': workspace:~
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
@@ -1122,7 +1122,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       react: ^17.0.1
       react-dom: ^17.0.1
       rimraf: ^4.4.0
@@ -1146,7 +1146,7 @@ importers:
       '@fluidframework/build-tools': 0.24.0_@types+node@16.18.38
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
       '@fluidframework/mocha-test-setup': link:../../../../packages/test/mocha-test-setup
-      '@fluidframework/test-tools': 0.2.158186
+      '@fluidframework/test-tools': 1.0.195075
       '@types/mocha': 9.1.1
       '@types/node': 16.18.38
       '@types/react': 17.0.52
@@ -1158,7 +1158,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -1177,7 +1177,7 @@ importers:
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.1.0
       '@fluidframework/map': workspace:~
-      '@fluidframework/test-tools': ^0.2.158186
+      '@fluidframework/test-tools': ^1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -1190,7 +1190,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       react: ^17.0.1
       rimraf: ^4.4.0
@@ -1218,7 +1218,7 @@ importers:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.24.0_2wska3rv6ra5ajbmktsvyxwga4
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
-      '@fluidframework/test-tools': 0.2.158186
+      '@fluidframework/test-tools': 1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -1231,10 +1231,10 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
+      ts-jest: 29.1.1_tndnqa5xo6u3ff2xboqc6b3zs4
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
       typescript: 5.1.6
       typescript-formatter: 7.2.2_typescript@5.1.6
@@ -1257,7 +1257,7 @@ importers:
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.1.0
       '@fluidframework/map': workspace:~
-      '@fluidframework/test-tools': ^0.2.158186
+      '@fluidframework/test-tools': ^1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -1271,7 +1271,7 @@ importers:
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
       ot-json1: ^1.0.1
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       react: ^17.0.1
       rimraf: ^4.4.0
@@ -1298,7 +1298,7 @@ importers:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.24.0_2wska3rv6ra5ajbmktsvyxwga4
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
-      '@fluidframework/test-tools': 0.2.158186
+      '@fluidframework/test-tools': 1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -1311,10 +1311,10 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
+      ts-jest: 29.1.1_tndnqa5xo6u3ff2xboqc6b3zs4
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
       typescript: 5.1.6
       webpack: 5.83.0_webpack-cli@4.10.0
@@ -1336,7 +1336,7 @@ importers:
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.1.0
       '@fluidframework/map': workspace:~
-      '@fluidframework/test-tools': ^0.2.158186
+      '@fluidframework/test-tools': ^1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -1349,7 +1349,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       react: ^17.0.1
       rimraf: ^4.4.0
@@ -1375,7 +1375,7 @@ importers:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.24.0_2wska3rv6ra5ajbmktsvyxwga4
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
-      '@fluidframework/test-tools': 0.2.158186
+      '@fluidframework/test-tools': 1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -1388,10 +1388,10 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
+      ts-jest: 29.1.1_tndnqa5xo6u3ff2xboqc6b3zs4
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
       typescript: 5.1.6
       webpack: 5.83.0_webpack-cli@4.10.0
@@ -1422,7 +1422,7 @@ importers:
       express: ^4.16.3
       fs-extra: ^9.1.0
       nconf: ^0.12.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       source-map-loader: ^2.0.0
       style-loader: ^1.0.0
@@ -1458,7 +1458,7 @@ importers:
       css-loader: 1.0.1_webpack@5.83.0
       eslint: 8.6.0
       fs-extra: 9.1.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       source-map-loader: 2.0.2_webpack@5.83.0
       style-loader: 1.3.0_webpack@5.83.0
@@ -1497,7 +1497,7 @@ importers:
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
-      eslint-config-prettier: ~8.5.0
+      eslint-config-prettier: ~9.0.0
       eslint-plugin-jest: ~27.1.5
       eslint-plugin-react: ~7.28.0
       eslint-plugin-react-hooks: ~4.6.0
@@ -1505,7 +1505,7 @@ importers:
       jest: ^29.6.2
       jest-environment-jsdom: ^29.6.2
       jest-junit: ^10.0.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       react: ^17.0.1
       react-dom: ^17.0.1
       rimraf: ^4.4.0
@@ -1548,7 +1548,7 @@ importers:
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
-      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-config-prettier: 9.0.0_eslint@8.6.0
       eslint-plugin-jest: 27.1.7_4vvgvlvub2y5pamq36yy3w7ouq
       eslint-plugin-react: 7.28.0_eslint@8.6.0
       eslint-plugin-react-hooks: 4.6.0_eslint@8.6.0
@@ -1556,11 +1556,11 @@ importers:
       jest: 29.6.2
       jest-environment-jsdom: 29.6.2
       jest-junit: 10.0.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       start-server-and-test: 1.15.5
       tinylicious: 2.0.1
-      ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
+      ts-jest: 29.1.1_tndnqa5xo6u3ff2xboqc6b3zs4
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
       tslib: 1.14.1
       typescript: 5.1.6
@@ -1579,7 +1579,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.1.0
       '@fluidframework/ink': workspace:~
-      '@fluidframework/test-tools': ^0.2.158186
+      '@fluidframework/test-tools': ^1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -1595,7 +1595,7 @@ importers:
       jest-puppeteer: ^6.2.0
       less: ~3.9.0
       less-loader: ^4.1.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       react: ^17.0.1
       rimraf: ^4.4.0
@@ -1618,7 +1618,7 @@ importers:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.24.0_2wska3rv6ra5ajbmktsvyxwga4
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
-      '@fluidframework/test-tools': 0.2.158186
+      '@fluidframework/test-tools': 1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -1634,7 +1634,7 @@ importers:
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
       less: 3.9.0
       less-loader: 4.1.0_less@3.9.0+webpack@5.83.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
       style-loader: 1.3.0_webpack@5.83.0
@@ -1658,7 +1658,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.1.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/task-manager': workspace:~
-      '@fluidframework/test-tools': ^0.2.158186
+      '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/test-utils': workspace:~
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
@@ -1672,7 +1672,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       react: ^17.0.1
       rimraf: ^4.4.0
@@ -1696,7 +1696,7 @@ importers:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.24.0_2wska3rv6ra5ajbmktsvyxwga4
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
-      '@fluidframework/test-tools': 0.2.158186
+      '@fluidframework/test-tools': 1.0.195075
       '@fluidframework/test-utils': link:../../../packages/test/test-utils
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
@@ -1710,10 +1710,10 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
+      ts-jest: 29.1.1_tndnqa5xo6u3ff2xboqc6b3zs4
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
       typescript: 5.1.6
       webpack: 5.83.0_webpack-cli@4.10.0
@@ -1750,7 +1750,7 @@ importers:
       css-loader: ^1.0.0
       eslint: ~8.6.0
       events: ^3.1.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       react: ^17.0.1
       rimraf: ^4.4.0
       style-loader: ^1.0.0
@@ -1790,7 +1790,7 @@ importers:
       copyfiles: 2.4.1
       css-loader: 1.0.1_webpack@5.83.0
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       style-loader: 1.3.0_webpack@5.83.0
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
@@ -1809,7 +1809,7 @@ importers:
       '@fluidframework/build-tools': ^0.24.0
       '@fluidframework/eslint-config-fluid': ^2.1.0
       '@fluidframework/map': workspace:~
-      '@fluidframework/test-tools': ^0.2.158186
+      '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/view-interfaces': workspace:~
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
@@ -1823,7 +1823,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       react: ^17.0.1
       rimraf: ^4.4.0
@@ -1845,7 +1845,7 @@ importers:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.24.0_2wska3rv6ra5ajbmktsvyxwga4
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
-      '@fluidframework/test-tools': 0.2.158186
+      '@fluidframework/test-tools': 1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -1858,10 +1858,10 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
+      ts-jest: 29.1.1_tndnqa5xo6u3ff2xboqc6b3zs4
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
       typescript: 5.1.6
       webpack: 5.83.0_webpack-cli@4.10.0
@@ -1880,7 +1880,7 @@ importers:
       '@fluidframework/build-tools': ^0.24.0
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.1.0
-      '@fluidframework/test-tools': ^0.2.158186
+      '@fluidframework/test-tools': ^1.0.195075
       '@rushstack/eslint-config': ^2.5.1
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
@@ -1894,7 +1894,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       react: ^17.0.1
       rimraf: ^4.4.0
@@ -1917,7 +1917,7 @@ importers:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.24.0_2wska3rv6ra5ajbmktsvyxwga4
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
-      '@fluidframework/test-tools': 0.2.158186
+      '@fluidframework/test-tools': 1.0.195075
       '@rushstack/eslint-config': 2.6.2_qvtltsyn3reahc7lgycismcfiq
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
@@ -1931,10 +1931,10 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
+      ts-jest: 29.1.1_tndnqa5xo6u3ff2xboqc6b3zs4
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
       typescript: 5.1.6
       webpack: 5.83.0_webpack-cli@4.10.0
@@ -1955,7 +1955,6 @@ importers:
       '@fluidframework/merge-tree': workspace:~
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/sequence': workspace:~
-      '@types/node': ^16.18.38
       '@types/react': ^17.0.44
       css-loader: ^1.0.0
       eslint: ~8.6.0
@@ -1963,7 +1962,7 @@ importers:
       loader-utils: ^1.1.0
       monaco-editor: ^0.30.0
       monaco-editor-webpack-plugin: ^6.0.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       react: ^17.0.1
       rimraf: ^4.4.0
       sass: ^1.42.1
@@ -1985,7 +1984,6 @@ importers:
       '@fluidframework/merge-tree': link:../../../packages/dds/merge-tree
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
       '@fluidframework/sequence': link:../../../packages/dds/sequence
-      '@types/node': 16.18.38
       monaco-editor: 0.30.1
       react: 17.0.2
     devDependencies:
@@ -1999,7 +1997,7 @@ importers:
       html-loader: 3.1.2_webpack@5.83.0
       loader-utils: 1.4.2
       monaco-editor-webpack-plugin: 6.0.0_2qboj4cfeaihsk43nim6w2f4um
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sass: 1.62.1
       sass-loader: 7.3.1_webpack@5.83.0
@@ -2024,7 +2022,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.1.0
       '@fluidframework/map': workspace:~
-      '@fluidframework/test-tools': ^0.2.158186
+      '@fluidframework/test-tools': ^1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -2035,7 +2033,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       rimraf: ^4.4.0
       ts-jest: ^29.1.1
@@ -2056,7 +2054,7 @@ importers:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.24.0_2wska3rv6ra5ajbmktsvyxwga4
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
-      '@fluidframework/test-tools': 0.2.158186
+      '@fluidframework/test-tools': 1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -2067,10 +2065,10 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
+      ts-jest: 29.1.1_tndnqa5xo6u3ff2xboqc6b3zs4
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
       typescript: 5.1.6
       webpack: 5.83.0_webpack-cli@4.10.0
@@ -2086,7 +2084,7 @@ importers:
       '@fluidframework/build-common': ^2.0.0
       '@fluidframework/build-tools': ^0.24.0
       '@fluidframework/eslint-config-fluid': ^2.1.0
-      '@fluidframework/test-tools': ^0.2.158186
+      '@fluidframework/test-tools': ^1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -2101,7 +2099,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       react: ^17.0.1
       rimraf: ^4.4.0
@@ -2122,7 +2120,7 @@ importers:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.24.0_2wska3rv6ra5ajbmktsvyxwga4
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
-      '@fluidframework/test-tools': 0.2.158186
+      '@fluidframework/test-tools': 1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -2137,11 +2135,11 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
       style-loader: 1.3.0_webpack@5.83.0
-      ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
+      ts-jest: 29.1.1_tndnqa5xo6u3ff2xboqc6b3zs4
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
       typescript: 5.1.6
       webpack: 5.83.0_webpack-cli@4.10.0
@@ -2167,7 +2165,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.1.0
       '@fluidframework/request-handler': workspace:~
       '@fluidframework/runtime-utils': workspace:~
-      '@fluidframework/test-tools': ^0.2.158186
+      '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/view-adapters': workspace:~
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
@@ -2183,7 +2181,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       react: ^17.0.1
       rimraf: ^4.4.0
@@ -2215,7 +2213,7 @@ importers:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.24.0_2wska3rv6ra5ajbmktsvyxwga4
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
-      '@fluidframework/test-tools': 0.2.158186
+      '@fluidframework/test-tools': 1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -2230,11 +2228,11 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
       style-loader: 1.3.0_webpack@5.83.0
-      ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
+      ts-jest: 29.1.1_tndnqa5xo6u3ff2xboqc6b3zs4
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
       typescript: 5.1.6
       webpack: 5.83.0_webpack-cli@4.10.0
@@ -2251,7 +2249,7 @@ importers:
       '@fluidframework/build-tools': ^0.24.0
       '@fluidframework/eslint-config-fluid': ^2.1.0
       '@fluidframework/map': workspace:~
-      '@fluidframework/test-tools': ^0.2.158186
+      '@fluidframework/test-tools': ^1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -2262,7 +2260,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       rimraf: ^4.4.0
       ts-jest: ^29.1.1
@@ -2281,7 +2279,7 @@ importers:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.24.0_2wska3rv6ra5ajbmktsvyxwga4
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
-      '@fluidframework/test-tools': 0.2.158186
+      '@fluidframework/test-tools': 1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -2292,10 +2290,10 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
+      ts-jest: 29.1.1_tndnqa5xo6u3ff2xboqc6b3zs4
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
       typescript: 5.1.6
       webpack: 5.83.0_webpack-cli@4.10.0
@@ -2315,7 +2313,7 @@ importers:
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       rimraf: ^4.4.0
       ts-loader: ^9.3.0
@@ -2335,7 +2333,7 @@ importers:
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
@@ -2352,7 +2350,7 @@ importers:
       '@fluidframework/build-common': ^2.0.0
       '@fluidframework/build-tools': ^0.24.0
       '@fluidframework/eslint-config-fluid': ^2.1.0
-      '@fluidframework/test-tools': ^0.2.158186
+      '@fluidframework/test-tools': ^1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -2367,7 +2365,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       react: ^17.0.1
       rimraf: ^4.4.0
@@ -2387,7 +2385,7 @@ importers:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.24.0_2wska3rv6ra5ajbmktsvyxwga4
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
-      '@fluidframework/test-tools': 0.2.158186
+      '@fluidframework/test-tools': 1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -2402,11 +2400,11 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
       style-loader: 1.3.0_webpack@5.83.0
-      ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
+      ts-jest: 29.1.1_tndnqa5xo6u3ff2xboqc6b3zs4
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
       typescript: 5.1.6
       webpack: 5.83.0_webpack-cli@4.10.0
@@ -2421,7 +2419,7 @@ importers:
       '@fluidframework/build-common': ^2.0.0
       '@fluidframework/build-tools': ^0.24.0
       '@fluidframework/eslint-config-fluid': ^2.1.0
-      '@fluidframework/test-tools': ^0.2.158186
+      '@fluidframework/test-tools': ^1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -2436,7 +2434,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       react: ^17.0.1
       rimraf: ^4.4.0
@@ -2456,7 +2454,7 @@ importers:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.24.0_2wska3rv6ra5ajbmktsvyxwga4
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
-      '@fluidframework/test-tools': 0.2.158186
+      '@fluidframework/test-tools': 1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -2471,11 +2469,11 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
       style-loader: 1.3.0_webpack@5.83.0
-      ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
+      ts-jest: 29.1.1_tndnqa5xo6u3ff2xboqc6b3zs4
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
       typescript: 5.1.6
       webpack: 5.83.0_webpack-cli@4.10.0
@@ -2490,7 +2488,7 @@ importers:
       '@fluidframework/build-common': ^2.0.0
       '@fluidframework/build-tools': ^0.24.0
       '@fluidframework/eslint-config-fluid': ^2.1.0
-      '@fluidframework/test-tools': ^0.2.158186
+      '@fluidframework/test-tools': ^1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -2505,7 +2503,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       react: ^17.0.1
       rimraf: ^4.4.0
@@ -2525,7 +2523,7 @@ importers:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.24.0_2wska3rv6ra5ajbmktsvyxwga4
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
-      '@fluidframework/test-tools': 0.2.158186
+      '@fluidframework/test-tools': 1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -2540,11 +2538,11 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
       style-loader: 1.3.0_webpack@5.83.0
-      ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
+      ts-jest: 29.1.1_tndnqa5xo6u3ff2xboqc6b3zs4
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
       typescript: 5.1.6
       webpack: 5.83.0_webpack-cli@4.10.0
@@ -2585,7 +2583,7 @@ importers:
       eslint: ~8.6.0
       events: ^3.1.0
       orderedmap: ^2.1.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       prosemirror-example-setup: ^1.2.1
       prosemirror-history: ^1.3.0
       prosemirror-keymap: ^1.2.0
@@ -2647,7 +2645,7 @@ importers:
       copyfiles: 2.4.1
       css-loader: 1.0.1_webpack@5.83.0
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       style-loader: 1.3.0_webpack@5.83.0
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
@@ -2678,7 +2676,7 @@ importers:
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
-      '@fluidframework/test-tools': ^0.2.158186
+      '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/undo-redo': workspace:~
       '@fluidframework/view-interfaces': workspace:~
       '@types/expect-puppeteer': 2.2.1
@@ -2700,7 +2698,7 @@ importers:
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
       jsdom: ^16.7.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       process: ^0.11.10
       puppeteer: ^17.1.3
       react: ^17.0.1
@@ -2743,7 +2741,7 @@ importers:
       '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.24.0_2wska3rv6ra5ajbmktsvyxwga4
-      '@fluidframework/test-tools': 0.2.158186
+      '@fluidframework/test-tools': 1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -2760,7 +2758,7 @@ importers:
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_c74ur6dz4zjug5kosl76nqtepy
       jsdom: 16.7.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       process: 0.11.10
       puppeteer: 17.1.3
       rimraf: 4.4.1
@@ -2801,7 +2799,7 @@ importers:
       css-loader: ^1.0.0
       eslint: ~8.6.0
       events: ^3.1.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       react: ^17.0.1
       rimraf: ^4.4.0
       simplemde: ^1.11.2
@@ -2841,7 +2839,7 @@ importers:
       '@types/simplemde': 1.11.8
       css-loader: 1.0.1_webpack@5.83.0
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       style-loader: 1.3.0_webpack@5.83.0
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
@@ -2885,7 +2883,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -2916,13 +2914,13 @@ importers:
       c8: 7.13.0
       cross-env: 7.0.3
       eslint: 8.6.0
-      eslint-import-resolver-typescript: 3.5.5_wwrwxdavgu4hzdoqb37x5rvvke
-      eslint-plugin-import: 2.25.4_av4jjatakjabmml5z5flrwsy3e
+      eslint-import-resolver-typescript: 3.5.5_lzq2knpwsp5cvefgpb4ykfeff4
+      eslint-plugin-import: 2.25.4_htojv7osgecekql5s5yswrjo4e
       mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -2947,7 +2945,7 @@ importers:
       copyfiles: ^2.4.1
       css-loader: ^1.0.0
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       react: ^17.0.1
       rimraf: ^4.4.0
       source-map-loader: ^2.0.0
@@ -2981,7 +2979,7 @@ importers:
       copyfiles: 2.4.1
       css-loader: 1.0.1_webpack@5.83.0
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       source-map-loader: 2.0.2_webpack@5.83.0
       style-loader: 1.3.0_webpack@5.83.0
@@ -3006,7 +3004,7 @@ importers:
       '@fluidframework/map': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
-      '@fluidframework/test-tools': ^0.2.158186
+      '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/test-utils': workspace:~
       '@fluidframework/view-adapters': workspace:~
       '@types/expect-puppeteer': 2.2.1
@@ -3022,7 +3020,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       react: ^17.0.1
       react-dom: ^17.0.1
@@ -3053,7 +3051,7 @@ importers:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.24.0_2wska3rv6ra5ajbmktsvyxwga4
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
-      '@fluidframework/test-tools': 0.2.158186
+      '@fluidframework/test-tools': 1.0.195075
       '@fluidframework/test-utils': link:../../../packages/test/test-utils
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
@@ -3068,7 +3066,7 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
       source-map-loader: 2.0.2_webpack@5.83.0
@@ -3124,7 +3122,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       react: ^17.0.1
       react-dom: ^17.0.1
       rimraf: ^4.4.0
@@ -3174,8 +3172,8 @@ importers:
       cross-env: 7.0.3
       css-loader: 1.0.1_webpack@5.83.0
       eslint: 8.6.0
-      eslint-import-resolver-typescript: 3.5.5_wwrwxdavgu4hzdoqb37x5rvvke
-      eslint-plugin-import: 2.25.4_av4jjatakjabmml5z5flrwsy3e
+      eslint-import-resolver-typescript: 3.5.5_lzq2knpwsp5cvefgpb4ykfeff4
+      eslint-plugin-import: 2.25.4_htojv7osgecekql5s5yswrjo4e
       esm-loader-css: 1.0.4
       file-loader: 3.0.1_webpack@5.83.0
       html-loader: 3.1.2_webpack@5.83.0
@@ -3185,7 +3183,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       source-map-loader: 2.0.2_webpack@5.83.0
       style-loader: 1.3.0_webpack@5.83.0
@@ -3224,7 +3222,7 @@ importers:
       '@fluidframework/sequence': workspace:~
       '@fluidframework/task-manager': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
-      '@fluidframework/test-tools': ^0.2.158186
+      '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/tinylicious-driver': workspace:~
       '@types/cors': ^2.8.4
       '@types/expect-puppeteer': 2.2.1
@@ -3260,7 +3258,7 @@ importers:
       jest-puppeteer: ^6.2.0
       lodash.isequal: ^4.5.0
       node-fetch: ^2.6.9
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       process: ^0.11.10
       puppeteer: ^17.1.3
       react: ^17.0.1
@@ -3316,7 +3314,7 @@ importers:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.24.0_2wska3rv6ra5ajbmktsvyxwga4
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
-      '@fluidframework/test-tools': 0.2.158186
+      '@fluidframework/test-tools': 1.0.195075
       '@types/cors': 2.8.13
       '@types/expect-puppeteer': 2.2.1
       '@types/express': 4.17.17
@@ -3334,7 +3332,7 @@ importers:
       cross-env: 7.0.3
       eslint: 8.6.0
       eslint-plugin-eslint-comments: 3.2.0_eslint@8.6.0
-      eslint-plugin-import: 2.25.4_eslint@8.6.0
+      eslint-plugin-import: 2.25.4_4pij4nvnkqnncanfc5qjphoilq
       eslint-plugin-jsdoc: 39.3.25_eslint@8.6.0
       eslint-plugin-prefer-arrow: 1.2.3_eslint@8.6.0
       eslint-plugin-react: 7.28.0_eslint@8.6.0
@@ -3346,7 +3344,7 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       process: 0.11.10
       puppeteer: 17.1.3
       rimraf: 4.4.1
@@ -3354,7 +3352,7 @@ importers:
       stream-http: 3.2.0
       supertest: 3.4.2
       tinylicious: 2.0.1
-      ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
+      ts-jest: 29.1.1_tndnqa5xo6u3ff2xboqc6b3zs4
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
       typescript: 5.1.6
       webpack: 5.83.0_webpack-cli@4.10.0
@@ -3384,7 +3382,7 @@ importers:
       '@types/puppeteer': 1.3.0
       cross-env: ^7.0.3
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       source-map-loader: ^2.0.0
       string-replace-loader: ^3.1.0
@@ -3416,7 +3414,7 @@ importers:
       '@types/puppeteer': 1.3.0
       cross-env: 7.0.3
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       string-replace-loader: 3.1.0_webpack@5.83.0
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
@@ -3458,7 +3456,7 @@ importers:
       '@types/uuid': ^9.0.2
       copyfiles: ^2.4.1
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
       uuid: ^9.0.0
@@ -3496,7 +3494,7 @@ importers:
       '@types/uuid': 9.0.2
       copyfiles: 2.4.1
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -3516,7 +3514,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.1.0
       '@fluidframework/routerlicious-driver': workspace:~
       '@fluidframework/runtime-utils': workspace:~
-      '@fluidframework/test-tools': ^0.2.158186
+      '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/tinylicious-driver': workspace:~
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
@@ -3531,7 +3529,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       process: ^0.11.10
       puppeteer: ^17.1.3
       rimraf: ^4.4.0
@@ -3562,7 +3560,7 @@ importers:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.24.0_2wska3rv6ra5ajbmktsvyxwga4
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
-      '@fluidframework/test-tools': 0.2.158186
+      '@fluidframework/test-tools': 1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -3575,11 +3573,11 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       process: 0.11.10
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
+      ts-jest: 29.1.1_tndnqa5xo6u3ff2xboqc6b3zs4
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
       typescript: 5.1.6
       webpack: 5.83.0_webpack-cli@4.10.0
@@ -3612,7 +3610,7 @@ importers:
       '@fluidframework/sequence': workspace:~
       '@fluidframework/task-manager': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
-      '@fluidframework/test-tools': ^0.2.158186
+      '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/tinylicious-driver': workspace:~
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
@@ -3638,7 +3636,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       process: ^0.11.10
       puppeteer: ^17.1.3
       react: ^17.0.1
@@ -3683,7 +3681,7 @@ importers:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.24.0_2wska3rv6ra5ajbmktsvyxwga4
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
-      '@fluidframework/test-tools': 0.2.158186
+      '@fluidframework/test-tools': 1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -3697,7 +3695,7 @@ importers:
       css-loader: 1.0.1_webpack@5.83.0
       eslint: 8.6.0
       eslint-plugin-eslint-comments: 3.2.0_eslint@8.6.0
-      eslint-plugin-import: 2.25.4_eslint@8.6.0
+      eslint-plugin-import: 2.25.4_4pij4nvnkqnncanfc5qjphoilq
       eslint-plugin-jsdoc: 39.3.25_eslint@8.6.0
       eslint-plugin-prefer-arrow: 1.2.3_eslint@8.6.0
       eslint-plugin-react: 7.28.0_eslint@8.6.0
@@ -3707,12 +3705,12 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       process: 0.11.10
       puppeteer: 17.1.3
       rimraf: 4.4.1
       style-loader: 1.3.0_webpack@5.83.0
-      ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
+      ts-jest: 29.1.1_tndnqa5xo6u3ff2xboqc6b3zs4
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
       typescript: 5.1.6
       webpack: 5.83.0_webpack-cli@4.10.0
@@ -3745,7 +3743,7 @@ importers:
       '@fluidframework/sequence': workspace:~
       '@fluidframework/task-manager': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
-      '@fluidframework/test-tools': ^0.2.158186
+      '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/tinylicious-driver': workspace:~
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
@@ -3771,7 +3769,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       process: ^0.11.10
       puppeteer: ^17.1.3
       react: ^17.0.1
@@ -3816,7 +3814,7 @@ importers:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.24.0_2wska3rv6ra5ajbmktsvyxwga4
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
-      '@fluidframework/test-tools': 0.2.158186
+      '@fluidframework/test-tools': 1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -3830,7 +3828,7 @@ importers:
       css-loader: 1.0.1_webpack@5.83.0
       eslint: 8.6.0
       eslint-plugin-eslint-comments: 3.2.0_eslint@8.6.0
-      eslint-plugin-import: 2.25.4_eslint@8.6.0
+      eslint-plugin-import: 2.25.4_4pij4nvnkqnncanfc5qjphoilq
       eslint-plugin-jsdoc: 39.3.25_eslint@8.6.0
       eslint-plugin-prefer-arrow: 1.2.3_eslint@8.6.0
       eslint-plugin-react: 7.28.0_eslint@8.6.0
@@ -3840,12 +3838,12 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       process: 0.11.10
       puppeteer: 17.1.3
       rimraf: 4.4.1
       style-loader: 1.3.0_webpack@5.83.0
-      ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
+      ts-jest: 29.1.1_tndnqa5xo6u3ff2xboqc6b3zs4
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
       typescript: 5.1.6
       webpack: 5.83.0_webpack-cli@4.10.0
@@ -3867,7 +3865,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.1.0
       '@fluidframework/map': workspace:~
       '@fluidframework/runtime-utils': workspace:~
-      '@fluidframework/test-tools': ^0.2.158186
+      '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/view-adapters': workspace:~
       '@fluidframework/view-interfaces': workspace:~
       '@types/expect-puppeteer': 2.2.1
@@ -3884,7 +3882,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       react: ^17.0.1
       react-dom: ^17.0.1
@@ -3914,7 +3912,7 @@ importers:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.24.0_2wska3rv6ra5ajbmktsvyxwga4
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
-      '@fluidframework/test-tools': 0.2.158186
+      '@fluidframework/test-tools': 1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -3929,10 +3927,10 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
+      ts-jest: 29.1.1_tndnqa5xo6u3ff2xboqc6b3zs4
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
       typescript: 5.1.6
       webpack: 5.83.0_webpack-cli@4.10.0
@@ -3951,7 +3949,7 @@ importers:
       '@fluidframework/container-runtime-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.1.0
       '@fluidframework/runtime-utils': workspace:~
-      '@fluidframework/test-tools': ^0.2.158186
+      '@fluidframework/test-tools': ^1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -3965,7 +3963,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       process: ^0.11.10
       puppeteer: ^17.1.3
       rimraf: ^4.4.0
@@ -3990,7 +3988,7 @@ importers:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.24.0_2wska3rv6ra5ajbmktsvyxwga4
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
-      '@fluidframework/test-tools': 0.2.158186
+      '@fluidframework/test-tools': 1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -4003,11 +4001,11 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       process: 0.11.10
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
+      ts-jest: 29.1.1_tndnqa5xo6u3ff2xboqc6b3zs4
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
       typescript: 5.1.6
       webpack: 5.83.0_webpack-cli@4.10.0
@@ -4026,7 +4024,7 @@ importers:
       '@fluidframework/container-runtime-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.1.0
       '@fluidframework/runtime-utils': workspace:~
-      '@fluidframework/test-tools': ^0.2.158186
+      '@fluidframework/test-tools': ^1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -4042,7 +4040,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       process: ^0.11.10
       puppeteer: ^17.1.3
       react: ^17.0.1
@@ -4073,7 +4071,7 @@ importers:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.24.0_2wska3rv6ra5ajbmktsvyxwga4
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
-      '@fluidframework/test-tools': 0.2.158186
+      '@fluidframework/test-tools': 1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -4088,11 +4086,11 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       process: 0.11.10
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
+      ts-jest: 29.1.1_tndnqa5xo6u3ff2xboqc6b3zs4
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
       typescript: 5.1.6
       webpack: 5.83.0_webpack-cli@4.10.0
@@ -4153,7 +4151,7 @@ importers:
       jest-puppeteer: ^6.2.0
       jsonwebtoken: ^8.4.0
       lodash: ^4.17.21
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       react: ^17.0.1
       react-dom: ^17.0.1
@@ -4199,7 +4197,6 @@ importers:
       '@fluidframework/shared-object-base': link:../../../../packages/dds/shared-object-base
       '@fluidframework/tinylicious-driver': link:../../../../packages/drivers/tinylicious-driver
       '@fluidframework/view-interfaces': link:../../../../packages/framework/view-interfaces
-      '@types/uuid': 9.0.2
       events: 3.3.0
       jsonwebtoken: 8.5.1
       lodash: 4.17.21
@@ -4212,6 +4209,7 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
       '@types/puppeteer': 1.3.0
+      '@types/uuid': 9.0.2
       clean-webpack-plugin: 4.0.0_webpack@5.83.0
       concurrently: 8.2.1
       cross-env: 7.0.3
@@ -4221,7 +4219,7 @@ importers:
       jest: 29.6.2
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
       sass: 1.62.1
@@ -4287,7 +4285,7 @@ importers:
       jest-puppeteer: ^6.2.0
       jsonwebtoken: ^8.4.0
       lodash: ^4.17.21
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       react: ^17.0.1
       react-dom: ^17.0.1
@@ -4336,7 +4334,6 @@ importers:
       '@material-ui/core': 4.12.4_sfoxds7t5ydpegc3knd667wn6m
       '@material-ui/lab': 4.0.0-alpha.61_phlbjj2qqbzyjdfzujtmlw3coi
       '@material-ui/styles': 4.11.5_sfoxds7t5ydpegc3knd667wn6m
-      '@types/uuid': 9.0.2
       events: 3.3.0
       jsonwebtoken: 8.5.1
       lodash: 4.17.21
@@ -4350,6 +4347,7 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
       '@types/puppeteer': 1.3.0
+      '@types/uuid': 9.0.2
       clean-webpack-plugin: 4.0.0_webpack@5.83.0
       concurrently: 8.2.1
       cross-env: 7.0.3
@@ -4359,7 +4357,7 @@ importers:
       jest: 29.6.2
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
       sass: 1.62.1
@@ -4377,14 +4375,14 @@ importers:
       '@fluidframework/build-common': ^2.0.0
       '@fluidframework/build-tools': ^0.24.0
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     devDependencies:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.24.0
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -4425,7 +4423,7 @@ importers:
       jsdoc: 3.6.7
       lighthouse: ^5.2.0
       lodash: ^4.17.21
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       source-map-loader: ^2.0.0
       typedoc: ^0.12.0
@@ -4470,7 +4468,7 @@ importers:
       jest-junit: 10.0.0
       jsdoc: 3.6.7
       lighthouse: 5.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       source-map-loader: 2.0.2_webpack@5.83.0
       typedoc: 0.12.0
@@ -4501,7 +4499,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       nock: ^13.3.3
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       semver: ^7.5.3
       sinon: ^7.4.2
@@ -4533,7 +4531,7 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       nock: 13.3.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
       typescript: 5.1.6
@@ -4568,7 +4566,7 @@ importers:
       moment: ^2.21.0
       murmurhash3js: 3.0.1
       nock: ^13.3.3
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       semver: ^7.5.3
       sinon: ^7.4.2
@@ -4606,7 +4604,7 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       nock: 13.3.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
       typescript: 5.1.6
@@ -4660,7 +4658,7 @@ importers:
       moment: ^2.21.0
       msgpackr: ^1.4.7
       pako: ^2.0.4
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
       uuid: ^9.0.0
@@ -4711,7 +4709,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -4762,7 +4760,7 @@ importers:
       lighthouse: ^5.2.0
       lodash.debounce: ^4.0.8
       memoize-one: ^5.0.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       process: ^0.11.10
       react: ^17.0.1
       react-base-table: 1.13.2
@@ -4839,7 +4837,7 @@ importers:
       jest-transform-file: 1.1.1
       jsdoc: 3.6.7
       lighthouse: 5.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       process: 0.11.10
       rimraf: 4.4.1
       sinon: 7.5.0
@@ -4878,7 +4876,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       nock: ^13.3.3
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       semver: ^7.5.3
       sinon: ^7.4.2
@@ -4910,7 +4908,7 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       nock: 13.3.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
       typescript: 5.1.6
@@ -4931,7 +4929,7 @@ importers:
       eslint: ~8.6.0
       jest: ^29.6.2
       jest-junit: ^10.0.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       source-map-loader: ^2.0.0
       ts-jest: ^29.1.1
@@ -4954,7 +4952,7 @@ importers:
       eslint: 8.6.0
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       source-map-loader: 2.0.2_webpack@5.83.0
       ts-jest: 29.1.1_4tpdl3ym67q7f5tdlz4ykdagxi
@@ -4983,7 +4981,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       nock: ^13.3.3
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       semver: ^7.5.3
       sinon: ^7.4.2
@@ -5011,7 +5009,7 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       nock: 13.3.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
 
@@ -5027,10 +5025,10 @@ importers:
       '@types/jest': 29.5.3
       '@types/node': ^16.18.38
       eslint: ~8.6.0
-      eslint-config-prettier: ~8.5.0
+      eslint-config-prettier: ~9.0.0
       jest: ^29.6.2
       jest-junit: ^10.0.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       ts-jest: ^29.1.1
       typescript: ~5.1.6
@@ -5046,12 +5044,12 @@ importers:
       '@types/jest': 29.5.3
       '@types/node': 16.18.38
       eslint: 8.6.0
-      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-config-prettier: 9.0.0_eslint@8.6.0
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
+      ts-jest: 29.1.1_tndnqa5xo6u3ff2xboqc6b3zs4
       typescript: 5.1.6
 
   experimental/PropertyDDS/services/property-query-service:
@@ -5104,7 +5102,7 @@ importers:
       moment: ^2.21.0
       nconf: ^0.12.0
       npm-run-all: 4.1.5
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       promisify: 0.0.3
       qs: ^6.11.0
       request: ^2.88.0
@@ -5173,7 +5171,7 @@ importers:
       mochawesome: 3.1.2_mocha@10.2.0
       moment: 2.29.4
       npm-run-all: 4.1.5
-      prettier: 2.6.2
+      prettier: 3.0.3
       promisify: 0.0.3
       request: 2.88.2
       request-promise-native: 1.0.7_request@2.88.2
@@ -5219,7 +5217,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       path-browserify: ^1.0.1
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -5256,7 +5254,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -5287,7 +5285,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       quill-delta: ^4.2.2
       rimraf: ^4.4.0
       typescript: ~5.1.6
@@ -5318,7 +5316,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       quill-delta: 4.2.2
       rimraf: 4.4.1
       typescript: 5.1.6
@@ -5350,7 +5348,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       ot-json1: ^1.0.1
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -5380,7 +5378,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -5412,7 +5410,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -5443,7 +5441,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -5486,13 +5484,13 @@ importers:
       easy-table: ^1.1.1
       env-cmd: ^10.1.0
       eslint: ~8.6.0
-      eslint-config-prettier: ~8.5.0
+      eslint-config-prettier: ~9.0.0
       lru-cache: ^6.0.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       sorted-btree: ^1.8.0
       typescript: ~5.1.6
@@ -5539,12 +5537,12 @@ importers:
       easy-table: 1.2.0
       env-cmd: 10.1.0
       eslint: 8.6.0
-      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-config-prettier: 9.0.0_eslint@8.6.0
       mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -5588,13 +5586,13 @@ importers:
       diff: ^3.5.0
       easy-table: ^1.1.1
       eslint: ~8.6.0
-      eslint-config-prettier: ~8.5.0
+      eslint-config-prettier: ~9.0.0
       good-fences: ^1.1.1
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       sorted-btree: ^1.8.0
       typescript: ~5.1.6
@@ -5641,13 +5639,13 @@ importers:
       diff: 3.5.0
       easy-table: 1.2.0
       eslint: 8.6.0
-      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-config-prettier: 9.0.0_eslint@8.6.0
       good-fences: 1.2.0
       mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -5670,7 +5668,7 @@ importers:
       cross-env: ^7.0.3
       eslint: ~8.6.0
       events: ^3.1.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -5692,7 +5690,7 @@ importers:
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -5714,7 +5712,7 @@ importers:
       '@types/node': ^16.18.38
       copyfiles: ^2.4.1
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -5735,7 +5733,7 @@ importers:
       '@types/node': 16.18.38
       copyfiles: 2.4.1
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -5755,7 +5753,7 @@ importers:
       '@types/react': ^17.0.44
       copyfiles: ^2.4.1
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       react: ^17.0.1
       rimraf: ^4.4.0
       typescript: ~5.1.6
@@ -5776,7 +5774,7 @@ importers:
       '@types/react': 17.0.52
       copyfiles: 2.4.1
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -5801,9 +5799,9 @@ importers:
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
-      eslint-config-prettier: ~8.5.0
+      eslint-config-prettier: ~9.0.0
       mocha: ^10.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       react: ^17.0.1
       rimraf: ^4.4.0
       sinon: ^7.4.2
@@ -5830,9 +5828,9 @@ importers:
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
-      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-config-prettier: 9.0.0_eslint@8.6.0
       mocha: 10.2.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
       typescript: 5.1.6
@@ -5865,7 +5863,7 @@ importers:
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
-      eslint-config-prettier: ~8.5.0
+      eslint-config-prettier: ~9.0.0
       events: ^3.1.0
       jest: ^29.6.2
       jest-junit: ^10.0.0
@@ -5875,7 +5873,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       rewire: ^5.0.0
       rimraf: ^4.4.0
@@ -5915,7 +5913,7 @@ importers:
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
-      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-config-prettier: 9.0.0_eslint@8.6.0
       jest: 29.6.2_546szy65dvhukjyz7aaas7covq
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
@@ -5923,12 +5921,12 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rewire: 5.0.0
       rimraf: 4.4.1
       sinon: 7.5.0
-      ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
+      ts-jest: 29.1.1_tndnqa5xo6u3ff2xboqc6b3zs4
       ts-node: 10.9.1_df7afiotem46v675cpaych2n3q
       typescript: 5.1.6
 
@@ -5948,7 +5946,7 @@ importers:
       eslint: ~8.6.0
       eslint-plugin-deprecation: ~1.5.0
       events: ^3.1.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -5967,7 +5965,7 @@ importers:
       copyfiles: 2.4.1
       eslint: 8.6.0
       eslint-plugin-deprecation: 1.5.0_qvtltsyn3reahc7lgycismcfiq
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -5982,7 +5980,7 @@ importers:
       '@types/node': ^16.18.38
       copyfiles: ^2.4.1
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     devDependencies:
@@ -5995,7 +5993,7 @@ importers:
       '@types/node': 16.18.38
       copyfiles: 2.4.1
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -6015,12 +6013,12 @@ importers:
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
-      eslint-config-prettier: ~8.5.0
+      eslint-config-prettier: ~9.0.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^7.4.2
       typescript: ~5.1.6
@@ -6039,12 +6037,12 @@ importers:
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
-      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-config-prettier: 9.0.0_eslint@8.6.0
       mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
       typescript: 5.1.6
@@ -6061,7 +6059,7 @@ importers:
       '@microsoft/api-extractor': ^7.37.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -6076,7 +6074,7 @@ importers:
       '@microsoft/api-extractor': 7.37.0
       copyfiles: 2.4.1
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -6108,7 +6106,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -6139,7 +6137,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -6170,7 +6168,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -6200,7 +6198,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -6229,7 +6227,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
       uuid: ^9.0.0
@@ -6259,7 +6257,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -6298,7 +6296,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       path-browserify: ^1.0.1
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -6336,7 +6334,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -6378,7 +6376,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       ts-node: ^10.9.1
       tslib: ^1.10.0
@@ -6423,7 +6421,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       ts-node: 10.9.1_undwa5qxrriq4xnbtioa2ez7wy
       typescript: 5.1.6
@@ -6464,7 +6462,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -6502,7 +6500,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -6535,7 +6533,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
       uuid: ^9.0.0
@@ -6569,7 +6567,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -6602,7 +6600,7 @@ importers:
       mocha-junit-reporter: ^1.18.0
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -6634,7 +6632,7 @@ importers:
       mocha-junit-reporter: 1.23.3_mocha@10.2.0
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -6667,7 +6665,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -6699,7 +6697,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -6739,7 +6737,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       random-js: ^1.0.8
       rimraf: ^4.4.0
       typescript: ~5.1.6
@@ -6781,7 +6779,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       random-js: 1.0.8
       rimraf: 4.4.1
       typescript: 5.1.6
@@ -6819,7 +6817,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       ts-node: ^10.9.1
       typescript: ~5.1.6
@@ -6858,7 +6856,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       ts-node: 10.9.1_undwa5qxrriq4xnbtioa2ez7wy
       typescript: 5.1.6
@@ -6891,7 +6889,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -6922,7 +6920,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -7028,7 +7026,7 @@ importers:
       mocha-junit-reporter: ^1.18.0
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -7064,7 +7062,7 @@ importers:
       mocha-junit-reporter: 1.23.3_mocha@10.2.0
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -7092,7 +7090,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -7119,7 +7117,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -7140,7 +7138,7 @@ importers:
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       jsonschema: ^1.2.6
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -7160,7 +7158,7 @@ importers:
       '@types/node': 16.18.38
       copyfiles: 2.4.1
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -7190,7 +7188,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       socket.io-client: ^4.6.1
       typescript: ~5.1.6
@@ -7220,7 +7218,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       socket.io-client: 4.6.1
       typescript: 5.1.6
@@ -7244,7 +7242,7 @@ importers:
       fake-indexeddb: 3.1.4
       idb: ^6.1.2
       jest: ^29.6.2
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -7266,7 +7264,7 @@ importers:
       eslint: 8.6.0
       fake-indexeddb: 3.1.4
       jest: 29.6.2_@types+node@16.18.38
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -7288,7 +7286,7 @@ importers:
       '@types/node': ^16.18.38
       copyfiles: ^2.4.1
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -7309,7 +7307,7 @@ importers:
       '@types/node': 16.18.38
       copyfiles: 2.4.1
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -7335,7 +7333,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -7360,7 +7358,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -7401,7 +7399,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       socket.io-client: ^4.6.1
       typescript: ~5.1.6
@@ -7446,7 +7444,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       socket.io-client: 4.6.1
       typescript: 5.1.6
@@ -7485,7 +7483,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       node-fetch: ^2.6.9
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^7.4.2
       socket.io-client: ^4.6.1
@@ -7527,7 +7525,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
       typescript: 5.1.6
@@ -7545,7 +7543,7 @@ importers:
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -7561,7 +7559,7 @@ importers:
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -7585,7 +7583,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -7608,7 +7606,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -7632,7 +7630,7 @@ importers:
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       nock: ^13.3.3
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -7655,7 +7653,7 @@ importers:
       copyfiles: 2.4.1
       eslint: 8.6.0
       nock: 13.3.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -7697,7 +7695,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       nock: ^13.3.3
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^7.4.2
       socket.io-client: ^4.6.1
@@ -7745,7 +7743,7 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       nock: 13.3.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
       typescript: 5.1.6
@@ -7773,7 +7771,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       nconf: ^0.12.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
       url: ^0.11.0
@@ -7801,7 +7799,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -7817,7 +7815,7 @@ importers:
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/routerlicious-driver': workspace:~
-      '@fluidframework/test-tools': ^0.2.158186
+      '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/tinylicious-driver-previous': npm:@fluidframework/tinylicious-driver@2.0.0-internal.7.0.0
       '@microsoft/api-extractor': ^7.37.0
       '@types/jsrsasign': ^8.0.8
@@ -7829,7 +7827,7 @@ importers:
       eslint: ~8.6.0
       jsrsasign: ^10.5.25
       mocha: ^10.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
       uuid: ^9.0.0
@@ -7847,7 +7845,7 @@ importers:
       '@fluidframework/build-tools': 0.24.0_@types+node@16.18.38
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
-      '@fluidframework/test-tools': 0.2.158186
+      '@fluidframework/test-tools': 1.0.195075
       '@fluidframework/tinylicious-driver-previous': /@fluidframework/tinylicious-driver/2.0.0-internal.7.0.0
       '@microsoft/api-extractor': 7.37.0_@types+node@16.18.38
       '@types/jsrsasign': 8.0.13
@@ -7858,7 +7856,7 @@ importers:
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -7884,7 +7882,7 @@ importers:
       '@types/node': ^16.18.38
       copyfiles: ^2.4.1
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
       uuid: ^9.0.0
@@ -7911,7 +7909,7 @@ importers:
       '@types/node': 16.18.38
       copyfiles: 2.4.1
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -7949,7 +7947,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
       uuid: ^9.0.0
@@ -7988,7 +7986,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -8027,7 +8025,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -8065,7 +8063,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -8082,12 +8080,12 @@ importers:
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
-      eslint-config-prettier: ~8.5.0
+      eslint-config-prettier: ~9.0.0
       eslint-plugin-jest: ~27.1.5
       eslint-plugin-react: ~7.28.0
       eslint-plugin-react-hooks: ~4.6.0
       mocha: ^10.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^7.4.2
       tslib: ^1.10.0
@@ -8105,12 +8103,12 @@ importers:
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
-      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-config-prettier: 9.0.0_eslint@8.6.0
       eslint-plugin-jest: 27.1.7_qvtltsyn3reahc7lgycismcfiq
       eslint-plugin-react: 7.28.0_eslint@8.6.0
       eslint-plugin-react-hooks: 4.6.0_eslint@8.6.0
       mocha: 10.2.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
       tslib: 1.14.1
@@ -8139,7 +8137,7 @@ importers:
       '@types/node': ^16.18.38
       copyfiles: ^2.4.1
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -8165,7 +8163,7 @@ importers:
       '@types/node': 16.18.38
       copyfiles: 2.4.1
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -8196,7 +8194,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -8226,7 +8224,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -8246,7 +8244,7 @@ importers:
       '@types/node': ^16.18.38
       copyfiles: ^2.4.1
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -8265,7 +8263,7 @@ importers:
       '@types/node': 16.18.38
       copyfiles: 2.4.1
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -8301,7 +8299,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -8336,7 +8334,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -8358,7 +8356,7 @@ importers:
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -8379,7 +8377,7 @@ importers:
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -8410,7 +8408,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -8440,7 +8438,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -8466,7 +8464,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -8491,7 +8489,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -8524,7 +8522,7 @@ importers:
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       mocha: ^10.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       start-server-and-test: ^1.11.7
       tinylicious: ^2.0.1
@@ -8560,7 +8558,7 @@ importers:
       copyfiles: 2.4.1
       eslint: 8.6.0
       mocha: 10.2.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       start-server-and-test: 1.15.5
       tinylicious: 2.0.1
@@ -8594,7 +8592,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -8625,7 +8623,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -8643,7 +8641,7 @@ importers:
       '@types/react-dom': ^17.0.18
       copyfiles: ^2.4.1
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       react: ^17.0.1
       react-dom: ^17.0.1
       rimraf: ^4.4.0
@@ -8664,7 +8662,7 @@ importers:
       '@types/react-dom': 17.0.18
       copyfiles: 2.4.1
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -8681,7 +8679,7 @@ importers:
       '@types/react-dom': ^17.0.18
       copyfiles: ^2.4.1
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -8697,7 +8695,7 @@ importers:
       '@types/react-dom': 17.0.18
       copyfiles: 2.4.1
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -8738,7 +8736,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^7.4.2
       typescript: ~5.1.6
@@ -8783,7 +8781,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
       typescript: 5.1.6
@@ -8818,7 +8816,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^7.4.2
       typescript: ~5.1.6
@@ -8856,7 +8854,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
       typescript: 5.1.6
@@ -8866,6 +8864,7 @@ importers:
       '@fluid-tools/build-cli': ^0.24.0
       '@fluidframework/build-common': ^2.0.0
       '@fluidframework/build-tools': ^0.24.0
+      '@fluidframework/container-loader': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.1.0
@@ -8884,10 +8883,11 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
+      '@fluidframework/container-loader': link:../container-loader
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
@@ -8910,7 +8910,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -8926,7 +8926,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.1.0
       '@fluidframework/protocol-definitions': ^3.0.0
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -8941,7 +8941,7 @@ importers:
       '@fluidframework/build-tools': 0.24.0
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -8985,7 +8985,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^7.4.2
       sorted-btree: ^1.8.0
@@ -9033,7 +9033,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
       typescript: 5.1.6
@@ -9053,7 +9053,7 @@ importers:
       '@microsoft/api-extractor': ^7.37.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -9071,7 +9071,7 @@ importers:
       '@microsoft/api-extractor': 7.37.0
       copyfiles: 2.4.1
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -9108,7 +9108,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
       uuid: ^9.0.0
@@ -9146,7 +9146,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -9164,7 +9164,7 @@ importers:
       '@microsoft/api-extractor': ^7.37.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -9181,7 +9181,7 @@ importers:
       '@microsoft/api-extractor': 7.37.0
       copyfiles: 2.4.1
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -9200,7 +9200,7 @@ importers:
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       eslint-plugin-deprecation: ~1.5.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -9218,7 +9218,7 @@ importers:
       copyfiles: 2.4.1
       eslint: 8.6.0
       eslint-plugin-deprecation: 1.5.0_qvtltsyn3reahc7lgycismcfiq
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -9251,7 +9251,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^7.4.2
       ts-node: ^10.9.1
@@ -9285,7 +9285,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
       ts-node: 10.9.1_undwa5qxrriq4xnbtioa2ez7wy
@@ -9327,7 +9327,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
       uuid: ^9.0.0
@@ -9368,7 +9368,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -9397,7 +9397,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       ts-loader: ^9.3.0
       typescript: ~5.1.6
@@ -9428,7 +9428,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
       typescript: 5.1.6
@@ -9489,7 +9489,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       nock: ^13.3.3
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       ts-loader: ^9.3.0
       typescript: ~5.1.6
@@ -9549,7 +9549,7 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       nock: 13.3.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
       typescript: 5.1.6
@@ -9572,7 +9572,7 @@ importers:
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       mocha: ^10.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       source-map-support: ^0.5.21
       typescript: ~5.1.6
@@ -9592,7 +9592,7 @@ importers:
       '@types/node': 16.18.38
       copyfiles: 2.4.1
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -9634,7 +9634,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -9660,6 +9660,7 @@ importers:
       '@fluidframework/sequence': link:../../dds/sequence
       '@fluidframework/server-local-server': 2.0.1
       '@fluidframework/test-utils': link:../test-utils
+      mocha: 10.2.0
     devDependencies:
       '@fluid-tools/build-cli': 0.24.0_@types+node@16.18.38
       '@fluidframework/build-common': 2.0.0
@@ -9671,11 +9672,10 @@ importers:
       c8: 7.13.0
       cross-env: 7.0.3
       eslint: 8.6.0
-      mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -9699,7 +9699,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       random-js: ^1.0.8
       rimraf: ^4.4.0
       typescript: ~5.1.6
@@ -9723,7 +9723,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       random-js: 1.0.8
       rimraf: 4.4.1
       typescript: 5.1.6
@@ -9739,7 +9739,7 @@ importers:
       '@types/node': ^16.18.38
       applicationinsights: ^2.1.9
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -9753,7 +9753,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
       '@types/node': 16.18.38
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -9770,7 +9770,7 @@ importers:
       '@microsoft/api-extractor': ^7.37.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
       uuid: ^9.0.0
@@ -9788,7 +9788,7 @@ importers:
       '@microsoft/api-extractor': 7.37.0
       copyfiles: 2.4.1
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -9822,7 +9822,7 @@ importers:
       c8: ^7.7.1
       copyfiles: ^2.4.1
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       semver: ^7.5.3
       typescript: ~5.1.6
@@ -9859,7 +9859,7 @@ importers:
       c8: 7.13.0
       copyfiles: 2.4.1
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -9925,7 +9925,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       nock: ^13.3.3
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       semver: ^7.5.3
       sinon: ^7.4.2
@@ -9996,13 +9996,13 @@ importers:
       '@types/uuid': 9.0.2
       c8: 7.13.0
       eslint: 8.6.0
-      eslint-import-resolver-typescript: 3.5.5_wwrwxdavgu4hzdoqb37x5rvvke
-      eslint-plugin-import: 2.25.4_av4jjatakjabmml5z5flrwsy3e
+      eslint-import-resolver-typescript: 3.5.5_lzq2knpwsp5cvefgpb4ykfeff4
+      eslint-plugin-import: 2.25.4_htojv7osgecekql5s5yswrjo4e
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       nock: 13.3.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -10020,7 +10020,7 @@ importers:
       cross-env: ^7.0.3
       eslint: ~8.6.0
       mocha: ^10.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       random-js: ^1.0.8
       rimraf: ^4.4.0
       typescript: ~5.1.6
@@ -10039,7 +10039,7 @@ importers:
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -10080,7 +10080,7 @@ importers:
       cross-env: ^7.0.3
       eslint: ~8.6.0
       mocha: ^10.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       ps-node: ^0.1.6
       rimraf: ^4.4.0
       start-server-and-test: ^1.11.7
@@ -10126,7 +10126,7 @@ importers:
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -10176,7 +10176,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
       uuid: ^9.0.0
@@ -10227,7 +10227,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -10280,7 +10280,7 @@ importers:
       moment: ^2.21.0
       nconf: ^0.12.0
       nock: ^13.3.3
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       proper-lockfile: ^4.1.2
       rimraf: ^4.4.0
       semver: ^7.5.3
@@ -10333,14 +10333,14 @@ importers:
       c8: 7.13.0
       cross-env: 7.0.3
       eslint: 8.6.0
-      eslint-import-resolver-typescript: 3.5.5_wwrwxdavgu4hzdoqb37x5rvvke
-      eslint-plugin-import: 2.25.4_av4jjatakjabmml5z5flrwsy3e
+      eslint-import-resolver-typescript: 3.5.5_lzq2knpwsp5cvefgpb4ykfeff4
+      eslint-plugin-import: 2.25.4_htojv7osgecekql5s5yswrjo4e
       mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       nock: 13.3.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
       typescript: 5.1.6
@@ -10368,13 +10368,13 @@ importers:
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
-      eslint-config-prettier: ~8.5.0
+      eslint-config-prettier: ~9.0.0
       eslint-plugin-chai-expect: ~3.0.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -10397,13 +10397,13 @@ importers:
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
-      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-config-prettier: 9.0.0_eslint@8.6.0
       eslint-plugin-chai-expect: 3.0.0_eslint@8.6.0
       mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -10454,7 +10454,7 @@ importers:
       cross-env: ^7.0.3
       dotenv-webpack: ^7.0.3
       eslint: ~8.6.0
-      eslint-config-prettier: ~8.5.0
+      eslint-config-prettier: ~9.0.0
       eslint-plugin-chai-expect: ~3.0.0
       good-fences: ^1.1.1
       html-webpack-plugin: ^5.5.0
@@ -10466,7 +10466,7 @@ importers:
       jsdom: ^16.7.0
       jsdom-global: ^3.0.2
       mocha: ^10.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       proxyquire: ^2.1.3
       puppeteer: ^17.1.3
       react: ^17.0.1
@@ -10531,7 +10531,7 @@ importers:
       cross-env: 7.0.3
       dotenv-webpack: 7.1.1_webpack@5.83.0
       eslint: 8.6.0
-      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-config-prettier: 9.0.0_eslint@8.6.0
       eslint-plugin-chai-expect: 3.0.0_eslint@8.6.0
       good-fences: 1.2.0
       html-webpack-plugin: 5.5.1_webpack@5.83.0
@@ -10543,14 +10543,14 @@ importers:
       jsdom: 16.7.0
       jsdom-global: 3.0.2_jsdom@16.7.0
       mocha: 10.2.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       proxyquire: 2.1.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
       sinon: 7.5.0
       sinon-chrome: 3.0.1
       start-server-and-test: 1.15.5
-      ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
+      ts-jest: 29.1.1_tndnqa5xo6u3ff2xboqc6b3zs4
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
       typescript: 5.1.6
       webpack: 5.83.0_webpack-cli@4.10.0
@@ -10589,14 +10589,14 @@ importers:
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
-      eslint-config-prettier: ~8.5.0
+      eslint-config-prettier: ~9.0.0
       eslint-plugin-chai-expect: ~3.0.0
       events: ^3.1.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -10632,14 +10632,14 @@ importers:
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
-      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-config-prettier: 9.0.0_eslint@8.6.0
       eslint-plugin-chai-expect: 3.0.0_eslint@8.6.0
       events: 3.3.0
       mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -10687,7 +10687,7 @@ importers:
       '@types/react-dom': ^17.0.18
       '@types/testing-library__jest-dom': ^5.14.5
       eslint: ~8.6.0
-      eslint-config-prettier: ~8.5.0
+      eslint-config-prettier: ~9.0.0
       eslint-plugin-jest: ~27.1.5
       eslint-plugin-react: ~7.28.0
       eslint-plugin-react-hooks: ~4.6.0
@@ -10697,7 +10697,7 @@ importers:
       jest-environment-jsdom: ^29.6.2
       jest-junit: ^10.0.0
       pm2: ^5.3.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       re-resizable: ^6.9.9
       react: ^17.0.1
@@ -10759,7 +10759,7 @@ importers:
       '@types/react-dom': 17.0.18
       '@types/testing-library__jest-dom': 5.14.5
       eslint: 8.6.0
-      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-config-prettier: 9.0.0_eslint@8.6.0
       eslint-plugin-jest: 27.1.7_4vvgvlvub2y5pamq36yy3w7ouq
       eslint-plugin-react: 7.28.0_eslint@8.6.0
       eslint-plugin-react-hooks: 4.6.0_eslint@8.6.0
@@ -10769,10 +10769,10 @@ importers:
       jest-environment-jsdom: 29.6.2
       jest-junit: 10.0.0
       pm2: 5.3.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
+      ts-jest: 29.1.1_tndnqa5xo6u3ff2xboqc6b3zs4
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
       typescript: 5.1.6
       webpack: 5.83.0_webpack-cli@4.10.0
@@ -10824,7 +10824,7 @@ importers:
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
-      eslint-config-prettier: ~8.5.0
+      eslint-config-prettier: ~9.0.0
       eslint-plugin-jest: ~27.1.5
       eslint-plugin-react: ~7.28.0
       eslint-plugin-react-hooks: ~4.6.0
@@ -10836,7 +10836,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       playwright: ^1.36.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       prop-types: ^15.8.1
       react: ^17.0.1
       react-dom: ^17.0.1
@@ -10897,7 +10897,7 @@ importers:
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
-      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-config-prettier: 9.0.0_eslint@8.6.0
       eslint-plugin-jest: 27.1.7_4vvgvlvub2y5pamq36yy3w7ouq
       eslint-plugin-react: 7.28.0_eslint@8.6.0
       eslint-plugin-react-hooks: 4.6.0_eslint@8.6.0
@@ -10909,11 +10909,11 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       playwright: 1.37.1
-      prettier: 2.6.2
+      prettier: 3.0.3
       prop-types: 15.8.1
       rimraf: 4.4.1
       simple-git: 3.19.1
-      ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
+      ts-jest: 29.1.1_tndnqa5xo6u3ff2xboqc6b3zs4
       typescript: 5.1.6
       vite: 4.4.9_@types+node@16.18.40
 
@@ -10942,7 +10942,7 @@ importers:
       '@fluidframework/tool-utils': workspace:~
       '@types/node': ^16.18.38
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -10970,7 +10970,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
       '@types/node': 16.18.38
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -11001,7 +11001,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
       yargs: 13.2.2
@@ -11033,7 +11033,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -11076,7 +11076,7 @@ importers:
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       json-stable-stringify: ^1.0.1
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -11118,7 +11118,7 @@ importers:
       '@types/node': 16.18.38
       copyfiles: 2.4.1
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -11166,7 +11166,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       nconf: ^0.12.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       sillyname: ^0.1.0
       source-map-loader: ^2.0.0
@@ -11223,7 +11223,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       source-map-loader: 2.0.2_webpack@5.83.0
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
@@ -11259,7 +11259,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       node-fetch: ^2.6.9
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -11290,7 +11290,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -11322,7 +11322,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^7.4.2
       typescript: ~5.1.6
@@ -11356,7 +11356,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
       typescript: 5.1.6
@@ -11389,7 +11389,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       proper-lockfile: ^4.1.2
       rimraf: ^4.4.0
       typescript: ~5.1.6
@@ -11422,7 +11422,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -14830,14 +14830,14 @@ packages:
     resolution: {integrity: sha512-q3zaKmH79+gO5t0EwR2ghSVbJqP3nnNNXx3o/rp+v6LKVZaxRZYMWgw2ESR2gF8rI7TWSeKkGVfBime2mVbDoQ==}
     dependencies:
       '@fluentui/set-version': 8.2.11
-      tslib: 2.6.2
+      tslib: 2.6.0
     dev: false
 
   /@fluentui/dom-utilities/2.2.11:
     resolution: {integrity: sha512-2tXfg7/9PXu9nfU72/P3o3waHEFEQtHUfQbVexUaYqNNAxMj6sOfsqpUx4vd5nPgO+grSWrl+spqlLN2yej51w==}
     dependencies:
       '@fluentui/set-version': 8.2.11
-      tslib: 2.6.2
+      tslib: 2.6.0
     dev: false
 
   /@fluentui/font-icons-mdl2/8.5.17_q5o373oqrklnndq2vhekyuzhxi:
@@ -14846,7 +14846,7 @@ packages:
       '@fluentui/set-version': 8.2.11
       '@fluentui/style-utilities': 8.9.17_q5o373oqrklnndq2vhekyuzhxi
       '@fluentui/utilities': 8.13.18_q5o373oqrklnndq2vhekyuzhxi
-      tslib: 2.6.2
+      tslib: 2.6.0
     transitivePeerDependencies:
       - '@types/react'
       - react
@@ -14864,13 +14864,13 @@ packages:
       '@fluentui/utilities': 8.13.18_q5o373oqrklnndq2vhekyuzhxi
       '@types/react': 17.0.52
       react: 17.0.2
-      tslib: 2.6.2
+      tslib: 2.6.0
     dev: false
 
   /@fluentui/keyboard-key/0.4.11:
     resolution: {integrity: sha512-TVB/EloWado9AVp1niChgcdDOQAHGP5B30Dinmtfe7zi8OnstwPoxwFP6dHJDdpLQ6ZEUTaEHViSzvewl7Chag==}
     dependencies:
-      tslib: 2.6.2
+      tslib: 2.6.0
     dev: false
 
   /@fluentui/keyboard-keys/9.0.3:
@@ -14883,14 +14883,14 @@ packages:
     resolution: {integrity: sha512-vIiFv7WtXTPz0Sx6h1NpzqrwDN7yef7aQwqFl46yov72BodiAQMTazBl2A/z76IanBPklJmaTquFT9Uydlp/Dg==}
     dependencies:
       '@fluentui/set-version': 8.2.11
-      tslib: 2.6.2
+      tslib: 2.6.0
     dev: false
 
   /@fluentui/merge-styles/8.5.12:
     resolution: {integrity: sha512-ZnUo0YuMP7AYi68dkknFqVxopIAgbrUnqR/MZlemmRvBYyy1SMj1WQeHcoiLFA8mF8YKn7B+jxQgJbN2bfcrRw==}
     dependencies:
       '@fluentui/set-version': 8.2.11
-      tslib: 2.6.2
+      tslib: 2.6.0
     dev: false
 
   /@fluentui/priority-overflow/9.1.4:
@@ -15279,7 +15279,7 @@ packages:
       '@fluentui/utilities': 8.13.18_q5o373oqrklnndq2vhekyuzhxi
       '@types/react': 17.0.52
       react: 17.0.2
-      tslib: 2.6.2
+      tslib: 2.6.0
     dev: false
 
   /@fluentui/react-hooks/8.6.24_q5o373oqrklnndq2vhekyuzhxi:
@@ -15293,7 +15293,7 @@ packages:
       '@fluentui/utilities': 8.13.13_q5o373oqrklnndq2vhekyuzhxi
       '@types/react': 17.0.52
       react: 17.0.2
-      tslib: 2.6.0
+      tslib: 2.6.2
     dev: false
 
   /@fluentui/react-icons/2.0.201_react@17.0.2:
@@ -16074,7 +16074,7 @@ packages:
       '@fluentui/set-version': 8.2.11
       '@types/react': 17.0.52
       react: 17.0.2
-      tslib: 2.6.2
+      tslib: 2.6.0
     dev: false
 
   /@fluentui/react/8.109.4_74b3ggvk3akyhuq4eydyx3fqim:
@@ -16108,13 +16108,13 @@ packages:
   /@fluentui/set-version/8.2.11:
     resolution: {integrity: sha512-UI03tysau/adBO1a3q4uFZWQ3lfkiFcAWIFng4k5odWcCokfCm5IxA0urKqj5W5JRYdyoBUaq8QbcNGkFB4dCw==}
     dependencies:
-      tslib: 2.6.2
+      tslib: 2.6.0
     dev: false
 
   /@fluentui/set-version/8.2.9:
     resolution: {integrity: sha512-fpWo4DLt8K4spNip2YhNZlGnSKIa5F9hL/wQBE0EPei6+HEeRO2slXfHohOO5v1lIkfLPcpAh/Lzs2iuxzw/lw==}
     dependencies:
-      tslib: 2.6.2
+      tslib: 2.6.0
     dev: false
 
   /@fluentui/style-utilities/8.9.10_q5o373oqrklnndq2vhekyuzhxi:
@@ -16125,7 +16125,7 @@ packages:
       '@fluentui/theme': 2.6.35_q5o373oqrklnndq2vhekyuzhxi
       '@fluentui/utilities': 8.13.18_q5o373oqrklnndq2vhekyuzhxi
       '@microsoft/load-themed-styles': 1.10.295
-      tslib: 2.6.2
+      tslib: 2.6.0
     transitivePeerDependencies:
       - '@types/react'
       - react
@@ -16139,7 +16139,7 @@ packages:
       '@fluentui/theme': 2.6.35_q5o373oqrklnndq2vhekyuzhxi
       '@fluentui/utilities': 8.13.18_q5o373oqrklnndq2vhekyuzhxi
       '@microsoft/load-themed-styles': 1.10.295
-      tslib: 2.6.2
+      tslib: 2.6.0
     transitivePeerDependencies:
       - '@types/react'
       - react
@@ -16156,7 +16156,7 @@ packages:
       '@fluentui/utilities': 8.13.18_q5o373oqrklnndq2vhekyuzhxi
       '@types/react': 17.0.52
       react: 17.0.2
-      tslib: 2.6.2
+      tslib: 2.6.0
     dev: false
 
   /@fluentui/theme/2.6.35_q5o373oqrklnndq2vhekyuzhxi:
@@ -16170,7 +16170,7 @@ packages:
       '@fluentui/utilities': 8.13.18_q5o373oqrklnndq2vhekyuzhxi
       '@types/react': 17.0.52
       react: 17.0.2
-      tslib: 2.6.2
+      tslib: 2.6.0
     dev: false
 
   /@fluentui/tokens/1.0.0-alpha.8:
@@ -16190,7 +16190,7 @@ packages:
       '@fluentui/set-version': 8.2.11
       '@types/react': 17.0.52
       react: 17.0.2
-      tslib: 2.6.2
+      tslib: 2.6.0
     dev: false
 
   /@fluentui/utilities/8.13.18_q5o373oqrklnndq2vhekyuzhxi:
@@ -16204,7 +16204,7 @@ packages:
       '@fluentui/set-version': 8.2.11
       '@types/react': 17.0.52
       react: 17.0.2
-      tslib: 2.6.2
+      tslib: 2.6.0
     dev: false
 
   /@fluid-experimental/attributable-map/2.0.0-internal.7.0.0:
@@ -16694,7 +16694,7 @@ packages:
       isomorphic-fetch: 3.0.0
       nconf: 0.12.0
       sillyname: 0.1.0
-      uuid: 9.0.1
+      uuid: 9.0.0
       webpack-dev-server: 4.6.0_nwcuyijzf6l5chuh7xhtrzgjly
     transitivePeerDependencies:
       - '@types/express'
@@ -16721,7 +16721,7 @@ packages:
       '@fluidframework/runtime-definitions': 2.0.0-internal.7.0.0
       '@fluidframework/runtime-utils': 2.0.0-internal.7.0.0
       '@fluidframework/telemetry-utils': 2.0.0-internal.7.0.0
-      uuid: 9.0.1
+      uuid: 9.0.0
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -16744,7 +16744,7 @@ packages:
       '@fluidframework/runtime-utils': 2.0.0-internal.7.0.0
       '@fluidframework/synthesize': 2.0.0-internal.7.0.0
       '@fluidframework/view-interfaces': 2.0.0-internal.7.0.0
-      uuid: 9.0.1
+      uuid: 9.0.0
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -16767,7 +16767,7 @@ packages:
       '@fluidframework/runtime-utils': 2.0.0-internal.7.0.0_debug@4.3.4
       '@fluidframework/synthesize': 2.0.0-internal.7.0.0
       '@fluidframework/view-interfaces': 2.0.0-internal.7.0.0
-      uuid: 9.0.1
+      uuid: 9.0.0
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -16803,7 +16803,7 @@ packages:
     dependencies:
       '@fluidframework/protocol-definitions': 3.0.0
       jsrsasign: 10.8.6
-      uuid: 9.0.1
+      uuid: 9.0.0
     dev: true
 
   /@fluidframework/build-common/2.0.0:
@@ -17194,7 +17194,7 @@ packages:
     resolution: {integrity: sha512-jXCWUnehifjXBHANIVO7ZI9Hueiimt7nPrxvkXDyanaLzYtTeOAArVO10bSyDctynzb1SOvhdPtxka+NpHCeLQ==}
     dependencies:
       '@fluidframework/common-definitions': 1.0.0
-      '@types/events': 3.0.0
+      '@types/events': 3.0.1
       base64-js: 1.5.1
       buffer: 6.0.3
       events: 3.3.0
@@ -17227,7 +17227,7 @@ packages:
       events: 3.3.0
       lodash: 4.17.21
       url: 0.11.3
-      uuid: 9.0.1
+      uuid: 9.0.0
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -17286,7 +17286,7 @@ packages:
       events: 3.3.0
       lz4js: 0.2.0
       sorted-btree: 1.8.1
-      uuid: 9.0.1
+      uuid: 9.0.0
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -17380,7 +17380,7 @@ packages:
       '@fluidframework/runtime-utils': 2.0.0-internal.7.0.0_debug@4.3.4
       '@fluidframework/telemetry-utils': 2.0.0-internal.7.0.0
       lodash: 4.17.21
-      uuid: 9.0.1
+      uuid: 9.0.0
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -17464,7 +17464,7 @@ packages:
       axios: 0.26.1
       lz4js: 0.2.0
       url: 0.11.3
-      uuid: 9.0.1
+      uuid: 9.0.0
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -17484,7 +17484,7 @@ packages:
       axios: 0.26.1_debug@4.3.4
       lz4js: 0.2.0
       url: 0.11.3
-      uuid: 9.0.1
+      uuid: 9.0.0
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -17622,7 +17622,7 @@ packages:
       '@fluidframework/protocol-definitions': 3.0.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.7.0.0
       '@fluidframework/shared-object-base': 2.0.0-internal.7.0.0
-      uuid: 9.0.1
+      uuid: 9.0.0
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -17647,8 +17647,8 @@ packages:
       '@fluidframework/telemetry-utils': 2.0.0-internal.7.0.0
       events: 3.3.0
       jsrsasign: 10.8.6
-      url: 0.11.3
-      uuid: 9.0.1
+      url: 0.11.0
+      uuid: 9.0.0
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -17676,8 +17676,8 @@ packages:
       '@fluidframework/telemetry-utils': 2.0.0-internal.7.0.0
       events: 3.3.0
       jsrsasign: 10.8.6
-      url: 0.11.3
-      uuid: 9.0.1
+      url: 0.11.0
+      uuid: 9.0.0
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -17793,7 +17793,7 @@ packages:
       '@fluidframework/driver-utils': 2.0.0-internal.7.0.0
       '@fluidframework/odsp-driver-definitions': 2.0.0-internal.7.0.0
       '@fluidframework/telemetry-utils': 2.0.0-internal.7.0.0
-      node-fetch: 2.7.0
+      node-fetch: 2.6.11
     transitivePeerDependencies:
       - debug
       - encoding
@@ -17810,7 +17810,7 @@ packages:
       '@fluidframework/driver-utils': 2.0.0-internal.7.0.0_debug@4.3.4
       '@fluidframework/odsp-driver-definitions': 2.0.0-internal.7.0.0
       '@fluidframework/telemetry-utils': 2.0.0-internal.7.0.0
-      node-fetch: 2.7.0
+      node-fetch: 2.6.11
     transitivePeerDependencies:
       - debug
       - encoding
@@ -17837,9 +17837,9 @@ packages:
       '@fluidframework/protocol-base': 2.0.1
       '@fluidframework/protocol-definitions': 3.0.0
       '@fluidframework/telemetry-utils': 2.0.0-internal.7.0.0
-      node-fetch: 2.7.0
-      socket.io-client: 4.7.2
-      uuid: 9.0.1
+      node-fetch: 2.6.11
+      socket.io-client: 4.6.1
+      uuid: 9.0.0
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -17874,7 +17874,7 @@ packages:
       '@fluidframework/runtime-definitions': 2.0.0-internal.7.0.0
       '@fluidframework/runtime-utils': 2.0.0-internal.7.0.0
       '@fluidframework/shared-object-base': 2.0.0-internal.7.0.0
-      uuid: 9.0.1
+      uuid: 9.0.0
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -17968,7 +17968,7 @@ packages:
       json-stringify-safe: 5.0.1
       socket.io-client: 4.7.2
       url-parse: 1.5.10
-      uuid: 9.0.1
+      uuid: 9.0.0
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -17991,11 +17991,11 @@ packages:
       '@fluidframework/protocol-definitions': 3.0.0
       '@fluidframework/server-services-client': 2.0.1
       '@fluidframework/telemetry-utils': 2.0.0-internal.7.0.0
-      cross-fetch: 3.1.8
+      cross-fetch: 3.1.6
       json-stringify-safe: 5.0.1
-      socket.io-client: 4.7.2
+      socket.io-client: 4.6.1
       url-parse: 1.5.10
-      uuid: 9.0.1
+      uuid: 9.0.0
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -18012,7 +18012,7 @@ packages:
       '@fluidframework/driver-definitions': 2.0.0-internal.7.0.0
       '@fluidframework/protocol-definitions': 3.0.0
       nconf: 0.12.0
-      url: 0.11.3
+      url: 0.11.0
     dev: true
 
   /@fluidframework/runtime-definitions/2.0.0-internal.7.0.0:
@@ -18351,7 +18351,7 @@ packages:
       '@fluidframework/runtime-definitions': 2.0.0-internal.7.0.0
       '@fluidframework/runtime-utils': 2.0.0-internal.7.0.0_debug@4.3.4
       '@fluidframework/telemetry-utils': 2.0.0-internal.7.0.0
-      uuid: 9.0.1
+      uuid: 9.0.0
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -18404,7 +18404,7 @@ packages:
       '@fluidframework/protocol-definitions': 3.0.0
       debug: 4.3.4
       events: 3.3.0
-      uuid: 9.0.1
+      uuid: 9.0.0
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -18415,7 +18415,7 @@ packages:
       '@fluidframework/core-interfaces': 2.0.0-internal.7.0.0
       '@fluidframework/driver-definitions': 2.0.0-internal.7.0.0
       '@fluidframework/protocol-definitions': 3.0.0
-      uuid: 9.0.1
+      uuid: 9.0.0
     dev: true
 
   /@fluidframework/test-runtime-utils/2.0.0-internal.7.0.0:
@@ -18436,7 +18436,7 @@ packages:
       axios: 0.26.1
       events: 3.3.0
       jsrsasign: 10.8.6
-      uuid: 9.0.1
+      uuid: 9.0.0
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -18463,7 +18463,7 @@ packages:
       axios: 0.26.1_debug@4.3.4
       events: 3.3.0
       jsrsasign: 10.8.6
-      uuid: 9.0.1
+      uuid: 9.0.0
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -18472,8 +18472,8 @@ packages:
       - utf-8-validate
     dev: true
 
-  /@fluidframework/test-tools/0.2.158186:
-    resolution: {integrity: sha512-PwO7X/Kg46befSo28mSuef95/fQUmfOFWmoY1FdWAMz+6srX4o/8B4KVaKQ/3nmFD5a/PQHYHqyzAxWiFZYpfQ==}
+  /@fluidframework/test-tools/1.0.195075:
+    resolution: {integrity: sha512-N7FiXKoz6uQhDJhJxSunya5uP/GWNEp0ohYs0Jkb8Mmnow1SKuxl29x3rC9Kf5zORjUk8krCjam50+d8aPFGaw==}
     hasBin: true
     dev: true
 
@@ -18503,7 +18503,7 @@ packages:
       '@fluidframework/test-runtime-utils': 2.0.0-internal.7.0.0_debug@4.3.4
       best-random: 1.0.3
       debug: 4.3.4
-      uuid: 9.0.1
+      uuid: 9.0.0
     transitivePeerDependencies:
       - bufferutil
       - encoding
@@ -18526,7 +18526,7 @@ packages:
       '@fluidframework/routerlicious-driver': 2.0.0-internal.7.0.0
       '@fluidframework/runtime-utils': 2.0.0-internal.7.0.0
       '@fluidframework/tinylicious-driver': 2.0.0-internal.7.0.0
-      uuid: 9.0.1
+      uuid: 9.0.0
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -18545,7 +18545,7 @@ packages:
       '@fluidframework/routerlicious-driver': 2.0.0-internal.7.0.0
       '@fluidframework/server-services-client': 2.0.1
       jsrsasign: 10.8.6
-      uuid: 9.0.1
+      uuid: 9.0.0
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -18628,7 +18628,7 @@ packages:
       csstype: 3.1.2
       rtl-css-js: 1.16.1
       stylis: 4.2.0
-      tslib: 2.6.2
+      tslib: 2.5.0
     dev: false
 
   /@griffel/react/1.5.14_react@17.0.2:
@@ -18648,7 +18648,7 @@ packages:
     dependencies:
       '@griffel/core': 1.14.1
       react: 17.0.2
-      tslib: 2.6.2
+      tslib: 2.5.0
     dev: false
 
   /@griffel/style-types/1.0.1:
@@ -22927,6 +22927,9 @@ packages:
   /@types/events/3.0.0:
     resolution: {integrity: sha512-EaObqwIvayI5a8dCzhFrjKzVwKLxjoG9T6Ppd5CEo07LRKfQ8Yokw54r5+Wq7FaBQ+yXRvQAYPrHwya1/UFt9g==}
 
+  /@types/events/3.0.1:
+    resolution: {integrity: sha512-QfUFdKjGSc+iCf8OFZhqJKfDuqB6lP57kSMkPw8ba3yNDANicUwCdaPt5ytZ4nDXXVFxQkvT8v73I4stSVrCxA==}
+
   /@types/expect-puppeteer/2.2.1:
     resolution: {integrity: sha512-xfDxxVkt9R8hqjrN++7KCAg105mUzdETT04E2tlMKDn/+Q9gdvTiSGIEDs1BUS2mcbHUlfuAWqSDEwyVd7RKsg==}
     dependencies:
@@ -23208,6 +23211,7 @@ packages:
 
   /@types/node/16.18.38:
     resolution: {integrity: sha512-6sfo1qTulpVbkxECP+AVrHV9OoJqhzCsfTNp5NIG+enM4HyM3HvZCO798WShIXBN0+QtDIcutJCjsVYnQP5rIQ==}
+    dev: true
 
   /@types/node/16.18.40:
     resolution: {integrity: sha512-+yno3ItTEwGxXiS/75Q/aHaa5srkpnJaH+kdkTVJ3DtJEwv92itpKbxU+FjPoh2m/5G9zmUQfrL4A4C13c+iGA==}
@@ -23434,6 +23438,7 @@ packages:
 
   /@types/uuid/9.0.2:
     resolution: {integrity: sha512-kNnC1GFBLuhImSnV7w4njQkUiJi0ZXUycu1rUaouPqiKlXkh77JKgdRnTAp1x5eBwcIwbtI+3otwzuIDEuDoxQ==}
+    dev: true
 
   /@types/valid-url/1.0.4:
     resolution: {integrity: sha512-msGTxAnOwsiKZ36i5h3eBfOsMfuh+vKMqwsepJAd56ov9b+F9yYbJuE3rFOznHScNMKPY/y6rXbtWkb5RhyHMg==}
@@ -23502,8 +23507,8 @@ packages:
       '@types/yargs-parser': 21.0.0
     dev: true
 
-  /@types/yauzl/2.10.0:
-    resolution: {integrity: sha512-Cn6WYCm0tXv8p6k+A8PvbDG763EDpBoTzHdA+Q/MF6H3sapGjCm9NzoaJncJS9tUKSuCoDs9XHxYYsQDgxR6kw==}
+  /@types/yauzl/2.10.1:
+    resolution: {integrity: sha512-CHzgNU3qYBnp/O4S3yv2tXPlvMTq0YWSTVg2/JYLqWZGHwwgJGAwd00poay/11asPq8wLFwHzubyInqHIFmmiw==}
     requiresBuild: true
     dependencies:
       '@types/node': 16.18.53
@@ -24175,7 +24180,7 @@ packages:
       webpack-dev-server:
         optional: true
     dependencies:
-      webpack-cli: 4.10.0_qsn6o3u33rjjm6wv75wpbgo5ga
+      webpack-cli: 4.10.0_webpack@5.83.0
     dev: true
 
   /@wojtekmaj/enzyme-adapter-react-17/0.6.7_7ltvq4e2railvf5uya4ffxpe2a:
@@ -24399,8 +24404,10 @@ packages:
       ajv: 6.12.6
     dev: true
 
-  /ajv-formats/2.1.1:
+  /ajv-formats/2.1.1_ajv@8.12.0:
     resolution: {integrity: sha512-Wx0Kx52hxE7C18hkMEggYlEifqWZtYaRgouJor+WMdPnQyEK13vgEWyVNup7SoeeoLMsr4kf5h6dOW11I15MUA==}
+    peerDependencies:
+      ajv: ^8.0.0
     peerDependenciesMeta:
       ajv:
         optional: true
@@ -27568,7 +27575,6 @@ packages:
       node-fetch: 2.6.11
     transitivePeerDependencies:
       - encoding
-    dev: false
 
   /cross-fetch/3.1.8:
     resolution: {integrity: sha512-cvA+JwZoU0Xq+h6WkMvAUqPEYy92Obet6UdKLfW60qn99ftItKjB5T+BkyWOFWe2pUyfQ+IJHmpOTznqk1M6Kg==}
@@ -28036,7 +28042,7 @@ packages:
       memfs-or-file-map-to-github-branch: 1.2.1
       micromatch: 4.0.5
       node-cleanup: 2.1.2
-      node-fetch: 2.6.11
+      node-fetch: 2.7.0
       override-require: 1.1.1
       p-limit: 2.3.0
       parse-diff: 0.7.1
@@ -29351,6 +29357,15 @@ packages:
       eslint: 8.6.0
     dev: true
 
+  /eslint-config-prettier/9.0.0_eslint@8.6.0:
+    resolution: {integrity: sha512-IcJsTkJae2S35pRsRAwoCE+925rJJStOdkKnLVgtE+tEpqU0EVVM7OqrwxqgptKdX29NUwC82I5pXsGFIgSevw==}
+    hasBin: true
+    peerDependencies:
+      eslint: '>=7.0.0'
+    dependencies:
+      eslint: 8.6.0
+    dev: true
+
   /eslint-import-resolver-node/0.3.7:
     resolution: {integrity: sha512-gozW2blMLJCeFpBwugLTGyvVjNoeo1knonXAcatC6bjPBZitotxdWf7Gimr25N4c0AAOo4eOUfaG82IJPDpqCA==}
     dependencies:
@@ -29361,7 +29376,7 @@ packages:
       - supports-color
     dev: true
 
-  /eslint-import-resolver-typescript/3.5.5_wwrwxdavgu4hzdoqb37x5rvvke:
+  /eslint-import-resolver-typescript/3.5.5_lzq2knpwsp5cvefgpb4ykfeff4:
     resolution: {integrity: sha512-TdJqPHs2lW5J9Zpe17DZNQuDnox4xo2o+0tE7Pggain9Rbc19ik8kFtXdxZ250FVx2kF4vlt2RSf4qlUpG7bhw==}
     engines: {node: ^14.18.0 || >=16.0.0}
     peerDependencies:
@@ -29371,8 +29386,8 @@ packages:
       debug: 4.3.4
       enhanced-resolve: 5.15.0
       eslint: 8.6.0
-      eslint-module-utils: 2.8.0_av4jjatakjabmml5z5flrwsy3e
-      eslint-plugin-import: 2.25.4_av4jjatakjabmml5z5flrwsy3e
+      eslint-module-utils: 2.8.0_htojv7osgecekql5s5yswrjo4e
+      eslint-plugin-import: 2.25.4_htojv7osgecekql5s5yswrjo4e
       get-tsconfig: 4.6.2
       globby: 13.1.4
       is-core-module: 2.12.1
@@ -29385,7 +29400,7 @@ packages:
       - supports-color
     dev: true
 
-  /eslint-module-utils/2.8.0_2wwsys6gbnsdc4a7jaa5rcv4nq:
+  /eslint-module-utils/2.8.0_htojv7osgecekql5s5yswrjo4e:
     resolution: {integrity: sha512-aWajIYfsqCKRDgUfjEXNN/JlrzauMuSEy5sbd7WXbtW3EH6A6MpwEh42c7qD+MqQo9QMJ6fWLAeIJynx0g6OAw==}
     engines: {node: '>=4'}
     peerDependencies:
@@ -29406,66 +29421,10 @@ packages:
       eslint-import-resolver-webpack:
         optional: true
     dependencies:
+      '@typescript-eslint/parser': 5.55.0_qvtltsyn3reahc7lgycismcfiq
       debug: 3.2.7
       eslint: 8.6.0
-      eslint-import-resolver-node: 0.3.7
-    transitivePeerDependencies:
-      - supports-color
-    dev: true
-
-  /eslint-module-utils/2.8.0_ajv3vlqzjpoxbu6hdlpgvuycsm:
-    resolution: {integrity: sha512-aWajIYfsqCKRDgUfjEXNN/JlrzauMuSEy5sbd7WXbtW3EH6A6MpwEh42c7qD+MqQo9QMJ6fWLAeIJynx0g6OAw==}
-    engines: {node: '>=4'}
-    peerDependencies:
-      '@typescript-eslint/parser': '*'
-      eslint: '*'
-      eslint-import-resolver-node: '*'
-      eslint-import-resolver-typescript: '*'
-      eslint-import-resolver-webpack: '*'
-    peerDependenciesMeta:
-      '@typescript-eslint/parser':
-        optional: true
-      eslint:
-        optional: true
-      eslint-import-resolver-node:
-        optional: true
-      eslint-import-resolver-typescript:
-        optional: true
-      eslint-import-resolver-webpack:
-        optional: true
-    dependencies:
-      debug: 3.2.7
-      eslint: 8.6.0
-      eslint-import-resolver-node: 0.3.7
-      eslint-import-resolver-typescript: 3.5.5_wwrwxdavgu4hzdoqb37x5rvvke
-    transitivePeerDependencies:
-      - supports-color
-    dev: true
-
-  /eslint-module-utils/2.8.0_av4jjatakjabmml5z5flrwsy3e:
-    resolution: {integrity: sha512-aWajIYfsqCKRDgUfjEXNN/JlrzauMuSEy5sbd7WXbtW3EH6A6MpwEh42c7qD+MqQo9QMJ6fWLAeIJynx0g6OAw==}
-    engines: {node: '>=4'}
-    peerDependencies:
-      '@typescript-eslint/parser': '*'
-      eslint: '*'
-      eslint-import-resolver-node: '*'
-      eslint-import-resolver-typescript: '*'
-      eslint-import-resolver-webpack: '*'
-    peerDependenciesMeta:
-      '@typescript-eslint/parser':
-        optional: true
-      eslint:
-        optional: true
-      eslint-import-resolver-node:
-        optional: true
-      eslint-import-resolver-typescript:
-        optional: true
-      eslint-import-resolver-webpack:
-        optional: true
-    dependencies:
-      debug: 3.2.7
-      eslint: 8.6.0
-      eslint-import-resolver-typescript: 3.5.5_wwrwxdavgu4hzdoqb37x5rvvke
+      eslint-import-resolver-typescript: 3.5.5_lzq2knpwsp5cvefgpb4ykfeff4
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -29495,7 +29454,7 @@ packages:
       debug: 3.2.7
       eslint: 8.6.0
       eslint-import-resolver-node: 0.3.7
-      eslint-import-resolver-typescript: 3.5.5_wwrwxdavgu4hzdoqb37x5rvvke
+      eslint-import-resolver-typescript: 3.5.5_lzq2knpwsp5cvefgpb4ykfeff4
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -29594,66 +29553,6 @@ packages:
       eslint: 8.6.0
       eslint-import-resolver-node: 0.3.7
       eslint-module-utils: 2.8.0_nd5yjn7vp7rjhzbqd7k4s2bww4
-      has: 1.0.3
-      is-core-module: 2.12.1
-      is-glob: 4.0.3
-      minimatch: 3.1.2
-      object.values: 1.1.6
-      resolve: 1.22.2
-      tsconfig-paths: 3.14.2
-    transitivePeerDependencies:
-      - eslint-import-resolver-typescript
-      - eslint-import-resolver-webpack
-      - supports-color
-    dev: true
-
-  /eslint-plugin-import/2.25.4_av4jjatakjabmml5z5flrwsy3e:
-    resolution: {integrity: sha512-/KJBASVFxpu0xg1kIBn9AUa8hQVnszpwgE7Ld0lKAlx7Ie87yzEzCgSkekt+le/YVhiaosO4Y14GDAOc41nfxA==}
-    engines: {node: '>=4'}
-    peerDependencies:
-      '@typescript-eslint/parser': '*'
-      eslint: ^2 || ^3 || ^4 || ^5 || ^6 || ^7.2.0 || ^8
-    peerDependenciesMeta:
-      '@typescript-eslint/parser':
-        optional: true
-    dependencies:
-      array-includes: 3.1.6
-      array.prototype.flat: 1.3.1
-      debug: 2.6.9
-      doctrine: 2.1.0
-      eslint: 8.6.0
-      eslint-import-resolver-node: 0.3.7
-      eslint-module-utils: 2.8.0_ajv3vlqzjpoxbu6hdlpgvuycsm
-      has: 1.0.3
-      is-core-module: 2.12.1
-      is-glob: 4.0.3
-      minimatch: 3.1.2
-      object.values: 1.1.6
-      resolve: 1.22.2
-      tsconfig-paths: 3.14.2
-    transitivePeerDependencies:
-      - eslint-import-resolver-typescript
-      - eslint-import-resolver-webpack
-      - supports-color
-    dev: true
-
-  /eslint-plugin-import/2.25.4_eslint@8.6.0:
-    resolution: {integrity: sha512-/KJBASVFxpu0xg1kIBn9AUa8hQVnszpwgE7Ld0lKAlx7Ie87yzEzCgSkekt+le/YVhiaosO4Y14GDAOc41nfxA==}
-    engines: {node: '>=4'}
-    peerDependencies:
-      '@typescript-eslint/parser': '*'
-      eslint: ^2 || ^3 || ^4 || ^5 || ^6 || ^7.2.0 || ^8
-    peerDependenciesMeta:
-      '@typescript-eslint/parser':
-        optional: true
-    dependencies:
-      array-includes: 3.1.6
-      array.prototype.flat: 1.3.1
-      debug: 2.6.9
-      doctrine: 2.1.0
-      eslint: 8.6.0
-      eslint-import-resolver-node: 0.3.7
-      eslint-module-utils: 2.8.0_2wwsys6gbnsdc4a7jaa5rcv4nq
       has: 1.0.3
       is-core-module: 2.12.1
       is-glob: 4.0.3
@@ -30496,7 +30395,7 @@ packages:
       get-stream: 5.2.0
       yauzl: 2.10.0
     optionalDependencies:
-      '@types/yauzl': 2.10.0
+      '@types/yauzl': 2.10.1
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -30615,7 +30514,7 @@ packages:
     dependencies:
       '@fastify/deepmerge': 1.3.0
       ajv: 8.12.0
-      ajv-formats: 2.1.1
+      ajv-formats: 2.1.1_ajv@8.12.0
       fast-deep-equal: 3.1.3
       fast-uri: 2.2.0
       rfdc: 1.3.0
@@ -31362,7 +31261,7 @@ packages:
     requiresBuild: true
     dependencies:
       bindings: 1.5.0
-      nan: 2.17.0
+      nan: 2.18.0
     dev: true
     optional: true
 
@@ -37263,8 +37162,8 @@ packages:
     resolution: {integrity: sha512-nnbWWOkoWyUsTjKrhgD0dcz22mdkSnpYqbEjIm2nhwhuxlSkpywJmBo8h0ZqJdkp73mb90SssHkN4rsRaBAfAA==}
     dev: true
 
-  /nan/2.17.0:
-    resolution: {integrity: sha512-2ZTgtl0nJsO0KQCjEpxcIr5D+Yv90plTitZt9JBfQvVJDS5seMl3FOvsh3+9CoYWXf/1l5OaZzzF6nDm4cagaQ==}
+  /nan/2.18.0:
+    resolution: {integrity: sha512-W7tfG7vMOGtD30sHoZSSc/JVYiyDPEyQVso/Zz+/uQd0B0L46gtC+pHha5FFMRpil6fm/AoEcRWyOVi4+E/f8w==}
     requiresBuild: true
     dev: true
     optional: true
@@ -39438,12 +39337,18 @@ packages:
     resolution: {integrity: sha512-PkUpF+qoXTqhOeWL9fu7As8LXsIUZ1WYaJiY/a7McAQzxjk82OF0tibkFXVCDImZtWxbvojFjerkiLb0/q8mew==}
     engines: {node: '>=10.13.0'}
     hasBin: true
+    dev: true
 
   /prettier/2.8.8:
     resolution: {integrity: sha512-tdN8qQGvNjw4CHbY+XXk0JgCXn9QiF21a55rBe5LJAU+kDyC4WQn4+awm2Xfk2lQMk5fKup9XgzTZtGkjBdP9Q==}
     engines: {node: '>=10.13.0'}
     hasBin: true
     dev: true
+
+  /prettier/3.0.3:
+    resolution: {integrity: sha512-L/4pUDMxcNa8R/EthV08Zt42WBO4h1rarVtK0K+QJG0X187OLo7l699jWw0GKuwzkPQ//jMFA/8Xm6Fh3J/DAg==}
+    engines: {node: '>=14'}
+    hasBin: true
 
   /pretty-bytes/5.6.0:
     resolution: {integrity: sha512-FFw039TmrBqFK8ma/7OL3sDz/VytdtJr044/QUJtH0wK9lb9jLq9tJyIxUwtQJHwar2BqtiA4iCWSwo9JLkzFg==}
@@ -39497,7 +39402,7 @@ packages:
     engines: {node: '>= 0.8'}
     dev: true
 
-  /pretty-quick/3.1.3_prettier@2.6.2:
+  /pretty-quick/3.1.3_prettier@3.0.3:
     resolution: {integrity: sha512-kOCi2FJabvuh1as9enxYmrnBC6tVMoVOenMaBqRfsvBHB0cbpYHjdQEpSglpASDFEXVwplpcGR4CLEaisYAFcA==}
     engines: {node: '>=10.13'}
     hasBin: true
@@ -39510,7 +39415,7 @@ packages:
       ignore: 5.2.4
       mri: 1.2.0
       multimatch: 4.0.0
-      prettier: 2.6.2
+      prettier: 3.0.3
     dev: true
 
   /prettyjson/1.2.5:
@@ -41590,7 +41495,7 @@ packages:
     dependencies:
       '@types/json-schema': 7.0.11
       ajv: 8.12.0
-      ajv-formats: 2.1.1
+      ajv-formats: 2.1.1_ajv@8.12.0
       ajv-keywords: 5.1.0_ajv@8.12.0
 
   /scoped-regex/2.1.0:
@@ -43367,7 +43272,7 @@ packages:
       schema-utils: 3.3.0
       serialize-javascript: 6.0.1
       terser: 5.20.0
-      webpack: 5.88.2
+      webpack: 5.88.2_webpack-cli@4.10.0
     dev: true
 
   /terser/4.8.1:
@@ -43754,7 +43659,7 @@ packages:
       yargs-parser: 21.1.1
     dev: true
 
-  /ts-jest/29.1.1_bd7t4cpe6hueih24owb27fpuam:
+  /ts-jest/29.1.1_tndnqa5xo6u3ff2xboqc6b3zs4:
     resolution: {integrity: sha512-D6xjnnbP17cC85nliwGiL+tpoKN0StpgE0TeOjXQTU6MVCfsB4v7aW05CgQ/1OywGb0x/oy9hHFnN+sczTiRaA==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
     hasBin: true
@@ -43775,9 +43680,10 @@ packages:
       esbuild:
         optional: true
     dependencies:
+      '@babel/core': 7.22.10
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
-      jest: 29.6.2_@types+node@16.18.38
+      jest: 29.6.2
       jest-util: 29.6.2
       json5: 2.2.3
       lodash.memoize: 4.1.2

@@ -34,7 +34,11 @@ export class Interval implements ISerializableInterval {
 	 * @internal
 	 */
 	public propertyManager: PropertiesManager;
-	constructor(public start: number, public end: number, props?: PropertySet) {
+	constructor(
+		public start: number,
+		public end: number,
+		props?: PropertySet,
+	) {
 		this.propertyManager = new PropertiesManager();
 		this.properties = {};
 
