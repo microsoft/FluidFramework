@@ -7,7 +7,7 @@
 // The Build ID needed to fetch the desired data.
 const BUILD_ID = process.env.BUILD_ID;
 // The token need to make the API calls.
-const ADO_API_TOKEN = btoa(process.env.ADO_API_TOKEN);
+const ADO_API_TOKEN = process.env.ADO_API_TOKEN;
 
 // The workspace where the new files/folder created in this script will be stored.
 const TEST_WORKSPACE = process.env.TEST_WORKSPACE;
@@ -27,7 +27,7 @@ async function fetchData() {
                 // Fetch data from Timeline API
                 const response = await fetch(apiUrl, {
                         headers: {
-                                Authorization: `${ADO_API_TOKEN}`,
+                                Authorization: `Basic ${btoa(":" + ADO_API_TOKEN)}`,
                         },
                 });
                 console.log(response);
