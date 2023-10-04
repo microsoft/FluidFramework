@@ -8,7 +8,6 @@ Release commands are used to manage the Fluid release process.
 * [`flub release history`](#flub-release-history)
 * [`flub release report`](#flub-release-report)
 * [`flub release report-unreleased`](#flub-release-report-unreleased)
-* [`flub release setDtsTypes`](#flub-release-setdtstypes)
 
 ## `flub release`
 

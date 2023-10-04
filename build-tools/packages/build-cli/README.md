@@ -46,6 +46,7 @@ USAGE
 * [`flub merge`](docs/merge.md) - Sync branches depending on the batch size passed
 * [`flub release`](docs/release.md) - Release commands are used to manage the Fluid release process.
 * [`flub run`](docs/run.md) - Generate a report from input bundle stats collected through the collect bundleStats command.
+* [`flub setPackageTypesField`](docs/setPackageTypesField.md) - Updates which .d.ts file is referenced by the `types` field in package.json. This command is used during package publishing (by CI) to select the d.ts file which corresponds to the selected API-Extractor release tag.
 * [`flub test-only-filter`](docs/test-only-filter.md) - FOR INTERNAL TESTING ONLY. This command is used only to test the common package filtering and selection logic that is used across the CLI. FOR INTERNAL TESTING ONLY.
 * [`flub typetests`](docs/typetests.md) - Updates configuration for type tests in package.json files. If the previous version changes after running preparation, then npm install must be run before building.
 
