@@ -56,7 +56,7 @@ function collectPropertyNames(obj: object): Set<string> {
 	]);
 }
 
-describe("lazyTree", () => {
+describe("LazyTree", () => {
 	it("property names", () => {
 		const builder = new SchemaBuilder("lazyTree");
 		const emptyStruct = builder.struct("empty", {});
@@ -109,7 +109,19 @@ describe("lazyTree", () => {
 		assert.deepEqual(bannedFieldNames, new Set(existingPropertiesExtended));
 	});
 
-	describe("struct", () => {
+	describe("LazyFieldNode", () => {
+		// TODO
+	});
+
+	describe("LazyLeaf", () => {
+		// TODO
+	});
+
+	describe("LazyMap", () => {
+		// TODO
+	});
+
+	describe("LazyStruct", () => {
 		const structBuilder = new SchemaBuilder("boxing", {}, jsonSchema);
 		const emptyStruct = structBuilder.struct("empty", {});
 		const testStruct = structBuilder.struct("mono", {
