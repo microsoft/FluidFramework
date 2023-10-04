@@ -28,6 +28,7 @@ import {
 	rootFieldKey,
 	TreeNavigationResult,
 	ValueSchema,
+	UpPath,
 } from "../../../core";
 import { forestWithContent } from "../../utils";
 import { leaf as leafDomain } from "../../../domains";
@@ -235,6 +236,47 @@ describe("LazyField", () => {
 			const boxedResult = field.boxedAt(0);
 			assert.equal(boxedResult.type, leafDomain.string.name);
 			assert.equal(boxedResult.value, "Hello world");
+		});
+
+		it("parent", () => {
+			const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+			const struct = builder.struct("struct", {
+				foo: SchemaBuilder.fieldOptional(...leafDomain.primitives),
+			});
+			const rootSchema = SchemaBuilder.fieldOptional(struct);
+			const schema = builder.intoDocumentSchema(rootSchema);
+
+			const { context, cursor } = initializeTreeWithContent({
+				schema,
+				initialTree: {
+					foo: "Hello world",
+				},
+			});
+
+			const rootField = new LazyOptionalField(context, rootSchema, cursor, rootFieldAnchor);
+			assert.equal(rootField.parent, undefined);
+
+			const parentPath: UpPath = {
+				parent: undefined,
+				parentField: rootFieldKey,
+				parentIndex: 0,
+			};
+			const parentAnchor = context.forest.anchors.track(parentPath);
+
+			// Move cursor down to leaf field
+			cursor.enterNode(0);
+			cursor.enterField(brand("foo"));
+
+			const leafField = new LazyOptionalField(
+				context,
+				SchemaBuilder.fieldOptional(...leafDomain.primitives),
+				cursor,
+				{
+					parent: parentAnchor,
+					fieldKey: brand("foo"),
+				},
+			);
+			assert.equal(leafField.parent, rootField.boxedAt(0));
 		});
 
 		describe("length", () => {
