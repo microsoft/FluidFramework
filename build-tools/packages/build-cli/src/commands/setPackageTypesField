@@ -4,9 +4,9 @@
  */
 import { Flags } from "@oclif/core";
 import { Package, updatePackageJsonFile, PackageJson } from "@fluidframework/build-tools";
-import { PackageCommand } from "../../BasePackageCommand";
+import { PackageCommand } from "../BasePackageCommand";
 import { ExtractorConfig } from "@microsoft/api-extractor";
-import { CommandLogger } from "../../logging";
+import { CommandLogger } from "../logging";
 import path from "node:path";
 import { strict as assert } from "node:assert";
 import * as fs from "fs";
@@ -37,7 +37,7 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 	typeof SetReleaseTagPublishingCommand
 > {
 	static readonly description =
-		"Updates the .d.ts types that are included in the `types` field in package.json. This command is intended to be used in CI only.";
+		"Updates which .d.ts file is referenced by the `types` field in package.json. This command is used during package publishing (by CI) to select the d.ts file which corresponds to the selected API-Extractor release tag.";
 
 	static readonly enableJsonFlag = true;
 
@@ -61,6 +61,13 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 	};
 
 	protected async processPackage(pkg: Package): Promise<void> {
+		const configOptions = ExtractorConfig.tryLoadForFolder({
+			startingFolder: pkg.directory,
+		});
+		if (configOptions === undefined) {
+			this.verbose(`No api-extractor config found for ${pkg.name}. Skipping.`);
+			return;
+		}
 		updatePackageJsonFile(pkg.directory, (json) => {
 			if (json.types !== undefined && json.typings !== undefined) {
 				throw new Error(
@@ -71,17 +78,11 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 			const types: string | undefined = json.types ?? json.typings;
 
 			if (types === undefined) {
-				this.verbose("Neither 'types' nor 'typings' field is defined in the package.json.");
-				return;
+				throw new Error(
+					"Neither 'types' nor 'typings' field is defined in the package.json.",
+				);
 			}
 
-			const configOptions = ExtractorConfig.tryLoadForFolder({
-				startingFolder: pkg.directory,
-			});
-			if (configOptions === undefined) {
-				this.verbose(`No api-extractor config found for ${pkg.name}. Skipping.`);
-				return;
-			}
 			const extractorConfig = ExtractorConfig.prepare(configOptions);
 			assert(this.flags.types !== undefined, "--types flag must be provided.");
 
@@ -146,11 +147,7 @@ function updatePackageJsonTypes(
 			}
 
 			if (filePath) {
-				if (json.typings !== undefined) {
-					json.typings = calculateRelativePath(filePath, directory);
-					return true;
-				}
-				assert(json.types !== undefined, "`types` field is undefined");
+				delete json.typings;
 				json.types = calculateRelativePath(filePath, directory);
 				return true;
 			}
@@ -166,7 +163,7 @@ function updatePackageJsonTypes(
  * ensuring that the file path and the target directory have the same parent folder.
  * If the parent folders do not match, an error is thrown.
  *
- * @param filePath - The file path to calculate the relative path for.
+ * @param filePath - The file path to calculate the relative path from.
  * @param directory - The target directory to which the relative path should be calculated.
  * @returns The calculated relative path from 'directory' to 'filePath'.
  * @throws Error if the file path does not exists.
