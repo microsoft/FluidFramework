@@ -44,7 +44,6 @@ import {
 	createRoomLeaveMessage,
 	createRuntimeMessage,
 	generateClientId,
-	IRuntimeSignalEnvelope,
 } from "../utils";
 import {
 	IBroadcastSignalEventPayload,
@@ -624,8 +623,7 @@ export function configureWebSocketServices(
 				async (broadcastSignal: IBroadcastSignalEventPayload) => {
 					try {
 						const signalRoom = broadcastSignal.signalRoom;
-						const signalContent =
-							broadcastSignal.signalContent as IRuntimeSignalEnvelope;
+						const signalContent = broadcastSignal.signalContent;
 
 						// No-op if the room (collab session) that signal came in from is different
 						// than the current room. We reuse websockets so there could be multiple rooms

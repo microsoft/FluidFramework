@@ -145,9 +145,10 @@ export function create(
 		async (request, response) => {
 			const tenantId = getParam(request.params, "tenantId");
 			const documentId = getParam(request.params, "id");
-			const signalContent = JSON.parse(
-				getParam(request.body, "signalContent"),
-			) as IRuntimeSignalEnvelope;
+			const signalContent = getParam(
+				request.body,
+				"signalContent",
+			) as unknown as IRuntimeSignalEnvelope;
 			const validSignalContent =
 				typeof signalContent?.contents?.type === "string" &&
 				signalContent?.contents?.content !== undefined;
@@ -155,14 +156,17 @@ export function create(
 				response
 					.status(400)
 					.send(`signalContent should contain 'content' and 'type' keys.`);
+				return;
 			}
 			try {
 				const signalRoom: IRoom = { tenantId, documentId };
 				const payload: IBroadcastSignalEventPayload = { signalRoom, signalContent };
 				collaborationSessionEventEmitter.emit("broadcastSignal", payload);
 				response.status(200).send("OK");
+				return;
 			} catch (error) {
 				response.status(500).send(error);
+				return;
 			}
 		},
 	);
