@@ -430,8 +430,10 @@ export type StructFields<TFields extends RestrictiveReadonlyRecord<string, Field
 	{
 		readonly [key in keyof TFields]: UnboxField<TFields[key]>;
 	} & {
-		readonly // boxed fields (TODO: maybe remove these when same as non-boxed version?)
-		[key in keyof TFields as `boxed${Capitalize<key & string>}`]: TypedField<TFields[key]>;
+		// boxed fields (TODO: maybe remove these when same as non-boxed version?)
+		readonly [key in keyof TFields as `boxed${Capitalize<key & string>}`]: TypedField<
+			TFields[key]
+		>;
 	};
 // TODO: Add `set` method when FieldKind provides a setter (and derive the type from it).
 // set(key: FieldKey, content: FlexibleFieldContent<TSchema["mapFields"]>): void;
@@ -709,7 +711,7 @@ export type TypedFieldInner<
 	Types extends AllowedTypes,
 > = Kind extends typeof FieldKinds.sequence
 	? Sequence<Types>
-	: Kind extends typeof FieldKinds.value
+	: Kind extends typeof FieldKinds.required
 	? RequiredField<Types>
 	: Kind extends typeof FieldKinds.optional
 	? OptionalField<Types>
@@ -785,7 +787,7 @@ export type UnboxFieldInner<
 	Emptiness extends "maybeEmpty" | "notEmpty",
 > = Kind extends typeof FieldKinds.sequence
 	? Sequence<TTypes>
-	: Kind extends typeof FieldKinds.value
+	: Kind extends typeof FieldKinds.required
 	? UnboxNodeUnion<TTypes>
 	: Kind extends typeof FieldKinds.optional
 	? UnboxNodeUnion<TTypes> | (Emptiness extends "notEmpty" ? never : undefined)

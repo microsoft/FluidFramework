@@ -41,6 +41,14 @@ export interface TypedTreeOptions<TRoot extends FieldSchema = FieldSchema>
 }
 
 /**
+ * Channel for a Tree DDS.
+ * @alpha
+ */
+export type TypedTreeChannel<TRoot extends FieldSchema = FieldSchema> = IChannel & {
+	readonly root: TypedField<TRoot>;
+};
+
+/**
  * A channel factory that creates a {@link TreeField}.
  * @alpha
  */
@@ -68,7 +76,7 @@ export class TypedTreeFactory<TRoot extends FieldSchema = FieldSchema> implement
 		id: string,
 		services: IChannelServices,
 		channelAttributes: Readonly<IChannelAttributes>,
-	): Promise<IChannel & { readonly root: TypedField<TRoot> }> {
+	): Promise<TypedTreeChannel<TRoot>> {
 		const tree = new SharedTree(id, runtime, channelAttributes, this.options, "SharedTree");
 		await tree.load(services);
 		const view = tree.schematize(this.options);
@@ -76,10 +84,7 @@ export class TypedTreeFactory<TRoot extends FieldSchema = FieldSchema> implement
 		return new ChannelWrapperWithRoot(tree, root);
 	}
 
-	public create(
-		runtime: IFluidDataStoreRuntime,
-		id: string,
-	): IChannel & { readonly root: TypedField<TRoot> } {
+	public create(runtime: IFluidDataStoreRuntime, id: string): TypedTreeChannel<TRoot> {
 		const tree = new SharedTree(id, runtime, this.attributes, this.options, "SharedTree");
 		tree.initializeLocal();
 		// TODO: Once various issues with schema editing are fixed separate initialize from schematize, and explicitly do both here.
@@ -153,7 +158,10 @@ class ChannelWrapper implements IChannel {
  * IChannel wrapper that exposes a "root".
  */
 class ChannelWrapperWithRoot<T> extends ChannelWrapper {
-	public constructor(inner: IChannel, public readonly root: T) {
+	public constructor(
+		inner: IChannel,
+		public readonly root: T,
+	) {
 		super(inner);
 	}
 }

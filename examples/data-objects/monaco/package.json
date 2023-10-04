@@ -45,7 +45,6 @@
 		"@fluidframework/merge-tree": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
-		"@types/node": "^16.18.38",
 		"monaco-editor": "^0.30.0",
 		"react": "^17.0.1"
 	},
@@ -60,7 +59,7 @@
 		"html-loader": "^3.1.0",
 		"loader-utils": "^1.1.0",
 		"monaco-editor-webpack-plugin": "^6.0.0",
-		"prettier": "~2.6.2",
+		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"sass": "^1.42.1",
 		"sass-loader": "^7.1.0",

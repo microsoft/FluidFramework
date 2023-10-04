@@ -4,7 +4,8 @@
  */
 
 /**
- * This module bundles utilities for laying out {@link DocumentationNode} content for API items as a library export.
+ * This module bundles utilities for laying out {@link DocumentationNode} content for API items as a single
+ * library export.
  */
 
 export {

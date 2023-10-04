@@ -103,7 +103,7 @@
 		"jest-junit": "^10.0.0",
 		"jsdoc": "3.6.7",
 		"lighthouse": "^5.2.0",
-		"prettier": "~2.6.2",
+		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"source-map-loader": "^2.0.0",
 		"typedoc": "^0.12.0",
