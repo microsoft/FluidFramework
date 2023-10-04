@@ -184,9 +184,6 @@ export interface IPerformanceEventMarkers {
 
 // @internal
 export interface ISampledTelemetryLogger extends ITelemetryLoggerExt {
-    // (undocumented)
-    eventSampler?: IEventSampler;
-    // (undocumented)
     isSamplingDisabled: boolean;
 }
 

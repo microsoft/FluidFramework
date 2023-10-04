@@ -125,6 +125,74 @@ describe("Sampling", () => {
 		events = [];
 	});
 
+	it("Events are not sampled if DisableSampling telemetry flag is set to true", () => {
+		const injectedSettings = {
+			"Fluid.Telemetry.DisableSampling": true,
+		};
+		const logger = getMockLoggerExtWithConfig(injectedSettings);
+
+		const loggerWithoutSampling = createSampledLogger(
+			logger,
+			createSystematicEventSampler({ samplingRate: 1 }),
+		);
+		const loggerWithEvery5Sampling = createSampledLogger(
+			logger,
+			createSystematicEventSampler({ samplingRate: 5 }),
+		);
+
+		const totalEventCount = 15;
+		for (let i = 0; i < totalEventCount; i++) {
+			loggerWithoutSampling.send({ category: "generic", eventName: "noSampling" });
+			loggerWithEvery5Sampling.send({ category: "generic", eventName: "oneEveryFive" });
+		}
+		assert.equal(
+			events.filter((event) => event.eventName === "noSampling").length,
+			totalEventCount,
+		);
+		assert.equal(
+			events.filter((event) => event.eventName === "oneEveryFive").length,
+			totalEventCount,
+		);
+	});
+
+	it("Events are not sampled if DisableSampling telemetry flag is set to true and no sampler is provided", () => {
+		const injectedSettings = {
+			"Fluid.Telemetry.DisableSampling": true,
+		};
+		const logger = getMockLoggerExtWithConfig(injectedSettings);
+
+		// Sampling is disabled AND there was no sampler provided
+		const loggerWithoutSampling = createSampledLogger(logger);
+
+		const totalEventCount = 15;
+		for (let i = 0; i < totalEventCount; i++) {
+			loggerWithoutSampling.send({ category: "generic", eventName: "noSampling" });
+		}
+		assert.equal(
+			events.filter((event) => event.eventName === "noSampling").length,
+			totalEventCount,
+		);
+	});
+
+	it("Events are not sampled if DisableSampling telemetry flag is set to false but no sampler is provided", () => {
+		const injectedSettings = {
+			"Fluid.Telemetry.DisableSampling": false,
+		};
+		const logger = getMockLoggerExtWithConfig(injectedSettings);
+
+		// Sampling is disabled however there was no sampler provided so all events will be sent.
+		const loggerWithoutSampling = createSampledLogger(logger);
+
+		const totalEventCount = 15;
+		for (let i = 0; i < totalEventCount; i++) {
+			loggerWithoutSampling.send({ category: "generic", eventName: "noSampling" });
+		}
+		assert.equal(
+			events.filter((event) => event.eventName === "noSampling").length,
+			totalEventCount,
+		);
+	});
+
 	it("Systematic Sampling works as expected", () => {
 		const injectedSettings = {
 			"Fluid.Telemetry.DisableSampling": false,
@@ -165,37 +233,7 @@ describe("Sampling", () => {
 		);
 	});
 
-	it("Sampling does not run if DisableSampling telemetry flag is set to true", () => {
-		const injectedSettings = {
-			"Fluid.Telemetry.DisableSampling": true,
-		};
-		const logger = getMockLoggerExtWithConfig(injectedSettings);
-
-		const loggerWithoutSampling = createSampledLogger(
-			logger,
-			createSystematicEventSampler({ samplingRate: 1 }),
-		);
-		const loggerWithEvery5Sampling = createSampledLogger(
-			logger,
-			createSystematicEventSampler({ samplingRate: 5 }),
-		);
-
-		const totalEventCount = 15;
-		for (let i = 0; i < totalEventCount; i++) {
-			loggerWithoutSampling.send({ category: "generic", eventName: "noSampling" });
-			loggerWithEvery5Sampling.send({ category: "generic", eventName: "oneEveryFive" });
-		}
-		assert.equal(
-			events.filter((event) => event.eventName === "noSampling").length,
-			totalEventCount,
-		);
-		assert.equal(
-			events.filter((event) => event.eventName === "oneEveryFive").length,
-			totalEventCount,
-		);
-	});
-
-	it("Custom Event Sampler works as expected with externally controlled state", () => {
+	it("Event Sampler works as expected with externally controlled state", () => {
 		const injectedSettings = {
 			"Fluid.Telemetry.DisableSampling": false,
 		};

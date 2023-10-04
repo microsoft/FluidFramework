@@ -302,8 +302,8 @@ class OpPerfTelemetry {
 		}
 
 		if (
-			this.opLatencyLogger.isSamplingDisabled ||
-			(this.clientId === message.clientId &&
+			this.clientId === message.clientId &&
+			(this.opLatencyLogger.isSamplingDisabled ||
 				this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber)
 		) {
 			// We do an explicit check for undefined right after this

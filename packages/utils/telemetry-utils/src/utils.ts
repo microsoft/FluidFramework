@@ -34,11 +34,11 @@ export function logIfFalse(
 }
 
 /**
- * Used in conjunction with the {@link createSampledLogger} to control logic for sampling events.
+ * An object that contains a callback used in conjunction with the {@link createSampledLogger} utility function to provide custom logic for sampling events.
  *
  * @internal
  */
-export interface IEventSampler<> {
+export interface IEventSampler {
 	/**
 	 * @returns true if the event should be sampled or false if not
 	 */
@@ -60,7 +60,6 @@ export interface ISampledTelemetryLogger extends ITelemetryLoggerExt {
 	 * emitted anyway.
 	 */
 	isSamplingDisabled: boolean;
-	eventSampler?: IEventSampler;
 }
 
 /**
@@ -74,7 +73,7 @@ export interface ISampledTelemetryLogger extends ITelemetryLoggerExt {
  * 'Fluid.Telemetry.DisableSampling': if this config value is set to true, all events will be unsampled and therefore logged.
  * Otherwise only a sample will be logged according to the provided event sampler callback.
  *
- * Note that the same sampler is used for all APIs of the returned logger. If you want separate events flowing through the returned logger to be sampled separately, the {@IEventSampler} you provide should track them separately.
+ * Note that the same sampler is used for all APIs of the returned logger. If you want separate events flowing through the returned logger to be sampled separately, the {@link IEventSampler} you provide should track them separately.
  *
  * @internal
  */
@@ -89,27 +88,28 @@ export function createSampledLogger(
 
 	const sampledLogger = {
 		send: (event: ITelemetryBaseEvent): void => {
-			// if sampling is disabled, log all events. Otherwise, use the eventSampler to determine if the event should be logged.
-			if (isSamplingDisabled || (!isSamplingDisabled && eventSampler?.sample())) {
+			// The sampler uses the following logic for sending events:
+			// 1. If isSamplingDisabled is true, then this means events should be unsampled. Therefore we send the event without any checks.
+			// 2. If isSamplingDisabled is false, then event should be sampled using the event sampler, if the sampler is not defined just send all events, other use the eventSampler.sample() method.
+			if (isSamplingDisabled || eventSampler === undefined || eventSampler.sample()) {
 				logger.send(event);
 			}
 		},
 		sendTelemetryEvent: (event: ITelemetryGenericEventExt): void => {
-			if (isSamplingDisabled || (!isSamplingDisabled && eventSampler?.sample())) {
+			if (isSamplingDisabled || eventSampler === undefined || eventSampler.sample()) {
 				logger.sendTelemetryEvent(event);
 			}
 		},
 		sendErrorEvent: (event: ITelemetryGenericEventExt): void => {
-			if (isSamplingDisabled || (!isSamplingDisabled && eventSampler?.sample())) {
+			if (isSamplingDisabled || eventSampler === undefined || eventSampler.sample()) {
 				logger.sendErrorEvent(event);
 			}
 		},
 		sendPerformanceEvent: (event: ITelemetryGenericEventExt): void => {
-			if (isSamplingDisabled || (!isSamplingDisabled && eventSampler?.sample())) {
+			if (isSamplingDisabled || eventSampler === undefined || eventSampler.sample()) {
 				logger.sendPerformanceEvent(event);
 			}
 		},
-		eventSampler,
 		isSamplingDisabled: isSamplingDisabled === true,
 	};
 
