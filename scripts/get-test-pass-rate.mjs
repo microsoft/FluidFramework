@@ -30,6 +30,7 @@ async function fetchData() {
                                 Authorization: `Basic ${ADO_API_TOKEN}`,
                         },
                 });
+                console.log(response);
                 if (!response.ok) {
                         throw new Error(`HTTP error, status: ${response.status}`);
                 }
