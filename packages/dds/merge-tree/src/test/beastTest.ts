@@ -4,6 +4,7 @@
  */
 
 /* eslint-disable @typescript-eslint/consistent-type-assertions, no-bitwise */
+/* eslint-disable @typescript-eslint/no-base-to-string */
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 

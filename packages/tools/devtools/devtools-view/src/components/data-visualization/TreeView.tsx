@@ -5,9 +5,9 @@
 
 import React from "react";
 
-import { HasContainerKey, VisualTreeNode } from "@fluid-experimental/devtools-core";
+import { type HasContainerKey, type VisualTreeNode } from "@fluid-experimental/devtools-core";
 
-import { DataVisualizationTreeProps } from "./CommonInterfaces";
+import { type DataVisualizationTreeProps } from "./CommonInterfaces";
 import { TreeDataView } from "./TreeDataView";
 import { TreeHeader } from "./TreeHeader";
 import { TreeItem } from "./TreeItem";

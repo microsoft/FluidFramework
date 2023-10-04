@@ -1793,7 +1793,10 @@ export class ContainerRuntime
 		return this.dataStores.aliases.get(maybeAlias) ?? maybeAlias;
 	}
 
-	private async getDataStoreFromRequest(id: string, request: IRequest): Promise<IFluidRouter> {
+	private async getDataStoreFromRequest(
+		id: string,
+		request: IRequest,
+	): Promise<IFluidDataStoreChannel> {
 		const headerData: RuntimeHeaderData = {};
 		if (typeof request.headers?.[RuntimeHeaders.wait] === "boolean") {
 			headerData.wait = request.headers[RuntimeHeaders.wait];

@@ -54,7 +54,7 @@ export interface Tree<TSchema = unknown> extends Iterable<Tree> {
 	 * Gets the {@link TreeStatus} of this tree.
 	 *
 	 * @remarks
-	 * For non-root fields, this is the the status of the parent node, since fields do not have a separate lifetime.
+	 * For non-root fields, this is the status of the parent node, since fields do not have a separate lifetime.
 	 */
 	treeStatus(): TreeStatus;
 }
@@ -108,7 +108,7 @@ export interface TreeNode extends Tree<TreeSchema> {
 
 	/**
 	 * Same as `this.schema.name`.
-	 * This is provided as a enumerable own property to aid with JavaScript object traversals of this data-structure.
+	 * This is provided as an enumerable own property to aid with JavaScript object traversals of this data-structure.
 	 * See [ReadMe](./README.md) for details.
 	 */
 	readonly type: TreeSchemaIdentifier;
@@ -180,7 +180,7 @@ export interface TreeField extends Tree<FieldSchema>, Iterable<TreeNode> {
  * A {@link TreeNode} that behaves like a `Map<FieldKey, Field>` for a specific `Field` type.
  *
  * @remarks
- * Unlike TypeScript Map type, {@link MapNode.get} always provides a reference to any field looked up, even if its never been set.
+ * Unlike TypeScript Map type, {@link MapNode.get} always provides a reference to any field looked up, even if it has never been set.
  *
  * This means that, for example, a `MapNode` of {@link Sequence} fields will return an empty sequence when a previously unused key is looked up,
  * and that sequence can be used to insert new items into the field.
@@ -190,6 +190,35 @@ export interface TreeField extends Tree<FieldSchema>, Iterable<TreeNode> {
  * @alpha
  */
 export interface MapNode<TSchema extends MapSchema> extends TreeNode {
+	/**
+	 * The number of elements in the map.
+	 *
+	 * @remarks
+	 * All fields under a map implicitly exist, but `size` will count only the fields which contain one or more nodes.
+	 */
+	readonly size: number;
+
+	/**
+	 * Checks whether a value exists for the given key.
+	 * @param key - Which map entry to look up.
+	 *
+	 * @remarks
+	 * All fields under a map implicitly exist, but `has` will only return true if there are one or more nodes present in the given field.
+	 *
+	 * @privateRemarks
+	 * TODO: Consider changing the key type to `string` for easier use.
+	 */
+	has(key: FieldKey): boolean;
+
+	/**
+	 * Get the value associated with `key`.
+	 * @param key - which map entry to look up.
+	 *
+	 * @privateRemarks
+	 * TODO: Consider changing the key type to `string` for easier use.
+	 */
+	get(key: FieldKey): UnboxField<TSchema["mapFields"]>;
+
 	/**
 	 * Get the field for `key`.
 	 * @param key - which map entry to look up.
@@ -201,7 +230,48 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	 * @privateRemarks
 	 * TODO: Consider changing the key type to `string` for easier use.
 	 */
-	get(key: FieldKey): TypedField<TSchema["mapFields"]>;
+	getBoxed(key: FieldKey): TypedField<TSchema["mapFields"]>;
+
+	/**
+	 * Returns an iterable of keys in the map.
+	 *
+	 * @remarks
+	 * All fields under a map implicitly exist, but `keys` will yield only the keys of fields which contain one or more nodes.
+	 */
+	keys(): IterableIterator<FieldKey>;
+
+	/**
+	 * Returns an iterable of values in the map.
+	 *
+	 * @remarks
+	 * All fields under a map implicitly exist, but `values` will yield only the fields containing one or more nodes.
+	 */
+	values(): IterableIterator<UnboxField<TSchema["mapFields"]>>;
+
+	/**
+	 * Returns an iterable of key, value pairs for every entry in the map.
+	 *
+	 * @remarks
+	 * All fields under a map implicitly exist, but `entries` will yield only the entries whose fields contain one or more nodes.
+	 */
+	entries(): IterableIterator<[FieldKey, UnboxField<TSchema["mapFields"]>]>;
+
+	/**
+	 * Executes a provided function once per each key/value pair in the map.
+	 * @param callbackFn - The function to run for each map entry
+	 * @param thisArg - If present, `callbackFn` will be bound to `thisArg`
+	 *
+	 * @privateRemarks
+	 * TODO: This should run over fields in insertion order if we want to match the javascript foreach spec.
+	 */
+	forEach(
+		callbackFn: (
+			value: UnboxField<TSchema["mapFields"]>,
+			key: FieldKey,
+			map: MapNode<TSchema>,
+		) => void,
+		thisArg?: any,
+	): void;
 
 	// TODO: Add `set` method when FieldKind provides a setter (and derive the type from it).
 	// set(key: FieldKey, content: FlexibleFieldContent<TSchema["mapFields"]>): void;
