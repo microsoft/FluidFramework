@@ -13,7 +13,7 @@ import {
 	SchemaData,
 	storedEmptyFieldSchema,
 } from "../../core";
-import { FullSchemaPolicy, Multiplicity } from "./fieldKind";
+import { FullSchemaPolicy, Multiplicity, withEditor } from "./fieldKind";
 
 /**
  * @returns true iff `superset` is a superset of `original`.
@@ -106,8 +106,8 @@ export function allowsFieldSuperset(
 	original: FieldStoredSchema,
 	superset: FieldStoredSchema,
 ): boolean {
-	return (
-		policy.fieldKinds.get(original.kind.identifier) ?? fail("missing kind")
+	return withEditor(
+		policy.fieldKinds.get(original.kind.identifier) ?? fail("missing kind"),
 	).allowsFieldSuperset(policy, originalData, original.types, superset);
 }
 
