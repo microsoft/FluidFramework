@@ -300,16 +300,16 @@ export interface EditableTreeEvents {
 	subtreeChanging(upPath: UpPath): PathVisitor | void;
 
 	/**
-	 * Raised on nodes right before a change is applied to them (or their fields), or somewher in their subtree.
-	 * @param upPath - the path corresponding to the location of the node, upward. Note that this is not necessarily the
-	 * node that is changing; the change could be in a descendant of the node the `upPath` points to.
+	 * Raised on a node right before a change is applied to one of its fields or the fields of a descendant node.
+	 * @param upPath - The path (upward) corresponding to the location of the node raising the event. Note that this is not
+	 * necessarily the node that is about to change; the change could be in a descendant of the node the `upPath` points to.
 	 */
 	beforeChange(upPath: UpPath): void;
 
 	/**
-	 * Raised on nodes right after a change has been applied to them (or their fields), or somewhere in their subtree.
-	 * @param upPath - the path corresponding to the location of the node, upward. Note that this is not necessarily the
-	 * node that changed; the change could be in a descendant of the node the `upPath` points to.
+	 * Raised on a node right after a change is applied to one of its fields or the fields of a descendant node.
+	 * @param upPath - The path (upward) corresponding to the location of the node raising the event. Note that this is not
+	 * necessarily the node that changed; the change could be in a descendant of the node the `upPath` points to.
 	 */
 	afterChange(upPath: UpPath): void;
 }
