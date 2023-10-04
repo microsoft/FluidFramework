@@ -14,6 +14,7 @@ const { ApiItemKind } = require("@microsoft/api-extractor-model");
 const { PackageName } = require("@rushstack/node-core-library");
 const fs = require("fs-extra");
 const path = require("path");
+const yaml = require("js-yaml");
 
 const { alertNodeType } = require("./alert-node");
 const { layoutContent } = require("./api-documentation-layout");
@@ -44,6 +45,12 @@ async function renderApiDocumentation() {
 	console.groupEnd();
 
 	const config = getApiItemTransformationConfigurationWithDefaults({
+		documentBoundaries: [
+			ApiItemKind.Class,
+			ApiItemKind.Enum,
+			ApiItemKind.Interface,
+			ApiItemKind.Namespace,
+		],
 		apiModel,
 		newlineKind: "lf",
 		uriRoot: "/docs/apis",
@@ -76,6 +83,8 @@ async function renderApiDocumentation() {
 		console.error("Encountered error while generating API documentation:", error);
 		throw error;
 	}
+
+	processMetaDataFromDocuments(documents);
 
 	console.groupEnd();
 
@@ -119,6 +128,53 @@ async function renderApiDocumentation() {
 	);
 
 	console.groupEnd();
+}
+
+/**
+ * Processes, categorizes them based on API item kinds and saves metadata from documents into YAML files.
+ *
+ * The function creates maps from the metadata: one for API items and another for packages.
+ * Results are saved to 'apiData.yaml' and 'packageData.yaml' in the 'data' directory.
+ *
+ * @param {Array<Object>} documents - List of documents containing metadata.
+ * @param {Object} documents[].documentItemMetadata - Metadata for a document item.
+ * @param {string} documents[].documentItemMetadata.apiItemName - Name of the API item.
+ * @param {string} documents[].documentItemMetadata.apiItemKind - Kind of the API item (e.g., Class, Interface, Package).
+ * @param {string} documents[].documentItemMetadata.packageName - Name of the package to which the API item belongs.
+ *
+ * @returns {void}
+ */
+function processMetaDataFromDocuments(documents) {
+	const { APIMap, packageMap } = documents.reduce(
+		(
+			{ APIMap, packageMap },
+			{ documentItemMetadata: { apiItemName, apiItemKind, packageName } },
+		) => {
+			if (apiItemKind === ApiItemKind.Package) {
+				return {
+					APIMap,
+					packageMap: { ...packageMap, [apiItemName]: packageName },
+				};
+			}
+
+			if (
+				[ApiItemKind.Class, ApiItemKind.Interface, ApiItemKind.Enum].includes(apiItemKind)
+			) {
+				APIMap[packageName] = APIMap[packageName] || {};
+				APIMap[packageName][apiItemKind] = APIMap[packageName][apiItemKind] || [];
+				APIMap[packageName][apiItemKind].push(apiItemName);
+			}
+			return { APIMap, packageMap };
+		},
+		{ APIMap: {}, packageMap: {} },
+	);
+
+	fs.writeFileSync(path.join(__dirname, "..", "data", "apiData.yaml"), yaml.dump(APIMap), "utf8");
+	fs.writeFileSync(
+		path.join(__dirname, "..", "data", "packageData.yaml"),
+		yaml.dump(packageMap),
+		"utf8",
+	);
 }
 
 module.exports = {

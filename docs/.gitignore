@@ -6,6 +6,8 @@ node_modules/
 public/
 scripts/api-documenter/temp
 themes/thxvscode/assets/js/node_modules/
+data/apiData.yaml
+data/packageData.yaml
 
 # Windows ADS files in docs.
 **/*:Zone.Identifier

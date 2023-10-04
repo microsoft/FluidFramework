@@ -93,7 +93,8 @@
                                 <a href="{{relURL $customLink}}"
                                     {{ if $isCurrentPage }}aria-label="Current Page: {{ $customTitle | humanize | title }} "
                                     {{ end }}>
-                                    {{ $customTitle | humanize | title }} </a>
+                                    {{ $customTitle | humanize | title }}
+                                </a>
                             </li>
 
                         {{- else }}
@@ -116,7 +117,26 @@
                                 <a href="{{$targetPage.RelPermalink}}"
                                     {{ if $isCurrentPage }}aria-label="Current Page: {{ (path.Base $targetPage.RelPermalink) | humanize | title }} "
                                     {{ end }}>
-                                    {{ (path.Base $targetPage.RelPermalink) | humanize | title }} </a>
+                                    {{ (path.Base $targetPage.RelPermalink) | humanize | title }}
+                                </a>
+                                
+                                {{ $packageKey := index $.Site.Data.packageData $targetPage.Params.package }}
+                                {{ $apiDetails := index $.Site.Data.apiData $packageKey }}
+
+                                <ul class="nested-nav">
+                                    {{ range $category := slice "Interface" "Class" "Enum" }}
+                                        {{ if isset $apiDetails $category }}
+                                            <li>
+                                                <span class="sub-heading">{{ $category }}</span>
+                                                <ul>
+                                                    {{ range index $apiDetails $category }}
+                                                        <li>{{ . }}</li>
+                                                    {{ end }}
+                                                </ul>
+                                            </li>
+                                        {{ end }}
+                                    {{ end }}
+                                </ul>
                             </li>
                         {{- end }}
                     {{- end }}

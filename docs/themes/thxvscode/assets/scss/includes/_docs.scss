@@ -166,6 +166,19 @@
 	padding: 0;
 }
 
+.nested-nav {
+    padding-left: 20px; /* Increase indentation */
+}
+
+.nested-nav .sub-heading {
+    font-weight: bold;  /* Make sub-heading bold */
+    margin-top: 10px;   /* Add some spacing */
+}
+
+.nested-nav ul {
+    padding-left: 20px; /* Further indentation for nested items */
+}
+
 #docs-navbar .nav {
 	li a {
 		border-left: 1px solid $gray;

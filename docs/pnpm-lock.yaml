@@ -7,7 +7,7 @@ importers:
 
   .:
     specifiers:
-      '@fluid-tools/api-markdown-documenter': ^0.8.3
+      '@fluid-tools/api-markdown-documenter': ^0.9.0
       '@fluid-tools/markdown-magic': file:../tools/markdown-magic
       '@fluidframework/build-common': ^2.0.0
       '@microsoft/api-extractor-model': ^7.27.3
@@ -22,6 +22,7 @@ importers:
       glob: ^7.2.3
       http-server: ^14.1.1
       hugo-extended: ^0.113.0
+      js-yaml: ^4.1.0
       linkcheck-bin: 3.0.0-0
       markdown-magic: npm:@tylerbu/markdown-magic@2.4.0-tylerbu-1
       markdown-magic-package-json: ^2.0.2
@@ -38,7 +39,7 @@ importers:
       rimraf: ^5.0.1
       start-server-and-test: ^2.0.0
     dependencies:
-      '@fluid-tools/api-markdown-documenter': 0.8.3
+      '@fluid-tools/api-markdown-documenter': 0.9.0
       '@fluid-tools/markdown-magic': file:../tools/markdown-magic_bfrwj6ys6wock6p526xv5vf35u
       '@fluidframework/build-common': 2.0.0
       '@microsoft/api-extractor-model': 7.27.3
@@ -68,6 +69,8 @@ importers:
       replace-in-file: 7.0.1
       rimraf: 5.0.1
       start-server-and-test: 2.0.0
+    devDependencies:
+      js-yaml: 4.1.0
 
 packages:
 
@@ -148,13 +151,13 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dev: false
 
-  /@fluid-tools/api-markdown-documenter/0.8.3:
-    resolution: {integrity: sha512-rGmb3VJxaP7vVJoVZw21jLlj9WpC6wW9x271Rp4WvQQYaxD/a8XSLNyNwJ5P8O6IOe4tPTJEc5xRrA/svqGS/A==}
+  /@fluid-tools/api-markdown-documenter/0.9.0:
+    resolution: {integrity: sha512-u0CQq9x+Lq3g5ADwGLx/nOP1Rg2Wl6PQcqnYA+D1D3o8NjqrE8MR3kk/8XJ72cnOC5st3PglE5vIo9P00Iw9/Q==}
     dependencies:
       '@microsoft/api-documenter': 7.22.33
-      '@microsoft/api-extractor-model': 7.28.0
+      '@microsoft/api-extractor-model': 7.28.1
       '@microsoft/tsdoc': 0.14.2
-      '@rushstack/node-core-library': 3.60.0
+      '@rushstack/node-core-library': 3.59.4
       chalk: 4.1.2
     transitivePeerDependencies:
       - '@types/node'
@@ -273,12 +276,12 @@ packages:
       - '@types/node'
     dev: false
 
-  /@microsoft/api-extractor-model/7.28.0:
-    resolution: {integrity: sha512-QIMtUVm1tqiKG+M6ciFgRShcDoovyltaeg+CbyOnyr7SMrp6gg0ojK5/nToMqR9kAvsTS4QVgW4Twl50EoAjcw==}
+  /@microsoft/api-extractor-model/7.28.1:
+    resolution: {integrity: sha512-1hD9gQRu8VR53/e8GI+aql7MtWXHE/XtpOSgphJ6SB7AswqJT0mRZVufUbg3D57UdrchvLKz9b+zqay0Oq2vgg==}
     dependencies:
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 3.60.0
+      '@rushstack/node-core-library': 3.60.1
     transitivePeerDependencies:
       - '@types/node'
     dev: false
@@ -405,8 +408,8 @@ packages:
       z-schema: 5.0.5
     dev: false
 
-  /@rushstack/node-core-library/3.60.0:
-    resolution: {integrity: sha512-PcyrqhILvzU+65wMFybQ2VeGNnU5JzhDq2OvUi3j6jPUxyllM7b2hrRUwCuVaYboewYzIbpzXFzgxe2K7ii1nw==}
+  /@rushstack/node-core-library/3.60.1:
+    resolution: {integrity: sha512-cWKCImfezPvILKu5eUPkz0Mp/cO/zOSJdPD64KHliBcdmbPHg/sF4rEL7WJkWywXT1RQ/U/N8uKdXMe7jDCXNw==}
     peerDependencies:
       '@types/node': '*'
     peerDependenciesMeta:
@@ -962,7 +965,6 @@ packages:
 
   /argparse/2.0.1:
     resolution: {integrity: sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==}
-    dev: false
 
   /arr-diff/4.0.0:
     resolution: {integrity: sha512-YVIQ82gZPGBebQV/a8dar4AitzCQs0jjXwMPZllpXMaGjXPYVUawSxQrRsjhjupyVxEvbHgUmIhKVlND+j02kA==}
@@ -3652,7 +3654,6 @@ packages:
     hasBin: true
     dependencies:
       argparse: 2.0.1
-    dev: false
 
   /jsdoc-type-pratt-parser/3.1.0:
     resolution: {integrity: sha512-MgtD0ZiCDk9B+eI73BextfRrVQl0oyzRG8B2BjORts6jbunj4ScKPcyXGTbB6eXL4y9TzxCm6hyeLq/2ASzNdw==}
@@ -4418,7 +4419,7 @@ packages:
     dependencies:
       hosted-git-info: 4.1.0
       is-core-module: 2.12.1
-      semver: 7.5.4
+      semver: 7.5.2
       validate-npm-package-license: 3.0.4
     dev: false
 
@@ -5226,6 +5227,14 @@ packages:
 
   /semver/7.3.8:
     resolution: {integrity: sha512-NB1ctGL5rlHrPJtFDVIVzTyQylMLu9N9VICA6HSFJo8MCGVTMW6gfpicwKmmK/dAjTOrqu5l63JJOpDSrAis3A==}
+    engines: {node: '>=10'}
+    hasBin: true
+    dependencies:
+      lru-cache: 6.0.0
+    dev: false
+
+  /semver/7.5.2:
+    resolution: {integrity: sha512-SoftuTROv/cRjCze/scjGyiDtcUyxw1rgYQSZY7XTmtR5hX+dm76iDbTH8TkLPHCQmlbQVSSbNZCPM2hb0knnQ==}
     engines: {node: '>=10'}
     hasBin: true
     dependencies:

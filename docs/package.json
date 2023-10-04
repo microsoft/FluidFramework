@@ -39,7 +39,7 @@
 		"start": "hugo server"
 	},
 	"dependencies": {
-		"@fluid-tools/api-markdown-documenter": "^0.8.3",
+		"@fluid-tools/api-markdown-documenter": "^0.9.0",
 		"@fluid-tools/markdown-magic": "file:../tools/markdown-magic",
 		"@fluidframework/build-common": "^2.0.0",
 		"@microsoft/api-extractor-model": "^7.27.3",
@@ -69,6 +69,9 @@
 		"replace-in-file": "^7.0.1",
 		"rimraf": "^5.0.1",
 		"start-server-and-test": "^2.0.0"
+	},
+	"devDependencies": {
+		"js-yaml": "^4.1.0"
 	},
 	"pnpm": {
 		"overrides": {
