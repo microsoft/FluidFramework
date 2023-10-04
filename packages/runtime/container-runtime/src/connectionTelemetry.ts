@@ -94,16 +94,14 @@ class OpPerfTelemetry {
 		this.logger = createChildLogger({ logger, namespace: "OpPerf" });
 
 		const deltaLatencyEventSampler: IEventSampler = (() => {
-			const state = {
-				eventCount: -1,
-			};
+			let eventCount = -1;
 			return {
 				sample: () => {
-					state.eventCount++;
+					eventCount++;
 					const shouldSample =
-						state.eventCount % OpPerfTelemetry.DELTA_LATENCY_SAMPLE_RATE === 0;
+						eventCount % OpPerfTelemetry.DELTA_LATENCY_SAMPLE_RATE === 0;
 					if (shouldSample) {
-						state.eventCount = 0;
+						eventCount = 0;
 					}
 					return shouldSample;
 				},
@@ -151,7 +149,7 @@ class OpPerfTelemetry {
 				) {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const latencyStats = this.latencyStatistics.get(msg.clientSequenceNumber)!;
-
+					assert(latencyStats !== undefined, "Latency stats for op should exist");
 					assert(
 						latencyStats.opProcessingTimes.outboundPushEventTime === undefined,
 						0x2c8 /* "outboundPushEventTime should be undefined" */,

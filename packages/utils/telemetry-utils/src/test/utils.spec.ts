@@ -105,16 +105,13 @@ describe("Sampling", () => {
 	 */
 	// eslint-disable-next-line unicorn/consistent-function-scoping
 	function createSystematicEventSampler(options: { samplingRate: number }): IEventSampler {
-		const state = {
-			eventCount: -1,
-		};
-
+		let eventCount = -1;
 		return {
 			sample: (): boolean => {
-				state.eventCount++;
-				const shouldSample = state.eventCount % options.samplingRate === 0;
+				eventCount++;
+				const shouldSample = eventCount % options.samplingRate === 0;
 				if (shouldSample) {
-					state.eventCount = 0;
+					eventCount = 0;
 				}
 				return shouldSample;
 			},
