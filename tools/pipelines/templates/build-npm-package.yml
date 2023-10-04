@@ -314,6 +314,7 @@ stages:
                   command: 'custom'
                   workingDir: ${{ parameters.buildDirectory }}
                   customCommand: 'run ${{ taskTestStep }}:coverage'
+                  retryCount: '1'
                 condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
                 env:
                   ${{ if contains(taskTestStep, 'tinylicious') }}:
@@ -329,6 +330,7 @@ stages:
                   command: 'custom'
                   workingDir: ${{ parameters.buildDirectory }}
                   customCommand: 'run ${{ taskTestStep }}'
+                  retryCount: '1'
                 condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
                 env:
                   ${{ if contains(taskTestStep, 'tinylicious') }}:
