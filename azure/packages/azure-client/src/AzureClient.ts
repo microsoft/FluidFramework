@@ -209,9 +209,8 @@ export class AzureClient {
 		if (!resolvedUrl) {
 			throw new Error("Unable to resolved URL");
 		}
-		const documentService = await this.documentServiceFactory.createDocumentService(
-			resolvedUrl,
-		);
+		const documentService =
+			await this.documentServiceFactory.createDocumentService(resolvedUrl);
 		const storage = await documentService.connectToStorage();
 
 		// External API uses null

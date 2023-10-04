@@ -33,6 +33,7 @@ importers:
       eslint-plugin-unicorn: ~40.0.0
       eslint-plugin-unused-imports: ~2.0.0
       lerna: 5.6.2
+      prettier: ~3.0.3
       rimraf: ^3.0.2
       run-script-os: ^1.1.5
       supertest: ^3.3.0
@@ -62,6 +63,7 @@ importers:
       eslint-plugin-unicorn: 40.0.0_eslint@8.27.0
       eslint-plugin-unused-imports: 2.0.0_eslint@8.27.0
       lerna: 5.6.2
+      prettier: 3.0.3
       rimraf: 3.0.2
       run-script-os: 1.1.6
       supertest: 3.4.2
@@ -101,7 +103,7 @@ importers:
       ioredis: ^5.2.3
       lodash: ^4.17.19
       nconf: ^0.11.4
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^3.0.2
       supertest: ^3.3.0
       tslint: ^5.12.0
@@ -143,7 +145,7 @@ importers:
       eslint-plugin-react: 7.28.0_eslint@8.27.0
       eslint-plugin-unicorn: 40.0.0_eslint@8.27.0
       eslint-plugin-unused-imports: 2.0.0_eslint@8.27.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 3.0.2
       supertest: 3.4.2
       tslint: 5.20.1_typescript@4.5.5
@@ -197,7 +199,7 @@ importers:
       jsonwebtoken: ^9.0.0
       mocha: ^10.1.0
       nconf: ^0.11.4
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       querystring: ^0.2.0
       rimraf: ^3.0.2
       sinon: ^9.2.3
@@ -256,7 +258,7 @@ importers:
       eslint-plugin-unicorn: 40.0.0_eslint@8.27.0
       eslint-plugin-unused-imports: 2.0.0_eslint@8.27.0
       mocha: 10.2.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 3.0.2
       sinon: 9.2.4
       supertest: 3.4.2
@@ -11654,6 +11656,12 @@ packages:
   /prettier/2.6.2:
     resolution: {integrity: sha512-PkUpF+qoXTqhOeWL9fu7As8LXsIUZ1WYaJiY/a7McAQzxjk82OF0tibkFXVCDImZtWxbvojFjerkiLb0/q8mew==}
     engines: {node: '>=10.13.0'}
+    hasBin: true
+    dev: true
+
+  /prettier/3.0.3:
+    resolution: {integrity: sha512-L/4pUDMxcNa8R/EthV08Zt42WBO4h1rarVtK0K+QJG0X187OLo7l699jWw0GKuwzkPQ//jMFA/8Xm6Fh3J/DAg==}
+    engines: {node: '>=14'}
     hasBin: true
     dev: true
 
