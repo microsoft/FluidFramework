@@ -298,9 +298,6 @@ export class ClusterWebServerFactory implements core.IWebServerFactory {
 			clearTimeout(disconnectTimeout);
 			this.disconnectTimeouts.delete(worker.id);
 		});
-
-		// TODO: Add timeout for worker to exit gracefully?
-		// https://nodejs.org/docs/latest-v18.x/api/cluster.html#workerkillsignal
 	}
 }
 
