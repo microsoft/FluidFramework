@@ -1,6 +1,6 @@
 # @fluid-experimental/spanner
 
-The `Spanner` Distributed Data Structure (DDS) which can load and switch from one DDS to another.
+The `Spanner` Distributed Data Structure (DDS) which can load and switch from one `SharedObject` DDS to another.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:includeHeading=TRUE) -->
 
@@ -48,7 +48,81 @@ package for more information including tools to convert between version schemes.
 
 ## API Documentation
 
-API documentation for **@fluid-experimental/spanner** is not available.
+API documentation for **@fluid-experimental/spanner** is **subject to change**
+
+### Registry setup
+
+If the old `SharedObject` is `SharedCell` and the new `SharedObject` is `SharedMap` the factory will look something like
+this:
+
+```typescript
+const spannerFactory = new SpannerFactory<SharedCell, SharedMap>(
+	SharedCell.getFactory(),
+	SharedMap.getFactory(),
+	// May want to add type here
+	// May want to add the populateNewSharedObject function here
+);
+
+new DataObjectFactory(
+	"YourDataObjectPackagePath",
+	YourDataObjectClass,
+	[spannerFactory],
+	{},
+);
+```
+
+### Creation of the channel
+
+Creation and storing of the Channel should work like all other channels. Except the type should be the `SharedObject` Type.
+
+```typescript
+const spanner = this.runtime.createChannel(
+	"spanner",
+	SharedCell.getFactory().type,
+) as Spanner<TOld, TNew>;
+
+// Storing the handle to make the channel attached
+this.root.set("spanner", spanner.handle);
+return spanner;
+```
+
+### Getting the SharedObject
+
+Loading of the channel should work like all other channels. Getting the underlying `SharedObject` is as simple as `spanner.target`.
+
+This code should be the same when retrieving the underlying `SharedObject` after the hot swap.
+
+```typescript
+const handle = this.root.get("spanner");
+// assert check for defined value
+const spanner: Spanner<SharedCell, SharedMap> = await handle.get();
+// Feel free to do a check for spanner.attributes to make sure you can safely cast.
+const sharedCell: SharedCell = spanner.target as SharedCell; // Casting may be necessary here.
+```
+
+### Injecting the migration code
+
+Implement your populateNewSharedObject function - this is subject to change as it is hacky
+
+```typescript
+const spanner: Spanner<SharedCell, SharedMap>;
+// old cell is your old data structure with data
+// newMap is your new empty data structure to transfer the data to
+spanner.populateNewSharedObject = (oldCell: SharedCell, newMap: SharedMap) => {
+	// Example migration, this is where you write your custom migration code
+	map.set("some key", cell.get());
+};
+```
+
+### Hot swapping
+
+After the setup you can hot swap all SharedObjects by firing a migrate/barrier op. Maybe we'll call this `HotSwap` or `Swap`
+
+```typescript
+spanner.submitMigrateOp();
+```
+
+TBD - There will need to be a need to emit an event
 
 <!-- prettier-ignore-end -->
 

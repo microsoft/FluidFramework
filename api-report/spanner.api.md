@@ -26,14 +26,13 @@ export class Spanner<TOld extends SharedObject, TNew extends SharedObject> imple
     constructor(id: string, runtime: IFluidDataStoreRuntime, newFactory: IChannelFactory, oldSharedObject?: TOld | undefined, newSharedObject?: TNew | undefined);
     // (undocumented)
     get attributes(): IChannelAttributes;
-    // (undocumented)
     connect(services: IChannelServices): void;
     // (undocumented)
     getAttachSummary(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined): ISummaryTreeWithStats;
     // (undocumented)
     getGCData(fullGC?: boolean | undefined): IGarbageCollectionData;
     // (undocumented)
-    readonly handle: IFluidHandle<TOld | TNew>;
+    readonly handle: IFluidHandle<Spanner<TOld, TNew>>;
     // (undocumented)
     readonly id: string;
     // (undocumented)
@@ -44,17 +43,13 @@ export class Spanner<TOld extends SharedObject, TNew extends SharedObject> imple
     //
     // (undocumented)
     load(services: SpannerChannelServices): void;
-    // (undocumented)
-    migrate: (oldSharedObject: TOld, newSharedObject: TNew) => void;
-    // (undocumented)
-    processMigrateOp(message: ISequencedDocumentMessage): boolean;
+    populateNewSharedObject: (oldSharedObject: TOld, newSharedObject: TNew) => void;
     // (undocumented)
     reconnect(): void;
     // (undocumented)
     submitMigrateOp(): void;
     // (undocumented)
     summarize(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined): Promise<ISummaryTreeWithStats>;
-    // (undocumented)
     swap(): {
         new: TNew;
         old: TOld;
@@ -66,13 +61,9 @@ export class Spanner<TOld extends SharedObject, TNew extends SharedObject> imple
 // @public @sealed
 export class SpannerFactory<TOld extends SharedObject, TNew extends SharedObject> implements IChannelFactory {
     constructor(oldFactory: IChannelFactory, newFactory: IChannelFactory);
-    // (undocumented)
     get attributes(): IChannelAttributes;
-    // (undocumented)
     create(runtime: IFluidDataStoreRuntime, id: string): Spanner<TOld, TNew>;
-    // (undocumented)
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<Spanner<TOld, TNew>>;
-    // (undocumented)
     get type(): string;
 }
 
