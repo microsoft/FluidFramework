@@ -20,12 +20,12 @@ export interface PackageSelectionCriteria {
 	/**
 	 * An array of release groups whose packages are selected.
 	 */
-	releaseGroups: (ReleaseGroup | string)[];
+	releaseGroups: ReleaseGroup[];
 
 	/**
 	 * An array of release groups whose root packages are selected.
 	 */
-	releaseGroupRoots: (ReleaseGroup | string)[];
+	releaseGroupRoots: ReleaseGroup[];
 
 	/**
 	 * If set, only selects the single package in this directory.
@@ -73,8 +73,8 @@ export const parsePackageSelectionFlags = (flags: selectionFlags): PackageSelect
 			? AllPackagesSelectionCriteria
 			: {
 					independentPackages: flags.packages ?? false,
-					releaseGroups: flags.releaseGroup ?? [],
-					releaseGroupRoots: flags.releaseGroupRoot ?? [],
+					releaseGroups: flags.releaseGroup as ReleaseGroup[] ?? [],
+					releaseGroupRoots: flags.releaseGroupRoot as ReleaseGroup[] ?? [],
 					directory: flags.dir,
 			  };
 
@@ -180,7 +180,12 @@ const selectPackagesFromContext = (
 		if (packages.length === 0) {
 			continue;
 		}
-		const dir = packages[0].directory;
+
+    if(packages[0].monoRepo === undefined) {
+      throw new Error(`No release group found for package: ${packages[0]}`);
+    }
+
+		const dir = packages[0].monoRepo.directory;
 		const pkg = Package.loadDir(dir, rg);
 		selected.push(Package.loadDir(dir, rg, pkg.monoRepo, { kind: "releaseGroupRootPackage" }));
 	}
