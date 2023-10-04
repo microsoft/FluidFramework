@@ -7,7 +7,7 @@
 // The Build ID needed to fetch the desired data.
 const BUILD_ID = process.env.BUILD_ID;
 // The token need to make the API calls.
-const ADO_API_TOKEN = Buffer.from(process.env.ADO_API_TOKEN).toString("base64");
+const ADO_API_TOKEN = process.env.ADO_API_TOKEN;
 
 // The workspace where the new files/folder created in this script will be stored.
 const TEST_WORKSPACE = process.env.TEST_WORKSPACE;
