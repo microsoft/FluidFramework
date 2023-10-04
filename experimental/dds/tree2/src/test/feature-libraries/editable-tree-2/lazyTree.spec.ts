@@ -110,15 +110,81 @@ describe("LazyTree", () => {
 	});
 
 	describe("LazyFieldNode", () => {
-		// TODO
+		it("is", () => {
+			// TODO
+		});
+
+		describe("value", () => {
+			it("Empty", () => {
+				// TODO
+			});
+			it("Non-empty", () => {
+				// TODO
+			});
+		});
+
+		describe("tryGetField", () => {
+			it("Empty", () => {
+				// TODO
+			});
+			it("Non-empty", () => {
+				// TODO
+			});
+		});
+
+		// TODO: what else?
 	});
 
 	describe("LazyLeaf", () => {
-		// TODO
+		it("is", () => {
+			// TODO
+		});
+
+		describe("value", () => {
+			it("Empty", () => {
+				// TODO
+			});
+			it("Non-empty", () => {
+				// TODO
+			});
+		});
+
+		describe("tryGetField", () => {
+			it("Empty", () => {
+				// TODO
+			});
+			it("Non-empty", () => {
+				// TODO
+			});
+		});
+
+		// TODO: what else?
 	});
 
 	describe("LazyMap", () => {
-		// TODO
+		it("is", () => {
+			// TODO
+		});
+
+		describe("value", () => {
+			it("Empty", () => {
+				// TODO
+			});
+			it("Non-empty", () => {
+				// TODO
+			});
+		});
+
+		describe("tryGetField", () => {
+			it("Empty", () => {
+				// TODO
+			});
+			it("Non-empty", () => {
+				// TODO
+			});
+		});
+
+		// TODO: what else?
 	});
 
 	describe("LazyStruct", () => {
@@ -160,6 +226,28 @@ describe("LazyTree", () => {
 			assert.equal(struct.willUnbox, struct.boxedWillUnbox.content);
 			assert(struct.notUnboxed.isSameAs(struct.boxedNotUnboxed));
 		});
+
+		it("is", () => {
+			// TODO
+		});
+
+		describe("value", () => {
+			it("Empty", () => {
+				// TODO
+			});
+			it("Non-empty", () => {
+				// TODO
+			});
+		});
+
+		describe("tryGetField", () => {
+			it("Empty", () => {
+				// TODO
+			});
+			it("Non-empty", () => {
+				// TODO
+			});
+		});
 	});
 
 	describe("enumerable own properties", () => {
@@ -197,6 +285,17 @@ describe("LazyTree", () => {
 					});
 				});
 			}
+		});
+	});
+
+	// The details here are not really particular to individual implementations, so the tests here
+	// are written in terms of Struct nodes.
+	describe("parent", () => {
+		it("Unparented", () => {
+			// TODO
+		});
+		it("Parented", () => {
+			// TODO
 		});
 	});
 });
