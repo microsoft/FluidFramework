@@ -650,8 +650,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 						pathVisitor.beforeAttach(sourcePath, destinationPath);
 					}
 				}
-
-				// TODO: emit beforeChange event and propagate it to all the parent hierarchy
 			},
 			afterAttach(source: FieldKey, destination: Range): void {
 				assert(this.parentField !== undefined, "Must be in a field in order to attach");
@@ -669,8 +667,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 						pathVisitor.afterAttach(sourcePath, destinationPath);
 					}
 				}
-
-				// TODO: emit afterChange event and propagate it to all the parent hierarchy
 			},
 			attach(source: FieldKey, count: number, destination: PlaceIndex): void {
 				this.notifyChildrenChanging();
@@ -706,8 +702,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 						pathVisitor.beforeDetach(sourcePath, destinationPath);
 					}
 				}
-
-				// TODO: emit beforeChange event and propagate it to all the parent hierarchy
 			},
 			afterDetach(source: PlaceIndex, count: number, destination: FieldKey): void {
 				assert(this.parentField !== undefined, "Must be in a field in order to attach");
@@ -726,8 +720,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 						pathVisitor.afterDetach(sourcePath, destinationPath);
 					}
 				}
-
-				// TODO: emit afterChange event and propagate it to all the parent hierarchy
 			},
 			detach(source: Range, destination: FieldKey): void {
 				this.notifyChildrenChanging();
@@ -772,8 +764,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 						);
 					}
 				}
-
-				// TODO: emit beforeChange event and propagate it to all the parent hierarchy
 			},
 			afterReplace(
 				newContentSource: FieldKey,
@@ -804,7 +794,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 						);
 					}
 				}
-				// TODO: emit afterChange event and propagate it to all the parent hierarchy
 			},
 			replace(
 				newContentSource: FieldKey,
@@ -836,9 +825,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 						pathVisitor.beforeDestroy(range);
 					}
 				}
-
-				// TODO: destroying contents of a detached field probably shouldn't cause beforeChange? Because they weren't
-				// attached so the tree isn't technically changing yet?
 			},
 			create(content: Delta.ProtoNodes, destination: FieldKey): void {
 				// Nothing to do since content can only be created in a new detached field,
@@ -855,8 +841,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 						pathVisitor.afterCreate(rangePath);
 					}
 				}
-
-				// TODO: creating contents of a detached field probably shouldn't cause afterChange? Only after they are attached?
 			},
 			enterNode(index: number): void {
 				assert(
@@ -900,7 +884,8 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					// Remove subtree path visitors added at this node if there are any
 					this.pathVisitors.delete(p);
 				});
-				// TODO: can this.parent change because of the call above? Otherwise we're doing a redundant assert.
+				// QUESTION
+				// Can this.parent change because of the call above? Otherwise we're doing a redundant assert.
 				const parent = this.parent;
 				assert(parent !== undefined, 0x769 /* Unable to exit root node */);
 				this.parentField = parent.parentField;
