@@ -126,7 +126,12 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 		if (this.schema.types === undefined) {
 			return false;
 		}
-		return compareSets({ a: this.schema.types, b: schema.types });
+		return compareSets({
+			a: this.schema.types,
+			b: schema.types,
+			aExtra: () => false,
+			bExtra: () => false,
+		});
 	}
 
 	public isSameAs(other: TreeField): boolean {

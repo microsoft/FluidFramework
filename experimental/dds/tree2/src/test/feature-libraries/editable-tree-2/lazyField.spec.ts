@@ -179,30 +179,30 @@ describe("LazyField", () => {
 
 			// #region OptionalField<Primitive>
 
-			const primitiveOptionalField = new LazyOptionalField(
+			const booleanOptionalField = new LazyOptionalField(
 				context,
 				SchemaBuilder.fieldOptional(leafDomain.boolean),
 				cursor,
 				detachedFieldAnchor,
 			);
 
-			assert(primitiveOptionalField.is(SchemaBuilder.fieldOptional(leafDomain.boolean)));
-			assert(!primitiveOptionalField.is(SchemaBuilder.fieldOptional(Any)));
-			assert(primitiveOptionalField.is(SchemaBuilder.fieldOptional(leafDomain.number))); // TODO: this is presumably wrong
-			assert(!primitiveOptionalField.is(SchemaBuilder.fieldValue()));
-			assert(!primitiveOptionalField.is(SchemaBuilder.fieldValue(Any)));
-			assert(!primitiveOptionalField.is(SchemaBuilder.fieldValue(leafDomain.boolean)));
-			assert(!primitiveOptionalField.is(SchemaBuilder.fieldValue(leafDomain.number)));
-			assert(!primitiveOptionalField.is(SchemaBuilder.fieldSequence()));
-			assert(!primitiveOptionalField.is(SchemaBuilder.fieldSequence(Any)));
-			assert(!primitiveOptionalField.is(SchemaBuilder.fieldSequence(leafDomain.boolean)));
-			assert(!primitiveOptionalField.is(SchemaBuilder.fieldSequence(leafDomain.number)));
+			assert(booleanOptionalField.is(SchemaBuilder.fieldOptional(leafDomain.boolean)));
+			assert(!booleanOptionalField.is(SchemaBuilder.fieldOptional(Any)));
+			assert(booleanOptionalField.is(SchemaBuilder.fieldOptional(leafDomain.number))); // TODO: this is presumably wrong
+			assert(!booleanOptionalField.is(SchemaBuilder.fieldValue()));
+			assert(!booleanOptionalField.is(SchemaBuilder.fieldValue(Any)));
+			assert(!booleanOptionalField.is(SchemaBuilder.fieldValue(leafDomain.boolean)));
+			assert(!booleanOptionalField.is(SchemaBuilder.fieldValue(leafDomain.number)));
+			assert(!booleanOptionalField.is(SchemaBuilder.fieldSequence()));
+			assert(!booleanOptionalField.is(SchemaBuilder.fieldSequence(Any)));
+			assert(!booleanOptionalField.is(SchemaBuilder.fieldSequence(leafDomain.boolean)));
+			assert(!booleanOptionalField.is(SchemaBuilder.fieldSequence(leafDomain.number)));
 			assert(
-				!primitiveOptionalField.is(
+				!booleanOptionalField.is(
 					SchemaBuilder.fieldRecursive(FieldKinds.value, recursiveStructSchema),
 				),
 			);
-			assert(primitiveOptionalField.is(SchemaBuilder.fieldOptional()));
+			assert(booleanOptionalField.is(SchemaBuilder.fieldOptional()));
 
 			// #endregion
 		});
@@ -386,7 +386,7 @@ describe("LazyField", () => {
 		});
 	});
 
-	describe("LazyValueField", () => {
+	describe.only("LazyValueField", () => {
 		it("is", () => {
 			// #region Tree and schema initialization
 
@@ -436,30 +436,30 @@ describe("LazyField", () => {
 
 			// #region ValueField<Primitive>
 
-			const primitiveValueField = new LazyValueField(
+			const booleanValueField = new LazyValueField(
 				context,
 				SchemaBuilder.fieldValue(leafDomain.boolean),
 				cursor,
 				detachedFieldAnchor,
 			);
 
-			assert(primitiveValueField.is(SchemaBuilder.fieldValue(leafDomain.boolean)));
-			assert(!primitiveValueField.is(SchemaBuilder.fieldValue(Any)));
-			assert(!primitiveValueField.is(SchemaBuilder.fieldOptional()));
-			assert(!primitiveValueField.is(SchemaBuilder.fieldOptional(Any)));
-			assert(!primitiveValueField.is(SchemaBuilder.fieldOptional(leafDomain.number)));
-			assert(!primitiveValueField.is(SchemaBuilder.fieldSequence()));
-			assert(!primitiveValueField.is(SchemaBuilder.fieldSequence(Any)));
-			assert(!primitiveValueField.is(SchemaBuilder.fieldSequence(leafDomain.boolean)));
-			assert(!primitiveValueField.is(SchemaBuilder.fieldSequence(leafDomain.number)));
+			assert(booleanValueField.is(SchemaBuilder.fieldValue(leafDomain.boolean)));
+			assert(!booleanValueField.is(SchemaBuilder.fieldValue(Any)));
+			assert(!booleanValueField.is(SchemaBuilder.fieldOptional()));
+			assert(!booleanValueField.is(SchemaBuilder.fieldOptional(Any)));
+			assert(!booleanValueField.is(SchemaBuilder.fieldOptional(leafDomain.number)));
+			assert(!booleanValueField.is(SchemaBuilder.fieldSequence()));
+			assert(!booleanValueField.is(SchemaBuilder.fieldSequence(Any)));
+			assert(!booleanValueField.is(SchemaBuilder.fieldSequence(leafDomain.boolean)));
+			assert(!booleanValueField.is(SchemaBuilder.fieldSequence(leafDomain.number)));
 			assert(
-				primitiveValueField.is(
+				!booleanValueField.is(
 					SchemaBuilder.fieldRecursive(FieldKinds.value, recursiveStructSchema),
 				),
-			); // TODO: this is presumably wrong
-			assert(primitiveValueField.is(SchemaBuilder.fieldValue()));
-			assert(primitiveValueField.is(SchemaBuilder.fieldValue(leafDomain.number))); // TODO: this is presumably wrong
-			assert(!primitiveValueField.is(SchemaBuilder.fieldOptional(leafDomain.boolean)));
+			);
+			assert(!booleanValueField.is(SchemaBuilder.fieldValue()));
+			assert(!booleanValueField.is(SchemaBuilder.fieldValue(leafDomain.number)));
+			assert(!booleanValueField.is(SchemaBuilder.fieldOptional(leafDomain.boolean)));
 
 			// #endregion
 		});
