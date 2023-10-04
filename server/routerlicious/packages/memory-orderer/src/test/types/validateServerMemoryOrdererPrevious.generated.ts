@@ -143,7 +143,6 @@ declare function get_old_InterfaceDeclaration_ILocalOrdererSetup():
 declare function use_current_InterfaceDeclaration_ILocalOrdererSetup(
     use: TypeOnly<current.ILocalOrdererSetup>);
 use_current_InterfaceDeclaration_ILocalOrdererSetup(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ILocalOrdererSetup());
 
 /*
@@ -468,7 +467,6 @@ declare function get_current_ClassDeclaration_LocalOrderer():
 declare function use_old_ClassDeclaration_LocalOrderer(
     use: TypeOnly<old.LocalOrderer>);
 use_old_ClassDeclaration_LocalOrderer(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_LocalOrderer());
 
 /*

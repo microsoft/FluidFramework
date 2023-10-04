@@ -14,8 +14,6 @@ import prompts from "prompts";
 
 import { BaseCommand } from "../../base";
 import { Repository, getDefaultBumpTypeForBranch } from "../../lib";
-import GenerateUpcomingCommand from "./upcoming";
-import { ReleaseGroup } from "../../releaseGroups";
 
 /**
  * If more than this number of packages are changed relative to the selected branch, the user will be prompted to select
@@ -306,7 +304,7 @@ async function createChangesetFile(
 	const changesetContent = await createChangesetContent(packages, body);
 	await writeFile(
 		changesetPath,
-		prettier(changesetContent, { proseWrap: "never", parser: "markdown" }),
+		await prettier(changesetContent, { proseWrap: "never", parser: "markdown" }),
 	);
 	return changesetPath;
 }

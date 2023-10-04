@@ -17,5 +17,8 @@ export function distanceSquared(a: IPoint, b: IPoint) {
 
 export class Point implements IPoint {
 	// Constructor
-	constructor(public x: number, public y: number) {}
+	constructor(
+		public x: number,
+		public y: number,
+	) {}
 }
