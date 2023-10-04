@@ -157,10 +157,8 @@ describe("LazyField", () => {
 				detachedFieldAnchor,
 			);
 
-			// Positive cases
 			assert(anyOptionalField.is(SchemaBuilder.fieldOptional(Any)));
 
-			// Negative cases
 			assert(!anyOptionalField.is(SchemaBuilder.fieldOptional()));
 			assert(!anyOptionalField.is(SchemaBuilder.fieldOptional(leafDomain.boolean)));
 			assert(!anyOptionalField.is(SchemaBuilder.fieldValue()));
@@ -187,8 +185,9 @@ describe("LazyField", () => {
 			);
 
 			assert(booleanOptionalField.is(SchemaBuilder.fieldOptional(leafDomain.boolean)));
+
 			assert(!booleanOptionalField.is(SchemaBuilder.fieldOptional(Any)));
-			assert(booleanOptionalField.is(SchemaBuilder.fieldOptional(leafDomain.number))); // TODO: this is presumably wrong
+			assert(!booleanOptionalField.is(SchemaBuilder.fieldOptional(leafDomain.number)));
 			assert(!booleanOptionalField.is(SchemaBuilder.fieldValue()));
 			assert(!booleanOptionalField.is(SchemaBuilder.fieldValue(Any)));
 			assert(!booleanOptionalField.is(SchemaBuilder.fieldValue(leafDomain.boolean)));
@@ -202,7 +201,7 @@ describe("LazyField", () => {
 					SchemaBuilder.fieldRecursive(FieldKinds.value, recursiveStructSchema),
 				),
 			);
-			assert(booleanOptionalField.is(SchemaBuilder.fieldOptional()));
+			assert(!booleanOptionalField.is(SchemaBuilder.fieldOptional()));
 
 			// #endregion
 		});
@@ -386,7 +385,7 @@ describe("LazyField", () => {
 		});
 	});
 
-	describe.only("LazyValueField", () => {
+	describe("LazyValueField", () => {
 		it("is", () => {
 			// #region Tree and schema initialization
 
@@ -418,6 +417,7 @@ describe("LazyField", () => {
 			);
 
 			assert(anyValueField.is(SchemaBuilder.fieldValue(Any)));
+
 			assert(!anyValueField.is(SchemaBuilder.fieldValue()));
 			assert(!anyValueField.is(SchemaBuilder.fieldValue(leafDomain.boolean)));
 			assert(!anyValueField.is(SchemaBuilder.fieldOptional()));
@@ -444,6 +444,7 @@ describe("LazyField", () => {
 			);
 
 			assert(booleanValueField.is(SchemaBuilder.fieldValue(leafDomain.boolean)));
+
 			assert(!booleanValueField.is(SchemaBuilder.fieldValue(Any)));
 			assert(!booleanValueField.is(SchemaBuilder.fieldOptional()));
 			assert(!booleanValueField.is(SchemaBuilder.fieldOptional(Any)));
