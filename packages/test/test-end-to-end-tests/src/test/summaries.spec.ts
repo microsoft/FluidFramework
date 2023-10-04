@@ -350,12 +350,10 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 			const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 				[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
 			]);
-			const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-				dataStoreFactory1,
-				registryStoreEntries,
-				undefined,
-				[],
-			);
+			const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+				defaultFactory: dataStoreFactory1,
+				registryEntries: registryStoreEntries,
+			});
 
 			// Create a container for the first client.
 			const container1 = await provider.createContainer(runtimeFactory);

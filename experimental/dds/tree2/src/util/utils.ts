@@ -247,6 +247,22 @@ export function isJsonObject(
 	return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+/**
+ * Verifies that the supplied indices are valid within the supplied array.
+ * @param startIndex - The starting index in the range. Must be in [0, length).
+ * @param endIndex - The ending index in the range. Must be within (start, length].
+ * @param array - The array the indices refer to
+ */
+export function assertValidRangeIndices(
+	startIndex: number,
+	endIndex: number,
+	array: { readonly length: number },
+) {
+	assert(endIndex > startIndex, "Range indices are malformed.");
+	assertValidIndex(startIndex, array, false);
+	assertValidIndex(endIndex, array, true);
+}
+
 export function assertValidIndex(
 	index: number,
 	array: { readonly length: number },
@@ -379,4 +395,46 @@ export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
  */
 export interface Named<TName> {
 	readonly name: TName;
+}
+
+/**
+ * Placeholder for `Symbol.dispose`.
+ *
+ * Replace this with `Symbol.dispose` when it is available.
+ */
+export const disposeSymbol: unique symbol = Symbol("Symbol.dispose");
+
+/**
+ * An object with an explicit lifetime that can be ended.
+ */
+export interface IDisposable {
+	/**
+	 * Call to end the lifetime of this object.
+	 *
+	 * It is invalid to use this object after this,
+	 * except for operations which explicitly document they are valid after disposal.
+	 *
+	 * @remarks
+	 * May cleanup resources retained by this object.
+	 * Often includes un-registering from events and thus preventing other objects from retaining a reference to this indefinably.
+	 *
+	 * Usually the only operations allowed after disposal are querying if an object is already disposed,
+	 * but this can vary between implementations.
+	 */
+	[disposeSymbol](): void;
+}
+
+/**
+ * Capitalize a string.
+ */
+export function capitalize<S extends string>(s: S): Capitalize<S> {
+	// To avoid splitting characters which are made of multiple UTF-16 code units,
+	// use iteration instead of indexing to separate the first character.
+	const iterated = s[Symbol.iterator]().next();
+	if (iterated.done === true) {
+		// Empty string case.
+		return "" as Capitalize<S>;
+	}
+
+	return (iterated.value.toUpperCase() + s.slice(iterated.value.length)) as Capitalize<S>;
 }

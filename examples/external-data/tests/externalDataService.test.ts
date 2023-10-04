@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { Server } from "http";
+import type { Server } from "node:http";
 
 import cors from "cors";
 import express from "express";
@@ -76,6 +76,7 @@ describe("mock-external-data-service", () => {
 
 	async function getCurrentExternalData(): Promise<ITaskData> {
 		const fetchResponse = await externalDataSource!.fetchData(externalTaskListId);
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		const responseBody = JSON.parse(fetchResponse.body.toString()) as Record<
 			string | number | symbol,
 			unknown

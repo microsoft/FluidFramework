@@ -3,22 +3,23 @@
  * Licensed under the MIT License.
  */
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import { type IFluidHandle, type IFluidLoadable } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { SharedString } from "@fluidframework/sequence";
 import { SharedCell } from "@fluidframework/cell";
 import { SharedMatrix } from "@fluidframework/matrix";
-import { SharedObjectClass } from "@fluidframework/fluid-static";
+import { type SharedObjectClass } from "@fluidframework/fluid-static";
 import {
 	AllowedUpdateType,
 	FieldKinds,
-	ISharedTree,
+	type ISharedTree,
 	SchemaBuilder,
 	ValueSchema,
 	SharedTreeFactory,
 	valueSymbol,
+	typeNameSymbol,
 } from "@fluid-experimental/tree2";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { type IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 /**
  * AppData uses the React CollaborativeTextArea to load a collaborative HTML <textarea>
  */
@@ -87,9 +88,7 @@ export class AppData extends DataObject {
 		return this._initialObjects;
 	}
 
-	public static get Name(): string {
-		return "@devtools-example/test-app";
-	}
+	public static readonly Name = "@devtools-example/test-app";
 
 	private static readonly factory = new DataObjectFactory(
 		AppData.Name,
@@ -222,11 +221,11 @@ export class AppData extends DataObject {
 		const stringSchema = builder.leaf("string-property", ValueSchema.String);
 		const numberSchema = builder.leaf("number-property", ValueSchema.Number);
 		const booleanSchema = builder.leaf("boolean-property", ValueSchema.Boolean);
-
-		const serializableSchema = builder.leaf("serializable-property", ValueSchema.Serializable);
+		// TODO: Maybe include example handle
+		const handleSchema = builder.leaf("handle-property", ValueSchema.FluidHandle);
 
 		const leafSchema = builder.struct("leaf-item", {
-			leafField: SchemaBuilder.fieldValue(serializableSchema),
+			leafField: SchemaBuilder.fieldValue(stringSchema, booleanSchema, handleSchema),
 		});
 
 		const childSchema = builder.struct("child-item", {
@@ -250,13 +249,19 @@ export class AppData extends DataObject {
 				childrenOne: [
 					{
 						childField: "Hello world!",
-						childData: { leafField: { [valueSymbol]: "Hello world again!" } },
+						childData: {
+							leafField: {
+								[typeNameSymbol]: stringSchema.name,
+								[valueSymbol]: "Hello world again!",
+							},
+						},
 					},
 					{
 						childField: true,
 						childData: {
 							leafField: {
-								[valueSymbol]: false, // TODO: SharedTree should encode the handle.
+								[typeNameSymbol]: booleanSchema.name,
+								[valueSymbol]: false,
 							},
 						},
 					},

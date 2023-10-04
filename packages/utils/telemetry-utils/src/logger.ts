@@ -305,26 +305,30 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 					? taggableProp
 					: { value: taggableProp, tag: undefined };
 			switch (tag) {
-				case undefined:
+				case undefined: {
 					// No tag means we can log plainly
 					newEvent[key] = value;
 					break;
+				}
 				case "PackageData": // For back-compat
-				case TelemetryDataTag.CodeArtifact:
+				case TelemetryDataTag.CodeArtifact: {
 					// For Microsoft applications, CodeArtifact is safe for now
 					// (we don't load 3P code in 1P apps)
 					newEvent[key] = value;
 					break;
-				case TelemetryDataTag.UserData:
+				}
+				case TelemetryDataTag.UserData: {
 					// Strip out anything tagged explicitly as UserData.
 					// Alternate strategy would be to hash these props
 					newEvent[key] = "REDACTED (UserData)";
 					break;
-				default:
+				}
+				default: {
 					// If we encounter a tag we don't recognize
 					// then we must assume we should scrub.
 					newEvent[key] = "REDACTED (unknown tag)";
 					break;
+				}
 			}
 		}
 		this.logger.send(newEvent);
@@ -404,11 +408,7 @@ export class ChildLogger extends TelemetryLogger {
 			return child;
 		}
 
-		return new ChildLogger(
-			baseLogger ? baseLogger : { send(): void {} },
-			namespace,
-			properties,
-		);
+		return new ChildLogger(baseLogger ?? { send(): void {} }, namespace, properties);
 	}
 
 	private constructor(
@@ -489,7 +489,7 @@ export class MultiSinkLogger extends TelemetryLogger {
 		loggers: ITelemetryBaseLogger[] = [],
 		tryInheritProperties?: true,
 	) {
-		let realProperties = properties !== undefined ? { ...properties } : undefined;
+		let realProperties = properties === undefined ? undefined : { ...properties };
 		if (tryInheritProperties === true) {
 			const merge = (realProperties ??= {});
 			loggers
@@ -566,22 +566,55 @@ export interface IPerformanceEventMarkers {
  * Helper class to log performance events
  */
 export class PerformanceEvent {
+	/**
+	 * Creates an instance of {@link PerformanceEvent} and starts measurements
+	 * @param logger - the logger to be used for publishing events
+	 * @param event - the logging event details which will be published with the performance measurements
+	 * @param markers - See {@link IPerformanceEventMarkers}
+	 * @param recordHeapSize - whether or not to also record memory performance
+	 * @param emitLogs - should this instance emit logs. If set to false, logs will not be emitted to the logger,
+	 * but measurements will still be performed and any specified markers will be generated.
+	 * @returns An instance of {@link PerformanceEvent}
+	 */
 	public static start(
 		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		markers?: IPerformanceEventMarkers,
 		recordHeapSize: boolean = false,
+		emitLogs: boolean = true,
 	): PerformanceEvent {
-		return new PerformanceEvent(logger, event, markers, recordHeapSize);
+		return new PerformanceEvent(logger, event, markers, recordHeapSize, emitLogs);
 	}
 
+	/**
+	 * Measure a synchronous task
+	 * @param logger - the logger to be used for publishing events
+	 * @param event - the logging event details which will be published with the performance measurements
+	 * @param callback - the task to be executed and measured
+	 * @param markers - See {@link IPerformanceEventMarkers}
+	 * @param sampleThreshold - events with the same name and category will be sent to the logger
+	 * only when we hit this many executions of the task. If unspecified, all events will be sent.
+	 * @returns The results of the executed task
+	 *
+	 * @remarks Note that if the "same" event (category + eventName) would be emitted by different
+	 * tasks (`callback`), `sampleThreshold` is still applied only based on the event's category + eventName,
+	 * so executing either of the tasks will increase the internal counter and they
+	 * effectively "share" the sampling rate for the event.
+	 */
 	public static timedExec<T>(
 		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		callback: (event: PerformanceEvent) => T,
 		markers?: IPerformanceEventMarkers,
+		sampleThreshold: number = 1,
 	): T {
-		const perfEvent = PerformanceEvent.start(logger, event, markers);
+		const perfEvent = PerformanceEvent.start(
+			logger,
+			event,
+			markers,
+			undefined, // recordHeapSize
+			PerformanceEvent.shouldReport(event, sampleThreshold),
+		);
 		try {
 			const ret = callback(perfEvent);
 			perfEvent.autoEnd();
@@ -592,14 +625,37 @@ export class PerformanceEvent {
 		}
 	}
 
+	/**
+	 * Measure an asynchronous task
+	 * @param logger - the logger to be used for publishing events
+	 * @param event - the logging event details which will be published with the performance measurements
+	 * @param callback - the task to be executed and measured
+	 * @param markers - See {@link IPerformanceEventMarkers}
+	 * @param recordHeapSize - whether or not to also record memory performance
+	 * @param sampleThreshold - events with the same name and category will be sent to the logger
+	 * only when we hit this many executions of the task. If unspecified, all events will be sent.
+	 * @returns The results of the executed task
+	 *
+	 * @remarks Note that if the "same" event (category + eventName) would be emitted by different
+	 * tasks (`callback`), `sampleThreshold` is still applied only based on the event's category + eventName,
+	 * so executing either of the tasks will increase the internal counter and they
+	 * effectively "share" the sampling rate for the event.
+	 */
 	public static async timedExecAsync<T>(
 		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		callback: (event: PerformanceEvent) => Promise<T>,
 		markers?: IPerformanceEventMarkers,
 		recordHeapSize?: boolean,
+		sampleThreshold: number = 1,
 	): Promise<T> {
-		const perfEvent = PerformanceEvent.start(logger, event, markers, recordHeapSize);
+		const perfEvent = PerformanceEvent.start(
+			logger,
+			event,
+			markers,
+			recordHeapSize,
+			PerformanceEvent.shouldReport(event, sampleThreshold),
+		);
 		try {
 			const ret = await callback(perfEvent);
 			perfEvent.autoEnd();
@@ -624,14 +680,14 @@ export class PerformanceEvent {
 		event: ITelemetryGenericEvent,
 		private readonly markers: IPerformanceEventMarkers = { end: true, cancel: "generic" },
 		private readonly recordHeapSize: boolean = false,
+		private readonly emitLogs: boolean = true,
 	) {
 		this.event = { ...event };
 		if (this.markers.start) {
 			this.reportEvent("start");
 		}
 
-		// eslint-disable-next-line unicorn/no-null
-		if (typeof window === "object" && window != null && window.performance?.mark) {
+		if (typeof window === "object" && window?.performance?.mark) {
 			this.startMark = `${event.eventName}-start`;
 			window.performance.mark(this.startMark);
 		}
@@ -687,6 +743,10 @@ export class PerformanceEvent {
 			return;
 		}
 
+		if (!this.emitLogs) {
+			return;
+		}
+
 		const event: ITelemetryPerformanceEvent = { ...this.event, ...props };
 		event.eventName = `${event.eventName}_${eventNameSuffix}`;
 		if (eventNameSuffix !== "start") {
@@ -708,6 +768,14 @@ export class PerformanceEvent {
 		}
 
 		this.logger.sendPerformanceEvent(event, error);
+	}
+
+	private static readonly eventHits = new Map<string, number>();
+	private static shouldReport(event: ITelemetryGenericEvent, sampleThreshold: number): boolean {
+		const eventKey = `.${event.category}.${event.eventName}`;
+		const hitCount = PerformanceEvent.eventHits.get(eventKey) ?? 0;
+		PerformanceEvent.eventHits.set(eventKey, hitCount >= sampleThreshold ? 1 : hitCount + 1);
+		return hitCount % sampleThreshold === 0;
 	}
 }
 
@@ -769,17 +837,20 @@ function convertToBasePropertyTypeUntagged(
 		case "string":
 		case "number":
 		case "boolean":
-		case "undefined":
+		case "undefined": {
 			return x;
-		case "object":
+		}
+		case "object": {
 			// We assume this is an array or flat object based on the input types
 			return JSON.stringify(x);
-		default:
+		}
+		default: {
 			// should never reach this case based on the input types
 			console.error(
 				`convertToBasePropertyTypeUntagged: INVALID PROPERTY (typed as ${typeof x})`,
 			);
 			return `INVALID PROPERTY (typed as ${typeof x})`;
+		}
 	}
 }
 
@@ -811,6 +882,8 @@ export const tagData = <
 		// eslint-disable-next-line unicorn/no-array-reduce, unicorn/prefer-object-from-entries
 		.reduce((pv, cv) => {
 			const [key, value] = cv;
+			// The ternary form is less legible in this case.
+			// eslint-disable-next-line unicorn/prefer-ternary
 			if (typeof value === "function") {
 				// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 				pv[key] = () => {

@@ -63,7 +63,6 @@ import {
 	createResponseError,
 	exceptionToResponse,
 	GCDataBuilder,
-	requestFluidObject,
 	unpackChildNodesUsedRoutes,
 } from "@fluidframework/runtime-utils";
 import {
@@ -118,14 +117,14 @@ export class FluidDataStoreRuntime
 			context,
 			sharedObjectRegistry,
 			existing,
-			async (dataStoreRuntime) => requestFluidObject(dataStoreRuntime, "/"),
+			async (dataStoreRuntime) => dataStoreRuntime.entryPoint,
 		);
 	}
 
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.entryPoint}
 	 */
-	public readonly entryPoint?: IFluidHandle<FluidObject>;
+	public readonly entryPoint: IFluidHandle<FluidObject>;
 
 	/**
 	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
@@ -235,7 +234,7 @@ export class FluidDataStoreRuntime
 	 * @param dataStoreContext - Context object for the runtime.
 	 * @param sharedObjectRegistry - The registry of shared objects that this data store will be able to instantiate.
 	 * @param existing - Pass 'true' if loading this datastore from an existing file; pass 'false' otherwise.
-	 * @param initializeEntryPoint - Function to initialize the entryPoint object for the data store runtime. The
+	 * @param provideEntryPoint - Function to initialize the entryPoint object for the data store runtime. The
 	 * handle to this data store runtime will point to the object returned by this function. If this function is not
 	 * provided, the handle will be left undefined. This is here so we can start making handles a first-class citizen
 	 * and the primary way of interacting with some Fluid objects, and should be used if possible.
@@ -244,7 +243,7 @@ export class FluidDataStoreRuntime
 		private readonly dataStoreContext: IFluidDataStoreContext,
 		private readonly sharedObjectRegistry: ISharedObjectRegistry,
 		existing: boolean,
-		initializeEntryPoint?: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>,
+		provideEntryPoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>,
 	) {
 		super();
 
@@ -329,14 +328,11 @@ export class FluidDataStoreRuntime
 			});
 		}
 
-		if (initializeEntryPoint) {
-			const promise = new LazyPromise(async () => initializeEntryPoint(this));
-			this.entryPoint = new FluidObjectHandle<FluidObject>(
-				promise,
-				"",
-				this.objectsRoutingContext,
-			);
-		}
+		this.entryPoint = new FluidObjectHandle<FluidObject>(
+			new LazyPromise(async () => provideEntryPoint(this)),
+			"",
+			this.objectsRoutingContext,
+		);
 
 		this.attachListener();
 		this._attachState = dataStoreContext.attachState;
@@ -384,16 +380,13 @@ export class FluidDataStoreRuntime
 		return this.request(request);
 	}
 
-	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		try {
 			const parser = RequestParser.create(request);
 			const id = parser.pathParts[0];
 
 			if (id === "_channels" || id === "_custom") {
-				return this.request(parser.createSubRequest(1));
+				return await this.request(parser.createSubRequest(1));
 			}
 
 			// Check for a data type reference first
@@ -525,17 +518,6 @@ export class FluidDataStoreRuntime
 	 * This function is called when a handle to this data store is added to a visible DDS.
 	 */
 	public attachGraph() {
-		this.makeVisibleAndAttachGraph();
-	}
-
-	/**
-	 * @deprecated - Not necessary if consumers add a new dataStore to the container by storing its handle.
-	 * Binds this runtime to the container
-	 * This includes the following:
-	 * 1. Sending an Attach op that includes all existing state
-	 * 2. Attaching the graph if the data store becomes attached.
-	 */
-	public bindToContext() {
 		this.makeVisibleAndAttachGraph();
 	}
 
@@ -1185,10 +1167,17 @@ export const mixinSummaryHandler = (
 
 		async summarize(...args: any[]) {
 			const summary = await super.summarize(...args);
-			const content = await handler(this);
-			if (content !== undefined) {
-				this.addBlob(summary, content.path, content.content);
+
+			try {
+				const content = await handler(this);
+				if (content !== undefined) {
+					this.addBlob(summary, content.path, content.content);
+				}
+			} catch (e) {
+				// Any error coming from app-provided handler should be marked as DataProcessingError
+				throw DataProcessingError.wrapIfUnrecognized(e, "mixinSummaryHandler");
 			}
+
 			return summary;
 		}
 	} as typeof FluidDataStoreRuntime;

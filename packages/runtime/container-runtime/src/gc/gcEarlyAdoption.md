@@ -78,7 +78,7 @@ For this to work, you must disable the `Fluid.GarbageCollection.ThrowOnTombstone
 
 When a Tombstoned object (via `handle.get()`) fails to load, the 404 response error object has an `underlyingResponseHeaders` with the
 `isTombstoned` flag set to true: i.e. `error.underlyingResponseHeaders?.isTombstoned === true`. In this case,
-you may turn around and use `IContainerRuntime.resolveHandle` with `allowTombstone: true` in `IRequest.headers` to request
+you may turn around and use `IContainerRuntimeWithResolveHandle_Deprecated.resolveHandle` with `allowTombstone: true` in `IRequest.headers` to request
 the object again - this time it will succeed.
 
 To be very clear once again - This path uses deprecated APIs (`resolveHandle`) and comes with no guarantees of support.
@@ -89,14 +89,27 @@ Note: The Summarizer client will _never_ throw on usage or load of a Tombstoned 
 
 ## Enabling Sweep
 
-The following configuration is required for Sweep to be enabled for a given document:
+To enable Sweep for the first time, set this GC Option:
 
--   GC Option `gcSweepGeneration` must be set, and the persisted value must match the current value in the code
--   Each of these two Config Settings must be set to `true` in the session:
-    -   `Fluid.GarbageCollection.Test.SweepDataStores`
-    -   `Fluid.GarbageCollection.Test.SweepAttachmentBlobs`
+```ts
+gcSweepGeneration: 0;
+```
 
-### Differences between gcSweepGeneration and gcTombstoneGeneration
+This will enable sweep for all documents moving forward _as well as_ any documents created with `gcTombstoneGeneration: 0`
+(this is a special case in the code).
+
+### A caveat...
+
+If you used `gcTombstoneGeneration` **and ever bumped it**, you should skip 0 here to avoid enabling Sweep for old / at-risk documents:
+
+```ts
+gcSweepGeneration: 1;
+```
+
+Remember, you can always bump `gcSweepGeneration` to disable Sweep for all existing documents and start fresh,
+in case a major bug is discovered and fixed.
+
+### More about gcSweepGeneration and gcTombstoneGeneration
 
 `gcSweepGeneration` is persisted and immutable in the document, just like `gcTombstoneGeneration`.
 However, behavior differs in a few important ways.
@@ -108,14 +121,14 @@ This means that until the `gcSweepGeneration` GC Option is set, _no existing doc
 So all documents created since the most recent bump to the gcSweepGeneration will have Sweep enabled.
 Note that if `gcSweepGeneration` is set and matches, Tombstone Mode is off for the session and `gcTombstoneGeneration` is ignored.
 
-Lastly, there is a special case when `gcSweepGeneration === 0`: Any document with `gcTombstoneGeneration: 0` will
+And as mentioned above, there is a special case when `gcSweepGeneration === 0`: Any document with `gcTombstoneGeneration: 0` will
 be eligible for Sweep as well. This was done for historical reasons due to circumstances during GC's development.
 
 ## More Advanced Configurations
 
 There are a handful of other configuration options/settings that can be used to tweak GC's behavior,
-mostly for testing. Please refer to the function [`generateGCConfigs` in gcConfigs.ts](.\gcConfigs.ts)
-for the full story.
+mostly for testing. Please refer to the function [`generateGCConfigs` in gcConfigs.ts](./gcConfigs.ts) and the
+[setting/option names listed in gcDefinitions.ts](./gcDefinitions.ts) for the full story.
 
 Examples of available advanced configuration include:
 
@@ -124,6 +137,7 @@ Examples of available advanced configuration include:
     -   Disabling running GC Mark and/or Sweep phases for this session
     -   Forcing GC Mark and/or Sweep to run for this session even if otherwise it would be disabled
     -   Disabling Tombstone Mode (don't even mark objects as Tombstones)
+    -   Disabling the deletion of either DataStores or AttachmentBlobs independent of one another (when Sweep is enabled)
 -   Overriding the default Session Expiry for new files (or disabling it altogether, which will also disable Tombstone/Sweep)
 -   Overriding the Sweep Timeout, _independent of Session Expiry_, so use with care (for testing purposes only - data loss could occur)
 -   Running in "Test Mode", where objects are deleted as soon as they're unreferenced

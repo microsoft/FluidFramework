@@ -3,17 +3,15 @@
  * Licensed under the MIT License.
  */
 
-export {
+export type {
 	SharedObjectType,
 	VisualizeSharedObject,
 	VisualizeChildData,
 	SharedObjectVisualizers,
 	DataVisualizerEvents,
-	DataVisualizerGraph,
-	visualizeChildData,
-	VisualizerNode,
 } from "./DataVisualization";
-export { Edit, EditData, EditSharedObject, SharedObjectEdit } from "./DataEditing";
+export { DataVisualizerGraph, visualizeChildData, VisualizerNode } from "./DataVisualization";
+export type { Edit, EditData, EditSharedObject, SharedObjectEdit } from "./DataEditing";
 export { defaultEditors } from "./DefaultEditors";
 export {
 	defaultVisualizers,
@@ -26,8 +24,7 @@ export {
 	visualizeSharedTree,
 	visualizeUnknownSharedObject,
 } from "./DefaultVisualizers";
-export {
-	createHandleNode,
+export type {
 	FluidHandleNode,
 	FluidObjectNode,
 	FluidObjectNodeBase,
@@ -41,8 +38,8 @@ export {
 	ValueNodeBase,
 	VisualNodeBase,
 	VisualNode,
-	VisualNodeKind,
 	VisualTreeNode,
 	VisualValueNode,
 	UnknownObjectNode,
 } from "./VisualTree";
+export { createHandleNode, VisualNodeKind } from "./VisualTree";
