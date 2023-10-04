@@ -10,56 +10,54 @@ const BUILD_ID = process.env.BUILD_ID;
 const ADO_API_TOKEN = process.env.ADO_API_TOKEN;
 
 // The workspace where the new files/folder created in this script will be stored.
-const TEST_WORKSPACE = process.env.TEST_WORKSPACE;
+const BASE_OUTPUT_FOLDER = process.env.BASE_OUTPUT_FOLDER;
+if(BUILD_ID == undefined || ADO_API_TOKEN == undefined || BASE_OUTPUT_FOLDER == undefined){
+    throw new Error("Script variables not initialized");
+}
 console.log("BUILD_ID:", BUILD_ID);
-console.log("TEST_WORKSPACE:", TEST_WORKSPACE);
+console.log("TEST_WORKSPACE:", BASE_OUTPUT_FOLDER);
 
 // Create output folder - Note: This requires Node.js fs module
 import * as fs from "fs";
-if (!fs.existsSync(`${TEST_WORKSPACE}/stageFiles`)) {
-        fs.mkdirSync(`${TEST_WORKSPACE}/stageFiles`, { recursive: true });
-        console.log("Folder created");
+if (!fs.existsSync(`${BASE_OUTPUT_FOLDER}/stageFiles`)) {
+    fs.mkdirSync(`${BASE_OUTPUT_FOLDER}/stageFiles`, { recursive: true });
+    console.log("Folder created");
 }
 const apiUrl = `https://dev.azure.com/fluidframework/internal/_apis/build/builds/${BUILD_ID}/timeline?api-version=7.1-preview.2`;
-
-async function fetchData() {
-        try {
-                // Fetch data from Timeline API
-                const response = await fetch(apiUrl, {
-                        headers: {
-                                Authorization: `Basic ${btoa(":" + ADO_API_TOKEN)}`,
-                        },
-                });
-                if (!response.ok) {
-                        throw new Error(`HTTP error, status: ${response.status}`);
-                }
-                const data = await response.json();
-                console.log("Saving stage names");
-                // Extract and save all stage names
-                const stages = data.records
-                        .filter((record) => record.type === "Stage")
-                        .map((record) => record.identifier);
-                for (const stage of stages) {
-                        if (stage == "runAfterAll") continue;
-                        console.log(`Fetching data for stage: ${stage}`);
-                        // Fetch test rate data for each stage.
-                        const stageApiUrl = `https://vstmr.dev.azure.com/fluidframework/internal/_apis/testresults/metrics?pipelineId=${BUILD_ID}&stageName=${stage}&api-version=7.1-preview.1`;
-                        const stageResponse = await fetch(stageApiUrl, {
-                                headers: {
-                                        Authorization: `Basic ${btoa(":" + ADO_API_TOKEN)}`,
-                                },
-                        });
-
-                        const stageData = await stageResponse.json();
-                        // Save the API data to a JSON file.
-                        fs.writeFileSync(
-                                `${TEST_WORKSPACE}/stageFiles/${stage}.json`,
-                                JSON.stringify(stageData),
-                        );
-                }
-        } catch (error) {
-                console.error("Error:", error);
-                process.exit(1);
-        }
+// Fetch data from Timeline API
+const response = await fetch(apiUrl, {
+    headers: {
+            Authorization: `Basic ${Buffer.from(":" + ADO_API_TOKEN).toString('base64')}`,
+    },
+});
+console.log(response);
+if (!response.ok) {
+    throw new Error(`Error during API call to get build timeline. Status: ${response.status}`);
 }
-fetchData();
+const data = await response.json();
+console.log("Saving stage names");
+// Extract and save all stage names
+const stages = data.records
+        .filter((record) => record.type === "Stage")
+        .map((record) => record.identifier);
+for (const stage of stages) {
+    if (stage === "runAfterAll"){ continue; }
+    console.log(`Fetching data for stage: ${stage}`);
+    // Fetch test rate data for each stage.
+    const stageApiUrl = `https://vstmr.dev.azure.com/fluidframework/internal/_apis/testresults/metrics?pipelineId=${BUILD_ID}&stageName=${stage}&api-version=7.1-preview.1`;
+    const stageResponse = await fetch(stageApiUrl, {
+            headers: {
+                    Authorization: `Basic ${Buffer.from(":" + ADO_API_TOKEN).toString('base64')}`,
+            },
+    });
+    if (!stageResponse.ok) {
+        throw new Error(`Error during API call to get build metrics. Status: ${response.status}`);
+    }
+
+    const stageData = await stageResponse.json();
+    // Save the API data to a JSON file.
+    fs.writeFileSync(
+            `${BASE_OUTPUT_FOLDER}/stageFiles/${stage}.json`,
+            JSON.stringify(stageData),
+    );
+}

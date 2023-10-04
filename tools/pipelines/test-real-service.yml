@@ -205,7 +205,7 @@ stages:
               env:
                 BUILD_ID: $(Build.BuildId)
                 ADO_API_TOKEN: $(System.AccessToken)
-                TEST_WORKSPACE: ${{ variables.testWorkspace }}
+                BASE_OUTPUT_FOLDER: ${{ variables.testWorkspace }}
                 BUILD_SOURCES_DIRECTORY: $(Build.SourcesDirectory)
                 PIPELINE: 'EndToEndTests'
               inputs:
@@ -213,7 +213,7 @@ stages:
                 workingDirectory: $(toolAbsolutePath)
                 script: |
                   echo "Fetching pass rate data and saving into JSON files"
-                  node "$BUILD_SOURCESDIRECTORY/scripts/get-test-pass-rate.mjs"
-                  echo "Files created. Now running handler"
-                  node --require @ff-internal/aria-logger bin/run --handlerModule "$BUILD_SOURCESDIRECTORY/tools/telemetry-generator/dist/handlers/testPassRate.js" --dir "$TEST_WORKSPACE/stageFiles"
+                  node "$BUILD_SOURCES_DIRECTORY/scripts/get-test-pass-rate.mjs"
+                  echo "Files created. Now running telemetry-generator"
+                  node --require @ff-internal/aria-logger bin/run --handlerModule "$(toolAbsolutePath)/dist/handlers/testPassRate.js" --dir "$TEST_WORKSPACE/stageFiles"
                 
