@@ -74,18 +74,18 @@ export const valueChangeHandler: FieldChangeHandler<OptionalChangeset, ValueFiel
 	editor: valueFieldEditor,
 };
 
-const valueIdentifier = "Value";
+const requiredIdentifier = "Value";
 
 /**
  * Exactly one item.
  */
-export const value = new FieldKindWithEditor(
-	valueIdentifier,
-	Multiplicity.Value,
+export const required = new FieldKindWithEditor(
+	requiredIdentifier,
+	Multiplicity.Single,
 	valueChangeHandler,
 	(types, other) =>
 		(other.kind.identifier === sequence.identifier ||
-			other.kind.identifier === valueIdentifier ||
+			other.kind.identifier === requiredIdentifier ||
 			other.kind.identifier === optional.identifier ||
 			other.kind.identifier === nodeKey.identifier) &&
 		allowsTreeSchemaIdentifierSuperset(types, other.types),
@@ -115,11 +115,11 @@ const nodeKeyIdentifier = "NodeKey";
  */
 export const nodeKey = new FieldKindWithEditor(
 	nodeKeyIdentifier,
-	Multiplicity.Value,
+	Multiplicity.Single,
 	noChangeHandler,
 	(types, other) =>
 		(other.kind.identifier === sequence.identifier ||
-			other.kind.identifier === valueIdentifier ||
+			other.kind.identifier === requiredIdentifier ||
 			other.kind.identifier === optional.identifier ||
 			other.kind.identifier === nodeKeyIdentifier) &&
 		allowsTreeSchemaIdentifierSuperset(types, other.types),
@@ -159,7 +159,7 @@ export const forbidden = new FieldKindWithEditor(
 	Multiplicity.Forbidden,
 	noChangeHandler,
 	// All multiplicities other than Value support empty.
-	(types, other) => fieldKinds.get(other.kind.identifier)?.multiplicity !== Multiplicity.Value,
+	(types, other) => fieldKinds.get(other.kind.identifier)?.multiplicity !== Multiplicity.Single,
 	new Set(),
 );
 
@@ -167,18 +167,18 @@ export const forbidden = new FieldKindWithEditor(
  * Default field kinds by identifier
  */
 export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
-	[value, optional, sequence, nodeKey, forbidden].map((s) => [s.identifier, s]),
+	[required, optional, sequence, nodeKey, forbidden].map((s) => [s.identifier, s]),
 );
 
 // Create named Aliases for nicer intellisense.
 
-// TODO: Find a way to make docs like {@inheritDoc value} work in vscode.
+// TODO: Find a way to make docs like {@inheritDoc required} work in vscode.
 // TODO: ensure thy work in generated docs.
 // TODO: add these comments to the rest of the cases below.
 /**
  * @alpha
  */
-export interface ValueFieldKind extends FieldKind<"Value", Multiplicity.Value> {}
+export interface Required extends FieldKind<"Value", Multiplicity.Single> {}
 /**
  * @alpha
  */
@@ -190,7 +190,7 @@ export interface Sequence extends FieldKind<"Sequence", Multiplicity.Sequence> {
 /**
  * @alpha
  */
-export interface NodeKeyFieldKind extends FieldKind<"NodeKey", Multiplicity.Value> {}
+export interface NodeKeyFieldKind extends FieldKind<"NodeKey", Multiplicity.Single> {}
 /**
  * @alpha
  */
@@ -203,9 +203,9 @@ export interface Forbidden
  */
 export const FieldKinds: {
 	// TODO: inheritDoc for these somehow
-	readonly value: ValueFieldKind;
+	readonly required: Required;
 	readonly optional: Optional;
 	readonly sequence: Sequence;
 	readonly nodeKey: NodeKeyFieldKind;
 	readonly forbidden: Forbidden;
-} = { value, optional, sequence, nodeKey, forbidden };
+} = { required, optional, sequence, nodeKey, forbidden };

@@ -99,7 +99,7 @@ export const counterHandle: FieldChangeHandler<number> = {
  */
 export const counter = new FieldKindWithEditor(
 	"Counter",
-	Multiplicity.Value,
+	Multiplicity.Single,
 	counterHandle,
 	(types, other) => other.kind.identifier === "Counter",
 	new Set(),

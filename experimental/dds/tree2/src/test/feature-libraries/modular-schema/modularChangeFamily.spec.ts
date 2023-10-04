@@ -73,7 +73,7 @@ const singleNodeHandler: FieldChangeHandler<NodeChangeset> = {
 
 const singleNodeField = new FieldKindWithEditor(
 	"SingleNode",
-	Multiplicity.Value,
+	Multiplicity.Single,
 	singleNodeHandler,
 	(a, b) => false,
 	new Set(),
@@ -733,7 +733,7 @@ describe("ModularChangeFamily", () => {
 		} as unknown as FieldChangeHandler<RevisionTag[]>;
 		const field = new FieldKindWithEditor(
 			"ChecksRevIndexing",
-			Multiplicity.Value,
+			Multiplicity.Single,
 			handler,
 			(a, b) => false,
 			new Set(),

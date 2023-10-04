@@ -182,7 +182,7 @@ export {
 	SchemaBuilder,
 	AllowedTypes,
 	TreeSchema,
-	ValueFieldKind,
+	Required,
 	Optional,
 	Sequence,
 	NodeKeyFieldKind,

@@ -711,7 +711,7 @@ export type TypedFieldInner<
 	Types extends AllowedTypes,
 > = Kind extends typeof FieldKinds.sequence
 	? Sequence<Types>
-	: Kind extends typeof FieldKinds.value
+	: Kind extends typeof FieldKinds.required
 	? RequiredField<Types>
 	: Kind extends typeof FieldKinds.optional
 	? OptionalField<Types>
@@ -787,7 +787,7 @@ export type UnboxFieldInner<
 	Emptiness extends "maybeEmpty" | "notEmpty",
 > = Kind extends typeof FieldKinds.sequence
 	? Sequence<TTypes>
-	: Kind extends typeof FieldKinds.value
+	: Kind extends typeof FieldKinds.required
 	? UnboxNodeUnion<TTypes>
 	: Kind extends typeof FieldKinds.optional
 	? UnboxNodeUnion<TTypes> | (Emptiness extends "notEmpty" ? never : undefined)

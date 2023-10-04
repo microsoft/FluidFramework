@@ -125,7 +125,7 @@ type ApplyMultiplicity<TMultiplicity extends Multiplicity, TypedChild, Mode exte
     [Multiplicity.Forbidden]: undefined;
     [Multiplicity.Optional]: Mode extends ApiMode.Editable ? EditableOptionalField<TypedChild> : undefined | TypedChild;
     [Multiplicity.Sequence]: Mode extends ApiMode.Editable | ApiMode.EditableUnwrapped ? EditableSequenceField<TypedChild> : TypedChild[];
-    [Multiplicity.Value]: Mode extends ApiMode.Editable ? EditableValueField<TypedChild> : TypedChild;
+    [Multiplicity.Single]: Mode extends ApiMode.Editable ? EditableValueField<TypedChild> : TypedChild;
 }[TMultiplicity];
 
 // @alpha
@@ -586,7 +586,7 @@ export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
 
 // @alpha
 export const FieldKinds: {
-    readonly value: ValueFieldKind;
+    readonly required: Required_2;
     readonly optional: Optional;
     readonly sequence: Sequence;
     readonly nodeKey: NodeKeyFieldKind;
@@ -1342,7 +1342,7 @@ export enum Multiplicity {
     Forbidden = 3,
     Optional = 1,
     Sequence = 2,
-    Value = 0
+    Single = 0
 }
 
 // @alpha
@@ -1393,7 +1393,7 @@ export const nodeKeyField: {
 export const nodeKeyFieldKey = "__n_id__";
 
 // @alpha (undocumented)
-export interface NodeKeyFieldKind extends FieldKind<"NodeKey", Multiplicity.Value> {
+export interface NodeKeyFieldKind extends FieldKind<"NodeKey", Multiplicity.Single> {
 }
 
 // @alpha
@@ -1548,7 +1548,7 @@ export function recordDependency(dependent: ObservingDependent | undefined, depe
 const recursiveStruct: TreeSchema<"recursiveStruct", {
 structFields: {
 recursive: FieldSchema<Optional, [() => TreeSchema<"recursiveStruct", any>]>;
-number: FieldSchema<ValueFieldKind, [TreeSchema<"com.fluidframework.leaf.number", {
+number: FieldSchema<Required_2, [TreeSchema<"com.fluidframework.leaf.number", {
 leafValue: import("..").ValueSchema.Number;
 }>]>;
 };
@@ -1558,7 +1558,7 @@ leafValue: import("..").ValueSchema.Number;
 const recursiveStruct2: TreeSchema<"recursiveStruct2", {
 structFields: {
 recursive: FieldSchema<Optional, [() => TreeSchema<"recursiveStruct2", any>]>;
-number: FieldSchema<ValueFieldKind, [TreeSchema<"com.fluidframework.leaf.number", {
+number: FieldSchema<Required_2, [TreeSchema<"com.fluidframework.leaf.number", {
 leafValue: import("..").ValueSchema.Number;
 }>]>;
 };
@@ -1572,6 +1572,11 @@ type RecursiveTreeSchemaSpecification = unknown;
 
 // @alpha
 type _RecursiveTrick = never;
+
+// @alpha (undocumented)
+interface Required_2 extends FieldKind<"Value", Multiplicity.Single> {
+}
+export { Required_2 as Required }
 
 // @alpha
 export interface RequiredField<TTypes extends AllowedTypes> extends TreeField {
@@ -1643,8 +1648,8 @@ export class SchemaBuilder {
     }>;
     static fieldOptional<T extends AllowedTypes>(...allowedTypes: T): FieldSchema<typeof FieldKinds.optional, T>;
     static fieldRecursive<Kind extends FieldKind, T extends FlexList<RecursiveTreeSchema>>(kind: Kind, ...allowedTypes: T): FieldSchema<Kind, T>;
+    static fieldRequired<T extends AllowedTypes>(...allowedTypes: T): FieldSchema<typeof FieldKinds.required, T>;
     static fieldSequence<T extends AllowedTypes>(...t: T): FieldSchema<typeof FieldKinds.sequence, T>;
-    static fieldValue<T extends AllowedTypes>(...allowedTypes: T): FieldSchema<typeof FieldKinds.value, T>;
     intoDocumentSchema<Kind extends FieldKind, Types extends AllowedTypes>(root: FieldSchema<Kind, Types>): TypedSchemaCollection<FieldSchema<Kind, Types>>;
     intoLibrary(): SchemaLibrary;
     leaf<Name extends string, T extends ValueSchema>(name: Name, t: T): TreeSchema<Name, {
@@ -2027,7 +2032,7 @@ ApplyMultiplicity<TField["kind"]["multiplicity"], AllowedTypesToTypedTrees<Mode,
 ][_InlineTrick];
 
 // @alpha
-type TypedFieldInner<Kind extends FieldKind, Types extends AllowedTypes> = Kind extends typeof FieldKinds.sequence ? Sequence2<Types> : Kind extends typeof FieldKinds.value ? RequiredField<Types> : Kind extends typeof FieldKinds.optional ? OptionalField<Types> : TreeField;
+type TypedFieldInner<Kind extends FieldKind, Types extends AllowedTypes> = Kind extends typeof FieldKinds.sequence ? Sequence2<Types> : Kind extends typeof FieldKinds.required ? RequiredField<Types> : Kind extends typeof FieldKinds.optional ? OptionalField<Types> : TreeField;
 
 // @alpha
 type TypedFields<Mode extends ApiMode, TFields extends undefined | {
@@ -2105,7 +2110,7 @@ export const typeSymbol: unique symbol;
 type UnboxField<TSchema extends FieldSchema, Emptiness extends "maybeEmpty" | "notEmpty" = "maybeEmpty"> = UnboxFieldInner<TSchema["kind"], TSchema["allowedTypes"], Emptiness>;
 
 // @alpha
-type UnboxFieldInner<Kind extends FieldKind, TTypes extends AllowedTypes, Emptiness extends "maybeEmpty" | "notEmpty"> = Kind extends typeof FieldKinds.sequence ? Sequence2<TTypes> : Kind extends typeof FieldKinds.value ? UnboxNodeUnion<TTypes> : Kind extends typeof FieldKinds.optional ? UnboxNodeUnion<TTypes> | (Emptiness extends "notEmpty" ? never : undefined) : unknown;
+type UnboxFieldInner<Kind extends FieldKind, TTypes extends AllowedTypes, Emptiness extends "maybeEmpty" | "notEmpty"> = Kind extends typeof FieldKinds.sequence ? Sequence2<TTypes> : Kind extends typeof FieldKinds.required ? UnboxNodeUnion<TTypes> : Kind extends typeof FieldKinds.optional ? UnboxNodeUnion<TTypes> | (Emptiness extends "notEmpty" ? never : undefined) : unknown;
 
 // @alpha
 type UnboxNode<TSchema extends TreeSchema> = TSchema extends LeafSchema ? SchemaAware.InternalTypes.TypedValue<TSchema["leafValue"]> : TSchema extends MapSchema ? MapNode<TSchema> : TSchema extends FieldNodeSchema ? UnboxField<TSchema["structFieldsObject"][""]> : TSchema extends StructSchema ? StructTyped<TSchema> : unknown;
@@ -2206,7 +2211,7 @@ export type UntypedTreeOrPrimitive<TContext = UntypedTreeContext> = UntypedTree<
 interface UntypedValueField<TContext = UntypedTreeContext, TChild = UntypedTree<TContext>, TUnwrappedChild = UnwrappedUntypedTree<TContext>, TNewContent = ContextuallyTypedNodeData> extends UntypedField<TContext, TChild, UntypedTree<TContext>, TUnwrappedChild> {
     readonly content: TChild;
     readonly fieldSchema: FieldStoredSchema & {
-        readonly kind: ValueFieldKind;
+        readonly kind: Required_2;
     };
     setContent(newContent: ITreeCursor | TNewContent): void;
 }
@@ -2239,10 +2244,6 @@ export type Value = undefined | TreeValue;
 // @alpha (undocumented)
 export interface ValueFieldEditBuilder {
     set(newContent: ITreeCursor): void;
-}
-
-// @alpha (undocumented)
-export interface ValueFieldKind extends FieldKind<"Value", Multiplicity.Value> {
 }
 
 // @alpha
