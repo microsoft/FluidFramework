@@ -12,7 +12,8 @@
  */
 module.exports = function handler(fileData, logger) {
 	if (fileData.resultSummary == null ) {
-		console.log(`could not locate test result info`);
+		console.log(`Could not locate test result info.`);
+		return;
 	}
 	if (process.env.BUILD_ID !== undefined) {
 		console.log("BUILD_ID", process.env.BUILD_ID);
