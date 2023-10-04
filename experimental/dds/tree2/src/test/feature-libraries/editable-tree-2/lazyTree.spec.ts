@@ -21,7 +21,6 @@ import {
 	isPrimitiveValue,
 	jsonableTreeFromCursor,
 	singleMapTreeCursor,
-	typeNameSymbol,
 	Tree,
 	TreeField,
 	TreeNode,
@@ -32,8 +31,10 @@ import {
 	assertAllowedValue,
 	FieldKind,
 	AllowedTypes,
+	typeNameSymbol,
 } from "../../../feature-libraries";
 import {
+	EmptyKey,
 	FieldAnchor,
 	FieldKey,
 	ITreeSubscriptionCursor,
@@ -49,7 +50,6 @@ import {
 	LazyOptionalField,
 	LazySequence,
 	LazyValueField,
-	//
 } from "../../../feature-libraries/editable-tree-2/lazyField";
 import { boxedIterator, visitIterableTree } from "../../../feature-libraries/editable-tree-2";
 import { Context } from "../../../feature-libraries/editable-tree-2/context";
@@ -127,8 +127,8 @@ describe.only("LazyTree", () => {
 	);
 	const emptyStructNodeSchema = _schemaBuilder.struct("emptyStruct", {});
 	const nonEmptyStructNodeSchema = _schemaBuilder.struct("nonEmptyStruct", {
-		willUnbox: SchemaBuilder.fieldOptional(emptyStructNodeSchema),
-		notUnboxed: SchemaBuilder.fieldSequence(emptyStructNodeSchema),
+		foo: SchemaBuilder.fieldOptional(emptyStructNodeSchema),
+		bar: SchemaBuilder.fieldSequence(emptyStructNodeSchema),
 	});
 	const mapNodeAnySchema = _schemaBuilder.map("mapAny", SchemaBuilder.fieldOptional(Any));
 	const mapNodeStringSchema = _schemaBuilder.map(
@@ -268,8 +268,7 @@ describe.only("LazyTree", () => {
 					anchor,
 				);
 
-				// TODO: is this the right key?
-				assert.equal(node.tryGetField(brand("")), undefined);
+				assert.equal(node.tryGetField(EmptyKey), undefined);
 			});
 
 			it("Non-empty", () => {
@@ -317,11 +316,6 @@ describe.only("LazyTree", () => {
 			assert.equal(node.value, "Hello world");
 		});
 
-		// TODO: What are the semantics here? Is there a special key?
-		it.skip("tryGetField", () => {
-			assert.equal(node.tryGetField(brand("")), "Hello world");
-		});
-
 		// TODO: what else?
 	});
 
@@ -367,9 +361,16 @@ describe.only("LazyTree", () => {
 		});
 
 		it("tryGetField", () => {
-			assert.equal(node.tryGetField(brand("foo")), "Hello");
-			assert.equal(node.tryGetField(brand("bar")), "world");
-			assert.equal(node.tryGetField(brand("baz")), undefined);
+			const fooField = node.tryGetField(brand("foo"));
+			assert(fooField !== undefined);
+			assert(fooField.is(SchemaBuilder.fieldOptional(leafDomain.string)));
+
+			const barField = node.tryGetField(brand("bar"));
+			assert(barField !== undefined);
+			assert(barField.is(SchemaBuilder.fieldOptional(leafDomain.string)));
+
+			const bazField = node.tryGetField(brand("baz"));
+			assert(bazField === undefined);
 		});
 
 		// TODO: what else?
@@ -388,46 +389,67 @@ describe.only("LazyTree", () => {
 			const context = contextWithContentReadonly({
 				schema,
 				initialTree: {
-					[typeNameSymbol]: emptyStructNodeSchema.name,
-					willUnbox: {},
-					notUnboxed: [],
+					[typeNameSymbol]: nonEmptyStructNodeSchema.name,
+					foo: {}, // Will unbox
+					bar: [], // Won't unbox
 				},
 			});
 			const cursor = initializeCursor(context, rootFieldAnchor);
 			cursor.enterNode(0);
+
 			const anchor = context.forest.anchors.track(cursor.getPath() ?? fail());
+			const anchorNode = context.forest.anchors.locate(anchor) ?? fail();
+
 			const struct = buildLazyStruct(
 				context,
 				nonEmptyStructNodeSchema,
 				cursor,
-				context.forest.anchors.locate(anchor) ?? fail(),
+				anchorNode,
 				anchor,
 			);
 
-			assert.equal(struct.willUnbox, struct.boxedWillUnbox.content);
-			assert(struct.notUnboxed.isSameAs(struct.boxedNotUnboxed));
+			assert.equal(struct.foo, struct.boxedFoo.content);
+			assert(struct.bar.isSameAs(struct.boxedBar));
 		});
 
-		it("is", () => {
+		it.skip("is", () => {
+			const { context, cursor } = initializeTreeWithContent({
+				schema,
+				initialTree: {
+					willUnbox: "Hello world",
+					wontUnbox: 42,
+				},
+			});
+			cursor.enterNode(0);
+
+			const anchor = context.forest.anchors.track(cursor.getPath() ?? fail());
+			const anchorNode = context.forest.anchors.locate(anchor) ?? fail();
+
+			const node = buildLazyStruct(
+				context,
+				nonEmptyStructNodeSchema,
+				cursor,
+				anchorNode,
+				anchor,
+			);
+
+			assert(node.is(nonEmptyStructNodeSchema));
+
+			assert(!node.is(mapNodeAnySchema));
+			assert(!node.is(fieldNodeOptionalAnySchema));
+			assert(!node.is(fieldNodeOptionalStringSchema));
+			assert(!node.is(fieldNodeValueAnySchema));
+			assert(!node.is(fieldNodeValueStringSchema));
+			assert(!node.is(leafDomain.string));
+			assert(!node.is(emptyStructNodeSchema));
+		});
+
+		it("value", () => {
 			// TODO
 		});
 
-		describe("value", () => {
-			it("Empty", () => {
-				// TODO
-			});
-			it("Non-empty", () => {
-				// TODO
-			});
-		});
-
-		describe("tryGetField", () => {
-			it("Empty", () => {
-				// TODO
-			});
-			it("Non-empty", () => {
-				// TODO
-			});
+		it("tryGetField", () => {
+			// TODO
 		});
 	});
 
