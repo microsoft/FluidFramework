@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-internal-modules */
+
 import { strict as assert, fail } from "assert";
 
 import {
@@ -11,7 +13,6 @@ import {
 	LazyMap,
 	LazyStruct,
 	buildLazyStruct,
-	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/editable-tree-2/lazyTree";
 import {
 	Any,
@@ -29,8 +30,18 @@ import {
 	fieldApiPrefixes,
 	validateStructFieldName,
 	assertAllowedValue,
+	FieldKind,
+	AllowedTypes,
 } from "../../../feature-libraries";
-import { FieldKey, MapTree, TreeNavigationResult, TreeValue, rootFieldKey } from "../../../core";
+import {
+	FieldAnchor,
+	FieldKey,
+	ITreeSubscriptionCursor,
+	MapTree,
+	TreeNavigationResult,
+	TreeValue,
+	rootFieldKey,
+} from "../../../core";
 import { forestWithContent } from "../../utils";
 import { RestrictiveReadonlyRecord, brand } from "../../../util";
 import {
@@ -38,12 +49,13 @@ import {
 	LazyOptionalField,
 	LazySequence,
 	LazyValueField,
-	// eslint-disable-next-line import/no-internal-modules
+	//
 } from "../../../feature-libraries/editable-tree-2/lazyField";
-// eslint-disable-next-line import/no-internal-modules
 import { boxedIterator, visitIterableTree } from "../../../feature-libraries/editable-tree-2";
+import { Context } from "../../../feature-libraries/editable-tree-2/context";
+import { TreeContent } from "../../../shared-tree";
 import { testTrees, treeContentFromTestTree } from "../../testTrees";
-import { jsonSchema } from "../../../domains";
+import { jsonSchema, leaf as leafDomain } from "../../../domains";
 import { contextWithContentReadonly, getReadonlyContext } from "./utils";
 
 function collectPropertyNames(obj: object): Set<string> {
@@ -54,6 +66,38 @@ function collectPropertyNames(obj: object): Set<string> {
 		...Object.getOwnPropertyNames(obj),
 		...collectPropertyNames(Object.getPrototypeOf(obj)),
 	]);
+}
+
+const rootFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: rootFieldKey };
+
+/**
+ * Creates a cursor from the provided `context` and moves it to the provided `anchor`.
+ */
+function initializeCursor(context: Context, anchor: FieldAnchor): ITreeSubscriptionCursor {
+	const cursor = context.forest.allocateCursor();
+
+	assert.equal(context.forest.tryMoveCursorToField(anchor, cursor), TreeNavigationResult.Ok);
+	return cursor;
+}
+
+/**
+ * Initializes a test tree, context, and cursor, and moves the cursor to the tree's root.
+ *
+ * @returns The initialized context and cursor.
+ */
+function initializeTreeWithContent<Kind extends FieldKind, Types extends AllowedTypes>(
+	treeContent: TreeContent,
+): {
+	context: Context;
+	cursor: ITreeSubscriptionCursor;
+} {
+	const context = contextWithContentReadonly(treeContent);
+	const cursor = initializeCursor(context, rootFieldAnchor);
+
+	return {
+		context,
+		cursor,
+	};
 }
 
 describe("LazyTree", () => {
@@ -110,16 +154,29 @@ describe("LazyTree", () => {
 	});
 
 	describe("LazyFieldNode", () => {
+		const schemaBuilder = new SchemaBuilder("test", {}, leafDomain.library);
+		const fieldNode = schemaBuilder.fieldNode("field", SchemaBuilder.fieldOptional(Any));
+		const schema = schemaBuilder.intoDocumentSchema(SchemaBuilder.fieldValue(fieldNode));
+
 		it("is", () => {
 			// TODO
 		});
 
 		describe("value", () => {
-			it("Empty", () => {
-				// TODO
+			it("Missing optional value", () => {
+				const { context, cursor } = initializeTreeWithContent({ schema, initialTree: {} });
+				cursor.enterNode(0);
+
+				const anchor = context.forest.anchors.track(cursor.getPath() ?? fail());
+				const anchorNode = context.forest.anchors.locate(anchor) ?? fail();
+
+				const node = new LazyFieldNode(context, fieldNode, cursor, anchorNode, anchor);
+
+				assert.equal(node.value, undefined);
 			});
-			it("Non-empty", () => {
-				// TODO
+
+			it("With value", () => {
+				// TODO: How do you specify the initialTree for a field node?
 			});
 		});
 
@@ -205,14 +262,7 @@ describe("LazyTree", () => {
 					notUnboxed: [],
 				},
 			});
-			const cursor = context.forest.allocateCursor();
-			assert.equal(
-				context.forest.tryMoveCursorToField(
-					{ fieldKey: rootFieldKey, parent: undefined },
-					cursor,
-				),
-				TreeNavigationResult.Ok,
-			);
+			const cursor = initializeCursor(context, rootFieldAnchor);
 			cursor.enterNode(0);
 			const anchor = context.forest.anchors.track(cursor.getPath() ?? fail());
 			const struct = buildLazyStruct(
