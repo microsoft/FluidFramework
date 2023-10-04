@@ -586,7 +586,7 @@ export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
 
 // @alpha
 export const FieldKinds: {
-    readonly required: ValueFieldKind;
+    readonly required: Required_2;
     readonly optional: Optional;
     readonly sequence: Sequence;
     readonly nodeKey: NodeKeyFieldKind;
@@ -1548,7 +1548,7 @@ export function recordDependency(dependent: ObservingDependent | undefined, depe
 const recursiveStruct: TreeSchema<"recursiveStruct", {
 structFields: {
 recursive: FieldSchema<Optional, [() => TreeSchema<"recursiveStruct", any>]>;
-number: FieldSchema<ValueFieldKind, [TreeSchema<"com.fluidframework.leaf.number", {
+number: FieldSchema<Required_2, [TreeSchema<"com.fluidframework.leaf.number", {
 leafValue: import("..").ValueSchema.Number;
 }>]>;
 };
@@ -1558,7 +1558,7 @@ leafValue: import("..").ValueSchema.Number;
 const recursiveStruct2: TreeSchema<"recursiveStruct2", {
 structFields: {
 recursive: FieldSchema<Optional, [() => TreeSchema<"recursiveStruct2", any>]>;
-number: FieldSchema<ValueFieldKind, [TreeSchema<"com.fluidframework.leaf.number", {
+number: FieldSchema<Required_2, [TreeSchema<"com.fluidframework.leaf.number", {
 leafValue: import("..").ValueSchema.Number;
 }>]>;
 };
@@ -1572,6 +1572,11 @@ type RecursiveTreeSchemaSpecification = unknown;
 
 // @alpha
 type _RecursiveTrick = never;
+
+// @alpha (undocumented)
+interface Required_2 extends FieldKind<"Value", Multiplicity.Single> {
+}
+export { Required_2 as Required }
 
 // @alpha
 export interface RequiredField<TTypes extends AllowedTypes> extends TreeField {
@@ -2206,7 +2211,7 @@ export type UntypedTreeOrPrimitive<TContext = UntypedTreeContext> = UntypedTree<
 interface UntypedValueField<TContext = UntypedTreeContext, TChild = UntypedTree<TContext>, TUnwrappedChild = UnwrappedUntypedTree<TContext>, TNewContent = ContextuallyTypedNodeData> extends UntypedField<TContext, TChild, UntypedTree<TContext>, TUnwrappedChild> {
     readonly content: TChild;
     readonly fieldSchema: FieldStoredSchema & {
-        readonly kind: ValueFieldKind;
+        readonly kind: Required_2;
     };
     setContent(newContent: ITreeCursor | TNewContent): void;
 }
@@ -2239,10 +2244,6 @@ export type Value = undefined | TreeValue;
 // @alpha (undocumented)
 export interface ValueFieldEditBuilder {
     set(newContent: ITreeCursor): void;
-}
-
-// @alpha (undocumented)
-export interface ValueFieldKind extends FieldKind<"Value", Multiplicity.Single> {
 }
 
 // @alpha
