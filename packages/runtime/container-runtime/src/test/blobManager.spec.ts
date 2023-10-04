@@ -689,7 +689,6 @@ describe("BlobManager", () => {
 			assert.strictEqual(runtime.unprocessedBlobs.size, 1);
 			try {
 				await runtime.processBlobs(false);
-				await handleP;
 				assert.fail("Should not succeed");
 			} catch (error: any) {
 				assert.strictEqual(error.message, "fake error");
@@ -711,7 +710,6 @@ describe("BlobManager", () => {
 			ac.abort();
 			try {
 				await runtime.processBlobs();
-				await handleP;
 				assert.fail("Should not succeed");
 			} catch (error: any) {
 				assert.strictEqual(
@@ -821,7 +819,6 @@ describe("BlobManager", () => {
 
 			const blobContents = IsoBuffer.from(content, "utf8");
 			const handleP = runtime.createBlob(blobContents);
-			await runtime.processBlobs();
 			await runtime.processAll();
 
 			const blobHandle = await handleP;
@@ -848,7 +845,6 @@ describe("BlobManager", () => {
 			const blob2Contents = IsoBuffer.from("blob2", "utf8");
 			const handle1P = runtime.createBlob(blob1Contents);
 			const handle2P = runtime.createBlob(blob2Contents);
-			await runtime.processBlobs();
 			await runtime.processAll();
 
 			const blob1Handle = await handle1P;
