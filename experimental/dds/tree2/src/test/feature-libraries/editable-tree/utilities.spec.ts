@@ -27,10 +27,9 @@ import {
 	getOwnArrayKeys,
 	keyIsValidIndex,
 	treeStatusFromAnchorCache,
+	detachedFieldSlot,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/editable-tree/utilities";
-// eslint-disable-next-line import/no-internal-modules
-import { detachedFieldSlot } from "../../../feature-libraries/editable-tree/editableTree";
 import { brand } from "../../../util";
 import {
 	arraySchema,

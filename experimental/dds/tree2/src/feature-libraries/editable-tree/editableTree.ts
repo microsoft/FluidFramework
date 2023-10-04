@@ -43,7 +43,6 @@ import {
 } from "../untypedTree";
 import {
 	AdaptingProxyHandler,
-	DetachedFieldCache,
 	adaptWithProxy,
 	getStableNodeKey,
 	treeStatusFromAnchorCache,
@@ -62,8 +61,6 @@ import { makeField, unwrappedField } from "./editableField";
 import { ProxyTarget } from "./ProxyTarget";
 
 const editableTreeSlot = anchorSlot<EditableTree>();
-
-export const detachedFieldSlot = anchorSlot<DetachedFieldCache>();
 
 export function makeTree(context: ProxyContext, cursor: ITreeSubscriptionCursor): EditableTree {
 	const anchor = cursor.buildAnchor();

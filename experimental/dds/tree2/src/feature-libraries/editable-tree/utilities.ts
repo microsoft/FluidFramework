@@ -12,6 +12,7 @@ import {
 	FieldKey,
 	TreeStoredSchema,
 	UpPath,
+	anchorSlot,
 	getDetachedFieldContainingPath,
 	rootField,
 } from "../../core";
@@ -21,7 +22,6 @@ import { FieldKinds } from "../default-field-kinds";
 import { StableNodeKey } from "../node-key";
 import { getField } from "../untypedTree";
 import { EditableTree, TreeStatus } from "./editableTreeTypes";
-import { detachedFieldSlot } from "./editableTree";
 
 /**
  * @returns true iff `schema` trees should default to being viewed as just their value when possible.
@@ -176,7 +176,7 @@ function getCachedUpdatedDetachedField(
 	});
 	return detachedField;
 }
-
+export const detachedFieldSlot = anchorSlot<DetachedFieldCache>();
 export interface DetachedFieldCache {
 	generationNumber: number;
 	detachedField: DetachedField;
