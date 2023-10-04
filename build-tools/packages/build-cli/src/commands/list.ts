@@ -36,7 +36,7 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 		releaseGroup: releaseGroupFlag({ required: true }),
 		feed: Flags.custom<Feed | undefined>({
 			description:
-				"Filter the resulting packages to those that should be published to a particular npm feed. Use 'official' for public npm.",
+				"Filter the resulting packages to those that should be published to a particular npm feed. Use 'public' for public npm. The 'official' and 'internal' values are deprecated and should not be used.",
 			options: [...feeds, "official", "internal"],
 			helpGroup: "PACKAGE FILTER",
 			required: false,
