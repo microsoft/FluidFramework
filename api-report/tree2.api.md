@@ -245,9 +245,6 @@ abstract class BrandedType<ValueType, Name extends string> {
 export function brandOpaque<T extends BrandedType<any, string>>(value: isAny<ValueFromBranded<T>> extends true ? never : ValueFromBranded<T>): BrandedType<ValueFromBranded<T>, NameFromBranded<T>>;
 
 // @alpha
-export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
-
-// @alpha
 export type CheckTypesOverlap<T, TCheck> = [Extract<T, TCheck> extends never ? never : T][0];
 
 // @alpha
@@ -1380,14 +1377,6 @@ export interface NodeData {
 type NodeDataFor<Mode extends ApiMode, TSchema extends TreeSchema> = TypedNode_2<TSchema, Mode>;
 
 // @alpha (undocumented)
-export enum NodeExistenceState {
-    // (undocumented)
-    Alive = 0,
-    // (undocumented)
-    Dead = 1
-}
-
-// @alpha (undocumented)
 export interface NodeExistsConstraint {
     // (undocumented)
     violated: boolean;
@@ -1553,12 +1542,6 @@ export interface RangeEntry<T> {
 }
 
 // @alpha
-export interface ReadonlyRepairDataStore<TTree = Delta.ProtoNode, TRevisionTag = unknown> {
-    // (undocumented)
-    getNodes(revision: TRevisionTag, path: UpPath | undefined, key: FieldKey, index: number, count: number): TTree[];
-}
-
-// @alpha
 export function recordDependency(dependent: ObservingDependent | undefined, dependee: Dependee): void;
 
 // @alpha (undocumented)
@@ -1591,11 +1574,6 @@ type RecursiveTreeSchemaSpecification = unknown;
 type _RecursiveTrick = never;
 
 // @alpha
-export interface RepairDataStore<TChange, TTree = Delta.ProtoNode, TRevisionTag = unknown> extends ReadonlyRepairDataStore<TTree, TRevisionTag> {
-    capture(change: TChange, revision: TRevisionTag): void;
-}
-
-// @alpha
 export interface RequiredField<TTypes extends AllowedTypes> extends TreeField {
     // (undocumented)
     readonly boxedContent: TypedNodeUnion<TTypes>;
@@ -1616,9 +1594,6 @@ type RequiredFields<T> = [
 type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
     readonly [P in symbol | string]: P extends K ? T : never;
 };
-
-// @alpha
-export type RevisionTag = StableId;
 
 // @alpha
 type Root<TTree = ProtoNode> = FieldMarks<TTree>;
@@ -1870,15 +1845,6 @@ export type StructTyped<TSchema extends StructSchema> = Struct & StructFields<TS
 export interface SubtreePolicy {
     // (undocumented)
     maxDepth: number;
-}
-
-// @alpha (undocumented)
-export interface TaggedChange<TChangeset> {
-    // (undocumented)
-    readonly change: TChangeset;
-    // (undocumented)
-    readonly revision: RevisionTag | undefined;
-    readonly rollbackOf?: RevisionTag;
 }
 
 declare namespace testRecursiveDomain {
