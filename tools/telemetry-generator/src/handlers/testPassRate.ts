@@ -35,7 +35,7 @@ module.exports = function handler(fileData, logger) {
 		passedTests,
 		failedTests,
 		totalTests: resultSummary.totalTestCount,
-		passRate,
+		result: passRate,
 		duration: resultSummary.duration,
 		buildId: process.env.BUILD_ID ?? "",
 		name: process.env.PIPELINE ?? "",
