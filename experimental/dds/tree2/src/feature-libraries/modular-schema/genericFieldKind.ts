@@ -4,7 +4,7 @@
  */
 
 import { Delta, makeAnonChange, tagChange, TaggedChange } from "../../core";
-import { brand, fail, IdAllocator } from "../../util";
+import { fail, IdAllocator } from "../../util";
 import { CrossFieldManager } from "./crossFieldQueries";
 import {
 	FieldChangeHandler,
@@ -14,7 +14,7 @@ import {
 	NodeChangeRebaser,
 	RevisionMetadataSource,
 } from "./fieldChangeHandler";
-import { FieldKind, Multiplicity } from "./fieldKind";
+import { FieldKindWithEditor, Multiplicity } from "./fieldKind";
 import { makeGenericChangeCodec } from "./genericFieldKindCodecs";
 import { GenericChange, GenericChangeset } from "./genericFieldKindTypes";
 import { NodeChangeset } from "./modularChangeTypes";
@@ -152,8 +152,8 @@ function rebaseGenericChange(
 /**
  * {@link FieldKind} used to represent changes to elements of a field in a field-kind-agnostic format.
  */
-export const genericFieldKind: FieldKind = new FieldKind(
-	brand("ModularEditBuilder.Generic"),
+export const genericFieldKind: FieldKindWithEditor = new FieldKindWithEditor(
+	"ModularEditBuilder.Generic",
 	Multiplicity.Sequence,
 	genericChangeHandler,
 	(types, other) => false,

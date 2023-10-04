@@ -19,13 +19,12 @@ import {
 	FieldChangeHandler,
 	FieldEditor,
 	referenceFreeFieldChangeRebaser,
-	BrandedFieldKind,
-	brandedFieldKind,
+	FieldKindWithEditor,
 } from "../modular-schema";
-import { sequenceFieldChangeHandler, SequenceFieldEditor } from "../sequence-field";
+import { sequenceFieldChangeHandler } from "../sequence-field";
 import { noChangeCodecFamily } from "./defaultFieldChangeCodecs";
 import { OptionalChangeset } from "./defaultFieldChangeTypes";
-import { OptionalFieldEditor, optionalChangeHandler, optionalFieldEditor } from "./optionalField";
+import { optionalChangeHandler, optionalFieldEditor } from "./optionalField";
 
 /**
  * ChangeHandler that only handles no-op / identity changes.
@@ -49,20 +48,20 @@ export interface ValueFieldEditor extends FieldEditor<OptionalChangeset> {
 	set(newValue: ITreeCursor, id: ChangesetLocalId): OptionalChangeset;
 }
 
+const optionalIdentifier = "Optional";
 /**
  * 0 or 1 items.
  */
-export const optional: BrandedFieldKind<"Optional", Multiplicity.Optional, OptionalFieldEditor> =
-	brandedFieldKind(
-		"Optional",
-		Multiplicity.Optional,
-		optionalChangeHandler,
-		(types, other) =>
-			(other.kind.identifier === sequence.identifier ||
-				other.kind.identifier === optional.identifier) &&
-			allowsTreeSchemaIdentifierSuperset(types, other.types),
-		new Set([]),
-	);
+export const optional = new FieldKindWithEditor(
+	optionalIdentifier,
+	Multiplicity.Optional,
+	optionalChangeHandler,
+	(types, other) =>
+		(other.kind.identifier === sequence.identifier ||
+			other.kind.identifier === optionalIdentifier) &&
+		allowsTreeSchemaIdentifierSuperset(types, other.types),
+	new Set([]),
+);
 
 export const valueFieldEditor: ValueFieldEditor = {
 	...optionalFieldEditor,
@@ -75,54 +74,54 @@ export const valueChangeHandler: FieldChangeHandler<OptionalChangeset, ValueFiel
 	editor: valueFieldEditor,
 };
 
+const valueIdentifier = "Value";
+
 /**
  * Exactly one item.
  */
-export const value: BrandedFieldKind<"Value", Multiplicity.Value, ValueFieldEditor> =
-	brandedFieldKind(
-		"Value",
-		Multiplicity.Value,
-		valueChangeHandler,
-		(types, other) =>
-			(other.kind.identifier === sequence.identifier ||
-				other.kind.identifier === value.identifier ||
-				other.kind.identifier === optional.identifier ||
-				other.kind.identifier === nodeKey.identifier) &&
-			allowsTreeSchemaIdentifierSuperset(types, other.types),
-		new Set(),
-	);
+export const value = new FieldKindWithEditor(
+	valueIdentifier,
+	Multiplicity.Value,
+	valueChangeHandler,
+	(types, other) =>
+		(other.kind.identifier === sequence.identifier ||
+			other.kind.identifier === valueIdentifier ||
+			other.kind.identifier === optional.identifier ||
+			other.kind.identifier === nodeKey.identifier) &&
+		allowsTreeSchemaIdentifierSuperset(types, other.types),
+	new Set(),
+);
+
+const sequenceIdentifier = "Sequence";
 
 /**
  * 0 or more items.
  */
-export const sequence: BrandedFieldKind<"Sequence", Multiplicity.Sequence, SequenceFieldEditor> =
-	brandedFieldKind(
-		"Sequence",
-		Multiplicity.Sequence,
-		sequenceFieldChangeHandler,
-		(types, other) =>
-			other.kind.identifier === sequence.identifier &&
-			allowsTreeSchemaIdentifierSuperset(types, other.types),
-		// TODO: add normalizer/importers for handling ops from other kinds.
-		new Set([]),
-	);
+export const sequence = new FieldKindWithEditor(
+	sequenceIdentifier,
+	Multiplicity.Sequence,
+	sequenceFieldChangeHandler,
+	(types, other) =>
+		other.kind.identifier === sequenceIdentifier &&
+		allowsTreeSchemaIdentifierSuperset(types, other.types),
+	// TODO: add normalizer/importers for handling ops from other kinds.
+	new Set([]),
+);
+
+const nodeKeyIdentifier = "NodeKey";
 
 /**
  * Exactly one identifier.
  */
-export const nodeKey: BrandedFieldKind<
-	"NodeKey",
-	Multiplicity.Value,
-	FieldEditor<0>
-> = brandedFieldKind(
-	"NodeKey",
+export const nodeKey = new FieldKindWithEditor(
+	nodeKeyIdentifier,
 	Multiplicity.Value,
 	noChangeHandler,
 	(types, other) =>
 		(other.kind.identifier === sequence.identifier ||
-			other.kind.identifier === value.identifier ||
+			other.kind.identifier === valueIdentifier ||
 			other.kind.identifier === optional.identifier ||
-			other.kind.identifier === nodeKey.identifier) &&
+			other.kind.identifier === nodeKeyIdentifier) &&
 		allowsTreeSchemaIdentifierSuperset(types, other.types),
 	new Set(),
 );
@@ -155,7 +154,7 @@ export const nodeKey: BrandedFieldKind<
  *
  * See {@link emptyField} for a constant, reusable field using Forbidden.
  */
-export const forbidden = brandedFieldKind(
+export const forbidden = new FieldKindWithEditor(
 	forbiddenFieldKindIdentifier,
 	Multiplicity.Forbidden,
 	noChangeHandler,
@@ -167,7 +166,7 @@ export const forbidden = brandedFieldKind(
 /**
  * Default field kinds by identifier
  */
-export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
+export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
 	[value, optional, sequence, nodeKey, forbidden].map((s) => [s.identifier, s]),
 );
 
@@ -179,32 +178,24 @@ export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
 /**
  * @alpha
  */
-export interface ValueFieldKind
-	extends BrandedFieldKind<"Value", Multiplicity.Value, FieldEditor<any>> {}
+export interface ValueFieldKind extends FieldKind<"Value", Multiplicity.Value> {}
 /**
  * @alpha
  */
-export interface Optional
-	extends BrandedFieldKind<"Optional", Multiplicity.Optional, FieldEditor<any>> {}
+export interface Optional extends FieldKind<"Optional", Multiplicity.Optional> {}
 /**
  * @alpha
  */
-export interface Sequence
-	extends BrandedFieldKind<"Sequence", Multiplicity.Sequence, FieldEditor<any>> {}
+export interface Sequence extends FieldKind<"Sequence", Multiplicity.Sequence> {}
 /**
  * @alpha
  */
-export interface NodeKeyFieldKind
-	extends BrandedFieldKind<"NodeKey", Multiplicity.Value, FieldEditor<any>> {}
+export interface NodeKeyFieldKind extends FieldKind<"NodeKey", Multiplicity.Value> {}
 /**
  * @alpha
  */
 export interface Forbidden
-	extends BrandedFieldKind<
-		typeof forbiddenFieldKindIdentifier,
-		Multiplicity.Forbidden,
-		FieldEditor<any>
-	> {}
+	extends FieldKind<typeof forbiddenFieldKindIdentifier, Multiplicity.Forbidden> {}
 
 /**
  * Default FieldKinds with their editor types erased.
