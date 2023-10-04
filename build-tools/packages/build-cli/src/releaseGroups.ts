@@ -17,6 +17,8 @@ export type ReleasePackage = string;
 
 /**
  * An array of known release groups.
+ *
+ * @internal
  */
 export const knownReleaseGroups = [
 	"build-tools",

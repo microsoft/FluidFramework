@@ -6,7 +6,7 @@
 
 import { run } from '@oclif/core';
 
-// @public
+// @internal
 export const knownReleaseGroups: readonly ["build-tools", "client", "server", "gitrest", "historian"];
 
 // @internal
