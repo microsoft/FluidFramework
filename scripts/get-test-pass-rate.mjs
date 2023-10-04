@@ -27,7 +27,7 @@ async function fetchData() {
                 // Fetch data from Timeline API
                 const response = await fetch(apiUrl, {
                         headers: {
-                                Authorization: `Basic ${ADO_API_TOKEN}`,
+                                Authorization: `${ADO_API_TOKEN}`,
                         },
                 });
                 console.log(response);
