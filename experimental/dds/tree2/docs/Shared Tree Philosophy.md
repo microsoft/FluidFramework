@@ -181,7 +181,7 @@ To tackle this problem in a way that follows the compatibility and extensibility
 
 The goal is to ensure it is possible to provide high performance specialized tree representations that can handle specific use cases with performance that's not inhibited by being part of Shared Tree.
 Secondary to this is ensuring that the effort required to do this is minimized.
-This means both that the baseline performance should be good enough in most cases, and the specialized cases should as general as possible while still offering the required performance wins to reduce how many specializations are needed.
+This means both that the baseline performance should be good enough in most cases, and the specialized cases should be as general as possible while still offering the required performance wins to reduce how many specializations are needed.
 
 To meet this first goal (avoid any shared tree specific overhead), the design should ensure it is possible to provide a customized fast path end to end, meaning that all the way from ops or summaries to the view access by the application, it's possible to opt into specialized formats and low level access to eliminate performance overhead incurred by the tree abstraction.
 To keep ease of use, it's important that the tree abstractions are always usable (so debugging tools, non-performance-critical code, etc. can use them), and that it's simply possible for code to opt in to using optional fast paths to achieve this.
