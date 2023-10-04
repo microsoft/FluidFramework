@@ -223,6 +223,7 @@ export class MockRuntime
 		await new Promise<void>((resolve) => setTimeout(resolve, delay));
 		this.connected = true;
 		this.emit("connected", "client ID");
+		await this.processStashed();
 		const ops = this.ops;
 		this.ops = [];
 		ops.forEach((op) => this.blobManager.reSubmit(op.metadata));
