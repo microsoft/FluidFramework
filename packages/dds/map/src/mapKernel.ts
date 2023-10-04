@@ -63,21 +63,15 @@ export type IMapOperation = IMapKeyOperation | IMapClearOperation;
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse | JSON.parse}.
  */
 export interface IMapDataObjectSerializable {
-	[key: string]: {
-		// eslint-disable-next-line import/no-deprecated
-		serializableValue: ISerializableValue;
-		index?: number;
-	};
+	// eslint-disable-next-line import/no-deprecated
+	[key: string]: ISerializableValue;
 }
 
 /**
  * Serialized key/value data.
  */
 export interface IMapDataObjectSerialized {
-	[key: string]: {
-		serializableValue: ISerializedValue;
-		index?: number;
-	};
+	[key: string]: ISerializedValue;
 }
 
 type MapKeyLocalOpMetadata =
@@ -602,28 +596,27 @@ export class MapKernel {
 	 */
 	public getSerializedStorage(serializer: IFluidSerializer): IMapDataObjectSerialized {
 		const serializableMapData: IMapDataObjectSerialized = {};
-		const keysInOrder = this.getKeysInCreationOrder();
 		for (const [key, localValue] of this.data.entries()) {
-			const index = keysInOrder.indexOf(key);
-			serializableMapData[key] = {
-				serializableValue: localValue.makeSerialized(serializer, this.handle),
-				index,
-			};
+			serializableMapData[key] = localValue.makeSerialized(serializer, this.handle);
+			serializableMapData[key].index = this.getKeyIndex(key);
 		}
 		return serializableMapData;
 	}
 
 	public getSerializableStorage(serializer: IFluidSerializer): IMapDataObjectSerializable {
 		const serializableMapData: IMapDataObjectSerializable = {};
-		const keysInOrder = this.getKeysInCreationOrder();
 		for (const [key, localValue] of this.data.entries()) {
-			const index = keysInOrder.indexOf(key);
-			serializableMapData[key] = {
-				serializableValue: makeSerializable(localValue, serializer, this.handle),
-				index,
-			};
+			serializableMapData[key] = makeSerializable(localValue, serializer, this.handle);
+			serializableMapData[key].index = this.getKeyIndex(key);
 		}
 		return serializableMapData;
+	}
+
+	private getKeyIndex(key: string): number {
+		if (this.isAttached()) {
+			return this.ackedKeysTracker.get(key) as number;
+		}
+		return (this.pendingSetTracker.get(key) as number[])[0];
 	}
 
 	public serialize(serializer: IFluidSerializer): string {
@@ -638,18 +631,12 @@ export class MapKernel {
 		for (const [key, serializable] of Object.entries(json)) {
 			const localValue = {
 				key,
-				value: this.makeLocal(key, serializable.serializableValue),
+				value: this.makeLocal(key, serializable),
 			};
 
 			this.data.set(localValue.key, localValue.value);
 			// fill the creation index for the loaded data
 			this.addAckedKeyIndex(localValue.key, serializable.index);
-			/*
-			if (serializable.index) {
-				this.addAckedKeyIndex(localValue.key, serializable.index);
-			} else {
-				this.addAckedKeyIndex(localValue.key);
-			} */
 		}
 	}
 

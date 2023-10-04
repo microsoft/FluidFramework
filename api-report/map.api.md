@@ -145,12 +145,14 @@ export interface ILocalValue {
 
 // @public @deprecated
 export interface ISerializableValue {
+    index?: number;
     type: string;
     value: any;
 }
 
 // @public
 export interface ISerializedValue {
+    index?: number;
     type: string;
     value: string | undefined;
 }

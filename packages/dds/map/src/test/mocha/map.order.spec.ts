@@ -12,12 +12,14 @@ import {
 	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
+import { ISummaryBlob } from "@fluidframework/protocol-definitions";
 import { MapFactory, SharedMap } from "../../map";
 import {
 	IMapClearOperation,
 	IMapDeleteOperation,
 	IMapSetOperation,
 } from "../../internalInterfaces";
+import { ISharedMap } from "../../interfaces";
 import { TestSharedMap, createConnectedMap, createLocalMap } from "./mapUtils";
 
 describe("Map Iteration Order", () => {
@@ -78,26 +80,6 @@ describe("Map Iteration Order", () => {
 			map.set("1", 3);
 
 			assert.deepEqual(Array.from(map.keys()), ["2", "1"]);
-		});
-
-		it.skip("serialize/load", async () => {
-			map.set("2", 1);
-			map.set("1", 2);
-			map.set("4", 5);
-
-			const containerRuntimeFactory = new MockContainerRuntimeFactory();
-			const dataStoreRuntime = new MockFluidDataStoreRuntime();
-			const containerRuntime =
-				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-			const services = MockSharedObjectServices.createFromSummary(
-				map.getAttachSummary().summary,
-			);
-			services.deltaConnection = dataStoreRuntime.createDeltaConnection();
-
-			const loadedMap = new SharedMap("loadedMap", dataStoreRuntime, MapFactory.Attributes);
-			await loadedMap.load(services);
-
-			assert.deepEqual(Array.from(loadedMap.keys()), ["2", "1", "4"]);
 		});
 	});
 
@@ -193,6 +175,174 @@ describe("Map Iteration Order", () => {
 			assert.deepEqual(Array.from(map1.values()), [4]);
 			assert.deepEqual(Array.from(map2.keys()), ["1"]);
 			assert.deepEqual(Array.from(map2.values()), [4]);
+		});
+	});
+
+	describe("Serialization/Load", () => {
+		let map1: ISharedMap;
+
+		it("can be compatible with the old summary without index field", async () => {
+			const content = JSON.stringify({
+				blobs: [],
+				content: {
+					2: {
+						type: "Plain",
+						value: 2,
+					},
+					1: {
+						type: "Plain",
+						value: 1,
+					},
+					3: {
+						type: "Plain",
+						value: 3,
+					},
+				},
+			});
+
+			const services = new MockSharedObjectServices({ header: content });
+			const factory = new MapFactory();
+			map1 = await factory.load(
+				new MockFluidDataStoreRuntime(),
+				"mapId",
+				services,
+				factory.attributes,
+			);
+			// The data can be maintained after loading, but the order can not be guaranteed
+			assert.equal(map1.get("1"), 1);
+			assert.equal(map1.get("2"), 2);
+			assert.equal(map1.get("3"), 3);
+
+			assert.deepEqual(Array.from(map1.keys()), ["1", "2", "3"]);
+		});
+
+		it("can maintain the expected order given the index", async () => {
+			const content = JSON.stringify({
+				blobs: [],
+				content: {
+					2: {
+						type: "Plain",
+						value: 2,
+						index: 0,
+					},
+					1: {
+						type: "Plain",
+						value: 1,
+						index: 1,
+					},
+					3: {
+						type: "Plain",
+						value: 3,
+						index: 2,
+					},
+				},
+			});
+
+			const services = new MockSharedObjectServices({ header: content });
+			const factory = new MapFactory();
+			map1 = await factory.load(
+				new MockFluidDataStoreRuntime(),
+				"mapId",
+				services,
+				factory.attributes,
+			);
+			assert.equal(map1.get("1"), 1);
+			assert.equal(map1.get("2"), 2);
+			assert.equal(map1.get("3"), 3);
+
+			assert.deepEqual(Array.from(map1.keys()), ["2", "1", "3"]);
+		});
+
+		it("serialize the contents, load it into another map and maintain the order", async () => {
+			map1 = createLocalMap("map1");
+			map1.set("2", 1);
+			map1.set("1", 2);
+			map1.set("4", 5);
+
+			const containerRuntimeFactory = new MockContainerRuntimeFactory();
+			const dataStoreRuntime = new MockFluidDataStoreRuntime();
+			const containerRuntime =
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+			const services = MockSharedObjectServices.createFromSummary(
+				map1.getAttachSummary().summary,
+			);
+			services.deltaConnection = dataStoreRuntime.createDeltaConnection();
+
+			const map2 = new SharedMap("map2", dataStoreRuntime, MapFactory.Attributes);
+			map2.set("1", 3);
+			map2.set("6", 6);
+			await map2.load(services);
+
+			assert.deepEqual(Array.from(map2.keys()), ["2", "1", "4", "6"]);
+		});
+
+		it("serialize big maps with multiple blobs and maintain the order", async () => {
+			map1 = createLocalMap("map1");
+			map1.set("2", 1);
+
+			// 40K char string
+			let longString = "01234567890";
+			for (let i = 0; i < 12; i++) {
+				longString = longString + longString;
+			}
+			map1.set("1", longString);
+			map1.set("3", 3);
+
+			const summaryTree = map1.getAttachSummary().summary;
+			assert.strictEqual(
+				Object.keys(summaryTree.tree).length,
+				2,
+				"There should be 2 entries in the summary tree",
+			);
+			const expectedContent1 = JSON.stringify({
+				blobs: ["blob0"],
+				content: {
+					2: {
+						type: "Plain",
+						value: 1,
+						index: 0,
+					},
+					3: {
+						type: "Plain",
+						value: 3,
+						index: 2,
+					},
+				},
+			});
+			const expectedContent2 = JSON.stringify({
+				1: {
+					type: "Plain",
+					value: longString,
+					index: 1,
+				},
+			});
+
+			const header = summaryTree.tree.header as ISummaryBlob;
+			const blob0 = summaryTree.tree.blob0 as ISummaryBlob;
+			assert.strictEqual(
+				header?.content,
+				expectedContent1,
+				"header content is not as expected",
+			);
+			assert.strictEqual(
+				blob0?.content,
+				expectedContent2,
+				"blob0 content is not as expected",
+			);
+
+			const services = new MockSharedObjectServices({
+				header: header.content,
+				blob0: blob0.content,
+			});
+			const factory = new MapFactory();
+			const map2 = await factory.load(
+				new MockFluidDataStoreRuntime(),
+				"mapId",
+				services,
+				factory.attributes,
+			);
+
+			assert.deepEqual(Array.from(map2.keys()), ["2", "1", "3"]);
 		});
 	});
 

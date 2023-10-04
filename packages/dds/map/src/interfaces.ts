@@ -383,6 +383,12 @@ export interface ISerializableValue {
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	value: any;
+
+	/**
+	 * The index (original position) of the value in DDS, if undefined, it indicates that
+	 * the order of this value is irrelevant, like the storage in SharedDirectory
+	 */
+	index?: number;
 }
 
 /**
@@ -400,4 +406,10 @@ export interface ISerializedValue {
 	 * @remarks Will be undefined if the original value was undefined.
 	 */
 	value: string | undefined;
+
+	/**
+	 * The index (original position) of the value in DDS, if undefined, it indicates that
+	 * the order of this value is irrelevant, like the storage in SharedDirectory
+	 */
+	index?: number;
 }

@@ -136,7 +136,7 @@ describe("Map", () => {
 				const subMapHandleUrl = subMap.handle.absolutePath;
 				assert.equal(
 					summaryContent,
-					`{"blobs":[],"content":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}}}`,
+					`{"blobs":[],"content":{"first":{"type":"Plain","value":"second","index":0},"third":{"type":"Plain","value":"fourth","index":1},"fifth":{"type":"Plain","value":"sixth","index":2},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"},"index":3}}}`,
 				);
 			});
 
@@ -153,7 +153,7 @@ describe("Map", () => {
 				const subMapHandleUrl = subMap.handle.absolutePath;
 				assert.equal(
 					summaryContent,
-					`{"blobs":[],"content":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}}}`,
+					`{"blobs":[],"content":{"first":{"type":"Plain","value":"second","index":0},"third":{"type":"Plain","value":"fourth","index":1},"fifth":{"type":"Plain","index":2},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"},"index":3}}}`,
 				);
 			});
 
@@ -174,7 +174,7 @@ describe("Map", () => {
 					.content;
 				assert.equal(
 					summaryContent,
-					`{"blobs":[],"content":{"object":{"type":"Plain","value":{"subMapHandle":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"},"nestedObj":{"subMap2Handle":{"type":"__fluid_handle__","url":"${subMap2HandleUrl}"}}}}}}`,
+					`{"blobs":[],"content":{"object":{"type":"Plain","value":{"subMapHandle":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"},"nestedObj":{"subMap2Handle":{"type":"__fluid_handle__","url":"${subMap2HandleUrl}"}}},"index":0}}}`,
 				);
 			});
 
@@ -215,6 +215,7 @@ describe("Map", () => {
 						key: {
 							type: "Plain",
 							value: "value",
+							index: 0,
 						},
 					},
 				});
@@ -258,10 +259,12 @@ describe("Map", () => {
 						key: {
 							type: "Plain",
 							value: "value",
+							index: 0,
 						},
 						zzz: {
 							type: "Plain",
 							value: "the end",
+							index: 2,
 						},
 					},
 				});
@@ -269,6 +272,7 @@ describe("Map", () => {
 					longValue: {
 						type: "Plain",
 						value: longString,
+						index: 1,
 					},
 				});
 

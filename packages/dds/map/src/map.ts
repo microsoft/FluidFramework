@@ -285,12 +285,22 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 				const blobName = `blob${counter}`;
 				counter++;
 				blobs.push(blobName);
-				const content: IMapDataObjectSerializable = {
-					[key]: {
-						type: value.type,
-						value: JSON.parse(value.value) as unknown,
-					},
-				};
+				const content: IMapDataObjectSerializable =
+					value.index !== undefined
+						? {
+								[key]: {
+									type: value.type,
+									value: JSON.parse(value.value) as unknown,
+									index: value.index,
+								},
+						  }
+						: {
+								[key]: {
+									type: value.type,
+									value: JSON.parse(value.value) as unknown,
+								},
+						  };
+
 				builder.addBlob(blobName, JSON.stringify(content));
 			} else {
 				currentSize += value.type.length + 21; // Approximation cost of property header
@@ -306,13 +316,33 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 					headerBlob = {};
 					currentSize = 0;
 				}
+				headerBlob[key] =
+					value.index !== undefined
+						? {
+								type: value.type,
+								value:
+									value.value === undefined
+										? undefined
+										: (JSON.parse(value.value) as unknown),
+								index: value.index,
+						  }
+						: {
+								type: value.type,
+								value:
+									value.value === undefined
+										? undefined
+										: (JSON.parse(value.value) as unknown),
+						  };
+				/*
 				headerBlob[key] = {
+					serializableValue: {
 					type: value.type,
 					value:
 						value.value === undefined
 							? undefined
 							: (JSON.parse(value.value) as unknown),
-				};
+					}
+				}; */
 			}
 		}
 
