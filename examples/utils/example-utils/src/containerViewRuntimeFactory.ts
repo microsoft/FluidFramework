@@ -25,13 +25,10 @@ export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory 
 	) {
 		// We'll use a MountableView so webpack-fluid-loader can display us,
 		// and add our default view request handler.
-		super(
-			new Map([[dataStoreFactory.type, Promise.resolve(dataStoreFactory)]]),
-			undefined,
-			undefined,
-			undefined,
-			async (containerRuntime: IContainerRuntime): Promise<IFluidMountableViewEntryPoint> => {
-				const entryPointHandle = await containerRuntime.getAliasedDataStoreEntryPoint?.(
+		super({
+			registryEntries: new Map([[dataStoreFactory.type, Promise.resolve(dataStoreFactory)]]),
+			provideEntryPoint: async (containerRuntime: IContainerRuntime): Promise<IFluidMountableViewEntryPoint> => {
+				const entryPointHandle = await containerRuntime.getAliasedDataStoreEntryPoint(
 					dataStoreId,
 				);
 
@@ -54,7 +51,7 @@ export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory 
 					getDefaultMountableView: getDefaultView,
 				};
 			},
-		);
+		});
 	}
 
 	/**

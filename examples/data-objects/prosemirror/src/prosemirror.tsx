@@ -82,6 +82,7 @@ export class ProseMirror extends EventEmitter implements IFluidLoadable, IProvid
 	public get IFluidLoadable() {
 		return this;
 	}
+
 	public get IRichTextEditor() {
 		return this._collabManager!;
 	}

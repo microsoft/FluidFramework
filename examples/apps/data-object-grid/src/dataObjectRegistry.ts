@@ -16,6 +16,7 @@ import { Coordinate } from "@fluid-example/multiview-coordinate-model";
 import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate-view";
 import { ProseMirror, ProseMirrorFactory, ProseMirrorReactView } from "@fluid-example/prosemirror";
 import { Clicker, ClickerInstantiationFactory, ClickerReactView } from "@fluid-example/clicker";
+// eslint-disable-next-line import/no-deprecated
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import * as React from "react";
@@ -39,6 +40,7 @@ function createSingleHandleItem(subFactory: IFluidDataStoreFactory) {
 		}
 
 		return {
+			// eslint-disable-next-line import/no-deprecated
 			handle: (await requestFluidObject<IFluidLoadable>(dataStore, "/")).handle,
 		};
 	};

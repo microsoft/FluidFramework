@@ -41,7 +41,7 @@ class ProseMirrorRuntimeFactory extends RuntimeFactoryHelper {
 			registryEntries: registry,
 			existing,
 			containerScope: context.scope,
-			initializeEntryPoint: async (containerRuntime: IContainerRuntime) => {
+			provideEntryPoint: async (containerRuntime: IContainerRuntime) => {
 				// ISSUE: IContainerRuntime doesn't have methods that expose data stores as IDataStore or
 				// IFluidDataStoreChannel, which expose entryPoint. getRootDataStore returns an IFluidRouter.
 				const dataStore: IFluidDataStoreChannel = (await containerRuntime.getRootDataStore(

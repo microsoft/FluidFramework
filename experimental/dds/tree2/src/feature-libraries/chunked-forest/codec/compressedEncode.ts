@@ -269,7 +269,10 @@ export class InlineArrayShape
 	/**
 	 * @param length - number of invocations of `inner`.
 	 */
-	public constructor(public readonly length: number, public readonly inner: NodesEncoder) {
+	public constructor(
+		public readonly length: number,
+		public readonly inner: NodesEncoder,
+	) {
 		super();
 	}
 
@@ -395,7 +398,7 @@ export function encodeValue(
 		}
 	} else {
 		if (shape === true) {
-			assert(value !== undefined, "required value must not be missing");
+			assert(value !== undefined, 0x78d /* required value must not be missing */);
 			outputBuffer.push(value);
 		} else if (shape === false) {
 			assert(value === undefined, 0x73f /* incompatible value shape: expected no value */);

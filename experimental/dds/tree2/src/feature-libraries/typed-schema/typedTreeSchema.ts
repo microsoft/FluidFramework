@@ -21,8 +21,8 @@ import {
 	Named,
 	requireAssignableTo,
 } from "../../util";
-import { FieldKindTypes, FieldKinds } from "../default-field-kinds";
-import { FullSchemaPolicy } from "../modular-schema";
+import { FieldKinds } from "../default-field-kinds";
+import { FieldKind, FullSchemaPolicy } from "../modular-schema";
 import { LazyItem, normalizeFlexList } from "./flexList";
 import { ObjectToMap, WithDefault, objectToMapTyped } from "./typeUtils";
 
@@ -112,7 +112,11 @@ export class TreeSchema<
 
 	public readonly info: Assume<T, TreeSchemaSpecification>;
 
-	public constructor(public readonly builder: Named<string>, name: Name, info: T) {
+	public constructor(
+		public readonly builder: Named<string>,
+		name: Name,
+		info: T,
+	) {
 		this.info = info as Assume<T, TreeSchemaSpecification>;
 		this.name = name as Name & TreeSchemaIdentifier;
 		this.structFieldsObject = normalizeStructFields<
@@ -304,7 +308,7 @@ export type TreeSchemaSpecification = [
  * This can include policy for how to use this schema for "view" purposes, and well as how to expose editing APIs.
  * @sealed @alpha
  */
-export class FieldSchema<Kind extends FieldKindTypes = FieldKindTypes, Types = AllowedTypes> {
+export class FieldSchema<Kind extends FieldKind = FieldKind, Types = AllowedTypes> {
 	/**
 	 * Schema for a field which must always be empty.
 	 */
@@ -313,12 +317,16 @@ export class FieldSchema<Kind extends FieldKindTypes = FieldKindTypes, Types = A
 	protected _typeCheck?: MakeNominal;
 
 	/**
-	 * @param kind - The [kind](https://en.wikipedia.org/wiki/Kind_(type_theory)) of this field.
+	 * @param kind - The {@link https://en.wikipedia.org/wiki/Kind_(type_theory) | kind} of this field.
 	 * Determine the multiplicity, viewing and editing APIs as well as the merge resolution policy.
 	 * @param allowedTypes - What types of tree nodes are allowed in this field.
 	 */
-	public constructor(public readonly kind: Kind, public readonly allowedTypes: Types) {}
+	public constructor(
+		public readonly kind: Kind,
+		public readonly allowedTypes: Types,
+	) {}
 
+	// TODO:#5702 cache the result of this getter
 	public get types(): TreeTypeSet {
 		return allowedTypesToTypeSet(this.allowedTypes as unknown as AllowedTypes);
 	}

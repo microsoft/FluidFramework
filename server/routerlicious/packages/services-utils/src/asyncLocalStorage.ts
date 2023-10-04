@@ -8,7 +8,7 @@ import { v4 as uuid } from "uuid";
 import type { Request, Response, NextFunction } from "express";
 import { CorrelationIdHeaderName } from "@fluidframework/server-services-client";
 import { getGlobalTelemetryContext } from "@fluidframework/server-services-telemetry";
-import { getTelemetryContextPropertiesWithHttpInfo } from "./asyncContext";
+import { getTelemetryContextPropertiesWithHttpInfo } from "./telemetryContext";
 
 /**
  * DEPRECATED

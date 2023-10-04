@@ -18,9 +18,15 @@ import {
 	StructSchema,
 } from "../typed-schema";
 import { EditableTreeEvents } from "../untypedTree";
-import { FieldKindTypes, FieldKinds } from "../default-field-kinds";
+import { FieldKinds } from "../default-field-kinds";
 import { TreeStatus } from "../editable-tree";
+import { FieldKind } from "../modular-schema";
 import { TreeContext } from "./context";
+
+/**
+ * Allows boxed iteration of a tree/field
+ */
+export const boxedIterator = Symbol();
 
 /**
  * Part of a tree.
@@ -38,7 +44,7 @@ import { TreeContext } from "./context";
  *
  * @alpha
  */
-export interface Tree<TSchema = unknown> extends Iterable<Tree> {
+export interface Tree<TSchema = unknown> {
 	/**
 	 * Schema for this entity.
 	 * If well-formed, it must follow this schema.
@@ -57,6 +63,14 @@ export interface Tree<TSchema = unknown> extends Iterable<Tree> {
 	 * For non-root fields, this is the status of the parent node, since fields do not have a separate lifetime.
 	 */
 	treeStatus(): TreeStatus;
+
+	/**
+	 * Iterate through all nodes/fields in this field/node.
+	 *
+	 * @remarks
+	 * No mutations to the current view of the shared tree are permitted during iteration.
+	 */
+	[boxedIterator](): IterableIterator<Tree>;
 }
 
 /**
@@ -113,7 +127,7 @@ export interface TreeNode extends Tree<TreeSchema> {
 	 */
 	readonly type: TreeSchemaIdentifier;
 
-	[Symbol.iterator](): Iterator<TreeField>;
+	[boxedIterator](): IterableIterator<TreeField>;
 }
 
 /**
@@ -130,13 +144,13 @@ export interface TreeNode extends Tree<TreeSchema> {
  * 1. To hold the children of non-leaf {@link TreeNode}s.
  * 2. As the root of a {@link Tree}.
  *
- * Down-casting (via {@link TreeField#is}) is required to access Schema-Aware APIs, including editing.
+ * Down-casting (via {@link TreeField.is}) is required to access Schema-Aware APIs, including editing.
  * All content in the tree is accessible without down-casting, but if the schema is known,
  * the schema aware API may be more ergonomic.
  *
  * @alpha
  */
-export interface TreeField extends Tree<FieldSchema>, Iterable<TreeNode> {
+export interface TreeField extends Tree<FieldSchema> {
 	/**
 	 * The `FieldKey` this field is under.
 	 * Defines what part of its parent this field makes up.
@@ -154,7 +168,7 @@ export interface TreeField extends Tree<FieldSchema>, Iterable<TreeNode> {
 	 */
 	is<TSchema extends FieldSchema>(schema: TSchema): this is TypedField<TSchema>;
 
-	[Symbol.iterator](): Iterator<TreeNode>;
+	[boxedIterator](): IterableIterator<TreeNode>;
 
 	/**
 	 * Check if this field is the same as a different field.
@@ -276,7 +290,16 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	// TODO: Add `set` method when FieldKind provides a setter (and derive the type from it).
 	// set(key: FieldKey, content: FlexibleFieldContent<TSchema["mapFields"]>): void;
 
-	[Symbol.iterator](): Iterator<TypedField<TSchema["mapFields"]>>;
+	/**
+	 * Iterate through all fields in the map.
+	 *
+	 * @remarks
+	 * No mutations to the current view of the shared tree are permitted during iteration.
+	 * To iterate over the unboxed values of the map, use `Symbol.Iterator()`.
+	 */
+	[boxedIterator](): IterableIterator<TypedField<TSchema["mapFields"]>>;
+
+	[Symbol.iterator](): IterableIterator<UnboxField<TSchema["mapFields"], "notEmpty">>;
 
 	/**
 	 * An enumerable own property which allows JavaScript object traversals to access {@link Sequence} content.
@@ -407,8 +430,10 @@ export type StructFields<TFields extends RestrictiveReadonlyRecord<string, Field
 	{
 		readonly [key in keyof TFields]: UnboxField<TFields[key]>;
 	} & {
-		readonly // boxed fields (TODO: maybe remove these when same as non-boxed version?)
-		[key in keyof TFields as `boxed${Capitalize<key & string>}`]: TypedField<TFields[key]>;
+		// boxed fields (TODO: maybe remove these when same as non-boxed version?)
+		readonly [key in keyof TFields as `boxed${Capitalize<key & string>}`]: TypedField<
+			TFields[key]
+		>;
 	};
 // TODO: Add `set` method when FieldKind provides a setter (and derive the type from it).
 // set(key: FieldKey, content: FlexibleFieldContent<TSchema["mapFields"]>): void;
@@ -446,6 +471,16 @@ export type FlexibleNodeContent<TTypes extends AllowedTypes> = SchemaAware.Allow
 >;
 
 /**
+ * Type to ensures two types overlap in at least one way.
+ * It evaluates to the input type if this is true, and never otherwise.
+ * Examples:
+ * CheckTypesOverlap\<number | boolean, number | object\> = number | boolean
+ * CheckTypesOverlap\<number | boolean, string | object\> = never
+ * @alpha
+ */
+export type CheckTypesOverlap<T, TCheck> = [Extract<T, TCheck> extends never ? never : T][0];
+
+/**
  * {@link TreeField} that stores a sequence of children.
  *
  * Sequence fields can contain an ordered sequence any number of {@link TreeNode}s which must be of the {@link AllowedTypes} from the {@link FieldSchema}).
@@ -477,26 +512,137 @@ export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
 
 	/**
 	 * Calls the provided callback function on each child of this sequence, and returns an array that contains the results.
-	 * @param callbackfn - A function that accepts the child, its index, and this field.
+	 * @param callbackfn - A function that accepts the child and its index.
 	 */
-	map<U>(callbackfn: (value: UnboxNodeUnion<TTypes>, index: number, array: this) => U): U[];
+	map<U>(callbackfn: (value: UnboxNodeUnion<TTypes>, index: number) => U): U[];
 
 	/**
 	 * Calls the provided callback function on each child of this sequence, and returns an array that contains the results.
-	 * @param callbackfn - A function that accepts the child, its index, and this field.
+	 * @param callbackfn - A function that accepts the child and its index.
 	 */
-	mapBoxed<U>(callbackfn: (value: TypedNodeUnion<TTypes>, index: number, array: this) => U): U[];
+	mapBoxed<U>(callbackfn: (value: TypedNodeUnion<TTypes>, index: number) => U): U[];
 
 	readonly length: number;
 
-	// TODO: more and/or better editing APIs. As is, this can't express moves.
-	replaceRange(
-		index: number,
-		count: number,
-		content: Iterable<FlexibleNodeContent<TTypes>>,
+	/**
+	 * Inserts new item(s) at a specified location.
+	 * @param index - The index at which to insert `value`.
+	 * @param value - The content to insert.
+	 * @throws Throws if any of the input indices are invalid.
+	 */
+	insertAt(index: number, value: FlexibleNodeContent<TTypes>[]): void;
+
+	/**
+	 * Inserts new item(s) at the start of the sequence.
+	 * @param value - The content to insert.
+	 * @throws Throws if any of the input indices are invalid.
+	 */
+	insertAtStart(value: FlexibleNodeContent<TTypes>[]): void;
+
+	/**
+	 * Inserts new item(s) at the end of the sequence.
+	 * @param value - The content to insert.
+	 * @throws Throws if any of the input indices are invalid.
+	 */
+	insertAtEnd(value: FlexibleNodeContent<TTypes>[]): void;
+
+	/**
+	 * Removes the item at the specified location.
+	 * @param index - The index at which to remove the item.
+	 * @throws Throws if any of the input indices are invalid.
+	 */
+	removeAt(index: number): void;
+
+	/**
+	 * Removes all items between the specified indices.
+	 * @param start - The starting index of the range to remove (inclusive). Defaults to the start of the sequence.
+	 * @param end - The ending index of the range to remove (exclusive).
+	 * @throws Throws if any of the input indices are invalid.
+	 * If `end` is not supplied or is greater than the length of the sequence, all items after `start` are deleted.
+	 */
+	removeRange(start?: number, end?: number): void;
+
+	/**
+	 * Moves the specified items to the start of the sequence.
+	 * @param sourceStart - The starting index of the range to move (inclusive).
+	 * @param sourceEnd - The ending index of the range to move (exclusive)
+	 * @throws Throws if any of the input indices are invalid.
+	 * @remarks
+	 * All indices are relative to the sequence excluding the nodes being moved.
+	 */
+	moveToStart(sourceStart: number, sourceEnd: number): void;
+
+	/**
+	 * Moves the specified items to the start of the sequence.
+	 * @param sourceStart - The starting index of the range to move (inclusive).
+	 * @param sourceEnd - The ending index of the range to move (exclusive)
+	 * @param source - The source sequence to move items out of.
+	 * @throws Throws if the types of any of the items being moved are not allowed in the destination sequence or if the input indices are invalid.
+	 * @remarks
+	 * All indices are relative to the sequence excluding the nodes being moved.
+	 */
+	moveToStart<TTypesSource extends AllowedTypes>(
+		sourceStart: number,
+		sourceEnd: number,
+		source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
 	): void;
 
-	[Symbol.iterator](): Iterator<TypedNodeUnion<TTypes>>;
+	/**
+	 * Moves the specified items to the end of the sequence.
+	 * @param sourceStart - The starting index of the range to move (inclusive).
+	 * @param sourceEnd - The ending index of the range to move (exclusive)
+	 * @throws Throws if any of the input indices are invalid.
+	 * @remarks
+	 * All indices are relative to the sequence excluding the nodes being moved.
+	 */
+	moveToEnd(sourceStart: number, sourceEnd: number): void;
+
+	/**
+	 * Moves the specified items to the end of the sequence.
+	 * @param sourceStart - The starting index of the range to move (inclusive).
+	 * @param sourceEnd - The ending index of the range to move (exclusive)
+	 * @param source - The source sequence to move items out of.
+	 * @throws Throws if the types of any of the items being moved are not allowed in the destination sequence or if the input indices are invalid.
+	 * @remarks
+	 * All indices are relative to the sequence excluding the nodes being moved.
+	 */
+	moveToEnd<TTypesSource extends AllowedTypes>(
+		sourceStart: number,
+		sourceEnd: number,
+		source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
+	): void;
+
+	/**
+	 * Moves the specified items to the desired location within the sequence.
+	 * @param index - The index to move the items to.
+	 * @param sourceStart - The starting index of the range to move (inclusive).
+	 * @param sourceEnd - The ending index of the range to move (exclusive)
+	 * @throws Throws if any of the input indices are invalid.
+	 * @remarks
+	 * All indices are relative to the sequence excluding the nodes being moved.
+	 */
+	moveToIndex(index: number, sourceStart: number, sourceEnd: number): void;
+
+	/**
+	 * Moves the specified items to the desired location within the sequence.
+	 * @param index - The index to move the items to.
+	 * @param sourceStart - The starting index of the range to move (inclusive).
+	 * @param sourceEnd - The ending index of the range to move (exclusive)
+	 * @param source - The source sequence to move items out of.
+	 * @throws Throws if the types of any of the items being moved are not allowed in the destination sequence or if the input indices are invalid.
+	 * @remarks
+	 * All indices are relative to the sequence excluding the nodes being moved.
+	 */
+	moveToIndex<TTypesSource extends AllowedTypes>(
+		index: number,
+		sourceStart: number,
+		sourceEnd: number,
+		source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
+	): void;
+
+	[boxedIterator](): IterableIterator<TypedNodeUnion<TTypes>>;
+
+	[Symbol.iterator](): IterableIterator<UnboxNodeUnion<TTypes>>;
 
 	/**
 	 * An enumerable own property which allows JavaScript object traversals to access {@link Sequence} content.
@@ -561,7 +707,7 @@ export type TypedField<TSchema extends FieldSchema> = TypedFieldInner<
  * @alpha
  */
 export type TypedFieldInner<
-	Kind extends FieldKindTypes,
+	Kind extends FieldKind,
 	Types extends AllowedTypes,
 > = Kind extends typeof FieldKinds.sequence
 	? Sequence<Types>
@@ -625,24 +771,26 @@ export type TypedNode<TSchema extends TreeSchema> = TSchema extends LeafSchema
  * Recursively unboxes that content (then its content etc.) as well if the node union does unboxing.
  * @alpha
  */
-export type UnboxField<TSchema extends FieldSchema> = UnboxFieldInner<
-	TSchema["kind"],
-	TSchema["allowedTypes"]
->;
+export type UnboxField<
+	TSchema extends FieldSchema,
+	// If "notEmpty", then optional fields will unbox to their content (not their content | undefined)
+	Emptiness extends "maybeEmpty" | "notEmpty" = "maybeEmpty",
+> = UnboxFieldInner<TSchema["kind"], TSchema["allowedTypes"], Emptiness>;
 
 /**
  * Helper for implementing {@link InternalEditableTreeTypes#UnboxField}.
  * @alpha
  */
 export type UnboxFieldInner<
-	Kind extends FieldKindTypes,
+	Kind extends FieldKind,
 	TTypes extends AllowedTypes,
+	Emptiness extends "maybeEmpty" | "notEmpty",
 > = Kind extends typeof FieldKinds.sequence
 	? Sequence<TTypes>
 	: Kind extends typeof FieldKinds.value
 	? UnboxNodeUnion<TTypes>
 	: Kind extends typeof FieldKinds.optional
-	? UnboxNodeUnion<TTypes> | undefined
+	? UnboxNodeUnion<TTypes> | (Emptiness extends "notEmpty" ? never : undefined)
 	: // TODO: forbidden and nodeKey
 	  unknown;
 
