@@ -106,10 +106,17 @@ Run the following to build the client packages:
 
 ```shell
 pnpm install
-npm run build:fast
+npm run build
 ```
 
+You can use the experimental worker mode to get faster build time as well: `npm run build:fast`
+
 See also: [Contributing](#Contributing)
+
+## Build in VSCode
+
+To build Fluid Framework within VSCode, open the Fluid Framework repo folder as a work space and use Ctrl-Shift-B
+to activate the build task. It is the same as running `npm run build` on the command line.
 
 ## NodeJs Installation
 
