@@ -11,7 +11,7 @@ To best achieve this goal we plan to deliver a set of libraries that enable deve
 
 -   Easily learn how to use the libraries without relying on prior experience with collaboration tools.
 
-    Using the libraries should teach what is needed when its needed rather than requiring collaboration specific knowledge or experience as a prerequisite.
+    Using the libraries should teach what is needed when it's needed rather than requiring collaboration specific knowledge or experience as a prerequisite.
     The learning curve should be fast enough to be productive on day one, both for maintaining existing experiences or authoring new ones.
 
 -   Avoid common pitfalls of collaborative software.
@@ -21,19 +21,19 @@ To best achieve this goal we plan to deliver a set of libraries that enable deve
     Additionally, the resulting experiences need to be maintainable, including easy authoring of new features and reviewing of changes for possible collaboration issues.
     For code authors, it should be easy to find the right way to do something, and know it will be robust.
     For code reviews, it should be obvious in review, only looking at the changed code, if it might introduce a collaboration related issue (such as unexpected merge behavior, issues collaborating with previous or future versions of the app, inability to open old document, etc.).
-    This needs to be true, even for a novice users of shared tree without experience writing collaborative experiences.
+    This needs to be true, even for novice users of shared tree without experience writing collaborative experiences.
 
-    One way this is achieved is to ensure work and requirements specific to collaboration support will be easy to discover when relevant and easy learn about and handle when needed.
+    One way this is achieved is to ensure work and requirements specific to collaboration support will be easy to discover when relevant and easy to learn about and handle when needed.
     For example, if adding a new editing operation, it should be obvious how to ensure the required application invariants hold—even across merges—, and what the implications are for deployment and cross version collaboration.
 
 -   Adopt Shared Tree without concern for having to migrate to another solution due to hitting limitations.
 
     This means that if a developer wants to make a change that interacts with collaboration, the fact that their application is powered by shared tree will not be a limiting factor on what can be achieved.
-    This includes compatibility between different application or version of an applications, scalability, availability, merge quality etc.
+    This includes compatibility between different applications or versions of an application, scalability, availability, merge quality, etc.
     More concretely, if faced with a new application collaboration requirement, it should be practical to either build it on top of shared tree or extend shared tree to support it.
     Doing this should not require major reworking of either the application or shared tree implementations, not require extending it in a way that the upstream shared tree would not be willing to maintain.
 
--   Generalize investments into improved user experiences across many different application.
+-   Generalize investments into improved user experiences across many different applications.
 
     As much as possible, shared tree should serve as a framework for sharing generalized collaborative logic, and a good default library of such logic.
     For example merge resolution strategies, compatibility adapters, debug tools, common schema etc, can be generalized for easy use by all users of Shared Tree.
@@ -67,8 +67,8 @@ Shared Tree's approach to doing all this while being extensible and maintainable
 Shared tree is a collaborative data-structure allowing cross version collaboration as well as support for loading all old formats.
 This imposes some very strict compatibility requirements that can make changing its implementation and functionality difficult.
 
-This puts a large tension between maintainability and extensibility.
-This leads to a design that is focused on optimizing for extensibility while minimizing the difficult of maintaining compatibility across these extensions.
+This puts a large tension between maintainability and extensibility, and leads to a design that is focused on
+optimizing for extensibility while minimizing the difficulty of maintaining compatibility across these extensions.
 The approach Shared Tree takes for this is separation of concerns and version-ability of components.
 
 Concepts are split into three categories based on compatibility requirements (see [SchemaVersioning](packages/dds/SchemaVersioning.md) for details of why these exist and what is in each):
@@ -78,14 +78,14 @@ Concepts are split into three categories based on compatibility requirements (se
 
 The Shared Tree design minimizes the amount of stuff (code, formats, data, etc) in the first category and attempts to keep items in the first category as simple and independent as practical.
 
-For example, the merge resolution logic for sequences is defined as a single component, and if it needs changes that are incompatible (for example an improvement to merge resolution), its possible to simply author a new version of this logic, and select between both at runtime based on either protocol version or schema.
+For example, the merge resolution logic for sequences is defined as a single component, and if it needs changes that are incompatible (for example an improvement to merge resolution), it's possible to simply author a new version of this logic, and select between both at runtime based on either protocol version or schema.
 
 Additionally the Shared Tree architecture organizes these components such that if needed they can be replaced incrementally.
-For example, the tree reading and editing API is build on-top of cursors.
+For example, the tree reading and editing API is built on-top of cursors.
 A different version of this API can be authored, tested and adopted side by side with the old one with minimum difficulty.
 If the underlying tree storage (`forest`) changes, the tree API components (`editable-tree`) will not be impacted.
 Similarly if the cursor API needed to change, forest could add support for the new one (without dropping the old one), then users could migrate incrementally.
-This kind concurrent multi-version support is extra important for cases which fall into category one above (impact data compatibility not just API compatibility).
+This kind of concurrent multi-version support is extra important for cases which fall into category one above (impact data compatibility not just API compatibility).
 For example shared tree can introduce a new version of editing primitives and/or merge semantics for a field kind (for example sequence, see below),
 which applications can opt into in their schema in a compatible way.
 
@@ -115,7 +115,7 @@ There are a few [kinds](<https://en.wikipedia.org/wiki/Kind_(type_theory)>) of n
 There are also a few kinds of fields which provide different collaborative data-structures (like `sequence`, or `optional`), each of which hold nodes.
 
 All of the editing is done in the fields via the `field kind`.
-This allows the editing logic, both API and merge policy, to be packaged together into minimal versionable units ( `field kinds`).
+This allows the editing logic, both API and merge policy, to be packaged together into minimal versionable units (`field kinds`).
 Since the schema explicitly selects what field kinds to use, updating them is opt-in, and can be coordinated with deployment schedules to achieve the required cross version collaboration requirements.
 This also leverages all the same collaboration as the rest of schema evolution, making adopting alternative field kinds no different from updating other aspects of the application's schema.
 
@@ -131,7 +131,7 @@ Applications need to be able to easily ensure the invariants they require will b
 While the built in merge resolution will often be sufficient to ensure the application invariants hold (see "Field Kinds" above), this won't always be the case.
 To cover those instances, an additional tool is required: "Constraints".
 Constraints are used to specify which concurrent edits could cause an unacceptable merge result.
-The constraints API (status: its not finished yet) allows defining a constraint that is sufficiently conservative, meaning that it will detect all concurrent edits that could possible be an issue, but might include some that would be fine.
+The constraints API (status: it's not finished yet) allows defining a constraint that is sufficiently conservative, meaning that it will detect all concurrent edits that could possibly be an issue, but might include some that would be fine.
 The most basic constraint, that nothing has changed, will detect any concurrent edit, and the application can opt into refining that to allow concurrent edits it knows are safe.
 For example for many transactions, edits to unrelated subtrees are safe, so only constraining the smallest impacted subtree makes sense.
 Furthermore, for most simple transactions, like operations impacting a single field, its likely the built in merge resolution and automatic field level constraints will be sufficient (for example setting an optional value could pick last write wins semantics, and not need any additional constraints, or might use a first write wins approach, and automatically get a constraint that the field hasn't changed).
@@ -141,7 +141,7 @@ One of the reasons SharedTree is a tree (not a graph or something else) is forci
 Logically different subtrees are independent of each-other, and when operations do span them, both sides or a common parent can be constrained as needed.
 
 Users of Shared Tree are encouraged to factor their applications in this tree structured pattern as well, allowing subtrees to be passed into the relevant application components.
-This helps enable reuse of application components withing and across shared tree applications, as well as best enables optimizations like those mentioned in "Efficient Data Storage" to be effective and encapsulated.
+This helps enable reuse of application components within and across shared tree applications, as well as best enables optimizations like those mentioned in "Efficient Data Storage" to be effective and encapsulated.
 
 Some areas of the SharedTree design that currently do not deliver ideal subtree isolation are:
 
@@ -153,10 +153,10 @@ Some areas of the SharedTree design that currently do not deliver ideal subtree 
 # Stored and View Schema
 
 Applications need to make assumptions about the data they are working with.
-For simple in memory cases, this is generally managed with types.
-The code in the application uses those types to enable readers of the code (including other developers and compilers) reason about and validate the logic in the application.
-Shared Tree provides this same experience: the application code gets to use types to reason about the document content its working with, however it also has to deal with the fact that the document content might come from a different application or a different version of the same application (newer, older or even a divergent fork).
-To ensure content from a document is not misinterpreted, the document carries with it the "stored schema", which defines the structure and editing behaviors of the content within ghr document.
+For simple in-memory cases, this is generally managed with types.
+The code in the application uses those types to enable readers of the code (including other developers and compilers) to reason about and validate the logic in the application.
+Shared Tree provides this same experience: the application code gets to use types to reason about the document content it's working with, however it also has to deal with the fact that the document content might come from a different application or a different version of the same application (newer, older or even a divergent fork).
+To ensure content from a document is not misinterpreted, the document carries with it the "stored schema", which defines the structure and editing behaviors of the content within the document.
 This can be checked against the "view schema" which defines the types the application is programmed against.
 If they match, the application can safely work on the document as is.
 If they do not match, the application needs to take some corrective action.
@@ -164,7 +164,7 @@ The set of possible corrective actions generally includes raising a compatibilit
 In the general case these compatibility fixes can be done in a composable subtree local way, and form a general approach for handling schema evolution.
 This approach is designed to enable separating the portion of the application that deals with compatibility, keeping the main logic of the app as clean as possible, as suggested in [SchemaVersioning](packages/dds/SchemaVersioning.md).
 
-Importantly, the View Schema, allow the application to have strong types for the document content, which helps make it clear which invariants Shared Tree guarantees (mainly that the document stays in schema) and which ones the application must take action to maintain (nearly everything else).
+Importantly, the View Schema allows the application to have strong types for the document content, which helps make it clear which invariants Shared Tree guarantees (mainly that the document stays in schema) and which ones the application must take action to maintain (nearly everything else).
 Additionally the strong types from the view schema should help improve readability and maintainability of Shared Tree powered collaborative experiences,
 and the checking of them against view schema guards against may data corruption sceneries that are common in collaborative editing scenarios.
 
@@ -179,13 +179,13 @@ This is key to ensuring users of shared tree can leverage shared tree for handli
 
 To tackle this problem in a way that follows the compatibility and extensibility approach of separation of concerns and versioned components, Chunked Forest was created.
 
-The goal is to ensure it is possible to provide high performance specialized tree representations that can handle specific use cases with performance thats not inhibited by being part of Shared Tree.
+The goal is to ensure it is possible to provide high performance specialized tree representations that can handle specific use cases with performance that's not inhibited by being part of Shared Tree.
 Secondary to this is ensuring that the effort required to do this is minimized.
 This means both that the baseline performance should be good enough in most cases, and the specialized cases should as general as possible while still offering the required performance wins to reduce how many specializations are needed.
 
-To meet this first goal (avoid any shared tree specific overhead), the design ensure it is possible to provide a customized fast path end to end, meaning that all the way from ops or summaries to the view access by the application, its possible to opt into specialized formats and low level access to eliminate performance incurred by the tree abstraction.
-To keep easy of use, its important that the tree abstractions are always usable (so debugging tools, non performance critical code, etc. can use them), and that its simply possible for code to opt in to using optional fast paths to achieve this.
-This ensures that all logic can be compared against the simple non specialized reference implementation (for example for testing the optimizations), and that its ok if uncommon edge cases cause the specialized formats to not be used and fall back to more generic ones.
+To meet this first goal (avoid any shared tree specific overhead), the design should ensure it is possible to provide a customized fast path end to end, meaning that all the way from ops or summaries to the view access by the application, it's possible to opt into specialized formats and low level access to eliminate performance overhead incurred by the tree abstraction.
+To keep ease of use, it's important that the tree abstractions are always usable (so debugging tools, non-performance-critical code, etc. can use them), and that it's simply possible for code to opt in to using optional fast paths to achieve this.
+This ensures that all logic can be compared against the simple non specialized reference implementation (for example for testing the optimizations), and that it's ok if uncommon edge cases cause the specialized formats to not be used and fall back to more generic ones.
 
 Accomplishing this goal requires specialized tree data formats or APIs at a few levels:
 
