@@ -695,4 +695,38 @@ describe("SequenceField - Rebase", () => {
 		const rebased = rebase(moveB, moveA);
 		assert.deepEqual(rebased, expected);
 	});
+
+	it("rebasing over transient revive changes cell ID", () => {
+		const change = TestChange.mint([0], 1);
+		const modify = Change.modifyDetached(0, change, {
+			revision: tag1,
+			localId: brand(1),
+		});
+
+		const revive = [
+			Mark.transient(
+				Mark.revive(2, { revision: tag1, localId: brand(0) }),
+				Mark.delete(2, brand(2)),
+			),
+		];
+
+		const rebased = rebase(modify, revive, tag2);
+		const expected = Change.modifyDetached(0, change, { revision: tag2, localId: brand(3) });
+		assert.deepEqual(rebased, expected);
+	});
+
+	// TODO: Is it necessary to record lineage to transient detach events?
+	it("rebasing over transient adds lineage", () => {
+		const insert = Change.insert(0, 1);
+		const transient = [Mark.transient(Mark.insert(2, brand(0)), Mark.delete(2, brand(2)))];
+		const rebased = rebase(insert, transient);
+		const expected = [
+			Mark.insert(1, {
+				localId: brand(0),
+				lineage: [{ revision: tag1, id: brand(2), count: 2, offset: 0 }],
+			}),
+		];
+
+		assert.deepEqual(rebased, expected);
+	});
 });

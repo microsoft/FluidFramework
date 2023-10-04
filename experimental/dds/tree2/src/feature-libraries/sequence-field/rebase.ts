@@ -31,6 +31,8 @@ import {
 	areOutputCellsEmpty,
 	getDetachCellId,
 	getInputCellId,
+	isTransientEffect,
+	getOutputCellId,
 } from "./utils";
 import {
 	Changeset,
@@ -137,12 +139,6 @@ function rebaseMarkList<TNodeChange>(
 			);
 		}
 
-		const length = getInputLength(baseMark);
-		assert(
-			length === getInputLength(currMark),
-			0x4f6 /* The two marks should be the same size */,
-		);
-
 		const rebasedMark = rebaseMark(
 			currMark,
 			baseMark,
@@ -156,20 +152,21 @@ function rebaseMarkList<TNodeChange>(
 		// Note that we first add lineage for `baseMark` to `lineageRecipients`, then handle adding lineage to `rebasedMark`,
 		// then add `baseMark` to `lineageEntries` so that `rebasedMark` does not get an entry for `baseMark`.
 		// `rebasedMark` should already have a detach event for `baseMark`.
-		if (markEmptiesCells(baseMark)) {
-			assert(isDetach(baseMark), 0x709 /* Only detach marks should empty cells */);
-			const detachId = getDetachCellId(baseMark, baseRevision, metadata);
+		if (markEmptiesCells(baseMark) || isTransientEffect(baseMark)) {
+			const detachId = getOutputCellId(baseMark, baseRevision, metadata);
+			assert(detachId !== undefined, "Mark which empties cells should have a detach ID");
 			assert(detachId.revision !== undefined, 0x74a /* Detach ID should have a revision */);
 			addLineageToRecipients(
 				lineageRecipients,
 				detachId.revision,
 				detachId.localId,
-				length,
+				baseMark.count,
 				metadata,
 			);
 		}
 
 		if (areInputCellsEmpty(rebasedMark)) {
+			// TODO: Should this also check for transient effects?
 			if (markEmptiesCells(baseMark)) {
 				assert(isDetach(baseMark), 0x74b /* Only detaches empty cells */);
 				if (baseMark.type === "MoveOut" || baseMark.detachIdOverride === undefined) {
@@ -187,17 +184,17 @@ function rebaseMarkList<TNodeChange>(
 		}
 		factory.push(rebasedMark);
 
-		if (markEmptiesCells(baseMark)) {
-			assert(isDetach(baseMark), 0x70a /* Only detach marks should empty cells */);
-			const detachId = getDetachCellId(baseMark, baseRevision, metadata);
+		if (markEmptiesCells(baseMark) || isTransientEffect(baseMark)) {
+			const detachId = getOutputCellId(baseMark, baseRevision, metadata);
+			assert(detachId !== undefined, "Mark which empties cells should have a detach ID");
 			if (detachId.revision === getIntention(baseRevision, metadata) ?? baseRevision) {
-				addIdRange(detachBlock, { id: baseMark.id, count: baseMark.count });
+				addIdRange(detachBlock, { id: detachId.localId, count: baseMark.count });
 			} else {
 				assert(detachId.revision !== undefined, 0x74c /* Detach ID should have revision */);
 				lineageEntries.push({
 					revision: detachId.revision,
 					id: detachId.localId,
-					count: length,
+					count: baseMark.count,
 				});
 			}
 		} else if (!areOutputCellsEmpty(baseMark)) {
@@ -440,31 +437,8 @@ function rebaseMark<TNodeChange>(
 			}
 		}
 		rebasedMark = withoutCellId(rebasedMark);
-	} else if (
-		nodeExistenceState === NodeExistenceState.Alive &&
-		(rebasedMark.type === "MoveOut" || rebasedMark.type === "ReturnFrom") &&
-		rebasedMark.cellId === undefined
-	) {
-		setPairedMarkStatus(
-			moveEffects,
-			CrossFieldTarget.Destination,
-			rebasedMark.revision,
-			rebasedMark.id,
-			rebasedMark.count,
-			PairedMarkUpdate.Reactivated,
-		);
-	} else if (
-		nodeExistenceState === NodeExistenceState.Dead &&
-		(rebasedMark.type === "MoveOut" || rebasedMark.type === "ReturnFrom")
-	) {
-		setPairedMarkStatus(
-			moveEffects,
-			CrossFieldTarget.Destination,
-			rebasedMark.revision,
-			rebasedMark.id,
-			rebasedMark.count,
-			PairedMarkUpdate.Deactivated,
-		);
+	} else if (isTransientEffect(baseMark)) {
+		rebasedMark.cellId = getOutputCellId(baseMark, baseRevision, metadata);
 	}
 	return rebasedMark;
 }

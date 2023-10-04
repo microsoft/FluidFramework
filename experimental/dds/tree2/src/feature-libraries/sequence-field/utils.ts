@@ -1062,10 +1062,7 @@ export function withRevision<TMark extends Mark<unknown>>(
 	}
 
 	const cloned = cloneMark(mark);
-
-	assert(cloned.type !== "Transient", "TODO");
-	(cloned as Exclude<Mark<unknown>, CellMark<NoopMark | TransientEffect, unknown>>).revision =
-		revision;
+	(cloned as Exclude<Mark<unknown>, CellMark<NoopMark, unknown>>).revision = revision;
 	return cloned;
 }
 

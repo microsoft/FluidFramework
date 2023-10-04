@@ -19,7 +19,7 @@ import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { fakeTaggedRepair as fakeRepair } from "../../utils";
 import { cases, ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
-import { compose, composeNoVerify, shallowCompose } from "./utils";
+import { compose, composeAnonChanges, composeNoVerify, shallowCompose } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const tag1: RevisionTag = mintRevisionTag();
@@ -276,6 +276,57 @@ describe("SequenceField - Compose", () => {
 		const expected = Change.modify(0, childChangeAB);
 		const actual = compose([makeAnonChange(modifyA), makeAnonChange(modifyB)]);
 		assert.deepEqual(actual, expected);
+	});
+
+	it("Delete and modify ○ transient revive", () => {
+		const childChange = TestChange.mint([0], 1);
+		const del = tagChange(
+			composeAnonChanges([Change.modify(0, childChange), Change.delete(0, 1)]),
+			tag1,
+		);
+		const transient = tagChange(
+			[
+				Mark.transient(
+					Mark.revive(1, { revision: tag1, localId: brand(0) }),
+					Mark.delete(1, brand(1)),
+				),
+			],
+			tag2,
+		);
+
+		const composed = compose([del, transient]);
+		const expected = compose([
+			makeAnonChange(Change.modify(0, childChange)),
+			tagChange(Change.delete(0, 1, brand(1)), tag2),
+		]);
+		assert.deepEqual(composed, expected);
+	});
+
+	it("Transient insert ○ transient revive", () => {
+		const insert = tagChange(
+			[Mark.transient(Mark.insert(1, brand(0)), Mark.delete(1, brand(1)))],
+			tag1,
+		);
+
+		const revive = tagChange(
+			[
+				Mark.transient(
+					Mark.revive(1, { revision: tag1, localId: brand(1) }),
+					Mark.delete(1, brand(0)),
+				),
+			],
+			tag2,
+		);
+
+		const composed = compose([insert, revive]);
+		const expected = [
+			Mark.transient(
+				Mark.insert(1, { revision: tag1, localId: brand(0) }, { revision: tag1 }),
+				Mark.delete(1, brand(0), { revision: tag2 }),
+			),
+		];
+
+		assert.deepEqual(composed, expected);
 	});
 
 	it("insert ○ delete (within insert)", () => {

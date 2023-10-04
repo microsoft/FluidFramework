@@ -17,6 +17,7 @@ import {
 	NoopMark,
 	Delete,
 	CellMark,
+	Revive,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import {
@@ -258,13 +259,42 @@ function invertMark<TNodeChange>(
 			return applyMovedChanges(invertedMark, revision, crossFieldManager);
 		}
 		case "Transient": {
+			if (mark.cellId === undefined) {
+				return [];
+			}
+
+			assert(
+				mark.detach.type === "Delete" &&
+					(mark.attach.type === "Insert" || mark.attach.type === "Revive"),
+				"TODO: Handle transient moves",
+			);
+
+			const outputId =
+				getOutputCellId(mark, revision, undefined) ??
+				fail("Output cell ID should be defined");
+			const markRevision = outputId.revision ?? fail("Expected revision");
+			const attach: Revive = {
+				type: "Revive",
+				content: reviver(markRevision, inputIndex, mark.count),
+				inverseOf: markRevision,
+			};
+
+			const detach: Delete = {
+				type: "Delete",
+				id: mark.cellId.localId,
+				detachIdOverride: { ...mark.cellId, revision: mark.cellId.revision ?? revision },
+			};
+
 			return [
-				invertNodeChangeOrSkip(
-					mark.count,
-					mark.changes,
-					inputIndex,
-					invertChild,
-					getOutputCellId(mark, revision, undefined),
+				withNodeChange(
+					{
+						type: "Transient",
+						count: mark.count,
+						cellId: getOutputCellId(mark, revision, undefined),
+						attach,
+						detach,
+					},
+					invertNodeChange(mark.changes, inputIndex, invertChild),
 				),
 			];
 		}

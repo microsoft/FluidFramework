@@ -173,16 +173,54 @@ function composeMarks<TNodeChange>(
 	const nodeChange = composeChildChanges(baseMark.changes, newMark.changes, newRev, composeChild);
 
 	if (isTransientEffect(newMark)) {
-		// BUG: This must be wrong, as composing an empty mark with a transient mark would result in an empty mark.
-		return withNodeChange(baseMark, nodeChange);
+		if (markEmptiesCells(baseMark)) {
+			// baseMark is a detach which cancels with the attach portion of the transient,
+			// so we are just left with the detach portion of the transient.
+			return withRevision(
+				withNodeChange({ ...newMark.detach, count: baseMark.count }, nodeChange),
+				newMark.detach.revision ?? newMark.revision ?? newRev,
+			);
+		}
+
+		if (isTransientEffect(baseMark)) {
+			// `newMark`'s attach portion cancels with `baseMark`'s detach portion.
+			const originalAttach = { ...baseMark.attach };
+			if (originalAttach.revision === undefined && baseMark.revision !== undefined) {
+				originalAttach.revision = baseMark.revision;
+			}
+
+			const finalDetach = { ...newMark.detach };
+			const detachRevision = finalDetach.revision ?? newMark.revision ?? newRev;
+			if (detachRevision !== undefined) {
+				finalDetach.revision = detachRevision;
+			}
+
+			return withNodeChange(
+				{
+					type: "Transient",
+					cellId: baseMark.cellId,
+					count: baseMark.count,
+					attach: originalAttach,
+					detach: finalDetach,
+				},
+				nodeChange,
+			);
+		}
+
+		return withRevision(withNodeChange(newMark, nodeChange), newRev);
 	}
 	if (isTransientEffect(baseMark)) {
 		if (markFillsCells(newMark)) {
-			const originalAttach = withNodeChange(
-				{ ...baseMark.attach, cellId: baseMark.cellId, count: baseMark.count },
-				nodeChange,
+			const originalAttach = withRevision(
+				withNodeChange(
+					{ ...baseMark.attach, cellId: baseMark.cellId, count: baseMark.count },
+					nodeChange,
+				),
+				baseMark.attach.revision ?? baseMark.revision,
 			);
 
+			// TODO: This assumes that the original attach was successful.
+			// We should probably treat a muted transient effect as a noop.
 			return originalAttach;
 		}
 		// Noop and Placeholder marks must be muted because the node they target has been deleted.
