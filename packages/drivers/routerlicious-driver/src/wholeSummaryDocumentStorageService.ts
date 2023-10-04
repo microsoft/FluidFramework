@@ -309,9 +309,8 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 			},
 			async (event) => {
 				const manager = await this.getStorageManager(disableCache);
-				const response: IR11sResponse<IWholeFlatSnapshot> = await manager.getSnapshot(
-					versionId,
-				);
+				const response: IR11sResponse<IWholeFlatSnapshot> =
+					await manager.getSnapshot(versionId);
 				const start = performance.now();
 				const snapshot: INormalizedWholeSnapshot =
 					convertWholeFlatSnapshotToSnapshotTreeAndBlobs(response.content);

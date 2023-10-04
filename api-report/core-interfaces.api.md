@@ -17,7 +17,7 @@ export const FluidErrorTypes: {
 };
 
 // @public (undocumented)
-export type FluidErrorTypes = typeof FluidErrorTypes[keyof typeof FluidErrorTypes];
+export type FluidErrorTypes = (typeof FluidErrorTypes)[keyof typeof FluidErrorTypes];
 
 // @public
 export type FluidObject<T = unknown> = {
@@ -482,7 +482,7 @@ export const LogLevel: {
 };
 
 // @public
-export type LogLevel = typeof LogLevel[keyof typeof LogLevel];
+export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 
 // @public
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {
