@@ -101,6 +101,41 @@ function initializeTreeWithContent<Kind extends FieldKind, Types extends Allowed
 }
 
 describe.only("LazyTree", () => {
+	// #region Create common schemas used in tests below
+
+	let _schemaBuilder: SchemaBuilder | undefined = new SchemaBuilder(
+		"testShared",
+		{},
+		leafDomain.library,
+	);
+
+	const fieldNodeOptionalAnySchema = _schemaBuilder.fieldNode(
+		"optionalAny",
+		SchemaBuilder.fieldOptional(Any),
+	);
+	const fieldNodeOptionalStringSchema = _schemaBuilder.fieldNode(
+		"optionalString",
+		SchemaBuilder.fieldOptional(leafDomain.string),
+	);
+	const fieldNodeValueAnySchema = _schemaBuilder.fieldNode(
+		"valueAny",
+		SchemaBuilder.fieldValue(Any),
+	);
+	const fieldNodeValueStringSchema = _schemaBuilder.fieldNode(
+		"valueString",
+		SchemaBuilder.fieldValue(leafDomain.string),
+	);
+	const structNodeSchema = _schemaBuilder.struct("struct", {});
+	const mapNodeAnySchema = _schemaBuilder.map("mapAny", SchemaBuilder.fieldOptional(Any));
+	const mapNodeStringSchema = _schemaBuilder.map(
+		"mapString",
+		SchemaBuilder.fieldOptional(leafDomain.string),
+	);
+
+	const sharedTestSchemas = _schemaBuilder.intoLibrary();
+	_schemaBuilder = undefined; // Prevent tests from accidentally re-using this builder
+	// #endregion
+
 	it("property names", () => {
 		const builder = new SchemaBuilder("lazyTree");
 		const emptyStruct = builder.struct("empty", {});
@@ -154,34 +189,10 @@ describe.only("LazyTree", () => {
 	});
 
 	describe("LazyFieldNode", () => {
-		// #region Shared schema initialization
-
-		const schemaBuilder = new SchemaBuilder("test", {}, leafDomain.library);
-		const fieldNodeOptionalAnySchema = schemaBuilder.fieldNode(
-			"optionalAny",
-			SchemaBuilder.fieldOptional(Any),
-		);
-
-		// Schemas used in `is` checks
-		const fieldNodeOptionalStringSchema = schemaBuilder.fieldNode(
-			"optionalString",
-			SchemaBuilder.fieldOptional(leafDomain.string),
-		);
-		const fieldNodeValueAnySchema = schemaBuilder.fieldNode(
-			"valueAny",
-			SchemaBuilder.fieldValue(Any),
-		);
-		const fieldNodeValueStringSchema = schemaBuilder.fieldNode(
-			"valueString",
-			SchemaBuilder.fieldValue(leafDomain.string),
-		);
-		const structNodeSchema = schemaBuilder.struct("struct", {});
-
+		const schemaBuilder = new SchemaBuilder("test", {}, leafDomain.library, sharedTestSchemas);
 		const schema = schemaBuilder.intoDocumentSchema(
 			SchemaBuilder.fieldValue(fieldNodeOptionalAnySchema),
 		);
-
-		// #endregion
 
 		it("is", () => {
 			const { context, cursor } = initializeTreeWithContent({ schema, initialTree: {} });
@@ -203,6 +214,8 @@ describe.only("LazyTree", () => {
 			assert(!node.is(fieldNodeOptionalStringSchema));
 			assert(!node.is(fieldNodeValueAnySchema));
 			assert(!node.is(fieldNodeValueStringSchema));
+			assert(!node.is(fieldNodeValueStringSchema));
+			assert(!node.is(leafDomain.string));
 			assert(!node.is(structNodeSchema));
 		});
 
@@ -246,10 +259,12 @@ describe.only("LazyTree", () => {
 					anchor,
 				);
 
-				assert.equal(node.tryGetField(brand("")), undefined); // TODO: is this the right key?
+				// TODO: is this the right key?
+				assert.equal(node.tryGetField(brand("")), undefined);
 			});
+
 			it("Non-empty", () => {
-				// TODO
+				// TODO: How do you specify the initialTree for a field node?
 			});
 		});
 
@@ -257,26 +272,40 @@ describe.only("LazyTree", () => {
 	});
 
 	describe("LazyLeaf", () => {
+		const schemaBuilder = new SchemaBuilder("test", {}, leafDomain.library, sharedTestSchemas);
+		const schema = schemaBuilder.intoDocumentSchema(
+			SchemaBuilder.fieldValue(leafDomain.string),
+		);
+
+		const { context, cursor } = initializeTreeWithContent({
+			schema,
+			initialTree: "Hello world",
+		});
+		cursor.enterNode(0);
+
+		const anchor = context.forest.anchors.track(cursor.getPath() ?? fail());
+		const anchorNode = context.forest.anchors.locate(anchor) ?? fail();
+
+		const node = new LazyLeaf(context, leafDomain.string, cursor, anchorNode, anchor);
+
 		it("is", () => {
-			// TODO
+			assert(node.is(leafDomain.string));
+
+			assert(!node.is(fieldNodeOptionalAnySchema));
+			assert(!node.is(fieldNodeOptionalStringSchema));
+			assert(!node.is(fieldNodeValueAnySchema));
+			assert(!node.is(fieldNodeValueStringSchema));
+			assert(!node.is(leafDomain.number));
+			assert(!node.is(structNodeSchema));
 		});
 
-		describe("value", () => {
-			it("Empty", () => {
-				// TODO
-			});
-			it("Non-empty", () => {
-				// TODO
-			});
+		it("value", () => {
+			assert.equal(node.value, "Hello world");
 		});
 
-		describe("tryGetField", () => {
-			it("Empty", () => {
-				// TODO
-			});
-			it("Non-empty", () => {
-				// TODO
-			});
+		// TODO: What are the semantics here? Is there a special key?
+		it.skip("tryGetField", () => {
+			assert.equal(node.tryGetField(brand("")), "Hello world");
 		});
 
 		// TODO: what else?
