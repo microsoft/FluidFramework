@@ -79,7 +79,7 @@ export type ApplyMultiplicity<TMultiplicity extends Multiplicity, TypedChild> = 
 	[Multiplicity.Forbidden]: undefined;
 	[Multiplicity.Optional]: undefined | TypedChild;
 	[Multiplicity.Sequence]: TypedChild[];
-	[Multiplicity.Value]: TypedChild;
+	[Multiplicity.Single]: TypedChild;
 }[TMultiplicity];
 
 // TODO: add strong typed `getNode`.
