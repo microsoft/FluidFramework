@@ -55,7 +55,7 @@ import { boxedIterator, visitIterableTree } from "../../../feature-libraries/edi
 import { Context } from "../../../feature-libraries/editable-tree-2/context";
 import { TreeContent } from "../../../shared-tree";
 import { testTrees, treeContentFromTestTree } from "../../testTrees";
-import { jsonSchema, leaf as leafDomain } from "../../../domains";
+import { leaf as leafDomain } from "../../../domains";
 import { contextWithContentReadonly, getReadonlyContext } from "./utils";
 
 function collectPropertyNames(obj: object): Set<string> {
@@ -125,7 +125,11 @@ describe.only("LazyTree", () => {
 		"valueString",
 		SchemaBuilder.fieldValue(leafDomain.string),
 	);
-	const structNodeSchema = _schemaBuilder.struct("struct", {});
+	const emptyStructNodeSchema = _schemaBuilder.struct("emptyStruct", {});
+	const nonEmptyStructNodeSchema = _schemaBuilder.struct("nonEmptyStruct", {
+		willUnbox: SchemaBuilder.fieldOptional(emptyStructNodeSchema),
+		notUnboxed: SchemaBuilder.fieldSequence(emptyStructNodeSchema),
+	});
 	const mapNodeAnySchema = _schemaBuilder.map("mapAny", SchemaBuilder.fieldOptional(Any));
 	const mapNodeStringSchema = _schemaBuilder.map(
 		"mapString",
@@ -221,7 +225,7 @@ describe.only("LazyTree", () => {
 			assert(!node.is(fieldNodeValueStringSchema));
 			assert(!node.is(fieldNodeValueStringSchema));
 			assert(!node.is(leafDomain.string));
-			assert(!node.is(structNodeSchema));
+			assert(!node.is(emptyStructNodeSchema));
 		});
 
 		describe("value", () => {
@@ -306,7 +310,7 @@ describe.only("LazyTree", () => {
 			assert(!node.is(fieldNodeValueAnySchema));
 			assert(!node.is(fieldNodeValueStringSchema));
 			assert(!node.is(leafDomain.number));
-			assert(!node.is(structNodeSchema));
+			assert(!node.is(emptyStructNodeSchema));
 		});
 
 		it("value", () => {
@@ -355,7 +359,7 @@ describe.only("LazyTree", () => {
 			assert(!node.is(fieldNodeValueAnySchema));
 			assert(!node.is(fieldNodeValueStringSchema));
 			assert(!node.is(leafDomain.string));
-			assert(!node.is(structNodeSchema));
+			assert(!node.is(emptyStructNodeSchema));
 		});
 
 		it("value", () => {
@@ -372,19 +376,19 @@ describe.only("LazyTree", () => {
 	});
 
 	describe("LazyStruct", () => {
-		const structBuilder = new SchemaBuilder("boxing", {}, jsonSchema);
-		const emptyStruct = structBuilder.struct("empty", {});
-		const testStruct = structBuilder.struct("mono", {
-			willUnbox: SchemaBuilder.fieldOptional(emptyStruct),
-			notUnboxed: SchemaBuilder.fieldSequence(emptyStruct),
-		});
+		const structBuilder = new SchemaBuilder(
+			"lazyStructTest",
+			{},
+			leafDomain.library,
+			sharedTestSchemas,
+		);
 		const schema = structBuilder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
 
 		it("boxing", () => {
 			const context = contextWithContentReadonly({
 				schema,
 				initialTree: {
-					[typeNameSymbol]: testStruct.name,
+					[typeNameSymbol]: emptyStructNodeSchema.name,
 					willUnbox: {},
 					notUnboxed: [],
 				},
@@ -394,7 +398,7 @@ describe.only("LazyTree", () => {
 			const anchor = context.forest.anchors.track(cursor.getPath() ?? fail());
 			const struct = buildLazyStruct(
 				context,
-				testStruct,
+				nonEmptyStructNodeSchema,
 				cursor,
 				context.forest.anchors.locate(anchor) ?? fail(),
 				anchor,
