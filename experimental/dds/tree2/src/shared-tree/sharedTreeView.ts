@@ -20,7 +20,6 @@ import {
 	combineVisitors,
 	visitDelta,
 	DetachedFieldIndex,
-	announceVisitor,
 	makeDetachedFieldIndex,
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
@@ -425,7 +424,7 @@ export class SharedTreeView implements ISharedTreeBranchView {
 				const delta = this.changeFamily.intoDelta(event.change);
 				const combinedVisitor = combineVisitors([
 					this.forest.acquireVisitor(),
-					announceVisitor(this.forest.anchors.acquireVisitor()),
+					this.forest.anchors.acquireVisitor(),
 				]);
 				visitDelta(delta, combinedVisitor, this.removedTrees);
 				combinedVisitor.free();

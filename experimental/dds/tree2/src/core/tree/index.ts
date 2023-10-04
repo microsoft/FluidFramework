@@ -82,7 +82,6 @@ export {
 	announceDelta,
 	applyDelta,
 	combineVisitors,
-	announceVisitor,
 	makeDetachedFieldIndex,
 } from "./visitorUtils";
 export { PathVisitor, ReplaceKind } from "./visitPath";

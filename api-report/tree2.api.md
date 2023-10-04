@@ -82,7 +82,7 @@ export type AnchorsCompare = CompareFunction<UpPath>;
 
 // @alpha @sealed
 export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLocator {
-    acquireVisitor(): AnnouncedVisitor;
+    acquireVisitor(): AnnouncedVisitor & DeltaVisitor;
     // (undocumented)
     forget(anchor: Anchor): void;
     internalizePath(originalPath: UpPath): UpPath;
@@ -107,7 +107,7 @@ export type AnchorSlot<TContent> = BrandedKey<Opaque<Brand<number, "AnchorSlot">
 export function anchorSlot<TContent>(): AnchorSlot<TContent>;
 
 // @alpha
-export interface AnnouncedVisitor extends DeltaVisitor {
+export interface AnnouncedVisitor {
     // (undocumented)
     afterAttach(source: FieldKey, destination: Range_2): void;
     afterCreate(content: Delta.ProtoNodes, destination: FieldKey): void;

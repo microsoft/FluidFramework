@@ -558,7 +558,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 	/**
 	 * Updates the anchors according to the changes described in the given delta
 	 */
-	public acquireVisitor(): AnnouncedVisitor {
+	public acquireVisitor(): AnnouncedVisitor & DeltaVisitor {
 		assert(
 			this.activeVisitor === undefined,
 			0x767 /* Must release existing visitor before acquiring another */,
