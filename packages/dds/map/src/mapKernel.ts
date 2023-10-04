@@ -382,6 +382,13 @@ export class MapKernel {
 		});
 	}
 
+	/**
+	 * We currently make a copy of the map's keys when one of its iteration methods is called.
+	 * This guarantees it's safe to use the iterator even after map mutation (as long
+	 * as it's acceptable to return only the map content that existed before mutation).
+	 * If we didn't have this requirement, we could be a bit more efficient here by
+	 * implementing an O(1) auxiliary memory iterator on RedBlackTree and using that.
+	 */
 	private getKeysInCreationOrder(): string[] {
 		// Get the local unack'd keys in creation order
 		const localKeys: string[] = [];
