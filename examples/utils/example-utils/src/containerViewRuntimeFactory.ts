@@ -27,10 +27,11 @@ export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory 
 		// and add our default view request handler.
 		super({
 			registryEntries: new Map([[dataStoreFactory.type, Promise.resolve(dataStoreFactory)]]),
-			provideEntryPoint: async (containerRuntime: IContainerRuntime): Promise<IFluidMountableViewEntryPoint> => {
-				const entryPointHandle = await containerRuntime.getAliasedDataStoreEntryPoint(
-					dataStoreId,
-				);
+			provideEntryPoint: async (
+				containerRuntime: IContainerRuntime,
+			): Promise<IFluidMountableViewEntryPoint> => {
+				const entryPointHandle =
+					await containerRuntime.getAliasedDataStoreEntryPoint(dataStoreId);
 
 				if (entryPointHandle === undefined) {
 					throw new Error(`Default dataStore [${dataStoreId}] must exist`);
