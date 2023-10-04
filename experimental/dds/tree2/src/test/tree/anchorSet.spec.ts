@@ -342,7 +342,7 @@ describe("AnchorSet", () => {
 		assert.equal(fieldSlotCache?.generationNumber, anchors.generationNumber);
 		assert.equal(fieldSlotCache, cache);
 
-		// Applies a dummy delta to trigger "treeChanging" event and increment anchorSet generationNumber.
+		// Applies a dummy delta to increment anchorSet generationNumber.
 		applyDelta(new Map([]), anchors);
 
 		// Check that the cache generationNumber is no longer matching anchorSet generationNumber.

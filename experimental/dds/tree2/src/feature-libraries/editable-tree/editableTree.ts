@@ -20,7 +20,6 @@ import {
 	AnchorNode,
 	inCursorField,
 	rootFieldKey,
-	DetachedField,
 } from "../../core";
 import { brand, fail } from "../../util";
 import { FieldKind } from "../modular-schema";
@@ -44,6 +43,7 @@ import {
 } from "../untypedTree";
 import {
 	AdaptingProxyHandler,
+	DetachedFieldCache,
 	adaptWithProxy,
 	getStableNodeKey,
 	treeStatusFromAnchorCache,
@@ -62,11 +62,6 @@ import { makeField, unwrappedField } from "./editableField";
 import { ProxyTarget } from "./ProxyTarget";
 
 const editableTreeSlot = anchorSlot<EditableTree>();
-
-export interface DetachedFieldCache {
-	generationNumber: number;
-	detachedField: DetachedField;
-}
 
 export const detachedFieldSlot = anchorSlot<DetachedFieldCache>();
 
@@ -257,7 +252,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		if (this.isFreed()) {
 			return TreeStatus.Deleted;
 		}
-		return treeStatusFromAnchorCache(this, this.anchorNode);
+		return treeStatusFromAnchorCache(this.context.forest.anchors, this.anchorNode);
 	}
 
 	public on<K extends keyof EditableTreeEvents>(
