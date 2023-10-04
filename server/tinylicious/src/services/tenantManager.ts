@@ -18,7 +18,10 @@ export class TinyliciousTenant implements ITenant {
 	private readonly repository = "tinylicious";
 	private readonly manager: GitManager;
 
-	constructor(private readonly url: string, private readonly historianUrl: string) {
+	constructor(
+		private readonly url: string,
+		private readonly historianUrl: string,
+	) {
 		const historian = new Historian(historianUrl, false, false);
 		this.manager = new GitManager(historian);
 	}

@@ -308,9 +308,8 @@ export class RestGitService {
 		if (cachedLatestSummarySha === sha) {
 			// If the requested sha is the same as the cached latest summary's sha, we should retrieve it
 			// from cache.
-			const cachedLatestSummary = await this.getCache<IWholeFlatSummary>(
-				latestSummaryCacheKey,
-			);
+			const cachedLatestSummary =
+				await this.getCache<IWholeFlatSummary>(latestSummaryCacheKey);
 			// If latest summary sha is cached, but the summary itself does not exist in cache, retrieve the requested summary
 			// by specific version as normal and do not cache it.
 			if (cachedLatestSummary) {

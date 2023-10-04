@@ -33,7 +33,7 @@ import {
 	fail,
 } from "../../util";
 import { AllowedTypes, FieldSchema } from "../typed-schema";
-import { TreeStatus, treeStatusFromPath } from "../editable-tree";
+import { treeStatusFromPath } from "../editable-tree";
 import { Context } from "./context";
 import {
 	FlexibleNodeContent,
@@ -47,6 +47,7 @@ import {
 	RequiredField,
 	boxedIterator,
 	CheckTypesOverlap,
+	TreeStatus,
 } from "./editableTreeTypes";
 import { makeTree } from "./lazyTree";
 import {
@@ -373,12 +374,12 @@ export class LazySequence<TTypes extends AllowedTypes>
 }
 
 export class LazyValueField<TTypes extends AllowedTypes>
-	extends LazyField<typeof FieldKinds.value, TTypes>
+	extends LazyField<typeof FieldKinds.required, TTypes>
 	implements RequiredField<TTypes>
 {
 	public constructor(
 		context: Context,
-		schema: FieldSchema<typeof FieldKinds.value, TTypes>,
+		schema: FieldSchema<typeof FieldKinds.required, TTypes>,
 		cursor: ITreeSubscriptionCursor,
 		fieldAnchor: FieldAnchor,
 	) {
@@ -466,7 +467,7 @@ const builderList: [FieldKind, Builder][] = [
 	[FieldKinds.nodeKey, LazyOptionalField], // TODO
 	[FieldKinds.optional, LazyOptionalField],
 	[FieldKinds.sequence, LazySequence],
-	[FieldKinds.value, LazyValueField],
+	[FieldKinds.required, LazyValueField],
 ];
 
 const kindToClass: ReadonlyMap<FieldKind, Builder> = new Map(builderList);
