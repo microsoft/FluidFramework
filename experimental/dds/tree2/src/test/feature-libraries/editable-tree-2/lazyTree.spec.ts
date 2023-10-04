@@ -246,7 +246,7 @@ describe.only("LazyTree", () => {
 					anchor,
 				);
 
-				assert.equal(node.tryGetField(brand("")), undefined); // TODO: is this right?
+				assert.equal(node.tryGetField(brand("")), undefined); // TODO: is this the right key?
 			});
 			it("Non-empty", () => {
 				// TODO
