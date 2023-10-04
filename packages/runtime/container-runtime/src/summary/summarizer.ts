@@ -62,8 +62,6 @@ export class SummarizingWarning
 export const createSummarizingWarning = (errorMessage: string, logged: boolean) =>
 	new SummarizingWarning(errorMessage, logged);
 
-export const summarizerRequestUrl = "_summarizer";
-
 /**
  * Summarizer is responsible for coordinating when to generate and send summaries.
  * It is the main entry point for summary work.
@@ -109,6 +107,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 	 * interface will expect an absolute URL and will not handle "/".
 	 * @param loader - the loader that resolves the request
 	 * @param url - the URL used to resolve the container
+	 * @deprecated Creating a summarizer is not a publicly supported API. Please remove all usage of this static method.
 	 */
 	public static async create(loader: ILoader, url: string): Promise<ISummarizer> {
 		const request: IRequest = {
@@ -132,7 +131,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 		if (resolvedContainer.getEntryPoint !== undefined) {
 			fluidObject = await resolvedContainer.getEntryPoint();
 		} else {
-			const response = await resolvedContainer.request({ url: summarizerRequestUrl });
+			const response = await resolvedContainer.request({ url: "_summarizer" });
 			if (response.status !== 200 || response.mimeType !== "fluid/object") {
 				throw responseToException(response, request);
 			}

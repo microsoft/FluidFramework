@@ -24,6 +24,7 @@ import {
 	AttachState,
 	ILoaderOptions,
 	ILoader,
+	LoaderHeader,
 } from "@fluidframework/container-definitions";
 import {
 	IContainerRuntime,
@@ -47,6 +48,7 @@ import {
 	UsageError,
 } from "@fluidframework/telemetry-utils";
 import {
+	DriverHeader,
 	FetchSource,
 	IDocumentStorageService,
 	ISummaryContext,
@@ -102,6 +104,7 @@ import {
 	calculateStats,
 	TelemetryContext,
 	ReadAndParseBlob,
+	responseToException,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
@@ -153,7 +156,7 @@ import {
 	EnqueueSummarizeResult,
 	ISummarizerEvents,
 	IBaseSummarizeResult,
-	summarizerRequestUrl,
+	ISummarizer,
 } from "./summary";
 import { formExponentialFn, Throttler } from "./throttler";
 import {
@@ -625,6 +628,53 @@ type MessageWithContext =
 			modernRuntimeMessage: false;
 			local: boolean;
 	  };
+
+const summarizerRequestUrl = "_summarizer";
+
+/**
+ * Create and retrieve the summmarizer
+ */
+async function createSummarizer(loader: ILoader, url: string): Promise<ISummarizer> {
+	const request: IRequest = {
+		headers: {
+			[LoaderHeader.cache]: false,
+			[LoaderHeader.clientDetails]: {
+				capabilities: { interactive: false },
+				type: summarizerClientType,
+			},
+			[DriverHeader.summarizingClient]: true,
+			[LoaderHeader.reconnect]: false,
+		},
+		url,
+	};
+
+	const resolvedContainer = await loader.resolve(request);
+	let fluidObject: FluidObject<ISummarizer> | undefined;
+
+	// Older containers may not have the "getEntryPoint" API
+	// ! This check will need to stay until LTS of loader moves past 2.0.0-internal.7.0.0
+	if (resolvedContainer.getEntryPoint !== undefined) {
+		fluidObject = await resolvedContainer.getEntryPoint();
+	} else {
+		const response = await resolvedContainer.request({ url: summarizerRequestUrl });
+		if (response.status !== 200 || response.mimeType !== "fluid/object") {
+			throw responseToException(response, request);
+		}
+		fluidObject = response.value;
+	}
+
+	if (fluidObject?.ISummarizer === undefined) {
+		throw new UsageError("Fluid object does not implement ISummarizer");
+	}
+	return fluidObject.ISummarizer;
+}
+
+/**
+ * This function is not supported publicly and exists for e2e testing
+ */
+export async function TEST_requestSummarizer(loader: ILoader, url: string): Promise<ISummarizer> {
+	return createSummarizer(loader, url);
+}
 
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
@@ -3910,7 +3960,7 @@ export class ContainerRuntime
 			if (absoluteUrl === undefined) {
 				throw new Error("absoluteUrl could not be resolved for creating summarizer");
 			}
-			return Summarizer.create(loader, absoluteUrl);
+			return createSummarizer(loader, absoluteUrl);
 		};
 	}
 
