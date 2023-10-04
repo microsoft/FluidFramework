@@ -27,7 +27,7 @@ interface PackageTypesList {
 
 const knownDtsKinds = ["alpha", "beta", "public", "untrimmed"] as const;
 
-type DtsKind = typeof knownDtsKinds[number];
+type DtsKind = (typeof knownDtsKinds)[number];
 
 function isDtsKind(str: string | undefined): str is DtsKind {
 	return str === undefined ? false : knownDtsKinds.includes(str as any);
