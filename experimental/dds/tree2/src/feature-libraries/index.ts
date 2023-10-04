@@ -53,7 +53,6 @@ export {
 	comparePipeline,
 	compileSyntaxTree,
 	setField,
-	TreeStatus,
 } from "./editable-tree";
 
 export {
@@ -244,6 +243,7 @@ export {
 	getTreeContext,
 	boxedIterator,
 	CheckTypesOverlap,
+	TreeStatus,
 } from "./editable-tree-2";
 
 // Split into separate import and export for compatibility with API-Extractor.
