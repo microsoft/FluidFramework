@@ -73,8 +73,8 @@ export const parsePackageSelectionFlags = (flags: selectionFlags): PackageSelect
 			? AllPackagesSelectionCriteria
 			: {
 					independentPackages: flags.packages ?? false,
-					releaseGroups: flags.releaseGroup as ReleaseGroup[] ?? [],
-					releaseGroupRoots: flags.releaseGroupRoot as ReleaseGroup[] ?? [],
+					releaseGroups: (flags.releaseGroup as ReleaseGroup[]) ?? [],
+					releaseGroupRoots: (flags.releaseGroupRoot as ReleaseGroup[]) ?? [],
 					directory: flags.dir,
 			  };
 
@@ -181,9 +181,9 @@ const selectPackagesFromContext = (
 			continue;
 		}
 
-    if(packages[0].monoRepo === undefined) {
-      throw new Error(`No release group found for package: ${packages[0]}`);
-    }
+		if (packages[0].monoRepo === undefined) {
+			throw new Error(`No release group found for package: ${packages[0]}`);
+		}
 
 		const dir = packages[0].monoRepo.directory;
 		const pkg = Package.loadDir(dir, rg);
