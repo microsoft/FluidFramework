@@ -49,7 +49,6 @@ export namespace PathHelper {
 		in_path: string,
 		out_types?: TOKEN_TYPES[],
 	): string[] {
-		// eslint-disable-line complexity
 		const tokens = [];
 		let currentToken = "";
 
@@ -60,7 +59,7 @@ export namespace PathHelper {
 
 		// Handle a / at the beginning of the path by adding a special token for it
 		let path_start = 0;
-		if (in_path[0] === "/") {
+		if (in_path.startsWith("/")) {
 			tokens.push("/");
 			if (out_types) {
 				out_types.push(TOKEN_TYPES.PATH_ROOT_TOKEN);
@@ -104,8 +103,8 @@ export namespace PathHelper {
 				if (token.length === 0) {
 					// There's an error somewhere. Let's abort the fast-track.
 					break;
-				} else if (token[0] === "[") {
-					if (token.length > 2 && token[token.length - 1] === "]") {
+				} else if (token.startsWith("[")) {
+					if (token.length > 2 && token.endsWith("]")) {
 						additionalTypes.push(TOKEN_TYPES.ARRAY_TOKEN);
 						additionalTokens[i] = token.substr(1, token.length - 2);
 					} else {
@@ -313,7 +312,7 @@ export namespace PathHelper {
 		if (inSquareBrackets) {
 			// There was a un-closed bracket at the end
 			throw new Error(MSG.UNCLOSED_BRACKETS + in_path);
-		} else if (in_path[in_path.length - 1] === PROPERTY_PATH_DELIMITER) {
+		} else if (in_path.endsWith(PROPERTY_PATH_DELIMITER)) {
 			// A path ended with a PROPERTY_PATH_DELIMITER
 			throw new Error(MSG.DOT_AT_END + in_path);
 		} else if (tokenStarted) {
@@ -357,10 +356,7 @@ export namespace PathHelper {
 			throw new TypeError(`Expecting a string as a path: ${in_quotedPathSegment}`);
 		}
 
-		if (
-			in_quotedPathSegment[0] === '"' &&
-			in_quotedPathSegment[in_quotedPathSegment.length - 1] === '"'
-		) {
+		if (in_quotedPathSegment.startsWith('"') && in_quotedPathSegment.endsWith('"')) {
 			// We remove double quotes
 			in_quotedPathSegment = in_quotedPathSegment.substr(1, in_quotedPathSegment.length - 2);
 
@@ -404,7 +400,7 @@ export namespace PathHelper {
 	export const checkValidRepositoryAbsolutePath = function (in_path: string) {
 		if (
 			in_path !== "" && // either an empty reference
-			in_path[0] !== "/"
+			!in_path.startsWith("/")
 		) {
 			// or an absolute path starting with /
 			throw new Error(MSG.INVALID_PATH_IN_REFERENCE);

@@ -22,6 +22,7 @@ export {
 	forEachNode,
 	forEachNodeInSubtree,
 	forEachField,
+	iterateCursorField,
 	ITreeCursorSynchronous,
 	PathRootPrefix,
 	inCursorField,
@@ -39,6 +40,7 @@ export {
 	FieldUpPath,
 	compareUpPaths,
 	compareFieldUpPaths,
+	getDetachedFieldContainingPath,
 	UpPathDefault,
 } from "./pathTree";
 export {

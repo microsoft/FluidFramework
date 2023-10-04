@@ -160,7 +160,10 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		return Object.entries(this.channels ?? {});
 	}
 
-	public constructor(private _length: number, baseEntry?: AttributionKey | null) {
+	public constructor(
+		private _length: number,
+		baseEntry?: AttributionKey | null,
+	) {
 		if (baseEntry !== undefined) {
 			this.offsets.push(0);
 			this.keys.push(baseEntry);
@@ -195,7 +198,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 
 	private get(index: number): AttributionKey | undefined {
 		const key = this.keys[index];
-		return key !== null ? key : undefined;
+		return key ?? undefined;
 	}
 
 	public get length(): number {

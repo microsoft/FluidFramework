@@ -34,7 +34,7 @@ export const FluidErrorTypes = {
 	 */
 	usageError: "usageError",
 } as const;
-export type FluidErrorTypes = typeof FluidErrorTypes[keyof typeof FluidErrorTypes];
+export type FluidErrorTypes = (typeof FluidErrorTypes)[keyof typeof FluidErrorTypes];
 
 /**
  * Base interface for all errors and warnings emitted the container.
@@ -93,6 +93,9 @@ export interface IGenericError extends IErrorBase {
 	 * {@inheritDoc IErrorBase.errorType}
 	 */
 	readonly errorType: typeof FluidErrorTypes.genericError;
+
+	// TODO: Use `unknown` instead (API-Breaking)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	error?: any;
 }
 

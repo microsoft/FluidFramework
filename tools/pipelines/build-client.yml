@@ -139,3 +139,25 @@ extends:
     - syncpack:versions
     - check:versions
     - prettier
+    additionalBuildSteps:
+      - task: Bash@3
+        displayName: Inject devtools telemetry logger token
+        inputs:
+          targetType: 'inline'
+          script: |
+            echo Generating .env
+            echo "DEVTOOLS_TELEMETRY_TOKEN=$(devtools-telemetry-key)" >> ./packages/tools/devtools/devtools-browser-extension/.env
+            
+      - task: Npm@1
+        displayName: Build devtools
+        inputs:
+          command: 'custom'
+          workingDir: ./packages/tools/devtools/devtools-browser-extension/
+          customCommand: 'run webpack'
+      
+      - task: PublishPipelineArtifact@1
+        displayName: Publish Artifact - Devtools Browser Extension
+        inputs:
+          targetPath: './packages/tools/devtools/devtools-browser-extension/dist/bundle/'
+          artifactName: 'devtools-extension-bundle'
+          publishLocation: 'pipeline'

@@ -92,7 +92,7 @@ export function treeContentFromTestTree(test: TestTree): TreeContent {
 const builder = new SchemaBuilder("test");
 export const minimal = builder.struct("minimal", {});
 export const numeric = builder.leaf("numeric", ValueSchema.Number);
-export const serializable = builder.leaf("serializable", ValueSchema.Serializable);
+export const bool = builder.leaf("bool", ValueSchema.Boolean);
 export const hasMinimalValueField = builder.struct("hasMinimalValueField", {
 	field: SchemaBuilder.fieldValue(minimal),
 });
@@ -139,12 +139,12 @@ export const testTrees: readonly TestTree[] = [
 	testTree("minimal", library, minimal, {}),
 	testTree("numeric", library, numeric, 5),
 	testField("numericSequence", library, SchemaBuilder.fieldSequence(numeric), [1, 2, 3]),
-	testTree("true boolean", library, serializable, {
-		[typeNameSymbol]: "serializable",
+	testTree("true boolean", library, bool, {
+		[typeNameSymbol]: "bool",
 		[valueSymbol]: true,
 	}),
-	testTree("false boolean", library, serializable, {
-		[typeNameSymbol]: "serializable",
+	testTree("false boolean", library, bool, {
+		[typeNameSymbol]: "bool",
 		[valueSymbol]: false,
 	}),
 	testTree("hasMinimalValueField", library, hasMinimalValueField, {

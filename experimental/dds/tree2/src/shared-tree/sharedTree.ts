@@ -179,7 +179,8 @@ export class SharedTree
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
-		if (!this.storedSchema.tryHandleOp(message.contents)) {
+		// TODO: Get rid of this `as any`. There should be a better way to narrow the type of message.contents.
+		if (!this.storedSchema.tryHandleOp(message.contents as any)) {
 			super.processCore(message, local, localOpMetadata);
 		}
 	}

@@ -12,7 +12,7 @@ import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { ScopeType } from '@fluidframework/protocol-definitions';
 
 // @public (undocumented)
-export const createTinyliciousCreateNewRequest: (documentId?: string | undefined) => IRequest;
+export const createTinyliciousCreateNewRequest: (documentId?: string) => IRequest;
 
 // @public
 export const defaultTinyliciousEndpoint = "http://localhost";

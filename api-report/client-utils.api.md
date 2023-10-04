@@ -13,16 +13,15 @@ import { TransformedEvent } from '@fluidframework/core-interfaces';
 
 // @internal
 export class Buffer extends Uint8Array {
+    static from(value: unknown, encodingOrOffset?: unknown, length?: unknown): IsoBuffer;
     // (undocumented)
-    static from(value: any, encodingOrOffset?: any, length?: any): IsoBuffer;
+    static isBuffer(obj: unknown): obj is Buffer;
     // (undocumented)
-    static isBuffer(obj: any): obj is Buffer;
-    // (undocumented)
-    toString(encoding?: string): string;
+    toString(encoding?: "utf8" | "utf-8" | "base64"): string;
 }
 
 // @internal
-export const bufferToString: (blob: ArrayBufferLike, encoding: string) => string;
+export const bufferToString: (blob: ArrayBufferLike, encoding: "utf8" | "utf-8" | "base64") => string;
 
 // @internal
 export type EventEmitterEventType = EventEmitter extends {
@@ -121,7 +120,7 @@ export type TypedEventTransform<TThis, TEvent> = TransformedEvent<TThis, "newLis
 export function Uint8ArrayToArrayBuffer(array: Uint8Array): ArrayBuffer;
 
 // @internal
-export function Uint8ArrayToString(arr: Uint8Array, encoding?: string): string;
+export function Uint8ArrayToString(arr: Uint8Array, encoding?: "utf8" | "utf-8" | "base64"): string;
 
 // (No @packageDocumentation comment for this package)
 

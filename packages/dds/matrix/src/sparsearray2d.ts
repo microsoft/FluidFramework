@@ -60,12 +60,8 @@ export class SparseArray2D<T>
 {
 	constructor(private readonly root: UA<UA<UA<UA<UA<T>>>>> = [undefined]) {}
 
-	public get rowCount() {
-		return 0xffffffff;
-	}
-	public get colCount() {
-		return 0xffffffff;
-	}
+	public readonly rowCount = 0xffffffff;
+	public readonly colCount = 0xffffffff;
 
 	public getCell(row: number, col: number): T | undefined {
 		const keyHi = r0c0ToMorton2x16(row >>> 16, col >>> 16);
@@ -226,7 +222,7 @@ export class SparseArray2D<T>
 	private getLevel<T>(parent: UA<UA<T>>, subKey: number) {
 		const level = parent[subKey];
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		return level === undefined ? (parent[subKey] = new Array(256).fill(undefined)) : level;
+		return level ?? (parent[subKey] = new Array(256).fill(undefined));
 	}
 
 	public snapshot() {

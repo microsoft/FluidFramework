@@ -56,7 +56,7 @@ export const MergeTreeDeltaType = {
 	GROUP: 3,
 } as const;
 
-export type MergeTreeDeltaType = typeof MergeTreeDeltaType[keyof typeof MergeTreeDeltaType];
+export type MergeTreeDeltaType = (typeof MergeTreeDeltaType)[keyof typeof MergeTreeDeltaType];
 
 export interface IMergeTreeDelta {
 	/**
@@ -120,7 +120,7 @@ export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
 }
 
 /**
- * @deprecated - The ability to create group ops will be removed in an upcoming release, as group ops are redundant with he native batching capabilities of the runtime
+ * @deprecated - The ability to create group ops will be removed in an upcoming release, as group ops are redundant with the native batching capabilities of the runtime
  */
 export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
 	type: typeof MergeTreeDeltaType.GROUP;

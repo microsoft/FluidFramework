@@ -98,7 +98,7 @@ export class Repository {
 		localRef = "HEAD",
 	): Promise<string> {
 		const base = await this.gitClient
-			.fetch(["--all"]) // make sure we have the latest remote refs
+			.fetch([remote]) // make sure we have the latest remote refs
 			.raw("merge-base", `refs/remotes/${remote}/${branch}`, localRef);
 		return base;
 	}

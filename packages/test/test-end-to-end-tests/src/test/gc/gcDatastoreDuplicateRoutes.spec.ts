@@ -81,9 +81,8 @@ describeNoCompat("GC Data Store Duplicates", (getTestObjectProvider) => {
 		dds.set("change", "change1");
 
 		// Create a new dataStore so that the GC blob is regenerated
-		const dataStore = await mainDataStore._context.containerRuntime.createDataStore(
-			TestDataObjectType,
-		);
+		const dataStore =
+			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType);
 		await dataStore.trySetAlias("ARootDataStore");
 
 		summarizer1.close();

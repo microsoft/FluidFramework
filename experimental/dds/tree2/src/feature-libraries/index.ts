@@ -27,8 +27,10 @@ export {
 	FlushableBinderOptions,
 	FlushableDataBinder,
 	MatchPolicy,
+	SubtreePolicy,
 	BindSyntaxTree,
 	indexSymbol,
+	BindPolicy,
 	BindTree,
 	BindTreeDefault,
 	DownPath,
@@ -77,6 +79,7 @@ export {
 	TreeDataContext,
 	normalizeNewFieldContent,
 	NewFieldContent,
+	assertAllowedValue,
 } from "./contextuallyTyped";
 
 export { ForestSummarizer } from "./forestSummarizer";
@@ -135,13 +138,11 @@ export {
 } from "./modular-schema";
 
 export {
-	SchemaBuilder,
 	TreeSchema,
 	AllowedTypes,
 	FieldSchema,
 	TypedSchemaCollection,
 	Any,
-	SchemaLibrary,
 	SchemaLibraryData,
 	LazyTreeSchema,
 	InternalTypedSchemaTypes,
@@ -159,6 +160,7 @@ export {
 	fieldApiPrefixes,
 	validateStructFieldName,
 } from "./typed-schema";
+export { SchemaBuilder, SchemaLibrary } from "./schemaBuilder";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
 
@@ -192,7 +194,6 @@ export {
 	Sequence,
 	NodeKeyFieldKind,
 	Forbidden,
-	FieldKindTypes,
 	DefaultChangeset,
 	DefaultChangeFamily,
 	DefaultEditBuilder,
@@ -237,10 +238,12 @@ export {
 	TypedField,
 	TypedNode,
 	TypedNodeUnion,
-	UntypedEntity,
-	UntypedField as UntypedField2,
-	UntypedTree as UntypedTree2,
+	Tree,
+	TreeField,
+	TreeNode,
 	getTreeContext,
+	boxedIterator,
+	CheckTypesOverlap,
 } from "./editable-tree-2";
 
 // Split into separate import and export for compatibility with API-Extractor.

@@ -17,7 +17,7 @@ export const FluidErrorTypes: {
 };
 
 // @public (undocumented)
-export type FluidErrorTypes = typeof FluidErrorTypes[keyof typeof FluidErrorTypes];
+export type FluidErrorTypes = (typeof FluidErrorTypes)[keyof typeof FluidErrorTypes];
 
 // @public
 export type FluidObject<T = unknown> = {
@@ -297,10 +297,10 @@ export interface IFluidPackageEnvironment {
     };
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const IFluidRouter: keyof IProvideFluidRouter;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IFluidRouter extends IProvideFluidRouter {
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
@@ -353,7 +353,7 @@ export interface IProvideFluidLoadable {
     readonly IFluidLoadable: IFluidLoadable;
 }
 
-// @public
+// @public @deprecated
 export interface IProvideFluidRouter {
     // (undocumented)
     readonly IFluidRouter: IFluidRouter;
@@ -399,7 +399,7 @@ export interface IResponse {
 export const isFluidCodeDetails: (details: unknown) => details is Readonly<IFluidCodeDetails>;
 
 // @public @deprecated
-export const isFluidPackage: (pkg: any) => pkg is Readonly<IFluidPackage>;
+export const isFluidPackage: (pkg: unknown) => pkg is Readonly<IFluidPackage>;
 
 // @public @deprecated (undocumented)
 export interface ITaggedTelemetryPropertyType {
@@ -482,7 +482,7 @@ export const LogLevel: {
 };
 
 // @public
-export type LogLevel = typeof LogLevel[keyof typeof LogLevel];
+export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 
 // @public
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {

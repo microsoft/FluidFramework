@@ -9,12 +9,12 @@
 import { expect } from "chai";
 
 import { SharedCell } from "@fluidframework/cell";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
-import { ISharedObject } from "@fluidframework/shared-object-base";
+import { type ISharedObject } from "@fluidframework/shared-object-base";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import {
 	AllowedUpdateType,
@@ -23,14 +23,15 @@ import {
 	ValueSchema,
 	SharedTreeFactory,
 	valueSymbol,
+	typeNameSymbol,
 } from "@fluid-experimental/tree2";
 
-import { EditType, FluidObjectId } from "../CommonInterfaces";
+import { EditType, type FluidObjectId } from "../CommonInterfaces";
 import {
-	FluidObjectTreeNode,
-	FluidObjectValueNode,
-	FluidUnknownObjectNode,
-	VisualChildNode,
+	type FluidObjectTreeNode,
+	type FluidObjectValueNode,
+	type FluidUnknownObjectNode,
+	type VisualChildNode,
 	visualizeChildData as visualizeChildDataBase,
 	visualizeSharedCell,
 	visualizeSharedCounter,
@@ -306,8 +307,6 @@ describe("DefaultVisualizers unit tests", () => {
 		sharedMatrix.insertCols(0, 3);
 		sharedMatrix.setCell(0, 0, "Hello");
 		sharedMatrix.setCell(0, 1, "World");
-		// False positive
-		// eslint-disable-next-line unicorn/no-useless-undefined
 		sharedMatrix.setCell(0, 2, undefined);
 		sharedMatrix.setCell(1, 0, 1);
 		sharedMatrix.setCell(1, 1, true);
@@ -411,11 +410,10 @@ describe("DefaultVisualizers unit tests", () => {
 		const stringSchema = builder.leaf("string-property", ValueSchema.String);
 		const numberSchema = builder.leaf("number-property", ValueSchema.Number);
 		const booleanSchema = builder.leaf("boolean-property", ValueSchema.Boolean);
-
-		const serializableSchema = builder.leaf("serializable-property", ValueSchema.Serializable);
+		const handleSchema = builder.leaf("handle-property", ValueSchema.FluidHandle);
 
 		const leafSchema = builder.struct("leaf-item", {
-			leafField: SchemaBuilder.fieldValue(serializableSchema),
+			leafField: SchemaBuilder.fieldValue(booleanSchema, handleSchema, stringSchema),
 		});
 
 		const childSchema = builder.struct("child-item", {
@@ -439,13 +437,19 @@ describe("DefaultVisualizers unit tests", () => {
 				childrenOne: [
 					{
 						childField: "Hello world!",
-						childData: { leafField: { [valueSymbol]: "Hello world again!" } },
+						childData: {
+							leafField: {
+								[typeNameSymbol]: stringSchema.name,
+								[valueSymbol]: "Hello world again!",
+							},
+						},
 					},
 					{
 						childField: true,
 						childData: {
 							leafField: {
-								[valueSymbol]: false, // TODO: SharedTree should encode the handle.
+								[typeNameSymbol]: booleanSchema.name,
+								[valueSymbol]: false, // TODO: Use a handle here.
 							},
 						},
 					},

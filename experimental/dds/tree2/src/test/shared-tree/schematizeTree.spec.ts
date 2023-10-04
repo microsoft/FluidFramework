@@ -29,10 +29,10 @@ import { createEmitter } from "../../events";
 
 const builder = new SchemaBuilder("Schematize Tree Tests");
 const root = builder.leaf("root", ValueSchema.Number);
-const schema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
+const schema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(root));
 
 const builderGeneralized = new SchemaBuilder("Schematize Tree Tests Generalized");
-const rootGeneralized = builderGeneralized.leaf("root", ValueSchema.Serializable);
+const rootGeneralized = builderGeneralized.leaf("root", ValueSchema.Number);
 const schemaGeneralized = builderGeneralized.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
 
 const builderValue = new SchemaBuilder("Schematize Tree Tests");

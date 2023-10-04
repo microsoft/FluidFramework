@@ -12,8 +12,9 @@ export type Skip = typeof Skip;
  * @remarks
  * Non-recursive depth first traversal.
  */
-export function visitIterableTree<T extends Iterable<T>>(
+export function visitIterableTree<T>(
 	root: T,
+	iterator: (t: T) => Iterable<T>,
 	visitor: (item: T) => Skip | void,
 ): void {
 	const queue: Iterable<T>[] = [[root]];
@@ -21,7 +22,7 @@ export function visitIterableTree<T extends Iterable<T>>(
 	while ((next = queue.pop())) {
 		for (const child of next) {
 			if (visitor(child) !== Skip) {
-				queue.push(child);
+				queue.push(iterator(child));
 			}
 		}
 	}
@@ -94,14 +95,11 @@ export function visitBipartiteIterableTree<A extends Iterable<B>, B extends Iter
  * Such utility functions really only provide an improvement of hand coding each cases if the non-recessiveness is required.
  * Since supporting very deeps trees hasn't been a priority, such visitors are also not a priority, and are thus not included here for now.
  */
-export function visitBipartiteIterableTreeWithState<
-	A extends Iterable<B>,
-	B extends Iterable<A>,
-	StateA,
-	StateB,
->(
+export function visitBipartiteIterableTreeWithState<A, B, StateA, StateB>(
 	root: A,
 	fromAbove: StateA,
+	iterateA: (a: A) => Iterable<B>,
+	iterateB: (b: B) => Iterable<A>,
 	visitorA: (item: A, fromAbove: StateA) => Skip | StateB,
 	visitorB: (item: B, fromAbove: StateB) => Skip | StateA,
 ) {
@@ -110,10 +108,10 @@ export function visitBipartiteIterableTreeWithState<
 	while ((next = queueA.pop())) {
 		const result = visitorA(...next);
 		if (result !== Skip) {
-			for (const nextB of next[0]) {
+			for (const nextB of iterateA(next[0])) {
 				const resultB = visitorB(nextB, result);
 				if (resultB !== Skip) {
-					for (const child of nextB) {
+					for (const child of iterateB(nextB)) {
 						queueA.push([child, resultB]);
 					}
 				}

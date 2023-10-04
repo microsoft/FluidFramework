@@ -24,7 +24,14 @@ export class SampleCodeLoader implements ICodeDetailsLoader {
 	}
 	public async load(): Promise<IFluidModuleWithDetails> {
 		return {
-			module: { fluidExport: new BaseContainerRuntimeFactory(new Map()) },
+			module: {
+				fluidExport: new BaseContainerRuntimeFactory({
+					registryEntries: new Map(),
+					provideEntryPoint: async () => ({
+						myProp: "myValue",
+					}),
+				}),
+			},
 			details: { package: "no-dynamic-package", config: {} },
 		};
 	}
