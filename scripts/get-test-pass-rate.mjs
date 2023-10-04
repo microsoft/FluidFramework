@@ -47,7 +47,7 @@ async function fetchData() {
                         const stageApiUrl = `https://vstmr.dev.azure.com/fluidframework/internal/_apis/testresults/metrics?pipelineId=${BUILD_ID}&stageName=${stage}&api-version=7.1-preview.1`;
                         const stageResponse = await fetch(stageApiUrl, {
                                 headers: {
-                                        Authorization: `Basic ${ADO_API_TOKEN}`,
+                                        Authorization: `Basic ${btoa(":" + ADO_API_TOKEN)}`,
                                 },
                         });
 
