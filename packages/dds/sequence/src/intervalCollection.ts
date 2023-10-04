@@ -715,6 +715,12 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 	);
 }
 
+// solely for type checking in the implementation of add - will be removed once
+// deprecated signatures are removed
+const isSequencePlace = (place: any): place is SequencePlace => {
+	return typeof place === "number" || typeof place === "string" || place.pos !== undefined;
+};
+
 /**
  * Collection of intervals that supports addition, modification, removal, and efficient spatial querying.
  * Changes to this collection will be incur updates on collaborating clients (i.e. they are not local-only).
@@ -832,7 +838,15 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * @remarks - See documentation on {@link SequenceInterval} for comments on interval endpoint semantics: there are subtleties
 	 * with how the current half-open behavior is represented.
 	 */
-	add(start: SequencePlace, end: SequencePlace, props?: PropertySet): TInterval;
+	add({
+		start,
+		end,
+		props,
+	}: {
+		start: SequencePlace;
+		end: SequencePlace;
+		props?: PropertySet;
+	}): TInterval;
 	/**
 	 * Removes an interval from the collection.
 	 * @param id - Id of the interval to remove
@@ -1199,25 +1213,60 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		props?: PropertySet,
 	): TInterval;
 
-	public add(start: SequencePlace, end: SequencePlace, props?: PropertySet): TInterval;
+	public add({
+		start,
+		end,
+		props,
+	}: {
+		start: SequencePlace;
+		end: SequencePlace;
+		props?: PropertySet;
+	}): TInterval;
 
 	public add(
-		arg1: SequencePlace,
-		arg2: SequencePlace,
-		arg3?: IntervalType | PropertySet,
-		arg4?: PropertySet,
+		start:
+			| SequencePlace
+			| {
+					start: SequencePlace;
+					end: SequencePlace;
+					props?: PropertySet;
+			  },
+		end?: SequencePlace,
+		intervalType?: IntervalType,
+		props?: PropertySet,
 	): TInterval {
+		let intStart: SequencePlace;
+		let intEnd: SequencePlace;
 		let type: IntervalType;
 		let properties: PropertySet | undefined;
 
-		const intStart: SequencePlace = arg1;
-		const intEnd: SequencePlace = arg2;
-		if (typeof arg3 === "number") {
-			type = arg3;
-			properties = arg4;
+		// figure out what to do about this now that both start and the options are objects
+		// if (!isSequencePlace(start)) {
+		// 	intStart = start.start;
+		// 	intEnd = start.end;
+		// 	type = IntervalType.SlideOnRemove;
+		// 	properties = start.props;
+		// } else {
+		// 	intStart = start;
+		// 	assert(end !== undefined, "end must be defined");
+		// 	intEnd = end;
+		// 	assert(intervalType !== undefined, "intervalType must be defined");
+		// 	type = intervalType;
+		// 	properties = props;
+		// }
+
+		if (isSequencePlace(start)) {
+			intStart = start;
+			assert(end !== undefined, "end must be defined");
+			intEnd = end;
+			assert(intervalType !== undefined, "intervalType must be defined");
+			type = intervalType;
+			properties = props;
 		} else {
+			intStart = start.start;
+			intEnd = start.end;
 			type = IntervalType.SlideOnRemove;
-			properties = arg3;
+			properties = start.props;
 		}
 
 		if (!this.localCollection) {

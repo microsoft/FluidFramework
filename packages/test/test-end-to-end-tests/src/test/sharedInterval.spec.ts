@@ -65,8 +65,8 @@ function testIntervalOperations(intervalCollection: IIntervalCollection<Sequence
 	let interval: SequenceInterval | undefined;
 	let id;
 
-	intervalArray[0] = intervalCollection.add(0, 0);
-	intervalArray[1] = intervalCollection.add(0, 0);
+	intervalArray[0] = intervalCollection.add({ start: 0, end: 0 });
+	intervalArray[1] = intervalCollection.add({ start: 0, end: 0 });
 	assert.notStrictEqual(intervalArray[0], intervalArray[1], "Unique intervals not added");
 
 	id = intervalArray[0].getIntervalId();
@@ -85,15 +85,15 @@ function testIntervalOperations(intervalCollection: IIntervalCollection<Sequence
 	interval = intervalCollection.getIntervalById(id);
 	assert.strictEqual(interval, undefined, "Interval not removed");
 
-	intervalArray[0] = intervalCollection.add(0, 0);
-	intervalArray[1] = intervalCollection.add(0, 1);
-	intervalArray[2] = intervalCollection.add(0, 2);
-	intervalArray[3] = intervalCollection.add(1, 0);
-	intervalArray[4] = intervalCollection.add(1, 1);
-	intervalArray[5] = intervalCollection.add(1, 2);
-	intervalArray[6] = intervalCollection.add(2, 0);
-	intervalArray[7] = intervalCollection.add(2, 1);
-	intervalArray[8] = intervalCollection.add(2, 2);
+	intervalArray[0] = intervalCollection.add({ start: 0, end: 0 });
+	intervalArray[1] = intervalCollection.add({ start: 0, end: 1 });
+	intervalArray[2] = intervalCollection.add({ start: 0, end: 2 });
+	intervalArray[3] = intervalCollection.add({ start: 1, end: 0 });
+	intervalArray[4] = intervalCollection.add({ start: 1, end: 1 });
+	intervalArray[5] = intervalCollection.add({ start: 1, end: 2 });
+	intervalArray[6] = intervalCollection.add({ start: 2, end: 0 });
+	intervalArray[7] = intervalCollection.add({ start: 2, end: 1 });
+	intervalArray[8] = intervalCollection.add({ start: 2, end: 2 });
 
 	let i: number;
 	let result;
@@ -284,7 +284,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 
 		it("replace all is included", async () => {
 			sharedString.insertText(3, ".");
-			intervals.add(0, 3);
+			intervals.add({ start: 0, end: 3 });
 			assertIntervals([{ start: 0, end: 3 }]);
 
 			sharedString.replaceText(0, 3, `xxx`);
@@ -293,7 +293,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 
 		it("remove all yields empty range", async () => {
 			const len = sharedString.getLength();
-			intervals.add(0, len - 1);
+			intervals.add({ start: 0, end: len - 1 });
 			assertIntervals([{ start: 0, end: len - 1 }]);
 
 			sharedString.removeRange(0, len);
@@ -302,7 +302,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 		});
 
 		it("replace before is excluded", async () => {
-			intervals.add(1, 2);
+			intervals.add({ start: 1, end: 2 });
 			assertIntervals([{ start: 1, end: 2 }]);
 
 			sharedString.replaceText(0, 1, `x`);
@@ -310,7 +310,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 		});
 
 		it("insert at first position is excluded", async () => {
-			intervals.add(0, 2);
+			intervals.add({ start: 0, end: 2 });
 			assertIntervals([{ start: 0, end: 2 }]);
 
 			sharedString.insertText(0, ".");
@@ -319,7 +319,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 
 		it("replace first is included", async () => {
 			sharedString.insertText(0, "012");
-			intervals.add(0, 2);
+			intervals.add({ start: 0, end: 2 });
 			assertIntervals([{ start: 0, end: 2 }]);
 
 			sharedString.replaceText(0, 1, `x`);
@@ -328,7 +328,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 
 		it("replace last is included", async () => {
 			sharedString.insertText(0, "012");
-			intervals.add(0, 2);
+			intervals.add({ start: 0, end: 2 });
 			assertIntervals([{ start: 0, end: 2 }]);
 
 			sharedString.replaceText(1, 2, `x`);
@@ -336,7 +336,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 		});
 
 		it("insert at last position is included", async () => {
-			intervals.add(0, 2);
+			intervals.add({ start: 0, end: 2 });
 			assertIntervals([{ start: 0, end: 2 }]);
 
 			sharedString.insertText(2, ".");
@@ -344,7 +344,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 		});
 
 		it("insert after last position is excluded", async () => {
-			intervals.add(0, 2);
+			intervals.add({ start: 0, end: 2 });
 			assertIntervals([{ start: 0, end: 2 }]);
 
 			sharedString.insertText(3, ".");
@@ -352,7 +352,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 		});
 
 		it("replace after", async () => {
-			intervals.add(0, 1);
+			intervals.add({ start: 0, end: 1 });
 			assertIntervals([{ start: 0, end: 1 }]);
 
 			sharedString.replaceText(1, 2, `x`);
@@ -361,7 +361,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 
 		it("repeated replacement", async () => {
 			sharedString.insertText(0, "012");
-			intervals.add(0, 2);
+			intervals.add({ start: 0, end: 2 });
 			assertIntervals([{ start: 0, end: 2 }]);
 
 			for (let j = 0; j < 10; j++) {
@@ -397,7 +397,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 
 			sharedString1.insertText(0, "0123456789");
 			const intervals1 = sharedString1.getIntervalCollection("intervals");
-			intervals1.add(1, 7);
+			intervals1.add({ start: 1, end: 7 });
 			assertIntervalsHelper(sharedString1, intervals1, [{ start: 1, end: 7 }]);
 
 			// Load the Container that was created by the first client.
@@ -438,15 +438,15 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 			const intervalArray: any[] = [];
 			let interval: SequenceInterval;
 
-			intervalArray[0] = intervals1.add(0, 0);
-			intervalArray[1] = intervals1.add(0, 1);
-			intervalArray[2] = intervals1.add(0, 2);
-			intervalArray[3] = intervals1.add(1, 0);
-			intervalArray[4] = intervals1.add(1, 1);
-			intervalArray[5] = intervals1.add(1, 2);
-			intervalArray[6] = intervals1.add(2, 0);
-			intervalArray[7] = intervals1.add(2, 1);
-			intervalArray[8] = intervals1.add(2, 2);
+			intervalArray[0] = intervals1.add({ start: 0, end: 0 });
+			intervalArray[1] = intervals1.add({ start: 0, end: 1 });
+			intervalArray[2] = intervals1.add({ start: 0, end: 2 });
+			intervalArray[3] = intervals1.add({ start: 1, end: 0 });
+			intervalArray[4] = intervals1.add({ start: 1, end: 1 });
+			intervalArray[5] = intervals1.add({ start: 1, end: 2 });
+			intervalArray[6] = intervals1.add({ start: 2, end: 0 });
+			intervalArray[7] = intervals1.add({ start: 2, end: 1 });
+			intervalArray[8] = intervals1.add({ start: 2, end: 2 });
 
 			// Load the Container that was created by the first client.
 			const container2 = await provider.loadTestContainer(testContainerConfig);
@@ -571,9 +571,9 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 			await provider.ensureSynchronized();
 
 			// Conflicting adds
-			interval1 = intervals1.add(0, 0);
+			interval1 = intervals1.add({ start: 0, end: 0 });
 			id1 = interval1.getIntervalId();
-			interval2 = intervals2.add(0, 0);
+			interval2 = intervals2.add({ start: 0, end: 0 });
 			id2 = interval2.getIntervalId();
 
 			await provider.ensureSynchronized();
@@ -619,16 +619,16 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 			);
 
 			// Conflicting removes + add
-			interval1 = intervals1.add(1, 1);
+			interval1 = intervals1.add({ start: 1, end: 1 });
 			id1 = interval1.getIntervalId();
-			interval2 = intervals2.add(1, 1);
+			interval2 = intervals2.add({ start: 1, end: 1 });
 			id2 = interval2.getIntervalId();
 
 			await provider.ensureSynchronized();
 
 			intervals2.removeIntervalById(id1);
 			intervals1.removeIntervalById(id2);
-			interval1 = intervals1.add(1, 1);
+			interval1 = intervals1.add({ start: 1, end: 1 });
 			id1 = interval1.getIntervalId();
 
 			await provider.ensureSynchronized();
@@ -952,17 +952,25 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 
 			const comment1Text = SharedString.create(dataObject1.runtime);
 			comment1Text.insertText(0, "a comment...");
-			intervalCollection1.add(0, 3, {
-				story: comment1Text.handle,
+			intervalCollection1.add({
+				start: 0,
+				end: 3,
+				props: {
+					story: comment1Text.handle,
+				},
 			});
 			const comment2Text = SharedString.create(dataObject1.runtime);
 			comment2Text.insertText(0, "another comment...");
-			intervalCollection1.add(5, 7, {
-				story: comment2Text.handle,
+			intervalCollection1.add({
+				start: 5,
+				end: 7,
+				props: {
+					story: comment2Text.handle,
+				},
 			});
 			const nestedMap = SharedMap.create(dataObject1.runtime);
 			nestedMap.set("nestedKey", "nestedValue");
-			intervalCollection1.add(8, 9, { story: nestedMap.handle });
+			intervalCollection1.add({ start: 8, end: 9, props: { story: nestedMap.handle } });
 			await provider.ensureSynchronized();
 
 			const serialized1 = Array.from(intervalCollection1);
