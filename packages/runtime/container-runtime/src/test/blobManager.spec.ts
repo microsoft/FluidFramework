@@ -760,6 +760,7 @@ describe("BlobManager", () => {
 				// finish op
 				await Promise.all([p1, p2]);
 			} catch (error: any) {
+				assert.strictEqual(error.message, "uploadBlob aborted");
 				assert.ok(error.uploadTime);
 				assert.strictEqual(error.acked, false);
 			}
@@ -785,6 +786,7 @@ describe("BlobManager", () => {
 				ac.abort();
 				await handleP;
 			} catch (error: any) {
+				assert.strictEqual(error.message, "uploadBlob aborted");
 				assert.ok(error.uploadTime);
 				assert.strictEqual(error.acked, false);
 			}
