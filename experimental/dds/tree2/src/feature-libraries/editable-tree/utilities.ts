@@ -176,7 +176,9 @@ function getCachedUpdatedDetachedField(
 	});
 	return detachedField;
 }
+
 export const detachedFieldSlot = anchorSlot<DetachedFieldCache>();
+
 export interface DetachedFieldCache {
 	generationNumber: number;
 	detachedField: DetachedField;

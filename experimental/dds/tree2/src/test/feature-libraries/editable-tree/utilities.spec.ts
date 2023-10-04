@@ -28,6 +28,7 @@ import {
 	keyIsValidIndex,
 	treeStatusFromAnchorCache,
 	detachedFieldSlot,
+	treeStatusFromDetachedField,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/editable-tree/utilities";
 import { brand } from "../../../util";
@@ -194,6 +195,21 @@ describe("editable-tree utilities", () => {
 			// Calls treeStatusFromAnchorCache and checks if cache is updated.
 			treeStatusFromAnchorCache(anchors, anchorNode0);
 			assert.deepEqual(anchorNode0.slots.get(detachedFieldSlot), expectedUpdatedCache);
+		});
+	});
+
+	describe("treeStatusFromDetachedField", () => {
+		it("returns TreeStatus.InDocument for root detachedField", () => {
+			assert(
+				treeStatusFromDetachedField(keyAsDetachedField(rootFieldKey)) ===
+					TreeStatus.InDocument,
+			);
+		});
+		it("returns TreeStatus.Removed for non-root detachedField", () => {
+			assert(
+				treeStatusFromDetachedField(keyAsDetachedField(brand("testKey"))) ===
+					TreeStatus.Removed,
+			);
 		});
 	});
 });
