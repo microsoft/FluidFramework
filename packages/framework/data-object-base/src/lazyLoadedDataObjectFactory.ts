@@ -63,6 +63,7 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject>
 	): Promise<FluidDataStoreRuntime> {
 		const runtimeClass = mixinRequestHandler(
 			async (request: IRequest, rt: FluidDataStoreRuntime) => {
+				// The provideEntryPoint callback below always returns T, so this cast is safe
 				const dataObject = (await rt.entryPoint.get()) as T;
 				assert(
 					dataObject.request !== undefined,
