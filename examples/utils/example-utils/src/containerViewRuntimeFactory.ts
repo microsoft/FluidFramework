@@ -5,11 +5,9 @@
 
 import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import {
-	IFluidDataStoreChannel,
-	IFluidDataStoreFactory,
-} from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { MountableView } from "@fluidframework/view-adapters";
+import { IFluidMountableViewEntryPoint } from "@fluidframework/view-interfaces";
 
 const dataStoreId = "modelDataStore";
 
@@ -32,21 +30,30 @@ export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory 
 			undefined,
 			undefined,
 			undefined,
-			async (containerRuntime: IContainerRuntime) => {
-				// ISSUE: IContainerRuntime doesn't have methods that expose data stores as IDataStore or
-				// IFluidDataStoreChannel, which expose entryPoint. getRootDataStore returns an IFluidRouter.
-				const dataStore: IFluidDataStoreChannel = (await containerRuntime.getRootDataStore(
+			async (containerRuntime: IContainerRuntime): Promise<IFluidMountableViewEntryPoint> => {
+				const entryPointHandle = await containerRuntime.getAliasedDataStoreEntryPoint?.(
 					dataStoreId,
-				)) as IFluidDataStoreChannel;
+				);
 
-				// TODO: better type discovery
-				const fluidObject: T = (await dataStore.entryPoint?.get()) as T;
-				if (fluidObject === undefined) {
-					throw new Error("DataStore did not set its EntryPoint");
+				if (entryPointHandle === undefined) {
+					throw new Error(`Default dataStore [${dataStoreId}] must exist`);
 				}
 
-				return new MountableView(viewCallback(fluidObject));
-			} /* initializeEntryPoint */,
+				const entryPoint = await entryPointHandle.get();
+
+				const view = viewCallback(entryPoint as T);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+				let getDefaultView = async () => view;
+				if (MountableView.canMount(view)) {
+					getDefaultView = async () => new MountableView(view);
+				}
+
+				return {
+					getDefaultDataObject: async () => entryPoint,
+					getDefaultView,
+					getDefaultMountableView: getDefaultView,
+				};
+			},
 		);
 	}
 

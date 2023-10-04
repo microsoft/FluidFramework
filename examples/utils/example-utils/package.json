@@ -54,6 +54,7 @@
 		"@fluidframework/task-manager": "workspace:~",
 		"@fluidframework/tinylicious-driver": "workspace:~",
 		"@fluidframework/view-adapters": "workspace:~",
+		"@fluidframework/view-interfaces": "workspace:~",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {

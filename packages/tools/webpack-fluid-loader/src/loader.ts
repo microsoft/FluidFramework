@@ -22,7 +22,10 @@ import { Loader } from "@fluidframework/container-loader";
 import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver";
 import { HostStoragePolicy, IPersistedCache } from "@fluidframework/odsp-driver-definitions";
 import { IUser } from "@fluidframework/protocol-definitions";
-import { IFluidMountableView } from "@fluidframework/view-interfaces";
+import {
+	IFluidMountableView,
+	IFluidMountableViewEntryPoint,
+} from "@fluidframework/view-interfaces";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
@@ -368,7 +371,10 @@ async function getFluidObjectAndRender(container: IContainer, url: string, div: 
 	const entryPoint = await container.getEntryPoint?.();
 
 	let fluidObject: FluidObject<IFluidMountableView>;
-	if (entryPoint === undefined) {
+	if (
+		entryPoint === undefined ||
+		(entryPoint as IFluidMountableViewEntryPoint).getDefaultView === undefined
+	) {
 		const response = await container.request({
 			headers: {
 				mountableView: true,
@@ -382,7 +388,7 @@ async function getFluidObjectAndRender(container: IContainer, url: string, div: 
 
 		fluidObject = response.value;
 	} else {
-		fluidObject = entryPoint;
+		fluidObject = await (entryPoint as IFluidMountableViewEntryPoint).getDefaultView();
 	}
 
 	if (fluidObject === undefined) {
