@@ -28,7 +28,7 @@ export class AzureAudience extends ServiceAudience<AzureMember> implements IAzur
 
 // @public
 export class AzureClient {
-    constructor(props: AzureClientProps);
+    constructor(properties: AzureClientProps);
     copyContainer(id: string, containerSchema: ContainerSchema, version?: AzureContainerVersion): Promise<{
         container: IFluidContainer;
         services: AzureContainerServices;

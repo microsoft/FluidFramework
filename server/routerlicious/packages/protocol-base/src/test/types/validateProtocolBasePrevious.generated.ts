@@ -16,42 +16,6 @@ type TypeOnly<T> = {
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_AttachmentTreeEntry": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_AttachmentTreeEntry": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_BlobTreeEntry": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_BlobTreeEntry": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ILocalSequencedClient": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ILocalSequencedClient": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IProtocolHandler": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IProtocolHandler():
@@ -71,7 +35,6 @@ declare function get_current_InterfaceDeclaration_IProtocolHandler():
 declare function use_old_InterfaceDeclaration_IProtocolHandler(
     use: TypeOnly<old.IProtocolHandler>);
 use_old_InterfaceDeclaration_IProtocolHandler(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IProtocolHandler());
 
 /*
@@ -144,7 +107,6 @@ declare function get_current_ClassDeclaration_ProtocolOpHandler():
 declare function use_old_ClassDeclaration_ProtocolOpHandler(
     use: TypeOnly<old.ProtocolOpHandler>);
 use_old_ClassDeclaration_ProtocolOpHandler(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ProtocolOpHandler());
 
 /*
@@ -270,50 +232,26 @@ use_old_TypeAliasDeclaration_QuorumProposalsSnapshot(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_TreeTreeEntry": {"forwardCompat": false}
+* "FunctionDeclaration_buildGitTreeHierarchy": {"forwardCompat": false}
 */
+declare function get_old_FunctionDeclaration_buildGitTreeHierarchy():
+    TypeOnly<typeof old.buildGitTreeHierarchy>;
+declare function use_current_FunctionDeclaration_buildGitTreeHierarchy(
+    use: TypeOnly<typeof current.buildGitTreeHierarchy>);
+use_current_FunctionDeclaration_buildGitTreeHierarchy(
+    get_old_FunctionDeclaration_buildGitTreeHierarchy());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_TreeTreeEntry": {"backCompat": false}
+* "FunctionDeclaration_buildGitTreeHierarchy": {"backCompat": false}
 */
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_addBlobToTree": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_addBlobToTree": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_buildHierarchy": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_buildHierarchy": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_generateServiceProtocolEntries": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_generateServiceProtocolEntries": {"backCompat": false}
-*/
+declare function get_current_FunctionDeclaration_buildGitTreeHierarchy():
+    TypeOnly<typeof current.buildGitTreeHierarchy>;
+declare function use_old_FunctionDeclaration_buildGitTreeHierarchy(
+    use: TypeOnly<typeof old.buildGitTreeHierarchy>);
+use_old_FunctionDeclaration_buildGitTreeHierarchy(
+    get_current_FunctionDeclaration_buildGitTreeHierarchy());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -362,51 +300,3 @@ declare function use_old_FunctionDeclaration_getGitType(
     use: TypeOnly<typeof old.getGitType>);
 use_old_FunctionDeclaration_getGitType(
     get_current_FunctionDeclaration_getGitType());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_getQuorumTreeEntries": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_getQuorumTreeEntries": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_isServiceMessageType": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_isServiceMessageType": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_isSystemMessage": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_isSystemMessage": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_mergeAppAndProtocolTree": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_mergeAppAndProtocolTree": {"backCompat": false}
-*/

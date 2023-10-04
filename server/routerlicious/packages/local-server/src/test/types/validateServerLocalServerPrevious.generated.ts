@@ -23,7 +23,6 @@ declare function get_old_InterfaceDeclaration_ILocalDeltaConnectionServer():
 declare function use_current_InterfaceDeclaration_ILocalDeltaConnectionServer(
     use: TypeOnly<current.ILocalDeltaConnectionServer>);
 use_current_InterfaceDeclaration_ILocalDeltaConnectionServer(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ILocalDeltaConnectionServer());
 
 /*
@@ -48,7 +47,6 @@ declare function get_old_ClassDeclaration_LocalDeltaConnectionServer():
 declare function use_current_ClassDeclaration_LocalDeltaConnectionServer(
     use: TypeOnly<current.LocalDeltaConnectionServer>);
 use_current_ClassDeclaration_LocalDeltaConnectionServer(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_LocalDeltaConnectionServer());
 
 /*
