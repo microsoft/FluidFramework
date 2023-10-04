@@ -19,7 +19,6 @@ import {
 } from "../typed-schema";
 import { EditableTreeEvents } from "../untypedTree";
 import { FieldKinds } from "../default-field-kinds";
-import { TreeStatus } from "../editable-tree";
 import { FieldKind } from "../modular-schema";
 import { TreeContext } from "./context";
 
@@ -71,6 +70,27 @@ export interface Tree<TSchema = unknown> {
 	 * No mutations to the current view of the shared tree are permitted during iteration.
 	 */
 	[boxedIterator](): IterableIterator<Tree>;
+}
+
+/**
+ * Status of the tree that a particular node in {@link EditableTree} and {@link UntypedTree} belongs to.
+ * @alpha
+ */
+export enum TreeStatus {
+	/**
+	 * Is parented under the root field.
+	 */
+	InDocument = 0,
+
+	/**
+	 * Is not parented under the root field, but can be added back to the original document tree.
+	 */
+	Removed = 1,
+
+	/**
+	 * Is removed and cannot be added back to the original document tree.
+	 */
+	Deleted = 2,
 }
 
 /**
