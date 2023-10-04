@@ -128,7 +128,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 	const b7: BallTree = { [typeNameSymbol]: ballSchema.name, x: 1 };
 
 	{
-		type XField = typeof ballSchema["structFieldsObject"]["x"];
+		type XField = (typeof ballSchema)["structFieldsObject"]["x"];
 		type XMultiplicity = XField["kind"]["multiplicity"];
 		type XContent = TypedField<XField, ApiMode.Simple>;
 		type XChild = XField["allowedTypes"];

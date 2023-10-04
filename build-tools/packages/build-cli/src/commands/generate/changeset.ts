@@ -325,7 +325,7 @@ async function createChangesetFile(
 	const changesetContent = await createChangesetContent(packages, body);
 	await writeFile(
 		changesetPath,
-		prettier(changesetContent, { proseWrap: "never", parser: "markdown" }),
+		await prettier(changesetContent, { proseWrap: "never", parser: "markdown" }),
 	);
 	return changesetPath;
 }

@@ -169,7 +169,7 @@ export interface BindingContext {
 }
 
 // @alpha
-export type BindingContextType = typeof BindingType[keyof typeof BindingType];
+export type BindingContextType = (typeof BindingType)[keyof typeof BindingType];
 
 // @alpha
 export const BindingType: {

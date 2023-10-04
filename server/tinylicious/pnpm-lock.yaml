@@ -65,7 +65,7 @@ importers:
       moment: ^2.21.0
       morgan: ^1.8.1
       nconf: ^0.12.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       socket.io: ^4.5.0
       split: ^1.0.0
@@ -136,7 +136,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.0
       ts-node: 8.10.2_typescript@4.5.5
       typescript: 4.5.5
@@ -4577,9 +4577,9 @@ packages:
     engines: {node: '>= 0.8.0'}
     dev: true
 
-  /prettier/2.6.2:
-    resolution: {integrity: sha512-PkUpF+qoXTqhOeWL9fu7As8LXsIUZ1WYaJiY/a7McAQzxjk82OF0tibkFXVCDImZtWxbvojFjerkiLb0/q8mew==}
-    engines: {node: '>=10.13.0'}
+  /prettier/3.0.3:
+    resolution: {integrity: sha512-L/4pUDMxcNa8R/EthV08Zt42WBO4h1rarVtK0K+QJG0X187OLo7l699jWw0GKuwzkPQ//jMFA/8Xm6Fh3J/DAg==}
+    engines: {node: '>=14'}
     hasBin: true
     dev: true
 

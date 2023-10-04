@@ -18,7 +18,7 @@ export const RBColor = {
 /**
  * @internal
  */
-export type RBColor = typeof RBColor[keyof typeof RBColor];
+export type RBColor = (typeof RBColor)[keyof typeof RBColor];
 
 /**
  * @internal

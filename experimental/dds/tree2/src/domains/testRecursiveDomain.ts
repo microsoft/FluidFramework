@@ -42,7 +42,7 @@ type _0 = requireFalse<isAny<typeof recursiveStruct2>>;
 type _1 = requireTrue<
 	areSafelyAssignable<
 		typeof recursiveStruct2,
-		ReturnType<typeof recursiveStruct2.structFieldsObject.recursive.allowedTypes[0]>
+		ReturnType<(typeof recursiveStruct2.structFieldsObject.recursive.allowedTypes)[0]>
 	>
 >;
 /**
