@@ -43,10 +43,7 @@ function runFindOverlappingIntervalsBenchmark({
 		intervalCollection = sharedString.getIntervalCollection("ranges");
 		const intervalWidth = (segmentCount * segmentLength) / intervalCount / 2;
 		for (let i = 0; i < intervalCount; i++) {
-			intervalCollection.add({
-				start: intervalWidth * (2 * i),
-				end: intervalWidth * (2 * i + 1),
-			});
+			intervalCollection.add(intervalWidth * (2 * i), intervalWidth * (2 * i + 1));
 		}
 	};
 

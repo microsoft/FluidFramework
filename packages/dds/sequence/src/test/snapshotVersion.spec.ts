@@ -14,7 +14,6 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
-import { IntervalType } from "../intervals";
 import { generateStrings, LocationBase } from "./generateSharedStrings";
 
 function assertIntervalCollectionsAreEquivalent(
@@ -172,7 +171,7 @@ describe("SharedString Snapshot Version", () => {
 		originalString.initializeLocal();
 		originalString.insertText(0, "ABCD");
 		const collectionId = "015e0f46-efa3-42d7-a9ab-970ecc376df9";
-		originalString.getIntervalCollection(collectionId).add(1, 2, IntervalType.SlideOnRemove);
+		originalString.getIntervalCollection(collectionId).add(1, 2);
 		const summaryTree = originalString.getAttachSummary().summary;
 		const snapshotTree = convertSummaryTreeToITree(summaryTree);
 		const serializedSnapshot = JSON.stringify(snapshotTree);

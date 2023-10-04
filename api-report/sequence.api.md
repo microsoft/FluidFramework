@@ -138,11 +138,7 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval> ex
     [Symbol.iterator](): Iterator<TInterval>;
     // @deprecated
     add(start: SequencePlace, end: SequencePlace, intervalType: IntervalType, props?: PropertySet): TInterval;
-    add({ start, end, props, }: {
-        start: SequencePlace;
-        end: SequencePlace;
-        props?: PropertySet;
-    }): TInterval;
+    add(start: SequencePlace, end: SequencePlace, props?: PropertySet): TInterval;
     // (undocumented)
     attachDeserializer(onDeserialize: DeserializeCallback): void;
     // (undocumented)

@@ -419,11 +419,7 @@ function revertLocalDelete(
 	// reusing the id causes eventual consistency bugs, so it is removed here and recreated in add
 	const { intervalId, ...props } = revertible.interval.properties;
 	if (isValidRange(startSlidePos, endSlidePos, string)) {
-		const int = collection.add({
-			start: startSlidePos,
-			end: endSlidePos,
-			props,
-		});
+		const int = collection.add(startSlidePos, endSlidePos, props);
 
 		idMap.forEach((newId, oldId) => {
 			if (intervalId === newId) {

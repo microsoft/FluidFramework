@@ -209,11 +209,11 @@ export function makeReducer(
 		},
 		addInterval: async ({ client }, { start, end, collectionName, id, startSide, endSide }) => {
 			const collection = client.channel.getIntervalCollection(collectionName);
-			collection.add({
-				start: { pos: start, side: startSide },
-				end: { pos: end, side: endSide },
-				props: { intervalId: id },
-			});
+			collection.add(
+				{ pos: start, side: startSide },
+				{ pos: end, side: endSide },
+				{ intervalId: id },
+			);
 		},
 		deleteInterval: async ({ client }, { id, collectionName }) => {
 			const collection = client.channel.getIntervalCollection(collectionName);
