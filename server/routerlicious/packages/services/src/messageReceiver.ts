@@ -15,10 +15,7 @@ class RabbitmqReceiver implements ITaskMessageReceiver {
 	private connection: amqp.Connection;
 	private channel: amqp.Channel;
 
-	constructor(
-		private readonly rabbitmqConfig: any,
-		private readonly taskQueueName: string,
-	) {
+	constructor(private readonly rabbitmqConfig: any, private readonly taskQueueName: string) {
 		this.rabbitmqConnectionString = this.rabbitmqConfig.connectionString;
 	}
 

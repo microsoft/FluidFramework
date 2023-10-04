@@ -40,10 +40,7 @@ export class HttpServer implements core.IHttpServer {
 }
 
 export class WebServer implements core.IWebServer {
-	constructor(
-		public httpServer: HttpServer,
-		public webSocketServer: core.IWebSocketServer,
-	) {}
+	constructor(public httpServer: HttpServer, public webSocketServer: core.IWebSocketServer) {}
 
 	/**
 	 * Closes the web server

@@ -19,10 +19,7 @@ export class CopierLambda implements IPartitionLambda {
 	private pendingOffset: IQueuedMessage | undefined;
 	private currentJobs = new Map<string, IRawOperationMessageBatch[]>();
 
-	constructor(
-		private readonly rawOpCollection: ICollection<any>,
-		protected context: IContext,
-	) {}
+	constructor(private readonly rawOpCollection: ICollection<any>, protected context: IContext) {}
 
 	public handler(message: IQueuedMessage) {
 		// Extract batch of raw ops from Kafka message:
