@@ -100,7 +100,7 @@ function initializeTreeWithContent<Kind extends FieldKind, Types extends Allowed
 	};
 }
 
-describe("LazyTree", () => {
+describe.only("LazyTree", () => {
 	it("property names", () => {
 		const builder = new SchemaBuilder("lazyTree");
 		const emptyStruct = builder.struct("empty", {});
@@ -182,7 +182,15 @@ describe("LazyTree", () => {
 
 		describe("tryGetField", () => {
 			it("Empty", () => {
-				// TODO
+				const { context, cursor } = initializeTreeWithContent({ schema, initialTree: {} });
+				cursor.enterNode(0);
+
+				const anchor = context.forest.anchors.track(cursor.getPath() ?? fail());
+				const anchorNode = context.forest.anchors.locate(anchor) ?? fail();
+
+				const node = new LazyFieldNode(context, fieldNode, cursor, anchorNode, anchor);
+
+				assert.equal(node.tryGetField(brand("")), undefined); // TODO: is this right?
 			});
 			it("Non-empty", () => {
 				// TODO
