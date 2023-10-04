@@ -227,7 +227,14 @@ export function generateBumpDepsCommitMessage(
  *
  * @internal
  */
-export function getDefaultBumpTypeForBranch(branchName: string): VersionBumpType | undefined {
+export function getDefaultBumpTypeForBranch(
+	branchName: string,
+	releaseGroup: ReleaseGroup = "client",
+): VersionBumpType | undefined {
+	if (releaseGroup === "server") {
+		return "major";
+	}
+
 	if (["main", "lts"].includes(branchName)) {
 		return "minor";
 	}
