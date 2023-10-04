@@ -1955,7 +1955,6 @@ importers:
       '@fluidframework/merge-tree': workspace:~
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/sequence': workspace:~
-      '@types/node': ^16.18.38
       '@types/react': ^17.0.44
       css-loader: ^1.0.0
       eslint: ~8.6.0
@@ -1985,7 +1984,6 @@ importers:
       '@fluidframework/merge-tree': link:../../../packages/dds/merge-tree
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
       '@fluidframework/sequence': link:../../../packages/dds/sequence
-      '@types/node': 16.18.38
       monaco-editor: 0.30.1
       react: 17.0.2
     devDependencies:
@@ -4082,7 +4080,6 @@ importers:
       '@fluidframework/shared-object-base': link:../../../../packages/dds/shared-object-base
       '@fluidframework/tinylicious-driver': link:../../../../packages/drivers/tinylicious-driver
       '@fluidframework/view-interfaces': link:../../../../packages/framework/view-interfaces
-      '@types/uuid': 9.0.2
       events: 3.3.0
       jsonwebtoken: 8.5.1
       lodash: 4.17.21
@@ -4095,6 +4092,7 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
       '@types/puppeteer': 1.3.0
+      '@types/uuid': 9.0.2
       clean-webpack-plugin: 4.0.0_webpack@5.83.0
       concurrently: 8.2.1
       cross-env: 7.0.3
@@ -4219,7 +4217,6 @@ importers:
       '@material-ui/core': 4.12.4_sfoxds7t5ydpegc3knd667wn6m
       '@material-ui/lab': 4.0.0-alpha.61_phlbjj2qqbzyjdfzujtmlw3coi
       '@material-ui/styles': 4.11.5_sfoxds7t5ydpegc3knd667wn6m
-      '@types/uuid': 9.0.2
       events: 3.3.0
       jsonwebtoken: 8.5.1
       lodash: 4.17.21
@@ -4233,6 +4230,7 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
       '@types/puppeteer': 1.3.0
+      '@types/uuid': 9.0.2
       clean-webpack-plugin: 4.0.0_webpack@5.83.0
       concurrently: 8.2.1
       cross-env: 7.0.3
@@ -9476,6 +9474,7 @@ importers:
       '@fluidframework/sequence': link:../../dds/sequence
       '@fluidframework/server-local-server': 2.0.1
       '@fluidframework/test-utils': link:../test-utils
+      mocha: 10.2.0
     devDependencies:
       '@fluid-tools/build-cli': 0.24.0_@types+node@16.18.38
       '@fluidframework/build-common': 2.0.0
@@ -9487,7 +9486,6 @@ importers:
       c8: 7.13.0
       cross-env: 7.0.3
       eslint: 8.6.0
-      mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
@@ -22928,6 +22926,7 @@ packages:
 
   /@types/node/16.18.38:
     resolution: {integrity: sha512-6sfo1qTulpVbkxECP+AVrHV9OoJqhzCsfTNp5NIG+enM4HyM3HvZCO798WShIXBN0+QtDIcutJCjsVYnQP5rIQ==}
+    dev: true
 
   /@types/node/16.18.40:
     resolution: {integrity: sha512-+yno3ItTEwGxXiS/75Q/aHaa5srkpnJaH+kdkTVJ3DtJEwv92itpKbxU+FjPoh2m/5G9zmUQfrL4A4C13c+iGA==}
@@ -23155,6 +23154,7 @@ packages:
 
   /@types/uuid/9.0.2:
     resolution: {integrity: sha512-kNnC1GFBLuhImSnV7w4njQkUiJi0ZXUycu1rUaouPqiKlXkh77JKgdRnTAp1x5eBwcIwbtI+3otwzuIDEuDoxQ==}
+    dev: true
 
   /@types/valid-url/1.0.4:
     resolution: {integrity: sha512-msGTxAnOwsiKZ36i5h3eBfOsMfuh+vKMqwsepJAd56ov9b+F9yYbJuE3rFOznHScNMKPY/y6rXbtWkb5RhyHMg==}
