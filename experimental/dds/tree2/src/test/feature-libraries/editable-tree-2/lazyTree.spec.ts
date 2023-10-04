@@ -189,7 +189,12 @@ describe.only("LazyTree", () => {
 	});
 
 	describe("LazyFieldNode", () => {
-		const schemaBuilder = new SchemaBuilder("test", {}, leafDomain.library, sharedTestSchemas);
+		const schemaBuilder = new SchemaBuilder(
+			"lazyFieldTest",
+			{},
+			leafDomain.library,
+			sharedTestSchemas,
+		);
 		const schema = schemaBuilder.intoDocumentSchema(
 			SchemaBuilder.fieldValue(fieldNodeOptionalAnySchema),
 		);
@@ -272,7 +277,12 @@ describe.only("LazyTree", () => {
 	});
 
 	describe("LazyLeaf", () => {
-		const schemaBuilder = new SchemaBuilder("test", {}, leafDomain.library, sharedTestSchemas);
+		const schemaBuilder = new SchemaBuilder(
+			"lazyLeafTest",
+			{},
+			leafDomain.library,
+			sharedTestSchemas,
+		);
 		const schema = schemaBuilder.intoDocumentSchema(
 			SchemaBuilder.fieldValue(leafDomain.string),
 		);
@@ -312,26 +322,50 @@ describe.only("LazyTree", () => {
 	});
 
 	describe("LazyMap", () => {
+		const schemaBuilder = new SchemaBuilder(
+			"lazyMapTest",
+			{},
+			leafDomain.library,
+			sharedTestSchemas,
+		);
+		const schema = schemaBuilder.intoDocumentSchema(
+			SchemaBuilder.fieldValue(mapNodeStringSchema),
+		);
+
+		const { context, cursor } = initializeTreeWithContent({
+			schema,
+			initialTree: {
+				foo: "Hello",
+				bar: "world",
+			},
+		});
+		cursor.enterNode(0);
+
+		const anchor = context.forest.anchors.track(cursor.getPath() ?? fail());
+		const anchorNode = context.forest.anchors.locate(anchor) ?? fail();
+
+		const node = new LazyMap(context, mapNodeStringSchema, cursor, anchorNode, anchor);
+
 		it("is", () => {
-			// TODO
+			assert(node.is(mapNodeStringSchema));
+
+			assert(!node.is(mapNodeAnySchema));
+			assert(!node.is(fieldNodeOptionalAnySchema));
+			assert(!node.is(fieldNodeOptionalStringSchema));
+			assert(!node.is(fieldNodeValueAnySchema));
+			assert(!node.is(fieldNodeValueStringSchema));
+			assert(!node.is(leafDomain.string));
+			assert(!node.is(structNodeSchema));
 		});
 
-		describe("value", () => {
-			it("Empty", () => {
-				// TODO
-			});
-			it("Non-empty", () => {
-				// TODO
-			});
+		it("value", () => {
+			assert.equal(node.value, undefined); // Map nodes do not have a value
 		});
 
-		describe("tryGetField", () => {
-			it("Empty", () => {
-				// TODO
-			});
-			it("Non-empty", () => {
-				// TODO
-			});
+		it("tryGetField", () => {
+			assert.equal(node.tryGetField(brand("foo")), "Hello");
+			assert.equal(node.tryGetField(brand("bar")), "world");
+			assert.equal(node.tryGetField(brand("baz")), undefined);
 		});
 
 		// TODO: what else?
