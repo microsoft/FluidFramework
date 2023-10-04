@@ -303,7 +303,7 @@ describe("editable-tree: editing", () => {
 		}
 	});
 
-	it.only("events on nodes", () => {
+	it.only("beforeChange/afterChange events fire the expected number of times", () => {
 		const tree = viewWithContent({ schema: fullSchemaData, initialTree: getPerson() });
 		const person = tree.root as EditableTree;
 
@@ -311,114 +311,131 @@ describe("editable-tree: editing", () => {
 		let afterChangePersonCount = 0;
 		let beforeChangeAddressCount = 0;
 		let afterChangeAddressCount = 0;
-		// let beforeChangeAgeCount = 0;
-		// let afterChangeAgeCount = 0;
-		// let beforeChangeZipCount = 0;
-		// let afterChangeZipCount = 0;
 
 		person[on]("beforeChange", (event) => {
 			beforeChangePersonCount++;
 		});
-		person[on]("subtreeChanging", (event) => {
-			// TODO: this fails because subtreeChanging is emitted twice, one for each pass of the delta visit, and on the
-			// second time both before and after could have fired already.
-			// assert.strictEqual(
-			// 	beforeChangePersonCount,
-			// 	afterChangePersonCount + 1,
-			// 	"person subtreeChanging",
-			// );
-		});
 		person[on]("afterChange", (event) => {
 			afterChangePersonCount++;
 		});
-		// (person.age as EditableTree)[on]("beforeChange", (event) => {
-		// 	beforeChangeAgeCount++;
-		// });
-		// (person.age as EditableTree)[on]("subtreeChanging", (event) => {
-		// 	// TODO: this fails because subtreeChanging is emitted twice, one for each pass of the delta visit, and on the
-		// 	// second time both before and after could have fired already.
-		// 	// assert.strictEqual(
-		// 	// 	beforeChangeAgeCount,
-		// 	// 	afterChangeAgeCount + 1,
-		// 	// 	"age subtreeChanging",
-		// 	// );
-		// });
-		// (person.age as EditableTree)[on]("afterChange", (event) => {
-		// 	afterChangeAgeCount++;
-		// });
 
-		{
-			assert.strictEqual(beforeChangePersonCount, 0);
-			assert.strictEqual(afterChangePersonCount, 0);
+		assert.strictEqual(beforeChangePersonCount, 0);
+		assert.strictEqual(afterChangePersonCount, 0);
 
-			person.age = brand<Int32>(32);
+		// Update age; should fire events on the person node.
+		person.age = brand<Int32>(32);
 
-			assert.strictEqual(beforeChangePersonCount, 1);
-			assert.strictEqual(afterChangePersonCount, 1);
+		assert.strictEqual(beforeChangePersonCount, 1);
+		assert.strictEqual(afterChangePersonCount, 1);
 
-			// Replace optional address.
-			// This lets us put listeners on it.
-			person.address = {
-				zip: "99999",
-				street: "foo",
-				phones: [12345],
-			} as unknown as Address; // TODO: fix up these strong types to reflect unwrapping
+		// Update address; should fire events on the person node.
+		// This also lets us put listeners on it, otherwise get complaints that person.address might be undefined below.
+		person.address = {
+			zip: "99999",
+			street: "foo",
+			phones: [12345],
+		} as unknown as Address; // TODO: fix up these strong types to reflect unwrapping
 
-			assert.strictEqual(beforeChangePersonCount, 2);
-			assert.strictEqual(afterChangePersonCount, 2);
+		assert.strictEqual(beforeChangePersonCount, 2);
+		assert.strictEqual(afterChangePersonCount, 2);
 
-			person.address[on]("beforeChange", (event) => {
-				beforeChangeAddressCount++;
-			});
-			person.address[on]("subtreeChanging", (event) => {
-				// TODO: this fails because subtreeChanging is emitted twice, one for each pass of the delta visit, and on the
-				// second time both before and after could have fired already.
-				// assert.strictEqual(
-				// 	beforeChangeAddressCount,
-				// 	afterChangeAddressCount + 1,
-				// 	"address subtreeChanging",
-				// );
-			});
-			person.address[on]("afterChange", (event) => {
-				afterChangeAddressCount++;
-			});
+		person.address[on]("beforeChange", (event) => {
+			beforeChangeAddressCount++;
+		});
+		person.address[on]("afterChange", (event) => {
+			afterChangeAddressCount++;
+		});
 
-			// Replace zip in address
+		assert.strictEqual(beforeChangeAddressCount, 0);
+		assert.strictEqual(afterChangeAddressCount, 0);
 
-			assert.strictEqual(beforeChangePersonCount, 2);
-			assert.strictEqual(afterChangePersonCount, 2);
-			assert.strictEqual(beforeChangeAddressCount, 0);
-			assert.strictEqual(afterChangeAddressCount, 0);
+		// Replace zip in address; should fire events on the address node and the person node.
+		person.address.zip = brand<Int32>(12345);
 
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			person.address!.zip = brand<Int32>(123);
+		assert.strictEqual(beforeChangePersonCount, 3);
+		assert.strictEqual(afterChangePersonCount, 3);
+		assert.strictEqual(beforeChangeAddressCount, 1);
+		assert.strictEqual(afterChangeAddressCount, 1);
 
-			assert.strictEqual(beforeChangePersonCount, 3);
-			assert.strictEqual(afterChangePersonCount, 3);
-			assert.strictEqual(beforeChangeAddressCount, 1);
-			assert.strictEqual(afterChangeAddressCount, 1);
+		// Replace the whole address; should fire events on the person node.
+		person.address = {
+			zip: "99999",
+			street: "foo",
+			phones: [12345],
+		} as unknown as Address; // TODO: fix up these strong types to reflect unwrapping
 
-			// Update the whole address again.
-			// Note that this replaces the address Node, so the previous one won't get its listeners fired.
-			person.address = {
-				zip: "99999",
-				street: "foo",
-				phones: [12345],
-			} as unknown as Address; // TODO: fix up these strong types to reflect unwrapping
+		assert.strictEqual(beforeChangePersonCount, 4);
+		assert.strictEqual(afterChangePersonCount, 4);
+		// No events should have fired on the old address node.
+		assert.strictEqual(beforeChangeAddressCount, 1);
+		assert.strictEqual(afterChangeAddressCount, 1);
 
-			assert.strictEqual(beforeChangePersonCount, 4);
-			assert.strictEqual(afterChangePersonCount, 4);
-			assert.strictEqual(beforeChangeAddressCount, 1);
-			assert.strictEqual(afterChangeAddressCount, 1);
+		// Replace zip in new address node; should fire events on the person node (but not on the old address node)
+		person.address.zip = brand<Int32>(23456);
 
-			// Verify final counts
-			// - 4 fired the root (person) (changed person.address twice, person.age once, person.address.zip once)
-			// - 1 fired for person.address. Replacing that node doesn't fire listeners on it.
-			assert.strictEqual(beforeChangePersonCount, 4);
-			assert.strictEqual(afterChangePersonCount, 4);
-			assert.strictEqual(beforeChangeAddressCount, 1);
-			assert.strictEqual(afterChangeAddressCount, 1);
-		}
+		assert.strictEqual(beforeChangePersonCount, 5);
+		assert.strictEqual(afterChangePersonCount, 5);
+		assert.strictEqual(beforeChangeAddressCount, 1);
+		assert.strictEqual(afterChangeAddressCount, 1);
+	});
+
+	it.only("beforeChange/afterChange fire in the expected order and always together", () => {
+		const tree = viewWithContent({ schema: fullSchemaData, initialTree: getPerson() });
+		const person = tree.root as EditableTree;
+
+		let beforeCounter = 0;
+		let afterCounter = 0;
+
+		person[on]("beforeChange", (event) => {
+			beforeCounter++;
+			assert.strictEqual(afterCounter, beforeCounter - 1, "beforeChange fired out of order");
+		});
+		person[on]("afterChange", (event) => {
+			afterCounter++;
+			assert.strictEqual(afterCounter, beforeCounter, "afterChange fired out of order");
+		});
+
+		// Make updates to the tree
+		person.age = brand<Int32>(32);
+		person.address = {
+			zip: "99999",
+			street: "foo",
+			phones: [12345],
+		} as unknown as Address; // TODO: fix up these strong types to reflect unwrapping
+		person.address.zip = brand<Int32>(12345);
+		person.address = {
+			zip: "99999",
+			street: "foo",
+			phones: [12345],
+		} as unknown as Address; // TODO: fix up these strong types to reflect unwrapping
+		person.address.zip = brand<Int32>(23456);
+
+		// Check the number of events fired is correct (otherwise the assertions in the listeners might not have ran)
+		assert.strictEqual(beforeCounter, 5);
+		assert.strictEqual(afterCounter, 5);
+	});
+
+	it.skip("leaf nodes don't emit beforeChange/afterChange when they are replaced", () => {
+		const tree = viewWithContent({ schema: fullSchemaData, initialTree: getPerson() });
+		const person = tree.root as EditableTree;
+		person.age = brand<Int32>(32); // Explicitly update age so we can attach listeners to it.
+		let beforeCounter = 0;
+		let afterCounter = 0;
+		// QUESTION
+		// Are we already not allowing leaf nodes to have listeners?
+		// `person.age[on]` doesn't work (error: "Element implicitly has an 'any' type because expression of type 'unique
+		// symbol' can't be used to index type 'number | EditableTree'")
+		// And with the cast to EditableTree: TypeError: person.age[feature_libraries_1.on] is not a function
+		(person.age as EditableTree)[on]("beforeChange", (event) => {
+			beforeCounter++;
+		});
+		(person.age as EditableTree)[on]("afterChange", (event) => {
+			afterCounter++;
+		});
+		person.age = brand<Int32>(33);
+		// Events shouldn't have fired on the original age node
+		assert.strictEqual(beforeCounter, 0);
+		assert.strictEqual(afterCounter, 0);
 	});
 
 	describe(`can move nodes`, () => {
