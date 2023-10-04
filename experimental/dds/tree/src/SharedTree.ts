@@ -565,7 +565,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 
 		/**
 		 * Because the IdCompressor emits so much telemetry, this function is used to sample
-		 * approximatley 0.5% of all clients. Only the given percentage of sessions will emit telemetry.
+		 * approximately 5% of all clients. Only the given percentage of sessions will emit telemetry.
 		 */
 		const idCompressorEventSampler: IEventSampler = (() => {
 			const isIdCompressorTelemetryEnabled = Math.random() < 0.05;

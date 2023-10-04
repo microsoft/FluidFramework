@@ -186,6 +186,7 @@ class OpPerfTelemetry {
 				(this.opLatencyLogger.isSamplingDisabled ||
 					this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber)
 			) {
+				// We do an explicit check for undefined right after this
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const latencyStats = this.latencyStatistics.get(message.clientSequenceNumber)!;
 				assert(latencyStats !== undefined, "Latency stats for op should exist");
@@ -305,6 +306,7 @@ class OpPerfTelemetry {
 			(this.clientId === message.clientId &&
 				this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber)
 		) {
+			// We do an explicit check for undefined right after this
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const latencyData = this.latencyStatistics.get(message.clientSequenceNumber)!;
 			assert(latencyData !== undefined, "Undefined latency statistics for op");

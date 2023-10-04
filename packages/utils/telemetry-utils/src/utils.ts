@@ -51,18 +51,30 @@ export interface IEventSampler<> {
  * @internal
  */
 export interface ISampledTelemetryLogger extends ITelemetryLoggerExt {
+	/**
+	 * Indicates if the feature flag to disable sampling is set.
+	 *
+	 * @remarks Exposed to enable some advanced scenarios where the code using the sampled logger
+	 * could take advantage of skipping the execution of some logic when it can determine
+	 * it won't be necessary because the telemetry event that needs it wouldn't be
+	 * emitted anyway.
+	 */
 	isSamplingDisabled: boolean;
 	eventSampler?: IEventSampler;
 }
 
 /**
  * Wraps around an existing logger matching the {@link ITelemetryLoggerExt} interface and provides the ability to only log a subset of events using a sampling strategy.
+ *
+ * @remarks
  * The sampling functionality uses the Fluid telemetry logging configuration along with the optionally provided event sampling callback to determine whether an event should
  * be logged or not.
  *
  * Configuration object parameters:
  * 'Fluid.Telemetry.DisableSampling': if this config value is set to true, all events will be unsampled and therefore logged.
  * Otherwise only a sample will be logged according to the provided event sampler callback.
+ *
+ * Note that the same sampler is used for all APIs of the returned logger. If you want separate events flowing through the returned logger to be sampled separately, the {@IEventSampler} you provide should track them separately.
  *
  * @internal
  */
