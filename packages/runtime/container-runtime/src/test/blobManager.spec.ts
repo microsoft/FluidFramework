@@ -121,7 +121,7 @@ export class MockRuntime
 				});
 				this.unprocessedBlobs.add(blob);
 				this.emit("blob");
-				this.blobPs.push(P.catch(() => {}));
+				this.blobPs.push(P.then(() => {}));
 				return P;
 			},
 			readBlob: async (id) => this.storage.readBlob(id),
@@ -648,6 +648,7 @@ describe("BlobManager", () => {
 				assert.strictEqual(error.status, undefined);
 				assert.strictEqual(error.uploadTime, undefined);
 				assert.strictEqual(error.acked, undefined);
+				assert.strictEqual(error.message, "uploadBlob aborted");
 			}
 			const summaryData = validateSummary(runtime);
 			assert.strictEqual(summaryData.ids.length, 0);
@@ -658,18 +659,18 @@ describe("BlobManager", () => {
 			await runtime.attach();
 			await runtime.connect();
 			const ac = new AbortController();
-			let handleP;
+			const blob = IsoBuffer.from("blob", "utf8");
+			const handleP = runtime.createBlob(blob, ac.signal);
+			ac.abort("abort test");
+			assert.strictEqual(runtime.unprocessedBlobs.size, 1);
+			await runtime.processBlobs();
 			try {
-				const blob = IsoBuffer.from("blob", "utf8");
-				handleP = runtime.createBlob(blob, ac.signal);
-				ac.abort("abort test");
-				assert.strictEqual(runtime.unprocessedBlobs.size, 1);
-				await runtime.processBlobs();
 				await handleP;
 				assert.fail("Should not succeed");
 			} catch (error: any) {
 				assert.strictEqual(error.uploadTime, undefined);
 				assert.strictEqual(error.acked, false);
+				assert.strictEqual(error.message, "uploadBlob aborted");
 			}
 			assert(handleP);
 			await assert.rejects(handleP);
@@ -682,18 +683,16 @@ describe("BlobManager", () => {
 			await runtime.attach();
 			await runtime.connect();
 			const ac = new AbortController();
-			let handleP;
+			const blob = IsoBuffer.from("blob", "utf8");
+			const handleP = runtime.createBlob(blob, ac.signal);
+			ac.abort("abort test");
+			assert.strictEqual(runtime.unprocessedBlobs.size, 1);
 			try {
-				const blob = IsoBuffer.from("blob", "utf8");
-				handleP = runtime.createBlob(blob, ac.signal);
-				ac.abort("abort test");
-				assert.strictEqual(runtime.unprocessedBlobs.size, 1);
 				await runtime.processBlobs(false);
 				await handleP;
 				assert.fail("Should not succeed");
 			} catch (error: any) {
-				assert.strictEqual(error.uploadTime, undefined);
-				assert.strictEqual(error.acked, false);
+				assert.strictEqual(error.message, "fake error");
 			}
 			assert(handleP);
 			await assert.rejects(handleP);
@@ -706,18 +705,19 @@ describe("BlobManager", () => {
 			await runtime.attach();
 			await runtime.connect();
 			const ac = new AbortController();
-			let handleP;
+			const blob = IsoBuffer.from("blob", "utf8");
+			const handleP = runtime.createBlob(blob, ac.signal);
+			runtime.disconnect();
+			ac.abort();
 			try {
-				const blob = IsoBuffer.from("blob", "utf8");
-				handleP = runtime.createBlob(blob, ac.signal);
-				runtime.disconnect();
-				ac.abort();
 				await runtime.processBlobs();
 				await handleP;
 				assert.fail("Should not succeed");
 			} catch (error: any) {
-				assert.strictEqual(error.uploadTime, undefined);
-				assert.strictEqual(error.acked, false);
+				assert.strictEqual(
+					error.message,
+					"fake error due to having no connection to storage service",
+				);
 			}
 			assert(handleP);
 			await assert.rejects(handleP);
@@ -750,20 +750,18 @@ describe("BlobManager", () => {
 			await runtime.attach();
 			await runtime.connect();
 			const ac = new AbortController();
-			let handleP;
+			const blob = IsoBuffer.from("blob", "utf8");
+			const handleP = runtime.createBlob(blob, ac.signal);
+			const p1 = runtime.processBlobs();
+			const p2 = runtime.processHandles();
+			// finish upload
+			await Promise.race([p1, p2]);
+			ac.abort();
+			runtime.processOps();
 			try {
-				const blob = IsoBuffer.from("blob", "utf8");
-				handleP = runtime.createBlob(blob, ac.signal);
-				const p1 = runtime.processBlobs();
-				const p2 = runtime.processHandles();
-				// finish upload
-				await Promise.race([p1, p2]);
-				ac.abort();
-				runtime.processOps();
 				// finish op
 				await Promise.all([p1, p2]);
 			} catch (error: any) {
-				// assert.strictEqual(error.status, PendingBlobStatus.SendingOp);
 				assert.ok(error.uploadTime);
 				assert.strictEqual(error.acked, false);
 			}
@@ -789,7 +787,6 @@ describe("BlobManager", () => {
 				ac.abort();
 				await handleP;
 			} catch (error: any) {
-				// assert.strictEqual(error.status, PendingBlobStatus.SendingOp);
 				assert.ok(error.uploadTime);
 				assert.strictEqual(error.acked, false);
 			}
@@ -824,6 +821,7 @@ describe("BlobManager", () => {
 
 			const blobContents = IsoBuffer.from(content, "utf8");
 			const handleP = runtime.createBlob(blobContents);
+			await runtime.processBlobs();
 			await runtime.processAll();
 
 			const blobHandle = await handleP;
@@ -850,6 +848,7 @@ describe("BlobManager", () => {
 			const blob2Contents = IsoBuffer.from("blob2", "utf8");
 			const handle1P = runtime.createBlob(blob1Contents);
 			const handle2P = runtime.createBlob(blob2Contents);
+			await runtime.processBlobs();
 			await runtime.processAll();
 
 			const blob1Handle = await handle1P;
