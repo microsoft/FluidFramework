@@ -333,16 +333,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 										? undefined
 										: (JSON.parse(value.value) as unknown),
 						  };
-				/*
-				headerBlob[key] = {
-					serializableValue: {
-					type: value.type,
-					value:
-						value.value === undefined
-							? undefined
-							: (JSON.parse(value.value) as unknown),
-					}
-				}; */
+	
 			}
 		}
 
