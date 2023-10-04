@@ -768,7 +768,7 @@ export const MergeTreeDeltaType: {
 };
 
 // @public (undocumented)
-export type MergeTreeDeltaType = typeof MergeTreeDeltaType[keyof typeof MergeTreeDeltaType];
+export type MergeTreeDeltaType = (typeof MergeTreeDeltaType)[keyof typeof MergeTreeDeltaType];
 
 // @public (undocumented)
 export type MergeTreeMaintenanceCallback = (MaintenanceArgs: IMergeTreeMaintenanceCallbackArgs, opArgs: IMergeTreeDeltaOpArgs | undefined) => void;
@@ -782,7 +782,7 @@ export const MergeTreeMaintenanceType: {
 };
 
 // @public (undocumented)
-export type MergeTreeMaintenanceType = typeof MergeTreeMaintenanceType[keyof typeof MergeTreeMaintenanceType];
+export type MergeTreeMaintenanceType = (typeof MergeTreeMaintenanceType)[keyof typeof MergeTreeMaintenanceType];
 
 // @alpha (undocumented)
 export interface MergeTreeRevertibleDriver {
@@ -854,7 +854,7 @@ export const RBColor: {
 };
 
 // @internal (undocumented)
-export type RBColor = typeof RBColor[keyof typeof RBColor];
+export type RBColor = (typeof RBColor)[keyof typeof RBColor];
 
 // @internal (undocumented)
 export interface RBNode<TKey, TData> {
@@ -1039,7 +1039,7 @@ export const SlidingPreference: {
 };
 
 // @public
-export type SlidingPreference = typeof SlidingPreference[keyof typeof SlidingPreference];
+export type SlidingPreference = (typeof SlidingPreference)[keyof typeof SlidingPreference];
 
 // @internal (undocumented)
 export interface SortedDictionary<TKey, TData> extends Dictionary<TKey, TData> {

@@ -33,7 +33,7 @@ importers:
       eslint: ~8.6.0
       jest: ^29.6.2
       mocha: ^10.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       pretty-quick: ^3.1.3
       rimraf: ^4.4.0
       run-script-os: ^1.1.6
@@ -59,8 +59,8 @@ importers:
       eslint: 8.6.0
       jest: 29.6.2
       mocha: 10.2.0
-      prettier: 2.6.2
-      pretty-quick: 3.1.3_prettier@2.6.2
+      prettier: 3.0.3
+      pretty-quick: 3.1.3_prettier@3.0.3
       rimraf: 4.4.1
       run-script-os: 1.1.6
       syncpack: 9.8.6
@@ -99,10 +99,10 @@ importers:
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
-      eslint-config-prettier: ~8.5.0
+      eslint-config-prettier: ~9.0.0
       eslint-plugin-jsdoc: ~39.3.0
       mocha: ^10.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       start-server-and-test: ^1.11.7
       typescript: ~5.1.6
@@ -140,10 +140,10 @@ importers:
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
-      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-config-prettier: 9.0.0_eslint@8.6.0
       eslint-plugin-jsdoc: 39.3.25_eslint@8.6.0
       mocha: 10.2.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       start-server-and-test: 1.15.5
       typescript: 5.1.6
@@ -159,7 +159,7 @@ importers:
       eslint: ~8.6.0
       eslint-plugin-jsdoc: ~39.3.0
       forever: ^4.0.3
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       tinylicious: ^2.0.1
       ts-node: ^10.9.1
@@ -175,7 +175,7 @@ importers:
       eslint: 8.6.0
       eslint-plugin-jsdoc: 39.3.25_eslint@8.6.0
       forever: 4.0.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       ts-node: 10.9.1_typescript@5.1.6
       typescript: 5.1.6
@@ -192,10 +192,10 @@ importers:
       '@types/jsrsasign': ^8.0.8
       copyfiles: ^2.4.1
       eslint: ~8.6.0
-      eslint-config-prettier: ~8.5.0
+      eslint-config-prettier: ~9.0.0
       eslint-plugin-jsdoc: ~39.3.0
       jsrsasign: ^10.5.25
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
       uuid: ^9.0.0
@@ -213,9 +213,9 @@ importers:
       '@types/jsrsasign': 8.0.13
       copyfiles: 2.4.1
       eslint: 8.6.0
-      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-config-prettier: 9.0.0_eslint@8.6.0
       eslint-plugin-jsdoc: 39.3.25_eslint@8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -253,7 +253,7 @@ importers:
       jest-environment-puppeteer: ^4.3.0
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       process: ^0.11.10
       puppeteer: ^17.1.3
       rimraf: ^4.4.0
@@ -302,7 +302,7 @@ importers:
       jest-environment-puppeteer: 4.4.0
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       process: 0.11.10
       puppeteer: 17.1.3
       rimraf: 4.4.1
@@ -347,7 +347,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       nock: ^13.3.3
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^7.4.2
       start-server-and-test: ^1.11.7
@@ -374,7 +374,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       sinon: 7.5.0
       start-server-and-test: 1.15.5
       tinylicious: 2.0.1
@@ -427,7 +427,7 @@ importers:
       js-yaml: ^4.1.0
       mocha: ^10.2.0
       nock: ^13.3.3
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^7.4.2
       start-server-and-test: ^1.11.7
@@ -472,7 +472,7 @@ importers:
       c8: 7.13.0
       eslint: 8.6.0
       nock: 13.3.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -504,7 +504,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       process: ^0.11.10
       puppeteer: ^17.1.3
       rimraf: ^4.4.0
@@ -543,7 +543,7 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       process: 0.11.10
       puppeteer: 17.1.3
       rimraf: 4.4.1
@@ -586,7 +586,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       process: ^0.11.10
       puppeteer: ^17.1.3
       react: ^17.0.1
@@ -634,7 +634,7 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       process: 0.11.10
       puppeteer: 17.1.3
       rimraf: 4.4.1
@@ -672,7 +672,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       process: ^0.11.10
       puppeteer: ^17.1.3
       react: ^17.0.1
@@ -717,7 +717,7 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       process: 0.11.10
       puppeteer: 17.1.3
       rimraf: 4.4.1
@@ -771,7 +771,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       process: ^0.11.10
       prop-types: ^15.8.1
       puppeteer: ^17.1.3
@@ -841,7 +841,7 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       process: 0.11.10
       puppeteer: 17.1.3
       rimraf: 4.4.1
@@ -884,7 +884,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       process: ^0.11.10
       puppeteer: ^17.1.3
       rimraf: ^4.4.0
@@ -924,7 +924,7 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
       ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
@@ -965,7 +965,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       process: ^0.11.10
       puppeteer: ^17.1.3
       rimraf: ^4.4.0
@@ -1008,7 +1008,7 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       process: 0.11.10
       puppeteer: 17.1.3
       rimraf: 4.4.1
@@ -1046,7 +1046,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       react: ^17.0.1
       rimraf: ^4.4.0
@@ -1084,7 +1084,7 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
       ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
@@ -1122,7 +1122,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       react: ^17.0.1
       react-dom: ^17.0.1
       rimraf: ^4.4.0
@@ -1158,7 +1158,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -1190,7 +1190,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       react: ^17.0.1
       rimraf: ^4.4.0
@@ -1231,7 +1231,7 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
       ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
@@ -1271,7 +1271,7 @@ importers:
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
       ot-json1: ^1.0.1
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       react: ^17.0.1
       rimraf: ^4.4.0
@@ -1311,7 +1311,7 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
       ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
@@ -1349,7 +1349,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       react: ^17.0.1
       rimraf: ^4.4.0
@@ -1388,7 +1388,7 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
       ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
@@ -1422,7 +1422,7 @@ importers:
       express: ^4.16.3
       fs-extra: ^9.1.0
       nconf: ^0.12.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       source-map-loader: ^2.0.0
       style-loader: ^1.0.0
@@ -1458,7 +1458,7 @@ importers:
       css-loader: 1.0.1_webpack@5.83.0
       eslint: 8.6.0
       fs-extra: 9.1.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       source-map-loader: 2.0.2_webpack@5.83.0
       style-loader: 1.3.0_webpack@5.83.0
@@ -1497,7 +1497,7 @@ importers:
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
-      eslint-config-prettier: ~8.5.0
+      eslint-config-prettier: ~9.0.0
       eslint-plugin-jest: ~27.1.5
       eslint-plugin-react: ~7.28.0
       eslint-plugin-react-hooks: ~4.6.0
@@ -1505,7 +1505,7 @@ importers:
       jest: ^29.6.2
       jest-environment-jsdom: ^29.6.2
       jest-junit: ^10.0.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       react: ^17.0.1
       react-dom: ^17.0.1
       rimraf: ^4.4.0
@@ -1548,7 +1548,7 @@ importers:
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
-      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-config-prettier: 9.0.0_eslint@8.6.0
       eslint-plugin-jest: 27.1.7_4vvgvlvub2y5pamq36yy3w7ouq
       eslint-plugin-react: 7.28.0_eslint@8.6.0
       eslint-plugin-react-hooks: 4.6.0_eslint@8.6.0
@@ -1556,7 +1556,7 @@ importers:
       jest: 29.6.2
       jest-environment-jsdom: 29.6.2
       jest-junit: 10.0.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       start-server-and-test: 1.15.5
       tinylicious: 2.0.1
@@ -1595,7 +1595,7 @@ importers:
       jest-puppeteer: ^6.2.0
       less: ~3.9.0
       less-loader: ^4.1.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       react: ^17.0.1
       rimraf: ^4.4.0
@@ -1634,7 +1634,7 @@ importers:
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
       less: 3.9.0
       less-loader: 4.1.0_less@3.9.0+webpack@5.83.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
       style-loader: 1.3.0_webpack@5.83.0
@@ -1672,7 +1672,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       react: ^17.0.1
       rimraf: ^4.4.0
@@ -1710,7 +1710,7 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
       ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
@@ -1750,7 +1750,7 @@ importers:
       css-loader: ^1.0.0
       eslint: ~8.6.0
       events: ^3.1.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       react: ^17.0.1
       rimraf: ^4.4.0
       style-loader: ^1.0.0
@@ -1790,7 +1790,7 @@ importers:
       copyfiles: 2.4.1
       css-loader: 1.0.1_webpack@5.83.0
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       style-loader: 1.3.0_webpack@5.83.0
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
@@ -1823,7 +1823,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       react: ^17.0.1
       rimraf: ^4.4.0
@@ -1858,7 +1858,7 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
       ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
@@ -1894,7 +1894,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       react: ^17.0.1
       rimraf: ^4.4.0
@@ -1931,7 +1931,7 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
       ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
@@ -1962,7 +1962,7 @@ importers:
       loader-utils: ^1.1.0
       monaco-editor: ^0.30.0
       monaco-editor-webpack-plugin: ^6.0.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       react: ^17.0.1
       rimraf: ^4.4.0
       sass: ^1.42.1
@@ -1989,7 +1989,7 @@ importers:
     devDependencies:
       '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.0
-      '@fluidframework/build-tools': 0.24.0_2wska3rv6ra5ajbmktsvyxwga4
+      '@fluidframework/build-tools': 0.24.0_webpack-cli@4.10.0
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
       '@types/react': 17.0.52
       css-loader: 1.0.1_webpack@5.83.0
@@ -1997,7 +1997,7 @@ importers:
       html-loader: 3.1.2_webpack@5.83.0
       loader-utils: 1.4.2
       monaco-editor-webpack-plugin: 6.0.0_2qboj4cfeaihsk43nim6w2f4um
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sass: 1.62.1
       sass-loader: 7.3.1_webpack@5.83.0
@@ -2033,7 +2033,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       rimraf: ^4.4.0
       ts-jest: ^29.1.1
@@ -2065,7 +2065,7 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
       ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
@@ -2099,7 +2099,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       react: ^17.0.1
       rimraf: ^4.4.0
@@ -2135,7 +2135,7 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
       style-loader: 1.3.0_webpack@5.83.0
@@ -2181,7 +2181,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       react: ^17.0.1
       rimraf: ^4.4.0
@@ -2228,7 +2228,7 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
       style-loader: 1.3.0_webpack@5.83.0
@@ -2260,7 +2260,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       rimraf: ^4.4.0
       ts-jest: ^29.1.1
@@ -2290,7 +2290,7 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
       ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
@@ -2313,7 +2313,7 @@ importers:
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       rimraf: ^4.4.0
       ts-loader: ^9.3.0
@@ -2333,7 +2333,7 @@ importers:
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
@@ -2365,7 +2365,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       react: ^17.0.1
       rimraf: ^4.4.0
@@ -2400,7 +2400,7 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
       style-loader: 1.3.0_webpack@5.83.0
@@ -2434,7 +2434,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       react: ^17.0.1
       rimraf: ^4.4.0
@@ -2469,7 +2469,7 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
       style-loader: 1.3.0_webpack@5.83.0
@@ -2503,7 +2503,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       react: ^17.0.1
       rimraf: ^4.4.0
@@ -2538,7 +2538,7 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
       style-loader: 1.3.0_webpack@5.83.0
@@ -2583,7 +2583,7 @@ importers:
       eslint: ~8.6.0
       events: ^3.1.0
       orderedmap: ^2.1.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       prosemirror-example-setup: ^1.2.1
       prosemirror-history: ^1.3.0
       prosemirror-keymap: ^1.2.0
@@ -2645,7 +2645,7 @@ importers:
       copyfiles: 2.4.1
       css-loader: 1.0.1_webpack@5.83.0
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       style-loader: 1.3.0_webpack@5.83.0
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
@@ -2682,7 +2682,7 @@ importers:
       css-loader: ^1.0.0
       eslint: ~8.6.0
       events: ^3.1.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       react: ^17.0.1
       rimraf: ^4.4.0
       simplemde: ^1.11.2
@@ -2722,7 +2722,7 @@ importers:
       '@types/simplemde': 1.11.8
       css-loader: 1.0.1_webpack@5.83.0
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       style-loader: 1.3.0_webpack@5.83.0
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
@@ -2766,7 +2766,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -2803,7 +2803,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -2828,7 +2828,7 @@ importers:
       copyfiles: ^2.4.1
       css-loader: ^1.0.0
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       react: ^17.0.1
       rimraf: ^4.4.0
       source-map-loader: ^2.0.0
@@ -2862,7 +2862,7 @@ importers:
       copyfiles: 2.4.1
       css-loader: 1.0.1_webpack@5.83.0
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       source-map-loader: 2.0.2_webpack@5.83.0
       style-loader: 1.3.0_webpack@5.83.0
@@ -2903,7 +2903,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       react: ^17.0.1
       react-dom: ^17.0.1
@@ -2949,7 +2949,7 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
       source-map-loader: 2.0.2_webpack@5.83.0
@@ -3005,7 +3005,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       react: ^17.0.1
       react-dom: ^17.0.1
       rimraf: ^4.4.0
@@ -3066,7 +3066,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       source-map-loader: 2.0.2_webpack@5.88.2
       style-loader: 1.3.0_webpack@5.88.2
@@ -3141,7 +3141,7 @@ importers:
       jest-puppeteer: ^6.2.0
       lodash.isequal: ^4.5.0
       node-fetch: ^2.6.9
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       process: ^0.11.10
       puppeteer: ^17.1.3
       react: ^17.0.1
@@ -3227,7 +3227,7 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       process: 0.11.10
       puppeteer: 17.1.3
       rimraf: 4.4.1
@@ -3265,7 +3265,7 @@ importers:
       '@types/puppeteer': 1.3.0
       cross-env: ^7.0.3
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       source-map-loader: ^2.0.0
       string-replace-loader: ^3.1.0
@@ -3297,7 +3297,7 @@ importers:
       '@types/puppeteer': 1.3.0
       cross-env: 7.0.3
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       string-replace-loader: 3.1.0_webpack@5.83.0
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
@@ -3339,7 +3339,7 @@ importers:
       '@types/uuid': ^9.0.2
       copyfiles: ^2.4.1
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
       uuid: ^9.0.0
@@ -3377,7 +3377,7 @@ importers:
       '@types/uuid': 9.0.2
       copyfiles: 2.4.1
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -3412,7 +3412,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       process: ^0.11.10
       puppeteer: ^17.1.3
       rimraf: ^4.4.0
@@ -3456,7 +3456,7 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       process: 0.11.10
       puppeteer: 17.1.3
       rimraf: 4.4.1
@@ -3519,7 +3519,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       process: ^0.11.10
       puppeteer: ^17.1.3
       react: ^17.0.1
@@ -3588,7 +3588,7 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       process: 0.11.10
       puppeteer: 17.1.3
       rimraf: 4.4.1
@@ -3652,7 +3652,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       process: ^0.11.10
       puppeteer: ^17.1.3
       react: ^17.0.1
@@ -3721,7 +3721,7 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       process: 0.11.10
       puppeteer: 17.1.3
       rimraf: 4.4.1
@@ -3765,7 +3765,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       react: ^17.0.1
       react-dom: ^17.0.1
@@ -3810,7 +3810,7 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
       ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
@@ -3846,7 +3846,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       process: ^0.11.10
       puppeteer: ^17.1.3
       rimraf: ^4.4.0
@@ -3884,7 +3884,7 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       process: 0.11.10
       puppeteer: 17.1.3
       rimraf: 4.4.1
@@ -3923,7 +3923,7 @@ importers:
       jest: ^29.6.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^6.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       process: ^0.11.10
       puppeteer: ^17.1.3
       react: ^17.0.1
@@ -3969,7 +3969,7 @@ importers:
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       process: 0.11.10
       puppeteer: 17.1.3
       rimraf: 4.4.1
@@ -4034,7 +4034,7 @@ importers:
       jest-puppeteer: ^6.2.0
       jsonwebtoken: ^8.4.0
       lodash: ^4.17.21
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       react: ^17.0.1
       react-dom: ^17.0.1
@@ -4102,7 +4102,7 @@ importers:
       jest: 29.6.2
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
       sass: 1.62.1
@@ -4168,7 +4168,7 @@ importers:
       jest-puppeteer: ^6.2.0
       jsonwebtoken: ^8.4.0
       lodash: ^4.17.21
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       react: ^17.0.1
       react-dom: ^17.0.1
@@ -4240,7 +4240,7 @@ importers:
       jest: 29.6.2
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
       sass: 1.62.1
@@ -4258,14 +4258,14 @@ importers:
       '@fluidframework/build-common': ^2.0.0
       '@fluidframework/build-tools': ^0.24.0
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     devDependencies:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.24.0
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -4306,7 +4306,7 @@ importers:
       jsdoc: 3.6.7
       lighthouse: ^5.2.0
       lodash: ^4.17.21
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       source-map-loader: ^2.0.0
       typedoc: ^0.12.0
@@ -4351,7 +4351,7 @@ importers:
       jest-junit: 10.0.0
       jsdoc: 3.6.7
       lighthouse: 5.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       source-map-loader: 2.0.2_webpack@5.83.0
       typedoc: 0.12.0
@@ -4382,7 +4382,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       nock: ^13.3.3
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       semver: ^7.5.3
       sinon: ^7.4.2
@@ -4414,7 +4414,7 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       nock: 13.3.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
       typescript: 5.1.6
@@ -4449,7 +4449,7 @@ importers:
       moment: ^2.21.0
       murmurhash3js: 3.0.1
       nock: ^13.3.3
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       semver: ^7.5.3
       sinon: ^7.4.2
@@ -4487,7 +4487,7 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       nock: 13.3.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
       typescript: 5.1.6
@@ -4541,7 +4541,7 @@ importers:
       moment: ^2.21.0
       msgpackr: ^1.4.7
       pako: ^2.0.4
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
       uuid: ^9.0.0
@@ -4592,7 +4592,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -4643,7 +4643,7 @@ importers:
       lighthouse: ^5.2.0
       lodash.debounce: ^4.0.8
       memoize-one: ^5.0.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       process: ^0.11.10
       react: ^17.0.1
       react-base-table: 1.13.2
@@ -4720,7 +4720,7 @@ importers:
       jest-transform-file: 1.1.1
       jsdoc: 3.6.7
       lighthouse: 5.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       process: 0.11.10
       rimraf: 4.4.1
       sinon: 7.5.0
@@ -4759,7 +4759,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       nock: ^13.3.3
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       semver: ^7.5.3
       sinon: ^7.4.2
@@ -4791,7 +4791,7 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       nock: 13.3.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
       typescript: 5.1.6
@@ -4812,7 +4812,7 @@ importers:
       eslint: ~8.6.0
       jest: ^29.6.2
       jest-junit: ^10.0.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       source-map-loader: ^2.0.0
       ts-jest: ^29.1.1
@@ -4835,7 +4835,7 @@ importers:
       eslint: 8.6.0
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       source-map-loader: 2.0.2_webpack@5.83.0
       ts-jest: 29.1.1_4tpdl3ym67q7f5tdlz4ykdagxi
@@ -4864,7 +4864,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       nock: ^13.3.3
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       semver: ^7.5.3
       sinon: ^7.4.2
@@ -4892,7 +4892,7 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       nock: 13.3.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
 
@@ -4908,10 +4908,10 @@ importers:
       '@types/jest': 29.5.3
       '@types/node': ^16.18.38
       eslint: ~8.6.0
-      eslint-config-prettier: ~8.5.0
+      eslint-config-prettier: ~9.0.0
       jest: ^29.6.2
       jest-junit: ^10.0.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       ts-jest: ^29.1.1
       typescript: ~5.1.6
@@ -4927,10 +4927,10 @@ importers:
       '@types/jest': 29.5.3
       '@types/node': 16.18.38
       eslint: 8.6.0
-      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-config-prettier: 9.0.0_eslint@8.6.0
       jest: 29.6.2_@types+node@16.18.38
       jest-junit: 10.0.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
       typescript: 5.1.6
@@ -4985,7 +4985,7 @@ importers:
       moment: ^2.21.0
       nconf: ^0.12.0
       npm-run-all: 4.1.5
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       promisify: 0.0.3
       qs: ^6.11.0
       request: ^2.88.0
@@ -5054,7 +5054,7 @@ importers:
       mochawesome: 3.1.2_mocha@10.2.0
       moment: 2.29.4
       npm-run-all: 4.1.5
-      prettier: 2.6.2
+      prettier: 3.0.3
       promisify: 0.0.3
       request: 2.88.2
       request-promise-native: 1.0.7_request@2.88.2
@@ -5100,7 +5100,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       path-browserify: ^1.0.1
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -5137,7 +5137,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -5168,7 +5168,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       quill-delta: ^4.2.2
       rimraf: ^4.4.0
       typescript: ~5.1.6
@@ -5199,7 +5199,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       quill-delta: 4.2.2
       rimraf: 4.4.1
       typescript: 5.1.6
@@ -5231,7 +5231,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       ot-json1: ^1.0.1
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -5261,7 +5261,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -5293,7 +5293,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -5324,7 +5324,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -5367,13 +5367,13 @@ importers:
       easy-table: ^1.1.1
       env-cmd: ^10.1.0
       eslint: ~8.6.0
-      eslint-config-prettier: ~8.5.0
+      eslint-config-prettier: ~9.0.0
       lru-cache: ^6.0.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       sorted-btree: ^1.8.0
       typescript: ~5.1.6
@@ -5420,12 +5420,12 @@ importers:
       easy-table: 1.2.0
       env-cmd: 10.1.0
       eslint: 8.6.0
-      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-config-prettier: 9.0.0_eslint@8.6.0
       mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -5469,13 +5469,13 @@ importers:
       diff: ^3.5.0
       easy-table: ^1.1.1
       eslint: ~8.6.0
-      eslint-config-prettier: ~8.5.0
+      eslint-config-prettier: ~9.0.0
       good-fences: ^1.1.1
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       sorted-btree: ^1.8.0
       typescript: ~5.1.6
@@ -5522,13 +5522,13 @@ importers:
       diff: 3.5.0
       easy-table: 1.2.0
       eslint: 8.6.0
-      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-config-prettier: 9.0.0_eslint@8.6.0
       good-fences: 1.2.0
       mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -5551,7 +5551,7 @@ importers:
       cross-env: ^7.0.3
       eslint: ~8.6.0
       events: ^3.1.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -5573,7 +5573,7 @@ importers:
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -5595,7 +5595,7 @@ importers:
       '@types/node': ^16.18.38
       copyfiles: ^2.4.1
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -5616,7 +5616,7 @@ importers:
       '@types/node': 16.18.38
       copyfiles: 2.4.1
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -5636,7 +5636,7 @@ importers:
       '@types/react': ^17.0.44
       copyfiles: ^2.4.1
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       react: ^17.0.1
       rimraf: ^4.4.0
       typescript: ~5.1.6
@@ -5657,7 +5657,7 @@ importers:
       '@types/react': 17.0.52
       copyfiles: 2.4.1
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -5682,9 +5682,9 @@ importers:
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
-      eslint-config-prettier: ~8.5.0
+      eslint-config-prettier: ~9.0.0
       mocha: ^10.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       react: ^17.0.1
       rimraf: ^4.4.0
       sinon: ^7.4.2
@@ -5711,9 +5711,9 @@ importers:
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
-      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-config-prettier: 9.0.0_eslint@8.6.0
       mocha: 10.2.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
       typescript: 5.1.6
@@ -5746,7 +5746,7 @@ importers:
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
-      eslint-config-prettier: ~8.5.0
+      eslint-config-prettier: ~9.0.0
       events: ^3.1.0
       jest: ^29.6.2
       jest-junit: ^10.0.0
@@ -5756,7 +5756,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       rewire: ^5.0.0
       rimraf: ^4.4.0
@@ -5796,7 +5796,7 @@ importers:
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
-      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-config-prettier: 9.0.0_eslint@8.6.0
       jest: 29.6.2_546szy65dvhukjyz7aaas7covq
       jest-junit: 10.0.0
       jest-puppeteer: 6.2.0_puppeteer@17.1.3
@@ -5804,7 +5804,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rewire: 5.0.0
       rimraf: 4.4.1
@@ -5829,7 +5829,7 @@ importers:
       eslint: ~8.6.0
       eslint-plugin-deprecation: ~1.5.0
       events: ^3.1.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -5848,7 +5848,7 @@ importers:
       copyfiles: 2.4.1
       eslint: 8.6.0
       eslint-plugin-deprecation: 1.5.0_qvtltsyn3reahc7lgycismcfiq
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -5863,7 +5863,7 @@ importers:
       '@types/node': ^16.18.38
       copyfiles: ^2.4.1
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     devDependencies:
@@ -5876,7 +5876,7 @@ importers:
       '@types/node': 16.18.38
       copyfiles: 2.4.1
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -5896,12 +5896,12 @@ importers:
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
-      eslint-config-prettier: ~8.5.0
+      eslint-config-prettier: ~9.0.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^7.4.2
       typescript: ~5.1.6
@@ -5920,12 +5920,12 @@ importers:
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
-      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-config-prettier: 9.0.0_eslint@8.6.0
       mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
       typescript: 5.1.6
@@ -5942,7 +5942,7 @@ importers:
       '@microsoft/api-extractor': ^7.37.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -5957,7 +5957,7 @@ importers:
       '@microsoft/api-extractor': 7.37.0
       copyfiles: 2.4.1
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -5989,7 +5989,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -6020,7 +6020,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -6051,7 +6051,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -6081,7 +6081,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -6110,7 +6110,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
       uuid: ^9.0.0
@@ -6140,7 +6140,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -6179,7 +6179,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       path-browserify: ^1.0.1
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -6217,7 +6217,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -6259,7 +6259,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       ts-node: ^10.9.1
       tslib: ^1.10.0
@@ -6304,7 +6304,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       ts-node: 10.9.1_undwa5qxrriq4xnbtioa2ez7wy
       typescript: 5.1.6
@@ -6345,7 +6345,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -6383,7 +6383,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -6416,7 +6416,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
       uuid: ^9.0.0
@@ -6450,7 +6450,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -6483,7 +6483,7 @@ importers:
       mocha-junit-reporter: ^1.18.0
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -6515,7 +6515,7 @@ importers:
       mocha-junit-reporter: 1.23.3_mocha@10.2.0
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -6548,7 +6548,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -6580,7 +6580,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -6620,7 +6620,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       random-js: ^1.0.8
       rimraf: ^4.4.0
       typescript: ~5.1.6
@@ -6662,7 +6662,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       random-js: 1.0.8
       rimraf: 4.4.1
       typescript: 5.1.6
@@ -6700,7 +6700,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       ts-node: ^10.9.1
       typescript: ~5.1.6
@@ -6739,7 +6739,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       ts-node: 10.9.1_undwa5qxrriq4xnbtioa2ez7wy
       typescript: 5.1.6
@@ -6772,7 +6772,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -6803,7 +6803,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -6840,7 +6840,7 @@ importers:
       mocha-junit-reporter: ^1.18.0
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -6876,7 +6876,7 @@ importers:
       mocha-junit-reporter: 1.23.3_mocha@10.2.0
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -6904,7 +6904,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -6931,7 +6931,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -6952,7 +6952,7 @@ importers:
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       jsonschema: ^1.2.6
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -6972,7 +6972,7 @@ importers:
       '@types/node': 16.18.38
       copyfiles: 2.4.1
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -7002,7 +7002,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       socket.io-client: ^4.6.1
       typescript: ~5.1.6
@@ -7032,7 +7032,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       socket.io-client: 4.6.1
       typescript: 5.1.6
@@ -7056,7 +7056,7 @@ importers:
       fake-indexeddb: 3.1.4
       idb: ^6.1.2
       jest: ^29.6.2
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -7078,7 +7078,7 @@ importers:
       eslint: 8.6.0
       fake-indexeddb: 3.1.4
       jest: 29.6.2_@types+node@16.18.38
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -7100,7 +7100,7 @@ importers:
       '@types/node': ^16.18.38
       copyfiles: ^2.4.1
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -7121,7 +7121,7 @@ importers:
       '@types/node': 16.18.38
       copyfiles: 2.4.1
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -7147,7 +7147,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -7172,7 +7172,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -7213,7 +7213,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       socket.io-client: ^4.6.1
       typescript: ~5.1.6
@@ -7258,7 +7258,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       socket.io-client: 4.6.1
       typescript: 5.1.6
@@ -7297,7 +7297,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       node-fetch: ^2.6.9
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^7.4.2
       socket.io-client: ^4.6.1
@@ -7339,7 +7339,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
       typescript: 5.1.6
@@ -7357,7 +7357,7 @@ importers:
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -7373,7 +7373,7 @@ importers:
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -7397,7 +7397,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -7420,7 +7420,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -7444,7 +7444,7 @@ importers:
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       nock: ^13.3.3
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -7467,7 +7467,7 @@ importers:
       copyfiles: 2.4.1
       eslint: 8.6.0
       nock: 13.3.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -7509,7 +7509,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       nock: ^13.3.3
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^7.4.2
       socket.io-client: ^4.6.1
@@ -7557,7 +7557,7 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       nock: 13.3.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
       typescript: 5.1.6
@@ -7585,7 +7585,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       nconf: ^0.12.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
       url: ^0.11.0
@@ -7613,7 +7613,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -7641,7 +7641,7 @@ importers:
       eslint: ~8.6.0
       jsrsasign: ^10.5.25
       mocha: ^10.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
       uuid: ^9.0.0
@@ -7670,7 +7670,7 @@ importers:
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -7696,7 +7696,7 @@ importers:
       '@types/node': ^16.18.38
       copyfiles: ^2.4.1
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
       uuid: ^9.0.0
@@ -7723,7 +7723,7 @@ importers:
       '@types/node': 16.18.38
       copyfiles: 2.4.1
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -7761,7 +7761,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
       uuid: ^9.0.0
@@ -7800,7 +7800,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -7839,7 +7839,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -7877,7 +7877,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -7894,12 +7894,12 @@ importers:
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
-      eslint-config-prettier: ~8.5.0
+      eslint-config-prettier: ~9.0.0
       eslint-plugin-jest: ~27.1.5
       eslint-plugin-react: ~7.28.0
       eslint-plugin-react-hooks: ~4.6.0
       mocha: ^10.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^7.4.2
       tslib: ^1.10.0
@@ -7917,12 +7917,12 @@ importers:
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
-      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-config-prettier: 9.0.0_eslint@8.6.0
       eslint-plugin-jest: 27.1.7_qvtltsyn3reahc7lgycismcfiq
       eslint-plugin-react: 7.28.0_eslint@8.6.0
       eslint-plugin-react-hooks: 4.6.0_eslint@8.6.0
       mocha: 10.2.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
       tslib: 1.14.1
@@ -7951,7 +7951,7 @@ importers:
       '@types/node': ^16.18.38
       copyfiles: ^2.4.1
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -7977,7 +7977,7 @@ importers:
       '@types/node': 16.18.38
       copyfiles: 2.4.1
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -8008,7 +8008,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -8038,7 +8038,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -8058,7 +8058,7 @@ importers:
       '@types/node': ^16.18.38
       copyfiles: ^2.4.1
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -8077,7 +8077,7 @@ importers:
       '@types/node': 16.18.38
       copyfiles: 2.4.1
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -8113,7 +8113,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -8148,7 +8148,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -8170,7 +8170,7 @@ importers:
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -8191,7 +8191,7 @@ importers:
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -8222,7 +8222,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -8252,7 +8252,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -8278,7 +8278,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -8303,7 +8303,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -8336,7 +8336,7 @@ importers:
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       mocha: ^10.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       start-server-and-test: ^1.11.7
       tinylicious: ^2.0.1
@@ -8372,7 +8372,7 @@ importers:
       copyfiles: 2.4.1
       eslint: 8.6.0
       mocha: 10.2.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       start-server-and-test: 1.15.5
       tinylicious: 2.0.1
@@ -8406,7 +8406,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -8437,7 +8437,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -8455,7 +8455,7 @@ importers:
       '@types/react-dom': ^17.0.18
       copyfiles: ^2.4.1
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       react: ^17.0.1
       react-dom: ^17.0.1
       rimraf: ^4.4.0
@@ -8476,7 +8476,7 @@ importers:
       '@types/react-dom': 17.0.18
       copyfiles: 2.4.1
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -8493,7 +8493,7 @@ importers:
       '@types/react-dom': ^17.0.18
       copyfiles: ^2.4.1
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -8509,7 +8509,7 @@ importers:
       '@types/react-dom': 17.0.18
       copyfiles: 2.4.1
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -8550,7 +8550,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^7.4.2
       typescript: ~5.1.6
@@ -8595,7 +8595,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
       typescript: 5.1.6
@@ -8630,7 +8630,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^7.4.2
       typescript: ~5.1.6
@@ -8668,7 +8668,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
       typescript: 5.1.6
@@ -8697,7 +8697,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -8724,7 +8724,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -8740,7 +8740,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.1.0
       '@fluidframework/protocol-definitions': ^3.0.0
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -8755,7 +8755,7 @@ importers:
       '@fluidframework/build-tools': 0.24.0
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -8799,7 +8799,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^7.4.2
       sorted-btree: ^1.8.0
@@ -8847,7 +8847,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
       typescript: 5.1.6
@@ -8867,7 +8867,7 @@ importers:
       '@microsoft/api-extractor': ^7.37.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -8885,7 +8885,7 @@ importers:
       '@microsoft/api-extractor': 7.37.0
       copyfiles: 2.4.1
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -8922,7 +8922,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
       uuid: ^9.0.0
@@ -8960,7 +8960,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -8978,7 +8978,7 @@ importers:
       '@microsoft/api-extractor': ^7.37.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -8995,7 +8995,7 @@ importers:
       '@microsoft/api-extractor': 7.37.0
       copyfiles: 2.4.1
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -9014,7 +9014,7 @@ importers:
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       eslint-plugin-deprecation: ~1.5.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -9032,7 +9032,7 @@ importers:
       copyfiles: 2.4.1
       eslint: 8.6.0
       eslint-plugin-deprecation: 1.5.0_qvtltsyn3reahc7lgycismcfiq
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -9065,7 +9065,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^7.4.2
       ts-node: ^10.9.1
@@ -9099,7 +9099,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
       ts-node: 10.9.1_undwa5qxrriq4xnbtioa2ez7wy
@@ -9141,7 +9141,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
       uuid: ^9.0.0
@@ -9182,7 +9182,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -9211,7 +9211,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       ts-loader: ^9.3.0
       typescript: ~5.1.6
@@ -9242,7 +9242,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
       typescript: 5.1.6
@@ -9303,7 +9303,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       nock: ^13.3.3
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       ts-loader: ^9.3.0
       typescript: ~5.1.6
@@ -9363,7 +9363,7 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       nock: 13.3.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
       typescript: 5.1.6
@@ -9386,7 +9386,7 @@ importers:
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       mocha: ^10.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       source-map-support: ^0.5.21
       typescript: ~5.1.6
@@ -9406,7 +9406,7 @@ importers:
       '@types/node': 16.18.38
       copyfiles: 2.4.1
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -9448,7 +9448,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -9489,7 +9489,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -9513,7 +9513,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       random-js: ^1.0.8
       rimraf: ^4.4.0
       typescript: ~5.1.6
@@ -9537,7 +9537,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       random-js: 1.0.8
       rimraf: 4.4.1
       typescript: 5.1.6
@@ -9553,7 +9553,7 @@ importers:
       '@types/node': ^16.18.38
       applicationinsights: ^2.1.9
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -9567,7 +9567,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
       '@types/node': 16.18.38
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -9584,7 +9584,7 @@ importers:
       '@microsoft/api-extractor': ^7.37.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
       uuid: ^9.0.0
@@ -9602,7 +9602,7 @@ importers:
       '@microsoft/api-extractor': 7.37.0
       copyfiles: 2.4.1
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -9636,7 +9636,7 @@ importers:
       c8: ^7.7.1
       copyfiles: ^2.4.1
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       semver: ^7.5.3
       typescript: ~5.1.6
@@ -9673,7 +9673,7 @@ importers:
       c8: 7.13.0
       copyfiles: 2.4.1
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -9738,7 +9738,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       nock: ^13.3.3
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       semver: ^7.5.3
       sinon: ^7.4.2
@@ -9814,7 +9814,7 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       nock: 13.3.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -9832,7 +9832,7 @@ importers:
       cross-env: ^7.0.3
       eslint: ~8.6.0
       mocha: ^10.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       random-js: ^1.0.8
       rimraf: ^4.4.0
       typescript: ~5.1.6
@@ -9851,7 +9851,7 @@ importers:
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -9892,7 +9892,7 @@ importers:
       cross-env: ^7.0.3
       eslint: ~8.6.0
       mocha: ^10.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       ps-node: ^0.1.6
       rimraf: ^4.4.0
       start-server-and-test: ^1.11.7
@@ -9938,7 +9938,7 @@ importers:
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -9988,7 +9988,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
       uuid: ^9.0.0
@@ -10039,7 +10039,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -10092,7 +10092,7 @@ importers:
       moment: ^2.21.0
       nconf: ^0.12.0
       nock: ^13.3.3
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       proper-lockfile: ^4.1.2
       rimraf: ^4.4.0
       semver: ^7.5.3
@@ -10152,7 +10152,7 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       nock: 13.3.3
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
       typescript: 5.1.6
@@ -10180,13 +10180,13 @@ importers:
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
-      eslint-config-prettier: ~8.5.0
+      eslint-config-prettier: ~9.0.0
       eslint-plugin-chai-expect: ~3.0.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -10209,13 +10209,13 @@ importers:
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
-      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-config-prettier: 9.0.0_eslint@8.6.0
       eslint-plugin-chai-expect: 3.0.0_eslint@8.6.0
       mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -10266,7 +10266,7 @@ importers:
       cross-env: ^7.0.3
       dotenv-webpack: ^7.0.3
       eslint: ~8.6.0
-      eslint-config-prettier: ~8.5.0
+      eslint-config-prettier: ~9.0.0
       eslint-plugin-chai-expect: ~3.0.0
       good-fences: ^1.1.1
       html-webpack-plugin: ^5.5.0
@@ -10278,7 +10278,7 @@ importers:
       jsdom: ^16.7.0
       jsdom-global: ^3.0.2
       mocha: ^10.2.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       proxyquire: ^2.1.3
       puppeteer: ^17.1.3
       react: ^17.0.1
@@ -10343,7 +10343,7 @@ importers:
       cross-env: 7.0.3
       dotenv-webpack: 7.1.1_webpack@5.83.0
       eslint: 8.6.0
-      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-config-prettier: 9.0.0_eslint@8.6.0
       eslint-plugin-chai-expect: 3.0.0_eslint@8.6.0
       good-fences: 1.2.0
       html-webpack-plugin: 5.5.1_webpack@5.83.0
@@ -10355,7 +10355,7 @@ importers:
       jsdom: 16.7.0
       jsdom-global: 3.0.2_jsdom@16.7.0
       mocha: 10.2.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       proxyquire: 2.1.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
@@ -10401,14 +10401,14 @@ importers:
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
-      eslint-config-prettier: ~8.5.0
+      eslint-config-prettier: ~9.0.0
       eslint-plugin-chai-expect: ~3.0.0
       events: ^3.1.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -10444,14 +10444,14 @@ importers:
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
-      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-config-prettier: 9.0.0_eslint@8.6.0
       eslint-plugin-chai-expect: 3.0.0_eslint@8.6.0
       events: 3.3.0
       mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -10499,7 +10499,7 @@ importers:
       '@types/react-dom': ^17.0.18
       '@types/testing-library__jest-dom': ^5.14.5
       eslint: ~8.6.0
-      eslint-config-prettier: ~8.5.0
+      eslint-config-prettier: ~9.0.0
       eslint-plugin-jest: ~27.1.5
       eslint-plugin-react: ~7.28.0
       eslint-plugin-react-hooks: ~4.6.0
@@ -10509,7 +10509,7 @@ importers:
       jest-environment-jsdom: ^29.6.2
       jest-junit: ^10.0.0
       pm2: ^5.3.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       puppeteer: ^17.1.3
       re-resizable: ^6.9.9
       react: ^17.0.1
@@ -10571,7 +10571,7 @@ importers:
       '@types/react-dom': 17.0.18
       '@types/testing-library__jest-dom': 5.14.5
       eslint: 8.6.0
-      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-config-prettier: 9.0.0_eslint@8.6.0
       eslint-plugin-jest: 27.1.7_4vvgvlvub2y5pamq36yy3w7ouq
       eslint-plugin-react: 7.28.0_eslint@8.6.0
       eslint-plugin-react-hooks: 4.6.0_eslint@8.6.0
@@ -10581,7 +10581,7 @@ importers:
       jest-environment-jsdom: 29.6.2
       jest-junit: 10.0.0
       pm2: 5.3.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
       ts-jest: 29.1.1_bd7t4cpe6hueih24owb27fpuam
@@ -10636,7 +10636,7 @@ importers:
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
-      eslint-config-prettier: ~8.5.0
+      eslint-config-prettier: ~9.0.0
       eslint-plugin-jest: ~27.1.5
       eslint-plugin-react: ~7.28.0
       eslint-plugin-react-hooks: ~4.6.0
@@ -10648,7 +10648,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       playwright: ^1.36.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       prop-types: ^15.8.1
       react: ^17.0.1
       react-dom: ^17.0.1
@@ -10709,7 +10709,7 @@ importers:
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
-      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-config-prettier: 9.0.0_eslint@8.6.0
       eslint-plugin-jest: 27.1.7_4vvgvlvub2y5pamq36yy3w7ouq
       eslint-plugin-react: 7.28.0_eslint@8.6.0
       eslint-plugin-react-hooks: 4.6.0_eslint@8.6.0
@@ -10721,7 +10721,7 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       playwright: 1.37.1
-      prettier: 2.6.2
+      prettier: 3.0.3
       prop-types: 15.8.1
       rimraf: 4.4.1
       simple-git: 3.19.1
@@ -10754,7 +10754,7 @@ importers:
       '@fluidframework/tool-utils': workspace:~
       '@types/node': ^16.18.38
       eslint: ~8.6.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -10782,7 +10782,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
       '@types/node': 16.18.38
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -10813,7 +10813,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
       yargs: 13.2.2
@@ -10845,7 +10845,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -10888,7 +10888,7 @@ importers:
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       json-stable-stringify: ^1.0.1
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -10930,7 +10930,7 @@ importers:
       '@types/node': 16.18.38
       copyfiles: 2.4.1
       eslint: 8.6.0
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -10978,7 +10978,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       nconf: ^0.12.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       sillyname: ^0.1.0
       source-map-loader: ^2.0.0
@@ -11035,7 +11035,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       source-map-loader: 2.0.2_webpack@5.83.0
       ts-loader: 9.4.2_2g4z7xhl5j2hjnjlc6adf2vq2m
@@ -11071,7 +11071,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       node-fetch: ^2.6.9
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -11102,7 +11102,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -11134,7 +11134,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^7.4.2
       typescript: ~5.1.6
@@ -11168,7 +11168,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
       typescript: 5.1.6
@@ -11201,7 +11201,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      prettier: ~2.6.2
+      prettier: ~3.0.3
       proper-lockfile: ^4.1.2
       rimraf: ^4.4.0
       typescript: ~5.1.6
@@ -11234,7 +11234,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 2.6.2
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -29079,6 +29079,15 @@ packages:
       eslint: 8.6.0
     dev: true
 
+  /eslint-config-prettier/9.0.0_eslint@8.6.0:
+    resolution: {integrity: sha512-IcJsTkJae2S35pRsRAwoCE+925rJJStOdkKnLVgtE+tEpqU0EVVM7OqrwxqgptKdX29NUwC82I5pXsGFIgSevw==}
+    hasBin: true
+    peerDependencies:
+      eslint: '>=7.0.0'
+    dependencies:
+      eslint: 8.6.0
+    dev: true
+
   /eslint-import-resolver-node/0.3.7:
     resolution: {integrity: sha512-gozW2blMLJCeFpBwugLTGyvVjNoeo1knonXAcatC6bjPBZitotxdWf7Gimr25N4c0AAOo4eOUfaG82IJPDpqCA==}
     dependencies:
@@ -39121,12 +39130,18 @@ packages:
     resolution: {integrity: sha512-PkUpF+qoXTqhOeWL9fu7As8LXsIUZ1WYaJiY/a7McAQzxjk82OF0tibkFXVCDImZtWxbvojFjerkiLb0/q8mew==}
     engines: {node: '>=10.13.0'}
     hasBin: true
+    dev: true
 
   /prettier/2.8.8:
     resolution: {integrity: sha512-tdN8qQGvNjw4CHbY+XXk0JgCXn9QiF21a55rBe5LJAU+kDyC4WQn4+awm2Xfk2lQMk5fKup9XgzTZtGkjBdP9Q==}
     engines: {node: '>=10.13.0'}
     hasBin: true
     dev: true
+
+  /prettier/3.0.3:
+    resolution: {integrity: sha512-L/4pUDMxcNa8R/EthV08Zt42WBO4h1rarVtK0K+QJG0X187OLo7l699jWw0GKuwzkPQ//jMFA/8Xm6Fh3J/DAg==}
+    engines: {node: '>=14'}
+    hasBin: true
 
   /pretty-bytes/5.6.0:
     resolution: {integrity: sha512-FFw039TmrBqFK8ma/7OL3sDz/VytdtJr044/QUJtH0wK9lb9jLq9tJyIxUwtQJHwar2BqtiA4iCWSwo9JLkzFg==}
@@ -39180,7 +39195,7 @@ packages:
     engines: {node: '>= 0.8'}
     dev: true
 
-  /pretty-quick/3.1.3_prettier@2.6.2:
+  /pretty-quick/3.1.3_prettier@3.0.3:
     resolution: {integrity: sha512-kOCi2FJabvuh1as9enxYmrnBC6tVMoVOenMaBqRfsvBHB0cbpYHjdQEpSglpASDFEXVwplpcGR4CLEaisYAFcA==}
     engines: {node: '>=10.13'}
     hasBin: true
@@ -39193,7 +39208,7 @@ packages:
       ignore: 5.2.4
       mri: 1.2.0
       multimatch: 4.0.0
-      prettier: 2.6.2
+      prettier: 3.0.3
     dev: true
 
   /prettyjson/1.2.5:

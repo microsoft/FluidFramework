@@ -88,7 +88,11 @@ export class ProseMirrorTransactionBuilder {
 
 	private readonly things = new Array<IThing>();
 
-	constructor(state: EditorState, private readonly schema: Schema, sharedString: SharedString) {
+	constructor(
+		state: EditorState,
+		private readonly schema: Schema,
+		sharedString: SharedString,
+	) {
 		this.transaction = state.tr;
 		this.transaction.setMeta("fluid-local", true);
 

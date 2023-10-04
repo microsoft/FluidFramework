@@ -300,7 +300,7 @@ export const IntervalStickiness: {
 };
 
 // @internal
-export type IntervalStickiness = typeof IntervalStickiness[keyof typeof IntervalStickiness];
+export type IntervalStickiness = (typeof IntervalStickiness)[keyof typeof IntervalStickiness];
 
 // @public (undocumented)
 export enum IntervalType {

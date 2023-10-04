@@ -430,8 +430,10 @@ export type StructFields<TFields extends RestrictiveReadonlyRecord<string, Field
 	{
 		readonly [key in keyof TFields]: UnboxField<TFields[key]>;
 	} & {
-		readonly // boxed fields (TODO: maybe remove these when same as non-boxed version?)
-		[key in keyof TFields as `boxed${Capitalize<key & string>}`]: TypedField<TFields[key]>;
+		// boxed fields (TODO: maybe remove these when same as non-boxed version?)
+		readonly [key in keyof TFields as `boxed${Capitalize<key & string>}`]: TypedField<
+			TFields[key]
+		>;
 	};
 // TODO: Add `set` method when FieldKind provides a setter (and derive the type from it).
 // set(key: FieldKey, content: FlexibleFieldContent<TSchema["mapFields"]>): void;

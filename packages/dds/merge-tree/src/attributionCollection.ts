@@ -165,8 +165,10 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		return Object.entries(this.channels ?? {});
 	}
 
-	// eslint-disable-next-line @rushstack/no-new-null
-	public constructor(private _length: number, baseEntry?: AttributionKey | null) {
+	public constructor(
+		private _length: number,
+		baseEntry?: AttributionKey | null,
+	) {
 		if (baseEntry !== undefined) {
 			this.offsets.push(0);
 			this.keys.push(baseEntry);
