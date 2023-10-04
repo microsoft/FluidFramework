@@ -21,12 +21,13 @@ module.exports = function handler(fileData, logger) {
 		console.log("BUILD_ID not defined.");
 	}
 	const resultSummary = fileData.resultSummary.resultSummaryByRunState.Completed;
+	console.log(resultSummary);
 
 	const passedTests: number = resultSummary.aggregatedResultDetailsByOutcome.Passed?.count ?? 0;
 	const failedTests: number = resultSummary.aggregatedResultDetailsByOutcome.Failed?.count ?? 0;
 	const totalTests = passedTests + failedTests;
 	const passRate = totalTests !== 0 ? passedTests / totalTests : 0;
-
+	console.log(passRate);
 	logger.send({
 		category: "performance",
 		eventName: "TestPassRate",
