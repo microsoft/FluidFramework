@@ -14,7 +14,7 @@ describe("TypedTree", () => {
 	it("editable-tree-2-end-to-end", () => {
 		const builder = new SchemaBuilder("e2e");
 		const numberSchema = builder.leaf("number", ValueSchema.Number);
-		const schema = builder.intoDocumentSchema(SchemaBuilder.fieldValue(numberSchema));
+		const schema = builder.intoDocumentSchema(SchemaBuilder.fieldRequired(numberSchema));
 		const factory = new TypedTreeFactory({
 			jsonValidator: typeboxValidator,
 			forest: ForestType.Reference,

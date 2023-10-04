@@ -5,7 +5,7 @@
 
 export {
 	FieldKinds,
-	ValueFieldKind,
+	Required as ValueFieldKind,
 	Optional,
 	Sequence,
 	NodeKeyFieldKind,

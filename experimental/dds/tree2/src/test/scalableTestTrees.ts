@@ -30,7 +30,7 @@ const deepBuilder = new SchemaBuilder("sharedTree.bench: deep", {}, jsonSchema);
 
 // Test data in "deep" mode: a linked list with a number at the end.
 const linkedListSchema = deepBuilder.structRecursive("linkedList", {
-	foo: SchemaBuilder.fieldRecursive(FieldKinds.value, () => linkedListSchema, jsonNumber),
+	foo: SchemaBuilder.fieldRecursive(FieldKinds.required, () => linkedListSchema, jsonNumber),
 });
 
 const wideBuilder = new SchemaBuilder("sharedTree.bench: wide", {}, jsonSchema);
@@ -40,11 +40,11 @@ export const wideRootSchema = wideBuilder.struct("WideRoot", {
 });
 
 export const wideSchema = wideBuilder.intoDocumentSchema(
-	SchemaBuilder.field(FieldKinds.value, wideRootSchema),
+	SchemaBuilder.field(FieldKinds.required, wideRootSchema),
 );
 
 export const deepSchema = deepBuilder.intoDocumentSchema(
-	SchemaBuilder.field(FieldKinds.value, linkedListSchema, jsonNumber),
+	SchemaBuilder.field(FieldKinds.required, linkedListSchema, jsonNumber),
 );
 
 /**

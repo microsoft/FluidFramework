@@ -153,7 +153,7 @@ export enum Multiplicity {
 	/**
 	 * Exactly one item.
 	 */
-	Value,
+	Single,
 	/**
 	 * 0 or 1 items.
 	 */
