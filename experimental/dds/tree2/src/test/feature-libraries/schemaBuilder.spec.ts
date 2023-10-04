@@ -29,7 +29,7 @@ describe("typedTreeSchema", () => {
 		type _1 = requireTrue<
 			areSafelyAssignable<
 				typeof recursiveStruct,
-				ReturnType<typeof recursiveStruct.structFieldsObject.foo.allowedTypes[0]>
+				ReturnType<(typeof recursiveStruct.structFieldsObject.foo.allowedTypes)[0]>
 			>
 		>;
 	});
@@ -52,7 +52,7 @@ describe("typedTreeSchema", () => {
 		type _1 = requireTrue<
 			areSafelyAssignable<
 				typeof recursiveStruct,
-				ReturnType<typeof recursiveStruct.structFieldsObject.foo.allowedTypes[0]>
+				ReturnType<(typeof recursiveStruct.structFieldsObject.foo.allowedTypes)[0]>
 			>
 		>;
 	});
@@ -75,7 +75,7 @@ describe("typedTreeSchema", () => {
 		type _1 = requireTrue<
 			areSafelyAssignable<
 				typeof recursiveStruct,
-				ReturnType<typeof recursiveStruct.structFieldsObject.foo.allowedTypes[0]>
+				ReturnType<(typeof recursiveStruct.structFieldsObject.foo.allowedTypes)[0]>
 			>
 		>;
 	});

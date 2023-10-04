@@ -60,27 +60,21 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 
 			// Check for dds
 			const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
-			const sharedDir = await defaultDataStore.getSharedObject<SharedDirectory>(
-				sharedDirectoryId,
-			);
-			const sharedString = await defaultDataStore.getSharedObject<SharedString>(
-				sharedStringId,
-			);
+			const sharedDir =
+				await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
+			const sharedString =
+				await defaultDataStore.getSharedObject<SharedString>(sharedStringId);
 			const sharedCell = await defaultDataStore.getSharedObject<SharedCell>(sharedCellId);
-			const sharedCounter = await defaultDataStore.getSharedObject<SharedCounter>(
-				sharedCounterId,
-			);
-			const crc = await defaultDataStore.getSharedObject<ConsensusRegisterCollection<string>>(
-				crcId,
-			);
+			const sharedCounter =
+				await defaultDataStore.getSharedObject<SharedCounter>(sharedCounterId);
+			const crc =
+				await defaultDataStore.getSharedObject<ConsensusRegisterCollection<string>>(crcId);
 			const coc = await defaultDataStore.getSharedObject<ConsensusOrderedCollection>(cocId);
 			const ink = await defaultDataStore.getSharedObject<Ink>(sharedInkId);
-			const sharedMatrix = await defaultDataStore.getSharedObject<SharedMatrix>(
-				sharedMatrixId,
-			);
-			const sparseMatrix = await defaultDataStore.getSharedObject<SparseMatrix>(
-				sparseMatrixId,
-			);
+			const sharedMatrix =
+				await defaultDataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
+			const sparseMatrix =
+				await defaultDataStore.getSharedObject<SparseMatrix>(sparseMatrixId);
 			assert.strictEqual(sharedMap.id, sharedMapId, "Shared map should exist!!");
 			assert.strictEqual(sharedDir.id, sharedDirectoryId, "Shared directory should exist!!");
 			assert.strictEqual(sharedString.id, sharedStringId, "Shared string should exist!!");
@@ -110,27 +104,21 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 
 			// Check for dds
 			const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
-			const sharedDir = await defaultDataStore.getSharedObject<SharedDirectory>(
-				sharedDirectoryId,
-			);
-			const sharedString = await defaultDataStore.getSharedObject<SharedString>(
-				sharedStringId,
-			);
+			const sharedDir =
+				await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
+			const sharedString =
+				await defaultDataStore.getSharedObject<SharedString>(sharedStringId);
 			const sharedCell = await defaultDataStore.getSharedObject<SharedCell>(sharedCellId);
-			const sharedCounter = await defaultDataStore.getSharedObject<SharedCounter>(
-				sharedCounterId,
-			);
-			const crc = await defaultDataStore.getSharedObject<ConsensusRegisterCollection<string>>(
-				crcId,
-			);
+			const sharedCounter =
+				await defaultDataStore.getSharedObject<SharedCounter>(sharedCounterId);
+			const crc =
+				await defaultDataStore.getSharedObject<ConsensusRegisterCollection<string>>(crcId);
 			const coc = await defaultDataStore.getSharedObject<ConsensusOrderedCollection>(cocId);
 			const ink = await defaultDataStore.getSharedObject<Ink>(sharedInkId);
-			const sharedMatrix = await defaultDataStore.getSharedObject<SharedMatrix>(
-				sharedMatrixId,
-			);
-			const sparseMatrix = await defaultDataStore.getSharedObject<SparseMatrix>(
-				sparseMatrixId,
-			);
+			const sharedMatrix =
+				await defaultDataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
+			const sparseMatrix =
+				await defaultDataStore.getSharedObject<SparseMatrix>(sparseMatrixId);
 			assert.strictEqual(sharedMap.id, sharedMapId, "Shared map should exist!!");
 			assert.strictEqual(sharedDir.id, sharedDirectoryId, "Shared directory should exist!!");
 			assert.strictEqual(sharedString.id, sharedStringId, "Shared string should exist!!");

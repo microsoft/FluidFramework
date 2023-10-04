@@ -164,9 +164,8 @@ async function createSummarizer(
 
 function createDataStoreRuntime(factory: typeof FluidDataStoreRuntime = FluidDataStoreRuntime) {
 	return mixinSummaryHandler(async (runtime: FluidDataStoreRuntime) => {
-		const obj: PureDataObject & FluidObject<SearchContent> = await DataObject.getDataObject(
-			runtime,
-		);
+		const obj: PureDataObject & FluidObject<SearchContent> =
+			await DataObject.getDataObject(runtime);
 		const searchObj = obj.SearchContent;
 		if (searchObj === undefined) {
 			return undefined;
