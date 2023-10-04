@@ -4,17 +4,10 @@
  */
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IIntegerRange } from "../base";
-import { Heap, RedBlackTree, Stack } from "../collections";
-import {
-	compareNumbers,
-	IncrementalExecOp,
-	IncrementalMapState,
-	ISegment,
-} from "../mergeTreeNodes";
+import { Heap, RedBlackTree } from "../collections";
+import { compareNumbers } from "../mergeTreeNodes";
 import { ClientSeq, clientSeqComparer } from "../mergeTree";
 import { PropertySet } from "../properties";
-import { TextSegment } from "../textSegment";
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
 import { TestClient } from "./testClient";
 
@@ -138,48 +131,6 @@ export class TestServer extends TestClient {
 		}
 		return false;
 	}
-	public incrementalGetText(start?: number, end?: number) {
-		const range: Partial<IIntegerRange> = { start, end };
-		if (range.start === undefined) {
-			range.start = 0;
-		}
-		if (range.end === undefined) {
-			range.end = this.getLength();
-		}
-		const context = new TextSegment("");
-		const stack = new Stack<IncrementalMapState<TextSegment>>();
-		const initialState = new IncrementalMapState(
-			this.mergeTree.root,
-			{ leaf: incrementalGatherText },
-			0,
-			this.getCurrentSeq(),
-			this.getClientId(),
-			context,
-			range.start,
-			range.end,
-			0,
-		);
-		stack.push(initialState);
-
-		while (!stack.empty()) {
-			this.mergeTree.incrementalBlockMap(stack);
-		}
-		return context.text;
-	}
-}
-
-function incrementalGatherText(segment: ISegment, state: IncrementalMapState<TextSegment>) {
-	if (TextSegment.is(segment)) {
-		if (state.start <= 0 && state.end >= segment.text.length) {
-			state.context.text += segment.text;
-		} else {
-			state.context.text +=
-				state.end >= segment.text.length
-					? segment.text.substring(state.start)
-					: segment.text.substring(state.start, state.end);
-		}
-	}
-	state.op = IncrementalExecOp.Go;
 }
 
 /**

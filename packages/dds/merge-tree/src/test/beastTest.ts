@@ -704,12 +704,8 @@ export function TestPack(verbose = true) {
 		return str;
 	}
 
-	const checkIncr = false;
-
 	let getTextTime = 0;
 	let getTextCalls = 0;
-	let incrGetTextTime = 0;
-	let incrGetTextCalls = 0;
 	const catchUpTime = 0;
 	const catchUps = 0;
 
@@ -730,17 +726,11 @@ export function TestPack(verbose = true) {
 			client.accumOps
 		).toFixed(1);
 		const aveGetTextTime = (getTextTime / getTextCalls).toFixed(1);
-		let aveIncrGetTextTime = "off";
 		let aveCatchUpTime = "off";
 		if (catchUps > 0) {
 			aveCatchUpTime = (catchUpTime / catchUps).toFixed(1);
 		}
-		if (checkIncr) {
-			aveIncrGetTextTime = (incrGetTextTime / incrGetTextCalls).toFixed(1);
-		}
-		log(
-			`get text time: ${aveGetTextTime} incr: ${aveIncrGetTextTime} catch up ${aveCatchUpTime}`,
-		);
+		log(`get text time: ${aveGetTextTime} catch up ${aveCatchUpTime}`);
 		log(
 			`accum time ${client.accumTime} us ops: ${client.accumOps} ave time ${aveTime} - wtime ${adjTime} pack ${avePackTime} ave window ${aveWindow}`,
 		);
@@ -790,19 +780,10 @@ export function TestPack(verbose = true) {
 
 		function checkTextMatch() {
 			// log(`checking text match @${server.getCurrentSeq()}`);
-			let clockStart = clock();
+			const clockStart = clock();
 			const serverText = server.getText();
 			getTextTime += elapsedMicroseconds(clockStart);
 			getTextCalls++;
-			if (checkIncr) {
-				clockStart = clock();
-				const serverIncrText = server.incrementalGetText();
-				incrGetTextTime += elapsedMicroseconds(clockStart);
-				incrGetTextCalls++;
-				if (serverIncrText !== serverText) {
-					log("incr get text mismatch");
-				}
-			}
 			for (const client of clients) {
 				const cliText = client.getText();
 				if (cliText !== serverText) {
@@ -1654,10 +1635,7 @@ export class DocumentTree {
 	id: string | undefined;
 	static randPack = new RandomPack();
 
-	constructor(
-		public name: string,
-		public children: DocumentNode[],
-	) {}
+	constructor(public name: string, public children: DocumentNode[]) {}
 
 	addToMergeTree(client: TestClient, docNode: DocumentNode) {
 		if (typeof docNode === "string") {

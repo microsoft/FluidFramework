@@ -47,7 +47,7 @@ export const MergeTreeMaintenanceType = {
 	ACKNOWLEDGED: -4,
 } as const;
 export type MergeTreeMaintenanceType =
-	(typeof MergeTreeMaintenanceType)[keyof typeof MergeTreeMaintenanceType];
+	typeof MergeTreeMaintenanceType[keyof typeof MergeTreeMaintenanceType];
 
 export type MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType | MergeTreeMaintenanceType;
 

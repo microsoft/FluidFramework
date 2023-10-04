@@ -31,7 +31,7 @@ export const SlidingPreference = {
  * Dictates the preferential direction for a {@link ReferencePosition} to slide
  * in a merge-tree
  */
-export type SlidingPreference = (typeof SlidingPreference)[keyof typeof SlidingPreference];
+export type SlidingPreference = typeof SlidingPreference[keyof typeof SlidingPreference];
 
 /**
  * @internal
