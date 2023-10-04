@@ -32,7 +32,7 @@ import { FieldChangeHandler, FieldEditor } from "./fieldChangeHandler";
  * This being @sealed is for users of this package.
  * This package itself may provide implementations.
  * This pattern was picked instead of an interface since we do not have a convention for how to mark interfaces as only allowed to be implemented by the package declaring them,
- * and using a class also gets stronger. (nominal) typing for objects which will be down cast.
+ * and using a class also gets stronger (nominal) typing for objects which will be down cast.
  */
 export abstract class FieldKind<
 	TName extends string = string,
