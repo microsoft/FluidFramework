@@ -154,12 +154,56 @@ describe.only("LazyTree", () => {
 	});
 
 	describe("LazyFieldNode", () => {
+		// #region Shared schema initialization
+
 		const schemaBuilder = new SchemaBuilder("test", {}, leafDomain.library);
-		const fieldNode = schemaBuilder.fieldNode("field", SchemaBuilder.fieldOptional(Any));
-		const schema = schemaBuilder.intoDocumentSchema(SchemaBuilder.fieldValue(fieldNode));
+		const fieldNodeOptionalAnySchema = schemaBuilder.fieldNode(
+			"optionalAny",
+			SchemaBuilder.fieldOptional(Any),
+		);
+
+		// Schemas used in `is` checks
+		const fieldNodeOptionalStringSchema = schemaBuilder.fieldNode(
+			"optionalString",
+			SchemaBuilder.fieldOptional(leafDomain.string),
+		);
+		const fieldNodeValueAnySchema = schemaBuilder.fieldNode(
+			"valueAny",
+			SchemaBuilder.fieldValue(Any),
+		);
+		const fieldNodeValueStringSchema = schemaBuilder.fieldNode(
+			"valueString",
+			SchemaBuilder.fieldValue(leafDomain.string),
+		);
+		const structNodeSchema = schemaBuilder.struct("struct", {});
+
+		const schema = schemaBuilder.intoDocumentSchema(
+			SchemaBuilder.fieldValue(fieldNodeOptionalAnySchema),
+		);
+
+		// #endregion
 
 		it("is", () => {
-			// TODO
+			const { context, cursor } = initializeTreeWithContent({ schema, initialTree: {} });
+			cursor.enterNode(0);
+
+			const anchor = context.forest.anchors.track(cursor.getPath() ?? fail());
+			const anchorNode = context.forest.anchors.locate(anchor) ?? fail();
+
+			const node = new LazyFieldNode(
+				context,
+				fieldNodeOptionalAnySchema,
+				cursor,
+				anchorNode,
+				anchor,
+			);
+
+			assert(node.is(fieldNodeOptionalAnySchema));
+
+			assert(!node.is(fieldNodeOptionalStringSchema));
+			assert(!node.is(fieldNodeValueAnySchema));
+			assert(!node.is(fieldNodeValueStringSchema));
+			assert(!node.is(structNodeSchema));
 		});
 
 		describe("value", () => {
@@ -170,7 +214,13 @@ describe.only("LazyTree", () => {
 				const anchor = context.forest.anchors.track(cursor.getPath() ?? fail());
 				const anchorNode = context.forest.anchors.locate(anchor) ?? fail();
 
-				const node = new LazyFieldNode(context, fieldNode, cursor, anchorNode, anchor);
+				const node = new LazyFieldNode(
+					context,
+					fieldNodeOptionalAnySchema,
+					cursor,
+					anchorNode,
+					anchor,
+				);
 
 				assert.equal(node.value, undefined);
 			});
@@ -188,7 +238,13 @@ describe.only("LazyTree", () => {
 				const anchor = context.forest.anchors.track(cursor.getPath() ?? fail());
 				const anchorNode = context.forest.anchors.locate(anchor) ?? fail();
 
-				const node = new LazyFieldNode(context, fieldNode, cursor, anchorNode, anchor);
+				const node = new LazyFieldNode(
+					context,
+					fieldNodeOptionalAnySchema,
+					cursor,
+					anchorNode,
+					anchor,
+				);
 
 				assert.equal(node.tryGetField(brand("")), undefined); // TODO: is this right?
 			});
