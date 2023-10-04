@@ -78,10 +78,13 @@ export interface ICodecOptions {
  * @remarks `TEncoded` should always be valid Json (i.e. not contain functions), but due to TypeScript's handling
  * of index signatures and `JsonCompatibleReadOnly`'s index signature in the Json object case, specifying this as a
  * type-system level constraint makes code that uses this interface more difficult to write.
+ *
+ * If provided, `TValidate` allows the input type passed to `decode` to be different than `TEncoded`.
+ * This is useful when, for example, the type being decoded is `unknown` and must be validated to be a `TEncoded` before being decoded to a `TDecoded`.
  */
-export interface IJsonCodec<TDecoded, TEncoded = JsonCompatibleReadOnly>
+export interface IJsonCodec<TDecoded, TEncoded = JsonCompatibleReadOnly, TValidate = TEncoded>
 	extends IEncoder<TDecoded, TEncoded>,
-		IDecoder<TDecoded, TEncoded> {
+		IDecoder<TDecoded, TValidate> {
 	encodedSchema?: TAnySchema;
 }
 
@@ -109,8 +112,9 @@ export interface IBinaryCodec<TDecoded>
 export interface IMultiFormatCodec<
 	TDecoded,
 	TJsonEncoded extends JsonCompatibleReadOnly = JsonCompatibleReadOnly,
+	TJsonValidate = TJsonEncoded,
 > {
-	json: IJsonCodec<TDecoded, TJsonEncoded>;
+	json: IJsonCodec<TDecoded, TJsonEncoded, TJsonValidate>;
 	binary: IBinaryCodec<TDecoded>;
 
 	/** Ensures multi-format codecs cannot also be single-format codecs. */

@@ -145,7 +145,7 @@ interface SchemaOp {
 export class SchemaEditor<TRepository extends StoredSchemaRepository>
 	implements StoredSchemaRepository
 {
-	private readonly codec: IJsonCodec<SchemaData, Format>;
+	private readonly codec: IJsonCodec<SchemaData, Format, unknown>;
 	private readonly formatValidator: SchemaValidationFunction<typeof Format>;
 	public constructor(
 		public readonly inner: TRepository,
@@ -235,7 +235,7 @@ export class SchemaEditor<TRepository extends StoredSchemaRepository>
 
 	private tryDecodeOp(encodedOp: JsonCompatibleReadOnly): SchemaData | undefined {
 		if (isJsonObject(encodedOp) && encodedOp.type === "SchemaOp") {
-			return this.codec.decode(encodedOp.data as Format);
+			return this.codec.decode(encodedOp.data);
 		}
 
 		return undefined;
