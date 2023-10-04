@@ -107,7 +107,7 @@ For example, new edit operations can be added or new configuration flags added t
 This can get complicated, so to keep it manageable, this problem was subdivided in a few different ways.
 
 The data-model for Shared Tree was selected to assist with subdividing this problem.
-The selected data-model consists of many small structures where collaborative edits interact—fields—, and nodes which connect them into a hierarchy and assigns types to each of the fields.
+The selected data-model consists of many small structures named "fields" where collaborative edits interact, and "nodes" which connect them into a hierarchy and assigns types to each of the fields.
 
 The nodes have schema which define the schema for their fields.
 There are a few [kinds](<https://en.wikipedia.org/wiki/Kind_(type_theory)>) of nodes that configure their fields differently, for example structs (with a fixed set of mixed field types) or maps (with an extensible set of matching field types).
