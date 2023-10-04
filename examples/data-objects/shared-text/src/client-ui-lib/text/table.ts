@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-deprecated */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 /* eslint-disable @typescript-eslint/strict-boolean-expressions */
@@ -504,7 +505,10 @@ export class Table {
 	public logicalColumns: Column[] = [];
 	public gridColumns: IColumnMarker[] = [];
 	public idToColumn = new Map<string, IColumnMarker>();
-	constructor(public tableMarker: ITableMarker, public endTableMarker: ITableMarker) {}
+	constructor(
+		public tableMarker: ITableMarker,
+		public endTableMarker: ITableMarker,
+	) {}
 
 	public addGridColumn(columnMarker: IColumnMarker) {
 		columnMarker.columnId = columnMarker.getId();
@@ -633,7 +637,10 @@ export class Row {
 	public minContentWidth = 0;
 	public cells = <Cell[]>[];
 
-	constructor(public rowMarker: IRowMarker, public endRowMarker: IRowMarker) {}
+	constructor(
+		public rowMarker: IRowMarker,
+		public endRowMarker: IRowMarker,
+	) {}
 
 	// TODO: move to view layer
 	public findClosestCell(x: number) {
@@ -663,7 +670,10 @@ export class Cell {
 	// TODO: update on typing in cell
 	public emptyCell = false;
 	public additionalCellMarkers: ICellMarker[] | undefined;
-	constructor(public marker: ICellMarker, public endMarker: ICellMarker) {}
+	constructor(
+		public marker: ICellMarker,
+		public endMarker: ICellMarker,
+	) {}
 	public addAuxMarker(marker: ICellMarker) {
 		if (!this.additionalCellMarkers) {
 			this.additionalCellMarkers = [];

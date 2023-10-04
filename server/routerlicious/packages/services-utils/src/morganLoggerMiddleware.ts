@@ -13,7 +13,7 @@ import {
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
 import { getCorrelationIdWithHttpFallback } from "./asyncLocalStorage";
-import { getTelemetryContextPropertiesWithHttpInfo } from "./asyncContext";
+import { getTelemetryContextPropertiesWithHttpInfo } from "./telemetryContext";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const split = require("split");

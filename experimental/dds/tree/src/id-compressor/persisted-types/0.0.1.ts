@@ -23,7 +23,7 @@ export type SerializedSessionData = readonly [
 	/**
 	 * Index into the serialized AttributionIDs array; points to the attribution ID provided for this session
 	 */
-	attributionId?: number
+	attributionId?: number,
 ];
 
 export type SerializedClusterOverrides = readonly [
@@ -32,7 +32,7 @@ export type SerializedClusterOverrides = readonly [
 	/** The override string */
 	override: string,
 	/** The first ID that was finalized and associated with this override, set only if different than the `overriddenFinalIndex` */
-	overriddenId?: FinalCompressedId
+	overriddenId?: FinalCompressedId,
 ][];
 
 /**
@@ -60,7 +60,7 @@ export type SerializedCluster = readonly [
 	/**
 	 * Overrides in this cluster. Omitted if no overrides exist in the cluster.
 	 */
-	overrides?: SerializedClusterOverrides
+	overrides?: SerializedClusterOverrides,
 ];
 
 export type SerializedLocalOverrides = readonly (readonly [LocalCompressedId, string])[];
@@ -97,8 +97,8 @@ export interface SerializedSessionIdNormalizer {
 		finalRanges?: readonly (readonly [
 			alignedLocal: LocalCompressedId,
 			firstFinal: FinalCompressedId,
-			lastFinal: FinalCompressedId
-		])[]
+			lastFinal: FinalCompressedId,
+		])[],
 	])[];
 }
 
