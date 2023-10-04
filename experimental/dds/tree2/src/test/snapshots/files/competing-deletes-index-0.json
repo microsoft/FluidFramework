@@ -1,0 +1,37 @@
+{
+    "type": 1,
+    "tree": {
+        "indexes": {
+            "type": 1,
+            "tree": {
+                "EditManager": {
+                    "type": 1,
+                    "tree": {
+                        "String": {
+                            "type": 2,
+                            "content": "{\"trunk\":[{\"change\":{\"changes\":[{\"fieldKey\":\"rootFieldKey\",\"fieldKind\":\"Sequence\",\"change\":[{\"type\":\"Delete\",\"count\":1,\"id\":0}]}]},\"revision\":\"beefbeef-beef-4000-8000-000000000007\",\"sequenceNumber\":3,\"sessionId\":\"beefbeef-beef-4000-8000-000000000001\"},{\"change\":{\"changes\":[{\"fieldKey\":\"rootFieldKey\",\"fieldKind\":\"Sequence\",\"change\":[{\"type\":\"Delete\",\"count\":1,\"id\":0,\"cellId\":{\"revision\":\"beefbeef-beef-4000-8000-000000000007\",\"localId\":0,\"adjacentCells\":[{\"id\":0,\"count\":1}]}}]}]},\"revision\":\"beefbeef-beef-4000-8000-000000000008\",\"sequenceNumber\":4,\"sessionId\":\"beefbeef-beef-4000-8000-000000000002\"},{\"change\":{\"changes\":[{\"fieldKey\":\"rootFieldKey\",\"fieldKind\":\"Sequence\",\"change\":[{\"type\":\"Delete\",\"count\":1,\"id\":0,\"cellId\":{\"revision\":\"beefbeef-beef-4000-8000-000000000007\",\"localId\":0,\"adjacentCells\":[{\"id\":0,\"count\":1}]}}]}]},\"revision\":\"beefbeef-beef-4000-8000-000000000009\",\"sequenceNumber\":5,\"sessionId\":\"beefbeef-beef-4000-8000-000000000003\"}],\"branches\":[[\"beefbeef-beef-4000-8000-000000000002\",{\"base\":\"00000000-0000-4000-8000-000000000000\",\"commits\":[{\"change\":{\"changes\":[{\"fieldKey\":\"rootFieldKey\",\"fieldKind\":\"Sequence\",\"change\":[{\"type\":\"Delete\",\"count\":1,\"id\":0}]}]},\"revision\":\"beefbeef-beef-4000-8000-000000000008\",\"sessionId\":\"beefbeef-beef-4000-8000-000000000002\"}]}],[\"beefbeef-beef-4000-8000-000000000003\",{\"base\":\"00000000-0000-4000-8000-000000000000\",\"commits\":[{\"change\":{\"changes\":[{\"fieldKey\":\"rootFieldKey\",\"fieldKind\":\"Sequence\",\"change\":[{\"type\":\"Delete\",\"count\":1,\"id\":0}]}]},\"revision\":\"beefbeef-beef-4000-8000-000000000009\",\"sessionId\":\"beefbeef-beef-4000-8000-000000000003\"}]}]]}"
+                        }
+                    }
+                },
+                "Schema": {
+                    "type": 1,
+                    "tree": {
+                        "SchemaString": {
+                            "type": 2,
+                            "content": "{\"version\":\"1.0.0\",\"treeSchema\":[{\"name\":\"Json.Array\",\"structFields\":[{\"kind\":\"Sequence\",\"types\":[\"Json.Object\",\"Json.Array\",\"com.fluidframework.leaf.number\",\"com.fluidframework.leaf.boolean\",\"com.fluidframework.leaf.string\",\"Json.Null\"],\"name\":\"\"}]},{\"name\":\"Json.Null\",\"structFields\":[]},{\"name\":\"Json.Object\",\"mapFields\":{\"kind\":\"Optional\",\"types\":[\"Json.Object\",\"Json.Array\",\"com.fluidframework.leaf.number\",\"com.fluidframework.leaf.boolean\",\"com.fluidframework.leaf.string\",\"Json.Null\"]},\"structFields\":[]},{\"name\":\"com.fluidframework.leaf.boolean\",\"structFields\":[],\"leafValue\":2},{\"name\":\"com.fluidframework.leaf.handle\",\"structFields\":[],\"leafValue\":3},{\"name\":\"com.fluidframework.leaf.number\",\"structFields\":[],\"leafValue\":0},{\"name\":\"com.fluidframework.leaf.string\",\"structFields\":[],\"leafValue\":1}],\"rootFieldSchema\":{\"kind\":\"Sequence\",\"types\":[\"Json.Object\",\"Json.Array\",\"com.fluidframework.leaf.number\",\"com.fluidframework.leaf.boolean\",\"com.fluidframework.leaf.string\",\"Json.Null\"]}}"
+                        }
+                    }
+                },
+                "Forest": {
+                    "type": 1,
+                    "tree": {
+                        "ForestTree": {
+                            "type": 2,
+                            "content": "[[\"rootFieldKey\",[{\"type\":\"com.fluidframework.leaf.number\",\"value\":1},{\"type\":\"com.fluidframework.leaf.number\",\"value\":2},{\"type\":\"com.fluidframework.leaf.number\",\"value\":3}]]]"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -35,6 +35,8 @@
 		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
+		"test:snapshots": "cross-env MOCHA_SPEC='./dist/test/snapshots/summary.spec.js' mocha",
+		"test:snapshots:regen": "cross-env MOCHA_SPEC='./dist/test/snapshots/summary.spec.js' mocha -- --snapshot",
 		"test:benchmark:report": "mocha --exit --perfMode --parentProcess --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 60000",
 		"test:coverage": "c8 npm test",
 		"test:mocha": "mocha",

@@ -1,0 +1,37 @@
+{
+    "type": 1,
+    "tree": {
+        "indexes": {
+            "type": 1,
+            "tree": {
+                "EditManager": {
+                    "type": 1,
+                    "tree": {
+                        "String": {
+                            "type": 2,
+                            "content": "{\"trunk\":[{\"change\":{\"changes\":[{\"fieldKey\":\"rootFieldKey\",\"fieldKind\":\"Sequence\",\"change\":[{\"count\":1},{\"type\":\"Delete\",\"count\":1,\"id\":0}]}]},\"revision\":\"beefbeef-beef-4000-8000-000000000013\",\"sequenceNumber\":3,\"sessionId\":\"beefbeef-beef-4000-8000-00000000000d\"},{\"change\":{\"changes\":[{\"fieldKey\":\"rootFieldKey\",\"fieldKind\":\"Sequence\",\"change\":[{\"count\":1},{\"type\":\"Delete\",\"count\":1,\"id\":0,\"cellId\":{\"revision\":\"beefbeef-beef-4000-8000-000000000013\",\"localId\":0,\"adjacentCells\":[{\"id\":0,\"count\":1}]}}]}]},\"revision\":\"beefbeef-beef-4000-8000-000000000014\",\"sequenceNumber\":4,\"sessionId\":\"beefbeef-beef-4000-8000-00000000000e\"},{\"change\":{\"changes\":[{\"fieldKey\":\"rootFieldKey\",\"fieldKind\":\"Sequence\",\"change\":[{\"count\":1},{\"type\":\"Delete\",\"count\":1,\"id\":0,\"cellId\":{\"revision\":\"beefbeef-beef-4000-8000-000000000013\",\"localId\":0,\"adjacentCells\":[{\"id\":0,\"count\":1}]}}]}]},\"revision\":\"beefbeef-beef-4000-8000-000000000015\",\"sequenceNumber\":5,\"sessionId\":\"beefbeef-beef-4000-8000-00000000000f\"}],\"branches\":[[\"beefbeef-beef-4000-8000-00000000000e\",{\"base\":\"00000000-0000-4000-8000-000000000000\",\"commits\":[{\"change\":{\"changes\":[{\"fieldKey\":\"rootFieldKey\",\"fieldKind\":\"Sequence\",\"change\":[{\"count\":1},{\"type\":\"Delete\",\"count\":1,\"id\":0}]}]},\"revision\":\"beefbeef-beef-4000-8000-000000000014\",\"sessionId\":\"beefbeef-beef-4000-8000-00000000000e\"}]}],[\"beefbeef-beef-4000-8000-00000000000f\",{\"base\":\"00000000-0000-4000-8000-000000000000\",\"commits\":[{\"change\":{\"changes\":[{\"fieldKey\":\"rootFieldKey\",\"fieldKind\":\"Sequence\",\"change\":[{\"count\":1},{\"type\":\"Delete\",\"count\":1,\"id\":0}]}]},\"revision\":\"beefbeef-beef-4000-8000-000000000015\",\"sessionId\":\"beefbeef-beef-4000-8000-00000000000f\"}]}]]}"
+                        }
+                    }
+                },
+                "Schema": {
+                    "type": 1,
+                    "tree": {
+                        "SchemaString": {
+                            "type": 2,
+                            "content": "{\"version\":\"1.0.0\",\"treeSchema\":[{\"name\":\"Json.Array\",\"structFields\":[{\"kind\":\"Sequence\",\"types\":[\"Json.Object\",\"Json.Array\",\"com.fluidframework.leaf.number\",\"com.fluidframework.leaf.boolean\",\"com.fluidframework.leaf.string\",\"Json.Null\"],\"name\":\"\"}]},{\"name\":\"Json.Null\",\"structFields\":[]},{\"name\":\"Json.Object\",\"mapFields\":{\"kind\":\"Optional\",\"types\":[\"Json.Object\",\"Json.Array\",\"com.fluidframework.leaf.number\",\"com.fluidframework.leaf.boolean\",\"com.fluidframework.leaf.string\",\"Json.Null\"]},\"structFields\":[]},{\"name\":\"com.fluidframework.leaf.boolean\",\"structFields\":[],\"leafValue\":2},{\"name\":\"com.fluidframework.leaf.handle\",\"structFields\":[],\"leafValue\":3},{\"name\":\"com.fluidframework.leaf.number\",\"structFields\":[],\"leafValue\":0},{\"name\":\"com.fluidframework.leaf.string\",\"structFields\":[],\"leafValue\":1}],\"rootFieldSchema\":{\"kind\":\"Sequence\",\"types\":[\"Json.Object\",\"Json.Array\",\"com.fluidframework.leaf.number\",\"com.fluidframework.leaf.boolean\",\"com.fluidframework.leaf.string\",\"Json.Null\"]}}"
+                        }
+                    }
+                },
+                "Forest": {
+                    "type": 1,
+                    "tree": {
+                        "ForestTree": {
+                            "type": 2,
+                            "content": "[[\"rootFieldKey\",[{\"type\":\"com.fluidframework.leaf.number\",\"value\":0},{\"type\":\"com.fluidframework.leaf.number\",\"value\":2},{\"type\":\"com.fluidframework.leaf.number\",\"value\":3}]]]"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
