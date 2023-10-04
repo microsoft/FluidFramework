@@ -31,10 +31,10 @@
                         }
                     }
                 },
-                "TreeIndex": {
+                "DetachedFieldIndex": {
                     "type": 1,
                     "tree": {
-                        "TreeIndexBlob": {
+                        "DetachedFieldIndexBlob": {
                             "type": 2,
                             "content": "{\"data\":\"[]\",\"id\":2}"
                         }
