@@ -57,6 +57,7 @@ export class LocalOrdererManager implements IOrdererManager {
 					return true;
 				}
 			}
+            console.log("test change");
 			return false;
 		});
 	}
