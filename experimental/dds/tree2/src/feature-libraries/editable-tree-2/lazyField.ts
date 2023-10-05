@@ -406,7 +406,6 @@ export class LazyValueField<TTypes extends AllowedTypes>
 		return this.boxedAt(0);
 	}
 
-	// TODO
 	private setContent(newContent: FlexibleNodeContent<TTypes>): void {
 		const content = this.normalizeNewContent(newContent);
 		const fieldEditor = this.valueFieldEditor();
@@ -440,17 +439,15 @@ export class LazyOptionalField<TTypes extends AllowedTypes>
 		return this.length === 0 ? undefined : this.at(0);
 	}
 
-	// TODO
-	// public set content(newContent: FlexibleNodeContent<TTypes> | undefined) {
-	// 	this.setContent(newContent);
-	// }
+	public set content(newContent: FlexibleNodeContent<TTypes> | undefined) {
+		this.setContent(newContent);
+	}
 
 	public get boxedContent(): TypedNodeUnion<TTypes> | undefined {
 		return this.length === 0 ? undefined : this.boxedAt(0);
 	}
 
-	// TODO
-	public setContent(newContent: FlexibleNodeContent<TTypes> | undefined): void {
+	private setContent(newContent: FlexibleNodeContent<TTypes> | undefined): void {
 		const content = this.normalizeNewContent(newContent);
 		const fieldEditor = this.optionalEditor();
 		assert(

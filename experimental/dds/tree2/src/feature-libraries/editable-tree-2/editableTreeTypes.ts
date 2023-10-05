@@ -704,9 +704,11 @@ export interface RequiredField<TTypes extends AllowedTypes> extends TreeField {
  * @alpha
  */
 export interface OptionalField<TTypes extends AllowedTypes> extends TreeField {
-	content?: UnboxNodeUnion<TTypes>;
+	get content(): UnboxNodeUnion<TTypes> | undefined;
+	set content(newContent: FlexibleNodeContent<TTypes> | undefined);
+
 	readonly boxedContent?: TypedNodeUnion<TTypes>;
-	setContent(content: undefined | FlexibleNodeContent<TTypes>): void; // TODO
+	// setContent(content: FlexibleNodeContent<TTypes> | undefined): void; // TODO
 }
 
 // #endregion

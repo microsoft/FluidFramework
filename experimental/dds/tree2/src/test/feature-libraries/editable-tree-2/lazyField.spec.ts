@@ -90,7 +90,7 @@ describe("LazyField", () => {
 				),
 		);
 		assert.throws(
-			() => optionalField.setContent(undefined),
+			() => (optionalField.content = undefined),
 			(e: Error) =>
 				validateAssertionError(
 					e,
