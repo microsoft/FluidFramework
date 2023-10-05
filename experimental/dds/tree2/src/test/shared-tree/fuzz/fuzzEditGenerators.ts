@@ -407,7 +407,9 @@ type FuzzField =
 type FieldFilter = (field: FuzzField) => boolean;
 
 const isNonEmptyField: FieldFilter = (field) =>
-	field.content !== undefined && (field.type !== "sequence" || field.content.length > 0);
+	field.content !== undefined &&
+	((field.type === "sequence" && field.content.length > 0) ||
+		(field.type !== "sequence" && field.content.content !== undefined));
 
 function selectField(
 	node: FuzzNode,

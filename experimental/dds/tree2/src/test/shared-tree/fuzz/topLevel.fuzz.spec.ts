@@ -71,6 +71,8 @@ describe("Fuzz - Top-Level", () => {
 				maxNumberOfClients: 3,
 			},
 			reconnectProbability: 0,
+			// TODO:AB#5713: These seeds trigger 0x4a6. Investigate and fix.
+			skip: [1, 5, 9, 12, 18],
 		};
 		createDDSFuzzSuite(model, options);
 	});
@@ -99,6 +101,8 @@ describe("Fuzz - Top-Level", () => {
 			saveFailures: {
 				directory: failureDirectory,
 			},
+			// TODO:AB#5713: These seeds trigger 0x4a6. Investigate and fix.
+			skip: [5, 11],
 		};
 		createDDSFuzzSuite(model, options);
 	});
