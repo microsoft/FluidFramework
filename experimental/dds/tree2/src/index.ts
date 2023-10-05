@@ -55,11 +55,6 @@ export {
 	TreeTypeSet,
 	SchemaData,
 	FieldAnchor,
-	RevisionTag,
-	ChangesetLocalId,
-	TaggedChange,
-	RepairDataStore,
-	ReadonlyRepairDataStore,
 	SchemaEvents,
 	ForestEvents,
 	PathRootPrefix,
@@ -127,27 +122,6 @@ export {
 } from "./domains";
 
 export {
-	MemoizedIdRangeAllocator,
-	IdRange,
-	ModularChangeset,
-	EditDescription,
-	FieldChangeHandler,
-	FieldEditor,
-	FieldChangeRebaser,
-	NodeChangeset,
-	FieldChangeMap,
-	FieldChangeset,
-	FieldChange,
-	ToDelta,
-	NodeReviver,
-	NodeChangeComposer,
-	NodeChangeInverter,
-	NodeChangeRebaser,
-	CrossFieldManager,
-	CrossFieldTarget,
-	RevisionIndexer,
-	RevisionMetadataSource,
-	RevisionInfo,
 	FieldKind,
 	Multiplicity,
 	isNeverField,
@@ -190,7 +164,6 @@ export {
 	CursorAdapter,
 	CursorWithNode,
 	parentField,
-	HasFieldChanges,
 	EditableTreeEvents,
 	on,
 	InternalTypedSchemaTypes,
@@ -209,8 +182,7 @@ export {
 	SchemaBuilder,
 	AllowedTypes,
 	TreeSchema,
-	BrandedFieldKind,
-	ValueFieldKind,
+	Required,
 	Optional,
 	Sequence,
 	NodeKeyFieldKind,
@@ -226,7 +198,6 @@ export {
 	LazyTreeSchema,
 	FieldGenerator,
 	TreeDataContext,
-	NodeExistenceState,
 	createDataBinderBuffering,
 	createDataBinderDirect,
 	createDataBinderInvalidating,
@@ -308,17 +279,7 @@ export {
 	ForestType,
 } from "./shared-tree";
 
-export type {
-	IBinaryCodec,
-	ICodecFamily,
-	ICodecOptions,
-	IDecoder,
-	IEncoder,
-	IJsonCodec,
-	IMultiFormatCodec,
-	JsonValidator,
-	SchemaValidationFunction,
-} from "./codec";
+export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec";
 export { noopValidator } from "./codec";
 export { typeboxValidator } from "./external-utilities";
 
