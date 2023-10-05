@@ -145,10 +145,13 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 		// undefined because there's a default value for the flag.
 		const usedBranchFlag = this.argv.includes("--branch") || this.argv.includes("-b");
 		if (!usedBranchFlag) {
-			// eslint-disable-next-line @typescript-eslint/no-shadow
-			const { packages } = await repo.getChangedSinceRef(branch, remote, context);
+			const { packages: usedBranchPackages } = await repo.getChangedSinceRef(
+				branch,
+				remote,
+				context,
+			);
 
-			if (packages.length > BRANCH_PROMPT_LIMIT) {
+			if (usedBranchPackages.length > BRANCH_PROMPT_LIMIT) {
 				const answer = await prompts({
 					type: "select",
 					name: "selectedBranch",
@@ -322,7 +325,7 @@ async function createChangesetFile(
 	const changesetContent = await createChangesetContent(packages, body);
 	await writeFile(
 		changesetPath,
-		prettier(changesetContent, { proseWrap: "never", parser: "markdown" }),
+		await prettier(changesetContent, { proseWrap: "never", parser: "markdown" }),
 	);
 	return changesetPath;
 }

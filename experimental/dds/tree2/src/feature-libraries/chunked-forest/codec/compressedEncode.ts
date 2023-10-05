@@ -269,7 +269,10 @@ export class InlineArrayShape
 	/**
 	 * @param length - number of invocations of `inner`.
 	 */
-	public constructor(public readonly length: number, public readonly inner: NodesEncoder) {
+	public constructor(
+		public readonly length: number,
+		public readonly inner: NodesEncoder,
+	) {
 		super();
 	}
 

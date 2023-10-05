@@ -19,7 +19,6 @@ import {
 } from "../typed-schema";
 import { EditableTreeEvents } from "../untypedTree";
 import { FieldKinds } from "../default-field-kinds";
-import { TreeStatus } from "../editable-tree";
 import { FieldKind } from "../modular-schema";
 import { TreeContext } from "./context";
 
@@ -71,6 +70,27 @@ export interface Tree<TSchema = unknown> {
 	 * No mutations to the current view of the shared tree are permitted during iteration.
 	 */
 	[boxedIterator](): IterableIterator<Tree>;
+}
+
+/**
+ * Status of the tree that a particular node in {@link EditableTree} and {@link UntypedTree} belongs to.
+ * @alpha
+ */
+export enum TreeStatus {
+	/**
+	 * Is parented under the root field.
+	 */
+	InDocument = 0,
+
+	/**
+	 * Is not parented under the root field, but can be added back to the original document tree.
+	 */
+	Removed = 1,
+
+	/**
+	 * Is removed and cannot be added back to the original document tree.
+	 */
+	Deleted = 2,
 }
 
 /**
@@ -430,8 +450,10 @@ export type StructFields<TFields extends RestrictiveReadonlyRecord<string, Field
 	{
 		readonly [key in keyof TFields]: UnboxField<TFields[key]>;
 	} & {
-		readonly // boxed fields (TODO: maybe remove these when same as non-boxed version?)
-		[key in keyof TFields as `boxed${Capitalize<key & string>}`]: TypedField<TFields[key]>;
+		// boxed fields (TODO: maybe remove these when same as non-boxed version?)
+		readonly [key in keyof TFields as `boxed${Capitalize<key & string>}`]: TypedField<
+			TFields[key]
+		>;
 	};
 // TODO: Add `set` method when FieldKind provides a setter (and derive the type from it).
 // set(key: FieldKey, content: FlexibleFieldContent<TSchema["mapFields"]>): void;
@@ -709,7 +731,7 @@ export type TypedFieldInner<
 	Types extends AllowedTypes,
 > = Kind extends typeof FieldKinds.sequence
 	? Sequence<Types>
-	: Kind extends typeof FieldKinds.value
+	: Kind extends typeof FieldKinds.required
 	? RequiredField<Types>
 	: Kind extends typeof FieldKinds.optional
 	? OptionalField<Types>
@@ -785,7 +807,7 @@ export type UnboxFieldInner<
 	Emptiness extends "maybeEmpty" | "notEmpty",
 > = Kind extends typeof FieldKinds.sequence
 	? Sequence<TTypes>
-	: Kind extends typeof FieldKinds.value
+	: Kind extends typeof FieldKinds.required
 	? UnboxNodeUnion<TTypes>
 	: Kind extends typeof FieldKinds.optional
 	? UnboxNodeUnion<TTypes> | (Emptiness extends "notEmpty" ? never : undefined)

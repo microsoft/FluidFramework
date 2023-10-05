@@ -8,7 +8,7 @@ import { fromInternalScheme, isInternalVersionScheme } from "@fluid-tools/versio
 import { Flags } from "@oclif/core";
 import { command as execCommand } from "execa";
 import { readFile, writeFile } from "fs/promises";
-import * as semver from "semver";
+import { inc } from "semver";
 import { CleanOptions } from "simple-git";
 
 import { BaseCommand } from "../../base";
@@ -54,7 +54,7 @@ export default class GenerateChangeLogCommand extends BaseCommand<typeof Generat
 		// version and using it directly.
 		const changesetsCalculatedVersion = isInternalVersionScheme(pkgVersion)
 			? fromInternalScheme(pkgVersion)[0].version
-			: semver.inc(pkgVersion, "major");
+			: inc(pkgVersion, "major");
 		const versionToUse = this.flags.version ?? pkgVersion;
 
 		// Replace the changeset version with the correct version.
