@@ -46,7 +46,7 @@ import {
 	AdaptingProxyHandler,
 	adaptWithProxy,
 	getStableNodeKey,
-	treeStatusFromAnchorCache,
+	treeStatusFromPath,
 } from "./utilities";
 import { ProxyContext } from "./editableTreeContext";
 import {
@@ -249,7 +249,8 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		if (this.isFreed()) {
 			return TreeStatus.Deleted;
 		}
-		return treeStatusFromAnchorCache(this.context.forest.anchors, this.anchorNode);
+		const path = this.anchorNode;
+		return treeStatusFromPath(path);
 	}
 
 	public on<K extends keyof EditableTreeEvents>(
