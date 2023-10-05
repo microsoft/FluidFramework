@@ -206,12 +206,7 @@ export interface TreeField extends Tree<FieldSchema> {
 // #region Node Kinds
 
 /**
- * A node that behaves like a `Map<FieldKey, Field>` for a specific `Field` type.
- * @alpha
- */
-
-/**
- * A {@link TreeNode} that behaves like a `Map<FieldKey, Field>` for a specific `Field` type.
+ * A {@link TreeNode} that behaves like a `Map<string, Field>` for a specific `Field` type.
  *
  * @remarks
  * Unlike TypeScript Map type, {@link MapNode.get} always provides a reference to any field looked up, even if it has never been set.
@@ -238,20 +233,14 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	 *
 	 * @remarks
 	 * All fields under a map implicitly exist, but `has` will only return true if there are one or more nodes present in the given field.
-	 *
-	 * @privateRemarks
-	 * TODO: Consider changing the key type to `string` for easier use.
 	 */
-	has(key: FieldKey): boolean;
+	has(key: string): boolean;
 
 	/**
 	 * Get the value associated with `key`.
 	 * @param key - which map entry to look up.
-	 *
-	 * @privateRemarks
-	 * TODO: Consider changing the key type to `string` for easier use.
 	 */
-	get(key: FieldKey): UnboxField<TSchema["mapFields"]>;
+	get(key: string): UnboxField<TSchema["mapFields"]>;
 
 	/**
 	 * Get the field for `key`.
@@ -260,11 +249,8 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	 * @remarks
 	 * All fields under a map implicitly exist, so `get` can be called with any key and will always return a field.
 	 * Even if the field is empty, it will still be returned, and can be edited to insert content into the map.
-	 *
-	 * @privateRemarks
-	 * TODO: Consider changing the key type to `string` for easier use.
 	 */
-	getBoxed(key: FieldKey): TypedField<TSchema["mapFields"]>;
+	getBoxed(key: string): TypedField<TSchema["mapFields"]>;
 
 	/**
 	 * Returns an iterable of keys in the map.
@@ -310,7 +296,7 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	): void;
 
 	// TODO: Add `set` method when FieldKind provides a setter (and derive the type from it).
-	// set(key: FieldKey, content: FlexibleFieldContent<TSchema["mapFields"]>): void;
+	// set(key: string, content: FlexibleFieldContent<TSchema["mapFields"]>): void;
 
 	/**
 	 * Iterate through all fields in the map.

@@ -35,7 +35,6 @@ import {
 	StructSchema,
 	Any,
 } from "../typed-schema";
-import { treeStatusFromPath } from "../editable-tree";
 import { EditableTreeEvents } from "../untypedTree";
 import { FieldKinds } from "../default-field-kinds";
 import { Context } from "./context";
@@ -63,6 +62,7 @@ import {
 	tryMoveCursorToAnchorSymbol,
 } from "./lazyEntity";
 import { unboxedField } from "./unboxed";
+import { treeStatusFromAnchorCache } from "./utilities";
 
 const lazyTreeSlot = anchorSlot<LazyTree>();
 
@@ -253,8 +253,7 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 		if (this[isFreedSymbol]()) {
 			return TreeStatus.Deleted;
 		}
-		const path = this.#anchorNode;
-		return treeStatusFromPath(path);
+		return treeStatusFromAnchorCache(this.context.forest.anchors, this.#anchorNode);
 	}
 
 	public on<K extends keyof EditableTreeEvents>(

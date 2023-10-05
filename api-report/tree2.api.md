@@ -81,9 +81,11 @@ export type AnchorsCompare = CompareFunction<UpPath>;
 
 // @alpha @sealed
 export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLocator {
+    constructor();
     acquireVisitor(): DeltaVisitor;
     // (undocumented)
     forget(anchor: Anchor): void;
+    generationNumber: number;
     internalizePath(originalPath: UpPath): UpPath;
     isEmpty(): boolean;
     // (undocumented)
@@ -1261,9 +1263,9 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
     };
     entries(): IterableIterator<[FieldKey, UnboxField<TSchema["mapFields"], "notEmpty">]>;
     forEach(callbackFn: (value: UnboxField<TSchema["mapFields"], "notEmpty">, key: FieldKey, map: MapNode<TSchema>) => void, thisArg?: any): void;
-    get(key: FieldKey): UnboxField<TSchema["mapFields"]>;
-    getBoxed(key: FieldKey): TypedField<TSchema["mapFields"]>;
-    has(key: FieldKey): boolean;
+    get(key: string): UnboxField<TSchema["mapFields"]>;
+    getBoxed(key: string): TypedField<TSchema["mapFields"]>;
+    has(key: string): boolean;
     keys(): IterableIterator<FieldKey>;
     readonly size: number;
     values(): IterableIterator<UnboxField<TSchema["mapFields"], "notEmpty">>;

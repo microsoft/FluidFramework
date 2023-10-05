@@ -113,7 +113,7 @@ extends:
     packageManager: pnpm
     buildDirectory: .
     tagName: client
-    poolBuild: NewLarge 
+    poolBuild: NewLarge
     checkoutSubmodules: true
     taskBundleAnalysis: true
     taskLint: false
@@ -140,6 +140,7 @@ extends:
     - syncpack:deps
     - syncpack:versions
     - check:versions
+    - generate:packageList
     - prettier
     additionalBuildSteps:
       - task: Bash@3
@@ -149,14 +150,14 @@ extends:
           script: |
             echo Generating .env
             echo "DEVTOOLS_TELEMETRY_TOKEN=$(devtools-telemetry-key)" >> ./packages/tools/devtools/devtools-browser-extension/.env
-            
+
       - task: Npm@1
         displayName: Build devtools
         inputs:
           command: 'custom'
           workingDir: ./packages/tools/devtools/devtools-browser-extension/
           customCommand: 'run webpack'
-      
+
       - task: PublishPipelineArtifact@1
         displayName: Publish Artifact - Devtools Browser Extension
         inputs:
