@@ -6,7 +6,7 @@ See [GitHub](https://github.com/microsoft/FluidFramework) for more details on Fl
 
 ## API-Extractor Configuration
 
-This package exports a base configuration for use with [API-Extractor](TODO).
+This package exports a base configuration for use with [API-Extractor](https://api-extractor.com/).
 It can be extended in your package's local configuration file like the following:
 
 ```json
