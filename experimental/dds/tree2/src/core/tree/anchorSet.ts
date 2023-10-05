@@ -198,7 +198,9 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 	private anchorCounter = 1;
 
 	/**
-	 * Incrementing number to keep track of how up to date the cache of any anchor may be.
+	 * Incrementing number that is bumped each time that the {@link AnchorSet} is changed.
+	 * This allows consumers to cache state associated with a particular generation number and later determine if that state may have been invalidated using a comparison with the current generation number.
+	 * For example, anchor slots can be used to cache the removal status of a node to memoize repeated walks up the tree.
 	 */
 	public generationNumber = 0;
 
