@@ -114,7 +114,7 @@ export interface AnnouncedVisitor {
     // (undocumented)
     afterDetach(source: PlaceIndex, count: number, destination: FieldKey): void;
     // (undocumented)
-    afterReplace(newContentSource: FieldKey, newContent: Range_2, oldContent: FieldKey, kind: ReplaceKind): void;
+    afterReplace(newContentSource: FieldKey, newContent: Range_2, oldContent: FieldKey): void;
     // (undocumented)
     beforeAttach(source: FieldKey, count: number, destination: PlaceIndex): void;
     // (undocumented)
@@ -122,7 +122,7 @@ export interface AnnouncedVisitor {
     // (undocumented)
     beforeDetach(source: Range_2, destination: FieldKey): void;
     // (undocumented)
-    beforeReplace(newContent: FieldKey, oldContent: Range_2, oldContentDestination: FieldKey, kind: ReplaceKind): void;
+    beforeReplace(newContent: FieldKey, oldContent: Range_2, oldContentDestination: FieldKey): void;
 }
 
 // @alpha
@@ -487,7 +487,7 @@ export interface DeltaVisitor {
     exitNode(index: NodeIndex): void;
     // (undocumented)
     free(): void;
-    replace(newContentSource: FieldKey, range: Range_2, oldContentDestination: FieldKey, kind: ReplaceKind): void;
+    replace(newContentSource: FieldKey, range: Range_2, oldContentDestination: FieldKey): void;
 }
 
 // @alpha
@@ -916,7 +916,11 @@ export interface ICodecOptions {
 }
 
 // @alpha
-export type IdAllocator<TId = number> = (count?: number) => TId;
+export interface IdAllocator<TId = number> {
+    allocate: (count?: number) => TId;
+    // (undocumented)
+    getNextId: () => TId;
+}
 
 // @alpha (undocumented)
 export interface IDecoder<TDecoded, TEncoded> {
@@ -1733,11 +1737,11 @@ export interface PathVisitor {
     afterAttach(source: DetachedPlaceUpPath, destination: RangeUpPath): void;
     afterCreate(content: DetachedRangeUpPath): void;
     afterDetach(source: PlaceUpPath, destination: DetachedRangeUpPath): void;
-    afterReplace(newContentSource: DetachedPlaceUpPath, newContent: RangeUpPath, oldContent: DetachedRangeUpPath, kind: ReplaceKind): void;
+    afterReplace(newContentSource: DetachedPlaceUpPath, newContent: RangeUpPath, oldContent: DetachedRangeUpPath): void;
     beforeAttach(source: DetachedRangeUpPath, destination: PlaceUpPath): void;
     beforeDestroy(content: DetachedRangeUpPath): void;
     beforeDetach(source: RangeUpPath, destination: DetachedPlaceUpPath): void;
-    beforeReplace(newContent: DetachedRangeUpPath, oldContent: RangeUpPath, oldContentDestination: DetachedPlaceUpPath, kind: ReplaceKind): void;
+    beforeReplace(newContent: DetachedRangeUpPath, oldContent: RangeUpPath, oldContentDestination: DetachedPlaceUpPath): void;
     // @deprecated
     onDelete(path: UpPath, count: number): void;
     // @deprecated (undocumented)
@@ -1841,12 +1845,6 @@ interface Remove<TTree = ProtoNode> extends HasModifications<TTree> {
     readonly detachId: DetachedNodeId;
     // (undocumented)
     readonly type: typeof MarkType.Remove;
-}
-
-// @alpha
-export enum ReplaceKind {
-    CellPerfect = 0,
-    SpliceLike = 1
 }
 
 // @alpha

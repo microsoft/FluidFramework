@@ -16,7 +16,6 @@ import {
 	DetachedRangeUpPath,
 	RangeUpPath,
 	DetachedPlaceUpPath,
-	ReplaceKind,
 	PlaceUpPath,
 	AnchorNode,
 } from "../../core";
@@ -1458,14 +1457,12 @@ describe("Editing", () => {
 					newContent: DetachedRangeUpPath,
 					oldContent: RangeUpPath,
 					oldContentDestination: DetachedPlaceUpPath,
-					kind: ReplaceKind,
 				): void {},
 
 				afterReplace(
 					newContentSource: DetachedPlaceUpPath,
 					newContent: RangeUpPath,
 					oldContent: DetachedRangeUpPath,
-					kind: ReplaceKind,
 				): void {},
 				beforeDestroy(content: DetachedRangeUpPath): void {},
 				beforeAttach(source: DetachedRangeUpPath, destination: PlaceUpPath): void {},
@@ -1832,14 +1829,12 @@ describe("Editing", () => {
 					newContent: DetachedRangeUpPath,
 					oldContent: RangeUpPath,
 					oldContentDestination: DetachedPlaceUpPath,
-					kind: ReplaceKind,
 				): void {},
 
 				afterReplace(
 					newContentSource: DetachedPlaceUpPath,
 					newContent: RangeUpPath,
 					oldContent: DetachedRangeUpPath,
-					kind: ReplaceKind,
 				): void {},
 				beforeDestroy(content: DetachedRangeUpPath): void {},
 				beforeAttach(source: DetachedRangeUpPath, destination: PlaceUpPath): void {},

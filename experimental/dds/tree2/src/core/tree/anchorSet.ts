@@ -26,7 +26,7 @@ import {
 	RangeUpPath,
 } from "./pathTree";
 import { Value, EmptyKey } from "./types";
-import { PathVisitor, ReplaceKind } from "./visitPath";
+import { PathVisitor } from "./visitPath";
 import { DeltaVisitor } from "./visitDelta";
 import * as Delta from "./delta";
 import { AnnouncedVisitor } from "./visitorUtils";
@@ -707,12 +707,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				};
 				this.anchorSet.moveChildren(sourcePath, destinationPath, source.end - source.start);
 			},
-			beforeReplace(
-				newContent: FieldKey,
-				oldContent: Range,
-				destination: FieldKey,
-				kind: ReplaceKind,
-			): void {
+			beforeReplace(newContent: FieldKey, oldContent: Range, destination: FieldKey): void {
 				assert(this.parentField !== undefined, "Must be in a field in order to replace");
 				const oldContentPath: RangeUpPath = {
 					parent: this.parent,
@@ -734,7 +729,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 							newNodesSourcePath,
 							oldContentPath,
 							oldNodesDestinationPath,
-							kind,
 						);
 					}
 				}
@@ -743,7 +737,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				newContentSource: FieldKey,
 				newContent: Range,
 				oldContent: FieldKey,
-				kind: ReplaceKind,
 			): void {
 				assert(this.parentField !== undefined, "Must be in a field in order to replace");
 				const newContentPath: RangeUpPath = {
@@ -766,7 +759,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 							newNodesSourcePath,
 							newContentPath,
 							oldNodesDestinationPath,
-							kind,
 						);
 					}
 				}

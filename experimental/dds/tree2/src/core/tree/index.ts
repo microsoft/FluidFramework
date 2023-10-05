@@ -84,7 +84,7 @@ export {
 	combineVisitors,
 	makeDetachedFieldIndex,
 } from "./visitorUtils";
-export { PathVisitor, ReplaceKind } from "./visitPath";
+export { PathVisitor } from "./visitPath";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
 import * as Delta from "./delta";

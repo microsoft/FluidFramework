@@ -12,7 +12,6 @@ import {
 	PlaceUpPath,
 	ProtoNodes,
 	RangeUpPath,
-	ReplaceKind,
 	UpPath,
 	topDownPath,
 } from "../../core";
@@ -363,13 +362,11 @@ abstract class AbstractPathVisitor implements PathVisitor {
 		newContent: DetachedRangeUpPath,
 		oldContent: RangeUpPath,
 		oldContentDestination: DetachedPlaceUpPath,
-		kind: ReplaceKind,
 	): void {}
 	public afterReplace(
 		newContentSource: DetachedPlaceUpPath,
 		newContent: RangeUpPath,
 		oldContent: DetachedRangeUpPath,
-		kind: ReplaceKind,
 	): void {
 		this.onDelete(
 			{

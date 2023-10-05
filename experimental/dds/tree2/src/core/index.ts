@@ -71,7 +71,6 @@ export {
 	DeltaVisitor,
 	AnnouncedVisitor,
 	PathVisitor,
-	ReplaceKind,
 	SparseNode,
 	getDescendant,
 	compareUpPaths,

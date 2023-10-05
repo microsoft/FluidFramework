@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 import { buildForest } from "../../feature-libraries/object-forest";
-import { FieldKey, ReplaceKind, initializeForest, rootFieldKey } from "../../core";
+import { FieldKey, initializeForest, rootFieldKey } from "../../core";
 import { JsonCompatible, brand } from "../../util";
 
 import { testForest } from "../forestTestSuite";
@@ -58,13 +58,7 @@ describe("object-forest", () => {
 			const visitor = forest.acquireVisitor();
 			visitor.enterField(rootFieldKey);
 			assert.throws(
-				() =>
-					visitor.replace(
-						detachedFieldKey,
-						{ start: 0, end: 1 },
-						detachedFieldKey,
-						ReplaceKind.CellPerfect,
-					),
+				() => visitor.replace(detachedFieldKey, { start: 0, end: 1 }, detachedFieldKey),
 				/Replace detached source field and detached destination field must be different/,
 			);
 			visitor.exitField(rootFieldKey);

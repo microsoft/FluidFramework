@@ -17,7 +17,6 @@ import {
 	clonePath,
 	rootFieldKey,
 	DetachedRangeUpPath,
-	ReplaceKind,
 	RangeUpPath,
 	PlaceUpPath,
 	DetachedPlaceUpPath,
@@ -390,12 +389,11 @@ describe("AnchorSet", () => {
 				newContent: DetachedRangeUpPath,
 				oldContent: RangeUpPath,
 				oldContentDestination: DetachedPlaceUpPath,
-				kind: ReplaceKind,
 			): void {
 				log.logger(
 					`visitSubtreeChange.beforeReplace-old:${rangeToString(
 						oldContent,
-					)}-new:${rangeToString(newContent)}-kind:${kind}`,
+					)}-new:${rangeToString(newContent)}`,
 				)();
 			},
 
@@ -403,12 +401,11 @@ describe("AnchorSet", () => {
 				newContentSource: DetachedPlaceUpPath,
 				newContent: RangeUpPath,
 				oldContent: DetachedRangeUpPath,
-				kind: ReplaceKind,
 			): void {
 				log.logger(
 					`visitSubtreeChange.afterReplace-old:${rangeToString(
 						oldContent,
-					)}-new:${rangeToString(newContent)}-kind:${kind}`,
+					)}-new:${rangeToString(newContent)}`,
 				)();
 			},
 			beforeDestroy(content: DetachedRangeUpPath): void {

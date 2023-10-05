@@ -8,7 +8,6 @@ import { FieldKey } from "../schema-stored";
 import * as Delta from "./delta";
 import { PlaceIndex, Range } from "./pathTree";
 import { ForestRootId, DetachedFieldIndex } from "./detachedFieldIndex";
-import { ReplaceKind } from "./visitPath";
 import { DeltaVisitor, visitDelta } from "./visitDelta";
 
 export function makeDetachedFieldIndex(prefix: string = "Temp"): DetachedFieldIndex {
@@ -98,21 +97,16 @@ export function combineVisitors(
 					v.afterDetach(source.start, source.end - source.start, destination);
 				}
 			}),
-		replace: (
-			newContent: FieldKey,
-			oldContent: Range,
-			oldContentDestination: FieldKey,
-			kind: ReplaceKind,
-		) =>
+		replace: (newContent: FieldKey, oldContent: Range, oldContentDestination: FieldKey) =>
 			visitors.forEach((v) => {
 				if (isAnnouncedVisitor(v)) {
-					v.beforeReplace(newContent, oldContent, oldContentDestination, kind);
+					v.beforeReplace(newContent, oldContent, oldContentDestination);
 				}
 				if (isDeltaVisitor(v)) {
-					v.replace(newContent, oldContent, oldContentDestination, kind);
+					v.replace(newContent, oldContent, oldContentDestination);
 				}
 				if (isAnnouncedVisitor(v)) {
-					v.afterReplace(newContent, oldContent, oldContentDestination, kind);
+					v.afterReplace(newContent, oldContent, oldContentDestination);
 				}
 			}),
 		enterNode: (...args) =>
@@ -157,16 +151,6 @@ export interface AnnouncedVisitor {
 	afterAttach(source: FieldKey, destination: Range): void;
 	beforeDetach(source: Range, destination: FieldKey): void;
 	afterDetach(source: PlaceIndex, count: number, destination: FieldKey): void;
-	beforeReplace(
-		newContent: FieldKey,
-		oldContent: Range,
-		oldContentDestination: FieldKey,
-		kind: ReplaceKind,
-	): void;
-	afterReplace(
-		newContentSource: FieldKey,
-		newContent: Range,
-		oldContent: FieldKey,
-		kind: ReplaceKind,
-	): void;
+	beforeReplace(newContent: FieldKey, oldContent: Range, oldContentDestination: FieldKey): void;
+	afterReplace(newContentSource: FieldKey, newContent: Range, oldContent: FieldKey): void;
 }

@@ -25,7 +25,6 @@ import {
 	mapCursorField,
 	DeltaVisitor,
 	PlaceIndex,
-	ReplaceKind,
 	Range,
 } from "../../core";
 import { assertValidRange, brand, fail, getOrAddEmptyToMap } from "../../util";
@@ -194,7 +193,6 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 				newContentSource: FieldKey,
 				range: Range,
 				oldContentDestination: FieldKey,
-				kind: ReplaceKind,
 			): void {
 				assert(
 					newContentSource !== oldContentDestination,

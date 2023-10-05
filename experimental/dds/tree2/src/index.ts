@@ -78,7 +78,6 @@ export {
 	FieldKindSpecifier,
 	AllowedUpdateType,
 	PathVisitor,
-	ReplaceKind,
 	Adapters,
 	TreeAdapter,
 	MapTree,

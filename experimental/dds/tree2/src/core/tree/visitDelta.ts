@@ -9,7 +9,6 @@ import { FieldKey } from "../schema-stored";
 import * as Delta from "./delta";
 import { NodeIndex, PlaceIndex, Range } from "./pathTree";
 import { ForestRootId, DetachedFieldIndex } from "./detachedFieldIndex";
-import { ReplaceKind } from "./visitPath";
 
 /**
  * Implementation notes:
@@ -177,14 +176,8 @@ export interface DeltaVisitor {
 	 * @param newContentSource - The detached field to transfer the new nodes from.
 	 * @param range - The bounds of the range of nodes to replace.
 	 * @param oldContentDestination - The key for a new detached field to transfer the old nodes to.
-	 * @param kind - The kinds of replacement this operation conveys.
 	 */
-	replace(
-		newContentSource: FieldKey,
-		range: Range,
-		oldContentDestination: FieldKey,
-		kind: ReplaceKind,
-	): void;
+	replace(newContentSource: FieldKey, range: Range, oldContentDestination: FieldKey): void;
 
 	enterNode(index: NodeIndex): void;
 	exitNode(index: NodeIndex): void;
@@ -674,7 +667,6 @@ function attachPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 								newContentField,
 								{ start: index, end: index + 1 },
 								oldContentField,
-								ReplaceKind.CellPerfect,
 							);
 						} else {
 							// This a simple attach

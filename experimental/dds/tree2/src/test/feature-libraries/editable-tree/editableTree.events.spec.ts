@@ -14,7 +14,6 @@ import {
 	PathVisitor,
 	ProtoNodes,
 	DetachedRangeUpPath,
-	ReplaceKind,
 	DetachedPlaceUpPath,
 	PlaceUpPath,
 	RangeUpPath,
@@ -101,13 +100,11 @@ describe("editable-tree: event subscription", () => {
 					newContent: DetachedRangeUpPath,
 					oldContent: RangeUpPath,
 					oldContentDestination: DetachedPlaceUpPath,
-					kind: ReplaceKind,
 				): void {},
 				afterReplace(
 					newContentSource: DetachedPlaceUpPath,
 					newContent: RangeUpPath,
 					oldContent: DetachedRangeUpPath,
-					kind: ReplaceKind,
 				): void {},
 			};
 			return visitor;
