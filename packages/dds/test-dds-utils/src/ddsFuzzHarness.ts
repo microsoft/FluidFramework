@@ -198,6 +198,13 @@ export interface DDSFuzzModel<
 		channelB: ReturnType<TChannelFactory["create"]>,
 	) => void;
 
+	/**
+	 * An array of transforms used during fuzz test minimization to reduce test
+	 * cases. See {@link MinimizationTransform} for additional context.
+	 *
+	 * If no transforms are supplied, minimization will still occur, but the
+	 * contents of the operations will remain unchanged.
+	 */
 	minimizationTransforms?: MinimizationTransform<TOperation>[];
 }
 

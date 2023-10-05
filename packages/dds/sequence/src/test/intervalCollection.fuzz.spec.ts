@@ -226,10 +226,9 @@ const baseModel: Omit<
 	minimizationTransforms: [
 		(op) => {
 			if (op.type !== "addText") {
-				return op;
+				return;
 			}
 			op.content = op.content.slice(1);
-			return op;
 		},
 		(op) => {
 			switch (op.type) {
@@ -250,16 +249,14 @@ const baseModel: Omit<
 				default:
 					break;
 			}
-			return op;
 		},
 		(op) => {
 			if (op.type !== "removeRange" && op.type !== "addInterval") {
-				return op;
+				return;
 			}
 			if (op.end > 0) {
 				op.end -= 1;
 			}
-			return op;
 		},
 	],
 };

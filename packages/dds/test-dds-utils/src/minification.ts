@@ -7,9 +7,32 @@ import { SaveInfo, makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { BaseOperation, DDSFuzzModel, DDSFuzzSuiteOptions, replayTest } from "./ddsFuzzHarness";
 
-export type MinimizationTransform<TOperation extends BaseOperation> = (
-	op: TOperation,
-) => TOperation;
+/**
+ * A function which takes in an operation and modifies it by reference to be more
+ * minimal.
+ *
+ * This function should be a small step forward and should avoid expensive
+ * computations, as it will be run potentially thousands of times.
+ *
+ * A good example of a minimization transform is:
+ *
+ * ```ts
+ * (op) => {
+ *   // this transform only applies to text insertion ops
+ *   if (op.type !== "addText") {
+ * 		return;
+ * 	 }
+ *
+ *   // shift the insertion index to the left by one. this makes the index
+ * 	 // a smaller number and may allow other ops to be shifted to the left
+ *   // as well
+ * 	 if (op.index > 0) {
+ * 		op.index -= 1;
+ * 	 }
+ * }
+ * ```
+ */
+export type MinimizationTransform<TOperation extends BaseOperation> = (op: TOperation) => void;
 
 export class FuzzTestMinimizer<
 	TChannelFactory extends IChannelFactory,
@@ -34,6 +57,9 @@ export class FuzzTestMinimizer<
 		const firstError = await this.assertFails();
 
 		if (!firstError) {
+			// throw an error here rather than silently returning the operations
+			// unchanged. a test case that doesn't fail initially indicates an
+			// error, either on the part of the user or in the fuzz test runner
 			throw new Error("test case doesn't fail.");
 		}
 
@@ -73,10 +99,6 @@ export class FuzzTestMinimizer<
 	private async applyRandomTransform(): Promise<void> {
 		const transform = this.random.pick(this.transforms);
 
-		if (!transform) {
-			throw new Error("no transforms passed");
-		}
-
 		const opIdx = this.random.integer(0, this.operations.length - 1);
 
 		await this.applyTransform(transform, opIdx);
@@ -93,7 +115,7 @@ export class FuzzTestMinimizer<
 			.map(() => this.random.pick(this.transforms));
 
 		// select `n` random operations without duplicates
-		let operationIdxs = [...Array.from({ length: n }).keys()];
+		let operationIdxs = [...Array.from({ length: this.operations.length }).keys()];
 		this.random.shuffle(operationIdxs);
 		operationIdxs = operationIdxs.slice(0, n);
 
@@ -134,7 +156,7 @@ export class FuzzTestMinimizer<
 
 		const op = this.operations[opIdx];
 
-		// deep clone the op as transforms may modify by reference
+		// deep clone the op as transforms modify by reference
 		const originalOp = JSON.parse(JSON.stringify(op)) as TOperation;
 
 		transform(op);
