@@ -656,7 +656,7 @@ async function createSummarizer(loader: ILoader, url: string): Promise<ISummariz
 	if (resolvedContainer.getEntryPoint !== undefined) {
 		fluidObject = await resolvedContainer.getEntryPoint();
 	} else {
-		const response = await resolvedContainer.request({ url: summarizerRequestUrl });
+		const response = await resolvedContainer.request({ url: `/${summarizerRequestUrl}` });
 		if (response.status !== 200 || response.mimeType !== "fluid/object") {
 			throw responseToException(response, request);
 		}
@@ -3956,12 +3956,7 @@ export class ContainerRuntime
 	 */
 	private formCreateSummarizerFn(loader: ILoader) {
 		return async () => {
-			const absoluteUrl = await this.getAbsoluteUrl("");
-			assert(
-				absoluteUrl !== undefined,
-				"absoluteUrl could not be resolved for creating summarizer",
-			);
-			return createSummarizer(loader, absoluteUrl);
+			return createSummarizer(loader, `/${summarizerRequestUrl}`);
 		};
 	}
 
