@@ -12,6 +12,8 @@ import {
 } from "@fluid-internal/test-dds-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { UpPath, Anchor, Value, AllowedUpdateType, JsonableTree } from "../../../core";
+import { ISharedTreeView, SharedTree } from "../../../shared-tree";
+import { SchemaAware, typeNameSymbol } from "../../../feature-libraries";
 import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils";
 import { makeOpGenerator, EditGeneratorOpWeights, FuzzTestState } from "./fuzzEditGenerators";
 import { fuzzReducer } from "./fuzzEditReducers";
@@ -24,8 +26,6 @@ import {
 	failureDirectory,
 } from "./fuzzUtils";
 import { Operation } from "./operationTypes";
-import { ISharedTreeView, SharedTree } from "../../../shared-tree";
-import { SchemaAware, typeNameSymbol } from "../../../feature-libraries";
 
 interface AbortFuzzTestState extends FuzzTestState {
 	anchors?: Map<Anchor, [UpPath, Value]>[];
