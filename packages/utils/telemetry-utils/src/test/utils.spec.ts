@@ -158,7 +158,7 @@ describe("Sampling", () => {
 		};
 		const logger = getMockLoggerExtWithConfig(injectedSettings);
 
-		// Sampling is disabled AND there was no sampler provided
+		// Sampling is enabled AND there was no sampler provided
 		const loggerWithoutSampling = createSampledLogger(logger);
 
 		const totalEventCount = 15;

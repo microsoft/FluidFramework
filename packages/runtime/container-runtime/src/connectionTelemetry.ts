@@ -145,7 +145,8 @@ class OpPerfTelemetry {
 			for (const msg of messages) {
 				if (
 					msg.type === MessageType.Operation &&
-					this.clientSequenceNumberForLatencyStatistics === msg.clientSequenceNumber
+					(this.opLatencyLogger.isSamplingDisabled ||
+						this.clientSequenceNumberForLatencyStatistics === msg.clientSequenceNumber)
 				) {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const latencyStats = this.latencyStatistics.get(msg.clientSequenceNumber)!;
