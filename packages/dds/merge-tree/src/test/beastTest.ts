@@ -4,7 +4,6 @@
  */
 
 /* eslint-disable @typescript-eslint/consistent-type-assertions, no-bitwise */
-/* eslint-disable @typescript-eslint/no-base-to-string */
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
@@ -22,16 +21,9 @@ import {
 	PropertyAction,
 	RedBlackTree,
 	SortedDictionary,
-	Stack,
 } from "../collections";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
-import {
-	IJSONMarkerSegment,
-	IMergeNode,
-	ISegment,
-	Marker,
-	reservedMarkerIdKey,
-} from "../mergeTreeNodes";
+import { IJSONMarkerSegment, IMergeNode, ISegment, reservedMarkerIdKey } from "../mergeTreeNodes";
 import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
 import { createRemoveRangeOp } from "../opBuilder";
 import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
@@ -1647,10 +1639,6 @@ export class RandomPack {
 	}
 }
 
-function docNodeToString(docNode: DocumentNode) {
-	return typeof docNode === "string" ? docNode : docNode.name;
-}
-
 export type DocumentNode = string | DocumentTree;
 /**
  * Generate and model documents from the following tree grammar:
@@ -1666,7 +1654,10 @@ export class DocumentTree {
 	id: string | undefined;
 	static randPack = new RandomPack();
 
-	constructor(public name: string, public children: DocumentNode[]) {}
+	constructor(
+		public name: string,
+		public children: DocumentNode[],
+	) {}
 
 	addToMergeTree(client: TestClient, docNode: DocumentNode) {
 		if (typeof docNode === "string") {
@@ -1689,7 +1680,7 @@ export class DocumentTree {
 					[reservedMarkerIdKey]: trid,
 					[reservedRangeLabelsKey]: [docNode.name],
 				};
-				let behaviors = ReferenceType.NestBegin;
+				let behaviors = ReferenceType.Simple;
 				if (docNode.name === "row") {
 					props[reservedTileLabelsKey] = ["pg"];
 					behaviors |= ReferenceType.Tile;
@@ -1703,148 +1694,13 @@ export class DocumentTree {
 			}
 			if (docNode.name !== "pg") {
 				const etrid = `end-${docNode.name}${id?.toString()}`;
-				client.insertMarkerLocal(this.pos, ReferenceType.NestEnd, {
+				client.insertMarkerLocal(this.pos, ReferenceType.Simple, {
 					[reservedMarkerIdKey]: etrid,
 					[reservedRangeLabelsKey]: [docNode.name],
 				});
 				this.pos++;
 			}
 		}
-	}
-
-	checkStacksAllPositions(client: TestClient) {
-		let errorCount = 0;
-		let pos = 0;
-		const verbose = false;
-		const stacks = {
-			box: new Stack<string>(),
-			row: new Stack<string>(),
-		};
-
-		function printStack(stack: Stack<string>) {
-			// eslint-disable-next-line @typescript-eslint/no-for-in-array, guard-for-in, no-restricted-syntax
-			for (const item in stack.items) {
-				log(item);
-			}
-		}
-
-		function printStacks() {
-			for (const name of ["box", "row"]) {
-				log(`${name}:`);
-				printStack(stacks[name]);
-			}
-		}
-
-		function checkTreeStackEmpty(treeStack: Stack<string>) {
-			if (!treeStack.empty()) {
-				errorCount++;
-				log("mismatch: client stack empty; tree stack not");
-			}
-		}
-
-		const checkNodeStacks = (docNode: DocumentNode) => {
-			if (typeof docNode === "string") {
-				const text = docNode;
-				const epos = pos + text.length;
-				if (verbose) {
-					log(`stacks for [${pos}, ${epos}): ${text}`);
-					printStacks();
-				}
-				const cliStacks = client.getStackContext(pos, ["box", "row"]);
-				for (const name of ["box", "row"]) {
-					const cliStack = cliStacks[name];
-					const treeStack = <Stack<string>>stacks[name];
-					if (cliStack) {
-						const len = cliStack.items.length;
-						if (len > 0) {
-							if (len !== treeStack.items.length) {
-								log(
-									`stack length mismatch cli ${len} tree ${treeStack.items.length}`,
-								);
-								errorCount++;
-							}
-							for (let i = 0; i < len; i++) {
-								const cliMarkerId = (cliStack.items[i] as Marker).getId();
-								const treeMarkerId = treeStack.items[i];
-								if (cliMarkerId !== treeMarkerId) {
-									errorCount++;
-									log(
-										`mismatch index ${i}: ${cliMarkerId} !== ${treeMarkerId} pos ${pos} text ${text}`,
-									);
-									printStack(treeStack);
-									log(client.mergeTree.toString());
-								}
-							}
-						} else {
-							checkTreeStackEmpty(treeStack);
-						}
-					} else {
-						checkTreeStackEmpty(treeStack);
-					}
-				}
-				pos = epos;
-			} else {
-				pos++;
-				if (docNode.name === "pg") {
-					checkNodeStacks(docNode.children[0]);
-				} else {
-					stacks[docNode.name].push(docNode.id);
-					for (const child of docNode.children) {
-						checkNodeStacks(child);
-					}
-					stacks[docNode.name].pop();
-					pos++;
-				}
-			}
-		};
-
-		let prevPos = -1;
-		let prevChild: DocumentNode | undefined;
-
-		// log(client.mergeTree.toString());
-		for (const rootChild of this.children) {
-			if (prevPos >= 0) {
-				if (typeof prevChild !== "string" && prevChild?.name === "row") {
-					const id = prevChild.id;
-					const endId = `end-${id}`;
-					const endRowMarker = <Marker>client.getMarkerFromId(endId);
-					const endRowPos = client.getPosition(endRowMarker);
-					prevPos = endRowPos;
-				}
-				const tilePos = client.findTile(prevPos + 1, "pg", false);
-				if (tilePos) {
-					if (tilePos.pos !== pos) {
-						errorCount++;
-						log(
-							`next tile ${tilePos.tile} found from pos ${prevPos} at ${tilePos.pos} compare to ${pos}`,
-						);
-					}
-				}
-			}
-			if (verbose) {
-				log(`next child ${pos} with name ${docNodeToString(rootChild)}`);
-			}
-			prevPos = pos;
-			prevChild = rootChild;
-			// printStacks();
-			checkNodeStacks(rootChild);
-		}
-		return errorCount;
-	}
-
-	private generateClient() {
-		const client = new TestClient();
-		client.startOrUpdateCollaboration("Fred");
-		for (const child of this.children) {
-			this.addToMergeTree(client, child);
-		}
-		return client;
-	}
-
-	static test1() {
-		const doc = DocumentTree.generateDocument();
-		const client = doc.generateClient();
-		return doc.checkStacksAllPositions(client);
 	}
 
 	static generateDocument() {
@@ -1963,10 +1819,6 @@ describe("Routerlicious", () => {
 			const testPack = TestPack(true);
 			testPack.firstTest();
 		});
-
-		it("hierarchy", () => {
-			assert(DocumentTree.test1() === 0, logLines.join("\n"));
-		}).timeout(testTimeout);
 
 		it("randolicious", () => {
 			const testPack = TestPack(false);

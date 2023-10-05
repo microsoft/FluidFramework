@@ -145,8 +145,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     };
     // (undocumented)
     getShortClientId(longClientId: string): number;
-    // @deprecated (undocumented)
-    getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap;
     // (undocumented)
     insertAtReferencePositionLocal(refPos: ReferencePosition, segment: ISegment): IMergeTreeInsertMsg | undefined;
     // (undocumented)
@@ -363,14 +361,6 @@ export interface IConsensusValue {
     value: any;
 }
 
-// @internal @deprecated
-export interface IIntegerRange {
-    // (undocumented)
-    end: number;
-    // (undocumented)
-    start: number;
-}
-
 // @public (undocumented)
 export interface IJSONMarkerSegment extends IJSONSegment {
     // (undocumented)
@@ -539,9 +529,6 @@ export interface IMergeTreeTextHelper {
     // (undocumented)
     getText(refSeq: number, clientId: number, placeholder: string, start?: number, end?: number): string;
 }
-
-// @public @deprecated (undocumented)
-export function internedSpaces(n: number): string;
 
 // @internal (undocumented)
 export interface IRBAugmentation<TKey, TData> {
@@ -782,7 +769,7 @@ export const MergeTreeDeltaType: {
 };
 
 // @public (undocumented)
-export type MergeTreeDeltaType = typeof MergeTreeDeltaType[keyof typeof MergeTreeDeltaType];
+export type MergeTreeDeltaType = (typeof MergeTreeDeltaType)[keyof typeof MergeTreeDeltaType];
 
 // @public (undocumented)
 export type MergeTreeMaintenanceCallback = (MaintenanceArgs: IMergeTreeMaintenanceCallbackArgs, opArgs: IMergeTreeDeltaOpArgs | undefined) => void;
@@ -796,7 +783,7 @@ export const MergeTreeMaintenanceType: {
 };
 
 // @public (undocumented)
-export type MergeTreeMaintenanceType = typeof MergeTreeMaintenanceType[keyof typeof MergeTreeMaintenanceType];
+export type MergeTreeMaintenanceType = (typeof MergeTreeMaintenanceType)[keyof typeof MergeTreeMaintenanceType];
 
 // @alpha (undocumented)
 export interface MergeTreeRevertibleDriver {
@@ -861,9 +848,6 @@ export interface QProperty<TKey, TData> {
     key?: TKey;
 }
 
-// @public @deprecated (undocumented)
-export type RangeStackMap = MapLike<Stack<ReferencePosition>>;
-
 // @internal (undocumented)
 export const RBColor: {
     readonly RED: 0;
@@ -871,7 +855,7 @@ export const RBColor: {
 };
 
 // @internal (undocumented)
-export type RBColor = typeof RBColor[keyof typeof RBColor];
+export type RBColor = (typeof RBColor)[keyof typeof RBColor];
 
 // @internal (undocumented)
 export interface RBNode<TKey, TData> {
@@ -958,10 +942,6 @@ export interface ReferencePosition {
 
 // @public
 export enum ReferenceType {
-    // @deprecated (undocumented)
-    NestBegin = 2,
-    // @deprecated (undocumented)
-    NestEnd = 4,
     // (undocumented)
     RangeBegin = 16,
     // (undocumented)
@@ -974,17 +954,8 @@ export enum ReferenceType {
     Transient = 256
 }
 
-// @public @deprecated (undocumented)
-export const refGetRangeLabels: (refPos: ReferencePosition) => string[] | undefined;
-
 // @public (undocumented)
 export const refGetTileLabels: (refPos: ReferencePosition) => string[] | undefined;
-
-// @public @deprecated (undocumented)
-export function refHasRangeLabel(refPos: ReferencePosition, label: string): boolean;
-
-// @public @deprecated (undocumented)
-export function refHasRangeLabels(refPos: ReferencePosition): boolean;
 
 // @public (undocumented)
 export function refHasTileLabel(refPos: ReferencePosition, label: string): boolean;
@@ -1069,7 +1040,7 @@ export const SlidingPreference: {
 };
 
 // @public
-export type SlidingPreference = typeof SlidingPreference[keyof typeof SlidingPreference];
+export type SlidingPreference = (typeof SlidingPreference)[keyof typeof SlidingPreference];
 
 // @internal (undocumented)
 export interface SortedDictionary<TKey, TData> extends Dictionary<TKey, TData> {

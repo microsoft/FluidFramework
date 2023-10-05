@@ -65,7 +65,7 @@ describe("schema converter", () => {
 						const idFieldSchema =
 							propertySchema.structFields.get(brand("guid")) ??
 							fail("expected field");
-						assert.deepEqual(idFieldSchema.kind, FieldKinds.value);
+						assert.deepEqual(idFieldSchema.kind, FieldKinds.required);
 						assert.deepEqual(
 							[...(idFieldSchema.types ?? fail("expected types"))],
 							["String"],
@@ -85,7 +85,7 @@ describe("schema converter", () => {
 							const idFieldSchema =
 								propertySchema.structFields.get(brand("guid")) ??
 								fail("expected field");
-							assert.deepEqual(idFieldSchema.kind, FieldKinds.value);
+							assert.deepEqual(idFieldSchema.kind, FieldKinds.required);
 							assert.deepEqual(
 								[...(idFieldSchema.types ?? fail("expected types"))],
 								["String"],
@@ -94,7 +94,7 @@ describe("schema converter", () => {
 								const toFieldSchema =
 									propertySchema.structFields.get(brand("to")) ??
 									fail("expected field");
-								assert.deepEqual(toFieldSchema.kind, FieldKinds.value);
+								assert.deepEqual(toFieldSchema.kind, FieldKinds.required);
 								assert.deepEqual(
 									[...(toFieldSchema.types ?? fail("expected types"))],
 									["Reference"],

@@ -57,12 +57,12 @@ function createTreeMarkerOps(
 
 	return [
 		{
-			seg: { marker: { refType: ReferenceType.NestBegin }, props: beginMarkerProps },
+			seg: { marker: { refType: ReferenceType.Simple }, props: beginMarkerProps },
 			pos1: beginMarkerPos,
 			type: MergeTreeDeltaType.INSERT,
 		},
 		{
-			seg: { marker: { refType: ReferenceType.NestEnd }, props: endMarkerProps },
+			seg: { marker: { refType: ReferenceType.Simple }, props: endMarkerProps },
 			pos1: endMarkerPos,
 			type: MergeTreeDeltaType.INSERT,
 		},

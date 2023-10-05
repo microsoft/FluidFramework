@@ -91,6 +91,7 @@ declare function get_current_ClassDeclaration_Client():
 declare function use_old_ClassDeclaration_Client(
     use: TypeOnly<old.Client>);
 use_old_ClassDeclaration_Client(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_Client());
 
 /*
@@ -337,26 +338,14 @@ use_old_InterfaceDeclaration_IConsensusValue(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IIntegerRange": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IIntegerRange": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IIntegerRange():
-    TypeOnly<old.IIntegerRange>;
-declare function use_current_InterfaceDeclaration_IIntegerRange(
-    use: TypeOnly<current.IIntegerRange>);
-use_current_InterfaceDeclaration_IIntegerRange(
-    get_old_InterfaceDeclaration_IIntegerRange());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IIntegerRange": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IIntegerRange": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IIntegerRange():
-    TypeOnly<current.IIntegerRange>;
-declare function use_old_InterfaceDeclaration_IIntegerRange(
-    use: TypeOnly<old.IIntegerRange>);
-use_old_InterfaceDeclaration_IIntegerRange(
-    get_current_InterfaceDeclaration_IIntegerRange());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1705,26 +1694,14 @@ use_old_InterfaceDeclaration_RBNodeActions(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_RangeStackMap": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_RangeStackMap": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_RangeStackMap():
-    TypeOnly<old.RangeStackMap>;
-declare function use_current_TypeAliasDeclaration_RangeStackMap(
-    use: TypeOnly<current.RangeStackMap>);
-use_current_TypeAliasDeclaration_RangeStackMap(
-    get_old_TypeAliasDeclaration_RangeStackMap());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_RangeStackMap": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_RangeStackMap": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_RangeStackMap():
-    TypeOnly<current.RangeStackMap>;
-declare function use_old_TypeAliasDeclaration_RangeStackMap(
-    use: TypeOnly<old.RangeStackMap>);
-use_old_TypeAliasDeclaration_RangeStackMap(
-    get_current_TypeAliasDeclaration_RangeStackMap());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -2761,26 +2738,14 @@ use_old_FunctionDeclaration_getSlideToSegoff(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_internedSpaces": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_internedSpaces": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_internedSpaces():
-    TypeOnly<typeof old.internedSpaces>;
-declare function use_current_FunctionDeclaration_internedSpaces(
-    use: TypeOnly<typeof current.internedSpaces>);
-use_current_FunctionDeclaration_internedSpaces(
-    get_old_FunctionDeclaration_internedSpaces());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_internedSpaces": {"backCompat": false}
+* "RemovedFunctionDeclaration_internedSpaces": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_internedSpaces():
-    TypeOnly<typeof current.internedSpaces>;
-declare function use_old_FunctionDeclaration_internedSpaces(
-    use: TypeOnly<typeof old.internedSpaces>);
-use_old_FunctionDeclaration_internedSpaces(
-    get_current_FunctionDeclaration_internedSpaces());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -2881,26 +2846,14 @@ use_old_FunctionDeclaration_minReferencePosition(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_refGetRangeLabels": {"forwardCompat": false}
+* "RemovedVariableDeclaration_refGetRangeLabels": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_refGetRangeLabels():
-    TypeOnly<typeof old.refGetRangeLabels>;
-declare function use_current_VariableDeclaration_refGetRangeLabels(
-    use: TypeOnly<typeof current.refGetRangeLabels>);
-use_current_VariableDeclaration_refGetRangeLabels(
-    get_old_VariableDeclaration_refGetRangeLabels());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_refGetRangeLabels": {"backCompat": false}
+* "RemovedVariableDeclaration_refGetRangeLabels": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_refGetRangeLabels():
-    TypeOnly<typeof current.refGetRangeLabels>;
-declare function use_old_VariableDeclaration_refGetRangeLabels(
-    use: TypeOnly<typeof old.refGetRangeLabels>);
-use_old_VariableDeclaration_refGetRangeLabels(
-    get_current_VariableDeclaration_refGetRangeLabels());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -2929,50 +2882,26 @@ use_old_VariableDeclaration_refGetTileLabels(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_refHasRangeLabel": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_refHasRangeLabel": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_refHasRangeLabel():
-    TypeOnly<typeof old.refHasRangeLabel>;
-declare function use_current_FunctionDeclaration_refHasRangeLabel(
-    use: TypeOnly<typeof current.refHasRangeLabel>);
-use_current_FunctionDeclaration_refHasRangeLabel(
-    get_old_FunctionDeclaration_refHasRangeLabel());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_refHasRangeLabel": {"backCompat": false}
+* "RemovedFunctionDeclaration_refHasRangeLabel": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_refHasRangeLabel():
-    TypeOnly<typeof current.refHasRangeLabel>;
-declare function use_old_FunctionDeclaration_refHasRangeLabel(
-    use: TypeOnly<typeof old.refHasRangeLabel>);
-use_old_FunctionDeclaration_refHasRangeLabel(
-    get_current_FunctionDeclaration_refHasRangeLabel());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_refHasRangeLabels": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_refHasRangeLabels": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_refHasRangeLabels():
-    TypeOnly<typeof old.refHasRangeLabels>;
-declare function use_current_FunctionDeclaration_refHasRangeLabels(
-    use: TypeOnly<typeof current.refHasRangeLabels>);
-use_current_FunctionDeclaration_refHasRangeLabels(
-    get_old_FunctionDeclaration_refHasRangeLabels());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_refHasRangeLabels": {"backCompat": false}
+* "RemovedFunctionDeclaration_refHasRangeLabels": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_refHasRangeLabels():
-    TypeOnly<typeof current.refHasRangeLabels>;
-declare function use_old_FunctionDeclaration_refHasRangeLabels(
-    use: TypeOnly<typeof old.refHasRangeLabels>);
-use_old_FunctionDeclaration_refHasRangeLabels(
-    get_current_FunctionDeclaration_refHasRangeLabels());
 
 /*
 * Validate forward compat by using old type in place of current type

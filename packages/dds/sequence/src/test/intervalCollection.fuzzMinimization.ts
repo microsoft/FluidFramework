@@ -58,7 +58,10 @@ interface OpMinimizationPass {
 }
 
 export class PassManager {
-	constructor(readonly original_operations: Operation[], readonly seed: number) {}
+	constructor(
+		readonly original_operations: Operation[],
+		readonly seed: number,
+	) {}
 
 	random = makeRandom();
 

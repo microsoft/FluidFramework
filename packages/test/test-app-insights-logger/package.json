@@ -42,7 +42,7 @@
 		"@fluidframework/eslint-config-fluid": "^2.1.0",
 		"@types/node": "^16.18.38",
 		"eslint": "~8.6.0",
-		"prettier": "~2.6.2",
+		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.1.6"
 	},
