@@ -136,6 +136,26 @@
 			"RemovedClassDeclaration_Stack": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"FunctionDeclaration_extendIfUndefined": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_clone": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_combine": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_extend": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_extendIfUndefined": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}

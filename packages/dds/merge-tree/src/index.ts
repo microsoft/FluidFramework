@@ -110,11 +110,7 @@ export {
 } from "./ops";
 export {
 	addProperties,
-	clone,
-	combine,
 	createMap,
-	extend,
-	extendIfUndefined,
 	IConsensusValue,
 	MapLike,
 	matchProperties,

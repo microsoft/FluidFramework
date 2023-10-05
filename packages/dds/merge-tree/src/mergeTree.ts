@@ -64,7 +64,7 @@ import {
 	ReferenceType,
 } from "./ops";
 import { PartialSequenceLengths } from "./partialLengths";
-import { createMap, extend, MapLike, PropertySet } from "./properties";
+import { createMap, extend, extendIfUndefined, MapLike, PropertySet } from "./properties";
 import {
 	refTypeIncludesFlag,
 	ReferencePosition,
@@ -247,17 +247,6 @@ function addNodeReferences(
 	}
 }
 
-function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | undefined) {
-	if (extension !== undefined) {
-		// eslint-disable-next-line no-restricted-syntax
-		for (const key in extension) {
-			if (base[key] === undefined) {
-				base[key] = extension[key];
-			}
-		}
-	}
-	return base;
-}
 class HierMergeBlock extends MergeBlock implements IHierBlock {
 	public rightmostTiles: MapLike<ReferencePosition>;
 	public leftmostTiles: MapLike<ReferencePosition>;
