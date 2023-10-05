@@ -38,6 +38,8 @@ import {
 	getPerson,
 	Int32,
 	Address,
+	Bool,
+	Person,
 } from "./mockData";
 
 const fieldAddress: FieldKey = brand("address");
@@ -145,9 +147,17 @@ describe("editable-tree: event subscription", () => {
 	});
 });
 
+function getPersonBasic(): Person {
+	return {
+		name: "Adam",
+		age: brand<Int32>(35),
+		adult: brand<Bool>(true),
+	} as unknown as Person; // TODO: fix up these strong types to reflect unwrapping
+}
+
 describe("beforeChange/afterChange events", () => {
-	it.only("fire the expected number of times", () => {
-		const tree = viewWithContent({ schema: fullSchemaData, initialTree: getPerson() });
+	it("fire the expected number of times", () => {
+		const tree = viewWithContent({ schema: fullSchemaData, initialTree: getPersonBasic() });
 		const person = tree.root as EditableTree;
 
 		let beforeChangePersonCount = 0;
@@ -165,13 +175,13 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(beforeChangePersonCount, 0);
 		assert.strictEqual(afterChangePersonCount, 0);
 
-		// Update age; should fire events on the person node.
+		// Replace existing node - age; should fire events on the person node.
 		person.age = brand<Int32>(32);
 
 		assert.strictEqual(beforeChangePersonCount, 1);
 		assert.strictEqual(afterChangePersonCount, 1);
 
-		// Update address; should fire events on the person node.
+		// Add node where there was none before - address; should fire events on the person node.
 		// This also lets us put listeners on it, otherwise get complaints that person.address might be undefined below.
 		person.address = {
 			zip: "99999",
@@ -220,10 +230,16 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(afterChangePersonCount, 5);
 		assert.strictEqual(beforeChangeAddressCount, 1);
 		assert.strictEqual(afterChangeAddressCount, 1);
+
+		// Delete node - age; should fire events on the person node
+		delete person.age;
+
+		assert.strictEqual(beforeChangePersonCount, 6);
+		assert.strictEqual(afterChangePersonCount, 6);
 	});
 
 	it.only("fire in the expected order and always together", () => {
-		const tree = viewWithContent({ schema: fullSchemaData, initialTree: getPerson() });
+		const tree = viewWithContent({ schema: fullSchemaData, initialTree: getPersonBasic() });
 		const person = tree.root as EditableTree;
 
 		let beforeCounter = 0;
@@ -238,13 +254,18 @@ describe("beforeChange/afterChange events", () => {
 			assert.strictEqual(afterCounter, beforeCounter, "afterChange fired out of order");
 		});
 
-		// Make updates to the tree
+		// Make updates of different kinds to the tree
+		// Replace an existing node
 		person.age = brand<Int32>(32);
+		// Add a node where there was none before
 		person.address = {
 			zip: "99999",
 			street: "foo",
 			phones: [12345],
 		} as unknown as Address; // TODO: fix up these strong types to reflect unwrapping
+		// Delete a node
+		delete person.age;
+		// Other miscelleaneous updates
 		person.address.zip = brand<Int32>(12345);
 		person.address = {
 			zip: "99999",
@@ -254,8 +275,8 @@ describe("beforeChange/afterChange events", () => {
 		person.address.zip = brand<Int32>(23456);
 
 		// Check the number of events fired is correct (otherwise the assertions in the listeners might not have ran)
-		assert.strictEqual(beforeCounter, 5);
-		assert.strictEqual(afterCounter, 5);
+		assert.strictEqual(beforeCounter, 6);
+		assert.strictEqual(afterCounter, 6);
 	});
 
 	it.skip("not emitted by leaf nodes when they are replaced", () => {
