@@ -77,9 +77,9 @@ function initializeTreeWithContent<Kind extends FieldKind, Types extends Allowed
 }
 
 /**
- * Mock {@link LazyField} implementation for testing.
+ * Test {@link LazyField} implementation.
  */
-class MockLazyField<TTypes extends AllowedTypes> extends LazyField<
+class TestLazyField<TTypes extends AllowedTypes> extends LazyField<
 	typeof FieldKinds.optional,
 	TTypes
 > {}
@@ -155,7 +155,7 @@ describe("LazyField", () => {
 
 		// #region OptionalField<Any>
 
-		const anyOptionalField = new MockLazyField(
+		const anyOptionalField = new TestLazyField(
 			context,
 			SchemaBuilder.fieldOptional(Any),
 			cursor,
@@ -226,7 +226,7 @@ describe("LazyField", () => {
 			},
 		});
 
-		const rootField = new MockLazyField(context, rootSchema, cursor, rootFieldAnchor);
+		const rootField = new TestLazyField(context, rootSchema, cursor, rootFieldAnchor);
 		assert.equal(rootField.parent, undefined);
 
 		const parentPath: UpPath = {
@@ -240,7 +240,7 @@ describe("LazyField", () => {
 		cursor.enterNode(0);
 		cursor.enterField(brand("foo"));
 
-		const leafField = new MockLazyField(
+		const leafField = new TestLazyField(
 			context,
 			SchemaBuilder.fieldOptional(...leafDomain.primitives),
 			cursor,
