@@ -3957,9 +3957,10 @@ export class ContainerRuntime
 	private formCreateSummarizerFn(loader: ILoader) {
 		return async () => {
 			const absoluteUrl = await this.getAbsoluteUrl("");
-			if (absoluteUrl === undefined) {
-				throw new Error("absoluteUrl could not be resolved for creating summarizer");
-			}
+			assert(
+				absoluteUrl !== undefined,
+				"absoluteUrl could not be resolved for creating summarizer",
+			);
 			return createSummarizer(loader, absoluteUrl);
 		};
 	}
