@@ -145,7 +145,7 @@ export const makeEditGenerator = (
 		const fieldInfo = selectTreeField(tree.view, state.random, weights.fieldSelection);
 		switch (fieldInfo.type) {
 			case "optional":
-			case "value": {
+			case "required": {
 				const { type: fieldType, content: field } = fieldInfo;
 				const contents: FuzzSet = {
 					type: "set",
@@ -178,7 +178,7 @@ export const makeEditGenerator = (
 	};
 
 	const deletableFieldFilter: FieldFilter = (fieldInfo) =>
-		isNonEmptyField(fieldInfo) && fieldInfo.type !== "value";
+		isNonEmptyField(fieldInfo) && fieldInfo.type !== "required";
 
 	const deleteContent = (state: FuzzTestState): FieldEditTypes => {
 		const tree = state.client.channel;
@@ -400,7 +400,7 @@ type FuzzField =
 			content: FuzzNode["boxedSequenceF"];
 	  }
 	| {
-			type: "value";
+			type: "required";
 			content: FuzzNode["boxedRequiredF"];
 	  };
 
@@ -429,11 +429,11 @@ function selectField(
 	};
 
 	const value = (): FuzzField | "no-valid-fields" => {
-		const field = { type: "value", content: node.boxedRequiredF } as const;
+		const field = { type: "required", content: node.boxedRequiredF } as const;
 		if (filter(field)) {
 			return field;
 		} else {
-			alreadyPickedOptions.add("value");
+			alreadyPickedOptions.add("required");
 			return "no-valid-fields";
 		}
 	};
@@ -482,7 +482,7 @@ function selectField(
 	const hasNotAlreadySelected = (name: string) => () => !alreadyPickedOptions.has(name);
 	const generator = createWeightedGenerator<FuzzField | "no-valid-fields", BaseFuzzTestState>([
 		[optional, weights.optional, hasNotAlreadySelected("optional")],
-		[value, weights.value, hasNotAlreadySelected("value")],
+		[value, weights.value, hasNotAlreadySelected("required")],
 		[sequence, weights.sequence, hasNotAlreadySelected("sequence")],
 		[recurse, weights.recurse, hasNotAlreadySelected("child")],
 		[

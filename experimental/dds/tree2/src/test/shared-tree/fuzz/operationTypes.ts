@@ -66,15 +66,15 @@ export interface FuzzSet {
 	value: JsonableTree;
 }
 
-export type FieldEditTypes = SequenceFieldEdit | ValueFieldEdit | OptionalFieldEdit;
+export type FieldEditTypes = SequenceFieldEdit | RequiredFieldEdit | OptionalFieldEdit;
 
 export interface SequenceFieldEdit {
 	type: "sequence";
 	edit: FuzzInsert | FuzzDelete;
 }
 
-export interface ValueFieldEdit {
-	type: "value";
+export interface RequiredFieldEdit {
+	type: "required";
 	edit: FuzzSet;
 }
 

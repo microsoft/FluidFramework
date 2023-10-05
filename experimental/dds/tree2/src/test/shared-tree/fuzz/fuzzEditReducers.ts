@@ -75,7 +75,7 @@ export function applyFieldEdit(tree: ISharedTreeView, fieldEdit: FieldEdit): voi
 		case "sequence":
 			applySequenceFieldEdit(tree, fieldEdit.change.edit);
 			break;
-		case "value":
+		case "required":
 			applyValueFieldEdit(tree, fieldEdit.change.edit);
 			break;
 		case "optional":
@@ -94,7 +94,7 @@ function applySequenceFieldEdit(tree: ISharedTreeView, change: FuzzFieldChange):
 			const parent = navigateToNode(tree, change.parent);
 			assert(parent?.is(fuzzNode), "Defined down-path should point to a valid parent");
 			const field = parent.boxedSequenceF;
-			field.replaceRange(change.index, 0, [singleTextCursor(change.value) as any]);
+			field.insertAt(change.index, [singleTextCursor(change.value) as any]);
 			break;
 		}
 		case "delete": {
@@ -105,7 +105,7 @@ function applySequenceFieldEdit(tree: ISharedTreeView, change: FuzzFieldChange):
 				field?.is(fuzzNode.structFieldsObject.sequenceF),
 				"Defined down-path should point to a valid parent",
 			);
-			field.replaceRange(index, change.count, []);
+			field.removeRange(index, change.count);
 			break;
 		}
 		default:
