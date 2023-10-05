@@ -29,6 +29,8 @@ import sillyname from "sillyname";
 import { Provider } from "nconf";
 import winston from "winston";
 import { v4 as uuid } from "uuid";
+import axios from "axios";
+import { ManagedIdentityCredential } from "@azure/identity";
 import { Constants } from "../../../utils";
 import {
 	craftClientJoinMessage,
@@ -38,6 +40,30 @@ import {
 	IBlobData,
 	IMapSetOperation,
 } from "./restHelper";
+
+const resource = "https://prometheus.monitor.azure.com/.default";
+const endpoint = "https://frs-dev-monitor-8rqx.westus2.prometheus.monitor.azure.com/api/v1/query";
+const aadCredentials = new ManagedIdentityCredential("55c0d21e-333a-46bc-ac06-3cedd07a64be"); // cliend-id
+
+async function getToken() {
+	return aadCredentials.getToken(resource);
+}
+
+async function executeProm(query, token) {
+	const authTokenParam = `Bearer ${token}`;
+	return axios.post(
+		endpoint,
+		{
+			query,
+		},
+		{
+			headers: {
+				"Authorization": authTokenParam,
+				"Content-Type": "application/x-www-form-urlencoded",
+			},
+		},
+	);
+}
 
 export function create(
 	config: Provider,
@@ -79,7 +105,17 @@ export function create(
 			throttleIdPrefix: "ping",
 		}),
 		async (request, response) => {
-			response.sendStatus(200);
+			try {
+				const query =
+					'1 - (avg(irate(node_cpu_seconds_total{mode="idle",cluster="frs-dev1-aks-eastus-001"}[5m])))';
+				const token = await getToken();
+				const data = await executeProm(query, token.token);
+				response.json({ status: "ok", token, result: data.data });
+			} catch (e) {
+				response.json({ error: "Prom query failed" });
+				// response.sendStatus(200);
+				console.log(e);
+			}
 		},
 	);
 

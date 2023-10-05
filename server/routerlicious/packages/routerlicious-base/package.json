@@ -50,6 +50,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
+		"@azure/identity": "^3.3.0",
 		"@fluidframework/common-utils": "^3.0.0",
 		"@fluidframework/gitresources": "workspace:~",
 		"@fluidframework/protocol-definitions": "^3.0.0",
@@ -66,6 +67,7 @@
 		"@fluidframework/server-services-shared": "workspace:~",
 		"@fluidframework/server-services-telemetry": "workspace:~",
 		"@fluidframework/server-services-utils": "workspace:~",
+		"axios": "^1.5.0",
 		"body-parser": "^1.17.1",
 		"bytes": "^3.0.0",
 		"compression": "^1.7.2",
