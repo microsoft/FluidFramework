@@ -45,7 +45,6 @@ import {
 	TreeValue,
 	rootFieldKey,
 } from "../../../core";
-import { forestWithContent } from "../../utils";
 import { RestrictiveReadonlyRecord, brand } from "../../../util";
 import {
 	LazyField,
@@ -58,7 +57,7 @@ import { Context } from "../../../feature-libraries/editable-tree-2/context";
 import { TreeContent } from "../../../shared-tree";
 import { testTrees, treeContentFromTestTree } from "../../testTrees";
 import { leaf as leafDomain } from "../../../domains";
-import { contextWithContentReadonly, getReadonlyContext } from "./utils";
+import { contextWithContentReadonly } from "./utils";
 
 function collectPropertyNames(obj: object): Set<string> {
 	if (obj == null) {
@@ -113,23 +112,16 @@ describe.only("LazyTree", () => {
 		const emptyStruct = builder.struct("empty", {});
 		const testSchema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(emptyStruct));
 
-		const forest = forestWithContent({ schema: testSchema, initialTree: {} });
-		const context = getReadonlyContext(forest, testSchema);
-		const cursor = context.forest.allocateCursor();
-		assert.equal(
-			forest.tryMoveCursorToField({ fieldKey: rootFieldKey, parent: undefined }, cursor),
-			TreeNavigationResult.Ok,
-		);
+		const { cursor, context } = initializeTreeWithContent({
+			schema: testSchema,
+			initialTree: {},
+		});
 		cursor.enterNode(0);
-		const anchor = forest.anchors.track(cursor.getPath() ?? fail());
 
-		const struct = buildLazyStruct(
-			context,
-			emptyStruct,
-			cursor,
-			forest.anchors.locate(anchor) ?? fail(),
-			anchor,
-		);
+		const anchor = context.forest.anchors.track(cursor.getPath() ?? fail());
+		const anchorNode = context.forest.anchors.locate(anchor) ?? fail();
+
+		const struct = buildLazyStruct(context, emptyStruct, cursor, anchorNode, anchor);
 
 		const existingProperties = collectPropertyNames(struct);
 		const existingPropertiesExtended = new Set(existingProperties);
