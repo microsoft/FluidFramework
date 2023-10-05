@@ -3,11 +3,17 @@
  * Licensed under the MIT License.
  */
 
+export { IApiCounters, InMemoryApiCounters } from "./apiCounters";
 export {
 	bindCorrelationId,
 	getCorrelationId,
 	getCorrelationIdWithHttpFallback,
 } from "./asyncLocalStorage";
+export {
+	bindTelemetryContext,
+	getTelemetryContextPropertiesWithHttpInfo,
+} from "./telemetryContext";
+export { bindTimeoutContext } from "./timeoutContext";
 export {
 	generateToken,
 	generateUser,
@@ -16,12 +22,15 @@ export {
 	respondWithNetworkError,
 	validateTokenClaims,
 	verifyStorageToken,
-	validateTokenRevocationClaims,
+	validateTokenScopeClaims,
+	verifyToken,
 } from "./auth";
+export { getBooleanFromConfig, getNumberFromConfig } from "./configUtils";
 export { parseBoolean } from "./conversion";
 export { deleteSummarizedOps } from "./deleteSummarizedOps";
 export { getHostIp } from "./dns";
 export { FluidServiceError, FluidServiceErrorCode } from "./errorUtils";
+export { executeApiWithMetric } from "./executeApiWithMetric";
 export { executeOnInterval, ScheduledJob } from "./executeOnInterval";
 export { choose, getRandomName } from "./generateNames";
 export { configureLogging, IWinstonConfig } from "./logger";
@@ -35,6 +44,11 @@ export {
 	executeRedisMultiWithHmsetExpireAndLpush,
 	IRedisParameters,
 } from "./redisUtils";
+export { IThrottleConfig, ISimpleThrottleConfig, getThrottleConfig } from "./throttlerConfigs";
 export { IThrottleMiddlewareOptions, throttle } from "./throttlerMiddleware";
+export {
+	WebSocketTracker,
+	DummyTokenRevocationManager,
+	DummyRevokedTokenChecker,
+} from "./tokenRevocationManager";
 export { WinstonLumberjackEngine } from "./winstonLumberjackEngine";
-export { WebSocketTracker, DummyTokenRevocationManager } from "./tokenRevocationManager";

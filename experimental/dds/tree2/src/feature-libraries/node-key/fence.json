@@ -1,0 +1,6 @@
+{
+	"tags": ["node-key"],
+	"exports": ["index"],
+	// TODO: "feature-libraries" dependency is for defaultFieldKinds, and should be removed once proper view schema are provided.
+	"imports": ["util", "core", "feature-libraries", "modular-schema"]
+}

@@ -79,14 +79,17 @@ describeFullCompat("SharedCounter", (getTestObjectProvider) => {
 			// SharedCounter was created in beforeEach
 			assert.ok(
 				sharedCounter1,
+				// eslint-disable-next-line @typescript-eslint/no-base-to-string
 				`Couldn't find the counter in container1, instead got ${sharedCounter1}`,
 			);
 			assert.ok(
 				sharedCounter2,
+				// eslint-disable-next-line @typescript-eslint/no-base-to-string
 				`Couldn't find the counter in container2, instead got ${sharedCounter2}`,
 			);
 			assert.ok(
 				sharedCounter3,
+				// eslint-disable-next-line @typescript-eslint/no-base-to-string
 				`Couldn't find the counter in container3, instead got ${sharedCounter3}`,
 			);
 		});
@@ -205,11 +208,6 @@ describeNoCompat("SharedCounter orderSequentially", (getTestObjectProvider) => {
 				error: "RollbackError: rollback not supported",
 				errorType: ContainerErrorType.dataProcessingError,
 			},
-			{
-				eventName: "fluid:telemetry:Container:ContainerDispose",
-				error: "RollbackError: rollback not supported",
-				errorType: ContainerErrorType.dataProcessingError,
-			},
 		],
 		async () => {
 			let error: Error | undefined;
@@ -224,7 +222,7 @@ describeNoCompat("SharedCounter orderSequentially", (getTestObjectProvider) => {
 
 			assert.notEqual(error, undefined, "No error");
 			assert.ok(error?.message.startsWith("RollbackError:"), "Unexpected error message");
-			assert.equal(containerRuntime.disposed, true);
+			assert.equal(container.closed, true);
 		},
 	);
 });

@@ -186,25 +186,11 @@ stages:
             artifact: api-extractor-combined
             path: '$(Build.SourcesDirectory)/_api-extractor-temp/doc-models'
 
-        - task: UseNode@1
-          displayName: 'Use Node 16.x'
-          inputs:
-            version: 16.x
+        - template: templates/include-use-node-version.yml
 
-        - task: Cache@2
-          displayName: Cache pnpm store
-          inputs:
-            key: '"pnpm-store" | "$(Agent.OS)" | $(Build.SourcesDirectory)/docs/pnpm-lock.yaml'
-            path: ${{ variables.pnpmStorePath }}
-
-        - task: Bash@3
-          displayName: Install and configure pnpm
-          inputs:
-            targetType: 'inline'
-            script: |
-              npm i -g pnpm@7.30.5
-              pnpm -v
-              pnpm config set store-dir $(pnpmStorePath)
+        - template: templates/include-install-pnpm.yml
+          parameters:
+            buildDirectory: $(Build.SourcesDirectory)/docs
 
         - task: Bash@3
           displayName: Install dependencies
@@ -248,10 +234,7 @@ stages:
           submodules: false
           clean: true
 
-        - task: UseNode@1
-          displayName: 'Use Node 16.x'
-          inputs:
-            version: 16.x
+        - template: templates/include-use-node-version.yml
 
         - task: UseDotNet@2
           displayName: 'Use .NET Core 3.x'

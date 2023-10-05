@@ -21,6 +21,7 @@ import {
 	Constants,
 	IExternalWriterConfig,
 	IFileSystemManager,
+	IFileSystemManagerFactories,
 	IRepoManagerParams,
 	IRepositoryManagerFactory,
 	IStorageRoutingId,
@@ -45,6 +46,18 @@ export function validateBlobContent(content: string): boolean {
 }
 
 /**
+ * Returns the fsManagerFactory based on the isEphemeral flag
+ */
+export function getFilesystemManagerFactory(
+	fileSystemManagerFactories: IFileSystemManagerFactories,
+	isEphemeralContainer: boolean,
+) {
+	return isEphemeralContainer && fileSystemManagerFactories.ephemeralFileSystemManagerFactory
+		? fileSystemManagerFactories.ephemeralFileSystemManagerFactory
+		: fileSystemManagerFactories.defaultFileSystemManagerFactory;
+}
+
+/**
  * Helper function to decode externalstorage read params
  */
 export function getExternalWriterParams(
@@ -62,6 +75,12 @@ export function getRepoManagerParamsFromRequest(request: Request): IRepoManagerP
 	const storageRoutingId: IStorageRoutingId = parseStorageRoutingId(
 		request.get(Constants.StorageRoutingIdHeader),
 	);
+
+	const isEphemeralFromRequest = request.get(Constants.IsEphemeralContainer);
+
+	const isEphemeralContainer: boolean =
+		isEphemeralFromRequest === undefined ? false : isEphemeralFromRequest === "true";
+
 	return {
 		repoOwner: request.params.owner,
 		repoName: request.params.repo,
@@ -69,6 +88,7 @@ export function getRepoManagerParamsFromRequest(request: Request): IRepoManagerP
 		fileSystemManagerParams: {
 			storageName,
 		},
+		isEphemeralContainer,
 	};
 }
 
@@ -104,7 +124,7 @@ export async function persistLatestFullSummaryInStorage(
 	try {
 		const directoryExists = await exists(fileSystemManager, storageDirectoryPath);
 		persistLatestFullSummaryInStorageMetric.setProperty(
-			BaseGitRestTelemetryProperties.fullSummaryirectoryExists,
+			BaseGitRestTelemetryProperties.fullSummaryDirectoryExists,
 			directoryExists !== false,
 		);
 		if (directoryExists === false) {
@@ -213,6 +233,7 @@ export function getLumberjackBasePropertiesFromRepoManagerParams(params: IRepoMa
 		[BaseGitRestTelemetryProperties.repoOwner]: params.repoOwner,
 		[BaseGitRestTelemetryProperties.repoName]: params.repoName,
 		[BaseGitRestTelemetryProperties.storageName]: params?.fileSystemManagerParams?.storageName,
+		[BaseGitRestTelemetryProperties.isEphemeralContainer]: params?.isEphemeralContainer,
 	};
 }
 
@@ -318,22 +339,6 @@ export async function checkSoftDeleted(
 			lumberjackProperties,
 			error,
 		);
-		throw error;
-	}
-}
-
-export async function executeApiWithMetric<U>(
-	api: () => Promise<U>,
-	apiName: string,
-	telemetryProperties: Record<string, any>,
-): Promise<U> {
-	const metric = Lumberjack.newLumberMetric(apiName, telemetryProperties);
-	try {
-		const result = await api();
-		metric.success(`RepositoryManager: ${apiName} success`);
-		return result;
-	} catch (error: any) {
-		metric.error(`RepositoryManager: ${apiName} error`, error);
 		throw error;
 	}
 }

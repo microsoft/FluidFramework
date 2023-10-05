@@ -4,10 +4,20 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
-import { assert, EventEmitterEventType } from "@fluidframework/common-utils";
+import { IFluidHandle, ITelemetryProperties } from "@fluidframework/core-interfaces";
+import {
+	ITelemetryLoggerExt,
+	createChildLogger,
+	DataProcessingError,
+	EventEmitterWithErrorHandling,
+	loggerToMonitoringContext,
+	MonitoringContext,
+	SampledTelemetryHelper,
+	tagCodeArtifacts,
+} from "@fluidframework/telemetry-utils";
+import { assert } from "@fluidframework/core-utils";
+import { EventEmitterEventType } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
@@ -21,16 +31,8 @@ import {
 	ITelemetryContext,
 	blobCountPropertyName,
 	totalBlobSizePropertyName,
+	IExperimentalIncrementalSummaryContext,
 } from "@fluidframework/runtime-definitions";
-import {
-	ChildLogger,
-	EventEmitterWithErrorHandling,
-	loggerToMonitoringContext,
-	MonitoringContext,
-	SampledTelemetryHelper,
-	TelemetryDataTag,
-} from "@fluidframework/telemetry-utils";
-import { DataProcessingError } from "@fluidframework/container-utils";
 import { FluidSerializer, IFluidSerializer } from "./serializer";
 import { SharedObjectHandle } from "./handle";
 import { SummarySerializer } from "./summarySerializer";
@@ -58,7 +60,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	/**
 	 * Telemetry logger for the shared object
 	 */
-	protected readonly logger: ITelemetryLogger;
+	protected readonly logger: ITelemetryLoggerExt;
 	private readonly mc: MonitoringContext;
 
 	/**
@@ -105,12 +107,14 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 
 		this.handle = new SharedObjectHandle(this, id, runtime.IFluidHandleContext);
 
-		this.logger = ChildLogger.create(runtime.logger, undefined, {
-			all: {
-				sharedObjectId: uuid(),
-				ddsType: {
-					value: this.attributes.type,
-					tag: TelemetryDataTag.CodeArtifact,
+		this.logger = createChildLogger({
+			logger: runtime.logger,
+			properties: {
+				all: {
+					sharedObjectId: uuid(),
+					...tagCodeArtifacts({
+						ddsType: this.attributes.type,
+					}),
 				},
 			},
 		});
@@ -656,8 +660,13 @@ export abstract class SharedObject<
 		fullTree: boolean = false,
 		trackState: boolean = false,
 		telemetryContext?: ITelemetryContext,
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 	): Promise<ISummaryTreeWithStats> {
-		const result = this.summarizeCore(this.serializer, telemetryContext);
+		const result = this.summarizeCore(
+			this.serializer,
+			telemetryContext,
+			incrementalSummaryContext,
+		);
 		this.incrementTelemetryMetric(
 			blobCountPropertyName,
 			result.stats.blobNodeCount,
@@ -722,6 +731,7 @@ export abstract class SharedObject<
 	protected abstract summarizeCore(
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext,
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 	): ISummaryTreeWithStats;
 
 	private incrementTelemetryMetric(

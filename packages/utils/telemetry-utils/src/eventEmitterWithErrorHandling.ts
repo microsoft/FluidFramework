@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IEvent } from "@fluidframework/common-definitions";
-import { TypedEventEmitter, EventEmitterEventType } from "@fluidframework/common-utils";
+import { TypedEventEmitter, EventEmitterEventType } from "@fluid-internal/client-utils";
+import { IEvent } from "@fluidframework/core-interfaces";
 
 /**
  * Event Emitter helper class
@@ -14,12 +14,14 @@ export class EventEmitterWithErrorHandling<
 	TEvent extends IEvent = IEvent,
 > extends TypedEventEmitter<TEvent> {
 	constructor(
+		// TODO: use `unknown` instead (breaking API change)
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		private readonly errorHandler: (eventName: EventEmitterEventType, error: any) => void,
 	) {
 		super();
 	}
 
-	public emit(event: EventEmitterEventType, ...args: any[]): boolean {
+	public emit(event: EventEmitterEventType, ...args: unknown[]): boolean {
 		try {
 			return super.emit(event, ...args);
 		} catch (error) {

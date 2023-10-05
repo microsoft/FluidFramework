@@ -38,9 +38,21 @@ export function validateRequestParams(...paramNames: (string | number)[]): Reque
 }
 
 /**
+ * Converts the request param to a boolean
+ */
+export function getBooleanParam(param: any): boolean {
+	return param === undefined ? false : typeof param === "boolean" ? param : param === "true";
+}
+
+/**
  * Default error message sent to API consumer when an unknown error is encountered.
  */
 export const defaultErrorMessage = "Internal Server Error";
+
+/**
+ * Header to denote that the container is ephemeral.
+ */
+export const IsEphemeralContainer = "Is-Ephemeral-Container";
 
 /**
  * Helper function to handle a promise that should be returned to the user.
@@ -59,18 +71,25 @@ export function handleResponse<T>(
 	successStatus: number = 200,
 	onSuccess: (value: T) => void = () => {},
 ) {
-	resultP.then(
-		(result) => {
+	resultP
+		.then((result) => {
 			if (allowClientCache === true) {
 				response.setHeader("Cache-Control", "public, max-age=31536000");
 			} else if (allowClientCache === false) {
 				response.setHeader("Cache-Control", "no-store, max-age=0");
 			}
-
+			// Make sure the browser will expose specific headers for performance analysis.
+			response.setHeader(
+				"Access-Control-Expose-Headers",
+				"Content-Encoding, Content-Length, Content-Type",
+			);
+			// In order to report W3C timings, Time-Allow-Origin needs to be set.
+			response.setHeader("Timing-Allow-Origin", "*");
 			onSuccess(result);
+			// Express' json call below will set the content-length.
 			response.status(successStatus).json(result);
-		},
-		(error) => {
+		})
+		.catch((error) => {
 			// Only log unexpected errors on the assumption that explicitly thrown
 			// NetworkErrors have additional logging in place at the source.
 			if (error instanceof Error && error?.name === "NetworkError") {
@@ -83,6 +102,5 @@ export function handleResponse<T>(
 				Lumberjack.error("Unexpected error when processing HTTP Request", undefined, error);
 				response.status(errorStatus ?? 400).json(defaultErrorMessage);
 			}
-		},
-	);
+		});
 }

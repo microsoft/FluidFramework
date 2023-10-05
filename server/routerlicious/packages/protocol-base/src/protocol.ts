@@ -26,30 +26,6 @@ export interface IScribeProtocolState {
 	values: [string, ICommittedProposal][];
 }
 
-export function isSystemMessage(message: ISequencedDocumentMessage) {
-	switch (message.type) {
-		case MessageType.ClientJoin:
-		case MessageType.ClientLeave:
-		case MessageType.Propose:
-		case MessageType.Reject:
-		case MessageType.NoOp:
-		case MessageType.NoClient:
-		case MessageType.Summarize:
-		case MessageType.SummaryAck:
-		case MessageType.SummaryNack:
-			return true;
-		default:
-			return false;
-	}
-}
-
-export interface ILocalSequencedClient extends ISequencedClient {
-	/**
-	 * True if the client should have left the quorum, false otherwise
-	 */
-	shouldHaveLeft?: boolean;
-}
-
 export interface IProtocolHandler {
 	readonly quorum: IQuorum;
 	readonly attributes: IDocumentAttributes;
@@ -71,18 +47,14 @@ export class ProtocolOpHandler implements IProtocolHandler {
 		return this._quorum;
 	}
 
-	public readonly term: number;
-
 	constructor(
 		public minimumSequenceNumber: number,
 		public sequenceNumber: number,
-		term: number | undefined,
 		members: [string, ISequencedClient][],
 		proposals: [number, ISequencedProposal, string[]][],
 		values: [string, ICommittedProposal][],
 		sendProposal: (key: string, value: any) => number,
 	) {
-		this.term = term ?? 1;
 		this._quorum = new Quorum(members, proposals, values, sendProposal);
 	}
 
@@ -90,7 +62,6 @@ export class ProtocolOpHandler implements IProtocolHandler {
 		return {
 			minimumSequenceNumber: this.minimumSequenceNumber,
 			sequenceNumber: this.sequenceNumber,
-			term: this.term,
 		};
 	}
 

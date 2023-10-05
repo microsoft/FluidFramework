@@ -5,7 +5,13 @@
 
 import * as querystring from "querystring";
 import safeStringify from "json-stringify-safe";
-import Axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosRequestHeaders } from "axios";
+import {
+	default as Axios,
+	AxiosError,
+	AxiosInstance,
+	AxiosRequestConfig,
+	RawAxiosRequestHeaders,
+} from "axios";
 import { v4 as uuid } from "uuid";
 import { debug } from "./debug";
 import { createFluidServiceNetworkError, INetworkErrorDetails } from "./error";
@@ -22,9 +28,16 @@ export abstract class RestWrapper {
 	public async get<T>(
 		url: string,
 		queryString?: Record<string, unknown>,
-		headers?: AxiosRequestHeaders,
+		headers?: RawAxiosRequestHeaders,
+		additionalOptions?: Partial<
+			Omit<
+				AxiosRequestConfig,
+				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
+			>
+		>,
 	): Promise<T> {
 		const options: AxiosRequestConfig = {
+			...additionalOptions,
 			baseURL: this.baseurl,
 			headers,
 			maxBodyLength: this.maxBodyLength,
@@ -39,9 +52,16 @@ export abstract class RestWrapper {
 		url: string,
 		requestBody: any,
 		queryString?: Record<string, unknown>,
-		headers?: AxiosRequestHeaders,
+		headers?: RawAxiosRequestHeaders,
+		additionalOptions?: Partial<
+			Omit<
+				AxiosRequestConfig,
+				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
+			>
+		>,
 	): Promise<T> {
 		const options: AxiosRequestConfig = {
+			...additionalOptions,
 			baseURL: this.baseurl,
 			data: requestBody,
 			headers,
@@ -56,9 +76,16 @@ export abstract class RestWrapper {
 	public async delete<T>(
 		url: string,
 		queryString?: Record<string, unknown>,
-		headers?: AxiosRequestHeaders,
+		headers?: RawAxiosRequestHeaders,
+		additionalOptions?: Partial<
+			Omit<
+				AxiosRequestConfig,
+				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
+			>
+		>,
 	): Promise<T> {
 		const options: AxiosRequestConfig = {
+			...additionalOptions,
 			baseURL: this.baseurl,
 			headers,
 			maxBodyLength: this.maxBodyLength,
@@ -73,9 +100,16 @@ export abstract class RestWrapper {
 		url: string,
 		requestBody: any,
 		queryString?: Record<string, unknown>,
-		headers?: AxiosRequestHeaders,
+		headers?: RawAxiosRequestHeaders,
+		additionalOptions?: Partial<
+			Omit<
+				AxiosRequestConfig,
+				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
+			>
+		>,
 	): Promise<T> {
 		const options: AxiosRequestConfig = {
+			...additionalOptions,
 			baseURL: this.baseurl,
 			data: requestBody,
 			headers,
@@ -109,10 +143,10 @@ export class BasicRestWrapper extends RestWrapper {
 		defaultQueryString: Record<string, unknown> = {},
 		maxBodyLength = 1000 * 1024 * 1024,
 		maxContentLength = 1000 * 1024 * 1024,
-		private defaultHeaders: AxiosRequestHeaders = {},
+		private defaultHeaders: RawAxiosRequestHeaders = {},
 		private readonly axios: AxiosInstance = Axios,
 		private readonly refreshDefaultQueryString?: () => Record<string, unknown>,
-		private readonly refreshDefaultHeaders?: () => AxiosRequestHeaders,
+		private readonly refreshDefaultHeaders?: () => RawAxiosRequestHeaders,
 		private readonly getCorrelationId?: () => string | undefined,
 	) {
 		super(baseurl, defaultQueryString, maxBodyLength, maxContentLength);
@@ -135,7 +169,7 @@ export class BasicRestWrapper extends RestWrapper {
 				.then((response) => {
 					resolve(response.data);
 				})
-				.catch((error: AxiosError) => {
+				.catch((error: AxiosError<any>) => {
 					if (error?.response?.status === statusCode) {
 						// Axios misinterpreted as error, return as successful response
 						resolve(error?.response?.data);
@@ -212,9 +246,9 @@ export class BasicRestWrapper extends RestWrapper {
 	}
 
 	private generateHeaders(
-		headers?: AxiosRequestHeaders,
+		headers?: RawAxiosRequestHeaders,
 		fallbackCorrelationId?: string,
-	): AxiosRequestHeaders {
+	): RawAxiosRequestHeaders {
 		let result = headers ?? {};
 		if (this.defaultHeaders) {
 			result = { ...this.defaultHeaders, ...headers };

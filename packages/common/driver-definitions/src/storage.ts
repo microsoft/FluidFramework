@@ -8,7 +8,7 @@ import {
 	IEventProvider,
 	IErrorEvent,
 	ITelemetryBaseLogger,
-} from "@fluidframework/common-definitions";
+} from "@fluidframework/core-interfaces";
 import {
 	ConnectionMode,
 	IClient,
@@ -53,9 +53,9 @@ export interface IDeltaStorageService {
 	 * @param id - document id.
 	 * @param from - first op to retrieve (inclusive)
 	 * @param to - first op not to retrieve (exclusive end)
-	 * @param fetchReason - Reason for fetching the messages. Example, gap between seq number
-	 * of Op on wire and known seq number. It should not contain any PII. It can be logged by
-	 * spo which could help in debugging sessions if any issue occurs.
+	 * @param fetchReason - Reason for fetching the messages, for logging.
+	 * Example, gap between seq number of Op on wire and known seq number.
+	 * It can be logged by spo which could help in debugging sessions if any issue occurs.
 	 */
 	get(
 		tenantId: string,
@@ -85,9 +85,9 @@ export interface IDocumentDeltaStorageService {
 	 * @param to - first op not to retrieve (exclusive end)
 	 * @param abortSignal - signal that aborts operation
 	 * @param cachedOnly - return only cached ops, i.e. ops available locally on client.
-	 * @param fetchReason - Reason for fetching the messages. Example, gap between seq number
-	 * of Op on wire and known seq number. It should not contain any PII. It can be logged by
-	 * spo which could help in debugging sessions if any issue occurs.
+	 * @param fetchReason - Reason for fetching the messages, for logging.
+	 * Example, gap between seq number of Op on wire and known seq number.
+	 * It can be logged by spo which could help in debugging sessions if any issue occurs.
 	 */
 	fetchMessages(
 		from: number,
@@ -113,12 +113,6 @@ export interface IDocumentStorageServicePolicies {
 	 * Should the Loader implement any sort of pre-fetching or caching mechanism?
 	 */
 	readonly caching?: LoaderCachingPolicy;
-
-	/**
-	 * If this policy is provided, it tells runtime on ideal size for blobs.
-	 * Blobs that are smaller than that size should be aggregated into bigger blobs.
-	 */
-	readonly minBlobSize?: number;
 
 	/**
 	 * IMPORTANT: This policy MUST be set to 5 days and PROPERLY ENFORCED for drivers that are used

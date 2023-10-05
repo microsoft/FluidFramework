@@ -27,6 +27,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+// This file is a reporter used with node, so depending on node is fine.
+/* eslint-disable import/no-nodejs-modules */
+
 /* eslint no-console: ["error", { allow: ["log"] }] */
 import * as path from "path";
 import * as fs from "fs";
@@ -114,9 +117,7 @@ export class BenchmarkReporter {
 			? path.resolve(outputDirectory)
 			: path.join(__dirname, ".output");
 
-		if (!fs.existsSync(this.outputDirectory)) {
-			fs.mkdirSync(this.outputDirectory, { recursive: true });
-		}
+		fs.mkdirSync(this.outputDirectory, { recursive: true });
 	}
 
 	/**

@@ -20,9 +20,14 @@ import {
 import { addSummarizeResultToSummary, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
-import { assert, bufferToString, unreachableCase } from "@fluidframework/common-utils";
-import { UsageError } from "@fluidframework/container-utils";
-import { loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
+import { bufferToString } from "@fluid-internal/client-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
+import {
+	createChildLogger,
+	loggerToMonitoringContext,
+	PerformanceEvent,
+	UsageError,
+} from "@fluidframework/telemetry-utils";
 import { Attributor, IAttributor, OpStreamAttributor } from "./attributor";
 import { AttributorSerializer, chain, deltaEncoder, Encoder } from "./encoders";
 import { makeLZ4Encoder } from "./lz4Encoder";
@@ -65,12 +70,12 @@ export interface IRuntimeAttributor extends IProvideRuntimeAttributor {
 	get(key: AttributionKey): AttributionInfo;
 
 	/**
-	 * @returns - Whether any AttributionInfo exists for the provided key.
+	 * @returns Whether any AttributionInfo exists for the provided key.
 	 */
 	has(key: AttributionKey): boolean;
 
 	/**
-	 * @returns - Whether the runtime is currently tracking attribution information for the loaded container.
+	 * @returns Whether the runtime is currently tracking attribution information for the loaded container.
 	 * See {@link mixinAttributor} for more details on when this happens.
 	 */
 	readonly isEnabled: boolean;
@@ -131,6 +136,7 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 			);
 
 			const mc = loggerToMonitoringContext(context.taggedLogger);
+
 			const shouldTrackAttribution = mc.config.getBoolean(enableOnNewFileKey) ?? false;
 			if (shouldTrackAttribution) {
 				(context.options.attribution ??= {}).track = true;
@@ -147,17 +153,34 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 			)) as ContainerRuntimeWithAttributor;
 			runtime.runtimeAttributor = runtimeAttributor as RuntimeAttributor;
 
+			const logger = createChildLogger({ logger: runtime.logger, namespace: "Attributor" });
+
 			// Note: this fetches attribution blobs relatively eagerly in the load flow; we may want to optimize
 			// this to avoid blocking on such information until application actually requests some op-based attribution
 			// info or we need to summarize. All that really needs to happen immediately is to start recording
 			// op seq# -> attributionInfo for new ops.
-			await runtime.runtimeAttributor.initialize(
-				deltaManager,
-				audience,
-				baseSnapshot,
-				async (id) => runtime.storage.readBlob(id),
-				shouldTrackAttribution,
+			await PerformanceEvent.timedExecAsync(
+				logger,
+				{
+					eventName: "initialize",
+				},
+				async (event) => {
+					await runtime.runtimeAttributor?.initialize(
+						deltaManager,
+						audience,
+						baseSnapshot,
+						async (id) => runtime.storage.readBlob(id),
+						shouldTrackAttribution,
+					);
+					event.end({
+						attributionEnabledInConfig: shouldTrackAttribution,
+						attributionEnabledInDoc: runtime.runtimeAttributor
+							? runtime.runtimeAttributor.isEnabled
+							: false,
+					});
+				},
 			);
+
 			return runtime;
 		}
 

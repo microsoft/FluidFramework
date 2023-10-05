@@ -3,32 +3,32 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import assert from "node:assert";
 import {
 	ITelemetryBaseEvent,
 	ITelemetryErrorEvent,
 	ITelemetryPerformanceEvent,
 	ITelemetryGenericEvent,
-	ITelemetryLogger,
-} from "@fluidframework/common-definitions";
+} from "@fluidframework/core-interfaces";
 import { ThresholdCounter } from "../thresholdCounter";
+import { ITelemetryLoggerExt } from "../telemetryTypes";
 
-class FakeTelemetryLogger implements ITelemetryLogger {
+class FakeTelemetryLogger implements ITelemetryLoggerExt {
 	public events: ITelemetryGenericEvent[] = [];
 
 	public send(_event: ITelemetryBaseEvent): void {
 		assert.fail("Should not be called");
 	}
 
-	public sendTelemetryEvent(_event: ITelemetryGenericEvent, _error?: any) {
+	public sendTelemetryEvent(_event: ITelemetryGenericEvent, _error?: unknown): void {
 		assert.fail("Should not be called");
 	}
 
-	public sendErrorEvent(_event: ITelemetryErrorEvent, _error?: any) {
+	public sendErrorEvent(_event: ITelemetryErrorEvent, _error?: unknown): void {
 		assert.fail("Should not be called");
 	}
 
-	public sendPerformanceEvent(event: ITelemetryPerformanceEvent, _error?: any): void {
+	public sendPerformanceEvent(event: ITelemetryPerformanceEvent, _error?: unknown): void {
 		this.events.push(event);
 	}
 }

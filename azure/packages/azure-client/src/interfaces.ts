@@ -2,13 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { IMember, IServiceAudience } from "@fluidframework/fluid-static";
-import { IUser } from "@fluidframework/protocol-definitions";
-import { ITokenProvider } from "@fluidframework/routerlicious-driver";
+import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { type IMember, type IServiceAudience } from "@fluidframework/fluid-static";
+import { type IUser } from "@fluidframework/protocol-definitions";
+import { type ITokenProvider } from "@fluidframework/routerlicious-driver";
+import { type IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import { type ICompressionStorageConfig } from "@fluidframework/driver-utils";
 
-// Re-export so developers can build loggers without pulling in common-definitions
-export { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+// Re-export so developers can build loggers without pulling in core-interfaces
+export type { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 
 /**
  * Props for initializing a new AzureClient instance
@@ -22,6 +24,13 @@ export interface AzureClientProps {
 	 * Optional. A logger instance to receive diagnostic messages.
 	 */
 	readonly logger?: ITelemetryBaseLogger;
+
+	/**
+	 * Base interface for providing configurations to control experimental features. If unsure, leave this undefined.
+	 */
+	readonly configProvider?: IConfigProviderBase;
+
+	readonly summaryCompression?: boolean | ICompressionStorageConfig;
 }
 
 /**

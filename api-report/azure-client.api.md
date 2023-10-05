@@ -6,11 +6,13 @@
 
 import { ContainerSchema } from '@fluidframework/fluid-static';
 import { IClient } from '@fluidframework/protocol-definitions';
+import { ICompressionStorageConfig } from '@fluidframework/driver-utils';
+import { IConfigProviderBase } from '@fluidframework/telemetry-utils';
 import { IFluidContainer } from '@fluidframework/fluid-static';
 import { IMember } from '@fluidframework/fluid-static';
 import { IServiceAudience } from '@fluidframework/fluid-static';
-import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
+import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { ITokenProvider } from '@fluidframework/routerlicious-driver';
 import { ITokenResponse } from '@fluidframework/routerlicious-driver';
@@ -26,7 +28,7 @@ export class AzureAudience extends ServiceAudience<AzureMember> implements IAzur
 
 // @public
 export class AzureClient {
-    constructor(props: AzureClientProps);
+    constructor(properties: AzureClientProps);
     copyContainer(id: string, containerSchema: ContainerSchema, version?: AzureContainerVersion): Promise<{
         container: IFluidContainer;
         services: AzureContainerServices;
@@ -44,8 +46,11 @@ export class AzureClient {
 
 // @public
 export interface AzureClientProps {
+    readonly configProvider?: IConfigProviderBase;
     readonly connection: AzureRemoteConnectionConfig | AzureLocalConnectionConfig;
     readonly logger?: ITelemetryBaseLogger;
+    // (undocumented)
+    readonly summaryCompression?: boolean | ICompressionStorageConfig;
 }
 
 // @public

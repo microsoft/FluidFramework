@@ -29,8 +29,8 @@ export const isSharedObjectClass = (obj: any): obj is SharedObjectClass<any> => 
 export const parseDataObjectsFromSharedObjects = (
 	schema: ContainerSchema,
 ): [NamedFluidDataStoreRegistryEntry[], IChannelFactory[]] => {
-	const registryEntries: Set<NamedFluidDataStoreRegistryEntry> = new Set();
-	const sharedObjects: Set<IChannelFactory> = new Set();
+	const registryEntries = new Set<NamedFluidDataStoreRegistryEntry>();
+	const sharedObjects = new Set<IChannelFactory>();
 
 	const tryAddObject = (obj: LoadableObjectClass<any>) => {
 		if (isSharedObjectClass(obj)) {

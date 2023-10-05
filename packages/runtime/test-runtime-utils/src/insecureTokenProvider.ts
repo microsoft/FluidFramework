@@ -33,7 +33,7 @@ export class InsecureTokenProvider implements ITokenProvider {
 		 *
 		 * @param scopes - See {@link @fluidframework/protocol-definitions#ITokenClaims.scopes}
 		 *
-		 * @defaultValue - [ ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite ]
+		 * @defaultValue [ ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite ]
 		 */
 		private readonly scopes?: ScopeType[],
 	) {}

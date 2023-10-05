@@ -15,25 +15,56 @@
  *
  * @packageDocumentation
  */
-export { IMapMessageLocalMetadata, IValueOpEmitter } from "./defaultMapInterfaces";
+export { IMapMessageLocalMetadata, IValueOpEmitter, SequenceOptions } from "./defaultMapInterfaces";
 export {
-	DeserializeCallback,
-	IIntervalCollectionEvent,
-	IIntervalHelpers,
+	IInterval,
 	Interval,
-	IntervalCollection,
-	IntervalCollectionIterator,
-	IntervalLocator,
-	intervalLocatorFromEndpoint,
+	IntervalOpType,
 	IntervalType,
 	ISerializableInterval,
 	ISerializedInterval,
 	SequenceInterval,
-	ISerializedIntervalCollectionV2,
-	CompressedSerializedInterval,
 	SerializedIntervalDelta,
+	IntervalStickiness,
+	IIntervalHelpers,
+	sequenceIntervalHelpers,
+} from "./intervals";
+export {
+	DeserializeCallback,
+	IIntervalCollectionEvent,
+	IIntervalCollection,
+	IntervalLocator,
+	intervalLocatorFromEndpoint,
+	Side,
+	InteriorSequencePlace,
+	SequencePlace,
 } from "./intervalCollection";
-export { IInterval, IntervalConflictResolver } from "./intervalTree";
+export {
+	IntervalIndex,
+	SequenceIntervalIndexes,
+	IOverlappingIntervalsIndex,
+	createOverlappingIntervalsIndex,
+	createOverlappingSequenceIntervalsIndex,
+	IEndpointInRangeIndex,
+	IStartpointInRangeIndex,
+	createEndpointInRangeIndex,
+	createStartpointInRangeIndex,
+	IIdIntervalIndex,
+	createIdIntervalIndex,
+	IEndpointIndex,
+	createEndpointIndex,
+} from "./intervalIndex";
+export {
+	appendAddIntervalToRevertibles,
+	appendChangeIntervalToRevertibles,
+	appendDeleteIntervalToRevertibles,
+	appendIntervalPropertyChangedToRevertibles,
+	appendSharedStringDeltaToRevertibles,
+	discardSharedStringRevertibles,
+	IntervalRevertible,
+	revertSharedStringRevertibles,
+	SharedStringRevertible,
+} from "./revertibles";
 export { ISharedSegmentSequenceEvents, SharedSegmentSequence } from "./sequence";
 export {
 	ISequenceDeltaRange,

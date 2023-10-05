@@ -4,13 +4,15 @@
 
 # ORDER MATTERS! The last matching pattern has the most precedence.
 
+# When updating this file, you should also consider updating the GitHub label config in actions-labeler.yml so that
+# any area changes are labeled correctly.
+
 # Files in the root
 /*.*                                                                      @microsoft/fluid-cr-core
 
 /.devcontainer/                                                           @microsoft/fluid-cr-infra
 /.github/                                                                 @microsoft/fluid-cr-infra
 /.github/ISSUE_TEMPLATE/                                                  @microsoft/fluid-cr-docs
-/.md-magic-templates/                                                     @microsoft/fluid-cr-docs
 /.vscode/                                                                 @microsoft/fluid-cr-infra
 
 /azure/                                                                   @microsoft/fluid-cr-framework
@@ -25,9 +27,8 @@
 /experimental/                                                            @microsoft/fluid-cr-framework
 /experimental/PropertyDDS/                                                @evaliyev @karlbom @nedalhy @ruiterr
 /experimental/dds/tree/                                                   @microsoft/fluid-cr-tree
-/experimental/dds/tree-graphql/                                           @microsoft/fluid-cr-tree
+/experimental/dds/tree2/                                                  @microsoft/fluid-cr-tree
 /packages/dds/                                                            @microsoft/fluid-cr-dds
-/packages/dds/tree                                                        @microsoft/fluid-cr-tree
 /packages/drivers/                                                        @microsoft/fluid-cr-drivers
 /packages/drivers/odsp*/                                                  @microsoft/fluid-cr-drivers @microsoft/fluid-cr-odsp
 /packages/framework/                                                      @microsoft/fluid-cr-framework
@@ -35,12 +36,17 @@
 /packages/runtime/                                                        @microsoft/fluid-cr-runtime
 /packages/test/                                                           @microsoft/fluid-cr-test
 /packages/tools/                                                          @microsoft/fluid-cr-tools
+/packages/tools/devtools/                                                 @microsoft/team-rohan
 /packages/utils/                                                          @microsoft/fluid-cr-infra
 /packages/utils/odsp-doclib-utils/                                        @microsoft/fluid-cr-odsp
 /packages/utils/telemetry-utils/                                          @microsoft/fluid-cr-telemetry
 /server/                                                                  @microsoft/fluid-cr-server
-/tools/                                                                   @microsoft/fluid-cr-infra
-/tools/pipelines/build-azure.yml                                          @microsoft/fluid-cr-framework
+/tools/                                                                   @microsoft/fluid-cr-tools
+/tools/api-markdown-documenter                                            @microsoft/fluid-cr-docs @microsoft/fluid-cr-infra
+/tools/markdown-magic/                                                    @microsoft/fluid-cr-infra
+/tools/markdown-magic/src/templates                                       @microsoft/fluid-cr-docs
+/tools/pipelines/                                                         @microsoft/fluid-cr-infra
+/tools/pipelines/build-azure.yml                                          @microsoft/fluid-cr-infra @microsoft/fluid-cr-framework
 
 # PUBLIC API REPORTS
 # All packages are assumed to have public APIs unless defined otherwise in the sections below.
@@ -48,7 +54,6 @@ api-report/                                                               @micro
 # These packages represent the primary public API of the framework.
 api-report/azure-client.api.md                                            @microsoft/fluid-cr-api
 api-report/azure-service-utils.api.md                                     @microsoft/fluid-cr-api
-api-report/test-client-utils.api.md                                       @microsoft/fluid-cr-api
 api-report/fluid-framework.api.md                                         @microsoft/fluid-cr-api
 api-report/tinylicious-client.api.md                                      @microsoft/fluid-cr-api
 
@@ -59,7 +64,6 @@ api-report/cell.api.md                                                    @micro
 api-report/container-loader.api.md                                        @microsoft/fluid-cr-loader
 api-report/container-runtime-definitions.api.md                           @microsoft/fluid-cr-runtime
 api-report/container-runtime.api.md                                       @microsoft/fluid-cr-runtime
-api-report/container-utils.api.md                                         @microsoft/fluid-cr-runtime
 api-report/counter.api.md                                                 @microsoft/fluid-cr-dds
 api-report/data-object-base.api.md                                        @microsoft/fluid-cr-framework
 api-report/datastore-definitions.api.md                                   @microsoft/fluid-cr-runtime
@@ -98,7 +102,7 @@ api-report/test-driver-definitions.api.md                                 @micro
 api-report/test-runtime-utils.api.md                                      @microsoft/fluid-cr-runtime
 api-report/test-utils.api.md                                              @microsoft/fluid-cr-test
 api-report/tool-utils.api.md                                              @microsoft/fluid-cr-tools
-api-report/tree.api.md                                                    @microsoft/fluid-cr-tree
+api-report/tree2.api.md                                                   @microsoft/fluid-cr-tree
 api-report/undo-redo.api.md                                               @microsoft/fluid-cr-framework
 api-report/view-adapters.api.md                                           @microsoft/fluid-cr-framework
 api-report/view-interfaces.api.md                                         @microsoft/fluid-cr-framework

@@ -4,27 +4,34 @@
  */
 
 export {
-	ContainerMessageType,
-	ContainerRuntimeMessage,
 	ISummaryRuntimeOptions,
 	ISummaryBaseConfiguration,
 	ISummaryConfigurationHeuristics,
 	ISummaryConfigurationDisableSummarizer,
 	ISummaryConfigurationDisableHeuristics,
 	IContainerRuntimeOptions,
-	IRootSummaryTreeWithStats,
 	isRuntimeMessage,
 	RuntimeMessage,
 	agentSchedulerId,
 	ContainerRuntime,
 	RuntimeHeaders,
 	AllowTombstoneRequestHeaderKey,
+	AllowInactiveRequestHeaderKey,
 	TombstoneResponseHeaderKey,
+	InactiveResponseHeaderKey,
 	ISummaryConfiguration,
 	DefaultSummaryConfiguration,
 	ICompressionRuntimeOptions,
 	CompressionAlgorithms,
+	TEST_requestSummarizer,
 } from "./containerRuntime";
+export {
+	ContainerMessageType,
+	ContainerRuntimeMessage,
+	IContainerRuntimeMessageCompatDetails,
+	CompatModeBehavior,
+	RecentlyAddedContainerRuntimeMessageDetails,
+} from "./messageTypes";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry";
 export { IGCRuntimeOptions, IGCStats } from "./gc";
 export {
@@ -67,5 +74,10 @@ export {
 	OpActionEventListener,
 	OpActionEventName,
 	ICancellableSummarizerController,
+	SubmitSummaryFailureData,
+	SummaryStage,
+	IRetriableFailureResult,
+	ISummarizeEventProps,
 } from "./summary";
+export { isStableId, generateStableId, assertIsStableId } from "./id-compressor";
 export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle";

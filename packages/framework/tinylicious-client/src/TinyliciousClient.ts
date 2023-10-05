@@ -15,8 +15,6 @@ import {
 	InsecureTinyliciousTokenProvider,
 	InsecureTinyliciousUrlResolver,
 } from "@fluidframework/tinylicious-driver";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import {
 	ContainerSchema,
 	DOProviderContainerRuntimeFactory,
@@ -71,7 +69,7 @@ export class TinyliciousClient {
 			config: {},
 		});
 
-		const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");
+		const rootDataObject = (await container.getEntryPoint()) as IRootDataObject;
 
 		/**
 		 * See {@link FluidContainer.attach}
@@ -82,9 +80,10 @@ export class TinyliciousClient {
 			}
 			const request = createTinyliciousCreateNewRequest();
 			await container.attach(request);
-			const resolved = container.resolvedUrl;
-			ensureFluidResolvedUrl(resolved);
-			return resolved.id;
+			if (container.resolvedUrl === undefined) {
+				throw new Error("Resolved Url not available on attached container");
+			}
+			return container.resolvedUrl.id;
 		};
 
 		const fluidContainer = new FluidContainer(container, rootDataObject);
@@ -109,7 +108,7 @@ export class TinyliciousClient {
 	}> {
 		const loader = this.createLoader(containerSchema);
 		const container = await loader.resolve({ url: id });
-		const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");
+		const rootDataObject = (await container.getEntryPoint()) as IRootDataObject;
 		const fluidContainer = new FluidContainer(container, rootDataObject);
 		const services = this.getContainerServices(container);
 		return { container: fluidContainer, services };

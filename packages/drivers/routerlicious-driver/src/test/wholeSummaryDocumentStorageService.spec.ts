@@ -4,17 +4,18 @@
  */
 
 import assert from "assert";
-import { DebugLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { SummaryType, ISummaryTree } from "@fluidframework/protocol-definitions";
-import {
-	IWholeFlatSummary,
-	IWholeFlatSummaryBlob,
-	IWholeFlatSummaryTreeEntry,
-} from "@fluidframework/server-services-client";
 import { WholeSummaryDocumentStorageService } from "../wholeSummaryDocumentStorageService";
+import { IR11sResponse } from "../restWrapper";
+import {
+	IWholeFlatSnapshot,
+	IWholeFlatSnapshotBlob,
+	IWholeFlatSnapshotTreeEntry,
+} from "../contracts";
 
-/* Blobs contained within source summary tree returned by git manager */
-const summaryBlobs: IWholeFlatSummaryBlob[] = [
+/* Blobs contained within source snapshot tree returned by git manager */
+const summaryBlobs: IWholeFlatSnapshotBlob[] = [
 	{
 		id: "bARCTBK4PQiMLVK2gR5hPRkId",
 		content: "[]",
@@ -37,8 +38,8 @@ const summaryBlobs: IWholeFlatSummaryBlob[] = [
 	},
 ];
 
-/* Tree entries contained within source summary tree returned by git manager */
-const treeEntries: IWholeFlatSummaryTreeEntry[] = [
+/* Tree entries contained within source snapshot tree returned by git manager */
+const treeEntries: IWholeFlatSnapshotTreeEntry[] = [
 	{
 		path: ".protocol",
 		type: "tree",
@@ -72,8 +73,8 @@ const treeEntries: IWholeFlatSummaryTreeEntry[] = [
 	},
 ];
 
-/* Source summary returned by git manager */
-const flatSummary: IWholeFlatSummary = {
+/* Source snapshot returned by git manager */
+const flatSnapshot: IWholeFlatSnapshot = {
 	id: "bBwAAAAAHAAAA",
 	trees: [
 		{
@@ -131,8 +132,13 @@ const expectedSummary: ISummaryTree = {
 };
 
 class MockGitManager {
-	public async getSummary(sha: string): Promise<IWholeFlatSummary> {
-		return flatSummary;
+	public async getSnapshot(sha: string): Promise<IR11sResponse<IWholeFlatSnapshot>> {
+		return {
+			content: flatSnapshot,
+			headers: new Map(),
+			propsToLog: {},
+			requestUrl: "",
+		};
 	}
 }
 
@@ -141,7 +147,7 @@ describe("WholeSummaryDocumentStorageService", () => {
 		const service = new WholeSummaryDocumentStorageService(
 			"id",
 			new MockGitManager() as any,
-			DebugLogger.create("fluid:testSummaries"),
+			createChildLogger({ namespace: "fluid:testSummaries" }),
 			{},
 		);
 

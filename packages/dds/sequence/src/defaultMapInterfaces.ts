@@ -5,7 +5,7 @@
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISharedObjectEvents } from "@fluidframework/shared-object-base";
-import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
+import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 
 /**
  * Type of "valueChanged" event parameter.
@@ -51,6 +51,37 @@ export interface IMapMessageLocalMetadata {
 }
 
 /**
+ * Optional flags that configure options for sequence DDSs
+ */
+export interface SequenceOptions {
+	/**
+	 * Enable the ability to use interval APIs that rely on positions before and
+	 * after individual characters, referred to as "sides". See {@link SequencePlace}
+	 * for additional context.
+	 *
+	 * This flag must be enabled to pass instances of {@link SequencePlace} to
+	 * any IIntervalCollection API.
+	 *
+	 * Also see the feature flag `mergeTreeReferencesCanSlideToEndpoint` to allow
+	 * endpoints to slide to the special endpoint segments.
+	 *
+	 * The default value is false.
+	 */
+	intervalStickinessEnabled: boolean;
+	/**
+	 * Enable the ability for interval endpoints to slide to the special endpoint
+	 * segments that exist before and after the bounds of the string. This is
+	 * primarily useful for workflows involving interval stickiness, and it is
+	 * suggested to enable both this flag and `intervalStickinessEnabled` at the
+	 * same time.
+	 *
+	 * The default value is false.
+	 */
+	mergeTreeReferencesCanSlideToEndpoint: boolean;
+	[key: string]: boolean;
+}
+
+/**
  * A value factory is used to serialize/deserialize value types to a map
  * @alpha
  */
@@ -63,7 +94,7 @@ export interface IValueFactory<T> {
 	 * @returns The new value type
 	 * @alpha
 	 */
-	load(emitter: IValueOpEmitter, raw: any): T;
+	load(emitter: IValueOpEmitter, raw: any, options?: Partial<SequenceOptions>): T;
 
 	/**
 	 * Given a value type, provides a JSONable form of its data to be used for snapshotting.  This data must be

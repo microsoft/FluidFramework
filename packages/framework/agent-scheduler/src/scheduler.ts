@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
-import { UsageError } from "@fluidframework/container-utils";
 import {
 	FluidDataStoreRuntime,
 	FluidObjectHandle,
@@ -21,7 +21,7 @@ import {
 	NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
-import { TelemetryDataTag } from "@fluidframework/telemetry-utils";
+import { tagCodeArtifacts, UsageError } from "@fluidframework/telemetry-utils";
 import { IAgentScheduler, IAgentSchedulerEvents } from "./agent";
 
 // Note: making sure this ID is unique and does not collide with storage provided clientID
@@ -121,6 +121,8 @@ export class AgentScheduler
 		private readonly consensusRegisterCollection: ConsensusRegisterCollection<string | null>,
 	) {
 		super();
+		// We are expecting this class to have many listeners, so we suppress noisy "MaxListenersExceededWarning" logging.
+		super.setMaxListeners(0);
 		this._handle = new FluidObjectHandle(this, "", this.runtime.objectsRoutingContext);
 	}
 
@@ -131,9 +133,7 @@ export class AgentScheduler
 	public async register(...taskUrls: string[]): Promise<void> {
 		for (const taskUrl of taskUrls) {
 			if (this.registeredTasks.has(taskUrl)) {
-				throw new UsageError(`Task is already registered`, {
-					taskUrl: { tag: TelemetryDataTag.CodeArtifact, value: taskUrl },
-				});
+				throw new UsageError(`Task is already registered`, tagCodeArtifacts({ taskUrl }));
 			}
 		}
 		const unregisteredTasks: string[] = [];
@@ -148,13 +148,11 @@ export class AgentScheduler
 		return this.registerCore(unregisteredTasks);
 	}
 
-	public async pick(taskId: string, worker: () => Promise<void>): Promise<void> {
-		if (this.locallyRunnableTasks.has(taskId)) {
-			throw new UsageError(`Task is already attempted`, {
-				taskUrl: { tag: TelemetryDataTag.CodeArtifact, value: taskId },
-			});
+	public async pick(taskUrl: string, worker: () => Promise<void>): Promise<void> {
+		if (this.locallyRunnableTasks.has(taskUrl)) {
+			throw new UsageError(`Task is already attempted`, tagCodeArtifacts({ taskUrl }));
 		}
-		this.locallyRunnableTasks.set(taskId, worker);
+		this.locallyRunnableTasks.set(taskUrl, worker);
 
 		// We have a policy to disallow non-interactive clients from taking tasks.  Callers of pick() can
 		// either perform this check proactively and call conditionally, or catch the error (in which case
@@ -166,9 +164,9 @@ export class AgentScheduler
 
 		// Check the current status and express interest if it's a new one (undefined) or currently unpicked (null).
 		if (this.isActive()) {
-			const currentClient = this.getTaskClientId(taskId);
+			const currentClient = this.getTaskClientId(taskUrl);
 			if (currentClient === undefined || currentClient === null) {
-				await this.writeCore(taskId, this.clientId);
+				await this.writeCore(taskUrl, this.clientId);
 			}
 		}
 	}
@@ -177,9 +175,7 @@ export class AgentScheduler
 		const active = this.isActive();
 		for (const taskUrl of taskUrls) {
 			if (!this.locallyRunnableTasks.has(taskUrl)) {
-				throw new UsageError(`Task was never registered`, {
-					taskUrl: { tag: TelemetryDataTag.CodeArtifact, value: taskUrl },
-				});
+				throw new UsageError(`Task was never registered`, tagCodeArtifacts({ taskUrl }));
 			}
 			if (!this.runningTasks.has(taskUrl)) {
 				// If we got disconnected (and are attached), tasks that we WERE picked for at the time of disconnect
@@ -188,18 +184,14 @@ export class AgentScheduler
 				// ourselves clearing the task upon reconnect.
 				// This UsageError is to enforce that the caller should check AgentScheduler.pickedTasks before trying
 				// to release a task.
-				throw new UsageError(`Task is not currently picked`, {
-					taskUrl: { tag: TelemetryDataTag.CodeArtifact, value: taskUrl },
-				});
+				throw new UsageError(`Task is not currently picked`, tagCodeArtifacts({ taskUrl }));
 			}
 			// We may only release tasks that we KNOW we hold (detached state or connected and own the CRC).  If we're
 			// attached+disconnected then we'll lose the task automatically, and so may not release manually (someone
 			// else might hold it by the time we reconnect)
 			assert(active, 0x119 /* "This agent became inactive while releasing" */);
 			if (this.getTaskClientId(taskUrl) !== this.clientId) {
-				throw new UsageError(`Task was never picked`, {
-					taskUrl: { tag: TelemetryDataTag.CodeArtifact, value: taskUrl },
-				});
+				throw new UsageError(`Task was never picked`, tagCodeArtifacts({ taskUrl }));
 			}
 		}
 		return this.releaseCore([...taskUrls]);
@@ -449,7 +441,7 @@ class AgentSchedulerRuntime extends FluidDataStoreRuntime {
 		const response = await super.request(request);
 		if (response.status === 404) {
 			if (request.url === "" || request.url === "/") {
-				const agentScheduler = await this.entryPoint?.get();
+				const agentScheduler = await this.entryPoint.get();
 				assert(
 					agentScheduler !== undefined,
 					0x466 /* entryPoint for AgentSchedulerRuntime should have been initialized by now */,
@@ -476,22 +468,24 @@ export class AgentSchedulerFactory implements IFluidDataStoreFactory {
 
 	public static async createChildInstance(
 		parentContext: IFluidDataStoreContext,
-	): Promise<AgentScheduler> {
+	): Promise<IAgentScheduler> {
 		const packagePath = [...parentContext.packagePath, AgentSchedulerFactory.type];
 		const dataStore = await parentContext.containerRuntime.createDataStore(packagePath);
-		const entryPoint: FluidObject<IAgentScheduler> | undefined =
-			await dataStore.entryPoint?.get();
+		const entryPoint: FluidObject<IAgentScheduler> = await dataStore.entryPoint.get();
 
 		// AgentSchedulerRuntime always puts an AgentScheduler object in the data store's entryPoint, but double-check
 		// while we plumb entryPoints correctly everywhere, so we can be sure the cast below is fine.
 		assert(
-			entryPoint?.IAgentScheduler !== undefined,
+			entryPoint.IAgentScheduler !== undefined,
 			0x467 /* The data store's entryPoint is not an AgentScheduler! */,
 		);
 		return entryPoint as unknown as AgentScheduler;
 	}
 
-	public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
+	public async instantiateDataStore(
+		context: IFluidDataStoreContext,
+		existing: boolean,
+	): Promise<FluidDataStoreRuntime> {
 		const mapFactory = SharedMap.getFactory();
 		const consensusRegisterCollectionFactory = ConsensusRegisterCollection.getFactory();
 		const dataTypes = new Map<string, IChannelFactory>();

@@ -17,21 +17,26 @@ import {
 } from "@fluidframework/container-runtime";
 import { ILoaderOptions } from "@fluidframework/container-loader";
 import { ConfigTypes, LoggingError } from "@fluidframework/telemetry-utils";
+import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import { ILoadTestConfig, OptionOverride } from "./testConfigFile";
 
 const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
 	cache: booleanCases,
 	provideScopeLoader: booleanCases,
 	maxClientLeaveWaitTime: numberCases,
 	summarizeProtocolTree: [undefined],
+	enableOfflineLoad: booleanCases,
 };
 
-export function applyOverrides<T>(
+export function applyOverrides<T extends Record<string, any>>(
 	options: OptionsMatrix<T>,
 	optionsOverrides: Partial<OptionsMatrix<T>> | undefined,
 ) {
 	const realOptions: OptionsMatrix<T> = { ...options };
 	if (optionsOverrides !== undefined) {
-		for (const key of Object.keys(optionsOverrides)) {
+		// The cast is required because TS5 infers that 'key' must be in the set 'keyof T' and
+		// notes that the type 'Partial<OptionsMatrix<T>>' may contain additional keys not in T.
+		for (const key of Object.keys(optionsOverrides) as (string & keyof T)[]) {
 			const override = optionsOverrides[key];
 			if (override !== undefined) {
 				if (Array.isArray(override)) {
@@ -61,7 +66,6 @@ const gcOptionsMatrix: OptionsMatrix<IGCRuntimeOptions> = {
 	disableGC: booleanCases,
 	gcAllowed: booleanCases,
 	runFullGC: booleanCases,
-	sweepAllowed: [false],
 	sessionExpiryTimeoutMs: [undefined], // Don't want coverage here
 };
 
@@ -96,6 +100,8 @@ export function generateRuntimeOptions(
 		enableOpReentryCheck: [true],
 		// Compressed payloads exceeding this size will be chunked into messages of exactly this size
 		chunkSizeInBytes: [204800],
+		enableRuntimeIdCompressor: [undefined, true],
+		enableGroupedBatching: [true, false],
 	};
 
 	return generatePairwiseOptions<IContainerRuntimeOptions>(
@@ -116,4 +122,25 @@ export function generateConfigurations(
 		return [{}];
 	}
 	return generatePairwiseOptions<Record<string, ConfigTypes>>(overrides, seed);
+}
+
+/**
+ *
+ * @param testConfig - the ILoadTestConfig to extract the Option Override from
+ * @param driverType - the DriverType being used in the test, used to determine which option override to pick
+ * @param endpoint - the Endpoint being used in the test, used to determine which option override to pick
+ * @returns an option override
+ */
+export function getOptionOverride(
+	testConfig: ILoadTestConfig | undefined,
+	driverType: TestDriverTypes,
+	endpoint: string | undefined,
+): OptionOverride | undefined {
+	// Specifically using an all or nothing strategy as that's how our current test config options are written today
+	// We first search for the key driverType-endpoint, if that doesn't exist then we just key on the driverType
+	const driverEndpointOverride = `${driverType}-${endpoint}`;
+	return (
+		testConfig?.optionOverrides?.[driverEndpointOverride] ??
+		testConfig?.optionOverrides?.[driverType]
+	);
 }

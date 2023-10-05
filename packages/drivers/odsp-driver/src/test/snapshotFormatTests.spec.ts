@@ -5,8 +5,8 @@
 
 import { strict as assert } from "assert";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { stringToBuffer } from "@fluidframework/common-utils";
-import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
+import { stringToBuffer } from "@fluid-internal/client-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import { parseCompactSnapshotResponse } from "../compactSnapshotParser";
 import { convertToCompactSnapshot } from "../compactSnapshotWriter";
 import { ISnapshotContents } from "../odspPublicUtils";
@@ -103,7 +103,6 @@ const ops: ISequencedDocumentMessage[] = [
 		minimumSequenceNumber: 0,
 		referenceSequenceNumber: -1,
 		sequenceNumber: 1,
-		term: 1,
 		timestamp: 1623883807452,
 		type: "join",
 	},
@@ -114,7 +113,6 @@ const ops: ISequencedDocumentMessage[] = [
 		minimumSequenceNumber: 0,
 		referenceSequenceNumber: -1,
 		sequenceNumber: 2,
-		term: 1,
 		timestamp: 1623883811928,
 		type: "join",
 	},
@@ -129,8 +127,9 @@ describe("Snapshot Format Conversion Tests", () => {
 			sequenceNumber: 0,
 			latestSequenceNumber: 2,
 		};
+		const logger = new MockLogger();
 		const compactSnapshot = convertToCompactSnapshot(snapshotContents);
-		const result = parseCompactSnapshotResponse(compactSnapshot, new TelemetryUTLogger());
+		const result = parseCompactSnapshotResponse(compactSnapshot, logger.toTelemetryLogger());
 		assert.deepStrictEqual(result.snapshotTree, snapshotTree, "Tree structure should match");
 		assert.deepStrictEqual(result.blobs, blobs, "Blobs content should match");
 		assert.deepStrictEqual(result.ops, ops, "Ops should match");
@@ -147,6 +146,7 @@ describe("Snapshot Format Conversion Tests", () => {
 			compactSnapshot.buffer,
 			"Compact representation should remain same",
 		);
+		logger.assertMatchNone([{ category: "error" }]);
 	});
 
 	it("Conversion test with empty ops", async () => {
@@ -157,8 +157,9 @@ describe("Snapshot Format Conversion Tests", () => {
 			sequenceNumber: 0,
 			latestSequenceNumber: 2,
 		};
+		const logger = new MockLogger();
 		const compactSnapshot = convertToCompactSnapshot(snapshotContents);
-		const result = parseCompactSnapshotResponse(compactSnapshot, new TelemetryUTLogger());
+		const result = parseCompactSnapshotResponse(compactSnapshot, logger.toTelemetryLogger());
 		assert.deepStrictEqual(result.snapshotTree, snapshotTree, "Tree structure should match");
 		assert.deepStrictEqual(result.blobs, blobs, "Blobs content should match");
 		assert.deepStrictEqual(result.ops, [], "Ops should match");
@@ -175,5 +176,6 @@ describe("Snapshot Format Conversion Tests", () => {
 			compactSnapshot.buffer,
 			"Compact representation should remain same",
 		);
+		logger.assertMatchNone([{ category: "error" }]);
 	});
 });

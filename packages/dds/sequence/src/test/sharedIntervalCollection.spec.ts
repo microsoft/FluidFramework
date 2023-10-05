@@ -15,10 +15,11 @@ import {
 	SharedIntervalCollection,
 	SharedIntervalCollectionFactory,
 } from "../sharedIntervalCollection";
-import { Interval, IntervalCollection, IntervalType } from "../intervalCollection";
+import { IIntervalCollection } from "../intervalCollection";
+import { Interval, IntervalType } from "../intervals";
 
 const assertIntervals = (
-	intervalCollection: IntervalCollection<Interval>,
+	intervalCollection: IIntervalCollection<Interval>,
 	expected: readonly { start: number; end: number }[],
 	validateOverlapping: boolean = true,
 ) => {
@@ -69,7 +70,7 @@ function createConnectedIntervalCollection(
 	);
 	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
-		deltaConnection: containerRuntime.createDeltaConnection(),
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(undefined),
 	};
 	intervals.connect(services);
@@ -82,8 +83,8 @@ describe("SharedIntervalCollection", () => {
 		let runtimeFactory: MockContainerRuntimeFactory;
 		let intervals1: SharedIntervalCollection;
 		let intervals2: SharedIntervalCollection;
-		let collection1: IntervalCollection<Interval>;
-		let collection2: IntervalCollection<Interval>;
+		let collection1: IIntervalCollection<Interval>;
+		let collection2: IIntervalCollection<Interval>;
 
 		beforeEach(() => {
 			runtimeFactory = new MockContainerRuntimeFactory();
@@ -146,7 +147,7 @@ describe("SharedIntervalCollection", () => {
 			runtimeFactory.processAllMessages();
 
 			const id = interval.getIntervalId() ?? assert.fail("expected interval to have id");
-			collection1.change(id, 10);
+			collection1.change(id, 10, 20);
 			assertIntervals(collection1, [
 				{ start: 10, end: 20 },
 				{ start: 10, end: 30 },
@@ -173,8 +174,8 @@ describe("SharedIntervalCollection", () => {
 		let intervals1: SharedIntervalCollection;
 		let intervals2: SharedIntervalCollection;
 		let runtime1: MockContainerRuntimeForReconnection;
-		let collection1: IntervalCollection<Interval>;
-		let collection2: IntervalCollection<Interval>;
+		let collection1: IIntervalCollection<Interval>;
+		let collection2: IIntervalCollection<Interval>;
 
 		beforeEach(() => {
 			runtimeFactory = new MockContainerRuntimeFactoryForReconnection();

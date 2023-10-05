@@ -72,13 +72,14 @@ describeFullCompat("SharedString", (getTestObjectProvider) => {
 			"The retrieved text should match the inserted text.",
 		);
 
-		// Wait for the ops to to be submitted and processed across the containers.
-		await provider.ensureSynchronized();
-
 		// Create a initialize a new container with the same id.
 		const newContainer = await provider.loadTestContainer(testContainerConfig);
 		const newComponent = await requestFluidObject<ITestFluidObject>(newContainer, "default");
 		const newSharedString = await newComponent.getSharedObject<SharedString>(stringId);
+
+		// Wait for the ops to to be submitted and processed across the containers.
+		await provider.ensureSynchronized();
+
 		assert.equal(
 			newSharedString.getText(),
 			text,

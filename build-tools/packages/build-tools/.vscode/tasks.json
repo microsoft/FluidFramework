@@ -9,8 +9,8 @@
 			"problemMatcher": ["$tsc"],
 			"group": {
 				"kind": "build",
-				"isDefault": true
-			}
-		}
-	]
+				"isDefault": true,
+			},
+		},
+	],
 }

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
+import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import {
 	getDocAttributesFromProtocolSummary,
 	getQuorumValuesFromProtocolSummary,
@@ -15,7 +15,7 @@ import { defaultHash } from "@fluidframework/server-services-client";
 
 export async function createDocument(
 	localDeltaConnectionServer,
-	resolvedUrl: IFluidResolvedUrl,
+	resolvedUrl: IResolvedUrl,
 	summary: ISummaryTree,
 ) {
 	const pathName = new URL(resolvedUrl.url).pathname;
@@ -37,12 +37,12 @@ export async function createDocument(
 		id,
 		appSummary,
 		sequenceNumber,
-		documentAttributes.term ?? 1,
 		defaultHash,
 		resolvedUrl.endpoints.ordererUrl ?? "",
 		resolvedUrl.endpoints.storageUrl ?? "",
 		resolvedUrl.endpoints.deltaStorageUrl ?? "",
 		quorumValues,
 		false /* enableDiscovery */,
+		false /* isEphemeralContainer */,
 	);
 }

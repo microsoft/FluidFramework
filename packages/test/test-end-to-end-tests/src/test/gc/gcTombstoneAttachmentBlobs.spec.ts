@@ -16,13 +16,15 @@ import {
 	ITestContainerConfig,
 } from "@fluidframework/test-utils";
 import { describeNoCompat, ITestDataObject, itExpects } from "@fluid-internal/test-version-utils";
-import { delay, stringToBuffer } from "@fluidframework/common-utils";
+import { stringToBuffer } from "@fluid-internal/client-utils";
+import { delay } from "@fluidframework/core-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import {
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
 	MockDetachedBlobStorage,
-} from "../mockDetachedBlobStorage";
+} from "../mockDetachedBlobStorage.js";
+import { waitForContainerWriteModeConnectionWrite } from "./gcTestSummaryUtils.js";
 
 /**
  * These tests validate that SweepReady attachment blobs are correctly marked as tombstones. Tombstones should be added
@@ -61,13 +63,10 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 			dataStore._root.set("transition to write", "true");
 			await waitForContainerConnection(container);
 
-			const { summarizer } = await createSummarizer(
-				provider,
-				container,
-				undefined /* summaryVersion */,
-				gcOptions,
-				mockConfigProvider(settings),
-			);
+			const { summarizer } = await createSummarizer(provider, container, {
+				runtimeOptions: { gcOptions },
+				loaderProps: { configProvider: mockConfigProvider(settings) },
+			});
 
 			return { dataStore, summarizer };
 		}
@@ -136,9 +135,11 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				const { container: summarizingContainer } = await createSummarizer(
 					provider,
 					container2,
+					{
+						runtimeOptions: { gcOptions },
+						loaderProps: { configProvider: mockConfigProvider(settings) },
+					},
 					summary2.summaryVersion,
-					gcOptions,
-					mockConfigProvider(settings),
 				);
 				const summarizingResponse = await summarizingContainer.request({
 					url: blobHandle.absolutePath,
@@ -295,11 +296,6 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 			[
 				{
 					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
-				},
-				{
-					error: "SweepReadyObject_Loaded",
-					eventName:
-						"fluid:telemetry:ContainerRuntime:GarbageCollector:SweepReadyObject_Loaded",
 				},
 			],
 			async () => {
@@ -468,13 +464,10 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				mainDataStore._root.set("transition to write", "true");
 				await waitForContainerConnection(mainContainer);
 
-				const { summarizer } = await createSummarizer(
-					provider,
-					mainContainer,
-					undefined /* summaryVersion */,
-					gcOptions,
-					mockConfigProvider(settings),
-				);
+				const { summarizer } = await createSummarizer(provider, mainContainer, {
+					runtimeOptions: { gcOptions },
+					loaderProps: { configProvider: mockConfigProvider(settings) },
+				});
 
 				// Remove the blob's handle to unreference it.
 				mainDataStore._root.delete("blob");
@@ -556,13 +549,10 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				mainDataStore._root.delete("local1");
 				mainDataStore._root.delete("local2");
 
-				const { summarizer } = await createSummarizer(
-					provider,
-					mainContainer,
-					undefined /* summaryVersion */,
-					gcOptions,
-					mockConfigProvider(settings),
-				);
+				const { summarizer } = await createSummarizer(provider, mainContainer, {
+					runtimeOptions: { gcOptions },
+					loaderProps: { configProvider: mockConfigProvider(settings) },
+				});
 
 				// Summarize so that the above attachment blob is marked unreferenced.
 				await provider.ensureSynchronized();
@@ -647,13 +637,10 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				mainDataStore._root.set("transition to write", "true");
 				await waitForContainerConnection(mainContainer);
 
-				const { summarizer } = await createSummarizer(
-					provider,
-					mainContainer,
-					undefined /* summaryVersion */,
-					gcOptions,
-					mockConfigProvider(settings),
-				);
+				const { summarizer } = await createSummarizer(provider, mainContainer, {
+					runtimeOptions: { gcOptions },
+					loaderProps: { configProvider: mockConfigProvider(settings) },
+				});
 
 				// Add the blob's local handles to reference them.
 				mainDataStore._root.set("local1", localHandle1);
@@ -752,30 +739,14 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 		 * GC data to validate references against and ensure that gcUnknownOutboundReferences error is not logged.
 		 */
 		async function createSummarizerWithInitialSummary(container: IContainer) {
-			const { summarizer } = await createSummarizer(
-				provider,
-				container,
-				undefined /* summaryVersion */,
-				gcOptions,
-				mockConfigProvider(settings),
-			);
+			const { summarizer } = await createSummarizer(provider, container, {
+				runtimeOptions: { gcOptions },
+				loaderProps: { configProvider: mockConfigProvider(settings) },
+			});
 			await provider.ensureSynchronized();
 			await summarizeNow(summarizer);
 			return summarizer;
 		}
-
-		const ensureContainerConnectedWriteMode = async (container: IContainer) => {
-			const resolveIfActive = (res: () => void) => {
-				if (container.deltaManager.active) {
-					res();
-				}
-			};
-			if (!container.deltaManager.active) {
-				await new Promise<void>((resolve) =>
-					container.on("connected", () => resolveIfActive(resolve)),
-				);
-			}
-		};
 
 		beforeEach(async function () {
 			provider = getTestObjectProvider({ syncSummarizer: true });
@@ -803,15 +774,16 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				// Disconnect the main container, upload an attachment blob and mark it referenced.
 				mainContainer.disconnect();
 				const blobContents = "Blob contents";
-				const blobHandle = await mainDataStore._context.uploadBlob(
+				const blobHandleP = mainDataStore._context.uploadBlob(
 					stringToBuffer(blobContents, "utf-8"),
 				);
-				mainDataStore._root.set("blob", blobHandle);
 
 				// Connect the container after the blob is uploaded. Send an op to transition it to write mode.
 				mainContainer.connect();
 				mainDataStore._root.set("transition to write", "true");
-				await ensureContainerConnectedWriteMode(mainContainer);
+				await waitForContainerWriteModeConnectionWrite(mainContainer);
+				const blobHandle = await blobHandleP;
+				mainDataStore._root.set("blob", blobHandle);
 
 				// Remove the blob's handle to unreference it.
 				mainDataStore._root.delete("blob");
@@ -862,16 +834,16 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				// with a localId for the blob.
 				mainContainer.disconnect();
 				const blobContents = "Blob contents";
-				const localHandle1 = await mainDataStore._context.uploadBlob(
+				const localHandle1P = mainDataStore._context.uploadBlob(
 					stringToBuffer(blobContents, "utf-8"),
 				);
-				mainDataStore._root.set("local1", localHandle1);
 
 				// Connect the container after the blob is uploaded. Send an op to transition the container to write mode.
 				mainContainer.connect();
 				mainDataStore._root.set("transition to write", "true");
-				await ensureContainerConnectedWriteMode(mainContainer);
-
+				await waitForContainerWriteModeConnectionWrite(mainContainer);
+				const localHandle1 = await localHandle1P;
+				mainDataStore._root.set("local1", localHandle1);
 				// Upload the same blob. This will get de-duped and we will get back another local handle. Both this and
 				// the blob uploaded in disconnected mode should be mapped to the same storageId.
 				const localHandle2 = await mainDataStore._context.uploadBlob(
@@ -953,17 +925,19 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				// these blobs are uploaded to the server, they will be de-duped and redirect to the same storageId.
 				mainContainer.disconnect();
 				const blobContents = "Blob contents";
-				const localHandle1 = await mainDataStore._context.uploadBlob(
+				const localHandle1P = mainDataStore._context.uploadBlob(
 					stringToBuffer(blobContents, "utf-8"),
 				);
-				const localHandle2 = await mainDataStore._context.uploadBlob(
+				const localHandle2P = mainDataStore._context.uploadBlob(
 					stringToBuffer(blobContents, "utf-8"),
 				);
 
 				// Connect the container after the blob is uploaded. Send an op to transition the container to write mode.
 				mainContainer.connect();
 				mainDataStore._root.set("transition to write", "true");
-				await ensureContainerConnectedWriteMode(mainContainer);
+				await waitForContainerWriteModeConnectionWrite(mainContainer);
+				const localHandle1 = await localHandle1P;
+				const localHandle2 = await localHandle2P;
 
 				// Add the blob's local handles to reference them.
 				mainDataStore._root.set("local1", localHandle1);

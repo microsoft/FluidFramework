@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { UsageError } from "@fluidframework/container-utils";
-import { MonitoringContext } from "@fluidframework/telemetry-utils";
+import { MonitoringContext, UsageError } from "@fluidframework/telemetry-utils";
 import { IContainerRuntimeMetadata } from "../summary";
 import {
-	currentGCVersion,
+	nextGCVersion,
 	defaultInactiveTimeoutMs,
 	defaultSessionExpiryDurationMs,
 	disableTombstoneKey,
@@ -16,7 +15,7 @@ import {
 	gcTestModeKey,
 	gcTombstoneGenerationOptionName,
 	GCVersion,
-	gcVersionUpgradeToV3Key,
+	gcVersionUpgradeToV4Key,
 	IGarbageCollectorConfigs,
 	IGCRuntimeOptions,
 	maxSnapshotCacheExpiryMs,
@@ -106,21 +105,26 @@ export function generateGCConfigs(
 		createParams.gcOptions[gcSweepGenerationOptionName] /* currentGeneration */,
 	);
 
+	// If version upgrade is not enabled, fall back to the stable GC version.
+	const gcVersionInEffect =
+		mc.config.getBoolean(gcVersionUpgradeToV4Key) === true ? nextGCVersion : stableGCVersion;
+
+	// The GC version is up-to-date if the GC version in effect is at least equal to the GC version in base snapshot.
+	// If it is not up-to-date, there is a newer version of GC out there which is more reliable than this. So, GC
+	// should not run as it may produce incorrect / unreliable state.
+	const isGCVersionUpToDate =
+		gcVersionInBaseSnapshot === undefined || gcVersionInEffect >= gcVersionInBaseSnapshot;
+
 	/**
 	 * Whether GC should run or not. The following conditions have to be met to run sweep:
-	 *
 	 * 1. GC should be enabled for this container.
-	 *
 	 * 2. GC should not be disabled via disableGC GC option.
-	 *
+	 * 3. The current GC version should be greater of equal to the GC version in the base snapshot.
 	 * These conditions can be overridden via runGCKey feature flag.
 	 */
 	const shouldRunGC =
 		mc.config.getBoolean(runGCKey) ??
-		// GC must be enabled for the document.
-		(gcEnabled &&
-			// GC must not be disabled via GC options.
-			!createParams.gcOptions.disableGC);
+		(gcEnabled && !createParams.gcOptions.disableGC && isGCVersionUpToDate);
 
 	/**
 	 * Whether sweep should run or not. The following conditions have to be met to run sweep:
@@ -148,6 +152,8 @@ export function generateGCConfigs(
 		throw new UsageError("inactive timeout should not be greater than the sweep timeout");
 	}
 
+	const throwOnInactiveLoad: boolean | undefined = createParams.gcOptions.throwOnInactiveLoad;
+
 	// Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
 	const testMode =
 		mc.config.getBoolean(gcTestModeKey) ?? createParams.gcOptions.runGCInTestMode === true;
@@ -155,12 +161,6 @@ export function generateGCConfigs(
 	// via feature flags.
 	const tombstoneMode = !shouldRunSweep && mc.config.getBoolean(disableTombstoneKey) !== true;
 	const runFullGC = createParams.gcOptions.runFullGC;
-
-	// If version upgrade is not enabled, fall back to the stable GC version.
-	const gcVersionInEffect =
-		mc.config.getBoolean(gcVersionUpgradeToV3Key) === false
-			? stableGCVersion
-			: currentGCVersion;
 
 	return {
 		gcEnabled,
@@ -173,6 +173,7 @@ export function generateGCConfigs(
 		sessionExpiryTimeoutMs,
 		sweepTimeoutMs,
 		inactiveTimeoutMs,
+		throwOnInactiveLoad,
 		persistedGcFeatureMatrix,
 		gcVersionInBaseSnapshot,
 		gcVersionInEffect,

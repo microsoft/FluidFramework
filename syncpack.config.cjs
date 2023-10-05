@@ -26,6 +26,20 @@ module.exports = {
 	 * `syncpack lint-semver-ranges`, the output is grouped by label.
 	 */
 	semverGroups: [
+		// Workaround for compatibility issues.
+		// Ideally this section would be empty (and removed).
+		// Items should be removed from here when possible.
+		{
+			label: "Version compatibility workarounds should be used, or removed from syncpack.config.cjs if no longer needed.",
+			dependencies: [
+				"@fluidframework/build-tools>npm-package-json-lint@^6.0.0",
+				"@oclif/core",
+			],
+			dependencyTypes: ["pnpmOverrides"],
+			packages: ["**"],
+			range: "~",
+		},
+
 		{
 			label: "engines.node should always use >= ranges",
 			dependencyTypes: ["engines"],
@@ -93,7 +107,6 @@ module.exports = {
 				"@types/url-parse",
 				"fake-indexeddb",
 				"json-stringify-safe",
-				"tinylicious",
 				"yargs",
 			],
 			packages: ["**"],
@@ -113,6 +126,9 @@ module.exports = {
 				"typescript",
 				"vue",
 				"webpack-dev-server",
+
+				// Required due to use of "unstable" tree component APIs
+				"@fluentui/react-components",
 			],
 			packages: ["**"],
 			range: "~",
@@ -135,6 +151,16 @@ module.exports = {
 	 * `syncpack list-mismatches`, the output is grouped by label.
 	 */
 	versionGroups: [
+		// Workaround for compatibility issues.
+		// Ideally this section would be empty (and removed).
+		// Items should be removed from here when possible.
+		{
+			label: "Version compatibility workarounds should be used, or removed from syncpack.config.cjs if no longer needed.",
+			dependencies: ["react-virtualized-auto-sizer", "@types/react", "@types/react-dom"],
+			packages: ["**"],
+			isIgnored: true,
+		},
+
 		{
 			label: "Versions of common Fluid packages should all match",
 			dependencies: [

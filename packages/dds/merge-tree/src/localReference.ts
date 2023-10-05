@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
-import { UsageError } from "@fluidframework/container-utils";
+import { assert } from "@fluidframework/core-utils";
+import { UsageError } from "@fluidframework/telemetry-utils";
 import { List, ListNode, walkList } from "./collections";
 import { ISegment } from "./mergeTreeNodes";
 import { TrackingGroup, TrackingGroupCollection } from "./mergeTreeTracking";
@@ -12,10 +12,32 @@ import { ICombiningOp, ReferenceType } from "./ops";
 import { addProperties, PropertySet } from "./properties";
 import {
 	refHasTileLabels,
+	// eslint-disable-next-line import/no-deprecated
 	refHasRangeLabels,
 	ReferencePosition,
 	refTypeIncludesFlag,
 } from "./referencePositions";
+
+/**
+ * Dictates the preferential direction for a {@link ReferencePosition} to slide
+ * in a merge-tree
+ */
+export const SlidingPreference = {
+	/**
+	 * Prefer sliding towards the start of the tree
+	 */
+	BACKWARD: 0,
+	/**
+	 * Prefer sliding towards the end of the tree
+	 */
+	FORWARD: 1,
+} as const;
+
+/**
+ * Dictates the preferential direction for a {@link ReferencePosition} to slide
+ * in a merge-tree
+ */
+export type SlidingPreference = (typeof SlidingPreference)[keyof typeof SlidingPreference];
 
 /**
  * @internal
@@ -45,6 +67,11 @@ export interface LocalReferencePosition extends ReferencePosition {
 		Record<"beforeSlide" | "afterSlide", (ref: LocalReferencePosition) => void>
 	>;
 	readonly trackingCollection: TrackingGroupCollection;
+	/**
+	 * Whether or not this reference position can slide onto one of the two
+	 * special segments representing the position before or after the tree
+	 */
+	readonly canSlideToEndpoint?: boolean;
 }
 
 /**
@@ -66,7 +93,12 @@ class LocalReference implements LocalReferencePosition {
 		return (this._trackingCollection ??= new TrackingGroupCollection(this));
 	}
 
-	constructor(public refType = ReferenceType.Simple, properties?: PropertySet) {
+	constructor(
+		public refType = ReferenceType.Simple,
+		properties?: PropertySet,
+		public readonly slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
+		public readonly canSlideToEndpoint?: boolean,
+	) {
 		_validateReferenceType(refType);
 		this.properties = properties;
 	}
@@ -134,6 +166,37 @@ interface IRefsAtOffset {
 
 function assertLocalReferences(lref: any): asserts lref is LocalReference {
 	assert(lref instanceof LocalReference, 0x2e0 /* "lref not a Local Reference" */);
+}
+
+/**
+ * @returns true if `func` returns true for any position within the collection
+ */
+export function anyLocalReferencePosition(
+	collection: LocalReferenceCollection,
+	func: (pos: LocalReferencePosition) => boolean,
+): boolean {
+	for (const pos of collection) {
+		if (func(pos)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * @returns only the local reference positions for which the `predicate` returns
+ * true
+ */
+export function* filterLocalReferencePositions(
+	collection: LocalReferenceCollection,
+	predicate: (pos: LocalReferencePosition) => boolean,
+): Generator<LocalReferencePosition> {
+	for (const pos of collection) {
+		if (predicate(pos)) {
+			yield pos;
+		}
+	}
 }
 
 /**
@@ -261,8 +324,10 @@ export class LocalReferenceCollection {
 		offset: number,
 		refType: ReferenceType,
 		properties: PropertySet | undefined,
+		slidingPreference?: SlidingPreference,
+		canSlideToEndpoint?: boolean,
 	): LocalReferencePosition {
-		const ref = new LocalReference(refType, properties);
+		const ref = new LocalReference(refType, properties, slidingPreference, canSlideToEndpoint);
 		ref.link(this.segment, offset, undefined);
 		if (!refTypeIncludesFlag(ref, ReferenceType.Transient)) {
 			this.addLocalRef(ref, offset);
@@ -290,6 +355,7 @@ export class LocalReferenceCollection {
 
 			lref.link(this.segment, offset, atRefs.push(lref).last);
 
+			// eslint-disable-next-line import/no-deprecated
 			if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
 				this.hierRefCount++;
 			}
@@ -309,6 +375,7 @@ export class LocalReferenceCollection {
 			node?.list?.remove(node);
 
 			lref.link(lref.getSegment(), lref.getOffset(), undefined);
+			// eslint-disable-next-line import/no-deprecated
 			if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
 				this.hierRefCount--;
 			}
@@ -406,6 +473,7 @@ export class LocalReferenceCollection {
 			for (const lref of localRefs) {
 				assertLocalReferences(lref);
 				lref.link(splitSeg, lref.getOffset() - offset, lref.getListNode());
+				// eslint-disable-next-line import/no-deprecated
 				if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
 					this.hierRefCount--;
 					localRefs.hierRefCount++;
@@ -444,6 +512,7 @@ export class LocalReferenceCollection {
 							? beforeRefs.unshift(lref)?.first
 							: beforeRefs.insertAfter(precedingRef, lref)?.first;
 					lref.link(this.segment, 0, precedingRef);
+					// eslint-disable-next-line import/no-deprecated
 					if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
 						this.hierRefCount++;
 					}
@@ -477,6 +546,7 @@ export class LocalReferenceCollection {
 					lref.callbacks?.beforeSlide?.(lref);
 					afterRefs.push(lref);
 					lref.link(this.segment, lastOffset, afterRefs.last);
+					// eslint-disable-next-line import/no-deprecated
 					if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
 						this.hierRefCount++;
 					}

@@ -4,7 +4,7 @@
  */
 
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { UsageError } from "@fluidframework/driver-utils";
 import {
 	IFileEntry,
@@ -27,15 +27,19 @@ import { ClpCompliantAppHeader } from "./contractsPublic";
 
 /**
  * Creates a new Fluid container on an existing file.
- * This requires service's capability to manage Fluid container inside an existing file.
- * @example - This enables a scenario where Fluid data is not stored as a standalone file but in a way that is managed
- *  by an existing file. For example, SharePoint Pages is able to store Fluid container in an
- *  "alternative file partition" where the main File stub is an ASPX page.
+ *
+ * @remarks This requires service's capability to manage Fluid container inside an existing file.
+ *
+ * @example
+ *
+ * This enables a scenario where Fluid data is not stored as a standalone file but in a way that is managed
+ * by an existing file. For example, SharePoint Pages is able to store Fluid container in an
+ * "alternative file partition" where the main File stub is an ASPX page.
  */
 export async function createNewContainerOnExistingFile(
 	getStorageToken: InstrumentedStorageTokenFetcher,
 	fileInfo: IExistingFileInfo,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	createNewSummary: ISummaryTree | undefined,
 	epochTracker: EpochTracker,
 	fileEntry: IFileEntry,

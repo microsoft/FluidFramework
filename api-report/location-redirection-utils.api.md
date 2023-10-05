@@ -4,17 +4,11 @@
 
 ```ts
 
-import { ILocationRedirectionError } from '@fluidframework/driver-definitions';
-import { IRequest } from '@fluidframework/core-interfaces';
-import { ITelemetryLogger } from '@fluidframework/common-definitions';
-import { IUrlResolver } from '@fluidframework/driver-definitions';
+import { isLocationRedirectionError } from '@fluidframework/container-loader';
+import { resolveWithLocationRedirectionHandling } from '@fluidframework/container-loader';
 
-// @public
-export function isLocationRedirectionError(error: any): error is ILocationRedirectionError;
+export { isLocationRedirectionError }
 
-// @public
-export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryLogger): Promise<T>;
-
-// (No @packageDocumentation comment for this package)
+export { resolveWithLocationRedirectionHandling }
 
 ```

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent } from "@fluidframework/common-definitions";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { IEvent } from "@fluidframework/core-interfaces";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IAgentScheduler } from "./agent";
 
 export interface ITaskSubscriptionEvents extends IEvent {
@@ -21,7 +21,10 @@ export class TaskSubscription extends TypedEventEmitter<ITaskSubscriptionEvents>
 	 * @param agentScheduler - The AgentScheduler that will be subscribed against
 	 * @param taskId - The string ID of the task to subscribe against
 	 */
-	constructor(private readonly agentScheduler: IAgentScheduler, public readonly taskId: string) {
+	constructor(
+		private readonly agentScheduler: IAgentScheduler,
+		public readonly taskId: string,
+	) {
 		super();
 		agentScheduler.on("picked", (_taskId: string) => {
 			if (_taskId === this.taskId) {

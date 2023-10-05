@@ -3,25 +3,32 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger, IEvent } from "@fluidframework/common-definitions";
-import { assert, performance, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { IEvent } from "@fluidframework/core-interfaces";
+import {
+	ITelemetryLoggerExt,
+	IFluidErrorBase,
+	loggerToMonitoringContext,
+} from "@fluidframework/telemetry-utils";
+import { performance, TypedEventEmitter } from "@fluid-internal/client-utils";
+import { assert, Deferred } from "@fluidframework/core-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import { OdspError } from "@fluidframework/odsp-driver-definitions";
-import { IFluidErrorBase, loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
 import {
 	IClient,
 	IConnect,
+	IDocumentMessage,
 	INack,
 	ISequencedDocumentMessage,
 	ISignalMessage,
 } from "@fluidframework/protocol-definitions";
-import { Socket, io as SocketIOClientStatic } from "socket.io-client";
+import { Socket } from "socket.io-client";
 import { v4 as uuid } from "uuid";
 import { createGenericNetworkError } from "@fluidframework/driver-utils";
 import { IOdspSocketError, IGetOpsResponse, IFlushOpsResponse } from "./contracts";
 import { EpochTracker } from "./epochTracker";
 import { errorObjectFromSocketError } from "./odspError";
+import { SocketIOClientStatic } from "./socketModule";
 import { pkgVersion } from "./packageVersion";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
@@ -58,7 +65,7 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
 	// Map of all existing socket io sockets. [url, tenantId, documentId] -> socket
 	private static readonly socketIoSockets: Map<string, SocketReference> = new Map();
 
-	public static find(key: string, logger: ITelemetryLogger) {
+	public static find(key: string, logger: ITelemetryLoggerExt) {
 		const socketReference = SocketReference.socketIoSockets.get(key);
 
 		// Verify the socket is healthy before reusing it
@@ -112,7 +119,10 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
 		return this._socket;
 	}
 
-	public constructor(public readonly key: string, socket: Socket) {
+	public constructor(
+		public readonly key: string,
+		socket: Socket,
+	) {
 		super();
 
 		this._socket = socket;
@@ -122,27 +132,32 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
 		// Server sends this event when it wants to disconnect a particular client in which case the client id would
 		// be present or if it wants to disconnect all the clients. The server always closes the socket in case all
 		// clients needs to be disconnected. So fully remove the socket reference in this case.
-		socket.on("server_disconnect", (socketError: IOdspSocketError, clientId?: string) => {
-			// Treat all errors as recoverable, and rely on joinSession / reconnection flow to
-			// filter out retryable vs. non-retryable cases.
-			const error = errorObjectFromSocketError(socketError, "server_disconnect");
-			error.addTelemetryProperties({ disconnectClientId: clientId });
-			error.canRetry = true;
-
-			// see comment in disconnected() getter
-			// Setting it here to ensure socket reuse does not happen if new request to connect
-			// comes in from "disconnect" listener below, before we close socket.
-			this.isPendingInitialConnection = false;
-
-			if (clientId === undefined) {
-				// We could first raise "disconnect" event, but that may result in socket reuse due to
-				// new connection comming in. So, it's better to have more explicit flow to make it impossible.
-				this.closeSocket(error);
-			} else {
-				this.emit("disconnect", error, clientId);
-			}
-		});
+		socket.on("server_disconnect", this.serverDisconnectEventHandler);
 	}
+
+	private readonly serverDisconnectEventHandler = (
+		socketError: IOdspSocketError,
+		clientId?: string,
+	) => {
+		// Treat all errors as recoverable, and rely on joinSession / reconnection flow to
+		// filter out retryable vs. non-retryable cases.
+		const error = errorObjectFromSocketError(socketError, "server_disconnect");
+		error.addTelemetryProperties({ disconnectClientId: clientId });
+		error.canRetry = true;
+
+		// see comment in disconnected() getter
+		// Setting it here to ensure socket reuse does not happen if new request to connect
+		// comes in from "disconnect" listener below, before we close socket.
+		this.isPendingInitialConnection = false;
+
+		if (clientId === undefined) {
+			// We could first raise "disconnect" event, but that may result in socket reuse due to
+			// new connection comming in. So, it's better to have more explicit flow to make it impossible.
+			this.closeSocket(error);
+		} else {
+			this.emit("disconnect", error, clientId);
+		}
+	};
 
 	private clearTimer() {
 		if (this.delayDeleteTimeout !== undefined) {
@@ -156,6 +171,7 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
 			return;
 		}
 
+		this._socket.off("server_disconnect", this.serverDisconnectEventHandler);
 		this.clearTimer();
 
 		assert(
@@ -238,7 +254,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		token: string | null,
 		client: IClient,
 		url: string,
-		telemetryLogger: ITelemetryLogger,
+		telemetryLogger: ITelemetryLoggerExt,
 		timeoutMs: number,
 		epochTracker: EpochTracker,
 		socketReferenceKeyPrefix: string | undefined,
@@ -266,7 +282,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		);
 
 		const socket = socketReference.socket;
-
+		const connectionId = uuid();
 		const connectMessage: IConnect = {
 			client,
 			id: documentId,
@@ -275,7 +291,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			token, // Token is going to indicate tenant level information, etc...
 			versions: protocolVersions,
 			driverVersion: pkgVersion,
-			nonce: uuid(),
+			nonce: connectionId,
 			epoch: epochTracker.fluidEpoch,
 			relayUserAgent: [client.details.environment, ` driverVersion:${pkgVersion}`].join(";"),
 		};
@@ -292,6 +308,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			socketReference,
 			telemetryLogger,
 			enableMultiplexing,
+			connectionId,
 		);
 
 		try {
@@ -330,6 +347,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		new Map();
 	private flushOpNonce: string | undefined;
 	private flushDeferred: Deferred<FlushResult> | undefined;
+	private connectionNotYetDisposedTimeout: ReturnType<typeof setTimeout> | undefined;
 
 	/**
 	 * Error raising for socket.io issues
@@ -353,7 +371,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		enableMultiplexing: boolean,
 		tenantId: string,
 		documentId: string,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 	): SocketReference {
 		const existingSocketReference = SocketReference.find(key, logger);
 		if (existingSocketReference) {
@@ -384,10 +402,11 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		socket: Socket,
 		documentId: string,
 		socketReference: SocketReference,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		private readonly enableMultiplexing?: boolean,
+		connectionId?: string,
 	) {
-		super(socket, documentId, logger, false, uuid());
+		super(socket, documentId, logger, false, connectionId);
 		this.socketReference = socketReference;
 		this.requestOpsNoncePrefix = `${uuid()}-`;
 	}
@@ -492,9 +511,9 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			this.logger.sendTelemetryEvent(
 				{
 					eventName: "ServerDisconnect",
-					clientId: this.hasDetails ? this.clientId : undefined,
+					driverVersion: pkgVersion,
 					details: JSON.stringify({
-						connection: this.connectionId,
+						...this.getConnectionDetailsProps(),
 					}),
 				},
 				error,
@@ -533,14 +552,14 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 
 		this.socketReference!.on("disconnect", this.disconnectHandler);
 
-		this.socket.on("get_ops_response", (result: IGetOpsResponse) => {
+		this.addTrackedListener("get_ops_response", (result: IGetOpsResponse) => {
 			const messages = result.messages;
 			const data = this.getOpsMap.get(result.nonce);
 			// Due to socket multiplexing, this client may not have asked for any data
 			// If so, there it most likely does not need these ops (otherwise it already asked for them)
 			// Also we may have deleted entry in this.getOpsMap due to too many requests and too slow response.
 			// But not processing such result may push us into infinite loop of fast requests and dropping all responses
-			if (data !== undefined || result.nonce.indexOf(this.requestOpsNoncePrefix) === 0) {
+			if (data !== undefined || result.nonce.startsWith(this.requestOpsNoncePrefix)) {
 				this.getOpsMap.delete(result.nonce);
 				const common = {
 					eventName: "GetOps",
@@ -568,7 +587,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			}
 		});
 
-		this.socket.on("flush_ops_response", (result: IFlushOpsResponse) => {
+		this.addTrackedListener("flush_ops_response", (result: IFlushOpsResponse) => {
 			if (this.flushOpNonce === result.nonce) {
 				const seq = result.lastPersistedSequenceNumber;
 				let category: "generic" | "error" = "generic";
@@ -597,7 +616,12 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			}
 		});
 
-		await super.initialize(connectMessage, timeout);
+		await super.initialize(connectMessage, timeout).finally(() => {
+			this.logger.sendTelemetryEvent({
+				eventName: "ConnectionAttemptInfo",
+				...this.getConnectionDetailsProps(),
+			});
+		});
 	}
 
 	protected addTrackedListener(event: string, listener: (...args: any[]) => void) {
@@ -663,6 +687,59 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 				super.addTrackedListener(event, listener);
 				break;
 		}
+	}
+
+	public get disposed() {
+		if (!(this._disposed || this.socket.connected)) {
+			// Send error event if this connection is not yet disposed after socket is disconnected for 15s.
+			if (this.connectionNotYetDisposedTimeout === undefined) {
+				this.connectionNotYetDisposedTimeout = setTimeout(() => {
+					if (!this._disposed) {
+						this.logger.sendErrorEvent({
+							eventName: "ConnectionNotYetDisposed",
+							driverVersion: pkgVersion,
+							details: JSON.stringify({
+								...this.getConnectionDetailsProps(),
+							}),
+						});
+					}
+				}, 15000);
+			}
+		}
+		return this._disposed;
+	}
+
+	/**
+	 * Returns true in case the connection is not yet disposed and the socket is also connected. The expectation is
+	 * that it will be called only after connection is fully established. i.e. there should no way to submit an op
+	 * while we are connecting, as connection object is not exposed to Loader layer until connection is established.
+	 */
+	private get connected(): boolean {
+		return !this.disposed && this.socket.connected;
+	}
+
+	protected emitMessages(type: string, messages: IDocumentMessage[][]) {
+		// Only submit the op/signals if we are connected.
+		if (this.connected) {
+			this.socket.emit(type, this.clientId, messages);
+		}
+	}
+
+	/**
+	 * Submits a new delta operation to the server
+	 * @param message - delta operation to submit
+	 */
+	public submit(messages: IDocumentMessage[]): void {
+		this.emitMessages("submitOp", [messages]);
+	}
+
+	/**
+	 * Submits a new signal to the server
+	 *
+	 * @param message - signal to submit
+	 */
+	public submitSignal(message: IDocumentMessage): void {
+		this.emitMessages("submitSignal", [[message]]);
 	}
 
 	/**

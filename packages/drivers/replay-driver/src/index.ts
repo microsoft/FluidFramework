@@ -11,6 +11,5 @@ export {
 	IFileSnapshot,
 	OpStorage,
 	SnapshotStorage,
-	StaticStorageDocumentService,
 	StaticStorageDocumentServiceFactory,
 } from "./storageImplementations";

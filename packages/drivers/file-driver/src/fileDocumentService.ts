@@ -14,17 +14,13 @@ import { FileDeltaStorageService } from "./fileDeltaStorageService";
 // eslint-disable-next-line import/namespace
 export class FileDocumentService implements api.IDocumentService {
 	constructor(
+		public readonly resolvedUrl: api.IResolvedUrl,
 		private readonly storage: api.IDocumentStorageService,
 		private readonly deltaStorage: FileDeltaStorageService,
 		private readonly deltaConnection: api.IDocumentDeltaConnection,
 	) {}
 
 	public dispose() {}
-
-	// TODO: Issue-2109 Implement detach container api or put appropriate comment.
-	public get resolvedUrl(): api.IResolvedUrl {
-		throw new Error("Not implemented");
-	}
 
 	public async connectToStorage(): Promise<api.IDocumentStorageService> {
 		return this.storage;

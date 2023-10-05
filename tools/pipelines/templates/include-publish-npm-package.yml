@@ -19,49 +19,74 @@ parameters:
   default: Small
 
 stages:
+
+# This stage only runs for test-branch builds
 - stage: publish_npm_internal_test
   dependsOn: build
-  displayName: Publish Internal Test Packages
+  displayName: Publish internal test feed
   condition: and(succeeded(), eq(variables['testBuild'], true))
+  variables:
+  - group: ado-feeds
   jobs:
   - template: include-publish-npm-package-deployment.yml
     parameters:
       namespace: ${{ parameters.namespace }}
-      devFeedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/test/npm/registry/
-      feedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/test/npm/registry/
-      official: false
+      feedUrl: $(ado-feeds-test) # Comes from the ado-feeds variable group
+      feedKind: internal-test
       environment: test-package-build-feed
       pool: ${{ parameters.pool }}
       publishNonScopedPackages: ${{ parameters.publishNonScopedPackages }}
 
-- stage: publish_npm_internal
+# This stage and the following stage both run for non-test builds. The build feed is equivalent to the public npmjs.org
+# feed except it contains builds for every main- or next-branch build.
+- stage: publish_npm_internal_build
   dependsOn: build
-  displayName: Publish Internal Packages
+  displayName: Publish to internal build feed
+  # This condition should match the condition for publish_npm_internal_dev
   condition: and(succeeded(), eq(variables['testBuild'], false))
+  variables:
+  - group: ado-feeds
   jobs:
   - template: include-publish-npm-package-deployment.yml
     parameters:
       namespace: ${{ parameters.namespace }}
-      devFeedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/dev/npm/registry/
-      feedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
-      official: false
+      feedUrl: $(ado-feeds-build) # Comes from the ado-feeds variable group
+      feedKind: internal-build
+      # Environment should match the condition for publish_npm_internal_dev
       environment: package-build-feed
       pool: ${{ parameters.pool }}
       publishNonScopedPackages: ${{ parameters.publishNonScopedPackages }}
 
-- stage: publish_npm_official
+- stage: publish_npm_internal_dev
   dependsOn: build
-  displayName: Publish Official Packages
-  condition: and(succeeded(), or(eq(variables['release'], 'release'), eq(variables['release'], 'prerelease')))
+  displayName: Publish to internal dev feed
+  # This condition should match the condition for publish_npm_internal_build
+  condition: and(succeeded(), eq(variables['testBuild'], false))
+  variables:
+  - group: ado-feeds
   jobs:
   - template: include-publish-npm-package-deployment.yml
     parameters:
       namespace: ${{ parameters.namespace }}
-      # internal/msinternal/example packages are deleted for official releases, but in case something goes wrong with that,
-      # using the `dev` registry is safe.
-      devFeedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/dev/npm/registry/
-      feedName: https://registry.npmjs.org
-      official: true
+      feedUrl: $(ado-feeds-dev) # Comes from the ado-feeds variable group
+      feedKind: internal-dev
+      # Environment should match the condition for publish_npm_internal_build
+      environment: package-build-feed
+      pool: ${{ parameters.pool }}
+      publishNonScopedPackages: ${{ parameters.publishNonScopedPackages }}
+
+- stage: publish_npm_public
+  dependsOn: build
+  displayName: Publish to public npmjs.org
+  condition: and(succeeded(), or(eq(variables['release'], 'release'), eq(variables['release'], 'prerelease')))
+  variables:
+  - group: ado-feeds
+  jobs:
+  - template: include-publish-npm-package-deployment.yml
+    parameters:
+      namespace: ${{ parameters.namespace }}
+      feedUrl: https://registry.npmjs.org
+      feedKind: public
       environment: package-npmjs-feed
       pool: ${{ parameters.pool }}
       publishNonScopedPackages: ${{ parameters.publishNonScopedPackages }}

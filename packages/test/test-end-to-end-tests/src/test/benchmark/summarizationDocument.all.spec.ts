@@ -4,6 +4,7 @@
  */
 import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
+import { delay } from "@fluidframework/core-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeE2EDocRun, getCurrentBenchmarkType } from "@fluid-internal/test-version-utils";
 import {
@@ -12,8 +13,7 @@ import {
 	IBenchmarkParameters,
 	IDocumentLoaderAndSummarizer,
 	ISummarizeResult,
-} from "./DocumentCreator";
-
+} from "./DocumentCreator.js";
 const scenarioTitle = "Summarize Document";
 describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 	let documentWrapper: IDocumentLoaderAndSummarizer;
@@ -28,13 +28,28 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 			testName: `${scenarioTitle} - ${docData.testTitle}`,
 			provider,
 			documentType: docData.documentType,
+			documentTypeInfo: docData.documentTypeInfo,
 			benchmarkType,
 		});
 		await documentWrapper.initializeDocument();
 		// Summarize the first time.
-		await documentWrapper.summarize();
+		const lastSummarizeClient = await documentWrapper.summarize(
+			documentWrapper.mainContainer,
+			undefined,
+			/* close container */ true,
+		);
+		summaryVersion = lastSummarizeClient.summaryVersion;
 	});
 
+	beforeEach(async function () {
+		const docData = getDocumentInfo();
+		if (
+			docData.supportedEndpoints &&
+			!docData.supportedEndpoints?.includes(provider.driver.type)
+		) {
+			this.skip();
+		}
+	});
 	/**
 	 * The PerformanceTestWrapper class includes 2 functionalities:
 	 * 1) Store any objects that should not be garbage collected during the benchmark execution (specific for memory tests).
@@ -53,17 +68,29 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 				this.container = await documentWrapper.loadDocument();
 				assert(this.container !== undefined, "container needs to be defined.");
 				await provider.ensureSynchronized();
+				assert(this.container.closed !== true, "container needs to be open.");
+				try {
+					this.summarizerClient = await documentWrapper.summarize(
+						this.container,
+						summaryVersion,
+						/* close container */ false,
+					);
 
-				this.summarizerClient = await documentWrapper.summarize(summaryVersion);
-				assert(
-					this.summarizerClient.summaryVersion !== undefined,
-					"summaryVersion needs to be defined.",
-				);
-				summaryVersion = this.summarizerClient.summaryVersion;
+					assert(
+						this.summarizerClient.summaryVersion !== undefined,
+						"summaryVersion needs to be defined.",
+					);
+					summaryVersion = this.summarizerClient.summaryVersion;
+					this.summarizerClient.summarizer.close();
+				} catch (error) {
+					throw new Error(`Error summarizing: ${error}`);
+				}
+				this.container.close();
 			}
-			beforeIteration(): void {
+			async before(): Promise<void> {
 				this.container = undefined;
 				this.summarizerClient = undefined;
+				await delay(2000);
 			}
 		})(),
 	);

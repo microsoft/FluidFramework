@@ -5,7 +5,7 @@
 
 export { GarbageCollector } from "./garbageCollection";
 export {
-	currentGCVersion,
+	nextGCVersion,
 	defaultInactiveTimeoutMs,
 	defaultSessionExpiryDurationMs,
 	disableSweepLogKey,
@@ -15,7 +15,7 @@ export {
 	gcSweepGenerationOptionName,
 	GCFeatureMatrix,
 	GCVersion,
-	gcVersionUpgradeToV3Key,
+	gcVersionUpgradeToV4Key,
 	IGarbageCollectionRuntime,
 	IGarbageCollector,
 	IGarbageCollectorConfigs,
@@ -29,8 +29,8 @@ export {
 	runSessionExpiryKey,
 	runSweepKey,
 	stableGCVersion,
-	sweepAttachmentBlobsKey,
-	sweepDatastoresKey,
+	disableAttachmentBlobSweepKey,
+	disableDatastoreSweepKey,
 	throwOnTombstoneLoadKey,
 	throwOnTombstoneUsageKey,
 	UnreferencedState,
@@ -38,8 +38,6 @@ export {
 export {
 	cloneGCData,
 	concatGarbageCollectionStates,
-	getGCDataFromSnapshot,
-	sendGCUnexpectedUsageEvent,
 	shouldAllowGcTombstoneEnforcement,
 	shouldAllowGcSweep,
 	trimLeadingAndTrailingSlashes,
@@ -52,10 +50,10 @@ export {
 	IGarbageCollectionState,
 	IGarbageCollectionSummaryDetailsLegacy,
 } from "./gcSummaryDefinitions";
-export { GCSummaryStateTracker, IGCSummaryTrackingData } from "./gcSummaryStateTracker";
 export {
-	skipClosureForXDaysKey,
-	closuresMapLocalStorageKey,
-	SweepReadyUsageDetectionHandler,
-} from "./gcSweepReadyUsageDetection";
+	gcStateBlobKey,
+	GCSummaryStateTracker,
+	IGCSummaryTrackingData,
+} from "./gcSummaryStateTracker";
+export { GCTelemetryTracker, sendGCUnexpectedUsageEvent } from "./gcTelemetry";
 export { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";

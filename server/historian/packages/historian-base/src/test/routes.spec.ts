@@ -99,8 +99,10 @@ describe("routes", () => {
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
+					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
+					undefined,
 					defaultCache,
 					asyncLocalStorage,
 				);
@@ -203,8 +205,10 @@ describe("routes", () => {
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
+					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
+					undefined,
 					defaultCache,
 					asyncLocalStorage,
 				);
@@ -321,8 +325,10 @@ describe("routes", () => {
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
+					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
+					undefined,
 					defaultCache,
 					asyncLocalStorage,
 				);
@@ -427,8 +433,10 @@ describe("routes", () => {
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
+					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
+					undefined,
 					defaultCache,
 					asyncLocalStorage,
 				);
@@ -496,8 +504,10 @@ describe("routes", () => {
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
+					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
+					undefined,
 					defaultCache,
 					asyncLocalStorage,
 				);
@@ -557,8 +567,10 @@ describe("routes", () => {
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
+					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
+					undefined,
 					defaultCache,
 					asyncLocalStorage,
 				);
@@ -617,8 +629,10 @@ describe("routes", () => {
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
+					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
+					undefined,
 					defaultCache,
 					asyncLocalStorage,
 				);
@@ -705,8 +719,10 @@ describe("routes", () => {
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
+					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
+					undefined,
 					defaultCache,
 					asyncLocalStorage,
 				);
@@ -797,8 +813,10 @@ describe("routes", () => {
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
+					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
+					undefined,
 					defaultCache,
 					asyncLocalStorage,
 				);
@@ -903,8 +921,10 @@ describe("routes", () => {
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
+					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
+					undefined,
 					defaultCache,
 					asyncLocalStorage,
 				);
@@ -990,8 +1010,10 @@ describe("routes", () => {
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
+					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
+					undefined,
 					defaultCache,
 					asyncLocalStorage,
 				);
@@ -1051,8 +1073,10 @@ describe("routes", () => {
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
+					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
+					undefined,
 					defaultCache,
 					asyncLocalStorage,
 				);
@@ -1104,8 +1128,10 @@ describe("routes", () => {
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
+					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
+					undefined,
 					defaultCache,
 					asyncLocalStorage,
 				);
@@ -1160,8 +1186,10 @@ describe("routes", () => {
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
+					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
+					undefined,
 					defaultCache,
 					asyncLocalStorage,
 				);

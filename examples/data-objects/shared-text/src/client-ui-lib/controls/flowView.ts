@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-deprecated */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 /* eslint-disable @typescript-eslint/strict-boolean-expressions */
 /* eslint-disable no-bitwise */
 
-import { performance } from "@fluidframework/common-utils";
+import { performance } from "@fluid-internal/client-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import * as types from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
@@ -1471,7 +1472,10 @@ class FlowCursor extends Cursor {
 	public presenceInfo: ILocalPresenceInfo | undefined;
 	public presenceInfoUpdated = true;
 
-	constructor(public viewportDiv: HTMLDivElement, public pos = 0) {
+	constructor(
+		public viewportDiv: HTMLDivElement,
+		public pos = 0,
+	) {
 		super(viewportDiv, pos);
 	}
 
@@ -3584,7 +3588,8 @@ export class FlowView extends ui.Component {
 		} else {
 			if (opCursorPos !== undefined) {
 				this.remotePresenceFromEdit(
-					event.opArgs.sequencedMessage!.clientId,
+					// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+					event.opArgs.sequencedMessage!.clientId as string,
 					event.opArgs.sequencedMessage!.referenceSequenceNumber,
 					opCursorPos,
 				);

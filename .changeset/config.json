@@ -1,10 +1,10 @@
 {
 	"$schema": "https://unpkg.com/@changesets/config@2.3.0/schema.json",
 	"changelog": [
-		"changesets-format-with-issue-links",
+		"@fluid-internal/changelog-generator-wrapper",
 		{
 			"repoBaseUrl": "https://github.com/microsoft/FluidFramework",
-			"issueTemplate": " ([#$issue]($repoBaseUrl/pull-requests/$issue))",
+			"issueTemplate": " ([#$issue]($repoBaseUrl/issues/$issue))",
 			"commitTemplate": " [$abbrevHash]($repoBaseUrl/commits/$hash)"
 		}
 	],

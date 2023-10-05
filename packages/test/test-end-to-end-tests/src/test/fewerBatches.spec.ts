@@ -178,8 +178,9 @@ describeNoCompat("Fewer batches", (getTestObjectProvider) => {
 	const processOutOfOrderOp = async (featureGates: Record<string, ConfigTypes> = {}) => {
 		await setupContainers(testContainerConfig, featureGates);
 
-		// Force the container into write-mode
-		dataObject1map.set("key0", "0");
+		// Force the containers into write-mode
+		dataObject1map.set("Force write", "0");
+		dataObject2map.set("Force write", "0");
 		await provider.ensureSynchronized();
 
 		// Ignore the batch we just sent
@@ -213,7 +214,6 @@ describeNoCompat("Fewer batches", (getTestObjectProvider) => {
 			minimumSequenceNumber: 0,
 			referenceSequenceNumber: 2,
 			sequenceNumber: 3,
-			term: 1,
 			timestamp: 1675197275171,
 			type: "op",
 			expHash1: "4d1a6431",

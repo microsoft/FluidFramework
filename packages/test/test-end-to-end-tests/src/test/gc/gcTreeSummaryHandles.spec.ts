@@ -5,8 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { IContainer, IRuntimeFactory, LoaderHeader } from "@fluidframework/container-definitions";
 import { ILoaderProps } from "@fluidframework/container-loader";
 import {
@@ -24,13 +23,13 @@ import { DriverHeader, ISummaryContext } from "@fluidframework/driver-definition
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { gcTreeKey, IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	TestFluidObjectFactory,
 	wrapDocumentServiceFactory,
 	waitForContainerConnection,
+	createContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
 
@@ -52,6 +51,9 @@ async function loadSummarizer(
 		},
 		[DriverHeader.summarizingClient]: true,
 		[LoaderHeader.reconnect]: false,
+		[LoaderHeader.loadMode]: {
+			opsBeforeReturn: "sequenceNumber",
+		},
 		[LoaderHeader.sequenceNumber]: sequenceNumber,
 		[LoaderHeader.version]: summaryVersion,
 	};
@@ -65,7 +67,7 @@ async function loadSummarizer(
 	// Fail fast if we receive a nack as something must have gone wrong.
 	const summaryCollection = new SummaryCollection(
 		summarizerContainer.deltaManager,
-		new TelemetryNullLogger(),
+		createChildLogger(),
 	);
 	summaryCollection.on("summaryNack", (op: ISummaryNackMessage) => {
 		throw new Error(
@@ -115,7 +117,7 @@ class ControlledCancellationToken implements ISummaryCancellationToken {
 async function submitFailingSummary(
 	provider: ITestObjectProvider,
 	summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection },
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	failingStage: FailingSubmitSummaryStage,
 	fullTree: boolean = false,
 ) {
@@ -147,7 +149,7 @@ async function submitFailingSummary(
 async function submitAndAckSummary(
 	provider: ITestObjectProvider,
 	summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection },
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	fullTree: boolean = false,
 	cancellationToken: ISummaryCancellationToken = neverCancelledSummaryToken,
 ) {
@@ -163,9 +165,8 @@ async function submitAndAckSummary(
 	});
 	assert(result.stage === "submit", "The summary was not submitted");
 	// Wait for the above summary to be ack'd.
-	const ackedSummary = await summarizerClient.summaryCollection.waitSummaryAck(
-		summarySequenceNumber,
-	);
+	const ackedSummary =
+		await summarizerClient.summaryCollection.waitSummaryAck(summarySequenceNumber);
 	// Update the container runtime with the given ack. We have to do this manually because there is no summarizer
 	// client in these tests that takes care of this.
 	await summarizerClient.containerRuntime.refreshLatestSummaryAck({
@@ -180,23 +181,30 @@ async function submitAndAckSummary(
 /**
  * Validates whether or not a GC Tree Summary Handle should be written to the summary.
  */
-describeNoCompat("GC Tree stored as a handle in summaries", (getTestObjectProvider) => {
+describeNoCompat("GC Tree stored as a handle in summaries", (getTestObjectProvider, apis) => {
+	const {
+		containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
+	} = apis;
+
 	let provider: ITestObjectProvider;
-	const dataObjectFactory = new TestFluidObjectFactory([]);
+	// TODO:#4670: Make this compat-version-specific.
+	const defaultFactory = new TestFluidObjectFactory([]);
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
 		gcOptions: { gcAllowed: true },
 	};
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
-	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-		dataObjectFactory,
-		[[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
-		undefined,
-		[innerRequestHandler],
-		runtimeOptions,
+	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
+		ContainerRuntimeFactoryWithDefaultDataStore,
+		{
+			defaultFactory,
+			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+			requestHandlers: [innerRequestHandler],
+			runtimeOptions,
+		},
 	);
-	const logger = new TelemetryNullLogger();
+	const logger = createChildLogger();
 
 	// Stores the latest summary uploaded to the server.
 	let latestUploadedSummary: ISummaryTree | undefined;
@@ -301,12 +309,12 @@ describeNoCompat("GC Tree stored as a handle in summaries", (getTestObjectProvid
 
 			// Create data stores B and C, and mark them as referenced.
 			dataStoreB = await requestFluidObject<ITestFluidObject>(
-				await dataStoreA.context.containerRuntime.createDataStore(dataObjectFactory.type),
+				await dataStoreA.context.containerRuntime.createDataStore(defaultFactory.type),
 				"",
 			);
 			dataStoreA.root.set("dataStoreB", dataStoreB.handle);
 			dataStoreC = await requestFluidObject<ITestFluidObject>(
-				await dataStoreA.context.containerRuntime.createDataStore(dataObjectFactory.type),
+				await dataStoreA.context.containerRuntime.createDataStore(defaultFactory.type),
 				"",
 			);
 			dataStoreA.root.set("dataStoreC", dataStoreC.handle);
@@ -327,12 +335,10 @@ describeNoCompat("GC Tree stored as a handle in summaries", (getTestObjectProvid
 		it("Stores handle when data store changes, but no handles are modified", async () => {
 			// Load a new summarizerClient from the full GC tree
 			const summarizerClient2 = await getNewSummarizer();
-			const tree1 = await summarizerClient1.containerRuntime.storage.getSnapshotTree()[
-				gcTreeKey
-			];
-			const tree2 = await summarizerClient2.containerRuntime.storage.getSnapshotTree()[
-				gcTreeKey
-			];
+			const tree1 =
+				await summarizerClient1.containerRuntime.storage.getSnapshotTree()[gcTreeKey];
+			const tree2 =
+				await summarizerClient2.containerRuntime.storage.getSnapshotTree()[gcTreeKey];
 			assert.deepEqual(tree2, tree1, "GC trees between containers should be the same!");
 
 			// Make a change in dataStoreA.
@@ -349,12 +355,10 @@ describeNoCompat("GC Tree stored as a handle in summaries", (getTestObjectProvid
 
 			// Summarize on a new summarizer client and validate that a GC blob handle is generated.
 			await submitSummaryAndValidateState(summarizerClient3, isTreeHandle);
-			const tree3 = await summarizerClient1.containerRuntime.storage.getSnapshotTree()[
-				gcTreeKey
-			];
-			const tree4 = await summarizerClient3.containerRuntime.storage.getSnapshotTree()[
-				gcTreeKey
-			];
+			const tree3 =
+				await summarizerClient1.containerRuntime.storage.getSnapshotTree()[gcTreeKey];
+			const tree4 =
+				await summarizerClient3.containerRuntime.storage.getSnapshotTree()[gcTreeKey];
 			assert.deepEqual(tree2, tree3, "GC trees with handles should be the same!");
 			assert.deepEqual(
 				tree3,

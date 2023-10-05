@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { FlowDocument } from "../document";
-import { TagName } from "../util";
-import { debug } from "./debug";
+import { FlowDocument } from "../document/index.js";
+import { TagName } from "../util/index.js";
+import { debug } from "./debug.js";
 
 const enum ClipboardFormat {
 	html = "text/html",

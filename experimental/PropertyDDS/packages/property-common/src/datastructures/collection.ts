@@ -27,7 +27,10 @@ export class Collection<T> {
 	 * @param _type - optional parameter pointing to the constructor
 	 * of a type this Collection will host.
 	 */
-	constructor(protected _name = "Untitled Collection", protected _type?: new () => any) {}
+	constructor(
+		protected _name = "Untitled Collection",
+		protected _type?: new () => any,
+	) {}
 
 	// Pass-thru binding handles
 	onAdd(in_key, in_value) {}
@@ -118,8 +121,8 @@ export class Collection<T> {
 	}
 
 	/**
-	 * Return the last item in the collection, null if empty
-	 * @returns - last item, or undefined if empty
+	 * Return the last item in the collection, undefined if empty
+	 * @returns The last item, or undefined if empty
 	 * */
 	getLastItem(): T | undefined {
 		const index = _.last(this._order);

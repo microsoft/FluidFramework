@@ -3,21 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { IErrorBase, ITelemetryProperties } from "@fluidframework/core-interfaces";
 import {
-	IDeltaQueue,
-	ReadOnlyInfo,
-	IConnectionDetailsInternal,
+	IConnectionDetails,
 	ICriticalContainerError,
+	IDeltaQueue,
 	IFluidCodeDetails,
 	isFluidPackage,
+	ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 import {
 	ConnectionMode,
-	IDocumentMessage,
-	ISequencedDocumentMessage,
 	IClientConfiguration,
 	IClientDetails,
+	IDocumentMessage,
+	ISequencedDocumentMessage,
+	ISignalClient,
 	ISignalMessage,
 } from "@fluidframework/protocol-definitions";
 import { IContainerPackageInfo } from "@fluidframework/driver-definitions";
@@ -26,6 +27,21 @@ export enum ReconnectMode {
 	Never = "Never",
 	Disabled = "Disabled",
 	Enabled = "Enabled",
+}
+
+export interface IConnectionStateChangeReason<T extends IErrorBase = IErrorBase> {
+	text: string;
+	error?: T;
+}
+
+/**
+ * Internal version of IConnectionDetails with props are only exposed internally
+ */
+export interface IConnectionDetailsInternal extends IConnectionDetails {
+	mode: ConnectionMode;
+	version: string;
+	initialClients: ISignalClient[];
+	reason: IConnectionStateChangeReason;
 }
 
 /**
@@ -95,7 +111,7 @@ export interface IConnectionManager {
 	/**
 	 * Initiates connection to relay service (noop if already connected).
 	 */
-	connect(connectionMode?: ConnectionMode): void;
+	connect(reason: IConnectionStateChangeReason, connectionMode?: ConnectionMode): void;
 
 	/**
 	 * Disposed connection manager
@@ -139,7 +155,7 @@ export interface IConnectionManagerFactoryArgs {
 	/**
 	 * Called whenever connection to relay service is lost.
 	 */
-	readonly disconnectHandler: (reason: string) => void;
+	readonly disconnectHandler: (reason: IConnectionStateChangeReason) => void;
 
 	/**
 	 * Called whenever new connection to rely service is established
@@ -148,8 +164,6 @@ export interface IConnectionManagerFactoryArgs {
 
 	/**
 	 * Called whenever ping/pong messages are roundtripped on connection.
-	 *
-	 * @deprecated No replacement API intended.
 	 */
 	readonly pongHandler: (latency: number) => void;
 
@@ -165,8 +179,22 @@ export interface IConnectionManagerFactoryArgs {
 	 *
 	 * @param readonly - Whether or not the container is now read-only.
 	 * `undefined` indicates that user permissions are not yet known.
+	 * @param readonlyConnectionReason - reason/error if any for the change
 	 */
-	readonly readonlyChangeHandler: (readonly?: boolean) => void;
+	readonly readonlyChangeHandler: (
+		readonly?: boolean,
+		readonlyConnectionReason?: IConnectionStateChangeReason,
+	) => void;
+
+	/**
+	 * Called whenever we try to start establishing a new connection.
+	 */
+	readonly establishConnectionHandler: (reason: IConnectionStateChangeReason) => void;
+
+	/**
+	 * Called whenever we cancel the connection in progress.
+	 */
+	readonly cancelConnectionHandler: (reason: IConnectionStateChangeReason) => void;
 }
 
 /**

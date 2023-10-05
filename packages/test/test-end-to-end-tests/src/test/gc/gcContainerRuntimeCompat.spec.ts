@@ -21,8 +21,8 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils";
 import { describeFullCompat, getContainerRuntimeApi } from "@fluid-internal/test-version-utils";
-import { pkgVersion } from "../../packageVersion";
-import { getGCStateFromSummary } from "./gcTestSummaryUtils";
+import { pkgVersion } from "../../packageVersion.js";
+import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
 /**
  * These tests validate the compatibility of the GC data in the summary tree across the past 2 container runtime
@@ -50,13 +50,12 @@ describeFullCompat.skip("GC summary compatibility tests", (getTestObjectProvider
 		};
 		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 			runtime.IFluidHandleContext.resolveHandle(request);
-		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-			dataObjectFactory,
-			[[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
-			undefined,
-			[innerRequestHandler],
+		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+			defaultFactory: dataObjectFactory,
+			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
+			requestHandlers: [innerRequestHandler],
 			runtimeOptions,
-		);
+		});
 		return provider.createContainer(runtimeFactory, { configProvider: mockConfigProvider() });
 	}
 

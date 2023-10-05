@@ -4,7 +4,7 @@
  */
 
 import { expect } from 'chai';
-import { assert } from '@fluidframework/common-utils';
+import { assert } from '@fluidframework/core-utils';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
 import { FluidSerializer } from '@fluidframework/shared-object-base';
@@ -195,7 +195,7 @@ describe('EditUtilities', () => {
 				traits: { [leafTrait]: [testTree.buildLeaf(leafId)] },
 			};
 			const clone = convertTreeNodes<ChangeNode, ChangeNode>(tree, (node) => ({ ...node }));
-			assert(typeof clone !== 'number', '');
+			assert(typeof clone !== 'number', 0x660 /*  */);
 			expect(clone.definition).to.equal(tree.definition);
 			expect(clone.identifier).to.equal(tree.identifier);
 			expect(clone.payload).to.equal(tree.payload);
@@ -237,7 +237,7 @@ describe('EditUtilities', () => {
 				(n) => internalizeBuildNode(n, testTree),
 				isNumber
 			);
-			assert(typeof converted !== 'number', 'unexpected detached ID');
+			assert(typeof converted !== 'number', 0x661 /* unexpected detached ID */);
 			expect(converted.traits).to.not.be.undefined;
 		});
 
@@ -248,7 +248,7 @@ describe('EditUtilities', () => {
 				(n) => internalizeBuildNode(n, testTree),
 				isNumber
 			);
-			assert(typeof converted !== 'number', 'unexpected detached ID');
+			assert(typeof converted !== 'number', 0x662 /* unexpected detached ID */);
 			expect(converted.traits).to.not.be.undefined;
 		});
 

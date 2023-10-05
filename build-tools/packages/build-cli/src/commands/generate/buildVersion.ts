@@ -6,7 +6,7 @@ import { Flags } from "@oclif/core";
 import * as childProcess from "child_process";
 import * as fs from "fs";
 
-import { getIsLatest, getSimpleVersion } from "@fluidframework/build-tools";
+import { getIsLatest, getSimpleVersion } from "@fluid-tools/version-tools";
 
 import { BaseCommand } from "../../base";
 
@@ -69,7 +69,6 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 	};
 
 	public async run(): Promise<void> {
-		const context = await this.getContext();
 		const flags = this.flags;
 		const isRelease = flags.release === "release";
 		const useSimplePatchVersion = flags.patch?.toLowerCase() === "true";
@@ -121,6 +120,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 			this.log(`##vso[task.setvariable variable=codeVersion;isOutput=true]${codeVersion}`);
 		}
 
+		const context = await this.getContext();
 		const tags = flags.tags ?? (await context.gitRepo.getAllTags());
 		if (flags.tag !== undefined) {
 			const isLatest = getIsLatest(
@@ -128,7 +128,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 				version,
 				tags,
 				shouldIncludeInternalVersions,
-				this.logger,
+				true,
 			);
 			this.log(`isLatest=${isLatest}`);
 			if (isRelease && isLatest === true) {

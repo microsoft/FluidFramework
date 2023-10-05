@@ -67,6 +67,19 @@ export enum KeyName {
 	key2 = "key2",
 }
 
+// This is tenantEncryptionKey version by year, it's append only.
+// We will add a new version each year.
+export enum EncryptionKeyVersion {
+	key2022 = "2022",
+	key2023 = "2023",
+	key2024 = "2024",
+	key2025 = "2025",
+}
+
+export interface IEncryptedTenantKeys extends ITenantKeys {
+	encryptionKeyVersion?: EncryptionKeyVersion;
+}
+
 export interface ITenant {
 	gitManager: IGitManager;
 
@@ -89,7 +102,13 @@ export interface ITenantManager {
 	/**
 	 * Retrieves GitManager instance for the given tenant
 	 */
-	getTenantGitManager(tenantId: string, documentId: string): Promise<IGitManager>;
+	getTenantGitManager(
+		tenantId: string,
+		documentId: string,
+		storageName?: string,
+		includeDisabledTenant?: boolean,
+		isEphemeralContainer?: boolean,
+	): Promise<IGitManager>;
 
 	/**
 	 * Verifies that the given auth token is valid. A rejected promise indicates an invalid token.
@@ -100,4 +119,8 @@ export interface ITenantManager {
 	 * Retrieves the key for the given tenant. This is a privileged op and should be used with care.
 	 */
 	getKey(tenantId: string): Promise<string>;
+}
+
+export interface ITenantConfigManager {
+	getTenantStorageName(tenantId: string): Promise<string>;
 }

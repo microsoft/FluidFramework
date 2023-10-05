@@ -4,19 +4,16 @@
  */
 import * as child_process from "child_process";
 import fs from "fs";
-import { pathExistsSync } from "fs-extra";
-import merge from "lodash.merge";
-import { NpmPackageJsonLint } from "npm-package-json-lint";
 import { EOL as newline } from "os";
 import path from "path";
 import * as readline from "readline";
 import replace from "replace-in-file";
 import sortPackageJson from "sort-package-json";
 
-import { IFluidBuildConfig } from "../../common/fluidRepo";
+import { updatePackageJsonFile } from "../../common/npmPackage";
 import { getFluidBuildConfig } from "../../common/fluidUtils";
-import { PackageJson, updatePackageJsonFile } from "../../common/npmPackage";
 import { Handler, readFile, writeFile } from "../common";
+import { PackageNamePolicyConfig } from "../../common/fluidRepo";
 
 const licenseId = "MIT";
 const author = "Microsoft and contributors";
@@ -30,18 +27,6 @@ or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.micr
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 `;
 
-/**
- * An array of dependencies that should always use tilde dependency ranges instead of caret.
- */
-let _tildeDependencies: string[] | undefined;
-
-const getTildeDependencies = (manifest: IFluidBuildConfig | undefined) => {
-	if (_tildeDependencies === undefined) {
-		_tildeDependencies = manifest?.policy?.dependencies?.requireTilde ?? [];
-	}
-	return _tildeDependencies;
-};
-
 // Some of our package scopes definitely should publish, and others should never publish.  If they should never
 // publish, we want to add the "private": true flag to their package.json to prevent publishing, and conversely if
 // they should always publish we should ensure the "private": true flag is not present.  There is then a third
@@ -51,10 +36,23 @@ const getTildeDependencies = (manifest: IFluidBuildConfig | undefined) => {
 /**
  * Whether the package is known to be a publicly published package for general use.
  */
-function packageMustPublishToNPM(name: string): boolean {
-	return (
-		name.startsWith("@fluidframework/") || name === "fluid-framework" || name === "tinylicious"
-	);
+export function packageMustPublishToNPM(name: string, config: PackageNamePolicyConfig): boolean {
+	const mustPublish = config.mustPublish.npm;
+
+	if (mustPublish === undefined) {
+		return false;
+	}
+
+	for (const pkgOrScope of mustPublish) {
+		if (
+			(pkgOrScope.startsWith("@") && name.startsWith(`${pkgOrScope}/`)) ||
+			name === pkgOrScope
+		) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 /**
@@ -62,66 +60,248 @@ function packageMustPublishToNPM(name: string): boolean {
  * Note that packages published to NPM will also be published internally, however.
  * This should be a minimal set required for legacy compat of internal partners or internal CI requirements.
  */
-function packageMustPublishToInternalFeedOnly(name: string): boolean {
-	return (
-		// TODO: We may not need to publish test packages to the internal feed, remove these exceptions if possible.
-		name === "@fluid-internal/test-app-insights-logger" ||
-		name === "@fluid-internal/test-service-load" ||
-		// Most examples should be private, but table-document needs to publish internally for legacy compat
-		name === "@fluid-example/table-document"
-	);
+export function packageMustPublishToInternalFeedOnly(
+	name: string,
+	config: PackageNamePolicyConfig,
+): boolean {
+	const mustPublish = config.mustPublish.internalFeed;
+
+	if (mustPublish === undefined) {
+		return false;
+	}
+
+	for (const pkgOrScope of mustPublish) {
+		if (
+			(pkgOrScope.startsWith("@") && name.startsWith(`${pkgOrScope}/`)) ||
+			name === pkgOrScope
+		) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 /**
  * Whether the package has the option to publicly publish if it chooses.
  * For example, an experimental package may choose to remain unpublished until it's ready for customers to try it out.
  */
-function packageMayChooseToPublishToNPM(name: string): boolean {
-	return name.startsWith("@fluid-experimental/") || name.startsWith("@fluid-tools/");
+export function packageMayChooseToPublishToNPM(
+	name: string,
+	config: PackageNamePolicyConfig,
+): boolean {
+	const mayPublish = config.mayPublish.npm;
+
+	if (mayPublish === undefined) {
+		return false;
+	}
+
+	for (const pkgOrScope of mayPublish) {
+		if (
+			(pkgOrScope.startsWith("@") && name.startsWith(`${pkgOrScope}/`)) ||
+			name === pkgOrScope
+		) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 /**
  * Whether the package has the option to publish to an internal feed if it chooses.
  */
-function packageMayChooseToPublishToInternalFeedOnly(name: string): boolean {
-	return name.startsWith("@fluid-internal/") || name.startsWith("@fluid-msinternal/");
+export function packageMayChooseToPublishToInternalFeedOnly(
+	name: string,
+	config: PackageNamePolicyConfig,
+): boolean {
+	const mayPublish = config.mayPublish.internalFeed;
+
+	if (mayPublish === undefined) {
+		return false;
+	}
+
+	for (const pkgOrScope of mayPublish) {
+		if (
+			(pkgOrScope.startsWith("@") && name.startsWith(`${pkgOrScope}/`)) ||
+			name === pkgOrScope
+		) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 /**
  * If we haven't explicitly OK'd the package scope to publish in one of the categories above, it must be marked
  * private to prevent publishing.
  */
-function packageMustBePrivate(name: string): boolean {
+export function packageMustBePrivate(name: string, root: string): boolean {
+	const config = getFluidBuildConfig(root).policy?.packageNames;
+
+	if (config === undefined) {
+		// Unless configured, all packages must be private
+		return true;
+	}
+
 	return !(
-		packageMustPublishToNPM(name) ||
-		packageMayChooseToPublishToNPM(name) ||
-		packageMustPublishToInternalFeedOnly(name) ||
-		packageMayChooseToPublishToInternalFeedOnly(name)
+		packageMustPublishToNPM(name, config) ||
+		packageMayChooseToPublishToNPM(name, config) ||
+		packageMustPublishToInternalFeedOnly(name, config) ||
+		packageMayChooseToPublishToInternalFeedOnly(name, config)
 	);
 }
 
 /**
  * If we know a package needs to publish somewhere, then it must not be marked private to allow publishing.
  */
-function packageMustNotBePrivate(name: string): boolean {
-	return packageMustPublishToNPM(name) || packageMustPublishToInternalFeedOnly(name);
+export function packageMustNotBePrivate(name: string, root: string): boolean {
+	const config = getFluidBuildConfig(root).policy?.packageNames;
+
+	if (config === undefined) {
+		// Unless configured, all packages must be private
+		return false;
+	}
+
+	return (
+		packageMustPublishToNPM(name, config) || packageMustPublishToInternalFeedOnly(name, config)
+	);
 }
 
 /**
  * Whether the package either belongs to a known Fluid package scope or is a known unscoped package.
  */
-function packageIsFluidPackage(name: string): boolean {
-	return (
-		name.startsWith("@fluidframework/") ||
-		name.startsWith("@fluid-example/") ||
-		name.startsWith("@fluid-experimental/") ||
-		name.startsWith("@fluid-internal/") ||
-		name.startsWith("@fluid-msinternal/") ||
-		name.startsWith("@fluid-tools/") ||
-		name === "fluid-framework" ||
-		name === "fluidframework-docs" ||
-		name === "tinylicious"
-	);
+function packageIsFluidPackage(name: string, root: string): boolean {
+	const config = getFluidBuildConfig(root).policy?.packageNames;
+
+	if (config === undefined) {
+		// Unless configured, all packages are considered Fluid packages
+		return true;
+	}
+
+	return packageScopeIsAllowed(name, config) || packageIsKnownUnscoped(name, config);
+}
+
+/**
+ * Returns true if the package scope matches the .
+ */
+function packageScopeIsAllowed(name: string, config: PackageNamePolicyConfig): boolean {
+	const allowedScopes = config?.allowedScopes;
+
+	if (allowedScopes === undefined) {
+		// No config, so all scopes are invalid.
+		return false;
+	}
+
+	for (const allowedScope of allowedScopes) {
+		if (name.startsWith(`${allowedScope}/`)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * Returns true if the name matches one of the configured known unscoped package names.
+ */
+function packageIsKnownUnscoped(name: string, config: PackageNamePolicyConfig): boolean {
+	const unscopedPackages = config?.unscopedPackages;
+
+	if (unscopedPackages === undefined) {
+		// No config, return false for all values
+		return false;
+	}
+
+	for (const allowedPackage of unscopedPackages) {
+		if (name === allowedPackage) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * An array of known npm feeds used in the Fluid Framework CI pipelines.
+ */
+export const feeds = [
+	/**
+	 * The public npm feed at npmjs.org.
+	 */
+	"public",
+
+	/**
+	 * Contains per-commit to microsoft/FluidFramework main releases of all Fluid packages that are available in the
+	 * public feed, plus some internal-only packages.
+	 */
+	"internal-build",
+
+	/**
+	 * Contains test packages, i.e. packages published from a branch in the microsoft/FluidFramework repository beginning
+	 * with test/.
+	 */
+	"internal-test",
+
+	/**
+	 * Contains packages private to the FluidFramework repository (@fluid-private packages). These should only be
+	 * referenced as devDependencies by other packages in FluidFramework and its pipelines.
+	 */
+	"internal-dev",
+] as const;
+
+/**
+ * A type representing the known npm feeds used in the Fluid Framework CI pipelines.
+ */
+export type Feed = (typeof feeds)[number];
+
+/**
+ * Type guard. Returns true if the provided string is a known npm feed.
+ */
+export function isFeed(str: string | undefined): str is Feed {
+	if (str === undefined) {
+		return false;
+	}
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	return feeds.includes(str as any);
+}
+
+/**
+ * Determines if a package should be published to a specific npm feed per the provided config.
+ */
+export function packagePublishesToFeed(
+	name: string,
+	config: PackageNamePolicyConfig,
+	feed: Feed,
+): boolean {
+	const publishPublic =
+		packageMustPublishToNPM(name, config) || packageMayChooseToPublishToNPM(name, config);
+	const publishInternalBuild =
+		publishPublic || packageMustPublishToInternalFeedOnly(name, config);
+
+	switch (feed) {
+		case "public": {
+			return publishPublic;
+		}
+
+		// The build and dev feed should be mutually exclusive
+		case "internal-build": {
+			return publishInternalBuild;
+		}
+
+		case "internal-dev": {
+			return (
+				!publishInternalBuild && packageMayChooseToPublishToInternalFeedOnly(name, config)
+			);
+		}
+
+		case "internal-test": {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 type IReadmeInfo =
@@ -267,7 +447,7 @@ export const handlers: Handler[] = [
 		// If you'd like to introduce a new package scope or a new unscoped package, please discuss it first.
 		name: "npm-strange-package-name",
 		match,
-		handler: (file) => {
+		handler: (file, root) => {
 			let json: { name: string };
 			try {
 				json = JSON.parse(readFile(file));
@@ -276,7 +456,7 @@ export const handlers: Handler[] = [
 			}
 
 			// "root" is the package name for monorepo roots, so ignore them
-			if (!packageIsFluidPackage(json.name) && json.name !== "root") {
+			if (!packageIsFluidPackage(json.name, root) && json.name !== "root") {
 				const matched = json.name.match(/^(@.+)\//);
 				if (matched !== null) {
 					return `Scope ${matched[1]} is an unexpected Fluid scope`;
@@ -291,7 +471,7 @@ export const handlers: Handler[] = [
 		// Also verify that non-private packages don't take dependencies on private packages.
 		name: "npm-private-packages",
 		match,
-		handler: (file) => {
+		handler: (file, root) => {
 			let json: { name: string; private?: boolean; dependencies: Record<string, string> };
 			try {
 				json = JSON.parse(readFile(file));
@@ -302,12 +482,12 @@ export const handlers: Handler[] = [
 			ensurePrivatePackagesComputed();
 			const errors: string[] = [];
 
-			if (json.private && packageMustNotBePrivate(json.name)) {
+			if (json.private && packageMustNotBePrivate(json.name, root)) {
 				errors.push(`Package ${json.name} must not be marked private`);
 			}
 
 			// Packages publish by default, so we need an explicit true flag to suppress publishing.
-			if (json.private !== true && packageMustBePrivate(json.name)) {
+			if (json.private !== true && packageMustBePrivate(json.name, root)) {
 				errors.push(`Package ${json.name} must be marked private`);
 			}
 
@@ -475,66 +655,6 @@ export const handlers: Handler[] = [
 		},
 	},
 	{
-		name: "npm-package-json-lint",
-		match,
-		handler: (file, root) => {
-			let jsonStr: string;
-			let json: PackageJson;
-			try {
-				jsonStr = readFile(file);
-				json = JSON.parse(jsonStr);
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
-			}
-
-			const ret: string[] = [];
-
-			const { dependencies, devDependencies } = json;
-			const manifest = getFluidBuildConfig(root);
-			const tildeDependencies = getTildeDependencies(manifest);
-			if (dependencies !== undefined) {
-				for (const [dep, ver] of Object.entries(json.dependencies)) {
-					if (tildeDependencies.includes(dep) && !ver.startsWith("~")) {
-						ret.push(`Dependencies on ${dep} must use tilde (~) dependencies.`);
-					}
-				}
-			}
-
-			if (devDependencies !== undefined) {
-				for (const [dep, ver] of Object.entries(json.devDependencies)) {
-					if (tildeDependencies.includes(dep) && !ver.startsWith("~")) {
-						ret.push(`devDependencies on ${dep} must use tilde (~) dependencies.`);
-					}
-				}
-			}
-
-			const { valid, validationResults } = runNpmJsonLint(json, file);
-
-			if (!valid) {
-				for (const result of validationResults.results) {
-					for (const issue of result.issues) {
-						switch (issue.lintId) {
-							case "valid-values-name-scope":
-								ret.push(`${json.name} -- ${issue.lintId} -- ${issue.lintMessage}`);
-								break;
-							default:
-								ret.push(`${issue.lintId} -- ${issue.lintMessage}`);
-								break;
-						}
-					}
-				}
-			}
-
-			if (ret.length > 1) {
-				return `${ret.join(newline)}`;
-			} else if (ret.length === 1) {
-				return ret[0];
-			}
-
-			return undefined;
-		},
-	},
-	{
 		name: "npm-package-json-prettier",
 		match,
 		handler: (file) => {
@@ -610,12 +730,12 @@ export const handlers: Handler[] = [
 						hasPrettierScriptResolver ||
 						hasPrettierFixScriptResolver
 					) {
-						const formatScript = json.scripts.format?.includes("lerna");
-						const prettierScript = json.scripts.prettier?.includes("--ignore-path");
+						const formatScript = json.scripts?.format?.includes("lerna");
+						const prettierScript = json.scripts?.prettier?.includes("--ignore-path");
 						const prettierFixScript =
-							json.scripts["prettier:fix"]?.includes("--ignore-path");
+							json.scripts?.["prettier:fix"]?.includes("--ignore-path");
 
-						if (!formatScript) {
+						if (json.scripts !== undefined && !formatScript) {
 							json.scripts.format = "npm run prettier:fix";
 
 							if (!prettierScript) {
@@ -633,59 +753,408 @@ export const handlers: Handler[] = [
 			return { resolved: true };
 		},
 	},
+	{
+		name: "npm-package-json-script-clean",
+		match,
+		handler: (file) => {
+			let json;
+
+			try {
+				json = JSON.parse(readFile(file));
+			} catch (err) {
+				return "Error parsing JSON file: " + file;
+			}
+
+			const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
+			const missingScripts: string[] = [];
+
+			if (hasScriptsField) {
+				const hasBuildScript = Object.prototype.hasOwnProperty.call(json.scripts, "build");
+				const hasCleanScript = Object.prototype.hasOwnProperty.call(json.scripts, "clean");
+
+				if (hasBuildScript && !hasCleanScript) {
+					missingScripts.push(`clean`);
+				}
+			}
+
+			return missingScripts.length > 0
+				? `${file} is missing the following scripts: \n\t${missingScripts.join("\n\t")}`
+				: undefined;
+		},
+	},
+	{
+		name: "npm-package-json-script-dep",
+		match,
+		handler: (file, root) => {
+			const manifest = getFluidBuildConfig(root);
+			const commandPackages = manifest.policy?.dependencies?.commandPackages;
+			if (commandPackages === undefined) {
+				return;
+			}
+			const commandDep = new Map(commandPackages);
+			let json;
+
+			try {
+				json = JSON.parse(readFile(file));
+			} catch (err) {
+				return "Error parsing JSON file: " + file;
+			}
+
+			const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
+			const missingDeps: string[] = [];
+
+			if (hasScriptsField) {
+				const commands = new Set(
+					Object.values(json.scripts as string[]).map((s) => s.split(" ")[0]),
+				);
+				for (const command of commands.values()) {
+					const dep = commandDep.get(command);
+					if (
+						dep &&
+						json.dependencies?.[dep] === undefined &&
+						json.devDependencies?.[dep] === undefined
+					) {
+						missingDeps.push(`Package '${dep}' missing needed by command '${command}'`);
+					}
+				}
+			}
+
+			return missingDeps.length > 0
+				? `${file} is missing the following dependencies or devDependencies: \n\t${missingDeps.join(
+						"\n\t",
+				  )}`
+				: undefined;
+		},
+	},
+	{
+		name: "npm-package-json-test-scripts",
+		match,
+		handler: (file, root) => {
+			// This rules enforces that if the package have test files (in 'src/test', excluding 'src/test/types'),
+			// or mocha/jest dependencies, it should have a test scripts so that the pipeline will pick it up
+
+			let json;
+
+			try {
+				json = JSON.parse(readFile(file));
+			} catch (err) {
+				return "Error parsing JSON file: " + file;
+			}
+
+			const packageDir = path.dirname(file);
+			const scripts = json.scripts;
+			if (
+				scripts !== undefined &&
+				Object.keys(scripts).some((name) => name.startsWith("test"))
+			) {
+				// Found test script
+				return undefined;
+			}
+
+			const testDir = path.join(packageDir, "src", "test");
+			if (fs.existsSync(testDir)) {
+				const info = fs.readdirSync(testDir, { withFileTypes: true });
+				if (
+					info.some(
+						(e) =>
+							path.extname(e.name) === ".ts" ||
+							(e.isDirectory() && e.name !== "types"),
+					)
+				) {
+					return "Test files exists but no test scripts";
+				}
+			}
+
+			const dep = ["mocha", "@types/mocha", "jest", "@types/jest"];
+			if (
+				(json.dependencies &&
+					Object.keys(json.dependencies).some((name) => dep.includes(name))) ||
+				(json.devDependencies &&
+					Object.keys(json.devDependencies).some((name) => dep.includes(name)))
+			) {
+				return `Package has one of "${dep.join()}" dependency but no test scripts`;
+			}
+		},
+	},
+	{
+		name: "npm-package-json-test-scripts-split",
+		match,
+		handler: (file, root) => {
+			// This rule enforces that because the pipeline split running these test in different steps, each project
+			// has the split set up property (into test:mocha, test:jest and test:realsvc). Release groups that don't
+			// have splits in the pipeline is excluded in the "handlerExclusions" in the fluidBuild.config.cjs
+			let json;
+
+			try {
+				json = JSON.parse(readFile(file));
+			} catch (err) {
+				return "Error parsing JSON file: " + file;
+			}
+
+			const scripts = json.scripts;
+			if (scripts === undefined) {
+				return undefined;
+			}
+			const testScript = scripts["test"];
+
+			const splitTestScriptNames = ["test:mocha", "test:jest", "test:realsvc"];
+
+			if (testScript === undefined) {
+				if (splitTestScriptNames.some((name) => scripts[name] !== undefined)) {
+					return "Missing 'test' scripts";
+				}
+				return undefined;
+			}
+
+			const actualSplitTestScriptNames = splitTestScriptNames.filter(
+				(name) => scripts[name] !== undefined,
+			);
+
+			if (actualSplitTestScriptNames.length === 0) {
+				if (!testScript.startsWith("echo ")) {
+					return "Missing split test scripts. The 'test' script must call one or more \"split\" scripts like 'test:mocha', 'test:jest', or 'test:realsvc'.";
+				}
+				return undefined;
+			}
+			const expectedTestScript = actualSplitTestScriptNames
+				.map((name) => `npm run ${name}`)
+				.join(" && ");
+			if (testScript !== expectedTestScript) {
+				return `Unexpected test script:\n\tactual: ${testScript}\n\texpected: ${expectedTestScript}`;
+			}
+		},
+	},
+	{
+		name: "npm-package-json-script-mocha-config",
+		match,
+		handler: (file, root) => {
+			// This rule enforces that mocha will use a config file and setup both the console, json and xml reporters.
+			let json;
+			try {
+				json = JSON.parse(readFile(file));
+			} catch (err) {
+				return "Error parsing JSON file: " + file;
+			}
+
+			const scripts = json.scripts;
+			if (scripts === undefined) {
+				return undefined;
+			}
+			const mochaScriptName = scripts["test:mocha"] !== undefined ? "test:mocha" : "test";
+			const mochaScript = scripts[mochaScriptName];
+
+			if (mochaScript === undefined || !mochaScript.startsWith("mocha")) {
+				// skip irregular test script for now
+				return undefined;
+			}
+
+			const packageDir = path.dirname(file);
+			const mochaRcNames = [".mocharc", ".mocharc.js", ".mocharc.json", ".mocharc.cjs"];
+			const mochaRcName = mochaRcNames.find((name) =>
+				fs.existsSync(path.join(packageDir, name)),
+			);
+
+			if (mochaRcName === undefined) {
+				if (!mochaScript.includes(" --config ")) {
+					return "Missing config arguments";
+				}
+			}
+		},
+	},
+
+	{
+		name: "npm-package-json-script-jest-config",
+		match,
+		handler: (file, root) => {
+			// This rule enforces that jest will use a config file and setup both the default (console) and junit reporters.
+			let json;
+
+			try {
+				json = JSON.parse(readFile(file));
+			} catch (err) {
+				return "Error parsing JSON file: " + file;
+			}
+
+			const scripts = json.scripts;
+			if (scripts === undefined) {
+				return undefined;
+			}
+			const jestScriptName = scripts["test:jest"] !== undefined ? "test:jest" : "test";
+			const jestScript = scripts[jestScriptName];
+
+			if (jestScript === undefined || !jestScript.startsWith("jest")) {
+				// skip irregular test script for now
+				return undefined;
+			}
+
+			const packageDir = path.dirname(file);
+			const jestFileName = ["jest.config.js", "jest.config.cjs"].find((name) =>
+				fs.existsSync(path.join(packageDir, name)),
+			);
+			if (jestFileName === undefined) {
+				return `Missing jest config file.`;
+			}
+
+			const jestConfigFile = path.join(packageDir, jestFileName);
+			const config = require(path.resolve(jestConfigFile));
+			if (config.reporters === undefined) {
+				return `Missing reporters in '${jestConfigFile}'`;
+			}
+
+			const expectedReporter = [
+				"default",
+				[
+					"jest-junit",
+					{
+						outputDirectory: "nyc",
+						outputName: "jest-junit-report.xml",
+					},
+				],
+			];
+
+			if (JSON.stringify(config.reporters) !== JSON.stringify(expectedReporter)) {
+				return `Unexpected reporters in '${jestConfigFile}'`;
+			}
+
+			if (json["jest-junit"] !== undefined) {
+				return `Extraneous jest-unit config in ${file}`;
+			}
+		},
+	},
+	{
+		name: "npm-package-json-esm",
+		match,
+		handler: (file, root) => {
+			// This rule enforces that we have a module field in the package iff we have a ESM build
+			// So that tools like webpack will pack up the right version.
+			let json;
+
+			try {
+				json = JSON.parse(readFile(file));
+			} catch (err) {
+				return "Error parsing JSON file: " + file;
+			}
+
+			const scripts = json.scripts;
+			if (scripts === undefined) {
+				return undefined;
+			}
+			// Using the heuristic that our package use "build:esnext" or "tsc:esnext" to indicate
+			// that it has a ESM build.
+			const esnextScriptsNames = ["build:esnext", "tsc:esnext"];
+			const hasBuildEsNext = esnextScriptsNames.some((name) => scripts[name] !== undefined);
+			const hasModuleOutput = json.module !== undefined;
+
+			if (hasBuildEsNext) {
+				if (!hasModuleOutput) {
+					return "Missing 'module' field in package.json for ESM build";
+				}
+			} else {
+				// If we don't have a separate esnext build, it's still ok to have the "module"
+				// field if it is the same as "main"
+				if (hasModuleOutput && json.main !== json.module) {
+					return "Missing ESM build script while package.json has 'module' field";
+				}
+			}
+		},
+	},
+	{
+		name: "npm-package-json-clean-script",
+		match,
+		handler: (file, root) => {
+			// This rule enforces the "clean" script will delete all the build and test output
+			let json;
+
+			try {
+				json = JSON.parse(readFile(file));
+			} catch (err) {
+				return "Error parsing JSON file: " + file;
+			}
+
+			const scripts = json.scripts;
+			if (scripts === undefined) {
+				return undefined;
+			}
+
+			const cleanScript = scripts.clean;
+			if (cleanScript) {
+				// Ignore clean scripts that are root of the release group
+				if (cleanScript.startsWith("pnpm")) {
+					return undefined;
+				}
+
+				// Enforce clean script prefix
+				if (!cleanScript.startsWith("rimraf --glob ")) {
+					return "'clean' script should start with 'rimraf --glob'";
+				}
+			}
+
+			const missing = missingCleanDirectories(scripts);
+
+			if (missing.length !== 0) {
+				return `'clean' script missing the following:${missing
+					.map((i) => `\n\t${i}`)
+					.join("")}`;
+			}
+
+			const clean = scripts["clean"];
+			if (clean && clean.startsWith("rimraf ")) {
+				if (clean.includes('"')) {
+					return "'clean' script using double quotes instead of single quotes";
+				}
+
+				if (!clean.includes("'")) {
+					return "'clean' script rimraf argument should have single quotes";
+				}
+			}
+		},
+		resolver: (file, root) => {
+			const result: { resolved: boolean; message?: string } = { resolved: true };
+			updatePackageJsonFile(path.dirname(file), (json) => {
+				const missing = missingCleanDirectories(json.scripts);
+				const clean = json.scripts["clean"] ?? "rimraf --glob";
+				if (clean.startsWith("rimraf --glob")) {
+					result.resolved = false;
+					result.message =
+						"Unable to fix 'clean' script that doesn't start with 'rimraf --glob'";
+				}
+				if (missing.length === 0) {
+					return;
+				}
+				json.scripts["clean"] = `${clean} ${missing.map((name) => `'${name}'`).join(" ")}`;
+			});
+
+			return result;
+		},
+	},
 ];
 
-function runNpmJsonLint(json: PackageJson, file: string) {
-	const lintConfig = getLintConfig(file);
-	const options = {
-		packageJsonObject: json,
-		packageJsonFilePath: file,
-		config: lintConfig,
-	};
+function missingCleanDirectories(scripts: any) {
+	const expectedClean: string[] = [];
 
-	const linter = new NpmPackageJsonLint(options);
-	const validationResults = linter.lint();
-	const valid = validationResults.errorCount + validationResults.warningCount === 0;
-	return { valid, validationResults };
-}
-
-const defaultNpmPackageJsonLintConfig = {
-	rules: {
-		"no-repeated-dependencies": "error",
-		"require-repository-directory": "error",
-		"valid-values-name-scope": [
-			"error",
-			[
-				"@fluidframework",
-				"@fluid-internal",
-				"@fluid-example",
-				"@fluid-experimental",
-				"@fluid-tools",
-			],
-		],
-	},
-};
-
-/**
- * Checks for an .npmpackagejsonlintrc.json file next to the package.json. If it exists, its contents will be merged
- * into the default config.
- *
- * @param file path to the package.json file.
- * @returns a config for npmPackageJsonLint.
- */
-function getLintConfig(file: string) {
-	const configFilePath = path.join(path.dirname(file), ".npmpackagejsonlintrc.json");
-	const defaultConfig = defaultNpmPackageJsonLintConfig;
-	const finalConfig = {};
-	if (pathExistsSync(configFilePath)) {
-		let configJson;
-		try {
-			configJson = JSON.parse(readFile(configFilePath));
-		} catch (err) {
-			configJson = {};
-		}
-		merge(finalConfig, defaultConfig, configJson);
-		return finalConfig;
+	if (scripts["tsc"]) {
+		expectedClean.push("dist");
 	}
-	return defaultConfig;
+
+	// Using the heuristic that our package use "build:esnext" or "tsc:esnext" to indicate
+	// that it has a ESM build.
+	const esnextScriptsNames = ["build:esnext", "tsc:esnext"];
+	const hasBuildEsNext = esnextScriptsNames.some((name) => scripts[name] !== undefined);
+	if (hasBuildEsNext) {
+		expectedClean.push("lib");
+	}
+
+	if (scripts["build"]?.startsWith("fluid-build")) {
+		expectedClean.push("*.tsbuildinfo");
+		expectedClean.push("*.build.log");
+	}
+
+	if (scripts["build:docs"]) {
+		expectedClean.push("_api-extractor-temp");
+	}
+
+	if (scripts["test"] && !scripts["test"].startsWith("echo")) {
+		expectedClean.push("nyc");
+	}
+	return expectedClean.filter((name) => !scripts.clean?.includes(name));
 }

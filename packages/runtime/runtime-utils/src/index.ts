@@ -10,7 +10,6 @@ export {
 	createResponseError,
 	exceptionToResponse,
 	Factory,
-	packagePathToTelemetryProperty,
 	requestFluidObject,
 	responseToException,
 } from "./dataStoreHelpers";
@@ -34,4 +33,5 @@ export {
 	TelemetryContext,
 	utf8ByteLength,
 } from "./summaryUtils";
+export { unpackChildNodesUsedRoutes } from "./unpackUsedRoutes";
 export { ReadAndParseBlob, seqFromTree } from "./utils";

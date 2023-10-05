@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { Property, RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber } from "./constants";
 import {
@@ -12,6 +12,7 @@ import {
 	IMergeBlock,
 	IRemovalInfo,
 	ISegment,
+	seqLTE,
 	toRemovalInfo,
 } from "./mergeTreeNodes";
 import { SortedSet } from "./sortedSet";
@@ -352,22 +353,21 @@ export class PartialSequenceLengths {
 		);
 		combinedPartialLengths.segmentCount = block.childCount;
 
-		function seqLTE(seq: number | undefined, minSeq: number) {
-			return seq !== undefined && seq !== UnassignedSequenceNumber && seq <= minSeq;
-		}
-
 		for (let i = 0; i < block.childCount; i++) {
 			const child = block.children[i];
 			if (child.isLeaf()) {
 				// Leaf segment
 				const segment = child;
-				if (seqLTE(segment.seq, collabWindow.minSeq)) {
+				if (segment.seq !== undefined && seqLTE(segment.seq, collabWindow.minSeq)) {
 					combinedPartialLengths.minLength += segment.cachedLength;
 				} else {
 					PartialSequenceLengths.insertSegment(combinedPartialLengths, segment);
 				}
 				const removalInfo = toRemovalInfo(segment);
-				if (seqLTE(removalInfo?.removedSeq, collabWindow.minSeq)) {
+				if (
+					removalInfo?.removedSeq !== undefined &&
+					seqLTE(removalInfo.removedSeq, collabWindow.minSeq)
+				) {
 					combinedPartialLengths.minLength -= segment.cachedLength;
 				} else if (removalInfo !== undefined) {
 					PartialSequenceLengths.insertSegment(

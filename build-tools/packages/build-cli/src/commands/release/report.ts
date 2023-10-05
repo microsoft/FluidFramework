@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ux, Flags, Interfaces, Command } from "@oclif/core";
+import { ux, Flags, Command } from "@oclif/core";
 import { strict as assert } from "assert";
 import chalk from "chalk";
 import { differenceInBusinessDays, formatDistanceToNow } from "date-fns";
@@ -16,6 +16,7 @@ import { Context, VersionDetails } from "@fluidframework/build-tools";
 
 import {
 	ReleaseVersion,
+	VersionBumpType,
 	detectBumpType,
 	detectVersionScheme,
 	getPreviousVersions,
@@ -92,7 +93,7 @@ export abstract class ReleaseReportBaseCommand<T extends typeof Command> extends
 	/**
 	 * The release group or package that is being reported on.
 	 */
-	protected abstract releaseGroupOrPackage: ReleaseGroup | ReleasePackage | undefined;
+	protected abstract releaseGroupName: ReleaseGroup | ReleasePackage | undefined;
 
 	/**
 	 * Returns true if the `date` is within `days` days of the current date.
@@ -109,9 +110,10 @@ export abstract class ReleaseReportBaseCommand<T extends typeof Command> extends
 	 * Collect release data from the repo. Subclasses should call this in their init or run methods.
 	 *
 	 * @param context - The {@link Context}.
+	 * @param mode - The {@link ReleaseSelectionMode} to use to determine the release to report on.
 	 * @param releaseGroup - If provided, the release data collected will be limited to only the pakages in this release
 	 * group and its direct Fluid dependencies.
-	 * @param mode - The {@link ReleaseSelectionMode} to use to determine the release to report on.
+	 * @param includeDependencies - If true, the release data will include the Fluid dependencies of the release group.
 	 */
 	protected async collectReleaseData(
 		context: Context,
@@ -139,7 +141,7 @@ export abstract class ReleaseReportBaseCommand<T extends typeof Command> extends
 			if (isReleaseGroup(releaseGroupOrPackage)) {
 				if (includeDependencies) {
 					[rgVerMap, pkgVerMap] = getFluidDependencies(context, releaseGroupOrPackage);
-					rgs.push(...(Object.keys(rgVerMap) as ReleaseGroup[]));
+					rgs.push(...Object.keys(rgVerMap));
 					pkgs.push(...Object.keys(pkgVerMap));
 				} else {
 					rgs.push(releaseGroupOrPackage);
@@ -393,7 +395,7 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 	};
 
 	defaultMode: ReleaseSelectionMode = "inRepo";
-	releaseGroupOrPackage: ReleaseGroup | ReleasePackage | undefined;
+	releaseGroupName: ReleaseGroup | ReleasePackage | undefined;
 
 	public async run(): Promise<void> {
 		const flags = this.flags;
@@ -411,14 +413,14 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 				: this.defaultMode;
 		assert(mode !== undefined, `mode is undefined`);
 
-		this.releaseGroupOrPackage = flags.releaseGroup;
+		this.releaseGroupName = flags.releaseGroup;
 		const context = await this.getContext();
 
 		// Collect the release version data from the history
 		this.releaseData = await this.collectReleaseData(
 			context,
 			mode,
-			this.releaseGroupOrPackage,
+			this.releaseGroupName,
 			/* includeDeps */ mode === "inRepo",
 		);
 
@@ -635,9 +637,10 @@ interface PackageReleaseData {
 	[packageName: string]: RawReleaseData;
 }
 
-interface RawReleaseData {
+export interface RawReleaseData {
 	repoVersion: VersionDetails;
 	latestReleasedVersion: VersionDetails;
+	latestReleaseType?: VersionBumpType;
 	previousReleasedVersion?: VersionDetails;
 	versions: readonly VersionDetails[];
 }

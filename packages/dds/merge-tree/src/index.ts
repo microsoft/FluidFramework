@@ -40,8 +40,14 @@ export {
 	createDetachedLocalReferencePosition,
 	LocalReferenceCollection,
 	LocalReferencePosition,
+	SlidingPreference,
 } from "./localReference";
-export { AttributionPolicy, IMergeTreeAttributionOptions, IMergeTreeOptions } from "./mergeTree";
+export {
+	AttributionPolicy,
+	IMergeTreeAttributionOptions,
+	IMergeTreeOptions,
+	getSlideToSegoff,
+} from "./mergeTree";
 export {
 	IMergeTreeClientSequenceArgs,
 	IMergeTreeDeltaCallbackArgs,
@@ -56,46 +62,32 @@ export {
 } from "./mergeTreeDeltaCallback";
 export {
 	BaseSegment,
-	BlockAction,
-	BlockUpdateActions,
 	CollaborationWindow,
 	compareNumbers,
 	compareStrings,
 	debugMarkerToString,
 	IConsensusInfo,
-	IHierBlock,
 	IJSONMarkerSegment,
 	IMarkerModifiedAction,
-	IMergeBlock,
-	IMergeNode,
 	IMergeNodeCommon,
-	IncrementalBlockAction,
-	IncrementalExecOp,
-	IncrementalMapState,
-	IncrementalSegmentAction,
-	IncrementalSegmentActions,
-	InsertContext,
 	internedSpaces,
 	IRemovalInfo,
 	ISegment,
 	ISegmentAction,
-	ISegmentChanges,
 	Marker,
-	MaxNodesInBlock,
-	MergeBlock,
 	MergeNode,
-	MinListener,
-	NodeAction,
-	ordinalToArray,
 	reservedMarkerIdKey,
 	reservedMarkerSimpleTypeKey,
-	SearchResult,
 	SegmentAccumulator,
-	SegmentActions,
 	SegmentGroup,
 	toRemovalInfo,
 } from "./mergeTreeNodes";
-export { Trackable, TrackingGroup, TrackingGroupCollection } from "./mergeTreeTracking";
+export {
+	Trackable,
+	TrackingGroup,
+	ITrackingGroup,
+	TrackingGroupCollection,
+} from "./mergeTreeTracking";
 export {
 	createAnnotateMarkerOp,
 	createAnnotateRangeOp,
@@ -156,6 +148,7 @@ export { IJSONTextSegment, IMergeTreeTextHelper, TextSegment } from "./textSegme
 export {
 	appendToMergeTreeDeltaRevertibles,
 	discardMergeTreeDeltaRevertible,
+	isMergeTreeDeltaRevertible,
 	MergeTreeDeltaRevertible,
 	MergeTreeRevertibleDriver,
 	revertMergeTreeDeltaRevertibles,

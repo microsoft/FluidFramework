@@ -7,6 +7,7 @@
 		"declaration": false,
 		"declarationMap": false,
 		"skipLibCheck": true,
+		"module": "esnext",
 	},
 	"include": ["./**/*"],
 	"references": [

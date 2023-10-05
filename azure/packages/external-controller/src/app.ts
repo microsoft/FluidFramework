@@ -4,13 +4,17 @@
  */
 import { IFluidContainer, IValueChanged, SharedMap } from "fluid-framework";
 
+import { DevtoolsLogger, initializeDevtools } from "@fluid-experimental/devtools";
 import {
 	AzureClient,
 	AzureContainerServices,
 	AzureLocalConnectionConfig,
 	AzureRemoteConnectionConfig,
 } from "@fluidframework/azure-client";
-import { InsecureTokenProvider, generateTestUser } from "@fluidframework/test-client-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
+
+import { v4 as uuid } from "uuid";
 
 import { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider";
 import { DiceRollerController, DiceRollerControllerProps } from "./controller";
@@ -29,7 +33,10 @@ const userDetails: ICustomUserDetails = {
 // Define the server we will be using and initialize Fluid
 const useAzure = process.env.FLUID_CLIENT === "azure";
 
-const user = generateTestUser();
+const user = {
+	id: uuid(),
+	name: uuid(),
+};
 
 const azureUser = {
 	userId: user.id,
@@ -106,8 +113,14 @@ async function initializeNewContainer(
 async function start(): Promise<void> {
 	// Create a custom ITelemetryBaseLogger object to pass into the Tinylicious container
 	// and hook to the Telemetry system
+	const baseLogger = createChildLogger();
+
+	// Wrap telemetry logger for use with Devtools
+	const devtoolsLogger = new DevtoolsLogger(baseLogger);
+
 	const clientProps = {
 		connection: connectionConfig,
+		logger: devtoolsLogger,
 	};
 	const client = new AzureClient(clientProps);
 	let container: IFluidContainer;
@@ -128,9 +141,8 @@ async function start(): Promise<void> {
 		// map2.set("diceValue", 1);
 		// console.log(map1.get("diceValue"));
 		// Initialize our models so they are ready for use with our controllers
-		[diceRollerController1Props, diceRollerController2Props] = await initializeNewContainer(
-			container,
-		);
+		[diceRollerController1Props, diceRollerController2Props] =
+			await initializeNewContainer(container);
 
 		// If the app is in a `createNew` state, and the container is detached, we attach the container.
 		// This uploads the container to the service and connects to the collaboration session.
@@ -147,6 +159,17 @@ async function start(): Promise<void> {
 	}
 
 	document.title = id;
+
+	// Initialize Devtools
+	initializeDevtools({
+		logger: devtoolsLogger,
+		initialContainers: [
+			{
+				container,
+				containerKey: "Dice Roller Container",
+			},
+		],
+	});
 
 	// Here we are guaranteed that the maps have already been initialized for use with a DiceRollerController
 	const diceRollerController1 = new DiceRollerController(diceRollerController1Props);

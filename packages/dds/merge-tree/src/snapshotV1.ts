@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { assert, bufferToString } from "@fluidframework/common-utils";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { assert } from "@fluidframework/core-utils";
+import { bufferToString } from "@fluid-internal/client-utils";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { AttributionKey, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
@@ -40,17 +40,17 @@ export class SnapshotV1 {
 	private readonly segments: JsonSegmentSpecs[];
 	private readonly segmentLengths: number[];
 	private readonly attributionCollections: IAttributionCollection<AttributionKey>[];
-	private readonly logger: ITelemetryLogger;
+	private readonly logger: ITelemetryLoggerExt;
 	private readonly chunkSize: number;
 
 	constructor(
 		public mergeTree: MergeTree,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		private readonly getLongClientId: (id: number) => string,
 		public filename?: string,
 		public onCompletion?: () => void,
 	) {
-		this.logger = ChildLogger.create(logger, "Snapshot");
+		this.logger = createChildLogger({ logger, namespace: "Snapshot" });
 		this.chunkSize = mergeTree?.options?.mergeTreeSnapshotChunkSize ?? SnapshotV1.chunkSize;
 
 		const { currentSeq, minSeq } = mergeTree.collabWindow;
@@ -262,7 +262,9 @@ export class SnapshotV1 {
 					segment.properties = undefined;
 					segment.propertyManager = undefined;
 				}
-				const raw: IJSONSegmentWithMergeInfo = { json: segment.toJSONObject() };
+				const raw: IJSONSegmentWithMergeInfo & { removedClient?: string } = {
+					json: segment.toJSONObject(),
+				};
 				// If the segment insertion is above the MSN, record the insertion merge info.
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				if (segment.seq! > minSeq) {
@@ -293,7 +295,7 @@ export class SnapshotV1 {
 				// Sanity check that we are preserving either the seq < minSeq or a removed segment's info.
 				assert(
 					(raw.seq !== undefined && raw.client !== undefined) ||
-						(raw.removedSeq !== undefined && raw.removedClient !== undefined),
+						(raw.removedSeq !== undefined && raw.removedClientIds !== undefined),
 					0x066 /* "Corrupted preservation of segment metadata!" */,
 				);
 
@@ -314,7 +316,7 @@ export class SnapshotV1 {
 	public static async loadChunk(
 		storage: IChannelStorageService,
 		path: string,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		options: PropertySet | undefined,
 		serializer?: IFluidSerializer,
 	): Promise<MergeTreeChunkV1> {
@@ -326,7 +328,7 @@ export class SnapshotV1 {
 	public static processChunk(
 		path: string,
 		chunk: string,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		options: PropertySet | undefined,
 		serializer?: IFluidSerializer,
 	): MergeTreeChunkV1 {

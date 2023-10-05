@@ -7,13 +7,10 @@ parameters:
 - name: namespace
   type: boolean
 
-- name: official
-  type: boolean
-
-- name: feedName
+- name: feedKind
   type: string
 
-- name: devFeedName
+- name: feedUrl
   type: string
 
 - name: environment
@@ -55,27 +52,22 @@ jobs:
           steps:
           - download: current
             artifact: pack
-          - task: UseNode@1
-            displayName: Use Node 16.x
-            inputs:
-              version: 16.x
+          - template: include-use-node-version.yml
           - template: include-publish-npm-package-steps.yml
             parameters:
               namespace: ${{ parameters.namespace }}
               artifactPath: scoped
-              devFeedName: ${{ parameters.devFeedName }}
-              feedName: ${{ parameters.feedName }}
+              feedUrl: ${{ parameters.feedUrl }}
               customEndPoint: ${{ parameters.customEndPoint }}
-              official: ${{ parameters.official }}
+              feedKind: ${{ parameters.feedKind }}
               publishFlags: ${{ parameters.publishFlags }}
           - ${{ if eq(parameters.publishNonScopedPackages, true) }}:
             - template: include-publish-npm-package-steps.yml
               parameters:
                 namespace: false
                 artifactPath: non-scoped
-                devFeedName: ${{ parameters.devFeedName }}
-                feedName: ${{ parameters.feedName }}
-                official: ${{ parameters.official }}
+                feedUrl: ${{ parameters.feedUrl }}
+                feedKind: ${{ parameters.feedKind }}
                 customEndPoint: ${{ parameters.customEndPoint }}
                 publishFlags: ${{ parameters.publishFlags }}
           - template: include-git-tag-steps.yml

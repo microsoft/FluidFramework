@@ -5,7 +5,7 @@
 
 import { AsyncLocalStorage } from "async_hooks";
 import * as querystring from "querystring";
-import type { AxiosRequestHeaders } from "axios";
+import type { RawAxiosRequestHeaders } from "axios";
 import * as git from "@fluidframework/gitresources";
 import {
 	IGetRefParamsExternal,
@@ -24,7 +24,7 @@ import * as uuid from "uuid";
 import * as winston from "winston";
 import { getCorrelationId } from "@fluidframework/server-services-utils";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
-import { getRequestErrorTranslator } from "../utils";
+import { Constants, getRequestErrorTranslator } from "../utils";
 import { ICache } from "./definitions";
 
 // We include the historian version in the user-agent string
@@ -63,8 +63,10 @@ export class RestGitService {
 		private readonly asyncLocalStorage?: AsyncLocalStorage<string>,
 		private readonly storageName?: string,
 		private readonly storageUrl?: string,
+		private readonly isEphemeralContainer?: boolean,
+		private readonly maxCacheableSummarySize?: number,
 	) {
-		const defaultHeaders: AxiosRequestHeaders =
+		const defaultHeaders: RawAxiosRequestHeaders =
 			storageName !== undefined
 				? {
 						"User-Agent": userAgent,
@@ -81,6 +83,11 @@ export class RestGitService {
 			);
 			defaultHeaders.Authorization = `Basic ${token.toString("base64")}`;
 		}
+
+		// We set the flag only for ephemeral containers
+		if (this.isEphemeralContainer) {
+			defaultHeaders[Constants.IsEphemeralContainer] = this.isEphemeralContainer;
+		}
 		this.lumberProperties = {
 			[BaseTelemetryProperties.tenantId]: this.tenantId,
 			[BaseTelemetryProperties.documentId]: this.documentId,
@@ -88,29 +95,22 @@ export class RestGitService {
 
 		const baseUrl = this.storageUrl || storage.url;
 
-		winston.info(
-			`Created RestGitService: ${JSON.stringify({
-				"BaseUrl": baseUrl,
-				"Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
-				"Storage-Name": this.storageName,
-			})}`,
-		);
+		const restGitServiceCreationLog = `Created RestGitService: ${JSON.stringify({
+			"BaseUrl": baseUrl,
+			"Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
+			"Storage-Name": this.storageName,
+			"Is-Ephemeral-Container": this.isEphemeralContainer,
+		})}`;
 
-		Lumberjack.info(
-			`Created RestGitService: ${JSON.stringify({
-				"BaseUrl": baseUrl,
-				"Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
-				"Storage-Name": this.storageName,
-			})}`,
-			this.lumberProperties,
-		);
+		winston.info(restGitServiceCreationLog);
+		Lumberjack.info(restGitServiceCreationLog, this.lumberProperties);
 
 		this.restWrapper = new BasicRestWrapper(
 			baseUrl,
 			undefined,
 			undefined,
 			undefined,
-			defaultHeaders,
+			defaultHeaders as any,
 			undefined,
 			undefined,
 			undefined,
@@ -237,9 +237,12 @@ export class RestGitService {
 			summaryParams,
 			initial !== undefined ? { initial } : undefined,
 		);
+		// JSON.stringify is not ideal for performance here, but it is better than crashing the cache service.
+		const summarySize = JSON.stringify(summaryResponse).length;
 		if (
 			summaryParams.type === "container" &&
-			(summaryResponse as IWholeFlatSummary).trees !== undefined
+			(summaryResponse as IWholeFlatSummary).trees !== undefined &&
+			summarySize <= this.maxCacheableSummarySize
 		) {
 			// Cache the written summary for future retrieval. If this fails, next summary retrieval
 			// will receive an older version, but that is OK. Client will catch up with ops.
@@ -305,9 +308,8 @@ export class RestGitService {
 		if (cachedLatestSummarySha === sha) {
 			// If the requested sha is the same as the cached latest summary's sha, we should retrieve it
 			// from cache.
-			const cachedLatestSummary = await this.getCache<IWholeFlatSummary>(
-				latestSummaryCacheKey,
-			);
+			const cachedLatestSummary =
+				await this.getCache<IWholeFlatSummary>(latestSummaryCacheKey);
 			// If latest summary sha is cached, but the summary itself does not exist in cache, retrieve the requested summary
 			// by specific version as normal and do not cache it.
 			if (cachedLatestSummary) {

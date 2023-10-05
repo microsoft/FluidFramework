@@ -20,7 +20,7 @@ import { bumpVirtualPatchVersion, isVirtualPatch } from "./virtualPatchScheme";
  *
  * - "internal" is the 2.0.0-internal.1.0.0 scheme.
  *
- * - "internalPrerelease" is the 2.0.0-internal.1.0.0.[CI build #] scheme.
+ * - "internalPrerelease" is the 2.0.0-dev.1.0.0.[CI build #] scheme.
  *
  * - "virtualPatch" is the 0.36.1002 scheme.
  */

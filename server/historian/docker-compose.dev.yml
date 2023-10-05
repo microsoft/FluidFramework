@@ -1,14 +1,14 @@
 version: "3.4"
 services:
-    historian:
-        build: .
-        ports:
-            - 3001:3000
-        volumes:
-            - .:/home/node/server
-            - /home/node/server/node_modules
-        restart: always
+  historian:
+    build: .
+    ports:
+      - 3001:3000
+    volumes:
+      - .:/home/node/server
+      - /home/node/server/node_modules
+    restart: always
 networks:
-    default:
-        external:
-            name: routerlicious_default
+  default:
+    external:
+      name: routerlicious_default

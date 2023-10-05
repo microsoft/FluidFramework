@@ -18,7 +18,7 @@ export class ComponentView implements NodeView {
 	constructor(
 		public node: Node,
 		public outerView: EditorView,
-		public getPos: (() => number) | boolean,
+		public getPos: () => number | undefined,
 		public loader: ILoader,
 	) {
 		// The node's representation in the editor (empty, for now)
@@ -45,13 +45,6 @@ export class ComponentView implements NodeView {
 
 	private load(url: string) {
 		this.attach(url);
-		const containerP = this.loader.resolve({ url });
-		// eslint-disable-next-line @typescript-eslint/no-floating-promises
-		containerP.then((container) => {
-			container.on("contextChanged", (value) => {
-				this.attach(url);
-			});
-		});
 	}
 
 	private attach(url: string) {

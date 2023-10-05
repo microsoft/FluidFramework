@@ -7,7 +7,7 @@
 
 /* eslint-disable @typescript-eslint/prefer-optional-chain */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
 import { IAttributionCollection } from "./attributionCollection";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
@@ -20,8 +20,10 @@ import { PartialSequenceLengths } from "./partialLengths";
 import { clone, createMap, MapLike, PropertySet } from "./properties";
 import {
 	refTypeIncludesFlag,
+	// eslint-disable-next-line import/no-deprecated
 	RangeStackMap,
 	ReferencePosition,
+	// eslint-disable-next-line import/no-deprecated
 	refGetRangeLabels,
 	refGetTileLabels,
 } from "./referencePositions";
@@ -32,11 +34,6 @@ import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManage
  * Common properties for a node in a merge tree.
  */
 export interface IMergeNodeCommon {
-	parent?: IMergeBlock;
-	/**
-	 * The length of the contents of the node.
-	 */
-	cachedLength: number;
 	/**
 	 * The index of this node in its parent's list of children.
 	 */
@@ -49,12 +46,15 @@ export interface IMergeNodeCommon {
 	isLeaf(): this is ISegment;
 }
 
-export type IMergeNode = IMergeBlock | ISegment;
-
+export type IMergeLeaf = ISegment & { parent?: IMergeBlock };
+export type IMergeNode = IMergeBlock | IMergeLeaf;
 /**
  * Internal (i.e. non-leaf) node in a merge tree.
+ * @internal
  */
 export interface IMergeBlock extends IMergeNodeCommon {
+	parent?: IMergeBlock;
+
 	needsScour?: boolean;
 	/**
 	 * Number of direct children of this node
@@ -76,15 +76,23 @@ export interface IMergeBlock extends IMergeNodeCommon {
 	 * objects are always defined.
 	 */
 	partialLengths?: PartialSequenceLengths;
+	/**
+	 * The length of the contents of the node.
+	 */
+	cachedLength: number | undefined;
 	hierBlock(): IHierBlock | undefined;
 	assignChild(child: IMergeNode, index: number, updateOrdinal?: boolean): void;
 	setOrdinal(child: IMergeNode, index: number): void;
 }
 
+/**
+ * @internal
+ */
 export interface IHierBlock extends IMergeBlock {
 	hierToString(indentCount: number): string;
 	rightmostTiles: MapLike<ReferencePosition>;
 	leftmostTiles: MapLike<ReferencePosition>;
+	// eslint-disable-next-line import/no-deprecated
 	rangeStacks: RangeStackMap;
 }
 
@@ -127,7 +135,21 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
 	readonly type: string;
 	readonly segmentGroups: SegmentGroupCollection;
 	readonly trackingCollection: TrackingGroupCollection;
+	/**
+	 * Whether or not this segment is a special segment denoting the start or
+	 * end of the tree
+	 *
+	 * Endpoint segments are imaginary segments positioned immediately before or
+	 * after the tree. These segments cannot be referenced by regular operations
+	 * and exist primarily as a bucket for local references to slide onto during
+	 * deletion of regular segments.
+	 */
+	readonly endpointType?: "start" | "end";
 
+	/**
+	 * The length of the contents of the node.
+	 */
+	cachedLength: number;
 	/**
 	 * Stores attribution keys associated with offsets of this segment.
 	 * This data is only persisted if MergeTree's `attributions.track` flag is set to true.
@@ -138,10 +160,11 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
 	 *
 	 * @alpha
 	 *
-	 * @remarks - There are plans to make the shape of the data stored extensible in a couple ways:
+	 * @remarks There are plans to make the shape of the data stored extensible in a couple ways:
 	 *
 	 * 1. Injection of custom attribution information associated with the segment (ex: copy-paste of
 	 * content but keeping the old attribution information).
+	 *
 	 * 2. Storage of multiple "channels" of information (ex: track property changes separately from insertion,
 	 * or only attribute certain property modifications, etc.)
 	 */
@@ -198,7 +221,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
 	 *
 	 * @param segmentGroup - Pending segment group associated with this op.
 	 * @param opArgs - Information about the op that was acked
-	 * @returns - true if the op modifies the segment, otherwise false.
+	 * @returns `true` if the op modifies the segment, otherwise `false`.
 	 * The only current false case is overlapping remove, where a segment is removed
 	 * by a previously sequenced operation before the current operation is acked.
 	 * @throws - error if the segment state doesn't match segment group or op.
@@ -225,12 +248,16 @@ export interface ISegmentAction<TClientData> {
 		accum: TClientData,
 	): boolean;
 }
-
+/**
+ * @internal
+ */
 export interface ISegmentChanges {
 	next?: ISegment;
 	replaceCurrent?: ISegment;
 }
-
+/**
+ * @internal
+ */
 export interface BlockAction<TClientData> {
 	// eslint-disable-next-line @typescript-eslint/prefer-function-type
 	(
@@ -244,6 +271,9 @@ export interface BlockAction<TClientData> {
 	): boolean;
 }
 
+/**
+ * @internal
+ */
 export interface NodeAction<TClientData> {
 	// eslint-disable-next-line @typescript-eslint/prefer-function-type
 	(
@@ -256,19 +286,29 @@ export interface NodeAction<TClientData> {
 		clientData: TClientData,
 	): boolean;
 }
-
+/**
+ * @internal
+ */
 export interface IncrementalSegmentAction<TContext> {
 	(segment: ISegment, state: IncrementalMapState<TContext>);
 }
 
+/**
+ * @internal
+ */
 export interface IncrementalBlockAction<TContext> {
 	(state: IncrementalMapState<TContext>);
 }
-
+/**
+ * @internal
+ * */
 export interface BlockUpdateActions {
 	child: (block: IMergeBlock, index: number) => void;
 }
 
+/**
+ * @internal
+ */
 export interface InsertContext {
 	candidateSegment?: ISegment;
 	prepareEvents?: boolean;
@@ -277,6 +317,9 @@ export interface InsertContext {
 	continuePredicate?: (continueFromBlock: IMergeBlock) => boolean;
 }
 
+/**
+ * @internal
+ */
 export interface SegmentActions<TClientData> {
 	leaf?: ISegmentAction<TClientData>;
 	shift?: NodeAction<TClientData>;
@@ -284,13 +327,18 @@ export interface SegmentActions<TClientData> {
 	pre?: BlockAction<TClientData>;
 	post?: BlockAction<TClientData>;
 }
-
+/**
+ * @internal
+ */
 export interface IncrementalSegmentActions<TContext> {
 	leaf: IncrementalSegmentAction<TContext>;
 	pre?: IncrementalBlockAction<TContext>;
 	post?: IncrementalBlockAction<TContext>;
 }
 
+/**
+ * @internal
+ */
 export interface SearchResult {
 	text: string;
 	pos: number;
@@ -306,30 +354,26 @@ export interface SegmentGroup {
 export class MergeNode implements IMergeNodeCommon {
 	index: number = 0;
 	ordinal: string = "";
-	parent?: IMergeBlock;
 	cachedLength: number = 0;
 
-	isLeaf() {
+	isLeaf(): this is ISegment {
 		return false;
 	}
 }
-export function ordinalToArray(ord: string) {
-	const a: number[] = [];
-	if (ord) {
-		for (let i = 0, len = ord.length; i < len; i++) {
-			a.push(ord.charCodeAt(i));
-		}
-	}
-	return a;
-}
 
-// Note that the actual branching factor of the MergeTree is `MaxNodesInBlock - 1`.  This is because
-// the MergeTree always inserts first, then checks for overflow and splits if the child count equals
-// `MaxNodesInBlock`.  (i.e., `MaxNodesInBlock` contains 1 extra slot for temporary storage to
-// facilitate splits.)
+/**
+ * Note that the actual branching factor of the MergeTree is `MaxNodesInBlock - 1`.  This is because
+ * the MergeTree always inserts first, then checks for overflow and splits if the child count equals
+ * `MaxNodesInBlock`.  (i.e., `MaxNodesInBlock` contains 1 extra slot for temporary storage to
+ * facilitate splits.)
+ * @internal
+ */
 export const MaxNodesInBlock = 8;
-
+/**
+ * @internal
+ */
 export class MergeBlock extends MergeNode implements IMergeBlock {
+	parent?: IMergeBlock;
 	public children: IMergeNode[];
 	public constructor(public childCount: number) {
 		super();
@@ -364,6 +408,10 @@ export class MergeBlock extends MergeNode implements IMergeBlock {
 	}
 }
 
+export function seqLTE(seq: number, minOrRefSeq: number) {
+	return seq !== UnassignedSequenceNumber && seq <= minOrRefSeq;
+}
+
 export abstract class BaseSegment extends MergeNode implements ISegment {
 	public clientId: number = LocalClientId;
 	public seq: number = UniversalSequenceNumber;
@@ -389,12 +437,8 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 		collabWindow?: CollaborationWindow,
 		rollback: PropertiesRollback = PropertiesRollback.None,
 	) {
-		if (!this.propertyManager) {
-			this.propertyManager = new PropertiesManager();
-		}
-		if (!this.properties) {
-			this.properties = createMap<any>();
-		}
+		this.propertyManager ??= new PropertiesManager();
+		this.properties ??= createMap<any>();
 		return this.propertyManager.addProperties(
 			this.properties,
 			newProps,
@@ -480,10 +524,12 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 
 	public splitAt(pos: number): ISegment | undefined {
 		if (pos > 0) {
-			const leafSegment = this.createSplitSegmentAt(pos);
+			const leafSegment: IMergeLeaf | undefined = this.createSplitSegmentAt(pos);
 			if (leafSegment) {
 				this.copyPropertiesTo(leafSegment);
-				leafSegment.parent = this.parent;
+				// eslint-disable-next-line @typescript-eslint/no-this-alias
+				const thisAsMergeSegment: IMergeLeaf = this;
+				leafSegment.parent = thisAsMergeSegment.parent;
 
 				// Give the leaf a temporary yet valid ordinal.
 				// when this segment is put in the tree, it will get its real ordinal,
@@ -541,6 +587,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 			);
 		}
 
+		this.cachedLength ??= 0;
 		this.cachedLength += other.cachedLength;
 	}
 
@@ -610,9 +657,7 @@ export class Marker extends BaseSegment implements ReferencePosition {
 	}
 
 	getId(): string | undefined {
-		if (this.properties && this.properties[reservedMarkerIdKey]) {
-			return this.properties[reservedMarkerIdKey] as string;
-		}
+		return this.properties?.[reservedMarkerIdKey] as string;
 	}
 
 	toString() {
@@ -631,13 +676,17 @@ export class Marker extends BaseSegment implements ReferencePosition {
 		throw new Error("Can not append to marker");
 	}
 }
-
+/**
+ * @internal
+ */
 export enum IncrementalExecOp {
 	Go,
 	Stop,
 	Yield,
 }
-
+/**
+ * @internal
+ */
 export class IncrementalMapState<TContext> {
 	op = IncrementalExecOp.Go;
 	constructor(
@@ -677,6 +726,9 @@ export const compareNumbers = (a: number, b: number) => a - b;
 export const compareStrings = (a: string, b: string) => a.localeCompare(b);
 
 const indentStrings = ["", " ", "  "];
+/**
+ * @deprecated This functionality is deprecated and will be removed in a future release.
+ */
 export function internedSpaces(n: number) {
 	if (indentStrings[n] === undefined) {
 		indentStrings[n] = "";
@@ -695,7 +747,9 @@ export interface IConsensusInfo {
 export interface SegmentAccumulator {
 	segments: ISegment[];
 }
-
+/**
+ * @internal
+ */
 export interface MinListener {
 	minRequired: number;
 	onMinGE(minSeq: number): void;
@@ -734,6 +788,7 @@ export function debugMarkerToString(marker: Marker): string {
 			lbuf += tileLabel;
 		}
 	}
+	// eslint-disable-next-line import/no-deprecated
 	const rangeLabels = refGetRangeLabels(marker);
 	if (rangeLabels) {
 		let rangeKind = "begin";

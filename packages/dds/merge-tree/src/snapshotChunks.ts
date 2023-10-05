@@ -7,7 +7,7 @@
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { PropertySet } from "./properties";
 import { SnapshotLegacy } from "./snapshotlegacy";
 import { IJSONSegment } from "./ops";
@@ -65,11 +65,6 @@ export interface IJSONSegmentWithMergeInfo {
 	json: IJSONSegment;
 	client?: string;
 	seq?: number;
-	/**
-	 * @deprecated Use {@link IJSONSegmentWithMergeInfo.removedClientIds} instead.
-	 * This only exists for backwards compatability.
-	 */
-	removedClient?: string;
 	removedClientIds?: string[];
 	removedSeq?: number;
 }
@@ -86,7 +81,7 @@ export function hasMergeInfo(
 export function serializeAsMinSupportedVersion(
 	path: string,
 	chunk: VersionedMergeTreeChunk,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	options: PropertySet | undefined,
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
@@ -139,7 +134,7 @@ export function serializeAsMinSupportedVersion(
 export function serializeAsMaxSupportedVersion(
 	path: string,
 	chunk: VersionedMergeTreeChunk,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	options: PropertySet | undefined,
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
@@ -151,7 +146,7 @@ export function serializeAsMaxSupportedVersion(
 export function toLatestVersion(
 	path: string,
 	chunk: VersionedMergeTreeChunk,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	options: PropertySet | undefined,
 ): MergeTreeChunkV1 {
 	switch (chunk.version) {

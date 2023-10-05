@@ -17,7 +17,6 @@ export interface ISummaryWriteResponse {
 }
 
 export interface ILatestSummaryState {
-	term: number;
 	protocolHead: number;
 	scribe: string;
 	messages: ISequencedDocumentMessage[];
@@ -40,6 +39,7 @@ export interface ISummaryWriter {
 		lastSummaryHead: string | undefined,
 		checkpoint: IScribe,
 		pendingOps: ISequencedOperationMessage[],
+		isEphemeralContainer?: boolean,
 	): Promise<ISummaryWriteResponse>;
 
 	writeServiceSummary(
@@ -47,6 +47,7 @@ export interface ISummaryWriter {
 		currentProtocolHead: number,
 		checkpoint: IScribe,
 		pendingOps: ISequencedOperationMessage[],
+		isEphemeralContainer?: boolean,
 	): Promise<string | false>;
 
 	isExternal: boolean;
@@ -72,6 +73,9 @@ export interface ICheckpointManager {
 		checkpoint: IScribe,
 		protocolHead: number,
 		pendingCheckpointMessages: ISequencedOperationMessage[],
+		noActiveClients: boolean,
+		globalCheckpointOnly: boolean,
+		markAsCorrupt: boolean,
 	): Promise<void>;
 
 	delete(sequenceNumber: number, lte: boolean): Promise<void>;

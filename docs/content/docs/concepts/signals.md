@@ -63,7 +63,7 @@ For more information on using `ContainerSchema` to create objects please see [Da
 
 #### Signal request
 
-When a client joins a collaboration session, they may need to receive information about the current state immediately after connecting the container.  To support this, they can request a specific signal be sent to them from other connected clients. For example, in the [PresenceTracker](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/presence-tracker) example we define a "focusRequest" signal type that a newly joining client uses to request the focus-state of each currently connected client:
+When a client joins a collaboration session, they may need to receive information about the current state immediately after connecting the container.  To support this, they can request a specific signal be sent to them from other connected clients. For example, in the [PresenceTracker](https://github.com/microsoft/FluidFramework/tree/main/examples/apps/presence-tracker) example we define a "focusRequest" signal type that a newly joining client uses to request the focus-state of each currently connected client:
 
 ```typescript
 private static readonly focusRequestType = "focusRequest";
@@ -83,7 +83,7 @@ this.signalManager.onSignal(FocusTracker.focusRequestType, () => {
 });
 ```
 
-This pattern adds cost however, as it forces every connected client to generate a signal.  Consider whether your scenario can be satisfied by receiving the signals naturally over time instead of requesting the information up-front. The mouse tracking in [PresenceTracker](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/presence-tracker) is an example where a newly connecting client does not request current state. Since mouse movements are frequent, the newly connecting client can instead simply wait to receive other users' mouse positions on their next mousemove event.
+This pattern adds cost however, as it forces every connected client to generate a signal.  Consider whether your scenario can be satisfied by receiving the signals naturally over time instead of requesting the information up-front. The mouse tracking in [PresenceTracker](https://github.com/microsoft/FluidFramework/tree/main/examples/apps/presence-tracker) is an example where a newly connecting client does not request current state. Since mouse movements are frequent, the newly connecting client can instead simply wait to receive other users' mouse positions on their next mousemove event.
 
 #### Grouping signal types
 

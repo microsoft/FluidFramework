@@ -5,7 +5,8 @@
 
 import { strict as assert } from "assert";
 import sinon from "sinon";
-import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { Deferred } from "@fluidframework/core-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import {
 	IDocumentMessage,
@@ -40,6 +41,19 @@ class MockRuntime {
 	constructor(
 		public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 	) {}
+	public on(
+		_event: "op",
+		_listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void,
+	) {
+		return this;
+	}
+
+	public off(
+		_event: "op",
+		_listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void,
+	) {
+		return this;
+	}
 }
 
 describe("Summary Manager", () => {
@@ -59,7 +73,10 @@ describe("Summary Manager", () => {
 	const summarizerClientId = "test";
 
 	// Fake objects
-	const summaryCollection = new SummaryCollection(mockDeltaManager, mockLogger);
+	const summaryCollection = new SummaryCollection(
+		mockDeltaManager,
+		mockLogger.toTelemetryLogger(),
+	);
 	const throttler = {
 		delayMs: 0,
 		numAttempts: 0,
@@ -77,7 +94,6 @@ describe("Summary Manager", () => {
 		minimumSequenceNumber: 5,
 		referenceSequenceNumber: 5,
 		sequenceNumber: 6,
-		term: 0,
 		timestamp: 6,
 		type: MessageType.Summarize,
 		contents: {
@@ -153,7 +169,6 @@ describe("Summary Manager", () => {
 				},
 				async (options) => {},
 				new SummarizeHeuristicData(0, { refSequenceNumber: 0, summaryTime: Date.now() }),
-				() => {},
 				summaryCollection,
 				neverCancelledSummaryToken,
 				// stopSummarizerCallback

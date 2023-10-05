@@ -4,7 +4,7 @@
  */
 
 import { StablePlace, StableRange } from './ChangeTypes';
-import { assert, fail } from './Common';
+import { assertWithMessage, fail } from './Common';
 import { TraitLocation, TreeView, TreeViewPlace, TreeViewRange } from './TreeView';
 
 /**
@@ -25,7 +25,7 @@ export function rangeFromStableRange(view: TreeView, range: StableRange): TreeVi
 export function placeFromStablePlace(view: TreeView, stablePlace: StablePlace): TreeViewPlace {
 	const { side } = stablePlace;
 	if (stablePlace.referenceSibling === undefined) {
-		assert(stablePlace.referenceTrait !== undefined);
+		assertWithMessage(stablePlace.referenceTrait !== undefined);
 		return {
 			trait: stablePlace.referenceTrait,
 			side,

@@ -2,17 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Command, Flags, Interfaces } from "@oclif/core";
+import { Command, Flags } from "@oclif/core";
 import chalk from "chalk";
 import { Machine } from "jssm";
 
 import { BaseCommand } from "./base";
 import { StateHandler } from "./handlers";
-
-// type Flags<T extends typeof Command> = Interfaces.InferredFlags<
-// 	typeof StateMachineCommand["baseFlags"] & T["flags"]
-// >;
-// type Args<T extends typeof BaseCommand> = Interfaces.InferredArgs<T["args"]>;
+import { testModeFlag } from "./flags";
 
 /**
  * A base CLI command that uses an internal state machine to govern its behavior. Subclasses must provide a state
@@ -33,11 +29,7 @@ import { StateHandler } from "./handlers";
 export abstract class StateMachineCommand<T extends typeof Command> extends BaseCommand<T> {
 	static flags = {
 		// Test mode flags
-		testMode: Flags.boolean({
-			default: false,
-			description: "Enables test mode. This flag enables other flags used for testing.",
-			hidden: true,
-		}),
+		testMode: testModeFlag,
 		state: Flags.string({
 			description:
 				"A state to start in when the command initializes. Used to test the processing of specific states.",

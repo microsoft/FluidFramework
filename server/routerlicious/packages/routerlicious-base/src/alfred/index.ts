@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export { IAlfredResourcesCustomizations } from "./customizations";
 export { AlfredRunner } from "./runner";
 export {
 	AlfredResources,
@@ -10,4 +11,9 @@ export {
 	AlfredRunnerFactory,
 	OrdererManager,
 } from "./runnerFactory";
-export { DeltaService } from "./services";
+export {
+	DeltaService,
+	DocumentDeleteService,
+	IDocumentDeleteService,
+	StorageNameAllocator,
+} from "./services";

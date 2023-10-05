@@ -3,11 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import type { IContainer, IHostLoader } from "@fluidframework/container-definitions";
+import {
+	LoaderHeader,
+	type IContainer,
+	type IHostLoader,
+} from "@fluidframework/container-definitions";
 import { ILoaderProps, Loader } from "@fluidframework/container-loader";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import type { IRequest, IResponse } from "@fluidframework/core-interfaces";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
+// eslint-disable-next-line import/no-deprecated
 import { create404Response, requestFluidObject } from "@fluidframework/runtime-utils";
 import type { IDetachedModel, IModelLoader, ModelMakerCallback } from "./interfaces";
 
@@ -33,6 +37,7 @@ const isModelRequest = (request: IRequest): request is IModelRequest =>
  * ModelLoader contract.
  * @param modelMakerCallback - A callback that will produce the model for the container
  * @returns A request handler that can be provided to the container runtime factory
+ * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
  */
 export const makeModelRequestHandler = <ModelType>(
 	modelMakerCallback: ModelMakerCallback<ModelType>,
@@ -57,7 +62,10 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 	// Here we specifically pick just the loader props we know we need to keep API exposure low.  Fine to add more
 	// here if we determine they're needed, but they should be picked explicitly (e.g. avoid "scope").
 	public constructor(
-		props: Pick<ILoaderProps, "urlResolver" | "documentServiceFactory" | "codeLoader"> & {
+		props: Pick<
+			ILoaderProps,
+			"urlResolver" | "documentServiceFactory" | "codeLoader" | "logger"
+		> & {
 			generateCreateNewRequest: () => IRequest;
 		},
 	) {
@@ -65,6 +73,7 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 			urlResolver: props.urlResolver,
 			documentServiceFactory: props.documentServiceFactory,
 			codeLoader: props.codeLoader,
+			logger: props.logger,
 		});
 		this.generateCreateNewRequest = props.generateCreateNewRequest;
 	}
@@ -92,6 +101,7 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 			url: modelUrl,
 			headers: { containerRef: container },
 		};
+		// eslint-disable-next-line import/no-deprecated
 		return requestFluidObject<ModelType>(container, request);
 	}
 
@@ -105,9 +115,10 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 		// to stamp it on something that would rather not know it (e.g. the model).
 		const attach = async () => {
 			await container.attach(this.generateCreateNewRequest());
-			const resolved = container.resolvedUrl;
-			ensureFluidResolvedUrl(resolved);
-			return resolved.id;
+			if (container.resolvedUrl === undefined) {
+				throw new Error("Resolved Url not available on attached container");
+			}
+			return container.resolvedUrl.id;
 		};
 		return { model, attach };
 	}
@@ -116,13 +127,28 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 		const container = await this.loader.resolve({
 			url: id,
 			headers: {
-				loadMode: {
+				[LoaderHeader.loadMode]: {
 					// Here we use "all" to ensure we are caught up before returning.  This is particularly important
 					// for direct-link scenarios, where the user might have a direct link to a data object that was
 					// just attached (i.e. the "attach" op and the "set" of the handle into some map is in the
 					// trailing ops).  If we don't fully process those ops, the expected object won't be found.
 					opsBeforeReturn: "all",
 				},
+			},
+		});
+		const model = await this.getModelFromContainer(container);
+		return model;
+	}
+
+	public async loadExistingPaused(id: string, sequenceNumber: number): Promise<ModelType> {
+		const container = await this.loader.resolve({
+			url: id,
+			headers: {
+				[LoaderHeader.loadMode]: {
+					opsBeforeReturn: "sequenceNumber",
+					pauseAfterLoad: true,
+				},
+				[LoaderHeader.sequenceNumber]: sequenceNumber,
 			},
 		});
 		const model = await this.getModelFromContainer(container);

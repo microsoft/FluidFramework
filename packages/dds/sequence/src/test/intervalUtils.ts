@@ -6,6 +6,8 @@
 import { strict as assert } from "assert";
 import { MockContainerRuntimeForReconnection } from "@fluidframework/test-runtime-utils";
 import { SharedString } from "../sharedString";
+import { IIntervalCollection } from "../intervalCollection";
+import { SequenceInterval } from "../intervals";
 
 export interface Client {
 	sharedString: SharedString;
@@ -55,6 +57,27 @@ export function assertEquivalentSharedStrings(a: SharedString, b: SharedString) 
 			assert(intervalId);
 			const otherInterval = collection2.getIntervalById(intervalId);
 			assert(otherInterval);
+			assert.equal(
+				interval.startSide,
+				otherInterval.startSide,
+				"interval start side not equal",
+			);
+			assert.equal(interval.endSide, otherInterval.endSide, "interval end side not equal");
+			assert.equal(
+				interval.stickiness,
+				otherInterval.stickiness,
+				"interval stickiness not equal",
+			);
+			assert.equal(
+				interval.start.slidingPreference,
+				otherInterval.start.slidingPreference,
+				"start sliding preference not equal",
+			);
+			assert.equal(
+				interval.end.slidingPreference,
+				otherInterval.end.slidingPreference,
+				"end sliding preference not equal",
+			);
 			const firstStart = a.localReferencePositionToPosition(interval.start);
 			const otherStart = b.localReferencePositionToPosition(otherInterval.start);
 			assert.equal(
@@ -80,3 +103,32 @@ export function assertEquivalentSharedStrings(a: SharedString, b: SharedString) 
 		}
 	}
 }
+
+export const assertIntervals = (
+	sharedString: SharedString,
+	intervalCollection: IIntervalCollection<SequenceInterval>,
+	expected: readonly { start: number; end: number }[],
+	validateOverlapping: boolean = true,
+) => {
+	const actual = Array.from(intervalCollection);
+	if (validateOverlapping && sharedString.getLength() > 0) {
+		const overlapping = intervalCollection.findOverlappingIntervals(
+			0,
+			sharedString.getLength() - 1,
+		);
+		assert.deepEqual(actual, overlapping, "Interval search returned inconsistent results");
+	}
+	assert.strictEqual(
+		actual.length,
+		expected.length,
+		`findOverlappingIntervals() must return the expected number of intervals`,
+	);
+
+	const actualPos = actual.map((interval) => {
+		assert(interval);
+		const start = sharedString.localReferencePositionToPosition(interval.start);
+		const end = sharedString.localReferencePositionToPosition(interval.end);
+		return { start, end };
+	});
+	assert.deepEqual(actualPos, expected, "intervals are not as expected");
+};

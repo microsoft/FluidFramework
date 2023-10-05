@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
+import {
+	readAndParse,
+	blobHeadersBlobName as blobNameForBlobHeaders,
+} from "@fluidframework/driver-utils";
 import {
 	ISequencedDocumentMessage,
 	ISnapshotTree,
@@ -91,6 +94,8 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
 	readonly summaryNumber?: number;
 	/** GUID to identify a document in telemetry */
 	readonly telemetryDocumentId?: string;
+	/** True if the runtime IdCompressor is enabled */
+	readonly idCompressorEnabled?: boolean;
 }
 
 export interface ICreateContainerMetadata {
@@ -150,6 +155,8 @@ export const metadataBlobName = ".metadata";
 export const chunksBlobName = ".chunks";
 export const electedSummarizerBlobName = ".electedSummarizer";
 export const blobsTreeName = ".blobs";
+export const idCompressorBlobName = ".idCompressor";
+export const blobHeadersBlobName = blobNameForBlobHeaders;
 
 export function rootHasIsolatedChannels(metadata?: IContainerRuntimeMetadata): boolean {
 	return !!metadata && !metadata.disableIsolatedChannels;
@@ -169,6 +176,7 @@ export const nonDataStorePaths = [
 	".serviceProtocol",
 	blobsTreeName,
 	gcTreeKey,
+	idCompressorBlobName,
 ];
 
 export const dataStoreAttributesBlobName = ".component";
@@ -179,7 +187,9 @@ export const dataStoreAttributesBlobName = ".component";
  * @param summarizeResult - Summary tree and stats to modify
  *
  * @example
+ *
  * Converts from:
+ *
  * ```typescript
  * {
  *     type: SummaryType.Tree,
@@ -200,6 +210,7 @@ export const dataStoreAttributesBlobName = ".component";
  *     },
  * }
  * ```
+ *
  * And adds +1 to treeNodeCount in stats.
  */
 export function wrapSummaryInChannelsTree(summarizeResult: ISummaryTreeWithStats): void {

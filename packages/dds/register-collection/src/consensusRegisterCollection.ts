@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, bufferToString, unreachableCase } from "@fluidframework/common-utils";
+import { bufferToString } from "@fluid-internal/client-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
 	IChannelAttributes,
@@ -227,7 +228,7 @@ export class ConsensusRegisterCollection<T>
 		localOpMetadata: unknown,
 	) {
 		if (message.type === MessageType.Operation) {
-			const op: IIncomingRegisterOperation<T> = message.contents;
+			const op = message.contents as IIncomingRegisterOperation<T>;
 			switch (op.type) {
 				case "write": {
 					// backward compatibility: File at rest written with runtime <= 0.13 do not have refSeq

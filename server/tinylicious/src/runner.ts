@@ -13,16 +13,22 @@ import {
 	DefaultMetricClient,
 	IRunner,
 } from "@fluidframework/server-services-core";
-import { Deferred } from "@fluidframework/common-utils";
+// eslint-disable-next-line import/no-deprecated
+import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import { configureWebSocketServices } from "@fluidframework/server-lambdas";
+import {
+	configureWebSocketServices,
+	ICollaborationSessionEvents,
+} from "@fluidframework/server-lambdas";
 import { TestClientManager } from "@fluidframework/server-test-utils";
 import detect from "detect-port";
 import * as app from "./app";
 
 export class TinyliciousRunner implements IRunner {
 	private server?: IWebServer;
+
+	// eslint-disable-next-line import/no-deprecated
 	private runningDeferred: Deferred<void>;
 
 	constructor(
@@ -33,12 +39,15 @@ export class TinyliciousRunner implements IRunner {
 		private readonly tenantManager: ITenantManager,
 		private readonly storage: IDocumentStorage,
 		private readonly mongoManager: MongoManager,
+		// eslint-disable-next-line import/no-deprecated
+		private readonly collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	) {}
 
 	public async start(): Promise<void> {
 		const version = process.env.npm_package_version;
 		winston.info(`Starting tinylicious@${version}`);
 
+		// eslint-disable-next-line import/no-deprecated
 		this.runningDeferred = new Deferred<void>();
 
 		// Make sure provided port is unoccupied
@@ -52,20 +61,41 @@ export class TinyliciousRunner implements IRunner {
 			throw e;
 		}
 
-		const alfred = app.create(this.config, this.storage, this.mongoManager);
+		const alfred = app.create(
+			this.config,
+			this.storage,
+			this.mongoManager,
+			this.collaborationSessionEventEmitter,
+		);
 		alfred.set("port", this.port);
 
 		this.server = this.serverFactory.create(alfred);
 		const httpServer = this.server.httpServer;
 
 		configureWebSocketServices(
-			this.server.webSocketServer,
-			this.orderManager,
-			this.tenantManager,
-			this.storage,
-			new TestClientManager(),
-			new DefaultMetricClient(),
-			winston,
+			this.server.webSocketServer /* webSocketServer */,
+			this.orderManager /* orderManager */,
+			this.tenantManager /* tenantManager */,
+			this.storage /* storage */,
+			new TestClientManager() /* clientManager */,
+			new DefaultMetricClient() /* metricLogger */,
+			winston /* logger */,
+			undefined /* maxNumberOfClientsPerDocument */,
+			undefined /* numberOfMessagesPerTrace */,
+			undefined /* maxTokenLifetimeSec */,
+			undefined /* isTokenExpiryEnabled */,
+			undefined /* isClientConnectivityCountingEnabled */,
+			undefined /* isSignalUsageCountingEnabled */,
+			undefined /* cache */,
+			undefined /* connectThrottlerPerTenant */,
+			undefined /* connectThrottlerPerCluster */,
+			undefined /* submitOpThrottler */,
+			undefined /* submitSignalThrottler */,
+			undefined /* throttleAndUsageStorageManager */,
+			undefined /* verifyMaxMessageSize */,
+			undefined /* socketTracker */,
+			undefined /* revokedTokenChecker */,
+			this.collaborationSessionEventEmitter /* collaborationSessionEventEmitter  */,
 		);
 
 		// Listen on provided port, on all network interfaces.

@@ -10,6 +10,7 @@ import {
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { IChannel } from "@fluidframework/datastore-definitions";
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "../dataStoreRuntime";
 import { LocalChannelContext, RehydratedLocalChannelContext } from "../localChannelContext";
 
@@ -17,13 +18,20 @@ describe("LocalChannelContext Tests", () => {
 	let dataStoreContext: MockFluidDataStoreContext;
 	let sharedObjectRegistry: ISharedObjectRegistry;
 	const loadRuntime = (context: IFluidDataStoreContext, registry: ISharedObjectRegistry) =>
-		new FluidDataStoreRuntime(context, registry, /* existing */ false);
+		new FluidDataStoreRuntime(context, registry, /* existing */ false, async () => ({
+			myProp: "myValue",
+		}));
 
 	beforeEach(() => {
 		dataStoreContext = new MockFluidDataStoreContext();
 		sharedObjectRegistry = {
-			get(name: string) {
-				throw new Error("Not implemented");
+			get(type: string) {
+				return {
+					type,
+					attributes: { type, snapshotFormatVersion: "0" },
+					create: () => ({}) as any as IChannel,
+					load: async () => Promise.resolve({} as any as IChannel),
+				};
 			},
 		};
 	});
@@ -46,7 +54,7 @@ describe("LocalChannelContext Tests", () => {
 			);
 		assert.throws(
 			codeBlock,
-			(e) => validateAssertionError(e, "Channel context ID cannot contain slashes"),
+			(e: Error) => validateAssertionError(e, "Channel context ID cannot contain slashes"),
 			"Expected exception was not thrown",
 		);
 	});
@@ -69,7 +77,7 @@ describe("LocalChannelContext Tests", () => {
 			);
 		assert.throws(
 			codeBlock,
-			(e) => validateAssertionError(e, "Channel context ID cannot contain slashes"),
+			(e: Error) => validateAssertionError(e, "Channel context ID cannot contain slashes"),
 			"Expected exception was not thrown",
 		);
 	});

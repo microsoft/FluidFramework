@@ -109,15 +109,19 @@ function logWithTime(msg: string | Error | undefined, logFunc: ErrorLoggingFunct
 }
 
 function log(msg: string | undefined): void {
-	logWithTime(msg, console.log);
+	if (!commonOptions.quiet) {
+		logWithTime(msg, console.log);
+	}
 }
 
 function info(msg: string | Error | undefined) {
-	logWithTime(`INFO: ${msg}`, console.log);
+	if (!commonOptions.quiet) {
+		logWithTime(`INFO: ${msg}`, console.log);
+	}
 }
 
 function verbose(msg: string | Error | undefined) {
-	if (commonOptions.verbose) {
+	if (!commonOptions.quiet && commonOptions.verbose) {
 		logWithTime(`VERBOSE: ${msg}`, console.log);
 	}
 }

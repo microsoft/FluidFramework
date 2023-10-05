@@ -2,50 +2,69 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import * as path from "path";
+import * as childProcess from "node:child_process";
+import * as path from "node:path";
+import { existsSync } from "node:fs";
 import { cosmiconfigSync } from "cosmiconfig";
+import findUp from "find-up";
 
 import { commonOptions } from "./commonOptions";
 import { IFluidBuildConfig } from "./fluidRepo";
-import { defaultLogger } from "./logging";
-import { existsSync, lookUpDirAsync, readJsonAsync, realpathAsync } from "./utils";
+import { Logger, defaultLogger } from "./logging";
+import { realpathAsync } from "./utils";
+import { readJson } from "fs-extra";
 
-const { verbose } = defaultLogger;
-
-async function isFluidRootLerna(dir: string) {
+/**
+ * This function checks that there is a lerna.json file in root of the client and server release groups.
+ *
+ * Long term we want to get rid of this file, since we no longer use lerna. However, that is a larger change that will
+ * be done later. For now, the file must be in the root for both the client and server release groups.
+ *
+ * Client is needed because it's the root of the repo, and server needs it because the server CI pipeline is built using
+ * docker, and the docker context is rooted at the release group root, so it doesn't have access to any files outside
+ * the root of the server release group.
+ */
+async function isFluidRootLerna(dir: string, log: Logger = defaultLogger) {
 	const filename = path.join(dir, "lerna.json");
 	if (!existsSync(filename)) {
-		verbose(`InferRoot: lerna.json not found`);
+		log.verbose(`InferRoot: lerna.json not found`);
 		return false;
 	}
 	const rootPackageManifest = getFluidBuildConfig(dir);
-	if (
-		rootPackageManifest.repoPackages.server !== undefined &&
-		!existsSync(path.join(dir, rootPackageManifest.repoPackages.server as string, "lerna.json"))
-	) {
-		verbose(
-			`InferRoot: ${dir}/${
-				rootPackageManifest.repoPackages.server as string
-			}/lerna.json not found`,
-		);
-		return false;
+	if (rootPackageManifest.repoPackages.server !== undefined) {
+		if (Array.isArray(rootPackageManifest.repoPackages.server)) {
+			log.warning(
+				`InferRoot: fluid-build settings for the server release group are an array, which is not expected.`,
+			);
+			return false;
+		}
+
+		const serverPath =
+			typeof rootPackageManifest.repoPackages.server === "string"
+				? rootPackageManifest.repoPackages.server
+				: rootPackageManifest.repoPackages.server.directory;
+
+		if (!existsSync(path.join(dir, serverPath, "lerna.json"))) {
+			log.verbose(`InferRoot: ${dir}/${serverPath}/lerna.json not found`);
+			return false;
+		}
 	}
 
 	return true;
 }
 
-async function isFluidRootPackage(dir: string) {
+async function isFluidRootPackage(dir: string, log: Logger = defaultLogger) {
 	const filename = path.join(dir, "package.json");
 	if (!existsSync(filename)) {
-		verbose(`InferRoot: package.json not found`);
+		log.verbose(`InferRoot: package.json not found`);
 		return false;
 	}
 
-	const parsed = await readJsonAsync(filename);
+	const parsed = await readJson(filename);
 	if (parsed.name === "root" && parsed.private === true) {
 		return true;
 	}
-	verbose(`InferRoot: package.json not matched`);
+	log.verbose(`InferRoot: package.json not matched`);
 	return false;
 }
 
@@ -53,48 +72,57 @@ async function isFluidRoot(dir: string) {
 	return (await isFluidRootLerna(dir)) && (await isFluidRootPackage(dir));
 }
 
-async function inferRoot() {
-	return lookUpDirAsync(process.cwd(), async (curr) => {
-		verbose(`InferRoot: probing ${curr}`);
-		try {
-			if (await isFluidRoot(curr)) {
-				return true;
-			}
-			// eslint-disable-next-line no-empty
-		} catch {}
-		return false;
-	});
+async function inferRoot(log: Logger = defaultLogger) {
+	let fluidConfig = findUp.sync("fluidBuild.config.cjs", { cwd: process.cwd(), type: "file" });
+	if (fluidConfig === undefined) {
+		log?.verbose(`No fluidBuild.config.cjs found. Falling back to git root.`);
+		// Use the git root as a fallback for older branches where the fluidBuild config is still in
+		// package.json
+		const gitRoot = childProcess
+			.execSync("git rev-parse --show-toplevel", { encoding: "utf8" })
+			.trim();
+		fluidConfig = path.join(gitRoot, "package.json");
+		if (fluidConfig === undefined || !existsSync(fluidConfig)) {
+			return undefined;
+		}
+	}
+	const isRoot = await isFluidRootPackage(path.dirname(fluidConfig), log);
+	if (isRoot) {
+		return path.dirname(fluidConfig);
+	}
+
+	return undefined;
 }
 
-export async function getResolvedFluidRoot() {
+export async function getResolvedFluidRoot(log: Logger = defaultLogger) {
 	let checkFluidRoot = true;
 	let root = commonOptions.root;
 	if (root) {
-		verbose(`Using argument root @ ${root}`);
+		log.verbose(`Using argument root @ ${root}`);
 	} else {
-		root = await inferRoot();
+		root = await inferRoot(log);
 		if (root) {
 			checkFluidRoot = false;
-			verbose(`Using inferred root @ ${root}`);
+			log.verbose(`Using inferred root @ ${root}`);
 		} else if (commonOptions.defaultRoot) {
 			root = commonOptions.defaultRoot;
-			verbose(`Using default root @ ${root}`);
+			log.verbose(`Using default root @ ${root}`);
 		} else {
-			console.error(
-				`ERROR: Unknown repo root. Specify it with --root or environment variable _FLUID_ROOT_`,
+			log.errorLog(
+				`Unknown repo root. Specify it with --root or environment variable _FLUID_ROOT_`,
 			);
 			process.exit(-101);
 		}
 	}
 
 	if (checkFluidRoot && !isFluidRoot(root)) {
-		console.error(`ERROR: '${root}' is not a root of Fluid repo.`);
+		log.errorLog(`'${root}' is not a root of Fluid repo.`);
 		process.exit(-100);
 	}
 
 	const resolvedRoot = path.resolve(root);
 	if (!existsSync(resolvedRoot)) {
-		console.error(`ERROR: Repo root '${resolvedRoot}' does not exist.`);
+		log.errorLog(`Repo root '${resolvedRoot}' does not exist.`);
 		process.exit(-102);
 	}
 

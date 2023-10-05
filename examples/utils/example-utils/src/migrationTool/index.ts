@@ -4,3 +4,7 @@
  */
 
 export { MigrationTool, MigrationToolInstantiationFactory } from "./migrationTool";
+export {
+	SameContainerMigrationTool,
+	SameContainerMigrationToolInstantiationFactory,
+} from "./sameContainerMigrationTool";

@@ -16,23 +16,26 @@ import {
 	SummaryTreeUploadManager,
 	WholeSummaryUploadManager,
 	ISession,
+	getGlobalTimeoutContext,
 } from "@fluidframework/server-services-client";
 import {
 	ICollection,
 	IDeliState,
+	IDocument,
 	IDocumentDetails,
+	IDocumentRepository,
 	IDocumentStorage,
 	IScribe,
+	ISequencedOperationMessage,
+	IStorageNameAllocator,
 	ITenantManager,
 	SequencedOperationType,
-	IDocument,
-	ISequencedOperationMessage,
-	IDocumentRepository,
 } from "@fluidframework/server-services-core";
 import * as winston from "winston";
 import { toUtf8 } from "@fluidframework/common-utils";
 import {
 	BaseTelemetryProperties,
+	CommonProperties,
 	LumberEventName,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
@@ -43,6 +46,7 @@ export class DocumentStorage implements IDocumentStorage {
 		private readonly tenantManager: ITenantManager,
 		private readonly enableWholeSummaryUpload: boolean,
 		private readonly opsCollection: ICollection<ISequencedOperationMessage>,
+		private readonly storageNameAssigner: IStorageNameAllocator,
 	) {}
 
 	/**
@@ -62,15 +66,12 @@ export class DocumentStorage implements IDocumentStorage {
 	}
 
 	private createInitialProtocolTree(
-		documentId: string,
 		sequenceNumber: number,
-		term: number,
 		values: [string, ICommittedProposal][],
 	): ISummaryTree {
 		const documentAttributes: IDocumentAttributes = {
 			minimumSequenceNumber: sequenceNumber,
 			sequenceNumber,
-			term,
 		};
 
 		const summary: ISummaryTree = {
@@ -121,27 +122,41 @@ export class DocumentStorage implements IDocumentStorage {
 		documentId: string,
 		appTree: ISummaryTree,
 		sequenceNumber: number,
-		term: number,
 		initialHash: string,
 		ordererUrl: string,
 		historianUrl: string,
 		deltaStreamUrl: string,
 		values: [string, ICommittedProposal][],
 		enableDiscovery: boolean = false,
+		isEphemeralContainer: boolean = false,
 	): Promise<IDocumentDetails> {
-		const gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
+		const storageName = await this.storageNameAssigner?.assign(tenantId, documentId);
+		const gitManager = await this.tenantManager.getTenantGitManager(
+			tenantId,
+			documentId,
+			storageName,
+			false /* includeDisabledTenant */,
+			isEphemeralContainer,
+		);
 
+		const storageNameAssignerEnabled = !!this.storageNameAssigner;
 		const lumberjackProperties = {
 			[BaseTelemetryProperties.tenantId]: tenantId,
 			[BaseTelemetryProperties.documentId]: documentId,
+			storageName,
+			enableWholeSummaryUpload: this.enableWholeSummaryUpload,
+			storageNameAssignerExists: storageNameAssignerEnabled,
+			isEphemeralContainer,
 		};
+		if (storageNameAssignerEnabled && !storageName) {
+			// Using a warning instead of an error just in case there are some outliers that we don't know about.
+			Lumberjack.warning(
+				"Failed to get storage name for new document.",
+				lumberjackProperties,
+			);
+		}
 
-		const protocolTree = this.createInitialProtocolTree(
-			documentId,
-			sequenceNumber,
-			term,
-			values,
-		);
+		const protocolTree = this.createInitialProtocolTree(sequenceNumber, values);
 		const fullTree = this.createFullTree(appTree, protocolTree);
 
 		const blobsShaCache = new Map<string, string>();
@@ -162,6 +177,7 @@ export class DocumentStorage implements IDocumentStorage {
 				0 /* sequenceNumber */,
 				true /* initial */,
 			);
+
 			let initialSummaryUploadSuccessMessage = `Tree reference: ${JSON.stringify(handle)}`;
 
 			if (!this.enableWholeSummaryUpload) {
@@ -193,14 +209,16 @@ export class DocumentStorage implements IDocumentStorage {
 			throw error;
 		}
 
-		const deli: Omit<IDeliState, "epoch"> = {
+		// Storage is known to take too long sometimes. Check timeout before continuing.
+		getGlobalTimeoutContext().checkTimeout();
+
+		const deli: IDeliState = {
 			clients: undefined,
 			durableSequenceNumber: sequenceNumber,
 			expHash1: initialHash,
 			logOffset: -1,
 			sequenceNumber,
 			signalClientConnectionNumber: 0,
-			term: 1,
 			lastSentMSN: 0,
 			nackMessages: undefined,
 			successfullyStartedLambdas: [],
@@ -226,6 +244,7 @@ export class DocumentStorage implements IDocumentStorage {
 			// the initial summary would not be accepted as a valid parent because lastClientSummaryHead is undefined and latest
 			// summary is a service summary. However, initial summary _is_ a valid parent in this scenario.
 			validParentSummaries: [initialSummaryVersionId],
+			isCorrupt: false,
 		};
 
 		const session: ISession = {
@@ -260,7 +279,13 @@ export class DocumentStorage implements IDocumentStorage {
 					scribe: JSON.stringify(scribe),
 					tenantId,
 					version: "0.1",
+					storageName,
+					isEphemeralContainer,
 				},
+			);
+			createDocumentCollectionMetric.setProperty(
+				CommonProperties.isEphemeralContainer,
+				isEphemeralContainer,
 			);
 			createDocumentCollectionMetric.success("Successfully created document");
 			return result;
@@ -385,11 +410,11 @@ export class DocumentStorage implements IDocumentStorage {
 		const document = await this.documentRepository.readOne({ documentId, tenantId });
 		if (document === null) {
 			// Guard against storage failure. Returns false if storage is unresponsive.
-			const foundInSummaryP = this.readFromSummary(tenantId, documentId).then(
-				(result) => {
+			const foundInSummaryP = this.readFromSummary(tenantId, documentId)
+				.then((result) => {
 					return result;
-				},
-				(err) => {
+				})
+				.catch((err) => {
 					winston.error(`Error while fetching summary for ${tenantId}/${documentId}`);
 					winston.error(err);
 					const lumberjackProperties = {
@@ -398,10 +423,13 @@ export class DocumentStorage implements IDocumentStorage {
 					};
 					Lumberjack.error(`Error while fetching summary`, lumberjackProperties);
 					return false;
-				},
-			);
+				});
 
 			const inSummary = await foundInSummaryP;
+			Lumberjack.warning("Backfilling document from summary!", {
+				[BaseTelemetryProperties.tenantId]: tenantId,
+				[BaseTelemetryProperties.documentId]: documentId,
+			});
 
 			// Setting an empty string to deli and scribe denotes that the checkpoints should be loaded from summary.
 			const value = inSummary
@@ -449,7 +477,7 @@ export class DocumentStorage implements IDocumentStorage {
 				// Duplicate key errors are ignored
 				if (error.code !== 11000) {
 					// Needs to be a full rejection here
-					return Promise.reject(error);
+					throw error;
 				}
 			});
 			winston.info(`Inserted ${dbOps.length} ops into deltas DB`);

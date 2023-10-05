@@ -103,18 +103,18 @@ care of by Azure Kubernetes Service.
 
 #### Shared
 
-- Kafka - left-numbat
+-   Kafka - left-numbat
 
 #### PPE
 
-- Mongo - quoting-armadillo
-- Redis - lumpy-condor
-- Historian - terrific-otter
-- Rabbitmq - modest-poodle
+-   Mongo - quoting-armadillo
+-   Redis - lumpy-condor
+-   Historian - terrific-otter
+-   Rabbitmq - modest-poodle
 
 #### Prod
 
-- Mongo - quieting-guppy
-- Redis - winsome-wombat
-- Historian - smelly-wolf
-- Rabbitmq - lumpy-worm
+-   Mongo - quieting-guppy
+-   Redis - winsome-wombat
+-   Historian - smelly-wolf
+-   Rabbitmq - lumpy-worm

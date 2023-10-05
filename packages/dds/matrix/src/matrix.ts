@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	IFluidDataStoreRuntime,
@@ -25,11 +25,11 @@ import {
 	MergeTreeDeltaType,
 	IMergeTreeOp,
 	SegmentGroup,
-	ISegment,
 	Client,
+	IJSONSegment,
 } from "@fluidframework/merge-tree";
 import { MatrixOp } from "./ops";
-import { PermutationVector, PermutationSegment } from "./permutationvector";
+import { PermutationVector, reinsertSegmentIntoVector } from "./permutationvector";
 import { SparseArray2D } from "./sparsearray2d";
 import { SharedMatrixFactory } from "./runtime";
 import { Handle, isHandleValid } from "./handletable";
@@ -63,6 +63,7 @@ interface ISetOpMetadata {
  * A matrix cell value may be undefined (indicating an empty cell) or any serializable type,
  * excluding null.  (However, nulls may be embedded inside objects and arrays.)
  */
+// eslint-disable-next-line @rushstack/no-new-null -- Using 'null' to disallow 'null'.
 export type MatrixItem<T> = Serializable<Exclude<T, null>> | undefined;
 
 /**
@@ -368,25 +369,9 @@ export class SharedMatrix<T = any>
 		this.submitRowMessage(this.rows.remove(rowStart, count));
 	}
 
-	/** @internal */ public _undoRemoveRows(segment: ISegment) {
-		const original = segment as PermutationSegment;
-
-		// (Re)insert the removed number of rows at the original position.
-		const { op, inserted } = this.rows.insertRelative(original, original.cachedLength);
+	/** @internal */ public _undoRemoveRows(rowStart: number, spec: IJSONSegment) {
+		const { op, inserted } = reinsertSegmentIntoVector(this.rows, rowStart, spec);
 		this.submitRowMessage(op);
-
-		// Transfer handles and undo/redo tracking groups from the original segment to the
-		// newly inserted segment.
-		original.transferToReplacement(inserted);
-
-		// Invalidate the handleCache in case it was populated during the 'rowsChanged'
-		// callback, which occurs before the handle span is populated.
-		const rowStart = this.rows.getPosition(inserted);
-		this.rows.handleCache.itemsChanged(
-			rowStart,
-			/* removedCount: */ 0,
-			/* insertedCount: */ inserted.cachedLength,
-		);
 
 		// Generate setCell ops for each populated cell in the reinserted rows.
 		let rowHandle = inserted.start;
@@ -407,25 +392,9 @@ export class SharedMatrix<T = any>
 		}
 	}
 
-	/** @internal */ public _undoRemoveCols(segment: ISegment) {
-		const original = segment as PermutationSegment;
-
-		// (Re)insert the removed number of columns at the original position.
-		const { op, inserted } = this.cols.insertRelative(original, original.cachedLength);
+	/** @internal */ public _undoRemoveCols(colStart: number, spec: IJSONSegment) {
+		const { op, inserted } = reinsertSegmentIntoVector(this.cols, colStart, spec);
 		this.submitColMessage(op);
-
-		// Transfer handles and undo/redo tracking groups from the original segment to the
-		// newly inserted segment.
-		original.transferToReplacement(inserted);
-
-		// Invalidate the handleCache in case it was populated during the 'colsChanged'
-		// callback, which occurs before the handle span is populated.
-		const colStart = this.cols.getPosition(inserted);
-		this.cols.handleCache.itemsChanged(
-			colStart,
-			/* removedCount: */ 0,
-			/* insertedCount: */ inserted.cachedLength,
-		);
 
 		// Generate setCell ops for each populated cell in the reinserted cols.
 		let colHandle = inserted.start;
@@ -783,10 +752,16 @@ export class SharedMatrix<T = any>
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
 	 */
 	protected applyStashedOp(content: any): unknown {
-		if (content.target === SnapshotPath.cols || content.target === SnapshotPath.rows) {
-			const op = content as IMergeTreeOp;
-			const currentVector = content.target === SnapshotPath.cols ? this.cols : this.rows;
-			const oppositeVector = content.target === SnapshotPath.cols ? this.rows : this.cols;
+		const parsedContent = parseHandles(content, this.serializer);
+		if (
+			parsedContent.target === SnapshotPath.cols ||
+			parsedContent.target === SnapshotPath.rows
+		) {
+			const op = parsedContent as IMergeTreeOp;
+			const currentVector =
+				parsedContent.target === SnapshotPath.cols ? this.cols : this.rows;
+			const oppositeVector =
+				parsedContent.target === SnapshotPath.cols ? this.rows : this.cols;
 			const metadata = currentVector.applyStashedOp(op);
 			const localSeq = currentVector.getCollabWindow().localSeq;
 			const oppositeWindow = oppositeVector.getCollabWindow();
@@ -801,9 +776,12 @@ export class SharedMatrix<T = any>
 
 			return metadata;
 		} else {
-			assert(content.type === MatrixOp.set, 0x2da /* "Unknown SharedMatrix 'op' type." */);
+			assert(
+				parsedContent.type === MatrixOp.set,
+				0x2da /* "Unknown SharedMatrix 'op' type." */,
+			);
 
-			const setOp = content as ISetOp<T>;
+			const setOp = parsedContent as ISetOp<T>;
 			const rowHandle = this.rows.getAllocatedHandle(setOp.row);
 			const colHandle = this.cols.getAllocatedHandle(setOp.col);
 			const rowsRefSeq = this.rows.getCollabWindow().currentSeq;

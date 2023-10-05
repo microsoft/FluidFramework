@@ -73,8 +73,11 @@ function verifyBatchMetadata(batchMessages: ISequencedDocumentMessage[]) {
 	const batchCount = batchMessages.length;
 	assert(batchCount !== 0, "No messages in the batch");
 
-	const batchBeginMetadata = batchMessages[0].metadata?.batch;
-	const batchEndMetadata = batchMessages[batchCount - 1].metadata?.batch;
+	const batchBeginMetadata = (batchMessages[0].metadata as { batch?: unknown } | undefined)
+		?.batch;
+	const batchEndMetadata = (
+		batchMessages[batchCount - 1].metadata as { batch?: unknown } | undefined
+	)?.batch;
 	if (batchCount === 1) {
 		assert.equal(
 			batchBeginMetadata,
@@ -131,6 +134,13 @@ describeNoCompat("Flushing ops", (getTestObjectProvider) => {
 		dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 		dataObject2map1 = await dataObject2.getSharedObject<SharedMap>(map1Id);
 		dataObject2map2 = await dataObject2.getSharedObject<SharedMap>(map2Id);
+
+		// To precisely control batch boundary, we need to force the container into write mode upfront
+		// So that the first flush doesn't result in reconnect to write mode and cause batches
+		// to be "merged"
+
+		dataObject1map1.set("forceWrite", true);
+		dataObject2map2.set("forceWrite", true);
 
 		await waitForCleanContainers(dataObject1, dataObject2);
 		await provider.ensureSynchronized();
@@ -606,24 +616,6 @@ describeNoCompat("Flushing ops", (getTestObjectProvider) => {
 		afterEach(async () => {
 			dataObject1BatchMessages = [];
 			dataObject2BatchMessages = [];
-		});
-	});
-
-	describe("Batch validation when using getPendingLocalState()", () => {
-		beforeEach(async () => {
-			await setupContainers();
-		});
-		it("cannot capture the pending local state during ordersequentially", async () => {
-			dataObject1.context.containerRuntime.orderSequentially(() => {
-				dataObject1map1.set("key1", "value1");
-				dataObject1map2.set("key2", "value2");
-				assert.throws(
-					() => container1.closeAndGetPendingLocalState(),
-					/can't get state during orderSequentially/,
-				);
-				dataObject1map1.set("key3", "value3");
-				dataObject1map2.set("key4", "value4");
-			});
 		});
 	});
 

@@ -2,29 +2,30 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert } from "console";
-import registerDebug from "debug";
 import * as path from "path";
 
 import { defaultLogger } from "../../../common/logging";
-import { ScriptDependencies } from "../../../common/npmPackage";
 import { globFn, readFileAsync, statAsync, toPosixPath, unquote } from "../../../common/utils";
 import { BuildPackage } from "../../buildGraph";
-import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
+import { LeafTask, LeafWithDoneFileTask, LeafWithFileStatDoneFileTask } from "./leafTask";
 
 /* eslint-disable @typescript-eslint/no-empty-function */
 
 const { verbose } = defaultLogger;
 
 export class EchoTask extends LeafTask {
-	protected addDependentTasks(dependentTasks: LeafTask[]) {}
+	protected get taskWeight() {
+		return 0; // generally cheap relative to other tasks
+	}
 	protected async checkLeafIsUpToDate() {
 		return true;
 	}
 }
 
 export class LesscTask extends LeafTask {
-	protected addDependentTasks(dependentTasks: LeafTask[]) {}
+	protected get taskWeight() {
+		return 0; // generally cheap relative to other tasks
+	}
 	protected async checkLeafIsUpToDate() {
 		// TODO: assume lessc <src> <dst>
 		const args = this.command.split(" ");
@@ -39,27 +40,25 @@ export class LesscTask extends LeafTask {
 			const [srcTime, dstTime] = await Promise.all([srcTimeP, dstTimeP]);
 			const result = srcTime <= dstTime;
 			if (!result) {
-				this.logVerboseNotUpToDate();
+				this.traceNotUpToDate();
 			}
 			return result;
 		} catch (e: any) {
 			verbose(`${this.node.pkg.nameColored}: ${e.message}`);
-			this.logVerboseTrigger("failed to get file stats");
+			this.traceTrigger("failed to get file stats");
 			return false;
 		}
 	}
 }
 
-const traceCopyFileTrigger = registerDebug("fluid-build:task:trigger:copyfiles");
-
-export class CopyfilesTask extends LeafWithDoneFileTask {
+export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
 	private parsed: boolean = false;
 	private readonly upLevel: number = 0;
 	private readonly copySrcArg: string = "";
 	private readonly copyDstArg: string = "";
 
-	constructor(node: BuildPackage, command: string, scriptDeps: ScriptDependencies) {
-		super(node, command, scriptDeps);
+	constructor(node: BuildPackage, command: string, taskName: string | undefined) {
+		super(node, command, taskName);
 
 		// TODO: something better
 		const args = this.command.split(" ");
@@ -86,37 +85,34 @@ export class CopyfilesTask extends LeafWithDoneFileTask {
 		this.parsed = true;
 	}
 
-	protected addDependentTasks(dependentTasks: LeafTask[]) {
-		if (this.parsed) {
-			if (this.copySrcArg.startsWith("src")) {
-				return;
-			}
-
-			if (this.copySrcArg.startsWith("./_api-extractor-temp/doc-models/")) {
-				this.addChildTask(dependentTasks, this.node, "api-extractor run --local");
-				return;
-			}
-		}
-		this.addAllDependentPackageTasks(dependentTasks);
-	}
-
 	private _srcFiles: string[] | undefined;
 	private _dstFiles: string[] | undefined;
-	private async getCopySourceFiles() {
-		assert(this.parsed);
+
+	protected get taskWeight() {
+		return 0; // generally cheap relative to other tasks
+	}
+	protected async getInputFiles() {
+		if (!this.parsed) {
+			// If we can't parse the argument, we don't know what we are doing.
+			throw new Error("error parsing command line");
+		}
 		if (!this._srcFiles) {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const srcGlob = path.join(this.node.pkg.directory, this.copySrcArg!);
 			this._srcFiles = await globFn(srcGlob, { nodir: true });
 		}
 		return this._srcFiles;
 	}
 
-	private async getCopyDestFiles() {
-		assert(this.parsed);
+	protected async getOutputFiles() {
+		if (!this.parsed) {
+			// If we can't parse the argument, we don't know what we are doing.
+			throw new Error("error parsing command line");
+		}
 		if (!this._dstFiles) {
 			const directory = toPosixPath(this.node.pkg.directory);
 			const dstPath = directory + "/" + this.copyDstArg;
-			const srcFiles = await this.getCopySourceFiles();
+			const srcFiles = await this.getInputFiles();
 			this._dstFiles = srcFiles.map((match) => {
 				const relPath = path.relative(directory, match);
 				let currRelPath = relPath;
@@ -134,40 +130,12 @@ export class CopyfilesTask extends LeafWithDoneFileTask {
 
 		return this._dstFiles;
 	}
-
-	protected async getDoneFileContent(): Promise<string | undefined> {
-		if (!this.parsed) {
-			// If we can't parse the argument, we don't know what we are doing.
-			this.logVerboseTask(`error parsing command line`);
-			return undefined;
-		}
-
-		const srcFiles = await this.getCopySourceFiles();
-		const dstFiles = await this.getCopyDestFiles();
-
-		// Gather the file informations
-		try {
-			const srcTimesP = Promise.all(srcFiles.map((match) => statAsync(match)));
-			const dstTimesP = Promise.all(dstFiles.map((match) => statAsync(match)));
-			const [srcTimes, dstTimes] = await Promise.all([srcTimesP, dstTimesP]);
-
-			const srcInfo = srcTimes.map((srcTime) => {
-				return { mtimeMs: srcTime.mtimeMs, size: srcTime.size };
-			});
-			const dstInfo = dstTimes.map((dstTime) => {
-				return { mtimeMs: dstTime.mtimeMs, size: dstTime.size };
-			});
-			return JSON.stringify({ srcFiles, dstFiles, srcInfo, dstInfo });
-		} catch (e: any) {
-			this.logVerboseTask(`error comparing file times ${e.message}`);
-			this.logVerboseTrigger("failed to get file stats");
-			return undefined;
-		}
-	}
 }
 
 export class GenVerTask extends LeafTask {
-	protected addDependentTasks(dependentTasks: LeafTask[]) {}
+	protected get taskWeight() {
+		return 0; // generally cheap relative to other tasks
+	}
 	protected async checkLeafIsUpToDate() {
 		const file = path.join(this.node.pkg.directory, "src/packageVersion.ts");
 		try {
@@ -176,20 +144,20 @@ export class GenVerTask extends LeafTask {
 				/.*\nexport const pkgName = "(.*)";[\n\r]*export const pkgVersion = "([0-9A-Za-z.+-]+)";.*/m,
 			);
 			if (match === null) {
-				this.logVerboseTrigger("src/packageVersion.ts content not matched");
+				this.traceTrigger("src/packageVersion.ts content not matched");
 				return false;
 			}
 			if (this.node.pkg.name !== match[1]) {
-				this.logVerboseTrigger("package name in src/packageVersion.ts not matched");
+				this.traceTrigger("package name in src/packageVersion.ts not matched");
 				return false;
 			}
 			if (this.node.pkg.version !== match[2]) {
-				this.logVerboseTrigger("package version in src/packageVersion.ts not matched");
+				this.traceTrigger("package version in src/packageVersion.ts not matched");
 				return false;
 			}
 			return true;
 		} catch {
-			this.logVerboseTrigger(`failed to read src/packageVersion.ts`);
+			this.traceTrigger(`failed to read src/packageVersion.ts`);
 			return false;
 		}
 	}
@@ -199,6 +167,34 @@ export class TypeValidationTask extends LeafWithDoneFileTask {
 	protected async getDoneFileContent(): Promise<string | undefined> {
 		return JSON.stringify(this.package.packageJson);
 	}
+}
 
-	protected addDependentTasks(dependentTasks: LeafTask[]): void {}
+export class GoodFence extends LeafWithFileStatDoneFileTask {
+	protected get taskWeight() {
+		return 0; // generally cheap relative to other tasks
+	}
+	private inputFiles: string[] | undefined;
+	protected async getInputFiles(): Promise<string[]> {
+		if (!this.inputFiles) {
+			const fenceGlob = path.join(this.node.pkg.directory, "**/fence.json");
+			const fenceFiles = await globFn(fenceGlob, { nodir: true });
+			const tsFileSet = new Set<string>();
+			const fencedTsFilesP = fenceFiles.map((fenceFile) => {
+				const dir = path.dirname(fenceFile);
+				return globFn(path.join(dir, "**/*.ts"));
+			});
+			const fencedTsFiles = await Promise.all(fencedTsFilesP);
+			fencedTsFiles.forEach((tsFiles) => {
+				tsFiles.forEach((file) => {
+					tsFileSet.add(file);
+				});
+			});
+
+			this.inputFiles = new Array(...tsFileSet.keys());
+		}
+		return this.inputFiles;
+	}
+	protected async getOutputFiles(): Promise<string[]> {
+		return [];
+	}
 }

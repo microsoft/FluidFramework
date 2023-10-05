@@ -27,6 +27,7 @@ export function createProducer(
 	replicationFactor?: number,
 	maxBatchSize?: number,
 	sslCACertFilePath?: string,
+	eventHubConnString?: string,
 ): IProducer {
 	let producer: IProducer;
 
@@ -38,10 +39,16 @@ export function createProducer(
 			replicationFactor,
 			maxMessageSize: MaxKafkaMessageSize,
 			sslCACertFilePath,
+			eventHubConnString,
 		});
 
 		producer.on("error", (error, errorData: IContextErrorData) => {
 			if (errorData?.restart) {
+				Lumberjack.error(
+					"Kafka Producer emitted an error that is configured to restart the process.",
+					{ errorLabel: errorData?.errorLabel },
+					error,
+				);
 				throw new Error(error);
 			} else {
 				winston.error(
@@ -50,7 +57,7 @@ export function createProducer(
 				winston.error(inspect(error));
 				Lumberjack.error(
 					"Kafka Producer emitted an error that is not configured to restart the process.",
-					undefined,
+					{ errorLabel: errorData?.errorLabel },
 					error,
 				);
 			}

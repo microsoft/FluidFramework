@@ -5,12 +5,10 @@
 ```ts
 
 import * as api from '@fluidframework/protocol-definitions';
-import * as api_2 from '@fluidframework/driver-definitions';
 import { ConnectionMode } from '@fluidframework/protocol-definitions';
-import { IClient } from '@fluidframework/protocol-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IConnected } from '@fluidframework/protocol-definitions';
-import { IDisposable } from '@fluidframework/common-definitions';
+import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentDeltaConnection } from '@fluidframework/driver-definitions';
 import { IDocumentDeltaConnectionEvents } from '@fluidframework/driver-definitions';
 import { IDocumentDeltaStorageService } from '@fluidframework/driver-definitions';
@@ -27,10 +25,10 @@ import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { IStream } from '@fluidframework/driver-definitions';
 import { ISummaryContext } from '@fluidframework/driver-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { ReadDocumentStorageServiceBase } from '@fluidframework/replay-driver';
-import { TypedEventEmitter } from '@fluidframework/common-utils';
+import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @public
 export class FileDeltaStorageService implements IDocumentDeltaStorageService {
@@ -43,25 +41,11 @@ export class FileDeltaStorageService implements IDocumentDeltaStorageService {
 }
 
 // @public
-export class FileDocumentService implements api_2.IDocumentService {
-    constructor(storage: api_2.IDocumentStorageService, deltaStorage: FileDeltaStorageService, deltaConnection: api_2.IDocumentDeltaConnection);
-    // (undocumented)
-    connectToDeltaStorage(): Promise<api_2.IDocumentDeltaStorageService>;
-    connectToDeltaStream(client: IClient): Promise<api_2.IDocumentDeltaConnection>;
-    // (undocumented)
-    connectToStorage(): Promise<api_2.IDocumentStorageService>;
-    // (undocumented)
-    dispose(): void;
-    // (undocumented)
-    get resolvedUrl(): api_2.IResolvedUrl;
-}
-
-// @public
 export class FileDocumentServiceFactory implements IDocumentServiceFactory {
     constructor(storage: IDocumentStorageService, deltaStorage: FileDeltaStorageService, deltaConnection: IDocumentDeltaConnection);
     // (undocumented)
     createContainer(createNewSummary: ISummaryTree, resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
-    createDocumentService(fileURL: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
+    createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
 }
 
 // @public (undocumented)
@@ -74,7 +58,7 @@ export const FileSnapshotWriterClassFactory: <TBase extends ReaderConstructor>(B
         onSnapshotHandler(snapshot: IFileSnapshot): void;
         readBlob(sha: string): Promise<ArrayBufferLike>;
         getVersions(versionId: string | null, count: number): Promise<api.IVersion[]>;
-        getSnapshotTree(version?: api.IVersion | undefined): Promise<api.ISnapshotTree | null>;
+        getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null>;
         uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string>;
         buildTree(snapshotTree: api.ISnapshotTree): Promise<api.ITree>;
         repositoryUrl: string;
@@ -110,7 +94,7 @@ export const FluidFetchReaderFileSnapshotWriter: {
         onSnapshotHandler(snapshot: IFileSnapshot): void;
         readBlob(sha: string): Promise<ArrayBufferLike>;
         getVersions(versionId: string | null, count: number): Promise<api.IVersion[]>;
-        getSnapshotTree(version?: api.IVersion | undefined): Promise<api.ISnapshotTree | null>;
+        getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null>;
         uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string>;
         buildTree(snapshotTree: api.ISnapshotTree): Promise<api.ITree>;
         repositoryUrl: string;

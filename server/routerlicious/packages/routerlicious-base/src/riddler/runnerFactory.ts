@@ -15,11 +15,12 @@ import {
 	IRunner,
 	IRunnerFactory,
 	IWebServerFactory,
+	ICollection,
 } from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import Redis from "ioredis";
+import * as Redis from "ioredis";
 import { RedisCache } from "@fluidframework/server-services";
 import { RiddlerRunner } from "./runner";
 import { ITenantDocument } from "./tenantManager";
@@ -29,6 +30,7 @@ export class RiddlerResources implements IResources {
 
 	constructor(
 		public readonly config: Provider,
+		public readonly tenantsCollection: ICollection<ITenantDocument>,
 		public readonly tenantsCollectionName: string,
 		public readonly mongoManager: MongoManager,
 		public readonly port: any,
@@ -37,6 +39,8 @@ export class RiddlerResources implements IResources {
 		public readonly defaultHistorianUrl: string,
 		public readonly defaultInternalHistorianUrl: string,
 		public readonly secretManager: ISecretManager,
+		public readonly fetchTenantKeyMetricIntervalMs: number,
+		public readonly riddlerStorageRequestMetricIntervalMs: number,
 		public readonly cache: RedisCache,
 	) {
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
@@ -58,7 +62,20 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 				host: redisConfig.host,
 				port: redisConfig.port,
 				password: redisConfig.pass,
+				connectTimeout: redisConfig.connectTimeout,
+				enableReadyCheck: true,
+				maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
+				enableOfflineQueue: redisConfig.enableOfflineQueue,
 			};
+			if (redisConfig.enableAutoPipelining) {
+				/**
+				 * When enabled, all commands issued during an event loop iteration are automatically wrapped in a
+				 * pipeline and sent to the server at the same time. This can improve performance by 30-50%.
+				 * More info: https://github.com/luin/ioredis#autopipelining
+				 */
+				redisOptions.enableAutoPipelining = true;
+				redisOptions.autoPipeliningIgnoredCommands = ["ping"];
+			}
 			if (redisConfig.tls) {
 				redisOptions.tls = {
 					servername: redisConfig.host,
@@ -67,7 +84,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 			const redisParams = {
 				expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
 			};
-			const redisClient = new Redis(redisOptions);
+			const redisClient = new Redis.default(redisOptions);
 
 			cache = new RedisCache(redisClient, redisParams);
 		}
@@ -125,8 +142,14 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 		const defaultInternalHistorianUrl =
 			config.get("worker:internalBlobStorageUrl") || defaultHistorianUrl;
 
+		const fetchTenantKeyMetricIntervalMs = config.get("apiCounters:fetchTenantKeyMetricMs");
+		const riddlerStorageRequestMetricIntervalMs = config.get(
+			"apiCounters:riddlerStorageRequestMetricMs",
+		);
+
 		return new RiddlerResources(
 			config,
+			collection,
 			tenantsCollectionName,
 			mongoManager,
 			port,
@@ -135,6 +158,8 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 			defaultHistorianUrl,
 			defaultInternalHistorianUrl,
 			secretManager,
+			fetchTenantKeyMetricIntervalMs,
+			riddlerStorageRequestMetricIntervalMs,
 			cache,
 		);
 	}
@@ -144,15 +169,17 @@ export class RiddlerRunnerFactory implements IRunnerFactory<RiddlerResources> {
 	public async create(resources: RiddlerResources): Promise<IRunner> {
 		return new RiddlerRunner(
 			resources.webServerFactory,
-			resources.tenantsCollectionName,
+			resources.tenantsCollection,
 			resources.port,
-			resources.mongoManager,
 			resources.loggerFormat,
 			resources.baseOrdererUrl,
 			resources.defaultHistorianUrl,
 			resources.defaultInternalHistorianUrl,
 			resources.secretManager,
+			resources.fetchTenantKeyMetricIntervalMs,
+			resources.riddlerStorageRequestMetricIntervalMs,
 			resources.cache,
+			resources.config,
 		);
 	}
 }

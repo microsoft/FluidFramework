@@ -162,14 +162,15 @@ graph LR
   Describes the hierarchical structure of the summary tree from the root to the first layer of leaf nodes.
 </label>
 <ul labelledby="root-diagram">
-  <li>root</li>
-  <ul>
-    <li>.protocol</li>
-    <li>_scheduler</li>
-    <li>DataStore_1</li>
-    <li>DataStore_2</li>
-    <li>.chunks</li>
-  </ul>
+  <li>root
+    <ul>
+      <li>.protocol</li>
+      <li>_scheduler</li>
+      <li>DataStore_1</li>
+      <li>DataStore_2</li>
+      <li>.chunks</li>
+    </ul>
+  </li>
 </ul>
 </span>
 
@@ -190,18 +191,21 @@ graph LR
   Describes the hierarchical structure of the summary tree from the data store nodes.
 </label>
 <ul labelledby="ds-diagram">
-  <li>DataStore_1</li>
-  <ul>
-    <li>.fluid-object</li>
-    <li>DDS_1</li>
+  <li>DataStore_1
     <ul>
-      <li>.attributes</li>
-      <li>(more blobs)</li>
-      <li>(subtrees)</li>
+      <li>.fluid-object</li>
+      <li>DDS_1
+        <ul>
+          <li>.attributes</li>
+          <li>(more blobs)</li>
+          <li>(subtrees)</li>
+        </ul>
+      </li>
+      <li>DDS_2</li>
     </ul>
-    <li>DDS_2</li>
-  </ul>
+  </li>
 </ul>
+
 </span>
 
 ### Protocol
@@ -231,20 +235,23 @@ graph LR
   Describes the hierarchical structure of the summaries.
 </label>
 <ul labelledby="protocol-diagram">
-  <li>root</li>
-  <ul>
-    <li>.protocol</li>
+  <li>root
     <ul>
-      <li>quorumMembers</li>
-      <li>quorumProposals</li>
-      <li>quorumValues</li>
-      <li>attributes</li>
+      <li>.protocol
+        <ul>
+          <li>quorumMembers</li>
+          <li>quorumProposals</li>
+          <li>quorumValues</li>
+          <li>attributes</li>
+        </ul>
+      </li>
+      <li>_scheduler</li>
+      <li>DataStore_1</li>
+      <li>DataStore_2</li>
     </ul>
-    <li>_scheduler</li>
-    <li>DataStore_1</li>
-    <li>DataStore_2</li>
-  </ul>
+  </li>
 </ul>
+
 </span>
 
 ### Fluid Data Stores

@@ -55,6 +55,5 @@ that don't have an HTTP canvas can participate in the Fluid Framework collaborat
 
 ## Fluid in a Microsoft 365 Teams tab
 
-The [Teams and Fluid "Hello World" app](https://github.com/microsoft/FluidExamples/tree/main/teams-fluid-hello-world)
-shows you how to integrate a Fluid Framework application into a custom Microsoft 365 Teams tab. See
-also [Using Fluid with Microsoft Teams](https://learn.microsoft.com/en-us/microsoftteams/platform/tabs/how-to/using-fluid-msteam).
+The [Using Fluid with Microsoft Teams](https://learn.microsoft.com/en-us/microsoftteams/platform/tabs/how-to/using-fluid-msteam)
+article shows you how to integrate a Fluid Framework application into a custom Microsoft 365 Teams tab.

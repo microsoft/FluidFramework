@@ -4,8 +4,11 @@
  */
 import { VersionBumpType, detectVersionScheme } from "@fluid-tools/version-tools";
 import { Config } from "@oclif/core";
+import { MonoRepoKind } from "@fluidframework/build-tools";
+import chalk from "chalk";
+import { strict as assert } from "node:assert";
 
-import { BaseCommand } from "../base";
+import { findPackageOrReleaseGroup } from "../args";
 import {
 	bumpTypeFlag,
 	checkFlags,
@@ -66,8 +69,26 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 		const flags = this.flags;
 
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const releaseGroup = flags.releaseGroup ?? flags.package!;
-		const releaseVersion = context.getVersion(releaseGroup);
+		const rgOrPackageName = flags.releaseGroup ?? flags.package!;
+		assert(
+			rgOrPackageName !== undefined,
+			"Either release group and package flags must be provided.",
+		);
+
+		const packageOrReleaseGroup = findPackageOrReleaseGroup(rgOrPackageName, context);
+		if (packageOrReleaseGroup === undefined) {
+			this.error(`Could not find release group or package: ${rgOrPackageName}`, {
+				exit: 1,
+			});
+		}
+		const releaseGroup = packageOrReleaseGroup.name;
+		const releaseVersion = packageOrReleaseGroup.version;
+
+		// eslint-disable-next-line no-warning-comments
+		// TODO: can be removed once server team owns server releases
+		if (flags.releaseGroup === MonoRepoKind.Server && flags.bumpType === "minor") {
+			this.error(`Server release are always a ${chalk.bold("MAJOR")} release`);
+		}
 
 		// oclif doesn't support nullable boolean flags, so this works around that limitation by checking the args
 		// passed into the command. If neither are passed, then the default is determined by the branch config.

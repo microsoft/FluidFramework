@@ -15,25 +15,12 @@ Updates configuration for type tests in package.json files. If the previous vers
 
 ```
 USAGE
-  $ flub typetests [-v] [-a | -d <value> | --packages | -g client|server|azure|build-tools]
-    [--releaseGroupRoots] [--private] [--scope <value> | -g client|server|azure|build-tools] [--reset] [-p | --exact
-    <value> | -r | --disable] [-n | --enable]
+  $ flub typetests [-v | --quiet] [--concurrency <value>] [--all | --dir <value> | --packages | -g
+    client|server|azure|build-tools|gitrest|historian|all | --releaseGroupRoot
+    client|server|azure|build-tools|gitrest|historian|all] [--private] [--scope <value> | --skipScope <value>] [--reset]
+    [-p | --exact <value> | -r | --disable] [-n | --enable]
 
 FLAGS
-  -a, --all
-      Run on all packages and release groups. Cannot be used with --dir, --packages, or --releaseGroup.
-
-  -d, --dir=<value>
-      Run on the package in this directory. Cannot be used with --all, --packages, or --releaseGroup.
-
-  -g, --releaseGroup=<option>
-      Run on all packages within this release group. Cannot be used with --all, --dir, or --packages.
-      <options: client|server|azure|build-tools>
-
-  -g, --skipScope=<option>...
-      Package scopes to filter out.
-      <options: client|server|azure|build-tools>
-
   -n, --normalize
       Removes any unrecognized data from "typeValidation" in the package.json
 
@@ -57,8 +44,8 @@ FLAGS
       Remove the test "-previous" version dependency. This is also done implicitly (without this flag) if type tests are
       disabled.
 
-  -v, --verbose
-      Verbose logging.
+  --concurrency=<value>
+      [default: 25] The number of tasks to execute concurrently.
 
   --disable
       Set the "typeValidation.disabled" setting to "true" in the package.json
@@ -69,20 +56,35 @@ FLAGS
   --exact=<value>
       An exact string to use as the previous version constraint. The string will be used as-is.
 
-  --packages
-      Run on all independent packages in the repo. Cannot be used with --all, --dir, or --releaseGroup.
-
-  --[no-]private
-      Only include private packages (or non-private packages for --no-private)
-
-  --releaseGroupRoots
-      Runs only on the root package of release groups. Can only be used with --all or --releaseGroup.
-
   --reset
       Resets the broken type test settings in package.json.
 
-  --scope=<value>...
-      Package scopes to filter to.
+PACKAGE SELECTION FLAGS
+  -g, --releaseGroup=<option>...  Run on all child packages within the specified release groups. This does not include
+                                  release group root packages. To include those, use the --releaseGroupRoot argument.
+                                  Cannot be used with --all, --dir, or --packages.
+                                  <options: client|server|azure|build-tools|gitrest|historian|all>
+  --all                           Run on all packages and release groups. Cannot be used with --all, --dir,
+                                  --releaseGroup, or --releaseGroupRoot.
+  --dir=<value>                   Run on the package in this directory. Cannot be used with --all, --dir,
+                                  --releaseGroup, or --releaseGroupRoot.
+  --packages                      Run on all independent packages in the repo. Cannot be used with --all, --dir,
+                                  --releaseGroup, or --releaseGroupRoot.
+  --releaseGroupRoot=<option>...  Run on the root package of the specified release groups. This does not include any
+                                  child packages within the release group. To include those, use the --releaseGroup
+                                  argument. Cannot be used with --all, --dir, or --packages.
+                                  <options: client|server|azure|build-tools|gitrest|historian|all>
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+  --quiet        Disable all logging.
+
+PACKAGE FILTER FLAGS
+  --[no-]private          Only include private packages. Use --no-private to exclude private packages instead.
+  --scope=<value>...      Package scopes to filter to. If provided, only packages whose scope matches the flag will be
+                          included. Cannot be used with --skipScope.
+  --skipScope=<value>...  Package scopes to filter out. If provided, packages whose scope matches the flag will be
+                          excluded. Cannot be used with --scope.
 
 DESCRIPTION
   Updates configuration for type tests in package.json files. If the previous version changes after running preparation,

@@ -4,40 +4,40 @@
 
 ```ts
 
-// @public
+// @public @deprecated
 export type ExtendEventProvider<TBaseEvent extends IEvent, TBase extends IEventProvider<TBaseEvent>, TEvent extends TBaseEvent> = Omit<Omit<Omit<TBase, "on">, "once">, "off"> & IEventProvider<TBaseEvent> & IEventProvider<TEvent>;
 
-// @public
+// @public @deprecated
 export interface IDisposable {
     dispose(error?: Error): void;
     readonly disposed: boolean;
 }
 
-// @public
+// @public @deprecated
 export interface IErrorEvent extends IEvent {
     // @eventProperty
     (event: "error", listener: (message: any) => void): any;
 }
 
-// @public
+// @public @deprecated
 export interface IEvent {
     // @eventProperty
     (event: string, listener: (...args: any[]) => void): any;
 }
 
-// @public
+// @public @deprecated
 export interface IEventProvider<TEvent extends IEvent> {
     readonly off: IEventTransformer<this, TEvent>;
     readonly on: IEventTransformer<this, TEvent>;
     readonly once: IEventTransformer<this, TEvent>;
 }
 
-// @public
+// @public @deprecated
 export type IEventThisPlaceHolder = {
     thisPlaceHolder: "thisPlaceHolder";
 };
 
-// @public
+// @public @deprecated
 export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
     (event: infer E0, listener: (...args: infer A0) => void): any;
     (event: infer E1, listener: (...args: infer A1) => void): any;
@@ -190,12 +190,12 @@ export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
     (event: string, listener: (...args: any[]) => void): any;
 } ? TransformedEvent<TThis, E0, A0> : TransformedEvent<TThis, string, any[]>;
 
-// @public
+// @public @deprecated
 export interface ILoggingError extends Error {
     getTelemetryProperties(): ITelemetryProperties;
 }
 
-// @public
+// @public @deprecated
 export interface ITaggedTelemetryPropertyType {
     // (undocumented)
     tag: string;
@@ -203,7 +203,7 @@ export interface ITaggedTelemetryPropertyType {
     value: TelemetryEventPropertyType;
 }
 
-// @public
+// @public @deprecated
 export interface ITelemetryBaseEvent extends ITelemetryProperties {
     // (undocumented)
     category: string;
@@ -211,19 +211,19 @@ export interface ITelemetryBaseEvent extends ITelemetryProperties {
     eventName: string;
 }
 
-// @public
+// @public @deprecated
 export interface ITelemetryBaseLogger {
     // (undocumented)
     send(event: ITelemetryBaseEvent): void;
 }
 
-// @public
+// @public @deprecated
 export interface ITelemetryErrorEvent extends ITelemetryProperties {
     // (undocumented)
     eventName: string;
 }
 
-// @public
+// @public @deprecated
 export interface ITelemetryGenericEvent extends ITelemetryProperties {
     // (undocumented)
     category?: TelemetryEventCategory;
@@ -231,7 +231,7 @@ export interface ITelemetryGenericEvent extends ITelemetryProperties {
     eventName: string;
 }
 
-// @public
+// @public @deprecated
 export interface ITelemetryLogger extends ITelemetryBaseLogger {
     send(event: ITelemetryBaseEvent): void;
     sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
@@ -239,30 +239,30 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
     sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void;
 }
 
-// @public
+// @public @deprecated
 export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
     // (undocumented)
     duration?: number;
 }
 
-// @public
+// @public @deprecated
 export interface ITelemetryProperties {
     // (undocumented)
     [index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
 }
 
-// @public
+// @public @deprecated
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {
     [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K];
 } : L;
 
-// @public
+// @public @deprecated
 export type TelemetryEventCategory = "generic" | "error" | "performance";
 
-// @public
+// @public @deprecated
 export type TelemetryEventPropertyType = string | number | boolean | undefined;
 
-// @public
+// @public @deprecated
 export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;
 
 ```

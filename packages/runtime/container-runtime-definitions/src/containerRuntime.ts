@@ -3,51 +3,42 @@
  * Licensed under the MIT License.
  */
 
-import { IEventProvider } from "@fluidframework/common-definitions";
 import { AttachState, IDeltaManager, ILoaderOptions } from "@fluidframework/container-definitions";
-import { IRequest, IResponse, IFluidRouter, FluidObject } from "@fluidframework/core-interfaces";
+import {
+	IEventProvider,
+	IRequest,
+	IResponse,
+	// eslint-disable-next-line import/no-deprecated
+	IFluidRouter,
+	FluidObject,
+	IFluidHandle,
+	IFluidHandleContext,
+} from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
 	IClientDetails,
 	IDocumentMessage,
-	IHelpMessage,
 	ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import {
 	FlushMode,
 	IContainerRuntimeBase,
 	IContainerRuntimeBaseEvents,
-	IDataStore,
 	IFluidDataStoreContextDetached,
 	IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
 
 /**
- * @deprecated Not necessary if consumers add a new dataStore to the container by storing its handle.
+ * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
  */
-export interface IDataStoreWithBindToContext_Deprecated extends IDataStore {
-	fluidDataStoreChannel?: { bindToContext?(): void };
-}
-
-/**
- * @deprecated This will be removed in a later release.
- */
-export const IContainerRuntime: keyof IProvideContainerRuntime = "IContainerRuntime";
-
-/**
- * @deprecated This will be removed in a later release.
- */
-export interface IProvideContainerRuntime {
-	/**
-	 * @deprecated This will be removed in a later release.
-	 */
-	IContainerRuntime: IContainerRuntime;
+export interface IContainerRuntimeWithResolveHandle_Deprecated extends IContainerRuntime {
+	readonly IFluidHandleContext: IFluidHandleContext;
+	resolveHandle(request: IRequest): Promise<IResponse>;
 }
 
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
 	(event: "dirty" | "disconnected" | "dispose" | "saved" | "attached", listener: () => void);
 	(event: "connected", listener: (clientId: string) => void);
-	(event: "localHelp", listener: (message: IHelpMessage) => void);
 }
 
 export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase &
@@ -57,8 +48,7 @@ export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase &
  * Represents the runtime of the container. Contains helper functions/state of the container.
  */
 export interface IContainerRuntime
-	extends IProvideContainerRuntime,
-		IProvideFluidDataStoreRegistry,
+	extends IProvideFluidDataStoreRegistry,
 		IContainerRuntimeBaseWithCombinedEvents {
 	readonly options: ILoaderOptions;
 	readonly clientId: string | undefined;
@@ -77,8 +67,18 @@ export interface IContainerRuntime
 	 * Returns the runtime of the data store.
 	 * @param id - Id supplied during creating the data store.
 	 * @param wait - True if you want to wait for it.
+	 * @deprecated - Use getAliasedDataStoreEntryPoint instead to get an aliased data store's entry point.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
+
+	/**
+	 * Returns the aliased data store's entryPoint, given the alias.
+	 * @param alias - The alias for the data store.
+	 * @returns The data store's entry point ({@link @fluidframework/core-interfaces#IFluidHandle}) if it exists and is aliased.
+	 * Returns undefined if no data store has been assigned the given alias.
+	 */
+	getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
 
 	/**
 	 * Creates detached data store context. Data store initialization is considered complete
@@ -107,6 +107,7 @@ export interface IContainerRuntime
 	/**
 	 * Resolves handle URI
 	 * @param request - request to resolve
+	 * @deprecated Will be removed in future major release. Migrate all usage of resolveHandle to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	resolveHandle(request: IRequest): Promise<IResponse>;
 }

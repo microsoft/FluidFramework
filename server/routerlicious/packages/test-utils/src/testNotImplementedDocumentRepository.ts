@@ -10,12 +10,16 @@ export class TestNotImplementedDocumentRepository implements IDocumentRepository
 	async create(document: IDocument): Promise<any> {
 		throw new Error(defaultErrorMsg);
 	}
-	
+
 	async readOne(filter: any): Promise<IDocument> {
 		throw new Error(defaultErrorMsg);
 	}
 
 	async updateOne(filter: any, update: any, options?: any): Promise<void> {
+		throw new Error(defaultErrorMsg);
+	}
+
+	async deleteOne(filter: any): Promise<any> {
 		throw new Error(defaultErrorMsg);
 	}
 

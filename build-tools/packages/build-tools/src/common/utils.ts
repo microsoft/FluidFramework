@@ -151,16 +151,6 @@ export function resolveNodeModule(basePath: string, lookupPath: string) {
 	return undefined;
 }
 
-export async function readJsonAsync(filename: string) {
-	const content = await readFileAsync(filename, "utf-8");
-	return JSON.parse(content);
-}
-
-export function readJsonSync(filename: string) {
-	const content = fs.readFileSync(filename, "utf-8");
-	return JSON.parse(content);
-}
-
 export async function lookUpDirAsync(
 	dir: string,
 	callback: (currentDir: string) => Promise<boolean>,
@@ -213,4 +203,42 @@ export function isSameFileOrDir(f1: string, f2: string) {
 		return false;
 	}
 	return isEqual(fs.lstatSync(n1), fs.lstatSync(n2));
+}
+
+export function fatal(error: string): never {
+	const e = new Error(error);
+	(e as any).fatal = true;
+	throw e;
+}
+
+/**
+ * Execute a command. If there is an error, print error message and exit process
+ *
+ * @param cmd Command line to execute
+ * @param dir dir the directory to execute on
+ * @param error description of command line to print when error happens
+ */
+export async function exec(cmd: string, dir: string, error: string, pipeStdIn?: string) {
+	const result = await execAsync(cmd, { cwd: dir }, pipeStdIn);
+	if (result.error) {
+		fatal(
+			`ERROR: Unable to ${error}\nERROR: error during command ${cmd}\nERROR: ${result.error.message}`,
+		);
+	}
+	return result.stdout;
+}
+
+/**
+ * Execute a command. If there is an error, print error message and exit process
+ *
+ * @param cmd Command line to execute
+ * @param dir dir the directory to execute on
+ * @param error description of command line to print when error happens
+ */
+export async function execNoError(cmd: string, dir: string, pipeStdIn?: string) {
+	const result = await execAsync(cmd, { cwd: dir }, pipeStdIn);
+	if (result.error) {
+		return undefined;
+	}
+	return result.stdout;
 }

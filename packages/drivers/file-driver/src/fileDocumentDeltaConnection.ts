@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable } from "@fluidframework/common-definitions";
+import { IDisposable } from "@fluidframework/core-interfaces";
 import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
@@ -19,7 +19,7 @@ import {
 	ITokenClaims,
 	ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { FileDeltaStorageService } from "./fileDeltaStorageService";
 
 const MaxBatchDeltas = 2000;

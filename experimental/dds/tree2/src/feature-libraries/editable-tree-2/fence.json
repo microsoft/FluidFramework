@@ -1,0 +1,6 @@
+{
+	"tags": ["editable-tree-2"],
+	"exports": ["index"],
+	// TODO: "feature-libraries" dependency is for defaultFieldKinds, and should be removed once proper view schema are provided.
+	"imports": ["util", "events", "core", "feature-libraries", "modular-schema", "node-key"]
+}

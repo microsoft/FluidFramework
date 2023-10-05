@@ -16,16 +16,21 @@ import {
 	ITestContainerConfig,
 } from "@fluidframework/test-utils";
 import { describeNoCompat, ITestDataObject, itExpects } from "@fluid-internal/test-version-utils";
-import { delay, stringToBuffer } from "@fluidframework/common-utils";
+import { stringToBuffer } from "@fluid-internal/client-utils";
+import { delay } from "@fluidframework/core-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 // eslint-disable-next-line import/no-internal-modules
-import { blobsTreeName } from "@fluidframework/container-runtime/dist/summary";
+import { blobsTreeName } from "@fluidframework/container-runtime/dist/summary/index.js";
 import {
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
 	MockDetachedBlobStorage,
-} from "../mockDetachedBlobStorage";
-import { getGCDeletedStateFromSummary, getGCStateFromSummary } from "./gcTestSummaryUtils";
+} from "../mockDetachedBlobStorage.js";
+import {
+	getGCDeletedStateFromSummary,
+	getGCStateFromSummary,
+	waitForContainerWriteModeConnectionWrite,
+} from "./gcTestSummaryUtils.js";
 
 /**
  * These tests validate that SweepReady attachment blobs are correctly swept. Swept attachment blobs should be
@@ -82,9 +87,10 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 		const { summarizer, container: summarizerContainer } = await createSummarizer(
 			provider,
 			container,
-			undefined /* summaryVersion */,
-			gcOptions,
-			mockConfigProvider(settings),
+			{
+				runtimeOptions: { gcOptions },
+				loaderProps: { configProvider: mockConfigProvider(settings) },
+			},
 		);
 
 		return { dataStore, summarizer, summarizerContainer };
@@ -92,7 +98,6 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 
 	beforeEach(async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
-		settings["Fluid.GarbageCollection.Test.SweepAttachmentBlobs"] = true;
 		settings["Fluid.GarbageCollection.RunSweep"] = true;
 		settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
 	});
@@ -385,9 +390,10 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 				const { summarizer, container: summarizerContainer } = await createSummarizer(
 					provider,
 					mainContainer,
-					undefined /* summaryVersion */,
-					gcOptions,
-					mockConfigProvider(settings),
+					{
+						runtimeOptions: { gcOptions },
+						loaderProps: { configProvider: mockConfigProvider(settings) },
+					},
 				);
 
 				// Remove the blob's handle to unreference it.
@@ -490,9 +496,10 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 				const { summarizer, container: summarizerContainer } = await createSummarizer(
 					provider,
 					mainContainer,
-					undefined /* summaryVersion */,
-					gcOptions,
-					mockConfigProvider(settings),
+					{
+						runtimeOptions: { gcOptions },
+						loaderProps: { configProvider: mockConfigProvider(settings) },
+					},
 				);
 
 				// Summarize so that the above attachment blob is marked unreferenced.
@@ -588,9 +595,10 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 				const { summarizer, container: summarizerContainer } = await createSummarizer(
 					provider,
 					mainContainer,
-					undefined /* summaryVersion */,
-					gcOptions,
-					mockConfigProvider(settings),
+					{
+						runtimeOptions: { gcOptions },
+						loaderProps: { configProvider: mockConfigProvider(settings) },
+					},
 				);
 
 				// Add the blob handles to reference them.
@@ -682,27 +690,15 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 			const { summarizer, container: summarizerContainer } = await createSummarizer(
 				provider,
 				container,
-				undefined /* summaryVersion */,
-				gcOptions,
-				mockConfigProvider(settings),
+				{
+					runtimeOptions: { gcOptions },
+					loaderProps: { configProvider: mockConfigProvider(settings) },
+				},
 			);
 			await provider.ensureSynchronized();
 			await summarizeNow(summarizer);
 			return { summarizer, summarizerContainer };
 		}
-
-		const ensureContainerConnectedWriteMode = async (container: IContainer) => {
-			const resolveIfActive = (res: () => void) => {
-				if (container.deltaManager.active) {
-					res();
-				}
-			};
-			if (!container.deltaManager.active) {
-				await new Promise<void>((resolve) =>
-					container.on("connected", () => resolveIfActive(resolve)),
-				);
-			}
-		};
 
 		beforeEach(async function () {
 			if (provider.driver.type !== "local") {
@@ -732,15 +728,16 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 				// Disconnect the main container, upload an attachment blob and mark it referenced.
 				mainContainer.disconnect();
 				const blobContents = "Blob contents";
-				const blobHandle = await mainDataStore._context.uploadBlob(
+				const blobHandleP = mainDataStore._context.uploadBlob(
 					stringToBuffer(blobContents, "utf-8"),
 				);
-				mainDataStore._root.set("blob", blobHandle);
 
 				// Connect the container after the blob is uploaded. Send an op to transition it to write mode.
 				mainContainer.connect();
+				const blobHandle = await blobHandleP;
 				mainDataStore._root.set("transition to write", "true");
-				await ensureContainerConnectedWriteMode(mainContainer);
+				mainDataStore._root.set("blob", blobHandle);
+				await waitForContainerWriteModeConnectionWrite(mainContainer);
 
 				// Remove the blob's handle to unreference it.
 				mainDataStore._root.delete("blob");
@@ -809,15 +806,16 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 				// Disconnect the main container, upload an attachment blob and mark it referenced.
 				mainContainer.disconnect();
 				const blobContents = "Blob contents";
-				const blobHandle1 = await mainDataStore._context.uploadBlob(
+				const blobHandle1P = mainDataStore._context.uploadBlob(
 					stringToBuffer(blobContents, "utf-8"),
 				);
-				mainDataStore._root.set("blob1", blobHandle1);
 
 				// Connect the container after the blob is uploaded. Send an op to transition the container to write mode.
 				mainContainer.connect();
 				mainDataStore._root.set("transition to write", "true");
-				await ensureContainerConnectedWriteMode(mainContainer);
+				await waitForContainerWriteModeConnectionWrite(mainContainer);
+				const blobHandle1 = await blobHandle1P;
+				mainDataStore._root.set("blob1", blobHandle1);
 
 				// Upload the same blob. This will get de-duped and we will get back another blob handle. Both this and
 				// the blob uploaded in disconnected mode should be different.
@@ -909,18 +907,19 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 				// these blobs are uploaded to the server, they will be de-duped and redirect to the same storageId.
 				mainContainer.disconnect();
 				const blobContents = "Blob contents";
-				const blobHandle1 = await mainDataStore._context.uploadBlob(
+				const blobHandle1P = mainDataStore._context.uploadBlob(
 					stringToBuffer(blobContents, "utf-8"),
 				);
-				const blobHandle2 = await mainDataStore._context.uploadBlob(
+				const blobHandle2P = mainDataStore._context.uploadBlob(
 					stringToBuffer(blobContents, "utf-8"),
 				);
 
 				// Connect the container after the blob is uploaded. Send an op to transition the container to write mode.
 				mainContainer.connect();
 				mainDataStore._root.set("transition to write", "true");
-				await ensureContainerConnectedWriteMode(mainContainer);
-
+				await waitForContainerWriteModeConnectionWrite(mainContainer);
+				const blobHandle1 = await blobHandle1P;
+				const blobHandle2 = await blobHandle2P;
 				// Add the blob handles to reference them.
 				mainDataStore._root.set("blob1", blobHandle1);
 				mainDataStore._root.set("blob2", blobHandle2);

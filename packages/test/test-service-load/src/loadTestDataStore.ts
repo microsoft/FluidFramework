@@ -17,11 +17,11 @@ import { IDirectory, ISharedDirectory, ISharedMap, SharedMap } from "@fluidframe
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { delay, assert } from "@fluidframework/common-utils";
+import { delay, assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ILoaderOptions } from "@fluidframework/container-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { ILoadTestConfig } from "./testConfigFile";
-import { LeaderElection } from "./leaderElection";
 
 export interface IRunConfig {
 	runId: number;
@@ -29,7 +29,8 @@ export interface IRunConfig {
 	testConfig: ILoadTestConfig;
 	verbose: boolean;
 	random: IRandom;
-	logger: ITelemetryLogger;
+	logger: ITelemetryLoggerExt;
+	loaderConfig?: ILoaderOptions;
 }
 
 export interface ILoadTest {
@@ -118,9 +119,8 @@ export class LoadTestDataStoreModel {
 		let gcDataStore: LoadTestDataStore | undefined;
 		if (!root.has(gcDataStoreIdKey)) {
 			// The data store for this pair doesn't exist, create it and store its url.
-			gcDataStore = await LoadTestDataStoreInstantiationFactory.createInstance(
-				containerRuntime,
-			);
+			gcDataStore =
+				await LoadTestDataStoreInstantiationFactory.createInstance(containerRuntime);
 			// Force the new data store to be attached.
 			root.set("Fake", gcDataStore.handle);
 			root.delete("Fake");
@@ -514,9 +514,6 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 			this.context.containerRuntime,
 		);
 
-		const leaderElection = new LeaderElection(this.runtime);
-		leaderElection.setupLeaderElection();
-
 		// At every moment, we want half the client to be concurrent writers, and start and stop
 		// in a rotation fashion for every cycle.
 		// To set that up we start each client in a staggered way, each will independently go thru write
@@ -660,7 +657,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				  };
 
 		try {
-			while (dataModel.counter.value < clientSendCount && !this.disposed) {
+			while (dataModel.counter.value < clientSendCount && !this.runtime.disposed) {
 				// this enables a quick ramp down. due to restart, some clients can lag
 				// leading to a slow ramp down. so if there are less than half the clients
 				// and it's partner is done, return true to complete the runner.
@@ -752,16 +749,15 @@ const LoadTestDataStoreInstantiationFactory = new DataObjectFactory(
 const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 	runtime.IFluidHandleContext.resolveHandle(request);
 
-export const createFluidExport = (options: IContainerRuntimeOptions) =>
-	new ContainerRuntimeFactoryWithDefaultDataStore(
-		LoadTestDataStoreInstantiationFactory,
-		new Map([
+export const createFluidExport = (runtimeOptions: IContainerRuntimeOptions) =>
+	new ContainerRuntimeFactoryWithDefaultDataStore({
+		defaultFactory: LoadTestDataStoreInstantiationFactory,
+		registryEntries: new Map([
 			[
 				LoadTestDataStore.DataStoreName,
 				Promise.resolve(LoadTestDataStoreInstantiationFactory),
 			],
 		]),
-		undefined,
-		[innerRequestHandler],
-		options,
-	);
+		requestHandlers: [innerRequestHandler],
+		runtimeOptions,
+	});

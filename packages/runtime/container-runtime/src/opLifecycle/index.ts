@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { BatchManager, estimateSocketSize } from "./batchManager";
+export { BatchManager, estimateSocketSize, BatchSequenceNumbers } from "./batchManager";
 export {
 	BatchMessage,
 	IBatch,
@@ -11,8 +11,9 @@ export {
 	IChunkedOp,
 	IMessageProcessingResult,
 } from "./definitions";
-export { Outbox } from "./outbox";
+export { Outbox, getLongStack } from "./outbox";
 export { OpCompressor } from "./opCompressor";
 export { OpDecompressor } from "./opDecompressor";
 export { OpSplitter, splitOp } from "./opSplitter";
 export { RemoteMessageProcessor, unpackRuntimeMessage } from "./remoteMessageProcessor";
+export { OpGroupingManager } from "./opGroupingManager";

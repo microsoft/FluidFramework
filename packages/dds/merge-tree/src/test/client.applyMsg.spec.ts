@@ -181,7 +181,7 @@ describe("client.applyMsg", () => {
 		assert.equal(segmentInfo.segment?.removedSeq, UnassignedSequenceNumber);
 		assert.equal(client.mergeTree.pendingSegments?.length, 1);
 
-		client.applyMsg(client.makeOpMessage(removeOp, 18));
+		client.applyMsg(client.makeOpMessage(removeOp, 18, 0));
 
 		assert.equal(segmentInfo.segment?.removedSeq, 18);
 		assert.equal(client.mergeTree.pendingSegments?.length, 0);
@@ -234,7 +234,7 @@ describe("client.applyMsg", () => {
 		assert.equal(segmentInfo.segment?.removedSeq, remoteMessage.sequenceNumber);
 		assert.equal(segmentInfo.segment?.segmentGroups.size, 1);
 
-		client.applyMsg(client.makeOpMessage(removeOp, 18));
+		client.applyMsg(client.makeOpMessage(removeOp, 18, 0));
 
 		assert.equal(segmentInfo.segment?.removedSeq, remoteMessage.sequenceNumber);
 		assert(segmentInfo.segment?.segmentGroups.empty);
@@ -380,12 +380,7 @@ describe("client.applyMsg", () => {
 	});
 
 	it("Local insert after acked local delete", () => {
-		const clients = createClientsAtInitialState(
-			{ initialState: "ZZ", options: { mergeTreeUseNewLengthCalculations: true } },
-			"A",
-			"B",
-			"C",
-		);
+		const clients = createClientsAtInitialState({ initialState: "ZZ" }, "A", "B", "C");
 
 		const logger = new TestClientLogger(clients.all);
 
@@ -462,12 +457,7 @@ describe("client.applyMsg", () => {
 	});
 
 	it("Inconsistent shared string after pausing connection #9703", () => {
-		const clients = createClientsAtInitialState(
-			{ initialState: "abcd", options: { mergeTreeUseNewLengthCalculations: true } },
-			"A",
-			"B",
-			"C",
-		);
+		const clients = createClientsAtInitialState({ initialState: "abcd" }, "A", "B", "C");
 
 		const logger = new TestClientLogger(clients.all);
 
@@ -594,14 +584,8 @@ describe("client.applyMsg", () => {
 	 * Client C does not match client A
 	 * ```
 	 */
-	it.skip("Concurrent insert into removed segment across block boundary", () => {
-		const clients = createClientsAtInitialState(
-			{ initialState: "", options: { mergeTreeUseNewLengthCalculations: true } },
-			"A",
-			"B",
-			"C",
-			"D",
-		);
+	it("Concurrent insert into removed segment across block boundary", () => {
+		const clients = createClientsAtInitialState({ initialState: "" }, "A", "B", "C", "D");
 
 		const logger = new TestClientLogger([clients.A, clients.C]);
 		let seq = 0;

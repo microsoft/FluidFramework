@@ -7,13 +7,18 @@
 		"timestamp": true,
 		"label": "winston"
 	},
+	"lumberjack": {
+		"options": {
+			"enableGlobalTelemetryContext": true
+		}
+	},
 	"mongo": {
 		"operationsDbEndpoint": "mongodb://mongodb:27017",
 		"globalDbEndpoint": "mongodb://mongodb:27017",
 		"globalDbEnabled": false,
 		"expireAfterSeconds": -1,
 		"createCosmosDBIndexes": false,
-		"bufferMaxEntries": 50,
+		"directConnection": true,
 		"softDeletionRetentionPeriodMs": 2592000000,
 		"offlineWindowMs": 86400000,
 		"softDeletionEnabled": false,
@@ -23,6 +28,7 @@
 			"deltas": "deltas",
 			"rawdeltas": "rawdeltas",
 			"documents": "documents",
+			"checkpoints": "checkpoints",
 			"partitions": "partitions",
 			"tenants": "tenants",
 			"nodes": "nodes",
@@ -41,7 +47,8 @@
 			"rdkafkaAutomaticConsume": true,
 			"rdkafkaConsumeTimeout": 5,
 			"rdkafkaMaxConsumerCommitRetries": 10
-		}
+		},
+		"customRestartOnKafkaErrorCodes": [-195, -192, -187, -185, -181, 14]
 	},
 	"zookeeper": {
 		"endpoint": "zookeeper:2181"
@@ -49,6 +56,16 @@
 	"storage": {
 		"enableWholeSummaryUpload": false,
 		"storageUrl": "http://gitrest:3000"
+	},
+	"checkpoints": {
+		"localCheckpointEnabled": true,
+		"checkpointsTTLInSeconds": 864000,
+		"kafkaCheckpointOnReprocessingOp": false,
+		"ignoreCheckpointFlushException": false
+	},
+	"apiCounters": {
+		"fetchTenantKeyMetricMs": 60000,
+		"riddlerStorageRequestMetricMs": 60000
 	},
 	"alfred": {
 		"kafkaClientId": "alfred",
@@ -58,110 +75,23 @@
 		"numberOfMessagesPerTrace": 100,
 		"sessionStickinessDurationMs": 3600000,
 		"enableConnectionCountLogging": false,
+		"ignoreEphemeralFlag": true,
 		"throttling": {
 			"restCallsPerTenant": {
-				"generalRestCall": {
-					"maxPerMs": 1000000,
-					"maxBurst": 1000000,
-					"minCooldownIntervalInMs": 1000000,
-					"minThrottleIntervalInMs": 1000000,
-					"maxInMemoryCacheSize": 1000,
-					"maxInMemoryCacheAgeInMs": 60000,
-					"enableEnhancedTelemetry": false
-				},
-				"createDoc": {
-					"maxPerMs": 1000000,
-					"maxBurst": 1000000,
-					"minCooldownIntervalInMs": 1000000,
-					"minThrottleIntervalInMs": 1000000,
-					"maxInMemoryCacheSize": 1000,
-					"maxInMemoryCacheAgeInMs": 60000,
-					"enableEnhancedTelemetry": false
-				},
-				"getDeltas": {
-					"maxPerMs": 1000000,
-					"maxBurst": 1000000,
-					"minCooldownIntervalInMs": 1000000,
-					"minThrottleIntervalInMs": 1000000,
-					"maxInMemoryCacheSize": 1000,
-					"maxInMemoryCacheAgeInMs": 60000,
-					"enableEnhancedTelemetry": false
-				},
-				"getSession": {
-					"maxPerMs": 1000000,
-					"maxBurst": 1000000,
-					"minCooldownIntervalInMs": 1000000,
-					"minThrottleIntervalInMs": 1000000,
-					"maxInMemoryCacheSize": 1000,
-					"maxInMemoryCacheAgeInMs": 60000,
-					"enableEnhancedTelemetry": false
-				}
+				"generalRestCall": "disabled",
+				"createDoc": "disabled",
+				"getDeltas": "disabled",
+				"getSession": "disabled"
 			},
 			"restCallsPerCluster": {
-				"createDoc": {
-					"maxPerMs": 1000000,
-					"maxBurst": 1000000,
-					"minCooldownIntervalInMs": 1000000,
-					"minThrottleIntervalInMs": 1000000,
-					"maxInMemoryCacheSize": 1000,
-					"maxInMemoryCacheAgeInMs": 60000,
-					"enableEnhancedTelemetry": false
-				},
-				"getDeltas": {
-					"maxPerMs": 1000000,
-					"maxBurst": 1000000,
-					"minCooldownIntervalInMs": 1000000,
-					"minThrottleIntervalInMs": 1000000,
-					"maxInMemoryCacheSize": 1000,
-					"maxInMemoryCacheAgeInMs": 60000,
-					"enableEnhancedTelemetry": false
-				},
-				"getSession": {
-					"maxPerMs": 1000000,
-					"maxBurst": 1000000,
-					"minCooldownIntervalInMs": 1000000,
-					"minThrottleIntervalInMs": 1000000,
-					"maxInMemoryCacheSize": 1000,
-					"maxInMemoryCacheAgeInMs": 60000,
-					"enableEnhancedTelemetry": false
-				}
+				"createDoc": "disabled",
+				"getDeltas": "disabled",
+				"getSession": "disabled"
 			},
-			"socketConnectionsPerTenant": {
-				"maxPerMs": 1000000,
-				"maxBurst": 1000000,
-				"minCooldownIntervalInMs": 1000000,
-				"minThrottleIntervalInMs": 1000000,
-				"maxInMemoryCacheSize": 1000,
-				"maxInMemoryCacheAgeInMs": 60000,
-				"enableEnhancedTelemetry": false
-			},
-			"socketConnectionsPerCluster": {
-				"maxPerMs": 1000000,
-				"maxBurst": 1000000,
-				"minCooldownIntervalInMs": 1000000,
-				"minThrottleIntervalInMs": 1000000,
-				"maxInMemoryCacheSize": 1000,
-				"maxInMemoryCacheAgeInMs": 60000,
-				"enableEnhancedTelemetry": false
-			},
-			"submitOps": {
-				"maxPerMs": 1000000,
-				"maxBurst": 1000000,
-				"minCooldownIntervalInMs": 1000000,
-				"minThrottleIntervalInMs": 1000000,
-				"maxInMemoryCacheSize": 1000,
-				"maxInMemoryCacheAgeInMs": 60000,
-				"enableEnhancedTelemetry": false
-			},
-			"submitSignal": {
-				"maxPerMs": 1000000,
-				"maxBurst": 1000000,
-				"minCooldownIntervalInMs": 1000000,
-				"minThrottleIntervalInMs": 1000000,
-				"maxInMemoryCacheSize": 1000,
-				"maxInMemoryCacheAgeInMs": 60000,
-				"enableEnhancedTelemetry": false
-			}
+			"socketConnectionsPerTenant": "disabled",
+			"socketConnectionsPerCluster": "disabled",
+			"submitOps": "disabled",
+			"submitSignal": "disabled"
 		},
 		"topic": "rawdeltas",
 		"bucket": "snapshots",
@@ -188,7 +118,11 @@
 		"enforceServerGeneratedDocumentId": false,
 		"socketIo": {
 			"perMessageDeflate": true
-		}
+		},
+		"jwtTokenCache": {
+			"enable": true
+		},
+		"getDeltasRequestMaxOpsRange": 2000
 	},
 	"client": {
 		"type": "browser",
@@ -208,7 +142,8 @@
 			"idleTime": 10000,
 			"maxTime": 60000,
 			"maxMessages": 500
-		}
+		},
+		"restartOnCheckpointFailure": true
 	},
 	"scribe": {
 		"kafkaClientId": "scribe",
@@ -218,7 +153,11 @@
 			"maxTime": 60000,
 			"maxMessages": 500
 		},
-		"getDeltasViaAlfred": true
+		"getDeltasViaAlfred": true,
+		"verifyLastOpPersistence": false,
+		"restartOnCheckpointFailure": true,
+		"disableTransientTenantFiltering": true,
+		"maxLogtailLength": 2000
 	},
 	"system": {
 		"httpServer": {
@@ -231,6 +170,10 @@
 	"usage": {
 		"clientConnectivityCountingEnabled": false,
 		"signalUsageCountingEnabled": false
+	},
+	"shared": {
+		"transientTenants": [],
+		"runnerServerCloseTimeoutMs": 30000
 	},
 	"auth": {
 		"endpoint": "http://riddler:5000",
@@ -257,10 +200,6 @@
 		"serviceGraph": {
 			"group": "serviceGraph",
 			"topic": "deltas"
-		},
-		"foreman": {
-			"group": "foreman",
-			"topic": "deltas"
 		}
 	},
 	"scriptorium": {
@@ -269,7 +208,9 @@
 		"groupId": "scriptorium",
 		"checkpointBatchSize": 1,
 		"checkpointTimeIntervalMsec": 1000,
-		"enableTelemetry": true
+		"enableTelemetry": true,
+		"maxDbBatchSize": 1000,
+		"restartOnCheckpointFailure": true
 	},
 	"copier": {
 		"topic": "rawdeltas",
@@ -278,46 +219,44 @@
 		"checkpointBatchSize": 1,
 		"checkpointTimeIntervalMsec": 1000
 	},
-	"foreman": {
-		"alfred": "http://alfred:3000",
-		"queues": ["paparazziQueue", "augloopQueue", "headlessQueue"],
-		"permissions": {
-			"paparazziQueue": ["snapshot", "spell", "intel", "translation"],
-			"augloopQueue": ["augmentation"],
-			"headlessQueue": [
-				"chain-snapshot",
-				"chain-intel",
-				"chain-translation",
-				"chain-spell",
-				"chain-cache"
-			]
-		}
-	},
-	"paparazzi": {
-		"queue": "paparazziQueue"
-	},
 	"rabbitmq": {
 		"connectionString": "amqp://rabbitmq"
 	},
 	"redis": {
 		"host": "redis",
 		"port": 6379,
-		"tls": false
+		"tls": false,
+		"connectTimeout": 10000,
+		"maxRetriesPerRequest": 20,
+		"enableAutoPipelining": false,
+		"enableOfflineQueue": true
 	},
 	"redisForTenantCache": {
 		"host": "redis",
 		"port": 6379,
-		"tls": false
+		"tls": false,
+		"connectTimeout": 10000,
+		"maxRetriesPerRequest": 20,
+		"enableAutoPipelining": false,
+		"enableOfflineQueue": true
 	},
 	"redis2": {
 		"host": "redis",
 		"port": 6379,
-		"tls": false
+		"tls": false,
+		"connectTimeout": 10000,
+		"maxRetriesPerRequest": 20,
+		"enableAutoPipelining": false,
+		"enableOfflineQueue": true
 	},
 	"redisForThrottling": {
 		"host": "redis",
 		"port": 6379,
-		"tls": false
+		"tls": false,
+		"connectTimeout": 10000,
+		"maxRetriesPerRequest": 20,
+		"enableAutoPipelining": false,
+		"enableOfflineQueue": true
 	},
 	"error": {
 		"track": false,
@@ -385,6 +324,6 @@
 		}
 	],
 	"tokenRevocation": {
-		"enable": false
+		"enable": true
 	}
 }

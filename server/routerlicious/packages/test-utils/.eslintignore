@@ -1,1 +1,2 @@
 *.spec.ts
+*.generated.ts

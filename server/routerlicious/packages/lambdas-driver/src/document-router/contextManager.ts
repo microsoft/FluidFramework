@@ -57,7 +57,9 @@ export class DocumentContextManager extends EventEmitter {
 			() => this.tail,
 		);
 		this.contexts.add(context);
-		context.addListener("checkpoint", () => this.updateCheckpoint());
+		context.addListener("checkpoint", (restartOnCheckpointFailure?: boolean) =>
+			this.updateCheckpoint(restartOnCheckpointFailure),
+		);
 		context.addListener("error", (error, errorData: IContextErrorData) =>
 			this.emit("error", error, errorData),
 		);
@@ -108,7 +110,7 @@ export class DocumentContextManager extends EventEmitter {
 		this.removeAllListeners();
 	}
 
-	private updateCheckpoint() {
+	private updateCheckpoint(restartOnCheckpointFailure?: boolean) {
 		if (this.closed) {
 			return;
 		}
@@ -128,7 +130,7 @@ export class DocumentContextManager extends EventEmitter {
 
 		// Checkpoint once the offset has changed
 		if (queuedMessage.offset !== this.lastCheckpoint.offset) {
-			this.partitionContext.checkpoint(queuedMessage);
+			this.partitionContext.checkpoint(queuedMessage, restartOnCheckpointFailure);
 			this.lastCheckpoint = queuedMessage;
 		}
 	}

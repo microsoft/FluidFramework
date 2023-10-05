@@ -7,7 +7,7 @@
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 
 // @public (undocumented)
@@ -35,7 +35,7 @@ export interface ITestDriver {
 export type OdspEndpoint = "odsp" | "odsp-df";
 
 // @public (undocumented)
-export type RouterliciousEndpoint = "frs" | "r11s" | "docker";
+export type RouterliciousEndpoint = "frs" | "frsCanary" | "r11s" | "docker";
 
 // @public (undocumented)
 export type TestDriverTypes = "tinylicious" | "t9s" | "routerlicious" | "r11s" | "odsp" | "local";

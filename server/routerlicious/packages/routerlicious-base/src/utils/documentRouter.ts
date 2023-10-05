@@ -6,7 +6,6 @@
 import { DocumentLambdaFactory } from "@fluidframework/server-lambdas-driver";
 import {
 	DefaultServiceConfiguration,
-	IPartitionConfig,
 	IPartitionLambdaFactory,
 } from "@fluidframework/server-services-core";
 import nconf from "nconf";
@@ -28,7 +27,7 @@ export interface IPlugin {
 export async function createDocumentRouter(
 	config: nconf.Provider,
 	customizations?: Record<string, any>,
-): Promise<IPartitionLambdaFactory<IPartitionConfig>> {
+): Promise<IPartitionLambdaFactory> {
 	const pluginConfig = config.get("documentLambda") as string | object;
 	const plugin = // eslint-disable-next-line @typescript-eslint/no-require-imports
 		(typeof pluginConfig === "object" ? pluginConfig : require(pluginConfig)) as IPlugin;

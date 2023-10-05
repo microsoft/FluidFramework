@@ -4,6 +4,7 @@
  */
 
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { ConnectionNotAvailableMode } from "../mongodb";
 import { DefaultExceptionRule } from "./defaultExceptionRule";
 import { IMongoExceptionRetryRule } from "./IMongoExceptionRetryRule";
 import { createMongoErrorRetryRuleset } from "./mongoError";
@@ -15,38 +16,39 @@ export class MongoErrorRetryAnalyzer {
 	private readonly mongoErrorRetryRuleset: IMongoExceptionRetryRule[];
 	private readonly defaultRule: IMongoExceptionRetryRule;
 
-	public static getInstance(retryRuleOverride: Map<string, boolean>): MongoErrorRetryAnalyzer {
+	public static getInstance(
+		retryRuleOverride: Map<string, boolean>,
+		connectionNotAvailableMode: ConnectionNotAvailableMode,
+	): MongoErrorRetryAnalyzer {
 		if (!this.instance) {
-			this.instance = new MongoErrorRetryAnalyzer(retryRuleOverride);
+			this.instance = new MongoErrorRetryAnalyzer(
+				retryRuleOverride,
+				connectionNotAvailableMode,
+			);
 		}
 		return this.instance;
 	}
 
-	private constructor(retryRuleOverride: Map<string, boolean>) {
+	private constructor(
+		retryRuleOverride: Map<string, boolean>,
+		connectionNotAvailableMode: ConnectionNotAvailableMode,
+	) {
 		this.mongoNetworkErrorRetryRuleset = createMongoNetworkErrorRetryRuleset(retryRuleOverride);
-		this.mongoErrorRetryRuleset = createMongoErrorRetryRuleset(retryRuleOverride);
+		this.mongoErrorRetryRuleset = createMongoErrorRetryRuleset(
+			retryRuleOverride,
+			connectionNotAvailableMode,
+		);
 		this.defaultRule = new DefaultExceptionRule(retryRuleOverride);
 	}
 
 	public shouldRetry(error: Error): boolean {
 		const rule = this.getRetryRule(error);
-		const sanitizedError = {
-			name: error.name,
-			message: error.message,
-			stack: error.stack,
-			// eslint-disable-next-line @typescript-eslint/dot-notation
-			code: error["code"],
-			// eslint-disable-next-line @typescript-eslint/dot-notation
-			codeName: error["codeName"],
-			// eslint-disable-next-line @typescript-eslint/dot-notation
-			errorLabels: error["errorLabels"],
-		};
 		if (!rule) {
 			// This should not happen.
 			Lumberjack.error(
 				"MongoErrorRetryAnalyzer.shouldRetry() didn't get a rule",
 				undefined,
-				sanitizedError,
+				error,
 			);
 			return false;
 		}
@@ -60,7 +62,7 @@ export class MongoErrorRetryAnalyzer {
 		Lumberjack.warning(
 			`Error rule used ${rule.ruleName}, shouldRetry: ${decision}`,
 			properties,
-			sanitizedError,
+			error,
 		);
 		return decision;
 	}

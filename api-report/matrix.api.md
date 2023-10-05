@@ -11,11 +11,11 @@ import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
+import { IJSONSegment } from '@fluidframework/merge-tree';
 import { IMatrixConsumer } from '@tiny-calc/nano';
 import { IMatrixProducer } from '@tiny-calc/nano';
 import { IMatrixReader } from '@tiny-calc/nano';
 import { IMatrixWriter } from '@tiny-calc/nano';
-import { ISegment } from '@fluidframework/merge-tree';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { Serializable } from '@fluidframework/datastore-definitions';
@@ -95,9 +95,9 @@ export class SharedMatrix<T = any> extends SharedObject implements IMatrixProduc
     // (undocumented)
     toString(): string;
     // @internal (undocumented)
-    _undoRemoveCols(segment: ISegment): void;
+    _undoRemoveCols(colStart: number, spec: IJSONSegment): void;
     // @internal (undocumented)
-    _undoRemoveRows(segment: ISegment): void;
+    _undoRemoveRows(rowStart: number, spec: IJSONSegment): void;
 }
 
 // @public (undocumented)

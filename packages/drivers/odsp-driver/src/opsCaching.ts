@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { performance } from "@fluidframework/common-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { performance } from "@fluid-internal/client-utils";
 
 // ISequencedDocumentMessage
 export interface IMessage {
@@ -34,7 +34,7 @@ export class OpsCache {
 
 	constructor(
 		startingSequenceNumber: number,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 		private readonly cache: ICache,
 		private readonly batchSize: number,
 		private readonly timerGranularity,

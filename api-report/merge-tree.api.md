@@ -6,20 +6,20 @@
 
 import { AttributionKey } from '@fluidframework/runtime-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
-import type { IEventThisPlaceHolder } from '@fluidframework/common-definitions';
+import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import type { ITelemetryLogger } from '@fluidframework/common-definitions';
-import { TypedEventEmitter } from '@fluidframework/common-utils';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @public (undocumented)
 export function addProperties(oldProps: PropertySet | undefined, newProps: PropertySet, op?: ICombiningOp, seq?: number): PropertySet;
 
-// @alpha
-export function appendToMergeTreeDeltaRevertibles(driver: MergeTreeRevertibleDriver, deltaArgs: IMergeTreeDeltaCallbackArgs, revertibles: MergeTreeDeltaRevertible[]): void;
+// @alpha (undocumented)
+export function appendToMergeTreeDeltaRevertibles(deltaArgs: IMergeTreeDeltaCallbackArgs, revertibles: MergeTreeDeltaRevertible[]): void;
 
 // @alpha @sealed
 export interface AttributionPolicy {
@@ -87,23 +87,11 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     abstract readonly type: string;
 }
 
-// @public (undocumented)
-export interface BlockAction<TClientData> {
-    // (undocumented)
-    (block: IMergeBlock, pos: number, refSeq: number, clientId: number, start: number | undefined, end: number | undefined, accum: TClientData): boolean;
-}
-
-// @public (undocumented)
-export interface BlockUpdateActions {
-    // (undocumented)
-    child: (block: IMergeBlock, index: number) => void;
-}
-
 // Warning: (ae-forgotten-export) The symbol "IClientEvents" needs to be exported by the entry point index.d.ts
 //
 // @public (undocumented)
 export class Client extends TypedEventEmitter<IClientEvents> {
-    constructor(specToSegment: (spec: IJSONSegment) => ISegment, logger: ITelemetryLogger, options?: PropertySet);
+    constructor(specToSegment: (spec: IJSONSegment) => ISegment, logger: ITelemetryLoggerExt, options?: PropertySet);
     // (undocumented)
     addLongClientId(longClientId: string): void;
     annotateMarker(marker: Marker, props: PropertySet, combiningOp?: ICombiningOp): IMergeTreeAnnotateMsg | undefined;
@@ -119,11 +107,11 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
     // (undocumented)
     cloneFromSegments(): Client;
-    createLocalReferencePosition(segment: ISegment, offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
+    createLocalReferencePosition(segment: ISegment | "start" | "end", offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
     // (undocumented)
     createTextHelper(): IMergeTreeTextHelper;
     findReconnectionPosition(segment: ISegment, localSeq: number): number;
-    // (undocumented)
+    // @deprecated (undocumented)
     findTile(startPos: number, tileLabel: string, preceding?: boolean): {
         tile: ReferencePosition;
         pos: number;
@@ -157,14 +145,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     };
     // (undocumented)
     getShortClientId(longClientId: string): number;
-    getSlideToSegment(segoff: {
-        segment: ISegment | undefined;
-        offset: number | undefined;
-    }): {
-        segment: ISegment | undefined;
-        offset: number | undefined;
-    };
-    // (undocumented)
+    // @deprecated (undocumented)
     getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap;
     // (undocumented)
     insertAtReferencePositionLocal(refPos: ReferencePosition, segment: ISegment): IMergeTreeInsertMsg | undefined;
@@ -178,7 +159,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     // (undocumented)
     localTransaction(groupOp: IMergeTreeGroupMsg): void;
     // (undocumented)
-    readonly logger: ITelemetryLogger;
+    readonly logger: ITelemetryLoggerExt;
     // (undocumented)
     longClientId: string | undefined;
     peekPendingSegmentGroups(count?: number): SegmentGroup | SegmentGroup[] | undefined;
@@ -188,6 +169,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     removeRangeLocal(start: number, end: number): IMergeTreeRemoveMsg;
     resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number | undefined;
     rollback?(op: any, localOpMetadata: unknown): void;
+    searchForMarker(startPos: number, markerLabel: string, forwards?: boolean): Marker | undefined;
     serializeGCData(handle: IFluidHandle, handleCollectingSerializer: IFluidSerializer): void;
     // (undocumented)
     readonly specToSegment: (spec: IJSONSegment) => ISegment;
@@ -252,7 +234,7 @@ export function createAnnotateRangeOp(start: number, end: number, props: Propert
 // @public (undocumented)
 export function createDetachedLocalReferencePosition(refType?: ReferenceType): LocalReferencePosition;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export function createGroupOp(...ops: IMergeTreeDeltaOp[]): IMergeTreeGroupMsg;
 
 // @alpha (undocumented)
@@ -288,7 +270,7 @@ export interface Dictionary<TKey, TData> {
     remove(key: TKey): void;
 }
 
-// @alpha
+// @alpha (undocumented)
 export function discardMergeTreeDeltaRevertible(revertibles: MergeTreeDeltaRevertible[]): void;
 
 // @public (undocumented)
@@ -296,6 +278,15 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T> | undefined, c
 
 // @public (undocumented)
 export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | undefined): MapLike<T>;
+
+// @internal
+export function getSlideToSegoff(segoff: {
+    segment: ISegment | undefined;
+    offset: number | undefined;
+}, slidingPreference?: SlidingPreference, useNewSlidingBehavior?: boolean): {
+    segment: ISegment | undefined;
+    offset: number | undefined;
+};
 
 // @alpha (undocumented)
 export interface IAttributionCollection<T> {
@@ -371,18 +362,6 @@ export interface IConsensusValue {
     value: any;
 }
 
-// @public (undocumented)
-export interface IHierBlock extends IMergeBlock {
-    // (undocumented)
-    hierToString(indentCount: number): string;
-    // (undocumented)
-    leftmostTiles: MapLike<ReferencePosition>;
-    // (undocumented)
-    rangeStacks: RangeStackMap;
-    // (undocumented)
-    rightmostTiles: MapLike<ReferencePosition>;
-}
-
 // @internal @deprecated
 export interface IIntegerRange {
     // (undocumented)
@@ -422,33 +401,11 @@ export interface IMarkerModifiedAction {
 }
 
 // @public
-export interface IMergeBlock extends IMergeNodeCommon {
-    // (undocumented)
-    assignChild(child: IMergeNode, index: number, updateOrdinal?: boolean): void;
-    childCount: number;
-    children: IMergeNode[];
-    // (undocumented)
-    hierBlock(): IHierBlock | undefined;
-    // (undocumented)
-    needsScour?: boolean;
-    // Warning: (ae-forgotten-export) The symbol "PartialSequenceLengths" needs to be exported by the entry point index.d.ts
-    partialLengths?: PartialSequenceLengths;
-    // (undocumented)
-    setOrdinal(child: IMergeNode, index: number): void;
-}
-
-// @public (undocumented)
-export type IMergeNode = IMergeBlock | ISegment;
-
-// @public
 export interface IMergeNodeCommon {
-    cachedLength: number;
     index: number;
     // (undocumented)
     isLeaf(): this is ISegment;
     ordinal: string;
-    // (undocumented)
-    parent?: IMergeBlock;
 }
 
 // @public (undocumented)
@@ -508,9 +465,10 @@ export interface IMergeTreeDeltaOpArgs {
     readonly groupOp?: IMergeTreeGroupMsg;
     readonly op: IMergeTreeOp;
     readonly sequencedMessage?: ISequencedDocumentMessage;
+    readonly stashed?: boolean;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
     // (undocumented)
     ops: IMergeTreeDeltaOp[];
@@ -546,9 +504,10 @@ export interface IMergeTreeOptions {
     attribution?: IMergeTreeAttributionOptions;
     // (undocumented)
     catchUpBlobName?: string;
+    // @alpha
+    mergeTreeReferencesCanSlideToEndpoint?: boolean;
     // (undocumented)
     mergeTreeSnapshotChunkSize?: number;
-    mergeTreeUseNewLengthCalculations?: boolean;
     newMergeTreeSnapshotFormat?: boolean;
 }
 
@@ -580,78 +539,7 @@ export interface IMergeTreeTextHelper {
     getText(refSeq: number, clientId: number, placeholder: string, start?: number, end?: number): string;
 }
 
-// @public (undocumented)
-export interface IncrementalBlockAction<TContext> {
-    // (undocumented)
-    (state: IncrementalMapState<TContext>): any;
-}
-
-// @public (undocumented)
-export enum IncrementalExecOp {
-    // (undocumented)
-    Go = 0,
-    // (undocumented)
-    Stop = 1,
-    // (undocumented)
-    Yield = 2
-}
-
-// @public (undocumented)
-export class IncrementalMapState<TContext> {
-    constructor(block: IMergeBlock, actions: IncrementalSegmentActions<TContext>, pos: number, refSeq: number, clientId: number, context: TContext, start: number, end: number, childIndex?: number);
-    // (undocumented)
-    actions: IncrementalSegmentActions<TContext>;
-    // (undocumented)
-    block: IMergeBlock;
-    // (undocumented)
-    childIndex: number;
-    // (undocumented)
-    clientId: number;
-    // (undocumented)
-    context: TContext;
-    // (undocumented)
-    end: number;
-    // (undocumented)
-    op: IncrementalExecOp;
-    // (undocumented)
-    pos: number;
-    // (undocumented)
-    refSeq: number;
-    // (undocumented)
-    start: number;
-}
-
-// @public (undocumented)
-export interface IncrementalSegmentAction<TContext> {
-    // (undocumented)
-    (segment: ISegment, state: IncrementalMapState<TContext>): any;
-}
-
-// @public (undocumented)
-export interface IncrementalSegmentActions<TContext> {
-    // (undocumented)
-    leaf: IncrementalSegmentAction<TContext>;
-    // (undocumented)
-    post?: IncrementalBlockAction<TContext>;
-    // (undocumented)
-    pre?: IncrementalBlockAction<TContext>;
-}
-
-// @public (undocumented)
-export interface InsertContext {
-    // (undocumented)
-    candidateSegment?: ISegment;
-    // (undocumented)
-    continuePredicate?: (continueFromBlock: IMergeBlock) => boolean;
-    // (undocumented)
-    leaf: (segment: ISegment | undefined, pos: number, ic: InsertContext) => ISegmentChanges;
-    // (undocumented)
-    prepareEvents?: boolean;
-    // (undocumented)
-    structureChange?: boolean;
-}
-
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export function internedSpaces(n: number): string;
 
 // @internal (undocumented)
@@ -691,11 +579,13 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
     append(segment: ISegment): void;
     // @alpha
     attribution?: IAttributionCollection<AttributionKey>;
+    cachedLength: number;
     // (undocumented)
     canAppend(segment: ISegment): boolean;
     clientId: number;
     // (undocumented)
     clone(): ISegment;
+    readonly endpointType?: "start" | "end";
     localRefs?: LocalReferenceCollection;
     localRemovedSeq?: number;
     localSeq?: number;
@@ -720,12 +610,21 @@ export interface ISegmentAction<TClientData> {
     (segment: ISegment, pos: number, refSeq: number, clientId: number, start: number, end: number, accum: TClientData): boolean;
 }
 
+// @alpha
+export function isMergeTreeDeltaRevertible(x: unknown): x is MergeTreeDeltaRevertible;
+
 // @public (undocumented)
-export interface ISegmentChanges {
+export interface ITrackingGroup {
     // (undocumented)
-    next?: ISegment;
+    has(trackable: Trackable): boolean;
     // (undocumented)
-    replaceCurrent?: ISegment;
+    link(trackable: Trackable): void;
+    // (undocumented)
+    size: number;
+    // (undocumented)
+    tracked: readonly Trackable[];
+    // (undocumented)
+    unlink(trackable: Trackable): boolean;
 }
 
 // @internal (undocumented)
@@ -762,7 +661,7 @@ export class LocalReferenceCollection {
     // @internal (undocumented)
     clear(): void;
     // @internal (undocumented)
-    createLocalRef(offset: number, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
+    createLocalRef(offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
     // @internal (undocumented)
     get empty(): boolean;
     // @internal
@@ -783,6 +682,7 @@ export class LocalReferenceCollection {
 export interface LocalReferencePosition extends ReferencePosition {
     // (undocumented)
     callbacks?: Partial<Record<"beforeSlide" | "afterSlide", (ref: LocalReferencePosition) => void>>;
+    readonly canSlideToEndpoint?: boolean;
     // (undocumented)
     readonly trackingCollection: TrackingGroupCollection;
 }
@@ -836,25 +736,7 @@ export class Marker extends BaseSegment implements ReferencePosition {
 export function matchProperties(a: PropertySet | undefined, b: PropertySet | undefined): boolean;
 
 // @public (undocumented)
-export const MaxNodesInBlock = 8;
-
-// @public (undocumented)
 export function maxReferencePosition<T extends ReferencePosition>(a: T, b: T): T;
-
-// @public (undocumented)
-export class MergeBlock extends MergeNode implements IMergeBlock {
-    constructor(childCount: number);
-    // (undocumented)
-    assignChild(child: IMergeNode, index: number, updateOrdinal?: boolean): void;
-    // (undocumented)
-    childCount: number;
-    // (undocumented)
-    children: IMergeNode[];
-    // (undocumented)
-    hierBlock(): IHierBlock | undefined;
-    // (undocumented)
-    setOrdinal(child: IMergeNode, index: number): void;
-}
 
 // @public (undocumented)
 export class MergeNode implements IMergeNodeCommon {
@@ -863,11 +745,9 @@ export class MergeNode implements IMergeNodeCommon {
     // (undocumented)
     index: number;
     // (undocumented)
-    isLeaf(): boolean;
+    isLeaf(): this is ISegment;
     // (undocumented)
     ordinal: string;
-    // (undocumented)
-    parent?: IMergeBlock;
 }
 
 // @public (undocumented)
@@ -879,16 +759,16 @@ export type MergeTreeDeltaOperationType = typeof MergeTreeDeltaType.ANNOTATE | t
 // @public (undocumented)
 export type MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType | MergeTreeMaintenanceType;
 
-// @alpha
+// @alpha (undocumented)
 export type MergeTreeDeltaRevertible = {
     operation: typeof MergeTreeDeltaType.INSERT;
-    trackingGroup: TrackingGroup;
+    trackingGroup: ITrackingGroup;
 } | {
     operation: typeof MergeTreeDeltaType.REMOVE;
-    trackingGroup: TrackingGroup;
+    trackingGroup: ITrackingGroup;
 } | {
     operation: typeof MergeTreeDeltaType.ANNOTATE;
-    trackingGroup: TrackingGroup;
+    trackingGroup: ITrackingGroup;
     propertyDeltas: PropertySet;
 };
 
@@ -901,7 +781,7 @@ export const MergeTreeDeltaType: {
 };
 
 // @public (undocumented)
-export type MergeTreeDeltaType = typeof MergeTreeDeltaType[keyof typeof MergeTreeDeltaType];
+export type MergeTreeDeltaType = (typeof MergeTreeDeltaType)[keyof typeof MergeTreeDeltaType];
 
 // @public (undocumented)
 export type MergeTreeMaintenanceCallback = (MaintenanceArgs: IMergeTreeMaintenanceCallbackArgs, opArgs: IMergeTreeDeltaOpArgs | undefined) => void;
@@ -915,51 +795,23 @@ export const MergeTreeMaintenanceType: {
 };
 
 // @public (undocumented)
-export type MergeTreeMaintenanceType = typeof MergeTreeMaintenanceType[keyof typeof MergeTreeMaintenanceType];
+export type MergeTreeMaintenanceType = (typeof MergeTreeMaintenanceType)[keyof typeof MergeTreeMaintenanceType];
 
-// @alpha
+// @alpha (undocumented)
 export interface MergeTreeRevertibleDriver {
     // (undocumented)
     annotateRange(start: number, end: number, props: PropertySet): any;
     // (undocumented)
-    createLocalReferencePosition(segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
-    // (undocumented)
-    getContainingSegment(pos: number): {
-        segment: ISegment | undefined;
-        offset: number | undefined;
-    };
-    // (undocumented)
-    getPosition(segment: ISegment): number;
-    // (undocumented)
     insertFromSpec(pos: number, spec: IJSONSegment): any;
     // (undocumented)
-    localReferencePositionToPosition(lref: LocalReferencePosition): number;
-    // (undocumented)
     removeRange(start: number, end: number): any;
-}
-
-// @public (undocumented)
-export interface MinListener {
-    // (undocumented)
-    minRequired: number;
-    // (undocumented)
-    onMinGE(minSeq: number): void;
 }
 
 // @public (undocumented)
 export function minReferencePosition<T extends ReferencePosition>(a: T, b: T): T;
 
 // @public (undocumented)
-export interface NodeAction<TClientData> {
-    // (undocumented)
-    (node: IMergeNode, pos: number, refSeq: number, clientId: number, start: number | undefined, end: number | undefined, clientData: TClientData): boolean;
-}
-
-// @public (undocumented)
 export const NonCollabClient = -2;
-
-// @public (undocumented)
-export function ordinalToArray(ord: string): number[];
 
 // @public (undocumented)
 export class PropertiesManager {
@@ -1008,7 +860,7 @@ export interface QProperty<TKey, TData> {
     key?: TKey;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export type RangeStackMap = MapLike<Stack<ReferencePosition>>;
 
 // @internal (undocumented)
@@ -1018,7 +870,7 @@ export const RBColor: {
 };
 
 // @internal (undocumented)
-export type RBColor = typeof RBColor[keyof typeof RBColor];
+export type RBColor = (typeof RBColor)[keyof typeof RBColor];
 
 // @internal (undocumented)
 export interface RBNode<TKey, TData> {
@@ -1100,13 +952,14 @@ export interface ReferencePosition {
     properties?: PropertySet;
     // (undocumented)
     refType: ReferenceType;
+    slidingPreference?: SlidingPreference;
 }
 
 // @public
 export enum ReferenceType {
-    // (undocumented)
+    // @deprecated (undocumented)
     NestBegin = 2,
-    // (undocumented)
+    // @deprecated (undocumented)
     NestEnd = 4,
     // (undocumented)
     RangeBegin = 16,
@@ -1120,16 +973,16 @@ export enum ReferenceType {
     Transient = 256
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const refGetRangeLabels: (refPos: ReferencePosition) => string[] | undefined;
 
 // @public (undocumented)
 export const refGetTileLabels: (refPos: ReferencePosition) => string[] | undefined;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export function refHasRangeLabel(refPos: ReferencePosition, label: string): boolean;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export function refHasRangeLabels(refPos: ReferencePosition): boolean;
 
 // @public (undocumented)
@@ -1153,35 +1006,13 @@ export const reservedRangeLabelsKey = "referenceRangeLabels";
 // @public (undocumented)
 export const reservedTileLabelsKey = "referenceTileLabels";
 
-// @alpha
+// @alpha (undocumented)
 export function revertMergeTreeDeltaRevertibles(driver: MergeTreeRevertibleDriver, revertibles: MergeTreeDeltaRevertible[]): void;
-
-// @public (undocumented)
-export interface SearchResult {
-    // (undocumented)
-    pos: number;
-    // (undocumented)
-    text: string;
-}
 
 // @public (undocumented)
 export interface SegmentAccumulator {
     // (undocumented)
     segments: ISegment[];
-}
-
-// @public (undocumented)
-export interface SegmentActions<TClientData> {
-    // (undocumented)
-    contains?: NodeAction<TClientData>;
-    // (undocumented)
-    leaf?: ISegmentAction<TClientData>;
-    // (undocumented)
-    post?: BlockAction<TClientData>;
-    // (undocumented)
-    pre?: BlockAction<TClientData>;
-    // (undocumented)
-    shift?: NodeAction<TClientData>;
 }
 
 // @public (undocumented)
@@ -1199,8 +1030,6 @@ export interface SegmentGroup {
 // @public (undocumented)
 export class SegmentGroupCollection {
     constructor(segment: ISegment);
-    // @deprecated (undocumented)
-    clear(): void;
     // (undocumented)
     copyTo(segment: ISegment): void;
     // (undocumented)
@@ -1231,6 +1060,15 @@ export interface SerializedAttributionCollection extends SequenceOffsets {
     // (undocumented)
     length: number;
 }
+
+// @public
+export const SlidingPreference: {
+    readonly BACKWARD: 0;
+    readonly FORWARD: 1;
+};
+
+// @public
+export type SlidingPreference = (typeof SlidingPreference)[keyof typeof SlidingPreference];
 
 // @internal (undocumented)
 export interface SortedDictionary<TKey, TData> extends Dictionary<TKey, TData> {
@@ -1336,14 +1174,12 @@ export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemova
 export type Trackable = ISegment | LocalReferencePosition;
 
 // @public (undocumented)
-export class TrackingGroup {
+export class TrackingGroup implements ITrackingGroup {
     constructor();
     // (undocumented)
     has(trackable: Trackable): boolean;
     // (undocumented)
     link(trackable: Trackable): void;
-    // @deprecated (undocumented)
-    get segments(): readonly ISegment[];
     // (undocumented)
     get size(): number;
     // (undocumented)
@@ -1360,13 +1196,13 @@ export class TrackingGroupCollection {
     // (undocumented)
     get empty(): boolean;
     // (undocumented)
-    link(trackingGroup: TrackingGroup): void;
+    link(trackingGroup: ITrackingGroup): void;
     // (undocumented)
     matches(trackingCollection: TrackingGroupCollection): boolean;
     // (undocumented)
-    readonly trackingGroups: Set<TrackingGroup>;
+    get trackingGroups(): Set<TrackingGroup>;
     // (undocumented)
-    unlink(trackingGroup: TrackingGroup): boolean;
+    unlink(trackingGroup: ITrackingGroup): boolean;
 }
 
 // @public (undocumented)

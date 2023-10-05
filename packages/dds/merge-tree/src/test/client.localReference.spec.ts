@@ -11,7 +11,8 @@ import { toRemovalInfo } from "../mergeTreeNodes";
 import { MergeTreeDeltaType, ReferenceType } from "../ops";
 import { TextSegment } from "../textSegment";
 import { DetachedReferencePosition } from "../referencePositions";
-import { LocalReferencePosition } from "../localReference";
+import { LocalReferencePosition, SlidingPreference } from "../localReference";
+import { getSlideToSegoff } from "../mergeTree";
 import { createClientsAtInitialState } from "./testClientLogger";
 import { TestClient } from "./";
 
@@ -24,7 +25,7 @@ function getSlideOnRemoveReferencePosition(
 		referenceSequenceNumber: op.referenceSequenceNumber,
 		clientId: op.clientId,
 	});
-	segoff = client.getSlideToSegment(segoff);
+	segoff = getSlideToSegoff(segoff);
 	return segoff;
 }
 
@@ -577,5 +578,45 @@ describe("MergeTree.Client", () => {
 			client.removeRangeRemote(0, 2, ++seq, seq - 1, "2");
 			assert(localRefA.getSegment() === originalSegment, "ref was removed");
 		});
+	});
+
+	it("slides to correct position with backward sliding preference", () => {
+		const client1 = new TestClient();
+		const client2 = new TestClient();
+
+		client1.startOrUpdateCollaboration("1");
+		client2.startOrUpdateCollaboration("2");
+
+		let seq = 0;
+		const insert1 = client1.makeOpMessage(client1.insertTextLocal(0, "abcXdef"), ++seq);
+		client1.applyMsg(insert1);
+		client2.applyMsg(insert1);
+
+		const segInfo = client1.getContainingSegment(3);
+
+		const localRef = client1.createLocalReferencePosition(
+			segInfo.segment!,
+			segInfo.offset,
+			ReferenceType.SlideOnRemove,
+			undefined,
+			SlidingPreference.BACKWARD,
+		);
+
+		assert.equal(client1.localReferencePositionToPosition(localRef), 3);
+
+		const insert2 = client1.makeOpMessage(client1.insertTextLocal(4, "ghi"), ++seq);
+		client1.applyMsg(insert2);
+		client2.applyMsg(insert2);
+
+		assert.equal(client1.localReferencePositionToPosition(localRef), 3);
+
+		const remove1 = client1.makeOpMessage(client1.removeRangeLocal(1, 4), ++seq);
+		client1.applyMsg(remove1);
+		client2.applyMsg(remove1);
+
+		assert.equal(client1.getText(), "aghidef");
+		assert.equal(client1.localReferencePositionToPosition(localRef), 0);
+		assert.equal(client2.getText(), "aghidef");
+		assert.equal(client2.localReferencePositionToPosition(localRef), 0);
 	});
 });

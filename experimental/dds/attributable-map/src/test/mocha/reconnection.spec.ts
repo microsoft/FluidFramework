@@ -10,15 +10,15 @@ import {
 	MockContainerRuntimeForReconnection,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { MapFactory, SharedMap } from "../../map";
+import { MapFactory, AttributableMap } from "../../map";
 
 describe("Reconnection", () => {
 	describe("SharedMap", () => {
 		let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
 		let containerRuntime1: MockContainerRuntimeForReconnection;
 		let containerRuntime2: MockContainerRuntimeForReconnection;
-		let map1: SharedMap;
-		let map2: SharedMap;
+		let map1: AttributableMap;
+		let map2: AttributableMap;
 
 		beforeEach(async () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
@@ -27,20 +27,20 @@ describe("Reconnection", () => {
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 			containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1 = {
-				deltaConnection: containerRuntime1.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
-			map1 = new SharedMap("shared-map-1", dataStoreRuntime1, MapFactory.Attributes);
+			map1 = new AttributableMap("shared-map-1", dataStoreRuntime1, MapFactory.Attributes);
 			map1.connect(services1);
 
 			// Create the second SharedMap.
 			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
 			containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 			const services2 = {
-				deltaConnection: containerRuntime2.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
-			map2 = new SharedMap("shared-map-2", dataStoreRuntime2, MapFactory.Attributes);
+			map2 = new AttributableMap("shared-map-2", dataStoreRuntime2, MapFactory.Attributes);
 			map2.connect(services2);
 		});
 

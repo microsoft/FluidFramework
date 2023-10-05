@@ -6,12 +6,13 @@ import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeE2EDocRun, getCurrentBenchmarkType } from "@fluid-internal/test-version-utils";
+import { delay } from "@fluidframework/core-utils";
 import {
 	benchmarkAll,
 	createDocument,
 	IBenchmarkParameters,
 	IDocumentLoader,
-} from "./DocumentCreator";
+} from "./DocumentCreator.js";
 
 describeE2EDocRun("Load Document", (getTestObjectProvider, getDocumentInfo) => {
 	let documentWrapper: IDocumentLoader;
@@ -25,9 +26,20 @@ describeE2EDocRun("Load Document", (getTestObjectProvider, getDocumentInfo) => {
 			testName: `Load Document - ${docData.testTitle}`,
 			provider,
 			documentType: docData.documentType,
+			documentTypeInfo: docData.documentTypeInfo,
 			benchmarkType,
 		});
 		await documentWrapper.initializeDocument();
+	});
+
+	beforeEach(async function () {
+		const docData = getDocumentInfo();
+		if (
+			docData.supportedEndpoints &&
+			!docData.supportedEndpoints?.includes(provider.driver.type)
+		) {
+			this.skip();
+		}
 	});
 	/**
 	 * The PerformanceTestWrapper class includes 2 functionalities:
@@ -46,8 +58,9 @@ describeE2EDocRun("Load Document", (getTestObjectProvider, getDocumentInfo) => {
 				assert(this.container !== undefined, "container needs to be defined.");
 				this.container.close();
 			}
-			beforeIteration(): void {
+			async before(): Promise<void> {
 				this.container = undefined;
+				await delay(1000);
 			}
 		})(),
 	);

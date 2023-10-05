@@ -15,22 +15,24 @@ import { IFileEntry } from '@fluidframework/odsp-driver-definitions';
 import { IOdspResolvedUrl } from '@fluidframework/odsp-driver-definitions';
 import { IOdspUrlParts } from '@fluidframework/odsp-driver-definitions';
 import { IPersistedCache } from '@fluidframework/odsp-driver-definitions';
+import { IRelaySessionAwareDriverFactory } from '@fluidframework/odsp-driver-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharingLinkKind } from '@fluidframework/odsp-driver-definitions';
 import { ISnapshotOptions } from '@fluidframework/odsp-driver-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
+import { ISocketStorageDiscovery } from '@fluidframework/odsp-driver-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
-import { ITelemetryLogger } from '@fluidframework/common-definitions';
-import { ITelemetryProperties } from '@fluidframework/common-definitions';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { ITelemetryLogger } from '@fluidframework/core-interfaces';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { OdspResourceTokenFetchOptions } from '@fluidframework/odsp-driver-definitions';
-import { PromiseCache } from '@fluidframework/common-utils';
+import { PromiseCache } from '@fluidframework/core-utils';
 import { RateLimiter } from '@fluidframework/driver-utils';
 import { ShareLinkTypes } from '@fluidframework/odsp-driver-definitions';
-import { TelemetryLogger } from '@fluidframework/telemetry-utils';
 import { TokenFetcher } from '@fluidframework/odsp-driver-definitions';
 
 // @public
@@ -61,7 +63,7 @@ export function getApiRoot(origin: string): string;
 export function getHashedDocumentId(driveId: string, itemId: string): Promise<string>;
 
 // @public
-export function getLocatorFromOdspUrl(url: URL): OdspFluidDataStoreLocator | undefined;
+export function getLocatorFromOdspUrl(url: URL, requireFluidSignature?: boolean): OdspFluidDataStoreLocator | undefined;
 
 // @public
 export function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefined>;
@@ -114,7 +116,7 @@ export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
 }
 
 // @public
-export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
+export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory, IRelaySessionAwareDriverFactory {
     constructor(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy);
     // (undocumented)
     createContainer(createNewSummary: ISummaryTree | undefined, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
@@ -123,7 +125,10 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     // Warning: (ae-forgotten-export) The symbol "ICacheAndTracker" needs to be exported by the entry point index.d.ts
     //
     // (undocumented)
-    protected createDocumentServiceCore(resolvedUrl: IResolvedUrl, odspLogger: TelemetryLogger, cacheAndTrackerArg?: ICacheAndTracker, clientIsSummarizer?: boolean): Promise<IDocumentService>;
+    protected createDocumentServiceCore(resolvedUrl: IResolvedUrl, odspLogger: ITelemetryLogger, cacheAndTrackerArg?: ICacheAndTracker, clientIsSummarizer?: boolean): Promise<IDocumentService>;
+    getRelayServiceSessionInfo(resolvedUrl: IResolvedUrl): Promise<ISocketStorageDiscovery | undefined>;
+    // (undocumented)
+    get IRelaySessionAwareDriverFactory(): this;
     // (undocumented)
     protected persistedCache: IPersistedCache;
     // Warning: (ae-forgotten-export) The symbol "IPrefetchSnapshotContents" needs to be exported by the entry point index.d.ts
@@ -173,7 +178,7 @@ export interface OdspFluidDataStoreLocator extends IOdspUrlParts {
 // Warning: (ae-forgotten-export) The symbol "ISnapshotContentsWithProps" needs to be exported by the entry point index.d.ts
 //
 // @public
-export function parseCompactSnapshotResponse(buffer: Uint8Array, logger: ITelemetryLogger): ISnapshotContentsWithProps;
+export function parseCompactSnapshotResponse(buffer: Uint8Array, logger: ITelemetryLoggerExt): ISnapshotContentsWithProps;
 
 // Warning: (ae-forgotten-export) The symbol "SnapshotFormatSupportType" needs to be exported by the entry point index.d.ts
 //

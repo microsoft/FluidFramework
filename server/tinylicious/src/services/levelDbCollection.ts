@@ -36,7 +36,10 @@ async function readStream<T>(stream): Promise<T[]> {
 }
 
 export class Collection<T> implements ICollection<T> {
-	constructor(private readonly db: any, private readonly property: ICollectionProperty) {}
+	constructor(
+		private readonly db: any,
+		private readonly property: ICollectionProperty,
+	) {}
 
 	public aggregate(pipeline: any, options?: any): any {
 		throw new Error("Method Not Implemented");
@@ -64,7 +67,7 @@ export class Collection<T> implements ICollection<T> {
 	public async update(filter: any, set: any, addToSet: any): Promise<void> {
 		const value = await this.findOneInternal(filter);
 		if (!value) {
-			return Promise.reject(new Error("Not found"));
+			throw new Error("Not found");
 		} else {
 			_.extend(value, set);
 			return this.insertOne(value);

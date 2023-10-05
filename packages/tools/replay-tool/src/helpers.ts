@@ -8,17 +8,13 @@ import fs from "fs";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ILoaderOptions, Loader } from "@fluidframework/container-loader";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import {
-	IDocumentServiceFactory,
-	IFluidResolvedUrl,
-	IResolvedUrl,
-} from "@fluidframework/driver-definitions";
+import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IFileSnapshot } from "@fluidframework/replay-driver";
-import { TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { getNormalizedSnapshot, ISnapshotNormalizerConfig } from "@fluidframework/tool-utils";
 import stringify from "json-stable-stringify";
-import { FluidObject } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/common-utils";
+import { FluidObject, ITelemetryLogger } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import {
 	excludeChannelContentDdsFactories,
 	ReplayDataStoreFactory,
@@ -67,6 +63,7 @@ export function compareWithReferenceSnapshot(
 	 * package versions with X before we compare them.
 	 *
 	 * @example
+	 *
 	 * This is how it will look:
 	 * Before replace:
 	 *
@@ -108,10 +105,10 @@ export async function loadContainer(
 	documentServiceFactory: IDocumentServiceFactory,
 	documentName: string,
 	strictChannels: boolean,
-	logger?: TelemetryLogger,
+	logger?: ITelemetryLogger,
 	loaderOptions?: ILoaderOptions,
 ): Promise<IContainer> {
-	const resolved: IFluidResolvedUrl = {
+	const resolved: IResolvedUrl = {
 		endpoints: {
 			deltaStorageUrl: "example.com",
 			ordererUrl: "example.com",
@@ -166,6 +163,14 @@ export async function loadContainer(
 		new ReplayRuntimeFactory(runtimeOptions, dataStoreRegistries),
 	);
 
+	// Add a config provider to the Loader to enable / disable features.
+	const settings: Record<string, ConfigTypes> = {};
+	const configProvider: IConfigProviderBase = {
+		getRawConfig: (name: string): ConfigTypes => settings[name],
+	};
+	// This is to align with the snapshot tests which may upgrade GC Version before the default is changed.
+	settings["Fluid.GarbageCollection.GCVersionUpgradeToV4"] = false;
+
 	// Load the Fluid document while forcing summarizeProtocolTree option
 	const loader = new Loader({
 		urlResolver,
@@ -175,6 +180,7 @@ export async function loadContainer(
 			? { ...loaderOptions, summarizeProtocolTree: true }
 			: { summarizeProtocolTree: true },
 		logger,
+		configProvider,
 	});
 
 	return loader.resolve({ url: resolved.url });

@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-export { IOdspError, IOdspErrorAugmentations, OdspError, OdspErrorType } from "./errors";
+export {
+	IOdspError,
+	IOdspErrorAugmentations,
+	OdspError,
+	OdspErrorType,
+	OdspErrorTypes,
+} from "./errors";
 export {
 	HostStoragePolicy,
 	ICollabSessionOptions,
@@ -39,3 +45,8 @@ export {
 	tokenFromResponse,
 	TokenResponse,
 } from "./tokenFetch";
+export {
+	IProvideSessionAwareDriverFactory,
+	IRelaySessionAwareDriverFactory,
+	ISocketStorageDiscovery,
+} from "./sessionProvider";

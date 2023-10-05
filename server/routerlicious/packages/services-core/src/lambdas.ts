@@ -10,7 +10,10 @@ import { BoxcarType, IBoxcarMessage, IMessage } from "./messages";
 import { IQueuedMessage } from "./queue";
 
 export interface IPartitionLambdaPlugin {
-	create(config: Provider, customizations?: Record<string, any>): Promise<IPartitionLambdaFactory>;
+	create(
+		config: Provider,
+		customizations?: Record<string, any>,
+	): Promise<IPartitionLambdaFactory>;
 	customize?(config: Provider): Promise<Record<string, any>>;
 }
 
@@ -49,13 +52,20 @@ export interface IContextErrorData {
 
 	tenantId?: string;
 	documentId?: string;
+
+	/**
+	 * For KafkaRunner logging purposes.
+	 * Since KafkaRunner metric logs all the errors, this will indicate how the error was handled
+	 * eg: doc corruption error / rdkafkaConsumer error, so that we can filter accordingly
+	 */
+	errorLabel?: string;
 }
 
 export interface IContext {
 	/**
 	 * Updates the checkpoint
 	 */
-	checkpoint(queuedMessage: IQueuedMessage): void;
+	checkpoint(queuedMessage: IQueuedMessage, restartFlag?: boolean): void;
 
 	/**
 	 * Closes the context with an error.
@@ -72,6 +82,12 @@ export interface IContext {
 
 export interface IPartitionLambda {
 	/**
+	 * Expire document partition after this long of no activity.
+	 * When undefined, the default global IDocumentLambdaServerConfiguration.partitionActivityTimeout is used.
+	 */
+	readonly activityTimeout?: number;
+
+	/**
 	 * Processes an incoming message
 	 */
 	handler(message: IQueuedMessage): Promise<void> | undefined;
@@ -86,13 +102,12 @@ export interface IPartitionLambda {
 /**
  * Factory for creating lambda related objects
  */
-export interface IPartitionLambdaFactory<T extends IPartitionConfig = IPartitionLambdaConfig>
-	extends EventEmitter {
+export interface IPartitionLambdaFactory<TConfig = undefined> extends EventEmitter {
 	/**
 	 * Constructs a new lambda
 	 */
 	create(
-		config: T,
+		config: TConfig,
 		context: IContext,
 		updateActivityTime?: () => void,
 	): Promise<IPartitionLambda>;
@@ -104,16 +119,9 @@ export interface IPartitionLambdaFactory<T extends IPartitionConfig = IPartition
 }
 
 /**
- * Partition config
- */
-export interface IPartitionConfig {
-	leaderEpoch: number;
-}
-
-/**
  * Lambda config
  */
-export interface IPartitionLambdaConfig extends IPartitionConfig {
+export interface IPartitionLambdaConfig {
 	tenantId: string;
 	documentId: string;
 }

@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, bufferToString, stringToBuffer } from "@fluidframework/common-utils";
+import { IDisposable } from "@fluidframework/core-interfaces";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
 import {
 	FetchSource,
@@ -27,7 +29,6 @@ import { RetriableDocumentStorageService } from "./retriableDocumentStorageServi
 
 /**
  * Stringified blobs from a summary/snapshot tree.
- * @deprecated this is an internal interface and will not longer be exported in future versions
  * @internal
  */
 export interface ISerializableBlobContents {
@@ -60,7 +61,7 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 	 */
 	public constructor(
 		detachedBlobStorage: IDetachedBlobStorage | undefined,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 		/**
 		 * ArrayBufferLikes or utf8 encoded strings, containing blobs from a snapshot
 		 */
@@ -98,12 +99,6 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 				this.addProtocolSummaryIfMissing,
 			);
 		}
-
-		// ensure we did not lose that policy in the process of wrapping
-		assert(
-			storageService.policies?.minBlobSize === this._storageService.policies?.minBlobSize,
-			0x0e0 /* "lost minBlobSize policy" */,
-		);
 	}
 
 	public loadSnapshotForRehydratingContainer(snapshotTree: ISnapshotTreeWithBlobContents) {
@@ -183,7 +178,7 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 class BlobOnlyStorage implements IDocumentStorageService {
 	constructor(
 		private readonly detachedStorage: IDetachedBlobStorage | undefined,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 	) {}
 
 	public async createBlob(content: ArrayBufferLike): Promise<ICreateBlobResponse> {
@@ -229,11 +224,13 @@ class BlobOnlyStorage implements IDocumentStorageService {
 	}
 }
 
-// runtime will write a tree to the summary containing only "attachment" type entries
-// which reference attachment blobs by ID. However, some drivers do not support this type
-// and will convert them to "blob" type entries. We want to avoid saving these to reduce
-// the size of stashed change blobs.
+// runtime will write a tree to the summary containing "attachment" type entries
+// which reference attachment blobs by ID, along with a blob containing the blob redirect table.
+// However, some drivers do not support the "attachment" type and will convert them to "blob" type
+// entries. We want to avoid saving these to reduce the size of stashed change blobs, but we
+// need to make sure the blob redirect table is saved.
 const blobsTreeName = ".blobs";
+const redirectTableBlobName = ".redirectTable";
 
 /**
  * Get blob contents of a snapshot tree from storage (or, ideally, cache)
@@ -255,7 +252,9 @@ async function getBlobContentsFromTreeCore(
 ) {
 	const treePs: Promise<any>[] = [];
 	for (const [key, subTree] of Object.entries(tree.trees)) {
-		if (!root || key !== blobsTreeName) {
+		if (root && key === blobsTreeName) {
+			treePs.push(getBlobManagerTreeFromTree(subTree, blobs, storage));
+		} else {
 			treePs.push(getBlobContentsFromTreeCore(subTree, blobs, storage, false));
 		}
 	}
@@ -265,6 +264,18 @@ async function getBlobContentsFromTreeCore(
 		blobs[id] = bufferToString(blob, "utf8");
 	}
 	return Promise.all(treePs);
+}
+
+// save redirect table from .blobs tree but nothing else
+async function getBlobManagerTreeFromTree(
+	tree: ISnapshotTree,
+	blobs: ISerializableBlobContents,
+	storage: IDocumentStorageService,
+) {
+	const id = tree.blobs[redirectTableBlobName];
+	const blob = await storage.readBlob(id);
+	// ArrayBufferLike will not survive JSON.stringify()
+	blobs[id] = bufferToString(blob, "utf8");
 }
 
 /**
@@ -284,7 +295,9 @@ function getBlobContentsFromTreeWithBlobContentsCore(
 	root = true,
 ) {
 	for (const [key, subTree] of Object.entries(tree.trees)) {
-		if (!root || key !== blobsTreeName) {
+		if (root && key === blobsTreeName) {
+			getBlobManagerTreeFromTreeWithBlobContents(subTree, blobs);
+		} else {
 			getBlobContentsFromTreeWithBlobContentsCore(subTree, blobs, false);
 		}
 	}
@@ -294,4 +307,16 @@ function getBlobContentsFromTreeWithBlobContentsCore(
 		// ArrayBufferLike will not survive JSON.stringify()
 		blobs[id] = bufferToString(blob, "utf8");
 	}
+}
+
+// save redirect table from .blobs tree but nothing else
+function getBlobManagerTreeFromTreeWithBlobContents(
+	tree: ISnapshotTreeWithBlobContents,
+	blobs: ISerializableBlobContents,
+) {
+	const id = tree.blobs[redirectTableBlobName];
+	const blob = tree.blobsContents[id];
+	assert(blob !== undefined, 0x70f /* Blob must be present in blobsContents */);
+	// ArrayBufferLike will not survive JSON.stringify()
+	blobs[id] = bufferToString(blob, "utf8");
 }

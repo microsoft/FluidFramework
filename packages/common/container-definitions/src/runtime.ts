@@ -3,11 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-definitions";
-import { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import {
+	ITelemetryBaseLogger,
+	IDisposable,
+	FluidObject,
+	IRequest,
+	IResponse,
+} from "@fluidframework/core-interfaces";
+
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
-	IClientConfiguration,
 	IClientDetails,
 	ISequencedDocumentMessage,
 	ISnapshotTree,
@@ -54,6 +59,7 @@ export enum AttachState {
 export interface IRuntime extends IDisposable {
 	/**
 	 * Executes a request against the runtime
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	request(request: IRequest): Promise<IResponse>;
 
@@ -70,6 +76,8 @@ export interface IRuntime extends IDisposable {
 	/**
 	 * Processes the given signal
 	 */
+	// TODO: use `unknown` instead (API breaking)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	processSignal(message: any, local: boolean);
 
 	/**
@@ -92,7 +100,7 @@ export interface IRuntime extends IDisposable {
 	 * @experimental
 	 * {@link https://github.com/microsoft/FluidFramework/packages/tree/main/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
-	getPendingLocalState(): unknown;
+	getPendingLocalState(props?: { notifyImminentClosure?: boolean }): unknown;
 
 	/**
 	 * Notify runtime that container is moving to "Attaching" state
@@ -112,11 +120,8 @@ export interface IRuntime extends IDisposable {
 	 * Use this as the primary way of getting access to the user-defined logic within the container runtime.
 	 *
 	 * @see {@link IContainer.getEntryPoint}
-	 *
-	 * @remarks The plan is that eventually IRuntime will no longer have a request() method, this method will no
-	 * longer be optional, and it will become the only way to access the entryPoint for the runtime.
 	 */
-	getEntryPoint?(): Promise<FluidObject | undefined>;
+	getEntryPoint(): Promise<FluidObject | undefined>;
 }
 
 /**
@@ -130,30 +135,32 @@ export interface IBatchMessage {
 }
 
 /**
- * The ContainerContext is a proxy standing between the Container and the Container's IRuntime.
- * This allows the Container to terminate the connection to the IRuntime.
- *
- * Specifically, there is an event on Container, onContextChanged, which mean a new code proposal has been loaded,
- * so the old IRuntime is no longer valid, as its ContainerContext has been revoked,
- * and the Container has created a new ContainerContext.
+ * IContainerContext is fundamentally just the set of things that an IRuntimeFactory (and IRuntime) will consume from the
+ * loader layer.  It gets passed into the IRuntimeFactory.instantiateRuntime call.  Only include members on this interface
+ * if you intend them to be consumed/called from the runtime layer.
  */
-export interface IContainerContext extends IDisposable {
-	/** @deprecated Please pass in existing directly in instantiateRuntime */
-	readonly existing: boolean | undefined;
+export interface IContainerContext {
 	readonly options: ILoaderOptions;
 	readonly clientId: string | undefined;
 	readonly clientDetails: IClientDetails;
 	readonly storage: IDocumentStorageService;
 	readonly connected: boolean;
 	readonly baseSnapshot: ISnapshotTree | undefined;
-	/** @deprecated Please use submitBatchFn & submitSummaryFn */
+	/**
+	 * @deprecated Please use submitBatchFn & submitSummaryFn
+	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
-	/** @returns clientSequenceNumber of last message in a batch */
+	/**
+	 * @returns clientSequenceNumber of last message in a batch
+	 */
 	readonly submitBatchFn: (batch: IBatchMessage[], referenceSequenceNumber?: number) => number;
 	readonly submitSummaryFn: (
 		summaryOp: ISummaryContent,
 		referenceSequenceNumber?: number,
 	) => number;
+	// TODO: use `unknown` instead (API breaking)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	readonly submitSignalFn: (contents: any) => void;
 	readonly disposeFn?: (error?: ICriticalContainerError) => void;
 	readonly closeFn: (error?: ICriticalContainerError) => void;
@@ -171,7 +178,6 @@ export interface IContainerContext extends IDisposable {
 	readonly loader: ILoader;
 	// The logger implementation, which would support tagged events, should be provided by the loader.
 	readonly taggedLogger: ITelemetryBaseLogger;
-	readonly serviceConfiguration: IClientConfiguration | undefined;
 	pendingLocalState?: unknown;
 
 	/**
@@ -202,15 +208,13 @@ export interface IContainerContext extends IDisposable {
 	 * WARNING: this id is meant for telemetry usages ONLY, not recommended for other consumption
 	 * This id is not supposed to be exposed anywhere else. It is dependant on usage or drivers
 	 * and scenarios which can change in the future.
+	 * @deprecated 2.0.0-internal.5.2.0 - The docId is already logged by the {@link IContainerContext.taggedLogger} for
+	 * telemetry purposes, so this is generally unnecessary for telemetry.
+	 * If the id is needed for other purposes it should be passed to the consumer explicitly.
+	 *
+	 * @privateremarks Tracking in AB#5714
 	 */
 	readonly id: string;
-
-	/**
-	 * Proxy for {@link IRuntime.getEntryPoint}, the entryPoint defined in the container's runtime.
-	 *
-	 * @see {@link IContainer.getEntryPoint}
-	 */
-	getEntryPoint?(): Promise<FluidObject | undefined>;
 }
 
 export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";

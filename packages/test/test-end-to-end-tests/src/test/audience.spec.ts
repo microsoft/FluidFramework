@@ -4,15 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestObjectProvider,
+	createContainerRuntimeFactoryWithDefaultDataStore,
 	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
@@ -21,26 +16,33 @@ import { IRequest } from "@fluidframework/core-interfaces";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { IContainer } from "@fluidframework/container-definitions";
 
-class TestDataObject extends DataObject {
-	public get _root() {
-		return this.root;
+describeFullCompat("Audience correctness", (getTestObjectProvider, apis) => {
+	class TestDataObject extends apis.dataRuntime.DataObject {
+		public get _root() {
+			return this.root;
+		}
 	}
-}
 
-describeFullCompat("Audience correctness", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
-	const dataObjectFactory = new DataObjectFactory("TestDataObject", TestDataObject, [], []);
+	const dataObjectFactory = new apis.dataRuntime.DataObjectFactory(
+		"TestDataObject",
+		TestDataObject,
+		[],
+		[],
+	);
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
-	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-		dataObjectFactory,
-		[[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
-		undefined,
-		[innerRequestHandler],
-		// Disable summaries so the summarizer client doesn't interfere with the audience
+	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
+		apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore,
 		{
-			summaryOptions: {
-				summaryConfigOverrides: { state: "disabled" },
+			defaultFactory: dataObjectFactory,
+			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
+			requestHandlers: [innerRequestHandler],
+			// Disable summaries so the summarizer client doesn't interfere with the audience
+			runtimeOptions: {
+				summaryOptions: {
+					summaryConfigOverrides: { state: "disabled" },
+				},
 			},
 		},
 	);
