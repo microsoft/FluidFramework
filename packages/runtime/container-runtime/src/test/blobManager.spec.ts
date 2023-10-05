@@ -121,7 +121,7 @@ export class MockRuntime
 				});
 				this.unprocessedBlobs.add(blob);
 				this.emit("blob");
-				this.blobPs.push(P.then(() => {}));
+				this.blobPs.push(P);
 				return P;
 			},
 			readBlob: async (id) => this.storage.readBlob(id),
@@ -181,7 +181,7 @@ export class MockRuntime
 			this.processBlobsP.reject(new Error("fake error"));
 		}
 		this.processBlobsP = new Deferred<void>();
-		await Promise.all(blobPs);
+		await Promise.all(blobPs).catch(() => {});
 	}
 
 	public async processHandles() {
@@ -688,13 +688,12 @@ describe("BlobManager", () => {
 			const handleP = runtime.createBlob(blob, ac.signal);
 			ac.abort("abort test");
 			assert.strictEqual(runtime.unprocessedBlobs.size, 1);
+			await runtime.processBlobs(false);
 			try {
-				await runtime.processBlobs(false);
-				assert.fail("Should not succeed");
+				await handleP;
 			} catch (error: any) {
-				assert.strictEqual(error.message, "fake error");
+				assert.strictEqual(error.message, "uploadBlob aborted");
 			}
-			assert(handleP);
 			await assert.rejects(handleP);
 			const summaryData = validateSummary(runtime);
 			assert.strictEqual(summaryData.ids.length, 0);
@@ -709,16 +708,13 @@ describe("BlobManager", () => {
 			const handleP = runtime.createBlob(blob, ac.signal);
 			runtime.disconnect();
 			ac.abort();
+			await runtime.processBlobs();
 			try {
-				await runtime.processBlobs();
+				await handleP;
 				assert.fail("Should not succeed");
 			} catch (error: any) {
-				assert.strictEqual(
-					error.message,
-					"fake error due to having no connection to storage service",
-				);
+				assert.strictEqual(error.message, "uploadBlob aborted");
 			}
-			assert(handleP);
 			await assert.rejects(handleP);
 			const summaryData = validateSummary(runtime);
 			assert.strictEqual(summaryData.ids.length, 0);
@@ -759,13 +755,12 @@ describe("BlobManager", () => {
 			runtime.processOps();
 			try {
 				// finish op
-				await Promise.all([p1, p2]);
+				await handleP;
 			} catch (error: any) {
 				assert.strictEqual(error.message, "uploadBlob aborted");
 				assert.ok(error.uploadTime);
 				assert.strictEqual(error.acked, false);
 			}
-			assert(handleP);
 			await assert.rejects(handleP);
 			const summaryData = validateSummary(runtime);
 			assert.strictEqual(summaryData.ids.length, 0);
