@@ -36,6 +36,8 @@ import {
 	TreeSchema,
 } from "../../../feature-libraries";
 import {
+	Anchor,
+	AnchorNode,
 	EmptyKey,
 	FieldAnchor,
 	FieldKey,
@@ -106,6 +108,19 @@ function initializeTreeWithContent<Kind extends FieldKind, Types extends Allowed
  */
 class TestLazyTree<TSchema extends TreeSchema> extends LazyTree<TSchema> {}
 
+/**
+ * Creates an {@link Anchor} and an {@link AnchorNode} for the provided cursor's location.
+ */
+function createAnchors(
+	context: Context,
+	cursor: ITreeSubscriptionCursor,
+): { anchor: Anchor; anchorNode: AnchorNode } {
+	const anchor = context.forest.anchors.track(cursor.getPath() ?? fail());
+	const anchorNode = context.forest.anchors.locate(anchor) ?? fail();
+
+	return { anchor, anchorNode };
+}
+
 describe("LazyTree", () => {
 	it("property names", () => {
 		const builder = new SchemaBuilder("lazyTree");
@@ -118,8 +133,7 @@ describe("LazyTree", () => {
 		});
 		cursor.enterNode(0);
 
-		const anchor = context.forest.anchors.track(cursor.getPath() ?? fail());
-		const anchorNode = context.forest.anchors.locate(anchor) ?? fail();
+		const { anchor, anchorNode } = createAnchors(context, cursor);
 
 		const struct = buildLazyStruct(context, emptyStruct, cursor, anchorNode, anchor);
 
@@ -190,8 +204,7 @@ describe("LazyTree", () => {
 		const { context, cursor } = initializeTreeWithContent({ schema, initialTree: {} });
 		cursor.enterNode(0);
 
-		const anchor = context.forest.anchors.track(cursor.getPath() ?? fail());
-		const anchorNode = context.forest.anchors.locate(anchor) ?? fail();
+		const { anchor, anchorNode } = createAnchors(context, cursor);
 
 		const node = new TestLazyTree(
 			context,
@@ -232,8 +245,7 @@ describe("LazyTree", () => {
 		});
 		cursor.enterNode(0);
 
-		const anchor = context.forest.anchors.track(cursor.getPath() ?? fail());
-		const anchorNode = context.forest.anchors.locate(anchor) ?? fail();
+		const { anchor, anchorNode } = createAnchors(context, cursor);
 
 		const node = new TestLazyTree(context, fieldNodeSchema, cursor, anchorNode, anchor);
 		const { index, parent } = node.parentField;
@@ -260,8 +272,7 @@ describe("LazyTree", () => {
 			});
 			cursor.enterNode(0);
 
-			const anchor = context.forest.anchors.track(cursor.getPath() ?? fail());
-			const anchorNode = context.forest.anchors.locate(anchor) ?? fail();
+			const { anchor, anchorNode } = createAnchors(context, cursor);
 
 			const node = new LazyFieldNode(context, fieldNodeSchema, cursor, anchorNode, anchor);
 
@@ -273,8 +284,7 @@ describe("LazyTree", () => {
 				const { context, cursor } = initializeTreeWithContent({ schema, initialTree: {} });
 				cursor.enterNode(0);
 
-				const anchor = context.forest.anchors.track(cursor.getPath() ?? fail());
-				const anchorNode = context.forest.anchors.locate(anchor) ?? fail();
+				const { anchor, anchorNode } = createAnchors(context, cursor);
 
 				const node = new LazyFieldNode(
 					context,
@@ -296,8 +306,7 @@ describe("LazyTree", () => {
 				});
 				cursor.enterNode(0);
 
-				const anchor = context.forest.anchors.track(cursor.getPath() ?? fail());
-				const anchorNode = context.forest.anchors.locate(anchor) ?? fail();
+				const { anchor, anchorNode } = createAnchors(context, cursor);
 
 				const node = new LazyFieldNode(
 					context,
@@ -326,8 +335,7 @@ describe("LazyTree", () => {
 		});
 		cursor.enterNode(0);
 
-		const anchor = context.forest.anchors.track(cursor.getPath() ?? fail());
-		const anchorNode = context.forest.anchors.locate(anchor) ?? fail();
+		const { anchor, anchorNode } = createAnchors(context, cursor);
 
 		const node = new LazyLeaf(context, leafDomain.string, cursor, anchorNode, anchor);
 
@@ -353,8 +361,7 @@ describe("LazyTree", () => {
 		});
 		cursor.enterNode(0);
 
-		const anchor = context.forest.anchors.track(cursor.getPath() ?? fail());
-		const anchorNode = context.forest.anchors.locate(anchor) ?? fail();
+		const { anchor, anchorNode } = createAnchors(context, cursor);
 
 		const node = new LazyMap(context, mapNodeSchema, cursor, anchorNode, anchor);
 
@@ -388,8 +395,7 @@ describe("LazyTree", () => {
 		const cursor = initializeCursor(context, rootFieldAnchor);
 		cursor.enterNode(0);
 
-		const anchor = context.forest.anchors.track(cursor.getPath() ?? fail());
-		const anchorNode = context.forest.anchors.locate(anchor) ?? fail();
+		const { anchor, anchorNode } = createAnchors(context, cursor);
 
 		const node = buildLazyStruct(context, structNodeSchema, cursor, anchorNode, anchor);
 
