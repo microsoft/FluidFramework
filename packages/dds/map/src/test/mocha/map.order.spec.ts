@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 
 import { strict as assert } from "assert";
 import {
@@ -22,6 +23,14 @@ import {
 import { ISharedMap } from "../../interfaces";
 import { TestSharedMap, createConnectedMap, createLocalMap } from "./mapUtils";
 
+function assertIterationOrder(map: ISharedMap, keys: string[]) {
+	assert.deepEqual(Array.from(map.keys()), keys);
+	const values = keys.map((key) => map.get(key));
+	assert.deepEqual(Array.from(map.values()), values);
+	const entries = keys.map((key) => [key, map.get(key)]);
+	assert.deepEqual(Array.from(map.entries()), entries);
+}
+
 describe("Map Iteration Order", () => {
 	describe("Local state", () => {
 		let map: SharedMap;
@@ -35,8 +44,7 @@ describe("Map Iteration Order", () => {
 			map.set("1", 2);
 			map.set("3", 3);
 
-			assert.deepEqual(Array.from(map.keys()), ["2", "1", "3"]);
-			assert.deepEqual(Array.from(map.values()), [1, 2, 3]);
+			assertIterationOrder(map, ["2", "1", "3"]);
 		});
 
 		it("set with value overwritting", () => {
@@ -47,8 +55,7 @@ describe("Map Iteration Order", () => {
 			map.set("4", 5);
 			map.set("2", 6);
 
-			assert.deepEqual(Array.from(map.keys()), ["2", "1", "3", "4"]);
-			assert.deepEqual(Array.from(map.values()), [6, 4, 3, 5]);
+			assertIterationOrder(map, ["2", "1", "3", "4"]);
 		});
 
 		it("delete", () => {
@@ -56,30 +63,26 @@ describe("Map Iteration Order", () => {
 			map.set("2", 1);
 			map.set("1", 2);
 			map.set("3", 3);
-
 			map.delete("1");
-			assert.deepEqual(Array.from(map.keys()), ["2", "3"]);
+
+			assertIterationOrder(map, ["2", "3"]);
 
 			map.set("1", 4);
-			assert.deepEqual(Array.from(map.keys()), ["2", "3", "1"]);
-			assert.deepEqual(Array.from(map.values()), [1, 3, 4]);
+			assertIterationOrder(map, ["2", "3", "1"]);
 		});
 
 		it("clear", () => {
 			map.set("2", 1);
 			map.set("1", 2);
 			map.set("3", 3);
-
 			map.clear();
-			assert.deepEqual(Array.from(map.keys()), []);
-			assert.deepEqual(Array.from(map.values()), []);
+			assertIterationOrder(map, []);
 
 			map.set("3", 1);
 			map.set("2", 2);
 			map.delete("3");
 			map.set("1", 3);
-
-			assert.deepEqual(Array.from(map.keys()), ["2", "1"]);
+			assertIterationOrder(map, ["2", "1"]);
 		});
 	});
 
@@ -102,16 +105,16 @@ describe("Map Iteration Order", () => {
 			map1.delete("1");
 
 			containerRuntimeFactory.processSomeMessages(2);
-			assert.deepEqual(Array.from(map1.keys()), ["2"]);
-			assert.deepEqual(Array.from(map2.keys()), ["1", "2", "3", "4"]);
+			assertIterationOrder(map1, ["2"]);
+			assertIterationOrder(map2, ["1", "2", "3", "4"]);
 
 			containerRuntimeFactory.processSomeMessages(2);
-			assert.deepEqual(Array.from(map1.keys()), ["2", "3", "4"]);
-			assert.deepEqual(Array.from(map2.keys()), ["1", "2", "3", "4"]);
+			assertIterationOrder(map1, ["2", "3", "4"]);
+			assertIterationOrder(map2, ["1", "2", "3", "4"]);
 
 			containerRuntimeFactory.processAllMessages();
-			assert.deepEqual(Array.from(map1.keys()), ["2", "3", "4"]);
-			assert.deepEqual(Array.from(map2.keys()), ["2", "3", "4"]);
+			assertIterationOrder(map1, ["2", "3", "4"]);
+			assertIterationOrder(map2, ["2", "3", "4"]);
 		});
 
 		it("Remote set conflicts with local pending set", () => {
@@ -121,16 +124,12 @@ describe("Map Iteration Order", () => {
 			map2.set("1", 2);
 
 			containerRuntimeFactory.processSomeMessages(2);
-			assert.deepEqual(Array.from(map1.keys()), ["1", "2"]);
-			assert.deepEqual(Array.from(map1.values()), [1, 2]);
-			assert.deepEqual(Array.from(map2.keys()), ["1", "2", "3"]);
-			assert.deepEqual(Array.from(map2.values()), [2, 2, 3]);
+			assertIterationOrder(map1, ["1", "2"]);
+			assertIterationOrder(map2, ["1", "2", "3"]);
 
 			containerRuntimeFactory.processSomeMessages(2);
-			assert.deepEqual(Array.from(map1.keys()), ["1", "2", "3"]);
-			assert.deepEqual(Array.from(map1.values()), [2, 2, 3]);
-			assert.deepEqual(Array.from(map2.keys()), ["1", "2", "3"]);
-			assert.deepEqual(Array.from(map2.values()), [2, 2, 3]);
+			assertIterationOrder(map1, ["1", "2", "3"]);
+			assertIterationOrder(map2, ["1", "2", "3"]);
 		});
 
 		it("Remote sets conflicts with local pending delete", () => {
@@ -141,16 +140,16 @@ describe("Map Iteration Order", () => {
 			map2.delete("1");
 
 			containerRuntimeFactory.processSomeMessages(2);
-			assert.deepEqual(Array.from(map1.keys()), ["1", "2"]);
-			assert.deepEqual(Array.from(map2.keys()), ["2", "3"]);
+			assertIterationOrder(map1, ["1", "2"]);
+			assertIterationOrder(map2, ["2", "3"]);
 
 			containerRuntimeFactory.processSomeMessages(2);
-			assert.deepEqual(Array.from(map1.keys()), ["1", "2", "3"]);
-			assert.deepEqual(Array.from(map2.keys()), ["2", "3"]);
+			assertIterationOrder(map1, ["1", "2", "3"]);
+			assertIterationOrder(map2, ["2", "3"]);
 
 			containerRuntimeFactory.processSomeMessages(1);
-			assert.deepEqual(Array.from(map1.keys()), ["2", "3"]);
-			assert.deepEqual(Array.from(map2.keys()), ["2", "3"]);
+			assertIterationOrder(map1, ["2", "3"]);
+			assertIterationOrder(map2, ["2", "3"]);
 		});
 
 		it("Remote set conflicts with local pending clear", () => {
@@ -161,20 +160,16 @@ describe("Map Iteration Order", () => {
 			map2.set("1", 4);
 
 			containerRuntimeFactory.processSomeMessages(3);
-			assert.deepEqual(Array.from(map1.keys()), ["1", "2", "3"]);
-			assert.deepEqual(Array.from(map1.values()), [1, 2, 3]);
-			assert.deepEqual(Array.from(map2.keys()), ["1"]);
-			assert.deepEqual(Array.from(map2.values()), [4]);
+			assertIterationOrder(map1, ["1", "2", "3"]);
+			assertIterationOrder(map2, ["1"]);
 
 			containerRuntimeFactory.processSomeMessages(1);
-			assert.deepEqual(Array.from(map1.keys()), []);
-			assert.deepEqual(Array.from(map2.keys()), ["1"]);
+			assertIterationOrder(map1, []);
+			assertIterationOrder(map2, ["1"]);
 
 			containerRuntimeFactory.processSomeMessages(1);
-			assert.deepEqual(Array.from(map1.keys()), ["1"]);
-			assert.deepEqual(Array.from(map1.values()), [4]);
-			assert.deepEqual(Array.from(map2.keys()), ["1"]);
-			assert.deepEqual(Array.from(map2.values()), [4]);
+			assertIterationOrder(map1, ["1"]);
+			assertIterationOrder(map2, ["1"]);
 		});
 	});
 
@@ -208,12 +203,9 @@ describe("Map Iteration Order", () => {
 				services,
 				factory.attributes,
 			);
-			// The data can be maintained after loading, but the order can not be guaranteed
-			assert.equal(map1.get("1"), 1);
-			assert.equal(map1.get("2"), 2);
-			assert.equal(map1.get("3"), 3);
 
-			assert.deepEqual(Array.from(map1.keys()), ["1", "2", "3"]);
+			// The data can be maintained after loading, but the order can not be guaranteed
+			assertIterationOrder(map1, ["1", "2", "3"]);
 		});
 
 		it("can maintain the expected order given the index", async () => {
@@ -246,11 +238,8 @@ describe("Map Iteration Order", () => {
 				services,
 				factory.attributes,
 			);
-			assert.equal(map1.get("1"), 1);
-			assert.equal(map1.get("2"), 2);
-			assert.equal(map1.get("3"), 3);
 
-			assert.deepEqual(Array.from(map1.keys()), ["2", "1", "3"]);
+			assertIterationOrder(map1, ["2", "1", "3"]);
 		});
 
 		it("serialize the contents, load it into another map and maintain the order", async () => {
@@ -273,7 +262,7 @@ describe("Map Iteration Order", () => {
 			map2.set("6", 6);
 			await map2.load(services);
 
-			assert.deepEqual(Array.from(map2.keys()), ["2", "1", "4", "6"]);
+			assertIterationOrder(map2, ["2", "1", "4", "6"]);
 		});
 
 		it("serialize big maps with multiple blobs and maintain the order", async () => {
@@ -342,7 +331,7 @@ describe("Map Iteration Order", () => {
 				factory.attributes,
 			);
 
-			assert.deepEqual(Array.from(map2.keys()), ["2", "1", "3"]);
+			assertIterationOrder(map2, ["2", "1", "3"]);
 		});
 	});
 
@@ -389,10 +378,8 @@ describe("Map Iteration Order", () => {
 
 			containerRuntimeFactory.processAllMessages();
 
-			assert.deepEqual(Array.from(map1.keys()), ["3", "1", "2"]);
-			assert.deepEqual(Array.from(map1.values()), [3, 1, 2]);
-			assert.deepEqual(Array.from(map2.keys()), ["3", "1", "2"]);
-			assert.deepEqual(Array.from(map2.values()), [3, 1, 2]);
+			assertIterationOrder(map1, ["3", "1", "2"]);
+			assertIterationOrder(map2, ["3", "1", "2"]);
 		});
 	});
 
@@ -416,15 +403,19 @@ describe("Map Iteration Order", () => {
 			map.testApplyStashedOp(op2);
 			map.testApplyStashedOp(op1);
 			map.testApplyStashedOp(op3);
-			assert.deepEqual(Array.from(map.keys()), ["2", "1", "3"]);
+
+			assertIterationOrder(map, ["2", "1", "3"]);
+			// assert.deepEqual(Array.from(map.keys()), ["2", "1", "3"]);
 
 			const op4: IMapDeleteOperation = { type: "delete", key: "1" };
 			map.testApplyStashedOp(op4);
-			assert.deepEqual(Array.from(map.keys()), ["2", "3"]);
+
+			assertIterationOrder(map, ["2", "3"]);
 
 			const op5: IMapClearOperation = { type: "clear" };
 			map.testApplyStashedOp(op5);
-			assert.deepEqual(Array.from(map.keys()), []);
+
+			assertIterationOrder(map, []);
 		});
 	});
 });

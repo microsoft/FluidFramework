@@ -333,7 +333,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 										? undefined
 										: (JSON.parse(value.value) as unknown),
 						  };
-	
 			}
 		}
 
