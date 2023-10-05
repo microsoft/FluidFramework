@@ -21,7 +21,7 @@ import {
 } from "../../utils";
 import { makeOpGenerator, EditGeneratorOpWeights, FuzzTestState } from "./fuzzEditGenerators";
 import { fuzzReducer } from "./fuzzEditReducers";
-import { createAnchors, onCreate, validateAnchors } from "./fuzzUtils";
+import { createAnchors, failureDirectory, onCreate, validateAnchors } from "./fuzzUtils";
 import { Operation } from "./operationTypes";
 
 /**
@@ -108,6 +108,9 @@ describe("Fuzz - undo/redo", () => {
 			defaultTestCount: runsPerBatch,
 			numberOfClients: 3,
 			emitter,
+			saveFailures: {
+				directory: failureDirectory,
+			},
 		});
 	});
 
@@ -120,7 +123,7 @@ describe("Fuzz - undo/redo", () => {
 			Operation,
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
-			workloadName: "SharedTree",
+			workloadName: "undo-out-of-order",
 			factory: new SharedTreeTestFactory(onCreate),
 			generatorFactory,
 			reducer: fuzzReducer,
@@ -172,6 +175,9 @@ describe("Fuzz - undo/redo", () => {
 				enabled: false,
 				attachProbability: 0,
 			},
+			saveFailures: {
+				directory: failureDirectory,
+			},
 		});
 	});
 
@@ -191,7 +197,7 @@ describe("Fuzz - undo/redo", () => {
 			Operation,
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
-			workloadName: "SharedTree",
+			workloadName: "undo-unsequenced",
 			factory: new SharedTreeTestFactory(onCreate),
 			generatorFactory,
 			reducer: fuzzReducer,
@@ -219,6 +225,9 @@ describe("Fuzz - undo/redo", () => {
 			detachedStartOptions: {
 				enabled: false,
 				attachProbability: 1,
+			},
+			saveFailures: {
+				directory: failureDirectory,
 			},
 		});
 	});

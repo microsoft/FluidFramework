@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import path from "path";
 import { takeAsync } from "@fluid-internal/stochastic-test-utils";
 import {
 	DDSFuzzModel,
@@ -14,7 +13,7 @@ import { FlushMode } from "@fluidframework/runtime-definitions";
 import { SharedTreeTestFactory, validateTreeConsistency } from "../../utils";
 import { makeOpGenerator, EditGeneratorOpWeights } from "./fuzzEditGenerators";
 import { fuzzReducer } from "./fuzzEditReducers";
-import { onCreate } from "./fuzzUtils";
+import { failureDirectory, onCreate } from "./fuzzUtils";
 import { Operation } from "./operationTypes";
 
 const baseOptions: Partial<DDSFuzzSuiteOptions> = {
@@ -61,7 +60,7 @@ describe("Fuzz - Top-Level", () => {
 			...baseOptions,
 			defaultTestCount: runsPerBatch,
 			saveFailures: {
-				directory: path.join(__dirname, "../../../../src/test/shared-tree/fuzz/failures"),
+				directory: failureDirectory,
 			},
 			detachedStartOptions: {
 				enabled: false,
@@ -98,7 +97,7 @@ describe("Fuzz - Top-Level", () => {
 				enableGroupedBatching: true,
 			},
 			saveFailures: {
-				directory: path.join(__dirname, "../../../../src/test/shared-tree/fuzz/failures"),
+				directory: failureDirectory,
 			},
 		};
 		createDDSFuzzSuite(model, options);

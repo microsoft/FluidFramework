@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
+import path from "path";
 import {
 	moveToDetachedField,
 	Anchor,
@@ -83,3 +84,8 @@ export function getEditableTree(
 
 	return (tree as any)[cachedEditableTreeSymbol] as TypedField<typeof fuzzSchema.rootFieldSchema>;
 }
+
+export const failureDirectory = path.join(
+	__dirname,
+	"../../../../src/test/shared-tree/fuzz/failures",
+);
