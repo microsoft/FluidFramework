@@ -684,7 +684,9 @@ export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
  * @alpha
  */
 export interface RequiredField<TTypes extends AllowedTypes> extends TreeField {
-	content: UnboxNodeUnion<TTypes>;
+	get content(): UnboxNodeUnion<TTypes>;
+	set content(content: FlexibleNodeContent<TTypes>);
+
 	readonly boxedContent: TypedNodeUnion<TTypes>;
 	// setContent(content: FlexibleNodeContent<TTypes>): void;
 }

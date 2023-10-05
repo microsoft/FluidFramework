@@ -1582,7 +1582,8 @@ export interface RequiredField<TTypes extends AllowedTypes> extends TreeField {
     // (undocumented)
     readonly boxedContent: TypedNodeUnion<TTypes>;
     // (undocumented)
-    content: UnboxNodeUnion<TTypes>;
+    get content(): UnboxNodeUnion<TTypes>;
+    set content(content: FlexibleNodeContent<TTypes>);
 }
 
 // @alpha
