@@ -145,10 +145,7 @@ export function create(
 		async (request, response) => {
 			const tenantId = getParam(request.params, "tenantId");
 			const documentId = getParam(request.params, "id");
-			const signalContent = getParam(
-				request.body,
-				"signalContent",
-			) as unknown as IRuntimeSignalEnvelope;
+			const signalContent = request?.body?.signalContent as IRuntimeSignalEnvelope;
 			const validSignalContent =
 				typeof signalContent?.contents?.type === "string" &&
 				signalContent?.contents?.content !== undefined;
