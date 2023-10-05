@@ -1,6 +1,7 @@
 lockfileVersion: 5.4
 
 overrides:
+  '@microsoft/api-extractor>typescript': ~5.1.6
   '@types/node': ^16.18.38
   node-fetch: ^2.6.9
   good-fences>nodegit: npm:empty-npm-package@1.0.0
@@ -19398,7 +19399,7 @@ packages:
       resolve: 1.22.6
       semver: 7.5.4
       source-map: 0.6.1
-      typescript: 5.0.4
+      typescript: 5.1.6
     transitivePeerDependencies:
       - '@types/node'
     dev: true
@@ -19418,7 +19419,7 @@ packages:
       resolve: 1.22.6
       semver: 7.5.4
       source-map: 0.6.1
-      typescript: 5.0.4
+      typescript: 5.1.6
     transitivePeerDependencies:
       - '@types/node'
     dev: true
@@ -19438,7 +19439,7 @@ packages:
       resolve: 1.22.6
       semver: 7.5.4
       source-map: 0.6.1
-      typescript: 5.0.4
+      typescript: 5.1.6
     transitivePeerDependencies:
       - '@types/node'
     dev: true
@@ -43972,12 +43973,6 @@ packages:
   /typescript/4.9.5:
     resolution: {integrity: sha512-1FXk9E2Hm+QzZQ7z+McJiHL4NW1F2EzMu9Nq9i3zAaGqibafqYwCVU6WyWAuyQRRzOlxou8xZSyXLEN8oKj24g==}
     engines: {node: '>=4.2.0'}
-    hasBin: true
-    dev: true
-
-  /typescript/5.0.4:
-    resolution: {integrity: sha512-cW9T5W9xY37cc+jfEnaUvX91foxtHkza3Nw3wkoF4sSlKn0MONdkdEndig/qPBWXNkmplh3NzayQzCiHM4/hqw==}
-    engines: {node: '>=12.20'}
     hasBin: true
     dev: true
 
