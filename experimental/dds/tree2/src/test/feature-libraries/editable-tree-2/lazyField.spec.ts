@@ -76,6 +76,9 @@ function initializeTreeWithContent<Kind extends FieldKind, Types extends Allowed
 	};
 }
 
+/**
+ * Mock {@link LazyField} implementation for testing.
+ */
 class MockLazyField<TTypes extends AllowedTypes> extends LazyField<
 	typeof FieldKinds.optional,
 	TTypes
