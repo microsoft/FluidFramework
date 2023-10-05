@@ -4,12 +4,21 @@
  */
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { Heap, RedBlackTree } from "../collections";
+import { Comparer, Heap, RedBlackTree } from "../collections";
 import { compareNumbers } from "../mergeTreeNodes";
-import { ClientSeq, clientSeqComparer } from "../mergeTree";
 import { PropertySet } from "../properties";
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
 import { TestClient } from "./testClient";
+
+interface ClientSeq {
+	refSeq: number;
+	clientId: string;
+}
+
+const clientSeqComparer: Comparer<ClientSeq> = {
+	min: { refSeq: -1, clientId: "" },
+	compare: (a, b) => a.refSeq - b.refSeq,
+};
 
 /**
  * Server for tests.  Simulates client communication by directing placing

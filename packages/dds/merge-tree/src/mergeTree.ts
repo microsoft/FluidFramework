@@ -262,14 +262,6 @@ class HierMergeBlock extends MergeBlock implements IHierBlock {
 	}
 }
 
-/**
- * @internal
- */
-export interface ClientSeq {
-	refSeq: number;
-	clientId: string;
-}
-
 export interface IMergeTreeOptions {
 	catchUpBlobName?: string;
 	/**
@@ -361,14 +353,6 @@ export interface AttributionPolicy {
 	 */
 	serializer: IAttributionCollectionSerializer;
 }
-
-/**
- * @internal
- */
-export const clientSeqComparer: Comparer<ClientSeq> = {
-	min: { refSeq: -1, clientId: "" },
-	compare: (a, b) => a.refSeq - b.refSeq,
-};
 
 /**
  * @internal

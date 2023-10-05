@@ -6,7 +6,7 @@ import assert from "assert";
 import { computeHierarchicalOrdinal } from "../ordinal";
 import { doOverRange } from "./mergeTreeOperationRunner";
 
-export function computeNumericOrdinal(index: number) {
+function computeNumericOrdinal(index: number) {
 	const prefixLen = Math.floor(index / 0xffff);
 	const prefix = String.fromCharCode(0xffff).repeat(prefixLen);
 	return `${prefix}${String.fromCharCode(index - prefixLen * 0xffff)}`;
