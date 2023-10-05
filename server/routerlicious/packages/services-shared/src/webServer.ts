@@ -40,7 +40,10 @@ export class HttpServer implements core.IHttpServer {
 }
 
 export class WebServer implements core.IWebServer {
-	constructor(public httpServer: HttpServer, public webSocketServer: core.IWebSocketServer) {}
+	constructor(
+		public httpServer: HttpServer,
+		public webSocketServer: core.IWebSocketServer,
+	) {}
 
 	/**
 	 * Closes the web server
@@ -198,18 +201,21 @@ export class ClusterWebServerFactory implements core.IWebServerFactory {
 
 		// Kill workers when they take too long to spawn.
 		cluster.on("fork", (worker) => {
-			const timeout = setTimeout(() => {
-				Lumberjack.error("Timed out waiting for worker to spawn.", {
-					id: worker.id,
-					pid: worker.process.pid,
-				});
+			const timeout = setTimeout(
+				() => {
+					Lumberjack.error("Timed out waiting for worker to spawn.", {
+						id: worker.id,
+						pid: worker.process.pid,
+					});
 
-				// Make sure worker dies.
-				this.killWorker(worker);
+					// Make sure worker dies.
+					this.killWorker(worker);
 
-				// Remove timeout from map.
-				this.newForkTimeouts.delete(worker.id);
-			}, this.clusterConfig?.workerForkTimeoutMs);
+					// Remove timeout from map.
+					this.newForkTimeouts.delete(worker.id);
+				},
+				this.clusterConfig?.workerForkTimeoutMs,
+			);
 			this.newForkTimeouts.set(worker.id, timeout);
 		});
 		cluster.on("listening", (worker, address) => {

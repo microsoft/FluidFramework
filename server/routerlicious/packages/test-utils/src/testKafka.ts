@@ -21,7 +21,10 @@ export class TestConsumer implements IConsumer {
 	// Leverage the context code for storing and tracking an offset
 	private readonly context = new TestContext();
 
-	constructor(public groupId: string, public topic: string) {}
+	constructor(
+		public groupId: string,
+		public topic: string,
+	) {}
 
 	public setFailOnCommit(value: boolean) {
 		this.failOnCommit = value;
