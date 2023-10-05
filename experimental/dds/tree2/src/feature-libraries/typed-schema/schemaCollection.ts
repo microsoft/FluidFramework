@@ -276,6 +276,7 @@ export const bannedFieldNames = new Set([
 	"tryGetField",
 	"type",
 	"value",
+	"localNodeKey",
 ]);
 
 /**
@@ -294,7 +295,7 @@ export function validateStructFieldName(
 
 	if (bannedFieldNames.has(name)) {
 		errors.push(
-			`${describeField()} uses one of the banned field names (${[
+			`${describeField()} uses "${name}" one of the banned field names (${[
 				...bannedFieldNames,
 			]}). ${suggestion}`,
 		);

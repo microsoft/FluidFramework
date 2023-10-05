@@ -38,6 +38,7 @@ import {
 import { treeStatusFromPath } from "../editable-tree";
 import { EditableTreeEvents } from "../untypedTree";
 import { FieldKinds } from "../default-field-kinds";
+import { LocalNodeKey } from "../node-key";
 import { Context } from "./context";
 import {
 	FieldNode,
@@ -53,7 +54,7 @@ import {
 	boxedIterator,
 	TreeStatus,
 } from "./editableTreeTypes";
-import { makeField } from "./lazyField";
+import { LazyNodeKeyField, makeField } from "./lazyField";
 import {
 	LazyEntity,
 	cursorSymbol,
@@ -457,7 +458,34 @@ export class LazyFieldNode<TSchema extends FieldNodeSchema>
 
 export abstract class LazyStruct<TSchema extends StructSchema>
 	extends LazyTree<TSchema>
-	implements Struct {}
+	implements Struct
+{
+	public get localNodeKey(): LocalNodeKey | undefined {
+		// TODO: Optimize this to be in the derived class so it can cache schema lookup.
+		// TODO: Optimize this to avoid allocating the field object.
+
+		const key = this.context.nodeKeyFieldKey;
+		const fieldSchema = this.schema.structFields.get(key);
+
+		if (fieldSchema === undefined) {
+			return undefined;
+		}
+
+		const field = this.tryGetField(key);
+		assert(field instanceof LazyNodeKeyField, "unexpected node key field");
+		// TODO: ideally we would do something like this, but that adds dependencies we can't have here:
+		// assert(
+		// 	field.is(new FieldSchema(FieldKinds.nodeKey, [nodeKeyTreeSchema])),
+		// 	"invalid node key field",
+		// );
+
+		if (this.context.nodeKeyFieldKey === undefined) {
+			return undefined;
+		}
+
+		return field.localNodeKey;
+	}
+}
 
 export function buildLazyStruct<TSchema extends StructSchema>(
 	context: Context,

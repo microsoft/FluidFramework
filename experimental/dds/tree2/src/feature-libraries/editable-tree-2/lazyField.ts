@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+import { StableId } from "@fluidframework/runtime-definitions";
 import {
 	FieldKey,
 	TreeNavigationResult,
@@ -28,12 +29,14 @@ import {
 import {
 	assertValidIndex,
 	assertValidRangeIndices,
+	brand,
 	compareSets,
 	disposeSymbol,
 	fail,
 } from "../../util";
 import { AllowedTypes, FieldSchema } from "../typed-schema";
 import { treeStatusFromPath } from "../editable-tree";
+import { LocalNodeKey, StableNodeKey, nodeKeyTreeIdentifier } from "../node-key";
 import { Context } from "./context";
 import {
 	FlexibleNodeContent,
@@ -48,6 +51,7 @@ import {
 	boxedIterator,
 	CheckTypesOverlap,
 	TreeStatus,
+	NodeKeyField,
 } from "./editableTreeTypes";
 import { makeTree } from "./lazyTree";
 import {
@@ -450,6 +454,38 @@ export class LazyOptionalField<TTypes extends AllowedTypes>
 	}
 }
 
+export class LazyNodeKeyField<TTypes extends AllowedTypes>
+	extends LazyField<typeof FieldKinds.nodeKey, TTypes>
+	implements NodeKeyField
+{
+	public constructor(
+		context: Context,
+		schema: FieldSchema<typeof FieldKinds.nodeKey, TTypes>,
+		cursor: ITreeSubscriptionCursor,
+		fieldAnchor: FieldAnchor,
+	) {
+		super(context, schema, cursor, fieldAnchor);
+
+		makePropertyEnumerableOwn(this, "stableNodeKey", LazyNodeKeyField.prototype);
+	}
+
+	public get localNodeKey(): LocalNodeKey {
+		// TODO: Optimize this to be a fast path that gets a LocalNodeKey directly from the
+		// forest rather than getting the StableNodeKey and the compressing it.
+		return this.context.nodeKeys.localize(this.stableNodeKey);
+	}
+
+	public get stableNodeKey(): StableNodeKey {
+		const cursor = this[cursorSymbol];
+		cursor.enterNode(0);
+		assert(cursor.type === nodeKeyTreeIdentifier, "invalid node key type");
+		const stableKey = cursor.value;
+		assert(typeof stableKey === "string", "invalid node key type");
+		cursor.exitNode();
+		return brand(stableKey as StableId);
+	}
+}
+
 export class LazyForbiddenField<TTypes extends AllowedTypes> extends LazyField<
 	typeof FieldKinds.forbidden,
 	TTypes
@@ -464,7 +500,7 @@ type Builder = new <TTypes extends AllowedTypes>(
 
 const builderList: [FieldKind, Builder][] = [
 	[FieldKinds.forbidden, LazyForbiddenField],
-	[FieldKinds.nodeKey, LazyOptionalField], // TODO
+	[FieldKinds.nodeKey, LazyNodeKeyField],
 	[FieldKinds.optional, LazyOptionalField],
 	[FieldKinds.sequence, LazySequence],
 	[FieldKinds.required, LazyValueField],
