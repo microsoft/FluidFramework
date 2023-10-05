@@ -163,7 +163,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 
 			if (flags.updateType !== "patch" && flags.updateType !== "minor") {
 				this.warning(
-					"Ensure the client release notes indicate that server dependencies have been bumped to a new major version.",
+					"Ensure the client release notes indicate that server dependencies have been bumped to a new major version and link the release notes.",
 				);
 			}
 		}
