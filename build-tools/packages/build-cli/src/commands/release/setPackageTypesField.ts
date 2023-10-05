@@ -4,9 +4,9 @@
  */
 import { Flags } from "@oclif/core";
 import { Package, updatePackageJsonFile, PackageJson } from "@fluidframework/build-tools";
-import { PackageCommand } from "../BasePackageCommand";
+import { PackageCommand } from "../../BasePackageCommand";
 import { ExtractorConfig } from "@microsoft/api-extractor";
-import { CommandLogger } from "../logging";
+import { CommandLogger } from "../../logging";
 import path from "node:path";
 import { strict as assert } from "node:assert";
 import * as fs from "fs";
@@ -147,8 +147,11 @@ function updatePackageJsonTypes(
 			}
 
 			if (filePath) {
+				if (!fs.existsSync(filePath)) {
+					throw new Error(`${filePath} path does not exists`);
+				}
 				delete json.typings;
-				json.types = calculateRelativePath(filePath, directory);
+				json.types = path.relative(directory, filePath);
 				return true;
 			}
 		}
@@ -156,24 +159,4 @@ function updatePackageJsonTypes(
 		log.verbose(`Unable to update types: ${JSON.stringify(extractorConfig.projectFolder)}`);
 	}
 	return false;
-}
-
-/**
- * Calculates the relative path from a given file path to a target directory while
- * ensuring that the file path and the target directory have the same parent folder.
- * If the parent folders do not match, an error is thrown.
- *
- * @param filePath - The file path to calculate the relative path from.
- * @param directory - The target directory to which the relative path should be calculated.
- * @returns The calculated relative path from 'directory' to 'filePath'.
- * @throws Error if the file path does not exists.
- */
-function calculateRelativePath(filePath: string, directory: string): string {
-	if (!fs.existsSync(filePath)) {
-		throw new Error(`${filePath} path does not exists`);
-	}
-
-	const relativePath = path.relative(directory, filePath);
-
-	return relativePath;
 }
