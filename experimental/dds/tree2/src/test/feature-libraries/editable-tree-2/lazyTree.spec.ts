@@ -106,7 +106,7 @@ function initializeTreeWithContent<Kind extends FieldKind, Types extends Allowed
  */
 class TestLazyTree<TSchema extends TreeSchema> extends LazyTree<TSchema> {}
 
-describe.only("LazyTree", () => {
+describe("LazyTree", () => {
 	it("property names", () => {
 		const builder = new SchemaBuilder("lazyTree");
 		const emptyStruct = builder.struct("empty", {});
@@ -214,13 +214,31 @@ describe.only("LazyTree", () => {
 	});
 
 	// The details of `parent` are agnostic to the implementation, so tested using our test tree implementation
-	describe("parent", () => {
-		it("Unparented", () => {
-			// TODO
+	it("parent", () => {
+		const schemaBuilder = new SchemaBuilder("test", {}, leafDomain.library);
+		const fieldNodeSchema = schemaBuilder.fieldNode(
+			"field",
+			SchemaBuilder.fieldOptional(leafDomain.string),
+		);
+		const schema = schemaBuilder.intoDocumentSchema(
+			SchemaBuilder.fieldRequired(fieldNodeSchema),
+		);
+
+		const { context, cursor } = initializeTreeWithContent({
+			schema,
+			initialTree: {
+				[EmptyKey]: "Hello world",
+			},
 		});
-		it("Parented", () => {
-			// TODO
-		});
+		cursor.enterNode(0);
+
+		const anchor = context.forest.anchors.track(cursor.getPath() ?? fail());
+		const anchorNode = context.forest.anchors.locate(anchor) ?? fail();
+
+		const node = new TestLazyTree(context, fieldNodeSchema, cursor, anchorNode, anchor);
+		const { index, parent } = node.parentField;
+		assert.equal(index, 0);
+		assert.equal(parent.key, rootFieldKey);
 	});
 
 	describe("LazyFieldNode", () => {
