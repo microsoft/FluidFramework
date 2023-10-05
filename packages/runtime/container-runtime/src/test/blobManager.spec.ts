@@ -181,7 +181,11 @@ export class MockRuntime
 			this.processBlobsP.reject(new Error("fake error"));
 		}
 		this.processBlobsP = new Deferred<void>();
-		await Promise.all(blobPs).catch(() => {});
+		for (const blobP of blobPs) {
+			// allow uploadBlob to finish their then/catch statements
+			await blobP.then().catch(() => {});
+		}
+		// await Promise.allSettled(blobPs).catch(() => {});
 	}
 
 	public async processHandles() {
@@ -691,6 +695,7 @@ describe("BlobManager", () => {
 			await runtime.processBlobs(false);
 			try {
 				await handleP;
+				assert.fail("Should not succeed");
 			} catch (error: any) {
 				assert.strictEqual(error.message, "uploadBlob aborted");
 			}
@@ -756,6 +761,7 @@ describe("BlobManager", () => {
 			try {
 				// finish op
 				await handleP;
+				assert.fail("Should not succeed");
 			} catch (error: any) {
 				assert.strictEqual(error.message, "uploadBlob aborted");
 				assert.ok(error.uploadTime);
@@ -781,6 +787,7 @@ describe("BlobManager", () => {
 				runtime.disconnect();
 				ac.abort();
 				await handleP;
+				assert.fail("Should not succeed");
 			} catch (error: any) {
 				assert.strictEqual(error.message, "uploadBlob aborted");
 				assert.ok(error.uploadTime);
