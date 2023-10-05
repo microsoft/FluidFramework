@@ -35,7 +35,7 @@ import {
 	StructSchema,
 	Any,
 } from "../typed-schema";
-import { TreeStatus, treeStatusFromPath } from "../editable-tree";
+import { treeStatusFromPath } from "../editable-tree";
 import { EditableTreeEvents } from "../untypedTree";
 import { FieldKinds } from "../default-field-kinds";
 import { Context } from "./context";
@@ -50,8 +50,10 @@ import {
 	UnboxField,
 	TreeField,
 	TreeNode,
+	boxedIterator,
+	TreeStatus,
 } from "./editableTreeTypes";
-import { makeField, unboxedField } from "./lazyField";
+import { makeField } from "./lazyField";
 import {
 	LazyEntity,
 	cursorSymbol,
@@ -60,6 +62,7 @@ import {
 	makePropertyEnumerableOwn,
 	tryMoveCursorToAnchorSymbol,
 } from "./lazyEntity";
+import { unboxedField } from "./unboxed";
 
 const lazyTreeSlot = anchorSlot<LazyTree>();
 
@@ -191,7 +194,7 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 		});
 	}
 
-	public [Symbol.iterator](): IterableIterator<TreeField> {
+	public [boxedIterator](): IterableIterator<TreeField> {
 		return mapCursorFields(this[cursorSymbol], (cursor) =>
 			makeField(this.context, getFieldSchema(cursor.getFieldKey(), this.schema), cursor),
 		).values();
@@ -373,8 +376,19 @@ export class LazyMap<TSchema extends MapSchema>
 	// 	}
 	// }
 
-	public [Symbol.iterator](): IterableIterator<TypedField<TSchema["mapFields"]>> {
-		return super[Symbol.iterator]() as IterableIterator<TypedField<TSchema["mapFields"]>>;
+	public override [boxedIterator](): IterableIterator<TypedField<TSchema["mapFields"]>> {
+		return super[boxedIterator]() as IterableIterator<TypedField<TSchema["mapFields"]>>;
+	}
+
+	public [Symbol.iterator](): IterableIterator<UnboxField<TSchema["mapFields"], "notEmpty">> {
+		return mapCursorFields(
+			this[cursorSymbol],
+			(cursor) =>
+				unboxedField(this.context, this.schema.mapFields, cursor) as UnboxField<
+					TSchema["mapFields"],
+					"notEmpty"
+				>,
+		)[Symbol.iterator]();
 	}
 
 	public get asObject(): {

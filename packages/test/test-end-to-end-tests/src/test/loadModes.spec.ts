@@ -28,7 +28,11 @@ import {
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
-import { ContainerRuntime, ISummarizer, Summarizer } from "@fluidframework/container-runtime";
+import {
+	ContainerRuntime,
+	ISummarizer,
+	TEST_requestSummarizer,
+} from "@fluidframework/container-runtime";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
@@ -121,11 +125,10 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 	});
 
 	async function createContainer(): Promise<IContainer> {
-		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-			testDataObjectFactory,
-			[[testDataObjectFactory.type, Promise.resolve(testDataObjectFactory)]],
-			undefined,
-		);
+		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+			defaultFactory: testDataObjectFactory,
+			registryEntries: [[testDataObjectFactory.type, Promise.resolve(testDataObjectFactory)]],
+		});
 		const loader = createLoader(
 			[[provider.defaultCodeDetails, runtimeFactory]],
 			provider.documentServiceFactory,
@@ -143,14 +146,13 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 
 	async function loadContainer(
 		containerUrl: IResolvedUrl | undefined,
-		factory: IFluidDataStoreFactory,
+		defaultFactory: IFluidDataStoreFactory,
 		headers?: IRequestHeader,
 	): Promise<IContainer> {
-		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-			factory,
-			[[factory.type, Promise.resolve(factory)]],
-			undefined,
-		);
+		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+			defaultFactory,
+			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+		});
 		const loader = createLoader(
 			[[provider.defaultCodeDetails, runtimeFactory]],
 			provider.documentServiceFactory,
@@ -165,11 +167,10 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 	}
 
 	async function createSummarizerFromContainer(container: IContainer): Promise<ISummarizer> {
-		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-			testDataObjectFactory,
-			[[testDataObjectFactory.type, Promise.resolve(testDataObjectFactory)]],
-			undefined,
-		);
+		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+			defaultFactory: testDataObjectFactory,
+			registryEntries: [[testDataObjectFactory.type, Promise.resolve(testDataObjectFactory)]],
+		});
 		const loader = createLoader(
 			[[provider.defaultCodeDetails, runtimeFactory]],
 			provider.documentServiceFactory,
@@ -181,7 +182,7 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 		if (absoluteUrl === undefined) {
 			throw new Error("URL could not be resolved");
 		}
-		const summarizer = await Summarizer.create(loader, absoluteUrl);
+		const summarizer = await TEST_requestSummarizer(loader, absoluteUrl);
 		await waitForSummarizerConnection(summarizer);
 		return summarizer;
 	}

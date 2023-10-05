@@ -112,7 +112,11 @@ export class TreeSchema<
 
 	public readonly info: Assume<T, TreeSchemaSpecification>;
 
-	public constructor(public readonly builder: Named<string>, name: Name, info: T) {
+	public constructor(
+		public readonly builder: Named<string>,
+		name: Name,
+		info: T,
+	) {
 		this.info = info as Assume<T, TreeSchemaSpecification>;
 		this.name = name as Name & TreeSchemaIdentifier;
 		this.structFieldsObject = normalizeStructFields<
@@ -317,8 +321,12 @@ export class FieldSchema<Kind extends FieldKind = FieldKind, Types = AllowedType
 	 * Determine the multiplicity, viewing and editing APIs as well as the merge resolution policy.
 	 * @param allowedTypes - What types of tree nodes are allowed in this field.
 	 */
-	public constructor(public readonly kind: Kind, public readonly allowedTypes: Types) {}
+	public constructor(
+		public readonly kind: Kind,
+		public readonly allowedTypes: Types,
+	) {}
 
+	// TODO:#5702 cache the result of this getter
 	public get types(): TreeTypeSet {
 		return allowedTypesToTypeSet(this.allowedTypes as unknown as AllowedTypes);
 	}

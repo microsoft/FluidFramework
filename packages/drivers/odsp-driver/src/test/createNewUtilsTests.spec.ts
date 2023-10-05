@@ -30,7 +30,6 @@ describe("Create New Utils Tests", () => {
 	const documentAttributes: api.IDocumentAttributes = {
 		minimumSequenceNumber: 0,
 		sequenceNumber: 0,
-		term: 1,
 	};
 	const blobContent = "testing";
 	const createSummary = () => {

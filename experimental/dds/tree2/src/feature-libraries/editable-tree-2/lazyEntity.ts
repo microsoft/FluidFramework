@@ -9,10 +9,9 @@ import {
 	ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
 } from "../../core";
-import { TreeStatus } from "../editable-tree";
 import { fail, disposeSymbol, IDisposable } from "../../util";
 import { Context } from "./context";
-import { Tree } from "./editableTreeTypes";
+import { Tree, TreeStatus, boxedIterator } from "./editableTreeTypes";
 
 /**
  * Declare an enumerable own property on `T` under the key `key` using the implementation of one on `from`.
@@ -85,7 +84,7 @@ export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
 		makePropertyNotEnumerable(this, anchorSymbol);
 	}
 
-	public abstract [Symbol.iterator](): Iterator<Tree>;
+	public abstract [boxedIterator](): IterableIterator<Tree>;
 
 	public abstract treeStatus(): TreeStatus;
 

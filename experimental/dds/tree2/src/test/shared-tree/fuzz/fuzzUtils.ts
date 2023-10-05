@@ -19,7 +19,11 @@ import { leaf } from "../../../domains";
 
 const builder = new SchemaBuilder("Tree2 Fuzz", {}, leaf.library);
 export const fuzzNode = builder.structRecursive("Fuzz node", {
-	requiredF: SchemaBuilder.fieldRecursive(FieldKinds.value, () => fuzzNode, ...leaf.primitives),
+	requiredF: SchemaBuilder.fieldRecursive(
+		FieldKinds.required,
+		() => fuzzNode,
+		...leaf.primitives,
+	),
 	optionalF: SchemaBuilder.fieldRecursive(
 		FieldKinds.optional,
 		() => fuzzNode,

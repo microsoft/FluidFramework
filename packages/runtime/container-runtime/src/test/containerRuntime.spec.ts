@@ -53,7 +53,7 @@ import {
 	type RecentlyAddedContainerRuntimeMessageDetails,
 	type OutboundContainerRuntimeMessage,
 } from "../messageTypes";
-import { IPendingMessageNew, PendingStateManager } from "../pendingStateManager";
+import { PendingStateManager } from "../pendingStateManager";
 import { DataStores } from "../dataStores";
 import { ISummaryCancellationToken, neverCancelledSummaryToken } from "../summary";
 
@@ -123,10 +123,13 @@ describe("Runtime", () => {
 			referenceSequenceNumber: 0,
 			clientSequenceNumber: 0,
 			contents: undefined,
-			term: undefined,
 		};
 		return mockContext;
 	};
+
+	const mockProvideEntryPoint = async () => ({
+		myProp: "myValue",
+	});
 
 	describe("Container Runtime", () => {
 		describe("flushMode setting", () => {
@@ -136,6 +139,7 @@ describe("Runtime", () => {
 					registryEntries: [],
 					existing: false,
 					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
 				});
 
 				assert.strictEqual(containerRuntime.flushMode, FlushMode.TurnBased);
@@ -149,6 +153,7 @@ describe("Runtime", () => {
 					runtimeOptions: {
 						flushMode: FlushMode.Immediate,
 					},
+					provideEntryPoint: mockProvideEntryPoint,
 				});
 
 				assert.strictEqual(containerRuntime.flushMode, FlushMode.Immediate);
@@ -162,6 +167,7 @@ describe("Runtime", () => {
 					runtimeOptions: {
 						flushMode: FlushMode.TurnBased,
 					},
+					provideEntryPoint: mockProvideEntryPoint,
 				});
 
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -262,6 +268,7 @@ describe("Runtime", () => {
 								},
 								flushMode,
 							},
+							provideEntryPoint: mockProvideEntryPoint,
 						});
 						containerErrors.length = 0;
 						submittedOpsMetdata.length = 0;
@@ -616,6 +623,7 @@ describe("Runtime", () => {
 								},
 								flushMode,
 							},
+							provideEntryPoint: mockProvideEntryPoint,
 						});
 						containerErrors.length = 0;
 					});
@@ -649,8 +657,7 @@ describe("Runtime", () => {
 						pendingStates: [
 							{
 								type: "message",
-								messageType: ContainerMessageType.BlobAttach,
-								content: {},
+								content: `{"type": "${ContainerMessageType.BlobAttach}", "contents": {}}`,
 							},
 						],
 					},
@@ -678,6 +685,7 @@ describe("Runtime", () => {
 					existing: false,
 					runtimeOptions: undefined,
 					containerScope: {},
+					provideEntryPoint: mockProvideEntryPoint,
 				});
 				assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
 				assert.deepStrictEqual(updateDirtyStateStub.args, [[false]]);
@@ -692,6 +700,7 @@ describe("Runtime", () => {
 					existing: false,
 					requestHandler: undefined,
 					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
 				});
 				assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
 				assert.deepStrictEqual(updateDirtyStateStub.args, [[true]]);
@@ -706,6 +715,7 @@ describe("Runtime", () => {
 					existing: false,
 					requestHandler: undefined,
 					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
 				});
 				assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
 				assert.deepStrictEqual(updateDirtyStateStub.args, [[true]]);
@@ -720,6 +730,7 @@ describe("Runtime", () => {
 					existing: false,
 					requestHandler: undefined,
 					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
 				});
 				assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
 				assert.deepStrictEqual(updateDirtyStateStub.args, [[true]]);
@@ -805,6 +816,7 @@ describe("Runtime", () => {
 							},
 						},
 					},
+					provideEntryPoint: mockProvideEntryPoint,
 				});
 			});
 
@@ -1037,6 +1049,7 @@ describe("Runtime", () => {
 					existing: false,
 					requestHandler: undefined,
 					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
 				});
 			});
 			it("process remote op with unrecognized type and 'Ignore' compat behavior", async () => {
@@ -1138,6 +1151,7 @@ describe("Runtime", () => {
 					existing: false,
 					requestHandler: undefined,
 					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
 				});
 			});
 
@@ -1221,7 +1235,7 @@ describe("Runtime", () => {
 						public static async loadRuntime(params: {
 							context: IContainerContext;
 							containerRuntimeCtor?: typeof ContainerRuntime;
-							initializeEntryPoint: (
+							provideEntryPoint: (
 								containerRuntime: IContainerRuntime,
 							) => Promise<FluidObject>;
 							existing: boolean;
@@ -1252,7 +1266,7 @@ describe("Runtime", () => {
 					42,
 				).loadRuntime({
 					context: getMockContext() as IContainerContext,
-					initializeEntryPoint: async (containerRuntime) => myEntryPoint,
+					provideEntryPoint: async (containerRuntime) => myEntryPoint,
 					existing: false,
 					registryEntries: [],
 				});
@@ -1290,15 +1304,6 @@ describe("Runtime", () => {
 					myResponse,
 					"request method in runtime did not return the expected object",
 				);
-
-				// The entryPoint should use the request handler we passed in the runtime's constructor
-				assert(containerRuntime.getEntryPoint !== undefined);
-				const actualEntryPoint = await containerRuntime.getEntryPoint?.();
-				assert.notStrictEqual(
-					actualEntryPoint,
-					undefined,
-					"entryPoint was not the expected object",
-				);
 			});
 
 			it("when using new loadRuntime method", async () => {
@@ -1307,51 +1312,18 @@ describe("Runtime", () => {
 				};
 				const containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext() as IContainerContext,
-					initializeEntryPoint: async (ctrRuntime) => myEntryPoint,
+					provideEntryPoint: async (ctrRuntime) => myEntryPoint,
 					existing: false,
 					registryEntries: [],
 				});
 
 				// The entryPoint should come from the provided initialization function.
-				const actualEntryPoint = await containerRuntime.getEntryPoint?.();
+				const actualEntryPoint = await containerRuntime.getEntryPoint();
 				assert(actualEntryPoint !== undefined, "entryPoint was not initialized");
 				assert.deepEqual(
 					actualEntryPoint,
 					myEntryPoint,
 					"entryPoint does not match expected object",
-				);
-			});
-
-			// TODO: Remove this test in internal.7.0 when initializeEntryPoint becomes required AB#4992
-			it("loadRuntime only passed requestHandlers", async () => {
-				const myResponse: IResponse = {
-					mimeType: "fluid/object",
-					value: "hello!",
-					status: 200,
-				};
-
-				const containerRuntime = await ContainerRuntime.loadRuntime({
-					context: getMockContext() as IContainerContext,
-					requestHandler: async (req, ctrRuntime) => myResponse,
-					existing: false,
-					registryEntries: [],
-				});
-
-				// Calling request on the runtime should use the request handler we passed in the runtime's constructor.
-				const responseFromRequestMethod = await containerRuntime.request({ url: "/" });
-				assert.deepEqual(
-					responseFromRequestMethod,
-					myResponse,
-					"request method in runtime did not return the expected object",
-				);
-
-				// The entryPoint should use the request handler we passed in the runtime's constructor
-				assert(containerRuntime.getEntryPoint !== undefined);
-				const actualEntryPoint = await containerRuntime.getEntryPoint?.();
-				assert.notStrictEqual(
-					actualEntryPoint,
-					undefined,
-					"entryPoint was not the expected object",
 				);
 			});
 
@@ -1368,7 +1340,7 @@ describe("Runtime", () => {
 				const containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext() as IContainerContext,
 					requestHandler: async (req, ctrRuntime) => myResponse,
-					initializeEntryPoint: async (ctrRuntime) => myEntryPoint,
+					provideEntryPoint: async (ctrRuntime) => myEntryPoint,
 					existing: false,
 					registryEntries: [],
 				});
@@ -1382,7 +1354,7 @@ describe("Runtime", () => {
 				);
 
 				// The entryPoint should come from the provided initialization function.
-				const actualEntryPoint = await containerRuntime.getEntryPoint?.();
+				const actualEntryPoint = await containerRuntime.getEntryPoint();
 				assert(actualEntryPoint !== undefined, "entryPoint was not initialized");
 				assert.deepEqual(
 					actualEntryPoint,
@@ -1402,6 +1374,7 @@ describe("Runtime", () => {
 					registryEntries: [],
 					existing: false,
 					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
 				});
 				pendingStateManager = (containerRuntime as any).pendingStateManager;
 			});
@@ -1418,8 +1391,7 @@ describe("Runtime", () => {
 				assert.notStrictEqual(state, undefined, "expect pending local state");
 				assert.strictEqual(state?.pendingStates.length, 1, "expect 1 pending message");
 				assert.deepStrictEqual(
-					JSON.parse((state?.pendingStates[0] as IPendingMessageNew).content).contents
-						.contents,
+					JSON.parse(state?.pendingStates?.[0].content).contents.contents,
 					{
 						prop1: 1,
 					},
@@ -1490,6 +1462,7 @@ describe("Runtime", () => {
 					registryEntries: [],
 					existing: false,
 					runtimeOptions,
+					provideEntryPoint: mockProvideEntryPoint,
 				});
 
 				mockLogger.assertMatchAny([
@@ -1517,6 +1490,7 @@ describe("Runtime", () => {
 					registryEntries: [],
 					existing: false,
 					runtimeOptions,
+					provideEntryPoint: mockProvideEntryPoint,
 				});
 
 				mockLogger.assertMatchAny([
@@ -1575,6 +1549,7 @@ describe("Runtime", () => {
 						runtimeOptions: {
 							flushMode: FlushModeExperimental.Async as unknown as FlushMode,
 						},
+						provideEntryPoint: mockProvideEntryPoint,
 					});
 
 					assert.equal(runtime.flushMode, FlushMode.TurnBased);
@@ -1597,6 +1572,7 @@ describe("Runtime", () => {
 					runtimeOptions: {
 						flushMode: FlushModeExperimental.Async as unknown as FlushMode,
 					},
+					provideEntryPoint: mockProvideEntryPoint,
 				});
 
 				assert.equal(runtime.flushMode, FlushModeExperimental.Async);
@@ -1627,6 +1603,7 @@ describe("Runtime", () => {
 					context: getMockContext(settings) as IContainerContext,
 					registryEntries: [],
 					existing: false,
+					provideEntryPoint: mockProvideEntryPoint,
 				});
 			});
 

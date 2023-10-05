@@ -31,7 +31,7 @@ export {
 	takeAsync,
 } from "./generators";
 export { PerformanceWordMarkovChain, SpaceEfficientWordMarkovChain } from "./markovChain";
-export { performFuzzActions, performFuzzActionsAsync } from "./performActions";
+export { performFuzzActions, performFuzzActionsAsync, saveOpsToFile } from "./performActions";
 export { makeRandom } from "./random";
 export {
 	AcceptanceCondition,

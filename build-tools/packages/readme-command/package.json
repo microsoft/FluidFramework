@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/readme-command",
-	"version": "0.24.0",
+	"version": "0.26.0",
 	"private": true,
 	"description": "CLI to generate readmes for Fluid build-tools",
 	"homepage": "https://fluidframework.com",
@@ -62,8 +62,8 @@
 		"eslint": "~8.6.0",
 		"eslint-config-oclif": "^4.0.0",
 		"eslint-config-oclif-typescript": "^1.0.3",
-		"eslint-config-prettier": "~8.5.0",
-		"prettier": "~2.6.2",
+		"eslint-config-prettier": "~9.0.0",
+		"prettier": "~3.0.3",
 		"rimraf": "^4.4.1",
 		"ts-node": "^10.9.1",
 		"tslib": "^2.6.0",

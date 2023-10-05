@@ -23,6 +23,7 @@ export {
 	DefaultSummaryConfiguration,
 	ICompressionRuntimeOptions,
 	CompressionAlgorithms,
+	TEST_requestSummarizer,
 } from "./containerRuntime";
 export {
 	ContainerMessageType,
