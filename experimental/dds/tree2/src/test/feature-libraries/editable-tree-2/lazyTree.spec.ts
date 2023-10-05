@@ -124,13 +124,13 @@ describe.only("LazyTree", () => {
 		"optionalString",
 		SchemaBuilder.fieldOptional(leafDomain.string),
 	);
-	const fieldNodeValueAnySchema = _schemaBuilder.fieldNode(
-		"valueAny",
-		SchemaBuilder.fieldValue(Any),
+	const fieldNodeRequiredAnySchema = _schemaBuilder.fieldNode(
+		"requiredAny",
+		SchemaBuilder.fieldRequired(Any),
 	);
-	const fieldNodeValueStringSchema = _schemaBuilder.fieldNode(
+	const fieldNodeRequiredStringSchema = _schemaBuilder.fieldNode(
 		"valueString",
-		SchemaBuilder.fieldValue(leafDomain.string),
+		SchemaBuilder.fieldRequired(leafDomain.string),
 	);
 	const structNodeSchema = _schemaBuilder.struct("struct", {
 		foo: SchemaBuilder.fieldOptional(leafDomain.string),
@@ -206,7 +206,7 @@ describe.only("LazyTree", () => {
 			sharedTestSchemas,
 		);
 		const schema = schemaBuilder.intoDocumentSchema(
-			SchemaBuilder.fieldValue(fieldNodeOptionalAnySchema),
+			SchemaBuilder.fieldRequired(fieldNodeOptionalAnySchema),
 		);
 
 		it("is", () => {
@@ -227,9 +227,9 @@ describe.only("LazyTree", () => {
 			assert(node.is(fieldNodeOptionalAnySchema));
 
 			assert(!node.is(fieldNodeOptionalStringSchema));
-			assert(!node.is(fieldNodeValueAnySchema));
-			assert(!node.is(fieldNodeValueStringSchema));
-			assert(!node.is(fieldNodeValueStringSchema));
+			assert(!node.is(fieldNodeRequiredAnySchema));
+			assert(!node.is(fieldNodeRequiredStringSchema));
+			assert(!node.is(fieldNodeRequiredStringSchema));
 			assert(!node.is(leafDomain.string));
 			assert(!node.is(structNodeSchema));
 		});
@@ -313,7 +313,7 @@ describe.only("LazyTree", () => {
 			sharedTestSchemas,
 		);
 		const schema = schemaBuilder.intoDocumentSchema(
-			SchemaBuilder.fieldValue(leafDomain.string),
+			SchemaBuilder.fieldRequired(leafDomain.string),
 		);
 
 		const { context, cursor } = initializeTreeWithContent({
@@ -332,8 +332,8 @@ describe.only("LazyTree", () => {
 
 			assert(!node.is(fieldNodeOptionalAnySchema));
 			assert(!node.is(fieldNodeOptionalStringSchema));
-			assert(!node.is(fieldNodeValueAnySchema));
-			assert(!node.is(fieldNodeValueStringSchema));
+			assert(!node.is(fieldNodeRequiredAnySchema));
+			assert(!node.is(fieldNodeRequiredStringSchema));
 			assert(!node.is(leafDomain.number));
 			assert(!node.is(structNodeSchema));
 		});
@@ -353,7 +353,7 @@ describe.only("LazyTree", () => {
 			sharedTestSchemas,
 		);
 		const schema = schemaBuilder.intoDocumentSchema(
-			SchemaBuilder.fieldValue(mapNodeStringSchema),
+			SchemaBuilder.fieldRequired(mapNodeStringSchema),
 		);
 
 		const { context, cursor } = initializeTreeWithContent({
@@ -376,8 +376,8 @@ describe.only("LazyTree", () => {
 			assert(!node.is(mapNodeAnySchema));
 			assert(!node.is(fieldNodeOptionalAnySchema));
 			assert(!node.is(fieldNodeOptionalStringSchema));
-			assert(!node.is(fieldNodeValueAnySchema));
-			assert(!node.is(fieldNodeValueStringSchema));
+			assert(!node.is(fieldNodeRequiredAnySchema));
+			assert(!node.is(fieldNodeRequiredStringSchema));
 			assert(!node.is(leafDomain.string));
 			assert(!node.is(structNodeSchema));
 		});
@@ -431,8 +431,8 @@ describe.only("LazyTree", () => {
 			assert(!node.is(mapNodeAnySchema));
 			assert(!node.is(fieldNodeOptionalAnySchema));
 			assert(!node.is(fieldNodeOptionalStringSchema));
-			assert(!node.is(fieldNodeValueAnySchema));
-			assert(!node.is(fieldNodeValueStringSchema));
+			assert(!node.is(fieldNodeRequiredAnySchema));
+			assert(!node.is(fieldNodeRequiredStringSchema));
 			assert(!node.is(leafDomain.string));
 		});
 
