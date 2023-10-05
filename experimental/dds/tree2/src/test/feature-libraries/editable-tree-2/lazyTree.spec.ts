@@ -294,8 +294,6 @@ describe.only("LazyTree", () => {
 				assert(field.is(SchemaBuilder.fieldOptional(leafDomain.string)));
 			});
 		});
-
-		// TODO: what else?
 	});
 
 	describe("LazyLeaf", () => {
@@ -318,8 +316,6 @@ describe.only("LazyTree", () => {
 		it("value", () => {
 			assert.equal(node.value, "Hello world");
 		});
-
-		// TODO: what else?
 	});
 
 	describe("LazyMap", () => {
@@ -353,8 +349,6 @@ describe.only("LazyTree", () => {
 			assert.notEqual(node.tryGetField(brand("bar")), undefined);
 			assert.equal(node.tryGetField(brand("baz")), undefined);
 		});
-
-		// TODO: what else?
 	});
 
 	describe("LazyStruct", () => {
