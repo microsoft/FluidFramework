@@ -35,6 +35,7 @@ import { leaf as leafDomain } from "../../../domains";
 import { brand } from "../../../util";
 import { type Context } from "../../../feature-libraries/editable-tree-2/context";
 import {
+	LazyField,
 	LazyOptionalField,
 	LazySequence,
 	LazyValueField,
@@ -74,6 +75,11 @@ function initializeTreeWithContent<Kind extends FieldKind, Types extends Allowed
 		cursor,
 	};
 }
+
+class MockLazyField<TTypes extends AllowedTypes> extends LazyField<
+	typeof FieldKinds.optional,
+	TTypes
+> {}
 
 describe("LazyField", () => {
 	it("LazyField implementations do not allow edits to detached trees", () => {
@@ -129,83 +135,121 @@ describe("LazyField", () => {
 		);
 	});
 
-	describe("LazyOptionalField", () => {
-		it("is", () => {
-			// #region Tree and schema initialization
+	it("is", () => {
+		// #region Tree and schema initialization
 
-			const builder = new SchemaBuilder("test", undefined, leafDomain.library);
-			const recursiveStructSchema = builder.structRecursive("recursiveStruct", {
-				flag: SchemaBuilder.fieldRequired(leafDomain.boolean),
-				child: SchemaBuilder.fieldRecursive(
-					FieldKinds.optional,
-					() => recursiveStructSchema,
-				),
-			});
-			const rootSchema = SchemaBuilder.fieldOptional(builder.struct("struct", {}));
-			const schema = builder.intoDocumentSchema(rootSchema);
+		const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+		const recursiveStructSchema = builder.structRecursive("recursiveStruct", {
+			flag: SchemaBuilder.fieldRequired(leafDomain.boolean),
+			child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => recursiveStructSchema),
+		});
+		const rootSchema = SchemaBuilder.fieldOptional(builder.struct("struct", {}));
+		const schema = builder.intoDocumentSchema(rootSchema);
 
-			const { context, cursor } = initializeTreeWithContent({ schema, initialTree: {} });
+		const { context, cursor } = initializeTreeWithContent({ schema, initialTree: {} });
 
-			// #endregion
+		// #endregion
 
-			// #region OptionalField<Any>
+		// #region OptionalField<Any>
 
-			const anyOptionalField = new LazyOptionalField(
-				context,
-				SchemaBuilder.fieldOptional(Any),
-				cursor,
-				detachedFieldAnchor,
-			);
+		const anyOptionalField = new MockLazyField(
+			context,
+			SchemaBuilder.fieldOptional(Any),
+			cursor,
+			detachedFieldAnchor,
+		);
 
-			assert(anyOptionalField.is(SchemaBuilder.fieldOptional(Any)));
+		assert(anyOptionalField.is(SchemaBuilder.fieldOptional(Any)));
 
-			assert(!anyOptionalField.is(SchemaBuilder.fieldOptional()));
-			assert(!anyOptionalField.is(SchemaBuilder.fieldOptional(leafDomain.boolean)));
-			assert(!anyOptionalField.is(SchemaBuilder.fieldRequired()));
-			assert(!anyOptionalField.is(SchemaBuilder.fieldRequired(Any)));
-			assert(!anyOptionalField.is(SchemaBuilder.fieldRequired(leafDomain.boolean)));
-			assert(!anyOptionalField.is(SchemaBuilder.fieldSequence()));
-			assert(!anyOptionalField.is(SchemaBuilder.fieldSequence(Any)));
-			assert(!anyOptionalField.is(SchemaBuilder.fieldSequence(leafDomain.boolean)));
-			assert(
-				!anyOptionalField.is(
-					SchemaBuilder.fieldRecursive(FieldKinds.required, recursiveStructSchema),
-				),
-			);
+		assert(!anyOptionalField.is(SchemaBuilder.fieldOptional()));
+		assert(!anyOptionalField.is(SchemaBuilder.fieldOptional(leafDomain.boolean)));
+		assert(!anyOptionalField.is(SchemaBuilder.fieldRequired()));
+		assert(!anyOptionalField.is(SchemaBuilder.fieldRequired(Any)));
+		assert(!anyOptionalField.is(SchemaBuilder.fieldRequired(leafDomain.boolean)));
+		assert(!anyOptionalField.is(SchemaBuilder.fieldSequence()));
+		assert(!anyOptionalField.is(SchemaBuilder.fieldSequence(Any)));
+		assert(!anyOptionalField.is(SchemaBuilder.fieldSequence(leafDomain.boolean)));
+		assert(
+			!anyOptionalField.is(
+				SchemaBuilder.fieldRecursive(FieldKinds.required, recursiveStructSchema),
+			),
+		);
 
-			// #endregion
+		// #endregion
 
-			// #region OptionalField<Primitive>
+		// #region OptionalField<Primitive>
 
-			const booleanOptionalField = new LazyOptionalField(
-				context,
-				SchemaBuilder.fieldOptional(leafDomain.boolean),
-				cursor,
-				detachedFieldAnchor,
-			);
+		const booleanOptionalField = new LazyOptionalField(
+			context,
+			SchemaBuilder.fieldOptional(leafDomain.boolean),
+			cursor,
+			detachedFieldAnchor,
+		);
 
-			assert(booleanOptionalField.is(SchemaBuilder.fieldOptional(leafDomain.boolean)));
+		assert(booleanOptionalField.is(SchemaBuilder.fieldOptional(leafDomain.boolean)));
 
-			assert(!booleanOptionalField.is(SchemaBuilder.fieldOptional(Any)));
-			assert(!booleanOptionalField.is(SchemaBuilder.fieldOptional(leafDomain.number)));
-			assert(!booleanOptionalField.is(SchemaBuilder.fieldRequired()));
-			assert(!booleanOptionalField.is(SchemaBuilder.fieldRequired(Any)));
-			assert(!booleanOptionalField.is(SchemaBuilder.fieldRequired(leafDomain.boolean)));
-			assert(!booleanOptionalField.is(SchemaBuilder.fieldRequired(leafDomain.number)));
-			assert(!booleanOptionalField.is(SchemaBuilder.fieldSequence()));
-			assert(!booleanOptionalField.is(SchemaBuilder.fieldSequence(Any)));
-			assert(!booleanOptionalField.is(SchemaBuilder.fieldSequence(leafDomain.boolean)));
-			assert(!booleanOptionalField.is(SchemaBuilder.fieldSequence(leafDomain.number)));
-			assert(
-				!booleanOptionalField.is(
-					SchemaBuilder.fieldRecursive(FieldKinds.required, recursiveStructSchema),
-				),
-			);
-			assert(!booleanOptionalField.is(SchemaBuilder.fieldOptional()));
+		assert(!booleanOptionalField.is(SchemaBuilder.fieldOptional(Any)));
+		assert(!booleanOptionalField.is(SchemaBuilder.fieldOptional(leafDomain.number)));
+		assert(!booleanOptionalField.is(SchemaBuilder.fieldRequired()));
+		assert(!booleanOptionalField.is(SchemaBuilder.fieldRequired(Any)));
+		assert(!booleanOptionalField.is(SchemaBuilder.fieldRequired(leafDomain.boolean)));
+		assert(!booleanOptionalField.is(SchemaBuilder.fieldRequired(leafDomain.number)));
+		assert(!booleanOptionalField.is(SchemaBuilder.fieldSequence()));
+		assert(!booleanOptionalField.is(SchemaBuilder.fieldSequence(Any)));
+		assert(!booleanOptionalField.is(SchemaBuilder.fieldSequence(leafDomain.boolean)));
+		assert(!booleanOptionalField.is(SchemaBuilder.fieldSequence(leafDomain.number)));
+		assert(
+			!booleanOptionalField.is(
+				SchemaBuilder.fieldRecursive(FieldKinds.required, recursiveStructSchema),
+			),
+		);
+		assert(!booleanOptionalField.is(SchemaBuilder.fieldOptional()));
 
-			// #endregion
+		// #endregion
+	});
+
+	it("parent", () => {
+		const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+		const struct = builder.struct("struct", {
+			foo: SchemaBuilder.fieldOptional(...leafDomain.primitives),
+		});
+		const rootSchema = SchemaBuilder.fieldOptional(struct);
+		const schema = builder.intoDocumentSchema(rootSchema);
+
+		const { context, cursor } = initializeTreeWithContent({
+			schema,
+			initialTree: {
+				foo: "Hello world",
+			},
 		});
 
+		const rootField = new MockLazyField(context, rootSchema, cursor, rootFieldAnchor);
+		assert.equal(rootField.parent, undefined);
+
+		const parentPath: UpPath = {
+			parent: undefined,
+			parentField: rootFieldKey,
+			parentIndex: 0,
+		};
+		const parentAnchor = context.forest.anchors.track(parentPath);
+
+		// Move cursor down to leaf field
+		cursor.enterNode(0);
+		cursor.enterField(brand("foo"));
+
+		const leafField = new MockLazyField(
+			context,
+			SchemaBuilder.fieldOptional(...leafDomain.primitives),
+			cursor,
+			{
+				parent: parentAnchor,
+				fieldKey: brand("foo"),
+			},
+		);
+		assert.equal(leafField.parent, rootField.boxedAt(0));
+	});
+
+	describe("LazyOptionalField", () => {
 		describe("at", () => {
 			it("Unboxes", () => {
 				const builder = new SchemaBuilder("test", undefined, leafDomain.library);
@@ -235,47 +279,6 @@ describe("LazyField", () => {
 			const boxedResult = field.boxedAt(0);
 			assert.equal(boxedResult.type, leafDomain.string.name);
 			assert.equal(boxedResult.value, "Hello world");
-		});
-
-		it("parent", () => {
-			const builder = new SchemaBuilder("test", undefined, leafDomain.library);
-			const struct = builder.struct("struct", {
-				foo: SchemaBuilder.fieldOptional(...leafDomain.primitives),
-			});
-			const rootSchema = SchemaBuilder.fieldOptional(struct);
-			const schema = builder.intoDocumentSchema(rootSchema);
-
-			const { context, cursor } = initializeTreeWithContent({
-				schema,
-				initialTree: {
-					foo: "Hello world",
-				},
-			});
-
-			const rootField = new LazyOptionalField(context, rootSchema, cursor, rootFieldAnchor);
-			assert.equal(rootField.parent, undefined);
-
-			const parentPath: UpPath = {
-				parent: undefined,
-				parentField: rootFieldKey,
-				parentIndex: 0,
-			};
-			const parentAnchor = context.forest.anchors.track(parentPath);
-
-			// Move cursor down to leaf field
-			cursor.enterNode(0);
-			cursor.enterField(brand("foo"));
-
-			const leafField = new LazyOptionalField(
-				context,
-				SchemaBuilder.fieldOptional(...leafDomain.primitives),
-				cursor,
-				{
-					parent: parentAnchor,
-					fieldKey: brand("foo"),
-				},
-			);
-			assert.equal(leafField.parent, rootField.boxedAt(0));
 		});
 
 		describe("length", () => {
@@ -386,85 +389,6 @@ describe("LazyField", () => {
 	});
 
 	describe("LazyValueField", () => {
-		it("is", () => {
-			// #region Tree and schema initialization
-
-			const builder = new SchemaBuilder("test", undefined, leafDomain.library);
-			const recursiveStructSchema = builder.structRecursive("recursiveStruct", {
-				flag: SchemaBuilder.fieldRequired(leafDomain.boolean),
-				child: SchemaBuilder.fieldRecursive(
-					FieldKinds.optional,
-					() => recursiveStructSchema,
-				),
-			});
-			const rootSchema = SchemaBuilder.fieldRequired(builder.struct("struct", {}));
-			const schema = builder.intoDocumentSchema(rootSchema);
-
-			const { context, cursor } = initializeTreeWithContent({
-				schema,
-				initialTree: {},
-			});
-
-			// #endregion
-
-			// #region ValueField<Any>
-
-			const anyValueField = new LazyValueField(
-				context,
-				SchemaBuilder.fieldRequired(Any),
-				cursor,
-				detachedFieldAnchor,
-			);
-
-			assert(anyValueField.is(SchemaBuilder.fieldRequired(Any)));
-
-			assert(!anyValueField.is(SchemaBuilder.fieldRequired()));
-			assert(!anyValueField.is(SchemaBuilder.fieldRequired(leafDomain.boolean)));
-			assert(!anyValueField.is(SchemaBuilder.fieldOptional()));
-			assert(!anyValueField.is(SchemaBuilder.fieldOptional(leafDomain.boolean)));
-			assert(!anyValueField.is(SchemaBuilder.fieldSequence()));
-			assert(!anyValueField.is(SchemaBuilder.fieldSequence(Any)));
-			assert(!anyValueField.is(SchemaBuilder.fieldSequence(leafDomain.boolean)));
-			assert(
-				!anyValueField.is(
-					SchemaBuilder.fieldRecursive(FieldKinds.required, recursiveStructSchema),
-				),
-			);
-			assert(!anyValueField.is(SchemaBuilder.fieldOptional(Any)));
-
-			// #endregion
-
-			// #region ValueField<Primitive>
-
-			const booleanValueField = new LazyValueField(
-				context,
-				SchemaBuilder.fieldRequired(leafDomain.boolean),
-				cursor,
-				detachedFieldAnchor,
-			);
-
-			assert(booleanValueField.is(SchemaBuilder.fieldRequired(leafDomain.boolean)));
-
-			assert(!booleanValueField.is(SchemaBuilder.fieldRequired(Any)));
-			assert(!booleanValueField.is(SchemaBuilder.fieldOptional()));
-			assert(!booleanValueField.is(SchemaBuilder.fieldOptional(Any)));
-			assert(!booleanValueField.is(SchemaBuilder.fieldOptional(leafDomain.number)));
-			assert(!booleanValueField.is(SchemaBuilder.fieldSequence()));
-			assert(!booleanValueField.is(SchemaBuilder.fieldSequence(Any)));
-			assert(!booleanValueField.is(SchemaBuilder.fieldSequence(leafDomain.boolean)));
-			assert(!booleanValueField.is(SchemaBuilder.fieldSequence(leafDomain.number)));
-			assert(
-				!booleanValueField.is(
-					SchemaBuilder.fieldRecursive(FieldKinds.required, recursiveStructSchema),
-				),
-			);
-			assert(!booleanValueField.is(SchemaBuilder.fieldRequired()));
-			assert(!booleanValueField.is(SchemaBuilder.fieldRequired(leafDomain.number)));
-			assert(!booleanValueField.is(SchemaBuilder.fieldOptional(leafDomain.boolean)));
-
-			// #endregion
-		});
-
 		describe("at", () => {
 			it("Unboxes", () => {
 				const builder = new SchemaBuilder("test", undefined, leafDomain.library);
@@ -550,81 +474,6 @@ describe("LazyField", () => {
 	});
 
 	describe("LazySequence", () => {
-		it("is", () => {
-			// #region Tree and schema initialization
-
-			const builder = new SchemaBuilder("test", undefined, leafDomain.library);
-			const recursiveStructSchema = builder.structRecursive("recursiveStruct", {
-				flag: SchemaBuilder.fieldRequired(leafDomain.boolean),
-				child: SchemaBuilder.fieldRecursive(
-					FieldKinds.optional,
-					() => recursiveStructSchema,
-				),
-			});
-			const rootSchema = SchemaBuilder.fieldOptional(builder.struct("struct", {}));
-			const schema = builder.intoDocumentSchema(rootSchema);
-
-			const { context, cursor } = initializeTreeWithContent({ schema, initialTree: {} });
-
-			// #endregion
-
-			// #region Sequence<Any>
-
-			const anySequence = new LazySequence(
-				context,
-				SchemaBuilder.fieldSequence(Any),
-				cursor,
-				detachedFieldAnchor,
-			);
-
-			// Positive cases
-			assert(anySequence.is(SchemaBuilder.fieldSequence(Any)));
-
-			// Negative cases
-			assert(!anySequence.is(SchemaBuilder.fieldOptional()));
-			assert(!anySequence.is(SchemaBuilder.fieldOptional(Any)));
-			assert(!anySequence.is(SchemaBuilder.fieldOptional(leafDomain.boolean)));
-			assert(!anySequence.is(SchemaBuilder.fieldRequired()));
-			assert(!anySequence.is(SchemaBuilder.fieldRequired(Any)));
-			assert(!anySequence.is(SchemaBuilder.fieldRequired(leafDomain.boolean)));
-			assert(!anySequence.is(SchemaBuilder.fieldSequence(leafDomain.boolean)));
-			assert(!anySequence.is(SchemaBuilder.fieldSequence()));
-			assert(
-				!anySequence.is(
-					SchemaBuilder.fieldRecursive(FieldKinds.required, recursiveStructSchema),
-				),
-			);
-
-			// #endregion
-
-			// #region Sequence<Primitive>
-
-			const primitiveSequence = new LazySequence(
-				context,
-				SchemaBuilder.fieldSequence(leafDomain.boolean),
-				cursor,
-				detachedFieldAnchor,
-			);
-
-			// Positive cases
-			assert(primitiveSequence.is(SchemaBuilder.fieldSequence(leafDomain.boolean)));
-
-			// Negative cases
-			assert(!primitiveSequence.is(SchemaBuilder.fieldOptional()));
-			assert(!primitiveSequence.is(SchemaBuilder.fieldOptional(Any)));
-			assert(!primitiveSequence.is(SchemaBuilder.fieldOptional(leafDomain.boolean)));
-			assert(!primitiveSequence.is(SchemaBuilder.fieldRequired()));
-			assert(!primitiveSequence.is(SchemaBuilder.fieldRequired(Any)));
-			assert(!primitiveSequence.is(SchemaBuilder.fieldRequired(leafDomain.boolean)));
-			assert(
-				!primitiveSequence.is(
-					SchemaBuilder.fieldRecursive(FieldKinds.required, recursiveStructSchema),
-				),
-			);
-
-			// #endregion
-		});
-
 		describe("at", () => {
 			it("Unboxes", () => {
 				const builder = new SchemaBuilder("test", undefined, leafDomain.library);
