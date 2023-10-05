@@ -999,10 +999,12 @@ function runTest<TChannelFactory extends IChannelFactory, TOperation extends Bas
 ): void {
 	const itFn = options.only.has(seed) ? it.only : options.skip.has(seed) ? it.skip : it;
 	itFn(`seed ${seed}`, async () => {
+		// don't write to files or do minimization in CI
+		const inCi = !!process.env.TF_BUILD;
 		try {
-			await runTestForSeed(model, options, seed, saveInfo);
+			await runTestForSeed(model, options, seed, inCi ? undefined : saveInfo);
 		} catch (error) {
-			if (!saveInfo) {
+			if (!saveInfo || inCi) {
 				throw error;
 			}
 
