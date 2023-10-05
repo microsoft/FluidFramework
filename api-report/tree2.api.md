@@ -1463,8 +1463,6 @@ export interface OptionalField<TTypes extends AllowedTypes> extends TreeField {
     // (undocumented)
     get content(): UnboxNodeUnion<TTypes> | undefined;
     set content(newContent: FlexibleNodeContent<TTypes> | undefined);
-    // (undocumented)
-    setContent(content: FlexibleNodeContent<TTypes> | undefined): void;
 }
 
 // @alpha (undocumented)
