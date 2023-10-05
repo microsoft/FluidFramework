@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { SaveInfo, makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { BaseOperation, DDSFuzzModel, DDSFuzzSuiteOptions, replayTest } from "./ddsFuzzHarness";
@@ -51,9 +56,6 @@ export class FuzzTestMinimizer<
 		return this.operations;
 	}
 
-	/**
-	 * Remove any superfluous ops
-	 */
 	private async tryDeleteEachOp(): Promise<void> {
 		let idx = this.operations.length - 1;
 

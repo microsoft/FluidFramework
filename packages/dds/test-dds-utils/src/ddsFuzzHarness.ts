@@ -675,7 +675,7 @@ export function mixinSynchronization<
 ): DDSFuzzModel<TChannelFactory, TOperation | Synchronize, TState> {
 	const { validationStrategy } = options;
 	let generatorFactory: () => Generator<TOperation | Synchronize, TState>;
-	// const minimizationTransforms = model.minimizationTransforms as MinimizationTransform<TOperation | Synchronize>[] | undefined;
+
 	switch (validationStrategy.type) {
 		case "random": {
 			// passing 1 here causes infinite loops. passing close to 1 is wasteful
