@@ -43,6 +43,11 @@ parameters:
   default:
   - fluid-framework
 
+variables:
+- name: toolAbsolutePath
+  value: $(Build.SourcesDirectory)/tools/telemetry-generator
+  readonly: true
+
 trigger:
   branches:
     include:
@@ -164,3 +169,35 @@ extends:
           targetPath: './packages/tools/devtools/devtools-browser-extension/dist/bundle/'
           artifactName: 'devtools-extension-bundle'
           publishLocation: 'pipeline'
+
+  # Capture per-pipeline stage results
+- ${{ if eq(variables['Build.Reason'], 'IndividualCI') }}:
+  # not sure if i need the stage and condition: not in a stages block and i dont want it to run all the time
+  displayName: Retrieve and upload client stage stats to Kusto
+  dependsOn: []
+  jobs:
+    - template: include-test-perf-benchmarks.yml
+      parameters:
+          testWorkspace: ${{ variables.testWorkspace }}
+          poolBuild: Small
+          customSteps:
+
+          - task: Bash@3
+            displayName: Retrieve buildId results
+            inputs:
+              targetType: 'inline'
+              workingDirectory: $(toolAbsolutePath)
+              script: |
+                echo "creating output folder"
+                mkdir -p ${{ variables.testWorkspace }}/clientOutput
+                echo "Executing curl command ..."
+                echo  'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$(Build.BuildId)/timeline"'
+                curl -u ":$(System.AccessToken)" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$(Build.BuildId)/timeline\?api-version\=6.0-preview.1" > ${{ variables.testWorkspace }}/clientOutput/output.json
+                pwd;
+                ls -laR ${{ variables.testWorkspace }}/clientOutput/output.json;
+                cat ${{ variables.testWorkspace }}/clientOutput/output.json;
+                node --require @ff-internal/aria-logger bin/run --handlerModule $(Build.SourcesDirectory)/tools/telemetry-generator/dist/handlers/stageTimingRetriever.js --dir '${{ variables.testWorkspace }}/clientOutput/';
+            env:
+              BUILD_ID: $(Build.BuildId)
+              ADO_API_TOKEN: $(System.AccessToken)
+              PIPELINE: 'BuildClient'
