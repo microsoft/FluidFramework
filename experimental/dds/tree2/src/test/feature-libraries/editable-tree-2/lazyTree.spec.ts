@@ -108,44 +108,6 @@ function initializeTreeWithContent<Kind extends FieldKind, Types extends Allowed
 class TestLazyTree<TSchema extends TreeSchema> extends LazyTree<TSchema> {}
 
 describe.only("LazyTree", () => {
-	// #region Create common schemas used in tests below
-
-	let _schemaBuilder: SchemaBuilder | undefined = new SchemaBuilder(
-		"testShared",
-		{},
-		leafDomain.library,
-	);
-
-	const fieldNodeOptionalAnySchema = _schemaBuilder.fieldNode(
-		"optionalAny",
-		SchemaBuilder.fieldOptional(Any),
-	);
-	const fieldNodeOptionalStringSchema = _schemaBuilder.fieldNode(
-		"optionalString",
-		SchemaBuilder.fieldOptional(leafDomain.string),
-	);
-	const fieldNodeRequiredAnySchema = _schemaBuilder.fieldNode(
-		"requiredAny",
-		SchemaBuilder.fieldRequired(Any),
-	);
-	const fieldNodeRequiredStringSchema = _schemaBuilder.fieldNode(
-		"valueString",
-		SchemaBuilder.fieldRequired(leafDomain.string),
-	);
-	const structNodeSchema = _schemaBuilder.struct("struct", {
-		foo: SchemaBuilder.fieldOptional(leafDomain.string),
-		bar: SchemaBuilder.fieldSequence(leafDomain.number),
-	});
-	const mapNodeAnySchema = _schemaBuilder.map("mapAny", SchemaBuilder.fieldOptional(Any));
-	const mapNodeStringSchema = _schemaBuilder.map(
-		"mapString",
-		SchemaBuilder.fieldOptional(leafDomain.string),
-	);
-
-	const sharedTestSchemas = _schemaBuilder.intoLibrary();
-	_schemaBuilder = undefined; // Prevent tests from accidentally re-using this builder
-	// #endregion
-
 	it("property names", () => {
 		const builder = new SchemaBuilder("lazyTree");
 		const emptyStruct = builder.struct("empty", {});
@@ -198,11 +160,40 @@ describe.only("LazyTree", () => {
 		assert.deepEqual(bannedFieldNames, new Set(existingPropertiesExtended));
 	});
 
+	// The details of `is` are agnostic to the implementation, so tested using our test tree implementation
 	it("is", () => {
-		const schemaBuilder = new SchemaBuilder("test", {}, leafDomain.library, sharedTestSchemas);
+		// #region Create schemas
+
+		const schemaBuilder = new SchemaBuilder("testShared", {}, leafDomain.library);
+
+		const fieldNodeOptionalAnySchema = schemaBuilder.fieldNode(
+			"optionalAny",
+			SchemaBuilder.fieldOptional(Any),
+		);
+		const fieldNodeOptionalStringSchema = schemaBuilder.fieldNode(
+			"optionalString",
+			SchemaBuilder.fieldOptional(leafDomain.string),
+		);
+		const fieldNodeRequiredAnySchema = schemaBuilder.fieldNode(
+			"requiredAny",
+			SchemaBuilder.fieldRequired(Any),
+		);
+		const fieldNodeRequiredStringSchema = schemaBuilder.fieldNode(
+			"valueString",
+			SchemaBuilder.fieldRequired(leafDomain.string),
+		);
+		const structNodeSchema = schemaBuilder.struct("struct", {});
+		const mapNodeAnySchema = schemaBuilder.map("mapAny", SchemaBuilder.fieldOptional(Any));
+		const mapNodeStringSchema = schemaBuilder.map(
+			"mapString",
+			SchemaBuilder.fieldOptional(leafDomain.string),
+		);
+
 		const schema = schemaBuilder.intoDocumentSchema(
 			SchemaBuilder.fieldRequired(fieldNodeOptionalAnySchema),
 		);
+
+		// #endregion
 
 		const { context, cursor } = initializeTreeWithContent({ schema, initialTree: {} });
 		cursor.enterNode(0);
@@ -224,14 +215,30 @@ describe.only("LazyTree", () => {
 		assert(!node.is(fieldNodeRequiredAnySchema));
 		assert(!node.is(fieldNodeRequiredStringSchema));
 		assert(!node.is(fieldNodeRequiredStringSchema));
+		assert(!node.is(mapNodeAnySchema));
+		assert(!node.is(mapNodeStringSchema));
 		assert(!node.is(leafDomain.string));
 		assert(!node.is(structNodeSchema));
 	});
 
+	// The details of `parent` are agnostic to the implementation, so tested using our test tree implementation
+	describe("parent", () => {
+		it("Unparented", () => {
+			// TODO
+		});
+		it("Parented", () => {
+			// TODO
+		});
+	});
+
 	describe("LazyFieldNode", () => {
-		const schemaBuilder = new SchemaBuilder("test", {}, leafDomain.library, sharedTestSchemas);
+		const schemaBuilder = new SchemaBuilder("test", {}, leafDomain.library);
+		const fieldNodeSchema = schemaBuilder.fieldNode(
+			"field",
+			SchemaBuilder.fieldOptional(leafDomain.string),
+		);
 		const schema = schemaBuilder.intoDocumentSchema(
-			SchemaBuilder.fieldRequired(fieldNodeOptionalAnySchema),
+			SchemaBuilder.fieldRequired(fieldNodeSchema),
 		);
 
 		it("value", () => {
@@ -246,13 +253,7 @@ describe.only("LazyTree", () => {
 			const anchor = context.forest.anchors.track(cursor.getPath() ?? fail());
 			const anchorNode = context.forest.anchors.locate(anchor) ?? fail();
 
-			const node = new LazyFieldNode(
-				context,
-				fieldNodeOptionalStringSchema,
-				cursor,
-				anchorNode,
-				anchor,
-			);
+			const node = new LazyFieldNode(context, fieldNodeSchema, cursor, anchorNode, anchor);
 
 			assert.equal(node.value, undefined); // FieldNode_s do not have a value
 		});
@@ -267,7 +268,7 @@ describe.only("LazyTree", () => {
 
 				const node = new LazyFieldNode(
 					context,
-					fieldNodeOptionalAnySchema,
+					fieldNodeSchema,
 					cursor,
 					anchorNode,
 					anchor,
@@ -290,7 +291,7 @@ describe.only("LazyTree", () => {
 
 				const node = new LazyFieldNode(
 					context,
-					fieldNodeOptionalStringSchema,
+					fieldNodeSchema,
 					cursor,
 					anchorNode,
 					anchor,
@@ -306,7 +307,7 @@ describe.only("LazyTree", () => {
 	});
 
 	describe("LazyLeaf", () => {
-		const schemaBuilder = new SchemaBuilder("test", {}, leafDomain.library, sharedTestSchemas);
+		const schemaBuilder = new SchemaBuilder("test", {}, leafDomain.library);
 		const schema = schemaBuilder.intoDocumentSchema(
 			SchemaBuilder.fieldRequired(leafDomain.string),
 		);
@@ -330,10 +331,12 @@ describe.only("LazyTree", () => {
 	});
 
 	describe("LazyMap", () => {
-		const schemaBuilder = new SchemaBuilder("test", {}, leafDomain.library, sharedTestSchemas);
-		const schema = schemaBuilder.intoDocumentSchema(
-			SchemaBuilder.fieldRequired(mapNodeStringSchema),
+		const schemaBuilder = new SchemaBuilder("test", {}, leafDomain.library);
+		const mapNodeSchema = schemaBuilder.map(
+			"mapString",
+			SchemaBuilder.fieldOptional(leafDomain.string),
 		);
+		const schema = schemaBuilder.intoDocumentSchema(SchemaBuilder.fieldRequired(mapNodeSchema));
 
 		const { context, cursor } = initializeTreeWithContent({
 			schema,
@@ -347,7 +350,7 @@ describe.only("LazyTree", () => {
 		const anchor = context.forest.anchors.track(cursor.getPath() ?? fail());
 		const anchorNode = context.forest.anchors.locate(anchor) ?? fail();
 
-		const node = new LazyMap(context, mapNodeStringSchema, cursor, anchorNode, anchor);
+		const node = new LazyMap(context, mapNodeSchema, cursor, anchorNode, anchor);
 
 		it("value", () => {
 			assert.equal(node.value, undefined); // Map nodes do not have a value
@@ -363,8 +366,12 @@ describe.only("LazyTree", () => {
 	});
 
 	describe("LazyStruct", () => {
-		const structBuilder = new SchemaBuilder("test", {}, leafDomain.library, sharedTestSchemas);
-		const schema = structBuilder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
+		const schemaBuilder = new SchemaBuilder("test", {}, leafDomain.library);
+		const structNodeSchema = schemaBuilder.struct("struct", {
+			foo: SchemaBuilder.fieldOptional(leafDomain.string),
+			bar: SchemaBuilder.fieldSequence(leafDomain.number),
+		});
+		const schema = schemaBuilder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
 
 		const context = contextWithContentReadonly({
 			schema,
@@ -433,17 +440,6 @@ describe.only("LazyTree", () => {
 					});
 				});
 			}
-		});
-	});
-
-	// The details here are not really particular to individual implementations, so the tests here
-	// are written in terms of Struct nodes.
-	describe("parent", () => {
-		it("Unparented", () => {
-			// TODO
-		});
-		it("Parented", () => {
-			// TODO
 		});
 	});
 });
