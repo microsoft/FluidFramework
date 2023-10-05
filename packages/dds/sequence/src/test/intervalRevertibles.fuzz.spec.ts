@@ -47,23 +47,19 @@ import {
 import { makeOperationGenerator } from "./intervalCollection.fuzz.spec";
 import { minimizeTestFromFailureFile } from "./intervalCollection.fuzzMinimization";
 
-// Since the clients are created by the fuzz harness, the factory object must be
-// modified in order to set the mergeTreeUseNewLengthCalculations option on the
-// underlying merge tree. This can be deleted after PR#15868 is in main.
 class RevertibleFactory extends SharedStringFactory {
-	options = { mergeTreeUseNewLengthCalculations: true };
 	public async load(
 		runtime: IFluidDataStoreRuntime,
 		id: string,
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<SharedString> {
-		runtime.options.mergeTreeUseNewLengthCalculations = true;
+		runtime.options.intervalStickinessEnabled = true;
 		return super.load(runtime, id, services, attributes);
 	}
 
 	public create(document: IFluidDataStoreRuntime, id: string): SharedString {
-		document.options.mergeTreeUseNewLengthCalculations = true;
+		document.options.intervalStickinessEnabled = true;
 		return super.create(document, id);
 	}
 }
@@ -146,12 +142,6 @@ const intervalTestOptions: Partial<DDSFuzzSuiteOptions> = {
 const optionsWithEmitter: Partial<DDSFuzzSuiteOptions> = {
 	...intervalTestOptions,
 	emitter,
-	// TODO:AB#5338: IntervalCollection doesn't correctly handle edits made while detached. Once supported,
-	// this config should be enabled (deleting is sufficient: detached start is enabled by default)
-	detachedStartOptions: {
-		enabled: false,
-		attachProbability: 0.2,
-	},
 };
 
 type ClientOpState = FuzzTestState;
@@ -161,17 +151,17 @@ function operationGenerator(
 	async function revertSharedStringRevertibles(
 		state: ClientOpState,
 	): Promise<RevertSharedStringRevertibles> {
-		assert(isRevertibleSharedString(state.channel));
+		assert(isRevertibleSharedString(state.client.channel));
 		return {
 			type: "revertSharedStringRevertibles",
 			// grab a random number of edits to revert
-			editsToRevert: state.random.integer(1, state.channel.revertibles.length),
+			editsToRevert: state.random.integer(1, state.client.channel.revertibles.length),
 		};
 	}
 
-	const hasRevertibles = ({ channel }: ClientOpState): boolean => {
-		assert(isRevertibleSharedString(channel));
-		return channel.revertibles.length > 0;
+	const hasRevertibles = ({ client }: ClientOpState): boolean => {
+		assert(isRevertibleSharedString(client.channel));
+		return client.channel.revertibles.length > 0;
 	};
 
 	assert(optionsParam.weights !== undefined);
@@ -248,6 +238,8 @@ describe("IntervalCollection fuzz testing with rebasing", () => {
 			flushMode: FlushMode.TurnBased,
 			enableGroupedBatching: true,
 		},
+		// Skipped due to 0x54e, see AB#5337 or comment on "default interval collection" fuzz suite.
+		skip: [13, 16, 17, 20, 21, 23, 30, 37, 41, 43, 44, 49, 51, 55, 62, 69, 70, 73, 84, 91, 95],
 	});
 });
 

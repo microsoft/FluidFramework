@@ -60,7 +60,10 @@ export class DebugLogger implements ITelemetryBaseLogger {
 		});
 	}
 
-	private constructor(private readonly debug: IDebugger, private readonly debugErr: IDebugger) {}
+	private constructor(
+		private readonly debug: IDebugger,
+		private readonly debugErr: IDebugger,
+	) {}
 
 	/**
 	 * Send an event to debug loggers
@@ -108,6 +111,7 @@ export class DebugLogger implements ITelemetryBaseLogger {
 		}
 
 		// Print multi-line.
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		logger(`${name} ${payload} ${tick} ${stack}`);
 	}
 }

@@ -75,30 +75,34 @@ export function SettingsView(): React.ReactElement {
 		},
 	): void {
 		switch (option.optionValue) {
-			case ThemeOption.Light:
+			case ThemeOption.Light: {
 				setTheme({
 					name: ThemeOption.Light,
 					theme: webLightTheme,
 				});
 				break;
-			case ThemeOption.Dark:
+			}
+			case ThemeOption.Dark: {
 				setTheme({
 					name: ThemeOption.Dark,
 					theme: webDarkTheme,
 				});
 				break;
-			case ThemeOption.HighContrast:
+			}
+			case ThemeOption.HighContrast: {
 				setTheme({
 					name: ThemeOption.HighContrast,
 					theme: teamsHighContrastTheme,
 				});
 				break;
-			default:
+			}
+			default: {
 				setTheme({
 					name: ThemeOption.Dark,
 					theme: webDarkTheme,
 				});
 				break;
+			}
 		}
 	}
 

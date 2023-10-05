@@ -7,7 +7,7 @@ import {
 	webDarkTheme,
 	webLightTheme,
 	teamsHighContrastTheme,
-	Theme,
+	type Theme,
 } from "@fluentui/react-components";
 
 teamsHighContrastTheme.colorSubtleBackgroundHover = "#1aebff";

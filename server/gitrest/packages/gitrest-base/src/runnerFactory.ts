@@ -29,7 +29,8 @@ export class GitrestResources implements core.IResources {
 		public readonly asyncLocalStorage?: AsyncLocalStorage<string>,
 		public readonly enableOptimizedInitialSummary?: boolean,
 	) {
-		this.webServerFactory = new services.BasicWebServerFactory();
+		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
+		this.webServerFactory = new services.BasicWebServerFactory(httpServerConfig);
 	}
 
 	public async dispose(): Promise<void> {

@@ -76,6 +76,7 @@ function headersToMap(headers: Headers) {
 }
 
 export function getPropsToLogFromResponse(headers: {
+	// eslint-disable-next-line @rushstack/no-new-null
 	get: (id: string) => string | undefined | null;
 }) {
 	interface LoggingHeader {
@@ -183,6 +184,7 @@ export class RouterliciousRestWrapper extends RestWrapper {
 			return {
 				content: result,
 				headers,
+				// eslint-disable-next-line @typescript-eslint/no-base-to-string
 				requestUrl: fetchRequestConfig[0].toString(),
 				propsToLog: {
 					...getPropsToLogFromResponse(headers),

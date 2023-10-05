@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-kafka-orderer",
-	"version": "2.0.0",
+	"version": "3.0.0",
 	"description": "Fluid ordering services",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -28,7 +28,7 @@
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
-		"@fluidframework/protocol-definitions": "^2.1.0",
+		"@fluidframework/protocol-definitions": "^3.0.0",
 		"@fluidframework/server-services-core": "workspace:~"
 	},
 	"devDependencies": {
@@ -36,11 +36,11 @@
 		"@fluidframework/build-common": "^2.0.0",
 		"@fluidframework/build-tools": "^0.22.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/server-kafka-orderer-previous": "npm:@fluidframework/server-kafka-orderer@0.1040.1000",
+		"@fluidframework/server-kafka-orderer-previous": "npm:@fluidframework/server-kafka-orderer@2.0.0",
 		"@types/node": "^18.17.1",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.27.0",
-		"prettier": "~2.6.2",
+		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"typescript": "~4.5.5"
 	},

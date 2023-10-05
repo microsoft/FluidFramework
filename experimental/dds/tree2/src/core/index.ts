@@ -50,6 +50,7 @@ export {
 	getDepth,
 	mapCursorField,
 	mapCursorFields,
+	iterateCursorField,
 	getMapTreeField,
 	MapTree,
 	detachedFieldAsKey,
@@ -82,6 +83,7 @@ export {
 	ProtoNodes,
 	CursorMarker,
 	isCursor,
+	getDetachedFieldContainingPath,
 } from "./tree";
 
 export {

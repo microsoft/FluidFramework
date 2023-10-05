@@ -119,9 +119,8 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 		await waitForContainerConnection(container);
 
 		const handleKey = "handle";
-		const dataStore = await defaultDataObject._context.containerRuntime.createDataStore(
-			TestDataObjectType,
-		);
+		const dataStore =
+			await defaultDataObject._context.containerRuntime.createDataStore(TestDataObjectType);
 		const testDataObject = (await dataStore.entryPoint?.get()) as ITestDataObject | undefined;
 		assert(
 			testDataObject !== undefined,
@@ -135,9 +134,8 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 		defaultDataObject._root.delete(handleKey);
 
 		// Summarize
-		const { container: summarizingContainer1, summarizer: summarizer1 } = await loadSummarizer(
-			container,
-		);
+		const { container: summarizingContainer1, summarizer: summarizer1 } =
+			await loadSummarizer(container);
 		const summaryVersion = (await summarize(summarizer1)).summaryVersion;
 
 		// TODO: trailing op test - note because of the way gc is currently structured, the error isn't logged,

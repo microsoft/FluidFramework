@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { IGCTestProvider, runGCTests } from "@fluid-internal/test-dds-utils";
+import { strict as assert } from "node:assert";
+import { type IGCTestProvider, runGCTests } from "@fluid-internal/test-dds-utils";
 import {
 	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
-	MockContainerRuntimeForReconnection,
+	type MockContainerRuntimeForReconnection,
 	MockStorage,
 	MockSharedObjectServices,
 } from "@fluidframework/test-runtime-utils";
 import { SharedCell } from "../cell";
 import { CellFactory } from "../cellFactory";
-import { ISharedCell, ICellOptions } from "../interfaces";
+import { type ISharedCell, type ICellOptions } from "../interfaces";
 
 function createConnectedCell(
 	id: string,
