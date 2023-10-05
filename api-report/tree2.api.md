@@ -1461,7 +1461,7 @@ export interface OptionalField<TTypes extends AllowedTypes> extends TreeField {
     // (undocumented)
     readonly boxedContent?: TypedNodeUnion<TTypes>;
     // (undocumented)
-    readonly content?: UnboxNodeUnion<TTypes>;
+    content?: UnboxNodeUnion<TTypes>;
     // (undocumented)
     setContent(content: undefined | FlexibleNodeContent<TTypes>): void;
 }
@@ -1583,9 +1583,7 @@ export interface RequiredField<TTypes extends AllowedTypes> extends TreeField {
     // (undocumented)
     readonly boxedContent: TypedNodeUnion<TTypes>;
     // (undocumented)
-    readonly content: UnboxNodeUnion<TTypes>;
-    // (undocumented)
-    setContent(content: FlexibleNodeContent<TTypes>): void;
+    content: UnboxNodeUnion<TTypes>;
 }
 
 // @alpha

@@ -98,7 +98,7 @@ describe("LazyField", () => {
 				),
 		);
 		assert.throws(
-			() => valueField.setContent({}),
+			() => (valueField.content = {}),
 			(e: Error) =>
 				validateAssertionError(
 					e,
