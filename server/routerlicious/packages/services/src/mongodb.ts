@@ -453,7 +453,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		}
 	}
 
-	private cloneError(error: any): any {
+	private cloneError<TError>(error: TError): TError {
 		try {
 			return structuredClone(error);
 		} catch (errCloning) {
@@ -465,7 +465,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		}
 
 		try {
-			return cloneDeep(error);
+			return cloneDeep<TError>(error);
 		} catch (errCloning) {
 			Lumberjack.warning(
 				`Error cloning error object using cloneDeep.`,
@@ -475,7 +475,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		}
 
 		try {
-			return JSON.parse(JSON.stringify(error));
+			return JSON.parse(JSON.stringify(error)) as TError;
 		} catch (errCloning) {
 			Lumberjack.warning(
 				`Error cloning error object using JSON.stringify.`,
