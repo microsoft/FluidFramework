@@ -145,11 +145,8 @@ export function create(
 		async (request, response) => {
 			const tenantId = getParam(request.params, "tenantId");
 			const documentId = getParam(request.params, "id");
-			const signalContent = request?.body?.signalContent as IRuntimeSignalEnvelope;
-			const validSignalContent =
-				typeof signalContent?.contents?.type === "string" &&
-				signalContent?.contents?.content !== undefined;
-			if (!validSignalContent) {
+			const signalContent = request?.body?.signalContent;
+			if (!isValidSignalEnvelope(signalContent)) {
 				response
 					.status(400)
 					.send(`signalContent should contain 'content' and 'type' keys.`);
@@ -208,6 +205,12 @@ function sendJoin(
 		};
 		Lumberjack.error("Error sending join message to producer", lumberjackProperties, err);
 	});
+}
+
+function isValidSignalEnvelope(
+	input: Partial<IRuntimeSignalEnvelope>,
+): input is IRuntimeSignalEnvelope {
+	return typeof input?.contents?.type === "string" && input?.contents?.content !== undefined;
 }
 
 function sendLeave(
