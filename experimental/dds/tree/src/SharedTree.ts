@@ -27,6 +27,8 @@ import {
 	createChildLogger,
 	ITelemetryLoggerPropertyBags,
 	PerformanceEvent,
+	createSampledLogger,
+	IEventSampler,
 } from '@fluidframework/telemetry-utils';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { fail, copyPropertyIfDefined, RestOrArray, unwrapRestOrArray } from './Common';
@@ -94,7 +96,7 @@ import { SharedTreeEncoder_0_0_2, SharedTreeEncoder_0_1_1 } from './SharedTreeEn
 import { revert } from './HistoryEditFactory';
 import { BuildNode, BuildTreeNode, Change, ChangeType } from './ChangeTypes';
 import { TransactionInternal } from './TransactionInternal';
-import { IdCompressor, createSessionId, createThrottledIdCompressorLogger } from './id-compressor';
+import { IdCompressor, createSessionId } from './id-compressor';
 import { convertEditIds } from './IdConversion';
 import { MutableStringInterner } from './StringInterner';
 import { nilUuid } from './UuidUtilities';
@@ -560,12 +562,21 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		});
 
 		const attributionId = (options as SharedTreeOptions<WriteFormat.v0_1_1>).attributionId;
-		this.idCompressor = new IdCompressor(
-			createSessionId(),
-			reservedIdCount,
-			attributionId,
-			createThrottledIdCompressorLogger(this.logger, 0.05)
-		);
+
+		/**
+		 * Because the IdCompressor emits so much telemetry, this function is used to sample
+		 * approximately 5% of all clients. Only the given percentage of sessions will emit telemetry.
+		 */
+		const idCompressorEventSampler: IEventSampler = (() => {
+			const isIdCompressorTelemetryEnabled = Math.random() < 0.05;
+			return {
+				sample: () => {
+					return isIdCompressorTelemetryEnabled;
+				},
+			};
+		})();
+		const idCompressorLoger = createSampledLogger(this.logger, idCompressorEventSampler);
+		this.idCompressor = new IdCompressor(createSessionId(), reservedIdCount, attributionId, idCompressorLoger);
 		this.editLogSize = options.inMemoryHistorySize;
 		this.editEvictionFrequency = options.inMemoryHistorySize;
 		const { editLog, cachingLogViewer } = this.initializeNewEditLogFromSummary(

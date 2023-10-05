@@ -38,10 +38,10 @@
 		"@fluidframework/driver-definitions": "workspace:~"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.24.0",
+		"@fluid-tools/build-cli": "^0.25.0",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.24.0",
-		"@fluidframework/eslint-config-fluid": "^3.0.0",
+		"@fluidframework/build-tools": "^0.25.0",
+		"@fluidframework/eslint-config-fluid": "^2.1.0",
 		"@fluidframework/odsp-driver-definitions-previous": "npm:@fluidframework/odsp-driver-definitions@2.0.0-internal.7.0.0",
 		"@fluidframework/protocol-definitions": "^3.0.0",
 		"@microsoft/api-extractor": "^7.37.0",

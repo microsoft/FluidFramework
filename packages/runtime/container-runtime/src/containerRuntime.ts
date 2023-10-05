@@ -23,6 +23,7 @@ import {
 	ICriticalContainerError,
 	AttachState,
 	ILoaderOptions,
+	ILoader,
 	LoaderHeader,
 } from "@fluidframework/container-definitions";
 import {
@@ -99,12 +100,11 @@ import {
 	create404Response,
 	exceptionToResponse,
 	GCDataBuilder,
-	// eslint-disable-next-line import/no-deprecated
-	requestFluidObject,
 	seqFromTree,
 	calculateStats,
 	TelemetryContext,
 	ReadAndParseBlob,
+	responseToException,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
@@ -144,7 +144,6 @@ import {
 	IConnectableRuntime,
 	IGeneratedSummaryStats,
 	ISubmitSummaryOptions,
-	ISummarizer,
 	ISummarizerInternalsProvider,
 	ISummarizerRuntime,
 	IRefreshSummaryAckOptions,
@@ -157,6 +156,7 @@ import {
 	EnqueueSummarizeResult,
 	ISummarizerEvents,
 	IBaseSummarizeResult,
+	ISummarizer,
 } from "./summary";
 import { formExponentialFn, Throttler } from "./throttler";
 import {
@@ -628,6 +628,53 @@ type MessageWithContext =
 			modernRuntimeMessage: false;
 			local: boolean;
 	  };
+
+const summarizerRequestUrl = "_summarizer";
+
+/**
+ * Create and retrieve the summmarizer
+ */
+async function createSummarizer(loader: ILoader, url: string): Promise<ISummarizer> {
+	const request: IRequest = {
+		headers: {
+			[LoaderHeader.cache]: false,
+			[LoaderHeader.clientDetails]: {
+				capabilities: { interactive: false },
+				type: summarizerClientType,
+			},
+			[DriverHeader.summarizingClient]: true,
+			[LoaderHeader.reconnect]: false,
+		},
+		url,
+	};
+
+	const resolvedContainer = await loader.resolve(request);
+	let fluidObject: FluidObject<ISummarizer> | undefined;
+
+	// Older containers may not have the "getEntryPoint" API
+	// ! This check will need to stay until LTS of loader moves past 2.0.0-internal.7.0.0
+	if (resolvedContainer.getEntryPoint !== undefined) {
+		fluidObject = await resolvedContainer.getEntryPoint();
+	} else {
+		const response = await resolvedContainer.request({ url: summarizerRequestUrl });
+		if (response.status !== 200 || response.mimeType !== "fluid/object") {
+			throw responseToException(response, request);
+		}
+		fluidObject = response.value;
+	}
+
+	if (fluidObject?.ISummarizer === undefined) {
+		throw new UsageError("Fluid object does not implement ISummarizer");
+	}
+	return fluidObject.ISummarizer;
+}
+
+/**
+ * This function is not supported publicly and exists for e2e testing
+ */
+export async function TEST_requestSummarizer(loader: ILoader, url: string): Promise<ISummarizer> {
+	return createSummarizer(loader, url);
+}
 
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
@@ -1577,7 +1624,7 @@ export class ContainerRuntime
 					this, // IConnectedState
 					this.summaryCollection,
 					this.logger,
-					this.formRequestSummarizerFn(loader),
+					this.formCreateSummarizerFn(loader),
 					new Throttler(
 						60 * 1000, // 60 sec delay window
 						30 * 1000, // 30 sec max delay
@@ -1683,7 +1730,7 @@ export class ContainerRuntime
 			const parser = RequestParser.create(request);
 			const id = parser.pathParts[0];
 
-			if (id === "_summarizer" && parser.pathParts.length === 1) {
+			if (id === summarizerRequestUrl && parser.pathParts.length === 1) {
 				if (this._summarizer !== undefined) {
 					return {
 						status: 200,
@@ -3905,37 +3952,16 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * * Forms a function that will request a Summarizer.
-	 * @param loaderRouter - the loader acting as an IFluidRouter
-	 * */
-	// eslint-disable-next-line import/no-deprecated
-	private formRequestSummarizerFn(loaderRouter: IFluidRouter) {
+	 * Forms a function that will create and retrieve a Summarizer.
+	 */
+	private formCreateSummarizerFn(loader: ILoader) {
 		return async () => {
-			const request: IRequest = {
-				headers: {
-					[LoaderHeader.cache]: false,
-					[LoaderHeader.clientDetails]: {
-						capabilities: { interactive: false },
-						type: summarizerClientType,
-					},
-					[DriverHeader.summarizingClient]: true,
-					[LoaderHeader.reconnect]: false,
-				},
-				url: "/_summarizer",
-			};
-
-			// eslint-disable-next-line import/no-deprecated
-			const fluidObject = await requestFluidObject<FluidObject<ISummarizer>>(
-				loaderRouter,
-				request,
+			const absoluteUrl = await this.getAbsoluteUrl("");
+			assert(
+				absoluteUrl !== undefined,
+				"absoluteUrl could not be resolved for creating summarizer",
 			);
-			const summarizer = fluidObject.ISummarizer;
-
-			if (!summarizer) {
-				throw new UsageError("Fluid object does not implement ISummarizer");
-			}
-
-			return summarizer;
+			return createSummarizer(loader, absoluteUrl);
 		};
 	}
 
