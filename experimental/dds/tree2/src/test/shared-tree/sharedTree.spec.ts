@@ -105,7 +105,7 @@ describe("SharedTree", () => {
 	it("editable-tree-2-end-to-end", () => {
 		const builder = new SchemaBuilder("e2e");
 		const numberSchema = builder.leaf("number", ValueSchema.Number);
-		const schema = builder.intoDocumentSchema(SchemaBuilder.fieldValue(numberSchema));
+		const schema = builder.intoDocumentSchema(SchemaBuilder.fieldRequired(numberSchema));
 		const factory = new SharedTreeFactory({
 			jsonValidator: typeboxValidator,
 			forest: ForestType.Reference,
@@ -141,7 +141,7 @@ describe("SharedTree", () => {
 
 		// Ensure that the first tree has the state we expect
 		assert.equal(getTestValue(view1), value);
-		assert.equal(schemaCodec.encode(provider.trees[0].storedSchema), expectedSchema);
+		assert.deepEqual(schemaCodec.encode(provider.trees[0].storedSchema), expectedSchema);
 		// Ensure that the second tree receives the expected state from the first tree
 		await provider.ensureSynchronized();
 		validateViewConsistency(view1, provider.trees[1].view);
@@ -945,7 +945,7 @@ describe("SharedTree", () => {
 		const builder = new SchemaBuilder("Events test schema");
 		const numberSchema = builder.leaf("number", ValueSchema.Number);
 		const treeSchema = builder.struct("root", {
-			x: SchemaBuilder.fieldValue(numberSchema),
+			x: SchemaBuilder.fieldRequired(numberSchema),
 		});
 		const schema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
 
@@ -1767,7 +1767,7 @@ describe("SharedTree", () => {
 		it("Anchor Stability fails when root node is deleted", async () => {
 			const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 
-			const rootFieldSchema = SchemaBuilder.fieldValue(Any);
+			const rootFieldSchema = SchemaBuilder.fieldRequired(Any);
 			const testSchemaBuilder = new SchemaBuilder("testSchema");
 			const numberSchema = testSchemaBuilder.leaf("Number", ValueSchema.Number);
 			const rootNodeSchema = testSchemaBuilder.structRecursive("Node", {

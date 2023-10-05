@@ -57,7 +57,7 @@ export function initializeContent(
 		// These kinds are known to tolerate empty, so use the schema as is:
 		incrementalSchemaUpdate = schema;
 	} else {
-		assert(rootKind === FieldKinds.value.identifier, 0x5c8 /* Unexpected kind */);
+		assert(rootKind === FieldKinds.required.identifier, 0x5c8 /* Unexpected kind */);
 		// Replace value kind with optional kind in root field schema:
 		incrementalSchemaUpdate = {
 			treeSchema: schema.treeSchema,
