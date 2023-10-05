@@ -93,18 +93,15 @@ function cellDeltaFromMark<TNodeChange>(
 			}
 			case "Delete": {
 				const major = mark.revision ?? revision;
-				const hasMajor: { major?: RevisionTag } = {};
+				const detachId: Delta.DetachedNodeId = { minor: mark.id };
 				if (major !== undefined) {
-					hasMajor.major = major;
+					detachId.major = major;
 				}
 				return [
 					{
 						type: Delta.MarkType.Remove,
 						count: mark.count,
-						detachId: {
-							...hasMajor,
-							minor: mark.id,
-						},
+						detachId,
 					},
 				];
 			}
@@ -133,18 +130,15 @@ function cellDeltaFromMark<TNodeChange>(
 					};
 				}
 				const major = cellId.revision ?? revision;
-				const hasMajor: { major?: RevisionTag } = {};
+				const restoreId: Delta.DetachedNodeId = { minor: cellId.localId };
 				if (major !== undefined) {
-					hasMajor.major = major;
+					restoreId.major = major;
 				}
 				const restoreMark: Mutable<Delta.Restore> = {
 					type: Delta.MarkType.Restore,
 					count: mark.count,
 					newContent: {
-						restoreId: {
-							...hasMajor,
-							minor: cellId.localId,
-						},
+						restoreId,
 						...hasTransience,
 					},
 				};
