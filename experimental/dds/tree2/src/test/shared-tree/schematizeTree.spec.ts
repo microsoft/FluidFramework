@@ -37,7 +37,7 @@ const schemaGeneralized = builderGeneralized.intoDocumentSchema(SchemaBuilder.fi
 
 const builderValue = new SchemaBuilder("Schematize Tree Tests");
 const root2 = builderValue.leaf("root", ValueSchema.Number);
-const schemaValueRoot = builderValue.intoDocumentSchema(SchemaBuilder.fieldValue(Any));
+const schemaValueRoot = builderValue.intoDocumentSchema(SchemaBuilder.fieldRequired(Any));
 
 const emptySchema = new SchemaBuilder("Empty", {
 	rejectEmpty: false,
@@ -111,7 +111,7 @@ describe("schematizeTree", () => {
 
 					assert.deepEqual(
 						log,
-						content.schema.rootFieldSchema.kind === FieldKinds.value
+						content.schema.rootFieldSchema.kind === FieldKinds.required
 							? ["schema", "content", "schema"]
 							: ["schema", "content"],
 					);

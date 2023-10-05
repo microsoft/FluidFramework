@@ -22,7 +22,7 @@ import {
 	NodeChangeset,
 	RevisionInfo,
 } from "./modularChangeTypes";
-import { FieldKind } from "./fieldKind";
+import { FieldKindWithEditor } from "./fieldKind";
 import { genericFieldKind } from "./genericFieldKind";
 import {
 	EncodedFieldChange,
@@ -32,7 +32,7 @@ import {
 } from "./modularChangeFormat";
 
 function makeV0Codec(
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 	{ jsonValidator: validator }: ICodecOptions,
 ): IJsonCodec<ModularChangeset> {
 	const nodeChangesetCodec: IJsonCodec<NodeChangeset, EncodedNodeChangeset> = {
@@ -41,7 +41,7 @@ function makeV0Codec(
 		encodedSchema: EncodedNodeChangeset,
 	};
 
-	const getMapEntry = (field: FieldKind) => {
+	const getMapEntry = (field: FieldKindWithEditor) => {
 		const codec = field.changeHandler.codecsFactory(nodeChangesetCodec).resolve(0);
 		return {
 			codec,
@@ -172,7 +172,7 @@ function makeV0Codec(
 }
 
 export function makeModularChangeCodecFamily(
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 	options: ICodecOptions,
 ): ICodecFamily<ModularChangeset> {
 	return makeCodecFamily([[0, makeV0Codec(fieldKinds, options)]]);

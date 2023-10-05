@@ -87,8 +87,8 @@ describe("editableTreeTypes", () => {
 		/**
 		 * Test doc comment.
 		 */
-		leaf: SchemaBuilder.fieldValue(jsonNumber),
-		polymorphic: SchemaBuilder.fieldValue(jsonNumber, jsonString),
+		leaf: SchemaBuilder.fieldRequired(jsonNumber),
+		polymorphic: SchemaBuilder.fieldRequired(jsonNumber, jsonString),
 		optionalLeaf: SchemaBuilder.fieldOptional(jsonNumber),
 		optionalObject: SchemaBuilder.fieldOptional(jsonObject),
 		sequence: SchemaBuilder.fieldSequence(jsonNumber),
@@ -103,7 +103,7 @@ describe("editableTreeTypes", () => {
 		/**
 		 * Data field.
 		 */
-		x: SchemaBuilder.fieldValue(jsonNumber),
+		x: SchemaBuilder.fieldRequired(jsonNumber),
 	});
 	type Recursive = TypedNode<typeof recursiveStruct>;
 

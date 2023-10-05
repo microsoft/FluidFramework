@@ -17,7 +17,8 @@ import { valueSymbol } from "../contextuallyTyped";
 import { FieldKinds } from "../default-field-kinds";
 import { StableNodeKey } from "../node-key";
 import { getField } from "../untypedTree";
-import { EditableTree, TreeStatus } from "./editableTreeTypes";
+import { TreeStatus } from "../editable-tree-2";
+import { EditableTree } from "./editableTreeTypes";
 
 /**
  * @returns true iff `schema` trees should default to being viewed as just their value when possible.
