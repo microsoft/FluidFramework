@@ -4,10 +4,6 @@
  */
 import { strict as assert } from "assert";
 import {
-	JsonableTree,
-	fieldSchema,
-	SchemaData,
-	rootFieldKey,
 	moveToDetachedField,
 	Anchor,
 	UpPath,
@@ -16,9 +12,9 @@ import {
 	compareUpPaths,
 	forEachNodeInSubtree,
 } from "../../../core";
-import { FieldKinds, SchemaBuilder, StructTyped } from "../../../feature-libraries";
+import { FieldKinds, SchemaBuilder, StructTyped, TypedField } from "../../../feature-libraries";
 import { SharedTree, ISharedTreeView } from "../../../shared-tree";
-import * as leaf from "../../../domains/leafDomain";
+import { leaf } from "../../../domains";
 
 const builder = new SchemaBuilder("Tree2 Fuzz", {}, leaf.library);
 export const fuzzNode = builder.structRecursive("Fuzz node", {
@@ -74,4 +70,16 @@ export function createAnchors(tree: ISharedTreeView): Map<Anchor, [UpPath, Value
 	});
 	cursor.free();
 	return anchors;
+}
+
+// KLUDGE:AB#5677: Avoid calling editableTree2 more than once per tree as it currently crashes.
+const cachedEditableTreeSymbol = Symbol();
+export function getEditableTree(
+	tree: ISharedTreeView,
+): TypedField<typeof fuzzSchema.rootFieldSchema> {
+	if ((tree as any)[cachedEditableTreeSymbol] === undefined) {
+		(tree as any)[cachedEditableTreeSymbol] = tree.editableTree2(fuzzSchema);
+	}
+
+	return (tree as any)[cachedEditableTreeSymbol] as TypedField<typeof fuzzSchema.rootFieldSchema>;
 }

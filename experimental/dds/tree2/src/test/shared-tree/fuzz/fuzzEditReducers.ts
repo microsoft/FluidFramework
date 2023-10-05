@@ -6,11 +6,10 @@
 import { strict as assert } from "assert";
 import { combineReducersAsync } from "@fluid-internal/stochastic-test-utils";
 import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
-import { TreeField, TreeNode, singleTextCursor, toDownPath } from "../../../feature-libraries";
+import { DownPath, TreeField, TreeNode, singleTextCursor } from "../../../feature-libraries";
 import { fail } from "../../../util";
 import { validateTreeConsistency } from "../../utils";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../../shared-tree";
-import { FieldUpPath } from "../../../core";
 import {
 	FieldEdit,
 	FuzzDelete,
@@ -20,7 +19,7 @@ import {
 	FuzzUndoRedoType,
 	Operation,
 } from "./operationTypes";
-import { fuzzNode, fuzzSchema } from "./fuzzUtils";
+import { fuzzNode, getEditableTree } from "./fuzzUtils";
 
 export const fuzzReducer = combineReducersAsync<Operation, DDSFuzzTestState<SharedTreeFactory>>({
 	edit: async (state, operation) => {
@@ -90,16 +89,23 @@ export function applyFieldEdit(tree: ISharedTreeView, fieldEdit: FieldEdit): voi
 function applySequenceFieldEdit(tree: ISharedTreeView, change: FuzzFieldChange): void {
 	switch (change.type) {
 		case "insert": {
-			const field = tree.editor.sequenceField(change.fieldPath);
-			field.insert(change.index, singleTextCursor(change.value));
+			assert(change.parent !== undefined, "Sequence change should not occur at the root.");
+
+			const parent = navigateToNode(tree, change.parent);
+			assert(parent?.is(fuzzNode), "Defined down-path should point to a valid parent");
+			const field = parent.boxedSequenceF;
+			field.replaceRange(change.index, 0, [singleTextCursor(change.value) as any]);
 			break;
 		}
 		case "delete": {
-			const field = tree.editor.sequenceField({
-				parent: change.firstNode?.parent,
-				field: change.firstNode?.parentField,
-			});
-			field.delete(change.firstNode?.parentIndex, change.count);
+			const firstNode = navigateToNode(tree, change.firstNode);
+			assert(firstNode !== undefined, "Down-path should point to a valid firstNode");
+			const { parent: field, index } = firstNode.parentField;
+			assert(
+				field?.is(fuzzNode.structFieldsObject.sequenceF),
+				"Defined down-path should point to a valid parent",
+			);
+			field.replaceRange(index, change.count, []);
 			break;
 		}
 		default:
@@ -108,54 +114,71 @@ function applySequenceFieldEdit(tree: ISharedTreeView, change: FuzzFieldChange):
 }
 
 function applyValueFieldEdit(tree: ISharedTreeView, change: FuzzSet): void {
-	const field = tree.editor.valueField(change.fieldPath);
-	field.set(singleTextCursor(change.value));
+	assert(change.parent !== undefined, "Value change should not occur at the root.");
+	const parent = navigateToNode(tree, change.parent);
+	assert(parent?.is(fuzzNode), "Defined down-path should point to a valid parent");
+	const field = parent.tryGetField(change.key);
+	assert(
+		field?.is(fuzzNode.structFieldsObject.requiredF),
+		"Parent of Value change should have an optional field to modify",
+	);
+	field.setContent(singleTextCursor(change.value) as any);
+}
+
+function navigateToNode(tree: ISharedTreeView, path: DownPath | undefined): TreeNode | undefined {
+	const rootField = getEditableTree(tree);
+	if (path === undefined) {
+		return undefined;
+	}
+
+	const finalLocation = path.reduce<{
+		field: TreeField;
+		containedNode: TreeNode | undefined;
+	}>(
+		({ containedNode }, nextStep) => {
+			const childField = containedNode?.tryGetField(nextStep.field);
+			// Checking "=== true" causes tsc to fail to typecheck, as it is no longer able to narrow according
+			// to the .is typeguard.
+			/* eslint-disable @typescript-eslint/strict-boolean-expressions */
+			if (childField?.is(fuzzNode.structFieldsObject.sequenceF)) {
+				assert(nextStep.index !== undefined);
+				return {
+					field: childField,
+					containedNode: childField.at(nextStep.index),
+				};
+			} else if (
+				childField?.is(fuzzNode.structFieldsObject.optionalF) ||
+				childField?.is(fuzzNode.structFieldsObject.requiredF)
+			) {
+				return { field: childField, containedNode: childField.content };
+			}
+			/* eslint-enable @typescript-eslint/strict-boolean-expressions */
+
+			fail(`Unexpected field type: ${childField?.key}`);
+		},
+		{ field: rootField, containedNode: rootField.content },
+	);
+
+	return finalLocation.containedNode;
 }
 
 function applyOptionalFieldEdit(tree: ISharedTreeView, change: FuzzSet | FuzzDelete): void {
 	switch (change.type) {
 		case "set": {
-			const rootField = tree.editableTree2(fuzzSchema);
-			if (change.fieldPath.parent !== undefined) {
-				const topDown = toDownPath(change.fieldPath.parent);
-				const { field } = topDown.reduce<{
-					field: TreeField;
-					containedNode: TreeNode | undefined;
-				}>(
-					({ containedNode }, nextStep) => {
-						const childField = containedNode?.tryGetField(nextStep.field);
-						if (childField?.is(fuzzNode.structFieldsObject.sequenceF)) {
-							assert(nextStep.index !== undefined);
-							return {
-								field: childField,
-								containedNode: childField.at(nextStep.index),
-							};
-						} else if (
-							childField?.is(fuzzNode.structFieldsObject.optionalF) ||
-							childField?.is(fuzzNode.structFieldsObject.requiredF)
-						) {
-							return { field: childField, containedNode: childField.content };
-						}
-						fail(`Unexpected field type: ${childField?.key}`);
-					},
-					{ field: rootField, containedNode: rootField.content },
-				);
-				assert(field.is(fuzzNode.structFieldsObject.optionalF));
-				field.setContent(singleTextCursor(change.value) as any);
-			} else {
+			const rootField = getEditableTree(tree);
+			if (change.parent === undefined) {
 				rootField.setContent(singleTextCursor(change.value) as any);
+			} else {
+				const parent = navigateToNode(tree, change.parent);
+				assert(parent?.is(fuzzNode), "Defined down-path should point to a valid parent");
+				parent.boxedOptionalF.setContent(singleTextCursor(change.value) as any);
 			}
 			break;
 		}
 		case "delete": {
-			const fieldPath: FieldUpPath = {
-				parent: change.firstNode?.parent,
-				field: change.firstNode?.parentField,
-			};
-			const field = tree.editor.optionalField(fieldPath);
-			// Note: we're assuming that the field is currently set.
-			// This is only safe because the fuzz generator guarantees it.
-			field.set(undefined, false);
+			const field = navigateToNode(tree, change.firstNode)?.parentField.parent;
+			assert(field?.is(fuzzNode.structFieldsObject.optionalF));
+			field.setContent(undefined);
 			break;
 		}
 		default:

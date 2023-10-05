@@ -41,6 +41,7 @@ tools/pipelines/
 build-tools/packages/build-tools/src/test/data/
 experimental/dds/tree/src/test/documents/
 experimental/dds/tree2/src/test/snapshots/files/*.json
+experimental/dds/tree2/src/test/shared-tree/fuzz/failures/**/*.json
 packages/dds/merge-tree/src/test/literature/*.txt
 packages/dds/merge-tree/src/test/results/*.json
 packages/dds/sequence/src/test/snapshots/**/*.json

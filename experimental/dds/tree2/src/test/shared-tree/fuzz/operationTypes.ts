@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey, FieldUpPath, JsonableTree, UpPath } from "../../../core";
+import { FieldKey, JsonableTree } from "../../../core";
+import { DownPath } from "../../../feature-libraries";
 
 export type Operation = TreeOperation | Synchronize;
 
@@ -33,14 +34,31 @@ export interface FieldEdit {
 
 export interface FuzzInsert {
 	type: "insert";
-	fieldPath: FieldUpPath;
+	/**
+	 * DownPath to the field's parent node. Undefined iff this is the root trait.
+	 */
+	parent: DownPath | undefined;
+	/**
+	 * Key on the parent node corresponding to this field.
+	 */
+	key: FieldKey;
+	/**
+	 * Index to insert within the field.
+	 */
 	index: number;
 	value: JsonableTree;
 }
 
 export interface FuzzSet {
 	type: "set";
-	fieldPath: FieldUpPath;
+	/**
+	 * DownPath to the field's parent node. Undefined iff this is the root trait.
+	 */
+	parent: DownPath | undefined;
+	/**
+	 * Key on the parent node corresponding to this field.
+	 */
+	key: FieldKey;
 	/**
 	 * @privateRemarks - Optional fields use {@link FuzzDelete} to mean "delete the field's contents" rather than
 	 * a `FuzzSet` with undefined value, hence why this property is required.
@@ -101,7 +119,7 @@ export interface Synchronize {
 }
 
 export interface NodeRangePath {
-	firstNode: UpPath;
+	firstNode: DownPath;
 	count: number;
 }
 

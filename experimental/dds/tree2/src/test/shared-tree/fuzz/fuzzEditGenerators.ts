@@ -14,26 +14,16 @@ import {
 import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import { ISharedTreeView, SharedTreeFactory } from "../../../shared-tree";
 import { brand, fail } from "../../../util";
+import { FieldKey, FieldUpPath, JsonableTree, UpPath } from "../../../core";
+import { DownPath, TreeNode, toDownPath } from "../../../feature-libraries";
 import {
-	CursorLocationType,
-	FieldKey,
-	FieldUpPath,
-	JsonableTree,
-	moveToDetachedField,
-	UpPath,
-} from "../../../core";
-import {
-	FieldEdit,
 	FieldEditTypes,
-	FuzzDelete,
 	FuzzInsert,
 	FuzzSet,
 	FuzzTransactionType,
 	FuzzUndoRedoType,
 	Operation,
-	OptionalFieldEdit,
 	RedoOp,
-	SequenceFieldEdit,
 	Synchronize,
 	TransactionAbortOp,
 	TransactionBoundary,
@@ -42,17 +32,8 @@ import {
 	TreeEdit,
 	UndoOp,
 	UndoRedo,
-	ValueFieldEdit,
 } from "./operationTypes";
-import { FuzzNode, fuzzNode, fuzzSchema } from "./fuzzUtils";
-import {
-	FieldSchema,
-	OptionalField,
-	StructTyped,
-	TreeField,
-	TreeNode,
-} from "../../../feature-libraries";
-import { TypedField } from "../../../feature-libraries/editable-tree-2";
+import { FuzzNode, fuzzNode, getEditableTree } from "./fuzzUtils";
 
 export type FuzzTestState = DDSFuzzTestState<SharedTreeFactory>;
 
@@ -138,27 +119,25 @@ export const makeEditGenerator = (
 
 	const jsonableTree = (state: FuzzTestState): JsonableTree => {
 		// Heuristics around what type of tree we insert could be made customizable to tend toward trees of certain characteristics.
-		if (state.random.bool(0.3)) {
-			return {
-				type: brand("com.fluidframework.leaf.number"),
-				value: state.random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
-			};
-		} else {
-			return {
-				type: brand("Fuzz node"),
-				fields: {
-					requiredF: [
-						{
-							type: brand("com.fluidframework.leaf.number"),
-							value: state.random.integer(
-								Number.MIN_SAFE_INTEGER,
-								Number.MAX_SAFE_INTEGER,
-							),
-						},
-					],
-				},
-			};
-		}
+		return state.random.bool(0.3)
+			? {
+					type: brand("com.fluidframework.leaf.number"),
+					value: state.random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
+			  }
+			: {
+					type: brand("Fuzz node"),
+					fields: {
+						requiredF: [
+							{
+								type: brand("com.fluidframework.leaf.number"),
+								value: state.random.integer(
+									Number.MIN_SAFE_INTEGER,
+									Number.MAX_SAFE_INTEGER,
+								),
+							},
+						],
+					},
+			  };
 	};
 
 	const insert = (state: FuzzTestState): FieldEditTypes => {
@@ -170,7 +149,8 @@ export const makeEditGenerator = (
 				const { type: fieldType, content: field } = fieldInfo;
 				const contents: FuzzSet = {
 					type: "set",
-					fieldPath: fieldUpPathFromField(field),
+					parent: maybeDownPathFromNode(field.parent),
+					key: field.key,
 					value: jsonableTree(state),
 				};
 				return {
@@ -182,7 +162,8 @@ export const makeEditGenerator = (
 				const { content: field } = fieldInfo;
 				const contents: FuzzInsert = {
 					type: "insert",
-					fieldPath: fieldUpPathFromField(field),
+					parent: maybeDownPathFromNode(field.parent),
+					key: field.key,
 					index: state.random.integer(0, field.length),
 					value: jsonableTree(state),
 				};
@@ -222,7 +203,7 @@ export const makeEditGenerator = (
 					type: "optional",
 					edit: {
 						type: "delete",
-						firstNode: upPathFromNode(content),
+						firstNode: downPathFromNode(content),
 						count: 1,
 					},
 				};
@@ -235,13 +216,14 @@ export const makeEditGenerator = (
 					"Sequence field should have content for it to be selected for deletion",
 				);
 				const start = state.random.integer(0, field.length - 1);
-				// TODO: Magic number here. Generally we want to limit deletions to be relatively small.
+				// It'd be reasonable to move this to config. The idea is that by avoiding large deletions,
+				// we're more likely to generate more interesting outcomes.
 				const count = state.random.integer(1, Math.min(3, field.length - start));
 				return {
 					type: "sequence",
 					edit: {
 						type: "delete",
-						firstNode: upPathFromNode(field.at(start)),
+						firstNode: downPathFromNode(field.at(start)),
 						count,
 					},
 				};
@@ -400,11 +382,12 @@ function upPathFromNode(node: TreeNode): UpPath {
 	};
 }
 
-function fieldUpPathFromField(field: TreeField): FieldUpPath {
-	return {
-		parent: field.parent ? upPathFromNode(field.parent) : undefined,
-		field: field.key,
-	};
+function downPathFromNode(node: TreeNode): DownPath {
+	return toDownPath(upPathFromNode(node));
+}
+
+function maybeDownPathFromNode(node: TreeNode | undefined): DownPath | undefined {
+	return node === undefined ? undefined : downPathFromNode(node);
 }
 
 type FuzzField =
@@ -465,9 +448,13 @@ function selectField(
 
 	const recurse = (state: { random: IRandom }): FuzzField | "no-valid-fields" => {
 		const childNodes: FuzzNode[] = [];
+		// Checking "=== true" causes tsc to fail to typecheck, as it is no longer able to narrow according
+		// to the .is typeguard.
+		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 		if (node.optionalF?.is(fuzzNode)) {
 			childNodes.push(node.optionalF);
 		}
+
 		if (node.requiredF?.is(fuzzNode)) {
 			childNodes.push(node.requiredF);
 		}
@@ -478,9 +465,9 @@ function selectField(
 		});
 		state.random.shuffle(childNodes);
 		for (const child of childNodes) {
-			const result = selectField(child, random, weights, filter);
-			if (result !== "no-valid-fields") {
-				return result;
+			const childResult = selectField(child, random, weights, filter);
+			if (childResult !== "no-valid-fields") {
+				return childResult;
 			}
 		}
 		alreadyPickedOptions.add("child");
@@ -511,16 +498,6 @@ function selectField(
 	return result;
 }
 
-// KLUDGE:AB#5677: Avoid calling editableTree2 more than once per tree as it currently crashes.
-const cachedEditableTreeSymbol = Symbol();
-const getEditableTree = (tree: ISharedTreeView): TypedField<typeof fuzzSchema.rootFieldSchema> => {
-	if ((tree as any)[cachedEditableTreeSymbol] === undefined) {
-		(tree as any)[cachedEditableTreeSymbol] = tree.editableTree2(fuzzSchema);
-	}
-
-	return (tree as any)[cachedEditableTreeSymbol];
-};
-
 function trySelectTreeField(
 	tree: ISharedTreeView,
 	random: IRandom,
@@ -539,16 +516,21 @@ function trySelectTreeField(
 
 	for (const option of options) {
 		switch (option) {
-			case "root": {
-				// TODO: 'as const' here doesn't work since optional field allowing only FuzzNodes isn't assignable to
+			case "optional": {
+				// Note: 'as const' here doesn't work since optional field allowing only FuzzNodes isn't assignable to
 				// optional field allowing that plus primitives.
-				const field = { type: "optional", content: editable } as any;
+				// This is because of the presence of mutation methods on the optional field which shouldn't be called
+				// by reasonable generator filters.
+				const field = { type: "optional", content: editable } as unknown as FuzzField;
 				if (filter(field)) {
 					return field;
 				}
 				break;
 			}
-			case "child": {
+			case "recurse": {
+				// Checking "=== true" causes tsc to fail to typecheck, as it is no longer able to narrow according
+				// to the .is typeguard.
+				// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 				if (editable.content?.is(fuzzNode)) {
 					const result = selectField(editable.content, random, weights, filter);
 					if (result !== "no-valid-fields") {
@@ -558,6 +540,8 @@ function trySelectTreeField(
 
 				break;
 			}
+			default:
+				fail(`Invalid option: ${option}`);
 		}
 	}
 

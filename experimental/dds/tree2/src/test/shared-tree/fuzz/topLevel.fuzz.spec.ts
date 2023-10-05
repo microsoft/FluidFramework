@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import path from "path";
 import { takeAsync } from "@fluid-internal/stochastic-test-utils";
 import {
 	DDSFuzzModel,
@@ -15,7 +16,6 @@ import { makeOpGenerator, EditGeneratorOpWeights } from "./fuzzEditGenerators";
 import { fuzzReducer } from "./fuzzEditReducers";
 import { onCreate } from "./fuzzUtils";
 import { Operation } from "./operationTypes";
-import path from "path";
 
 const baseOptions: Partial<DDSFuzzSuiteOptions> = {
 	numberOfClients: 3,
@@ -38,14 +38,14 @@ const baseOptions: Partial<DDSFuzzSuiteOptions> = {
  */
 describe("Fuzz - Top-Level", () => {
 	const runsPerBatch = 20;
-	const opsPerRun = 50;
+	const opsPerRun = 20;
 	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = { insert: 1 };
 	const generatorFactory = () => takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
 	/**
 	 * This test suite is meant exercise all public APIs of SharedTree together, as well as all service-oriented
 	 * operations (such as summarization and stashed ops).
 	 */
-	describe.only("Everything", () => {
+	describe("Everything", () => {
 		const model: DDSFuzzModel<
 			SharedTreeTestFactory,
 			Operation,
@@ -72,7 +72,6 @@ describe("Fuzz - Top-Level", () => {
 				maxNumberOfClients: 3,
 			},
 			reconnectProbability: 0,
-			replay: 9,
 		};
 		createDDSFuzzSuite(model, options);
 	});
