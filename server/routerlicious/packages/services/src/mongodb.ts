@@ -134,7 +134,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 			try {
 				await this.updateCore(filter, set, addToSet, mongoOptions);
 			} catch (sdkError) {
-				const error = cloneDeep(sdkError);
+				const error = this.cloneError(sdkError);
 				this.sanitizeError(error);
 				throw error;
 			}
@@ -157,7 +157,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 			try {
 				await this.updateManyCore(filter, set, addToSet, mongoOptions);
 			} catch (sdkError) {
-				const error = cloneDeep(sdkError);
+				const error = this.cloneError(sdkError);
 				this.sanitizeError(error);
 				throw error;
 			}
@@ -180,7 +180,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 			try {
 				await this.updateCore(filter, set, addToSet, mongoOptions);
 			} catch (sdkError) {
-				const error = cloneDeep(sdkError);
+				const error = this.cloneError(sdkError);
 				this.sanitizeError(error);
 				throw error;
 			}
@@ -228,7 +228,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 				// Older mongo driver bug, this insertedId was objectId or 3.2 but changed to any ID type consumer provided.
 				return result.insertedId;
 			} catch (sdkError) {
-				const error = cloneDeep(sdkError);
+				const error = this.cloneError(sdkError);
 				this.sanitizeError(error);
 				throw error;
 			}
@@ -247,7 +247,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 					ordered: false,
 				});
 			} catch (sdkError) {
-				const error = cloneDeep(sdkError);
+				const error = this.cloneError(sdkError);
 				this.sanitizeError(error);
 				throw error;
 			}
@@ -312,7 +312,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 					? { value: result.value, existing: true }
 					: { value, existing: false };
 			} catch (sdkError) {
-				const error = cloneDeep(sdkError);
+				const error = this.cloneError(sdkError);
 				this.sanitizeError(error);
 				throw error;
 			}
@@ -341,7 +341,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 					? { value: result.value, existing: true }
 					: { value, existing: false };
 			} catch (sdkError) {
-				const error = cloneDeep(sdkError);
+				const error = this.cloneError(sdkError);
 				this.sanitizeError(error);
 				throw error;
 			}
@@ -397,7 +397,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 				(error: any, numRetries: number, retryAfterInterval: number) =>
 					numRetries * retryAfterInterval, // calculateIntervalMs
 				(error) => {
-					const facadeError = cloneDeep(error);
+					const facadeError = this.cloneError(error);
 					this.sanitizeError(facadeError);
 				} /* onErrorFn */,
 				this.telemetryEnabled, // telemetryEnabled
@@ -451,6 +451,41 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 				throw err;
 			}
 		}
+	}
+
+	private cloneError(error: any): any {
+		try {
+			return structuredClone(error);
+		} catch (errCloning) {
+			Lumberjack.warning(
+				`Error cloning error object using cloneErrorDeep.`,
+				undefined,
+				errCloning,
+			);
+		}
+
+		try {
+			return cloneDeep(error);
+		} catch (errCloning) {
+			Lumberjack.warning(
+				`Error cloning error object using cloneDeep.`,
+				undefined,
+				errCloning,
+			);
+		}
+
+		try {
+			return JSON.parse(JSON.stringify(error));
+		} catch (errCloning) {
+			Lumberjack.warning(
+				`Error cloning error object using JSON.stringify.`,
+				undefined,
+				errCloning,
+			);
+		}
+
+		Lumberjack.error("Failed to clone error object. Using the shallow copy.", undefined, error);
+		return { ...error };
 	}
 
 	private terminateBasedOnCounterThreshold(counters: Record<string, number>): void {
