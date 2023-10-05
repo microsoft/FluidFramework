@@ -10,7 +10,7 @@
 import { assert } from "@fluidframework/core-utils";
 import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils";
 import { IAttributionCollectionSerializer } from "./attributionCollection";
-import { Comparer, Heap, List, ListNode, Stack } from "./collections";
+import { Comparer, Heap, List, ListNode } from "./collections";
 import {
 	LocalClientId,
 	NonCollabClient,
@@ -33,8 +33,6 @@ import {
 	IMergeBlock,
 	IMergeLeaf,
 	IMergeNode,
-	IncrementalExecOp,
-	IncrementalMapState,
 	InsertContext,
 	IRemovalInfo,
 	ISegment,
@@ -2492,54 +2490,6 @@ export class MergeTree {
 			}
 		}
 		this.nodeMap(refSeq, clientId, handler, accum, undefined, start, end);
-	}
-
-	public incrementalBlockMap<TContext>(stateStack: Stack<IncrementalMapState<TContext>>) {
-		while (!stateStack.empty()) {
-			// We already check the stack is not empty
-			const state = stateStack.top()!;
-			if (state.op !== IncrementalExecOp.Go) {
-				return;
-			}
-			if (state.childIndex === 0) {
-				state.start ??= 0;
-				state.end ??= this.blockLength(state.block, state.refSeq, state.clientId);
-				state.actions.pre?.(state);
-			}
-			if (state.op === IncrementalExecOp.Go && state.childIndex < state.block.childCount) {
-				const child = state.block.children[state.childIndex];
-				const len = this.nodeLength(child, state.refSeq, state.clientId) ?? 0;
-				if (len > 0 && state.start < len && state.end > 0) {
-					if (!child.isLeaf()) {
-						const childState = new IncrementalMapState(
-							child,
-							state.actions,
-							state.pos,
-							state.refSeq,
-							state.clientId,
-							state.context,
-							state.start,
-							state.end,
-							0,
-						);
-						stateStack.push(childState);
-					} else {
-						state.actions.leaf(child, state);
-					}
-				}
-				state.pos += len;
-				state.start -= len;
-				state.end -= len;
-				state.childIndex++;
-			} else {
-				if (state.childIndex === state.block.childCount) {
-					if (state.op === IncrementalExecOp.Go) {
-						state.actions.post?.(state);
-					}
-					stateStack.pop();
-				}
-			}
-		}
 	}
 
 	private nodeMap<TClientData>(
