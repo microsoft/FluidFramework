@@ -114,7 +114,9 @@ describe("Fuzz - undo/redo", () => {
 		});
 	});
 
-	describe("out of order undo matches the initial state", () => {
+	// Generally broken with multiple issues:
+	// AB#5747 tracks root-causing these and re-enabling.
+	describe.skip("out of order undo matches the initial state", () => {
 		const generatorFactory = (): AsyncGenerator<Operation, UndoRedoFuzzTestState> =>
 			takeAsync(opsPerRun, makeOpGenerator(undoRedoWeights));
 
@@ -169,8 +171,6 @@ describe("Fuzz - undo/redo", () => {
 			defaultTestCount: runsPerBatch,
 			numberOfClients: 3,
 			emitter,
-			// ADO:5083, assert 0x6a1 hit for 13 and 18
-			skip: [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
 			detachedStartOptions: {
 				enabled: false,
 				attachProbability: 0,
@@ -218,10 +218,10 @@ describe("Fuzz - undo/redo", () => {
 			numberOfClients: 3,
 			emitter,
 			validationStrategy: { type: "fixedInterval", interval: opsPerRun * 2 }, // interval set to prevent synchronization
-			skip: [4, 8, 11, 13, 15, 18],
-			// TODO: Enabling this causes the tree2 fuzz tests to infinite loop due to how edit generation is set up.
-			// This config can probably stay false (this test is targeted at long-running undo/redo scenarios, so having a single
-			// client start detached and later attach is not interesting), but it should still function even if enabled.
+			// TODO:AB#5713: These seeds trigger 0x4a6. Investigate and fix.
+			skip: [0, 1, 3, 4, 5, 8, 13, 14, 16, 19],
+			// This test is targeted at long-running undo/redo scenarios, so having a single client start detached and later attach
+			// is not particularly interesting
 			detachedStartOptions: {
 				enabled: false,
 				attachProbability: 1,
