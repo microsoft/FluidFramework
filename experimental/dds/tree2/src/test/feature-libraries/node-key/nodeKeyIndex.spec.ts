@@ -250,69 +250,71 @@ describe("Node Key Index", () => {
 
 	// TODO: branching and forking is not exposed in the new API, so these tests are disabled for now
 	// TODO: Schema changes are not yet fully hooked up to eventing. A schema change should probably trigger
-	// it.skip("reacts to schema changes", () => {
-	// 	// This is missing the global node key field on the node
-	// 	const builder2 = new SchemaBuilder("node key index test", {}, nodeKeySchema);
-	// 	const nodeSchemaNoKey = builder2.structRecursive("node", {
-	// 		child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchemaNoKey),
-	// 	});
-	// 	const nodeSchemaDataNoKey = builder2.intoDocumentSchema(
-	// 		SchemaBuilder.fieldOptional(nodeSchemaNoKey),
-	// 	);
+	/*
+	it.skip("reacts to schema changes", () => {
+		// This is missing the global node key field on the node
+		const builder2 = new SchemaBuilder("node key index test", {}, nodeKeySchema);
+		const nodeSchemaNoKey = builder2.structRecursive("node", {
+			child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchemaNoKey),
+		});
+		const nodeSchemaDataNoKey = builder2.intoDocumentSchema(
+			SchemaBuilder.fieldOptional(nodeSchemaNoKey),
+		);
 
-	// 	const view = createView(undefined);
-	// 	const key = view.context.nodeKeys.generate();
-	// 	view.setContent({
-	// 		...contextualizeKey(view, key),
-	// 		child: undefined,
-	// 	});
-	// 	assertIds(view, [key]);
-	// 	view.storedSchema.update(nodeSchemaDataNoKey);
-	// 	assertIds(view, []);
-	// 	view.storedSchema.update(nodeSchemaData);
-	// 	assertIds(view, [key]);
-	// });
+		const view = createView(undefined);
+		const key = view.context.nodeKeys.generate();
+		view.setContent({
+			...contextualizeKey(view, key),
+			child: undefined,
+		});
+		assertIds(view, [key]);
+		view.storedSchema.update(nodeSchemaDataNoKey);
+		assertIds(view, []);
+		view.storedSchema.update(nodeSchemaData);
+		assertIds(view, [key]);
+	});
 
-	// function describeForkingTests(prefork: boolean): void {
-	// 	function getView(): ISharedTreeView {
-	// 		const view = createView(undefined);
-	// 		return prefork ? view.fork() : view;
-	// 	}
-	// 	describe(`forking from ${prefork ? "a fork" : "the root"}`, () => {
-	// 		it("does not mutate the base when mutating a fork", () => {
-	// 			const view = getView();
-	// 			const key = view.context.nodeKeys.generate();
-	// 			view.setContent({
-	// 				...contextualizeKey(view, key),
-	// 				child: undefined,
-	// 			});
+	function describeForkingTests(prefork: boolean): void {
+		function getView(): ISharedTreeView {
+			const view = createView(undefined);
+			return prefork ? view.fork() : view;
+		}
+		describe(`forking from ${prefork ? "a fork" : "the root"}`, () => {
+			it("does not mutate the base when mutating a fork", () => {
+				const view = getView();
+				const key = view.context.nodeKeys.generate();
+				view.setContent({
+					...contextualizeKey(view, key),
+					child: undefined,
+				});
 
-	// 			const fork = view.fork();
-	// 			fork.setContent(undefined);
-	// 			assertIds(view, [key]);
-	// 			assertIds(fork, []);
-	// 			view.merge(fork);
-	// 			assertIds(view, []);
-	// 		});
+				const fork = view.fork();
+				fork.setContent(undefined);
+				assertIds(view, [key]);
+				assertIds(fork, []);
+				view.merge(fork);
+				assertIds(view, []);
+			});
 
-	// 		it("does not mutate the fork when mutating a base", () => {
-	// 			const view = getView();
-	// 			const key = view.context.nodeKeys.generate();
-	// 			view.setContent({
-	// 				...contextualizeKey(view, key),
-	// 				child: undefined,
-	// 			});
+			it("does not mutate the fork when mutating a base", () => {
+				const view = getView();
+				const key = view.context.nodeKeys.generate();
+				view.setContent({
+					...contextualizeKey(view, key),
+					child: undefined,
+				});
 
-	// 			const fork = view.fork();
-	// 			view.setContent(undefined);
-	// 			assertIds(view, []);
-	// 			assertIds(fork, [key]);
-	// 			view.merge(fork);
-	// 			assertIds(view, []);
-	// 		});
-	// 	});
-	// }
+				const fork = view.fork();
+				view.setContent(undefined);
+				assertIds(view, []);
+				assertIds(fork, [key]);
+				view.merge(fork);
+				assertIds(view, []);
+			});
+		});
+	}
 
-	// describeForkingTests(false);
-	// describeForkingTests(true);
+	describeForkingTests(false);
+	describeForkingTests(true);
+	*/
 });
