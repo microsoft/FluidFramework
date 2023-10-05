@@ -185,7 +185,6 @@ export class MockRuntime
 			// allow uploadBlob to finish their then/catch statements
 			await blobP.then().catch(() => {});
 		}
-		// await Promise.allSettled(blobPs).catch(() => {});
 	}
 
 	public async processHandles() {
@@ -441,6 +440,26 @@ describe("BlobManager", () => {
 		assert.strictEqual(summaryData.redirectTable.size, 1);
 	});
 
+	it("upload fails gracefully", async () => {
+		await runtime.attach();
+		await runtime.connect();
+
+		const handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+		await runtime.processBlobs(false);
+		runtime.processOps();
+		try {
+			await handleP;
+			assert.fail("should fail");
+		}
+		catch (error: any) {
+			assert.strictEqual(error.message, "fake error");
+		}
+		await assert.rejects(handleP);
+		const summaryData = validateSummary(runtime);
+		assert.strictEqual(summaryData.ids.length, 0);
+		assert.strictEqual(summaryData.redirectTable, undefined);
+	});
+
 	it("completes after disconnection while op in flight", async () => {
 		await runtime.attach();
 		await runtime.connect();
@@ -690,8 +709,9 @@ describe("BlobManager", () => {
 			const ac = new AbortController();
 			const blob = IsoBuffer.from("blob", "utf8");
 			const handleP = runtime.createBlob(blob, ac.signal);
+			const handleP2 = runtime.createBlob(IsoBuffer.from("blob2", "utf8"));
 			ac.abort("abort test");
-			assert.strictEqual(runtime.unprocessedBlobs.size, 1);
+			assert.strictEqual(runtime.unprocessedBlobs.size, 2);
 			await runtime.processBlobs(false);
 			try {
 				await handleP;
@@ -699,7 +719,18 @@ describe("BlobManager", () => {
 			} catch (error: any) {
 				assert.strictEqual(error.message, "uploadBlob aborted");
 			}
+			try {
+				// failure with or without aborting behaves similar right now
+				// because we haven't made distinction between retriable and
+				// non-retriable errors. If uploadBlob finds a retriable error,
+				// it will keep retrying until the call is aborted.
+				await handleP2;
+				assert.fail("Should not succeed");
+			} catch (error: any) {
+				assert.strictEqual(error.message, "fake error");
+			}
 			await assert.rejects(handleP);
+			await assert.rejects(handleP2);
 			const summaryData = validateSummary(runtime);
 			assert.strictEqual(summaryData.ids.length, 0);
 			assert.strictEqual(summaryData.redirectTable, undefined);
