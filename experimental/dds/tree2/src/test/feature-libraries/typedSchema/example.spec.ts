@@ -13,8 +13,8 @@ const numberSchema = builder.leaf("number", ValueSchema.Number);
 
 // Declare struct
 const ballSchema = builder.struct("Ball", {
-	x: SchemaBuilder.fieldValue(numberSchema),
-	y: SchemaBuilder.fieldValue(numberSchema),
+	x: SchemaBuilder.fieldRequired(numberSchema),
+	y: SchemaBuilder.fieldRequired(numberSchema),
 });
 
 // We can inspect the schema.

@@ -100,7 +100,7 @@
 		"mocha-json-output-reporter": "^2.0.1",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
-		"prettier": "~2.6.2",
+		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.1.6"
 	},
@@ -110,35 +110,8 @@
 				"forwardCompat": false,
 				"backCompat": false
 			},
-			"InterfaceDeclaration_IMergeTreeDelta": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_IMergeTreeDeltaCallbackArgs": {
-				"backCompat": false
-			},
-			"TypeAliasDeclaration_IMergeTreeDeltaOp": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_IMergeTreeDeltaOpArgs": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_IMergeTreeGroupMsg": {
-				"backCompat": false
-			},
-			"TypeAliasDeclaration_IMergeTreeOp": {
-				"backCompat": false
-			},
-			"TypeAliasDeclaration_MergeTreeDeltaOperationType": {
-				"backCompat": false
-			},
-			"TypeAliasDeclaration_MergeTreeDeltaOperationTypes": {
-				"backCompat": false
-			},
 			"VariableDeclaration_MergeTreeDeltaType": {
 				"forwardCompat": false
-			},
-			"TypeAliasDeclaration_MergeTreeDeltaType": {
-				"backCompat": false
 			},
 			"InterfaceDeclaration_IHierBlock": {
 				"forwardCompat": false
@@ -234,8 +207,33 @@
 				"forwardCompat": false,
 				"backCompat": false
 			},
+			"RemovedInterfaceDeclaration_IIntegerRange": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_internedSpaces": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedVariableDeclaration_refGetRangeLabels": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_refHasRangeLabel": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_refHasRangeLabels": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
 			"ClassDeclaration_Client": {
-				"forwardCompat": false
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_RangeStackMap": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}

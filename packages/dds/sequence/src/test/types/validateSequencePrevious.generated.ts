@@ -307,7 +307,6 @@ declare function get_current_InterfaceDeclaration_ISequenceDeltaRange():
 declare function use_old_InterfaceDeclaration_ISequenceDeltaRange(
     use: TypeOnly<old.ISequenceDeltaRange>);
 use_old_InterfaceDeclaration_ISequenceDeltaRange(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISequenceDeltaRange());
 
 /*
@@ -356,7 +355,6 @@ declare function get_current_InterfaceDeclaration_ISerializedInterval():
 declare function use_old_InterfaceDeclaration_ISerializedInterval(
     use: TypeOnly<old.ISerializedInterval>);
 use_old_InterfaceDeclaration_ISerializedInterval(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISerializedInterval());
 
 /*
@@ -430,6 +428,7 @@ declare function get_current_InterfaceDeclaration_ISharedString():
 declare function use_old_InterfaceDeclaration_ISharedString(
     use: TypeOnly<old.ISharedString>);
 use_old_InterfaceDeclaration_ISharedString(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISharedString());
 
 /*
@@ -562,7 +561,6 @@ declare function get_old_InterfaceDeclaration_IntervalLocator():
 declare function use_current_InterfaceDeclaration_IntervalLocator(
     use: TypeOnly<current.IntervalLocator>);
 use_current_InterfaceDeclaration_IntervalLocator(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IntervalLocator());
 
 /*
@@ -611,7 +609,6 @@ declare function get_old_TypeAliasDeclaration_IntervalRevertible():
 declare function use_current_TypeAliasDeclaration_IntervalRevertible(
     use: TypeOnly<current.IntervalRevertible>);
 use_current_TypeAliasDeclaration_IntervalRevertible(
-    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_IntervalRevertible());
 
 /*
@@ -720,7 +717,6 @@ declare function get_current_ClassDeclaration_SequenceDeltaEvent():
 declare function use_old_ClassDeclaration_SequenceDeltaEvent(
     use: TypeOnly<old.SequenceDeltaEvent>);
 use_old_ClassDeclaration_SequenceDeltaEvent(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SequenceDeltaEvent());
 
 /*
@@ -745,7 +741,6 @@ declare function get_current_ClassDeclaration_SequenceEvent():
 declare function use_old_ClassDeclaration_SequenceEvent(
     use: TypeOnly<old.SequenceEvent>);
 use_old_ClassDeclaration_SequenceEvent(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SequenceEvent());
 
 /*
@@ -758,7 +753,6 @@ declare function get_old_ClassDeclaration_SequenceInterval():
 declare function use_current_ClassDeclaration_SequenceInterval(
     use: TypeOnly<current.SequenceInterval>);
 use_current_ClassDeclaration_SequenceInterval(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SequenceInterval());
 
 /*
@@ -819,7 +813,6 @@ declare function get_current_ClassDeclaration_SequenceMaintenanceEvent():
 declare function use_old_ClassDeclaration_SequenceMaintenanceEvent(
     use: TypeOnly<old.SequenceMaintenanceEvent>);
 use_old_ClassDeclaration_SequenceMaintenanceEvent(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SequenceMaintenanceEvent());
 
 /*
@@ -892,7 +885,6 @@ declare function get_current_TypeAliasDeclaration_SerializedIntervalDelta():
 declare function use_old_TypeAliasDeclaration_SerializedIntervalDelta(
     use: TypeOnly<old.SerializedIntervalDelta>);
 use_old_TypeAliasDeclaration_SerializedIntervalDelta(
-    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_SerializedIntervalDelta());
 
 /*
@@ -966,6 +958,7 @@ declare function get_current_ClassDeclaration_SharedSegmentSequence():
 declare function use_old_ClassDeclaration_SharedSegmentSequence(
     use: TypeOnly<old.SharedSegmentSequence<any>>);
 use_old_ClassDeclaration_SharedSegmentSequence(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SharedSegmentSequence());
 
 /*
@@ -991,6 +984,7 @@ declare function get_current_ClassDeclaration_SharedSequence():
 declare function use_old_ClassDeclaration_SharedSequence(
     use: TypeOnly<old.SharedSequence<any>>);
 use_old_ClassDeclaration_SharedSequence(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SharedSequence());
 
 /*
@@ -1016,6 +1010,7 @@ declare function get_current_ClassDeclaration_SharedString():
 declare function use_old_ClassDeclaration_SharedString(
     use: TypeOnly<old.SharedString>);
 use_old_ClassDeclaration_SharedString(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SharedString());
 
 /*
@@ -1052,7 +1047,6 @@ declare function get_old_TypeAliasDeclaration_SharedStringRevertible():
 declare function use_current_TypeAliasDeclaration_SharedStringRevertible(
     use: TypeOnly<current.SharedStringRevertible>);
 use_current_TypeAliasDeclaration_SharedStringRevertible(
-    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_SharedStringRevertible());
 
 /*

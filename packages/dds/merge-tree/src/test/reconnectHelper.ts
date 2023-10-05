@@ -10,7 +10,7 @@ import { SegmentGroup } from "..";
 import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger";
 
 const ClientIds = ["A", "B", "C", "D"] as const;
-type ClientName = typeof ClientIds[number];
+type ClientName = (typeof ClientIds)[number];
 
 export class ReconnectTestHelper {
 	clients = createClientsAtInitialState(

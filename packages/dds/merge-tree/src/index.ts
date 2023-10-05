@@ -11,7 +11,6 @@ export {
 	SequenceOffsets,
 } from "./attributionCollection";
 export { createInsertOnlyAttributionPolicy } from "./attributionPolicy";
-export { IIntegerRange } from "./base";
 export { Client } from "./client";
 export {
 	ConflictAction,
@@ -77,7 +76,6 @@ export {
 	IncrementalSegmentAction,
 	IncrementalSegmentActions,
 	InsertContext,
-	internedSpaces,
 	IRemovalInfo,
 	ISegment,
 	ISegmentAction,
@@ -137,12 +135,8 @@ export {
 	DetachedReferencePosition,
 	maxReferencePosition,
 	minReferencePosition,
-	RangeStackMap,
 	ReferencePosition,
-	refGetRangeLabels,
 	refGetTileLabels,
-	refHasRangeLabel,
-	refHasRangeLabels,
 	refHasTileLabel,
 	refHasTileLabels,
 	refTypeIncludesFlag,

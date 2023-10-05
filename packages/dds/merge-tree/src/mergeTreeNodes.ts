@@ -19,15 +19,7 @@ import { ICombiningOp, IJSONSegment, IMarkerDef, MergeTreeDeltaType, ReferenceTy
 import { computeHierarchicalOrdinal } from "./ordinal";
 import { PartialSequenceLengths } from "./partialLengths";
 import { clone, createMap, MapLike, PropertySet } from "./properties";
-import {
-	refTypeIncludesFlag,
-	// eslint-disable-next-line import/no-deprecated
-	RangeStackMap,
-	ReferencePosition,
-	// eslint-disable-next-line import/no-deprecated
-	refGetRangeLabels,
-	refGetTileLabels,
-} from "./referencePositions";
+import { refTypeIncludesFlag, ReferencePosition, refGetTileLabels } from "./referencePositions";
 import { SegmentGroupCollection } from "./segmentGroupCollection";
 import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManager";
 
@@ -90,11 +82,8 @@ export interface IMergeBlock extends IMergeNodeCommon {
  * @internal
  */
 export interface IHierBlock extends IMergeBlock {
-	hierToString(indentCount: number): string;
 	rightmostTiles: MapLike<ReferencePosition>;
 	leftmostTiles: MapLike<ReferencePosition>;
-	// eslint-disable-next-line import/no-deprecated
-	rangeStacks: RangeStackMap;
 }
 
 /**
@@ -829,20 +818,6 @@ export const compareNumbers = (a: number, b: number) => a - b;
 
 export const compareStrings = (a: string, b: string) => a.localeCompare(b);
 
-const indentStrings = ["", " ", "  "];
-/**
- * @deprecated This functionality is deprecated and will be removed in a future release.
- */
-export function internedSpaces(n: number) {
-	if (indentStrings[n] === undefined) {
-		indentStrings[n] = "";
-		for (let i = 0; i < n; i++) {
-			indentStrings[n] += " ";
-		}
-	}
-	return indentStrings[n];
-}
-
 export interface IConsensusInfo {
 	marker: Marker;
 	callback: (m: Marker) => void;
@@ -864,18 +839,6 @@ export function debugMarkerToString(marker: Marker): string {
 	if (refTypeIncludesFlag(marker, ReferenceType.Tile)) {
 		bbuf += "Tile";
 	}
-	if (refTypeIncludesFlag(marker, ReferenceType.NestBegin)) {
-		if (bbuf.length > 0) {
-			bbuf += "; ";
-		}
-		bbuf += "RangeBegin";
-	}
-	if (refTypeIncludesFlag(marker, ReferenceType.NestEnd)) {
-		if (bbuf.length > 0) {
-			bbuf += "; ";
-		}
-		bbuf += "RangeEnd";
-	}
 	let lbuf = "";
 	const id = marker.getId();
 	if (id) {
@@ -892,26 +855,7 @@ export function debugMarkerToString(marker: Marker): string {
 			lbuf += tileLabel;
 		}
 	}
-	// eslint-disable-next-line import/no-deprecated
-	const rangeLabels = refGetRangeLabels(marker);
-	if (rangeLabels) {
-		let rangeKind = "begin";
-		if (refTypeIncludesFlag(marker, ReferenceType.NestEnd)) {
-			rangeKind = "end";
-		}
-		if (tileLabels) {
-			lbuf += " ";
-		}
-		lbuf += `range ${rangeKind} -- `;
-		const labels = rangeLabels;
-		for (let i = 0, len = labels.length; i < len; i++) {
-			const rangeLabel = labels[i];
-			if (i > 0) {
-				lbuf += "; ";
-			}
-			lbuf += rangeLabel;
-		}
-	}
+
 	let pbuf = "";
 	if (marker.properties) {
 		pbuf += JSON.stringify(marker.properties, (key, value) => {

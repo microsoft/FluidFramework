@@ -121,11 +121,10 @@ export class TestClient extends Client {
 	): Promise<TestClient> {
 		const client2 = new TestClient(options, specToSeg);
 		const { catchupOpsP } = await client2.load(
-			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			{
 				logger: client2.logger,
 				clientId: newLongClientId,
-			} as IFluidDataStoreRuntime,
+			} as any as IFluidDataStoreRuntime,
 			storage,
 			TestClient.serializer,
 		);

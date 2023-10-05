@@ -43,7 +43,6 @@
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:newsnapfiles": "node dist/test/createSnapshotFiles.js",
 		"test:stress": "cross-env FUZZ_TEST_COUNT=100 FUZZ_STRESS_RUN=true mocha --ignore 'dist/test/memory/**/*' --recursive 'dist/test/**/*.fuzz.spec.js' -r @fluidframework/mocha-test-setup",
-		"testfarm": "node dist/test/testFarm.js",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
@@ -106,7 +105,7 @@
 		"mocha-json-output-reporter": "^2.0.1",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
-		"prettier": "~2.6.2",
+		"prettier": "~3.0.3",
 		"random-js": "^1.0.8",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.1.6"
@@ -121,29 +120,21 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"InterfaceDeclaration_ISequenceDeltaRange": {
-				"backCompat": false
-			},
 			"InterfaceDeclaration_ISharedString": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_SequenceDeltaEvent": {
-				"backCompat": false
-			},
-			"ClassDeclaration_SequenceEvent": {
-				"backCompat": false
-			},
-			"ClassDeclaration_SequenceMaintenanceEvent": {
+				"forwardCompat": false,
 				"backCompat": false
 			},
 			"ClassDeclaration_SharedSegmentSequence": {
-				"forwardCompat": false
+				"forwardCompat": false,
+				"backCompat": false
 			},
 			"ClassDeclaration_SharedSequence": {
-				"forwardCompat": false
+				"forwardCompat": false,
+				"backCompat": false
 			},
 			"ClassDeclaration_SharedString": {
-				"forwardCompat": false
+				"forwardCompat": false,
+				"backCompat": false
 			},
 			"TypeAliasDeclaration_CompressedSerializedInterval": {
 				"backCompat": false
@@ -168,24 +159,6 @@
 			},
 			"RemovedInterfaceDeclaration_ISerializedIntervalCollectionV2": {
 				"backCompat": false
-			},
-			"InterfaceDeclaration_ISerializedInterval": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_IntervalLocator": {
-				"forwardCompat": false
-			},
-			"TypeAliasDeclaration_IntervalRevertible": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_SequenceInterval": {
-				"forwardCompat": false
-			},
-			"TypeAliasDeclaration_SerializedIntervalDelta": {
-				"backCompat": false
-			},
-			"TypeAliasDeclaration_SharedStringRevertible": {
-				"forwardCompat": false
 			}
 		}
 	}

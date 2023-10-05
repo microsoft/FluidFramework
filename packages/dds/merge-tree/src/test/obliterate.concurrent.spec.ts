@@ -16,7 +16,7 @@ import { ReconnectTestHelper } from "./reconnectHelper";
  * - removed ranges are surrounded by `[` ... `]`
  * - obliterated ranges are surrounded by `(` ... `)`
  *
- * In cases where there ranges are ambiguous, there are additional diagrams
+ * In cases where these ranges are ambiguous, there are additional diagrams
  * containing `v` and `-`, with the `v` denoting the start and end of the range
  *
  * E.g.
