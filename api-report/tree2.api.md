@@ -1257,14 +1257,14 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
     // (undocumented)
     [Symbol.iterator](): IterableIterator<UnboxField<TSchema["mapFields"], "notEmpty">>;
     readonly asObject: {
-        readonly [P in string]?: UnboxField<TSchema["mapFields"]>;
+        readonly [P in FieldKey]?: UnboxField<TSchema["mapFields"]>;
     };
-    entries(): IterableIterator<[string, UnboxField<TSchema["mapFields"]>]>;
-    forEach(callbackFn: (value: UnboxField<TSchema["mapFields"]>, key: string, map: MapNode<TSchema>) => void, thisArg?: any): void;
+    entries(): IterableIterator<[FieldKey, UnboxField<TSchema["mapFields"]>]>;
+    forEach(callbackFn: (value: UnboxField<TSchema["mapFields"]>, key: FieldKey, map: MapNode<TSchema>) => void, thisArg?: any): void;
     get(key: string): UnboxField<TSchema["mapFields"]>;
     getBoxed(key: string): TypedField<TSchema["mapFields"]>;
     has(key: string): boolean;
-    keys(): IterableIterator<string>;
+    keys(): IterableIterator<FieldKey>;
     readonly size: number;
     values(): IterableIterator<UnboxField<TSchema["mapFields"]>>;
 }

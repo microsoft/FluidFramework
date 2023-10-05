@@ -258,7 +258,7 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	 * @remarks
 	 * All fields under a map implicitly exist, but `keys` will yield only the keys of fields which contain one or more nodes.
 	 */
-	keys(): IterableIterator<string>;
+	keys(): IterableIterator<FieldKey>;
 
 	/**
 	 * Returns an iterable of values in the map.
@@ -274,7 +274,7 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	 * @remarks
 	 * All fields under a map implicitly exist, but `entries` will yield only the entries whose fields contain one or more nodes.
 	 */
-	entries(): IterableIterator<[string, UnboxField<TSchema["mapFields"]>]>;
+	entries(): IterableIterator<[FieldKey, UnboxField<TSchema["mapFields"]>]>;
 
 	/**
 	 * Executes a provided function once per each key/value pair in the map.
@@ -287,7 +287,7 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	forEach(
 		callbackFn: (
 			value: UnboxField<TSchema["mapFields"]>,
-			key: string,
+			key: FieldKey,
 			map: MapNode<TSchema>,
 		) => void,
 		thisArg?: any,
@@ -315,7 +315,7 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	 * This object is not guaranteed to be kept up to date across edits and thus should not be held onto across edits.
 	 */
 	readonly asObject: {
-		readonly [P in string]?: UnboxField<TSchema["mapFields"]>;
+		readonly [P in FieldKey]?: UnboxField<TSchema["mapFields"]>;
 	};
 }
 
