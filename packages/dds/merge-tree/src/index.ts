@@ -26,7 +26,6 @@ export {
 	RBNodeActions,
 	RedBlackTree,
 	SortedDictionary,
-	Stack,
 } from "./collections";
 export {
 	LocalClientId,

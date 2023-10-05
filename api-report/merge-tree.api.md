@@ -1091,20 +1091,6 @@ export abstract class SortedSet<T, U extends string | number> {
 }
 
 // @public (undocumented)
-export class Stack<T> {
-    // (undocumented)
-    empty(): boolean;
-    // (undocumented)
-    items: T[];
-    // (undocumented)
-    pop(): T | undefined;
-    // (undocumented)
-    push(val: T): void;
-    // (undocumented)
-    top(): T | undefined;
-}
-
-// @public (undocumented)
 export class TextSegment extends BaseSegment {
     constructor(text: string);
     // (undocumented)

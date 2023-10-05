@@ -141,7 +141,6 @@ export {
 	SortedSegmentSet,
 	SortedSegmentSetItem,
 	SortedSet,
-	Stack,
 	TextSegment,
 	toRemovalInfo,
 	Trackable,

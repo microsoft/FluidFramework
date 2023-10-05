@@ -2041,26 +2041,14 @@ use_old_ClassDeclaration_SortedSet(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_Stack": {"forwardCompat": false}
+* "RemovedClassDeclaration_Stack": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_Stack():
-    TypeOnly<old.Stack<any>>;
-declare function use_current_ClassDeclaration_Stack(
-    use: TypeOnly<current.Stack<any>>);
-use_current_ClassDeclaration_Stack(
-    get_old_ClassDeclaration_Stack());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_Stack": {"backCompat": false}
+* "RemovedClassDeclaration_Stack": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_Stack():
-    TypeOnly<current.Stack<any>>;
-declare function use_old_ClassDeclaration_Stack(
-    use: TypeOnly<old.Stack<any>>);
-use_old_ClassDeclaration_Stack(
-    get_current_ClassDeclaration_Stack());
 
 /*
 * Validate forward compat by using old type in place of current type

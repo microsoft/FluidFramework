@@ -132,6 +132,10 @@
 			"RemovedTypeAliasDeclaration_RangeStackMap": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"RemovedClassDeclaration_Stack": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}
