@@ -17,6 +17,7 @@ import { IFluidModule } from '@fluidframework/container-definitions';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IHostLoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions as ILoaderOptions_2 } from '@fluidframework/container-definitions';
+import { ILocationRedirectionError } from '@fluidframework/driver-definitions';
 import { IProtocolHandler as IProtocolHandler_2 } from '@fluidframework/protocol-base';
 import { IProvideFluidCodeDetailsComparer } from '@fluidframework/container-definitions';
 import { IQuorumSnapshot } from '@fluidframework/protocol-base';
@@ -99,6 +100,9 @@ export interface IProtocolHandler extends IProtocolHandler_2 {
 }
 
 // @public
+export function isLocationRedirectionError(error: any): error is ILocationRedirectionError;
+
+// @public
 export class Loader implements IHostLoader {
     constructor(loaderProps: ILoaderProps);
     // (undocumented)
@@ -126,6 +130,9 @@ export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot:
 
 // @public @deprecated
 export function requestResolvedObjectFromContainer(container: IContainer, headers?: IRequestHeader): Promise<IResponse>;
+
+// @public
+export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger): Promise<T>;
 
 // @public
 export function waitContainerToCatchUp(container: IContainer): Promise<boolean>;

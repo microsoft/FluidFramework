@@ -20,8 +20,10 @@ import { PartialSequenceLengths } from "./partialLengths";
 import { clone, createMap, MapLike, PropertySet } from "./properties";
 import {
 	refTypeIncludesFlag,
+	// eslint-disable-next-line import/no-deprecated
 	RangeStackMap,
 	ReferencePosition,
+	// eslint-disable-next-line import/no-deprecated
 	refGetRangeLabels,
 	refGetTileLabels,
 } from "./referencePositions";
@@ -90,6 +92,7 @@ export interface IHierBlock extends IMergeBlock {
 	hierToString(indentCount: number): string;
 	rightmostTiles: MapLike<ReferencePosition>;
 	leftmostTiles: MapLike<ReferencePosition>;
+	// eslint-disable-next-line import/no-deprecated
 	rangeStacks: RangeStackMap;
 }
 
@@ -723,6 +726,9 @@ export const compareNumbers = (a: number, b: number) => a - b;
 export const compareStrings = (a: string, b: string) => a.localeCompare(b);
 
 const indentStrings = ["", " ", "  "];
+/**
+ * @deprecated This functionality is deprecated and will be removed in a future release.
+ */
 export function internedSpaces(n: number) {
 	if (indentStrings[n] === undefined) {
 		indentStrings[n] = "";
@@ -782,6 +788,7 @@ export function debugMarkerToString(marker: Marker): string {
 			lbuf += tileLabel;
 		}
 	}
+	// eslint-disable-next-line import/no-deprecated
 	const rangeLabels = refGetRangeLabels(marker);
 	if (rangeLabels) {
 		let rangeKind = "begin";

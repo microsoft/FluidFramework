@@ -35,7 +35,7 @@ import {
 	StructSchema,
 	Any,
 } from "../typed-schema";
-import { TreeStatus, treeStatusFromPath } from "../editable-tree";
+import { treeStatusFromPath } from "../editable-tree";
 import { EditableTreeEvents } from "../untypedTree";
 import { FieldKinds } from "../default-field-kinds";
 import { Context } from "./context";
@@ -51,8 +51,9 @@ import {
 	TreeField,
 	TreeNode,
 	boxedIterator,
+	TreeStatus,
 } from "./editableTreeTypes";
-import { makeField, unboxedField } from "./lazyField";
+import { makeField } from "./lazyField";
 import {
 	LazyEntity,
 	cursorSymbol,
@@ -61,6 +62,7 @@ import {
 	makePropertyEnumerableOwn,
 	tryMoveCursorToAnchorSymbol,
 } from "./lazyEntity";
+import { unboxedField } from "./unboxed";
 
 const lazyTreeSlot = anchorSlot<LazyTree>();
 

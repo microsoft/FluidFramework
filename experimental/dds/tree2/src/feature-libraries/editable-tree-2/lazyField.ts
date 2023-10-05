@@ -15,7 +15,6 @@ import {
 	ITreeCursor,
 	keyAsDetachedField,
 	rootField,
-	EmptyKey,
 	iterateCursorField,
 } from "../../core";
 import { FieldKind } from "../modular-schema";
@@ -26,15 +25,15 @@ import {
 	SequenceFieldEditBuilder,
 	ValueFieldEditBuilder,
 } from "../default-field-kinds";
-import { compareSets, disposeSymbol, fail, oneFromSet } from "../../util";
 import {
-	AllowedTypes,
-	FieldSchema,
-	TreeSchema,
-	schemaIsFieldNode,
-	schemaIsLeaf,
-} from "../typed-schema";
-import { TreeStatus, treeStatusFromPath } from "../editable-tree";
+	assertValidIndex,
+	assertValidRangeIndices,
+	compareSets,
+	disposeSymbol,
+	fail,
+} from "../../util";
+import { AllowedTypes, FieldSchema } from "../typed-schema";
+import { treeStatusFromPath } from "../editable-tree";
 import { Context } from "./context";
 import {
 	FlexibleNodeContent,
@@ -42,13 +41,13 @@ import {
 	Sequence,
 	TypedField,
 	TypedNodeUnion,
-	UnboxField,
-	UnboxNode,
 	UnboxNodeUnion,
 	TreeField,
 	TreeNode,
 	RequiredField,
 	boxedIterator,
+	CheckTypesOverlap,
+	TreeStatus,
 } from "./editableTreeTypes";
 import { makeTree } from "./lazyTree";
 import {
@@ -61,6 +60,7 @@ import {
 	makePropertyNotEnumerable,
 	tryMoveCursorToAnchorSymbol,
 } from "./lazyEntity";
+import { unboxedUnion } from "./unboxed";
 
 export function makeField(
 	context: Context,
@@ -254,36 +254,132 @@ export class LazySequence<TTypes extends AllowedTypes>
 		makePropertyEnumerableOwn(this, "asArray", LazySequence.prototype);
 	}
 
+	public get asArray(): readonly UnboxNodeUnion<TTypes>[] {
+		return this.map((x) => x);
+	}
+
 	private sequenceEditor(): SequenceFieldEditBuilder {
 		const fieldPath = this.getFieldPathForEditing();
 		const fieldEditor = this.context.editor.sequenceField(fieldPath);
 		return fieldEditor;
 	}
 
-	public replaceRange(
-		index: number,
-		count: number,
-		newContent: Iterable<FlexibleNodeContent<TTypes>>,
-	): void {
+	public insertAt(index: number, value: FlexibleNodeContent<TTypes>[]): void {
 		const fieldEditor = this.sequenceEditor();
-		const content = this.normalizeNewContent([...newContent]);
-
-		fieldEditor.delete(index, count);
+		const content = this.normalizeNewContent(Array.isArray(value) ? value : [value]);
+		assertValidIndex(index, this, true);
 		fieldEditor.insert(index, content);
 	}
 
-	public get asArray(): readonly UnboxNodeUnion<TTypes>[] {
-		return this.map((x) => x);
+	public insertAtStart(value: FlexibleNodeContent<TTypes>[]): void {
+		this.insertAt(0, value);
+	}
+
+	public insertAtEnd(value: FlexibleNodeContent<TTypes>[]): void {
+		this.insertAt(this.length, value);
+	}
+
+	public removeAt(index: number): void {
+		const fieldEditor = this.sequenceEditor();
+		fieldEditor.delete(index, 1);
+	}
+
+	public removeRange(start?: number, end?: number): void {
+		const fieldEditor = this.sequenceEditor();
+		const { length } = this;
+		const removeStart = start ?? 0;
+		const removeEnd = Math.min(length, end ?? length);
+		assertValidRangeIndices(removeStart, removeEnd, this);
+		fieldEditor.delete(removeStart, removeEnd - removeStart);
+	}
+
+	public moveToStart(sourceStart: number, sourceEnd: number): void;
+	public moveToStart<TTypesSource extends AllowedTypes>(
+		sourceStart: number,
+		sourceEnd: number,
+		source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
+	): void;
+	public moveToStart<TTypesSource extends AllowedTypes>(
+		sourceStart: number,
+		sourceEnd: number,
+		source?: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
+	): void {
+		this._moveToIndex(0, sourceStart, sourceEnd, source);
+	}
+
+	public moveToEnd(sourceStart: number, sourceEnd: number): void;
+	public moveToEnd<TTypesSource extends AllowedTypes>(
+		sourceStart: number,
+		sourceEnd: number,
+		source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
+	): void;
+	public moveToEnd<TTypesSource extends AllowedTypes>(
+		sourceStart: number,
+		sourceEnd: number,
+		source?: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
+	): void {
+		this._moveToIndex(this.length, sourceStart, sourceEnd, source);
+	}
+
+	public moveToIndex(index: number, sourceStart: number, sourceEnd: number): void;
+	public moveToIndex<TTypesSource extends AllowedTypes>(
+		index: number,
+		sourceStart: number,
+		sourceEnd: number,
+		source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
+	): void;
+	public moveToIndex<TTypesSource extends AllowedTypes>(
+		index: number,
+		sourceStart: number,
+		sourceEnd: number,
+		source?: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
+	): void {
+		this._moveToIndex(index, sourceStart, sourceEnd, source);
+	}
+
+	private _moveToIndex<TTypesSource extends AllowedTypes>(
+		index: number,
+		sourceStart: number,
+		sourceEnd: number,
+		source?: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
+	): void {
+		const sourceField = source !== undefined ? (this.isSameAs(source) ? this : source) : this;
+		assertValidRangeIndices(sourceStart, sourceEnd, sourceField);
+		if (this.schema.types !== undefined && sourceField !== this) {
+			for (let i = sourceStart; i < sourceEnd; i++) {
+				const sourceNode = sourceField.at(sourceStart);
+				if (!this.schema.types.has(sourceNode.schema.name)) {
+					throw new Error("Type in source sequence is not allowed in destination.");
+				}
+			}
+		}
+		const count = sourceEnd - sourceStart;
+		let destinationIndex = index;
+		if (sourceField === this) {
+			destinationIndex -= count;
+		}
+		assertValidIndex(destinationIndex, this, true);
+		// TODO: determine support for move across different sequence types
+		assert(source instanceof LazySequence, "Unsupported sequence implementation.");
+		const sourceFieldPath = (sourceField as LazySequence<TTypesSource>).getFieldPath();
+		const destinationFieldPath = this.getFieldPath();
+		this.context.editor.move(
+			sourceFieldPath,
+			sourceStart,
+			count,
+			destinationFieldPath,
+			destinationIndex,
+		);
 	}
 }
 
 export class LazyValueField<TTypes extends AllowedTypes>
-	extends LazyField<typeof FieldKinds.value, TTypes>
+	extends LazyField<typeof FieldKinds.required, TTypes>
 	implements RequiredField<TTypes>
 {
 	public constructor(
 		context: Context,
-		schema: FieldSchema<typeof FieldKinds.value, TTypes>,
+		schema: FieldSchema<typeof FieldKinds.required, TTypes>,
 		cursor: ITreeSubscriptionCursor,
 		fieldAnchor: FieldAnchor,
 	) {
@@ -371,80 +467,7 @@ const builderList: [FieldKind, Builder][] = [
 	[FieldKinds.nodeKey, LazyOptionalField], // TODO
 	[FieldKinds.optional, LazyOptionalField],
 	[FieldKinds.sequence, LazySequence],
-	[FieldKinds.value, LazyValueField],
+	[FieldKinds.required, LazyValueField],
 ];
 
 const kindToClass: ReadonlyMap<FieldKind, Builder> = new Map(builderList);
-
-/**
- * See {@link UnboxNode} for documentation on what unwrapping this performs.
- */
-function unboxedTree<TSchema extends TreeSchema>(
-	context: Context,
-	schema: TSchema,
-	cursor: ITreeSubscriptionCursor,
-): UnboxNode<TSchema> {
-	if (schemaIsLeaf(schema)) {
-		return cursor.value as UnboxNode<TSchema>;
-	}
-	if (schemaIsFieldNode(schema)) {
-		cursor.enterField(EmptyKey);
-		const primaryField = makeField(
-			context,
-			schema.structFields.get(EmptyKey) ?? fail("invalid schema"),
-			cursor,
-		);
-		cursor.exitField();
-		return primaryField as UnboxNode<TSchema>;
-	}
-
-	return makeTree(context, cursor) as UnboxNode<TSchema>;
-}
-
-/**
- * See {@link UnboxNodeUnion} for documentation on what unwrapping this performs.
- */
-function unboxedUnion<TTypes extends AllowedTypes>(
-	context: Context,
-	schema: FieldSchema<FieldKind, TTypes>,
-	cursor: ITreeSubscriptionCursor,
-): UnboxNodeUnion<TTypes> {
-	const type = oneFromSet(schema.types);
-	if (type !== undefined) {
-		return unboxedTree(
-			context,
-			context.schema.treeSchema.get(type) ?? fail("missing schema"),
-			cursor,
-		) as UnboxNodeUnion<TTypes>;
-	}
-	return makeTree(context, cursor) as UnboxNodeUnion<TTypes>;
-}
-
-/**
- * @param context - the common context of the field.
- * @param schema - the FieldStoredSchema of the field.
- * @param cursor - the cursor, which must point to the field being proxified.
- */
-export function unboxedField<TSchema extends FieldSchema>(
-	context: Context,
-	schema: TSchema,
-	cursor: ITreeSubscriptionCursor,
-): UnboxField<TSchema> {
-	const kind = schema.kind;
-	if (kind === FieldKinds.value) {
-		return inCursorNode(cursor, 0, (innerCursor) =>
-			unboxedUnion(context, schema, innerCursor),
-		) as UnboxField<TSchema>;
-	}
-	if (kind === FieldKinds.optional) {
-		if (cursor.getFieldLength() === 0) {
-			return undefined as UnboxField<TSchema>;
-		}
-		return inCursorNode(cursor, 0, (innerCursor) =>
-			unboxedUnion(context, schema, innerCursor),
-		) as UnboxField<TSchema>;
-	}
-
-	// TODO: forbidden and nodeKey
-	return makeField(context, schema, cursor) as UnboxField<TSchema>;
-}

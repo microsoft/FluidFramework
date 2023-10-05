@@ -19,7 +19,6 @@ import {
 } from "../typed-schema";
 import { EditableTreeEvents } from "../untypedTree";
 import { FieldKinds } from "../default-field-kinds";
-import { TreeStatus } from "../editable-tree";
 import { FieldKind } from "../modular-schema";
 import { TreeContext } from "./context";
 
@@ -71,6 +70,27 @@ export interface Tree<TSchema = unknown> {
 	 * No mutations to the current view of the shared tree are permitted during iteration.
 	 */
 	[boxedIterator](): IterableIterator<Tree>;
+}
+
+/**
+ * Status of the tree that a particular node in {@link EditableTree} and {@link UntypedTree} belongs to.
+ * @alpha
+ */
+export enum TreeStatus {
+	/**
+	 * Is parented under the root field.
+	 */
+	InDocument = 0,
+
+	/**
+	 * Is not parented under the root field, but can be added back to the original document tree.
+	 */
+	Removed = 1,
+
+	/**
+	 * Is removed and cannot be added back to the original document tree.
+	 */
+	Deleted = 2,
 }
 
 /**
@@ -430,8 +450,10 @@ export type StructFields<TFields extends RestrictiveReadonlyRecord<string, Field
 	{
 		readonly [key in keyof TFields]: UnboxField<TFields[key]>;
 	} & {
-		readonly // boxed fields (TODO: maybe remove these when same as non-boxed version?)
-		[key in keyof TFields as `boxed${Capitalize<key & string>}`]: TypedField<TFields[key]>;
+		// boxed fields (TODO: maybe remove these when same as non-boxed version?)
+		readonly [key in keyof TFields as `boxed${Capitalize<key & string>}`]: TypedField<
+			TFields[key]
+		>;
 	};
 // TODO: Add `set` method when FieldKind provides a setter (and derive the type from it).
 // set(key: FieldKey, content: FlexibleFieldContent<TSchema["mapFields"]>): void;
@@ -467,6 +489,16 @@ export type FlexibleNodeContent<TTypes extends AllowedTypes> = SchemaAware.Allow
 	SchemaAware.ApiMode.Flexible,
 	TTypes
 >;
+
+/**
+ * Type to ensures two types overlap in at least one way.
+ * It evaluates to the input type if this is true, and never otherwise.
+ * Examples:
+ * CheckTypesOverlap\<number | boolean, number | object\> = number | boolean
+ * CheckTypesOverlap\<number | boolean, string | object\> = never
+ * @alpha
+ */
+export type CheckTypesOverlap<T, TCheck> = [Extract<T, TCheck> extends never ? never : T][0];
 
 /**
  * {@link TreeField} that stores a sequence of children.
@@ -512,11 +544,120 @@ export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
 
 	readonly length: number;
 
-	// TODO: more and/or better editing APIs. As is, this can't express moves.
-	replaceRange(
+	/**
+	 * Inserts new item(s) at a specified location.
+	 * @param index - The index at which to insert `value`.
+	 * @param value - The content to insert.
+	 * @throws Throws if any of the input indices are invalid.
+	 */
+	insertAt(index: number, value: FlexibleNodeContent<TTypes>[]): void;
+
+	/**
+	 * Inserts new item(s) at the start of the sequence.
+	 * @param value - The content to insert.
+	 * @throws Throws if any of the input indices are invalid.
+	 */
+	insertAtStart(value: FlexibleNodeContent<TTypes>[]): void;
+
+	/**
+	 * Inserts new item(s) at the end of the sequence.
+	 * @param value - The content to insert.
+	 * @throws Throws if any of the input indices are invalid.
+	 */
+	insertAtEnd(value: FlexibleNodeContent<TTypes>[]): void;
+
+	/**
+	 * Removes the item at the specified location.
+	 * @param index - The index at which to remove the item.
+	 * @throws Throws if any of the input indices are invalid.
+	 */
+	removeAt(index: number): void;
+
+	/**
+	 * Removes all items between the specified indices.
+	 * @param start - The starting index of the range to remove (inclusive). Defaults to the start of the sequence.
+	 * @param end - The ending index of the range to remove (exclusive).
+	 * @throws Throws if any of the input indices are invalid.
+	 * If `end` is not supplied or is greater than the length of the sequence, all items after `start` are deleted.
+	 */
+	removeRange(start?: number, end?: number): void;
+
+	/**
+	 * Moves the specified items to the start of the sequence.
+	 * @param sourceStart - The starting index of the range to move (inclusive).
+	 * @param sourceEnd - The ending index of the range to move (exclusive)
+	 * @throws Throws if any of the input indices are invalid.
+	 * @remarks
+	 * All indices are relative to the sequence excluding the nodes being moved.
+	 */
+	moveToStart(sourceStart: number, sourceEnd: number): void;
+
+	/**
+	 * Moves the specified items to the start of the sequence.
+	 * @param sourceStart - The starting index of the range to move (inclusive).
+	 * @param sourceEnd - The ending index of the range to move (exclusive)
+	 * @param source - The source sequence to move items out of.
+	 * @throws Throws if the types of any of the items being moved are not allowed in the destination sequence or if the input indices are invalid.
+	 * @remarks
+	 * All indices are relative to the sequence excluding the nodes being moved.
+	 */
+	moveToStart<TTypesSource extends AllowedTypes>(
+		sourceStart: number,
+		sourceEnd: number,
+		source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
+	): void;
+
+	/**
+	 * Moves the specified items to the end of the sequence.
+	 * @param sourceStart - The starting index of the range to move (inclusive).
+	 * @param sourceEnd - The ending index of the range to move (exclusive)
+	 * @throws Throws if any of the input indices are invalid.
+	 * @remarks
+	 * All indices are relative to the sequence excluding the nodes being moved.
+	 */
+	moveToEnd(sourceStart: number, sourceEnd: number): void;
+
+	/**
+	 * Moves the specified items to the end of the sequence.
+	 * @param sourceStart - The starting index of the range to move (inclusive).
+	 * @param sourceEnd - The ending index of the range to move (exclusive)
+	 * @param source - The source sequence to move items out of.
+	 * @throws Throws if the types of any of the items being moved are not allowed in the destination sequence or if the input indices are invalid.
+	 * @remarks
+	 * All indices are relative to the sequence excluding the nodes being moved.
+	 */
+	moveToEnd<TTypesSource extends AllowedTypes>(
+		sourceStart: number,
+		sourceEnd: number,
+		source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
+	): void;
+
+	/**
+	 * Moves the specified items to the desired location within the sequence.
+	 * @param index - The index to move the items to.
+	 * @param sourceStart - The starting index of the range to move (inclusive).
+	 * @param sourceEnd - The ending index of the range to move (exclusive)
+	 * @throws Throws if any of the input indices are invalid.
+	 * @remarks
+	 * All indices are relative to the sequence excluding the nodes being moved.
+	 */
+	moveToIndex(index: number, sourceStart: number, sourceEnd: number): void;
+
+	/**
+	 * Moves the specified items to the desired location within the sequence.
+	 * @param index - The index to move the items to.
+	 * @param sourceStart - The starting index of the range to move (inclusive).
+	 * @param sourceEnd - The ending index of the range to move (exclusive)
+	 * @param source - The source sequence to move items out of.
+	 * @throws Throws if the types of any of the items being moved are not allowed in the destination sequence or if the input indices are invalid.
+	 * @remarks
+	 * All indices are relative to the sequence excluding the nodes being moved.
+	 */
+	moveToIndex<TTypesSource extends AllowedTypes>(
 		index: number,
-		count: number,
-		content: Iterable<FlexibleNodeContent<TTypes>>,
+		sourceStart: number,
+		sourceEnd: number,
+		source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
 	): void;
 
 	[boxedIterator](): IterableIterator<TypedNodeUnion<TTypes>>;
@@ -590,7 +731,7 @@ export type TypedFieldInner<
 	Types extends AllowedTypes,
 > = Kind extends typeof FieldKinds.sequence
 	? Sequence<Types>
-	: Kind extends typeof FieldKinds.value
+	: Kind extends typeof FieldKinds.required
 	? RequiredField<Types>
 	: Kind extends typeof FieldKinds.optional
 	? OptionalField<Types>
@@ -666,7 +807,7 @@ export type UnboxFieldInner<
 	Emptiness extends "maybeEmpty" | "notEmpty",
 > = Kind extends typeof FieldKinds.sequence
 	? Sequence<TTypes>
-	: Kind extends typeof FieldKinds.value
+	: Kind extends typeof FieldKinds.required
 	? UnboxNodeUnion<TTypes>
 	: Kind extends typeof FieldKinds.optional
 	? UnboxNodeUnion<TTypes> | (Emptiness extends "notEmpty" ? never : undefined)

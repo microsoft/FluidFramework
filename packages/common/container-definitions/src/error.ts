@@ -16,7 +16,7 @@ export const ContainerErrorTypes = {
 	 */
 	clientSessionExpiredError: "clientSessionExpiredError",
 } as const;
-export type ContainerErrorTypes = typeof ContainerErrorTypes[keyof typeof ContainerErrorTypes];
+export type ContainerErrorTypes = (typeof ContainerErrorTypes)[keyof typeof ContainerErrorTypes];
 
 /**
  * Different error types the Container may report out to the Host.

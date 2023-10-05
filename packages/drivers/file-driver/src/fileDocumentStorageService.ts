@@ -27,7 +27,10 @@ export class FluidFetchReader
 {
 	protected docTree: api.ISnapshotTree | null = null;
 
-	constructor(private readonly path: string, private readonly versionName?: string) {
+	constructor(
+		private readonly path: string,
+		private readonly versionName?: string,
+	) {
 		super();
 	}
 

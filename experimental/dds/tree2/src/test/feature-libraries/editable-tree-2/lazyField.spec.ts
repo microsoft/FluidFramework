@@ -76,13 +76,13 @@ describe("LazyField", () => {
 		);
 		const valueField = new LazyValueField(
 			context,
-			SchemaBuilder.fieldValue(Any),
+			SchemaBuilder.fieldRequired(Any),
 			cursor,
 			detachedFieldAnchor,
 		);
 		cursor.free();
 		assert.throws(
-			() => sequenceField.replaceRange(0, 1, []),
+			() => sequenceField.insertAt(0, [1]),
 			(e: Error) =>
 				validateAssertionError(
 					e,
@@ -136,7 +136,7 @@ describe("LazyOptionalField", () => {
 			const builder = new SchemaBuilder("test");
 			const booleanLeafSchema = builder.leaf("bool", ValueSchema.Boolean);
 			const recursiveStructSchema = builder.structRecursive("recursiveStruct", {
-				flag: SchemaBuilder.fieldValue(booleanLeafSchema),
+				flag: SchemaBuilder.fieldRequired(booleanLeafSchema),
 				child: SchemaBuilder.fieldRecursive(
 					FieldKinds.optional,
 					() => recursiveStructSchema,
@@ -162,10 +162,10 @@ describe("LazyOptionalField", () => {
 			// Negative cases
 			assert(!field.is(SchemaBuilder.fieldOptional()));
 			assert(!field.is(SchemaBuilder.fieldOptional(booleanLeafSchema)));
-			assert(!field.is(SchemaBuilder.fieldValue(Any)));
+			assert(!field.is(SchemaBuilder.fieldRequired(Any)));
 			assert(!field.is(SchemaBuilder.fieldSequence(Any)));
 			assert(
-				!field.is(SchemaBuilder.fieldRecursive(FieldKinds.value, recursiveStructSchema)),
+				!field.is(SchemaBuilder.fieldRecursive(FieldKinds.required, recursiveStructSchema)),
 			);
 		});
 
@@ -176,7 +176,7 @@ describe("LazyOptionalField", () => {
 			const booleanLeafSchema = builder.leaf("bool", ValueSchema.Boolean);
 			const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
 			const recursiveStructSchema = builder.structRecursive("recursiveStruct", {
-				flag: SchemaBuilder.fieldValue(booleanLeafSchema),
+				flag: SchemaBuilder.fieldRequired(booleanLeafSchema),
 				child: SchemaBuilder.fieldRecursive(
 					FieldKinds.optional,
 					() => recursiveStructSchema,
@@ -200,14 +200,14 @@ describe("LazyOptionalField", () => {
 			assert(field.is(SchemaBuilder.fieldOptional(booleanLeafSchema)));
 
 			// Negative cases
-			assert(!field.is(SchemaBuilder.fieldValue(Any)));
-			assert(!field.is(SchemaBuilder.fieldValue(booleanLeafSchema)));
-			assert(!field.is(SchemaBuilder.fieldValue(numberLeafSchema)));
+			assert(!field.is(SchemaBuilder.fieldRequired(Any)));
+			assert(!field.is(SchemaBuilder.fieldRequired(booleanLeafSchema)));
+			assert(!field.is(SchemaBuilder.fieldRequired(numberLeafSchema)));
 			assert(!field.is(SchemaBuilder.fieldSequence(Any)));
 			assert(!field.is(SchemaBuilder.fieldSequence(booleanLeafSchema)));
 			assert(!field.is(SchemaBuilder.fieldSequence(numberLeafSchema)));
 			assert(
-				!field.is(SchemaBuilder.fieldRecursive(FieldKinds.value, recursiveStructSchema)),
+				!field.is(SchemaBuilder.fieldRecursive(FieldKinds.required, recursiveStructSchema)),
 			);
 		});
 
@@ -218,11 +218,11 @@ describe("LazyOptionalField", () => {
 			const booleanLeafSchema = builder.leaf("bool", ValueSchema.Boolean);
 			const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
 			const structLeafSchema = builder.struct("struct", {
-				foo: SchemaBuilder.fieldValue(booleanLeafSchema),
+				foo: SchemaBuilder.fieldRequired(booleanLeafSchema),
 				bar: SchemaBuilder.fieldOptional(numberLeafSchema),
 			});
 			const recursiveStructSchema = builder.structRecursive("recursiveStruct", {
-				flag: SchemaBuilder.fieldValue(booleanLeafSchema),
+				flag: SchemaBuilder.fieldRequired(booleanLeafSchema),
 				child: SchemaBuilder.fieldRecursive(
 					FieldKinds.optional,
 					() => recursiveStructSchema,
@@ -246,14 +246,14 @@ describe("LazyOptionalField", () => {
 			assert(field.is(SchemaBuilder.fieldOptional(structLeafSchema)));
 
 			// Negative cases
-			assert(!field.is(SchemaBuilder.fieldValue(Any)));
-			assert(!field.is(SchemaBuilder.fieldValue(structLeafSchema)));
-			assert(!field.is(SchemaBuilder.fieldValue(booleanLeafSchema)));
+			assert(!field.is(SchemaBuilder.fieldRequired(Any)));
+			assert(!field.is(SchemaBuilder.fieldRequired(structLeafSchema)));
+			assert(!field.is(SchemaBuilder.fieldRequired(booleanLeafSchema)));
 			assert(!field.is(SchemaBuilder.fieldSequence(Any)));
 			assert(!field.is(SchemaBuilder.fieldSequence(structLeafSchema)));
 			assert(!field.is(SchemaBuilder.fieldSequence(booleanLeafSchema)));
 			assert(
-				!field.is(SchemaBuilder.fieldRecursive(FieldKinds.value, recursiveStructSchema)),
+				!field.is(SchemaBuilder.fieldRecursive(FieldKinds.required, recursiveStructSchema)),
 			);
 		});
 
@@ -339,7 +339,7 @@ describe("LazyOptionalField", () => {
 		const booleanLeafSchema = builder.leaf("bool", ValueSchema.Boolean);
 		const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
 		const leafSchema = builder.struct("struct", {
-			foo: SchemaBuilder.fieldValue(booleanLeafSchema),
+			foo: SchemaBuilder.fieldRequired(booleanLeafSchema),
 			bar: SchemaBuilder.fieldOptional(numberLeafSchema),
 		});
 		const rootSchema = SchemaBuilder.fieldOptional(leafSchema);
