@@ -415,6 +415,7 @@ describe("DDS Fuzz Harness", () => {
 					reducer: async ({ client }) => {
 						reducerSelectionCounts.increment(client.channel.id);
 					},
+					minimizationTransforms: [],
 				},
 				options,
 			);
