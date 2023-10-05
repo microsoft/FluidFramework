@@ -373,12 +373,12 @@ describe("LazyField", () => {
 	});
 
 	describe("LazySequence", () => {
+		const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+		const rootSchema = SchemaBuilder.fieldSequence(leafDomain.number);
+		const schema = builder.intoDocumentSchema(rootSchema);
+
 		describe("at", () => {
 			it("Unboxes", () => {
-				const builder = new SchemaBuilder("test", undefined, leafDomain.library);
-				const rootSchema = SchemaBuilder.fieldSequence(leafDomain.number);
-				const schema = builder.intoDocumentSchema(rootSchema);
-
 				const { context, cursor } = initializeTreeWithContent({
 					schema,
 					initialTree: [37, 42],
@@ -393,32 +393,24 @@ describe("LazyField", () => {
 		});
 
 		it("boxedAt", () => {
-			const builder = new SchemaBuilder("test", undefined, leafDomain.library);
-			const rootSchema = SchemaBuilder.fieldSequence(leafDomain.string);
-			const schema = builder.intoDocumentSchema(rootSchema);
-
 			const { context, cursor } = initializeTreeWithContent({
 				schema,
-				initialTree: ["Hello", "world"],
+				initialTree: [37, 42],
 			});
 
 			const sequence = new LazySequence(context, rootSchema, cursor, rootFieldAnchor);
 
 			const boxedResult0 = sequence.boxedAt(0);
-			assert.equal(boxedResult0.type, leafDomain.string.name);
-			assert.equal(boxedResult0.value, "Hello");
+			assert.equal(boxedResult0.type, leafDomain.number.name);
+			assert.equal(boxedResult0.value, 37);
 
 			const boxedResult1 = sequence.boxedAt(1);
-			assert.equal(boxedResult1.type, leafDomain.string.name);
-			assert.equal(boxedResult1.value, "world");
+			assert.equal(boxedResult1.type, leafDomain.number.name);
+			assert.equal(boxedResult1.value, 42);
 		});
 
 		describe("length", () => {
 			it("Empty", () => {
-				const builder = new SchemaBuilder("test", undefined, leafDomain.library);
-				const rootSchema = SchemaBuilder.fieldSequence(leafDomain.number);
-				const schema = builder.intoDocumentSchema(rootSchema);
-
 				const { context, cursor } = initializeTreeWithContent({
 					schema,
 					initialTree: [],
@@ -430,10 +422,6 @@ describe("LazyField", () => {
 			});
 
 			it("Non-empty", () => {
-				const builder = new SchemaBuilder("test", undefined, leafDomain.library);
-				const rootSchema = SchemaBuilder.fieldSequence(leafDomain.number);
-				const schema = builder.intoDocumentSchema(rootSchema);
-
 				const { context, cursor } = initializeTreeWithContent({
 					schema,
 					initialTree: [37, 42],
@@ -447,10 +435,6 @@ describe("LazyField", () => {
 
 		describe("map", () => {
 			it("Empty", () => {
-				const builder = new SchemaBuilder("test", undefined, leafDomain.library);
-				const rootSchema = SchemaBuilder.fieldSequence(leafDomain.boolean);
-				const schema = builder.intoDocumentSchema(rootSchema);
-
 				const { context, cursor } = initializeTreeWithContent({
 					schema,
 					initialTree: [],
@@ -463,30 +447,22 @@ describe("LazyField", () => {
 			});
 
 			it("Non-empty", () => {
-				const builder = new SchemaBuilder("test", undefined, leafDomain.library);
-				const rootSchema = SchemaBuilder.fieldSequence(leafDomain.boolean);
-				const schema = builder.intoDocumentSchema(rootSchema);
-
 				const { context, cursor } = initializeTreeWithContent({
 					schema,
-					initialTree: [true, false],
+					initialTree: [37, 42],
 				});
 
 				const sequence = new LazySequence(context, rootSchema, cursor, rootFieldAnchor);
 
 				const mapResult = sequence.map((value) => value);
 				assert.equal(mapResult.length, 2);
-				assert.equal(mapResult[0], true);
-				assert.equal(mapResult[1], false);
+				assert.equal(mapResult[0], 37);
+				assert.equal(mapResult[1], 42);
 			});
 		});
 
 		describe("mapBoxed", () => {
 			it("Empty", () => {
-				const builder = new SchemaBuilder("test", undefined, leafDomain.library);
-				const rootSchema = SchemaBuilder.fieldSequence(leafDomain.boolean);
-				const schema = builder.intoDocumentSchema(rootSchema);
-
 				const { context, cursor } = initializeTreeWithContent({
 					schema,
 					initialTree: [],
@@ -499,32 +475,24 @@ describe("LazyField", () => {
 			});
 
 			it("Non-empty", () => {
-				const builder = new SchemaBuilder("test", undefined, leafDomain.library);
-				const rootSchema = SchemaBuilder.fieldSequence(leafDomain.boolean);
-				const schema = builder.intoDocumentSchema(rootSchema);
-
 				const { context, cursor } = initializeTreeWithContent({
 					schema,
-					initialTree: [true, false],
+					initialTree: [37, 42],
 				});
 
 				const sequence = new LazySequence(context, rootSchema, cursor, rootFieldAnchor);
 
 				const mapResult = sequence.mapBoxed((value) => value);
 				assert.equal(mapResult.length, 2);
-				assert.equal(mapResult[0].type, leafDomain.boolean.name);
-				assert.equal(mapResult[0].value, true);
-				assert.equal(mapResult[1].type, leafDomain.boolean.name);
-				assert.equal(mapResult[1].value, false);
+				assert.equal(mapResult[0].type, leafDomain.number.name);
+				assert.equal(mapResult[0].value, 37);
+				assert.equal(mapResult[1].type, leafDomain.number.name);
+				assert.equal(mapResult[1].value, 42);
 			});
 		});
 
 		describe("asArray", () => {
 			it("Empty", () => {
-				const builder = new SchemaBuilder("test", undefined, leafDomain.library);
-				const rootSchema = SchemaBuilder.fieldSequence(leafDomain.string);
-				const schema = builder.intoDocumentSchema(rootSchema);
-
 				const { context, cursor } = initializeTreeWithContent({
 					schema,
 					initialTree: [],
@@ -537,21 +505,17 @@ describe("LazyField", () => {
 			});
 
 			it("Non-empty", () => {
-				const builder = new SchemaBuilder("test", undefined, leafDomain.library);
-				const rootSchema = SchemaBuilder.fieldSequence(leafDomain.string);
-				const schema = builder.intoDocumentSchema(rootSchema);
-
 				const { context, cursor } = initializeTreeWithContent({
 					schema,
-					initialTree: ["Hello", "world"],
+					initialTree: [37, 42],
 				});
 
 				const sequence = new LazySequence(context, rootSchema, cursor, rootFieldAnchor);
 
 				const array = sequence.asArray;
 				assert.equal(array.length, 2);
-				assert.equal(array[0], "Hello");
-				assert.equal(array[1], "world");
+				assert.equal(array[0], 37);
+				assert.equal(array[1], 42);
 			});
 		});
 	});
