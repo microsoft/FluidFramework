@@ -381,6 +381,30 @@ describe("Map Iteration Order", () => {
 			assertIterationOrder(map1, ["3", "1", "2"]);
 			assertIterationOrder(map2, ["3", "1", "2"]);
 		});
+
+		it("can maintain order when a client disconnects in the meanwhile", async () => {
+			map1.set("3", 1);
+			containerRuntimeFactory.processAllMessages();
+
+			// Disconnect the first client
+			containerRuntime1.connected = false;
+
+			map1.set("1", 2);
+
+			map2.set("4", 3);
+			map2.set("2", 4);
+
+			// Reconnect the first client.
+			containerRuntime1.connected = true;
+
+			assertIterationOrder(map1, ["3", "1"]);
+			assertIterationOrder(map2, ["3", "4", "2"]);
+
+			containerRuntimeFactory.processAllMessages();
+
+			assertIterationOrder(map1, ["3", "4", "2", "1"]);
+			assertIterationOrder(map2, ["3", "4", "2", "1"]);
+		});
 	});
 
 	describe("Op processing", () => {
