@@ -22,7 +22,7 @@ import {
 // Search this file for "as any" and "as NodeChangeset"
 import { TestChange } from "../../testChange";
 import { deepFreeze, defaultRevisionMetadataFromChanges, isDeltaVisible } from "../../utils";
-import { brand, idAllocatorFromMaxId } from "../../../util";
+import { brand, fakeIdAllocator, idAllocatorFromMaxId } from "../../../util";
 import {
 	optionalChangeRebaser,
 	optionalFieldEditor,
@@ -89,7 +89,8 @@ function invert(change: TaggedChange<OptionalChangeset>): OptionalChangeset {
 		// Note: content here is arbitrary. If adding or changing this test suite, this NodeReviver implementation
 		// may need to be changed.
 		() => [singleTextCursor({ type, value: "revived" })],
-		() => assert.fail("Optional fields should not generate IDs during invert"),
+		// Optional fields should not generate IDs during invert
+		fakeIdAllocator,
 		failCrossFieldManager,
 	);
 }

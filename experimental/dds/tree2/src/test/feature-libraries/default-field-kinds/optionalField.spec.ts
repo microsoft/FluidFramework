@@ -14,7 +14,7 @@ import {
 	tagChange,
 	tagRollbackInverse,
 } from "../../../core";
-import { IdAllocator, brand } from "../../../util";
+import { brand, fakeIdAllocator } from "../../../util";
 import {
 	assertMarkListEqual,
 	defaultRevisionMetadataFromChanges,
@@ -38,8 +38,6 @@ const arbitraryChildChange = changesetForChild("arbitraryChildChange");
 
 const nodeChange1 = changesetForChild("nodeChange1");
 const nodeChange2 = changesetForChild("nodeChange2");
-
-const failIdAllocator: IdAllocator = () => assert.fail("Should not allocate ids");
 
 const failCrossFieldManager: CrossFieldManager = {
 	get: () => assert.fail("Should query CrossFieldManager"),
@@ -157,7 +155,7 @@ describe("optionalField", () => {
 			const composed = optionalChangeRebaser.compose(
 				[change1, change2],
 				simpleChildComposer,
-				failIdAllocator,
+				fakeIdAllocator,
 				failCrossFieldManager,
 				defaultRevisionMetadataFromChanges([change1, change2]),
 			);
@@ -195,7 +193,7 @@ describe("optionalField", () => {
 						);
 						return arbitraryChildChange;
 					},
-					failIdAllocator,
+					fakeIdAllocator,
 					failCrossFieldManager,
 					defaultRevisionMetadataFromChanges([change1, change4]),
 				),
@@ -226,7 +224,7 @@ describe("optionalField", () => {
 					change1,
 					childInverter,
 					repair,
-					failIdAllocator,
+					fakeIdAllocator,
 					failCrossFieldManager,
 				),
 				expected,
@@ -244,7 +242,7 @@ describe("optionalField", () => {
 						change2PreChange1.change,
 						change1,
 						childRebaser,
-						failIdAllocator,
+						fakeIdAllocator,
 						failCrossFieldManager,
 						defaultRevisionMetadataFromChanges([change1]),
 					),
@@ -274,7 +272,7 @@ describe("optionalField", () => {
 						changeToRebase,
 						makeAnonChange(baseChange),
 						childRebaser,
-						failIdAllocator,
+						fakeIdAllocator,
 						failCrossFieldManager,
 						defaultRevisionMetadataFromChanges([]),
 					),
@@ -295,7 +293,7 @@ describe("optionalField", () => {
 						deletion,
 						() => assert.fail("Should not need to invert children"),
 						fakeRepair,
-						failIdAllocator,
+						fakeIdAllocator,
 						failCrossFieldManager,
 					),
 					tag2,
@@ -315,7 +313,7 @@ describe("optionalField", () => {
 					changeToRebase,
 					deletion,
 					childRebaser,
-					failIdAllocator,
+					fakeIdAllocator,
 					failCrossFieldManager,
 					defaultRevisionMetadataFromChanges([deletion]),
 				);
@@ -324,7 +322,7 @@ describe("optionalField", () => {
 					changeToRebase2,
 					revive,
 					childRebaser,
-					failIdAllocator,
+					fakeIdAllocator,
 					failCrossFieldManager,
 					defaultRevisionMetadataFromChanges([revive]),
 				);
@@ -371,7 +369,7 @@ describe("optionalField", () => {
 					changeToRebase,
 					makeAnonChange(baseChange),
 					childRebaser,
-					failIdAllocator,
+					fakeIdAllocator,
 					failCrossFieldManager,
 					defaultRevisionMetadataFromChanges([]),
 				);

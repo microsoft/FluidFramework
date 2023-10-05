@@ -1050,7 +1050,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	}
 
 	public generateId(count?: number): ChangesetLocalId {
-		return brand(this.idAllocator(count));
+		return brand(this.idAllocator.allocate(count));
 	}
 
 	private buildChangeMap(

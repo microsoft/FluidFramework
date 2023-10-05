@@ -130,7 +130,7 @@ export class DetachedFieldIndex {
 	 * Associates the DetachedNodeId with a field key and creates an entry for it in the index.
 	 */
 	public createEntry(nodeId?: Delta.DetachedNodeId, count: number = 1): Entry {
-		const root = this.rootIdAllocator(count);
+		const root = this.rootIdAllocator.allocate(count);
 		const field = this.toFieldKey(root);
 		const entry = { field, root };
 
@@ -143,7 +143,7 @@ export class DetachedFieldIndex {
 	public encode(): string {
 		return JSON.stringify({
 			data: encodeNestedMap(this.detachedNodeToField),
-			id: this.rootIdAllocator(),
+			id: this.rootIdAllocator.getNextId(),
 		});
 	}
 

@@ -109,4 +109,5 @@ export {
 	idAllocatorFromMaxId,
 	idAllocatorFromState,
 	IdAllocationState,
+	fakeIdAllocator,
 } from "./idAllocator";
