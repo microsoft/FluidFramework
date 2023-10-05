@@ -450,8 +450,7 @@ describe("BlobManager", () => {
 		try {
 			await handleP;
 			assert.fail("should fail");
-		}
-		catch (error: any) {
+		} catch (error: any) {
 			assert.strictEqual(error.message, "fake error");
 		}
 		await assert.rejects(handleP);
