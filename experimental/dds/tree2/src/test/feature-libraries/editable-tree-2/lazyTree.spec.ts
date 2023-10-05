@@ -125,10 +125,9 @@ describe.only("LazyTree", () => {
 		"valueString",
 		SchemaBuilder.fieldValue(leafDomain.string),
 	);
-	const emptyStructNodeSchema = _schemaBuilder.struct("emptyStruct", {});
-	const nonEmptyStructNodeSchema = _schemaBuilder.struct("nonEmptyStruct", {
-		foo: SchemaBuilder.fieldOptional(emptyStructNodeSchema),
-		bar: SchemaBuilder.fieldSequence(emptyStructNodeSchema),
+	const structNodeSchema = _schemaBuilder.struct("struct", {
+		foo: SchemaBuilder.fieldOptional(leafDomain.string),
+		bar: SchemaBuilder.fieldSequence(leafDomain.number),
 	});
 	const mapNodeAnySchema = _schemaBuilder.map("mapAny", SchemaBuilder.fieldOptional(Any));
 	const mapNodeStringSchema = _schemaBuilder.map(
@@ -225,7 +224,7 @@ describe.only("LazyTree", () => {
 			assert(!node.is(fieldNodeValueStringSchema));
 			assert(!node.is(fieldNodeValueStringSchema));
 			assert(!node.is(leafDomain.string));
-			assert(!node.is(emptyStructNodeSchema));
+			assert(!node.is(structNodeSchema));
 		});
 
 		it("value", () => {
@@ -329,7 +328,7 @@ describe.only("LazyTree", () => {
 			assert(!node.is(fieldNodeValueAnySchema));
 			assert(!node.is(fieldNodeValueStringSchema));
 			assert(!node.is(leafDomain.number));
-			assert(!node.is(emptyStructNodeSchema));
+			assert(!node.is(structNodeSchema));
 		});
 
 		it("value", () => {
@@ -373,7 +372,7 @@ describe.only("LazyTree", () => {
 			assert(!node.is(fieldNodeValueAnySchema));
 			assert(!node.is(fieldNodeValueStringSchema));
 			assert(!node.is(leafDomain.string));
-			assert(!node.is(emptyStructNodeSchema));
+			assert(!node.is(structNodeSchema));
 		});
 
 		it("value", () => {
@@ -405,55 +404,29 @@ describe.only("LazyTree", () => {
 		);
 		const schema = structBuilder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
 
+		const context = contextWithContentReadonly({
+			schema,
+			initialTree: {
+				[typeNameSymbol]: structNodeSchema.name,
+				foo: "Hello world", // Will unbox
+				bar: [], // Won't unbox
+			},
+		});
+		const cursor = initializeCursor(context, rootFieldAnchor);
+		cursor.enterNode(0);
+
+		const anchor = context.forest.anchors.track(cursor.getPath() ?? fail());
+		const anchorNode = context.forest.anchors.locate(anchor) ?? fail();
+
+		const node = buildLazyStruct(context, structNodeSchema, cursor, anchorNode, anchor);
+
 		it("boxing", () => {
-			const context = contextWithContentReadonly({
-				schema,
-				initialTree: {
-					[typeNameSymbol]: nonEmptyStructNodeSchema.name,
-					foo: {}, // Will unbox
-					bar: [], // Won't unbox
-				},
-			});
-			const cursor = initializeCursor(context, rootFieldAnchor);
-			cursor.enterNode(0);
-
-			const anchor = context.forest.anchors.track(cursor.getPath() ?? fail());
-			const anchorNode = context.forest.anchors.locate(anchor) ?? fail();
-
-			const struct = buildLazyStruct(
-				context,
-				nonEmptyStructNodeSchema,
-				cursor,
-				anchorNode,
-				anchor,
-			);
-
-			assert.equal(struct.foo, struct.boxedFoo.content);
-			assert(struct.bar.isSameAs(struct.boxedBar));
+			assert.equal(node.foo, node.boxedFoo.content);
+			assert(node.bar.isSameAs(node.boxedBar));
 		});
 
-		it.skip("is", () => {
-			const { context, cursor } = initializeTreeWithContent({
-				schema,
-				initialTree: {
-					willUnbox: "Hello world",
-					wontUnbox: 42,
-				},
-			});
-			cursor.enterNode(0);
-
-			const anchor = context.forest.anchors.track(cursor.getPath() ?? fail());
-			const anchorNode = context.forest.anchors.locate(anchor) ?? fail();
-
-			const node = buildLazyStruct(
-				context,
-				nonEmptyStructNodeSchema,
-				cursor,
-				anchorNode,
-				anchor,
-			);
-
-			assert(node.is(nonEmptyStructNodeSchema));
+		it("is", () => {
+			assert(node.is(structNodeSchema));
 
 			assert(!node.is(mapNodeAnySchema));
 			assert(!node.is(fieldNodeOptionalAnySchema));
@@ -461,7 +434,6 @@ describe.only("LazyTree", () => {
 			assert(!node.is(fieldNodeValueAnySchema));
 			assert(!node.is(fieldNodeValueStringSchema));
 			assert(!node.is(leafDomain.string));
-			assert(!node.is(emptyStructNodeSchema));
 		});
 
 		it("value", () => {
