@@ -253,18 +253,16 @@ describe("LazyField", () => {
 	});
 
 	describe("LazyOptionalField", () => {
-		describe("at", () => {
-			it("Unboxes", () => {
-				const builder = new SchemaBuilder("test", undefined, leafDomain.library);
-				const rootSchema = SchemaBuilder.fieldOptional(leafDomain.number);
-				const schema = builder.intoDocumentSchema(rootSchema);
+		it("at", () => {
+			const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+			const rootSchema = SchemaBuilder.fieldOptional(leafDomain.number);
+			const schema = builder.intoDocumentSchema(rootSchema);
 
-				const { context, cursor } = initializeTreeWithContent({ schema, initialTree: 42 });
+			const { context, cursor } = initializeTreeWithContent({ schema, initialTree: 42 });
 
-				const field = new LazyOptionalField(context, rootSchema, cursor, rootFieldAnchor);
+			const field = new LazyOptionalField(context, rootSchema, cursor, rootFieldAnchor);
 
-				assert.equal(field.at(0), 42);
-			});
+			assert.equal(field.at(0), 42);
 		});
 
 		it("boxedAt", () => {
