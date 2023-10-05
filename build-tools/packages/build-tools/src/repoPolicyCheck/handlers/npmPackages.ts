@@ -36,7 +36,7 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 /**
  * Whether the package is known to be a publicly published package for general use.
  */
-function packageMustPublishToNPM(name: string, config: PackageNamePolicyConfig): boolean {
+export function packageMustPublishToNPM(name: string, config: PackageNamePolicyConfig): boolean {
 	const mustPublish = config.mustPublish.npm;
 
 	if (mustPublish === undefined) {
@@ -60,7 +60,7 @@ function packageMustPublishToNPM(name: string, config: PackageNamePolicyConfig):
  * Note that packages published to NPM will also be published internally, however.
  * This should be a minimal set required for legacy compat of internal partners or internal CI requirements.
  */
-function packageMustPublishToInternalFeedOnly(
+export function packageMustPublishToInternalFeedOnly(
 	name: string,
 	config: PackageNamePolicyConfig,
 ): boolean {
@@ -86,7 +86,10 @@ function packageMustPublishToInternalFeedOnly(
  * Whether the package has the option to publicly publish if it chooses.
  * For example, an experimental package may choose to remain unpublished until it's ready for customers to try it out.
  */
-function packageMayChooseToPublishToNPM(name: string, config: PackageNamePolicyConfig): boolean {
+export function packageMayChooseToPublishToNPM(
+	name: string,
+	config: PackageNamePolicyConfig,
+): boolean {
 	const mayPublish = config.mayPublish.npm;
 
 	if (mayPublish === undefined) {
@@ -108,7 +111,7 @@ function packageMayChooseToPublishToNPM(name: string, config: PackageNamePolicyC
 /**
  * Whether the package has the option to publish to an internal feed if it chooses.
  */
-function packageMayChooseToPublishToInternalFeedOnly(
+export function packageMayChooseToPublishToInternalFeedOnly(
 	name: string,
 	config: PackageNamePolicyConfig,
 ): boolean {
@@ -134,7 +137,7 @@ function packageMayChooseToPublishToInternalFeedOnly(
  * If we haven't explicitly OK'd the package scope to publish in one of the categories above, it must be marked
  * private to prevent publishing.
  */
-function packageMustBePrivate(name: string, root: string): boolean {
+export function packageMustBePrivate(name: string, root: string): boolean {
 	const config = getFluidBuildConfig(root).policy?.packageNames;
 
 	if (config === undefined) {
@@ -153,7 +156,7 @@ function packageMustBePrivate(name: string, root: string): boolean {
 /**
  * If we know a package needs to publish somewhere, then it must not be marked private to allow publishing.
  */
-function packageMustNotBePrivate(name: string, root: string): boolean {
+export function packageMustNotBePrivate(name: string, root: string): boolean {
 	const config = getFluidBuildConfig(root).policy?.packageNames;
 
 	if (config === undefined) {
@@ -213,6 +216,87 @@ function packageIsKnownUnscoped(name: string, config: PackageNamePolicyConfig): 
 
 	for (const allowedPackage of unscopedPackages) {
 		if (name === allowedPackage) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * An array of known npm feeds used in the Fluid Framework CI pipelines.
+ */
+export const feeds = [
+	/**
+	 * The public npm feed at npmjs.org.
+	 */
+	"public",
+
+	/**
+	 * Contains per-commit to microsoft/FluidFramework main releases of all Fluid packages that are available in the
+	 * public feed, plus some internal-only packages.
+	 */
+	"internal-build",
+
+	/**
+	 * Contains test packages, i.e. packages published from a branch in the microsoft/FluidFramework repository beginning
+	 * with test/.
+	 */
+	"internal-test",
+
+	/**
+	 * Contains packages private to the FluidFramework repository (@fluid-private packages). These should only be
+	 * referenced as devDependencies by other packages in FluidFramework and its pipelines.
+	 */
+	"internal-dev",
+] as const;
+
+/**
+ * A type representing the known npm feeds used in the Fluid Framework CI pipelines.
+ */
+export type Feed = (typeof feeds)[number];
+
+/**
+ * Type guard. Returns true if the provided string is a known npm feed.
+ */
+export function isFeed(str: string | undefined): str is Feed {
+	if (str === undefined) {
+		return false;
+	}
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	return feeds.includes(str as any);
+}
+
+/**
+ * Determines if a package should be published to a specific npm feed per the provided config.
+ */
+export function packagePublishesToFeed(
+	name: string,
+	config: PackageNamePolicyConfig,
+	feed: Feed,
+): boolean {
+	const publishPublic =
+		packageMustPublishToNPM(name, config) || packageMayChooseToPublishToNPM(name, config);
+	const publishInternalBuild =
+		publishPublic || packageMustPublishToInternalFeedOnly(name, config);
+
+	switch (feed) {
+		case "public": {
+			return publishPublic;
+		}
+
+		// The build and dev feed should be mutually exclusive
+		case "internal-build": {
+			return publishInternalBuild;
+		}
+
+		case "internal-dev": {
+			return (
+				!publishInternalBuild && packageMayChooseToPublishToInternalFeedOnly(name, config)
+			);
+		}
+
+		case "internal-test": {
 			return true;
 		}
 	}

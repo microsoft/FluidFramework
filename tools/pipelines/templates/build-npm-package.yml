@@ -108,6 +108,10 @@ parameters:
   type: string
   default: 'npm ci --unsafe-perm'
 
+- name: additionalBuildSteps
+  type: stepList
+  default: []
+
 # The semver range constraint to use for interdependencies; that is, dependencies on other packages within the release
 # group
 - name: interdependencyRange
@@ -119,7 +123,6 @@ parameters:
 - name: checks
   type: object
   default: []
-
 
 variables:
   # We use 'chalk' to colorize output, which auto-detects color support in the
@@ -380,7 +383,7 @@ stages:
               displayName: Publish Artifact - Tinylicious Log
               inputs:
                 targetPath: '${{ parameters.buildDirectory }}/packages/test/test-end-to-end-tests/tinylicious.log'
-                artifactName: 'tinyliciousLog'
+                artifactName: 'tinyliciousLog_attempt-$(System.JobAttempt)'
                 publishLocation: 'pipeline'
               condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
               continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
@@ -584,6 +587,10 @@ stages:
                 echo "##vso[task.logissue type=error]Build should not create extraneous files"
                 exit -1;
               fi
+
+        # This additional build step is used to run step not part of the main build. In build client pipeline,
+        # this is used to inject telemetry key file and upload built devtools extension.
+        - ${{ parameters.additionalBuildSteps }}
 
       # Job - Component detection
       - ${{ if eq(variables.componentDetection, true) }}:

@@ -211,7 +211,6 @@ declare function get_current_InterfaceDeclaration_IIntervalHelpers():
 declare function use_old_InterfaceDeclaration_IIntervalHelpers(
     use: TypeOnly<old.IIntervalHelpers<any>>);
 use_old_InterfaceDeclaration_IIntervalHelpers(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IIntervalHelpers());
 
 /*
@@ -356,7 +355,6 @@ declare function get_current_InterfaceDeclaration_ISerializedInterval():
 declare function use_old_InterfaceDeclaration_ISerializedInterval(
     use: TypeOnly<old.ISerializedInterval>);
 use_old_InterfaceDeclaration_ISerializedInterval(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISerializedInterval());
 
 /*
@@ -429,6 +427,7 @@ declare function get_current_InterfaceDeclaration_ISharedString():
 declare function use_old_InterfaceDeclaration_ISharedString(
     use: TypeOnly<old.ISharedString>);
 use_old_InterfaceDeclaration_ISharedString(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISharedString());
 
 /*
@@ -478,6 +477,30 @@ declare function use_old_InterfaceDeclaration_IValueOpEmitter(
     use: TypeOnly<old.IValueOpEmitter>);
 use_old_InterfaceDeclaration_IValueOpEmitter(
     get_current_InterfaceDeclaration_IValueOpEmitter());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_InteriorSequencePlace": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_InteriorSequencePlace():
+    TypeOnly<old.InteriorSequencePlace>;
+declare function use_current_InterfaceDeclaration_InteriorSequencePlace(
+    use: TypeOnly<current.InteriorSequencePlace>);
+use_current_InterfaceDeclaration_InteriorSequencePlace(
+    get_old_InterfaceDeclaration_InteriorSequencePlace());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_InteriorSequencePlace": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_InteriorSequencePlace():
+    TypeOnly<current.InteriorSequencePlace>;
+declare function use_old_InterfaceDeclaration_InteriorSequencePlace(
+    use: TypeOnly<old.InteriorSequencePlace>);
+use_old_InterfaceDeclaration_InteriorSequencePlace(
+    get_current_InterfaceDeclaration_InteriorSequencePlace());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -537,7 +560,6 @@ declare function get_old_InterfaceDeclaration_IntervalLocator():
 declare function use_current_InterfaceDeclaration_IntervalLocator(
     use: TypeOnly<current.IntervalLocator>);
 use_current_InterfaceDeclaration_IntervalLocator(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IntervalLocator());
 
 /*
@@ -586,7 +608,6 @@ declare function get_old_TypeAliasDeclaration_IntervalRevertible():
 declare function use_current_TypeAliasDeclaration_IntervalRevertible(
     use: TypeOnly<current.IntervalRevertible>);
 use_current_TypeAliasDeclaration_IntervalRevertible(
-    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_IntervalRevertible());
 
 /*
@@ -731,7 +752,6 @@ declare function get_old_ClassDeclaration_SequenceInterval():
 declare function use_current_ClassDeclaration_SequenceInterval(
     use: TypeOnly<current.SequenceInterval>);
 use_current_ClassDeclaration_SequenceInterval(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SequenceInterval());
 
 /*
@@ -804,7 +824,6 @@ declare function get_old_InterfaceDeclaration_SequenceOptions():
 declare function use_current_InterfaceDeclaration_SequenceOptions(
     use: TypeOnly<current.SequenceOptions>);
 use_current_InterfaceDeclaration_SequenceOptions(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_SequenceOptions());
 
 /*
@@ -818,6 +837,30 @@ declare function use_old_InterfaceDeclaration_SequenceOptions(
     use: TypeOnly<old.SequenceOptions>);
 use_old_InterfaceDeclaration_SequenceOptions(
     get_current_InterfaceDeclaration_SequenceOptions());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_SequencePlace": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_SequencePlace():
+    TypeOnly<old.SequencePlace>;
+declare function use_current_TypeAliasDeclaration_SequencePlace(
+    use: TypeOnly<current.SequencePlace>);
+use_current_TypeAliasDeclaration_SequencePlace(
+    get_old_TypeAliasDeclaration_SequencePlace());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_SequencePlace": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_SequencePlace():
+    TypeOnly<current.SequencePlace>;
+declare function use_old_TypeAliasDeclaration_SequencePlace(
+    use: TypeOnly<old.SequencePlace>);
+use_old_TypeAliasDeclaration_SequencePlace(
+    get_current_TypeAliasDeclaration_SequencePlace());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -841,7 +884,6 @@ declare function get_current_TypeAliasDeclaration_SerializedIntervalDelta():
 declare function use_old_TypeAliasDeclaration_SerializedIntervalDelta(
     use: TypeOnly<old.SerializedIntervalDelta>);
 use_old_TypeAliasDeclaration_SerializedIntervalDelta(
-    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_SerializedIntervalDelta());
 
 /*
@@ -914,6 +956,7 @@ declare function get_current_ClassDeclaration_SharedSegmentSequence():
 declare function use_old_ClassDeclaration_SharedSegmentSequence(
     use: TypeOnly<old.SharedSegmentSequence<any>>);
 use_old_ClassDeclaration_SharedSegmentSequence(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SharedSegmentSequence());
 
 /*
@@ -938,6 +981,7 @@ declare function get_current_ClassDeclaration_SharedSequence():
 declare function use_old_ClassDeclaration_SharedSequence(
     use: TypeOnly<old.SharedSequence<any>>);
 use_old_ClassDeclaration_SharedSequence(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SharedSequence());
 
 /*
@@ -962,6 +1006,7 @@ declare function get_current_ClassDeclaration_SharedString():
 declare function use_old_ClassDeclaration_SharedString(
     use: TypeOnly<old.SharedString>);
 use_old_ClassDeclaration_SharedString(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SharedString());
 
 /*
@@ -998,7 +1043,6 @@ declare function get_old_TypeAliasDeclaration_SharedStringRevertible():
 declare function use_current_TypeAliasDeclaration_SharedStringRevertible(
     use: TypeOnly<current.SharedStringRevertible>);
 use_current_TypeAliasDeclaration_SharedStringRevertible(
-    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_SharedStringRevertible());
 
 /*
@@ -1036,6 +1080,30 @@ declare function use_old_TypeAliasDeclaration_SharedStringSegment(
     use: TypeOnly<old.SharedStringSegment>);
 use_old_TypeAliasDeclaration_SharedStringSegment(
     get_current_TypeAliasDeclaration_SharedStringSegment());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_Side": {"forwardCompat": false}
+*/
+declare function get_old_EnumDeclaration_Side():
+    TypeOnly<old.Side>;
+declare function use_current_EnumDeclaration_Side(
+    use: TypeOnly<current.Side>);
+use_current_EnumDeclaration_Side(
+    get_old_EnumDeclaration_Side());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_Side": {"backCompat": false}
+*/
+declare function get_current_EnumDeclaration_Side():
+    TypeOnly<current.Side>;
+declare function use_old_EnumDeclaration_Side(
+    use: TypeOnly<old.Side>);
+use_old_EnumDeclaration_Side(
+    get_current_EnumDeclaration_Side());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1443,5 +1511,4 @@ declare function get_current_VariableDeclaration_sequenceIntervalHelpers():
 declare function use_old_VariableDeclaration_sequenceIntervalHelpers(
     use: TypeOnly<typeof old.sequenceIntervalHelpers>);
 use_old_VariableDeclaration_sequenceIntervalHelpers(
-    // @ts-expect-error compatibility expected to be broken
     get_current_VariableDeclaration_sequenceIntervalHelpers());

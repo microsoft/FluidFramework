@@ -64,7 +64,7 @@ async function createDataObject<
 			const dataObject = (await runtimeArg.entryPoint.get()) as TObj;
 			assert(
 				dataObject.request !== undefined,
-				"Data store runtime entryPoint does not have request",
+				0x795 /* Data store runtime entryPoint does not have request */,
 			);
 			return dataObject.request(request);
 		},
@@ -129,9 +129,10 @@ async function createDataObject<
  * @typeParam I - The input types for the DataObject
  */
 export class PureDataObjectFactory<
-	TObj extends PureDataObject<I>,
-	I extends DataObjectTypes = DataObjectTypes,
-> implements
+		TObj extends PureDataObject<I>,
+		I extends DataObjectTypes = DataObjectTypes,
+	>
+	implements
 		IFluidDataStoreFactory,
 		Partial<IProvideFluidDataStoreRegistry>,
 		IRootDataObjectFactory

@@ -122,7 +122,6 @@ import { ConnectionManager } from "./connectionManager";
 import { ConnectionState } from "./connectionState";
 import {
 	IProtocolHandler,
-	OnlyValidTermValue,
 	ProtocolHandler,
 	ProtocolHandlerBuilder,
 	protocolHandlerShouldProcessSignal,
@@ -360,7 +359,6 @@ export interface IPendingContainerState {
 	 */
 	savedOps: ISequencedDocumentMessage[];
 	url: string;
-	term: number;
 	clientId?: string;
 }
 
@@ -624,7 +622,21 @@ export class Container
 	}
 
 	/**
-	 * Tracks host requiring read-only mode.
+	 * Sends signal to runtime (and data stores) to be read-only.
+	 * Hosts may have read only views, indicating to data stores that no edits are allowed.
+	 * This is independent from this._readonlyPermissions (permissions) and this.connectionMode
+	 * (server can return "write" mode even when asked for "read")
+	 * Leveraging same "readonly" event as runtime & data stores should behave the same in such case
+	 * as in read-only permissions.
+	 * But this.active can be used by some DDSes to figure out if ops can be sent
+	 * (for example, read-only view still participates in code proposals / upgrades decisions)
+	 *
+	 * Forcing Readonly does not prevent DDS from generating ops. It is up to user code to honour
+	 * the readonly flag. If ops are generated, they will accumulate locally and not be sent. If
+	 * there are pending in the outbound queue, it will stop sending until force readonly is
+	 * cleared.
+	 *
+	 * @param readonly - set or clear force readonly.
 	 */
 	public forceReadonly(readonly: boolean) {
 		this._deltaManager.connectionManager.forceReadonly(readonly);
@@ -1142,7 +1154,6 @@ export class Container
 					snapshotBlobs: this.baseSnapshotBlobs,
 					savedOps: this.savedOps,
 					url: this.resolvedUrl.url,
-					term: OnlyValidTermValue,
 					// no need to save this if there is no pending runtime state
 					clientId: pendingRuntimeState !== undefined ? this.clientId : undefined,
 				};
@@ -1782,7 +1793,6 @@ export class Container
 	private async createDetached(codeDetails: IFluidCodeDetails) {
 		const attributes: IDocumentAttributes = {
 			sequenceNumber: detachedContainerRefSeqNumber,
-			term: OnlyValidTermValue,
 			minimumSequenceNumber: 0,
 		};
 
@@ -1848,7 +1858,6 @@ export class Container
 			return {
 				minimumSequenceNumber: 0,
 				sequenceNumber: 0,
-				term: OnlyValidTermValue,
 			};
 		}
 

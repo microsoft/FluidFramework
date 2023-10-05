@@ -134,7 +134,7 @@ export {
 	revisionMetadataSourceFromInfo,
 	NodeExistsConstraint,
 	NodeExistenceState,
-	BrandedFieldKind,
+	FieldKindWithEditor,
 } from "./modular-schema";
 
 export {
@@ -189,12 +189,11 @@ export {
 
 export {
 	FieldKinds,
-	ValueFieldKind,
+	Required,
 	Optional,
 	Sequence,
 	NodeKeyFieldKind,
 	Forbidden,
-	FieldKindTypes,
 	DefaultChangeset,
 	DefaultChangeFamily,
 	DefaultEditBuilder,
@@ -243,6 +242,8 @@ export {
 	TreeField,
 	TreeNode,
 	getTreeContext,
+	boxedIterator,
+	CheckTypesOverlap,
 } from "./editable-tree-2";
 
 // Split into separate import and export for compatibility with API-Extractor.

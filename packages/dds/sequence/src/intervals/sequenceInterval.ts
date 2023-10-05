@@ -567,7 +567,7 @@ export function createSequenceInterval(
 			endPos !== undefined &&
 			startSide !== undefined &&
 			endSide !== undefined,
-		"start and end cannot be undefined because they were not passed in as undefined",
+		0x794 /* start and end cannot be undefined because they were not passed in as undefined */,
 	);
 	const stickiness = computeStickinessFromSide(startPos, startSide, endPos, endSide);
 	let beginRefType = ReferenceType.RangeBegin;
@@ -576,10 +576,6 @@ export function createSequenceInterval(
 		beginRefType = ReferenceType.Transient;
 		endRefType = ReferenceType.Transient;
 	} else {
-		if (intervalType === IntervalType.Nest) {
-			beginRefType = ReferenceType.NestBegin;
-			endRefType = ReferenceType.NestEnd;
-		}
 		// All non-transient interval references must eventually be SlideOnRemove
 		// To ensure eventual consistency, they must start as StayOnRemove when
 		// pending (created locally and creation op is not acked)

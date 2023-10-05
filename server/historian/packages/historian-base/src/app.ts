@@ -19,6 +19,7 @@ import { DriverVersionHeaderName } from "@fluidframework/server-services-client"
 import {
 	alternativeMorganLoggerMiddleware,
 	bindCorrelationId,
+	bindTelemetryContext,
 	jsonMorganLoggerMiddleware,
 } from "@fluidframework/server-services-utils";
 import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-services-telemetry";
@@ -55,6 +56,7 @@ export function create(
 	};
 	app.use(restLessMiddleware());
 
+	app.use(bindTelemetryContext());
 	const loggerFormat = config.get("logger:morganFormat");
 	if (loggerFormat === "json") {
 		app.use(

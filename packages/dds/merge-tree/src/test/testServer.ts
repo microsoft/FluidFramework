@@ -4,17 +4,10 @@
  */
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IIntegerRange } from "../base";
-import { Heap, RedBlackTree, Stack } from "../collections";
-import {
-	compareNumbers,
-	IncrementalExecOp,
-	IncrementalMapState,
-	ISegment,
-} from "../mergeTreeNodes";
+import { Heap, RedBlackTree } from "../collections";
+import { compareNumbers } from "../mergeTreeNodes";
 import { ClientSeq, clientSeqComparer } from "../mergeTree";
 import { PropertySet } from "../properties";
-import { TextSegment } from "../textSegment";
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
 import { TestClient } from "./testClient";
 
@@ -57,7 +50,6 @@ export class TestServer extends TestClient {
 	applyMsg(msg: ISequencedDocumentMessage) {
 		super.applyMsg(msg);
 		if (TestClient.useCheckQ) {
-			// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 			const clid = this.getShortClientId(msg.clientId as string);
 			return checkTextMatchRelative(msg.referenceSequenceNumber, clid, this, msg);
 		} else {
@@ -80,7 +72,6 @@ export class TestServer extends TestClient {
 		msg.sequenceNumber = -1;
 	}
 	copyMsg(msg: ISequencedDocumentMessage) {
-		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 		return {
 			clientId: msg.clientId,
 			clientSequenceNumber: msg.clientSequenceNumber,
@@ -89,7 +80,7 @@ export class TestServer extends TestClient {
 			referenceSequenceNumber: msg.referenceSequenceNumber,
 			sequenceNumber: msg.sequenceNumber,
 			type: msg.type,
-		} as ISequencedDocumentMessage;
+		} as any as ISequencedDocumentMessage;
 	}
 
 	private minSeq = 0;
@@ -140,48 +131,6 @@ export class TestServer extends TestClient {
 		}
 		return false;
 	}
-	public incrementalGetText(start?: number, end?: number) {
-		const range: Partial<IIntegerRange> = { start, end };
-		if (range.start === undefined) {
-			range.start = 0;
-		}
-		if (range.end === undefined) {
-			range.end = this.getLength();
-		}
-		const context = new TextSegment("");
-		const stack = new Stack<IncrementalMapState<TextSegment>>();
-		const initialState = new IncrementalMapState(
-			this.mergeTree.root,
-			{ leaf: incrementalGatherText },
-			0,
-			this.getCurrentSeq(),
-			this.getClientId(),
-			context,
-			range.start,
-			range.end,
-			0,
-		);
-		stack.push(initialState);
-
-		while (!stack.empty()) {
-			this.mergeTree.incrementalBlockMap(stack);
-		}
-		return context.text;
-	}
-}
-
-function incrementalGatherText(segment: ISegment, state: IncrementalMapState<TextSegment>) {
-	if (TextSegment.is(segment)) {
-		if (state.start <= 0 && state.end >= segment.text.length) {
-			state.context.text += segment.text;
-		} else {
-			state.context.text +=
-				state.end >= segment.text.length
-					? segment.text.substring(state.start)
-					: segment.text.substring(state.start, state.end);
-		}
-	}
-	state.op = IncrementalExecOp.Go;
 }
 
 /**
@@ -199,11 +148,7 @@ export function checkTextMatchRelative(
 	if (cliText === undefined || cliText !== serverText) {
 		console.log(`mismatch `);
 		console.log(msg);
-		//        console.log(serverText);
-		//        console.log(cliText);
-		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		console.log(server.mergeTree.toString());
-		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		console.log(client.mergeTree.toString());
 		return true;
 	}

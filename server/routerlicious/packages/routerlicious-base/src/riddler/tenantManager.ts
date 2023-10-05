@@ -763,8 +763,8 @@ export class TenantManager {
 
 	private async getKeyFromCache(tenantId: string): Promise<string> {
 		try {
-			const cachedKey = await this.runWithCacheRequestCounter(async () =>
-				this.cache?.get(`tenantKeys:${tenantId}`),
+			const cachedKey = await this.runWithCacheRequestCounter(
+				async () => this.cache?.get(`tenantKeys:${tenantId}`),
 			);
 
 			if (cachedKey == null) {
@@ -787,16 +787,16 @@ export class TenantManager {
 	}
 
 	private async deleteKeyFromCache(tenantId: string): Promise<boolean> {
-		return this.runWithCacheRequestCounter(async () =>
-			this.cache?.delete(`tenantKeys:${tenantId}`),
+		return this.runWithCacheRequestCounter(
+			async () => this.cache?.delete(`tenantKeys:${tenantId}`),
 		);
 	}
 
 	private async setKeyInCache(tenantId: string, value: IEncryptedTenantKeys): Promise<boolean> {
 		const lumberProperties = { [BaseTelemetryProperties.tenantId]: tenantId };
 		try {
-			await this.runWithCacheRequestCounter(async () =>
-				this.cache?.set(`tenantKeys:${tenantId}`, JSON.stringify(value)),
+			await this.runWithCacheRequestCounter(
+				async () => this.cache?.set(`tenantKeys:${tenantId}`, JSON.stringify(value)),
 			);
 			this.fetchTenantKeyApiCounter.incrementCounter(
 				FetchTenantKeyMetric.SetKeyInCacheSuccess,

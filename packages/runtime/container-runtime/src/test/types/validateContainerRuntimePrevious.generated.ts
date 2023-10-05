@@ -151,7 +151,6 @@ declare function get_old_ClassDeclaration_ContainerRuntime():
 declare function use_current_ClassDeclaration_ContainerRuntime(
     use: TypeOnly<current.ContainerRuntime>);
 use_current_ClassDeclaration_ContainerRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_ContainerRuntime());
 
 /*
@@ -164,7 +163,6 @@ declare function get_current_ClassDeclaration_ContainerRuntime():
 declare function use_old_ClassDeclaration_ContainerRuntime(
     use: TypeOnly<old.ContainerRuntime>);
 use_old_ClassDeclaration_ContainerRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ContainerRuntime());
 
 /*
@@ -1390,6 +1388,30 @@ declare function use_old_TypeAliasDeclaration_OpActionEventName(
     use: TypeOnly<old.OpActionEventName>);
 use_old_TypeAliasDeclaration_OpActionEventName(
     get_current_TypeAliasDeclaration_OpActionEventName());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_RecentlyAddedContainerRuntimeMessageDetails": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_RecentlyAddedContainerRuntimeMessageDetails():
+    TypeOnly<old.RecentlyAddedContainerRuntimeMessageDetails>;
+declare function use_current_InterfaceDeclaration_RecentlyAddedContainerRuntimeMessageDetails(
+    use: TypeOnly<current.RecentlyAddedContainerRuntimeMessageDetails>);
+use_current_InterfaceDeclaration_RecentlyAddedContainerRuntimeMessageDetails(
+    get_old_InterfaceDeclaration_RecentlyAddedContainerRuntimeMessageDetails());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_RecentlyAddedContainerRuntimeMessageDetails": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_RecentlyAddedContainerRuntimeMessageDetails():
+    TypeOnly<current.RecentlyAddedContainerRuntimeMessageDetails>;
+declare function use_old_InterfaceDeclaration_RecentlyAddedContainerRuntimeMessageDetails(
+    use: TypeOnly<old.RecentlyAddedContainerRuntimeMessageDetails>);
+use_old_InterfaceDeclaration_RecentlyAddedContainerRuntimeMessageDetails(
+    get_current_InterfaceDeclaration_RecentlyAddedContainerRuntimeMessageDetails());
 
 /*
 * Validate forward compat by using old type in place of current type

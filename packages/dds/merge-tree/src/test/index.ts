@@ -38,7 +38,6 @@ export {
 	runMergeTreeOperationRunner,
 	TestOperation,
 } from "./mergeTreeOperationRunner";
-export { ProxString, TST, TSTNode, TSTResult } from "./tst";
 export { ClientSeq, clientSeqComparer, LRUSegment, MergeTree } from "../mergeTree";
 export { MergeTreeTextHelper } from "../MergeTreeTextHelper";
 export { SnapshotLegacy } from "../snapshotlegacy";
@@ -71,7 +70,6 @@ export {
 	ICombiningOp,
 	IConsensusInfo,
 	IConsensusValue,
-	IIntegerRange,
 	IJSONMarkerSegment,
 	IJSONSegment,
 	IJSONTextSegment,
@@ -91,7 +89,6 @@ export {
 	IMergeTreeRemoveMsg,
 	IMergeTreeSegmentDelta,
 	IMergeTreeTextHelper,
-	internedSpaces,
 	IRBAugmentation,
 	IRBMatcher,
 	IRelativePosition,
@@ -123,23 +120,18 @@ export {
 	PropertyAction,
 	PropertySet,
 	QProperty,
-	RangeStackMap,
 	RBColor,
 	RBNode,
 	RBNodeActions,
 	RedBlackTree,
 	ReferencePosition,
 	ReferenceType,
-	refGetRangeLabels,
 	refGetTileLabels,
-	refHasRangeLabel,
-	refHasRangeLabels,
 	refHasTileLabel,
 	refHasTileLabels,
 	refTypeIncludesFlag,
 	reservedMarkerIdKey,
 	reservedMarkerSimpleTypeKey,
-	reservedRangeLabelsKey,
 	reservedTileLabelsKey,
 	revertMergeTreeDeltaRevertibles,
 	SegmentAccumulator,

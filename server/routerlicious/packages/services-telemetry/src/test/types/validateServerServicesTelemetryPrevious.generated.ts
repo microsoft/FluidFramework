@@ -107,7 +107,6 @@ declare function get_current_EnumDeclaration_CommonProperties():
 declare function use_old_EnumDeclaration_CommonProperties(
     use: TypeOnly<old.CommonProperties>);
 use_old_EnumDeclaration_CommonProperties(
-    // @ts-expect-error compatibility expected to be broken
     get_current_EnumDeclaration_CommonProperties());
 
 /*
@@ -161,6 +160,30 @@ use_old_InterfaceDeclaration_ILumberjackEngine(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ILumberjackOptions": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ILumberjackOptions():
+    TypeOnly<old.ILumberjackOptions>;
+declare function use_current_InterfaceDeclaration_ILumberjackOptions(
+    use: TypeOnly<current.ILumberjackOptions>);
+use_current_InterfaceDeclaration_ILumberjackOptions(
+    get_old_InterfaceDeclaration_ILumberjackOptions());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ILumberjackOptions": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ILumberjackOptions():
+    TypeOnly<current.ILumberjackOptions>;
+declare function use_old_InterfaceDeclaration_ILumberjackOptions(
+    use: TypeOnly<old.ILumberjackOptions>);
+use_old_InterfaceDeclaration_ILumberjackOptions(
+    get_current_InterfaceDeclaration_ILumberjackOptions());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ILumberjackSchemaValidationResult": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ILumberjackSchemaValidationResult():
@@ -205,6 +228,54 @@ declare function use_old_InterfaceDeclaration_ILumberjackSchemaValidator(
     use: TypeOnly<old.ILumberjackSchemaValidator>);
 use_old_InterfaceDeclaration_ILumberjackSchemaValidator(
     get_current_InterfaceDeclaration_ILumberjackSchemaValidator());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ITelemetryContext": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ITelemetryContext():
+    TypeOnly<old.ITelemetryContext>;
+declare function use_current_InterfaceDeclaration_ITelemetryContext(
+    use: TypeOnly<current.ITelemetryContext>);
+use_current_InterfaceDeclaration_ITelemetryContext(
+    get_old_InterfaceDeclaration_ITelemetryContext());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ITelemetryContext": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ITelemetryContext():
+    TypeOnly<current.ITelemetryContext>;
+declare function use_old_InterfaceDeclaration_ITelemetryContext(
+    use: TypeOnly<old.ITelemetryContext>);
+use_old_InterfaceDeclaration_ITelemetryContext(
+    get_current_InterfaceDeclaration_ITelemetryContext());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ITelemetryContextProperties": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ITelemetryContextProperties():
+    TypeOnly<old.ITelemetryContextProperties>;
+declare function use_current_InterfaceDeclaration_ITelemetryContextProperties(
+    use: TypeOnly<current.ITelemetryContextProperties>);
+use_current_InterfaceDeclaration_ITelemetryContextProperties(
+    get_old_InterfaceDeclaration_ITelemetryContextProperties());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ITelemetryContextProperties": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ITelemetryContextProperties():
+    TypeOnly<current.ITelemetryContextProperties>;
+declare function use_old_InterfaceDeclaration_ITelemetryContextProperties(
+    use: TypeOnly<old.ITelemetryContextProperties>);
+use_old_InterfaceDeclaration_ITelemetryContextProperties(
+    get_current_InterfaceDeclaration_ITelemetryContextProperties());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -276,7 +347,6 @@ declare function get_current_ClassDeclaration_Lumber():
 declare function use_old_ClassDeclaration_Lumber(
     use: TypeOnly<old.Lumber>);
 use_old_ClassDeclaration_Lumber(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_Lumber());
 
 /*
@@ -301,7 +371,6 @@ declare function get_current_EnumDeclaration_LumberEventName():
 declare function use_old_EnumDeclaration_LumberEventName(
     use: TypeOnly<old.LumberEventName>);
 use_old_EnumDeclaration_LumberEventName(
-    // @ts-expect-error compatibility expected to be broken
     get_current_EnumDeclaration_LumberEventName());
 
 /*
@@ -523,6 +592,30 @@ use_old_EnumDeclaration_ThrottlingTelemetryProperties(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_getGlobalTelemetryContext": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_getGlobalTelemetryContext():
+    TypeOnly<typeof old.getGlobalTelemetryContext>;
+declare function use_current_VariableDeclaration_getGlobalTelemetryContext(
+    use: TypeOnly<typeof current.getGlobalTelemetryContext>);
+use_current_VariableDeclaration_getGlobalTelemetryContext(
+    get_old_VariableDeclaration_getGlobalTelemetryContext());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_getGlobalTelemetryContext": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_getGlobalTelemetryContext():
+    TypeOnly<typeof current.getGlobalTelemetryContext>;
+declare function use_old_VariableDeclaration_getGlobalTelemetryContext(
+    use: TypeOnly<typeof old.getGlobalTelemetryContext>);
+use_old_VariableDeclaration_getGlobalTelemetryContext(
+    get_current_VariableDeclaration_getGlobalTelemetryContext());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_getLumberBaseProperties": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_getLumberBaseProperties():
@@ -567,3 +660,27 @@ declare function use_old_FunctionDeclaration_handleError(
     use: TypeOnly<typeof old.handleError>);
 use_old_FunctionDeclaration_handleError(
     get_current_FunctionDeclaration_handleError());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_setGlobalTelemetryContext": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_setGlobalTelemetryContext():
+    TypeOnly<typeof old.setGlobalTelemetryContext>;
+declare function use_current_VariableDeclaration_setGlobalTelemetryContext(
+    use: TypeOnly<typeof current.setGlobalTelemetryContext>);
+use_current_VariableDeclaration_setGlobalTelemetryContext(
+    get_old_VariableDeclaration_setGlobalTelemetryContext());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_setGlobalTelemetryContext": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_setGlobalTelemetryContext():
+    TypeOnly<typeof current.setGlobalTelemetryContext>;
+declare function use_old_VariableDeclaration_setGlobalTelemetryContext(
+    use: TypeOnly<typeof old.setGlobalTelemetryContext>);
+use_old_VariableDeclaration_setGlobalTelemetryContext(
+    get_current_VariableDeclaration_setGlobalTelemetryContext());

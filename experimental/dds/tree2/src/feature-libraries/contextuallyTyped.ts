@@ -139,7 +139,7 @@ export function isFluidHandle(value: undefined | FluidSerializableReadOnly): val
 	const getMember = (value as Partial<IFluidHandle>).get;
 	assert(
 		(typeof getMember === "function") === isHandle,
-		"Fluid handle detection via get method should match detection via IFluidHandle field",
+		0x76e /* Fluid handle detection via get method should match detection via IFluidHandle field */,
 	);
 	return isHandle;
 }
@@ -147,7 +147,7 @@ export function isFluidHandle(value: undefined | FluidSerializableReadOnly): val
 export function assertAllowedValue(
 	value: undefined | FluidSerializableReadOnly,
 ): asserts value is Value {
-	assert(isPrimitiveValue(value) || isFluidHandle(value), "invalid value");
+	assert(isPrimitiveValue(value) || isFluidHandle(value), 0x76f /* invalid value */);
 }
 
 /**
@@ -574,7 +574,7 @@ function setFieldForKey(
 ): void {
 	const requiredFieldSchema = getFieldSchema(key, schema);
 	const multiplicity = getFieldKind(requiredFieldSchema).multiplicity;
-	if (multiplicity === Multiplicity.Value && context.fieldSource !== undefined) {
+	if (multiplicity === Multiplicity.Single && context.fieldSource !== undefined) {
 		const fieldGenerator = context.fieldSource(key, requiredFieldSchema);
 		if (fieldGenerator !== undefined) {
 			const children = fieldGenerator();
@@ -621,7 +621,7 @@ export function applyFieldTypesFromContext(
 		return children;
 	}
 	assert(
-		multiplicity === Multiplicity.Value || multiplicity === Multiplicity.Optional,
+		multiplicity === Multiplicity.Single || multiplicity === Multiplicity.Optional,
 		0x4da /* single value provided for an unsupported field */,
 	);
 	return [applyTypesFromContext(context, field.types, data)];

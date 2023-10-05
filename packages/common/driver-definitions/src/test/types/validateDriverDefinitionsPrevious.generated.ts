@@ -79,7 +79,6 @@ declare function get_old_VariableDeclaration_DriverErrorTypes():
 declare function use_current_VariableDeclaration_DriverErrorTypes(
     use: TypeOnly<typeof current.DriverErrorTypes>);
 use_current_VariableDeclaration_DriverErrorTypes(
-    // @ts-expect-error compatibility expected to be broken
     get_old_VariableDeclaration_DriverErrorTypes());
 
 /*

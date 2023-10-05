@@ -123,7 +123,6 @@ describe("Runtime", () => {
 			referenceSequenceNumber: 0,
 			clientSequenceNumber: 0,
 			contents: undefined,
-			term: undefined,
 		};
 		return mockContext;
 	};

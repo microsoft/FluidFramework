@@ -22,7 +22,15 @@ import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import { ILoadTest, IRunConfig } from "./loadTestDataStore";
-import { createCodeLoader, createLogger, createTestDriver, getProfile, safeExit } from "./utils";
+import {
+	configProvider,
+	createCodeLoader,
+	createLogger,
+	createTestDriver,
+	getProfile,
+	globalConfigurations,
+	safeExit,
+} from "./utils";
 import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
 import {
 	generateConfigurations,
@@ -220,13 +228,14 @@ async function runnerProcess(
 
 			// Construct the loader
 			runConfig.loaderConfig = loaderOptions[runConfig.runId % loaderOptions.length];
+			const testConfiguration = configurations[runConfig.runId % configurations.length];
 			runConfig.logger.sendTelemetryEvent({
 				eventName: "RunConfigOptions",
 				details: JSON.stringify({
 					loaderOptions: runConfig.loaderConfig,
 					containerOptions: containerOptions[runConfig.runId % containerOptions.length],
 					logLevel: runConfig.logger.minLogLevel,
-					configurations: configurations[runConfig.runId % configurations.length],
+					configurations: { ...globalConfigurations, ...testConfiguration },
 				}),
 			});
 			const loader = new Loader({
@@ -237,11 +246,7 @@ async function runnerProcess(
 				),
 				logger: runConfig.logger,
 				options: runConfig.loaderConfig,
-				configProvider: {
-					getRawConfig(name) {
-						return configurations[runConfig.runId % configurations.length][name];
-					},
-				},
+				configProvider: configProvider(testConfiguration),
 			});
 
 			const stashedOps = stashedOpP ? await stashedOpP : undefined;
@@ -348,9 +353,8 @@ function scheduleFaultInjection(
 				container.connectionState === ConnectionState.Connected &&
 				container.resolvedUrl !== undefined
 			) {
-				const deltaConn = ds.documentServices.get(
-					container.resolvedUrl,
-				)?.documentDeltaConnection;
+				const deltaConn = ds.documentServices.get(container.resolvedUrl)
+					?.documentDeltaConnection;
 				if (deltaConn !== undefined && !deltaConn.disposed) {
 					// 1 in numClients chance of non-retritable error to not overly conflict with container close
 					const canRetry = random.bool(1 - 1 / runConfig.testConfig.numClients);
