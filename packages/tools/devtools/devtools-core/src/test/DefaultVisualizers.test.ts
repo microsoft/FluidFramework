@@ -9,12 +9,12 @@
 import { expect } from "chai";
 
 import { SharedCell } from "@fluidframework/cell";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
-import { ISharedObject } from "@fluidframework/shared-object-base";
+import { type ISharedObject } from "@fluidframework/shared-object-base";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import {
 	AllowedUpdateType,
@@ -26,12 +26,12 @@ import {
 	typeNameSymbol,
 } from "@fluid-experimental/tree2";
 
-import { EditType, FluidObjectId } from "../CommonInterfaces";
+import { EditType, type FluidObjectId } from "../CommonInterfaces";
 import {
-	FluidObjectTreeNode,
-	FluidObjectValueNode,
-	FluidUnknownObjectNode,
-	VisualChildNode,
+	type FluidObjectTreeNode,
+	type FluidObjectValueNode,
+	type FluidUnknownObjectNode,
+	type VisualChildNode,
 	visualizeChildData as visualizeChildDataBase,
 	visualizeSharedCell,
 	visualizeSharedCounter,
@@ -307,8 +307,6 @@ describe("DefaultVisualizers unit tests", () => {
 		sharedMatrix.insertCols(0, 3);
 		sharedMatrix.setCell(0, 0, "Hello");
 		sharedMatrix.setCell(0, 1, "World");
-		// False positive
-		// eslint-disable-next-line unicorn/no-useless-undefined
 		sharedMatrix.setCell(0, 2, undefined);
 		sharedMatrix.setCell(1, 0, 1);
 		sharedMatrix.setCell(1, 1, true);
@@ -415,21 +413,21 @@ describe("DefaultVisualizers unit tests", () => {
 		const handleSchema = builder.leaf("handle-property", ValueSchema.FluidHandle);
 
 		const leafSchema = builder.struct("leaf-item", {
-			leafField: SchemaBuilder.fieldValue(booleanSchema, handleSchema, stringSchema),
+			leafField: SchemaBuilder.fieldRequired(booleanSchema, handleSchema, stringSchema),
 		});
 
 		const childSchema = builder.struct("child-item", {
-			childField: SchemaBuilder.fieldValue(stringSchema, booleanSchema),
+			childField: SchemaBuilder.fieldRequired(stringSchema, booleanSchema),
 			childData: SchemaBuilder.fieldOptional(leafSchema),
 		});
 
 		const rootNodeSchema = builder.struct("root-item", {
 			childrenOne: SchemaBuilder.fieldSequence(childSchema),
-			childrenTwo: SchemaBuilder.fieldValue(numberSchema),
+			childrenTwo: SchemaBuilder.fieldRequired(numberSchema),
 		});
 
 		const schema = builder.intoDocumentSchema(
-			SchemaBuilder.field(FieldKinds.value, rootNodeSchema),
+			SchemaBuilder.field(FieldKinds.required, rootNodeSchema),
 		);
 
 		sharedTree.schematize({

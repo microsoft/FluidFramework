@@ -28,18 +28,18 @@ import {
 	TableHeaderRowNode,
 	TableNode,
 } from "../../documentation-domain";
-import { injectSeparator } from "../../utilities";
 import {
 	ApiFunctionLike,
 	ApiModifier,
 	getDefaultValueBlock,
-	getLinkForApiItem,
 	getModifiers,
 	getReleaseTag,
+	injectSeparator,
 	isDeprecated,
-} from "../ApiItemUtilities";
-import { transformDocSection } from "../DocNodeTransforms";
-import { getDocNodeTransformationOptions } from "../Utilities";
+} from "../../utilities";
+import { getLinkForApiItem } from "../ApiItemTransformUtilities";
+import { transformTsdocSection } from "../TsdocNodeTransforms";
+import { getTsdocNodeTransformationOptions } from "../Utilities";
 import { ApiItemTransformationConfiguration } from "../configuration";
 import { createExcerptSpanWithHyperlinks } from "./Helpers";
 
@@ -439,7 +439,7 @@ export function createPropertiesTable(
 		(apiItem) => getModifiers(apiItem, options?.modifiersToOmit).length > 0,
 	);
 	const hasDefaultValues = apiProperties.some(
-		(apiItem) => getDefaultValueBlock(apiItem, config) !== undefined,
+		(apiItem) => getDefaultValueBlock(apiItem, config.logger) !== undefined,
 	);
 
 	const headerRowCells: TableHeaderCellNode[] = [
@@ -533,11 +533,11 @@ export function createApiSummaryCell(
 	config: Required<ApiItemTransformationConfiguration>,
 ): TableBodyCellNode {
 	if (apiItem instanceof ApiDocumentedItem) {
-		const docNodeTransformOptions = getDocNodeTransformationOptions(apiItem, config);
+		const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
 		if (apiItem.tsdocComment !== undefined) {
-			const summaryComment = transformDocSection(
+			const summaryComment = transformTsdocSection(
 				apiItem.tsdocComment.summarySection,
-				docNodeTransformOptions,
+				tsdocNodeTransformOptions,
 			);
 			return new TableBodyCellNode(summaryComment.children);
 		}
@@ -617,15 +617,15 @@ export function createDefaultValueCell(
 	apiItem: ApiItem,
 	config: Required<ApiItemTransformationConfiguration>,
 ): TableBodyCellNode {
-	const docNodeTransformOptions = getDocNodeTransformationOptions(apiItem, config);
+	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
 
-	const defaultValueSection = getDefaultValueBlock(apiItem, config);
+	const defaultValueSection = getDefaultValueBlock(apiItem, config.logger);
 
 	if (defaultValueSection === undefined) {
 		return TableBodyCellNode.Empty;
 	}
 
-	const contents = transformDocSection(defaultValueSection, docNodeTransformOptions);
+	const contents = transformTsdocSection(defaultValueSection, tsdocNodeTransformOptions);
 
 	// Since we are sticking the contents into a table cell, we can remove the outer Paragraph node
 	// from the hierarchy to simplify things.
@@ -722,11 +722,11 @@ export function createParameterSummaryCell(
 		return TableBodyCellNode.Empty;
 	}
 
-	const docNodeTransformOptions = getDocNodeTransformationOptions(contextApiItem, config);
+	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(contextApiItem, config);
 
-	const cellContent = transformDocSection(
+	const cellContent = transformTsdocSection(
 		apiParameter.tsdocParamBlock.content,
-		docNodeTransformOptions,
+		tsdocNodeTransformOptions,
 	);
 
 	// Since we are putting the contents into a table cell anyways, omit the Paragraph
@@ -752,11 +752,11 @@ export function createTypeParameterSummaryCell(
 		return TableBodyCellNode.Empty;
 	}
 
-	const docNodeTransformOptions = getDocNodeTransformationOptions(contextApiItem, config);
+	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(contextApiItem, config);
 
-	const cellContent = transformDocSection(
+	const cellContent = transformTsdocSection(
 		apiTypeParameter.tsdocTypeParamBlock.content,
-		docNodeTransformOptions,
+		tsdocNodeTransformOptions,
 	);
 
 	// Since we are putting the contents into a table cell anyways, omit the Paragraph

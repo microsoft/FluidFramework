@@ -107,7 +107,7 @@ export interface Operation {
 	type: "noop";
 }
 
-const noopGenerator = async () => ({ type: "noop" } as const);
+const noopGenerator = async () => ({ type: "noop" }) as const;
 
 export const baseModel: DDSFuzzModel<SharedNothingFactory, Operation | ChangeConnectionState> = {
 	workloadName: "test",

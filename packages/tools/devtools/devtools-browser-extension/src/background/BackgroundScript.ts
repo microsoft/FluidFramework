@@ -4,16 +4,16 @@
  */
 
 import {
-	ISourcedDevtoolsMessage,
+	type ISourcedDevtoolsMessage,
 	devtoolsMessageSource,
 	isDevtoolsMessage,
 } from "@fluid-experimental/devtools-core";
 
 import { browser } from "../Globals";
 import {
-	DevToolsInitAcknowledgement,
+	type DevToolsInitAcknowledgement,
 	devToolsInitAcknowledgementType,
-	DevToolsInitMessage,
+	type DevToolsInitMessage,
 	devToolsInitMessageType,
 	extensionMessageSource,
 	postMessageToPort,

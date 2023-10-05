@@ -9,21 +9,23 @@ import type { Static, TAnySchema, TSchema } from "@sinclair/typebox";
 import { fail, JsonCompatibleReadOnly } from "../util";
 
 /**
- * @alpha
+ * Translates decoded data to encoded data.
+ * @remarks Typically paired with an {@link IEncoder}.
  */
 export interface IEncoder<TDecoded, TEncoded> {
 	/**
-	 * Encodes `obj` into some encoded format. Typically paired with an {@link IDecoder}.
+	 * Encodes `obj` into some encoded format.
 	 */
 	encode(obj: TDecoded): TEncoded;
 }
 
 /**
- * @alpha
+ * Translates encoded data to decoded data.
+ * @remarks Typically paired with an {@link IEncoder}.
  */
 export interface IDecoder<TDecoded, TEncoded> {
 	/**
-	 * Decodes `obj` from some encoded format. Typically paired with an {@link IEncoder}.
+	 * Decodes `obj` from some encoded format.
 	 */
 	decode(obj: TEncoded): TDecoded;
 }
@@ -74,20 +76,21 @@ export interface ICodecOptions {
 }
 
 /**
- * @alpha
- * @remarks `TEncoded` should always be valid Json (i.e. not contain functions), but due to Typescript's handling
+ * @remarks `TEncoded` should always be valid Json (i.e. not contain functions), but due to TypeScript's handling
  * of index signatures and `JsonCompatibleReadOnly`'s index signature in the Json object case, specifying this as a
  * type-system level constraint makes code that uses this interface more difficult to write.
+ *
+ * If provided, `TValidate` allows the input type passed to `decode` to be different than `TEncoded`.
+ * This is useful when, for example, the type being decoded is `unknown` and must be validated to be a `TEncoded` before being decoded to a `TDecoded`.
  */
-export interface IJsonCodec<TDecoded, TEncoded = JsonCompatibleReadOnly>
+export interface IJsonCodec<TDecoded, TEncoded = JsonCompatibleReadOnly, TValidate = TEncoded>
 	extends IEncoder<TDecoded, TEncoded>,
-		IDecoder<TDecoded, TEncoded> {
+		IDecoder<TDecoded, TValidate> {
 	encodedSchema?: TAnySchema;
 }
 
 /**
  * @remarks TODO: We might consider using DataView or some kind of writer instead of IsoBuffer.
- * @alpha
  */
 export interface IBinaryCodec<TDecoded>
 	extends IEncoder<TDecoded, IsoBuffer>,
@@ -103,14 +106,13 @@ export interface IBinaryCodec<TDecoded>
  *
  * Using an {@link ICodecFamily} is the recommended strategy for managing this support, keeping in
  * mind evolution of encodings over time.
- *
- * @alpha
  */
 export interface IMultiFormatCodec<
 	TDecoded,
 	TJsonEncoded extends JsonCompatibleReadOnly = JsonCompatibleReadOnly,
+	TJsonValidate = TJsonEncoded,
 > {
-	json: IJsonCodec<TDecoded, TJsonEncoded>;
+	json: IJsonCodec<TDecoded, TJsonEncoded, TJsonValidate>;
 	binary: IBinaryCodec<TDecoded>;
 
 	/** Ensures multi-format codecs cannot also be single-format codecs. */
@@ -127,7 +129,6 @@ export interface IMultiFormatCodec<
  * the `formatVersion` parameter)
  * allows avoiding some duplicate work at encode/decode time, since the vast majority of document usage will not
  * involve mixed format versions.
- * @alpha
  */
 export interface ICodecFamily<TDecoded> {
 	/**

@@ -26,18 +26,16 @@ import {
 import { IDebuggerController, IDebuggerUI } from "./fluidDebuggerUi";
 import { Sanitizer } from "./sanitizer";
 
+// eslint-disable-next-line @rushstack/no-new-null
 export type debuggerUIFactory = (controller: IDebuggerController) => IDebuggerUI | null;
 
 /**
  * Replay controller that uses pop-up window to control op playback
  */
 export class DebugReplayController extends ReplayController implements IDebuggerController {
+	// eslint-disable-next-line @rushstack/no-new-null
 	public static create(createUi: debuggerUIFactory): DebugReplayController | null {
-		if (
-			typeof localStorage === "object" &&
-			localStorage !== null &&
-			localStorage.FluidDebugger
-		) {
+		if (typeof localStorage === "object" && localStorage?.FluidDebugger) {
 			const controller = new DebugReplayController();
 			const ui = createUi(controller);
 			if (ui) {
@@ -275,6 +273,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
 		throw new Error("Reading blob before storage is setup properly");
 	}
 
+	// eslint-disable-next-line @rushstack/no-new-null
 	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
 		if (this.storage !== undefined) {
 			return this.storage.getVersions(versionId, count);
@@ -282,6 +281,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
 		throw new Error("initStorage() was not called!");
 	}
 
+	// eslint-disable-next-line @rushstack/no-new-null
 	public async getSnapshotTree(versionRequested?: IVersion): Promise<ISnapshotTree | null> {
 		if (this.storage !== undefined) {
 			return this.storage.getSnapshotTree(versionRequested);

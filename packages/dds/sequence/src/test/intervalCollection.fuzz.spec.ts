@@ -18,10 +18,16 @@ import {
 	DDSFuzzSuiteOptions,
 } from "@fluid-internal/test-dds-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
+import {
+	IChannelAttributes,
+	IChannelServices,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { IIntervalCollection } from "../intervalCollection";
+import { IIntervalCollection, Side } from "../intervalCollection";
 import { SharedStringFactory } from "../sequenceFactory";
-import { IntervalStickiness, SequenceInterval } from "../intervals";
+import { SharedString } from "../sharedString";
+import { SequenceInterval } from "../intervals";
 import { assertEquivalentSharedStrings } from "./intervalUtils";
 import {
 	Operation,
@@ -65,7 +71,10 @@ export function makeOperationGenerator(
 
 	function inclusiveRange(state: ClientOpState): RangeSpec {
 		const start = startPosition(state);
-		const end = state.random.integer(start, Math.max(start, state.channel.getLength() - 1));
+		const end = state.random.integer(
+			start,
+			Math.max(start, state.client.channel.getLength() - 1),
+		);
 		return { start, end };
 	}
 
@@ -83,17 +92,19 @@ export function makeOperationGenerator(
 		return propSet;
 	}
 
-	function nonEmptyIntervalCollection({ channel, random }: ClientOpState): string {
-		const nonEmptyLabels = Array.from(channel.getIntervalCollectionLabels()).filter((label) => {
-			const collection = channel.getIntervalCollection(label);
-			return isNonEmpty(collection);
-		});
+	function nonEmptyIntervalCollection({ client, random }: ClientOpState): string {
+		const nonEmptyLabels = Array.from(client.channel.getIntervalCollectionLabels()).filter(
+			(label) => {
+				const collection = client.channel.getIntervalCollection(label);
+				return isNonEmpty(collection);
+			},
+		);
 		return random.pick(nonEmptyLabels);
 	}
 
 	function interval(state: ClientOpState): { collectionName: string; id: string } {
 		const collectionName = nonEmptyIntervalCollection(state);
-		const intervals = Array.from(state.channel.getIntervalCollection(collectionName));
+		const intervals = Array.from(state.client.channel.getIntervalCollection(collectionName));
 		const id = state.random.pick(intervals)?.getIntervalId();
 		assert(id);
 
@@ -109,9 +120,8 @@ export function makeOperationGenerator(
 			...inclusiveRange(state),
 			collectionName: state.random.pick(options.intervalCollectionNamePool),
 			id: state.random.uuid4(),
-			stickiness: state.random.pick(
-				Object.values(IntervalStickiness) as IntervalStickiness[],
-			),
+			startSide: state.random.pick([Side.Before, Side.After]),
+			endSide: state.random.pick([Side.Before, Side.After]),
 		};
 	}
 
@@ -126,8 +136,10 @@ export function makeOperationGenerator(
 		const { start, end } = inclusiveRange(state);
 		return {
 			type: "changeInterval",
-			start: state.random.integer(0, 5) === 5 ? undefined : start,
-			end: state.random.integer(0, 5) === 5 ? undefined : end,
+			start,
+			end,
+			startSide: state.random.pick([Side.Before, Side.After]),
+			endSide: state.random.pick([Side.Before, Side.After]),
 			...interval(state),
 		};
 	}
@@ -140,16 +152,16 @@ export function makeOperationGenerator(
 		};
 	}
 
-	const hasAnInterval = ({ channel }: ClientOpState): boolean =>
-		Array.from(channel.getIntervalCollectionLabels()).some((label) => {
-			const collection = channel.getIntervalCollection(label);
+	const hasAnInterval = ({ client }: ClientOpState): boolean =>
+		Array.from(client.channel.getIntervalCollectionLabels()).some((label) => {
+			const collection = client.channel.getIntervalCollection(label);
 			return isNonEmpty(collection);
 		});
 
-	const hasNotTooManyIntervals: AcceptanceCondition<ClientOpState> = ({ channel }) => {
+	const hasNotTooManyIntervals: AcceptanceCondition<ClientOpState> = ({ client }) => {
 		let intervalCount = 0;
-		for (const label of channel.getIntervalCollectionLabels()) {
-			for (const _ of channel.getIntervalCollection(label)) {
+		for (const label of client.channel.getIntervalCollectionLabels()) {
+			for (const _ of client.channel.getIntervalCollection(label)) {
 				intervalCount++;
 				if (intervalCount >= options.maxIntervals) {
 					return false;
@@ -182,6 +194,23 @@ export function makeOperationGenerator(
 	]);
 }
 
+class IntervalCollectionFuzzFactory extends SharedStringFactory {
+	public async load(
+		runtime: IFluidDataStoreRuntime,
+		id: string,
+		services: IChannelServices,
+		attributes: IChannelAttributes,
+	): Promise<SharedString> {
+		runtime.options.intervalStickinessEnabled = true;
+		return super.load(runtime, id, services, attributes);
+	}
+
+	public create(document: IFluidDataStoreRuntime, id: string): SharedString {
+		document.options.intervalStickinessEnabled = true;
+		return super.create(document, id);
+	}
+}
+
 const baseModel: Omit<
 	DDSFuzzModel<SharedStringFactory, Operation, FuzzTestState>,
 	"workloadName"
@@ -193,7 +222,7 @@ const baseModel: Omit<
 		// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
 		makeReducer(),
 	validateConsistency: assertEquivalentSharedStrings,
-	factory: new SharedStringFactory(),
+	factory: new IntervalCollectionFuzzFactory(),
 };
 
 const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
@@ -228,22 +257,17 @@ describe("IntervalCollection fuzz testing", () => {
 
 	createDDSFuzzSuite(model, {
 		...defaultFuzzOptions,
-		// AB#4477: Seed 12 is the same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477.
-		// The other failing seeds were added when updates of the msn on reconnects
-		// were introduced to skip seeds due to a bug in a sequence DDS causing a `0x54e` error to occur.
+		// AB#4477: Seed 20 and others with its call stack is the same root cause as skipped regression test in
+		// intervalCollection.spec.ts--search for 4477.
+		// The other failing seeds were added when the mocks were changed to properly update msn on reconnects.
+		// This exposed ways that `0x54e` can occur.
 		// The root cause of this bug is--roughly speaking--interval endpoints with StayOnRemove being placed
 		// on segments that can be zamboni'd.
 		// TODO:AB#5337: re-enable these seeds.
 		skip: [
-			3, 4, 9, 11, 12, 13, 19, 20, 32, 39, 41, 42, 43, 44, 45, 49, 52, 53, 55, 58, 61, 63, 74,
-			76, 79, 86, 91, 92, 94,
+			1, 2, 4, 9, 10, 11, 12, 14, 16, 19, 21, 23, 24, 26, 27, 32, 33, 39, 40, 43, 44, 45, 46,
+			47, 48, 50, 51, 53, 55, 62, 69, 71, 72, 73, 74, 81, 82, 84, 86, 88, 89, 93, 95, 96,
 		],
-		// TODO:AB#5338: IntervalCollection doesn't correctly handle edits made while detached. Once supported,
-		// this config should be enabled (deleting is sufficient: detached start is enabled by default)
-		detachedStartOptions: {
-			enabled: false,
-			attachProbability: 0.2,
-		},
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
 	});
@@ -267,14 +291,6 @@ describe("IntervalCollection no reconnect fuzz testing", () => {
 
 	createDDSFuzzSuite(noReconnectModel, {
 		...options,
-		// AB#4477: Same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477.
-		skip: [80, 9, 12, 44],
-		// TODO:AB#5338: IntervalCollection doesn't correctly handle edits made while detached. Once supported,
-		// this config should be enabled (deleting is sufficient: detached start is enabled by default)
-		detachedStartOptions: {
-			enabled: false,
-			attachProbability: 0.2,
-		},
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
 	});
@@ -288,14 +304,9 @@ describe("IntervalCollection fuzz testing with rebased batches", () => {
 
 	createDDSFuzzSuite(noReconnectWithRebaseModel, {
 		...defaultFuzzOptions,
-		// ADO:4477: Same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477.
-		skip: [9, 12, 29],
-		// TODO:AB#5338: IntervalCollection doesn't correctly handle edits made while detached. Once supported,
-		// this config should be enabled (deleting is sufficient: detached start is enabled by default)
-		detachedStartOptions: {
-			enabled: false,
-			attachProbability: 0.2,
-		},
+		// AB#4477: Either the same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477,
+		// or 0x54e, see AB#5337 or comment on "default interval collection" fuzz suite.
+		skip: [3, 9, 11, 13, 23, 26, 29, 30, 31, 32, 36, 39, 41, 46, 49, 52, 53, 71, 73, 81, 86],
 		reconnectProbability: 0.0,
 		numberOfClients: 3,
 		clientJoinOptions: {

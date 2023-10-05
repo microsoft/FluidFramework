@@ -5,7 +5,6 @@
 
 import { ScopeType, ITokenClaims } from "@fluidframework/protocol-definitions";
 import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
-import { getRandomName } from "@fluidframework/server-services-client";
 import { KJUR as jsrsasign } from "jsrsasign";
 import { v4 as uuid } from "uuid";
 
@@ -46,9 +45,13 @@ export class InsecureTinyliciousTokenProvider implements ITokenProvider {
 		lifetime: number = 60 * 60,
 		ver: string = "1.0",
 	): string {
+		const userId = uuid();
+		const match = userId.match(/^([\da-f]{8})-([\da-f]{4})/);
+		const userName = match !== null ? match[0] : userId; // Just use the first two segments of the (fake) userId as a fake name.
+
 		// Current time in seconds
 		const now = Math.round(Date.now() / 1000);
-		const user = { id: uuid(), name: getRandomName() };
+		const user = { id: userId, name: userName };
 
 		const claims: ITokenClaims = {
 			documentId: documentId ?? "",

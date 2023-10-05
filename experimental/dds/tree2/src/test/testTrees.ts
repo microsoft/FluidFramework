@@ -39,7 +39,7 @@ function testTree<T extends TreeSchema>(
 	rootNode: T,
 	data: SchemaAware.AllowedTypesToTypedTrees<SchemaAware.ApiMode.Flexible, [T]>,
 ): TestTree {
-	const fieldSchema = SchemaBuilder.fieldValue(rootNode);
+	const fieldSchema = SchemaBuilder.fieldRequired(rootNode);
 	return testField(name, schemaData, fieldSchema, data);
 }
 
@@ -94,28 +94,28 @@ export const minimal = builder.struct("minimal", {});
 export const numeric = builder.leaf("numeric", ValueSchema.Number);
 export const bool = builder.leaf("bool", ValueSchema.Boolean);
 export const hasMinimalValueField = builder.struct("hasMinimalValueField", {
-	field: SchemaBuilder.fieldValue(minimal),
+	field: SchemaBuilder.fieldRequired(minimal),
 });
 export const hasNumericValueField = builder.struct("hasNumericValueField", {
-	field: SchemaBuilder.fieldValue(numeric),
+	field: SchemaBuilder.fieldRequired(numeric),
 });
 export const hasPolymorphicValueField = builder.struct("hasPolymorphicValueField", {
-	field: SchemaBuilder.fieldValue(numeric, minimal),
+	field: SchemaBuilder.fieldRequired(numeric, minimal),
 });
 export const hasAnyValueField = builder.struct("hasAnyValueField", {
-	field: SchemaBuilder.fieldValue(Any),
+	field: SchemaBuilder.fieldRequired(Any),
 });
 export const hasOptionalField = builder.struct("hasOptionalField", {
 	field: SchemaBuilder.fieldOptional(numeric),
 });
 export const allTheFields = builder.struct("allTheFields", {
 	optional: SchemaBuilder.fieldOptional(numeric),
-	valueField: SchemaBuilder.fieldValue(numeric),
+	valueField: SchemaBuilder.fieldRequired(numeric),
 	sequence: SchemaBuilder.fieldSequence(numeric),
 });
 export const anyFields = builder.struct("anyFields", {
 	optional: SchemaBuilder.fieldOptional(Any),
-	valueField: SchemaBuilder.fieldValue(Any),
+	valueField: SchemaBuilder.fieldRequired(Any),
 	sequence: SchemaBuilder.fieldSequence(Any),
 });
 

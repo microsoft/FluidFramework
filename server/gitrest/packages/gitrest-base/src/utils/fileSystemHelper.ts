@@ -54,7 +54,10 @@ export class FilesystemError extends Error {
 		return this.err.code;
 	}
 
-	constructor(public readonly err: ISystemError, message?: string) {
+	constructor(
+		public readonly err: ISystemError,
+		message?: string,
+	) {
 		super(message ? `${err.description}: ${message}` : err.description);
 		this.name = "FilesystemError";
 	}

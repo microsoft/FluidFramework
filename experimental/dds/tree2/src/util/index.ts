@@ -76,6 +76,7 @@ export {
 	disposeSymbol,
 	IDisposable,
 	capitalize,
+	assertValidRangeIndices,
 } from "./utils";
 export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting";
 

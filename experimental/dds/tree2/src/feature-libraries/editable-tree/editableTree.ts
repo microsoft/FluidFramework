@@ -41,6 +41,7 @@ import {
 	contextSymbol,
 	treeStatus,
 } from "../untypedTree";
+import { TreeStatus } from "../editable-tree-2";
 import {
 	AdaptingProxyHandler,
 	adaptWithProxy,
@@ -55,7 +56,6 @@ import {
 	proxyTargetSymbol,
 	localNodeKeySymbol,
 	setField,
-	TreeStatus,
 } from "./editableTreeTypes";
 import { makeField, unwrappedField } from "./editableField";
 import { ProxyTarget } from "./ProxyTarget";

@@ -25,7 +25,11 @@ if [ -f ".releaseGroup" ]; then
 
   # This saves a list of the packages in the working directory in topological order to a temporary file.
   # Each package name is modified to match the packed tar files.
-  flub list --no-private --releaseGroup $RELEASE_GROUP --tarball > $STAGING_PATH/pack/packagePublishOrder.txt
+  flub list --no-private --releaseGroup $RELEASE_GROUP --tarball --feed public > $STAGING_PATH/pack/packagePublishOrder-public.txt
+  flub list --no-private --releaseGroup $RELEASE_GROUP --tarball --feed internal-build > $STAGING_PATH/pack/packagePublishOrder-internal-build.txt
+  flub list --no-private --releaseGroup $RELEASE_GROUP --tarball --feed internal-dev > $STAGING_PATH/pack/packagePublishOrder-internal-dev.txt
+  flub list --no-private --releaseGroup $RELEASE_GROUP --tarball --feed internal-test > $STAGING_PATH/pack/packagePublishOrder-internal-test.txt
+
 else
   $PACKAGE_MANAGER pack && mv -t $STAGING_PATH/pack/scoped/ ./*.tgz
 fi

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
-import { Serializable } from "@fluidframework/datastore-definitions";
-import { AttributionKey } from "@fluidframework/runtime-definitions";
+import { type ISharedObject, type ISharedObjectEvents } from "@fluidframework/shared-object-base";
+import { type Serializable } from "@fluidframework/datastore-definitions";
+import { type AttributionKey } from "@fluidframework/runtime-definitions";
 
 /**
  * Events emitted by {@link ISharedCell}.

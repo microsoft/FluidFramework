@@ -5,12 +5,11 @@
 
 export {
 	FieldKinds,
-	ValueFieldKind,
+	Required,
 	Optional,
 	Sequence,
 	NodeKeyFieldKind,
 	Forbidden,
-	FieldKindTypes,
 	fieldKinds,
 } from "./defaultFieldKinds";
 

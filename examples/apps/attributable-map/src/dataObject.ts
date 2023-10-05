@@ -51,9 +51,7 @@ export class HitCounter extends DataObject implements IHitCounter {
 		return this._map;
 	}
 
-	public static get Name() {
-		return "@fluid-example/attributable-map";
-	}
+	public static readonly Name = "@fluid-example/attributable-map";
 
 	private static readonly factory = new DataObjectFactory(
 		HitCounter.Name,

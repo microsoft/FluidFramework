@@ -8,29 +8,10 @@
  */
 
 export {
-	ApiFunctionLike,
-	ApiMemberKind,
-	ApiModuleLike,
-	ApiSignatureLike,
-	ApiModifier,
 	doesItemRequireOwnDocument,
-	getDefaultValueBlock,
-	getDeprecatedBlock,
-	getExampleBlocks,
 	getHeadingForApiItem,
 	getLinkForApiItem,
-	getModifiers,
-	getQualifiedApiItemName,
-	getReleaseTag,
-	getReturnsBlock,
-	getSeeBlocks,
-	getThrowsBlocks,
-	getUnscopedPackageName,
-	isDeprecated,
-	isOptional,
-	isReadonly,
-	isStatic,
-} from "./ApiItemUtilities";
+} from "./ApiItemTransformUtilities";
 export {
 	type ApiItemTransformationConfiguration,
 	type ApiItemTransformationOptions,
@@ -42,6 +23,19 @@ export {
 	type TransformApiItemWithChildren,
 	type TransformApiItemWithoutChildren,
 } from "./configuration";
-export { transformDocNode } from "./DocNodeTransforms";
+export {
+	createBreadcrumbParagraph,
+	createDeprecationNoticeSection,
+	createExamplesSection,
+	createParametersSection,
+	createRemarksSection,
+	createReturnsSection,
+	createSeeAlsoSection,
+	createSignatureSection,
+	createSummaryParagraph,
+	createThrowsSection,
+	createTypeParametersSection,
+} from "./helpers";
+export { transformTsdocNode } from "./TsdocNodeTransforms";
 export { apiItemToDocument, apiItemToSections } from "./TransformApiItem";
 export { transformApiModel } from "./TransformApiModel";

@@ -111,7 +111,7 @@ export type SharedTreeArgs<WF extends WriteFormat = WriteFormat> = [writeFormat:
  */
 export type SharedTreeOptions<
 	WF extends WriteFormat,
-	HistoryCompatibility extends 'Forwards' | 'None' = 'Forwards'
+	HistoryCompatibility extends 'Forwards' | 'None' = 'Forwards',
 > = SharedTreeBaseOptions &
 	Omit<
 		WF extends WriteFormat.v0_0_2
