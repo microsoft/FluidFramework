@@ -19,6 +19,7 @@ importers:
       '@microsoft/api-extractor': ^7.36.1
       c8: ^7.14.0
       commitizen: ^4.3.0
+      concurrently: ^8.2.1
       conventional-changelog-cli: ^2.2.2
       conventional-changelog-conventionalcommits: ^5.0.0
       copyfiles: ^2.4.1
@@ -41,6 +42,7 @@ importers:
       '@microsoft/api-extractor': 7.36.1
       c8: 7.14.0
       commitizen: 4.3.0
+      concurrently: 8.2.1
       conventional-changelog-cli: 2.2.2
       conventional-changelog-conventionalcommits: 5.0.0
       copyfiles: 2.4.1
