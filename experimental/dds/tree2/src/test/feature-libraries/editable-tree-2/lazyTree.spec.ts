@@ -228,28 +228,27 @@ describe.only("LazyTree", () => {
 			assert(!node.is(emptyStructNodeSchema));
 		});
 
-		describe("value", () => {
-			it("Missing optional value", () => {
-				const { context, cursor } = initializeTreeWithContent({ schema, initialTree: {} });
-				cursor.enterNode(0);
-
-				const anchor = context.forest.anchors.track(cursor.getPath() ?? fail());
-				const anchorNode = context.forest.anchors.locate(anchor) ?? fail();
-
-				const node = new LazyFieldNode(
-					context,
-					fieldNodeOptionalAnySchema,
-					cursor,
-					anchorNode,
-					anchor,
-				);
-
-				assert.equal(node.value, undefined);
+		it("value", () => {
+			const { context, cursor } = initializeTreeWithContent({
+				schema,
+				initialTree: {
+					[EmptyKey]: "Hello world",
+				},
 			});
+			cursor.enterNode(0);
 
-			it("With value", () => {
-				// TODO: How do you specify the initialTree for a field node?
-			});
+			const anchor = context.forest.anchors.track(cursor.getPath() ?? fail());
+			const anchorNode = context.forest.anchors.locate(anchor) ?? fail();
+
+			const node = new LazyFieldNode(
+				context,
+				fieldNodeOptionalStringSchema,
+				cursor,
+				anchorNode,
+				anchor,
+			);
+
+			assert.equal(node.value, undefined); // FieldNode_s do not have a value
 		});
 
 		describe("tryGetField", () => {
@@ -272,7 +271,28 @@ describe.only("LazyTree", () => {
 			});
 
 			it("Non-empty", () => {
-				// TODO: How do you specify the initialTree for a field node?
+				const { context, cursor } = initializeTreeWithContent({
+					schema,
+					initialTree: {
+						[EmptyKey]: "Hello world",
+					},
+				});
+				cursor.enterNode(0);
+
+				const anchor = context.forest.anchors.track(cursor.getPath() ?? fail());
+				const anchorNode = context.forest.anchors.locate(anchor) ?? fail();
+
+				const node = new LazyFieldNode(
+					context,
+					fieldNodeOptionalStringSchema,
+					cursor,
+					anchorNode,
+					anchor,
+				);
+
+				const field = node.tryGetField(EmptyKey);
+				assert(field !== undefined);
+				assert(field.is(SchemaBuilder.fieldOptional(leafDomain.string)));
 			});
 		});
 
