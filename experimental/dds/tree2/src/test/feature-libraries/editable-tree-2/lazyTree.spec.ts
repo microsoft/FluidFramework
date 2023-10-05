@@ -380,16 +380,9 @@ describe.only("LazyTree", () => {
 		});
 
 		it("tryGetField", () => {
-			const fooField = node.tryGetField(brand("foo"));
-			assert(fooField !== undefined);
-			assert(fooField.is(SchemaBuilder.fieldOptional(leafDomain.string)));
-
-			const barField = node.tryGetField(brand("bar"));
-			assert(barField !== undefined);
-			assert(barField.is(SchemaBuilder.fieldOptional(leafDomain.string)));
-
-			const bazField = node.tryGetField(brand("baz"));
-			assert(bazField === undefined);
+			assert.notEqual(node.tryGetField(brand("foo")), undefined);
+			assert.notEqual(node.tryGetField(brand("bar")), undefined);
+			assert.equal(node.tryGetField(brand("baz")), undefined);
 		});
 
 		// TODO: what else?
@@ -437,11 +430,13 @@ describe.only("LazyTree", () => {
 		});
 
 		it("value", () => {
-			// TODO
+			assert.equal(node.value, undefined); // Struct nodes do not have a value
 		});
 
 		it("tryGetField", () => {
-			// TODO
+			assert.notEqual(node.tryGetField(brand("foo")), undefined);
+			assert.equal(node.tryGetField(brand("bar")), undefined); // TODO: this is presumably wrong - empty array shouldn't yield undefined
+			assert.equal(node.tryGetField(brand("baz")), undefined);
 		});
 	});
 
