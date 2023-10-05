@@ -12,6 +12,7 @@ import {
 	LazyLeaf,
 	LazyMap,
 	LazyStruct,
+	LazyTree,
 	buildLazyStruct,
 } from "../../../feature-libraries/editable-tree-2/lazyTree";
 import {
@@ -32,6 +33,7 @@ import {
 	FieldKind,
 	AllowedTypes,
 	typeNameSymbol,
+	TreeSchema,
 } from "../../../feature-libraries";
 import {
 	EmptyKey,
@@ -99,6 +101,11 @@ function initializeTreeWithContent<Kind extends FieldKind, Types extends Allowed
 		cursor,
 	};
 }
+
+/**
+ * Test {@link LazyTree} implementation.
+ */
+class MockLazyTree<TSchema extends TreeSchema> extends LazyTree<TSchema> {}
 
 describe.only("LazyTree", () => {
 	// #region Create common schemas used in tests below
