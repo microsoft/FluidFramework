@@ -36,7 +36,7 @@
                     "tree": {
                         "DetachedFieldIndexBlob": {
                             "type": 2,
-                            "content": "{\"data\":\"[]\",\"id\":1}"
+                            "content": "{\"data\":\"[]\",\"id\":0}"
                         }
                     }
                 }

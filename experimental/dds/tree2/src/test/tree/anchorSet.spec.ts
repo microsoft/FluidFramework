@@ -455,8 +455,8 @@ describe("AnchorSet", () => {
 			anchors,
 		);
 		log.expect([
-			["visitSubtreeChange.beforeReplace-old:foo[5, 6]-new:Temp-0[0, 1]-kind:0", 1],
-			["visitSubtreeChange.afterReplace-old:Temp-1[0, 1]-new:foo[5, 6]-kind:0", 1],
+			["visitSubtreeChange.beforeReplace-old:foo[5, 6]-new:Temp-0[0, 1]", 1],
+			["visitSubtreeChange.afterReplace-old:Temp-1[0, 1]-new:foo[5, 6]", 1],
 		]);
 		log.clear();
 		announceTestDelta(
