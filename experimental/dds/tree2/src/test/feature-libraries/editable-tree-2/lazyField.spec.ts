@@ -18,7 +18,6 @@ import {
 	FieldSchema,
 	SchemaAware,
 	SchemaBuilder,
-	TreeSchema,
 } from "../../../feature-libraries";
 import {
 	FieldAnchor,
@@ -27,7 +26,6 @@ import {
 	type ITreeSubscriptionCursor,
 	rootFieldKey,
 	TreeNavigationResult,
-	ValueSchema,
 	UpPath,
 } from "../../../core";
 import { forestWithContent } from "../../utils";
@@ -253,133 +251,84 @@ describe("LazyField", () => {
 	});
 
 	describe("LazyOptionalField", () => {
-		it("at", () => {
-			const builder = new SchemaBuilder("test", undefined, leafDomain.library);
-			const rootSchema = SchemaBuilder.fieldOptional(leafDomain.number);
-			const schema = builder.intoDocumentSchema(rootSchema);
+		const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+		const rootSchema = SchemaBuilder.fieldOptional(leafDomain.number);
+		const schema = builder.intoDocumentSchema(rootSchema);
 
-			const { context, cursor } = initializeTreeWithContent({ schema, initialTree: 42 });
+		/**
+		 * Creates a tree using {@link rootSchema} and returns a field associated with the root field.
+		 */
+		function createField<TRoot extends FieldSchema = FieldSchema>(
+			initialTree:
+				| SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Flexible>
+				| readonly ITreeCursorSynchronous[]
+				| ITreeCursorSynchronous,
+		) {
+			const { context, cursor } = initializeTreeWithContent({ schema, initialTree });
 
-			const field = new LazyOptionalField(context, rootSchema, cursor, rootFieldAnchor);
+			return new LazyOptionalField(context, rootSchema, cursor, rootFieldAnchor);
+		}
 
-			assert.equal(field.at(0), 42);
-		});
+		describe("Field with value", () => {
+			const field = createField(42);
 
-		it("boxedAt", () => {
-			const builder = new SchemaBuilder("test", undefined, leafDomain.library);
-			const rootSchema = SchemaBuilder.fieldOptional(leafDomain.string);
-			const schema = builder.intoDocumentSchema(rootSchema);
-
-			const { context, cursor } = initializeTreeWithContent({
-				schema,
-				initialTree: "Hello world",
+			it("at", () => {
+				assert.equal(field.at(0), 42);
 			});
 
-			const field = new LazyOptionalField(context, rootSchema, cursor, rootFieldAnchor);
+			it("boxedAt", () => {
+				const boxedResult = field.boxedAt(0);
+				assert.equal(boxedResult.type, leafDomain.number.name);
+				assert.equal(boxedResult.value, 42);
+			});
 
-			const boxedResult = field.boxedAt(0);
-			assert.equal(boxedResult.type, leafDomain.string.name);
-			assert.equal(boxedResult.value, "Hello world");
+			it("length", () => {
+				assert.equal(field.length, 1);
+			});
+
+			it("map", () => {
+				assert.deepEqual(
+					field.map((value) => value),
+					[42],
+				);
+			});
+
+			it("mapBoxed", () => {
+				const mapResult = field.mapBoxed((value) => value);
+				assert.equal(mapResult.length, 1);
+				assert.equal(mapResult[0].value, 42);
+			});
 		});
 
-		describe("length", () => {
-			const builder = new SchemaBuilder("test", undefined, leafDomain.library);
-			const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
-			const rootSchema = SchemaBuilder.fieldOptional(numberLeafSchema);
-			const schema = builder.intoDocumentSchema(rootSchema);
+		describe("Field without value", () => {
+			const field = createField(undefined);
 
-			it("No value", () => {
-				const { context, cursor } = initializeTreeWithContent({
-					schema,
-					initialTree: undefined,
-				});
+			it("at", () => {
+				// Invalid to request the value if there isn't one.
+				assert.throws(() => field.at(0));
+			});
 
-				const field = new LazyOptionalField(
-					context,
-					SchemaBuilder.fieldOptional(numberLeafSchema),
-					cursor,
-					rootFieldAnchor,
-				);
+			it("boxedAt", () => {
+				// Invalid to request the value if there isn't one.
+				assert.throws(() => field.boxedAt(0));
+			});
 
+			it("length", () => {
 				assert.equal(field.length, 0);
 			});
 
-			it("With value", () => {
-				const { context, cursor } = initializeTreeWithContent({ schema, initialTree: 42 });
-
-				const field = new LazyOptionalField(
-					context,
-					SchemaBuilder.fieldOptional(numberLeafSchema),
-					cursor,
-					rootFieldAnchor,
-				);
-
-				assert.equal(field.length, 1);
-			});
-		});
-
-		/**
-		 * Creates a tree whose root node contains a single (optional) leaf field.
-		 * Also initializes a cursor and moves that cursor to the tree's root field.
-		 *
-		 * @returns The root node's field.
-		 */
-		function createOptionalLeafTree(
-			kind: ValueSchema,
-			initialTree?:
-				| SchemaAware.TypedField<FieldSchema, SchemaAware.ApiMode.Flexible>
-				| readonly ITreeCursorSynchronous[]
-				| ITreeCursorSynchronous,
-		): LazyOptionalField<[TreeSchema<"leaf">]> {
-			const builder = new SchemaBuilder("test");
-			const leafSchema = builder.leaf("leaf", kind);
-			const rootSchema = SchemaBuilder.fieldOptional(leafSchema);
-			const schema = builder.intoDocumentSchema(rootSchema);
-
-			const { context, cursor } = initializeTreeWithContent({ schema, initialTree });
-
-			return new LazyOptionalField(
-				context,
-				SchemaBuilder.fieldOptional(leafSchema),
-				cursor,
-				rootFieldAnchor,
-			);
-		}
-
-		describe("map", () => {
-			it("No value", () => {
-				const field = createOptionalLeafTree(ValueSchema.Number, undefined);
-
+			it("map", () => {
 				assert.deepEqual(
 					field.map((value) => value),
 					[],
 				);
 			});
 
-			it("Primitive field", () => {
-				const field = createOptionalLeafTree(ValueSchema.Boolean, false);
-
+			it("mapBoxed", () => {
 				assert.deepEqual(
-					field.map((value) => value),
-					[false],
+					field.mapBoxed((value) => value),
+					[],
 				);
-			});
-		});
-
-		describe("mapBoxed", () => {
-			it("No value", () => {
-				const field = createOptionalLeafTree(ValueSchema.String, undefined);
-
-				const mapResult = field.mapBoxed((value) => value);
-				assert.deepEqual(mapResult, []);
-			});
-
-			it("With value", () => {
-				const field = createOptionalLeafTree(ValueSchema.Number, 42);
-
-				const mapResult = field.mapBoxed((value) => value);
-				assert.equal(mapResult.length, 1);
-				assert.equal(mapResult[0].value, 42);
 			});
 		});
 	});
