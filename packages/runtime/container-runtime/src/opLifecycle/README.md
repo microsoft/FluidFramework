@@ -24,10 +24,7 @@ By default, the runtime is configured with a max batch size of `716800` bytes, w
 
 ### How batching works
 
-Batching in the context of Fluid ops is a way in which the framework accumulates and applies ops. A batch is a group of ops accumulated within a single JS turn, which will be broadcasted in the same order to all the other connected clients and applied synchronously. Additional logic and validation ensure that batches do not interleave and they are processed in isolation. This means two things:
-
--   A client will always start sending a new batch only after finishing a batch. Batches will never be sent interleaved or nested.
--   When receiving a batch of ops, the client will process it in isolation without interleaving it with other batches or ops from other clients
+Batching in the context of Fluid ops is a way in which the framework accumulates and applies ops. A batch is a group of ops accumulated within a single JS turn, which will be broadcasted in the same order to all the other connected clients and applied synchronously. Additional logic and validation ensure that batches are never interleaved, nested or interrupted and they are processed in isolation without interleaving of ops from other clients.
 
 The way batches are formed is governed by the `FlushMode` setting of the `ContainerRuntimeOptions` and it is immutable for the entire lifetime of the runtime and subsequently the container.
 
@@ -46,7 +43,7 @@ export enum FlushMode {
 }
 ```
 
-What this means is that `FlushMode.Immediate` will send each op in its own payload to the server, while `FlushMode.TurnBased` will accumulate all ops in a single JS turn and send them together in the same payload. Technically, `FlushMode.Immediate` can be simulated with `FlushMode.TurnBased` by calling any async API immediately after producing each op. Therefore, for all intents and purposes, `FlushMode.Immediate` enables all batches sent to the server to have only one op.
+What this means is that `FlushMode.Immediate` will send each op in its own payload to the server, while `FlushMode.TurnBased` will accumulate all ops in a single JS turn and send them together in the same payload. Technically, `FlushMode.Immediate` can be simulated with `FlushMode.TurnBased` by interrupting the JS turn after producing only one op (for example by pausing the execution to wait on a promise). Therefore, for all intents and purposes, `FlushMode.Immediate` enables all batches to have only one op.
 
 **By default, Fluid uses `FlushMode.TurnBased`** as:
 
@@ -143,26 +140,7 @@ By default, the runtime is configured with the following values related to compr
     }
 ```
 
-To use compression but disable chunking:
-
-```
-    const runtimeOptions: IContainerRuntimeOptions = {
-        chunkSizeInBytes: Number.POSITIVE_INFINITY,
-    }
-```
-
-To disable compression (will also disable chunking, as chunking works only for compressed batches):
-
-```
-    const runtimeOptions: IContainerRuntimeOptions = {
-        compressionOptions: {
-            minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
-            compressionAlgorithm: CompressionAlgorithms.lz4,
-        },
-    }
-```
-
-To enable grouped batching:
+To enable grouped batching, use the following property:
 
 ```
     const runtimeOptions: IContainerRuntimeOptions = {
