@@ -11,6 +11,9 @@
 
 import {
 	MakeNominal,
+	Covariant,
+	Contravariant,
+	Invariant,
 	requireTrue,
 	requireFalse,
 	isAssignableTo,
@@ -46,33 +49,32 @@ declare class Derived2 extends Nominal1 {
 
 declare class Generic<_T> {}
 
-declare class GenericCovariant<out _T> {
-	protected _typeCheck?: MakeNominal;
+declare class GenericCovariant<out T> {
+	protected _typeCheck?: Covariant<T>;
 }
 
-declare class GenericContravariant<in _T> {
-	protected _typeCheck?: MakeNominal;
+declare class GenericContravariant<in T> {
+	protected _typeCheck?: Contravariant<T>;
 }
 
-declare class GenericInvariant<in out _T> {
-	protected _typeCheck?: MakeNominal;
+declare class GenericInvariant<in out T> {
+	protected _typeCheck?: Invariant<T>;
 }
 
-declare class GenericMulti<in out _T, out _K> {
-	protected _typeCheck?: MakeNominal;
+declare class GenericMulti<in out T, out K> {
+	protected _typeCheck?: Invariant<T> & Covariant<K>;
 }
 
-interface GenericCovariantInterface<out _T> {
-
+interface GenericCovariantInterface<out T> {
+	_typeCheck?: Covariant<T>;
 }
 
-interface GenericContravariantInterface<in _T> {
+interface GenericContravariantInterface<in T> {
+	_typeCheck?: Contravariant<T>;
 }
 
-
-
-interface GenericInvariantInterface<in out _T> {
-
+interface GenericInvariantInterface<in out T> {
+	_typeCheck?: Invariant<T>;
 }
 
 // Check that interface can be implemented without needing extra members
@@ -128,7 +130,6 @@ export type EnforceTypeCheckTests =
 	| requireFalse<isAssignableTo<GenericContravariant<Nominal1>, GenericContravariant<Nominal2>>>
 	| requireFalse<isAssignableTo<GenericContravariant<Derived1>, GenericContravariant<Nominal1>>>
 	| requireTrue<isAssignableTo<GenericContravariant<Nominal1>, GenericContravariant<Derived1>>>
-
 
 	// test Invariant
 	| requireFalse<isAssignableTo<GenericInvariant<Nominal1>, GenericInvariant<Nominal2>>>
