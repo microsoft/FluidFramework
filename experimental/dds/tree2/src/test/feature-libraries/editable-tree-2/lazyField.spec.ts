@@ -246,100 +246,25 @@ describe("LazyField", () => {
 		);
 		assert.equal(leafField.parent, rootField.boxedAt(0));
 	});
+});
 
-	describe("LazyOptionalField", () => {
-		const builder = new SchemaBuilder("test", undefined, leafDomain.library);
-		const rootSchema = SchemaBuilder.fieldOptional(leafDomain.number);
-		const schema = builder.intoDocumentSchema(rootSchema);
+describe("LazyOptionalField", () => {
+	const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+	const rootSchema = SchemaBuilder.fieldOptional(leafDomain.number);
+	const schema = builder.intoDocumentSchema(rootSchema);
 
-		describe("Field with value", () => {
-			const { context, cursor } = initializeTreeWithContent({ schema, initialTree: 42 });
-			const field = new LazyOptionalField(context, rootSchema, cursor, rootFieldAnchor);
-
-			it("at", () => {
-				assert.equal(field.at(0), 42);
-			});
-
-			it("boxedAt", () => {
-				const boxedResult = field.boxedAt(0);
-				assert.equal(boxedResult.type, leafDomain.number.name);
-				assert.equal(boxedResult.value, 42);
-			});
-
-			it("length", () => {
-				assert.equal(field.length, 1);
-			});
-
-			it("map", () => {
-				assert.deepEqual(
-					field.map((value) => value),
-					[42],
-				);
-			});
-
-			it("mapBoxed", () => {
-				const mapResult = field.mapBoxed((value) => value);
-				assert.equal(mapResult.length, 1);
-				assert.equal(mapResult[0].value, 42);
-			});
-		});
-
-		describe("Field without value", () => {
-			const { context, cursor } = initializeTreeWithContent({
-				schema,
-				initialTree: undefined,
-			});
-			const field = new LazyOptionalField(context, rootSchema, cursor, rootFieldAnchor);
-
-			it("at", () => {
-				// Invalid to request the value if there isn't one.
-				assert.throws(() => field.at(0));
-			});
-
-			it("boxedAt", () => {
-				// Invalid to request the value if there isn't one.
-				assert.throws(() => field.boxedAt(0));
-			});
-
-			it("length", () => {
-				assert.equal(field.length, 0);
-			});
-
-			it("map", () => {
-				assert.deepEqual(
-					field.map((value) => value),
-					[],
-				);
-			});
-
-			it("mapBoxed", () => {
-				assert.deepEqual(
-					field.mapBoxed((value) => value),
-					[],
-				);
-			});
-		});
-	});
-
-	describe("LazyValueField", () => {
-		const builder = new SchemaBuilder("test", undefined, leafDomain.library);
-		const rootSchema = SchemaBuilder.fieldRequired(leafDomain.string);
-		const schema = builder.intoDocumentSchema(rootSchema);
-
-		const initialTree = "Hello world";
-
-		const { context, cursor } = initializeTreeWithContent({ schema, initialTree });
-
-		const field = new LazyValueField(context, rootSchema, cursor, rootFieldAnchor);
+	describe("Field with value", () => {
+		const { context, cursor } = initializeTreeWithContent({ schema, initialTree: 42 });
+		const field = new LazyOptionalField(context, rootSchema, cursor, rootFieldAnchor);
 
 		it("at", () => {
-			assert.equal(field.at(0), initialTree);
+			assert.equal(field.at(0), 42);
 		});
 
 		it("boxedAt", () => {
 			const boxedResult = field.boxedAt(0);
-			assert.equal(boxedResult.type, leafDomain.string.name);
-			assert.equal(boxedResult.value, initialTree);
+			assert.equal(boxedResult.type, leafDomain.number.name);
+			assert.equal(boxedResult.value, 42);
 		});
 
 		it("length", () => {
@@ -349,73 +274,148 @@ describe("LazyField", () => {
 		it("map", () => {
 			assert.deepEqual(
 				field.map((value) => value),
-				[initialTree],
+				[42],
 			);
 		});
 
 		it("mapBoxed", () => {
 			const mapResult = field.mapBoxed((value) => value);
 			assert.equal(mapResult.length, 1);
-			assert.equal(mapResult[0].value, initialTree);
+			assert.equal(mapResult[0].value, 42);
 		});
 	});
 
-	describe("LazySequence", () => {
-		const builder = new SchemaBuilder("test", undefined, leafDomain.library);
-		const rootSchema = SchemaBuilder.fieldSequence(leafDomain.number);
-		const schema = builder.intoDocumentSchema(rootSchema);
-
+	describe("Field without value", () => {
 		const { context, cursor } = initializeTreeWithContent({
 			schema,
-			initialTree: [37, 42],
+			initialTree: undefined,
 		});
-
-		const sequence = new LazySequence(context, rootSchema, cursor, rootFieldAnchor);
+		const field = new LazyOptionalField(context, rootSchema, cursor, rootFieldAnchor);
 
 		it("at", () => {
-			assert.equal(sequence.length, 2);
-			assert.equal(sequence.at(0), 37);
-			assert.equal(sequence.at(1), 42);
-			assert.throws(() => sequence.at(2));
+			// Invalid to request the value if there isn't one.
+			assert.throws(() => field.at(0));
 		});
 
 		it("boxedAt", () => {
-			const boxedResult0 = sequence.boxedAt(0);
-			assert.equal(boxedResult0.type, leafDomain.number.name);
-			assert.equal(boxedResult0.value, 37);
-
-			const boxedResult1 = sequence.boxedAt(1);
-			assert.equal(boxedResult1.type, leafDomain.number.name);
-			assert.equal(boxedResult1.value, 42);
-
-			assert.throws(() => sequence.boxedAt(2));
+			// Invalid to request the value if there isn't one.
+			assert.throws(() => field.boxedAt(0));
 		});
 
 		it("length", () => {
-			assert.equal(sequence.length, 2);
+			assert.equal(field.length, 0);
 		});
 
 		it("map", () => {
-			const mapResult = sequence.map((value) => value);
-			assert.equal(mapResult.length, 2);
-			assert.equal(mapResult[0], 37);
-			assert.equal(mapResult[1], 42);
+			assert.deepEqual(
+				field.map((value) => value),
+				[],
+			);
 		});
 
 		it("mapBoxed", () => {
-			const mapResult = sequence.mapBoxed((value) => value);
-			assert.equal(mapResult.length, 2);
-			assert.equal(mapResult[0].type, leafDomain.number.name);
-			assert.equal(mapResult[0].value, 37);
-			assert.equal(mapResult[1].type, leafDomain.number.name);
-			assert.equal(mapResult[1].value, 42);
+			assert.deepEqual(
+				field.mapBoxed((value) => value),
+				[],
+			);
 		});
+	});
+});
 
-		it("asArray", () => {
-			const array = sequence.asArray;
-			assert.equal(array.length, 2);
-			assert.equal(array[0], 37);
-			assert.equal(array[1], 42);
-		});
+describe("LazyValueField", () => {
+	const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+	const rootSchema = SchemaBuilder.fieldRequired(leafDomain.string);
+	const schema = builder.intoDocumentSchema(rootSchema);
+
+	const initialTree = "Hello world";
+
+	const { context, cursor } = initializeTreeWithContent({ schema, initialTree });
+
+	const field = new LazyValueField(context, rootSchema, cursor, rootFieldAnchor);
+
+	it("at", () => {
+		assert.equal(field.at(0), initialTree);
+	});
+
+	it("boxedAt", () => {
+		const boxedResult = field.boxedAt(0);
+		assert.equal(boxedResult.type, leafDomain.string.name);
+		assert.equal(boxedResult.value, initialTree);
+	});
+
+	it("length", () => {
+		assert.equal(field.length, 1);
+	});
+
+	it("map", () => {
+		assert.deepEqual(
+			field.map((value) => value),
+			[initialTree],
+		);
+	});
+
+	it("mapBoxed", () => {
+		const mapResult = field.mapBoxed((value) => value);
+		assert.equal(mapResult.length, 1);
+		assert.equal(mapResult[0].value, initialTree);
+	});
+});
+
+describe("LazySequence", () => {
+	const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+	const rootSchema = SchemaBuilder.fieldSequence(leafDomain.number);
+	const schema = builder.intoDocumentSchema(rootSchema);
+
+	const { context, cursor } = initializeTreeWithContent({
+		schema,
+		initialTree: [37, 42],
+	});
+
+	const sequence = new LazySequence(context, rootSchema, cursor, rootFieldAnchor);
+
+	it("at", () => {
+		assert.equal(sequence.length, 2);
+		assert.equal(sequence.at(0), 37);
+		assert.equal(sequence.at(1), 42);
+		assert.throws(() => sequence.at(2));
+	});
+
+	it("boxedAt", () => {
+		const boxedResult0 = sequence.boxedAt(0);
+		assert.equal(boxedResult0.type, leafDomain.number.name);
+		assert.equal(boxedResult0.value, 37);
+
+		const boxedResult1 = sequence.boxedAt(1);
+		assert.equal(boxedResult1.type, leafDomain.number.name);
+		assert.equal(boxedResult1.value, 42);
+
+		assert.throws(() => sequence.boxedAt(2));
+	});
+
+	it("length", () => {
+		assert.equal(sequence.length, 2);
+	});
+
+	it("map", () => {
+		const mapResult = sequence.map((value) => value);
+		assert.equal(mapResult.length, 2);
+		assert.equal(mapResult[0], 37);
+		assert.equal(mapResult[1], 42);
+	});
+
+	it("mapBoxed", () => {
+		const mapResult = sequence.mapBoxed((value) => value);
+		assert.equal(mapResult.length, 2);
+		assert.equal(mapResult[0].type, leafDomain.number.name);
+		assert.equal(mapResult[0].value, 37);
+		assert.equal(mapResult[1].type, leafDomain.number.name);
+		assert.equal(mapResult[1].value, 42);
+	});
+
+	it("asArray", () => {
+		const array = sequence.asArray;
+		assert.equal(array.length, 2);
+		assert.equal(array[0], 37);
+		assert.equal(array[1], 42);
 	});
 });
