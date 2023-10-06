@@ -144,6 +144,8 @@ describe("LazyField", () => {
 		const rootSchema = SchemaBuilder.fieldOptional(builder.struct("struct", {}));
 		const schema = builder.intoDocumentSchema(rootSchema);
 
+		// Note: this tree initialization is strictly to enable construction of the lazy field.
+		// The test cases below are strictly in terms of the schema of the created fields.
 		const { context, cursor } = initializeTreeWithContent({ schema, initialTree: {} });
 
 		// #endregion
