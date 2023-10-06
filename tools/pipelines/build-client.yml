@@ -147,60 +147,59 @@ extends:
     - check:versions
     - generate:packageList
     - prettier
-    additionalBuildSteps:
-      - task: Bash@3
-        displayName: Inject devtools telemetry logger token
-        inputs:
-          targetType: 'inline'
-          script: |
-            echo Generating .env
-            echo "DEVTOOLS_TELEMETRY_TOKEN=$(devtools-telemetry-key)" >> ./packages/tools/devtools/devtools-browser-extension/.env
+# Capture per-pipeline stage results
+stages:
+  - ${{ if eq(variables['Build.Reason'], 'IndividualCI') }}:
+    displayName: Retrieve and upload client stage stats to Kusto
+    condition: always()
+    dependsOn: 
+      - build
 
-      - task: Npm@1
-        displayName: Build devtools
-        inputs:
-          command: 'custom'
-          workingDir: ./packages/tools/devtools/devtools-browser-extension/
-          customCommand: 'run webpack'
+    jobs:
+      - template: include-test-perf-benchmarks.yml
+        parameters:
+            testWorkspace: ${{ variables.testWorkspace }}
+            poolBuild: Small
+            customSteps:
 
-      - task: PublishPipelineArtifact@1
-        displayName: Publish Artifact - Devtools Browser Extension
-        inputs:
-          targetPath: './packages/tools/devtools/devtools-browser-extension/dist/bundle/'
-          artifactName: 'devtools-extension-bundle'
-          publishLocation: 'pipeline'
+            - task: Bash@3
+              displayName: Retrieve buildId results
+              inputs:
+                targetType: 'inline'
+                workingDirectory: $(toolAbsolutePath)
+                script: |
+                  echo "creating output folder"
+                  mkdir -p ${{ variables.testWorkspace }}/clientOutput
+                  echo "Executing curl command ..."
+                  echo  'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$(Build.BuildId)/timeline"'
+                  curl -u ":$(System.AccessToken)" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$(Build.BuildId)/timeline\?api-version\=6.0-preview.1" > ${{ variables.testWorkspace }}/clientOutput/output.json
+                  pwd;
+                  ls -laR ${{ variables.testWorkspace }}/clientOutput/output.json;
+                  cat ${{ variables.testWorkspace }}/clientOutput/output.json;
+                  node --require @ff-internal/aria-logger bin/run --handlerModule $(Build.SourcesDirectory)/tools/telemetry-generator/dist/handlers/stageTimingRetriever.js --dir '${{ variables.testWorkspace }}/clientOutput/';
+              env:
+                BUILD_ID: $(Build.BuildId)
+                ADO_API_TOKEN: $(System.AccessToken)
+                PIPELINE: 'BuildClient'
+additionalBuildSteps:
+  - task: Bash@3
+    displayName: Inject devtools telemetry logger token
+    inputs:
+      targetType: 'inline'
+      script: |
+        echo Generating .env
+        echo "DEVTOOLS_TELEMETRY_TOKEN=$(devtools-telemetry-key)" >> ./packages/tools/devtools/devtools-browser-extension/.env
 
-  # Capture per-pipeline stage results
-  stages:
-    - ${{ if eq(variables['Build.Reason'], 'IndividualCI') }}:
-      displayName: Retrieve and upload client stage stats to Kusto
-      condition: always()
-      dependsOn: 
-        - build
+  - task: Npm@1
+    displayName: Build devtools
+    inputs:
+      command: 'custom'
+      workingDir: ./packages/tools/devtools/devtools-browser-extension/
+      customCommand: 'run webpack'
 
-      jobs:
-        - template: include-test-perf-benchmarks.yml
-          parameters:
-              testWorkspace: ${{ variables.testWorkspace }}
-              poolBuild: Small
-              customSteps:
-
-              - task: Bash@3
-                displayName: Retrieve buildId results
-                inputs:
-                  targetType: 'inline'
-                  workingDirectory: $(toolAbsolutePath)
-                  script: |
-                    echo "creating output folder"
-                    mkdir -p ${{ variables.testWorkspace }}/clientOutput
-                    echo "Executing curl command ..."
-                    echo  'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$(Build.BuildId)/timeline"'
-                    curl -u ":$(System.AccessToken)" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$(Build.BuildId)/timeline\?api-version\=6.0-preview.1" > ${{ variables.testWorkspace }}/clientOutput/output.json
-                    pwd;
-                    ls -laR ${{ variables.testWorkspace }}/clientOutput/output.json;
-                    cat ${{ variables.testWorkspace }}/clientOutput/output.json;
-                    node --require @ff-internal/aria-logger bin/run --handlerModule $(Build.SourcesDirectory)/tools/telemetry-generator/dist/handlers/stageTimingRetriever.js --dir '${{ variables.testWorkspace }}/clientOutput/';
-                env:
-                  BUILD_ID: $(Build.BuildId)
-                  ADO_API_TOKEN: $(System.AccessToken)
-                  PIPELINE: 'BuildClient'
+  - task: PublishPipelineArtifact@1
+    displayName: Publish Artifact - Devtools Browser Extension
+    inputs:
+      targetPath: './packages/tools/devtools/devtools-browser-extension/dist/bundle/'
+      artifactName: 'devtools-extension-bundle'
+      publishLocation: 'pipeline'
