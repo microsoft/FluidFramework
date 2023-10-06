@@ -251,130 +251,6 @@ describe("LazyTree", () => {
 		assert.equal(parent.key, rootFieldKey);
 	});
 
-	describe("LazyFieldNode", () => {
-		const schemaBuilder = new SchemaBuilder("test", {}, leafDomain.library);
-		const fieldNodeSchema = schemaBuilder.fieldNode(
-			"field",
-			SchemaBuilder.fieldOptional(leafDomain.string),
-		);
-		const schema = schemaBuilder.intoDocumentSchema(
-			SchemaBuilder.fieldRequired(fieldNodeSchema),
-		);
-
-		const { context, cursor } = initializeTreeWithContent({
-			schema,
-			initialTree: {
-				[EmptyKey]: "Hello world",
-			},
-		});
-		cursor.enterNode(0);
-		const { anchor, anchorNode } = createAnchors(context, cursor);
-
-		const node = new LazyFieldNode(context, fieldNodeSchema, cursor, anchorNode, anchor);
-
-		it("value", () => {
-			assert.equal(node.value, undefined); // FieldNode_s do not have a value
-		});
-
-		it("tryGetField", () => {
-			const field = node.tryGetField(EmptyKey);
-			assert(field !== undefined);
-			assert(field.is(SchemaBuilder.fieldOptional(leafDomain.string)));
-		});
-	});
-
-	describe("LazyLeaf", () => {
-		const schemaBuilder = new SchemaBuilder("test", {}, leafDomain.library);
-		const schema = schemaBuilder.intoDocumentSchema(
-			SchemaBuilder.fieldRequired(leafDomain.string),
-		);
-
-		const { context, cursor } = initializeTreeWithContent({
-			schema,
-			initialTree: "Hello world",
-		});
-		cursor.enterNode(0);
-
-		const { anchor, anchorNode } = createAnchors(context, cursor);
-
-		const node = new LazyLeaf(context, leafDomain.string, cursor, anchorNode, anchor);
-
-		it("value", () => {
-			assert.equal(node.value, "Hello world");
-		});
-	});
-
-	describe("LazyMap", () => {
-		const schemaBuilder = new SchemaBuilder("test", {}, leafDomain.library);
-		const mapNodeSchema = schemaBuilder.map(
-			"mapString",
-			SchemaBuilder.fieldOptional(leafDomain.string),
-		);
-		const schema = schemaBuilder.intoDocumentSchema(SchemaBuilder.fieldRequired(mapNodeSchema));
-
-		const { context, cursor } = initializeTreeWithContent({
-			schema,
-			initialTree: {
-				foo: "Hello",
-				bar: "world",
-			},
-		});
-		cursor.enterNode(0);
-
-		const { anchor, anchorNode } = createAnchors(context, cursor);
-
-		const node = new LazyMap(context, mapNodeSchema, cursor, anchorNode, anchor);
-
-		it("value", () => {
-			assert.equal(node.value, undefined); // Map nodes do not have a value
-		});
-
-		it("tryGetField", () => {
-			assert.notEqual(node.tryGetField(brand("foo")), undefined);
-			assert.notEqual(node.tryGetField(brand("bar")), undefined);
-			assert.equal(node.tryGetField(brand("baz")), undefined);
-		});
-	});
-
-	describe("LazyStruct", () => {
-		const schemaBuilder = new SchemaBuilder("test", {}, leafDomain.library);
-		const structNodeSchema = schemaBuilder.struct("struct", {
-			foo: SchemaBuilder.fieldOptional(leafDomain.string),
-			bar: SchemaBuilder.fieldSequence(leafDomain.number),
-		});
-		const schema = schemaBuilder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
-
-		const context = contextWithContentReadonly({
-			schema,
-			initialTree: {
-				[typeNameSymbol]: structNodeSchema.name,
-				foo: "Hello world", // Will unbox
-				bar: [], // Won't unbox
-			},
-		});
-		const cursor = initializeCursor(context, rootFieldAnchor);
-		cursor.enterNode(0);
-
-		const { anchor, anchorNode } = createAnchors(context, cursor);
-
-		const node = buildLazyStruct(context, structNodeSchema, cursor, anchorNode, anchor);
-
-		it("boxing", () => {
-			assert.equal(node.foo, node.boxedFoo.content);
-			assert(node.bar.isSameAs(node.boxedBar));
-		});
-
-		it("value", () => {
-			assert.equal(node.value, undefined); // Struct nodes do not have a value
-		});
-
-		it("tryGetField", () => {
-			assert.notEqual(node.tryGetField(brand("foo")), undefined);
-			assert.equal(node.tryGetField(brand("bar")), undefined); // TODO: this is presumably wrong - empty array shouldn't yield undefined
-			assert.equal(node.tryGetField(brand("baz")), undefined);
-		});
-	});
-
 	describe("enumerable own properties", () => {
 		describe("test trees", () => {
 			for (const testTree of testTrees) {
@@ -411,6 +287,126 @@ describe("LazyTree", () => {
 				});
 			}
 		});
+	});
+});
+
+describe("LazyFieldNode", () => {
+	const schemaBuilder = new SchemaBuilder("test", {}, leafDomain.library);
+	const fieldNodeSchema = schemaBuilder.fieldNode(
+		"field",
+		SchemaBuilder.fieldOptional(leafDomain.string),
+	);
+	const schema = schemaBuilder.intoDocumentSchema(SchemaBuilder.fieldRequired(fieldNodeSchema));
+
+	const { context, cursor } = initializeTreeWithContent({
+		schema,
+		initialTree: {
+			[EmptyKey]: "Hello world",
+		},
+	});
+	cursor.enterNode(0);
+	const { anchor, anchorNode } = createAnchors(context, cursor);
+
+	const node = new LazyFieldNode(context, fieldNodeSchema, cursor, anchorNode, anchor);
+
+	it("value", () => {
+		assert.equal(node.value, undefined); // FieldNode_s do not have a value
+	});
+
+	it("tryGetField", () => {
+		const field = node.tryGetField(EmptyKey);
+		assert(field !== undefined);
+		assert(field.is(SchemaBuilder.fieldOptional(leafDomain.string)));
+	});
+});
+
+describe("LazyLeaf", () => {
+	const schemaBuilder = new SchemaBuilder("test", {}, leafDomain.library);
+	const schema = schemaBuilder.intoDocumentSchema(SchemaBuilder.fieldRequired(leafDomain.string));
+
+	const { context, cursor } = initializeTreeWithContent({
+		schema,
+		initialTree: "Hello world",
+	});
+	cursor.enterNode(0);
+
+	const { anchor, anchorNode } = createAnchors(context, cursor);
+
+	const node = new LazyLeaf(context, leafDomain.string, cursor, anchorNode, anchor);
+
+	it("value", () => {
+		assert.equal(node.value, "Hello world");
+	});
+});
+
+describe("LazyMap", () => {
+	const schemaBuilder = new SchemaBuilder("test", {}, leafDomain.library);
+	const mapNodeSchema = schemaBuilder.map(
+		"mapString",
+		SchemaBuilder.fieldOptional(leafDomain.string),
+	);
+	const schema = schemaBuilder.intoDocumentSchema(SchemaBuilder.fieldRequired(mapNodeSchema));
+
+	const { context, cursor } = initializeTreeWithContent({
+		schema,
+		initialTree: {
+			foo: "Hello",
+			bar: "world",
+		},
+	});
+	cursor.enterNode(0);
+
+	const { anchor, anchorNode } = createAnchors(context, cursor);
+
+	const node = new LazyMap(context, mapNodeSchema, cursor, anchorNode, anchor);
+
+	it("value", () => {
+		assert.equal(node.value, undefined); // Map nodes do not have a value
+	});
+
+	it("tryGetField", () => {
+		assert.notEqual(node.tryGetField(brand("foo")), undefined);
+		assert.notEqual(node.tryGetField(brand("bar")), undefined);
+		assert.equal(node.tryGetField(brand("baz")), undefined);
+	});
+});
+
+describe("LazyStruct", () => {
+	const schemaBuilder = new SchemaBuilder("test", {}, leafDomain.library);
+	const structNodeSchema = schemaBuilder.struct("struct", {
+		foo: SchemaBuilder.fieldOptional(leafDomain.string),
+		bar: SchemaBuilder.fieldSequence(leafDomain.number),
+	});
+	const schema = schemaBuilder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
+
+	const context = contextWithContentReadonly({
+		schema,
+		initialTree: {
+			[typeNameSymbol]: structNodeSchema.name,
+			foo: "Hello world", // Will unbox
+			bar: [], // Won't unbox
+		},
+	});
+	const cursor = initializeCursor(context, rootFieldAnchor);
+	cursor.enterNode(0);
+
+	const { anchor, anchorNode } = createAnchors(context, cursor);
+
+	const node = buildLazyStruct(context, structNodeSchema, cursor, anchorNode, anchor);
+
+	it("boxing", () => {
+		assert.equal(node.foo, node.boxedFoo.content);
+		assert(node.bar.isSameAs(node.boxedBar));
+	});
+
+	it("value", () => {
+		assert.equal(node.value, undefined); // Struct nodes do not have a value
+	});
+
+	it("tryGetField", () => {
+		assert.notEqual(node.tryGetField(brand("foo")), undefined);
+		assert.equal(node.tryGetField(brand("bar")), undefined); // TODO: this is presumably wrong - empty array shouldn't yield undefined
+		assert.equal(node.tryGetField(brand("baz")), undefined);
 	});
 });
 
