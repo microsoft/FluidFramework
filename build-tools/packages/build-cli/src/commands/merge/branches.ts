@@ -445,6 +445,8 @@ function getMergeConflictsDescription(props: {
 	return `
 ## ${source}-${target} integrate PR
 
+***DO NOT MERGE THIS PR USING THE GITHUB UI.***
+
 The aim of this pull request is to sync ${source} and ${target} branch. This branch has **MERGE CONFLICTS** with ${target} due to this commit. If this PR is assigned to you, you need to do the following:
 
 1. Acknowledge the pull request by adding a comment -- "Actively working on it".
@@ -480,6 +482,8 @@ function getMaybeCiFailuresDescription(props: {
 	const { source, target, mergeBranch, prTitle } = props;
 	return `
 ## ${source}-${target} integrate PR
+
+***DO NOT MERGE THIS PR USING THE GITHUB UI.***
 
 The aim of this pull request is to sync ${source} and ${target} branch. If this PR is assigned to you, you need to do the following:
 
