@@ -130,7 +130,7 @@ interface IWorkerHeartbeatMessage extends IWorkerMessage<undefined> {
 interface IWorkerShutdownMessage extends IWorkerMessage<undefined> {
 	type: "shutdown";
 }
-export interface IClusterConfig {
+export interface INodeClusterConfig {
 	workerHeartbeatIntervalMs: number;
 	workerTimeoutNumMissedHeartbeats: number;
 	workerForkTimeoutMs: number;
@@ -138,7 +138,7 @@ export interface IClusterConfig {
 }
 type WorkerMessage = IWorkerHeartbeatMessage | IWorkerShutdownMessage;
 
-export class ClusterWebServerFactory implements core.IWebServerFactory {
+export class NodeClusterWebServerFactory implements core.IWebServerFactory {
 	private readonly lastHeartbeatMap: Map<number, number> = new Map();
 	private readonly newForkTimeouts: Map<number, NodeJS.Timeout> = new Map();
 	private readonly disconnectTimeouts: Map<number, NodeJS.Timeout> = new Map();
@@ -146,7 +146,7 @@ export class ClusterWebServerFactory implements core.IWebServerFactory {
 
 	constructor(
 		private readonly httpServerConfig?: IHttpServerConfig,
-		private readonly clusterConfig?: Partial<IClusterConfig>,
+		private readonly clusterConfig?: Partial<INodeClusterConfig>,
 	) {
 		this.heartbeatIntervalMs = this.clusterConfig?.workerHeartbeatIntervalMs ?? 5000;
 	}
@@ -307,13 +307,13 @@ export class ClusterWebServerFactory implements core.IWebServerFactory {
 	}
 }
 
-export class SocketIoClusterWebServerFactory extends ClusterWebServerFactory {
+export class SocketIoNodeClusterWebServerFactory extends NodeClusterWebServerFactory {
 	constructor(
 		private readonly redisConfig: any,
 		private readonly socketIoAdapterConfig?: any,
 		httpServerConfig?: IHttpServerConfig,
 		private readonly socketIoConfig?: any,
-		clusterConfig?: Partial<IClusterConfig>,
+		clusterConfig?: Partial<INodeClusterConfig>,
 	) {
 		super(httpServerConfig, clusterConfig);
 	}

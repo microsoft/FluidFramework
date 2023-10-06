@@ -24,13 +24,13 @@ export { DocumentStorage } from "./storage";
 export {
 	BasicWebServerFactory,
 	HttpServer,
-	IClusterConfig,
+	INodeClusterConfig,
 	IHttpServerConfig,
 	RequestListener,
 	SocketIoWebServerFactory,
 	WebServer,
-	SocketIoClusterWebServerFactory,
-	ClusterWebServerFactory,
+	SocketIoNodeClusterWebServerFactory,
+	NodeClusterWebServerFactory,
 } from "./webServer";
 export { WholeSummaryReadGitManager } from "./wholeSummaryReadGitManager";
 export { WholeSummaryWriteGitManager } from "./wholeSummaryWriteGitManager";

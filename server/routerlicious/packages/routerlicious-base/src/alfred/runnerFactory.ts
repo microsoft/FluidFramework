@@ -118,16 +118,17 @@ export class AlfredResources implements core.IResources {
 		const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
 		const socketIoConfig = config.get("alfred:socketIo");
-		const clusterConfig: Partial<services.IClusterConfig> | undefined =
-			config.get("alfred:clusterConfig");
-		const useCluster = config.get("alfred:useCluster");
-		this.webServerFactory = useCluster
-			? new services.SocketIoClusterWebServerFactory(
+		const nodeClusterConfig: Partial<services.INodeClusterConfig> | undefined = config.get(
+			"alfred:nodeClusterConfig",
+		);
+		const useNodeCluster = config.get("alfred:useNodeCluster");
+		this.webServerFactory = useNodeCluster
+			? new services.SocketIoNodeClusterWebServerFactory(
 					redisConfig,
 					socketIoAdapterConfig,
 					httpServerConfig,
 					socketIoConfig,
-					clusterConfig,
+					nodeClusterConfig,
 			  )
 			: new services.SocketIoWebServerFactory(
 					this.redisConfig,

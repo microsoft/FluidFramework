@@ -123,10 +123,10 @@
 			"enable": true
 		},
 		"getDeltasRequestMaxOpsRange": 2000,
-		"useCluster": false
+		"useNodeCluster": false
 	},
 	"riddler": {
-		"useCluster": false
+		"useNodeCluster": false
 	},
 	"client": {
 		"type": "browser",

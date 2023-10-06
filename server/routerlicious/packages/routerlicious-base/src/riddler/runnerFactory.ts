@@ -44,11 +44,12 @@ export class RiddlerResources implements IResources {
 		public readonly cache: RedisCache,
 	) {
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
-		const clusterConfig: Partial<services.IClusterConfig> | undefined =
-			config.get("riddler:clusterConfig");
-		const useCluster = config.get("riddler:useCluster");
-		this.webServerFactory = useCluster
-			? new services.ClusterWebServerFactory(httpServerConfig, clusterConfig)
+		const nodeClusterConfig: Partial<services.INodeClusterConfig> | undefined = config.get(
+			"riddler:nodeClusterConfig",
+		);
+		const useNodeCluster = config.get("riddler:useNodeCluster");
+		this.webServerFactory = useNodeCluster
+			? new services.NodeClusterWebServerFactory(httpServerConfig, nodeClusterConfig)
 			: new services.BasicWebServerFactory(httpServerConfig);
 	}
 
