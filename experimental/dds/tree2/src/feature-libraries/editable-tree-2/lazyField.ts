@@ -14,7 +14,6 @@ import {
 	FieldUpPath,
 	ITreeCursor,
 	keyAsDetachedField,
-	rootField,
 	iterateCursorField,
 } from "../../core";
 import { FieldKind } from "../modular-schema";
@@ -33,7 +32,6 @@ import {
 	fail,
 } from "../../util";
 import { AllowedTypes, FieldSchema } from "../typed-schema";
-import { treeStatusFromPath } from "../editable-tree";
 import { Context } from "./context";
 import {
 	FlexibleNodeContent,
@@ -61,6 +59,7 @@ import {
 	tryMoveCursorToAnchorSymbol,
 } from "./lazyEntity";
 import { unboxedUnion } from "./unboxed";
+import { treeStatusFromAnchorCache, treeStatusFromDetachedField } from "./utilities";
 
 export function makeField(
 	context: Context,
@@ -211,15 +210,13 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 		const parentAnchor = fieldAnchor.parent;
 		// If the parentAnchor is undefined it is a detached field.
 		if (parentAnchor === undefined) {
-			return keyAsDetachedField(fieldAnchor.fieldKey) === rootField
-				? TreeStatus.InDocument
-				: TreeStatus.Removed;
+			return treeStatusFromDetachedField(keyAsDetachedField(fieldAnchor.fieldKey));
 		}
 		const parentAnchorNode = this.context.forest.anchors.locate(parentAnchor);
 
 		// As the "parentAnchor === undefined" case is handled above, parentAnchorNode should exist.
 		assert(parentAnchorNode !== undefined, 0x77e /* parentAnchorNode must exist. */);
-		return treeStatusFromPath(parentAnchorNode);
+		return treeStatusFromAnchorCache(this.context.forest.anchors, parentAnchorNode);
 	}
 
 	public getFieldPath(): FieldUpPath {

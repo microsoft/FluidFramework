@@ -81,9 +81,11 @@ export type AnchorsCompare = CompareFunction<UpPath>;
 
 // @alpha @sealed
 export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLocator {
+    constructor();
     acquireVisitor(): DeltaVisitor;
     // (undocumented)
     forget(anchor: Anchor): void;
+    generationNumber: number;
     internalizePath(originalPath: UpPath): UpPath;
     isEmpty(): boolean;
     // (undocumented)
@@ -1255,18 +1257,18 @@ type MapFieldSchema = FieldSchema<typeof FieldKinds.optional | typeof FieldKinds
 export interface MapNode<TSchema extends MapSchema> extends TreeNode {
     [boxedIterator](): IterableIterator<TypedField<TSchema["mapFields"]>>;
     // (undocumented)
-    [Symbol.iterator](): IterableIterator<UnboxField<TSchema["mapFields"], "notEmpty">>;
+    [Symbol.iterator](): IterableIterator<[FieldKey, UnboxField<TSchema["mapFields"], "notEmpty">]>;
     readonly asObject: {
-        readonly [P in FieldKey]?: UnboxField<TSchema["mapFields"]>;
+        readonly [P in FieldKey]?: UnboxField<TSchema["mapFields"], "notEmpty">;
     };
-    entries(): IterableIterator<[FieldKey, UnboxField<TSchema["mapFields"]>]>;
-    forEach(callbackFn: (value: UnboxField<TSchema["mapFields"]>, key: FieldKey, map: MapNode<TSchema>) => void, thisArg?: any): void;
-    get(key: FieldKey): UnboxField<TSchema["mapFields"]>;
-    getBoxed(key: FieldKey): TypedField<TSchema["mapFields"]>;
-    has(key: FieldKey): boolean;
+    entries(): IterableIterator<[FieldKey, UnboxField<TSchema["mapFields"], "notEmpty">]>;
+    forEach(callbackFn: (value: UnboxField<TSchema["mapFields"], "notEmpty">, key: FieldKey, map: MapNode<TSchema>) => void, thisArg?: any): void;
+    get(key: string): UnboxField<TSchema["mapFields"]>;
+    getBoxed(key: string): TypedField<TSchema["mapFields"]>;
+    has(key: string): boolean;
     keys(): IterableIterator<FieldKey>;
     readonly size: number;
-    values(): IterableIterator<UnboxField<TSchema["mapFields"]>>;
+    values(): IterableIterator<UnboxField<TSchema["mapFields"], "notEmpty">>;
 }
 
 // @alpha (undocumented)
