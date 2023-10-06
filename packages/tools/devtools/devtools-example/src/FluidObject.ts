@@ -237,7 +237,7 @@ export class AppData extends DataObject {
 			childrenTwo: SchemaBuilder.fieldRequired(numberSchema),
 		});
 
-		const schema = builder.intoDocumentSchema(SchemaBuilder.fieldRequired(rootNodeSchema));
+		const schema = builder.toDocumentSchema(SchemaBuilder.fieldRequired(rootNodeSchema));
 
 		sharedTree.schematize({
 			schema,

@@ -18,7 +18,7 @@ import { ISharedTreeView, createSharedTreeView } from "../../../shared-tree";
 import { AllowedUpdateType, ValueSchema } from "../../../core";
 import { brand } from "../../../util";
 
-const builder = new SchemaBuilder("EditableTree Node Keys", {}, nodeKeySchema);
+const builder = new SchemaBuilder({ scope: "EditableTree Node Keys", libraries: [nodeKeySchema] });
 const stringSchema = builder.leaf("string", ValueSchema.String);
 const childNodeSchema = builder.struct("ChildNode", {
 	...nodeKeyField,
@@ -30,7 +30,7 @@ const parentNodeSchema = builder.struct("ParentNode", {
 	children: SchemaBuilder.fieldSequence(childNodeSchema),
 });
 const rootField = SchemaBuilder.fieldRequired(parentNodeSchema);
-const schema = builder.intoDocumentSchema(rootField);
+const schema = builder.toDocumentSchema(rootField);
 
 // TODO: this can probably be removed once daesun's stuff goes in
 function addKey(view: ISharedTreeView, key: LocalNodeKey): { [nodeKeyFieldKey]: StableNodeKey } {

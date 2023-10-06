@@ -36,7 +36,7 @@ import {
 } from "../../../core";
 import { brand, Brand } from "../../../util";
 
-const builder = new SchemaBuilder("mock data");
+const builder = new SchemaBuilder({ scope: "mock data" });
 
 export const stringSchema = builder.leaf("String", ValueSchema.String);
 
@@ -101,7 +101,7 @@ export const arraySchema = builder.fieldNode(
 
 export const rootPersonSchema = SchemaBuilder.field(FieldKinds.optional, personSchema);
 
-export const personSchemaLibrary = builder.intoLibrary();
+export const personSchemaLibrary = builder.finalize();
 
 export const fullSchemaData = buildTestSchema(rootPersonSchema);
 
@@ -238,9 +238,10 @@ export function getPerson(): Person {
  * Create schema supporting all type defined in this file, with the specified root field.
  */
 export function buildTestSchema<T extends FieldSchema>(rootField: T) {
-	return new SchemaBuilder("buildTestSchema", {}, personSchemaLibrary).intoDocumentSchema(
-		rootField,
-	);
+	return new SchemaBuilder({
+		scope: "buildTestSchema",
+		libraries: [personSchemaLibrary],
+	}).toDocumentSchema(rootField);
 }
 
 export function getReadonlyEditableTreeContext(

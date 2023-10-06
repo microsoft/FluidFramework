@@ -26,24 +26,24 @@ import { FieldKey, moveToDetachedField, rootFieldKey, UpPath } from "../core";
  */
 export const localFieldKey: FieldKey = brand("foo");
 
-const deepBuilder = new SchemaBuilder("sharedTree.bench: deep", {}, jsonSchema);
+const deepBuilder = new SchemaBuilder({ scope: "sharedTree.bench: deep", libraries: [jsonSchema] });
 
 // Test data in "deep" mode: a linked list with a number at the end.
 const linkedListSchema = deepBuilder.structRecursive("linkedList", {
 	foo: SchemaBuilder.fieldRecursive(FieldKinds.required, () => linkedListSchema, jsonNumber),
 });
 
-const wideBuilder = new SchemaBuilder("sharedTree.bench: wide", {}, jsonSchema);
+const wideBuilder = new SchemaBuilder({ scope: "sharedTree.bench: wide", libraries: [jsonSchema] });
 
 export const wideRootSchema = wideBuilder.struct("WideRoot", {
 	foo: SchemaBuilder.field(FieldKinds.sequence, jsonNumber),
 });
 
-export const wideSchema = wideBuilder.intoDocumentSchema(
+export const wideSchema = wideBuilder.toDocumentSchema(
 	SchemaBuilder.field(FieldKinds.required, wideRootSchema),
 );
 
-export const deepSchema = deepBuilder.intoDocumentSchema(
+export const deepSchema = deepBuilder.toDocumentSchema(
 	SchemaBuilder.field(FieldKinds.required, linkedListSchema, jsonNumber),
 );
 

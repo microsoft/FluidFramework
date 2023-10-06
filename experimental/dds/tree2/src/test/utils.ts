@@ -633,11 +633,10 @@ export function forestWithContent(content: TreeContent): IEditableForest {
 }
 
 const jsonSequenceRootField = SchemaBuilder.fieldSequence(...jsonRoot);
-export const jsonSequenceRootSchema = new SchemaBuilder(
-	"JsonSequenceRoot",
-	{},
-	jsonSchema,
-).intoDocumentSchema(jsonSequenceRootField);
+export const jsonSequenceRootSchema = new SchemaBuilder({
+	scope: "JsonSequenceRoot",
+	libraries: [jsonSchema],
+}).toDocumentSchema(jsonSequenceRootField);
 
 /**
  * If the root is an array, this creates a sequence field at the root instead of a JSON array node.
@@ -935,9 +934,12 @@ export function namedTreeSchema(
  * @deprecated This in invalid and only used to explicitly mark code as using the wrong schema. All usages of this should be fixed to use correct schema.
  */
 // TODO: remove all usages of this.
-export const wrongSchema = new SchemaBuilder("Wrong Schema", {
-	rejectEmpty: false,
-}).intoDocumentSchema(SchemaBuilder.fieldSequence(Any));
+export const wrongSchema = new SchemaBuilder({
+	scope: "Wrong Schema",
+	lint: {
+		rejectEmpty: false,
+	},
+}).toDocumentSchema(SchemaBuilder.fieldSequence(Any));
 
 /**
  * Schematize config Schema which is not correct.

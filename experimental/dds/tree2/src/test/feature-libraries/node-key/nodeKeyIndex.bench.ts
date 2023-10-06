@@ -28,7 +28,10 @@ import {
 import { nodeKeyField, nodeKeySchema, nodeKeyTreeSchema } from "../../../domains";
 import { brand } from "../../../util";
 
-const builder = new SchemaBuilder("node key index benchmarks", {}, nodeKeySchema);
+const builder = new SchemaBuilder({
+	scope: "node key index benchmarks",
+	libraries: [nodeKeySchema],
+});
 const nodeSchema = builder.structRecursive("node", {
 	child: SchemaBuilder.fieldRecursive(
 		FieldKinds.optional,
@@ -44,7 +47,7 @@ const nodeWithKeySchema = builder.structRecursive("nodeWithKey", {
 		() => nodeSchema,
 	),
 });
-const schemaData = builder.intoDocumentSchema(
+const schemaData = builder.toDocumentSchema(
 	SchemaBuilder.fieldOptional(nodeSchema, nodeWithKeySchema),
 );
 

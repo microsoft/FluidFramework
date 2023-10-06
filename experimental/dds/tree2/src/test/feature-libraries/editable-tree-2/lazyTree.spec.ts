@@ -58,9 +58,9 @@ function collectPropertyNames(obj: object): Set<string> {
 
 describe("lazyTree", () => {
 	it("property names", () => {
-		const builder = new SchemaBuilder("lazyTree");
+		const builder = new SchemaBuilder({ scope: "lazyTree" });
 		const emptyStruct = builder.struct("empty", {});
-		const testSchema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(emptyStruct));
+		const testSchema = builder.toDocumentSchema(SchemaBuilder.fieldOptional(emptyStruct));
 
 		const forest = forestWithContent({ schema: testSchema, initialTree: {} });
 		const context = getReadonlyContext(forest, testSchema);
@@ -110,13 +110,13 @@ describe("lazyTree", () => {
 	});
 
 	describe("struct", () => {
-		const structBuilder = new SchemaBuilder("boxing", {}, jsonSchema);
+		const structBuilder = new SchemaBuilder({ scope: "boxing", libraries: [jsonSchema] });
 		const emptyStruct = structBuilder.struct("empty", {});
 		const testStruct = structBuilder.struct("mono", {
 			willUnbox: SchemaBuilder.fieldOptional(emptyStruct),
 			notUnboxed: SchemaBuilder.fieldSequence(emptyStruct),
 		});
-		const schema = structBuilder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
+		const schema = structBuilder.toDocumentSchema(SchemaBuilder.fieldOptional(Any));
 
 		it("boxing", () => {
 			const context = contextWithContentReadonly({

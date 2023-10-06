@@ -21,7 +21,7 @@ import {
 import { FieldKinds, SchemaBuilder } from "../../../feature-libraries";
 
 describe("typedTreeSchema", () => {
-	const builder = new SchemaBuilder("test", {}, jsonSchema);
+	const builder = new SchemaBuilder({ scope: "test", libraries: [jsonSchema] });
 	const emptyStruct = builder.struct("empty", {});
 	const basicStruct = builder.struct("basicStruct", { foo: SchemaBuilder.fieldOptional(Any) });
 	const basicFieldNode = builder.fieldNode("field", SchemaBuilder.fieldOptional(Any));

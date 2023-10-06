@@ -23,12 +23,12 @@ import { brand } from "../../../util";
 import { SummarizeType, TestTreeProvider, initializeTestTree, viewWithContent } from "../../utils";
 import { AllowedUpdateType } from "../../../core";
 
-const builder = new SchemaBuilder("node key index tests", {}, nodeKeySchema);
+const builder = new SchemaBuilder({ scope: "node key index tests", libraries: [nodeKeySchema] });
 const nodeSchema = builder.structRecursive("node", {
 	...nodeKeyField,
 	child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchema),
 });
-const nodeSchemaData = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(nodeSchema));
+const nodeSchemaData = builder.toDocumentSchema(SchemaBuilder.fieldOptional(nodeSchema));
 
 // TODO: this can probably be removed once daesun's stuff goes in
 function contextualizeKey(
@@ -184,12 +184,12 @@ describe("Node Key Index", () => {
 	});
 
 	it("is disabled if node type is not in the tree schema", () => {
-		const builder2 = new SchemaBuilder("node key index test");
+		const builder2 = new SchemaBuilder({ scope: "node key index test" });
 		const nodeSchemaNoKey = builder2.structRecursive("node", {
 			child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchemaNoKey),
 		});
 		// This is missing the global node key field
-		const nodeSchemaDataNoKey = builder2.intoDocumentSchema(
+		const nodeSchemaDataNoKey = builder2.toDocumentSchema(
 			SchemaBuilder.fieldOptional(nodeSchemaNoKey),
 		);
 		assert(!nodeSchemaDataNoKey.treeSchema.has(nodeKeyTreeSchema.name));
@@ -238,11 +238,14 @@ describe("Node Key Index", () => {
 	// TODO: Schema changes are not yet fully hooked up to eventing. A schema change should probably trigger
 	it.skip("reacts to schema changes", () => {
 		// This is missing the global node key field on the node
-		const builder2 = new SchemaBuilder("node key index test", {}, nodeKeySchema);
+		const builder2 = new SchemaBuilder({
+			scope: "node key index test",
+			libraries: [nodeKeySchema],
+		});
 		const nodeSchemaNoKey = builder2.structRecursive("node", {
 			child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchemaNoKey),
 		});
-		const nodeSchemaDataNoKey = builder2.intoDocumentSchema(
+		const nodeSchemaDataNoKey = builder2.toDocumentSchema(
 			SchemaBuilder.fieldOptional(nodeSchemaNoKey),
 		);
 

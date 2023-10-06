@@ -10,10 +10,10 @@
  * Currently we do not have tooling in place to test this in our test suite, and exporting these types here is a temporary crutch to aid in diagnosing this issue.
  */
 
-import { FieldKinds, schemaBuilder2 } from "../feature-libraries";
+import { FieldKinds, schemaBuilder3 } from "../feature-libraries";
 import { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../util";
 
-const builder = new schemaBuilder2.SchemaBuilder({
+const builder = new schemaBuilder3.SchemaBuilder({
 	scope: "com.fluidframework.test",
 	fieldKinds: FieldKinds,
 });
@@ -21,25 +21,25 @@ const builder = new schemaBuilder2.SchemaBuilder({
 export class Empty extends builder.struct("empty", {}) {}
 
 const recursiveReference = () => RecursiveStruct;
-schemaBuilder2.fixRecursiveReference(recursiveReference);
+schemaBuilder3.fixRecursiveReference(recursiveReference);
 
 /**
  * @alpha
  */
 export class RecursiveStruct extends builder.struct("recursiveStruct2", {
 	recursive: builder.field.optional(recursiveReference),
-	number: builder.field.value(Empty),
+	number: builder.field.required(Empty),
 }) {}
 
 type _0 = requireFalse<isAny<typeof RecursiveStruct>>;
 type _1 = requireTrue<
 	areSafelyAssignable<
 		typeof RecursiveStruct,
-		ReturnType<typeof RecursiveStruct.structFieldsObject.recursive.allowedTypes[0]>
+		ReturnType<(typeof RecursiveStruct.structFieldsObject.recursive.allowedTypes)[0]>
 	>
 >;
 
 /**
  * @alpha
  */
-// export const jsonSchema = builder.intoLibrary();
+// export const jsonSchema = builder.finalize();

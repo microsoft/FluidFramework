@@ -104,7 +104,7 @@ describe("Schema Evolution Examples", () => {
 		y: SchemaBuilder.field(FieldKinds.required, number),
 	});
 
-	const defaultContentLibrary = contentTypesBuilder.intoLibrary();
+	const defaultContentLibrary = contentTypesBuilder.finalize();
 
 	const containersBuilder = new SchemaBuilder(
 		"Schema Evolution Examples: default containers",
@@ -125,7 +125,7 @@ describe("Schema Evolution Examples", () => {
 
 	const tolerantRoot = SchemaBuilder.field(FieldKinds.optional, canvas);
 
-	const treeViewSchema = containersBuilder.intoLibrary();
+	const treeViewSchema = containersBuilder.finalize();
 
 	/**
 	 * This shows basic usage of stored and view schema, including a schema change handled using the
@@ -142,7 +142,7 @@ describe("Schema Evolution Examples", () => {
 			"basic usage",
 			{},
 			treeViewSchema,
-		).intoDocumentSchema(root);
+		).toDocumentSchema(root);
 
 		// This is where legacy schema handling logic for schematize.
 		const adapters: Adapters = {};
@@ -193,7 +193,7 @@ describe("Schema Evolution Examples", () => {
 				"basic usage2",
 				{},
 				treeViewSchema,
-			).intoDocumentSchema(tolerantRoot);
+			).toDocumentSchema(tolerantRoot);
 			const view2 = new ViewSchema(defaultSchemaPolicy, adapters, viewCollection2);
 			// When we open this document, we should check it's compatibility with our application:
 			const compat = view2.checkCompatibility(stored);
@@ -272,7 +272,7 @@ describe("Schema Evolution Examples", () => {
 				items: SchemaBuilder.field(FieldKinds.sequence, positionedCanvasItem2),
 			});
 			// Once again we will simulate reloading the app with different schema by modifying the view schema.
-			const viewCollection3: TypedSchemaCollection = builderWithCounter.intoDocumentSchema(
+			const viewCollection3: TypedSchemaCollection = builderWithCounter.toDocumentSchema(
 				SchemaBuilder.field(FieldKinds.optional, canvas2),
 			);
 			const view3 = new ViewSchema(defaultSchemaPolicy, adapters, viewCollection3);
@@ -422,7 +422,7 @@ describe("Schema Evolution Examples", () => {
 	// 		items: SchemaBuilder.field(FieldKinds.sequence, positionedCanvasItemNew),
 	// 	});
 
-	// 	const viewCollection: SchemaCollection = builder.intoDocumentSchema(
+	// 	const viewCollection: SchemaCollection = builder.toDocumentSchema(
 	// 		SchemaBuilder.fieldRequired(canvas2),
 	// 	);
 

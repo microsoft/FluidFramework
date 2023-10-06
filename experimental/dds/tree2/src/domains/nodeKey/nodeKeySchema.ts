@@ -9,13 +9,18 @@ import {
 	nodeKeyFieldKey,
 	FieldKinds,
 	nodeKeyTreeIdentifier,
+	SchemaBuilderInternal,
 } from "../../feature-libraries";
 
-const builder = new SchemaBuilder("Node Key Schema");
+const builder = new SchemaBuilderInternal({ scope: "com.fluidframework.nodeKey" });
 
 /**
  * Schema for a node which holds a {@link StableNodeKey}.
  * @alpha
+ *
+ * @privateRemarks
+ * This being a leaf may cause issues with leaf unboxing plans.
+ * This might need to be changed to be a node holding a string node instead.
  */
 export const nodeKeyTreeSchema = builder.leaf(nodeKeyTreeIdentifier, ValueSchema.String);
 
@@ -36,4 +41,4 @@ export const nodeKeyField = {
  * Required to use {@link nodeKeyField}.
  * @alpha
  */
-export const nodeKeySchema = builder.intoLibrary();
+export const nodeKeySchema = builder.finalize();

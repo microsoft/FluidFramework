@@ -37,6 +37,7 @@ import {
 	isEditableTree,
 } from "../../../feature-libraries";
 import { createSharedTreeView } from "../../../shared-tree";
+import { leaf } from "../../../domains";
 import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 // Test UnbrandedName
@@ -51,10 +52,10 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 	const { optional, required, sequence } = FieldKinds;
 
 	// Example Schema:
-	const builder = new SchemaBuilder("Schema Aware tests");
+	const builder = new SchemaBuilder({ scope: "Schema Aware tests", libraries: [leaf.library] });
 
 	// Declare a simple type which just holds a number.
-	const numberSchema = builder.leaf("number", ValueSchema.Number);
+	const numberSchema = leaf.number;
 
 	// Check the various ways to refer to child types produce the same results
 	{
@@ -97,7 +98,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 	}
 
 	type x = typeof numberSchema.name;
-	const schemaData = builder.intoLibrary();
+	const schemaData = builder.finalize();
 
 	// Example Use:
 	type BallTree = TypedNode<typeof ballSchema, ApiMode.Flexible>;
@@ -112,7 +113,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 	const n1: NumberTree = 5;
 	const n2: NumberTree = { [valueSymbol]: 5 };
 	const n3: NumberTree = { [typeNameSymbol]: numberSchema.name, [valueSymbol]: 5 };
-	const n4: NumberTree = { [typeNameSymbol]: "number", [valueSymbol]: 5 };
+	const n4: NumberTree = { [typeNameSymbol]: "com.fluidframework.leaf.number", [valueSymbol]: 5 };
 
 	const b1: BallTree = { x: 1, y: 2, size: 10 };
 	const b1x: BallTree = { x: 1, y: 2, size: undefined }; // TODO: restore ability to omit optional fields.
@@ -210,7 +211,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 	// Test polymorphic cases:
 	{
-		const builder2 = new SchemaBuilder("Schema Aware polymorphic");
+		const builder2 = new SchemaBuilder({ scope: "Schema Aware polymorphic" });
 		const bool = builder2.leaf("bool", ValueSchema.Boolean);
 		const str = builder2.leaf("str", ValueSchema.String);
 		const parentField = SchemaBuilder.fieldRequired(str, bool);
@@ -277,7 +278,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 	// Test simple recursive cases:
 	{
-		const builder2 = new SchemaBuilder("Schema Aware recursive");
+		const builder2 = new SchemaBuilder({ scope: "Schema Aware recursive" });
 		const rec = builder2.structRecursive("rec", {
 			x: SchemaBuilder.fieldRecursive(optional, () => rec),
 		});
@@ -453,12 +454,11 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 describe("SchemaAware Editing", () => {
 	it("Use a sequence field", () => {
-		const builder = new SchemaBuilder("SchemaAware");
-		const stringSchema = builder.leaf("string", ValueSchema.String);
+		const builder = new SchemaBuilder({ scope: "SchemaAware", libraries: [leaf.library] });
 		const rootNodeSchema = builder.struct("Test", {
-			children: SchemaBuilder.fieldSequence(stringSchema),
+			children: SchemaBuilder.fieldSequence(leaf.string),
 		});
-		const schema = builder.intoDocumentSchema(
+		const schema = builder.toDocumentSchema(
 			SchemaBuilder.field(FieldKinds.required, rootNodeSchema),
 		);
 		const view = createSharedTreeView().schematize({

@@ -1106,8 +1106,8 @@ export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree;
 // @alpha (undocumented)
 export const jsonArray: TreeSchema<"Json.Array", {
 structFields: {
-"": FieldSchema<Sequence, [() => TreeSchema<"Json.Object", {
-mapFields: FieldSchema<Optional, [any, () => TreeSchema<"Json.Array", any>, TreeSchema<"com.fluidframework.leaf.number", {
+"": FieldSchema<Optional, readonly [() => TreeSchema<"Json.Object", {
+mapFields: FieldSchema<Optional, readonly [any, () => TreeSchema<"Json.Array", any>, TreeSchema<"com.fluidframework.leaf.number", {
 leafValue: import("../..").ValueSchema.Number;
 }>, TreeSchema<"com.fluidframework.leaf.boolean", {
 leafValue: import("../..").ValueSchema.Boolean;
@@ -1158,9 +1158,9 @@ leafValue: import("../..").ValueSchema.Number;
 
 // @alpha (undocumented)
 export const jsonObject: TreeSchema<"Json.Object", {
-mapFields: FieldSchema<Optional, [() => TreeSchema<"Json.Object", any>, () => TreeSchema<"Json.Array", {
+mapFields: FieldSchema<Optional, readonly [() => TreeSchema<"Json.Object", any>, () => TreeSchema<"Json.Array", {
 structFields: {
-"": FieldSchema<Sequence, [() => TreeSchema<"Json.Object", any>, any, TreeSchema<"com.fluidframework.leaf.number", {
+"": FieldSchema<Optional, readonly [() => TreeSchema<"Json.Object", any>, any, TreeSchema<"com.fluidframework.leaf.number", {
 leafValue: import("../..").ValueSchema.Number;
 }>, TreeSchema<"com.fluidframework.leaf.boolean", {
 leafValue: import("../..").ValueSchema.Boolean;
@@ -1386,7 +1386,7 @@ export interface NodeExistsConstraint {
 
 // @alpha
 export const nodeKeyField: {
-    __n_id__: FieldSchema<NodeKeyFieldKind, [TreeSchema<TreeSchemaIdentifier, {
+    __n_id__: FieldSchema<NodeKeyFieldKind, [TreeSchema<`com.fluidframework.nodeKey.${TreeSchemaIdentifier}`, {
     leafValue: ValueSchema.String;
     }>]>;
 };
@@ -1547,9 +1547,9 @@ export interface RangeEntry<T> {
 export function recordDependency(dependent: ObservingDependent | undefined, dependee: Dependee): void;
 
 // @alpha (undocumented)
-const recursiveStruct: TreeSchema<"recursiveStruct", {
+const recursiveStruct: TreeSchema<"Test Recursive Domain.struct", {
 structFields: {
-recursive: FieldSchema<Optional, [() => TreeSchema<"recursiveStruct", any>]>;
+recursive: FieldSchema<Optional, [() => TreeSchema<"Test Recursive Domain.struct", any>]>;
 number: FieldSchema<Required_2, [TreeSchema<"com.fluidframework.leaf.number", {
 leafValue: import("..").ValueSchema.Number;
 }>]>;
@@ -1557,9 +1557,9 @@ leafValue: import("..").ValueSchema.Number;
 }>;
 
 // @alpha (undocumented)
-const recursiveStruct2: TreeSchema<"recursiveStruct2", {
+const recursiveStruct2: TreeSchema<"Test Recursive Domain.struct2", {
 structFields: {
-recursive: FieldSchema<Optional, [() => TreeSchema<"recursiveStruct2", any>]>;
+recursive: FieldSchema<Optional, [() => TreeSchema<"Test Recursive Domain.struct2", any>]>;
 number: FieldSchema<Required_2, [TreeSchema<"com.fluidframework.leaf.number", {
 leafValue: import("..").ValueSchema.Number;
 }>]>;
@@ -1634,41 +1634,30 @@ declare namespace SchemaAware {
 export { SchemaAware }
 
 // @alpha @sealed
-export class SchemaBuilder {
-    constructor(name: string, lint?: Partial<SchemaLintConfiguration>, ...libraries: SchemaLibrary[]);
-    addLibraries(...libraries: SchemaLibrary[]): void;
-    static field<Kind extends FieldKind, T extends AllowedTypes>(kind: Kind, ...allowedTypes: T): FieldSchema<Kind, T>;
-    fieldNode<Name extends string, T extends FieldSchema>(name: Name, t: T): TreeSchema<Name, {
+export class SchemaBuilder<TScope extends string, TName extends number | string = string> extends SchemaBuilderBase<typeof FieldKinds, TScope, TName> {
+    fieldNode<Name extends TName, T extends FieldSchema>(name: Name, t: T): TreeSchema<`${TScope}.${Name}`, {
         structFields: {
             [""]: T;
         };
     }>;
-    fieldNodeRecursive<Name extends string, T>(name: Name, t: T): TreeSchema<Name, {
+    fieldNodeRecursive<Name extends TName, T>(name: Name, t: T): TreeSchema<`${TScope}.${Name}`, {
         structFields: {
             [""]: T;
         };
     }>;
     static fieldOptional<T extends AllowedTypes>(...allowedTypes: T): FieldSchema<typeof FieldKinds.optional, T>;
-    static fieldRecursive<Kind extends FieldKind, T extends FlexList<RecursiveTreeSchema>>(kind: Kind, ...allowedTypes: T): FieldSchema<Kind, T>;
     static fieldRequired<T extends AllowedTypes>(...allowedTypes: T): FieldSchema<typeof FieldKinds.required, T>;
     static fieldSequence<T extends AllowedTypes>(...t: T): FieldSchema<typeof FieldKinds.sequence, T>;
-    intoDocumentSchema<Kind extends FieldKind, Types extends AllowedTypes>(root: FieldSchema<Kind, Types>): TypedSchemaCollection<FieldSchema<Kind, Types>>;
-    intoLibrary(): SchemaLibrary;
-    leaf<Name extends string, T extends ValueSchema>(name: Name, t: T): TreeSchema<Name, {
-        leafValue: T;
-    }>;
-    map<Name extends string, T extends FieldSchema>(name: Name, fieldSchema: T): TreeSchema<Name, {
+    map<Name extends TName, T extends FieldSchema>(name: Name, fieldSchema: T): TreeSchema<`${TScope}.${Name}`, {
         mapFields: T;
     }>;
-    mapRecursive<Name extends string, T>(name: Name, t: T): TreeSchema<Name, {
+    mapRecursive<Name extends TName, T>(name: Name, t: T): TreeSchema<`${TScope}.${Name}`, {
         mapFields: T;
     }>;
-    // (undocumented)
-    readonly name: string;
-    struct<Name extends string, T extends RestrictiveReadonlyRecord<string, FieldSchema>>(name: Name, t: T): TreeSchema<Name, {
+    struct<Name extends TName, T extends RestrictiveReadonlyRecord<string, FieldSchema>>(name: Name, t: T): TreeSchema<`${TScope}.${Name}`, {
         structFields: T;
     }>;
-    structRecursive<Name extends string, T>(name: Name, t: T): TreeSchema<Name, {
+    structRecursive<Name extends TName, T>(name: Name, t: T): TreeSchema<`${TScope}.${Name}`, {
         structFields: T;
     }>;
 }

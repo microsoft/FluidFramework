@@ -39,17 +39,17 @@ import {
 	hasOptionalField,
 	library,
 	minimal,
-	numeric,
 	numericMap,
 	recursiveType,
 	testTrees,
 } from "../../../testTrees";
 import { typeboxValidator } from "../../../../external-utilities";
+import { leaf } from "../../../../domains";
 import { checkFieldEncode, checkNodeEncode } from "./checkEncode";
 
 const anyNodeShape = new NodeShape(undefined, undefined, [], anyFieldEncoder);
 const onlyTypeShape = new NodeShape(undefined, false, [], undefined);
-const numericShape = new NodeShape(numeric.name, true, [], undefined);
+const numericShape = new NodeShape(leaf.number.name, true, [], undefined);
 
 describe("schemaBasedEncoding", () => {
 	it("oneFromSet", () => {
@@ -98,7 +98,7 @@ describe("schemaBasedEncoding", () => {
 						return onlyTypeShape;
 					},
 				},
-				SchemaBuilder.fieldRequired(minimal, numeric),
+				SchemaBuilder.fieldRequired(minimal, leaf.number),
 				cache,
 			);
 			// There are multiple choices about how this case should be optimized, but the current implementation does this:
@@ -182,7 +182,7 @@ describe("schemaBasedEncoding", () => {
 			assert.deepEqual(bufferEmpty, [0]);
 			const bufferFull = checkNodeEncode(shape, cache, {
 				type: hasOptionalField.name,
-				fields: { field: [{ type: numeric.name, value: 5 }] },
+				fields: { field: [{ type: leaf.number.name, value: 5 }] },
 			});
 			assert.deepEqual(bufferFull, [[5]]);
 		});
@@ -212,7 +212,7 @@ describe("schemaBasedEncoding", () => {
 			assert.deepEqual(bufferEmpty, [[]]);
 			const bufferFull = checkNodeEncode(shape, cache, {
 				type: numericMap.name,
-				fields: { extra: [{ type: numeric.name, value: 5 }] },
+				fields: { extra: [{ type: leaf.number.name, value: 5 }] },
 			});
 			assert.deepEqual(bufferFull, [[new IdentifierToken("extra"), [5]]]);
 		});

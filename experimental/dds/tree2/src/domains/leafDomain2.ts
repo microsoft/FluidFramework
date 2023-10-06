@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKind, FieldKinds, schemaBuilder2 } from "../feature-libraries";
+import { FieldKind, FieldKinds, schemaBuilder3 } from "../feature-libraries";
 import { ValueSchema } from "../core";
 
 class ExtendedSchemaBuilder<
 	TFieldKinds extends Record<string, FieldKind>,
 	TScope extends string,
 	TName extends number | string = string,
-> extends schemaBuilder2.SchemaBuilder<TFieldKinds, TScope, TName> {
+> extends schemaBuilder3.SchemaBuilder<TFieldKinds, TScope, TName> {
 	public leaf<Name extends TName, T extends ValueSchema>(
 		name: Name,
 		valueSchema: T,
-	): schemaBuilder2.Holder<{ identifier: `${TScope}.${Name}`; leafValue: T }> {
+	): schemaBuilder3.Holder<{ identifier: `${TScope}.${Name}`; leafValue: T }> {
 		const identifier = this.scoped(name);
 		const schema = class {
 			public static readonly identifier = identifier;
