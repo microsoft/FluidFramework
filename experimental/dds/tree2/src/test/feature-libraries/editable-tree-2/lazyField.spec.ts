@@ -55,9 +55,9 @@ function initializeCursor(context: Context, anchor: FieldAnchor): ITreeSubscript
 
 describe("LazyField", () => {
 	it("LazyField implementations do not allow edits to detached trees", () => {
-		const builder = new SchemaBuilder("lazyTree");
+		const builder = new SchemaBuilder({ scope: "lazyTree" });
 		builder.struct("empty", {});
-		const schema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
+		const schema = builder.toDocumentSchema(SchemaBuilder.fieldOptional(Any));
 		const forest = forestWithContent({ schema, initialTree: {} });
 		const context = getReadonlyContext(forest, schema);
 		const cursor = initializeCursor(context, detachedFieldAnchor);
@@ -133,7 +133,7 @@ describe("LazyOptionalField", () => {
 		it("Any", () => {
 			// #region Tree and schema initialization
 
-			const builder = new SchemaBuilder("test");
+			const builder = new SchemaBuilder({ scope: "test" });
 			const booleanLeafSchema = builder.leaf("bool", ValueSchema.Boolean);
 			const recursiveStructSchema = builder.structRecursive("recursiveStruct", {
 				flag: SchemaBuilder.fieldRequired(booleanLeafSchema),
@@ -143,7 +143,7 @@ describe("LazyOptionalField", () => {
 				),
 			});
 			const rootSchema = SchemaBuilder.fieldOptional(builder.struct("struct", {}));
-			const schema = builder.intoDocumentSchema(rootSchema);
+			const schema = builder.toDocumentSchema(rootSchema);
 
 			const { context, cursor } = initializeTreeWithContent({ schema, initialTree: {} });
 
@@ -172,7 +172,7 @@ describe("LazyOptionalField", () => {
 		it("Primitive", () => {
 			// #region Tree and schema initialization
 
-			const builder = new SchemaBuilder("test");
+			const builder = new SchemaBuilder({ scope: "test" });
 			const booleanLeafSchema = builder.leaf("bool", ValueSchema.Boolean);
 			const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
 			const recursiveStructSchema = builder.structRecursive("recursiveStruct", {
@@ -183,7 +183,7 @@ describe("LazyOptionalField", () => {
 				),
 			});
 			const rootSchema = SchemaBuilder.fieldOptional(builder.struct("struct", {}));
-			const schema = builder.intoDocumentSchema(rootSchema);
+			const schema = builder.toDocumentSchema(rootSchema);
 
 			const { context, cursor } = initializeTreeWithContent({ schema, initialTree: {} });
 
@@ -214,7 +214,7 @@ describe("LazyOptionalField", () => {
 		it("Struct", () => {
 			// #region Tree and schema initialization
 
-			const builder = new SchemaBuilder("test");
+			const builder = new SchemaBuilder({ scope: "test" });
 			const booleanLeafSchema = builder.leaf("bool", ValueSchema.Boolean);
 			const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
 			const structLeafSchema = builder.struct("struct", {
@@ -229,7 +229,7 @@ describe("LazyOptionalField", () => {
 				),
 			});
 			const rootSchema = SchemaBuilder.fieldOptional(structLeafSchema);
-			const schema = builder.intoDocumentSchema(rootSchema);
+			const schema = builder.toDocumentSchema(rootSchema);
 
 			const { context, cursor } = initializeTreeWithContent({ schema, initialTree: {} });
 
@@ -262,10 +262,10 @@ describe("LazyOptionalField", () => {
 
 	describe("length", () => {
 		it("No value", () => {
-			const builder = new SchemaBuilder("test");
+			const builder = new SchemaBuilder({ scope: "test" });
 			const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
 			const rootSchema = SchemaBuilder.fieldOptional(numberLeafSchema);
-			const schema = builder.intoDocumentSchema(rootSchema);
+			const schema = builder.toDocumentSchema(rootSchema);
 
 			const { context, cursor } = initializeTreeWithContent({
 				schema,
@@ -283,10 +283,10 @@ describe("LazyOptionalField", () => {
 		});
 
 		it("With value", () => {
-			const builder = new SchemaBuilder("test");
+			const builder = new SchemaBuilder({ scope: "test" });
 			const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
 			const rootSchema = SchemaBuilder.fieldOptional(numberLeafSchema);
-			const schema = builder.intoDocumentSchema(rootSchema);
+			const schema = builder.toDocumentSchema(rootSchema);
 
 			const { context, cursor } = initializeTreeWithContent({ schema, initialTree: 42 });
 
@@ -310,11 +310,11 @@ describe("LazyOptionalField", () => {
 			| SchemaAware.TypedField<FieldSchema, SchemaAware.ApiMode.Flexible>
 			| readonly ITreeCursorSynchronous[]
 			| ITreeCursorSynchronous,
-	): LazyOptionalField<[TreeSchema<"leaf">]> {
-		const builder = new SchemaBuilder("test");
+	): LazyOptionalField<[TreeSchema<"test.leaf">]> {
+		const builder = new SchemaBuilder({ scope: "test" });
 		const leafSchema = builder.leaf("leaf", kind);
 		const rootSchema = SchemaBuilder.fieldOptional(leafSchema);
-		const schema = builder.intoDocumentSchema(rootSchema);
+		const schema = builder.toDocumentSchema(rootSchema);
 
 		const { context, cursor } = initializeTreeWithContent({ schema, initialTree });
 
@@ -334,8 +334,8 @@ describe("LazyOptionalField", () => {
 			| SchemaAware.TypedField<FieldSchema, SchemaAware.ApiMode.Flexible>
 			| readonly ITreeCursorSynchronous[]
 			| ITreeCursorSynchronous,
-	): LazyOptionalField<[TreeSchema<"struct">]> {
-		const builder = new SchemaBuilder("test");
+	): LazyOptionalField<[TreeSchema<"test.struct">]> {
+		const builder = new SchemaBuilder({ scope: "test" });
 		const booleanLeafSchema = builder.leaf("bool", ValueSchema.Boolean);
 		const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
 		const leafSchema = builder.struct("struct", {
@@ -343,7 +343,7 @@ describe("LazyOptionalField", () => {
 			bar: SchemaBuilder.fieldOptional(numberLeafSchema),
 		});
 		const rootSchema = SchemaBuilder.fieldOptional(leafSchema);
-		const schema = builder.intoDocumentSchema(rootSchema);
+		const schema = builder.toDocumentSchema(rootSchema);
 
 		const { context, cursor } = initializeTreeWithContent({ schema, initialTree });
 

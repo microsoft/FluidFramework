@@ -336,7 +336,7 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
  * - When polymorphism over {@link FieldSchema} (and not just a union of {@link AllowedTypes}) is required.
  * For example when encoding a schema for a type like
  * `Foo[] | Bar[]`, `Foo | Foo[]` or `Optional<Foo> | Optional<Bar>` (Where `Optional` is the Optional field kind, not TypeScript's `Optional`).
- * Since this schema system only allows `|` of {@link TreeSchema} (and only when declaring a {@link FieldSchema}), see {@link SchemaBuilder.field},
+ * Since this schema system only allows `|` of {@link TreeSchema} (and only when declaring a {@link FieldSchema}), see {@link SchemaBuilderBase.field},
  * these aggregate types are most simply expressed by creating fieldNodes for the terms like `Foo[]`, and `Optional<Foo>`.
  * Note that these are distinct from types like `(Foo | Bar)[]` and `Optional<Foo | Bar>` which can be expressed as single fields without extra nodes.
  * - When a distinct merge identity is desired for a field.
@@ -353,6 +353,11 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
  * Instead {@link FieldNode}s can be use to achieve something similar, more like:
  * `FieldNode<Sequence<Foo>> | FieldNode<Sequence<Bar>>` or `OptionalField<FieldNode<Sequence<Foo>>>`.
  *
+ * @privateRemarks
+ * TODO: The rule walking over the tree via enumerable own properties is lossless (see [ReadMe](./README.md) for details)
+ * fails to be true for recursive field nodes with field kind optional, since the length of the chain of field nodes is lost.
+ * THis could be fixed by tweaking the unboxing rules, or simply ban view schema that would have this problem (check for recursive optional field nodes).
+ * Replacing the field node pattern with one where the FieldNode node exposes APIs from its field instead of unboxing could have the same issue, and same solutions.
  * @alpha
  */
 export interface FieldNode<TSchema extends FieldNodeSchema> extends TreeNode {
@@ -698,7 +703,7 @@ export interface OptionalField<TTypes extends AllowedTypes> extends TreeField {
 }
 
 /**
- * Field that an immutable {@link StableNodeKey} identifying this node.
+ * Field that contains an immutable {@link StableNodeKey} identifying this node.
  * @alpha
  */
 export interface NodeKeyField extends TreeField {
