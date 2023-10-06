@@ -1648,6 +1648,9 @@ export class SchemaBuilder<TScope extends string, TName extends number | string 
     static fieldOptional<T extends AllowedTypes>(...allowedTypes: T): FieldSchema<typeof FieldKinds.optional, T>;
     static fieldRequired<T extends AllowedTypes>(...allowedTypes: T): FieldSchema<typeof FieldKinds.required, T>;
     static fieldSequence<T extends AllowedTypes>(...t: T): FieldSchema<typeof FieldKinds.sequence, T>;
+    leaf<Name extends TName, T extends ValueSchema>(name: Name, t: T): TreeSchema<`${TScope}.${Name}`, {
+        leafValue: T;
+    }>;
     map<Name extends TName, T extends FieldSchema>(name: Name, fieldSchema: T): TreeSchema<`${TScope}.${Name}`, {
         mapFields: T;
     }>;
@@ -1660,6 +1663,27 @@ export class SchemaBuilder<TScope extends string, TName extends number | string 
     structRecursive<Name extends TName, T>(name: Name, t: T): TreeSchema<`${TScope}.${Name}`, {
         structFields: T;
     }>;
+}
+
+// @alpha
+export class SchemaBuilderBase<TFieldKinds extends Record<string, FieldKind>, TScope extends string, TName extends number | string = string> {
+    constructor(options: {
+        scope: TScope;
+        lint?: Partial<SchemaLintConfiguration>;
+        libraries?: SchemaLibrary[];
+    });
+    // (undocumented)
+    protected addNodeSchema<T extends TreeSchema<string, any>>(schema: T): void;
+    static field<Kind extends FieldKind, T extends AllowedTypes>(kind: Kind, ...allowedTypes: T): FieldSchema<Kind, T>;
+    static fieldRecursive<Kind extends FieldKind, T extends FlexList<RecursiveTreeSchema>>(kind: Kind, ...allowedTypes: T): FieldSchema<Kind, T>;
+    finalize(): SchemaLibrary;
+    // (undocumented)
+    get name(): string;
+    // (undocumented)
+    readonly scope: TScope;
+    // (undocumented)
+    protected scoped<Name extends TName>(name: Name): `${TScope}.${Name}` & TreeSchemaIdentifier;
+    toDocumentSchema<Kind extends FieldKind, Types extends AllowedTypes>(root: FieldSchema<Kind, Types>): TypedSchemaCollection<FieldSchema<Kind, Types>>;
 }
 
 // @alpha

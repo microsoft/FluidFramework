@@ -52,7 +52,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 	const { optional, required, sequence } = FieldKinds;
 
 	// Example Schema:
-	const builder = new SchemaBuilder({ scope: "Schema Aware tests", libraries: [leaf.library] });
+	const builder = new SchemaBuilder({ scope: "SchemaAwareTests", libraries: [leaf.library] });
 
 	// Declare a simple type which just holds a number.
 	const numberSchema = leaf.number;
@@ -118,7 +118,12 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 	const b1: BallTree = { x: 1, y: 2, size: 10 };
 	const b1x: BallTree = { x: 1, y: 2, size: undefined }; // TODO: restore ability to omit optional fields.
 	const b2: BallTree = { [typeNameSymbol]: ballSchema.name, x: 1, y: 2, size: undefined };
-	const b4: BallTree = { [typeNameSymbol]: "ball", x: 1, y: n3, size: undefined };
+	const b4: BallTree = {
+		[typeNameSymbol]: "SchemaAwareTests.ball",
+		x: 1,
+		y: n3,
+		size: undefined,
+	};
 	const b6: BallTree = { [typeNameSymbol]: ballSchema.name, x: 1, y: n3, size: undefined };
 
 	// This is type safe, so we can only access fields that are in the schema.

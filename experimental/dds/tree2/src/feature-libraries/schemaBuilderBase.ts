@@ -142,7 +142,7 @@ export class SchemaBuilderBase<
 	 * Determine the multiplicity, viewing and editing APIs as well as the merge resolution policy.
 	 * @param allowedTypes - What types of children are allowed in this field.
 	 * @returns a {@link FieldSchema} which can be used as a struct field (see {@link SchemaBuilder.struct}),
-	 * a map field (see {@link SchemaBuilder.map}), a field node(see {@link SchemaBuilder.fieldNode}) or the root field (see {@link SchemaBuilder.toDocumentSchema}).
+	 * a map field (see {@link SchemaBuilder.map}), a field node(see {@link SchemaBuilder.fieldNode}) or the root field (see {@link SchemaBuilderBase.toDocumentSchema}).
 	 *
 	 * @privateRemarks
 	 * TODO: since this APi surface is using classes, maybe just have users do `new FieldSchema` instead?
@@ -156,7 +156,7 @@ export class SchemaBuilderBase<
 
 	/**
 	 * Define a schema for a field.
-	 * Same as {@link SchemaBuilder.field} but is less type safe and supports recursive types.
+	 * Same as {@link SchemaBuilderBase.field} but is less type safe and supports recursive types.
 	 * This API is less safe to work around a limitation of TypeScript.
 	 *
 	 * T must extends `AllowedTypes`: This cannot be enforced via TypeScript since such an "extends" clauses cause recursive types to error with:

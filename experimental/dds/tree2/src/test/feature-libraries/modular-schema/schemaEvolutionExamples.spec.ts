@@ -78,9 +78,9 @@ function assertEnumEqual<TEnum extends { [key: number]: string }>(
 }
 
 describe("Schema Evolution Examples", () => {
-	const contentTypesBuilder = new SchemaBuilder(
-		"Schema Evolution Examples: default content types",
-	);
+	const contentTypesBuilder = new SchemaBuilder({
+		scope: "Schema Evolution Examples: default content types",
+	});
 
 	// Define some schema and identifiers for them for use in these examples:
 	const canvasIdentifier: TreeSchemaIdentifier = brand("86432448-8454-4c86-a39c-699afbbdb753");
@@ -106,11 +106,10 @@ describe("Schema Evolution Examples", () => {
 
 	const defaultContentLibrary = contentTypesBuilder.finalize();
 
-	const containersBuilder = new SchemaBuilder(
-		"Schema Evolution Examples: default containers",
-		{},
-		defaultContentLibrary,
-	);
+	const containersBuilder = new SchemaBuilder({
+		scope: "Schema Evolution Examples: default containers",
+		libraries: [defaultContentLibrary],
+	});
 
 	// A type that can be used to position items without an inherent position within the canvas.
 	const positionedCanvasItem = containersBuilder.struct(positionedCanvasItemIdentifier, {
@@ -138,11 +137,10 @@ describe("Schema Evolution Examples", () => {
 	it("basic usage", () => {
 		// Collect our view schema.
 		// This will represent our view schema for a simple canvas application.
-		const viewCollection: TypedSchemaCollection = new SchemaBuilder(
-			"basic usage",
-			{},
-			treeViewSchema,
-		).toDocumentSchema(root);
+		const viewCollection: TypedSchemaCollection = new SchemaBuilder({
+			scope: "basic usage",
+			libraries: [treeViewSchema],
+		}).toDocumentSchema(root);
 
 		// This is where legacy schema handling logic for schematize.
 		const adapters: Adapters = {};
@@ -189,11 +187,10 @@ describe("Schema Evolution Examples", () => {
 
 			// This example picks the first approach.
 			// Lets simulate the developers of the app making this change by modifying the view schema:
-			const viewCollection2 = new SchemaBuilder(
-				"basic usage2",
-				{},
-				treeViewSchema,
-			).toDocumentSchema(tolerantRoot);
+			const viewCollection2 = new SchemaBuilder({
+				scope: "basic usage2",
+				libraries: [treeViewSchema],
+			}).toDocumentSchema(tolerantRoot);
 			const view2 = new ViewSchema(defaultSchemaPolicy, adapters, viewCollection2);
 			// When we open this document, we should check it's compatibility with our application:
 			const compat = view2.checkCompatibility(stored);
@@ -248,11 +245,10 @@ describe("Schema Evolution Examples", () => {
 			assertEnumEqual(Compatibility, compatNew.write, Compatibility.Compatible);
 
 			// Now lets imagine some time passes, and the developers want to add a second content type:
-			const builderWithCounter = new SchemaBuilder(
-				"builderWithCounter",
-				{},
-				defaultContentLibrary,
-			);
+			const builderWithCounter = new SchemaBuilder({
+				scope: "builderWithCounter",
+				libraries: [defaultContentLibrary],
+			});
 			const counterIdentifier: TreeSchemaIdentifier = brand(
 				"0d8da0ca-b3ba-4025-93a3-b8f181379e3b",
 			);

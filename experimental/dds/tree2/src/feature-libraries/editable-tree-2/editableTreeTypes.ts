@@ -336,7 +336,7 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
  * - When polymorphism over {@link FieldSchema} (and not just a union of {@link AllowedTypes}) is required.
  * For example when encoding a schema for a type like
  * `Foo[] | Bar[]`, `Foo | Foo[]` or `Optional<Foo> | Optional<Bar>` (Where `Optional` is the Optional field kind, not TypeScript's `Optional`).
- * Since this schema system only allows `|` of {@link TreeSchema} (and only when declaring a {@link FieldSchema}), see {@link SchemaBuilder.field},
+ * Since this schema system only allows `|` of {@link TreeSchema} (and only when declaring a {@link FieldSchema}),
  * these aggregate types are most simply expressed by creating fieldNodes for the terms like `Foo[]`, and `Optional<Foo>`.
  * Note that these are distinct from types like `(Foo | Bar)[]` and `Optional<Foo | Bar>` which can be expressed as single fields without extra nodes.
  * - When a distinct merge identity is desired for a field.

@@ -134,7 +134,7 @@ export class SchemaBuilder<
 
 	/**
 	 * Define a schema for a {@link RequiredField}.
-	 * Shorthand or passing `FieldKinds.required` to {@link SchemaBuilder.field}.
+	 * Shorthand or passing `FieldKinds.required` to {@link SchemaBuilderBase.field}.
 	 *
 	 * @privateRemarks
 	 * TODO: Consider adding even shorter syntax where:
