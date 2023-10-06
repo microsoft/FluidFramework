@@ -15,14 +15,11 @@ import {
 	Any,
 	type FieldKind,
 	FieldKinds,
-	FieldSchema,
-	SchemaAware,
 	SchemaBuilder,
 } from "../../../feature-libraries";
 import {
 	FieldAnchor,
 	FieldKey,
-	type ITreeCursorSynchronous,
 	type ITreeSubscriptionCursor,
 	rootFieldKey,
 	TreeNavigationResult,
@@ -255,22 +252,9 @@ describe("LazyField", () => {
 		const rootSchema = SchemaBuilder.fieldOptional(leafDomain.number);
 		const schema = builder.intoDocumentSchema(rootSchema);
 
-		/**
-		 * Creates a tree using {@link rootSchema} and returns a field associated with the root field.
-		 */
-		function createField<TRoot extends FieldSchema = FieldSchema>(
-			initialTree:
-				| SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Flexible>
-				| readonly ITreeCursorSynchronous[]
-				| ITreeCursorSynchronous,
-		) {
-			const { context, cursor } = initializeTreeWithContent({ schema, initialTree });
-
-			return new LazyOptionalField(context, rootSchema, cursor, rootFieldAnchor);
-		}
-
 		describe("Field with value", () => {
-			const field = createField(42);
+			const { context, cursor } = initializeTreeWithContent({ schema, initialTree: 42 });
+			const field = new LazyOptionalField(context, rootSchema, cursor, rootFieldAnchor);
 
 			it("at", () => {
 				assert.equal(field.at(0), 42);
@@ -301,7 +285,11 @@ describe("LazyField", () => {
 		});
 
 		describe("Field without value", () => {
-			const field = createField(undefined);
+			const { context, cursor } = initializeTreeWithContent({
+				schema,
+				initialTree: undefined,
+			});
+			const field = new LazyOptionalField(context, rootSchema, cursor, rootFieldAnchor);
 
 			it("at", () => {
 				// Invalid to request the value if there isn't one.
@@ -377,29 +365,21 @@ describe("LazyField", () => {
 		const rootSchema = SchemaBuilder.fieldSequence(leafDomain.number);
 		const schema = builder.intoDocumentSchema(rootSchema);
 
-		describe("at", () => {
-			it("Unboxes", () => {
-				const { context, cursor } = initializeTreeWithContent({
-					schema,
-					initialTree: [37, 42],
-				});
+		const { context, cursor } = initializeTreeWithContent({
+			schema,
+			initialTree: [37, 42],
+		});
 
-				const sequence = new LazySequence(context, rootSchema, cursor, rootFieldAnchor);
+		const sequence = new LazySequence(context, rootSchema, cursor, rootFieldAnchor);
 
-				assert.equal(sequence.length, 2);
-				assert.equal(sequence.at(0), 37);
-				assert.equal(sequence.at(1), 42);
-			});
+		it("at", () => {
+			assert.equal(sequence.length, 2);
+			assert.equal(sequence.at(0), 37);
+			assert.equal(sequence.at(1), 42);
+			assert.throws(() => sequence.at(2));
 		});
 
 		it("boxedAt", () => {
-			const { context, cursor } = initializeTreeWithContent({
-				schema,
-				initialTree: [37, 42],
-			});
-
-			const sequence = new LazySequence(context, rootSchema, cursor, rootFieldAnchor);
-
 			const boxedResult0 = sequence.boxedAt(0);
 			assert.equal(boxedResult0.type, leafDomain.number.name);
 			assert.equal(boxedResult0.value, 37);
@@ -407,116 +387,35 @@ describe("LazyField", () => {
 			const boxedResult1 = sequence.boxedAt(1);
 			assert.equal(boxedResult1.type, leafDomain.number.name);
 			assert.equal(boxedResult1.value, 42);
+
+			assert.throws(() => sequence.boxedAt(2));
 		});
 
-		describe("length", () => {
-			it("Empty", () => {
-				const { context, cursor } = initializeTreeWithContent({
-					schema,
-					initialTree: [],
-				});
-
-				const sequence = new LazySequence(context, rootSchema, cursor, rootFieldAnchor);
-
-				assert.equal(sequence.length, 0);
-			});
-
-			it("Non-empty", () => {
-				const { context, cursor } = initializeTreeWithContent({
-					schema,
-					initialTree: [37, 42],
-				});
-
-				const sequence = new LazySequence(context, rootSchema, cursor, rootFieldAnchor);
-
-				assert.equal(sequence.length, 2);
-			});
+		it("length", () => {
+			assert.equal(sequence.length, 2);
 		});
 
-		describe("map", () => {
-			it("Empty", () => {
-				const { context, cursor } = initializeTreeWithContent({
-					schema,
-					initialTree: [],
-				});
-
-				const sequence = new LazySequence(context, rootSchema, cursor, rootFieldAnchor);
-
-				const mapResult = sequence.map((value) => value);
-				assert.equal(mapResult.length, 0);
-			});
-
-			it("Non-empty", () => {
-				const { context, cursor } = initializeTreeWithContent({
-					schema,
-					initialTree: [37, 42],
-				});
-
-				const sequence = new LazySequence(context, rootSchema, cursor, rootFieldAnchor);
-
-				const mapResult = sequence.map((value) => value);
-				assert.equal(mapResult.length, 2);
-				assert.equal(mapResult[0], 37);
-				assert.equal(mapResult[1], 42);
-			});
+		it("map", () => {
+			const mapResult = sequence.map((value) => value);
+			assert.equal(mapResult.length, 2);
+			assert.equal(mapResult[0], 37);
+			assert.equal(mapResult[1], 42);
 		});
 
-		describe("mapBoxed", () => {
-			it("Empty", () => {
-				const { context, cursor } = initializeTreeWithContent({
-					schema,
-					initialTree: [],
-				});
-
-				const sequence = new LazySequence(context, rootSchema, cursor, rootFieldAnchor);
-
-				const mapResult = sequence.mapBoxed((value) => value);
-				assert.equal(mapResult.length, 0);
-			});
-
-			it("Non-empty", () => {
-				const { context, cursor } = initializeTreeWithContent({
-					schema,
-					initialTree: [37, 42],
-				});
-
-				const sequence = new LazySequence(context, rootSchema, cursor, rootFieldAnchor);
-
-				const mapResult = sequence.mapBoxed((value) => value);
-				assert.equal(mapResult.length, 2);
-				assert.equal(mapResult[0].type, leafDomain.number.name);
-				assert.equal(mapResult[0].value, 37);
-				assert.equal(mapResult[1].type, leafDomain.number.name);
-				assert.equal(mapResult[1].value, 42);
-			});
+		it("mapBoxed", () => {
+			const mapResult = sequence.mapBoxed((value) => value);
+			assert.equal(mapResult.length, 2);
+			assert.equal(mapResult[0].type, leafDomain.number.name);
+			assert.equal(mapResult[0].value, 37);
+			assert.equal(mapResult[1].type, leafDomain.number.name);
+			assert.equal(mapResult[1].value, 42);
 		});
 
-		describe("asArray", () => {
-			it("Empty", () => {
-				const { context, cursor } = initializeTreeWithContent({
-					schema,
-					initialTree: [],
-				});
-
-				const sequence = new LazySequence(context, rootSchema, cursor, rootFieldAnchor);
-
-				const array = sequence.asArray;
-				assert.equal(array.length, 0);
-			});
-
-			it("Non-empty", () => {
-				const { context, cursor } = initializeTreeWithContent({
-					schema,
-					initialTree: [37, 42],
-				});
-
-				const sequence = new LazySequence(context, rootSchema, cursor, rootFieldAnchor);
-
-				const array = sequence.asArray;
-				assert.equal(array.length, 2);
-				assert.equal(array[0], 37);
-				assert.equal(array[1], 42);
-			});
+		it("asArray", () => {
+			const array = sequence.asArray;
+			assert.equal(array.length, 2);
+			assert.equal(array[0], 37);
+			assert.equal(array[1], 42);
 		});
 	});
 });
