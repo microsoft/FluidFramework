@@ -1,5 +1,5 @@
 {
-	"name": "@fluid-internal/platform-dependent",
+	"name": "@fluid-private/platform-dependent",
 	"version": "2.0.0-internal.7.1.0",
 	"private": true,
 	"description": "Helper package that separates code for browser and server.",

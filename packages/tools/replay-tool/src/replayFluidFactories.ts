@@ -99,7 +99,7 @@ const allDdsFactories: IChannelFactory[] = [
 export class ReplayDataStoreFactory
 	implements IFluidDataStoreFactory, Partial<IFluidDataStoreRegistry>
 {
-	public readonly type = "@fluid-internal/replay-tool";
+	public readonly type = "@fluid-private/replay-tool";
 
 	public get IFluidDataStoreFactory() {
 		return this;

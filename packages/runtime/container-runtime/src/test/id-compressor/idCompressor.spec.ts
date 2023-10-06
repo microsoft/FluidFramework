@@ -12,7 +12,7 @@ import {
 	SessionSpaceCompressedId,
 	StableId,
 } from "@fluidframework/runtime-definitions";
-import { take } from "@fluid-internal/stochastic-test-utils";
+import { take } from "@fluid-private/stochastic-test-utils";
 import { IdCompressor, createSessionId } from "../../id-compressor";
 import {
 	performFuzzActions,

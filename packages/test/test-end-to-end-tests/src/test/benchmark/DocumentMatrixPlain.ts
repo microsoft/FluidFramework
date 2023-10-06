@@ -28,7 +28,7 @@ import {
 	DocumentMatrixPlainInfo,
 	assertDocumentTypeInfo,
 	isDocumentMatrixPlainInfo,
-} from "@fluid-internal/test-version-utils";
+} from "@fluid-private/test-version-utils";
 import {
 	ConfigTypes,
 	IConfigProviderBase,

@@ -1,4 +1,4 @@
-# @fluid-internal/test-version-utils
+# @fluid-private/test-version-utils
 
 This is a package for writing and setting up Fluid end to end tests using `mocha` that will generate variants with
 a specific driver and different version combinations of Fluid API between layers via `TestObjectProvider` provided
@@ -134,3 +134,9 @@ Legacy versions of all packages in all categories are installed regardless of wh
 For now, the current version are statically bound to also provide type. Although it can be switch to
 dynamic loading for consistency (or don't want to force the script to be loaded if they are not needed).
 Currently, we don't have such scenario yet.
+
+## Trademark
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks
+or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.

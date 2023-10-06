@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
-import { take } from '@fluid-internal/stochastic-test-utils';
+import { take } from '@fluid-private/stochastic-test-utils';
 import { fail, Mutable } from '../Common';
 import { defaultClusterCapacity, IdCompressor, isFinalId, isLocalId } from '../id-compressor/IdCompressor';
 import { IdCreationRange, UnackedLocalId, SerializedIdCompressorWithNoSession } from '../id-compressor';

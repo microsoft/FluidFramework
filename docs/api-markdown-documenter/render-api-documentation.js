@@ -50,13 +50,13 @@ async function renderApiDocumentation() {
 		includeTopLevelDocumentHeading: false, // This will be added automatically by Hugo
 		createDefaultLayout: layoutContent,
 		packageFilterPolicy: (apiPackage) => {
-			// Skip `@fluid-internal` packages
+			// Skip `@fluid-private` packages
 			const packageName = apiPackage.displayName;
 			const packageScope = PackageName.getScope(packageName);
 
 			console.log(`${packageName}: ${packageScope}`);
 
-			return ["@fluid-internal"].includes(packageScope);
+			return ["@fluid-private"].includes(packageScope);
 		},
 		fileNamePolicy: (apiItem) => {
 			return apiItem.kind === ApiItemKind.Model

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { generatePairwiseOptions } from "@fluid-internal/test-pairwise-generator";
+import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { IContainerLoadMode, LoaderHeader } from "@fluidframework/container-definitions";
 
@@ -24,7 +24,7 @@ import {
 	ITestObjectProvider,
 	timeoutPromise,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluid-internal/test-version-utils";
+import { describeFullCompat } from "@fluid-private/test-version-utils";
 
 const loadOptions: IContainerLoadMode[] = generatePairwiseOptions<IContainerLoadMode>({
 	deltaConnection: [undefined, "none", "delayed"],

@@ -22,7 +22,7 @@ import {
 	AsyncReducer as Reducer,
 	SaveInfo,
 	saveOpsToFile,
-} from "@fluid-internal/stochastic-test-utils";
+} from "@fluid-private/stochastic-test-utils";
 import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
@@ -135,11 +135,11 @@ function getSaveInfo(
  * type Operation = InsertOperation | RemoveOperation;
  * ```
  *
- * It would then typically use utilities from \@fluid-internal/stochastic-test-utils to write a generator
+ * It would then typically use utilities from \@fluid-private/stochastic-test-utils to write a generator
  * for inserting/removing content, and a reducer for interpreting the serializable operations in terms of
  * SimpleSharedString's public API.
  *
- * See \@fluid-internal/stochastic-test-utils's README for more details on this step.
+ * See \@fluid-private/stochastic-test-utils's README for more details on this step.
  *
  * Then, it could define a model like so:
  * ```typescript

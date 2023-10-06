@@ -1,4 +1,4 @@
-# @fluid-internal/platform-dependent
+# @fluid-private/platform-dependent
 
 ## 2.0.0-internal.7.0.0
 

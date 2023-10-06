@@ -1,4 +1,4 @@
-# @fluid-internal/test-service-load
+# @fluid-private/test-service-load
 
 _Note: This tool has dependencies on Microsoft-internal systems._
 

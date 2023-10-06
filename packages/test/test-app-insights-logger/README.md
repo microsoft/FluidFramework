@@ -1,4 +1,4 @@
-# @fluid-internal/test-app-insights-logger
+# @fluid-private/test-app-insights-logger
 
 Logger for collecting events in Azure Application Insights.
 

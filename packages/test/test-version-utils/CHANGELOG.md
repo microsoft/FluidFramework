@@ -1,4 +1,4 @@
-# @fluid-internal/test-version-utils
+# @fluid-private/test-version-utils
 
 ## 2.0.0-internal.7.0.0
 

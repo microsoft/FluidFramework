@@ -1,4 +1,4 @@
-# @fluid-internal/test-drivers
+# @fluid-private/test-drivers
 
 ## 2.0.0-internal.7.0.0
 

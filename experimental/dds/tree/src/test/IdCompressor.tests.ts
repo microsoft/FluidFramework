@@ -7,7 +7,7 @@ import { strict as assert } from 'assert';
 import { expect } from 'chai';
 import { v4, v5 } from 'uuid';
 import { MockLogger } from '@fluidframework/telemetry-utils';
-import { take } from '@fluid-internal/stochastic-test-utils';
+import { take } from '@fluid-private/stochastic-test-utils';
 import { validateAssertionError } from '@fluidframework/test-runtime-utils';
 import {
 	IdCompressor,

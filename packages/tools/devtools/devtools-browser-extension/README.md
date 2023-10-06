@@ -1,4 +1,4 @@
-# @fluid-internal/devtools-browser-extension
+# @fluid-private/devtools-browser-extension
 
 This package contains a browser (Chrome) developer tools extension for use with [@fluid-experimental/devtools][].
 It offers visual insights into the workings of the Fluid Framework in your application.

@@ -16,7 +16,7 @@ import {
 	StableId,
 	initialClusterCapacity,
 } from "@fluidframework/runtime-definitions";
-import { take } from "@fluid-internal/stochastic-test-utils";
+import { take } from "@fluid-private/stochastic-test-utils";
 import { IdCompressor, createSessionId } from "../../id-compressor";
 import { FinalCompressedId, LocalCompressedId, isFinalId, isLocalId, fail } from "./testCommon";
 import {

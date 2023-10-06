@@ -1,4 +1,4 @@
-# @fluid-internal/test-loader-utils
+# @fluid-private/test-loader-utils
 
 ## 2.0.0-internal.7.0.0
 

@@ -17,7 +17,7 @@ import {
 	describeInstallVersions,
 	getContainerRuntimeApi,
 	getDataRuntimeApi,
-} from "@fluid-internal/test-version-utils";
+} from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { FlushMode, IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";

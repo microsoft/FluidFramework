@@ -40,7 +40,7 @@
 	},
 	"dependencies": {
 		"@fluid-experimental/react-inputs": "workspace:~",
-		"@fluid-internal/app-insights-logger": "workspace:~",
+		"@fluid-private/app-insights-logger": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/counter": "workspace:~",

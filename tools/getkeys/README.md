@@ -1,4 +1,4 @@
-# @fluid-internal/getkeys
+# @fluid-private/getkeys
 
 This tool is specifically for Microsoft internal development.
 
@@ -22,3 +22,9 @@ outdated and had issues (e.g. not retrieving all the existing secrets from the v
 streamline it and make it behave consistently for everyone who runs it; we might remove the (deactivated) REST
 fallback approach, or fix it (start by updating the relevant NPM packages) and remove the AzureCLI flow. [Relevant
 discussion](https://teams.microsoft.com/l/message/19:50292e8934024fc19d6ca2080dd7681e@thread.skype/1657054734667?tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47&groupId=9ce27575-2f82-4689-abdb-bcff07e8063b&parentMessageId=1657054734667&teamName=Fluid%20Framework&channelName=Dev&createdTime=1657054734667).
+
+## Trademark
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks
+or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.

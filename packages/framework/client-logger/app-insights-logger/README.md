@@ -1,4 +1,4 @@
-# @fluid-internal/app-insights-logger
+# @fluid-private/app-insights-logger
 
 ## Overview
 

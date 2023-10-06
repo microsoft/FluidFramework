@@ -1,4 +1,4 @@
-# @fluid-internal/replay-tool
+# @fluid-private/replay-tool
 
 ## 2.0.0-internal.7.0.0
 

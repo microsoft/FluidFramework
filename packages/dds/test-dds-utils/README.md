@@ -1,4 +1,4 @@
-# @fluid-internal/test-dds-utils
+# @fluid-private/test-dds-utils
 
 Utilities for writing unit tests for DDS in Fluid Framework.
 
@@ -57,7 +57,7 @@ The caller is responsible for the following:
 ## Eventual Consistency Fuzz Tests
 
 This package also provides a [generic harness](./src/ddsFuzzHarness.ts) for writing eventual consistency fuzz tests for a DDS.
-This model is written using [@fluid-internal/stochastic-test-utils](../../test/stochastic-test-utils/README.md).
+This model is written using [@fluid-private/stochastic-test-utils](../../test/stochastic-test-utils/README.md).
 See documentation on `createDDSFuzzSuite` and `DDSFuzzModel` for more details.
 
 The harness currently supports testing eventual consistency of op application using Fluid's set of [mocks](../../runtime/test-runtime-utils/README.md)
@@ -69,3 +69,9 @@ The generic aspects of this model could be improved to fuzz test correctness a f
 
 -   Summarization correctness
 -   Offline (`applyStashedOp` implementation)
+
+## Trademark
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks
+or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.

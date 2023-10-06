@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { unreachableCase } from "@fluidframework/core-utils";
 import { singleTextCursor, SequenceField as SF, NodeChangeset } from "../../../feature-libraries";
 import { jsonNumber } from "../../../domains";

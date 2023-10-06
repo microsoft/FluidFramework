@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { combineReducersAsync } from "@fluid-internal/stochastic-test-utils";
-import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
+import { combineReducersAsync } from "@fluid-private/stochastic-test-utils";
+import { DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import { singleTextCursor } from "../../../feature-libraries";
 import { brand, fail } from "../../../util";
 import { validateTreeConsistency } from "../../utils";

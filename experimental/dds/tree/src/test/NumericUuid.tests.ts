@@ -7,7 +7,7 @@
 
 import { strict as assert } from 'assert';
 import { expect } from 'chai';
-import { makeRandom } from '@fluid-internal/stochastic-test-utils';
+import { makeRandom } from '@fluid-private/stochastic-test-utils';
 import { validateAssertionError } from '@fluidframework/test-runtime-utils';
 import { compareStrings } from '../Common';
 import {

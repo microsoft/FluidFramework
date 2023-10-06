@@ -11,13 +11,13 @@ import {
 	combineReducersAsync,
 	createWeightedAsyncGenerator,
 	takeAsync,
-} from "@fluid-internal/stochastic-test-utils";
+} from "@fluid-private/stochastic-test-utils";
 import {
 	Client,
 	createDDSFuzzSuite,
 	DDSFuzzModel,
 	DDSFuzzTestState,
-} from "@fluid-internal/test-dds-utils";
+} from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { DirectoryFactory } from "../../directory";
 import { IDirectory } from "../../interfaces";

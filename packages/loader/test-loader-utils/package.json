@@ -1,5 +1,5 @@
 {
-	"name": "@fluid-internal/test-loader-utils",
+	"name": "@fluid-private/test-loader-utils",
 	"version": "2.0.0-internal.7.1.0",
 	"description": "Mocks and other test utilities for the Fluid Framework Loader",
 	"homepage": "https://fluidframework.com",

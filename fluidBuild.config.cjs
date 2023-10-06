@@ -175,26 +175,21 @@ module.exports = {
 
 			mustPublish: {
 				// These packages will always be published to npm.
-				npm: [
-					"@fluidframework",
-					"fluid-framework",
-					"tinylicious",
-					"@fluid-internal/client-utils",
-				],
+				npm: ["@fluidframework", "fluid-framework", "tinylicious"],
 				// A list of packages known to be an internally published package but not to npm. Note that packages published
 				// to npm will also be published internally, however. This should be a minimal set required for legacy compat of
 				// internal partners or internal CI requirements.
 				internalFeed: [
 					// TODO: We may not need to publish test packages to the internal feed, remove these exceptions if possible.
-					"@fluid-internal/test-app-insights-logger",
-					"@fluid-internal/test-service-load",
+					"@fluid-private/test-app-insights-logger",
+					"@fluid-private/test-service-load",
 					// Most examples should be private, but table-document needs to publish internally for legacy compat
 					"@fluid-example/table-document",
 				],
 			},
 			mayPublish: {
 				// These packages may be published to npm in some cases. Policy doesn't enforce this.
-				npm: ["@fluid-experimental", "@fluid-tools"],
+				npm: ["@fluid-experimental", "@fluid-tools", "@fluid-internal"],
 				// These packages may be published to the internal feed in some cases. Policy doesn't enforce this.
 				internalFeed: ["@fluid-internal", "@fluid-private"],
 			},

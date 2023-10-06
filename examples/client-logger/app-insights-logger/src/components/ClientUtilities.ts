@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { FluidAppInsightsLogger } from "@fluid-internal/app-insights-logger";
+import { FluidAppInsightsLogger } from "@fluid-private/app-insights-logger";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import {

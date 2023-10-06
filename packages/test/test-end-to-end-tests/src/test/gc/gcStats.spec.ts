@@ -16,7 +16,7 @@ import {
 	ITestDataObject,
 	itExpects,
 	TestDataObjectType,
-} from "@fluid-internal/test-version-utils";
+} from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { defaultGCConfig } from "./gcTestConfigs.js";
 import { waitForContainerWriteModeConnectionWrite } from "./gcTestSummaryUtils.js";

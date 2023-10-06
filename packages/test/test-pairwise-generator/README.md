@@ -1,4 +1,4 @@
-# @fluid-internal/test-pairwise-generator
+# @fluid-private/test-pairwise-generator
 
 See [examples.spec.ts](./src/test/examples.spec.ts) for usage examples
 

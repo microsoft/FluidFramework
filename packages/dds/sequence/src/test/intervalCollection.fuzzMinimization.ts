@@ -9,8 +9,8 @@ import {
 	AsyncGenerator as Generator,
 	asyncGeneratorFromArray as generatorFromArray,
 	makeRandom,
-} from "@fluid-internal/stochastic-test-utils";
-import { DDSFuzzModel, replayTest } from "@fluid-internal/test-dds-utils";
+} from "@fluid-private/stochastic-test-utils";
+import { DDSFuzzModel, replayTest } from "@fluid-private/test-dds-utils";
 import { SharedStringFactory } from "../sequenceFactory";
 import { LoggingInfo, Operation, FuzzTestState, makeReducer } from "./intervalCollection.fuzzUtils";
 import { assertEquivalentSharedStrings } from "./intervalUtils";

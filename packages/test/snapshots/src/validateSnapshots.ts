@@ -14,7 +14,7 @@ import {
 	getNormalizedFileSnapshot,
 	loadContainer,
 	uploadSummary,
-} from "@fluid-internal/replay-tool";
+} from "@fluid-private/replay-tool";
 import { SnapshotStorageService } from "./snapshotStorageService";
 
 const metadataBlobName = ".metadata";

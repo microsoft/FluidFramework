@@ -1,4 +1,4 @@
-# @fluid-internal/stochastic-test-utils
+# @fluid-private/stochastic-test-utils
 
 This package contains utilities for writing stochastic tests (sometimes called fuzz tests).
 Such tests can be useful for stress testing systems with well-defined inputs and expected invariants.
@@ -166,3 +166,9 @@ This package also exports a `describeFuzz` helper, which is a simple wrapper aro
 
 -   `FUZZ_TEST_COUNT`: Controls the `testCount` value passed to the fuzz test's `describeFuzz` block callback.
 -   `FUZZ_STRESS_RUN`: If set to a truthy value, test commands in packages with fuzz tests will only run `describeFuzz` blocks.
+
+## Trademark
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks
+or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.

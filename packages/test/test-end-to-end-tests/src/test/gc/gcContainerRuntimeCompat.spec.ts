@@ -20,7 +20,7 @@ import {
 	waitForContainerConnection,
 	summarizeNow,
 } from "@fluidframework/test-utils";
-import { describeFullCompat, getContainerRuntimeApi } from "@fluid-internal/test-version-utils";
+import { describeFullCompat, getContainerRuntimeApi } from "@fluid-private/test-version-utils";
 import { pkgVersion } from "../../packageVersion.js";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 

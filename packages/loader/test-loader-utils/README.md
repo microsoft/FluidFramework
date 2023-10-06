@@ -1,4 +1,4 @@
-# @fluid-internal/test-loader-utils
+# @fluid-private/test-loader-utils
 
 Test utilities for the Fluid Framework Loader. Includes mock implementations of various loader interfaces.
 
@@ -24,12 +24,12 @@ package for more information including tools to convert between version schemes.
 To get started, install the package by running the following command:
 
 ```bash
-npm i @fluid-internal/test-loader-utils
+npm i @fluid-private/test-loader-utils
 ```
 
 ## API Documentation
 
-API documentation for **@fluid-internal/test-loader-utils** is available at <https://fluidframework.com/docs/apis/test-loader-utils>.
+API documentation for **@fluid-private/test-loader-utils** is available at <https://fluidframework.com/docs/apis/test-loader-utils>.
 
 ## Contribution Guidelines
 

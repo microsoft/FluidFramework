@@ -1,4 +1,4 @@
-# @fluid-internal/test-drivers
+# @fluid-private/test-drivers
 
 This package provides a simple and common driver abstraction that can be used by tests to be server agnostic.
 
@@ -43,3 +43,9 @@ E.g.
 ```bash
 npm run test:realsvc:run -- --driver=r11s --r11sEndpointName=docker
 ```
+
+## Trademark
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks
+or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.

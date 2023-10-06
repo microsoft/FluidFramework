@@ -1,5 +1,5 @@
 {
-	"name": "@fluid-internal/test-service-load",
+	"name": "@fluid-private/test-service-load",
 	"version": "2.0.0-internal.7.1.0",
 	"description": "Service load tests",
 	"homepage": "https://fluidframework.com",
@@ -76,9 +76,9 @@
 	},
 	"dependencies": {
 		"@fluid-internal/client-utils": "workspace:~",
-		"@fluid-internal/stochastic-test-utils": "workspace:~",
-		"@fluid-internal/test-drivers": "workspace:~",
-		"@fluid-internal/test-pairwise-generator": "workspace:~",
+		"@fluid-private/stochastic-test-utils": "workspace:~",
+		"@fluid-private/test-drivers": "workspace:~",
+		"@fluid-private/test-pairwise-generator": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",

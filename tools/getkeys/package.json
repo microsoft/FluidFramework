@@ -1,5 +1,5 @@
 {
-	"name": "@fluid-internal/getkeys",
+	"name": "@fluid-private/getkeys",
 	"version": "1.0.0",
 	"private": true,
 	"description": "",
