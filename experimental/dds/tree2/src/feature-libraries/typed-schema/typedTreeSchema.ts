@@ -20,6 +20,7 @@ import {
 	FlattenKeys,
 	Named,
 	requireAssignableTo,
+	compareSets,
 } from "../../util";
 import { FieldKinds } from "../default-field-kinds";
 import { FieldKind, FullSchemaPolicy } from "../modular-schema";
@@ -342,6 +343,24 @@ export class FieldSchema<out Kind extends FieldKind = FieldKind, const out Types
 
 	public get types(): TreeTypeSet {
 		return this.lazyTypes.value;
+	}
+
+	public equals(other: FieldSchema): boolean {
+		if (other.kind !== this.kind) {
+			return false;
+		}
+		if (other.types === undefined) {
+			return this.types === undefined;
+		}
+		if (this.types === undefined) {
+			return false;
+		}
+		return compareSets({
+			a: this.types,
+			b: other.types,
+			aExtra: () => false,
+			bExtra: () => false,
+		});
 	}
 }
 
