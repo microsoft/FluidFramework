@@ -433,16 +433,24 @@ export type StructTyped<TSchema extends StructSchema> = Struct &
  *
  * @alpha
  */
-export type StructFields<TFields extends RestrictiveReadonlyRecord<string, FieldSchema>> =
-	// Getters
-	{
-		readonly [key in keyof TFields]: UnboxField<TFields[key]>;
-	} & {
-		// boxed fields (TODO: maybe remove these when same as non-boxed version?)
-		readonly [key in keyof TFields as `boxed${Capitalize<key & string>}`]: TypedField<
-			TFields[key]
-		>;
-	};
+export type StructFields<TFields extends RestrictiveReadonlyRecord<string, FieldSchema>> = {
+	// boxed fields (TODO: maybe remove these when same as non-boxed version?)
+	readonly [key in keyof TFields as `boxed${Capitalize<key & string>}`]: TypedField<TFields[key]>;
+} & {
+	// Getter only
+	readonly [key in keyof TFields as TFields[key] extends number ? never : key]: UnboxField<
+		TFields[key]
+	>;
+} & {
+	// Getter + setter
+	[key in keyof TFields as TFields[key] extends number ? key : never]: UnboxField<TFields[key]>;
+} & {
+	// Setter method
+	readonly [key in keyof TFields as `set${Capitalize<key & string>}`]: (
+		content: FlexibleFieldContent<TFields[key]>,
+	) => void;
+};
+
 // TODO: Add `set` method when FieldKind provides a setter (and derive the type from it).
 // set(key: FieldKey, content: FlexibleFieldContent<TSchema["mapFields"]>): void;
 // {
@@ -453,7 +461,7 @@ export type StructFields<TFields extends RestrictiveReadonlyRecord<string, Field
 // This could be enabled to allow assignment via `=` in some cases.
 // & {
 // 	// Setter properties (when the type system permits)
-// 	[key in keyof TFields]: UnwrappedField<TFields[key]> & StructSetContent<TFields[key]>;
+// 	[key in keyof TFields]: UnboxField<TFields[key]> & StructSetContent<TFields[key]>;
 // }
 
 // #endregion
