@@ -685,6 +685,7 @@ importers:
       '@types/amqplib': ^0.5.17
       '@types/debug': ^4.1.5
       '@types/ioredis-mock': ^8.2.1
+      '@types/lodash': ^4.14.118
       '@types/lru-cache': ^5.1.0
       '@types/mocha': ^10.0.1
       '@types/node': ^18.17.1
@@ -699,9 +700,10 @@ importers:
       events: ^3.1.0
       ioredis: ^5.2.3
       ioredis-mock: ^8.2.3
+      lodash: ^4.17.21
       lru-cache: ^6.0.0
       mocha: ^10.2.0
-      mongodb: 4.17.0
+      mongodb: 4.17.1
       nconf: ^0.12.0
       prettier: ~3.0.3
       redis-commands: ^1.7.0
@@ -723,13 +725,15 @@ importers:
       '@fluidframework/server-services-telemetry': link:../services-telemetry
       '@fluidframework/server-services-utils': link:../services-utils
       '@socket.io/redis-emitter': 4.1.1
+      '@types/lodash': 4.14.195
       amqplib: 0.10.3
       axios: 1.5.0_debug@4.3.4
       debug: 4.3.4
       events: 3.3.0
       ioredis: 5.3.2
+      lodash: 4.17.21
       lru-cache: 6.0.0
-      mongodb: 4.17.0
+      mongodb: 4.17.1
       nconf: 0.12.0
       socket.io: 4.6.2
       telegrafjs: 0.1.3
@@ -11257,7 +11261,7 @@ packages:
       jws: 3.2.2
       lodash: 4.17.21
       ms: 2.1.3
-      semver: 7.5.3
+      semver: 7.5.4
 
   /jsrsasign/10.8.6:
     resolution: {integrity: sha512-bQmbVtsfbgaKBTWCKiDCPlUPbdlRIK/FzSwT3BzIgZl/cU6TqXu6pZJsCI/dJVrZ9Gir5GC4woqw9shH/v7MBw==}
@@ -12299,6 +12303,21 @@ packages:
       '@mongodb-js/saslprep': 1.1.0
     transitivePeerDependencies:
       - aws-crt
+    dev: true
+
+  /mongodb/4.17.1:
+    resolution: {integrity: sha512-MBuyYiPUPRTqfH2dV0ya4dcr2E5N52ocBuZ8Sgg/M030nGF78v855B3Z27mZJnp8PxjnUquEnAtjOsphgMZOlQ==}
+    engines: {node: '>=12.9.0'}
+    dependencies:
+      bson: 4.7.2
+      mongodb-connection-string-url: 2.6.0
+      socks: 2.7.1
+    optionalDependencies:
+      '@aws-sdk/credential-providers': 3.354.0
+      '@mongodb-js/saslprep': 1.1.0
+    transitivePeerDependencies:
+      - aws-crt
+    dev: false
 
   /morgan/1.10.0:
     resolution: {integrity: sha512-AbegBVI4sh6El+1gNwvD5YIck7nSA36weD7xvIxG4in80j/UoK8AEGaWnnz8v1GxonMCltmlNs5ZKbGvl9b1XQ==}
@@ -14598,7 +14617,6 @@ packages:
     hasBin: true
     dependencies:
       lru-cache: 6.0.0
-    dev: true
 
   /send/0.18.0:
     resolution: {integrity: sha512-qqWzuOjSFOuqPjFe4NOsMLafToQQwBSOEpS+FwEt3A2V3vKubTquT3vmLTQpFgMXp8AlFWFuP1qKaJZOtPpVXg==}

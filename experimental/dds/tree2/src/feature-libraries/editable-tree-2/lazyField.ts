@@ -24,13 +24,7 @@ import {
 	SequenceFieldEditBuilder,
 	ValueFieldEditBuilder,
 } from "../default-field-kinds";
-import {
-	assertValidIndex,
-	assertValidRangeIndices,
-	compareSets,
-	disposeSymbol,
-	fail,
-} from "../../util";
+import { assertValidIndex, assertValidRangeIndices, disposeSymbol, fail } from "../../util";
 import { AllowedTypes, FieldSchema } from "../typed-schema";
 import { Context } from "./context";
 import {
@@ -117,16 +111,7 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 			0x77c /* Narrowing must be done to a kind that exists in this context */,
 		);
 
-		if (schema.kind !== this.schema.kind) {
-			return false;
-		}
-		if (schema.types === undefined) {
-			return this.schema.types === undefined;
-		}
-		if (this.schema.types === undefined) {
-			return false;
-		}
-		return compareSets({ a: this.schema.types, b: schema.types });
+		return this.schema.equals(schema);
 	}
 
 	public isSameAs(other: TreeField): boolean {
