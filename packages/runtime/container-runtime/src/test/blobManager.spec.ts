@@ -119,8 +119,7 @@ export class MockRuntime
 							this.unprocessedBlobs.delete(blob);
 							return this.storage.createBlob(blob);
 						}
-					})
-					.catch(() => {});
+					});
 				this.unprocessedBlobs.add(blob);
 				this.emit("blob");
 				this.blobPs.push(P);

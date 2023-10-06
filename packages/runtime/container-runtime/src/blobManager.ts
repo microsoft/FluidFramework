@@ -504,10 +504,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		)
 			.then((response) => this.onUploadResolve(localId, response))
 			.catch((err) => {
+				this.pendingBlobs.get(localId)?.handleP.reject(err);
 				if (!this.pendingBlobs.get(localId)?.opsent) {
 					this.deletePendingBlob(localId);
 				}
-				throw err;
 			});
 	}
 

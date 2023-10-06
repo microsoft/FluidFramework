@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred, assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	FetchSource,
 	IDocumentStorageService,
@@ -24,7 +24,6 @@ import { runWithRetry } from "@fluidframework/driver-utils";
 export class RetriableDocumentStorageService implements IDocumentStorageService, IDisposable {
 	private _disposed = false;
 	private internalStorageService: IDocumentStorageService | undefined;
-	private readonly storageServiceDeferred: Deferred<void> = new Deferred();
 	constructor(
 		private readonly internalStorageServiceP: Promise<IDocumentStorageService>,
 		private readonly logger: ITelemetryLoggerExt,
@@ -34,7 +33,6 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 
 	private async initialize() {
 		this.internalStorageService = await this.internalStorageServiceP;
-		this.storageServiceDeferred.resolve();
 	}
 
 	public get policies(): IDocumentStorageServicePolicies | undefined {
@@ -61,25 +59,17 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 		version?: IVersion,
 		scenarioName?: string,
 	): Promise<ISnapshotTree | null> {
-		if (this.internalStorageService === undefined) {
-			await this.storageServiceDeferred.promise;
-		}
 		return this.runWithRetry(
 			async () =>
-				(this.internalStorageService as IDocumentStorageService).getSnapshotTree(
-					version,
-					scenarioName,
-				),
+				this.internalStorageServiceP.then(async (s)=> s.getSnapshotTree( version, scenarioName)),
 			"storage_getSnapshotTree",
 		);
 	}
 
 	public async readBlob(id: string): Promise<ArrayBufferLike> {
-		if (this.internalStorageService === undefined) {
-			await this.storageServiceDeferred.promise;
-		}
 		return this.runWithRetry(
-			async () => (this.internalStorageService as IDocumentStorageService).readBlob(id),
+			async () => 
+				this.internalStorageServiceP.then(async (s)=> s.readBlob(id)),
 			"storage_readBlob",
 		);
 	}
@@ -90,17 +80,14 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 		scenarioName?: string,
 		fetchSource?: FetchSource,
 	): Promise<IVersion[]> {
-		if (this.internalStorageService === undefined) {
-			await this.storageServiceDeferred.promise;
-		}
 		return this.runWithRetry(
 			async () =>
-				(this.internalStorageService as IDocumentStorageService).getVersions(
+			this.internalStorageServiceP.then(async (s)=> s.getVersions(
 					versionId,
 					count,
 					scenarioName,
 					fetchSource,
-				),
+				)),
 			"storage_getVersions",
 		);
 	}
@@ -109,9 +96,6 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 		summary: ISummaryTree,
 		context: ISummaryContext,
 	): Promise<string> {
-		if (this.internalStorageService === undefined) {
-			await this.storageServiceDeferred.promise;
-		}
 		// Not using retry loop here. Couple reasons:
 		// 1. If client lost connectivity, then retry loop will result in uploading stale summary
 		//    by stale summarizer after connectivity comes back. It will cause failures for this client and for
@@ -126,9 +110,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 			0x251 /* "creation summary has to have seq=0 && handle === undefined" */,
 		);
 		if (context.referenceSequenceNumber !== 0) {
-			return (
-				this.internalStorageService as IDocumentStorageService
-			).uploadSummaryWithContext(summary, context);
+			return this.internalStorageServiceP.then(async (s)=> s.uploadSummaryWithContext(summary, context));
 		}
 
 		// Creation flow with attachment blobs - need to do retries!
@@ -143,22 +125,16 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 	}
 
 	public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
-		if (this.internalStorageService === undefined) {
-			await this.storageServiceDeferred.promise;
-		}
 		return this.runWithRetry(
 			async () =>
-				(this.internalStorageService as IDocumentStorageService).downloadSummary(handle),
+			this.internalStorageServiceP.then(async (s)=> s.downloadSummary(handle)),
 			"storage_downloadSummary",
 		);
 	}
 
 	public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
-		if (this.internalStorageService === undefined) {
-			await this.storageServiceDeferred.promise;
-		}
 		return this.runWithRetry(
-			async () => (this.internalStorageService as IDocumentStorageService).createBlob(file),
+			async () => this.internalStorageServiceP.then(async (s)=> s.createBlob(file)),
 			"storage_createBlob",
 		);
 	}
