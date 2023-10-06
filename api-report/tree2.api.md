@@ -34,7 +34,7 @@ leafValue: ValueSchema.String;
 }>];
 
 // @alpha
-export type AllowedTypes = [Any] | readonly LazyItem<TreeSchema>[];
+export type AllowedTypes = readonly [Any] | readonly LazyItem<TreeSchema>[];
 
 // @alpha
 type AllowedTypesToTypedTrees<Mode extends ApiMode, T extends AllowedTypes> = [
@@ -641,11 +641,12 @@ interface Fields {
 }
 
 // @alpha @sealed
-export class FieldSchema<Kind extends FieldKind = FieldKind, Types = AllowedTypes> {
+export class FieldSchema<out Kind extends FieldKind = FieldKind, const out Types = AllowedTypes> {
     constructor(kind: Kind, allowedTypes: Types);
     // (undocumented)
     readonly allowedTypes: Types;
-    static readonly empty: FieldSchema<Forbidden, never[]>;
+    static readonly empty: FieldSchema<Forbidden, readonly []>;
+    equals(other: FieldSchema): boolean;
     // (undocumented)
     readonly kind: Kind;
     // (undocumented)
