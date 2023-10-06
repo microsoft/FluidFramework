@@ -1,7 +1,8 @@
 {
 	"name": "@fluid-experimental/spanner",
 	"version": "2.0.0-internal.7.1.0",
-	"description": "Distributed data structure for a single value",
+	"private": true,
+	"description": "Distributed data structure for swapping DDSes",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
