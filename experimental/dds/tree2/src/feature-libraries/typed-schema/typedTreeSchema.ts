@@ -345,6 +345,11 @@ export class FieldSchema<out Kind extends FieldKind = FieldKind, const out Types
 		return this.lazyTypes.value;
 	}
 
+	/**
+	 * Compare this schema to another.
+	 *
+	 * @returns true iff the schema are identical.
+	 */
 	public equals(other: FieldSchema): boolean {
 		if (other.kind !== this.kind) {
 			return false;
