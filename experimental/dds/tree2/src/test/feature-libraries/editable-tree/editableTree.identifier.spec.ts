@@ -22,14 +22,14 @@ const builder = new SchemaBuilder("EditableTree Node Keys", {}, nodeKeySchema);
 const stringSchema = builder.leaf("string", ValueSchema.String);
 const childNodeSchema = builder.struct("ChildNode", {
 	...nodeKeyField,
-	name: SchemaBuilder.fieldValue(stringSchema),
+	name: SchemaBuilder.fieldRequired(stringSchema),
 });
 
 const parentNodeSchema = builder.struct("ParentNode", {
 	...nodeKeyField,
 	children: SchemaBuilder.fieldSequence(childNodeSchema),
 });
-const rootField = SchemaBuilder.fieldValue(parentNodeSchema);
+const rootField = SchemaBuilder.fieldRequired(parentNodeSchema);
 const schema = builder.intoDocumentSchema(rootField);
 
 // TODO: this can probably be removed once daesun's stuff goes in

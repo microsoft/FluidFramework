@@ -247,7 +247,7 @@ export const OdspErrorTypes: {
 };
 
 // @public (undocumented)
-export type OdspErrorTypes = typeof OdspErrorTypes[keyof typeof OdspErrorTypes];
+export type OdspErrorTypes = (typeof OdspErrorTypes)[keyof typeof OdspErrorTypes];
 
 // @public
 export interface OdspResourceTokenFetchOptions extends TokenFetchOptions {

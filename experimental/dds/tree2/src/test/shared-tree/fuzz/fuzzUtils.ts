@@ -37,7 +37,7 @@ export const initialTreeState: JsonableTree = {
 	},
 };
 
-const rootFieldSchema = fieldSchema(FieldKinds.value);
+const rootFieldSchema = fieldSchema(FieldKinds.required);
 const rootNodeSchema = namedTreeSchema({
 	name: "TestValue",
 	mapFields: fieldSchema(FieldKinds.sequence),
