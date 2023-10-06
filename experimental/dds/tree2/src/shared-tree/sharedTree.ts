@@ -25,19 +25,17 @@ import {
 	buildForest,
 	ForestRepairDataStoreProvider,
 	SchemaEditor,
-	NodeKeyIndex,
-	createNodeKeyManager,
 	ModularChangeset,
-	nodeKeyFieldKey,
 	FieldSchema,
 	buildChunkedForest,
 	makeTreeChunker,
 } from "../feature-libraries";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
-import { JsonCompatibleReadOnly, brand } from "../util";
+import { JsonCompatibleReadOnly } from "../util";
 import { InitializeAndSchematizeConfiguration } from "./schematizedTree";
 import {
 	ISharedTreeView,
+	SharedTreeView,
 	ViewEvents,
 	createSharedTreeView,
 	schematizeView,
@@ -102,9 +100,8 @@ export class SharedTree
 	private readonly _events: ISubscribable<ViewEvents> &
 		IEmitter<ViewEvents> &
 		HasListeners<ViewEvents>;
-	public readonly view: ISharedTreeView;
+	public readonly view: SharedTreeView;
 	public readonly storedSchema: SchemaEditor<InMemoryStoredSchemaRepository>;
-	private readonly nodeKeyIndex: NodeKeyIndex;
 
 	public constructor(
 		id: string,
@@ -138,7 +135,6 @@ export class SharedTree
 			telemetryContextPrefix,
 		);
 		this.storedSchema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op), options);
-		this.nodeKeyIndex = new NodeKeyIndex(brand(nodeKeyFieldKey));
 		this._events = createEmitter<ViewEvents>();
 		this.view = createSharedTreeView({
 			branch: this.getLocalBranch(),
@@ -148,15 +144,13 @@ export class SharedTree
 			schema,
 			forest,
 			repairProvider,
-			nodeKeyManager: createNodeKeyManager(this.runtime.idCompressor),
-			nodeKeyIndex: this.nodeKeyIndex,
 			events: this._events,
 		});
 	}
 
 	public schematize<TRoot extends FieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
-	): ISharedTreeView {
+	): SharedTreeView {
 		// TODO:
 		// This should work, but schema editing on views doesn't send ops.
 		// this.view.schematize(config);
@@ -202,9 +196,6 @@ export class SharedTree
 
 	protected override async loadCore(services: IChannelStorageService): Promise<void> {
 		await super.loadCore(services);
-		// The identifier index must be populated after both the schema and forest have loaded.
-		// TODO: Create an ISummarizer for the identifier index and ensure it loads after the other indexes.
-		this.nodeKeyIndex.scanKeys(this.view.context);
 		this._events.emit("afterBatch");
 	}
 }

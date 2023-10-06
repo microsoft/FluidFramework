@@ -17,12 +17,18 @@ import {
 	IExperimentalIncrementalSummaryContext,
 	IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
-import { FieldSchema, TypedField } from "../feature-libraries";
+import {
+	FieldSchema,
+	TypedField,
+	createNodeKeyManager,
+	nodeKeyFieldKey,
+} from "../feature-libraries";
 import {
 	SharedTree,
 	SharedTreeOptions,
 	InitializeAndSchematizeConfiguration,
 } from "../shared-tree";
+import { brand } from "../util";
 
 /**
  * Configuration to specialize a Tree DDS for a particular use.
@@ -79,17 +85,27 @@ export class TypedTreeFactory<TRoot extends FieldSchema = FieldSchema> implement
 	): Promise<TypedTreeChannel<TRoot>> {
 		const tree = new SharedTree(id, runtime, channelAttributes, this.options, "SharedTree");
 		await tree.load(services);
-		const view = tree.schematize(this.options);
-		const root = view.editableTree2(this.options.schema);
-		return new ChannelWrapperWithRoot(tree, root);
+		return this.prepareChannel(runtime, tree);
 	}
 
 	public create(runtime: IFluidDataStoreRuntime, id: string): TypedTreeChannel<TRoot> {
 		const tree = new SharedTree(id, runtime, this.attributes, this.options, "SharedTree");
 		tree.initializeLocal();
-		// TODO: Once various issues with schema editing are fixed separate initialize from schematize, and explicitly do both here.
+		// TODO: Once various issues with schema editing are fixed separate initialize from schematize, do initialize here
+		return this.prepareChannel(runtime, tree);
+	}
+
+	private prepareChannel(
+		runtime: IFluidDataStoreRuntime,
+		tree: SharedTree,
+	): TypedTreeChannel<TRoot> {
+		const nodeKeyManager = createNodeKeyManager(runtime.idCompressor);
 		const view = tree.schematize(this.options);
-		const root = view.editableTree2(this.options.schema);
+		const root = view.editableTree2(
+			this.options.schema,
+			nodeKeyManager,
+			brand(nodeKeyFieldKey),
+		);
 		return new ChannelWrapperWithRoot(tree, root);
 	}
 }

@@ -99,8 +99,8 @@ describe("lazyTree", () => {
 
 			const errors: string[] = [];
 			// Confirm validateStructFieldName rejects all used names:
-			validateStructFieldName(name, () => "test", errors);
-			assert(errors.length > 0);
+			validateStructFieldName(name, () => "property test", errors);
+			assert(errors.length > 0, name);
 		}
 
 		// Ensure all existing properties are banned as field names:
