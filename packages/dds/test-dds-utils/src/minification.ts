@@ -70,7 +70,7 @@ export class FuzzTestMinimizer<
 		}
 
 		for (let i = 0; i < this.numIterations; i += 1) {
-			await this.applyRandomTransform();
+			await this.applyTransforms();
 			// some minimizations can only occur if two or more ops are modified
 			// at the same time
 			await this.applyNRandomTransforms(2);
@@ -96,12 +96,16 @@ export class FuzzTestMinimizer<
 		}
 	}
 
-	private async applyRandomTransform(): Promise<void> {
-		const transform = this.random.pick(this.transforms);
+	/**
+	 * Apply all transforms in a random order
+	 */
+	private async applyTransforms(): Promise<void> {
+		const transforms = [...this.transforms];
+		this.random.shuffle(transforms);
 
-		const opIdx = this.random.integer(0, this.operations.length - 1);
-
-		await this.applyTransform(transform, opIdx);
+		for (const transform of transforms) {
+			await this.applyTransform(transform);
+		}
 	}
 
 	private async applyNRandomTransforms(n: number): Promise<void> {
@@ -125,44 +129,47 @@ export class FuzzTestMinimizer<
 			);
 		}
 
-		const originalOperations: [TOperation, number][] = [];
+		const originalOperations: [string, number][] = [];
 
 		for (let i = 0; i < transforms.length; i++) {
 			const transform = transforms[i];
 			const op = this.operations[operationIdxs[i]];
 
-			originalOperations.push([
-				JSON.parse(JSON.stringify(op)) as TOperation,
-				operationIdxs[i],
-			]);
+			originalOperations.push([JSON.stringify(op), operationIdxs[i]]);
 
 			transform(op);
 		}
 
 		if (!(await this.assertFails())) {
 			for (const [op, idx] of originalOperations) {
-				this.operations[idx] = op;
+				this.operations[idx] = JSON.parse(op) as TOperation;
 			}
 		}
 	}
 
-	private async applyTransform(
-		transform: MinimizationTransform<TOperation>,
-		opIdx: number,
-	): Promise<void> {
-		if (opIdx >= this.operations.length) {
-			throw new Error("invalid op index. this indicates a bug in minimization.");
-		}
+	/**
+	 * Apply a given transform on each op until it can no longer make progress
+	 */
+	private async applyTransform(transform: MinimizationTransform<TOperation>): Promise<void> {
+		for (let opIdx = this.operations.length - 1; opIdx >= 0; opIdx--) {
+			// apply this transform at most 10 times on the current op
+			for (let i = 0; i < 10; i++) {
+				const op = this.operations[opIdx];
 
-		const op = this.operations[opIdx];
+				// deep clone the op as transforms modify by reference
+				const originalOp = JSON.stringify(op);
 
-		// deep clone the op as transforms modify by reference
-		const originalOp = JSON.parse(JSON.stringify(op)) as TOperation;
+				transform(op);
 
-		transform(op);
+				if (JSON.stringify(op) === originalOp) {
+					break;
+				}
 
-		if (!(await this.assertFails())) {
-			this.operations[opIdx] = originalOp;
+				if (!(await this.assertFails())) {
+					this.operations[opIdx] = JSON.parse(originalOp) as TOperation;
+					break;
+				}
+			}
 		}
 	}
 

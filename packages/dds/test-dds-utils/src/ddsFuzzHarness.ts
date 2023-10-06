@@ -1018,7 +1018,7 @@ function runTest<TChannelFactory extends IChannelFactory, TOperation extends Bas
 			const operations = JSON.parse(
 				readFileSync(saveInfo.filepath).toString(),
 			) as TOperation[];
-			const minimizer = new FuzzTestMinimizer(model, options, operations, seed, saveInfo, 50);
+			const minimizer = new FuzzTestMinimizer(model, options, operations, seed, saveInfo, 3);
 
 			const minimized = await minimizer.minimize();
 
