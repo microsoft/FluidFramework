@@ -66,9 +66,7 @@ describe("flub test-only-filter", () => {
 			const { filtered } = output;
 
 			const names = filtered.map((p) => p.name);
-			expect(names).to.not.be.containingAnyOf([
-				"@fluid-private/readme-command",
-			]);
+			expect(names).to.not.be.containingAnyOf(["@fluid-private/readme-command"]);
 		});
 
 	test.stdout()
