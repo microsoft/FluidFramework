@@ -113,12 +113,11 @@ export class FluidDataStoreRuntime
 		sharedObjectRegistry: ISharedObjectRegistry,
 		existing: boolean,
 	): FluidDataStoreRuntime {
-		return new FluidDataStoreRuntime(
-			context,
-			sharedObjectRegistry,
-			existing,
-			async (dataStoreRuntime) => dataStoreRuntime.entryPoint,
-		);
+		return new FluidDataStoreRuntime(context, sharedObjectRegistry, existing, () => {
+			throw new UsageError(
+				"FluidDataStoreRuntime.load is deprecated and should no longer be used",
+			);
+		});
 	}
 
 	/**
