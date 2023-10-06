@@ -37,7 +37,10 @@ export function create(
 	router.post("/:tenantId/:id/broadcast-signal", (request, response) => {
 		const tenantId = getParam(request.params, "tenantId");
 		const documentId = getParam(request.params, "id");
-		const signalContent = request?.body?.signalContent;
+		// This endpoint simply passes on signalContent as a blackbox so we don't
+		// do any validation on it here
+		const signalContent = getParam(request.body, "signalContent");
+
 		try {
 			const signalRoom: IRoom = { tenantId, documentId };
 			const payload: IBroadcastSignalEventPayload = { signalRoom, signalContent };
