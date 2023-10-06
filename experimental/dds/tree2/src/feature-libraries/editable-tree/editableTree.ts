@@ -30,7 +30,6 @@ import {
 	typeNameSymbol,
 	valueSymbol,
 } from "../contextuallyTyped";
-import { LocalNodeKey } from "../node-key";
 import { FieldKinds } from "../default-field-kinds";
 import {
 	EditableTreeEvents,
@@ -42,12 +41,7 @@ import {
 	treeStatus,
 } from "../untypedTree";
 import { TreeStatus } from "../editable-tree-2";
-import {
-	AdaptingProxyHandler,
-	adaptWithProxy,
-	getStableNodeKey,
-	treeStatusFromPath,
-} from "./utilities";
+import { AdaptingProxyHandler, adaptWithProxy, treeStatusFromPath } from "./utilities";
 import { ProxyContext } from "./editableTreeContext";
 import {
 	EditableField,
@@ -312,8 +306,6 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 				return target.context;
 			case on:
 				return target.on.bind(target);
-			case localNodeKeySymbol:
-				return getLocalNodeKey(target);
 			default:
 				return undefined;
 		}
@@ -455,13 +447,6 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 					value: target.on.bind(target),
 					writable: false,
 				};
-			case localNodeKeySymbol:
-				return {
-					configurable: true,
-					enumerable: false,
-					value: getLocalNodeKey(target),
-					writable: false,
-				};
 			default:
 				return undefined;
 		}
@@ -477,22 +462,4 @@ export function isEditableTree(field: UnwrappedEditableField): field is Editable
 		typeof field === "object" &&
 		isNodeProxyTarget(field[proxyTargetSymbol] as ProxyTarget<Anchor | FieldAnchor>)
 	);
-}
-
-/**
- * Retrieves the {@link LocalNodeKey} for the given node.
- * @remarks TODO: Optimize this to be a fast path that gets a {@link LocalNodeKey} directly from the
- * forest rather than getting the {@link StableNodeKey} and the compressing it.
- */
-function getLocalNodeKey(target: NodeProxyTarget): LocalNodeKey | undefined {
-	if (target.context.nodeKeyFieldKey === undefined) {
-		return undefined;
-	}
-
-	const stableNodeKey = getStableNodeKey(target.context.nodeKeyFieldKey, target.proxy);
-	if (stableNodeKey === undefined) {
-		return undefined;
-	}
-
-	return target.context.nodeKeys.localizeNodeKey(stableNodeKey);
 }
