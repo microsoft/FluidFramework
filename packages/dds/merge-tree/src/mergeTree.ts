@@ -4,7 +4,6 @@
  */
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-
 /* eslint-disable no-bitwise */
 
 import { assert } from "@fluidframework/core-utils";
