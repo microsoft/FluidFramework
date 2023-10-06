@@ -429,7 +429,6 @@ describe("Map Iteration Order", () => {
 			map.testApplyStashedOp(op3);
 
 			assertIterationOrder(map, ["2", "1", "3"]);
-			// assert.deepEqual(Array.from(map.keys()), ["2", "1", "3"]);
 
 			const op4: IMapDeleteOperation = { type: "delete", key: "1" };
 			map.testApplyStashedOp(op4);

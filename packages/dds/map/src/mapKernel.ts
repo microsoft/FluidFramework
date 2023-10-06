@@ -7,9 +7,13 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidSerializer, ValueType } from "@fluidframework/shared-object-base";
 import { assert } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { RedBlackTree, compareNumbers } from "@fluidframework/merge-tree";
-// eslint-disable-next-line import/no-deprecated
-import { ISerializableValue, ISerializedValue, ISharedMapEvents } from "./interfaces";
+import {
+	// eslint-disable-next-line import/no-deprecated
+	ISerializableValue,
+	ISerializedValue,
+	ISharedMapEvents,
+	CreationIndexTracker,
+} from "./interfaces";
 import {
 	IMapSetOperation,
 	IMapDeleteOperation,
@@ -186,31 +190,29 @@ export class MapKernel {
 	private readonly localValueMaker: LocalValueMaker;
 
 	/**
-	 * The index to track the acknowledgement order of entries
+	 * Assigns a unique ID to each acknowledged entry created in the map, facilitating the tracking
+	 * of key creation order.
+	 *
+	 * TODO: Consider replacing it with the sequence number for potential future attribution purposes.
 	 */
-	private creationIndex: number = 0;
+	private creationIndex: number = -1;
 
 	/**
-	 * Object to store the ack'd keys in creation order
+	 * The object to track the creation index of acknowledged entries, ensuring it aligns consistently
+	 * with the order of other clients, following the sequence number order precisely.
 	 */
-	private readonly ackedKeysIndex: RedBlackTree<number, string> = new RedBlackTree(
-		compareNumbers,
-	);
+	private readonly ackedKeysIndexTracker = new CreationIndexTracker();
 
 	/**
-	 * Object to store the mapping between the key and its creation index
+	 * The object to track the creation index of local created entries but uncommitted yet, following
+	 * the order of pending message ids.
+	 *
+	 * It does not require the assistance of the `keyToIndex` map.
 	 */
-	private readonly ackedKeysTracker: Map<string, number> = new Map();
+	private readonly localKeysIndexTracker = new CreationIndexTracker(false);
 
 	/**
-	 * Object to store the unack'd keys in creation order
-	 */
-	private readonly localKeysIndex: RedBlackTree<number, string> = new RedBlackTree(
-		compareNumbers,
-	);
-
-	/**
-	 * Object to store the message Id's for all set op's
+	 * The object to store the message Ids for all set op's
 	 */
 	private readonly pendingSetTracker: Map<string, number[]> = new Map();
 
@@ -384,21 +386,11 @@ export class MapKernel {
 	 * implementing an O(1) auxiliary memory iterator on RedBlackTree and using that.
 	 */
 	private getKeysInCreationOrder(): string[] {
-		// Get the local unack'd keys in creation order
-		const localKeys: string[] = [];
-		const ackedKeys: string[] = [];
-
-		this.localKeysIndex.mapRange((node) => {
-			if (!this.ackedKeysTracker.has(node.data)) {
-				localKeys.push(node.data);
-			}
-			return true;
-		}, localKeys);
-
-		this.ackedKeysIndex.mapRange((node) => {
-			ackedKeys.push(node.data);
-			return true;
-		}, localKeys);
+		// Get both ack'd and local uncommitted keys in creation order
+		const ackedKeys = this.ackedKeysIndexTracker.keys();
+		const localKeys = this.localKeysIndexTracker.keys(
+			(key) => !this.ackedKeysIndexTracker.has(key),
+		);
 
 		const keys = [...ackedKeys, ...localKeys];
 
@@ -447,7 +439,6 @@ export class MapKernel {
 
 		// If we are not attached, don't submit the op.
 		if (!this.isAttached()) {
-			// this.addAckedKeyIndex(key);
 			this.setLocalKeyIndexInDetached(key);
 			return;
 		}
@@ -469,7 +460,7 @@ export class MapKernel {
 			(this.pendingSetTracker.get(key) as number[])[0] = detachedCreationIndex;
 		} else {
 			this.pendingSetTracker.set(key, [detachedCreationIndex]);
-			this.localKeysIndex.put(detachedCreationIndex, key);
+			this.localKeysIndexTracker.set(key, detachedCreationIndex);
 		}
 	}
 
@@ -484,16 +475,12 @@ export class MapKernel {
 
 		// If we are not attached, don't submit the op.
 		if (!this.isAttached()) {
-			/*
-			const pos = this.ackedKeysTracker.get(key) as number;
-			this.ackedKeysTracker.delete(key);
-			this.ackedKeysIndex.remove(pos); */
 			this.deleteLocalKeyIndexInDetached(key);
 			return previousValue !== undefined;
 		}
 
 		// Update the unack'd deletion record
-		this.incrementLocalDeletionCount(key);
+		this.incrementPendingDeleteCount(key);
 
 		// Remove the key from ack'd insertions or all associated local pending set op's, it depends on
 		// whether the key is already ack'd or not
@@ -513,7 +500,7 @@ export class MapKernel {
 
 	private deleteLocalKeyIndexInDetached(key: string): void {
 		if (this.pendingSetTracker.has(key)) {
-			this.localKeysIndex.remove((this.pendingSetTracker.get(key) as number[])[0]);
+			this.localKeysIndexTracker.delete((this.pendingSetTracker.get(key) as number[])[0]);
 			this.pendingSetTracker.delete(key);
 		}
 	}
@@ -522,18 +509,17 @@ export class MapKernel {
 		const previousIndex: (number | number[])[] = [];
 
 		// If the deleted key is already ack'd, remove and backup its creation index
-		if (this.ackedKeysTracker.has(key)) {
-			const index = this.ackedKeysTracker.get(key) as number;
+		if (this.ackedKeysIndexTracker.has(key)) {
+			const index = this.ackedKeysIndexTracker.get(key) as number;
 			previousIndex.push(index);
-			this.ackedKeysTracker.delete(key);
-			this.ackedKeysIndex.remove(index);
+			this.ackedKeysIndexTracker.delete(key);
 		}
 		// If there exist pending set ops targeted on the deleted key, remove and backup
 		// the associated pending message ids
 		if (this.pendingSetTracker.has(key)) {
 			const pendingSetIds = this.pendingSetTracker.get(key) as number[];
 			previousIndex.push([...pendingSetIds]);
-			this.localKeysIndex.remove(pendingSetIds[0]);
+			this.localKeysIndexTracker.delete(pendingSetIds[0]);
 			this.pendingSetTracker.delete(key);
 		}
 
@@ -554,8 +540,7 @@ export class MapKernel {
 
 		// If we are not attached, don't submit the op.
 		if (!this.isAttached()) {
-			// this.clearAckedKeysIndex();
-			this.localKeysIndex.clear();
+			this.localKeysIndexTracker.clear();
 			this.pendingSetTracker.clear();
 			return;
 		}
@@ -577,12 +562,12 @@ export class MapKernel {
 	}
 
 	private clearKeysIndex() {
-		const ackedKeysTrackerCopy = new Map(this.ackedKeysTracker);
+		const ackedKeysTrackerCopy = new Map(this.ackedKeysIndexTracker.keyToIndex);
 		const pendingSetTrackerCopy = new Map(this.pendingSetTracker);
 		const pendingDeleteTrackerCopy = new Map(this.pendingDeleteTracker);
 
-		this.clearAckedKeysIndex();
-		this.localKeysIndex.clear();
+		this.ackedKeysIndexTracker.clear();
+		this.localKeysIndexTracker.clear();
 		this.pendingSetTracker.clear();
 		this.pendingDeleteTracker.clear();
 
@@ -614,7 +599,7 @@ export class MapKernel {
 
 	private getKeyIndex(key: string): number {
 		if (this.isAttached()) {
-			return this.ackedKeysTracker.get(key) as number;
+			return this.ackedKeysIndexTracker.get(key) as number;
 		}
 		return (this.pendingSetTracker.get(key) as number[])[0];
 	}
@@ -636,7 +621,10 @@ export class MapKernel {
 
 			this.data.set(localValue.key, localValue.value);
 			// fill the creation index for the loaded data
-			this.addAckedKeyIndex(localValue.key, serializable.index);
+			this.ackedKeysIndexTracker.set(
+				localValue.key,
+				serializable.index !== undefined ? serializable.index : ++this.creationIndex,
+			);
 		}
 	}
 
@@ -710,8 +698,7 @@ export class MapKernel {
 			// Rebuild the ackedKeysTracker and ackedInsertKeys
 			if (localOpMetadata.previousAckedKeysTracker !== undefined) {
 				for (const [key, index] of localOpMetadata.previousAckedKeysTracker) {
-					this.ackedKeysIndex.put(index, key);
-					this.ackedKeysTracker.set(key, index);
+					this.ackedKeysIndexTracker.set(key, index);
 				}
 			}
 
@@ -719,7 +706,7 @@ export class MapKernel {
 			if (localOpMetadata.previousPendingSetTracker !== undefined) {
 				for (const [key, messageIds] of localOpMetadata.previousPendingSetTracker) {
 					this.pendingSetTracker.set(key, Array.from(messageIds));
-					this.localKeysIndex.put(messageIds[0], key);
+					this.localKeysIndexTracker.set(key, messageIds[0]);
 				}
 			}
 
@@ -743,7 +730,7 @@ export class MapKernel {
 
 				// Remove the associated pending message id from the pendingSetTracker, it must
 				// exist in localKeysIndex since it is an "add" operation
-				this.localKeysIndex.remove(localOpMetadata.pendingMessageId);
+				this.localKeysIndexTracker.delete(localOpMetadata.pendingMessageId);
 				this.pendingSetTracker.delete(op.key);
 			} else if (
 				localOpMetadata.type === "edit" &&
@@ -762,16 +749,14 @@ export class MapKernel {
 				localOpMetadata.previousIndex !== undefined
 			) {
 				this.setCore(op.key as string, localOpMetadata.previousValue, true);
-				this.decrementLocalDeletionCount(op.key);
+				this.decrementPendingDeleteCount(op.key);
 
-				for (const pos of localOpMetadata.previousIndex) {
-					if (typeof pos === "number") {
-						// It indicates the deleted key was an ack'd key, we need to insert it back to the ackedKeys
-						this.ackedKeysTracker.set(op.key, pos);
-						this.ackedKeysIndex.put(pos, op.key);
+				for (const index of localOpMetadata.previousIndex) {
+					if (typeof index === "number") {
+						this.ackedKeysIndexTracker.set(op.key, index);
 					} else {
-						this.localKeysIndex.put(pos[0], op.key);
-						this.pendingSetTracker.set(op.key, pos);
+						this.localKeysIndexTracker.set(op.key, index[0]);
+						this.pendingSetTracker.set(op.key, index);
 					}
 				}
 			} else {
@@ -931,14 +916,15 @@ export class MapKernel {
 					this.ackPendingSetOp(op, pendingMessageId);
 				} else if (op.type === "delete") {
 					// Adjust the keys order if it is already ack'd
-					this.decrementLocalDeletionCount(op.key);
+					this.decrementPendingDeleteCount(op.key);
 				}
 			} else {
 				// We do not process the remote message at this moment, but it is possible to impact the order of ack'd keys
 				if (op.type === "set" && !this.pendingDeleteTracker.has(op.key)) {
-					this.addAckedKeyIndex(op.key);
+					// this.addAckedKeyIndex(op.key);
+					this.ackedKeysIndexTracker.set(op.key, ++this.creationIndex);
 				} else if (op.type === "delete") {
-					this.removeAckedKeyIndex(op.key);
+					this.ackedKeysIndexTracker.delete(op.key);
 				}
 			}
 			return false;
@@ -953,45 +939,19 @@ export class MapKernel {
 		// we need to ack this op
 		const pendingSetIds = this.pendingSetTracker.get(op.key);
 		if (pendingSetIds !== undefined && pendingSetIds[0] === pendingMessageId) {
-			this.addAckedKeyIndex(op.key);
+			this.ackedKeysIndexTracker.set(op.key, ++this.creationIndex);
 			pendingSetIds.shift();
 			if (pendingSetIds.length === 0) {
 				this.pendingSetTracker.delete(op.key);
 			}
 			// re-order the local inserted keys
-			if (this.localKeysIndex.get(pendingMessageId) !== undefined) {
-				this.localKeysIndex.remove(pendingMessageId);
+			if (this.localKeysIndexTracker.has(pendingMessageId)) {
+				this.localKeysIndexTracker.delete(pendingMessageId);
 				if (pendingSetIds.length > 0) {
-					this.localKeysIndex.put(pendingSetIds[0], op.key);
+					this.localKeysIndexTracker.set(op.key, pendingSetIds[0]);
 				}
 			}
 		}
-	}
-
-	private addAckedKeyIndex(key: string, index?: number): void {
-		if (!this.ackedKeysTracker.has(key)) {
-			if (index === undefined) {
-				const currentCreationIndex = this.creationIndex++;
-				this.ackedKeysTracker.set(key, currentCreationIndex);
-				this.ackedKeysIndex.put(currentCreationIndex, key);
-			} else {
-				this.ackedKeysTracker.set(key, index);
-				this.ackedKeysIndex.put(index, key);
-			}
-		}
-	}
-
-	private removeAckedKeyIndex(key: string): void {
-		if (this.ackedKeysTracker.has(key)) {
-			const index = this.ackedKeysTracker.get(key) as number;
-			this.ackedKeysTracker.delete(key);
-			this.ackedKeysIndex.remove(index);
-		}
-	}
-
-	private clearAckedKeysIndex(): void {
-		this.ackedKeysTracker.clear();
-		this.ackedKeysIndex.clear();
 	}
 
 	/**
@@ -1015,14 +975,14 @@ export class MapKernel {
 
 					return;
 				}
-				this.clearAckedKeysIndex();
+				this.ackedKeysIndexTracker.clear();
 
 				if (this.pendingKeys.size > 0) {
 					this.clearExceptPendingKeys();
 					return;
 				}
 				this.clearCore(local);
-				this.localKeysIndex.clear();
+				this.localKeysIndexTracker.clear();
 				this.pendingSetTracker.clear();
 				this.pendingDeleteTracker.clear();
 			},
@@ -1069,7 +1029,7 @@ export class MapKernel {
 				}
 				this.deleteCore(op.key, local);
 				// Adjust the keys order if the deleted key is already ack'd
-				this.removeAckedKeyIndex(op.key);
+				this.ackedKeysIndexTracker.delete(op.key);
 			},
 			submit: (op: IMapDeleteOperation, localOpMetadata: MapKeyLocalOpMetadata) => {
 				this.resubmitMapKeyMessage(op, localOpMetadata);
@@ -1078,7 +1038,7 @@ export class MapKernel {
 				// We don't reuse the metadata pendingMessageId but send a new one on each submit.
 				const previousValue = this.deleteCore(op.key, true);
 				const previousIndex = this.deleteKeysIndex(op.key);
-				this.incrementLocalDeletionCount(op.key);
+				this.incrementPendingDeleteCount(op.key);
 				const messageId = this.getMapKeyMessageId(op);
 				this.updatePendingSetIds(op, messageId);
 				return createKeyLocalOpMetadata(op, messageId, previousValue, previousIndex);
@@ -1094,7 +1054,7 @@ export class MapKernel {
 				const context = this.makeLocal(op.key, op.value);
 				this.setCore(op.key, context, local);
 				// Adjust the keys order if it is a fresh acked insertion
-				this.addAckedKeyIndex(op.key);
+				this.ackedKeysIndexTracker.set(op.key, ++this.creationIndex);
 			},
 			submit: (op: IMapSetOperation, localOpMetadata: MapKeyLocalOpMetadata) => {
 				this.resubmitMapKeyMessage(op, localOpMetadata);
@@ -1152,12 +1112,12 @@ export class MapKernel {
 		return pendingMessageId;
 	}
 
-	private incrementLocalDeletionCount(key: string): void {
+	private incrementPendingDeleteCount(key: string): void {
 		const count = this.pendingDeleteTracker.get(key) ?? 0;
 		this.pendingDeleteTracker.set(key, count + 1);
 	}
 
-	private decrementLocalDeletionCount(key: string): void {
+	private decrementPendingDeleteCount(key: string): void {
 		const count = this.pendingDeleteTracker.get(key) ?? 0;
 		this.pendingDeleteTracker.set(key, count - 1);
 		if (count <= 1) {
@@ -1175,15 +1135,15 @@ export class MapKernel {
 		if (op.type === "set") {
 			if (!this.pendingSetTracker.has(op.key)) {
 				this.pendingSetTracker.set(op.key, [pendingMessageId]);
-				this.localKeysIndex.put(pendingMessageId, op.key);
+				this.localKeysIndexTracker.set(op.key, pendingMessageId);
 			} else {
 				this.pendingSetTracker.get(op.key)?.push(pendingMessageId);
 			}
 		} else {
 			if (this.pendingSetTracker.has(op.key)) {
-				const pos = this.pendingSetTracker.get(op.key)?.[0];
+				const index = this.pendingSetTracker.get(op.key)?.[0];
 				this.pendingSetTracker.delete(op.key);
-				this.localKeysIndex.remove(pos as number);
+				this.localKeysIndexTracker.delete(index as number);
 			}
 		}
 	}
@@ -1242,10 +1202,10 @@ export class MapKernel {
 				if (pendingSetIds?.length === 0) {
 					this.pendingSetTracker.delete(op.key);
 				}
-				if (this.localKeysIndex.get(topPendingSetId) !== undefined) {
-					this.localKeysIndex.remove(topPendingSetId);
+				if (this.localKeysIndexTracker.has(topPendingSetId)) {
+					this.localKeysIndexTracker.delete(topPendingSetId);
 					if (pendingSetIds.length > 0) {
-						this.localKeysIndex.put(pendingSetIds[0], op.key);
+						this.localKeysIndexTracker.set(op.key, pendingSetIds[0]);
 					}
 				}
 			}
