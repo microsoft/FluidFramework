@@ -69,7 +69,7 @@
 		"ioredis": "^5.2.3",
 		"lodash": "^4.17.21",
 		"lru-cache": "^6.0.0",
-		"mongodb": "4.17.0",
+		"mongodb": "4.17.1",
 		"nconf": "^0.12.0",
 		"socket.io": "^4.5.3",
 		"telegrafjs": "^0.1.3",
