@@ -401,7 +401,7 @@ describe("Routerlicious", () => {
 							.expect(200);
 					});
 
-					it("/api/v1/:tenantId/:id/broadcast-signal", async () => {
+					it("/api/v1/:tenantId/:id/broadcast-signal malformed", async () => {
 						const body = {
 							signalContent: {},
 						};
