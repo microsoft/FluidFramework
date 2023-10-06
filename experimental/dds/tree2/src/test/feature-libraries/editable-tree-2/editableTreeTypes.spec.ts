@@ -37,7 +37,7 @@ import {
 	requireFalse,
 	requireTrue,
 } from "../../../util";
-import { EmptyKey } from "../../../core";
+import { EmptyKey, FieldKey } from "../../../core";
 import {
 	FieldKinds,
 	Any,
@@ -87,8 +87,8 @@ describe("editableTreeTypes", () => {
 		/**
 		 * Test doc comment.
 		 */
-		leaf: SchemaBuilder.fieldValue(jsonNumber),
-		polymorphic: SchemaBuilder.fieldValue(jsonNumber, jsonString),
+		leaf: SchemaBuilder.fieldRequired(jsonNumber),
+		polymorphic: SchemaBuilder.fieldRequired(jsonNumber, jsonString),
 		optionalLeaf: SchemaBuilder.fieldOptional(jsonNumber),
 		optionalObject: SchemaBuilder.fieldOptional(jsonObject),
 		sequence: SchemaBuilder.fieldSequence(jsonNumber),
@@ -103,7 +103,7 @@ describe("editableTreeTypes", () => {
 		/**
 		 * Data field.
 		 */
-		x: SchemaBuilder.fieldValue(jsonNumber),
+		x: SchemaBuilder.fieldRequired(jsonNumber),
 	});
 	type Recursive = TypedNode<typeof recursiveStruct>;
 
@@ -159,7 +159,7 @@ describe("editableTreeTypes", () => {
 			{ mapFields: typeof optionalNumberField }
 		>;
 		const mapNode = undefined as unknown as MapNode<typeof mapSchema>;
-		const unboxedMapIteration: number[] = [...mapNode];
+		const unboxedMapIteration: [FieldKey, number][] = [...mapNode];
 		const boxedMapIteration: TypedField<typeof optionalNumberField>[] = [
 			...mapNode[boxedIterator](),
 		];
