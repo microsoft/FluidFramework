@@ -73,7 +73,7 @@ export const DriverErrorTypes: {
 };
 
 // @public (undocumented)
-export type DriverErrorTypes = typeof DriverErrorTypes[keyof typeof DriverErrorTypes];
+export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErrorTypes];
 
 // @public
 export enum DriverHeader {

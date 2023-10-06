@@ -918,6 +918,7 @@ export class MergeTree {
 			const children = parent.children;
 			for (let childIndex = 0; childIndex < parent.childCount; childIndex++) {
 				const child = children[childIndex];
+				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when the first clause returns false.
 				if ((prevParent && child === prevParent) || child === node) {
 					break;
 				}
@@ -1633,6 +1634,7 @@ export class MergeTree {
 		}
 
 		if (
+			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when the first clause returns false.
 			(!_segmentGroup.previousProps && previousProps) ||
 			(_segmentGroup.previousProps && !previousProps)
 		) {
@@ -2483,8 +2485,8 @@ export class MergeTree {
 		}
 
 		const newOrder = Array.from(affectedSegments.map(({ data }) => data));
-		newOrder.forEach((seg) =>
-			seg.localRefs?.walkReferences((lref) => lref.callbacks?.beforeSlide?.(lref)),
+		newOrder.forEach(
+			(seg) => seg.localRefs?.walkReferences((lref) => lref.callbacks?.beforeSlide?.(lref)),
 		);
 		const perSegmentTrackingGroups = new Map<ISegment, TrackingGroup[]>();
 		for (const segment of newOrder) {
@@ -2524,8 +2526,8 @@ export class MergeTree {
 				this.nodeUpdateLengthNewStructure(node, false);
 			}
 		}
-		newOrder.forEach((seg) =>
-			seg.localRefs?.walkReferences((lref) => lref.callbacks?.afterSlide?.(lref)),
+		newOrder.forEach(
+			(seg) => seg.localRefs?.walkReferences((lref) => lref.callbacks?.afterSlide?.(lref)),
 		);
 	}
 

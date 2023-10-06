@@ -22,6 +22,7 @@ export {
 	TypedNodeUnion,
 	boxedIterator,
 	CheckTypesOverlap,
+	TreeStatus,
 } from "./editableTreeTypes";
 
 export {

@@ -415,6 +415,7 @@ describe("DDS Fuzz Harness", () => {
 					reducer: async ({ client }) => {
 						reducerSelectionCounts.increment(client.channel.id);
 					},
+					minimizationTransforms: [],
 				},
 				options,
 			);
@@ -861,15 +862,34 @@ describe("DDS Fuzz Harness", () => {
 				);
 			});
 
-			it("causes failure files to be written to disk", () => {
-				assert(fs.existsSync(path.join(jsonDir, "0.json")));
-				assert(fs.existsSync(path.join(jsonDir, "1.json")));
-				const contents: unknown = JSON.parse(
-					// eslint-disable-next-line unicorn/prefer-json-parse-buffer
-					fs.readFileSync(path.join(jsonDir, "0.json"), { encoding: "utf8" }),
-				);
-				assert.deepEqual(contents, [{ type: "attach" }, { clientId: "B", type: "noop" }]);
-			});
+			const inCi = !!process.env.TF_BUILD;
+			if (inCi) {
+				it("doesn't cause failure files to be written to disk", () => {
+					const file0Exists = fs.existsSync(path.join(jsonDir, "0.json"));
+					const file1Exists = fs.existsSync(path.join(jsonDir, "1.json"));
+
+					// we don't write files in CI to avoid superfluous computation
+					assert(!file0Exists, "expected file0 to not be written in CI");
+					assert(!file1Exists, "expected file0 to not be written in CI");
+				});
+			} else {
+				it("causes failure files to be written to disk", () => {
+					const file0Exists = fs.existsSync(path.join(jsonDir, "0.json"));
+					const file1Exists = fs.existsSync(path.join(jsonDir, "1.json"));
+
+					assert(file0Exists);
+					assert(file1Exists);
+
+					const contents: unknown = JSON.parse(
+						// eslint-disable-next-line unicorn/prefer-json-parse-buffer
+						fs.readFileSync(path.join(jsonDir, "0.json"), { encoding: "utf8" }),
+					);
+					assert.deepEqual(contents, [
+						{ type: "attach" },
+						{ clientId: "B", type: "noop" },
+					]);
+				});
+			}
 		});
 
 		describe("replay", () => {

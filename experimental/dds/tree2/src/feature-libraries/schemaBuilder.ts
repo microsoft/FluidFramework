@@ -217,17 +217,17 @@ export class SchemaBuilder {
 
 	/**
 	 * Define a schema for a {@link RequiredField}.
-	 * Shorthand or passing `FieldKinds.value` to {@link SchemaBuilder.field}.
+	 * Shorthand or passing `FieldKinds.required` to {@link SchemaBuilder.field}.
 	 *
 	 * @privateRemarks
 	 * TODO: Consider adding even shorter syntax where:
 	 * - AllowedTypes can be used as a FieldSchema (Or SchemaBuilder takes a default field kind).
 	 * - A TreeSchema can be used as AllowedTypes in the non-polymorphic case.
 	 */
-	public static fieldValue<T extends AllowedTypes>(
+	public static fieldRequired<T extends AllowedTypes>(
 		...allowedTypes: T
-	): FieldSchema<typeof FieldKinds.value, T> {
-		return SchemaBuilder.field(FieldKinds.value, ...allowedTypes);
+	): FieldSchema<typeof FieldKinds.required, T> {
+		return SchemaBuilder.field(FieldKinds.required, ...allowedTypes);
 	}
 
 	/**

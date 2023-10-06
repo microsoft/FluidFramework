@@ -10,7 +10,7 @@ import {
 	ApiItemTransformationConfiguration,
 	getApiItemTransformationConfigurationWithDefaults,
 } from "./configuration";
-import { doesItemRequireOwnDocument } from "./ApiItemUtilities";
+import { doesItemRequireOwnDocument } from "./ApiItemTransformUtilities";
 import { createBreadcrumbParagraph, createEntryPointList, wrapInSection } from "./helpers";
 import { apiItemToDocument, apiItemToSections } from "./TransformApiItem";
 

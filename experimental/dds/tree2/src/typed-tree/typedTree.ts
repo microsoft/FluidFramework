@@ -59,10 +59,10 @@ export class TypedTreeFactory<TRoot extends FieldSchema = FieldSchema> implement
 	public constructor(private readonly options: TypedTreeOptions<TRoot>) {
 		/**
 		 * TODO:
-		 * Either allow particular factory configurations to customize this string (for example `SharedTree:${configurationName}`),
+		 * Either allow particular factory configurations to customize this string (for example `https://graph.microsoft.com/types/tree/${configurationName}`),
 		 * and/or schematize as a separate step, after the tree is loaded/created.
 		 */
-		this.type = `SharedTree:${options.subtype}`;
+		this.type = `https://graph.microsoft.com/types/tree/${options.subtype}`;
 
 		this.attributes = {
 			type: this.type,
@@ -158,7 +158,10 @@ class ChannelWrapper implements IChannel {
  * IChannel wrapper that exposes a "root".
  */
 class ChannelWrapperWithRoot<T> extends ChannelWrapper {
-	public constructor(inner: IChannel, public readonly root: T) {
+	public constructor(
+		inner: IChannel,
+		public readonly root: T,
+	) {
 		super(inner);
 	}
 }
