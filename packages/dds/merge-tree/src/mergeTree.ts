@@ -37,6 +37,7 @@ import {
 	IncrementalExecOp,
 	IncrementalMapState,
 	InsertContext,
+	// eslint-disable-next-line import/no-deprecated
 	internedSpaces,
 	IRemovalInfo,
 	ISegment,
@@ -73,8 +74,11 @@ import {
 	refTypeIncludesFlag,
 	ReferencePosition,
 	DetachedReferencePosition,
+	// eslint-disable-next-line import/no-deprecated
 	RangeStackMap,
+	// eslint-disable-next-line import/no-deprecated
 	refHasRangeLabel,
+	// eslint-disable-next-line import/no-deprecated
 	refGetRangeLabels,
 	refGetTileLabels,
 	refHasTileLabel,
@@ -139,11 +143,13 @@ interface IReferenceSearchInfo {
 interface IMarkerSearchRangeInfo {
 	mergeTree: MergeTree;
 	rangeLabels: string[];
+	// eslint-disable-next-line import/no-deprecated
 	stacks: RangeStackMap;
 }
 
 function applyLeafRangeMarker(marker: Marker, searchInfo: IMarkerSearchRangeInfo) {
 	for (const rangeLabel of searchInfo.rangeLabels) {
+		// eslint-disable-next-line import/no-deprecated
 		if (refHasRangeLabel(marker, rangeLabel)) {
 			let currentStack = searchInfo.stacks[rangeLabel];
 			if (currentStack === undefined) {
@@ -260,6 +266,7 @@ function addTileIfNotPresent(tile: ReferencePosition, tiles: object) {
 	}
 }
 
+// eslint-disable-next-line import/no-deprecated
 function applyStackDelta(currentStackMap: RangeStackMap, deltaStackMap: RangeStackMap) {
 	// eslint-disable-next-line guard-for-in, no-restricted-syntax
 	for (const label in deltaStackMap) {
@@ -308,6 +315,7 @@ function addNodeReferences(
 	node: IMergeNode,
 	rightmostTiles: MapLike<ReferencePosition>,
 	leftmostTiles: MapLike<ReferencePosition>,
+	// eslint-disable-next-line import/no-deprecated
 	rangeStacks: RangeStackMap,
 ) {
 	function updateRangeInfo(label: string, refPos: ReferencePosition) {
@@ -333,6 +341,7 @@ function addNodeReferences(
 					addTileIfNotPresent(segment, leftmostTiles);
 				}
 				if (segment.refType & (ReferenceType.NestBegin | ReferenceType.NestEnd)) {
+					// eslint-disable-next-line import/no-deprecated
 					const rangeLabels = refGetRangeLabels(segment);
 					if (rangeLabels) {
 						for (const label of rangeLabels) {
@@ -353,6 +362,7 @@ function addNodeReferences(
 							addTileIfNotPresent(lref, leftmostTiles);
 						}
 						if (lref.refType & (ReferenceType.NestBegin | ReferenceType.NestEnd)) {
+							// eslint-disable-next-line import/no-deprecated
 							for (const label of refGetRangeLabels(lref)!) {
 								updateRangeInfo(label, lref);
 							}
@@ -401,6 +411,7 @@ class HierMergeBlock extends MergeBlock implements IHierBlock {
 		// eslint-disable-next-line guard-for-in, no-restricted-syntax
 		for (const key in this.rangeStacks) {
 			const stack = this.rangeStacks[key];
+			// eslint-disable-next-line import/no-deprecated
 			strbuf += internedSpaces(indentCount);
 			strbuf += `${key}: `;
 			for (const item of stack.items) {
@@ -907,6 +918,7 @@ export class MergeTree {
 			const children = parent.children;
 			for (let childIndex = 0; childIndex < parent.childCount; childIndex++) {
 				const child = children[childIndex];
+				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when the first clause returns false.
 				if ((prevParent && child === prevParent) || child === node) {
 					break;
 				}
@@ -1622,6 +1634,7 @@ export class MergeTree {
 		}
 
 		if (
+			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when the first clause returns false.
 			(!_segmentGroup.previousProps && previousProps) ||
 			(_segmentGroup.previousProps && !previousProps)
 		) {
@@ -2472,8 +2485,8 @@ export class MergeTree {
 		}
 
 		const newOrder = Array.from(affectedSegments.map(({ data }) => data));
-		newOrder.forEach((seg) =>
-			seg.localRefs?.walkReferences((lref) => lref.callbacks?.beforeSlide?.(lref)),
+		newOrder.forEach(
+			(seg) => seg.localRefs?.walkReferences((lref) => lref.callbacks?.beforeSlide?.(lref)),
 		);
 		const perSegmentTrackingGroups = new Map<ISegment, TrackingGroup[]>();
 		for (const segment of newOrder) {
@@ -2513,8 +2526,8 @@ export class MergeTree {
 				this.nodeUpdateLengthNewStructure(node, false);
 			}
 		}
-		newOrder.forEach((seg) =>
-			seg.localRefs?.walkReferences((lref) => lref.callbacks?.afterSlide?.(lref)),
+		newOrder.forEach(
+			(seg) => seg.localRefs?.walkReferences((lref) => lref.callbacks?.afterSlide?.(lref)),
 		);
 	}
 

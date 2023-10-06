@@ -156,7 +156,7 @@ export class TransactionView extends TreeView {
  */
 export function convertTreeNodesToViewNodes<
 	TIn extends HasVariadicTraits<TIn>,
-	TOut extends TreeViewNode = TreeViewNode
+	TOut extends TreeViewNode = TreeViewNode,
 >(root: TIn, convert: (node: TIn) => Omit<TOut, 'traits'>): TOut[];
 
 /**
@@ -166,7 +166,7 @@ export function convertTreeNodesToViewNodes<
  */
 export function convertTreeNodesToViewNodes<
 	TIn extends HasVariadicTraits<TIn>,
-	TOut extends TreeViewNode = TreeViewNode
+	TOut extends TreeViewNode = TreeViewNode,
 >(root: TIn, convert: (node: TIn) => Omit<TOut, 'traits'> | undefined): TOut[] | undefined;
 
 /**
@@ -178,7 +178,7 @@ export function convertTreeNodesToViewNodes<
  */
 export function convertTreeNodesToViewNodes<
 	TIn extends HasVariadicTraits<TIn>,
-	TOut extends TreeViewNode = TreeViewNode
+	TOut extends TreeViewNode = TreeViewNode,
 >(root: TIn, convert: (node: TIn) => Omit<TOut, 'traits'> | undefined): TOut[] | undefined {
 	const convertedRoot = convert(root) as Mutable<TOut>;
 	if (convertedRoot === undefined || root.traits === undefined) {

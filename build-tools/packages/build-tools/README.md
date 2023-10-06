@@ -1,66 +1,42 @@
 # @fluidframework/build-tools
 
-This package contains scripts and tools for Fluid Framework repo maintenance.
-The main tool is `fluid-build` which is a node script written specifically for building the Fluid Framework packages.
-A couple subsets of packages can be build with lerna, but this script unifies all the lerna managed package collections and the standalone packages (not using lerna).
-In addition to providing a single entry point for all the packages, fluid-build uses some hardcoded knowledge of the fluid-framework structure as well as information from the package files to speed up build time by maximizing concurrent task and incremental build.
+This package contains two tools:
 
-NOTE: There is a lot of assumption made in the tool about the commands parsing and dependencies and structure of the mono repo.
-If these assumption changes, this tool will break and needs to be fixed up.
-More work can be done to the tool to do it more formally and correctly.
-But it should work for our current repo.
+-   `fluid-build`: build task scheduler that support fast incremental build.
+-   `fluid-type-test-generator`: generate type compatibility tests
 
-`fluid-layer-check` is a tool to make sure the dependencies between Fluid Framework packages are properly layered. It also can be used to generate .dot file to generate a visual graph using GraphViz.
-
-## Setup
-
-In this directory:
-
-```sh
-npm i
-npm run build
-```
+While these tools are built for the Fluid Framework repo, they can be generalized and can apply to other repo as well.
+The content and example below will focus on the Fluid Framework repo.
 
 ## Running these tools (Command Line)
 
-This package produces several binaries, see `bin` in package.json.
+To use, one can install the package globally or with your package:
 
-This repo is normally build using the version of this package referenced by the root package.json file.
-To run that version, just do one of:
-
--   `npm i` in the root, and use the npm scripts that call it (ex: `build:fast`)
+-   In Fluid Framework repo, run `pnpm i` in the root, and use the npm scripts that call it (ex: `build:fast`)
 -   globally install that specific version of `@fluidframework/build-tools` and call its binaries directly (ex `fluid-build`)
 
-There are also several ways to use the local version of `@fluidframework/build-tools` from within the repo.
-Just build it (as in "Setup") then do one of:
+Run it from a locally build copy. First build it in this directory:
 
--   Use [npm link](https://docs.npmjs.com/cli/v8/commands/npm-link) with this package to override the version of it used in the root package (which is the `client` lerna package, but often used to build other as well). This will make scripts like `build:fast` use the linked version.
--   use `node bin/tool-name` in this directory or `node build-tools/packages/build-tools/bin/fluid-build tool-name` from the root.
-
-You can also use `npx --package "@fluidframework/build-tools" tool-name`, but exactly how versioning on this works and how it can be specified depends on the npm version and isn't super clear.
-
-Using `fluid-build`'s `--symlink:full` does **NOT** symlink the version of build tools in the repo into the root package: the root package will still use the published build-tools package.
-
-<!-- this list of arguments is duplicated in `src/common/commonOptions.ts` and they should be updated together -->
-
-All the tools take some common options:
-
-```
-     --defroot <path> Default root directory of the Fluid repo if infer failed (default: env _FLUID_DEFAULT_ROOT_)
-     --root <path>    Root directory of the Fluid repo (default: env _FLUID_ROOT_)
-     --timer          Measure elapsed time of each step
-     --logtime        Display the current time on every status message for logging
-  -v --verbose        Verbose messages
+```sh
+pnpm i
+pnpm run build
 ```
 
-## Running `fluid-build` (Command Line)
+Then either:
 
-This package produces several binaries, see `bin` in package.json.
-You can globally install this package to run them.
-To run the version of them you built in "Setup" above, run `node bin/tool-name`.
-Note that this correctly detects the fluid-framework directory when from elsewhere, for example it works just fine in the repository root with `node build-tools/packages/build-tools/bin/fluid-build fluid-build`.
+-   Direct invocation: Use `node bin/<tool-name>` in this directory or `node build-tools/packages/build-tools/bin/<tool-name>`
+    from the Fluid repo root.
+-   Symlink package: Use [npm link](https://docs.npmjs.com/cli/v10/commands/npm-link) with this package to override the
+    version of it used in the root package (which is the `client` lerna package, but often used to build other as well).
+    This will make scripts like `build:fast` use the linked version.
 
-One of these is tools is `fluid-build`:
+NOTE: Using `fluid-build`'s `--symlink:full` does **NOT** symlink the version of build tools in the repo into the root package:
+the root package will still use the published build-tools package.
+
+## `fluid-build`
+
+`fluid-build` is a build task scheduler. It support declarative task and dependencies definition, incremental
+detection for a range of tools and multiple workspace (a.k.a. release group) in a repo.
 
 <!-- this list of arguments is duplicated in `build-tools/packages/build-tools/src/fluidBuild/options.ts`
   and they should be updated together -->
@@ -69,7 +45,7 @@ One of these is tools is `fluid-build`:
 Usage: fluid-build <options> [(<package regexp>|<path>) ...]
     [<package regexp> ...] Regexp to match the package name (default: all packages)
 Options:
-     --all            Operate on all packages/monorepo (default: client monorepo). See also `--server`.
+     --all            Operate on all packages/monorepo (default: client monorepo). See also "--server".
   -c --clean          Same as running build script 'clean' on matched packages (all if package regexp is not specified)
   -d --dep            Apply actions (clean/force/rebuild) to matched packages and their dependent packages
      --fix            Auto fix warning from package check if possible
@@ -78,35 +54,48 @@ Options:
      --install        Run npm install for all packages/monorepo. This skips a package if node_modules already exists: it can not be used to update in response to changes to the package.json.
   -r --rebuild        Clean and build on matched packages (all if package regexp is not specified)
      --reinstall      Same as --uninstall --install.
-     --root <path>    Root directory of the Fluid repo (default: env _FLUID_ROOT_)
-  -t --task <name>    task to execute (default:build)
-     --azure          Operate on the azure monorepo (default: client monorepo). Overridden by `--all`
-     --server         Operate on the server monorepo (default: client monorepo). Overridden by `--all`
+  -g --releaseGroup   Release group to operate on
+     --root <path>    Root directory of the Fluid repo (default: env _FLUID_ROOT_ if exist, auto detect otherwise)
+  -t --task <name>    target to execute (default:build)
      --symlink        Fix symlink between packages within monorepo (isolate mode). This configures the symlinks to only connect within each lerna managed group of packages. This is the configuration tested by CI and should be kept working.
-     --symlink:full   Fix symlink between packages across monorepo (full mode). This symlinks more things in the repo together: exactly what additional things it links is unclear, but it is not everything. CI does not ensure this configuration is functional, so it may or may not work.
+     --symlink:full   Fix symlink between packages across monorepo (full mode). This symlinks everything in the repo together. CI does not ensure this configuration is functional, so it may or may not work.
      --uninstall      Clean all node_modules. This errors if some node-nodules folders do not exists: if hitting this limitation you can do an install first to work around it.
      --vscode         Output error message to work with default problem matcher in vscode
-     --defroot <path> Default root directory of the Fluid repo if infer failed (default: env _FLUID_DEFAULT_ROOT_)
-     --root <path>    Root directory of the Fluid repo (default: env _FLUID_ROOT_)
+     --defroot <path> Default root directory of the Fluid repo if auto detect failed (default: env _FLUID_DEFAULT_ROOT_)
      --timer          Measure elapsed time of each step
      --logtime        Display the current time on every status message for logging
   -v --verbose        Verbose messages
 ```
 
-Example:
+Example for Fluid Framework repo:
 
-After cloning a repo, you can install dependencies to all the packages:
+After cloning a repo, at the root of the repo, you can install dependencies to all the packages:
 
 ```sh
 fluid-build --install
 ```
 
-You can then start building (incrementally):
+You can start building (incrementally):
 
 ```sh
 fluid-build             # client packages
-fluid-build --server    # server packages
+fluid-build -g server   # server packages
 fluid-build --all       # all packages
+```
+
+Building selected packages (and dependent tasks):
+
+```sh
+fluid-build packages/dds/map     # Build starting from the package in the packagedir if exist.  (If the path doesn't exist it is tread as an regex to package name)
+fluid-build @fluidframework/map  # Build starting from the package @fluidframework/map since it is not an existing path
+fluid-build merge                # Build any package that has "merge" in the name
+```
+
+Building a selected task:
+
+```sh
+fluid-build -t tsc               # only run the task `tsc` (and dependent tasks) in all package of the current release group (client release group at the root)
+fluid-build -t build:esnext map  # only run the task `build:esnext` (and dependent tasks) in package that has "map" in the name
 ```
 
 Clean and rebuild:
@@ -130,58 +119,98 @@ fluid-build                   # build
 
 Note that --symlink\* changes any symlink, the tool will run the clean script for all the packages to make sure everything rebuilt every the next time.
 
-## Running `fluid-build` (Fluid directory workspace in VSCode)
+### Task and dependency definition
 
-To build Fluid within VSCode, use Ctrl-Shift-B to break up the build task list and choose `fluid-build`.
+`fluid-build` uses task and dependency definitions to construct a build graph. It is used to determine which task and
+the order to run in. The default definitions are located in at the root `fluidBuild.config.cjs` file under the `tasks` property.
+This definitions applies to all packages in the repo. Script tasks and dependencies specified in this default definitions
+doesn't have to appear on every package and will be ignored if it is not found.
 
-## Running `fluid-layer-check` (Command Line)
+The task definitions is an object with task names as keys, the task dependencies and config to define the action of the task.
+For more details, see the definition `TaskDefinitionsOnDisk` in [./src/common/fluidTaskDefinitions.ts](./src/common/fluidTaskDefinitions.ts)
 
-<!-- this list of arguments is duplicated in `build-tools/packages/build-tools/src/fluidBuild/options.ts`
-    and they should be updated together -->
+For example:
 
-```txt
-Usage: fluid-layer-check <options>
-Options:
-     --dot <path>     Generate *.dot for GraphViz
-     --info <path>    Path to the layer graph json file
-     --md [<path>]    Generate PACKAGES.md file for human consumption at path relative to repo root (default: repo root)
-     --defroot <path> Default root directory of the Fluid repo if infer failed (default: env _FLUID_DEFAULT_ROOT_)
-     --root <path>    Root directory of the Fluid repo (default: env _FLUID_ROOT_)
-     --timer          Measure elapsed time of each step
-     --logtime        Display the current time on every status message for logging
-  -v --verbose        Verbose messages
+```js
+module.exports = {
+   tasks: {
+      "build": {
+         dependsOn: [ "tsc", "build:test" ]           // Depends on the `tsc` nad `build:esnext` task in the same package
+         script: false                                // Don't trigger a npm script
+      }
+      "tsc": [ "^tsc"],                               // Depends on `tsc` task of all of the dependent packages
+                                                      // (if the task exists)
+      "build:test": [ "tsc" ],                        // Depends on `tsc` task
+      "clean": {
+         before: ["*"],                               // If the task "clean" is specified, it runs before all other task
+      }
+      "prettier": [],                                 // No dependent tasks
+   }
+}
 ```
 
-By default, without any options, fluid-layer-check checks the dependencies in Fluid Framework packages are layered properly and warn about if they are not. The property layering is defined in `data/layerInfo.json` file.
+Each package can be augmented the tasks definition by adding task definitions under `fluidBuild.tasks` in `package.json`.
 
-With --dot &lt;path&gt; argument, it will generate the dependency graph in the [dot](https://graphviz.gitlab.io/_pages/doc/info/lang.html) format and [GraphViz](https://graphviz.org/) can be used to generate visual representation of our packages.
+For example:
 
-## Details `fluid-build`
+```json
+{
+	"fluidBuild": {
+		"tasks": {
+			"tsc": ["...", "typetests:gen"], // Depends on "typetests:gen", including dependencies
+			// in default definition (i.e. "^tsc" in the above example)
+			"build:test": [
+				"@fluidframework/merge-tree#build:test" // Overrides default, depends only on "build:test" task
+				// in dependent package "@fluidframework/merge-tree"
+			],
+			"webpack": ["^tsc"] // Depends on `tsc` task of all of the dependent packages
+			// (if the task exists)
+		}
+	}
+}
+```
 
 ### Concurrency
 
-It make use of the dependencies in the package.json to build the dependency graph. It recognizes (crudely) the break apart of the tasks with in the build script, and make certain assumption to create dependency between those individual task. These task are then queued and schedule based on this dependency to increase the level of concurrent tasks it can run.
-
-Lerna will also automatically parallelize based on package dependencies (unless (--no-sort)[https://github.com/lerna/lerna/tree/main/core/global-options#--no-sort] is provided). This functionality of lerna is not used and instead `fluid-build` implements its own parallelization scheme.
+`fluid-build` will run task in parallel based on the dependencies information from the build graph. Task are queued
+when all the dependencies are "complete". By default, `fluid-build` will execute up to number of CPU of tasks.  
+This can be overridden by the `--concurrency` option on the command line.
 
 ### Incremental and Tasks
 
-The script recognized tasks in the Fluid package and has logic to detect whether a task need to be built.
+`fluid-build` support for incremental detection to check if a task is already up-to-date and doesn't need to rebuild to
+reduce build time. It has different detection based on the command that is activated. See the object definition
+`executableToLeafTask` in [./src/fluidBuild/tasks/taskFactory.ts](./src/fluidBuild/tasks/taskFactory.ts) for the full
+list of task.
 
-Note that `fluid-build --install` looks for the presence of `node_modules` and thus does not respond to changes to package.json.
-The actual build tasks do check package.json for changes, but will not initiate a npm install.
+Here are some of the tasks detection mechanism.
 
 #### Tsc Task
 
-For TypeScript compiler (TSC), it makes use of the incremental build info to tell us all the files it depends on and the file hash to check if the input files are changed.
-While tsc make use of this information to avoid recompilation, tsc still takes a while for unknown reason.
+For TypeScript compiler (TSC), `fluid-build` makes use of the incremental build info that the compiler already generate
+when incremental build option is enabled. While `tsc` also make use of this information to avoid recompilation, `tsc`
+still takes longer to detect that when invoked. `fluid-build` bypass that and read the incremental build to get all the
+input files it depends on and compare the before and after file hash to check if the input files are changed.
 
-Currently, this task recognize whether it is the default tsc build to commonjs modules, or for esnext modules for webpacking. Since the type definition should be the same for both, both will only wait for only the default tsc build from it's package dependencies, and not wait fo esnext one, so that we can get more concurrency.
+#### Tslint/Eslint/ApiExtractor Task
 
-#### Tslint/Eslint Task
+`tslint`, `eslint` and `api-extractor` are all "tsc-dependent" tasks, and have similar incremental rules. It will
+detect whether the task needs to run based on any `tsc` dependent task declared in the build graph (filtered to
+within the package if possible). It then copy the content of the `tsc` build info of these dependent task along with the
+the version and config for `tslint`, `eslint` and `api-extractor` and generate a "done" file. Compare the content of
+the current state and previous build will determine whether the task needs to be invoked.
 
-Tslint task only wait for the type definition from it's package dependencies.
+### Worker mode (Experimental)
 
-## Note about `fluid-bump-version`
+In worker mode using the option `--worker`, `fluid-build` will create worker processes reuse it to run some of the tools
+instead of spawning new processes. This can speed up the build around ~29%.
 
-This tool assumes that you have a set a remote git ref to `microsoft/FluidFramework`. Note that this ref must be an HTTPS URL - if you are using an SSH ref and get an error saying that a remote cannot be found for the repo, then make sure you add another ref specifically for the HTTPS URL (even if you do not use it otherwise).
+Worker mode is in experimental currently and not on by default. One drawback is that the worker processes would start
+accumulating memory, growing to multiple GB in size, and dev environment with limited memory may adversely affected.
+
+## Release Group definition
+
+Release group are basically group of packages managed by a workspace. `fluid-build` support multiple release group and
+independent packages within the same repo. The repo structure is specified in `fluidBuild.config.cjs` at the root of
+the repo under `repoPackages` property. See [fluidBuild.config.cjs](../../../fluidBuild.config.cjs) for how it looks
+like.
