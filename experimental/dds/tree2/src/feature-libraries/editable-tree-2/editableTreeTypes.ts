@@ -676,7 +676,6 @@ export interface RequiredField<TTypes extends AllowedTypes> extends TreeField {
 	set content(content: FlexibleNodeContent<TTypes>);
 
 	readonly boxedContent: TypedNodeUnion<TTypes>;
-	// setContent(content: FlexibleNodeContent<TTypes>): void;
 }
 
 /**
@@ -698,7 +697,6 @@ export interface OptionalField<TTypes extends AllowedTypes> extends TreeField {
 	set content(newContent: FlexibleNodeContent<TTypes> | undefined);
 
 	readonly boxedContent?: TypedNodeUnion<TTypes>;
-	// setContent(content: FlexibleNodeContent<TTypes> | undefined): void; // TODO
 }
 
 // #endregion
