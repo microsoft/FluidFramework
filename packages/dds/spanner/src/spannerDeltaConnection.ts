@@ -4,7 +4,6 @@
  */
 
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
 import { type IDeltaConnection, type IDeltaHandler } from "@fluidframework/datastore-definitions";
 import { type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { SpannerDeltaHandler } from "./spannerDeltaHandler";
@@ -58,10 +57,8 @@ export class SpannerDeltaConnection implements IDeltaConnection {
 
 	// This needs to be more thoroughly thought through. What happens when the source handle is changed?
 	public addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void {
-		assert(
-			this.deltaConnection.addedGCOutboundReference !== undefined,
-			"undefined addedGCOutboundReference",
-		);
-		this.deltaConnection.addedGCOutboundReference(srcHandle, outboundHandle);
+		if (this.deltaConnection.addedGCOutboundReference !== undefined) {
+			this.deltaConnection.addedGCOutboundReference(srcHandle, outboundHandle);
+		}
 	}
 }

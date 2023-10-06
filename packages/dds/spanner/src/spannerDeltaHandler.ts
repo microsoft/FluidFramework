@@ -5,6 +5,7 @@
 
 import { type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { type IDeltaHandler } from "@fluidframework/datastore-definitions";
+import { assert } from "@fluidframework/core-utils";
 
 /**
  * Handles incoming and outgoing deltas/ops for the Spanner distributed data structure.
@@ -40,6 +41,7 @@ export class SpannerDeltaHandler implements IDeltaHandler {
 		if (this.migrateFunction(message, local, localOpMetadata)) {
 			return;
 		}
+		// Check for migration and v1 vs v2 ops here
 		return this.handler.process(message, local, localOpMetadata);
 	}
 
@@ -64,6 +66,7 @@ export class SpannerDeltaHandler implements IDeltaHandler {
 	public attach(handler: IDeltaHandler): void {
 		// An assert here potentially to prevent the handler from being swapped out twice
 		// Maybe we want rollback, so maybe not an assert. Not sure.
+		assert(this.newHandler === undefined, "Can only swap handlers once");
 		this.newHandler = handler;
 	}
 }
