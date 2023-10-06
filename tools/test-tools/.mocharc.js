@@ -11,6 +11,8 @@ const config = {
 	"unhandled-rejections": "strict",
 	"forbid-only": true,
 	"spec": "dist/test",
+	"reporter": "mocha-multi-reporters",
+	"reporter-options": "configFile=mocha-multi-reporter-config.json",
 };
 
 module.exports = config;

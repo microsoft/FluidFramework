@@ -28,7 +28,7 @@ steps:
   # Console Log Failed Tests
   - ${{ each testResultDir in parameters.testResultDirs }}:    
     - task: Bash@3
-      displayName: Log Failed Tests
+      displayName: Log Failed Tests in ${{ testResultDir }}
       inputs:
         targetType: inline
         script: node $(Build.SourcesDirectory)/scripts/report-parser.js ${{ testResultDir }}

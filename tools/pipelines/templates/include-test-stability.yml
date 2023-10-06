@@ -167,17 +167,7 @@ jobs:
           condition: and(failed(), eq(variables['logExists'], 'true'), contains('${{ taskTestStep }}', 'tinylicious'))
           continueOnError: true
 
-      # Test - Upload results
-      - task: PublishTestResults@2
-        displayName: Publish Test Results
-        inputs:
-          testResultsFormat: 'JUnit'
-          testResultsFiles: '**/*junit-report.xml'
-          searchFolder: ${{ parameters.buildDirectory }}/nyc
-          mergeTestResults: false
-        condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
-
-      # Log Test Failures
+      # Process test result, include publishing and logging
       - template: include-log-test-failures.yml
         parameters:
           buildDirectory: ${{ parameters.buildDirectory }}
