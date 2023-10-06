@@ -37,7 +37,7 @@ import {
 	requireFalse,
 	requireTrue,
 } from "../../../util";
-import { EmptyKey } from "../../../core";
+import { EmptyKey, FieldKey } from "../../../core";
 import {
 	FieldKinds,
 	Any,
@@ -159,7 +159,7 @@ describe("editableTreeTypes", () => {
 			{ mapFields: typeof optionalNumberField }
 		>;
 		const mapNode = undefined as unknown as MapNode<typeof mapSchema>;
-		const unboxedMapIteration: number[] = [...mapNode];
+		const unboxedMapIteration: [FieldKey, number][] = [...mapNode];
 		const boxedMapIteration: TypedField<typeof optionalNumberField>[] = [
 			...mapNode[boxedIterator](),
 		];

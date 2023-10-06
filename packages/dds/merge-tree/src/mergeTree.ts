@@ -918,6 +918,7 @@ export class MergeTree {
 			const children = parent.children;
 			for (let childIndex = 0; childIndex < parent.childCount; childIndex++) {
 				const child = children[childIndex];
+				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when the first clause returns false.
 				if ((prevParent && child === prevParent) || child === node) {
 					break;
 				}
@@ -1633,6 +1634,7 @@ export class MergeTree {
 		}
 
 		if (
+			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when the first clause returns false.
 			(!_segmentGroup.previousProps && previousProps) ||
 			(_segmentGroup.previousProps && !previousProps)
 		) {

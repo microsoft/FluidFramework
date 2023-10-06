@@ -447,7 +447,7 @@ describe("schema converter", () => {
 			);
 			const childOfChildFieldSchema =
 				childSchema.structFields.get(childFieldKey) ?? fail("expected field schema");
-			assert.deepEqual(childOfChildFieldSchema, childFieldSchema);
+			assert(childOfChildFieldSchema.equals(childFieldSchema));
 		});
 
 		it(`throws when using "BaseProperty" in properties`, () => {
