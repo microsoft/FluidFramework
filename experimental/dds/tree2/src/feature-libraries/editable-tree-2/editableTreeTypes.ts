@@ -421,6 +421,11 @@ export interface Leaf<TSchema extends LeafSchema> extends TreeNode {
 /**
  * A {@link TreeNode} that behaves like struct, providing properties to access its fields.
  *
+ * @privateRemarks
+ *
+ * The corresponding implementation logic for this lives in `LazyTree.ts` under `buildStructClass`.
+ * If you change the signature here, you will need to update that logic to match.
+ *
  * @alpha
  */
 export type StructTyped<TSchema extends StructSchema> = Struct &
