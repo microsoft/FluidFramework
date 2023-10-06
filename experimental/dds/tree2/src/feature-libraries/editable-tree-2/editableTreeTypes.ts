@@ -6,7 +6,7 @@
 import * as SchemaAware from "../schema-aware";
 import { FieldKey, TreeSchemaIdentifier, TreeValue } from "../../core";
 import { Assume, RestrictiveReadonlyRecord, _InlineTrick } from "../../util";
-import { LocalNodeKey } from "../node-key";
+import { LocalNodeKey, StableNodeKey } from "../node-key";
 import {
 	FieldSchema,
 	InternalTypedSchemaTypes,
@@ -699,6 +699,15 @@ export interface OptionalField<TTypes extends AllowedTypes> extends TreeField {
 	readonly boxedContent?: TypedNodeUnion<TTypes>;
 }
 
+/**
+ * Field that an immutable {@link StableNodeKey} identifying this node.
+ * @alpha
+ */
+export interface NodeKeyField extends TreeField {
+	readonly localNodeKey: LocalNodeKey;
+	readonly stableNodeKey: StableNodeKey;
+}
+
 // #endregion
 
 // #region Typed
@@ -725,6 +734,8 @@ export type TypedFieldInner<
 	? RequiredField<Types>
 	: Kind extends typeof FieldKinds.optional
 	? OptionalField<Types>
+	: Kind extends typeof FieldKinds.nodeKey
+	? NodeKeyField
 	: TreeField;
 
 /**
@@ -801,7 +812,10 @@ export type UnboxFieldInner<
 	? UnboxNodeUnion<TTypes>
 	: Kind extends typeof FieldKinds.optional
 	? UnboxNodeUnion<TTypes> | (Emptiness extends "notEmpty" ? never : undefined)
-	: // TODO: forbidden and nodeKey
+	: // Since struct already provides a short-hand accessor for the local field key, and the field provides a nicer general API than the node under it in this case, do not unbox nodeKey fields.
+	Kind extends typeof FieldKinds.nodeKey
+	? NodeKeyField
+	: // TODO: forbidden
 	  unknown;
 
 /**

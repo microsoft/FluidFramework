@@ -860,7 +860,9 @@ declare namespace InternalEditableTreeTypes {
         StructFields,
         UnboxField,
         UnboxNode,
-        UnboxNodeUnion
+        UnboxNodeUnion,
+        NodeKeyField,
+        NodeKeys
     }
 }
 export { InternalEditableTreeTypes }
@@ -1008,12 +1010,6 @@ export interface ISharedTreeView extends AnchorLocator {
     fork(): ISharedTreeBranchView;
     merge(view: ISharedTreeBranchView): void;
     merge(view: ISharedTreeBranchView, disposeView: boolean): void;
-    readonly nodeKey: {
-        generate(): LocalNodeKey;
-        stabilize(key: LocalNodeKey): StableNodeKey;
-        localize(key: StableNodeKey): LocalNodeKey;
-        map: ReadonlyMap<LocalNodeKey, EditableTree>;
-    };
     rebase(view: ISharedTreeBranchView): void;
     redo(): void;
     get root(): UnwrappedEditableField;
@@ -1242,7 +1238,8 @@ export enum LocalCommitSource {
 }
 
 // @alpha
-export type LocalNodeKey = Opaque<Brand<SessionSpaceCompressedId, "Local Node Key">>;
+export interface LocalNodeKey extends Opaque<Brand<SessionSpaceCompressedId, "Local Node Key">> {
+}
 
 // @alpha
 export const localNodeKeySymbol: unique symbol;
@@ -1386,6 +1383,14 @@ export interface NodeExistsConstraint {
 }
 
 // @alpha
+interface NodeKeyField extends TreeField {
+    // (undocumented)
+    readonly localNodeKey: LocalNodeKey;
+    // (undocumented)
+    readonly stableNodeKey: StableNodeKey;
+}
+
+// @alpha
 export const nodeKeyField: {
     __n_id__: FieldSchema<NodeKeyFieldKind, [TreeSchema<TreeSchemaIdentifier, {
     leafValue: ValueSchema.String;
@@ -1397,6 +1402,14 @@ export const nodeKeyFieldKey = "__n_id__";
 
 // @alpha (undocumented)
 export interface NodeKeyFieldKind extends FieldKind<"NodeKey", Multiplicity.Single> {
+}
+
+// @alpha
+interface NodeKeys {
+    generate(): LocalNodeKey;
+    localize(key: StableNodeKey): LocalNodeKey;
+    readonly map: ReadonlyMap<LocalNodeKey, Struct>;
+    stabilize(key: LocalNodeKey): StableNodeKey;
 }
 
 // @alpha
@@ -1894,6 +1907,8 @@ export interface TreeContent<TRoot extends FieldSchema = FieldSchema> extends Sc
 
 // @alpha
 export interface TreeContext extends ISubscribable<ForestEvents> {
+    // (undocumented)
+    readonly nodeKeys: NodeKeys;
     get root(): TreeField;
     readonly schema: TypedSchemaCollection;
 }
@@ -2033,7 +2048,7 @@ ApplyMultiplicity<TField["kind"]["multiplicity"], AllowedTypesToTypedTrees<Mode,
 ][_InlineTrick];
 
 // @alpha
-type TypedFieldInner<Kind extends FieldKind, Types extends AllowedTypes> = Kind extends typeof FieldKinds.sequence ? Sequence2<Types> : Kind extends typeof FieldKinds.required ? RequiredField<Types> : Kind extends typeof FieldKinds.optional ? OptionalField<Types> : TreeField;
+type TypedFieldInner<Kind extends FieldKind, Types extends AllowedTypes> = Kind extends typeof FieldKinds.sequence ? Sequence2<Types> : Kind extends typeof FieldKinds.required ? RequiredField<Types> : Kind extends typeof FieldKinds.optional ? OptionalField<Types> : Kind extends typeof FieldKinds.nodeKey ? NodeKeyField : TreeField;
 
 // @alpha
 type TypedFields<Mode extends ApiMode, TFields extends undefined | {
@@ -2111,7 +2126,7 @@ export const typeSymbol: unique symbol;
 type UnboxField<TSchema extends FieldSchema, Emptiness extends "maybeEmpty" | "notEmpty" = "maybeEmpty"> = UnboxFieldInner<TSchema["kind"], TSchema["allowedTypes"], Emptiness>;
 
 // @alpha
-type UnboxFieldInner<Kind extends FieldKind, TTypes extends AllowedTypes, Emptiness extends "maybeEmpty" | "notEmpty"> = Kind extends typeof FieldKinds.sequence ? Sequence2<TTypes> : Kind extends typeof FieldKinds.required ? UnboxNodeUnion<TTypes> : Kind extends typeof FieldKinds.optional ? UnboxNodeUnion<TTypes> | (Emptiness extends "notEmpty" ? never : undefined) : unknown;
+type UnboxFieldInner<Kind extends FieldKind, TTypes extends AllowedTypes, Emptiness extends "maybeEmpty" | "notEmpty"> = Kind extends typeof FieldKinds.sequence ? Sequence2<TTypes> : Kind extends typeof FieldKinds.required ? UnboxNodeUnion<TTypes> : Kind extends typeof FieldKinds.optional ? UnboxNodeUnion<TTypes> | (Emptiness extends "notEmpty" ? never : undefined) : Kind extends typeof FieldKinds.nodeKey ? NodeKeyField : unknown;
 
 // @alpha
 type UnboxNode<TSchema extends TreeSchema> = TSchema extends LeafSchema ? SchemaAware.InternalTypes.TypedValue<TSchema["leafValue"]> : TSchema extends MapSchema ? MapNode<TSchema> : TSchema extends FieldNodeSchema ? UnboxField<TSchema["structFieldsObject"][""]> : TSchema extends StructSchema ? StructTyped<TSchema> : unknown;

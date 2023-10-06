@@ -17,6 +17,7 @@ import { TrackingGroupCollection } from "./mergeTreeTracking";
 import { ICombiningOp, IJSONSegment, IMarkerDef, MergeTreeDeltaType, ReferenceType } from "./ops";
 import { computeHierarchicalOrdinal } from "./ordinal";
 import { PartialSequenceLengths } from "./partialLengths";
+// eslint-disable-next-line import/no-deprecated
 import { clone, createMap, MapLike, PropertySet } from "./properties";
 import {
 	refTypeIncludesFlag,
@@ -438,6 +439,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 		rollback: PropertiesRollback = PropertiesRollback.None,
 	) {
 		this.propertyManager ??= new PropertiesManager();
+		// eslint-disable-next-line import/no-deprecated
 		this.properties ??= createMap<any>();
 		return this.propertyManager.addProperties(
 			this.properties,
@@ -460,6 +462,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 	protected cloneInto(b: ISegment) {
 		b.clientId = this.clientId;
 		// TODO: deep clone properties
+		// eslint-disable-next-line import/no-deprecated
 		b.properties = clone(this.properties);
 		b.removedClientIds = this.removedClientIds?.slice();
 		// TODO: copy removed client overlap and branch removal info
