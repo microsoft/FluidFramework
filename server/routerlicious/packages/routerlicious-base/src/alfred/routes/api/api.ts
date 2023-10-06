@@ -52,18 +52,15 @@ async function getToken() {
 
 async function executeProm(query, token) {
 	const authTokenParam = `Bearer ${token}`;
-	return axios.post(
-		endpoint,
-		{
-			query,
+	const formData = new URLSearchParams({
+		query,
+	});
+	return axios.post(endpoint, formData.toString(), {
+		headers: {
+			"Authorization": authTokenParam,
+			"Content-Type": "application/x-www-form-urlencoded",
 		},
-		{
-			headers: {
-				"Authorization": authTokenParam,
-				"Content-Type": "application/x-www-form-urlencoded",
-			},
-		},
-	);
+	});
 }
 
 export function create(
