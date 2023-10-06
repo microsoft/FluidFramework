@@ -437,12 +437,12 @@ export type StructFields<TFields extends RestrictiveReadonlyRecord<string, Field
 	// boxed fields (TODO: maybe remove these when same as non-boxed version?)
 	readonly [key in keyof TFields as `boxed${Capitalize<key & string>}`]: TypedField<TFields[key]>;
 } & {
-	// Getter only
+	// Getter only (when schema type is not an explicit primitive)
 	readonly [key in keyof TFields as TFields[key] extends number ? never : key]: UnboxField<
 		TFields[key]
 	>;
 } & {
-	// Getter + setter
+	// Getter + setter (when schema type is an explicit primitive)
 	[key in keyof TFields as TFields[key] extends number ? key : never]: UnboxField<TFields[key]>;
 } & {
 	// Setter method
