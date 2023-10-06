@@ -5,8 +5,6 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-/* eslint-disable @typescript-eslint/prefer-optional-chain */
-
 import { assert } from "@fluidframework/core-utils";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
 import { IAttributionCollection } from "./attributionCollection";
@@ -413,7 +411,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 			newProps,
 			op,
 			seq,
-			collabWindow && collabWindow.collaborating,
+			collabWindow?.collaborating,
 			rollback,
 		);
 	}

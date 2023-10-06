@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-/* eslint-disable @typescript-eslint/prefer-optional-chain, no-bitwise */
+/* eslint-disable no-bitwise */
 
 import { assert } from "@fluidframework/core-utils";
 import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils";
@@ -227,8 +227,7 @@ function addNodeReferences(
 			} else {
 				const baseSegment = node as BaseSegment;
 				if (
-					baseSegment.localRefs &&
-					baseSegment.localRefs.hierRefCount !== undefined &&
+					baseSegment.localRefs?.hierRefCount !== undefined &&
 					baseSegment.localRefs.hierRefCount > 0
 				) {
 					for (const lref of baseSegment.localRefs) {
@@ -1549,7 +1548,7 @@ export class MergeTree {
 
 		const { currentSeq, clientId } = this.collabWindow;
 
-		if (segmentInfo && segmentInfo.segment) {
+		if (segmentInfo?.segment) {
 			const segmentPosition = this.getPosition(segmentInfo.segment, currentSeq, clientId);
 			return segmentPosition + segmentInfo.offset!;
 		} else {
