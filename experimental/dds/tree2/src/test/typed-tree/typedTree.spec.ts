@@ -24,7 +24,7 @@ describe("TypedTree", () => {
 			subtype: "test",
 		});
 		const root = factory.create(new MockFluidDataStoreRuntime(), "the tree").root;
-		root.setContent(root.content + 1);
+		root.content += 1;
 		assert.equal(root.content, 2);
 	});
 });

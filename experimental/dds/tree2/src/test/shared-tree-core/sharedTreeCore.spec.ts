@@ -356,13 +356,13 @@ describe("SharedTreeCore", () => {
 		const editable1 = view1.editableTree2(schema);
 		const editable2 = view2.editableTree2(schema);
 
-		editable2.setContent({ [typeNameSymbol]: node.name, child: undefined });
-		editable1.setContent({ [typeNameSymbol]: node.name, child: undefined });
+		editable2.content = { [typeNameSymbol]: node.name, child: undefined };
+		editable1.content = { [typeNameSymbol]: node.name, child: undefined };
 		const rootNode = editable2.content;
 		assert(rootNode?.is(node), "Expected set operation to set root node");
-		rootNode.boxedChild.setContent(42);
-		editable1.setContent({ [typeNameSymbol]: node.name, child: undefined });
-		rootNode.boxedChild.setContent(43);
+		rootNode.boxedChild.content = 42;
+		editable1.content = { [typeNameSymbol]: node.name, child: undefined };
+		rootNode.boxedChild.content = 43;
 		containerRuntimeFactory.processAllMessages();
 	});
 

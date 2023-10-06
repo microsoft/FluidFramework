@@ -313,13 +313,13 @@ export interface ContextuallyTypedNodeDataObject {
 }
 
 // @alpha
-interface Contravariant<T> {
+interface Contravariant<in T> {
     // (undocumented)
     _removeCovariance?: (_: T) => void;
 }
 
 // @alpha
-interface Covariant<T> {
+interface Covariant<out T> {
     // (undocumented)
     _removeContravariance?: T;
 }
@@ -970,7 +970,7 @@ export class InvalidationToken {
 }
 
 // @alpha
-interface Invariant<T> extends Contravariant<T>, Covariant<T> {
+interface Invariant<in out T> extends Contravariant<T>, Covariant<T> {
 }
 
 // @alpha
@@ -1477,9 +1477,8 @@ export interface OptionalField<TTypes extends AllowedTypes> extends TreeField {
     // (undocumented)
     readonly boxedContent?: TypedNodeUnion<TTypes>;
     // (undocumented)
-    readonly content?: UnboxNodeUnion<TTypes>;
-    // (undocumented)
-    setContent(content: undefined | FlexibleNodeContent<TTypes>): void;
+    get content(): UnboxNodeUnion<TTypes> | undefined;
+    set content(newContent: FlexibleNodeContent<TTypes> | undefined);
 }
 
 // @alpha (undocumented)
@@ -1599,9 +1598,8 @@ export interface RequiredField<TTypes extends AllowedTypes> extends TreeField {
     // (undocumented)
     readonly boxedContent: TypedNodeUnion<TTypes>;
     // (undocumented)
-    readonly content: UnboxNodeUnion<TTypes>;
-    // (undocumented)
-    setContent(content: FlexibleNodeContent<TTypes>): void;
+    get content(): UnboxNodeUnion<TTypes>;
+    set content(content: FlexibleNodeContent<TTypes>);
 }
 
 // @alpha

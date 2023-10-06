@@ -383,15 +383,15 @@ export class LazyValueField<TTypes extends AllowedTypes>
 		return this.at(0);
 	}
 
-	public get boxedContent(): TypedNodeUnion<TTypes> {
-		return this.boxedAt(0);
-	}
-
-	public setContent(newContent: FlexibleNodeContent<TTypes>): void {
+	public set content(newContent: FlexibleNodeContent<TTypes>) {
 		const content = this.normalizeNewContent(newContent);
 		const fieldEditor = this.valueFieldEditor();
 		assert(content.length === 1, 0x780 /* value field content should normalize to one item */);
 		fieldEditor.set(content[0]);
+	}
+
+	public get boxedContent(): TypedNodeUnion<TTypes> {
+		return this.boxedAt(0);
 	}
 }
 
@@ -420,11 +420,7 @@ export class LazyOptionalField<TTypes extends AllowedTypes>
 		return this.length === 0 ? undefined : this.at(0);
 	}
 
-	public get boxedContent(): TypedNodeUnion<TTypes> | undefined {
-		return this.length === 0 ? undefined : this.boxedAt(0);
-	}
-
-	public setContent(newContent: FlexibleNodeContent<TTypes> | undefined): void {
+	public set content(newContent: FlexibleNodeContent<TTypes> | undefined) {
 		const content = this.normalizeNewContent(newContent);
 		const fieldEditor = this.optionalEditor();
 		assert(
@@ -432,6 +428,10 @@ export class LazyOptionalField<TTypes extends AllowedTypes>
 			0x781 /* optional field content should normalize at most one item */,
 		);
 		fieldEditor.set(content.length === 0 ? undefined : content[0], this.length === 0);
+	}
+
+	public get boxedContent(): TypedNodeUnion<TTypes> | undefined {
+		return this.length === 0 ? undefined : this.boxedAt(0);
 	}
 }
 

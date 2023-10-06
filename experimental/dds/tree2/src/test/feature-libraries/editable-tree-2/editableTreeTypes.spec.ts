@@ -142,7 +142,7 @@ describe("editableTreeTypes", () => {
 		// child.foo?.foo?.foo?.foo?.setX(5);
 		// child.foo?.boxedFoo.content?.foo?.foo?.setFoo({ x: 5, foo: { x: 5, foo: undefined } });
 
-		struct.boxedFoo.setContent(undefined);
+		struct.boxedFoo.content = undefined;
 		// Shorthand for the above.
 		// TODO: add shorthand setters
 		// struct.setFoo(undefined);
