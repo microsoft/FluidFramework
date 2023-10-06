@@ -254,7 +254,7 @@ export const feeds = [
 /**
  * A type representing the known npm feeds used in the Fluid Framework CI pipelines.
  */
-export type Feed = (typeof feeds)[number];
+export type Feed = typeof feeds[number];
 
 /**
  * Type guard. Returns true if the provided string is a known npm feed.
