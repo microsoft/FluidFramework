@@ -12,7 +12,7 @@ import { Uint8ArrayToArrayBuffer, Uint8ArrayToString } from "@fluid-internal/cli
 import { assert } from "@fluidframework/core-utils";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { NonRetryableError } from "@fluidframework/driver-utils";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import { ReadBuffer } from "./ReadBufferUtils";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { measure } from "./odspUtils";
@@ -616,7 +616,7 @@ function throwBufferParseException(
 ): never {
 	throw new NonRetryableError(
 		`Buffer parsing exception: ${message}`,
-		DriverErrorType.incorrectServerResponse,
+		DriverErrorTypes.incorrectServerResponse,
 		{
 			nodeType: getNodeType(node),
 			expectedNodeType,

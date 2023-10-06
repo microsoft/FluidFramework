@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { DriverErrorType, IThrottlingWarning } from "@fluidframework/driver-definitions";
+import { DriverErrorTypes, IThrottlingWarning } from "@fluidframework/driver-definitions";
 import { createWriteError, GenericNetworkError } from "@fluidframework/driver-utils";
 import { OdspErrorType, OdspError, IOdspError } from "@fluidframework/odsp-driver-definitions";
 import { isILoggingError } from "@fluidframework/telemetry-utils";
@@ -22,7 +22,7 @@ describe("OdspErrorUtils", () => {
 		it("GenericNetworkError Test_1", () => {
 			const networkError = createOdspNetworkError("Test Message", 500);
 			assert(
-				networkError.errorType === DriverErrorType.genericNetworkError,
+				networkError.errorType === DriverErrorTypes.genericNetworkError,
 				"Error should be a genericNetworkError",
 			);
 			assertCustomPropertySupport(networkError);
@@ -36,7 +36,7 @@ describe("OdspErrorUtils", () => {
 				undefined /* retryAfterSeconds */,
 			);
 			assert(
-				networkError.errorType === DriverErrorType.genericNetworkError,
+				networkError.errorType === DriverErrorTypes.genericNetworkError,
 				"Error should be a genericNetworkError",
 			);
 			assert.equal(networkError.canRetry, false, "400 is non-retryable");
@@ -47,7 +47,7 @@ describe("OdspErrorUtils", () => {
 			const networkError = createOdspNetworkError("Test Message", 500 /* statusCode */);
 			assertCustomPropertySupport(networkError);
 			assert(
-				networkError.errorType === DriverErrorType.genericNetworkError,
+				networkError.errorType === DriverErrorTypes.genericNetworkError,
 				"Error should be a genericNetworkError",
 			);
 			assert.equal(networkError.canRetry, true, "500 is retryable");
@@ -56,7 +56,7 @@ describe("OdspErrorUtils", () => {
 		it("AuthorizationError Test 401", () => {
 			const networkError = createOdspNetworkError("Test Message", 401 /* statusCode */);
 			assert(
-				networkError.errorType === DriverErrorType.authorizationError,
+				networkError.errorType === DriverErrorTypes.authorizationError,
 				"Error should be an authorizationError",
 			);
 			assertCustomPropertySupport(networkError);
@@ -65,7 +65,7 @@ describe("OdspErrorUtils", () => {
 		it("AuthorizationError Test 403", () => {
 			const networkError = createOdspNetworkError("Test Message", 403 /* statusCode */);
 			assert(
-				networkError.errorType === DriverErrorType.authorizationError,
+				networkError.errorType === DriverErrorTypes.authorizationError,
 				"Error should be an authorizationError",
 			);
 			assert.equal(networkError.canRetry, false, "canRetry should be preserved");
@@ -84,7 +84,7 @@ describe("OdspErrorUtils", () => {
 			const networkError = createOdspNetworkError("Test Message", 404 /* statusCode */);
 			assertCustomPropertySupport(networkError);
 			assert(
-				networkError.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError,
+				networkError.errorType === DriverErrorTypes.fileNotFoundOrAccessDeniedError,
 				"Error should be a fileNotFoundOrAccessDeniedError",
 			);
 			assert.equal(networkError.canRetry, false, "canRetry should be preserved");
@@ -107,7 +107,7 @@ describe("OdspErrorUtils", () => {
 			);
 			assertCustomPropertySupport(networkError);
 			assert(
-				networkError.errorType === DriverErrorType.genericNetworkError,
+				networkError.errorType === DriverErrorTypes.genericNetworkError,
 				"Error should be a genericNetworkError",
 			);
 			assert.equal(
@@ -125,7 +125,7 @@ describe("OdspErrorUtils", () => {
 			) as IThrottlingWarning;
 			assertCustomPropertySupport(networkError);
 			assert(
-				networkError.errorType === DriverErrorType.throttlingError,
+				networkError.errorType === DriverErrorTypes.throttlingError,
 				"Error should be a throttlingError",
 			);
 			assert.equal(
@@ -173,7 +173,7 @@ describe("OdspErrorUtils", () => {
 				responseText,
 			);
 			assert(
-				error.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError,
+				error.errorType === DriverErrorTypes.fileNotFoundOrAccessDeniedError,
 				"Error should be a fileNotFoundOrAccessDeniedError",
 			);
 			assert(error.redirectLocation === "url", "redirect location is wrong");
@@ -228,7 +228,10 @@ describe("OdspErrorUtils", () => {
 	it("WriteError Test", () => {
 		const writeError = createWriteError("Test Error", { driverVersion: pkgVersion });
 		assertCustomPropertySupport(writeError);
-		assert(writeError.errorType === DriverErrorType.writeError, "Error should be a writeError");
+		assert(
+			writeError.errorType === DriverErrorTypes.writeError,
+			"Error should be a writeError",
+		);
 		assert.equal(writeError.canRetry, false, "Error should be critical");
 	});
 });

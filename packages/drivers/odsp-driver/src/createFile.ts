@@ -16,7 +16,7 @@ import {
 	ShareLinkTypes,
 	IFileEntry,
 } from "@fluidframework/odsp-driver-definitions";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import { ICreateFileResponse } from "./contracts";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import {
@@ -232,7 +232,7 @@ export async function createNewEmptyFluidFile(
 					throw new NonRetryableError(
 						// pre-0.58 error message: ODSP CreateFile call returned no item ID
 						"ODSP CreateFile call returned no item ID (for empty file)",
-						DriverErrorType.incorrectServerResponse,
+						DriverErrorTypes.incorrectServerResponse,
 						{ driverVersion },
 					);
 				}
@@ -283,7 +283,7 @@ export async function createNewFluidFileFromSummary(
 			if (!content?.itemId) {
 				throw new NonRetryableError(
 					"ODSP CreateFile call returned no item ID",
-					DriverErrorType.incorrectServerResponse,
+					DriverErrorTypes.incorrectServerResponse,
 					{ driverVersion },
 				);
 			}

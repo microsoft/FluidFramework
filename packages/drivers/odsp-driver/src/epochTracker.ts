@@ -29,7 +29,7 @@ import {
 	IOdspErrorAugmentations,
 	IOdspResolvedUrl,
 } from "@fluidframework/odsp-driver-definitions";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import {
 	fetchAndParseAsJSONHelper,
 	fetchArray,
@@ -285,7 +285,7 @@ export class EpochTracker implements IPersistedFileCache {
 				// location info.
 				if (
 					isFluidError(error) &&
-					error.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError
+					error.errorType === DriverErrorTypes.fileNotFoundOrAccessDeniedError
 				) {
 					const redirectLocation = (error as IOdspErrorAugmentations).redirectLocation;
 					if (redirectLocation !== undefined) {
@@ -429,7 +429,7 @@ export class EpochTracker implements IPersistedFileCache {
 		fetchType: FetchTypeInternal,
 		fromCache: boolean = false,
 	) {
-		if (isFluidError(error) && error.errorType === DriverErrorType.fileOverwrittenInStorage) {
+		if (isFluidError(error) && error.errorType === DriverErrorTypes.fileOverwrittenInStorage) {
 			const epochError = this.checkForEpochErrorCore(epochFromResponse);
 			if (epochError !== undefined) {
 				epochError.addTelemetryProperties({
@@ -463,7 +463,7 @@ export class EpochTracker implements IPersistedFileCache {
 			// Difference - client detected mismatch, instead of server detecting it.
 			return new NonRetryableError(
 				"Epoch mismatch",
-				DriverErrorType.fileOverwrittenInStorage,
+				DriverErrorTypes.fileOverwrittenInStorage,
 				{ driverVersion, serverEpoch: epochFromResponse, clientEpoch: this.fluidEpoch },
 			);
 		}

@@ -4,7 +4,7 @@
  */
 
 import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import { NonRetryableError } from "@fluidframework/driver-utils";
 import { OdspError } from "@fluidframework/odsp-driver-definitions";
 import { getCircularReplacer, IFluidErrorBase } from "@fluidframework/telemetry-utils";
@@ -37,7 +37,7 @@ export function errorObjectFromSocketError(
 	} catch (error) {
 		return new NonRetryableError(
 			"Internal error: errorObjectFromSocketError",
-			DriverErrorType.fileNotFoundOrAccessDeniedError,
+			DriverErrorTypes.fileNotFoundOrAccessDeniedError,
 			{ driverVersion },
 		);
 	}

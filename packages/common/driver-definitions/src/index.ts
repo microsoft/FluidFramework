@@ -5,7 +5,6 @@
 
 export {
 	DriverError,
-	DriverErrorType,
 	DriverErrorTypes,
 	IAnyDriverError,
 	IAuthorizationError,

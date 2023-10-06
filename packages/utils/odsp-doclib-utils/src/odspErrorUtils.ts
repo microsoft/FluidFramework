@@ -4,8 +4,7 @@
  */
 
 import { ITelemetryProperties } from "@fluidframework/core-interfaces";
-// eslint-disable-next-line import/no-deprecated
-import { DriverErrorType } from "@fluidframework/driver-definitions";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import { IFluidErrorBase, LoggingError, numberFromString } from "@fluidframework/telemetry-utils";
 import {
 	AuthorizationError,
@@ -111,7 +110,7 @@ export interface OdspErrorResponse {
 /** Error encapsulating the error response from ODSP containing the redirect location when a resource has moved  */
 export class OdspRedirectError extends LoggingError implements IFluidErrorBase {
 	// eslint-disable-next-line import/no-deprecated
-	readonly errorType = DriverErrorType.fileNotFoundOrAccessDeniedError;
+	readonly errorType = DriverErrorTypes.fileNotFoundOrAccessDeniedError;
 	readonly canRetry = false;
 
 	constructor(
@@ -195,7 +194,7 @@ export function createOdspNetworkError(
 			error = new NonRetryableError(
 				errorMessage,
 				// eslint-disable-next-line import/no-deprecated
-				DriverErrorType.genericNetworkError,
+				DriverErrorTypes.genericNetworkError,
 				driverProps,
 			);
 			break;
@@ -245,7 +244,7 @@ export function createOdspNetworkError(
 			error = new NonRetryableError(
 				errorMessage,
 				// eslint-disable-next-line import/no-deprecated
-				DriverErrorType.fileNotFoundOrAccessDeniedError,
+				DriverErrorTypes.fileNotFoundOrAccessDeniedError,
 				driverProps,
 			);
 			break;
@@ -253,7 +252,7 @@ export function createOdspNetworkError(
 			error = new NonRetryableError(
 				errorMessage,
 				// eslint-disable-next-line import/no-deprecated
-				DriverErrorType.unsupportedClientProtocolVersion,
+				DriverErrorTypes.unsupportedClientProtocolVersion,
 				driverProps,
 			);
 			break;
@@ -269,7 +268,7 @@ export function createOdspNetworkError(
 			error = new NonRetryableError(
 				errorMessage,
 				// eslint-disable-next-line import/no-deprecated
-				DriverErrorType.fileOverwrittenInStorage,
+				DriverErrorTypes.fileOverwrittenInStorage,
 				driverProps,
 			);
 			break;
@@ -279,7 +278,7 @@ export function createOdspNetworkError(
 			error = new NonRetryableError(
 				errorMessage,
 				// eslint-disable-next-line import/no-deprecated
-				DriverErrorType.genericNetworkError,
+				DriverErrorTypes.genericNetworkError,
 				driverProps,
 			);
 			break;
@@ -303,7 +302,7 @@ export function createOdspNetworkError(
 				error = new NonRetryableError(
 					errorMessage,
 					// eslint-disable-next-line import/no-deprecated
-					DriverErrorType.fileIsLocked,
+					DriverErrorTypes.fileIsLocked,
 					driverProps,
 				);
 				break;
@@ -312,7 +311,7 @@ export function createOdspNetworkError(
 			error = new RetryableError(
 				errorMessage,
 				// eslint-disable-next-line import/no-deprecated
-				DriverErrorType.genericNetworkError,
+				DriverErrorTypes.genericNetworkError,
 				driverProps,
 			);
 			break;
@@ -324,7 +323,7 @@ export function createOdspNetworkError(
 			error = new NonRetryableError(
 				errorMessage,
 				// eslint-disable-next-line import/no-deprecated
-				DriverErrorType.outOfStorageError,
+				DriverErrorTypes.outOfStorageError,
 				driverProps,
 			);
 			break;
@@ -333,7 +332,7 @@ export function createOdspNetworkError(
 			error = new NonRetryableError(
 				errorMessage,
 				// eslint-disable-next-line import/no-deprecated
-				DriverErrorType.incorrectServerResponse,
+				DriverErrorTypes.incorrectServerResponse,
 				driverProps,
 			);
 			break;

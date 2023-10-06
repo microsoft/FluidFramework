@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { stub } from "sinon";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { EpochTracker } from "../epochTracker";
@@ -182,7 +182,7 @@ describe("Tests for snapshot fetch", () => {
 		} catch (error: any) {
 			assert.strictEqual(
 				error.errorType,
-				DriverErrorType.incorrectServerResponse,
+				DriverErrorTypes.incorrectServerResponse,
 				"incorrectServerResponse should be received",
 			);
 			assert.strictEqual(error.contentType, "unknown", "content type should be unknown");

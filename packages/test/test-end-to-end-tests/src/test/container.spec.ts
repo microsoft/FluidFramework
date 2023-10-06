@@ -22,7 +22,7 @@ import {
 	IContainerExperimental,
 } from "@fluidframework/container-loader";
 import {
-	DriverErrorType,
+	DriverErrorTypes,
 	FiveDaysMs,
 	IAnyDriverError,
 	IDocumentServiceFactory,
@@ -244,7 +244,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			"Container should be in Connecting state",
 		);
 		const err: IAnyDriverError = {
-			errorType: DriverErrorType.genericError,
+			errorType: DriverErrorTypes.genericError,
 			message: "Test error",
 			canRetry: false,
 		};
@@ -641,7 +641,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			service.connectToDeltaStream = async (client) => {
 				throw new NonRetryableError(
 					"outOfStorageError",
-					DriverErrorType.outOfStorageError,
+					DriverErrorTypes.outOfStorageError,
 					{ driverVersion: "1" },
 				);
 			};
@@ -662,7 +662,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 				assert(readonly, "Readonly should be true");
 				assert.strictEqual(
 					readonlyConnectionReason?.error?.errorType,
-					DriverErrorType.outOfStorageError,
+					DriverErrorTypes.outOfStorageError,
 					"Error should be outOfStorageError",
 				);
 				readOnlyPromise.resolve(true);

@@ -12,7 +12,7 @@ import { DataObjectClass } from '@fluidframework/fluid-static';
 import { DeserializeCallback } from '@fluidframework/sequence';
 import { DirectoryFactory } from '@fluidframework/map';
 import { DOProviderContainerRuntimeFactory } from '@fluidframework/fluid-static';
-import { DriverErrorType } from '@fluidframework/driver-definitions';
+import { DriverErrorTypes } from '@fluidframework/driver-definitions';
 import { FluidContainer } from '@fluidframework/fluid-static';
 import { getTextAndMarkers } from '@fluidframework/sequence';
 import { IConnection } from '@fluidframework/fluid-static';

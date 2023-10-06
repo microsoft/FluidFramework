@@ -531,7 +531,7 @@ export const NORMALIZED_ERROR_TYPE = "genericError";
  */
 class NormalizedLoggingError extends LoggingError {
 	// errorType "genericError" is used as a default value throughout the code.
-	// Note that this matches ContainerErrorType/DriverErrorType's genericError
+	// Note that this matches ContainerErrorType/DriverErrorTypes' genericError
 	errorType = NORMALIZED_ERROR_TYPE;
 
 	constructor(errorProps: Pick<IFluidErrorBase, "message" | "stack">) {

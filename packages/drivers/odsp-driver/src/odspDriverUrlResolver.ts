@@ -5,7 +5,7 @@
 import { assert } from "@fluidframework/core-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
-	DriverErrorType,
+	DriverErrorTypes,
 	DriverHeader,
 	IContainerPackageInfo,
 	IResolvedUrl,
@@ -99,7 +99,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 			if (!(fileName && siteURL && driveID && filePath !== null && filePath !== undefined)) {
 				throw new NonRetryableError(
 					"Proper new file params should be there!!",
-					DriverErrorType.genericError,
+					DriverErrorTypes.genericError,
 					{ driverVersion: pkgVersion },
 				);
 			}

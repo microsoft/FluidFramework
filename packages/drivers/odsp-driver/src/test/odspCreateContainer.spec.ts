@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { DriverErrorType, IDocumentService } from "@fluidframework/driver-definitions";
+import { DriverErrorTypes, IDocumentService } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
@@ -138,7 +138,7 @@ describe("Odsp Create Container Test", () => {
 			await mockFetchMultiple(
 				async () => createService(summary, resolved),
 				[
-					// Due to retry logic in getWithRetryForTokenRefresh() for DriverErrorType.incorrectServerResponse
+					// Due to retry logic in getWithRetryForTokenRefresh() for DriverErrorTypes.incorrectServerResponse
 					// Need to mock two calls
 					async () => okResponse({}, {}),
 					async () => okResponse({}, {}),
@@ -148,7 +148,7 @@ describe("Odsp Create Container Test", () => {
 			assert.strictEqual(error.statusCode, undefined, "Wrong error code");
 			assert.strictEqual(
 				error.errorType,
-				DriverErrorType.incorrectServerResponse,
+				DriverErrorTypes.incorrectServerResponse,
 				"Error type should be correct",
 			);
 			assert.strictEqual(

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import {
-	DriverErrorType,
+	DriverErrorTypes,
 	IDocumentStorageServicePolicies,
 } from "@fluidframework/driver-definitions";
 import { IOdspResolvedUrl, ICacheEntry, IEntry } from "@fluidframework/odsp-driver-definitions";
@@ -158,7 +158,7 @@ describe("Tests for Epoch Tracker", () => {
 			success = false;
 			assert.strictEqual(
 				error.errorType,
-				DriverErrorType.fileOverwrittenInStorage,
+				DriverErrorTypes.fileOverwrittenInStorage,
 				"Error should be epoch error",
 			);
 		}
@@ -189,7 +189,7 @@ describe("Tests for Epoch Tracker", () => {
 			success = false;
 			assert.strictEqual(
 				error.errorType,
-				DriverErrorType.fileOverwrittenInStorage,
+				DriverErrorTypes.fileOverwrittenInStorage,
 				"Error should be epoch error",
 			);
 		}
@@ -312,7 +312,7 @@ describe("Tests for Epoch Tracker", () => {
 			success = false;
 			assert.strictEqual(
 				error.errorType,
-				DriverErrorType.throttlingError,
+				DriverErrorTypes.throttlingError,
 				"Error should be throttling error",
 			);
 		}
@@ -343,7 +343,7 @@ describe("Tests for Epoch Tracker", () => {
 			success = false;
 			assert.strictEqual(
 				error.errorType,
-				DriverErrorType.fileOverwrittenInStorage,
+				DriverErrorTypes.fileOverwrittenInStorage,
 				"Error should be epoch error",
 			);
 		}
@@ -376,7 +376,7 @@ describe("Tests for Epoch Tracker", () => {
 			success = false;
 			assert.strictEqual(
 				error.errorType,
-				DriverErrorType.locationRedirection,
+				DriverErrorTypes.locationRedirection,
 				"Error should be locationRedirection error",
 			);
 			const newResolvedUrl: IOdspResolvedUrl = error.redirectUrl;
