@@ -9,7 +9,6 @@ import {
 	IBroadcastSignalEventPayload,
 	ICollaborationSessionEvents,
 	IRoom,
-	IRuntimeSignalEnvelope,
 } from "@fluidframework/server-lambdas";
 import { IDocumentStorage, MongoManager } from "@fluidframework/server-services-core";
 import { Router } from "express";
@@ -17,12 +16,6 @@ import { Provider } from "nconf";
 import { getParam } from "../../utils";
 import * as deltas from "./deltas";
 import * as documents from "./documents";
-
-function isValidSignalEnvelope(
-	input: Partial<IRuntimeSignalEnvelope>,
-): input is IRuntimeSignalEnvelope {
-	return typeof input?.contents?.type === "string" && input?.contents?.content !== undefined;
-}
 
 export function create(
 	config: Provider,
@@ -45,19 +38,13 @@ export function create(
 		const tenantId = getParam(request.params, "tenantId");
 		const documentId = getParam(request.params, "id");
 		const signalContent = request?.body?.signalContent;
-		if (!isValidSignalEnvelope(signalContent)) {
-			response.status(400).send(`signalContent should contain 'content' and 'type' keys.`);
-			return router;
-		}
 		try {
 			const signalRoom: IRoom = { tenantId, documentId };
 			const payload: IBroadcastSignalEventPayload = { signalRoom, signalContent };
-			collaborationSessionEventEmitter.emit("broadcastSignal", payload);
+			collaborationSessionEventEmitter?.emit("broadcastSignal", payload);
 			response.status(200).send("OK");
-			return router;
 		} catch (error) {
 			response.status(500).send(error);
-			return router;
 		}
 	});
 
