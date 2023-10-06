@@ -24,13 +24,7 @@ import {
 	SequenceFieldEditBuilder,
 	ValueFieldEditBuilder,
 } from "../default-field-kinds";
-import {
-	assertValidIndex,
-	assertValidRangeIndices,
-	compareSets,
-	disposeSymbol,
-	fail,
-} from "../../util";
+import { assertValidIndex, assertValidRangeIndices, disposeSymbol, fail } from "../../util";
 import { AllowedTypes, FieldSchema } from "../typed-schema";
 import { Context } from "./context";
 import {
