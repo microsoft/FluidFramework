@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IChannelAttributes } from "@fluidframework/datastore-definitions";
+import { type IChannelAttributes } from "@fluidframework/datastore-definitions";
 
 /**
  * Checks if two channel attributes objects match.

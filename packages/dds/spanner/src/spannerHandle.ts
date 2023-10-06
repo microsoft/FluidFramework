@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { SharedObject } from "@fluidframework/shared-object-base";
-import { Spanner } from "./spanner";
+import { type IFluidHandle } from "@fluidframework/core-interfaces";
+import { type SharedObject } from "@fluidframework/shared-object-base";
+import { type Spanner } from "./spanner";
 
 /**
  * Represents a handle to a Spanner object. How handles will be attached needs to work in the original flow so this

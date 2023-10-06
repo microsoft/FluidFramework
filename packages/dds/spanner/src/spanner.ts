@@ -3,24 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import { type IFluidHandle, type IFluidLoadable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import {
-	IChannel,
-	IChannelAttributes,
-	IChannelFactory,
-	IChannelServices,
-	IFluidDataStoreRuntime,
+	type IChannel,
+	type IChannelAttributes,
+	type IChannelFactory,
+	type IChannelServices,
+	type IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import {
-	ITelemetryContext,
-	ISummaryTreeWithStats,
-	IExperimentalIncrementalSummaryContext,
-	IGarbageCollectionData,
+	type ITelemetryContext,
+	type ISummaryTreeWithStats,
+	type IExperimentalIncrementalSummaryContext,
+	type IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
-import { SharedObject } from "@fluidframework/shared-object-base";
+import { type SharedObject } from "@fluidframework/shared-object-base";
 import { SpannerHandle } from "./spannerHandle";
 import { SpannerChannelServices } from "./spannerChannelServices";
 

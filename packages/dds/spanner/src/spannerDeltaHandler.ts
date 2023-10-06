@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IDeltaHandler } from "@fluidframework/datastore-definitions";
+import { type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { type IDeltaHandler } from "@fluidframework/datastore-definitions";
 
 /**
  * Handles incoming and outgoing deltas/ops for the Spanner distributed data structure.

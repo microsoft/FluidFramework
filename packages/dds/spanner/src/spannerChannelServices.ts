@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IChannelServices, IChannelStorageService } from "@fluidframework/datastore-definitions";
+import { type IChannelServices, type IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { SpannerDeltaConnection } from "./spannerDeltaConnection";
 
 /**

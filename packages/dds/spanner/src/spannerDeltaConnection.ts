@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
-import { IDeltaConnection, IDeltaHandler } from "@fluidframework/datastore-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { type IDeltaConnection, type IDeltaHandler } from "@fluidframework/datastore-definitions";
+import { type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { SpannerDeltaHandler } from "./spannerDeltaHandler";
 
 /**
@@ -44,12 +44,12 @@ export class SpannerDeltaConnection implements IDeltaConnection {
 	// Note: SharedObject.load calls attach as well as SharedObject.connect
 	public attach(handler: IDeltaHandler): void {
 		// we only want to actually attach to the delta connection once
-		if (this._handler !== undefined) {
-			this._handler.attach(handler);
-			this.dirty();
-		} else {
+		if (this._handler === undefined) {
 			this._handler = new SpannerDeltaHandler(handler, (message) => this.migrate(message));
 			this.deltaConnection.attach(this._handler);
+		} else {
+			this._handler.attach(handler);
+			this.dirty();
 		}
 	}
 	public dirty(): void {

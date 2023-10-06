@@ -10,7 +10,7 @@ import {
 	type IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import { DataProcessingError } from "@fluidframework/telemetry-utils";
-import { SharedObject } from "@fluidframework/shared-object-base";
+import { type SharedObject } from "@fluidframework/shared-object-base";
 import { Spanner } from "./spanner";
 import { SpannerChannelServices } from "./spannerChannelServices";
 import { attributesMatch } from "./utils";
