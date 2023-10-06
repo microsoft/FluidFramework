@@ -181,10 +181,7 @@ export class MockRuntime
 			this.processBlobsP.reject(new Error("fake error"));
 		}
 		this.processBlobsP = new Deferred<void>();
-		for (const blobP of blobPs) {
-			// allow uploadBlob to finish their then/catch statements
-			await blobP.then().catch(() => {});
-		}
+		await Promise.allSettled(blobPs).catch(()=>{});
 	}
 
 	public async processHandles() {
