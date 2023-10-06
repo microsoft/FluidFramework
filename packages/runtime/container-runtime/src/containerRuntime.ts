@@ -656,7 +656,7 @@ async function createSummarizer(loader: ILoader, url: string): Promise<ISummariz
 	if (resolvedContainer.getEntryPoint !== undefined) {
 		fluidObject = await resolvedContainer.getEntryPoint();
 	} else {
-		const response = await resolvedContainer.request({ url: summarizerRequestUrl });
+		const response = await resolvedContainer.request({ url: `/${summarizerRequestUrl}` });
 		if (response.status !== 200 || response.mimeType !== "fluid/object") {
 			throw responseToException(response, request);
 		}
@@ -1741,6 +1741,7 @@ export class ContainerRuntime
 				return create404Response(request);
 			}
 			if (this.requestHandler !== undefined) {
+				// eslint-disable-next-line @typescript-eslint/return-await -- Adding an await here causes test failures
 				return this.requestHandler(parser, this);
 			}
 
@@ -1760,6 +1761,7 @@ export class ContainerRuntime
 			const id = requestParser.pathParts[0];
 
 			if (id === "_channels") {
+				// eslint-disable-next-line @typescript-eslint/return-await -- Adding an await here causes test failures
 				return this.resolveHandle(requestParser.createSubRequest(1));
 			}
 
@@ -1781,6 +1783,7 @@ export class ContainerRuntime
 					subRequest.url.startsWith("/"),
 					0x126 /* "Expected createSubRequest url to include a leading slash" */,
 				);
+				// eslint-disable-next-line @typescript-eslint/return-await -- Adding an await here causes test failures
 				return dataStore.request(subRequest);
 			}
 
@@ -3956,12 +3959,7 @@ export class ContainerRuntime
 	 */
 	private formCreateSummarizerFn(loader: ILoader) {
 		return async () => {
-			const absoluteUrl = await this.getAbsoluteUrl("");
-			assert(
-				absoluteUrl !== undefined,
-				"absoluteUrl could not be resolved for creating summarizer",
-			);
-			return createSummarizer(loader, absoluteUrl);
+			return createSummarizer(loader, `/${summarizerRequestUrl}`);
 		};
 	}
 

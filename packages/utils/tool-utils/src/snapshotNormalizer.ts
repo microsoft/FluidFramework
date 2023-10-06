@@ -202,6 +202,7 @@ function normalizeEntry(
 			let contents = entry.value.contents;
 			// If this blob has to be normalized or it's a GC blob, parse and sort the blob contents first.
 			if (
+				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when .includes returns false.
 				config?.blobsToNormalize?.includes(entry.path) ||
 				entry.path.startsWith(gcBlobPrefix)
 			) {
