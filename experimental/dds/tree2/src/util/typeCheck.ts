@@ -114,7 +114,6 @@ export interface Covariant<out T> {
 	_removeContravariance?: T;
 }
 
-
 /**
  * Constrain generic type parameters to Invariant.
  *
