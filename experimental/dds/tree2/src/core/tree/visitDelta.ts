@@ -109,6 +109,7 @@ type RootTransfers = Map<
 		/**
 		 * The node ID that characterizes the detached field of origin.
 		 * Used to delete the entry from the tree index once the root is transferred.
+		 * If undefined, the root was created due to an insert.
 		 */
 		nodeId?: Delta.DetachedNodeId;
 		destination: ForestRootId;
