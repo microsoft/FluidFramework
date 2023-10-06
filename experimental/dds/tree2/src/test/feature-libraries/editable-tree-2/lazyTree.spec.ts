@@ -166,7 +166,6 @@ describe("LazyTree", () => {
 		assert.deepEqual(bannedFieldNames, new Set(existingPropertiesExtended));
 	});
 
-	// The details of `is` are agnostic to the implementation, so tested using our test tree implementation
 	it("is", () => {
 		// #region Create schemas
 
@@ -226,7 +225,6 @@ describe("LazyTree", () => {
 		assert(!node.is(structNodeSchema));
 	});
 
-	// The details of `parent` are agnostic to the implementation, so tested using our test tree implementation
 	it("parent", () => {
 		const schemaBuilder = new SchemaBuilder("test", {}, leafDomain.library);
 		const fieldNodeSchema = schemaBuilder.fieldNode(
@@ -263,63 +261,25 @@ describe("LazyTree", () => {
 			SchemaBuilder.fieldRequired(fieldNodeSchema),
 		);
 
+		const { context, cursor } = initializeTreeWithContent({
+			schema,
+			initialTree: {
+				[EmptyKey]: "Hello world",
+			},
+		});
+		cursor.enterNode(0);
+		const { anchor, anchorNode } = createAnchors(context, cursor);
+
+		const node = new LazyFieldNode(context, fieldNodeSchema, cursor, anchorNode, anchor);
+
 		it("value", () => {
-			const { context, cursor } = initializeTreeWithContent({
-				schema,
-				initialTree: {
-					[EmptyKey]: "Hello world",
-				},
-			});
-			cursor.enterNode(0);
-
-			const { anchor, anchorNode } = createAnchors(context, cursor);
-
-			const node = new LazyFieldNode(context, fieldNodeSchema, cursor, anchorNode, anchor);
-
 			assert.equal(node.value, undefined); // FieldNode_s do not have a value
 		});
 
-		describe("tryGetField", () => {
-			it("Empty", () => {
-				const { context, cursor } = initializeTreeWithContent({ schema, initialTree: {} });
-				cursor.enterNode(0);
-
-				const { anchor, anchorNode } = createAnchors(context, cursor);
-
-				const node = new LazyFieldNode(
-					context,
-					fieldNodeSchema,
-					cursor,
-					anchorNode,
-					anchor,
-				);
-
-				assert.equal(node.tryGetField(EmptyKey), undefined);
-			});
-
-			it("Non-empty", () => {
-				const { context, cursor } = initializeTreeWithContent({
-					schema,
-					initialTree: {
-						[EmptyKey]: "Hello world",
-					},
-				});
-				cursor.enterNode(0);
-
-				const { anchor, anchorNode } = createAnchors(context, cursor);
-
-				const node = new LazyFieldNode(
-					context,
-					fieldNodeSchema,
-					cursor,
-					anchorNode,
-					anchor,
-				);
-
-				const field = node.tryGetField(EmptyKey);
-				assert(field !== undefined);
-				assert(field.is(SchemaBuilder.fieldOptional(leafDomain.string)));
-			});
+		it("tryGetField", () => {
+			const field = node.tryGetField(EmptyKey);
+			assert(field !== undefined);
+			assert(field.is(SchemaBuilder.fieldOptional(leafDomain.string)));
 		});
 	});
 
