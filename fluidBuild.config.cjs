@@ -196,10 +196,7 @@ module.exports = {
 				// These packages may be published to npm in some cases. Policy doesn't enforce this.
 				npm: ["@fluid-experimental", "@fluid-tools"],
 				// These packages may be published to the internal feed in some cases. Policy doesn't enforce this.
-				internalFeed: [
-          "@fluid-internal",
-          "@fluid-private",
-        ],
+				internalFeed: ["@fluid-internal", "@fluid-private"],
 			},
 		},
 		dependencies: {
