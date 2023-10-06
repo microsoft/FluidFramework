@@ -77,3 +77,4 @@ extends:
     taskLint: false
     taskTest:
     - test
+    testResultDirs: [] # No test results to upload
