@@ -465,7 +465,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		}
 
 		try {
-			return cloneDeep<TError>(error);
+			return cloneDeep(error);
 		} catch (errCloning) {
 			Lumberjack.warning(
 				`Error cloning error object using cloneDeep.`,

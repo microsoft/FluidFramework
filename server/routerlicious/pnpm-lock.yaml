@@ -679,6 +679,7 @@ importers:
       '@types/amqplib': ^0.5.17
       '@types/debug': ^4.1.5
       '@types/ioredis-mock': ^8.2.1
+      '@types/lodash': ^4.14.118
       '@types/lru-cache': ^5.1.0
       '@types/mocha': ^10.0.1
       '@types/node': ^18.17.1
@@ -718,6 +719,7 @@ importers:
       '@fluidframework/server-services-telemetry': link:../services-telemetry
       '@fluidframework/server-services-utils': link:../services-utils
       '@socket.io/redis-emitter': 4.1.1
+      '@types/lodash': 4.14.195
       amqplib: 0.10.3
       axios: 1.5.0_debug@4.3.4
       debug: 4.3.4
