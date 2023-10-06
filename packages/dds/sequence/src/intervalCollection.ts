@@ -1582,6 +1582,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 		if (
 			opName === "change" &&
+			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when .hasPendingChangeStart returns false.
 			(this.hasPendingChangeStart(intervalId) || this.hasPendingChangeEnd(intervalId))
 		) {
 			this.removePendingChange(serializedInterval);

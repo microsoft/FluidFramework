@@ -28,7 +28,6 @@ import {
 	unboxedUnion,
 } from "../../../feature-libraries/editable-tree-2/unboxed";
 import { type TreeContent } from "../../../shared-tree";
-import { brand } from "../../../util";
 import { contextWithContentReadonly } from "./utils";
 
 const rootFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: rootFieldKey };
@@ -185,8 +184,8 @@ describe("unboxedTree", () => {
 
 		const unboxed = unboxedTree(context, mapSchema, cursor);
 		assert.equal(unboxed.size, 2);
-		assert.equal(unboxed.get(brand("foo")), "Hello");
-		assert.equal(unboxed.get(brand("bar")), "world");
+		assert.equal(unboxed.get("foo"), "Hello");
+		assert.equal(unboxed.get("bar"), "world");
 	});
 
 	it("Struct", () => {
