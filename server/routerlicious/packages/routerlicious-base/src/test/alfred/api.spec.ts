@@ -227,6 +227,14 @@ describe("Routerlicious", () => {
 							"post",
 						);
 					});
+					it("/:tenantId/:id/broadcast-signal", async () => {
+						await assertThrottle(
+							`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`,
+							null,
+							null,
+							"post",
+						);
+					});
 				});
 
 				describe("/documents", () => {
@@ -380,6 +388,25 @@ describe("Routerlicious", () => {
 						defaultDocumentDeleteService,
 					);
 					supertest = request(app);
+				});
+
+				describe("api/v1", () => {
+					it("/:tenantId/:id/broadcast-signal", async () => {
+						const body = {
+							signalContent: {
+								contents: {
+									type: "ExternalDataChanged_V1.0.0",
+									content: { taskListId: "task-list-1" },
+								},
+							},
+						};
+
+						await supertest
+							.post(`/documents/${appTenant1.id}/${document1._id}/broadcast-signal`)
+							.send(body)
+							.set("Authorization", tenantToken1)
+							.expect(200);
+					});
 				});
 
 				describe("/documents", () => {
