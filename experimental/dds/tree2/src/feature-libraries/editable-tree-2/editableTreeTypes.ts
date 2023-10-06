@@ -698,7 +698,7 @@ export interface OptionalField<TTypes extends AllowedTypes> extends TreeField {
 }
 
 /**
- * Field that an immutable {@link StableNodeKey} identifying this node.
+ * Field that contains an immutable {@link StableNodeKey} identifying this node.
  * @alpha
  */
 export interface NodeKeyField extends TreeField {
