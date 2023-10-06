@@ -103,7 +103,7 @@ export { DirectoryFactory }
 
 export { DOProviderContainerRuntimeFactory }
 
-export { DriverErrorType }
+export { DriverErrorTypes }
 
 export { FluidContainer }
 

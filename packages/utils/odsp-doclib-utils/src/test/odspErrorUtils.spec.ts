@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { DriverErrorTypes, IThrottlingWarning } from "@fluidframework/driver-definitions";
 import { createWriteError, GenericNetworkError } from "@fluidframework/driver-utils";
-import { OdspErrorType, OdspError, IOdspError } from "@fluidframework/odsp-driver-definitions";
+import { OdspErrorTypes, OdspError, IOdspError } from "@fluidframework/odsp-driver-definitions";
 import { isILoggingError } from "@fluidframework/telemetry-utils";
 import { createOdspNetworkError, enrichOdspError } from "../odspErrorUtils";
 import { pkgVersion } from "../packageVersion";
@@ -74,7 +74,7 @@ describe("OdspErrorUtils", () => {
 		it("OutOfStorageError Test 507", () => {
 			const networkError = createOdspNetworkError("Test Message", 507 /* statusCode */);
 			assert(
-				networkError.errorType === OdspErrorType.outOfStorageError,
+				networkError.errorType === OdspErrorTypes.outOfStorageError,
 				"Error should be an OutOfStorageError",
 			);
 			assertCustomPropertySupport(networkError);
@@ -93,7 +93,7 @@ describe("OdspErrorUtils", () => {
 		it("InvalidFileNameError Test 414", () => {
 			const networkError = createOdspNetworkError("Test Message", 414 /* statusCode */);
 			assert(
-				networkError.errorType === OdspErrorType.invalidFileNameError,
+				networkError.errorType === OdspErrorTypes.invalidFileNameError,
 				"Error should be an InvalidFileNameError",
 			);
 			assertCustomPropertySupport(networkError);

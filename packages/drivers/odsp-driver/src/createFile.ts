@@ -10,7 +10,7 @@ import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry
 import {
 	InstrumentedStorageTokenFetcher,
 	IOdspResolvedUrl,
-	OdspErrorType,
+	OdspErrorTypes,
 	ShareLinkInfoType,
 	ISharingLinkKind,
 	ShareLinkTypes,
@@ -67,7 +67,7 @@ export async function createNewFluidFile(
 		throw new NonRetryableError(
 			// pre-0.58 error message: Invalid filename
 			"Invalid filename for createNew",
-			OdspErrorType.invalidFileNameError,
+			OdspErrorTypes.invalidFileNameError,
 			{ driverVersion },
 		);
 	}

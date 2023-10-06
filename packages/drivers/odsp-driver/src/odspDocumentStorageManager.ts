@@ -21,7 +21,7 @@ import { RateLimiter, NonRetryableError } from "@fluidframework/driver-utils";
 import {
 	IOdspResolvedUrl,
 	ISnapshotOptions,
-	OdspErrorType,
+	OdspErrorTypes,
 	InstrumentedStorageTokenFetcher,
 	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions";
@@ -554,7 +554,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			const errorType = error.errorType;
 			// If the snapshot size is too big and the host specified the size limitation(specified in hostSnapshotOptions), then don't try to fetch the snapshot again.
 			if (
-				errorType === OdspErrorType.snapshotTooBig &&
+				errorType === OdspErrorTypes.snapshotTooBig &&
 				hostSnapshotOptions?.mds !== undefined &&
 				this.hostPolicy.summarizerClient !== true
 			) {
@@ -562,8 +562,8 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			}
 			// If the first snapshot request was with blobs and we either timed out or the size was too big, then try to fetch without blobs.
 			if (
-				(errorType === OdspErrorType.snapshotTooBig ||
-					errorType === OdspErrorType.fetchTimeout) &&
+				(errorType === OdspErrorTypes.snapshotTooBig ||
+					errorType === OdspErrorTypes.fetchTimeout) &&
 				snapshotOptions.blobs
 			) {
 				this.logger.sendErrorEvent({

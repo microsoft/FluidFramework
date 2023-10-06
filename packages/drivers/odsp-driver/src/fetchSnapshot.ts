@@ -17,7 +17,7 @@ import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import {
 	IOdspResolvedUrl,
 	ISnapshotOptions,
-	OdspErrorType,
+	OdspErrorTypes,
 	InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
@@ -490,7 +490,7 @@ async function fetchLatestSnapshotCore(
 				typeof error === "object" &&
 				error !== null &&
 				(error.errorType === DriverErrorTypes.fetchFailure ||
-					error.errorType === OdspErrorType.fetchTimeout)
+					error.errorType === OdspErrorTypes.fetchTimeout)
 			) {
 				error[getWithRetryForTokenRefreshRepeat] = true;
 			}

@@ -29,7 +29,7 @@ import {
 import {
 	IOdspResolvedUrl,
 	TokenFetchOptions,
-	OdspErrorType,
+	OdspErrorTypes,
 	tokenFromResponse,
 	isTokenFromCache,
 	OdspResourceTokenFetchOptions,
@@ -87,7 +87,7 @@ export async function getWithRetryForTokenRefresh<T>(
 				return get({ ...options, claims: e.claims, tenantId: e.tenantId });
 
 			case DriverErrorTypes.incorrectServerResponse: // some error on the wire, retry once
-			case OdspErrorType.fetchTokenError: // If the token was null, then retry once.
+			case OdspErrorTypes.fetchTokenError: // If the token was null, then retry once.
 				return get(options);
 
 			default:
@@ -151,13 +151,13 @@ export async function fetchHelper(
 
 			// This error is thrown by fetch() when AbortSignal is provided and it gets cancelled
 			if (error.name === "AbortError") {
-				throw new RetryableError("Fetch Timeout (AbortError)", OdspErrorType.fetchTimeout, {
+				throw new RetryableError("Fetch Timeout (AbortError)", OdspErrorTypes.fetchTimeout, {
 					driverVersion,
 				});
 			}
 			// TCP/IP timeout
 			if (redactedErrorText.includes("ETIMEDOUT")) {
-				throw new RetryableError("Fetch Timeout (ETIMEDOUT)", OdspErrorType.fetchTimeout, {
+				throw new RetryableError("Fetch Timeout (ETIMEDOUT)", OdspErrorTypes.fetchTimeout, {
 					driverVersion,
 				});
 			}
@@ -381,7 +381,7 @@ export function toInstrumentedOdspTokenFetcher(
 							throw new NonRetryableError(
 								// pre-0.58 error message: Token is null for ${name} call
 								`The Host-provided token fetcher returned null`,
-								OdspErrorType.fetchTokenError,
+								OdspErrorTypes.fetchTokenError,
 								{ method: name, driverVersion },
 							);
 						}
@@ -396,7 +396,7 @@ export function toInstrumentedOdspTokenFetcher(
 							(errorMessage) =>
 								new NetworkErrorBasic(
 									`The Host-provided token fetcher threw an error`,
-									OdspErrorType.fetchTokenError,
+									OdspErrorTypes.fetchTokenError,
 									typeof rawCanRetry === "boolean"
 										? rawCanRetry
 										: false /* canRetry */,

@@ -53,6 +53,14 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"EnumDeclaration_OdspErrorType": {
+				"forwardCompat": false
+			},
+			"RemovedEnumDeclaration_OdspErrorType": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

@@ -79,7 +79,7 @@ export interface ContainerWarning extends IErrorBase {
  *
  * - {@link @fluidframework/driver-definitions#DriverErrorTypes}
  *
- * - {@link @fluidframework/odsp-driver-definitions#OdspErrorType}
+ * - {@link @fluidframework/odsp-driver-definitions#OdspErrorTypes}
  *
  * - {@link @fluidframework/routerlicious-driver#RouterliciousErrorType}
  *

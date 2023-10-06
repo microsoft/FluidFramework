@@ -27,7 +27,7 @@ import {
 	HostStoragePolicy,
 	InstrumentedStorageTokenFetcher,
 	ISocketStorageDiscovery,
-	OdspErrorType,
+	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions";
 import { hasFacetCodes } from "@fluidframework/odsp-doclib-utils";
 import { IOdspCache } from "./odspCache";
@@ -155,7 +155,7 @@ export class OdspDelayLoadedDeltaStream {
 				throw this.annotateConnectionError(
 					new NonRetryableError(
 						"Websocket token is null",
-						OdspErrorType.fetchTokenError,
+						OdspErrorTypes.fetchTokenError,
 						{ driverVersion },
 					),
 					"getWebsocketToken",

@@ -7,7 +7,7 @@ import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { performance } from "@fluid-internal/client-utils";
 import { delay } from "@fluidframework/core-utils";
 import { canRetryOnError, getRetryDelayFromError } from "@fluidframework/driver-utils";
-import { OdspErrorType } from "@fluidframework/odsp-driver-definitions";
+import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
 import { Odsp409Error } from "./epochTracker";
 
 /**
@@ -44,7 +44,7 @@ export async function runWithRetry<T>(
 			const canRetry = canRetryOnError(error);
 
 			const coherencyError = error?.[Odsp409Error] === true;
-			const serviceReadonlyError = error?.errorType === OdspErrorType.serviceReadOnly;
+			const serviceReadonlyError = error?.errorType === OdspErrorTypes.serviceReadOnly;
 
 			// logging the first failed retry instead of every attempt. We want to avoid filling telemetry
 			// when we have tight loop of retrying in offline mode, but we also want to know what caused
