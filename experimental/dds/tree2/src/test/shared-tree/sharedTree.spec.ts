@@ -141,7 +141,7 @@ describe("SharedTree", () => {
 
 		// Ensure that the first tree has the state we expect
 		assert.equal(getTestValue(view1), value);
-		assert.equal(schemaCodec.encode(provider.trees[0].storedSchema), expectedSchema);
+		assert.deepEqual(schemaCodec.encode(provider.trees[0].storedSchema), expectedSchema);
 		// Ensure that the second tree receives the expected state from the first tree
 		await provider.ensureSynchronized();
 		validateViewConsistency(view1, provider.trees[1].view);

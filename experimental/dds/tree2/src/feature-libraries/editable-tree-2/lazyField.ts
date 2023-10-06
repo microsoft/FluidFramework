@@ -33,7 +33,7 @@ import {
 	fail,
 } from "../../util";
 import { AllowedTypes, FieldSchema } from "../typed-schema";
-import { TreeStatus, treeStatusFromPath } from "../editable-tree";
+import { treeStatusFromPath } from "../editable-tree";
 import { Context } from "./context";
 import {
 	FlexibleNodeContent,
@@ -47,6 +47,7 @@ import {
 	RequiredField,
 	boxedIterator,
 	CheckTypesOverlap,
+	TreeStatus,
 } from "./editableTreeTypes";
 import { makeTree } from "./lazyTree";
 import {
