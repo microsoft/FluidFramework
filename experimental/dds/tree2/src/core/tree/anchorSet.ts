@@ -595,9 +595,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 
 		const visitor = {
 			anchorSet: this,
-			// Need to keep track of this to account for the multi-pass nature of visiting deltas
-			nodesThatHaveEmittedBeforeChange: new Set<PathNode>(),
-			nodesThatHaveEmittedAfterChange: new Set<PathNode>(),
 			// Run `withNode` on anchorNode for parent if there is such an anchorNode.
 			// If at root, run `withRoot` instead.
 			maybeWithNode(withNode: (anchorNode: PathNode) => void, withRoot?: () => void) {
@@ -855,10 +852,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				};
 				this.parentField = undefined;
 				this.maybeWithNode((p) => {
-					if (!this.nodesThatHaveEmittedBeforeChange.has(p)) {
-						p.events.emit("beforeChange", p);
-						this.nodesThatHaveEmittedBeforeChange.add(p);
-					}
+					p.events.emit("beforeChange", p);
 					// avoid multiple pass side-effects
 					if (!this.pathVisitors.has(p)) {
 						const visitors: (PathVisitor | void)[] = p.events.emitAndCollect(
@@ -877,10 +871,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 			exitNode(index: number): void {
 				assert(this.parent !== undefined, 0x3ac /* Must have parent node */);
 				this.maybeWithNode((p) => {
-					if (!this.nodesThatHaveEmittedAfterChange.has(p)) {
-						p.events.emit("afterChange", p);
-						this.nodesThatHaveEmittedAfterChange.add(p);
-					}
+					p.events.emit("afterChange", p);
 					// Remove subtree path visitors added at this node if there are any
 					this.pathVisitors.delete(p);
 				});
