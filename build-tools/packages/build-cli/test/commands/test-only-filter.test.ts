@@ -54,7 +54,7 @@ describe("flub test-only-filter", () => {
 
 			const names = filtered.map((p) => p.name);
 			expect(names).to.be.containingAllOf([
-				"@fluid-internal/readme-command",
+				"@fluid-private/readme-command",
 				"@fluid-example/example-utils",
 			]);
 		});
@@ -67,8 +67,7 @@ describe("flub test-only-filter", () => {
 
 			const names = filtered.map((p) => p.name);
 			expect(names).to.not.be.containingAnyOf([
-				"@fluid-internal/readme-command",
-				// "@fluid-internal/test-version-utils",
+				"@fluid-private/readme-command",
 			]);
 		});
 
@@ -87,7 +86,7 @@ describe("flub test-only-filter", () => {
 
 			const names = filtered.map((p) => p.name);
 			expect(names).to.be.containingAllOf([
-				"@fluid-internal/readme-command",
+				"@fluid-private/readme-command",
 				"@fluid-tools/build-cli",
 				"fluid-framework",
 			]);

@@ -1,5 +1,5 @@
 {
-	"name": "@fluid-internal/changelog-generator-wrapper",
+	"name": "@fluid-private/changelog-generator-wrapper",
 	"version": "1.0.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",

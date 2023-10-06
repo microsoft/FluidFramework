@@ -57,7 +57,7 @@ importers:
 
   packages/build-cli:
     specifiers:
-      '@fluid-internal/readme-command': workspace:*
+      '@fluid-private/readme-command': workspace:*
       '@fluid-tools/version-tools': workspace:*
       '@fluidframework/build-common': ^2.0.0
       '@fluidframework/build-tools': workspace:*
@@ -174,7 +174,7 @@ importers:
       table: 6.8.1
       type-fest: 2.19.0
     devDependencies:
-      '@fluid-internal/readme-command': link:../readme-command
+      '@fluid-private/readme-command': link:../readme-command
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
       '@microsoft/api-extractor': 7.36.1_@types+node@14.18.53
@@ -421,7 +421,7 @@ importers:
 
   packages/version-tools:
     specifiers:
-      '@fluid-internal/readme-command': workspace:*
+      '@fluid-private/readme-command': workspace:*
       '@fluidframework/build-common': ^2.0.0
       '@fluidframework/eslint-config-fluid': ^2.1.0
       '@microsoft/api-extractor': ^7.36.1
@@ -469,7 +469,7 @@ importers:
       semver: 7.5.4
       table: 6.8.1
     devDependencies:
-      '@fluid-internal/readme-command': link:../readme-command
+      '@fluid-private/readme-command': link:../readme-command
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
       '@microsoft/api-extractor': 7.36.1_@types+node@14.18.53

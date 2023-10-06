@@ -167,6 +167,7 @@ module.exports = {
 				"@fluid-example",
 				"@fluid-experimental",
 				"@fluid-internal",
+				"@fluid-private",
 				"@fluid-tools",
 			],
 			// These packages are known unscoped packages.
@@ -193,9 +194,9 @@ module.exports = {
 			},
 			mayPublish: {
 				// These packages may be published to npm in some cases. Policy doesn't enforce this.
-				npm: ["@fluid-experimental", "@fluid-tools"],
+				npm: ["@fluid-experimental", "@fluid-tools", "@fluid-internal"],
 				// These packages may be published to the internal feed in some cases. Policy doesn't enforce this.
-				internalFeed: ["@fluid-internal"],
+				internalFeed: ["@fluid-internal", "@fluid-private"],
 			},
 		},
 		dependencies: {
@@ -221,7 +222,7 @@ module.exports = {
 		// around nested pnpm workspace behavior. These packages are not checked for the preinstall script that standard
 		// pnpm workspaces should have.
 		pnpmSinglePackageWorkspace: [
-			"@fluid-internal/changelog-generator-wrapper",
+			"@fluid-private/changelog-generator-wrapper",
 			"@fluid-tools/api-markdown-documenter",
 			"@fluid-tools/benchmark",
 			"@fluid-tools/markdown-magic",
