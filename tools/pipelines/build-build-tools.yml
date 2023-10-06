@@ -91,6 +91,9 @@ extends:
     tagName: build-tools
     taskBuild: build
     taskBuildDocs: false
+    tasktest:
+    - ci:test
+    - test:copyresults
     taskLint: true
     taskLintName: ci:eslint
     poolBuild: Large
