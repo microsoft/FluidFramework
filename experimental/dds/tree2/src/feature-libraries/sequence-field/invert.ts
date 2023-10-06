@@ -336,22 +336,20 @@ function applyMovedChanges<TNodeChange>(
 		mark.count,
 		true,
 	);
-	if (entry === undefined) {
-		return [mark];
+
+	if (entry.length < mark.count) {
+		const [mark1, mark2] = splitMark(mark, entry.length);
+		const mark1WithChanges =
+			entry.value !== undefined ? withNodeChange(mark1, entry.value) : mark1;
+
+		return [mark1WithChanges, ...applyMovedChanges(mark2, revision, manager)];
 	}
 
-	if (entry.start > mark.id) {
-		// The entry does not apply to the first cell in the mark.
-		const [mark1, mark2] = splitMark(mark, entry.start - mark.id);
-		return [mark1, ...applyMovedChanges(mark2, revision, manager)];
-	} else if (entry.start + entry.length < (mark.id as number) + mark.count) {
-		// The entry applies to the first cell in the mark, but not the mark's entire range.
-		const [mark1, mark2] = splitMark(mark, entry.start + entry.length - mark.id);
-		return [withNodeChange(mark1, entry.value), ...applyMovedChanges(mark2, revision, manager)];
-	} else {
-		// The entry applies to all cells in the mark.
+	if (entry.value !== undefined) {
 		return [withNodeChange(mark, entry.value)];
 	}
+
+	return [mark];
 }
 
 function invertNodeChangeOrSkip<TNodeChange>(

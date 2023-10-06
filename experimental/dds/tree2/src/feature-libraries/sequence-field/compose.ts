@@ -491,30 +491,6 @@ function amendComposeI<TNodeChange>(
 	while (!queue.isEmpty()) {
 		let mark = queue.dequeue();
 		switch (mark.type) {
-			case "MoveOut":
-			case "ReturnFrom": {
-				const replacementMark = getReplacementMark(
-					moveEffects,
-					CrossFieldTarget.Source,
-					mark.revision,
-					mark.id,
-					mark.count,
-				);
-				mark = replacementMark ?? mark;
-				break;
-			}
-			case "MoveIn":
-			case "ReturnTo": {
-				const replacementMark = getReplacementMark(
-					moveEffects,
-					CrossFieldTarget.Destination,
-					mark.revision,
-					mark.id,
-					mark.count,
-				);
-				mark = replacementMark ?? mark;
-				break;
-			}
 			case "Placeholder": {
 				const modifyAfter = getModifyAfter(moveEffects, mark.revision, mark.id, mark.count);
 				if (modifyAfter !== undefined) {
@@ -651,62 +627,13 @@ export class ComposeQueue<T> {
 
 	private dequeueBase(length: number = 0): ComposeMarks<T> {
 		const baseMark = this.baseMarks.dequeue();
-
-		if (baseMark !== undefined) {
-			switch (baseMark.type) {
-				case "MoveOut":
-				case "ReturnFrom":
-					{
-						const newMark = getReplacementMark(
-							this.moveEffects,
-							CrossFieldTarget.Source,
-							baseMark.revision,
-							baseMark.id,
-							baseMark.count,
-						);
-
-						if (newMark !== undefined) {
-							return { newMark };
-						}
-					}
-					break;
-				default:
-					break;
-			}
-		}
-
 		return { baseMark, newMark: length > 0 ? { count: length } : undefined };
 	}
 
 	private dequeueNew(length: number = 0): ComposeMarks<T> {
-		const newMark = this.newMarks.dequeue();
-
-		if (newMark !== undefined) {
-			switch (newMark.type) {
-				case "MoveIn":
-				case "ReturnTo":
-					{
-						const baseMark = getReplacementMark(
-							this.moveEffects,
-							CrossFieldTarget.Destination,
-							newMark.revision ?? this.newRevision,
-							newMark.id,
-							newMark.count,
-						);
-
-						if (baseMark !== undefined) {
-							return { baseMark };
-						}
-					}
-					break;
-				default:
-					break;
-			}
-		}
-
 		return {
 			baseMark: length > 0 ? { count: length } : undefined,
-			newMark,
+			newMark: this.newMarks.dequeue(),
 		};
 	}
 
@@ -723,103 +650,6 @@ export class ComposeQueue<T> {
 			newMark: this.newMarks.dequeueUpTo(length),
 		};
 	}
-}
-
-// It is expected that the range from `id` to `id + count - 1` has the same move effect.
-// The call sites to this function are making queries about a mark which has already been split by a `MarkQueue`
-// to match the ranges in `moveEffects`.
-// TODO: Reduce the duplication between this and other MoveEffect helpers
-function getReplacementMark<T>(
-	moveEffects: MoveEffectTable<T>,
-	target: CrossFieldTarget,
-	revision: RevisionTag | undefined,
-	id: MoveId,
-	count: number,
-): Mark<T> | undefined {
-	const effect = getMoveEffect(moveEffects, target, revision, id, count);
-	if (effect?.value.mark === undefined) {
-		return undefined;
-	}
-
-	const lastTargetId = (id as number) + count - 1;
-	const lastEffectId = effect.start + effect.length - 1;
-	assert(
-		effect.start <= id && lastEffectId >= lastTargetId,
-		0x6e9 /* Expected effect to cover entire mark */,
-	);
-
-	let mark = effect.value.mark;
-	assert(
-		mark.count === effect.length,
-		0x6ea /* Expected replacement mark to be same length as number of cells replaced */,
-	);
-
-	// The existing effect may cover more cells than the area we are querying.
-	// We only want to return the portion of the replacement mark which covers the cells from this query.
-	// We should then delete the replacement mark from the portion of the effect which covers the query range,
-	// and trim the replacement marks in the portion of the effect before and after the query range.
-	const cellsBefore = id - effect.start;
-	if (cellsBefore > 0) {
-		const [markBefore, newMark] = splitMark(mark, cellsBefore);
-		const effectBefore = { ...effect.value, mark: markBefore };
-		setMoveEffect(
-			moveEffects,
-			target,
-			revision,
-			brand(effect.start),
-			cellsBefore,
-			effectBefore,
-			false,
-		);
-		mark = newMark;
-	}
-
-	const cellsAfter = lastEffectId - lastTargetId;
-	if (cellsAfter > 0) {
-		const [newMark, markAfter] = splitMark(mark, cellsAfter);
-		const effectAfter = { ...effect.value, mark: markAfter };
-		setMoveEffect(
-			moveEffects,
-			target,
-			revision,
-			brand(lastTargetId + 1),
-			cellsAfter,
-			effectAfter,
-			false,
-		);
-		mark = newMark;
-	}
-
-	const newEffect = { ...effect.value };
-	delete newEffect.mark;
-	setMoveEffect(moveEffects, target, revision, id, count, newEffect, false);
-	return mark;
-}
-
-// It is expected that the range from `id` to `id + count - 1` has the same move effect.
-// The call sites to this function are making queries about a mark which has already been split by a `MarkQueue`
-// to match the ranges in `moveEffects`.
-// TODO: Reduce the duplication between this and other MoveEffect helpers
-function setReplacementMark<T>(
-	moveEffects: MoveEffectTable<T>,
-	target: CrossFieldTarget,
-	revision: RevisionTag | undefined,
-	id: MoveId,
-	count: number,
-	mark: Mark<T>,
-) {
-	const effect = getMoveEffect(moveEffects, target, revision, id, count, false);
-	let newEffect: MoveEffect<T>;
-	if (effect !== undefined) {
-		assert(
-			effect.start <= id && effect.start + effect.length >= (id as number) + count,
-			0x6eb /* Expected effect to cover entire mark */,
-		);
-		newEffect = { ...effect.value, mark };
-	} else {
-		newEffect = { mark };
-	}
-	setMoveEffect(moveEffects, target, revision, id, count, newEffect);
 }
 
 interface ComposeMarks<T> {
@@ -970,11 +800,8 @@ function setModifyAfter<T>(
 ) {
 	const effect = getMoveEffect(moveEffects, target, revision, id, count, false);
 	let newEffect: MoveEffect<unknown>;
-	if (effect !== undefined) {
-		assert(
-			effect.start <= id && effect.start + effect.length >= (id as number) + count,
-			0x6ec /* Expected effect to cover entire mark */,
-		);
+	assert(effect.length === count, 0x6ec /* Expected effect to cover entire mark */);
+	if (effect.value !== undefined) {
 		const nodeChange =
 			effect.value.modifyAfter !== undefined
 				? composeChanges([

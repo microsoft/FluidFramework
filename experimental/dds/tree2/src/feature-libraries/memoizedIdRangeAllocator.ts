@@ -7,7 +7,7 @@ import { ChangesetLocalId, RevisionTag } from "../core";
 import {
 	RangeMap,
 	getOrAddEmptyToMap,
-	getFirstFromRangeMap,
+	getFirstEntryFromRangeMap,
 	setInRangeMap,
 	Mutable,
 	brand,
@@ -67,7 +67,7 @@ export const MemoizedIdRangeAllocator = {
 				const ranges = getOrAddEmptyToMap(rangeMap, key);
 				let currId = startId;
 				while (count > 0) {
-					const firstRange = getFirstFromRangeMap(ranges, currId, count);
+					const firstRange = getFirstEntryFromRangeMap(ranges, currId, count);
 					if (firstRange === undefined) {
 						const newId = _nextId;
 						_nextId += count;

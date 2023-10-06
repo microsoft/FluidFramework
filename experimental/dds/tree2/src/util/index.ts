@@ -99,7 +99,14 @@ export {
 	brandedSlot,
 } from "./brandedMap";
 
-export { getFirstFromRangeMap, RangeEntry, RangeMap, setInRangeMap } from "./rangeMap";
+export {
+	getFirstEntryFromRangeMap,
+	getFromRangeMap,
+	RangeEntry,
+	RangeMap,
+	RangeQueryResult,
+	setInRangeMap,
+} from "./rangeMap";
 
 export {
 	IdAllocator,

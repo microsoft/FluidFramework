@@ -5,7 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { ChangeAtomId, ChangesetLocalId, RevisionTag, TaggedChange } from "../../core";
-import { brand, fail, getFirstFromRangeMap, getOrAddEmptyToMap, RangeMap } from "../../util";
+import { brand, fail, getFromRangeMap, getOrAddEmptyToMap, RangeMap } from "../../util";
 import {
 	addCrossFieldQuery,
 	CrossFieldManager,
@@ -847,7 +847,7 @@ export function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 			if (addDependency) {
 				addCrossFieldQuery(getQueries(target), revision, id, count);
 			}
-			return getFirstFromRangeMap(getMap(target).get(revision) ?? [], id, count);
+			return getFromRangeMap(getMap(target).get(revision) ?? [], id, count);
 		},
 		set: (
 			target: CrossFieldTarget,
@@ -859,8 +859,7 @@ export function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 		) => {
 			if (
 				invalidateDependents &&
-				getFirstFromRangeMap(getQueries(target).get(revision) ?? [], id, count) !==
-					undefined
+				getFromRangeMap(getQueries(target).get(revision) ?? [], id, count) !== undefined
 			) {
 				table.isInvalidated = true;
 			}

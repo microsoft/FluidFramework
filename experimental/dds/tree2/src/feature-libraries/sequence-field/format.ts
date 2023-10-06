@@ -314,6 +314,12 @@ export const ReturnFrom = Type.Composite(
 	noAdditionalProps,
 );
 
+export type MoveSource = MoveOut | ReturnFrom;
+export const MoveSource = Type.Union([MoveOut, ReturnFrom]);
+
+export type MoveDestination = MoveIn | ReturnTo;
+export type MoveMarkEffect = MoveSource | MoveDestination;
+
 /**
  * An attach mark that allocates new cells.
  */
@@ -326,8 +332,8 @@ export const Reattach = Type.Union([Revive, ReturnTo]);
 export type Attach = NewAttach | Reattach;
 export const Attach = Type.Union([NewAttach, Reattach]);
 
-export type Detach = Delete | MoveOut | ReturnFrom;
-export const Detach = Type.Union([Delete, MoveOut, ReturnFrom]);
+export type Detach = Delete | MoveSource;
+export const Detach = Type.Union([Delete, MoveSource]);
 
 /**
  * Mark used during compose to temporarily remember the position of nodes which were being moved

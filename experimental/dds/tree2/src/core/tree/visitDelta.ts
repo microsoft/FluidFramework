@@ -4,13 +4,7 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import {
-	RangeMap,
-	brand,
-	extractFromOpaque,
-	getFirstFromRangeMap,
-	setInRangeMap,
-} from "../../util";
+import { RangeMap, brand, extractFromOpaque, getFromRangeMap, setInRangeMap } from "../../util";
 import { FieldKey } from "../schema-stored";
 import * as Delta from "./delta";
 
@@ -250,43 +244,47 @@ function secondPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 					}
 					break;
 				case Delta.MarkType.MoveIn: {
-					let entry = getFirstFromRangeMap(
+					const startId = extractFromOpaque(mark.moveId);
+					let entry = getFromRangeMap(
 						config.movedOutRanges,
-						extractFromOpaque(mark.moveId),
+						extractFromOpaque(startId),
 						mark.count,
 					);
-					assert(entry !== undefined, 0x6d7 /* Expected a move out for this move in */);
+					assert(
+						entry.value !== undefined,
+						0x6d7 /* Expected a move out for this move in */,
+					);
 					visitor.onMoveIn(index, entry.length, entry.value);
 					let endIndex = index + entry.length;
 
-					const lengthBeforeMark = extractFromOpaque(mark.moveId) - entry.start;
+					const lengthBeforeMark = extractFromOpaque(mark.moveId) - startId;
 					if (lengthBeforeMark > 0) {
 						visitor.onMoveOut(index, lengthBeforeMark, entry.value);
 						endIndex -= lengthBeforeMark;
 						setInRangeMap(
 							config.movedOutRanges,
-							entry.start,
+							startId,
 							lengthBeforeMark,
 							entry.value,
 						);
 					}
 
 					const lastMarkId = (extractFromOpaque(mark.moveId) as number) + mark.count - 1;
-					let lastEntryId = entry.start + entry.length - 1;
+					let lastEntryId = startId + entry.length - 1;
 					let lengthAfterEntry = lastMarkId - lastEntryId;
 					while (lengthAfterEntry > 0) {
 						const nextId = lastEntryId + 1;
-						entry = getFirstFromRangeMap(config.movedOutRanges, nextId, mark.count);
+						entry = getFromRangeMap(config.movedOutRanges, nextId, mark.count);
 
 						assert(
-							entry !== undefined && entry.start === nextId,
+							entry.value !== undefined,
 							0x6d8 /* Expected a move out for the remaining portion of this move in */,
 						);
 
-						lastEntryId = entry.start + entry.length - 1;
+						lastEntryId = nextId + entry.length - 1;
 						lengthAfterEntry = lastMarkId - lastEntryId;
 
-						visitor.onMoveIn(endIndex, entry.length, brand(entry.start));
+						visitor.onMoveIn(endIndex, entry.length, brand(nextId));
 						endIndex += entry.length;
 					}
 

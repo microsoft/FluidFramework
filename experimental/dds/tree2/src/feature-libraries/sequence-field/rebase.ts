@@ -483,16 +483,9 @@ function sendMarkToDest<T>(
 		count,
 		false,
 	);
-	let newEffect: MoveEffect<T>;
-	if (effect !== undefined) {
-		assert(
-			effect.start <= id && effect.start + effect.length >= (id as number) + count,
-			0x6f1 /* Expected effect to cover entire mark */,
-		);
-		newEffect = { ...effect.value, movedMark: mark };
-	} else {
-		newEffect = { movedMark: mark };
-	}
+	assert(effect.length === count, 0x6f1 /* Expected effect to cover entire mark */);
+	const newEffect =
+		effect.value !== undefined ? { ...effect.value, movedMark: mark } : { movedMark: mark };
 	setMoveEffect(moveEffects, CrossFieldTarget.Destination, revision, id, count, newEffect);
 }
 
@@ -509,16 +502,11 @@ function setPairedMarkStatus(
 	status: PairedMarkUpdate,
 ) {
 	const effect = getMoveEffect(moveEffects, target, revision, id, count, false);
-	let newEffect: MoveEffect<unknown>;
-	if (effect !== undefined) {
-		assert(
-			effect.start <= id && effect.start + effect.length >= (id as number) + count,
-			0x6f2 /* Expected effect to cover entire mark */,
-		);
-		newEffect = { ...effect.value, pairedMarkStatus: status };
-	} else {
-		newEffect = { pairedMarkStatus: status };
-	}
+	assert(effect.length === count, 0x6f2 /* Expected effect to cover entire mark */);
+	const newEffect =
+		effect.value !== undefined
+			? { ...effect.value, pairedMarkStatus: status }
+			: { pairedMarkStatus: status };
 	setMoveEffect(moveEffects, target, revision, id, count, newEffect);
 }
 
@@ -642,12 +630,9 @@ function getMovedMark<T>(
 	count: number,
 ): Mark<T> | undefined {
 	const effect = getMoveEffect(moveEffects, CrossFieldTarget.Destination, revision, id, count);
+	assert(effect.length === count, 0x6f3 /* Expected effect to cover entire mark */);
 
-	if (effect?.value.movedMark !== undefined) {
-		assert(
-			effect.start <= id && effect.start + effect.length >= (id as number) + count,
-			0x6f3 /* Expected effect to cover entire mark */,
-		);
+	if (effect.value?.movedMark !== undefined) {
 		const newEffect = { ...effect.value };
 		delete newEffect.movedMark;
 		setMoveEffect(
