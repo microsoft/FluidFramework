@@ -6,6 +6,7 @@
 import * as SchemaAware from "../schema-aware";
 import { FieldKey, TreeSchemaIdentifier, TreeValue } from "../../core";
 import { Assume, RestrictiveReadonlyRecord, _InlineTrick } from "../../util";
+import { type PrimitiveValue } from "../contextuallyTyped";
 import { LocalNodeKey, StableNodeKey } from "../node-key";
 import {
 	FieldSchema,
@@ -438,12 +439,14 @@ export type StructFields<TFields extends RestrictiveReadonlyRecord<string, Field
 	readonly [key in keyof TFields as `boxed${Capitalize<key & string>}`]: TypedField<TFields[key]>;
 } & {
 	// Getter only (when schema type is not an explicit primitive)
-	readonly [key in keyof TFields as TFields[key] extends number ? never : key]: UnboxField<
-		TFields[key]
-	>;
+	readonly [key in keyof TFields as TFields[key] extends PrimitiveValue
+		? never
+		: key]: UnboxField<TFields[key]>;
 } & {
 	// Getter + setter (when schema type is an explicit primitive)
-	[key in keyof TFields as TFields[key] extends number ? key : never]: UnboxField<TFields[key]>;
+	[key in keyof TFields as TFields[key] extends PrimitiveValue ? key : never]: UnboxField<
+		TFields[key]
+	>;
 } & {
 	// Setter method
 	readonly [key in keyof TFields as `set${Capitalize<key & string>}`]: (
