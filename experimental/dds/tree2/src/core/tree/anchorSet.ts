@@ -642,6 +642,9 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					start: 0,
 					end: count,
 				});
+				this.maybeWithNode((p) => {
+					p.events.emit("beforeChange", p);
+				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
 						pathVisitor.beforeAttach(sourcePath, destinationPath);
@@ -659,6 +662,9 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					field: this.parentField,
 					...destination,
 				};
+				this.maybeWithNode((p) => {
+					p.events.emit("afterChange", p);
+				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
 						pathVisitor.afterAttach(sourcePath, destinationPath);
@@ -694,6 +700,9 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					field: destination,
 					index: 0,
 				});
+				this.maybeWithNode((p) => {
+					p.events.emit("beforeChange", p);
+				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
 						pathVisitor.beforeDetach(sourcePath, destinationPath);
@@ -711,6 +720,9 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					field: destination,
 					start: 0,
 					end: count,
+				});
+				this.maybeWithNode((p) => {
+					p.events.emit("afterChange", p);
 				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
@@ -752,6 +764,9 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					field: destination,
 					index: 0,
 				});
+				this.maybeWithNode((p) => {
+					p.events.emit("beforeChange", p);
+				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
 						pathVisitor.beforeReplace(
@@ -781,6 +796,9 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					field: oldContent,
 					start: 0,
 					end: newContent.end - newContent.start,
+				});
+				this.maybeWithNode((p) => {
+					p.events.emit("afterChange", p);
 				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
@@ -852,7 +870,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				};
 				this.parentField = undefined;
 				this.maybeWithNode((p) => {
-					p.events.emit("beforeChange", p);
 					// avoid multiple pass side-effects
 					if (!this.pathVisitors.has(p)) {
 						const visitors: (PathVisitor | void)[] = p.events.emitAndCollect(
@@ -871,7 +888,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 			exitNode(index: number): void {
 				assert(this.parent !== undefined, 0x3ac /* Must have parent node */);
 				this.maybeWithNode((p) => {
-					p.events.emit("afterChange", p);
 					// Remove subtree path visitors added at this node if there are any
 					this.pathVisitors.delete(p);
 				});

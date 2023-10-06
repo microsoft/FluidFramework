@@ -156,7 +156,7 @@ function getPersonBasic(): Person {
 }
 
 describe("beforeChange/afterChange events", () => {
-	it("fire the expected number of times", () => {
+	it.only("fire the expected number of times", () => {
 		const tree = viewWithContent({ schema: fullSchemaData, initialTree: getPersonBasic() });
 		const person = tree.root as EditableTree;
 
@@ -175,14 +175,13 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(beforeChangePersonCount, 0);
 		assert.strictEqual(afterChangePersonCount, 0);
 
-		// Replace existing node - age; should fire events twice (detach + attach) on the person node.
+		// Replace existing node - age; should fire events on the person node.
 		person.age = brand<Int32>(32);
 
-		assert.strictEqual(beforeChangePersonCount, 2);
-		assert.strictEqual(afterChangePersonCount, 2);
+		assert.strictEqual(beforeChangePersonCount, 1);
+		assert.strictEqual(afterChangePersonCount, 1);
 
 		// Add node where there was none before - address; should fire events on the person node.
-		// TODO: once or twice?
 		// This also lets us put listeners on it, otherwise get complaints that person.address might be undefined below.
 		person.address = {
 			zip: "99999",
@@ -190,8 +189,8 @@ describe("beforeChange/afterChange events", () => {
 			phones: [12345],
 		} as unknown as Address; // TODO: fix up these strong types to reflect unwrapping
 
-		assert.strictEqual(beforeChangePersonCount, 4);
-		assert.strictEqual(afterChangePersonCount, 4);
+		assert.strictEqual(beforeChangePersonCount, 2);
+		assert.strictEqual(afterChangePersonCount, 2);
 
 		person.address[on]("beforeChange", (event) => {
 			beforeChangeAddressCount++;
@@ -203,43 +202,43 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(beforeChangeAddressCount, 0);
 		assert.strictEqual(afterChangeAddressCount, 0);
 
-		// Replace zip in address; should fire events twice (detach + attach) on the address node and the person node.
+		// Replace zip in address; should fire events on the address node and the person node.
 		person.address.zip = brand<Int32>(12345);
 
-		assert.strictEqual(beforeChangePersonCount, 6);
-		assert.strictEqual(afterChangePersonCount, 6);
-		assert.strictEqual(beforeChangeAddressCount, 2);
-		assert.strictEqual(afterChangeAddressCount, 2);
+		assert.strictEqual(beforeChangePersonCount, 3);
+		assert.strictEqual(afterChangePersonCount, 3);
+		assert.strictEqual(beforeChangeAddressCount, 1);
+		assert.strictEqual(afterChangeAddressCount, 1);
 
-		// Replace the whole address; should fire events twice (detach + attach) on the person node.
+		// Replace the whole address; should fire events on the person node.
 		person.address = {
 			zip: "99999",
 			street: "foo",
 			phones: [12345],
 		} as unknown as Address; // TODO: fix up these strong types to reflect unwrapping
 
-		assert.strictEqual(beforeChangePersonCount, 8);
-		assert.strictEqual(afterChangePersonCount, 8);
+		assert.strictEqual(beforeChangePersonCount, 4);
+		assert.strictEqual(afterChangePersonCount, 4);
 		// No events should have fired on the old address node.
-		assert.strictEqual(beforeChangeAddressCount, 2);
-		assert.strictEqual(afterChangeAddressCount, 2);
+		assert.strictEqual(beforeChangeAddressCount, 1);
+		assert.strictEqual(afterChangeAddressCount, 1);
 
-		// Replace zip in new address node; should fire events twice (detach + attach) on the person node (but not on the old address node)
+		// Replace zip in new address node; should fire events on the person node (but not on the old address node)
 		person.address.zip = brand<Int32>(23456);
 
-		assert.strictEqual(beforeChangePersonCount, 10);
-		assert.strictEqual(afterChangePersonCount, 10);
-		assert.strictEqual(beforeChangeAddressCount, 2);
-		assert.strictEqual(afterChangeAddressCount, 2);
+		assert.strictEqual(beforeChangePersonCount, 5);
+		assert.strictEqual(afterChangePersonCount, 5);
+		assert.strictEqual(beforeChangeAddressCount, 1);
+		assert.strictEqual(afterChangeAddressCount, 1);
 
-		// Delete node - age; should fire events once (detach) on the person node
+		// Delete node - age; should fire events on the person node
 		delete person.age;
 
-		assert.strictEqual(beforeChangePersonCount, 11);
-		assert.strictEqual(afterChangePersonCount, 11);
+		assert.strictEqual(beforeChangePersonCount, 6);
+		assert.strictEqual(afterChangePersonCount, 6);
 	});
 
-	it("fire in the expected order and always together", () => {
+	it.only("fire in the expected order and always together", () => {
 		const tree = viewWithContent({ schema: fullSchemaData, initialTree: getPersonBasic() });
 		const person = tree.root as EditableTree;
 
@@ -276,8 +275,8 @@ describe("beforeChange/afterChange events", () => {
 		person.address.zip = brand<Int32>(23456);
 
 		// Check the number of events fired is correct (otherwise the assertions in the listeners might not have ran)
-		assert.strictEqual(beforeCounter, 11);
-		assert.strictEqual(afterCounter, 11);
+		assert.strictEqual(beforeCounter, 6);
+		assert.strictEqual(afterCounter, 6);
 	});
 
 	it.only("fire in the expected order and always together", () => {
