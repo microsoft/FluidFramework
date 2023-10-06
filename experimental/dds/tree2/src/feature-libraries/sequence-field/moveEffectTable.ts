@@ -17,7 +17,7 @@ import {
 	ReturnFrom,
 	ReturnTo,
 } from "./format";
-import { cloneMark, splitMark } from "./utils";
+import { cloneMark, isTransientEffect, splitMark } from "./utils";
 
 export type MoveEffectTable<T> = CrossFieldManager<MoveEffect<T>>;
 
@@ -45,11 +45,6 @@ export interface MoveEffect<T> {
 	 * Represents the new value for the `isSrcConflicted` or `isDstConflicted` field of this mark.
 	 */
 	pairedMarkStatus?: PairedMarkUpdate;
-
-	/**
-	 * The new value for this mark's `detachedBy` field.
-	 */
-	detacher?: RevisionTag;
 }
 
 export enum MoveEnd {
@@ -104,13 +99,26 @@ export function getMoveEffect<T>(
 	return moveEffects.get(target, revision, id, count, addDependency);
 }
 
-export type MoveMark<T> = CellMark<MoveOut | MoveIn | ReturnFrom | ReturnTo, T>;
+export type MoveMark<T> = CellMark<MoveMarkEffect, T>;
+export type MoveMarkEffect = MoveOut | MoveIn | ReturnFrom | ReturnTo;
 
-export function isMoveMark<T>(mark: MarkEffect): mark is MoveMark<T> {
-	switch (mark.type) {
-		case "MoveIn":
+export function isMoveMark(effect: MarkEffect): effect is MoveMarkEffect {
+	return isMoveSource(effect) || isMoveDestination(effect);
+}
+
+export function isMoveSource(effect: MarkEffect): effect is MoveOut | ReturnFrom {
+	switch (effect.type) {
 		case "MoveOut":
 		case "ReturnFrom":
+			return true;
+		default:
+			return false;
+	}
+}
+
+export function isMoveDestination(effect: MarkEffect): effect is MoveIn | ReturnTo {
+	switch (effect.type) {
+		case "MoveIn":
 		case "ReturnTo":
 			return true;
 		default:
@@ -118,22 +126,23 @@ export function isMoveMark<T>(mark: MarkEffect): mark is MoveMark<T> {
 	}
 }
 
-function applyMoveEffectsToDest<T>(
-	mark: CellMark<MoveIn | ReturnTo, T>,
+function updateDestPairedMarkStatus(
+	markEffect: MoveIn | ReturnTo,
+	count: number,
 	revision: RevisionTag | undefined,
-	effects: MoveEffectTable<T>,
+	effects: MoveEffectTable<unknown>,
 	consumeEffect: boolean,
-): Mark<T> {
-	const newMark: CellMark<MoveIn | ReturnTo, T> = {
-		...mark,
+): MarkEffect {
+	const newMark: MoveIn | ReturnTo = {
+		...markEffect,
 	};
 
 	const statusUpdate = getPairedMarkStatus(
 		effects,
 		CrossFieldTarget.Destination,
-		mark.revision ?? revision,
-		mark.id,
-		mark.count,
+		markEffect.revision ?? revision,
+		markEffect.id,
+		count,
 		consumeEffect,
 	);
 	if (statusUpdate === PairedMarkUpdate.Deactivated) {
@@ -175,27 +184,42 @@ function applyMoveEffectsToSource<T>(
 		delete newMark.changes;
 	}
 
+	return {
+		...newMark,
+		...updateSourcePairedMarkStatus(mark, mark.count, revision, effects, consumeEffect),
+	};
+}
+
+function updateSourcePairedMarkStatus(
+	markEffect: MoveOut | ReturnFrom,
+	count: number,
+	revision: RevisionTag | undefined,
+	effects: MoveEffectTable<unknown>,
+	consumeEffect: boolean,
+): MarkEffect {
 	const statusUpdate = getPairedMarkStatus(
 		effects,
 		CrossFieldTarget.Source,
-		mark.revision ?? revision,
-		mark.id,
-		mark.count,
+		markEffect.revision ?? revision,
+		markEffect.id,
+		count,
 		consumeEffect,
 	);
+
+	const newMarkEffect = { ...markEffect };
 	if (statusUpdate !== undefined) {
 		assert(
-			newMark.type === "ReturnFrom",
+			newMarkEffect.type === "ReturnFrom",
 			0x56a /* TODO: support updating MoveOut.isSrcConflicted */,
 		);
 		if (statusUpdate === PairedMarkUpdate.Deactivated) {
-			newMark.isDstConflicted = true;
+			newMarkEffect.isDstConflicted = true;
 		} else {
-			delete newMark.isDstConflicted;
+			delete newMarkEffect.isDstConflicted;
 		}
 	}
 
-	return newMark;
+	return newMarkEffect;
 }
 
 export function applyMoveEffectsToMark<T>(
@@ -205,7 +229,46 @@ export function applyMoveEffectsToMark<T>(
 	consumeEffect: boolean,
 	composeChildren?: (a: T | undefined, b: T | undefined) => T | undefined,
 ): Mark<T>[] {
-	if (isMoveMark(mark)) {
+	if (isTransientEffect(mark)) {
+		if (isMoveDestination(mark.attach)) {
+			assert(!isMoveSource(mark.detach), "TODO: Handle transient moves");
+			const effect = getMoveEffect(
+				effects,
+				CrossFieldTarget.Destination,
+				mark.attach.revision ?? mark.revision ?? revision,
+				mark.attach.id,
+				mark.count,
+			);
+
+			if (effect === undefined) {
+				return [mark];
+			}
+
+			if (effect.start > mark.attach.id) {
+				const [firstMark, secondMark] = splitMark(mark, effect.start - mark.attach.id);
+				return [
+					firstMark,
+					...applyMoveEffectsToMark(
+						secondMark,
+						revision,
+						effects,
+						consumeEffect,
+						composeChildren,
+					),
+				];
+			}
+		}
+
+		if (isMoveSource(mark.detach)) {
+			const effect = getMoveEffect(
+				effects,
+				CrossFieldTarget.Destination,
+				mark.detach.revision ?? mark.revision ?? revision,
+				mark.detach.id,
+				mark.count,
+			);
+		}
+	} else if (isMoveMark(mark)) {
 		const type = mark.type;
 		switch (type) {
 			case "MoveOut":
@@ -298,7 +361,16 @@ export function applyMoveEffectsToMark<T>(
 				if (lastEffectId < lastMarkId) {
 					const [firstMark, secondMark] = splitMark(mark, lastEffectId - mark.id + 1);
 					return [
-						applyMoveEffectsToDest(firstMark, revision, effects, consumeEffect),
+						{
+							...firstMark,
+							...updateDestPairedMarkStatus(
+								firstMark,
+								firstMark.count,
+								revision,
+								effects,
+								consumeEffect,
+							),
+						},
 						...applyMoveEffectsToMark(
 							secondMark,
 							revision,
@@ -308,7 +380,18 @@ export function applyMoveEffectsToMark<T>(
 						),
 					];
 				}
-				return [applyMoveEffectsToDest(mark, revision, effects, consumeEffect)];
+				return [
+					{
+						...mark,
+						...updateDestPairedMarkStatus(
+							mark,
+							mark.count,
+							revision,
+							effects,
+							consumeEffect,
+						),
+					},
+				];
 			}
 			default:
 				unreachableCase(type);
@@ -375,4 +458,24 @@ function getPairedMarkStatus<T>(
 	}
 
 	return undefined;
+}
+
+function getMin(a: number | undefined, b: number | undefined): number | undefined {
+	if (a === undefined) {
+		return b;
+	} else if (b === undefined) {
+		return a;
+	}
+
+	return Math.min(a, b);
+}
+
+function getMax(a: number | undefined, b: number | undefined): number | undefined {
+	if (a === undefined) {
+		return b;
+	} else if (b === undefined) {
+		return a;
+	}
+
+	return Math.max(a, b);
 }

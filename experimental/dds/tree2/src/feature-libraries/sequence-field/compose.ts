@@ -284,87 +284,87 @@ function composeMarks<TNodeChange>(
 		}
 		return withNodeChange(baseMark, nodeChange);
 	} else if (areInputCellsEmpty(baseMark)) {
-		if (isMoveMark(baseMark) && isMoveMark(newMark)) {
-			// `baseMark` must be a move destination since it is filling cells, and `newMark` must be a move source.
-			const baseIntention = getIntention(baseMark.revision, revisionMetadata);
-			const newIntention = getIntention(newMark.revision ?? newRev, revisionMetadata);
-			if (
-				areInverseMovesAtIntermediateLocation(
-					baseMark,
-					baseIntention,
-					newMark,
-					newIntention,
-				)
-			) {
-				// Send the node change to the source of the move, which is where the modified node is in the input context of the composition.
-				if (nodeChange !== undefined) {
-					setModifyAfter(
-						moveEffects,
-						CrossFieldTarget.Source,
-						baseMark.revision,
-						baseMark.id,
-						baseMark.count,
-						nodeChange,
-						composeChild,
-					);
-				}
-			} else {
-				setReplacementMark(
-					moveEffects,
-					CrossFieldTarget.Source,
-					baseMark.revision,
-					baseMark.id,
-					baseMark.count,
-					withRevision(withNodeChange(newMark, nodeChange), newRev),
-				);
-			}
+		// if (isMoveMark(baseMark) && isMoveMark(newMark)) {
+		// 	// `baseMark` must be a move destination since it is filling cells, and `newMark` must be a move source.
+		// 	const baseIntention = getIntention(baseMark.revision, revisionMetadata);
+		// 	const newIntention = getIntention(newMark.revision ?? newRev, revisionMetadata);
+		// 	if (
+		// 		areInverseMovesAtIntermediateLocation(
+		// 			baseMark,
+		// 			baseIntention,
+		// 			newMark,
+		// 			newIntention,
+		// 		)
+		// 	) {
+		// 		// Send the node change to the source of the move, which is where the modified node is in the input context of the composition.
+		// 		if (nodeChange !== undefined) {
+		// 			setModifyAfter(
+		// 				moveEffects,
+		// 				CrossFieldTarget.Source,
+		// 				baseMark.revision,
+		// 				baseMark.id,
+		// 				baseMark.count,
+		// 				nodeChange,
+		// 				composeChild,
+		// 			);
+		// 		}
+		// 	} else {
+		// 		setReplacementMark(
+		// 			moveEffects,
+		// 			CrossFieldTarget.Source,
+		// 			baseMark.revision,
+		// 			baseMark.id,
+		// 			baseMark.count,
+		// 			withRevision(withNodeChange(newMark, nodeChange), newRev),
+		// 		);
+		// 	}
 
-			return { count: 0 };
-		}
+		// 	return { count: 0 };
+		// }
 
-		if (isMoveMark(baseMark)) {
-			assert(
-				isAttach(baseMark) && isDetach(newMark),
-				"Marks with cell effects targeting empty cells must be an attach and detach",
-			);
+		// if (isMoveMark(baseMark)) {
+		// 	assert(
+		// 		isAttach(baseMark) && isDetach(newMark),
+		// 		"Marks with cell effects targeting empty cells must be an attach and detach",
+		// 	);
 
-			// TODO: Should strip mark fields from base attach and detach
-			// TODO: Add revision information the marks
-			const composed: CellMark<TransientEffect, TNodeChange> = {
-				type: "Transient",
-				cellId: baseMark.cellId,
-				count: baseMark.count,
-				attach: extractMarkEffect(baseMark),
-				detach: extractMarkEffect(withRevision(newMark, newRev)),
-			};
+		// 	// TODO: Should strip mark fields from base attach and detach
+		// 	// TODO: Add revision information the marks
+		// 	const composed: CellMark<TransientEffect, TNodeChange> = {
+		// 		type: "Transient",
+		// 		cellId: baseMark.cellId,
+		// 		count: baseMark.count,
+		// 		attach: extractMarkEffect(baseMark),
+		// 		detach: extractMarkEffect(withRevision(newMark, newRev)),
+		// 	};
 
-			if (baseMark.cellId !== undefined) {
-				composed.cellId = baseMark.cellId;
-			}
+		// 	if (baseMark.cellId !== undefined) {
+		// 		composed.cellId = baseMark.cellId;
+		// 	}
 
-			if (nodeChange !== undefined) {
-				composed.changes = nodeChange;
-			}
+		// 	if (nodeChange !== undefined) {
+		// 		composed.changes = nodeChange;
+		// 	}
 
-			return composed;
-		}
+		// 	return composed;
+		// }
 
-		if (isMoveMark(newMark)) {
-			// The nodes attached by `baseMark` have been moved by `newMark`.
-			// We can represent net effect of the two marks by moving `baseMark` to the destination of `newMark`.
-			setReplacementMark(
-				moveEffects,
-				CrossFieldTarget.Destination,
-				newMark.revision ?? newRev,
-				newMark.id,
-				newMark.count,
-				withNodeChange(baseMark, nodeChange),
-			);
-			return { count: 0 };
-		}
+		// if (isMoveMark(newMark)) {
+		// 	// The nodes attached by `baseMark` have been moved by `newMark`.
+		// 	// We can represent net effect of the two marks by moving `baseMark` to the destination of `newMark`.
+		// 	setReplacementMark(
+		// 		moveEffects,
+		// 		CrossFieldTarget.Destination,
+		// 		newMark.revision ?? newRev,
+		// 		newMark.id,
+		// 		newMark.count,
+		// 		withNodeChange(baseMark, nodeChange),
+		// 	);
+		// 	return { count: 0 };
+		// }
 
-		assert(isDeleteMark(newMark), 0x71c /* Unexpected mark type */);
-		assert(isGenerativeMark(baseMark), 0x71d /* Expected generative mark */);
+		assert(isDetach(newMark), 0x71c /* Unexpected mark type */);
+		assert(isAttach(baseMark), 0x71d /* Expected generative mark */);
 		return withNodeChange(
 			{
 				type: "Transient",
