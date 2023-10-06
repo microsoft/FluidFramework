@@ -157,15 +157,15 @@ export const testTrees: readonly TestTree[] = [
 	}),
 	testTree("hasAnyValueField", library, hasAnyValueField, {
 		field: {
-			[typeNameSymbol]: "numeric",
+			[typeNameSymbol]: leaf.number.name,
 			[valueSymbol]: 5,
 		},
 	}),
 	testTree("hasAnyValueFieldRecursive", library, hasAnyValueField, {
 		field: {
-			[typeNameSymbol]: "hasAnyValueField",
+			[typeNameSymbol]: hasAnyValueField.name,
 			field: {
-				[typeNameSymbol]: "numeric",
+				[typeNameSymbol]: leaf.number.name,
 				[valueSymbol]: 5,
 			},
 		},

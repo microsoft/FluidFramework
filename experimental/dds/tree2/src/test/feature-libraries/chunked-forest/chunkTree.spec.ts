@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { CursorLocationType, EmptyKey, mapCursorField, Value, ValueSchema } from "../../../core";
+import { CursorLocationType, EmptyKey, mapCursorField, Value } from "../../../core";
 import { jsonNull, jsonObject, leaf } from "../../../domains";
 import {
 	defaultSchemaPolicy,

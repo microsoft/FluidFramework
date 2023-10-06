@@ -88,7 +88,7 @@ describe("toDocumentSchema", () => {
 		const schema = schemaBuilder.toDocumentSchema(SchemaBuilder.fieldOptional(leafSchema));
 
 		assert.equal(schema.treeSchema.size, 1); // "leaf"
-		assert.equal(schema.treeSchema.get(brand("leaf")), leafSchema);
+		assert.equal(schema.treeSchema.get(brand("test.leaf")), leafSchema);
 	});
 });
 
@@ -99,6 +99,6 @@ describe("intoLibrary", () => {
 		const schema = schemaBuilder.finalize();
 
 		assert.equal(schema.treeSchema.size, 1); // "leaf"
-		assert.equal(schema.treeSchema.get(brand("leaf")), leafSchema);
+		assert.equal(schema.treeSchema.get(brand("test.leaf")), leafSchema);
 	});
 });

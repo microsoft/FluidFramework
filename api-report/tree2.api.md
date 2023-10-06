@@ -1387,7 +1387,7 @@ export interface NodeExistsConstraint {
 
 // @alpha
 export const nodeKeyField: {
-    __n_id__: FieldSchema<NodeKeyFieldKind, [TreeSchema<`com.fluidframework.nodeKey.${TreeSchemaIdentifier}`, {
+    __n_id__: FieldSchema<NodeKeyFieldKind, [TreeSchema<"com.fluidframework.nodeKey.NodeKey", {
     leafValue: ValueSchema.String;
     }>]>;
 };
@@ -1670,6 +1670,7 @@ export class SchemaBuilder<TScope extends string, TName extends number | string 
 export class SchemaBuilderBase<TScope extends string, TName extends number | string = string> {
     constructor(options: {
         scope: TScope;
+        name?: string;
         lint?: Partial<SchemaLintConfiguration>;
         libraries?: SchemaLibrary[];
     });
@@ -1678,8 +1679,7 @@ export class SchemaBuilderBase<TScope extends string, TName extends number | str
     static field<Kind extends FieldKind, T extends AllowedTypes>(kind: Kind, ...allowedTypes: T): FieldSchema<Kind, T>;
     static fieldRecursive<Kind extends FieldKind, T extends FlexList<RecursiveTreeSchema>>(kind: Kind, ...allowedTypes: T): FieldSchema<Kind, T>;
     finalize(): SchemaLibrary;
-    // (undocumented)
-    get name(): string;
+    readonly name: string;
     // (undocumented)
     readonly scope: TScope;
     // (undocumented)

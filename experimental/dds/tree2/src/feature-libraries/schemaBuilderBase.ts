@@ -32,20 +32,25 @@ export class SchemaBuilderBase<TScope extends string, TName extends number | str
 	private readonly adapters: Adapters = {};
 	public readonly scope: TScope;
 
-	public get name(): string {
-		return this.scope;
-	}
+	/**
+	 * Used in error messages to identify content produced by this builder.
+	 */
+	public readonly name: string;
 
 	/**
-	 * @param name - Name used to refer to this builder in error messages. Has no impact on the actual generated schema.
+	 * @param scope - Prefix appended to the identifiers to all {@link TreeSchema} produced by this builder.
+	 * Use of [Reverse domain name notation](https://en.wikipedia.org/wiki/Reverse_domain_name_notation) or a UUIDv4 is recommended to avoid collisions.
+	 * @param name - Name used to refer to this builder in error messages. Has no impact on the actual generated schema. Defaults to scope.
 	 * @param lint - Optional configuration for "linting". See {@link SchemaLintConfiguration}. Currently defaults to enabling all lints.
 	 * @param libraries - Libraries to include in this one. See `addLibraries` for details.
 	 */
 	public constructor(options: {
 		scope: TScope;
+		name?: string;
 		lint?: Partial<SchemaLintConfiguration>;
 		libraries?: SchemaLibrary[];
 	}) {
+		this.name = options.name ?? options.scope;
 		this.lintConfiguration = { ...schemaLintDefault, ...options.lint };
 		this.libraries = new Set();
 		this.addLibraries(...(options.libraries ?? []));

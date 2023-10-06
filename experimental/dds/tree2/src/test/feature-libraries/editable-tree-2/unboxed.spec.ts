@@ -112,12 +112,12 @@ describe("unboxedField", () => {
 
 		const unboxed = unboxedField(context, fieldSchema, cursor);
 		assert(unboxed !== undefined);
-		assert.equal(unboxed.type, "struct");
+		assert.equal(unboxed.type, "test.struct");
 		assert.equal(unboxed.name, "Foo");
 
 		const unboxedChild = unboxed.child;
 		assert(unboxedChild !== undefined);
-		assert.equal(unboxedChild.type, "struct");
+		assert.equal(unboxedChild.type, "test.struct");
 		assert.equal(unboxedChild.name, "Bar");
 		assert.equal(unboxedChild.child, undefined);
 	});

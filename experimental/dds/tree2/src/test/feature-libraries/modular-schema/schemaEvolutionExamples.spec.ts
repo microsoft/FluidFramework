@@ -25,7 +25,6 @@ import {
 	storedEmptyFieldSchema,
 	SchemaData,
 } from "../../../core";
-import { brand } from "../../../util";
 // eslint-disable-next-line import/no-internal-modules
 import { allowsFieldSuperset, allowsTreeSuperset } from "../../../feature-libraries/modular-schema";
 
@@ -79,27 +78,19 @@ function assertEnumEqual<TEnum extends { [key: number]: string }>(
 
 describe("Schema Evolution Examples", () => {
 	const contentTypesBuilder = new SchemaBuilder({
-		scope: "Schema Evolution Examples: default content types",
+		scope: "test",
+		name: "Schema Evolution Examples: default content types",
 	});
 
-	// Define some schema and identifiers for them for use in these examples:
-	const canvasIdentifier: TreeSchemaIdentifier = brand("86432448-8454-4c86-a39c-699afbbdb753");
-	const textIdentifier: TreeSchemaIdentifier = brand("3034e643-0ff3-44a9-8b7e-aea31fe635c8");
-	const positionedCanvasItemIdentifier: TreeSchemaIdentifier = brand(
-		"d1810094-0990-410e-9704-b17a94b1ad85",
-	);
-	const pointIdentifier: TreeSchemaIdentifier = brand("a68c1750-9fba-4b6e-8643-9d830e271c05");
-	const numberIdentifier: TreeSchemaIdentifier = brand("08b4087a-da53-45d1-86cd-15a2948077bf");
-
-	const number = contentTypesBuilder.leaf(numberIdentifier, ValueSchema.Number);
+	const number = contentTypesBuilder.leaf("Number", ValueSchema.Number);
 	const codePoint = contentTypesBuilder.leaf("Primitive.CodePoint", ValueSchema.Number);
 
 	// String made of unicode code points, allowing for sequence editing of a string.
-	const text = contentTypesBuilder.struct(textIdentifier, {
+	const text = contentTypesBuilder.struct("Text", {
 		children: SchemaBuilder.field(FieldKinds.sequence, codePoint),
 	});
 
-	const point = contentTypesBuilder.struct(pointIdentifier, {
+	const point = contentTypesBuilder.struct("Point", {
 		x: SchemaBuilder.field(FieldKinds.required, number),
 		y: SchemaBuilder.field(FieldKinds.required, number),
 	});
@@ -107,16 +98,17 @@ describe("Schema Evolution Examples", () => {
 	const defaultContentLibrary = contentTypesBuilder.finalize();
 
 	const containersBuilder = new SchemaBuilder({
-		scope: "Schema Evolution Examples: default containers",
+		scope: "test",
+		name: "Schema Evolution Examples: default containers",
 		libraries: [defaultContentLibrary],
 	});
 
 	// A type that can be used to position items without an inherent position within the canvas.
-	const positionedCanvasItem = containersBuilder.struct(positionedCanvasItemIdentifier, {
+	const positionedCanvasItem = containersBuilder.struct("PositionedCanvasItem", {
 		position: SchemaBuilder.field(FieldKinds.required, point),
 		content: SchemaBuilder.field(FieldKinds.required, text),
 	});
-	const canvas = containersBuilder.struct(canvasIdentifier, {
+	const canvas = containersBuilder.struct("Canvas", {
 		items: SchemaBuilder.field(FieldKinds.sequence, positionedCanvasItem),
 	});
 
@@ -138,7 +130,8 @@ describe("Schema Evolution Examples", () => {
 		// Collect our view schema.
 		// This will represent our view schema for a simple canvas application.
 		const viewCollection: TypedSchemaCollection = new SchemaBuilder({
-			scope: "basic usage",
+			scope: "test",
+			name: "basic usage",
 			libraries: [treeViewSchema],
 		}).toDocumentSchema(root);
 
@@ -188,7 +181,8 @@ describe("Schema Evolution Examples", () => {
 			// This example picks the first approach.
 			// Lets simulate the developers of the app making this change by modifying the view schema:
 			const viewCollection2 = new SchemaBuilder({
-				scope: "basic usage2",
+				scope: "test",
+				name: "basic usage2",
 				libraries: [treeViewSchema],
 			}).toDocumentSchema(tolerantRoot);
 			const view2 = new ViewSchema(defaultSchemaPolicy, adapters, viewCollection2);
@@ -226,13 +220,11 @@ describe("Schema Evolution Examples", () => {
 			// Lets assume its time to update the schema in the document
 			// (either eagerly or lazily when first needing to do so when writing into the document).
 			// Once again the order does not matter:
-			assert(stored.tryUpdateTreeSchema(canvasIdentifier, canvas));
-			assert(stored.tryUpdateTreeSchema(numberIdentifier, number));
-			assert(stored.tryUpdateTreeSchema(pointIdentifier, point));
-			assert(
-				stored.tryUpdateTreeSchema(positionedCanvasItemIdentifier, positionedCanvasItem),
-			);
-			assert(stored.tryUpdateTreeSchema(textIdentifier, text));
+			assert(stored.tryUpdateTreeSchema(canvas.name, canvas));
+			assert(stored.tryUpdateTreeSchema(number.name, number));
+			assert(stored.tryUpdateTreeSchema(point.name, point));
+			assert(stored.tryUpdateTreeSchema(positionedCanvasItem.name, positionedCanvasItem));
+			assert(stored.tryUpdateTreeSchema(text.name, text));
 			assert(stored.tryUpdateTreeSchema(codePoint.name, codePoint));
 			assert(stored.tryUpdateRootFieldSchema(tolerantRoot));
 
@@ -246,25 +238,21 @@ describe("Schema Evolution Examples", () => {
 
 			// Now lets imagine some time passes, and the developers want to add a second content type:
 			const builderWithCounter = new SchemaBuilder({
-				scope: "builderWithCounter",
+				scope: "test",
+				name: "builderWithCounter",
 				libraries: [defaultContentLibrary],
 			});
-			const counterIdentifier: TreeSchemaIdentifier = brand(
-				"0d8da0ca-b3ba-4025-93a3-b8f181379e3b",
-			);
-			const counter = builderWithCounter.struct(counterIdentifier, {
+
+			const counter = builderWithCounter.struct("Counter", {
 				count: SchemaBuilder.field(FieldKinds.required, number),
 			});
 			// Lets allow counters inside positionedCanvasItem, instead of just text:
-			const positionedCanvasItem2 = builderWithCounter.struct(
-				positionedCanvasItemIdentifier,
-				{
-					position: SchemaBuilder.field(FieldKinds.required, point),
-					content: SchemaBuilder.field(FieldKinds.required, text, counter),
-				},
-			);
+			const positionedCanvasItem2 = builderWithCounter.struct("PositionedCanvasItem", {
+				position: SchemaBuilder.field(FieldKinds.required, point),
+				content: SchemaBuilder.field(FieldKinds.required, text, counter),
+			});
 			// And canvas is still the same storage wise, but its view schema references the updated positionedCanvasItem2:
-			const canvas2 = builderWithCounter.struct(canvasIdentifier, {
+			const canvas2 = builderWithCounter.struct("Canvas", {
 				items: SchemaBuilder.field(FieldKinds.sequence, positionedCanvasItem2),
 			});
 			// Once again we will simulate reloading the app with different schema by modifying the view schema.
@@ -284,10 +272,8 @@ describe("Schema Evolution Examples", () => {
 			);
 
 			// This is the same case as above where we can choose to do a schema update if we want:
-			assert(
-				stored.tryUpdateTreeSchema(positionedCanvasItemIdentifier, positionedCanvasItem2),
-			);
-			assert(stored.tryUpdateTreeSchema(counterIdentifier, counter));
+			assert(stored.tryUpdateTreeSchema(positionedCanvasItem.name, positionedCanvasItem2));
+			assert(stored.tryUpdateTreeSchema(counter.name, counter));
 
 			// And recheck compat:
 			const compat3 = view3.checkCompatibility(stored);

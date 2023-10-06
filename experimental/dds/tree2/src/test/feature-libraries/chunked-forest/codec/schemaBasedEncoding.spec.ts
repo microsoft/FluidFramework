@@ -82,7 +82,7 @@ describe("schemaBasedEncoding", () => {
 					type: minimal.name,
 				},
 			]);
-			assert.deepEqual(buffer, [new IdentifierToken("minimal")]);
+			assert.deepEqual(buffer, [new IdentifierToken("test.minimal")]);
 		});
 
 		it("polymorphic-value", () => {
@@ -127,11 +127,11 @@ describe("schemaBasedEncoding", () => {
 			assert.equal(shape.shape, cache.nestedArray(onlyTypeShape));
 			assert.deepEqual(checkFieldEncode(shape, cache, []), [0]);
 			assert.deepEqual(checkFieldEncode(shape, cache, [{ type: minimal.name }]), [
-				[new IdentifierToken("minimal")],
+				[new IdentifierToken("test.minimal")],
 			]);
 			assert.deepEqual(
 				checkFieldEncode(shape, cache, [{ type: minimal.name }, { type: minimal.name }]),
-				[[new IdentifierToken("minimal"), new IdentifierToken("minimal")]],
+				[[new IdentifierToken("test.minimal"), new IdentifierToken("test.minimal")]],
 			);
 		});
 	});

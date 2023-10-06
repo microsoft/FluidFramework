@@ -8,11 +8,15 @@
 import { assert } from "@fluidframework/core-utils";
 import { Adapters, FieldKey, TreeSchemaIdentifier, TreeTypeSet, ValueSchema } from "../core";
 import { MakeNominal, RestrictiveReadonlyRecord, objectToMap } from "../util";
-import { SchemaLintConfiguration, schemaLintDefault } from "./typed-schema";
+import {
+	SchemaLintConfiguration,
+	schemaLintDefault,
+	InternalTypedSchemaTypes,
+} from "./typed-schema";
 import { FieldKind, FullSchemaPolicy } from "./modular-schema";
 import { FieldKinds } from "./default-field-kinds";
 import { Any } from "./typed-schema/typedTreeSchema";
-import { LazyItem, normalizeFlexList } from "./typed-schema/flexList";
+import { normalizeFlexList } from "./typed-schema/flexList";
 
 // TODO: tests and examples for this file
 
@@ -303,7 +307,7 @@ export interface FieldNodeSchema extends TreeSchemaBase {
  * "Any" is boxed in an array to allow use as variadic parameter.
  * @alpha
  */
-export type AllowedTypes = [Any] | readonly LazyItem<TreeSchema>[];
+export type AllowedTypes = [Any] | readonly InternalTypedSchemaTypes.LazyItem<TreeSchema>[];
 
 /**
  * All policy for a specific field,
