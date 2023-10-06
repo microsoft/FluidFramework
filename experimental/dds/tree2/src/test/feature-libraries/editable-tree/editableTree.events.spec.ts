@@ -279,11 +279,59 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(afterCounter, 6);
 	});
 
-	it.only("fire in the expected order and always together", () => {
+	it.only("tree is in correct state when events fire - primitive node deletions", () => {
 		const tree = viewWithContent({ schema: fullSchemaData, initialTree: getPersonBasic() });
 		const person = tree.root as EditableTree;
+		const initialAge = person.age;
+		let totalListenerCalls = 0;
 
+		person[on]("beforeChange", (event) => {
+			// PROBLEM: the local 'person' object did have its 'age' property updated already.
+			assert.strictEqual(person.age, initialAge);
+			totalListenerCalls++;
+		});
+		person[on]("afterChange", (event) => {
+			assert.strictEqual(person.age, undefined);
+			totalListenerCalls++;
+		});
 		delete person.age;
+		assert.strictEqual(totalListenerCalls, 2);
+	});
+
+	it.only("tree is in correct state when events fire - primitive node additions", () => {
+		const tree = viewWithContent({ schema: fullSchemaData, initialTree: getPersonBasic() });
+		const person = tree.root as EditableTree;
+		const newAdultValue = brand<Bool>(true);
+		let totalListenerCalls = 0;
+
+		person[on]("beforeChange", (event) => {
+			assert.strictEqual(person.adult, undefined);
+			totalListenerCalls++;
+		});
+		person[on]("afterChange", (event) => {
+			assert.strictEqual(person.adult, newAdultValue);
+			totalListenerCalls++;
+		});
+		person.adult = newAdultValue;
+		assert.strictEqual(totalListenerCalls, 2);
+	});
+
+	it.only("tree is in correct state when events fire - primitive node replacements", () => {
+		const tree = viewWithContent({ schema: fullSchemaData, initialTree: getPersonBasic() });
+		const person = tree.root as EditableTree;
+		const newNameValue = "John";
+		let totalListenerCalls = 0;
+
+		person[on]("beforeChange", (event) => {
+			assert.strictEqual(person.name, "Adam");
+			totalListenerCalls++;
+		});
+		person[on]("afterChange", (event) => {
+			assert.strictEqual(person.name, newNameValue);
+			totalListenerCalls++;
+		});
+		person.name = newNameValue;
+		assert.strictEqual(totalListenerCalls, 2);
 	});
 
 	it.skip("not emitted by leaf nodes when they are replaced", () => {
