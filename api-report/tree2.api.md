@@ -646,6 +646,7 @@ export class FieldSchema<out Kind extends FieldKind = FieldKind, const out Types
     // (undocumented)
     readonly allowedTypes: Types;
     static readonly empty: FieldSchema<Forbidden, readonly []>;
+    equals(other: FieldSchema): boolean;
     // (undocumented)
     readonly kind: Kind;
     // (undocumented)
