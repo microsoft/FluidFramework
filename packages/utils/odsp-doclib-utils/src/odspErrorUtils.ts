@@ -303,7 +303,11 @@ export function createOdspNetworkError(
 			);
 			break;
 		case 501:
-			error = new NonRetryableError(errorMessage, OdspErrorTypes.fluidNotEnabled, driverProps);
+			error = new NonRetryableError(
+				errorMessage,
+				OdspErrorTypes.fluidNotEnabled,
+				driverProps,
+			);
 			break;
 		case 507:
 			error = new NonRetryableError(

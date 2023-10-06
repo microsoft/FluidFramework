@@ -64,7 +64,8 @@
 	"typeValidation": {
 		"broken": {
 			"RemovedEnumDeclaration_DriverErrorType": {
-				"backCompat": false
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}
