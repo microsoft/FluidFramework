@@ -25,7 +25,7 @@ import { IAudience } from "./audience";
 import { IDeltaManager, ReadOnlyInfo } from "./deltas";
 import { ICriticalContainerError, ContainerWarning } from "./error";
 import { IFluidModule } from "./fluidModule";
-import { AttachState } from "./runtime";
+import { AttachState, type IInboundSignalMessage } from "./runtime";
 import { IFluidCodeDetails, IFluidPackage, IProvideFluidCodeDetailsComparer } from "./fluidPackage";
 
 /**
@@ -248,6 +248,22 @@ export interface IContainerEvents extends IEvent {
 	 * @see {@link IContainer.isDirty}
 	 */
 	(event: "saved", listener: (dirty: boolean) => void);
+
+	/**
+	 * Emitted immediately after processing an incoming signal (signal) addressed to container.
+	 *
+	 * @remarks
+	 *
+	 * Note: this event is not intended for general use.
+	 * Prefer to listen to events on the appropriate ultimate recipients of the signals, rather than listening to the
+	 * signals directly on the {@link IContainer}.
+	 *
+	 * Listener parameters:
+	 *
+	 * - `message`: The signal that was processed.
+	 * - `local`: True when signal originated by this client.
+	 */
+	(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
 }
 
 /**

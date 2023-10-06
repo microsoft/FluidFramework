@@ -227,6 +227,7 @@ export interface IContainerEvents extends IEvent {
     (event: "op", listener: (message: ISequencedDocumentMessage) => void): any;
     (event: "dirty", listener: (dirty: boolean) => void): any;
     (event: "saved", listener: (dirty: boolean) => void): any;
+    (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): any;
 }
 
 // @public (undocumented)
@@ -385,6 +386,12 @@ export { IGenericError }
 export interface IHostLoader extends ILoader {
     createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<IContainer>;
     rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer>;
+}
+
+// @public
+export interface IInboundSignalMessage extends ISignalMessage {
+    // (undocumented)
+    type: string;
 }
 
 // @public

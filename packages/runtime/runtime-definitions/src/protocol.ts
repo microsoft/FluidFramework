@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISignalMessage, ITree } from "@fluidframework/protocol-definitions";
+import { ITree } from "@fluidframework/protocol-definitions";
 
 /**
  * An envelope wraps the contents with the intended target
@@ -38,13 +38,6 @@ export interface ISignalEnvelope {
 		type: string;
 		content: any;
 	};
-}
-
-/**
- * Represents ISignalMessage with its type.
- */
-export interface IInboundSignalMessage extends ISignalMessage {
-	type: string;
 }
 
 /**

@@ -15,6 +15,7 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
 	IClientDetails,
 	ISequencedDocumentMessage,
+	ISignalMessage,
 	ISnapshotTree,
 	MessageType,
 	ISummaryTree,
@@ -76,7 +77,7 @@ export interface IRuntime extends IDisposable {
 	/**
 	 * Processes the given signal
 	 */
-	// TODO: use `unknown` instead (API breaking)
+	// TODO: use `ISignalMessage` instead (API breaking)
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	processSignal(message: any, local: boolean);
 
@@ -132,6 +133,13 @@ export interface IBatchMessage {
 	metadata: Record<string, unknown> | undefined;
 	compression?: string;
 	referenceSequenceNumber?: number;
+}
+
+/**
+ * Represents ISignalMessage with its type.
+ */
+export interface IInboundSignalMessage extends ISignalMessage {
+	type: string;
 }
 
 /**

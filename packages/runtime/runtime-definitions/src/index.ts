@@ -40,13 +40,7 @@ export {
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 } from "./garbageCollection";
-export {
-	IAttachMessage,
-	IEnvelope,
-	IInboundSignalMessage,
-	InboundAttachMessage,
-	ISignalEnvelope,
-} from "./protocol";
+export { IAttachMessage, IEnvelope, InboundAttachMessage, ISignalEnvelope } from "./protocol";
 export {
 	blobCountPropertyName,
 	channelsTreeName,
@@ -79,3 +73,6 @@ export {
 	IdCreationRangeWithStashedState,
 	initialClusterCapacity,
 } from "./id-compressor";
+
+// re-exported for backward compatibility
+export type { IInboundSignalMessage } from "@fluidframework/container-definitions";

@@ -9,6 +9,7 @@ import {
 	IContainer,
 	ICriticalContainerError,
 	ConnectionState,
+	type IInboundSignalMessage,
 } from "@fluidframework/container-definitions";
 import type { IRootDataObject, LoadableObjectClass, LoadableObjectRecord } from "./types";
 
@@ -69,6 +70,18 @@ export interface IFluidContainerEvents extends IEvent {
 	 * {@link IFluidContainer.dispose}), this will contain details about the error that caused it.
 	 */
 	(event: "disposed", listener: (error?: ICriticalContainerError) => void);
+
+	/**
+	 * Emitted immediately after processing an incoming signal (signal) addressed to container.
+	 *
+	 * @remarks
+	 *
+	 * Listener parameters:
+	 *
+	 * - `message`: The signal that was processed.
+	 * - `local`: True when signal originated by this client.
+	 */
+	(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
 }
 
 /**
@@ -218,6 +231,7 @@ export class FluidContainer
 		container.on("disconnected", this.disconnectedHandler);
 		container.on("saved", this.savedHandler);
 		container.on("dirty", this.dirtyHandler);
+		container.on("signal", (message) => this.emit("signal", message));
 	}
 
 	/**

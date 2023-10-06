@@ -66,6 +66,7 @@ export {
 	IProvideRuntimeFactory,
 	IRuntime,
 	IRuntimeFactory,
+	IInboundSignalMessage,
 } from "./runtime";
 
 export {

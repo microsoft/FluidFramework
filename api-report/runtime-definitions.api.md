@@ -17,13 +17,13 @@ import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
+import { IInboundSignalMessage } from '@fluidframework/container-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IProvideFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
@@ -333,11 +333,7 @@ export interface IIdCompressorCore {
     takeNextCreationRange(): IdCreationRange;
 }
 
-// @public
-export interface IInboundSignalMessage extends ISignalMessage {
-    // (undocumented)
-    type: string;
-}
+export { IInboundSignalMessage }
 
 // @public
 export type InboundAttachMessage = Omit<IAttachMessage, "snapshot"> & {

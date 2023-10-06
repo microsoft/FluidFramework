@@ -22,6 +22,7 @@ import {
 	IDeltaManager,
 	AttachState,
 	ILoaderOptions,
+	type IInboundSignalMessage,
 } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -34,7 +35,6 @@ import {
 import { IProvideFluidDataStoreFactory } from "./dataStoreFactory";
 import { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry";
 import { IGarbageCollectionData, IGarbageCollectionDetailsBase } from "./garbageCollection";
-import { IInboundSignalMessage } from "./protocol";
 import {
 	CreateChildSummarizerNodeParam,
 	ISummarizerNodeWithGC,
