@@ -641,7 +641,7 @@ interface Fields {
 }
 
 // @alpha @sealed
-export class FieldSchema<out Kind extends FieldKind = FieldKind, out const Types = AllowedTypes> {
+export class FieldSchema<out Kind extends FieldKind = FieldKind, const out Types = AllowedTypes> {
     constructor(kind: Kind, allowedTypes: Types);
     // (undocumented)
     readonly allowedTypes: Types;
