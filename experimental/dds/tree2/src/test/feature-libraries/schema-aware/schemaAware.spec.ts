@@ -163,7 +163,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 	type FlexNumber =
 		| number
 		| {
-				[typeNameSymbol]?: "number";
+				[typeNameSymbol]?: "com.fluidframework.leaf.number";
 				[valueSymbol]: number;
 		  };
 
@@ -180,7 +180,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 	}
 
 	interface FlexBall {
-		[typeNameSymbol]?: "ball";
+		[typeNameSymbol]?: "SchemaAwareTests.ball";
 		x: FlexNumber;
 		y: FlexNumber;
 		size: FlexNumber | undefined;
@@ -195,7 +195,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 	// This type type checks differently if its an interface, which breaks.
 	type SimpleBall = {
-		[typeNameSymbol]?: "ball";
+		[typeNameSymbol]?: "SchemaAwareTests.ball";
 		x: number;
 		y: number;
 		size: number | undefined;
@@ -216,7 +216,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 	// Test polymorphic cases:
 	{
-		const builder2 = new SchemaBuilder({ scope: "Schema Aware polymorphic" });
+		const builder2 = new SchemaBuilder({ scope: "SchemaAwarePolymorphicTest" });
 		const bool = builder2.leaf("bool", ValueSchema.Boolean);
 		const str = builder2.leaf("str", ValueSchema.String);
 		const parentField = SchemaBuilder.fieldRequired(str, bool);
@@ -225,23 +225,23 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 		type FlexBool =
 			| boolean
 			| {
-					[typeNameSymbol]?: "bool";
+					[typeNameSymbol]?: "SchemaAwarePolymorphicTest.bool";
 					[valueSymbol]: boolean;
 			  };
 
 		type FlexStr =
 			| string
 			| {
-					[typeNameSymbol]?: "str";
+					[typeNameSymbol]?: "SchemaAwarePolymorphicTest.str";
 					[valueSymbol]: string;
 			  };
 		interface FlexParent {
-			[typeNameSymbol]?: "parent";
+			[typeNameSymbol]?: "SchemaAwarePolymorphicTest.parent";
 			child: FlexBool | FlexStr;
 		}
 
 		interface SimpleParent {
-			[typeNameSymbol]?: "parent";
+			[typeNameSymbol]?: "SchemaAwarePolymorphicTest.parent";
 			child: boolean | string;
 		}
 
@@ -283,7 +283,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 	// Test simple recursive cases:
 	{
-		const builder2 = new SchemaBuilder({ scope: "Schema Aware recursive" });
+		const builder2 = new SchemaBuilder({ scope: "SchemaAwareRecursiveTest" });
 		const rec = builder2.structRecursive("rec", {
 			x: SchemaBuilder.fieldRecursive(optional, () => rec),
 		});
@@ -307,12 +307,12 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 		// Check generated schema aware types
 		{
 			type ExpectedFlexible = {
-				[typeNameSymbol]?: "rec";
+				[typeNameSymbol]?: "SchemaAwareRecursiveTest.rec";
 				x: ExpectedFlexible | undefined;
 			};
 
 			type ExpectedSimple = {
-				[typeNameSymbol]?: "rec";
+				[typeNameSymbol]?: "SchemaAwareRecursiveTest.rec";
 				x: ExpectedSimple | undefined;
 			};
 
@@ -353,7 +353,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 		type S = TypedNode<typeof boxSchema, ApiMode.Simple>;
 
 		interface FlexBox {
-			[typeNameSymbol]?: "box";
+			[typeNameSymbol]?: "SchemaAwareTests.box";
 			children: (FlexBall | FlexBox)[];
 		}
 

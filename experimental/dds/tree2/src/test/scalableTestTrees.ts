@@ -52,7 +52,7 @@ export const deepSchema = deepBuilder.toDocumentSchema(
  * Compatible with ContextuallyTypedNodeData
  */
 export interface JSDeepTree {
-	[typeNameSymbol]?: "linkedList" | undefined;
+	[typeNameSymbol]?: typeof linkedListSchema.name | undefined;
 	foo: JSDeepTree | number;
 }
 

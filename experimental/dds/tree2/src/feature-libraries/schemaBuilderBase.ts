@@ -24,12 +24,7 @@ import { FieldKind } from "./modular-schema";
  * @alpha
  */
 
-export class SchemaBuilderBase<
-	TFieldKinds extends Record<string, FieldKind>,
-	//  extends keyof TFieldKinds = "Required",
-	TScope extends string,
-	TName extends number | string = string,
-> {
+export class SchemaBuilderBase<TScope extends string, TName extends number | string = string> {
 	private readonly lintConfiguration: SchemaLintConfiguration;
 	private readonly libraries: Set<SchemaLibraryData>;
 	private finalized: boolean = false;
@@ -100,7 +95,7 @@ export class SchemaBuilderBase<
 	 * May only be called once after adding content to builder is complete.
 	 */
 	public finalize(): SchemaLibrary {
-		this.finalize();
+		this.finalizeCommon();
 
 		// Check for errors:
 		const collection = buildViewSchemaCollection(this.lintConfiguration, this.libraries);
@@ -117,7 +112,7 @@ export class SchemaBuilderBase<
 	public toDocumentSchema<Kind extends FieldKind, Types extends AllowedTypes>(
 		root: FieldSchema<Kind, Types>,
 	): TypedSchemaCollection<FieldSchema<Kind, Types>> {
-		this.finalize();
+		this.finalizeCommon();
 		const rootLibrary: SchemaLibraryData = {
 			name: this.name,
 			rootFieldSchema: root,

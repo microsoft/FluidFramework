@@ -1106,7 +1106,7 @@ export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree;
 // @alpha (undocumented)
 export const jsonArray: TreeSchema<"Json.Array", {
 structFields: {
-"": FieldSchema<Optional, readonly [() => TreeSchema<"Json.Object", {
+"": FieldSchema<Sequence, readonly [() => TreeSchema<"Json.Object", {
 mapFields: FieldSchema<Optional, readonly [any, () => TreeSchema<"Json.Array", any>, TreeSchema<"com.fluidframework.leaf.number", {
 leafValue: import("../..").ValueSchema.Number;
 }>, TreeSchema<"com.fluidframework.leaf.boolean", {
@@ -1160,7 +1160,7 @@ leafValue: import("../..").ValueSchema.Number;
 export const jsonObject: TreeSchema<"Json.Object", {
 mapFields: FieldSchema<Optional, readonly [() => TreeSchema<"Json.Object", any>, () => TreeSchema<"Json.Array", {
 structFields: {
-"": FieldSchema<Optional, readonly [() => TreeSchema<"Json.Object", any>, any, TreeSchema<"com.fluidframework.leaf.number", {
+"": FieldSchema<Sequence, readonly [() => TreeSchema<"Json.Object", any>, any, TreeSchema<"com.fluidframework.leaf.number", {
 leafValue: import("../..").ValueSchema.Number;
 }>, TreeSchema<"com.fluidframework.leaf.boolean", {
 leafValue: import("../..").ValueSchema.Boolean;
@@ -1634,7 +1634,7 @@ declare namespace SchemaAware {
 export { SchemaAware }
 
 // @alpha @sealed
-export class SchemaBuilder<TScope extends string, TName extends number | string = string> extends SchemaBuilderBase<typeof FieldKinds, TScope, TName> {
+export class SchemaBuilder<TScope extends string, TName extends number | string = string> extends SchemaBuilderBase<TScope, TName> {
     fieldNode<Name extends TName, T extends FieldSchema>(name: Name, t: T): TreeSchema<`${TScope}.${Name}`, {
         structFields: {
             [""]: T;
@@ -1666,7 +1666,7 @@ export class SchemaBuilder<TScope extends string, TName extends number | string 
 }
 
 // @alpha
-export class SchemaBuilderBase<TFieldKinds extends Record<string, FieldKind>, TScope extends string, TName extends number | string = string> {
+export class SchemaBuilderBase<TScope extends string, TName extends number | string = string> {
     constructor(options: {
         scope: TScope;
         lint?: Partial<SchemaLintConfiguration>;

@@ -58,7 +58,7 @@ export const jsonObject = builder.mapRecursive(
  */
 export const jsonArray = builder.fieldNodeRecursive(
 	"Array",
-	new FieldSchema(FieldKinds.optional, jsonRoot),
+	new FieldSchema(FieldKinds.sequence, jsonRoot),
 );
 
 /**

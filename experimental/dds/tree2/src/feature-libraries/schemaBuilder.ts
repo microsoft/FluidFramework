@@ -29,7 +29,7 @@ import { AllowedTypes, TreeSchema, FieldSchema } from "./typed-schema";
 export class SchemaBuilder<
 	TScope extends string,
 	TName extends number | string = string,
-> extends SchemaBuilderBase<typeof FieldKinds, TScope, TName> {
+> extends SchemaBuilderBase<TScope, TName> {
 	/**
 	 * Define (and add to this library) a {@link TreeSchema} for a {@link Struct} node.
 	 *

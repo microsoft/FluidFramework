@@ -310,7 +310,7 @@ describe("LazyOptionalField", () => {
 			| SchemaAware.TypedField<FieldSchema, SchemaAware.ApiMode.Flexible>
 			| readonly ITreeCursorSynchronous[]
 			| ITreeCursorSynchronous,
-	): LazyOptionalField<[TreeSchema<"leaf">]> {
+	): LazyOptionalField<[TreeSchema<"test.leaf">]> {
 		const builder = new SchemaBuilder({ scope: "test" });
 		const leafSchema = builder.leaf("leaf", kind);
 		const rootSchema = SchemaBuilder.fieldOptional(leafSchema);
@@ -334,7 +334,7 @@ describe("LazyOptionalField", () => {
 			| SchemaAware.TypedField<FieldSchema, SchemaAware.ApiMode.Flexible>
 			| readonly ITreeCursorSynchronous[]
 			| ITreeCursorSynchronous,
-	): LazyOptionalField<[TreeSchema<"struct">]> {
+	): LazyOptionalField<[TreeSchema<"test.struct">]> {
 		const builder = new SchemaBuilder({ scope: "test" });
 		const booleanLeafSchema = builder.leaf("bool", ValueSchema.Boolean);
 		const numberLeafSchema = builder.leaf("number", ValueSchema.Number);
