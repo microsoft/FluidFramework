@@ -43,7 +43,8 @@ import {
 
 const resource = "https://prometheus.monitor.azure.com/.default";
 const endpoint = "https://frs-dev-monitor-8rqx.westus2.prometheus.monitor.azure.com/api/v1/query";
-const aadCredentials = new ManagedIdentityCredential("55c0d21e-333a-46bc-ac06-3cedd07a64be"); // cliend-id
+const clientIdForManagedIdentity = "214d53cc-804f-4a6e-8887-7e49b976d3d5"; // clientid for frs-dev7-ami-storage-eastus-003 MI
+const aadCredentials = new ManagedIdentityCredential(clientIdForManagedIdentity);
 
 async function getToken() {
 	return aadCredentials.getToken(resource);
