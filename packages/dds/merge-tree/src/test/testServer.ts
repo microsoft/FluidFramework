@@ -148,7 +148,9 @@ export function checkTextMatchRelative(
 	if (cliText === undefined || cliText !== serverText) {
 		console.log(`mismatch `);
 		console.log(msg);
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		console.log(server.mergeTree.toString());
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		console.log(client.mergeTree.toString());
 		return true;
 	}
