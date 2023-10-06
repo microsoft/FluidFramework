@@ -119,7 +119,7 @@ describe("SharedTree", () => {
 		const root = view.editableTree2(schema);
 		const leaf = root.boxedContent;
 		assert.equal(leaf.value, 1);
-		root.setContent(2);
+		root.content = 2;
 		assert(leaf.treeStatus() !== TreeStatus.InDocument);
 		assert.equal(root.content, 2);
 	});

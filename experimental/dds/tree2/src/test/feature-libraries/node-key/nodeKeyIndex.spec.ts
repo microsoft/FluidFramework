@@ -61,10 +61,10 @@ describe("Node Key Index", () => {
 	it("can look up a node that was inserted", () => {
 		const view = treeWithContent({ initialTree: undefined, schema: nodeSchemaData });
 		const key = view.context.nodeKeys.generate();
-		view.setContent({
+		view.content = {
 			child: undefined,
 			...contextualizeKey(view.context.nodeKeys, key),
-		});
+		};
 		assertIds(view.context.nodeKeys, [key]);
 	});
 
@@ -75,7 +75,7 @@ describe("Node Key Index", () => {
 			view.context.nodeKeys.generate(),
 			view.context.nodeKeys.generate(),
 		];
-		view.setContent({
+		view.content = {
 			...contextualizeKey(view.context.nodeKeys, keys[0]),
 			child: {
 				...contextualizeKey(view.context.nodeKeys, keys[1]),
@@ -84,36 +84,36 @@ describe("Node Key Index", () => {
 					child: undefined,
 				},
 			},
-		});
+		};
 		assertIds(view.context.nodeKeys, keys);
 	});
 
 	it("can look up multiple nodes that were inserted over time", () => {
 		const view = createView(undefined);
 		const keyA = view.context.nodeKeys.generate();
-		view.setContent({
+		view.content = {
 			...contextualizeKey(view.context.nodeKeys, keyA),
 			child: undefined,
-		});
+		};
 
 		const node = view.context.nodeKeys.map.get(keyA);
 		assert(node !== undefined);
 		const keyB = view.context.nodeKeys.generate();
 		assert(node.is(nodeSchema));
-		node.boxedChild.setContent({
+		node.boxedChild.content = {
 			[nodeKeyFieldKey]: node.context.nodeKeys.stabilize(keyB),
 			child: undefined,
-		});
+		};
 		assertIds(view.context.nodeKeys, [keyA, keyB]);
 	});
 
 	it("forgets about nodes that are deleted", () => {
 		const view = createView(undefined);
-		view.setContent({
+		view.content = {
 			...contextualizeKey(view.context.nodeKeys, view.context.nodeKeys.generate()),
 			child: undefined,
-		});
-		view.setContent(undefined);
+		};
+		view.content = undefined;
 		assertIds(view.context.nodeKeys, []);
 	});
 
@@ -122,7 +122,7 @@ describe("Node Key Index", () => {
 		const key = view.context.nodeKeys.generate();
 		assert.throws(
 			() =>
-				view.setContent({
+				(view.content = {
 					...contextualizeKey(view.context.nodeKeys, key),
 					child: {
 						...contextualizeKey(view.context.nodeKeys, key),
@@ -190,13 +190,12 @@ describe("Node Key Index", () => {
 	it.skip("errors on nodes which should have keys, but do not", () => {
 		const view = createView(undefined);
 		assert.throws(
-			() =>
-				view.setContent(
-					// @ts-expect-error: Wrong type
-					{
-						child: undefined,
-					},
-				),
+			() => {
+				// @ts-expect-error: Wrong type
+				view.content = {
+					child: undefined,
+				};
+			},
 			(e: Error) => validateAssertionError(e, "Node key absent but required by schema"),
 		);
 	});
@@ -238,13 +237,13 @@ describe("Node Key Index", () => {
 			batches += 1;
 		});
 
-		view.setContent({
+		view.content = {
 			...contextualizeKey(view.context.nodeKeys, key),
 			child: undefined,
-		});
+		};
 
 		expectedIds = [];
-		view.setContent(undefined);
+		view.content = undefined;
 		assert.equal(batches, 2);
 	});
 
