@@ -172,13 +172,16 @@ export class MockRuntime
 		this.ops = [];
 	}
 
-	public async processBlobs(resolve = true) {
+	public async processBlobs(resolve: boolean, canRetry?: boolean, retryAfterSeconds?: number) {
 		const blobPs = this.blobPs;
 		this.blobPs = [];
 		if (resolve) {
 			this.processBlobsP.resolve();
 		} else {
-			this.processBlobsP.reject(new Error("fake error"));
+			const err: any = new Error("fake error");
+			err.canRetry = canRetry;
+			err.retryAfterSeconds = retryAfterSeconds;
+			this.processBlobsP.reject(err);
 		}
 		this.processBlobsP = new Deferred<void>();
 		await Promise.allSettled(blobPs).catch(() => {});
@@ -193,7 +196,7 @@ export class MockRuntime
 
 	public async processAll() {
 		while (this.blobPs.length + this.handlePs.length + this.ops.length > 0) {
-			const p1 = this.processBlobs();
+			const p1 = this.processBlobs(true);
 			const p2 = this.processHandles();
 			this.processOps();
 			await Promise.race([p1, p2]);
@@ -232,7 +235,7 @@ export class MockRuntime
 	public async processStashed() {
 		const uploadP = this.blobManager.processStashedChanges();
 		this.processing = true;
-		await this.processBlobs();
+		await this.processBlobs(true);
 		await uploadP;
 		this.processing = false;
 	}
@@ -414,7 +417,7 @@ describe("BlobManager", () => {
 		await runtime.connect();
 		runtime.attachedStorage.minTTL = 0.001; // force expired TTL being less than connection time (50ms)
 		await createBlob(IsoBuffer.from("blob", "utf8"));
-		await runtime.processBlobs();
+		await runtime.processBlobs(true);
 		runtime.disconnect();
 		await new Promise<void>((resolve) => setTimeout(resolve, 50));
 		await runtime.connect();
@@ -456,13 +459,30 @@ describe("BlobManager", () => {
 		assert.strictEqual(summaryData.redirectTable, undefined);
 	});
 
+	it("upload fails and retries for retriable errors", async () => {
+		await runtime.attach();
+		await runtime.connect();
+		const handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+		await runtime.processBlobs(false, true, 0);
+		// wait till next retry
+		await new Promise<void>((resolve) => setTimeout(resolve, 1));
+		// try again successfully
+		await runtime.processBlobs(true);
+		runtime.processOps();
+		await runtime.processHandles();
+		assert(handleP);
+		const summaryData = validateSummary(runtime);
+		assert.strictEqual(summaryData.ids.length, 1);
+		assert.strictEqual(summaryData.redirectTable.size, 1);
+	});
+
 	it("completes after disconnection while op in flight", async () => {
 		await runtime.attach();
 		await runtime.connect();
 
 		await createBlob(IsoBuffer.from("blob", "utf8"));
 		await createBlob(IsoBuffer.from("blob", "utf8"));
-		await runtime.processBlobs();
+		await runtime.processBlobs(true);
 
 		runtime.disconnect();
 		await runtime.connect();
@@ -506,7 +526,7 @@ describe("BlobManager", () => {
 
 		await createBlob(IsoBuffer.from("blob", "utf8"));
 		await createBlob(IsoBuffer.from("blob", "utf8"));
-		await runtime.processBlobs();
+		await runtime.processBlobs(true);
 
 		runtime.disconnect();
 		await runtime.connect();
@@ -599,7 +619,7 @@ describe("BlobManager", () => {
 		await runtime.connect();
 
 		await createBlob(IsoBuffer.from("blob", "utf8"));
-		await runtime.processBlobs();
+		await runtime.processBlobs(true);
 		await runtime.remoteUpload(IsoBuffer.from("blob", "utf8"));
 		await runtime.processAll();
 
@@ -613,7 +633,7 @@ describe("BlobManager", () => {
 
 		await createBlob(IsoBuffer.from("blob", "utf8"));
 		await runtime.connect();
-		await runtime.processBlobs();
+		await runtime.processBlobs(true);
 		await runtime.remoteUpload(IsoBuffer.from("blob", "utf8"));
 		await runtime.processAll();
 
@@ -642,7 +662,7 @@ describe("BlobManager", () => {
 		assert.strictEqual(runtime.blobManager.allBlobsAttached, true);
 		await createBlob(IsoBuffer.from("blob1", "utf8"));
 		assert.strictEqual(runtime.blobManager.allBlobsAttached, false);
-		await runtime.processBlobs();
+		await runtime.processBlobs(true);
 		assert.strictEqual(runtime.blobManager.allBlobsAttached, false);
 		await runtime.processAll();
 		assert.strictEqual(runtime.blobManager.allBlobsAttached, true);
@@ -683,7 +703,7 @@ describe("BlobManager", () => {
 			const handleP = runtime.createBlob(blob, ac.signal);
 			ac.abort("abort test");
 			assert.strictEqual(runtime.unprocessedBlobs.size, 1);
-			await runtime.processBlobs();
+			await runtime.processBlobs(true);
 			try {
 				await handleP;
 				assert.fail("Should not succeed");
@@ -740,7 +760,7 @@ describe("BlobManager", () => {
 			const handleP = runtime.createBlob(blob, ac.signal);
 			runtime.disconnect();
 			ac.abort();
-			await runtime.processBlobs();
+			await runtime.processBlobs(true);
 			try {
 				await handleP;
 				assert.fail("Should not succeed");
@@ -779,7 +799,7 @@ describe("BlobManager", () => {
 			const ac = new AbortController();
 			const blob = IsoBuffer.from("blob", "utf8");
 			const handleP = runtime.createBlob(blob, ac.signal);
-			const p1 = runtime.processBlobs();
+			const p1 = runtime.processBlobs(true);
 			const p2 = runtime.processHandles();
 			// finish upload
 			await Promise.race([p1, p2]);
@@ -807,7 +827,7 @@ describe("BlobManager", () => {
 			let handleP;
 			try {
 				handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"), ac.signal);
-				const p1 = runtime.processBlobs();
+				const p1 = runtime.processBlobs(true);
 				const p2 = runtime.processHandles();
 				// finish upload
 				await Promise.race([p1, p2]);
