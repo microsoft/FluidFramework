@@ -61,15 +61,16 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 	): Promise<ISnapshotTree | null> {
 		return this.runWithRetry(
 			async () =>
-				this.internalStorageServiceP.then(async (s)=> s.getSnapshotTree( version, scenarioName)),
+				this.internalStorageServiceP.then(async (s) =>
+					s.getSnapshotTree(version, scenarioName),
+				),
 			"storage_getSnapshotTree",
 		);
 	}
 
 	public async readBlob(id: string): Promise<ArrayBufferLike> {
 		return this.runWithRetry(
-			async () => 
-				this.internalStorageServiceP.then(async (s)=> s.readBlob(id)),
+			async () => this.internalStorageServiceP.then(async (s) => s.readBlob(id)),
 			"storage_readBlob",
 		);
 	}
@@ -82,12 +83,9 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 	): Promise<IVersion[]> {
 		return this.runWithRetry(
 			async () =>
-			this.internalStorageServiceP.then(async (s)=> s.getVersions(
-					versionId,
-					count,
-					scenarioName,
-					fetchSource,
-				)),
+				this.internalStorageServiceP.then(async (s) =>
+					s.getVersions(versionId, count, scenarioName, fetchSource),
+				),
 			"storage_getVersions",
 		);
 	}
@@ -110,7 +108,9 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 			0x251 /* "creation summary has to have seq=0 && handle === undefined" */,
 		);
 		if (context.referenceSequenceNumber !== 0) {
-			return this.internalStorageServiceP.then(async (s)=> s.uploadSummaryWithContext(summary, context));
+			return this.internalStorageServiceP.then(async (s) =>
+				s.uploadSummaryWithContext(summary, context),
+			);
 		}
 
 		// Creation flow with attachment blobs - need to do retries!
@@ -126,15 +126,14 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 
 	public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
 		return this.runWithRetry(
-			async () =>
-			this.internalStorageServiceP.then(async (s)=> s.downloadSummary(handle)),
+			async () => this.internalStorageServiceP.then(async (s) => s.downloadSummary(handle)),
 			"storage_downloadSummary",
 		);
 	}
 
 	public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
 		return this.runWithRetry(
-			async () => this.internalStorageServiceP.then(async (s)=> s.createBlob(file)),
+			async () => this.internalStorageServiceP.then(async (s) => s.createBlob(file)),
 			"storage_createBlob",
 		);
 	}
