@@ -35,7 +35,6 @@ import {
 	StructSchema,
 	Any,
 } from "../typed-schema";
-import { treeStatusFromPath } from "../editable-tree";
 import { EditableTreeEvents } from "../untypedTree";
 import { FieldKinds } from "../default-field-kinds";
 import { LocalNodeKey } from "../node-key";
@@ -64,6 +63,7 @@ import {
 	tryMoveCursorToAnchorSymbol,
 } from "./lazyEntity";
 import { unboxedField } from "./unboxed";
+import { treeStatusFromAnchorCache } from "./utilities";
 
 const lazyTreeSlot = anchorSlot<LazyTree>();
 
@@ -254,8 +254,7 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 		if (this[isFreedSymbol]()) {
 			return TreeStatus.Deleted;
 		}
-		const path = this.#anchorNode;
-		return treeStatusFromPath(path);
+		return treeStatusFromAnchorCache(this.context.forest.anchors, this.#anchorNode);
 	}
 
 	public on<K extends keyof EditableTreeEvents>(
@@ -310,22 +309,24 @@ export class LazyMap<TSchema extends MapSchema>
 		return mapCursorFields(this[cursorSymbol], (cursor) => cursor.getFieldKey()).values();
 	}
 
-	public values(): IterableIterator<UnboxField<TSchema["mapFields"]>> {
+	public values(): IterableIterator<UnboxField<TSchema["mapFields"], "notEmpty">> {
 		return mapCursorFields(
 			this[cursorSymbol],
 			(cursor) =>
 				unboxedField(this.context, this.schema.mapFields, cursor) as UnboxField<
-					TSchema["mapFields"]
+					TSchema["mapFields"],
+					"notEmpty"
 				>,
 		).values();
 	}
 
-	public entries(): IterableIterator<[FieldKey, UnboxField<TSchema["mapFields"]>]> {
+	public entries(): IterableIterator<[FieldKey, UnboxField<TSchema["mapFields"], "notEmpty">]> {
 		return mapCursorFields(this[cursorSymbol], (cursor) => {
-			const entry: [FieldKey, UnboxField<TSchema["mapFields"]>] = [
+			const entry: [FieldKey, UnboxField<TSchema["mapFields"], "notEmpty">] = [
 				cursor.getFieldKey(),
 				unboxedField(this.context, this.schema.mapFields, cursor) as UnboxField<
-					TSchema["mapFields"]
+					TSchema["mapFields"],
+					"notEmpty"
 				>,
 			];
 			return entry;
@@ -334,7 +335,7 @@ export class LazyMap<TSchema extends MapSchema>
 
 	public forEach(
 		callbackFn: (
-			value: UnboxField<TSchema["mapFields"]>,
+			value: UnboxField<TSchema["mapFields"], "notEmpty">,
 			key: FieldKey,
 			map: MapNode<TSchema>,
 		) => void,
@@ -381,21 +382,16 @@ export class LazyMap<TSchema extends MapSchema>
 		return super[boxedIterator]() as IterableIterator<TypedField<TSchema["mapFields"]>>;
 	}
 
-	public [Symbol.iterator](): IterableIterator<UnboxField<TSchema["mapFields"], "notEmpty">> {
-		return mapCursorFields(
-			this[cursorSymbol],
-			(cursor) =>
-				unboxedField(this.context, this.schema.mapFields, cursor) as UnboxField<
-					TSchema["mapFields"],
-					"notEmpty"
-				>,
-		)[Symbol.iterator]();
+	public [Symbol.iterator](): IterableIterator<
+		[FieldKey, UnboxField<TSchema["mapFields"], "notEmpty">]
+	> {
+		return this.entries();
 	}
 
 	public get asObject(): {
-		readonly [P in FieldKey]?: UnboxField<TSchema["mapFields"]>;
+		readonly [P in FieldKey]?: UnboxField<TSchema["mapFields"], "notEmpty">;
 	} {
-		const record: Record<FieldKey, UnboxField<TSchema["mapFields"]> | undefined> =
+		const record: Record<FieldKey, UnboxField<TSchema["mapFields"], "notEmpty"> | undefined> =
 			Object.create(null);
 
 		forEachField(this[cursorSymbol], (cursor) => {

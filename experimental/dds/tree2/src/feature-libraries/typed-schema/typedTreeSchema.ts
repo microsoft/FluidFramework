@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { Lazy, assert } from "@fluidframework/core-utils";
 import {
 	Adapters,
 	EmptyKey,
@@ -20,6 +20,7 @@ import {
 	FlattenKeys,
 	Named,
 	requireAssignableTo,
+	compareSets,
 } from "../../util";
 import { FieldKinds } from "../default-field-kinds";
 import { FieldKind, FullSchemaPolicy } from "../modular-schema";
@@ -249,13 +250,13 @@ export type LazyTreeSchema = TreeSchema | (() => TreeSchema);
  * "Any" is boxed in an array to allow use as variadic parameter.
  * @alpha
  */
-export type AllowedTypes = [Any] | readonly LazyItem<TreeSchema>[];
+export type AllowedTypes = readonly [Any] | readonly LazyItem<TreeSchema>[];
 
 /**
  * Checks if an {@link AllowedTypes} is {@link (Any:type)}.
  * @alpha
  */
-export function allowedTypesIsAny(t: AllowedTypes): t is [Any] {
+export function allowedTypesIsAny(t: AllowedTypes): t is readonly [Any] {
 	return t.length === 1 && t[0] === Any;
 }
 
@@ -306,15 +307,25 @@ export type TreeSchemaSpecification = [
  * including functionality that does not have to be kept consistent across versions or deterministic.
  *
  * This can include policy for how to use this schema for "view" purposes, and well as how to expose editing APIs.
+ *
+ * @remarks
+ * `Types` here must extend `AllowedTypes`, but this cannot be enforced with an "extends" clause due to the need to support recursive schema and
+ * [a design limitation of TypeScript](https://github.com/microsoft/TypeScript/issues/55758).
+ *
  * @sealed @alpha
  */
-export class FieldSchema<Kind extends FieldKind = FieldKind, Types = AllowedTypes> {
+export class FieldSchema<out Kind extends FieldKind = FieldKind, const out Types = AllowedTypes> {
 	/**
 	 * Schema for a field which must always be empty.
 	 */
 	public static readonly empty = new FieldSchema(FieldKinds.forbidden, []);
 
 	protected _typeCheck?: MakeNominal;
+
+	/**
+	 * This is computed lazily since types can be recursive, which makes evaluating this have to happen after all the schema are defined.
+	 */
+	private readonly lazyTypes: Lazy<TreeTypeSet>;
 
 	/**
 	 * @param kind - The {@link https://en.wikipedia.org/wiki/Kind_(type_theory) | kind} of this field.
@@ -324,11 +335,37 @@ export class FieldSchema<Kind extends FieldKind = FieldKind, Types = AllowedType
 	public constructor(
 		public readonly kind: Kind,
 		public readonly allowedTypes: Types,
-	) {}
+	) {
+		this.lazyTypes = new Lazy(() =>
+			allowedTypesToTypeSet(this.allowedTypes as unknown as AllowedTypes),
+		);
+	}
 
-	// TODO:#5702 cache the result of this getter
 	public get types(): TreeTypeSet {
-		return allowedTypesToTypeSet(this.allowedTypes as unknown as AllowedTypes);
+		return this.lazyTypes.value;
+	}
+
+	/**
+	 * Compare this schema to another.
+	 *
+	 * @returns true iff the schema are identical.
+	 */
+	public equals(other: FieldSchema): boolean {
+		if (other.kind !== this.kind) {
+			return false;
+		}
+		if (other.types === undefined) {
+			return this.types === undefined;
+		}
+		if (this.types === undefined) {
+			return false;
+		}
+		return compareSets({
+			a: this.types,
+			b: other.types,
+			aExtra: () => false,
+			bExtra: () => false,
+		});
 	}
 }
 

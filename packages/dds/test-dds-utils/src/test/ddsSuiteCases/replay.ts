@@ -29,6 +29,7 @@ const model: DDSFuzzModel<SharedNothingFactory, Operation> = {
 		// current spec for `replay`: it avoids running other fuzz test seeds/configurations.
 		currentIndex++;
 	},
+	minimizationTransforms: [],
 };
 
 createDDSFuzzSuite(model, {
