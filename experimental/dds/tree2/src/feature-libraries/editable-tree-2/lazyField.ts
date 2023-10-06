@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+import { StableId } from "@fluidframework/runtime-definitions";
 import {
 	FieldKey,
 	TreeNavigationResult,
@@ -24,8 +25,9 @@ import {
 	SequenceFieldEditBuilder,
 	ValueFieldEditBuilder,
 } from "../default-field-kinds";
-import { assertValidIndex, assertValidRangeIndices, disposeSymbol, fail } from "../../util";
+import { assertValidIndex, assertValidRangeIndices, brand, disposeSymbol, fail } from "../../util";
 import { AllowedTypes, FieldSchema } from "../typed-schema";
+import { LocalNodeKey, StableNodeKey, nodeKeyTreeIdentifier } from "../node-key";
 import { Context } from "./context";
 import {
 	FlexibleNodeContent,
@@ -40,6 +42,7 @@ import {
 	boxedIterator,
 	CheckTypesOverlap,
 	TreeStatus,
+	NodeKeyField,
 } from "./editableTreeTypes";
 import { makeTree } from "./lazyTree";
 import {
@@ -380,15 +383,15 @@ export class LazyValueField<TTypes extends AllowedTypes>
 		return this.at(0);
 	}
 
-	public get boxedContent(): TypedNodeUnion<TTypes> {
-		return this.boxedAt(0);
-	}
-
-	public setContent(newContent: FlexibleNodeContent<TTypes>): void {
+	public set content(newContent: FlexibleNodeContent<TTypes>) {
 		const content = this.normalizeNewContent(newContent);
 		const fieldEditor = this.valueFieldEditor();
 		assert(content.length === 1, 0x780 /* value field content should normalize to one item */);
 		fieldEditor.set(content[0]);
+	}
+
+	public get boxedContent(): TypedNodeUnion<TTypes> {
+		return this.boxedAt(0);
 	}
 }
 
@@ -417,11 +420,7 @@ export class LazyOptionalField<TTypes extends AllowedTypes>
 		return this.length === 0 ? undefined : this.at(0);
 	}
 
-	public get boxedContent(): TypedNodeUnion<TTypes> | undefined {
-		return this.length === 0 ? undefined : this.boxedAt(0);
-	}
-
-	public setContent(newContent: FlexibleNodeContent<TTypes> | undefined): void {
+	public set content(newContent: FlexibleNodeContent<TTypes> | undefined) {
 		const content = this.normalizeNewContent(newContent);
 		const fieldEditor = this.optionalEditor();
 		assert(
@@ -429,6 +428,42 @@ export class LazyOptionalField<TTypes extends AllowedTypes>
 			0x781 /* optional field content should normalize at most one item */,
 		);
 		fieldEditor.set(content.length === 0 ? undefined : content[0], this.length === 0);
+	}
+
+	public get boxedContent(): TypedNodeUnion<TTypes> | undefined {
+		return this.length === 0 ? undefined : this.boxedAt(0);
+	}
+}
+
+export class LazyNodeKeyField<TTypes extends AllowedTypes>
+	extends LazyField<typeof FieldKinds.nodeKey, TTypes>
+	implements NodeKeyField
+{
+	public constructor(
+		context: Context,
+		schema: FieldSchema<typeof FieldKinds.nodeKey, TTypes>,
+		cursor: ITreeSubscriptionCursor,
+		fieldAnchor: FieldAnchor,
+	) {
+		super(context, schema, cursor, fieldAnchor);
+
+		makePropertyEnumerableOwn(this, "stableNodeKey", LazyNodeKeyField.prototype);
+	}
+
+	public get localNodeKey(): LocalNodeKey {
+		// TODO: Optimize this to be a fast path that gets a LocalNodeKey directly from the
+		// forest rather than getting the StableNodeKey and the compressing it.
+		return this.context.nodeKeys.localize(this.stableNodeKey);
+	}
+
+	public get stableNodeKey(): StableNodeKey {
+		const cursor = this[cursorSymbol];
+		cursor.enterNode(0);
+		assert(cursor.type === nodeKeyTreeIdentifier, "invalid node key type");
+		const stableKey = cursor.value;
+		assert(typeof stableKey === "string", "invalid node key type");
+		cursor.exitNode();
+		return brand(stableKey as StableId);
 	}
 }
 
@@ -446,7 +481,7 @@ type Builder = new <TTypes extends AllowedTypes>(
 
 const builderList: [FieldKind, Builder][] = [
 	[FieldKinds.forbidden, LazyForbiddenField],
-	[FieldKinds.nodeKey, LazyOptionalField], // TODO
+	[FieldKinds.nodeKey, LazyNodeKeyField],
 	[FieldKinds.optional, LazyOptionalField],
 	[FieldKinds.sequence, LazySequence],
 	[FieldKinds.required, LazyValueField],
