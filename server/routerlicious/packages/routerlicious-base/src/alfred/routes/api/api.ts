@@ -112,9 +112,9 @@ export function create(
 				const data = await executeProm(query, token.token);
 				response.json({ status: "ok", token, result: data.data });
 			} catch (e) {
-				response.json({ error: "Prom query failed" });
+				response.json({ error: 'Prom query failed ${e}' });
 				// response.sendStatus(200);
-				console.log(e);
+				Lumberjack.error("Error in ping endpoint:", e);
 			}
 		},
 	);
