@@ -1,37 +1,75 @@
 {
-    "type": 1,
-    "tree": {
-        "indexes": {
-            "type": 1,
+  "type": "tree",
+  "tree": {
+    "type": "tree",
+    "indexes": {
+      "type": "tree",
+      "entries": [
+        {
+          "type": "tree",
+          "EditManager": {
+            "type": "tree",
             "tree": {
-                "EditManager": {
-                    "type": 1,
-                    "tree": {
-                        "String": {
-                            "type": 2,
-                            "content": "{\"trunk\":[],\"branches\":[]}"
-                        }
-                    }
+              "type": "blob",
+              "String": {
+                "type": "blob",
+                "content": {
+                  "trunk": [],
+                  "branches": []
                 },
-                "Schema": {
-                    "type": 1,
-                    "tree": {
-                        "SchemaString": {
-                            "type": 2,
-                            "content": "{\"version\":\"1.0.0\",\"treeSchema\":[{\"name\":\"TestInner\",\"mapFields\":{\"kind\":\"Sequence\"},\"structFields\":[]},{\"name\":\"TestLeaf\",\"structFields\":[],\"leafValue\":1}],\"rootFieldSchema\":{\"kind\":\"Sequence\"}}"
-                        }
-                    }
-                },
-                "Forest": {
-                    "type": 1,
-                    "tree": {
-                        "ForestTree": {
-                            "type": 2,
-                            "content": "[]"
-                        }
-                    }
-                }
+                "encoding": "utf-8"
+              }
             }
+          }
+        },
+        {
+          "type": "tree",
+          "Schema": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "SchemaString": {
+                "type": "blob",
+                "content": {
+                  "version": "1.0.0",
+                  "treeSchema": [
+                    {
+                      "name": "TestInner",
+                      "mapFields": {
+                        "kind": "Sequence"
+                      },
+                      "structFields": []
+                    },
+                    {
+                      "name": "TestLeaf",
+                      "structFields": [],
+                      "leafValue": 1
+                    }
+                  ],
+                  "rootFieldSchema": {
+                    "kind": "Sequence"
+                  }
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "Forest": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "ForestTree": {
+                "type": "blob",
+                "content": [],
+                "encoding": "utf-8"
+              }
+            }
+          }
         }
+      ]
     }
+  }
 }

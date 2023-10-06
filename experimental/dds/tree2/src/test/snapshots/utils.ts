@@ -5,18 +5,117 @@
 
 import { strict as assert } from "assert";
 import { promises as fs, existsSync, rmSync, mkdirSync } from "fs";
-import { Serializable } from "@fluidframework/datastore-definitions";
+import { ISummaryTree, SummaryType, SummaryObject } from "@fluidframework/protocol-definitions";
+import { Uint8ArrayToString } from "@fluid-internal/client-utils";
 
-const numberOfSpaces = 4;
+const numberOfSpaces = 2;
 
-export async function createSnapshot(path: string, data: Serializable): Promise<void> {
-	const dataStr = JSON.stringify(data, undefined, numberOfSpaces);
+function getSummaryTypeName(summaryObject: SummaryObject): "blob" | "tree" {
+	const type =
+		summaryObject.type === SummaryType.Handle ? summaryObject.handleType : summaryObject.type;
+
+	switch (type) {
+		case SummaryType.Blob:
+		case SummaryType.Attachment:
+			return "blob";
+		case SummaryType.Tree:
+			return "tree";
+		default:
+			throw new Error(`Unknown type: ${type}`);
+	}
+}
+
+function serializeTree(parentHandle: string, tree: ISummaryTree, rootNodeName: string) {
+	const entries: { type: "blob" | "tree" }[] = [];
+
+	for (const key of Object.keys(tree.tree)) {
+		const summaryObject = tree.tree[key];
+		let id: string | undefined;
+		let value: object | undefined;
+		switch (summaryObject.type) {
+			case SummaryType.Tree: {
+				const result = serializeTree(parentHandle, summaryObject, rootNodeName);
+				value = result;
+				break;
+			}
+			case SummaryType.Blob: {
+				value =
+					typeof summaryObject.content === "string"
+						? {
+								type: "blob",
+								content: JSON.parse(summaryObject.content),
+								encoding: "utf-8",
+						  }
+						: {
+								type: "blob",
+								content: Uint8ArrayToString(summaryObject.content, "base64"),
+								encoding: "base64",
+						  };
+				break;
+			}
+			case SummaryType.Handle: {
+				if (!parentHandle) {
+					throw Error("Parent summary does not exist to reference by handle.");
+				}
+				let handlePath = summaryObject.handle;
+				if (handlePath.length > 0 && !handlePath.startsWith("/")) {
+					handlePath = `/${handlePath}`;
+				}
+				const pathKey = `${rootNodeName}${handlePath}`;
+				id = `${parentHandle}/${pathKey}`;
+				break;
+			}
+			case SummaryType.Attachment: {
+				id = summaryObject.id;
+				break;
+			}
+			default: {
+				throw new Error(`Unknown type: ${(summaryObject as any).type}`);
+			}
+		}
+
+		const baseEntry = {
+			type: getSummaryTypeName(summaryObject),
+		};
+		let entry;
+		if (value !== undefined) {
+			assert.equal(
+				id,
+				undefined,
+				"Snapshot entry has both a tree value and a referenced id!",
+			);
+			entry = {
+				...baseEntry,
+				[encodeURIComponent(key)]: value,
+			};
+		} else if (id !== undefined) {
+			entry = {
+				...baseEntry,
+				[encodeURIComponent(key)]: id,
+			};
+		} else {
+			throw new Error(`Invalid tree entry for ${summaryObject.type}`);
+		}
+		entries.push(entry);
+	}
+
+	if (entries.length === 1) {
+		return { type: "tree", tree: entries[0] };
+	}
+
+	return { type: "tree", entries };
+}
+
+export async function createSnapshot(path: string, data: ISummaryTree): Promise<void> {
+	const tree = serializeTree(".handle", data, ".app");
+	const dataStr = JSON.stringify(tree, undefined, numberOfSpaces);
 	await fs.writeFile(path, dataStr);
 }
 
-export async function verifyEqualPastSnapshot(path: string, data: Serializable): Promise<void> {
+export async function verifyEqualPastSnapshot(path: string, data: ISummaryTree): Promise<void> {
 	assert(existsSync(path), `test snapshot file does not exist: ${path}`);
-	const dataStr = JSON.stringify(data, undefined, numberOfSpaces);
+	const tree = serializeTree(".handle", data, ".app");
+	const dataStr = JSON.stringify(tree, undefined, numberOfSpaces);
 	const pastDataStr = await fs.readFile(path, "utf-8");
 
 	assert.equal(dataStr, pastDataStr);

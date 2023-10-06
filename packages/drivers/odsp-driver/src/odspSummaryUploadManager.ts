@@ -81,7 +81,7 @@ export class OdspSummaryUploadManager {
 		tree: api.ISummaryTree,
 	): Promise<IWriteSummaryResponse> {
 		const containsProtocolTree = isCombinedAppAndProtocolSummary(tree);
-		const { snapshotTree, blobs } = await this.convertSummaryToSnapshotTree(
+		const { snapshotTree, blobs } = this.convertSummaryToSnapshotTree(
 			parentHandle,
 			tree,
 			".app",
@@ -156,7 +156,7 @@ export class OdspSummaryUploadManager {
 	 * @param path - Current path of node which is getting evaluated.
 	 * @param markUnreferencedNodes - True if we should mark unreferenced nodes.
 	 */
-	private async convertSummaryToSnapshotTree(
+	private convertSummaryToSnapshotTree(
 		parentHandle: string | undefined,
 		tree: api.ISummaryTree,
 		rootNodeName: string,
@@ -183,7 +183,7 @@ export class OdspSummaryUploadManager {
 			let unreferenced: true | undefined;
 			switch (summaryObject.type) {
 				case api.SummaryType.Tree: {
-					const result = await this.convertSummaryToSnapshotTree(
+					const result = this.convertSummaryToSnapshotTree(
 						parentHandle,
 						summaryObject,
 						rootNodeName,
