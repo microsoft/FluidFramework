@@ -538,21 +538,21 @@ export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
 	 * @param value - The content to insert.
 	 * @throws Throws if any of the input indices are invalid.
 	 */
-	insertAt(index: number, value: FlexibleNodeContent<TTypes>[]): void;
+	insertAt(index: number, value: Iterable<FlexibleNodeContent<TTypes>>): void;
 
 	/**
 	 * Inserts new item(s) at the start of the sequence.
 	 * @param value - The content to insert.
 	 * @throws Throws if any of the input indices are invalid.
 	 */
-	insertAtStart(value: FlexibleNodeContent<TTypes>[]): void;
+	insertAtStart(value: Iterable<FlexibleNodeContent<TTypes>>): void;
 
 	/**
 	 * Inserts new item(s) at the end of the sequence.
 	 * @param value - The content to insert.
 	 * @throws Throws if any of the input indices are invalid.
 	 */
-	insertAtEnd(value: FlexibleNodeContent<TTypes>[]): void;
+	insertAtEnd(value: Iterable<FlexibleNodeContent<TTypes>>): void;
 
 	/**
 	 * Removes the item at the specified location.
