@@ -125,8 +125,10 @@ const combineMembers = async (sourcePath, targetPath, instructions) => {
 
 const main = async () => {
 	// Clear output folders.
-	await fs.emptyDir(stagingPath);
-	await fs.emptyDir(outputPath);
+	await Promise.all([
+		fs.emptyDir(stagingPath),
+		fs.emptyDir(outputPath),
+	]);
 
 	const apiExtractorInputDir = path.resolve("..", "_api-extractor-temp", "doc-models");
 
