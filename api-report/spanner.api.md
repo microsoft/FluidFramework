@@ -8,22 +8,22 @@ import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
-import { IChannelStorageService } from '@fluidframework/datastore-definitions';
-import { IDeltaConnection } from '@fluidframework/datastore-definitions';
-import { IDeltaHandler } from '@fluidframework/datastore-definitions';
+import { IEvent } from '@fluidframework/core-interfaces';
 import { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
+import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
+// Warning: (ae-forgotten-export) The symbol "IHotSwapEvent" needs to be exported by the entry point index.d.ts
+//
 // @public
-export class Spanner<TOld extends SharedObject, TNew extends SharedObject> implements IChannel {
-    constructor(id: string, runtime: IFluidDataStoreRuntime, newFactory: IChannelFactory, oldSharedObject?: TOld | undefined, newSharedObject?: TNew | undefined);
+export class Spanner<TOld extends SharedObject, TNew extends SharedObject> extends TypedEventEmitter<IHotSwapEvent> implements IChannel {
+    constructor(id: string, runtime: IFluidDataStoreRuntime, oldFactory: IChannelFactory, newFactory: IChannelFactory, populateNewSharedObjectFn: (oldSharedObject: TOld, newSharedObject: TNew) => void);
     // (undocumented)
     get attributes(): IChannelAttributes;
     connect(services: IChannelServices): void;
@@ -38,29 +38,22 @@ export class Spanner<TOld extends SharedObject, TNew extends SharedObject> imple
     // (undocumented)
     get IFluidLoadable(): IFluidLoadable;
     // (undocumented)
+    initializeLocal(): void;
+    // (undocumented)
     isAttached(): boolean;
-    // Warning: (ae-forgotten-export) The symbol "SpannerChannelServices" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
-    load(services: SpannerChannelServices): void;
-    populateNewSharedObject: (oldSharedObject: TOld, newSharedObject: TNew) => void;
-    // (undocumented)
-    reconnect(): void;
+    load(services: IChannelServices, attributes: IChannelAttributes): Promise<void>;
     // (undocumented)
     submitMigrateOp(): void;
     // (undocumented)
     summarize(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined): Promise<ISummaryTreeWithStats>;
-    swap(): {
-        new: TNew;
-        old: TOld;
-    };
     // (undocumented)
     get target(): TOld | TNew;
 }
 
 // @public @sealed
 export class SpannerFactory<TOld extends SharedObject, TNew extends SharedObject> implements IChannelFactory {
-    constructor(oldFactory: IChannelFactory, newFactory: IChannelFactory);
+    constructor(oldFactory: IChannelFactory, newFactory: IChannelFactory, populateNewChannelFn: (oldChannel: TOld, newChannel: TNew) => void);
     get attributes(): IChannelAttributes;
     create(runtime: IFluidDataStoreRuntime, id: string): Spanner<TOld, TNew>;
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<Spanner<TOld, TNew>>;

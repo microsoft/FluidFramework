@@ -9,27 +9,55 @@ import { assert } from "@fluidframework/core-utils";
 
 /**
  * Handles incoming and outgoing deltas/ops for the Spanner distributed data structure.
- *
- * Since the handler will swap, that means the state of the underlying SpannerDeltaHandler will change. Not sure what
- * effect that will have on the runtime.
- *
  * This serves as an adapter to the real DeltaHandler, so that we can swap DeltaHandlers on the fly.
  *
- * Needs to be able to process v1 and v2 ops
+ * TODO: Needs to be able to process v1 and v2 ops, differentiate between them, understand the various states
+ * and drop v1 ops after migration. After the MSN of the barrier op, it needs to process v2 ops without needing to
+ * check for the v2 stamp.
  */
 export class SpannerDeltaHandler implements IDeltaHandler {
-	private newHandler: IDeltaHandler | undefined;
+	private oldHandler?: IDeltaHandler;
+	private newHandler?: IDeltaHandler;
 	public constructor(
-		private readonly oldHandler: IDeltaHandler,
 		// This is a hack, maybe parent handler would be better
-		public readonly migrateFunction: (
+		public readonly processMigrateOp: (
 			message: ISequencedDocumentMessage,
 			local: boolean,
 			localOpMetadata: unknown,
 		) => boolean,
 	) {}
 	private get handler(): IDeltaHandler {
-		return this.newHandler ?? this.oldHandler;
+		const handler = this.newHandler ?? this.oldHandler;
+		assert(handler !== undefined, "No handler to process op");
+		return handler;
+	}
+
+	public isPreAttachState(): boolean {
+		return this.oldHandler === undefined && this.newHandler === undefined;
+	}
+
+	public isUsingOldV1(): boolean {
+		return this.oldHandler !== undefined && this.newHandler === undefined;
+	}
+
+	public isUsingNewV2(): boolean {
+		return this.oldHandler !== undefined && this.newHandler !== undefined;
+	}
+
+	public load(oldHandler: IDeltaHandler): void {
+		assert(this.isPreAttachState(), "Should not have loaded any handlers!");
+		this.oldHandler = oldHandler;
+	}
+
+	// Allow for the handler to be swapped out for the new SharedObject's handler
+	// This is rather primitive for a solution as we might want the old handler to be able to process ops v1 ops after
+	// the swap.
+	// Maybe a better name for this function is swapHandlers?
+	public reconnect(handler: IDeltaHandler): void {
+		// An assert here potentially to prevent the handler from being swapped out twice
+		// Maybe we want rollback, so maybe not an assert. Not sure.
+		assert(this.isUsingOldV1(), "Can only swap handlers after the old handler is loaded");
+		this.newHandler = handler;
 	}
 
 	public process(
@@ -38,7 +66,7 @@ export class SpannerDeltaHandler implements IDeltaHandler {
 		localOpMetadata: unknown,
 	): void {
 		// This allows us to process the migrate op and prevent the shared object from processing the wrong ops
-		if (this.migrateFunction(message, local, localOpMetadata)) {
+		if (this.processMigrateOp(message, local, localOpMetadata)) {
 			return;
 		}
 		// Check for migration and v1 vs v2 ops here
@@ -49,24 +77,16 @@ export class SpannerDeltaHandler implements IDeltaHandler {
 	public setConnectionState(connected: boolean): void {
 		return this.handler.setConnectionState(connected);
 	}
-	public reSubmit(message: never, localOpMetadata: unknown): void {
+	public reSubmit(message: unknown, localOpMetadata: unknown): void {
+		// Blow up on V1 ops if new handler
 		return this.handler.reSubmit(message, localOpMetadata);
 	}
-	public applyStashedOp(message: never): unknown {
+	public applyStashedOp(message: unknown): unknown {
+		// Blow up on V1 ops if new handler
 		return this.handler.applyStashedOp(message);
 	}
-	public rollback?(message: never, localOpMetadata: unknown): void {
+	public rollback?(message: unknown, localOpMetadata: unknown): void {
+		// Blow up on V1 ops if new handler
 		return this.handler.rollback?.(message, localOpMetadata);
-	}
-
-	// Allow for the handler to be swapped out for the new SharedObject's handler
-	// This is rather primitive for a solution as we might want the old handler to be able to process ops v1 ops after
-	// the swap.
-	// Maybe a better name for this function is swapHandlers?
-	public attach(handler: IDeltaHandler): void {
-		// An assert here potentially to prevent the handler from being swapped out twice
-		// Maybe we want rollback, so maybe not an assert. Not sure.
-		assert(this.newHandler === undefined, "Can only swap handlers once");
-		this.newHandler = handler;
 	}
 }

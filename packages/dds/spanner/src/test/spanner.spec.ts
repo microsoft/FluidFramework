@@ -12,11 +12,14 @@ import { Spanner } from "../spanner";
 describe("Spanner", () => {
 	it("can create a Spanner", () => {
 		const mockFluidRuntime = new MockFluidDataStoreRuntime();
-		const spanner = new Spanner(
+		const spanner = new Spanner<SharedCell, SharedMap>(
 			"spanner",
 			mockFluidRuntime,
 			SharedCell.getFactory(),
-			SharedMap.getFactory().create(mockFluidRuntime, "spanner") as SharedMap,
+			SharedMap.getFactory(),
+			(oldChannel, newChannel) => {
+				newChannel.set("key", oldChannel.get());
+			},
 		);
 		assert.ok(spanner, "Could not create a Spanner");
 	});

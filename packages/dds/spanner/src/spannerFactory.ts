@@ -9,10 +9,9 @@ import {
 	type IChannelServices,
 	type IChannelFactory,
 } from "@fluidframework/datastore-definitions";
-import { DataProcessingError } from "@fluidframework/telemetry-utils";
 import { type SharedObject } from "@fluidframework/shared-object-base";
+import { assert } from "@fluidframework/core-utils";
 import { Spanner } from "./spanner";
-import { SpannerChannelServices } from "./spannerChannelServices";
 import { attributesMatch } from "./utils";
 
 /**
@@ -28,6 +27,7 @@ export class SpannerFactory<TOld extends SharedObject, TNew extends SharedObject
 	public constructor(
 		private readonly oldFactory: IChannelFactory,
 		private readonly newFactory: IChannelFactory,
+		private readonly populateNewChannelFn: (oldChannel: TOld, newChannel: TNew) => void,
 	) {}
 
 	/**
@@ -70,7 +70,6 @@ export class SpannerFactory<TOld extends SharedObject, TNew extends SharedObject
 		// delta connection intercept generated here
 		// The challenge here is that the Spanner needs to be able to intercept the delta connection and give its delta
 		// connection a special SpannerDeltaHandler that can process the migrate/barrier op,
-		const spannerServices = new SpannerChannelServices(services);
 
 		// Not sure if the spanner should be taking in both factories. It makes sense to do loading at the factory
 		// level, but then the intercept SpannerChannelServices, which acts like an adapter layer between the Spanner
@@ -80,36 +79,15 @@ export class SpannerFactory<TOld extends SharedObject, TNew extends SharedObject
 		// custom SharedObject.load, so calling the factory.load here makes the most sense. The only issue is that the
 		// SpannerChannelServices need a reference to the Spanner as well as the Spanner needing a reference to the
 		// SpannerChannelService, or something inside of it. It's a chicken and egg problem.
-		let oldChannel: TOld | undefined;
-		let newChannel: TNew | undefined;
-		if (attributesMatch(attributes, this.oldFactory.attributes)) {
-			oldChannel = (await this.oldFactory.load(
-				runtime,
-				id,
-				spannerServices,
-				attributes,
-			)) as TOld;
-		} else if (attributesMatch(attributes, this.newFactory.attributes)) {
-			newChannel = (await this.newFactory.load(
-				runtime,
-				id,
-				spannerServices,
-				attributes,
-			)) as TNew;
-		} else {
-			throw DataProcessingError.create(
-				"Channel attributes do not match either factory",
-				"SpannerFactory.load",
-			);
-		}
+		assert(attributesMatch(attributes, this.oldFactory.attributes), "Attributes do not match");
 		const spanner = new Spanner<TOld, TNew>(
 			id,
 			runtime,
+			this.oldFactory,
 			this.newFactory,
-			oldChannel,
-			newChannel,
+			this.populateNewChannelFn,
 		);
-		spanner.load(spannerServices);
+		await spanner.load(services, attributes);
 		return spanner;
 	}
 
@@ -125,7 +103,14 @@ export class SpannerFactory<TOld extends SharedObject, TNew extends SharedObject
 	 * able to encompass v1 to v2 to v3 transition or the migrate function itself will need to be updated.
 	 */
 	public create(runtime: IFluidDataStoreRuntime, id: string): Spanner<TOld, TNew> {
-		const oldChannel = this.oldFactory.create(runtime, id) as TOld;
-		return new Spanner<TOld, TNew>(id, runtime, this.newFactory, oldChannel);
+		const spanner = new Spanner<TOld, TNew>(
+			id,
+			runtime,
+			this.oldFactory,
+			this.newFactory,
+			this.populateNewChannelFn,
+		);
+		spanner.initializeLocal();
+		return spanner;
 	}
 }

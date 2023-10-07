@@ -86,11 +86,17 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 	const spannerSharedCellFactory = new SpannerFactory<SharedCell, SharedMap>(
 		SharedCell.getFactory(),
 		SharedMap.getFactory(),
+		(cell, map) => {
+			map.set(migrateKey, cell.get());
+		},
 	);
 
 	const spannerSharedMapFactory = new SpannerFactory<SharedMap, SharedMap>(
 		SharedMap.getFactory(),
 		SharedMap.getFactory(),
+		(map1, map2) => {
+			throw new Error("should not be migrating");
+		},
 	);
 
 	const spannerDataObjectFactory = new DataObjectFactory(
@@ -155,17 +161,18 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 		await provider.ensureSynchronized();
 
 		// Hot swap
-		const { new: map1, old: cell1 } = spanner1.swap();
-		map1.set(migrateKey, cell1.get());
-		spanner1.reconnect();
-
-		const { new: map2, old: cell2 } = spanner2.swap();
-		map2.set(migrateKey, cell2.get());
-		spanner2.reconnect();
-
-		// Send ops
-		map1.set(newKey, newValue);
+		spanner1.submitMigrateOp();
 		await provider.ensureSynchronized();
+		assert(
+			spanner1.target.attributes.type === SharedMap.getFactory().type,
+			"should have migrated sender to a shared map",
+		);
+		assert(
+			spanner2.target.attributes.type === SharedMap.getFactory().type,
+			"should have migrated sender to a shared map",
+		);
+		const map1 = spanner1.target as SharedMap;
+		const map2 = spanner2.target as SharedMap;
 
 		// Validate migration succeeded
 		const migratedValueMap1 = map1.get(migrateKey);
@@ -174,6 +181,10 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 			migratedValueMap2 === originalValue && migratedValueMap2 === migratedValueMap1,
 			`Failed to migrate values original ${originalValue} migrated 1: ${migratedValueMap1}, 2: ${migratedValueMap2}`,
 		);
+
+		// Can send ops post migration
+		map1.set(newKey, newValue);
+		await provider.ensureSynchronized();
 
 		// Check that v2 ops can be processed
 		assert(
@@ -196,9 +207,8 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 		await provider.ensureSynchronized();
 
 		// Hot swap summarizer client
-		const { new: map1, old: cell1 } = spanner1.swap();
-		map1.set(migrateKey, cell1.get());
-		spanner1.reconnect();
+		spanner1.submitMigrateOp();
+		await provider.ensureSynchronized();
 
 		// Summarize
 		await provider.ensureSynchronized();
@@ -225,73 +235,14 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 		assert(map3.get(migrateKey) === originalValue, "Failed to summarize hot swap");
 	});
 
-	// it("Can Summarize Hot Swap, SharedMap snapshot can be loaded from a SpannerFactory", async () => {
-	// 	// create summarizer client
-	// 	const { summarizer, container: container1 } = await createSummarizerFromFactory(
-	// 		provider,
-	// 		await provider.loadContainer(runtimeFactory2),
-	// 		spannerDataObjectFactory,
-	// 	);
-
-	// 	const testObj1 = await requestFluidObject<TestDataObject>(container1, "/");
-	// 	const spanner1 = testObj1.getSharedObject<Spanner<SharedCell, SharedMap>>();
-
-	// 	await provider.ensureSynchronized();
-
-	// 	// Hot swap summarizer client
-	// 	const { new: map1, old: cell1 } = spanner1.swap();
-	// 	map1.set(migrateKey, cell1.get());
-	// 	spanner1.reconnect();
-
-	// 	// Summarize
-	// 	await provider.ensureSynchronized();
-	// 	const { summaryVersion } = await summarizeNow(summarizer, "test");
-
-	// 	// Load from summary with a spanner factory
-	// 	const container2 = await provider.loadContainer(runtimeFactory2, undefined, {
-	// 		[LoaderHeader.version]: summaryVersion,
-	// 	});
-
-	// 	// Validates we can load the summarizer client with the Spanner code as well
-	// 	const testObj2 = await requestFluidObject<TestDataObject>(container2, "/");
-	// 	const spanner2 = testObj2.getSharedObject<Spanner<SharedMap, SharedMap>>();
-	// 	const map2 = spanner2.target;
-	// 	assert(map2.get(migrateKey) === originalValue, "Failed to summarize hot swap");
-	// });
-
-	it("Can create a channel and hot swap it within the same container", async () => {
-		const container = await provider.loadContainer(runtimeFactory2);
-		const testObj = await requestFluidObject<TestDataObject>(container, "/");
-		const spanner = testObj.createSpanner();
-		(spanner.target as SharedCell).set(originalValue);
-
-		await provider.ensureSynchronized();
-
-		// Hot swap
-		const { new: map, old: cell } = spanner.swap();
-		map.set(migrateKey, cell.get());
-		spanner.reconnect();
-
-		// Send ops
-		await provider.ensureSynchronized();
-		const migratedValueMap1 = map.get(migrateKey);
-		assert(
-			migratedValueMap1 === originalValue,
-			`Failed to migrate values original: ${originalValue}, migrated: ${migratedValueMap1}`,
-		);
-	});
-
 	// The API should look similar to this.
-	it("Hot swap can happen on migrate op", async () => {
+	it("Hot swap within the same container", async () => {
 		const container = await provider.loadContainer(runtimeFactory2);
 		const testObj = await requestFluidObject<TestDataObject>(container, "/");
 		const spanner = testObj.createSpanner();
 		(spanner.target as SharedCell).set(originalValue);
 
 		await provider.ensureSynchronized();
-		spanner.populateNewSharedObject = (cell, map) => {
-			map.set(migrateKey, cell.get());
-		};
 
 		// Hot swap with a migrate/barrier op
 		spanner.submitMigrateOp();
@@ -304,10 +255,10 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 			spanner.target.attributes.type === SharedMap.getFactory().type,
 			"should have migrated to a shared map",
 		);
-		const migratedValueMap1 = (spanner.target as SharedMap).get(migrateKey);
+		const migratedValueMap = (spanner.target as SharedMap).get(migrateKey);
 		assert(
-			migratedValueMap1 === originalValue,
-			`Failed to migrate values original: ${originalValue}, migrated: ${migratedValueMap1}`,
+			migratedValueMap === originalValue,
+			`Failed to migrate values original: ${originalValue}, migrated: ${migratedValueMap}`,
 		);
 	});
 });

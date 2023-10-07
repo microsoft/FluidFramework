@@ -3,8 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { type IFluidHandle, type IFluidLoadable } from "@fluidframework/core-interfaces";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import {
+	type IFluidHandle,
+	type IFluidLoadable,
+	type IEvent,
+} from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
+import { AttachState } from "@fluidframework/container-definitions";
 import {
 	type IChannel,
 	type IChannelAttributes,
@@ -22,7 +28,16 @@ import { type ISequencedDocumentMessage } from "@fluidframework/protocol-definit
 
 import { type SharedObject } from "@fluidframework/shared-object-base";
 import { SpannerHandle } from "./spannerHandle";
-import { SpannerChannelServices } from "./spannerChannelServices";
+import {
+	NoDeltasChannelServices as NoDeltaChannelServices,
+	SpannerChannelServices,
+} from "./spannerChannelServices";
+import { SpannerDeltaHandler } from "./spannerDeltaHandler";
+import { attributesMatch } from "./utils";
+
+interface IHotSwapEvent extends IEvent {
+	(event: "migrated", listener: () => void);
+}
 
 interface IHotSwapOp {
 	type: "hotSwap";
@@ -42,18 +57,37 @@ interface IHotSwapOp {
  *
  * There may be no need to extend SharedObject, but rather just IChannel should be fine
  */
-export class Spanner<TOld extends SharedObject, TNew extends SharedObject> implements IChannel {
+export class Spanner<TOld extends SharedObject, TNew extends SharedObject>
+	extends TypedEventEmitter<IHotSwapEvent>
+	implements IChannel
+{
 	public constructor(
 		public readonly id: string,
 		private readonly runtime: IFluidDataStoreRuntime,
+		private readonly oldFactory: IChannelFactory,
 		private readonly newFactory: IChannelFactory,
-		private readonly oldSharedObject?: TOld,
-		private newSharedObject?: TNew,
+		private readonly populateNewSharedObjectFn: (
+			oldSharedObject: TOld,
+			newSharedObject: TNew,
+		) => void,
 	) {
-		assert(newSharedObject !== undefined || oldSharedObject !== undefined, "Must provide one");
+		super();
+		this.deltaHandler = new SpannerDeltaHandler(this.processMigrateOp);
 	}
+	private _oldSharedObject?: TOld;
+	private get oldSharedObject(): TOld {
+		assert(this._oldSharedObject !== undefined, "Must load before accessing");
+		return this._oldSharedObject;
+	}
+	private newSharedObject?: TNew;
 
-	private services?: SpannerChannelServices;
+	private readonly deltaHandler: SpannerDeltaHandler;
+
+	private _services?: SpannerChannelServices;
+	private get services(): SpannerChannelServices {
+		assert(this._services !== undefined, "Must connect services before accessing");
+		return this._services;
+	}
 
 	// This is what returns the new SharedObject. This is what the customer will interact with to get the underlying
 	// SharedObject.
@@ -75,21 +109,6 @@ export class Spanner<TOld extends SharedObject, TNew extends SharedObject> imple
 	// Not exactly sure if this is right.
 	public get IFluidLoadable(): IFluidLoadable {
 		return this;
-	}
-
-	/**
-	 * This should be private, the responsibility of swap is to generate the new SharedObject in a detached state to
-	 * allow for the new SharedObject to be created and modified without sending ops.
-	 *
-	 * As a prototype this is ok, for a final design, this isn't.
-	 */
-	public swap(): { new: TNew; old: TOld } {
-		if (this.newSharedObject !== undefined) {
-			throw new Error("Already swapped");
-		}
-		this.newSharedObject = this.newFactory.create(this.runtime, this.id) as TNew;
-		assert(this.oldSharedObject !== undefined, "Should have an old object to swap");
-		return { new: this.newSharedObject, old: this.oldSharedObject };
 	}
 
 	// This allows the attach summary to look like there isn't a "Spanner" object that gets created
@@ -124,32 +143,63 @@ export class Spanner<TOld extends SharedObject, TNew extends SharedObject> imple
 	}
 
 	/**
-	 * This code was tricker to implement than expected... SharedObjects call connect when they are attached via
-	 * handles. They call load when they're loaded by the factory, but both methods cannot be called together. If load
-	 * is called on an attached/ing SharedObject, calling connect later will break, if connect is called, calling load
-	 * will break. Granted calling connect then load doesn't make much sense. Loading almost essentially the same as
-	 * calling connect. The only difference is that loading also populates the SharedObject with data.
+	 * Connects the Spanner's delta handler to the underlying channel services. At this point, no SharedObjects should
+	 * be connected and processing an op will hit an assert.
+	 *
+	 * This allows us to swap handlers on the fly and process the migrate/barrier op, and stamp v2 ops.
+	 */
+	private connectServicesOnce(services: IChannelServices): SpannerChannelServices {
+		assert(this._services === undefined, "Can only connect once, trying to connect");
+		this._services = new SpannerChannelServices(services);
+		this.services.deltaConnection.preAttach(this.deltaHandler);
+		return this.services;
+	}
+
+	/**
+	 * SharedObjects call connect when they are attached via handles. They call load when they're loaded by the
+	 * factory, but both methods cannot be called together. If load is called on an attached/ing SharedObject, calling
+	 * connect later will break, if connect is called, calling load will break. Granted calling connect then load
+	 * doesn't make much sense. Loading almost essentially the same as calling connect. The only difference is that
+	 * loading also populates the SharedObject with data.
 	 */
 	public connect(services: IChannelServices): void {
-		assert(this.services === undefined, "Can only connect once");
-		this.services = new SpannerChannelServices(services);
-		this.services.deltaConnection.migrate = (message: ISequencedDocumentMessage): boolean =>
-			this.processMigrateOp(message);
-		this.target.connect(this.services);
+		this.connectServicesOnce(services);
+		assert(
+			this.services.deltaConnection.isPreAttachState() === true,
+			"Should be preAttach state",
+		);
+		this.oldSharedObject.connect(this.services);
+		assert(this.services.deltaConnection.isUsingOldV1(), "Should be using old V1");
 	}
 
 	// Look at the explanation for connect to understand load
-	public load(services: SpannerChannelServices): void {
-		assert(this.services === undefined, "Can only connect once");
-		this.services = services;
+	public async load(services: IChannelServices, attributes: IChannelAttributes): Promise<void> {
+		const spannerServices =
+			this.runtime.attachState === AttachState.Detached
+				? new NoDeltaChannelServices(services)
+				: this.connectServicesOnce(services);
+		assert(attributesMatch(attributes, this.oldFactory.attributes), "Attributes mismatch!");
+		this._oldSharedObject = (await this.oldFactory.load(
+			this.runtime,
+			this.id,
+			spannerServices,
+			attributes,
+		)) as TOld;
+		assert(this.services.deltaConnection.isUsingOldV1(), "Should be using old V1");
+	}
+
+	// We need to initialize the old SharedObject, the problem is that during load we already initialize the old shared
+	// object with data. This function allows us to create the old SharedObject without data.
+	public initializeLocal(): void {
+		this._oldSharedObject = this.oldFactory.create(this.runtime, this.id) as TOld;
 	}
 
 	// This is to attach the new SharedObject's DeltaHandler to the DeltaConnection. Not sure what needs to be done
 	// with the new SharedObject's object storage.
-	public reconnect(): void {
-		assert(this.services !== undefined, "Must connect before reconnecting");
-		assert(this.newSharedObject !== undefined, "Can only reconnect the new shared object!");
+	private reconnect(): void {
+		assert(this.newSharedObject !== undefined, "Not in pre-reconnect state!");
 		this.newSharedObject.connect(this.services);
+		assert(this.services.deltaConnection.isUsingNewV2(), "Should be using new V2");
 	}
 
 	// This seems to work.
@@ -161,11 +211,6 @@ export class Spanner<TOld extends SharedObject, TNew extends SharedObject> imple
 	public submitMigrateOp(): void {
 		// Will need to add some sort of error handling here to check for data processing errors
 		if (this.isAttached()) {
-			assert(this.services !== undefined, "Must be connected before submitting");
-			assert(
-				this.oldSharedObject !== undefined,
-				"Should be migrating from old shared object!",
-			);
 			assert(
 				this.newSharedObject === undefined,
 				"Should be migrating to a new shared object!",
@@ -181,22 +226,24 @@ export class Spanner<TOld extends SharedObject, TNew extends SharedObject> imple
 
 	// This allows the Spanner to process a migrate/barrier op, swap the SharedObjects, populate the new SharedObject
 	// with the old SharedObject's data, and reconnect the new SharedObject.
-	private processMigrateOp(message: ISequencedDocumentMessage): boolean {
+	private readonly processMigrateOp = (message: ISequencedDocumentMessage): boolean => {
 		const contents = message.contents as IHotSwapOp;
-		if (contents.type === "hotSwap") {
-			const { new: newSharedObject, old: oldSharedObject } = this.swap();
-			this.populateNewSharedObject(oldSharedObject, newSharedObject);
-			this.reconnect();
-			return true;
+		if (contents.type !== "hotSwap") {
+			return false;
 		}
-		return false;
-	}
+		assert(
+			attributesMatch(contents.oldAttributes, this.oldSharedObject.attributes) &&
+				attributesMatch(contents.newAttributes, this.newFactory.attributes),
+			"Migrate op attributes mismatch!",
+		);
 
-	/**
-	 * This is a hook for the Customer to move data from the old SharedObject to the new SharedObject
-	 * For the prototype this is hacky and the customer just sets the function, but for the final design this should be
-	 * a pass-in function in the SpannerFactory, or some where else.
-	 */
-	public populateNewSharedObject: (oldSharedObject: TOld, newSharedObject: TNew) => void =
-		() => {};
+		// Only swap once while processing the migrate op
+		if (this.newSharedObject === undefined) {
+			this.newSharedObject = this.newFactory.create(this.runtime, this.id) as TNew;
+			this.populateNewSharedObjectFn(this.oldSharedObject, this.newSharedObject);
+			this.reconnect();
+			this.emit("migrated");
+		}
+		return true;
+	};
 }
