@@ -1431,7 +1431,6 @@ export class DocumentTree {
 				});
 				this.pos++;
 			} else {
-				// eslint-disable-next-line @typescript-eslint/restrict-plus-operands
 				const trid = docNode.name + this.ids[docNode.name].toString();
 				docNode.id = trid;
 				id = this.ids[docNode.name]++;

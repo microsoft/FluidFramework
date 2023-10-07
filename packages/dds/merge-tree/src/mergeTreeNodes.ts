@@ -5,8 +5,6 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-/* eslint-disable @typescript-eslint/prefer-optional-chain */
-
 import { assert } from "@fluidframework/core-utils";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
 import { IAttributionCollection } from "./attributionCollection";
@@ -17,7 +15,6 @@ import { TrackingGroupCollection } from "./mergeTreeTracking";
 import { ICombiningOp, IJSONSegment, IMarkerDef, MergeTreeDeltaType, ReferenceType } from "./ops";
 import { computeHierarchicalOrdinal } from "./ordinal";
 import { PartialSequenceLengths } from "./partialLengths";
-// eslint-disable-next-line import/no-deprecated
 import { clone, createMap, MapLike, PropertySet } from "./properties";
 import { refTypeIncludesFlag, ReferencePosition, refGetTileLabels } from "./referencePositions";
 import { SegmentGroupCollection } from "./segmentGroupCollection";
@@ -408,14 +405,13 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 		rollback: PropertiesRollback = PropertiesRollback.None,
 	) {
 		this.propertyManager ??= new PropertiesManager();
-		// eslint-disable-next-line import/no-deprecated
 		this.properties ??= createMap<any>();
 		return this.propertyManager.addProperties(
 			this.properties,
 			newProps,
 			op,
 			seq,
-			collabWindow && collabWindow.collaborating,
+			collabWindow?.collaborating,
 			rollback,
 		);
 	}
@@ -431,7 +427,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 	protected cloneInto(b: ISegment) {
 		b.clientId = this.clientId;
 		// TODO: deep clone properties
-		// eslint-disable-next-line import/no-deprecated
 		b.properties = clone(this.properties);
 		b.removedClientIds = this.removedClientIds?.slice();
 		// TODO: copy removed client overlap and branch removal info

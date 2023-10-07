@@ -4,12 +4,21 @@
  */
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { Heap, RedBlackTree } from "../collections";
+import { Comparer, Heap, RedBlackTree } from "../collections";
 import { compareNumbers } from "../mergeTreeNodes";
-import { ClientSeq, clientSeqComparer } from "../mergeTree";
 import { PropertySet } from "../properties";
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
 import { TestClient } from "./testClient";
+
+interface ClientSeq {
+	refSeq: number;
+	clientId: string;
+}
+
+const clientSeqComparer: Comparer<ClientSeq> = {
+	min: { refSeq: -1, clientId: "" },
+	compare: (a, b) => a.refSeq - b.refSeq,
+};
 
 /**
  * Server for tests.  Simulates client communication by directing placing
@@ -18,22 +27,12 @@ import { TestClient } from "./testClient";
 export class TestServer extends TestClient {
 	seq = 1;
 	clients: TestClient[] = [];
-	private messageListeners: TestClient[] = []; // Listeners do not generate edits
 	clientSeqNumbers: Heap<ClientSeq> = new Heap<ClientSeq>([], clientSeqComparer);
 	upstreamMap: RedBlackTree<number, number> = new RedBlackTree<number, number>(compareNumbers);
 	constructor(options?: PropertySet) {
 		super(options);
 	}
-	addUpstreamClients(upstreamClients: TestClient[]) {
-		// Assumes addClients already called
-		this.upstreamMap = new RedBlackTree<number, number>(compareNumbers);
-		for (const upstreamClient of upstreamClients) {
-			this.clientSeqNumbers.add({
-				refSeq: upstreamClient.getCurrentSeq(),
-				clientId: upstreamClient.longClientId ?? "",
-			});
-		}
-	}
+
 	addClients(clients: TestClient[]) {
 		this.clientSeqNumbers = new Heap<ClientSeq>([], clientSeqComparer);
 		this.clients = clients;
@@ -44,9 +43,7 @@ export class TestServer extends TestClient {
 			});
 		}
 	}
-	addListeners(listeners: TestClient[]) {
-		this.messageListeners = listeners;
-	}
+
 	applyMsg(msg: ISequencedDocumentMessage) {
 		super.applyMsg(msg);
 		if (TestClient.useCheckQ) {
@@ -56,6 +53,7 @@ export class TestServer extends TestClient {
 			return false;
 		}
 	}
+
 	// TODO: remove mappings when no longer needed using min seq
 	// in upstream message
 	transformUpstreamMessage(msg: ISequencedDocumentMessage) {
@@ -71,6 +69,7 @@ export class TestServer extends TestClient {
 		this.upstreamMap.put(msg.sequenceNumber, this.seq);
 		msg.sequenceNumber = -1;
 	}
+
 	copyMsg(msg: ISequencedDocumentMessage) {
 		return {
 			clientId: msg.clientId,
@@ -117,11 +116,6 @@ export class TestServer extends TestClient {
 					}
 					for (const client of this.clients) {
 						client.enqueueMsg(msg);
-					}
-					if (this.messageListeners) {
-						for (const listener of this.messageListeners) {
-							listener.enqueueMsg(this.copyMsg(msg));
-						}
 					}
 				}
 			} else {

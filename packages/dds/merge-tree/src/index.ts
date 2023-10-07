@@ -26,7 +26,6 @@ export {
 	RBNodeActions,
 	RedBlackTree,
 	SortedDictionary,
-	Stack,
 } from "./collections";
 export {
 	LocalClientId,
@@ -111,11 +110,7 @@ export {
 } from "./ops";
 export {
 	addProperties,
-	clone,
-	combine,
 	createMap,
-	extend,
-	extendIfUndefined,
 	IConsensusValue,
 	MapLike,
 	matchProperties,

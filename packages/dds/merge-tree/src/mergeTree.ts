@@ -4,8 +4,7 @@
  */
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-
-/* eslint-disable @typescript-eslint/prefer-optional-chain, no-bitwise */
+/* eslint-disable no-bitwise */
 
 import { assert } from "@fluidframework/core-utils";
 import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils";
@@ -64,8 +63,7 @@ import {
 	ReferenceType,
 } from "./ops";
 import { PartialSequenceLengths } from "./partialLengths";
-// eslint-disable-next-line import/no-deprecated
-import { createMap, extend, MapLike, PropertySet } from "./properties";
+import { createMap, extend, extendIfUndefined, MapLike, PropertySet } from "./properties";
 import {
 	refTypeIncludesFlag,
 	ReferencePosition,
@@ -228,8 +226,7 @@ function addNodeReferences(
 			} else {
 				const baseSegment = node as BaseSegment;
 				if (
-					baseSegment.localRefs &&
-					baseSegment.localRefs.hierRefCount !== undefined &&
+					baseSegment.localRefs?.hierRefCount !== undefined &&
 					baseSegment.localRefs.hierRefCount > 0
 				) {
 					for (const lref of baseSegment.localRefs) {
@@ -243,46 +240,24 @@ function addNodeReferences(
 		}
 	} else {
 		const block = node as IHierBlock;
-		// eslint-disable-next-line import/no-deprecated
 		extend(rightmostTiles, block.rightmostTiles);
 		extendIfUndefined(leftmostTiles, block.leftmostTiles);
 	}
 }
 
-function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | undefined) {
-	if (extension !== undefined) {
-		// eslint-disable-next-line no-restricted-syntax
-		for (const key in extension) {
-			if (base[key] === undefined) {
-				base[key] = extension[key];
-			}
-		}
-	}
-	return base;
-}
 class HierMergeBlock extends MergeBlock implements IHierBlock {
 	public rightmostTiles: MapLike<ReferencePosition>;
 	public leftmostTiles: MapLike<ReferencePosition>;
 
 	constructor(childCount: number) {
 		super(childCount);
-		// eslint-disable-next-line import/no-deprecated
 		this.rightmostTiles = createMap<ReferencePosition>();
-		// eslint-disable-next-line import/no-deprecated
 		this.leftmostTiles = createMap<ReferencePosition>();
 	}
 
 	public hierBlock() {
 		return this;
 	}
-}
-
-/**
- * @internal
- */
-export interface ClientSeq {
-	refSeq: number;
-	clientId: string;
 }
 
 export interface IMergeTreeOptions {
@@ -376,14 +351,6 @@ export interface AttributionPolicy {
 	 */
 	serializer: IAttributionCollectionSerializer;
 }
-
-/**
- * @internal
- */
-export const clientSeqComparer: Comparer<ClientSeq> = {
-	min: { refSeq: -1, clientId: "" },
-	compare: (a, b) => a.refSeq - b.refSeq,
-};
 
 /**
  * @internal
@@ -1582,7 +1549,7 @@ export class MergeTree {
 
 		const { currentSeq, clientId } = this.collabWindow;
 
-		if (segmentInfo && segmentInfo.segment) {
+		if (segmentInfo?.segment) {
 			const segmentPosition = this.getPosition(segmentInfo.segment, currentSeq, clientId);
 			return segmentPosition + segmentInfo.offset!;
 		} else {
@@ -2423,9 +2390,7 @@ export class MergeTree {
 		let len: number | undefined;
 		const hierBlock = block.hierBlock();
 		if (hierBlock) {
-			// eslint-disable-next-line import/no-deprecated
 			hierBlock.rightmostTiles = createMap<Marker>();
-			// eslint-disable-next-line import/no-deprecated
 			hierBlock.leftmostTiles = createMap<Marker>();
 		}
 		for (let i = 0; i < block.childCount; i++) {

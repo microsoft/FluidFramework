@@ -16,7 +16,6 @@ import {
 	seqLTE,
 	toRemovalInfo,
 } from "./mergeTreeNodes";
-// eslint-disable-next-line import/no-deprecated
 import { matchProperties } from "./properties";
 
 export const zamboniSegmentsMax = 2;
@@ -166,7 +165,6 @@ function scourNode(node: IMergeBlock, holdNodes: IMergeNode[], mergeTree: MergeT
 				const segmentHasPositiveLength = (mergeTree.localNetLength(segment) ?? 0) > 0;
 				const canAppend =
 					prevSegment?.canAppend(segment) &&
-					// eslint-disable-next-line import/no-deprecated
 					matchProperties(prevSegment.properties, segment.properties) &&
 					prevSegment.trackingCollection.matches(segment.trackingCollection) &&
 					segmentHasPositiveLength;

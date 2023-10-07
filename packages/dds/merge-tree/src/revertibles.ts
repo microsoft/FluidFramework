@@ -13,7 +13,6 @@ import { IMergeLeaf, ISegment, toRemovalInfo } from "./mergeTreeNodes";
 import { depthFirstNodeWalk } from "./mergeTreeNodeWalk";
 import { ITrackingGroup, Trackable, UnorderedTrackingGroup } from "./mergeTreeTracking";
 import { IJSONSegment, MergeTreeDeltaType, ReferenceType } from "./ops";
-// eslint-disable-next-line import/no-deprecated
 import { matchProperties, PropertySet } from "./properties";
 import { DetachedReferencePosition } from "./referencePositions";
 import { MergeTree, findRootMergeBlock } from "./mergeTree";
@@ -173,7 +172,6 @@ function appendLocalAnnotateToRevertibles(
 		if (propertyDeltas) {
 			if (
 				last?.operation === MergeTreeDeltaType.ANNOTATE &&
-				// eslint-disable-next-line import/no-deprecated
 				matchProperties(last?.propertyDeltas, propertyDeltas)
 			) {
 				last.trackingGroup.link(ds.segment);

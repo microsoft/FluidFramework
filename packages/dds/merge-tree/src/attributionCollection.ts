@@ -167,6 +167,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 
 	public constructor(
 		private _length: number,
+		// eslint-disable-next-line @rushstack/no-new-null
 		baseEntry?: AttributionKey | null,
 	) {
 		if (baseEntry !== undefined) {

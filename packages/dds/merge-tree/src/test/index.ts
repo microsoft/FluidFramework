@@ -38,7 +38,7 @@ export {
 	runMergeTreeOperationRunner,
 	TestOperation,
 } from "./mergeTreeOperationRunner";
-export { ClientSeq, clientSeqComparer, LRUSegment, MergeTree } from "../mergeTree";
+export { LRUSegment, MergeTree } from "../mergeTree";
 export { MergeTreeTextHelper } from "../MergeTreeTextHelper";
 export { SnapshotLegacy } from "../snapshotlegacy";
 export {
@@ -46,9 +46,7 @@ export {
 	appendToMergeTreeDeltaRevertibles,
 	BaseSegment,
 	Client,
-	clone,
 	CollaborationWindow,
-	combine,
 	compareNumbers,
 	compareReferencePositions,
 	compareStrings,
@@ -65,8 +63,6 @@ export {
 	DetachedReferencePosition,
 	Dictionary,
 	discardMergeTreeDeltaRevertible,
-	extend,
-	extendIfUndefined,
 	ICombiningOp,
 	IConsensusInfo,
 	IConsensusValue,
@@ -141,7 +137,6 @@ export {
 	SortedSegmentSet,
 	SortedSegmentSetItem,
 	SortedSet,
-	Stack,
 	TextSegment,
 	toRemovalInfo,
 	Trackable,
