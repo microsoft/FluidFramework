@@ -9,6 +9,7 @@ import { List, ListNode, walkList } from "./collections";
 import { ISegment } from "./mergeTreeNodes";
 import { TrackingGroup, TrackingGroupCollection } from "./mergeTreeTracking";
 import { ICombiningOp, ReferenceType } from "./ops";
+// eslint-disable-next-line import/no-deprecated
 import { addProperties, PropertySet } from "./properties";
 import { refHasTileLabels, ReferencePosition, refTypeIncludesFlag } from "./referencePositions";
 
@@ -126,6 +127,7 @@ class LocalReference implements LocalReferencePosition {
 	}
 
 	public addProperties(newProps: PropertySet, op?: ICombiningOp) {
+		// eslint-disable-next-line import/no-deprecated
 		this.properties = addProperties(this.properties, newProps, op);
 	}
 

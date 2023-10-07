@@ -25,6 +25,7 @@ import {
 	ReferenceType,
 	reservedRangeLabelsKey,
 	MergeTreeDeltaType,
+	// eslint-disable-next-line import/no-deprecated
 	createMap,
 } from "@fluidframework/merge-tree";
 import {
@@ -47,10 +48,12 @@ function createTreeMarkerOps(
 	endMarkerPos: number,
 	nodeType: string,
 ): IMergeTreeInsertMsg[] {
+	// eslint-disable-next-line import/no-deprecated
 	const endMarkerProps = createMap<any>();
 	endMarkerProps[reservedRangeLabelsKey] = [treeRangeLabel];
 	endMarkerProps[nodeTypeKey] = nodeType;
 
+	// eslint-disable-next-line import/no-deprecated
 	const beginMarkerProps = createMap<any>();
 	beginMarkerProps[reservedRangeLabelsKey] = [treeRangeLabel];
 	beginMarkerProps[nodeTypeKey] = nodeType;

@@ -64,6 +64,7 @@ import {
 	ReferenceType,
 } from "./ops";
 import { PartialSequenceLengths } from "./partialLengths";
+// eslint-disable-next-line import/no-deprecated
 import { createMap, extend, MapLike, PropertySet } from "./properties";
 import {
 	refTypeIncludesFlag,
@@ -242,6 +243,7 @@ function addNodeReferences(
 		}
 	} else {
 		const block = node as IHierBlock;
+		// eslint-disable-next-line import/no-deprecated
 		extend(rightmostTiles, block.rightmostTiles);
 		extendIfUndefined(leftmostTiles, block.leftmostTiles);
 	}
@@ -264,7 +266,9 @@ class HierMergeBlock extends MergeBlock implements IHierBlock {
 
 	constructor(childCount: number) {
 		super(childCount);
+		// eslint-disable-next-line import/no-deprecated
 		this.rightmostTiles = createMap<ReferencePosition>();
+		// eslint-disable-next-line import/no-deprecated
 		this.leftmostTiles = createMap<ReferencePosition>();
 	}
 
@@ -2419,7 +2423,9 @@ export class MergeTree {
 		let len: number | undefined;
 		const hierBlock = block.hierBlock();
 		if (hierBlock) {
+			// eslint-disable-next-line import/no-deprecated
 			hierBlock.rightmostTiles = createMap<Marker>();
+			// eslint-disable-next-line import/no-deprecated
 			hierBlock.leftmostTiles = createMap<Marker>();
 		}
 		for (let i = 0; i < block.childCount; i++) {
