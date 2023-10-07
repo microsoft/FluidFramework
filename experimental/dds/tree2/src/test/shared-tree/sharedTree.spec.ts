@@ -141,7 +141,7 @@ describe("SharedTree", () => {
 
 		// Ensure that the first tree has the state we expect
 		assert.equal(getTestValue(view1), value);
-		assert.equal(schemaCodec.encode(provider.trees[0].storedSchema), expectedSchema);
+		assert.deepEqual(schemaCodec.encode(provider.trees[0].storedSchema), expectedSchema);
 		// Ensure that the second tree receives the expected state from the first tree
 		await provider.ensureSynchronized();
 		validateViewConsistency(view1, provider.trees[1].view);
@@ -295,6 +295,65 @@ describe("SharedTree", () => {
 		validateRootField(tree1, ["A", "C"]);
 		const tree2 = (await provider.createTree()).view;
 		// Check that the joining tree was initialized with data from the attach summary
+		validateRootField(tree2, ["A", "C"]);
+
+		// Check that further edits are interpreted properly
+		insert(tree1, 1, "B");
+		await provider.ensureSynchronized();
+		validateRootField(tree1, ["A", "B", "C"]);
+		validateRootField(tree2, ["A", "B", "C"]);
+	});
+
+	it("can tolerate local edits submitted as part of a transaction in the attach summary", async () => {
+		const onCreate = (tree: SharedTree) => {
+			tree.storedSchema.update(jsonSequenceRootSchema);
+			tree.view.transaction.start();
+			insert(tree.view, 0, "A");
+			insert(tree.view, 1, "C");
+			tree.view.transaction.commit();
+			validateRootField(tree.view, ["A", "C"]);
+		};
+		const provider = await TestTreeProvider.create(
+			1,
+			SummarizeType.onDemand,
+			new SharedTreeTestFactory(onCreate),
+		);
+		const tree1 = provider.trees[0].view;
+		validateRootField(tree1, ["A", "C"]);
+		const tree2 = (await provider.createTree()).view;
+		// Check that the joining tree was initialized with data from the attach summary
+		validateRootField(tree2, ["A", "C"]);
+
+		// Check that further edits are interpreted properly
+		insert(tree1, 1, "B");
+		await provider.ensureSynchronized();
+		validateRootField(tree1, ["A", "B", "C"]);
+		validateRootField(tree2, ["A", "B", "C"]);
+	});
+
+	// AB#5745: Enable this test once it passes.
+	it.skip("can tolerate incomplete transactions when attaching", async () => {
+		const onCreate = (tree: SharedTree) => {
+			tree.storedSchema.update(jsonSequenceRootSchema);
+			tree.view.transaction.start();
+			insert(tree.view, 0, "A");
+			insert(tree.view, 1, "C");
+			validateRootField(tree.view, ["A", "C"]);
+		};
+		const provider = await TestTreeProvider.create(
+			1,
+			SummarizeType.onDemand,
+			new SharedTreeTestFactory(onCreate),
+		);
+		const tree1 = provider.trees[0].view;
+		validateRootField(tree1, ["A", "C"]);
+		const tree2 = (await provider.createTree()).view;
+		tree1.transaction.commit();
+		// Check that the joining tree was initialized with data from the attach summary
+		validateRootField(tree2, []);
+
+		await provider.ensureSynchronized();
+		validateRootField(tree1, ["A", "C"]);
 		validateRootField(tree2, ["A", "C"]);
 
 		// Check that further edits are interpreted properly

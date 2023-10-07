@@ -19,7 +19,6 @@ import {
 } from "../typed-schema";
 import { EditableTreeEvents } from "../untypedTree";
 import { FieldKinds } from "../default-field-kinds";
-import { TreeStatus } from "../editable-tree";
 import { FieldKind } from "../modular-schema";
 import { TreeContext } from "./context";
 
@@ -71,6 +70,27 @@ export interface Tree<TSchema = unknown> {
 	 * No mutations to the current view of the shared tree are permitted during iteration.
 	 */
 	[boxedIterator](): IterableIterator<Tree>;
+}
+
+/**
+ * Status of the tree that a particular node in {@link EditableTree} and {@link UntypedTree} belongs to.
+ * @alpha
+ */
+export enum TreeStatus {
+	/**
+	 * Is parented under the root field.
+	 */
+	InDocument = 0,
+
+	/**
+	 * Is not parented under the root field, but can be added back to the original document tree.
+	 */
+	Removed = 1,
+
+	/**
+	 * Is removed and cannot be added back to the original document tree.
+	 */
+	Deleted = 2,
 }
 
 /**
@@ -186,12 +206,7 @@ export interface TreeField extends Tree<FieldSchema> {
 // #region Node Kinds
 
 /**
- * A node that behaves like a `Map<FieldKey, Field>` for a specific `Field` type.
- * @alpha
- */
-
-/**
- * A {@link TreeNode} that behaves like a `Map<FieldKey, Field>` for a specific `Field` type.
+ * A {@link TreeNode} that behaves like a `Map<string, Field>` for a specific `Field` type.
  *
  * @remarks
  * Unlike TypeScript Map type, {@link MapNode.get} always provides a reference to any field looked up, even if it has never been set.
@@ -218,20 +233,14 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	 *
 	 * @remarks
 	 * All fields under a map implicitly exist, but `has` will only return true if there are one or more nodes present in the given field.
-	 *
-	 * @privateRemarks
-	 * TODO: Consider changing the key type to `string` for easier use.
 	 */
-	has(key: FieldKey): boolean;
+	has(key: string): boolean;
 
 	/**
 	 * Get the value associated with `key`.
 	 * @param key - which map entry to look up.
-	 *
-	 * @privateRemarks
-	 * TODO: Consider changing the key type to `string` for easier use.
 	 */
-	get(key: FieldKey): UnboxField<TSchema["mapFields"]>;
+	get(key: string): UnboxField<TSchema["mapFields"]>;
 
 	/**
 	 * Get the field for `key`.
@@ -240,11 +249,8 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	 * @remarks
 	 * All fields under a map implicitly exist, so `get` can be called with any key and will always return a field.
 	 * Even if the field is empty, it will still be returned, and can be edited to insert content into the map.
-	 *
-	 * @privateRemarks
-	 * TODO: Consider changing the key type to `string` for easier use.
 	 */
-	getBoxed(key: FieldKey): TypedField<TSchema["mapFields"]>;
+	getBoxed(key: string): TypedField<TSchema["mapFields"]>;
 
 	/**
 	 * Returns an iterable of keys in the map.
@@ -260,15 +266,17 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	 * @remarks
 	 * All fields under a map implicitly exist, but `values` will yield only the fields containing one or more nodes.
 	 */
-	values(): IterableIterator<UnboxField<TSchema["mapFields"]>>;
+	values(): IterableIterator<UnboxField<TSchema["mapFields"], "notEmpty">>;
 
 	/**
 	 * Returns an iterable of key, value pairs for every entry in the map.
 	 *
 	 * @remarks
 	 * All fields under a map implicitly exist, but `entries` will yield only the entries whose fields contain one or more nodes.
+	 *
+	 * This iteration provided by `entries()` is equivalent to that provided by direct iteration of the {@link MapNode} (a.k.a. `[Symbol.Iterator]()`).
 	 */
-	entries(): IterableIterator<[FieldKey, UnboxField<TSchema["mapFields"]>]>;
+	entries(): IterableIterator<[FieldKey, UnboxField<TSchema["mapFields"], "notEmpty">]>;
 
 	/**
 	 * Executes a provided function once per each key/value pair in the map.
@@ -280,7 +288,7 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	 */
 	forEach(
 		callbackFn: (
-			value: UnboxField<TSchema["mapFields"]>,
+			value: UnboxField<TSchema["mapFields"], "notEmpty">,
 			key: FieldKey,
 			map: MapNode<TSchema>,
 		) => void,
@@ -288,7 +296,7 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	): void;
 
 	// TODO: Add `set` method when FieldKind provides a setter (and derive the type from it).
-	// set(key: FieldKey, content: FlexibleFieldContent<TSchema["mapFields"]>): void;
+	// set(key: string, content: FlexibleFieldContent<TSchema["mapFields"]>): void;
 
 	/**
 	 * Iterate through all fields in the map.
@@ -299,7 +307,7 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	 */
 	[boxedIterator](): IterableIterator<TypedField<TSchema["mapFields"]>>;
 
-	[Symbol.iterator](): IterableIterator<UnboxField<TSchema["mapFields"], "notEmpty">>;
+	[Symbol.iterator](): IterableIterator<[FieldKey, UnboxField<TSchema["mapFields"], "notEmpty">]>;
 
 	/**
 	 * An enumerable own property which allows JavaScript object traversals to access {@link Sequence} content.
@@ -309,7 +317,7 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	 * This object is not guaranteed to be kept up to date across edits and thus should not be held onto across edits.
 	 */
 	readonly asObject: {
-		readonly [P in FieldKey]?: UnboxField<TSchema["mapFields"]>;
+		readonly [P in FieldKey]?: UnboxField<TSchema["mapFields"], "notEmpty">;
 	};
 }
 

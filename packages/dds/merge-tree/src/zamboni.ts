@@ -164,9 +164,7 @@ function scourNode(node: IMergeBlock, holdNodes: IMergeNode[], mergeTree: MergeT
 			if (segment.seq! <= mergeTree.collabWindow.minSeq) {
 				const segmentHasPositiveLength = (mergeTree.localNetLength(segment) ?? 0) > 0;
 				const canAppend =
-					// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
-					prevSegment &&
-					prevSegment.canAppend(segment) &&
+					prevSegment?.canAppend(segment) &&
 					matchProperties(prevSegment.properties, segment.properties) &&
 					prevSegment.trackingCollection.matches(segment.trackingCollection) &&
 					segmentHasPositiveLength;

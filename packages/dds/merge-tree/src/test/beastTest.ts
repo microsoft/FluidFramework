@@ -6,6 +6,7 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions, no-bitwise */
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-base-to-string */
 
 import { strict as assert } from "assert";
 import fs from "fs";
@@ -1430,7 +1431,6 @@ export class DocumentTree {
 				});
 				this.pos++;
 			} else {
-				// eslint-disable-next-line @typescript-eslint/restrict-plus-operands
 				const trid = docNode.name + this.ids[docNode.name].toString();
 				docNode.id = trid;
 				id = this.ids[docNode.name]++;

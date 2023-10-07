@@ -38,6 +38,7 @@ import {
 	ValueFieldEditBuilder,
 } from "../default-field-kinds";
 import { assertValidIndex, fail, assertNonNegativeSafeInteger } from "../../util";
+import { TreeStatus } from "../editable-tree-2";
 import {
 	AdaptingProxyHandler,
 	adaptWithProxy,
@@ -50,7 +51,6 @@ import { ProxyContext } from "./editableTreeContext";
 import {
 	EditableField,
 	EditableTree,
-	TreeStatus,
 	UnwrappedEditableField,
 	UnwrappedEditableTree,
 	proxyTargetSymbol,

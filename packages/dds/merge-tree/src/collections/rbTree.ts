@@ -637,6 +637,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
 		let go = true;
 		if (node) {
 			if (actions.pre) {
+				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when the first clause returns false.
 				if (actions.showStructure || node.color === RBColor.BLACK) {
 					go = actions.pre(node);
 				}
@@ -645,6 +646,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
 				go = this.nodeWalk(node.left, actions);
 			}
 			if (go && actions.infix) {
+				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when the first clause returns false.
 				if (actions.showStructure || node.color === RBColor.BLACK) {
 					go = actions.infix(node);
 				}
@@ -653,6 +655,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
 				go = this.nodeWalk(node.right, actions);
 			}
 			if (go && actions.post) {
+				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when the first clause returns false.
 				if (actions.showStructure || node.color === RBColor.BLACK) {
 					go = actions.post(node);
 				}
@@ -668,6 +671,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
 		let go = true;
 		if (node) {
 			if (actions.pre) {
+				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when the first clause returns false.
 				if (actions.showStructure || node.color === RBColor.BLACK) {
 					go = actions.pre(node);
 				}
@@ -676,6 +680,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
 				go = this.nodeWalkBackward(node.right, actions);
 			}
 			if (go && actions.infix) {
+				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when the first clause returns false.
 				if (actions.showStructure || node.color === RBColor.BLACK) {
 					go = actions.infix(node);
 				}
@@ -684,6 +689,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
 				go = this.nodeWalkBackward(node.left, actions);
 			}
 			if (go && actions.post) {
+				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when the first clause returns false.
 				if (actions.showStructure || node.color === RBColor.BLACK) {
 					go = actions.post(node);
 				}
