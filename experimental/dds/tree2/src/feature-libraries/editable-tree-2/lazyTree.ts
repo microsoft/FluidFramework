@@ -37,6 +37,7 @@ import {
 } from "../typed-schema";
 import { EditableTreeEvents } from "../untypedTree";
 import { FieldKinds } from "../default-field-kinds";
+import { Multiplicity } from "../modular-schema";
 import { LocalNodeKey } from "../node-key";
 import { Context } from "./context";
 import {
@@ -516,34 +517,41 @@ function buildStructClass<TSchema extends StructSchema>(
 	const propertyDescriptorMap: PropertyDescriptorMap = {};
 	const ownPropertyMap: PropertyDescriptorMap = {};
 
-	for (const [key, field] of schema.structFields) {
+	for (const [key, fieldSchema] of schema.structFields) {
+		// TODO
+		const supportsSetter =
+			fieldSchema.kind.multiplicity === Multiplicity.Single ||
+			fieldSchema.kind.multiplicity === Multiplicity.Optional;
+
 		ownPropertyMap[key] = {
 			enumerable: true,
 			get(this: CustomStruct): unknown {
 				return inCursorField(this[cursorSymbol], key, (cursor) =>
-					unboxedField(this.context, field, cursor),
+					unboxedField(this.context, fieldSchema, cursor),
 				);
 			},
+			set: supportsSetter
+				? function (this: CustomStruct, newContent: unknown) {
+						const field = inCursorField(this[cursorSymbol], key, (cursor) => {
+							return makeField(this.context, fieldSchema, cursor);
+						});
+
+						// TODO
+						if ((field as any).content !== undefined) {
+							(field as any).content = newContent;
+						}
+				  }
+				: undefined,
 		};
 
 		propertyDescriptorMap[`boxed${capitalize(key)}`] = {
 			enumerable: false,
 			get(this: CustomStruct) {
 				return inCursorField(this[cursorSymbol], key, (cursor) =>
-					makeField(this.context, field, cursor),
+					makeField(this.context, fieldSchema, cursor),
 				);
 			},
 		};
-
-		// TODO: add setters (methods and assignment) when compatible with FieldKind and TypeScript.
-		// propertyDescriptorMap[`set${capitalize(key)}`] = {
-		// 	enumerable: false,
-		// 	get(this: CustomStruct) {
-		// 		return (content: NewFieldContent) => {
-		// 			this.getField(key).setContent(content);
-		// 		};
-		// 	},
-		// };
 	}
 
 	// This must implement `StructTyped<TSchema>`, but TypeScript can't constrain it to do so.
