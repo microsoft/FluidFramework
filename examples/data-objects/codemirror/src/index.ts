@@ -6,12 +6,12 @@
 import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import {
-	IFluidDataStoreChannel,
-	IFluidDataStoreFactory,
-} from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import { MountableView } from "@fluidframework/view-adapters";
+import { IFluidMountableViewEntryPoint } from "@fluidframework/view-interfaces";
+import { FluidObject } from "@fluidframework/core-interfaces";
+import { getDataStoreEntryPoint } from "@fluid-example/example-utils";
 
 import React from "react";
 
@@ -44,26 +44,32 @@ class CodeMirrorFactory extends RuntimeFactoryHelper {
 			registryEntries: registry,
 			existing,
 			containerScope: context.scope,
-			provideEntryPoint: async (containerRuntime: IContainerRuntime) => {
+			provideEntryPoint: async (
+				containerRuntime: IContainerRuntime,
+			): Promise<IFluidMountableViewEntryPoint> => {
 				// ISSUE: IContainerRuntime doesn't have methods that expose data stores as IDataStore or
 				// IFluidDataStoreChannel, which expose entryPoint. getRootDataStore returns an IFluidRouter.
-				const dataStore: IFluidDataStoreChannel = (await containerRuntime.getRootDataStore(
+				const codeMirror = await getDataStoreEntryPoint<CodeMirrorComponent>(
+					runtime,
 					defaultComponentId,
-				)) as IFluidDataStoreChannel;
+				);
 
-				// TODO: better type discovery
-				const codeMirror: CodeMirrorComponent =
-					(await dataStore.entryPoint?.get()) as CodeMirrorComponent;
-				if (codeMirror === undefined) {
-					throw new Error("DataStore did not set its EntryPoint");
+				const view = React.createElement(CodeMirrorReactView, {
+					text: codeMirror.text,
+					presenceManager: codeMirror.presenceManager,
+				}) as any;
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+				let getMountableDefaultView = async () => view;
+				if (MountableView.canMount(view)) {
+					getMountableDefaultView = async () => new MountableView(view);
 				}
 
-				return new MountableView(
-					React.createElement(CodeMirrorReactView, {
-						text: codeMirror.text,
-						presenceManager: codeMirror.presenceManager,
-					}),
-				);
+				return {
+					getDefaultDataObject: async () => codeMirror as FluidObject,
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+					getDefaultView: async () => view,
+					getMountableDefaultView,
+				};
 			},
 		});
 

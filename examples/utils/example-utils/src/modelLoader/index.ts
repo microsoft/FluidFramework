@@ -4,7 +4,10 @@
  */
 
 export { IDetachedModel, IModelLoader, ModelMakerCallback } from "./interfaces";
-export { ModelContainerRuntimeFactory } from "./modelContainerRuntimeFactory";
+export {
+	ModelContainerRuntimeFactory,
+	IModelContainerRuntimeEntryPoint,
+} from "./modelContainerRuntimeFactory";
 export { makeModelRequestHandler, ModelLoader } from "./modelLoader";
 export { SessionStorageModelLoader } from "./sessionStorageModelLoader";
 export { StaticCodeLoader } from "./staticCodeLoader";

@@ -13,6 +13,9 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 // eslint-disable-next-line import/no-deprecated
 import { requestFluidObject, RequestParser } from "@fluidframework/runtime-utils";
 import { MountableView } from "@fluidframework/view-adapters";
+import { getDataStoreEntryPoint } from "@fluid-example/example-utils";
+import { IFluidMountableViewEntryPoint } from "@fluidframework/view-interfaces";
+import { FluidObject } from "@fluidframework/core-interfaces";
 import React from "react";
 import { Todo, TodoFactory, TodoView } from "./Todo";
 import { TodoItem, TodoItemView } from "./TodoItem";
@@ -89,12 +92,28 @@ class TodoContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 			registryEntries: new Map([TodoFactory.registryEntry]),
 			// eslint-disable-next-line import/no-deprecated
 			requestHandlers: [mountableViewRequestHandler(MountableView, [todoRequestHandler])],
-			provideEntryPoint: async (containerRuntime: IContainerRuntime) => {
-				const entryPoint = await containerRuntime.getAliasedDataStoreEntryPoint(todoId);
-				if (entryPoint === undefined) {
-					throw new Error("default dataStore must exist");
+			provideEntryPoint: async (
+				runtime: IContainerRuntime,
+			): Promise<IFluidMountableViewEntryPoint> => {
+				const todoDataObject = await getDataStoreEntryPoint<Todo>(runtime, todoId);
+
+				// TODO: need to incorporate logic from todoRequestHandler
+				const view = React.createElement(TodoView, {
+					todoModel: todoDataObject,
+					getDirectLink,
+				}) as any;
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+				let getMountableDefaultView = async () => view;
+				if (MountableView.canMount(view)) {
+					getMountableDefaultView = async () => new MountableView(view);
 				}
-				return entryPoint.get();
+
+				return {
+					getDefaultDataObject: async () => todoDataObject as FluidObject,
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+					getDefaultView: async () => view,
+					getMountableDefaultView,
+				};
 			},
 		});
 	}

@@ -27,9 +27,9 @@ export interface IFluidMountableViewEntryPoint {
     // (undocumented)
     getDefaultDataObject(): Promise<FluidObject>;
     // (undocumented)
-    getDefaultMountableView(): Promise<IFluidMountableView>;
-    // (undocumented)
     getDefaultView(): Promise<IFluidMountableView>;
+    // (undocumented)
+    getMountableDefaultView(): Promise<IFluidMountableView>;
 }
 
 // @public (undocumented)

@@ -5,6 +5,7 @@
 
 import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { MountableView } from "@fluidframework/view-adapters";
 import { IFluidMountableViewEntryPoint } from "@fluidframework/view-interfaces";
@@ -12,6 +13,21 @@ import { IFluidMountableViewEntryPoint } from "@fluidframework/view-interfaces";
 const dataStoreId = "modelDataStore";
 
 export type ViewCallback<T> = (fluidModel: T) => any;
+
+export async function getDataStoreEntryPoint<T>(
+	containerRuntime: IContainerRuntime,
+	alias: string,
+): Promise<T> {
+	const entryPointHandle = (await containerRuntime.getAliasedDataStoreEntryPoint(alias)) as
+		| IFluidHandle<T>
+		| undefined;
+
+	if (entryPointHandle === undefined) {
+		throw new Error(`Default dataStore [${alias}] must exist`);
+	}
+
+	return entryPointHandle.get();
+}
 
 /**
  * The ContainerViewRuntimeFactory is an example utility built to support binding a single model to a single view
@@ -30,26 +46,20 @@ export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory 
 			provideEntryPoint: async (
 				containerRuntime: IContainerRuntime,
 			): Promise<IFluidMountableViewEntryPoint> => {
-				const entryPointHandle =
-					await containerRuntime.getAliasedDataStoreEntryPoint(dataStoreId);
+				const entryPoint = await getDataStoreEntryPoint<T>(containerRuntime, dataStoreId);
 
-				if (entryPointHandle === undefined) {
-					throw new Error(`Default dataStore [${dataStoreId}] must exist`);
-				}
-
-				const entryPoint = await entryPointHandle.get();
-
-				const view = viewCallback(entryPoint as T);
+				const view = viewCallback(entryPoint);
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-				let getDefaultView = async () => view;
+				let getMountableDefaultView = async () => view;
 				if (MountableView.canMount(view)) {
-					getDefaultView = async () => new MountableView(view);
+					getMountableDefaultView = async () => new MountableView(view);
 				}
 
 				return {
-					getDefaultDataObject: async () => entryPoint,
-					getDefaultView,
-					getDefaultMountableView: getDefaultView,
+					getDefaultDataObject: async () => entryPoint as FluidObject,
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+					getDefaultView: async () => view,
+					getMountableDefaultView,
 				};
 			},
 		});

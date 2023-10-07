@@ -84,7 +84,7 @@ export class SmdeFactory implements IFluidDataStoreFactory {
 	}
 
 	public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
-		const runtime: FluidDataStoreRuntime = new FluidDataStoreRuntime(
+		return new FluidDataStoreRuntime(
 			context,
 			new Map(
 				[SharedMap.getFactory(), SharedString.getFactory()].map((factory) => [
@@ -93,8 +93,7 @@ export class SmdeFactory implements IFluidDataStoreFactory {
 				]),
 			),
 			existing,
-			async (_: IFluidDataStoreRuntime) => SmdeDataObject.load(runtime, existing),
+			async (runtime: IFluidDataStoreRuntime) => SmdeDataObject.load(runtime, existing),
 		);
-		return runtime;
 	}
 }

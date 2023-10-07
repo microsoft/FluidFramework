@@ -368,12 +368,12 @@ export async function start(
 }
 
 async function getFluidObjectAndRender(container: IContainer, url: string, div: HTMLDivElement) {
-	const entryPoint = await container.getEntryPoint?.();
+	const entryPoint = await container.getEntryPoint();
 
 	let fluidObject: FluidObject<IFluidMountableView>;
 	if (
 		entryPoint === undefined ||
-		(entryPoint as IFluidMountableViewEntryPoint).getDefaultView === undefined
+		(entryPoint as IFluidMountableViewEntryPoint).getMountableDefaultView === undefined
 	) {
 		const response = await container.request({
 			headers: {
@@ -388,7 +388,7 @@ async function getFluidObjectAndRender(container: IContainer, url: string, div: 
 
 		fluidObject = response.value;
 	} else {
-		fluidObject = await (entryPoint as IFluidMountableViewEntryPoint).getDefaultView();
+		fluidObject = await (entryPoint as IFluidMountableViewEntryPoint).getMountableDefaultView();
 	}
 
 	if (fluidObject === undefined) {

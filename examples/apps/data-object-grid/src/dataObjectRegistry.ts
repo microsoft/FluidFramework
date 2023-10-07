@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { Serializable } from "@fluidframework/datastore-definitions";
 import {
 	NamedFluidDataStoreRegistryEntries,
@@ -16,8 +16,6 @@ import { Coordinate } from "@fluid-example/multiview-coordinate-model";
 import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate-view";
 import { ProseMirror, ProseMirrorFactory, ProseMirrorReactView } from "@fluid-example/prosemirror";
 import { Clicker, ClickerInstantiationFactory, ClickerReactView } from "@fluid-example/clicker";
-// eslint-disable-next-line import/no-deprecated
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import * as React from "react";
 
@@ -32,16 +30,8 @@ function createSingleHandleItem(subFactory: IFluidDataStoreFactory) {
 	return async (context: IFluidDataStoreContext): Promise<ISingleHandleItem> => {
 		const packagePath = [...context.packagePath, subFactory.type];
 		const dataStore = await context.containerRuntime.createDataStore(packagePath);
-
-		if (dataStore.entryPoint !== undefined) {
-			return {
-				handle: dataStore.entryPoint as IFluidHandle,
-			};
-		}
-
 		return {
-			// eslint-disable-next-line import/no-deprecated
-			handle: (await requestFluidObject<IFluidLoadable>(dataStore, "/")).handle,
+			handle: dataStore.entryPoint as IFluidHandle,
 		};
 	};
 }

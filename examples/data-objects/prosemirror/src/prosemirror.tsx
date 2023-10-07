@@ -144,7 +144,7 @@ export class ProseMirrorFactory implements IFluidDataStoreFactory {
 	}
 
 	public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
-		const runtime: FluidDataStoreRuntime = new FluidDataStoreRuntime(
+		return new FluidDataStoreRuntime(
 			context,
 			new Map(
 				[SharedMap.getFactory(), SharedString.getFactory()].map((factory) => [
@@ -153,9 +153,8 @@ export class ProseMirrorFactory implements IFluidDataStoreFactory {
 				]),
 			),
 			existing,
-			async (_: IFluidDataStoreRuntime) => ProseMirror.load(runtime, context, existing),
+			async (runtime: IFluidDataStoreRuntime) => ProseMirror.load(runtime, context, existing),
 		);
-		return runtime;
 	}
 }
 

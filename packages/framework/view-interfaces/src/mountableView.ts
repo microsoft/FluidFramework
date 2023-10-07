@@ -56,5 +56,5 @@ export interface IFluidMountableView extends IProvideFluidMountableView {
 export interface IFluidMountableViewEntryPoint {
 	getDefaultDataObject(): Promise<FluidObject>;
 	getDefaultView(): Promise<IFluidMountableView>;
-	getDefaultMountableView(): Promise<IFluidMountableView>;
+	getMountableDefaultView(): Promise<IFluidMountableView>;
 }

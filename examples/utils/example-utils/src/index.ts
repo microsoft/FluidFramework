@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-export { ContainerViewRuntimeFactory, ViewCallback } from "./containerViewRuntimeFactory";
+export {
+	ContainerViewRuntimeFactory,
+	ViewCallback,
+	getDataStoreEntryPoint,
+} from "./containerViewRuntimeFactory";
 export type {
 	DataTransformationCallback,
 	IImportExportModel,
@@ -40,4 +44,5 @@ export {
 	SessionStorageModelLoader,
 	StaticCodeLoader,
 	TinyliciousModelLoader,
+	IModelContainerRuntimeEntryPoint,
 } from "./modelLoader";
