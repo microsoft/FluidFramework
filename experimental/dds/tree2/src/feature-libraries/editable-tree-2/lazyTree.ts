@@ -34,10 +34,11 @@ import {
 	LeafSchema,
 	StructSchema,
 	Any,
+	AllowedTypes,
 } from "../typed-schema";
 import { EditableTreeEvents } from "../untypedTree";
 import { FieldKinds } from "../default-field-kinds";
-import { Multiplicity } from "../modular-schema";
+import { FieldKind, Multiplicity } from "../modular-schema";
 import { LocalNodeKey } from "../node-key";
 import { Context } from "./context";
 import {
@@ -53,6 +54,8 @@ import {
 	TreeNode,
 	boxedIterator,
 	TreeStatus,
+	RequiredField,
+	OptionalField,
 } from "./editableTreeTypes";
 import { LazyNodeKeyField, makeField } from "./lazyField";
 import {
@@ -65,6 +68,7 @@ import {
 } from "./lazyEntity";
 import { unboxedField } from "./unboxed";
 import { treeStatusFromAnchorCache } from "./utilities";
+import { ContextuallyTypedNodeData } from "../contextuallyTyped";
 
 const lazyTreeSlot = anchorSlot<LazyTree>();
 
@@ -518,10 +522,30 @@ function buildStructClass<TSchema extends StructSchema>(
 	const ownPropertyMap: PropertyDescriptorMap = {};
 
 	for (const [key, fieldSchema] of schema.structFields) {
-		// TODO
-		const supportsSetter =
-			fieldSchema.kind.multiplicity === Multiplicity.Single ||
-			fieldSchema.kind.multiplicity === Multiplicity.Optional;
+		// eslint-disable-next-line no-inner-declarations
+		function getField(this: CustomStruct): TreeField {
+			return inCursorField(this[cursorSymbol], key, (cursor) => {
+				return makeField(this.context, fieldSchema, cursor);
+			});
+		}
+
+		// Map containing setter implementations for field kinds that support setters.
+		const setters = new Map<FieldKind, (newContent: ContextuallyTypedNodeData) => void>([
+			[
+				FieldKinds.required,
+				function (this: CustomStruct, newContent: ContextuallyTypedNodeData): void {
+					const field = getField(this) as RequiredField<AllowedTypes>;
+					field.content = newContent;
+				},
+			],
+			[
+				FieldKinds.optional,
+				function (this: CustomStruct, newContent: ContextuallyTypedNodeData): void {
+					const field = getField(this) as OptionalField<AllowedTypes>;
+					field.content = newContent;
+				},
+			],
+		]);
 
 		ownPropertyMap[key] = {
 			enumerable: true,
@@ -530,18 +554,7 @@ function buildStructClass<TSchema extends StructSchema>(
 					unboxedField(this.context, fieldSchema, cursor),
 				);
 			},
-			set: supportsSetter
-				? function (this: CustomStruct, newContent: unknown) {
-						const field = inCursorField(this[cursorSymbol], key, (cursor) => {
-							return makeField(this.context, fieldSchema, cursor);
-						});
-
-						// TODO
-						if ((field as any).content !== undefined) {
-							(field as any).content = newContent;
-						}
-				  }
-				: undefined,
+			set: setters.get(fieldSchema.kind),
 		};
 
 		propertyDescriptorMap[`boxed${capitalize(key)}`] = {
