@@ -392,6 +392,16 @@ export interface DDSFuzzSuiteOptions {
 	 * - not use grouped batching.
 	 */
 	containerRuntimeOptions?: IMockContainerRuntimeOptions;
+
+	/**
+	 * Whether or not to skip minimization of fuzz test cases. This is useful
+	 * when one only cares about the counts or types of errors, and not the
+	 * exact contents of the test cases.
+	 *
+	 * Fuzz test minimization can add a couple seconds of overhead per failing
+	 * test case. See {@link MinimizationTransform} for additional context.
+	 */
+	skipMinimization?: boolean;
 }
 
 export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
@@ -1005,13 +1015,20 @@ function runTest<TChannelFactory extends IChannelFactory, TOperation extends Bas
 	saveInfo: SaveInfo | undefined,
 ): void {
 	const itFn = options.only.has(seed) ? it.only : options.skip.has(seed) ? it.skip : it;
-	itFn(`seed ${seed}`, async () => {
+	itFn(`seed ${seed}`, async function () {
+		// 10 seconds per test should be quite a bit more than is necessary, but
+		// a timeout during minimization can cause bad UX because it obfuscates
+		// the actual error
+		//
+		// it should be noted that if a timeout occurs during minimization, the
+		// intermediate results are not lost and will still be written to the file
+		this.timeout(options.skipMinimization ? 2000 : 10_000);
 		// don't write to files or do minimization in CI
 		const inCi = !!process.env.TF_BUILD;
 		try {
 			await runTestForSeed(model, options, seed, inCi ? undefined : saveInfo);
 		} catch (error) {
-			if (!saveInfo || inCi) {
+			if (!saveInfo || inCi || options.skipMinimization) {
 				throw error;
 			}
 

@@ -4,7 +4,6 @@
  */
 
 import * as path from "path";
-import { readdirSync } from "fs";
 import { strict as assert } from "assert";
 import {
 	createWeightedAsyncGenerator as createWeightedGenerator,
@@ -45,7 +44,6 @@ import {
 	RevertSharedStringRevertibles,
 } from "./intervalCollection.fuzzUtils";
 import { makeOperationGenerator } from "./intervalCollection.fuzz.spec";
-import { minimizeTestFromFailureFile } from "./intervalCollection.fuzzMinimization";
 
 class RevertibleFactory extends SharedStringFactory {
 	public async load(
@@ -241,23 +239,4 @@ describe("IntervalCollection fuzz testing with rebasing", () => {
 		// Skipped due to 0x54e, see AB#5337 or comment on "default interval collection" fuzz suite.
 		skip: [13, 16, 17, 20, 21, 23, 30, 37, 41, 43, 44, 49, 51, 55, 62, 69, 70, 73, 84, 91, 95],
 	});
-});
-
-describe.skip("minimize specific seed", () => {
-	const seedToMinimize = 0;
-	minimizeTestFromFailureFile(seedToMinimize);
-});
-
-describe.skip("minimize all seeds", () => {
-	let files;
-	try {
-		files = readdirSync("./results");
-	} catch {
-		return;
-	}
-
-	for (const file of files) {
-		const seedToMinimize = parseInt(file.substring(0, file.length - ".json".length), 10);
-		minimizeTestFromFailureFile(seedToMinimize);
-	}
 });

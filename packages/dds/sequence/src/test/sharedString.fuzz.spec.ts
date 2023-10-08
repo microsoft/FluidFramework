@@ -4,7 +4,6 @@
  */
 
 import * as path from "path";
-import { readdirSync } from "fs";
 import {
 	createWeightedAsyncGenerator as createWeightedGenerator,
 	AsyncGenerator as Generator,
@@ -26,7 +25,6 @@ import {
 	createSharedStringGeneratorOperations,
 	SharedStringOperationGenerationConfig,
 } from "./intervalCollection.fuzzUtils";
-import { minimizeTestFromFailureFile } from "./intervalCollection.fuzzMinimization";
 
 type ClientOpState = FuzzTestState;
 export function makeSharedStringOperationGenerator(
@@ -147,23 +145,4 @@ describe("SharedString fuzz testing with rebased batches", () => {
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
 	});
-});
-
-describe.skip("minimize specific seed", () => {
-	const seedToMinimize = 0;
-	minimizeTestFromFailureFile(seedToMinimize);
-});
-
-describe.skip("minimize all seeds", () => {
-	let files;
-	try {
-		files = readdirSync("./results");
-	} catch {
-		return;
-	}
-
-	for (const file of files) {
-		const seedToMinimize = parseInt(file.substring(0, file.length - ".json".length), 10);
-		minimizeTestFromFailureFile(seedToMinimize);
-	}
 });

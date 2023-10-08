@@ -73,8 +73,10 @@ export class FuzzTestMinimizer<
 			await this.applyTransforms();
 			// some minimizations can only occur if two or more ops are modified
 			// at the same time
-			await this.applyNRandomTransforms(2);
-			await this.applyNRandomTransforms(3);
+			for (let j = 0; j < 50; j++) {
+				await this.applyNRandomTransforms(2);
+				await this.applyNRandomTransforms(3);
+			}
 		}
 
 		await this.tryDeleteEachOp();

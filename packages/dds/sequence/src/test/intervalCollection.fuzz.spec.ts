@@ -4,7 +4,6 @@
  */
 
 import * as path from "path";
-import { readdirSync } from "fs";
 import { strict as assert } from "assert";
 import {
 	AcceptanceCondition,
@@ -42,7 +41,6 @@ import {
 	defaultIntervalOperationGenerationConfig,
 	createSharedStringGeneratorOperations,
 } from "./intervalCollection.fuzzUtils";
-import { minimizeTestFromFailureFile } from "./intervalCollection.fuzzMinimization";
 
 type ClientOpState = FuzzTestState;
 export function makeOperationGenerator(
@@ -239,6 +237,7 @@ const baseModel: Omit<
 					break;
 				case "removeRange":
 				case "addInterval":
+				case "changeInterval":
 					if (op.start > 0) {
 						op.start -= 1;
 					}
@@ -251,7 +250,11 @@ const baseModel: Omit<
 			}
 		},
 		(op) => {
-			if (op.type !== "removeRange" && op.type !== "addInterval") {
+			if (
+				op.type !== "removeRange" &&
+				op.type !== "addInterval" &&
+				op.type !== "changeInterval"
+			) {
 				return;
 			}
 			if (op.end > 0) {
@@ -357,23 +360,4 @@ describe("IntervalCollection fuzz testing with rebased batches", () => {
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
 	});
-});
-
-describe.skip("minimize specific seed", () => {
-	const seedToMinimize = 0;
-	minimizeTestFromFailureFile(seedToMinimize);
-});
-
-describe.skip("minimize all seeds", () => {
-	let files;
-	try {
-		files = readdirSync("./results");
-	} catch {
-		return;
-	}
-
-	for (const file of files) {
-		const seedToMinimize = parseInt(file.substring(0, file.length - ".json".length), 10);
-		minimizeTestFromFailureFile(seedToMinimize);
-	}
 });
