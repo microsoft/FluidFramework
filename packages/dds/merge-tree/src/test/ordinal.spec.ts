@@ -3,8 +3,14 @@
  * Licensed under the MIT License.
  */
 import assert from "assert";
-import { computeNumericOrdinal, computeHierarchicalOrdinal } from "../ordinal";
+import { computeHierarchicalOrdinal } from "../ordinal";
 import { doOverRange } from "./mergeTreeOperationRunner";
+
+function computeNumericOrdinal(index: number) {
+	const prefixLen = Math.floor(index / 0xffff);
+	const prefix = String.fromCharCode(0xffff).repeat(prefixLen);
+	return `${prefix}${String.fromCharCode(index - prefixLen * 0xffff)}`;
+}
 
 describe("MergeTree.ordinals", () => {
 	doOverRange(

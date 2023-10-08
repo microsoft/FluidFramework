@@ -714,6 +714,16 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
 		if (this.serviceConfiguration.enableLumberjack) {
 			this.logSessionEndMetrics(closeType);
+			if (
+				this.checkpointService?.localCheckpointEnabled &&
+				!this.globalCheckpointOnly &&
+				closeType === LambdaCloseType.ActivityTimeout
+			) {
+				Lumberjack.info(
+					`Closing due to ActivityTimeout before NoClient op`,
+					getLumberBaseProperties(this.documentId, this.tenantId),
+				);
+			}
 		}
 	}
 

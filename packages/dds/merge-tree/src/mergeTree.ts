@@ -4,13 +4,12 @@
  */
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-
-/* eslint-disable @typescript-eslint/prefer-optional-chain, no-bitwise */
+/* eslint-disable no-bitwise */
 
 import { assert } from "@fluidframework/core-utils";
 import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils";
 import { IAttributionCollectionSerializer } from "./attributionCollection";
-import { Comparer, Heap, List, ListNode, Stack } from "./collections";
+import { Comparer, Heap, List, ListNode } from "./collections";
 import {
 	LocalClientId,
 	NonCollabClient,
@@ -33,9 +32,12 @@ import {
 	IMergeBlock,
 	IMergeLeaf,
 	IMergeNode,
+<<<<<<< HEAD
 	IMoveInfo,
 	IncrementalExecOp,
 	IncrementalMapState,
+=======
+>>>>>>> 75eb656639ffee3900e4e1f191e906a84ee78fdc
 	InsertContext,
 	IRemovalInfo,
 	ISegment,
@@ -68,7 +70,7 @@ import {
 	ReferenceType,
 } from "./ops";
 import { PartialSequenceLengths } from "./partialLengths";
-import { createMap, extend, MapLike, PropertySet } from "./properties";
+import { createMap, extend, extendIfUndefined, MapLike, PropertySet } from "./properties";
 import {
 	refTypeIncludesFlag,
 	ReferencePosition,
@@ -260,8 +262,7 @@ function addNodeReferences(
 			} else {
 				const baseSegment = node as BaseSegment;
 				if (
-					baseSegment.localRefs &&
-					baseSegment.localRefs.hierRefCount !== undefined &&
+					baseSegment.localRefs?.hierRefCount !== undefined &&
 					baseSegment.localRefs.hierRefCount > 0
 				) {
 					for (const lref of baseSegment.localRefs) {
@@ -280,17 +281,6 @@ function addNodeReferences(
 	}
 }
 
-function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | undefined) {
-	if (extension !== undefined) {
-		// eslint-disable-next-line no-restricted-syntax
-		for (const key in extension) {
-			if (base[key] === undefined) {
-				base[key] = extension[key];
-			}
-		}
-	}
-	return base;
-}
 class HierMergeBlock extends MergeBlock implements IHierBlock {
 	public rightmostTiles: MapLike<ReferencePosition>;
 	public leftmostTiles: MapLike<ReferencePosition>;
@@ -304,14 +294,6 @@ class HierMergeBlock extends MergeBlock implements IHierBlock {
 	public hierBlock() {
 		return this;
 	}
-}
-
-/**
- * @internal
- */
-export interface ClientSeq {
-	refSeq: number;
-	clientId: string;
 }
 
 export interface IMergeTreeOptions {
@@ -407,14 +389,6 @@ export interface AttributionPolicy {
 	 */
 	serializer: IAttributionCollectionSerializer;
 }
-
-/**
- * @internal
- */
-export const clientSeqComparer: Comparer<ClientSeq> = {
-	min: { refSeq: -1, clientId: "" },
-	compare: (a, b) => a.refSeq - b.refSeq,
-};
 
 /**
  * @internal
@@ -845,6 +819,7 @@ export class MergeTree {
 			const children = parent.children;
 			for (let childIndex = 0; childIndex < parent.childCount; childIndex++) {
 				const child = children[childIndex];
+				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when the first clause returns false.
 				if ((prevParent && child === prevParent) || child === node) {
 					break;
 				}
@@ -1611,6 +1586,7 @@ export class MergeTree {
 		}
 
 		if (
+			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when the first clause returns false.
 			(!_segmentGroup.previousProps && previousProps) ||
 			(_segmentGroup.previousProps && !previousProps)
 		) {
@@ -1725,7 +1701,7 @@ export class MergeTree {
 
 		const { currentSeq, clientId } = this.collabWindow;
 
-		if (segmentInfo && segmentInfo.segment) {
+		if (segmentInfo?.segment) {
 			const segmentPosition = this.getPosition(segmentInfo.segment, currentSeq, clientId);
 			return segmentPosition + segmentInfo.offset!;
 		} else {
@@ -2950,54 +2926,6 @@ export class MergeTree {
 			undefined,
 			visibilitySeq,
 		);
-	}
-
-	public incrementalBlockMap<TContext>(stateStack: Stack<IncrementalMapState<TContext>>) {
-		while (!stateStack.empty()) {
-			// We already check the stack is not empty
-			const state = stateStack.top()!;
-			if (state.op !== IncrementalExecOp.Go) {
-				return;
-			}
-			if (state.childIndex === 0) {
-				state.start ??= 0;
-				state.end ??= this.blockLength(state.block, state.refSeq, state.clientId);
-				state.actions.pre?.(state);
-			}
-			if (state.op === IncrementalExecOp.Go && state.childIndex < state.block.childCount) {
-				const child = state.block.children[state.childIndex];
-				const len = this.nodeLength(child, state.refSeq, state.clientId) ?? 0;
-				if (len > 0 && state.start < len && state.end > 0) {
-					if (!child.isLeaf()) {
-						const childState = new IncrementalMapState(
-							child,
-							state.actions,
-							state.pos,
-							state.refSeq,
-							state.clientId,
-							state.context,
-							state.start,
-							state.end,
-							0,
-						);
-						stateStack.push(childState);
-					} else {
-						state.actions.leaf(child, state);
-					}
-				}
-				state.pos += len;
-				state.start -= len;
-				state.end -= len;
-				state.childIndex++;
-			} else {
-				if (state.childIndex === state.block.childCount) {
-					if (state.op === IncrementalExecOp.Go) {
-						state.actions.post?.(state);
-					}
-					stateStack.pop();
-				}
-			}
-		}
 	}
 
 	/**
