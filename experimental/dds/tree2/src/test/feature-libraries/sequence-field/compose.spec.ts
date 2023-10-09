@@ -322,8 +322,12 @@ describe("SequenceField - Compose", () => {
 		const move = Change.move(1, 1, 0);
 		const actual = shallowCompose([makeAnonChange(insert), makeAnonChange(move)]);
 		const expected = [
-			Mark.insert([{ type, value: 2 }], { localId: brand(2) }),
+			Mark.moveIn(1, brand(0)),
 			Mark.insert([{ type, value: 1 }], { localId: brand(1) }),
+			Mark.transient(
+				Mark.insert([{ type, value: 2 }], { localId: brand(2) }),
+				Mark.moveOut(1, brand(0)),
+			),
 			Mark.insert([{ type, value: 3 }], { localId: brand(3) }),
 		];
 		assert.deepEqual(actual, expected);
@@ -408,16 +412,26 @@ describe("SequenceField - Compose", () => {
 		const actual = shallowCompose([makeAnonChange(insert), makeAnonChange(move)], revInfos);
 
 		const expected = [
-			Mark.insert([{ type, value: 2 }], { localId: brand(2), revision: tag1 }),
-			Mark.insert(
-				[
-					{ type, value: 3 },
-					{ type, value: 4 },
-				],
-				{ localId: brand(3), revision: tag2 },
-			),
-			Mark.insert([{ type, value: 5 }], { localId: brand(5), revision: tag1 }),
+			Mark.moveIn(4, brand(0)),
 			Mark.insert([{ type, value: 1 }], { localId: brand(1), revision: tag1 }),
+			Mark.transient(
+				Mark.insert([{ type, value: 2 }], { localId: brand(2), revision: tag1 }),
+				Mark.moveOut(1, brand(0)),
+			),
+			Mark.transient(
+				Mark.insert(
+					[
+						{ type, value: 3 },
+						{ type, value: 4 },
+					],
+					{ localId: brand(3), revision: tag2 },
+				),
+				Mark.moveOut(2, brand(1)),
+			),
+			Mark.transient(
+				Mark.insert([{ type, value: 5 }], { localId: brand(5), revision: tag1 }),
+				Mark.moveOut(1, brand(3)),
+			),
 			Mark.insert([{ type, value: 6 }], { localId: brand(6), revision: tag1 }),
 		];
 		assert.deepEqual(actual, expected);

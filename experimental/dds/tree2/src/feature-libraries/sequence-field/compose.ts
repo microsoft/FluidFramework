@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { ChangeAtomId, makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../core";
-import { asMutable, brand, fail, IdAllocator } from "../../util";
+import { asMutable, fail, IdAllocator } from "../../util";
 import {
 	CrossFieldManager,
 	CrossFieldTarget,
@@ -21,7 +21,6 @@ import {
 	CellId,
 	NoopMark,
 	CellMark,
-	TransientEffect,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { MarkQueue } from "./markQueue";
@@ -51,9 +50,7 @@ import {
 	getMarkMoveId,
 	withRevision,
 	markEmptiesCells,
-	splitMark,
 	isTransientEffect,
-	isGenerativeMark,
 	areOverlappingIdRanges,
 	getInputCellId,
 	isAttach,
@@ -662,7 +659,7 @@ interface ComposeMarks<T> {
  * It is assumed that both marks are active, `baseMark` is an attach, and `newMark` is a detach.
  * This means that the marks are at the location of the moved content after the first move takes place, but before the second.
  */
-function areInverseMovesAtIntermediateLocation(
+function _areInverseMovesAtIntermediateLocation(
 	baseMark: MoveMark<unknown>,
 	baseIntention: RevisionTag | undefined,
 	newMark: MoveMark<unknown>,

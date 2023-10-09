@@ -96,7 +96,7 @@ export {
 	TransactionResult,
 	BrandedKey,
 	BrandedMapSubset,
-	RangeEntry,
+	RangeQueryResult,
 	Named,
 } from "./util";
 

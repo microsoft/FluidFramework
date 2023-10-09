@@ -16,6 +16,8 @@ export interface RangeEntry<T> {
 
 /**
  * The result of a query about a range of keys.
+ *
+ * @alpha
  */
 export interface RangeQueryResult<T> {
 	/**
@@ -29,12 +31,6 @@ export interface RangeQueryResult<T> {
 	 * a query about the range [5, 10] would give a result with length 3.
 	 */
 	length: number;
-
-	/**
-	 * The offset of this result from the first key of its corresponding `RangeEntry`.
-	 * This should not usually be needed, but can be used when the values in the range map represent functions of the key.
-	 */
-	offset: number;
 }
 
 /**
@@ -45,23 +41,21 @@ export function getFromRangeMap<T>(
 	start: number,
 	length: number,
 ): RangeQueryResult<T> {
-	const lastQueryKey = start + length - 1;
 	for (const range of map) {
-		if (range.start > lastQueryKey) {
-			// We've passed the end of the query range.
-			break;
+		if (range.start > start) {
+			return { value: undefined, length: Math.min(range.start - start, length) };
 		}
 
 		const lastRangeKey = range.start + range.length - 1;
 		if (lastRangeKey >= start) {
 			// This range contains `start`.
 			const overlapLength = lastRangeKey - start + 1;
-			return { value: range.value, length: overlapLength, offset: range.start - start };
+			return { value: range.value, length: overlapLength };
 		}
 	}
 
 	// There were no entries intersecting the query range, so the entire query range has undefined value.
-	return { value: undefined, length, offset: 0 };
+	return { value: undefined, length };
 }
 
 export function getFirstEntryFromRangeMap<T>(

@@ -16,7 +16,7 @@ import {
 	MoveMarkEffect,
 	MoveSource,
 } from "./format";
-import { cloneMark, isTransientEffect, splitMark, withNodeChange } from "./utils";
+import { cloneMark, isTransientEffect, splitMark } from "./utils";
 
 export type MoveEffectTable<T> = CrossFieldManager<MoveEffect<T>>;
 
@@ -119,17 +119,16 @@ export function isMoveDestination(effect: MarkEffect): effect is MoveDestination
 	}
 }
 
+/**
+ * Applies any pending PairedMarkUpdate to `markEffect`.
+ */
 function updateDestPairedMarkStatus(
 	markEffect: MoveDestination,
 	count: number,
 	revision: RevisionTag | undefined,
 	effects: MoveEffectTable<unknown>,
 	consumeEffect: boolean,
-): MoveDestination {
-	const newMark: MoveDestination = {
-		...markEffect,
-	};
-
+) {
 	const statusUpdate = getPairedMarkStatus(
 		effects,
 		CrossFieldTarget.Destination,
@@ -139,12 +138,10 @@ function updateDestPairedMarkStatus(
 		consumeEffect,
 	);
 	if (statusUpdate === PairedMarkUpdate.Deactivated) {
-		newMark.isSrcConflicted = true;
+		markEffect.isSrcConflicted = true;
 	} else if (statusUpdate === PairedMarkUpdate.Reactivated) {
-		delete newMark.isSrcConflicted;
+		delete markEffect.isSrcConflicted;
 	}
-
-	return newMark;
 }
 
 function applyMoveEffectsToSource<T>(
@@ -170,10 +167,9 @@ function applyMoveEffectsToSource<T>(
 		nodeChange = composeChildren(mark.changes, modifyAfter);
 	}
 
-	const newMark = {
-		...mark,
-		...updateSourcePairedMarkStatus(mark, mark.count, revision, effects, consumeEffect),
-	};
+	const newMark = cloneMark(mark);
+	updateSourcePairedMarkStatus(newMark, mark.count, revision, effects, consumeEffect);
+
 	if (nodeChange !== undefined) {
 		newMark.changes = nodeChange;
 	} else {
@@ -189,7 +185,7 @@ function updateSourcePairedMarkStatus(
 	revision: RevisionTag | undefined,
 	effects: MoveEffectTable<unknown>,
 	consumeEffect: boolean,
-): MoveSource {
+) {
 	const statusUpdate = getPairedMarkStatus(
 		effects,
 		CrossFieldTarget.Source,
@@ -199,20 +195,17 @@ function updateSourcePairedMarkStatus(
 		consumeEffect,
 	);
 
-	const newMarkEffect = { ...markEffect };
 	if (statusUpdate !== undefined) {
 		assert(
-			newMarkEffect.type === "ReturnFrom",
+			markEffect.type === "ReturnFrom",
 			0x56a /* TODO: support updating MoveOut.isSrcConflicted */,
 		);
 		if (statusUpdate === PairedMarkUpdate.Deactivated) {
-			newMarkEffect.isDstConflicted = true;
+			markEffect.isDstConflicted = true;
 		} else {
-			delete newMarkEffect.isDstConflicted;
+			delete markEffect.isDstConflicted;
 		}
 	}
-
-	return newMarkEffect;
 }
 
 export function applyMoveEffectsToMark<T>(
@@ -236,16 +229,18 @@ export function applyMoveEffectsToMark<T>(
 
 			if (effect.length < mark.count) {
 				const [firstMark, secondMark] = splitMark(mark, effect.length);
+				const updatedAttach = { ...(firstMark.attach as MoveDestination) };
+				updateDestPairedMarkStatus(
+					updatedAttach,
+					firstMark.count,
+					attachRevision,
+					effects,
+					consumeEffect,
+				);
 				return [
 					{
 						...firstMark,
-						attach: updateDestPairedMarkStatus(
-							firstMark.attach as MoveDestination,
-							firstMark.count,
-							attachRevision,
-							effects,
-							consumeEffect,
-						),
+						attach: updatedAttach,
 					},
 					...applyMoveEffectsToMark(
 						secondMark,
@@ -255,20 +250,22 @@ export function applyMoveEffectsToMark<T>(
 						composeChildren,
 					),
 				];
+			} else {
+				const updatedAttach = { ...mark.attach };
+				updateDestPairedMarkStatus(
+					updatedAttach,
+					mark.count,
+					attachRevision,
+					effects,
+					consumeEffect,
+				);
+				return [
+					{
+						...mark,
+						attach: updatedAttach,
+					},
+				];
 			}
-
-			return [
-				{
-					...mark,
-					attach: updateDestPairedMarkStatus(
-						mark.attach,
-						mark.count,
-						attachRevision,
-						effects,
-						consumeEffect,
-					),
-				},
-			];
 		}
 
 		if (isMoveSource(mark.detach)) {
@@ -283,18 +280,15 @@ export function applyMoveEffectsToMark<T>(
 
 			if (effect.length < mark.count) {
 				const [firstMark, secondMark] = splitMark(mark, effect.length);
-				const updatedFirstMark = {
-					...firstMark,
-					detach: updateSourcePairedMarkStatus(
-						firstMark.detach as MoveSource,
-						firstMark.count,
-						detachRevision,
-						effects,
-						consumeEffect,
-					),
-				};
+				updateSourcePairedMarkStatus(
+					firstMark.detach as MoveSource,
+					firstMark.count,
+					detachRevision,
+					effects,
+					consumeEffect,
+				);
 
-				const newChanges = getModifyAfter(
+				const newFirstChanges = getModifyAfter(
 					effects,
 					detachRevision,
 					firstMark.detach.id,
@@ -302,16 +296,16 @@ export function applyMoveEffectsToMark<T>(
 					consumeEffect,
 				);
 
-				if (newChanges !== undefined) {
+				if (newFirstChanges !== undefined) {
 					assert(
 						composeChildren !== undefined,
 						"Must provide a change composer if modifying moves",
 					);
-					updatedFirstMark.changes = composeChildren(firstMark.changes, newChanges);
+					firstMark.changes = composeChildren(firstMark.changes, newFirstChanges);
 				}
 
 				return [
-					updatedFirstMark,
+					firstMark,
 					...applyMoveEffectsToMark(
 						secondMark,
 						revision,
@@ -322,16 +316,14 @@ export function applyMoveEffectsToMark<T>(
 				];
 			}
 
-			const updatedMark = {
-				...mark,
-				detach: updateSourcePairedMarkStatus(
-					mark.detach,
-					mark.count,
-					detachRevision,
-					effects,
-					consumeEffect,
-				),
-			};
+			const newMark = cloneMark(mark);
+			updateSourcePairedMarkStatus(
+				newMark.detach as MoveSource,
+				mark.count,
+				detachRevision,
+				effects,
+				consumeEffect,
+			);
 
 			const newChanges = getModifyAfter(
 				effects,
@@ -346,10 +338,10 @@ export function applyMoveEffectsToMark<T>(
 					composeChildren !== undefined,
 					"Must provide a change composer if modifying moves",
 				);
-				updatedMark.changes = composeChildren(mark.changes, newChanges);
+				newMark.changes = composeChildren(mark.changes, newChanges);
 			}
 
-			return [updatedMark];
+			return [newMark];
 		}
 	} else if (isMoveMark(mark)) {
 		const type = mark.type;
@@ -404,19 +396,17 @@ export function applyMoveEffectsToMark<T>(
 					mark.count,
 				);
 
-				if (effect.length > mark.count) {
+				if (effect.length < mark.count) {
 					const [firstMark, secondMark] = splitMark(mark, effect.length);
+					updateDestPairedMarkStatus(
+						firstMark,
+						firstMark.count,
+						revision,
+						effects,
+						consumeEffect,
+					);
 					return [
-						{
-							...firstMark,
-							...updateDestPairedMarkStatus(
-								firstMark,
-								firstMark.count,
-								revision,
-								effects,
-								consumeEffect,
-							),
-						},
+						firstMark,
 						...applyMoveEffectsToMark(
 							secondMark,
 							revision,
@@ -426,18 +416,10 @@ export function applyMoveEffectsToMark<T>(
 						),
 					];
 				}
-				return [
-					{
-						...mark,
-						...updateDestPairedMarkStatus(
-							mark,
-							mark.count,
-							revision,
-							effects,
-							consumeEffect,
-						),
-					},
-				];
+
+				const newMark = cloneMark(mark);
+				updateDestPairedMarkStatus(newMark, mark.count, revision, effects, consumeEffect);
+				return [newMark];
 			}
 			default:
 				unreachableCase(type);
@@ -486,9 +468,8 @@ function getPairedMarkStatus<T>(
 	consumeEffect: boolean = true,
 ): PairedMarkUpdate | undefined {
 	const effect = getMoveEffect(moveEffects, target, revision, id, count);
-
+	assert(effect.length === count, 0x6ef /* Expected effect to cover entire mark */);
 	if (effect.value?.pairedMarkStatus !== undefined) {
-		assert(effect.length === count, 0x6ef /* Expected effect to cover entire mark */);
 		if (consumeEffect) {
 			const newEffect = { ...effect.value };
 			delete newEffect.pairedMarkStatus;

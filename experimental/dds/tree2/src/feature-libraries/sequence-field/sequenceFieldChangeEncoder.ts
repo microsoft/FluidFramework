@@ -8,7 +8,7 @@ import { Type } from "@sinclair/typebox";
 import { JsonCompatible, JsonCompatibleReadOnly, fail } from "../../util";
 import { IJsonCodec, makeCodecFamily } from "../../codec";
 import { jsonableTreeFromCursor, singleTextCursor } from "../treeTextCursor";
-import { Attach, Changeset, Detach, Mark, MarkEffect, NoopMarkType, Revive } from "./format";
+import { Attach, Changeset, Detach, Mark, MarkEffect, NoopMarkType } from "./format";
 
 export const sequenceFieldChangeCodecFactory = <TNodeChange>(childCodec: IJsonCodec<TNodeChange>) =>
 	makeCodecFamily<Changeset<TNodeChange>>([[0, makeV0Codec(childCodec)]]);
@@ -26,7 +26,7 @@ function makeV0Codec<TNodeChange>(
 			case "Delete":
 			case "MoveOut":
 			case "ReturnFrom":
-				return { ...effect } as JsonCompatibleReadOnly & object;
+				return { ...(effect as JsonCompatibleReadOnly & object) };
 			case "Revive": {
 				const encodedContent = effect.content.map(
 					jsonableTreeFromCursor,
@@ -95,7 +95,11 @@ function makeV0Codec<TNodeChange>(
 			const marks: Changeset<TNodeChange> = [];
 			const array = changeset as unknown as Changeset<JsonCompatibleReadOnly>;
 			for (const mark of array) {
-				const decodedMark = { ...mark, ...decodeEffect(mark) } as Mark<TNodeChange>;
+				const decodedMark: Mark<TNodeChange> = { count: mark.count, ...decodeEffect(mark) };
+				if (mark.cellId !== undefined) {
+					decodedMark.cellId = mark.cellId;
+				}
+
 				if (mark.changes !== undefined) {
 					decodedMark.changes = childCodec.decode(mark.changes);
 				}
