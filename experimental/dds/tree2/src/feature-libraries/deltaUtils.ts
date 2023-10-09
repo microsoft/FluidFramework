@@ -82,7 +82,7 @@ export function mapMark<TIn, TOut>(
 		case Delta.MarkType.Remove:
 		case Delta.MarkType.MoveOut:
 			return {
-				...(mark as unknown as Delta.Modify<TOut>),
+				...(mark as unknown as Exclude<Delta.Mark<TOut>, Delta.Skip>),
 				...mapModifications(mark, func),
 			};
 		case Delta.MarkType.MoveIn: {
