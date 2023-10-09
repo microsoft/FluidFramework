@@ -299,7 +299,7 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 		/* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
 
 		const response = await prompts(questions);
-		// eslint-disable-next-line prefer-destructuring
+		// eslint-disable-next-line prefer-destructuring, @typescript-eslint/no-unsafe-assignment
 		const selectedPackages: Package[] = response.selectedPackages;
 		const bumpType = getDefaultBumpTypeForBranch(branch, releaseGroup) ?? "minor";
 

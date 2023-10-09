@@ -13,12 +13,6 @@ module.exports = {
 		"prettier",
 	],
 	rules: {
-		// TODO: Enable these ASAP
-		"@typescript-eslint/no-unsafe-argument": "off",
-		"@typescript-eslint/no-unsafe-assignment": "off",
-		"@typescript-eslint/no-unsafe-call": "off",
-		"@typescript-eslint/no-unsafe-member-access": "off",
-
 		// This rule is often triggered when using custom Flag classes, so disabling.
 		"object-shorthand": "off",
 
