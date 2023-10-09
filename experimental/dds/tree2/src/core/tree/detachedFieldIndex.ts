@@ -40,6 +40,7 @@ type Minor = number;
  * The tree index records detached field IDs and associates them with a change atom ID.
  */
 export class DetachedFieldIndex {
+	// TODO: don't store the field key in the index, it can be derived from the root ID
 	private detachedNodeToField: NestedMap<Major, Minor, Entry> = new Map();
 
 	/**
