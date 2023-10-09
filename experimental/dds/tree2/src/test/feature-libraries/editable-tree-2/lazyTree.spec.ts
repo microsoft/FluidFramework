@@ -412,6 +412,9 @@ describe("LazyStruct", () => {
 	it("Value assignment", () => {
 		node.foo = "New value!";
 		assert.equal(node.foo, "New value!");
+
+		node.setBar([37, 42]);
+		assert.deepEqual(node.bar.asArray, [37, 42]);
 	});
 });
 
