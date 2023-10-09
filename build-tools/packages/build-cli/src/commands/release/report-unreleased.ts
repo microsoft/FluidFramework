@@ -47,7 +47,7 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 	};
 
 	public async run(): Promise<void> {
-		const flags = this.flags;
+		const { flags, logger } = this;
 
 		const repoName: string[] = flags.repo.split("/");
 
@@ -76,7 +76,7 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 				authHeader,
 				ADO_BASE_URL,
 				flags.sourceBranch,
-				this.logger,
+				logger,
 			);
 			if (buildNumber !== undefined) {
 				this.log(
@@ -88,7 +88,7 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 					REGISTRY_URL,
 					PACKAGE_NAME,
 					buildNumber,
-					this.logger,
+					logger,
 				);
 				if (devVersion !== undefined) {
 					this.log(`Fetched dev version: ${devVersion}`);
@@ -96,10 +96,10 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 					const manifestFile = await generateReleaseReportForUnreleasedVersions(
 						GITHUB_RELEASE_URL,
 						devVersion,
-						this.logger,
+						logger,
 					);
 					if (manifestFile !== undefined) {
-						await writeManifestToFile(manifestFile, flags.output, this.logger);
+						await writeManifestToFile(manifestFile, flags.output, logger);
 					}
 				}
 			} else if (buildNumber === undefined) {
@@ -275,7 +275,7 @@ async function writeManifestToFile(
 	log?: Logger,
 ): Promise<string | undefined> {
 	try {
-		await fs.writeFile(output, JSON.stringify(manifestFile, null, 2));
+		await fs.writeFile(output, JSON.stringify(manifestFile, undefined, 2));
 
 		log?.log("Manifest modified successfully.", output);
 

@@ -493,7 +493,7 @@ export async function setVersion(
 	const translatedVersion = version;
 	const scheme = detectVersionScheme(translatedVersion);
 
-	const name = releaseGroupOrPackage.name;
+	const { name } = releaseGroupOrPackage;
 	const cmds: [string, string[], execa.Options | undefined][] = [];
 	let options: execa.Options | undefined;
 
@@ -564,10 +564,7 @@ export async function setVersion(
 	}
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 	lernaJson.version = translatedVersion.version;
-	const output = await prettier(
-		JSON.stringify(lernaJson),
-		prettierConfig === null ? undefined : prettierConfig,
-	);
+	const output = await prettier(JSON.stringify(lernaJson), prettierConfig ?? undefined);
 	await writeFile(lernaPath, output);
 
 	updatePackageJsonFile(path.join(releaseGroupOrPackage.repoPath, "package.json"), (json) => {
@@ -593,9 +590,11 @@ export async function setVersion(
 					? translatedVersion.version
 					: getVersionRange(translatedVersion, interdependencyRange);
 		} else {
+			// eslint-disable-next-line @typescript-eslint/no-base-to-string
 			newRange = `${interdependencyRange}${translatedVersion.version}`;
 		}
 	} else {
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		newRange = `${interdependencyRange}${translatedVersion.version}`;
 	}
 

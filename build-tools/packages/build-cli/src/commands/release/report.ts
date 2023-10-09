@@ -398,7 +398,7 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 	releaseGroupName: ReleaseGroup | ReleasePackage | undefined;
 
 	public async run(): Promise<void> {
-		const flags = this.flags;
+		const { flags } = this;
 
 		const shouldOutputFiles = flags.output !== undefined;
 		const outputPath = flags.output ?? process.cwd();
@@ -594,7 +594,7 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 			const highlight = this.isRecentReleaseByDate(latestDate) ? chalk.green : chalk.white;
 			const displayRelDate = highlight(getDisplayDateRelative(latestDate));
 
-			const displayPreviousVersion = prevVer === undefined ? DEFAULT_MIN_VERSION : prevVer;
+			const displayPreviousVersion = prevVer ?? DEFAULT_MIN_VERSION;
 
 			const bumpType = detectBumpType(prevVer ?? DEFAULT_MIN_VERSION, latestVer);
 			const displayBumpType = highlight(`${bumpType}`);

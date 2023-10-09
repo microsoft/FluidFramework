@@ -47,9 +47,9 @@ export const askForReleaseType: StateHandlerFunction = async (
 	let bumpType = inputBumpType ?? getDefaultBumpTypeForBranch(currentBranch);
 	if (inputBumpType === undefined) {
 		const choices = [
-			{ value: "major", name: `major (${currentVersion} => ${bumpedMajor})` },
-			{ value: "minor", name: `minor (${currentVersion} => ${bumpedMinor})` },
-			{ value: "patch", name: `patch  (${currentVersion} => ${bumpedPatch})` },
+			{ value: "major", name: `major (${currentVersion} => ${bumpedMajor.version})` },
+			{ value: "minor", name: `minor (${currentVersion} => ${bumpedMinor.version})` },
+			{ value: "patch", name: `patch  (${currentVersion} => ${bumpedPatch.version})` },
 		];
 		const askBumpType: inquirer.ListQuestion = {
 			type: "list",

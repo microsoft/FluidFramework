@@ -94,21 +94,21 @@ export abstract class StateMachineCommand<
 	 * of their `run` method.
 	 */
 	protected async stateLoop(): Promise<void> {
-		const flags = this.flags;
+		const { flags, machine, handler, logger, data } = this;
 
 		if (flags.testMode === true) {
-			const machineStates = this.machine.states();
+			const machineStates = machine.states();
 			if (flags.state !== undefined) {
 				if (!machineStates.includes(flags.state)) {
 					throw new Error(`State not found in state machine`);
 				}
 
-				const handled = await this.handler?.handleState(
+				const handled = await handler?.handleState(
 					flags.state,
-					this.machine,
+					machine,
 					flags.testMode,
-					this.logger,
-					this.data,
+					logger,
+					data,
 				);
 
 				if (handled === true) {
@@ -120,21 +120,21 @@ export abstract class StateMachineCommand<
 			}
 		} else {
 			do {
-				const state = this.machine.state();
+				const state = machine.state();
 
 				// eslint-disable-next-line no-await-in-loop
-				const handled = await this.handler?.handleState(
+				const handled = await handler?.handleState(
 					state,
-					this.machine,
+					machine,
 					flags.testMode,
-					this.logger,
-					this.data,
+					logger,
+					data,
 				);
 				if (handled !== true) {
 					this.error(chalk.red(`Unhandled state: ${state}`));
 				}
 
-				if (this.machine.state_is_final(state)) {
+				if (machine.state_is_final(state)) {
 					this.verbose(`Exiting. Final state: ${state}`);
 					this.exit();
 				}

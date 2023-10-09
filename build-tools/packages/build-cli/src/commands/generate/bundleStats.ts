@@ -27,7 +27,7 @@ export default class GenerateBundlestats extends BaseCommand<typeof GenerateBund
 	};
 
 	public async run(): Promise<void> {
-		const flags = this.flags;
+		const { flags } = this;
 		const pkgList = await (flags.packageMetadataPath === undefined
 			? pnpmList(process.cwd())
 			: (readJson(flags.packageMetadataPath) as Promise<PnpmListEntry[]>));

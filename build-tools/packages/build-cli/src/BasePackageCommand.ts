@@ -112,7 +112,7 @@ export abstract class PackageCommand<
 		let succeeded = 0;
 		// In verbose mode, we output a log line per package. In non-verbose mode, we want to display an activity
 		// spinner, so we only start the spinner if verbose is false.
-		const verbose = this.flags.verbose;
+		const { verbose } = this.flags;
 
 		function updateStatus(): void {
 			if (!verbose) {

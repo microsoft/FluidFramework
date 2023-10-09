@@ -52,6 +52,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 			char: "t",
 			default: "minor",
 			description: "Bump the current version of the dependency according to this bump type.",
+			multiple: false,
 		}),
 		prerelease: Flags.boolean({
 			dependsOn: ["updateType"],
@@ -116,8 +117,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 	 * Runs the `bump deps` command.
 	 */
 	public async run(): Promise<void> {
-		const args = this.args;
-		const flags = this.flags;
+		const { args, flags } = this;
 
 		const context = await this.getContext();
 		const shouldInstall = flags.install && !flags.skipChecks;

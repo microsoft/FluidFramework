@@ -16,7 +16,7 @@ import { BaseCommand } from "../../base";
 const readStdin: () => Promise<string | undefined> = async () => {
 	return new Promise((resolve) => {
 		const stdin = process.openStdin();
-		stdin.setEncoding("utf-8");
+		stdin.setEncoding("utf8");
 
 		let data = "";
 		stdin.on("data", (chunk) => {
@@ -246,7 +246,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 				);
 				if (result !== undefined && result !== "") {
 					let output = `${newline}file failed policy check: ${file}${newline}${result}`;
-					const resolver = handler.resolver;
+					const { resolver } = handler;
 					if (this.flags.fix && resolver) {
 						output += `${newline}attempting to resolve: ${file}`;
 						const resolveResult = runWithPerf(handler.name, "resolve", () =>
@@ -331,7 +331,7 @@ function runWithPerf<T>(name: string, action: policyAction, run: () => T): T {
 
 function runPolicyCheck(handlers: Handler[], fix: boolean): void {
 	for (const h of handlers) {
-		const final = h.final;
+		const { final } = h;
 		if (final) {
 			const result = runWithPerf(h.name, "final", () =>
 				final(CheckPolicy.pathToGitRoot, fix),

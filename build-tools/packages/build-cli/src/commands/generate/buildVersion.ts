@@ -69,7 +69,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 	};
 
 	public async run(): Promise<void> {
-		const flags = this.flags;
+		const { flags } = this;
 		const isRelease = flags.release === "release";
 		const useSimplePatchVersion = flags.patch?.toLowerCase() === "true";
 		const useTestVersion = flags.testBuild?.toLowerCase() === "true";

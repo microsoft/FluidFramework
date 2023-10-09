@@ -55,6 +55,7 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 			required: false,
 		}),
 		bumpType: bumpTypeFlag({
+			multiple: false,
 			required: false,
 		}),
 		skipChecks: skipCheckFlag,
@@ -66,7 +67,7 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 		await super.init();
 
 		const [context] = await Promise.all([this.getContext(), this.initMachineHooks()]);
-		const flags = this.flags;
+		const { argv, flags, logger, machine } = this;
 
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const rgOrPackageName = flags.releaseGroup ?? flags.package!;
@@ -92,9 +93,9 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 
 		// oclif doesn't support nullable boolean flags, so this works around that limitation by checking the args
 		// passed into the command. If neither are passed, then the default is determined by the branch config.
-		const userPolicyCheckChoice = this.argv.includes("--policyCheck")
+		const userPolicyCheckChoice = argv.includes("--policyCheck")
 			? true
-			: this.argv.includes("--no-policyCheck")
+			: argv.includes("--no-policyCheck")
 			? false
 			: undefined;
 
@@ -103,13 +104,13 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 			context.originalBranchName,
 		);
 
-		this.handler = new FluidReleaseStateHandler(this.machine, this.logger);
+		this.handler = new FluidReleaseStateHandler(machine, logger);
 
 		this.data = {
 			releaseGroup,
 			releaseVersion,
 			context,
-			promptWriter: new PromptWriter(this.logger),
+			promptWriter: new PromptWriter(logger),
 			bumpType: flags.bumpType as VersionBumpType,
 			versionScheme: detectVersionScheme(releaseVersion),
 			shouldSkipChecks: flags.skipChecks,

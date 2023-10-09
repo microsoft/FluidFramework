@@ -95,7 +95,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 	private remote: string | undefined;
 
 	public async run(): Promise<void> {
-		const flags = this.flags;
+		const { flags } = this;
 
 		const prTitle: string = `Automation: ${flags.source}-${flags.target} integrate`;
 		const context = await this.getContext();
