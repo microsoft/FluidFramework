@@ -9,9 +9,9 @@ import execa from "execa";
 import { PackageCommand } from "../BasePackageCommand";
 
 export default class ExecCommand extends PackageCommand<typeof ExecCommand> {
-	static description = `Run a shell command in the context of a package or release group.`;
+	static readonly description = `Run a shell command in the context of a package or release group.`;
 
-	static args = {
+	static readonly args = {
 		cmd: Args.string({
 			description: "The shell command to execute.",
 			required: true,

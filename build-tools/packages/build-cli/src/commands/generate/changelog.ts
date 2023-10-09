@@ -23,9 +23,9 @@ async function replaceInFile(search: string, replace: string, path: string): Pro
 }
 
 export default class GenerateChangeLogCommand extends BaseCommand<typeof GenerateChangeLogCommand> {
-	static description = "Generate a changelog for packages based on changesets.";
+	static readonly description = "Generate a changelog for packages based on changesets.";
 
-	static flags = {
+	static readonly flags = {
 		releaseGroup: releaseGroupFlag({
 			required: true,
 		}),
@@ -36,7 +36,7 @@ export default class GenerateChangeLogCommand extends BaseCommand<typeof Generat
 		...BaseCommand.flags,
 	};
 
-	static examples = [
+	static readonly examples = [
 		{
 			description: "Generate changelogs for the client release group.",
 			command: "<%= config.bin %> <%= command.id %> --releaseGroup client",

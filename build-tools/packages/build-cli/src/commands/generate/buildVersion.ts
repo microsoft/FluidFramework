@@ -18,11 +18,11 @@ import { BaseCommand } from "../../base";
 export default class GenerateBuildVersionCommand extends BaseCommand<
 	typeof GenerateBuildVersionCommand
 > {
-	static description = `This command is used to compute the version number of Fluid packages. The release version number is based on what's in the lerna.json/package.json. The CI pipeline will supply the build number and branch to determine the prerelease suffix if it is not a tagged build`;
+	static readonly description = `This command is used to compute the version number of Fluid packages. The release version number is based on what's in the lerna.json/package.json. The CI pipeline will supply the build number and branch to determine the prerelease suffix if it is not a tagged build`;
 
-	static examples = ["<%= config.bin %> <%= command.id %>"];
+	static readonly examples = ["<%= config.bin %> <%= command.id %>"];
 
-	static flags = {
+	static readonly flags = {
 		build: Flags.string({
 			description: "The CI build number.",
 			env: "VERSION_BUILDNUMBER",

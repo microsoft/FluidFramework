@@ -38,12 +38,12 @@ interface VersionInfo {
  */
 // eslint-disable-next-line import/no-default-export
 export default class VersionCommand extends Command {
-	static description =
+	static readonly description =
 		"Convert version strings between regular semver and the Fluid internal version scheme.";
 
-	static enableJsonFlag = true;
+	static readonly enableJsonFlag = true;
 
-	static flags = {
+	static readonly flags = {
 		type: Flags.string({
 			char: "t",
 			description: "bump type",
@@ -56,7 +56,7 @@ export default class VersionCommand extends Command {
 		}),
 	};
 
-	static args = {
+	static readonly args = {
 		version: Args.string({
 			description: "The version to convert.",
 			name: "version",
@@ -64,7 +64,7 @@ export default class VersionCommand extends Command {
 		}),
 	};
 
-	static examples = [
+	static readonly examples = [
 		{
 			description: "The version can be a Fluid internal version.",
 			command: "<%= config.bin %> <%= command.id %> 2.0.0-internal.1.0.0 --type minor",

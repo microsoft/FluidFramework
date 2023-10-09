@@ -21,14 +21,14 @@ const tagRefPrefix = "refs/tags/";
  * This command is used in CI to determine release information when a new release tag is pushed.
  */
 export default class FromTagCommand extends ReleaseReportBaseCommand<typeof FromTagCommand> {
-	static summary = "Determines release information based on a git tag argument.";
+	static readonly summary = "Determines release information based on a git tag argument.";
 
-	static description =
+	static readonly description =
 		"This command is used in CI to determine release information when a new release tag is pushed.";
 
-	static enableJsonFlag = true;
+	static readonly enableJsonFlag = true;
 
-	static args = {
+	static readonly args = {
 		tag: Args.string({
 			required: true,
 			description: "A git tag that represents a release. May begin with 'refs/tags/'.",
@@ -38,7 +38,7 @@ export default class FromTagCommand extends ReleaseReportBaseCommand<typeof From
 	defaultMode: ReleaseSelectionMode = "inRepo";
 	releaseGroupName: ReleaseGroup | undefined;
 
-	static examples = [
+	static readonly examples = [
 		{
 			description: "Get release information based on a git tag.",
 			command: "<%= config.bin %> <%= command.id %> build-tools_v0.13.0",

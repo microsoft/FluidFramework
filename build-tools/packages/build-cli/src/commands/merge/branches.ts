@@ -22,9 +22,9 @@ interface CleanupBranch {
  * Later, it creates a pull request based on the batch size passed.
  */
 export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
-	static description = "Sync branches depending on the batch size passed";
+	static readonly description = "Sync branches depending on the batch size passed";
 
-	static flags = {
+	static readonly flags = {
 		pat: Flags.string({
 			description:
 				"GitHub Personal Access Token. This parameter should be passed using the GITHUB_PAT environment variable for security purposes.",

@@ -36,7 +36,7 @@ export abstract class BaseCommand<T extends typeof Command>
 	/**
 	 * The flags defined on the base class.
 	 */
-	static baseFlags = {
+	static readonly baseFlags = {
 		root: rootPathFlag({
 			helpGroup: "GLOBAL",
 		}),

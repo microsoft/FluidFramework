@@ -40,14 +40,14 @@ import { npmCheckUpdatesHomegrown } from "../../lib/package";
  * This command is roughly equivalent to `fluid-bump-version --dep`.
  */
 export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
-	static description =
+	static readonly description =
 		"Update the dependency version of a specified package or release group. That is, if one or more packages in the repo depend on package A, then this command will update the dependency range on package A. The dependencies and the packages updated can be filtered using various flags.\n\nTo learn more see the detailed documentation at https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/bumpDetails.md";
 
-	static args = {
+	static readonly args = {
 		package_or_release_group: packageOrReleaseGroupArg,
 	};
 
-	static flags = {
+	static readonly flags = {
 		updateType: dependencyUpdateTypeFlag({
 			char: "t",
 			default: "minor",
@@ -82,7 +82,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 		...BaseCommand.flags,
 	};
 
-	static examples = [
+	static readonly examples = [
 		{
 			description:
 				"Bump dependencies on @fluidframework/build-common to the latest release version across all release groups.",
