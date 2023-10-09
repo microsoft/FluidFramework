@@ -1240,21 +1240,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		let type: IntervalType;
 		let properties: PropertySet | undefined;
 
-		// figure out what to do about this now that both start and the options are objects
-		// if (!isSequencePlace(start)) {
-		// 	intStart = start.start;
-		// 	intEnd = start.end;
-		// 	type = IntervalType.SlideOnRemove;
-		// 	properties = start.props;
-		// } else {
-		// 	intStart = start;
-		// 	assert(end !== undefined, "end must be defined");
-		// 	intEnd = end;
-		// 	assert(intervalType !== undefined, "intervalType must be defined");
-		// 	type = intervalType;
-		// 	properties = props;
-		// }
-
 		if (isSequencePlace(start)) {
 			intStart = start;
 			assert(end !== undefined, "end must be defined");
