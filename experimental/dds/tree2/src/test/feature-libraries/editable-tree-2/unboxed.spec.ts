@@ -28,7 +28,6 @@ import {
 	unboxedUnion,
 } from "../../../feature-libraries/editable-tree-2/unboxed";
 import { type TreeContent } from "../../../shared-tree";
-import { brand } from "../../../util";
 import { contextWithContentReadonly } from "./utils";
 
 const rootFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: rootFieldKey };
@@ -95,7 +94,7 @@ describe("unboxedField", () => {
 	it("Value field (struct)", () => {
 		const builder = new SchemaBuilder("test", undefined, leafDomain.library);
 		const structSchema = builder.structRecursive("struct", {
-			name: SchemaBuilder.fieldValue(leafDomain.string),
+			name: SchemaBuilder.fieldRequired(leafDomain.string),
 			child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => structSchema),
 		});
 		const fieldSchema = SchemaBuilder.fieldOptional(structSchema);
@@ -156,7 +155,7 @@ describe("unboxedField", () => {
 describe("unboxedTree", () => {
 	it("Leaf", () => {
 		const builder = new SchemaBuilder("test", undefined, leafDomain.library);
-		const rootSchema = SchemaBuilder.fieldValue(leafDomain.string);
+		const rootSchema = SchemaBuilder.fieldRequired(leafDomain.string);
 		const schema = builder.intoDocumentSchema(rootSchema);
 
 		const { context, cursor } = initializeTreeWithContent({
@@ -185,14 +184,14 @@ describe("unboxedTree", () => {
 
 		const unboxed = unboxedTree(context, mapSchema, cursor);
 		assert.equal(unboxed.size, 2);
-		assert.equal(unboxed.get(brand("foo")), "Hello");
-		assert.equal(unboxed.get(brand("bar")), "world");
+		assert.equal(unboxed.get("foo"), "Hello");
+		assert.equal(unboxed.get("bar"), "world");
 	});
 
 	it("Struct", () => {
 		const builder = new SchemaBuilder("test", undefined, leafDomain.library);
 		const structSchema = builder.structRecursive("struct", {
-			name: SchemaBuilder.fieldValue(leafDomain.string),
+			name: SchemaBuilder.fieldRequired(leafDomain.string),
 			child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => structSchema),
 		});
 		const rootSchema = SchemaBuilder.fieldOptional(structSchema);
@@ -235,7 +234,7 @@ describe("unboxedUnion", () => {
 
 	it("Single type", () => {
 		const builder = new SchemaBuilder("test", undefined, leafDomain.library);
-		const fieldSchema = SchemaBuilder.fieldValue(leafDomain.boolean);
+		const fieldSchema = SchemaBuilder.fieldRequired(leafDomain.boolean);
 		const schema = builder.intoDocumentSchema(fieldSchema);
 
 		const { context, cursor } = initializeTreeWithContent({

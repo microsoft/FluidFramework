@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/build-cli",
-	"version": "0.24.0",
+	"version": "0.26.0",
 	"description": "Build tools for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -110,7 +110,7 @@
 		"type-fest": "^2.19.0"
 	},
 	"devDependencies": {
-		"@fluid-internal/readme-command": "workspace:*",
+		"@fluid-private/readme-command": "workspace:*",
 		"@fluidframework/build-common": "^2.0.0",
 		"@fluidframework/eslint-config-fluid": "^2.1.0",
 		"@microsoft/api-extractor": "^7.36.1",

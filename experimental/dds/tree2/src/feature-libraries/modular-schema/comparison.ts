@@ -189,7 +189,7 @@ export function isNeverFieldRecursive(
 ): boolean {
 	if (
 		(policy.fieldKinds.get(field.kind.identifier) ?? fail("missing field kind"))
-			.multiplicity === Multiplicity.Value &&
+			.multiplicity === Multiplicity.Single &&
 		field.types !== undefined
 	) {
 		for (const type of field.types) {
@@ -249,7 +249,7 @@ export function isNeverTreeRecursive(
 			(
 				policy.fieldKinds.get(normalizeField(tree.mapFields).kind.identifier) ??
 				fail("missing field kind")
-			).multiplicity === Multiplicity.Value
+			).multiplicity === Multiplicity.Single
 		) {
 			return true;
 		}

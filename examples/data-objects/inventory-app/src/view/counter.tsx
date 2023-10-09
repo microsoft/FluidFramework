@@ -7,7 +7,7 @@ import { useTreeContext } from "@fluid-experimental/tree-react-api";
 import { SchemaBuilder, TypedField, leaf } from "@fluid-experimental/tree2";
 import * as React from "react";
 
-const schema = SchemaBuilder.fieldValue(leaf.number);
+const schema = SchemaBuilder.fieldRequired(leaf.number);
 
 export interface ICounterProps {
 	title: string;
@@ -24,13 +24,13 @@ export const Counter = ({ title, count }: ICounterProps): React.ReactElement => 
 			<h2>{title}</h2>
 			<div className="counter_spinner">
 				<button
-					onClick={() => count.setContent(count.content - 1)}
+					onClick={() => (count.content = count.content - 1)}
 					disabled={!(count.content > 0)}
 				>
 					-
 				</button>
 				<span className="counter_value">{count.content}</span>
-				<button onClick={() => count.setContent(count.content + 1)}>+</button>
+				<button onClick={() => (count.content = count.content + 1)}>+</button>
 			</div>
 		</div>
 	);

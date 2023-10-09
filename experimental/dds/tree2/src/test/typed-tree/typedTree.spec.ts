@@ -14,7 +14,7 @@ describe("TypedTree", () => {
 	it("editable-tree-2-end-to-end", () => {
 		const builder = new SchemaBuilder("e2e");
 		const numberSchema = builder.leaf("number", ValueSchema.Number);
-		const schema = builder.intoDocumentSchema(SchemaBuilder.fieldValue(numberSchema));
+		const schema = builder.intoDocumentSchema(SchemaBuilder.fieldRequired(numberSchema));
 		const factory = new TypedTreeFactory({
 			jsonValidator: typeboxValidator,
 			forest: ForestType.Reference,
@@ -24,7 +24,7 @@ describe("TypedTree", () => {
 			subtype: "test",
 		});
 		const root = factory.create(new MockFluidDataStoreRuntime(), "the tree").root;
-		root.setContent(root.content + 1);
+		root.content += 1;
 		assert.equal(root.content, 2);
 	});
 });

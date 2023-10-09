@@ -94,7 +94,7 @@ export const valueHandler: FieldChangeHandler<ValueChangeset> = {
 
 export const valueField = new FieldKindWithEditor(
 	"Value",
-	Multiplicity.Value,
+	Multiplicity.Single,
 	valueHandler,
 	(a, b) => false,
 	new Set(),
