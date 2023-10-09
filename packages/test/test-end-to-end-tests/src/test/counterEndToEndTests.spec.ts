@@ -18,7 +18,7 @@ import {
 	describeNoCompat,
 	itExpects,
 } from "@fluid-internal/test-version-utils";
-import { ContainerErrorType, IContainer } from "@fluidframework/container-definitions";
+import { ContainerErrorTypes, IContainer } from "@fluidframework/container-definitions";
 
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
@@ -206,7 +206,7 @@ describeNoCompat("SharedCounter orderSequentially", (getTestObjectProvider) => {
 			{
 				eventName: "fluid:telemetry:Container:ContainerClose",
 				error: "RollbackError: rollback not supported",
-				errorType: ContainerErrorType.dataProcessingError,
+				errorType: ContainerErrorTypes.dataProcessingError,
 			},
 		],
 		async () => {

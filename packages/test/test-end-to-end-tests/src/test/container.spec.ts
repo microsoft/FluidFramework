@@ -8,7 +8,7 @@ import { v4 as uuid } from "uuid";
 import { MockDocumentDeltaConnection } from "@fluid-internal/test-loader-utils";
 import { IErrorBase, IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import {
-	ContainerErrorType,
+	ContainerErrorTypes,
 	IPendingLocalState,
 	IFluidCodeDetails,
 	IContainer,
@@ -138,7 +138,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			{
 				eventName: "TestException",
 				error: "expectedFailure",
-				errorType: ContainerErrorType.genericError,
+				errorType: ContainerErrorTypes.genericError,
 			},
 		],
 		async () => {
@@ -167,7 +167,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			{
 				eventName: "TestException",
 				error: "expectedFailure",
-				errorType: ContainerErrorType.genericError,
+				errorType: ContainerErrorTypes.genericError,
 			},
 		],
 		async () => {

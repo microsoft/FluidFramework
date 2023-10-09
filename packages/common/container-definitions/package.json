@@ -60,6 +60,15 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"EnumDeclaration_ContainerErrorType": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedEnumDeclaration_ContainerErrorType": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

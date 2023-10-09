@@ -16,7 +16,7 @@ import {
 	TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
-import { ContainerErrorType } from "@fluidframework/container-definitions";
+import { ContainerErrorTypes } from "@fluidframework/container-definitions";
 
 // REVIEW: enable compat testing?
 describeNoCompat("Errors Types", (getTestObjectProvider) => {
@@ -72,7 +72,7 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
 		[
 			{
 				eventName: "fluid:telemetry:Container:ContainerClose",
-				errorType: ContainerErrorType.genericError,
+				errorType: ContainerErrorTypes.genericError,
 				error: "Injected error",
 				fatalConnectError: true,
 			},
@@ -92,7 +92,7 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
 				};
 				await loadContainer({ documentServiceFactory: mockFactory });
 			} catch (e: any) {
-				assert(e.errorType === ContainerErrorType.genericError);
+				assert(e.errorType === ContainerErrorTypes.genericError);
 				assert(e.message === "Injected error");
 				assert(e.fatalConnectError);
 			}
@@ -129,7 +129,7 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
 			};
 			await loadContainer({ documentServiceFactory: mockFactory });
 		} catch (e: any) {
-			assert(e.errorType === ContainerErrorType.genericError);
+			assert(e.errorType === ContainerErrorTypes.genericError);
 			assert(e.message === "Injected error");
 		}
 		assert(

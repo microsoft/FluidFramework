@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { AttachState, ContainerErrorType } from "@fluidframework/container-definitions";
+import { AttachState, ContainerErrorTypes } from "@fluidframework/container-definitions";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
@@ -36,7 +36,7 @@ const allDataCorruption = async (containers: IFluidContainer[]) =>
 			async (c) =>
 				new Promise<boolean>((resolve) =>
 					c.once("disposed", (error) => {
-						resolve(error?.errorType === ContainerErrorType.dataCorruptionError);
+						resolve(error?.errorType === ContainerErrorTypes.dataCorruptionError);
 					}),
 				),
 		),

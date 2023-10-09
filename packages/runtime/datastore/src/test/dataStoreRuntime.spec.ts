@@ -14,7 +14,7 @@ import {
 	MockFluidDataStoreContext,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils";
-import { ContainerErrorType } from "@fluidframework/container-definitions";
+import { ContainerErrorTypes } from "@fluidframework/container-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IErrorBase, FluidObject } from "@fluidframework/core-interfaces";
@@ -132,7 +132,7 @@ describe("FluidDataStoreRuntime Tests", () => {
 		assert.throws(
 			codeBlock,
 			(e: IErrorBase) =>
-				e.errorType === ContainerErrorType.usageError &&
+				e.errorType === ContainerErrorTypes.usageError &&
 				e.message === `Id cannot contain slashes: ${invalidId}`,
 		);
 	});

@@ -6,7 +6,7 @@
 
 import { AttachState } from '@fluidframework/container-definitions';
 import { ConnectionState } from '@fluidframework/container-loader';
-import { ContainerErrorType } from '@fluidframework/container-definitions';
+import { ContainerErrorTypes } from '@fluidframework/container-definitions';
 import { ContainerSchema } from '@fluidframework/fluid-static';
 import { DataObjectClass } from '@fluidframework/fluid-static';
 import { DeserializeCallback } from '@fluidframework/sequence';
@@ -91,7 +91,7 @@ export { AttachState }
 
 export { ConnectionState }
 
-export { ContainerErrorType }
+export { ContainerErrorTypes }
 
 export { ContainerSchema }
 

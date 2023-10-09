@@ -24,12 +24,7 @@ export {
 	IDeltaSender,
 	ReadOnlyInfo,
 } from "./deltas";
-export {
-	ContainerErrorTypes,
-	ContainerErrorType,
-	ContainerWarning,
-	ICriticalContainerError,
-} from "./error";
+export { ContainerErrorTypes, ContainerWarning, ICriticalContainerError } from "./error";
 export {
 	ConnectionState,
 	ICodeDetailsLoader,
