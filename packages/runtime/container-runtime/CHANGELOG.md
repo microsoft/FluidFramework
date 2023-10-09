@@ -1,5 +1,116 @@
 # @fluidframework/container-runtime
 
+## 2.0.0-internal.7.0.0
+
+### Major Changes
+
+-   DEPRECATED: container-runtime: requestHandlers are deprecated [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+
+    The concept of `requestHandlers` has been deprecated. Please migrate all usage of the following APIs to the new `entryPoint` pattern:
+
+    -   `requestHandler` property in `ContainerRuntime.loadRuntime(...)`
+    -   `RuntimeRequestHandler`
+    -   `RuntimeRequestHandlerBuilder`
+    -   `defaultFluidObjectRequestHandler(...)`
+    -   `defaultRouteRequestHandler(...)`
+    -   `mountableViewRequestHandler(...)`
+    -   `buildRuntimeRequestHandler(...)`
+    -   `createFluidObjectResponse(...)`
+    -   `handleFromLegacyUri(...)`
+    -   `rootDataStoreRequestHandler(...)`
+
+    See [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md) for more details.
+
+-   container-runtime: Removing some deprecated and likely unused ContainerRuntime APIs [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+
+    -   `IGCRuntimeOptions.sweepAllowed`
+    -   `ContainerRuntime.reSubmitFn`
+
+-   Dependencies on @fluidframework/protocol-definitions package updated to 3.0.0 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+
+    This included the following changes from the protocol-definitions release:
+
+    -   Updating signal interfaces for some planned improvements. The intention is split the interface between signals
+        submitted by clients to the server and the resulting signals sent from the server to clients.
+        -   A new optional type member is available on the ISignalMessage interface and a new ISentSignalMessage interface has
+            been added, which will be the typing for signals sent from the client to the server. Both extend a new
+            ISignalMessageBase interface that contains common members.
+    -   The @fluidframework/common-definitions package dependency has been updated to version 1.0.0.
+
+-   DEPRECATED: resolveHandle and IFluidHandleContext deprecated on IContainerRuntime [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+
+    The `resolveHandle(...)` and `get IFluidHandleContext()` methods have been deprecated on the following interfaces:
+
+    -   `IContainerRuntime`
+    -   `IContainerRuntimeBase`
+
+    Requesting arbitrary URLs has been deprecated on `IContainerRuntime`. Please migrate all usage to the `IContainerRuntime.getEntryPoint()` method if trying to obtain the application-specified root object.
+
+    See [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md) for more details.
+
+-   Server upgrade: dependencies on Fluid server packages updated to 2.0.1 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+
+    Dependencies on the following Fluid server package have been updated to version 2.0.1:
+
+    -   @fluidframework/gitresources: 2.0.1
+    -   @fluidframework/server-kafka-orderer: 2.0.1
+    -   @fluidframework/server-lambdas: 2.0.1
+    -   @fluidframework/server-lambdas-driver: 2.0.1
+    -   @fluidframework/server-local-server: 2.0.1
+    -   @fluidframework/server-memory-orderer: 2.0.1
+    -   @fluidframework/protocol-base: 2.0.1
+    -   @fluidframework/server-routerlicious: 2.0.1
+    -   @fluidframework/server-routerlicious-base: 2.0.1
+    -   @fluidframework/server-services: 2.0.1
+    -   @fluidframework/server-services-client: 2.0.1
+    -   @fluidframework/server-services-core: 2.0.1
+    -   @fluidframework/server-services-ordering-kafkanode: 2.0.1
+    -   @fluidframework/server-services-ordering-rdkafka: 2.0.1
+    -   @fluidframework/server-services-ordering-zookeeper: 2.0.1
+    -   @fluidframework/server-services-shared: 2.0.1
+    -   @fluidframework/server-services-telemetry: 2.0.1
+    -   @fluidframework/server-services-utils: 2.0.1
+    -   @fluidframework/server-test-utils: 2.0.1
+    -   tinylicious: 2.0.1
+
+-   container-runtime: initializeEntryPoint renamed to provideEntryPoint [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+
+    The naming of `initializeEntryPoint` has been changed to `provideEntryPoint`. Please change the property name in relevant calls to `ContainerRuntime.loadRuntime(...)`.
+
+-   test-utils: provideEntryPoint is required [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+
+    The optional `provideEntryPoint` method has become required on a number of constructors. A value will need to be provided to the following classes:
+
+    -   `BaseContainerRuntimeFactory`
+    -   `RuntimeFactory`
+    -   `ContainerRuntime` (constructor and `loadRuntime`)
+    -   `FluidDataStoreRuntime`
+
+    See [testContainerRuntimeFactoryWithDefaultDataStore.ts](https://github.com/microsoft/FluidFramework/tree/main/packages/test/test-utils/src/testContainerRuntimeFactoryWithDefaultDataStore.ts) for an example implemtation of `provideEntryPoint` for ContainerRuntime.
+    See [pureDataObjectFactory.ts](https://github.com/microsoft/FluidFramework/tree/main/packages/framework/aqueduct/src/data-object-factories/pureDataObjectFactory.ts#L83) for an example implementation of `provideEntryPoint` for DataStoreRuntime.
+
+    Subsequently, various `entryPoint` and `getEntryPoint()` endpoints have become required. Please see [containerRuntime.ts](https://github.com/microsoft/FluidFramework/tree/main/packages/runtime/container-runtime/src/containerRuntime.ts) for example implementations of these APIs.
+
+    For more details, see [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md)
+
+-   Minimum TypeScript version now 5.1.6 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+
+    The minimum supported TypeScript version for Fluid 2.0 clients is now 5.1.6.
+
+### Minor Changes
+
+-   container-runtime: Remove DeltaManagerProxyBase [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+
+    `DeltaManagerProxyBase` was deprecated in [version 2.0.0-internal.6.1.0](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.0.0-internal.6.1.0). It is no longer exported, and no replacement API is intended.
+
+## 2.0.0-internal.6.4.0
+
+### Minor Changes
+
+-   Some stack traces are improved ([#17380](https://github.com/microsoft/FluidFramework/issues/17380)) [34f2808ee9](https://github.com/microsoft/FluidFramework/commits/34f2808ee9764aef21b990f8b48860d9e3ce27a5)
+
+    Some stack traces have been improved and might now include frames for async functions that weren't previously included.
+
 ## 2.0.0-internal.6.3.0
 
 Dependency updates only.

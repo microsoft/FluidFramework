@@ -14,14 +14,14 @@ import { AllowedTypes, FieldKinds, SchemaBuilder } from "../feature-libraries";
 import { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../util";
 import * as leaf from "./leafDomain";
 
-const builder = new SchemaBuilder("Json Domain", {}, leaf.library);
+const builder = new SchemaBuilder("Test Recursive Domain", {}, leaf.library);
 
 /**
  * @alpha
  */
 export const recursiveStruct = builder.structRecursive("recursiveStruct", {
 	recursive: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => recursiveStruct),
-	number: SchemaBuilder.fieldValue(leaf.number),
+	number: SchemaBuilder.fieldRequired(leaf.number),
 });
 
 // Some related information in https://github.com/microsoft/TypeScript/issues/55758.
@@ -35,17 +35,17 @@ fixRecursiveReference(recursiveReference);
  */
 export const recursiveStruct2 = builder.struct("recursiveStruct2", {
 	recursive: SchemaBuilder.field(FieldKinds.optional, recursiveReference),
-	number: SchemaBuilder.fieldValue(leaf.number),
+	number: SchemaBuilder.fieldRequired(leaf.number),
 });
 
 type _0 = requireFalse<isAny<typeof recursiveStruct2>>;
 type _1 = requireTrue<
 	areSafelyAssignable<
 		typeof recursiveStruct2,
-		ReturnType<typeof recursiveStruct2.structFieldsObject.recursive.allowedTypes[0]>
+		ReturnType<(typeof recursiveStruct2.structFieldsObject.recursive.allowedTypes)[0]>
 	>
 >;
 /**
  * @alpha
  */
-export const jsonSchema = builder.intoLibrary();
+export const library = builder.intoLibrary();

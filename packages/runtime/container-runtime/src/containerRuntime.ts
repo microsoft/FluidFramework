@@ -8,9 +8,11 @@ import {
 	FluidObject,
 	IFluidHandle,
 	IFluidHandleContext,
+	// eslint-disable-next-line import/no-deprecated
 	IFluidRouter,
 	IRequest,
 	IResponse,
+	IProvideFluidHandleContext,
 } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
@@ -21,6 +23,7 @@ import {
 	ICriticalContainerError,
 	AttachState,
 	ILoaderOptions,
+	ILoader,
 	LoaderHeader,
 } from "@fluidframework/container-definitions";
 import {
@@ -97,11 +100,11 @@ import {
 	create404Response,
 	exceptionToResponse,
 	GCDataBuilder,
-	requestFluidObject,
 	seqFromTree,
 	calculateStats,
 	TelemetryContext,
 	ReadAndParseBlob,
+	responseToException,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
@@ -141,7 +144,6 @@ import {
 	IConnectableRuntime,
 	IGeneratedSummaryStats,
 	ISubmitSummaryOptions,
-	ISummarizer,
 	ISummarizerInternalsProvider,
 	ISummarizerRuntime,
 	IRefreshSummaryAckOptions,
@@ -154,6 +156,7 @@ import {
 	EnqueueSummarizeResult,
 	ISummarizerEvents,
 	IBaseSummarizeResult,
+	ISummarizer,
 } from "./summary";
 import { formExponentialFn, Throttler } from "./throttler";
 import {
@@ -626,13 +629,65 @@ type MessageWithContext =
 			local: boolean;
 	  };
 
+const summarizerRequestUrl = "_summarizer";
+
+/**
+ * Create and retrieve the summmarizer
+ */
+async function createSummarizer(loader: ILoader, url: string): Promise<ISummarizer> {
+	const request: IRequest = {
+		headers: {
+			[LoaderHeader.cache]: false,
+			[LoaderHeader.clientDetails]: {
+				capabilities: { interactive: false },
+				type: summarizerClientType,
+			},
+			[DriverHeader.summarizingClient]: true,
+			[LoaderHeader.reconnect]: false,
+		},
+		url,
+	};
+
+	const resolvedContainer = await loader.resolve(request);
+	let fluidObject: FluidObject<ISummarizer> | undefined;
+
+	// Older containers may not have the "getEntryPoint" API
+	// ! This check will need to stay until LTS of loader moves past 2.0.0-internal.7.0.0
+	if (resolvedContainer.getEntryPoint !== undefined) {
+		fluidObject = await resolvedContainer.getEntryPoint();
+	} else {
+		const response = await resolvedContainer.request({ url: `/${summarizerRequestUrl}` });
+		if (response.status !== 200 || response.mimeType !== "fluid/object") {
+			throw responseToException(response, request);
+		}
+		fluidObject = response.value;
+	}
+
+	if (fluidObject?.ISummarizer === undefined) {
+		throw new UsageError("Fluid object does not implement ISummarizer");
+	}
+	return fluidObject.ISummarizer;
+}
+
+/**
+ * This function is not supported publicly and exists for e2e testing
+ */
+export async function TEST_requestSummarizer(loader: ILoader, url: string): Promise<ISummarizer> {
+	return createSummarizer(loader, url);
+}
+
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
  */
 export class ContainerRuntime
 	extends TypedEventEmitter<IContainerRuntimeEvents & ISummarizerEvents>
-	implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider
+	implements
+		IContainerRuntime,
+		IRuntime,
+		ISummarizerRuntime,
+		ISummarizerInternalsProvider,
+		IProvideFluidHandleContext
 {
 	/**
 	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
@@ -669,10 +724,15 @@ export class ContainerRuntime
 			context,
 			registryEntries,
 			existing: existingFlag,
-			requestHandler,
 			runtimeOptions,
 			containerScope,
 			containerRuntimeCtor,
+			requestHandler,
+			provideEntryPoint: () => {
+				throw new UsageError(
+					"ContainerRuntime.load is deprecated and should no longer be used",
+				);
+			},
 		});
 	}
 
@@ -688,7 +748,7 @@ export class ContainerRuntime
 	 * - containerScope - runtime services provided with context
 	 * - containerRuntimeCtor - Constructor to use to create the ContainerRuntime instance.
 	 * This allows mixin classes to leverage this method to define their own async initializer.
-	 * - initializeEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
+	 * - provideEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
 	 * This object should provide all the functionality that the Container is expected to provide to the loader layer.
 	 */
 	public static async loadRuntime(params: {
@@ -698,29 +758,20 @@ export class ContainerRuntime
 		runtimeOptions?: IContainerRuntimeOptions;
 		containerScope?: FluidObject;
 		containerRuntimeCtor?: typeof ContainerRuntime;
+		/** @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md */
 		requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
-		initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
+		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
 	}): Promise<ContainerRuntime> {
 		const {
 			context,
 			registryEntries,
 			existing,
 			requestHandler,
+			provideEntryPoint,
 			runtimeOptions = {},
 			containerScope = {},
 			containerRuntimeCtor = ContainerRuntime,
 		} = params;
-
-		const initializeEntryPoint =
-			params.initializeEntryPoint ??
-			(async (containerRuntime: IContainerRuntime) => ({
-				get IFluidRouter() {
-					return this;
-				},
-				async request(req) {
-					return containerRuntime.request(req);
-				},
-			}));
 
 		// If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
 		// back-compat: Remove the TaggedLoggerAdapter fallback once all the host are using loader > 0.45
@@ -850,9 +901,9 @@ export class ContainerRuntime
 			blobManagerSnapshot,
 			context.storage,
 			idCompressor,
+			provideEntryPoint,
 			requestHandler,
 			undefined, // summaryConfiguration
-			initializeEntryPoint,
 		);
 
 		// Apply stashed ops with a reference sequence number equal to the sequence number of the snapshot,
@@ -876,17 +927,6 @@ export class ContainerRuntime
 
 	public get storage(): IDocumentStorageService {
 		return this._storage;
-	}
-
-	/** @deprecated - The functionality is no longer exposed publicly */
-	public get reSubmitFn() {
-		return (
-			type: ContainerMessageType,
-			contents: any,
-			localOpMetadata: unknown,
-			opMetadata: Record<string, unknown> | undefined,
-		) => this.reSubmitCore({ type, contents }, localOpMetadata, opMetadata);
-		// Note: compatDetails is not included in this deprecated API
 	}
 
 	private readonly submitFn: (
@@ -1140,6 +1180,7 @@ export class ContainerRuntime
 		blobManagerSnapshot: IBlobManagerLoadInfo,
 		private readonly _storage: IDocumentStorageService,
 		idCompressor: (IIdCompressor & IIdCompressorCore) | undefined,
+		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
 		private readonly requestHandler?: (
 			request: IRequest,
 			runtime: IContainerRuntime,
@@ -1150,7 +1191,6 @@ export class ContainerRuntime
 			// the runtime configuration overrides
 			...runtimeOptions.summaryOptions?.summaryConfigOverrides,
 		},
-		initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
 	) {
 		super();
 
@@ -1584,7 +1624,7 @@ export class ContainerRuntime
 					this, // IConnectedState
 					this.summaryCollection,
 					this.logger,
-					this.formRequestSummarizerFn(loader),
+					this.formCreateSummarizerFn(loader),
 					new Throttler(
 						60 * 1000, // 60 sec delay window
 						30 * 1000, // 30 sec max delay
@@ -1602,35 +1642,6 @@ export class ContainerRuntime
 				this.summaryManager.start();
 			}
 		}
-
-		this.deltaManager.on("readonly", (readonly: boolean) => {
-			// we accumulate ops while being in read-only state.
-			// once user gets write permissions and we have active connection, flush all pending ops.
-			// Note that the inner (non-proxy) delta manager is needed here to get the readonly information.
-			assert(
-				readonly === this.innerDeltaManager.readOnlyInfo.readonly,
-				0x124 /* "inconsistent readonly property/event state" */,
-			);
-
-			// We need to be very careful with when we (re)send pending ops, to ensure that we only send ops
-			// when we either never send an op, or attempted to send it but we know for sure it was not
-			// sequenced by server and will never be sequenced (i.e. was lost)
-			// For loss of connection, we wait for our own "join" op and use it a a barrier to know all the
-			// ops that made it from previous connection, before switching clientId and raising "connected" event
-			// But with read-only permissions, if we transition between read-only and r/w states while on same
-			// connection, then we have no good signal to tell us when it's safe to send ops we accumulated while
-			// being in read-only state.
-			// For that reason, we support getting to read-only state only when disconnected. This ensures that we
-			// can rely on same safety mechanism and resend ops only when we establish new connection.
-			// This is applicable for read-only permissions (event is raised before connection is properly registered),
-			// but it's an extra requirement for Container.forceReadonly() API
-			assert(
-				!readonly || !this.connected,
-				0x125 /* "Unsafe to transition to read-only state!" */,
-			);
-
-			this.replayPendingStates();
-		});
 
 		// logging hardware telemetry
 		logger.sendTelemetryEvent({
@@ -1671,7 +1682,7 @@ export class ContainerRuntime
 				);
 				return this._summarizer;
 			}
-			return initializeEntryPoint?.(this);
+			return provideEntryPoint(this);
 		});
 	}
 
@@ -1719,7 +1730,7 @@ export class ContainerRuntime
 			const parser = RequestParser.create(request);
 			const id = parser.pathParts[0];
 
-			if (id === "_summarizer" && parser.pathParts.length === 1) {
+			if (id === summarizerRequestUrl && parser.pathParts.length === 1) {
 				if (this._summarizer !== undefined) {
 					return {
 						status: 200,
@@ -1730,6 +1741,7 @@ export class ContainerRuntime
 				return create404Response(request);
 			}
 			if (this.requestHandler !== undefined) {
+				// eslint-disable-next-line @typescript-eslint/return-await -- Adding an await here causes test failures
 				return this.requestHandler(parser, this);
 			}
 
@@ -1749,6 +1761,7 @@ export class ContainerRuntime
 			const id = requestParser.pathParts[0];
 
 			if (id === "_channels") {
+				// eslint-disable-next-line @typescript-eslint/return-await -- Adding an await here causes test failures
 				return this.resolveHandle(requestParser.createSubRequest(1));
 			}
 
@@ -1770,6 +1783,7 @@ export class ContainerRuntime
 					subRequest.url.startsWith("/"),
 					0x126 /* "Expected createSubRequest url to include a leading slash" */,
 				);
+				// eslint-disable-next-line @typescript-eslint/return-await -- Adding an await here causes test failures
 				return dataStore.request(subRequest);
 			}
 
@@ -1782,10 +1796,10 @@ export class ContainerRuntime
 	/**
 	 * {@inheritDoc @fluidframework/container-definitions#IRuntime.getEntryPoint}
 	 */
-	public async getEntryPoint?(): Promise<FluidObject | undefined> {
+	public async getEntryPoint(): Promise<FluidObject> {
 		return this.entryPoint;
 	}
-	private readonly entryPoint: LazyPromise<FluidObject | undefined>;
+	private readonly entryPoint: LazyPromise<FluidObject>;
 
 	private internalId(maybeAlias: string): string {
 		return this.dataStores.aliases.get(maybeAlias) ?? maybeAlias;
@@ -2053,9 +2067,9 @@ export class ContainerRuntime
 		if (connecting && this.blobManager.hasPendingStashedBlobs()) {
 			assert(
 				!this.delayConnectClientId,
-				"Connect event delay must be canceled before subsequent connect event",
+				0x791 /* Connect event delay must be canceled before subsequent connect event */,
 			);
-			assert(!!clientId, "Must have clientId when connecting");
+			assert(!!clientId, 0x792 /* Must have clientId when connecting */);
 			this.delayConnectClientId = clientId;
 			this.blobManager.processStashedChanges().then(
 				() => {
@@ -2367,6 +2381,7 @@ export class ContainerRuntime
 	 * @param wait - True if you want to wait for it.
 	 * @deprecated - Use getAliasedDataStoreEntryPoint instead to get an aliased data store's entry point.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter> {
 		return this.getRootDataStoreChannel(id, wait);
 	}
@@ -2555,7 +2570,7 @@ export class ContainerRuntime
 				return false;
 			}
 		} else if (type === ContainerMessageType.FluidDataStoreOp) {
-			const envelope = contents as IEnvelope;
+			const envelope = contents;
 			if (envelope.address === agentSchedulerId) {
 				return false;
 			}
@@ -3693,7 +3708,7 @@ export class ContainerRuntime
 			case ContainerMessageType.FluidDataStoreOp:
 				// For operations, call rollbackDataStoreOp which will find the right store
 				// and trigger rollback on it.
-				this.dataStores.rollbackDataStoreOp(contents as IEnvelope, localOpMetadata);
+				this.dataStores.rollbackDataStoreOp(contents, localOpMetadata);
 				break;
 			default:
 				// Don't check message.compatDetails because this is for rolling back a local op so the type will be known
@@ -3940,35 +3955,11 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * * Forms a function that will request a Summarizer.
-	 * @param loaderRouter - the loader acting as an IFluidRouter
-	 * */
-	private formRequestSummarizerFn(loaderRouter: IFluidRouter) {
+	 * Forms a function that will create and retrieve a Summarizer.
+	 */
+	private formCreateSummarizerFn(loader: ILoader) {
 		return async () => {
-			const request: IRequest = {
-				headers: {
-					[LoaderHeader.cache]: false,
-					[LoaderHeader.clientDetails]: {
-						capabilities: { interactive: false },
-						type: summarizerClientType,
-					},
-					[DriverHeader.summarizingClient]: true,
-					[LoaderHeader.reconnect]: false,
-				},
-				url: "/_summarizer",
-			};
-
-			const fluidObject = await requestFluidObject<FluidObject<ISummarizer>>(
-				loaderRouter,
-				request,
-			);
-			const summarizer = fluidObject.ISummarizer;
-
-			if (!summarizer) {
-				throw new UsageError("Fluid object does not implement ISummarizer");
-			}
-
-			return summarizer;
+			return createSummarizer(loader, `/${summarizerRequestUrl}`);
 		};
 	}
 

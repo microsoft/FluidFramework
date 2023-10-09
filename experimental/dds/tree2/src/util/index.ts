@@ -32,7 +32,6 @@ export { OffsetList, OffsetListFactory } from "./offsetList";
 export { TransactionResult } from "./transactionResult";
 export {
 	areSafelyAssignable,
-	Bivariant,
 	Contravariant,
 	Covariant,
 	eitherIsAny,
@@ -76,6 +75,7 @@ export {
 	disposeSymbol,
 	IDisposable,
 	capitalize,
+	assertValidRangeIndices,
 } from "./utils";
 export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting";
 

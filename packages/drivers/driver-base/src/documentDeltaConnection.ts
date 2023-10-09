@@ -649,8 +649,12 @@ export class DocumentDeltaConnection
 		this.queuedMessages.push(...msgs);
 	};
 
-	protected earlySignalHandler = (msg: ISignalMessage) => {
-		this.queuedSignals.push(msg);
+	protected earlySignalHandler = (msg: ISignalMessage | ISignalMessage[]) => {
+		if (Array.isArray(msg)) {
+			this.queuedSignals.push(...msg);
+		} else {
+			this.queuedSignals.push(msg);
+		}
 	};
 
 	private removeEarlyOpHandler() {

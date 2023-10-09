@@ -71,6 +71,7 @@ trigger:
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
     - tools/pipelines/templates/include-git-tag-steps.yml
     - tools/pipelines/templates/include-use-node-version.yml
+    - tools/pipelines/templates/include-log-test-failures.yml
 
 pr:
   branches:
@@ -98,6 +99,7 @@ pr:
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-use-node-version.yml
+    - tools/pipelines/templates/include-log-test-failures.yml
 
 extends:
   template: templates/build-npm-package.yml
@@ -111,7 +113,7 @@ extends:
     packageManager: pnpm
     buildDirectory: .
     tagName: client
-    poolBuild: NewLarge 
+    poolBuild: NewLarge
     checkoutSubmodules: true
     taskBundleAnalysis: true
     taskLint: false
@@ -138,4 +140,27 @@ extends:
     - syncpack:deps
     - syncpack:versions
     - check:versions
+    - generate:packageList
     - prettier
+    additionalBuildSteps:
+      - task: Bash@3
+        displayName: Inject devtools telemetry logger token
+        inputs:
+          targetType: 'inline'
+          script: |
+            echo Generating .env
+            echo "DEVTOOLS_TELEMETRY_TOKEN=$(devtools-telemetry-key)" >> ./packages/tools/devtools/devtools-browser-extension/.env
+
+      - task: Npm@1
+        displayName: Build devtools
+        inputs:
+          command: 'custom'
+          workingDir: ./packages/tools/devtools/devtools-browser-extension/
+          customCommand: 'run webpack'
+
+      - task: PublishPipelineArtifact@1
+        displayName: Publish Artifact - Devtools Browser Extension
+        inputs:
+          targetPath: './packages/tools/devtools/devtools-browser-extension/dist/bundle/'
+          artifactName: 'devtools-extension-bundle'
+          publishLocation: 'pipeline'

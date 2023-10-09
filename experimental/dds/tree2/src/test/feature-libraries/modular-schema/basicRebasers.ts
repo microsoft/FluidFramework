@@ -8,12 +8,12 @@ import { TUnsafe, Type } from "@sinclair/typebox";
 import {
 	FieldChangeHandler,
 	FieldChangeRebaser,
-	FieldKind,
+	FieldKindWithEditor,
 	Multiplicity,
 	referenceFreeFieldChangeRebaser,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema";
-import { brand, fail } from "../../../util";
+import { fail } from "../../../util";
 import { makeCodecFamily, makeValueCodec } from "../../../codec";
 import { singleJsonCursor } from "../../../domains";
 import { Delta } from "../../../core";
@@ -92,9 +92,9 @@ export const valueHandler: FieldChangeHandler<ValueChangeset> = {
 	isEmpty: (change) => change === 0,
 };
 
-export const valueField = new FieldKind(
-	brand("Value"),
-	Multiplicity.Value,
+export const valueField = new FieldKindWithEditor(
+	"Value",
+	Multiplicity.Single,
 	valueHandler,
 	(a, b) => false,
 	new Set(),

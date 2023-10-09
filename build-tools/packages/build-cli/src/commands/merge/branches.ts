@@ -445,6 +445,8 @@ function getMergeConflictsDescription(props: {
 	return `
 ## ${source}-${target} integrate PR
 
+***DO NOT MERGE THIS PR USING THE GITHUB UI.***
+
 The aim of this pull request is to sync ${source} and ${target} branch. This branch has **MERGE CONFLICTS** with ${target} due to this commit. If this PR is assigned to you, you need to do the following:
 
 1. Acknowledge the pull request by adding a comment -- "Actively working on it".
@@ -463,6 +465,8 @@ The aim of this pull request is to sync ${source} and ${target} branch. This bra
 5. Address any CI failures. If you need to make additional changes to the PR, **always amend the commit** using the following git commands:
   - \`git commit --amend -m "${prTitle}"\`
   - \`git push --force-with-lease\`
+
+Once CI passes and the PR is ready to merge, add the "msftbot: merge-next" label to the PR and one of the people with merge permissions will merge it in.
 `;
 }
 
@@ -481,6 +485,8 @@ function getMaybeCiFailuresDescription(props: {
 	return `
 ## ${source}-${target} integrate PR
 
+***DO NOT MERGE THIS PR USING THE GITHUB UI.***
+
 The aim of this pull request is to sync ${source} and ${target} branch. If this PR is assigned to you, you need to do the following:
 
 1. Acknowledge the pull request by adding a comment -- "Actively working on it".
@@ -490,5 +496,7 @@ The aim of this pull request is to sync ${source} and ${target} branch. If this 
 4. **Do NOT rebase or squash the ${mergeBranch} branch: its history must be preserved**. Always amend the HEAD commit using the following git commands:
   - \`git commit --amend -m "${prTitle}"\`
   - \`git push --force-with-lease\`
+
+Once CI passes and the PR is ready to merge, add the "msftbot: merge-next" label to the PR and one of the people with merge permissions will merge it in.
 `;
 }

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import cluster from "cluster";
 import { Deferred } from "@fluidframework/common-utils";
 import {
 	ICache,
@@ -28,7 +29,7 @@ import { createMetricClient } from "@fluidframework/server-services";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";
-import { runnerHttpServerStop } from "../utils";
+import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
 import * as app from "./app";
 import { IDocumentDeleteService } from "./services";
 
@@ -104,43 +105,47 @@ export class AlfredRunner implements IRunner {
 		);
 		const isSignalUsageCountingEnabled = this.config.get("usage:signalUsageCountingEnabled");
 
-		// Register all the socket.io stuff
-		configureWebSocketServices(
-			this.server.webSocketServer,
-			this.orderManager,
-			this.tenantManager,
-			this.storage,
-			this.clientManager,
-			createMetricClient(this.metricClientConfig),
-			winston,
-			maxNumberOfClientsPerDocument,
-			numberOfMessagesPerTrace,
-			maxTokenLifetimeSec,
-			isTokenExpiryEnabled,
-			isClientConnectivityCountingEnabled,
-			isSignalUsageCountingEnabled,
-			this.redisCache,
-			this.socketConnectTenantThrottler,
-			this.socketConnectClusterThrottler,
-			this.socketSubmitOpThrottler,
-			this.socketSubmitSignalThrottler,
-			this.throttleAndUsageStorageManager,
-			this.verifyMaxMessageSize,
-			this.socketTracker,
-			this.revokedTokenChecker,
-		);
-
-		// Listen on provided port, on all network interfaces.
-		httpServer.listen(this.port);
 		httpServer.on("error", (error) => this.onError(error));
 		httpServer.on("listening", () => this.onListening());
 
-		// Start token manager
-		if (this.tokenRevocationManager) {
-			this.tokenRevocationManager.start().catch((error) => {
-				// Prevent service crash if token revocation manager fails to start
-				Lumberjack.error("Failed to start token revocation manager.", undefined, error);
-			});
+		if (cluster.isPrimary && this.server.webSocketServer === null) {
+			// Listen on provided port, on all network interfaces.
+			httpServer.listen(this.port);
+		} else {
+			// Register all the socket.io stuff
+			configureWebSocketServices(
+				this.server.webSocketServer,
+				this.orderManager,
+				this.tenantManager,
+				this.storage,
+				this.clientManager,
+				createMetricClient(this.metricClientConfig),
+				winston,
+				maxNumberOfClientsPerDocument,
+				numberOfMessagesPerTrace,
+				maxTokenLifetimeSec,
+				isTokenExpiryEnabled,
+				isClientConnectivityCountingEnabled,
+				isSignalUsageCountingEnabled,
+				this.redisCache,
+				this.socketConnectTenantThrottler,
+				this.socketConnectClusterThrottler,
+				this.socketSubmitOpThrottler,
+				this.socketSubmitSignalThrottler,
+				this.throttleAndUsageStorageManager,
+				this.verifyMaxMessageSize,
+				this.socketTracker,
+				this.revokedTokenChecker,
+			);
+			// Listen on primary thread port, on all network interfaces.
+			httpServer.listen(cluster.isPrimary ? this.port : 0);
+
+			if (this.tokenRevocationManager) {
+				this.tokenRevocationManager.start().catch((error) => {
+					// Prevent service crash if token revocation manager fails to start
+					Lumberjack.error("Failed to start token revocation manager.", undefined, error);
+				});
+			}
 		}
 
 		this.stopped = false;
