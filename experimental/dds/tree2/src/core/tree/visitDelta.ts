@@ -75,7 +75,7 @@ export function visitDelta(
 			rootChanges.delete(root);
 			const field = detachedFieldIndex.toFieldKey(root);
 			visitor.enterField(field);
-			visitModify(0, modifications, visitor, detachConfig);
+			visitNode(0, modifications, visitor, detachConfig);
 			visitor.exitField(field);
 		}
 		transferRoots(rootTransfers, detachedFieldIndex, visitor);
@@ -97,7 +97,7 @@ export function visitDelta(
 			rootChanges.delete(root);
 			const field = detachedFieldIndex.toFieldKey(root);
 			visitor.enterField(field);
-			visitModify(0, modifications, visitor, attachConfig);
+			visitNode(0, modifications, visitor, attachConfig);
 			visitor.exitField(field);
 		}
 	}
@@ -252,7 +252,7 @@ function visitFieldMarks(
 	}
 }
 
-function visitModify(
+function visitNode(
 	index: number,
 	fields: Delta.FieldMarks | undefined,
 	visitor: DeltaVisitor,
@@ -607,7 +607,7 @@ function detachPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 			catalogDetachPassRootChanges(mark, config);
 			if (mark.type === Delta.MarkType.Modify) {
 				if (mark.detachedNodeId === undefined) {
-					visitModify(index, mark.fields, visitor, config);
+					visitNode(index, mark.fields, visitor, config);
 					index += 1;
 				}
 			} else {
@@ -617,7 +617,7 @@ function detachPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 				const replaces = asReplaces(mark, config);
 				for (const { oldContent, newContent } of replaces) {
 					if (oldContent !== undefined) {
-						visitModify(index, oldContent.fields, visitor, config);
+						visitNode(index, oldContent.fields, visitor, config);
 						if (newContent === undefined) {
 							// This a simple detach
 							const oldRoot = oldContent.destination;
@@ -651,7 +651,7 @@ function attachPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 			catalogAttachPassRootChanges(mark, config);
 			if (mark.type === Delta.MarkType.Modify) {
 				if (mark.detachedNodeId === undefined) {
-					visitModify(index, mark.fields, visitor, config);
+					visitNode(index, mark.fields, visitor, config);
 					index += 1;
 				}
 			} else {
@@ -676,7 +676,7 @@ function attachPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 						if (newContent.nodeId !== undefined) {
 							config.detachedFieldIndex.deleteEntry(newContent.nodeId);
 						}
-						visitModify(index, newContent.fields, visitor, config);
+						visitNode(index, newContent.fields, visitor, config);
 						index += 1;
 					}
 				}
