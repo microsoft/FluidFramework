@@ -15,7 +15,7 @@ var directory = process.argv.slice(2)[0];
 
 const getJunitTestReports = (directory) => {
 	if (!fs.existsSync(directory)) {
-		throw new Error(`${directory} does not exist`);
+		throw new Error(`Directory '${directory}' does not exist`);
 	}
 	const files = [];
 	const filesInDirectory = fs.readdirSync(directory);
