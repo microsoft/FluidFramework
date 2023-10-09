@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
 import { SessionSpaceCompressedId } from "@fluidframework/runtime-definitions";
 import { FieldKey, TreeSchemaIdentifier } from "../../core";
 import { BrandedType, capitalize } from "../../util";
@@ -11,6 +10,7 @@ import { StructSchema, TreeSchema } from "../typed-schema";
 import { EditableTreeEvents } from "../untypedTree";
 import { TreeContext } from "./context";
 import {
+	FlexibleNodeContent,
 	Struct,
 	StructTyped,
 	TreeField,
@@ -20,18 +20,25 @@ import {
 } from "./editableTreeTypes";
 
 /**
- * Creates a node that falsely pretends to satisfy the given schema.
+ * Used to acquire the content of a raw struct
+ */
+export const nodeContent = Symbol();
+
+/**
+ * Creates a node that falsely pretends to satisfy the given schema while wrapping the given node content.
+ * Retrieve the node content via {@link nodeContent}.
  *
  * @remarks This is useful for creating "raw" nodes: nodes which capture data about a pending insertion but are not yet inserted.
  * These raw nodes can be then used on the right-hand side of an assignment (via `=`) to the tree.
  * However, their properties and methods should not be inspected (other than `schema` and `type`) since they are not implemented; they will error.
  *
- * @privateRemarks TODO: Generate these from schema, and use them to support `=` for structs by carrying contextually typed data.
+ * @privateRemarks TODO: Generate these from schema, and use them to support `=`.
  */
 export function createRawStruct<TSchema extends StructSchema>(
 	schema: TSchema,
-): StructTyped<TSchema> {
-	const node = new RawStruct(schema);
+	content: FlexibleNodeContent<[TSchema]>,
+): RawStruct<TSchema> & StructTyped<TSchema> {
+	const node = new RawStruct(schema, content);
 	for (const [key] of schema.structFields) {
 		Object.defineProperty(node, key, {
 			get: () => rawStructError(),
@@ -44,11 +51,19 @@ export function createRawStruct<TSchema extends StructSchema>(
 			enumerable: false,
 		});
 	}
-	return node as unknown as StructTyped<TSchema>;
+	return node as RawStruct<TSchema> & StructTyped<TSchema>;
 }
 
 class RawStruct<TSchema extends StructSchema> implements Struct {
-	public constructor(public readonly schema: TSchema) {}
+	public constructor(
+		public readonly schema: TSchema,
+		content: FlexibleNodeContent<[TSchema]>,
+	) {
+		this[nodeContent] = content;
+	}
+
+	// Use a symbol here so that it will never collide with a field name
+	public readonly [nodeContent]: FlexibleNodeContent<[TSchema]>;
 
 	public get type(): TreeSchemaIdentifier {
 		return this.schema.name;
@@ -80,11 +95,7 @@ class RawStruct<TSchema extends StructSchema> implements Struct {
 	public is<TSchemaCheck extends TreeSchema>(
 		schema: TSchemaCheck,
 	): this is TypedNode<TSchemaCheck> {
-		assert(
-			this.context.schema.treeSchema.get(schema.name) === schema,
-			0x785 /* Narrowing must be done to a schema that exists in this context */,
-		);
-		return (this.schema as TreeSchema) === schema;
+		return rawStructError();
 	}
 
 	public treeStatus(): TreeStatus {

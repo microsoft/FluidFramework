@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+// This file contains several lambdas that do a simple property access
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable import/no-internal-modules */
 
 import { strict as assert } from "node:assert";
@@ -13,6 +15,7 @@ import { SchemaBuilder } from "../../../feature-libraries";
 import {
 	boxedIterator,
 	createRawStruct,
+	nodeContent,
 	rawStructErrorMessage,
 } from "../../../feature-libraries/editable-tree-2";
 import { brand } from "../../../util";
@@ -34,48 +37,53 @@ describe("raw structs", () => {
 		});
 
 		assert(context.root.is(rootFieldSchema));
-
 		let struct = context.root.content;
+		const rawStruct = createRawStruct(structSchema, { foo: 42, bar: undefined, baz: [] });
 		// This assignment checks that the raw struct is assignable to the same type as the real struct
-		struct = createRawStruct(structSchema);
-		return { struct, structSchema };
+		struct = rawStruct;
+		return { rawStruct, structSchema };
 	}
 
 	it("allow reading schema data", () => {
-		const { struct, structSchema } = getRawStruct();
-		assert.equal(struct.schema, structSchema);
-		assert.equal(struct.type, structSchema.name);
+		const { rawStruct, structSchema } = getRawStruct();
+		assert.equal(rawStruct.schema, structSchema);
+		assert.equal(rawStruct.type, structSchema.name);
 	});
 
 	it("allow reading value", () => {
-		const { struct } = getRawStruct();
-		assert.equal(struct.value, undefined);
+		const { rawStruct } = getRawStruct();
+		assert.equal(rawStruct.value, undefined);
 	});
 
 	it("disallow reading most node properties", () => {
-		const { struct, structSchema } = getRawStruct();
-		assertThrowsRawNodeError(() => struct.context);
-		assertThrowsRawNodeError(() => struct.parentField);
-		assertThrowsRawNodeError(() => struct.tryGetField(brand("foo")));
-		assertThrowsRawNodeError(() => struct[boxedIterator]());
-		assertThrowsRawNodeError(() => struct.on("changing", () => {}));
-		assertThrowsRawNodeError(() => struct.is(structSchema));
-		assertThrowsRawNodeError(() => struct.treeStatus());
-		assertThrowsRawNodeError(() => struct.localNodeKey);
+		const { rawStruct, structSchema } = getRawStruct();
+		assertThrowsRawNodeError(() => rawStruct.context);
+		assertThrowsRawNodeError(() => rawStruct.parentField);
+		assertThrowsRawNodeError(() => rawStruct.tryGetField(brand("foo")));
+		assertThrowsRawNodeError(() => rawStruct[boxedIterator]());
+		assertThrowsRawNodeError(() => rawStruct.on("changing", () => {}));
+		assertThrowsRawNodeError(() => rawStruct.is(structSchema));
+		assertThrowsRawNodeError(() => rawStruct.treeStatus());
+		assertThrowsRawNodeError(() => rawStruct.localNodeKey);
 	});
 
 	it("disallow reading fields", () => {
-		const { struct } = getRawStruct();
-		assertThrowsRawNodeError(() => struct.foo);
-		assertThrowsRawNodeError(() => struct.bar);
-		assertThrowsRawNodeError(() => struct.baz);
+		const { rawStruct } = getRawStruct();
+		assertThrowsRawNodeError(() => rawStruct.foo);
+		assertThrowsRawNodeError(() => rawStruct.bar);
+		assertThrowsRawNodeError(() => rawStruct.baz);
 	});
 
 	it("disallow reading boxed fields", () => {
-		const { struct } = getRawStruct();
-		assertThrowsRawNodeError(() => struct.boxedFoo);
-		assertThrowsRawNodeError(() => struct.boxedBar);
-		assertThrowsRawNodeError(() => struct.boxedBaz);
+		const { rawStruct } = getRawStruct();
+		assertThrowsRawNodeError(() => rawStruct.boxedFoo);
+		assertThrowsRawNodeError(() => rawStruct.boxedBar);
+		assertThrowsRawNodeError(() => rawStruct.boxedBaz);
+	});
+
+	it("expose their contents", () => {
+		const { rawStruct } = getRawStruct();
+		assert.equal(rawStruct[nodeContent].foo, 42);
 	});
 
 	function assertThrowsRawNodeError(f: () => void): void {
