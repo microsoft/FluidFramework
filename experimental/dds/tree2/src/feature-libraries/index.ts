@@ -159,7 +159,9 @@ export {
 	fieldApiPrefixes,
 	validateStructFieldName,
 } from "./typed-schema";
-export { SchemaBuilder, SchemaLibrary } from "./schemaBuilder";
+
+export { SchemaBuilderBase, SchemaLibrary } from "./schemaBuilderBase";
+export { SchemaBuilder, SchemaBuilderInternal } from "./schemaBuilder";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
 

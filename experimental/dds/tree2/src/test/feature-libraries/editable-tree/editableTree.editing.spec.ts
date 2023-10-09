@@ -47,12 +47,12 @@ const otherFieldKey: FieldKey = brand("foo2");
 const rootSchemaName: TreeSchemaIdentifier = brand("Test");
 
 function getTestSchema<Kind extends FieldKind>(fieldKind: Kind) {
-	const builder = new SchemaBuilder("getTestSchema", {}, personSchemaLibrary);
+	const builder = new SchemaBuilder({ scope: "getTestSchema", libraries: [personSchemaLibrary] });
 	const rootNodeSchema = builder.struct("Test", {
 		foo: SchemaBuilder.field(fieldKind, stringSchema),
 		foo2: SchemaBuilder.field(fieldKind, stringSchema),
 	});
-	return builder.intoDocumentSchema(SchemaBuilder.field(FieldKinds.optional, rootNodeSchema));
+	return builder.toDocumentSchema(SchemaBuilder.field(FieldKinds.optional, rootNodeSchema));
 }
 
 describe("editable-tree: editing", () => {

@@ -74,7 +74,7 @@ describe("useTree()", () => {
 		assert.deepEqual(JSON.parse(JSON.stringify(tree.content)), {
 			nuts: 0,
 			bolts: 0,
-			type: "Contoso:Inventory-1.0.0",
+			type: "tree-react-api.Contoso:Inventory-1.0.0",
 		});
 	});
 });
