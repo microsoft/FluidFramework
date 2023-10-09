@@ -6171,65 +6171,6 @@ importers:
       rimraf: 4.4.1
       typescript: 5.1.6
 
-  packages/dds/hot-swap:
-    specifiers:
-      '@fluid-tools/build-cli': ^0.25.0
-      '@fluidframework/build-common': ^2.0.0
-      '@fluidframework/build-tools': ^0.25.0
-      '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/core-utils': workspace:~
-      '@fluidframework/datastore-definitions': workspace:~
-      '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ^3.0.0
-      '@fluidframework/mocha-test-setup': workspace:~
-      '@fluidframework/protocol-definitions': ^3.0.0
-      '@fluidframework/runtime-definitions': workspace:~
-      '@fluidframework/shared-object-base': workspace:~
-      '@fluidframework/test-runtime-utils': workspace:~
-      '@microsoft/api-extractor': ^7.37.0
-      '@types/mocha': ^9.1.1
-      '@types/node': ^16.18.38
-      c8: ^7.7.1
-      copyfiles: ^2.4.1
-      cross-env: ^7.0.3
-      eslint: ~8.50.0
-      mocha: ^10.2.0
-      mocha-json-output-reporter: ^2.0.1
-      mocha-multi-reporters: ^1.5.1
-      moment: ^2.21.0
-      prettier: ~3.0.3
-      rimraf: ^4.4.0
-      typescript: ~5.1.6
-    dependencies:
-      '@fluidframework/core-interfaces': link:../../common/core-interfaces
-      '@fluidframework/core-utils': link:../../common/core-utils
-      '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
-      '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/protocol-definitions': 3.0.0
-      '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
-      '@fluidframework/shared-object-base': link:../shared-object-base
-    devDependencies:
-      '@fluid-tools/build-cli': 0.25.0_@types+node@16.18.53
-      '@fluidframework/build-common': 2.0.0
-      '@fluidframework/build-tools': 0.25.0_@types+node@16.18.53
-      '@fluidframework/eslint-config-fluid': 3.0.0_loebgezstcsvd2poh2d55fifke
-      '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
-      '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.37.0_@types+node@16.18.53
-      '@types/mocha': 9.1.1
-      '@types/node': 16.18.53
-      c8: 7.13.0
-      copyfiles: 2.4.1
-      cross-env: 7.0.3
-      eslint: 8.50.0
-      mocha: 10.2.0
-      mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
-      mocha-multi-reporters: 1.5.1_mocha@10.2.0
-      moment: 2.29.4
-      prettier: 3.0.3
-      rimraf: 4.4.1
-      typescript: 5.1.6
-
   packages/dds/ink:
     specifiers:
       '@fluid-tools/build-cli': ^0.25.0
@@ -6523,6 +6464,65 @@ importers:
       copyfiles: 2.4.1
       cross-env: 7.0.3
       diff: 3.5.0
+      eslint: 8.50.0
+      mocha: 10.2.0
+      mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
+      mocha-multi-reporters: 1.5.1_mocha@10.2.0
+      moment: 2.29.4
+      prettier: 3.0.3
+      rimraf: 4.4.1
+      typescript: 5.1.6
+
+  packages/dds/migration-shim:
+    specifiers:
+      '@fluid-tools/build-cli': ^0.25.0
+      '@fluidframework/build-common': ^2.0.0
+      '@fluidframework/build-tools': ^0.25.0
+      '@fluidframework/core-interfaces': workspace:~
+      '@fluidframework/core-utils': workspace:~
+      '@fluidframework/datastore-definitions': workspace:~
+      '@fluidframework/driver-utils': workspace:~
+      '@fluidframework/eslint-config-fluid': ^3.0.0
+      '@fluidframework/mocha-test-setup': workspace:~
+      '@fluidframework/protocol-definitions': ^3.0.0
+      '@fluidframework/runtime-definitions': workspace:~
+      '@fluidframework/shared-object-base': workspace:~
+      '@fluidframework/test-runtime-utils': workspace:~
+      '@microsoft/api-extractor': ^7.37.0
+      '@types/mocha': ^9.1.1
+      '@types/node': ^16.18.38
+      c8: ^7.7.1
+      copyfiles: ^2.4.1
+      cross-env: ^7.0.3
+      eslint: ~8.50.0
+      mocha: ^10.2.0
+      mocha-json-output-reporter: ^2.0.1
+      mocha-multi-reporters: ^1.5.1
+      moment: ^2.21.0
+      prettier: ~3.0.3
+      rimraf: ^4.4.0
+      typescript: ~5.1.6
+    dependencies:
+      '@fluidframework/core-interfaces': link:../../common/core-interfaces
+      '@fluidframework/core-utils': link:../../common/core-utils
+      '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
+      '@fluidframework/driver-utils': link:../../loader/driver-utils
+      '@fluidframework/protocol-definitions': 3.0.0
+      '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
+      '@fluidframework/shared-object-base': link:../shared-object-base
+    devDependencies:
+      '@fluid-tools/build-cli': 0.25.0_@types+node@16.18.53
+      '@fluidframework/build-common': 2.0.0
+      '@fluidframework/build-tools': 0.25.0_@types+node@16.18.53
+      '@fluidframework/eslint-config-fluid': 3.0.0_loebgezstcsvd2poh2d55fifke
+      '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
+      '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
+      '@microsoft/api-extractor': 7.37.0_@types+node@16.18.53
+      '@types/mocha': 9.1.1
+      '@types/node': 16.18.53
+      c8: 7.13.0
+      copyfiles: 2.4.1
+      cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
