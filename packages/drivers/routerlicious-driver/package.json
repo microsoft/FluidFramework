@@ -107,6 +107,15 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"EnumDeclaration_RouterliciousErrorType": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedEnumDeclaration_RouterliciousErrorType": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

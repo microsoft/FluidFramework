@@ -71,12 +71,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean, session?: ISession): Promise<IDocumentService>;
 }
 
-// @public @deprecated
-export enum RouterliciousErrorType {
-    fileNotFoundOrAccessDeniedError = "fileNotFoundOrAccessDeniedError",
-    sslCertError = "sslCertError"
-}
-
 // @public
 export const RouterliciousErrorTypes: {
     readonly sslCertError: "sslCertError";

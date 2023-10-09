@@ -34,24 +34,6 @@ export type RouterliciousErrorTypes =
 	typeof RouterliciousErrorTypes[keyof typeof RouterliciousErrorTypes];
 
 /**
- * Routerlicious Error types
- * Different error types that may be thrown by the routerlicious driver
- *
- * @deprecated Use {@link (RouterliciousErrorTypes:variable)} instead.
- */
-export enum RouterliciousErrorType {
-	/**
-	 * File not found, or file deleted during session
-	 */
-	fileNotFoundOrAccessDeniedError = "fileNotFoundOrAccessDeniedError",
-
-	/**
-	 * SSL Certificate Error.
-	 */
-	sslCertError = "sslCertError",
-}
-
-/**
  * Interface for error responses for the WebSocket connection
  * Intended to be compatible with output from {@link NetworkError.toJSON}
  */
@@ -82,7 +64,7 @@ export interface IR11sSocketError {
 }
 
 export interface IR11sError extends Omit<IDriverErrorBase, "errorType"> {
-	readonly errorType: RouterliciousErrorType;
+	readonly errorType: RouterliciousErrorTypes;
 }
 
 export type R11sError = DriverError | IR11sError;
@@ -102,7 +84,7 @@ export function createR11sNetworkError(
 			error = new AuthorizationError(errorMessage, undefined, undefined, props);
 			break;
 		case 404:
-			const errorType = RouterliciousErrorType.fileNotFoundOrAccessDeniedError;
+			const errorType = RouterliciousErrorTypes.fileNotFoundOrAccessDeniedError;
 			error = new NonRetryableError(errorMessage, errorType, props);
 			break;
 		case 429:

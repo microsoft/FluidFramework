@@ -43,7 +43,7 @@ export interface ContainerWarning extends IErrorBase {
  *
  * - {@link @fluidframework/odsp-driver-definitions#OdspErrorTypes}
  *
- * - {@link @fluidframework/routerlicious-driver#RouterliciousErrorType}
+ * - {@link @fluidframework/routerlicious-driver#RouterliciousErrorTypes}
  *
  */
 export type ICriticalContainerError = IErrorBase;
