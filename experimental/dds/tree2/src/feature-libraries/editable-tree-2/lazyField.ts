@@ -249,18 +249,18 @@ export class LazySequence<TTypes extends AllowedTypes>
 		return fieldEditor;
 	}
 
-	public insertAt(index: number, value: FlexibleNodeContent<TTypes>[]): void {
+	public insertAt(index: number, value: Iterable<FlexibleNodeContent<TTypes>>): void {
 		const fieldEditor = this.sequenceEditor();
-		const content = this.normalizeNewContent(Array.isArray(value) ? value : [value]);
+		const content = this.normalizeNewContent(Array.isArray(value) ? value : Array.from(value));
 		assertValidIndex(index, this, true);
 		fieldEditor.insert(index, content);
 	}
 
-	public insertAtStart(value: FlexibleNodeContent<TTypes>[]): void {
+	public insertAtStart(value: Iterable<FlexibleNodeContent<TTypes>>): void {
 		this.insertAt(0, value);
 	}
 
-	public insertAtEnd(value: FlexibleNodeContent<TTypes>[]): void {
+	public insertAtEnd(value: Iterable<FlexibleNodeContent<TTypes>>): void {
 		this.insertAt(this.length, value);
 	}
 
