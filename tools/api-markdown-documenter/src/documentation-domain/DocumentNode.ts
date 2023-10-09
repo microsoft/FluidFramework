@@ -4,6 +4,7 @@
  */
 import type { Parent as UnistParent } from "unist";
 
+import { ApiItemKind } from "@microsoft/api-extractor-model";
 import { DocumentationNodeType } from "./DocumentationNodeType";
 import { SectionNode } from "./SectionNode";
 
@@ -14,9 +15,9 @@ import { SectionNode } from "./SectionNode";
  */
 export interface DocumentNodeProperties {
 	/**
-	 * Name of the API item from which this document node was generated.
+	 * Metadata for the document
 	 */
-	readonly apiItemName: string;
+	readonly documentItemMetadata: DocumentItemMetadata;
 
 	/**
 	 * Child nodes.
@@ -39,6 +40,32 @@ export interface DocumentNodeProperties {
 }
 
 /**
+ * Metadata of a {@link DocumentNode} in terms of its API.
+ *
+ * @remarks
+ * `DocumentItemMetadata` aids in tracing a documentation node to its API, useful for cross-referencing and integrations.
+ *
+ * @public
+ */
+export interface DocumentItemMetadata {
+	/**
+	 * Name of the original API, e.g., class or function, from which this documentation node is derived.
+	 */
+	readonly apiItemName: string;
+
+	/**
+	 * Category or type of the API like 'class' or 'function'.
+	 */
+	readonly apiItemKind: ApiItemKind;
+
+	/**
+	 * Originating package name for the API.
+	 * @remarks documents corresponding to an entity that doesn't belong to a package (e.g. an ApiModel) will not have this field set.
+	 */
+	readonly packageName: string | undefined;
+}
+
+/**
  * Represents the root of a document.
  *
  * @remarks
@@ -55,9 +82,9 @@ export class DocumentNode implements UnistParent<SectionNode>, DocumentNodePrope
 	public readonly type = DocumentationNodeType.Document;
 
 	/**
-	 * {@inheritDoc DocumentNodeProps.apiItemName}
+	 * {@inheritDoc DocumentNodeProps.documentItemMetadata}
 	 */
-	public readonly apiItemName: string;
+	public readonly documentItemMetadata: DocumentItemMetadata;
 
 	/**
 	 * {@inheritDoc DocumentNodeProps.children}
@@ -75,7 +102,7 @@ export class DocumentNode implements UnistParent<SectionNode>, DocumentNodePrope
 	public readonly frontMatter?: string;
 
 	public constructor(properties: DocumentNodeProperties) {
-		this.apiItemName = properties.apiItemName;
+		this.documentItemMetadata = properties.documentItemMetadata;
 		this.children = properties.children;
 		this.documentPath = properties.documentPath;
 		this.frontMatter = properties.frontMatter;

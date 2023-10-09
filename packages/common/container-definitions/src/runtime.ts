@@ -120,11 +120,8 @@ export interface IRuntime extends IDisposable {
 	 * Use this as the primary way of getting access to the user-defined logic within the container runtime.
 	 *
 	 * @see {@link IContainer.getEntryPoint}
-	 *
-	 * @remarks The plan is that eventually IRuntime will no longer have a request() method, this method will no
-	 * longer be optional, and it will become the only way to access the entryPoint for the runtime.
 	 */
-	getEntryPoint?(): Promise<FluidObject | undefined>;
+	getEntryPoint(): Promise<FluidObject | undefined>;
 }
 
 /**
@@ -214,7 +211,8 @@ export interface IContainerContext {
 	 * @deprecated 2.0.0-internal.5.2.0 - The docId is already logged by the {@link IContainerContext.taggedLogger} for
 	 * telemetry purposes, so this is generally unnecessary for telemetry.
 	 * If the id is needed for other purposes it should be passed to the consumer explicitly.
-	 * This member will be removed in the 2.0.0-internal.7.0.0 release.
+	 *
+	 * @privateremarks Tracking in AB#5714
 	 */
 	readonly id: string;
 }

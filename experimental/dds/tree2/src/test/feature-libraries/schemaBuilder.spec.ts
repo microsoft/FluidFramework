@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
 import {
 	areSafelyAssignable,
+	brand,
 	isAny,
 	requireAssignableTo,
 	requireFalse,
@@ -13,6 +16,7 @@ import {
 import { AllowedTypes, FieldKinds, TreeSchema } from "../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { SchemaBuilder } from "../../feature-libraries/schemaBuilder";
+import { ValueSchema } from "../../core";
 
 describe("typedTreeSchema", () => {
 	it("recursive", () => {
@@ -25,7 +29,7 @@ describe("typedTreeSchema", () => {
 		type _1 = requireTrue<
 			areSafelyAssignable<
 				typeof recursiveStruct,
-				ReturnType<typeof recursiveStruct.structFieldsObject.foo.allowedTypes[0]>
+				ReturnType<(typeof recursiveStruct.structFieldsObject.foo.allowedTypes)[0]>
 			>
 		>;
 	});
@@ -48,7 +52,7 @@ describe("typedTreeSchema", () => {
 		type _1 = requireTrue<
 			areSafelyAssignable<
 				typeof recursiveStruct,
-				ReturnType<typeof recursiveStruct.structFieldsObject.foo.allowedTypes[0]>
+				ReturnType<(typeof recursiveStruct.structFieldsObject.foo.allowedTypes)[0]>
 			>
 		>;
 	});
@@ -71,8 +75,30 @@ describe("typedTreeSchema", () => {
 		type _1 = requireTrue<
 			areSafelyAssignable<
 				typeof recursiveStruct,
-				ReturnType<typeof recursiveStruct.structFieldsObject.foo.allowedTypes[0]>
+				ReturnType<(typeof recursiveStruct.structFieldsObject.foo.allowedTypes)[0]>
 			>
 		>;
+	});
+});
+
+describe("intoDocumentSchema", () => {
+	it("Simple", () => {
+		const schemaBuilder = new SchemaBuilder("test");
+		const leafSchema = schemaBuilder.leaf("leaf", ValueSchema.Boolean);
+		const schema = schemaBuilder.intoDocumentSchema(SchemaBuilder.fieldOptional(leafSchema));
+
+		assert.equal(schema.treeSchema.size, 1); // "leaf"
+		assert.equal(schema.treeSchema.get(brand("leaf")), leafSchema);
+	});
+});
+
+describe("intoLibrary", () => {
+	it("Simple", () => {
+		const schemaBuilder = new SchemaBuilder("test");
+		const leafSchema = schemaBuilder.leaf("leaf", ValueSchema.Boolean);
+		const schema = schemaBuilder.intoLibrary();
+
+		assert.equal(schema.treeSchema.size, 1); // "leaf"
+		assert.equal(schema.treeSchema.get(brand("leaf")), leafSchema);
 	});
 });

@@ -20,6 +20,7 @@ import {
 	waitForContainerConnection,
 	summarizeNow,
 	createSummarizerFromFactory,
+	createContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/test-utils";
 import { describeNoCompat, getContainerRuntimeApi } from "@fluid-internal/test-version-utils";
 import { IContainerRuntimeBase, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
@@ -81,12 +82,14 @@ const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 const containerRuntimeFactoryWithDefaultDataStore =
 	getContainerRuntimeApi(pkgVersion).ContainerRuntimeFactoryWithDefaultDataStore;
 
-const runtimeFactory = new containerRuntimeFactoryWithDefaultDataStore(
-	dataStoreFactory1,
-	registryStoreEntries,
-	undefined,
-	[innerRequestHandler],
-	runtimeOptions,
+const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
+	containerRuntimeFactoryWithDefaultDataStore,
+	{
+		defaultFactory: dataStoreFactory1,
+		registryEntries: registryStoreEntries,
+		requestHandlers: [innerRequestHandler],
+		runtimeOptions,
+	},
 );
 
 async function createSummarizer(

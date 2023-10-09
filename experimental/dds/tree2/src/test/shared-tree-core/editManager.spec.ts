@@ -961,7 +961,7 @@ function getAllChanges(manager: TestEditManager): RecursiveReadonly<TestChange>[
 /** Adds a sequenced change to an `EditManager` and returns the delta that was caused by the change */
 function addSequencedChange(
 	editManager: TestEditManager,
-	...args: Parameters<typeof editManager["addSequencedChange"]>
+	...args: Parameters<(typeof editManager)["addSequencedChange"]>
 ): Delta.Root {
 	let delta: Delta.Root = emptyDelta;
 	const offChange = editManager.localBranch.on("change", ({ change }) => {

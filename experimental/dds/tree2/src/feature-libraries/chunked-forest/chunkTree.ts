@@ -250,7 +250,7 @@ export function tryShapeFromFieldSchema(
 	shapes: Map<TreeSchemaIdentifier, ShapeInfo>,
 ): FieldShape | undefined {
 	const kind = policy.fieldKinds.get(type.kind.identifier) ?? fail("missing FieldKind");
-	if (kind.multiplicity !== Multiplicity.Value) {
+	if (kind.multiplicity !== Multiplicity.Single) {
 		return undefined;
 	}
 	if (type.types?.size !== 1) {

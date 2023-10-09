@@ -122,7 +122,11 @@
 		"jwtTokenCache": {
 			"enable": true
 		},
-		"getDeltasRequestMaxOpsRange": 2000
+		"getDeltasRequestMaxOpsRange": 2000,
+		"useNodeCluster": false
+	},
+	"riddler": {
+		"useNodeCluster": false
 	},
 	"client": {
 		"type": "browser",

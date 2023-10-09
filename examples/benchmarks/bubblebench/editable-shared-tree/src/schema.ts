@@ -12,16 +12,16 @@ export const stringSchema = builder.leaf("string", ValueSchema.String);
 export const numberSchema = builder.leaf("number", ValueSchema.Number);
 
 export const bubbleSchema = builder.struct("BubbleBenchAppStateBubble-1.0.0", {
-	x: SchemaBuilder.fieldValue(numberSchema),
-	y: SchemaBuilder.fieldValue(numberSchema),
-	r: SchemaBuilder.fieldValue(numberSchema),
-	vx: SchemaBuilder.fieldValue(numberSchema),
-	vy: SchemaBuilder.fieldValue(numberSchema),
+	x: SchemaBuilder.fieldRequired(numberSchema),
+	y: SchemaBuilder.fieldRequired(numberSchema),
+	r: SchemaBuilder.fieldRequired(numberSchema),
+	vx: SchemaBuilder.fieldRequired(numberSchema),
+	vy: SchemaBuilder.fieldRequired(numberSchema),
 });
 
 export const clientSchema = builder.struct("BubbleBenchAppStateClient-1.0.0", {
-	clientId: SchemaBuilder.fieldValue(stringSchema),
-	color: SchemaBuilder.fieldValue(stringSchema),
+	clientId: SchemaBuilder.fieldRequired(stringSchema),
+	color: SchemaBuilder.fieldRequired(stringSchema),
 	bubbles: SchemaBuilder.fieldSequence(bubbleSchema),
 });
 

@@ -23,7 +23,10 @@ export class Cursor {
 	protected bgColor = "blue";
 	protected enabled = true;
 
-	constructor(public viewportDiv: HTMLDivElement, public pos = 0) {
+	constructor(
+		public viewportDiv: HTMLDivElement,
+		public pos = 0,
+	) {
 		this.makeSpan();
 	}
 

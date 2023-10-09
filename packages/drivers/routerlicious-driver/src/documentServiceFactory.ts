@@ -47,7 +47,6 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
 	enablePrefetch: true,
 	maxConcurrentStorageRequests: 100,
 	maxConcurrentOrdererRequests: 100,
-	aggregateBlobsSmallerThanBytes: undefined,
 	enableDiscovery: false,
 	enableWholeSummaryUpload: false,
 	enableRestLess: true,
@@ -340,7 +339,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			caching: this.driverPolicies.enablePrefetch
 				? LoaderCachingPolicy.Prefetch
 				: LoaderCachingPolicy.NoCaching,
-			minBlobSize: this.driverPolicies.aggregateBlobsSmallerThanBytes,
 			maximumCacheDurationMs: maximumSnapshotCacheDurationMs,
 		};
 

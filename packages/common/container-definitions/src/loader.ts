@@ -6,6 +6,7 @@
 import {
 	IRequest,
 	IResponse,
+	// eslint-disable-next-line import/no-deprecated
 	IFluidRouter,
 	FluidObject,
 	IEvent,
@@ -291,6 +292,7 @@ export type ConnectionState =
 /**
  * The Host's view of a Container and its connection to storage
  */
+// eslint-disable-next-line import/no-deprecated
 export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRouter {
 	/**
 	 * The Delta Manager supporting the op stream for this Container
@@ -391,9 +393,13 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 
 	/**
+	 * @deprecated Requesting will not be supported in a future major release.
+	 * Instead, access the objects in a Fluid Container using entryPoint, and then navigate from there using
+	 * app-specific logic (e.g. retrieving handles from the entryPoint's DDSes, or a container's entryPoint object
+	 * could implement a request paradigm itself)
+	 *
 	 * IMPORTANT: This overload is provided for back-compat where IContainer.request(\{ url: "/" \}) is already implemented and used.
 	 * The functionality it can provide (if the Container implementation is built for it) is redundant with @see {@link IContainer.getEntryPoint}.
-	 * Once that API is mandatory on IContainer, this overload will be deprecated.
 	 *
 	 * Refer to Removing-IFluidRouter.md for details on migrating from the request pattern to using entryPoint.
 	 *
@@ -410,9 +416,6 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	 * app-specific logic (e.g. retrieving handles from the entryPoint's DDSes, or a container's entryPoint object
 	 * could implement a request paradigm itself)
 	 *
-	 * NOTE: IContainer.request(\{url: "/"\}) is not yet deprecated. If and only if the Container implementation supports it,
-	 * that overload may be used as a proxy for getting the entryPoint until {@link IContainer.getEntryPoint} is mandatory.
-	 *
 	 * Refer to Removing-IFluidRouter.md for details on migrating from the request pattern to using entryPoint.
 	 */
 	request(request: IRequest): Promise<IResponse>;
@@ -420,6 +423,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	/**
 	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	readonly IFluidRouter: IFluidRouter;
 
 	/**
@@ -489,15 +493,8 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	/**
 	 * Exposes the entryPoint for the container.
 	 * Use this as the primary way of getting access to the user-defined logic within the container.
-	 * If the method is undefined or the returned promise returns undefined (meaning that exposing the entryPoint
-	 * hasn't been implemented in a particular scenario) fall back to the current approach of requesting the default
-	 * object of the container through the request pattern.
-	 *
-	 * @remarks The plan is that eventually IContainer will no longer implement IFluidRouter (and thus won't have a
-	 * request() method), this method will no longer be optional, and it will become the only way to access
-	 * the entryPoint for the container.
 	 */
-	getEntryPoint?(): Promise<FluidObject | undefined>;
+	getEntryPoint(): Promise<FluidObject | undefined>;
 }
 
 /**
@@ -523,6 +520,7 @@ export interface ILoader extends Partial<IProvideLoader> {
 	/**
 	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	readonly IFluidRouter: IFluidRouter;
 }
 

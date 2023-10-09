@@ -26,7 +26,10 @@ const { MSG } = constants;
  * @param high - Higher 32 bit
  */
 export class Integer64 {
-	constructor(protected low = 0, protected high = 0) {}
+	constructor(
+		protected low = 0,
+		protected high = 0,
+	) {}
 
 	/**
 	 * @returns The higher 32 bit integer part

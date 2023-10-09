@@ -115,7 +115,7 @@ describe("ContextuallyTyped", () => {
 			const builder = new SchemaBuilder("cursorFromContextualData");
 			const generatedSchema = builder.leaf("generated", ValueSchema.String);
 			const nodeSchema = builder.struct("node", {
-				foo: SchemaBuilder.fieldValue(generatedSchema),
+				foo: SchemaBuilder.fieldRequired(generatedSchema),
 			});
 
 			const nodeSchemaData = builder.intoDocumentSchema(
@@ -149,7 +149,7 @@ describe("ContextuallyTyped", () => {
 			const generatedSchema = builder.leaf("generated", ValueSchema.String);
 
 			const nodeSchema = builder.structRecursive("node", {
-				foo: SchemaBuilder.fieldValue(generatedSchema),
+				foo: SchemaBuilder.fieldRequired(generatedSchema),
 				child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchema),
 			});
 

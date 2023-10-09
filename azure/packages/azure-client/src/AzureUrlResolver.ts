@@ -71,18 +71,18 @@ function decodeAzureUrl(urlString: string): {
 } {
 	const url = new URL(urlString);
 	const ordererUrl = url.origin;
-	const searchParams = url.searchParams;
-	const storageUrl = searchParams.get("storage");
+	const searchParameters = url.searchParams;
+	const storageUrl = searchParameters.get("storage");
 	if (storageUrl === null) {
 		throw new Error("Azure URL did not contain a storage URL");
 	}
-	const tenantId = searchParams.get("tenantId");
+	const tenantId = searchParameters.get("tenantId");
 	if (tenantId === null) {
 		throw new Error("Azure URL did not contain a tenant ID");
 	}
 	const storageUrlDecoded = decodeURIComponent(storageUrl);
 	const tenantIdDecoded = decodeURIComponent(tenantId);
-	const containerId = searchParams.get("containerId");
+	const containerId = searchParameters.get("containerId");
 	const containerIdDecoded = containerId === null ? undefined : decodeURIComponent(containerId);
 	return {
 		ordererUrl,

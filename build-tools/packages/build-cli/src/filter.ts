@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Context, Logger, Package } from "@fluidframework/build-tools";
+import { Context, Package } from "@fluidframework/build-tools";
 import path from "node:path";
 import { filterFlags, selectionFlags } from "./flags";
 import { ReleaseGroup, knownReleaseGroups } from "./releaseGroups";

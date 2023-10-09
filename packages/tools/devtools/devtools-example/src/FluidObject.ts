@@ -11,7 +11,6 @@ import { SharedMatrix } from "@fluidframework/matrix";
 import { type SharedObjectClass } from "@fluidframework/fluid-static";
 import {
 	AllowedUpdateType,
-	FieldKinds,
 	type ISharedTree,
 	SchemaBuilder,
 	ValueSchema,
@@ -225,22 +224,20 @@ export class AppData extends DataObject {
 		const handleSchema = builder.leaf("handle-property", ValueSchema.FluidHandle);
 
 		const leafSchema = builder.struct("leaf-item", {
-			leafField: SchemaBuilder.fieldValue(stringSchema, booleanSchema, handleSchema),
+			leafField: SchemaBuilder.fieldRequired(stringSchema, booleanSchema, handleSchema),
 		});
 
 		const childSchema = builder.struct("child-item", {
-			childField: SchemaBuilder.fieldValue(stringSchema, booleanSchema),
+			childField: SchemaBuilder.fieldRequired(stringSchema, booleanSchema),
 			childData: SchemaBuilder.fieldOptional(leafSchema),
 		});
 
 		const rootNodeSchema = builder.struct("root-item", {
 			childrenOne: SchemaBuilder.fieldSequence(childSchema),
-			childrenTwo: SchemaBuilder.fieldValue(numberSchema),
+			childrenTwo: SchemaBuilder.fieldRequired(numberSchema),
 		});
 
-		const schema = builder.intoDocumentSchema(
-			SchemaBuilder.field(FieldKinds.value, rootNodeSchema),
-		);
+		const schema = builder.intoDocumentSchema(SchemaBuilder.fieldRequired(rootNodeSchema));
 
 		sharedTree.schematize({
 			schema,

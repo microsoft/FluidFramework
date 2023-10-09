@@ -18,7 +18,7 @@ import { AzureClient } from "../AzureClient";
 import { type AzureLocalConnectionConfig } from "../interfaces";
 
 function createAzureClient(scopes?: ScopeType[]): AzureClient {
-	const connectionProps: AzureLocalConnectionConfig = {
+	const connectionProperties: AzureLocalConnectionConfig = {
 		tokenProvider: new InsecureTokenProvider(
 			"fooBar",
 			{
@@ -30,7 +30,7 @@ function createAzureClient(scopes?: ScopeType[]): AzureClient {
 		endpoint: "http://localhost:7070",
 		type: "local",
 	};
-	return new AzureClient({ connection: connectionProps });
+	return new AzureClient({ connection: connectionProperties });
 }
 
 const connectionModeOf = (container: IFluidContainer): ConnectionMode =>
@@ -166,22 +166,22 @@ describe("AzureClient", () => {
 	 * Expected behavior: an error should be thrown when trying to get a non-existent container.
 	 */
 	it("cannot load improperly created container (cannot load a non-existent container)", async () => {
-		const consoleErrorFn = console.error;
+		const consoleErrorFunction = console.error;
 		console.error = (): void => {};
 		const containerAndServicesP = client.getContainer("containerConfig", schema);
 
-		const errorFn = (error: Error): boolean => {
+		const errorFunction = (error: Error): boolean => {
 			assert.notStrictEqual(error.message, undefined, "Azure Client error is undefined");
 			return true;
 		};
 
 		await assert.rejects(
 			containerAndServicesP,
-			errorFn,
+			errorFunction,
 			"Azure Client can load a non-existent container",
 		);
 		// eslint-disable-next-line require-atomic-updates
-		console.error = consoleErrorFn;
+		console.error = consoleErrorFunction;
 	});
 
 	/**

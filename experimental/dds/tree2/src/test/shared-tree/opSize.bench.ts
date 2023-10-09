@@ -36,13 +36,13 @@ const builder = new SchemaBuilder("opSize");
 
 const stringSchema = builder.leaf("String", ValueSchema.String);
 const childSchema = builder.struct("Test:Opsize-Bench-Child", {
-	data: SchemaBuilder.fieldValue(stringSchema),
+	data: SchemaBuilder.fieldRequired(stringSchema),
 });
 const parentSchema = builder.struct("Test:Opsize-Bench-Root", {
 	children: SchemaBuilder.fieldSequence(childSchema),
 });
 
-const rootSchema = SchemaBuilder.fieldValue(parentSchema);
+const rootSchema = SchemaBuilder.fieldRequired(parentSchema);
 
 const fullSchemaData = builder.intoDocumentSchema(rootSchema);
 

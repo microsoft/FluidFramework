@@ -190,7 +190,7 @@ export function validateViewSchemaCollection(
 				() => `Map fields of "${identifier}" schema from library "${tree.builder.name}"`,
 				errors,
 			);
-			if ((tree.mapFields.kind as FieldKind) === FieldKinds.value) {
+			if ((tree.mapFields.kind as FieldKind) === FieldKinds.required) {
 				errors.push(
 					`Map fields of "${identifier}" schema from library "${tree.builder.name}" has kind "value". This is invalid since it requires all possible field keys to have a value under them.`,
 				);
@@ -276,6 +276,7 @@ export const bannedFieldNames = new Set([
 	"tryGetField",
 	"type",
 	"value",
+	"localNodeKey",
 ]);
 
 /**
@@ -294,7 +295,7 @@ export function validateStructFieldName(
 
 	if (bannedFieldNames.has(name)) {
 		errors.push(
-			`${describeField()} uses one of the banned field names (${[
+			`${describeField()} uses "${name}" one of the banned field names (${[
 				...bannedFieldNames,
 			]}). ${suggestion}`,
 		);

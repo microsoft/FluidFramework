@@ -3,13 +3,16 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-deprecated
 import { mountableViewRequestHandler } from "@fluidframework/aqueduct";
 import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+// eslint-disable-next-line import/no-deprecated
 import { buildRuntimeRequestHandler } from "@fluidframework/request-handler";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	requestFluidObject,
 	RequestParser,
 	RuntimeFactoryHelper,
@@ -31,6 +34,7 @@ const viewRequestHandler = async (request: RequestParser, runtime: IContainerRun
 			url: ``,
 			headers: request.headers,
 		});
+		// eslint-disable-next-line import/no-deprecated
 		const smdeDataObject = await requestFluidObject<SmdeDataObject>(
 			await runtime.getRootDataStore(defaultComponentId),
 			objectRequest,
@@ -62,7 +66,9 @@ class SmdeContainerFactory extends RuntimeFactoryHelper {
 		const runtime: ContainerRuntime = await ContainerRuntime.load(
 			context,
 			registry,
+			// eslint-disable-next-line import/no-deprecated
 			buildRuntimeRequestHandler(
+				// eslint-disable-next-line import/no-deprecated
 				mountableViewRequestHandler(MountableView, [viewRequestHandler]),
 			),
 			undefined, // runtimeOptions

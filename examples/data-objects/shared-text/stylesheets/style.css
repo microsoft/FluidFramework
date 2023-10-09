@@ -144,7 +144,9 @@
 	margin: 0 auto 100px;
 	padding: 45px;
 	text-align: center;
-	box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.2), 0 5px 5px 0 rgba(0, 0, 0, 0.24);
+	box-shadow:
+		0 0 20px 0 rgba(0, 0, 0, 0.2),
+		0 5px 5px 0 rgba(0, 0, 0, 0.24);
 }
 .form input {
 	font-family: "Roboto", sans-serif;
@@ -244,7 +246,9 @@ div.titleletters {
 }
 .titleletter:before {
 	color: #fff;
-	text-shadow: -1px 0px 1px rgba(255, 255, 255, 0.8), 1px 0px 1px rgba(0, 0, 0, 0.8);
+	text-shadow:
+		-1px 0px 1px rgba(255, 255, 255, 0.8),
+		1px 0px 1px rgba(0, 0, 0, 0.8);
 	z-index: 3;
 	transform: rotateX(0deg) rotateY(-15deg) rotateZ(0deg);
 }

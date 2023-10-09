@@ -4,14 +4,16 @@
  */
 
 import { EventEmitter } from "events";
+// eslint-disable-next-line import/no-deprecated
 import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/core-utils";
 import {
 	IFluidLoadable,
-	IFluidRouter,
 	IRequest,
 	IResponse,
 	IFluidHandle,
+	// eslint-disable-next-line import/no-deprecated
+	IFluidRouter,
 } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
@@ -29,6 +31,7 @@ import "simplemde/dist/simplemde.min.css";
 /**
  * Data object storing the data to back a SimpleMDE editor.  Primarily just a SharedString.
  */
+// eslint-disable-next-line import/no-deprecated
 export class SmdeDataObject extends EventEmitter implements IFluidLoadable, IFluidRouter {
 	public static async load(runtime: IFluidDataStoreRuntime, existing: boolean) {
 		const collection = new SmdeDataObject(runtime);
@@ -49,6 +52,7 @@ export class SmdeDataObject extends EventEmitter implements IFluidLoadable, IFlu
 		return this;
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	public get IFluidRouter() {
 		return this;
 	}
@@ -67,6 +71,7 @@ export class SmdeDataObject extends EventEmitter implements IFluidLoadable, IFlu
 	}
 
 	public async request(request: IRequest): Promise<IResponse> {
+		// eslint-disable-next-line import/no-deprecated
 		return defaultFluidObjectRequestHandler(this, request);
 	}
 
@@ -113,6 +118,7 @@ export class SmdeFactory implements IFluidDataStoreFactory {
 				]),
 			),
 			existing,
+			async () => routerP,
 		);
 		const routerP = SmdeDataObject.load(runtime, existing);
 

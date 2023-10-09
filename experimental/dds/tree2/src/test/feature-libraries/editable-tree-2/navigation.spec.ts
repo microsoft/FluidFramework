@@ -9,7 +9,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/editable-tree-2/navigation";
 
-import { TreeField, TreeNode } from "../../../feature-libraries";
+import { TreeField, TreeNode, boxedIterator } from "../../../feature-libraries";
 import { FieldUpPath, UpPath } from "../../../core";
 
 /**
@@ -51,6 +51,8 @@ function test(root: TreeField): void {
 	visitBipartiteIterableTreeWithState(
 		root,
 		0,
+		(field) => field[boxedIterator](),
+		(node) => node[boxedIterator](),
 		(field: TreeField, n) => n,
 		(node: TreeNode, n) => {
 			depth = Math.max(n, depth);
@@ -62,6 +64,8 @@ function test(root: TreeField): void {
 	visitBipartiteIterableTreeWithState(
 		root,
 		undefined,
+		(field) => field[boxedIterator](),
+		(node) => node[boxedIterator](),
 		(field: TreeField, parent: UpPath | undefined): FieldUpPath => ({
 			parent,
 			field: field.key,

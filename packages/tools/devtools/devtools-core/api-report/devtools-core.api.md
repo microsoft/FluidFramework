@@ -248,7 +248,7 @@ export const EditType: {
 };
 
 // @internal (undocumented)
-export type EditType = typeof EditType[keyof typeof EditType];
+export type EditType = (typeof EditType)[keyof typeof EditType];
 
 // @public
 export interface FluidDevtoolsProps {

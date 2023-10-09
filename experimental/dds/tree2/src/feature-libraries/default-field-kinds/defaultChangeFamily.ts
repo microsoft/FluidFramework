@@ -20,7 +20,7 @@ import {
 	FieldChangeset,
 	ModularChangeset,
 } from "../modular-schema";
-import { fieldKinds, optional, sequence, value as valueFieldKind } from "./defaultFieldKinds";
+import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds";
 
 export type DefaultChangeset = ModularChangeset;
 

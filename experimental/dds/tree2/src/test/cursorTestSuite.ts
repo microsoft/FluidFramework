@@ -39,7 +39,7 @@ const emptySchema3 = schemaBuilder.struct("Empty Struct 3", {});
 export const mapSchema = schemaBuilder.map("Map", SchemaBuilder.fieldSequence(Any));
 // Struct with fixed shape
 export const structSchema = schemaBuilder.struct("struct", {
-	child: SchemaBuilder.fieldValue(leafNumber),
+	child: SchemaBuilder.fieldRequired(leafNumber),
 });
 
 export const testTreeSchema = schemaBuilder.intoDocumentSchema(SchemaBuilder.fieldSequence(Any));

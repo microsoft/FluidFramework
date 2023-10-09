@@ -299,12 +299,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 		return TreeNavigationResult.Ok;
 	}
 
-	/**
-	 * Set `cursorToMove` to location described by path.
-	 * This is NOT a relative move: current position is discarded.
-	 * Path must point to existing node.
-	 */
-	private moveCursorToPath(
+	public moveCursorToPath(
 		destination: UpPath | undefined,
 		cursorToMove: ITreeSubscriptionCursor,
 	): void {

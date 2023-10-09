@@ -226,7 +226,6 @@ describe("DeltaStorageService", () => {
 							minimumSequenceNumber: 1,
 							referenceSequenceNumber: 1,
 							sequenceNumber: from,
-							term: 1,
 							type: "dds",
 							timestamp: Date.now(),
 						},
@@ -244,7 +243,7 @@ describe("DeltaStorageService", () => {
 				async (from, to) => getCached(from, to),
 				(from, to) => [],
 				(ops) => {},
-				() => ({ isFirstSnapshotFromNetwork: false } as any as OdspDocumentStorageService),
+				() => ({ isFirstSnapshotFromNetwork: false }) as any as OdspDocumentStorageService,
 			);
 
 			const messages = odspDeltaStorageServiceWithCache.fetchMessages(1, undefined);

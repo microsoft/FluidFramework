@@ -206,7 +206,11 @@ export class BlobShallowCopy extends BlobCore {
 	 * @param start - Start point of the blob in the buffer.
 	 * @param end - End point of the blob in the buffer.
 	 */
-	constructor(protected data: Uint8Array, protected start: number, protected end: number) {
+	constructor(
+		protected data: Uint8Array,
+		protected start: number,
+		protected end: number,
+	) {
 		super();
 	}
 

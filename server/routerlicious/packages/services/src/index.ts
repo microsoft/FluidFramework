@@ -23,6 +23,7 @@ export { Throttler } from "./throttler";
 export { ThrottlerHelper } from "./throttlerHelper";
 export {
 	BasicWebServerFactory,
+	NodeClusterWebServerFactory,
 	containsPathTraversal,
 	decodeHeader,
 	defaultErrorMessage,
@@ -31,6 +32,7 @@ export {
 	handleResponse,
 	HttpServer,
 	IsEphemeralContainer,
+	INodeClusterConfig,
 	IHttpServerConfig,
 	ISocketIoRedisConnection,
 	ISocketIoRedisOptions,
@@ -40,6 +42,7 @@ export {
 	RestLessServer,
 	run,
 	runService,
+	SocketIoNodeClusterWebServerFactory,
 	SocketIoWebServerFactory,
 	validateRequestParams,
 	WebServer,

@@ -11,8 +11,8 @@ const builder = new SchemaBuilder("Simple Schema");
 export const numberSchema = builder.leaf("number", ValueSchema.Number);
 
 export const pointSchema = builder.struct("point", {
-	x: SchemaBuilder.fieldValue(numberSchema),
-	y: SchemaBuilder.fieldValue(numberSchema),
+	x: SchemaBuilder.fieldRequired(numberSchema),
+	y: SchemaBuilder.fieldRequired(numberSchema),
 });
 
 export const appSchemaData = builder.intoDocumentSchema(SchemaBuilder.fieldSequence(pointSchema));

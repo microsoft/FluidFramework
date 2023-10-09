@@ -28,7 +28,7 @@ export const RangeOperators = ["^", "~", ""] as const;
  * @remarks
  * We intentionally only include the operators we use, not everything considered valid in the semver spec.
  */
-export type RangeOperator = typeof RangeOperators[number];
+export type RangeOperator = (typeof RangeOperators)[number];
 
 /**
  * A typeguard to check if a variable is a {@link RangeOperator}.
@@ -58,7 +58,7 @@ export const WorkspaceRanges = ["workspace:*", "workspace:^", "workspace:~"] as 
  * We intentionally only include the ranges we use, not everything considered valid by workspace-protocol-aware tools
  * like yarn and pnpm.
  */
-export type WorkspaceRange = typeof WorkspaceRanges[number];
+export type WorkspaceRange = (typeof WorkspaceRanges)[number];
 
 /**
  * A typeguard to check if a variable is a {@link WorkspaceRange}.

@@ -43,7 +43,10 @@ export class NpmDepChecker {
 		["@angular/compiler", "@angular/platform-browser-dynamic"],
 	]);
 
-	constructor(private readonly pkg: Package, private readonly checkFiles: string[]) {
+	constructor(
+		private readonly pkg: Package,
+		private readonly checkFiles: string[],
+	) {
 		if (checkFiles.length !== 0) {
 			for (const name of Object.keys(pkg.packageJson.dependencies!)) {
 				if (this.ignored.indexOf(name) !== -1) {

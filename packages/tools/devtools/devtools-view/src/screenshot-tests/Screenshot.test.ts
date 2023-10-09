@@ -222,9 +222,8 @@ async function generateTestSuite(): Promise<void> {
 										throw error;
 									}
 
-									const screenshotDiff = await checkScreenshotDiff(
-										screenshotFilePath,
-									);
+									const screenshotDiff =
+										await checkScreenshotDiff(screenshotFilePath);
 
 									if (screenshotDiff) {
 										expect.fail(

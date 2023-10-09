@@ -11,6 +11,7 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	createSummarizer,
+	createContainerRuntimeFactoryWithDefaultDataStore,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
@@ -74,7 +75,7 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider, apis) => {
 	}
 
 	let provider: ITestObjectProvider;
-	const factory = new DataObjectFactory(
+	const defaultFactory = new DataObjectFactory(
 		"TestDataObject",
 		TestDataObject,
 		[SharedMap.getFactory(), SharedCell.getFactory()],
@@ -85,12 +86,13 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider, apis) => {
 		enableRuntimeIdCompressor: true,
 	};
 
-	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-		factory,
-		[[factory.type, Promise.resolve(factory)]],
-		undefined,
-		undefined,
-		runtimeOptions,
+	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
+		ContainerRuntimeFactoryWithDefaultDataStore,
+		{
+			defaultFactory,
+			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+			runtimeOptions,
+		},
 	);
 
 	let containerRuntime: ContainerRuntime;
@@ -183,12 +185,12 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider, apis) => {
 		// The first container should set a metadata property that automatically should
 		// enable it for any other container runtimes that are created.
 		const runtimeFactoryWithoutCompressorEnabled =
-			new ContainerRuntimeFactoryWithDefaultDataStore(
-				factory,
-				[[factory.type, Promise.resolve(factory)]],
-				undefined,
-				undefined,
-				undefined,
+			createContainerRuntimeFactoryWithDefaultDataStore(
+				ContainerRuntimeFactoryWithDefaultDataStore,
+				{
+					defaultFactory,
+					registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+				},
 			);
 
 		const container4 = await provider.loadContainer(runtimeFactoryWithoutCompressorEnabled);
@@ -562,7 +564,7 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider, apis) => {
 	// IdCompressor is at container runtime level, which means that individual DDSs
 	// in the same container and different DataStores should have the same underlying compressor state
 	it("DDSs in different DataStores have the same compressor state", async () => {
-		const dataStore2 = await factory.createInstance(containerRuntime);
+		const dataStore2 = await defaultFactory.createInstance(containerRuntime);
 		mainDataStore.map.set("DataStore2", dataStore2.handle);
 
 		await provider.ensureSynchronized();

@@ -55,6 +55,8 @@ export function generateToken(
 	documentId?: string,
 	user?: IUser,
 	lifetime: number = 60 * 60,
+	// Naming intended to match `ITokenClaims.ver`
+	// eslint-disable-next-line unicorn/prevent-abbreviations
 	ver: string = "1.0",
 ): string {
 	let userClaim = user ?? generateUser();
@@ -64,10 +66,9 @@ export function generateToken(
 
 	// Current time in seconds
 	const now = Math.round(Date.now() / 1000);
-	const docId = documentId ?? "";
 
 	const claims: ITokenClaims & { jti: string } = {
-		documentId: docId,
+		documentId: documentId ?? "",
 		scopes,
 		tenantId,
 		user: userClaim,

@@ -22,6 +22,7 @@ export {
 	forEachNode,
 	forEachNodeInSubtree,
 	forEachField,
+	iterateCursorField,
 	ITreeCursorSynchronous,
 	PathRootPrefix,
 	inCursorField,

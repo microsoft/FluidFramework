@@ -137,6 +137,7 @@ export function create(
 	server: http.Server,
 	socketIoAdapterConfig?: any,
 	socketIoConfig?: any,
+	ioSetup?: (io: Server) => void,
 ): core.IWebSocketServer {
 	const options: Redis.RedisOptions = {
 		host: redisConfig.host,
@@ -208,6 +209,9 @@ export function create(
 		},
 		adapter,
 	});
+	if (ioSetup !== undefined) {
+		ioSetup(io);
+	}
 
 	return new SocketIoServer(io, pub, sub);
 }

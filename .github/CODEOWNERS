@@ -64,7 +64,6 @@ api-report/cell.api.md                                                    @micro
 api-report/container-loader.api.md                                        @microsoft/fluid-cr-loader
 api-report/container-runtime-definitions.api.md                           @microsoft/fluid-cr-runtime
 api-report/container-runtime.api.md                                       @microsoft/fluid-cr-runtime
-api-report/container-utils.api.md                                         @microsoft/fluid-cr-runtime
 api-report/counter.api.md                                                 @microsoft/fluid-cr-dds
 api-report/data-object-base.api.md                                        @microsoft/fluid-cr-framework
 api-report/datastore-definitions.api.md                                   @microsoft/fluid-cr-runtime

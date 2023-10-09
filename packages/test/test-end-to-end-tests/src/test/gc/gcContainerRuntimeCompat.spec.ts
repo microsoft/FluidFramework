@@ -50,13 +50,12 @@ describeFullCompat.skip("GC summary compatibility tests", (getTestObjectProvider
 		};
 		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 			runtime.IFluidHandleContext.resolveHandle(request);
-		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-			dataObjectFactory,
-			[[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
-			undefined,
-			[innerRequestHandler],
+		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+			defaultFactory: dataObjectFactory,
+			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
+			requestHandlers: [innerRequestHandler],
 			runtimeOptions,
-		);
+		});
 		return provider.createContainer(runtimeFactory, { configProvider: mockConfigProvider() });
 	}
 

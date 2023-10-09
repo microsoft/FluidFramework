@@ -182,7 +182,7 @@ export type ApplyMultiplicity<
 	[Multiplicity.Sequence]: Mode extends ApiMode.Editable | ApiMode.EditableUnwrapped
 		? EditableSequenceField<TypedChild>
 		: TypedChild[];
-	[Multiplicity.Value]: Mode extends ApiMode.Editable
+	[Multiplicity.Single]: Mode extends ApiMode.Editable
 		? EditableValueField<TypedChild>
 		: TypedChild;
 }[TMultiplicity];

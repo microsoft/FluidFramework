@@ -10,6 +10,7 @@ import {
 	ContainerRuntime,
 } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+// eslint-disable-next-line import/no-deprecated
 import { RuntimeRequestHandler, buildRuntimeRequestHandler } from "@fluidframework/request-handler";
 import {
 	IFluidDataStoreRegistry,
@@ -38,25 +39,36 @@ export class BaseContainerRuntimeFactory
 	}
 	private readonly registry: IFluidDataStoreRegistry;
 
+	private readonly registryEntries: NamedFluidDataStoreRegistryEntries;
+	private readonly dependencyContainer?: IFluidDependencySynthesizer;
+	private readonly runtimeOptions?: IContainerRuntimeOptions;
+	private readonly requestHandlers: RuntimeRequestHandler[];
+	private readonly provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+
 	/**
 	 * @param registryEntries - The data store registry for containers produced
 	 * @param dependencyContainer - deprecated, will be removed in a future release
 	 * @param requestHandlers - Request handlers for containers produced
 	 * @param runtimeOptions - The runtime options passed to the ContainerRuntime when instantiating it
-	 * @param initializeEntryPoint - Function that will initialize the entryPoint of the ContainerRuntime instances
+	 * @param provideEntryPoint - Function that will initialize the entryPoint of the ContainerRuntime instances
 	 * created with this factory
 	 */
-	constructor(
-		private readonly registryEntries: NamedFluidDataStoreRegistryEntries,
-		private readonly dependencyContainer?: IFluidDependencySynthesizer,
-		private readonly requestHandlers: RuntimeRequestHandler[] = [],
-		private readonly runtimeOptions?: IContainerRuntimeOptions,
-		private readonly initializeEntryPoint?: (
-			runtime: IContainerRuntime,
-		) => Promise<FluidObject>,
-	) {
+	constructor(props: {
+		registryEntries: NamedFluidDataStoreRegistryEntries;
+		dependencyContainer?: IFluidDependencySynthesizer;
+		/** @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md */
+		requestHandlers?: RuntimeRequestHandler[];
+		runtimeOptions?: IContainerRuntimeOptions;
+		provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+	}) {
 		super();
-		this.registry = new FluidDataStoreRegistry(registryEntries);
+
+		this.registryEntries = props.registryEntries;
+		this.dependencyContainer = props.dependencyContainer;
+		this.runtimeOptions = props.runtimeOptions;
+		this.provideEntryPoint = props.provideEntryPoint;
+		this.requestHandlers = props.requestHandlers ?? [];
+		this.registry = new FluidDataStoreRegistry(this.registryEntries);
 	}
 
 	public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
@@ -87,8 +99,9 @@ export class BaseContainerRuntimeFactory
 			runtimeOptions: this.runtimeOptions,
 			registryEntries: this.registryEntries,
 			containerScope: scope,
+			// eslint-disable-next-line import/no-deprecated
 			requestHandler: buildRuntimeRequestHandler(...this.requestHandlers),
-			initializeEntryPoint: this.initializeEntryPoint,
+			provideEntryPoint: this.provideEntryPoint,
 		});
 	}
 

@@ -35,27 +35,6 @@ export const localNodeKeySymbol: unique symbol = Symbol("editable-tree:localNode
 export const setField: unique symbol = Symbol("editable-tree:setField()");
 
 /**
- * Status of the tree that a particular node in {@link EditableTree} and {@link UntypedTree} belongs to.
- * @alpha
- */
-export enum TreeStatus {
-	/**
-	 * Is parented under the root field.
-	 */
-	InDocument = 0,
-
-	/**
-	 * Is not parented under the root field, but can be added back to the original document tree.
-	 */
-	Removed = 1,
-
-	/**
-	 * Is removed and cannot be added back to the original document tree.
-	 */
-	Deleted = 2,
-}
-
-/**
  * A tree which can be traversed and edited.
  *
  * When iterating, only visits non-empty fields.

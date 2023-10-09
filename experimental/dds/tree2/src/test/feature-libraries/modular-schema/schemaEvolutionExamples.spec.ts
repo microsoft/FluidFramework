@@ -30,7 +30,10 @@ import { brand } from "../../../util";
 import { allowsFieldSuperset, allowsTreeSuperset } from "../../../feature-libraries/modular-schema";
 
 class TestSchemaRepository extends InMemoryStoredSchemaRepository {
-	public constructor(public readonly policy: FullSchemaPolicy, data?: SchemaData) {
+	public constructor(
+		public readonly policy: FullSchemaPolicy,
+		data?: SchemaData,
+	) {
 		super(data);
 	}
 
@@ -97,8 +100,8 @@ describe("Schema Evolution Examples", () => {
 	});
 
 	const point = contentTypesBuilder.struct(pointIdentifier, {
-		x: SchemaBuilder.field(FieldKinds.value, number),
-		y: SchemaBuilder.field(FieldKinds.value, number),
+		x: SchemaBuilder.field(FieldKinds.required, number),
+		y: SchemaBuilder.field(FieldKinds.required, number),
 	});
 
 	const defaultContentLibrary = contentTypesBuilder.intoLibrary();
@@ -111,14 +114,14 @@ describe("Schema Evolution Examples", () => {
 
 	// A type that can be used to position items without an inherent position within the canvas.
 	const positionedCanvasItem = containersBuilder.struct(positionedCanvasItemIdentifier, {
-		position: SchemaBuilder.field(FieldKinds.value, point),
-		content: SchemaBuilder.field(FieldKinds.value, text),
+		position: SchemaBuilder.field(FieldKinds.required, point),
+		content: SchemaBuilder.field(FieldKinds.required, text),
 	});
 	const canvas = containersBuilder.struct(canvasIdentifier, {
 		items: SchemaBuilder.field(FieldKinds.sequence, positionedCanvasItem),
 	});
 
-	const root: FieldSchema = SchemaBuilder.field(FieldKinds.value, canvas);
+	const root: FieldSchema = SchemaBuilder.field(FieldKinds.required, canvas);
 
 	const tolerantRoot = SchemaBuilder.field(FieldKinds.optional, canvas);
 
@@ -254,14 +257,14 @@ describe("Schema Evolution Examples", () => {
 				"0d8da0ca-b3ba-4025-93a3-b8f181379e3b",
 			);
 			const counter = builderWithCounter.struct(counterIdentifier, {
-				count: SchemaBuilder.field(FieldKinds.value, number),
+				count: SchemaBuilder.field(FieldKinds.required, number),
 			});
 			// Lets allow counters inside positionedCanvasItem, instead of just text:
 			const positionedCanvasItem2 = builderWithCounter.struct(
 				positionedCanvasItemIdentifier,
 				{
-					position: SchemaBuilder.field(FieldKinds.value, point),
-					content: SchemaBuilder.field(FieldKinds.value, text, counter),
+					position: SchemaBuilder.field(FieldKinds.required, point),
+					content: SchemaBuilder.field(FieldKinds.required, text, counter),
 				},
 			);
 			// And canvas is still the same storage wise, but its view schema references the updated positionedCanvasItem2:
@@ -399,7 +402,7 @@ describe("Schema Evolution Examples", () => {
 	// 			() => formattedText,
 	// 			codePoint,
 	// 		),
-	// 		size: SchemaBuilder.field(FieldKinds.value, number),
+	// 		size: SchemaBuilder.field(FieldKinds.required, number),
 	// 	});
 
 	// 	// We are also updating positionedCanvasItem to accept the new type.
@@ -410,9 +413,9 @@ describe("Schema Evolution Examples", () => {
 	// 	// as no version of the app need both view schema at the same time
 	// 	// (except for some approaches for staging roll-outs which are not covered here).
 	// 	const positionedCanvasItemNew = builder.struct(positionedCanvasItemIdentifier, {
-	// 		position: SchemaBuilder.field(FieldKinds.value, point),
+	// 		position: SchemaBuilder.field(FieldKinds.required, point),
 	// 		// Note that we are specifically excluding the old text here
-	// 		content: SchemaBuilder.field(FieldKinds.value, formattedText),
+	// 		content: SchemaBuilder.field(FieldKinds.required, formattedText),
 	// 	});
 	// 	// And canvas is still the same storage wise, but its view schema references the updated positionedCanvasItem2:
 	// 	const canvas2 = builder.struct(canvasIdentifier, {
@@ -420,7 +423,7 @@ describe("Schema Evolution Examples", () => {
 	// 	});
 
 	// 	const viewCollection: SchemaCollection = builder.intoDocumentSchema(
-	// 		SchemaBuilder.fieldValue(canvas2),
+	// 		SchemaBuilder.fieldRequired(canvas2),
 	// 	);
 
 	// 	const textAdapter: TreeAdapter = { input: textIdentifier, output: formattedTextIdentifier };
@@ -472,9 +475,9 @@ describe("Schema Evolution Examples", () => {
 	// 		// TODO: add an automated way to determine that this is the needed upgrade (some way to union schema?).
 	// 		const positionedCanvasItemTolerant = treeSchema({
 	// 			structFields: {
-	// 				position: fieldSchema(FieldKinds.value, [pointIdentifier]),
+	// 				position: fieldSchema(FieldKinds.required, [pointIdentifier]),
 	// 				// Note that we are specifically supporting both formats here.
-	// 				content: fieldSchema(FieldKinds.value, [
+	// 				content: fieldSchema(FieldKinds.required, [
 	// 					formattedTextIdentifier,
 	// 					textIdentifier,
 	// 				]),

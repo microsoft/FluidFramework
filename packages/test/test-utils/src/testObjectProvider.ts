@@ -7,7 +7,6 @@ import {
 	IContainer,
 	IHostLoader,
 	IFluidCodeDetails,
-	LoaderHeader,
 	ILoader,
 } from "@fluidframework/container-definitions";
 import {
@@ -112,9 +111,6 @@ export interface ITestContainerConfig {
 
 	/** Loader options for the loader used to create containers */
 	loaderProps?: Partial<ILoaderProps>;
-
-	/** Temporary flag: simulate read connection using delay connection, default is true */
-	simulateReadConnectionUsingDelay?: boolean;
 }
 
 export const createDocumentId = (): string => uuid();
@@ -386,41 +382,11 @@ export class TestObjectProvider implements ITestObjectProvider {
 		return this.resolveContainer(loader, requestHeader);
 	}
 
-	private async resolveContainer(
-		loader: ILoader,
-		requestHeader?: IRequestHeader,
-		delay: boolean = true,
-	) {
-		// Once AB#3889 is done to switch default connection mode to "read" on load, we don't need
-		// to load "delayed" across the board. Remove the following code.
-		const delayConnection =
-			delay &&
-			(requestHeader === undefined || requestHeader[LoaderHeader.reconnect] !== false);
-		const headers: IRequestHeader | undefined = delayConnection
-			? {
-					[LoaderHeader.loadMode]: { deltaConnection: "delayed" },
-					...requestHeader,
-			  }
-			: requestHeader;
-
-		const container = await loader.resolve({
+	private async resolveContainer(loader: ILoader, headers?: IRequestHeader) {
+		return loader.resolve({
 			url: await this.driver.createContainerUrl(this.documentId),
 			headers,
 		});
-
-		// Once AB#3889 is done to switch default connection mode to "read" on load, we don't need
-		// to load "delayed" across the board. Remove the following code.
-		if (delayConnection) {
-			// Older version may not have connect/disconnect. It was add in PR#9439, and available >= 0.59.1000
-			const maybeContainer = container as Partial<IContainer>;
-			if (maybeContainer.connect !== undefined) {
-				container.connect();
-			} else {
-				// back compat. Remove when we don't support < 0.59.1000
-				(container as any).resume();
-			}
-		}
-		return container;
 	}
 
 	/**
@@ -473,11 +439,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 	): Promise<IContainer> {
 		const loader = this.makeTestLoader(testContainerConfig);
 
-		const container = await this.resolveContainer(
-			loader,
-			requestHeader,
-			testContainerConfig?.simulateReadConnectionUsingDelay,
-		);
+		const container = await this.resolveContainer(loader, requestHeader);
 		await this.waitContainerToCatchUp(container);
 
 		return container;

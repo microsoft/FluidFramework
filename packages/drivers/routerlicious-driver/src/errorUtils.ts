@@ -31,7 +31,7 @@ export const RouterliciousErrorTypes = {
 	sslCertError: "sslCertError",
 } as const;
 export type RouterliciousErrorTypes =
-	typeof RouterliciousErrorTypes[keyof typeof RouterliciousErrorTypes];
+	(typeof RouterliciousErrorTypes)[keyof typeof RouterliciousErrorTypes];
 
 /**
  * Routerlicious Error types

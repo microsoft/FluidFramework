@@ -16,7 +16,10 @@ export class CheckpointManager {
 	private pendingCheckpoint: Deferred<void> | undefined;
 	private error: any;
 
-	constructor(private readonly id: number, private readonly consumer: IConsumer) {}
+	constructor(
+		private readonly id: number,
+		private readonly consumer: IConsumer,
+	) {}
 
 	/**
 	 * Requests a checkpoint at the given offset

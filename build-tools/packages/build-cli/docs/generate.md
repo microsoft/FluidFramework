@@ -96,15 +96,18 @@ Generates a new changeset file. You will be prompted to select the packages affe
 
 ```
 USAGE
-  $ flub generate changeset [-v | --quiet] [--json] [-b <value>] [--empty] [--all] [--uiMode default|simple]
+  $ flub generate changeset [-v | --quiet] [--json] [-b <value>] [--empty -g
+    client|server|azure|build-tools|gitrest|historian] [--all] [--uiMode default|simple]
 
 FLAGS
-  -b, --branch=<value>  [default: main] The branch to compare the current changes against. The current changes will be
-                        compared with this branch to populate the list of changed packages. You must have a valid remote
-                        pointing to the microsoft/FluidFramework repo.
-  --all                 Include ALL packages, including examples and other unpublished packages.
-  --empty               Create an empty changeset file. If this flag is used, all other flags are ignored. A new,
-                        randomly named changeset file will be created every time --empty is used.
+  -b, --branch=<value>         [default: main] The branch to compare the current changes against. The current changes
+                               will be compared with this branch to populate the list of changed packages. You must have
+                               a valid remote pointing to the microsoft/FluidFramework repo.
+  -g, --releaseGroup=<option>  Name of a release group.
+                               <options: client|server|azure|build-tools|gitrest|historian>
+  --all                        Include ALL packages, including examples and other unpublished packages.
+  --empty                      Create an empty changeset file. If this flag is used, all other flags are ignored. A new,
+                               randomly named changeset file will be created every time --empty is used.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.

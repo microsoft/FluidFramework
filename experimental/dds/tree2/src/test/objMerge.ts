@@ -16,7 +16,10 @@ export class Conflicted extends Merged {
 }
 
 export class Conflict extends Merged {
-	public constructor(public readonly lhs: unknown, public readonly rhs: unknown) {
+	public constructor(
+		public readonly lhs: unknown,
+		public readonly rhs: unknown,
+	) {
 		super();
 	}
 }

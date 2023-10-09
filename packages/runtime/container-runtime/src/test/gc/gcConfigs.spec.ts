@@ -327,14 +327,6 @@ describe("Garbage Collection configurations", () => {
 			gc = createGcWithPrivateMembers(undefined /* metadata */, { gcAllowed: false });
 			assert(!gc.configs.gcEnabled, "gcEnabled incorrect");
 		});
-		it("sweepAllowed ignored", () => {
-			gc = createGcWithPrivateMembers(undefined /* metadata */, {
-				gcAllowed: false,
-				sweepAllowed: true, // ignored. Not even checked against gcAllowed.
-				// no sweepGeneration option set
-			});
-			assert(!gc.configs.sweepEnabled, "sweepEnabled incorrect");
-		});
 		it("sweepGeneration specified, gcAllowed false", () => {
 			assert.throws(
 				() => {
@@ -414,7 +406,6 @@ describe("Garbage Collection configurations", () => {
 				gcFeatureMatrix: { tombstoneGeneration: 2, sweepGeneration: 2 },
 			};
 			gc = createGcWithPrivateMembers(undefined /* metadata */, {
-				sweepAllowed: true, // ignored
 				[gcTombstoneGenerationOptionName]: 2,
 				[gcSweepGenerationOptionName]: 2,
 			});
@@ -451,7 +442,6 @@ describe("Garbage Collection configurations", () => {
 				gcFeatureMatrix: { sweepGeneration: 2, tombstoneGeneration: undefined },
 			};
 			gc = createGcWithPrivateMembers(undefined /* metadata */, {
-				sweepAllowed: true, // ignored
 				[gcSweepGenerationOptionName]: 2,
 			});
 			const outputMetadata = gc.getMetadata();

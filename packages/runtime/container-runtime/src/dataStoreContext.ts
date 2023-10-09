@@ -740,11 +740,6 @@ export abstract class FluidDataStoreContext
 		this.makeLocallyVisibleFn();
 	}
 
-	/** @deprecated - To be replaced by calling makeLocallyVisible directly  */
-	public bindToContext() {
-		this.makeLocallyVisibleFn();
-	}
-
 	protected bindRuntime(channel: IFluidDataStoreChannel) {
 		if (this.channel) {
 			throw new Error("Runtime already bound");
@@ -1206,7 +1201,7 @@ export class LocalDetachedFluidDataStoreContext
 		// of data store factories tends to construct the data object (at least kick off an async method that returns
 		// it); that code moved to the entryPoint initialization function, so we want to ensure it still executes
 		// before the data store is attached.
-		await dataStoreChannel.entryPoint?.get();
+		await dataStoreChannel.entryPoint.get();
 
 		if (await this.isRoot()) {
 			dataStoreChannel.makeVisibleAndAttachGraph();

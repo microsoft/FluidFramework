@@ -22,7 +22,12 @@ export class Rectangle {
 		return { width: this.width, height: this.height };
 	}
 
-	constructor(public x: number, public y: number, public width: number, public height: number) {}
+	constructor(
+		public x: number,
+		public y: number,
+		public width: number,
+		public height: number,
+	) {}
 
 	public square() {
 		let len = this.width;

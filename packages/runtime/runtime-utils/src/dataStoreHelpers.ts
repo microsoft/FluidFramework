@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+// eslint-disable-next-line import/no-deprecated
 import { FluidObject, IFluidRouter, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import {
 	IFluidDataStoreFactory,
@@ -65,7 +66,11 @@ export function responseToException(response: IResponse, request: IRequest): Err
 	return responseErr;
 }
 
+/**
+ * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+ */
 export async function requestFluidObject<T = FluidObject>(
+	// eslint-disable-next-line import/no-deprecated
 	router: IFluidRouter,
 	url: string | IRequest,
 ): Promise<T> {

@@ -53,7 +53,6 @@ export {
 	comparePipeline,
 	compileSyntaxTree,
 	setField,
-	TreeStatus,
 } from "./editable-tree";
 
 export {
@@ -134,7 +133,7 @@ export {
 	revisionMetadataSourceFromInfo,
 	NodeExistsConstraint,
 	NodeExistenceState,
-	BrandedFieldKind,
+	FieldKindWithEditor,
 } from "./modular-schema";
 
 export {
@@ -189,7 +188,7 @@ export {
 
 export {
 	FieldKinds,
-	ValueFieldKind,
+	Required,
 	Optional,
 	Sequence,
 	NodeKeyFieldKind,
@@ -242,6 +241,9 @@ export {
 	TreeField,
 	TreeNode,
 	getTreeContext,
+	boxedIterator,
+	CheckTypesOverlap,
+	TreeStatus,
 } from "./editable-tree-2";
 
 // Split into separate import and export for compatibility with API-Extractor.

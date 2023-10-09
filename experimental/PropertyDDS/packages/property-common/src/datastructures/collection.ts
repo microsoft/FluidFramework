@@ -27,7 +27,10 @@ export class Collection<T> {
 	 * @param _type - optional parameter pointing to the constructor
 	 * of a type this Collection will host.
 	 */
-	constructor(protected _name = "Untitled Collection", protected _type?: new () => any) {}
+	constructor(
+		protected _name = "Untitled Collection",
+		protected _type?: new () => any,
+	) {}
 
 	// Pass-thru binding handles
 	onAdd(in_key, in_value) {}

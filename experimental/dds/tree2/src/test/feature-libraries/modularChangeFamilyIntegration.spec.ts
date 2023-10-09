@@ -18,8 +18,8 @@ import {
 import { typeboxValidator } from "../../external-utilities";
 import {
 	DefaultEditBuilder,
-	FieldKind,
 	FieldKinds,
+	FieldKindWithEditor,
 	ModularChangeset,
 	singleTextCursor,
 } from "../../feature-libraries";
@@ -30,10 +30,12 @@ import { testChangeReceiver } from "../utils";
 import { ModularChangeFamily } from "../../feature-libraries/modular-schema/modularChangeFamily";
 import { jsonNumber } from "../../domains";
 // eslint-disable-next-line import/no-internal-modules
+import { sequence } from "../../feature-libraries/default-field-kinds/defaultFieldKinds";
+// eslint-disable-next-line import/no-internal-modules
 import { MarkMaker } from "./sequence-field/testEdits";
 
-const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
-	[FieldKinds.sequence].map((f) => [f.identifier, f]),
+const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
+	[sequence].map((f) => [f.identifier, f]),
 );
 
 const family = new ModularChangeFamily(fieldKinds, { jsonValidator: typeboxValidator });

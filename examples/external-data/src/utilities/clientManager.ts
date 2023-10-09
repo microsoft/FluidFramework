@@ -83,12 +83,10 @@ export class ClientManager<TData = unknown> {
 		externalTaskListId: ExternalTaskListId,
 	): void {
 		const clientTaskListIds = this._clientMapping.get(client);
-		// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
 		if (clientTaskListIds !== undefined && clientTaskListIds.has(externalTaskListId)) {
 			clientTaskListIds.delete(externalTaskListId);
 		}
 		const taskListClients = this._taskListMapping.get(externalTaskListId);
-		// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
 		if (taskListClients !== undefined && taskListClients.has(client)) {
 			taskListClients.delete(client);
 		}
@@ -104,7 +102,6 @@ export class ClientManager<TData = unknown> {
 		if (clientTaskListIds !== undefined) {
 			for (const taskListId of clientTaskListIds) {
 				const taskListClients = this._taskListMapping.get(taskListId);
-				// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
 				if (taskListClients !== undefined && taskListClients.has(client)) {
 					taskListClients.delete(client);
 					if (taskListClients.size === 0) {

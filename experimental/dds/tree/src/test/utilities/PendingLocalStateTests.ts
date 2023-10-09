@@ -171,6 +171,10 @@ export function runPendingLocalStateTests(
 				id: documentId,
 				testObjectProvider,
 				writeFormat: WriteFormat.v0_0_2,
+				// To be removed ADO:5463
+				featureGates: {
+					'Fluid.Container.ForceWriteConnection': true,
+				},
 			}));
 
 			expect(countSmallTrees(tree0)).to.equal(0);

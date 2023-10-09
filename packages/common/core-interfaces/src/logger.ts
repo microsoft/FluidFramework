@@ -85,7 +85,7 @@ export const LogLevel = {
 /**
  * Specify a level to the log to filter out logs based on the level.
  */
-export type LogLevel = typeof LogLevel[keyof typeof LogLevel];
+export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 
 /**
  * Interface to output telemetry events.

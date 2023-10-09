@@ -691,49 +691,6 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 						"Conflicting changes",
 					);
 				}
-
-				intervals1.change(id1, 4, 4);
-				await provider.opProcessingController.processOutgoing();
-				intervals2.change(id1, 2, undefined);
-				await provider.ensureSynchronized();
-
-				interval1 = intervals1.getIntervalById(id1);
-				assert.strictEqual(
-					interval1?.start.getOffset(),
-					2,
-					"Conflicting transparent change",
-				);
-				assert.strictEqual(interval1?.end.getOffset(), 4, "Conflicting transparent change");
-
-				interval2 = intervals2.getIntervalById(id1);
-				assert.strictEqual(
-					interval2?.start.getOffset(),
-					2,
-					"Conflicting transparent change",
-				);
-				assert.strictEqual(interval2?.end.getOffset(), 4, "Conflicting transparent change");
-
-				intervals1.change(id1, undefined, 3);
-				await provider.opProcessingController.processOutgoing();
-				intervals2.change(id1, undefined, 2);
-
-				await provider.ensureSynchronized();
-
-				interval1 = intervals1.getIntervalById(id1);
-				assert.strictEqual(
-					interval1?.start.getOffset(),
-					2,
-					"Conflicting transparent change",
-				);
-				assert.strictEqual(interval1?.end.getOffset(), 2, "Conflicting transparent change");
-
-				interval2 = intervals2.getIntervalById(id1);
-				assert.strictEqual(
-					interval2?.start.getOffset(),
-					2,
-					"Conflicting transparent change",
-				);
-				assert.strictEqual(interval2?.end.getOffset(), 2, "Conflicting transparent change");
 			}
 
 			if (

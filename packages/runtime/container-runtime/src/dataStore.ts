@@ -170,7 +170,7 @@ class DataStore implements IDataStore {
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#IDataStore.entryPoint}
 	 */
-	get entryPoint(): IFluidHandle<FluidObject> | undefined {
+	get entryPoint(): IFluidHandle<FluidObject> {
 		return this.fluidDataStoreChannel.entryPoint;
 	}
 

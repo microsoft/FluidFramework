@@ -12,6 +12,7 @@ import {
 import { IContainerRuntimeOptions, ContainerRuntime } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
+// eslint-disable-next-line import/no-deprecated
 import { makeModelRequestHandler } from "./modelLoader";
 
 /**
@@ -39,6 +40,7 @@ export abstract class ModelContainerRuntimeFactory<ModelType> implements IRuntim
 		const runtime = await ContainerRuntime.load(
 			context,
 			this.registryEntries,
+			// eslint-disable-next-line import/no-deprecated
 			makeModelRequestHandler(this.createModel.bind(this)),
 			this.runtimeOptions,
 			undefined, // scope

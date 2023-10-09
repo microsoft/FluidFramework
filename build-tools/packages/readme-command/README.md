@@ -1,4 +1,4 @@
-# @fluid-internal/readme-command
+# @fluid-private/readme-command
 
 This package implements a single command: a subclass of the oclif readme command class with some minor tweaks. This
 package holds only this command because we don't need to distribute the readme command; we only use it locally to
@@ -6,7 +6,7 @@ generate the package readmes within the build-tools release group.
 
 <!-- prettier-ignore-start -->
 <!-- toc -->
-* [@fluid-internal/readme-command](#fluid-internalreadme-command)
+* [@fluid-private/readme-command](#fluid-privatereadme-command)
 * [Usage](#usage)
 <!-- tocstop -->
 <!-- prettier-ignore-stop -->
@@ -16,11 +16,11 @@ generate the package readmes within the build-tools release group.
 <!-- prettier-ignore-start -->
 <!-- usage -->
 ```sh-session
-$ npm install -g @fluid-internal/readme-command
+$ npm install -g @fluid-private/readme-command
 $ fluid-readme COMMAND
 running command...
 $ fluid-readme (--version|-V)
-@fluid-internal/readme-command/1.0.0
+@fluid-private/readme-command/1.0.0
 $ fluid-readme --help [COMMAND]
 USAGE
   $ fluid-readme COMMAND

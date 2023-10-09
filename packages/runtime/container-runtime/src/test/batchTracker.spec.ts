@@ -96,5 +96,5 @@ describe("Runtime", () => {
 		({
 			sequenceNumber,
 			referenceSequenceNumber: sequenceNumber,
-		} as ISequencedDocumentMessage);
+		}) as ISequencedDocumentMessage;
 });

@@ -210,6 +210,16 @@ export function createOdspNetworkError(
 					OdspErrorType.serviceReadOnly,
 					driverProps,
 				);
+			} else if (
+				innerMostErrorCode === "blockedIPAddress" ||
+				innerMostErrorCode === "conditionalAccessPolicyEnforced"
+			) {
+				error = new NonRetryableError(
+					"IP Address is blocked",
+					// eslint-disable-next-line import/no-deprecated
+					OdspErrorType.blockedIPAddress,
+					driverProps,
+				);
 			} else {
 				const claims = response?.headers
 					? parseAuthErrorClaims(response.headers)
@@ -314,7 +324,7 @@ export function createOdspNetworkError(
 			error = new NonRetryableError(
 				errorMessage,
 				// eslint-disable-next-line import/no-deprecated
-				OdspErrorType.outOfStorageError,
+				DriverErrorType.outOfStorageError,
 				driverProps,
 			);
 			break;

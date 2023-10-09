@@ -12,7 +12,10 @@ import { IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils";
 export class ClientSessionExpiredError extends LoggingError implements IFluidErrorBase {
 	readonly errorType = ContainerErrorTypes.clientSessionExpiredError;
 
-	constructor(message: string, readonly expiryMs: number) {
+	constructor(
+		message: string,
+		readonly expiryMs: number,
+	) {
 		super(message, { timeoutMs: expiryMs });
 	}
 }

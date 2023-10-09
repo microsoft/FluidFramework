@@ -16,7 +16,7 @@ import { TreeSchemaIdentifier } from "../../core";
  * {@link LocalNodeKey}s may be compared or equated via {@link compareLocalNodeKeys}.
  * @alpha
  */
-export type LocalNodeKey = Opaque<Brand<SessionSpaceCompressedId, "Local Node Key">>;
+export interface LocalNodeKey extends Opaque<Brand<SessionSpaceCompressedId, "Local Node Key">> {}
 
 /**
  * A UUID which identifies a node in the tree.

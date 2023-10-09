@@ -582,8 +582,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				.then(async () => this.uploadBlob(localId, entry.blob));
 			return entry.uploadP;
 		} else {
+			this.deletePendingBlob(localId);
 			entry.handleP.reject(error);
-			throw error;
 		}
 	}
 
@@ -970,7 +970,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				}
 
 				for (const [id, entry] of this.pendingBlobs) {
-					assert(entry.attached === true, "stashed blob should be attached");
+					assert(entry.attached === true, 0x790 /* stashed blob should be attached */);
 					blobs[id] = {
 						blob: bufferToString(entry.blob, "base64"),
 						storageId: entry.storageId,

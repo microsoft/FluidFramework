@@ -99,12 +99,6 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 				this.addProtocolSummaryIfMissing,
 			);
 		}
-
-		// ensure we did not lose that policy in the process of wrapping
-		assert(
-			storageService.policies?.minBlobSize === this._storageService.policies?.minBlobSize,
-			0x0e0 /* "lost minBlobSize policy" */,
-		);
 	}
 
 	public loadSnapshotForRehydratingContainer(snapshotTree: ISnapshotTreeWithBlobContents) {

@@ -33,9 +33,6 @@ export const InventoryListAppView: React.FC<IInventoryListAppViewProps> = (
 		};
 		model.migrationTool.on("proposingMigration", migrationStateChangedHandler);
 		model.migrationTool.on("stoppingCollaboration", migrationStateChangedHandler);
-		model.migrationTool.on("generatingV1Summary", migrationStateChangedHandler);
-		model.migrationTool.on("uploadingV1Summary", migrationStateChangedHandler);
-		model.migrationTool.on("submittingV1Summary", migrationStateChangedHandler);
 		model.migrationTool.on("proposingV2Code", migrationStateChangedHandler);
 		model.migrationTool.on("waitingForV2ProposalCompletion", migrationStateChangedHandler);
 		model.migrationTool.on("readyForMigration", migrationStateChangedHandler);
@@ -46,9 +43,6 @@ export const InventoryListAppView: React.FC<IInventoryListAppViewProps> = (
 		return () => {
 			model.migrationTool.off("proposingMigration", migrationStateChangedHandler);
 			model.migrationTool.off("stoppingCollaboration", migrationStateChangedHandler);
-			model.migrationTool.off("generatingV1Summary", migrationStateChangedHandler);
-			model.migrationTool.off("uploadingV1Summary", migrationStateChangedHandler);
-			model.migrationTool.off("submittingV1Summary", migrationStateChangedHandler);
 			model.migrationTool.off("proposingV2Code", migrationStateChangedHandler);
 			model.migrationTool.off("waitingForV2ProposalCompletion", migrationStateChangedHandler);
 			model.migrationTool.off("readyForMigration", migrationStateChangedHandler);

@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 import {
 	FieldChangeHandler,
 	FieldChangeRebaser,
-	FieldKind,
 	Multiplicity,
 	FieldEditor,
 	NodeChangeset,
@@ -15,6 +14,7 @@ import {
 	FieldChange,
 	ModularChangeset,
 	RevisionInfo,
+	FieldKindWithEditor,
 } from "../../../feature-libraries";
 import {
 	makeAnonChange,
@@ -71,15 +71,15 @@ const singleNodeHandler: FieldChangeHandler<NodeChangeset> = {
 	isEmpty: (change) => change.fieldChanges === undefined,
 };
 
-const singleNodeField = new FieldKind(
-	brand("SingleNode"),
-	Multiplicity.Value,
+const singleNodeField = new FieldKindWithEditor(
+	"SingleNode",
+	Multiplicity.Single,
 	singleNodeHandler,
 	(a, b) => false,
 	new Set(),
 );
 
-const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
+const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
 	[singleNodeField, valueField].map((field) => [field.identifier, field]),
 );
 
@@ -731,9 +731,9 @@ describe("ModularChangeFamily", () => {
 			isEmpty: (change: RevisionTag[]) => change.length === 0,
 			codecsFactory: () => makeCodecFamily([[0, throwCodec]]),
 		} as unknown as FieldChangeHandler<RevisionTag[]>;
-		const field = new FieldKind(
-			brand("ChecksRevIndexing"),
-			Multiplicity.Value,
+		const field = new FieldKindWithEditor(
+			"ChecksRevIndexing",
+			Multiplicity.Single,
 			handler,
 			(a, b) => false,
 			new Set(),

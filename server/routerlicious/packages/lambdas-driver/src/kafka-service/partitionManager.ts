@@ -53,6 +53,10 @@ export class PartitionManager extends EventEmitter {
 		if (listenForConsumerErrors) {
 			this.consumer.on("error", (error, errorData: IContextErrorData) => {
 				if (this.stopped) {
+					Lumberjack.info(
+						"Consumer.onError: PartitionManager already stopped, not emitting error again",
+						{ error, ...errorData },
+					);
 					return;
 				}
 
@@ -217,6 +221,10 @@ export class PartitionManager extends EventEmitter {
 			// Listen for error events to know when the partition has stopped processing due to an error
 			newPartition.on("error", (error, errorData: IContextErrorData) => {
 				if (this.stopped) {
+					Lumberjack.info(
+						"Partition.onError: PartitionManager already stopped, not emitting error again",
+						{ error, ...errorData },
+					);
 					return;
 				}
 

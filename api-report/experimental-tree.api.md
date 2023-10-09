@@ -87,10 +87,10 @@ export type Change = Insert | Detach | Build | SetValue | Constraint;
 export const Change: {
     build: (source: BuildNode | TreeNodeSequence<BuildNode>, destination: number) => Build;
     insert: (source: number, destination: StablePlace) => Insert;
-    detach: (source: StableRange, destination?: number | undefined) => Detach;
+    detach: (source: StableRange, destination?: number) => Detach;
     setPayload: (nodeToModify: NodeId, payload: Payload) => SetValue;
     clearPayload: (nodeToModify: NodeId) => SetValue;
-    constraint: (toConstrain: StableRange, effect: ConstraintEffect, identityHash?: UuidString | undefined, length?: number | undefined, contentHash?: UuidString | undefined, parentNode?: NodeId | undefined, label?: TraitLabel | undefined) => Constraint;
+    constraint: (toConstrain: StableRange, effect: ConstraintEffect, identityHash?: UuidString, length?: number, contentHash?: UuidString, parentNode?: NodeId, label?: TraitLabel) => Constraint;
     delete: (stableRange: StableRange) => Change;
     insertTree: (nodes: BuildNode | TreeNodeSequence<BuildNode>, destination: StablePlace) => Change[];
     move: (source: StableRange, destination: StablePlace) => Change[];
@@ -103,10 +103,10 @@ export type ChangeInternal = InsertInternal | DetachInternal | BuildInternal | S
 export const ChangeInternal: {
     build: (source: TreeNodeSequence<BuildNodeInternal>, destination: DetachedSequenceId) => BuildInternal;
     insert: (source: DetachedSequenceId, destination: StablePlaceInternal) => InsertInternal;
-    detach: (source: StableRangeInternal, destination?: DetachedSequenceId | undefined) => DetachInternal;
+    detach: (source: StableRangeInternal, destination?: DetachedSequenceId) => DetachInternal;
     setPayload: (nodeToModify: NodeData<NodeId> | NodeId, payload: Payload) => SetValueInternal;
     clearPayload: (nodeToModify: NodeData<NodeId> | NodeId) => SetValueInternal;
-    constraint: (toConstrain: StableRangeInternal, effect: ConstraintEffect, identityHash?: UuidString | undefined, length?: number | undefined, contentHash?: UuidString | undefined, parentNode?: NodeId | undefined, label?: TraitLabel | undefined) => ConstraintInternal;
+    constraint: (toConstrain: StableRangeInternal, effect: ConstraintEffect, identityHash?: UuidString, length?: number, contentHash?: UuidString, parentNode?: NodeId, label?: TraitLabel) => ConstraintInternal;
     delete: (stableRange: StableRangeInternal) => ChangeInternal;
     insertTree: (nodes: TreeNodeSequence<BuildNodeInternal>, destination: StablePlaceInternal) => ChangeInternal[];
     move: (source: StableRangeInternal, destination: StablePlaceInternal) => ChangeInternal[];

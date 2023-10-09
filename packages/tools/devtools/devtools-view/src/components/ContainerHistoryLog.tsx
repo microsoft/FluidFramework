@@ -30,7 +30,7 @@ import { LabelCellLayout } from "./utility-components";
 /**
  * Returns the text color based on the current color theme of the devtools.
  */
-function setThemeStyle(themeName: string, state: string): string {
+function setThemeStyle(themeName: ThemeOption, state: string): string {
 	if (themeName === ThemeOption.HighContrast) {
 		switch (state) {
 			case "attached": {

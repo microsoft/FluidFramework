@@ -55,10 +55,29 @@ export interface IMapMessageLocalMetadata {
  */
 export interface SequenceOptions {
 	/**
-	 * Enable {@link (IntervalStickiness:type) | interval stickiness}
-	 * other than "end"
+	 * Enable the ability to use interval APIs that rely on positions before and
+	 * after individual characters, referred to as "sides". See {@link SequencePlace}
+	 * for additional context.
+	 *
+	 * This flag must be enabled to pass instances of {@link SequencePlace} to
+	 * any IIntervalCollection API.
+	 *
+	 * Also see the feature flag `mergeTreeReferencesCanSlideToEndpoint` to allow
+	 * endpoints to slide to the special endpoint segments.
+	 *
+	 * The default value is false.
 	 */
 	intervalStickinessEnabled: boolean;
+	/**
+	 * Enable the ability for interval endpoints to slide to the special endpoint
+	 * segments that exist before and after the bounds of the string. This is
+	 * primarily useful for workflows involving interval stickiness, and it is
+	 * suggested to enable both this flag and `intervalStickinessEnabled` at the
+	 * same time.
+	 *
+	 * The default value is false.
+	 */
+	mergeTreeReferencesCanSlideToEndpoint: boolean;
 	[key: string]: boolean;
 }
 

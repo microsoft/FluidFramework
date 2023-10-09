@@ -589,7 +589,7 @@ describe("editable-tree: editing", () => {
 
 		it("as value field", () => {
 			const view = viewWithContent({
-				schema: getTestSchema(FieldKinds.value),
+				schema: getTestSchema(FieldKinds.required),
 				initialTree: { foo: "initial", foo2: "" },
 			});
 			const root = view.root;

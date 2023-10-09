@@ -24,6 +24,9 @@ import {
 	TreeNode,
 	TypedNodeUnion,
 	UnboxNodeUnion,
+	MapNode,
+	TypedField,
+	boxedIterator,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/editable-tree-2/editableTreeTypes";
 import { jsonSequenceRootSchema } from "../../utils";
@@ -34,7 +37,7 @@ import {
 	requireFalse,
 	requireTrue,
 } from "../../../util";
-import { EmptyKey } from "../../../core";
+import { EmptyKey, FieldKey } from "../../../core";
 import {
 	FieldKinds,
 	Any,
@@ -43,6 +46,7 @@ import {
 	MapSchema,
 	SchemaBuilder,
 	StructSchema,
+	TreeSchema,
 } from "../../../feature-libraries";
 
 describe("editableTreeTypes", () => {
@@ -83,8 +87,8 @@ describe("editableTreeTypes", () => {
 		/**
 		 * Test doc comment.
 		 */
-		leaf: SchemaBuilder.fieldValue(jsonNumber),
-		polymorphic: SchemaBuilder.fieldValue(jsonNumber, jsonString),
+		leaf: SchemaBuilder.fieldRequired(jsonNumber),
+		polymorphic: SchemaBuilder.fieldRequired(jsonNumber, jsonString),
 		optionalLeaf: SchemaBuilder.fieldOptional(jsonNumber),
 		optionalObject: SchemaBuilder.fieldOptional(jsonObject),
 		sequence: SchemaBuilder.fieldSequence(jsonNumber),
@@ -99,7 +103,7 @@ describe("editableTreeTypes", () => {
 		/**
 		 * Data field.
 		 */
-		x: SchemaBuilder.fieldValue(jsonNumber),
+		x: SchemaBuilder.fieldRequired(jsonNumber),
 	});
 	type Recursive = TypedNode<typeof recursiveStruct>;
 
@@ -137,10 +141,28 @@ describe("editableTreeTypes", () => {
 		// child.foo?.foo?.foo?.foo?.setX(5);
 		// child.foo?.boxedFoo.content?.foo?.foo?.setFoo({ x: 5, foo: { x: 5, foo: undefined } });
 
-		struct.boxedFoo.setContent(undefined);
+		struct.boxedFoo.content = undefined;
 		// Shorthand for the above.
 		// TODO: add shorthand setters
 		// struct.setFoo(undefined);
+	}
+
+	function iteratorsExample(mixed: Mixed): void {
+		const unboxedListIteration: number[] = [...mixed.sequence];
+		const boxedListIteration: TypedNode<typeof jsonNumber>[] = [
+			...mixed.sequence[boxedIterator](),
+		];
+
+		const optionalNumberField = SchemaBuilder.fieldOptional(jsonNumber);
+		const mapSchema = undefined as unknown as TreeSchema<
+			"MapIteration",
+			{ mapFields: typeof optionalNumberField }
+		>;
+		const mapNode = undefined as unknown as MapNode<typeof mapSchema>;
+		const unboxedMapIteration: [FieldKey, number][] = [...mapNode];
+		const boxedMapIteration: TypedField<typeof optionalNumberField>[] = [
+			...mapNode[boxedIterator](),
+		];
 	}
 
 	{

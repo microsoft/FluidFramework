@@ -373,6 +373,23 @@ export function mapCursorField<T, TCursor extends ITreeCursor = ITreeCursor>(
 }
 
 /**
+ * @param cursor - The tree whose field will be visited.
+ * @param f - Builds output from field member, which will be selected in cursor when cursor is provided.
+ * If `f` moves cursor, it must put it back to where it was at the beginning of `f` before returning.
+ * @returns An iterable of `T` resulting from applying `f` to each item of the current field on `cursor`.
+ * Yields nothing if an empty array if the field is empty or not present (which are considered the same).
+ */
+export function* iterateCursorField<T, TCursor extends ITreeCursor = ITreeCursor>(
+	cursor: TCursor,
+	f: (cursor: TCursor) => T,
+): IterableIterator<T> {
+	assert(cursor.mode === CursorLocationType.Fields, "should be in fields");
+	for (let inNodes = cursor.firstNode(); inNodes; inNodes = cursor.nextNode()) {
+		yield f(cursor);
+	}
+}
+
+/**
  * @param cursor - cursor at a field whose nodes will be visited.
  * @param f - For on each node.
  * If `f` moves cursor, it must put it back to where it was at the beginning of `f` before returning.

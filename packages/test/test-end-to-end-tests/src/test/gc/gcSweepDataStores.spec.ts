@@ -115,9 +115,8 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 		await waitForContainerConnection(container);
 
 		const handleKey = "handle";
-		const dataStore = await defaultDataObject._context.containerRuntime.createDataStore(
-			TestDataObjectType,
-		);
+		const dataStore =
+			await defaultDataObject._context.containerRuntime.createDataStore(TestDataObjectType);
 		const testDataObject = (await dataStore.entryPoint?.get()) as ITestDataObject | undefined;
 		assert(
 			testDataObject !== undefined,
@@ -131,9 +130,8 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 		defaultDataObject._root.delete(handleKey);
 
 		// Summarize
-		const { container: summarizingContainer1, summarizer: summarizer1 } = await loadSummarizer(
-			container,
-		);
+		const { container: summarizingContainer1, summarizer: summarizer1 } =
+			await loadSummarizer(container);
 		const summaryVersion = (await summarize(summarizer1)).summaryVersion;
 
 		// Close the containers as these containers would be closed by session expiry before sweep ready ever occurs

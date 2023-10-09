@@ -27,7 +27,7 @@ export const listTaskSchema = builder.structRecursive("ListTask", {
 	type _check = requireAssignableTo<typeof listTaskSchema, TreeSchema>;
 }
 
-export const rootFieldSchema = SchemaBuilder.fieldValue(stringTaskSchema, listTaskSchema);
+export const rootFieldSchema = SchemaBuilder.fieldRequired(stringTaskSchema, listTaskSchema);
 
 export const appSchemaData = builder.intoDocumentSchema(rootFieldSchema);
 

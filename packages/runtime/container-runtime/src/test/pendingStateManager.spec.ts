@@ -13,7 +13,7 @@ import {
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { isILoggingError } from "@fluidframework/telemetry-utils";
 
-import { IPendingMessageNew, PendingStateManager } from "../pendingStateManager";
+import { IPendingMessage, PendingStateManager } from "../pendingStateManager";
 import { BatchManager, BatchMessage } from "../opLifecycle";
 import type {
 	RecentlyAddedContainerRuntimeMessageDetails,
@@ -21,7 +21,7 @@ import type {
 } from "../messageTypes";
 
 type PendingStateManager_WithPrivates = Omit<PendingStateManager, "initialMessages"> & {
-	initialMessages: Deque<IPendingMessageNew>;
+	initialMessages: Deque<IPendingMessage>;
 };
 
 describe("Pending State Manager", () => {
@@ -312,6 +312,31 @@ describe("Pending State Manager", () => {
 			) as any;
 		}
 
+		describe("Constructor pendingStates", () => {
+			it("Empty local state", () => {
+				{
+					const pendingStateManager = createPendingStateManager(undefined);
+					assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), []);
+				}
+				{
+					const pendingStateManager = createPendingStateManager([]);
+					assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), []);
+				}
+			});
+
+			it("New format", () => {
+				const messages = [
+					{ type: "message", content: '{"type":"component"}' },
+					{
+						type: "message",
+						content: '{"type": "component", "contents": {"prop1": "value"}}',
+					},
+				];
+				const pendingStateManager = createPendingStateManager(messages);
+				assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), messages);
+			});
+		});
+
 		describe("Future op compat behavior", () => {
 			it("pending op roundtrip", async () => {
 				const pendingStateManager = createPendingStateManager([]);
@@ -333,122 +358,6 @@ describe("Pending State Manager", () => {
 						UnknownContainerRuntimeMessage,
 				);
 			});
-		});
-
-		describe("Constructor conversion", () => {
-			// TODO: Remove in 2.0.0-internal.7.0.0 once only new format is read in constructor (AB#4763)
-			describe("deserialized content", () => {
-				it("Empty local state", () => {
-					{
-						const pendingStateManager = createPendingStateManager(undefined);
-						assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), []);
-					}
-					{
-						const pendingStateManager = createPendingStateManager([]);
-						assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), []);
-					}
-				});
-
-				it("Old format", () => {
-					const pendingStateManager = createPendingStateManager([
-						{ type: "message", messageType: "component" },
-						{ type: "message", messageType: "component", content: { prop1: "value" } },
-					]);
-					assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), [
-						{
-							type: "message",
-							messageType: "component",
-							content: '{"type":"component"}',
-						},
-						{
-							type: "message",
-							messageType: "component",
-							content: '{"type":"component","contents":{"prop1":"value"}}',
-						},
-					]);
-				});
-
-				it("New format", () => {
-					const messages = [
-						{ type: "message", content: '{"type":"component"}' },
-						{
-							type: "message",
-							content: '{"type": "component", "contents": {"prop1": "value"}}',
-						},
-					];
-					const pendingStateManager = createPendingStateManager(messages);
-					assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), messages);
-				});
-
-				it("Mix of new and old formats", () => {
-					const pendingStateManager = createPendingStateManager([
-						{ type: "message", messageType: "component" },
-						{ type: "message", content: '{"type":"component"}' },
-						{
-							type: "message",
-							content: '{"type": "component", "contents": {"prop1": "value"}}',
-						},
-						{ type: "message", messageType: "component", content: { prop1: "value" } },
-					]);
-					assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), [
-						{
-							type: "message",
-							messageType: "component",
-							content: '{"type":"component"}',
-						},
-						{ type: "message", content: '{"type":"component"}' },
-						{
-							type: "message",
-							content: '{"type": "component", "contents": {"prop1": "value"}}',
-						},
-						{
-							type: "message",
-							messageType: "component",
-							content: '{"type":"component","contents":{"prop1":"value"}}',
-						},
-					]);
-				});
-			});
-		});
-
-		// TODO: remove when we only read new format in "2.0.0-internal.7.0.0" (AB#4763)
-		it("getLocalState writes new message format", async () => {
-			const pendingStateManager = createPendingStateManager([
-				{ type: "message", messageType: "component" },
-				{ type: "message", content: '{"type":"component"}' },
-				{
-					type: "message",
-					content: '{"type": "component", "contents": {"prop1": "value"}}',
-				},
-				{ type: "message", messageType: "component", content: { prop1: "value" } },
-			]);
-
-			await pendingStateManager.applyStashedOpsAt(0);
-
-			assert.deepStrictEqual(pendingStateManager.getLocalState()?.pendingStates, [
-				{
-					type: "message",
-					content: '{"type":"component"}',
-					localOpMetadata: undefined,
-					messageType: "component", // This prop is still there, but it is not on the IPendingMessageNew interface
-				},
-				{
-					type: "message",
-					content: '{"type":"component"}',
-					localOpMetadata: undefined,
-				},
-				{
-					type: "message",
-					content: '{"type": "component", "contents": {"prop1": "value"}}',
-					localOpMetadata: undefined,
-				},
-				{
-					type: "message",
-					content: '{"type":"component","contents":{"prop1":"value"}}',
-					localOpMetadata: undefined,
-					messageType: "component", // This prop is still there, but it is not on the IPendingMessageNew interface
-				},
-			]);
 		});
 	});
 

@@ -10,11 +10,14 @@ import {
 	AnchorNode,
 	AnchorSet,
 	Delta,
+	DetachedField,
 	FieldKey,
 	JsonableTree,
 	PathVisitor,
 	UpPath,
+	anchorSlot,
 	clonePath,
+	keyAsDetachedField,
 	rootFieldKey,
 	applyDelta,
 } from "../../core";
@@ -313,6 +316,40 @@ describe("AnchorSet", () => {
 		unsubscribePathVisitor();
 		applyDelta(makeDelta(insertMark, makePath([rootFieldKey, 0], [fieldFoo, 4])), anchors);
 		log.expect([]);
+	});
+
+	// Simple scenario using just anchorSets to validate if cache implementation of the EditableTree.treeStatus api works.
+	it("AnchorNode cache can be set and retrieved.", () => {
+		const anchors = new AnchorSet();
+
+		const anchor0 = anchors.track(makePath([rootFieldKey, 0]));
+		const anchorNode0 = anchors.locate(anchor0);
+
+		// Create and add dummy cache value to the anchorSlot.
+		const detachedField = keyAsDetachedField(rootFieldKey);
+		const cache = {
+			generationNumber: anchors.generationNumber,
+			detachedField,
+		};
+		const detachedfieldSlot = anchorSlot<{
+			generationNumber: number;
+			detachedField: DetachedField;
+		}>();
+		anchorNode0?.slots.set(detachedfieldSlot, cache);
+
+		// Checks that we can retrieve the cache that was set in anchorSlot.
+		const fieldSlotCache = anchorNode0?.slots.get(detachedfieldSlot);
+		assert.equal(fieldSlotCache?.generationNumber, anchors.generationNumber);
+		assert.equal(fieldSlotCache, cache);
+
+		// Applies a dummy delta to increment anchorSet generationNumber.
+		applyDelta(new Map([]), anchors);
+
+		// Check that the cache generationNumber is no longer matching anchorSet generationNumber.
+		assert.notEqual(
+			anchors.locate(anchor0)?.slots.get(detachedfieldSlot)?.generationNumber,
+			anchors.generationNumber,
+		);
 	});
 });
 

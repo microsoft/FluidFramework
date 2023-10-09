@@ -15,4 +15,8 @@ export {
 	Loader,
 	requestResolvedObjectFromContainer,
 } from "./loader";
+export {
+	isLocationRedirectionError,
+	resolveWithLocationRedirectionHandling,
+} from "./location-redirection-utilities";
 export { IProtocolHandler, ProtocolHandlerBuilder } from "./protocol";

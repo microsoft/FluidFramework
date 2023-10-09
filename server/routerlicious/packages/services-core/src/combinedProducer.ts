@@ -19,7 +19,10 @@ import { IProducer } from "./queue";
  * It will wait for each send to complete before sending the message to the next producer.
  */
 export class CombinedProducer<T = ITicketedMessage> implements IProducer<T> {
-	constructor(private readonly producers: IProducer<T>[], private readonly parallel: boolean) {}
+	constructor(
+		private readonly producers: IProducer<T>[],
+		private readonly parallel: boolean,
+	) {}
 
 	/**
 	 * Returns true if the producer is connected

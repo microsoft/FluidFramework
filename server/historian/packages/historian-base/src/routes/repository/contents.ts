@@ -15,6 +15,7 @@ import {
 	throttle,
 	getParam,
 } from "@fluidframework/server-services-utils";
+import { validateRequestParams } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
@@ -65,9 +66,9 @@ export function create(
 
 	router.get(
 		"/repos/:ignored?/:tenantId/contents/*",
-		utils.validateRequestParams("tenantId", 0),
+		validateRequestParams("tenantId", 0),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyTokenNotRevoked(revokedTokenChecker),
+		utils.verifyToken(revokedTokenChecker),
 		(request, response, next) => {
 			const contentP = getContent(
 				request.params.tenantId,

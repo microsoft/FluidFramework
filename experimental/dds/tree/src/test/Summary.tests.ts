@@ -469,7 +469,10 @@ class DeterministicIdGenerator {
 	private editIdCount = 0;
 	private readonly constantIdCompressor?: IdCompressor;
 
-	public constructor(public readonly writeFormat: WriteFormat, private readonly sharedTree: SharedTree) {
+	public constructor(
+		public readonly writeFormat: WriteFormat,
+		private readonly sharedTree: SharedTree
+	) {
 		if (this.writeFormat === WriteFormat.v0_1_1) {
 			assert(getIdNormalizerFromSharedTree(sharedTree).localSessionId === DeterministicIdGenerator.sessionId);
 		} else {

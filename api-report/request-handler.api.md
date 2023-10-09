@@ -13,33 +13,32 @@ import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { RequestParser } from '@fluidframework/runtime-utils';
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export function buildRuntimeRequestHandler(...handlers: RuntimeRequestHandler[]): (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const createFluidObjectResponse: (fluidObject: FluidObject) => {
     status: 200;
     mimeType: "fluid/object";
     value: FluidObject;
 };
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export function handleFromLegacyUri<T = FluidObject & IFluidLoadable>(uri: string, runtime: IContainerRuntimeBase): IFluidHandle<T>;
 
-// @public
+// @public @deprecated
 export const rootDataStoreRequestHandler: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse | undefined>;
 
-// @public
+// @public @deprecated
 export type RuntimeRequestHandler = (request: RequestParser, runtime: IContainerRuntime) => Promise<IResponse | undefined>;
 
-// @public
+// @public @deprecated
 export class RuntimeRequestHandlerBuilder {
     // (undocumented)
     handleRequest(request: IRequest, runtime: IContainerRuntime): Promise<IResponse>;
     // (undocumented)
     pushHandler(...handlers: RuntimeRequestHandler[]): void;
 }
-
 
 // (No @packageDocumentation comment for this package)
 

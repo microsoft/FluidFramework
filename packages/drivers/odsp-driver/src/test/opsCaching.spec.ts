@@ -413,7 +413,7 @@ describe("OdspDeltaStorageWithCache", () => {
 			(from: number, to: number) => {},
 			// opsReceived
 			(ops: ISequencedDocumentMessage[]) => opsToCache.push(...ops),
-			() => ({ isFirstSnapshotFromNetwork: false } as any as OdspDocumentStorageService),
+			() => ({ isFirstSnapshotFromNetwork: false }) as any as OdspDocumentStorageService,
 		);
 
 		const stream = storage.fetchMessages(

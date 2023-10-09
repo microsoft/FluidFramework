@@ -628,9 +628,8 @@ class CommitManager {
 					this._storage.get("commitTemplates:" + previousCommitGuid),
 				);
 			}
-			[previousCommitNode, previousCommitTemplatesNode] = await Promise.all(
-				previousNodePromises,
-			);
+			[previousCommitNode, previousCommitTemplatesNode] =
+				await Promise.all(previousNodePromises);
 
 			previousCSPromises.push(this._storage.getNodeChangeset(previousCommitNode.rootNodeRef));
 			if (in_params.fetchSchemas) {

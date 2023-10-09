@@ -10,10 +10,9 @@ import { IContainer } from "../../loader";
 
 declare const container: IContainer;
 
-// This is ok
-container.request({ url: "/" });
-
 // These are deprecated
+// eslint-disable-next-line deprecation/deprecation
+container.request({ url: "/" });
 // eslint-disable-next-line deprecation/deprecation
 container.request({ url: "/", headers: { shouldBeDeprecated: true } });
 // eslint-disable-next-line deprecation/deprecation

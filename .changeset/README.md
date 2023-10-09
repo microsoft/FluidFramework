@@ -13,4 +13,4 @@ the wiki.
 
 See
 [flub generate changelog](../build-tools/packages/build-cli/docs/generate.md#flub-generate-changelog), which is built on
-top of [@fluid-internal/changelog-generator](../build-tools/packages/changelog-generator/README.md).
+top of [@fluid-private/changelog-generator](../build-tools/packages/changelog-generator/README.md).

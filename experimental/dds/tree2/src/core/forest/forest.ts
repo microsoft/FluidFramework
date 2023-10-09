@@ -14,6 +14,7 @@ import {
 	detachedFieldAsKey,
 	ITreeCursor,
 	rootField,
+	UpPath,
 } from "../tree";
 import type { IEditableForest } from "./editableForest";
 
@@ -89,6 +90,16 @@ export interface IForestSubscription extends Dependee, ISubscribable<ForestEvent
 		destination: FieldAnchor,
 		cursorToMove: ITreeSubscriptionCursor,
 	): TreeNavigationResult;
+
+	/**
+	 * Set `cursorToMove` to location described by path.
+	 * This is NOT a relative move: current position is discarded.
+	 * Path must point to existing node. If a destination is not provided, the cursor
+	 * is moved to a special dummy node above the detached fields.
+	 * This dummy node can be used to read the detached fields,
+	 * but other operations (such as inspecting the dummy node's type or path) should not be relied upon.
+	 */
+	moveCursorToPath(destination: UpPath | undefined, cursorToMove: ITreeSubscriptionCursor): void;
 
 	/**
 	 * True if there are no nodes in the forest at all.

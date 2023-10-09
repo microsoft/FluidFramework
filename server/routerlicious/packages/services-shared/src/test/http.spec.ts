@@ -61,7 +61,10 @@ async function waitForResponseEnd(mockResponse: MockResponse): Promise<void> {
 }
 
 class MockMongoError extends Error {
-	constructor(public readonly code: number, public readonly message: string) {
+	constructor(
+		public readonly code: number,
+		public readonly message: string,
+	) {
 		super(message);
 	}
 }

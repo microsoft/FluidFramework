@@ -5,7 +5,7 @@
 
 import { FieldStoredSchema, ITreeCursor } from "../../core";
 import { ContextuallyTypedNodeData, NewFieldContent } from "../contextuallyTyped";
-import { Optional, Sequence, ValueFieldKind } from "../default-field-kinds";
+import { Optional, Sequence, Required } from "../default-field-kinds";
 import {
 	UntypedField,
 	UntypedTree,
@@ -97,7 +97,7 @@ export interface UntypedValueField<
 	 * The `FieldStoredSchema` of this field.
 	 */
 	readonly fieldSchema: FieldStoredSchema & {
-		readonly kind: ValueFieldKind;
+		readonly kind: Required;
 	};
 
 	/**

@@ -40,7 +40,7 @@ export abstract class LazyLoadedDataObject<TRoot extends ISharedObject = IShared
     get IFluidHandle(): IFluidHandle<this>;
     // (undocumented)
     get IFluidLoadable(): this;
-    // (undocumented)
+    // @deprecated (undocumented)
     get IFluidRouter(): this;
     // (undocumented)
     get IProvideFluidHandle(): this;
@@ -75,7 +75,12 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
 
 // @public (undocumented)
 export class RuntimeFactory extends RuntimeFactoryHelper {
-    constructor(defaultStoreFactory: IFluidDataStoreFactory, storeFactories?: IFluidDataStoreFactory[], requestHandlers?: RuntimeRequestHandler[], initializeEntryPoint?: ((runtime: IContainerRuntime) => Promise<FluidObject>) | undefined);
+    constructor(props: {
+        defaultStoreFactory: IFluidDataStoreFactory;
+        storeFactories: IFluidDataStoreFactory[];
+        requestHandlers?: RuntimeRequestHandler[];
+        provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+    });
     // (undocumented)
     instantiateFirstTime(runtime: ContainerRuntime): Promise<void>;
     // (undocumented)

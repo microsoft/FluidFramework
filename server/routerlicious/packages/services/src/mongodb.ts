@@ -4,6 +4,7 @@
  */
 
 import { assert } from "console";
+import { cloneDeep } from "lodash";
 import * as core from "@fluidframework/server-services-core";
 import {
 	AggregationCursor,
@@ -132,7 +133,8 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		const req = async () => {
 			try {
 				await this.updateCore(filter, set, addToSet, mongoOptions);
-			} catch (error) {
+			} catch (sdkError) {
+				const error = this.cloneError(sdkError);
 				this.sanitizeError(error);
 				throw error;
 			}
@@ -154,7 +156,8 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		const req = async () => {
 			try {
 				await this.updateManyCore(filter, set, addToSet, mongoOptions);
-			} catch (error) {
+			} catch (sdkError) {
+				const error = this.cloneError(sdkError);
 				this.sanitizeError(error);
 				throw error;
 			}
@@ -176,7 +179,8 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		const req = async () => {
 			try {
 				await this.updateCore(filter, set, addToSet, mongoOptions);
-			} catch (error) {
+			} catch (sdkError) {
+				const error = this.cloneError(sdkError);
 				this.sanitizeError(error);
 				throw error;
 			}
@@ -222,9 +226,9 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 					value as OptionalUnlessRequiredId<T>,
 				);
 				// Older mongo driver bug, this insertedId was objectId or 3.2 but changed to any ID type consumer provided.
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 				return result.insertedId;
-			} catch (error) {
+			} catch (sdkError) {
+				const error = this.cloneError(sdkError);
 				this.sanitizeError(error);
 				throw error;
 			}
@@ -242,7 +246,8 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 				await this.collection.insertMany(values as OptionalUnlessRequiredId<T>[], {
 					ordered: false,
 				});
-			} catch (error) {
+			} catch (sdkError) {
+				const error = this.cloneError(sdkError);
 				this.sanitizeError(error);
 				throw error;
 			}
@@ -306,7 +311,8 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 				return result.value
 					? { value: result.value, existing: true }
 					: { value, existing: false };
-			} catch (error) {
+			} catch (sdkError) {
+				const error = this.cloneError(sdkError);
 				this.sanitizeError(error);
 				throw error;
 			}
@@ -325,7 +331,6 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 	): Promise<{ value: T; existing: boolean }> {
 		const req = async () => {
 			try {
-				// eslint-disable-next-line @typescript-eslint/await-thenable
 				const result = await this.collection.findOneAndUpdate(
 					query,
 					{ $set: value },
@@ -335,7 +340,8 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 				return result.value
 					? { value: result.value, existing: true }
 					: { value, existing: false };
-			} catch (error) {
+			} catch (sdkError) {
+				const error = this.cloneError(sdkError);
 				this.sanitizeError(error);
 				throw error;
 			}
@@ -390,7 +396,10 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 				(e) => this.retryEnabled && this.mongoErrorRetryAnalyzer.shouldRetry(e), // ShouldRetry
 				(error: any, numRetries: number, retryAfterInterval: number) =>
 					numRetries * retryAfterInterval, // calculateIntervalMs
-				(error) => this.sanitizeError(error) /* onErrorFn */,
+				(error) => {
+					const facadeError = this.cloneError(error);
+					this.sanitizeError(facadeError);
+				} /* onErrorFn */,
 				this.telemetryEnabled, // telemetryEnabled
 			);
 			this.apiCounter.incrementCounter(callerName);
@@ -442,6 +451,41 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 				throw err;
 			}
 		}
+	}
+
+	private cloneError<TError>(error: TError): TError {
+		try {
+			return structuredClone(error);
+		} catch (errCloning) {
+			Lumberjack.warning(
+				`Error cloning error object using cloneErrorDeep.`,
+				undefined,
+				errCloning,
+			);
+		}
+
+		try {
+			return cloneDeep(error);
+		} catch (errCloning) {
+			Lumberjack.warning(
+				`Error cloning error object using cloneDeep.`,
+				undefined,
+				errCloning,
+			);
+		}
+
+		try {
+			return JSON.parse(JSON.stringify(error)) as TError;
+		} catch (errCloning) {
+			Lumberjack.warning(
+				`Error cloning error object using JSON.stringify.`,
+				undefined,
+				errCloning,
+			);
+		}
+
+		Lumberjack.error("Failed to clone error object. Using the shallow copy.", undefined, error);
+		return { ...error };
 	}
 
 	private terminateBasedOnCounterThreshold(counters: Record<string, number>): void {

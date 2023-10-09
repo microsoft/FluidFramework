@@ -48,7 +48,10 @@ export class Tenant implements core.ITenant {
  * Manages a collection of tenants
  */
 export class TenantManager implements core.ITenantManager, core.ITenantConfigManager {
-	constructor(private readonly endpoint: string, private readonly internalHistorianUrl: string) {}
+	constructor(
+		private readonly endpoint: string,
+		private readonly internalHistorianUrl: string,
+	) {}
 
 	public async createTenant(tenantId?: string): Promise<core.ITenantConfig & { key: string }> {
 		const restWrapper = new BasicRestWrapper(

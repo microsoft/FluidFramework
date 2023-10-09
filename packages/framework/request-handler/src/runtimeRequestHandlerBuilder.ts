@@ -6,15 +6,19 @@
 import { IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { RequestParser, create404Response } from "@fluidframework/runtime-utils";
+// eslint-disable-next-line import/no-deprecated
 import { RuntimeRequestHandler } from "./requestHandlers";
 
 /**
  * The RuntimeRequestHandlerBuilder creates a runtime request handler based on request handlers.
  * The provided handlers sequentially applied until one is able to satisfy the request.
+ * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
  */
 export class RuntimeRequestHandlerBuilder {
+	// eslint-disable-next-line import/no-deprecated
 	private readonly handlers: RuntimeRequestHandler[] = [];
 
+	// eslint-disable-next-line import/no-deprecated
 	public pushHandler(...handlers: RuntimeRequestHandler[]) {
 		if (handlers !== undefined) {
 			this.handlers.push(...handlers);
@@ -33,6 +37,8 @@ export class RuntimeRequestHandlerBuilder {
 	}
 }
 
+/** @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md */
+// eslint-disable-next-line import/no-deprecated
 export function buildRuntimeRequestHandler(...handlers: RuntimeRequestHandler[]) {
 	const builder = new RuntimeRequestHandlerBuilder();
 	builder.pushHandler(...handlers);

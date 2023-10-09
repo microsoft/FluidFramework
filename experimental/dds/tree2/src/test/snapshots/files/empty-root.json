@@ -1,0 +1,37 @@
+{
+    "type": 1,
+    "tree": {
+        "indexes": {
+            "type": 1,
+            "tree": {
+                "EditManager": {
+                    "type": 1,
+                    "tree": {
+                        "String": {
+                            "type": 2,
+                            "content": "{\"trunk\":[],\"branches\":[]}"
+                        }
+                    }
+                },
+                "Schema": {
+                    "type": 1,
+                    "tree": {
+                        "SchemaString": {
+                            "type": 2,
+                            "content": "{\"version\":\"1.0.0\",\"treeSchema\":[{\"name\":\"TestInner\",\"mapFields\":{\"kind\":\"Sequence\"},\"structFields\":[]},{\"name\":\"TestLeaf\",\"structFields\":[],\"leafValue\":1}],\"rootFieldSchema\":{\"kind\":\"Sequence\"}}"
+                        }
+                    }
+                },
+                "Forest": {
+                    "type": 1,
+                    "tree": {
+                        "ForestTree": {
+                            "type": 2,
+                            "content": "[]"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

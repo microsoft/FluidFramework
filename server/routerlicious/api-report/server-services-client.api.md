@@ -95,6 +95,9 @@ export function generateUser(): IUser;
 export const getAuthorizationTokenFromCredentials: (credentials: ICredentials) => string;
 
 // @public (undocumented)
+export const getGlobalTimeoutContext: () => ITimeoutContext;
+
+// @public (undocumented)
 export function getNextHash(message: ISequencedDocumentMessage, lastHash: string): string;
 
 // @public (undocumented)
@@ -395,6 +398,13 @@ export interface ISummaryUploadManager {
 }
 
 // @public (undocumented)
+export interface ITimeoutContext {
+    bindTimeout(maxDurationMs: number, callback: () => void): void;
+    bindTimeoutAsync<T>(maxDurationMs: number, callback: () => Promise<T>): Promise<T>;
+    checkTimeout(): void;
+}
+
+// @public (undocumented)
 export interface IWholeFlatSummary {
     // (undocumented)
     blobs?: IWholeFlatSummaryBlob[];
@@ -577,6 +587,9 @@ export abstract class RestWrapper {
     // (undocumented)
     protected abstract request<T>(options: AxiosRequestConfig, statusCode: number): Promise<T>;
 }
+
+// @public (undocumented)
+export const setGlobalTimeoutContext: (timeoutContext: ITimeoutContext) => void;
 
 // @public
 export class SummaryTreeUploadManager implements ISummaryUploadManager {

@@ -566,22 +566,55 @@ export interface IPerformanceEventMarkers {
  * Helper class to log performance events
  */
 export class PerformanceEvent {
+	/**
+	 * Creates an instance of {@link PerformanceEvent} and starts measurements
+	 * @param logger - the logger to be used for publishing events
+	 * @param event - the logging event details which will be published with the performance measurements
+	 * @param markers - See {@link IPerformanceEventMarkers}
+	 * @param recordHeapSize - whether or not to also record memory performance
+	 * @param emitLogs - should this instance emit logs. If set to false, logs will not be emitted to the logger,
+	 * but measurements will still be performed and any specified markers will be generated.
+	 * @returns An instance of {@link PerformanceEvent}
+	 */
 	public static start(
 		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		markers?: IPerformanceEventMarkers,
 		recordHeapSize: boolean = false,
+		emitLogs: boolean = true,
 	): PerformanceEvent {
-		return new PerformanceEvent(logger, event, markers, recordHeapSize);
+		return new PerformanceEvent(logger, event, markers, recordHeapSize, emitLogs);
 	}
 
+	/**
+	 * Measure a synchronous task
+	 * @param logger - the logger to be used for publishing events
+	 * @param event - the logging event details which will be published with the performance measurements
+	 * @param callback - the task to be executed and measured
+	 * @param markers - See {@link IPerformanceEventMarkers}
+	 * @param sampleThreshold - events with the same name and category will be sent to the logger
+	 * only when we hit this many executions of the task. If unspecified, all events will be sent.
+	 * @returns The results of the executed task
+	 *
+	 * @remarks Note that if the "same" event (category + eventName) would be emitted by different
+	 * tasks (`callback`), `sampleThreshold` is still applied only based on the event's category + eventName,
+	 * so executing either of the tasks will increase the internal counter and they
+	 * effectively "share" the sampling rate for the event.
+	 */
 	public static timedExec<T>(
 		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		callback: (event: PerformanceEvent) => T,
 		markers?: IPerformanceEventMarkers,
+		sampleThreshold: number = 1,
 	): T {
-		const perfEvent = PerformanceEvent.start(logger, event, markers);
+		const perfEvent = PerformanceEvent.start(
+			logger,
+			event,
+			markers,
+			undefined, // recordHeapSize
+			PerformanceEvent.shouldReport(event, sampleThreshold),
+		);
 		try {
 			const ret = callback(perfEvent);
 			perfEvent.autoEnd();
@@ -592,14 +625,37 @@ export class PerformanceEvent {
 		}
 	}
 
+	/**
+	 * Measure an asynchronous task
+	 * @param logger - the logger to be used for publishing events
+	 * @param event - the logging event details which will be published with the performance measurements
+	 * @param callback - the task to be executed and measured
+	 * @param markers - See {@link IPerformanceEventMarkers}
+	 * @param recordHeapSize - whether or not to also record memory performance
+	 * @param sampleThreshold - events with the same name and category will be sent to the logger
+	 * only when we hit this many executions of the task. If unspecified, all events will be sent.
+	 * @returns The results of the executed task
+	 *
+	 * @remarks Note that if the "same" event (category + eventName) would be emitted by different
+	 * tasks (`callback`), `sampleThreshold` is still applied only based on the event's category + eventName,
+	 * so executing either of the tasks will increase the internal counter and they
+	 * effectively "share" the sampling rate for the event.
+	 */
 	public static async timedExecAsync<T>(
 		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		callback: (event: PerformanceEvent) => Promise<T>,
 		markers?: IPerformanceEventMarkers,
 		recordHeapSize?: boolean,
+		sampleThreshold: number = 1,
 	): Promise<T> {
-		const perfEvent = PerformanceEvent.start(logger, event, markers, recordHeapSize);
+		const perfEvent = PerformanceEvent.start(
+			logger,
+			event,
+			markers,
+			recordHeapSize,
+			PerformanceEvent.shouldReport(event, sampleThreshold),
+		);
 		try {
 			const ret = await callback(perfEvent);
 			perfEvent.autoEnd();
@@ -624,6 +680,7 @@ export class PerformanceEvent {
 		event: ITelemetryGenericEvent,
 		private readonly markers: IPerformanceEventMarkers = { end: true, cancel: "generic" },
 		private readonly recordHeapSize: boolean = false,
+		private readonly emitLogs: boolean = true,
 	) {
 		this.event = { ...event };
 		if (this.markers.start) {
@@ -686,6 +743,10 @@ export class PerformanceEvent {
 			return;
 		}
 
+		if (!this.emitLogs) {
+			return;
+		}
+
 		const event: ITelemetryPerformanceEvent = { ...this.event, ...props };
 		event.eventName = `${event.eventName}_${eventNameSuffix}`;
 		if (eventNameSuffix !== "start") {
@@ -701,12 +762,19 @@ export class PerformanceEvent {
 				}
 			}
 		} else if (this.recordHeapSize) {
-			this.startMemoryCollection = (
-				performance as PerformanceWithMemory
-			)?.memory?.usedJSHeapSize;
+			this.startMemoryCollection = (performance as PerformanceWithMemory)?.memory
+				?.usedJSHeapSize;
 		}
 
 		this.logger.sendPerformanceEvent(event, error);
+	}
+
+	private static readonly eventHits = new Map<string, number>();
+	private static shouldReport(event: ITelemetryGenericEvent, sampleThreshold: number): boolean {
+		const eventKey = `.${event.category}.${event.eventName}`;
+		const hitCount = PerformanceEvent.eventHits.get(eventKey) ?? 0;
+		PerformanceEvent.eventHits.set(eventKey, hitCount >= sampleThreshold ? 1 : hitCount + 1);
+		return hitCount % sampleThreshold === 0;
 	}
 }
 

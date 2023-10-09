@@ -445,7 +445,10 @@ function applyPrefix(prefix: PathRootPrefix, path: UpPath | undefined): UpPath |
 export class PrefixedPath implements UpPath {
 	public readonly parentField: FieldKey;
 	public readonly parentIndex: number;
-	public constructor(public readonly prefix: PathRootPrefix, public readonly path: UpPath) {
+	public constructor(
+		public readonly prefix: PathRootPrefix,
+		public readonly path: UpPath,
+	) {
 		if (path.parent === undefined) {
 			this.parentField = prefix.rootFieldOverride ?? path.parentField;
 			this.parentIndex = path.parentIndex + (prefix.indexOffset ?? 0);

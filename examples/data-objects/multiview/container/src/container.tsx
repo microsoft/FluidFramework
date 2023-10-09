@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-deprecated
 import { BaseContainerRuntimeFactory, mountableViewRequestHandler } from "@fluidframework/aqueduct";
+// eslint-disable-next-line import/no-deprecated
 import { RuntimeRequestHandler } from "@fluidframework/request-handler";
+// eslint-disable-next-line import/no-deprecated
 import { RequestParser, requestFluidObject } from "@fluidframework/runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { MountableView } from "@fluidframework/view-adapters";
@@ -40,6 +43,7 @@ const createAndAttachCoordinate = async (
 	const simpleCoordinateComponentRuntime =
 		aliasResult === "Success" ? dataStore : await runtime.getRootDataStore(name);
 
+	// eslint-disable-next-line import/no-deprecated
 	return requestFluidObject<ICoordinate>(simpleCoordinateComponentRuntime, "/");
 };
 
@@ -53,6 +57,7 @@ async function requestObjectStoreFromId<T>(
 		url: ``,
 		headers: request.headers,
 	});
+	// eslint-disable-next-line import/no-deprecated
 	return requestFluidObject<T>(await runtime.getRootDataStore(id), coordinateRequest);
 }
 
@@ -107,9 +112,17 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
 	constructor() {
 		// We'll use a MountableView so webpack-fluid-loader can display us,
 		// and add our default view request handler.
-		super(registryEntries, undefined, [
-			mountableViewRequestHandler(MountableView, [defaultViewRequestHandler]),
-		]);
+		super({
+			registryEntries,
+			requestHandlers: [
+				// eslint-disable-next-line import/no-deprecated
+				mountableViewRequestHandler(MountableView, [defaultViewRequestHandler]),
+			],
+			provideEntryPoint: () => {
+				// TODO: AB#4993
+				throw new Error("TODO");
+			},
+		});
 	}
 
 	/**
@@ -154,6 +167,7 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
 			aliasResult === "Success"
 				? dataStore
 				: await runtime.getRootDataStore(constellationComponentName);
+		// eslint-disable-next-line import/no-deprecated
 		const constellationComponent = await requestFluidObject<Constellation>(component, "/");
 
 		// Add a few stars

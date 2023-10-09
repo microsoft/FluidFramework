@@ -64,19 +64,18 @@ describe("Logging Last Connection Mode ", () => {
 		);
 
 	async function createContainer(): Promise<IContainer> {
-		const factory: TestFluidObjectFactory = new TestFluidObjectFactory(
+		const defaultFactory: TestFluidObjectFactory = new TestFluidObjectFactory(
 			[[mapId, SharedMap.getFactory()]],
 			"default",
 		);
 
 		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 			runtime.IFluidHandleContext.resolveHandle(request);
-		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-			factory,
-			[[factory.type, Promise.resolve(factory)]],
-			undefined,
-			[innerRequestHandler],
-		);
+		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+			defaultFactory,
+			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+			requestHandlers: [innerRequestHandler],
+		});
 
 		const urlResolver = new LocalResolver();
 		const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);

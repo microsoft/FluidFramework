@@ -23,7 +23,7 @@ import {
 } from "@microsoft/api-extractor-model";
 
 import { DocumentNode, SectionNode } from "../documentation-domain";
-import { doesItemRequireOwnDocument } from "./ApiItemUtilities";
+import { doesItemRequireOwnDocument } from "./ApiItemTransformUtilities";
 import { createDocument } from "./Utilities";
 import { ApiItemTransformationConfiguration } from "./configuration";
 import { createBreadcrumbParagraph, wrapInSection } from "./helpers";

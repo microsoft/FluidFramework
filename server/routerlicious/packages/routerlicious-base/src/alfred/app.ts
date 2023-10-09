@@ -24,9 +24,10 @@ import {
 	alternativeMorganLoggerMiddleware,
 	bindCorrelationId,
 	bindTelemetryContext,
+	bindTimeoutContext,
 	jsonMorganLoggerMiddleware,
 } from "@fluidframework/server-services-utils";
-import { RestLessServer } from "@fluidframework/server-services";
+import { RestLessServer, IHttpServerConfig } from "@fluidframework/server-services";
 import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-services-telemetry";
 import { catch404, getIdFromRequest, getTenantIdFromRequest, handleError } from "../utils";
 import { IDocumentDeleteService } from "./services";
@@ -49,6 +50,7 @@ export function create(
 ) {
 	// Maximum REST request size
 	const requestSize = config.get("alfred:restJsonSize");
+	const httpServerConfig: IHttpServerConfig = config.get("system:httpServer");
 
 	// Express app configuration
 	const app: express.Express = express();
@@ -70,6 +72,10 @@ export function create(
 
 	app.use(compression());
 	app.use(bindTelemetryContext());
+	if (httpServerConfig?.connectionTimeoutMs) {
+		// If connectionTimeoutMs configured and not 0, bind timeout context.
+		app.use(bindTimeoutContext(httpServerConfig.connectionTimeoutMs));
+	}
 	const loggerFormat = config.get("logger:morganFormat");
 	if (loggerFormat === "json") {
 		app.use(

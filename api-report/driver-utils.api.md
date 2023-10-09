@@ -300,7 +300,6 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
     // (undocumented)
     get policies(): {
         caching: LoaderCachingPolicy;
-        minBlobSize?: number | undefined;
         maximumCacheDurationMs?: 432000000 | undefined;
     } | undefined;
     // (undocumented)

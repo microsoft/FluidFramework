@@ -134,7 +134,7 @@ function buildTreeSchema(
 					!fields.has(nodePropertyField),
 					0x712 /* name collision for nodePropertyField */,
 				);
-				fields.set(nodePropertyField, SchemaBuilder.fieldValue(nodePropertySchema));
+				fields.set(nodePropertyField, SchemaBuilder.fieldRequired(nodePropertySchema));
 			}
 			const fieldsObject = mapToObject(fields);
 			cache.treeSchema = builder.struct(typeid, fieldsObject);
@@ -240,7 +240,7 @@ function buildLocalFields(
 						builder,
 						treeSchemaMap,
 						allChildrenByType,
-						property.optional ? FieldKinds.optional : FieldKinds.value,
+						property.optional ? FieldKinds.optional : FieldKinds.required,
 						currentTypeid,
 					),
 				);

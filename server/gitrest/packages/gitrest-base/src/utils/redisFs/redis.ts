@@ -15,7 +15,10 @@ export class Redis {
 	private readonly expireAfterSeconds: number = 60 * 60 * 24;
 	private readonly prefix: string = "fs";
 
-	constructor(private readonly client: IoRedis.default, parameters?: IRedisParameters) {
+	constructor(
+		private readonly client: IoRedis.default,
+		parameters?: IRedisParameters,
+	) {
 		if (parameters?.expireAfterSeconds) {
 			this.expireAfterSeconds = parameters.expireAfterSeconds;
 		}

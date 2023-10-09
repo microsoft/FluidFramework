@@ -21,7 +21,10 @@ export class TaskSubscription extends TypedEventEmitter<ITaskSubscriptionEvents>
 	 * @param agentScheduler - The AgentScheduler that will be subscribed against
 	 * @param taskId - The string ID of the task to subscribe against
 	 */
-	constructor(private readonly agentScheduler: IAgentScheduler, public readonly taskId: string) {
+	constructor(
+		private readonly agentScheduler: IAgentScheduler,
+		public readonly taskId: string,
+	) {
 		super();
 		agentScheduler.on("picked", (_taskId: string) => {
 			if (_taskId === this.taskId) {

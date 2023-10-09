@@ -13,7 +13,7 @@ import {
 	SchemaData,
 	storedEmptyFieldSchema,
 } from "../../core";
-import { FullSchemaPolicy, Multiplicity } from "./fieldKind";
+import { FullSchemaPolicy, Multiplicity, withEditor } from "./fieldKind";
 
 /**
  * @returns true iff `superset` is a superset of `original`.
@@ -106,8 +106,8 @@ export function allowsFieldSuperset(
 	original: FieldStoredSchema,
 	superset: FieldStoredSchema,
 ): boolean {
-	return (
-		policy.fieldKinds.get(original.kind.identifier) ?? fail("missing kind")
+	return withEditor(
+		policy.fieldKinds.get(original.kind.identifier) ?? fail("missing kind"),
 	).allowsFieldSuperset(policy, originalData, original.types, superset);
 }
 
@@ -189,7 +189,7 @@ export function isNeverFieldRecursive(
 ): boolean {
 	if (
 		(policy.fieldKinds.get(field.kind.identifier) ?? fail("missing field kind"))
-			.multiplicity === Multiplicity.Value &&
+			.multiplicity === Multiplicity.Single &&
 		field.types !== undefined
 	) {
 		for (const type of field.types) {
@@ -249,7 +249,7 @@ export function isNeverTreeRecursive(
 			(
 				policy.fieldKinds.get(normalizeField(tree.mapFields).kind.identifier) ??
 				fail("missing field kind")
-			).multiplicity === Multiplicity.Value
+			).multiplicity === Multiplicity.Single
 		) {
 			return true;
 		}

@@ -11,13 +11,16 @@ import {
 	IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
+import { assert } from "@fluidframework/core-utils";
 import {
+	applyDelta,
+	Delta,
+	FieldKey,
 	IEditableForest,
-	initializeForest,
 	ITreeSubscriptionCursor,
 	JsonableTree,
 	mapCursorField,
-	moveToDetachedField,
+	mapCursorFields,
 } from "../core";
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
 import { jsonableTreeFromCursor, singleTextCursor } from "./treeTextCursor";
@@ -47,12 +50,13 @@ export class ForestSummarizer implements Summarizable {
 	 * @returns a snapshot of the forest's tree as a string.
 	 */
 	private getTreeString(stringify: SummaryElementStringifier): string {
-		// TODO: maybe assert there are no other roots
-		// (since we don't save them, and they should not exist outside transactions).
-		moveToDetachedField(this.forest, this.cursor);
-		const roots = mapCursorField(this.cursor, jsonableTreeFromCursor);
+		this.forest.moveCursorToPath(undefined, this.cursor);
+		const fields = mapCursorFields(this.cursor, (cursor) => [
+			this.cursor.getFieldKey(),
+			mapCursorField(cursor, jsonableTreeFromCursor),
+		]);
 		this.cursor.clear();
-		return stringify(roots);
+		return stringify(fields);
 	}
 
 	public getAttachSummary(
@@ -90,8 +94,20 @@ export class ForestSummarizer implements Summarizable {
 		if (await services.contains(treeBlobKey)) {
 			const treeBuffer = await services.readBlob(treeBlobKey);
 			const treeBufferString = bufferToString(treeBuffer, "utf8");
-			const jsonableTree = parse(treeBufferString) as JsonableTree[];
-			initializeForest(this.forest, jsonableTree.map(singleTextCursor));
+			// TODO: this code is parsing data without an optional validator, this should be defined in a typebox schema as part of the
+			// forest summary format.
+			const fields = parse(treeBufferString) as [FieldKey, JsonableTree[]][];
+
+			const delta: [FieldKey, Delta.Insert[]][] = fields.map(([fieldKey, content]) => {
+				const insert: Delta.Insert = {
+					type: Delta.MarkType.Insert,
+					content: content.map(singleTextCursor),
+				};
+				return [fieldKey, [insert]];
+			});
+
+			assert(this.forest.isEmpty, "forest must be empty");
+			applyDelta(new Map(delta), this.forest);
 		}
 	}
 }

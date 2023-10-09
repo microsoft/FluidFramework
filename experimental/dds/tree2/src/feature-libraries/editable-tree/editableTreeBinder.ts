@@ -248,7 +248,7 @@ export const BindingType = {
  *
  * @alpha
  */
-export type BindingContextType = typeof BindingType[keyof typeof BindingType];
+export type BindingContextType = (typeof BindingType)[keyof typeof BindingType];
 
 /**
  * The binding context attribution common to all binding events

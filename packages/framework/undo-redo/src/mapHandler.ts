@@ -35,7 +35,10 @@ export class SharedMapUndoRedoHandler {
  * Tracks a change on a shared map allows reverting it
  */
 export class SharedMapRevertible implements IRevertible {
-	constructor(private readonly changed: IValueChanged, private readonly map: ISharedMap) {}
+	constructor(
+		private readonly changed: IValueChanged,
+		private readonly map: ISharedMap,
+	) {}
 
 	public revert() {
 		this.map.set(this.changed.key, this.changed.previousValue);

@@ -340,7 +340,6 @@ describe("Container Runtime", () => {
 				minimumSequenceNumber: 0,
 				sequenceNumber: seq++,
 				type: MessageType.ClientLeave,
-				term: 1,
 				clientSequenceNumber: 1,
 				referenceSequenceNumber: 1,
 				contents: "",

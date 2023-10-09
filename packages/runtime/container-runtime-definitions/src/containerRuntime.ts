@@ -8,9 +8,11 @@ import {
 	IEventProvider,
 	IRequest,
 	IResponse,
+	// eslint-disable-next-line import/no-deprecated
 	IFluidRouter,
 	FluidObject,
 	IFluidHandle,
+	IFluidHandleContext,
 } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -22,16 +24,16 @@ import {
 	FlushMode,
 	IContainerRuntimeBase,
 	IContainerRuntimeBaseEvents,
-	IDataStore,
 	IFluidDataStoreContextDetached,
 	IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
 
 /**
- * @deprecated Not necessary if consumers add a new dataStore to the container by storing its handle.
+ * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
  */
-export interface IDataStoreWithBindToContext_Deprecated extends IDataStore {
-	fluidDataStoreChannel?: { bindToContext?(): void };
+export interface IContainerRuntimeWithResolveHandle_Deprecated extends IContainerRuntime {
+	readonly IFluidHandleContext: IFluidHandleContext;
+	resolveHandle(request: IRequest): Promise<IResponse>;
 }
 
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
@@ -67,6 +69,7 @@ export interface IContainerRuntime
 	 * @param wait - True if you want to wait for it.
 	 * @deprecated - Use getAliasedDataStoreEntryPoint instead to get an aliased data store's entry point.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
 
 	/**
@@ -75,7 +78,7 @@ export interface IContainerRuntime
 	 * @returns The data store's entry point ({@link @fluidframework/core-interfaces#IFluidHandle}) if it exists and is aliased.
 	 * Returns undefined if no data store has been assigned the given alias.
 	 */
-	getAliasedDataStoreEntryPoint?(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
+	getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
 
 	/**
 	 * Creates detached data store context. Data store initialization is considered complete
@@ -104,6 +107,7 @@ export interface IContainerRuntime
 	/**
 	 * Resolves handle URI
 	 * @param request - request to resolve
+	 * @deprecated Will be removed in future major release. Migrate all usage of resolveHandle to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	resolveHandle(request: IRequest): Promise<IResponse>;
 }

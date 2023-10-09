@@ -34,7 +34,7 @@ export const FluidErrorTypes = {
 	 */
 	usageError: "usageError",
 } as const;
-export type FluidErrorTypes = typeof FluidErrorTypes[keyof typeof FluidErrorTypes];
+export type FluidErrorTypes = (typeof FluidErrorTypes)[keyof typeof FluidErrorTypes];
 
 /**
  * Base interface for all errors and warnings emitted the container.

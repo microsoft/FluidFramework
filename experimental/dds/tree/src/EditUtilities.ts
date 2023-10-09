@@ -82,7 +82,7 @@ export function convertTreeNodes<TIn extends HasVariadicTraits<TIn>, TOut extend
 export function convertTreeNodes<
 	TIn extends HasVariadicTraits<TIn | TPlaceholder>,
 	TOut extends HasTraits<TOut | TPlaceholder>,
-	TPlaceholder
+	TPlaceholder,
 >(
 	root: TIn | TPlaceholder,
 	convert: (node: TIn) => NoTraits<TOut>,
@@ -100,7 +100,7 @@ export function convertTreeNodes<
 export function convertTreeNodes<
 	TIn extends HasVariadicTraits<TIn | TPlaceholder>,
 	TOut extends HasTraits<TOut | TPlaceholder>,
-	TPlaceholder
+	TPlaceholder,
 >(
 	root: TIn | TPlaceholder,
 	convert: (node: TIn) => NoTraits<TOut>,

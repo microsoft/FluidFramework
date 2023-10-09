@@ -16,6 +16,7 @@ import {
 	SummaryTreeUploadManager,
 	WholeSummaryUploadManager,
 	ISession,
+	getGlobalTimeoutContext,
 } from "@fluidframework/server-services-client";
 import {
 	ICollection,
@@ -207,6 +208,9 @@ export class DocumentStorage implements IDocumentStorage {
 			initialSummaryUploadMetric.error("Error during initial summary upload", error);
 			throw error;
 		}
+
+		// Storage is known to take too long sometimes. Check timeout before continuing.
+		getGlobalTimeoutContext().checkTimeout();
 
 		const deli: IDeliState = {
 			clients: undefined,

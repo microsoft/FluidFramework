@@ -142,7 +142,10 @@ class BenchmarkState<T> implements BenchmarkTimer<T> {
 	private readonly startTime: T;
 	private phase: Phase;
 	public iterationsPerBatch: number;
-	public constructor(public readonly timer: Timer<T>, options: BenchmarkTimingOptions) {
+	public constructor(
+		public readonly timer: Timer<T>,
+		options: BenchmarkTimingOptions,
+	) {
 		this.startTime = timer.now();
 		this.samples = [];
 		this.options = {

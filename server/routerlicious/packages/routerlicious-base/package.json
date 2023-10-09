@@ -84,12 +84,12 @@
 		"ws": "^7.4.6"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.22.0",
+		"@fluid-tools/build-cli": "^0.25.0",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.22.0",
+		"@fluidframework/build-tools": "^0.25.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/server-local-server": "workspace:~",
-		"@fluidframework/server-routerlicious-base-previous": "npm:@fluidframework/server-routerlicious-base@0.1040.1000",
+		"@fluidframework/server-routerlicious-base-previous": "npm:@fluidframework/server-routerlicious-base@2.0.0",
 		"@fluidframework/server-test-utils": "workspace:~",
 		"@types/body-parser": "^1.19.2",
 		"@types/bytes": "^3.0.0",
@@ -113,7 +113,7 @@
 		"concurrently": "^8.2.1",
 		"eslint": "~8.27.0",
 		"mocha": "^10.2.0",
-		"prettier": "~2.6.2",
+		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"sinon": "^9.2.3",
 		"supertest": "^3.1.0",
@@ -128,13 +128,6 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"ClassDeclaration_AlfredResources": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_RiddlerResources": {
-				"forwardCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

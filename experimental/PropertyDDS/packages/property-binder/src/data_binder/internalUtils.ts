@@ -435,8 +435,7 @@ const _invokeNodePropertyCallbacks = function (in_invokeContext: InvokeContext, 
 		) {
 			result[key] = key;
 			return result;
-		},
-		{});
+		}, {});
 		_callCorrespondingHandlers(
 			in_invokeContext,
 			"remove",
