@@ -13,6 +13,7 @@ import { getInstalledPackageVersion } from "../../../common/taskUtils";
 import { getTscUtils, TscUtil } from "../../../common/tscUtils";
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const isEqual = require("lodash.isequal");
 
 const { verbose } = defaultLogger;

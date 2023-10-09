@@ -11,10 +11,17 @@ module.exports = {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
 	rules: {
-		"@typescript-eslint/switch-exhaustiveness-check": "error",
-		"@typescript-eslint/no-inferrable-types": "off",
-		"@typescript-eslint/no-var-requires": "off",
+		// TODO: Enable these ASAP
+		"@typescript-eslint/no-explicit-any": "off",
+		"@typescript-eslint/no-unsafe-argument": "off",
+		"@typescript-eslint/no-unsafe-assignment": "off",
+		"@typescript-eslint/no-unsafe-call": "off",
+		"@typescript-eslint/no-unsafe-member-access": "off",
+		"@typescript-eslint/no-unused-vars": "warn",
+		//"@typescript-eslint/no-inferrable-types": "off",
+		//"@typescript-eslint/no-var-requires": "off",
 
+		"@typescript-eslint/switch-exhaustiveness-check": "error",
 		// This package is exclusively used in a Node.js context
 		"import/no-nodejs-modules": "off",
 	},
