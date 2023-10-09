@@ -641,14 +641,14 @@ interface Fields {
 }
 
 // @alpha @sealed
-export class FieldSchema<out Kind extends FieldKind = FieldKind, const out Types = AllowedTypes> {
-    constructor(kind: Kind, allowedTypes: Types);
+export class FieldSchema<out TKind extends FieldKind = FieldKind, const out TTypes = AllowedTypes> {
+    constructor(kind: TKind, allowedTypes: TTypes);
     // (undocumented)
-    readonly allowedTypes: Types;
+    readonly allowedTypes: TTypes;
     static readonly empty: FieldSchema<Forbidden, readonly []>;
     equals(other: FieldSchema): boolean;
     // (undocumented)
-    readonly kind: Kind;
+    readonly kind: TKind;
     // (undocumented)
     protected _typeCheck?: MakeNominal;
     // (undocumented)
@@ -1843,9 +1843,9 @@ export interface Struct extends TreeNode {
 type StructFields<TFields extends RestrictiveReadonlyRecord<string, FieldSchema>> = {
     readonly [key in keyof TFields as `boxed${Capitalize<key & string>}`]: TypedField<TFields[key]>;
 } & {
-    readonly [key in keyof TFields as TFields[key] extends PrimitiveValue ? never : key]: UnboxField<TFields[key]>;
+    readonly [key in keyof TFields as TFields[key]["kind"] extends typeof FieldKinds.optional | typeof FieldKinds.required ? never : key]: UnboxField<TFields[key]>;
 } & {
-    [key in keyof TFields as TFields[key] extends PrimitiveValue ? key : never]: UnboxField<TFields[key]>;
+    [key in keyof TFields as TFields[key]["kind"] extends typeof FieldKinds.optional | typeof FieldKinds.required ? key : never]: UnboxField<TFields[key]>;
 } & {
     readonly [key in keyof TFields as `set${Capitalize<key & string>}`]: (content: FlexibleFieldContent<TFields[key]>) => void;
 };

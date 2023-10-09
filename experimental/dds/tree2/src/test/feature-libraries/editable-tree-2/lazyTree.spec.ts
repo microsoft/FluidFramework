@@ -408,6 +408,11 @@ describe("LazyStruct", () => {
 		assert.equal(node.tryGetField(brand("bar")), undefined); // TODO: this is presumably wrong - empty array shouldn't yield undefined
 		assert.equal(node.tryGetField(brand("baz")), undefined);
 	});
+
+	it("Value assignment", () => {
+		node.foo = "New string!";
+		// node.bar = [42];
+	});
 });
 
 function fieldToMapTree(field: TreeField): MapTree[] {

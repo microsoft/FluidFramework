@@ -312,9 +312,13 @@ export type TreeSchemaSpecification = [
  * `Types` here must extend `AllowedTypes`, but this cannot be enforced with an "extends" clause due to the need to support recursive schema and
  * [a design limitation of TypeScript](https://github.com/microsoft/TypeScript/issues/55758).
  *
- * @sealed @alpha
+ * @typeParam TKind - The kind of field.
+ * @typeParam TTypes - The types allowed by the field.
+ *
+ * @sealed
+ * @alpha
  */
-export class FieldSchema<out Kind extends FieldKind = FieldKind, const out Types = AllowedTypes> {
+export class FieldSchema<out TKind extends FieldKind = FieldKind, const out TTypes = AllowedTypes> {
 	/**
 	 * Schema for a field which must always be empty.
 	 */
@@ -333,8 +337,8 @@ export class FieldSchema<out Kind extends FieldKind = FieldKind, const out Types
 	 * @param allowedTypes - What types of tree nodes are allowed in this field.
 	 */
 	public constructor(
-		public readonly kind: Kind,
-		public readonly allowedTypes: Types,
+		public readonly kind: TKind,
+		public readonly allowedTypes: TTypes,
 	) {
 		this.lazyTypes = new Lazy(() =>
 			allowedTypesToTypeSet(this.allowedTypes as unknown as AllowedTypes),
