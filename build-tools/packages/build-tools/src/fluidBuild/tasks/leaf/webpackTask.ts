@@ -5,7 +5,7 @@
 import * as path from "path";
 import * as fs from "fs";
 
-import { execAsync, globFn, toPosixPath } from "../../../common/utils";
+import { globFn, toPosixPath } from "../../../common/utils";
 import { LeafWithDoneFileTask } from "./leafTask";
 import { TscTask } from "./tscTask";
 

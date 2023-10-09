@@ -296,7 +296,7 @@ export abstract class LeafTask extends Task {
 			return BuildResult.Failed;
 		}
 
-		return new Promise((resolve, reject) => {
+		return new Promise((resolve) => {
 			traceTaskQueue(`${this.nameColored}: queued with weight ${this.weight}`);
 			q.push({ task: this, resolve, queueTime: Date.now() }, -this.weight);
 		});

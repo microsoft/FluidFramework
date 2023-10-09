@@ -829,7 +829,7 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-test-scripts",
 		match,
-		handler: (file, root) => {
+		handler: (file) => {
 			// This rules enforces that if the package have test files (in 'src/test', excluding 'src/test/types'),
 			// or mocha/jest dependencies, it should have a test scripts so that the pipeline will pick it up
 
@@ -879,7 +879,7 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-test-scripts-split",
 		match,
-		handler: (file, root) => {
+		handler: (file) => {
 			// This rule enforces that because the pipeline split running these test in different steps, each project
 			// has the split set up property (into test:mocha, test:jest and test:realsvc). Release groups that don't
 			// have splits in the pipeline is excluded in the "handlerExclusions" in the fluidBuild.config.cjs
@@ -927,7 +927,7 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-script-mocha-config",
 		match,
-		handler: (file, root) => {
+		handler: (file) => {
 			// This rule enforces that mocha will use a config file and setup both the console, json and xml reporters.
 			let json;
 			try {
@@ -965,7 +965,7 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-script-jest-config",
 		match,
-		handler: (file, root) => {
+		handler: (file) => {
 			// This rule enforces that jest will use a config file and setup both the default (console) and junit reporters.
 			let json;
 
@@ -1025,7 +1025,7 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-esm",
 		match,
-		handler: (file, root) => {
+		handler: (file) => {
 			// This rule enforces that we have a module field in the package iff we have a ESM build
 			// So that tools like webpack will pack up the right version.
 			let json;
@@ -1062,7 +1062,7 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-clean-script",
 		match,
-		handler: (file, root) => {
+		handler: (file) => {
 			// This rule enforces the "clean" script will delete all the build and test output
 			let json;
 
@@ -1109,7 +1109,7 @@ export const handlers: Handler[] = [
 				}
 			}
 		},
-		resolver: (file, root) => {
+		resolver: (file) => {
 			const result: { resolved: boolean; message?: string } = { resolved: true };
 			updatePackageJsonFile(path.dirname(file), (json) => {
 				const missing = missingCleanDirectories(json.scripts);
