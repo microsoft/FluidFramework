@@ -43,11 +43,6 @@ parameters:
   default:
   - fluid-framework
 
-variables:
-- name: toolAbsolutePath
-  value: $(Build.SourcesDirectory)/tools/telemetry-generator
-  readonly: true
-
 trigger:
   branches:
     include:
