@@ -500,7 +500,8 @@ function catalogAttachPassRootChanges(mark: Exclude<Delta.Mark, number>, config:
 	switch (mark.type) {
 		case Delta.MarkType.Insert: {
 			if (mark.content.length > 0) {
-				const rootSource = ensureCreation(mark, config);
+				const rootSource = config.insertToRootId.get(mark);
+				assert(rootSource !== undefined, "content should've been created in the detach pass");
 				nodeId = mark.detachId;
 				fields = mark.fields;
 				if (mark.detachId !== undefined) {
