@@ -4,30 +4,27 @@
  */
 /* eslint-disable @typescript-eslint/no-empty-interface */
 
-import { ValueSchema, SchemaAware, SchemaBuilder } from "@fluid-experimental/tree2";
+import { SchemaAware, SchemaBuilder, leaf } from "@fluid-experimental/tree2";
 
-const builder = new SchemaBuilder("bubble-bench");
-
-export const stringSchema = builder.leaf("string", ValueSchema.String);
-export const numberSchema = builder.leaf("number", ValueSchema.Number);
+const builder = new SchemaBuilder({ scope: "bubble-bench", libraries: [leaf.library] });
 
 export const bubbleSchema = builder.struct("BubbleBenchAppStateBubble-1.0.0", {
-	x: SchemaBuilder.fieldRequired(numberSchema),
-	y: SchemaBuilder.fieldRequired(numberSchema),
-	r: SchemaBuilder.fieldRequired(numberSchema),
-	vx: SchemaBuilder.fieldRequired(numberSchema),
-	vy: SchemaBuilder.fieldRequired(numberSchema),
+	x: SchemaBuilder.fieldRequired(leaf.number),
+	y: SchemaBuilder.fieldRequired(leaf.number),
+	r: SchemaBuilder.fieldRequired(leaf.number),
+	vx: SchemaBuilder.fieldRequired(leaf.number),
+	vy: SchemaBuilder.fieldRequired(leaf.number),
 });
 
 export const clientSchema = builder.struct("BubbleBenchAppStateClient-1.0.0", {
-	clientId: SchemaBuilder.fieldRequired(stringSchema),
-	color: SchemaBuilder.fieldRequired(stringSchema),
+	clientId: SchemaBuilder.fieldRequired(leaf.string),
+	color: SchemaBuilder.fieldRequired(leaf.string),
 	bubbles: SchemaBuilder.fieldSequence(bubbleSchema),
 });
 
 export const rootAppStateSchema = SchemaBuilder.fieldSequence(clientSchema);
 
-export const appSchemaData = builder.intoDocumentSchema(rootAppStateSchema);
+export const appSchemaData = builder.toDocumentSchema(rootAppStateSchema);
 
 export type Bubble = SchemaAware.TypedNode<typeof bubbleSchema>;
 export type Client = SchemaAware.TypedNode<typeof clientSchema>;

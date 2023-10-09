@@ -81,9 +81,9 @@ class TestLazyField<TTypes extends AllowedTypes> extends LazyField<
 
 describe("LazyField", () => {
 	it("LazyField implementations do not allow edits to detached trees", () => {
-		const builder = new SchemaBuilder("lazyTree");
+		const builder = new SchemaBuilder({ scope: "lazyTree" });
 		builder.struct("empty", {});
-		const schema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
+		const schema = builder.toDocumentSchema(SchemaBuilder.fieldOptional(Any));
 		const forest = forestWithContent({ schema, initialTree: {} });
 		const context = getReadonlyContext(forest, schema);
 		const cursor = initializeCursor(context, detachedFieldAnchor);
@@ -136,9 +136,9 @@ describe("LazyField", () => {
 	it("is", () => {
 		// #region Tree and schema initialization
 
-		const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+		const builder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
 		const rootSchema = SchemaBuilder.fieldOptional(builder.struct("struct", {}));
-		const schema = builder.intoDocumentSchema(rootSchema);
+		const schema = builder.toDocumentSchema(rootSchema);
 
 		// Note: this tree initialization is strictly to enable construction of the lazy field.
 		// The test cases below are strictly in terms of the schema of the created fields.
@@ -195,12 +195,12 @@ describe("LazyField", () => {
 	});
 
 	it("parent", () => {
-		const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+		const builder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
 		const struct = builder.struct("struct", {
 			foo: SchemaBuilder.fieldOptional(...leafDomain.primitives),
 		});
 		const rootSchema = SchemaBuilder.fieldOptional(struct);
-		const schema = builder.intoDocumentSchema(rootSchema);
+		const schema = builder.toDocumentSchema(rootSchema);
 
 		const { context, cursor } = initializeTreeWithContent({
 			schema,
@@ -237,9 +237,9 @@ describe("LazyField", () => {
 });
 
 describe("LazyOptionalField", () => {
-	const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+	const builder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
 	const rootSchema = SchemaBuilder.fieldOptional(leafDomain.number);
-	const schema = builder.intoDocumentSchema(rootSchema);
+	const schema = builder.toDocumentSchema(rootSchema);
 
 	describe("Field with value", () => {
 		const { context, cursor } = initializeTreeWithContent({ schema, initialTree: 42 });
@@ -311,9 +311,9 @@ describe("LazyOptionalField", () => {
 });
 
 describe("LazyValueField", () => {
-	const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+	const builder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
 	const rootSchema = SchemaBuilder.fieldRequired(leafDomain.string);
-	const schema = builder.intoDocumentSchema(rootSchema);
+	const schema = builder.toDocumentSchema(rootSchema);
 
 	const initialTree = "Hello world";
 
@@ -350,9 +350,9 @@ describe("LazyValueField", () => {
 });
 
 describe("LazySequence", () => {
-	const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+	const builder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
 	const rootSchema = SchemaBuilder.fieldSequence(leafDomain.number);
-	const schema = builder.intoDocumentSchema(rootSchema);
+	const schema = builder.toDocumentSchema(rootSchema);
 
 	const { context, cursor } = initializeTreeWithContent({
 		schema,
