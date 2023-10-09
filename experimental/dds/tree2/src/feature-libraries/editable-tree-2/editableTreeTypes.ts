@@ -448,24 +448,26 @@ export type StructFields<TFields extends RestrictiveReadonlyRecord<string, Field
 } & {
 	// TODO: readonly uncondionally + setter of intersection type
 	// - Use never as key when not creating setter
-	// Getter only (when schema type is not a leaf)
+	// Getter only (when schema type is not a value)
 	readonly [key in keyof TFields as TFields[key]["kind"] extends
 		| typeof FieldKinds.optional
 		| typeof FieldKinds.required
 		? never
 		: key]: UnboxField<TFields[key]>;
 } & {
-	// Getter + setter (when schema type is a leaf)
+	// Getter + setter (when schema type is a value)
 	[key in keyof TFields as TFields[key]["kind"] extends
 		| typeof FieldKinds.optional
 		| typeof FieldKinds.required
 		? key
 		: never]: UnboxField<TFields[key]>;
 } & {
-	// Setter method
-	readonly [key in keyof TFields as `set${Capitalize<key & string>}`]: (
-		content: FlexibleFieldContent<TFields[key]>,
-	) => void;
+	// Setter method (When schema type is a value)
+	readonly [key in keyof TFields as TFields[key]["kind"] extends
+		| typeof FieldKinds.optional
+		| typeof FieldKinds.required
+		? `set${Capitalize<key & string>}`
+		: never]: (content: FlexibleFieldContent<TFields[key]>) => void;
 };
 
 // TODO: Add `set` method when FieldKind provides a setter (and derive the type from it).

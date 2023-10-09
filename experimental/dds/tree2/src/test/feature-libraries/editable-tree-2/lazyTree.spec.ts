@@ -378,7 +378,7 @@ describe("LazyMap", () => {
 	});
 });
 
-describe.only("LazyStruct", () => {
+describe("LazyStruct", () => {
 	const schemaBuilder = new SchemaBuilder("test", {}, leafDomain.library);
 	const structNodeSchema = schemaBuilder.struct("struct", {
 		foo: SchemaBuilder.fieldOptional(leafDomain.string),
@@ -386,7 +386,7 @@ describe.only("LazyStruct", () => {
 	});
 	const schema = schemaBuilder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
 
-	// Count the number of times edits have been generated
+	// Count the number of times edits have been generated.
 	let editCallCount = 0;
 	beforeEach(() => {
 		editCallCount = 0;
@@ -434,12 +434,60 @@ describe.only("LazyStruct", () => {
 		assert.equal(node.tryGetField(brand("baz")), undefined);
 	});
 
+	// Validates that
 	it("Value assignment generates edits", () => {
-		node.foo = "New value!";
+		assert.equal(editCallCount, 0);
+
+		node.foo = "First edit";
 		assert.equal(editCallCount, 1);
 
-		node.setBar([37, 42]);
+		node.setFoo("Second edit");
 		assert.equal(editCallCount, 2);
+	});
+});
+
+describe.only("buildLazyStruct", () => {
+	const schemaBuilder = new SchemaBuilder("test", {}, leafDomain.library);
+	const structNodeSchema = schemaBuilder.struct("struct", {
+		optional: SchemaBuilder.fieldOptional(leafDomain.string),
+		required: SchemaBuilder.fieldRequired(leafDomain.boolean),
+		sequence: SchemaBuilder.fieldSequence(leafDomain.number),
+	});
+	const schema = schemaBuilder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
+
+	// Count the number of times edits have been generated.
+	let editCallCount = 0;
+	beforeEach(() => {
+		editCallCount = 0;
+	});
+
+	const context = contextWithContentReadonly({
+		schema,
+		initialTree: {
+			optional: "Hello",
+			required: true,
+			sequence: [1, 2, 3],
+		},
+	});
+
+	const cursor = initializeCursor(context, rootFieldAnchor);
+	cursor.enterNode(0);
+
+	const { anchor, anchorNode } = createAnchors(context, cursor);
+
+	const node = buildLazyStruct(context, structNodeSchema, cursor, anchorNode, anchor);
+
+	it("Binds setter properties for values, but not other field kinds", () => {
+		assert(Object.getOwnPropertyDescriptor(node, "optional")?.set !== undefined);
+		assert(Object.getOwnPropertyDescriptor(node, "required")?.set !== undefined);
+		assert(Object.getOwnPropertyDescriptor(node, "sequence")?.set === undefined);
+	});
+
+	it('Binds "set" methods for values, but not other field kinds', () => {
+		const record = node as unknown as Record<string | number | symbol, unknown>;
+		assert(record.setOptional !== undefined);
+		assert(record.setRequired !== undefined);
+		assert(record.setSequence === undefined);
 	});
 });
 

@@ -546,6 +546,9 @@ function buildStructClass<TSchema extends StructSchema>(
 			],
 		]);
 
+		const setter = setters.get(fieldSchema.kind);
+
+		// Create getter and setter (when appropriate) for property
 		ownPropertyMap[key] = {
 			enumerable: true,
 			get(this: CustomStruct): unknown {
@@ -553,21 +556,22 @@ function buildStructClass<TSchema extends StructSchema>(
 					unboxedField(this.context, fieldSchema, cursor),
 				);
 			},
-			set: setters.get(fieldSchema.kind),
+			set: setter,
 		};
+
+		// Create set method for property (when appropriate)
+		if (setter !== undefined) {
+			propertyDescriptorMap[`set${capitalize(key)}`] = {
+				enumerable: false,
+				get(this: CustomStruct) {
+					return setters.get(fieldSchema.kind);
+				},
+			};
+		}
 
 		propertyDescriptorMap[`boxed${capitalize(key)}`] = {
 			enumerable: false,
 			get(this: CustomStruct) {
-				return inCursorField(this[cursorSymbol], key, (cursor) =>
-					makeField(this.context, fieldSchema, cursor),
-				);
-			},
-		};
-
-		propertyDescriptorMap[`set${capitalize(key)}`] = {
-			enumerable: false,
-			get(this: CustomStruct, newContent: ContextuallyTypedNodeData): unknown {
 				return inCursorField(this[cursorSymbol], key, (cursor) =>
 					makeField(this.context, fieldSchema, cursor),
 				);

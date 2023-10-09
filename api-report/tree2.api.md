@@ -1847,7 +1847,7 @@ type StructFields<TFields extends RestrictiveReadonlyRecord<string, FieldSchema>
 } & {
     [key in keyof TFields as TFields[key]["kind"] extends typeof FieldKinds.optional | typeof FieldKinds.required ? key : never]: UnboxField<TFields[key]>;
 } & {
-    readonly [key in keyof TFields as `set${Capitalize<key & string>}`]: (content: FlexibleFieldContent<TFields[key]>) => void;
+    readonly [key in keyof TFields as TFields[key]["kind"] extends typeof FieldKinds.optional | typeof FieldKinds.required ? `set${Capitalize<key & string>}` : never]: (content: FlexibleFieldContent<TFields[key]>) => void;
 };
 
 // @alpha
