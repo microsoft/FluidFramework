@@ -108,6 +108,8 @@ export type DriverErrorTypes = typeof DriverErrorTypes[keyof typeof DriverErrorT
 
 /**
  * Interface describing errors and warnings raised by any driver code.
+ *
+ * @remarks
  * Not expected to be implemented by a class or an object literal, but rather used in place of
  * any or unknown in various function signatures that pass errors around.
  *
