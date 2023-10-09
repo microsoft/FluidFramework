@@ -13,6 +13,13 @@ module.exports = {
 		"prettier",
 	],
 	rules: {
+		// TODO: Enable these ASAP
+		"@typescript-eslint/no-unsafe-assignment": "off",
+		"@typescript-eslint/no-unsafe-call": "off",
+
+    // This rule is often triggered when using custom Flag classes, so disabling.
+		"object-shorthand": "off",
+
 		// This package is exclusively used in a Node.js context
 		"import/no-nodejs-modules": "off",
 
@@ -46,6 +53,9 @@ module.exports = {
 
 		// Too strict for our needs
 		"unicorn/filename-case": "off",
+
+		// Destructuring is often awkward to use with commands
+		"unicorn/consistent-destructuring": "off",
 
 		// Deprecated in 2018: https://eslint.org/blog/2018/11/jsdoc-end-of-life/
 		"valid-jsdoc": "off",
