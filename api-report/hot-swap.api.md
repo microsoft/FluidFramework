@@ -4,7 +4,6 @@
 
 ```ts
 
-import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
@@ -26,7 +25,7 @@ export class HotSwap implements IChannel {
     // (undocumented)
     getGCData(fullGC?: boolean | undefined): IGarbageCollectionData;
     // (undocumented)
-    handle: IFluidHandle<FluidObject & IFluidLoadable>;
+    handle: IFluidHandle;
     // (undocumented)
     id: string;
     // (undocumented)
