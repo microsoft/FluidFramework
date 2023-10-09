@@ -45,7 +45,7 @@ import {
 	RevisionMetadataSource,
 	NodeExistenceState,
 } from "./fieldChangeHandler";
-import { FieldKind } from "./fieldKind";
+import { FieldKind, FieldKindWithEditor, withEditor } from "./fieldKind";
 import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./genericFieldKind";
 import { GenericChangeset } from "./genericFieldKindTypes";
 import { makeModularChangeCodecFamily } from "./modularChangeCodecs";
@@ -70,7 +70,7 @@ export class ModularChangeFamily
 	public readonly codecs: ICodecFamily<ModularChangeset>;
 
 	public constructor(
-		public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
+		public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 		codecOptions: ICodecOptions,
 	) {
 		this.codecs = makeModularChangeCodecFamily(this.fieldKinds, codecOptions);
@@ -92,7 +92,7 @@ export class ModularChangeFamily
 		genId: IdAllocator,
 		revisionMetadata: RevisionMetadataSource,
 	): {
-		fieldKind: FieldKind;
+		fieldKind: FieldKindWithEditor;
 		changesets: FieldChangeset[];
 	} {
 		// TODO: Handle the case where changes have conflicting field kinds
@@ -784,13 +784,13 @@ function isEmptyNodeChangeset(change: NodeChangeset): boolean {
 export function getFieldKind(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
 	kind: FieldKindIdentifier,
-): FieldKind {
+): FieldKindWithEditor {
 	if (kind === genericFieldKind.identifier) {
 		return genericFieldKind;
 	}
 	const fieldKind = fieldKinds.get(kind);
 	assert(fieldKind !== undefined, 0x3ad /* Unknown field kind */);
-	return fieldKind;
+	return withEditor(fieldKind);
 }
 
 export function getChangeHandler(

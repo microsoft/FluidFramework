@@ -301,11 +301,11 @@ export const IntervalStickiness: {
 };
 
 // @internal
-export type IntervalStickiness = typeof IntervalStickiness[keyof typeof IntervalStickiness];
+export type IntervalStickiness = (typeof IntervalStickiness)[keyof typeof IntervalStickiness];
 
 // @public (undocumented)
 export enum IntervalType {
-    // (undocumented)
+    // @deprecated (undocumented)
     Nest = 1,
     // (undocumented)
     Simple = 0,

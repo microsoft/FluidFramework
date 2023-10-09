@@ -19,7 +19,10 @@ export interface IAppModel {
 }
 
 class AppModel implements IAppModel {
-	public constructor(public readonly appData: AppData, public readonly container: IContainer) {}
+	public constructor(
+		public readonly appData: AppData,
+		public readonly container: IContainer,
+	) {}
 }
 
 const collaborativeObjId = "collaborative-obj";

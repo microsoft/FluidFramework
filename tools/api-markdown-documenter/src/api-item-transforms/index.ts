@@ -8,29 +8,10 @@
  */
 
 export {
-	ApiFunctionLike,
-	ApiMemberKind,
-	ApiModuleLike,
-	ApiSignatureLike,
-	ApiModifier,
 	doesItemRequireOwnDocument,
-	getDefaultValueBlock,
-	getDeprecatedBlock,
-	getExampleBlocks,
 	getHeadingForApiItem,
 	getLinkForApiItem,
-	getModifiers,
-	getQualifiedApiItemName,
-	getReleaseTag,
-	getReturnsBlock,
-	getSeeBlocks,
-	getThrowsBlocks,
-	getUnscopedPackageName,
-	isDeprecated,
-	isOptional,
-	isReadonly,
-	isStatic,
-} from "./ApiItemUtilities";
+} from "./ApiItemTransformUtilities";
 export {
 	type ApiItemTransformationConfiguration,
 	type ApiItemTransformationOptions,

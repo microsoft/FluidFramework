@@ -207,6 +207,13 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 	private anchorCounter = 1;
 
 	/**
+	 * Incrementing number that is bumped each time that the {@link AnchorSet} is changed.
+	 * This allows consumers to cache state associated with a particular generation number and later determine if that state may have been invalidated using a comparison with the current generation number.
+	 * For example, anchor slots can be used to cache the removal status of a node to memoize repeated walks up the tree.
+	 */
+	public generationNumber = 0;
+
+	/**
 	 * Special root node under which all anchors in this anchor set are transitively parented.
 	 * This does not appear in the UpPaths (instead they use undefined for the root).
 	 * Immediate children of this root are in detached fields (which have their identifiers used as the field keys).
@@ -224,6 +231,12 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 	private readonly anchorToPath: Map<Anchor, PathNode> = new Map();
 
 	private activeVisitor?: DeltaVisitor;
+
+	public constructor() {
+		this.on("treeChanging", () => {
+			this.generationNumber += 1;
+		});
+	}
 
 	public on<K extends keyof AnchorSetRootEvents>(
 		eventName: K,
