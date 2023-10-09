@@ -2,52 +2,41 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { MonoRepoKind, isMonoRepoKind } from "@fluidframework/build-tools";
-import { Flags } from "@oclif/core";
+import { MonoRepoKind, Package } from "@fluidframework/build-tools";
 import sortPackageJson from "sort-package-json";
 import { table } from "table";
 
-import { BaseCommand } from "../base";
-import { releaseGroupFlag } from "../flags";
 import { PackageVersionList } from "../lib";
+import { PackageCommand } from "../BasePackageCommand";
+import { PackageWithKind } from "../filter";
 
 /**
  * The root `info` command.
  */
-export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
+export default class InfoCommand extends PackageCommand<typeof InfoCommand> {
 	static description = "Get info about the repo, release groups, and packages.";
 
-	static flags = {
-		releaseGroup: releaseGroupFlag({
-			required: false,
-		}),
-		private: Flags.boolean({
-			allowNo: true,
-			char: "p",
-			default: true,
-			description: "Include private packages (default true).",
-			required: false,
-		}),
-		...BaseCommand.flags,
-	};
+	static enableJsonFlag = true;
+	protected selectAllByDefault = true;
 
-	static enableJsonFlag: boolean = true;
+	protected async processPackage(pkg: Package): Promise<void> {
+		// do nothing
+	}
+
+	protected async processPackages(packages: PackageWithKind[]): Promise<void> {
+		// do nothing
+	}
 
 	async run(): Promise<PackageVersionList> {
-		const flags = this.flags;
-		const context = await this.getContext();
-		let packages =
-			flags.releaseGroup !== undefined && isMonoRepoKind(flags.releaseGroup)
-				? context.packagesInReleaseGroup(flags.releaseGroup)
-				: [...context.fullPackageMap.values()];
+		await super.run();
 
-		// Filter out private packages
-		if (!flags.private) {
-			packages = packages.filter((p) => p.packageJson.private !== true);
+		const packages = this.filteredPackages;
+		if (packages === undefined || packages.length === 0) {
+			this.error(`No packages found.`, { exit: 1 });
 		}
 
 		const tableData: (string | MonoRepoKind | undefined)[][] = [
-			["Release group", "Name", "Private", "Version"],
+			["Release group", "Name", "Private", "Kind", "Version"],
 		];
 		const jsonData: PackageVersionList = {};
 		for (const pkg of packages) {
@@ -56,6 +45,7 @@ export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
 				pkg.monoRepo?.kind ?? "n/a",
 				pkg.name,
 				pkg.packageJson.private === true ? "-private-" : "",
+				pkg.kind,
 				version,
 			]);
 			jsonData[pkg.name] = version;

@@ -33,9 +33,10 @@ export default class FilterCommand extends PackageCommand<typeof FilterCommand> 
 	static description = `This command outputs JSON containing metadata about the packages selected and filtered. This output is parsed in tests. While the --json flag is technically optional, it should always be passed when using this command for testing. Otherwise there is no output to be checked for correctness.`;
 
 	// hide the command from help since it's only supposed to be used for internal testing
-	static hidden = false;
+	static hidden = true;
 
 	static enableJsonFlag = true;
+	protected selectAllByDefault = false;
 
 	protected async processPackage(pkg: Package): Promise<void> {
 		// do nothing

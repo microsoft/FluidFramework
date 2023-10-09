@@ -79,6 +79,8 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 		},
 	];
 
+	protected selectAllByDefault = false;
+
 	protected async processPackage(pkg: Package): Promise<void> {
 		const version =
 			this.flags.exact ??

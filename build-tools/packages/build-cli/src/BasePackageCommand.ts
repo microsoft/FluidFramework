@@ -35,6 +35,13 @@ export abstract class PackageCommand<
 		...BaseCommand.flags,
 	};
 
+	/**
+	 * If set to true, then all packages will be selected if no package selection flags are used. This means that the user
+	 * does not need to pass --all to select all packages.
+	 */
+	protected abstract get selectAllByDefault(): boolean;
+	protected abstract set selectAllByDefault(value: boolean);
+
 	protected filterOptions: PackageFilterOptions | undefined;
 	protected selectionOptions: PackageSelectionCriteria | undefined;
 
@@ -66,7 +73,7 @@ export abstract class PackageCommand<
 	): Promise<void>;
 
 	protected parseFlags() {
-		this.selectionOptions = parsePackageSelectionFlags(this.flags);
+		this.selectionOptions = parsePackageSelectionFlags(this.flags, this.selectAllByDefault);
 		this.filterOptions = parsePackageFilterFlags(this.flags);
 	}
 
