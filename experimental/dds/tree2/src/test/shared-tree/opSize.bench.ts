@@ -32,7 +32,7 @@ import { typeboxValidator } from "../../external-utilities";
 // They could be reimplemented targeted the lower level APIs if desired.
 // 5. "large" node just get a long repeated string value, not a complex tree, so tree encoding is not really covered here.
 
-const builder = new SchemaBuilder("opSize");
+const builder = new SchemaBuilder({ scope: "opSize" });
 
 const stringSchema = builder.leaf("String", ValueSchema.String);
 const childSchema = builder.struct("Test:Opsize-Bench-Child", {
@@ -44,7 +44,7 @@ const parentSchema = builder.struct("Test:Opsize-Bench-Root", {
 
 const rootSchema = SchemaBuilder.fieldRequired(parentSchema);
 
-const fullSchemaData = builder.intoDocumentSchema(rootSchema);
+const fullSchemaData = builder.toDocumentSchema(rootSchema);
 
 const initialTestJsonTree = {
 	type: parentSchema.name,

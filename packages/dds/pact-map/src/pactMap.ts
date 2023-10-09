@@ -483,6 +483,7 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 		if (message.type === MessageType.Operation) {
 			const op = message.contents as IPactMapOperation<T>;
 
