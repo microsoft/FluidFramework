@@ -1843,7 +1843,7 @@ export interface Struct extends TreeNode {
 type StructFields<TFields extends RestrictiveReadonlyRecord<string, FieldSchema>> = {
     readonly [key in keyof TFields as `boxed${Capitalize<key & string>}`]: TypedField<TFields[key]>;
 } & {
-    readonly [key in keyof TFields as TFields[key]["kind"] extends typeof FieldKinds.optional | typeof FieldKinds.required ? never : key]: UnboxField<TFields[key]>;
+    readonly [key in keyof TFields]: UnboxField<TFields[key]>;
 } & {
     [key in keyof TFields as TFields[key]["kind"] extends typeof FieldKinds.optional | typeof FieldKinds.required ? key : never]: UnboxField<TFields[key]>;
 } & {
