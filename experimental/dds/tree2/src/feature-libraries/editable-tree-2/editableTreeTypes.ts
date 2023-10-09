@@ -451,19 +451,22 @@ export type StructFields<TFields extends RestrictiveReadonlyRecord<string, Field
 } & {
 	// Add setter (make property writable) when schema type is a value.
 	// If we could map to getters and setters separately, we would preferably do that, but we can't.
-	[key in keyof TFields as TFields[key]["kind"] extends
-		| typeof FieldKinds.optional
-		| typeof FieldKinds.required
+	[key in keyof TFields as TFields[key]["kind"] extends EditableFieldKinds
 		? key
 		: never]: UnboxField<TFields[key]>;
 } & {
 	// Setter method (When schema type is a value)
-	readonly [key in keyof TFields as TFields[key]["kind"] extends
-		| typeof FieldKinds.optional
-		| typeof FieldKinds.required
+	readonly [key in keyof TFields as TFields[key]["kind"] extends EditableFieldKinds
 		? `set${Capitalize<key & string>}`
 		: never]: (content: FlexibleFieldContent<TFields[key]>) => void;
 };
+
+/**
+ * Field kinds that allow editing of their values.
+ *
+ * @alpha
+ */
+export type EditableFieldKinds = typeof FieldKinds.optional | typeof FieldKinds.required;
 
 // #endregion
 

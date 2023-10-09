@@ -18,6 +18,7 @@ export {
 	Sequence,
 	Struct,
 	StructTyped,
+	EditableFieldKinds,
 	TypedNode,
 	TypedNodeUnion,
 	boxedIterator,

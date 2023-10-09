@@ -221,6 +221,7 @@ export {
 } from "./untypedTree";
 
 export {
+	EditableFieldKinds,
 	FieldNode,
 	FlexibleFieldContent,
 	FlexibleNodeContent,

@@ -485,6 +485,9 @@ export interface EditableField extends UntypedField<EditableTreeContext, Editabl
     setContent(newContent: NewFieldContent): void;
 }
 
+// @alpha
+export type EditableFieldKinds = typeof FieldKinds.optional | typeof FieldKinds.required;
+
 // @alpha (undocumented)
 type EditableOptionalField<TypedChild> = [
 UntypedOptionalField & MarkedArrayLike<TypedChild>
@@ -1845,9 +1848,9 @@ type StructFields<TFields extends RestrictiveReadonlyRecord<string, FieldSchema>
 } & {
     readonly [key in keyof TFields]: UnboxField<TFields[key]>;
 } & {
-    [key in keyof TFields as TFields[key]["kind"] extends typeof FieldKinds.optional | typeof FieldKinds.required ? key : never]: UnboxField<TFields[key]>;
+    [key in keyof TFields as TFields[key]["kind"] extends EditableFieldKinds ? key : never]: UnboxField<TFields[key]>;
 } & {
-    readonly [key in keyof TFields as TFields[key]["kind"] extends typeof FieldKinds.optional | typeof FieldKinds.required ? `set${Capitalize<key & string>}` : never]: (content: FlexibleFieldContent<TFields[key]>) => void;
+    readonly [key in keyof TFields as TFields[key]["kind"] extends EditableFieldKinds ? `set${Capitalize<key & string>}` : never]: (content: FlexibleFieldContent<TFields[key]>) => void;
 };
 
 // @alpha
