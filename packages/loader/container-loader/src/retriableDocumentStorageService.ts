@@ -116,9 +116,8 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 		// Creation flow with attachment blobs - need to do retries!
 		return this.runWithRetry(
 			async () =>
-				(this.internalStorageService as IDocumentStorageService).uploadSummaryWithContext(
-					summary,
-					context,
+				this.internalStorageServiceP.then(async (s) =>
+					s.uploadSummaryWithContext(summary, context),
 				),
 			"storage_uploadSummaryWithContext",
 		);
