@@ -18,8 +18,6 @@ module.exports = {
 		"@typescript-eslint/no-unsafe-call": "off",
 		"@typescript-eslint/no-unsafe-member-access": "off",
 		"@typescript-eslint/no-unused-vars": "warn",
-		//"@typescript-eslint/no-inferrable-types": "off",
-		//"@typescript-eslint/no-var-requires": "off",
 
 		"@typescript-eslint/switch-exhaustiveness-check": "error",
 		// This package is exclusively used in a Node.js context
