@@ -1,5 +1,11 @@
 # @fluid-experimental/migration-shim
 
+## WARNING
+
+**DO NOT USE**: Experimental package - API's will change. Provides the ability to swap an existing LegacySharedTree DDS
+with a new SharedTree DDS and migrate the
+data via an op at runtime.
+
 <!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
 
 <!-- prettier-ignore-start -->
@@ -20,11 +26,6 @@ package for more information including tools to convert between version schemes.
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
-
-## Description
-
-Experimental package - API's will change. Provides the ability to swap an existing DDS with a new DDS and migrate the
-data via an op at runtime.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_API_DOCS_SECTION:includeHeading=TRUE) -->
 

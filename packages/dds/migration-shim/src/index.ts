@@ -10,4 +10,4 @@
  * @packageDocumentation
  */
 
-export { MigrationShim as MigrationShim } from "./migrationShim";
+export { MigrationShim } from "./migrationShim";
