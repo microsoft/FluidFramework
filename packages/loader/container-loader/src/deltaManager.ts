@@ -402,7 +402,11 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 					this.close(normalizeError(error));
 				}
 			},
-			signalHandler: (message: ISignalMessage) => this._inboundSignal.push(message),
+			signalHandler: (signals: ISignalMessage[]) => {
+				for (const signal of signals) {
+					this._inboundSignal.push(signal);
+				}
+			},
 			reconnectionDelayHandler: (delayMs: number, error: unknown) =>
 				this.emitDelayInfo(this.deltaStreamDelayId, delayMs, error),
 			closeHandler: (error: any) => this.close(error),
