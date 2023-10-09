@@ -62,7 +62,7 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 		...StateMachineCommand.flags,
 	};
 
-	async init() {
+	async init(): Promise<void> {
 		await super.init();
 
 		const [context] = await Promise.all([this.getContext(), this.initMachineHooks()]);

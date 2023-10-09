@@ -99,7 +99,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 	static count = 0;
 	static pathToGitRoot = "";
 
-	async run() {
+	async run(): Promise<void> {
 		let handlersToRun: Handler[] = policyHandlers.filter((h) => {
 			if (this.flags.excludeHandler === undefined || this.flags.excludeHandler.length === 0) {
 				return true;
@@ -143,6 +143,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 
 		const manifest = getFluidBuildConfig(this.flags.root ?? process.cwd());
 
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const rawExclusions: string[] =
 			this.flags.exclusions === undefined
 				? manifest.policy?.exclusions
@@ -200,6 +201,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 
 		let scriptOutput = "";
 		p.stdout.on("data", (data) => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 			scriptOutput = `${scriptOutput}${data.toString()}`;
 		});
 		p.stdout.on("close", () => {
@@ -271,7 +273,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 			});
 	}
 
-	logStats() {
+	logStats(): void {
 		this.log(
 			`Statistics: ${CheckPolicy.processed} processed, ${
 				CheckPolicy.count - CheckPolicy.processed
@@ -291,7 +293,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		exclusions: RegExp[],
 		handlers: Handler[],
 		handlerExclusions: HandlerExclusions,
-	) {
+	): void {
 		const filePath = path.join(CheckPolicy.pathToGitRoot, line).trim().replace(/\\/g, "/");
 
 		if (!pathRegex.test(line) || !fs.existsSync(filePath)) {
@@ -306,7 +308,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 
 		try {
 			this.routeToHandlers(filePath, handlers, handlerExclusions);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			throw new Error(`Line error: ${error}`);
 		}
 
@@ -327,7 +329,7 @@ function runWithPerf<T>(name: string, action: policyAction, run: () => T): T {
 	return result;
 }
 
-function runPolicyCheck(handlers: Handler[], fix: boolean) {
+function runPolicyCheck(handlers: Handler[], fix: boolean): void {
 	for (const h of handlers) {
 		const final = h.final;
 		if (final) {

@@ -22,7 +22,7 @@ import {
 } from "../lib";
 import { CommandLogger } from "../logging";
 import { MachineState } from "../machines";
-import { isReleaseGroup } from "../releaseGroups";
+import { ReleaseSource, isReleaseGroup } from "../releaseGroups";
 import { getRunPolicyCheckDefault } from "../repoConfig";
 import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler";
 import { BaseStateHandler, StateHandlerFunction } from "./stateHandlers";
@@ -164,15 +164,15 @@ export const checkDoesReleaseFromReleaseBranch: StateHandlerFunction = async (
 			choices: [
 				{
 					name: "main/lts",
-					value: "direct",
+					value: "direct" as ReleaseSource,
 				},
-				{ name: "release branch", value: "releaseBranches" },
+				{ name: "release branch", value: "releaseBranches" as ReleaseSource },
 			],
 			message: `The ${releaseGroup} release group can be released directly from main, or you can create a release branch. Would you like to release from main or a release branch? If in doubt, select 'release branch'.`,
 		};
 
 		const answers = await inquirer.prompt(branchToReleaseFrom);
-		releaseSource = answers.releaseType;
+		releaseSource = answers.releaseType as ReleaseSource;
 	}
 
 	if (releaseSource === "direct") {

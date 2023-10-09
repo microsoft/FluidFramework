@@ -37,7 +37,7 @@ export class CheckLayers extends BaseCommand<typeof CheckLayers> {
 		...BaseCommand.flags,
 	};
 
-	async run() {
+	async run(): Promise<void> {
 		const flags = this.flags;
 		const timer = new Timer(flags.timer);
 

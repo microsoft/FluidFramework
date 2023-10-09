@@ -41,7 +41,7 @@ export async function createBumpBranch(
 	context: Context,
 	releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
 	bumpType: VersionBumpType,
-) {
+): Promise<string> {
 	const version = context.getVersion(releaseGroupOrPackage);
 	const name = generateBumpVersionBranchName(releaseGroupOrPackage, bumpType, version);
 	await context.createBranch(name);
@@ -68,7 +68,7 @@ export function generateBumpVersionBranchName(
 	bumpType: VersionChangeTypeExtended,
 	version: ReleaseVersion,
 	scheme?: VersionScheme,
-) {
+): string {
 	const newVersion = isVersionBumpTypeExtended(bumpType)
 		? bumpVersionScheme(version, bumpType, scheme)
 		: bumpType.version;

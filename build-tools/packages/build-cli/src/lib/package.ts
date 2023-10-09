@@ -172,8 +172,9 @@ export async function npmCheckUpdates(
 		if (glob.endsWith("*")) {
 			for (const [pkgJsonPath, upgradedDeps] of Object.entries(result)) {
 				const jsonPath = path.join(repoPath, pkgJsonPath);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				const { name } = readJsonSync(jsonPath);
-				const pkg = context.fullPackageMap.get(name);
+				const pkg = context.fullPackageMap.get(name as string);
 				if (pkg === undefined) {
 					log?.warning(`Package not found in context: ${name}`);
 					continue;
@@ -190,8 +191,9 @@ export async function npmCheckUpdates(
 			}
 		} else {
 			const jsonPath = path.join(repoPath, glob, "package.json");
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const { name } = readJsonSync(jsonPath);
-			const pkg = context.fullPackageMap.get(name);
+			const pkg = context.fullPackageMap.get(name as string);
 			if (pkg === undefined) {
 				log?.warning(`Package not found in context: ${name}`);
 				continue;
@@ -537,7 +539,7 @@ export async function setVersion(
 			if (results.all !== undefined) {
 				log?.verbose(results.all);
 			}
-		} catch (error: any) {
+		} catch (error: unknown) {
 			log?.errorLog(`Error running command: ${cmd} ${args}\n${error}`);
 			throw error;
 		}
@@ -551,6 +553,7 @@ export async function setVersion(
 	// Since we don't use lerna to bump, manually updates the lerna.json file. Also updates the root package.json for good
 	// measure. Long term we may consider removing lerna.json and using the root package version as the "source of truth".
 	const lernaPath = path.join(releaseGroupOrPackage.repoPath, "lerna.json");
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const [lernaJson, prettierConfig] = await Promise.all([
 		readJson(lernaPath),
 		resolvePrettierConfig(lernaPath),
@@ -559,6 +562,7 @@ export async function setVersion(
 	if (prettierConfig !== null) {
 		prettierConfig.filepath = lernaPath;
 	}
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 	lernaJson.version = translatedVersion.version;
 	const output = await prettier(
 		JSON.stringify(lernaJson),

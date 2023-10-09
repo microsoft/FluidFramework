@@ -26,7 +26,9 @@ import { testModeFlag } from "./flags";
  * The command also provides a `state` flag that can be used to initialize the state machine to a specific state. This
  * is intended for testing.
  */
-export abstract class StateMachineCommand<T extends typeof Command> extends BaseCommand<T> {
+export abstract class StateMachineCommand<
+	T extends typeof Command & { flags: typeof StateMachineCommand.flags },
+> extends BaseCommand<T> {
 	static flags = {
 		// Test mode flags
 		testMode: testModeFlag,
@@ -36,6 +38,7 @@ export abstract class StateMachineCommand<T extends typeof Command> extends Base
 			dependsOn: ["testMode"],
 			hidden: true,
 		}),
+		...BaseCommand.flags,
 	};
 
 	/**
@@ -63,11 +66,13 @@ export abstract class StateMachineCommand<T extends typeof Command> extends Base
 	/**
 	 * Wires up some hooks on the state machine to do machine-wide logging.
 	 */
-	protected async initMachineHooks() {
+	protected async initMachineHooks(): Promise<void> {
 		for (const state of this.machine.states()) {
 			// Logs the entry into any terminal state, noting the source state and action that caused the transition.
 			if (this.machine.state_is_terminal(state) === true) {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				this.machine.hook_entry(state, (o: any) => {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 					const { from, action } = o;
 					this.verbose(`${state}: ${action} from ${from}`);
 				});
@@ -76,7 +81,9 @@ export abstract class StateMachineCommand<T extends typeof Command> extends Base
 
 		// Logs all transitions in the state machine, noting the source and target states and the action that caused the
 		// transition.
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		this.machine.hook_any_transition((t: any) => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const { action, from, to } = t;
 			this.verbose(`STATE MACHINE: ${from} [${action}] ==> ${to}`);
 		});

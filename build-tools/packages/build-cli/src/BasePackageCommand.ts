@@ -65,12 +65,12 @@ export abstract class PackageCommand<
 		kind: PackageKind,
 	): Promise<void>;
 
-	protected parseFlags() {
+	protected parseFlags(): void {
 		this.selectionOptions = parsePackageSelectionFlags(this.flags);
 		this.filterOptions = parsePackageFilterFlags(this.flags);
 	}
 
-	protected async selectAndFilterPackages() {
+	protected async selectAndFilterPackages(): Promise<void> {
 		if (this.selectionOptions === undefined) {
 			throw new Error(`No packages selected.`);
 		}
@@ -85,7 +85,7 @@ export abstract class PackageCommand<
 		[this.selectedPackages, this.filteredPackages] = [selected, filtered];
 	}
 
-	public async run(): Promise<any> {
+	public async run(): Promise<unknown> {
 		this.parseFlags();
 
 		assert(this.selectionOptions !== undefined, "selectionOptions is undefined");

@@ -60,8 +60,10 @@ export const askForReleaseType: StateHandlerFunction = async (
 		};
 		questions.push(askBumpType);
 		const answers = await inquirer.prompt(questions);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		bumpType = answers.bumpType;
-		data.bumpType = bumpType;
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, require-atomic-updates
+		data.bumpType = answers.bumpType;
 	}
 
 	if (bumpType === undefined) {
