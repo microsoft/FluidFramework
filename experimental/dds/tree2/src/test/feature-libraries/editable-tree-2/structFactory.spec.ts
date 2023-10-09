@@ -23,14 +23,14 @@ import { contextWithContentReadonly } from "./utils";
 
 describe("raw structs", () => {
 	function getRawStruct() {
-		const builder = new SchemaBuilder("raw struct test", undefined, leafDomain.library);
+		const builder = new SchemaBuilder({ scope: "raw struct test" });
 		const structSchema = builder.struct("struct", {
 			foo: SchemaBuilder.fieldRequired(leafDomain.number),
 			bar: SchemaBuilder.fieldOptional(leafDomain.string),
 			baz: SchemaBuilder.fieldSequence(leafDomain.boolean),
 		});
 		const rootFieldSchema = SchemaBuilder.fieldRequired(structSchema);
-		const schema = builder.intoDocumentSchema(rootFieldSchema);
+		const schema = builder.toDocumentSchema(rootFieldSchema);
 		const context = contextWithContentReadonly({
 			schema,
 			initialTree: { foo: 42, baz: [] },
