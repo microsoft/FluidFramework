@@ -84,7 +84,7 @@ export class SchemaBuilderBase<TScope extends string, TName extends number | str
 	}
 
 	protected addNodeSchema<T extends TreeSchema<string, any>>(schema: T): void {
-		assert(!this.treeSchema.has(schema.name), 1707 /* Conflicting TreeSchema names */);
+		assert(!this.treeSchema.has(schema.name), "Conflicting TreeSchema names");
 		this.treeSchema.set(schema.name, schema as TreeSchema);
 	}
 
