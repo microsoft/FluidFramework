@@ -45,16 +45,18 @@ import {
 import {
 	Any,
 	buildForest,
+	createMockNodeKeyManager,
 	DefaultChangeFamily,
 	DefaultChangeset,
 	DefaultEditBuilder,
+	FieldSchema,
 	ForestRepairDataStoreProvider,
 	jsonableTreeFromCursor,
 	makeSchemaCodec,
 	mapFieldMarks,
 	mapMarkList,
 	mapTreeFromCursor,
-	NodeKeyIndex,
+	nodeKeyFieldKey as nodeKeyFieldKeyDefault,
 	NodeKeyManager,
 	NodeReviver,
 	normalizeNewFieldContent,
@@ -63,6 +65,7 @@ import {
 	revisionMetadataSourceFromInfo,
 	SchemaBuilder,
 	singleTextCursor,
+	TypedField,
 } from "../feature-libraries";
 import {
 	RevisionTag,
@@ -605,8 +608,6 @@ export function viewWithContent(
 	content: TreeContent,
 	args?: {
 		repairProvider?: ForestRepairDataStoreProvider<DefaultChangeset>;
-		nodeKeyManager?: NodeKeyManager;
-		nodeKeyIndex?: NodeKeyIndex;
 		events?: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>;
 	},
 ): ISharedTreeView {
@@ -632,12 +633,34 @@ export function forestWithContent(content: TreeContent): IEditableForest {
 	return forest;
 }
 
+export function treeWithContent<TRoot extends FieldSchema>(
+	content: TreeContent<TRoot>,
+	args?: {
+		repairProvider?: ForestRepairDataStoreProvider<DefaultChangeset>;
+		nodeKeyManager?: NodeKeyManager;
+		nodeKeyFieldKey?: FieldKey;
+		events?: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>;
+	},
+): TypedField<TRoot> {
+	const forest = forestWithContent(content);
+	const view = createSharedTreeView({
+		...args,
+		forest,
+		schema: new InMemoryStoredSchemaRepository(content.schema),
+	});
+	const manager = args?.nodeKeyManager ?? createMockNodeKeyManager();
+	return view.editableTree2(
+		content.schema,
+		manager,
+		args?.nodeKeyFieldKey ?? brand(nodeKeyFieldKeyDefault),
+	);
+}
+
 const jsonSequenceRootField = SchemaBuilder.fieldSequence(...jsonRoot);
-export const jsonSequenceRootSchema = new SchemaBuilder(
-	"JsonSequenceRoot",
-	{},
-	jsonSchema,
-).intoDocumentSchema(jsonSequenceRootField);
+export const jsonSequenceRootSchema = new SchemaBuilder({
+	scope: "JsonSequenceRoot",
+	libraries: [jsonSchema],
+}).toDocumentSchema(jsonSequenceRootField);
 
 /**
  * If the root is an array, this creates a sequence field at the root instead of a JSON array node.
@@ -935,9 +958,12 @@ export function namedTreeSchema(
  * @deprecated This in invalid and only used to explicitly mark code as using the wrong schema. All usages of this should be fixed to use correct schema.
  */
 // TODO: remove all usages of this.
-export const wrongSchema = new SchemaBuilder("Wrong Schema", {
-	rejectEmpty: false,
-}).intoDocumentSchema(SchemaBuilder.fieldSequence(Any));
+export const wrongSchema = new SchemaBuilder({
+	scope: "Wrong Schema",
+	lint: {
+		rejectEmpty: false,
+	},
+}).toDocumentSchema(SchemaBuilder.fieldSequence(Any));
 
 /**
  * Schematize config Schema which is not correct.

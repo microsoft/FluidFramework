@@ -261,6 +261,7 @@ export {
 	MapSchema,
 	StructSchema,
 	CheckTypesOverlap,
+	SchemaBuilderBase,
 } from "./feature-libraries";
 
 export {

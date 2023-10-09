@@ -66,11 +66,10 @@ export interface ForestTestConfiguration {
 	skipCursorErrorCheck?: true;
 }
 
-const jsonDocumentSchema = new SchemaBuilder(
-	"jsonDocumentSchema",
-	{},
-	jsonSchema,
-).intoDocumentSchema(SchemaBuilder.fieldSequence(...jsonRoot));
+const jsonDocumentSchema = new SchemaBuilder({
+	scope: "jsonDocumentSchema",
+	libraries: [jsonSchema],
+}).toDocumentSchema(SchemaBuilder.fieldSequence(...jsonRoot));
 
 /**
  * Generic forest test suite
@@ -794,13 +793,13 @@ export function testForest(config: ForestTestConfiguration): void {
 				assert.deepEqual(actual, expected);
 			});
 			it("when moving the last node in the field", () => {
-				const builder = new SchemaBuilder("moving");
+				const builder = new SchemaBuilder({ scope: "moving" });
 				const leaf = builder.leaf("leaf", ValueSchema.Number);
 				const root = builder.struct("root", {
 					x: SchemaBuilder.fieldSequence(leaf),
 					y: SchemaBuilder.fieldSequence(leaf),
 				});
-				const schema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(root));
+				const schema = builder.toDocumentSchema(SchemaBuilder.fieldOptional(root));
 
 				const forest = factory(new InMemoryStoredSchemaRepository(schema));
 				initializeForest(forest, [

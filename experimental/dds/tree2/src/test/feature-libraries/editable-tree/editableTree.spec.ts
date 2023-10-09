@@ -385,12 +385,12 @@ describe("editable-tree: read-only", () => {
 	});
 
 	it("primitives under node are unwrapped, but may be accessed without unwrapping", () => {
-		const builder = new SchemaBuilder("test", {}, personSchemaLibrary);
+		const builder = new SchemaBuilder({ scope: "test", libraries: [personSchemaLibrary] });
 		const parentSchema = builder.struct("parent", {
 			child: SchemaBuilder.field(FieldKinds.required, stringSchema),
 		});
 		const rootSchema = SchemaBuilder.field(FieldKinds.required, parentSchema);
-		const schemaData = builder.intoDocumentSchema(rootSchema);
+		const schemaData = builder.toDocumentSchema(rootSchema);
 		const forest = setupForest(schemaData, { child: "x" });
 		const context = getReadonlyEditableTreeContext(forest, schemaData);
 		assert(isEditableTree(context.unwrappedRoot));

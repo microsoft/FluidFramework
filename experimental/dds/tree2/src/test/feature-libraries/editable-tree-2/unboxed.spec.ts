@@ -65,9 +65,9 @@ function initializeTreeWithContent<Kind extends FieldKind, Types extends Allowed
 describe("unboxedField", () => {
 	describe("Optional field", () => {
 		it("No value", () => {
-			const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+			const builder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
 			const fieldSchema = SchemaBuilder.fieldOptional(leafDomain.number);
-			const schema = builder.intoDocumentSchema(fieldSchema);
+			const schema = builder.toDocumentSchema(fieldSchema);
 
 			const { context, cursor } = initializeTreeWithContent({
 				schema,
@@ -78,9 +78,9 @@ describe("unboxedField", () => {
 		});
 
 		it("With value (leaf)", () => {
-			const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+			const builder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
 			const fieldSchema = SchemaBuilder.fieldOptional(leafDomain.number);
-			const schema = builder.intoDocumentSchema(fieldSchema);
+			const schema = builder.toDocumentSchema(fieldSchema);
 
 			const { context, cursor } = initializeTreeWithContent({
 				schema,
@@ -92,13 +92,13 @@ describe("unboxedField", () => {
 	});
 
 	it("Value field (struct)", () => {
-		const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+		const builder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
 		const structSchema = builder.structRecursive("struct", {
 			name: SchemaBuilder.fieldRequired(leafDomain.string),
 			child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => structSchema),
 		});
 		const fieldSchema = SchemaBuilder.fieldOptional(structSchema);
-		const schema = builder.intoDocumentSchema(fieldSchema);
+		const schema = builder.toDocumentSchema(fieldSchema);
 
 		const initialTree = {
 			name: "Foo",
@@ -112,20 +112,20 @@ describe("unboxedField", () => {
 
 		const unboxed = unboxedField(context, fieldSchema, cursor);
 		assert(unboxed !== undefined);
-		assert.equal(unboxed.type, "struct");
+		assert.equal(unboxed.type, "test.struct");
 		assert.equal(unboxed.name, "Foo");
 
 		const unboxedChild = unboxed.child;
 		assert(unboxedChild !== undefined);
-		assert.equal(unboxedChild.type, "struct");
+		assert.equal(unboxedChild.type, "test.struct");
 		assert.equal(unboxedChild.name, "Bar");
 		assert.equal(unboxedChild.child, undefined);
 	});
 
 	it("Sequence field", () => {
-		const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+		const builder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
 		const fieldSchema = SchemaBuilder.fieldSequence(leafDomain.string);
-		const schema = builder.intoDocumentSchema(fieldSchema);
+		const schema = builder.toDocumentSchema(fieldSchema);
 
 		const { context, cursor } = initializeTreeWithContent({
 			schema,
@@ -138,9 +138,9 @@ describe("unboxedField", () => {
 	});
 
 	it("Schema: Any", () => {
-		const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+		const builder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
 		const fieldSchema = SchemaBuilder.fieldOptional(Any);
-		const schema = builder.intoDocumentSchema(fieldSchema);
+		const schema = builder.toDocumentSchema(fieldSchema);
 
 		const { context, cursor } = initializeTreeWithContent({ schema, initialTree: 42 });
 
@@ -154,9 +154,9 @@ describe("unboxedField", () => {
 
 describe("unboxedTree", () => {
 	it("Leaf", () => {
-		const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+		const builder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
 		const rootSchema = SchemaBuilder.fieldRequired(leafDomain.string);
-		const schema = builder.intoDocumentSchema(rootSchema);
+		const schema = builder.toDocumentSchema(rootSchema);
 
 		const { context, cursor } = initializeTreeWithContent({
 			schema,
@@ -168,10 +168,10 @@ describe("unboxedTree", () => {
 	});
 
 	it("Map", () => {
-		const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+		const builder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
 		const mapSchema = builder.map("map", SchemaBuilder.fieldOptional(leafDomain.string));
 		const rootSchema = SchemaBuilder.fieldOptional(mapSchema);
-		const schema = builder.intoDocumentSchema(rootSchema);
+		const schema = builder.toDocumentSchema(rootSchema);
 
 		const { context, cursor } = initializeTreeWithContent({
 			schema,
@@ -189,13 +189,13 @@ describe("unboxedTree", () => {
 	});
 
 	it("Struct", () => {
-		const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+		const builder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
 		const structSchema = builder.structRecursive("struct", {
 			name: SchemaBuilder.fieldRequired(leafDomain.string),
 			child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => structSchema),
 		});
 		const rootSchema = SchemaBuilder.fieldOptional(structSchema);
-		const schema = builder.intoDocumentSchema(rootSchema);
+		const schema = builder.toDocumentSchema(rootSchema);
 
 		const initialTree = {
 			name: "Foo",
@@ -219,9 +219,9 @@ describe("unboxedTree", () => {
 
 describe("unboxedUnion", () => {
 	it("Any", () => {
-		const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+		const builder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
 		const fieldSchema = SchemaBuilder.fieldOptional(Any);
-		const schema = builder.intoDocumentSchema(fieldSchema);
+		const schema = builder.toDocumentSchema(fieldSchema);
 
 		const { context, cursor } = initializeTreeWithContent({ schema, initialTree: 42 });
 		cursor.enterNode(0); // Root node field has 1 node; move into it
@@ -233,9 +233,9 @@ describe("unboxedUnion", () => {
 	});
 
 	it("Single type", () => {
-		const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+		const builder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
 		const fieldSchema = SchemaBuilder.fieldRequired(leafDomain.boolean);
-		const schema = builder.intoDocumentSchema(fieldSchema);
+		const schema = builder.toDocumentSchema(fieldSchema);
 
 		const { context, cursor } = initializeTreeWithContent({
 			schema,
@@ -247,9 +247,9 @@ describe("unboxedUnion", () => {
 	});
 
 	it("Multi-type", () => {
-		const builder = new SchemaBuilder("test", undefined, leafDomain.library);
+		const builder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
 		const fieldSchema = SchemaBuilder.fieldOptional(leafDomain.string, leafDomain.handle);
-		const schema = builder.intoDocumentSchema(fieldSchema);
+		const schema = builder.toDocumentSchema(fieldSchema);
 
 		const { context, cursor } = initializeTreeWithContent({
 			schema,

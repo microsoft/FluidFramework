@@ -22,7 +22,6 @@ import {
 	SchemaBuilder,
 	Any,
 	TypedSchemaCollection,
-	createMockNodeKeyManager,
 } from "../../../feature-libraries";
 import {
 	ValueSchema,
@@ -36,7 +35,7 @@ import {
 } from "../../../core";
 import { brand, Brand } from "../../../util";
 
-const builder = new SchemaBuilder("mock data");
+const builder = new SchemaBuilder({ scope: "mock data" });
 
 export const stringSchema = builder.leaf("String", ValueSchema.String);
 
@@ -101,7 +100,7 @@ export const arraySchema = builder.fieldNode(
 
 export const rootPersonSchema = SchemaBuilder.field(FieldKinds.optional, personSchema);
 
-export const personSchemaLibrary = builder.intoLibrary();
+export const personSchemaLibrary = builder.finalize();
 
 export const fullSchemaData = buildTestSchema(rootPersonSchema);
 
@@ -238,9 +237,10 @@ export function getPerson(): Person {
  * Create schema supporting all type defined in this file, with the specified root field.
  */
 export function buildTestSchema<T extends FieldSchema>(rootField: T) {
-	return new SchemaBuilder("buildTestSchema", {}, personSchemaLibrary).intoDocumentSchema(
-		rootField,
-	);
+	return new SchemaBuilder({
+		scope: "buildTestSchema",
+		libraries: [personSchemaLibrary],
+	}).toDocumentSchema(rootField);
 }
 
 export function getReadonlyEditableTreeContext(
@@ -249,7 +249,7 @@ export function getReadonlyEditableTreeContext(
 ): EditableTreeContext {
 	// This will error if someone tries to call mutation methods on it
 	const dummyEditor = {} as unknown as DefaultEditBuilder;
-	return getEditableTreeContext(forest, schema, dummyEditor, createMockNodeKeyManager());
+	return getEditableTreeContext(forest, schema, dummyEditor);
 }
 
 export function setupForest<T extends FieldSchema>(

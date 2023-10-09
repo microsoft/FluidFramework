@@ -62,7 +62,7 @@ import {
 } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
 import { EditManager } from "../../shared-tree-core";
-import { jsonNumber, jsonSchema } from "../../domains";
+import { jsonNumber, jsonSchema, leaf } from "../../domains";
 import { noopValidator } from "../../codec";
 
 const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator });
@@ -103,9 +103,8 @@ describe("SharedTree", () => {
 	});
 
 	it("editable-tree-2-end-to-end", () => {
-		const builder = new SchemaBuilder("e2e");
-		const numberSchema = builder.leaf("number", ValueSchema.Number);
-		const schema = builder.intoDocumentSchema(SchemaBuilder.fieldRequired(numberSchema));
+		const builder = new SchemaBuilder({ scope: "e2e", libraries: [leaf.library] });
+		const schema = builder.toDocumentSchema(SchemaBuilder.fieldRequired(leaf.number));
 		const factory = new SharedTreeFactory({
 			jsonValidator: typeboxValidator,
 			forest: ForestType.Reference,
@@ -117,10 +116,10 @@ describe("SharedTree", () => {
 			schema,
 		});
 		const root = view.editableTree2(schema);
-		const leaf = root.boxedContent;
-		assert.equal(leaf.value, 1);
-		root.setContent(2);
-		assert(leaf.treeStatus() !== TreeStatus.InDocument);
+		const leafNode = root.boxedContent;
+		assert.equal(leafNode.value, 1);
+		root.content = 2;
+		assert(leafNode.treeStatus() !== TreeStatus.InDocument);
 		assert.equal(root.content, 2);
 	});
 
@@ -475,9 +474,10 @@ describe("SharedTree", () => {
 		it("can insert and delete a node in an optional field", () => {
 			const value = 42;
 			const provider = new TestTreeProviderLite(2);
-			const schema = new SchemaBuilder("optional", {}, jsonSchema).intoDocumentSchema(
-				SchemaBuilder.fieldOptional(jsonNumber),
-			);
+			const schema = new SchemaBuilder({
+				scope: "optional",
+				libraries: [jsonSchema],
+			}).toDocumentSchema(SchemaBuilder.fieldOptional(jsonNumber));
 			const config: InitializeAndSchematizeConfiguration = {
 				schema,
 				initialTree: value,
@@ -1001,12 +1001,12 @@ describe("SharedTree", () => {
 
 	// TODO: many of these events tests should be tests of SharedTreeView instead.
 	describe("Events", () => {
-		const builder = new SchemaBuilder("Events test schema");
+		const builder = new SchemaBuilder({ scope: "Events test schema" });
 		const numberSchema = builder.leaf("number", ValueSchema.Number);
 		const treeSchema = builder.struct("root", {
 			x: SchemaBuilder.fieldRequired(numberSchema),
 		});
-		const schema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
+		const schema = builder.toDocumentSchema(SchemaBuilder.fieldOptional(Any));
 
 		it("triggers events for local and subtree changes", () => {
 			const view = viewWithContent({
@@ -1827,13 +1827,13 @@ describe("SharedTree", () => {
 			const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 
 			const rootFieldSchema = SchemaBuilder.fieldRequired(Any);
-			const testSchemaBuilder = new SchemaBuilder("testSchema");
+			const testSchemaBuilder = new SchemaBuilder({ scope: "testSchema" });
 			const numberSchema = testSchemaBuilder.leaf("Number", ValueSchema.Number);
 			const rootNodeSchema = testSchemaBuilder.structRecursive("Node", {
 				foo: SchemaBuilder.fieldSequence(numberSchema),
 				foo2: SchemaBuilder.fieldSequence(numberSchema),
 			});
-			const testSchema = testSchemaBuilder.intoDocumentSchema(rootFieldSchema);
+			const testSchema = testSchemaBuilder.toDocumentSchema(rootFieldSchema);
 
 			// TODO: if this tests is just about deleting the root, it should use a simpler tree.
 			const initialTreeState: JsonableTree = {
