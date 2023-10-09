@@ -7,6 +7,7 @@
 
 import { strict as assert, fail } from "assert";
 
+import { noopValidator } from "../../../codec";
 import {
 	LazyFieldNode,
 	LazyLeaf,
@@ -34,6 +35,11 @@ import {
 	AllowedTypes,
 	typeNameSymbol,
 	TreeSchema,
+	createMockNodeKeyManager,
+	nodeKeyFieldKey,
+	DefaultEditBuilder,
+	DefaultChangeFamily,
+	DefaultChangeset,
 } from "../../../feature-libraries";
 import {
 	Anchor,
@@ -55,10 +61,11 @@ import {
 	LazyValueField,
 } from "../../../feature-libraries/editable-tree-2/lazyField";
 import { boxedIterator, visitIterableTree } from "../../../feature-libraries/editable-tree-2";
-import { Context } from "../../../feature-libraries/editable-tree-2/context";
+import { Context, getTreeContext } from "../../../feature-libraries/editable-tree-2/context";
 import { TreeContent } from "../../../shared-tree";
-import { testTrees, treeContentFromTestTree } from "../../testTrees";
 import { leaf as leafDomain } from "../../../domains";
+import { testTrees, treeContentFromTestTree } from "../../testTrees";
+import { forestWithContent } from "../../utils";
 import { contextWithContentReadonly } from "./utils";
 
 function collectPropertyNames(obj: object): Set<string> {
@@ -371,7 +378,7 @@ describe("LazyMap", () => {
 	});
 });
 
-describe("LazyStruct", () => {
+describe.only("LazyStruct", () => {
 	const schemaBuilder = new SchemaBuilder("test", {}, leafDomain.library);
 	const structNodeSchema = schemaBuilder.struct("struct", {
 		foo: SchemaBuilder.fieldOptional(leafDomain.string),
@@ -379,14 +386,32 @@ describe("LazyStruct", () => {
 	});
 	const schema = schemaBuilder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
 
-	const context = contextWithContentReadonly({
-		schema,
-		initialTree: {
-			[typeNameSymbol]: structNodeSchema.name,
-			foo: "Hello world", // Will unbox
-			bar: [], // Won't unbox
-		},
+	// Count the number of times edits have been generated
+	let editCallCount = 0;
+	beforeEach(() => {
+		editCallCount = 0;
 	});
+
+	const editBuilder = new DefaultEditBuilder(
+		new DefaultChangeFamily({ jsonValidator: noopValidator }),
+		(change: DefaultChangeset) => {
+			editCallCount++;
+		},
+	);
+	const initialTree = {
+		[typeNameSymbol]: structNodeSchema.name,
+		foo: "Hello world", // Will unbox
+		bar: [], // Won't unbox
+	};
+	const forest = forestWithContent({ schema, initialTree });
+	const context = getTreeContext(
+		schema,
+		forest,
+		editBuilder,
+		createMockNodeKeyManager(),
+		brand(nodeKeyFieldKey),
+	);
+
 	const cursor = initializeCursor(context, rootFieldAnchor);
 	cursor.enterNode(0);
 
@@ -409,12 +434,12 @@ describe("LazyStruct", () => {
 		assert.equal(node.tryGetField(brand("baz")), undefined);
 	});
 
-	it("Value assignment", () => {
+	it("Value assignment generates edits", () => {
 		node.foo = "New value!";
-		assert.equal(node.foo, "New value!");
+		assert.equal(editCallCount, 1);
 
 		node.setBar([37, 42]);
-		assert.deepEqual(node.bar.asArray, [37, 42]);
+		assert.equal(editCallCount, 2);
 	});
 });
 

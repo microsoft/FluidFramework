@@ -433,8 +433,12 @@ export type StructTyped<TSchema extends StructSchema> = Struct &
 /**
  * Properties to access a struct nodes fields. See {@link StructTyped}.
  *
- * @privateRemarks
- * TODO: support custom field keys
+ * @privateRemarks TODOs:
+ *
+ * 1. Support custom field keys.
+ *
+ * 2. Do we keep assignment operator + "setFoo" methods, or just use methods?
+ * Inconsistency in the API experience could confusing for consumers.
  *
  * @alpha
  */

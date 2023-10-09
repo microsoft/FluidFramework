@@ -564,6 +564,15 @@ function buildStructClass<TSchema extends StructSchema>(
 				);
 			},
 		};
+
+		propertyDescriptorMap[`set${capitalize(key)}`] = {
+			enumerable: false,
+			get(this: CustomStruct, newContent: ContextuallyTypedNodeData): unknown {
+				return inCursorField(this[cursorSymbol], key, (cursor) =>
+					makeField(this.context, fieldSchema, cursor),
+				);
+			},
+		};
 	}
 
 	// This must implement `StructTyped<TSchema>`, but TypeScript can't constrain it to do so.
