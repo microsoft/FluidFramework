@@ -54,7 +54,7 @@ trigger:
     - tools/pipelines/templates/include-git-tag-steps.yml
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
-    - scripts/report-parser.js
+    - scripts/*
     # Relevant to the test-azure-frs pipeline
     - packages/dds/map
     - packages/drivers/routerlicious-driver
@@ -87,7 +87,7 @@ pr:
     - tools/pipelines/templates/include-git-tag-steps.yml
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
-    - scripts/report-parser.js
+    - scripts/*
     # Relevant to the test-azure-frs pipeline
     - packages/dds/map
     - packages/drivers/routerlicious-driver
