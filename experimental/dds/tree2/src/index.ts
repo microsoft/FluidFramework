@@ -262,6 +262,8 @@ export {
 	StructSchema,
 	CheckTypesOverlap,
 	SchemaBuilderBase,
+	ImplicitFieldSchema,
+	ImplicitAllowedTypes,
 } from "./feature-libraries";
 
 export {

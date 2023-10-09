@@ -104,7 +104,7 @@ describe("SharedTree", () => {
 
 	it("editable-tree-2-end-to-end", () => {
 		const builder = new SchemaBuilder({ scope: "e2e", libraries: [leaf.library] });
-		const schema = builder.toDocumentSchema(SchemaBuilder.fieldRequired(leaf.number));
+		const schema = builder.toDocumentSchema(leaf.number);
 		const factory = new SharedTreeFactory({
 			jsonValidator: typeboxValidator,
 			forest: ForestType.Reference,
@@ -1004,7 +1004,7 @@ describe("SharedTree", () => {
 		const builder = new SchemaBuilder({ scope: "Events test schema" });
 		const numberSchema = builder.leaf("number", ValueSchema.Number);
 		const treeSchema = builder.struct("root", {
-			x: SchemaBuilder.fieldRequired(numberSchema),
+			x: numberSchema,
 		});
 		const schema = builder.toDocumentSchema(SchemaBuilder.fieldOptional(Any));
 

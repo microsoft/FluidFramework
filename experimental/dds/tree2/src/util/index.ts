@@ -76,6 +76,7 @@ export {
 	IDisposable,
 	capitalize,
 	assertValidRangeIndices,
+	transformObjectMap,
 } from "./utils";
 export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting";
 
