@@ -22,6 +22,7 @@ import {
 	forEachField,
 } from "../../core";
 import { capitalize, disposeSymbol, fail, getOrCreate } from "../../util";
+import { ContextuallyTypedNodeData } from "../contextuallyTyped";
 import {
 	FieldSchema,
 	TreeSchema,
@@ -38,7 +39,7 @@ import {
 } from "../typed-schema";
 import { EditableTreeEvents } from "../untypedTree";
 import { FieldKinds } from "../default-field-kinds";
-import { FieldKind, Multiplicity } from "../modular-schema";
+import { FieldKind } from "../modular-schema";
 import { LocalNodeKey } from "../node-key";
 import { Context } from "./context";
 import {
@@ -68,7 +69,6 @@ import {
 } from "./lazyEntity";
 import { unboxedField } from "./unboxed";
 import { treeStatusFromAnchorCache } from "./utilities";
-import { ContextuallyTypedNodeData } from "../contextuallyTyped";
 
 const lazyTreeSlot = anchorSlot<LazyTree>();
 
@@ -522,26 +522,25 @@ function buildStructClass<TSchema extends StructSchema>(
 	const ownPropertyMap: PropertyDescriptorMap = {};
 
 	for (const [key, fieldSchema] of schema.structFields) {
-		// eslint-disable-next-line no-inner-declarations
-		function getField(this: CustomStruct): TreeField {
-			return inCursorField(this[cursorSymbol], key, (cursor) => {
-				return makeField(this.context, fieldSchema, cursor);
-			});
-		}
-
 		// Map containing setter implementations for field kinds that support setters.
 		const setters = new Map<FieldKind, (newContent: ContextuallyTypedNodeData) => void>([
 			[
 				FieldKinds.required,
 				function (this: CustomStruct, newContent: ContextuallyTypedNodeData): void {
-					const field = getField(this) as RequiredField<AllowedTypes>;
+					const field = inCursorField(this[cursorSymbol], key, (cursor) => {
+						return makeField(this.context, fieldSchema, cursor);
+					}) as RequiredField<AllowedTypes>;
+
 					field.content = newContent;
 				},
 			],
 			[
 				FieldKinds.optional,
 				function (this: CustomStruct, newContent: ContextuallyTypedNodeData): void {
-					const field = getField(this) as OptionalField<AllowedTypes>;
+					const field = inCursorField(this[cursorSymbol], key, (cursor) => {
+						return makeField(this.context, fieldSchema, cursor);
+					}) as OptionalField<AllowedTypes>;
+
 					field.content = newContent;
 				},
 			],
