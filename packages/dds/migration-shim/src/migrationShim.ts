@@ -17,9 +17,9 @@ import {
 import { type IFluidHandle, type IFluidLoadable } from "@fluidframework/core-interfaces";
 
 /**
- * Create skeleton Hot Swap Channel
+ * Create skeleton Migration Shim that can hot swap from one DDS to a new DDS.
  */
-export class HotSwap implements IChannel {
+export class MigrationShim implements IChannel {
 	public id!: string;
 	public attributes!: IChannelAttributes;
 	public getAttachSummary(

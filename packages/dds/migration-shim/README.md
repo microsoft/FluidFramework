@@ -1,4 +1,4 @@
-# @fluid-experimental/hot-swap
+# @fluid-experimental/migration-shim
 
 <!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
 
@@ -23,7 +23,8 @@ package for more information including tools to convert between version schemes.
 
 ## Description
 
-Experimental package - API's will change.
+Experimental package - API's will change. Provides the ability to swap an existing DDS with a new DDS and migrate the
+data via an op at runtime.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_API_DOCS_SECTION:includeHeading=TRUE) -->
 
@@ -33,7 +34,7 @@ Experimental package - API's will change.
 
 ## API Documentation
 
-API documentation for **@fluid-experimental/hot-swap** not available
+API documentation for **@fluid-experimental/migration-shim** not available
 
 <!-- prettier-ignore-end -->
 
