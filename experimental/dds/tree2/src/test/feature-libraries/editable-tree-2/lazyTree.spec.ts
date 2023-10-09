@@ -410,8 +410,8 @@ describe("LazyStruct", () => {
 	});
 
 	it("Value assignment", () => {
-		node.foo = "New string!";
-		// node.bar = [42];
+		node.foo = "New value!";
+		assert.equal(node.foo, "New value!");
 	});
 });
 
