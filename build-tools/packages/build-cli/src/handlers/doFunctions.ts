@@ -163,7 +163,7 @@ export const doReleaseGroupBump: StateHandlerFunction = async (
 	const packages = rgRepo instanceof MonoRepo ? rgRepo.packages : [rgRepo];
 
 	log.info(
-		`Bumping ${releaseGroup} from ${releaseVersion} to ${newVersion} (${chalk.blue(
+		`Bumping ${releaseGroup} from ${releaseVersion} to ${newVersion.version} (${chalk.blue(
 			bumpType,
 		)} bump)!`,
 	);

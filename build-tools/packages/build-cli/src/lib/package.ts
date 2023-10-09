@@ -660,6 +660,7 @@ async function setPackageDependencies(
 					continue;
 				}
 
+				// eslint-disable-next-line @typescript-eslint/no-base-to-string
 				newRangeString = dep.range.toString();
 				if (dependencies[name] !== newRangeString) {
 					changed = true;
@@ -811,6 +812,7 @@ export async function npmCheckUpdatesHomegrown(
 	}
 
 	const range: InterdependencyRange = prerelease ? newVersion : `^${[...versionSet][0]}`;
+	// eslint-disable-next-line @typescript-eslint/no-base-to-string
 	log?.verbose(`Calculated new range: ${range}`);
 	for (const dep of Object.keys(dependencyVersionMap)) {
 		const pkg = context.fullPackageMap.get(dep);
