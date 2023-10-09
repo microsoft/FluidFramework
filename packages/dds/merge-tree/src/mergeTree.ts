@@ -11,6 +11,7 @@
 import { assert } from "@fluidframework/core-utils";
 import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils";
 import { IAttributionCollectionSerializer } from "./attributionCollection";
+// eslint-disable-next-line import/no-deprecated
 import { Comparer, Heap, List, ListNode, Stack } from "./collections";
 import {
 	LocalClientId,
@@ -69,6 +70,7 @@ import {
 	ReferenceType,
 } from "./ops";
 import { PartialSequenceLengths } from "./partialLengths";
+// eslint-disable-next-line import/no-deprecated
 import { createMap, extend, MapLike, PropertySet } from "./properties";
 import {
 	refTypeIncludesFlag,
@@ -153,6 +155,7 @@ function applyLeafRangeMarker(marker: Marker, searchInfo: IMarkerSearchRangeInfo
 		if (refHasRangeLabel(marker, rangeLabel)) {
 			let currentStack = searchInfo.stacks[rangeLabel];
 			if (currentStack === undefined) {
+				// eslint-disable-next-line import/no-deprecated
 				currentStack = new Stack<Marker>();
 				searchInfo.stacks[rangeLabel] = currentStack;
 			}
@@ -274,6 +277,7 @@ function applyStackDelta(currentStackMap: RangeStackMap, deltaStackMap: RangeSta
 		if (!deltaStack.empty()) {
 			let currentStack = currentStackMap[label];
 			if (currentStack === undefined) {
+				// eslint-disable-next-line import/no-deprecated
 				currentStack = new Stack<ReferencePosition>();
 				currentStackMap[label] = currentStack;
 			}
@@ -284,6 +288,7 @@ function applyStackDelta(currentStackMap: RangeStackMap, deltaStackMap: RangeSta
 	}
 }
 
+// eslint-disable-next-line import/no-deprecated
 function applyRangeReference(stack: Stack<ReferencePosition>, delta: ReferencePosition) {
 	if (refTypeIncludesFlag(delta, ReferenceType.NestBegin)) {
 		stack.push(delta);
@@ -321,6 +326,7 @@ function addNodeReferences(
 	function updateRangeInfo(label: string, refPos: ReferencePosition) {
 		let stack = rangeStacks[label];
 		if (stack === undefined) {
+			// eslint-disable-next-line import/no-deprecated
 			stack = new Stack<ReferencePosition>();
 			rangeStacks[label] = stack;
 		}
@@ -374,6 +380,7 @@ function addNodeReferences(
 	} else {
 		const block = <IHierBlock>node;
 		applyStackDelta(rangeStacks, block.rangeStacks);
+		// eslint-disable-next-line import/no-deprecated
 		extend(rightmostTiles, block.rightmostTiles);
 		extendIfUndefined(leftmostTiles, block.leftmostTiles);
 	}
@@ -393,12 +400,16 @@ function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | undefine
 class HierMergeBlock extends MergeBlock implements IHierBlock {
 	public rightmostTiles: MapLike<ReferencePosition>;
 	public leftmostTiles: MapLike<ReferencePosition>;
+	// eslint-disable-next-line import/no-deprecated
 	public rangeStacks: MapLike<Stack<ReferencePosition>>;
 
 	constructor(childCount: number) {
 		super(childCount);
+		// eslint-disable-next-line import/no-deprecated
 		this.rightmostTiles = createMap<ReferencePosition>();
+		// eslint-disable-next-line import/no-deprecated
 		this.leftmostTiles = createMap<ReferencePosition>();
+		// eslint-disable-next-line import/no-deprecated
 		this.rangeStacks = createMap<Stack<ReferencePosition>>();
 	}
 
@@ -918,6 +929,7 @@ export class MergeTree {
 			const children = parent.children;
 			for (let childIndex = 0; childIndex < parent.childCount; childIndex++) {
 				const child = children[childIndex];
+				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when the first clause returns false.
 				if ((prevParent && child === prevParent) || child === node) {
 					break;
 				}
@@ -1311,6 +1323,7 @@ export class MergeTree {
 	public getStackContext(startPos: number, clientId: number, rangeLabels: string[]) {
 		const searchInfo: IMarkerSearchRangeInfo = {
 			mergeTree: this,
+			// eslint-disable-next-line import/no-deprecated
 			stacks: createMap<Stack<Marker>>(),
 			rangeLabels,
 		};
@@ -1633,6 +1646,7 @@ export class MergeTree {
 		}
 
 		if (
+			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when the first clause returns false.
 			(!_segmentGroup.previousProps && previousProps) ||
 			(_segmentGroup.previousProps && !previousProps)
 		) {
@@ -2588,7 +2602,9 @@ export class MergeTree {
 		let len: number | undefined;
 		const hierBlock = block.hierBlock();
 		if (hierBlock) {
+			// eslint-disable-next-line import/no-deprecated
 			hierBlock.rightmostTiles = createMap<Marker>();
+			// eslint-disable-next-line import/no-deprecated
 			hierBlock.leftmostTiles = createMap<Marker>();
 			hierBlock.rangeStacks = {};
 		}
@@ -2670,6 +2686,7 @@ export class MergeTree {
 		this.nodeMap(refSeq, clientId, handler, accum, undefined, start, end);
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	public incrementalBlockMap<TContext>(stateStack: Stack<IncrementalMapState<TContext>>) {
 		while (!stateStack.empty()) {
 			// We already check the stack is not empty

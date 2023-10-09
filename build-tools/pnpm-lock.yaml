@@ -14,11 +14,12 @@ importers:
       '@commitlint/cz-commitlint': ^17.5.0
       '@fluid-tools/build-cli': ~0.25.0
       '@fluidframework/build-common': ^2.0.0
-      '@fluidframework/build-tools': ~0.22.0
+      '@fluidframework/build-tools': ~0.25.0
       '@microsoft/api-documenter': ^7.22.24
       '@microsoft/api-extractor': ^7.36.1
       c8: ^7.14.0
       commitizen: ^4.3.0
+      concurrently: ^8.2.1
       conventional-changelog-cli: ^2.2.2
       conventional-changelog-conventionalcommits: ^5.0.0
       copyfiles: ^2.4.1
@@ -36,11 +37,12 @@ importers:
       '@commitlint/cz-commitlint': 17.5.0_i4x6owxztfhigiiqlxwntt4k24
       '@fluid-tools/build-cli': 0.25.0_typescript@5.1.6
       '@fluidframework/build-common': 2.0.0
-      '@fluidframework/build-tools': 0.22.0_typescript@5.1.6
+      '@fluidframework/build-tools': 0.25.0
       '@microsoft/api-documenter': 7.22.24
       '@microsoft/api-extractor': 7.36.1
       c8: 7.14.0
       commitizen: 4.3.0
+      concurrently: 8.2.1
       conventional-changelog-cli: 2.2.2
       conventional-changelog-conventionalcommits: 5.0.0
       copyfiles: 2.4.1
@@ -55,7 +57,7 @@ importers:
 
   packages/build-cli:
     specifiers:
-      '@fluid-internal/readme-command': workspace:*
+      '@fluid-private/readme-command': workspace:*
       '@fluid-tools/version-tools': workspace:*
       '@fluidframework/build-common': ^2.0.0
       '@fluidframework/build-tools': workspace:*
@@ -172,7 +174,7 @@ importers:
       table: 6.8.1
       type-fest: 2.19.0
     devDependencies:
-      '@fluid-internal/readme-command': link:../readme-command
+      '@fluid-private/readme-command': link:../readme-command
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
       '@microsoft/api-extractor': 7.36.1_@types+node@14.18.53
@@ -419,7 +421,7 @@ importers:
 
   packages/version-tools:
     specifiers:
-      '@fluid-internal/readme-command': workspace:*
+      '@fluid-private/readme-command': workspace:*
       '@fluidframework/build-common': ^2.0.0
       '@fluidframework/eslint-config-fluid': ^2.1.0
       '@microsoft/api-extractor': ^7.36.1
@@ -467,7 +469,7 @@ importers:
       semver: 7.5.4
       table: 6.8.1
     devDependencies:
-      '@fluid-internal/readme-command': link:../readme-command
+      '@fluid-private/readme-command': link:../readme-command
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
       '@microsoft/api-extractor': 7.36.1_@types+node@14.18.53
@@ -1073,28 +1075,6 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluid-tools/version-tools/0.22.0_typescript@5.1.6:
-    resolution: {integrity: sha512-XA8OC0OQ06EUiYoP12XmuP2u/7xVx6R2dQq0TRUK3XUhv9q1AY6vcvPZzdG8U4wS9tHiCO/ThDf8dTICJf2NOw==}
-    engines: {node: '>=14.17.0'}
-    hasBin: true
-    dependencies:
-      '@oclif/core': 2.8.11_typescript@5.1.6
-      '@oclif/plugin-autocomplete': 2.3.1_typescript@5.1.6
-      '@oclif/plugin-commands': 2.2.17_typescript@5.1.6
-      '@oclif/plugin-help': 5.2.11_typescript@5.1.6
-      '@oclif/plugin-not-found': 2.3.27_typescript@5.1.6
-      '@oclif/plugin-plugins': 3.1.6_typescript@5.1.6
-      chalk: 2.4.2
-      semver: 7.5.4
-      table: 6.8.1
-    transitivePeerDependencies:
-      - '@swc/core'
-      - '@swc/wasm'
-      - '@types/node'
-      - supports-color
-      - typescript
-    dev: true
-
   /@fluid-tools/version-tools/0.25.0_typescript@5.1.6:
     resolution: {integrity: sha512-+YZnnPu/gaT1okqjJ90/fkEfeZm4Evuv54TsLK2m6Xl3TRePwY1JV9IxYPPWIaJxtNIQ0DurFwwFHjs8YAoMuA==}
     engines: {node: '>=14.17.0'}
@@ -1120,54 +1100,6 @@ packages:
   /@fluidframework/build-common/2.0.0:
     resolution: {integrity: sha512-oJsAczo32UpnM+/8LeE2KKOhr1KBxA48Y4umq/t9QfIFRiX0YtgyrLHRAtnGV6l/+4LX/Urmv6bbckeTFaPw7g==}
     hasBin: true
-    dev: true
-
-  /@fluidframework/build-tools/0.22.0_typescript@5.1.6:
-    resolution: {integrity: sha512-KqQ6v0ut8dEPpA9x9jGD/MjOzMx9JtMtrLf08vxUQCcQNZqQVELOVeM2wjf1n2NV9Oj8ejlcsL8pkT24oWIETA==}
-    engines: {node: '>=14.17.0'}
-    hasBin: true
-    dependencies:
-      '@fluid-tools/version-tools': 0.22.0_typescript@5.1.6
-      '@fluidframework/bundle-size-tools': 0.22.0
-      '@manypkg/get-packages': 2.2.0
-      '@octokit/core': 4.2.4
-      '@rushstack/node-core-library': 3.59.5
-      async: 3.2.4
-      chalk: 2.4.2
-      commander: 6.2.1
-      cosmiconfig: 8.2.0
-      danger: 10.9.0_@octokit+core@4.2.4
-      date-fns: 2.30.0
-      debug: 4.3.4
-      detect-indent: 6.1.0
-      execa: 5.1.1
-      find-up: 5.0.0
-      fs-extra: 9.1.0
-      glob: 7.2.3
-      ignore: 5.2.4
-      json5: 2.2.3
-      lodash: 4.17.21
-      lodash.isequal: 4.5.0
-      lodash.merge: 4.6.2
-      minimatch: 7.4.6
-      replace-in-file: 6.3.5
-      rimraf: 4.4.1
-      semver: 7.5.4
-      shelljs: 0.8.5
-      sort-package-json: 1.57.0
-      ts-morph: 17.0.1
-      type-fest: 2.19.0
-      yaml: 2.3.1
-    transitivePeerDependencies:
-      - '@swc/core'
-      - '@swc/wasm'
-      - '@types/node'
-      - encoding
-      - esbuild
-      - supports-color
-      - typescript
-      - uglify-js
-      - webpack-cli
     dev: true
 
   /@fluidframework/build-tools/0.25.0:
@@ -1214,22 +1146,6 @@ packages:
       - encoding
       - esbuild
       - supports-color
-      - uglify-js
-      - webpack-cli
-    dev: true
-
-  /@fluidframework/bundle-size-tools/0.22.0:
-    resolution: {integrity: sha512-mbwI23lw3AjbfS9TdYMMl2V8VdolDgHJQPR2rPpDrKVyuF7Iny1tHuAX3Y8lAzCGgpgZlL3LxGIMbw/OhmtLmg==}
-    dependencies:
-      azure-devops-node-api: 11.2.0
-      jszip: 3.10.1
-      msgpack-lite: 0.1.26
-      pako: 2.1.0
-      typescript: 4.5.5
-      webpack: 5.88.1
-    transitivePeerDependencies:
-      - '@swc/core'
-      - esbuild
       - uglify-js
       - webpack-cli
     dev: true
@@ -10420,12 +10336,6 @@ packages:
     resolution: {integrity: sha512-zdu8XMNEDepKKR+XYOXAVPtWui0ly0NtohUscw+UmaHiAWT8hrV1rr//H6V+0DvJ3OQ19S979M0laLfX8rm82Q==}
     dependencies:
       is-typedarray: 1.0.0
-
-  /typescript/4.5.5:
-    resolution: {integrity: sha512-TCTIul70LyWe6IJWT8QSYeA54WQe8EjQFU4wY52Fasj5UKx88LNYKCgBEHcOMOrFF1rKGbD8v/xcNWVUq9SymA==}
-    engines: {node: '>=4.2.0'}
-    hasBin: true
-    dev: true
 
   /typescript/5.0.4:
     resolution: {integrity: sha512-cW9T5W9xY37cc+jfEnaUvX91foxtHkza3Nw3wkoF4sSlKn0MONdkdEndig/qPBWXNkmplh3NzayQzCiHM4/hqw==}
