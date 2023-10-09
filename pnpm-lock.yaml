@@ -19578,7 +19578,7 @@ packages:
       resolve: 1.22.6
       semver: 7.5.4
       source-map: 0.6.1
-      typescript: 5.0.4
+      typescript: 5.1.6
     transitivePeerDependencies:
       - '@types/node'
     dev: true
