@@ -24,7 +24,7 @@ import { AllowedTypes, TreeSchema, FieldSchema } from "./typed-schema";
  * Major package version updates are allowed to break API compatibility, but must not break content compatibility unless a corresponding code change is made in the app to opt in.
  *
  * @privateRemarks
- * // TODO: Maybe rename to SchemaBuilder1 because of the versioning implications above.
+ * TODO: Maybe rename to SchemaBuilder1 because of the versioning implications above.
  * @sealed @alpha
  */
 
@@ -184,7 +184,7 @@ export class SchemaBuilder<
 
 /**
  * Extends {@link SchemaBuilder1} with functionality only used to create built in special libraries.
- * Should not be package exported.
+ * @privateRemarks Should not be package exported.
  */
 export class SchemaBuilderInternal<
 	TScope extends `com.fluidframework.${string}`,
