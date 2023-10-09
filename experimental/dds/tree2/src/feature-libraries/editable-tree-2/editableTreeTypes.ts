@@ -470,19 +470,6 @@ export type StructFields<TFields extends RestrictiveReadonlyRecord<string, Field
 		: never]: (content: FlexibleFieldContent<TFields[key]>) => void;
 };
 
-// TODO: Add `set` method when FieldKind provides a setter (and derive the type from it).
-// set(key: FieldKey, content: FlexibleFieldContent<TSchema["mapFields"]>): void;
-// {
-// 	readonly [key in keyof TFields as `set${Capitalize<key & string>}`]: (
-// 		content: FlexibleFieldContent<TFields[key]>,
-// 	) => void;
-// };
-// This could be enabled to allow assignment via `=` in some cases.
-// & {
-// 	// Setter properties (when the type system permits)
-// 	[key in keyof TFields]: UnboxField<TFields[key]> & StructSetContent<TFields[key]>;
-// }
-
 // #endregion
 
 // #region Field Kinds
