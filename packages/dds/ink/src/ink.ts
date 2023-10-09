@@ -143,7 +143,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
 			time: Date.now(),
 			type: "createStroke",
 		};
-		this.submitLocalMessage(createStrokeOperation, undefined);
+		this.submitLocalMessage(createStrokeOperation, undefined, undefined); //* FIX
 		return this.executeCreateStrokeOperation(createStrokeOperation);
 	}
 
@@ -156,7 +156,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
 			point,
 			type: "stylus",
 		};
-		this.submitLocalMessage(stylusOperation, undefined);
+		this.submitLocalMessage(stylusOperation, undefined, undefined);
 		return this.executeStylusOperation(stylusOperation);
 	}
 
@@ -168,7 +168,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
 			time: Date.now(),
 			type: "clear",
 		};
-		this.submitLocalMessage(clearOperation, undefined);
+		this.submitLocalMessage(clearOperation, undefined, undefined);
 		this.executeClearOperation(clearOperation);
 	}
 

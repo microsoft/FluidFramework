@@ -302,7 +302,7 @@ export class SharedPropertyTree extends SharedObject {
 		if (this.transmissionsHaveBeenStopped) {
 			this.enqueuedMessages.push(transferChange);
 		} else {
-			this.submitLocalMessage(transferChange);
+			this.submitLocalMessage(transferChange, undefined, /* rootMetadata */ undefined); //* FIX
 		}
 	}
 
@@ -310,7 +310,7 @@ export class SharedPropertyTree extends SharedObject {
 		this.transmissionsHaveBeenStopped = stop;
 		if (stop === false) {
 			for (const message of this.enqueuedMessages) {
-				this.submitLocalMessage(message);
+				this.submitLocalMessage(message, undefined, /* rootMetadata */ undefined);
 			}
 			this.enqueuedMessages = [];
 		}
@@ -920,7 +920,11 @@ export class SharedPropertyTree extends SharedObject {
 		const rebasedOperation = find(this.localChanges, (op) => op.guid === content.guid);
 
 		if (rebasedOperation) {
-			this.submitLocalMessage(cloneDeep(rebasedOperation), localOpMetadata);
+			this.submitLocalMessage(
+				cloneDeep(rebasedOperation),
+				localOpMetadata,
+				/* rootMetadata */ undefined,
+			); //* FIX
 		} else {
 			// Could this happen or is there a guard that we will never resubmit an already submitted op?
 			console.warn("Resubmitting operation which has already been received back.");

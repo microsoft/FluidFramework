@@ -746,7 +746,7 @@ export class MapKernel {
 		previousMap?: Map<string, ILocalValue>,
 	): void {
 		const metadata = createClearLocalOpMetadata(op, this.getMapClearMessageId(), previousMap);
-		this.submitMessage(op, metadata);
+		this.submitMessage(op, metadata, /* rootMetadata */ undefined); //* FIX
 	}
 
 	private getMapKeyMessageId(op: IMapKeyOperation): number {
@@ -771,7 +771,7 @@ export class MapKernel {
 			this.getMapKeyMessageId(op),
 			previousValue,
 		);
-		this.submitMessage(op, localMetadata);
+		this.submitMessage(op, localMetadata, /* rootMetadata */ undefined);
 	}
 
 	/**
@@ -806,6 +806,6 @@ export class MapKernel {
 			localOpMetadata.type === "edit"
 				? { type: "edit", pendingMessageId, previousValue: localOpMetadata.previousValue }
 				: { type: "add", pendingMessageId };
-		this.submitMessage(op, localMetadata);
+		this.submitMessage(op, localMetadata, /* rootMetadata */ undefined);
 	}
 }

@@ -416,7 +416,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		if (!this.loadedDeferred.isCompleted) {
 			this.loadedDeferredOutgoingOps.push(metadata ? [translated, metadata] : translated);
 		} else {
-			this.submitLocalMessage(translated, metadata);
+			this.submitLocalMessage(translated, metadata, /* rootMetadata */ undefined); //* FIX
 		}
 	}
 

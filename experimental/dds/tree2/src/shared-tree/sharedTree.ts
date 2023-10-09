@@ -170,7 +170,11 @@ export class SharedTree
 			attributes,
 			telemetryContextPrefix,
 		);
-		this.storedSchema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op), options);
+		this.storedSchema = new SchemaEditor(
+			schema,
+			(op) => this.submitLocalMessage(op, undefined, /* rootMetadata */ undefined),
+			options,
+		); //* FIX
 		this._events = createEmitter<ViewEvents>();
 		this.view = createSharedTreeView({
 			branch: this.getLocalBranch(),

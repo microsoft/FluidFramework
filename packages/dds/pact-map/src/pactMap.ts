@@ -268,7 +268,7 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 			refSeq: this.runtime.deltaManager.lastSequenceNumber,
 		};
 
-		this.submitLocalMessage(setOp);
+		this.submitLocalMessage(setOp, undefined, /* rootMetadata */ undefined); //* FIX
 	}
 
 	/**
@@ -354,7 +354,7 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 				type: "accept",
 				key,
 			};
-			this.submitLocalMessage(acceptOp);
+			this.submitLocalMessage(acceptOp, undefined, /* rootMetadata */ undefined);
 		}
 	};
 
@@ -468,7 +468,7 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 		}
 
 		// Otherwise we can resubmit
-		this.submitLocalMessage(pactMapOp, localOpMetadata);
+		this.submitLocalMessage(pactMapOp, localOpMetadata, /* rootMetadata */ undefined);
 	}
 
 	/**
