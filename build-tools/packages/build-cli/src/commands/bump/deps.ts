@@ -52,7 +52,6 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 			char: "t",
 			default: "minor",
 			description: "Bump the current version of the dependency according to this bump type.",
-			multiple: false,
 		}),
 		prerelease: Flags.boolean({
 			dependsOn: ["updateType"],

@@ -564,7 +564,11 @@ export async function setVersion(
 	}
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 	lernaJson.version = translatedVersion.version;
-	const output = await prettier(JSON.stringify(lernaJson), prettierConfig ?? undefined);
+	const output = await prettier(
+		JSON.stringify(lernaJson),
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- the nullish-coalescing form looks strange; this is clearer
+		prettierConfig === null ? undefined : prettierConfig,
+	);
 	await writeFile(lernaPath, output);
 
 	updatePackageJsonFile(path.join(releaseGroupOrPackage.repoPath, "package.json"), (json) => {

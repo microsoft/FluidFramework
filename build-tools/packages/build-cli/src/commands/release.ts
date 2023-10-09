@@ -55,7 +55,6 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 			required: false,
 		}),
 		bumpType: bumpTypeFlag({
-			multiple: false,
 			required: false,
 		}),
 		skipChecks: skipCheckFlag,

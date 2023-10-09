@@ -47,7 +47,6 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			description:
 				"Bump the release group or package to the next version according to this bump type.",
 			exclusive: ["exact"],
-			multiple: false,
 		}),
 		exact: Flags.string({
 			description:
@@ -58,7 +57,6 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			description: "Override the version scheme used by the release group or package.",
 			required: false,
 			exclusive: ["exact"],
-			multiple: false,
 		}),
 		exactDepType: Flags.string({
 			description:
