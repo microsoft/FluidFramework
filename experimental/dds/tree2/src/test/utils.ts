@@ -925,7 +925,7 @@ export function applyTestDelta(
 
 export function announceTestDelta(
 	delta: Delta.Root,
-	deltaProcessor: { acquireVisitor: () => AnnouncedVisitor },
+	deltaProcessor: { acquireVisitor: () => DeltaVisitor & AnnouncedVisitor },
 	detachedFieldIndex?: DetachedFieldIndex,
 ): void {
 	announceDelta(delta, deltaProcessor, detachedFieldIndex ?? makeDetachedFieldIndex());

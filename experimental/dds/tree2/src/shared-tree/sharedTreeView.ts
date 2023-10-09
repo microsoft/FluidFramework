@@ -422,10 +422,11 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		branch.on("change", (event) => {
 			if (event.change !== undefined) {
 				const delta = this.changeFamily.intoDelta(event.change);
-				const combinedVisitor = combineVisitors([
-					this.forest.acquireVisitor(),
-					this.forest.anchors.acquireVisitor(),
-				]);
+				const anchorVisitor = this.forest.anchors.acquireVisitor();
+				const combinedVisitor = combineVisitors(
+					[this.forest.acquireVisitor(), anchorVisitor],
+					[anchorVisitor],
+				);
 				visitDelta(delta, combinedVisitor, this.removedTrees);
 				combinedVisitor.free();
 				this.nodeKeyIndex.scanKeys(this.context);

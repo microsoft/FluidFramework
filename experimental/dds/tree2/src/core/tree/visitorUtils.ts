@@ -26,113 +26,55 @@ export function applyDelta(
 
 export function announceDelta(
 	delta: Delta.Root,
-	deltaProcessor: { acquireVisitor: () => AnnouncedVisitor },
+	deltaProcessor: { acquireVisitor: () => DeltaVisitor & AnnouncedVisitor },
 	detachedFieldIndex: DetachedFieldIndex,
 ): void {
-	const visitor = combineVisitors([deltaProcessor.acquireVisitor()]);
-	visitDelta(delta, visitor, detachedFieldIndex);
+	const visitor = deltaProcessor.acquireVisitor();
+	visitDelta(delta, combineVisitors([visitor], [visitor]), detachedFieldIndex);
 	visitor.free();
 }
 
-function isDeltaVisitor(obj: any): obj is DeltaVisitor {
-	return obj.create !== undefined;
-}
-
-function isAnnouncedVisitor(obj: any): obj is AnnouncedVisitor {
-	return obj.afterCreate !== undefined;
-}
-
 export function combineVisitors(
-	visitors: readonly (DeltaVisitor | AnnouncedVisitor)[],
+	visitors: readonly DeltaVisitor[],
+	announceVisitors: readonly AnnouncedVisitor[] = [],
 ): DeltaVisitor {
 	return {
-		free: () =>
-			visitors.forEach((v) => {
-				if (isDeltaVisitor(v)) {
-					v.free();
-				}
-			}),
-		create: (...args) =>
-			visitors.forEach((v) => {
-				if (isDeltaVisitor(v)) {
-					v.create(...args);
-				}
-				if (isAnnouncedVisitor(v)) {
-					v.afterCreate(...args);
-				}
-			}),
-		destroy: (...args) =>
-			visitors.forEach((v) => {
-				if (isAnnouncedVisitor(v)) {
-					v.beforeDestroy(...args);
-				}
-				if (isDeltaVisitor(v)) {
-					v.destroy(...args);
-				}
-			}),
-		attach: (source: FieldKey, count: number, destination: PlaceIndex) =>
-			visitors.forEach((v) => {
-				if (isAnnouncedVisitor(v)) {
-					v.beforeAttach(source, count, destination);
-				}
-				if (isDeltaVisitor(v)) {
-					v.attach(source, count, destination);
-				}
-				if (isAnnouncedVisitor(v)) {
-					v.afterAttach(source, {
-						start: destination,
-						end: destination + count,
-					});
-				}
-			}),
-		detach: (source: Range, destination: FieldKey) =>
-			visitors.forEach((v) => {
-				if (isAnnouncedVisitor(v)) {
-					v.beforeDetach(source, destination);
-				}
-				if (isDeltaVisitor(v)) {
-					v.detach(source, destination);
-				}
-				if (isAnnouncedVisitor(v)) {
-					v.afterDetach(source.start, source.end - source.start, destination);
-				}
-			}),
-		replace: (newContent: FieldKey, oldContent: Range, oldContentDestination: FieldKey) =>
-			visitors.forEach((v) => {
-				if (isAnnouncedVisitor(v)) {
-					v.beforeReplace(newContent, oldContent, oldContentDestination);
-				}
-				if (isDeltaVisitor(v)) {
-					v.replace(newContent, oldContent, oldContentDestination);
-				}
-				if (isAnnouncedVisitor(v)) {
-					v.afterReplace(newContent, oldContent, oldContentDestination);
-				}
-			}),
-		enterNode: (...args) =>
-			visitors.forEach((v) => {
-				if (isDeltaVisitor(v)) {
-					v.enterNode(...args);
-				}
-			}),
-		exitNode: (...args) =>
-			visitors.forEach((v) => {
-				if (isDeltaVisitor(v)) {
-					v.exitNode(...args);
-				}
-			}),
-		enterField: (...args) =>
-			visitors.forEach((v) => {
-				if (isDeltaVisitor(v)) {
-					v.enterField(...args);
-				}
-			}),
-		exitField: (...args) =>
-			visitors.forEach((v) => {
-				if (isDeltaVisitor(v)) {
-					v.exitField(...args);
-				}
-			}),
+		free: () => visitors.forEach((v) => v.free()),
+		create: (...args) => {
+			visitors.forEach((v) => v.create(...args));
+			announceVisitors.forEach((v) => v.afterCreate(...args));
+		},
+		destroy: (...args) => {
+			announceVisitors.forEach((v) => v.beforeDestroy(...args));
+			visitors.forEach((v) => v.destroy(...args));
+		},
+		attach: (source: FieldKey, count: number, destination: PlaceIndex) => {
+			announceVisitors.forEach((v) => v.beforeAttach(source, count, destination));
+			visitors.forEach((v) => v.attach(source, count, destination));
+			announceVisitors.forEach((v) =>
+				v.afterAttach(source, { start: destination, end: destination + count }),
+			);
+		},
+		detach: (source: Range, destination: FieldKey) => {
+			announceVisitors.forEach((v) => v.beforeDetach(source, destination));
+			visitors.forEach((v) => v.detach(source, destination));
+			announceVisitors.forEach((v) =>
+				v.afterDetach(source.start, source.end - source.start, destination),
+			);
+		},
+		replace: (newContent: FieldKey, oldContent: Range, oldContentDestination: FieldKey) => {
+			announceVisitors.forEach((v) =>
+				v.beforeReplace(newContent, oldContent, oldContentDestination),
+			);
+			visitors.forEach((v) => v.replace(newContent, oldContent, oldContentDestination));
+			announceVisitors.forEach((v) =>
+				v.afterReplace(newContent, oldContent, oldContentDestination),
+			);
+		},
+		enterNode: (...args) => visitors.forEach((v) => v.enterNode(...args)),
+		exitNode: (...args) => visitors.forEach((v) => v.exitNode(...args)),
+		enterField: (...args) => visitors.forEach((v) => v.enterField(...args)),
+		exitField: (...args) => visitors.forEach((v) => v.exitField(...args)),
 	};
 }
 
