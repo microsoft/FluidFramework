@@ -490,6 +490,8 @@ export function optionalFieldIntoDelta(
 		minor: change.fieldChange.id,
 	};
 	const hasOldFieldChanges: Mutable<Delta.HasModifications> = {};
+	// If there are changes to the old content, convert them into the delta format and save any resulting field changes
+	// TODO: maybe rethink how we use optionals so this pattern isn't so confusing
 	if (childChange !== undefined) {
 		const fields = deltaFromChild(childChange).fields;
 		if (fields !== undefined) {
