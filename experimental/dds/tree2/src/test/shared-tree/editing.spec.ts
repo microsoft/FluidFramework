@@ -658,7 +658,7 @@ describe("Editing", () => {
 			expectJsonTree([tree, tree2], [{}]);
 		});
 
-		// Tests that a move is aborted if the moved node has been concurrently deleted
+		// Tests that nodes can be moved out from a subtree which was concurrently deleted
 		it("ancestor of move source deleted", () => {
 			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
 			const tree2 = tree.fork();

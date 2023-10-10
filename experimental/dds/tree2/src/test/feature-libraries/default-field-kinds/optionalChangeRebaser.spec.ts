@@ -112,7 +112,6 @@ function rebase(
 		idAllocator,
 		moveEffects,
 		metadata,
-		undefined,
 	);
 }
 

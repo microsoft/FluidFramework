@@ -40,11 +40,7 @@ import {
 	getFirstFromCrossFieldMap,
 	setInCrossFieldMap,
 } from "./crossFieldQueries";
-import {
-	FieldChangeHandler,
-	RevisionMetadataSource,
-	NodeExistenceState,
-} from "./fieldChangeHandler";
+import { FieldChangeHandler, RevisionMetadataSource } from "./fieldChangeHandler";
 import { FieldKind, FieldKindWithEditor, withEditor } from "./fieldKind";
 import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./genericFieldKind";
 import { GenericChangeset } from "./genericFieldKindTypes";
@@ -617,7 +613,6 @@ export class ModularChangeFamily
 					genId,
 					manager,
 					revisionMetadata,
-					existenceState,
 				);
 				const rebasedFieldChange: FieldChange = {
 					fieldKind: fieldKind.identifier,
@@ -1102,6 +1097,11 @@ export interface EditDescription {
 	field: FieldUpPath;
 	fieldKind: FieldKindIdentifier;
 	change: FieldChangeset;
+}
+
+enum NodeExistenceState {
+	Alive,
+	Dead,
 }
 
 function getRevInfoFromTaggedChanges(changes: TaggedChange<ModularChangeset>[]): {
