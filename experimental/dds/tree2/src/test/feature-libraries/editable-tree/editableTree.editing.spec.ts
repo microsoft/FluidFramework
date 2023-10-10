@@ -660,9 +660,7 @@ describe("editable-tree: editing", () => {
 				assert.equal(nodeStatus, TreeStatus.InDocument);
 			});
 
-			// Currently returns TreeStatus.Deleted.
-			// But the remove apis should eventually be fixed such that it returns TreeStatus.Removed.
-			it("removed node returns TreeStatus.Deleted on itself and its contents", () => {
+			it("removed node returns TreeStatus.Removed on itself and its contents", () => {
 				const view = viewWithContent({
 					schema: getTestSchema(FieldKinds.sequence),
 					initialTree: { foo: ["foo"], foo2: [] },
@@ -685,9 +683,9 @@ describe("editable-tree: editing", () => {
 
 				// Check TreeStatus after remove.
 				const rootStatusAfterRemove = root[treeStatus]();
-				assert.equal(rootStatusAfterRemove, TreeStatus.Deleted);
+				assert.equal(rootStatusAfterRemove, TreeStatus.Removed);
 				const nodeStatusAfterRemove = node[treeStatus]();
-				assert.equal(nodeStatusAfterRemove, TreeStatus.Deleted);
+				assert.equal(nodeStatusAfterRemove, TreeStatus.Removed);
 			});
 		});
 
@@ -709,9 +707,7 @@ describe("editable-tree: editing", () => {
 				assert.equal(field.treeStatus(), TreeStatus.InDocument);
 			});
 
-			// Currently returns TreeStatus.Deleted.
-			// But the remove apis should eventually be fixed such that it returns TreeStatus.Removed
-			it("removed field and its contents returns TreeStatus.Deleted", () => {
+			it("removed field and its contents returns TreeStatus.Removed", () => {
 				const view = viewWithContent({
 					schema: getTestSchema(FieldKinds.sequence),
 					initialTree: { foo: ["foo"], foo2: [] },
@@ -734,10 +730,10 @@ describe("editable-tree: editing", () => {
 
 				// Check TreeStatus after remove.
 				const fieldStatusAfterRemove = field.treeStatus();
-				assert.equal(fieldStatusAfterRemove, TreeStatus.Deleted);
+				assert.equal(fieldStatusAfterRemove, TreeStatus.Removed);
 
 				const nodeStatusAfterRemove = node[treeStatus]();
-				assert.equal(nodeStatusAfterRemove, TreeStatus.Deleted);
+				assert.equal(nodeStatusAfterRemove, TreeStatus.Removed);
 			});
 		});
 	});
