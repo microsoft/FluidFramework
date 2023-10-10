@@ -208,10 +208,10 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 
 		// Hot swap summarizer client
 		spanner1.submitMigrateOp();
-		await provider.ensureSynchronized();
 
 		// Summarize
 		await provider.ensureSynchronized();
+		await new Promise((resolve) => spanner1.on("migrated", resolve));
 		const { summaryVersion } = await summarizeNow(summarizer, "test");
 
 		// Validate that the SharedMap was on the snapshot, this would fail if there was a SharedCell on the snapshot
