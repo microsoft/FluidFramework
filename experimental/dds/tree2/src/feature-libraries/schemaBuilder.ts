@@ -214,6 +214,8 @@ export class SchemaBuilder<
 	 * Produce a TypedSchemaCollection which captures the content added to this builder, any additional SchemaLibraries that were added to it and a root field.
 	 * Can be used with schematize to provide schema aware access to document content.
 	 *
+	 * @remarks
+	 *
 	 * May only be called once after adding content to builder is complete.
 	 */
 	public toDocumentSchema<TSchema extends ImplicitFieldSchema>(
@@ -240,7 +242,8 @@ export class SchemaBuilderInternal<
 > extends SchemaBuilder<TScope> {}
 
 /**
- * @alpha Normalizes an {@link ImplicitFieldSchema} into a {@link FieldSchema}.
+ * Normalizes an {@link ImplicitFieldSchema} into a {@link FieldSchema}.
+ * @alpha
  */
 export type NormalizeField<
 	TSchema extends ImplicitFieldSchema,
@@ -250,7 +253,8 @@ export type NormalizeField<
 	: FieldSchema<TDefault, NormalizeAllowedTypes<Assume<TSchema, ImplicitAllowedTypes>>>;
 
 /**
- * @alpha Normalizes an {@link ImplicitAllowedTypes} into  {@link AllowedTypes}.
+ * Normalizes an {@link ImplicitAllowedTypes} into  {@link AllowedTypes}.
+ * @alpha
  */
 export type NormalizeAllowedTypes<TSchema extends ImplicitAllowedTypes> = TSchema extends TreeSchema
 	? readonly [TSchema]
