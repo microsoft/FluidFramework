@@ -8,7 +8,7 @@ import { EventEmitter } from "events";
 import {
 	MockDocumentDeltaConnection,
 	MockDocumentService,
-} from "@fluid-internal/test-loader-utils";
+} from "@fluid-private/test-loader-utils";
 import {
 	ITelemetryLoggerExt,
 	createChildLogger,

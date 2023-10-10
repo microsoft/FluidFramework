@@ -3,5 +3,5 @@
 @fluid-internal/test-end-to-end-tests
 @fluid-internal/test-drivers
 @fluid-internal/stochastic-test-utils
-@fluid-internal/test-loader-utils
+@fluid-private/test-loader-utils
 @fluid-internal/test-dds-utils

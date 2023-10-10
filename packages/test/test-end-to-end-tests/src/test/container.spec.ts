@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
-import { MockDocumentDeltaConnection } from "@fluid-internal/test-loader-utils";
+import { MockDocumentDeltaConnection } from "@fluid-private/test-loader-utils";
 import { IErrorBase, IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import {
 	ContainerErrorType,
