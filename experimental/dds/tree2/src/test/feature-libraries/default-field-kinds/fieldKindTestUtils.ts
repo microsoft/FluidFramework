@@ -12,7 +12,7 @@ import {
 import { FieldKey, ValueSchema, JsonableTree, ITreeCursorSynchronous } from "../../../core";
 import { brand } from "../../../util";
 
-const builder = new SchemaBuilder("defaultFieldKinds tests");
+const builder = new SchemaBuilder({ scope: "defaultFieldKinds tests" });
 export const testLeaf = builder.leaf("TestLeaf", ValueSchema.String);
 
 // TODO: Users of this are mainly working with in memory representations.

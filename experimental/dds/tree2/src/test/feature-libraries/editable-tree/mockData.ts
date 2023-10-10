@@ -22,7 +22,6 @@ import {
 	SchemaBuilder,
 	Any,
 	TypedSchemaCollection,
-	createMockNodeKeyManager,
 } from "../../../feature-libraries";
 import {
 	ValueSchema,
@@ -36,7 +35,7 @@ import {
 } from "../../../core";
 import { brand, Brand } from "../../../util";
 
-const builder = new SchemaBuilder("mock data");
+const builder = new SchemaBuilder({ scope: "mock data" });
 
 export const stringSchema = builder.leaf("String", ValueSchema.String);
 
@@ -51,8 +50,8 @@ export const simplePhonesSchema = builder.struct("Test:SimplePhones-1.0.0", {
 });
 
 export const complexPhoneSchema = builder.struct("Test:Phone-1.0.0", {
-	number: SchemaBuilder.field(FieldKinds.value, stringSchema),
-	prefix: SchemaBuilder.field(FieldKinds.value, stringSchema),
+	number: SchemaBuilder.field(FieldKinds.required, stringSchema),
+	prefix: SchemaBuilder.field(FieldKinds.required, stringSchema),
 	extraPhones: SchemaBuilder.field(FieldKinds.optional, simplePhonesSchema),
 });
 
@@ -68,7 +67,7 @@ export const phonesSchema = builder.fieldNode(
 );
 
 export const addressSchema = builder.struct("Test:Address-1.0.0", {
-	zip: SchemaBuilder.field(FieldKinds.value, stringSchema, int32Schema),
+	zip: SchemaBuilder.field(FieldKinds.required, stringSchema, int32Schema),
 	street: SchemaBuilder.field(FieldKinds.optional, stringSchema),
 	city: SchemaBuilder.field(FieldKinds.optional, stringSchema),
 	country: SchemaBuilder.field(FieldKinds.optional, stringSchema),
@@ -82,7 +81,7 @@ export const mapStringSchema = builder.map(
 );
 
 export const personSchema = builder.struct("Test:Person-1.0.0", {
-	name: SchemaBuilder.field(FieldKinds.value, stringSchema),
+	name: SchemaBuilder.field(FieldKinds.required, stringSchema),
 	age: SchemaBuilder.field(FieldKinds.optional, int32Schema),
 	adult: SchemaBuilder.field(FieldKinds.optional, boolSchema),
 	salary: SchemaBuilder.field(FieldKinds.optional, float64Schema, int32Schema, stringSchema),
@@ -101,7 +100,7 @@ export const arraySchema = builder.fieldNode(
 
 export const rootPersonSchema = SchemaBuilder.field(FieldKinds.optional, personSchema);
 
-export const personSchemaLibrary = builder.intoLibrary();
+export const personSchemaLibrary = builder.finalize();
 
 export const fullSchemaData = buildTestSchema(rootPersonSchema);
 
@@ -238,9 +237,10 @@ export function getPerson(): Person {
  * Create schema supporting all type defined in this file, with the specified root field.
  */
 export function buildTestSchema<T extends FieldSchema>(rootField: T) {
-	return new SchemaBuilder("buildTestSchema", {}, personSchemaLibrary).intoDocumentSchema(
-		rootField,
-	);
+	return new SchemaBuilder({
+		scope: "buildTestSchema",
+		libraries: [personSchemaLibrary],
+	}).toDocumentSchema(rootField);
 }
 
 export function getReadonlyEditableTreeContext(
@@ -249,7 +249,7 @@ export function getReadonlyEditableTreeContext(
 ): EditableTreeContext {
 	// This will error if someone tries to call mutation methods on it
 	const dummyEditor = {} as unknown as DefaultEditBuilder;
-	return getEditableTreeContext(forest, schema, dummyEditor, createMockNodeKeyManager());
+	return getEditableTreeContext(forest, schema, dummyEditor);
 }
 
 export function setupForest<T extends FieldSchema>(

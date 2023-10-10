@@ -9,6 +9,7 @@ import { List, ListNode, walkList } from "./collections";
 import { ISegment } from "./mergeTreeNodes";
 import { TrackingGroup, TrackingGroupCollection } from "./mergeTreeTracking";
 import { ICombiningOp, ReferenceType } from "./ops";
+// eslint-disable-next-line import/no-deprecated
 import { addProperties, PropertySet } from "./properties";
 import {
 	refHasTileLabels,
@@ -37,7 +38,7 @@ export const SlidingPreference = {
  * Dictates the preferential direction for a {@link ReferencePosition} to slide
  * in a merge-tree
  */
-export type SlidingPreference = typeof SlidingPreference[keyof typeof SlidingPreference];
+export type SlidingPreference = (typeof SlidingPreference)[keyof typeof SlidingPreference];
 
 /**
  * @internal
@@ -132,6 +133,7 @@ class LocalReference implements LocalReferencePosition {
 	}
 
 	public addProperties(newProps: PropertySet, op?: ICombiningOp) {
+		// eslint-disable-next-line import/no-deprecated
 		this.properties = addProperties(this.properties, newProps, op);
 	}
 
@@ -441,7 +443,9 @@ export class LocalReferenceCollection {
 		const offset = lref.getOffset();
 		const refsAtOffset = this.refsByOffset[offset];
 		if (
+			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when the first clause returns false.
 			refsAtOffset?.before?.includes(listNode) ||
+			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when the first clause returns false.
 			refsAtOffset?.at?.includes(listNode) ||
 			refsAtOffset?.after?.includes(listNode)
 		) {

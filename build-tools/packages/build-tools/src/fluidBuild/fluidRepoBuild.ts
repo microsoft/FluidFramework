@@ -17,7 +17,6 @@ import {
 	ExecAsyncResult,
 } from "../common/utils";
 import { BuildGraph } from "./buildGraph";
-import { FluidPackageCheck } from "./fluidPackageCheck";
 import { NpmDepChecker } from "./npmDepChecker";
 import { ISymlinkOptions, symlinkPackage } from "./symlinkUtils";
 
@@ -29,16 +28,6 @@ export interface IPackageMatchedOptions {
 	dirs: string[];
 	releaseGroups: string[];
 }
-
-/** Packages in this list will not have their scripts checked for conformance with repo standards. */
-const uncheckedPackages = [
-	"@fluid-internal/build-cli",
-	"@fluid-internal/version-tools",
-	"@fluid-tools/build-cli",
-	"@fluid-tools/version-tools",
-	"@fluidframework/build-tools",
-	"@fluidframework/eslint-config-fluid",
-];
 
 export class FluidRepoBuild extends FluidRepo {
 	constructor(resolvedRoot: string) {
@@ -98,26 +87,6 @@ export class FluidRepoBuild extends FluidRepo {
 		return true;
 	}
 
-	public async checkPackages(fix: boolean) {
-		for (const pkg of this.packages.packages) {
-			if (!pkg.matched) {
-				// Only check package that matched to build
-				continue;
-			}
-			// TODO: Make this configurable and/or teach fluid-build about new scripts
-
-			if (uncheckedPackages.includes(pkg.name)) {
-				verbose(`Skipping ${pkg.nameColored} because it's ignored.`);
-				continue;
-			}
-			if (FluidPackageCheck.checkScripts(pkg, fix)) {
-				await pkg.savePackageJson();
-			}
-			await FluidPackageCheck.checkNpmIgnore(pkg, fix);
-			await FluidPackageCheck.checkTsConfig(pkg, fix);
-			await FluidPackageCheck.checkTestDir(pkg, fix);
-		}
-	}
 	public async depcheck() {
 		for (const pkg of this.packages.packages) {
 			// Fluid specific

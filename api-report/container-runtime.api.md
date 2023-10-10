@@ -706,6 +706,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
     internalsProvider: ISummarizerInternalsProvider, handleContext: IFluidHandleContext, summaryCollection: SummaryCollection, runCoordinatorCreateFn: (runtime: IConnectableRuntime) => Promise<ICancellableSummarizerController>);
     // (undocumented)
     close(): void;
+    // @deprecated
     static create(loader: ILoader, url: string): Promise<ISummarizer>;
     dispose(): void;
     // (undocumented)
@@ -788,6 +789,9 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 
 // @public
 export type SummaryStage = SubmitSummaryResult["stage"] | "unknown";
+
+// @public
+export function TEST_requestSummarizer(loader: ILoader, url: string): Promise<ISummarizer>;
 
 // @public
 export const TombstoneResponseHeaderKey = "isTombstoned";

@@ -17,6 +17,9 @@ const {
 
 const { AlertNode } = require("./alert-node");
 
+const customExamplesSectionTitle = "Usage";
+const customThrowsSectionTitle = "Error Handling";
+
 /**
  * Default content layout for all API items.
  *
@@ -84,7 +87,7 @@ function layoutContent(apiItem, itemSpecificContent, config) {
 	}
 
 	// Render examples (if any)
-	const renderedExamples = LayoutUtilities.createExamplesSection(apiItem, config);
+	const renderedExamples = LayoutUtilities.createExamplesSection(apiItem, config, customExamplesSectionTitle);
 	if (renderedExamples !== undefined) {
 		sections.push(renderedExamples);
 	}
@@ -96,7 +99,7 @@ function layoutContent(apiItem, itemSpecificContent, config) {
 	}
 
 	// Render @throws content (if any)
-	const renderedThrows = LayoutUtilities.createThrowsSection(apiItem, config);
+	const renderedThrows = LayoutUtilities.createThrowsSection(apiItem, config, customThrowsSectionTitle);
 	if (renderedThrows !== undefined) {
 		sections.push(renderedThrows);
 	}

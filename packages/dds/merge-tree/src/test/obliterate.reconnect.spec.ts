@@ -9,7 +9,7 @@ import { IMergeTreeDeltaOp } from "../ops";
 import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger";
 
 const ClientIds = ["A", "B", "C", "D"] as const;
-type ClientName = typeof ClientIds[number];
+type ClientName = (typeof ClientIds)[number];
 
 class ReconnectTestHelper {
 	clients = createClientsAtInitialState({ initialState: "" }, ...ClientIds);
