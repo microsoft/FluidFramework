@@ -7,7 +7,9 @@ import assert from "assert";
 import express from "express";
 import request from "supertest";
 import nconf from "nconf";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { Lumberjack, TestEngine1 } from "@fluidframework/server-services-telemetry";
+import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import {
 	TestTenantManager,
 	TestThrottler,
@@ -122,6 +124,8 @@ describe("Routerlicious", () => {
 			const defaultDeltaService = new DeltaService(deltasCollection, defaultTenantManager);
 			const defaultDocumentRepository = new TestNotImplementedDocumentRepository();
 			const defaultDocumentDeleteService = new DocumentDeleteService();
+			const defaultCollaborationSessionEventEmitter =
+				new TypedEventEmitter<ICollaborationSessionEvents>();
 			let app: express.Application;
 			let supertest: request.SuperTest<request.Test>;
 			describe("throttling", () => {
@@ -180,6 +184,9 @@ describe("Routerlicious", () => {
 						defaultProducer,
 						defaultDocumentRepository,
 						defaultDocumentDeleteService,
+						null,
+						null,
+						defaultCollaborationSessionEventEmitter,
 					);
 					supertest = request(app);
 				});
@@ -378,12 +385,15 @@ describe("Routerlicious", () => {
 						defaultProducer,
 						defaultDocumentRepository,
 						defaultDocumentDeleteService,
+						null,
+						null,
+						defaultCollaborationSessionEventEmitter,
 					);
 					supertest = request(app);
 				});
 
 				describe("api/v1", () => {
-					it("/api/v1/:tenantId/:id/broadcast-signal", async () => {
+					it("/api/v1/:tenantId/:id/broadcast-signal 200", async () => {
 						const body = {
 							signalContent: {
 								contents: {
@@ -401,7 +411,7 @@ describe("Routerlicious", () => {
 							.expect(200);
 					});
 
-					it("/api/v1/:tenantId/:id/broadcast-signal malformed", async () => {
+					it("/api/v1/:tenantId/:id/broadcast-signal 400", async () => {
 						const body = {
 							signalContent: {},
 						};
