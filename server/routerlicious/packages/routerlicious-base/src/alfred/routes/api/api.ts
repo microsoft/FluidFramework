@@ -149,7 +149,7 @@ export function create(
 			if (!isValidSignalEnvelope(signalContent)) {
 				response
 					.status(400)
-					.send(`signalContent should contain 'content' and 'type' keys.`);
+					.send(`signalContent should contain 'contents.content' and 'contents.type' keys.`);
 				return;
 			}
 			try {
