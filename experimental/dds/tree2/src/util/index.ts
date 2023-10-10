@@ -23,9 +23,12 @@ export {
 	getOrDefaultInNestedMap,
 	NestedMap,
 	SizedNestedMap,
+	populateNestedMap,
 	setInNestedMap,
 	tryAddToNestedMap,
 	tryGetFromNestedMap,
+	encodeNestedMap,
+	decodeNestedMap,
 } from "./nestedMap";
 export { addToNestedSet, NestedSet, nestedSetContains } from "./nestedSet";
 export { OffsetList, OffsetListFactory } from "./offsetList";
@@ -66,6 +69,7 @@ export {
 	zipIterables,
 	Assume,
 	assertValidIndex,
+	assertValidRange,
 	assertNonNegativeSafeInteger,
 	generateStableId,
 	useDeterministicStableId,
@@ -105,4 +109,5 @@ export {
 	idAllocatorFromMaxId,
 	idAllocatorFromState,
 	IdAllocationState,
+	fakeIdAllocator,
 } from "./idAllocator";

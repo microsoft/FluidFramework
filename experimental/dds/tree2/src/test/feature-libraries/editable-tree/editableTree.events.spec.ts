@@ -13,6 +13,10 @@ import {
 	IEditableForest,
 	PathVisitor,
 	ProtoNodes,
+	DetachedRangeUpPath,
+	DetachedPlaceUpPath,
+	PlaceUpPath,
+	RangeUpPath,
 } from "../../../core";
 import { brand } from "../../../util";
 import { getField, jsonableTreeFromCursor, on, singleTextCursor } from "../../../feature-libraries";
@@ -86,6 +90,22 @@ describe("editable-tree: event subscription", () => {
 					assert.deepEqual(path, node);
 					visitLog.push(path);
 				},
+				afterCreate(content: DetachedRangeUpPath): void {},
+				beforeDestroy(content: DetachedRangeUpPath): void {},
+				beforeAttach(source: DetachedRangeUpPath, destination: PlaceUpPath): void {},
+				afterAttach(source: DetachedPlaceUpPath, destination: RangeUpPath): void {},
+				beforeDetach(source: RangeUpPath, destination: DetachedPlaceUpPath): void {},
+				afterDetach(source: PlaceUpPath, destination: DetachedRangeUpPath): void {},
+				beforeReplace(
+					newContent: DetachedRangeUpPath,
+					oldContent: RangeUpPath,
+					oldContentDestination: DetachedPlaceUpPath,
+				): void {},
+				afterReplace(
+					newContentSource: DetachedPlaceUpPath,
+					newContent: RangeUpPath,
+					oldContent: DetachedRangeUpPath,
+				): void {},
 			};
 			return visitor;
 		});

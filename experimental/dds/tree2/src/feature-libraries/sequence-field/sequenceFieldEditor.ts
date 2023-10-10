@@ -84,7 +84,6 @@ export const sequenceFieldEditor = {
 		assert(detachEvent.revision !== undefined, 0x724 /* Detach event must have a revision */);
 		const mark: Reattach<never> = {
 			type: "Revive",
-			content: reviver(detachEvent.revision, detachEvent.localId, count),
 			count,
 			cellId: detachEvent,
 		};
