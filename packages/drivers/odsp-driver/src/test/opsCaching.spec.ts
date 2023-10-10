@@ -119,7 +119,7 @@ async function runTestNoTimer(
 	cache.addOps(mockData);
 
 	const writes = mockCache.writeCount;
-	assert.equal(writes, initialWritesExpected);
+	assert.equal(writes, initialWritesExpected, "initialWrites should match");
 
 	// Validate that writing same ops is not going to change anything
 	cache.addOps(mockData);
@@ -134,7 +134,11 @@ async function runTestNoTimer(
 	// ensure adding same ops and flushing again is doing nothing
 	cache.addOps(mockData);
 	cache.flushOps();
-	assert.equal(mockCache.opsWritten, totalOpsWritten ?? mockData.length);
+	assert.equal(
+		mockCache.opsWritten,
+		totalOpsWritten ?? mockData.length,
+		"ops written does not match",
+	);
 	logger.assertMatchNone([{ category: "error" }]);
 }
 
@@ -241,6 +245,47 @@ describe("OpsCache", () => {
 			},
 			1,
 			2,
+		);
+	});
+
+	it("Epmty ops at beginning and end of batch should cause the batch to not be cached", async () => {
+		await runTest(
+			5,
+			100,
+			[
+				{ sequenceNumber: 101, data: "101" },
+				{ sequenceNumber: 102, data: "102" },
+				{ sequenceNumber: 103, data: "103" },
+			],
+			{},
+			0,
+			0,
+			0,
+		);
+	});
+
+	it("Epmty ops at just the beginning should still cause the batch to be cached", async () => {
+		await runTest(
+			5,
+			100,
+			[
+				{ sequenceNumber: 101, data: "101" },
+				{ sequenceNumber: 102, data: "102" },
+				{ sequenceNumber: 103, data: "103" },
+				{ sequenceNumber: 104, data: "104" },
+			],
+			{
+				"5_20": [
+					undefined,
+					{ sequenceNumber: 101, data: "101" },
+					{ sequenceNumber: 102, data: "102" },
+					{ sequenceNumber: 103, data: "103" },
+					{ sequenceNumber: 104, data: "104" },
+				],
+			},
+			1,
+			1,
+			4,
 		);
 	});
 
