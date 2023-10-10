@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils";
 import { ChangeAtomId, RevisionTag, TaggedChange } from "../../core";
 import { IdAllocator, fail } from "../../util";
-import { CrossFieldManager, CrossFieldTarget, NodeReviver } from "../modular-schema";
+import { CrossFieldManager, CrossFieldTarget } from "../modular-schema";
 import {
 	Changeset,
 	Mark,
@@ -44,14 +44,12 @@ export type NodeChangeInverter<TNodeChange> = (
 export function invert<TNodeChange>(
 	change: TaggedChange<Changeset<TNodeChange>>,
 	invertChild: NodeChangeInverter<TNodeChange>,
-	reviver: NodeReviver,
 	genId: IdAllocator,
 	crossFieldManager: CrossFieldManager,
 ): Changeset<TNodeChange> {
 	return invertMarkList(
 		change.change,
 		change.revision,
-		reviver,
 		invertChild,
 		crossFieldManager as CrossFieldManager<TNodeChange>,
 	);
@@ -60,7 +58,6 @@ export function invert<TNodeChange>(
 export function amendInvert<TNodeChange>(
 	invertedChange: Changeset<TNodeChange>,
 	originalRevision: RevisionTag | undefined,
-	reviver: NodeReviver,
 	genId: IdAllocator,
 	crossFieldManager: CrossFieldManager,
 ): Changeset<TNodeChange> {
@@ -74,7 +71,6 @@ export function amendInvert<TNodeChange>(
 function invertMarkList<TNodeChange>(
 	markList: MarkList<TNodeChange>,
 	revision: RevisionTag | undefined,
-	reviver: NodeReviver,
 	invertChild: NodeChangeInverter<TNodeChange>,
 	crossFieldManager: CrossFieldManager<TNodeChange>,
 ): MarkList<TNodeChange> {
@@ -82,14 +78,7 @@ function invertMarkList<TNodeChange>(
 	let inputIndex = 0;
 
 	for (const mark of markList) {
-		const inverseMarks = invertMark(
-			mark,
-			inputIndex,
-			revision,
-			reviver,
-			invertChild,
-			crossFieldManager,
-		);
+		const inverseMarks = invertMark(mark, inputIndex, revision, invertChild, crossFieldManager);
 		inverseMarkList.push(...inverseMarks);
 		inputIndex += getInputLength(mark);
 	}
@@ -101,7 +90,6 @@ function invertMark<TNodeChange>(
 	mark: Mark<TNodeChange>,
 	inputIndex: number,
 	revision: RevisionTag | undefined,
-	reviver: NodeReviver,
 	invertChild: NodeChangeInverter<TNodeChange>,
 	crossFieldManager: CrossFieldManager<TNodeChange>,
 ): Mark<TNodeChange>[] {
@@ -226,7 +214,6 @@ function invertMark<TNodeChange>(
 						},
 						inputIndex,
 						revision,
-						reviver,
 						invertChild,
 						crossFieldManager,
 				  )

@@ -5,7 +5,6 @@
 
 import { SequenceField as SF, singleTextCursor } from "../../../feature-libraries";
 import { brand } from "../../../util";
-import { fakeTaggedRepair as fakeRepair } from "../../utils";
 import {
 	ChangeAtomId,
 	ChangesetLocalId,
@@ -89,10 +88,9 @@ function createReviveChangeset(
 	startIndex: number,
 	count: number,
 	detachEvent: SF.CellId,
-	reviver = fakeRepair,
 	lastDetach?: SF.CellId,
 ): SF.Changeset<never> {
-	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent, reviver);
+	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent);
 	const mark = markList[markList.length - 1] as SF.Reattach;
 	if (lastDetach !== undefined) {
 		mark.cellId = lastDetach;
@@ -104,16 +102,9 @@ function createRedundantReviveChangeset(
 	startIndex: number,
 	count: number,
 	detachEvent: SF.CellId,
-	reviver = fakeRepair,
 	isIntention?: boolean,
 ): SF.Changeset<never> {
-	const markList = SF.sequenceFieldEditor.revive(
-		startIndex,
-		count,
-		detachEvent,
-		reviver,
-		isIntention,
-	);
+	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent, isIntention);
 	const mark = markList[markList.length - 1] as SF.Reattach;
 	delete mark.cellId;
 	return markList;
@@ -124,9 +115,8 @@ function createBlockedReviveChangeset(
 	count: number,
 	detachEvent: SF.CellId,
 	lastDetach: SF.CellId,
-	reviver = fakeRepair,
 ): SF.Changeset<never> {
-	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent, reviver);
+	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent);
 	const mark = markList[markList.length - 1] as SF.Reattach;
 	mark.cellId = lastDetach;
 	return markList;
@@ -136,10 +126,9 @@ function createIntentionalReviveChangeset(
 	startIndex: number,
 	count: number,
 	detachEvent: SF.CellId,
-	reviver = fakeRepair,
 	lastDetach?: SF.CellId,
 ): SF.Changeset<never> {
-	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent, reviver, true);
+	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent, true);
 	const mark = markList[markList.length - 1] as SF.Reattach;
 
 	if (lastDetach !== undefined) {
