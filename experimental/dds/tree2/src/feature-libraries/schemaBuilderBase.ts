@@ -114,13 +114,12 @@ export class SchemaBuilderBase<TScope extends string, TName extends number | str
 
 	/**
 	 * Produce a TypedSchemaCollection which captures the content added to this builder, any additional SchemaLibraries that were added to it and a root field.
-	 * Can be used with schematize to provide schema aware access to document content.
 	 *
 	 * May only be called once after adding content to builder is complete.
 	 */
-	public toDocumentSchema<Kind extends FieldKind, Types extends AllowedTypes>(
-		root: FieldSchema<Kind, Types>,
-	): TypedSchemaCollection<FieldSchema<Kind, Types>> {
+	protected toDocumentSchemaInternal<TSchema extends FieldSchema>(
+		root: TSchema,
+	): TypedSchemaCollection<TSchema> {
 		this.finalizeCommon();
 		const rootLibrary: SchemaLibraryData = {
 			name: this.name,
@@ -132,7 +131,7 @@ export class SchemaBuilderBase<TScope extends string, TName extends number | str
 			rootLibrary,
 			...this.libraries,
 		]);
-		const typed: TypedSchemaCollection<FieldSchema<Kind, Types>> = {
+		const typed: TypedSchemaCollection<TSchema> = {
 			...collection,
 			rootFieldSchema: root,
 		};
@@ -146,7 +145,7 @@ export class SchemaBuilderBase<TScope extends string, TName extends number | str
 	 * Determine the multiplicity, viewing and editing APIs as well as the merge resolution policy.
 	 * @param allowedTypes - What types of children are allowed in this field.
 	 * @returns a {@link FieldSchema} which can be used as a struct field (see {@link SchemaBuilder.struct}),
-	 * a map field (see {@link SchemaBuilder.map}), a field node(see {@link SchemaBuilder.fieldNode}) or the root field (see {@link SchemaBuilderBase.toDocumentSchema}).
+	 * a map field (see {@link SchemaBuilder.map}), a field node(see {@link SchemaBuilder.fieldNode}) or the root field (see {@link SchemaBuilder.toDocumentSchema}).
 	 *
 	 * @privateRemarks
 	 * TODO:

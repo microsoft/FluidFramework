@@ -182,13 +182,10 @@ describe("LazyTree", () => {
 			"optionalString",
 			SchemaBuilder.fieldOptional(leafDomain.string),
 		);
-		const fieldNodeRequiredAnySchema = schemaBuilder.fieldNode(
-			"requiredAny",
-			SchemaBuilder.fieldRequired(Any),
-		);
+		const fieldNodeRequiredAnySchema = schemaBuilder.fieldNode("requiredAny", Any);
 		const fieldNodeRequiredStringSchema = schemaBuilder.fieldNode(
 			"valueString",
-			SchemaBuilder.fieldRequired(leafDomain.string),
+			leafDomain.string,
 		);
 		const structNodeSchema = schemaBuilder.struct("struct", {});
 		const mapNodeAnySchema = schemaBuilder.map("mapAny", SchemaBuilder.fieldOptional(Any));
@@ -197,9 +194,7 @@ describe("LazyTree", () => {
 			SchemaBuilder.fieldOptional(leafDomain.string),
 		);
 
-		const schema = schemaBuilder.toDocumentSchema(
-			SchemaBuilder.fieldRequired(fieldNodeOptionalAnySchema),
-		);
+		const schema = schemaBuilder.toDocumentSchema(fieldNodeOptionalAnySchema);
 
 		// #endregion
 
@@ -221,7 +216,6 @@ describe("LazyTree", () => {
 		assert(!node.is(fieldNodeOptionalStringSchema));
 		assert(!node.is(fieldNodeRequiredAnySchema));
 		assert(!node.is(fieldNodeRequiredStringSchema));
-		assert(!node.is(fieldNodeRequiredStringSchema));
 		assert(!node.is(mapNodeAnySchema));
 		assert(!node.is(mapNodeStringSchema));
 		assert(!node.is(leafDomain.string));
@@ -237,7 +231,7 @@ describe("LazyTree", () => {
 			"field",
 			SchemaBuilder.fieldOptional(leafDomain.string),
 		);
-		const schema = schemaBuilder.toDocumentSchema(SchemaBuilder.fieldRequired(fieldNodeSchema));
+		const schema = schemaBuilder.toDocumentSchema(fieldNodeSchema);
 
 		const { context, cursor } = initializeTreeWithContent({
 			schema,
@@ -303,7 +297,7 @@ describe("LazyFieldNode", () => {
 		"field",
 		SchemaBuilder.fieldOptional(leafDomain.string),
 	);
-	const schema = schemaBuilder.toDocumentSchema(SchemaBuilder.fieldRequired(fieldNodeSchema));
+	const schema = schemaBuilder.toDocumentSchema(fieldNodeSchema);
 
 	const { context, cursor } = initializeTreeWithContent({
 		schema,
@@ -332,7 +326,7 @@ describe("LazyLeaf", () => {
 		scope: "test",
 		libraries: [leafDomain.library],
 	});
-	const schema = schemaBuilder.toDocumentSchema(SchemaBuilder.fieldRequired(leafDomain.string));
+	const schema = schemaBuilder.toDocumentSchema(leafDomain.string);
 
 	const { context, cursor } = initializeTreeWithContent({
 		schema,
@@ -358,7 +352,7 @@ describe("LazyMap", () => {
 		"mapString",
 		SchemaBuilder.fieldOptional(leafDomain.string),
 	);
-	const schema = schemaBuilder.toDocumentSchema(SchemaBuilder.fieldRequired(mapNodeSchema));
+	const schema = schemaBuilder.toDocumentSchema(mapNodeSchema);
 
 	const { context, cursor } = initializeTreeWithContent({
 		schema,

@@ -125,7 +125,6 @@ export {
 	allowsRepoSuperset,
 	GenericChangeset,
 	genericFieldKind,
-	NodeReviver,
 	RevisionIndexer,
 	RevisionMetadataSource,
 	RevisionInfo,
@@ -161,7 +160,15 @@ export {
 } from "./typed-schema";
 
 export { SchemaBuilderBase, SchemaLibrary } from "./schemaBuilderBase";
-export { SchemaBuilder, SchemaBuilderInternal } from "./schemaBuilder";
+export {
+	SchemaBuilder,
+	SchemaBuilderInternal,
+	ImplicitFieldSchema,
+	NormalizeField,
+	DefaultFieldKind,
+	ImplicitAllowedTypes,
+	NormalizeAllowedTypes,
+} from "./schemaBuilder";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
 

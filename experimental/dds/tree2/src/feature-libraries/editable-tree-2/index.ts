@@ -25,6 +25,8 @@ export {
 	TreeStatus,
 } from "./editableTreeTypes";
 
+export { createRawStruct, rawStructErrorMessage, nodeContent } from "./rawStruct";
+
 export {
 	visitBipartiteIterableTree,
 	Skip,
