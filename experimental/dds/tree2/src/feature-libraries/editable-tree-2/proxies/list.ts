@@ -22,6 +22,7 @@ const getField = <TTypes extends AllowedTypes>(target: object) => {
 
 // For brevity, the current implementation dynamically builds a property descriptor map from a list of
 // functions we want to re-expose via the proxy.
+
 const staticDispatchMap: PropertyDescriptorMap = {};
 
 // TODO: Historically I've been impressed by V8's ability to inline compositions of functions, but it's
@@ -50,6 +51,9 @@ function addDescriptor(
 // For compatibility, we are initially implement 'readonly T[]' by applying the Array.prototype methods
 // to the list proxy.  Over time, we should replace these with efficient implementations on LazySequence
 // to avoid re-entering the proxy as these methods access 'length' and the indexed properties.
+//
+// TODO: This assumes 'Function.name' matches the property name on 'Array.prototype', which may be
+// dubious across JS engines.
 [
 	// TODO: Remove cast to any once targeting a more recent ES version.
 	(Array.prototype as any).at,
@@ -104,6 +108,7 @@ function addDescriptor(
 	addDescriptor(staticDispatchMap, fn, getField);
 });
 
+// [Symbol.iterator] is an alias for 'Array.prototype.values', as 'Function.name' returns 'values'.
 staticDispatchMap[Symbol.iterator] = {
 	value: Array.prototype[Symbol.iterator],
 	writable: false,
@@ -113,10 +118,16 @@ staticDispatchMap[Symbol.iterator] = {
 
 const prototype = Object.create(null, staticDispatchMap);
 
+/**
+ * Helper to coerce property keys to integer indexes (or undefined if not an in-range integer).
+ */
 function asIndex(key: string | symbol, length: number) {
 	if (typeof key === "string") {
+		// TODO: It may be worth a '0' <= ch <= '9' check before calling 'Number' to quickly
+		// reject 'length' as an index, or even parsing integers ourselves.
 		const asNumber = Number(key);
 
+		// TODO: See 'matrix/range.ts' for a fast integer coercing + range check.
 		if (Number.isInteger(asNumber)) {
 			return 0 <= asNumber && asNumber < length ? asNumber : undefined;
 		}
@@ -124,6 +135,11 @@ function asIndex(key: string | symbol, length: number) {
 }
 
 export function createListProxy<TTypes extends AllowedTypes>(treeNode: TreeNode): List<TTypes> {
+	// Create a 'dispatch' object that this Proxy forwards to instead of the proxy target.
+	// Own properties on the dispatch object are surfaced as own properties of the proxy.
+	// (e.g., 'length', which is defined below).
+	//
+	// Properties normally inherited from 'Array.prototype' are surfaced via the prototype chain.
 	const dispatch = Object.create(prototype, {
 		length: {
 			get(this: object) {
@@ -153,10 +169,13 @@ export function createListProxy<TTypes extends AllowedTypes>(treeNode: TreeNode)
 				: (Reflect.get(dispatch, key) as unknown);
 		},
 		set: (target, key, newValue, receiver) => {
+			// 'Symbol.isConcatSpreadable' may be set on an Array instance to modify the behavior of
+			// the concat method.  We allow this property to be added to the dispatch object.
 			if (key === Symbol.isConcatSpreadable) {
 				return Reflect.set(dispatch, key, newValue);
 			}
-			// For MVP, we disallow set.
+
+			// For MVP, we otherwise disallow setting properties (mutation is only available via the list mutation APIs).
 			return false;
 		},
 		has: (target, key) => {
@@ -166,6 +185,8 @@ export function createListProxy<TTypes extends AllowedTypes>(treeNode: TreeNode)
 		},
 		ownKeys: (target) => {
 			const field = getField(dispatch);
+
+			// TODO: Need to surface 'Symbol.isConcatSpreadable' as an own key.
 			return Array.from({ length: field.length }, (_, index) => `${index}`).concat("length");
 		},
 		getOwnPropertyDescriptor: (target, key) => {

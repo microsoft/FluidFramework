@@ -45,7 +45,7 @@ export function createObjectProxy<TTypes extends AllowedTypes>(
 					value: getProxyForField(field),
 					writable: true,
 					enumerable: true,
-					configurable: true,		// Must be 'configurable' if property is absent from proxy target.
+					configurable: true, // Must be 'configurable' if property is absent from proxy target.
 				};
 
 				return p;

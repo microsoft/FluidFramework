@@ -34,6 +34,7 @@ type Root = TypedNode<typeof root>;
 const schema = builder.toDocumentSchema(SchemaBuilder.fieldRequired(root));
 
 describe("List", () => {
+	/** Similar to JSON stringify, but preserves 'undefined' and leaves numbers as-is. */
 	function pretty(arg: any) {
 		return arg === undefined
 			? "undefined"
@@ -42,6 +43,7 @@ describe("List", () => {
 			: JSON.stringify(arg);
 	}
 
+	/** Formats 'args' array, inserting commas and eliding trailing undefines.  */
 	function prettyArgs(...args: any[]) {
 		return args.reduce((prev: string, arg, index) => {
 			// If all remaining arguments are 'undefined' elide them.
@@ -58,6 +60,7 @@ describe("List", () => {
 		}, "");
 	}
 
+	/** Creates test case titles that resemble function calls: `<array>.[name](..args..) -> <expected>` */
 	function prettyCall(
 		name: string,
 		array: readonly unknown[],
@@ -67,10 +70,12 @@ describe("List", () => {
 		return `${pretty(array)}.${name}(${prettyArgs(...args)}) -> ${pretty(expected)}`;
 	}
 
+	/** Helper that creates an array of the given length, populating it with ["A", "B", ..etc..] */
 	function createArray(length: number): string[] {
 		return Array.from({ length }).map((_, i) => String.fromCodePoint(0x41 + i));
 	}
 
+	/** Helper that creates a new SharedTree with the test schema and returns the root proxy. */
 	function createTree(): Root {
 		// Consider 'initializeTreeWithContent' for readonly tests?
 		const view = createTreeView(schema, { numbers: [], strings: [] });
@@ -81,6 +86,7 @@ describe("List", () => {
 	}
 
 	// TODO: Combine createList helpers once we unbox unions.
+	/** Helper that creates a new List<number> proxy */
 	function createNumberList(items: readonly number[]): List<[typeof leaf.number]> {
 		const list = createTree().numbers;
 		list.insertAtStart(items);
@@ -89,6 +95,7 @@ describe("List", () => {
 	}
 
 	// TODO: Combine createList helpers once we unbox unions.
+	/** Helper that creates a new List<string> proxy */
 	function createStringList(items: readonly string[]): List<[typeof leaf.string]> {
 		const list = createTree().strings;
 		list.insertAtStart(items);
@@ -111,7 +118,7 @@ describe("List", () => {
 				const expected = fn(array);
 				const subject = createStringList(array);
 
-				it(`${name}(${JSON.stringify(array)}) -> ${JSON.stringify(expected)}`, () => {
+				it(`${name}(${pretty(array)}) -> ${pretty(expected)}`, () => {
 					const actual = fn(subject);
 					assert.deepEqual(actual, expected);
 				});
@@ -131,11 +138,13 @@ describe("List", () => {
 				Object.prototype.toString.call(target),
 			);
 
+			// 'deepEquals' requires that objects have the same prototype to be considered equal.
 			test0(
 				"Object.getPrototypeOf",
 				(target: unknown) => Object.getPrototypeOf(target) as unknown,
 			);
 
+			// 'deepEquals' enumerates and compares the own properties of objects.
 			describe("Object.getOwnPropertyDescriptors", () => {
 				for (let n = 0; n < 3; n++) {
 					test0("Object.getOwnPropertyDescriptors", (target) => {
@@ -154,7 +163,7 @@ describe("List", () => {
 			const expected = fn(array);
 			const subject = createStringList(array);
 
-			it(`${JSON.stringify(array)} -> ${JSON.stringify(expected)}`, () => {
+			it(`${pretty(array)} -> ${pretty(expected)}`, () => {
 				const actual = fn(subject);
 				assert.deepEqual(actual, expected);
 			});
@@ -184,6 +193,7 @@ describe("List", () => {
 			}
 		});
 
+		// Enumerates values
 		describe("for...of", () => {
 			for (let n = 0; n < 3; n++) {
 				test1((subject) => {
@@ -196,6 +206,7 @@ describe("List", () => {
 			}
 		});
 
+		// Enumerates keys configured as 'enumerable: true' (both own and inherited.)
 		describe("for...in", () => {
 			for (let n = 0; n < 3; n++) {
 				test1((subject) => {
@@ -228,6 +239,8 @@ describe("List", () => {
 
 		describe("[Symbol.isConcatSpreadable] matches array defaults", () => {
 			test1((subject) => {
+				// Capture the value of [Symbol.isConcatSpreadable].  The returned object will be compared
+				// via 'deepEquals' by 'test1()'.
 				return {
 					hasConcatSpreadable: Reflect.has(subject, Symbol.isConcatSpreadable),
 					isConcatSpreadable: Reflect.get(subject, Symbol.isConcatSpreadable),
@@ -280,7 +293,7 @@ describe("List", () => {
 				});
 			}
 
-			// TODO: Concat currently does not honor the [Symbol.isConcatSpreadable] property.
+			// TODO: Concat currently does not preserve the [Symbol.isConcatSpreadable] property.
 			describe.skip("concat()", () => {
 				const setSpreadable = (
 					target: readonly string[],
@@ -380,6 +393,8 @@ describe("List", () => {
 				}
 			});
 
+			// Iterative functions are those that accept a callback with (value, index, array) parameters,
+			// such as 'map' and 'forEach'.
 			describe("iterative function", () => {
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const lowerA = "a".codePointAt(0)!;
@@ -393,18 +408,33 @@ describe("List", () => {
 					...args: unknown[]
 				) => unknown;
 
+				// Ensure that invoking 'fnName' on an array-like subject returns the same result
+				// as invoking the same function on a true JS array.  This test helper also logs
+				// and checks the (this, value, index, array) arguments provided to the callback.
+				//
+				// 'fnName' is the name of the Array.prototype function to invoke (e.g., 'concat').
+				// The function is invoked in two ways:
+				//
+				// 1. As a method on the subject (e.g., 'subject.concat(...args)').
+				// 2. As a method on Array.prototype (e.g., 'Array.prototype.concat.call(subject, ...args)').
+				//
+				// The results of both are compared to the result of invoking the same function on a true JS array.
+				//
+				// The optional 'init' parameter provides an initial state, otherwise both are empty.
 				function test3(fnName: string, callback: (...args: any[]) => unknown = predicate) {
 					// Wraps the callback function to log the values of 'this', 'value', and 'index',
 					// which are expected to be identical between a true JS array and our array-like subject.
-					const logCalls = (expectedArray: readonly string[], log: unknown[][]) => {
+					const logCalls = (expectedArrayParam: readonly string[], log: unknown[][]) => {
 						return function (...args: unknown[]) {
 							const result = callback(...args);
 
-							// To simplify comparing the logged arguments we verify the 'array' parameter as we go.
-							const actualArray = args.pop();
+							// Other than the 'array' parameter, the arguments should be identical.  To make
+							// comparison with 'deepEquals' easy, we check and remove the 'array' parameter
+							// as we go.
+							const actualArrayParam = args.pop();
 							assert.equal(
-								actualArray,
-								expectedArray,
+								actualArrayParam,
+								expectedArrayParam,
 								"The last argument of an iterative function callback must be the array instance.",
 							);
 
@@ -414,6 +444,7 @@ describe("List", () => {
 					};
 
 					return (array: readonly string[], ...otherArgs: unknown[]) => {
+						// Compute the expected result and log the expected arguments to the callback.
 						const expected = array.slice();
 						const expectedFn = Reflect.get(expected, fnName) as IterativeFn;
 						const expectedArgs: unknown[][] = [];
@@ -422,6 +453,7 @@ describe("List", () => {
 							...otherArgs,
 						]);
 
+						// Check the actual result and compare the actual arguments to the callback.
 						function innerTest(
 							subject: readonly string[],
 							fnSource: readonly string[],
@@ -510,21 +542,6 @@ describe("List", () => {
 					[[], ["a"], ["a", "b"]].forEach((init) => check(init, []));
 				});
 			});
-
-			const invokeSearchFn = (
-				fn: (..._: any[]) => unknown,
-				args: any[],
-				start: undefined | number,
-			) => {
-				// Several of the non-iterative Array search functions accept an optional 'fromIndex'
-				// as the last paramater.  Unfortunately, applying the 'to integer' conversion steps
-				// coerces an explicitly undefined value to '0'.
-				//
-				// For 'includes' and 'indexOf', this is mostly benign since the default behavior is
-				// to start the search from 0.  For 'lastIndexOf' this results in only searching the
-				// zeroth element.
-				return start === undefined ? fn(...args) : fn(...args, start);
-			};
 
 			describe("includes()", () => {
 				const check = (array: readonly string[], item: unknown, start?: number) => {
