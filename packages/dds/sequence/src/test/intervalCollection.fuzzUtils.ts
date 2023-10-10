@@ -9,7 +9,7 @@ import {
 	combineReducersAsync as combineReducers,
 	AsyncReducer as Reducer,
 } from "@fluid-internal/stochastic-test-utils";
-import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
+import { DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
 import { revertSharedStringRevertibles, SharedStringRevertible } from "../revertibles";
 import { SharedStringFactory } from "../sequenceFactory";

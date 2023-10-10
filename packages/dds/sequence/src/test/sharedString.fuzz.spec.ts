@@ -14,7 +14,7 @@ import {
 	createDDSFuzzSuite,
 	DDSFuzzModel,
 	DDSFuzzSuiteOptions,
-} from "@fluid-internal/test-dds-utils";
+} from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { SharedStringFactory } from "../sequenceFactory";
 import { assertEquivalentSharedStrings } from "./intervalUtils";

@@ -13,7 +13,7 @@ import {
 	DDSFuzzTestState,
 	createDDSFuzzSuite,
 	DDSFuzzHarnessEvents,
-} from "@fluid-internal/test-dds-utils";
+} from "@fluid-private/test-dds-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils";
 import { ISharedTreeBranchView } from "../../../shared-tree";

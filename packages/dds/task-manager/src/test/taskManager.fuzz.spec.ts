@@ -13,7 +13,7 @@ import {
 	AsyncReducer as Reducer,
 	takeAsync as take,
 } from "@fluid-internal/stochastic-test-utils";
-import { createDDSFuzzSuite, DDSFuzzModel, DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
+import { createDDSFuzzSuite, DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { TaskManagerFactory } from "../taskManagerFactory";
 import { ITaskManager } from "../interfaces";

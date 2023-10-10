@@ -4,4 +4,4 @@
 @fluid-internal/test-drivers
 @fluid-internal/stochastic-test-utils
 @fluid-private/test-loader-utils
-@fluid-internal/test-dds-utils
+@fluid-private/test-dds-utils

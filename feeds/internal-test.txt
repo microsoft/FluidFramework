@@ -54,7 +54,7 @@ fluid-framework
 @fluidframework/driver-web-cache
 @fluidframework/driver-base
 @fluidframework/debugger
-@fluid-internal/test-dds-utils
+@fluid-private/test-dds-utils
 @fluidframework/task-manager
 @fluidframework/shared-summary-block
 @fluidframework/shared-object-base

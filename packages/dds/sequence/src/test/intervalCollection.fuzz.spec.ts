@@ -16,7 +16,7 @@ import {
 	createDDSFuzzSuite,
 	DDSFuzzModel,
 	DDSFuzzSuiteOptions,
-} from "@fluid-internal/test-dds-utils";
+} from "@fluid-private/test-dds-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
 import {
 	IChannelAttributes,

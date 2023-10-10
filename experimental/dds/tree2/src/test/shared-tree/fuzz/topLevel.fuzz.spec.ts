@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { takeAsync } from "@fluid-internal/stochastic-test-utils";
-import { DDSFuzzModel, createDDSFuzzSuite, DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
+import { DDSFuzzModel, createDDSFuzzSuite, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { SharedTreeTestFactory, validateTreeConsistency } from "../../utils";
 import { makeOpGenerator, EditGeneratorOpWeights } from "./fuzzEditGenerators";

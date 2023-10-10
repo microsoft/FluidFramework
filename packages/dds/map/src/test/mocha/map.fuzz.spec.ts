@@ -5,7 +5,7 @@
 
 import * as path from "path";
 import { strict as assert } from "assert";
-import { DDSFuzzModel, DDSFuzzTestState, createDDSFuzzSuite } from "@fluid-internal/test-dds-utils";
+import { DDSFuzzModel, DDSFuzzTestState, createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import {
 	combineReducers,
