@@ -81,7 +81,6 @@ describe("Background Script unit tests", () => {
 			connectionInfo: chrome.tabs.ConnectInfo | undefined,
 		): Port => {
 			connectCalled = true;
-			console.log(connectionInfo);
 			expect(_tabId).to.equal(tabId);
 			expect(connectionInfo).to.deep.equal({ name: "Background-Content-Port" });
 			return tabPort;
