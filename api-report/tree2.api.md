@@ -359,7 +359,7 @@ export function createFlushableBinderOptions<E extends Events<E>>({ sortFn, sort
 
 // @alpha
 export interface CrossFieldManager<T = unknown> {
-    get(target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId, count: number, addDependency: boolean): RangeEntry<T> | undefined;
+    get(target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId, count: number, addDependency: boolean): RangeQueryResult<T>;
     set(target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId, count: number, newValue: T, invalidateDependents: boolean): void;
 }
 
@@ -1718,13 +1718,9 @@ type ProtoNodes = readonly ProtoNode[];
 export const proxyTargetSymbol: unique symbol;
 
 // @alpha
-export interface RangeEntry<T> {
-    // (undocumented)
+export interface RangeQueryResult<T> {
     length: number;
-    // (undocumented)
-    start: number;
-    // (undocumented)
-    value: T;
+    value: T | undefined;
 }
 
 // @alpha
