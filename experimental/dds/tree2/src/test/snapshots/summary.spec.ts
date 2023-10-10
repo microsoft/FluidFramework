@@ -11,35 +11,6 @@ import { generateTestTrees } from "./testTrees";
 
 const regenerateSnapshots = process.argv.includes("--snapshot");
 
-// TODO: The generated test trees should eventually be updated to use the chunked-forest.
-// generateTestTrees()
-// 	.then((trees) => {
-// 		describe("Summary snapshot", () => {
-// 			// Only run this test when you want to regenerate the snapshot.
-// 			if (regenerateSnapshots) {
-// 				regenTestDirectory(dirPath);
-// 				describe.only("regenerate", () => {
-// 					for (const { name, summary } of trees) {
-// 						it(`for ${name}`, async () => {
-// 							await createSnapshot(getFilepath(name), summary);
-// 						});
-// 					}
-// 				});
-// 			}
-
-// 			describe("matches the historical snapshot", () => {
-// 				for (const { name, summary } of trees) {
-// 					it(`for ${name}`, async () => {
-// 						await verifyEqualPastSnapshot(getFilepath(name), summary);
-// 					});
-// 				}
-// 			});
-// 		});
-// 	})
-// 	.catch((e) => {
-// 		throw e;
-// 	});
-
 const dirPathTail = "src/test/snapshots/files";
 const dirPath = path.join(__dirname, `../../../${dirPathTail}`);
 

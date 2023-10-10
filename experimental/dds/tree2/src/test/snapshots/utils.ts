@@ -25,6 +25,13 @@ function getSummaryTypeName(summaryObject: SummaryObject): "blob" | "tree" {
 	}
 }
 
+/**
+ * Rather than JSON.stringify the entire `ISummaryTree` for the purpose of writing
+ * it to disk, this function more closely resembles how the summary gets serialized
+ * to storage. This helps avoid confusion on problems such as
+ * double-JSON-stringification and makes it easier to diff using line-by-line
+ * tools.
+ */
 function serializeTree(parentHandle: string, tree: ISummaryTree, rootNodeName: string) {
 	const entries: { type: "blob" | "tree" }[] = [];
 

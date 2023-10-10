@@ -96,16 +96,17 @@ function generateTreeRecursively(
 	}
 }
 
+// TODO: The generated test trees should eventually be updated to use the chunked-forest.
 export function generateTestTrees() {
 	const testTrees: {
 		only?: boolean;
 		skip?: boolean;
 		name: string;
-		tree: (takeSnapshot: (tree: ISharedTree, name: string) => Promise<void>) => Promise<void>;
+		runScenario: (takeSnapshot: (tree: ISharedTree, name: string) => Promise<void>) => Promise<void>;
 	}[] = [
 		{
 			name: "move-across-fields",
-			tree: async (validate) => {
+			runScenario: async (takeSnapshot) => {
 				const provider = new TestTreeProviderLite(2);
 				const tree1 = provider.trees[0].view;
 				const tree2 = provider.trees[1].view;
@@ -158,12 +159,12 @@ export function generateTestTrees() {
 
 				provider.processMessages();
 
-				await validate(provider.trees[0], "tree-0-final");
+				await takeSnapshot(provider.trees[0], "tree-0-final");
 			},
 		},
 		{
 			name: "insert-and-delete",
-			tree: async (validate) => {
+			runScenario: async (takeSnapshot) => {
 				const value = "42";
 				const provider = new TestTreeProviderLite(2);
 				const tree1 = provider.trees[0].schematize(emptyJsonSequenceConfig);
@@ -175,20 +176,20 @@ export function generateTestTrees() {
 				tree1.context.root.insertNodes(0, [value]);
 				provider.processMessages();
 
-				await validate(provider.trees[0], "tree-0-after-insert");
+				await takeSnapshot(provider.trees[0], "tree-0-after-insert");
 
 				// Delete node
 				remove(tree1, 0, 1);
 
 				provider.processMessages();
 
-				await validate(provider.trees[0], "tree-0-final");
-				await validate(provider.trees[1], "tree-1-final");
+				await takeSnapshot(provider.trees[0], "tree-0-final");
+				await takeSnapshot(provider.trees[1], "tree-1-final");
 			},
 		},
 		{
 			name: "competing-deletes",
-			tree: async (validate) => {
+			runScenario: async (takeSnapshot) => {
 				for (const index of [0, 1, 2, 3]) {
 					const provider = new TestTreeProviderLite(4);
 					const config: InitializeAndSchematizeConfiguration = {
@@ -206,13 +207,13 @@ export function generateTestTrees() {
 					remove(tree2, index, 1);
 					remove(tree3, index, 1);
 					provider.processMessages();
-					await validate(provider.trees[0], `index-${index}`);
+					await takeSnapshot(provider.trees[0], `index-${index}`);
 				}
 			},
 		},
 		{
 			name: "concurrent-inserts",
-			tree: async (validate) => {
+			runScenario: async (takeSnapshot) => {
 				const baseTree = factory.create(
 					new MockFluidDataStoreRuntime({ clientId: "test-client", id: "test" }),
 					"test",
@@ -231,7 +232,7 @@ export function generateTestTrees() {
 				tree2.rebaseOnto(tree1);
 				tree1.merge(tree2);
 
-				await validate(baseTree, "tree2");
+				await takeSnapshot(baseTree, "tree2");
 
 				const expected = ["x", "y", "a", "b", "c"];
 				expectJsonTree([tree1, tree2], expected);
@@ -243,16 +244,16 @@ export function generateTestTrees() {
 				tree3.rebaseOnto(tree1);
 				tree1.merge(tree3);
 
-				await validate(baseTree, "tree3");
+				await takeSnapshot(baseTree, "tree3");
 			},
 		},
 		{
 			name: "complete-3x3",
-			tree: async (validate) => {
+			runScenario: async (takeSnapshot) => {
 				const fieldKeyA: FieldKey = brand("FieldA");
 				const fieldKeyB: FieldKey = brand("FieldB");
 				const fieldKeyC: FieldKey = brand("FieldC");
-				await validate(
+				await takeSnapshot(
 					generateCompleteTree([fieldKeyA, fieldKeyB, fieldKeyC], 2, 3),
 					"final",
 				);
@@ -260,7 +261,7 @@ export function generateTestTrees() {
 		},
 		{
 			name: "has-handle",
-			tree: async (validate) => {
+			runScenario: async (takeSnapshot) => {
 				const innerBuilder = new SchemaBuilder({
 					scope: "has-handle",
 					libraries: [leaf.library],
@@ -285,12 +286,12 @@ export function generateTestTrees() {
 					field: rootFieldKey,
 				});
 				field.set(singleTextCursor({ type: leaf.handle.name, value: tree.handle }), true);
-				await validate(tree, "final");
+				await takeSnapshot(tree, "final");
 			},
 		},
 		{
 			name: "nested-sequence-change",
-			tree: async (validate) => {
+			runScenario: async (takeSnapshot) => {
 				const innerBuilder = new SchemaBuilder({
 					scope: "has-sequence-map",
 				});
@@ -334,13 +335,13 @@ export function generateTestTrees() {
 					})
 					.insert(0, [singleTextCursor({ type: brand("SeqMap") })]);
 				view.transaction.commit();
-				await validate(tree, "final");
+				await takeSnapshot(tree, "final");
 			},
 		},
 		{
 			name: "empty-root",
-			tree: async (validate) => {
-				await validate(generateCompleteTree([], 0, 0), "final");
+			runScenario: async (takeSnapshot) => {
+				await takeSnapshot(generateCompleteTree([], 0, 0), "final");
 			},
 		},
 	];
