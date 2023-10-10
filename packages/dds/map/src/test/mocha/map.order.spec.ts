@@ -67,8 +67,10 @@ describe("Map Iteration Order", () => {
 
 			assertIterationOrder(map, ["2", "3"]);
 
+			map.delete("2");
+			map.delete("1"); // duplicate delete
 			map.set("1", 4);
-			assertIterationOrder(map, ["2", "3", "1"]);
+			assertIterationOrder(map, ["3", "1"]);
 		});
 
 		it("clear", () => {
@@ -138,6 +140,9 @@ describe("Map Iteration Order", () => {
 			map2.set("3", 3);
 			map2.set("1", 2);
 			map2.delete("1");
+
+			assertIterationOrder(map1, ["1", "2"]);
+			assertIterationOrder(map2, ["3"]);
 
 			containerRuntimeFactory.processSomeMessages(2);
 			assertIterationOrder(map1, ["1", "2"]);
