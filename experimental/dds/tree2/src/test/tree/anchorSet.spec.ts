@@ -291,7 +291,7 @@ describe("AnchorSet", () => {
 		});
 	});
 
-	it("triggers events", () => {
+	it("triggers childrenChanging, treeChanging, subtreeChanging, and afterDestroy callbacks", () => {
 		// AnchorSet does not guarantee event ordering within a batch so use UnorderedTestLogger.
 		const log = new UnorderedTestLogger();
 		const anchors = new AnchorSet();
@@ -347,6 +347,80 @@ describe("AnchorSet", () => {
 			["root childrenChange", 1],
 			["root treeChange", 1],
 		]);
+	});
+
+	it("triggers beforeChange and afterChange callbacks in the right order and always as a pair", () => {
+		const insertMark: Delta.Insert = {
+			type: Delta.MarkType.Insert,
+			content: [node].map(singleTextCursor),
+		};
+		const deleteMark: Delta.Remove = {
+			type: Delta.MarkType.Remove,
+			count: 1,
+			detachId,
+		};
+		const replaceMark: Delta.Insert = {
+			type: Delta.MarkType.Insert,
+			content: [node].map(singleTextCursor),
+			oldContent: { detachId: { minor: 42 } },
+		};
+		const anchors = new AnchorSet();
+
+		// Insert a node at the root to set up listeners on it
+		announceTestDelta(
+			makeDelta(insertMark, makePath([rootFieldKey, 0], [fieldFoo, 3])),
+			anchors,
+		);
+		const anchor0 = anchors.track(makePath([rootFieldKey, 0]));
+		const node0 = anchors.locate(anchor0) ?? assert.fail();
+
+		let beforeCounter = 0;
+		let afterCounter = 0;
+
+		const unsubscribeBeforeChange = node0.on("beforeChange", (n: AnchorNode) => {
+			beforeCounter++;
+			assert.strictEqual(afterCounter, beforeCounter - 1, "beforeChange fired out of order");
+		});
+		const unsubscribeAfterChange = node0.on("afterChange", (n: AnchorNode) => {
+			afterCounter++;
+			assert.strictEqual(afterCounter, beforeCounter, "afterChange fired out of order");
+		});
+
+		// Test an insert delta
+		announceTestDelta(
+			makeDelta(insertMark, makePath([rootFieldKey, 0], [fieldFoo, 4])),
+			anchors,
+		);
+		assert.strictEqual(beforeCounter, 1);
+		assert.strictEqual(afterCounter, 1);
+
+		// Test a replace delta
+		announceTestDelta(
+			makeDelta(replaceMark, makePath([rootFieldKey, 0], [fieldFoo, 5])),
+			anchors,
+		);
+		assert.strictEqual(beforeCounter, 2);
+		assert.strictEqual(afterCounter, 2);
+
+		// Test a delete delta
+		announceTestDelta(
+			makeDelta(deleteMark, makePath([rootFieldKey, 0], [fieldFoo, 5])),
+			anchors,
+		);
+		assert.strictEqual(beforeCounter, 3);
+		assert.strictEqual(afterCounter, 3);
+
+		// TODO: test a move delta
+
+		// Remove listeners and validate another delta doesn't trigger the listeners anymore
+		unsubscribeBeforeChange();
+		unsubscribeAfterChange();
+		announceTestDelta(
+			makeDelta(insertMark, makePath([rootFieldKey, 0], [fieldFoo, 4])),
+			anchors,
+		);
+		assert.strictEqual(beforeCounter, 3);
+		assert.strictEqual(afterCounter, 3);
 	});
 
 	it("triggers path visitor callbacks", () => {
