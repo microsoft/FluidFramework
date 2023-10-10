@@ -155,8 +155,8 @@ export function create(
 				return;
 			}
 			if (
-				collaborationSessionEventEmitter &&
-				collaborationSessionEventEmitter !== undefined
+				!collaborationSessionEventEmitter ||
+				collaborationSessionEventEmitter === undefined
 			) {
 				response
 					.status(500)
