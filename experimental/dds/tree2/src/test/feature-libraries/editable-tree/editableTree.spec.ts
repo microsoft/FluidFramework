@@ -347,7 +347,7 @@ describe("editable-tree: read-only", () => {
 	});
 
 	it("value roots are unwrapped", () => {
-		const schemaData = buildTestSchema(SchemaBuilder.fieldRequired(optionalChildSchema));
+		const schemaData = buildTestSchema(SchemaBuilder.required(optionalChildSchema));
 		const forest = setupForest(schemaData, {});
 		const context = getReadonlyEditableTreeContext(forest, schemaData);
 		assert(isEditableTree(context.unwrappedRoot));
@@ -356,7 +356,7 @@ describe("editable-tree: read-only", () => {
 	});
 
 	it("optional roots are unwrapped", () => {
-		const schemaData = buildTestSchema(SchemaBuilder.fieldOptional(optionalChildSchema));
+		const schemaData = buildTestSchema(SchemaBuilder.optional(optionalChildSchema));
 		// Empty
 		{
 			const forest = setupForest(schemaData, undefined);

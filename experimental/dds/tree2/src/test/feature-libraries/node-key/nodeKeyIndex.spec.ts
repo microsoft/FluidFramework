@@ -29,7 +29,7 @@ const nodeSchema = builder.structRecursive("node", {
 	...nodeKeyField,
 	child: FieldSchema.createUnsafe(FieldKinds.optional, [() => nodeSchema]),
 });
-const nodeSchemaData = builder.toDocumentSchema(SchemaBuilder.fieldOptional(nodeSchema));
+const nodeSchemaData = builder.toDocumentSchema(SchemaBuilder.optional(nodeSchema));
 
 // TODO: this can probably be removed once daesun's stuff goes in
 function contextualizeKey(view: NodeKeys, key: LocalNodeKey): { [nodeKeyFieldKey]: StableNodeKey } {
@@ -207,10 +207,10 @@ describe("Node Key Index", () => {
 			name: "node key index test",
 			libraries: [leaf.library],
 		});
-		const nodeSchemaNoKey = builder2.map("node", SchemaBuilder.fieldOptional(Any));
+		const nodeSchemaNoKey = builder2.map("node", SchemaBuilder.optional(Any));
 
 		const nodeSchemaDataNoKey = builder2.toDocumentSchema(
-			SchemaBuilder.fieldOptional(nodeSchemaNoKey),
+			SchemaBuilder.optional(nodeSchemaNoKey),
 		);
 		assert(!nodeSchemaDataNoKey.treeSchema.has(nodeKeyTreeSchema.name));
 
@@ -265,7 +265,7 @@ describe("Node Key Index", () => {
 			child: FieldSchema.createUnsafe(FieldKinds.optional, [() => nodeSchemaNoKey]),
 		});
 		const nodeSchemaDataNoKey = builder2.toDocumentSchema(
-			SchemaBuilder.fieldOptional(nodeSchemaNoKey),
+			SchemaBuilder.optional(nodeSchemaNoKey),
 		);
 
 		const view = createView(undefined);

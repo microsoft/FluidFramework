@@ -21,7 +21,7 @@ const builder = new SchemaBuilder({ scope: "Test Recursive Domain", libraries: [
  */
 export const recursiveStruct = builder.structRecursive("struct", {
 	recursive: FieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveStruct]),
-	number: SchemaBuilder.fieldRequired(leaf.number),
+	number: leaf.number,
 });
 
 // Some related information in https://github.com/microsoft/TypeScript/issues/55758.
@@ -35,7 +35,7 @@ fixRecursiveReference(recursiveReference);
  */
 export const recursiveStruct2 = builder.struct("struct2", {
 	recursive: FieldSchema.create(FieldKinds.optional, [recursiveReference]),
-	number: SchemaBuilder.fieldRequired(leaf.number),
+	number: leaf.number,
 });
 
 type _0 = requireFalse<isAny<typeof recursiveStruct2>>;

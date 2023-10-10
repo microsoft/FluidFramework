@@ -185,37 +185,74 @@ export class SchemaBuilder<
 
 	/**
 	 * Define a schema for an {@link OptionalField}.
-	 * Shorthand or passing `FieldKinds.optional` to {@link FieldSchema}.
+	 * @remarks
+	 * Shorthand or passing `FieldKinds.optional` to {@link FieldSchema.create}.
+	 *
+	 * This method is also available as an instance method on {@link SchemaBuilder}
 	 */
-	public static fieldOptional<const T extends AllowedTypes>(
-		...allowedTypes: T
-	): FieldSchema<typeof FieldKinds.optional, T> {
-		return FieldSchema.create(FieldKinds.optional, allowedTypes);
+	public static optional<const T extends ImplicitAllowedTypes>(
+		allowedTypes: T,
+	): FieldSchema<typeof FieldKinds.optional, NormalizeAllowedTypes<T>> {
+		return FieldSchema.create(FieldKinds.optional, normalizeAllowedTypes(allowedTypes));
+	}
+
+	/**
+	 * Define a schema for an {@link OptionalField}.
+	 * @remarks
+	 * Shorthand or passing `FieldKinds.optional` to {@link FieldSchema.create}.
+	 *
+	 * Since this creates a {@link FieldSchema} (and not a {@link TreeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
+	 * therefor this method is the same as the static version.
+	 */
+	public readonly optional = SchemaBuilder.optional;
+
+	/**
+	 * Define a schema for an {@link RequiredField}.
+	 * @remarks
+	 * Shorthand or passing `FieldKinds.required` to {@link FieldSchema.create}.
+	 *
+	 * This method is also available as an instance method on {@link SchemaBuilder}
+	 */
+	public static required<const T extends ImplicitAllowedTypes>(
+		allowedTypes: T,
+	): FieldSchema<typeof FieldKinds.required, NormalizeAllowedTypes<T>> {
+		return FieldSchema.create(FieldKinds.required, normalizeAllowedTypes(allowedTypes));
 	}
 
 	/**
 	 * Define a schema for a {@link RequiredField}.
-	 * Shorthand or passing `FieldKinds.required` to {@link FieldSchema}.
+	 * @remarks
+	 * Shorthand or passing `FieldKinds.required` to {@link FieldSchema.create}.
+	 * Note that `FieldKinds.required` is the current default field kind, so APIs accepting {@link ImplicitFieldSchema}
+	 * can be passed the `allowedTypes` and will implicitly wrap it up in a {@link RequiredField}.
 	 *
-	 * @privateRemarks
-	 * TODO: Consider adding even shorter syntax where:
-	 * - AllowedTypes can be used as a FieldSchema (Or SchemaBuilder takes a default field kind).
-	 * - A TreeSchema can be used as AllowedTypes in the non-polymorphic case.
+	 * Since this creates a {@link FieldSchema} (and not a {@link TreeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
+	 * therefor this method is the same as the static version.
 	 */
-	public static fieldRequired<const T extends AllowedTypes>(
-		...allowedTypes: T
-	): FieldSchema<typeof FieldKinds.required, T> {
-		return FieldSchema.create(FieldKinds.required, allowedTypes);
+	public readonly required = SchemaBuilder.required;
+
+	/**
+	 * Define a schema for a {@link Sequence}.
+	 * @remarks
+	 * Shorthand or passing `FieldKinds.sequence` to {@link FieldSchema.create}.
+	 *
+	 * This method is also available as an instance method on {@link SchemaBuilder}
+	 */
+	public static sequence<const T extends ImplicitAllowedTypes>(
+		allowedTypes: T,
+	): FieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>> {
+		return FieldSchema.create(FieldKinds.sequence, normalizeAllowedTypes(allowedTypes));
 	}
 
 	/**
-	 * Define a schema for a {@link Sequence} field.
+	 * Define a schema for a {@link Sequence}.
+	 * @remarks
+	 * Shorthand or passing `FieldKinds.sequence` to {@link FieldSchema.create}.
+	 *
+	 * Since this creates a {@link FieldSchema} (and not a {@link TreeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
+	 * therefor this method is the same as the static version.
 	 */
-	public static fieldSequence<const T extends AllowedTypes>(
-		...t: T
-	): FieldSchema<typeof FieldKinds.sequence, T> {
-		return FieldSchema.create(FieldKinds.sequence, t);
-	}
+	public readonly sequence = SchemaBuilder.sequence;
 
 	/**
 	 * Produce a TypedSchemaCollection which captures the content added to this builder, any additional SchemaLibraries that were added to it and a root field.

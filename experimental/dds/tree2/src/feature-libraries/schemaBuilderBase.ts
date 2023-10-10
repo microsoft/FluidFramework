@@ -34,6 +34,9 @@ export class SchemaBuilderBase<TScope extends string, TName extends number | str
 	private finalized: boolean = false;
 	private readonly treeSchema: Map<TreeSchemaIdentifier, TreeSchema> = new Map();
 	private readonly adapters: Adapters = {};
+	/**
+	 * Prefix appended to the identifiers of all {@link TreeSchema} produced by this builder.
+	 */
 	public readonly scope: TScope;
 
 	/**
@@ -42,7 +45,7 @@ export class SchemaBuilderBase<TScope extends string, TName extends number | str
 	public readonly name: string;
 
 	/**
-	 * @param scope - Prefix appended to the identifiers to all {@link TreeSchema} produced by this builder.
+	 * @param scope - Prefix appended to the identifiers of all {@link TreeSchema} produced by this builder.
 	 * Use of [Reverse domain name notation](https://en.wikipedia.org/wiki/Reverse_domain_name_notation) or a UUIDv4 is recommended to avoid collisions.
 	 * @param name - Name used to refer to this builder in error messages. Has no impact on the actual generated schema. Defaults to scope.
 	 * @param lint - Optional configuration for "linting". See {@link SchemaLintConfiguration}. Currently defaults to enabling all lints.

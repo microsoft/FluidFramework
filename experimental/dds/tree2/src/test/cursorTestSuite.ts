@@ -36,13 +36,13 @@ const leafNumber = schemaBuilder.leaf("number", ValueSchema.Number);
 export const emptySchema = schemaBuilder.struct("Empty Struct", {});
 const emptySchema2 = schemaBuilder.struct("Empty Struct 2", {});
 const emptySchema3 = schemaBuilder.struct("Empty Struct 3", {});
-export const mapSchema = schemaBuilder.map("Map", SchemaBuilder.fieldSequence(Any));
+export const mapSchema = schemaBuilder.map("Map", SchemaBuilder.sequence(Any));
 // Struct with fixed shape
 export const structSchema = schemaBuilder.struct("struct", {
-	child: SchemaBuilder.fieldRequired(leafNumber),
+	child: leafNumber,
 });
 
-export const testTreeSchema = schemaBuilder.toDocumentSchema(SchemaBuilder.fieldSequence(Any));
+export const testTreeSchema = schemaBuilder.toDocumentSchema(SchemaBuilder.sequence(Any));
 
 export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 	["minimal", { type: emptySchema.name }],

@@ -366,11 +366,11 @@ export class LazyMap<TSchema extends MapSchema>
 	// TODO: when appropriate add setter that delegates to field kind specific setter.
 	// public set(key: FieldKey, content: FlexibleFieldContent<TSchema["mapFields"]>): void {
 	// 	const field = this.get(key);
-	// 	if (field.is(SchemaBuilder.fieldOptional(...this.schema.mapFields.allowedTypes))) {
+	// 	if (field.is(SchemaBuilder.optional(this.schema.mapFields.allowedTypes))) {
 	// 		field.setContent(content);
 	// 	} else {
 	// 		assert(
-	// 			field.is(SchemaBuilder.fieldSequence(...this.schema.mapFields.allowedTypes)),
+	// 			field.is(SchemaBuilder.sequence(this.schema.mapFields.allowedTypes)),
 	// 			"unexpected map field kind",
 	// 		);
 	// 		// TODO: fix merge semantics.

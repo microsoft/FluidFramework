@@ -613,7 +613,7 @@ export function treeWithContent<TRoot extends FieldSchema>(
 	);
 }
 
-const jsonSequenceRootField = SchemaBuilder.fieldSequence(...jsonRoot);
+const jsonSequenceRootField = SchemaBuilder.sequence(jsonRoot);
 export const jsonSequenceRootSchema = new SchemaBuilder({
 	scope: "JsonSequenceRoot",
 	libraries: [jsonSchema],
@@ -874,7 +874,7 @@ export const wrongSchema = new SchemaBuilder({
 	lint: {
 		rejectEmpty: false,
 	},
-}).toDocumentSchema(SchemaBuilder.fieldSequence(Any));
+}).toDocumentSchema(SchemaBuilder.sequence(Any));
 
 /**
  * Schematize config Schema which is not correct.
