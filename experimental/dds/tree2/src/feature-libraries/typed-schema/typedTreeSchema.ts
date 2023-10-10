@@ -3,8 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { EmptyKey, FieldKey, TreeSchemaIdentifier, TreeTypeSet, ValueSchema } from "../../core";
+import { Lazy, assert } from "@fluidframework/core-utils";
+import {
+	Adapters,
+	EmptyKey,
+	FieldKey,
+	TreeSchemaIdentifier,
+	TreeTypeSet,
+	ValueSchema,
+} from "../../core";
 import {
 	MakeNominal,
 	Assume,
@@ -12,11 +19,13 @@ import {
 	_InlineTrick,
 	FlattenKeys,
 	Named,
+	requireAssignableTo,
+	compareSets,
 } from "../../util";
-import { FieldKindTypes, FieldKinds } from "../default-field-kinds";
+import { FieldKinds } from "../default-field-kinds";
+import { FieldKind, FullSchemaPolicy } from "../modular-schema";
 import { LazyItem, normalizeFlexList } from "./flexList";
 import { ObjectToMap, WithDefault, objectToMapTyped } from "./typeUtils";
-import { RecursiveTreeSchemaSpecification } from "./schemaBuilder";
 
 // TODO: tests for this file
 
@@ -40,6 +49,34 @@ export type NormalizeStructFieldsInner<T extends Fields> = {
 export type NormalizeStructFields<T extends Fields | undefined> = NormalizeStructFieldsInner<
 	WithDefault<T, Record<string, never>>
 >;
+
+/**
+ * Placeholder for to `TreeSchema` to use in constraints where `TreeSchema` is desired but using it causes
+ * recursive types to fail to compile due to TypeScript limitations.
+ *
+ * Using `TreeSchema` instead in some key "extends" clauses cause recursive types to error with:
+ * "'theSchema' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer."
+ *
+ * TODO: how much more specific of a type can be provided without triggering the above error?
+ * @alpha
+ */
+export type RecursiveTreeSchema = unknown;
+
+/**
+ * Placeholder for to `TreeSchemaSpecification` to use in constraints where `TreeSchemaSpecification` is desired but using it causes
+ * recursive types to fail to compile due to TypeScript limitations.
+ *
+ * See `RecursiveTreeSchema`.
+ *
+ * TODO: how much more specific of a type can be provided without triggering the above error?
+ * @alpha
+ */
+export type RecursiveTreeSchemaSpecification = unknown;
+
+{
+	type _check1 = requireAssignableTo<TreeSchemaSpecification, RecursiveTreeSchemaSpecification>;
+	type _check2 = requireAssignableTo<TreeSchema, RecursiveTreeSchema>;
+}
 
 /**
  * T must extend TreeSchemaSpecification.
@@ -76,7 +113,11 @@ export class TreeSchema<
 
 	public readonly info: Assume<T, TreeSchemaSpecification>;
 
-	public constructor(public readonly builder: Named<string>, name: Name, info: T) {
+	public constructor(
+		public readonly builder: Named<string>,
+		name: Name,
+		info: T,
+	) {
 		this.info = info as Assume<T, TreeSchemaSpecification>;
 		this.name = name as Name & TreeSchemaIdentifier;
 		this.structFieldsObject = normalizeStructFields<
@@ -209,13 +250,13 @@ export type LazyTreeSchema = TreeSchema | (() => TreeSchema);
  * "Any" is boxed in an array to allow use as variadic parameter.
  * @alpha
  */
-export type AllowedTypes = [Any] | readonly LazyItem<TreeSchema>[];
+export type AllowedTypes = readonly [Any] | readonly LazyItem<TreeSchema>[];
 
 /**
  * Checks if an {@link AllowedTypes} is {@link (Any:type)}.
  * @alpha
  */
-export function allowedTypesIsAny(t: AllowedTypes): t is [Any] {
+export function allowedTypesIsAny(t: AllowedTypes): t is readonly [Any] {
 	return t.length === 1 && t[0] === Any;
 }
 
@@ -266,19 +307,65 @@ export type TreeSchemaSpecification = [
  * including functionality that does not have to be kept consistent across versions or deterministic.
  *
  * This can include policy for how to use this schema for "view" purposes, and well as how to expose editing APIs.
+ *
+ * @remarks
+ * `Types` here must extend `AllowedTypes`, but this cannot be enforced with an "extends" clause due to the need to support recursive schema and
+ * [a design limitation of TypeScript](https://github.com/microsoft/TypeScript/issues/55758).
+ *
  * @sealed @alpha
  */
-export class FieldSchema<Kind extends FieldKindTypes = FieldKindTypes, Types = AllowedTypes> {
+export class FieldSchema<out Kind extends FieldKind = FieldKind, const out Types = AllowedTypes> {
 	/**
 	 * Schema for a field which must always be empty.
 	 */
 	public static readonly empty = new FieldSchema(FieldKinds.forbidden, []);
 
 	protected _typeCheck?: MakeNominal;
-	public constructor(public readonly kind: Kind, public readonly allowedTypes: Types) {}
+
+	/**
+	 * This is computed lazily since types can be recursive, which makes evaluating this have to happen after all the schema are defined.
+	 */
+	private readonly lazyTypes: Lazy<TreeTypeSet>;
+
+	/**
+	 * @param kind - The {@link https://en.wikipedia.org/wiki/Kind_(type_theory) | kind} of this field.
+	 * Determine the multiplicity, viewing and editing APIs as well as the merge resolution policy.
+	 * @param allowedTypes - What types of tree nodes are allowed in this field.
+	 */
+	public constructor(
+		public readonly kind: Kind,
+		public readonly allowedTypes: Types,
+	) {
+		this.lazyTypes = new Lazy(() =>
+			allowedTypesToTypeSet(this.allowedTypes as unknown as AllowedTypes),
+		);
+	}
 
 	public get types(): TreeTypeSet {
-		return allowedTypesToTypeSet(this.allowedTypes as unknown as AllowedTypes);
+		return this.lazyTypes.value;
+	}
+
+	/**
+	 * Compare this schema to another.
+	 *
+	 * @returns true iff the schema are identical.
+	 */
+	public equals(other: FieldSchema): boolean {
+		if (other.kind !== this.kind) {
+			return false;
+		}
+		if (other.types === undefined) {
+			return this.types === undefined;
+		}
+		if (this.types === undefined) {
+			return false;
+		}
+		return compareSets({
+			a: this.types,
+			b: other.types,
+			aExtra: () => false,
+			bExtra: () => false,
+		});
 	}
 }
 
@@ -294,4 +381,23 @@ export function allowedTypesToTypeSet(t: AllowedTypes): TreeTypeSet {
 	const list: readonly (() => TreeSchema)[] = normalizeFlexList(t);
 	const names = list.map((f) => f().name);
 	return new Set(names);
+}
+
+/**
+ * Schema data that can be be used to view a document.
+ * Strongly typed over its rootFieldSchema.
+ *
+ * @remarks
+ * This type is mainly used as a type constraint to mean that the code working with it requires strongly typed schema.
+ * The actual type used will include detailed schema information for all the types in the collection.
+ * This pattern is used to implement SchemaAware APIs.
+ *
+ * @alpha
+ */
+
+export interface TypedSchemaCollection<T extends FieldSchema = FieldSchema> {
+	readonly rootFieldSchema: T;
+	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
+	readonly policy: FullSchemaPolicy;
+	readonly adapters: Adapters;
 }

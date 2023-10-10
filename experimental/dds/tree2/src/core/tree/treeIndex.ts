@@ -129,7 +129,7 @@ export class TreeIndex {
 	 * Associates the DetachedNodeId with a field key and creates an entry for it in the index.
 	 */
 	public createEntry(nodeId?: Delta.DetachedNodeId, count: number = 1): Entry {
-		const root = this.rootIdAllocator(count);
+		const root = this.rootIdAllocator.allocate(count);
 		const field = this.toFieldKey(root);
 		const entry = { field, root };
 

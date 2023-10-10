@@ -1,5 +1,35 @@
 # @fluidframework/odsp-doclib-utils
 
+## 2.0.0-internal.7.0.0
+
+### Major Changes
+
+-   odsp-driver: Load container in readonly mode when driver throws DriverErrorType.outOfStorage [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+
+    Handle DriverErrorType.outOfStorage error from driver and load the container in readonly mode. Currently there is no
+    handling and when the join session throws this error, the container will get closed. With this we use NoDeltaStream
+    object as connection and load the container in read mode, so that it loads properly. We also notify the that the
+    container is "readonly" through the event on delta manager so that apps can listen to this and show any UX etc. The app
+    can listen to the event like this:
+
+    ```ts
+    container.deltaManager.on(
+    	"readonly",
+    	(readonly?: boolean, readonlyConnectionReason?: { text: string; error?: IErrorBase }) => {
+    		// error?.errorType will be equal to DriverErrorType.outOfStorage in this case
+    		// App logic
+    	},
+    );
+    ```
+
+-   Minimum TypeScript version now 5.1.6 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+
+    The minimum supported TypeScript version for Fluid 2.0 clients is now 5.1.6.
+
+## 2.0.0-internal.6.4.0
+
+Dependency updates only.
+
 ## 2.0.0-internal.6.3.0
 
 Dependency updates only.

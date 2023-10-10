@@ -12,8 +12,14 @@ import {
 	// Allow import from file being tested.
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/default-field-kinds/defaultFieldKinds";
-import { makeAnonChange, TaggedChange, mintRevisionTag, tagChange } from "../../../core";
-import { IdAllocator, brand } from "../../../util";
+import {
+	makeAnonChange,
+	TaggedChange,
+	mintRevisionTag,
+	tagChange,
+	ChangesetLocalId,
+} from "../../../core";
+import { brand, fakeIdAllocator } from "../../../util";
 import { defaultRevisionMetadataFromChanges } from "../../utils";
 // eslint-disable-next-line import/no-internal-modules
 import { OptionalChangeset } from "../../../feature-libraries/default-field-kinds/defaultFieldChangeTypes";
@@ -27,8 +33,6 @@ const arbitraryChildChange = changesetForChild("arbitraryChildChange");
 
 const nodeChange1 = changesetForChild("nodeChange1");
 const nodeChange2 = changesetForChild("nodeChange2");
-
-const failIdAllocator: IdAllocator = () => assert.fail("Should not allocate ids");
 
 const failCrossFieldManager: CrossFieldManager = {
 	get: () => assert.fail("Should not query CrossFieldManager"),
@@ -65,9 +69,9 @@ describe("defaultFieldKinds", () => {
 		const fieldHandler: FieldChangeHandler<OptionalChangeset, ValueFieldEditor> =
 			valueChangeHandler;
 
-		const childChange1: OptionalChangeset = { childChange: nodeChange1 };
-		const childChange2: OptionalChangeset = { childChange: nodeChange2 };
-		const childChange3: OptionalChangeset = { childChange: arbitraryChildChange };
+		const childChange1: OptionalChangeset = { childChanges: [["self", nodeChange1]] };
+		const childChange2: OptionalChangeset = { childChanges: [["self", nodeChange2]] };
+		const childChange3: OptionalChangeset = { childChanges: [["self", arbitraryChildChange]] };
 
 		const change1 = tagChange(
 			fieldHandler.editor.set(testTreeCursor("tree1"), brand(1)),
@@ -108,7 +112,7 @@ describe("defaultFieldKinds", () => {
 			const composed = fieldHandler.rebaser.compose(
 				[change1, change2],
 				simpleChildComposer,
-				failIdAllocator,
+				fakeIdAllocator,
 				failCrossFieldManager,
 				defaultRevisionMetadataFromChanges([change1, change2]),
 			);
@@ -122,7 +126,7 @@ describe("defaultFieldKinds", () => {
 				fieldHandler.rebaser.compose(
 					[change1, taggedChildChange1],
 					simpleChildComposer,
-					failIdAllocator,
+					fakeIdAllocator,
 					failCrossFieldManager,
 					defaultRevisionMetadataFromChanges([change1, taggedChildChange1]),
 				),
@@ -132,20 +136,25 @@ describe("defaultFieldKinds", () => {
 			const composition = fieldHandler.rebaser.compose(
 				[makeAnonChange(childChange1), change1],
 				simpleChildComposer,
-				failIdAllocator,
+				fakeIdAllocator,
 				failCrossFieldManager,
 				defaultRevisionMetadataFromChanges([change1]),
 			);
 			assert.deepEqual(composition, {
 				fieldChange: { ...change1.change.fieldChange, revision: change1.revision },
-				childChange: nodeChange1,
+				childChanges: [
+					[
+						{ revision: change1.revision, localId: brand<ChangesetLocalId>(1) },
+						nodeChange1,
+					],
+				],
 			});
 
 			assert.deepEqual(
 				fieldHandler.rebaser.compose(
 					[makeAnonChange(childChange1), makeAnonChange(childChange2)],
 					childComposer1_2,
-					failIdAllocator,
+					fakeIdAllocator,
 					failCrossFieldManager,
 					defaultRevisionMetadataFromChanges([]),
 				),
@@ -162,11 +171,11 @@ describe("defaultFieldKinds", () => {
 			const inverted = fieldHandler.rebaser.invert(
 				{ revision: mintRevisionTag(), change: change1WithChildChange },
 				childInverter,
-				failIdAllocator,
+				fakeIdAllocator,
 				failCrossFieldManager,
 			);
 
-			assert.deepEqual(inverted.childChange, nodeChange2);
+			assert.deepEqual(inverted.childChanges, [["self", nodeChange2]]);
 		});
 
 		it("can be rebased", () => {
@@ -177,7 +186,7 @@ describe("defaultFieldKinds", () => {
 					change2.change,
 					makeAnonChange(change1WithChildChange),
 					childRebaser,
-					failIdAllocator,
+					fakeIdAllocator,
 					failCrossFieldManager,
 					defaultRevisionMetadataFromChanges([]),
 				),
@@ -203,7 +212,7 @@ describe("defaultFieldKinds", () => {
 					changeToRebase,
 					makeAnonChange(baseChange),
 					childRebaser,
-					failIdAllocator,
+					fakeIdAllocator,
 					failCrossFieldManager,
 					defaultRevisionMetadataFromChanges([]),
 				),

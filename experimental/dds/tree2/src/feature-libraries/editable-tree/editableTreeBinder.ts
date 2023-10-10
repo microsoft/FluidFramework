@@ -12,7 +12,6 @@ import {
 	PlaceUpPath,
 	ProtoNodes,
 	RangeUpPath,
-	ReplaceKind,
 	UpPath,
 	topDownPath,
 } from "../../core";
@@ -259,7 +258,7 @@ export const BindingType = {
  *
  * @alpha
  */
-export type BindingContextType = typeof BindingType[keyof typeof BindingType];
+export type BindingContextType = (typeof BindingType)[keyof typeof BindingType];
 
 /**
  * The binding context attribution common to all binding events
@@ -345,7 +344,7 @@ abstract class AbstractPathVisitor implements PathVisitor {
 				parentField: destination.field,
 				parentIndex: destination.start,
 			},
-			[],
+			this.getContent(destination),
 		);
 	}
 	public beforeDetach(source: RangeUpPath, destination: DetachedPlaceUpPath): void {}
@@ -363,13 +362,11 @@ abstract class AbstractPathVisitor implements PathVisitor {
 		newContent: DetachedRangeUpPath,
 		oldContent: RangeUpPath,
 		oldContentDestination: DetachedPlaceUpPath,
-		kind: ReplaceKind,
 	): void {}
 	public afterReplace(
 		newContentSource: DetachedPlaceUpPath,
 		newContent: RangeUpPath,
 		oldContent: DetachedRangeUpPath,
-		kind: ReplaceKind,
 	): void {
 		this.onDelete(
 			{
@@ -385,8 +382,12 @@ abstract class AbstractPathVisitor implements PathVisitor {
 				parentField: newContent.field,
 				parentIndex: newContent.start,
 			},
-			[],
+			this.getContent(newContent),
 		);
+	}
+	protected getContent(range: RangeUpPath): ProtoNodes {
+		// TODO: either lookup the content in the forest or stop providing the content in the events
+		return [];
 	}
 
 	public abstract onDelete(path: UpPath, count: number): void;

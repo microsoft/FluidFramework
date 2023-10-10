@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { logIfFalse } from "../utils";
+import { IEventSampler, createSampledLogger, logIfFalse } from "../utils";
 import { TelemetryDataTag, tagCodeArtifacts, tagData } from "../logger";
+import { ConfigTypes, IConfigProviderBase, mixinMonitoringContext } from "../config";
+import { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "../telemetryTypes";
 
 class TestLogger implements ITelemetryBaseLogger {
 	send(event: ITelemetryBaseEvent): void {
@@ -67,6 +69,254 @@ describe("tagData", () => {
 		};
 
 		assert.deepEqual(taggedData, expected);
+	});
+});
+
+describe("Sampling", () => {
+	let events: (ITelemetryBaseEvent | ITelemetryGenericEventExt)[] = [];
+
+	function getMockLoggerExtWithConfig(
+		configDictionary?: Record<string, ConfigTypes>,
+	): ITelemetryLoggerExt {
+		const logger: ITelemetryLoggerExt = {
+			send(event: ITelemetryBaseEvent): void {
+				events.push(event);
+			},
+			sendTelemetryEvent: (event) => {
+				events.push(event);
+			},
+			sendErrorEvent: (event) => {
+				events.push(event);
+			},
+			sendPerformanceEvent: (event) => {
+				events.push(event);
+			},
+		};
+
+		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+			getRawConfig: (name: string): ConfigTypes => settings[name],
+		});
+
+		return mixinMonitoringContext(logger, configProvider(configDictionary ?? {})).logger;
+	}
+
+	/**
+	 * Creates an event sampler that uses a systematic approach to sampling (Sampling every nth event)
+	 */
+	// eslint-disable-next-line unicorn/consistent-function-scoping
+	function createSystematicEventSampler(options: { samplingRate: number }): IEventSampler {
+		let eventCount = -1;
+		return {
+			sample: (): boolean => {
+				eventCount++;
+				const shouldSample = eventCount % options.samplingRate === 0;
+				if (shouldSample) {
+					eventCount = 0;
+				}
+				return shouldSample;
+			},
+		};
+	}
+
+	beforeEach(() => {
+		events = [];
+	});
+
+	it("Events are not sampled if DisableSampling telemetry flag is set to true", () => {
+		const injectedSettings = {
+			"Fluid.Telemetry.DisableSampling": true,
+		};
+		const logger = getMockLoggerExtWithConfig(injectedSettings);
+
+		const loggerWithoutSampling = createSampledLogger(
+			logger,
+			createSystematicEventSampler({ samplingRate: 1 }),
+		);
+		const loggerWithEvery5Sampling = createSampledLogger(
+			logger,
+			createSystematicEventSampler({ samplingRate: 5 }),
+		);
+
+		const totalEventCount = 15;
+		for (let i = 0; i < totalEventCount; i++) {
+			loggerWithoutSampling.send({ category: "generic", eventName: "noSampling" });
+			loggerWithEvery5Sampling.send({ category: "generic", eventName: "oneEveryFive" });
+		}
+		assert.equal(
+			events.filter((event) => event.eventName === "noSampling").length,
+			totalEventCount,
+		);
+		assert.equal(
+			events.filter((event) => event.eventName === "oneEveryFive").length,
+			totalEventCount,
+		);
+	});
+
+	it("Events are not sampled if DisableSampling telemetry flag is set to true and no sampler is provided", () => {
+		const injectedSettings = {
+			"Fluid.Telemetry.DisableSampling": true,
+		};
+		const logger = getMockLoggerExtWithConfig(injectedSettings);
+
+		// Sampling is enabled AND there was no sampler provided
+		const loggerWithoutSampling = createSampledLogger(logger);
+
+		const totalEventCount = 15;
+		for (let i = 0; i < totalEventCount; i++) {
+			loggerWithoutSampling.send({ category: "generic", eventName: "noSampling" });
+		}
+		assert.equal(
+			events.filter((event) => event.eventName === "noSampling").length,
+			totalEventCount,
+		);
+	});
+
+	it("Events are not sampled if DisableSampling telemetry flag is set to false but no sampler is provided", () => {
+		const injectedSettings = {
+			"Fluid.Telemetry.DisableSampling": false,
+		};
+		const logger = getMockLoggerExtWithConfig(injectedSettings);
+
+		// Sampling is enabled however there was no sampler provided so all events will be sent.
+		const loggerWithoutSampling = createSampledLogger(logger);
+
+		const totalEventCount = 15;
+		for (let i = 0; i < totalEventCount; i++) {
+			loggerWithoutSampling.send({ category: "generic", eventName: "noSampling" });
+		}
+		assert.equal(
+			events.filter((event) => event.eventName === "noSampling").length,
+			totalEventCount,
+		);
+	});
+
+	it("Systematic Sampling works as expected", () => {
+		const injectedSettings = {
+			"Fluid.Telemetry.DisableSampling": false,
+		};
+		const logger = getMockLoggerExtWithConfig(injectedSettings);
+
+		const loggerWithoutSampling = createSampledLogger(
+			logger,
+			createSystematicEventSampler({ samplingRate: 1 }),
+		);
+		const loggerWithEvery3Sampling = createSampledLogger(
+			logger,
+			createSystematicEventSampler({ samplingRate: 3 }),
+		);
+		const loggerWithEvery5Sampling = createSampledLogger(
+			logger,
+			createSystematicEventSampler({ samplingRate: 5 }),
+		);
+
+		const totalEventCount = 15;
+		for (let i = 0; i < totalEventCount; i++) {
+			loggerWithoutSampling.send({ category: "generic", eventName: "noSampling" });
+			loggerWithEvery3Sampling.send({ category: "generic", eventName: "oneEveryThree" });
+			loggerWithEvery5Sampling.send({ category: "generic", eventName: "oneEveryFive" });
+		}
+
+		assert.equal(
+			events.filter((event) => event.eventName === "noSampling").length,
+			totalEventCount,
+		);
+		assert.equal(
+			events.filter((event) => event.eventName === "oneEveryThree").length,
+			totalEventCount / 3,
+		);
+		assert.equal(
+			events.filter((event) => event.eventName === "oneEveryFive").length,
+			totalEventCount / 5,
+		);
+	});
+
+	it("Event Sampler works as expected with externally controlled state", () => {
+		const injectedSettings = {
+			"Fluid.Telemetry.DisableSampling": false,
+		};
+		const logger = getMockLoggerExtWithConfig(injectedSettings);
+
+		interface ExampleEvent extends ITelemetryBaseEvent {
+			eventNumber: number;
+			appNumber1: number;
+			appNumber2: number;
+			appBoolean1: boolean;
+			appModeString: string;
+		}
+
+		let exampleAppDataNumber1 = 0;
+		let exampleAppDataNumber2 = 10;
+		let exampleAppDataBoolean1 = true;
+		let exampleAppDataModeString = "ready";
+
+		/* eslint-disable unicorn/consistent-function-scoping */
+		const shouldSampleEvent = (
+			appNumber1: number,
+			appNumber2: number,
+			appBoolean1: boolean,
+			appMode: string,
+		): boolean => {
+			const shouldSample =
+				appNumber1 < 1 && appNumber2 > 1 && appBoolean1 === true && appMode === "ready";
+
+			return shouldSample;
+		};
+		/* eslint-enable */
+
+		const customEventSampler: IEventSampler = {
+			sample: () =>
+				shouldSampleEvent(
+					exampleAppDataNumber1,
+					exampleAppDataNumber2,
+					exampleAppDataBoolean1,
+					exampleAppDataModeString,
+				),
+		};
+
+		const loggerWithSampling = createSampledLogger(logger, customEventSampler);
+
+		const totalEventCount = 20;
+		const eventName = "testEvent";
+		for (let i = 0; i < totalEventCount; i++) {
+			if (i % 2 === 0) {
+				// These values should cause events to be emitted (sampler returns false)
+				exampleAppDataNumber1 = -10;
+				exampleAppDataNumber2 = 2;
+				exampleAppDataBoolean1 = true;
+				exampleAppDataModeString = "ready";
+			} else {
+				//  These values should cause events to not be emitted (sampler returns true)
+				exampleAppDataNumber1 = 0;
+				exampleAppDataNumber2 = 10;
+				exampleAppDataBoolean1 = true;
+				exampleAppDataModeString = "not_ready";
+			}
+
+			loggerWithSampling.send({
+				category: "generic",
+				eventName,
+				eventNumber: i,
+				appNumber1: exampleAppDataNumber1,
+				appNumber2: exampleAppDataNumber2,
+				appBoolean1: exampleAppDataBoolean1,
+				appModeString: exampleAppDataModeString,
+			});
+		}
+
+		const emittedEvents = events.filter((event) => event.eventName === eventName);
+		assert.equal(emittedEvents.length === 10, true);
+		for (const event of emittedEvents) {
+			const typedEvent = event as ExampleEvent;
+			assert.equal(
+				shouldSampleEvent(
+					typedEvent.appNumber1,
+					typedEvent.appNumber2,
+					typedEvent.appBoolean1,
+					typedEvent.appModeString,
+				),
+				true,
+			);
+		}
 	});
 });
 

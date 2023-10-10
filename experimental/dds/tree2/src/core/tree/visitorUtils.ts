@@ -3,118 +3,78 @@
  * Licensed under the MIT License.
  */
 
-import { brand, IdAllocator, idAllocatorFromMaxId } from "../../util";
+import { IdAllocator, idAllocatorFromMaxId } from "../../util";
+import { FieldKey } from "../schema-stored";
 import * as Delta from "./delta";
-import { DetachedPlaceUpPath, DetachedRangeUpPath, PlaceIndex, Range } from "./pathTree";
-import { ForestRootId, TreeIndex } from "./treeIndex";
-import { ReplaceKind } from "./visitPath";
+import { PlaceIndex, Range } from "./pathTree";
+import { ForestRootId, DetachedFieldIndex } from "./detachedFieldIndex";
 import { DeltaVisitor, visitDelta } from "./visitDelta";
 
-export function makeTreeIndex(prefix: string = "Temp"): TreeIndex {
-	return new TreeIndex(prefix, idAllocatorFromMaxId() as IdAllocator<ForestRootId>);
+export function makeDetachedFieldIndex(prefix: string = "Temp"): DetachedFieldIndex {
+	return new DetachedFieldIndex(prefix, idAllocatorFromMaxId() as IdAllocator<ForestRootId>);
 }
 
 export function applyDelta(
 	delta: Delta.Root,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor },
-	treeIndex?: TreeIndex,
+	detachedFieldIndex: DetachedFieldIndex,
 ): void {
 	const visitor = deltaProcessor.acquireVisitor();
-	visitDelta(delta, visitor, treeIndex ?? makeTreeIndex());
+	visitDelta(delta, visitor, detachedFieldIndex);
 	visitor.free();
 }
 
 export function announceDelta(
 	delta: Delta.Root,
-	deltaProcessor: { acquireVisitor: () => AnnouncedVisitor },
-	treeIndex?: TreeIndex,
+	deltaProcessor: { acquireVisitor: () => DeltaVisitor & AnnouncedVisitor },
+	detachedFieldIndex: DetachedFieldIndex,
 ): void {
-	const visitor = announceVisitor(deltaProcessor.acquireVisitor());
-	visitDelta(delta, visitor, treeIndex ?? makeTreeIndex());
+	const visitor = deltaProcessor.acquireVisitor();
+	visitDelta(delta, combineVisitors([visitor], [visitor]), detachedFieldIndex);
 	visitor.free();
 }
 
-export function combineVisitors(visitors: readonly DeltaVisitor[]): DeltaVisitor {
+export function combineVisitors(
+	visitors: readonly DeltaVisitor[],
+	announceVisitors: readonly AnnouncedVisitor[] = [],
+): DeltaVisitor {
 	return {
 		free: () => visitors.forEach((v) => v.free()),
-		create: (...args) => visitors.forEach((v) => v.create(...args)),
-		destroy: (...args) => visitors.forEach((v) => v.destroy(...args)),
-		attach: (...args) => visitors.forEach((v) => v.attach(...args)),
-		detach: (...args) => visitors.forEach((v) => v.detach(...args)),
-		replace: (...args) => visitors.forEach((v) => v.replace(...args)),
+		create: (...args) => {
+			visitors.forEach((v) => v.create(...args));
+			announceVisitors.forEach((v) => v.afterCreate(...args));
+		},
+		destroy: (...args) => {
+			announceVisitors.forEach((v) => v.beforeDestroy(...args));
+			visitors.forEach((v) => v.destroy(...args));
+		},
+		attach: (source: FieldKey, count: number, destination: PlaceIndex) => {
+			announceVisitors.forEach((v) => v.beforeAttach(source, count, destination));
+			visitors.forEach((v) => v.attach(source, count, destination));
+			announceVisitors.forEach((v) =>
+				v.afterAttach(source, { start: destination, end: destination + count }),
+			);
+		},
+		detach: (source: Range, destination: FieldKey) => {
+			announceVisitors.forEach((v) => v.beforeDetach(source, destination));
+			visitors.forEach((v) => v.detach(source, destination));
+			announceVisitors.forEach((v) =>
+				v.afterDetach(source.start, source.end - source.start, destination),
+			);
+		},
+		replace: (newContent: FieldKey, oldContent: Range, oldContentDestination: FieldKey) => {
+			announceVisitors.forEach((v) =>
+				v.beforeReplace(newContent, oldContent, oldContentDestination),
+			);
+			visitors.forEach((v) => v.replace(newContent, oldContent, oldContentDestination));
+			announceVisitors.forEach((v) =>
+				v.afterReplace(newContent, oldContent, oldContentDestination),
+			);
+		},
 		enterNode: (...args) => visitors.forEach((v) => v.enterNode(...args)),
 		exitNode: (...args) => visitors.forEach((v) => v.exitNode(...args)),
 		enterField: (...args) => visitors.forEach((v) => v.enterField(...args)),
 		exitField: (...args) => visitors.forEach((v) => v.exitField(...args)),
-	};
-}
-
-export function announceVisitor(visitor: AnnouncedVisitor): DeltaVisitor {
-	return {
-		free: () => visitor.free(),
-		create: (index: PlaceIndex, content: Delta.ProtoNodes) => {
-			visitor.create(index, content);
-			visitor.afterCreate({ start: index, end: index + content.length }, content);
-		},
-		destroy: (...args) => {
-			visitor.beforeDestroy(...args);
-			visitor.destroy(...args);
-		},
-		replace: (
-			newContentSource: DetachedRangeUpPath,
-			oldContent: Range,
-			oldContentDestination: DetachedPlaceUpPath,
-			kind: ReplaceKind,
-		) => {
-			visitor.beforeReplace(newContentSource, oldContent, oldContentDestination, kind);
-			visitor.replace(newContentSource, oldContent, oldContentDestination, kind);
-			visitor.afterReplace(
-				brand({
-					field: newContentSource.field,
-					index: newContentSource.start,
-				}),
-				{
-					start: oldContent.start,
-					end: oldContent.start + newContentSource.end - newContentSource.start,
-				},
-				brand({
-					field: oldContentDestination.field,
-					start: oldContentDestination.index,
-					end: oldContentDestination.index + oldContent.end - oldContent.start,
-				}),
-				kind,
-			);
-		},
-		attach: (source: DetachedRangeUpPath, destination: PlaceIndex) => {
-			visitor.beforeAttach(source, destination);
-			visitor.attach(source, destination);
-			visitor.afterAttach(
-				brand({
-					field: source.field,
-					index: source.start,
-				}),
-				{
-					start: destination,
-					end: destination + source.end - source.start,
-				},
-			);
-		},
-		detach: (source: Range, destination: DetachedPlaceUpPath) => {
-			visitor.beforeDetach(source, destination);
-			visitor.detach(source, destination);
-			visitor.afterDetach(
-				source.start,
-				brand({
-					field: destination.field,
-					start: destination.index,
-					end: destination.index + source.end - source.start,
-				}),
-			);
-		},
-		enterNode: (...args) => visitor.enterNode(...args),
-		exitNode: (...args) => visitor.exitNode(...args),
-		enterField: (...args) => visitor.enterField(...args),
-		exitField: (...args) => visitor.exitField(...args),
 	};
 }
 
@@ -123,23 +83,16 @@ export function announceVisitor(visitor: AnnouncedVisitor): DeltaVisitor {
  * Must be freed after use.
  * @alpha
  */
-export interface AnnouncedVisitor extends DeltaVisitor {
-	afterCreate(range: Range, content: Delta.ProtoNodes): void;
-	beforeDestroy(range: Range): void;
-	beforeAttach(source: DetachedRangeUpPath, destination: PlaceIndex): void;
-	afterAttach(source: DetachedPlaceUpPath, destination: Range): void;
-	beforeDetach(source: Range, destination: DetachedPlaceUpPath): void;
-	afterDetach(source: PlaceIndex, destination: DetachedRangeUpPath): void;
-	beforeReplace(
-		newContent: DetachedRangeUpPath,
-		oldContent: Range,
-		oldContentDestination: DetachedPlaceUpPath,
-		kind: ReplaceKind,
-	): void;
-	afterReplace(
-		newContentSource: DetachedPlaceUpPath,
-		newContent: Range,
-		oldContent: DetachedRangeUpPath,
-		kind: ReplaceKind,
-	): void;
+export interface AnnouncedVisitor {
+	/**
+	 * A hook that is called after all nodes have been created.
+	 */
+	afterCreate(content: Delta.ProtoNodes, destination: FieldKey): void;
+	beforeDestroy(field: FieldKey, count: number): void;
+	beforeAttach(source: FieldKey, count: number, destination: PlaceIndex): void;
+	afterAttach(source: FieldKey, destination: Range): void;
+	beforeDetach(source: Range, destination: FieldKey): void;
+	afterDetach(source: PlaceIndex, count: number, destination: FieldKey): void;
+	beforeReplace(newContent: FieldKey, oldContent: Range, oldContentDestination: FieldKey): void;
+	afterReplace(newContentSource: FieldKey, newContent: Range, oldContent: FieldKey): void;
 }

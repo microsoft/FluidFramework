@@ -136,6 +136,7 @@ interface PendingBlob {
 	attached?: boolean;
 	acked?: boolean;
 	abortSignal?: AbortSignal;
+	pendingStashed?: boolean;
 }
 
 export interface IPendingBlobs {
@@ -269,6 +270,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				attached,
 				acked,
 				opsent: true,
+				pendingStashed: true,
 			});
 		});
 
@@ -329,13 +331,17 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			uploadTime: pending?.uploadTime,
 		});
 	}
+
+	public hasPendingStashedBlobs(): boolean {
+		return Array.from(this.pendingBlobs.values()).some((e) => e.pendingStashed === true);
+	}
 	/**
 	 * Upload blobs added while offline. This must be completed before connecting and resubmitting ops.
 	 */
 	public async processStashedChanges() {
 		this.retryThrottler.cancel();
 		const pendingUploads = Array.from(this.pendingBlobs.values())
-			.filter((e) => e.uploading === true)
+			.filter((e) => e.pendingStashed === true)
 			.map(async (e) => e.uploadP);
 		await PerformanceEvent.timedExecAsync(
 			this.mc.logger,
@@ -559,7 +565,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				(this.opsInFlight.get(response.id) ?? []).concat(localId),
 			);
 		}
-
 		return response;
 	}
 
@@ -577,8 +582,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				.then(async () => this.uploadBlob(localId, entry.blob));
 			return entry.uploadP;
 		} else {
+			this.deletePendingBlob(localId);
 			entry.handleP.reject(error);
-			throw error;
 		}
 	}
 
@@ -613,6 +618,9 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			if (pendingEntry?.abortSignal?.aborted) {
 				this.deletePendingBlob(localId);
 				return;
+			}
+			if (pendingEntry?.pendingStashed) {
+				pendingEntry.pendingStashed = false;
 			}
 		}
 		assert(blobId !== undefined, 0x12a /* "Missing blob id on metadata" */);
@@ -922,7 +930,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		}
 	}
 
-	public async getPendingBlobs(waitBlobsToAttach?: boolean): Promise<IPendingBlobs | undefined> {
+	public async attachAndGetPendingBlobs(): Promise<IPendingBlobs | undefined> {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
 			{ eventName: "GetPendingBlobs" },
@@ -937,34 +945,32 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					for (const [id, entry] of this.pendingBlobs) {
 						if (!localBlobs.has(entry)) {
 							localBlobs.add(entry);
-							if (waitBlobsToAttach) {
-								if (!entry.opsent) {
-									this.sendBlobAttachOp(id, entry.storageId);
-								}
-								entry.handleP.resolve(this.getBlobHandle(id));
-								attachBlobsP.push(
-									new Promise<void>((resolve) => {
-										const onBlobAttached = (attachedEntry) => {
-											if (attachedEntry === entry) {
-												this.off("blobAttached", onBlobAttached);
-												resolve();
-											}
-										};
-										if (!entry.attached) {
-											this.on("blobAttached", onBlobAttached);
-										} else {
+							if (!entry.opsent) {
+								this.sendBlobAttachOp(id, entry.storageId);
+							}
+							entry.handleP.resolve(this.getBlobHandle(id));
+							attachBlobsP.push(
+								new Promise<void>((resolve) => {
+									const onBlobAttached = (attachedEntry) => {
+										if (attachedEntry === entry) {
+											this.off("blobAttached", onBlobAttached);
 											resolve();
 										}
-									}),
-								);
-							}
+									};
+									if (!entry.attached) {
+										this.on("blobAttached", onBlobAttached);
+									} else {
+										resolve();
+									}
+								}),
+							);
 						}
 					}
 					await Promise.all(attachBlobsP);
 				}
-				// another for is needed to correctly mark attach state
-				// future optimization won't add unattached blobs to the list
+
 				for (const [id, entry] of this.pendingBlobs) {
+					assert(entry.attached === true, 0x790 /* stashed blob should be attached */);
 					blobs[id] = {
 						blob: bufferToString(entry.blob, "base64"),
 						storageId: entry.storageId,
@@ -974,7 +980,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 						uploadTime: entry.uploadTime,
 					};
 				}
-				return blobs;
+				return Object.keys(blobs).length > 0 ? blobs : undefined;
 			},
 		);
 	}

@@ -64,6 +64,10 @@ export interface PathVisitor {
 
 	/**
 	 * Invoked before the replacement of a range of nodes.
+	 *
+	 * Note that the `newContent` range length will always match the `oldContent` range length.
+	 * A replace might actually be separate detaches and attaches which have been coalesced.
+	 *
 	 * @param newContent - The content that will be attached in place of the old.
 	 * @param oldContent - The old that will be replaced.
 	 * @param oldContentDestination - The destination of the old content.
@@ -73,21 +77,22 @@ export interface PathVisitor {
 		newContent: DetachedRangeUpPath,
 		oldContent: RangeUpPath,
 		oldContentDestination: DetachedPlaceUpPath,
-		kind: ReplaceKind,
 	): void;
 
 	/**
 	 * Invoked after the replacement of a range of nodes.
+	 *
+	 * Note that the `newContent` range length will always match the `oldContent` range length.
+	 * A replace might actually be separate detaches and attaches which have been coalesced.
+	 *
 	 * @param newContentSource - The place that the new content came from.
 	 * @param newContent - The new content.
 	 * @param oldContent - The content that was replaced.
-	 * @param kind - The kind of replacement that occurred.
 	 */
 	afterReplace(
 		newContentSource: DetachedPlaceUpPath,
 		newContent: RangeUpPath,
 		oldContent: DetachedRangeUpPath,
-		kind: ReplaceKind,
 	): void;
 
 	/**

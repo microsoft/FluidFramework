@@ -69,7 +69,7 @@ export function fieldShaper(
 	const type = oneFromSet(field.types);
 	const nodeEncoder = type !== undefined ? treeHandler.shapeFromTree(type) : anyNodeEncoder;
 	// eslint-disable-next-line unicorn/prefer-ternary
-	if (kind.multiplicity === Multiplicity.Value) {
+	if (kind.multiplicity === Multiplicity.Single) {
 		return asFieldEncoder(nodeEncoder);
 	} else {
 		return cache.nestedArray(nodeEncoder);
@@ -124,7 +124,7 @@ function valueShapeFromSchema(schema: ValueSchema | undefined): undefined | Enco
 		case ValueSchema.Number:
 		case ValueSchema.String:
 		case ValueSchema.Boolean:
-		case ValueSchema.Serializable:
+		case ValueSchema.FluidHandle:
 			return true;
 		default:
 			unreachableCase(schema);

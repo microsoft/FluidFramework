@@ -16,6 +16,8 @@ import {
 	IDocumentService,
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
+	// eslint-disable-next-line import/no-deprecated
+	DriverErrorType,
 } from "@fluidframework/driver-definitions";
 import {
 	canRetryOnError,
@@ -45,6 +47,7 @@ import {
 import {
 	formatTick,
 	GenericError,
+	isFluidError,
 	ITelemetryLoggerExt,
 	normalizeError,
 	UsageError,
@@ -112,7 +115,15 @@ class NoDeltaStream
 		blockSize: 0,
 	};
 	checkpointSequenceNumber?: number | undefined = undefined;
-	constructor(public readonly storageOnlyReason?: string) {
+	/**
+	 * Connection which is not connected to socket.
+	 * @param storageOnlyReason - Reason on why the connection to delta stream is not allowed.
+	 * @param readonlyConnectionReason - reason/error if any which lead to using NoDeltaStream.
+	 */
+	constructor(
+		public readonly storageOnlyReason?: string,
+		public readonly readonlyConnectionReason?: IConnectionStateChangeReason,
+	) {
 		super();
 	}
 	submit(messages: IDocumentMessage[]): void {
@@ -409,7 +420,7 @@ export class ConnectionManager implements IConnectionManager {
 			// Notify everyone we are in read-only state.
 			// Useful for data stores in case we hit some critical error,
 			// to switch to a mode where user edits are not accepted
-			this.set_readonlyPermissions(true, oldReadonlyValue);
+			this.set_readonlyPermissions(true, oldReadonlyValue, disconnectReason);
 		}
 	}
 
@@ -432,21 +443,7 @@ export class ConnectionManager implements IConnectionManager {
 	}
 
 	/**
-	 * Sends signal to runtime (and data stores) to be read-only.
-	 * Hosts may have read only views, indicating to data stores that no edits are allowed.
-	 * This is independent from this._readonlyPermissions (permissions) and this.connectionMode
-	 * (server can return "write" mode even when asked for "read")
-	 * Leveraging same "readonly" event as runtime & data stores should behave the same in such case
-	 * as in read-only permissions.
-	 * But this.active can be used by some DDSes to figure out if ops can be sent
-	 * (for example, read-only view still participates in code proposals / upgrades decisions)
-	 *
-	 * Forcing Readonly does not prevent DDS from generating ops. It is up to user code to honour
-	 * the readonly flag. If ops are generated, they will accumulate locally and not be sent. If
-	 * there are pending in the outbound queue, it will stop sending until force readonly is
-	 * cleared.
-	 *
-	 * @param readonly - set or clear force readonly.
+	 * {@inheritDoc Container.forceReadonly}
 	 */
 	public forceReadonly(readonly: boolean) {
 		if (readonly !== this._forceReadonly) {
@@ -487,10 +484,11 @@ export class ConnectionManager implements IConnectionManager {
 	private set_readonlyPermissions(
 		newReadonlyValue: boolean,
 		oldReadonlyValue: boolean | undefined,
+		readonlyConnectionReason?: IConnectionStateChangeReason,
 	) {
 		this._readonlyPermissions = newReadonlyValue;
 		if (oldReadonlyValue !== this.readonly) {
-			this.props.readonlyChangeHandler(this.readonly);
+			this.props.readonlyChangeHandler(this.readonly, readonlyConnectionReason);
 		}
 	}
 
@@ -589,7 +587,23 @@ export class ConnectionManager implements IConnectionManager {
 				}
 			} catch (origError: any) {
 				if (isDeltaStreamConnectionForbiddenError(origError)) {
-					connection = new NoDeltaStream(origError.storageOnlyReason);
+					connection = new NoDeltaStream(origError.storageOnlyReason, {
+						text: origError.message,
+						error: origError,
+					});
+					requestedMode = "read";
+					break;
+				} else if (
+					isFluidError(origError) &&
+					// eslint-disable-next-line import/no-deprecated
+					origError.errorType === DriverErrorType.outOfStorageError
+				) {
+					// If we get out of storage error from calling joinsession, then use the NoDeltaStream object so
+					// that user can at least load the container.
+					connection = new NoDeltaStream(undefined, {
+						text: origError.message,
+						error: origError,
+					});
 					requestedMode = "read";
 					break;
 				}
@@ -722,7 +736,7 @@ export class ConnectionManager implements IConnectionManager {
 
 		// Remove listeners first so we don't try to retrigger this flow accidentally through reconnectOnError
 		connection.off("op", this.opHandler);
-		connection.off("signal", this.props.signalHandler);
+		connection.off("signal", this.signalHandler);
 		connection.off("nack", this.nackHandler);
 		connection.off("disconnect", this.disconnectHandlerInternal);
 		connection.off("error", this.errorHandler);
@@ -805,7 +819,11 @@ export class ConnectionManager implements IConnectionManager {
 			0x0e8 /* "readonly perf with write connection" */,
 		);
 
-		this.set_readonlyPermissions(readonly, oldReadonlyValue);
+		this.set_readonlyPermissions(
+			readonly,
+			oldReadonlyValue,
+			isNoDeltaStreamConnection(connection) ? connection.readonlyConnectionReason : undefined,
+		);
 
 		if (this._disposed) {
 			// Raise proper events, Log telemetry event and close connection.
@@ -816,7 +834,7 @@ export class ConnectionManager implements IConnectionManager {
 		this._outbound.resume();
 
 		connection.on("op", this.opHandler);
-		connection.on("signal", this.props.signalHandler);
+		connection.on("signal", this.signalHandler);
 		connection.on("nack", this.nackHandler);
 		connection.on("disconnect", this.disconnectHandlerInternal);
 		connection.on("error", this.errorHandler);
@@ -882,28 +900,32 @@ export class ConnectionManager implements IConnectionManager {
 				type: SignalType.Clear,
 			}),
 		};
-		this.props.signalHandler(clearSignal);
 
-		for (const priorClient of connection.initialClients ?? []) {
-			const joinSignal: ISignalMessage = {
+		// list of signals to process due to this new connection
+		let signalsToProcess: ISignalMessage[] = [clearSignal];
+
+		const clientJoinSignals: ISignalMessage[] = (connection.initialClients ?? []).map(
+			(priorClient) => ({
 				clientId: null, // system signal
 				content: JSON.stringify({
 					type: SignalType.ClientJoin,
 					content: priorClient, // ISignalClient
 				}),
-			};
-			this.props.signalHandler(joinSignal);
+			}),
+		);
+		if (clientJoinSignals.length > 0) {
+			signalsToProcess = signalsToProcess.concat(clientJoinSignals);
 		}
 
 		// Unfortunately, there is no defined order between initialSignals (including join & leave signals)
 		// and connection.initialClients. In practice, connection.initialSignals quite often contains join signal
 		// for "self" and connection.initialClients does not contain "self", so we have to process them after
 		// "clear" signal above.
-		if (connection.initialSignals !== undefined) {
-			for (const signal of connection.initialSignals) {
-				this.props.signalHandler(signal);
-			}
+		if (connection.initialSignals !== undefined && connection.initialSignals.length > 0) {
+			signalsToProcess = signalsToProcess.concat(connection.initialSignals);
 		}
+
+		this.props.signalHandler(signalsToProcess);
 	}
 
 	/**
@@ -1119,6 +1141,11 @@ export class ConnectionManager implements IConnectionManager {
 	private readonly opHandler = (documentId: string, messagesArg: ISequencedDocumentMessage[]) => {
 		const messages = Array.isArray(messagesArg) ? messagesArg : [messagesArg];
 		this.props.incomingOpHandler(messages, "opHandler");
+	};
+
+	private readonly signalHandler = (signalsArg: ISignalMessage | ISignalMessage[]) => {
+		const signals = Array.isArray(signalsArg) ? signalsArg : [signalsArg];
+		this.props.signalHandler(signals);
 	};
 
 	// Always connect in write mode after getting nacked.

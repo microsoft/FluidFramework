@@ -27,13 +27,14 @@ export {
 	setInNestedMap,
 	tryAddToNestedMap,
 	tryGetFromNestedMap,
+	encodeNestedMap,
+	decodeNestedMap,
 } from "./nestedMap";
 export { addToNestedSet, NestedSet, nestedSetContains } from "./nestedSet";
 export { OffsetList, OffsetListFactory } from "./offsetList";
 export { TransactionResult } from "./transactionResult";
 export {
 	areSafelyAssignable,
-	Bivariant,
 	Contravariant,
 	Covariant,
 	eitherIsAny,
@@ -68,6 +69,7 @@ export {
 	zipIterables,
 	Assume,
 	assertValidIndex,
+	assertValidRange,
 	assertNonNegativeSafeInteger,
 	generateStableId,
 	useDeterministicStableId,
@@ -77,6 +79,7 @@ export {
 	disposeSymbol,
 	IDisposable,
 	capitalize,
+	assertValidRangeIndices,
 } from "./utils";
 export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting";
 
@@ -106,4 +109,5 @@ export {
 	idAllocatorFromMaxId,
 	idAllocatorFromState,
 	IdAllocationState,
+	fakeIdAllocator,
 } from "./idAllocator";

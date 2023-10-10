@@ -53,7 +53,6 @@ export {
 	comparePipeline,
 	compileSyntaxTree,
 	setField,
-	TreeStatus,
 } from "./editable-tree";
 
 export {
@@ -79,6 +78,7 @@ export {
 	TreeDataContext,
 	normalizeNewFieldContent,
 	NewFieldContent,
+	assertAllowedValue,
 } from "./contextuallyTyped";
 
 export { ForestSummarizer } from "./forestSummarizer";
@@ -132,17 +132,15 @@ export {
 	revisionMetadataSourceFromInfo,
 	NodeExistsConstraint,
 	NodeExistenceState,
-	BrandedFieldKind,
+	FieldKindWithEditor,
 } from "./modular-schema";
 
 export {
-	SchemaBuilder,
 	TreeSchema,
 	AllowedTypes,
 	FieldSchema,
 	TypedSchemaCollection,
 	Any,
-	SchemaLibrary,
 	SchemaLibraryData,
 	LazyTreeSchema,
 	InternalTypedSchemaTypes,
@@ -160,6 +158,9 @@ export {
 	fieldApiPrefixes,
 	validateStructFieldName,
 } from "./typed-schema";
+
+export { SchemaBuilderBase, SchemaLibrary } from "./schemaBuilderBase";
+export { SchemaBuilder, SchemaBuilderInternal } from "./schemaBuilder";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
 
@@ -185,12 +186,11 @@ export {
 
 export {
 	FieldKinds,
-	ValueFieldKind,
+	Required,
 	Optional,
 	Sequence,
 	NodeKeyFieldKind,
 	Forbidden,
-	FieldKindTypes,
 	DefaultChangeset,
 	DefaultChangeFamily,
 	DefaultEditBuilder,
@@ -235,12 +235,17 @@ export {
 	TypedField,
 	TypedNode,
 	TypedNodeUnion,
-	UntypedEntity,
-	UntypedField as UntypedField2,
-	UntypedTree as UntypedTree2,
+	Tree,
+	TreeField,
+	TreeNode,
 	getTreeContext,
+	boxedIterator,
+	CheckTypesOverlap,
+	TreeStatus,
 } from "./editable-tree-2";
 
 // Split into separate import and export for compatibility with API-Extractor.
 import * as SchemaAware from "./schema-aware";
 export { SchemaAware };
+
+export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer";

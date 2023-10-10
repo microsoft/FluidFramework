@@ -32,9 +32,8 @@ export class WebpackTask extends LeafWithDoneFileTask {
 			const srcGlob = toPosixPath(this.node.pkg.directory) + "/src/**/*.*";
 			const srcFiles = await globFn(srcGlob);
 			for (const srcFile of srcFiles) {
-				content.sources[srcFile] = await this.node.buildContext.fileHashCache.getFileHash(
-					srcFile,
-				);
+				content.sources[srcFile] =
+					await this.node.buildContext.fileHashCache.getFileHash(srcFile);
 			}
 
 			for (const dep of this.allDependentTasks) {

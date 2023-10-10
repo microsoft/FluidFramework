@@ -82,7 +82,7 @@ export function mapMark<TIn, TOut>(
 		case Delta.MarkType.Remove:
 		case Delta.MarkType.MoveOut:
 			return {
-				...(mark as unknown as Delta.Modify<TOut>),
+				...(mark as unknown as Exclude<Delta.Mark<TOut>, Delta.Skip>),
 				...mapModifications(mark, func),
 			};
 		case Delta.MarkType.MoveIn: {
@@ -102,7 +102,7 @@ function mapOldContent<TIn, TOut>(
 	input: HasOldContent<TIn>,
 	func: (tree: TIn) => TOut,
 ): HasOldContent<TOut> {
-	const hasOldContent: { oldContent?: OldContent<TOut> } = {};
+	const hasOldContent: HasOldContent<TOut> = {};
 	if (input.oldContent !== undefined) {
 		hasOldContent.oldContent = { detachId: input.oldContent.detachId };
 		if (input.oldContent.fields !== undefined) {

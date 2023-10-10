@@ -14,18 +14,31 @@ import {
 	jsonRoot,
 	jsonSchema,
 	jsonString,
+	leaf,
 } from "../../../domains";
 
 import {
 	Sequence,
 	TypedNode,
-	UntypedField,
+	TreeField,
 	RequiredField,
+	TreeNode,
+	TypedNodeUnion,
+	UnboxNodeUnion,
+	MapNode,
+	TypedField,
+	boxedIterator,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/editable-tree-2/editableTreeTypes";
 import { jsonSequenceRootSchema } from "../../utils";
-import { isAssignableTo, requireAssignableTo, requireFalse, requireTrue } from "../../../util";
-import { EmptyKey } from "../../../core";
+import {
+	areSafelyAssignable,
+	isAssignableTo,
+	requireAssignableTo,
+	requireFalse,
+	requireTrue,
+} from "../../../util";
+import { EmptyKey, FieldKey } from "../../../core";
 import {
 	FieldKinds,
 	Any,
@@ -34,10 +47,7 @@ import {
 	MapSchema,
 	SchemaBuilder,
 	StructSchema,
-	schemaIsFieldNode,
-	schemaIsLeaf,
-	schemaIsMap,
-	schemaIsStruct,
+	TreeSchema,
 } from "../../../feature-libraries";
 
 describe("editableTreeTypes", () => {
@@ -45,14 +55,14 @@ describe("editableTreeTypes", () => {
 	 * Example showing the node kinds used in the json domain (everything except structs),
 	 * including narrowing and exhaustive matches.
 	 */
-	function jsonExample(root: UntypedField): void {
+	function jsonExample(root: TreeField): void {
 		assert(root.is(jsonSequenceRootSchema.rootFieldSchema));
 		for (const tree of root) {
-			if (tree.is(jsonBoolean)) {
+			if (tree.is(leaf.boolean)) {
 				const b: boolean = tree.value;
-			} else if (tree.is(jsonNumber)) {
+			} else if (tree.is(leaf.number)) {
 				const n: number = tree.value;
-			} else if (tree.is(jsonString)) {
+			} else if (tree.is(leaf.string)) {
 				const s: string = tree.value;
 			} else if (tree.is(jsonArray)) {
 				const a: Sequence<typeof jsonRoot> = tree.content;
@@ -68,7 +78,7 @@ describe("editableTreeTypes", () => {
 		}
 	}
 
-	const builder = new SchemaBuilder("test", {}, jsonSchema);
+	const builder = new SchemaBuilder({ scope: "test", libraries: [jsonSchema] });
 	const emptyStruct = builder.struct("empty", {});
 	const basicStruct = builder.struct("basicStruct", { foo: SchemaBuilder.fieldOptional(Any) });
 	const basicFieldNode = builder.fieldNode("field", SchemaBuilder.fieldOptional(Any));
@@ -78,8 +88,8 @@ describe("editableTreeTypes", () => {
 		/**
 		 * Test doc comment.
 		 */
-		leaf: SchemaBuilder.fieldValue(jsonNumber),
-		polymorphic: SchemaBuilder.fieldValue(jsonNumber, jsonString),
+		leaf: SchemaBuilder.fieldRequired(jsonNumber),
+		polymorphic: SchemaBuilder.fieldRequired(jsonNumber, jsonString),
 		optionalLeaf: SchemaBuilder.fieldOptional(jsonNumber),
 		optionalObject: SchemaBuilder.fieldOptional(jsonObject),
 		sequence: SchemaBuilder.fieldSequence(jsonNumber),
@@ -94,7 +104,7 @@ describe("editableTreeTypes", () => {
 		/**
 		 * Data field.
 		 */
-		x: SchemaBuilder.fieldValue(jsonNumber),
+		x: SchemaBuilder.fieldRequired(jsonNumber),
 	});
 	type Recursive = TypedNode<typeof recursiveStruct>;
 
@@ -102,7 +112,7 @@ describe("editableTreeTypes", () => {
 	 * All combinations of boxed and unboxed access.
 	 */
 	function boxingExample(mixed: Mixed): void {
-		const leaf: number = mixed.leaf;
+		const leafNode: number = mixed.leaf;
 		const leafBoxed: TypedNode<typeof jsonNumber> = mixed.boxedLeaf.boxedContent;
 
 		// Current policy is to box polymorphic values so they can be checked for type with `is`.
@@ -132,38 +142,29 @@ describe("editableTreeTypes", () => {
 		// child.foo?.foo?.foo?.foo?.setX(5);
 		// child.foo?.boxedFoo.content?.foo?.foo?.setFoo({ x: 5, foo: { x: 5, foo: undefined } });
 
-		struct.boxedFoo.setContent(undefined);
+		struct.boxedFoo.content = undefined;
 		// Shorthand for the above.
 		// TODO: add shorthand setters
 		// struct.setFoo(undefined);
 	}
 
-	it("schema is", () => {
-		assert(schemaIsLeaf(jsonBoolean));
-		assert(!schemaIsFieldNode(jsonBoolean));
-		assert(!schemaIsStruct(jsonBoolean));
-		assert(!schemaIsMap(jsonBoolean));
+	function iteratorsExample(mixed: Mixed): void {
+		const unboxedListIteration: number[] = [...mixed.sequence];
+		const boxedListIteration: TypedNode<typeof jsonNumber>[] = [
+			...mixed.sequence[boxedIterator](),
+		];
 
-		assert(!schemaIsLeaf(jsonArray));
-		assert(schemaIsFieldNode(jsonArray));
-		assert(!schemaIsStruct(jsonArray));
-		assert(!schemaIsMap(jsonArray));
-
-		assert(!schemaIsLeaf(jsonObject));
-		assert(!schemaIsFieldNode(jsonObject));
-		assert(!schemaIsStruct(jsonObject));
-		assert(schemaIsMap(jsonObject));
-
-		assert(!schemaIsLeaf(emptyStruct));
-		assert(!schemaIsFieldNode(emptyStruct));
-		assert(schemaIsStruct(emptyStruct));
-		assert(!schemaIsMap(emptyStruct));
-
-		assert(!schemaIsLeaf(basicStruct));
-		assert(!schemaIsFieldNode(basicStruct));
-		assert(schemaIsStruct(basicStruct));
-		assert(!schemaIsMap(basicStruct));
-	});
+		const optionalNumberField = SchemaBuilder.fieldOptional(jsonNumber);
+		const mapSchema = undefined as unknown as TreeSchema<
+			"MapIteration",
+			{ mapFields: typeof optionalNumberField }
+		>;
+		const mapNode = undefined as unknown as MapNode<typeof mapSchema>;
+		const unboxedMapIteration: [FieldKey, number][] = [...mapNode];
+		const boxedMapIteration: TypedField<typeof optionalNumberField>[] = [
+			...mapNode[boxedIterator](),
+		];
+	}
 
 	{
 		type _1 = requireAssignableTo<typeof jsonBoolean, LeafSchema>;
@@ -201,5 +202,135 @@ describe("editableTreeTypes", () => {
 		type _2 = requireFalse<isAssignableTo<typeof basicStruct, FieldNodeSchema>>;
 		type _3 = requireFalse<isAssignableTo<typeof basicStruct, MapSchema>>;
 		type _4 = requireTrue<isAssignableTo<typeof basicStruct, StructSchema>>;
+	}
+
+	function nominalTyping(): void {
+		const builder2 = new SchemaBuilder({ scope: "test" });
+		const emptyStruct1 = builder2.struct("empty1", {});
+		const emptyStruct2 = builder2.struct("empty2", {});
+
+		// Schema for types which only different in name are distinguished
+		{
+			type _1 = requireFalse<isAssignableTo<typeof emptyStruct1, typeof emptyStruct2>>;
+			type _2 = requireFalse<isAssignableTo<typeof emptyStruct2, typeof emptyStruct1>>;
+		}
+		type Empty1 = TypedNode<typeof emptyStruct1>;
+		type Empty2 = TypedNode<typeof emptyStruct2>;
+
+		// Schema for TypedNode which only different in name are distinguished
+		{
+			// TODO: Fix this. Might be fixed when moving to class based schema builder. Otherwise add strongly typed named to nodes.
+			// @ts-expect-error TODO: fix this and remove expected error.
+			type _1 = requireFalse<isAssignableTo<Empty1, Empty2>>;
+			// @ts-expect-error TODO: fix this and remove expected error.
+			type _2 = requireFalse<isAssignableTo<Empty2, Empty1>>;
+		}
+	}
+
+	// Two different simple node types to compare and test with.
+	type BasicStruct = TypedNode<typeof basicStruct>;
+	type BasicFieldNode = TypedNode<typeof basicFieldNode>;
+	{
+		type _1 = requireFalse<isAssignableTo<BasicStruct, BasicFieldNode>>;
+		type _2 = requireFalse<isAssignableTo<BasicFieldNode, BasicStruct>>;
+	}
+
+	// Basic unit test for TreeNode.is type narrowing.
+	function nodeIs(node: TreeNode): void {
+		if (node.is(basicStruct)) {
+			type _1 = requireAssignableTo<typeof node, BasicStruct>;
+		}
+		if (node.is(basicFieldNode)) {
+			type _1 = requireAssignableTo<typeof node, BasicFieldNode>;
+		}
+	}
+
+	// TypedNodeUnion
+	{
+		// Any
+		{
+			type _1 = requireTrue<areSafelyAssignable<TypedNodeUnion<[Any]>, TreeNode>>;
+		}
+
+		// Direct
+		{
+			type UnionBasic1 = TypedNodeUnion<[typeof basicStruct]>;
+			type _1 = requireTrue<areSafelyAssignable<UnionBasic1, BasicStruct>>;
+		}
+		// Lazy
+		{
+			type _1 = requireTrue<
+				areSafelyAssignable<TypedNodeUnion<[() => typeof basicStruct]>, BasicStruct>
+			>;
+		}
+		// Union
+		{
+			type _1 = requireTrue<
+				areSafelyAssignable<
+					TypedNodeUnion<[typeof basicStruct, typeof basicFieldNode]>,
+					BasicStruct | BasicFieldNode
+				>
+			>;
+		}
+		// Recursive
+		{
+			type _1 = requireTrue<
+				areSafelyAssignable<TypedNodeUnion<[typeof recursiveStruct]>, Recursive>
+			>;
+		}
+		// Recursive Lazy
+		{
+			type _1 = requireTrue<
+				areSafelyAssignable<TypedNodeUnion<[() => typeof recursiveStruct]>, Recursive>
+			>;
+		}
+	}
+
+	// UnboxNodeUnion
+	{
+		// Any
+		{
+			type _1 = requireTrue<areSafelyAssignable<UnboxNodeUnion<[Any]>, TreeNode>>;
+		}
+
+		// Direct
+		{
+			type UnionBasic1 = UnboxNodeUnion<[typeof basicStruct]>;
+			type _1 = requireTrue<areSafelyAssignable<UnionBasic1, BasicStruct>>;
+		}
+		// Lazy
+		{
+			type _1 = requireTrue<
+				areSafelyAssignable<UnboxNodeUnion<[() => typeof basicStruct]>, BasicStruct>
+			>;
+		}
+		// Union
+		{
+			type _1 = requireTrue<
+				areSafelyAssignable<
+					UnboxNodeUnion<[typeof basicStruct, typeof basicFieldNode]>,
+					BasicStruct | BasicFieldNode
+				>
+			>;
+		}
+		// Unboxed FieldNode
+		{
+			type UnboxedFieldNode = UnboxNodeUnion<[typeof basicFieldNode]>;
+			// TODO: areSafelyAssignable doesn't seem to work in this case. Revisit this once on TS 5 and TypeCheck is updated for it.
+			type _1 = requireAssignableTo<UnboxedFieldNode, TreeNode | undefined>;
+			type _2 = requireAssignableTo<TreeNode | undefined, UnboxedFieldNode>;
+		}
+		// Recursive
+		{
+			type _1 = requireTrue<
+				areSafelyAssignable<UnboxNodeUnion<[typeof recursiveStruct]>, Recursive>
+			>;
+		}
+		// Recursive Lazy
+		{
+			type _1 = requireTrue<
+				areSafelyAssignable<UnboxNodeUnion<[() => typeof recursiveStruct]>, Recursive>
+			>;
+		}
 	}
 });

@@ -4,9 +4,9 @@
  */
 
 export {
-	UntypedField,
-	UntypedTree,
-	UntypedEntity,
+	TreeField,
+	TreeNode,
+	Tree,
 	TypedField,
 	FieldNode,
 	FlexibleFieldContent,
@@ -20,6 +20,9 @@ export {
 	StructTyped,
 	TypedNode,
 	TypedNodeUnion,
+	boxedIterator,
+	CheckTypesOverlap,
+	TreeStatus,
 } from "./editableTreeTypes";
 
 export {

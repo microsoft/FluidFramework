@@ -37,6 +37,7 @@ import {
 	getLumberBaseProperties,
 	LumberEventName,
 	Lumberjack,
+	CommonProperties,
 } from "@fluidframework/server-services-telemetry";
 import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionValid } from "../utils";
 import { CheckpointManager } from "./checkpointManager";
@@ -156,6 +157,11 @@ export class ScribeLambdaFactory
 					return new NoOpLambda(context);
 				}
 			}
+
+			scribeSessionMetric?.setProperty(
+				CommonProperties.isEphemeralContainer,
+				document?.isEphemeralContainer ?? false,
+			);
 
 			gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
 			summaryReader = new SummaryReader(
@@ -315,6 +321,7 @@ export class ScribeLambdaFactory
 			this.disableTransientTenantFiltering,
 			this.restartOnCheckpointFailure,
 			this.kafkaCheckpointOnReprocessingOp,
+			document.isEphemeralContainer ?? false,
 		);
 
 		await this.sendLambdaStartResult(tenantId, documentId, {

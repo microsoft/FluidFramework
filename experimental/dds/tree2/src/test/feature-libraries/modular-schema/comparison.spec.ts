@@ -47,11 +47,6 @@ describe("Schema Comparison", () => {
 		mapFields: anyField,
 	};
 
-	const anyLeaf: TreeStoredSchema = {
-		structFields: emptyMap,
-		leafValue: ValueSchema.Serializable,
-	};
-
 	const numberLeaf: TreeStoredSchema = {
 		structFields: emptyMap,
 		leafValue: ValueSchema.Number,
@@ -60,7 +55,7 @@ describe("Schema Comparison", () => {
 	/**
 	 * FieldStoredSchema which is impossible for any data to be in schema with.
 	 */
-	const neverField = fieldSchema(FieldKinds.value, []);
+	const neverField = fieldSchema(FieldKinds.required, []);
 
 	/**
 	 * TreeStoredSchema which is impossible for any data to be in schema with.
@@ -91,11 +86,11 @@ describe("Schema Comparison", () => {
 
 	const valueLocalFieldTree = namedTreeSchema({
 		name: "valueLocalFieldTree",
-		structFields: { x: fieldSchema(FieldKinds.value, [emptyTree.name]) },
+		structFields: { x: fieldSchema(FieldKinds.required, [emptyTree.name]) },
 	});
 
-	const valueAnyField = fieldSchema(FieldKinds.value);
-	const valueEmptyTreeField = fieldSchema(FieldKinds.value, [emptyTree.name]);
+	const valueAnyField = fieldSchema(FieldKinds.required);
+	const valueEmptyTreeField = fieldSchema(FieldKinds.required, [emptyTree.name]);
 	const optionalAnyField = fieldSchema(FieldKinds.optional);
 	const optionalEmptyTreeField = fieldSchema(FieldKinds.optional, [emptyTree.name]);
 
@@ -114,7 +109,7 @@ describe("Schema Comparison", () => {
 		const repo = new InMemoryStoredSchemaRepository();
 		assert(isNeverField(defaultSchemaPolicy, repo, neverField));
 		updateTreeSchema(repo, brand("never"), neverTree);
-		const neverField2: FieldStoredSchema = fieldSchema(FieldKinds.value, [brand("never")]);
+		const neverField2: FieldStoredSchema = fieldSchema(FieldKinds.required, [brand("never")]);
 		assert(isNeverField(defaultSchemaPolicy, repo, neverField2));
 		assert.equal(isNeverField(defaultSchemaPolicy, repo, storedEmptyFieldSchema), false);
 		assert.equal(isNeverField(defaultSchemaPolicy, repo, anyField), false);
@@ -124,7 +119,7 @@ describe("Schema Comparison", () => {
 			isNeverField(
 				defaultSchemaPolicy,
 				repo,
-				fieldSchema(FieldKinds.value, [brand("empty")]),
+				fieldSchema(FieldKinds.required, [brand("empty")]),
 			),
 			false,
 		);
@@ -152,7 +147,6 @@ describe("Schema Comparison", () => {
 			false,
 		);
 		assert.equal(isNeverTree(defaultSchemaPolicy, repo, anyTreeWithoutValue), false);
-		assert.equal(isNeverTree(defaultSchemaPolicy, repo, anyLeaf), false);
 
 		assert(
 			allowsTreeSuperset(
@@ -171,7 +165,7 @@ describe("Schema Comparison", () => {
 
 	it("isNeverTreeRecursive", () => {
 		const repo = new InMemoryStoredSchemaRepository();
-		const recursiveField = fieldSchema(FieldKinds.value, [brand("recursive")]);
+		const recursiveField = fieldSchema(FieldKinds.required, [brand("recursive")]);
 		const recursiveType = treeSchema({
 			mapFields: recursiveField,
 		});
@@ -181,7 +175,10 @@ describe("Schema Comparison", () => {
 
 	it("isNeverTreeRecursive non-never", () => {
 		const repo = new InMemoryStoredSchemaRepository();
-		const recursiveField = fieldSchema(FieldKinds.value, [brand("recursive"), emptyTree.name]);
+		const recursiveField = fieldSchema(FieldKinds.required, [
+			brand("recursive"),
+			emptyTree.name,
+		]);
 		const recursiveType = treeSchema({
 			mapFields: recursiveField,
 		});
@@ -191,11 +188,8 @@ describe("Schema Comparison", () => {
 	});
 
 	it("allowsValueSuperset", () => {
-		testOrder(allowsValueSuperset, [ValueSchema.Boolean, ValueSchema.Serializable]);
-		testOrder(allowsValueSuperset, [ValueSchema.Number, ValueSchema.Serializable]);
-		testOrder(allowsValueSuperset, [ValueSchema.String, ValueSchema.Serializable]);
 		assert.equal(
-			getOrdering(ValueSchema.Serializable, undefined, allowsValueSuperset),
+			getOrdering(ValueSchema.FluidHandle, undefined, allowsValueSuperset),
 			Ordering.Incomparable,
 		);
 		assert.equal(
@@ -214,7 +208,7 @@ describe("Schema Comparison", () => {
 			ValueSchema.Boolean,
 			ValueSchema.Number,
 			ValueSchema.String,
-			ValueSchema.Serializable,
+			ValueSchema.FluidHandle,
 		]);
 	});
 
@@ -245,7 +239,7 @@ describe("Schema Comparison", () => {
 		const repo = new InMemoryStoredSchemaRepository();
 		updateTreeSchema(repo, brand("never"), neverTree);
 		updateTreeSchema(repo, emptyTree.name, emptyTree);
-		const neverField2: FieldStoredSchema = fieldSchema(FieldKinds.value, [brand("never")]);
+		const neverField2: FieldStoredSchema = fieldSchema(FieldKinds.required, [brand("never")]);
 		const compare = (a: FieldStoredSchema, b: FieldStoredSchema): boolean =>
 			allowsFieldSuperset(defaultSchemaPolicy, repo, a, b);
 		testOrder(compare, [
@@ -310,10 +304,10 @@ describe("Schema Comparison", () => {
 			a: TreeStoredSchema | undefined,
 			b: TreeStoredSchema | undefined,
 		): boolean => allowsTreeSuperset(defaultSchemaPolicy, repo, a, b);
-		testOrder(compare, [neverTree, numberLeaf, anyLeaf]);
+		testOrder(compare, [neverTree, numberLeaf]);
 		testPartialOrder(
 			compare,
-			[neverTree, neverTree2, undefined, anyLeaf, numberLeaf],
+			[neverTree, neverTree2, undefined, numberLeaf],
 			[[neverTree, neverTree2, undefined]],
 		);
 	});

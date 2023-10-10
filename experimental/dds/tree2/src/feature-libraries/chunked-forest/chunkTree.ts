@@ -250,7 +250,7 @@ export function tryShapeFromFieldSchema(
 	shapes: Map<TreeSchemaIdentifier, ShapeInfo>,
 ): FieldShape | undefined {
 	const kind = policy.fieldKinds.get(type.kind.identifier) ?? fail("missing FieldKind");
-	if (kind.multiplicity !== Multiplicity.Value) {
+	if (kind.multiplicity !== Multiplicity.Single) {
 		return undefined;
 	}
 	if (type.types?.size !== 1) {
@@ -466,7 +466,7 @@ export function uniformChunkFromCursor(
 	// TODO:
 	// This could have a fast path for consuming already uniformly chunked data with matching shape.
 
-	const values: TreeValue = [];
+	const values: TreeValue[] = [];
 	let topLevelLength = 1;
 	while (topLevelLength <= maxTopLevelLength) {
 		insertValues(cursor, shape, values);

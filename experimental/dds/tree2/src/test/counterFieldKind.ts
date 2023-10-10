@@ -5,22 +5,16 @@
 
 import { Type } from "@sinclair/typebox";
 import { ICodecFamily, makeCodecFamily, makeValueCodec } from "../codec";
-import {
-	BrandedFieldKind,
-	FieldChangeHandler,
-	FieldChangeRebaser,
-	singleTextCursor,
-} from "../feature-libraries";
+import { FieldChangeHandler, FieldChangeRebaser, singleTextCursor } from "../feature-libraries";
 // This is imported directly to implement an example of a field kind.
 import {
-	FieldEditor,
-	FieldKind,
+	FieldKindWithEditor,
 	Multiplicity,
 	referenceFreeFieldChangeRebaser,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../feature-libraries/modular-schema";
 import { brand, fail } from "../util";
-import { Delta, FieldKindIdentifier, FieldStoredSchema, TaggedChange, TreeTypeSet } from "../core";
+import { Delta, TaggedChange } from "../core";
 import { jsonNumber } from "../domains";
 
 export const counterCodecFamily: ICodecFamily<number> = makeCodecFamily([
@@ -74,6 +68,7 @@ export const counterHandle: FieldChangeHandler<number> = {
 							oldContent: {
 								detachId: {
 									major: revision,
+									// This is an arbitrary number for testing.
 									minor: 424242,
 								},
 							},
@@ -107,34 +102,10 @@ export const counterHandle: FieldChangeHandler<number> = {
  * How should it use its type set?
  * How should it handle lack of associative addition due to precision and overflow?
  */
-export const counter: BrandedFieldKind<
+export const counter = new FieldKindWithEditor(
 	"Counter",
-	Multiplicity.Value,
-	FieldEditor<number>
-> = brandedFieldKind(
-	"Counter",
-	Multiplicity.Value,
+	Multiplicity.Single,
 	counterHandle,
-	(types, other) => other.kind.identifier === counter.identifier,
+	(types, other) => other.kind.identifier === "Counter",
 	new Set(),
 );
-
-function brandedFieldKind<
-	TName extends string,
-	TMultiplicity extends Multiplicity,
-	TEditor extends FieldEditor<any>,
->(
-	identifier: TName,
-	multiplicity: TMultiplicity,
-	changeHandler: FieldChangeHandler<any, TEditor>,
-	allowsTreeSupersetOf: (originalTypes: TreeTypeSet, superset: FieldStoredSchema) => boolean,
-	handlesEditsFrom: ReadonlySet<FieldKindIdentifier>,
-): BrandedFieldKind<TName, TMultiplicity, TEditor> {
-	return new FieldKind<TEditor, TMultiplicity>(
-		brand(identifier),
-		multiplicity,
-		changeHandler,
-		allowsTreeSupersetOf,
-		handlesEditsFrom,
-	) as BrandedFieldKind<TName, TMultiplicity, TEditor>;
-}

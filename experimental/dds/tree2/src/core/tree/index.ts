@@ -22,6 +22,7 @@ export {
 	forEachNode,
 	forEachNodeInSubtree,
 	forEachField,
+	iterateCursorField,
 	ITreeCursorSynchronous,
 	PathRootPrefix,
 	inCursorField,
@@ -81,10 +82,9 @@ export {
 	announceDelta,
 	applyDelta,
 	combineVisitors,
-	announceVisitor,
-	makeTreeIndex,
+	makeDetachedFieldIndex,
 } from "./visitorUtils";
-export { PathVisitor, ReplaceKind } from "./visitPath";
+export { PathVisitor } from "./visitPath";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
 import * as Delta from "./delta";
@@ -94,4 +94,4 @@ export { SparseNode, getDescendant } from "./sparseTree";
 
 export { isSkipMark, emptyDelta } from "./deltaUtil";
 
-export { TreeIndex, ForestRootId } from "./treeIndex";
+export { DetachedFieldIndex, ForestRootId } from "./detachedFieldIndex";

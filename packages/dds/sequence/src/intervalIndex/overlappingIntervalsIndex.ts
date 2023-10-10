@@ -2,10 +2,19 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+/* eslint-disable import/no-deprecated */
 
 import { Client } from "@fluidframework/merge-tree";
-import { IntervalType, IIntervalHelpers, ISerializableInterval } from "../intervals";
+import {
+	IntervalType,
+	IIntervalHelpers,
+	ISerializableInterval,
+	sequenceIntervalHelpers,
+	SequenceInterval,
+} from "../intervals";
 import { IntervalNode, IntervalTree } from "../intervalTree";
+import { SharedString } from "../sharedString";
+import { SequencePlace, endpointPosAndSide } from "../intervalCollection";
 import { IntervalIndex } from "./intervalIndex";
 
 export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInterval>
@@ -14,7 +23,7 @@ export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInter
 	 * @returns an array of all intervals contained in this collection that overlap the range
 	 * `[start end]`.
 	 */
-	findOverlappingIntervals(start: number, end: number): TInterval[];
+	findOverlappingIntervals(start: SequencePlace, end: SequencePlace): TInterval[];
 
 	/**
 	 * Gathers the interval results based on specified parameters.
@@ -22,8 +31,8 @@ export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInter
 	gatherIterationResults(
 		results: TInterval[],
 		iteratesForward: boolean,
-		start?: number,
-		end?: number,
+		start?: SequencePlace,
+		end?: SequencePlace,
 	): void;
 }
 
@@ -50,8 +59,8 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 	public gatherIterationResults(
 		results: TInterval[],
 		iteratesForward: boolean,
-		start?: number,
-		end?: number,
+		start?: SequencePlace,
+		end?: SequencePlace,
 	): void {
 		if (this.intervalTree.intervals.isEmpty()) {
 			return;
@@ -71,8 +80,8 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 		} else {
 			const transientInterval: TInterval = this.helpers.create(
 				"transient",
-				start,
-				end,
+				start ?? "start",
+				end ?? "end",
 				this.client,
 				IntervalType.Transient,
 			);
@@ -129,8 +138,15 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 		}
 	}
 
-	public findOverlappingIntervals(start: number, end: number): TInterval[] {
-		if (end < start || this.intervalTree.intervals.isEmpty()) {
+	public findOverlappingIntervals(start: SequencePlace, end: SequencePlace): TInterval[] {
+		const { startPos, endPos } = endpointPosAndSide(start, end);
+
+		if (
+			startPos === undefined ||
+			endPos === undefined ||
+			endPos < startPos ||
+			this.intervalTree.intervals.isEmpty()
+		) {
 			return [];
 		}
 		const transientInterval = this.helpers.create(
@@ -154,9 +170,9 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 	}
 }
 
-export function createOverlappingIntervalsIndex<TInterval extends ISerializableInterval>(
-	client: Client,
-	helpers: IIntervalHelpers<TInterval>,
-): IOverlappingIntervalsIndex<TInterval> {
-	return new OverlappingIntervalsIndex<TInterval>(client, helpers);
+export function createOverlappingIntervalsIndex(
+	sharedString: SharedString,
+): IOverlappingIntervalsIndex<SequenceInterval> {
+	const client = (sharedString as unknown as { client: Client }).client;
+	return new OverlappingIntervalsIndex<SequenceInterval>(client, sequenceIntervalHelpers);
 }

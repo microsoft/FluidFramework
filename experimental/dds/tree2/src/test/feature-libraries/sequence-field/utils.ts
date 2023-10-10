@@ -20,7 +20,7 @@ import {
 } from "../../../core";
 import { TestChange } from "../../testChange";
 import { assertMarkListEqual, deepFreeze, defaultRevisionMetadataFromChanges } from "../../utils";
-import { brand, fail, IdAllocator, idAllocatorFromMaxId } from "../../../util";
+import { brand, fakeIdAllocator, IdAllocator, idAllocatorFromMaxId } from "../../../util";
 import { TestChangeset } from "./testEdits";
 
 export function composeAnonChanges(changes: TestChangeset[]): TestChangeset {
@@ -137,7 +137,8 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 	let inverted = SF.invert(
 		change,
 		TestChange.invert,
-		() => fail("Sequence fields should not generate IDs during invert"),
+		// Sequence fields should not generate IDs during invert
+		fakeIdAllocator,
 		table,
 	);
 
@@ -148,7 +149,8 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 		inverted = SF.amendInvert(
 			inverted,
 			change.revision,
-			() => fail("Sequence fields should not generate IDs during invert"),
+			// Sequence fields should not generate IDs during invert
+			fakeIdAllocator,
 			table,
 		);
 		assert(!table.isInvalidated, "Invert should not need more than one amend pass");

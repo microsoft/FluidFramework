@@ -14,7 +14,7 @@ import {
 } from "@microsoft/api-extractor-model";
 
 import { SectionNode } from "../../documentation-domain";
-import { ApiModifier, filterByKind, isStatic } from "../ApiItemUtilities";
+import { ApiModifier, filterByKind, isStatic } from "../../utilities";
 import { ApiItemTransformationConfiguration } from "../configuration";
 import { createChildDetailsSection, createMemberTables } from "../helpers";
 

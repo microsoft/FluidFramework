@@ -17,7 +17,7 @@ import {
 	typeNameSymbol,
 	getPrimaryField,
 	SchemaBuilder,
-	FieldKindTypes,
+	FieldKind,
 	UnwrappedEditableField,
 	setField,
 	EditableTree,
@@ -46,13 +46,13 @@ const otherFieldKey: FieldKey = brand("foo2");
 
 const rootSchemaName: TreeSchemaIdentifier = brand("Test");
 
-function getTestSchema<Kind extends FieldKindTypes>(fieldKind: Kind) {
-	const builder = new SchemaBuilder("getTestSchema", {}, personSchemaLibrary);
+function getTestSchema<Kind extends FieldKind>(fieldKind: Kind) {
+	const builder = new SchemaBuilder({ scope: "getTestSchema", libraries: [personSchemaLibrary] });
 	const rootNodeSchema = builder.struct("Test", {
 		foo: SchemaBuilder.field(fieldKind, stringSchema),
 		foo2: SchemaBuilder.field(fieldKind, stringSchema),
 	});
-	return builder.intoDocumentSchema(SchemaBuilder.field(FieldKinds.optional, rootNodeSchema));
+	return builder.toDocumentSchema(SchemaBuilder.field(FieldKinds.optional, rootNodeSchema));
 }
 
 describe("editable-tree: editing", () => {
@@ -589,7 +589,7 @@ describe("editable-tree: editing", () => {
 
 		it("as value field", () => {
 			const view = viewWithContent({
-				schema: getTestSchema(FieldKinds.value),
+				schema: getTestSchema(FieldKinds.required),
 				initialTree: { foo: "initial", foo2: "" },
 			});
 			const root = view.root;

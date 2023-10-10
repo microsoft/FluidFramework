@@ -26,7 +26,7 @@ describe("getPendingLocalState", () => {
 		await runtime.connect();
 		const blob = IsoBuffer.from("blob", "utf8");
 		const handleP = runtime.createBlob(blob);
-		const pendingStateP = runtime.getPendingLocalState(true);
+		const pendingStateP = runtime.getPendingLocalState();
 		await runtime.processHandles();
 		await assert.doesNotReject(handleP);
 		const pendingState = await pendingStateP;
@@ -42,7 +42,6 @@ describe("getPendingLocalState", () => {
 
 		const runtime2 = new MockRuntime(mc, summaryData, false, pendingState);
 		await runtime2.attach();
-		await runtime2.processStashed();
 		await runtime2.connect();
 		await runtime2.processAll();
 
@@ -57,7 +56,7 @@ describe("getPendingLocalState", () => {
 		const blob = IsoBuffer.from("blob", "utf8");
 		const handleP = runtime.createBlob(blob);
 		await runtime.processBlobs();
-		const pendingStateP = runtime.getPendingLocalState(true);
+		const pendingStateP = runtime.getPendingLocalState();
 		await runtime.processHandles();
 		await assert.doesNotReject(handleP);
 		const pendingState = await pendingStateP;
@@ -73,7 +72,6 @@ describe("getPendingLocalState", () => {
 
 		const runtime2 = new MockRuntime(mc, summaryData, false, pendingState);
 		await runtime2.attach();
-		await runtime2.processStashed();
 		await runtime2.connect();
 		await runtime2.processAll();
 
@@ -90,7 +88,7 @@ describe("getPendingLocalState", () => {
 		await runtime.processBlobs();
 		const blob2 = IsoBuffer.from("blob2", "utf8");
 		const handleP2 = runtime.createBlob(blob2);
-		const pendingStateP = runtime.getPendingLocalState(true);
+		const pendingStateP = runtime.getPendingLocalState();
 		await runtime.processHandles();
 		await assert.doesNotReject(handleP);
 		await assert.doesNotReject(handleP2);
@@ -104,7 +102,6 @@ describe("getPendingLocalState", () => {
 
 		const runtime2 = new MockRuntime(mc, summaryData, false, pendingState);
 		await runtime2.attach();
-		await runtime2.processStashed();
 		await runtime2.connect();
 		await runtime2.processAll();
 
@@ -121,7 +118,7 @@ describe("getPendingLocalState", () => {
 		await runtime.processBlobs();
 		const blob2 = IsoBuffer.from("blob2", "utf8");
 		const handleP2 = runtime.createBlob(blob2);
-		const pendingStateP = runtime.getPendingLocalState(true);
+		const pendingStateP = runtime.getPendingLocalState();
 		await runtime.processHandles();
 		const handleP3 = runtime.createBlob(IsoBuffer.from("blob3", "utf8"));
 		await runtime.processBlobs();
@@ -139,7 +136,6 @@ describe("getPendingLocalState", () => {
 
 		const runtime2 = new MockRuntime(mc, summaryData, false, pendingState);
 		await runtime2.attach();
-		await runtime2.processStashed();
 		await runtime2.connect();
 		await runtime2.processAll();
 

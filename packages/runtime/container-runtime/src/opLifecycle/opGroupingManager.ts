@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ContainerMessageType } from "..";
+import { ContainerMessageType } from "../messageTypes";
 import { IBatch } from "./definitions";
 
 /**
@@ -22,9 +22,7 @@ interface IGroupedMessage {
 	compression?: string;
 }
 
-function isGroupContents(
-	opContents: IGroupedBatchMessageContents | { type?: unknown } | undefined,
-): opContents is IGroupedBatchMessageContents {
+function isGroupContents(opContents: any): opContents is IGroupedBatchMessageContents {
 	return opContents?.type === OpGroupingManager.groupedBatchOp;
 }
 

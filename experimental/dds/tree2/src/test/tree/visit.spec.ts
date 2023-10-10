@@ -11,17 +11,19 @@ import {
 	Delta,
 	DeltaVisitor,
 	visitDelta,
-	TreeIndex,
-	makeTreeIndex,
-	DetachedRangeUpPath,
-	DetachedPlaceUpPath,
+	DetachedFieldIndex,
+	makeDetachedFieldIndex,
 } from "../../core";
 import { brand } from "../../util";
 import { deepFreeze } from "../utils";
 
-function visit(delta: Delta.Root, visitor: DeltaVisitor, treeIndex?: TreeIndex): void {
+function visit(
+	delta: Delta.Root,
+	visitor: DeltaVisitor,
+	detachedFieldIndex?: DetachedFieldIndex,
+): void {
 	deepFreeze(delta);
-	visitDelta(delta, visitor, treeIndex ?? makeTreeIndex(""));
+	visitDelta(delta, visitor, detachedFieldIndex ?? makeDetachedFieldIndex(""));
 }
 
 type CallSignatures<T> = {
@@ -46,7 +48,7 @@ const visitorMethods: (keyof DeltaVisitor)[] = [
 function testVisit(
 	delta: Delta.Root,
 	expected: Readonly<VisitScript>,
-	treeIndex?: TreeIndex,
+	detachedFieldIndex?: DetachedFieldIndex,
 ): void {
 	let callIndex = 0;
 	const result: VisitScript = [];
@@ -62,16 +64,16 @@ function testVisit(
 	for (const methodName of visitorMethods) {
 		visitor[methodName] = makeChecker(methodName);
 	}
-	visit(delta, visitor, treeIndex);
+	visit(delta, visitor, detachedFieldIndex);
 	assert.deepEqual(result, expected);
 }
 
 function testTreeVisit(
 	marks: Delta.MarkList,
 	expected: Readonly<VisitScript>,
-	treeIndex?: TreeIndex,
+	detachedFieldIndex?: DetachedFieldIndex,
 ): void {
-	testVisit(new Map([[rootKey, marks]]), expected, treeIndex);
+	testVisit(new Map([[rootKey, marks]]), expected, detachedFieldIndex);
 }
 
 const rootKey: FieldKey = brand("root");
@@ -100,17 +102,15 @@ describe("visit", () => {
 			type: Delta.MarkType.Insert,
 			content,
 		};
-		const index = makeTreeIndex("");
+		const index = makeDetachedFieldIndex("");
 		testTreeVisit(
 			[mark],
 			[
 				["enterField", rootKey],
 				["exitField", rootKey],
-				["enterField", field0],
-				["create", 0, content],
-				["exitField", field0],
+				["create", content, field0],
 				["enterField", rootKey],
-				["attach", brand<DetachedRangeUpPath>({ field: field0, start: 0, end: 1 }), 0],
+				["attach", field0, 1, 0],
 				["exitField", rootKey],
 			],
 			index,
@@ -118,7 +118,7 @@ describe("visit", () => {
 		assert.equal(index.entries().next().done, true);
 	});
 	it("insert child", () => {
-		const index = makeTreeIndex("");
+		const index = makeDetachedFieldIndex("");
 		const mark = {
 			type: Delta.MarkType.Insert,
 			content,
@@ -136,13 +136,11 @@ describe("visit", () => {
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", rootKey],
-			["enterField", field0],
-			["create", 0, content],
-			["exitField", field0],
+			["create", content, field0],
 			["enterField", rootKey],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["attach", brand<DetachedRangeUpPath>({ field: field0, start: 0, end: 1 }), 42],
+			["attach", field0, 1, 42],
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", rootKey],
@@ -151,7 +149,7 @@ describe("visit", () => {
 		assert.equal(index.entries().next().done, true);
 	});
 	it("remove root", () => {
-		const index = makeTreeIndex("");
+		const index = makeDetachedFieldIndex("");
 		const mark: Delta.Remove = {
 			type: Delta.MarkType.Remove,
 			count: 2,
@@ -161,16 +159,8 @@ describe("visit", () => {
 			[1, mark],
 			[
 				["enterField", rootKey],
-				[
-					"detach",
-					{ start: 1, end: 2 },
-					brand<DetachedPlaceUpPath>({ field: field0, index: 0 }),
-				],
-				[
-					"detach",
-					{ start: 1, end: 2 },
-					brand<DetachedPlaceUpPath>({ field: field1, index: 0 }),
-				],
+				["detach", { start: 1, end: 2 }, field0],
+				["detach", { start: 1, end: 2 }, field1],
 				["exitField", rootKey],
 				["enterField", rootKey],
 				["exitField", rootKey],
@@ -183,7 +173,7 @@ describe("visit", () => {
 		]);
 	});
 	it("remove child", () => {
-		const index = makeTreeIndex("");
+		const index = makeDetachedFieldIndex("");
 		const mark: Delta.Remove = {
 			type: Delta.MarkType.Remove,
 			count: 1,
@@ -199,11 +189,7 @@ describe("visit", () => {
 			["enterField", rootKey],
 			["enterNode", 0],
 			["enterField", fooKey],
-			[
-				"detach",
-				{ start: 42, end: 43 },
-				brand<DetachedPlaceUpPath>({ field: field0, index: 0 }),
-			],
+			["detach", { start: 42, end: 43 }, field0],
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", rootKey],
@@ -220,7 +206,7 @@ describe("visit", () => {
 		]);
 	});
 	it("remove under insert", () => {
-		const index = makeTreeIndex("");
+		const index = makeDetachedFieldIndex("");
 		const remove: Delta.Remove = {
 			type: Delta.MarkType.Remove,
 			count: 1,
@@ -236,22 +222,16 @@ describe("visit", () => {
 		const expected: VisitScript = [
 			["enterField", rootKey],
 			["exitField", rootKey],
-			["enterField", field0],
-			["create", 0, content],
-			["exitField", field0],
+			["create", content, field0],
 			["enterField", field0],
 			["enterNode", 0],
 			["enterField", fooKey],
-			[
-				"detach",
-				{ start: 42, end: 43 },
-				brand<DetachedPlaceUpPath>({ field: field1, index: 0 }),
-			],
+			["detach", { start: 42, end: 43 }, field1],
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", field0],
 			["enterField", rootKey],
-			["attach", brand<DetachedRangeUpPath>({ field: field0, start: 0, end: 1 }), 0],
+			["attach", field0, 1, 0],
 			["enterNode", 0],
 			["enterField", fooKey],
 			["exitField", fooKey],
@@ -264,7 +244,7 @@ describe("visit", () => {
 		]);
 	});
 	it("move node to the right", () => {
-		const index = makeTreeIndex("");
+		const index = makeDetachedFieldIndex("");
 		// start with 0123 then move 1 so the order is 0213
 		const moveId: Delta.MoveId = brand(1);
 		const moveOut: Delta.MoveOut = {
@@ -280,21 +260,17 @@ describe("visit", () => {
 		const delta = [1, moveOut, 1, moveIn];
 		const expected: VisitScript = [
 			["enterField", rootKey],
-			[
-				"detach",
-				{ start: 1, end: 2 },
-				brand<DetachedPlaceUpPath>({ field: field0, index: 0 }),
-			],
+			["detach", { start: 1, end: 2 }, field0],
 			["exitField", rootKey],
 			["enterField", rootKey],
-			["attach", brand<DetachedRangeUpPath>({ field: field0, start: 0, end: 1 }), 2],
+			["attach", field0, 1, 2],
 			["exitField", rootKey],
 		];
 		testTreeVisit(delta, expected, index);
 		assert.equal(index.entries().next().done, true);
 	});
 	it("move children to the left", () => {
-		const index = makeTreeIndex("");
+		const index = makeDetachedFieldIndex("");
 		const moveId: Delta.MoveId = brand(1);
 		const moveOut: Delta.MoveOut = {
 			type: Delta.MarkType.MoveOut,
@@ -316,24 +292,16 @@ describe("visit", () => {
 			["enterField", rootKey],
 			["enterNode", 0],
 			["enterField", fooKey],
-			[
-				"detach",
-				{ start: 5, end: 6 },
-				brand<DetachedPlaceUpPath>({ field: field0, index: 0 }),
-			],
-			[
-				"detach",
-				{ start: 5, end: 6 },
-				brand<DetachedPlaceUpPath>({ field: field1, index: 0 }),
-			],
+			["detach", { start: 5, end: 6 }, field0],
+			["detach", { start: 5, end: 6 }, field1],
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", rootKey],
 			["enterField", rootKey],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["attach", brand<DetachedRangeUpPath>({ field: field0, start: 0, end: 1 }), 2],
-			["attach", brand<DetachedRangeUpPath>({ field: field1, start: 0, end: 1 }), 3],
+			["attach", field0, 1, 2],
+			["attach", field1, 1, 3],
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", rootKey],
@@ -342,7 +310,7 @@ describe("visit", () => {
 		assert.equal(index.entries().next().done, true);
 	});
 	it("move cousins", () => {
-		const index = makeTreeIndex("");
+		const index = makeDetachedFieldIndex("");
 		const moveId: Delta.MoveId = brand(1);
 		const moveOut: Delta.MoveOut = {
 			type: Delta.MarkType.MoveOut,
@@ -369,18 +337,14 @@ describe("visit", () => {
 			["enterField", fooKey],
 			["exitField", fooKey],
 			["enterField", barKey],
-			[
-				"detach",
-				{ start: 0, end: 1 },
-				brand<DetachedPlaceUpPath>({ field: field0, index: 0 }),
-			],
+			["detach", { start: 0, end: 1 }, field0],
 			["exitField", barKey],
 			["exitNode", 0],
 			["exitField", rootKey],
 			["enterField", rootKey],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["attach", brand<DetachedRangeUpPath>({ field: field0, start: 0, end: 1 }), 0],
+			["attach", field0, 1, 0],
 			["exitField", fooKey],
 			["enterField", barKey],
 			["exitField", barKey],
@@ -391,7 +355,7 @@ describe("visit", () => {
 		assert.equal(index.entries().next().done, true);
 	});
 	it("move-in under remove", () => {
-		const index = makeTreeIndex("");
+		const index = makeDetachedFieldIndex("");
 		const moveId: Delta.MoveId = brand(1);
 		const moveOut: Delta.MoveOut = {
 			type: Delta.MarkType.MoveOut,
@@ -418,23 +382,15 @@ describe("visit", () => {
 			["enterField", fooKey],
 			["exitField", fooKey],
 			["exitNode", 0],
-			[
-				"detach",
-				{ start: 0, end: 1 },
-				brand<DetachedPlaceUpPath>({ field: field0, index: 0 }),
-			],
-			[
-				"detach",
-				{ start: 0, end: 1 },
-				brand<DetachedPlaceUpPath>({ field: field1, index: 0 }),
-			],
+			["detach", { start: 0, end: 1 }, field0],
+			["detach", { start: 0, end: 1 }, field1],
 			["exitField", rootKey],
 			["enterField", rootKey],
 			["exitField", rootKey],
 			["enterField", field0],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["attach", brand<DetachedRangeUpPath>({ field: field1, start: 0, end: 1 }), 0],
+			["attach", field1, 1, 0],
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", field0],
@@ -445,7 +401,7 @@ describe("visit", () => {
 		]);
 	});
 	it("move-out under remove", () => {
-		const index = makeTreeIndex("");
+		const index = makeDetachedFieldIndex("");
 		const moveId: Delta.MoveId = brand(1);
 		const moveOut: Delta.MoveOut = {
 			type: Delta.MarkType.MoveOut,
@@ -470,21 +426,13 @@ describe("visit", () => {
 			["enterField", rootKey],
 			["enterNode", 0],
 			["enterField", fooKey],
-			[
-				"detach",
-				{ start: 0, end: 1 },
-				brand<DetachedPlaceUpPath>({ field: field1, index: 0 }),
-			],
+			["detach", { start: 0, end: 1 }, field1],
 			["exitField", fooKey],
 			["exitNode", 0],
-			[
-				"detach",
-				{ start: 0, end: 1 },
-				brand<DetachedPlaceUpPath>({ field: field0, index: 0 }),
-			],
+			["detach", { start: 0, end: 1 }, field0],
 			["exitField", rootKey],
 			["enterField", rootKey],
-			["attach", brand<DetachedRangeUpPath>({ field: field1, start: 0, end: 1 }), 0],
+			["attach", field1, 1, 0],
 			["exitField", rootKey],
 			["enterField", field0],
 			["enterNode", 0],
@@ -499,7 +447,7 @@ describe("visit", () => {
 		]);
 	});
 	it("move-in under move-out", () => {
-		const index = makeTreeIndex("");
+		const index = makeDetachedFieldIndex("");
 		const moveId1: Delta.MoveId = brand(1);
 		const moveId2: Delta.MoveId = brand(2);
 		const moveIn1: Delta.MoveIn = {
@@ -533,22 +481,14 @@ describe("visit", () => {
 			["enterField", fooKey],
 			["exitField", fooKey],
 			["exitNode", 0],
-			[
-				"detach",
-				{ start: 0, end: 1 },
-				brand<DetachedPlaceUpPath>({ field: field0, index: 0 }),
-			],
-			[
-				"detach",
-				{ start: 0, end: 1 },
-				brand<DetachedPlaceUpPath>({ field: field1, index: 0 }),
-			],
+			["detach", { start: 0, end: 1 }, field0],
+			["detach", { start: 0, end: 1 }, field1],
 			["exitField", rootKey],
 			["enterField", rootKey],
-			["attach", brand<DetachedRangeUpPath>({ field: field0, start: 0, end: 1 }), 0],
+			["attach", field0, 1, 0],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["attach", brand<DetachedRangeUpPath>({ field: field1, start: 0, end: 1 }), 0],
+			["attach", field1, 1, 0],
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", rootKey],
@@ -557,7 +497,7 @@ describe("visit", () => {
 		assert.equal(index.entries().next().done, true);
 	});
 	it("remove under move-out", () => {
-		const index = makeTreeIndex("");
+		const index = makeDetachedFieldIndex("");
 		const moveId1: Delta.MoveId = brand(1);
 		const moveIn1: Delta.MoveIn = {
 			type: Delta.MarkType.MoveIn,
@@ -582,21 +522,13 @@ describe("visit", () => {
 			["enterField", rootKey],
 			["enterNode", 0],
 			["enterField", fooKey],
-			[
-				"detach",
-				{ start: 0, end: 1 },
-				brand<DetachedPlaceUpPath>({ field: field1, index: 0 }),
-			],
+			["detach", { start: 0, end: 1 }, field1],
 			["exitField", fooKey],
 			["exitNode", 0],
-			[
-				"detach",
-				{ start: 0, end: 1 },
-				brand<DetachedPlaceUpPath>({ field: field0, index: 0 }),
-			],
+			["detach", { start: 0, end: 1 }, field0],
 			["exitField", rootKey],
 			["enterField", rootKey],
-			["attach", brand<DetachedRangeUpPath>({ field: field0, start: 0, end: 1 }), 0],
+			["attach", field0, 1, 0],
 			["enterNode", 0],
 			["enterField", fooKey],
 			["exitField", fooKey],
@@ -609,7 +541,7 @@ describe("visit", () => {
 		]);
 	});
 	it("transient insert", () => {
-		const index = makeTreeIndex("");
+		const index = makeDetachedFieldIndex("");
 		const mark: Delta.Insert = {
 			type: Delta.MarkType.Insert,
 			content,
@@ -619,17 +551,11 @@ describe("visit", () => {
 		const expected: VisitScript = [
 			["enterField", rootKey],
 			["exitField", rootKey],
-			["enterField", field0],
-			["create", 0, content],
-			["exitField", field0],
+			["create", content, field0],
 			["enterField", rootKey],
 			["exitField", rootKey],
 			["enterField", field0],
-			[
-				"detach",
-				{ start: 0, end: 1 },
-				brand<DetachedPlaceUpPath>({ field: field1, index: 0 }),
-			],
+			["detach", { start: 0, end: 1 }, field1],
 			["exitField", field0],
 		];
 		testTreeVisit(delta, expected, index);
@@ -638,7 +564,7 @@ describe("visit", () => {
 		]);
 	});
 	it("move-out under transient", () => {
-		const index = makeTreeIndex("");
+		const index = makeDetachedFieldIndex("");
 		const moveId: Delta.MoveId = brand(1);
 		const moveOut: Delta.MoveOut = {
 			type: Delta.MarkType.MoveOut,
@@ -674,17 +600,11 @@ describe("visit", () => {
 			["exitField", barKey],
 			["exitNode", 0],
 			["exitField", rootKey],
-			["enterField", field0],
-			["create", 0, content],
-			["exitField", field0],
+			["create", content, field0],
 			["enterField", field0],
 			["enterNode", 0],
 			["enterField", barKey],
-			[
-				"detach",
-				{ start: 0, end: 1 },
-				brand<DetachedPlaceUpPath>({ field: field1, index: 0 }),
-			],
+			["detach", { start: 0, end: 1 }, field1],
 			["exitField", barKey],
 			["exitNode", 0],
 			["exitField", field0],
@@ -693,16 +613,12 @@ describe("visit", () => {
 			["enterField", fooKey],
 			["exitField", fooKey],
 			["enterField", barKey],
-			["attach", brand<DetachedRangeUpPath>({ field: field1, start: 0, end: 1 }), 0],
+			["attach", field1, 1, 0],
 			["exitField", barKey],
 			["exitNode", 0],
 			["exitField", rootKey],
 			["enterField", field0],
-			[
-				"detach",
-				{ start: 0, end: 1 },
-				brand<DetachedPlaceUpPath>({ field: field2, index: 0 }),
-			],
+			["detach", { start: 0, end: 1 }, field2],
 			["exitField", field0],
 			["enterField", field2],
 			["enterNode", 0],
@@ -717,7 +633,7 @@ describe("visit", () => {
 		]);
 	});
 	it("restore", () => {
-		const index = makeTreeIndex("");
+		const index = makeDetachedFieldIndex("");
 		const node1 = { minor: 1 };
 		index.createEntry(node1);
 		const restore: Delta.Restore = {
@@ -730,14 +646,14 @@ describe("visit", () => {
 			["enterField", rootKey],
 			["exitField", rootKey],
 			["enterField", rootKey],
-			["attach", brand<DetachedRangeUpPath>({ field: field0, start: 0, end: 1 }), 0],
+			["attach", field0, 1, 0],
 			["exitField", rootKey],
 		];
 		testTreeVisit(delta, expected, index);
 		assert.equal(index.entries().next().done, true);
 	});
 	it("move removed node", () => {
-		const index = makeTreeIndex("");
+		const index = makeDetachedFieldIndex("");
 		const node1 = { minor: 1 };
 		index.createEntry(node1);
 		const moveOut: Delta.MoveOut = {
@@ -756,21 +672,17 @@ describe("visit", () => {
 			["enterField", rootKey],
 			["exitField", rootKey],
 			["enterField", field0],
-			[
-				"detach",
-				{ start: 0, end: 1 },
-				brand<DetachedPlaceUpPath>({ field: field1, index: 0 }),
-			],
+			["detach", { start: 0, end: 1 }, field1],
 			["exitField", field0],
 			["enterField", rootKey],
-			["attach", brand<DetachedRangeUpPath>({ field: field1, start: 0, end: 1 }), 0],
+			["attach", field1, 1, 0],
 			["exitField", rootKey],
 		];
 		testTreeVisit(delta, expected, index);
 		assert.equal(index.entries().next().done, true);
 	});
 	it("modify removed node", () => {
-		const index = makeTreeIndex("");
+		const index = makeDetachedFieldIndex("");
 		const node1 = { minor: 1 };
 		index.createEntry(node1);
 		const moveOut: Delta.MoveOut = {
@@ -796,11 +708,7 @@ describe("visit", () => {
 			["enterField", field0],
 			["enterNode", 0],
 			["enterField", fooKey],
-			[
-				"detach",
-				{ start: 0, end: 1 },
-				brand<DetachedPlaceUpPath>({ field: field1, index: 0 }),
-			],
+			["detach", { start: 0, end: 1 }, field1],
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", field0],
@@ -809,7 +717,7 @@ describe("visit", () => {
 			["enterField", field0],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["attach", brand<DetachedRangeUpPath>({ field: field1, start: 0, end: 1 }), 0],
+			["attach", field1, 1, 0],
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", field0],
@@ -820,7 +728,7 @@ describe("visit", () => {
 		]);
 	});
 	it("transient move-in and modify", () => {
-		const index = makeTreeIndex("");
+		const index = makeDetachedFieldIndex("");
 		const moveOut: Delta.MoveOut = {
 			type: Delta.MarkType.MoveOut,
 			count: 1,
@@ -854,32 +762,20 @@ describe("visit", () => {
 			["enterField", rootKey],
 			["enterNode", 0],
 			["enterField", fooKey],
-			[
-				"detach",
-				{ start: 0, end: 1 },
-				brand<DetachedPlaceUpPath>({ field: field1, index: 0 }),
-			],
+			["detach", { start: 0, end: 1 }, field1],
 			["exitField", fooKey],
 			["exitNode", 0],
-			[
-				"detach",
-				{ start: 0, end: 1 },
-				brand<DetachedPlaceUpPath>({ field: field0, index: 0 }),
-			],
+			["detach", { start: 0, end: 1 }, field0],
 			["exitField", rootKey],
 			["enterField", rootKey],
 			["exitField", rootKey],
 			["enterField", field0],
-			[
-				"detach",
-				{ start: 0, end: 1 },
-				brand<DetachedPlaceUpPath>({ field: field2, index: 0 }),
-			],
+			["detach", { start: 0, end: 1 }, field2],
 			["exitField", field0],
 			["enterField", field2],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["attach", brand<DetachedRangeUpPath>({ field: field1, start: 0, end: 1 }), 0],
+			["attach", field1, 1, 0],
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", field2],
@@ -890,7 +786,7 @@ describe("visit", () => {
 		]);
 	});
 	it("transient restore", () => {
-		const index = makeTreeIndex("");
+		const index = makeDetachedFieldIndex("");
 		const node1 = { minor: 1 };
 		index.createEntry(node1);
 		const restore: Delta.Restore = {
@@ -905,11 +801,7 @@ describe("visit", () => {
 			["enterField", rootKey],
 			["exitField", rootKey],
 			["enterField", field0],
-			[
-				"detach",
-				{ start: 0, end: 1 },
-				brand<DetachedPlaceUpPath>({ field: field1, index: 0 }),
-			],
+			["detach", { start: 0, end: 1 }, field1],
 			["exitField", field0],
 		];
 		testTreeVisit(delta, expected, index);

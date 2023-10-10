@@ -9,26 +9,8 @@ import { FileSystem, NewlineKind } from "@rushstack/node-core-library";
 import { ApiItemTransformationConfiguration, transformApiModel } from "./api-item-transforms";
 import { DocumentNode } from "./documentation-domain";
 import { Logger } from "./Logging";
-import { MarkdownRenderConfiguration, renderDocumentAsMarkdown } from "./markdown-renderer";
-
-/**
- * Configuration for interacting with the file-system.
- *
- * @public
- */
-export interface FileSystemConfiguration {
-	/**
-	 * The directory under which the document files will be generated.
-	 */
-	outputDirectoryPath: string;
-
-	/**
-	 * Specifies what type of newlines API Documenter should use when writing output files.
-	 *
-	 * @defaultValue {@link @rushstack/node-core-library#NewlineKind.OsDefault}
-	 */
-	readonly newlineKind?: NewlineKind;
-}
+import { MarkdownRenderConfiguration, renderDocumentAsMarkdown } from "./renderers";
+import { FileSystemConfiguration } from "./FileSystemConfiguration";
 
 /**
  * Renders the provided model and its contents, and writes each document to a file on disk.
@@ -69,8 +51,8 @@ export async function renderApiModelAsMarkdown(
  * Renders the provided documents using Markdown syntax, and writes each document to a file on disk.
  *
  * @param documents - The documents to render. Each will be rendered to its own file on disk per
- * {@link DocumentNode.filePath} (relative to the provided output directory).
- * @param renderConfig - A partial {@link MarkdownRenderConfiguration}.
+ * {@link DocumentNode.documentPath} (relative to the provided output directory).
+ * @param renderConfig - Configuration for rendering {@link DocumentNode}s as Markdown.
  * @param fileSystemConfig - Configuration for writing document files to disk.
  * @param logger - Receiver of system log data. Default: {@link defaultConsoleLogger}.
  *
@@ -95,7 +77,7 @@ export async function renderDocumentsAsMarkdown(
 				logger,
 			});
 
-			const filePath = Path.join(outputDirectoryPath, document.filePath);
+			const filePath = Path.join(outputDirectoryPath, `${document.documentPath}.md`);
 			await FileSystem.writeFileAsync(filePath, renderedDocument, {
 				convertLineEndings: newlineKind ?? NewlineKind.OsDefault,
 				ensureFolderExists: true,

@@ -13,7 +13,6 @@ import { NodeChangeset, RevisionInfo } from "./modularChangeTypes";
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
  * implement a unified ChangeFamily supporting documents with multiple field kinds.
- * @alpha
  */
 export interface FieldChangeHandler<
 	TChangeset,
@@ -36,9 +35,6 @@ export interface FieldChangeHandler<
 	isEmpty(change: TChangeset): boolean;
 }
 
-/**
- * @alpha
- */
 export interface FieldChangeRebaser<TChangeset> {
 	/**
 	 * Compose a collection of changesets into a single one.
@@ -144,9 +140,6 @@ export function isolatedFieldChangeRebaser<TChangeset>(data: {
 	};
 }
 
-/**
- * @alpha
- */
 export interface FieldEditor<TChangeset> {
 	/**
 	 * Creates a changeset which represents the given `change` to the child at `childIndex` of this editor's field.

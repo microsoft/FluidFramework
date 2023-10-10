@@ -11,7 +11,6 @@ import {
 	ITreeSubscriptionCursor,
 	FieldStoredSchema,
 	TreeStoredSchema,
-	ValueSchema,
 	mapCursorField,
 	CursorLocationType,
 	FieldAnchor,
@@ -39,6 +38,7 @@ import {
 	ValueFieldEditBuilder,
 } from "../default-field-kinds";
 import { assertValidIndex, fail, assertNonNegativeSafeInteger } from "../../util";
+import { TreeStatus } from "../editable-tree-2";
 import {
 	AdaptingProxyHandler,
 	adaptWithProxy,
@@ -51,7 +51,6 @@ import { ProxyContext } from "./editableTreeContext";
 import {
 	EditableField,
 	EditableTree,
-	TreeStatus,
 	UnwrappedEditableField,
 	UnwrappedEditableTree,
 	proxyTargetSymbol,
@@ -238,7 +237,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 	 */
 	private valueFieldEditor(): ValueFieldEditBuilder {
 		assert(
-			this.kind === FieldKinds.value,
+			this.kind === FieldKinds.required,
 			0x6bb /* Field kind must be a value to edit as a value. */,
 		);
 		const fieldPath = this.cursor.getFieldPath();
@@ -254,7 +253,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 				}
 				return this.getNode(0);
 			}
-			case Multiplicity.Value: {
+			case Multiplicity.Single: {
 				return this.getNode(0);
 			}
 			case Multiplicity.Forbidden: {
@@ -281,7 +280,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 				fieldEditor.set(content.length === 0 ? undefined : content[0], this.length === 0);
 				break;
 			}
-			case FieldKinds.value: {
+			case FieldKinds.required: {
 				const fieldEditor = this.valueFieldEditor();
 				assert(
 					content.length === 1,
@@ -622,10 +621,7 @@ function unwrappedTree(
 		if (isPrimitiveValue(nodeValue)) {
 			return nodeValue;
 		}
-		assert(
-			nodeType.leafValue === ValueSchema.Serializable,
-			0x3c7 /* `undefined` values not allowed for primitive fields */,
-		);
+		fail("`undefined` values not allowed for primitive fields");
 	}
 
 	const primary = getPrimaryArrayKey(nodeType);

@@ -28,6 +28,7 @@ const testCases: {
 	editedState: JsonCompatible[];
 	parentUndoState?: JsonCompatible[];
 	forkUndoState?: JsonCompatible[];
+	skip?: true;
 }[] = [
 	{
 		name: "inserts",
@@ -61,6 +62,46 @@ const testCases: {
 		editedState: ["C", "D"],
 	},
 	{
+		skip: true, // Blocked on #5263
+		name: "nested deletes",
+		edit: (actedOn) => {
+			const listNode: UpPath = {
+				parent: rootPath,
+				parentField: brand("foo"),
+				parentIndex: 0,
+			};
+
+			actedOn.transaction.start();
+			const listField = actedOn.editor.sequenceField({
+				parent: listNode,
+				field: brand(""),
+			});
+			listField.delete(0, 1);
+			remove(actedOn, 0, 1);
+			actedOn.transaction.commit();
+		},
+		initialState: [{ foo: ["A"] }],
+		editedState: [],
+	},
+	{
+		skip: true, // Blocked on #5263
+		name: "move out under delete",
+		edit: (actedOn) => {
+			const listNode: UpPath = {
+				parent: rootPath,
+				parentField: brand("foo"),
+				parentIndex: 0,
+			};
+
+			actedOn.transaction.start();
+			actedOn.editor.move({ parent: listNode, field: brand("") }, 0, 1, rootField, 1);
+			remove(actedOn, 0, 1);
+			actedOn.transaction.commit();
+		},
+		initialState: [{ foo: ["A"] }],
+		editedState: ["A"],
+	},
+	{
 		name: "the move of a node",
 		edit: (actedOn) => {
 			const field = actedOn.editor.sequenceField(rootField);
@@ -87,22 +128,21 @@ const testCases: {
 	{
 		name: "a delete of content that is concurrently edited",
 		edit: (actedOn, other) => {
-			other.editor
-				.valueField({ parent: rootPath, field: brand("child") })
-				.set(singleTextCursor({ type: jsonString.name, value: "y" }));
+			other.editor.sequenceField({ parent: rootPath, field: brand("child") }).delete(0, 1);
 			actedOn.editor.sequenceField(rootField).delete(0, 1);
 		},
 		initialState: [{ child: "x" }],
 		editedState: [],
 		// Undoing the insertion of A on the parent branch is a no-op because the node was deleted
 		parentUndoState: [],
-		forkUndoState: [{ child: "y" }],
+		forkUndoState: [{}],
 	},
 ];
 
 describe("Undo and redo", () => {
 	for (const {
 		name,
+		skip,
 		edit,
 		undoCount,
 		initialState,
@@ -111,7 +151,8 @@ describe("Undo and redo", () => {
 		forkUndoState,
 	} of testCases) {
 		const count = undoCount ?? 1;
-		it(`${name} (act on fork undo on fork)`, () => {
+		const itFn = skip ? it.skip : it;
+		itFn(`${name} (act on fork undo on fork)`, () => {
 			const view = makeTreeFromJson(initialState);
 			const fork = view.fork();
 
@@ -135,7 +176,7 @@ describe("Undo and redo", () => {
 			expectJsonTree(fork, editedState);
 		});
 
-		it(`${name} (act on view undo on fork)`, () => {
+		itFn(`${name} (act on view undo on fork)`, () => {
 			const view = makeTreeFromJson(initialState);
 			const fork = view.fork();
 
@@ -159,7 +200,7 @@ describe("Undo and redo", () => {
 			expectJsonTree(fork, editedState);
 		});
 
-		it(`${name} (act on view undo on view)`, () => {
+		itFn(`${name} (act on view undo on view)`, () => {
 			const view = makeTreeFromJson(initialState);
 			const fork = view.fork();
 
@@ -182,7 +223,7 @@ describe("Undo and redo", () => {
 			expectJsonTree(view, editedState);
 		});
 
-		it(`${name} (act on fork undo on view)`, () => {
+		itFn(`${name} (act on fork undo on view)`, () => {
 			const view = makeTreeFromJson(initialState);
 			const fork = view.fork();
 

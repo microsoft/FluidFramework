@@ -8,9 +8,7 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { AppState } from "./state";
 
 export class Bubblebench extends DataObject {
-	public static get Name(): string {
-		return "@fluid-example/bubblebench-baseline";
-	}
+	public static readonly Name = "@fluid-example/bubblebench-baseline";
 	private state?: AppState;
 
 	protected async hasInitialized(): Promise<void> {

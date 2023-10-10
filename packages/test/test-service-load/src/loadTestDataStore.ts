@@ -22,7 +22,6 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { ILoaderOptions } from "@fluidframework/container-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { ILoadTestConfig } from "./testConfigFile";
-import { LeaderElection } from "./leaderElection";
 
 export interface IRunConfig {
 	runId: number;
@@ -120,9 +119,8 @@ export class LoadTestDataStoreModel {
 		let gcDataStore: LoadTestDataStore | undefined;
 		if (!root.has(gcDataStoreIdKey)) {
 			// The data store for this pair doesn't exist, create it and store its url.
-			gcDataStore = await LoadTestDataStoreInstantiationFactory.createInstance(
-				containerRuntime,
-			);
+			gcDataStore =
+				await LoadTestDataStoreInstantiationFactory.createInstance(containerRuntime);
 			// Force the new data store to be attached.
 			root.set("Fake", gcDataStore.handle);
 			root.delete("Fake");
@@ -516,9 +514,6 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 			this.context.containerRuntime,
 		);
 
-		const leaderElection = new LeaderElection(this.runtime);
-		leaderElection.setupLeaderElection();
-
 		// At every moment, we want half the client to be concurrent writers, and start and stop
 		// in a rotation fashion for every cycle.
 		// To set that up we start each client in a staggered way, each will independently go thru write
@@ -754,16 +749,15 @@ const LoadTestDataStoreInstantiationFactory = new DataObjectFactory(
 const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 	runtime.IFluidHandleContext.resolveHandle(request);
 
-export const createFluidExport = (options: IContainerRuntimeOptions) =>
-	new ContainerRuntimeFactoryWithDefaultDataStore(
-		LoadTestDataStoreInstantiationFactory,
-		new Map([
+export const createFluidExport = (runtimeOptions: IContainerRuntimeOptions) =>
+	new ContainerRuntimeFactoryWithDefaultDataStore({
+		defaultFactory: LoadTestDataStoreInstantiationFactory,
+		registryEntries: new Map([
 			[
 				LoadTestDataStore.DataStoreName,
 				Promise.resolve(LoadTestDataStoreInstantiationFactory),
 			],
 		]),
-		undefined,
-		[innerRequestHandler],
-		options,
-	);
+		requestHandlers: [innerRequestHandler],
+		runtimeOptions,
+	});
