@@ -18,7 +18,7 @@
                     "tree": {
                         "SchemaString": {
                             "type": 2,
-                            "content": "{\"version\":\"1.0.0\",\"treeSchema\":[{\"name\":\"SeqMap\",\"mapFields\":{\"kind\":\"Sequence\",\"types\":[\"SeqMap\"]},\"structFields\":[]}],\"rootFieldSchema\":{\"kind\":\"Sequence\",\"types\":[\"SeqMap\"]}}"
+                            "content": "{\"version\":\"1.0.0\",\"treeSchema\":[{\"name\":\"has-sequence-map.SeqMap\",\"mapFields\":{\"kind\":\"Sequence\",\"types\":[\"has-sequence-map.SeqMap\"]},\"structFields\":[]}],\"rootFieldSchema\":{\"kind\":\"Sequence\",\"types\":[\"has-sequence-map.SeqMap\"]}}"
                         }
                     }
                 },
@@ -27,7 +27,16 @@
                     "tree": {
                         "ForestTree": {
                             "type": 2,
-                            "content": "[{\"type\":\"SeqMap\",\"fields\":{\"foo\":[{\"type\":\"SeqMap\"}]}}]"
+                            "content": "[[\"rootFieldKey\",[{\"type\":\"SeqMap\",\"fields\":{\"foo\":[{\"type\":\"SeqMap\"}]}}]]]"
+                        }
+                    }
+                },
+                "DetachedFieldIndex": {
+                    "type": 1,
+                    "tree": {
+                        "DetachedFieldIndexBlob": {
+                            "type": 2,
+                            "content": "{\"data\":\"[]\",\"id\":1}"
                         }
                     }
                 }

@@ -736,7 +736,7 @@ export class ConnectionManager implements IConnectionManager {
 
 		// Remove listeners first so we don't try to retrigger this flow accidentally through reconnectOnError
 		connection.off("op", this.opHandler);
-		connection.off("signal", this.props.signalHandler);
+		connection.off("signal", this.signalHandler);
 		connection.off("nack", this.nackHandler);
 		connection.off("disconnect", this.disconnectHandlerInternal);
 		connection.off("error", this.errorHandler);
@@ -834,7 +834,7 @@ export class ConnectionManager implements IConnectionManager {
 		this._outbound.resume();
 
 		connection.on("op", this.opHandler);
-		connection.on("signal", this.props.signalHandler);
+		connection.on("signal", this.signalHandler);
 		connection.on("nack", this.nackHandler);
 		connection.on("disconnect", this.disconnectHandlerInternal);
 		connection.on("error", this.errorHandler);
@@ -900,28 +900,32 @@ export class ConnectionManager implements IConnectionManager {
 				type: SignalType.Clear,
 			}),
 		};
-		this.props.signalHandler(clearSignal);
 
-		for (const priorClient of connection.initialClients ?? []) {
-			const joinSignal: ISignalMessage = {
+		// list of signals to process due to this new connection
+		let signalsToProcess: ISignalMessage[] = [clearSignal];
+
+		const clientJoinSignals: ISignalMessage[] = (connection.initialClients ?? []).map(
+			(priorClient) => ({
 				clientId: null, // system signal
 				content: JSON.stringify({
 					type: SignalType.ClientJoin,
 					content: priorClient, // ISignalClient
 				}),
-			};
-			this.props.signalHandler(joinSignal);
+			}),
+		);
+		if (clientJoinSignals.length > 0) {
+			signalsToProcess = signalsToProcess.concat(clientJoinSignals);
 		}
 
 		// Unfortunately, there is no defined order between initialSignals (including join & leave signals)
 		// and connection.initialClients. In practice, connection.initialSignals quite often contains join signal
 		// for "self" and connection.initialClients does not contain "self", so we have to process them after
 		// "clear" signal above.
-		if (connection.initialSignals !== undefined) {
-			for (const signal of connection.initialSignals) {
-				this.props.signalHandler(signal);
-			}
+		if (connection.initialSignals !== undefined && connection.initialSignals.length > 0) {
+			signalsToProcess = signalsToProcess.concat(connection.initialSignals);
 		}
+
+		this.props.signalHandler(signalsToProcess);
 	}
 
 	/**
@@ -1137,6 +1141,11 @@ export class ConnectionManager implements IConnectionManager {
 	private readonly opHandler = (documentId: string, messagesArg: ISequencedDocumentMessage[]) => {
 		const messages = Array.isArray(messagesArg) ? messagesArg : [messagesArg];
 		this.props.incomingOpHandler(messages, "opHandler");
+	};
+
+	private readonly signalHandler = (signalsArg: ISignalMessage | ISignalMessage[]) => {
+		const signals = Array.isArray(signalsArg) ? signalsArg : [signalsArg];
+		this.props.signalHandler(signals);
 	};
 
 	// Always connect in write mode after getting nacked.

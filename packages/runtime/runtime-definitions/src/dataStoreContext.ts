@@ -101,7 +101,7 @@ export const VisibilityState = {
 	 */
 	GloballyVisible: "GloballyVisible",
 };
-export type VisibilityState = typeof VisibilityState[keyof typeof VisibilityState];
+export type VisibilityState = (typeof VisibilityState)[keyof typeof VisibilityState];
 
 export interface IContainerRuntimeBaseEvents extends IEvent {
 	(event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void);

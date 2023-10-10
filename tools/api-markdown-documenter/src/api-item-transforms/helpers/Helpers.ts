@@ -37,20 +37,22 @@ import {
 	UnorderedListNode,
 } from "../../documentation-domain";
 import { Logger } from "../../Logging";
-import { injectSeparator } from "../../utilities";
 import {
 	ApiFunctionLike,
+	injectSeparator,
+	getQualifiedApiItemName,
+	getSeeBlocks,
+	getThrowsBlocks,
+	getDeprecatedBlock,
+	getExampleBlocks,
+	getReturnsBlock,
+} from "../../utilities";
+import {
 	doesItemKindRequireOwnDocument,
 	doesItemRequireOwnDocument,
 	getAncestralHierarchy,
-	getDeprecatedBlock,
-	getExampleBlocks,
 	getLinkForApiItem,
-	getQualifiedApiItemName,
-	getReturnsBlock,
-	getSeeBlocks,
-	getThrowsBlocks,
-} from "../ApiItemUtilities";
+} from "../ApiItemTransformUtilities";
 import { transformTsdocSection } from "../TsdocNodeTransforms";
 import { getTsdocNodeTransformationOptions } from "../Utilities";
 import { ApiItemTransformationConfiguration } from "../configuration";
