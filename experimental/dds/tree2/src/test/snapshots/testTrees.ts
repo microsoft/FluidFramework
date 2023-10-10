@@ -116,7 +116,7 @@ export async function generateTestTrees(): Promise<
 		only?: boolean;
 		skip?: boolean;
 		name: string;
-		tree: (a: (b: ISharedTree, validationName: string) => Promise<void>) => Promise<void>;
+		tree: (takeSnapshot: (tree: ISharedTree, name: string) => Promise<void>) => Promise<void>;
 	}[] = [
 		{
 			name: "move-across-fields",
