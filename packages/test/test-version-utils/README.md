@@ -1,4 +1,4 @@
-# @fluid-internal/test-version-utils
+# @fluid-private/test-version-utils
 
 This is a package for writing and setting up Fluid end to end tests using `mocha` that will generate variants with
 a specific driver and different version combinations of Fluid API between layers via `TestObjectProvider` provided

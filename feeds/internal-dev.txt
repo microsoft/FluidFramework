@@ -1,4 +1,4 @@
-@fluid-internal/test-version-utils
+@fluid-private/test-version-utils
 @fluid-internal/test-pairwise-generator
 @fluid-internal/test-end-to-end-tests
 @fluid-internal/test-drivers

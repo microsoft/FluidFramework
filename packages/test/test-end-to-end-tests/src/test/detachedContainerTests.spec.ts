@@ -41,7 +41,7 @@ import {
 	describeFullCompat,
 	describeNoCompat,
 	itExpects,
-} from "@fluid-internal/test-version-utils";
+} from "@fluid-private/test-version-utils";
 
 const detachedContainerRefSeqNumber = 0;
 

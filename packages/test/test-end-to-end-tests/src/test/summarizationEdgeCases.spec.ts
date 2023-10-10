@@ -8,7 +8,7 @@ import {
 	ITestDataObject,
 	TestDataObjectType,
 	describeNoCompat,
-} from "@fluid-internal/test-version-utils";
+} from "@fluid-private/test-version-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import {
 	ITestContainerConfig,

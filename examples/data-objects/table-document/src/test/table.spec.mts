@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeLoaderCompat } from "@fluid-internal/test-version-utils";
+import { describeLoaderCompat } from "@fluid-private/test-version-utils";
 import { TableDocument } from "../document.js";
 import { TableSlice } from "../slice.js";
 import { TableDocumentItem } from "../table.js";

@@ -11,7 +11,7 @@ import {
 	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluid-internal/test-version-utils";
+import { describeFullCompat } from "@fluid-private/test-version-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { IContainer } from "@fluidframework/container-definitions";

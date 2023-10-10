@@ -6,7 +6,7 @@
 @fluid-tools/fetch-tool
 @fluid-experimental/devtools-core
 @fluid-experimental/devtools
-@fluid-internal/test-version-utils
+@fluid-private/test-version-utils
 @fluidframework/test-utils
 @fluid-internal/test-service-load
 @fluid-internal/test-pairwise-generator

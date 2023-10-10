@@ -13,7 +13,7 @@ import { IContainer, IProvideRuntimeFactory } from "@fluidframework/container-de
 
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider, createTestContainerRuntimeFactory } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluid-internal/test-version-utils";
+import { describeFullCompat } from "@fluid-private/test-version-utils";
 import { rootDataStoreRequestHandler } from "@fluidframework/request-handler";
 
 // By default, the container loads in read mode.  However, pick() attempts silently fail if not in write

@@ -14,7 +14,7 @@ import {
 	ITestFluidObject,
 	ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
-import { describeFullCompat, describeNoCompat } from "@fluid-internal/test-version-utils";
+import { describeFullCompat, describeNoCompat } from "@fluid-private/test-version-utils";
 
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";

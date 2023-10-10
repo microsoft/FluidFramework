@@ -22,7 +22,7 @@ import {
 	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, getContainerRuntimeApi } from "@fluid-internal/test-version-utils";
+import { describeNoCompat, getContainerRuntimeApi } from "@fluid-private/test-version-utils";
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import {
 	IChannelAttributes,

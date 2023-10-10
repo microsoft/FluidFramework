@@ -17,7 +17,7 @@ import {
 	describeFullCompat,
 	describeNoCompat,
 	itExpects,
-} from "@fluid-internal/test-version-utils";
+} from "@fluid-private/test-version-utils";
 import { ContainerErrorType, IContainer } from "@fluidframework/container-definitions";
 
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
