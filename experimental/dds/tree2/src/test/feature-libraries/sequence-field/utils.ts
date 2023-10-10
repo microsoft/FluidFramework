@@ -19,12 +19,7 @@ import {
 	tagChange,
 } from "../../../core";
 import { TestChange } from "../../testChange";
-import {
-	assertMarkListEqual,
-	deepFreeze,
-	defaultRevisionMetadataFromChanges,
-	fakeTaggedRepair as fakeRepair,
-} from "../../utils";
+import { assertMarkListEqual, deepFreeze, defaultRevisionMetadataFromChanges } from "../../utils";
 import { brand, fakeIdAllocator, IdAllocator, idAllocatorFromMaxId } from "../../../util";
 import { TestChangeset } from "./testEdits";
 
@@ -142,7 +137,6 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 	let inverted = SF.invert(
 		change,
 		TestChange.invert,
-		fakeRepair,
 		// Sequence fields should not generate IDs during invert
 		fakeIdAllocator,
 		table,
@@ -155,7 +149,6 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 		inverted = SF.amendInvert(
 			inverted,
 			change.revision,
-			fakeRepair,
 			// Sequence fields should not generate IDs during invert
 			fakeIdAllocator,
 			table,

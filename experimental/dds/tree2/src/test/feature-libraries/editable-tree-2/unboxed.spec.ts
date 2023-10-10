@@ -155,8 +155,7 @@ describe("unboxedField", () => {
 describe("unboxedTree", () => {
 	it("Leaf", () => {
 		const builder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
-		const rootSchema = SchemaBuilder.fieldRequired(leafDomain.string);
-		const schema = builder.toDocumentSchema(rootSchema);
+		const schema = builder.toDocumentSchema(leafDomain.string);
 
 		const { context, cursor } = initializeTreeWithContent({
 			schema,
