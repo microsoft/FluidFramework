@@ -11,6 +11,13 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
+	"exports": {
+		".": {
+			"types": "./lib/index.d.ts",
+			"import": "./lib/index.js",
+			"require": "./dist/index.js"
+		}
+	},
 	"main": "dist/index.js",
 	"module": "lib/index.js",
 	"types": "dist/index.d.ts",
