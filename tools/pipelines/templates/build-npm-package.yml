@@ -478,7 +478,14 @@ stages:
 
                   echo "@fluidframework:registry=${{ variables.feed }}" >> ./.npmrc
                   echo "@fluid-experimental:registry=${{ variables.feed }}" >> ./.npmrc
+
+                  # This is confusing, but we are using the .npmrc here to load dependencies from different feeds. These
+                  # scopes must be loaded from the "dev" feed because that is the only place they are published. Ideally
+                  # this logic will be centralized outside of CI in the future.
                   echo "@fluid-internal:registry=${{ variables.devFeed }}" >> ./.npmrc
+                  echo "@fluid-private:registry=${{ variables.devFeed }}" >> ./.npmrc
+
+                  # These scopes must be loaded from different internal feeds beyond the Fluid feeds.
                   echo "@ff-internal:registry=$(ado-feeds-build)" >> ./.npmrc
                   echo "@microsoft:registry=$(ado-feeds-office)" >> ./.npmrc
                   echo "always-auth=true" >> ./.npmrc
