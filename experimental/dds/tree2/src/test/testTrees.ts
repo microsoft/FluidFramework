@@ -93,28 +93,28 @@ export function treeContentFromTestTree(test: TestTree): TreeContent {
 const builder = new SchemaBuilder({ scope: "test", libraries: [leaf.library] });
 export const minimal = builder.struct("minimal", {});
 export const hasMinimalValueField = builder.struct("hasMinimalValueField", {
-	field: SchemaBuilder.fieldRequired(minimal),
+	field: minimal,
 });
 export const hasNumericValueField = builder.struct("hasNumericValueField", {
-	field: SchemaBuilder.fieldRequired(leaf.number),
+	field: leaf.number,
 });
 export const hasPolymorphicValueField = builder.struct("hasPolymorphicValueField", {
-	field: SchemaBuilder.fieldRequired(leaf.number, minimal),
+	field: [leaf.number, minimal],
 });
 export const hasAnyValueField = builder.struct("hasAnyValueField", {
-	field: SchemaBuilder.fieldRequired(Any),
+	field: Any,
 });
 export const hasOptionalField = builder.struct("hasOptionalField", {
 	field: SchemaBuilder.fieldOptional(leaf.number),
 });
 export const allTheFields = builder.struct("allTheFields", {
 	optional: SchemaBuilder.fieldOptional(leaf.number),
-	valueField: SchemaBuilder.fieldRequired(leaf.number),
+	valueField: leaf.number,
 	sequence: SchemaBuilder.fieldSequence(leaf.number),
 });
 export const anyFields = builder.struct("anyFields", {
 	optional: SchemaBuilder.fieldOptional(Any),
-	valueField: SchemaBuilder.fieldRequired(Any),
+	valueField: Any,
 	sequence: SchemaBuilder.fieldSequence(Any),
 });
 
