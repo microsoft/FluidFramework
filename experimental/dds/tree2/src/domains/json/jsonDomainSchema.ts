@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { AllowedTypes, FieldKinds, SchemaBuilder } from "../../feature-libraries";
+import { AllowedTypes, FieldKinds, FieldSchema, SchemaBuilder } from "../../feature-libraries";
 import { requireAssignableTo } from "../../util";
 import * as leaf from "../leafDomain";
 
-const builder = new SchemaBuilder("Json Domain", {}, leaf.library);
+const builder = new SchemaBuilder({ scope: "Json", libraries: [leaf.library] });
 
 /**
  * @alpha
@@ -24,7 +24,7 @@ export const jsonString = leaf.string;
 /**
  * @alpha
  */
-export const jsonNull = builder.struct("Json.Null", {});
+export const jsonNull = builder.struct("Null", {});
 
 /**
  * @alpha
@@ -49,19 +49,19 @@ export const jsonRoot = [() => jsonObject, () => jsonArray, ...jsonPrimitives] a
  * @alpha
  */
 export const jsonObject = builder.mapRecursive(
-	"Json.Object",
-	SchemaBuilder.fieldRecursive(FieldKinds.optional, ...jsonRoot),
+	"Object",
+	new FieldSchema(FieldKinds.optional, jsonRoot),
 );
 
 /**
  * @alpha
  */
 export const jsonArray = builder.fieldNodeRecursive(
-	"Json.Array",
-	SchemaBuilder.fieldRecursive(FieldKinds.sequence, ...jsonRoot),
+	"Array",
+	new FieldSchema(FieldKinds.sequence, jsonRoot),
 );
 
 /**
  * @alpha
  */
-export const jsonSchema = builder.intoLibrary();
+export const jsonSchema = builder.finalize();

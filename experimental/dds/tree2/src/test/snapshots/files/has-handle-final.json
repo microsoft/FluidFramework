@@ -46,7 +46,7 @@
                                 "wasEmpty": true,
                                 "newContent": {
                                   "set": {
-                                    "type": "Handle",
+                                    "type": "com.fluidframework.leaf.handle",
                                     "value": {
                                       "type": "__fluid_handle__",
                                       "url": "/test/test"
@@ -82,15 +82,30 @@
                   "version": "1.0.0",
                   "treeSchema": [
                     {
-                      "name": "Handle",
+                      "name": "com.fluidframework.leaf.boolean",
+                      "structFields": [],
+                      "leafValue": 2
+                    },
+                    {
+                      "name": "com.fluidframework.leaf.handle",
                       "structFields": [],
                       "leafValue": 3
+                    },
+                    {
+                      "name": "com.fluidframework.leaf.number",
+                      "structFields": [],
+                      "leafValue": 0
+                    },
+                    {
+                      "name": "com.fluidframework.leaf.string",
+                      "structFields": [],
+                      "leafValue": 1
                     }
                   ],
                   "rootFieldSchema": {
                     "kind": "Optional",
                     "types": [
-                      "Handle"
+                      "com.fluidframework.leaf.handle"
                     ]
                   }
                 },
@@ -112,7 +127,7 @@
                     "rootFieldKey",
                     [
                       {
-                        "type": "Handle",
+                        "type": "com.fluidframework.leaf.handle",
                         "value": {
                           "type": "__fluid_handle__",
                           "url": "/test/test"
@@ -121,6 +136,23 @@
                     ]
                   ]
                 ],
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "DetachedFieldIndex": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "DetachedFieldIndexBlob": {
+                "type": "blob",
+                "content": {
+                  "data": "[]",
+                  "id": 0
+                },
                 "encoding": "utf-8"
               }
             }

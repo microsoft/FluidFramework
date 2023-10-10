@@ -85,11 +85,11 @@
                   "version": "1.0.0",
                   "treeSchema": [
                     {
-                      "name": "SeqMap",
+                      "name": "has-sequence-map.SeqMap",
                       "mapFields": {
                         "kind": "Sequence",
                         "types": [
-                          "SeqMap"
+                          "has-sequence-map.SeqMap"
                         ]
                       },
                       "structFields": []
@@ -98,7 +98,7 @@
                   "rootFieldSchema": {
                     "kind": "Sequence",
                     "types": [
-                      "SeqMap"
+                      "has-sequence-map.SeqMap"
                     ]
                   }
                 },
@@ -132,6 +132,23 @@
                     ]
                   ]
                 ],
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "DetachedFieldIndex": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "DetachedFieldIndexBlob": {
+                "type": "blob",
+                "content": {
+                  "data": "[]",
+                  "id": 1
+                },
                 "encoding": "utf-8"
               }
             }

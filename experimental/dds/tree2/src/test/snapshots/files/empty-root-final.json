@@ -34,16 +34,31 @@
                   "version": "1.0.0",
                   "treeSchema": [
                     {
-                      "name": "TestInner",
+                      "name": "com.fluidframework.leaf.boolean",
+                      "structFields": [],
+                      "leafValue": 2
+                    },
+                    {
+                      "name": "com.fluidframework.leaf.handle",
+                      "structFields": [],
+                      "leafValue": 3
+                    },
+                    {
+                      "name": "com.fluidframework.leaf.number",
+                      "structFields": [],
+                      "leafValue": 0
+                    },
+                    {
+                      "name": "com.fluidframework.leaf.string",
+                      "structFields": [],
+                      "leafValue": 1
+                    },
+                    {
+                      "name": "test trees.TestInner",
                       "mapFields": {
                         "kind": "Sequence"
                       },
                       "structFields": []
-                    },
-                    {
-                      "name": "TestLeaf",
-                      "structFields": [],
-                      "leafValue": 1
                     }
                   ],
                   "rootFieldSchema": {
@@ -64,6 +79,23 @@
               "ForestTree": {
                 "type": "blob",
                 "content": [],
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "DetachedFieldIndex": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "DetachedFieldIndexBlob": {
+                "type": "blob",
+                "content": {
+                  "data": "[]",
+                  "id": -1
+                },
                 "encoding": "utf-8"
               }
             }

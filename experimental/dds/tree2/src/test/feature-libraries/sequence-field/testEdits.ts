@@ -9,7 +9,6 @@ import { fakeTaggedRepair as fakeRepair } from "../../utils";
 import {
 	ChangeAtomId,
 	ChangesetLocalId,
-	ITreeCursorSynchronous,
 	JsonableTree,
 	mintRevisionTag,
 	RevisionTag,
@@ -217,7 +216,7 @@ function createInsertMark<TChange = never>(
 }
 
 /**
- * @param countOrContent - The content to revive.
+ * @param count - The content to revive.
  * If a number is passed, that many dummy nodes will be generated.
  * @param cellId - The first cell to revive content into.
  * If undefined, the revive targets populated cells and is therefore muted.
@@ -225,17 +224,13 @@ function createInsertMark<TChange = never>(
  * Use this to give the mark a `RevisionTag`
  */
 function createReviveMark<TChange = never>(
-	countOrContent: number | ITreeCursorSynchronous[],
+	count: number,
 	cellId?: SF.CellId,
 	overrides?: Partial<SF.Revive<TChange>>,
 ): SF.Revive<TChange> {
-	const content = Array.isArray(countOrContent)
-		? countOrContent
-		: generateJsonables(countOrContent).map(singleTextCursor);
 	const mark: SF.Revive<TChange> = {
 		type: "Revive",
-		count: content.length,
-		content,
+		count,
 	};
 	if (cellId !== undefined) {
 		mark.cellId = cellId;

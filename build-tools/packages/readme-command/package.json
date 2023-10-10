@@ -1,5 +1,5 @@
 {
-	"name": "@fluid-internal/readme-command",
+	"name": "@fluid-private/readme-command",
 	"version": "0.26.0",
 	"private": true,
 	"description": "CLI to generate readmes for Fluid build-tools",

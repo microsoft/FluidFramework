@@ -7,13 +7,16 @@ import { SchemaBuilder, Any } from "../../feature-libraries";
 import { createSharedTreeView } from "../../shared-tree";
 import { ValueSchema, AllowedUpdateType, storedEmptyFieldSchema } from "../../core";
 
-const builder = new SchemaBuilder("Schematize Tree Tests");
+const builder = new SchemaBuilder({ scope: "test", name: "Schematize Tree Tests" });
 const root = builder.leaf("root", ValueSchema.Number);
-const schema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(root));
+const schema = builder.toDocumentSchema(SchemaBuilder.fieldOptional(root));
 
-const builderGeneralized = new SchemaBuilder("Schematize Tree Tests Generalized");
+const builderGeneralized = new SchemaBuilder({
+	scope: "test",
+	name: "Schematize Tree Tests Generalized",
+});
 const rootGeneralized = builderGeneralized.leaf("root", ValueSchema.Number);
-const schemaGeneralized = builderGeneralized.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
+const schemaGeneralized = builderGeneralized.toDocumentSchema(SchemaBuilder.fieldOptional(Any));
 
 describe("sharedTreeView", () => {
 	describe("schematize", () => {

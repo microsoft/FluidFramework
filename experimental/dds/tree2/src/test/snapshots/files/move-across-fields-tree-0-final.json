@@ -207,6 +207,23 @@
               }
             }
           }
+        },
+        {
+          "type": "tree",
+          "DetachedFieldIndex": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "DetachedFieldIndexBlob": {
+                "type": "blob",
+                "content": {
+                  "data": "[]",
+                  "id": 2
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
         }
       ]
     }

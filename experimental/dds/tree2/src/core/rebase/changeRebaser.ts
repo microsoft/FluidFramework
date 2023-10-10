@@ -4,7 +4,6 @@
  */
 
 import { Invariant } from "../../util";
-import { ReadonlyRepairDataStore } from "../repair";
 import type { RevisionTag } from "./types";
 
 /**
@@ -54,19 +53,12 @@ export interface ChangeRebaser<TChangeset> {
 	 * This flag is relevant to merge semantics that are dependent on edit sequencing order:
 	 * - In the context of an undo, this function inverts a change that is sequenced and applied before the produced inverse.
 	 * - In the context of a rollback, this function inverts a change that is sequenced after but applied before the produced inverse.
-	 * @param repairStore - The store to query for repair data.
-	 * If undefined, dummy data will be created instead.
 	 * @returns the inverse of `changes`.
 	 *
 	 * `compose([changes, inverse(changes)])` be equal to `compose([])`:
 	 * See {@link ChangeRebaser} for details.
 	 */
-	invert(
-		changes: TaggedChange<TChangeset>,
-		isRollback: boolean,
-		// TODO: make the repair store mandatory when all usages of this method have repair data support.
-		repairStore?: ReadonlyRepairDataStore,
-	): TChangeset;
+	invert(changes: TaggedChange<TChangeset>, isRollback: boolean): TChangeset;
 
 	/**
 	 * Rebase `change` over `over`.

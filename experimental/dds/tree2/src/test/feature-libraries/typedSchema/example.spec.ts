@@ -3,18 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { ValueSchema } from "../../../core";
+import { leaf } from "../../../domains";
 import { FieldKinds, SchemaBuilder } from "../../../feature-libraries";
 
-const builder = new SchemaBuilder("example");
-
-// Declare a simple type which just holds a number.
-const numberSchema = builder.leaf("number", ValueSchema.Number);
+const builder = new SchemaBuilder({ scope: "example", libraries: [leaf.library] });
 
 // Declare struct
 const ballSchema = builder.struct("Ball", {
-	x: SchemaBuilder.fieldRequired(numberSchema),
-	y: SchemaBuilder.fieldRequired(numberSchema),
+	x: SchemaBuilder.fieldRequired(leaf.number),
+	y: SchemaBuilder.fieldRequired(leaf.number),
 });
 
 // We can inspect the schema.
@@ -34,4 +31,4 @@ const diagramSchema = builder.structRecursive("Diagram", {
 const rootField = SchemaBuilder.fieldOptional(diagramSchema);
 
 // Collect the schema together.
-const schemaData = builder.intoDocumentSchema(rootField);
+const schemaData = builder.toDocumentSchema(rootField);

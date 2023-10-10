@@ -28,7 +28,7 @@
                                 "count": 1,
                                 "content": [
                                   {
-                                    "type": "TestInner"
+                                    "type": "test trees.TestInner"
                                   }
                                 ],
                                 "cellId": {
@@ -64,7 +64,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "1"
                                             }
                                           ],
@@ -109,7 +109,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "2"
                                             }
                                           ],
@@ -154,7 +154,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "3"
                                             }
                                           ],
@@ -196,7 +196,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "4"
                                             }
                                           ],
@@ -241,7 +241,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "5"
                                             }
                                           ],
@@ -286,7 +286,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "6"
                                             }
                                           ],
@@ -328,7 +328,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "7"
                                             }
                                           ],
@@ -373,7 +373,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "8"
                                             }
                                           ],
@@ -418,7 +418,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "9"
                                             }
                                           ],
@@ -455,7 +455,7 @@
                                 "count": 1,
                                 "content": [
                                   {
-                                    "type": "TestInner"
+                                    "type": "test trees.TestInner"
                                   }
                                 ],
                                 "cellId": {
@@ -491,7 +491,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "10"
                                             }
                                           ],
@@ -536,7 +536,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "11"
                                             }
                                           ],
@@ -581,7 +581,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "12"
                                             }
                                           ],
@@ -623,7 +623,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "13"
                                             }
                                           ],
@@ -668,7 +668,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "14"
                                             }
                                           ],
@@ -713,7 +713,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "15"
                                             }
                                           ],
@@ -755,7 +755,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "16"
                                             }
                                           ],
@@ -800,7 +800,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "17"
                                             }
                                           ],
@@ -845,7 +845,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "18"
                                             }
                                           ],
@@ -882,7 +882,7 @@
                                 "count": 1,
                                 "content": [
                                   {
-                                    "type": "TestInner"
+                                    "type": "test trees.TestInner"
                                   }
                                 ],
                                 "cellId": {
@@ -918,7 +918,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "19"
                                             }
                                           ],
@@ -963,7 +963,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "20"
                                             }
                                           ],
@@ -1008,7 +1008,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "21"
                                             }
                                           ],
@@ -1050,7 +1050,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "22"
                                             }
                                           ],
@@ -1095,7 +1095,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "23"
                                             }
                                           ],
@@ -1140,7 +1140,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "24"
                                             }
                                           ],
@@ -1182,7 +1182,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "25"
                                             }
                                           ],
@@ -1227,7 +1227,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "26"
                                             }
                                           ],
@@ -1272,7 +1272,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "27"
                                             }
                                           ],
@@ -1306,7 +1306,7 @@
                                 "count": 1,
                                 "content": [
                                   {
-                                    "type": "TestInner"
+                                    "type": "test trees.TestInner"
                                   }
                                 ],
                                 "cellId": {
@@ -1342,7 +1342,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "28"
                                             }
                                           ],
@@ -1387,7 +1387,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "29"
                                             }
                                           ],
@@ -1432,7 +1432,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "30"
                                             }
                                           ],
@@ -1474,7 +1474,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "31"
                                             }
                                           ],
@@ -1519,7 +1519,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "32"
                                             }
                                           ],
@@ -1564,7 +1564,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "33"
                                             }
                                           ],
@@ -1606,7 +1606,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "34"
                                             }
                                           ],
@@ -1651,7 +1651,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "35"
                                             }
                                           ],
@@ -1696,7 +1696,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "36"
                                             }
                                           ],
@@ -1733,7 +1733,7 @@
                                 "count": 1,
                                 "content": [
                                   {
-                                    "type": "TestInner"
+                                    "type": "test trees.TestInner"
                                   }
                                 ],
                                 "cellId": {
@@ -1769,7 +1769,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "37"
                                             }
                                           ],
@@ -1814,7 +1814,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "38"
                                             }
                                           ],
@@ -1859,7 +1859,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "39"
                                             }
                                           ],
@@ -1901,7 +1901,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "40"
                                             }
                                           ],
@@ -1946,7 +1946,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "41"
                                             }
                                           ],
@@ -1991,7 +1991,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "42"
                                             }
                                           ],
@@ -2033,7 +2033,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "43"
                                             }
                                           ],
@@ -2078,7 +2078,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "44"
                                             }
                                           ],
@@ -2123,7 +2123,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "45"
                                             }
                                           ],
@@ -2160,7 +2160,7 @@
                                 "count": 1,
                                 "content": [
                                   {
-                                    "type": "TestInner"
+                                    "type": "test trees.TestInner"
                                   }
                                 ],
                                 "cellId": {
@@ -2196,7 +2196,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "46"
                                             }
                                           ],
@@ -2241,7 +2241,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "47"
                                             }
                                           ],
@@ -2286,7 +2286,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "48"
                                             }
                                           ],
@@ -2328,7 +2328,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "49"
                                             }
                                           ],
@@ -2373,7 +2373,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "50"
                                             }
                                           ],
@@ -2418,7 +2418,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "51"
                                             }
                                           ],
@@ -2460,7 +2460,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "52"
                                             }
                                           ],
@@ -2505,7 +2505,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "53"
                                             }
                                           ],
@@ -2550,7 +2550,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "54"
                                             }
                                           ],
@@ -2584,7 +2584,7 @@
                                 "count": 1,
                                 "content": [
                                   {
-                                    "type": "TestInner"
+                                    "type": "test trees.TestInner"
                                   }
                                 ],
                                 "cellId": {
@@ -2620,7 +2620,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "55"
                                             }
                                           ],
@@ -2665,7 +2665,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "56"
                                             }
                                           ],
@@ -2710,7 +2710,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "57"
                                             }
                                           ],
@@ -2752,7 +2752,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "58"
                                             }
                                           ],
@@ -2797,7 +2797,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "59"
                                             }
                                           ],
@@ -2842,7 +2842,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "60"
                                             }
                                           ],
@@ -2884,7 +2884,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "61"
                                             }
                                           ],
@@ -2929,7 +2929,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "62"
                                             }
                                           ],
@@ -2974,7 +2974,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "63"
                                             }
                                           ],
@@ -3011,7 +3011,7 @@
                                 "count": 1,
                                 "content": [
                                   {
-                                    "type": "TestInner"
+                                    "type": "test trees.TestInner"
                                   }
                                 ],
                                 "cellId": {
@@ -3047,7 +3047,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "64"
                                             }
                                           ],
@@ -3092,7 +3092,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "65"
                                             }
                                           ],
@@ -3137,7 +3137,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "66"
                                             }
                                           ],
@@ -3179,7 +3179,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "67"
                                             }
                                           ],
@@ -3224,7 +3224,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "68"
                                             }
                                           ],
@@ -3269,7 +3269,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "69"
                                             }
                                           ],
@@ -3311,7 +3311,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "70"
                                             }
                                           ],
@@ -3356,7 +3356,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "71"
                                             }
                                           ],
@@ -3401,7 +3401,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "72"
                                             }
                                           ],
@@ -3438,7 +3438,7 @@
                                 "count": 1,
                                 "content": [
                                   {
-                                    "type": "TestInner"
+                                    "type": "test trees.TestInner"
                                   }
                                 ],
                                 "cellId": {
@@ -3474,7 +3474,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "73"
                                             }
                                           ],
@@ -3519,7 +3519,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "74"
                                             }
                                           ],
@@ -3564,7 +3564,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "75"
                                             }
                                           ],
@@ -3606,7 +3606,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "76"
                                             }
                                           ],
@@ -3651,7 +3651,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "77"
                                             }
                                           ],
@@ -3696,7 +3696,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "78"
                                             }
                                           ],
@@ -3738,7 +3738,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "79"
                                             }
                                           ],
@@ -3783,7 +3783,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "80"
                                             }
                                           ],
@@ -3828,7 +3828,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "TestLeaf",
+                                              "type": "com.fluidframework.leaf.string",
                                               "value": "81"
                                             }
                                           ],
@@ -3869,16 +3869,31 @@
                   "version": "1.0.0",
                   "treeSchema": [
                     {
-                      "name": "TestInner",
+                      "name": "com.fluidframework.leaf.boolean",
+                      "structFields": [],
+                      "leafValue": 2
+                    },
+                    {
+                      "name": "com.fluidframework.leaf.handle",
+                      "structFields": [],
+                      "leafValue": 3
+                    },
+                    {
+                      "name": "com.fluidframework.leaf.number",
+                      "structFields": [],
+                      "leafValue": 0
+                    },
+                    {
+                      "name": "com.fluidframework.leaf.string",
+                      "structFields": [],
+                      "leafValue": 1
+                    },
+                    {
+                      "name": "test trees.TestInner",
                       "mapFields": {
                         "kind": "Sequence"
                       },
                       "structFields": []
-                    },
-                    {
-                      "name": "TestLeaf",
-                      "structFields": [],
-                      "leafValue": 1
                     }
                   ],
                   "rootFieldSchema": {
@@ -3903,141 +3918,141 @@
                     "FieldA",
                     [
                       {
-                        "type": "TestInner",
+                        "type": "test trees.TestInner",
                         "fields": {
                           "FieldA": [
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "1"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "2"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "3"
                             }
                           ],
                           "FieldB": [
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "4"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "5"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "6"
                             }
                           ],
                           "FieldC": [
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "7"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "8"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "9"
                             }
                           ]
                         }
                       },
                       {
-                        "type": "TestInner",
+                        "type": "test trees.TestInner",
                         "fields": {
                           "FieldA": [
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "10"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "11"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "12"
                             }
                           ],
                           "FieldB": [
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "13"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "14"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "15"
                             }
                           ],
                           "FieldC": [
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "16"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "17"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "18"
                             }
                           ]
                         }
                       },
                       {
-                        "type": "TestInner",
+                        "type": "test trees.TestInner",
                         "fields": {
                           "FieldA": [
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "19"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "20"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "21"
                             }
                           ],
                           "FieldB": [
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "22"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "23"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "24"
                             }
                           ],
                           "FieldC": [
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "25"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "26"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "27"
                             }
                           ]
@@ -4049,141 +4064,141 @@
                     "FieldB",
                     [
                       {
-                        "type": "TestInner",
+                        "type": "test trees.TestInner",
                         "fields": {
                           "FieldA": [
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "28"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "29"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "30"
                             }
                           ],
                           "FieldB": [
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "31"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "32"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "33"
                             }
                           ],
                           "FieldC": [
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "34"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "35"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "36"
                             }
                           ]
                         }
                       },
                       {
-                        "type": "TestInner",
+                        "type": "test trees.TestInner",
                         "fields": {
                           "FieldA": [
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "37"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "38"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "39"
                             }
                           ],
                           "FieldB": [
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "40"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "41"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "42"
                             }
                           ],
                           "FieldC": [
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "43"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "44"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "45"
                             }
                           ]
                         }
                       },
                       {
-                        "type": "TestInner",
+                        "type": "test trees.TestInner",
                         "fields": {
                           "FieldA": [
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "46"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "47"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "48"
                             }
                           ],
                           "FieldB": [
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "49"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "50"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "51"
                             }
                           ],
                           "FieldC": [
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "52"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "53"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "54"
                             }
                           ]
@@ -4195,141 +4210,141 @@
                     "FieldC",
                     [
                       {
-                        "type": "TestInner",
+                        "type": "test trees.TestInner",
                         "fields": {
                           "FieldA": [
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "55"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "56"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "57"
                             }
                           ],
                           "FieldB": [
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "58"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "59"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "60"
                             }
                           ],
                           "FieldC": [
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "61"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "62"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "63"
                             }
                           ]
                         }
                       },
                       {
-                        "type": "TestInner",
+                        "type": "test trees.TestInner",
                         "fields": {
                           "FieldA": [
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "64"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "65"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "66"
                             }
                           ],
                           "FieldB": [
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "67"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "68"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "69"
                             }
                           ],
                           "FieldC": [
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "70"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "71"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "72"
                             }
                           ]
                         }
                       },
                       {
-                        "type": "TestInner",
+                        "type": "test trees.TestInner",
                         "fields": {
                           "FieldA": [
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "73"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "74"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "75"
                             }
                           ],
                           "FieldB": [
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "76"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "77"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "78"
                             }
                           ],
                           "FieldC": [
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "79"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "80"
                             },
                             {
-                              "type": "TestLeaf",
+                              "type": "com.fluidframework.leaf.string",
                               "value": "81"
                             }
                           ]
@@ -4338,6 +4353,23 @@
                     ]
                   ]
                 ],
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "DetachedFieldIndex": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "DetachedFieldIndexBlob": {
+                "type": "blob",
+                "content": {
+                  "data": "[]",
+                  "id": 89
+                },
                 "encoding": "utf-8"
               }
             }

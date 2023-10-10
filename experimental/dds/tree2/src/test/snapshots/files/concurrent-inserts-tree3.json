@@ -386,6 +386,23 @@
               }
             }
           }
+        },
+        {
+          "type": "tree",
+          "DetachedFieldIndex": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "DetachedFieldIndexBlob": {
+                "type": "blob",
+                "content": {
+                  "data": "[]",
+                  "id": 17
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
         }
       ]
     }

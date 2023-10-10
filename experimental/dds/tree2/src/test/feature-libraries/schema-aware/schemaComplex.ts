@@ -9,7 +9,7 @@ import { FieldKinds, ValueSchema, SchemaAware } from "../../../";
 import { SchemaBuilder, TreeSchema } from "../../../feature-libraries";
 import { requireAssignableTo } from "../../../util";
 
-const builder = new SchemaBuilder("Complex Schema Example");
+const builder = new SchemaBuilder({ scope: "Complex Schema Example" });
 
 // Schema
 export const stringTaskSchema = builder.leaf("StringTask", ValueSchema.String);
@@ -29,7 +29,7 @@ export const listTaskSchema = builder.structRecursive("ListTask", {
 
 export const rootFieldSchema = SchemaBuilder.fieldRequired(stringTaskSchema, listTaskSchema);
 
-export const appSchemaData = builder.intoDocumentSchema(rootFieldSchema);
+export const appSchemaData = builder.toDocumentSchema(rootFieldSchema);
 
 // Schema aware types
 export type StringTask = SchemaAware.TypedNode<typeof stringTaskSchema>;

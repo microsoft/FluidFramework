@@ -6,7 +6,7 @@
 import * as SchemaAware from "../schema-aware";
 import { FieldKey, TreeSchemaIdentifier, TreeValue } from "../../core";
 import { Assume, RestrictiveReadonlyRecord, _InlineTrick } from "../../util";
-import { LocalNodeKey } from "../node-key";
+import { LocalNodeKey, StableNodeKey } from "../node-key";
 import {
 	FieldSchema,
 	InternalTypedSchemaTypes,
@@ -336,7 +336,7 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
  * - When polymorphism over {@link FieldSchema} (and not just a union of {@link AllowedTypes}) is required.
  * For example when encoding a schema for a type like
  * `Foo[] | Bar[]`, `Foo | Foo[]` or `Optional<Foo> | Optional<Bar>` (Where `Optional` is the Optional field kind, not TypeScript's `Optional`).
- * Since this schema system only allows `|` of {@link TreeSchema} (and only when declaring a {@link FieldSchema}), see {@link SchemaBuilder.field},
+ * Since this schema system only allows `|` of {@link TreeSchema} (and only when declaring a {@link FieldSchema}), see {@link SchemaBuilderBase.field},
  * these aggregate types are most simply expressed by creating fieldNodes for the terms like `Foo[]`, and `Optional<Foo>`.
  * Note that these are distinct from types like `(Foo | Bar)[]` and `Optional<Foo | Bar>` which can be expressed as single fields without extra nodes.
  * - When a distinct merge identity is desired for a field.
@@ -353,6 +353,11 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
  * Instead {@link FieldNode}s can be use to achieve something similar, more like:
  * `FieldNode<Sequence<Foo>> | FieldNode<Sequence<Bar>>` or `OptionalField<FieldNode<Sequence<Foo>>>`.
  *
+ * @privateRemarks
+ * TODO: The rule walking over the tree via enumerable own properties is lossless (see [ReadMe](./README.md) for details)
+ * fails to be true for recursive field nodes with field kind optional, since the length of the chain of field nodes is lost.
+ * THis could be fixed by tweaking the unboxing rules, or simply ban view schema that would have this problem (check for recursive optional field nodes).
+ * Replacing the field node pattern with one where the FieldNode node exposes APIs from its field instead of unboxing could have the same issue, and same solutions.
  * @alpha
  */
 export interface FieldNode<TSchema extends FieldNodeSchema> extends TreeNode {
@@ -538,21 +543,21 @@ export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
 	 * @param value - The content to insert.
 	 * @throws Throws if any of the input indices are invalid.
 	 */
-	insertAt(index: number, value: FlexibleNodeContent<TTypes>[]): void;
+	insertAt(index: number, value: Iterable<FlexibleNodeContent<TTypes>>): void;
 
 	/**
 	 * Inserts new item(s) at the start of the sequence.
 	 * @param value - The content to insert.
 	 * @throws Throws if any of the input indices are invalid.
 	 */
-	insertAtStart(value: FlexibleNodeContent<TTypes>[]): void;
+	insertAtStart(value: Iterable<FlexibleNodeContent<TTypes>>): void;
 
 	/**
 	 * Inserts new item(s) at the end of the sequence.
 	 * @param value - The content to insert.
 	 * @throws Throws if any of the input indices are invalid.
 	 */
-	insertAtEnd(value: FlexibleNodeContent<TTypes>[]): void;
+	insertAtEnd(value: Iterable<FlexibleNodeContent<TTypes>>): void;
 
 	/**
 	 * Removes the item at the specified location.
@@ -672,9 +677,10 @@ export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
  * @alpha
  */
 export interface RequiredField<TTypes extends AllowedTypes> extends TreeField {
-	readonly content: UnboxNodeUnion<TTypes>;
+	get content(): UnboxNodeUnion<TTypes>;
+	set content(content: FlexibleNodeContent<TTypes>);
+
 	readonly boxedContent: TypedNodeUnion<TTypes>;
-	setContent(content: FlexibleNodeContent<TTypes>): void;
 }
 
 /**
@@ -692,9 +698,19 @@ export interface RequiredField<TTypes extends AllowedTypes> extends TreeField {
  * @alpha
  */
 export interface OptionalField<TTypes extends AllowedTypes> extends TreeField {
-	readonly content?: UnboxNodeUnion<TTypes>;
+	get content(): UnboxNodeUnion<TTypes> | undefined;
+	set content(newContent: FlexibleNodeContent<TTypes> | undefined);
+
 	readonly boxedContent?: TypedNodeUnion<TTypes>;
-	setContent(content: undefined | FlexibleNodeContent<TTypes>): void;
+}
+
+/**
+ * Field that contains an immutable {@link StableNodeKey} identifying this node.
+ * @alpha
+ */
+export interface NodeKeyField extends TreeField {
+	readonly localNodeKey: LocalNodeKey;
+	readonly stableNodeKey: StableNodeKey;
 }
 
 // #endregion
@@ -723,6 +739,8 @@ export type TypedFieldInner<
 	? RequiredField<Types>
 	: Kind extends typeof FieldKinds.optional
 	? OptionalField<Types>
+	: Kind extends typeof FieldKinds.nodeKey
+	? NodeKeyField
 	: TreeField;
 
 /**
@@ -799,7 +817,10 @@ export type UnboxFieldInner<
 	? UnboxNodeUnion<TTypes>
 	: Kind extends typeof FieldKinds.optional
 	? UnboxNodeUnion<TTypes> | (Emptiness extends "notEmpty" ? never : undefined)
-	: // TODO: forbidden and nodeKey
+	: // Since struct already provides a short-hand accessor for the local field key, and the field provides a nicer general API than the node under it in this case, do not unbox nodeKey fields.
+	Kind extends typeof FieldKinds.nodeKey
+	? NodeKeyField
+	: // TODO: forbidden
 	  unknown;
 
 /**

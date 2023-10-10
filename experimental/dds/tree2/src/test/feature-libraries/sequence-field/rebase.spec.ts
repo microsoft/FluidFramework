@@ -177,13 +177,13 @@ describe("SequenceField - Rebase", () => {
 		const deletion = Change.delete(1, 1);
 		const actual = rebase(revive, deletion, tag3);
 		const expected = [
-			Mark.revive(fakeRepair(tag1, 1, 1), undefined, { inverseOf: tag1 }),
+			Mark.revive(1, undefined, { inverseOf: tag1 }),
 			Mark.revive(
-				fakeRepair(tag1, 2, 1),
+				1,
 				{ revision: tag3, localId: brand(0), adjacentCells: [{ id: brand(0), count: 1 }] },
 				{ inverseOf: tag1 },
 			),
-			Mark.revive(fakeRepair(tag1, 3, 1), undefined, { inverseOf: tag1 }),
+			Mark.revive(1, undefined, { inverseOf: tag1 }),
 		];
 		assert.deepEqual(actual, expected);
 	});
@@ -199,17 +199,9 @@ describe("SequenceField - Rebase", () => {
 		const revive2 = Change.revive(0, 1, { revision: tag2, localId: brand(2) }, fakeRepair);
 		const actual = rebase(revive1, revive2, tag2);
 		const expected = [
-			Mark.revive(
-				fakeRepair(tag1, 0, 1),
-				{ revision: tag2, localId: brand(1) },
-				{ inverseOf: tag1 },
-			),
-			Mark.revive(fakeRepair(tag1, 1, 1), undefined, { inverseOf: tag1 }),
-			Mark.revive(
-				fakeRepair(tag1, 2, 1),
-				{ revision: tag2, localId: brand(3) },
-				{ inverseOf: tag1 },
-			),
+			Mark.revive(1, { revision: tag2, localId: brand(1) }, { inverseOf: tag1 }),
+			Mark.revive(1, undefined, { inverseOf: tag1 }),
+			Mark.revive(1, { revision: tag2, localId: brand(3) }, { inverseOf: tag1 }),
 		];
 		assert.deepEqual(actual, expected);
 	});
