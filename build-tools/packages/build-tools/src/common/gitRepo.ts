@@ -8,10 +8,7 @@ import { Logger } from "./logging";
 import { exec, execNoError } from "./utils";
 
 export class GitRepo {
-	constructor(
-		public readonly resolvedRoot: string,
-		protected readonly log?: Logger,
-	) {}
+	constructor(public readonly resolvedRoot: string, protected readonly log?: Logger) {}
 
 	private async getRemotes() {
 		const result = await this.exec(`remote -v`, `getting remotes`);

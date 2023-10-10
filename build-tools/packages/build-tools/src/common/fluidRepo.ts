@@ -263,10 +263,7 @@ export class FluidRepo {
 
 	public readonly packages: Packages;
 
-	constructor(
-		public readonly resolvedRoot: string,
-		log: Logger = defaultLogger,
-	) {
+	constructor(public readonly resolvedRoot: string, log: Logger = defaultLogger) {
 		const packageManifest = getFluidBuildConfig(resolvedRoot);
 
 		// Expand to full IFluidRepoPackage and full path
