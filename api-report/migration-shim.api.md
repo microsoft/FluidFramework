@@ -6,7 +6,6 @@
 
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions';
@@ -18,6 +17,8 @@ import { ISharedTree } from '@fluid-experimental/tree2';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { SharedTree } from '@fluid-experimental/tree';
+import { SharedTreeFactory } from '@fluid-experimental/tree';
+import { SharedTreeFactory as SharedTreeFactory_2 } from '@fluid-experimental/tree2';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @public
@@ -27,13 +28,15 @@ export interface IMigrationEvent extends IEvent {
 
 // @public
 export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements IChannel {
-    constructor(id: string, runtime: IFluidDataStoreRuntime, oldFactory: IChannelFactory, // Should this be a legacy shared tree factory only?
-    newFactory: IChannelFactory, // Should this be a new shared tree factory only?
+    constructor(id: string, runtime: IFluidDataStoreRuntime, oldFactory: SharedTreeFactory, // Should this be a legacy shared tree factory only?
+    newFactory: SharedTreeFactory_2, // Should this be a new shared tree factory only?
     populateNewSharedObjectFn: (oldSharedObject: SharedTree, newSharedObject: ISharedTree) => void);
     // (undocumented)
     attributes: IChannelAttributes;
     // (undocumented)
     connect(services: IChannelServices): void;
+    // (undocumented)
+    create(): void;
     // (undocumented)
     getAttachSummary(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined): ISummaryTreeWithStats;
     // (undocumented)
@@ -47,9 +50,13 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
     // (undocumented)
     isAttached(): boolean;
     // (undocumented)
+    load(services: IChannelServices): Promise<void>;
+    // (undocumented)
     submitMigrateOp(): void;
     // (undocumented)
     summarize(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined): Promise<ISummaryTreeWithStats>;
+    // (undocumented)
+    get target(): SharedTree | ISharedTree;
 }
 
 ```

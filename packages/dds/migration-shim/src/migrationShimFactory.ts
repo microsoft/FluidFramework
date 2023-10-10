@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils";
 import {
 	type IChannelAttributes,
 	type IFluidDataStoreRuntime,
@@ -15,16 +16,14 @@ import {
 } from "@fluid-experimental/tree";
 import { type SharedTreeFactory, type ISharedTree } from "@fluid-experimental/tree2";
 import { MigrationShim } from "./migrationShim";
+import { attributesMatch } from "./utils";
 
 /**
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link MigrationShim}.
  *
  * Creates the migration shim that allows a migration from legacy shared tree to shared tree.
- * Note: There may be a need for 3 different factories for different parts of the migration.
- * That or three different shims.
+ * Its only concern is creating a pre-migration shim that can hot swap from one DDS to a new DDS.
  * 1. pre-migration
- * 2. after a summary has been generated but there may still be potential v1 ops
- * 3. post-migration after a summary has been generated and the msn has moved far enough forward for only v2 ops
  *
  * @sealed
  */
@@ -39,7 +38,7 @@ export class MigrationShimFactory implements IChannelFactory {
 	) {}
 
 	/**
-	 * TODO: type documentation
+	 * Can only load the LegacySharedTree
 	 *
 	 * {@link @fluidframework/datastore-definitions#IChannelFactory."type"}
 	 */
@@ -48,7 +47,7 @@ export class MigrationShimFactory implements IChannelFactory {
 	}
 
 	/**
-	 * TODO: attributes documentation
+	 * Should be the LegacySharedTree attributes
 	 *
 	 * {@link @fluidframework/datastore-definitions#IChannelFactory.attributes}
 	 */
@@ -59,7 +58,7 @@ export class MigrationShimFactory implements IChannelFactory {
 	/**
 	 * {@link @fluidframework/datastore-definitions#IChannelFactory.load}
 	 *
-	 * TODO: load documentation
+	 * Should be loading the MigrationShim
 	 */
 	public async load(
 		runtime: IFluidDataStoreRuntime,
@@ -67,7 +66,7 @@ export class MigrationShimFactory implements IChannelFactory {
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<MigrationShim> {
-		// assert check that the attributes match the old factory
+		assert(attributesMatch(attributes, this.oldFactory.attributes), "Attributes do not match");
 		const migrationShim = new MigrationShim(
 			id,
 			runtime,
@@ -75,14 +74,14 @@ export class MigrationShimFactory implements IChannelFactory {
 			this.newFactory,
 			this.populateNewChannelFn,
 		);
-		// the old shared object will need to be loaded here
+		await migrationShim.load(services);
 		return migrationShim;
 	}
 
 	/**
 	 * {@link @fluidframework/datastore-definitions#IChannelFactory.create}
 	 *
-	 * TODO: create documentation
+	 * Create MigrationShim that can hot swap from one DDS to a new DDS.
 	 */
 	public create(runtime: IFluidDataStoreRuntime, id: string): MigrationShim {
 		const migrationShim = new MigrationShim(
@@ -92,7 +91,7 @@ export class MigrationShimFactory implements IChannelFactory {
 			this.newFactory,
 			this.populateNewChannelFn,
 		);
-		// the old shared object will need to be loaded
+		migrationShim.create();
 		return migrationShim;
 	}
 }
