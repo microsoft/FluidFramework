@@ -1785,7 +1785,8 @@ describe("Editing", () => {
 			tree.merge(tree2, false);
 			tree2.rebaseOnto(tree);
 
-			expectJsonTree([tree, tree2], ["43"]);
+			expectJsonTree([tree], ["43"]);
+			expectJsonTree([tree2], ["43"]);
 		});
 
 		it.skip("undo restores a removed node even when that node was never present on the branch", () => {

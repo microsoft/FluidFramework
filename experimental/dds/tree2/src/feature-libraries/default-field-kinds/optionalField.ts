@@ -30,7 +30,7 @@ import {
 	NodeExistenceState,
 	FieldChangeHandler,
 } from "../modular-schema";
-import { OptionalChangeset, OptionalFieldChange } from "./defaultFieldChangeTypes";
+import { NodeUpdate, OptionalChangeset, OptionalFieldChange } from "./defaultFieldChangeTypes";
 import { makeOptionalFieldCodecFamily } from "./defaultFieldChangeCodecs";
 
 type ChangeId = ChangeAtomId | "self";
@@ -136,7 +136,10 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		let fieldChange: Mutable<OptionalFieldChange> | undefined;
 		let currentChildNodeChanges: TaggedChange<NodeChangeset>[] = [];
-		for (const { change, revision } of changes) {
+		const trackedCreations: { clearedBy: ChangeAtomId; update: NodeUpdate }[] = [];
+		const transientContent: NodeUpdate[] = [];
+		let index = 0;
+		for (const { change, revision, rollbackOf } of changes) {
 			const { childChanges } = change;
 			if (childChanges !== undefined) {
 				for (const [childId, childChange] of childChanges) {
@@ -164,10 +167,38 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 					fieldChange.revision = change.fieldChange.revision ?? revision;
 				}
 
+				let hasMatchingPriorInverse = false;
+				const maybePriorInverse = changes.findIndex(
+					(c) =>
+						(c.rollbackOf !== undefined && c.rollbackOf === revision) ||
+						(c.change.fieldChange?.newContent !== undefined &&
+							"revert" in c.change.fieldChange.newContent &&
+							c.change.fieldChange.newContent.revert.revision === revision) ||
+						c.revision === rollbackOf,
+				);
+				hasMatchingPriorInverse = maybePriorInverse !== -1 && maybePriorInverse < index;
+
 				if (change.fieldChange.newContent !== undefined) {
-					fieldChange.newContent = { ...change.fieldChange.newContent };
+					if ("set" in change.fieldChange.newContent) {
+						trackedCreations.push({
+							clearedBy: { revision: fieldChange.revision, localId: fieldChange.id },
+							update: change.fieldChange.newContent,
+						});
+
+						transientContent.push(change.fieldChange.newContent);
+					}
+
+					if (hasMatchingPriorInverse) {
+						fieldChange = undefined;
+					} else {
+						fieldChange.newContent = { ...change.fieldChange.newContent };
+					}
 				} else {
-					delete fieldChange.newContent;
+					if (hasMatchingPriorInverse) {
+						fieldChange = undefined;
+					} else {
+						delete fieldChange.newContent;
+					}
 				}
 
 				// Node was changed by this revision: flush the current changes
@@ -185,6 +216,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 					);
 				}
 			}
+
+			index++;
 		}
 
 		if (currentChildNodeChanges.length > 0) {
@@ -202,7 +235,15 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		const composed: OptionalChangeset = {};
 
 		if (fieldChange !== undefined) {
+			if (fieldChange.newContent !== undefined && "set" in fieldChange.newContent) {
+				trackedCreations.pop();
+			}
+
 			composed.fieldChange = fieldChange;
+
+			if (trackedCreations.length > 0) {
+				composed.fieldChange.transientContent = trackedCreations;
+			}
 		}
 
 		if (perChildChanges.size > 0) {
@@ -210,6 +251,10 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				id,
 				composeChild(changeList),
 			]);
+		}
+
+		if (transientContent !== undefined) {
+			composed.transientContent = transientContent;
 		}
 
 		return composed;
@@ -492,6 +537,22 @@ export function optionalFieldIntoDelta(
 	const hasOldFieldChanges: Mutable<Delta.HasModifications> = {};
 	// If there are changes to the old content, convert them into the delta format and save any resulting field changes
 	// TODO: maybe rethink how we use optionals so this pattern isn't so confusing
+	let detachedInserts: Delta.Insert[] = [];
+	if ((change.fieldChange.transientContent?.length ?? 0) > 0) {
+		const transientInserts: Delta.Insert[] | undefined =
+			change.fieldChange.transientContent?.map((c, index) => {
+				return {
+					type: Delta.MarkType.Insert,
+					content: [singleTextCursor((c.update as { set: JsonableTree }).set)],
+					detachId: { ...id, minor: id.minor + index + 1 },
+				};
+			});
+
+		if (transientInserts !== undefined) {
+			detachedInserts = transientInserts;
+		}
+	}
+	console.log(detachedInserts);
 	if (childChange !== undefined) {
 		const fields = deltaFromChild(childChange).fields;
 		if (fields !== undefined) {
@@ -501,8 +562,20 @@ export function optionalFieldIntoDelta(
 	if (update === undefined) {
 		// The field is being cleared
 		if (!change.fieldChange.wasEmpty) {
-			return [{ type: Delta.MarkType.Remove, count: 1, detachId: id, ...hasOldFieldChanges }];
+			return [
+				// ...detachedInserts,
+				{ type: Delta.MarkType.Remove, count: 1, detachId: id, ...hasOldFieldChanges },
+			];
 		}
+
+		const oldContent: Mutable<Pick<Delta.Insert, "oldContent">> = {};
+		if ((change.fieldChange.transientContent?.length ?? 0) > 0) {
+			oldContent.oldContent = {
+				detachId: id,
+				...hasOldFieldChanges,
+			};
+		}
+
 		return [];
 	} else {
 		const hasNewFieldChanges: Mutable<Delta.HasModifications> = {};
@@ -521,7 +594,9 @@ export function optionalFieldIntoDelta(
 		}
 		if (Object.prototype.hasOwnProperty.call(update, "set")) {
 			const content = [singleTextCursor((update as { set: JsonableTree }).set)];
+
 			return [
+				// ...detachedInserts,
 				{
 					type: Delta.MarkType.Insert,
 					...hasNewFieldChanges,
@@ -535,7 +610,9 @@ export function optionalFieldIntoDelta(
 				major: changeId.revision,
 				minor: changeId.localId,
 			};
+
 			return [
+				// ...detachedInserts,
 				{
 					type: Delta.MarkType.Restore,
 					count: 1,

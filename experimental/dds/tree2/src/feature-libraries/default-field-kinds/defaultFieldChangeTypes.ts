@@ -39,6 +39,11 @@ export interface OptionalFieldChange {
 	newContent?: NodeUpdate;
 
 	/**
+	 * Transient content for this trait.
+	 */
+	transientContent?: { clearedBy: ChangeAtomId; update: NodeUpdate }[];
+
+	/**
 	 * Whether the field was empty in the state this change is based on.
 	 */
 	wasEmpty: boolean;
@@ -49,6 +54,8 @@ export interface OptionalChangeset {
 	 * If defined, specifies the new content for the field.
 	 */
 	fieldChange?: OptionalFieldChange;
+
+	transientContent?: NodeUpdate[];
 
 	/**
 	 * Changes to nodes which occupied this field prior to this changeset at some point.

@@ -217,14 +217,6 @@ describe("OptionalField - Rebaser Axioms", () => {
 
 	describe("A ○ A⁻¹ === ε", () => {
 		for (const [name, change] of testChanges) {
-			if (["SetA", "SetB", "SetUndefined"].includes(name)) {
-				// TODO:AB#4622: OptionalChangeset should obey group axioms, but the current compose implementation does not
-				// cancel changes from inverses, and in some cases the representation isn't sufficient for doing so.
-				// Set operations fail to satisfy this test because they generate explicit deltas which set the trait to be
-				// the previous value, rather than noops.
-				continue;
-			}
-
 			it(`${name} ○ ${name}⁻¹ === ε`, () => {
 				const taggedChange = tagChange(change, tag1);
 				const inv = invert(taggedChange);
@@ -241,13 +233,6 @@ describe("OptionalField - Rebaser Axioms", () => {
 
 	describe("A⁻¹ ○ A === ε", () => {
 		for (const [name, change] of testChanges) {
-			if (["SetA", "SetB", "SetUndefined"].includes(name)) {
-				// TODO:AB#4622: OptionalChangeset should obey group axioms, but the current compose implementation does not
-				// cancel changes from inverses, and in some cases the representation isn't sufficient for doing so.
-				// Set operations fail to satisfy this test because they generate explicit deltas which set the trait to be
-				// the previous value, rather than noops.
-				continue;
-			}
 			it(`${name}⁻¹ ○ ${name} === ε`, () => {
 				const taggedChange = tagChange(change, tag1);
 				const inv = tagRollbackInverse(invert(taggedChange), tag2, taggedChange.revision);
