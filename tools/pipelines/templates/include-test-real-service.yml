@@ -196,7 +196,6 @@ jobs:
           targetType: 'inline'
           workingDirectory: ${{ parameters.testWorkspace }}
           # Note: $(ado-feeds-build) and $(ado-feeds-office) come from the ado-feeds variable group
-          # Also, the
           script: |
             echo Initialize package
             npm init --yes
