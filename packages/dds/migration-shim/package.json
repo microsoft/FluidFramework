@@ -61,15 +61,15 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
+		"@fluid-experimental/tree": "workspace:~",
+		"@fluid-experimental/tree2": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/protocol-definitions": "^3.0.0",
-		"@fluidframework/runtime-definitions": "workspace:~",
-		"@fluid-experimental/tree": "workspace:~",
-		"@fluid-experimental/tree2": "workspace:~"
+		"@fluidframework/runtime-definitions": "workspace:~"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.25.0",
@@ -94,7 +94,7 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"disabled": true,
-		"broken": {}
+		"broken": {},
+		"disabled": true
 	}
 }
