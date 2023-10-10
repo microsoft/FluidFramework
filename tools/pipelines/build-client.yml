@@ -119,6 +119,7 @@ extends:
     taskLint: false
     taskBuildDocs: false
     publishDocs: true
+    telemetry: true
     taskTest:
     - webpack
     - ci:test:mocha
@@ -142,7 +143,6 @@ extends:
     - check:versions
     - generate:packageList
     - prettier
-    telemetry: true
     additionalBuildSteps:
     - task: Bash@3
       displayName: Inject devtools telemetry logger token
