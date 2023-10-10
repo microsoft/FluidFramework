@@ -130,9 +130,9 @@ function createAnchors(
 
 describe("LazyTree", () => {
 	it("property names", () => {
-		const builder = new SchemaBuilder("lazyTree");
+		const builder = new SchemaBuilder({ scope: "lazyTree" });
 		const emptyStruct = builder.struct("empty", {});
-		const testSchema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(emptyStruct));
+		const testSchema = builder.toDocumentSchema(SchemaBuilder.fieldOptional(emptyStruct));
 
 		const { cursor, context } = initializeTreeWithContent({
 			schema: testSchema,
@@ -176,7 +176,10 @@ describe("LazyTree", () => {
 	it("is", () => {
 		// #region Create schemas
 
-		const schemaBuilder = new SchemaBuilder("testShared", {}, leafDomain.library);
+		const schemaBuilder = new SchemaBuilder({
+			scope: "testShared",
+			libraries: [leafDomain.library],
+		});
 
 		const fieldNodeOptionalAnySchema = schemaBuilder.fieldNode(
 			"optionalAny",
@@ -201,7 +204,7 @@ describe("LazyTree", () => {
 			SchemaBuilder.fieldOptional(leafDomain.string),
 		);
 
-		const schema = schemaBuilder.intoDocumentSchema(
+		const schema = schemaBuilder.toDocumentSchema(
 			SchemaBuilder.fieldRequired(fieldNodeOptionalAnySchema),
 		);
 
@@ -233,14 +236,15 @@ describe("LazyTree", () => {
 	});
 
 	it("parent", () => {
-		const schemaBuilder = new SchemaBuilder("test", {}, leafDomain.library);
+		const schemaBuilder = new SchemaBuilder({
+			scope: "test",
+			libraries: [leafDomain.library],
+		});
 		const fieldNodeSchema = schemaBuilder.fieldNode(
 			"field",
 			SchemaBuilder.fieldOptional(leafDomain.string),
 		);
-		const schema = schemaBuilder.intoDocumentSchema(
-			SchemaBuilder.fieldRequired(fieldNodeSchema),
-		);
+		const schema = schemaBuilder.toDocumentSchema(SchemaBuilder.fieldRequired(fieldNodeSchema));
 
 		const { context, cursor } = initializeTreeWithContent({
 			schema,
@@ -298,12 +302,15 @@ describe("LazyTree", () => {
 });
 
 describe("LazyFieldNode", () => {
-	const schemaBuilder = new SchemaBuilder("test", {}, leafDomain.library);
+	const schemaBuilder = new SchemaBuilder({
+		scope: "test",
+		libraries: [leafDomain.library],
+	});
 	const fieldNodeSchema = schemaBuilder.fieldNode(
 		"field",
 		SchemaBuilder.fieldOptional(leafDomain.string),
 	);
-	const schema = schemaBuilder.intoDocumentSchema(SchemaBuilder.fieldRequired(fieldNodeSchema));
+	const schema = schemaBuilder.toDocumentSchema(SchemaBuilder.fieldRequired(fieldNodeSchema));
 
 	const { context, cursor } = initializeTreeWithContent({
 		schema,
@@ -328,8 +335,11 @@ describe("LazyFieldNode", () => {
 });
 
 describe("LazyLeaf", () => {
-	const schemaBuilder = new SchemaBuilder("test", {}, leafDomain.library);
-	const schema = schemaBuilder.intoDocumentSchema(SchemaBuilder.fieldRequired(leafDomain.string));
+	const schemaBuilder = new SchemaBuilder({
+		scope: "test",
+		libraries: [leafDomain.library],
+	});
+	const schema = schemaBuilder.toDocumentSchema(SchemaBuilder.fieldRequired(leafDomain.string));
 
 	const { context, cursor } = initializeTreeWithContent({
 		schema,
@@ -347,12 +357,15 @@ describe("LazyLeaf", () => {
 });
 
 describe("LazyMap", () => {
-	const schemaBuilder = new SchemaBuilder("test", {}, leafDomain.library);
+	const schemaBuilder = new SchemaBuilder({
+		scope: "test",
+		libraries: [leafDomain.library],
+	});
 	const mapNodeSchema = schemaBuilder.map(
 		"mapString",
 		SchemaBuilder.fieldOptional(leafDomain.string),
 	);
-	const schema = schemaBuilder.intoDocumentSchema(SchemaBuilder.fieldRequired(mapNodeSchema));
+	const schema = schemaBuilder.toDocumentSchema(SchemaBuilder.fieldRequired(mapNodeSchema));
 
 	const { context, cursor } = initializeTreeWithContent({
 		schema,
@@ -379,12 +392,15 @@ describe("LazyMap", () => {
 });
 
 describe("LazyStruct", () => {
-	const schemaBuilder = new SchemaBuilder("test", {}, leafDomain.library);
+	const schemaBuilder = new SchemaBuilder({
+		scope: "test",
+		libraries: [leafDomain.library],
+	});
 	const structNodeSchema = schemaBuilder.struct("struct", {
 		foo: SchemaBuilder.fieldOptional(leafDomain.string),
 		bar: SchemaBuilder.fieldSequence(leafDomain.number),
 	});
-	const schema = schemaBuilder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
+	const schema = schemaBuilder.toDocumentSchema(SchemaBuilder.fieldOptional(Any));
 
 	// Count the number of times edits have been generated.
 	let editCallCount = 0;

@@ -20,7 +20,7 @@ import { ValueSchema } from "../../core";
 
 describe("typedTreeSchema", () => {
 	it("recursive", () => {
-		const builder = new SchemaBuilder("test");
+		const builder = new SchemaBuilder({ scope: "test" });
 
 		const recursiveStruct = builder.structRecursive("recursiveStruct", {
 			foo: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => recursiveStruct),
@@ -37,7 +37,7 @@ describe("typedTreeSchema", () => {
 	it("recursive without special functions", () => {
 		// Recursive helper function are needed but can be avoided due to issues covered in https://github.com/microsoft/TypeScript/issues/55758.
 		// This workaround seems to only work for compile time, not for intellisense, which makes it not very useful in practice and hard to verify that it works.
-		const builder = new SchemaBuilder("test");
+		const builder = new SchemaBuilder({ scope: "test" });
 
 		const recursiveReference = () => recursiveStruct;
 		type _trickCompilerIntoWorking = requireAssignableTo<
@@ -63,7 +63,7 @@ describe("typedTreeSchema", () => {
 		// Some related information in https://github.com/microsoft/TypeScript/issues/55758.
 		function fixRecursiveReference<T extends AllowedTypes>(...types: T): void {}
 
-		const builder = new SchemaBuilder("test");
+		const builder = new SchemaBuilder({ scope: "test" });
 
 		const recursiveReference = () => recursiveStruct;
 		fixRecursiveReference(recursiveReference);
@@ -81,24 +81,24 @@ describe("typedTreeSchema", () => {
 	});
 });
 
-describe("intoDocumentSchema", () => {
+describe("toDocumentSchema", () => {
 	it("Simple", () => {
-		const schemaBuilder = new SchemaBuilder("test");
+		const schemaBuilder = new SchemaBuilder({ scope: "test" });
 		const leafSchema = schemaBuilder.leaf("leaf", ValueSchema.Boolean);
-		const schema = schemaBuilder.intoDocumentSchema(SchemaBuilder.fieldOptional(leafSchema));
+		const schema = schemaBuilder.toDocumentSchema(SchemaBuilder.fieldOptional(leafSchema));
 
 		assert.equal(schema.treeSchema.size, 1); // "leaf"
-		assert.equal(schema.treeSchema.get(brand("leaf")), leafSchema);
+		assert.equal(schema.treeSchema.get(brand("test.leaf")), leafSchema);
 	});
 });
 
 describe("intoLibrary", () => {
 	it("Simple", () => {
-		const schemaBuilder = new SchemaBuilder("test");
+		const schemaBuilder = new SchemaBuilder({ scope: "test" });
 		const leafSchema = schemaBuilder.leaf("leaf", ValueSchema.Boolean);
-		const schema = schemaBuilder.intoLibrary();
+		const schema = schemaBuilder.finalize();
 
 		assert.equal(schema.treeSchema.size, 1); // "leaf"
-		assert.equal(schema.treeSchema.get(brand("leaf")), leafSchema);
+		assert.equal(schema.treeSchema.get(brand("test.leaf")), leafSchema);
 	});
 });
