@@ -10,7 +10,7 @@
 import { strict as assert } from "node:assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { leaf as leafDomain } from "../../../domains";
+import { leaf } from "../../../domains";
 import { SchemaBuilder } from "../../../feature-libraries";
 import {
 	boxedIterator,
@@ -23,11 +23,14 @@ import { contextWithContentReadonly } from "./utils";
 
 describe("raw structs", () => {
 	function getRawStruct() {
-		const builder = new SchemaBuilder({ scope: "raw struct test" });
+		const builder = new SchemaBuilder({
+			scope: "raw struct test",
+			libraries: [leaf.library],
+		});
 		const structSchema = builder.struct("struct", {
-			foo: SchemaBuilder.fieldRequired(leafDomain.number),
-			bar: SchemaBuilder.fieldOptional(leafDomain.string),
-			baz: SchemaBuilder.fieldSequence(leafDomain.boolean),
+			foo: SchemaBuilder.fieldRequired(leaf.number),
+			bar: SchemaBuilder.fieldOptional(leaf.string),
+			baz: SchemaBuilder.fieldSequence(leaf.boolean),
 		});
 		const rootFieldSchema = SchemaBuilder.fieldRequired(structSchema);
 		const schema = builder.toDocumentSchema(rootFieldSchema);
