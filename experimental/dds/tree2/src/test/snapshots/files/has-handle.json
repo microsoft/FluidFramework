@@ -30,6 +30,15 @@
                             "content": "[[\"rootFieldKey\",[{\"type\":\"com.fluidframework.leaf.handle\",\"value\":{\"type\":\"__fluid_handle__\",\"url\":\"/test/test\"}}]]]"
                         }
                     }
+                },
+                "DetachedFieldIndex": {
+                    "type": 1,
+                    "tree": {
+                        "DetachedFieldIndexBlob": {
+                            "type": 2,
+                            "content": "{\"data\":\"[]\",\"id\":0}"
+                        }
+                    }
                 }
             }
         }

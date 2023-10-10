@@ -81,7 +81,7 @@ export function makeTree(context: Context, cursor: ITreeSubscriptionCursor): Laz
 	const schema = context.schema.treeSchema.get(cursor.type) ?? fail("missing schema");
 	const output = buildSubclass(context, schema, cursor, anchorNode, anchor);
 	anchorNode.slots.set(lazyTreeSlot, output);
-	anchorNode.on("afterDelete", cleanupTree);
+	anchorNode.on("afterDestroy", cleanupTree);
 	return output;
 }
 
@@ -142,7 +142,7 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 		assert(cursor.mode === CursorLocationType.Nodes, 0x783 /* must be in nodes mode */);
 
 		anchorNode.slots.set(lazyTreeSlot, this);
-		this.#removeDeleteCallback = anchorNode.on("afterDelete", cleanupTree);
+		this.#removeDeleteCallback = anchorNode.on("afterDestroy", cleanupTree);
 
 		assert(
 			this.context.schema.treeSchema.get(this.schema.name) !== undefined,

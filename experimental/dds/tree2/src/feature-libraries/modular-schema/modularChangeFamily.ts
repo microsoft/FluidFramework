@@ -14,7 +14,6 @@ import {
 	FieldKey,
 	UpPath,
 	TaggedChange,
-	ReadonlyRepairDataStore,
 	RevisionTag,
 	tagChange,
 	makeAnonChange,
@@ -31,7 +30,6 @@ import {
 	idAllocatorFromState,
 	Mutable,
 } from "../../util";
-import { dummyRepairDataStore } from "../fakeRepairDataStore";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
 import {
 	CrossFieldManager,
@@ -287,11 +285,7 @@ export class ModularChangeFamily
 	 * performing a sandwich rebase.
 	 * @param repairStore - The store to query for repair data.
 	 */
-	public invert(
-		change: TaggedChange<ModularChangeset>,
-		isRollback: boolean,
-		repairStore?: ReadonlyRepairDataStore,
-	): ModularChangeset {
+	public invert(change: TaggedChange<ModularChangeset>, isRollback: boolean): ModularChangeset {
 		// Return an empty inverse for changes with constraint violations
 		if ((change.change.constraintViolationCount ?? 0) > 0) {
 			return makeModularChangeset(new Map());
@@ -303,12 +297,10 @@ export class ModularChangeFamily
 		// TODO: add a getMax function to IdAllocator to make for a clearer contract.
 		const genId: IdAllocator = idAllocatorFromState(idState);
 		const crossFieldTable = newCrossFieldTable<InvertData>();
-		const resolvedRepairStore = repairStore ?? dummyRepairDataStore;
 
 		const invertedFields = this.invertFieldMap(
 			tagChange(change.change.fieldChanges, change.revision),
 			genId,
-			resolvedRepairStore,
 			undefined,
 			crossFieldTable,
 		);
@@ -316,15 +308,14 @@ export class ModularChangeFamily
 		if (crossFieldTable.invalidatedFields.size > 0) {
 			const fieldsToUpdate = crossFieldTable.invalidatedFields;
 			crossFieldTable.invalidatedFields = new Set();
-			for (const { fieldKey, fieldChange, path, originalRevision } of fieldsToUpdate) {
+			for (const { fieldChange, originalRevision } of fieldsToUpdate) {
 				const amendedChange = getChangeHandler(
 					this.fieldKinds,
 					fieldChange.fieldKind,
 				).rebaser.amendInvert(
 					fieldChange.change,
 					originalRevision,
-					(revision: RevisionTag, index: number, count: number): Delta.ProtoNode[] =>
-						resolvedRepairStore.getNodes(revision, path, fieldKey, index, count),
+					(revision: RevisionTag, index: number, count: number): Delta.ProtoNode[] => [],
 					genId,
 					newCrossFieldManager(crossFieldTable),
 				);
@@ -354,7 +345,6 @@ export class ModularChangeFamily
 	private invertFieldMap(
 		changes: TaggedChange<FieldChangeMap>,
 		genId: IdAllocator,
-		repairStore: ReadonlyRepairDataStore,
 		path: UpPath | undefined,
 		crossFieldTable: CrossFieldTable<InvertData>,
 	): FieldChangeMap {
@@ -367,7 +357,7 @@ export class ModularChangeFamily
 				revisionTag: RevisionTag,
 				index: number,
 				count: number,
-			): Delta.ProtoNode[] => repairStore.getNodes(revisionTag, path, field, index, count);
+			): Delta.ProtoNode[] => [];
 
 			const manager = newCrossFieldManager(crossFieldTable);
 			const invertedChange = getChangeHandler(
@@ -380,7 +370,6 @@ export class ModularChangeFamily
 						{ revision, change: childChanges },
 						genId,
 						crossFieldTable,
-						repairStore,
 						index === undefined
 							? undefined
 							: {
@@ -417,7 +406,6 @@ export class ModularChangeFamily
 		change: TaggedChange<NodeChangeset>,
 		genId: IdAllocator,
 		crossFieldTable: CrossFieldTable<InvertData>,
-		repairStore: ReadonlyRepairDataStore,
 		path?: UpPath,
 	): NodeChangeset {
 		const inverse: NodeChangeset = {};
@@ -426,7 +414,6 @@ export class ModularChangeFamily
 			inverse.fieldChanges = this.invertFieldMap(
 				{ ...change, change: change.change.fieldChanges },
 				genId,
-				repairStore,
 				path,
 				crossFieldTable,
 			);
@@ -718,14 +705,14 @@ export class ModularChangeFamily
 		return rebasedChange;
 	}
 
-	public intoDelta(change: ModularChangeset): Delta.Root {
+	public intoDelta({ change, revision }: TaggedChange<ModularChangeset>): Delta.Root {
 		// Return an empty delta for changes with constraint violations
 		if ((change.constraintViolationCount ?? 0) > 0) {
 			return new Map();
 		}
 
 		const idAllocator = MemoizedIdRangeAllocator.fromNextId();
-		return this.intoDeltaImpl(change.fieldChanges, undefined, idAllocator);
+		return this.intoDeltaImpl(change.fieldChanges, revision, idAllocator);
 	}
 
 	/**
@@ -1063,7 +1050,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	}
 
 	public generateId(count?: number): ChangesetLocalId {
-		return brand(this.idAllocator(count));
+		return brand(this.idAllocator.allocate(count));
 	}
 
 	private buildChangeMap(

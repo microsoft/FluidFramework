@@ -165,9 +165,6 @@ export { SchemaBuilder, SchemaBuilderInternal } from "./schemaBuilder";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
 
-export { ForestRepairDataStore, ForestRepairDataStoreProvider } from "./forestRepairDataStore";
-export { dummyRepairDataStore } from "./fakeRepairDataStore";
-
 export {
 	TreeChunk,
 	chunkTree,
@@ -251,3 +248,5 @@ export {
 // Split into separate import and export for compatibility with API-Extractor.
 import * as SchemaAware from "./schema-aware";
 export { SchemaAware };
+
+export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer";

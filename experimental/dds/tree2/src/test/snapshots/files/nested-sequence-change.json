@@ -30,6 +30,15 @@
                             "content": "[[\"rootFieldKey\",[{\"type\":\"SeqMap\",\"fields\":{\"foo\":[{\"type\":\"SeqMap\"}]}}]]]"
                         }
                     }
+                },
+                "DetachedFieldIndex": {
+                    "type": 1,
+                    "tree": {
+                        "DetachedFieldIndexBlob": {
+                            "type": 2,
+                            "content": "{\"data\":\"[]\",\"id\":1}"
+                        }
+                    }
                 }
             }
         }
