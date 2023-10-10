@@ -25,6 +25,13 @@ export {
 	AnchorSet,
 	DetachedField,
 	UpPath,
+	Range,
+	RangeUpPath,
+	PlaceUpPath,
+	PlaceIndex,
+	NodeIndex,
+	DetachedPlaceUpPath,
+	DetachedRangeUpPath,
 	FieldUpPath,
 	Anchor,
 	RootField,
@@ -56,9 +63,13 @@ export {
 	detachedFieldAsKey,
 	keyAsDetachedField,
 	visitDelta,
+	combineVisitors,
+	announceDelta,
 	applyDelta,
+	makeDetachedFieldIndex,
 	setGenericTreeField,
 	DeltaVisitor,
+	AnnouncedVisitor,
 	PathVisitor,
 	SparseNode,
 	getDescendant,
@@ -83,6 +94,8 @@ export {
 	ProtoNodes,
 	CursorMarker,
 	isCursor,
+	DetachedFieldIndex,
+	ForestRootId,
 	getDetachedFieldContainingPath,
 } from "./tree";
 
@@ -164,5 +177,3 @@ export {
 	TreeAdapter,
 	AllowedUpdateType,
 } from "./schema-view";
-
-export { RepairDataStore, ReadonlyRepairDataStore, IRepairDataStoreProvider } from "./repair";

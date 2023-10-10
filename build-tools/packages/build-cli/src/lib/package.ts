@@ -7,7 +7,6 @@ import {
 	Logger,
 	MonoRepo,
 	Package,
-	VersionBag,
 	VersionDetails,
 	updatePackageJsonFile,
 } from "@fluidframework/build-tools";
@@ -561,7 +560,7 @@ export async function setVersion(
 		prettierConfig.filepath = lernaPath;
 	}
 	lernaJson.version = translatedVersion.version;
-	const output = prettier(
+	const output = await prettier(
 		JSON.stringify(lernaJson),
 		prettierConfig === null ? undefined : prettierConfig,
 	);

@@ -9,17 +9,15 @@ import {
 	ChangeFamilyEditor,
 	findAncestor,
 	GraphCommit,
-	IRepairDataStoreProvider,
 	mintCommit,
 	mintRevisionTag,
-	RepairDataStore,
-	UndoRedoManager,
 	tagChange,
 	TaggedChange,
 	LocalCommitSource,
 	rebaseBranch,
 	RevisionTag,
 	findCommonAncestor,
+	makeAnonChange,
 } from "../core";
 import { EventEmitter, ISubscribable } from "../events";
 import { TransactionStack } from "./transactionStack";
@@ -40,15 +38,15 @@ import { TransactionStack } from "./transactionStack";
  * transaction completes and all pending commits are replaced with a single squash commit.
  */
 export type SharedTreeBranchChange<TChange> =
-	| { type: "append"; change: TChange; newCommits: GraphCommit<TChange>[] }
+	| { type: "append"; change: TaggedChange<TChange>; newCommits: GraphCommit<TChange>[] }
 	| {
 			type: "remove";
-			change: TChange | undefined;
+			change: TaggedChange<TChange> | undefined;
 			removedCommits: GraphCommit<TChange>[];
 	  }
 	| {
 			type: "replace";
-			change: TChange | undefined;
+			change: TaggedChange<TChange> | undefined;
 			removedCommits: GraphCommit<TChange>[];
 			newCommits: GraphCommit<TChange>[];
 	  };
@@ -95,7 +93,7 @@ export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TCha
 
 	/**
 	 * Fired when a revertible change is made to this branch.
-	 * 
+	 *
 	 * TODO pass a revertible to the event
 	 */
 	revertible(type: LocalCommitSource): void;
@@ -119,7 +117,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	SharedTreeBranchEvents<TEditor, TChange>
 > {
 	public readonly editor: TEditor;
-	private readonly transactions = new TransactionStack<TChange>();
+	private readonly transactions = new TransactionStack();
 	private disposed = false;
 	/**
 	 * Construct a new branch.
@@ -132,7 +130,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	public constructor(
 		private head: GraphCommit<TChange>,
 		public readonly changeFamily: ChangeFamily<TEditor, TChange>,
-		public repairDataStoreProvider?: IRepairDataStoreProvider<TChange>,
 	) {
 		super();
 		this.editor = this.changeFamily.buildEditor((change) =>
@@ -169,20 +166,10 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	): [change: TChange, newCommit: GraphCommit<TChange>] {
 		this.assertNotDisposed();
 
-		// If this is not part of a transaction, capture the repair data
-		let repairData: RepairDataStore<TChange> | undefined;
-		if (!this.isTransacting() && this.repairDataStoreProvider !== undefined) {
-			repairData = this.repairDataStoreProvider.createRepairData();
-			repairData.capture(change, revision);
-		}
-
 		this.head = mintCommit(this.head, {
 			revision,
 			change,
-			repairData,
 		});
-
-		this.transactions.repairStore?.capture(change, this.head.revision);
 
 		// If this is not part of a transaction, emit a revertible event
 		if (undoRedoType !== undefined && !this.isTransacting()) {
@@ -191,7 +178,11 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			this.emit("revertible", undoRedoType);
 		}
 
-		this.emit("change", { type: "append", change, newCommits: [this.head] });
+		this.emit("change", {
+			type: "append",
+			change: tagChange(change, revision),
+			newCommits: [this.head],
+		});
 		return [change, this.head];
 	}
 
@@ -207,29 +198,19 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 * all commits made since this call will be squashed into a single head commit.
 	 * @param repairStore - the repair store associated with this transaction
 	 */
-	public startTransaction(repairStore?: RepairDataStore<TChange>): void {
+	public startTransaction(): void {
 		this.assertNotDisposed();
-		if (!this.isTransacting() && this.repairDataStoreProvider !== undefined) {
-			// If this is the start of a transaction stack, freeze the
-			// repair data store provider so that repair data can be captured based on the
-			// state of the branch at the start of the transaction.
-			this.repairDataStoreProvider.freeze();
-		}
 		const forks = new Set<SharedTreeBranch<TEditor, TChange>>();
 		const onDisposeUnSubscribes: (() => void)[] = [];
 		const onForkUnSubscribe = onForkTransitive(this, (fork) => {
 			forks.add(fork);
 			onDisposeUnSubscribes.push(fork.on("dispose", () => forks.delete(fork)));
 		});
-		this.transactions.push(
-			this.head.revision,
-			() => {
-				forks.forEach((fork) => fork.dispose());
-				onDisposeUnSubscribes.forEach((unsubscribe) => unsubscribe());
-				onForkUnSubscribe();
-			},
-			repairStore,
-		);
+		this.transactions.push(this.head.revision, () => {
+			forks.forEach((fork) => fork.dispose());
+			onDisposeUnSubscribes.forEach((unsubscribe) => unsubscribe());
+			onForkUnSubscribe();
+		});
 		this.editor.enterTransaction();
 	}
 
@@ -258,16 +239,9 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const squashedChange = this.changeFamily.rebaser.compose(anonymousCommits);
 		const revision = mintRevisionTag();
 
-		let repairData: RepairDataStore<TChange> | undefined;
-		if (!this.isTransacting() && this.repairDataStoreProvider !== undefined) {
-			repairData = this.repairDataStoreProvider.createRepairData();
-			repairData?.capture(squashedChange, revision);
-		}
-
 		this.head = mintCommit(startCommit, {
 			revision,
 			change: squashedChange,
-			repairData,
 		});
 
 		// If this transaction is not nested, emit a revertible event
@@ -276,10 +250,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			// TODO only do this when undo is enabled
 			this.emit("revertible", LocalCommitSource.Default);
 		}
-
-		// If there is still an ongoing transaction (because this transaction was nested inside of an outer transaction)
-		// then update the repair data store for that transaction
-		this.transactions.repairStore?.capture(this.head.change, revision);
 
 		this.emit("change", {
 			type: "replace",
@@ -301,7 +271,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		abortedCommits: GraphCommit<TChange>[],
 	] {
 		this.assertNotDisposed();
-		const [startCommit, commits, repairStore] = this.popTransaction();
+		const [startCommit, commits] = this.popTransaction();
 		this.editor.exitTransaction();
 		this.head = startCommit;
 
@@ -311,7 +281,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		const inverses: TaggedChange<TChange>[] = [];
 		for (let i = commits.length - 1; i >= 0; i--) {
-			const inverse = this.changeFamily.rebaser.invert(commits[i], false, repairStore);
+			const inverse = this.changeFamily.rebaser.invert(commits[i], false);
 			inverses.push(tagChange(inverse, mintRevisionTag()));
 		}
 		const change =
@@ -319,7 +289,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		this.emit("change", {
 			type: "remove",
-			change,
+			change: change === undefined ? undefined : makeAnonChange(change),
 			removedCommits: commits,
 		});
 		return [change, commits];
@@ -332,29 +302,26 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		return this.transactions.size !== 0;
 	}
 
-	private popTransaction(): [
-		GraphCommit<TChange>,
-		GraphCommit<TChange>[],
-		RepairDataStore<TChange> | undefined,
-	] {
-		const { startRevision, repairStore } = this.transactions.pop();
+	private popTransaction(): [GraphCommit<TChange>, GraphCommit<TChange>[]] {
+		const { startRevision } = this.transactions.pop();
 		const commits: GraphCommit<TChange>[] = [];
 		const startCommit = findAncestor([this.head, commits], (c) => c.revision === startRevision);
 		assert(
 			startCommit !== undefined,
 			0x593 /* Expected branch to be ahead of transaction start revision */,
 		);
-		return [startCommit, commits, repairStore];
+		return [startCommit, commits];
 	}
 
 	// TODO does this need to be a public api? we might be able to return this as a the "revert" method of the revertible
-	public revert(commit: GraphCommit<TChange>): [change: TChange, newCommit: GraphCommit<TChange>] | undefined {
+	public revert(
+		commit: GraphCommit<TChange>,
+	): [change: TChange, newCommit: GraphCommit<TChange>] | undefined {
 		assert(!this.isTransacting(), "Undo is not yet supported during transactions");
 
 		let change = this.changeFamily.rebaser.invert(
 			tagChange(commit.change, commit.revision),
 			false,
-			commit.repairData,
 		);
 
 		const headCommit = this.getHead();
@@ -425,20 +392,12 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	/**
 	 * Spawn a new branch that is based off of the current state of this branch.
 	 * Changes made to the new branch will not be applied to this branch until the new branch is merged back in.
-	 * @param repairDataStoreProvider - a {@link RepairDataStoreProvider} that reflects the state of the new branch. If one is not
-	 * provided, then it will be cloned from this branch.
 	 *
 	 * @remarks Forks created during a transaction will be disposed when the transaction ends.
 	 */
-	public fork(
-		repairDataStoreProvider?: IRepairDataStoreProvider<TChange>,
-	): SharedTreeBranch<TEditor, TChange> {
+	public fork(): SharedTreeBranch<TEditor, TChange> {
 		this.assertNotDisposed();
-		const fork = new SharedTreeBranch(
-			this.head,
-			this.changeFamily,
-			repairDataStoreProvider ?? this.repairDataStoreProvider?.clone(),
-		);
+		const fork = new SharedTreeBranch(this.head, this.changeFamily);
 		this.emit("fork", fork);
 		return fork;
 	}
@@ -481,7 +440,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const newCommits = targetCommits.concat(sourceCommits);
 		this.emit("change", {
 			type: "replace",
-			change,
+			change: change === undefined ? undefined : makeAnonChange(change),
 			removedCommits: deletedSourceCommits,
 			newCommits,
 		});
@@ -521,7 +480,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const change = this.changeFamily.rebaser.compose(sourceCommits);
 		this.emit("change", {
 			type: "append",
-			change,
+			change: makeAnonChange(change),
 			newCommits: sourceCommits,
 		});
 		return [change, sourceCommits];
@@ -533,18 +492,12 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		onto: SharedTreeBranch<TEditor, TChange>,
 		upTo = onto.getHead(),
 	) {
-		const { head, repairDataStoreProvider } = branch;
+		const { head } = branch;
 		if (head === upTo) {
 			return undefined;
 		}
 
-		const rebaseResult = rebaseBranch(
-			this.changeFamily.rebaser,
-			repairDataStoreProvider,
-			head,
-			upTo,
-			onto.getHead(),
-		);
+		const rebaseResult = rebaseBranch(this.changeFamily.rebaser, head, upTo, onto.getHead());
 		const [rebasedHead] = rebaseResult;
 		if (this.head === rebasedHead) {
 			return undefined;

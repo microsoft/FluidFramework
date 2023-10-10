@@ -32,7 +32,7 @@ import {
 	TableNode,
 	UnorderedListNode,
 } from "../../documentation-domain";
-import { getHeadingForApiItem } from "../ApiItemUtilities";
+import { getHeadingForApiItem } from "../ApiItemTransformUtilities";
 import { apiItemToSections } from "../TransformApiItem";
 import {
 	ApiItemTransformationConfiguration,

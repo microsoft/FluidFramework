@@ -24,8 +24,10 @@ import {
 	rootFieldKey,
 	mapCursorField,
 	DeltaVisitor,
+	PlaceIndex,
+	Range,
 } from "../../core";
-import { brand, fail, getOrAddEmptyToMap } from "../../util";
+import { assertValidRange, brand, fail, getOrAddEmptyToMap } from "../../util";
 import { createEmitter } from "../../events";
 import { BasicChunk, BasicChunkCursor, SiblingsOrKey } from "./basicChunk";
 import { basicChunkTree, chunkTree, IChunker } from "./chunkTree";
@@ -91,8 +93,6 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 		);
 		this.events.emit("beforeChange");
 
-		const moves: Map<Delta.MoveId, DetachedField> = new Map();
-
 		if (this.roots.isShared()) {
 			this.roots = this.roots.clone();
 		}
@@ -110,28 +110,6 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 				);
 				return this.mutableChunkStack[this.mutableChunkStack.length - 1];
 			},
-			moveIn(
-				index: number,
-				toAttach: DetachedField,
-				invalidateDependents: boolean = true,
-			): number {
-				if (invalidateDependents) {
-					this.forest.invalidateDependents();
-				}
-				const detachedKey = detachedFieldAsKey(toAttach);
-				const children = this.forest.roots.fields.get(detachedKey) ?? [];
-				this.forest.roots.fields.delete(detachedKey);
-				if (children.length === 0) {
-					return 0; // Prevent creating 0 sized fields when inserting empty into empty.
-				}
-
-				const parent = this.getParent();
-				const destinationField = getOrAddEmptyToMap(parent.mutableChunk.fields, parent.key);
-				// TODO: this will fail for very large moves due to argument limits.
-				destinationField.splice(index, 0, ...children);
-
-				return children.length;
-			},
 			free(): void {
 				this.mutableChunk = undefined;
 				this.mutableChunkStack.length = 0;
@@ -142,43 +120,87 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 				this.forest.activeVisitor = undefined;
 				this.forest.events.emit("afterChange");
 			},
-			onDelete(index: number, count: number): void {
-				this.onMoveOut(index, count);
-			},
-			onInsert(index: number, content: Delta.ProtoNodes): void {
-				this.forest.invalidateDependents();
-				const chunks: TreeChunk[] = content.map((c) => chunkTree(c, this.forest.chunker));
-				const field = this.forest.newDetachedField();
-				this.forest.roots.fields.set(detachedFieldAsKey(field), chunks);
-				this.moveIn(index, field, false);
-			},
-			onMoveOut(index: number, count: number, id?: Delta.MoveId): void {
+			destroy(detachedField: FieldKey, count: number): void {
 				this.forest.invalidateDependents();
 				const parent = this.getParent();
-				const sourceField = parent.mutableChunk.fields.get(parent.key) ?? [];
-				const newField = sourceField.splice(index, count);
+				parent.mutableChunk.fields.delete(detachedField);
+			},
+			create(content: Delta.ProtoNodes, destination: FieldKey): void {
+				this.forest.invalidateDependents();
+				const chunks: TreeChunk[] = content.map((c) => chunkTree(c, this.forest.chunker));
+				this.forest.roots.fields.set(destination, chunks);
+			},
+			attach(source: FieldKey, count: number, destination: PlaceIndex): void {
+				this.forest.invalidateDependents();
+				this.attachEdit(source, count, destination);
+			},
+			detach(source: Range, destination: FieldKey): void {
+				this.forest.invalidateDependents();
+				this.detachEdit(source, destination);
+			},
+			/**
+			 * Attaches the range into the current field by transferring it from the given source path.
+			 * Does not invalidate dependents.
+			 * @param source - The the range to be attached.
+			 * @param destination - The index in the current field at which to attach the content.
+			 */
+			attachEdit(source: FieldKey, count: number, destination: PlaceIndex): void {
+				const sourceField = this.forest.roots.fields.get(source) ?? [];
+				this.forest.roots.fields.delete(source);
+				if (sourceField.length === 0) {
+					return; // Prevent creating 0 sized fields when inserting empty into empty.
+				}
 
-				if (id !== undefined) {
-					const detached = this.forest.newDetachedField();
-					const key = detachedFieldAsKey(detached);
+				const parent = this.getParent();
+				const destinationField = getOrAddEmptyToMap(parent.mutableChunk.fields, parent.key);
+				// TODO: this will fail for very large moves due to argument limits.
+				destinationField.splice(destination, 0, ...sourceField);
+			},
+			/**
+			 * Detaches the range from the current field and transfers it to the given destination if any.
+			 * Does not invalidate dependents.
+			 * @param source - The bounds of the range to be detached from the current field.
+			 * @param destination - If specified, the destination to transfer the detached range to.
+			 * If not specified, the detached range is destroyed.
+			 */
+			detachEdit(source: Range, destination: FieldKey | undefined): void {
+				const parent = this.getParent();
+				const sourceField = parent.mutableChunk.fields.get(parent.key) ?? [];
+
+				assertValidRange(source, sourceField);
+				const newField = sourceField.splice(source.start, source.end - source.start);
+
+				if (destination !== undefined) {
+					assert(
+						!this.forest.roots.fields.has(destination),
+						"Destination must be a new empty detached field",
+					);
 					if (newField.length > 0) {
-						this.forest.roots.fields.set(key, newField);
+						this.forest.roots.fields.set(destination, newField);
 					}
-					moves.set(id, detached);
 				} else {
 					for (const child of newField) {
 						child.referenceRemoved();
 					}
 				}
+				// This check is performed after the transfer to ensure that the field is not removed in scenarios
+				// where the source and destination are the same.
 				if (sourceField.length === 0) {
 					parent.mutableChunk.fields.delete(parent.key);
 				}
 			},
-			onMoveIn(index: number, count: number, id: Delta.MoveId): void {
-				const toAttach = moves.get(id) ?? fail("move in without move out");
-				moves.delete(id);
-				const countMoved = this.moveIn(index, toAttach);
-				assert(countMoved === count, 0x533 /* counts must match */);
+			replace(
+				newContentSource: FieldKey,
+				range: Range,
+				oldContentDestination: FieldKey,
+			): void {
+				assert(
+					newContentSource !== oldContentDestination,
+					"Replace detached source field and detached destination field must be different",
+				);
+				this.forest.invalidateDependents();
+				this.detachEdit(range, oldContentDestination);
+				this.attachEdit(newContentSource, range.end - range.start, range.start);
 			},
 			enterNode(index: number): void {
 				assert(this.mutableChunk === undefined, 0x535 /* should be in field */);
@@ -299,12 +321,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 		return TreeNavigationResult.Ok;
 	}
 
-	/**
-	 * Set `cursorToMove` to location described by path.
-	 * This is NOT a relative move: current position is discarded.
-	 * Path must point to existing node.
-	 */
-	private moveCursorToPath(
+	public moveCursorToPath(
 		destination: UpPath | undefined,
 		cursorToMove: ITreeSubscriptionCursor,
 	): void {

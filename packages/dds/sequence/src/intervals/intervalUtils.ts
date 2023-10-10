@@ -82,6 +82,9 @@ export const IntervalOpType = {
 
 export enum IntervalType {
 	Simple = 0x0,
+	/**
+	 * @deprecated - this functionality is no longer supported and will be removed
+	 */
 	Nest = 0x1,
 
 	/**
@@ -262,7 +265,7 @@ export const IntervalStickiness = {
  *
  * @internal
  */
-export type IntervalStickiness = typeof IntervalStickiness[keyof typeof IntervalStickiness];
+export type IntervalStickiness = (typeof IntervalStickiness)[keyof typeof IntervalStickiness];
 
 export function startReferenceSlidingPreference(stickiness: IntervalStickiness): SlidingPreference {
 	// if any start stickiness, prefer sliding backwards

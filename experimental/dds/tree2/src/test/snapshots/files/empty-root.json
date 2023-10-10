@@ -1,0 +1,46 @@
+{
+    "type": 1,
+    "tree": {
+        "indexes": {
+            "type": 1,
+            "tree": {
+                "EditManager": {
+                    "type": 1,
+                    "tree": {
+                        "String": {
+                            "type": 2,
+                            "content": "{\"trunk\":[],\"branches\":[]}"
+                        }
+                    }
+                },
+                "Schema": {
+                    "type": 1,
+                    "tree": {
+                        "SchemaString": {
+                            "type": 2,
+                            "content": "{\"version\":\"1.0.0\",\"treeSchema\":[{\"name\":\"com.fluidframework.leaf.boolean\",\"structFields\":[],\"leafValue\":2},{\"name\":\"com.fluidframework.leaf.handle\",\"structFields\":[],\"leafValue\":3},{\"name\":\"com.fluidframework.leaf.number\",\"structFields\":[],\"leafValue\":0},{\"name\":\"com.fluidframework.leaf.string\",\"structFields\":[],\"leafValue\":1},{\"name\":\"test trees.TestInner\",\"mapFields\":{\"kind\":\"Sequence\"},\"structFields\":[]}],\"rootFieldSchema\":{\"kind\":\"Sequence\"}}"
+                        }
+                    }
+                },
+                "Forest": {
+                    "type": 1,
+                    "tree": {
+                        "ForestTree": {
+                            "type": 2,
+                            "content": "[]"
+                        }
+                    }
+                },
+                "DetachedFieldIndex": {
+                    "type": 1,
+                    "tree": {
+                        "DetachedFieldIndexBlob": {
+                            "type": 2,
+                            "content": "{\"data\":\"[]\",\"id\":-1}"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

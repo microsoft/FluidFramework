@@ -1,16 +1,13 @@
-export interface Revertible { 
-    readonly kind: RevertibleKind; 
-    readonly origin: { 
+export interface Revertible {
+	readonly kind: RevertibleKind;
+	readonly origin: {
+		readonly isLocal: boolean;
 
-        readonly isLocal: boolean; 
-
-        readonly view: ISharedTreeView; 
-
-    }; 
-    revert(): RevertResult; 
-    discard(): DiscardResult; 
-
-} 
+		readonly view: ISharedTreeView;
+	};
+	revert(): RevertResult;
+	discard(): DiscardResult;
+}
 
 /**
  * The type of revertible commit.

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/version-tools",
-	"version": "0.24.0",
+	"version": "0.26.0",
 	"description": "Versioning tools for Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -40,9 +40,8 @@
 		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
+		"test:coverage": "c8 npm run test",
 		"test:mocha": "mocha --forbid-only \"lib/test/**/*.test.js\"",
-		"test:mocha:report": "npm run test:mocha -- -- --reporter xunit --reporter-option output=nyc/mocha-junit-report.xml",
-		"test:report": "c8 npm run test:mocha:report",
 		"tsc": "tsc"
 	},
 	"c8": {
@@ -77,7 +76,7 @@
 		"table": "^6.8.1"
 	},
 	"devDependencies": {
-		"@fluid-internal/readme-command": "workspace:*",
+		"@fluid-private/readme-command": "workspace:*",
 		"@fluidframework/build-common": "^2.0.0",
 		"@fluidframework/eslint-config-fluid": "^2.1.0",
 		"@microsoft/api-extractor": "^7.36.1",
@@ -94,13 +93,13 @@
 		"eslint": "~8.6.0",
 		"eslint-config-oclif": "^4.0.0",
 		"eslint-config-oclif-typescript": "^1.0.3",
-		"eslint-config-prettier": "~8.5.0",
+		"eslint-config-prettier": "~9.0.0",
 		"mocha": "^10.2.0",
 		"mocha-json-output-reporter": "^2.1.0",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.29.4",
 		"oclif": "^3.9.1",
-		"prettier": "~2.6.2",
+		"prettier": "~3.0.3",
 		"rimraf": "^4.4.1",
 		"ts-node": "^10.9.1",
 		"tslib": "^2.6.0",
