@@ -28,7 +28,7 @@ describe("raw structs", () => {
 			libraries: [leaf.library],
 		});
 		const structSchema = builder.struct("struct", {
-			foo: SchemaBuilder.fieldRequired(leaf.number),
+			foo: leaf.number,
 			bar: SchemaBuilder.fieldOptional(leaf.string),
 			baz: SchemaBuilder.fieldSequence(leaf.boolean),
 		});
