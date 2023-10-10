@@ -439,7 +439,6 @@ export class MapKernel {
 
 		// If we are not attached, don't submit the op.
 		if (!this.isAttached()) {
-			// this.setLocalKeyIndexInDetached(key);
 			return;
 		}
 
@@ -454,17 +453,6 @@ export class MapKernel {
 		this.submitMapKeyMessage(op, messageId, previousValue);
 	}
 
-	/*
-	private setLocalKeyIndexInDetached(key: string): void {
-		const detachedCreationIndex = ++this.pendingMessageId;
-		if (this.pendingSetTracker.has(key)) {
-			(this.pendingSetTracker.get(key) as number[])[0] = detachedCreationIndex;
-		} else {
-			this.pendingSetTracker.set(key, [detachedCreationIndex]);
-			this.localKeysIndexTracker.set(key, detachedCreationIndex);
-		}
-	} */
-
 	/**
 	 * Delete a key from the map.
 	 * @param key - Key to delete
@@ -476,7 +464,6 @@ export class MapKernel {
 
 		// If we are not attached, don't submit the op.
 		if (!this.isAttached()) {
-			// this.deleteLocalKeyIndexInDetached(key);
 			return previousValue !== undefined;
 		}
 
@@ -498,14 +485,6 @@ export class MapKernel {
 
 		return previousValue !== undefined;
 	}
-
-	/*
-	private deleteLocalKeyIndexInDetached(key: string): void {
-		if (this.pendingSetTracker.has(key)) {
-			this.localKeysIndexTracker.delete((this.pendingSetTracker.get(key) as number[])[0]);
-			this.pendingSetTracker.delete(key);
-		} 
-	} */
 
 	private deleteKeysIndex(key: string): (number | number[])[] {
 		const previousIndex: (number | number[])[] = [];
@@ -542,8 +521,6 @@ export class MapKernel {
 
 		// If we are not attached, don't submit the op.
 		if (!this.isAttached()) {
-			this.localKeysIndexTracker.clear();
-			this.pendingSetTracker.clear();
 			return;
 		}
 
@@ -578,6 +555,12 @@ export class MapKernel {
 
 	/**
 	 * Serializes the data stored in the shared map to a JSON string
+	 *
+	 * There are two scenarios in which the creation index may be absent:
+	 * 1. When the client is detached, we defer assigning the creation index until the data is about to be summarized.
+	 * 2. When the client is attached, but data was created during the detached stage, the creation indices for that data are still missing.
+	 * In both of these scenarios, the creation index is populated (starting from 0) before the summarization process begins.
+	 *
 	 * @param serializer - The serializer to use to serialize handles in its values.
 	 * @returns A JSON string containing serialized map data
 	 */
@@ -588,17 +571,12 @@ export class MapKernel {
 			const serializedValue = localValue.makeSerialized(serializer, this.handle);
 
 			if (!this.isAttached() || !this.ackedKeysIndexTracker.has(key)) {
-				serializableMapData[key] = {
-					...serializedValue,
-					index: ++this.creationIndex,
-				};
-				this.ackedKeysIndexTracker.set(key, this.creationIndex);
-			} else {
-				serializableMapData[key] = {
-					...serializedValue,
-					index: this.ackedKeysIndexTracker.get(key) as number,
-				};
+				this.ackedKeysIndexTracker.set(key, ++this.creationIndex);
 			}
+			serializableMapData[key] = {
+				...serializedValue,
+				index: this.ackedKeysIndexTracker.get(key) as number,
+			};
 		}
 
 		return serializableMapData;
@@ -611,17 +589,12 @@ export class MapKernel {
 			const serializedValue = makeSerializable(localValue, serializer, this.handle);
 
 			if (!this.isAttached() || !this.ackedKeysIndexTracker.has(key)) {
-				serializableMapData[key] = {
-					...serializedValue,
-					index: ++this.creationIndex,
-				};
-				this.ackedKeysIndexTracker.set(key, this.creationIndex);
-			} else {
-				serializableMapData[key] = {
-					...serializedValue,
-					index: this.ackedKeysIndexTracker.get(key) as number,
-				};
+				this.ackedKeysIndexTracker.set(key, ++this.creationIndex);
 			}
+			serializableMapData[key] = {
+				...serializedValue,
+				index: this.ackedKeysIndexTracker.get(key) as number,
+			};
 		}
 
 		return serializableMapData;
@@ -633,15 +606,22 @@ export class MapKernel {
 
 	/**
 	 * Populate the kernel with the given map data.
+	 *
+	 * If there exixts data created during the detached stage without assigned creation index, it is essential to populate these indices
+	 * (starting from 0) and keep track of their count.
+	 *
+	 * Additionally, for loading data in the old format lacking an index field, it is necessary to populate the corresponding creation index
+	 * based on the current value.
+	 *
 	 * @param data - A JSON string containing serialized map data
 	 */
 	public populateFromSerializable(json: IMapDataObjectSerializable): void {
-		// Add creation index for the old data
-		let existingDataCount = 0;
+		// Add creation index for the old data (if necessary)
+		let detachedDataCount = 0;
 		for (const key of this.data.keys()) {
 			if (!this.ackedKeysIndexTracker.has(key)) {
 				this.ackedKeysIndexTracker.set(key, ++this.creationIndex);
-				existingDataCount++;
+				detachedDataCount++;
 			}
 		}
 		// Load the new data and maintain its order
@@ -657,43 +637,14 @@ export class MapKernel {
 				this.ackedKeysIndexTracker.set(
 					localValue.key,
 					serializable.index !== undefined
-						? existingDataCount + serializable.index
+						? detachedDataCount + serializable.index
 						: ++this.creationIndex,
 				);
 			}
-			/*
-			if (this.isAttached()) {
-				if (!this.ackedKeysIndexTracker.has(localValue.key)) {
-					this.ackedKeysIndexTracker.set(
-						localValue.key,
-						serializable.index ?? ++this.creationIndex,
-					);
-				}
-			} else {
-				if (serializable.index) {
-					this.localKeysIndexTracker.set(key, serializable.index);
-				}
-			} */
 		}
 		if (this.ackedKeysIndexTracker.max() !== undefined) {
 			this.creationIndex = this.ackedKeysIndexTracker.max() as number;
 		}
-		/*
-		if (this.isAttached()) {
-			if (this.ackedKeysIndexTracker.max() !== undefined) {
-				this.creationIndex = this.ackedKeysIndexTracker.max() as number;
-			}
-		} else {
-			const keysInserted = this.localKeysIndexTracker.keys();
-			for (const key of keysInserted) {
-				if (!oldData.has(key)) {
-					const value = this.get(key);
-					this.delete(key);
-					this.set(key, value);
-				}
-			}
-			this.localKeysIndexTracker.clear();
-		} */
 	}
 
 	public populate(json: string): void {
@@ -1131,7 +1082,6 @@ export class MapKernel {
 				const context = this.makeLocal(op.key, op.value);
 				this.setCore(op.key, context, local);
 				// Adjust the keys order if it is a fresh acked insertion
-				// this.creationIndex++;
 				if (!this.ackedKeysIndexTracker.has(op.key)) {
 					this.ackedKeysIndexTracker.set(op.key, ++this.creationIndex);
 				}
