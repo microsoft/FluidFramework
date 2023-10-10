@@ -21,8 +21,8 @@ import {
 	type ITelemetryContext,
 	type ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
-import { type SharedObject } from "@fluidframework/shared-object-base";
-
+import { type SharedTree as LegacySharedTree } from "@fluid-experimental/tree";
+import { type ISharedTree } from "@fluid-experimental/tree2";
 /**
  * Interface for migration events.
  */
@@ -54,18 +54,15 @@ export interface IMigrationOp {
 /**
  * Create skeleton Migration Shim that can hot swap from one DDS to a new DDS.
  */
-export class MigrationShim<TOld extends SharedObject, TNew extends SharedObject>
-	extends TypedEventEmitter<IMigrationEvent>
-	implements IChannel
-{
+export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements IChannel {
 	public constructor(
 		public readonly id: string,
 		private readonly runtime: IFluidDataStoreRuntime,
 		private readonly oldFactory: IChannelFactory, // Should this be a legacy shared tree factory only?
 		private readonly newFactory: IChannelFactory, // Should this be a new shared tree factory only?
 		private readonly populateNewSharedObjectFn: (
-			oldSharedObject: TOld,
-			newSharedObject: TNew,
+			oldSharedObject: LegacySharedTree,
+			newSharedObject: ISharedTree,
 		) => void,
 	) {
 		super();

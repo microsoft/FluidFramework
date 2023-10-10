@@ -68,7 +68,8 @@
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/protocol-definitions": "^3.0.0",
 		"@fluidframework/runtime-definitions": "workspace:~",
-		"@fluidframework/shared-object-base": "workspace:~"
+		"@fluid-experimental/tree": "workspace:~",
+		"@fluid-experimental/tree2": "workspace:~"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.25.0",

@@ -9,7 +9,11 @@ import {
 	type IChannelServices,
 	type IChannelFactory,
 } from "@fluidframework/datastore-definitions";
-import { type SharedObject } from "@fluidframework/shared-object-base";
+import {
+	type SharedTreeFactory as LegacySharedTreeFactory,
+	type SharedTree as LegacySharedTree,
+} from "@fluid-experimental/tree";
+import { type SharedTreeFactory, type ISharedTree } from "@fluid-experimental/tree2";
 import { MigrationShim } from "./migrationShim";
 
 /**
@@ -24,13 +28,14 @@ import { MigrationShim } from "./migrationShim";
  *
  * @sealed
  */
-export class MigrationShimFactory<TOld extends SharedObject, TNew extends SharedObject>
-	implements IChannelFactory
-{
+export class MigrationShimFactory implements IChannelFactory {
 	public constructor(
-		private readonly oldFactory: IChannelFactory,
-		private readonly newFactory: IChannelFactory,
-		private readonly populateNewChannelFn: (oldChannel: TOld, newChannel: TNew) => void,
+		private readonly oldFactory: LegacySharedTreeFactory,
+		private readonly newFactory: SharedTreeFactory,
+		private readonly populateNewChannelFn: (
+			oldChannel: LegacySharedTree,
+			newChannel: ISharedTree,
+		) => void,
 	) {}
 
 	/**
@@ -61,9 +66,9 @@ export class MigrationShimFactory<TOld extends SharedObject, TNew extends Shared
 		id: string,
 		services: IChannelServices,
 		attributes: IChannelAttributes,
-	): Promise<MigrationShim<TOld, TNew>> {
+	): Promise<MigrationShim> {
 		// assert check that the attributes match the old factory
-		const migrationShim = new MigrationShim<TOld, TNew>(
+		const migrationShim = new MigrationShim(
 			id,
 			runtime,
 			this.oldFactory,
@@ -79,8 +84,8 @@ export class MigrationShimFactory<TOld extends SharedObject, TNew extends Shared
 	 *
 	 * TODO: create documentation
 	 */
-	public create(runtime: IFluidDataStoreRuntime, id: string): MigrationShim<TOld, TNew> {
-		const migrationShim = new MigrationShim<TOld, TNew>(
+	public create(runtime: IFluidDataStoreRuntime, id: string): MigrationShim {
+		const migrationShim = new MigrationShim(
 			id,
 			runtime,
 			this.oldFactory,

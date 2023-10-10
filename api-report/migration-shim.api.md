@@ -14,9 +14,10 @@ import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
+import { ISharedTree } from '@fluid-experimental/tree2';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
-import { SharedObject } from '@fluidframework/shared-object-base';
+import { SharedTree } from '@fluid-experimental/tree';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @public
@@ -25,10 +26,10 @@ export interface IMigrationEvent extends IEvent {
 }
 
 // @public
-export class MigrationShim<TOld extends SharedObject, TNew extends SharedObject> extends TypedEventEmitter<IMigrationEvent> implements IChannel {
+export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements IChannel {
     constructor(id: string, runtime: IFluidDataStoreRuntime, oldFactory: IChannelFactory, // Should this be a legacy shared tree factory only?
     newFactory: IChannelFactory, // Should this be a new shared tree factory only?
-    populateNewSharedObjectFn: (oldSharedObject: TOld, newSharedObject: TNew) => void);
+    populateNewSharedObjectFn: (oldSharedObject: SharedTree, newSharedObject: ISharedTree) => void);
     // (undocumented)
     attributes: IChannelAttributes;
     // (undocumented)
