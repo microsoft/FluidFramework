@@ -16,7 +16,7 @@ import { assert, delay } from "@fluidframework/core-utils";
 import { LogLevel } from "@fluidframework/core-interfaces";
 import * as api from "@fluidframework/protocol-definitions";
 import { promiseRaceWithWinner } from "@fluidframework/driver-base";
-import { ISummaryContext, DriverErrorTypes, FetchSource } from "@fluidframework/driver-definitions";
+import { ISummaryContext, FetchSource } from "@fluidframework/driver-definitions";
 import { RateLimiter, NonRetryableError } from "@fluidframework/driver-utils";
 import {
 	IOdspResolvedUrl,
@@ -427,14 +427,14 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			if (!versionsResponse) {
 				throw new NonRetryableError(
 					"No response from /versions endpoint",
-					DriverErrorTypes.genericNetworkError,
+					OdspErrorTypes.genericNetworkError,
 					{ driverVersion },
 				);
 			}
 			if (!Array.isArray(versionsResponse.value)) {
 				throw new NonRetryableError(
 					"Incorrect response from /versions endpoint, expected an array",
-					DriverErrorTypes.genericNetworkError,
+					OdspErrorTypes.genericNetworkError,
 					{ driverVersion },
 				);
 			}
@@ -684,7 +684,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		if (!this.snapshotUrl) {
 			throw new NonRetryableError(
 				"Method failed because no snapshot url was available",
-				DriverErrorTypes.genericError,
+				OdspErrorTypes.genericError,
 				{ driverVersion },
 			);
 		}
@@ -694,7 +694,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		if (!this.attachmentPOSTUrl) {
 			throw new NonRetryableError(
 				"Method failed because no attachment POST url was available",
-				DriverErrorTypes.genericError,
+				OdspErrorTypes.genericError,
 				{ driverVersion },
 			);
 		}
@@ -704,7 +704,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		if (!this.attachmentGETUrl) {
 			throw new NonRetryableError(
 				"Method failed because no attachment GET url was available",
-				DriverErrorTypes.genericError,
+				OdspErrorTypes.genericError,
 				{ driverVersion },
 			);
 		}

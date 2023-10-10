@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryProperties, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { IResolvedUrl, DriverErrorTypes } from "@fluidframework/driver-definitions";
+import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import {
 	isOnline,
 	OnlineStatus,
@@ -83,10 +83,10 @@ export async function getWithRetryForTokenRefresh<T>(
 		const options: TokenFetchOptionsEx = { refresh: true, previousError: e };
 		switch (e.errorType) {
 			// If the error is 401 or 403 refresh the token and try once more.
-			case DriverErrorTypes.authorizationError:
+			case OdspErrorTypes.authorizationError:
 				return get({ ...options, claims: e.claims, tenantId: e.tenantId });
 
-			case DriverErrorTypes.incorrectServerResponse: // some error on the wire, retry once
+			case OdspErrorTypes.incorrectServerResponse: // some error on the wire, retry once
 			case OdspErrorTypes.fetchTokenError: // If the token was null, then retry once.
 				return get(options);
 
@@ -115,7 +115,7 @@ export async function fetchHelper(
 				throw new NonRetryableError(
 					// pre-0.58 error message: No response from fetch call
 					"No response from ODSP fetch call",
-					DriverErrorTypes.incorrectServerResponse,
+					OdspErrorTypes.incorrectServerResponse,
 					{ driverVersion },
 				);
 			}
@@ -171,7 +171,7 @@ export async function fetchHelper(
 				throw new RetryableError(
 					// pre-0.58 error message prefix: Offline
 					`ODSP fetch failure (Offline): ${redactedErrorText}`,
-					DriverErrorTypes.offlineError,
+					OdspErrorTypes.offlineError,
 					{
 						driverVersion,
 						rawErrorMessage: taggedErrorMessage,
@@ -183,7 +183,7 @@ export async function fetchHelper(
 				throw new RetryableError(
 					// pre-0.58 error message prefix: Fetch error
 					`ODSP fetch failure: ${redactedErrorText}`,
-					DriverErrorTypes.fetchFailure,
+					OdspErrorTypes.fetchFailure,
 					{
 						driverVersion,
 						rawErrorMessage: taggedErrorMessage,

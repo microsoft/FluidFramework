@@ -14,7 +14,6 @@ import {
 	IDocumentDeltaConnection,
 	IResolvedUrl,
 	IDocumentServicePolicies,
-	DriverErrorTypes,
 } from "@fluidframework/driver-definitions";
 import {
 	DeltaStreamConnectionForbiddenError,
@@ -181,7 +180,7 @@ export class OdspDelayLoadedDeltaStream {
 					if (
 						typeof error === "object" &&
 						error !== null &&
-						error.errorType === DriverErrorTypes.authorizationError
+						error.errorType === OdspErrorTypes.authorizationError
 					) {
 						this.cache.sessionJoinCache.remove(this.joinSessionKey);
 					}
@@ -271,7 +270,7 @@ export class OdspDelayLoadedDeltaStream {
 			this.clearJoinSessionTimer();
 			throw new NonRetryableError(
 				"JoinSessionRefreshTimerNotCancelled",
-				DriverErrorTypes.genericError,
+				OdspErrorTypes.genericError,
 				{
 					driverVersion,
 					details: JSON.stringify({

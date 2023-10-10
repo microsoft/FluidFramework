@@ -13,7 +13,6 @@ import {
 import { fromUtf8ToBase64 } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import { getW3CData } from "@fluidframework/driver-base";
-import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import {
 	IOdspResolvedUrl,
 	ISnapshotOptions,
@@ -190,8 +189,8 @@ export async function fetchSnapshotWithRedeem(
 			if (
 				(typeof error === "object" &&
 					error !== null &&
-					error.errorType === DriverErrorTypes.authorizationError) ||
-				error.errorType === DriverErrorTypes.fileNotFoundOrAccessDeniedError
+					error.errorType === OdspErrorTypes.authorizationError) ||
+				error.errorType === OdspErrorTypes.fileNotFoundOrAccessDeniedError
 			) {
 				await removeEntries();
 			}
@@ -364,7 +363,7 @@ async function fetchLatestSnapshotCore(
 						) {
 							throw new NonRetryableError(
 								"Returned odsp snapshot is malformed. No trees or blobs!",
-								DriverErrorTypes.incorrectServerResponse,
+								OdspErrorTypes.incorrectServerResponse,
 								propsToLog,
 							);
 						}
@@ -385,7 +384,7 @@ async function fetchLatestSnapshotCore(
 					default:
 						throw new NonRetryableError(
 							"Unknown snapshot content type",
-							DriverErrorTypes.incorrectServerResponse,
+							OdspErrorTypes.incorrectServerResponse,
 							propsToLog,
 						);
 				}
@@ -399,7 +398,7 @@ async function fetchLatestSnapshotCore(
 					(errorMessage) =>
 						new NonRetryableError(
 							`Error parsing snapshot response: ${errorMessage}`,
-							DriverErrorTypes.genericError,
+							OdspErrorTypes.genericError,
 							propsToLog,
 						),
 				);
@@ -489,7 +488,7 @@ async function fetchLatestSnapshotCore(
 			if (
 				typeof error === "object" &&
 				error !== null &&
-				(error.errorType === DriverErrorTypes.fetchFailure ||
+				(error.errorType === OdspErrorTypes.fetchFailure ||
 					error.errorType === OdspErrorTypes.fetchTimeout)
 			) {
 				error[getWithRetryForTokenRefreshRepeat] = true;
@@ -648,8 +647,8 @@ function isRedeemSharingLinkError(odspResolvedUrl: IOdspResolvedUrl, error: any)
 		odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem !== undefined &&
 		typeof error === "object" &&
 		error !== null &&
-		(error.errorType === DriverErrorTypes.authorizationError ||
-			error.errorType === DriverErrorTypes.fileNotFoundOrAccessDeniedError)
+		(error.errorType === OdspErrorTypes.authorizationError ||
+			error.errorType === OdspErrorTypes.fileNotFoundOrAccessDeniedError)
 	) {
 		return true;
 	}

@@ -4,10 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import { createOdspNetworkError, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import { NonRetryableError } from "@fluidframework/driver-utils";
-import { OdspError } from "@fluidframework/odsp-driver-definitions";
+import { OdspError, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
 import { IOdspSocketError } from "../contracts";
 import { fetchAndParseAsJSONHelper, getWithRetryForTokenRefresh } from "../odspUtils";
 import { errorObjectFromSocketError } from "../odspError";
@@ -46,7 +45,7 @@ describe("Odsp Error", () => {
 
 	it("throwOdspNetworkError first-class properties", async () => {
 		const networkError = createOdspNetworkErrorWithResponse("some message", 400);
-		if (networkError.errorType !== DriverErrorTypes.genericNetworkError) {
+		if (networkError.errorType !== OdspErrorTypes.genericNetworkError) {
 			assert.fail("networkError should be a genericNetworkError");
 		} else {
 			assert(
@@ -79,7 +78,7 @@ describe("Odsp Error", () => {
 			code: 400,
 		};
 		const networkError = errorObjectFromSocketError(socketError, "disconnect");
-		if (networkError.errorType !== DriverErrorTypes.genericNetworkError) {
+		if (networkError.errorType !== OdspErrorTypes.genericNetworkError) {
 			assert.fail("networkError should be a genericNetworkError");
 		} else {
 			assert(
@@ -101,7 +100,7 @@ describe("Odsp Error", () => {
 			code: 400,
 		};
 		const networkError = errorObjectFromSocketError(socketError, "error");
-		if (networkError.errorType !== DriverErrorTypes.genericNetworkError) {
+		if (networkError.errorType !== OdspErrorTypes.genericNetworkError) {
 			assert.fail("networkError should be a genericNetworkError");
 		} else {
 			assert(
@@ -133,7 +132,7 @@ describe("Odsp Error", () => {
 			},
 		};
 		const networkError = errorObjectFromSocketError(socketError, "error");
-		if (networkError.errorType !== DriverErrorTypes.genericNetworkError) {
+		if (networkError.errorType !== OdspErrorTypes.genericNetworkError) {
 			assert.fail("networkError should be a genericNetworkError");
 		} else {
 			assert(
@@ -162,7 +161,7 @@ describe("Odsp Error", () => {
 			retryAfter: 10,
 		};
 		const networkError = errorObjectFromSocketError(socketError, "handler");
-		if (networkError.errorType !== DriverErrorTypes.throttlingError) {
+		if (networkError.errorType !== OdspErrorTypes.throttlingError) {
 			assert.fail("networkError should be a throttlingError");
 		} else {
 			assert(
@@ -195,7 +194,7 @@ describe("Odsp Error", () => {
 			} else {
 				throw new NonRetryableError(
 					"some message",
-					DriverErrorTypes.incorrectServerResponse,
+					OdspErrorTypes.incorrectServerResponse,
 					{ driverVersion: pkgVersion },
 				);
 			}
@@ -241,7 +240,7 @@ describe("Odsp Error", () => {
 		} catch (error: any) {
 			assert.equal(
 				error.errorType,
-				DriverErrorTypes.authorizationError,
+				OdspErrorTypes.authorizationError,
 				"errorType should be authorizationError",
 			);
 			assert(
@@ -299,7 +298,7 @@ describe("Odsp Error", () => {
 		} catch (error: any) {
 			assert.strictEqual(
 				error.errorType,
-				DriverErrorTypes.authorizationError,
+				OdspErrorTypes.authorizationError,
 				"errorType should be authorizationError",
 			);
 			assert(
@@ -330,13 +329,13 @@ describe("Odsp Error", () => {
 		const error: any = createOdspNetworkErrorWithResponse("epochMismatch", 409);
 		assert.strictEqual(
 			error.errorType,
-			DriverErrorTypes.fileOverwrittenInStorage,
+			OdspErrorTypes.fileOverwrittenInStorage,
 			"Error type should be fileOverwrittenInStorage",
 		);
 		const errorBag = { ...error.getTelemetryProperties() };
 		assert.strictEqual(
 			errorBag.errorType,
-			DriverErrorTypes.fileOverwrittenInStorage,
+			OdspErrorTypes.fileOverwrittenInStorage,
 			"Error type should exist in prop bag",
 		);
 	});
@@ -359,7 +358,7 @@ describe("Odsp Error", () => {
 		);
 		assert.strictEqual(
 			error.errorType,
-			DriverErrorTypes.fileNotFoundOrAccessDeniedError,
+			OdspErrorTypes.fileNotFoundOrAccessDeniedError,
 			"Error type should be locationRedirection",
 		);
 		assert.strictEqual(error.redirectLocation, redirectLocation, "Site location should match");
