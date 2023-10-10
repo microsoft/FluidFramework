@@ -454,14 +454,14 @@ export type StructFields<TFields extends RestrictiveReadonlyRecord<string, Field
 	// Unboxed fields
 	readonly [key in keyof TFields]: UnboxField<TFields[key]>;
 } & {
-	// Add setter (make property writable) when schema type is a value.
+	// Add setter (make property writable) when the field is of a kind that has a logical set operation.
 	// If we could map to getters and setters separately, we would preferably do that, but we can't.
 	// See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
 	[key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
 		? key
 		: never]: UnboxField<TFields[key]>;
 } & {
-	// Setter method (When schema type is a value)
+	// Setter method (when the field is of a kind that has a logical set operation).
 	readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
 		? `set${Capitalize<key & string>}`
 		: never]: (content: FlexibleFieldContent<TFields[key]>) => void;
