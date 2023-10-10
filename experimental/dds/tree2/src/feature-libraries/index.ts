@@ -125,7 +125,6 @@ export {
 	allowsRepoSuperset,
 	GenericChangeset,
 	genericFieldKind,
-	NodeReviver,
 	RevisionIndexer,
 	RevisionMetadataSource,
 	RevisionInfo,
