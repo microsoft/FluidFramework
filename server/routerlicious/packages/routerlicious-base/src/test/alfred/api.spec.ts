@@ -392,8 +392,8 @@ describe("Routerlicious", () => {
 					supertest = request(app);
 				});
 
-				describe("api/v1", () => {
-					it("/api/v1/:tenantId/:id/broadcast-signal 200", async () => {
+				describe("/api/v1/:tenantId/:id/broadcast-signal", () => {
+					it("Successful request", async () => {
 						const body = {
 							signalContent: {
 								contents: {
@@ -411,7 +411,7 @@ describe("Routerlicious", () => {
 							.expect(200);
 					});
 
-					it("/api/v1/:tenantId/:id/broadcast-signal 400", async () => {
+					it("Invalid request content", async () => {
 						const body = {
 							signalContent: {},
 						};

@@ -149,7 +149,18 @@ export function create(
 			if (!isValidSignalEnvelope(signalContent)) {
 				response
 					.status(400)
-					.send(`signalContent should contain 'contents.content' and 'contents.type' keys.`);
+					.send(
+						`signalContent should contain 'contents.content' and 'contents.type' keys.`,
+					);
+				return;
+			}
+			if (
+				collaborationSessionEventEmitter &&
+				collaborationSessionEventEmitter !== undefined
+			) {
+				response
+					.status(500)
+					.send(`No emitter configured for the broadcast-signal endpoint.`);
 				return;
 			}
 			try {
