@@ -4,7 +4,7 @@
  */
 
 // Driver API
-import { DriverApi } from "@fluid-internal/test-drivers";
+import { DriverApi } from "@fluid-private/test-drivers";
 
 // Loader API
 import { Loader } from "@fluidframework/container-loader";

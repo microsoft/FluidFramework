@@ -7,7 +7,7 @@ import { resolve } from 'path';
 import { assert } from '@fluidframework/core-utils';
 import { v5 as uuidv5 } from 'uuid';
 import { expect } from 'chai';
-import { LocalServerTestDriver } from '@fluid-internal/test-drivers';
+import { LocalServerTestDriver } from '@fluid-private/test-drivers';
 import { SummaryCollection, DefaultSummaryConfiguration } from '@fluidframework/container-runtime';
 import { IContainerExperimental, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader';
 import { requestFluidObject } from '@fluidframework/runtime-utils';

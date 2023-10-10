@@ -56,7 +56,7 @@
 	"dependencies": {
 		"@fluid-experimental/attributor": "workspace:~",
 		"@fluid-experimental/sequence-deprecated": "workspace:~",
-		"@fluid-internal/test-drivers": "workspace:~",
+		"@fluid-private/test-drivers": "workspace:~",
 		"@fluid-tools/version-tools": "^0.25.0",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/cell": "workspace:~",
