@@ -57,7 +57,7 @@ import {
 	RequiredField,
 	OptionalField,
 } from "./editableTreeTypes";
-import { LazyField, LazyNodeKeyField, makeField } from "./lazyField";
+import { LazyNodeKeyField, makeField } from "./lazyField";
 import {
 	LazyEntity,
 	cursorSymbol,
@@ -68,7 +68,6 @@ import {
 } from "./lazyEntity";
 import { unboxedField } from "./unboxed";
 import { treeStatusFromAnchorCache } from "./utilities";
-import { FieldKind, Multiplicity } from "../modular-schema";
 
 const lazyTreeSlot = anchorSlot<LazyTree>();
 
