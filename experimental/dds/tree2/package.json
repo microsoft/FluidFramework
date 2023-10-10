@@ -81,8 +81,8 @@
 	},
 	"devDependencies": {
 		"@fluid-internal/stochastic-test-utils": "workspace:~",
-		"@fluid-private/test-dds-utils": "workspace:~",
 		"@fluid-internal/test-drivers": "workspace:~",
+		"@fluid-private/test-dds-utils": "workspace:~",
 		"@fluid-tools/benchmark": "^0.48.0",
 		"@fluid-tools/build-cli": "^0.25.0",
 		"@fluidframework/build-common": "^2.0.0",
