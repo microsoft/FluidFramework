@@ -584,41 +584,46 @@ export class MapKernel {
 	public getSerializedStorage(serializer: IFluidSerializer): IMapDataObjectSerialized {
 		const serializableMapData: IMapDataObjectSerialized = {};
 
-		if (!this.isAttached()) {
-			for (const [key, localValue] of this.data.entries()) {
-				serializableMapData[key] = localValue.makeSerialized(serializer, this.handle);
-				serializableMapData[key].index = ++this.creationIndex;
+		for (const [key, localValue] of this.data.entries()) {
+			const serializedValue = localValue.makeSerialized(serializer, this.handle);
+
+			if (!this.isAttached() || !this.ackedKeysIndexTracker.has(key)) {
+				serializableMapData[key] = {
+					...serializedValue,
+					index: ++this.creationIndex,
+				};
 				this.ackedKeysIndexTracker.set(key, this.creationIndex);
-			}
-		} else {
-			for (const [key, localValue] of this.data.entries()) {
-				serializableMapData[key] = localValue.makeSerialized(serializer, this.handle);
-				if (!this.ackedKeysIndexTracker.has(key)) {
-					this.ackedKeysIndexTracker.set(key, ++this.creationIndex);
-				}
-				serializableMapData[key].index = this.ackedKeysIndexTracker.get(key) as number;
+			} else {
+				serializableMapData[key] = {
+					...serializedValue,
+					index: this.ackedKeysIndexTracker.get(key) as number,
+				};
 			}
 		}
+
 		return serializableMapData;
 	}
 
 	public getSerializableStorage(serializer: IFluidSerializer): IMapDataObjectSerializable {
 		const serializableMapData: IMapDataObjectSerializable = {};
-		if (!this.isAttached()) {
-			for (const [key, localValue] of this.data.entries()) {
-				serializableMapData[key] = makeSerializable(localValue, serializer, this.handle);
-				serializableMapData[key].index = ++this.creationIndex;
+
+		for (const [key, localValue] of this.data.entries()) {
+			const serializedValue = makeSerializable(localValue, serializer, this.handle);
+
+			if (!this.isAttached() || !this.ackedKeysIndexTracker.has(key)) {
+				serializableMapData[key] = {
+					...serializedValue,
+					index: ++this.creationIndex,
+				};
 				this.ackedKeysIndexTracker.set(key, this.creationIndex);
-			}
-		} else {
-			for (const [key, localValue] of this.data.entries()) {
-				serializableMapData[key] = makeSerializable(localValue, serializer, this.handle);
-				if (!this.ackedKeysIndexTracker.has(key)) {
-					this.ackedKeysIndexTracker.set(key, ++this.creationIndex);
-				}
-				serializableMapData[key].index = this.ackedKeysIndexTracker.get(key) as number;
+			} else {
+				serializableMapData[key] = {
+					...serializedValue,
+					index: this.ackedKeysIndexTracker.get(key) as number,
+				};
 			}
 		}
+
 		return serializableMapData;
 	}
 
@@ -631,7 +636,15 @@ export class MapKernel {
 	 * @param data - A JSON string containing serialized map data
 	 */
 	public populateFromSerializable(json: IMapDataObjectSerializable): void {
-		const oldData = new Map(this.data);
+		// Add creation index for the old data
+		let existingDataCount = 0;
+		for (const key of this.data.keys()) {
+			if (!this.ackedKeysIndexTracker.has(key)) {
+				this.ackedKeysIndexTracker.set(key, ++this.creationIndex);
+				existingDataCount++;
+			}
+		}
+		// Load the new data and maintain its order
 		for (const [key, serializable] of Object.entries(json)) {
 			const localValue = {
 				key,
@@ -640,6 +653,15 @@ export class MapKernel {
 
 			this.data.set(localValue.key, localValue.value);
 			// fill the creation index for the loaded data
+			if (!this.ackedKeysIndexTracker.has(localValue.key)) {
+				this.ackedKeysIndexTracker.set(
+					localValue.key,
+					serializable.index !== undefined
+						? existingDataCount + serializable.index
+						: ++this.creationIndex,
+				);
+			}
+			/*
 			if (this.isAttached()) {
 				if (!this.ackedKeysIndexTracker.has(localValue.key)) {
 					this.ackedKeysIndexTracker.set(
@@ -651,8 +673,12 @@ export class MapKernel {
 				if (serializable.index) {
 					this.localKeysIndexTracker.set(key, serializable.index);
 				}
-			}
+			} */
 		}
+		if (this.ackedKeysIndexTracker.max() !== undefined) {
+			this.creationIndex = this.ackedKeysIndexTracker.max() as number;
+		}
+		/*
 		if (this.isAttached()) {
 			if (this.ackedKeysIndexTracker.max() !== undefined) {
 				this.creationIndex = this.ackedKeysIndexTracker.max() as number;
@@ -667,7 +693,7 @@ export class MapKernel {
 				}
 			}
 			this.localKeysIndexTracker.clear();
-		}
+		} */
 	}
 
 	public populate(json: string): void {

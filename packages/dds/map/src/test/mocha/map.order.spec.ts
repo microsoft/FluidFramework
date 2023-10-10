@@ -262,7 +262,7 @@ describe("Map Iteration Order", () => {
 			map2.set("6", 6);
 			await map2.load(services);
 
-			assertIterationOrder(map2, ["2", "1", "4", "6"]);
+			assertIterationOrder(map2, ["1", "6", "2", "4"]);
 		});
 
 		it("serialize big maps with multiple blobs and maintain the order", async () => {
