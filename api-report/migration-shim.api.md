@@ -6,6 +6,7 @@
 
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
+import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions';
@@ -57,6 +58,49 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
     summarize(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined): Promise<ISummaryTreeWithStats>;
     // (undocumented)
     get target(): SharedTree | ISharedTree;
+}
+
+// @public @sealed
+export class MigrationShimFactory implements IChannelFactory {
+    constructor(oldFactory: SharedTreeFactory, newFactory: SharedTreeFactory_2, populateNewChannelFn: (oldChannel: SharedTree, newChannel: ISharedTree) => void);
+    get attributes(): IChannelAttributes;
+    create(runtime: IFluidDataStoreRuntime, id: string): MigrationShim;
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<MigrationShim>;
+    get type(): string;
+}
+
+// @public
+export class SharedTreeShim implements IChannel {
+    constructor(id: string, target: ISharedTree);
+    // (undocumented)
+    get attributes(): IChannelAttributes;
+    // (undocumented)
+    connect(services: IChannelServices): void;
+    // (undocumented)
+    getAttachSummary(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined): ISummaryTreeWithStats;
+    // (undocumented)
+    getGCData(fullGC?: boolean | undefined): IGarbageCollectionData;
+    // (undocumented)
+    handle: IFluidHandle;
+    // (undocumented)
+    readonly id: string;
+    // (undocumented)
+    get IFluidLoadable(): IFluidLoadable;
+    // (undocumented)
+    isAttached(): boolean;
+    // (undocumented)
+    summarize(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined): Promise<ISummaryTreeWithStats>;
+    // (undocumented)
+    readonly target: ISharedTree;
+}
+
+// @public @sealed
+export class SharedTreeShimFactory implements IChannelFactory {
+    constructor(factory: SharedTreeFactory_2);
+    get attributes(): IChannelAttributes;
+    create(runtime: IFluidDataStoreRuntime, id: string): SharedTreeShim;
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<SharedTreeShim>;
+    get type(): string;
 }
 
 ```
