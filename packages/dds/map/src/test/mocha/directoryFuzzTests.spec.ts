@@ -11,7 +11,7 @@ import {
 	combineReducersAsync,
 	createWeightedAsyncGenerator,
 	takeAsync,
-} from "@fluid-internal/stochastic-test-utils";
+} from "@fluid-private/stochastic-test-utils";
 import {
 	Client,
 	createDDSFuzzSuite,

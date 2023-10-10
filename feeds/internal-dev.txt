@@ -2,6 +2,6 @@
 @fluid-internal/test-pairwise-generator
 @fluid-internal/test-end-to-end-tests
 @fluid-private/test-drivers
-@fluid-internal/stochastic-test-utils
+@fluid-private/stochastic-test-utils
 @fluid-internal/test-loader-utils
 @fluid-internal/test-dds-utils

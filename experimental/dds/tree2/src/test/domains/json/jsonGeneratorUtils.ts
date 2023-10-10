@@ -7,7 +7,7 @@
  * This file contains a series of utility functions intended to assist with generating random data.
  */
 
-import { makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
 
 // Constructs a string containing all character in the given unicode range [charMin..charMax] (inclusive).
 export function createAlphabetFromUnicodeRange(charMin: number, charMax: number) {

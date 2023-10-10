@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SaveInfo, makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { SaveInfo, makeRandom } from "@fluid-private/stochastic-test-utils";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { BaseOperation, DDSFuzzModel, DDSFuzzSuiteOptions, replayTest } from "./ddsFuzzHarness";
 

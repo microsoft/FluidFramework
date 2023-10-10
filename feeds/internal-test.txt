@@ -14,7 +14,7 @@
 @fluid-private/test-drivers
 @fluidframework/test-driver-definitions
 @fluid-internal/test-app-insights-logger
-@fluid-internal/stochastic-test-utils
+@fluid-private/stochastic-test-utils
 @fluidframework/mocha-test-setup
 @fluidframework/test-runtime-utils
 @fluidframework/runtime-utils

@@ -74,7 +74,7 @@
 	},
 	"devDependencies": {
 		"@fluid-experimental/attributable-map-previous": "npm:@fluid-experimental/attributable-map@2.0.0-internal.7.0.0",
-		"@fluid-internal/stochastic-test-utils": "workspace:~",
+		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluid-internal/test-dds-utils": "workspace:~",
 		"@fluid-tools/benchmark": "^0.48.0",
 		"@fluid-tools/build-cli": "^0.25.0",

@@ -5156,8 +5156,8 @@ importers:
     specifiers:
       '@fluid-experimental/attributable-map-previous': npm:@fluid-experimental/attributable-map@2.0.0-internal.7.0.0
       '@fluid-internal/client-utils': workspace:~
-      '@fluid-internal/stochastic-test-utils': workspace:~
       '@fluid-internal/test-dds-utils': workspace:~
+      '@fluid-private/stochastic-test-utils': workspace:~
       '@fluid-tools/benchmark': ^0.48.0
       '@fluid-tools/build-cli': ^0.25.0
       '@fluidframework/build-common': ^2.0.0
@@ -5202,8 +5202,8 @@ importers:
       path-browserify: 1.0.1
     devDependencies:
       '@fluid-experimental/attributable-map-previous': /@fluid-experimental/attributable-map/2.0.0-internal.7.0.0
-      '@fluid-internal/stochastic-test-utils': link:../../../packages/test/stochastic-test-utils
       '@fluid-internal/test-dds-utils': link:../../../packages/dds/test-dds-utils
+      '@fluid-private/stochastic-test-utils': link:../../../packages/test/stochastic-test-utils
       '@fluid-tools/benchmark': 0.48.0
       '@fluid-tools/build-cli': 0.25.0_@types+node@16.18.38
       '@fluidframework/build-common': 2.0.0
@@ -5417,7 +5417,7 @@ importers:
   experimental/dds/tree:
     specifiers:
       '@fluid-internal/client-utils': workspace:~
-      '@fluid-internal/stochastic-test-utils': workspace:~
+      '@fluid-private/stochastic-test-utils': workspace:~
       '@fluid-private/test-drivers': workspace:~
       '@fluid-tools/benchmark': ^0.48.0
       '@fluidframework/build-common': ^2.0.0
@@ -5480,7 +5480,7 @@ importers:
       sorted-btree: 1.8.1
       uuid: 9.0.0
     devDependencies:
-      '@fluid-internal/stochastic-test-utils': link:../../../packages/test/stochastic-test-utils
+      '@fluid-private/stochastic-test-utils': link:../../../packages/test/stochastic-test-utils
       '@fluid-private/test-drivers': link:../../../packages/test/test-drivers
       '@fluid-tools/benchmark': 0.48.0
       '@fluidframework/build-common': 2.0.0
@@ -5518,8 +5518,8 @@ importers:
   experimental/dds/tree2:
     specifiers:
       '@fluid-internal/client-utils': workspace:~
-      '@fluid-internal/stochastic-test-utils': workspace:~
       '@fluid-internal/test-dds-utils': workspace:~
+      '@fluid-private/stochastic-test-utils': workspace:~
       '@fluid-private/test-drivers': workspace:~
       '@fluid-tools/benchmark': ^0.48.0
       '@fluid-tools/build-cli': ^0.25.0
@@ -5581,8 +5581,8 @@ importers:
       sorted-btree: 1.8.1
       uuid: 9.0.0
     devDependencies:
-      '@fluid-internal/stochastic-test-utils': link:../../../packages/test/stochastic-test-utils
       '@fluid-internal/test-dds-utils': link:../../../packages/dds/test-dds-utils
+      '@fluid-private/stochastic-test-utils': link:../../../packages/test/stochastic-test-utils
       '@fluid-private/test-drivers': link:../../../packages/test/test-drivers
       '@fluid-tools/benchmark': 0.48.0
       '@fluid-tools/build-cli': 0.25.0_@types+node@16.18.38
@@ -6233,8 +6233,8 @@ importers:
   packages/dds/map:
     specifiers:
       '@fluid-internal/client-utils': workspace:~
-      '@fluid-internal/stochastic-test-utils': workspace:~
       '@fluid-internal/test-dds-utils': workspace:~
+      '@fluid-private/stochastic-test-utils': workspace:~
       '@fluid-tools/benchmark': ^0.48.0
       '@fluid-tools/build-cli': ^0.25.0
       '@fluidframework/build-common': ^2.0.0
@@ -6281,8 +6281,8 @@ importers:
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       path-browserify: 1.0.1
     devDependencies:
-      '@fluid-internal/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-internal/test-dds-utils': link:../test-dds-utils
+      '@fluid-private/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-tools/benchmark': 0.48.0
       '@fluid-tools/build-cli': 0.25.0_@types+node@16.18.38
       '@fluidframework/build-common': 2.0.0
@@ -6399,8 +6399,8 @@ importers:
   packages/dds/merge-tree:
     specifiers:
       '@fluid-internal/client-utils': workspace:~
-      '@fluid-internal/stochastic-test-utils': workspace:~
       '@fluid-internal/test-pairwise-generator': workspace:~
+      '@fluid-private/stochastic-test-utils': workspace:~
       '@fluid-tools/benchmark': ^0.48.0
       '@fluid-tools/build-cli': ^0.25.0
       '@fluidframework/build-common': ^2.0.0
@@ -6446,8 +6446,8 @@ importers:
       '@fluidframework/shared-object-base': link:../shared-object-base
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
     devDependencies:
-      '@fluid-internal/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-internal/test-pairwise-generator': link:../../test/test-pairwise-generator
+      '@fluid-private/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-tools/benchmark': 0.48.0
       '@fluid-tools/build-cli': 0.25.0_@types+node@16.18.38
       '@fluidframework/build-common': 2.0.0
@@ -6736,8 +6736,8 @@ importers:
   packages/dds/sequence:
     specifiers:
       '@fluid-internal/client-utils': workspace:~
-      '@fluid-internal/stochastic-test-utils': workspace:~
       '@fluid-internal/test-dds-utils': workspace:~
+      '@fluid-private/stochastic-test-utils': workspace:~
       '@fluid-tools/benchmark': ^0.48.0
       '@fluid-tools/build-cli': ^0.25.0
       '@fluidframework/build-common': ^2.0.0
@@ -6787,8 +6787,8 @@ importers:
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       uuid: 9.0.0
     devDependencies:
-      '@fluid-internal/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-internal/test-dds-utils': link:../test-dds-utils
+      '@fluid-private/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-tools/benchmark': 0.48.0
       '@fluid-tools/build-cli': 0.25.0_@types+node@16.18.38
       '@fluidframework/build-common': 2.0.0
@@ -6958,8 +6958,8 @@ importers:
 
   packages/dds/task-manager:
     specifiers:
-      '@fluid-internal/stochastic-test-utils': workspace:~
       '@fluid-internal/test-dds-utils': workspace:~
+      '@fluid-private/stochastic-test-utils': workspace:~
       '@fluid-tools/build-cli': ^0.25.0
       '@fluidframework/build-common': ^2.0.0
       '@fluidframework/build-tools': ^0.25.0
@@ -7004,8 +7004,8 @@ importers:
       '@fluidframework/shared-object-base': link:../shared-object-base
       events: 3.3.0
     devDependencies:
-      '@fluid-internal/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-internal/test-dds-utils': link:../test-dds-utils
+      '@fluid-private/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-tools/build-cli': 0.25.0_@types+node@16.18.38
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.25.0_@types+node@16.18.38
@@ -7032,7 +7032,7 @@ importers:
   packages/dds/test-dds-utils:
     specifiers:
       '@fluid-internal/client-utils': workspace:~
-      '@fluid-internal/stochastic-test-utils': workspace:~
+      '@fluid-private/stochastic-test-utils': workspace:~
       '@fluid-tools/build-cli': ^0.25.0
       '@fluidframework/build-common': ^2.0.0
       '@fluidframework/build-tools': ^0.25.0
@@ -7058,7 +7058,7 @@ importers:
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
-      '@fluid-internal/stochastic-test-utils': link:../../test/stochastic-test-utils
+      '@fluid-private/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/shared-object-base': link:../shared-object-base
@@ -7956,7 +7956,7 @@ importers:
   packages/framework/attributor:
     specifiers:
       '@fluid-internal/client-utils': workspace:~
-      '@fluid-internal/stochastic-test-utils': workspace:~
+      '@fluid-private/stochastic-test-utils': workspace:~
       '@fluid-tools/build-cli': ^0.25.0
       '@fluidframework/build-common': ^2.0.0
       '@fluidframework/build-tools': ^0.25.0
@@ -8005,7 +8005,7 @@ importers:
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       lz4js: 0.2.0
     devDependencies:
-      '@fluid-internal/stochastic-test-utils': link:../../test/stochastic-test-utils
+      '@fluid-private/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-tools/build-cli': 0.25.0_@types+node@16.18.38
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.25.0_@types+node@16.18.38
@@ -8911,7 +8911,7 @@ importers:
   packages/runtime/container-runtime:
     specifiers:
       '@fluid-internal/client-utils': workspace:~
-      '@fluid-internal/stochastic-test-utils': workspace:~
+      '@fluid-private/stochastic-test-utils': workspace:~
       '@fluid-tools/benchmark': ^0.48.0
       '@fluid-tools/build-cli': ^0.25.0
       '@fluidframework/build-common': ^2.0.0
@@ -8973,7 +8973,7 @@ importers:
       sorted-btree: 1.8.1
       uuid: 9.0.0
     devDependencies:
-      '@fluid-internal/stochastic-test-utils': link:../../test/stochastic-test-utils
+      '@fluid-private/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-tools/benchmark': 0.48.0
       '@fluid-tools/build-cli': 0.25.0
       '@fluidframework/build-common': 2.0.0
@@ -10007,8 +10007,8 @@ importers:
   packages/test/test-service-load:
     specifiers:
       '@fluid-internal/client-utils': workspace:~
-      '@fluid-internal/stochastic-test-utils': workspace:~
       '@fluid-internal/test-pairwise-generator': workspace:~
+      '@fluid-private/stochastic-test-utils': workspace:~
       '@fluid-private/test-drivers': workspace:~
       '@fluid-tools/build-cli': ^0.25.0
       '@fluidframework/aqueduct': workspace:~
@@ -10049,8 +10049,8 @@ importers:
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
-      '@fluid-internal/stochastic-test-utils': link:../stochastic-test-utils
       '@fluid-internal/test-pairwise-generator': link:../test-pairwise-generator
+      '@fluid-private/stochastic-test-utils': link:../stochastic-test-utils
       '@fluid-private/test-drivers': link:../test-drivers
       '@fluidframework/aqueduct': link:../../framework/aqueduct
       '@fluidframework/container-definitions': link:../../common/container-definitions

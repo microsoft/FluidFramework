@@ -8,7 +8,7 @@
 import { strict as assert } from "assert";
 import * as fs from "fs";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IRandom } from "@fluid-internal/stochastic-test-utils";
+import { IRandom } from "@fluid-private/stochastic-test-utils";
 import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 import { TextSegment } from "../textSegment";
 import { ISegment, SegmentGroup, toRemovalInfo } from "../mergeTreeNodes";

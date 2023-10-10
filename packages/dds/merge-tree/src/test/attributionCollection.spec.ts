@@ -11,7 +11,7 @@ import {
 	makeRandom,
 	performFuzzActions,
 	take,
-} from "@fluid-internal/stochastic-test-utils";
+} from "@fluid-private/stochastic-test-utils";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
 import { AttributionCollection, SerializedAttributionCollection } from "../attributionCollection";
 import { BaseSegment, ISegment } from "../mergeTreeNodes";

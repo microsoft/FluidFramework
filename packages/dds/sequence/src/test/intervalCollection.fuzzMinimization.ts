@@ -9,7 +9,7 @@ import {
 	AsyncGenerator as Generator,
 	asyncGeneratorFromArray as generatorFromArray,
 	makeRandom,
-} from "@fluid-internal/stochastic-test-utils";
+} from "@fluid-private/stochastic-test-utils";
 import { DDSFuzzModel, replayTest } from "@fluid-internal/test-dds-utils";
 import { SharedStringFactory } from "../sequenceFactory";
 import { LoggingInfo, Operation, FuzzTestState, makeReducer } from "./intervalCollection.fuzzUtils";
