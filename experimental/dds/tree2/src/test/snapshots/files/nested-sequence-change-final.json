@@ -28,7 +28,7 @@
                                 "count": 1,
                                 "content": [
                                   {
-                                    "type": "SeqMap"
+                                    "type": "has-sequence-map.SeqMap"
                                   }
                                 ],
                                 "cellId": {
@@ -45,7 +45,7 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "SeqMap"
+                                              "type": "has-sequence-map.SeqMap"
                                             }
                                           ],
                                           "cellId": {
@@ -120,11 +120,11 @@
                     "rootFieldKey",
                     [
                       {
-                        "type": "SeqMap",
+                        "type": "has-sequence-map.SeqMap",
                         "fields": {
                           "foo": [
                             {
-                              "type": "SeqMap"
+                              "type": "has-sequence-map.SeqMap"
                             }
                           ]
                         }
