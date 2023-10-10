@@ -80,7 +80,7 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "^2.0.0",
+		"@fluidframework/build-common": "2.0.1-197473",
 		"@fluidframework/build-tools": "^0.25.0",
 		"@fluidframework/eslint-config-fluid": "^3.0.0",
 		"@types/mocha": "^9.1.1",
