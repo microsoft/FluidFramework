@@ -25,9 +25,9 @@ import {
 } from "../core";
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
 import { SummaryEncodeType } from "../shared-tree";
-import { jsonableTreeFromCursor, singleTextCursor } from "./treeTextCursor";
 import { FullSchemaPolicy } from "./modular-schema";
 import { decode, schemaCompressedEncode, uncompressedEncode, EncodedChunk } from "./chunked-forest";
+import { jsonableTreeFromCursor, singleTextCursor } from "./treeTextCursor";
 
 /**
  * The storage key for the blob in the summary containing tree data
@@ -67,6 +67,7 @@ export class ForestSummarizer implements Summarizable {
 	 */
 	private getTreeString(stringify: SummaryElementStringifier): string {
 		this.forest.moveCursorToPath(undefined, this.cursor);
+		// TODO: Encode all detached fields in one operation for better performance and compression
 		const fields = mapCursorFields(this.cursor, (cursor) => [
 			this.cursor.getFieldKey(),
 			encodeSummary(
@@ -119,13 +120,13 @@ export class ForestSummarizer implements Summarizable {
 			// forest summary format.
 			const fields = parse(treeBufferString) as [FieldKey, EncodedChunk][];
 			const delta: [FieldKey, Delta.Insert[]][] = fields.map(([fieldKey, content]) => {
-				const jsonableTree = mapCursorField(
+				const cursors = mapCursorField(
 					decode(content).cursor(),
 					jsonableTreeFromCursor,
-				);
+				).map(singleTextCursor);
 				const insert: Delta.Insert = {
 					type: Delta.MarkType.Insert,
-					content: jsonableTree.map(singleTextCursor),
+					content: cursors,
 				};
 				return [fieldKey, [insert]];
 			});
