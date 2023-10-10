@@ -462,7 +462,7 @@ describe("LazyStruct", () => {
 	});
 });
 
-describe.only("buildLazyStruct", () => {
+describe("buildLazyStruct", () => {
 	const schemaBuilder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
 	const structNodeSchema = schemaBuilder.struct("struct", {
 		optional: SchemaBuilder.fieldOptional(leafDomain.string),
