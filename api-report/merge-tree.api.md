@@ -15,7 +15,7 @@ import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export function addProperties(oldProps: PropertySet | undefined, newProps: PropertySet, op?: ICombiningOp, seq?: number): PropertySet;
 
 // @alpha (undocumented)
@@ -191,7 +191,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     walkSegments<undefined>(handler: ISegmentAction<undefined>, start?: number, end?: number, accum?: undefined, splitRange?: boolean): void;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export function clone<T>(extension: MapLike<T> | undefined): MapLike<T> | undefined;
 
 // @public (undocumented)
@@ -210,7 +210,7 @@ export class CollaborationWindow {
     minSeq: number;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export function combine(combiningInfo: ICombiningOp, currentValue: any, newValue: any, seq?: number): any;
 
 // @public (undocumented)
@@ -246,7 +246,7 @@ export function createInsertOp(pos: number, segSpec: any): IMergeTreeInsertMsg;
 // @public (undocumented)
 export function createInsertSegmentOp(pos: number, segment: ISegment): IMergeTreeInsertMsg;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export function createMap<T>(): MapLike<T>;
 
 // @public
@@ -273,10 +273,10 @@ export interface Dictionary<TKey, TData> {
 // @alpha (undocumented)
 export function discardMergeTreeDeltaRevertible(revertibles: MergeTreeDeltaRevertible[]): void;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export function extend<T>(base: MapLike<T>, extension: MapLike<T> | undefined, combiningOp?: ICombiningOp, seq?: number): MapLike<T>;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | undefined): MapLike<T>;
 
 // @internal
@@ -732,7 +732,7 @@ export class Marker extends BaseSegment implements ReferencePosition {
     readonly type = "Marker";
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export function matchProperties(a: PropertySet | undefined, b: PropertySet | undefined): boolean;
 
 // @public (undocumented)
@@ -1119,7 +1119,7 @@ export abstract class SortedSet<T, U extends string | number> {
     get size(): number;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export class Stack<T> {
     // (undocumented)
     empty(): boolean;
