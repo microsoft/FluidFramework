@@ -378,7 +378,7 @@ stages:
               continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
 
           # Process test result, include publishing and logging
-          - template: include-log-test-failures.yml
+          - template: include-process-test-results.yml
             parameters:
               buildDirectory: ${{ parameters.buildDirectory }}
               testResultDirs: ${{ parameters.testResultDirs }}

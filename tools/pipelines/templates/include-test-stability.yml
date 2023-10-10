@@ -168,6 +168,6 @@ jobs:
           continueOnError: true
 
       # Process test result, include publishing and logging
-      - template: include-log-test-failures.yml
+      - template: include-process-test-results.yml
         parameters:
           buildDirectory: ${{ parameters.buildDirectory }}
