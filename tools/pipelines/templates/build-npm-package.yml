@@ -625,7 +625,7 @@ stages:
   - ${{ if eq(variables['Build.Reason'], 'IndividualCI') }}:
     - stage: runAfterAll
       displayName: Retrieve and upload client stage stats to Kusto
-      condition: always()
+      condition: eq(parameters.tagName, 'client')
       dependsOn: 
         - build
 
