@@ -162,7 +162,7 @@ export function generateTestTrees(): { name: string; tree: () => ISharedTree }[]
 						parent: undefined,
 						field: rootFieldKey,
 					})
-					.insert(0, [singleTextCursor({ type: brand("SeqMap") })]);
+					.insert(0, [singleTextCursor({ type: seqMapSchema.name })]);
 				// The nested change
 				view.editor
 					.sequenceField({
@@ -173,7 +173,7 @@ export function generateTestTrees(): { name: string; tree: () => ISharedTree }[]
 						},
 						field: brand("foo"),
 					})
-					.insert(0, [singleTextCursor({ type: brand("SeqMap") })]);
+					.insert(0, [singleTextCursor({ type: seqMapSchema.name })]);
 				view.transaction.commit();
 				return tree;
 			},
