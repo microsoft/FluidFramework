@@ -539,6 +539,9 @@ describe("Routerlicious", () => {
 						defaultProducer,
 						defaultDocumentRepository,
 						defaultDocumentDeleteService,
+						null,
+						null,
+						defaultCollaborationSessionEventEmitter,
 					);
 					supertest = request(app);
 				});
@@ -570,6 +573,12 @@ describe("Routerlicious", () => {
 					it("/:tenantId/:id/blobs", async () => {
 						await assertCorrelationId(
 							`/api/v1/${appTenant1.id}/${document1._id}/blobs`,
+							"post",
+						);
+					});
+					it("/api/v1/:tenantId/:id/broadcast-signal", async () => {
+						await assertCorrelationId(
+							`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`,
 							"post",
 						);
 					});
