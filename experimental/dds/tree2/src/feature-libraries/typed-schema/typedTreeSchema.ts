@@ -55,13 +55,13 @@ export type NormalizeStructFields<T extends Fields | undefined> = NormalizeStruc
  *
  * These extends constraints only serve as documentation:
  * to avoid breaking compilation, this type has to not actually enforce anything, and thus is just `unknown`.
- * Therefor the type safety is the responsibility of the user of the API.
+ * Therefore the type safety is the responsibility of the user of the API.
  * @alpha
  */
 export type Unenforced<_DesiredExtendsConstraint> = unknown;
 
 {
-	type _check2 = requireAssignableTo<TreeSchema, Unenforced<TreeSchema>>;
+	type _check = requireAssignableTo<TreeSchema, Unenforced<TreeSchema>>;
 }
 
 /**
@@ -310,7 +310,7 @@ export class FieldSchema<
 
 	/**
 	 * Constructs a FieldSchema.
-	 * @remarks
+	 * @privateRemarks
 	 * Alias for the constructor, but with extends clause for the `Types` parameter that {@link FieldSchema} can not have (due to recursive type issues).
 	 */
 	public static create<Kind extends FieldKind, const Types extends AllowedTypes>(
