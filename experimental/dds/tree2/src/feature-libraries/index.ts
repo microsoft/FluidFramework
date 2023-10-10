@@ -223,7 +223,7 @@ export {
 } from "./untypedTree";
 
 export {
-	EditableFieldKinds,
+	AssignableFieldKinds,
 	FieldNode,
 	FlexibleFieldContent,
 	FlexibleNodeContent,

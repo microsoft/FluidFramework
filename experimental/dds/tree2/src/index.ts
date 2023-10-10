@@ -249,7 +249,7 @@ export {
 	Sequence2,
 	Struct,
 	StructTyped,
-	EditableFieldKinds,
+	AssignableFieldKinds,
 	TreeContext,
 	TypedField,
 	TypedNode,

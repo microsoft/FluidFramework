@@ -143,6 +143,9 @@ export interface ArrayLikeMut<TGet, TSet extends TGet = TGet> extends ArrayLike<
 type ArrayToUnion<T extends readonly unknown[]> = T extends readonly (infer TValue)[] ? TValue : never;
 
 // @alpha
+export type AssignableFieldKinds = typeof FieldKinds.optional | typeof FieldKinds.required;
+
+// @alpha
 type Assume<TInput, TAssumeToBe> = TInput extends TAssumeToBe ? TInput : TAssumeToBe;
 
 // @alpha
@@ -484,9 +487,6 @@ export interface EditableField extends UntypedField<EditableTreeContext, Editabl
     replaceNodes(index: number, newContent: NewFieldContent, count?: number): void;
     setContent(newContent: NewFieldContent): void;
 }
-
-// @alpha
-export type EditableFieldKinds = typeof FieldKinds.optional | typeof FieldKinds.required;
 
 // @alpha (undocumented)
 type EditableOptionalField<TypedChild> = [
@@ -1861,9 +1861,9 @@ type StructFields<TFields extends RestrictiveReadonlyRecord<string, FieldSchema>
 } & {
     readonly [key in keyof TFields]: UnboxField<TFields[key]>;
 } & {
-    [key in keyof TFields as TFields[key]["kind"] extends EditableFieldKinds ? key : never]: UnboxField<TFields[key]>;
+    [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? key : never]: UnboxField<TFields[key]>;
 } & {
-    readonly [key in keyof TFields as TFields[key]["kind"] extends EditableFieldKinds ? `set${Capitalize<key & string>}` : never]: (content: FlexibleFieldContent<TFields[key]>) => void;
+    readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? `set${Capitalize<key & string>}` : never]: (content: FlexibleFieldContent<TFields[key]>) => void;
 };
 
 // @alpha

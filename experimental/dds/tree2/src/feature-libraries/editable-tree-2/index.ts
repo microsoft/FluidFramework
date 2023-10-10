@@ -18,7 +18,7 @@ export {
 	Sequence,
 	Struct,
 	StructTyped,
-	EditableFieldKinds,
+	AssignableFieldKinds,
 	TypedNode,
 	TypedNodeUnion,
 	boxedIterator,
