@@ -463,13 +463,13 @@ describe("LazyStruct", () => {
 });
 
 describe.only("buildLazyStruct", () => {
-	const schemaBuilder = new SchemaBuilder("test", {}, leafDomain.library);
+	const schemaBuilder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
 	const structNodeSchema = schemaBuilder.struct("struct", {
 		optional: SchemaBuilder.fieldOptional(leafDomain.string),
 		required: SchemaBuilder.fieldRequired(leafDomain.boolean),
 		sequence: SchemaBuilder.fieldSequence(leafDomain.number),
 	});
-	const schema = schemaBuilder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
+	const schema = schemaBuilder.toDocumentSchema(SchemaBuilder.fieldOptional(Any));
 
 	// Count the number of times edits have been generated.
 	let editCallCount = 0;
