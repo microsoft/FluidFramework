@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+import { StableId } from "@fluidframework/runtime-definitions";
 import {
 	FieldKey,
 	TreeNavigationResult,
@@ -14,7 +15,6 @@ import {
 	FieldUpPath,
 	ITreeCursor,
 	keyAsDetachedField,
-	rootField,
 	iterateCursorField,
 } from "../../core";
 import { FieldKind } from "../modular-schema";
@@ -25,15 +25,9 @@ import {
 	SequenceFieldEditBuilder,
 	ValueFieldEditBuilder,
 } from "../default-field-kinds";
-import {
-	assertValidIndex,
-	assertValidRangeIndices,
-	compareSets,
-	disposeSymbol,
-	fail,
-} from "../../util";
+import { assertValidIndex, assertValidRangeIndices, brand, disposeSymbol, fail } from "../../util";
 import { AllowedTypes, FieldSchema } from "../typed-schema";
-import { TreeStatus, treeStatusFromPath } from "../editable-tree";
+import { LocalNodeKey, StableNodeKey, nodeKeyTreeIdentifier } from "../node-key";
 import { Context } from "./context";
 import {
 	FlexibleNodeContent,
@@ -47,6 +41,8 @@ import {
 	RequiredField,
 	boxedIterator,
 	CheckTypesOverlap,
+	TreeStatus,
+	NodeKeyField,
 } from "./editableTreeTypes";
 import { makeTree } from "./lazyTree";
 import {
@@ -60,6 +56,7 @@ import {
 	tryMoveCursorToAnchorSymbol,
 } from "./lazyEntity";
 import { unboxedUnion } from "./unboxed";
+import { treeStatusFromAnchorCache, treeStatusFromDetachedField } from "./utilities";
 
 export function makeField(
 	context: Context,
@@ -81,7 +78,7 @@ export function makeField(
 		const anchorNode =
 			context.forest.anchors.locate(fieldAnchor.parent) ??
 			fail("parent anchor node should always exist since field is under a node");
-		anchorNode.on("afterDelete", () => {
+		anchorNode.on("afterDestroy", () => {
 			field[disposeSymbol]();
 		});
 	}
@@ -117,16 +114,7 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 			0x77c /* Narrowing must be done to a kind that exists in this context */,
 		);
 
-		if (schema.kind !== this.schema.kind) {
-			return false;
-		}
-		if (schema.types === undefined) {
-			return this.schema.types === undefined;
-		}
-		if (this.schema.types === undefined) {
-			return false;
-		}
-		return compareSets({ a: this.schema.types, b: schema.types });
+		return this.schema.equals(schema);
 	}
 
 	public isSameAs(other: TreeField): boolean {
@@ -210,15 +198,13 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 		const parentAnchor = fieldAnchor.parent;
 		// If the parentAnchor is undefined it is a detached field.
 		if (parentAnchor === undefined) {
-			return keyAsDetachedField(fieldAnchor.fieldKey) === rootField
-				? TreeStatus.InDocument
-				: TreeStatus.Removed;
+			return treeStatusFromDetachedField(keyAsDetachedField(fieldAnchor.fieldKey));
 		}
 		const parentAnchorNode = this.context.forest.anchors.locate(parentAnchor);
 
 		// As the "parentAnchor === undefined" case is handled above, parentAnchorNode should exist.
 		assert(parentAnchorNode !== undefined, 0x77e /* parentAnchorNode must exist. */);
-		return treeStatusFromPath(parentAnchorNode);
+		return treeStatusFromAnchorCache(this.context.forest.anchors, parentAnchorNode);
 	}
 
 	public getFieldPath(): FieldUpPath {
@@ -263,18 +249,18 @@ export class LazySequence<TTypes extends AllowedTypes>
 		return fieldEditor;
 	}
 
-	public insertAt(index: number, value: FlexibleNodeContent<TTypes>[]): void {
+	public insertAt(index: number, value: Iterable<FlexibleNodeContent<TTypes>>): void {
 		const fieldEditor = this.sequenceEditor();
-		const content = this.normalizeNewContent(Array.isArray(value) ? value : [value]);
+		const content = this.normalizeNewContent(Array.isArray(value) ? value : Array.from(value));
 		assertValidIndex(index, this, true);
 		fieldEditor.insert(index, content);
 	}
 
-	public insertAtStart(value: FlexibleNodeContent<TTypes>[]): void {
+	public insertAtStart(value: Iterable<FlexibleNodeContent<TTypes>>): void {
 		this.insertAt(0, value);
 	}
 
-	public insertAtEnd(value: FlexibleNodeContent<TTypes>[]): void {
+	public insertAtEnd(value: Iterable<FlexibleNodeContent<TTypes>>): void {
 		this.insertAt(this.length, value);
 	}
 
@@ -373,12 +359,12 @@ export class LazySequence<TTypes extends AllowedTypes>
 }
 
 export class LazyValueField<TTypes extends AllowedTypes>
-	extends LazyField<typeof FieldKinds.value, TTypes>
+	extends LazyField<typeof FieldKinds.required, TTypes>
 	implements RequiredField<TTypes>
 {
 	public constructor(
 		context: Context,
-		schema: FieldSchema<typeof FieldKinds.value, TTypes>,
+		schema: FieldSchema<typeof FieldKinds.required, TTypes>,
 		cursor: ITreeSubscriptionCursor,
 		fieldAnchor: FieldAnchor,
 	) {
@@ -397,15 +383,15 @@ export class LazyValueField<TTypes extends AllowedTypes>
 		return this.at(0);
 	}
 
-	public get boxedContent(): TypedNodeUnion<TTypes> {
-		return this.boxedAt(0);
-	}
-
-	public setContent(newContent: FlexibleNodeContent<TTypes>): void {
+	public set content(newContent: FlexibleNodeContent<TTypes>) {
 		const content = this.normalizeNewContent(newContent);
 		const fieldEditor = this.valueFieldEditor();
 		assert(content.length === 1, 0x780 /* value field content should normalize to one item */);
 		fieldEditor.set(content[0]);
+	}
+
+	public get boxedContent(): TypedNodeUnion<TTypes> {
+		return this.boxedAt(0);
 	}
 }
 
@@ -434,11 +420,7 @@ export class LazyOptionalField<TTypes extends AllowedTypes>
 		return this.length === 0 ? undefined : this.at(0);
 	}
 
-	public get boxedContent(): TypedNodeUnion<TTypes> | undefined {
-		return this.length === 0 ? undefined : this.boxedAt(0);
-	}
-
-	public setContent(newContent: FlexibleNodeContent<TTypes> | undefined): void {
+	public set content(newContent: FlexibleNodeContent<TTypes> | undefined) {
 		const content = this.normalizeNewContent(newContent);
 		const fieldEditor = this.optionalEditor();
 		assert(
@@ -446,6 +428,42 @@ export class LazyOptionalField<TTypes extends AllowedTypes>
 			0x781 /* optional field content should normalize at most one item */,
 		);
 		fieldEditor.set(content.length === 0 ? undefined : content[0], this.length === 0);
+	}
+
+	public get boxedContent(): TypedNodeUnion<TTypes> | undefined {
+		return this.length === 0 ? undefined : this.boxedAt(0);
+	}
+}
+
+export class LazyNodeKeyField<TTypes extends AllowedTypes>
+	extends LazyField<typeof FieldKinds.nodeKey, TTypes>
+	implements NodeKeyField
+{
+	public constructor(
+		context: Context,
+		schema: FieldSchema<typeof FieldKinds.nodeKey, TTypes>,
+		cursor: ITreeSubscriptionCursor,
+		fieldAnchor: FieldAnchor,
+	) {
+		super(context, schema, cursor, fieldAnchor);
+
+		makePropertyEnumerableOwn(this, "stableNodeKey", LazyNodeKeyField.prototype);
+	}
+
+	public get localNodeKey(): LocalNodeKey {
+		// TODO: Optimize this to be a fast path that gets a LocalNodeKey directly from the
+		// forest rather than getting the StableNodeKey and the compressing it.
+		return this.context.nodeKeys.localize(this.stableNodeKey);
+	}
+
+	public get stableNodeKey(): StableNodeKey {
+		const cursor = this[cursorSymbol];
+		cursor.enterNode(0);
+		assert(cursor.type === nodeKeyTreeIdentifier, "invalid node key type");
+		const stableKey = cursor.value;
+		assert(typeof stableKey === "string", "invalid node key type");
+		cursor.exitNode();
+		return brand(stableKey as StableId);
 	}
 }
 
@@ -463,10 +481,10 @@ type Builder = new <TTypes extends AllowedTypes>(
 
 const builderList: [FieldKind, Builder][] = [
 	[FieldKinds.forbidden, LazyForbiddenField],
-	[FieldKinds.nodeKey, LazyOptionalField], // TODO
+	[FieldKinds.nodeKey, LazyNodeKeyField],
 	[FieldKinds.optional, LazyOptionalField],
 	[FieldKinds.sequence, LazySequence],
-	[FieldKinds.value, LazyValueField],
+	[FieldKinds.required, LazyValueField],
 ];
 
 const kindToClass: ReadonlyMap<FieldKind, Builder> = new Map(builderList);

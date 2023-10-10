@@ -74,7 +74,7 @@ export function unboxedField<TSchema extends FieldSchema>(
 	cursor: ITreeSubscriptionCursor,
 ): UnboxField<TSchema> {
 	const kind = schema.kind;
-	if (kind === FieldKinds.value) {
+	if (kind === FieldKinds.required) {
 		return inCursorNode(cursor, 0, (innerCursor) =>
 			unboxedUnion(context, schema, innerCursor),
 		) as UnboxField<TSchema>;

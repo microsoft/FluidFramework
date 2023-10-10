@@ -17,11 +17,14 @@ import { TrackingGroupCollection } from "./mergeTreeTracking";
 import { ICombiningOp, IJSONSegment, IMarkerDef, MergeTreeDeltaType, ReferenceType } from "./ops";
 import { computeHierarchicalOrdinal } from "./ordinal";
 import { PartialSequenceLengths } from "./partialLengths";
+// eslint-disable-next-line import/no-deprecated
 import { clone, createMap, MapLike, PropertySet } from "./properties";
 import {
 	refTypeIncludesFlag,
+	// eslint-disable-next-line import/no-deprecated
 	RangeStackMap,
 	ReferencePosition,
+	// eslint-disable-next-line import/no-deprecated
 	refGetRangeLabels,
 	refGetTileLabels,
 } from "./referencePositions";
@@ -90,6 +93,7 @@ export interface IHierBlock extends IMergeBlock {
 	hierToString(indentCount: number): string;
 	rightmostTiles: MapLike<ReferencePosition>;
 	leftmostTiles: MapLike<ReferencePosition>;
+	// eslint-disable-next-line import/no-deprecated
 	rangeStacks: RangeStackMap;
 }
 
@@ -435,6 +439,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 		rollback: PropertiesRollback = PropertiesRollback.None,
 	) {
 		this.propertyManager ??= new PropertiesManager();
+		// eslint-disable-next-line import/no-deprecated
 		this.properties ??= createMap<any>();
 		return this.propertyManager.addProperties(
 			this.properties,
@@ -457,6 +462,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 	protected cloneInto(b: ISegment) {
 		b.clientId = this.clientId;
 		// TODO: deep clone properties
+		// eslint-disable-next-line import/no-deprecated
 		b.properties = clone(this.properties);
 		b.removedClientIds = this.removedClientIds?.slice();
 		// TODO: copy removed client overlap and branch removal info
@@ -723,6 +729,9 @@ export const compareNumbers = (a: number, b: number) => a - b;
 export const compareStrings = (a: string, b: string) => a.localeCompare(b);
 
 const indentStrings = ["", " ", "  "];
+/**
+ * @deprecated This functionality is deprecated and will be removed in a future release.
+ */
 export function internedSpaces(n: number) {
 	if (indentStrings[n] === undefined) {
 		indentStrings[n] = "";
@@ -782,6 +791,7 @@ export function debugMarkerToString(marker: Marker): string {
 			lbuf += tileLabel;
 		}
 	}
+	// eslint-disable-next-line import/no-deprecated
 	const rangeLabels = refGetRangeLabels(marker);
 	if (rangeLabels) {
 		let rangeKind = "begin";

@@ -101,7 +101,7 @@ export const RouterliciousErrorTypes: {
 };
 
 // @public (undocumented)
-export type RouterliciousErrorTypes = typeof RouterliciousErrorTypes[keyof typeof RouterliciousErrorTypes];
+export type RouterliciousErrorTypes = (typeof RouterliciousErrorTypes)[keyof typeof RouterliciousErrorTypes];
 
 // (No @packageDocumentation comment for this package)
 

@@ -5,25 +5,20 @@
 
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { brand, useDeterministicStableId } from "../../util";
-import { AllowedUpdateType, FieldKey, UpPath, ValueSchema, rootFieldKey } from "../../core";
-import {
-	ISharedTree,
-	ISharedTreeView,
-	SharedTreeFactory,
-	SummaryEncodeType,
-} from "../../shared-tree";
+import { AllowedUpdateType, FieldKey, UpPath, rootFieldKey } from "../../core";
+import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../shared-tree";
 import { Any, FieldKinds, SchemaBuilder, singleTextCursor } from "../../feature-libraries";
 import { typeboxValidator } from "../../external-utilities";
+import { leaf } from "../../domains";
 
 const factory = new SharedTreeFactory({
 	jsonValidator: typeboxValidator,
 	summaryEncodeType: SummaryEncodeType.Compressed,
 });
 
-const builder = new SchemaBuilder("test trees");
+const builder = new SchemaBuilder({ scope: "test trees", libraries: [leaf.library] });
 const rootNodeSchema = builder.map("TestInner", SchemaBuilder.fieldSequence(Any));
-const leafNodeSchema = builder.leaf("TestLeaf", ValueSchema.String);
-const testSchema = builder.intoDocumentSchema(SchemaBuilder.fieldSequence(Any));
+const testSchema = builder.toDocumentSchema(SchemaBuilder.fieldSequence(Any));
 
 function generateCompleteTree(
 	fields: FieldKey[],
@@ -65,7 +60,7 @@ function generateTreeRecursively(
 		for (let i = 0; i < nodesPerField; i++) {
 			if (height === 1) {
 				const writeCursor = singleTextCursor({
-					type: leafNodeSchema.name,
+					type: leaf.string.name,
 					// TODO: these values show up in the snapshot as "[object Object]", which doesn't seem right.
 					value: currentValue.value.toString(),
 				});
@@ -110,10 +105,12 @@ export function generateTestTrees(): { name: string; tree: () => ISharedTree }[]
 		{
 			name: "has-handle",
 			tree: () => {
-				const innerBuilder = new SchemaBuilder("has-handle");
-				const handleSchema = innerBuilder.leaf("Handle", ValueSchema.FluidHandle);
-				const docSchema = innerBuilder.intoDocumentSchema(
-					SchemaBuilder.fieldOptional(handleSchema),
+				const innerBuilder = new SchemaBuilder({
+					scope: "has-handle",
+					libraries: [leaf.library],
+				});
+				const docSchema = innerBuilder.toDocumentSchema(
+					SchemaBuilder.fieldOptional(leaf.handle),
 				);
 
 				const config = {
@@ -131,19 +128,21 @@ export function generateTestTrees(): { name: string; tree: () => ISharedTree }[]
 					parent: undefined,
 					field: rootFieldKey,
 				});
-				field.set(singleTextCursor({ type: handleSchema.name, value: tree.handle }), true);
+				field.set(singleTextCursor({ type: leaf.handle.name, value: tree.handle }), true);
 				return tree;
 			},
 		},
 		{
 			name: "nested-sequence-change",
 			tree: () => {
-				const innerBuilder = new SchemaBuilder("has-sequence-map");
+				const innerBuilder = new SchemaBuilder({
+					scope: "has-sequence-map",
+				});
 				const seqMapSchema = innerBuilder.mapRecursive(
 					"SeqMap",
 					SchemaBuilder.fieldRecursive(FieldKinds.sequence, () => seqMapSchema),
 				);
-				const docSchema = innerBuilder.intoDocumentSchema(
+				const docSchema = innerBuilder.toDocumentSchema(
 					SchemaBuilder.fieldSequence(seqMapSchema),
 				);
 

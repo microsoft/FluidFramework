@@ -19,6 +19,8 @@ import {
 	IEditableForest,
 	ITreeCursorSynchronous,
 	ITreeSubscriptionCursor,
+	JsonableTree,
+	makeDetachedFieldIndex,
 	mapCursorField,
 	mapCursorFields,
 	SchemaData,
@@ -132,7 +134,7 @@ export class ForestSummarizer implements Summarizable {
 			});
 
 			assert(this.forest.isEmpty, "forest must be empty");
-			applyDelta(new Map(delta), this.forest);
+			applyDelta(new Map(delta), this.forest, makeDetachedFieldIndex("init"));
 		}
 	}
 }

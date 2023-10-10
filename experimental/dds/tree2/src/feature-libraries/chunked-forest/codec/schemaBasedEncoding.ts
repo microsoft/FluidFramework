@@ -69,7 +69,7 @@ export function fieldShaper(
 	const type = oneFromSet(field.types);
 	const nodeEncoder = type !== undefined ? treeHandler.shapeFromTree(type) : anyNodeEncoder;
 	// eslint-disable-next-line unicorn/prefer-ternary
-	if (kind.multiplicity === Multiplicity.Value) {
+	if (kind.multiplicity === Multiplicity.Single) {
 		return asFieldEncoder(nodeEncoder);
 	} else {
 		return cache.nestedArray(nodeEncoder);

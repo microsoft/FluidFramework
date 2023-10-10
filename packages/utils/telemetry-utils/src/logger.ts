@@ -762,9 +762,8 @@ export class PerformanceEvent {
 				}
 			}
 		} else if (this.recordHeapSize) {
-			this.startMemoryCollection = (
-				performance as PerformanceWithMemory
-			)?.memory?.usedJSHeapSize;
+			this.startMemoryCollection = (performance as PerformanceWithMemory)?.memory
+				?.usedJSHeapSize;
 		}
 
 		this.logger.sendPerformanceEvent(event, error);
