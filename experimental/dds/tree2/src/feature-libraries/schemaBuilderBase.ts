@@ -14,8 +14,8 @@ import {
 	TreeSchema,
 	FieldSchema,
 	TypedSchemaCollection,
-	RecursiveTreeSchema,
 	FlexList,
+	Unenforced,
 } from "./typed-schema";
 import { FieldKind } from "./modular-schema";
 
@@ -156,7 +156,7 @@ export class SchemaBuilderBase<TScope extends string, TName extends number | str
 		kind: Kind,
 		...allowedTypes: T
 	): FieldSchema<Kind, T> {
-		return new FieldSchema(kind, allowedTypes);
+		return FieldSchema.create(kind, allowedTypes);
 	}
 
 	/**
@@ -172,9 +172,9 @@ export class SchemaBuilderBase<TScope extends string, TName extends number | str
 	public static fieldRecursive<
 		Kind extends FieldKind,
 		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
-		T extends FlexList<RecursiveTreeSchema>,
+		T extends FlexList<Unenforced<TreeSchema>>,
 	>(kind: Kind, ...allowedTypes: T): FieldSchema<Kind, T> {
-		return new FieldSchema(kind, allowedTypes);
+		return FieldSchema.createUnsafe(kind, allowedTypes);
 	}
 }
 

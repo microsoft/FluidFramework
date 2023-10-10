@@ -50,7 +50,7 @@ export const jsonRoot = [() => jsonObject, () => jsonArray, ...jsonPrimitives] a
  */
 export const jsonObject = builder.mapRecursive(
 	"Object",
-	new FieldSchema(FieldKinds.optional, jsonRoot),
+	FieldSchema.createUnsafe(FieldKinds.optional, jsonRoot),
 );
 
 /**
@@ -58,7 +58,7 @@ export const jsonObject = builder.mapRecursive(
  */
 export const jsonArray = builder.fieldNodeRecursive(
 	"Array",
-	new FieldSchema(FieldKinds.sequence, jsonRoot),
+	FieldSchema.createUnsafe(FieldKinds.sequence, jsonRoot),
 );
 
 /**
