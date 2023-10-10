@@ -678,22 +678,14 @@ export interface IProvideLoader {
 }
 
 /**
- * @deprecated 0.48, This API will be removed in 0.50
- * No replacement since it is not expected anyone will depend on this outside container-loader
- * See {@link https://github.com/microsoft/FluidFramework/issues/9711} for context.
- */
-export interface IPendingLocalState {
-	url: string;
-	pendingRuntimeState: unknown;
-}
-
-/**
  * This is used when we rehydrate a container from the snapshot. Here we put the blob contents
  * in separate property: {@link ISnapshotTreeWithBlobContents.blobsContents}.
  *
  * @remarks This is used as the `ContainerContext`'s base snapshot when attaching.
+ *
+ * @internal
  */
 export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
-	blobsContents: { [path: string]: ArrayBufferLike };
+	blobsContents?: { [path: string]: ArrayBufferLike };
 	trees: { [path: string]: ISnapshotTreeWithBlobContents };
 }

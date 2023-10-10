@@ -26,7 +26,7 @@ import {
 import { IAudience } from "./audience";
 import { IDeltaManager } from "./deltas";
 import { ICriticalContainerError } from "./error";
-import { ILoader, ILoaderOptions, ISnapshotTreeWithBlobContents } from "./loader";
+import { ILoader, ILoaderOptions } from "./loader";
 import { IFluidCodeDetails } from "./fluidPackage";
 
 /**
@@ -101,13 +101,6 @@ export interface IRuntime extends IDisposable {
 	 * {@link https://github.com/microsoft/FluidFramework/packages/tree/main/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
 	getPendingLocalState(props?: { notifyImminentClosure?: boolean }): unknown;
-
-	/**
-	 * Notify runtime that container is moving to "Attaching" state
-	 * @param snapshot - snapshot created at attach time
-	 * @deprecated - not necessary after op replay moved to Container
-	 */
-	notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
 
 	/**
 	 * Notify runtime that we have processed a saved message, so that it can do async work (applying

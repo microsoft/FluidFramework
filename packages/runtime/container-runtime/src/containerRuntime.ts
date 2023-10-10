@@ -3886,8 +3886,6 @@ export class ContainerRuntime
 		);
 	}
 
-	public notifyAttaching() {} // do nothing (deprecated method)
-
 	public async getPendingLocalState(props?: {
 		notifyImminentClosure: boolean;
 	}): Promise<unknown> {
