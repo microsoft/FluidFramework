@@ -112,13 +112,13 @@ export async function createSnapshot(path: string, data: ISummaryTree): Promise<
 	await fs.writeFile(path, dataStr);
 }
 
-export async function verifyEqualPastSnapshot(path: string, data: ISummaryTree): Promise<void> {
+export async function verifyEqualPastSnapshot(path: string, data: ISummaryTree, testName: string): Promise<void> {
 	assert(existsSync(path), `test snapshot file does not exist: ${path}`);
 	const tree = serializeTree(".handle", data, ".app");
 	const dataStr = JSON.stringify(tree, undefined, numberOfSpaces);
 	const pastDataStr = await fs.readFile(path, "utf-8");
 
-	assert.equal(dataStr, pastDataStr);
+	assert.equal(dataStr, pastDataStr, `snapshot different for ${testName}`);
 }
 
 /**

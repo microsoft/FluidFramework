@@ -4,8 +4,7 @@
  */
 
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { brand, useAsyncDeterministicStableId } from "../../util";
+import { brand } from "../../util";
 import {
 	ISharedTree,
 	ISharedTreeView,
@@ -97,12 +96,7 @@ function generateTreeRecursively(
 	}
 }
 
-export async function generateTestTrees(): Promise<
-	{
-		name: string;
-		summary: ISummaryTree;
-	}[]
-> {
+export function generateTestTrees() {
 	const testTrees: {
 		only?: boolean;
 		skip?: boolean;
@@ -351,35 +345,5 @@ export async function generateTestTrees(): Promise<
 		},
 	];
 
-	const trees: {
-		name: string;
-		summary: ISummaryTree;
-	}[] = [];
-
-	const testNames = new Set<string>();
-
-	const hasOnly = testTrees.some(({ only }) => only ?? false);
-
-	for (const { name: testName, tree: generateTree, skip = false, only = false } of testTrees) {
-		if (skip || (hasOnly && !only)) {
-			continue;
-		}
-
-		await useAsyncDeterministicStableId(async () => {
-			return generateTree(async (tree, innerName) => {
-				const fullName = `${testName}-${innerName}`;
-
-				if (testNames.has(fullName)) {
-					throw new Error(`Duplicate snapshot name: ${fullName}`);
-				}
-
-				testNames.add(fullName);
-
-				const { summary } = await tree.summarize(true);
-				trees.push({ summary, name: fullName });
-			});
-		});
-	}
-
-	return trees;
+	return testTrees;
 }
