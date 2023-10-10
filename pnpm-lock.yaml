@@ -6475,6 +6475,7 @@ importers:
 
   packages/dds/migration-shim:
     specifiers:
+      '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.25.0
       '@fluidframework/build-common': ^2.0.0
       '@fluidframework/build-tools': ^0.25.0
@@ -6503,6 +6504,7 @@ importers:
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
+      '@fluid-internal/client-utils': link:../../common/client-utils
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
