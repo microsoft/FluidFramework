@@ -108,7 +108,6 @@ export interface OdspErrorResponse {
 
 /** Error encapsulating the error response from ODSP containing the redirect location when a resource has moved  */
 export class OdspRedirectError extends LoggingError implements IFluidErrorBase {
-	// eslint-disable-next-line import/no-deprecated
 	readonly errorType = DriverErrorTypes.fileNotFoundOrAccessDeniedError;
 	readonly canRetry = false;
 
