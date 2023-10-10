@@ -19,10 +19,10 @@ import {
 	TestTreeProviderLite,
 	emptyJsonSequenceConfig,
 	expectJsonTree,
-	initializeTestTree,
 	insert,
 	jsonSequenceRootSchema,
 	remove,
+	wrongSchema,
 } from "../utils";
 import { AllowedUpdateType, FieldKey, JsonableTree, UpPath, rootFieldKey } from "../../core";
 import { leaf } from "../../domains";
@@ -116,6 +116,9 @@ export async function generateTestTrees(): Promise<
 				const tree1 = provider.trees[0].view;
 				const tree2 = provider.trees[1].view;
 
+				// NOTE: we're using the old tree editing APIs here as the new
+				// editable-tree-2 API doesn't support cross-field moves at the
+				// time of writing
 				const initialState: JsonableTree = {
 					type: brand("Node"),
 					fields: {
@@ -131,7 +134,18 @@ export async function generateTestTrees(): Promise<
 						],
 					},
 				};
-				initializeTestTree(tree1, initialState);
+
+				tree1.storedSchema.update(wrongSchema);
+
+				// Apply an edit to the tree which inserts a node with a value
+				runSynchronous(tree1, () => {
+					const writeCursors = singleTextCursor(initialState);
+					const field = tree1.editor.sequenceField({
+						parent: undefined,
+						field: rootFieldKey,
+					});
+					field.insert(0, writeCursors);
+				});
 
 				runSynchronous(tree1, () => {
 					const rootPath = {
@@ -210,7 +224,7 @@ export async function generateTestTrees(): Promise<
 					"test",
 				);
 
-				initializeTestTree(baseTree.view, undefined, jsonSequenceRootSchema);
+				baseTree.view.storedSchema.update(jsonSequenceRootSchema);
 
 				const tree1 = baseTree.view;
 				const tree2 = tree1.fork();

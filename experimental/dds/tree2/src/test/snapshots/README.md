@@ -9,7 +9,9 @@ The trees in this test suite are intended to exercise end-to-end tree constructi
 
 ### Running
 
-To run the existing snapshot tests, you can run: `npm run test:snapshots`.
+Snapshot tests are run as part of the regular test run (`npm run test`).
+
+To run them in isolation, you can run `npm run test:snapshots` from the `tree2` package.
 
 ### Updating and Regenerating
 
