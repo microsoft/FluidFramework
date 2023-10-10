@@ -133,6 +133,17 @@ import { ITreeCursorSynchronous } from "./cursor";
 export type Root<TTree = ProtoNode> = FieldMarks<TTree>;
 
 /**
+ * A Delta mark that targets detached content.
+ * @alpha
+ */
+export interface IsDetachedMark {
+	/**
+	 * When specified, indicates that the target node(s) are detached, and specifies the ID associated with the first node.
+	 */
+	readonly detachedNodeId: DetachedNodeId;
+}
+
+/**
  * The default representation for inserted content.
  *
  * TODO:
@@ -162,7 +173,8 @@ export type ProtoNodes = readonly ProtoNode[];
 export type Mark<TTree = ProtoNode> =
 	| Skip
 	| Modify<TTree>
-	| Delete<TTree>
+	| Remove<TTree>
+	| Restore<TTree>
 	| MoveOut<TTree>
 	| MoveIn
 	| Insert<TTree>;
@@ -191,30 +203,48 @@ export interface HasModifications<TTree = ProtoNode> {
 }
 
 /**
- * Describes modifications made to an otherwise untouched subtree.
+ * Describes existing content that is replaced.
  * @alpha
  */
-export interface Modify<TTree = ProtoNode> extends HasModifications<TTree> {
-	readonly type: typeof MarkType.Modify;
+export interface CanReplaceContent<TTree = ProtoNode> {
+	readonly oldContent?: OldContent<TTree>;
 }
 
 /**
- * Describes the deletion of a contiguous range of node.
+ * Describes modifications made to an otherwise untouched subtree.
  * @alpha
  */
-export interface Delete<TTree = ProtoNode> extends HasModifications<TTree> {
-	readonly type: typeof MarkType.Delete;
+export interface Modify<TTree = ProtoNode>
+	extends HasModifications<TTree>,
+		Partial<IsDetachedMark> {
+	readonly type: typeof MarkType.Modify;
+	readonly count?: never;
+}
+
+/**
+ * Describes the removal of a contiguous range of nodes.
+ * @alpha
+ */
+export interface Remove<TTree = ProtoNode> extends HasModifications<TTree> {
+	readonly type: typeof MarkType.Remove;
 	/**
 	 * Must be 1 when `fields` is populated.
 	 */
 	readonly count: number;
+	/**
+	 * The ID assigned to the first node being removed.
+	 * Subsequent nodes should be assigned incrementing IDs.
+	 */
+	readonly detachId: DetachedNodeId;
 }
 
 /**
  * Describes the moving out of a contiguous range of node.
  * @alpha
  */
-export interface MoveOut<TTree = ProtoNode> extends HasModifications<TTree> {
+export interface MoveOut<TTree = ProtoNode>
+	extends HasModifications<TTree>,
+		Partial<IsDetachedMark> {
 	readonly type: typeof MarkType.MoveOut;
 	/**
 	 * Must be 1 when `fields` is populated.
@@ -237,14 +267,40 @@ export interface MoveIn {
 	 * The delta should carry exactly one `MoveOut` mark with the same move ID.
 	 */
 	readonly moveId: MoveId;
+
+	/**
+	 * The ID to assign the first node being replaced.
+	 * Subsequent replaced nodes should be assigned incrementing IDs.
+	 * Populated iff the insertion is transient.
+	 */
+	readonly detachId?: DetachedNodeId;
+}
+
+/**
+ * When set, indicates that the inserted content is replacing some existing content.
+ * @alpha
+ */
+export interface OldContent<TTree = ProtoNode> {
+	/**
+	 * Modifications to the old content.
+	 */
+	readonly fields?: FieldMarks<TTree>;
+	/**
+	 * The ID to assign the first node being replaced.
+	 * Subsequent replaced nodes should be assigned incrementing IDs.
+	 */
+	readonly detachId: DetachedNodeId;
 }
 
 /**
  * Describes the insertion of a contiguous range of node.
  * @alpha
  */
-export interface Insert<TTree = ProtoNode> extends HasModifications<TTree> {
+export interface Insert<TTree = ProtoNode>
+	extends HasModifications<TTree>,
+		CanReplaceContent<TTree> {
 	readonly type: typeof MarkType.Insert;
+
 	// TODO: use a single cursor with multiple nodes instead of array of cursors.
 	/**
 	 * Must be of length 1 when `fields` is populated.
@@ -252,17 +308,60 @@ export interface Insert<TTree = ProtoNode> extends HasModifications<TTree> {
 	readonly content: readonly TTree[];
 
 	/**
-	 * When set, indicates that the inserted content should be deleted.
-	 * This is used in scenarios where content is moved out from under an inserted subtree that is then deleted.
+	 * The ID to assign the first node being replaced.
+	 * Subsequent replaced nodes should be assigned incrementing IDs.
+	 * Populated iff the insertion is transient.
 	 */
-	readonly isTransient?: true;
+	readonly detachId?: DetachedNodeId;
 }
 
 /**
- * Uniquely identifies a MoveOut/MoveIn pair within a delta.
+ * Describes the restoration of a contiguous range of node.
+ * @alpha
+ */
+export interface Restore<TTree = ProtoNode> extends CanReplaceContent<TTree> {
+	readonly type: typeof MarkType.Restore;
+	/**
+	 * Must be 1 when `fields` is populated.
+	 */
+	readonly count: number;
+
+	readonly newContent: {
+		/**
+		 * The ID assigned to the first node being restored.
+		 * Subsequent nodes should be assigned incrementing IDs.
+		 */
+		readonly restoreId: DetachedNodeId;
+
+		/**
+		 * The ID to assign the first node being replaced.
+		 * Subsequent replaced nodes should be assigned incrementing IDs.
+		 * Populated iff the restoration is transient.
+		 */
+		readonly detachId?: DetachedNodeId;
+	};
+
+	/**
+	 * Modifications to the new content.
+	 */
+	readonly fields?: FieldMarks<TTree>;
+}
+
+/**
+ * Uniquely identifies a node in the scope of a delta.
+ * Often accompanied with a count that indicates a set of nodes whose IDs are contiguous.
  * @alpha
  */
 export interface MoveId extends Opaque<Brand<number, "delta.MoveId">> {}
+
+/**
+ * A globally unique ID for a node in a detached field.
+ * @alpha
+ */
+export interface DetachedNodeId {
+	major?: string | number;
+	minor: number;
+}
 
 /**
  * @alpha
@@ -281,6 +380,7 @@ export const MarkType = {
 	Modify: 0,
 	Insert: 1,
 	MoveIn: 2,
-	Delete: 3,
+	Remove: 3,
 	MoveOut: 4,
+	Restore: 5,
 } as const;

@@ -12,6 +12,7 @@ import {
 	ITreeCursor,
 	ChangeFamilyEditor,
 	FieldUpPath,
+	TaggedChange,
 } from "../../core";
 import { brand, isReadonlyArray } from "../../util";
 import {
@@ -20,7 +21,7 @@ import {
 	FieldChangeset,
 	ModularChangeset,
 } from "../modular-schema";
-import { fieldKinds, optional, sequence, value as valueFieldKind } from "./defaultFieldKinds";
+import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds";
 
 export type DefaultChangeset = ModularChangeset;
 
@@ -44,7 +45,7 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
 		return this.modularFamily.codecs;
 	}
 
-	public intoDelta(change: DefaultChangeset): Delta.Root {
+	public intoDelta(change: TaggedChange<DefaultChangeset>): Delta.Root {
 		return this.modularFamily.intoDelta(change);
 	}
 

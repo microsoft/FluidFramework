@@ -13,7 +13,6 @@ export {
 	areCursors,
 	localNodeKeySymbol,
 	setField,
-	TreeStatus,
 } from "./editableTreeTypes";
 
 export { isEditableField } from "./editableField";

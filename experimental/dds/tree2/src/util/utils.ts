@@ -247,6 +247,22 @@ export function isJsonObject(
 	return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+/**
+ * Verifies that the supplied indices are valid within the supplied array.
+ * @param startIndex - The starting index in the range. Must be in [0, length).
+ * @param endIndex - The ending index in the range. Must be within (start, length].
+ * @param array - The array the indices refer to
+ */
+export function assertValidRangeIndices(
+	startIndex: number,
+	endIndex: number,
+	array: { readonly length: number },
+) {
+	assert(endIndex > startIndex, "Range indices are malformed.");
+	assertValidIndex(startIndex, array, false);
+	assertValidIndex(endIndex, array, true);
+}
+
 export function assertValidIndex(
 	index: number,
 	array: { readonly length: number },
@@ -258,6 +274,16 @@ export function assertValidIndex(
 	} else {
 		assert(index < array.length, 0x379 /* index must be less than length */);
 	}
+}
+
+export function assertValidRange(
+	{ start, end }: { start: number; end: number },
+	array: { readonly length: number },
+) {
+	assertNonNegativeSafeInteger(start);
+	assertNonNegativeSafeInteger(end);
+	assert(end <= array.length, "Range end must be less than or equal to length");
+	assert(start <= end, "Range start must be less than or equal to range start");
 }
 
 export function assertNonNegativeSafeInteger(index: number) {

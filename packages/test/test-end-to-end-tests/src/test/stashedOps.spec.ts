@@ -1012,9 +1012,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 			{ eventName: "fluid:telemetry:Container:WaitBeforeClientLeave_end" },
 		],
 		async () => {
-			const container: IContainerExperimental = await provider.loadTestContainer(
-				testContainerConfig,
-			);
+			const container: IContainerExperimental =
+				await provider.loadTestContainer(testContainerConfig);
 			const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
 			// Force to write mode to get a leave message
 			dataStore.root.set("forceWrite", true);
@@ -1615,9 +1614,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 	// TODO: https://github.com/microsoft/FluidFramework/issues/10729
 	it("can stash between summary op and ack", async function () {
 		map1.set("test op 1", "test op 1");
-		const container: IContainerExperimental = await provider.loadTestContainer(
-			testContainerConfig,
-		);
+		const container: IContainerExperimental =
+			await provider.loadTestContainer(testContainerConfig);
 		const pendingOps = await new Promise<string | undefined>((resolve, reject) =>
 			container.on("op", (op) => {
 				if (op.type === "summarize") {

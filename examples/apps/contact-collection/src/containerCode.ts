@@ -6,6 +6,7 @@
 import { ModelContainerRuntimeFactory } from "@fluid-example/example-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+// eslint-disable-next-line import/no-deprecated
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import { ContactCollectionInstantiationFactory, IContactCollection } from "./dataObject";
@@ -39,6 +40,7 @@ export class ContactCollectionContainerRuntimeFactory extends ModelContainerRunt
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
 	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
+		// eslint-disable-next-line import/no-deprecated
 		const contactCollection = await requestFluidObject<IContactCollection>(
 			await runtime.getRootDataStore(contactCollectionId),
 			"",

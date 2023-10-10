@@ -14,6 +14,7 @@ import {
 	jsonRoot,
 	jsonSchema,
 	jsonString,
+	leaf,
 } from "../../../domains";
 
 import {
@@ -24,6 +25,9 @@ import {
 	TreeNode,
 	TypedNodeUnion,
 	UnboxNodeUnion,
+	MapNode,
+	TypedField,
+	boxedIterator,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/editable-tree-2/editableTreeTypes";
 import { jsonSequenceRootSchema } from "../../utils";
@@ -34,7 +38,7 @@ import {
 	requireFalse,
 	requireTrue,
 } from "../../../util";
-import { EmptyKey } from "../../../core";
+import { EmptyKey, FieldKey } from "../../../core";
 import {
 	FieldKinds,
 	Any,
@@ -43,6 +47,7 @@ import {
 	MapSchema,
 	SchemaBuilder,
 	StructSchema,
+	TreeSchema,
 } from "../../../feature-libraries";
 
 describe("editableTreeTypes", () => {
@@ -53,11 +58,11 @@ describe("editableTreeTypes", () => {
 	function jsonExample(root: TreeField): void {
 		assert(root.is(jsonSequenceRootSchema.rootFieldSchema));
 		for (const tree of root) {
-			if (tree.is(jsonBoolean)) {
+			if (tree.is(leaf.boolean)) {
 				const b: boolean = tree.value;
-			} else if (tree.is(jsonNumber)) {
+			} else if (tree.is(leaf.number)) {
 				const n: number = tree.value;
-			} else if (tree.is(jsonString)) {
+			} else if (tree.is(leaf.string)) {
 				const s: string = tree.value;
 			} else if (tree.is(jsonArray)) {
 				const a: Sequence<typeof jsonRoot> = tree.content;
@@ -73,7 +78,7 @@ describe("editableTreeTypes", () => {
 		}
 	}
 
-	const builder = new SchemaBuilder("test", {}, jsonSchema);
+	const builder = new SchemaBuilder({ scope: "test", libraries: [jsonSchema] });
 	const emptyStruct = builder.struct("empty", {});
 	const basicStruct = builder.struct("basicStruct", { foo: SchemaBuilder.fieldOptional(Any) });
 	const basicFieldNode = builder.fieldNode("field", SchemaBuilder.fieldOptional(Any));
@@ -83,8 +88,8 @@ describe("editableTreeTypes", () => {
 		/**
 		 * Test doc comment.
 		 */
-		leaf: SchemaBuilder.fieldValue(jsonNumber),
-		polymorphic: SchemaBuilder.fieldValue(jsonNumber, jsonString),
+		leaf: SchemaBuilder.fieldRequired(jsonNumber),
+		polymorphic: SchemaBuilder.fieldRequired(jsonNumber, jsonString),
 		optionalLeaf: SchemaBuilder.fieldOptional(jsonNumber),
 		optionalObject: SchemaBuilder.fieldOptional(jsonObject),
 		sequence: SchemaBuilder.fieldSequence(jsonNumber),
@@ -99,7 +104,7 @@ describe("editableTreeTypes", () => {
 		/**
 		 * Data field.
 		 */
-		x: SchemaBuilder.fieldValue(jsonNumber),
+		x: SchemaBuilder.fieldRequired(jsonNumber),
 	});
 	type Recursive = TypedNode<typeof recursiveStruct>;
 
@@ -107,7 +112,7 @@ describe("editableTreeTypes", () => {
 	 * All combinations of boxed and unboxed access.
 	 */
 	function boxingExample(mixed: Mixed): void {
-		const leaf: number = mixed.leaf;
+		const leafNode: number = mixed.leaf;
 		const leafBoxed: TypedNode<typeof jsonNumber> = mixed.boxedLeaf.boxedContent;
 
 		// Current policy is to box polymorphic values so they can be checked for type with `is`.
@@ -137,10 +142,28 @@ describe("editableTreeTypes", () => {
 		// child.foo?.foo?.foo?.foo?.setX(5);
 		// child.foo?.boxedFoo.content?.foo?.foo?.setFoo({ x: 5, foo: { x: 5, foo: undefined } });
 
-		struct.boxedFoo.setContent(undefined);
+		struct.boxedFoo.content = undefined;
 		// Shorthand for the above.
 		// TODO: add shorthand setters
 		// struct.setFoo(undefined);
+	}
+
+	function iteratorsExample(mixed: Mixed): void {
+		const unboxedListIteration: number[] = [...mixed.sequence];
+		const boxedListIteration: TypedNode<typeof jsonNumber>[] = [
+			...mixed.sequence[boxedIterator](),
+		];
+
+		const optionalNumberField = SchemaBuilder.fieldOptional(jsonNumber);
+		const mapSchema = undefined as unknown as TreeSchema<
+			"MapIteration",
+			{ mapFields: typeof optionalNumberField }
+		>;
+		const mapNode = undefined as unknown as MapNode<typeof mapSchema>;
+		const unboxedMapIteration: [FieldKey, number][] = [...mapNode];
+		const boxedMapIteration: TypedField<typeof optionalNumberField>[] = [
+			...mapNode[boxedIterator](),
+		];
 	}
 
 	{
@@ -182,7 +205,7 @@ describe("editableTreeTypes", () => {
 	}
 
 	function nominalTyping(): void {
-		const builder2 = new SchemaBuilder("test");
+		const builder2 = new SchemaBuilder({ scope: "test" });
 		const emptyStruct1 = builder2.struct("empty1", {});
 		const emptyStruct2 = builder2.struct("empty2", {});
 

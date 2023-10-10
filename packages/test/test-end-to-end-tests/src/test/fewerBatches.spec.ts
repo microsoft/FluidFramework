@@ -214,7 +214,6 @@ describeNoCompat("Fewer batches", (getTestObjectProvider) => {
 			minimumSequenceNumber: 0,
 			referenceSequenceNumber: 2,
 			sequenceNumber: 3,
-			term: 1,
 			timestamp: 1675197275171,
 			type: "op",
 			expHash1: "4d1a6431",

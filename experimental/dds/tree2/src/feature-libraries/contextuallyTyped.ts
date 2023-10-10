@@ -574,7 +574,7 @@ function setFieldForKey(
 ): void {
 	const requiredFieldSchema = getFieldSchema(key, schema);
 	const multiplicity = getFieldKind(requiredFieldSchema).multiplicity;
-	if (multiplicity === Multiplicity.Value && context.fieldSource !== undefined) {
+	if (multiplicity === Multiplicity.Single && context.fieldSource !== undefined) {
 		const fieldGenerator = context.fieldSource(key, requiredFieldSchema);
 		if (fieldGenerator !== undefined) {
 			const children = fieldGenerator();
@@ -621,7 +621,7 @@ export function applyFieldTypesFromContext(
 		return children;
 	}
 	assert(
-		multiplicity === Multiplicity.Value || multiplicity === Multiplicity.Optional,
+		multiplicity === Multiplicity.Single || multiplicity === Multiplicity.Optional,
 		0x4da /* single value provided for an unsupported field */,
 	);
 	return [applyTypesFromContext(context, field.types, data)];

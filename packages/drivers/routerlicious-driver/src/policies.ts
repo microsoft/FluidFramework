@@ -20,14 +20,6 @@ export interface IRouterliciousDriverPolicies {
 	 */
 	maxConcurrentOrdererRequests: number;
 	/**
-	 * Give hosts the option to change blob aggregation behavior to suit their needs.
-	 * Larger number means fewer blob individual requests, but less blob-deduping.
-	 * Smaller number means more blob individual requests, but more blob-deduping.
-	 * Setting to `undefined` disables blob aggregration.
-	 * Default: undefined
-	 */
-	aggregateBlobsSmallerThanBytes: number | undefined;
-	/**
 	 * Enable uploading entire summary tree as a IWholeSummaryPayload to storage.
 	 * Default: false
 	 */
