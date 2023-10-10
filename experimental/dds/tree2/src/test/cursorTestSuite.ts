@@ -29,7 +29,7 @@ import {
 import { brand } from "../util";
 import { expectEqualFieldPaths, expectEqualPaths } from "./utils";
 
-const schemaBuilder = new SchemaBuilder("Cursor Test Suite");
+const schemaBuilder = new SchemaBuilder({ scope: "Cursor Test Suite" });
 const leafString = schemaBuilder.leaf("string", ValueSchema.String);
 const leafBoolean = schemaBuilder.leaf("boolean", ValueSchema.Boolean);
 const leafNumber = schemaBuilder.leaf("number", ValueSchema.Number);
@@ -39,10 +39,10 @@ const emptySchema3 = schemaBuilder.struct("Empty Struct 3", {});
 export const mapSchema = schemaBuilder.map("Map", SchemaBuilder.fieldSequence(Any));
 // Struct with fixed shape
 export const structSchema = schemaBuilder.struct("struct", {
-	child: SchemaBuilder.fieldValue(leafNumber),
+	child: SchemaBuilder.fieldRequired(leafNumber),
 });
 
-export const testTreeSchema = schemaBuilder.intoDocumentSchema(SchemaBuilder.fieldSequence(Any));
+export const testTreeSchema = schemaBuilder.toDocumentSchema(SchemaBuilder.fieldSequence(Any));
 
 export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 	["minimal", { type: emptySchema.name }],

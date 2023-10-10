@@ -149,8 +149,8 @@ jobs:
               condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
         # Verify if the tinylicious log exists
         - task: Bash@3
-          displayName: Validate Tinylicious Log 
-          inputs: 
+          displayName: Validate Tinylicious Log
+          inputs:
             targetType: 'inline'
             workingDirectory: ${{ parameters.buildDirectory }}
             script: |
@@ -162,22 +162,12 @@ jobs:
           displayName: Publish Artifact - Tinylicious Log
           inputs:
             targetPath: '${{ parameters.buildDirectory }}/packages/test/test-end-to-end-tests/tinylicious.log'
-            artifactName: 'tinyliciousLog_${{ parameters.stageName }}'
+            artifactName: 'tinyliciousLog_${{ parameters.stageName }}_attempt-$(System.JobAttempt)'
             publishLocation: 'pipeline'
           condition: and(failed(), eq(variables['logExists'], 'true'), contains('${{ taskTestStep }}', 'tinylicious'))
           continueOnError: true
 
-      # Test - Upload results
-      - task: PublishTestResults@2
-        displayName: Publish Test Results
-        inputs:
-          testResultsFormat: 'JUnit'
-          testResultsFiles: '**/*junit-report.xml'
-          searchFolder: ${{ parameters.buildDirectory }}/nyc
-          mergeTestResults: false
-        condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
-
-      # Log Test Failures
-      - template: include-log-test-failures.yml
+      # Process test result, include publishing and logging
+      - template: include-process-test-results.yml
         parameters:
           buildDirectory: ${{ parameters.buildDirectory }}

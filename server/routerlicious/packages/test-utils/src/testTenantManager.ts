@@ -20,7 +20,11 @@ export class TestTenant implements ITenant {
 	private readonly repository = "test";
 	private readonly manager: GitManager;
 
-	constructor(private readonly url: string, private readonly historianUrl: string, db: IDb) {
+	constructor(
+		private readonly url: string,
+		private readonly historianUrl: string,
+		db: IDb,
+	) {
 		const testHistorian = new TestHistorian(db);
 		this.manager = new GitManager(testHistorian);
 	}

@@ -144,7 +144,7 @@ function inlineCellIdRevision(cellId: CellId, revision: RevisionTag | undefined)
 
 export function cloneMark<TMark extends Mark<TNodeChange>, TNodeChange>(mark: TMark): TMark {
 	const clone = { ...mark };
-	if (clone.type === "Insert" || clone.type === "Revive") {
+	if (clone.type === "Insert") {
 		clone.content = [...clone.content];
 	}
 	if (clone.cellId !== undefined) {
@@ -463,7 +463,6 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 				lhsRevive.inverseOf === rhs.inverseOf &&
 				areMergeableChangeAtoms(lhsRevive.transientDetach, lhs.count, rhs.transientDetach)
 			) {
-				lhsRevive.content.push(...rhs.content);
 				lhsRevive.count += rhs.count;
 				return true;
 			}
@@ -874,10 +873,9 @@ export function splitMark<T, TMark extends Mark<T>>(mark: TMark, length: number)
 			return [mark1, mark2];
 		}
 		case "Revive": {
-			const mark1: TMark = { ...mark, content: mark.content.slice(0, length), count: length };
+			const mark1: TMark = { ...mark, count: length };
 			const mark2: TMark = {
 				...mark,
-				content: mark.content.slice(length),
 				count: remainder,
 			};
 

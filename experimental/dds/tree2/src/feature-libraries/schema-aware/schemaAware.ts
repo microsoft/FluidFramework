@@ -146,7 +146,7 @@ export type TypedFields<
 > = [
 	TFields extends { [key: string]: FieldSchema }
 		? {
-				[key in keyof TFields]: TypedField<
+				-readonly [key in keyof TFields]: TypedField<
 					TFields[key],
 					Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode
 				>;
@@ -182,7 +182,7 @@ export type ApplyMultiplicity<
 	[Multiplicity.Sequence]: Mode extends ApiMode.Editable | ApiMode.EditableUnwrapped
 		? EditableSequenceField<TypedChild>
 		: TypedChild[];
-	[Multiplicity.Value]: Mode extends ApiMode.Editable
+	[Multiplicity.Single]: Mode extends ApiMode.Editable
 		? EditableValueField<TypedChild>
 		: TypedChild;
 }[TMultiplicity];

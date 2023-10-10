@@ -16,7 +16,7 @@ import { TreeSchemaIdentifier } from "../../core";
  * {@link LocalNodeKey}s may be compared or equated via {@link compareLocalNodeKeys}.
  * @alpha
  */
-export type LocalNodeKey = Opaque<Brand<SessionSpaceCompressedId, "Local Node Key">>;
+export interface LocalNodeKey extends Opaque<Brand<SessionSpaceCompressedId, "Local Node Key">> {}
 
 /**
  * A UUID which identifies a node in the tree.
@@ -53,4 +53,6 @@ export const nodeKeyFieldKey = "__n_id__";
  * @privateRemarks TODO: Come up with a unified and collision-resistant naming schema for types defined by the system.
  * For now, we'll use `__` to reduce the change of collision, since this is what other internal properties use in Fluid.
  */
-export const nodeKeyTreeIdentifier: TreeSchemaIdentifier = brand(nodeKeyFieldKey);
+export const nodeKeyTreeIdentifier: TreeSchemaIdentifier = brand(
+	"com.fluidframework.nodeKey.NodeKey",
+);

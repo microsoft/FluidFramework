@@ -58,6 +58,12 @@ export interface IDeliServerConfiguration {
 
 	// enables marking leave ops with a flag when they were the last client
 	enableLeaveOpNoClientServerMetadata: boolean;
+
+	// enables restarting the process when deli fails to checkpoint
+	restartOnCheckpointFailure: boolean;
+
+	// enables kafka checkpoints when reprocessing messages
+	kafkaCheckpointOnReprocessingOp: boolean;
 }
 
 export interface ICheckpointHeuristicsServerConfiguration {
@@ -218,6 +224,8 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
 		skipSummarizeAugmentationForSingleCommmit: false,
 		disableNoClientMessage: false,
 		enableLeaveOpNoClientServerMetadata: false,
+		restartOnCheckpointFailure: true,
+		kafkaCheckpointOnReprocessingOp: true,
 	},
 	broadcaster: {
 		includeEventInMessageBatchName: false,

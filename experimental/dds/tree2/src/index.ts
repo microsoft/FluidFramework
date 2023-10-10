@@ -19,12 +19,20 @@ export {
 	AnchorSet,
 	DetachedField,
 	UpPath,
+	Range,
+	RangeUpPath,
+	PlaceUpPath,
+	DetachedRangeUpPath,
+	DetachedPlaceUpPath,
+	PlaceIndex,
+	NodeIndex,
 	FieldUpPath,
 	Anchor,
 	RootField,
 	ChildCollection,
 	ChildLocation,
 	DeltaVisitor,
+	AnnouncedVisitor,
 	FieldMapObject,
 	NodeData,
 	GenericTreeNode,
@@ -55,12 +63,8 @@ export {
 	TreeTypeSet,
 	SchemaData,
 	FieldAnchor,
-	RevisionTag,
-	ChangesetLocalId,
-	TaggedChange,
-	RepairDataStore,
-	ReadonlyRepairDataStore,
 	SchemaEvents,
+	ChangesetLocalId,
 	ForestEvents,
 	PathRootPrefix,
 	AnchorSlot,
@@ -122,30 +126,11 @@ export {
 	jsonSchema,
 	nodeKeyField,
 	nodeKeySchema,
+	leaf,
+	testRecursiveDomain,
 } from "./domains";
 
 export {
-	MemoizedIdRangeAllocator,
-	IdRange,
-	ModularChangeset,
-	EditDescription,
-	FieldChangeHandler,
-	FieldEditor,
-	FieldChangeRebaser,
-	NodeChangeset,
-	FieldChangeMap,
-	FieldChangeset,
-	FieldChange,
-	ToDelta,
-	NodeReviver,
-	NodeChangeComposer,
-	NodeChangeInverter,
-	NodeChangeRebaser,
-	CrossFieldManager,
-	CrossFieldTarget,
-	RevisionIndexer,
-	RevisionMetadataSource,
-	RevisionInfo,
 	FieldKind,
 	Multiplicity,
 	isNeverField,
@@ -188,7 +173,6 @@ export {
 	CursorAdapter,
 	CursorWithNode,
 	parentField,
-	HasFieldChanges,
 	EditableTreeEvents,
 	on,
 	InternalTypedSchemaTypes,
@@ -205,11 +189,9 @@ export {
 	UnwrappedUntypedTree,
 	UntypedTreeOrPrimitive,
 	SchemaBuilder,
-	FieldKindTypes,
 	AllowedTypes,
 	TreeSchema,
-	BrandedFieldKind,
-	ValueFieldKind,
+	Required,
 	Optional,
 	Sequence,
 	NodeKeyFieldKind,
@@ -225,7 +207,6 @@ export {
 	LazyTreeSchema,
 	FieldGenerator,
 	TreeDataContext,
-	NodeExistenceState,
 	createDataBinderBuffering,
 	createDataBinderDirect,
 	createDataBinderInvalidating,
@@ -288,6 +269,11 @@ export {
 	LeafSchema,
 	MapSchema,
 	StructSchema,
+	CheckTypesOverlap,
+	SchemaBuilderBase,
+	ImplicitFieldSchema,
+	ImplicitAllowedTypes,
+	Unenforced,
 } from "./feature-libraries";
 
 export {
@@ -306,19 +292,11 @@ export {
 	ForestType,
 } from "./shared-tree";
 
-export type {
-	IBinaryCodec,
-	ICodecFamily,
-	ICodecOptions,
-	IDecoder,
-	IEncoder,
-	IJsonCodec,
-	IMultiFormatCodec,
-	JsonValidator,
-	SchemaValidationFunction,
-} from "./codec";
+export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec";
 export { noopValidator } from "./codec";
 export { typeboxValidator } from "./external-utilities";
+
+export { TypedTreeFactory, TypedTreeOptions, TypedTreeChannel } from "./typed-tree";
 
 // Below here are things that are used by the above, but not part of the desired API surface.
 import * as InternalTypes from "./internal";

@@ -19,7 +19,7 @@ export {
 	schemaIsMap,
 	schemaIsStruct,
 	TypedSchemaCollection,
-	RecursiveTreeSchema,
+	Unenforced,
 } from "./typedTreeSchema";
 
 export { ViewSchema } from "./view";

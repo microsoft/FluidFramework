@@ -53,7 +53,6 @@ export {
 	comparePipeline,
 	compileSyntaxTree,
 	setField,
-	TreeStatus,
 } from "./editable-tree";
 
 export {
@@ -126,7 +125,6 @@ export {
 	allowsRepoSuperset,
 	GenericChangeset,
 	genericFieldKind,
-	NodeReviver,
 	RevisionIndexer,
 	RevisionMetadataSource,
 	RevisionInfo,
@@ -134,7 +132,7 @@ export {
 	revisionMetadataSourceFromInfo,
 	NodeExistsConstraint,
 	NodeExistenceState,
-	BrandedFieldKind,
+	FieldKindWithEditor,
 } from "./modular-schema";
 
 export {
@@ -159,13 +157,21 @@ export {
 	bannedFieldNames,
 	fieldApiPrefixes,
 	validateStructFieldName,
+	Unenforced,
 } from "./typed-schema";
-export { SchemaBuilder, SchemaLibrary } from "./schemaBuilder";
+
+export { SchemaBuilderBase, SchemaLibrary } from "./schemaBuilderBase";
+export {
+	SchemaBuilder,
+	SchemaBuilderInternal,
+	ImplicitFieldSchema,
+	NormalizeField,
+	DefaultFieldKind,
+	ImplicitAllowedTypes,
+	NormalizeAllowedTypes,
+} from "./schemaBuilder";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
-
-export { ForestRepairDataStore, ForestRepairDataStoreProvider } from "./forestRepairDataStore";
-export { dummyRepairDataStore } from "./fakeRepairDataStore";
 
 export {
 	TreeChunk,
@@ -189,12 +195,11 @@ export {
 
 export {
 	FieldKinds,
-	ValueFieldKind,
+	Required,
 	Optional,
 	Sequence,
 	NodeKeyFieldKind,
 	Forbidden,
-	FieldKindTypes,
 	DefaultChangeset,
 	DefaultChangeFamily,
 	DefaultEditBuilder,
@@ -243,8 +248,13 @@ export {
 	TreeField,
 	TreeNode,
 	getTreeContext,
+	boxedIterator,
+	CheckTypesOverlap,
+	TreeStatus,
 } from "./editable-tree-2";
 
 // Split into separate import and export for compatibility with API-Extractor.
 import * as SchemaAware from "./schema-aware";
 export { SchemaAware };
+
+export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer";

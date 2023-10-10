@@ -20,7 +20,12 @@ export {
 	StructTyped,
 	TypedNode,
 	TypedNodeUnion,
+	boxedIterator,
+	CheckTypesOverlap,
+	TreeStatus,
 } from "./editableTreeTypes";
+
+export { createRawStruct, rawStructErrorMessage, nodeContent } from "./rawStruct";
 
 export {
 	visitBipartiteIterableTree,

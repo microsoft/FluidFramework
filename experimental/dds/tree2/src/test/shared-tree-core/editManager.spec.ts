@@ -823,7 +823,7 @@ function runUnitTestScenario(
 					// Local changes should always lead to a delta that is equivalent to the local change.
 					manager.localBranch.apply(changeset, revision);
 					assert.deepEqual(
-						manager.changeFamily.intoDelta(manager.localBranch.getHead().change),
+						manager.changeFamily.intoDelta(manager.localBranch.getHead()),
 						asDelta([seq]),
 					);
 					break;
@@ -961,7 +961,7 @@ function getAllChanges(manager: TestEditManager): RecursiveReadonly<TestChange>[
 /** Adds a sequenced change to an `EditManager` and returns the delta that was caused by the change */
 function addSequencedChange(
 	editManager: TestEditManager,
-	...args: Parameters<typeof editManager["addSequencedChange"]>
+	...args: Parameters<(typeof editManager)["addSequencedChange"]>
 ): Delta.Root {
 	let delta: Delta.Root = emptyDelta;
 	const offChange = editManager.localBranch.on("change", ({ change }) => {
