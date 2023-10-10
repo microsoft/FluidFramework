@@ -19,6 +19,7 @@ import {
 	Any,
 	FieldKind,
 	FieldKinds,
+	FieldSchema,
 	SchemaBuilder,
 } from "../../../feature-libraries";
 import { Context } from "../../../feature-libraries/editable-tree-2/context";
@@ -95,7 +96,7 @@ describe("unboxedField", () => {
 		const builder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
 		const structSchema = builder.structRecursive("struct", {
 			name: SchemaBuilder.fieldRequired(leafDomain.string),
-			child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => structSchema),
+			child: FieldSchema.createUnsafe(FieldKinds.optional, [() => structSchema]),
 		});
 		const fieldSchema = SchemaBuilder.fieldOptional(structSchema);
 		const schema = builder.toDocumentSchema(fieldSchema);
@@ -191,7 +192,7 @@ describe("unboxedTree", () => {
 		const builder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
 		const structSchema = builder.structRecursive("struct", {
 			name: SchemaBuilder.fieldRequired(leafDomain.string),
-			child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => structSchema),
+			child: FieldSchema.createUnsafe(FieldKinds.optional, [() => structSchema]),
 		});
 		const rootSchema = SchemaBuilder.fieldOptional(structSchema);
 		const schema = builder.toDocumentSchema(rootSchema);

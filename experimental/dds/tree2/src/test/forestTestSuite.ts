@@ -43,6 +43,7 @@ import {
 	isNeverField,
 	SchemaBuilder,
 	cursorForTypedTreeData,
+	FieldSchema,
 } from "../feature-libraries";
 import { MockDependent, applyTestDelta, expectEqualFieldPaths } from "./utils";
 import { testGeneralPurposeTreeCursor, testTreeSchema } from "./cursorTestSuite";
@@ -100,7 +101,7 @@ export function testForest(config: ForestTestConfiguration): void {
 					const schema = new InMemoryStoredSchemaRepository();
 					const forest = factory(schema);
 
-					const rootFieldSchema = SchemaBuilder.field(FieldKinds.optional, ...jsonRoot);
+					const rootFieldSchema = FieldSchema.create(FieldKinds.optional, jsonRoot);
 					schema.update({
 						...jsonSchema,
 						rootFieldSchema,

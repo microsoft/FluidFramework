@@ -5,6 +5,7 @@
 import { strict as assert } from "assert";
 import {
 	FieldKinds,
+	FieldSchema,
 	isEditableField,
 	isEditableTree,
 	SchemaAware,
@@ -34,7 +35,7 @@ const deepBuilder = new SchemaBuilder({
 
 // Test data in "deep" mode: a linked list with a number at the end.
 const linkedListSchema = deepBuilder.structRecursive("linkedList", {
-	foo: SchemaBuilder.fieldRecursive(FieldKinds.required, () => linkedListSchema, jsonNumber),
+	foo: FieldSchema.createUnsafe(FieldKinds.required, [() => linkedListSchema, jsonNumber]),
 });
 
 const wideBuilder = new SchemaBuilder({
@@ -44,16 +45,12 @@ const wideBuilder = new SchemaBuilder({
 });
 
 export const wideRootSchema = wideBuilder.struct("WideRoot", {
-	foo: SchemaBuilder.field(FieldKinds.sequence, jsonNumber),
+	foo: FieldSchema.create(FieldKinds.sequence, [jsonNumber]),
 });
 
-export const wideSchema = wideBuilder.toDocumentSchema(
-	SchemaBuilder.field(FieldKinds.required, wideRootSchema),
-);
+export const wideSchema = wideBuilder.toDocumentSchema(wideRootSchema);
 
-export const deepSchema = deepBuilder.toDocumentSchema(
-	SchemaBuilder.field(FieldKinds.required, linkedListSchema, jsonNumber),
-);
+export const deepSchema = deepBuilder.toDocumentSchema([linkedListSchema, jsonNumber]);
 
 /**
  * JS object like a deep tree.

@@ -132,7 +132,7 @@ export function buildViewSchemaCollection(
 		// Thus a library can be used as SchemaData, but if used for full document's SchemaData,
 		// the document will be forced to be empty (due to having an empty root field):
 		// this seems unlikely to cause issues in practice, and results in convenient type compatibility.
-		rootFieldSchema: rootFieldSchema ?? new FieldSchema(FieldKinds.forbidden, []),
+		rootFieldSchema: rootFieldSchema ?? FieldSchema.create(FieldKinds.forbidden, []),
 		treeSchema,
 		adapters,
 		policy: defaultSchemaPolicy,

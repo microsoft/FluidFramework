@@ -7,7 +7,13 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { brand, useDeterministicStableId } from "../../util";
 import { AllowedUpdateType, FieldKey, UpPath, rootFieldKey } from "../../core";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../shared-tree";
-import { Any, FieldKinds, SchemaBuilder, singleTextCursor } from "../../feature-libraries";
+import {
+	Any,
+	FieldKinds,
+	FieldSchema,
+	SchemaBuilder,
+	singleTextCursor,
+} from "../../feature-libraries";
 import { typeboxValidator } from "../../external-utilities";
 import { leaf } from "../../domains";
 
@@ -137,7 +143,7 @@ export function generateTestTrees(): { name: string; tree: () => ISharedTree }[]
 				});
 				const seqMapSchema = innerBuilder.mapRecursive(
 					"SeqMap",
-					SchemaBuilder.fieldRecursive(FieldKinds.sequence, () => seqMapSchema),
+					FieldSchema.createUnsafe(FieldKinds.sequence, [() => seqMapSchema]),
 				);
 				const docSchema = innerBuilder.toDocumentSchema(
 					SchemaBuilder.fieldSequence(seqMapSchema),
