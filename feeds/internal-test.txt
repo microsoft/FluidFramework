@@ -9,7 +9,7 @@
 @fluid-private/test-version-utils
 @fluidframework/test-utils
 @fluid-internal/test-service-load
-@fluid-internal/test-pairwise-generator
+@fluid-private/test-pairwise-generator
 @fluid-internal/test-end-to-end-tests
 @fluid-internal/test-drivers
 @fluidframework/test-driver-definitions

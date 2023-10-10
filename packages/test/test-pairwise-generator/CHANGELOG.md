@@ -1,4 +1,4 @@
-# @fluid-internal/test-pairwise-generator
+# @fluid-private/test-pairwise-generator
 
 ## 2.0.0-internal.7.0.0
 

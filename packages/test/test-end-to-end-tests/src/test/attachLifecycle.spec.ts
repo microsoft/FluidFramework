@@ -4,7 +4,7 @@
  */
 import { strict as assert } from "assert";
 
-import { generatePairwiseOptions } from "@fluid-internal/test-pairwise-generator";
+import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { createLoader, ITestFluidObject, timeoutPromise } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluid-private/test-version-utils";

@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { generatePairwiseOptions } from "@fluid-internal/test-pairwise-generator";
+import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { describeFuzz, makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
 import { createPropertyTrackingAndInsertionAttributionPolicyFactory } from "../attributionPolicy";
