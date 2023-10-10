@@ -361,7 +361,7 @@ export async function generateTestTrees(): Promise<
 				const fullName = `${testName}-${innerName}`;
 
 				if (testNames.has(fullName)) {
-					throw new Error(`Duplicate snapshot test name: ${fullName}`);
+					throw new Error(`Duplicate snapshot name: ${fullName}`);
 				}
 
 				testNames.add(fullName);
