@@ -32,12 +32,12 @@ describe("snapshot tests", () => {
 
 	const testTrees = generateTestTrees();
 
-	for (const { name: testName, tree: generateTree, skip = false, only = false } of testTrees) {
+	for (const { name: testName, runScenario, skip = false, only = false } of testTrees) {
 		const itFn = only ? it.only : skip ? it.skip : it;
 
 		itFn(`${regenerateSnapshots ? "regenerate " : ""}for ${testName}`, async () => {
 			await useAsyncDeterministicStableId(async () => {
-				return generateTree(async (tree, innerName) => {
+				return runScenario(async (tree, innerName) => {
 					const fullName = `${testName}-${innerName}`;
 
 					if (testNames.has(fullName)) {

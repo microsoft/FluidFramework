@@ -102,7 +102,9 @@ export function generateTestTrees() {
 		only?: boolean;
 		skip?: boolean;
 		name: string;
-		runScenario: (takeSnapshot: (tree: ISharedTree, name: string) => Promise<void>) => Promise<void>;
+		runScenario: (
+			takeSnapshot: (tree: ISharedTree, name: string) => Promise<void>,
+		) => Promise<void>;
 	}[] = [
 		{
 			name: "move-across-fields",
