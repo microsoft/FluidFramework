@@ -146,7 +146,6 @@ function invertMark<TNodeChange>(
 							revision: markRevision,
 							localId: mark.id,
 						},
-						content: reviver(inverseRevision, inputIndex, mark.count),
 						count: mark.count,
 						inverseOf: inverseRevision,
 					},
@@ -275,7 +274,6 @@ function invertMark<TNodeChange>(
 			const markRevision = outputId.revision ?? fail("Expected revision");
 			const attach: Revive = {
 				type: "Revive",
-				content: reviver(markRevision, inputIndex, mark.count),
 				inverseOf: markRevision,
 			};
 

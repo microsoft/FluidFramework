@@ -7,7 +7,6 @@ import { ObjectOptions, TSchema, Type } from "@sinclair/typebox";
 import {
 	ChangeAtomId,
 	ChangesetLocalId,
-	ITreeCursorSynchronous,
 	JsonableTree,
 	RevisionTag,
 	RevisionTagSchema,
@@ -256,7 +255,6 @@ export const MoveOut = Type.Composite(
 
 export interface Revive extends HasReattachFields, HasRevisionTag {
 	type: "Revive";
-	content: ITreeCursorSynchronous[];
 }
 export const Revive = Type.Composite(
 	[
@@ -264,7 +262,6 @@ export const Revive = Type.Composite(
 		HasRevisionTag,
 		Type.Object({
 			type: Type.Literal("Revive"),
-			content: Type.Array(ProtoNode),
 		}),
 	],
 	noAdditionalProps,

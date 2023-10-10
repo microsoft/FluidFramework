@@ -12,7 +12,7 @@ import {
 	tagChange,
 } from "../../../core";
 import { TestChange } from "../../testChange";
-import { deepFreeze, fakeRepair } from "../../utils";
+import { deepFreeze } from "../../utils";
 import { brand } from "../../../util";
 import { SequenceField as SF } from "../../../feature-libraries";
 import { composeAnonChanges, invert as invertChange } from "./utils";
@@ -219,7 +219,7 @@ describe("SequenceField - Invert", () => {
 		it("revert-only redundant revive => skip", () => {
 			const input = [
 				Mark.modify(childChange1),
-				Mark.revive(fakeRepair(tag1, 0, 1), undefined, {
+				Mark.revive(1, undefined, {
 					inverseOf: tag1,
 					changes: childChange2,
 				}),

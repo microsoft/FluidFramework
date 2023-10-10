@@ -44,7 +44,7 @@ describe("editable-tree utilities", () => {
 			schema,
 		};
 
-		const rootSchema = SchemaBuilder.field(FieldKinds.value, arraySchema);
+		const rootSchema = SchemaBuilder.field(FieldKinds.required, arraySchema);
 		const fullSchemaData = buildTestSchema(rootSchema);
 		const primary = getPrimaryField(arraySchema);
 		assert(primary !== undefined);

@@ -7,7 +7,6 @@ import { unreachableCase } from "@fluidframework/core-utils";
 import { Type } from "@sinclair/typebox";
 import { JsonCompatible, JsonCompatibleReadOnly, fail } from "../../util";
 import { IJsonCodec, makeCodecFamily } from "../../codec";
-import { jsonableTreeFromCursor, singleTextCursor } from "../treeTextCursor";
 import { Attach, Changeset, Detach, Mark, MarkEffect, NoopMarkType } from "./format";
 
 export const sequenceFieldChangeCodecFactory = <TNodeChange>(childCodec: IJsonCodec<TNodeChange>) =>
@@ -26,13 +25,8 @@ function makeV0Codec<TNodeChange>(
 			case "Delete":
 			case "MoveOut":
 			case "ReturnFrom":
+			case "Revive":
 				return { ...(effect as JsonCompatibleReadOnly & object) };
-			case "Revive": {
-				const encodedContent = effect.content.map(
-					jsonableTreeFromCursor,
-				) as unknown as JsonCompatible[];
-				return { ...effect, content: encodedContent };
-			}
 			case "Transient":
 				return {
 					...effect,
@@ -56,11 +50,8 @@ function makeV0Codec<TNodeChange>(
 			case "Delete":
 			case "MoveOut":
 			case "ReturnFrom":
+			case "Revive":
 				return { ...effect };
-			case "Revive": {
-				const decodedContent = effect.content.map(singleTextCursor);
-				return { ...effect, content: decodedContent };
-			}
 			case "Transient":
 				return {
 					...effect,
@@ -86,7 +77,6 @@ function makeV0Codec<TNodeChange>(
 				if (mark.changes !== undefined) {
 					encodedMark.changes = childCodec.encode(mark.changes);
 				}
-
 				jsonMarks.push(encodedMark as unknown as JsonCompatible);
 			}
 			return jsonMarks;

@@ -45,16 +45,17 @@ import {
 import {
 	Any,
 	buildForest,
+	createMockNodeKeyManager,
 	DefaultChangeFamily,
 	DefaultChangeset,
 	DefaultEditBuilder,
-	ForestRepairDataStoreProvider,
+	FieldSchema,
 	jsonableTreeFromCursor,
 	makeSchemaCodec,
 	mapFieldMarks,
 	mapMarkList,
 	mapTreeFromCursor,
-	NodeKeyIndex,
+	nodeKeyFieldKey as nodeKeyFieldKeyDefault,
 	NodeKeyManager,
 	NodeReviver,
 	normalizeNewFieldContent,
@@ -63,6 +64,7 @@ import {
 	revisionMetadataSourceFromInfo,
 	SchemaBuilder,
 	singleTextCursor,
+	TypedField,
 } from "../feature-libraries";
 import {
 	RevisionTag,
@@ -78,10 +80,6 @@ import {
 	compareUpPaths,
 	UpPath,
 	clonePath,
-	RepairDataStore,
-	ITreeCursorSynchronous,
-	FieldKey,
-	IRepairDataStoreProvider,
 	UndoRedoManager,
 	ChangeFamilyEditor,
 	ChangeFamily,
@@ -96,6 +94,13 @@ import {
 	initializeForest,
 	AllowedUpdateType,
 	IEditableForest,
+	DeltaVisitor,
+	DetachedFieldIndex,
+	AnnouncedVisitor,
+	applyDelta,
+	makeDetachedFieldIndex,
+	announceDelta,
+	FieldKey,
 } from "../core";
 import { JsonCompatible, Named, brand, makeArray } from "../util";
 import { ICodecFamily, withSchemaValidation } from "../codec";
@@ -449,17 +454,22 @@ export function isDeltaVisible(delta: Delta.MarkList): boolean {
 					}
 					break;
 				}
+				case Delta.MarkType.Restore: {
+					if (mark.newContent.detachId === undefined || mark.oldContent !== undefined) {
+						return true;
+					}
+					break;
+				}
 				case Delta.MarkType.Insert: {
-					if (mark.isTransient !== true) {
+					if (mark.detachId === undefined) {
 						return true;
 					}
 					break;
 				}
 				case Delta.MarkType.MoveOut:
 				case Delta.MarkType.MoveIn:
-				case Delta.MarkType.Delete:
+				case Delta.MarkType.Remove:
 					return true;
-					break;
 				default:
 					unreachableCase(type);
 			}
@@ -604,9 +614,6 @@ export function validateViewConsistency(treeA: ISharedTreeView, treeB: ISharedTr
 export function viewWithContent(
 	content: TreeContent,
 	args?: {
-		repairProvider?: ForestRepairDataStoreProvider<DefaultChangeset>;
-		nodeKeyManager?: NodeKeyManager;
-		nodeKeyIndex?: NodeKeyIndex;
 		events?: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>;
 	},
 ): ISharedTreeView {
@@ -632,12 +639,33 @@ export function forestWithContent(content: TreeContent): IEditableForest {
 	return forest;
 }
 
+export function treeWithContent<TRoot extends FieldSchema>(
+	content: TreeContent<TRoot>,
+	args?: {
+		nodeKeyManager?: NodeKeyManager;
+		nodeKeyFieldKey?: FieldKey;
+		events?: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>;
+	},
+): TypedField<TRoot> {
+	const forest = forestWithContent(content);
+	const view = createSharedTreeView({
+		...args,
+		forest,
+		schema: new InMemoryStoredSchemaRepository(content.schema),
+	});
+	const manager = args?.nodeKeyManager ?? createMockNodeKeyManager();
+	return view.editableTree2(
+		content.schema,
+		manager,
+		args?.nodeKeyFieldKey ?? brand(nodeKeyFieldKeyDefault),
+	);
+}
+
 const jsonSequenceRootField = SchemaBuilder.fieldSequence(...jsonRoot);
-export const jsonSequenceRootSchema = new SchemaBuilder(
-	"JsonSequenceRoot",
-	{},
-	jsonSchema,
-).intoDocumentSchema(jsonSequenceRootField);
+export const jsonSequenceRootSchema = new SchemaBuilder({
+	scope: "JsonSequenceRoot",
+	libraries: [jsonSchema],
+}).toDocumentSchema(jsonSequenceRootField);
 
 /**
  * If the root is an array, this creates a sequence field at the root instead of a JSON array node.
@@ -737,53 +765,7 @@ export function expectEqualFieldPaths(path: FieldUpPath, expectedPath: FieldUpPa
 	assert.equal(path.field, expectedPath.field);
 }
 
-export class MockRepairDataStore<TChange> implements RepairDataStore<TChange> {
-	public capturedData = new Map<RevisionTag, (ITreeCursorSynchronous | Value)[]>();
-
-	public capture(change: TChange, revision: RevisionTag): void {
-		const existing = this.capturedData.get(revision);
-
-		if (existing === undefined) {
-			this.capturedData.set(revision, [revision]);
-		} else {
-			existing.push(revision);
-		}
-	}
-
-	public getNodes(
-		revision: RevisionTag,
-		path: UpPath | undefined,
-		key: FieldKey,
-		index: number,
-		count: number,
-	): ITreeCursorSynchronous[] {
-		return makeArray(count, () => singleTextCursor({ type: brand("MockRevivedNode") }));
-	}
-
-	public getValue(revision: RevisionTag, path: UpPath): Value {
-		return "MockRevivedValue";
-	}
-}
-
 export const mockIntoDelta = (delta: Delta.Root) => delta;
-
-export class MockRepairDataStoreProvider<TChange> implements IRepairDataStoreProvider<TChange> {
-	public freeze(): void {
-		// Noop
-	}
-
-	public applyChange(change: TChange): void {
-		// Noop
-	}
-
-	public createRepairData(): MockRepairDataStore<TChange> {
-		return new MockRepairDataStore();
-	}
-
-	public clone(): IRepairDataStoreProvider<TChange> {
-		return new MockRepairDataStoreProvider();
-	}
-}
 
 export function createMockUndoRedoManager(): UndoRedoManager<DefaultChangeset, DefaultEditBuilder> {
 	return UndoRedoManager.create(new DefaultChangeFamily({ jsonValidator: typeboxValidator }));
@@ -935,9 +917,12 @@ export function namedTreeSchema(
  * @deprecated This in invalid and only used to explicitly mark code as using the wrong schema. All usages of this should be fixed to use correct schema.
  */
 // TODO: remove all usages of this.
-export const wrongSchema = new SchemaBuilder("Wrong Schema", {
-	rejectEmpty: false,
-}).intoDocumentSchema(SchemaBuilder.fieldSequence(Any));
+export const wrongSchema = new SchemaBuilder({
+	scope: "Wrong Schema",
+	lint: {
+		rejectEmpty: false,
+	},
+}).toDocumentSchema(SchemaBuilder.fieldSequence(Any));
 
 /**
  * Schematize config Schema which is not correct.
@@ -955,3 +940,19 @@ export const wrongSchemaConfig: InitializeAndSchematizeConfiguration<
 	allowedSchemaModifications: AllowedUpdateType.None,
 	initialTree: [],
 };
+
+export function applyTestDelta(
+	delta: Delta.Root,
+	deltaProcessor: { acquireVisitor: () => DeltaVisitor },
+	detachedFieldIndex?: DetachedFieldIndex,
+): void {
+	applyDelta(delta, deltaProcessor, detachedFieldIndex ?? makeDetachedFieldIndex());
+}
+
+export function announceTestDelta(
+	delta: Delta.Root,
+	deltaProcessor: { acquireVisitor: () => DeltaVisitor & AnnouncedVisitor },
+	detachedFieldIndex?: DetachedFieldIndex,
+): void {
+	announceDelta(delta, deltaProcessor, detachedFieldIndex ?? makeDetachedFieldIndex());
+}

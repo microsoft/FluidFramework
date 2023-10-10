@@ -13,6 +13,7 @@ import {
 	areInputCellsEmpty,
 	areOutputCellsEmpty,
 	getEffectiveNodeChanges,
+	getOutputCellId,
 	isTransientEffect,
 } from "./utils";
 
@@ -84,10 +85,16 @@ function cellDeltaFromMark<TNodeChange>(
 				return [mark.count];
 			}
 			case "Delete": {
+				const major = mark.revision ?? revision;
+				const detachId: Delta.DetachedNodeId = { minor: mark.id };
+				if (major !== undefined) {
+					detachId.major = major;
+				}
 				return [
 					{
-						type: Delta.MarkType.Delete,
+						type: Delta.MarkType.Remove,
 						count: mark.count,
+						detachId,
 					},
 				];
 			}
@@ -101,29 +108,56 @@ function cellDeltaFromMark<TNodeChange>(
 				}));
 			}
 			case "Revive": {
-				const insertMark: Mutable<Delta.Insert> = {
-					type: Delta.MarkType.Insert,
-					content: mark.content,
+				const cellId = mark.cellId;
+				assert(cellId !== undefined, "Effective revive must target an empty cell");
+				const major = cellId.revision ?? revision;
+				const restoreId: Delta.DetachedNodeId = { minor: cellId.localId };
+				if (major !== undefined) {
+					restoreId.major = major;
+				}
+				const restoreMark: Mutable<Delta.Restore> = {
+					type: Delta.MarkType.Restore,
+					count: mark.count,
+					newContent: { restoreId },
 				};
-				return [insertMark];
+				return [restoreMark];
 			}
 			case "Transient": {
+				if (mark.cellId === undefined) {
+					return [mark.count];
+				}
+
 				const attachType = mark.attach.type;
+				const outputId =
+					getOutputCellId(mark, revision, undefined) ??
+					fail("Transient mark should have output ID");
+
+				const detachId = {
+					major: outputId.revision,
+					minor: outputId.localId,
+				};
+
 				switch (attachType) {
 					case "Insert":
 						return [
 							{
 								type: Delta.MarkType.Insert,
 								content: mark.attach.content.map(singleTextCursor),
-								isTransient: true,
+								detachId,
 							},
 						];
 					case "Revive":
 						return [
 							{
-								type: Delta.MarkType.Insert,
-								content: mark.attach.content,
-								isTransient: true,
+								type: Delta.MarkType.Restore,
+								count: mark.count,
+								newContent: {
+									restoreId: {
+										major: mark.cellId.revision,
+										minor: mark.cellId.localId,
+									},
+									detachId,
+								},
 							},
 						];
 					case "MoveIn":

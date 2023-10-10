@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { ChangeAtomId, makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../core";
-import { asMutable, fail, IdAllocator } from "../../util";
+import { asMutable, brand, fail, fakeIdAllocator, IdAllocator } from "../../util";
 import {
 	CrossFieldManager,
 	CrossFieldTarget,
@@ -480,7 +480,7 @@ function amendComposeI<TNodeChange>(
 		undefined,
 		moveEffects,
 		true,
-		() => fail("Should not generate IDs"),
+		fakeIdAllocator,
 		// TODO: Should pass in revision for new changes
 		(a, b) => composeChildChanges(a, b, undefined, composeChild),
 	);

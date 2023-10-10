@@ -180,11 +180,11 @@ export function cloneMark<TMark extends Mark<TNodeChange>, TNodeChange>(mark: TM
 	if (clone.type === "Transient") {
 		clone.attach = { ...clone.attach };
 		clone.detach = { ...clone.detach };
-		if (clone.attach.type === "Insert" || clone.attach.type === "Revive") {
+		if (clone.attach.type === "Insert") {
 			clone.attach.content = [...clone.attach.content];
 		}
 	}
-	if (clone.type === "Insert" || clone.type === "Revive") {
+	if (clone.type === "Insert") {
 		clone.content = [...clone.content];
 	}
 	if (clone.cellId !== undefined) {
@@ -528,7 +528,7 @@ function tryMergeEffects(
 		case "Revive": {
 			const lhsRevive = lhs as Revive;
 			if (lhsRevive.inverseOf === rhs.inverseOf) {
-				return { ...lhsRevive, content: [...lhsRevive.content, ...rhs.content] };
+				return lhsRevive;
 			}
 			break;
 		}
@@ -918,11 +918,11 @@ function splitMarkEffect<TEffect extends MarkEffect>(
 ): [TEffect, TEffect] {
 	const type = effect.type;
 	switch (type) {
-		case NoopMarkType: {
+		case NoopMarkType:
+		case "Revive": {
 			return [effect, effect];
 		}
-		case "Insert":
-		case "Revive": {
+		case "Insert": {
 			const effect1: TEffect = {
 				...effect,
 				content: effect.content.slice(0, length),
