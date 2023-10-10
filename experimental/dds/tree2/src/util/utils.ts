@@ -374,7 +374,7 @@ export function objectToMap<MapKey extends string | number | symbol, MapValue>(
 }
 
 /**
- * Convert an object used as a map into a new object used like a map..
+ * Convert an object used as a map into a new object used like a map.
  *
  * @remarks
  * This function must only be used with objects specifically intended to encode map like information.

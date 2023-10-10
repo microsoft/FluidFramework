@@ -66,7 +66,7 @@ export class SchemaBuilder<
 	 * Same as `struct` but with less type safety and works for recursive objects.
 	 * Reduced type safety is a side effect of a workaround for a TypeScript limitation.
 	 *
-	 * See note on RecursiveTreeSchema for details.
+	 * See note on {@link InternalTypedSchemaTypes#RecursiveTreeSchema} for details.
 	 *
 	 * TODO: Make this work with ImplicitFieldSchema.
 	 */
@@ -98,7 +98,7 @@ export class SchemaBuilder<
 	 * Same as `map` but with less type safety and works for recursive objects.
 	 * Reduced type safety is a side effect of a workaround for a TypeScript limitation.
 	 *
-	 * See note on RecursiveTreeSchema for details.
+	 * See note on {@link InternalTypedSchemaTypes#RecursiveTreeSchema} for details.
 	 *
 	 * TODO: Make this work with ImplicitFieldSchema.
 	 */
@@ -139,7 +139,7 @@ export class SchemaBuilder<
 	 * Same as `fieldNode` but with less type safety and works for recursive objects.
 	 * Reduced type safety is a side effect of a workaround for a TypeScript limitation.
 	 *
-	 * See note on RecursiveTreeSchema for details.
+	 * See note on {@link InternalTypedSchemaTypes#RecursiveTreeSchema} for details.
 	 *
 	 * TODO: Make this work with ImplicitFieldSchema.
 	 */
@@ -262,6 +262,9 @@ export type NormalizeAllowedTypes<TSchema extends ImplicitAllowedTypes> = TSchem
 	? readonly [Any]
 	: TSchema;
 
+/**
+ * Normalizes an {@link ImplicitFieldSchema} into a {@link FieldSchema}.
+ */
 export function normalizeField<TSchema extends ImplicitFieldSchema, TDefault extends FieldKind>(
 	schema: TSchema,
 	defaultKind: TDefault,
@@ -276,6 +279,9 @@ export function normalizeField<TSchema extends ImplicitFieldSchema, TDefault ext
 	>;
 }
 
+/**
+ * Normalizes an {@link ImplicitAllowedTypes} into  {@link AllowedTypes}.
+ */
 export function normalizeAllowedTypes<TSchema extends ImplicitAllowedTypes>(
 	schema: TSchema,
 ): NormalizeAllowedTypes<TSchema> {
