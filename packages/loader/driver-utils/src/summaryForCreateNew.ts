@@ -28,8 +28,9 @@ export interface CombinedAppAndProtocolSummary extends ISummaryTree {
  * this is used internally for create new, and single commit summary
  * @internal
  */
-export function isCombinedAppAndProtocolSummary(
+export function isCombinedAppAndProtocolSummary<T extends string>(
 	summary: ISummaryTree | undefined,
+	...optionalRootTrees: string[]
 ): summary is CombinedAppAndProtocolSummary {
 	if (
 		summary?.tree === undefined ||
@@ -38,7 +39,7 @@ export function isCombinedAppAndProtocolSummary(
 	) {
 		return false;
 	}
-	const treeKeys = Object.keys(summary.tree);
+	const treeKeys = Object.keys(summary.tree).filter((t) => !optionalRootTrees.includes(t));
 	if (treeKeys.length !== 2) {
 		return false;
 	}
