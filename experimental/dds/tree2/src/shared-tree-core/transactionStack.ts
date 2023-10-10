@@ -3,17 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { RepairDataStore, RevisionTag } from "../core";
+import { RevisionTag } from "../core";
 import { fail } from "../util";
 
 /**
  * A helper class that organizes the state needed for managing nesting transactions.
  */
-export class TransactionStack<TChange> {
+export class TransactionStack {
 	private readonly stack: {
 		startRevision: RevisionTag;
 		dispose: () => void;
-		repairStore?: RepairDataStore<TChange>;
 	}[] = [];
 
 	/**
@@ -24,24 +23,13 @@ export class TransactionStack<TChange> {
 	}
 
 	/**
-	 * @returns the repair data store for the current transaction, or `undefined` if no transaction is ongoing.
-	 */
-	public get repairStore(): RepairDataStore<TChange> | undefined {
-		return this.stack[this.stack.length - 1]?.repairStore;
-	}
-
-	/**
 	 * Pushes a new transaction onto the stack. That transaction becomes the current transaction.
 	 * @param startRevision - the revision of the latest commit when this transaction begins
 	 * @param repairStore - an optional repair data store for helping with undo or rollback operations
 	 * @param disposables - an optional collection of disposable data to release after finishing a transaction
 	 */
-	public push(
-		startRevision: RevisionTag,
-		dispose: () => void,
-		repairStore?: RepairDataStore<TChange>,
-	): void {
-		this.stack.push({ startRevision, dispose, repairStore });
+	public push(startRevision: RevisionTag, dispose: () => void): void {
+		this.stack.push({ startRevision, dispose });
 	}
 
 	/**
@@ -50,7 +38,6 @@ export class TransactionStack<TChange> {
 	 */
 	public pop(): {
 		startRevision: RevisionTag;
-		repairStore?: RepairDataStore<TChange>;
 	} {
 		const transaction = this.stack.pop() ?? fail("No transaction is currently in progress");
 		transaction.dispose();

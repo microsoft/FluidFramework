@@ -58,7 +58,7 @@ export type Anchor = Brand<number, "rebaser.Anchor">;
 
 // @alpha
 export interface AnchorEvents {
-    afterDelete(anchor: AnchorNode): void;
+    afterDestroy(anchor: AnchorNode): void;
     childrenChanging(anchor: AnchorNode): void;
     subtreeChanging(anchor: AnchorNode): PathVisitor | void;
     valueChanging(anchor: AnchorNode, value: Value): void;
@@ -82,7 +82,7 @@ export type AnchorsCompare = CompareFunction<UpPath>;
 // @alpha @sealed
 export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLocator {
     constructor();
-    acquireVisitor(): DeltaVisitor;
+    acquireVisitor(): AnnouncedVisitor & DeltaVisitor;
     // (undocumented)
     forget(anchor: Anchor): void;
     generationNumber: number;
@@ -106,6 +106,25 @@ export type AnchorSlot<TContent> = BrandedKey<Opaque<Brand<number, "AnchorSlot">
 
 // @alpha
 export function anchorSlot<TContent>(): AnchorSlot<TContent>;
+
+// @alpha
+export interface AnnouncedVisitor {
+    // (undocumented)
+    afterAttach(source: FieldKey, destination: Range_2): void;
+    afterCreate(content: Delta.ProtoNodes, destination: FieldKey): void;
+    // (undocumented)
+    afterDetach(source: PlaceIndex, count: number, destination: FieldKey): void;
+    // (undocumented)
+    afterReplace(newContentSource: FieldKey, newContent: Range_2, oldContent: FieldKey): void;
+    // (undocumented)
+    beforeAttach(source: FieldKey, count: number, destination: PlaceIndex): void;
+    // (undocumented)
+    beforeDestroy(field: FieldKey, count: number): void;
+    // (undocumented)
+    beforeDetach(source: Range_2, destination: FieldKey): void;
+    // (undocumented)
+    beforeReplace(newContent: FieldKey, oldContent: Range_2, oldContentDestination: FieldKey): void;
+}
 
 // @alpha
 export const Any: "Any";
@@ -245,6 +264,15 @@ abstract class BrandedType<ValueType, Name extends string> {
 
 // @alpha
 export function brandOpaque<T extends BrandedType<any, string>>(value: isAny<ValueFromBranded<T>> extends true ? never : ValueFromBranded<T>): BrandedType<ValueFromBranded<T>, NameFromBranded<T>>;
+
+// @alpha
+interface CanReplaceContent<TTree = ProtoNode> {
+    // (undocumented)
+    readonly oldContent?: OldContent<TTree>;
+}
+
+// @alpha
+export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
 
 // @alpha
 export type CheckTypesOverlap<T, TCheck> = [Extract<T, TCheck> extends never ? never : T][0];
@@ -395,13 +423,6 @@ type DefaultFieldKind = typeof FieldKinds.required;
 export const defaultSchemaPolicy: FullSchemaPolicy;
 
 // @alpha
-interface Delete<TTree = ProtoNode> extends HasModifications<TTree> {
-    readonly count: number;
-    // (undocumented)
-    readonly type: typeof MarkType.Delete;
-}
-
-// @alpha
 export interface DeleteBindingContext extends BindingContext {
     // (undocumented)
     readonly count: number;
@@ -414,18 +435,23 @@ export interface DeleteBindingContext extends BindingContext {
 declare namespace Delta {
     export {
         Root,
+        IsDetachedMark,
         ProtoNode,
         ProtoNodes,
         Mark,
         MarkList,
         Skip,
         HasModifications,
+        CanReplaceContent,
         Modify,
-        Delete,
+        Remove,
         MoveOut,
         MoveIn,
+        OldContent,
         Insert,
+        Restore,
         MoveId,
+        DetachedNodeId,
         FieldMap,
         FieldMarks,
         MarkType
@@ -435,24 +461,21 @@ export { Delta }
 
 // @alpha
 export interface DeltaVisitor {
+    attach(source: FieldKey, count: number, destination: PlaceIndex): void;
+    create(content: Delta.ProtoNodes, destination: FieldKey): void;
+    destroy(detachedField: FieldKey, count: number): void;
+    detach(source: Range_2, destination: FieldKey): void;
     // (undocumented)
     enterField(key: FieldKey): void;
     // (undocumented)
-    enterNode(index: number): void;
+    enterNode(index: NodeIndex): void;
     // (undocumented)
     exitField(key: FieldKey): void;
     // (undocumented)
-    exitNode(index: number): void;
+    exitNode(index: NodeIndex): void;
     // (undocumented)
     free(): void;
-    // (undocumented)
-    onDelete(index: number, count: number): void;
-    // (undocumented)
-    onInsert(index: number, content: Delta.ProtoNodes): void;
-    // (undocumented)
-    onMoveIn(index: number, count: number, id: Delta.MoveId): void;
-    // (undocumented)
-    onMoveOut(index: number, count: number, id: Delta.MoveId): void;
+    replace(newContentSource: FieldKey, range: Range_2, oldContentDestination: FieldKey): void;
 }
 
 // @alpha
@@ -469,6 +492,20 @@ export interface Dependent extends NamedComputation {
 // @alpha
 export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField">> {
 }
+
+// @alpha
+interface DetachedNodeId {
+    // (undocumented)
+    major?: string | number;
+    // (undocumented)
+    minor: number;
+}
+
+// @alpha
+export type DetachedPlaceUpPath = Brand<Omit<PlaceUpPath, "parent">, "DetachedRangeUpPath">;
+
+// @alpha
+export type DetachedRangeUpPath = Brand<Omit<RangeUpPath, "parent">, "DetachedRangeUpPath">;
 
 // @alpha
 function downCast<TSchema extends TreeSchema>(schema: TSchema, tree: UntypedTreeCore<any, any>): tree is TypedNode_2<TSchema>;
@@ -788,7 +825,11 @@ export interface ICodecOptions {
 }
 
 // @alpha
-export type IdAllocator = (count?: number) => number;
+export interface IdAllocator<TId = number> {
+    allocate: (count?: number) => TId;
+    // (undocumented)
+    getNextId: () => TId;
+}
 
 // @alpha
 export interface IDefaultEditBuilder {
@@ -844,9 +885,9 @@ export interface InitializeAndSchematizeConfiguration<TRoot extends FieldSchema 
 type _InlineTrick = 0;
 
 // @alpha
-interface Insert<TTree = ProtoNode> extends HasModifications<TTree> {
+interface Insert<TTree = ProtoNode> extends HasModifications<TTree>, CanReplaceContent<TTree> {
     readonly content: readonly TTree[];
-    readonly isTransient?: true;
+    readonly detachId?: DetachedNodeId;
     // (undocumented)
     readonly type: typeof MarkType.Insert;
 }
@@ -990,6 +1031,11 @@ type isAny<T> = boolean extends (T extends {} ? true : false) ? true : false;
 
 // @alpha
 export function isContextuallyTypedNodeDataObject(data: ContextuallyTypedNodeData | undefined): data is ContextuallyTypedNodeDataObject;
+
+// @alpha
+interface IsDetachedMark {
+    readonly detachedNodeId: DetachedNodeId;
+}
 
 // @alpha
 export function isEditableField(field: UnwrappedEditableField): field is EditableField;
@@ -1297,7 +1343,7 @@ export interface MapTree extends NodeData {
 }
 
 // @alpha
-type Mark<TTree = ProtoNode> = Skip | Modify<TTree> | Delete<TTree> | MoveOut<TTree> | MoveIn | Insert<TTree>;
+type Mark<TTree = ProtoNode> = Skip | Modify<TTree> | Remove<TTree> | Restore<TTree> | MoveOut<TTree> | MoveIn | Insert<TTree>;
 
 // @alpha
 export interface MarkedArrayLike<TGet, TSet extends TGet = TGet> extends ArrayLikeMut<TGet, TSet> {
@@ -1315,15 +1361,18 @@ const MarkType: {
     readonly Modify: 0;
     readonly Insert: 1;
     readonly MoveIn: 2;
-    readonly Delete: 3;
+    readonly Remove: 3;
     readonly MoveOut: 4;
+    readonly Restore: 5;
 };
 
 // @alpha
 export type MatchPolicy = SubtreePolicy | "subtree" | "path";
 
 // @alpha
-interface Modify<TTree = ProtoNode> extends HasModifications<TTree> {
+interface Modify<TTree = ProtoNode> extends HasModifications<TTree>, Partial<IsDetachedMark> {
+    // (undocumented)
+    readonly count?: never;
     // (undocumented)
     readonly type: typeof MarkType.Modify;
 }
@@ -1336,13 +1385,14 @@ interface MoveId extends Opaque<Brand<number, "delta.MoveId">> {
 interface MoveIn {
     // (undocumented)
     readonly count: number;
+    readonly detachId?: DetachedNodeId;
     readonly moveId: MoveId;
     // (undocumented)
     readonly type: typeof MarkType.MoveIn;
 }
 
 // @alpha
-interface MoveOut<TTree = ProtoNode> extends HasModifications<TTree> {
+interface MoveOut<TTree = ProtoNode> extends HasModifications<TTree>, Partial<IsDetachedMark> {
     readonly count: number;
     readonly moveId: MoveId;
     // (undocumented)
@@ -1393,6 +1443,9 @@ export interface NodeExistsConstraint {
     // (undocumented)
     violated: boolean;
 }
+
+// @alpha
+export type NodeIndex = number;
 
 // @alpha
 interface NodeKeyField extends TreeField {
@@ -1471,6 +1524,12 @@ export interface ObservingDependent extends Dependent {
 }
 
 // @alpha
+interface OldContent<TTree = ProtoNode> {
+    readonly detachId: DetachedNodeId;
+    readonly fields?: FieldMarks<TTree>;
+}
+
+// @alpha
 export const on: unique symbol;
 
 // @alpha
@@ -1529,9 +1588,26 @@ export interface PathStep {
 
 // @alpha
 export interface PathVisitor {
+    afterAttach(source: DetachedPlaceUpPath, destination: RangeUpPath): void;
+    afterCreate(content: DetachedRangeUpPath): void;
+    afterDetach(source: PlaceUpPath, destination: DetachedRangeUpPath): void;
+    afterReplace(newContentSource: DetachedPlaceUpPath, newContent: RangeUpPath, oldContent: DetachedRangeUpPath): void;
+    beforeAttach(source: DetachedRangeUpPath, destination: PlaceUpPath): void;
+    beforeDestroy(content: DetachedRangeUpPath): void;
+    beforeDetach(source: RangeUpPath, destination: DetachedPlaceUpPath): void;
+    beforeReplace(newContent: DetachedRangeUpPath, oldContent: RangeUpPath, oldContentDestination: DetachedPlaceUpPath): void;
+    // @deprecated
     onDelete(path: UpPath, count: number): void;
-    // (undocumented)
+    // @deprecated (undocumented)
     onInsert(path: UpPath, content: Delta.ProtoNodes): void;
+}
+
+// @alpha
+export type PlaceIndex = number;
+
+// @alpha
+export interface PlaceUpPath<TUpPath extends UpPath = UpPath> extends FieldUpPath<TUpPath> {
+    readonly index: PlaceIndex;
 }
 
 // @alpha
@@ -1565,6 +1641,13 @@ type ProtoNodes = readonly ProtoNode[];
 export const proxyTargetSymbol: unique symbol;
 
 // @alpha
+interface Range_2 {
+    readonly end: PlaceIndex;
+    readonly start: PlaceIndex;
+}
+export { Range_2 as Range }
+
+// @alpha
 export interface RangeEntry<T> {
     // (undocumented)
     length: number;
@@ -1572,6 +1655,10 @@ export interface RangeEntry<T> {
     start: number;
     // (undocumented)
     value: T;
+}
+
+// @alpha
+export interface RangeUpPath<TUpPath extends UpPath = UpPath> extends FieldUpPath<TUpPath>, Range_2 {
 }
 
 // @alpha
@@ -1606,6 +1693,14 @@ type RecursiveTreeSchemaSpecification = unknown;
 // @alpha
 type _RecursiveTrick = never;
 
+// @alpha
+interface Remove<TTree = ProtoNode> extends HasModifications<TTree> {
+    readonly count: number;
+    readonly detachId: DetachedNodeId;
+    // (undocumented)
+    readonly type: typeof MarkType.Remove;
+}
+
 // @alpha (undocumented)
 interface Required_2 extends FieldKind<"Value", Multiplicity.Single> {
 }
@@ -1626,6 +1721,19 @@ type RequiredFields<T> = [
     [P in keyof T as undefined extends T[P] ? never : P]: T[P];
 }
 ][_InlineTrick];
+
+// @alpha
+interface Restore<TTree = ProtoNode> extends CanReplaceContent<TTree> {
+    readonly count: number;
+    readonly fields?: FieldMarks<TTree>;
+    // (undocumented)
+    readonly newContent: {
+        readonly restoreId: DetachedNodeId;
+        readonly detachId?: DetachedNodeId;
+    };
+    // (undocumented)
+    readonly type: typeof MarkType.Restore;
+}
 
 // @alpha
 type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
@@ -2282,7 +2390,7 @@ export type UnwrappedUntypedTree<TContext = UntypedTreeContext> = UntypedTreeOrP
 export interface UpPath<TParent = UpPathDefault> {
     readonly parent: TParent | undefined;
     readonly parentField: FieldKey;
-    readonly parentIndex: number;
+    readonly parentIndex: NodeIndex;
 }
 
 // @alpha
