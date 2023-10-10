@@ -57,7 +57,7 @@ import {
 	RequiredField,
 	OptionalField,
 } from "./editableTreeTypes";
-import { LazyNodeKeyField, makeField } from "./lazyField";
+import { LazyField, LazyNodeKeyField, makeField } from "./lazyField";
 import {
 	LazyEntity,
 	cursorSymbol,
@@ -68,6 +68,7 @@ import {
 } from "./lazyEntity";
 import { unboxedField } from "./unboxed";
 import { treeStatusFromAnchorCache } from "./utilities";
+import { FieldKind, Multiplicity } from "../modular-schema";
 
 const lazyTreeSlot = anchorSlot<LazyTree>();
 
@@ -520,6 +521,16 @@ function buildStructClass<TSchema extends StructSchema>(
 	const propertyDescriptorMap: PropertyDescriptorMap = {};
 	const ownPropertyMap: PropertyDescriptorMap = {};
 
+	function getBoxedField(
+		struct: CustomStruct,
+		key: FieldKey,
+		fieldSchema: FieldSchema,
+	): TreeField {
+		return inCursorField(struct[cursorSymbol], key, (cursor) => {
+			return makeField(struct.context, fieldSchema, cursor);
+		});
+	}
+
 	for (const [key, fieldSchema] of schema.structFields) {
 		let setter: ((newContent: ContextuallyTypedNodeData) => void) | undefined;
 		switch (fieldSchema.kind) {
@@ -528,10 +539,11 @@ function buildStructClass<TSchema extends StructSchema>(
 					this: CustomStruct,
 					newContent: ContextuallyTypedNodeData,
 				): void {
-					const field = inCursorField(this[cursorSymbol], key, (cursor) => {
-						return makeField(this.context, fieldSchema, cursor);
-					}) as RequiredField<AllowedTypes>;
-
+					const field = getBoxedField(
+						this,
+						key,
+						fieldSchema,
+					) as RequiredField<AllowedTypes>;
 					field.content = newContent;
 				};
 				break;
@@ -541,10 +553,11 @@ function buildStructClass<TSchema extends StructSchema>(
 					this: CustomStruct,
 					newContent: ContextuallyTypedNodeData,
 				): void {
-					const field = inCursorField(this[cursorSymbol], key, (cursor) => {
-						return makeField(this.context, fieldSchema, cursor);
-					}) as OptionalField<AllowedTypes>;
-
+					const field = getBoxedField(
+						this,
+						key,
+						fieldSchema,
+					) as OptionalField<AllowedTypes>;
 					field.content = newContent;
 				};
 				break;
@@ -578,9 +591,7 @@ function buildStructClass<TSchema extends StructSchema>(
 		propertyDescriptorMap[`boxed${capitalize(key)}`] = {
 			enumerable: false,
 			get(this: CustomStruct) {
-				return inCursorField(this[cursorSymbol], key, (cursor) =>
-					makeField(this.context, fieldSchema, cursor),
-				);
+				return getBoxedField(this, key, fieldSchema);
 			},
 		};
 	}
