@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	Value,
 	Anchor,
@@ -23,24 +23,33 @@ import {
 } from "../../core";
 import { brand, fail } from "../../util";
 import { FieldKind } from "../modular-schema";
-import { getFieldKind, getFieldSchema, typeNameSymbol, valueSymbol } from "../contextuallyTyped";
-import { LocalNodeKey } from "../node-key";
+import {
+	getFieldKind,
+	NewFieldContent,
+	getFieldSchema,
+	typeNameSymbol,
+	valueSymbol,
+} from "../contextuallyTyped";
 import { FieldKinds } from "../default-field-kinds";
-import { AdaptingProxyHandler, adaptWithProxy, getStableNodeKey } from "./utilities";
+import {
+	EditableTreeEvents,
+	getField,
+	on,
+	parentField,
+	typeSymbol,
+	contextSymbol,
+	treeStatus,
+} from "../untypedTree";
+import { TreeStatus } from "../editable-tree-2";
+import { AdaptingProxyHandler, adaptWithProxy, treeStatusFromPath } from "./utilities";
 import { ProxyContext } from "./editableTreeContext";
 import {
 	EditableField,
 	EditableTree,
-	EditableTreeEvents,
 	UnwrappedEditableField,
-	getField,
-	on,
-	parentField,
 	proxyTargetSymbol,
-	typeSymbol,
-	contextSymbol,
-	NewFieldContent,
 	localNodeKeySymbol,
+	setField,
 } from "./editableTreeTypes";
 import { makeField, unwrappedField } from "./editableField";
 import { ProxyTarget } from "./ProxyTarget";
@@ -60,7 +69,7 @@ export function makeTree(context: ProxyContext, cursor: ITreeSubscriptionCursor)
 	const newTarget = new NodeProxyTarget(context, cursor, anchorNode, anchor);
 	const output = adaptWithProxy(newTarget, nodeProxyHandler);
 	anchorNode.slots.set(editableTreeSlot, output);
-	anchorNode.on("afterDelete", cleanupTree);
+	anchorNode.on("afterDestroy", cleanupTree);
 	return output;
 }
 
@@ -92,16 +101,12 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 
 		this.proxy = adaptWithProxy(this, nodeProxyHandler);
 		anchorNode.slots.set(editableTreeSlot, this.proxy);
-		this.removeDeleteCallback = anchorNode.on("afterDelete", cleanupTree);
+		this.removeDeleteCallback = anchorNode.on("afterDestroy", cleanupTree);
 
 		assert(
 			this.context.schema.treeSchema.get(this.typeName) !== undefined,
 			0x5b1 /* There is no explicit schema for this node type. Ensure that the type is correct and the schema for it was added to the SchemaData */,
 		);
-	}
-
-	protected buildAnchor(): Anchor {
-		return this.context.forest.anchors.track(this.anchorNode);
 	}
 
 	protected tryMoveCursorToAnchor(
@@ -170,6 +175,10 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		);
 	}
 
+	public setField(fieldKey: FieldKey, content: NewFieldContent): void {
+		this.getField(fieldKey).setContent(content);
+	}
+
 	public [Symbol.iterator](): IterableIterator<EditableField> {
 		const type = this.type;
 		return mapCursorFields(this.cursor, (cursor) =>
@@ -184,11 +193,11 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 	public get parentField(): { readonly parent: EditableField; readonly index: number } {
 		const cursor = this.cursor;
 		const index = this.anchorNode.parentIndex;
-		assert(this.cursor.fieldIndex === index, "mismatched indexes");
+		assert(this.cursor.fieldIndex === index, 0x714 /* mismatched indexes */);
 		const key = this.anchorNode.parentField;
 
 		cursor.exitNode();
-		assert(key === cursor.getFieldKey(), "mismatched keys");
+		assert(key === cursor.getFieldKey(), 0x715 /* mismatched keys */);
 		let fieldSchema: FieldStoredSchema;
 
 		// Check if the current node is in a detached sequence.
@@ -228,6 +237,14 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		this.cursor.enterNode(index);
 
 		return { parent: proxifiedField, index };
+	}
+
+	public treeStatus(): TreeStatus {
+		if (this.isFreed()) {
+			return TreeStatus.Deleted;
+		}
+		const path = this.anchorNode;
+		return treeStatusFromPath(path);
 	}
 
 	public on<K extends keyof EditableTreeEvents>(
@@ -279,14 +296,16 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 				return target[Symbol.iterator].bind(target);
 			case getField:
 				return target.getField.bind(target);
+			case setField:
+				return target.setField.bind(target);
+			case treeStatus:
+				return target.treeStatus.bind(target);
 			case parentField:
 				return target.parentField;
 			case contextSymbol:
 				return target.context;
 			case on:
 				return target.on.bind(target);
-			case localNodeKeySymbol:
-				return getLocalNodeKey(target);
 			default:
 				return undefined;
 		}
@@ -303,7 +322,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 		);
 		if (typeof key === "string") {
 			const fieldKey: FieldKey = brand(key);
-			target.getField(fieldKey).content = value;
+			target.setField(fieldKey, value);
 			return true;
 		}
 		return false;
@@ -311,7 +330,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 	deleteProperty: (target: NodeProxyTarget, key: string | symbol): boolean => {
 		if (typeof key === "string") {
 			const fieldKey: FieldKey = brand(key);
-			target.getField(fieldKey).delete();
+			target.getField(fieldKey).remove();
 			return true;
 		}
 		return false;
@@ -331,11 +350,10 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 			case parentField:
 			case on:
 			case contextSymbol:
-			case localNodeKeySymbol:
 				return true;
+			case localNodeKeySymbol:
+				return target.context.nodeKeyFieldKey !== undefined;
 			case valueSymbol:
-				// Could do `target.value !== ValueSchema.Nothing`
-				// instead if values which could be modified should report as existing.
 				return target.value !== undefined;
 			default:
 				return false;
@@ -401,6 +419,13 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 					value: target.getField.bind(target),
 					writable: false,
 				};
+			case setField:
+				return {
+					configurable: true,
+					enumerable: false,
+					value: target.setField.bind(target),
+					writable: false,
+				};
 			case parentField:
 				return {
 					configurable: true,
@@ -422,13 +447,6 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 					value: target.on.bind(target),
 					writable: false,
 				};
-			case localNodeKeySymbol:
-				return {
-					configurable: true,
-					enumerable: false,
-					value: getLocalNodeKey(target),
-					writable: false,
-				};
 			default:
 				return undefined;
 		}
@@ -444,22 +462,4 @@ export function isEditableTree(field: UnwrappedEditableField): field is Editable
 		typeof field === "object" &&
 		isNodeProxyTarget(field[proxyTargetSymbol] as ProxyTarget<Anchor | FieldAnchor>)
 	);
-}
-
-/**
- * Retrieves the {@link LocalNodeKey} for the given node.
- * @remarks TODO: Optimize this to be a fast path that gets a {@link LocalNodeKey} directly from the
- * forest rather than getting the {@link StableNodeKey} and the compressing it.
- */
-function getLocalNodeKey(target: NodeProxyTarget): LocalNodeKey | undefined {
-	if (target.context.nodeKeyFieldKey === undefined) {
-		return undefined;
-	}
-
-	const stableNodeKey = getStableNodeKey(target.context.nodeKeyFieldKey, target.proxy);
-	if (stableNodeKey === undefined) {
-		return undefined;
-	}
-
-	return target.context.nodeKeys.localizeNodeKey(stableNodeKey);
 }

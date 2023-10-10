@@ -52,11 +52,11 @@ function bench(
 		dataConsumer: (cursor: ITreeCursor, calculate: (...operands: any[]) => void) => any;
 	}[],
 ) {
-	const schemaCollection = new SchemaBuilder(
-		"JsonCursor benchmark",
-		jsonSchema,
-	).intoDocumentSchema(SchemaBuilder.fieldOptional(...jsonRoot));
-	const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, schemaCollection);
+	const schemaCollection = new SchemaBuilder({
+		scope: "JsonCursor benchmark",
+		libraries: [jsonSchema],
+	}).toDocumentSchema(SchemaBuilder.fieldOptional(...jsonRoot));
+	const schema = new InMemoryStoredSchemaRepository(schemaCollection);
 	for (const { name, getJson, dataConsumer } of data) {
 		describe(name, () => {
 			let json: JsonCompatible;
@@ -93,7 +93,7 @@ function bench(
 				[
 					"object-forest Cursor",
 					() => {
-						const forest = buildForest(schema);
+						const forest = buildForest();
 						initializeForest(forest, [singleTextCursor(encodedTree)]);
 						const cursor = forest.allocateCursor();
 						moveToDetachedField(forest, cursor);

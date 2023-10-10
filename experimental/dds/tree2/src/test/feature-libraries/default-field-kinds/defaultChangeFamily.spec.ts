@@ -5,13 +5,11 @@
 
 import { strict as assert } from "assert";
 import {
-	AnchorSet,
 	Delta,
 	FieldKey,
 	mintRevisionTag,
 	IForestSubscription,
 	initializeForest,
-	InMemoryStoredSchemaRepository,
 	ITreeCursorSynchronous,
 	JsonableTree,
 	mapCursorField,
@@ -19,24 +17,23 @@ import {
 	rootFieldKey,
 	TaggedChange,
 	UpPath,
+	applyDelta,
+	makeDetachedFieldIndex,
 } from "../../../core";
 import { jsonNumber, jsonObject, jsonString } from "../../../domains";
 import {
 	DefaultChangeFamily,
 	DefaultChangeset,
 	DefaultEditBuilder,
-	defaultSchemaPolicy,
 	buildForest,
 	singleTextCursor,
 	jsonableTreeFromCursor,
-	ModularChangeset,
 } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { assertDeltaEqual } from "../../utils";
 import { noopValidator } from "../../../codec";
 
 const defaultChangeFamily = new DefaultChangeFamily({ jsonValidator: noopValidator });
-const defaultIntoDelta = (change: ModularChangeset) => defaultChangeFamily.intoDelta(change);
 const family = defaultChangeFamily;
 
 const rootKey = rootFieldKey;
@@ -110,25 +107,22 @@ function initializeEditableForest(data?: JsonableTree): {
 	changes: TaggedChange<DefaultChangeset>[];
 	deltas: Delta.Root[];
 } {
-	const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
-	const forest = buildForest(schema);
+	const forest = buildForest();
 	if (data !== undefined) {
 		initializeForest(forest, [singleTextCursor(data)]);
 	}
 	let currentRevision = mintRevisionTag();
 	const changes: TaggedChange<DefaultChangeset>[] = [];
 	const deltas: Delta.Root[] = [];
-	const builder = new DefaultEditBuilder(
-		family,
-		(change) => {
-			changes.push({ revision: currentRevision, change });
-			const delta = defaultChangeFamily.intoDelta(change);
-			deltas.push(delta);
-			forest.applyDelta(delta);
-			currentRevision = mintRevisionTag();
-		},
-		new AnchorSet(),
-	);
+	const detachedFieldIndex = makeDetachedFieldIndex();
+	const builder = new DefaultEditBuilder(family, (change) => {
+		const taggedChange = { revision: currentRevision, change };
+		changes.push(taggedChange);
+		const delta = defaultChangeFamily.intoDelta(taggedChange);
+		deltas.push(delta);
+		applyDelta(delta, forest, detachedFieldIndex);
+		currentRevision = mintRevisionTag();
+	});
 	return {
 		forest,
 		builder,

@@ -3,24 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKinds, SchemaAware, SchemaBuilder, ValueSchema } from "@fluid-experimental/tree2";
+import { SchemaBuilder, TypedField, TypedNode, leaf } from "@fluid-experimental/tree2";
 
-const builder = new SchemaBuilder("inventory app");
-export const float64 = builder.leaf("number", ValueSchema.Number);
-export const string = builder.leaf("string", ValueSchema.String);
+const builder = new SchemaBuilder({ scope: "inventory app", libraries: [leaf.library] });
 
 export const part = builder.struct("Contoso:Part-1.0.0", {
-	name: SchemaBuilder.field(FieldKinds.value, string),
-	quantity: SchemaBuilder.field(FieldKinds.value, float64),
+	name: SchemaBuilder.fieldRequired(leaf.string),
+	quantity: SchemaBuilder.fieldRequired(leaf.number),
 });
 
 export const inventory = builder.struct("Contoso:Inventory-1.0.0", {
-	parts: SchemaBuilder.field(FieldKinds.sequence, part),
+	parts: SchemaBuilder.fieldSequence(part),
 });
 
-export const rootField = SchemaBuilder.field(FieldKinds.value, inventory);
-export type RootField = SchemaAware.TypedField<typeof rootField>;
+export const inventoryField = SchemaBuilder.fieldRequired(inventory);
+export type InventoryField = TypedField<typeof inventoryField>;
 
-export const schema = builder.intoDocumentSchema(rootField);
+export const schema = builder.toDocumentSchema(inventoryField);
 
-export type Inventory = SchemaAware.TypedNode<typeof inventory>;
+export type Inventory = TypedNode<typeof inventory>;

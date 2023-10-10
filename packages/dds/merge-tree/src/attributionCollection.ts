@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	AttributionKey,
 	OpAttributionKey,
@@ -17,11 +17,14 @@ import { ISegment } from "./mergeTreeNodes";
 export interface SequenceOffsets {
 	/**
 	 * Parallel array with posBreakpoints which tracks the seq of insertion.
-	 * Ex: if seqs is [45, 46] and posBreakpoints is [0, 3], the section of the string
+	 *
+	 * @example
+	 *
+	 * If seqs is [45, 46] and posBreakpoints is [0, 3], the section of the string
 	 * between offsets 0 and 3 was inserted at seq 45 and the section of the string between
 	 * 3 and the length of the string was inserted at seq 46.
 	 *
-	 * @remarks - We use null here rather than undefined as round-tripping through JSON converts
+	 * @remarks We use null here rather than undefined as round-tripping through JSON converts
 	 * undefineds to null anyway
 	 */
 	seqs: (number | AttributionKey | null)[];
@@ -157,7 +160,10 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		return Object.entries(this.channels ?? {});
 	}
 
-	public constructor(private _length: number, baseEntry?: AttributionKey | null) {
+	public constructor(
+		private _length: number,
+		baseEntry?: AttributionKey | null,
+	) {
 		if (baseEntry !== undefined) {
 			this.offsets.push(0);
 			this.keys.push(baseEntry);
@@ -192,7 +198,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 
 	private get(index: number): AttributionKey | undefined {
 		const key = this.keys[index];
-		return key !== null ? key : undefined;
+		return key ?? undefined;
 	}
 
 	public get length(): number {

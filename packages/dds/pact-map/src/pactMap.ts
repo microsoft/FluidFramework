@@ -5,41 +5,41 @@
 
 /* eslint-disable unicorn/numeric-separators-style */
 
+// False positive: this is an import from the `events` package, not from Node.
+// eslint-disable-next-line unicorn/prefer-node-protocol
 import { EventEmitter } from "events";
 
-import { assert } from "@fluidframework/common-utils";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { assert } from "@fluidframework/core-utils";
+import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
-	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
-	IChannelFactory,
+	type IChannelAttributes,
+	type IFluidDataStoreRuntime,
+	type IChannelStorageService,
+	type IChannelFactory,
 } from "@fluidframework/datastore-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { type ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
 	createSingleBlobSummary,
-	IFluidSerializer,
+	type IFluidSerializer,
 	SharedObject,
 } from "@fluidframework/shared-object-base";
 import { PactMapFactory } from "./pactMapFactory";
-import { IPactMap, IPactMapEvents } from "./interfaces";
+import { type IAcceptedPact, type IPactMap, type IPactMapEvents } from "./interfaces";
 
 /**
  * The accepted pact information, if any.
  */
-interface IAcceptedPact<T> {
+interface IAcceptedPactInternal<T> {
 	/**
 	 * The accepted value of the given type or undefined (typically in case of delete).
 	 */
 	value: T | undefined;
 
 	/**
-	 * The sequence number when the value was accepted, which will normally coincide with one of three possibilities:
+	 * The sequence number when the value was accepted, which will normally coincide with one of two possibilities:
 	 * - The sequence number of the "accept" op from the final client we expected signoff from
 	 * - The sequence number of the ClientLeave of the final client we expected signoff from
-	 * - The sequence number of the "set" op, if there were no expected signoffs (i.e. only the submitting client
-	 * was connected when the op was sequenced)
 	 *
 	 * For values set in detached state, it will be 0.
 	 */
@@ -65,9 +65,9 @@ interface IPendingPact<T> {
  * Internal format of the values stored in the PactMap.
  */
 type Pact<T> =
-	| { accepted: IAcceptedPact<T>; pending: undefined }
+	| { accepted: IAcceptedPactInternal<T>; pending: undefined }
 	| { accepted: undefined; pending: IPendingPact<T> }
-	| { accepted: IAcceptedPact<T>; pending: IPendingPact<T> };
+	| { accepted: IAcceptedPactInternal<T>; pending: IPendingPact<T> };
 
 /**
  * PactMap operation formats
@@ -177,7 +177,7 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 		return new PactMapFactory();
 	}
 
-	private readonly values: Map<string, Pact<T>> = new Map();
+	private readonly values = new Map<string, Pact<T>>();
 
 	private readonly incomingOp: EventEmitter = new EventEmitter();
 
@@ -206,6 +206,22 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 	 */
 	public get(key: string): T | undefined {
 		return this.values.get(key)?.accepted?.value;
+	}
+
+	/**
+	 * {@inheritDoc IPactMap.getWithDetails}
+	 */
+	public getWithDetails(key: string): IAcceptedPact<T> | undefined {
+		// Note: We return type `IAcceptedPact` instead of `IAcceptedPactInternal` since we may want to diverge
+		// the interfaces in the future.
+		const acceptedPact = this.values.get(key)?.accepted;
+		if (acceptedPact === undefined) {
+			return undefined;
+		}
+		return {
+			value: acceptedPact.value,
+			acceptedSequenceNumber: acceptedPact.sequenceNumber,
+		};
 	}
 
 	/**
@@ -377,11 +393,12 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 
 				if (pending.expectedSignoffs.length === 0) {
 					// The pending value has settled
+					const clientLeaveSequenceNumber = this.runtime.deltaManager.lastSequenceNumber;
 					this.values.set(key, {
 						accepted: {
 							value: pending.value,
 							// The sequence number of the ClientLeave message.
-							sequenceNumber: this.runtime.deltaManager.lastSequenceNumber,
+							sequenceNumber: clientLeaveSequenceNumber,
 						},
 						pending: undefined,
 					});
@@ -399,17 +416,7 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 	 */
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
 		const allEntries = [...this.values.entries()];
-		// Filter out items that are ineffectual
-		const summaryEntries = allEntries.filter(([, pact]) => {
-			return (
-				// Items have an effect if they are still pending, have a real value, or some client may try to
-				// reference state before the value was accepted.  Otherwise they can be dropped.
-				pact.pending !== undefined ||
-				pact.accepted.value !== undefined ||
-				pact.accepted.sequenceNumber > this.runtime.deltaManager.minimumSequenceNumber
-			);
-		});
-		return createSingleBlobSummary(snapshotFileName, JSON.stringify(summaryEntries));
+		return createSingleBlobSummary(snapshotFileName, JSON.stringify(allEntries));
 	}
 
 	/**
@@ -476,11 +483,12 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 		if (message.type === MessageType.Operation) {
 			const op = message.contents as IPactMapOperation<T>;
 
 			switch (op.type) {
-				case "set":
+				case "set": {
 					this.incomingOp.emit(
 						"set",
 						op.key,
@@ -489,8 +497,9 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 						message.sequenceNumber,
 					);
 					break;
+				}
 
-				case "accept":
+				case "accept": {
 					this.incomingOp.emit(
 						"accept",
 						op.key,
@@ -498,9 +507,11 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 						message.sequenceNumber,
 					);
 					break;
+				}
 
-				default:
+				default: {
 					throw new Error("Unknown operation");
+				}
 			}
 		}
 	}

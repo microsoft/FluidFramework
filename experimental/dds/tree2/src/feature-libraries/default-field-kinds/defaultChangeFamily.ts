@@ -7,12 +7,12 @@ import { ICodecFamily, ICodecOptions } from "../../codec";
 import {
 	ChangeFamily,
 	ChangeRebaser,
-	AnchorSet,
 	Delta,
 	UpPath,
 	ITreeCursor,
 	ChangeFamilyEditor,
 	FieldUpPath,
+	TaggedChange,
 } from "../../core";
 import { brand, isReadonlyArray } from "../../util";
 import {
@@ -21,7 +21,7 @@ import {
 	FieldChangeset,
 	ModularChangeset,
 } from "../modular-schema";
-import { fieldKinds, optional, sequence, value as valueFieldKind } from "./defaultFieldKinds";
+import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds";
 
 export type DefaultChangeset = ModularChangeset;
 
@@ -45,15 +45,12 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
 		return this.modularFamily.codecs;
 	}
 
-	public intoDelta(change: DefaultChangeset): Delta.Root {
+	public intoDelta(change: TaggedChange<DefaultChangeset>): Delta.Root {
 		return this.modularFamily.intoDelta(change);
 	}
 
-	public buildEditor(
-		changeReceiver: (change: DefaultChangeset) => void,
-		anchorSet: AnchorSet,
-	): DefaultEditBuilder {
-		return new DefaultEditBuilder(this, changeReceiver, anchorSet);
+	public buildEditor(changeReceiver: (change: DefaultChangeset) => void): DefaultEditBuilder {
+		return new DefaultEditBuilder(this, changeReceiver);
 	}
 }
 
@@ -115,9 +112,8 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 	public constructor(
 		family: ChangeFamily<ChangeFamilyEditor, DefaultChangeset>,
 		changeReceiver: (change: DefaultChangeset) => void,
-		anchors: AnchorSet,
 	) {
-		this.modularBuilder = new ModularEditBuilder(family, changeReceiver, anchors);
+		this.modularBuilder = new ModularEditBuilder(family, changeReceiver);
 	}
 
 	public enterTransaction(): void {

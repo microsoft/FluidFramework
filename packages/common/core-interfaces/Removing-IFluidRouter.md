@@ -46,17 +46,47 @@ The new way to do this is via the object's "entry point".
 Here it is on `IContainer`, returning an anonymous `FluidObject` - the application-specified root object:
 
 ```ts
-getEntryPoint?(): Promise<FluidObject | undefined>;
+getEntryPoint(): Promise<FluidObject | undefined>;
 ```
 
 And here it is on `IDataStore`, returning an `IFluidHandle` to an anonymous `FluidObject` - the DataStore's root object:
 
 ```ts
-readonly entryPoint?: IFluidHandle<FluidObject>;
+readonly entryPoint: IFluidHandle<FluidObject>;
 ```
 
 So how does an application specify what the Container or DataStore's entry point is?
-Via a parameter `initializeEntryPoint` that's found on `ContainerRuntime.loadRuntime` and `FluidDataStoreRuntime`'s constructor.
+Via a parameter `provideEntryPoint` that's found on `ContainerRuntime.loadRuntime` and `FluidDataStoreRuntime`'s constructor.
+
+See [testContainerRuntimeFactoryWithDefaultDataStore.ts](https://github.com/microsoft/FluidFramework/tree/main/packages/test/test-utils/src/testContainerRuntimeFactoryWithDefaultDataStore.ts) for an example implemtation of `provideEntryPoint` for ContainerRuntime.
+See [pureDataObjectFactory.ts](https://github.com/microsoft/FluidFramework/tree/main/packages/framework/aqueduct/src/data-object-factories/pureDataObjectFactory.ts#L83) for an example implementation of `provideEntryPoint` for DataStoreRuntime.
+
+### ILoader request pattern
+
+The `request` API (associated with the `IFluidRouter` interface) has been deprecated on `ILoader` and `Loader`.
+
+After calling `ILoader.resolve(...)`, call the `getEntryPoint()` method on the returned `IContainer`.
+The following is an example of what this change may look like:
+
+```ts
+// OLD
+const request: IRequest;
+const urlResolver = new YourUrlResolver();
+const loader = new Loader({ urlResolver, ... });
+
+await loader.resolve(request);
+const response = loader.request(request);
+```
+
+```ts
+// NEW
+const request: IRequest;
+const urlResolver = new YourUrlResolver();
+const loader = new Loader({ urlResolver, ... });
+
+const container = await loader.resolve(request);
+const entryPoint = await container.getEntryPoint();
+```
 
 ### Aliased DataStores
 
@@ -65,7 +95,25 @@ Via a parameter `initializeEntryPoint` that's found on `ContainerRuntime.loadRun
 ## Status
 
 <!-- prettier-ignore-start -->
-| API                                                      | Deprecated in        | Removed in           |
-| -------------------------------------------------------- | -------------------- | -------------------- |
-| `IFluidRouter`                                           | 2.0.0-internal.5.4.0 |                      |
+| API                                                                                          | Deprecated in        | Removed in           |
+| -------------------------------------------------------------------------------------------- | -------------------- | -------------------- |
+| `IContainer.request` (except calling with "/")                                               | 2.0.0-internal.6.0.0 |                      |
+| `IDataStore.request` (except calling with "/")                                               | 2.0.0-internal.6.0.0 |                      |
+| `IContainer.IFluidRouter`                                                                    | 2.0.0-internal.6.0.0 |                      |
+| `IDataStore.IFluidRouter`                                                                    | 2.0.0-internal.6.0.0 |                      |
+| `request` and `IFluidRouter` on `ILoader` and `Loader`                                       | 2.0.0-internal.6.0.0 |                      |
+| `request` and `IFluidRouter` on `IRuntime` and `ContainerRuntime`                            | 2.0.0-internal.6.0.0 |                      |
+| `request` and `IFluidRouter` on `IFluidDataStoreRuntime` and `FluidDataStoreRuntime`         | 2.0.0-internal.6.0.0 |                      |
+| `request` and `IFluidRouter` on `IFluidDataStoreChannel`                                     | 2.0.0-internal.6.0.0 |                      |
+| `getRootDataStore` on `IContainerRuntime` and `ContainerRuntime`                             | 2.0.0-internal.6.0.0 |                      |
+| `resolveHandle` on `IContainerRuntime`                                                       | 2.0.0-internal.7.0.0 |                      |
+| `IFluidHandleContext` on `IContainerRuntimeBase`                                             | 2.0.0-internal.7.0.0 |                      |
+| `requestHandler` property in `ContainerRuntime.loadRuntime(...)`                             | 2.0.0-internal.7.0.0 |                      |
+| `RuntimeRequestHandler` and `RuntimeRequestHandlerBuilder`                                   | 2.0.0-internal.7.0.0 |                      |
+| `request` and `IFluidRouter` on `IContainer` and `Container`                                 | 2.0.0-internal.7.0.0 |                      |
+| `request` and `IFluidRouter` on `IDataStore`                                                 | 2.0.0-internal.7.0.0 |                      |
+| `IFluidRouter` and `IProvideFluidRouter`                                                     | 2.0.0-internal.7.0.0 |                      |
+| `requestFluidObject`                                                                         | 2.0.0-internal.7.0.0 |                      |
+| `requestResolvedObjectFromContainer`                                                         | 2.0.0-internal.7.0.0 |                      |
+| `getDefaultObjectFromContainer`, `getObjectWithIdFromContainer` and `getObjectFromContainer` | 2.0.0-internal.7.0.0 |                      |
 <!-- prettier-ignore-end -->

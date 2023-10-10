@@ -9,17 +9,15 @@ export {
 	Changeset,
 	Delete,
 	Detach,
-	HasChanges,
 	HasMoveId,
 	HasRevisionTag,
 	Insert,
 	Mark,
 	MarkList,
-	Modify,
 	MoveIn,
 	MoveOut,
 	NodeChangeType,
-	NodeCount,
+	CellCount as NodeCount,
 	MoveId,
 	ProtoNode,
 	Reattach,
@@ -30,8 +28,9 @@ export {
 	LineageEvent,
 	HasReattachFields,
 	CellId,
-	CellTargetingMark,
+	HasMarkFields,
 	HasLineage,
+	IdRange,
 } from "./format";
 export {
 	SequenceFieldChangeHandler,
@@ -55,6 +54,7 @@ export {
 	newCrossFieldTable,
 	newMoveEffectTable,
 	CrossFieldTable,
+	cloneMark,
 } from "./utils";
 export {
 	isMoveMark,

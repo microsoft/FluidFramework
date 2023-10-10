@@ -13,7 +13,6 @@
 /.devcontainer/                                                           @microsoft/fluid-cr-infra
 /.github/                                                                 @microsoft/fluid-cr-infra
 /.github/ISSUE_TEMPLATE/                                                  @microsoft/fluid-cr-docs
-/.md-magic-templates/                                                     @microsoft/fluid-cr-docs
 /.vscode/                                                                 @microsoft/fluid-cr-infra
 
 /azure/                                                                   @microsoft/fluid-cr-framework
@@ -29,7 +28,6 @@
 /experimental/PropertyDDS/                                                @evaliyev @karlbom @nedalhy @ruiterr
 /experimental/dds/tree/                                                   @microsoft/fluid-cr-tree
 /experimental/dds/tree2/                                                  @microsoft/fluid-cr-tree
-/experimental/dds/tree-graphql/                                           @microsoft/fluid-cr-tree
 /packages/dds/                                                            @microsoft/fluid-cr-dds
 /packages/drivers/                                                        @microsoft/fluid-cr-drivers
 /packages/drivers/odsp*/                                                  @microsoft/fluid-cr-drivers @microsoft/fluid-cr-odsp
@@ -44,7 +42,9 @@
 /packages/utils/telemetry-utils/                                          @microsoft/fluid-cr-telemetry
 /server/                                                                  @microsoft/fluid-cr-server
 /tools/                                                                   @microsoft/fluid-cr-tools
-/tools/markdown-magic/                                                    @microsoft/fluid-cr-tools @microsoft/fluid-cr-infra
+/tools/api-markdown-documenter                                            @microsoft/fluid-cr-docs @microsoft/fluid-cr-infra
+/tools/markdown-magic/                                                    @microsoft/fluid-cr-infra
+/tools/markdown-magic/src/templates                                       @microsoft/fluid-cr-docs
 /tools/pipelines/                                                         @microsoft/fluid-cr-infra
 /tools/pipelines/build-azure.yml                                          @microsoft/fluid-cr-infra @microsoft/fluid-cr-framework
 
@@ -54,7 +54,6 @@ api-report/                                                               @micro
 # These packages represent the primary public API of the framework.
 api-report/azure-client.api.md                                            @microsoft/fluid-cr-api
 api-report/azure-service-utils.api.md                                     @microsoft/fluid-cr-api
-api-report/test-client-utils.api.md                                       @microsoft/fluid-cr-api
 api-report/fluid-framework.api.md                                         @microsoft/fluid-cr-api
 api-report/tinylicious-client.api.md                                      @microsoft/fluid-cr-api
 
@@ -65,7 +64,6 @@ api-report/cell.api.md                                                    @micro
 api-report/container-loader.api.md                                        @microsoft/fluid-cr-loader
 api-report/container-runtime-definitions.api.md                           @microsoft/fluid-cr-runtime
 api-report/container-runtime.api.md                                       @microsoft/fluid-cr-runtime
-api-report/container-utils.api.md                                         @microsoft/fluid-cr-runtime
 api-report/counter.api.md                                                 @microsoft/fluid-cr-dds
 api-report/data-object-base.api.md                                        @microsoft/fluid-cr-framework
 api-report/datastore-definitions.api.md                                   @microsoft/fluid-cr-runtime

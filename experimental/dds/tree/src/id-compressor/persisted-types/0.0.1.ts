@@ -23,7 +23,7 @@ export type SerializedSessionData = readonly [
 	/**
 	 * Index into the serialized AttributionIDs array; points to the attribution ID provided for this session
 	 */
-	attributionId?: number
+	attributionId?: number,
 ];
 
 export type SerializedClusterOverrides = readonly [
@@ -32,7 +32,7 @@ export type SerializedClusterOverrides = readonly [
 	/** The override string */
 	override: string,
 	/** The first ID that was finalized and associated with this override, set only if different than the `overriddenFinalIndex` */
-	overriddenId?: FinalCompressedId
+	overriddenId?: FinalCompressedId,
 ][];
 
 /**
@@ -60,7 +60,7 @@ export type SerializedCluster = readonly [
 	/**
 	 * Overrides in this cluster. Omitted if no overrides exist in the cluster.
 	 */
-	overrides?: SerializedClusterOverrides
+	overrides?: SerializedClusterOverrides,
 ];
 
 export type SerializedLocalOverrides = readonly (readonly [LocalCompressedId, string])[];
@@ -97,8 +97,8 @@ export interface SerializedSessionIdNormalizer {
 		finalRanges?: readonly (readonly [
 			alignedLocal: LocalCompressedId,
 			firstFinal: FinalCompressedId,
-			lastFinal: FinalCompressedId
-		])[]
+			lastFinal: FinalCompressedId,
+		])[],
 	])[];
 }
 
@@ -150,8 +150,10 @@ export interface SerializedIdCompressorWithOngoingSession extends SerializedIdCo
  * A range is composed of local IDs that were generated. Some of these may have overrides.
  *
  * @example
+ *
  * Suppose an IdCompressor generated a sequence of local IDs as follows:
- * ```
+ *
+ * ```typescripot
  * compressor.generateLocalId()
  * compressor.generateLocalId('0093cf29-9454-4034-8940-33b1077b41c3')
  * compressor.generateLocalId()
@@ -160,8 +162,10 @@ export interface SerializedIdCompressorWithOngoingSession extends SerializedIdCo
  * compressor.generateLocalId()
  * compressor.takeNextCreationRange()
  * ```
+ *
  * This would result in the following range:
- * ```
+ *
+ * ```typescript
  * {
  *     first: localId1,
  *     last: localId6,

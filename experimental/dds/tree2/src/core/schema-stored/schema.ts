@@ -51,42 +51,20 @@ export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
 export const FieldKindIdentifierSchema = brandedStringType<FieldKindIdentifier>();
 
 /**
- * Example for how we might want to handle values.
- *
- * This might be significantly different if we want to focus more on binary formats
- * (need to work out how Fluid GC would work with that).
- * For now, this is a simple easy to support setup.
- *
- * Note that use of non-Nothing values might be restricted in the actual user facing schema languages:
- * we could instead choose to get by with the only types supporting values being effectively builtin,
- * though this limitation could prevent users for updating/extending
- * the primitive schema to allow the annotations they might want.
- *
- * An interesting alternative to this simple value Enum would be to use something more expressive here, like JsonSchema:
- * since this is modeling immutable data, we really just need a way to figure out which if these value schema allow
- * super sets of each-other.
- *
- * TODO: come up with a final design for how to handle primitives / values.
- * This design is just a placeholder.
+ * Schema for what {@link TreeValue} is allowed on a Leaf node.
  * @alpha
  */
 export enum ValueSchema {
-	Nothing,
 	Number,
 	String,
 	Boolean,
-	/**
-	 * Any Fluid serializable data.
-	 *
-	 * This includes Nothing / undefined.
-	 *
-	 * If it is desired to not include Nothing here, `anyNode` and `allowsValueSuperset` would need adjusting.
-	 */
-	Serializable,
+	FluidHandle,
 }
 
 /**
  * {@link ValueSchema} for privative types.
+ * @privateRemarks
+ * TODO: remove when old editable tree API is removed.
  * @alpha
  */
 export type PrimitiveValueSchema = ValueSchema.Number | ValueSchema.String | ValueSchema.Boolean;
@@ -180,17 +158,16 @@ export interface TreeStoredSchema {
 
 	/**
 	 * Constraint for fields not mentioned in `structFields`.
+	 * If undefined, all such fields must be empty.
 	 *
 	 * Allows using using the fields as a map, with the keys being
 	 * FieldKeys and the values being constrained by this FieldStoredSchema.
-	 *
-	 * To forbid this map like usage, use {@link emptyField} here.
 	 *
 	 * Usually `FieldKind.Value` should NOT be used here
 	 * since no nodes can ever be in schema are in schema if you use `FieldKind.Value` here
 	 * (that would require infinite children).
 	 */
-	readonly mapFields: FieldStoredSchema;
+	readonly mapFields?: FieldStoredSchema;
 
 	/**
 	 * There are several approaches for how to store actual data in the tree
@@ -204,20 +181,8 @@ export interface TreeStoredSchema {
 	 * this is not intended to be a suggestion of what approach to take, or what to expose in the schema language.
 	 * This is simply one approach that can work for modeling them in the internal schema representation.
 	 */
-	readonly value: ValueSchema;
+	readonly leafValue?: ValueSchema;
 }
-
-/**
- * @alpha
- */
-export interface Named<TName> {
-	readonly name: TName;
-}
-
-/**
- * @alpha
- */
-export type NamedTreeSchema = Named<TreeSchemaIdentifier> & TreeStoredSchema;
 
 /**
  * View of schema data that can be stored in a document.

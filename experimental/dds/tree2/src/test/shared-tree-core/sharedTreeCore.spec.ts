@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { IEvent } from "@fluidframework/common-definitions";
-import { IsoBuffer, TypedEventEmitter } from "@fluidframework/common-utils";
+import { IEvent } from "@fluidframework/core-interfaces";
+import { IsoBuffer, TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IChannelAttributes, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/protocol-definitions";
 import {
@@ -27,10 +27,20 @@ import {
 	SummaryElementParser,
 	SummaryElementStringifier,
 } from "../../shared-tree-core";
-import { ChangeFamily, ChangeFamilyEditor, rootFieldKey } from "../../core";
-import { DefaultChangeset, DefaultEditBuilder, singleTextCursor } from "../../feature-libraries";
+import { AllowedUpdateType, ChangeFamily, ChangeFamilyEditor, rootFieldKey } from "../../core";
+import {
+	DefaultChangeset,
+	DefaultEditBuilder,
+	FieldKinds,
+	SchemaBuilder,
+	singleTextCursor,
+	typeNameSymbol,
+} from "../../feature-libraries";
 import { brand } from "../../util";
 import { ISubscribable } from "../../events";
+import { SharedTreeTestFactory } from "../utils";
+import { InitializeAndSchematizeConfiguration } from "../../shared-tree";
+import { leaf } from "../../domains";
 import { TestSharedTreeCore } from "./utils";
 
 describe("SharedTreeCore", () => {
@@ -230,8 +240,9 @@ describe("SharedTreeCore", () => {
 		const runtime = new MockFluidDataStoreRuntime();
 		const tree = new TestSharedTreeCore(runtime);
 		const factory = new MockContainerRuntimeFactory();
+		factory.createContainerRuntime(runtime);
 		tree.connect({
-			deltaConnection: factory.createContainerRuntime(runtime).createDeltaConnection(),
+			deltaConnection: runtime.createDeltaConnection(),
 			objectStorage: new MockStorage(),
 		});
 
@@ -240,60 +251,119 @@ describe("SharedTreeCore", () => {
 		assert.equal(getTrunkLength(tree), 1);
 		changeTree(tree);
 		changeTree(tree);
-		// No commits are evicted yet because there are none behind the minimum sequence number
+		// One commit is at the minimum sequence number and is evicted
 		factory.processAllMessages(); // Minimum sequence number === 1
-		assert.equal(getTrunkLength(tree), 3);
+		assert.equal(getTrunkLength(tree), 2);
 		changeTree(tree);
 		changeTree(tree);
 		changeTree(tree);
-		// Two commits are behind the minimum sequence number and are evicted
+		// Three commits are behind or at the minimum sequence number and are evicted
 		factory.processAllMessages(); // Minimum sequence number === 3
-		assert.equal(getTrunkLength(tree), 6 - 2);
+		assert.equal(getTrunkLength(tree), 6 - 3);
 	});
 
 	it("evicts trunk commits only when no branches have them in their ancestry", () => {
 		const runtime = new MockFluidDataStoreRuntime();
 		const tree = new TestSharedTreeCore(runtime);
 		const factory = new MockContainerRuntimeFactory();
+		factory.createContainerRuntime(runtime);
 		tree.connect({
-			deltaConnection: factory.createContainerRuntime(runtime).createDeltaConnection(),
+			deltaConnection: runtime.createDeltaConnection(),
 			objectStorage: new MockStorage(),
 		});
 
-		// The following scenario tests that branches are tracked across rebases and untracked after disposal
+		// The following scenario tests that branches are tracked across rebases and untracked after disposal.
+		// Calling `factory.processAllMessages()` will result in the minimum sequence number being set to the the
+		// sequence number just before the most recently received changed. Thus, eviction from this point of view
+		// is "off by one"; a commit is only evicted once another commit is sequenced after it.
 		//
-		//                                 trunk: [seqNum1, (branchBaseA, branchBaseB, ...), seqNum2, ...]
+		//                                            trunk: [seqNum1, (branchBaseA, branchBaseB, ...), seqNum2, ...]
 		changeTree(tree);
-		factory.processAllMessages(); //          [1]
+		factory.processAllMessages(); //                     [1]
 		assert.equal(getTrunkLength(tree), 1);
 		const branch1 = tree.getLocalBranch().fork();
 		const branch2 = tree.getLocalBranch().fork();
 		const branch3 = branch2.fork();
 		changeTree(tree);
-		factory.processAllMessages(); //          [1 (b1, b2, b3), 2]
+		factory.processAllMessages(); //                     [x (b1, b2, b3), 2]
 		changeTree(tree);
-		factory.processAllMessages(); //          [1 (b1, b2, b3), 2, 3]
-		assert.equal(getTrunkLength(tree), 3);
-		branch1.dispose(); //                     [1 (b2, b3), 2, 3]
-		assert.equal(getTrunkLength(tree), 3);
-		branch2.dispose(); //                     [1 (b3), 2, 3]
-		assert.equal(getTrunkLength(tree), 3);
-		branch3.dispose(); //                     [x, 2, 3]
+		factory.processAllMessages(); //                     [x (b1, b2, b3), 2, 3]
 		assert.equal(getTrunkLength(tree), 2);
-		const branch4 = tree.getLocalBranch().fork(); //     [x, 2, 3 (b4)]
-		changeTree(tree);
-		changeTree(tree);
-		factory.processAllMessages(); //          [x, x, 3 (b4), 4, 5]
-		assert.equal(getTrunkLength(tree), 3);
-		const branch5 = tree.getLocalBranch().fork(); //     [x, x, 3 (b4), 4, 5 (b5)]
-		branch4.rebaseOnto(branch5); //           [x, x, 3, 4, 5 (b4, b5)]
-		branch4.dispose(); //                     [x, x, 3, 4, 5 (b5)]
-		assert.equal(getTrunkLength(tree), 3);
-		changeTree(tree);
-		factory.processAllMessages(); //          [x, x, x, 4, 5 (b5)]
+		branch1.dispose(); //                                [x (b2, b3), 2, 3]
 		assert.equal(getTrunkLength(tree), 2);
-		branch5.dispose(); //                     [x, x, x, 4, 5]
+		branch2.dispose(); //                                [x (b3), 2, 3]
 		assert.equal(getTrunkLength(tree), 2);
+		branch3.dispose(); //                                [x, x, 3]
+		assert.equal(getTrunkLength(tree), 1);
+		const branch4 = tree.getLocalBranch().fork(); //     [x, x, 3 (b4)]
+		changeTree(tree);
+		changeTree(tree);
+		factory.processAllMessages(); //                     [x, x, x (b4), 4, 5]
+		assert.equal(getTrunkLength(tree), 2);
+		const branch5 = tree.getLocalBranch().fork(); //     [x, x, x (b4), 4, 5 (b5)]
+		branch4.rebaseOnto(branch5); //                      [x, x, x, 4, 5 (b4, b5)]
+		branch4.dispose(); //                                [x, x, x, 4, 5 (b5)]
+		assert.equal(getTrunkLength(tree), 2);
+		changeTree(tree);
+		factory.processAllMessages(); //                     [x, x, x, x, 5 (b5), 6]
+		assert.equal(getTrunkLength(tree), 1);
+		changeTree(tree);
+		branch5.dispose(); //                                [x, x, x, x, x, x, 7]
+		assert.equal(getTrunkLength(tree), 1);
+	});
+
+	// This test triggers 0x4a6 at the time of writing, as rebasing tree2's final edit over tree1's final edit
+	// didn't properly track state related to the detached node the edit affects.
+	// When unskipping this test, it may be desirable to add assertions verifying the final state of the two trees.
+	it.skip("Regression test for 0x4a6", async () => {
+		const containerRuntimeFactory = new MockContainerRuntimeFactory();
+		const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
+		const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+		const factory = new SharedTreeTestFactory(() => {});
+
+		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+		const tree1 = factory.create(dataStoreRuntime1, "A");
+		tree1.connect({
+			deltaConnection: dataStoreRuntime1.createDeltaConnection(),
+			objectStorage: new MockStorage(),
+		});
+
+		const b = new SchemaBuilder({ scope: "0x4a6 repro", libraries: [leaf.library] });
+		const node = b.structRecursive("test node", {
+			child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => node, leaf.number),
+		});
+		const schema = b.toDocumentSchema(SchemaBuilder.fieldOptional(node));
+
+		const tree2 = await factory.load(
+			dataStoreRuntime2,
+			"B",
+			{
+				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
+				objectStorage: MockStorage.createFromSummary((await tree1.summarize()).summary),
+			},
+			factory.attributes,
+		);
+
+		const config: InitializeAndSchematizeConfiguration = {
+			schema,
+			initialTree: undefined,
+			allowedSchemaModifications: AllowedUpdateType.None,
+		};
+
+		const view1 = tree1.schematize(config);
+		const view2 = tree2.schematize(config);
+		const editable1 = view1.editableTree2(schema);
+		const editable2 = view2.editableTree2(schema);
+
+		editable2.content = { [typeNameSymbol]: node.name, child: undefined };
+		editable1.content = { [typeNameSymbol]: node.name, child: undefined };
+		const rootNode = editable2.content;
+		assert(rootNode?.is(node), "Expected set operation to set root node");
+		rootNode.boxedChild.content = 42;
+		editable1.content = { [typeNameSymbol]: node.name, child: undefined };
+		rootNode.boxedChild.content = 43;
+		containerRuntimeFactory.processAllMessages();
 	});
 
 	function isSummaryTree(summaryObject: SummaryObject): summaryObject is ISummaryTree {

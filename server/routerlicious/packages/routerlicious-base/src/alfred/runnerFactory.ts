@@ -4,6 +4,7 @@
  */
 
 import * as os from "os";
+import cluster from "cluster";
 import { KafkaOrdererFactory } from "@fluidframework/server-kafka-orderer";
 import {
 	LocalNodeFactory,
@@ -117,12 +118,24 @@ export class AlfredResources implements core.IResources {
 		const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
 		const socketIoConfig = config.get("alfred:socketIo");
-		this.webServerFactory = new services.SocketIoWebServerFactory(
-			this.redisConfig,
-			socketIoAdapterConfig,
-			httpServerConfig,
-			socketIoConfig,
+		const nodeClusterConfig: Partial<services.INodeClusterConfig> | undefined = config.get(
+			"alfred:nodeClusterConfig",
 		);
+		const useNodeCluster = config.get("alfred:useNodeCluster");
+		this.webServerFactory = useNodeCluster
+			? new services.SocketIoNodeClusterWebServerFactory(
+					redisConfig,
+					socketIoAdapterConfig,
+					httpServerConfig,
+					socketIoConfig,
+					nodeClusterConfig,
+			  )
+			: new services.SocketIoWebServerFactory(
+					this.redisConfig,
+					socketIoAdapterConfig,
+					httpServerConfig,
+					socketIoConfig,
+			  );
 	}
 
 	public async dispose(): Promise<void> {
@@ -256,15 +269,6 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const checkpointsTTLSeconds =
 			config.get("checkpoints:checkpointsTTLInSeconds") ?? defaultTTLInSeconds;
 		await checkpointsCollection.createTTLIndex({ _ts: 1 }, checkpointsTTLSeconds);
-
-		// Foreman agent uploader does not run locally.
-		// TODO: Make agent uploader run locally.
-		const foremanConfig = config.get("foreman");
-		const taskMessageSender = services.createMessageSender(
-			config.get("rabbitmq"),
-			foremanConfig,
-		);
-		await taskMessageSender.initialize();
 
 		const nodeCollectionName = config.get("mongo:collectionNames:nodes");
 		const nodeManager = new NodeManager(operationsDbMongoManager, nodeCollectionName);
@@ -470,7 +474,6 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		// Disable by default because microsoft/FluidFramework/pull/#9223 set chunking to disabled by default.
 		// Therefore, default clients will ignore server's 16kb message size limit.
 		const verifyMaxMessageSize = config.get("alfred:verifyMaxMessageSize") ?? false;
-		const address = `${await utils.getHostIp()}:4000`;
 
 		// This cache will be used to store connection counts for logging connectionCount metrics.
 		let redisCache: core.ICache;
@@ -502,6 +505,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			redisCache = new services.RedisCache(redisClientForLogging);
 		}
 
+		const address = `${await utils.getHostIp()}:4000`;
 		const nodeFactory = new LocalNodeFactory(
 			os.hostname(),
 			address,
@@ -513,7 +517,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			deliCheckpointService,
 			scribeCheckpointService,
 			60000,
-			() => new NodeWebSocketServer(4000),
+			() => new NodeWebSocketServer(cluster.isPrimary ? 4000 : 0),
 			maxSendMessageSize,
 			winston,
 		);
@@ -540,7 +544,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		// This wanst to create stuff
 		const port = utils.normalizePort(process.env.PORT || "3000");
 
-		const deltaService = new DeltaService(operationsDbMongoManager, tenantManager);
+		const deltaService = new DeltaService(opsCollection, tenantManager);
 		const documentDeleteService =
 			customizations?.documentDeleteService ?? new DocumentDeleteService();
 

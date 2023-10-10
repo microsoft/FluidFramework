@@ -46,7 +46,7 @@ describe("Container Runtime", () => {
 		const startDeltaManager = async (): Promise<void> =>
 			new Promise((resolve) => {
 				deltaManager.on("connect", resolve);
-				deltaManager.connect({ reason: "test" });
+				deltaManager.connect({ reason: { text: "test" } });
 			});
 
 		// Function to yield control in the Javascript event loop.
@@ -325,7 +325,7 @@ describe("Container Runtime", () => {
 			});
 			await new Promise((resolve) => {
 				deltaManager2.on("connect", resolve);
-				deltaManager2.connect({ reason: "test" });
+				deltaManager2.connect({ reason: { text: "test" } });
 			});
 
 			assert.strictEqual(
@@ -340,7 +340,6 @@ describe("Container Runtime", () => {
 				minimumSequenceNumber: 0,
 				sequenceNumber: seq++,
 				type: MessageType.ClientLeave,
-				term: 1,
 				clientSequenceNumber: 1,
 				referenceSequenceNumber: 1,
 				contents: "",

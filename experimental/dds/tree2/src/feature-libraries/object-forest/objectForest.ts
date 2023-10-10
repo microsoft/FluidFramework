@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
-	recordDependency,
 	SimpleDependee,
 	SimpleObservingDependent,
 	ITreeSubscriptionCursor,
@@ -16,23 +15,30 @@ import {
 	FieldKey,
 	DetachedField,
 	AnchorSet,
-	detachedFieldAsKey,
 	Delta,
 	UpPath,
 	Anchor,
-	visitDelta,
 	ITreeCursor,
 	CursorLocationType,
 	TreeSchemaIdentifier,
-	TreeValue,
 	MapTree,
 	getMapTreeField,
 	FieldAnchor,
 	FieldUpPath,
 	ForestEvents,
 	PathRootPrefix,
+	DeltaVisitor,
+	Range,
+	PlaceIndex,
+	Value,
 } from "../../core";
-import { brand, fail, assertValidIndex } from "../../util";
+import {
+	brand,
+	fail,
+	assertValidIndex,
+	assertValidRange,
+	assertNonNegativeSafeInteger,
+} from "../../util";
 import { CursorWithNode, SynchronousCursor } from "../treeCursorUtils";
 import { mapTreeFromCursor, singleMapTreeCursor } from "../mapTreeCursor";
 import { createEmitter } from "../../events";
@@ -53,6 +59,8 @@ function makeRoot(): MapTree {
 class ObjectForest extends SimpleDependee implements IEditableForest {
 	private readonly dependent = new SimpleObservingDependent(() => this.invalidateDependents());
 
+	private activeVisitor?: DeltaVisitor;
+
 	public readonly roots: MapTree = makeRoot();
 
 	// All cursors that are in the "Current" state. Must be empty when editing.
@@ -60,13 +68,12 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 
 	private readonly events = createEmitter<ForestEvents>();
 
-	public constructor(
-		public readonly schema: StoredSchemaRepository,
-		public readonly anchors: AnchorSet = new AnchorSet(),
-	) {
+	public constructor(public readonly anchors: AnchorSet = new AnchorSet()) {
 		super("object-forest.ObjectForest");
-		// Invalidate forest if schema change.
-		recordDependency(this.dependent, this.schema);
+	}
+
+	public get isEmpty(): boolean {
+		return this.roots.fields.size === 0;
 	}
 
 	public on<K extends keyof ForestEvents>(eventName: K, listener: ForestEvents[K]): () => void {
@@ -74,7 +81,7 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 	}
 
 	public clone(schema: StoredSchemaRepository, anchors: AnchorSet): ObjectForest {
-		const forest = new ObjectForest(schema, anchors);
+		const forest = new ObjectForest(anchors);
 		// Deep copy the trees.
 		for (const [key, value] of this.roots.fields) {
 			// TODO: this references the existing TreeValues instead of copying them:
@@ -91,9 +98,13 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 		this.anchors.forget(anchor);
 	}
 
-	public applyDelta(delta: Delta.Root): void {
-		this.events.emit("beforeDelta", delta);
-		this.invalidateDependents();
+	public acquireVisitor(): DeltaVisitor {
+		assert(
+			this.activeVisitor === undefined,
+			0x76c /* Must release existing visitor before acquiring another */,
+		);
+		this.events.emit("beforeChange");
+
 		assert(
 			this.currentCursors.size === 0,
 			0x374 /* No cursors can be current when modifying forest */,
@@ -105,70 +116,121 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 		// This pattern could be generalized/formalized with a concept of an exclusive cursor,
 		// which can edit, but is the only cursor allowed at the time.
 
-		const moves: Map<Delta.MoveId, DetachedField> = new Map();
 		const cursor: Cursor = this.allocateCursor();
 		cursor.setToAboveDetachedSequences();
-		const moveIn = (index: number, toAttach: DetachedField): number => {
-			const detachedKey = detachedFieldAsKey(toAttach);
-			const children = getMapTreeField(this.roots, detachedKey, false);
-			this.roots.fields.delete(detachedKey);
-			if (children.length === 0) {
-				return 0; // Prevent creating 0 sized fields when inserting empty into empty.
-			}
-
-			const [parent, key] = cursor.getParent();
-			const destinationField = getMapTreeField(parent, key, true);
-			assertValidIndex(index, destinationField, true);
-			// TODO: this will fail for very large moves due to argument limits.
-			destinationField.splice(index, 0, ...children);
-
-			return children.length;
-		};
 		const visitor = {
-			onDelete: (index: number, count: number): void => {
-				visitor.onMoveOut(index, count);
-			},
-			onInsert: (index: number, content: Delta.ProtoNode[]): void => {
-				const range = this.add(content);
-				moveIn(index, range);
-			},
-			onMoveOut: (index: number, count: number, id?: Delta.MoveId): void => {
-				const [parent, key] = cursor.getParent();
-				const sourceField = getMapTreeField(parent, key, false);
-				const startIndex = index;
-				const endIndex = index + count;
-				assertValidIndex(startIndex, sourceField, true);
-				assertValidIndex(endIndex, sourceField, true);
+			forest: this,
+			cursor,
+			free() {
+				this.cursor.free();
 				assert(
-					startIndex <= endIndex,
-					0x371 /* detached range's end must be after its start */,
+					this.forest.activeVisitor !== undefined,
+					0x76d /* Multiple free calls for same visitor */,
 				);
-				const newField = sourceField.splice(startIndex, endIndex - startIndex);
-				const field = this.addFieldAsDetached(newField);
-				if (id !== undefined) {
-					moves.set(id, field);
-				} else {
-					this.delete(field);
+				this.forest.activeVisitor = undefined;
+				this.forest.events.emit("afterChange");
+			},
+			destroy(detachedField: FieldKey, count: number): void {
+				this.forest.invalidateDependents();
+				this.forest.delete(detachedField);
+			},
+			create(content: Delta.ProtoNodes, destination: FieldKey): void {
+				this.forest.invalidateDependents();
+				this.forest.add(content, destination);
+			},
+			attach(source: FieldKey, count: number, destination: PlaceIndex): void {
+				this.forest.invalidateDependents();
+				this.attachEdit(source, count, destination);
+			},
+			detach(source: Range, destination: FieldKey): void {
+				this.forest.invalidateDependents();
+				this.detachEdit(source, destination);
+			},
+			/**
+			 * Attaches the nodes from the given source field into the current field.
+			 * Does not invalidate dependents.
+			 * @param source - The the range to be attached.
+			 * @param count - The number of nodes being attached.
+			 * Expected to match the number of nodes in the source detached field.
+			 * @param destination - The index in the current field at which to attach the content.
+			 */
+			attachEdit(source: FieldKey, count: number, destination: PlaceIndex): void {
+				assertNonNegativeSafeInteger(count);
+				if (count === 0) {
+					return;
 				}
-				if (sourceField.length === 0) {
+				const [parent, key] = cursor.getParent();
+				assert(
+					parent !== this.forest.roots || key !== source,
+					"Attach source field must be different from current field",
+				);
+				const currentField = getMapTreeField(parent, key, true);
+				assertValidIndex(destination, currentField, true);
+				const sourceField = getMapTreeField(this.forest.roots, source, false);
+				assert(sourceField !== undefined, "Attach source field must exist");
+				assert(
+					sourceField.length === count,
+					"Attach must consume all nodes in source field",
+				);
+				// TODO: this will fail for very large insertions due to argument limits.
+				currentField.splice(destination, 0, ...sourceField);
+				this.forest.delete(source);
+			},
+			/**
+			 * Detaches the range from the current field and transfers it to the given destination if any.
+			 * Does not invalidate dependents.
+			 * @param source - The bounds of the range to be detached from the current field.
+			 * @param destination - If specified, the destination to transfer the detached range to.
+			 * If not specified, the detached range is destroyed.
+			 */
+			detachEdit(source: Range, destination: FieldKey | undefined): void {
+				const [parent, key] = cursor.getParent();
+				assert(
+					destination === undefined ||
+						parent !== this.forest.roots ||
+						key !== destination,
+					"Detach destination field must be different from current field",
+				);
+				const currentField = getMapTreeField(parent, key, true);
+				assertValidRange(source, currentField);
+				const content = currentField.splice(source.start, source.end - source.start);
+				if (destination !== undefined) {
+					this.forest.addFieldAsDetached(content, destination);
+				}
+				// This check is performed after the transfer to ensure that the field is not removed in scenarios
+				// where the source and destination are the same.
+				if (currentField.length === 0) {
 					parent.fields.delete(key);
 				}
 			},
-			onMoveIn: (index: number, count: number, id: Delta.MoveId): void => {
-				const toAttach = moves.get(id) ?? fail("move in without move out");
-				moves.delete(id);
-				const countMoved = moveIn(index, toAttach);
-				assert(countMoved === count, 0x369 /* counts must match */);
+			replace(
+				newContentSource: FieldKey,
+				range: Range,
+				oldContentDestination: FieldKey,
+			): void {
+				assert(
+					newContentSource !== oldContentDestination,
+					"Replace detached source field and detached destination field must be different",
+				);
+				this.forest.invalidateDependents();
+				this.detachEdit(range, oldContentDestination);
+				this.attachEdit(newContentSource, range.end - range.start, range.start);
 			},
-			enterNode: (index: number): void => cursor.enterNode(index),
-			exitNode: (index: number): void => cursor.exitNode(),
-			enterField: (key: FieldKey): void => cursor.enterField(key),
-			exitField: (key: FieldKey): void => cursor.exitField(),
+			enterNode(index: number): void {
+				this.cursor.enterNode(index);
+			},
+			exitNode(index: number): void {
+				this.cursor.exitNode();
+			},
+			enterField(key: FieldKey): void {
+				this.cursor.enterField(key);
+			},
+			exitField(key: FieldKey): void {
+				this.cursor.exitField();
+			},
 		};
-		visitDelta(delta, visitor);
-		cursor.free();
-
-		this.events.emit("afterDelta", delta);
+		this.activeVisitor = visitor;
+		return visitor;
 	}
 
 	private nextRange = 0;
@@ -178,23 +240,20 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 		return range;
 	}
 
-	private add(nodes: Iterable<ITreeCursor>): DetachedField {
+	private add(nodes: Iterable<ITreeCursor>, key: FieldKey): void {
 		const field: ObjectField = Array.from(nodes, mapTreeFromCursor);
-		return this.addFieldAsDetached(field);
+		this.addFieldAsDetached(field, key);
 	}
 
-	private addFieldAsDetached(field: ObjectField): DetachedField {
-		const detached = this.newDetachedField();
-		const key = detachedFieldAsKey(detached);
+	private addFieldAsDetached(field: ObjectField, key: FieldKey): void {
 		assert(!this.roots.fields.has(key), 0x370 /* new range must not already exist */);
 		if (field.length > 0) {
 			this.roots.fields.set(key, field);
 		}
-		return detached;
 	}
 
-	private delete(field: DetachedField): void {
-		this.roots.fields.delete(detachedFieldAsKey(field));
+	private delete(field: FieldKey): void {
+		this.roots.fields.delete(field);
 	}
 
 	public allocateCursor(): Cursor {
@@ -229,11 +288,6 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 		return TreeNavigationResult.Ok;
 	}
 
-	/**
-	 * Set `cursorToMove` to location described by path.
-	 * This is NOT a relative move: current position is discarded.
-	 * Path must point to existing node.
-	 */
 	public moveCursorToPath(
 		destination: UpPath | undefined,
 		cursorToMove: ITreeSubscriptionCursor,
@@ -376,7 +430,7 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 		assert(this.innerCursor !== undefined, 0x43f /* Cursor must be current to be used */);
 		return this.innerCursor.type;
 	}
-	public get value(): TreeValue {
+	public get value(): Value {
 		assert(this.innerCursor !== undefined, 0x440 /* Cursor must be current to be used */);
 		return this.innerCursor.value;
 	}
@@ -445,13 +499,12 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 	}
 }
 
-// This function is the only package level export for objectForest, and hides all the implementation types.
+// This function is the folder level export for objectForest, and hides all the implementation types.
 // When other forest implementations are created (ex: optimized ones),
 // this function should likely be moved and updated to (at least conditionally) use them.
 /**
  * @returns an implementation of {@link IEditableForest} with no data or schema.
- * @alpha
  */
-export function buildForest(schema: StoredSchemaRepository, anchors?: AnchorSet): IEditableForest {
-	return new ObjectForest(schema, anchors);
+export function buildForest(anchors?: AnchorSet): IEditableForest {
+	return new ObjectForest(anchors);
 }

@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 import {
 	FieldChangeHandler,
 	FieldChangeRebaser,
-	FieldKind,
 	Multiplicity,
 	FieldEditor,
 	NodeChangeset,
@@ -15,6 +14,7 @@ import {
 	FieldChange,
 	ModularChangeset,
 	RevisionInfo,
+	FieldKindWithEditor,
 } from "../../../feature-libraries";
 import {
 	makeAnonChange,
@@ -22,7 +22,6 @@ import {
 	tagChange,
 	TaggedChange,
 	FieldKindIdentifier,
-	AnchorSet,
 	Delta,
 	FieldKey,
 	UpPath,
@@ -68,19 +67,19 @@ const singleNodeHandler: FieldChangeHandler<NodeChangeset> = {
 	rebaser: singleNodeRebaser,
 	codecsFactory: (childCodec) => makeCodecFamily([[0, childCodec]]),
 	editor: singleNodeEditor,
-	intoDelta: (change, deltaFromChild) => [deltaFromChild(change)],
+	intoDelta: ({ change }, deltaFromChild) => [deltaFromChild(change)],
 	isEmpty: (change) => change.fieldChanges === undefined,
 };
 
-const singleNodeField = new FieldKind(
-	brand("SingleNode"),
-	Multiplicity.Value,
+const singleNodeField = new FieldKindWithEditor(
+	"SingleNode",
+	Multiplicity.Single,
 	singleNodeHandler,
 	(a, b) => false,
 	new Set(),
 );
 
-const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
+const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
 	[singleNodeField, valueField].map((field) => [field.identifier, field]),
 );
 
@@ -91,6 +90,8 @@ const tag2: RevisionTag = mintRevisionTag();
 
 const fieldA: FieldKey = brand("a");
 const fieldB: FieldKey = brand("b");
+
+const detachId = { major: undefined, minor: 424242 };
 
 const valueChange1a: ValueChangeset = { old: 0, new: 1 };
 const valueChange1b: ValueChangeset = { old: 0, new: 2 };
@@ -587,23 +588,21 @@ describe("ModularChangeFamily", () => {
 		it("fieldChanges", () => {
 			const valueDelta1: Delta.MarkList = [
 				{
-					type: Delta.MarkType.Delete,
-					count: 1,
-				},
-				{
 					type: Delta.MarkType.Insert,
 					content: [singleJsonCursor(1)],
+					oldContent: {
+						detachId,
+					},
 				},
 			];
 
 			const valueDelta2: Delta.MarkList = [
 				{
-					type: Delta.MarkType.Delete,
-					count: 1,
-				},
-				{
 					type: Delta.MarkType.Insert,
 					content: [singleJsonCursor(2)],
+					oldContent: {
+						detachId,
+					},
 				},
 			];
 
@@ -619,7 +618,7 @@ describe("ModularChangeFamily", () => {
 				[fieldB, valueDelta2],
 			]);
 
-			assertDeltaEqual(family.intoDelta(rootChange1a), expectedDelta);
+			assertDeltaEqual(family.intoDelta(makeAnonChange(rootChange1a)), expectedDelta);
 		});
 	});
 
@@ -638,7 +637,7 @@ describe("ModularChangeFamily", () => {
 
 	it("build child change", () => {
 		const [changeReceiver, getChanges] = testChangeReceiver(family);
-		const editor = family.buildEditor(changeReceiver, new AnchorSet());
+		const editor = family.buildEditor(changeReceiver);
 		const path: UpPath = {
 			parent: undefined,
 			parentField: fieldA,
@@ -732,9 +731,9 @@ describe("ModularChangeFamily", () => {
 			isEmpty: (change: RevisionTag[]) => change.length === 0,
 			codecsFactory: () => makeCodecFamily([[0, throwCodec]]),
 		} as unknown as FieldChangeHandler<RevisionTag[]>;
-		const field = new FieldKind(
-			brand("ChecksRevIndexing"),
-			Multiplicity.Value,
+		const field = new FieldKindWithEditor(
+			"ChecksRevIndexing",
+			Multiplicity.Single,
 			handler,
 			(a, b) => false,
 			new Set(),

@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	FieldKey,
 	FieldStoredSchema,
 	ITreeCursorSynchronous,
 	mapCursorFields,
 	TreeSchemaIdentifier,
-	ValueSchema,
 	SimpleObservingDependent,
 	recordDependency,
 	Value,
@@ -18,7 +17,6 @@ import {
 	StoredSchemaRepository,
 	CursorLocationType,
 	SchemaData,
-	forbiddenFieldKindIdentifier,
 } from "../../core";
 import { FullSchemaPolicy, Multiplicity } from "../modular-schema";
 import { fail } from "../../util";
@@ -222,7 +220,7 @@ export function tryShapeFromSchema(
 		return cached;
 	}
 	const treeSchema = schema.treeSchema.get(type) ?? fail("missing schema");
-	if (treeSchema.mapFields.kind.identifier !== forbiddenFieldKindIdentifier) {
+	if (treeSchema.mapFields !== undefined) {
 		return polymorphic;
 	}
 	const fieldsArray: FieldShape[] = [];
@@ -234,7 +232,7 @@ export function tryShapeFromSchema(
 		fieldsArray.push(fieldShape);
 	}
 
-	const shape = new TreeShape(type, treeSchema.value !== ValueSchema.Nothing, fieldsArray);
+	const shape = new TreeShape(type, treeSchema.leafValue !== undefined, fieldsArray);
 	shapes.set(type, shape);
 	return shape;
 }
@@ -252,7 +250,7 @@ export function tryShapeFromFieldSchema(
 	shapes: Map<TreeSchemaIdentifier, ShapeInfo>,
 ): FieldShape | undefined {
 	const kind = policy.fieldKinds.get(type.kind.identifier) ?? fail("missing FieldKind");
-	if (kind.multiplicity !== Multiplicity.Value) {
+	if (kind.multiplicity !== Multiplicity.Single) {
 		return undefined;
 	}
 	if (type.types?.size !== 1) {
@@ -468,7 +466,7 @@ export function uniformChunkFromCursor(
 	// TODO:
 	// This could have a fast path for consuming already uniformly chunked data with matching shape.
 
-	const values: TreeValue = [];
+	const values: TreeValue[] = [];
 	let topLevelLength = 1;
 	while (topLevelLength <= maxTopLevelLength) {
 		insertValues(cursor, shape, values);

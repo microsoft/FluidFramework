@@ -697,35 +697,34 @@ class PropertyFactory {
 
 		if (in_compareRemote) {
 			var that = this;
-			this._remoteScopedAndVersionedTemplates.iterate(function (
-				scope,
-				remoteVersionedTemplates,
-			) {
-				if (remoteVersionedTemplates.has(typeidWithoutVersion)) {
-					var previousRemoteVersion = remoteVersionedTemplates
-						.item(typeidWithoutVersion)
-						.getNearestPreviousItem(version);
-
-					if (previousRemoteVersion) {
-						validationResults = that._templateValidator.validate(
-							in_template.serializeCanonical(),
-							previousRemoteVersion.getPropertyTemplate().serializeCanonical(),
-						);
-						warnings.push.apply(warnings, validationResults.warnings);
-					} else {
-						var nextRemoteVersion = remoteVersionedTemplates
+			this._remoteScopedAndVersionedTemplates.iterate(
+				function (scope, remoteVersionedTemplates) {
+					if (remoteVersionedTemplates.has(typeidWithoutVersion)) {
+						var previousRemoteVersion = remoteVersionedTemplates
 							.item(typeidWithoutVersion)
-							.getNearestNextItem(version);
-						if (nextRemoteVersion) {
+							.getNearestPreviousItem(version);
+
+						if (previousRemoteVersion) {
 							validationResults = that._templateValidator.validate(
-								nextRemoteVersion.getPropertyTemplate().serializeCanonical(),
 								in_template.serializeCanonical(),
+								previousRemoteVersion.getPropertyTemplate().serializeCanonical(),
 							);
 							warnings.push.apply(warnings, validationResults.warnings);
+						} else {
+							var nextRemoteVersion = remoteVersionedTemplates
+								.item(typeidWithoutVersion)
+								.getNearestNextItem(version);
+							if (nextRemoteVersion) {
+								validationResults = that._templateValidator.validate(
+									nextRemoteVersion.getPropertyTemplate().serializeCanonical(),
+									in_template.serializeCanonical(),
+								);
+								warnings.push.apply(warnings, validationResults.warnings);
+							}
 						}
 					}
-				}
-			});
+				},
+			);
 		}
 
 		if (!_.isEmpty(warnings)) {
@@ -1349,8 +1348,8 @@ class PropertyFactory {
 				currentPropertyVarName = `property${currentPropertyNumber}`;
 				creationFunctionSource += `const ${currentPropertyVarName} =
                     new parameters[${currentParameterIndex}](parameters[${
-					currentParameterIndex + 1
-				}]);\n`;
+						currentParameterIndex + 1
+					}]);\n`;
 				currentParameterIndex += 2;
 
 				// Insert / append the property to the parent
@@ -1553,7 +1552,6 @@ class PropertyFactory {
 		// This creates a class that will have the correct name in the debugger, but I am not
 		// sure whether we want to use a dynamic eval for this. It might be flagged by some security scans
 		// It should be safe, since we control the name of constructorClasses for properties
-		// eslint-disable-next-line no-new-func
 		var propertyConstructorFunction = class extends in_baseConstructor {};
 		propertyConstructorFunction.prototype._typeid = in_typeid;
 
@@ -1774,7 +1772,7 @@ class PropertyFactory {
 					out_propertyDef.typeid = in_propertiesEntry.typeid;
 
 					// If this is a primitive type, we create it via the registered constructor
-					var result = new templateOrConstructor(in_propertiesEntry); // eslint-disable-line new-cap
+					var result = new templateOrConstructor(in_propertiesEntry);
 					return result;
 				} else {
 					const templateWrapper = this._getWrapper(typeid, context, in_scope);
@@ -2238,6 +2236,7 @@ class PropertyFactory {
 	async initializeSchemaStore(in_options) {
 		// https://regex101.com/r/TlgGJp/2
 		var regexBaseUrl =
+			// eslint-disable-next-line unicorn/no-unsafe-regex
 			/^(https?:)?\/\/((.[-a-zA-Z0-9@:%_+~#=.]{2,256}){1,2}\.[a-z]{2,6}|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(:\d{1,5})?(\/[-a-zA-Z0-9@:%_+.~#?&/=]*)*$/;
 
 		if (
@@ -2253,7 +2252,7 @@ class PropertyFactory {
 			return Promise.reject(new Error(MSG.FSS_BASEURL_WRONG));
 		}
 
-		if (in_options.url.slice(-1) !== "/") {
+		if (!in_options.url.endsWith("/")) {
 			in_options.url = in_options.url + "/";
 		}
 

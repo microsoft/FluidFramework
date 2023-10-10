@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { TUnsafe, Type } from "@sinclair/typebox";
 import {
 	FieldChangeHandler,
 	FieldChangeRebaser,
-	FieldKind,
+	FieldKindWithEditor,
 	Multiplicity,
 	referenceFreeFieldChangeRebaser,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema";
-import { brand, fail } from "../../../util";
+import { fail } from "../../../util";
 import { makeCodecFamily, makeValueCodec } from "../../../codec";
 import { singleJsonCursor } from "../../../domains";
 import { Delta } from "../../../core";
@@ -81,20 +81,29 @@ export const valueHandler: FieldChangeHandler<ValueChangeset> = {
 		makeCodecFamily([[0, makeValueCodec<TUnsafe<ValueChangeset>>(Type.Any())]]),
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
 
-	intoDelta: (change, deltaFromChild) =>
+	intoDelta: ({ change, revision }) =>
 		change === 0
 			? []
 			: [
-					{ type: Delta.MarkType.Delete, count: 1 },
-					{ type: Delta.MarkType.Insert, content: [singleJsonCursor(change.new)] },
+					{
+						type: Delta.MarkType.Insert,
+						content: [singleJsonCursor(change.new)],
+						oldContent: {
+							detachId: {
+								major: revision,
+								// This is an arbitrary number for testing.
+								minor: 424242,
+							},
+						},
+					},
 			  ],
 
 	isEmpty: (change) => change === 0,
 };
 
-export const valueField = new FieldKind(
-	brand("Value"),
-	Multiplicity.Value,
+export const valueField = new FieldKindWithEditor(
+	"Value",
+	Multiplicity.Single,
 	valueHandler,
 	(a, b) => false,
 	new Set(),

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	IEditableForest,
 	moveToDetachedField,
@@ -16,9 +16,8 @@ import {
 } from "../../core";
 import { ISubscribable } from "../../events";
 import { DefaultEditBuilder } from "../default-field-kinds";
-import { NodeKeyManager } from "../node-key";
-import { FieldGenerator } from "../contextuallyTyped";
-import { EditableField, NewFieldContent, UnwrappedEditableField } from "./editableTreeTypes";
+import { FieldGenerator, NewFieldContent } from "../contextuallyTyped";
+import { EditableField, UnwrappedEditableField } from "./editableTreeTypes";
 import { makeField, unwrappedField } from "./editableField";
 import { ProxyTarget } from "./ProxyTarget";
 
@@ -29,10 +28,22 @@ import { ProxyTarget } from "./ProxyTarget";
  */
 export interface EditableTreeContext extends ISubscribable<ForestEvents> {
 	/**
-	 * Gets or sets the root field of the tree.
+	 * Gets the root field of the tree.
+	 */
+	get root(): EditableField;
+
+	/**
+	 * Gets the root field of the tree.
 	 *
-	 * When using its setter, the input data must be formed depending
-	 * on a multiplicity of the field, on if it's polymorphic or not and, for non-sequence multiplicities,
+	 * See {@link UnwrappedEditableField} for what is unwrapped.
+	 */
+	get unwrappedRoot(): UnwrappedEditableField;
+
+	/**
+	 * Sets the content of the root field of the tree.
+	 *
+	 * The input data must be formed depending
+	 * on the multiplicity of the field, on if it's polymorphic or not and, for non-sequence multiplicities,
 	 * on if the field's node declares its primary function by means of a primary field (see `getPrimaryField`):
 	 * - For `Sequence` multiplicities and "primary fielded" nodes, an array of a {@link ContextuallyTypedNodeData}
 	 * or an {@link EditableField} is expected.
@@ -57,22 +68,7 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
 	 * it should not overwrite concurrently inserted content while replacing the field should.
 	 * This might be changed in the future once the low-level editing API is available.
 	 */
-	get root(): EditableField;
-
-	set root(data: NewFieldContent);
-
-	/**
-	 * Gets or sets the root field of the tree.
-	 *
-	 * When using its getter, see {@link UnwrappedEditableField} for what is unwrapped.
-	 *
-	 * Currently, its setter works exactly the same way as {@link EditableTreeContext.root},
-	 * but it might be changed in the future once the low-level editing API
-	 * for `replaceField` will become available.
-	 */
-	get unwrappedRoot(): UnwrappedEditableField;
-
-	set unwrappedRoot(data: NewFieldContent);
+	setContent(data: NewFieldContent): void;
 
 	/**
 	 * Schema used within this context.
@@ -128,12 +124,12 @@ export class ProxyContext implements EditableTreeContext {
 	 */
 	public constructor(
 		public readonly forest: IEditableForest,
+		public readonly schema: SchemaData,
 		public readonly editor: DefaultEditBuilder,
-		public readonly nodeKeys: NodeKeyManager,
 		public readonly nodeKeyFieldKey?: FieldKey,
 	) {
 		this.eventUnregister = [
-			this.forest.on("beforeDelta", () => {
+			this.forest.on("beforeChange", () => {
 				this.prepareForEdit();
 			}),
 		];
@@ -169,22 +165,18 @@ export class ProxyContext implements EditableTreeContext {
 		return this.getRoot(true);
 	}
 
-	public set unwrappedRoot(value: NewFieldContent) {
+	public setContent(value: NewFieldContent): void {
 		// Note that an implementation of `set root` might change in the future.
 		// This setter might want to keep the `replaceNodes` semantics for the cases when the root is unwrapped,
 		// and use `replaceField` only if the root is a sequence field i.e.
 		// it's unwrapped to the field itself.
 		// TODO: update implementation once the low-level editing API is available.
-		this.root = value;
+		const rootField = this.getRoot(false);
+		rootField.setContent(value);
 	}
 
 	public get root(): EditableField {
 		return this.getRoot(false);
-	}
-
-	public set root(value: NewFieldContent) {
-		const rootField = this.getRoot(false);
-		rootField.content = value;
 	}
 
 	private getRoot(unwrap: false): EditableField;
@@ -200,10 +192,6 @@ export class ProxyContext implements EditableTreeContext {
 		return proxifiedField;
 	}
 
-	public get schema(): SchemaData {
-		return this.forest.schema;
-	}
-
 	public on<K extends keyof ForestEvents>(eventName: K, listener: ForestEvents[K]): () => void {
 		return this.forest.on(eventName, listener);
 	}
@@ -214,17 +202,11 @@ export class ProxyContext implements EditableTreeContext {
  *
  * @param forest - the Forest
  * @param editor - an editor that makes changes to the forest.
- * @param nodeKeyManager - an object which handles node key generation and conversion
- * @param nodeKeyFieldKey - an optional field key under which node keys are stored in this tree.
- * If present, clients may query the {@link LocalNodeKey} of a node directly via the {@link localNodeKeySymbol}.
- * @returns {@link EditableTreeContext} which is used to manage the cursors and anchors within the EditableTrees:
- * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
  */
 export function getEditableTreeContext(
 	forest: IEditableForest,
+	schema: SchemaData,
 	editor: DefaultEditBuilder,
-	nodeKeyManager: NodeKeyManager,
-	nodeKeyFieldKey?: FieldKey,
 ): EditableTreeContext {
-	return new ProxyContext(forest, editor, nodeKeyManager, nodeKeyFieldKey);
+	return new ProxyContext(forest, schema, editor);
 }

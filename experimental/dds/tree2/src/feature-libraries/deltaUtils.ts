@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/common-utils";
+import { unreachableCase } from "@fluidframework/core-utils";
 import { Delta, FieldKey, isSkipMark } from "../core";
 import { Mutable } from "../util";
 
@@ -64,39 +64,52 @@ export function mapMark<TIn, TOut>(
 	}
 	const type = mark.type;
 	switch (type) {
-		case Delta.MarkType.Insert: {
+		case Delta.MarkType.Insert:
 			return {
-				type: Delta.MarkType.Insert,
+				...(mark as unknown as Delta.Insert<TOut>),
 				...mapModifications(mark, func),
+				...mapOldContent(mark, func),
 				content: mark.content.map(func),
 			};
-		}
-		case Delta.MarkType.Modify: {
+		case Delta.MarkType.Restore: {
 			return {
-				type: Delta.MarkType.Modify,
+				...(mark as unknown as Delta.Restore<TOut>),
 				...mapModifications(mark, func),
+				...mapOldContent(mark, func),
 			};
 		}
-		case Delta.MarkType.MoveOut: {
+		case Delta.MarkType.Modify:
+		case Delta.MarkType.Remove:
+		case Delta.MarkType.MoveOut:
 			return {
-				type: Delta.MarkType.MoveOut,
-				count: mark.count,
-				moveId: mark.moveId,
+				...(mark as unknown as Exclude<Delta.Mark<TOut>, Delta.Skip>),
 				...mapModifications(mark, func),
 			};
+		case Delta.MarkType.MoveIn: {
+			return { ...mark };
 		}
-		case Delta.MarkType.Delete: {
-			return {
-				type: Delta.MarkType.Delete,
-				count: mark.count,
-				...mapModifications(mark, func),
-			};
-		}
-		case Delta.MarkType.MoveIn:
-			return mark;
 		default:
 			unreachableCase(type);
 	}
+}
+
+type OldContent<T> = Mutable<(Delta.Insert<T> | Delta.Restore<T>)["oldContent"]>;
+interface HasOldContent<T> {
+	oldContent?: OldContent<T>;
+}
+
+function mapOldContent<TIn, TOut>(
+	input: HasOldContent<TIn>,
+	func: (tree: TIn) => TOut,
+): HasOldContent<TOut> {
+	const hasOldContent: HasOldContent<TOut> = {};
+	if (input.oldContent !== undefined) {
+		hasOldContent.oldContent = { detachId: input.oldContent.detachId };
+		if (input.oldContent.fields !== undefined) {
+			hasOldContent.oldContent.fields = mapFieldMarks(input.oldContent.fields, func);
+		}
+	}
+	return hasOldContent;
 }
 
 function mapModifications<TIn, TOut>(

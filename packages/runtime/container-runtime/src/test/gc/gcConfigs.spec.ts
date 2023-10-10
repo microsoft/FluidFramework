@@ -5,7 +5,8 @@
 
 import { strict as assert } from "assert";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { ICriticalContainerError, IErrorBase } from "@fluidframework/container-definitions";
+import { ICriticalContainerError } from "@fluidframework/container-definitions";
+import { IErrorBase } from "@fluidframework/core-interfaces";
 import {
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
@@ -15,8 +16,9 @@ import {
 	ConfigTypes,
 	MonitoringContext,
 	mixinMonitoringContext,
+	createChildLogger,
 } from "@fluidframework/telemetry-utils";
-import { Timer } from "@fluidframework/common-utils";
+import { Timer } from "@fluidframework/core-utils";
 import {
 	GarbageCollector,
 	GCNodeType,
@@ -34,9 +36,9 @@ import {
 	runSweepKey,
 	defaultInactiveTimeoutMs,
 	gcTestModeKey,
-	currentGCVersion,
+	nextGCVersion,
 	stableGCVersion,
-	gcVersionUpgradeToV3Key,
+	gcVersionUpgradeToV4Key,
 	gcTombstoneGenerationOptionName,
 	gcSweepGenerationOptionName,
 	GCVersion,
@@ -59,7 +61,7 @@ describe("Garbage Collection configurations", () => {
 
 	let injectedSettings: Record<string, ConfigTypes> = {};
 	let mockLogger: MockLogger;
-	let mc: MonitoringContext;
+	let mc: MonitoringContext<MockLogger>;
 	let clock: SinonFakeTimers;
 	// The default GC data returned by `getGCData` on which GC is run. Update this to update the referenced graph.
 	let defaultGCData: IGarbageCollectionData = { gcNodes: {} };
@@ -122,7 +124,7 @@ describe("Garbage Collection configurations", () => {
 			runtime: gcRuntime,
 			gcOptions: createParams.gcOptions ?? {},
 			baseSnapshot: createParams.baseSnapshot,
-			baseLogger: mc.logger,
+			baseLogger: createChildLogger({ logger: mc.logger }),
 			existing: createParams.metadata !== undefined /* existing */,
 			metadata: createParams.metadata,
 			createContainerMetadata: {
@@ -255,8 +257,8 @@ describe("Garbage Collection configurations", () => {
 				"getMetadata returned different metadata than loaded from",
 			);
 		});
-		it("Metadata Roundtrip with GC version upgrade to v3 enabled", () => {
-			injectedSettings[gcVersionUpgradeToV3Key] = true;
+		it("Metadata Roundtrip with GC version upgrade to v4 enabled", () => {
+			injectedSettings[gcVersionUpgradeToV4Key] = true;
 			const inputMetadata: IGCMetadata = {
 				sweepEnabled: true, // ignored
 				gcFeature: 1,
@@ -269,7 +271,7 @@ describe("Garbage Collection configurations", () => {
 			const expectedOutputMetadata: IGCMetadata = {
 				...inputMetadata,
 				sweepEnabled: false, // Hardcoded, not used
-				gcFeature: currentGCVersion,
+				gcFeature: nextGCVersion,
 			};
 			assert.deepEqual(
 				outputMetadata,
@@ -277,8 +279,8 @@ describe("Garbage Collection configurations", () => {
 				"getMetadata returned different metadata than loaded from",
 			);
 		});
-		it("Metadata Roundtrip with GC version upgrade to v3 disabled", () => {
-			injectedSettings[gcVersionUpgradeToV3Key] = false;
+		it("Metadata Roundtrip with GC version upgrade to v4 disabled", () => {
+			injectedSettings[gcVersionUpgradeToV4Key] = false;
 			const inputMetadata: IGCMetadata = {
 				sweepEnabled: true, // ignored
 				gcFeature: 1,
@@ -324,14 +326,6 @@ describe("Garbage Collection configurations", () => {
 		it("gcAllowed false", () => {
 			gc = createGcWithPrivateMembers(undefined /* metadata */, { gcAllowed: false });
 			assert(!gc.configs.gcEnabled, "gcEnabled incorrect");
-		});
-		it("sweepAllowed ignored", () => {
-			gc = createGcWithPrivateMembers(undefined /* metadata */, {
-				gcAllowed: false,
-				sweepAllowed: true, // ignored. Not even checked against gcAllowed.
-				// no sweepGeneration option set
-			});
-			assert(!gc.configs.sweepEnabled, "sweepEnabled incorrect");
 		});
 		it("sweepGeneration specified, gcAllowed false", () => {
 			assert.throws(
@@ -412,7 +406,6 @@ describe("Garbage Collection configurations", () => {
 				gcFeatureMatrix: { tombstoneGeneration: 2, sweepGeneration: 2 },
 			};
 			gc = createGcWithPrivateMembers(undefined /* metadata */, {
-				sweepAllowed: true, // ignored
 				[gcTombstoneGenerationOptionName]: 2,
 				[gcSweepGenerationOptionName]: 2,
 			});
@@ -423,11 +416,11 @@ describe("Garbage Collection configurations", () => {
 				"getMetadata returned different metadata than expected",
 			);
 		});
-		it("Metadata Roundtrip with GC version upgrade to v3 enabled", () => {
-			injectedSettings[gcVersionUpgradeToV3Key] = true;
+		it("Metadata Roundtrip with GC version upgrade to v4 enabled", () => {
+			injectedSettings[gcVersionUpgradeToV4Key] = true;
 			const expectedMetadata: IGCMetadata = {
 				sweepEnabled: false, // hardcoded, not used
-				gcFeature: currentGCVersion,
+				gcFeature: nextGCVersion,
 				sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
 				sweepTimeoutMs: defaultSessionExpiryDurationMs + 6 * oneDayMs,
 				gcFeatureMatrix: undefined,
@@ -449,7 +442,6 @@ describe("Garbage Collection configurations", () => {
 				gcFeatureMatrix: { sweepGeneration: 2, tombstoneGeneration: undefined },
 			};
 			gc = createGcWithPrivateMembers(undefined /* metadata */, {
-				sweepAllowed: true, // ignored
 				[gcSweepGenerationOptionName]: 2,
 			});
 			const outputMetadata = gc.getMetadata();
@@ -705,7 +697,7 @@ describe("Garbage Collection configurations", () => {
 			});
 
 			it("shouldRunGC should be false when gcVersionInEffect is older than gcVersionInBaseSnapshot", () => {
-				const gcVersionInBaseSnapshot = currentGCVersion + 1;
+				const gcVersionInBaseSnapshot = nextGCVersion + 1;
 				gc = createGcWithPrivateMembers({ gcFeature: gcVersionInBaseSnapshot });
 				assert.equal(gc.configs.gcEnabled, true, "PRECONDITION: gcEnabled set incorrectly");
 				assert.equal(gc.configs.shouldRunGC, false, "shouldRunGC should be false");

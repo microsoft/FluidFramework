@@ -3,7 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse, IFluidRouter, FluidObject } from "@fluidframework/core-interfaces";
+import {
+	IRequest,
+	IResponse,
+	// eslint-disable-next-line import/no-deprecated
+	IFluidRouter,
+	FluidObject,
+	IEvent,
+	IEventProvider,
+} from "@fluidframework/core-interfaces";
 import {
 	IClientDetails,
 	IDocumentMessage,
@@ -13,7 +21,6 @@ import {
 	ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
-import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { IAudience } from "./audience";
 import { IDeltaManager, ReadOnlyInfo } from "./deltas";
 import { ICriticalContainerError, ContainerWarning } from "./error";
@@ -48,7 +55,7 @@ export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComp
 	 * Load the code module (package) that can interact with the document.
 	 *
 	 * @param source - Code proposal that articulates the current schema the document is written in.
-	 * @returns - Code module entry point along with the code details associated with it.
+	 * @returns Code module entry point along with the code details associated with it.
 	 */
 	load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }
@@ -79,22 +86,10 @@ export interface IFluidCodeResolver {
 	/**
 	 * Resolves a Fluid code details into a form that can be loaded.
 	 * @param details - The Fluid code details to resolve.
-	 * @returns - A IResolvedFluidCodeDetails where the resolvedPackage's Fluid file entries are absolute urls, and
+	 * @returns A IResolvedFluidCodeDetails where the resolvedPackage's Fluid file entries are absolute urls, and
 	 * an optional resolvedPackageCacheId if the loaded package should be cached.
 	 */
 	resolveCodeDetails(details: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails>;
-}
-
-/**
- * Code AllowListing Interface
- *
- * @deprecated 2.0.0-internal.3.2.0 Fluid does not prescribe a particular code validation approach. Will be removed in an upcoming release.
- */
-export interface ICodeAllowList {
-	/**
-	 * @deprecated 2.0.0-internal.3.2.0 Fluid does not prescribe a particular code validation approach. Will be removed in an upcoming release.
-	 */
-	testSource(source: IResolvedFluidCodeDetails): Promise<boolean>;
 }
 
 /**
@@ -140,11 +135,6 @@ export interface IContainerEvents extends IEvent {
 		event: "codeDetailsProposed",
 		listener: (codeDetails: IFluidCodeDetails, proposal: ISequencedProposal) => void,
 	);
-
-	/**
-	 * @deprecated No replacement API recommended.
-	 */
-	(event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void);
 
 	/**
 	 * Emitted when the {@link IContainer} becomes disconnected from the Fluid service.
@@ -302,6 +292,7 @@ export type ConnectionState =
 /**
  * The Host's view of a Container and its connection to storage
  */
+// eslint-disable-next-line import/no-deprecated
 export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRouter {
 	/**
 	 * The Delta Manager supporting the op stream for this Container
@@ -371,16 +362,6 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	close(error?: ICriticalContainerError): void;
 
 	/**
-	 * @deprecated - This is moved to the IContainerExperimental interface. To access you should cast IContainerExperimental before attempting to use
-	 *
-	 * Closes the container and returns serialized local state intended to be
-	 * given to a newly loaded container.
-	 * @experimental
-	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/closeAndGetPendingLocalState.md}
-	 */
-	closeAndGetPendingLocalState(): string;
-
-	/**
 	 * Propose new code details that define the code to be loaded for this container's runtime.
 	 *
 	 * The returned promise will be true when the proposal is accepted, and false if the proposal is rejected.
@@ -412,10 +393,38 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 
 	/**
+	 * @deprecated Requesting will not be supported in a future major release.
+	 * Instead, access the objects in a Fluid Container using entryPoint, and then navigate from there using
+	 * app-specific logic (e.g. retrieving handles from the entryPoint's DDSes, or a container's entryPoint object
+	 * could implement a request paradigm itself)
+	 *
+	 * IMPORTANT: This overload is provided for back-compat where IContainer.request(\{ url: "/" \}) is already implemented and used.
+	 * The functionality it can provide (if the Container implementation is built for it) is redundant with @see {@link IContainer.getEntryPoint}.
+	 *
+	 * Refer to Removing-IFluidRouter.md for details on migrating from the request pattern to using entryPoint.
+	 *
+	 * @param request - Only requesting \{ url: "/" \} is supported, requesting arbitrary URLs is deprecated.
+	 */
+	request(request: { url: "/"; headers?: undefined }): Promise<IResponse>;
+
+	/**
 	 * Issue a request against the container for a resource.
 	 * @param request - The request to be issued against the container
+	 *
+	 * @deprecated - Requesting an arbitrary URL with headers will not be supported in a future major release.
+	 * Instead, access the objects in a Fluid Container using entryPoint, and then navigate from there using
+	 * app-specific logic (e.g. retrieving handles from the entryPoint's DDSes, or a container's entryPoint object
+	 * could implement a request paradigm itself)
+	 *
+	 * Refer to Removing-IFluidRouter.md for details on migrating from the request pattern to using entryPoint.
 	 */
 	request(request: IRequest): Promise<IResponse>;
+
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
+	// eslint-disable-next-line import/no-deprecated
+	readonly IFluidRouter: IFluidRouter;
 
 	/**
 	 * Provides the current state of the container's connection to the ordering service.
@@ -484,21 +493,14 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	/**
 	 * Exposes the entryPoint for the container.
 	 * Use this as the primary way of getting access to the user-defined logic within the container.
-	 * If the method is undefined or the returned promise returns undefined (meaning that exposing the entryPoint
-	 * hasn't been implemented in a particular scenario) fall back to the current approach of requesting the default
-	 * object of the container through the request pattern.
-	 *
-	 * @remarks The plan is that eventually IContainer will no longer implement IFluidRouter (and thus won't have a
-	 * request() method), this method will no longer be optional, and it will become the only way to access
-	 * the entryPoint for the container.
 	 */
-	getEntryPoint?(): Promise<FluidObject | undefined>;
+	getEntryPoint(): Promise<FluidObject | undefined>;
 }
 
 /**
  * The Runtime's view of the Loader, used for loading Containers
  */
-export interface ILoader extends IFluidRouter, Partial<IProvideLoader> {
+export interface ILoader extends Partial<IProvideLoader> {
 	/**
 	 * Resolves the resource specified by the URL + headers contained in the request object
 	 * to the underlying container that will resolve the request.
@@ -509,6 +511,17 @@ export interface ILoader extends IFluidRouter, Partial<IProvideLoader> {
 	 * a request against the server found from the resolve step.
 	 */
 	resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer>;
+
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
+	 */
+	request(request: IRequest): Promise<IResponse>;
+
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
+	 */
+	// eslint-disable-next-line import/no-deprecated
+	readonly IFluidRouter: IFluidRouter;
 }
 
 /**
@@ -529,6 +542,7 @@ export interface IHostLoader extends ILoader {
 }
 
 export type ILoaderOptions = {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	[key in string | number]: any;
 } & {
 	/**
@@ -538,7 +552,7 @@ export type ILoaderOptions = {
 	 * false, always load a new container and don't cache it. If the container has already been
 	 * closed, it will not be cached. A cache option in the LoaderHeader for an individual
 	 * request will override the Loader's value.
-	 * Defaults to true.
+	 * Defaults to false.
 	 */
 	cache?: boolean;
 
@@ -562,7 +576,7 @@ export type ILoaderOptions = {
  */
 export enum LoaderHeader {
 	/**
-	 * @deprecated In next release, all caching functionality will be removed, and this is not useful anymore
+	 * @deprecated This header has been deprecated and will be removed in a future release
 	 * Override the Loader's default caching behavior for this container.
 	 */
 	cache = "fluid-cache",
@@ -574,6 +588,10 @@ export enum LoaderHeader {
 	 */
 	loadMode = "loadMode",
 	reconnect = "fluid-reconnect",
+	/**
+	 * Loads the container to at least the specified sequence number.
+	 * If not defined, behavior will fall back to `IContainerLoadMode.opsBeforeReturn`.
+	 */
 	sequenceNumber = "fluid-sequence-number",
 
 	/**
@@ -591,6 +609,11 @@ export interface IContainerLoadMode {
 	 * Default value.
 	 */
 	| undefined
+		/*
+		 * Only fetch and apply trailing ops up until (and including) the specified sequence number.
+		 * Requires `ILoaderHeader["fluid-sequence-number"]` to also be defined.
+		 */
+		| "sequenceNumber"
 		/*
 		 * Only cached trailing ops are applied before returning container.
 		 * Caching is optional and could be implemented by the driver.
@@ -624,6 +647,11 @@ export interface IContainerLoadMode {
 		 * Default value.
 		 */
 		| undefined;
+
+	/**
+	 * If set to true, will indefinitely pause all incoming and outgoing after the container is loaded.
+	 */
+	pauseAfterLoad?: boolean;
 }
 
 /**
@@ -631,11 +659,15 @@ export interface IContainerLoadMode {
  */
 export interface ILoaderHeader {
 	/**
-	 * @deprecated In next release, all caching functionality will be removed, and this is not useful anymore
+	 * @deprecated This header has been deprecated and will be removed in a future release
 	 */
 	[LoaderHeader.cache]: boolean;
 	[LoaderHeader.clientDetails]: IClientDetails;
 	[LoaderHeader.loadMode]: IContainerLoadMode;
+	/**
+	 * Loads the container to at least the specified sequence number.
+	 * If not defined, behavior will fall back to `IContainerLoadMode.opsBeforeReturn`.
+	 */
 	[LoaderHeader.sequenceNumber]: number;
 	[LoaderHeader.reconnect]: boolean;
 	[LoaderHeader.version]: string | undefined;

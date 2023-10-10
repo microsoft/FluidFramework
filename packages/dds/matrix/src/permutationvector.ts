@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	IFluidDataStoreRuntime,
@@ -140,7 +140,6 @@ export class PermutationVector extends Client {
 			{
 				...runtime.options,
 				newMergeTreeSnapshotFormat: true, // Temporarily force new snapshot format until it is the default.
-				mergeTreeUseNewLengthCalculations: true,
 			},
 		); // (See https://github.com/microsoft/FluidFramework/issues/84)
 
@@ -405,6 +404,7 @@ export class PermutationVector extends Client {
 		const s: string[] = [];
 
 		this.walkSegments((segment) => {
+			// eslint-disable-next-line @typescript-eslint/no-base-to-string
 			s.push(`${segment}`);
 			return true;
 		});

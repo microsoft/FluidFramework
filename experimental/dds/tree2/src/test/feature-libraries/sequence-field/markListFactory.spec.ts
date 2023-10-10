@@ -4,10 +4,14 @@
  */
 
 import { strict as assert } from "assert";
-import { mintRevisionTag, RevisionTag, TreeSchemaIdentifier } from "../../../core";
-import { ChangesetLocalId, SequenceField as SF } from "../../../feature-libraries";
+import {
+	ChangesetLocalId,
+	mintRevisionTag,
+	RevisionTag,
+	TreeSchemaIdentifier,
+} from "../../../core";
+import { SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
-import { fakeTaggedRepair as fakeRepair } from "../../utils";
 import { MarkMaker as Mark } from "./testEdits";
 
 const dummyMark = Mark.delete(1, brand(0));
@@ -29,12 +33,19 @@ describe("SequenceField - MarkListFactory", () => {
 		assert.deepStrictEqual(factory.list, [dummyMark]);
 	});
 
-	it("Merges runs of offsets into a single offset", () => {
+	it("Merges runs of no-op marks over populated cells", () => {
 		const factory = new SF.MarkListFactory();
 		factory.pushOffset(42);
 		factory.pushOffset(42);
 		factory.pushContent(dummyMark);
 		assert.deepStrictEqual(factory.list, [{ count: 84 }, dummyMark]);
+	});
+
+	it("Hides no-op marks over empty cells", () => {
+		const factory = new SF.MarkListFactory();
+		factory.push({ cellId: { localId: brand(0) }, count: 42 });
+		factory.pushContent(dummyMark);
+		assert.deepStrictEqual(factory.list, [dummyMark]);
 	});
 
 	it("Does not insert an offset when there is no content after the offset", () => {
@@ -117,30 +128,49 @@ describe("SequenceField - MarkListFactory", () => {
 
 	it("Can merge consecutive revives", () => {
 		const factory = new SF.MarkListFactory();
-		const revive1 = Mark.revive(fakeRepair(detachedBy, 0, 1), {
+		const revive1 = Mark.revive(1, {
 			revision: detachedBy,
 			localId: brand(0),
 		});
-		const revive2 = Mark.revive(fakeRepair(detachedBy, 1, 1), {
+		const revive2 = Mark.revive(1, {
 			revision: detachedBy,
 			localId: brand(1),
 		});
 		factory.pushContent(revive1);
 		factory.pushContent(revive2);
-		const expected = Mark.revive(fakeRepair(detachedBy, 0, 2), {
+		const expected = Mark.revive(2, {
 			revision: detachedBy,
 			localId: brand(0),
 		});
 		assert.deepStrictEqual(factory.list, [expected]);
 	});
 
+	it("Can merge consecutive return-tos", () => {
+		const factory = new SF.MarkListFactory();
+		const return1 = Mark.returnTo(1, brand(0), {
+			revision: detachedBy,
+			localId: brand(1),
+		});
+		const return2 = Mark.returnTo(2, brand(1), {
+			revision: detachedBy,
+			localId: brand(2),
+		});
+		factory.pushContent(return1);
+		factory.pushContent(return2);
+		const expected = Mark.returnTo(3, brand(0), {
+			revision: detachedBy,
+			localId: brand(1),
+		});
+		assert.deepStrictEqual(factory.list, [expected]);
+	});
+
 	it("Does not merge revives with gaps", () => {
 		const factory = new SF.MarkListFactory();
-		const revive1 = Mark.revive(fakeRepair(detachedBy, 0, 1), {
+		const revive1 = Mark.revive(1, {
 			revision: detachedBy,
 			localId: brand(0),
 		});
-		const revive2 = Mark.revive(fakeRepair(detachedBy, 2, 1), {
+		const revive2 = Mark.revive(1, {
 			revision: detachedBy,
 			localId: brand(2),
 		});

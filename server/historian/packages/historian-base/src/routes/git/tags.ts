@@ -9,16 +9,18 @@ import {
 	IStorageNameRetriever,
 	IThrottler,
 	IRevokedTokenChecker,
+	IDocumentManager,
 } from "@fluidframework/server-services-core";
 import {
 	IThrottleMiddlewareOptions,
 	throttle,
 	getParam,
 } from "@fluidframework/server-services-utils";
+import { validateRequestParams } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
-import { ICache, ITenantService } from "../../services";
+import { ICache, IDenyList, ITenantService } from "../../services";
 import * as utils from "../utils";
 import { Constants } from "../../utils";
 
@@ -27,9 +29,11 @@ export function create(
 	tenantService: ITenantService,
 	storageNameRetriever: IStorageNameRetriever,
 	restTenantThrottlers: Map<string, IThrottler>,
+	documentManager: IDocumentManager,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
 	revokedTokenChecker?: IRevokedTokenChecker,
+	denyList?: IDenyList,
 ): Router {
 	const router: Router = Router();
 
@@ -52,8 +56,10 @@ export function create(
 			authorization,
 			tenantService,
 			storageNameRetriever,
+			documentManager,
 			cache,
 			asyncLocalStorage,
+			denyList,
 		});
 		return service.createTag(params);
 	}
@@ -65,17 +71,19 @@ export function create(
 			authorization,
 			tenantService,
 			storageNameRetriever,
+			documentManager,
 			cache,
 			asyncLocalStorage,
+			denyList,
 		});
 		return service.getTag(tag);
 	}
 
 	router.post(
 		"/repos/:ignored?/:tenantId/git/tags",
-		utils.validateRequestParams("tenantId"),
+		validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyTokenNotRevoked(revokedTokenChecker),
+		utils.verifyToken(revokedTokenChecker),
 		(request, response, next) => {
 			const tagP = createTag(
 				request.params.tenantId,
@@ -88,9 +96,9 @@ export function create(
 
 	router.get(
 		"/repos/:ignored?/:tenantId/git/tags/*",
-		utils.validateRequestParams("tenantId", 0),
+		validateRequestParams("tenantId", 0),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyTokenNotRevoked(revokedTokenChecker),
+		utils.verifyToken(revokedTokenChecker),
 		(request, response, next) => {
 			const tagP = getTag(
 				request.params.tenantId,

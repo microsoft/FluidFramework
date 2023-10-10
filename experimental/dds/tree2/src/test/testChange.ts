@@ -14,6 +14,7 @@ import {
 	ChangeFamilyEditor,
 	FieldKey,
 	emptyDelta,
+	RevisionTag,
 } from "../core";
 import { IJsonCodec, makeCodecFamily, makeValueCodec } from "../codec";
 import { RecursiveReadonly, brand } from "../util";
@@ -142,26 +143,6 @@ function rebase(
 	return TestChange.emptyChange;
 }
 
-function rebaseAnchors(anchors: AnchorSet, over: TestChange): void {
-	if (isNonEmptyChange(over) && anchors instanceof TestAnchorSet) {
-		let lastChange: RecursiveReadonly<NonEmptyTestChange> | undefined;
-		const { rebases } = anchors;
-		for (let iChange = rebases.length - 1; iChange >= 0; --iChange) {
-			const change = rebases[iChange];
-			if (isNonEmptyChange(change)) {
-				lastChange = change;
-				break;
-			}
-		}
-		if (lastChange !== undefined) {
-			// The new change should apply to the context brought about by the previous change
-			assert.deepEqual(over.inputContext, lastChange.outputContext);
-		}
-		anchors.intentions = composeIntentions(anchors.intentions, over.intentions);
-		rebases.push(over);
-	}
-}
-
 function checkChangeList(
 	changes: readonly RecursiveReadonly<TestChange>[],
 	intentions: number[],
@@ -182,17 +163,21 @@ function checkChangeList(
 	assert.deepEqual(intentionsSeen, intentions);
 }
 
-function toDelta(change: TestChange): Delta.Modify {
+function toDelta({ change, revision }: TaggedChange<TestChange>): Delta.Modify {
 	if (change.intentions.length > 0) {
+		const hasMajor: { major?: RevisionTag } = {};
+		if (revision !== undefined) {
+			hasMajor.major = revision;
+		}
 		return {
 			type: Delta.MarkType.Modify,
 			fields: new Map([
 				[
 					brand("foo"),
 					[
-						{ type: Delta.MarkType.Delete, count: 1 },
 						{
 							type: Delta.MarkType.Insert,
+							oldContent: { detachId: { ...hasMajor, minor: 424242 } },
 							content: [
 								singleTextCursor({
 									type: brand("test"),
@@ -222,7 +207,6 @@ export const TestChange = {
 	compose,
 	invert,
 	rebase,
-	rebaseAnchors,
 	checkChangeList,
 	toDelta,
 	codec,
@@ -241,10 +225,6 @@ export class TestChangeRebaser implements ChangeRebaser<TestChange> {
 	public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
 		return rebase(change, over.change) ?? { intentions: [] };
 	}
-
-	public rebaseAnchors(anchors: AnchorSet, over: TestChange): void {
-		rebaseAnchors(anchors, over);
-	}
 }
 
 export class UnrebasableTestChangeRebaser extends TestChangeRebaser {
@@ -257,7 +237,6 @@ export class NoOpChangeRebaser extends TestChangeRebaser {
 	public rebasedCount = 0;
 	public invertedCount = 0;
 	public composedCount = 0;
-	public rebaseAnchorCallsCount = 0;
 
 	public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
 		this.rebasedCount += 1;
@@ -272,10 +251,6 @@ export class NoOpChangeRebaser extends TestChangeRebaser {
 	public compose(changes: TaggedChange<TestChange>[]): TestChange {
 		this.composedCount += changes.length;
 		return changes.length === 0 ? emptyChange : changes[0].change;
-	}
-
-	public rebaseAnchors(anchors: AnchorSet, over: TestChange): void {
-		this.rebaseAnchorCallsCount += 1;
 	}
 }
 
@@ -324,7 +299,7 @@ export function testChangeFamilyFactory(
 			enterTransaction: () => assert.fail("Unexpected edit"),
 			exitTransaction: () => assert.fail("Unexpected edit"),
 		}),
-		intoDelta: (change: TestChange): Delta.Root => asDelta(change.intentions),
+		intoDelta: ({ change }: TaggedChange<TestChange>): Delta.Root => asDelta(change.intentions),
 	};
 	return family;
 }

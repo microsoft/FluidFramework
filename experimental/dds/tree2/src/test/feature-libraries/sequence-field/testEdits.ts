@@ -3,23 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ChangesetLocalId,
-	SequenceField as SF,
-	singleTextCursor,
-} from "../../../feature-libraries";
+import { SequenceField as SF, singleTextCursor } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { fakeTaggedRepair as fakeRepair } from "../../utils";
 import {
-	ITreeCursorSynchronous,
+	ChangeAtomId,
+	ChangesetLocalId,
 	JsonableTree,
 	mintRevisionTag,
 	RevisionTag,
 	TreeSchemaIdentifier,
 } from "../../../core";
 import { TestChange } from "../../testChange";
-// eslint-disable-next-line import/no-internal-modules
-import { ChangeAtomId } from "../../../feature-libraries/modular-schema";
 import { composeAnonChanges, composeAnonChangesShallow } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
@@ -187,7 +182,7 @@ function createModifyDetachedChangeset<TNodeChange>(
 	detachEvent: SF.CellId,
 ): SF.Changeset<TNodeChange> {
 	const changeset = createModifyChangeset(index, change);
-	const modify = changeset[changeset.length - 1] as SF.Modify;
+	const modify = changeset[changeset.length - 1] as SF.NoopMark<TNodeChange>;
 	modify.cellId = detachEvent;
 	return changeset;
 }
@@ -211,19 +206,17 @@ function createInsertMark<TChange = never>(
 	const mark: SF.Insert<TChange> = {
 		type: "Insert",
 		content,
-		id: cellIdObject.localId,
+		count: content.length,
+		cellId: cellIdObject,
 	};
 	if (cellIdObject.revision !== undefined) {
 		mark.revision = cellIdObject.revision;
-	}
-	if (cellIdObject.lineage !== undefined) {
-		mark.lineage = cellIdObject.lineage;
 	}
 	return { ...mark, ...overrides };
 }
 
 /**
- * @param countOrContent - The content to revive.
+ * @param count - The content to revive.
  * If a number is passed, that many dummy nodes will be generated.
  * @param cellId - The first cell to revive content into.
  * If undefined, the revive targets populated cells and is therefore muted.
@@ -231,17 +224,13 @@ function createInsertMark<TChange = never>(
  * Use this to give the mark a `RevisionTag`
  */
 function createReviveMark<TChange = never>(
-	countOrContent: number | ITreeCursorSynchronous[],
+	count: number,
 	cellId?: SF.CellId,
 	overrides?: Partial<SF.Revive<TChange>>,
 ): SF.Revive<TChange> {
-	const content = Array.isArray(countOrContent)
-		? countOrContent
-		: generateJsonables(countOrContent).map(singleTextCursor);
 	const mark: SF.Revive<TChange> = {
 		type: "Revive",
-		count: content.length,
-		content,
+		count,
 	};
 	if (cellId !== undefined) {
 		mark.cellId = cellId;
@@ -310,13 +299,11 @@ function createMoveInMark(
 	const mark: SF.MoveIn = {
 		type: "MoveIn",
 		id: cellIdObject.localId,
+		cellId: cellIdObject,
 		count,
 	};
 	if (cellIdObject.revision !== undefined) {
 		mark.revision = cellIdObject.revision;
-	}
-	if (cellIdObject.lineage !== undefined) {
-		mark.lineage = cellIdObject.lineage;
 	}
 	return { ...mark, ...overrides };
 }
@@ -376,9 +363,9 @@ function createReturnToMark(
  * @param changes - The changes to apply to the node.
  * @param cellId - Describes the cell that the target node used to reside in. Used when the target node is removed.
  */
-function createModifyMark<TChange>(changes: TChange, cellId?: SF.CellId): SF.Modify<TChange> {
-	const mark: SF.Modify<TChange> = {
-		type: "Modify",
+function createModifyMark<TChange>(changes: TChange, cellId?: SF.CellId): SF.NoopMark<TChange> {
+	const mark: SF.NoopMark<TChange> = {
+		count: 1,
 		changes,
 	};
 	if (cellId !== undefined) {
@@ -387,7 +374,10 @@ function createModifyMark<TChange>(changes: TChange, cellId?: SF.CellId): SF.Mod
 	return mark;
 }
 
-function overrideCellId<TMark extends SF.CellTargetingMark>(cellId: SF.CellId, mark: TMark): TMark {
+function overrideCellId<TMark extends SF.HasMarkFields<unknown>>(
+	cellId: SF.CellId,
+	mark: TMark,
+): TMark {
 	mark.cellId = cellId;
 	return mark;
 }

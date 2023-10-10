@@ -139,7 +139,10 @@ type LayerDependencyNode = { node: LayerNode; orderedChildren: LayerNode[] };
 class GroupNode extends BaseNode {
 	public layerNodes: LayerNode[] = [];
 
-	constructor(name: string, private readonly groupInfo: ILayerGroupInfo) {
+	constructor(
+		name: string,
+		private readonly groupInfo: ILayerGroupInfo,
+	) {
 		super(name);
 	}
 
@@ -187,7 +190,10 @@ class PackageNode extends BaseNode {
 	private _indirectDependencies: Set<PackageNode> | undefined;
 	private _level: number | undefined;
 
-	constructor(name: string, public readonly layerNode: LayerNode) {
+	constructor(
+		name: string,
+		public readonly layerNode: LayerNode,
+	) {
 		super(name);
 	}
 

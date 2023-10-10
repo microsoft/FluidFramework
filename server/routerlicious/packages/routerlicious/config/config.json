@@ -7,6 +7,11 @@
 		"timestamp": true,
 		"label": "winston"
 	},
+	"lumberjack": {
+		"options": {
+			"enableGlobalTelemetryContext": true
+		}
+	},
 	"mongo": {
 		"operationsDbEndpoint": "mongodb://mongodb:27017",
 		"globalDbEndpoint": "mongodb://mongodb:27017",
@@ -70,6 +75,7 @@
 		"numberOfMessagesPerTrace": 100,
 		"sessionStickinessDurationMs": 3600000,
 		"enableConnectionCountLogging": false,
+		"ignoreEphemeralFlag": true,
 		"throttling": {
 			"restCallsPerTenant": {
 				"generalRestCall": "disabled",
@@ -116,7 +122,11 @@
 		"jwtTokenCache": {
 			"enable": true
 		},
-		"getDeltasRequestMaxOpsRange": 2000
+		"getDeltasRequestMaxOpsRange": 2000,
+		"useNodeCluster": false
+	},
+	"riddler": {
+		"useNodeCluster": false
 	},
 	"nexus": {
 		"kafkaClientId": "nexus",
@@ -222,7 +232,8 @@
 		"signalUsageCountingEnabled": false
 	},
 	"shared": {
-		"transientTenants": []
+		"transientTenants": [],
+		"runnerServerCloseTimeoutMs": 30000
 	},
 	"auth": {
 		"endpoint": "http://riddler:5000",
@@ -249,10 +260,6 @@
 		"serviceGraph": {
 			"group": "serviceGraph",
 			"topic": "deltas"
-		},
-		"foreman": {
-			"group": "foreman",
-			"topic": "deltas"
 		}
 	},
 	"scriptorium": {
@@ -271,24 +278,6 @@
 		"groupId": "copier",
 		"checkpointBatchSize": 1,
 		"checkpointTimeIntervalMsec": 1000
-	},
-	"foreman": {
-		"alfred": "http://alfred:3000",
-		"queues": ["paparazziQueue", "augloopQueue", "headlessQueue"],
-		"permissions": {
-			"paparazziQueue": ["snapshot", "spell", "intel", "translation"],
-			"augloopQueue": ["augmentation"],
-			"headlessQueue": [
-				"chain-snapshot",
-				"chain-intel",
-				"chain-translation",
-				"chain-spell",
-				"chain-cache"
-			]
-		}
-	},
-	"paparazzi": {
-		"queue": "paparazziQueue"
 	},
 	"rabbitmq": {
 		"connectionString": "amqp://rabbitmq"

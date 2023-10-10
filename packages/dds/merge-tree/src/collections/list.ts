@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { UsageError } from "@fluidframework/container-utils";
+import { UsageError } from "@fluidframework/telemetry-utils";
 
 export interface ListNode<T> {
 	readonly list: List<T> | undefined;
@@ -41,7 +41,10 @@ class HeadNode<T> {
 const DeadHead = new HeadNode<any>(undefined);
 
 class DataNode<T> extends HeadNode<T> implements ListNode<T> {
-	constructor(headNode: HeadNode<T>, public readonly data: T) {
+	constructor(
+		headNode: HeadNode<T>,
+		public readonly data: T,
+	) {
 		super(undefined);
 		this.headNode = headNode;
 	}

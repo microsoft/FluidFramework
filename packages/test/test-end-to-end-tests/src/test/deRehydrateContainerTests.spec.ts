@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { compare } from "semver";
-import { bufferToString } from "@fluidframework/common-utils";
+import { bufferToString } from "@fluid-internal/client-utils";
 import {
 	IContainer,
 	IFluidCodeDetails,
@@ -380,27 +380,21 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 
 			// Check for dds
 			const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
-			const sharedDir = await defaultDataStore.getSharedObject<SharedDirectory>(
-				sharedDirectoryId,
-			);
-			const sharedString = await defaultDataStore.getSharedObject<SharedString>(
-				sharedStringId,
-			);
+			const sharedDir =
+				await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
+			const sharedString =
+				await defaultDataStore.getSharedObject<SharedString>(sharedStringId);
 			const sharedCell = await defaultDataStore.getSharedObject<SharedCell>(sharedCellId);
-			const sharedCounter = await defaultDataStore.getSharedObject<SharedCounter>(
-				sharedCounterId,
-			);
-			const crc = await defaultDataStore.getSharedObject<ConsensusRegisterCollection<string>>(
-				crcId,
-			);
+			const sharedCounter =
+				await defaultDataStore.getSharedObject<SharedCounter>(sharedCounterId);
+			const crc =
+				await defaultDataStore.getSharedObject<ConsensusRegisterCollection<string>>(crcId);
 			const coc = await defaultDataStore.getSharedObject<ConsensusOrderedCollection>(cocId);
 			const ink = await defaultDataStore.getSharedObject<Ink>(sharedInkId);
-			const sharedMatrix = await defaultDataStore.getSharedObject<SharedMatrix>(
-				sharedMatrixId,
-			);
-			const sparseMatrix = await defaultDataStore.getSharedObject<SparseMatrix>(
-				sparseMatrixId,
-			);
+			const sharedMatrix =
+				await defaultDataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
+			const sparseMatrix =
+				await defaultDataStore.getSharedObject<SparseMatrix>(sparseMatrixId);
 			assert.strictEqual(sharedMap.id, sharedMapId, "Shared map should exist!!");
 			assert.strictEqual(sharedDir.id, sharedDirectoryId, "Shared directory should exist!!");
 			assert.strictEqual(sharedString.id, sharedStringId, "Shared string should exist!!");
@@ -428,27 +422,21 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 
 			// Check for dds
 			const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
-			const sharedDir = await defaultDataStore.getSharedObject<SharedDirectory>(
-				sharedDirectoryId,
-			);
-			const sharedString = await defaultDataStore.getSharedObject<SharedString>(
-				sharedStringId,
-			);
+			const sharedDir =
+				await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
+			const sharedString =
+				await defaultDataStore.getSharedObject<SharedString>(sharedStringId);
 			const sharedCell = await defaultDataStore.getSharedObject<SharedCell>(sharedCellId);
-			const sharedCounter = await defaultDataStore.getSharedObject<SharedCounter>(
-				sharedCounterId,
-			);
-			const crc = await defaultDataStore.getSharedObject<ConsensusRegisterCollection<string>>(
-				crcId,
-			);
+			const sharedCounter =
+				await defaultDataStore.getSharedObject<SharedCounter>(sharedCounterId);
+			const crc =
+				await defaultDataStore.getSharedObject<ConsensusRegisterCollection<string>>(crcId);
 			const coc = await defaultDataStore.getSharedObject<ConsensusOrderedCollection>(cocId);
 			const ink = await defaultDataStore.getSharedObject<Ink>(sharedInkId);
-			const sharedMatrix = await defaultDataStore.getSharedObject<SharedMatrix>(
-				sharedMatrixId,
-			);
-			const sparseMatrix = await defaultDataStore.getSharedObject<SparseMatrix>(
-				sparseMatrixId,
-			);
+			const sharedMatrix =
+				await defaultDataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
+			const sparseMatrix =
+				await defaultDataStore.getSharedObject<SparseMatrix>(sparseMatrixId);
 			assert.strictEqual(sharedMap.id, sharedMapId, "Shared map should exist!!");
 			assert.strictEqual(sharedDir.id, sharedDirectoryId, "Shared directory should exist!!");
 			assert.strictEqual(sharedString.id, sharedStringId, "Shared string should exist!!");
@@ -476,27 +464,21 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 
 			// Check for dds
 			const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
-			const sharedDir = await defaultDataStore.getSharedObject<SharedDirectory>(
-				sharedDirectoryId,
-			);
-			const sharedString = await defaultDataStore.getSharedObject<SharedString>(
-				sharedStringId,
-			);
+			const sharedDir =
+				await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
+			const sharedString =
+				await defaultDataStore.getSharedObject<SharedString>(sharedStringId);
 			const sharedCell = await defaultDataStore.getSharedObject<SharedCell>(sharedCellId);
-			const sharedCounter = await defaultDataStore.getSharedObject<SharedCounter>(
-				sharedCounterId,
-			);
-			const crc = await defaultDataStore.getSharedObject<ConsensusRegisterCollection<string>>(
-				crcId,
-			);
+			const sharedCounter =
+				await defaultDataStore.getSharedObject<SharedCounter>(sharedCounterId);
+			const crc =
+				await defaultDataStore.getSharedObject<ConsensusRegisterCollection<string>>(crcId);
 			const coc = await defaultDataStore.getSharedObject<ConsensusOrderedCollection>(cocId);
 			const ink = await defaultDataStore.getSharedObject<Ink>(sharedInkId);
-			const sharedMatrix = await defaultDataStore.getSharedObject<SharedMatrix>(
-				sharedMatrixId,
-			);
-			const sparseMatrix = await defaultDataStore.getSharedObject<SparseMatrix>(
-				sparseMatrixId,
-			);
+			const sharedMatrix =
+				await defaultDataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
+			const sparseMatrix =
+				await defaultDataStore.getSharedObject<SparseMatrix>(sparseMatrixId);
 			assert.strictEqual(sharedMap.id, sharedMapId, "Shared map should exist!!");
 			assert.strictEqual(sharedDir.id, sharedDirectoryId, "Shared directory should exist!!");
 			assert.strictEqual(sharedString.id, sharedStringId, "Shared string should exist!!");
@@ -528,9 +510,8 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 				"Snapshot fetch should not be allowed in detached data store",
 			);
 
-			const container2: IContainer = await loader.rehydrateDetachedContainerFromSnapshot(
-				snapshotTree,
-			);
+			const container2: IContainer =
+				await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 			const response2 = await container2.request({ url: "/" });
 			const defaultDataStore2 = response2.value as TestFluidObject;
 			assert(
@@ -552,9 +533,8 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 
 			const responseBefore = await container.request({ url: "/" });
 			const defaultDataStoreBefore = responseBefore.value as TestFluidObject;
-			const sharedStringBefore = await defaultDataStoreBefore.getSharedObject<SharedString>(
-				sharedStringId,
-			);
+			const sharedStringBefore =
+				await defaultDataStoreBefore.getSharedObject<SharedString>(sharedStringId);
 			const intervalsBefore = sharedStringBefore.getIntervalCollection("intervals");
 			sharedStringBefore.insertText(0, "Hello");
 			let interval0: SequenceInterval | undefined = intervalsBefore.add(
@@ -585,9 +565,8 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 
 			const responseAfter = await container2.request({ url: "/" });
 			const defaultComponentAfter = responseAfter.value as TestFluidObject;
-			const sharedStringAfter = await defaultComponentAfter.getSharedObject<SharedString>(
-				sharedStringId,
-			);
+			const sharedStringAfter =
+				await defaultComponentAfter.getSharedObject<SharedString>(sharedStringId);
 			const intervalsAfter = sharedStringAfter.getIntervalCollection("intervals");
 			assert.strictEqual(
 				JSON.stringify(sharedStringAfter.summarize()),
@@ -639,21 +618,18 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 			let str = "AA";
 			const response1 = await container.request({ url: "/" });
 			const defaultComponent1 = response1.value as TestFluidObject;
-			const sharedString1 = await defaultComponent1.getSharedObject<SharedString>(
-				sharedStringId,
-			);
+			const sharedString1 =
+				await defaultComponent1.getSharedObject<SharedString>(sharedStringId);
 			sharedString1.insertText(0, str);
 			const snapshotTree = container.serialize();
 
 			const container2 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 			const responseBefore = await container2.request({ url: "/" });
 			const defaultDataStoreBefore = responseBefore.value as TestFluidObject;
-			const sharedStringBefore = await defaultDataStoreBefore.getSharedObject<SharedString>(
-				sharedStringId,
-			);
-			const sharedMapBefore = await defaultDataStoreBefore.getSharedObject<SharedMap>(
-				sharedMapId,
-			);
+			const sharedStringBefore =
+				await defaultDataStoreBefore.getSharedObject<SharedString>(sharedStringId);
+			const sharedMapBefore =
+				await defaultDataStoreBefore.getSharedObject<SharedMap>(sharedMapId);
 			str += "BB";
 			sharedStringBefore.insertText(0, str);
 			sharedMapBefore.set("0", str);
@@ -661,12 +637,10 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 			await container2.attach(request);
 			const responseAfter = await container2.request({ url: "/" });
 			const defaultComponentAfter = responseAfter.value as TestFluidObject;
-			const sharedStringAfter = await defaultComponentAfter.getSharedObject<SharedString>(
-				sharedStringId,
-			);
-			const sharedMapAfter = await defaultComponentAfter.getSharedObject<SharedMap>(
-				sharedMapId,
-			);
+			const sharedStringAfter =
+				await defaultComponentAfter.getSharedObject<SharedString>(sharedStringId);
+			const sharedMapAfter =
+				await defaultComponentAfter.getSharedObject<SharedMap>(sharedMapId);
 			assert.strictEqual(
 				JSON.stringify(sharedStringAfter.summarize()),
 				JSON.stringify(sharedStringBefore.summarize()),
@@ -699,9 +673,8 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 				// close the container that we don't use any more, so it doesn't block ensureSynchronized()
 				container.close();
 
-				const rehydratedContainer = await loader.rehydrateDetachedContainerFromSnapshot(
-					snapshotTree,
-				);
+				const rehydratedContainer =
+					await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 				await rehydratedContainer.attach(request);
 
 				// Now load the container from another loader.
@@ -719,9 +692,8 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 					url: `/${dataStore2.context.id}`,
 				});
 				const dataStore2FromRC = responseBefore.value as TestFluidObject;
-				const sharedMapFromRC = await dataStore2FromRC.getSharedObject<SharedMap>(
-					sharedMapId,
-				);
+				const sharedMapFromRC =
+					await dataStore2FromRC.getSharedObject<SharedMap>(sharedMapId);
 				sharedMapFromRC.set("1", "B");
 
 				const responseAfter = await container2.request({
@@ -761,9 +733,8 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 				// close the container that we don't use any more, so it doesn't block ensureSynchronized()
 				container.close();
 
-				const rehydratedContainer = await loader.rehydrateDetachedContainerFromSnapshot(
-					snapshotTree,
-				);
+				const rehydratedContainer =
+					await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 				await rehydratedContainer.attach(request);
 
 				// Now load the container from another loader.
@@ -789,9 +760,8 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 					url: `/${dataStore2.context.id}`,
 				});
 				const dataStore2FromRC = responseAfter.value as TestFluidObject;
-				const sharedMapFromRC = await dataStore2FromRC.getSharedObject<SharedMap>(
-					sharedMapId,
-				);
+				const sharedMapFromRC =
+					await dataStore2FromRC.getSharedObject<SharedMap>(sharedMapId);
 
 				await loaderContainerTracker.ensureSynchronized();
 				assert.strictEqual(
@@ -821,9 +791,8 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 			rootOfDataStore1.set("dataStore2", dataStore2.handle);
 
 			const snapshotTree = container.serialize();
-			const rehydratedContainer = await loader.rehydrateDetachedContainerFromSnapshot(
-				snapshotTree,
-			);
+			const rehydratedContainer =
+				await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
 			const response = await rehydratedContainer.request({
 				url: `/${dataStore2.context.id}`,
@@ -852,9 +821,8 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 			rootOfDataStore1.set("dd2", dds2.handle);
 
 			const snapshotTree = container.serialize();
-			const rehydratedContainer = await loader.rehydrateDetachedContainerFromSnapshot(
-				snapshotTree,
-			);
+			const rehydratedContainer =
+				await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
 			const response = await rehydratedContainer.request({
 				url: `/${defaultDataStore.runtime.id}/${ddsId}`,
@@ -886,15 +854,13 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 				) as SharedMap;
 				dds2.set("dataStore2", dataStore2.handle);
 
-				const rootOfDataStore1 = await defaultDataStore.getSharedObject<SharedMap>(
-					sharedMapId,
-				);
+				const rootOfDataStore1 =
+					await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
 				rootOfDataStore1.set("dd2", dds2.handle);
 
 				const snapshotTree = container.serialize();
-				const rehydratedContainer = await loader.rehydrateDetachedContainerFromSnapshot(
-					snapshotTree,
-				);
+				const rehydratedContainer =
+					await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
 				const responseForDDS = await rehydratedContainer.request({
 					url: `/${defaultDataStore.runtime.id}/${ddsId}`,
@@ -939,15 +905,13 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 				const rootOfDataStore2 = await dataStore2.getSharedObject<SharedMap>(sharedMapId);
 				rootOfDataStore2.set("dds2", dds2.handle);
 
-				const rootOfDataStore1 = await defaultDataStore.getSharedObject<SharedMap>(
-					sharedMapId,
-				);
+				const rootOfDataStore1 =
+					await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
 				rootOfDataStore1.set("dataStore2", dataStore2.handle);
 
 				const snapshotTree = container.serialize();
-				const rehydratedContainer = await loader.rehydrateDetachedContainerFromSnapshot(
-					snapshotTree,
-				);
+				const rehydratedContainer =
+					await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
 				const responseForDDS = await rehydratedContainer.request({
 					url: `/${dataStore2.runtime.id}/${ddsId}`,

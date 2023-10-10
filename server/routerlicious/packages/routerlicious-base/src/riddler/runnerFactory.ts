@@ -15,6 +15,7 @@ import {
 	IRunner,
 	IRunnerFactory,
 	IWebServerFactory,
+	ICollection,
 } from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
@@ -29,6 +30,7 @@ export class RiddlerResources implements IResources {
 
 	constructor(
 		public readonly config: Provider,
+		public readonly tenantsCollection: ICollection<ITenantDocument>,
 		public readonly tenantsCollectionName: string,
 		public readonly mongoManager: MongoManager,
 		public readonly port: any,
@@ -42,7 +44,13 @@ export class RiddlerResources implements IResources {
 		public readonly cache: RedisCache,
 	) {
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
-		this.webServerFactory = new services.BasicWebServerFactory(httpServerConfig);
+		const nodeClusterConfig: Partial<services.INodeClusterConfig> | undefined = config.get(
+			"riddler:nodeClusterConfig",
+		);
+		const useNodeCluster = config.get("riddler:useNodeCluster");
+		this.webServerFactory = useNodeCluster
+			? new services.NodeClusterWebServerFactory(httpServerConfig, nodeClusterConfig)
+			: new services.BasicWebServerFactory(httpServerConfig);
 	}
 
 	public async dispose(): Promise<void> {
@@ -147,6 +155,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 
 		return new RiddlerResources(
 			config,
+			collection,
 			tenantsCollectionName,
 			mongoManager,
 			port,
@@ -166,9 +175,8 @@ export class RiddlerRunnerFactory implements IRunnerFactory<RiddlerResources> {
 	public async create(resources: RiddlerResources): Promise<IRunner> {
 		return new RiddlerRunner(
 			resources.webServerFactory,
-			resources.tenantsCollectionName,
+			resources.tenantsCollection,
 			resources.port,
-			resources.mongoManager,
 			resources.loggerFormat,
 			resources.baseOrdererUrl,
 			resources.defaultHistorianUrl,
@@ -177,6 +185,7 @@ export class RiddlerRunnerFactory implements IRunnerFactory<RiddlerResources> {
 			resources.fetchTenantKeyMetricIntervalMs,
 			resources.riddlerStorageRequestMetricIntervalMs,
 			resources.cache,
+			resources.config,
 		);
 	}
 }

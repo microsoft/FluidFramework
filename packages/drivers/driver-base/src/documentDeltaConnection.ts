@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	IAnyDriverError,
 	IDocumentDeltaConnection,
@@ -640,8 +640,12 @@ export class DocumentDeltaConnection
 		this.queuedMessages.push(...msgs);
 	};
 
-	protected earlySignalHandler = (msg: ISignalMessage) => {
-		this.queuedSignals.push(msg);
+	protected earlySignalHandler = (msg: ISignalMessage | ISignalMessage[]) => {
+		if (Array.isArray(msg)) {
+			this.queuedSignals.push(...msg);
+		} else {
+			this.queuedSignals.push(msg);
+		}
 	};
 
 	private removeEarlyOpHandler() {

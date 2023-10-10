@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, bufferToString, IsoBuffer } from "@fluidframework/common-utils";
+import { bufferToString, IsoBuffer } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	IFluidDataStoreRuntime,
@@ -14,9 +15,8 @@ import {
 	ISummaryTreeWithStats,
 	IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ICodecOptions, IJsonCodec } from "../codec";
+import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
+import { ICodecOptions, IJsonCodec, SchemaValidationFunction } from "../codec";
 import {
 	cachedValue,
 	Dependee,
@@ -33,7 +33,7 @@ import {
 } from "../core";
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
 import { isJsonObject, JsonCompatibleReadOnly } from "../util";
-import { makeSchemaCodec } from "./schemaIndexFormat";
+import { makeSchemaCodec, Format } from "./schemaIndexFormat";
 
 /**
  * The storage key for the blob in the summary containing schema data
@@ -49,7 +49,7 @@ export class SchemaSummarizer implements Summarizable {
 	public readonly key = "Schema";
 
 	private readonly schemaBlob: ICachedValue<Promise<IFluidHandle<ArrayBufferLike>>>;
-	private readonly codec: IJsonCodec<SchemaData, string>;
+	private readonly codec: IJsonCodec<SchemaData, Format>;
 
 	public constructor(
 		private readonly runtime: IFluidDataStoreRuntime,
@@ -59,7 +59,8 @@ export class SchemaSummarizer implements Summarizable {
 		this.codec = makeSchemaCodec(options);
 		this.schemaBlob = cachedValue(async (observer) => {
 			recordDependency(observer, this.schema);
-			const schemaText = this.codec.encode(this.schema);
+			// Currently no Fluid handles are used, so just use JSON.stringify.
+			const schemaText = JSON.stringify(this.codec.encode(this.schema));
 
 			// For now we are not chunking the the schema, but still put it in a reusable blob:
 			return this.runtime.uploadBlob(IsoBuffer.from(schemaText));
@@ -72,10 +73,9 @@ export class SchemaSummarizer implements Summarizable {
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTreeWithStats {
-		const builder = new SummaryTreeBuilder();
-		const dataString = this.codec.encode(this.schema);
-		builder.addBlob(schemaStringKey, dataString);
-		return builder.getSummaryTree();
+		// Currently no Fluid handles are used, so just use JSON.stringify.
+		const dataString = JSON.stringify(this.codec.encode(this.schema));
+		return createSingleBlobSummary(schemaStringKey, dataString);
 	}
 
 	public async summarize(
@@ -85,9 +85,7 @@ export class SchemaSummarizer implements Summarizable {
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummaryTreeWithStats> {
 		const schemaBlobHandle = await this.schemaBlob.get();
-		const builder = new SummaryTreeBuilder();
-		builder.addBlob(schemaBlobKey, stringify(schemaBlobHandle));
-		return builder.getSummaryTree();
+		return createSingleBlobSummary(schemaBlobKey, stringify(schemaBlobHandle));
 	}
 
 	public getGCData(fullGC?: boolean): IGarbageCollectionData {
@@ -128,14 +126,15 @@ export class SchemaSummarizer implements Summarizable {
 		);
 
 		const schemaString = bufferToString(schemaBuffer, "utf-8");
-		const decoded = this.codec.decode(schemaString);
+		// Currently no Fluid handles are used, so just use JSON.parse.
+		const decoded = this.codec.decode(JSON.parse(schemaString));
 		this.schema.update(decoded);
 	}
 }
 
 interface SchemaOp {
 	readonly type: "SchemaOp";
-	readonly data: string;
+	readonly data: Format;
 }
 
 /**
@@ -146,13 +145,15 @@ interface SchemaOp {
 export class SchemaEditor<TRepository extends StoredSchemaRepository>
 	implements StoredSchemaRepository
 {
-	private readonly codec: IJsonCodec<SchemaData, string>;
+	private readonly codec: IJsonCodec<SchemaData, Format, unknown>;
+	private readonly formatValidator: SchemaValidationFunction<typeof Format>;
 	public constructor(
 		public readonly inner: TRepository,
 		private readonly submit: (op: SchemaOp) => void,
 		options: ICodecOptions,
 	) {
 		this.codec = makeSchemaCodec(options);
+		this.formatValidator = options.jsonValidator.compile(Format);
 	}
 
 	public on<K extends keyof SchemaEvents>(eventName: K, listener: SchemaEvents[K]): () => void {
@@ -165,16 +166,18 @@ export class SchemaEditor<TRepository extends StoredSchemaRepository>
 	 * TODO: Shared tree needs a pattern for handling non-changeset operations.
 	 * See TODO on `SharedTree.processCore`.
 	 */
-	public tryHandleOp(message: ISequencedDocumentMessage): boolean {
-		const op = message.contents as JsonCompatibleReadOnly;
-		if (isJsonObject(op) && op.type === "SchemaOp") {
-			assert(typeof op.data === "string", 0x6ca /* SchemaOps should have string data */);
-			const data = this.codec.decode(op.data);
+	public tryHandleOp(encodedOp: JsonCompatibleReadOnly): boolean {
+		const op = this.tryDecodeOp(encodedOp);
+		if (op !== undefined) {
 			// TODO: This does not correctly handle concurrency of schema edits.
-			this.inner.update(data);
+			this.inner.update(op);
 			return true;
 		}
 		return false;
+	}
+
+	public tryApplyStashedOp(encodedOp: JsonCompatibleReadOnly): boolean {
+		return this.tryHandleOp(encodedOp);
 	}
 
 	/**
@@ -187,8 +190,8 @@ export class SchemaEditor<TRepository extends StoredSchemaRepository>
 		const op: JsonCompatibleReadOnly = content;
 		if (isJsonObject(op) && op.type === "SchemaOp") {
 			assert(
-				typeof op.data === "string",
-				0x5e3 /* expected string data for resubmitted schema op */,
+				this.formatValidator.check(op.data),
+				"unexpected format for resubmitted schema op",
 			);
 			const schemaOp: SchemaOp = {
 				type: op.type,
@@ -228,5 +231,13 @@ export class SchemaEditor<TRepository extends StoredSchemaRepository>
 
 	public get treeSchema(): ReadonlyMap<TreeSchemaIdentifier, TreeStoredSchema> {
 		return this.inner.treeSchema;
+	}
+
+	private tryDecodeOp(encodedOp: JsonCompatibleReadOnly): SchemaData | undefined {
+		if (isJsonObject(encodedOp) && encodedOp.type === "SchemaOp") {
+			return this.codec.decode(encodedOp.data);
+		}
+
+		return undefined;
 	}
 }

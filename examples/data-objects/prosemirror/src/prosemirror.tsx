@@ -6,15 +6,18 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { EventEmitter } from "events";
+// eslint-disable-next-line import/no-deprecated
 import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
 import {
 	IFluidLoadable,
-	IFluidRouter,
 	IRequest,
 	IResponse,
 	IFluidHandle,
 	FluidObject,
+	// eslint-disable-next-line import/no-deprecated
+	IFluidRouter,
 } from "@fluidframework/core-interfaces";
+// eslint-disable-next-line import/no-deprecated
 import { FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
@@ -22,6 +25,7 @@ import {
 	ReferenceType,
 	reservedRangeLabelsKey,
 	MergeTreeDeltaType,
+	// eslint-disable-next-line import/no-deprecated
 	createMap,
 } from "@fluidframework/merge-tree";
 import {
@@ -44,10 +48,12 @@ function createTreeMarkerOps(
 	endMarkerPos: number,
 	nodeType: string,
 ): IMergeTreeInsertMsg[] {
+	// eslint-disable-next-line import/no-deprecated
 	const endMarkerProps = createMap<any>();
 	endMarkerProps[reservedRangeLabelsKey] = [treeRangeLabel];
 	endMarkerProps[nodeTypeKey] = nodeType;
 
+	// eslint-disable-next-line import/no-deprecated
 	const beginMarkerProps = createMap<any>();
 	beginMarkerProps[reservedRangeLabelsKey] = [treeRangeLabel];
 	beginMarkerProps[nodeTypeKey] = nodeType;
@@ -73,6 +79,7 @@ function createTreeMarkerOps(
  */
 export class ProseMirror
 	extends EventEmitter
+	// eslint-disable-next-line import/no-deprecated
 	implements IFluidLoadable, IFluidRouter, IProvideRichTextEditor
 {
 	public static async load(
@@ -93,6 +100,7 @@ export class ProseMirror
 	public get IFluidLoadable() {
 		return this;
 	}
+	// eslint-disable-next-line import/no-deprecated
 	public get IFluidRouter() {
 		return this;
 	}
@@ -121,6 +129,7 @@ export class ProseMirror
 	}
 
 	public async request(request: IRequest): Promise<IResponse> {
+		// eslint-disable-next-line import/no-deprecated
 		return defaultFluidObjectRequestHandler(this, request);
 	}
 
@@ -161,6 +170,7 @@ export class ProseMirrorFactory implements IFluidDataStoreFactory {
 	}
 
 	public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
+		// eslint-disable-next-line import/no-deprecated
 		const runtimeClass = mixinRequestHandler(async (request: IRequest) => {
 			const router = await routerP;
 			return router.request(request);
@@ -175,6 +185,10 @@ export class ProseMirrorFactory implements IFluidDataStoreFactory {
 				]),
 			),
 			existing,
+			() => {
+				// TODO: AB#4993
+				throw new Error("TODO");
+			},
 		);
 		const routerP = ProseMirror.load(runtime, context, existing);
 

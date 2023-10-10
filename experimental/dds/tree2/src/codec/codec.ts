@@ -3,26 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import { assert, bufferToString, IsoBuffer } from "@fluidframework/common-utils";
+import { bufferToString, IsoBuffer } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import type { Static, TAnySchema, TSchema } from "@sinclair/typebox";
 import { fail, JsonCompatibleReadOnly } from "../util";
 
 /**
- * @alpha
+ * Translates decoded data to encoded data.
+ * @remarks Typically paired with an {@link IEncoder}.
  */
 export interface IEncoder<TDecoded, TEncoded> {
 	/**
-	 * Encodes `obj` into some encoded format. Typically paired with an {@link IDecoder}.
+	 * Encodes `obj` into some encoded format.
 	 */
 	encode(obj: TDecoded): TEncoded;
 }
 
 /**
- * @alpha
+ * Translates encoded data to decoded data.
+ * @remarks Typically paired with an {@link IEncoder}.
  */
 export interface IDecoder<TDecoded, TEncoded> {
 	/**
-	 * Decodes `obj` from some encoded format. Typically paired with an {@link IEncoder}.
+	 * Decodes `obj` from some encoded format.
 	 */
 	decode(obj: TEncoded): TDecoded;
 }
@@ -34,7 +37,7 @@ export interface IDecoder<TDecoded, TEncoded> {
  */
 export interface SchemaValidationFunction<Schema extends TSchema> {
 	/**
-	 * @returns - Whether the data matches a schema.
+	 * @returns Whether the data matches a schema.
 	 */
 	check(data: unknown): data is Static<Schema>;
 }
@@ -47,6 +50,11 @@ export interface JsonValidator {
 	/**
 	 * Compiles the provided JSON schema into a validator for that schema.
 	 * @param schema - A valid draft 6 JSON schema
+	 * @remarks Fluid handles--which have circular property references--are used in various places in the persisted
+	 * format. Handles should only be contained in sections of data which are validated against the empty schema `{}`
+	 * (see https://datatracker.ietf.org/doc/html/draft-wright-json-schema-01#section-4.4).
+	 *
+	 * Implementations of `JsonValidator` must therefore tolerate these values, despite the input not being valid JSON.
 	 */
 	compile<Schema extends TSchema>(schema: Schema): SchemaValidationFunction<Schema>;
 }
@@ -68,19 +76,21 @@ export interface ICodecOptions {
 }
 
 /**
- * @alpha
+ * @remarks `TEncoded` should always be valid Json (i.e. not contain functions), but due to TypeScript's handling
+ * of index signatures and `JsonCompatibleReadOnly`'s index signature in the Json object case, specifying this as a
+ * type-system level constraint makes code that uses this interface more difficult to write.
+ *
+ * If provided, `TValidate` allows the input type passed to `decode` to be different than `TEncoded`.
+ * This is useful when, for example, the type being decoded is `unknown` and must be validated to be a `TEncoded` before being decoded to a `TDecoded`.
  */
-export interface IJsonCodec<
-	TDecoded,
-	TEncoded extends JsonCompatibleReadOnly = JsonCompatibleReadOnly,
-> extends IEncoder<TDecoded, TEncoded>,
-		IDecoder<TDecoded, TEncoded> {
+export interface IJsonCodec<TDecoded, TEncoded = JsonCompatibleReadOnly, TValidate = TEncoded>
+	extends IEncoder<TDecoded, TEncoded>,
+		IDecoder<TDecoded, TValidate> {
 	encodedSchema?: TAnySchema;
 }
 
 /**
- * @remarks - TODO: We might consider using DataView or some kind of writer instead of IsoBuffer.
- * @alpha
+ * @remarks TODO: We might consider using DataView or some kind of writer instead of IsoBuffer.
  */
 export interface IBinaryCodec<TDecoded>
 	extends IEncoder<TDecoded, IsoBuffer>,
@@ -90,20 +100,19 @@ export interface IBinaryCodec<TDecoded>
  * Contains knowledge of how to encode some in-memory type into JSON and binary formats,
  * as well as how to decode those representations.
  *
- * @remarks - Codecs are typically used in shared-tree to convert data into some persisted format.
+ * @remarks Codecs are typically used in shared-tree to convert data into some persisted format.
  * For this common use case, any format for encoding that was ever actually used needs to
  * be supported for decoding in all future code versions.
  *
  * Using an {@link ICodecFamily} is the recommended strategy for managing this support, keeping in
  * mind evolution of encodings over time.
- *
- * @alpha
  */
 export interface IMultiFormatCodec<
 	TDecoded,
 	TJsonEncoded extends JsonCompatibleReadOnly = JsonCompatibleReadOnly,
+	TJsonValidate = TJsonEncoded,
 > {
-	json: IJsonCodec<TDecoded, TJsonEncoded>;
+	json: IJsonCodec<TDecoded, TJsonEncoded, TJsonValidate>;
 	binary: IBinaryCodec<TDecoded>;
 
 	/** Ensures multi-format codecs cannot also be single-format codecs. */
@@ -120,20 +129,19 @@ export interface IMultiFormatCodec<
  * the `formatVersion` parameter)
  * allows avoiding some duplicate work at encode/decode time, since the vast majority of document usage will not
  * involve mixed format versions.
- * @alpha
  */
 export interface ICodecFamily<TDecoded> {
 	/**
-	 * @returns - a codec that can be used to encode and decode data in the specified format.
+	 * @returns a codec that can be used to encode and decode data in the specified format.
 	 * @throws - if the format version is not supported by this family.
-	 * @remarks - Implementations should typically emit telemetry (either indirectly by throwing a well-known error with
+	 * @remarks Implementations should typically emit telemetry (either indirectly by throwing a well-known error with
 	 * logged properties or directly using some logger) when a format version is requested that is not supported.
 	 * This ensures that applications can diagnose compatibility issues.
 	 */
 	resolve(formatVersion: number): IMultiFormatCodec<TDecoded>;
 
 	/**
-	 * @returns - an iterable of all format versions supported by this family.
+	 * @returns an iterable of all format versions supported by this family.
 	 */
 	getSupportedFormats(): Iterable<number>;
 }
@@ -233,7 +241,7 @@ export const unitCodec: IMultiFormatCodec<0> = {
  * This type of encoding is only appropriate if the persisted type (which should be defined in a persisted format file)
  * happens to be convenient for in-memory usage as well.
  *
- * @remarks - Beware that this API can cause accidental extraneous data in the persisted format.
+ * @remarks Beware that this API can cause accidental extraneous data in the persisted format.
  * Consider the following example:
  * ```typescript
  * interface MyPersistedType {
@@ -293,11 +301,15 @@ export function makeValueCodec<Schema extends TSchema>(
  * Wraps a codec with JSON schema validation for its encoded type.
  * @returns An {@link IJsonCodec} which validates the data it encodes and decodes matches the provided schema.
  */
-export function withSchemaValidation<TInMemoryFormat, EncodedSchema extends TSchema>(
+export function withSchemaValidation<
+	TInMemoryFormat,
+	EncodedSchema extends TSchema,
+	TEncodedFormat = JsonCompatibleReadOnly,
+>(
 	schema: EncodedSchema,
-	codec: IJsonCodec<TInMemoryFormat>,
+	codec: IJsonCodec<TInMemoryFormat, TEncodedFormat>,
 	validator?: JsonValidator,
-): IJsonCodec<TInMemoryFormat> {
+): IJsonCodec<TInMemoryFormat, TEncodedFormat> {
 	if (!validator) {
 		return codec;
 	}
@@ -310,7 +322,7 @@ export function withSchemaValidation<TInMemoryFormat, EncodedSchema extends TSch
 			}
 			return encoded;
 		},
-		decode: (encoded: JsonCompatibleReadOnly) => {
+		decode: (encoded: TEncodedFormat) => {
 			if (!compiledFormat.check(encoded)) {
 				fail("Encoded schema should validate");
 			}

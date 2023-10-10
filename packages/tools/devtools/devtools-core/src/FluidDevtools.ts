@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { UsageError } from "@fluidframework/container-utils";
+import { UsageError } from "@fluidframework/telemetry-utils";
 
-import { ContainerDevtoolsProps, ContainerDevtools } from "./ContainerDevtools";
-import { IContainerDevtools } from "./IContainerDevtools";
+import { type ContainerDevtoolsProps, ContainerDevtools } from "./ContainerDevtools";
+import { type IContainerDevtools } from "./IContainerDevtools";
 import {
 	ContainerList,
 	DevtoolsDisposed,
@@ -14,15 +14,15 @@ import {
 	GetContainerList,
 	GetDevtoolsFeatures,
 	handleIncomingWindowMessage,
-	InboundHandlers,
-	ISourcedDevtoolsMessage,
-	MessageLoggingOptions,
+	type InboundHandlers,
+	type ISourcedDevtoolsMessage,
+	type MessageLoggingOptions,
 	postMessagesToWindow,
 } from "./messaging";
-import { IFluidDevtools } from "./IFluidDevtools";
-import { DevtoolsFeature, DevtoolsFeatureFlags } from "./Features";
-import { DevtoolsLogger } from "./DevtoolsLogger";
-import { ContainerKey } from "./CommonInterfaces";
+import { type IFluidDevtools } from "./IFluidDevtools";
+import { type DevtoolsFeatureFlags } from "./Features";
+import { type DevtoolsLogger } from "./DevtoolsLogger";
+import { type ContainerKey } from "./CommonInterfaces";
 import { pkgVersion as devtoolsVersion } from "./packageVersion";
 
 /**
@@ -242,14 +242,14 @@ export class FluidDevtools implements IFluidDevtools {
 	 * be returned.
 	 */
 	public static initialize(props?: FluidDevtoolsProps): FluidDevtools {
-		if (FluidDevtools.I !== undefined) {
+		if (FluidDevtools.I === undefined) {
+			FluidDevtools.I = new FluidDevtools(props);
+		} else {
 			console.warn(
 				"Devtools have already been initialized. " +
 					"Existing Devtools instance must be disposed before new ones may be initialized. " +
 					"Returning existing Devtools instance.",
 			);
-		} else {
-			FluidDevtools.I = new FluidDevtools(props);
 		}
 
 		return FluidDevtools.I;
@@ -339,14 +339,14 @@ export class FluidDevtools implements IFluidDevtools {
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/common-definitions#IDisposable.disposed}
+	 * {@inheritDoc @fluidframework/core-interfaces#IDisposable.disposed}
 	 */
 	public get disposed(): boolean {
 		return this._disposed;
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/common-definitions#IDisposable.dispose}
+	 * {@inheritDoc @fluidframework/core-interfaces#IDisposable.dispose}
 	 */
 	public dispose(): void {
 		if (this.disposed) {
@@ -380,7 +380,9 @@ export class FluidDevtools implements IFluidDevtools {
 	 */
 	private getSupportedFeatures(): DevtoolsFeatureFlags {
 		return {
-			[DevtoolsFeature.Telemetry]: this.logger !== undefined,
+			telemetry: this.logger !== undefined,
+			// Completed but disabled until we finish the story for unsampled telemetry that powers this feature
+			opLatencyTelemetry: false,
 		};
 	}
 }

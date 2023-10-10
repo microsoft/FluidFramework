@@ -1,5 +1,239 @@
 # @fluidframework/container-runtime
 
+## 2.0.0-internal.7.0.0
+
+### Major Changes
+
+-   DEPRECATED: container-runtime: requestHandlers are deprecated [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+
+    The concept of `requestHandlers` has been deprecated. Please migrate all usage of the following APIs to the new `entryPoint` pattern:
+
+    -   `requestHandler` property in `ContainerRuntime.loadRuntime(...)`
+    -   `RuntimeRequestHandler`
+    -   `RuntimeRequestHandlerBuilder`
+    -   `defaultFluidObjectRequestHandler(...)`
+    -   `defaultRouteRequestHandler(...)`
+    -   `mountableViewRequestHandler(...)`
+    -   `buildRuntimeRequestHandler(...)`
+    -   `createFluidObjectResponse(...)`
+    -   `handleFromLegacyUri(...)`
+    -   `rootDataStoreRequestHandler(...)`
+
+    See [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md) for more details.
+
+-   container-runtime: Removing some deprecated and likely unused ContainerRuntime APIs [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+
+    -   `IGCRuntimeOptions.sweepAllowed`
+    -   `ContainerRuntime.reSubmitFn`
+
+-   Dependencies on @fluidframework/protocol-definitions package updated to 3.0.0 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+
+    This included the following changes from the protocol-definitions release:
+
+    -   Updating signal interfaces for some planned improvements. The intention is split the interface between signals
+        submitted by clients to the server and the resulting signals sent from the server to clients.
+        -   A new optional type member is available on the ISignalMessage interface and a new ISentSignalMessage interface has
+            been added, which will be the typing for signals sent from the client to the server. Both extend a new
+            ISignalMessageBase interface that contains common members.
+    -   The @fluidframework/common-definitions package dependency has been updated to version 1.0.0.
+
+-   DEPRECATED: resolveHandle and IFluidHandleContext deprecated on IContainerRuntime [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+
+    The `resolveHandle(...)` and `get IFluidHandleContext()` methods have been deprecated on the following interfaces:
+
+    -   `IContainerRuntime`
+    -   `IContainerRuntimeBase`
+
+    Requesting arbitrary URLs has been deprecated on `IContainerRuntime`. Please migrate all usage to the `IContainerRuntime.getEntryPoint()` method if trying to obtain the application-specified root object.
+
+    See [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md) for more details.
+
+-   Server upgrade: dependencies on Fluid server packages updated to 2.0.1 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+
+    Dependencies on the following Fluid server package have been updated to version 2.0.1:
+
+    -   @fluidframework/gitresources: 2.0.1
+    -   @fluidframework/server-kafka-orderer: 2.0.1
+    -   @fluidframework/server-lambdas: 2.0.1
+    -   @fluidframework/server-lambdas-driver: 2.0.1
+    -   @fluidframework/server-local-server: 2.0.1
+    -   @fluidframework/server-memory-orderer: 2.0.1
+    -   @fluidframework/protocol-base: 2.0.1
+    -   @fluidframework/server-routerlicious: 2.0.1
+    -   @fluidframework/server-routerlicious-base: 2.0.1
+    -   @fluidframework/server-services: 2.0.1
+    -   @fluidframework/server-services-client: 2.0.1
+    -   @fluidframework/server-services-core: 2.0.1
+    -   @fluidframework/server-services-ordering-kafkanode: 2.0.1
+    -   @fluidframework/server-services-ordering-rdkafka: 2.0.1
+    -   @fluidframework/server-services-ordering-zookeeper: 2.0.1
+    -   @fluidframework/server-services-shared: 2.0.1
+    -   @fluidframework/server-services-telemetry: 2.0.1
+    -   @fluidframework/server-services-utils: 2.0.1
+    -   @fluidframework/server-test-utils: 2.0.1
+    -   tinylicious: 2.0.1
+
+-   container-runtime: initializeEntryPoint renamed to provideEntryPoint [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+
+    The naming of `initializeEntryPoint` has been changed to `provideEntryPoint`. Please change the property name in relevant calls to `ContainerRuntime.loadRuntime(...)`.
+
+-   test-utils: provideEntryPoint is required [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+
+    The optional `provideEntryPoint` method has become required on a number of constructors. A value will need to be provided to the following classes:
+
+    -   `BaseContainerRuntimeFactory`
+    -   `RuntimeFactory`
+    -   `ContainerRuntime` (constructor and `loadRuntime`)
+    -   `FluidDataStoreRuntime`
+
+    See [testContainerRuntimeFactoryWithDefaultDataStore.ts](https://github.com/microsoft/FluidFramework/tree/main/packages/test/test-utils/src/testContainerRuntimeFactoryWithDefaultDataStore.ts) for an example implemtation of `provideEntryPoint` for ContainerRuntime.
+    See [pureDataObjectFactory.ts](https://github.com/microsoft/FluidFramework/tree/main/packages/framework/aqueduct/src/data-object-factories/pureDataObjectFactory.ts#L83) for an example implementation of `provideEntryPoint` for DataStoreRuntime.
+
+    Subsequently, various `entryPoint` and `getEntryPoint()` endpoints have become required. Please see [containerRuntime.ts](https://github.com/microsoft/FluidFramework/tree/main/packages/runtime/container-runtime/src/containerRuntime.ts) for example implementations of these APIs.
+
+    For more details, see [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md)
+
+-   Minimum TypeScript version now 5.1.6 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+
+    The minimum supported TypeScript version for Fluid 2.0 clients is now 5.1.6.
+
+### Minor Changes
+
+-   container-runtime: Remove DeltaManagerProxyBase [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+
+    `DeltaManagerProxyBase` was deprecated in [version 2.0.0-internal.6.1.0](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.0.0-internal.6.1.0). It is no longer exported, and no replacement API is intended.
+
+## 2.0.0-internal.6.4.0
+
+### Minor Changes
+
+-   Some stack traces are improved ([#17380](https://github.com/microsoft/FluidFramework/issues/17380)) [34f2808ee9](https://github.com/microsoft/FluidFramework/commits/34f2808ee9764aef21b990f8b48860d9e3ce27a5)
+
+    Some stack traces have been improved and might now include frames for async functions that weren't previously included.
+
+## 2.0.0-internal.6.3.0
+
+Dependency updates only.
+
+## 2.0.0-internal.6.2.0
+
+### Minor Changes
+
+-   Remove use of @fluidframework/common-definitions ([#16638](https://github.com/microsoft/FluidFramework/issues/16638)) [a8c81509c9](https://github.com/microsoft/FluidFramework/commits/a8c81509c9bf09cfb2092ebcf7265205f9eb6dbf)
+
+    The **@fluidframework/common-definitions** package is being deprecated, so the following interfaces and types are now
+    imported from the **@fluidframework/core-interfaces** package:
+
+    -   interface IDisposable
+    -   interface IErrorEvent
+    -   interface IErrorEvent
+    -   interface IEvent
+    -   interface IEventProvider
+    -   interface ILoggingError
+    -   interface ITaggedTelemetryPropertyType
+    -   interface ITelemetryBaseEvent
+    -   interface ITelemetryBaseLogger
+    -   interface ITelemetryErrorEvent
+    -   interface ITelemetryGenericEvent
+    -   interface ITelemetryLogger
+    -   interface ITelemetryPerformanceEvent
+    -   interface ITelemetryProperties
+    -   type ExtendEventProvider
+    -   type IEventThisPlaceHolder
+    -   type IEventTransformer
+    -   type ReplaceIEventThisPlaceHolder
+    -   type ReplaceIEventThisPlaceHolder
+    -   type TelemetryEventCategory
+    -   type TelemetryEventPropertyType
+
+-   Deprecated `refreshLatestAck` in `ISummarizeOptions`, `IOnDemandSummarizeOptions` and `IEnqueueSummarizeOptions` ([#16907](https://github.com/microsoft/FluidFramework/issues/16907)) [5a921c56a6](https://github.com/microsoft/FluidFramework/commits/5a921c56a6ccd29a454e235e9d836717ce401714)
+
+    Passing `refreshLatestAck` as true will result in closing the summarizer. It is not supported anymore and will be removed in a future release. It should not be passed in to `summarizeOnDemand` and `enqueueSummarize` APIs anymore.
+
+## 2.0.0-internal.6.1.0
+
+Dependency updates only.
+
+## 2.0.0-internal.6.0.0
+
+### Major Changes
+
+-   Removed IContainerContext.existing [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
+
+    The recommended means of checking for existing changed to the instantiateRuntime param in 2021, and the IContainerContext.existing member was formally deprecated in 2.0.0-internal.2.0.0. This member is now removed.
+
+-   `getRootDataStore` API is deprecated [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
+
+    The `getRootDataStore` API that is used to get aliased data store has been deprecated. It will be removed in a future release.
+    Use `getAliasedDataStoreEntryPoint` API to get aliased data stores instead. It returns the data store's entry point which is its `IFluidHandle`. To use this API `initializeEntryPoint` must be provided when creating `FluidDataStoreRuntime` [here](https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/datastore/src/dataStoreRuntime.ts#L243). `getAliasedDataStoreEntryPoint` and `initializeEntryPoint` will become required in a future release.
+
+-   Request APIs deprecated from many places [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
+
+    The `request` API (associated with the `IFluidRouter` interface) has been deprecated on a number of classes and interfaces. The following are impacted:
+
+    -   `IRuntime` and `ContainerRuntime`
+    -   `IFluidDataStoreRuntime` and `FluidDataStoreRuntime`
+    -   `IFluidDataStoreChannel`
+    -   `MockFluidDataStoreRuntime`
+    -   `TestFluidObject`
+
+    Please migrate usage to the corresponding `entryPoint` or `getEntryPoint()` of the object. The value for these "entryPoint" related APIs is determined from factories (for `IRuntime` and `IFluidDataStoreRuntime`) via the `initializeEntryPoint` method. If no method is passed to the factory, the corresponding `entryPoint` and `getEntryPoint()` will be undefined.
+
+    For an example implementation of `initializeEntryPoint`, see [pureDataObjectFactory.ts](https://github.com/microsoft/FluidFramework/blob/next/packages/framework/aqueduct/src/data-object-factories/pureDataObjectFactory.ts#L84).
+
+    More information of the migration off the request pattern, and current status of its removal, is documented in [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md).
+
+-   `initializeEntryPoint` will become required [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
+
+    The optional `initializeEntryPoint` method has been added to a number of constructors. **This method argument will become required in an upcoming release** and a value will need to be provided to the following classes:
+
+    -   `BaseContainerRuntimeFactory`
+    -   `ContainerRuntimeFactoryWithDefaultDataStore`
+    -   `RuntimeFactory`
+    -   `ContainerRuntime` (constructor and `loadRuntime`)
+    -   `FluidDataStoreRuntime`
+
+    For an example implementation of `initializeEntryPoint`, see [pureDataObjectFactory.ts](https://github.com/microsoft/FluidFramework/blob/main/packages/framework/aqueduct/src/data-object-factories/pureDataObjectFactory.ts#L84).
+
+    This work will replace the request pattern. See [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md) for more info on this effort.
+
+-   New required method `getAliasedDataStoreEntryPoint` in ContainerRuntime [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
+
+    `getAliasedDataStoreEntryPoint` API has been added to ContainerRuntime. This can be used to get the entry point to an aliased data stores. To use this API `initializeEntryPoint` must be provided when creating `FluidDataStoreRuntime` [here](https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/datastore/src/dataStoreRuntime.ts#L243). `getAliasedDataStoreEntryPoint` and `initializeEntryPoint` will become required in a future release.
+
+-   `IRootSummaryTreeWithStats` removed [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
+
+    `IRootSummaryTreeWithStats` was the return type of `summarize` method on `ContainerRuntime`. It was an internal interface used only in `ContainerRuntime` class to to access `gcStats` from a call site. `gcStats` is not needed in the call site anymore so this interface is removed.
+
+-   getPendingLocalState and closeAndGetPendingLocalState are now async [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
+
+    getPendingLocalState and closeAndGetPendingLocalState are now async to allow uploading blobs to attach to a DDS (in closing scenario). There is a new parameter in those methods at the container/runtime layer "notifyImminentClosure" which is true only when closing and ensures uploading blobs fast resolve and get attached. Once we apply stashed ops to new container, blob will try to reupload and we will know where to place its references.
+
+-   Calling `ContainerRuntime.closeFn(...)` will no longer call `ContainerContext.disposeFn(...)` as well [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
+
+    This means the `ContainerRuntime` will no longer be disposed by calling this method.
+
+    If you want to dispose the `ContainerRuntime`, use the `ContainerRuntime.disposeFn` method.
+
+    For more information about close vs. dispose expectations, see the [Closure](https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/README.md#closure) section of Loader README.md.
+
+-   Upgraded typescript transpilation target to ES2020 [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
+
+    Upgraded typescript transpilation target to ES2020. This is done in order to decrease the bundle sizes of Fluid Framework packages. This has provided size improvements across the board for ex. Loader, Driver, Runtime etc. Reduced bundle sizes helps to load lesser code in apps and hence also helps to improve the perf.If any app wants to target any older versions of browsers with which this target version is not compatible, then they can use packages like babel to transpile to a older target.
+
+-   IDeltaManager members disposed and dispose() removed [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
+
+    IDeltaManager members disposed and dispose() were deprecated in 2.0.0-internal.5.3.0 and have now been removed.
+
+## 2.0.0-internal.5.4.0
+
+### Minor Changes
+
+-   ContainerRuntime.reSubmitFn is deprecated: ([#16276](https://github.com/microsoft/FluidFramework/issues/16276)) [46707372e8](https://github.com/microsoft/FluidFramework/commits/46707372e82a492f6e42b683d37d49c25e6be15b)
+
+    ContainerRuntime.reSubmitFn is deprecatedsince this functionality needs not be exposed, and we are refactoring the
+    signatures of related code internally.
+
 ## 2.0.0-internal.5.3.0
 
 Dependency updates only.

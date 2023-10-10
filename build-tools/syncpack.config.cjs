@@ -50,13 +50,6 @@ module.exports = {
 			range: "",
 		},
 
-		// PropertyDDS packages' dependencies are ignored because they use a lot of exact deps.
-		{
-			dependencies: ["**"],
-			packages: ["@fluid-experimental/property-*"],
-			isIgnored: true,
-		},
-
 		{
 			label: "Overridden server dependencies should always be exact versions",
 			dependencyTypes: ["pnpmOverrides"],
@@ -100,6 +93,19 @@ module.exports = {
 
 				// Required due to use of "unstable" tree component APIs
 				"@fluentui/react-components",
+			],
+			packages: ["**"],
+			range: "~",
+		},
+
+		{
+			label: "Dependencies on other fluid packages within the workspace should use tilde dependency ranges",
+			dependencies: [
+				"@fluid-private/readme-command",
+				"@fluid-tools/build-cli",
+				"@fluid-tools/version-tools",
+				"@fluidframework/build-tools",
+				"@fluidframework/bundle-size-tools",
 			],
 			packages: ["**"],
 			range: "~",
@@ -153,6 +159,7 @@ module.exports = {
 				"@fluid-example/**",
 				"@fluid-experimental/**",
 				"@fluid-internal/**",
+				"@fluid-private/**",
 				"@fluid-tools/**",
 				"@fluidframework/**",
 				"fluid-framework",
@@ -161,6 +168,7 @@ module.exports = {
 				"@fluid-example/**",
 				"@fluid-experimental/**",
 				"@fluid-internal/**",
+				"@fluid-private/**",
 				"@fluid-tools/**",
 				"@fluidframework/**",
 				"fluid-framework",

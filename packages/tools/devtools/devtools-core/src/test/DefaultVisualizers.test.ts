@@ -9,28 +9,28 @@
 import { expect } from "chai";
 
 import { SharedCell } from "@fluidframework/cell";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
-import { ISharedObject } from "@fluidframework/shared-object-base";
+import { type ISharedObject } from "@fluidframework/shared-object-base";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import {
 	AllowedUpdateType,
-	FieldKinds,
 	SchemaBuilder,
-	ValueSchema,
 	SharedTreeFactory,
 	valueSymbol,
+	typeNameSymbol,
+	leaf,
 } from "@fluid-experimental/tree2";
 
-import { EditType, FluidObjectId } from "../CommonInterfaces";
+import { EditType, type FluidObjectId } from "../CommonInterfaces";
 import {
-	FluidObjectTreeNode,
-	FluidObjectValueNode,
-	FluidUnknownObjectNode,
-	VisualChildNode,
+	type FluidObjectTreeNode,
+	type FluidObjectValueNode,
+	type FluidUnknownObjectNode,
+	type VisualChildNode,
 	visualizeChildData as visualizeChildDataBase,
 	visualizeSharedCell,
 	visualizeSharedCounter,
@@ -56,23 +56,47 @@ async function visualizeChildData(data: unknown): Promise<VisualChildNode> {
 }
 
 describe("DefaultVisualizers unit tests", () => {
-	it("SharedCell", async () => {
+	it("SharedCell (Primitive data)", async () => {
 		const runtime = new MockFluidDataStoreRuntime();
 		const sharedCell = new SharedCell("test-cell", runtime, SharedCell.getFactory().attributes);
+
+		const result = await visualizeSharedCell(sharedCell, visualizeChildData);
+
+		const expected: FluidObjectValueNode = {
+			fluidObjectId: sharedCell.id,
+			value: undefined,
+			typeMetadata: "SharedCell",
+			nodeKind: VisualNodeKind.FluidValueNode,
+			editProps: {
+				editTypes: undefined,
+			},
+		};
+
+		expect(result).to.deep.equal(expected);
+	});
+
+	it("SharedCell (JSON data)", async () => {
+		const runtime = new MockFluidDataStoreRuntime();
+		const sharedCell = new SharedCell("test-cell", runtime, SharedCell.getFactory().attributes);
+
+		sharedCell.set({ test: undefined });
 
 		const result = await visualizeSharedCell(sharedCell, visualizeChildData);
 
 		const expected: FluidObjectTreeNode = {
 			fluidObjectId: sharedCell.id,
 			children: {
-				data: {
-					value: undefined,
-					typeMetadata: "undefined",
+				test: {
 					nodeKind: VisualNodeKind.ValueNode,
+					typeMetadata: "undefined",
+					value: undefined,
 				},
 			},
-			typeMetadata: "SharedCell",
 			nodeKind: VisualNodeKind.FluidTreeNode,
+			typeMetadata: "SharedCell",
+			editProps: {
+				editTypes: undefined,
+			},
 		};
 
 		expect(result).to.deep.equal(expected);
@@ -282,8 +306,6 @@ describe("DefaultVisualizers unit tests", () => {
 		sharedMatrix.insertCols(0, 3);
 		sharedMatrix.setCell(0, 0, "Hello");
 		sharedMatrix.setCell(0, 1, "World");
-		// False positive
-		// eslint-disable-next-line unicorn/no-useless-undefined
 		sharedMatrix.setCell(0, 2, undefined);
 		sharedMatrix.setCell(1, 0, 1);
 		sharedMatrix.setCell(1, 1, true);
@@ -380,33 +402,28 @@ describe("DefaultVisualizers unit tests", () => {
 
 	it("SharedTree", async () => {
 		const factory = new SharedTreeFactory();
-		const builder = new SchemaBuilder("DefaultVisualizer_SharedTree_Test");
+		const builder = new SchemaBuilder({
+			scope: "DefaultVisualizer_SharedTree_Test",
+			libraries: [leaf.library],
+		});
 
 		const sharedTree = factory.create(new MockFluidDataStoreRuntime(), "test");
 
-		const stringSchema = builder.leaf("string-property", ValueSchema.String);
-		const numberSchema = builder.leaf("number-property", ValueSchema.Number);
-		const booleanSchema = builder.leaf("boolean-property", ValueSchema.Boolean);
-
-		const serializableSchema = builder.leaf("serializable-property", ValueSchema.Serializable);
-
 		const leafSchema = builder.struct("leaf-item", {
-			leafField: SchemaBuilder.fieldValue(serializableSchema),
+			leafField: SchemaBuilder.fieldRequired(leaf.boolean, leaf.handle, leaf.string),
 		});
 
 		const childSchema = builder.struct("child-item", {
-			childField: SchemaBuilder.fieldValue(stringSchema, booleanSchema),
+			childField: SchemaBuilder.fieldRequired(leaf.string, leaf.boolean),
 			childData: SchemaBuilder.fieldOptional(leafSchema),
 		});
 
 		const rootNodeSchema = builder.struct("root-item", {
 			childrenOne: SchemaBuilder.fieldSequence(childSchema),
-			childrenTwo: SchemaBuilder.fieldValue(numberSchema),
+			childrenTwo: SchemaBuilder.fieldRequired(leaf.number),
 		});
 
-		const schema = builder.intoDocumentSchema(
-			SchemaBuilder.field(FieldKinds.value, rootNodeSchema),
-		);
+		const schema = builder.toDocumentSchema(SchemaBuilder.fieldRequired(rootNodeSchema));
 
 		sharedTree.schematize({
 			schema,
@@ -415,13 +432,19 @@ describe("DefaultVisualizers unit tests", () => {
 				childrenOne: [
 					{
 						childField: "Hello world!",
-						childData: { leafField: { [valueSymbol]: "Hello world again!" } },
+						childData: {
+							leafField: {
+								[typeNameSymbol]: leaf.string.name,
+								[valueSymbol]: "Hello world again!",
+							},
+						},
 					},
 					{
 						childField: true,
 						childData: {
 							leafField: {
-								[valueSymbol]: false, // TODO: SharedTree should encode the handle.
+								[typeNameSymbol]: leaf.boolean.name,
+								[valueSymbol]: false, // TODO: Use a handle here.
 							},
 						},
 					},

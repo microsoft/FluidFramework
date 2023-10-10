@@ -56,8 +56,8 @@ import { IUser } from '@fluidframework/protocol-definitions';
 import { MessageType } from '@fluidframework/protocol-definitions';
 import { ReadOnlyInfo } from '@fluidframework/container-definitions';
 import { ScopeType } from '@fluidframework/protocol-definitions';
-import { TypedEventEmitter } from '@fluidframework/common-utils';
-import { VisibilityState as VisibilityState_2 } from '@fluidframework/runtime-definitions';
+import { TypedEventEmitter } from '@fluid-internal/client-utils';
+import { VisibilityState } from '@fluidframework/runtime-definitions';
 
 // @public
 export interface IInsecureUser extends IUser {
@@ -103,17 +103,17 @@ export class MockContainerRuntime {
     clientId: string;
     // (undocumented)
     protected clientSequenceNumber: number;
-    // (undocumented)
+    // @deprecated (undocumented)
     createDeltaConnection(): MockDeltaConnection;
     // (undocumented)
     protected readonly dataStoreRuntime: MockFluidDataStoreRuntime;
-    // (undocumented)
+    // @deprecated (undocumented)
     protected readonly deltaConnections: MockDeltaConnection[];
     // (undocumented)
     dirty(): void;
     // (undocumented)
     protected readonly factory: MockContainerRuntimeFactory;
-    flush?(): void;
+    flush(): void;
     // (undocumented)
     protected readonly overrides?: {
         minimumSequenceNumber?: number | undefined;
@@ -122,7 +122,7 @@ export class MockContainerRuntime {
     protected readonly pendingMessages: IMockContainerRuntimePendingMessage[];
     // (undocumented)
     process(message: ISequencedDocumentMessage): void;
-    rebase?(): void;
+    rebase(): void;
     protected get referenceSequenceNumber(): number;
     protected runtimeOptions: Required<IMockContainerRuntimeOptions>;
     // (undocumented)
@@ -310,8 +310,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     baseSnapshot: ISnapshotTree | undefined;
     // (undocumented)
-    bindToContext(): void;
-    // (undocumented)
     clientDetails: IClientDetails;
     // (undocumented)
     clientId: string | undefined;
@@ -380,6 +378,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     constructor(overrides?: {
         clientId?: string;
         entryPoint?: IFluidHandle<FluidObject>;
+        id?: string;
+        logger?: ITelemetryLoggerExt;
     });
     // (undocumented)
     get absolutePath(): string;
@@ -408,7 +408,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     createChannel(id: string, type: string): IChannel;
     // (undocumented)
-    createDeltaConnection?(): MockDeltaConnection;
+    createDeltaConnection(): MockDeltaConnection;
     // (undocumented)
     deltaManager: MockDeltaManager;
     // (undocumented)
@@ -420,7 +420,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     ensureNoDataModelChanges<T>(callback: () => T): T;
     // (undocumented)
-    readonly entryPoint?: IFluidHandle<FluidObject>;
+    readonly entryPoint: IFluidHandle<FluidObject>;
     // (undocumented)
     readonly existing: boolean;
     // (undocumented)
@@ -441,7 +441,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     readonly id: string;
     // (undocumented)
     get IFluidHandleContext(): IFluidHandleContext;
-    // (undocumented)
+    // @deprecated (undocumented)
     get IFluidRouter(): this;
     // (undocumented)
     get isAttached(): boolean;
@@ -466,7 +466,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     processSignal(message: any, local: boolean): void;
     // (undocumented)
     quorum: MockQuorumClients;
-    // (undocumented)
+    // @deprecated (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
     requestDataStore(request: IRequest): Promise<IResponse>;
@@ -497,7 +497,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
     // (undocumented)
-    get visibilityState(): VisibilityState_2;
+    get visibilityState(): VisibilityState;
     // (undocumented)
     waitAttached(): Promise<void>;
 }

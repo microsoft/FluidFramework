@@ -4,19 +4,20 @@
  */
 
 import { IDisposable, ITelemetryProperties } from "@fluidframework/core-interfaces";
-import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
+import { performance, TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
+	ICriticalContainerError,
 	IDeltaQueue,
 	ReadOnlyInfo,
-	IConnectionDetailsInternal,
-	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
-import { GenericError, UsageError } from "@fluidframework/container-utils";
 import {
 	IAnyDriverError,
 	IDocumentService,
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
+	// eslint-disable-next-line import/no-deprecated
+	DriverErrorType,
 } from "@fluidframework/driver-definitions";
 import {
 	canRetryOnError,
@@ -43,8 +44,21 @@ import {
 	ScopeType,
 	ISequencedDocumentSystemMessage,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt, formatTick, normalizeError } from "@fluidframework/telemetry-utils";
-import { ReconnectMode, IConnectionManager, IConnectionManagerFactoryArgs } from "./contracts";
+import {
+	formatTick,
+	GenericError,
+	isFluidError,
+	ITelemetryLoggerExt,
+	normalizeError,
+	UsageError,
+} from "@fluidframework/telemetry-utils";
+import {
+	ReconnectMode,
+	IConnectionManager,
+	IConnectionManagerFactoryArgs,
+	IConnectionDetailsInternal,
+	IConnectionStateChangeReason,
+} from "./contracts";
 import { DeltaQueue } from "./deltaQueue";
 import { SignalType } from "./protocol";
 import { isDeltaStreamConnectionForbiddenError } from "./utils";
@@ -101,7 +115,15 @@ class NoDeltaStream
 		blockSize: 0,
 	};
 	checkpointSequenceNumber?: number | undefined = undefined;
-	constructor(public readonly storageOnlyReason?: string) {
+	/**
+	 * Connection which is not connected to socket.
+	 * @param storageOnlyReason - Reason on why the connection to delta stream is not allowed.
+	 * @param readonlyConnectionReason - reason/error if any which lead to using NoDeltaStream.
+	 */
+	constructor(
+		public readonly storageOnlyReason?: string,
+		public readonly readonlyConnectionReason?: IConnectionStateChangeReason,
+	) {
 		super();
 	}
 	submit(messages: IDocumentMessage[]): void {
@@ -332,7 +354,7 @@ export class ConnectionManager implements IConnectionManager {
 
 	private static detailsFromConnection(
 		connection: IDocumentDeltaConnection,
-		reason: string,
+		reason: IConnectionStateChangeReason,
 	): IConnectionDetailsInternal {
 		return {
 			claims: connection.claims,
@@ -351,7 +373,7 @@ export class ConnectionManager implements IConnectionManager {
 	constructor(
 		private readonly serviceProvider: () => IDocumentService | undefined,
 		public readonly containerDirty: () => boolean,
-		private client: IClient,
+		private readonly client: IClient,
 		reconnectAllowed: boolean,
 		private readonly logger: ITelemetryLoggerExt,
 		private readonly props: IConnectionManagerFactoryArgs,
@@ -385,8 +407,12 @@ export class ConnectionManager implements IConnectionManager {
 
 		this._outbound.clear();
 
-		const disconnectReason = "Closing DeltaManager";
+		const disconnectReason: IConnectionStateChangeReason = {
+			text: "Closing DeltaManager",
+			error,
+		};
 
+		const oldReadonlyValue = this.readonly;
 		// This raises "disconnect" event if we have active connection.
 		this.disconnectFromDeltaStream(disconnectReason);
 
@@ -394,7 +420,7 @@ export class ConnectionManager implements IConnectionManager {
 			// Notify everyone we are in read-only state.
 			// Useful for data stores in case we hit some critical error,
 			// to switch to a mode where user edits are not accepted
-			this.set_readonlyPermissions(true);
+			this.set_readonlyPermissions(true, oldReadonlyValue, disconnectReason);
 		}
 	}
 
@@ -402,7 +428,7 @@ export class ConnectionManager implements IConnectionManager {
 	 * Enables or disables automatic reconnecting.
 	 * Will throw an error if reconnectMode set to Never.
 	 */
-	public setAutoReconnect(mode: ReconnectMode): void {
+	public setAutoReconnect(mode: ReconnectMode, reason: IConnectionStateChangeReason): void {
 		assert(
 			mode !== ReconnectMode.Never && this._reconnectMode !== ReconnectMode.Never,
 			0x278 /* "API is not supported for non-connecting or closed container" */,
@@ -412,26 +438,12 @@ export class ConnectionManager implements IConnectionManager {
 
 		if (mode !== ReconnectMode.Enabled) {
 			// immediately disconnect - do not rely on service eventually dropping connection.
-			this.disconnectFromDeltaStream("setAutoReconnect");
+			this.disconnectFromDeltaStream(reason);
 		}
 	}
 
 	/**
-	 * Sends signal to runtime (and data stores) to be read-only.
-	 * Hosts may have read only views, indicating to data stores that no edits are allowed.
-	 * This is independent from this._readonlyPermissions (permissions) and this.connectionMode
-	 * (server can return "write" mode even when asked for "read")
-	 * Leveraging same "readonly" event as runtime & data stores should behave the same in such case
-	 * as in read-only permissions.
-	 * But this.active can be used by some DDSes to figure out if ops can be sent
-	 * (for example, read-only view still participates in code proposals / upgrades decisions)
-	 *
-	 * Forcing Readonly does not prevent DDS from generating ops. It is up to user code to honour
-	 * the readonly flag. If ops are generated, they will accumulate locally and not be sent. If
-	 * there are pending in the outbound queue, it will stop sending until force readonly is
-	 * cleared.
-	 *
-	 * @param readonly - set or clear force readonly.
+	 * {@inheritDoc Container.forceReadonly}
 	 */
 	public forceReadonly(readonly: boolean) {
 		if (readonly !== this._forceReadonly) {
@@ -459,32 +471,38 @@ export class ConnectionManager implements IConnectionManager {
 					this.logger.sendErrorEvent({ eventName: "ForceReadonlyPendingChanged" });
 				}
 
-				reconnect = this.disconnectFromDeltaStream("Force readonly");
+				reconnect = this.disconnectFromDeltaStream({ text: "Force readonly" });
 			}
 			this.props.readonlyChangeHandler(this.readonly);
 			if (reconnect) {
 				// reconnect if we disconnected from before.
-				this.triggerConnect("Force Readonly", "read");
+				this.triggerConnect({ text: "Force Readonly" }, "read");
 			}
 		}
 	}
 
-	private set_readonlyPermissions(readonly: boolean) {
-		const oldValue = this.readonly;
-		this._readonlyPermissions = readonly;
-		if (oldValue !== this.readonly) {
-			this.props.readonlyChangeHandler(this.readonly);
+	private set_readonlyPermissions(
+		newReadonlyValue: boolean,
+		oldReadonlyValue: boolean | undefined,
+		readonlyConnectionReason?: IConnectionStateChangeReason,
+	) {
+		this._readonlyPermissions = newReadonlyValue;
+		if (oldReadonlyValue !== this.readonly) {
+			this.props.readonlyChangeHandler(this.readonly, readonlyConnectionReason);
 		}
 	}
 
-	public connect(reason: string, connectionMode?: ConnectionMode) {
-		this.connectCore(reason, connectionMode).catch((error) => {
-			const normalizedError = normalizeError(error, { props: fatalConnectErrorProp });
+	public connect(reason: IConnectionStateChangeReason, connectionMode?: ConnectionMode) {
+		this.connectCore(reason, connectionMode).catch((e) => {
+			const normalizedError = normalizeError(e, { props: fatalConnectErrorProp });
 			this.props.closeHandler(normalizedError);
 		});
 	}
 
-	private async connectCore(reason: string, connectionMode?: ConnectionMode): Promise<void> {
+	private async connectCore(
+		reason: IConnectionStateChangeReason,
+		connectionMode?: ConnectionMode,
+	): Promise<void> {
 		assert(!this._disposed, 0x26a /* "not closed" */);
 
 		if (this.connection !== undefined) {
@@ -569,7 +587,23 @@ export class ConnectionManager implements IConnectionManager {
 				}
 			} catch (origError: any) {
 				if (isDeltaStreamConnectionForbiddenError(origError)) {
-					connection = new NoDeltaStream(origError.storageOnlyReason);
+					connection = new NoDeltaStream(origError.storageOnlyReason, {
+						text: origError.message,
+						error: origError,
+					});
+					requestedMode = "read";
+					break;
+				} else if (
+					isFluidError(origError) &&
+					// eslint-disable-next-line import/no-deprecated
+					origError.errorType === DriverErrorType.outOfStorageError
+				) {
+					// If we get out of storage error from calling joinsession, then use the NoDeltaStream object so
+					// that user can at least load the container.
+					connection = new NoDeltaStream(undefined, {
+						text: origError.message,
+						error: origError,
+					});
 					requestedMode = "read";
 					break;
 				}
@@ -660,7 +694,7 @@ export class ConnectionManager implements IConnectionManager {
 	 * And report the error if it escapes for any reason.
 	 * @param args - The connection arguments
 	 */
-	private triggerConnect(reason: string, connectionMode: ConnectionMode) {
+	private triggerConnect(reason: IConnectionStateChangeReason, connectionMode: ConnectionMode) {
 		// reconnect() includes async awaits, and that causes potential race conditions
 		// where we might already have a connection. If it were to happen, it's possible that we will connect
 		// with different mode to `connectionMode`. Glancing through the caller chains, it looks like code should be
@@ -680,7 +714,7 @@ export class ConnectionManager implements IConnectionManager {
 	 * @param error - Error causing the disconnect if any.
 	 * @returns A boolean that indicates if there was an existing connection (or pending connection) to disconnect
 	 */
-	private disconnectFromDeltaStream(reason: string, error?: IAnyDriverError): boolean {
+	private disconnectFromDeltaStream(reason: IConnectionStateChangeReason): boolean {
 		this.pendingReconnect = false;
 
 		if (this.connection === undefined) {
@@ -702,7 +736,7 @@ export class ConnectionManager implements IConnectionManager {
 
 		// Remove listeners first so we don't try to retrigger this flow accidentally through reconnectOnError
 		connection.off("op", this.opHandler);
-		connection.off("signal", this.props.signalHandler);
+		connection.off("signal", this.signalHandler);
 		connection.off("nack", this.nackHandler);
 		connection.off("disconnect", this.disconnectHandlerInternal);
 		connection.off("error", this.errorHandler);
@@ -713,7 +747,7 @@ export class ConnectionManager implements IConnectionManager {
 		this._outbound.clear();
 		connection.dispose();
 
-		this.props.disconnectHandler(reason, error);
+		this.props.disconnectHandler(reason);
 
 		this._connectionVerboseProps = {};
 
@@ -723,7 +757,7 @@ export class ConnectionManager implements IConnectionManager {
 	/**
 	 * Cancel in-progress connection attempt.
 	 */
-	private cancelConnection(reason: string) {
+	private cancelConnection(reason: IConnectionStateChangeReason) {
 		assert(
 			this.pendingConnection !== undefined,
 			0x345 /* this.pendingConnection is undefined when trying to cancel */,
@@ -731,7 +765,10 @@ export class ConnectionManager implements IConnectionManager {
 		this.pendingConnection.abort();
 		this.pendingConnection = undefined;
 		this.logger.sendTelemetryEvent({ eventName: "ConnectionCancelReceived" });
-		this.props.cancelConnectionHandler(`Cancel Pending Connection due to ${reason}`);
+		this.props.cancelConnectionHandler({
+			text: `Cancel Pending Connection due to ${reason.text}`,
+			error: reason.error,
+		});
 	}
 
 	/**
@@ -742,7 +779,7 @@ export class ConnectionManager implements IConnectionManager {
 	private setupNewSuccessfulConnection(
 		connection: IDocumentDeltaConnection,
 		requestedMode: ConnectionMode,
-		reason: string,
+		reason: IConnectionStateChangeReason,
 	) {
 		// Old connection should have been cleaned up before establishing a new one
 		assert(
@@ -756,6 +793,7 @@ export class ConnectionManager implements IConnectionManager {
 
 		this.pendingConnection = undefined;
 
+		const oldReadonlyValue = this.readonly;
 		this.connection = connection;
 
 		// Does information in scopes & mode matches?
@@ -781,18 +819,22 @@ export class ConnectionManager implements IConnectionManager {
 			0x0e8 /* "readonly perf with write connection" */,
 		);
 
-		this.set_readonlyPermissions(readonly);
+		this.set_readonlyPermissions(
+			readonly,
+			oldReadonlyValue,
+			isNoDeltaStreamConnection(connection) ? connection.readonlyConnectionReason : undefined,
+		);
 
 		if (this._disposed) {
 			// Raise proper events, Log telemetry event and close connection.
-			this.disconnectFromDeltaStream("ConnectionManager already closed");
+			this.disconnectFromDeltaStream({ text: "ConnectionManager already closed" });
 			return;
 		}
 
 		this._outbound.resume();
 
 		connection.on("op", this.opHandler);
-		connection.on("signal", this.props.signalHandler);
+		connection.on("signal", this.signalHandler);
 		connection.on("nack", this.nackHandler);
 		connection.on("disconnect", this.disconnectHandlerInternal);
 		connection.on("error", this.errorHandler);
@@ -858,28 +900,32 @@ export class ConnectionManager implements IConnectionManager {
 				type: SignalType.Clear,
 			}),
 		};
-		this.props.signalHandler(clearSignal);
 
-		for (const priorClient of connection.initialClients ?? []) {
-			const joinSignal: ISignalMessage = {
+		// list of signals to process due to this new connection
+		let signalsToProcess: ISignalMessage[] = [clearSignal];
+
+		const clientJoinSignals: ISignalMessage[] = (connection.initialClients ?? []).map(
+			(priorClient) => ({
 				clientId: null, // system signal
 				content: JSON.stringify({
 					type: SignalType.ClientJoin,
 					content: priorClient, // ISignalClient
 				}),
-			};
-			this.props.signalHandler(joinSignal);
+			}),
+		);
+		if (clientJoinSignals.length > 0) {
+			signalsToProcess = signalsToProcess.concat(clientJoinSignals);
 		}
 
 		// Unfortunately, there is no defined order between initialSignals (including join & leave signals)
 		// and connection.initialClients. In practice, connection.initialSignals quite often contains join signal
 		// for "self" and connection.initialClients does not contain "self", so we have to process them after
 		// "clear" signal above.
-		if (connection.initialSignals !== undefined) {
-			for (const signal of connection.initialSignals) {
-				this.props.signalHandler(signal);
-			}
+		if (connection.initialSignals !== undefined && connection.initialSignals.length > 0) {
+			signalsToProcess = signalsToProcess.concat(connection.initialSignals);
 		}
+
+		this.props.signalHandler(signalsToProcess);
 	}
 
 	/**
@@ -890,7 +936,9 @@ export class ConnectionManager implements IConnectionManager {
 	 * @returns A promise that resolves when the connection is reestablished or we stop trying
 	 */
 	private reconnectOnError(requestedMode: ConnectionMode, error: IAnyDriverError) {
-		this.reconnect(requestedMode, error.message, error).catch(this.props.closeHandler);
+		this.reconnect(requestedMode, { text: error.message, error }).catch(
+			this.props.closeHandler,
+		);
 	}
 
 	/**
@@ -902,26 +950,25 @@ export class ConnectionManager implements IConnectionManager {
 	 */
 	private async reconnect(
 		requestedMode: ConnectionMode,
-		disconnectMessage: string,
-		error?: IAnyDriverError,
+		reason: IConnectionStateChangeReason<IAnyDriverError>,
 	) {
 		// We quite often get protocol errors before / after observing nack/disconnect
 		// we do not want to run through same sequence twice.
 		// If we're already disconnected/disconnecting it's not appropriate to call this again.
 		assert(this.connection !== undefined, 0x0eb /* "Missing connection for reconnect" */);
 
-		this.disconnectFromDeltaStream(disconnectMessage, error);
+		this.disconnectFromDeltaStream(reason);
 
 		// We will always trigger reconnect, even if canRetry is false.
 		// Any truly fatal error state will result in container close upon attempted reconnect,
 		// which is a preferable to closing abruptly when a live connection fails.
-		if (error !== undefined && !error.canRetry) {
+		if (reason.error?.canRetry === false) {
 			this.logger.sendTelemetryEvent(
 				{
 					eventName: "reconnectingDespiteFatalError",
 					reconnectMode: this.reconnectMode,
 				},
-				error,
+				reason.error,
 			);
 		}
 
@@ -938,9 +985,9 @@ export class ConnectionManager implements IConnectionManager {
 		}
 
 		// If the error tells us to wait before retrying, then do so.
-		const delayMs = getRetryDelayFromError(error);
-		if (error !== undefined && delayMs !== undefined) {
-			this.props.reconnectionDelayHandler(delayMs, error);
+		const delayMs = getRetryDelayFromError(reason.error);
+		if (reason.error !== undefined && delayMs !== undefined) {
+			this.props.reconnectionDelayHandler(delayMs, reason.error);
 			await new Promise<void>((resolve) => {
 				setTimeout(resolve, delayMs);
 			});
@@ -952,9 +999,13 @@ export class ConnectionManager implements IConnectionManager {
 		await waitForOnline();
 
 		this.triggerConnect(
-			error !== undefined
-				? "Reconnecting due to Error"
-				: `Reconnecting due to: ${disconnectMessage}`,
+			{
+				text:
+					reason.error !== undefined
+						? "Reconnecting due to Error"
+						: `Reconnecting due to: ${reason.text}`,
+				error: reason.error,
+			},
 			requestedMode,
 		);
 	}
@@ -1025,7 +1076,7 @@ export class ConnectionManager implements IConnectionManager {
 							// still valid?
 							await this.reconnect(
 								"write", // connectionMode
-								"Switch to write", // message
+								{ text: "Switch to write" }, // message
 							);
 						}
 					})
@@ -1079,7 +1130,7 @@ export class ConnectionManager implements IConnectionManager {
 				// Note - this may close container!
 				this.reconnect(
 					"read", // connectionMode
-					"Switch to read", // message
+					{ text: "Switch to read" }, // message
 				).catch((error) => {
 					this.logger.sendErrorEvent({ eventName: "SwitchToReadConnection" }, error);
 				});
@@ -1090,6 +1141,11 @@ export class ConnectionManager implements IConnectionManager {
 	private readonly opHandler = (documentId: string, messagesArg: ISequencedDocumentMessage[]) => {
 		const messages = Array.isArray(messagesArg) ? messagesArg : [messagesArg];
 		this.props.incomingOpHandler(messages, "opHandler");
+	};
+
+	private readonly signalHandler = (signalsArg: ISignalMessage | ISignalMessage[]) => {
+		const signals = Array.isArray(signalsArg) ? signalsArg : [signalsArg];
+		this.props.signalHandler(signals);
 	};
 
 	// Always connect in write mode after getting nacked.

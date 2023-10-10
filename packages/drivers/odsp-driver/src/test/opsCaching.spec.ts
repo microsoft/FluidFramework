@@ -6,7 +6,7 @@ import { strict as assert } from "assert";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IStream } from "@fluidframework/driver-definitions";
-import { delay } from "@fluidframework/common-utils";
+import { delay } from "@fluidframework/core-utils";
 import { OdspDeltaStorageWithCache } from "../odspDeltaStorageService";
 import { OpsCache, ICache, IMessage, CacheEntry } from "../opsCaching";
 import { OdspDocumentStorageService } from "../odspDocumentStorageManager";
@@ -108,7 +108,7 @@ async function runTestNoTimer(
 	const logger = new MockLogger();
 	const cache = new OpsCache(
 		initialSeq,
-		logger,
+		logger.toTelemetryLogger(),
 		mockCache,
 		batchSize,
 		-1, // timerGranularity
@@ -149,7 +149,7 @@ export async function runTestWithTimer(
 	const logger = new MockLogger();
 	const cache = new OpsCache(
 		initialSeq,
-		logger,
+		logger.toTelemetryLogger(),
 		mockCache,
 		batchSize,
 		1, // timerGranularity
@@ -313,7 +313,7 @@ describe("OpsCache", () => {
 		const logger = new MockLogger();
 		const cache = new OpsCache(
 			initialSeq,
-			logger,
+			logger.toTelemetryLogger(),
 			mockCache,
 			5 /* batchSize */,
 			-1, // timerGranularity
@@ -391,7 +391,7 @@ describe("OdspDeltaStorageWithCache", () => {
 		const storageOps = createOps(fromTotal + opsFromSnapshot + opsFromCache, opsFromStorage);
 
 		let totalOps = opsFromSnapshot + opsFromCache + (cacheOnly ? 0 : opsFromStorage);
-		const actualTo = toTotal === undefined ? fromTotal + totalOps : toTotal;
+		const actualTo = toTotal ?? fromTotal + totalOps;
 		assert(actualTo <= fromTotal + totalOps); // code will deadlock if that's not the case
 		const askingOps = actualTo - fromTotal;
 		totalOps = Math.min(totalOps, askingOps);
@@ -400,7 +400,7 @@ describe("OdspDeltaStorageWithCache", () => {
 		const logger = new MockLogger();
 		const storage = new OdspDeltaStorageWithCache(
 			snapshotOps,
-			logger,
+			logger.toTelemetryLogger(),
 			batchSize,
 			concurrency,
 			// getFromStorage
@@ -413,7 +413,7 @@ describe("OdspDeltaStorageWithCache", () => {
 			(from: number, to: number) => {},
 			// opsReceived
 			(ops: ISequencedDocumentMessage[]) => opsToCache.push(...ops),
-			() => ({ isFirstSnapshotFromNetwork: false } as any as OdspDocumentStorageService),
+			() => ({ isFirstSnapshotFromNetwork: false }) as any as OdspDocumentStorageService,
 		);
 
 		const stream = storage.fetchMessages(

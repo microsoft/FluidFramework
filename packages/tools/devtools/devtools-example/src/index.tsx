@@ -27,6 +27,8 @@ document.body.append(devtoolsElement);
 
 ReactDOM.render(<DevtoolsView />, devtoolsElement, () => {
 	console.log("Devtools UI rendered!");
+	// Setting "fluidStarted" is just for our test automation
+	globalThis.fluidStarted = true;
 });
 
 function DevtoolsView(): React.ReactElement {

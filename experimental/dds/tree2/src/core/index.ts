@@ -25,6 +25,13 @@ export {
 	AnchorSet,
 	DetachedField,
 	UpPath,
+	Range,
+	RangeUpPath,
+	PlaceUpPath,
+	PlaceIndex,
+	NodeIndex,
+	DetachedPlaceUpPath,
+	DetachedRangeUpPath,
 	FieldUpPath,
 	Anchor,
 	RootField,
@@ -50,13 +57,19 @@ export {
 	getDepth,
 	mapCursorField,
 	mapCursorFields,
+	iterateCursorField,
 	getMapTreeField,
 	MapTree,
 	detachedFieldAsKey,
 	keyAsDetachedField,
 	visitDelta,
+	combineVisitors,
+	announceDelta,
+	applyDelta,
+	makeDetachedFieldIndex,
 	setGenericTreeField,
 	DeltaVisitor,
+	AnnouncedVisitor,
 	PathVisitor,
 	SparseNode,
 	getDescendant,
@@ -65,6 +78,7 @@ export {
 	topDownPath,
 	compareFieldUpPaths,
 	forEachNode,
+	forEachNodeInSubtree,
 	forEachField,
 	PathRootPrefix,
 	isSkipMark,
@@ -80,6 +94,9 @@ export {
 	ProtoNodes,
 	CursorMarker,
 	isCursor,
+	DetachedFieldIndex,
+	ForestRootId,
+	getDetachedFieldContainingPath,
 } from "./tree";
 
 export {
@@ -102,8 +119,6 @@ export {
 	FieldKeySchema,
 	TreeSchemaIdentifier,
 	TreeSchemaIdentifierSchema,
-	NamedTreeSchema,
-	Named,
 	FieldStoredSchema,
 	ValueSchema,
 	PrimitiveValueSchema,
@@ -124,6 +139,7 @@ export {
 	SchemaEvents,
 	forbiddenFieldKindIdentifier,
 	storedEmptyFieldSchema,
+	cloneSchemaData,
 } from "./schema-stored";
 
 export { ChangeFamily, ChangeFamilyEditor, EditBuilder } from "./change-family";
@@ -137,6 +153,8 @@ export {
 	isRevisionTag,
 	RevisionTag,
 	RevisionTagSchema,
+	ChangesetLocalId,
+	ChangeAtomId,
 	TaggedChange,
 	makeAnonChange,
 	tagChange,
@@ -159,7 +177,5 @@ export {
 	TreeAdapter,
 	AllowedUpdateType,
 } from "./schema-view";
-
-export { RepairDataStore, ReadonlyRepairDataStore, IRepairDataStoreProvider } from "./repair";
 
 export { UndoRedoManager, LocalCommitSource } from "./undo";

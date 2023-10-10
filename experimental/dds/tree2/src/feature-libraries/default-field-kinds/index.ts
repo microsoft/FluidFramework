@@ -5,12 +5,11 @@
 
 export {
 	FieldKinds,
-	ValueFieldKind,
+	Required,
 	Optional,
 	Sequence,
 	NodeKeyFieldKind,
 	Forbidden,
-	FieldKindTypes,
 	fieldKinds,
 } from "./defaultFieldKinds";
 
@@ -24,4 +23,4 @@ export {
 	SequenceFieldEditBuilder,
 } from "./defaultChangeFamily";
 
-export { defaultSchemaPolicy, emptyField } from "./defaultSchema";
+export { defaultSchemaPolicy } from "./defaultSchema";

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent } from "@fluidframework/common-definitions";
-import { IDisposable } from "@fluidframework/core-interfaces";
+import { IDisposable, IEvent } from "@fluidframework/core-interfaces";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { Deferred, assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { Deferred, assert } from "@fluidframework/core-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import {
 	IDocumentMessage,
@@ -405,6 +405,7 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 	private handleSummaryAck(op: ISummaryAckMessage) {
 		const seq = op.contents.summaryProposal.summarySequenceNumber;
 		const summary = this.pendingSummaries.get(seq);
+		// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- optional chain is not logically equivalent
 		if (!summary || summary.summaryOp === undefined) {
 			// Summary ack without an op should be rare. We could fetch the
 			// reference sequence number from the snapshot, but instead we

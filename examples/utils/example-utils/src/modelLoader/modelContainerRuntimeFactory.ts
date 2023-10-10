@@ -12,6 +12,7 @@ import {
 import { IContainerRuntimeOptions, ContainerRuntime } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
+// eslint-disable-next-line import/no-deprecated
 import { makeModelRequestHandler } from "./modelLoader";
 
 /**
@@ -36,17 +37,17 @@ export abstract class ModelContainerRuntimeFactory<ModelType> implements IRuntim
 		context: IContainerContext,
 		existing: boolean,
 	): Promise<IRuntime> {
-		const fromExisting = existing ?? context.existing ?? false;
 		const runtime = await ContainerRuntime.load(
 			context,
 			this.registryEntries,
+			// eslint-disable-next-line import/no-deprecated
 			makeModelRequestHandler(this.createModel.bind(this)),
 			this.runtimeOptions,
 			undefined, // scope
 			existing,
 		);
 
-		if (!fromExisting) {
+		if (!existing) {
 			await this.containerInitializingFirstTime(runtime);
 		}
 		await this.containerHasInitialized(runtime);

@@ -12,7 +12,6 @@ import { ChangeRebaser, RevisionTag } from "../../core";
 import { GraphCommit, rebaseBranch } from "../../core/rebase";
 
 import { fail } from "../../util";
-import { MockRepairDataStoreProvider } from "../utils";
 
 /** Given a number in the range [0, 15], turn it into a deterministic and human-rememberable v4 UUID */
 function makeRevisionTag(tag: number): RevisionTag {
@@ -39,8 +38,6 @@ export class DummyChangeRebaser implements ChangeRebaser<typeof dummyChange> {
 	public rebase(): typeof dummyChange {
 		return {};
 	}
-
-	public rebaseAnchors(): void {}
 }
 
 describe("rebaser", () => {
@@ -133,7 +130,6 @@ describe("rebaser", () => {
 
 				const [result] = rebaseBranch(
 					new DummyChangeRebaser(),
-					new MockRepairDataStoreProvider(),
 					tester.branch,
 					base,
 					tester.main,

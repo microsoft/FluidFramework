@@ -20,11 +20,7 @@ export const EncodedNodeUpdate = <Schema extends TSchema>(tNodeChange: Schema) =
 		),
 		Type.Object(
 			{
-				/**
-				 * The node being restored.
-				 */
-				revert: EncodedJsonableTree,
-				changeId: EncodedChangeAtomId,
+				revert: EncodedChangeAtomId,
 				changes: Type.Optional(tNodeChange),
 			},
 			noAdditionalProps,
@@ -88,8 +84,14 @@ export const EncodedOptionalChangeset = <Schema extends TSchema>(tNodeChange: Sc
 	Type.Object(
 		{
 			fieldChange: Type.Optional(EncodedOptionalFieldChange(tNodeChange)),
-			childChange: Type.Optional(tNodeChange),
-			deletedBy: Type.Optional(EncodedChangeAtomId),
+			childChanges: Type.Optional(
+				Type.Array(
+					Type.Tuple([
+						Type.Union([EncodedChangeAtomId, Type.Literal("self")]),
+						tNodeChange,
+					]),
+				),
+			),
 		},
 		noAdditionalProps,
 	);

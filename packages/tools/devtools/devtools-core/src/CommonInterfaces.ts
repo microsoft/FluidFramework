@@ -8,7 +8,9 @@
  *
  * @remarks Each Container registered with the Devtools must be assigned a unique `containerKey`.
  *
- * @example "Canvas Container"
+ * @example
+ *
+ * "Canvas Container"
  *
  * @public
  */
@@ -47,13 +49,38 @@ export interface HasFluidObjectId {
 }
 
 /**
- * Base interface used in message data for edits allowed by a particular Fluid object (DDS) via
- * an enum.
+ * Represents the type selection for an edit being applied to a Shared Object.
  *
  * @internal
  */
-export enum EditType {
-	Number = "number",
-	String = "string",
-	Boolean = "boolean",
-}
+export const EditType = {
+	/**
+	 * Indicates that the data associated with an edit is or must be a `boolean`.
+	 */
+	Boolean: "boolean",
+
+	/**
+	 * Indicates that the data associated with an edit is or must be a `number`.
+	 */
+	Number: "number",
+
+	/**
+	 * Indicates that the data associated with an edit is or must be a `string`.
+	 */
+	String: "string",
+
+	/**
+	 * Indicates that the data associated with an edit is or must be a `undefined`.
+	 */
+	Undefined: "undefined",
+
+	/**
+	 * Indicates that the data associated with an edit is or must be a `null`.
+	 */
+	Null: "null",
+} as const;
+
+/**
+ * @internal
+ */
+export type EditType = (typeof EditType)[keyof typeof EditType];

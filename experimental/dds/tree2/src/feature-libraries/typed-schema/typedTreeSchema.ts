@@ -3,14 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
-import { IFieldSchema, ITreeSchema } from "../modular-schema";
-import { FieldKey, Named, TreeSchemaIdentifier, TreeTypeSet, ValueSchema } from "../../core";
-import { MakeNominal, Assume, RestrictiveReadonlyRecord } from "../../util";
-import { FieldKindTypes, FieldKinds } from "../default-field-kinds";
+import { Lazy, assert } from "@fluidframework/core-utils";
+import {
+	Adapters,
+	EmptyKey,
+	FieldKey,
+	TreeSchemaIdentifier,
+	TreeTypeSet,
+	ValueSchema,
+} from "../../core";
+import {
+	MakeNominal,
+	Assume,
+	RestrictiveReadonlyRecord,
+	_InlineTrick,
+	FlattenKeys,
+	Named,
+	requireAssignableTo,
+	compareSets,
+} from "../../util";
+import { FieldKinds } from "../default-field-kinds";
+import { FieldKind, FullSchemaPolicy } from "../modular-schema";
 import { LazyItem, normalizeFlexList } from "./flexList";
 import { ObjectToMap, WithDefault, objectToMapTyped } from "./typeUtils";
-import { RecursiveTreeSchemaSpecification } from "./schemaBuilder";
 
 // TODO: tests for this file
 
@@ -36,6 +51,34 @@ export type NormalizeStructFields<T extends Fields | undefined> = NormalizeStruc
 >;
 
 /**
+ * Placeholder for to `TreeSchema` to use in constraints where `TreeSchema` is desired but using it causes
+ * recursive types to fail to compile due to TypeScript limitations.
+ *
+ * Using `TreeSchema` instead in some key "extends" clauses cause recursive types to error with:
+ * "'theSchema' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer."
+ *
+ * TODO: how much more specific of a type can be provided without triggering the above error?
+ * @alpha
+ */
+export type RecursiveTreeSchema = unknown;
+
+/**
+ * Placeholder for to `TreeSchemaSpecification` to use in constraints where `TreeSchemaSpecification` is desired but using it causes
+ * recursive types to fail to compile due to TypeScript limitations.
+ *
+ * See `RecursiveTreeSchema`.
+ *
+ * TODO: how much more specific of a type can be provided without triggering the above error?
+ * @alpha
+ */
+export type RecursiveTreeSchemaSpecification = unknown;
+
+{
+	type _check1 = requireAssignableTo<TreeSchemaSpecification, RecursiveTreeSchemaSpecification>;
+	type _check2 = requireAssignableTo<TreeSchema, RecursiveTreeSchema>;
+}
+
+/**
  * T must extend TreeSchemaSpecification.
  * This can not be enforced using TypeScript since doing so breaks recursive type support.
  * See note on SchemaBuilder.fieldRecursive.
@@ -44,8 +87,7 @@ export type NormalizeStructFields<T extends Fields | undefined> = NormalizeStruc
 export class TreeSchema<
 	Name extends string = string,
 	T extends RecursiveTreeSchemaSpecification = TreeSchemaSpecification,
-> implements ITreeSchema
-{
+> {
 	// Allows reading fields through the normal map, but without losing type information.
 	public readonly structFields: ObjectToMap<
 		NormalizeStructFields<Assume<T, TreeSchemaSpecification>["structFields"]>,
@@ -57,29 +99,99 @@ export class TreeSchema<
 		Assume<T, TreeSchemaSpecification>["structFields"]
 	>;
 
-	public readonly mapFields: FieldSchema;
-	public readonly value: WithDefault<
-		Assume<T, TreeSchemaSpecification>["value"],
-		ValueSchema.Nothing
+	public readonly mapFields: WithDefault<
+		Assume<T, TreeSchemaSpecification>["mapFields"],
+		undefined
+	>;
+	// WithDefault is needed to convert unknown to undefined here (missing properties show up as unknown in types).
+	public readonly leafValue: WithDefault<
+		Assume<T, TreeSchemaSpecification>["leafValue"],
+		undefined
 	>;
 
 	public readonly name: Name & TreeSchemaIdentifier;
 
 	public readonly info: Assume<T, TreeSchemaSpecification>;
 
-	public constructor(public readonly builder: Named<string>, name: Name, info: T) {
+	public constructor(
+		public readonly builder: Named<string>,
+		name: Name,
+		info: T,
+	) {
 		this.info = info as Assume<T, TreeSchemaSpecification>;
 		this.name = name as Name & TreeSchemaIdentifier;
 		this.structFieldsObject = normalizeStructFields<
 			Assume<T, TreeSchemaSpecification>["structFields"]
 		>(this.info.structFields);
 		this.structFields = objectToMapTyped(this.structFieldsObject);
-		this.mapFields = normalizeField(this.info.mapFields);
-		this.value = (this.info.value ?? ValueSchema.Nothing) as WithDefault<
-			Assume<T, TreeSchemaSpecification>["value"],
-			ValueSchema.Nothing
+		this.mapFields = this.info.mapFields as WithDefault<
+			Assume<T, TreeSchemaSpecification>["mapFields"],
+			undefined
+		>;
+		this.leafValue = this.info.leafValue as WithDefault<
+			Assume<T, TreeSchemaSpecification>["leafValue"],
+			undefined
 		>;
 	}
+}
+
+// TODO: TreeSchema should be a union of the more specific schema type below, rather than containing all the info for all of them.
+// When this change is made, FieldNodeSchema should be properly separated from StructSchema,
+// and the bellow type checks could be done with instanceof tests.
+
+/**
+ * @alpha
+ */
+export type MapSchema = TreeSchema & MapSchemaSpecification;
+/**
+ * @alpha
+ */
+export type LeafSchema = TreeSchema & LeafSchemaSpecification;
+
+/**
+ * TODO: this includes FieldNodeSchema when it shouldn't
+ * @alpha
+ */
+export type StructSchema = TreeSchema & {
+	[P in keyof (MapSchemaSpecification & LeafSchemaSpecification)]?: undefined;
+};
+
+/**
+ * @alpha
+ *
+ * This is the subset of StructSchema that uses {@link EmptyKey} so the the old (editable-tree 1) API unboxes it.
+ * TODO: Once that API is removed, this can be cleaned up and properly separated from StructSchema
+ */
+export type FieldNodeSchema = StructSchema & {
+	/**
+	 * The fields of this node.
+	 * Only uses the {@link EmptyKey}.
+	 *
+	 * TODO: this extra indirection will be removed when refactoring TreeSchema (see other related TODOs for details).
+	 */
+	structFieldsObject: {
+		/**
+		 * The field this node wraps.
+		 * It is under the {@link EmptyKey}.
+		 */
+		[""]: FieldSchema;
+	};
+};
+
+export function schemaIsMap(schema: TreeSchema): schema is MapSchema {
+	return schema.mapFields !== undefined;
+}
+
+export function schemaIsLeaf(schema: TreeSchema): schema is LeafSchema {
+	return schema.leafValue !== undefined;
+}
+
+export function schemaIsFieldNode(schema: TreeSchema): schema is FieldNodeSchema {
+	return schema.structFields.size === 1 && schema.structFields.has(EmptyKey);
+}
+
+export function schemaIsStruct(schema: TreeSchema): schema is StructSchema {
+	return !schemaIsMap(schema) && !schemaIsLeaf(schema) && !schemaIsFieldNode(schema);
 }
 
 /**
@@ -138,46 +250,122 @@ export type LazyTreeSchema = TreeSchema | (() => TreeSchema);
  * "Any" is boxed in an array to allow use as variadic parameter.
  * @alpha
  */
-export type AllowedTypes = [Any] | readonly LazyItem<TreeSchema>[];
+export type AllowedTypes = readonly [Any] | readonly LazyItem<TreeSchema>[];
 
 /**
  * Checks if an {@link AllowedTypes} is {@link (Any:type)}.
  * @alpha
  */
-export function allowedTypesIsAny(t: AllowedTypes): t is [Any] {
+export function allowedTypesIsAny(t: AllowedTypes): t is readonly [Any] {
 	return t.length === 1 && t[0] === Any;
+}
+
+/**
+ * `TreeSchemaSpecification` for {@link SchemaBuilder.struct}.
+ * @alpha
+ */
+export interface StructSchemaSpecification {
+	readonly structFields: RestrictiveReadonlyRecord<string, FieldSchema>;
+}
+
+/**
+ * `TreeSchemaSpecification` for {@link SchemaBuilder.map}.
+ * @alpha
+ */
+export interface MapSchemaSpecification {
+	readonly mapFields: MapFieldSchema;
+}
+
+/**
+ * Subset of FieldSchema thats legal in maps.
+ * This requires empty to be a valid value for the map.
+ * @alpha
+ */
+export type MapFieldSchema = FieldSchema<typeof FieldKinds.optional | typeof FieldKinds.sequence>;
+
+/**
+ * `TreeSchemaSpecification` for {@link SchemaBuilder.leaf}.
+ * @alpha
+ */
+export interface LeafSchemaSpecification {
+	readonly leafValue: ValueSchema;
 }
 
 /**
  * Object for capturing information about a TreeStoredSchema for use at both compile time and runtime.
  * @alpha
  */
-export interface TreeSchemaSpecification {
-	readonly structFields?: RestrictiveReadonlyRecord<string, FieldSchema>;
-	readonly mapFields?: FieldSchema;
-	readonly value?: ValueSchema;
-}
+export type TreeSchemaSpecification = [
+	FlattenKeys<
+		(StructSchemaSpecification | MapSchemaSpecification | LeafSchemaSpecification) &
+			Partial<StructSchemaSpecification & MapSchemaSpecification & LeafSchemaSpecification>
+	>,
+][_InlineTrick];
 
 /**
  * All policy for a specific field,
  * including functionality that does not have to be kept consistent across versions or deterministic.
  *
  * This can include policy for how to use this schema for "view" purposes, and well as how to expose editing APIs.
+ *
+ * @remarks
+ * `Types` here must extend `AllowedTypes`, but this cannot be enforced with an "extends" clause due to the need to support recursive schema and
+ * [a design limitation of TypeScript](https://github.com/microsoft/TypeScript/issues/55758).
+ *
  * @sealed @alpha
  */
-export class FieldSchema<Kind extends FieldKindTypes = FieldKindTypes, Types = AllowedTypes>
-	implements IFieldSchema
-{
+export class FieldSchema<out Kind extends FieldKind = FieldKind, const out Types = AllowedTypes> {
 	/**
 	 * Schema for a field which must always be empty.
 	 */
 	public static readonly empty = new FieldSchema(FieldKinds.forbidden, []);
 
 	protected _typeCheck?: MakeNominal;
-	public constructor(public readonly kind: Kind, public readonly allowedTypes: Types) {}
+
+	/**
+	 * This is computed lazily since types can be recursive, which makes evaluating this have to happen after all the schema are defined.
+	 */
+	private readonly lazyTypes: Lazy<TreeTypeSet>;
+
+	/**
+	 * @param kind - The {@link https://en.wikipedia.org/wiki/Kind_(type_theory) | kind} of this field.
+	 * Determine the multiplicity, viewing and editing APIs as well as the merge resolution policy.
+	 * @param allowedTypes - What types of tree nodes are allowed in this field.
+	 */
+	public constructor(
+		public readonly kind: Kind,
+		public readonly allowedTypes: Types,
+	) {
+		this.lazyTypes = new Lazy(() =>
+			allowedTypesToTypeSet(this.allowedTypes as unknown as AllowedTypes),
+		);
+	}
 
 	public get types(): TreeTypeSet {
-		return allowedTypesToTypeSet(this.allowedTypes as unknown as AllowedTypes);
+		return this.lazyTypes.value;
+	}
+
+	/**
+	 * Compare this schema to another.
+	 *
+	 * @returns true iff the schema are identical.
+	 */
+	public equals(other: FieldSchema): boolean {
+		if (other.kind !== this.kind) {
+			return false;
+		}
+		if (other.types === undefined) {
+			return this.types === undefined;
+		}
+		if (this.types === undefined) {
+			return false;
+		}
+		return compareSets({
+			a: this.types,
+			b: other.types,
+			aExtra: () => false,
+			bExtra: () => false,
+		});
 	}
 }
 
@@ -193,4 +381,23 @@ export function allowedTypesToTypeSet(t: AllowedTypes): TreeTypeSet {
 	const list: readonly (() => TreeSchema)[] = normalizeFlexList(t);
 	const names = list.map((f) => f().name);
 	return new Set(names);
+}
+
+/**
+ * Schema data that can be be used to view a document.
+ * Strongly typed over its rootFieldSchema.
+ *
+ * @remarks
+ * This type is mainly used as a type constraint to mean that the code working with it requires strongly typed schema.
+ * The actual type used will include detailed schema information for all the types in the collection.
+ * This pattern is used to implement SchemaAware APIs.
+ *
+ * @alpha
+ */
+
+export interface TypedSchemaCollection<T extends FieldSchema = FieldSchema> {
+	readonly rootFieldSchema: T;
+	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
+	readonly policy: FullSchemaPolicy;
+	readonly adapters: Adapters;
 }

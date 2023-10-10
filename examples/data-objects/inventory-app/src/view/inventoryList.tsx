@@ -4,44 +4,20 @@
  */
 
 import * as React from "react";
-import { AllowedUpdateType, ISharedTree } from "@fluid-experimental/tree2";
-import { useTree } from "@fluid-experimental/tree-react-api";
-import { Inventory, RootField, schema } from "../schema";
+import { useTreeContext } from "@fluid-experimental/tree-react-api";
+import { Inventory, InventoryField } from "../schema";
 import { Counter } from "./counter";
 
-const schemaPolicy = {
-	schema,
-	initialTree: {
-		parts: [
-			{
-				name: "nut",
-				quantity: 0,
-			},
-			{
-				name: "bolt",
-				quantity: 0,
-			},
-		],
-	},
-	allowedSchemaModifications: AllowedUpdateType.None,
-};
-
-export const MainView: React.FC<{ tree: ISharedTree }> = ({ tree }) => {
-	const root: RootField = useTree(tree, schemaPolicy);
-	// TODO: value fields like `root` which always contain exactly one value should have a nicer API for accessing that child, like `.child`.
-	const inventory: Inventory = root[0];
+export const MainView: React.FC<{ tree: InventoryField }> = ({ tree }) => {
+	// TODO: offer an API to subscribe to invalidation from a field to avoid depending on the whole document here.
+	useTreeContext(tree.context);
+	const inventory: Inventory = tree.content;
 
 	const counters: JSX.Element[] = [];
 
 	for (const part of inventory.parts) {
 		counters.push(
-			<Counter
-				key={part.name}
-				title={part.name}
-				count={part.quantity}
-				onDecrement={() => part.quantity--}
-				onIncrement={() => part.quantity++}
-			></Counter>,
+			<Counter key={part.name} title={part.name} count={part.boxedQuantity}></Counter>,
 		);
 	}
 

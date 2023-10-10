@@ -159,6 +159,7 @@ describe("SequenceField - Rebase", () => {
 			Change.revive(1, 1, { revision: tag1, localId: brand(1) }, rebaseRepair, {
 				revision: tag2,
 				localId: brand(0),
+				adjacentCells: [{ id: brand(0), count: 1 }],
 			}),
 			// Later revive is unaffected
 			Change.redundantRevive(1, 1, { revision: tag1, localId: brand(3) }, rebaseRepair),
@@ -176,13 +177,13 @@ describe("SequenceField - Rebase", () => {
 		const deletion = Change.delete(1, 1);
 		const actual = rebase(revive, deletion, tag3);
 		const expected = [
-			Mark.revive(fakeRepair(tag1, 1, 1), undefined, { inverseOf: tag1 }),
+			Mark.revive(1, undefined, { inverseOf: tag1 }),
 			Mark.revive(
-				fakeRepair(tag1, 2, 1),
-				{ revision: tag3, localId: brand(0) },
+				1,
+				{ revision: tag3, localId: brand(0), adjacentCells: [{ id: brand(0), count: 1 }] },
 				{ inverseOf: tag1 },
 			),
-			Mark.revive(fakeRepair(tag1, 3, 1), undefined, { inverseOf: tag1 }),
+			Mark.revive(1, undefined, { inverseOf: tag1 }),
 		];
 		assert.deepEqual(actual, expected);
 	});
@@ -198,17 +199,9 @@ describe("SequenceField - Rebase", () => {
 		const revive2 = Change.revive(0, 1, { revision: tag2, localId: brand(2) }, fakeRepair);
 		const actual = rebase(revive1, revive2, tag2);
 		const expected = [
-			Mark.revive(
-				fakeRepair(tag1, 0, 1),
-				{ revision: tag2, localId: brand(1) },
-				{ inverseOf: tag1 },
-			),
-			Mark.revive(fakeRepair(tag1, 1, 1), undefined, { inverseOf: tag1 }),
-			Mark.revive(
-				fakeRepair(tag1, 2, 1),
-				{ revision: tag2, localId: brand(3) },
-				{ inverseOf: tag1 },
-			),
+			Mark.revive(1, { revision: tag2, localId: brand(1) }, { inverseOf: tag1 }),
+			Mark.revive(1, undefined, { inverseOf: tag1 }),
+			Mark.revive(1, { revision: tag2, localId: brand(3) }, { inverseOf: tag1 }),
 		];
 		assert.deepEqual(actual, expected);
 	});
@@ -228,7 +221,12 @@ describe("SequenceField - Rebase", () => {
 			Change.redundantRevive(0, 1, { revision: tag1, localId: brand(1) }, rebaseRepair, true),
 			// Overlapping revive is no longer conflicted.
 			// It now references the target node to revive using the latest delete.
-			Change.intentionalRevive(1, 1, { revision: tag2, localId: brand(0) }, rebaseRepair),
+			Change.intentionalRevive(
+				1,
+				1,
+				{ revision: tag2, localId: brand(0), adjacentCells: [{ id: brand(0), count: 1 }] },
+				rebaseRepair,
+			),
 			// Later revive is unaffected
 			Change.redundantRevive(2, 1, { revision: tag1, localId: brand(3) }, rebaseRepair, true),
 		]);
@@ -250,7 +248,12 @@ describe("SequenceField - Rebase", () => {
 			Change.redundantRevive(0, 1, { revision: tag1, localId: brand(1) }, rebaseRepair, true),
 			// Overlapping revive is no longer conflicted.
 			// It now references the target node to revive using the latest delete.
-			Change.intentionalRevive(1, 1, { revision: tag3, localId: brand(0) }, rebaseRepair),
+			Change.intentionalRevive(
+				1,
+				1,
+				{ revision: tag3, localId: brand(0), adjacentCells: [{ id: brand(0), count: 1 }] },
+				rebaseRepair,
+			),
 			// Later revive gets linage
 			Change.redundantRevive(2, 1, { revision: tag1, localId: brand(3) }, rebaseRepair, true),
 		]);
@@ -322,18 +325,21 @@ describe("SequenceField - Rebase", () => {
 				{
 					revision: tag1,
 					localId: brand(1),
-					lineage: [{ revision: tag1, id: brand(0), count: 1, offset: 1 }],
+					adjacentCells: [{ id: brand(0), count: 2 }],
 				},
 				Mark.moveOut(1, brand(0)),
 			),
 			Mark.moveOut(1, brand(1)),
-			Mark.onEmptyCell({ revision: tag1, localId: brand(2) }, Mark.moveOut(1, brand(2))),
+			Mark.onEmptyCell(
+				{ revision: tag1, localId: brand(2), adjacentCells: [{ id: brand(2), count: 1 }] },
+				Mark.moveOut(1, brand(2)),
+			),
 			Mark.moveOut(1, brand(3)),
 			Mark.onEmptyCell(
 				{
 					revision: tag1,
 					localId: brand(3),
-					lineage: [{ revision: tag1, id: brand(4), count: 1, offset: 0 }],
+					adjacentCells: [{ id: brand(3), count: 2 }],
 				},
 				Mark.moveOut(1, brand(4)),
 			),

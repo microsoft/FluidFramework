@@ -4,15 +4,15 @@
  */
 
 import { Delta, TaggedChange, RevisionTag } from "../../core";
-import { fail, Invariant } from "../../util";
+import { fail, IdAllocator, Invariant } from "../../util";
 import { ICodecFamily, IJsonCodec } from "../../codec";
+import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
 import { CrossFieldManager } from "./crossFieldQueries";
-import { ChangesetLocalId, NodeChangeset, RevisionInfo } from "./modularChangeTypes";
+import { NodeChangeset, RevisionInfo } from "./modularChangeTypes";
 
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
  * implement a unified ChangeFamily supporting documents with multiple field kinds.
- * @alpha
  */
 export interface FieldChangeHandler<
 	TChangeset,
@@ -22,7 +22,11 @@ export interface FieldChangeHandler<
 	readonly rebaser: FieldChangeRebaser<TChangeset>;
 	readonly codecsFactory: (childCodec: IJsonCodec<NodeChangeset>) => ICodecFamily<TChangeset>;
 	readonly editor: TEditor;
-	intoDelta(change: TChangeset, deltaFromChild: ToDelta): Delta.MarkList;
+	intoDelta(
+		change: TaggedChange<TChangeset>,
+		deltaFromChild: ToDelta,
+		idAllocator: MemoizedIdRangeAllocator,
+	): Delta.MarkList;
 
 	/**
 	 * Returns whether this change is empty, meaning that it represents no modifications to the field
@@ -31,9 +35,6 @@ export interface FieldChangeHandler<
 	isEmpty(change: TChangeset): boolean;
 }
 
-/**
- * @alpha
- */
 export interface FieldChangeRebaser<TChangeset> {
 	/**
 	 * Compose a collection of changesets into a single one.
@@ -141,9 +142,6 @@ export function isolatedFieldChangeRebaser<TChangeset>(data: {
 	};
 }
 
-/**
- * @alpha
- */
 export interface FieldEditor<TChangeset> {
 	/**
 	 * Creates a changeset which represents the given `change` to the child at `childIndex` of this editor's field.
@@ -200,13 +198,6 @@ export type NodeChangeRebaser = (
  * @alpha
  */
 export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => NodeChangeset;
-
-/**
- * Allocates a block of `count` consecutive IDs and returns the first ID in the block.
- * For convenience can be called with no parameters to allocate a single ID.
- * @alpha
- */
-export type IdAllocator = (count?: number) => ChangesetLocalId;
 
 /**
  * A callback that returns the index of the changeset associated with the given RevisionTag among the changesets being

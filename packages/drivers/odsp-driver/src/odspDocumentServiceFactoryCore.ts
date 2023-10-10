@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/core-interfaces";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { TelemetryLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
 	getDocAttributesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
@@ -69,7 +69,7 @@ export class OdspDocumentServiceFactoryCore
 	 * This function would return info about relay service session only if this factory established (or attempted to
 	 * establish) connection very recently. Otherwise, it will return undefined.
 	 * @param resolvedUrl - resolved url for container
-	 * @returns - Current join session response stored in cache. Undefined if not present.
+	 * @returns The current join session response stored in cache. `undefined` if not present.
 	 */
 	public async getRelayServiceSessionInfo(
 		resolvedUrl: IResolvedUrl,
@@ -265,7 +265,7 @@ export class OdspDocumentServiceFactoryCore
 
 	protected async createDocumentServiceCore(
 		resolvedUrl: IResolvedUrl,
-		odspLogger: TelemetryLogger,
+		odspLogger: ITelemetryLogger,
 		cacheAndTrackerArg?: ICacheAndTracker,
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {

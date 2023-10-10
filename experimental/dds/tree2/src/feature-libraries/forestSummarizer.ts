@@ -3,28 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { bufferToString, IsoBuffer } from "@fluidframework/common-utils";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import {
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
-} from "@fluidframework/datastore-definitions";
+import { bufferToString } from "@fluid-internal/client-utils";
+import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import {
 	ITelemetryContext,
 	ISummaryTreeWithStats,
 	IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
+import { assert } from "@fluidframework/core-utils";
 import {
+	applyDelta,
+	Delta,
+	FieldKey,
 	IEditableForest,
-	initializeForest,
 	ITreeSubscriptionCursor,
-	cachedValue,
-	ICachedValue,
-	recordDependency,
 	JsonableTree,
+	makeDetachedFieldIndex,
 	mapCursorField,
-	moveToDetachedField,
+	mapCursorFields,
 } from "../core";
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
 import { jsonableTreeFromCursor, singleTextCursor } from "./treeTextCursor";
@@ -42,24 +39,8 @@ export class ForestSummarizer implements Summarizable {
 
 	private readonly cursor: ITreeSubscriptionCursor;
 
-	// Note that if invalidation happens when these promises are running, you may get stale results.
-	private readonly treeBlob: ICachedValue<Promise<IFluidHandle<ArrayBufferLike>>>;
-
-	public constructor(
-		private readonly runtime: IFluidDataStoreRuntime,
-		private readonly forest: IEditableForest,
-	) {
+	public constructor(private readonly forest: IEditableForest) {
 		this.cursor = this.forest.allocateCursor();
-		this.treeBlob = cachedValue(async (observer) => {
-			// TODO: could optimize to depend on tree only, not also schema.
-			recordDependency(observer, this.forest);
-			// TODO:#4632: Using JSON.stringify here doesn't properly handle `IFluidHandle`s, which the encoded summary may contain.
-			const treeText = this.getTreeString((c) => JSON.stringify(c));
-
-			// For now we are not chunking the data, and instead put it in a single blob:
-			// TODO: use lower level API to avoid blob manager?
-			return this.runtime.uploadBlob(IsoBuffer.from(treeText));
-		});
 	}
 
 	/**
@@ -70,12 +51,13 @@ export class ForestSummarizer implements Summarizable {
 	 * @returns a snapshot of the forest's tree as a string.
 	 */
 	private getTreeString(stringify: SummaryElementStringifier): string {
-		// TODO: maybe assert there are no other roots
-		// (since we don't save them, and they should not exist outside transactions).
-		moveToDetachedField(this.forest, this.cursor);
-		const roots = mapCursorField(this.cursor, jsonableTreeFromCursor);
+		this.forest.moveCursorToPath(undefined, this.cursor);
+		const fields = mapCursorFields(this.cursor, (cursor) => [
+			this.cursor.getFieldKey(),
+			mapCursorField(cursor, jsonableTreeFromCursor),
+		]);
 		this.cursor.clear();
-		return stringify(roots);
+		return stringify(fields);
 	}
 
 	public getAttachSummary(
@@ -84,7 +66,7 @@ export class ForestSummarizer implements Summarizable {
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTreeWithStats {
-		return this.summarizeCore(stringify, this.getTreeString(stringify));
+		return createSingleBlobSummary(treeBlobKey, this.getTreeString(stringify));
 	}
 
 	public async summarize(
@@ -93,18 +75,7 @@ export class ForestSummarizer implements Summarizable {
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummaryTreeWithStats> {
-		const treeBlobHandle = await this.treeBlob.get();
-		return this.summarizeCore(stringify, treeBlobHandle);
-	}
-
-	private summarizeCore(
-		stringify: SummaryElementStringifier,
-		tree: string | IFluidHandle<ArrayBufferLike>,
-	): ISummaryTreeWithStats {
-		const builder = new SummaryTreeBuilder();
-		const serializedTreeBlobHandle = stringify(tree);
-		builder.addBlob(treeBlobKey, serializedTreeBlobHandle);
-		return builder.getSummaryTree();
+		return createSingleBlobSummary(treeBlobKey, this.getTreeString(stringify));
 	}
 
 	public getGCData(fullGC?: boolean): IGarbageCollectionData {
@@ -124,9 +95,20 @@ export class ForestSummarizer implements Summarizable {
 		if (await services.contains(treeBlobKey)) {
 			const treeBuffer = await services.readBlob(treeBlobKey);
 			const treeBufferString = bufferToString(treeBuffer, "utf8");
-			const tree = parse(treeBufferString) as string;
-			const jsonableTree = JSON.parse(tree) as JsonableTree[];
-			initializeForest(this.forest, jsonableTree.map(singleTextCursor));
+			// TODO: this code is parsing data without an optional validator, this should be defined in a typebox schema as part of the
+			// forest summary format.
+			const fields = parse(treeBufferString) as [FieldKey, JsonableTree[]][];
+
+			const delta: [FieldKey, Delta.Insert[]][] = fields.map(([fieldKey, content]) => {
+				const insert: Delta.Insert = {
+					type: Delta.MarkType.Insert,
+					content: content.map(singleTextCursor),
+				};
+				return [fieldKey, [insert]];
+			});
+
+			assert(this.forest.isEmpty, "forest must be empty");
+			applyDelta(new Map(delta), this.forest, makeDetachedFieldIndex("init"));
 		}
 	}
 }

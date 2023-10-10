@@ -1,5 +1,11 @@
 # @fluidframework/protocol-definitions Changelog
 
+## [3.0.0](https://github.com/microsoft/FluidFramework/releases/tag/protocol-definitions_v3.0.0)
+
+### Updated @fluidframework/common-definitions
+
+The @fluidframework/common-definitions package dependency has been updated to version 1.0.0.
+
 ## [2.1.0](https://github.com/microsoft/FluidFramework/releases/tag/protocol-definitions_v2.1.0)
 
 ### Updated signal interfaces

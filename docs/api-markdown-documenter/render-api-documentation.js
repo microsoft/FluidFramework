@@ -4,10 +4,9 @@
  */
 
 const {
-	loadModel,
-	DefaultPolicies,
 	DocumentationNodeType,
-	markdownDocumenterConfigurationWithDefaults,
+	getApiItemTransformationConfigurationWithDefaults,
+	loadModel,
 	renderDocumentAsMarkdown,
 	transformApiModel,
 } = require("@fluid-tools/api-markdown-documenter");
@@ -16,8 +15,10 @@ const { PackageName } = require("@rushstack/node-core-library");
 const fs = require("fs-extra");
 const path = require("path");
 
-const { createHugoFrontMatter } = require("./front-matter");
+const { alertNodeType } = require("./alert-node");
+const { layoutContent } = require("./api-documentation-layout");
 const { renderAlertNode, renderBlockQuoteNode, renderTableNode } = require("./custom-renderers");
+const { createHugoFrontMatter } = require("./front-matter");
 
 const apiReportsDirectoryPath = path.resolve(__dirname, "..", "_api-extractor-temp", "_build");
 const apiDocsDirectoryPath = path.resolve(__dirname, "..", "content", "docs", "apis");
@@ -35,18 +36,19 @@ async function renderApiDocumentation() {
 
 	// Custom renderers that utilize Hugo syntax for certain kinds of documentation elements.
 	const customRenderers = {
-		[DocumentationNodeType.Alert]: renderAlertNode,
 		[DocumentationNodeType.BlockQuote]: renderBlockQuoteNode,
 		[DocumentationNodeType.Table]: renderTableNode,
+		[alertNodeType]: renderAlertNode,
 	};
 
 	console.groupEnd();
 
-	const config = markdownDocumenterConfigurationWithDefaults({
+	const config = getApiItemTransformationConfigurationWithDefaults({
 		apiModel,
 		newlineKind: "lf",
 		uriRoot: "/docs/apis",
 		includeTopLevelDocumentHeading: false, // This will be added automatically by Hugo
+		createDefaultLayout: layoutContent,
 		packageFilterPolicy: (apiPackage) => {
 			// Skip `@fluid-internal` packages
 			const packageName = apiPackage.displayName;
@@ -56,13 +58,12 @@ async function renderApiDocumentation() {
 
 			return ["@fluid-internal"].includes(packageScope);
 		},
-
 		fileNamePolicy: (apiItem) => {
 			return apiItem.kind === ApiItemKind.Model
 				? "index"
 				: DefaultPolicies.defaultFileNamePolicy(apiItem);
 		},
-		frontMatterPolicy: (apiItem) => createHugoFrontMatter(apiItem, config, customRenderers),
+		frontMatter: (apiItem) => createHugoFrontMatter(apiItem, config, customRenderers),
 	});
 
 	console.log("Generating API documentation...");
@@ -86,15 +87,15 @@ async function renderApiDocumentation() {
 			let fileContents;
 			try {
 				fileContents = renderDocumentAsMarkdown(document, {
-					headingLevel: 2, // Hugo will inject its document titles as 1st level headings, so start content heading levels at 2.
-					renderers: customRenderers,
+					startingHeadingLevel: 2, // Hugo will inject its document titles as 1st level headings, so start content heading levels at 2.
+					customRenderers,
 				});
 			} catch (error) {
 				console.error("Encountered error while rendering Markdown:", error);
 				throw error;
 			}
 
-			let filePath = path.join(apiDocsDirectoryPath, document.filePath);
+			let filePath = path.join(apiDocsDirectoryPath, `${document.documentPath}.md`);
 
 			try {
 				// Hugo uses a special file-naming syntax to represent documents with "child" documents in the same directory.

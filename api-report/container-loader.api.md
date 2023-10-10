@@ -6,6 +6,7 @@
 
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudienceOwner } from '@fluidframework/container-definitions';
+import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IConfigProviderBase } from '@fluidframework/telemetry-utils';
 import { IContainer } from '@fluidframework/container-definitions';
 import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
@@ -16,6 +17,7 @@ import { IFluidModule } from '@fluidframework/container-definitions';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IHostLoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions as ILoaderOptions_2 } from '@fluidframework/container-definitions';
+import { ILocationRedirectionError } from '@fluidframework/driver-definitions';
 import { IProtocolHandler as IProtocolHandler_2 } from '@fluidframework/protocol-base';
 import { IProvideFluidCodeDetailsComparer } from '@fluidframework/container-definitions';
 import { IQuorumSnapshot } from '@fluidframework/protocol-base';
@@ -42,8 +44,8 @@ export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComp
 
 // @public
 export interface IContainerExperimental extends IContainer {
-    closeAndGetPendingLocalState(): string;
-    getPendingLocalState?(): string;
+    closeAndGetPendingLocalState?(): Promise<string>;
+    getPendingLocalState?(): Promise<string>;
 }
 
 // @public
@@ -98,15 +100,24 @@ export interface IProtocolHandler extends IProtocolHandler_2 {
 }
 
 // @public
+export function isLocationRedirectionError(error: any): error is ILocationRedirectionError;
+
+// @public
 export class Loader implements IHostLoader {
     constructor(loaderProps: ILoaderProps);
     // (undocumented)
-    createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<IContainer>;
-    // (undocumented)
+    createDetachedContainer(codeDetails: IFluidCodeDetails, createDetachedProps?: {
+        canReconnect?: boolean;
+        clientDetailsOverride?: IClientDetails;
+    }): Promise<IContainer>;
+    // @deprecated (undocumented)
     get IFluidRouter(): IFluidRouter;
     // (undocumented)
-    rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer>;
-    // (undocumented)
+    rehydrateDetachedContainerFromSnapshot(snapshot: string, createDetachedProps?: {
+        canReconnect?: boolean;
+        clientDetailsOverride?: IClientDetails;
+    }): Promise<IContainer>;
+    // @deprecated (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
     resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer>;
@@ -117,8 +128,11 @@ export class Loader implements IHostLoader {
 // @public
 export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot: IQuorumSnapshot, sendProposal: (key: string, value: any) => number) => IProtocolHandler;
 
-// @public
+// @public @deprecated
 export function requestResolvedObjectFromContainer(container: IContainer, headers?: IRequestHeader): Promise<IResponse>;
+
+// @public
+export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger): Promise<T>;
 
 // @public
 export function waitContainerToCatchUp(container: IContainer): Promise<boolean>;

@@ -4,32 +4,36 @@
  */
 import {
 	AttachState,
-	IContainer,
-	IFluidModuleWithDetails,
+	type IContainer,
+	type IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
-import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
+import {
+	type IDocumentServiceFactory,
+	type IUrlResolver,
+} from "@fluidframework/driver-definitions";
 import { applyStorageCompression } from "@fluidframework/driver-utils";
 import {
-	ContainerSchema,
+	type ContainerSchema,
 	DOProviderContainerRuntimeFactory,
 	FluidContainer,
-	IFluidContainer,
-	RootDataObject,
+	type IFluidContainer,
+	type IRootDataObject,
 } from "@fluidframework/fluid-static";
-import { IClient, SummaryType } from "@fluidframework/protocol-definitions";
+import { type IClient, SummaryType } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+// eslint-disable-next-line import/no-deprecated
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
-import { IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import { type IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { AzureAudience } from "./AzureAudience";
 import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver";
 import {
-	AzureClientProps,
-	AzureConnectionConfig,
-	AzureContainerServices,
-	AzureContainerVersion,
-	AzureGetVersionsOptions,
+	type AzureClientProps,
+	type AzureConnectionConfig,
+	type AzureContainerServices,
+	type AzureContainerVersion,
+	type AzureGetVersionsOptions,
 } from "./interfaces";
 import { isAzureRemoteConnectionConfig } from "./utils";
 
@@ -37,9 +41,9 @@ import { isAzureRemoteConnectionConfig } from "./utils";
  * Strongly typed id for connecting to a local Azure Fluid Relay.
  */
 const LOCAL_MODE_TENANT_ID = "local";
-const getTenantId = (connectionProps: AzureConnectionConfig): string => {
-	return isAzureRemoteConnectionConfig(connectionProps)
-		? connectionProps.tenantId
+const getTenantId = (connectionProperties: AzureConnectionConfig): string => {
+	return isAzureRemoteConnectionConfig(connectionProperties)
+		? connectionProperties.tenantId
 		: LOCAL_MODE_TENANT_ID;
 };
 
@@ -56,26 +60,26 @@ export class AzureClient {
 
 	/**
 	 * Creates a new client instance using configuration parameters.
-	 * @param props - Properties for initializing a new AzureClient instance
+	 * @param properties - Properties for initializing a new AzureClient instance
 	 */
-	public constructor(private readonly props: AzureClientProps) {
+	public constructor(private readonly properties: AzureClientProps) {
 		// remove trailing slash from URL if any
-		props.connection.endpoint = props.connection.endpoint.replace(/\/$/, "");
+		properties.connection.endpoint = properties.connection.endpoint.replace(/\/$/, "");
 		this.urlResolver = new AzureUrlResolver();
 		// The local service implementation differs from the Azure Fluid Relay in blob
 		// storage format. Azure Fluid Relay supports whole summary upload. Local currently does not.
-		const isRemoteConnection = isAzureRemoteConnectionConfig(this.props.connection);
+		const isRemoteConnection = isAzureRemoteConnectionConfig(this.properties.connection);
 		const origDocumentServiceFactory: IDocumentServiceFactory =
-			new RouterliciousDocumentServiceFactory(this.props.connection.tokenProvider, {
+			new RouterliciousDocumentServiceFactory(this.properties.connection.tokenProvider, {
 				enableWholeSummaryUpload: isRemoteConnection,
 				enableDiscovery: isRemoteConnection,
 			});
 
 		this.documentServiceFactory = applyStorageCompression(
 			origDocumentServiceFactory,
-			props.summaryCompression,
+			properties.summaryCompression,
 		);
-		this.configProvider = props.configProvider;
+		this.configProvider = properties.configProvider;
 	}
 
 	/**
@@ -94,7 +98,10 @@ export class AzureClient {
 			config: {},
 		});
 
-		const fluidContainer = await this.createFluidContainer(container, this.props.connection);
+		const fluidContainer = await this.createFluidContainer(
+			container,
+			this.properties.connection,
+		);
 		const services = this.getContainerServices(container);
 		return { container: fluidContainer, services };
 	}
@@ -116,9 +123,12 @@ export class AzureClient {
 		services: AzureContainerServices;
 	}> {
 		const loader = this.createLoader(containerSchema);
-		const url = new URL(this.props.connection.endpoint);
-		url.searchParams.append("storage", encodeURIComponent(this.props.connection.endpoint));
-		url.searchParams.append("tenantId", encodeURIComponent(getTenantId(this.props.connection)));
+		const url = new URL(this.properties.connection.endpoint);
+		url.searchParams.append("storage", encodeURIComponent(this.properties.connection.endpoint));
+		url.searchParams.append(
+			"tenantId",
+			encodeURIComponent(getTenantId(this.properties.connection)),
+		);
 		url.searchParams.append("containerId", encodeURIComponent(id));
 		const sourceContainer = await loader.resolve({ url: url.href });
 
@@ -139,7 +149,10 @@ export class AzureClient {
 
 		const container = await loader.rehydrateDetachedContainerFromSnapshot(JSON.stringify(tree));
 
-		const fluidContainer = await this.createFluidContainer(container, this.props.connection);
+		const fluidContainer = await this.createFluidContainer(
+			container,
+			this.properties.connection,
+		);
 		const services = this.getContainerServices(container);
 		return { container: fluidContainer, services };
 	}
@@ -158,12 +171,16 @@ export class AzureClient {
 		services: AzureContainerServices;
 	}> {
 		const loader = this.createLoader(containerSchema);
-		const url = new URL(this.props.connection.endpoint);
-		url.searchParams.append("storage", encodeURIComponent(this.props.connection.endpoint));
-		url.searchParams.append("tenantId", encodeURIComponent(getTenantId(this.props.connection)));
+		const url = new URL(this.properties.connection.endpoint);
+		url.searchParams.append("storage", encodeURIComponent(this.properties.connection.endpoint));
+		url.searchParams.append(
+			"tenantId",
+			encodeURIComponent(getTenantId(this.properties.connection)),
+		);
 		url.searchParams.append("containerId", encodeURIComponent(id));
 		const container = await loader.resolve({ url: url.href });
-		const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
+		// eslint-disable-next-line import/no-deprecated
+		const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");
 		const fluidContainer = new FluidContainer(container, rootDataObject);
 		const services = this.getContainerServices(container);
 		return { container: fluidContainer, services };
@@ -180,18 +197,20 @@ export class AzureClient {
 		id: string,
 		options?: AzureGetVersionsOptions,
 	): Promise<AzureContainerVersion[]> {
-		const url = new URL(this.props.connection.endpoint);
-		url.searchParams.append("storage", encodeURIComponent(this.props.connection.endpoint));
-		url.searchParams.append("tenantId", encodeURIComponent(getTenantId(this.props.connection)));
+		const url = new URL(this.properties.connection.endpoint);
+		url.searchParams.append("storage", encodeURIComponent(this.properties.connection.endpoint));
+		url.searchParams.append(
+			"tenantId",
+			encodeURIComponent(getTenantId(this.properties.connection)),
+		);
 		url.searchParams.append("containerId", encodeURIComponent(id));
 
 		const resolvedUrl = await this.urlResolver.resolve({ url: url.href });
 		if (!resolvedUrl) {
 			throw new Error("Unable to resolved URL");
 		}
-		const documentService = await this.documentServiceFactory.createDocumentService(
-			resolvedUrl,
-		);
+		const documentService =
+			await this.documentServiceFactory.createDocumentService(resolvedUrl);
 		const storage = await documentService.connectToStorage();
 
 		// External API uses null
@@ -233,7 +252,7 @@ export class AzureClient {
 			urlResolver: this.urlResolver,
 			documentServiceFactory: this.documentServiceFactory,
 			codeLoader,
-			logger: this.props.logger,
+			logger: this.properties.logger,
 			options: { client },
 			configProvider: this.configProvider,
 		});
@@ -248,7 +267,8 @@ export class AzureClient {
 			getTenantId(connection),
 		);
 
-		const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
+		// eslint-disable-next-line import/no-deprecated
+		const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");
 
 		/**
 		 * See {@link FluidContainer.attach}
@@ -261,7 +281,6 @@ export class AzureClient {
 			if (container.resolvedUrl === undefined) {
 				throw new Error("Resolved Url not available on attached container");
 			}
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return container.resolvedUrl.id;
 		};
 		const fluidContainer = new FluidContainer(container, rootDataObject);

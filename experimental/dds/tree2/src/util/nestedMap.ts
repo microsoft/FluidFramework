@@ -38,6 +38,19 @@ export function tryAddToNestedMap<Key1, Key2, Value>(
 }
 
 /**
+ * Copies over all entries from the source map into the destination map.
+ *
+ * @alpha
+ */
+export function populateNestedMap<Key1, Key2, Value>(
+	source: NestedMap<Key1, Key2, Value>,
+	destination: NestedMap<Key1, Key2, Value>,
+): void {
+	for (const [key1, innerMap] of source) {
+		destination.set(key1, new Map(innerMap));
+	}
+}
+/**
  * Sets the value at (key1, key2) in map to value.
  * If there already is a value for (key1, key2), it is replaced with the provided one.
  *
@@ -149,6 +162,31 @@ export function deleteFromNestedMap<Key1, Key2, Value>(
 }
 
 /**
+ * Encodes a NestedMap as a string.
+ */
+export function encodeNestedMap<Key1, Key2, Value>(map: NestedMap<Key1, Key2, Value>): string {
+	const encoded: [Key1, Key2, Value][] = [];
+	map.forEach((innerMap, key1) => {
+		innerMap.forEach((val, key2) => {
+			encoded.push([key1, key2, val]);
+		});
+	});
+	return JSON.stringify(encoded);
+}
+
+/**
+ * Decodes a NestedMap from a string.
+ */
+export function decodeNestedMap<Key1, Key2, Value>(encoded: string): NestedMap<Key1, Key2, Value> {
+	const decoded: [Key1, Key2, Value][] = JSON.parse(encoded);
+	const map = new Map<Key1, Map<Key2, Value>>();
+	for (const [key1, key2, val] of decoded) {
+		getOrAddInMap(map, key1, new Map<Key2, Value>()).set(key2, val);
+	}
+	return map;
+}
+
+/**
  * Map with two keys; same semantics as NestedMap, but maintains a size count for the entire collection.
  * Note: undefined is not supported as a value, and will cause incorrect behavior.
  *
@@ -233,5 +271,13 @@ export class SizedNestedMap<Key1, Key2, Value> {
 	public clear(): void {
 		this.count = 0;
 		this.nestedMap.clear();
+	}
+
+	public values(): IterableIterator<Value> {
+		return Array.from(this.nestedMap.values()).flatMap((innerMap) => innerMap.values())[0];
+	}
+
+	public [Symbol.iterator]() {
+		return this.nestedMap[Symbol.iterator]();
 	}
 }

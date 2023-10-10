@@ -6,21 +6,20 @@
 import {
 	Divider,
 	makeStyles,
-	SelectTabData,
-	SelectTabEvent,
+	type SelectTabData,
+	type SelectTabEvent,
 	shorthands,
 	Tab,
 	TabList,
-	TabValue,
+	type TabValue,
 } from "@fluentui/react-components";
 import {
-	ContainerDevtoolsFeature,
-	ContainerDevtoolsFeatureFlags,
+	type ContainerDevtoolsFeatureFlags,
 	ContainerDevtoolsFeatures,
 	GetContainerDevtoolsFeatures,
-	HasContainerKey,
-	ISourcedDevtoolsMessage,
-	InboundHandlers,
+	type HasContainerKey,
+	type ISourcedDevtoolsMessage,
+	type InboundHandlers,
 	handleIncomingMessage,
 } from "@fluid-experimental/devtools-core";
 import React from "react";
@@ -156,14 +155,16 @@ function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.React
 	const panelViews = Object.values(PanelView);
 	// Inner view selection
 	const [innerViewSelection, setInnerViewSelection] = React.useState<TabValue>(
-		supportedFeatures[ContainerDevtoolsFeature.ContainerData] === true
+		supportedFeatures.containerDataVisualization === true ||
+			// Backwards compatibility check, needed until we require at least devtools-core/devtools v2.0.0-internal.6.1.0
+			supportedFeatures["container-data"] === true
 			? PanelView.ContainerData
 			: PanelView.ContainerStateHistory,
 	);
 
 	let innerView: React.ReactElement;
 	switch (innerViewSelection) {
-		case PanelView.ContainerData:
+		case PanelView.ContainerData: {
 			innerView = (
 				<ContainerFeatureFlagContext.Provider
 					value={{ containerFeatureFlags: supportedFeatures }}
@@ -172,14 +173,18 @@ function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.React
 				</ContainerFeatureFlagContext.Provider>
 			);
 			break;
-		case PanelView.Audience:
+		}
+		case PanelView.Audience: {
 			innerView = <AudienceView containerKey={containerKey} />;
 			break;
-		case PanelView.ContainerStateHistory:
+		}
+		case PanelView.ContainerStateHistory: {
 			innerView = <ContainerHistoryView containerKey={containerKey} />;
 			break;
-		default:
+		}
+		default: {
 			throw new Error(`Unrecognized PanelView selection value: "${innerViewSelection}".`);
+		}
 	}
 
 	const onTabSelect = (event: SelectTabEvent, data: SelectTabData): void => {

@@ -28,7 +28,7 @@ import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { ReadDocumentStorageServiceBase } from '@fluidframework/replay-driver';
-import { TypedEventEmitter } from '@fluidframework/common-utils';
+import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @public
 export class FileDeltaStorageService implements IDocumentDeltaStorageService {
@@ -58,7 +58,7 @@ export const FileSnapshotWriterClassFactory: <TBase extends ReaderConstructor>(B
         onSnapshotHandler(snapshot: IFileSnapshot): void;
         readBlob(sha: string): Promise<ArrayBufferLike>;
         getVersions(versionId: string | null, count: number): Promise<api.IVersion[]>;
-        getSnapshotTree(version?: api.IVersion | undefined): Promise<api.ISnapshotTree | null>;
+        getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null>;
         uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string>;
         buildTree(snapshotTree: api.ISnapshotTree): Promise<api.ITree>;
         repositoryUrl: string;
@@ -94,7 +94,7 @@ export const FluidFetchReaderFileSnapshotWriter: {
         onSnapshotHandler(snapshot: IFileSnapshot): void;
         readBlob(sha: string): Promise<ArrayBufferLike>;
         getVersions(versionId: string | null, count: number): Promise<api.IVersion[]>;
-        getSnapshotTree(version?: api.IVersion | undefined): Promise<api.ISnapshotTree | null>;
+        getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null>;
         uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string>;
         buildTree(snapshotTree: api.ISnapshotTree): Promise<api.ITree>;
         repositoryUrl: string;
