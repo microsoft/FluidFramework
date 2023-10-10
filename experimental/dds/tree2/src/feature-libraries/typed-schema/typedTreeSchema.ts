@@ -354,8 +354,7 @@ export class FieldSchema<
 		for (const allowedType of allowedTypes) {
 			if (allowedType === Any) {
 				assert(allowedTypes.length === 1, "Invalid Any in allowedTypes");
-			}
-			if (typeof allowedType !== "function") {
+			} else if (typeof allowedType !== "function") {
 				assert(allowedType instanceof TreeSchema, "Invalid entry in allowedTypes");
 			}
 		}
