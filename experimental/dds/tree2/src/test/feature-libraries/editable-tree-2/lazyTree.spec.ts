@@ -471,12 +471,6 @@ describe("buildLazyStruct", () => {
 	});
 	const schema = schemaBuilder.toDocumentSchema(SchemaBuilder.fieldOptional(Any));
 
-	// Count the number of times edits have been generated.
-	let editCallCount = 0;
-	beforeEach(() => {
-		editCallCount = 0;
-	});
-
 	const context = contextWithContentReadonly({
 		schema,
 		initialTree: {
