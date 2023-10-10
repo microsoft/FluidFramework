@@ -28,7 +28,6 @@ import { Summarizable, SummaryElementParser, SummaryElementStringifier } from ".
 import { SummaryEncodeType } from "../shared-tree";
 import { FullSchemaPolicy } from "./modular-schema";
 import { decode, schemaCompressedEncode, uncompressedEncode, EncodedChunk } from "./chunked-forest";
-import { jsonableTreeFromCursor, singleTextCursor } from "./treeTextCursor";
 
 /**
  * The storage key for the blob in the summary containing tree data
@@ -121,10 +120,7 @@ export class ForestSummarizer implements Summarizable {
 			// forest summary format.
 			const fields = parse(treeBufferString) as [FieldKey, EncodedChunk][];
 			const delta: [FieldKey, Delta.Insert[]][] = fields.map(([fieldKey, content]) => {
-				const cursors = mapCursorField(
-					decode(content).cursor(),
-					jsonableTreeFromCursor,
-				).map(singleTextCursor);
+				const cursors = mapCursorField(decode(content).cursor(), (cursor) => cursor.fork());
 				const insert: Delta.Insert = {
 					type: Delta.MarkType.Insert,
 					content: cursors,
