@@ -39,7 +39,6 @@ import {
 } from "../typed-schema";
 import { EditableTreeEvents } from "../untypedTree";
 import { FieldKinds } from "../default-field-kinds";
-import { FieldKind } from "../modular-schema";
 import { LocalNodeKey } from "../node-key";
 import { Context } from "./context";
 import {
@@ -522,31 +521,38 @@ function buildStructClass<TSchema extends StructSchema>(
 	const ownPropertyMap: PropertyDescriptorMap = {};
 
 	for (const [key, fieldSchema] of schema.structFields) {
-		// Map containing setter implementations for field kinds that support setters.
-		const setters = new Map<FieldKind, (newContent: ContextuallyTypedNodeData) => void>([
-			[
-				FieldKinds.required,
-				function (this: CustomStruct, newContent: ContextuallyTypedNodeData): void {
+		let setter: ((newContent: ContextuallyTypedNodeData) => void) | undefined;
+		switch (fieldSchema.kind) {
+			case FieldKinds.optional: {
+				setter = function (
+					this: CustomStruct,
+					newContent: ContextuallyTypedNodeData,
+				): void {
 					const field = inCursorField(this[cursorSymbol], key, (cursor) => {
 						return makeField(this.context, fieldSchema, cursor);
 					}) as RequiredField<AllowedTypes>;
 
 					field.content = newContent;
-				},
-			],
-			[
-				FieldKinds.optional,
-				function (this: CustomStruct, newContent: ContextuallyTypedNodeData): void {
+				};
+				break;
+			}
+			case FieldKinds.required: {
+				setter = function (
+					this: CustomStruct,
+					newContent: ContextuallyTypedNodeData,
+				): void {
 					const field = inCursorField(this[cursorSymbol], key, (cursor) => {
 						return makeField(this.context, fieldSchema, cursor);
 					}) as OptionalField<AllowedTypes>;
 
 					field.content = newContent;
-				},
-			],
-		]);
-
-		const setter = setters.get(fieldSchema.kind);
+				};
+				break;
+			}
+			default:
+				setter = undefined;
+				break;
+		}
 
 		// Create getter and setter (when appropriate) for property
 		ownPropertyMap[key] = {
