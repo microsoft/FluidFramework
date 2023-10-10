@@ -17,8 +17,7 @@ import { FieldKind } from "./modular-schema";
  * Builds schema libraries, and the schema within them.
  *
  * @remarks
- * Field, when inferred from {@link ImplicitFieldSchema}, default to the `Required` {@link FieldKind}.
- *
+ * Fields, when inferred from {@link ImplicitFieldSchema}, default to the `Required` {@link FieldKind}.
  *
  * This type has some built in defaults which impact compatibility.
  * This includes which {@link FieldKind}s it uses.
