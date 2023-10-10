@@ -19,7 +19,6 @@ import {
 	IEditableForest,
 	ITreeCursorSynchronous,
 	ITreeSubscriptionCursor,
-	JsonableTree,
 	makeDetachedFieldIndex,
 	mapCursorField,
 	mapCursorFields,

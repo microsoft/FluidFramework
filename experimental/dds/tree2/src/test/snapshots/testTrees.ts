@@ -6,7 +6,12 @@
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { brand, useDeterministicStableId } from "../../util";
 import { AllowedUpdateType, FieldKey, UpPath, rootFieldKey } from "../../core";
-import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../shared-tree";
+import {
+	ISharedTree,
+	ISharedTreeView,
+	SharedTreeFactory,
+	SummaryEncodeType,
+} from "../../shared-tree";
 import { Any, FieldKinds, SchemaBuilder, singleTextCursor } from "../../feature-libraries";
 import { typeboxValidator } from "../../external-utilities";
 import { leaf } from "../../domains";

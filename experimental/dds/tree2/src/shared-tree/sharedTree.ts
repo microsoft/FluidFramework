@@ -117,7 +117,12 @@ export class SharedTree
 				: buildForest();
 		const removedTrees = makeDetachedFieldIndex("repair");
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);
-		const forestSummarizer = new ForestSummarizer(forest);
+		const forestSummarizer = new ForestSummarizer(
+			forest,
+			schema,
+			defaultSchemaPolicy,
+			options.summaryEncodeType,
+		);
 		const removedTreesSummarizer = new DetachedFieldIndexSummarizer(removedTrees);
 		const changeFamily = new DefaultChangeFamily(options);
 		super(
