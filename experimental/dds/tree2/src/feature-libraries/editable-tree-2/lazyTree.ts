@@ -564,7 +564,7 @@ function buildStructClass<TSchema extends StructSchema>(
 			propertyDescriptorMap[`set${capitalize(key)}`] = {
 				enumerable: false,
 				get(this: CustomStruct) {
-					return setters.get(fieldSchema.kind);
+					return setter;
 				},
 			};
 		}
