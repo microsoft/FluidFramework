@@ -238,18 +238,6 @@ export interface Remove<TTree = ProtoNode> extends HasModifications<TTree> {
 	readonly detachId: DetachedNodeId;
 }
 
-// /**
-//  * Describes the destruction of a contiguous range of detached nodes.
-//  * @alpha
-//  */
-// export interface Destroy extends IsDetachedMark {
-// 	readonly type: typeof MarkType.Destroy;
-// 	/**
-// 	 * Must be 1 when `fields` is populated.
-// 	 */
-// 	readonly count: number;
-// }
-
 /**
  * Describes the moving out of a contiguous range of node.
  * @alpha
@@ -303,23 +291,6 @@ export interface OldContent<TTree = ProtoNode> {
 	 */
 	readonly detachId: DetachedNodeId;
 }
-
-// /**
-//  * Describes the creation of a contiguous range of node.
-//  * @alpha
-//  */
-// export interface Create<TTree = ProtoNode> {
-// 	readonly type: typeof MarkType.Create;
-// 	/**
-// 	 * Must be of length 1 when `fields` is populated.
-// 	 */
-// 	readonly data: readonly TTree[];
-
-// 	/**
-// 	 * Modifications to the new content.
-// 	 */
-// 	readonly fields?: FieldMarks<TTree>;
-// }
 
 /**
  * Describes the insertion of a contiguous range of node.

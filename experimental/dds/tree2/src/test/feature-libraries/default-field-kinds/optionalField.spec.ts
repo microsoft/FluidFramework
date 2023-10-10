@@ -207,13 +207,6 @@ describe("optionalField", () => {
 				childChanges: [["self", nodeChange2]],
 			};
 
-			// const repair: NodeReviver = (revision: RevisionTag, index: number, count: number) => {
-			// 	assert.equal(revision, change1.revision);
-			// 	assert.equal(index, 0);
-			// 	assert.equal(count, 1);
-			// 	return [testTreeCursor("tree1")];
-			// };
-
 			assert.deepEqual(
 				optionalChangeRebaser.invert(
 					change1,
