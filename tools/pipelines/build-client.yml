@@ -142,6 +142,7 @@ extends:
     - check:versions
     - generate:packageList
     - prettier
+    telemetry: true
     additionalBuildSteps:
     - task: Bash@3
       displayName: Inject devtools telemetry logger token

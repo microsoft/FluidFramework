@@ -124,6 +124,10 @@ parameters:
   type: object
   default: []
 
+- name: telemetry
+  type: boolean
+  default: false
+
 variables:
   # We use 'chalk' to colorize output, which auto-detects color support in the
   # running terminal.  The log output shown in Azure DevOps job runs only has
@@ -622,10 +626,10 @@ stages:
         publishNonScopedPackages: ${{ variables.publishNonScopedPackages }}
 
   # Capture per-pipeline stage results
-  - ${{ if eq(variables['Build.Reason'], 'IndividualCI') }}:
+  - ${{ if and(eq(variables['Build.Reason'], 'IndividualCI'), eq(parameters.telemetry, true)) }}:
     - stage: runAfterAll
       displayName: Retrieve and upload client stage stats to Kusto
-      condition: eq(parameters.tagName, 'client')
+      condition: always()
       dependsOn: 
         - build
 
