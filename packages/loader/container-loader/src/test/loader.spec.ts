@@ -6,9 +6,9 @@
 import assert from "assert";
 import { isFluidError } from "@fluidframework/telemetry-utils";
 import { FluidErrorTypes } from "@fluidframework/core-interfaces";
-import { Loader } from "../loader";
 import { SummaryType } from "@fluidframework/protocol-definitions";
 import { IRuntime } from "@fluidframework/container-definitions";
+import { Loader } from "../loader";
 
 const failProxy = <T extends object>() => {
 	const proxy = new Proxy<T>({} as any as T, {
