@@ -48,7 +48,7 @@
 		"semver": "^7.5.4"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "2.0.1",
+		"@fluidframework/build-common": "^2.0.1",
 		"@fluidframework/eslint-config-fluid": "^2.1.0",
 		"@types/chai": "^4.3.5",
 		"@types/chai-arrays": "^2.0.0",

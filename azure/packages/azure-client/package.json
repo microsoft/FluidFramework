@@ -61,7 +61,7 @@
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/azure-client-previous": "npm:@fluidframework/azure-client@2.0.0-internal.7.0.0",
 		"@fluidframework/azure-local-service": "workspace:~",
-		"@fluidframework/build-common": "2.0.1",
+		"@fluidframework/build-common": "^2.0.1",
 		"@fluidframework/build-tools": "^0.25.0",
 		"@fluidframework/counter": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^3.0.0",
