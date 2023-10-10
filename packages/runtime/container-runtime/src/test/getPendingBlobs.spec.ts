@@ -143,4 +143,32 @@ describe("getPendingLocalState", () => {
 		assert.strictEqual(summaryData2.ids.length, 3);
 		assert.strictEqual(summaryData2.redirectTable.size, 3);
 	});
+
+	it("retries blob after being rejected if it was stashed", async () => {
+		await runtime.attach();
+		await runtime.connect();
+		const blob = IsoBuffer.from("blob", "utf8");
+		const handleP = runtime.createBlob(blob);
+		const pendingStateP = runtime.getPendingLocalState();
+		await runtime.processHandles();
+		await assert.doesNotReject(handleP);
+		const pendingState = await pendingStateP;
+		const pendingBlobs = pendingState[1] ?? {};
+		assert.strictEqual(Object.keys(pendingBlobs).length, 1);
+		assert.strictEqual(Object.values<any>(pendingBlobs)[0].acked, false);
+		assert.strictEqual(Object.values<any>(pendingBlobs)[0].attached, true);
+		assert.strictEqual(Object.values<any>(pendingBlobs)[0].uploadTime, undefined);
+
+		const summaryData = validateSummary(runtime);
+		assert.strictEqual(summaryData.ids.length, 0);
+		assert.strictEqual(summaryData.redirectTable, undefined);
+
+		const runtime2 = new MockRuntime(mc, summaryData, false, pendingState);
+		await runtime2.attach();
+		await runtime2.connect(0, true);
+		await runtime2.processAll();
+		const summaryData2 = validateSummary(runtime2);
+		assert.strictEqual(summaryData2.ids.length, 1);
+		assert.strictEqual(summaryData2.redirectTable.size, 1);
+	});
 });

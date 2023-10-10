@@ -44,7 +44,6 @@ import {
 	disableAttachmentBlobSweepKey,
 	throwOnTombstoneLoadKey,
 } from "./gc";
-import { Throttler, formExponentialFn, IThrottler } from "./throttler";
 import { summarizerClientType } from "./summary";
 import { IBlobMetadata } from "./metadata";
 
@@ -86,23 +85,6 @@ export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
 
 	public bind(handle: IFluidHandle) {
 		throw new Error("Cannot bind to blob handle");
-	}
-}
-
-class CancellableThrottler {
-	constructor(private readonly throttler: IThrottler) {}
-	private cancelP = new Deferred<void>();
-
-	public async getDelay(): Promise<void> {
-		return Promise.race([
-			this.cancelP.promise,
-			new Promise<void>((resolve) => setTimeout(resolve, this.throttler.getDelay())),
-		]);
-	}
-
-	public cancel() {
-		this.cancelP.resolve();
-		this.cancelP = new Deferred<void>();
 	}
 }
 
@@ -180,15 +162,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	 * because we know that the server will not delete the blob corresponding to that storage ID.
 	 */
 	private readonly opsInFlight: Map<string, string[]> = new Map();
-
-	private readonly retryThrottler = new CancellableThrottler(
-		new Throttler(
-			60 * 1000, // 60 sec delay window
-			30 * 1000, // 30 sec max delay
-			// throttling function increases exponentially (0ms, 40ms, 80ms, 160ms, etc)
-			formExponentialFn({ coefficient: 20, initialDelay: 0 }),
-		),
-	);
 
 	/** If true, throw an error when a tombstone attachment blob is retrieved. */
 	private readonly throwOnTombstoneLoad: boolean;
@@ -340,7 +313,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	 * Upload blobs added while offline. This must be completed before connecting and resubmitting ops.
 	 */
 	public async processStashedChanges() {
-		this.retryThrottler.cancel();
 		const pendingUploads = Array.from(this.pendingBlobs.values())
 			.filter((e) => e.pendingStashed === true)
 			.map(async (e) => e.uploadP);
@@ -504,8 +476,16 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		)
 			.then((response) => this.onUploadResolve(localId, response))
 			.catch((err) => {
-				this.pendingBlobs.get(localId)?.handleP.reject(err);
-				if (!this.pendingBlobs.get(localId)?.opsent) {
+				const entry = this.pendingBlobs.get(localId);
+				assert(
+					!!entry,
+					0x387 /* Must have pending blob entry for blob which failed to upload */,
+				);
+				if (entry.opsent) {
+					// retry indefinitely if blob op was sent
+					entry.uploadP = this.uploadBlob(localId, blob);
+				} else {
+					entry.handleP.reject(err);
 					this.deletePendingBlob(localId);
 				}
 			});

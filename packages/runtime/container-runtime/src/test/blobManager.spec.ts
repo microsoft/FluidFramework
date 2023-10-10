@@ -221,21 +221,29 @@ export class MockRuntime
 		return summary;
 	}
 
-	public async connect(delay = 0) {
+	public async connect(delay = 0, processStashedWithRetry?: boolean) {
 		assert(!this.connected);
 		await new Promise<void>((resolve) => setTimeout(resolve, delay));
 		this.connected = true;
 		this.emit("connected", "client ID");
-		await this.processStashed();
+		await this.processStashed(processStashedWithRetry);
 		const ops = this.ops;
 		this.ops = [];
 		ops.forEach((op) => this.blobManager.reSubmit(op.metadata));
 	}
 
-	public async processStashed() {
+	public async processStashed(processStashedWithRetry?: boolean) {
 		const uploadP = this.blobManager.processStashedChanges();
 		this.processing = true;
-		await this.processBlobs(true);
+		if (processStashedWithRetry) {
+			await this.processBlobs(false, false, 0);
+			// wait till next retry
+			await new Promise<void>((resolve) => setTimeout(resolve, 1));
+			// try again successfully
+			await this.processBlobs(true);
+		} else {
+			await this.processBlobs(true);
+		}
 		await uploadP;
 		this.processing = false;
 	}
