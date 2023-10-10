@@ -38,25 +38,35 @@ export function create(
 	router.post("/:tenantId/:id/broadcast-signal", (request, response) => {
 		const tenantId = getParam(request.params, "tenantId");
 		const documentId = getParam(request.params, "id");
-
-		try {
-			const signalContent = JSON.parse(
-				getParam(request.body, "signalContent"),
-			) as IRuntimeSignalEnvelope;
-			try {
-				const signalRoom: IRoom = { tenantId, documentId };
-				const payload: IBroadcastSignalEventPayload = { signalRoom, signalContent };
-				collaborationSessionEventEmitter.emit("broadcastSignal", payload);
-				response.status(200).send("OK");
-			} catch (error) {
-				response.status(500).send(error);
-			}
-		} catch (error) {
+		const signalContent = request?.body?.signalContent;
+		if (!isValidSignalEnvelope(signalContent)) {
 			response
 				.status(400)
-				.send(`signalContent should contain 'content' and 'type' keys. Error: ${error}`);
+				.send(`signalContent should contain 'contents.content' and 'contents.type' keys.`);
+			return;
+		}
+		if (!collaborationSessionEventEmitter) {
+			response.status(500).send(`No emitter configured for the broadcast-signal endpoint.`);
+			return;
+		}
+
+		try {
+			const signalRoom: IRoom = { tenantId, documentId };
+			const payload: IBroadcastSignalEventPayload = { signalRoom, signalContent };
+			collaborationSessionEventEmitter.emit("broadcastSignal", payload);
+			response.status(200).send("OK");
+			return;
+		} catch (error) {
+			response.status(500).send(error);
+			return;
 		}
 	});
 
 	return router;
+}
+
+function isValidSignalEnvelope(
+	input: Partial<IRuntimeSignalEnvelope>,
+): input is IRuntimeSignalEnvelope {
+	return typeof input?.contents?.type === "string" && input?.contents?.content !== undefined;
 }
