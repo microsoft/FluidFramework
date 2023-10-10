@@ -39,6 +39,7 @@ import {
 	IRuntime,
 	ReadOnlyInfo,
 	isFluidCodeDetails,
+	IGetPendingLocalStateProps,
 } from "@fluidframework/container-definitions";
 import {
 	IDocumentService,
@@ -1086,12 +1087,15 @@ export class Container
 		}
 	}
 
-	public async closeAndGetPendingLocalState(): Promise<string> {
+	public async closeAndGetPendingLocalState(signal?: AbortSignal): Promise<string> {
 		// runtime matches pending ops to successful ones by clientId and client seq num, so we need to close the
 		// container at the same time we get pending state, otherwise this container could reconnect and resubmit with
 		// a new clientId and a future container using stale pending state without the new clientId would resubmit them
 		this.disconnectInternal({ text: "closeAndGetPendingLocalState" }); // TODO https://dev.azure.com/fluidframework/internal/_workitems/edit/5127
-		const pendingState = await this.getPendingLocalStateCore({ notifyImminentClosure: true });
+		const pendingState = await this.getPendingLocalStateCore({
+			notifyImminentClosure: true,
+			signal,
+		});
 		this.close();
 		return pendingState;
 	}
@@ -1100,7 +1104,7 @@ export class Container
 		return this.getPendingLocalStateCore({ notifyImminentClosure: false });
 	}
 
-	private async getPendingLocalStateCore(props: { notifyImminentClosure: boolean }) {
+	private async getPendingLocalStateCore(props: IGetPendingLocalStateProps) {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
 			{
@@ -2518,5 +2522,5 @@ export interface IContainerExperimental extends IContainer {
 	 * @experimental
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
-	closeAndGetPendingLocalState?(): Promise<string>;
+	closeAndGetPendingLocalState?(signal?: AbortSignal): Promise<string>;
 }

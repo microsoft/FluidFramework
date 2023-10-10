@@ -377,6 +377,14 @@ export interface IFluidPackageEnvironment {
 
 export { IGenericError }
 
+// @public (undocumented)
+export interface IGetPendingLocalStateProps {
+    // (undocumented)
+    readonly notifyImminentClosure: boolean;
+    // (undocumented)
+    readonly signal?: AbortSignal;
+}
+
 // @public
 export interface IHostLoader extends ILoader {
     createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<IContainer>;
@@ -452,9 +460,7 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
 export interface IRuntime extends IDisposable {
     createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
     getEntryPoint?(): Promise<FluidObject | undefined>;
-    getPendingLocalState(props?: {
-        notifyImminentClosure?: boolean;
-    }): unknown;
+    getPendingLocalState(props?: IGetPendingLocalStateProps): unknown;
     // @deprecated
     notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
     notifyOpReplay?(message: ISequencedDocumentMessage): Promise<void>;

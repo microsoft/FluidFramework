@@ -599,11 +599,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		const pendingEntry = this.pendingBlobs.get(localId);
 
 		if (!blobId) {
-			// We submitted this op while offline. The blob should have been uploaded by now.
-			assert(
-				pendingEntry?.opsent === true && !!pendingEntry?.storageId,
-				0x38d /* blob must be uploaded before resubmitting BlobAttach op */,
-			);
+			// Ignore blobs that could not get uploaded/attached during stashing
+			if (!(pendingEntry?.opsent === true && !!pendingEntry?.storageId)) {
+				return;
+			}
 			return this.sendBlobAttachOp(localId, pendingEntry?.storageId);
 		}
 		return this.sendBlobAttachOp(localId, blobId);
@@ -930,7 +929,9 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		}
 	}
 
-	public async attachAndGetPendingBlobs(): Promise<IPendingBlobs | undefined> {
+	public async attachAndGetPendingBlobs(
+		signal?: AbortSignal,
+	): Promise<IPendingBlobs | undefined> {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
 			{ eventName: "GetPendingBlobs" },
@@ -940,6 +941,15 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				}
 				const blobs = {};
 				const localBlobs = new Set<PendingBlob>();
+				const abortPromise = new Promise<void>((resolve, reject) => {
+					signal?.addEventListener(
+						"abort",
+						() => {
+							reject(new Error("Operation aborted"));
+						},
+						{ once: true },
+					);
+				});
 				while (localBlobs.size < this.pendingBlobs.size) {
 					const attachBlobsP: Promise<void>[] = [];
 					for (const [id, entry] of this.pendingBlobs) {
@@ -966,10 +976,13 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 							);
 						}
 					}
-					await Promise.all(attachBlobsP);
+					await Promise.race([Promise.all(attachBlobsP), abortPromise]).catch(() => {});
 				}
 
 				for (const [id, entry] of this.pendingBlobs) {
+					if (signal?.aborted && !entry.attached) {
+						continue;
+					}
 					assert(entry.attached === true, 0x790 /* stashed blob should be attached */);
 					blobs[id] = {
 						blob: bufferToString(entry.blob, "base64"),

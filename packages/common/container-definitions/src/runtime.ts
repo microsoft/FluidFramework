@@ -100,7 +100,7 @@ export interface IRuntime extends IDisposable {
 	 * @experimental
 	 * {@link https://github.com/microsoft/FluidFramework/packages/tree/main/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
-	getPendingLocalState(props?: { notifyImminentClosure?: boolean }): unknown;
+	getPendingLocalState(props?: IGetPendingLocalStateProps): unknown;
 
 	/**
 	 * Notify runtime that container is moving to "Attaching" state
@@ -240,4 +240,10 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
 	 * @param existing - whether to instantiate for the first time or from an existing context
 	 */
 	instantiateRuntime(context: IContainerContext, existing: boolean): Promise<IRuntime>;
+}
+
+export interface IGetPendingLocalStateProps {
+	readonly notifyImminentClosure: boolean;
+
+	readonly signal?: AbortSignal;
 }
