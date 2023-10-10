@@ -13,7 +13,7 @@ importers:
       '@commitlint/config-conventional': ^17.6.6
       '@commitlint/cz-commitlint': ^17.5.0
       '@fluid-tools/build-cli': ~0.25.0
-      '@fluidframework/build-common': 2.0.1
+      '@fluidframework/build-common': ^2.0.1
       '@fluidframework/build-tools': ~0.25.0
       '@microsoft/api-documenter': ^7.22.24
       '@microsoft/api-extractor': ^7.36.1
@@ -59,7 +59,7 @@ importers:
     specifiers:
       '@fluid-private/readme-command': workspace:*
       '@fluid-tools/version-tools': workspace:*
-      '@fluidframework/build-common': 2.0.1
+      '@fluidframework/build-common': ^2.0.1
       '@fluidframework/build-tools': workspace:*
       '@fluidframework/bundle-size-tools': workspace:*
       '@fluidframework/eslint-config-fluid': ^2.1.0
@@ -213,7 +213,7 @@ importers:
   packages/build-tools:
     specifiers:
       '@fluid-tools/version-tools': workspace:*
-      '@fluidframework/build-common': 2.0.1
+      '@fluidframework/build-common': ^2.0.1
       '@fluidframework/bundle-size-tools': workspace:*
       '@fluidframework/eslint-config-fluid': ^2.1.0
       '@manypkg/get-packages': ^2.2.0
@@ -317,7 +317,7 @@ importers:
 
   packages/bundle-size-tools:
     specifiers:
-      '@fluidframework/build-common': 2.0.1
+      '@fluidframework/build-common': ^2.0.1
       '@fluidframework/eslint-config-fluid': ^2.1.0
       '@microsoft/api-extractor': ^7.36.1
       '@types/msgpack-lite': ^0.1.8
@@ -364,7 +364,7 @@ importers:
 
   packages/readme-command:
     specifiers:
-      '@fluidframework/build-common': 2.0.1
+      '@fluidframework/build-common': ^2.0.1
       '@fluidframework/eslint-config-fluid': ^2.1.0
       '@oclif/core': ^2.8.11
       '@oclif/plugin-help': ^5.2.11
@@ -422,7 +422,7 @@ importers:
   packages/version-tools:
     specifiers:
       '@fluid-private/readme-command': workspace:*
-      '@fluidframework/build-common': 2.0.1
+      '@fluidframework/build-common': ^2.0.1
       '@fluidframework/eslint-config-fluid': ^2.1.0
       '@microsoft/api-extractor': ^7.36.1
       '@oclif/core': ^2.8.11
