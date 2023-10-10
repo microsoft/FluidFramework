@@ -26,7 +26,7 @@ import { type SharedObject } from "@fluidframework/shared-object-base";
 /**
  * Interface for migration events.
  */
-interface IMigrationEvent extends IEvent {
+export interface IMigrationEvent extends IEvent {
 	/**
 	 * Event that is emitted when the migration is complete.
 	 */
