@@ -80,7 +80,7 @@ export class MigrationShimFactory<TOld extends SharedObject, TNew extends Shared
 	 * TODO: create documentation
 	 */
 	public create(runtime: IFluidDataStoreRuntime, id: string): MigrationShim<TOld, TNew> {
-		const spanner = new MigrationShim<TOld, TNew>(
+		const migrationShim = new MigrationShim<TOld, TNew>(
 			id,
 			runtime,
 			this.oldFactory,
@@ -88,6 +88,6 @@ export class MigrationShimFactory<TOld extends SharedObject, TNew extends Shared
 			this.populateNewChannelFn,
 		);
 		// the old shared object will need to be loaded
-		return spanner;
+		return migrationShim;
 	}
 }
