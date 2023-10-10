@@ -14,12 +14,12 @@ import { AllowedTypes, FieldKinds, SchemaBuilder } from "../feature-libraries";
 import { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../util";
 import * as leaf from "./leafDomain";
 
-const builder = new SchemaBuilder("Test Recursive Domain", {}, leaf.library);
+const builder = new SchemaBuilder({ scope: "Test Recursive Domain", libraries: [leaf.library] });
 
 /**
  * @alpha
  */
-export const recursiveStruct = builder.structRecursive("recursiveStruct", {
+export const recursiveStruct = builder.structRecursive("struct", {
 	recursive: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => recursiveStruct),
 	number: SchemaBuilder.fieldRequired(leaf.number),
 });
@@ -33,7 +33,7 @@ fixRecursiveReference(recursiveReference);
 /**
  * @alpha
  */
-export const recursiveStruct2 = builder.struct("recursiveStruct2", {
+export const recursiveStruct2 = builder.struct("struct2", {
 	recursive: SchemaBuilder.field(FieldKinds.optional, recursiveReference),
 	number: SchemaBuilder.fieldRequired(leaf.number),
 });
@@ -48,4 +48,4 @@ type _1 = requireTrue<
 /**
  * @alpha
  */
-export const library = builder.intoLibrary();
+export const library = builder.finalize();

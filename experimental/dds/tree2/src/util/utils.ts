@@ -276,6 +276,16 @@ export function assertValidIndex(
 	}
 }
 
+export function assertValidRange(
+	{ start, end }: { start: number; end: number },
+	array: { readonly length: number },
+) {
+	assertNonNegativeSafeInteger(start);
+	assertNonNegativeSafeInteger(end);
+	assert(end <= array.length, "Range end must be less than or equal to length");
+	assert(start <= end, "Range start must be less than or equal to range start");
+}
+
 export function assertNonNegativeSafeInteger(index: number) {
 	assert(Number.isSafeInteger(index), 0x376 /* index must be an integer */);
 	assert(index >= 0, 0x377 /* index must be non-negative */);
@@ -371,6 +381,34 @@ export function objectToMap<MapKey extends string | number | symbol, MapValue>(
 		map.set(key as MapKey, element);
 	}
 	return map;
+}
+
+/**
+ * Convert an object used as a map into a new object used like a map.
+ *
+ * @remarks
+ * This function must only be used with objects specifically intended to encode map like information.
+ * The only time such objects should be used is for encoding maps as object literals to allow for developer ergonomics or JSON compatibility.
+ * Even those two use-cases need to be carefully considered as using objects as maps can have a lot of issues
+ * (including but not limited to unintended access to __proto__ and other non-owned keys).
+ * {@link objectToMap} helps these few cases get into using an actual map in as safe of a way as is practical.
+ */
+export function transformObjectMap<MapKey extends string | number | symbol, MapValue, NewMapValue>(
+	objectMap: Record<MapKey, MapValue>,
+	transformer: (value: MapValue, key: MapKey) => NewMapValue,
+): Record<MapKey, MapValue> {
+	const output: Record<MapKey, MapValue> = Object.create(null);
+	// This function must only be used with objects specifically intended to encode map like information.
+	for (const key of Object.keys(objectMap)) {
+		const element = objectMap[key as MapKey];
+		Object.defineProperty(output, key, {
+			enumerable: true,
+			configurable: true,
+			writable: true,
+			value: transformer(element, key as MapKey),
+		});
+	}
+	return output;
 }
 
 /**

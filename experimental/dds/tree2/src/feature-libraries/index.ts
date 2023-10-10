@@ -125,7 +125,6 @@ export {
 	allowsRepoSuperset,
 	GenericChangeset,
 	genericFieldKind,
-	NodeReviver,
 	RevisionIndexer,
 	RevisionMetadataSource,
 	RevisionInfo,
@@ -159,12 +158,19 @@ export {
 	fieldApiPrefixes,
 	validateStructFieldName,
 } from "./typed-schema";
-export { SchemaBuilder, SchemaLibrary } from "./schemaBuilder";
+
+export { SchemaBuilderBase, SchemaLibrary } from "./schemaBuilderBase";
+export {
+	SchemaBuilder,
+	SchemaBuilderInternal,
+	ImplicitFieldSchema,
+	NormalizeField,
+	DefaultFieldKind,
+	ImplicitAllowedTypes,
+	NormalizeAllowedTypes,
+} from "./schemaBuilder";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
-
-export { ForestRepairDataStore, ForestRepairDataStoreProvider } from "./forestRepairDataStore";
-export { dummyRepairDataStore } from "./fakeRepairDataStore";
 
 export {
 	TreeChunk,
@@ -249,3 +255,5 @@ export {
 // Split into separate import and export for compatibility with API-Extractor.
 import * as SchemaAware from "./schema-aware";
 export { SchemaAware };
+
+export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer";

@@ -81,12 +81,21 @@ export const valueHandler: FieldChangeHandler<ValueChangeset> = {
 		makeCodecFamily([[0, makeValueCodec<TUnsafe<ValueChangeset>>(Type.Any())]]),
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
 
-	intoDelta: ({ change }, deltaFromChild) =>
+	intoDelta: ({ change, revision }) =>
 		change === 0
 			? []
 			: [
-					{ type: Delta.MarkType.Delete, count: 1 },
-					{ type: Delta.MarkType.Insert, content: [singleJsonCursor(change.new)] },
+					{
+						type: Delta.MarkType.Insert,
+						content: [singleJsonCursor(change.new)],
+						oldContent: {
+							detachId: {
+								major: revision,
+								// This is an arbitrary number for testing.
+								minor: 424242,
+							},
+						},
+					},
 			  ],
 
 	isEmpty: (change) => change === 0,

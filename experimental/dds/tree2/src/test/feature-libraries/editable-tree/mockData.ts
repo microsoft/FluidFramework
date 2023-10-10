@@ -22,7 +22,10 @@ import {
 	SchemaBuilder,
 	Any,
 	TypedSchemaCollection,
-	createMockNodeKeyManager,
+	NormalizeField,
+	DefaultFieldKind,
+	ImplicitFieldSchema,
+	SchemaAware,
 } from "../../../feature-libraries";
 import {
 	ValueSchema,
@@ -36,7 +39,7 @@ import {
 } from "../../../core";
 import { brand, Brand } from "../../../util";
 
-const builder = new SchemaBuilder("mock data");
+const builder = new SchemaBuilder({ scope: "mock data" });
 
 export const stringSchema = builder.leaf("String", ValueSchema.String);
 
@@ -101,7 +104,7 @@ export const arraySchema = builder.fieldNode(
 
 export const rootPersonSchema = SchemaBuilder.field(FieldKinds.optional, personSchema);
 
-export const personSchemaLibrary = builder.intoLibrary();
+export const personSchemaLibrary = builder.finalize();
 
 export const fullSchemaData = buildTestSchema(rootPersonSchema);
 
@@ -155,14 +158,18 @@ export type Person = EditableTree &
 		"editable-tree.Test:Person-1.0.0"
 	>;
 
-export const personData: ContextuallyTypedNodeDataObject = {
+export const personData: SchemaAware.TypedField<
+	typeof rootPersonSchema,
+	SchemaAware.ApiMode.Flexible
+> &
+	ContextuallyTypedNodeData = {
 	name: "Adam",
 	age: 35,
 	adult: true,
 	salary: { [valueSymbol]: 10420.2, [typeNameSymbol]: float64Schema.name },
 	friends: {
 		Mat: "Mat",
-	},
+	} as any, // TODO: map node builder type safety
 	address: {
 		zip: "99999",
 		street: "treeStreet",
@@ -179,10 +186,12 @@ export const personData: ContextuallyTypedNodeDataObject = {
 				[typeNameSymbol]: simplePhonesSchema.name,
 				[EmptyKey]: ["112", "113"],
 			},
-		],
+		] as any, // TODO: field node builder type safety
 		sequencePhones: ["113", "114"],
+		city: undefined,
+		country: undefined,
 	},
-};
+} satisfies ContextuallyTypedNodeDataObject;
 
 export function personJsonableTree(): JsonableTree {
 	return jsonableTreeFromCursor(
@@ -237,10 +246,13 @@ export function getPerson(): Person {
 /**
  * Create schema supporting all type defined in this file, with the specified root field.
  */
-export function buildTestSchema<T extends FieldSchema>(rootField: T) {
-	return new SchemaBuilder("buildTestSchema", {}, personSchemaLibrary).intoDocumentSchema(
-		rootField,
-	);
+export function buildTestSchema<TSchema extends ImplicitFieldSchema>(
+	rootField: TSchema,
+): TypedSchemaCollection<NormalizeField<TSchema, DefaultFieldKind>> {
+	return new SchemaBuilder({
+		scope: "buildTestSchema",
+		libraries: [personSchemaLibrary],
+	}).toDocumentSchema(rootField);
 }
 
 export function getReadonlyEditableTreeContext(
@@ -249,7 +261,7 @@ export function getReadonlyEditableTreeContext(
 ): EditableTreeContext {
 	// This will error if someone tries to call mutation methods on it
 	const dummyEditor = {} as unknown as DefaultEditBuilder;
-	return getEditableTreeContext(forest, schema, dummyEditor, createMockNodeKeyManager());
+	return getEditableTreeContext(forest, schema, dummyEditor);
 }
 
 export function setupForest<T extends FieldSchema>(

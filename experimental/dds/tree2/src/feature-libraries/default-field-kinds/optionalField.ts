@@ -8,11 +8,11 @@ import {
 	Delta,
 	ITreeCursor,
 	TaggedChange,
-	ITreeCursorSynchronous,
 	tagChange,
 	ChangesetLocalId,
 	ChangeAtomId,
 	RevisionTag,
+	JsonableTree,
 } from "../../core";
 import { fail, Mutable, IdAllocator, SizedNestedMap } from "../../util";
 import { singleTextCursor, jsonableTreeFromCursor } from "../treeTextCursor";
@@ -24,14 +24,12 @@ import {
 	NodeChangeRebaser,
 	NodeChangeset,
 	FieldEditor,
-	NodeReviver,
 	CrossFieldManager,
 	RevisionMetadataSource,
 	getIntention,
 	NodeExistenceState,
 	FieldChangeHandler,
 } from "../modular-schema";
-import { populateChildModifications } from "../deltaUtils";
 import { OptionalChangeset, OptionalFieldChange } from "./defaultFieldChangeTypes";
 import { makeOptionalFieldCodecFamily } from "./defaultFieldChangeCodecs";
 
@@ -222,7 +220,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	invert: (
 		{ revision, change }: TaggedChange<OptionalChangeset>,
 		invertChild: NodeChangeInverter,
-		reviver: NodeReviver,
 	): OptionalChangeset => {
 		// Changes to the child that existed in this field before `change` was applied.
 		let originalChildChanges: NodeChangeset | undefined;
@@ -264,8 +261,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			if (!fieldChange.wasEmpty) {
 				assert(revision !== undefined, 0x592 /* Unable to revert to undefined revision */);
 				inverse.fieldChange.newContent = {
-					revert: reviver(revision, 0, 1)[0],
-					changeId: { revision, localId: fieldChange.id },
+					revert: { revision, localId: fieldChange.id },
 					changes: originalChildChanges,
 				};
 			}
@@ -313,7 +309,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 						localId: over.fieldChange.id,
 					};
 					if ("revert" in overContent) {
-						restoredUndoChangeId = overContent.changeId;
+						restoredUndoChangeId = overContent.revert;
 					}
 				}
 			}
@@ -478,68 +474,80 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 	},
 };
 
-function deltaFromInsertAndChange(
-	insertedContent: ITreeCursorSynchronous | undefined,
-	nodeChange: NodeChangeset | undefined,
-	deltaFromNode: ToDelta,
+export function optionalFieldIntoDelta(
+	{ change, revision }: TaggedChange<OptionalChangeset>,
+	deltaFromChild: ToDelta,
 ): Delta.Mark[] {
-	if (insertedContent !== undefined) {
-		const insert: Mutable<Delta.Insert> = {
-			type: Delta.MarkType.Insert,
-			content: [insertedContent],
-		};
-		if (nodeChange !== undefined) {
-			const nodeDelta = deltaFromNode(nodeChange);
-			populateChildModifications(nodeDelta, insert);
-		}
-		return [insert];
-	}
+	const [_, childChange] = change.childChanges?.find(([changeId]) => changeId === "self") ?? [];
 
-	if (nodeChange !== undefined) {
-		return [deltaFromNode(nodeChange)];
-	}
-
-	return [];
-}
-
-function deltaForDelete(
-	nodeExists: boolean,
-	nodeChange: NodeChangeset | undefined,
-	deltaFromNode: ToDelta,
-): Delta.Mark[] {
-	if (!nodeExists) {
-		return [];
-	}
-
-	const deleteDelta: Mutable<Delta.Delete> = { type: Delta.MarkType.Delete, count: 1 };
-	if (nodeChange !== undefined) {
-		const modify = deltaFromNode(nodeChange);
-		deleteDelta.fields = modify.fields;
-	}
-	return [deleteDelta];
-}
-
-export function optionalFieldIntoDelta(change: OptionalChangeset, deltaFromChild: ToDelta) {
-	const [_, childChange] = change.childChanges?.find(([id]) => id === "self") ?? [];
 	if (change.fieldChange === undefined) {
 		return childChange !== undefined ? [deltaFromChild(childChange)] : [];
 	}
 
-	const deleteDelta = deltaForDelete(!change.fieldChange.wasEmpty, childChange, deltaFromChild);
-
 	const update = change.fieldChange?.newContent;
-	let content: ITreeCursorSynchronous | undefined;
-	if (update === undefined) {
-		content = undefined;
-	} else if ("set" in update) {
-		content = singleTextCursor(update.set);
-	} else {
-		content = update.revert;
+	const id = {
+		major: change.fieldChange.revision ?? revision,
+		minor: change.fieldChange.id,
+	};
+	const hasOldFieldChanges: Mutable<Delta.HasModifications> = {};
+	// If there are changes to the old content, convert them into the delta format and save any resulting field changes
+	// TODO: maybe rethink how we use optionals so this pattern isn't so confusing
+	if (childChange !== undefined) {
+		const fields = deltaFromChild(childChange).fields;
+		if (fields !== undefined) {
+			hasOldFieldChanges.fields = fields;
+		}
 	}
-
-	const insertDelta = deltaFromInsertAndChange(content, update?.changes, deltaFromChild);
-
-	return [...deleteDelta, ...insertDelta];
+	if (update === undefined) {
+		// The field is being cleared
+		if (!change.fieldChange.wasEmpty) {
+			return [{ type: Delta.MarkType.Remove, count: 1, detachId: id, ...hasOldFieldChanges }];
+		}
+		return [];
+	} else {
+		const hasNewFieldChanges: Mutable<Delta.HasModifications> = {};
+		if (update.changes !== undefined) {
+			const fields = deltaFromChild(update.changes).fields;
+			if (fields !== undefined) {
+				hasNewFieldChanges.fields = fields;
+			}
+		}
+		const hasOldContent: Mutable<Pick<Delta.Insert, "oldContent">> = {};
+		if (!change.fieldChange.wasEmpty) {
+			hasOldContent.oldContent = {
+				detachId: id,
+				...hasOldFieldChanges,
+			};
+		}
+		if (Object.prototype.hasOwnProperty.call(update, "set")) {
+			const content = [singleTextCursor((update as { set: JsonableTree }).set)];
+			return [
+				{
+					type: Delta.MarkType.Insert,
+					...hasNewFieldChanges,
+					...hasOldContent,
+					content,
+				},
+			];
+		} else {
+			const changeId = (update as { revert: ChangeAtomId }).revert;
+			const restoreId = {
+				major: changeId.revision,
+				minor: changeId.localId,
+			};
+			return [
+				{
+					type: Delta.MarkType.Restore,
+					count: 1,
+					newContent: {
+						...hasNewFieldChanges,
+						restoreId,
+					},
+					...hasOldContent,
+				},
+			];
+		}
+	}
 }
 
 export const optionalChangeHandler: FieldChangeHandler<OptionalChangeset, OptionalFieldEditor> = {
@@ -547,8 +555,7 @@ export const optionalChangeHandler: FieldChangeHandler<OptionalChangeset, Option
 	codecsFactory: makeOptionalFieldCodecFamily,
 	editor: optionalFieldEditor,
 
-	intoDelta: ({ change }: TaggedChange<OptionalChangeset>, deltaFromChild: ToDelta) =>
-		optionalFieldIntoDelta(change, deltaFromChild),
+	intoDelta: optionalFieldIntoDelta,
 	isEmpty: (change: OptionalChangeset) =>
 		change.childChanges === undefined && change.fieldChange === undefined,
 };

@@ -11,7 +11,10 @@ importers:
       '@types/node': ^14.18.0
       eslint: ~8.6.0
       eslint-config-prettier: ~9.0.0
-      mocha: ^10.0.0
+      mocha: ^10.2.0
+      mocha-json-output-reporter: ^2.1.0
+      mocha-multi-reporters: ^1.5.1
+      moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^2.6.2
       typescript: ~4.5.5
@@ -24,6 +27,9 @@ importers:
       eslint: 8.6.0
       eslint-config-prettier: 9.0.0_eslint@8.6.0
       mocha: 10.2.0
+      mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
+      mocha-multi-reporters: 1.5.1_mocha@10.2.0
+      moment: 2.29.4
       prettier: 3.0.3
       rimraf: 2.7.1
       typescript: 4.5.5
@@ -3663,6 +3669,29 @@ packages:
     hasBin: true
     dev: true
 
+  /mocha-json-output-reporter/2.1.0_mocha@10.2.0+moment@2.29.4:
+    resolution: {integrity: sha512-FF2BItlMo8nK9+SgN/WAD01ue7G+qI1Po0U3JCZXQiiyTJ5OV3KcT1mSoZKirjYP73JFZznaaPC6Mp052PF3Vw==}
+    peerDependencies:
+      mocha: ^10.0.0
+      moment: ^2.21.0
+    dependencies:
+      mocha: 10.2.0
+      moment: 2.29.4
+    dev: true
+
+  /mocha-multi-reporters/1.5.1_mocha@10.2.0:
+    resolution: {integrity: sha512-Yb4QJOaGLIcmB0VY7Wif5AjvLMUFAdV57D2TWEva1Y0kU/3LjKpeRVmlMIfuO1SVbauve459kgtIizADqxMWPg==}
+    engines: {node: '>=6.0.0'}
+    peerDependencies:
+      mocha: '>=3.1.2'
+    dependencies:
+      debug: 4.3.4
+      lodash: 4.17.21
+      mocha: 10.2.0
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+
   /mocha/10.2.0:
     resolution: {integrity: sha512-IDY7fl/BecMwFHzoqF2sg/SHHANeBoMMXFlS9r0OXKDssYE1M5O43wUY/9BVPeIvfH2zmEbBfseqN9gBQZzXkg==}
     engines: {node: '>= 14.0.0'}
@@ -3689,6 +3718,10 @@ packages:
       yargs: 16.2.0
       yargs-parser: 20.2.4
       yargs-unparser: 2.0.0
+    dev: true
+
+  /moment/2.29.4:
+    resolution: {integrity: sha512-5LC9SOxjSc2HF6vO2CyuTDNivEdoz2IvyJJGj6X8DJ0eFyfszE0QiEd+iXmBvUP3WHxSjFH/vIsA0EN00cgr8w==}
     dev: true
 
   /ms/2.0.0:

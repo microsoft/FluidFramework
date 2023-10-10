@@ -303,7 +303,10 @@ function buildFieldSchema<Kind extends FieldKind = FieldKind>(
 		: SchemaBuilder.field(fieldKind, ...allowedTypes);
 }
 
-const builtinBuilder = new SchemaBuilder("PropertyDDS to SharedTree builtin schema builder");
+const builtinBuilder = new SchemaBuilder({
+	scope: "com.fluidframework.PropertyDDSBuiltIn",
+	name: "PropertyDDS to SharedTree builtin schema builder",
+});
 // TODO:
 // It might make sense for all builtins (not specific to the particular schema being processed),
 // to be put into one library like this.
@@ -311,7 +314,7 @@ export const nodePropertySchema = builtinBuilder.map(
 	nodePropertyType,
 	SchemaBuilder.fieldOptional(Any),
 );
-const builtinLibrary = builtinBuilder.intoLibrary();
+const builtinLibrary = builtinBuilder.finalize();
 
 /**
  * Creates a TypedSchemaCollection out of PropertyDDS schema templates.
@@ -327,11 +330,11 @@ export function convertPropertyToSharedTreeSchema<Kind extends FieldKind = Field
 	allowedRootTypes: Any | ReadonlySet<string>,
 	extraTypes?: ReadonlySet<string>,
 ) {
-	const builder = new SchemaBuilder(
-		"PropertyDDS to SharedTree schema builder",
-		{},
-		builtinLibrary,
-	);
+	const builder = new SchemaBuilder({
+		scope: "converted",
+		name: "PropertyDDS to SharedTree schema builder",
+		libraries: [builtinLibrary],
+	});
 	const allChildrenByType = getAllInheritingChildrenTypes();
 	const treeSchemaMap: Map<string, LazyTreeSchema> = new Map();
 
@@ -353,5 +356,5 @@ export function convertPropertyToSharedTreeSchema<Kind extends FieldKind = Field
 		rootFieldKind,
 		...allowedTypes,
 	);
-	return builder.intoDocumentSchema(rootSchema);
+	return builder.toDocumentSchema(rootSchema);
 }

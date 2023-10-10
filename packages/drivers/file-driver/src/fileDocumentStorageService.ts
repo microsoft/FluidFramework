@@ -81,7 +81,7 @@ export class FluidFetchReader
 	// eslint-disable-next-line @rushstack/no-new-null
 	public async getVersions(versionId: string | null, count: number): Promise<api.IVersion[]> {
 		if (versionId === FileStorageDocumentName || versionId === null) {
-			if (this.docTree || this.versionName !== undefined) {
+			if (this.docTree !== null || this.versionName !== undefined) {
 				return [{ id: "latest", treeId: FileStorageVersionTreeId }];
 			}
 			// Started with ops - return empty set.
