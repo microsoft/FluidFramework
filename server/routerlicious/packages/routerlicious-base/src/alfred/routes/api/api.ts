@@ -154,10 +154,7 @@ export function create(
 					);
 				return;
 			}
-			if (
-				!collaborationSessionEventEmitter ||
-				collaborationSessionEventEmitter === undefined
-			) {
+			if (!collaborationSessionEventEmitter) {
 				response
 					.status(500)
 					.send(`No emitter configured for the broadcast-signal endpoint.`);
