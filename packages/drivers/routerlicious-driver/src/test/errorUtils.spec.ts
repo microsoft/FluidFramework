@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { DriverErrorTypes, IThrottlingWarning } from "@fluidframework/driver-definitions";
+import { IThrottlingWarning } from "@fluidframework/driver-definitions";
 import {
 	createR11sNetworkError,
 	throwR11sNetworkError,
@@ -17,13 +17,13 @@ describe("ErrorUtils", () => {
 		it("creates non-retriable authorization error on 401", () => {
 			const message = "test error";
 			const error = createR11sNetworkError(message, 401);
-			assert.strictEqual(error.errorType, DriverErrorTypes.authorizationError);
+			assert.strictEqual(error.errorType, RouterliciousErrorTypes.authorizationError);
 			assert.strictEqual(error.canRetry, false);
 		});
 		it("creates non-retriable authorization error on 403", () => {
 			const message = "test error";
 			const error = createR11sNetworkError(message, 403);
-			assert.strictEqual(error.errorType, DriverErrorTypes.authorizationError);
+			assert.strictEqual(error.errorType, RouterliciousErrorTypes.authorizationError);
 			assert.strictEqual(error.canRetry, false);
 		});
 		it("creates non-retriable not-found error on 404", () => {
@@ -38,33 +38,33 @@ describe("ErrorUtils", () => {
 		it("creates retriable error on 429 with retry-after", () => {
 			const message = "test error";
 			const error = createR11sNetworkError(message, 429, 5000);
-			assert.strictEqual(error.errorType, DriverErrorTypes.throttlingError);
+			assert.strictEqual(error.errorType, RouterliciousErrorTypes.throttlingError);
 			assert.strictEqual(error.canRetry, true);
 			assert.strictEqual((error as IThrottlingWarning).retryAfterSeconds, 5);
 		});
 		it("creates retriable error on 429 without retry-after", () => {
 			const message = "test error";
 			const error = createR11sNetworkError(message, 429);
-			assert.strictEqual(error.errorType, DriverErrorTypes.genericNetworkError);
+			assert.strictEqual(error.errorType, RouterliciousErrorTypes.genericNetworkError);
 			assert.strictEqual(error.canRetry, true);
 		});
 		it("creates retriable error on 500", () => {
 			const message = "test error";
 			const error = createR11sNetworkError(message, 500);
-			assert.strictEqual(error.errorType, DriverErrorTypes.genericNetworkError);
+			assert.strictEqual(error.errorType, RouterliciousErrorTypes.genericNetworkError);
 			assert.strictEqual(error.canRetry, true);
 		});
 		it("creates retriable error on anything else with retryAfter", () => {
 			const message = "test error";
 			const error = createR11sNetworkError(message, 400, 100000);
-			assert.strictEqual(error.errorType, DriverErrorTypes.throttlingError);
+			assert.strictEqual(error.errorType, RouterliciousErrorTypes.throttlingError);
 			assert.strictEqual(error.canRetry, true);
 			assert.strictEqual((error as any).retryAfterSeconds, 100);
 		});
 		it("creates non-retriable error on anything else", () => {
 			const message = "test error";
 			const error2 = createR11sNetworkError(message, 400);
-			assert.strictEqual(error2.errorType, DriverErrorTypes.genericNetworkError);
+			assert.strictEqual(error2.errorType, RouterliciousErrorTypes.genericNetworkError);
 			assert.strictEqual(error2.canRetry, false);
 		});
 	});
@@ -76,7 +76,7 @@ describe("ErrorUtils", () => {
 					throwR11sNetworkError(message, 401);
 				},
 				{
-					errorType: DriverErrorTypes.authorizationError,
+					errorType: RouterliciousErrorTypes.authorizationError,
 					canRetry: false,
 				},
 			);
@@ -88,7 +88,7 @@ describe("ErrorUtils", () => {
 					throwR11sNetworkError(message, 403);
 				},
 				{
-					errorType: DriverErrorTypes.authorizationError,
+					errorType: RouterliciousErrorTypes.authorizationError,
 					canRetry: false,
 				},
 			);
@@ -112,7 +112,7 @@ describe("ErrorUtils", () => {
 					throwR11sNetworkError(message, 429, 5000);
 				},
 				{
-					errorType: DriverErrorTypes.throttlingError,
+					errorType: RouterliciousErrorTypes.throttlingError,
 					canRetry: true,
 					retryAfterSeconds: 5,
 				},
@@ -125,7 +125,7 @@ describe("ErrorUtils", () => {
 					throwR11sNetworkError(message, 429);
 				},
 				{
-					errorType: DriverErrorTypes.genericNetworkError,
+					errorType: RouterliciousErrorTypes.genericNetworkError,
 					canRetry: true,
 				},
 			);
@@ -137,7 +137,7 @@ describe("ErrorUtils", () => {
 					throwR11sNetworkError(message, 500);
 				},
 				{
-					errorType: DriverErrorTypes.genericNetworkError,
+					errorType: RouterliciousErrorTypes.genericNetworkError,
 					canRetry: true,
 				},
 			);
@@ -149,7 +149,7 @@ describe("ErrorUtils", () => {
 					throwR11sNetworkError(message, 400, 200000);
 				},
 				{
-					errorType: DriverErrorTypes.throttlingError,
+					errorType: RouterliciousErrorTypes.throttlingError,
 					canRetry: true,
 					retryAfterSeconds: 200,
 				},
@@ -162,7 +162,7 @@ describe("ErrorUtils", () => {
 					throwR11sNetworkError(message, 400);
 				},
 				{
-					errorType: DriverErrorTypes.genericNetworkError,
+					errorType: RouterliciousErrorTypes.genericNetworkError,
 					canRetry: false,
 				},
 			);
@@ -187,7 +187,7 @@ describe("ErrorUtils", () => {
 				handler,
 			);
 			assertExpectedMessage(error.message);
-			assert.strictEqual(error.errorType, DriverErrorTypes.authorizationError);
+			assert.strictEqual(error.errorType, RouterliciousErrorTypes.authorizationError);
 			assert.strictEqual(error.canRetry, false);
 			assert.strictEqual((error as any).statusCode, 401);
 		});
@@ -200,7 +200,7 @@ describe("ErrorUtils", () => {
 				handler,
 			);
 			assertExpectedMessage(error.message);
-			assert.strictEqual(error.errorType, DriverErrorTypes.authorizationError);
+			assert.strictEqual(error.errorType, RouterliciousErrorTypes.authorizationError);
 			assert.strictEqual(error.canRetry, false);
 			assert.strictEqual((error as any).statusCode, 403);
 		});
@@ -231,7 +231,7 @@ describe("ErrorUtils", () => {
 			);
 
 			assertExpectedMessage(error.message);
-			assert.strictEqual(error.errorType, DriverErrorTypes.throttlingError);
+			assert.strictEqual(error.errorType, RouterliciousErrorTypes.throttlingError);
 			assert.strictEqual(error.canRetry, true);
 			assert.strictEqual((error as any).retryAfterSeconds, 5);
 			assert.strictEqual((error as any).statusCode, 429);
@@ -245,7 +245,7 @@ describe("ErrorUtils", () => {
 				handler,
 			);
 			assertExpectedMessage(error.message);
-			assert.strictEqual(error.errorType, DriverErrorTypes.genericNetworkError);
+			assert.strictEqual(error.errorType, RouterliciousErrorTypes.genericNetworkError);
 			assert.strictEqual(error.canRetry, true);
 		});
 		it("creates retriable error on 500", () => {
@@ -257,7 +257,7 @@ describe("ErrorUtils", () => {
 				handler,
 			);
 			assertExpectedMessage(error.message);
-			assert.strictEqual(error.errorType, DriverErrorTypes.genericNetworkError);
+			assert.strictEqual(error.errorType, RouterliciousErrorTypes.genericNetworkError);
 			assert.strictEqual(error.canRetry, true);
 			assert.strictEqual((error as any).statusCode, 500);
 		});
@@ -271,7 +271,7 @@ describe("ErrorUtils", () => {
 				handler,
 			);
 			assertExpectedMessage(error.message);
-			assert.strictEqual(error.errorType, DriverErrorTypes.throttlingError);
+			assert.strictEqual(error.errorType, RouterliciousErrorTypes.throttlingError);
 			assert.strictEqual(error.canRetry, true);
 			assert.strictEqual((error as any).retryAfterSeconds, 300);
 			assert.strictEqual((error as any).statusCode, 400);
