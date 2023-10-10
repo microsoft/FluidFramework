@@ -681,7 +681,6 @@ export interface IProvideLoader {
  * This is used when we rehydrate a container from the snapshot. Here we put the blob contents
  * in separate property: {@link ISnapshotTreeWithBlobContents.blobsContents}.
  *
- * @remarks This is used as the `ContainerContext`'s base snapshot when attaching.
  *
  * @internal
  */
