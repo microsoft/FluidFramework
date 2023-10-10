@@ -644,9 +644,7 @@ export class MapKernel {
 				if (!this.ackedKeysIndexTracker.has(localValue.key)) {
 					this.ackedKeysIndexTracker.set(
 						localValue.key,
-						serializable.index !== undefined
-							? serializable.index
-							: ++this.creationIndex,
+						serializable.index ?? ++this.creationIndex,
 					);
 				}
 			} else {
