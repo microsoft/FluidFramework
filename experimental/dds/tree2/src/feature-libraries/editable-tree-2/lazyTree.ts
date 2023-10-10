@@ -185,6 +185,13 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 		return this[cursorSymbol].value;
 	}
 
+	public getField(fieldKey: FieldKey): TreeField {
+		const schema = getFieldSchema(fieldKey, this.schema);
+		return inCursorField(this[cursorSymbol], fieldKey, (cursor) => {
+			return makeField(this.context, schema, cursor);
+		});
+	}
+
 	public tryGetField(fieldKey: FieldKey): TreeField | undefined {
 		const schema = getFieldSchema(fieldKey, this.schema);
 		return inCursorField(this[cursorSymbol], fieldKey, (cursor) => {

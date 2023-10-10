@@ -126,6 +126,11 @@ export interface TreeNode extends Tree<TreeSchema> {
 	): () => void;
 
 	/**
+	 * Gets a field of this node..
+	 */
+	getField(key: FieldKey): undefined | TreeField;
+
+	/**
 	 * Gets a field of this node, if it is not empty.
 	 */
 	tryGetField(key: FieldKey): undefined | TreeField;

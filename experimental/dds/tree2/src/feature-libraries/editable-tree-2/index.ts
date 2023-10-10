@@ -25,6 +25,8 @@ export {
 	TreeStatus,
 } from "./editableTreeTypes";
 
+export { getProxyForField, List } from "./proxies";
+
 export {
 	visitBipartiteIterableTree,
 	Skip,
