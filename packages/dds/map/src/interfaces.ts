@@ -409,8 +409,10 @@ export interface ISerializedValue {
 	value: string | undefined;
 
 	/**
-	 * The index (original position) of the value in DDS, if undefined, it indicates that
-	 * the order of this value is irrelevant, like the storage in SharedDirectory
+	 * The index at which this entry was created. For detached case, it indicates
+	 * the internal creation order of the data.
+	 *
+	 * TODO: it can be replaced with sequence number for the potential attribution support purpose.
 	 */
 	index?: number;
 }
@@ -447,10 +449,10 @@ export class CreationIndexTracker {
 	 * @param index - The creation index of a key.
 	 */
 	set(key: string, index: number): void {
-		if (!this.has(key)) {
-			this.indexToKey.put(index, key);
-			this.keyToIndex?.set(key, index);
-		}
+		// if (!this.has(key)) {
+		this.indexToKey.put(index, key);
+		this.keyToIndex?.set(key, index);
+		// }
 	}
 
 	/**
@@ -514,5 +516,13 @@ export class CreationIndexTracker {
 			return true;
 		}, keys);
 		return keys;
+	}
+
+	size(): number {
+		return this.indexToKey.size();
+	}
+
+	max(): number | undefined {
+		return this.indexToKey.max()?.key;
 	}
 }

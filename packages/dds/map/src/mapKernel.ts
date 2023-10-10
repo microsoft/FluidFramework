@@ -439,7 +439,7 @@ export class MapKernel {
 
 		// If we are not attached, don't submit the op.
 		if (!this.isAttached()) {
-			this.setLocalKeyIndexInDetached(key);
+			// this.setLocalKeyIndexInDetached(key);
 			return;
 		}
 
@@ -454,6 +454,7 @@ export class MapKernel {
 		this.submitMapKeyMessage(op, messageId, previousValue);
 	}
 
+	/*
 	private setLocalKeyIndexInDetached(key: string): void {
 		const detachedCreationIndex = ++this.pendingMessageId;
 		if (this.pendingSetTracker.has(key)) {
@@ -462,7 +463,7 @@ export class MapKernel {
 			this.pendingSetTracker.set(key, [detachedCreationIndex]);
 			this.localKeysIndexTracker.set(key, detachedCreationIndex);
 		}
-	}
+	} */
 
 	/**
 	 * Delete a key from the map.
@@ -475,7 +476,7 @@ export class MapKernel {
 
 		// If we are not attached, don't submit the op.
 		if (!this.isAttached()) {
-			this.deleteLocalKeyIndexInDetached(key);
+			// this.deleteLocalKeyIndexInDetached(key);
 			return previousValue !== undefined;
 		}
 
@@ -498,12 +499,13 @@ export class MapKernel {
 		return previousValue !== undefined;
 	}
 
+	/*
 	private deleteLocalKeyIndexInDetached(key: string): void {
 		if (this.pendingSetTracker.has(key)) {
 			this.localKeysIndexTracker.delete((this.pendingSetTracker.get(key) as number[])[0]);
 			this.pendingSetTracker.delete(key);
-		}
-	}
+		} 
+	} */
 
 	private deleteKeysIndex(key: string): (number | number[])[] {
 		const previousIndex: (number | number[])[] = [];
@@ -581,27 +583,43 @@ export class MapKernel {
 	 */
 	public getSerializedStorage(serializer: IFluidSerializer): IMapDataObjectSerialized {
 		const serializableMapData: IMapDataObjectSerialized = {};
-		for (const [key, localValue] of this.data.entries()) {
-			serializableMapData[key] = localValue.makeSerialized(serializer, this.handle);
-			serializableMapData[key].index = this.getKeyIndex(key);
+
+		if (!this.isAttached()) {
+			for (const [key, localValue] of this.data.entries()) {
+				serializableMapData[key] = localValue.makeSerialized(serializer, this.handle);
+				serializableMapData[key].index = ++this.creationIndex;
+				this.ackedKeysIndexTracker.set(key, this.creationIndex);
+			}
+		} else {
+			for (const [key, localValue] of this.data.entries()) {
+				serializableMapData[key] = localValue.makeSerialized(serializer, this.handle);
+				if (!this.ackedKeysIndexTracker.has(key)) {
+					this.ackedKeysIndexTracker.set(key, ++this.creationIndex);
+				}
+				serializableMapData[key].index = this.ackedKeysIndexTracker.get(key) as number;
+			}
 		}
 		return serializableMapData;
 	}
 
 	public getSerializableStorage(serializer: IFluidSerializer): IMapDataObjectSerializable {
 		const serializableMapData: IMapDataObjectSerializable = {};
-		for (const [key, localValue] of this.data.entries()) {
-			serializableMapData[key] = makeSerializable(localValue, serializer, this.handle);
-			serializableMapData[key].index = this.getKeyIndex(key);
+		if (!this.isAttached()) {
+			for (const [key, localValue] of this.data.entries()) {
+				serializableMapData[key] = makeSerializable(localValue, serializer, this.handle);
+				serializableMapData[key].index = ++this.creationIndex;
+				this.ackedKeysIndexTracker.set(key, this.creationIndex);
+			}
+		} else {
+			for (const [key, localValue] of this.data.entries()) {
+				serializableMapData[key] = makeSerializable(localValue, serializer, this.handle);
+				if (!this.ackedKeysIndexTracker.has(key)) {
+					this.ackedKeysIndexTracker.set(key, ++this.creationIndex);
+				}
+				serializableMapData[key].index = this.ackedKeysIndexTracker.get(key) as number;
+			}
 		}
 		return serializableMapData;
-	}
-
-	private getKeyIndex(key: string): number {
-		if (this.isAttached()) {
-			return this.ackedKeysIndexTracker.get(key) as number;
-		}
-		return (this.pendingSetTracker.get(key) as number[])[0];
 	}
 
 	public serialize(serializer: IFluidSerializer): string {
@@ -613,6 +631,7 @@ export class MapKernel {
 	 * @param data - A JSON string containing serialized map data
 	 */
 	public populateFromSerializable(json: IMapDataObjectSerializable): void {
+		const oldData = new Map(this.data);
 		for (const [key, serializable] of Object.entries(json)) {
 			const localValue = {
 				key,
@@ -621,10 +640,35 @@ export class MapKernel {
 
 			this.data.set(localValue.key, localValue.value);
 			// fill the creation index for the loaded data
-			this.ackedKeysIndexTracker.set(
-				localValue.key,
-				serializable.index !== undefined ? serializable.index : ++this.creationIndex,
-			);
+			if (this.isAttached()) {
+				if (!this.ackedKeysIndexTracker.has(localValue.key)) {
+					this.ackedKeysIndexTracker.set(
+						localValue.key,
+						serializable.index !== undefined
+							? serializable.index
+							: ++this.creationIndex,
+					);
+				}
+			} else {
+				if (serializable.index) {
+					this.localKeysIndexTracker.set(key, serializable.index);
+				}
+			}
+		}
+		if (this.isAttached()) {
+			if (this.ackedKeysIndexTracker.max() !== undefined) {
+				this.creationIndex = this.ackedKeysIndexTracker.max() as number;
+			}
+		} else {
+			const keysInserted = this.localKeysIndexTracker.keys();
+			for (const key of keysInserted) {
+				if (!oldData.has(key)) {
+					const value = this.get(key);
+					this.delete(key);
+					this.set(key, value);
+				}
+			}
+			this.localKeysIndexTracker.clear();
 		}
 	}
 
@@ -920,8 +964,13 @@ export class MapKernel {
 				}
 			} else {
 				// We do not process the remote message at this moment, but it is possible to impact the order of ack'd keys
-				if (op.type === "set" && !this.pendingDeleteTracker.has(op.key)) {
+				if (
+					op.type === "set" &&
+					!this.pendingDeleteTracker.has(op.key) &&
+					!this.ackedKeysIndexTracker.has(op.key)
+				) {
 					// this.addAckedKeyIndex(op.key);
+					// this.creationIndex++;
 					this.ackedKeysIndexTracker.set(op.key, ++this.creationIndex);
 				} else if (op.type === "delete") {
 					this.ackedKeysIndexTracker.delete(op.key);
@@ -939,7 +988,11 @@ export class MapKernel {
 		// we need to ack this op
 		const pendingSetIds = this.pendingSetTracker.get(op.key);
 		if (pendingSetIds !== undefined && pendingSetIds[0] === pendingMessageId) {
-			this.ackedKeysIndexTracker.set(op.key, ++this.creationIndex);
+			// this.creationIndex++;
+			if (!this.ackedKeysIndexTracker.has(op.key)) {
+				this.ackedKeysIndexTracker.set(op.key, ++this.creationIndex);
+			}
+
 			pendingSetIds.shift();
 			if (pendingSetIds.length === 0) {
 				this.pendingSetTracker.delete(op.key);
@@ -1054,7 +1107,10 @@ export class MapKernel {
 				const context = this.makeLocal(op.key, op.value);
 				this.setCore(op.key, context, local);
 				// Adjust the keys order if it is a fresh acked insertion
-				this.ackedKeysIndexTracker.set(op.key, ++this.creationIndex);
+				// this.creationIndex++;
+				if (!this.ackedKeysIndexTracker.has(op.key)) {
+					this.ackedKeysIndexTracker.set(op.key, ++this.creationIndex);
+				}
 			},
 			submit: (op: IMapSetOperation, localOpMetadata: MapKeyLocalOpMetadata) => {
 				this.resubmitMapKeyMessage(op, localOpMetadata);
