@@ -392,8 +392,8 @@ describe("Routerlicious", () => {
 					supertest = request(app);
 				});
 
-				describe("/api/v1/:tenantId/:id/broadcast-signal", () => {
-					it("Successful request", async () => {
+				describe("/api/v1", () => {
+					it("/api/v1/:tenantId/:id/broadcast-signal", async () => {
 						const body = {
 							signalContent: {
 								contents: {
@@ -410,18 +410,21 @@ describe("Routerlicious", () => {
 							.set("Content-Type", "application/json")
 							.expect(200);
 					});
-
-					it("Invalid request content", async () => {
+					it("/api/v1/:tenantId/:id/broadcast-signal invalid-token", async () => {
 						const body = {
-							signalContent: {},
+							signalContent: {
+								contents: {
+									type: "ExternalDataChanged_V1.0.0",
+									content: { taskListId: "task-list-1" },
+								},
+							},
 						};
 
 						await supertest
 							.post(`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`)
 							.send(body)
-							.set("Authorization", tenantToken1)
 							.set("Content-Type", "application/json")
-							.expect(400);
+							.expect(403);
 					});
 				});
 
@@ -791,6 +794,101 @@ describe("Routerlicious", () => {
 									isSessionActive: true,
 								});
 							});
+					});
+				});
+			});
+
+			describe("functionality", () => {
+				const maxThrottlerLimit = 10;
+				beforeEach(() => {
+					const restTenantThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantThrottlers = new Map<string, TestThrottler>();
+					restTenantThrottlers.set(
+						Constants.generalRestCallThrottleIdPrefix,
+						restTenantThrottler,
+					);
+					restTenantThrottlers.set(
+						Constants.getDeltasThrottleIdPrefix,
+						restTenantGetDeltasThrottler,
+					);
+					restTenantThrottlers.set(
+						Constants.createDocThrottleIdPrefix,
+						restTenantCreateDocThrottler,
+					);
+					restTenantThrottlers.set(
+						Constants.getSessionThrottleIdPrefix,
+						restTenantGetSessionThrottler,
+					);
+
+					const restClusterCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
+					const restClusterGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
+					const restClusterGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
+					const restClusterThrottlers = new Map<string, TestThrottler>();
+					restClusterThrottlers.set(
+						Constants.createDocThrottleIdPrefix,
+						restClusterCreateDocThrottler,
+					);
+					restClusterThrottlers.set(
+						Constants.getDeltasThrottleIdPrefix,
+						restClusterGetDeltasThrottler,
+					);
+					restClusterThrottlers.set(
+						Constants.getSessionThrottleIdPrefix,
+						restClusterGetSessionThrottler,
+					);
+
+					app = alfredApp.create(
+						defaultProvider,
+						defaultTenantManager,
+						restTenantThrottlers,
+						restClusterThrottlers,
+						defaultSingleUseTokenCache,
+						defaultStorage,
+						defaultAppTenants,
+						defaultDeltaService,
+						defaultProducer,
+						defaultDocumentRepository,
+						defaultDocumentDeleteService,
+						null,
+						null,
+						defaultCollaborationSessionEventEmitter,
+					);
+					supertest = request(app);
+				});
+
+				describe("/api/v1/:tenantId/:id/broadcast-signal", () => {
+					it("Successful request", async () => {
+						const body = {
+							signalContent: {
+								contents: {
+									type: "ExternalDataChanged_V1.0.0",
+									content: { taskListId: "task-list-1" },
+								},
+							},
+						};
+
+						await supertest
+							.post(`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`)
+							.send(body)
+							.set("Authorization", tenantToken1)
+							.set("Content-Type", "application/json")
+							.expect(200);
+					});
+
+					it("Invalid request content", async () => {
+						const body = {
+							signalContent: {},
+						};
+
+						await supertest
+							.post(`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`)
+							.send(body)
+							.set("Authorization", tenantToken1)
+							.set("Content-Type", "application/json")
+							.expect(400);
 					});
 				});
 			});
