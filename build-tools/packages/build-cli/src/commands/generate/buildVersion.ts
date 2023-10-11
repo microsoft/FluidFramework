@@ -37,11 +37,11 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 			options: ["release", "prerelease", "none"],
 			env: "VERSION_RELEASE",
 		}),
-		publishType: Flags.string({
+		packageReleaseType: Flags.string({
 			description: "Indicates build type.",
 			options: ["alpha", "beta", "public", "untrimmed"],
 			default: "untrimmed",
-			env: "PUBLISH_TYPE",
+			env: "PACKAGE_RELEASE_TYPE",
 		}),
 		patch: Flags.string({
 			description: "Indicates the build is a patch build.",
@@ -113,8 +113,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 			flags.build,
 			isRelease,
 			useSimplePatchVersion,
-			flags.publishType === "beta",
-			flags.publishType === "alpha",
+			flags.packageReleaseType,
 		);
 		const version = useTestVersion ? `0.0.0-${flags.build}-test` : simpleVersion;
 		this.log(`version=${version}`);

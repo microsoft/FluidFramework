@@ -24,46 +24,61 @@ const test_tags = [
 
 describe("getSimpleVersion", () => {
 	it("version with id, no prerelease", () => {
-		assert.equal(getSimpleVersion("0.15.0", "12345.0", false, true), "0.15.12345");
-		assert.equal(getSimpleVersion("0.15.0", "12345.0", true, true), "0.15.12345");
+		assert.equal(getSimpleVersion("0.15.0", "12345.0", false, true, "untrimmed"), "0.15.12345");
+		assert.equal(getSimpleVersion("0.15.0", "12345.0", true, true, "untrimmed"), "0.15.12345");
 	});
 
 	it("version with id, with prerelease", () => {
-		assert.equal(getSimpleVersion("0.15.0-rc", "12345.0", false, true), "0.15.12345-rc");
 		assert.equal(
-			getSimpleVersion("0.15.0-alpha.1", "12345.0", false, true),
+			getSimpleVersion("0.15.0-rc", "12345.0", false, true, "untrimmed"),
+			"0.15.12345-rc",
+		);
+		assert.equal(
+			getSimpleVersion("0.15.0-alpha.1", "12345.0", false, true, "untrimmed"),
 			"0.15.12345-alpha.1",
 		);
 		assert.equal(
-			getSimpleVersion("0.15.0-beta.2.1", "12345.0", false, true),
+			getSimpleVersion("0.15.0-beta.2.1", "12345.0", false, true, "untrimmed"),
 			"0.15.12345-beta.2.1",
 		);
-		assert.equal(getSimpleVersion("0.15.0-beta", "12345.0", true, true), "0.15.12345-beta");
+		assert.equal(
+			getSimpleVersion("0.15.0-beta", "12345.0", true, true, "untrimmed"),
+			"0.15.12345-beta",
+		);
 	});
 
 	it("version no id, no prerelease", () => {
-		assert.equal(getSimpleVersion("0.16.0", "12345.0", false, false), "0.16.0-12345.0");
-		assert.equal(getSimpleVersion("0.16.0", "12345.0", true, false), "0.16.0");
+		assert.equal(
+			getSimpleVersion("0.16.0", "12345.0", false, false, "untrimmed"),
+			"0.16.0-12345.0",
+		);
+		assert.equal(getSimpleVersion("0.16.0", "12345.0", true, false, "untrimmed"), "0.16.0");
 	});
 
 	it("version no id, with prerelease", () => {
-		assert.equal(getSimpleVersion("0.16.0-rc", "12345.0", false, false), "0.16.0-rc.12345.0");
 		assert.equal(
-			getSimpleVersion("0.16.0-alpha.1", "12345.0", false, false),
+			getSimpleVersion("0.16.0-rc", "12345.0", false, false, "untrimmed"),
+			"0.16.0-rc.12345.0",
+		);
+		assert.equal(
+			getSimpleVersion("0.16.0-alpha.1", "12345.0", false, false, "untrimmed"),
 			"0.16.0-alpha.1.12345.0",
 		);
 		assert.equal(
-			getSimpleVersion("0.16.0-beta.2.1", "12345.0", false, false),
+			getSimpleVersion("0.16.0-beta.2.1", "12345.0", false, false, "untrimmed"),
 			"0.16.0-beta.2.1.12345.0",
 		);
-		assert.equal(getSimpleVersion("0.16.0-beta", "12345.0", true, false), "0.16.0-beta");
+		assert.equal(
+			getSimpleVersion("0.16.0-beta", "12345.0", true, false, "untrimmed"),
+			"0.16.0-beta",
+		);
 	});
 
 	describe("Fluid internal versions", () => {
 		it("dev/PR build versions", () => {
 			const input = "2.0.0-internal.1.3.0";
 			const expected = "2.0.0-dev.1.3.0.93923";
-			const result = getSimpleVersion(input, "93923", false, false);
+			const result = getSimpleVersion(input, "93923", false, false, "untrimmed");
 			expect(result).to.equal(expected);
 
 			const range = getVersionRange("2.0.0-internal.1.3.0", "^");
@@ -74,7 +89,7 @@ describe("getSimpleVersion", () => {
 		it("release versions", () => {
 			const input = "2.0.0-internal.1.3.0";
 			const expected = "2.0.0-internal.1.3.0";
-			const result = getSimpleVersion(input, "93923", true, false);
+			const result = getSimpleVersion(input, "93923", true, false, "untrimmed");
 			expect(result).to.equal(expected);
 
 			const range = getVersionRange("2.0.0-internal.1.3.0", "^");
@@ -84,12 +99,12 @@ describe("getSimpleVersion", () => {
 
 		it("simple patch scheme should throw with Fluid internal versions", () => {
 			const input = "2.0.0-internal.1.3.0";
-			expect(() => getSimpleVersion(input, "93923", false, true)).to.throw();
+			expect(() => getSimpleVersion(input, "93923", false, true, "untrimmed")).to.throw();
 		});
 
 		it("release + simple patch scheme should throw with Fluid internal versions", () => {
 			const input = "2.0.0-internal.1.3.0";
-			expect(() => getSimpleVersion(input, "93923", true, true)).to.throw();
+			expect(() => getSimpleVersion(input, "93923", true, true, "untrimmed")).to.throw();
 		});
 	});
 });
@@ -156,5 +171,38 @@ describe("getIsLatest", () => {
 		});
 
 		assert.isFalse(getIsLatest("client", "1.2.3", post1_tags, true));
+	});
+
+	it("alpha build versions", () => {
+		const input = "2.0.0-internal.1.3.0";
+		const expected = "2.0.0-dev-alpha-types.1.3.0.93923";
+		const result = getSimpleVersion(input, "93923", false, false, "alpha");
+		expect(result).to.equal(expected);
+
+		const range = getVersionRange("2.0.0-internal.1.3.0", "^");
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		expect(semver.satisfies(result, range)).to.be.false;
+	});
+
+	it("beta build versions", () => {
+		const input = "2.0.0-internal.1.3.0";
+		const expected = "2.0.0-dev-beta-types.1.3.0.93923";
+		const result = getSimpleVersion(input, "93923", false, false, "beta");
+		expect(result).to.equal(expected);
+
+		const range = getVersionRange("2.0.0-internal.1.3.0", "^");
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		expect(semver.satisfies(result, range)).to.be.false;
+	});
+
+	it("public build versions", () => {
+		const input = "2.0.0-internal.1.3.0";
+		const expected = "2.0.0-dev.1.3.0.93923";
+		const result = getSimpleVersion(input, "93923", false, false, "public");
+		expect(result).to.equal(expected);
+
+		const range = getVersionRange("2.0.0-internal.1.3.0", "^");
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		expect(semver.satisfies(result, range)).to.be.false;
 	});
 });

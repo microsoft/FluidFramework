@@ -20,8 +20,7 @@ export function getSimpleVersion(
 	argBuildNum: string,
 	argRelease: boolean,
 	patch: boolean,
-	isBeta?: boolean,
-	isAlpha?: boolean,
+	packageReleaseType: string,
 ) {
 	// Azure DevOp passes in the build number as $(buildNum).$(buildAttempt).
 	// Get the Build number and ignore the attempt number.
@@ -34,12 +33,21 @@ export function getSimpleVersion(
 			);
 		}
 
-		if (!argRelease && isBeta) {
-			version = changePreReleaseIdentifier(version, "dev-beta-types");
-		} else if (!argRelease && isAlpha) {
-			version = changePreReleaseIdentifier(version, "dev-alpha-types");
-		} else if (!argRelease) {
-			version = changePreReleaseIdentifier(version, "dev");
+		if (!argRelease) {
+			let preReleaseIdentifier = "dev";
+
+			switch (true) {
+				case packageReleaseType === "beta":
+					preReleaseIdentifier = "dev-beta-types";
+					break;
+				case packageReleaseType === "alpha":
+					preReleaseIdentifier = "dev-alpha-types";
+					break;
+				default:
+					break;
+			}
+
+			version = changePreReleaseIdentifier(version, preReleaseIdentifier);
 		}
 	}
 
