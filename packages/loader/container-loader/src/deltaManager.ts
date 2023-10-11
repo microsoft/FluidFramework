@@ -312,24 +312,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		return message.clientSequenceNumber;
 	}
 
-	public submitSignal(content: any) {
-		return this.connectionManager.submitSignal(content);
-	}
-
-	/**
-	 * Submits signals to the server
-	 *
-	 * @param signals - signals to submit
-	 */
-	public submitSignals(signals: ISentSignalMessage | ISentSignalMessage[]): void {
-		const signalsArray = Array.isArray(signals) ? signals : [signals];
-
-		for (const signal of signalsArray) {
-			signal.referenceSequenceNumber = this.lastProcessedSequenceNumber;
-			signal.clientSequenceNumber = this.lastClientSequenceNumber;
-		}
-
-		return this.connectionManager.submitSignal(signalsArray);
+	public submitSignal(content: any, targetClientId?: string) {
+		return this.connectionManager.submitSignal(content, targetClientId);
 	}
 
 	public flush() {

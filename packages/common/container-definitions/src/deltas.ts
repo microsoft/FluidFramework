@@ -18,7 +18,6 @@ import {
 	ISequencedDocumentMessage,
 	ISignalMessage,
 	ITokenClaims,
-	ISentSignalMessage,
 } from "@fluidframework/protocol-definitions";
 
 /**
@@ -213,12 +212,7 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
 	 */
 	// TODO: use `unknown` instead (API breaking)
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	submitSignal(content: any): void;
-
-	/**
-	 * Submits signals to the server
-	 */
-	submitSignals(signals: ISentSignalMessage | ISentSignalMessage[]): void;
+	submitSignal(content: any, targetClientId?: string): void;
 
 	/**
 	 * @deprecated - 2.0.0-internal.5.3.0 - The IDeltaManager's dispose state is not recommended for observation

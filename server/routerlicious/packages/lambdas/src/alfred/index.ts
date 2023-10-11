@@ -1022,7 +1022,7 @@ export function configureWebSocketServices(
 		// Message sent when a new signal is submitted to the router
 		socket.on(
 			"submitSignal",
-			(clientId: string, contentBatches: (ISentSignalMessage | unknown | unknown[])[]) => {
+			(clientId: string, contentBatches: (unknown | unknown[])[]) => {
 				// Verify the user has subscription to the room.
 				const room = roomMap.get(clientId);
 				if (!room) {

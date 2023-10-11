@@ -945,7 +945,7 @@ export class ContainerRuntime
 		summaryOp: ISummaryContent,
 		referenceSequenceNumber?: number,
 	) => number;
-	private readonly submitSignalFn: (contents: any) => void;
+	private readonly submitSignalFn: (content: any, targetClientId?: string) => void;
 	public readonly disposeFn: (error?: ICriticalContainerError) => void;
 	public readonly closeFn: (error?: ICriticalContainerError) => void;
 
@@ -2606,11 +2606,12 @@ export class ContainerRuntime
 	 * Submits the signal to be sent to other clients.
 	 * @param type - Type of the signal.
 	 * @param content - Content of the signal.
+	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	public submitSignal(type: string, content: any) {
+	public submitSignal(type: string, content: any, targetClientId?: string) {
 		this.verifyNotClosed();
 		const envelope = this.createNewSignalEnvelope(undefined /* address */, type, content);
-		return this.submitSignalFn(envelope);
+		return this.submitSignalFn(envelope, targetClientId);
 	}
 
 	public submitDataStoreSignal(address: string, type: string, content: any) {

@@ -1051,9 +1051,9 @@ export class ConnectionManager implements IConnectionManager {
 		};
 	}
 
-	public submitSignal(content: any) {
+	public submitSignal(content: any, targetClientId?: string) {
 		if (this.connection !== undefined) {
-			this.connection.submitSignal(content);
+			this.connection.submitSignal(content, targetClientId);
 		} else {
 			this.logger.sendErrorEvent({ eventName: "submitSignalDisconnected" });
 		}

@@ -52,6 +52,13 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IFluidDataStoreContext": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IFluidDataStoreContextDetached": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

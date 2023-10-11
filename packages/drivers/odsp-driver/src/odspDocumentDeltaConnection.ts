@@ -19,6 +19,7 @@ import {
 	IConnect,
 	IDocumentMessage,
 	INack,
+	ISentSignalMessage,
 	ISequencedDocumentMessage,
 	ISignalMessage,
 } from "@fluidframework/protocol-definitions";
@@ -722,7 +723,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		return !this.disposed && this.socket.connected;
 	}
 
-	protected emitMessages(type: string, messages: IDocumentMessage[][]) {
+	protected emitMessages(type: string, messages: (IDocumentMessage | unknown)[][]) {
 		// Only submit the op/signals if we are connected.
 		if (this.connected) {
 			this.socket.emit(type, this.clientId, messages);
@@ -740,19 +741,16 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	/**
 	 * Submits a new signal to the server
 	 *
-	 * @param message - signal to submit
+	 * @param content - Content of the signal.
+	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	public submitSignal(message: IDocumentMessage): void {
-		this.submitSignals({ content: message });
-	}
+	public submitSignal(content: unknown, targetClientId?: string): void {
+		const signal: ISentSignalMessage = {
+			content,
+			targetClientId,
+		};
 
-	/**
-	 * Submits signals to the server
-	 *
-	 * @param signals - signals to submit
-	 */
-	public submitSignals(signals: ISentSignalMessage | ISentSignalMessage[]): void {
-		this.emitMessages("submitSignal", Array.isArray(signals) ? signals : [signals]);
+		this.emitMessages("submitSignal", [[signal]]);
 	}
 
 	/**

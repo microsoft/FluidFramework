@@ -2335,8 +2335,8 @@ export class Container
 		this.emit("op", message);
 	}
 
-	private submitSignal(message: any) {
-		this._deltaManager.submitSignal(JSON.stringify(message));
+	private submitSignal(content: any, targetClientId?: string) {
+		this._deltaManager.submitSignal(JSON.stringify(content), targetClientId);
 	}
 
 	private processSignal(message: ISignalMessage) {

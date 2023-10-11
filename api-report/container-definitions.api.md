@@ -245,6 +245,10 @@ export type ICriticalContainerError = IErrorBase;
 export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender {
     readonly active: boolean;
     readonly clientDetails: IClientDetails;
+    // @deprecated (undocumented)
+    dispose(error?: Error): void;
+    // @deprecated (undocumented)
+    readonly disposed: boolean;
     readonly hasCheckpointSequenceNumber: boolean;
     readonly inbound: IDeltaQueue<T>;
     readonly inboundSignal: IDeltaQueue<ISignalMessage>;
@@ -258,7 +262,7 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
     // (undocumented)
     readonly readOnlyInfo: ReadOnlyInfo;
     readonly serviceConfiguration: IClientConfiguration | undefined;
-    submitSignal(content: any): void;
+    submitSignal(content: any, targetClientId?: string): void;
     readonly version: string;
 }
 

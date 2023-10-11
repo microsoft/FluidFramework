@@ -60,6 +60,16 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IContainer": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IContainerContext": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IDeltaManager": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

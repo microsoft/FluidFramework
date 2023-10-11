@@ -16,7 +16,6 @@ import {
 	ICreateBlobResponse,
 	IDocumentMessage,
 	INack,
-	ISentSignalMessage,
 	ISequencedDocumentMessage,
 	ISignalClient,
 	ISignalMessage,
@@ -278,12 +277,7 @@ export interface IDocumentDeltaConnection
 	 */
 	// TODO: Use something other than `any`.
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	submitSignal(message: any): void;
-
-	/**
-	 * Submits signals to the server
-	 */
-	submitSignals(signals: ISentSignalMessage | ISentSignalMessage[]): void;
+	submitSignal(content: any, targetClientId?: string): void;
 }
 
 export enum LoaderCachingPolicy {

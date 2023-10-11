@@ -307,7 +307,7 @@ export class DocumentDeltaConnection
 		return this.details.initialClients;
 	}
 
-	protected emitMessages(type: string, messages: IDocumentMessage[][]) {
+	protected emitMessages(type: string, messages: (IDocumentMessage | unknown)[][]) {
 		// Although the implementation here disconnects the socket and does not reuse it, other subclasses
 		// (e.g. OdspDocumentDeltaConnection) may reuse the socket.  In these cases, we need to avoid emitting
 		// on the still-live socket.
@@ -329,20 +329,17 @@ export class DocumentDeltaConnection
 	/**
 	 * Submits a new signal to the server
 	 *
-	 * @param message - signal to submit
+	 * @param content - Content of the signal.
+	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	public submitSignal(message: IDocumentMessage): void {
+	public submitSignal(content: unknown, targetClientId?: string): void {
 		this.checkNotDisposed();
-		this.emitMessages("submitSignal", [[message]]);
-	}
 
-	/**
-	 * Submits signals to the server
-	 *
-	 * @param signals - signals to submit
-	 */
-	public submitSignals(signals: ISentSignalMessage | ISentSignalMessage[]): void {
-		throw new Error("Not implemented");
+		if (targetClientId) {
+			throw new Error("Sending signals to specific client ids is not supported");
+		}
+
+		this.emitMessages("submitSignal", [[content]]);
 	}
 
 	/**

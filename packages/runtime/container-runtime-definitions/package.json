@@ -52,6 +52,13 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IContainerRuntime": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IContainerRuntimeWithResolveHandle_Deprecated": {
+				"forwardCompat": false
+			}
+		}
 	}
 }
