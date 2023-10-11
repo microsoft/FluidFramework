@@ -28,7 +28,7 @@ describe("beforeChange/afterChange events", () => {
 	});
 	const schema = builder.toDocumentSchema(SchemaBuilder.field(FieldKinds.required, myNodeSchema));
 
-	it.only("fire the expected number of times", () => {
+	it("fire the expected number of times", () => {
 		// TODO: once assignment to properties is implemented in EditableTree2, update this test to apply changes like
 		//   root.myString = "new string";
 		// instead of
@@ -124,7 +124,7 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(rootAfterChangeCount, 6);
 	});
 
-	it.only("fire in the expected order and always together", () => {
+	it("fire in the expected order and always together", () => {
 		// TODO: once assignment to properties is implemented in EditableTree2, update this test to apply changes like
 		//   root.myString = "new string";
 		// instead of
@@ -176,7 +176,7 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(afterCounter, 6);
 	});
 
-	it.only("tree is in correct state when events fire - primitive node deletions", () => {
+	it("tree is in correct state when events fire - primitive node deletions", () => {
 		// TODO: once assignment to properties is implemented in EditableTree2, update this test to apply changes like
 		//   root.myString = "new string";
 		// instead of
@@ -212,7 +212,7 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(totalListenerCalls, 2);
 	});
 
-	it.only("tree is in correct state when events fire - primitive node additions", () => {
+	it("tree is in correct state when events fire - primitive node additions", () => {
 		// TODO: once assignment to properties is implemented in EditableTree2, update this test to apply changes like
 		//   root.myString = "new string";
 		// instead of
@@ -248,7 +248,7 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(totalListenerCalls, 2);
 	});
 
-	it.only("tree is in correct state when events fire - primitive node replacements", () => {
+	it("tree is in correct state when events fire - primitive node replacements", () => {
 		// TODO: once assignment to properties is implemented in EditableTree2, update this test to apply changes like
 		//   root.myString = "new string";
 		// instead of
@@ -283,7 +283,7 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(totalListenerCalls, 2);
 	});
 
-	it.only("not emitted by nodes when they are replaced", () => {
+	it("not emitted by nodes when they are replaced", () => {
 		// TODO: once assignment to properties is implemented in EditableTree2, update this test to apply changes like
 		//   root.myString = "new string";
 		// instead of
