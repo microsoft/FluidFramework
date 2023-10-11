@@ -413,11 +413,11 @@ export interface IContainerRuntimeOptions {
 	 * batch content size exceeds this value, it will be chunked into smaller ops of this exact size.
 	 *
 	 * This value is a trade-off between having many small chunks vs fewer larger chunks and by default, the runtime is configured to use
-	 * 200 * 1024 = 204800 bytes. This default value ensures that no compressed payload's content is able to exceed {@link maxBatchSizeInBytes}
+	 * 200 * 1024 = 204800 bytes. This default value ensures that no compressed payload's content is able to exceed {@link IContainerRuntimeOptions.maxBatchSizeInBytes}
 	 * regardless of the overhead of an individual op.
 	 *
-	 * Any value of `chunkSizeInBytes` exceeding {@link maxBatchSizeInBytes} will disable this feature, therefore if a compressed batch's content
-	 * size exceeds {@link maxBatchSizeInBytes} after compression, the container will close with an instance of `GenericError` with
+	 * Any value of `chunkSizeInBytes` exceeding {@link IContainerRuntimeOptions.maxBatchSizeInBytes} will disable this feature, therefore if a compressed batch's content
+	 * size exceeds {@link IContainerRuntimeOptions.maxBatchSizeInBytes} after compression, the container will close with an instance of `GenericError` with
 	 * the `BatchTooLarge` message.
 	 */
 	readonly chunkSizeInBytes?: number;
