@@ -612,7 +612,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				}
 			},
 			withNodeUpToRoot(withNode: (anchorNode: PathNode) => void) {
-				assert(this.parent !== undefined, "parent must exist");
+				// No assertion that this.parent exists because this also gets called when we attach a node to the root field.
 				let currentParent: UpPath | undefined = this.parent;
 				while (currentParent !== undefined) {
 					// this.parent = this.anchorSet.internalizePath(this.parent);
