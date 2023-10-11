@@ -202,7 +202,7 @@ export class SchemaBuilder<
 	 * Shorthand or passing `FieldKinds.optional` to {@link FieldSchema.create}.
 	 *
 	 * Since this creates a {@link FieldSchema} (and not a {@link TreeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
-	 * therefor this method is the same as the static version.
+	 * therefore this method is the same as the static version.
 	 */
 	public readonly optional = SchemaBuilder.optional;
 
