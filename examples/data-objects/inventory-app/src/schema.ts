@@ -13,7 +13,7 @@ export const part = builder.struct("Contoso:Part-1.0.0", {
 });
 
 export const inventory = builder.struct("Contoso:Inventory-1.0.0", {
-	parts: part,
+	parts: builder.sequence(part),
 });
 
 export const inventoryField = SchemaBuilder.required(inventory);
