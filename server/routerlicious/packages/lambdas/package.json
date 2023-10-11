@@ -107,6 +107,10 @@
 			"ClassDeclaration_DeliLambda": {
 				"backCompat": false
 			},
+			"InterfaceDeclaration_IBroadcastSignalEventPayload": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
 			"InterfaceDeclaration_ICheckpointParams": {
 				"backCompat": false
 			},
