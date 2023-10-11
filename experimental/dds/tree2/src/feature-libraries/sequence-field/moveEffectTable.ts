@@ -217,8 +217,11 @@ export function applyMoveEffectsToMark<T>(
 ): Mark<T>[] {
 	if (isTransientEffect(mark)) {
 		if (isMoveDestination(mark.attach)) {
+			if (isMoveSource(mark.detach)) {
+				// XXX: Do we need to apply move effects to this kind of mark?
+				return [mark];
+			}
 			const attachRevision = mark.attach.revision ?? mark.revision ?? revision;
-			assert(!isMoveSource(mark.detach), "TODO: Handle transient moves");
 			const effect = getMoveEffect(
 				effects,
 				CrossFieldTarget.Destination,

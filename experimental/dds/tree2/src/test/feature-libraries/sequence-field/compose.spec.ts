@@ -459,12 +459,10 @@ describe("SequenceField - Compose", () => {
 		const actual = shallowCompose([makeAnonChange(revive), tagChange(deletion, tag2)]);
 		const expected = [
 			Mark.revive(1, { revision: tag1, localId: brand(0) }, { inverseOf: tag1 }),
-			Mark.revive(1, { revision: tag1, localId: brand(0) }, { inverseOf: tag1 }),
 			Mark.transient(
 				Mark.revive(1, { revision: tag1, localId: brand(1) }, { inverseOf: tag1 }),
 				Mark.delete(1, brand(0), { revision: tag2 }),
 			),
-			Mark.revive(1, { revision: tag1, localId: brand(2) }, { inverseOf: tag1 }),
 			Mark.revive(1, { revision: tag1, localId: brand(2) }, { inverseOf: tag1 }),
 			Mark.transient(
 				Mark.revive(2, { revision: tag1, localId: brand(3) }, { inverseOf: tag1 }),
