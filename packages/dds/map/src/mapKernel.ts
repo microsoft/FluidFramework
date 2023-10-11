@@ -944,8 +944,6 @@ export class MapKernel {
 					!this.pendingDeleteTracker.has(op.key) &&
 					!this.ackedKeysIndexTracker.has(op.key)
 				) {
-					// this.addAckedKeyIndex(op.key);
-					// this.creationIndex++;
 					this.ackedKeysIndexTracker.set(op.key, ++this.creationIndex);
 				} else if (op.type === "delete") {
 					this.ackedKeysIndexTracker.delete(op.key);
@@ -963,7 +961,6 @@ export class MapKernel {
 		// we need to ack this op
 		const pendingSetIds = this.pendingSetTracker.get(op.key);
 		if (pendingSetIds !== undefined && pendingSetIds[0] === pendingMessageId) {
-			// this.creationIndex++;
 			if (!this.ackedKeysIndexTracker.has(op.key)) {
 				this.ackedKeysIndexTracker.set(op.key, ++this.creationIndex);
 			}
