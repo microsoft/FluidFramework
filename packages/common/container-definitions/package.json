@@ -60,6 +60,17 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedInterfaceDeclaration_IPendingLocalState": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IRuntime": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ISnapshotTreeWithBlobContents": {
+				"backCompat": false
+			}
+		}
 	}
 }
