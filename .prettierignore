@@ -100,3 +100,4 @@ tools/markdown-magic/test/include.md
 
 # Prettier messes up the formatting and regular expressions of this file
 experimental/dds/tree2/.dependency-cruiser.js
+experimental/dds/tree2/.dependency-cruiser-known-violations.json

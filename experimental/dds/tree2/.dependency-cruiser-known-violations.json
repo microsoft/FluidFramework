@@ -1,714 +1,727 @@
 [
-	{
-		"type": "cycle",
-		"from": "../../../packages/loader/container-loader/dist/container.js",
-		"to": "../../../packages/loader/container-loader/dist/loader.js",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"../../../packages/loader/container-loader/dist/loader.js",
-			"../../../packages/loader/container-loader/dist/container.js"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "../../../packages/loader/driver-utils/dist/adapters/compression/documentServiceCompressionAdapter.js",
-		"to": "../../../packages/loader/driver-utils/dist/adapters/compression/summaryblob/index.js",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"../../../packages/loader/driver-utils/dist/adapters/compression/summaryblob/index.js",
-			"../../../packages/loader/driver-utils/dist/adapters/compression/summaryblob/documentStorageServiceSummaryBlobCompressionAdapter.js",
-			"../../../packages/loader/driver-utils/dist/adapters/compression/index.js",
-			"../../../packages/loader/driver-utils/dist/adapters/compression/documentServiceFactoryCompressionAdapter.js",
-			"../../../packages/loader/driver-utils/dist/adapters/compression/documentServiceCompressionAdapter.js"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "../../../packages/loader/driver-utils/dist/adapters/compression/documentServiceFactoryCompressionAdapter.js",
-		"to": "../../../packages/loader/driver-utils/dist/adapters/compression/summaryblob/index.js",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"../../../packages/loader/driver-utils/dist/adapters/compression/summaryblob/index.js",
-			"../../../packages/loader/driver-utils/dist/adapters/compression/summaryblob/documentStorageServiceSummaryBlobCompressionAdapter.js",
-			"../../../packages/loader/driver-utils/dist/adapters/compression/index.js",
-			"../../../packages/loader/driver-utils/dist/adapters/compression/documentServiceFactoryCompressionAdapter.js"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "../../../packages/loader/driver-utils/dist/adapters/compression/index.js",
-		"to": "../../../packages/loader/driver-utils/dist/adapters/compression/summaryblob/index.js",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"../../../packages/loader/driver-utils/dist/adapters/compression/summaryblob/index.js",
-			"../../../packages/loader/driver-utils/dist/adapters/compression/summaryblob/documentStorageServiceSummaryBlobCompressionAdapter.js",
-			"../../../packages/loader/driver-utils/dist/adapters/compression/index.js"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "../../../packages/loader/driver-utils/dist/index.js",
-		"to": "../../../packages/loader/driver-utils/dist/runWithRetry.js",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"../../../packages/loader/driver-utils/dist/runWithRetry.js",
-			"../../../packages/loader/driver-utils/dist/index.js"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "../../../packages/runtime/container-runtime/dist/blobManager.js",
-		"to": "../../../packages/runtime/container-runtime/dist/containerRuntime.js",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"../../../packages/runtime/container-runtime/dist/containerRuntime.js",
-			"../../../packages/runtime/container-runtime/dist/blobManager.js"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "../../../packages/runtime/container-runtime/dist/blobManager.js",
-		"to": "../../../packages/runtime/container-runtime/dist/gc/index.js",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"../../../packages/runtime/container-runtime/dist/gc/index.js",
-			"../../../packages/runtime/container-runtime/dist/gc/garbageCollection.js",
-			"../../../packages/runtime/container-runtime/dist/containerRuntime.js",
-			"../../../packages/runtime/container-runtime/dist/blobManager.js"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "../../../packages/runtime/container-runtime/dist/blobManager.js",
-		"to": "../../../packages/runtime/container-runtime/dist/summary/index.js",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"../../../packages/runtime/container-runtime/dist/summary/index.js",
-			"../../../packages/runtime/container-runtime/dist/summary/summarizerNode/index.js",
-			"../../../packages/runtime/container-runtime/dist/summary/summarizerNode/summarizerNodeWithGc.js",
-			"../../../packages/runtime/container-runtime/dist/gc/index.js",
-			"../../../packages/runtime/container-runtime/dist/gc/garbageCollection.js",
-			"../../../packages/runtime/container-runtime/dist/containerRuntime.js",
-			"../../../packages/runtime/container-runtime/dist/blobManager.js"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "../../../packages/runtime/container-runtime/dist/containerRuntime.js",
-		"to": "../../../packages/runtime/container-runtime/dist/dataStores.js",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"../../../packages/runtime/container-runtime/dist/dataStores.js",
-			"../../../packages/runtime/container-runtime/dist/containerRuntime.js"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "../../../packages/runtime/container-runtime/dist/containerRuntime.js",
-		"to": "../../../packages/runtime/container-runtime/dist/deltaManagerSummarizerProxy.js",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"../../../packages/runtime/container-runtime/dist/deltaManagerSummarizerProxy.js",
-			"../../../packages/runtime/container-runtime/dist/summary/index.js",
-			"../../../packages/runtime/container-runtime/dist/summary/summarizerNode/index.js",
-			"../../../packages/runtime/container-runtime/dist/summary/summarizerNode/summarizerNodeWithGc.js",
-			"../../../packages/runtime/container-runtime/dist/gc/index.js",
-			"../../../packages/runtime/container-runtime/dist/gc/garbageCollection.js",
-			"../../../packages/runtime/container-runtime/dist/containerRuntime.js"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "../../../packages/runtime/container-runtime/dist/containerRuntime.js",
-		"to": "../../../packages/runtime/container-runtime/dist/gc/index.js",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"../../../packages/runtime/container-runtime/dist/gc/index.js",
-			"../../../packages/runtime/container-runtime/dist/gc/garbageCollection.js",
-			"../../../packages/runtime/container-runtime/dist/containerRuntime.js"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "../../../packages/runtime/container-runtime/dist/containerRuntime.js",
-		"to": "../../../packages/runtime/container-runtime/dist/opLifecycle/index.js",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"../../../packages/runtime/container-runtime/dist/opLifecycle/index.js",
-			"../../../packages/runtime/container-runtime/dist/opLifecycle/opCompressor.js",
-			"../../../packages/runtime/container-runtime/dist/containerRuntime.js"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "../../../packages/runtime/container-runtime/dist/containerRuntime.js",
-		"to": "../../../packages/runtime/container-runtime/dist/summary/index.js",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"../../../packages/runtime/container-runtime/dist/summary/index.js",
-			"../../../packages/runtime/container-runtime/dist/summary/summarizerNode/index.js",
-			"../../../packages/runtime/container-runtime/dist/summary/summarizerNode/summarizerNodeWithGc.js",
-			"../../../packages/runtime/container-runtime/dist/gc/index.js",
-			"../../../packages/runtime/container-runtime/dist/gc/garbageCollection.js",
-			"../../../packages/runtime/container-runtime/dist/containerRuntime.js"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "../../../packages/runtime/container-runtime/dist/dataStoreContext.js",
-		"to": "../../../packages/runtime/container-runtime/dist/gc/index.js",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"../../../packages/runtime/container-runtime/dist/gc/index.js",
-			"../../../packages/runtime/container-runtime/dist/gc/garbageCollection.js",
-			"../../../packages/runtime/container-runtime/dist/containerRuntime.js",
-			"../../../packages/runtime/container-runtime/dist/dataStores.js",
-			"../../../packages/runtime/container-runtime/dist/dataStoreContext.js"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "../../../packages/runtime/container-runtime/dist/dataStoreContext.js",
-		"to": "../../../packages/runtime/container-runtime/dist/summary/index.js",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"../../../packages/runtime/container-runtime/dist/summary/index.js",
-			"../../../packages/runtime/container-runtime/dist/summary/summarizerNode/index.js",
-			"../../../packages/runtime/container-runtime/dist/summary/summarizerNode/summarizerNodeWithGc.js",
-			"../../../packages/runtime/container-runtime/dist/gc/index.js",
-			"../../../packages/runtime/container-runtime/dist/gc/garbageCollection.js",
-			"../../../packages/runtime/container-runtime/dist/containerRuntime.js",
-			"../../../packages/runtime/container-runtime/dist/dataStores.js",
-			"../../../packages/runtime/container-runtime/dist/dataStoreContext.js"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "../../../packages/runtime/container-runtime/dist/dataStores.js",
-		"to": "../../../packages/runtime/container-runtime/dist/gc/index.js",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"../../../packages/runtime/container-runtime/dist/gc/index.js",
-			"../../../packages/runtime/container-runtime/dist/gc/garbageCollection.js",
-			"../../../packages/runtime/container-runtime/dist/containerRuntime.js",
-			"../../../packages/runtime/container-runtime/dist/dataStores.js"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "../../../packages/runtime/container-runtime/dist/dataStores.js",
-		"to": "../../../packages/runtime/container-runtime/dist/summary/index.js",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"../../../packages/runtime/container-runtime/dist/summary/index.js",
-			"../../../packages/runtime/container-runtime/dist/summary/summarizerNode/index.js",
-			"../../../packages/runtime/container-runtime/dist/summary/summarizerNode/summarizerNodeWithGc.js",
-			"../../../packages/runtime/container-runtime/dist/gc/index.js",
-			"../../../packages/runtime/container-runtime/dist/gc/garbageCollection.js",
-			"../../../packages/runtime/container-runtime/dist/containerRuntime.js",
-			"../../../packages/runtime/container-runtime/dist/dataStores.js"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "../../../packages/runtime/container-runtime/dist/opLifecycle/index.js",
-		"to": "../../../packages/runtime/container-runtime/dist/opLifecycle/opDecompressor.js",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"../../../packages/runtime/container-runtime/dist/opLifecycle/opDecompressor.js",
-			"../../../packages/runtime/container-runtime/dist/containerRuntime.js",
-			"../../../packages/runtime/container-runtime/dist/opLifecycle/index.js"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "../../../packages/utils/odsp-doclib-utils/dist/odspAuth.js",
-		"to": "../../../packages/utils/odsp-doclib-utils/dist/odspRequest.js",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"../../../packages/utils/odsp-doclib-utils/dist/odspRequest.js",
-			"../../../packages/utils/odsp-doclib-utils/dist/odspAuth.js"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "../../../packages/utils/telemetry-utils/dist/config.js",
-		"to": "../../../packages/utils/telemetry-utils/dist/logger.js",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"../../../packages/utils/telemetry-utils/dist/logger.js",
-			"../../../packages/utils/telemetry-utils/dist/config.js"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "src/feature-libraries/contextuallyTyped.ts",
-		"to": "src/feature-libraries/editable-tree/index.ts",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"src/feature-libraries/editable-tree/index.ts",
-			"src/feature-libraries/editable-tree/editableField.ts",
-			"src/feature-libraries/contextuallyTyped.ts"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "src/feature-libraries/editable-tree-2/context.ts",
-		"to": "src/feature-libraries/editable-tree-2/lazyField.ts",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"src/feature-libraries/editable-tree-2/lazyField.ts",
-			"src/feature-libraries/contextuallyTyped.ts",
-			"src/feature-libraries/editable-tree/index.ts",
-			"src/feature-libraries/editable-tree/editableField.ts",
-			"src/feature-libraries/editable-tree-2/index.ts",
-			"src/feature-libraries/editable-tree-2/context.ts"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "src/feature-libraries/editable-tree-2/context.ts",
-		"to": "src/feature-libraries/node-key/index.ts",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"src/feature-libraries/node-key/index.ts",
-			"src/feature-libraries/node-key/nodeKeyIndex.ts",
-			"src/feature-libraries/editable-tree-2/index.ts",
-			"src/feature-libraries/editable-tree-2/context.ts"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "src/feature-libraries/editable-tree-2/lazyField.ts",
-		"to": "src/feature-libraries/editable-tree-2/lazyTree.ts",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"src/feature-libraries/editable-tree-2/lazyTree.ts",
-			"src/feature-libraries/editable-tree-2/lazyField.ts"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "src/feature-libraries/editable-tree-2/lazyField.ts",
-		"to": "src/feature-libraries/editable-tree-2/unboxed.ts",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"src/feature-libraries/editable-tree-2/unboxed.ts",
-			"src/feature-libraries/editable-tree-2/lazyField.ts"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "src/feature-libraries/editable-tree-2/lazyField.ts",
-		"to": "src/feature-libraries/editable-tree-2/utilities.ts",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"src/feature-libraries/editable-tree-2/utilities.ts",
-			"src/feature-libraries/editable-tree-2/index.ts",
-			"src/feature-libraries/editable-tree-2/context.ts",
-			"src/feature-libraries/editable-tree-2/lazyField.ts"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "src/feature-libraries/editable-tree-2/lazyField.ts",
-		"to": "src/feature-libraries/node-key/index.ts",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"src/feature-libraries/node-key/index.ts",
-			"src/feature-libraries/node-key/nodeKeyIndex.ts",
-			"src/feature-libraries/editable-tree-2/index.ts",
-			"src/feature-libraries/editable-tree-2/context.ts",
-			"src/feature-libraries/editable-tree-2/lazyField.ts"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "src/feature-libraries/editable-tree-2/lazyTree.ts",
-		"to": "src/feature-libraries/editable-tree-2/unboxed.ts",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"src/feature-libraries/editable-tree-2/unboxed.ts",
-			"src/feature-libraries/editable-tree-2/lazyTree.ts"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "src/feature-libraries/editable-tree-2/lazyTree.ts",
-		"to": "src/feature-libraries/editable-tree-2/utilities.ts",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"src/feature-libraries/editable-tree-2/utilities.ts",
-			"src/feature-libraries/editable-tree-2/index.ts",
-			"src/feature-libraries/editable-tree-2/context.ts",
-			"src/feature-libraries/editable-tree-2/lazyField.ts",
-			"src/feature-libraries/editable-tree-2/lazyTree.ts"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "src/feature-libraries/editable-tree/editableField.ts",
-		"to": "src/feature-libraries/editable-tree/editableTree.ts",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"src/feature-libraries/editable-tree/editableTree.ts",
-			"src/feature-libraries/editable-tree/editableField.ts"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "src/feature-libraries/editable-tree/editableField.ts",
-		"to": "src/feature-libraries/editable-tree/editableTreeTypes.ts",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"src/feature-libraries/editable-tree/editableTreeTypes.ts",
-			"src/feature-libraries/contextuallyTyped.ts",
-			"src/feature-libraries/editable-tree/index.ts",
-			"src/feature-libraries/editable-tree/editableField.ts"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "src/feature-libraries/editable-tree/editableField.ts",
-		"to": "src/feature-libraries/editable-tree/utilities.ts",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"src/feature-libraries/editable-tree/utilities.ts",
-			"src/feature-libraries/contextuallyTyped.ts",
-			"src/feature-libraries/editable-tree/index.ts",
-			"src/feature-libraries/editable-tree/editableField.ts"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "src/feature-libraries/editable-tree/editableTree.ts",
-		"to": "src/feature-libraries/contextuallyTyped.ts",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"src/feature-libraries/contextuallyTyped.ts",
-			"src/feature-libraries/editable-tree/index.ts",
-			"src/feature-libraries/editable-tree/editableTree.ts"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "src/feature-libraries/editable-tree/editableTree.ts",
-		"to": "src/feature-libraries/editable-tree-2/index.ts",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"src/feature-libraries/editable-tree-2/index.ts",
-			"src/feature-libraries/editable-tree-2/context.ts",
-			"src/feature-libraries/editable-tree-2/lazyField.ts",
-			"src/feature-libraries/contextuallyTyped.ts",
-			"src/feature-libraries/editable-tree/index.ts",
-			"src/feature-libraries/editable-tree/editableTree.ts"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "src/feature-libraries/editable-tree/editableTree.ts",
-		"to": "src/feature-libraries/editable-tree/editableTreeTypes.ts",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"src/feature-libraries/editable-tree/editableTreeTypes.ts",
-			"src/feature-libraries/contextuallyTyped.ts",
-			"src/feature-libraries/editable-tree/index.ts",
-			"src/feature-libraries/editable-tree/editableTree.ts"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "src/feature-libraries/editable-tree/editableTree.ts",
-		"to": "src/feature-libraries/editable-tree/utilities.ts",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"src/feature-libraries/editable-tree/utilities.ts",
-			"src/feature-libraries/contextuallyTyped.ts",
-			"src/feature-libraries/editable-tree/index.ts",
-			"src/feature-libraries/editable-tree/editableTree.ts"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "src/feature-libraries/editable-tree/editableTree.ts",
-		"to": "src/feature-libraries/untypedTree.ts",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"src/feature-libraries/untypedTree.ts",
-			"src/feature-libraries/contextuallyTyped.ts",
-			"src/feature-libraries/editable-tree/index.ts",
-			"src/feature-libraries/editable-tree/editableTree.ts"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "src/feature-libraries/editable-tree/editableTreeBinder.ts",
-		"to": "src/feature-libraries/untypedTree.ts",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"src/feature-libraries/untypedTree.ts",
-			"src/feature-libraries/contextuallyTyped.ts",
-			"src/feature-libraries/editable-tree/index.ts",
-			"src/feature-libraries/editable-tree/editableTreeBinder.ts"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "src/feature-libraries/editable-tree/editableTreeContext.ts",
-		"to": "src/feature-libraries/editable-tree/editableField.ts",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"src/feature-libraries/editable-tree/editableField.ts",
-			"src/feature-libraries/contextuallyTyped.ts",
-			"src/feature-libraries/editable-tree/index.ts",
-			"src/feature-libraries/editable-tree/editableTreeContext.ts"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "src/feature-libraries/editable-tree/editableTreeTypes.ts",
-		"to": "src/feature-libraries/contextuallyTyped.ts",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"src/feature-libraries/contextuallyTyped.ts",
-			"src/feature-libraries/editable-tree/index.ts",
-			"src/feature-libraries/editable-tree/editableTreeTypes.ts"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "src/feature-libraries/editable-tree/editableTreeTypes.ts",
-		"to": "src/feature-libraries/untypedTree.ts",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"src/feature-libraries/untypedTree.ts",
-			"src/feature-libraries/contextuallyTyped.ts",
-			"src/feature-libraries/editable-tree/index.ts",
-			"src/feature-libraries/editable-tree/editableTreeTypes.ts"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "src/feature-libraries/editable-tree/index.ts",
-		"to": "src/feature-libraries/editable-tree/utilities.ts",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"src/feature-libraries/editable-tree/utilities.ts",
-			"src/feature-libraries/contextuallyTyped.ts",
-			"src/feature-libraries/editable-tree/index.ts"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "src/feature-libraries/editable-tree/utilities.ts",
-		"to": "src/feature-libraries/editable-tree-2/index.ts",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"src/feature-libraries/editable-tree-2/index.ts",
-			"src/feature-libraries/editable-tree-2/context.ts",
-			"src/feature-libraries/editable-tree-2/lazyField.ts",
-			"src/feature-libraries/contextuallyTyped.ts",
-			"src/feature-libraries/editable-tree/index.ts",
-			"src/feature-libraries/editable-tree/utilities.ts"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "src/feature-libraries/editable-tree/utilities.ts",
-		"to": "src/feature-libraries/untypedTree.ts",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"src/feature-libraries/untypedTree.ts",
-			"src/feature-libraries/contextuallyTyped.ts",
-			"src/feature-libraries/editable-tree/index.ts",
-			"src/feature-libraries/editable-tree/utilities.ts"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "src/feature-libraries/modular-schema/comparison.ts",
-		"to": "src/feature-libraries/modular-schema/fieldKind.ts",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"src/feature-libraries/modular-schema/fieldKind.ts",
-			"src/feature-libraries/modular-schema/comparison.ts"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "src/feature-libraries/sequence-field/markListFactory.ts",
-		"to": "src/feature-libraries/sequence-field/utils.ts",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"src/feature-libraries/sequence-field/utils.ts",
-			"src/feature-libraries/sequence-field/markListFactory.ts"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "src/feature-libraries/sequence-field/moveEffectTable.ts",
-		"to": "src/feature-libraries/sequence-field/utils.ts",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"src/feature-libraries/sequence-field/utils.ts",
-			"src/feature-libraries/sequence-field/moveEffectTable.ts"
-		]
-	},
-	{
-		"type": "cycle",
-		"from": "src/feature-libraries/untypedTree.ts",
-		"to": "src/feature-libraries/contextuallyTyped.ts",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"src/feature-libraries/contextuallyTyped.ts",
-			"src/feature-libraries/editable-tree/index.ts",
-			"src/feature-libraries/editable-tree/editableField.ts",
-			"src/feature-libraries/editable-tree/editableTree.ts",
-			"src/feature-libraries/untypedTree.ts"
-		]
-	}
+  {
+    "type": "cycle",
+    "from": "../../../packages/dds/test-dds-utils/dist/ddsFuzzHarness.js",
+    "to": "../../../packages/dds/test-dds-utils/dist/minification.js",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "../../../packages/dds/test-dds-utils/dist/minification.js",
+      "../../../packages/dds/test-dds-utils/dist/ddsFuzzHarness.js"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "../../../packages/loader/container-loader/dist/container.js",
+    "to": "../../../packages/loader/container-loader/dist/loader.js",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "../../../packages/loader/container-loader/dist/loader.js",
+      "../../../packages/loader/container-loader/dist/container.js"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "../../../packages/loader/driver-utils/dist/adapters/compression/documentServiceCompressionAdapter.js",
+    "to": "../../../packages/loader/driver-utils/dist/adapters/compression/summaryblob/index.js",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "../../../packages/loader/driver-utils/dist/adapters/compression/summaryblob/index.js",
+      "../../../packages/loader/driver-utils/dist/adapters/compression/summaryblob/documentStorageServiceSummaryBlobCompressionAdapter.js",
+      "../../../packages/loader/driver-utils/dist/adapters/compression/index.js",
+      "../../../packages/loader/driver-utils/dist/adapters/compression/documentServiceFactoryCompressionAdapter.js",
+      "../../../packages/loader/driver-utils/dist/adapters/compression/documentServiceCompressionAdapter.js"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "../../../packages/loader/driver-utils/dist/adapters/compression/documentServiceFactoryCompressionAdapter.js",
+    "to": "../../../packages/loader/driver-utils/dist/adapters/compression/summaryblob/index.js",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "../../../packages/loader/driver-utils/dist/adapters/compression/summaryblob/index.js",
+      "../../../packages/loader/driver-utils/dist/adapters/compression/summaryblob/documentStorageServiceSummaryBlobCompressionAdapter.js",
+      "../../../packages/loader/driver-utils/dist/adapters/compression/index.js",
+      "../../../packages/loader/driver-utils/dist/adapters/compression/documentServiceFactoryCompressionAdapter.js"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "../../../packages/loader/driver-utils/dist/adapters/compression/index.js",
+    "to": "../../../packages/loader/driver-utils/dist/adapters/compression/summaryblob/index.js",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "../../../packages/loader/driver-utils/dist/adapters/compression/summaryblob/index.js",
+      "../../../packages/loader/driver-utils/dist/adapters/compression/summaryblob/documentStorageServiceSummaryBlobCompressionAdapter.js",
+      "../../../packages/loader/driver-utils/dist/adapters/compression/index.js"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "../../../packages/loader/driver-utils/dist/index.js",
+    "to": "../../../packages/loader/driver-utils/dist/runWithRetry.js",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "../../../packages/loader/driver-utils/dist/runWithRetry.js",
+      "../../../packages/loader/driver-utils/dist/index.js"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "../../../packages/runtime/container-runtime/dist/blobManager.js",
+    "to": "../../../packages/runtime/container-runtime/dist/containerRuntime.js",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "../../../packages/runtime/container-runtime/dist/containerRuntime.js",
+      "../../../packages/runtime/container-runtime/dist/blobManager.js"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "../../../packages/runtime/container-runtime/dist/blobManager.js",
+    "to": "../../../packages/runtime/container-runtime/dist/gc/index.js",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "../../../packages/runtime/container-runtime/dist/gc/index.js",
+      "../../../packages/runtime/container-runtime/dist/gc/garbageCollection.js",
+      "../../../packages/runtime/container-runtime/dist/containerRuntime.js",
+      "../../../packages/runtime/container-runtime/dist/blobManager.js"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "../../../packages/runtime/container-runtime/dist/blobManager.js",
+    "to": "../../../packages/runtime/container-runtime/dist/summary/index.js",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "../../../packages/runtime/container-runtime/dist/summary/index.js",
+      "../../../packages/runtime/container-runtime/dist/summary/summarizerNode/index.js",
+      "../../../packages/runtime/container-runtime/dist/summary/summarizerNode/summarizerNodeWithGc.js",
+      "../../../packages/runtime/container-runtime/dist/gc/index.js",
+      "../../../packages/runtime/container-runtime/dist/gc/garbageCollection.js",
+      "../../../packages/runtime/container-runtime/dist/containerRuntime.js",
+      "../../../packages/runtime/container-runtime/dist/blobManager.js"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "../../../packages/runtime/container-runtime/dist/containerRuntime.js",
+    "to": "../../../packages/runtime/container-runtime/dist/dataStores.js",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "../../../packages/runtime/container-runtime/dist/dataStores.js",
+      "../../../packages/runtime/container-runtime/dist/containerRuntime.js"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "../../../packages/runtime/container-runtime/dist/containerRuntime.js",
+    "to": "../../../packages/runtime/container-runtime/dist/deltaManagerSummarizerProxy.js",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "../../../packages/runtime/container-runtime/dist/deltaManagerSummarizerProxy.js",
+      "../../../packages/runtime/container-runtime/dist/summary/index.js",
+      "../../../packages/runtime/container-runtime/dist/summary/summarizerNode/index.js",
+      "../../../packages/runtime/container-runtime/dist/summary/summarizerNode/summarizerNodeWithGc.js",
+      "../../../packages/runtime/container-runtime/dist/gc/index.js",
+      "../../../packages/runtime/container-runtime/dist/gc/garbageCollection.js",
+      "../../../packages/runtime/container-runtime/dist/containerRuntime.js"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "../../../packages/runtime/container-runtime/dist/containerRuntime.js",
+    "to": "../../../packages/runtime/container-runtime/dist/gc/index.js",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "../../../packages/runtime/container-runtime/dist/gc/index.js",
+      "../../../packages/runtime/container-runtime/dist/gc/garbageCollection.js",
+      "../../../packages/runtime/container-runtime/dist/containerRuntime.js"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "../../../packages/runtime/container-runtime/dist/containerRuntime.js",
+    "to": "../../../packages/runtime/container-runtime/dist/opLifecycle/index.js",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "../../../packages/runtime/container-runtime/dist/opLifecycle/index.js",
+      "../../../packages/runtime/container-runtime/dist/opLifecycle/opCompressor.js",
+      "../../../packages/runtime/container-runtime/dist/containerRuntime.js"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "../../../packages/runtime/container-runtime/dist/containerRuntime.js",
+    "to": "../../../packages/runtime/container-runtime/dist/summary/index.js",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "../../../packages/runtime/container-runtime/dist/summary/index.js",
+      "../../../packages/runtime/container-runtime/dist/summary/summarizerNode/index.js",
+      "../../../packages/runtime/container-runtime/dist/summary/summarizerNode/summarizerNodeWithGc.js",
+      "../../../packages/runtime/container-runtime/dist/gc/index.js",
+      "../../../packages/runtime/container-runtime/dist/gc/garbageCollection.js",
+      "../../../packages/runtime/container-runtime/dist/containerRuntime.js"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "../../../packages/runtime/container-runtime/dist/dataStoreContext.js",
+    "to": "../../../packages/runtime/container-runtime/dist/gc/index.js",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "../../../packages/runtime/container-runtime/dist/gc/index.js",
+      "../../../packages/runtime/container-runtime/dist/gc/garbageCollection.js",
+      "../../../packages/runtime/container-runtime/dist/containerRuntime.js",
+      "../../../packages/runtime/container-runtime/dist/dataStores.js",
+      "../../../packages/runtime/container-runtime/dist/dataStoreContext.js"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "../../../packages/runtime/container-runtime/dist/dataStoreContext.js",
+    "to": "../../../packages/runtime/container-runtime/dist/summary/index.js",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "../../../packages/runtime/container-runtime/dist/summary/index.js",
+      "../../../packages/runtime/container-runtime/dist/summary/summarizerNode/index.js",
+      "../../../packages/runtime/container-runtime/dist/summary/summarizerNode/summarizerNodeWithGc.js",
+      "../../../packages/runtime/container-runtime/dist/gc/index.js",
+      "../../../packages/runtime/container-runtime/dist/gc/garbageCollection.js",
+      "../../../packages/runtime/container-runtime/dist/containerRuntime.js",
+      "../../../packages/runtime/container-runtime/dist/dataStores.js",
+      "../../../packages/runtime/container-runtime/dist/dataStoreContext.js"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "../../../packages/runtime/container-runtime/dist/dataStores.js",
+    "to": "../../../packages/runtime/container-runtime/dist/gc/index.js",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "../../../packages/runtime/container-runtime/dist/gc/index.js",
+      "../../../packages/runtime/container-runtime/dist/gc/garbageCollection.js",
+      "../../../packages/runtime/container-runtime/dist/containerRuntime.js",
+      "../../../packages/runtime/container-runtime/dist/dataStores.js"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "../../../packages/runtime/container-runtime/dist/dataStores.js",
+    "to": "../../../packages/runtime/container-runtime/dist/summary/index.js",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "../../../packages/runtime/container-runtime/dist/summary/index.js",
+      "../../../packages/runtime/container-runtime/dist/summary/summarizerNode/index.js",
+      "../../../packages/runtime/container-runtime/dist/summary/summarizerNode/summarizerNodeWithGc.js",
+      "../../../packages/runtime/container-runtime/dist/gc/index.js",
+      "../../../packages/runtime/container-runtime/dist/gc/garbageCollection.js",
+      "../../../packages/runtime/container-runtime/dist/containerRuntime.js",
+      "../../../packages/runtime/container-runtime/dist/dataStores.js"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "../../../packages/runtime/container-runtime/dist/opLifecycle/index.js",
+    "to": "../../../packages/runtime/container-runtime/dist/opLifecycle/opDecompressor.js",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "../../../packages/runtime/container-runtime/dist/opLifecycle/opDecompressor.js",
+      "../../../packages/runtime/container-runtime/dist/containerRuntime.js",
+      "../../../packages/runtime/container-runtime/dist/opLifecycle/index.js"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "../../../packages/utils/odsp-doclib-utils/dist/odspAuth.js",
+    "to": "../../../packages/utils/odsp-doclib-utils/dist/odspRequest.js",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "../../../packages/utils/odsp-doclib-utils/dist/odspRequest.js",
+      "../../../packages/utils/odsp-doclib-utils/dist/odspAuth.js"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "../../../packages/utils/telemetry-utils/dist/config.js",
+    "to": "../../../packages/utils/telemetry-utils/dist/logger.js",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "../../../packages/utils/telemetry-utils/dist/logger.js",
+      "../../../packages/utils/telemetry-utils/dist/config.js"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "src/feature-libraries/contextuallyTyped.ts",
+    "to": "src/feature-libraries/editable-tree/index.ts",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "src/feature-libraries/editable-tree/index.ts",
+      "src/feature-libraries/editable-tree/editableField.ts",
+      "src/feature-libraries/contextuallyTyped.ts"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "src/feature-libraries/editable-tree-2/context.ts",
+    "to": "src/feature-libraries/editable-tree-2/lazyField.ts",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "src/feature-libraries/editable-tree-2/lazyField.ts",
+      "src/feature-libraries/contextuallyTyped.ts",
+      "src/feature-libraries/editable-tree/index.ts",
+      "src/feature-libraries/editable-tree/editableField.ts",
+      "src/feature-libraries/editable-tree-2/index.ts",
+      "src/feature-libraries/editable-tree-2/context.ts"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "src/feature-libraries/editable-tree-2/context.ts",
+    "to": "src/feature-libraries/node-key/index.ts",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "src/feature-libraries/node-key/index.ts",
+      "src/feature-libraries/node-key/nodeKeyIndex.ts",
+      "src/feature-libraries/editable-tree-2/index.ts",
+      "src/feature-libraries/editable-tree-2/context.ts"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "src/feature-libraries/editable-tree-2/lazyField.ts",
+    "to": "src/feature-libraries/editable-tree-2/lazyTree.ts",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "src/feature-libraries/editable-tree-2/lazyTree.ts",
+      "src/feature-libraries/editable-tree-2/lazyField.ts"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "src/feature-libraries/editable-tree-2/lazyField.ts",
+    "to": "src/feature-libraries/editable-tree-2/unboxed.ts",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "src/feature-libraries/editable-tree-2/unboxed.ts",
+      "src/feature-libraries/editable-tree-2/lazyField.ts"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "src/feature-libraries/editable-tree-2/lazyField.ts",
+    "to": "src/feature-libraries/editable-tree-2/utilities.ts",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "src/feature-libraries/editable-tree-2/utilities.ts",
+      "src/feature-libraries/editable-tree-2/index.ts",
+      "src/feature-libraries/editable-tree-2/context.ts",
+      "src/feature-libraries/editable-tree-2/lazyField.ts"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "src/feature-libraries/editable-tree-2/lazyField.ts",
+    "to": "src/feature-libraries/node-key/index.ts",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "src/feature-libraries/node-key/index.ts",
+      "src/feature-libraries/node-key/nodeKeyIndex.ts",
+      "src/feature-libraries/editable-tree-2/index.ts",
+      "src/feature-libraries/editable-tree-2/context.ts",
+      "src/feature-libraries/editable-tree-2/lazyField.ts"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "src/feature-libraries/editable-tree-2/lazyTree.ts",
+    "to": "src/feature-libraries/editable-tree-2/unboxed.ts",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "src/feature-libraries/editable-tree-2/unboxed.ts",
+      "src/feature-libraries/editable-tree-2/lazyTree.ts"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "src/feature-libraries/editable-tree-2/lazyTree.ts",
+    "to": "src/feature-libraries/editable-tree-2/utilities.ts",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "src/feature-libraries/editable-tree-2/utilities.ts",
+      "src/feature-libraries/editable-tree-2/index.ts",
+      "src/feature-libraries/editable-tree-2/context.ts",
+      "src/feature-libraries/editable-tree-2/lazyField.ts",
+      "src/feature-libraries/editable-tree-2/lazyTree.ts"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "src/feature-libraries/editable-tree/editableField.ts",
+    "to": "src/feature-libraries/editable-tree/editableTree.ts",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "src/feature-libraries/editable-tree/editableTree.ts",
+      "src/feature-libraries/editable-tree/editableField.ts"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "src/feature-libraries/editable-tree/editableField.ts",
+    "to": "src/feature-libraries/editable-tree/editableTreeTypes.ts",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "src/feature-libraries/editable-tree/editableTreeTypes.ts",
+      "src/feature-libraries/contextuallyTyped.ts",
+      "src/feature-libraries/editable-tree/index.ts",
+      "src/feature-libraries/editable-tree/editableField.ts"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "src/feature-libraries/editable-tree/editableField.ts",
+    "to": "src/feature-libraries/editable-tree/utilities.ts",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "src/feature-libraries/editable-tree/utilities.ts",
+      "src/feature-libraries/contextuallyTyped.ts",
+      "src/feature-libraries/editable-tree/index.ts",
+      "src/feature-libraries/editable-tree/editableField.ts"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "src/feature-libraries/editable-tree/editableTree.ts",
+    "to": "src/feature-libraries/contextuallyTyped.ts",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "src/feature-libraries/contextuallyTyped.ts",
+      "src/feature-libraries/editable-tree/index.ts",
+      "src/feature-libraries/editable-tree/editableTree.ts"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "src/feature-libraries/editable-tree/editableTree.ts",
+    "to": "src/feature-libraries/editable-tree-2/index.ts",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "src/feature-libraries/editable-tree-2/index.ts",
+      "src/feature-libraries/editable-tree-2/context.ts",
+      "src/feature-libraries/editable-tree-2/lazyField.ts",
+      "src/feature-libraries/contextuallyTyped.ts",
+      "src/feature-libraries/editable-tree/index.ts",
+      "src/feature-libraries/editable-tree/editableTree.ts"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "src/feature-libraries/editable-tree/editableTree.ts",
+    "to": "src/feature-libraries/editable-tree/editableTreeTypes.ts",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "src/feature-libraries/editable-tree/editableTreeTypes.ts",
+      "src/feature-libraries/contextuallyTyped.ts",
+      "src/feature-libraries/editable-tree/index.ts",
+      "src/feature-libraries/editable-tree/editableTree.ts"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "src/feature-libraries/editable-tree/editableTree.ts",
+    "to": "src/feature-libraries/editable-tree/utilities.ts",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "src/feature-libraries/editable-tree/utilities.ts",
+      "src/feature-libraries/contextuallyTyped.ts",
+      "src/feature-libraries/editable-tree/index.ts",
+      "src/feature-libraries/editable-tree/editableTree.ts"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "src/feature-libraries/editable-tree/editableTree.ts",
+    "to": "src/feature-libraries/untypedTree.ts",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "src/feature-libraries/untypedTree.ts",
+      "src/feature-libraries/contextuallyTyped.ts",
+      "src/feature-libraries/editable-tree/index.ts",
+      "src/feature-libraries/editable-tree/editableTree.ts"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "src/feature-libraries/editable-tree/editableTreeBinder.ts",
+    "to": "src/feature-libraries/untypedTree.ts",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "src/feature-libraries/untypedTree.ts",
+      "src/feature-libraries/contextuallyTyped.ts",
+      "src/feature-libraries/editable-tree/index.ts",
+      "src/feature-libraries/editable-tree/editableTreeBinder.ts"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "src/feature-libraries/editable-tree/editableTreeContext.ts",
+    "to": "src/feature-libraries/editable-tree/editableField.ts",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "src/feature-libraries/editable-tree/editableField.ts",
+      "src/feature-libraries/contextuallyTyped.ts",
+      "src/feature-libraries/editable-tree/index.ts",
+      "src/feature-libraries/editable-tree/editableTreeContext.ts"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "src/feature-libraries/editable-tree/editableTreeTypes.ts",
+    "to": "src/feature-libraries/contextuallyTyped.ts",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "src/feature-libraries/contextuallyTyped.ts",
+      "src/feature-libraries/editable-tree/index.ts",
+      "src/feature-libraries/editable-tree/editableTreeTypes.ts"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "src/feature-libraries/editable-tree/editableTreeTypes.ts",
+    "to": "src/feature-libraries/untypedTree.ts",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "src/feature-libraries/untypedTree.ts",
+      "src/feature-libraries/contextuallyTyped.ts",
+      "src/feature-libraries/editable-tree/index.ts",
+      "src/feature-libraries/editable-tree/editableTreeTypes.ts"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "src/feature-libraries/editable-tree/index.ts",
+    "to": "src/feature-libraries/editable-tree/utilities.ts",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "src/feature-libraries/editable-tree/utilities.ts",
+      "src/feature-libraries/contextuallyTyped.ts",
+      "src/feature-libraries/editable-tree/index.ts"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "src/feature-libraries/editable-tree/utilities.ts",
+    "to": "src/feature-libraries/editable-tree-2/index.ts",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "src/feature-libraries/editable-tree-2/index.ts",
+      "src/feature-libraries/editable-tree-2/context.ts",
+      "src/feature-libraries/editable-tree-2/lazyField.ts",
+      "src/feature-libraries/contextuallyTyped.ts",
+      "src/feature-libraries/editable-tree/index.ts",
+      "src/feature-libraries/editable-tree/utilities.ts"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "src/feature-libraries/editable-tree/utilities.ts",
+    "to": "src/feature-libraries/untypedTree.ts",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "src/feature-libraries/untypedTree.ts",
+      "src/feature-libraries/contextuallyTyped.ts",
+      "src/feature-libraries/editable-tree/index.ts",
+      "src/feature-libraries/editable-tree/utilities.ts"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "src/feature-libraries/modular-schema/comparison.ts",
+    "to": "src/feature-libraries/modular-schema/fieldKind.ts",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "src/feature-libraries/modular-schema/fieldKind.ts",
+      "src/feature-libraries/modular-schema/comparison.ts"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "src/feature-libraries/sequence-field/markListFactory.ts",
+    "to": "src/feature-libraries/sequence-field/utils.ts",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "src/feature-libraries/sequence-field/utils.ts",
+      "src/feature-libraries/sequence-field/markListFactory.ts"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "src/feature-libraries/sequence-field/moveEffectTable.ts",
+    "to": "src/feature-libraries/sequence-field/utils.ts",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "src/feature-libraries/sequence-field/utils.ts",
+      "src/feature-libraries/sequence-field/moveEffectTable.ts"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "src/feature-libraries/untypedTree.ts",
+    "to": "src/feature-libraries/contextuallyTyped.ts",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "src/feature-libraries/contextuallyTyped.ts",
+      "src/feature-libraries/editable-tree/index.ts",
+      "src/feature-libraries/editable-tree/editableField.ts",
+      "src/feature-libraries/editable-tree/editableTree.ts",
+      "src/feature-libraries/untypedTree.ts"
+    ]
+  }
 ]
