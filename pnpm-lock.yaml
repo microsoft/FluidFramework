@@ -8007,7 +8007,6 @@ importers:
       '@microsoft/api-extractor': ^7.37.0
       '@microsoft/applicationinsights-web': ^2.8.11
       '@types/mocha': ^9.1.1
-      '@types/node': ^16.18.38
       '@types/sinon': ^7.0.13
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
@@ -8027,11 +8026,10 @@ importers:
       '@microsoft/applicationinsights-web': 2.8.13_tslib@1.14.1
     devDependencies:
       '@fluidframework/build-common': 2.0.0
-      '@fluidframework/build-tools': 0.25.0_@types+node@16.18.53
+      '@fluidframework/build-tools': 0.25.0
       '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
-      '@microsoft/api-extractor': 7.37.0_@types+node@16.18.53
+      '@microsoft/api-extractor': 7.37.0
       '@types/mocha': 9.1.1
-      '@types/node': 16.18.53
       '@types/sinon': 7.5.2
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -16856,53 +16854,6 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/build-tools/0.25.0_@types+node@16.18.53:
-    resolution: {integrity: sha512-+z0JVpteTpDjtQkybVmyvVoxxElt3ueZYiWXhtP6IeWnhIAx+r7E9338dN4xCBsFl+mqUp2KKSX9qhgNteWFLg==}
-    engines: {node: '>=14.17.0'}
-    hasBin: true
-    dependencies:
-      '@fluid-tools/version-tools': 0.25.0
-      '@fluidframework/bundle-size-tools': 0.25.0
-      '@manypkg/get-packages': 2.2.0
-      '@octokit/core': 4.2.4
-      '@rushstack/node-core-library': 3.60.0_@types+node@16.18.53
-      async: 3.2.4
-      chalk: 2.4.2
-      commander: 6.2.1
-      cosmiconfig: 8.3.6_typescript@5.1.6
-      danger: 10.9.0_@octokit+core@4.2.4
-      date-fns: 2.30.0
-      debug: 4.3.4
-      detect-indent: 6.1.0
-      execa: 5.1.1
-      find-up: 5.0.0
-      fs-extra: 9.1.0
-      glob: 7.2.3
-      ignore: 5.2.4
-      json5: 2.2.3
-      lodash: 4.17.21
-      lodash.isequal: 4.5.0
-      lodash.merge: 4.6.2
-      minimatch: 7.4.6
-      replace-in-file: 6.3.5
-      rimraf: 4.4.1
-      semver: 7.5.4
-      shelljs: 0.8.5
-      sort-package-json: 1.57.0
-      ts-morph: 17.0.1
-      type-fest: 2.19.0
-      typescript: 5.1.6
-      yaml: 2.3.2
-    transitivePeerDependencies:
-      - '@swc/core'
-      - '@types/node'
-      - encoding
-      - esbuild
-      - supports-color
-      - uglify-js
-      - webpack-cli
-    dev: true
-
   /@fluidframework/build-tools/0.25.0_atz6un26dygc5sbqeq4zzkgzji:
     resolution: {integrity: sha512-+z0JVpteTpDjtQkybVmyvVoxxElt3ueZYiWXhtP6IeWnhIAx+r7E9338dN4xCBsFl+mqUp2KKSX9qhgNteWFLg==}
     engines: {node: '>=14.17.0'}
@@ -19432,16 +19383,6 @@ packages:
       - '@types/node'
     dev: true
 
-  /@microsoft/api-extractor-model/7.28.0_@types+node@16.18.53:
-    resolution: {integrity: sha512-QIMtUVm1tqiKG+M6ciFgRShcDoovyltaeg+CbyOnyr7SMrp6gg0ojK5/nToMqR9kAvsTS4QVgW4Twl50EoAjcw==}
-    dependencies:
-      '@microsoft/tsdoc': 0.14.2
-      '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 3.60.0_@types+node@16.18.53
-    transitivePeerDependencies:
-      - '@types/node'
-    dev: true
-
   /@microsoft/api-extractor/7.37.0:
     resolution: {integrity: sha512-df/wffWpDhYRw7kzdxeHGsCpim+dC8aFiZlsJb4uFvVPWhBZpDzOhQxSUTFx3Df1ORY+/JjuPR3fDE9Hq+PHzQ==}
     hasBin: true
@@ -19490,26 +19431,6 @@ packages:
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
       '@rushstack/node-core-library': 3.60.0_@types+node@16.18.40
-      '@rushstack/rig-package': 0.5.0
-      '@rushstack/ts-command-line': 4.16.0
-      colors: 1.2.5
-      lodash: 4.17.21
-      resolve: 1.22.6
-      semver: 7.5.4
-      source-map: 0.6.1
-      typescript: 5.0.4
-    transitivePeerDependencies:
-      - '@types/node'
-    dev: true
-
-  /@microsoft/api-extractor/7.37.0_@types+node@16.18.53:
-    resolution: {integrity: sha512-df/wffWpDhYRw7kzdxeHGsCpim+dC8aFiZlsJb4uFvVPWhBZpDzOhQxSUTFx3Df1ORY+/JjuPR3fDE9Hq+PHzQ==}
-    hasBin: true
-    dependencies:
-      '@microsoft/api-extractor-model': 7.28.0_@types+node@16.18.53
-      '@microsoft/tsdoc': 0.14.2
-      '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 3.60.0_@types+node@16.18.53
       '@rushstack/rig-package': 0.5.0
       '@rushstack/ts-command-line': 4.16.0
       colors: 1.2.5
@@ -20909,24 +20830,6 @@ packages:
         optional: true
     dependencies:
       '@types/node': 16.18.40
-      colors: 1.2.5
-      fs-extra: 7.0.1
-      import-lazy: 4.0.0
-      jju: 1.4.0
-      resolve: 1.22.6
-      semver: 7.5.4
-      z-schema: 5.0.5
-    dev: true
-
-  /@rushstack/node-core-library/3.60.0_@types+node@16.18.53:
-    resolution: {integrity: sha512-PcyrqhILvzU+65wMFybQ2VeGNnU5JzhDq2OvUi3j6jPUxyllM7b2hrRUwCuVaYboewYzIbpzXFzgxe2K7ii1nw==}
-    peerDependencies:
-      '@types/node': '*'
-    peerDependenciesMeta:
-      '@types/node':
-        optional: true
-    dependencies:
-      '@types/node': 16.18.53
       colors: 1.2.5
       fs-extra: 7.0.1
       import-lazy: 4.0.0
