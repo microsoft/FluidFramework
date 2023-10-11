@@ -2238,9 +2238,9 @@ export interface TypedSchemaCollection<T extends FieldSchema = FieldSchema> {
 }
 
 // @alpha
-export type TypedTreeChannel = IChannel & {
+export interface TypedTreeChannel extends IChannel {
     schematize<TRoot extends FieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): TypedField<TRoot>;
-};
+}
 
 // @alpha
 export class TypedTreeFactory implements IChannelFactory {
