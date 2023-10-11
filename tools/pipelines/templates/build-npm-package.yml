@@ -128,6 +128,10 @@ parameters:
   type: boolean
   default: false
 
+  - name: loggerPackage
+    type: string
+    default: '@ff-internal/aria-logger'
+
 variables:
   # We use 'chalk' to colorize output, which auto-detects color support in the
   # running terminal.  The log output shown in Azure DevOps job runs only has
@@ -145,9 +149,6 @@ variables:
     readonly: true
   - name: testWorkspace
     value: $(Pipeline.Workspace)/test
-  - name: loggerPackage
-    type: string
-    default: '@ff-internal/aria-logger'
   - group: ado-feeds
 
 stages:
