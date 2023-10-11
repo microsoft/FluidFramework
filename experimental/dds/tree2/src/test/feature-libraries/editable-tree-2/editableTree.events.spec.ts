@@ -176,6 +176,59 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(afterCounter, 6);
 	});
 
+	it("listeners can be removed successfully", () => {
+		const factory = new TypedTreeFactory({
+			jsonValidator: typeboxValidator,
+			forest: ForestType.Reference,
+			allowedSchemaModifications: AllowedUpdateType.None,
+			initialTree: {
+				myString: "initial string",
+				myOptionalNumber: undefined,
+				child: { myInnerString: "initial string in child" },
+			},
+			schema,
+			subtype: "test",
+		});
+
+		const root = factory.create(new MockFluidDataStoreRuntime(), "the tree").root.content;
+
+		let beforeHasFired = false;
+		let afterHasFired = false;
+
+		const unsubscribeBeforeChange = root.on("beforeChange", (upPath) => {
+			assert.strictEqual(
+				beforeHasFired,
+				false,
+				"beforeChange listener ran after being removed",
+			);
+			beforeHasFired = true;
+		});
+		const unsubscribeAfterChange = root.on("afterChange", (upPath) => {
+			assert.strictEqual(
+				afterHasFired,
+				false,
+				"beforeChange listener ran after being removed",
+			);
+			afterHasFired = true;
+		});
+
+		// Make a change that causes the listeners to fire
+		// TODO: update to `root.myString = "new string 1";` once assignment to properties is implemented in EditableTree2
+		root.boxedMyString.content = "new string 1";
+
+		// Confirm listeners fired once
+		assert.strictEqual(beforeHasFired, true);
+		assert.strictEqual(afterHasFired, true);
+
+		// Remove listeners
+		unsubscribeAfterChange();
+		unsubscribeBeforeChange();
+
+		// Make another change; if the listeners fire again, they'll cause an assertion failure
+		// TODO: update to `root.myString = "new string 2";` once assignment to properties is implemented in EditableTree2
+		root.boxedMyString.content = "new string 2";
+	});
+
 	it("tree is in correct state when events fire - primitive node deletions", () => {
 		const initialNumber = 20;
 		const factory = new TypedTreeFactory({
