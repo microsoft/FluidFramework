@@ -15,7 +15,7 @@
 		".": {
 			"types": "./lib/index.d.ts",
 			"import": "./lib/index.js",
-			"require": "./dist/index.js"
+			"require": "./lib/index.js"
 		}
 	},
 	"main": "lib/index.js",

@@ -12,8 +12,8 @@
 	"author": "Microsoft and contributors",
 	"exports": {
 		".": {
-			"types": "./lib/index.d.ts",
-			"import": "./lib/index.js",
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js",
 			"require": "./dist/index.js"
 		}
 	},
