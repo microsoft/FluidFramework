@@ -35,9 +35,9 @@ import {
 	StructSchema,
 	Any,
 } from "../typed-schema";
-import { TreeStatus, treeStatusFromPath } from "../editable-tree";
 import { EditableTreeEvents } from "../untypedTree";
 import { FieldKinds } from "../default-field-kinds";
+import { LocalNodeKey } from "../node-key";
 import { Context } from "./context";
 import {
 	FieldNode,
@@ -50,8 +50,10 @@ import {
 	UnboxField,
 	TreeField,
 	TreeNode,
+	boxedIterator,
+	TreeStatus,
 } from "./editableTreeTypes";
-import { makeField, unboxedField } from "./lazyField";
+import { LazyNodeKeyField, makeField } from "./lazyField";
 import {
 	LazyEntity,
 	cursorSymbol,
@@ -60,6 +62,8 @@ import {
 	makePropertyEnumerableOwn,
 	tryMoveCursorToAnchorSymbol,
 } from "./lazyEntity";
+import { unboxedField } from "./unboxed";
+import { treeStatusFromAnchorCache } from "./utilities";
 
 const lazyTreeSlot = anchorSlot<LazyTree>();
 
@@ -71,13 +75,13 @@ export function makeTree(context: Context, cursor: ITreeSubscriptionCursor): Laz
 	const cached = anchorNode.slots.get(lazyTreeSlot);
 	if (cached !== undefined) {
 		context.forest.anchors.forget(anchor);
-		assert(cached.context === context, "contexts must match");
+		assert(cached.context === context, 0x782 /* contexts must match */);
 		return cached;
 	}
 	const schema = context.schema.treeSchema.get(cursor.type) ?? fail("missing schema");
 	const output = buildSubclass(context, schema, cursor, anchorNode, anchor);
 	anchorNode.slots.set(lazyTreeSlot, output);
-	anchorNode.on("afterDelete", cleanupTree);
+	anchorNode.on("afterDestroy", cleanupTree);
 	return output;
 }
 
@@ -135,14 +139,14 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 	) {
 		super(context, schema, cursor, anchor);
 		this.#anchorNode = anchorNode;
-		assert(cursor.mode === CursorLocationType.Nodes, "must be in nodes mode");
+		assert(cursor.mode === CursorLocationType.Nodes, 0x783 /* must be in nodes mode */);
 
 		anchorNode.slots.set(lazyTreeSlot, this);
-		this.#removeDeleteCallback = anchorNode.on("afterDelete", cleanupTree);
+		this.#removeDeleteCallback = anchorNode.on("afterDestroy", cleanupTree);
 
 		assert(
 			this.context.schema.treeSchema.get(this.schema.name) !== undefined,
-			"There is no explicit schema for this node type. Ensure that the type is correct and the schema for it was added to the SchemaData",
+			0x784 /* There is no explicit schema for this node type. Ensure that the type is correct and the schema for it was added to the SchemaData */,
 		);
 
 		// Setup JS Object API:
@@ -156,7 +160,7 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 	): this is TypedNode<TSchemaInner> {
 		assert(
 			this.context.schema.treeSchema.get(schema.name) === schema,
-			"Narrowing must be done to a schema that exists in this context",
+			0x785 /* Narrowing must be done to a schema that exists in this context */,
 		);
 		return (this.schema as TreeSchema) === schema;
 	}
@@ -191,7 +195,7 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 		});
 	}
 
-	public [Symbol.iterator](): IterableIterator<TreeField> {
+	public [boxedIterator](): IterableIterator<TreeField> {
 		return mapCursorFields(this[cursorSymbol], (cursor) =>
 			makeField(this.context, getFieldSchema(cursor.getFieldKey(), this.schema), cursor),
 		).values();
@@ -200,11 +204,11 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 	public get parentField(): { readonly parent: TreeField; readonly index: number } {
 		const cursor = this[cursorSymbol];
 		const index = this.#anchorNode.parentIndex;
-		assert(cursor.fieldIndex === index, "mismatched indexes");
+		assert(cursor.fieldIndex === index, 0x786 /* mismatched indexes */);
 		const key = this.#anchorNode.parentField;
 
 		cursor.exitNode();
-		assert(key === cursor.getFieldKey(), "mismatched keys");
+		assert(key === cursor.getFieldKey(), 0x787 /* mismatched keys */);
 		let fieldSchema: FieldSchema;
 
 		// Check if the current node is in a detached sequence.
@@ -227,7 +231,7 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 				// Additionally this approach makes it possible for a user to take an EditableTree node, get its parent, check its schema, down cast based on that, then edit that detached field (ex: removing the node in it).
 				// This MIGHT work properly with existing merge resolution logic (it must keep client in sync and be unable to violate schema), but this either needs robust testing or to be explicitly banned (error before s3ending the op).
 				// Issues like replacing a node in the a removed sequenced then undoing the remove could easily violate schema if not everything works exactly right!
-				fieldSchema = new FieldSchema(FieldKinds.sequence, [Any]);
+				fieldSchema = FieldSchema.create(FieldKinds.sequence, [Any]);
 			}
 		} else {
 			cursor.exitField();
@@ -250,8 +254,7 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 		if (this[isFreedSymbol]()) {
 			return TreeStatus.Deleted;
 		}
-		const path = this.#anchorNode;
-		return treeStatusFromPath(path);
+		return treeStatusFromAnchorCache(this.context.forest.anchors, this.#anchorNode);
 	}
 
 	public on<K extends keyof EditableTreeEvents>(
@@ -296,7 +299,65 @@ export class LazyMap<TSchema extends MapSchema>
 		makePropertyEnumerableOwn(this, "asObject", LazyMap.prototype);
 	}
 
-	public get(key: FieldKey): TypedField<TSchema["mapFields"]> {
+	public get size(): number {
+		let fieldCount = 0;
+		forEachField(this[cursorSymbol], () => (fieldCount += 1));
+		return fieldCount;
+	}
+
+	public keys(): IterableIterator<FieldKey> {
+		return mapCursorFields(this[cursorSymbol], (cursor) => cursor.getFieldKey()).values();
+	}
+
+	public values(): IterableIterator<UnboxField<TSchema["mapFields"], "notEmpty">> {
+		return mapCursorFields(
+			this[cursorSymbol],
+			(cursor) =>
+				unboxedField(this.context, this.schema.mapFields, cursor) as UnboxField<
+					TSchema["mapFields"],
+					"notEmpty"
+				>,
+		).values();
+	}
+
+	public entries(): IterableIterator<[FieldKey, UnboxField<TSchema["mapFields"], "notEmpty">]> {
+		return mapCursorFields(this[cursorSymbol], (cursor) => {
+			const entry: [FieldKey, UnboxField<TSchema["mapFields"], "notEmpty">] = [
+				cursor.getFieldKey(),
+				unboxedField(this.context, this.schema.mapFields, cursor) as UnboxField<
+					TSchema["mapFields"],
+					"notEmpty"
+				>,
+			];
+			return entry;
+		}).values();
+	}
+
+	public forEach(
+		callbackFn: (
+			value: UnboxField<TSchema["mapFields"], "notEmpty">,
+			key: FieldKey,
+			map: MapNode<TSchema>,
+		) => void,
+		thisArg?: any,
+	): void {
+		const fn = thisArg !== undefined ? callbackFn.bind(thisArg) : callbackFn;
+		for (const [key, value] of this.entries()) {
+			fn(value, key, this);
+		}
+	}
+
+	public has(key: FieldKey): boolean {
+		return this.tryGetField(key) !== undefined;
+	}
+
+	public get(key: FieldKey): UnboxField<TSchema["mapFields"]> {
+		return inCursorField(this[cursorSymbol], key, (cursor) =>
+			unboxedField(this.context, this.schema.mapFields, cursor),
+		) as UnboxField<TSchema["mapFields"]>;
+	}
+
+	public getBoxed(key: FieldKey): TypedField<TSchema["mapFields"]> {
 		return inCursorField(this[cursorSymbol], key, (cursor) =>
 			makeField(this.context, this.schema.mapFields, cursor),
 		) as TypedField<TSchema["mapFields"]>;
@@ -317,14 +378,20 @@ export class LazyMap<TSchema extends MapSchema>
 	// 	}
 	// }
 
-	public [Symbol.iterator](): IterableIterator<TypedField<TSchema["mapFields"]>> {
-		return super[Symbol.iterator]() as IterableIterator<TypedField<TSchema["mapFields"]>>;
+	public override [boxedIterator](): IterableIterator<TypedField<TSchema["mapFields"]>> {
+		return super[boxedIterator]() as IterableIterator<TypedField<TSchema["mapFields"]>>;
+	}
+
+	public [Symbol.iterator](): IterableIterator<
+		[FieldKey, UnboxField<TSchema["mapFields"], "notEmpty">]
+	> {
+		return this.entries();
 	}
 
 	public get asObject(): {
-		readonly [P in FieldKey]?: UnboxField<TSchema["mapFields"]>;
+		readonly [P in FieldKey]?: UnboxField<TSchema["mapFields"], "notEmpty">;
 	} {
-		const record: Record<FieldKey, UnboxField<TSchema["mapFields"]> | undefined> =
+		const record: Record<FieldKey, UnboxField<TSchema["mapFields"], "notEmpty"> | undefined> =
 			Object.create(null);
 
 		forEachField(this[cursorSymbol], (cursor) => {
@@ -387,7 +454,34 @@ export class LazyFieldNode<TSchema extends FieldNodeSchema>
 
 export abstract class LazyStruct<TSchema extends StructSchema>
 	extends LazyTree<TSchema>
-	implements Struct {}
+	implements Struct
+{
+	public get localNodeKey(): LocalNodeKey | undefined {
+		// TODO: Optimize this to be in the derived class so it can cache schema lookup.
+		// TODO: Optimize this to avoid allocating the field object.
+
+		const key = this.context.nodeKeyFieldKey;
+		const fieldSchema = this.schema.structFields.get(key);
+
+		if (fieldSchema === undefined) {
+			return undefined;
+		}
+
+		const field = this.tryGetField(key);
+		assert(field instanceof LazyNodeKeyField, "unexpected node key field");
+		// TODO: ideally we would do something like this, but that adds dependencies we can't have here:
+		// assert(
+		// 	field.is(FieldSchema.create(FieldKinds.nodeKey, [nodeKeyTreeSchema])),
+		// 	"invalid node key field",
+		// );
+
+		if (this.context.nodeKeyFieldKey === undefined) {
+			return undefined;
+		}
+
+		return field.localNodeKey;
+	}
+}
 
 export function buildLazyStruct<TSchema extends StructSchema>(
 	context: Context,

@@ -77,10 +77,12 @@ function isPrimitiveType(type: string): type is PrimitiveTypeStrings {
 	switch (type) {
 		case "boolean":
 		case "number":
-		case "string":
+		case "string": {
 			return true;
-		default:
+		}
+		default: {
 			return false;
+		}
 	}
 }
 

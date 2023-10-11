@@ -5,17 +5,17 @@
 
 import { ValueSchema, SchemaAware, typeNameSymbol, valueSymbol, SchemaBuilder } from "../../../";
 
-const builder = new SchemaBuilder("Simple Schema");
+const builder = new SchemaBuilder({ scope: "Simple Schema" });
 
 // Schema
 export const numberSchema = builder.leaf("number", ValueSchema.Number);
 
 export const pointSchema = builder.struct("point", {
-	x: SchemaBuilder.fieldValue(numberSchema),
-	y: SchemaBuilder.fieldValue(numberSchema),
+	x: numberSchema,
+	y: numberSchema,
 });
 
-export const appSchemaData = builder.intoDocumentSchema(SchemaBuilder.fieldSequence(pointSchema));
+export const appSchemaData = builder.toDocumentSchema(SchemaBuilder.fieldSequence(pointSchema));
 
 // Schema aware types
 export type Number = SchemaAware.TypedNode<typeof numberSchema>;

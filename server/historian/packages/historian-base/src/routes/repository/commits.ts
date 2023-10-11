@@ -9,12 +9,14 @@ import {
 	IStorageNameRetriever,
 	IThrottler,
 	IRevokedTokenChecker,
+	IDocumentManager,
 } from "@fluidframework/server-services-core";
 import {
 	IThrottleMiddlewareOptions,
 	throttle,
 	getParam,
 } from "@fluidframework/server-services-utils";
+import { validateRequestParams } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
@@ -27,6 +29,7 @@ export function create(
 	tenantService: ITenantService,
 	storageNameRetriever: IStorageNameRetriever,
 	restTenantThrottlers: Map<string, IThrottler>,
+	documentManager: IDocumentManager,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
 	revokedTokenChecker?: IRevokedTokenChecker,
@@ -54,6 +57,7 @@ export function create(
 			authorization,
 			tenantService,
 			storageNameRetriever,
+			documentManager,
 			cache,
 			asyncLocalStorage,
 			denyList,
@@ -63,9 +67,9 @@ export function create(
 
 	router.get(
 		"/repos/:ignored?/:tenantId/commits",
-		utils.validateRequestParams("sha"),
+		validateRequestParams("sha"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyTokenNotRevoked(revokedTokenChecker),
+		utils.verifyToken(revokedTokenChecker),
 		(request, response, next) => {
 			const commitsP = getCommits(
 				request.params.tenantId,

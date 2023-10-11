@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Server } from "http";
+import { Server } from "node:http";
 
 import cors from "cors";
 import express from "express";
@@ -239,16 +239,16 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 			}
 
 			// 3. Webhook exists, attempt to remove the subscriber from the webhook
-			if (!webhook.subscribers.includes(subscriberUrl)) {
-				// 3a. Webhook exists but the provided subscriber is not subscribed with the webhook.
-				const resultMessage =
-					"Provided subscriberUrl does not have a webhook registered for the given externalTaskListId";
+			if (webhook.subscribers.includes(subscriberUrl)) {
+				// 3a. Webhook exists and the provided subcriber is currently subscribed to it.
+				webhook.removeSubscriber(subscriberUrl);
+				const resultMessage = `Unregistered webhook notification for externalTaskListId ${externalTaskListId} at subscriberUrl: "${subscriberUrl}".`;
 				console.info(formatLogMessage(resultMessage));
 				result.status(200).json({ message: resultMessage });
 			} else {
-				// 3b. Webhook exists and the provided subcriber is currently subscribed to it.
-				webhook.removeSubscriber(subscriberUrl);
-				const resultMessage = `Unregistered webhook notification for externalTaskListId ${externalTaskListId} at subscriberUrl: "${subscriberUrl}".`;
+				// 3b. Webhook exists but the provided subscriber is not subscribed with the webhook.
+				const resultMessage =
+					"Provided subscriberUrl does not have a webhook registered for the given externalTaskListId";
 				console.info(formatLogMessage(resultMessage));
 				result.status(200).json({ message: resultMessage });
 			}
@@ -290,6 +290,7 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 		}
 		externalDataSource.fetchData(externalTaskListId).then(
 			(response) => {
+				// eslint-disable-next-line @typescript-eslint/no-base-to-string
 				const responseBody = JSON.parse(response.body.toString()) as Record<
 					string | number | symbol,
 					unknown

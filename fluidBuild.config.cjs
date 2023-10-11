@@ -126,6 +126,10 @@ module.exports = {
 		],
 		// Exclusion per handler
 		handlerExclusions: {
+			"html-copyright-file-header": [
+				// Tests generate HTML "snapshot" artifacts
+				"tools/api-markdown-documenter/src/test/snapshots/.*",
+			],
 			"npm-package-json-script-clean": [
 				// eslint-config-fluid's build step generate printed configs that are checked in. No need to clean
 				"common/build/eslint-config-fluid/package.json",
@@ -163,6 +167,7 @@ module.exports = {
 				"@fluid-example",
 				"@fluid-experimental",
 				"@fluid-internal",
+				"@fluid-private",
 				"@fluid-tools",
 			],
 			// These packages are known unscoped packages.
@@ -170,7 +175,12 @@ module.exports = {
 
 			mustPublish: {
 				// These packages will always be published to npm.
-				npm: ["@fluidframework", "fluid-framework", "tinylicious"],
+				npm: [
+					"@fluidframework",
+					"fluid-framework",
+					"tinylicious",
+					"@fluid-internal/client-utils",
+				],
 				// A list of packages known to be an internally published package but not to npm. Note that packages published
 				// to npm will also be published internally, however. This should be a minimal set required for legacy compat of
 				// internal partners or internal CI requirements.
@@ -186,7 +196,7 @@ module.exports = {
 				// These packages may be published to npm in some cases. Policy doesn't enforce this.
 				npm: ["@fluid-experimental", "@fluid-tools"],
 				// These packages may be published to the internal feed in some cases. Policy doesn't enforce this.
-				internalFeed: ["@fluid-internal"],
+				internalFeed: ["@fluid-internal", "@fluid-private"],
 			},
 		},
 		dependencies: {
@@ -212,7 +222,7 @@ module.exports = {
 		// around nested pnpm workspace behavior. These packages are not checked for the preinstall script that standard
 		// pnpm workspaces should have.
 		pnpmSinglePackageWorkspace: [
-			"@fluid-internal/changelog-generator-wrapper",
+			"@fluid-private/changelog-generator-wrapper",
 			"@fluid-tools/api-markdown-documenter",
 			"@fluid-tools/benchmark",
 			"@fluid-tools/markdown-magic",

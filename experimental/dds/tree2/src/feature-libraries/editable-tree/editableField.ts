@@ -38,6 +38,7 @@ import {
 	ValueFieldEditBuilder,
 } from "../default-field-kinds";
 import { assertValidIndex, fail, assertNonNegativeSafeInteger } from "../../util";
+import { TreeStatus } from "../editable-tree-2";
 import {
 	AdaptingProxyHandler,
 	adaptWithProxy,
@@ -50,7 +51,6 @@ import { ProxyContext } from "./editableTreeContext";
 import {
 	EditableField,
 	EditableTree,
-	TreeStatus,
 	UnwrappedEditableField,
 	UnwrappedEditableTree,
 	proxyTargetSymbol,
@@ -73,7 +73,7 @@ export function makeField(
 		const anchorNode =
 			context.forest.anchors.locate(fieldAnchor.parent) ??
 			fail("parent anchor node should always exist since field is under a node");
-		anchorNode.on("afterDelete", () => {
+		anchorNode.on("afterDestroy", () => {
 			targetSequence.free();
 		});
 	}
@@ -237,7 +237,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 	 */
 	private valueFieldEditor(): ValueFieldEditBuilder {
 		assert(
-			this.kind === FieldKinds.value,
+			this.kind === FieldKinds.required,
 			0x6bb /* Field kind must be a value to edit as a value. */,
 		);
 		const fieldPath = this.cursor.getFieldPath();
@@ -253,7 +253,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 				}
 				return this.getNode(0);
 			}
-			case Multiplicity.Value: {
+			case Multiplicity.Single: {
 				return this.getNode(0);
 			}
 			case Multiplicity.Forbidden: {
@@ -280,7 +280,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 				fieldEditor.set(content.length === 0 ? undefined : content[0], this.length === 0);
 				break;
 			}
-			case FieldKinds.value: {
+			case FieldKinds.required: {
 				const fieldEditor = this.valueFieldEditor();
 				assert(
 					content.length === 1,

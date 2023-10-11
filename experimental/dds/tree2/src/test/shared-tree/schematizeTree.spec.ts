@@ -27,22 +27,28 @@ import { jsonSequenceRootSchema } from "../utils";
 import { TreeContent, initializeContent, schematize } from "../../shared-tree/schematizedTree";
 import { createEmitter } from "../../events";
 
-const builder = new SchemaBuilder("Schematize Tree Tests");
+const builder = new SchemaBuilder({ scope: "test", name: "Schematize Tree Tests" });
 const root = builder.leaf("root", ValueSchema.Number);
-const schema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(root));
+const schema = builder.toDocumentSchema(SchemaBuilder.fieldOptional(root));
 
-const builderGeneralized = new SchemaBuilder("Schematize Tree Tests Generalized");
+const builderGeneralized = new SchemaBuilder({
+	scope: "test",
+	name: "Schematize Tree Tests Generalized",
+});
 const rootGeneralized = builderGeneralized.leaf("root", ValueSchema.Number);
-const schemaGeneralized = builderGeneralized.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
+const schemaGeneralized = builderGeneralized.toDocumentSchema(SchemaBuilder.fieldOptional(Any));
 
-const builderValue = new SchemaBuilder("Schematize Tree Tests");
+const builderValue = new SchemaBuilder({ scope: "test", name: "Schematize Tree Tests2" });
 const root2 = builderValue.leaf("root", ValueSchema.Number);
-const schemaValueRoot = builderValue.intoDocumentSchema(SchemaBuilder.fieldValue(Any));
+const schemaValueRoot = builderValue.toDocumentSchema(SchemaBuilder.fieldRequired(Any));
 
-const emptySchema = new SchemaBuilder("Empty", {
-	rejectEmpty: false,
-	rejectForbidden: false,
-}).intoDocumentSchema(SchemaBuilder.field(FieldKinds.forbidden));
+const emptySchema = new SchemaBuilder({
+	scope: "Empty",
+	lint: {
+		rejectEmpty: false,
+		rejectForbidden: false,
+	},
+}).toDocumentSchema(FieldSchema.empty);
 
 function expectSchema(actual: SchemaData, expected: SchemaData): void {
 	// Check schema match
@@ -111,7 +117,7 @@ describe("schematizeTree", () => {
 
 					assert.deepEqual(
 						log,
-						content.schema.rootFieldSchema.kind === FieldKinds.value
+						content.schema.rootFieldSchema.kind === FieldKinds.required
 							? ["schema", "content", "schema"]
 							: ["schema", "content"],
 					);

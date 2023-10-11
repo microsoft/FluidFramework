@@ -438,7 +438,7 @@
 						{
 							"kind": "Constructor",
 							"canonicalReference": "simple-suite-test!TestClass:constructor(1)",
-							"docComment": "/**\n * Test class constructor\n *\n * @remarks\n *\n * Here are some remarks about the constructor\n *\n * @param privateProperty - See {@link TestAbstractClass}'s constructor.\n *\n * @param protectedProperty - See {@link TestAbstractClass.protectedProperty}.\n *\n * @param testClassProperty - See {@link TestClass.testClassProperty}.\n *\n * @param testClassEventProperty - See {@link TestClass.testClassEventProperty}.\n */\n",
+							"docComment": "/**\n * Test class constructor\n *\n * @remarks\n *\n * Here are some remarks about the constructor\n *\n * @param privateProperty - See {@link TestAbstractClass}'s constructor.\n *\n * @param protectedProperty - Some notes about the parameter.\n *\n * See {@link TestAbstractClass.protectedProperty}.\n *\n * @param testClassProperty - See {@link TestClass.testClassProperty}.\n *\n * @param testClassEventProperty - See {@link TestClass.testClassEventProperty}.\n */\n",
 							"excerptTokens": [
 								{
 									"kind": "Content",

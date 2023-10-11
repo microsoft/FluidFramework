@@ -32,25 +32,13 @@ describe("entryPoint compat", () => {
 		return (await runtime.getAliasedDataStoreEntryPoint?.("default"))!.get();
 	}
 
-	async function createRequestOnlyContainer(): Promise<IContainer> {
-		const dataObjectFactory = new DataObjectFactory("TestDataObject", TestDataObject, [], []);
-		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(dataObjectFactory, [
-			[dataObjectFactory.type, Promise.resolve(dataObjectFactory)],
-		]);
-
-		return provider.createContainer(runtimeFactory);
-	}
-
 	async function createContainer(): Promise<IContainer> {
 		const dataObjectFactory = new DataObjectFactory("TestDataObject", TestDataObject, [], []);
-		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-			dataObjectFactory,
-			[[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
-			undefined,
-			undefined,
-			undefined,
-			async (runtime: IContainerRuntime) => getDefaultFluidObject(runtime),
-		);
+		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+			defaultFactory: dataObjectFactory,
+			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
+			provideEntryPoint: async (runtime: IContainerRuntime) => getDefaultFluidObject(runtime),
+		});
 
 		return provider.createContainer(runtimeFactory);
 	}
@@ -67,7 +55,7 @@ describe("entryPoint compat", () => {
 		});
 
 		it("request pattern", async () => {
-			const container = await createRequestOnlyContainer();
+			const container = await createContainer();
 			const requestResult = await container.request({ url: "/" });
 
 			assert.strictEqual(requestResult.status, 200, requestResult.value);
@@ -95,7 +83,7 @@ describe("entryPoint compat", () => {
 		});
 
 		it("request pattern works", async () => {
-			const container = await createRequestOnlyContainer();
+			const container = await createContainer();
 			const requestResult = await container.request({ url: "/" });
 
 			assert.strictEqual(requestResult.status, 200, requestResult.value);

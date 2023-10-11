@@ -7,9 +7,7 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 
 export class TestDataObject extends DataObject {
-	public static get Name(): string {
-		return "@fluid-example/test-data-object";
-	}
+	public static readonly Name = "@fluid-example/test-data-object";
 
 	public static readonly factory = new DataObjectFactory(
 		TestDataObject.Name,
@@ -39,9 +37,7 @@ export class CounterTestDataObject extends DataObject {
 		this._counter = await counterHandle?.get();
 	}
 
-	public static get Name(): string {
-		return "@fluid-example/counter-test-data-object";
-	}
+	public static readonly Name = "@fluid-example/counter-test-data-object";
 
 	public static readonly factory = new DataObjectFactory(
 		CounterTestDataObject.Name,

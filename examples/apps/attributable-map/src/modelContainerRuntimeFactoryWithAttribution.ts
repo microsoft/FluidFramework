@@ -18,6 +18,7 @@ import {
 	IProvideRuntimeAttributor,
 } from "@fluid-experimental/attributor";
 import { FluidObject } from "@fluidframework/core-interfaces";
+// eslint-disable-next-line import/no-deprecated
 import { makeModelRequestHandler } from "@fluid-example/example-utils";
 
 const containerRuntimeWithAttribution = mixinAttributor(ContainerRuntime);
@@ -52,6 +53,7 @@ export abstract class ModelContainerRuntimeFactoryWithAttribution<ModelType>
 		const runtime = await containerRuntimeWithAttribution.load(
 			context,
 			this.registryEntries,
+			// eslint-disable-next-line import/no-deprecated
 			makeModelRequestHandler(this.createModel.bind(this)),
 			this.runtimeOptions,
 			scope, // scope

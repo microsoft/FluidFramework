@@ -17,7 +17,7 @@ import {
 import { ISubscribable } from "../events";
 import { Named } from "../util";
 import { PrimitiveValue, MarkedArrayLike, typeNameSymbol, valueSymbol } from "./contextuallyTyped";
-import { TreeStatus } from "./editable-tree";
+import { TreeStatus } from "./editable-tree-2";
 
 /**
  * This file provides an API for working with trees which is type safe even when schema is not known.
@@ -286,7 +286,6 @@ export interface EditableTreeEvents {
 	 * Raised when a specific EditableTree node is changing.
 	 * This includes its fields.
 	 * @param upPath - the path corresponding to the location of the node being changed, upward.
-	 * @param value - the new value stored in the node.
 	 */
 	changing(upPath: UpPath): void;
 

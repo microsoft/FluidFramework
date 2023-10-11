@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FluidObjectId, EditType } from "../CommonInterfaces";
+import { type FluidObjectId, type EditType } from "../CommonInterfaces";
 
 /**
  * This module contains a type system for describing visual descriptors of data objects in a serializable

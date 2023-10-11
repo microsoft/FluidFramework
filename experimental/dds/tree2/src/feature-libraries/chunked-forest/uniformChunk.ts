@@ -41,7 +41,10 @@ export class UniformChunk extends ReferenceCountedBase implements TreeChunk {
 	 * @param shape - describes the semantics and layout of `values`.
 	 * @param values - provides exclusive ownership of this array to this object (which might mutate it in the future).
 	 */
-	public constructor(public shape: ChunkShape, public values: TreeValue[]) {
+	public constructor(
+		public shape: ChunkShape,
+		public values: TreeValue[],
+	) {
 		super();
 		assert(
 			shape.treeShape.valuesPerTopLevelNode * shape.topLevelLength === values.length,
@@ -447,9 +450,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		return this.nodeInfo(CursorLocationType.Nodes).parentIndex;
 	}
 
-	public get chunkStart(): number {
-		return 0;
-	}
+	public readonly chunkStart: number = 0;
 
 	public get chunkLength(): number {
 		return this.nodeInfo(CursorLocationType.Nodes).topLevelLength;

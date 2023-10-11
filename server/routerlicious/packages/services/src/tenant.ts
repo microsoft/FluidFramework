@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ScopeType } from "@fluidframework/protocol-definitions";
 import {
 	GitManager,
 	Historian,
@@ -18,7 +19,7 @@ import {
 	CommonProperties,
 	getLumberBaseProperties,
 } from "@fluidframework/server-services-telemetry";
-import { AxiosRequestHeaders } from "axios";
+import { RawAxiosRequestHeaders } from "axios";
 import { IsEphemeralContainer } from ".";
 
 export class Tenant implements core.ITenant {
@@ -48,7 +49,10 @@ export class Tenant implements core.ITenant {
  * Manages a collection of tenants
  */
 export class TenantManager implements core.ITenantManager, core.ITenantConfigManager {
-	constructor(private readonly endpoint: string, private readonly internalHistorianUrl: string) {}
+	constructor(
+		private readonly endpoint: string,
+		private readonly internalHistorianUrl: string,
+	) {}
 
 	public async createTenant(tenantId?: string): Promise<core.ITenantConfig & { key: string }> {
 		const restWrapper = new BasicRestWrapper(
@@ -106,10 +110,14 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 		};
 		const getDefaultHeaders = () => {
 			const credentials: ICredentials = {
-				password: generateToken(tenantId, documentId, key, null),
+				password: generateToken(tenantId, documentId, key, [
+					ScopeType.DocWrite,
+					ScopeType.DocRead,
+					ScopeType.SummaryWrite,
+				]),
 				user: tenantId,
 			};
-			const headers: AxiosRequestHeaders = {
+			const headers: RawAxiosRequestHeaders = {
 				Authorization: getAuthorizationTokenFromCredentials(credentials),
 			};
 			if (storageName) {

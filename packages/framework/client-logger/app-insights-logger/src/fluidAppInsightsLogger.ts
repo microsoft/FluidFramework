@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ApplicationInsights } from "@microsoft/applicationinsights-web";
-import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { type ApplicationInsights } from "@microsoft/applicationinsights-web";
+import {
+	type ITelemetryBaseEvent,
+	type ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 
 /**
  * An implementation of {@link @fluidframework/core-interfaces#ITelemetryBaseLogger | ITelemetryBaseLogger}
