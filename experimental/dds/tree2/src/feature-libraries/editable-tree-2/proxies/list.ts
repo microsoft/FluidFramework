@@ -127,7 +127,7 @@ function asIndex(key: string | symbol, length: number) {
 		// reject 'length' as an index, or even parsing integers ourselves.
 		const asNumber = Number(key);
 
-		// TODO: See 'matrix/range.ts' for a fast integer coercing + range check.
+		// TODO: See 'matrix/range.ts' for fast integer coercing + range check.
 		if (Number.isInteger(asNumber)) {
 			return 0 <= asNumber && asNumber < length ? asNumber : undefined;
 		}
@@ -161,9 +161,9 @@ export function createListProxy<TTypes extends AllowedTypes>(treeNode: TreeNode)
 			const field = getField(dispatch);
 			const maybeIndex = asIndex(key, field.length);
 
-			// TODO: The only reason for using 'boxedAt' is to prevent FieldNode/LazySequence from
-			//       collapsing to 'undefined'.  Otherwise, we could avoid the overhead of allocating
-			//       boxes for leaves.
+			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
+			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
+			//       inner field.
 			return maybeIndex !== undefined
 				? getProxyForNode(field.boxedAt(maybeIndex))
 				: (Reflect.get(dispatch, key) as unknown);
@@ -186,6 +186,7 @@ export function createListProxy<TTypes extends AllowedTypes>(treeNode: TreeNode)
 		ownKeys: (target) => {
 			const field = getField(dispatch);
 
+			// TODO: Would a lazy iterator to produce the indexes work / be more efficient?
 			// TODO: Need to surface 'Symbol.isConcatSpreadable' as an own key.
 			return Array.from({ length: field.length }, (_, index) => `${index}`).concat("length");
 		},
@@ -196,7 +197,10 @@ export function createListProxy<TTypes extends AllowedTypes>(treeNode: TreeNode)
 				// To satisfy 'deepEquals' level scrutiny, the property descriptor for indexed properties must
 				// be a simple value property (as opposed to using getter) and declared writable/enumerable/configurable.
 				return {
-					value: field.at(maybeIndex),
+					// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
+					//       as simple as calling '.at' since this skips the node and returns the FieldNode's
+					//       inner field.
+					value: getProxyForNode(field.boxedAt(maybeIndex)),
 					writable: true, // For MVP, disallow setting indexed properties.
 					enumerable: true,
 					configurable: true,

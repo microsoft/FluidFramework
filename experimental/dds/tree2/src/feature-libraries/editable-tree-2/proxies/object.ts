@@ -12,8 +12,10 @@ export function createObjectProxy<TTypes extends AllowedTypes>(
 	content: TypedNodeUnion<TTypes>,
 	schema: StructSchema,
 ) {
-	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an object literal in order
-	// to pass 'Object.getPrototypeOf' comparison.
+	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an object with the same
+	// 'null prototype' you would get from on object literal '{}' or 'Object.create(null)'.  This is
+	// because 'deepEquals' uses 'Object.getPrototypeOf' as a way to quickly reject objects with different
+	// prototype chains.
 
 	// TODO: Although the target is an object literal, it's still worthwhile to try experimenting with
 	// a dispatch object to see if it improves performance.

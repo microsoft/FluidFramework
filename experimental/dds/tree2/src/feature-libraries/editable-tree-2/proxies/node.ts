@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert } from "@fluidframework/core-utils";
+
 import { fail } from "../../../util";
 import {
 	FieldSchema,
@@ -12,7 +12,6 @@ import {
 	schemaIsStruct,
 } from "../../typed-schema";
 import { FieldKinds } from "../../default-field-kinds";
-import { EmptyKey } from "../../../core";
 import { TreeNode, TypedField } from "../editableTreeTypes";
 import { createListProxy } from "./list";
 import { createObjectProxy } from "./object";
@@ -44,9 +43,9 @@ export function getProxyForField<T extends FieldSchema>(field: TypedField<T>) {
 		case FieldKinds.required: {
 			const asValue = field as TypedField<FieldSchema<typeof FieldKinds.required>>;
 
-			// TODO: The only reason for using 'boxedContent' is to prevent FieldNode/LazySequence from
-			//       collapsing to 'undefined'.  Otherwise, we could avoid the overhead of allocating
-			//       boxes for leaves.
+			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
+			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
+			//       inner field.
 			return getProxyForNode(asValue.boxedContent);
 		}
 		case FieldKinds.optional: {
@@ -70,8 +69,6 @@ export function getProxyForNode(treeNode: TreeNode) {
 		return treeNode.value;
 	}
 	if (schemaIsFieldNode(schema)) {
-		const field = treeNode.getField(EmptyKey);
-		assert(field?.schema.kind === FieldKinds.sequence, "FieldNode must be list");
 		return createListProxy(treeNode);
 	}
 	if (schemaIsStruct(schema)) {
