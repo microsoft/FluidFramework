@@ -158,6 +158,7 @@ export {
 	fieldApiPrefixes,
 	validateStructFieldName,
 	Unenforced,
+	AllowedTypeSet,
 } from "./typed-schema";
 
 export { SchemaBuilderBase, SchemaLibrary } from "./schemaBuilderBase";
@@ -252,6 +253,7 @@ export {
 	boxedIterator,
 	CheckTypesOverlap,
 	TreeStatus,
+	getProxyForField,
 } from "./editable-tree-2";
 
 // Split into separate import and export for compatibility with API-Extractor.

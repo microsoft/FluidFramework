@@ -20,6 +20,7 @@ export {
 	schemaIsStruct,
 	TypedSchemaCollection,
 	Unenforced,
+	AllowedTypeSet,
 } from "./typedTreeSchema";
 
 export { ViewSchema } from "./view";
