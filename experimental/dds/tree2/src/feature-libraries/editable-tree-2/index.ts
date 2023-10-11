@@ -18,6 +18,7 @@ export {
 	Sequence,
 	Struct,
 	StructTyped,
+	AssignableFieldKinds,
 	TypedNode,
 	TypedNodeUnion,
 	boxedIterator,
@@ -25,6 +26,7 @@ export {
 	TreeStatus,
 } from "./editableTreeTypes";
 
+export { getProxyForField, List } from "./proxies";
 export { createRawStruct, rawStructErrorMessage, nodeContent } from "./rawStruct";
 
 export {

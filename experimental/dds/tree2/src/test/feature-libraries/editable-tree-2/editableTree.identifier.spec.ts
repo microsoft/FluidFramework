@@ -12,15 +12,16 @@ import {
 	nodeKeyFieldKey,
 	NodeKeyManager,
 } from "../../../feature-libraries";
-import { nodeKeyField, nodeKeySchema } from "../../../domains";
-import { ValueSchema } from "../../../core";
+import { leaf, nodeKeyField, nodeKeySchema } from "../../../domains";
 import { treeWithContent } from "../../utils";
 
-const builder = new SchemaBuilder({ scope: "EditableTree Node Keys", libraries: [nodeKeySchema] });
-const stringSchema = builder.leaf("string", ValueSchema.String);
+const builder = new SchemaBuilder({
+	scope: "EditableTree Node Keys",
+	libraries: [nodeKeySchema, leaf.library],
+});
 const childNodeSchema = builder.struct("ChildNode", {
 	...nodeKeyField,
-	name: stringSchema,
+	name: leaf.string,
 });
 
 const parentNodeSchema = builder.struct("ParentNode", {
