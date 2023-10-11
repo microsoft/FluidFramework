@@ -198,8 +198,8 @@ export class MapKernel {
 	private creationIndex: number = -1;
 
 	/**
-	 * The object to track the creation index of acknowledged entries, ensuring it aligns consistently
-	 * with the order of other clients, following the sequence number order precisely.
+	 * Maintains a bidirectional association between acked keys and the order in which they were inserted.
+	 * This helps to ensure iteration order which is consistent with the JS map spec.
 	 */
 	private readonly ackedKeysIndexTracker = new CreationIndexTracker();
 
