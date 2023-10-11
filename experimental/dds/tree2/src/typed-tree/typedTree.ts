@@ -34,9 +34,7 @@ import { brand } from "../util";
  * Configuration to specialize a Tree DDS for a particular use.
  * @alpha
  */
-export interface TypedTreeOptions<TRoot extends FieldSchema = FieldSchema>
-	extends SharedTreeOptions,
-		InitializeAndSchematizeConfiguration<TRoot> {
+export interface TypedTreeOptions extends SharedTreeOptions {
 	/**
 	 * Name appended to {@link @fluidframework/datastore-definitions#IChannelFactory."type"} to identify this factory configuration.
 	 * @privateRemarks
@@ -50,24 +48,21 @@ export interface TypedTreeOptions<TRoot extends FieldSchema = FieldSchema>
  * Channel for a Tree DDS.
  * @alpha
  */
-export type TypedTreeChannel<TRoot extends FieldSchema = FieldSchema> = IChannel & {
-	readonly root: TypedField<TRoot>;
+export type TypedTreeChannel = IChannel & {
+	schematize<TRoot extends FieldSchema>(
+		config: InitializeAndSchematizeConfiguration<TRoot>,
+	): TypedField<TRoot>;
 };
 
 /**
  * A channel factory that creates a {@link TreeField}.
  * @alpha
  */
-export class TypedTreeFactory<TRoot extends FieldSchema = FieldSchema> implements IChannelFactory {
+export class TypedTreeFactory implements IChannelFactory {
 	public readonly type: string;
 	public readonly attributes: IChannelAttributes;
 
-	public constructor(private readonly options: TypedTreeOptions<TRoot>) {
-		/**
-		 * TODO:
-		 * Either allow particular factory configurations to customize this string (for example `https://graph.microsoft.com/types/tree/${configurationName}`),
-		 * and/or schematize as a separate step, after the tree is loaded/created.
-		 */
+	public constructor(private readonly options: TypedTreeOptions) {
 		this.type = `https://graph.microsoft.com/types/tree/${options.subtype}`;
 
 		this.attributes = {
@@ -82,31 +77,16 @@ export class TypedTreeFactory<TRoot extends FieldSchema = FieldSchema> implement
 		id: string,
 		services: IChannelServices,
 		channelAttributes: Readonly<IChannelAttributes>,
-	): Promise<TypedTreeChannel<TRoot>> {
+	): Promise<TypedTreeChannel> {
 		const tree = new SharedTree(id, runtime, channelAttributes, this.options, "SharedTree");
 		await tree.load(services);
-		return this.prepareChannel(runtime, tree);
+		return new ChannelWrapperWithSchematize(runtime, tree);
 	}
 
-	public create(runtime: IFluidDataStoreRuntime, id: string): TypedTreeChannel<TRoot> {
+	public create(runtime: IFluidDataStoreRuntime, id: string): TypedTreeChannel {
 		const tree = new SharedTree(id, runtime, this.attributes, this.options, "SharedTree");
 		tree.initializeLocal();
-		// TODO: Once various issues with schema editing are fixed separate initialize from schematize, do initialize here
-		return this.prepareChannel(runtime, tree);
-	}
-
-	private prepareChannel(
-		runtime: IFluidDataStoreRuntime,
-		tree: SharedTree,
-	): TypedTreeChannel<TRoot> {
-		const nodeKeyManager = createNodeKeyManager(runtime.idCompressor);
-		const view = tree.schematize(this.options);
-		const root = view.editableTree2(
-			this.options.schema,
-			nodeKeyManager,
-			brand(nodeKeyFieldKey),
-		);
-		return new ChannelWrapperWithRoot(tree, root);
+		return new ChannelWrapperWithSchematize(runtime, tree);
 	}
 }
 
@@ -171,13 +151,21 @@ class ChannelWrapper implements IChannel {
 }
 
 /**
- * IChannel wrapper that exposes a "root".
+ * IChannel wrapper that exposes "schematize".
  */
-class ChannelWrapperWithRoot<T> extends ChannelWrapper {
+class ChannelWrapperWithSchematize extends ChannelWrapper implements TypedTreeChannel {
 	public constructor(
-		inner: IChannel,
-		public readonly root: T,
+		private readonly runtime: IFluidDataStoreRuntime,
+		private readonly tree: SharedTree,
 	) {
-		super(inner);
+		super(tree);
+	}
+	public schematize<TRoot extends FieldSchema>(
+		config: InitializeAndSchematizeConfiguration<TRoot>,
+	): TypedField<TRoot> {
+		const nodeKeyManager = createNodeKeyManager(this.runtime.idCompressor);
+		const view = this.tree.schematize(config);
+		const root = view.editableTree2(config.schema, nodeKeyManager, brand(nodeKeyFieldKey));
+		return root;
 	}
 }

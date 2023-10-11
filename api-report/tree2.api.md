@@ -2220,25 +2220,25 @@ export interface TypedSchemaCollection<T extends FieldSchema = FieldSchema> {
 }
 
 // @alpha
-export type TypedTreeChannel<TRoot extends FieldSchema = FieldSchema> = IChannel & {
-    readonly root: TypedField<TRoot>;
+export type TypedTreeChannel = IChannel & {
+    schematize<TRoot extends FieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): TypedField<TRoot>;
 };
 
 // @alpha
-export class TypedTreeFactory<TRoot extends FieldSchema = FieldSchema> implements IChannelFactory {
-    constructor(options: TypedTreeOptions<TRoot>);
+export class TypedTreeFactory implements IChannelFactory {
+    constructor(options: TypedTreeOptions);
     // (undocumented)
     readonly attributes: IChannelAttributes;
     // (undocumented)
-    create(runtime: IFluidDataStoreRuntime, id: string): TypedTreeChannel<TRoot>;
+    create(runtime: IFluidDataStoreRuntime, id: string): TypedTreeChannel;
     // (undocumented)
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, channelAttributes: Readonly<IChannelAttributes>): Promise<TypedTreeChannel<TRoot>>;
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, channelAttributes: Readonly<IChannelAttributes>): Promise<TypedTreeChannel>;
     // (undocumented)
     readonly type: string;
 }
 
 // @alpha
-export interface TypedTreeOptions<TRoot extends FieldSchema = FieldSchema> extends SharedTreeOptions, InitializeAndSchematizeConfiguration<TRoot> {
+export interface TypedTreeOptions extends SharedTreeOptions {
     readonly subtype: string;
 }
 
