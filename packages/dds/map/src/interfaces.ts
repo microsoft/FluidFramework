@@ -385,8 +385,8 @@ export interface ISerializableValue {
 	value: any;
 
 	/**
-	 * The index (original position) of the value in DDS, if undefined, it indicates that
-	 * the order of this value is irrelevant, like the storage in SharedDirectory
+	 * The index (original position) of the value in DDS, ordered by key insertion order.
+	 * Back-compat: older versions of FF did not include this data in the summary.
 	 */
 	index?: number;
 }
