@@ -53,7 +53,9 @@ importers:
       '@fluidframework/build-tools': ^0.25.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources-previous': npm:@fluidframework/gitresources@2.0.0
+      '@microsoft/api-extractor': ^7.34.4
       concurrently: ^8.2.1
+      copyfiles: ^2.4.1
       eslint: ~8.27.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
@@ -64,7 +66,9 @@ importers:
       '@fluidframework/build-tools': 0.25.0
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/gitresources-previous': /@fluidframework/gitresources/2.0.0
+      '@microsoft/api-extractor': 7.36.0
       concurrently: 8.2.1
+      copyfiles: 2.4.1
       eslint: 8.27.0
       prettier: 3.0.3
       rimraf: 4.4.1
@@ -274,6 +278,7 @@ importers:
       '@fluidframework/server-services-core': workspace:~
       '@fluidframework/server-services-telemetry': workspace:~
       '@fluidframework/server-test-utils': workspace:~
+      '@microsoft/api-extractor': ^7.34.4
       '@types/jsrsasign': ^8.0.8
       '@types/mocha': ^10.0.1
       '@types/nock': ^9.3.0
@@ -315,6 +320,7 @@ importers:
       '@fluidframework/build-tools': 0.25.0_qiwzlxsc7nv6vcdymu2njnpbxe
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/server-local-server-previous': /@fluidframework/server-local-server/2.0.0
+      '@microsoft/api-extractor': 7.36.0_@types+node@18.17.6
       '@types/jsrsasign': 8.0.13
       '@types/mocha': 10.0.1
       '@types/nock': 9.3.1

@@ -72,7 +72,7 @@ describe("schemaBasedEncoding", () => {
 						return onlyTypeShape;
 					},
 				},
-				SchemaBuilder.fieldRequired(minimal),
+				SchemaBuilder.required(minimal),
 				cache,
 			);
 			// This is expected since this case should be optimized to just encode the inner shape.
@@ -98,7 +98,7 @@ describe("schemaBasedEncoding", () => {
 						return onlyTypeShape;
 					},
 				},
-				SchemaBuilder.fieldRequired(minimal, leaf.number),
+				SchemaBuilder.required([minimal, leaf.number]),
 				cache,
 			);
 			// There are multiple choices about how this case should be optimized, but the current implementation does this:
@@ -120,7 +120,7 @@ describe("schemaBasedEncoding", () => {
 						return onlyTypeShape;
 					},
 				},
-				SchemaBuilder.fieldSequence(minimal),
+				SchemaBuilder.sequence(minimal),
 				cache,
 			);
 			// There are multiple choices about how this case should be optimized, but the current implementation does this:

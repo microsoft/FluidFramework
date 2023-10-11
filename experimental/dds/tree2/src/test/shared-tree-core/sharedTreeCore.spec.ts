@@ -32,6 +32,7 @@ import {
 	DefaultChangeset,
 	DefaultEditBuilder,
 	FieldKinds,
+	FieldSchema,
 	SchemaBuilder,
 	singleTextCursor,
 	typeNameSymbol,
@@ -331,9 +332,9 @@ describe("SharedTreeCore", () => {
 
 		const b = new SchemaBuilder({ scope: "0x4a6 repro", libraries: [leaf.library] });
 		const node = b.structRecursive("test node", {
-			child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => node, leaf.number),
+			child: FieldSchema.createUnsafe(FieldKinds.optional, [() => node, leaf.number]),
 		});
-		const schema = b.toDocumentSchema(SchemaBuilder.fieldOptional(node));
+		const schema = b.toDocumentSchema(b.optional(node));
 
 		const tree2 = await factory.load(
 			dataStoreRuntime2,

@@ -417,6 +417,9 @@ export interface DataBinder<B extends OperationBinderEvents | InvalidationBinder
 }
 
 // @alpha
+type DefaultFieldKind = typeof FieldKinds.required;
+
+// @alpha
 export const defaultSchemaPolicy: FullSchemaPolicy;
 
 // @alpha
@@ -678,10 +681,11 @@ interface Fields {
 }
 
 // @alpha @sealed
-export class FieldSchema<out Kind extends FieldKind = FieldKind, const out Types = AllowedTypes> {
-    constructor(kind: Kind, allowedTypes: Types);
+export class FieldSchema<out Kind extends FieldKind = FieldKind, const out Types extends Unenforced<AllowedTypes> = AllowedTypes> {
     // (undocumented)
     readonly allowedTypes: Types;
+    static create<Kind extends FieldKind, const Types extends AllowedTypes>(kind: Kind, allowedTypes: Types): FieldSchema<Kind, Types>;
+    static createUnsafe<Kind extends FieldKind, const Types>(kind: Kind, allowedTypes: Types): FieldSchema<Kind, Types>;
     static readonly empty: FieldSchema<Forbidden, readonly []>;
     equals(other: FieldSchema): boolean;
     // (undocumented)
@@ -866,6 +870,12 @@ export interface IForestSubscription extends Dependee, ISubscribable<ForestEvent
 }
 
 // @alpha
+export type ImplicitAllowedTypes = AllowedTypes | TreeSchema | Any;
+
+// @alpha
+export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
+
+// @alpha
 export const indexSymbol: unique symbol;
 
 // @alpha
@@ -924,8 +934,6 @@ declare namespace InternalTypedSchemaTypes {
         MapSchemaSpecification,
         LeafSchemaSpecification,
         MapFieldSchema,
-        RecursiveTreeSchemaSpecification,
-        RecursiveTreeSchema,
         FlexList,
         FlexListToNonLazyArray,
         ConstantFlexListToNonLazyArray,
@@ -956,7 +964,10 @@ declare namespace InternalTypes {
         AllowOptionalNotFlattened,
         isAny,
         RestrictiveReadonlyRecord,
-        BrandedKeyContent
+        BrandedKeyContent,
+        NormalizeField_2 as NormalizeField,
+        DefaultFieldKind,
+        NormalizeAllowedTypes
     }
 }
 export { InternalTypes }
@@ -1445,7 +1456,7 @@ interface NodeKeyField extends TreeField {
 
 // @alpha
 export const nodeKeyField: {
-    __n_id__: FieldSchema<NodeKeyFieldKind, [TreeSchema<"com.fluidframework.nodeKey.NodeKey", {
+    __n_id__: FieldSchema<NodeKeyFieldKind, readonly [TreeSchema<"com.fluidframework.nodeKey.NodeKey", {
     leafValue: ValueSchema.String;
     }>]>;
 };
@@ -1474,11 +1485,17 @@ export type NoListenersCallback<E extends Events<E>> = (eventName: keyof Events<
 // @alpha
 export const noopValidator: JsonValidator;
 
+// @alpha
+type NormalizeAllowedTypes<TSchema extends ImplicitAllowedTypes> = TSchema extends TreeSchema ? readonly [TSchema] : TSchema extends Any ? readonly [Any] : TSchema;
+
 // @alpha (undocumented)
 type NormalizedFlexList<Item> = readonly Item[];
 
 // @alpha
 type NormalizeField<T extends FieldSchema | undefined> = T extends FieldSchema ? T : FieldSchema<typeof FieldKinds.forbidden, []>;
+
+// @alpha
+type NormalizeField_2<TSchema extends ImplicitFieldSchema, TDefault extends FieldKind> = TSchema extends FieldSchema ? TSchema : FieldSchema<TDefault, NormalizeAllowedTypes<Assume<TSchema, ImplicitAllowedTypes>>>;
 
 // @alpha (undocumented)
 type NormalizeStructFields<T extends Fields | undefined> = NormalizeStructFieldsInner<WithDefault<T, Record<string, never>>>;
@@ -1649,28 +1666,22 @@ export function recordDependency(dependent: ObservingDependent | undefined, depe
 // @alpha (undocumented)
 const recursiveStruct: TreeSchema<"Test Recursive Domain.struct", {
 structFields: {
-recursive: FieldSchema<Optional, [() => TreeSchema<"Test Recursive Domain.struct", any>]>;
-number: FieldSchema<Required_2, [TreeSchema<"com.fluidframework.leaf.number", {
+readonly recursive: FieldSchema<Optional, readonly [() => TreeSchema<"Test Recursive Domain.struct", any>]>;
+readonly number: TreeSchema<"com.fluidframework.leaf.number", {
 leafValue: import("..").ValueSchema.Number;
-}>]>;
+}>;
 };
 }>;
 
 // @alpha (undocumented)
 const recursiveStruct2: TreeSchema<"Test Recursive Domain.struct2", {
 structFields: {
-recursive: FieldSchema<Optional, [() => TreeSchema<"Test Recursive Domain.struct2", any>]>;
-number: FieldSchema<Required_2, [TreeSchema<"com.fluidframework.leaf.number", {
+readonly recursive: FieldSchema<Optional, readonly [() => TreeSchema<"Test Recursive Domain.struct2", any>]>;
+readonly number: FieldSchema<Required_2, readonly [TreeSchema<"com.fluidframework.leaf.number", {
 leafValue: import("..").ValueSchema.Number;
 }>]>;
 };
 }>;
-
-// @alpha
-type RecursiveTreeSchema = unknown;
-
-// @alpha
-type RecursiveTreeSchemaSpecification = unknown;
 
 // @alpha
 type _RecursiveTrick = never;
@@ -1755,34 +1766,40 @@ export { SchemaAware }
 
 // @alpha @sealed
 export class SchemaBuilder<TScope extends string = string, TName extends number | string = string> extends SchemaBuilderBase<TScope, TName> {
-    fieldNode<Name extends TName, T extends FieldSchema>(name: Name, t: T): TreeSchema<`${TScope}.${Name}`, {
+    fieldNode<Name extends TName, const T extends ImplicitFieldSchema>(name: Name, fieldSchema: T): TreeSchema<`${TScope}.${Name}`, {
+        structFields: {
+            [""]: NormalizeField_2<T, DefaultFieldKind>;
+        };
+    }>;
+    fieldNodeRecursive<Name extends TName, const T extends Unenforced<ImplicitFieldSchema>>(name: Name, t: T): TreeSchema<`${TScope}.${Name}`, {
         structFields: {
             [""]: T;
         };
     }>;
-    fieldNodeRecursive<Name extends TName, T>(name: Name, t: T): TreeSchema<`${TScope}.${Name}`, {
-        structFields: {
-            [""]: T;
-        };
-    }>;
-    static fieldOptional<T extends AllowedTypes>(...allowedTypes: T): FieldSchema<typeof FieldKinds.optional, T>;
-    static fieldRequired<T extends AllowedTypes>(...allowedTypes: T): FieldSchema<typeof FieldKinds.required, T>;
-    static fieldSequence<T extends AllowedTypes>(...t: T): FieldSchema<typeof FieldKinds.sequence, T>;
-    leaf<Name extends TName, T extends ValueSchema>(name: Name, t: T): TreeSchema<`${TScope}.${Name}`, {
+    leaf<Name extends TName, const T extends ValueSchema>(name: Name, t: T): TreeSchema<`${TScope}.${Name}`, {
         leafValue: T;
     }>;
-    map<Name extends TName, T extends FieldSchema>(name: Name, fieldSchema: T): TreeSchema<`${TScope}.${Name}`, {
+    map<Name extends TName, const T extends ImplicitFieldSchema>(name: Name, fieldSchema: T): TreeSchema<`${TScope}.${Name}`, {
+        mapFields: NormalizeField_2<T, DefaultFieldKind>;
+    }>;
+    mapRecursive<Name extends TName, const T extends Unenforced<ImplicitFieldSchema>>(name: Name, t: T): TreeSchema<`${TScope}.${Name}`, {
         mapFields: T;
     }>;
-    mapRecursive<Name extends TName, T>(name: Name, t: T): TreeSchema<`${TScope}.${Name}`, {
-        mapFields: T;
+    static optional<const T extends ImplicitAllowedTypes>(allowedTypes: T): FieldSchema<typeof FieldKinds.optional, NormalizeAllowedTypes<T>>;
+    readonly optional: typeof SchemaBuilder.optional;
+    static required<const T extends ImplicitAllowedTypes>(allowedTypes: T): FieldSchema<typeof FieldKinds.required, NormalizeAllowedTypes<T>>;
+    readonly required: typeof SchemaBuilder.required;
+    static sequence<const T extends ImplicitAllowedTypes>(allowedTypes: T): FieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>;
+    readonly sequence: typeof SchemaBuilder.sequence;
+    struct<const Name extends TName, const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>(name: Name, t: T): TreeSchema<`${TScope}.${Name}`, {
+        structFields: {
+            [key in keyof T]: NormalizeField_2<T[key], DefaultFieldKind>;
+        };
     }>;
-    struct<Name extends TName, T extends RestrictiveReadonlyRecord<string, FieldSchema>>(name: Name, t: T): TreeSchema<`${TScope}.${Name}`, {
+    structRecursive<Name extends TName, const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>>(name: Name, t: T): TreeSchema<`${TScope}.${Name}`, {
         structFields: T;
     }>;
-    structRecursive<Name extends TName, T>(name: Name, t: T): TreeSchema<`${TScope}.${Name}`, {
-        structFields: T;
-    }>;
+    toDocumentSchema<const TSchema extends ImplicitFieldSchema>(root: TSchema): TypedSchemaCollection<NormalizeField_2<TSchema, DefaultFieldKind>>;
 }
 
 // @alpha
@@ -1796,14 +1813,13 @@ export class SchemaBuilderBase<TScope extends string, TName extends number | str
     // (undocumented)
     protected addNodeSchema<T extends TreeSchema<string, any>>(schema: T): void;
     static field<Kind extends FieldKind, T extends AllowedTypes>(kind: Kind, ...allowedTypes: T): FieldSchema<Kind, T>;
-    static fieldRecursive<Kind extends FieldKind, T extends FlexList<RecursiveTreeSchema>>(kind: Kind, ...allowedTypes: T): FieldSchema<Kind, T>;
+    static fieldRecursive<Kind extends FieldKind, T extends FlexList<Unenforced<TreeSchema>>>(kind: Kind, ...allowedTypes: T): FieldSchema<Kind, T>;
     finalize(): SchemaLibrary;
     readonly name: string;
-    // (undocumented)
     readonly scope: TScope;
     // (undocumented)
     protected scoped<Name extends TName>(name: Name): `${TScope}.${Name}` & TreeSchemaIdentifier;
-    toDocumentSchema<Kind extends FieldKind, Types extends AllowedTypes>(root: FieldSchema<Kind, Types>): TypedSchemaCollection<FieldSchema<Kind, Types>>;
+    protected toDocumentSchemaInternal<TSchema extends FieldSchema>(root: TSchema): TypedSchemaCollection<TSchema>;
 }
 
 // @alpha
@@ -2082,7 +2098,7 @@ export interface TreeNode extends Tree<TreeSchema> {
 }
 
 // @alpha
-export class TreeSchema<Name extends string = string, T extends RecursiveTreeSchemaSpecification = TreeSchemaSpecification> {
+export class TreeSchema<Name extends string = string, T extends Unenforced<TreeSchemaSpecification> = TreeSchemaSpecification> {
     constructor(builder: Named<string>, name: Name, info: T);
     // (undocumented)
     readonly builder: Named<string>;
@@ -2178,7 +2194,7 @@ type TypedFields<Mode extends ApiMode, TFields extends undefined | {
 TFields extends {
     [key: string]: FieldSchema;
 } ? {
-    [key in keyof TFields]: TypedField_2<TFields[key], Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode>;
+    -readonly [key in keyof TFields]: TypedField_2<TFields[key], Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode>;
 } : EmptyObject
 ][_InlineTrick];
 
@@ -2267,6 +2283,9 @@ TName extends infer S & TreeSchemaIdentifier ? S : string
 
 // @alpha
 type UnbrandList<T extends unknown[], B> = T extends [infer Head, ...infer Tail] ? [Unbrand<Head, B>, ...UnbrandList<Tail, B>] : [];
+
+// @alpha
+export type Unenforced<_DesiredExtendsConstraint> = unknown;
 
 // @alpha
 type UntypedApi<Mode extends ApiMode> = {
