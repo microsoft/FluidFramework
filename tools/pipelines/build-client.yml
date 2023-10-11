@@ -13,9 +13,17 @@ parameters:
   values:
     - none
     - prerelease
+    - release
+- name: packageTypesOverride
+  displayName: Change package types (default = no change)
+  type: string
+  default: none
+  values:
+    - none
     - alpha
     - beta
-    - release
+    - public
+    - untrimmed
 - name: publishOverride
   displayName: Publish Override (default = based on branch)
   type: string
