@@ -1073,6 +1073,8 @@ export interface ISharedTreeView extends AnchorLocator {
     rebase(view: ISharedTreeBranchView): void;
     redo(): void;
     get root(): UnwrappedEditableField;
+    // (undocumented)
+    root2<TRoot extends FieldSchema>(viewSchema: TypedSchemaCollection<TRoot>): any;
     readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
     // @deprecated (undocumented)
     schematize<TRoot extends FieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): ISharedTreeView;
