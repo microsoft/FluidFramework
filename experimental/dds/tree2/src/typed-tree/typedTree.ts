@@ -48,11 +48,44 @@ export interface TypedTreeOptions extends SharedTreeOptions {
  * Channel for a Tree DDS.
  * @alpha
  */
-export type TypedTreeChannel = IChannel & {
+export interface TypedTreeChannel extends IChannel {
+	/**
+	 * Returns a tree known to be compatible with the provided schema with a schema aware API based on that schema.
+	 *
+	 * @remarks
+	 * If the tree is uninitialized (has no schema and no content), the tree is initialized with the provided `initialTree` and `schema`.
+	 *
+	 * The tree (now known to have been initialized) has its stored schema checked against the provided view `schema`.
+	 *
+	 * If the schema are compatible (including updating the stored schema if permitted via `allowedSchemaModifications`),
+	 * a {@link TreeField} for the root of the tree is returned, with a schema aware API based on the provided view schema.
+	 *
+	 * If the schema are not compatible, and exception is thrown.
+	 *
+	 * @privateRemarks
+	 * TODO: make the mismatch case recoverable.
+	 * - Provide a way to make a generic view schema for any document.
+	 * - Produce/throw the error in a document recoverable way (ex: specific exception type or return value).
+	 * TODO: Document and handle what happens when the stored schema changes after schematize has returned. Is some invalidation contract needed? How does editable tree behave?
+	 * TODO: Clarify lifetimes. Ensure calling schematize multiple times does not leak.
+	 * TODO: Support adapters for handling out of schema data.
+	 *
+	 * Doing initialization here, regardless of `AllowedUpdateType`, allows a small API that is hard to use incorrectly.
+	 * Other approach tend to have leave easy to make mistakes.
+	 * For example, having a separate initialization function means apps can forget to call it, making an app that can only open existing document,
+	 * or call it unconditionally leaving an app that can only create new documents.
+	 * It also would require the schema to be passed into to separate places and could cause issues if they didn't match.
+	 * Since the initialization function couldn't return a typed tree, the type checking wouldn't help catch that.
+	 * Also, if an app manages to create a document, but the initialization fails to get persisted, an app that only calls the initialization function
+	 * on the create code-path (for example how a schematized factory might do it),
+	 * would leave the document in an unusable state which could not be repaired when it is reopened (by the same or other clients).
+	 * Additionally, once out of schema content adapters are properly supported (with lazy document updates),
+	 * this initialization could become just another out of schema content adapter: at tha point it clearly belong here in schematize.
+	 */
 	schematize<TRoot extends FieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
 	): TypedField<TRoot>;
-};
+}
 
 /**
  * A channel factory that creates a {@link TreeField}.
@@ -166,7 +199,6 @@ class ChannelWrapperWithSchematize extends ChannelWrapper implements TypedTreeCh
 	): TypedField<TRoot> {
 		const nodeKeyManager = createNodeKeyManager(this.runtime.idCompressor);
 		const view = this.tree.schematize(config);
-		const root = view.editableTree2(config.schema, nodeKeyManager, brand(nodeKeyFieldKey));
-		return root;
+		return view.editableTree2(config.schema, nodeKeyManager, brand(nodeKeyFieldKey));
 	}
 }
