@@ -16,10 +16,6 @@ parameters:
 - name: environment
   type: string
 
-- name: publishNonScopedPackages
-  type: boolean
-  default: false
-
 - name: pool
   type: object
   default: Small
@@ -61,15 +57,6 @@ jobs:
               customEndPoint: ${{ parameters.customEndPoint }}
               feedKind: ${{ parameters.feedKind }}
               publishFlags: ${{ parameters.publishFlags }}
-          - ${{ if eq(parameters.publishNonScopedPackages, true) }}:
-            - template: include-publish-npm-package-steps.yml
-              parameters:
-                namespace: false
-                artifactPath: non-scoped
-                feedUrl: ${{ parameters.feedUrl }}
-                feedKind: ${{ parameters.feedKind }}
-                customEndPoint: ${{ parameters.customEndPoint }}
-                publishFlags: ${{ parameters.publishFlags }}
           - template: include-git-tag-steps.yml
             parameters:
               tagName: ${{ parameters.tagName }}

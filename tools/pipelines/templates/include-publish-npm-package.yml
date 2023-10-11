@@ -10,10 +10,6 @@ parameters:
 - name: tagName
   type: string
 
-- name: publishNonScopedPackages
-  type: boolean
-  default: false
-
 - name: pool
   type: object
   default: Small
@@ -35,7 +31,6 @@ stages:
       feedKind: internal-test
       environment: test-package-build-feed
       pool: ${{ parameters.pool }}
-      publishNonScopedPackages: ${{ parameters.publishNonScopedPackages }}
 
 # This stage and the following stage both run for non-test builds. The build feed is equivalent to the public npmjs.org
 # feed except it contains builds for every main- or next-branch build.
@@ -55,7 +50,6 @@ stages:
       # Environment should match the condition for publish_npm_internal_dev
       environment: package-build-feed
       pool: ${{ parameters.pool }}
-      publishNonScopedPackages: ${{ parameters.publishNonScopedPackages }}
 
 - stage: publish_npm_internal_dev
   dependsOn: build
@@ -73,7 +67,6 @@ stages:
       # Environment should match the condition for publish_npm_internal_build
       environment: package-build-feed
       pool: ${{ parameters.pool }}
-      publishNonScopedPackages: ${{ parameters.publishNonScopedPackages }}
 
 - stage: publish_npm_public
   dependsOn: build
@@ -89,7 +82,6 @@ stages:
       feedKind: public
       environment: package-npmjs-feed
       pool: ${{ parameters.pool }}
-      publishNonScopedPackages: ${{ parameters.publishNonScopedPackages }}
       customEndPoint: npmjs
       publishFlags: --access public
       tagName: ${{ parameters.tagName }}

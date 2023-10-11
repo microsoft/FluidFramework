@@ -79,10 +79,6 @@ parameters:
   type: string
   default:
 
-- name: nonScopedPackages
-  type: object
-  default: []
-
 - name: publishOverride
   type: string
 
@@ -135,7 +131,6 @@ variables:
       publishOverride: ${{ parameters.publishOverride }}
       releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
       buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
-      nonScopedPackages: ${{ parameters.nonScopedPackages }}
   - name: toolAbsolutePath
     value:  $(Build.SourcesDirectory)/tools/telemetry-generator
     readonly: true
@@ -201,7 +196,6 @@ stages:
                 BuildReason=$(variables['Build.Reason'])
 
               Publish Parameters:
-                nonScopedPackages=${{ join(', ', parameters.nonScopedPackages) }}
                 interdependencyRange='${{ parameters.interdependencyRange }}'
 
               Computed variables:
@@ -209,7 +203,6 @@ stages:
                 componentDetection=${{ variables.componentDetection }}
                 publish=${{ variables.publish }}
                 canRelease=${{ variables.canRelease }}
-                publishNonScopedPackages=${{ variables.publishNonScopedPackages }}
                 pnpmStorePath=${{ variables.pnpmStorePath }}
 
                 release=$(release)"
@@ -389,23 +382,12 @@ stages:
             displayName: npm pack
             env:
               PACKAGE_MANAGER: ${{ parameters.packageManager }}
-              PUBLISH_NON_SCOPED: ${{ variables.publishNonScopedPackages }}
               RELEASE_GROUP: ${{ parameters.tagName }}
               STAGING_PATH: $(Build.ArtifactStagingDirectory)
             inputs:
               targetType: 'filePath'
               workingDirectory: ${{ parameters.buildDirectory }}
               filePath: $(Build.SourcesDirectory)/scripts/pack-packages.sh
-
-          - ${{ if eq(variables.publishNonScopedPackages, true) }}:
-            - ${{ each parameter in parameters.nonScopedPackages }}:
-              - task: Bash@3
-                displayName: Move Non-Scoped Package ${{parameter}}
-                inputs:
-                  targetType: 'inline'
-                  workingDirectory: ${{ parameters.buildDirectory }}
-                  script: |
-                    mv -t $(Build.ArtifactStagingDirectory)/pack/non-scoped/ $(Build.ArtifactStagingDirectory)/pack/scoped/${{parameter}}*.tgz
 
           - task: PublishPipelineArtifact@1
             displayName: Publish Artifact - pack
@@ -609,4 +591,3 @@ stages:
       parameters:
         namespace: ${{ parameters.namespace }}
         tagName: ${{ parameters.tagName }}
-        publishNonScopedPackages: ${{ variables.publishNonScopedPackages }}
