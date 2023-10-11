@@ -361,8 +361,34 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 		this.verifyNotClosed();
 		if (this.isAttached()) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.services!.deltaConnection.submit(content, localOpMetadata, rootMetadata);
+			const deltaConnection = this.services!.deltaConnection;
+
+			//* TODO: Is this Back-Compat measure needed? I think not, I think DDS and DataStore layers are always in sync
+			if (deltaConnection.submit2 === undefined) {
+				deltaConnection.submit(content, localOpMetadata, rootMetadata);
+				return;
+			}
+			deltaConnection.submit2({ messageContent: content, localOpMetadata, rootMetadata });
 		}
+	}
+
+	/**
+	 * Submits a message by the local client to the runtime.
+	 * @param data - A params object containing all data needed to submit and successfully roundtrip this message
+	 */
+	protected submitLocalMessage2(data: {
+		/** The DDS-specific content of the message to be sent */
+		messageContent: unknown;
+		/**
+		 * The local metadata associated with the message. This is kept locally by the runtime
+		 * and not sent to the server. It will be provided back when this message is acknowledged by the server.
+		 * It will also be provided back when asked to resubmit the message.
+		 */
+		localOpMetadata?: unknown;
+		/** Metadata to be handled by the runtime and included in the final op payload */
+		rootMetadata: unknown;
+	}): void {
+		this.submitLocalMessage(data.messageContent, data.localOpMetadata, data.rootMetadata);
 	}
 
 	/**

@@ -168,12 +168,31 @@ export interface IDeltaConnection {
 
 	/**
 	 * Send new messages to the server.
+	 * @deprecated Use submit2 if available
+	 *
 	 * @param messageContent - The content of the message to be sent.
 	 * @param localOpMetadata - The local metadata associated with the message. This is kept locally by the runtime
 	 * and not sent to the server. It will be provided back when this message is acknowledged by the server. It will
 	 * also be provided back when asked to resubmit the message.
 	 */
 	submit(messageContent: any, localOpMetadata: unknown, rootMetadata: unknown): void;
+
+	/**
+	 * Send a new message to the server.
+	 * @param data - A params object containing all data needed to submit and successfully roundtrip this message
+	 */
+	submit2?(data: {
+		/** The channel-specific content of the message to be sent */
+		messageContent: unknown;
+		/**
+		 * The local metadata associated with the message. This is kept locally by the runtime
+		 * and not sent to the server. It will be provided back when this message is acknowledged by the server.
+		 * It will also be provided back when asked to resubmit the message.
+		 */
+		localOpMetadata?: unknown;
+		/** Metadata to be handled by the runtime and included in the final op payload */
+		rootMetadata: unknown;
+	}): void;
 
 	/**
 	 * Attaches a message handler to the delta connection

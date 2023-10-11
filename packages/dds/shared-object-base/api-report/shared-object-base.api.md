@@ -139,6 +139,11 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     // (undocumented)
     protected runtime: IFluidDataStoreRuntime;
     protected submitLocalMessage(content: any, localOpMetadata: unknown, rootMetadata: unknown): void;
+    protected submitLocalMessage2(data: {
+        messageContent: unknown;
+        localOpMetadata?: unknown;
+        rootMetadata: unknown;
+    }): void;
     // (undocumented)
     abstract summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
 }

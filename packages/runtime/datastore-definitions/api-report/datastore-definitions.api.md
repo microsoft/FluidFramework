@@ -79,7 +79,13 @@ export interface IDeltaConnection {
     // (undocumented)
     connected: boolean;
     dirty(): void;
+    // @deprecated
     submit(messageContent: any, localOpMetadata: unknown, rootMetadata: unknown): void;
+    submit2?(data: {
+        messageContent: unknown;
+        localOpMetadata?: unknown;
+        rootMetadata: unknown;
+    }): void;
 }
 
 // @public

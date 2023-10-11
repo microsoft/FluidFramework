@@ -452,6 +452,8 @@ export interface IFluidDataStoreContext
 
 	/**
 	 * Submits the message to be sent to other clients.
+	 * @deprecated Use submitMessage2 if available
+	 *
 	 * @param type - Type of the message.
 	 * @param content - Content of the message.
 	 * @param localOpMetadata - The local metadata associated with the message. This is kept locally and not sent to
@@ -464,6 +466,25 @@ export interface IFluidDataStoreContext
 		localOpMetadata: unknown,
 		rootMetadata: unknown,
 	): void;
+
+	/**
+	 * Submits the message to be sent to other clients.
+	 * @param data - A params object containing all data needed to submit and successfully roundtrip this message
+	 */
+	submitMessage2?(data: {
+		/** Type of the message. May indicate what to expect in the content */
+		type: string;
+		/** The datastore-specific content of the message to be sent */
+		messageContent: unknown;
+		/**
+		 * The local metadata associated with the message. This is kept locally by the runtime
+		 * and not sent to the server. It will be provided back when this message is acknowledged by the server.
+		 * It will also be provided back when asked to resubmit the message.
+		 */
+		localOpMetadata?: unknown;
+		/** Metadata to be handled by the runtime and included in the final op payload */
+		rootMetadata: unknown;
+	}): void;
 
 	/**
 	 * Submits the signal to be sent to other clients.

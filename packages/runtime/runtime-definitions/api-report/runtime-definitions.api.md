@@ -265,7 +265,14 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     setChannelDirty(address: string): void;
     // (undocumented)
     readonly storage: IDocumentStorageService;
+    // @deprecated
     submitMessage(type: string, content: any, localOpMetadata: unknown, rootMetadata: unknown): void;
+    submitMessage2?(data: {
+        type: string;
+        messageContent: unknown;
+        localOpMetadata?: unknown;
+        rootMetadata: unknown;
+    }): void;
     submitSignal(type: string, content: any): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;

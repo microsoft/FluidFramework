@@ -85,8 +85,7 @@ export function createChannelServiceEndpoints(
 ): ChannelServiceEndpoints {
 	const deltaConnection = new ChannelDeltaConnection(
 		connected,
-		(message, localOpMetadata, rootMetadata) =>
-			submitFn(message, localOpMetadata, rootMetadata),
+		submitFn,
 		dirtyFn,
 		addedGCOutboundReferenceFn,
 	);

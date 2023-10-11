@@ -857,13 +857,11 @@ export class FluidDataStoreRuntime
 		return summaryBuilder.getSummaryTree();
 	}
 
-	public submitMessage(
-		type: DataStoreMessageType,
-		content: any,
-		localOpMetadata: unknown,
-		rootMetadata: unknown,
-	) {
-		this.submit(type, content, localOpMetadata, rootMetadata);
+	/**
+	 * @deprecated Directly submitting an arbitrary message is not supported
+	 */
+	public submitMessage(type: DataStoreMessageType, content: any, localOpMetadata: unknown) {
+		this.submit(type, content, localOpMetadata, /* rootMetadata */ undefined); //* UNDO
 	}
 
 	public submitSignal(type: string, content: any) {
@@ -939,7 +937,19 @@ export class FluidDataStoreRuntime
 		rootMetadata: unknown,
 	): void {
 		this.verifyNotClosed();
-		this.dataStoreContext.submitMessage(type, content, localOpMetadata, rootMetadata);
+
+		// Back-compat: Until N-1 has submitMessage2
+		if (this.dataStoreContext.submitMessage2 === undefined) {
+			this.dataStoreContext.submitMessage(type, content, localOpMetadata, rootMetadata);
+			return;
+		}
+
+		this.dataStoreContext.submitMessage2({
+			type,
+			messageContent: content,
+			localOpMetadata,
+			rootMetadata,
+		});
 	}
 
 	/**
