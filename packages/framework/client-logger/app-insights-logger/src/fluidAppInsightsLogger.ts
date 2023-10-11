@@ -51,7 +51,7 @@ export interface FluidAppInsightsLoggerConfig {
  */
 export interface TelemetryFilter {
 	/**
-	 * The category {@link TelemetryEventCategory} of telemetry event that this filter applies to
+	 * The category {@link (TelemetryEventCategory:type)} of telemetry event that this filter applies to
 	 */
 	category: TelemetryEventCategory;
 	/**
