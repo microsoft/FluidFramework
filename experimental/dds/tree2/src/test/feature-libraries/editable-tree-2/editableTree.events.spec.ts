@@ -54,10 +54,10 @@ describe("beforeChange/afterChange events", () => {
 		let childBeforeChangeCount = 0;
 		let childAfterChangeCount = 0;
 
-		root.on("beforeChange", (event) => {
+		root.on("beforeChange", (upPath) => {
 			rootBeforeChangeCount++;
 		});
-		root.on("afterChange", (event) => {
+		root.on("afterChange", (upPath) => {
 			rootAfterChangeCount++;
 		});
 
@@ -79,10 +79,10 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(rootBeforeChangeCount, 2);
 		assert.strictEqual(rootAfterChangeCount, 2);
 
-		root.child?.on("beforeChange", (event) => {
+		root.child?.on("beforeChange", (upPath) => {
 			childBeforeChangeCount++;
 		});
-		root.child?.on("afterChange", (event) => {
+		root.child?.on("afterChange", (upPath) => {
 			childAfterChangeCount++;
 		});
 
@@ -148,11 +148,11 @@ describe("beforeChange/afterChange events", () => {
 		let beforeCounter = 0;
 		let afterCounter = 0;
 
-		root.on("beforeChange", (event) => {
+		root.on("beforeChange", (upPath) => {
 			beforeCounter++;
 			assert.strictEqual(afterCounter, beforeCounter - 1, "beforeChange fired out of order");
 		});
-		root.on("afterChange", (event) => {
+		root.on("afterChange", (upPath) => {
 			afterCounter++;
 			assert.strictEqual(afterCounter, beforeCounter, "afterChange fired out of order");
 		});
@@ -200,11 +200,11 @@ describe("beforeChange/afterChange events", () => {
 
 		let totalListenerCalls = 0;
 
-		root.on("beforeChange", (event) => {
+		root.on("beforeChange", (upPath) => {
 			assert.strictEqual(root.myOptionalNumber, initialNumber);
 			totalListenerCalls++;
 		});
-		root.on("afterChange", (event) => {
+		root.on("afterChange", (upPath) => {
 			assert.strictEqual(root.myOptionalNumber, undefined);
 			totalListenerCalls++;
 		});
@@ -236,11 +236,11 @@ describe("beforeChange/afterChange events", () => {
 		const root = factory.create(new MockFluidDataStoreRuntime(), "the tree").root.content;
 		let totalListenerCalls = 0;
 
-		root.on("beforeChange", (event) => {
+		root.on("beforeChange", (upPath) => {
 			assert.strictEqual(root.myOptionalNumber, undefined);
 			totalListenerCalls++;
 		});
-		root.on("afterChange", (event) => {
+		root.on("afterChange", (upPath) => {
 			assert.strictEqual(root.myOptionalNumber, newNumber);
 			totalListenerCalls++;
 		});
@@ -271,11 +271,11 @@ describe("beforeChange/afterChange events", () => {
 		let totalListenerCalls = 0;
 		const newString = "John";
 
-		root.on("beforeChange", (event) => {
+		root.on("beforeChange", (upPath) => {
 			assert.strictEqual(root.myString, "initial string");
 			totalListenerCalls++;
 		});
-		root.on("afterChange", (event) => {
+		root.on("afterChange", (upPath) => {
 			assert.strictEqual(root.myString, newString);
 			totalListenerCalls++;
 		});
@@ -306,10 +306,10 @@ describe("beforeChange/afterChange events", () => {
 
 		let beforeCounter = 0;
 		let afterCounter = 0;
-		root.child.on("beforeChange", (event) => {
+		root.child.on("beforeChange", (upPath) => {
 			beforeCounter++;
 		});
-		root.child.on("afterChange", (event) => {
+		root.child.on("afterChange", (upPath) => {
 			afterCounter++;
 		});
 		root.boxedChild.content = { myInnerString: "initial string in new child" };
