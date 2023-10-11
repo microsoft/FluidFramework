@@ -124,11 +124,12 @@ module.exports = {
 				"responsibility anymore. Factor it out into (e.g.) a separate utility/ helper or a mock.",
 			severity: "error",
 			from: {
-        path: "^(src)",
+				path: "^(src)",
 				pathNot: "^(src/test)",
-      },
+			},
 			to: {
-				path: "\.(spec|test)\.(js|mjs|cjs|ts|ls|coffee|litcoffee|coffee.md)$",
+				// prettier-ignore
+				path: "\.(spec|test)\.(js|mjs|cjs|ts|ls|coffee|litcoffee|coffee\.md)$",
 			},
 		},
 		{
@@ -198,7 +199,7 @@ module.exports = {
 		/* pattern specifying which files to include (regular expression)
        dependency-cruiser will skip everything not matching this pattern
     */
-		// includeOnly : '',
+		includeOnly: "^src/",
 
 		/* dependency-cruiser will include modules matching against the focus
        regular expression in its output, as well as their neighbours (direct
