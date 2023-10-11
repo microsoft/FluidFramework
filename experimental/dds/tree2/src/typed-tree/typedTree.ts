@@ -160,6 +160,7 @@ class ChannelWrapperWithSchematize extends ChannelWrapper implements TypedTreeCh
 	) {
 		super(tree);
 	}
+
 	public schematize<TRoot extends FieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
 	): TypedField<TRoot> {
