@@ -6,11 +6,11 @@
 import { assert } from "@fluidframework/core-utils";
 import { ValueSchema } from "../../core";
 import {
-	SchemaBuilder,
 	nodeKeyFieldKey,
 	FieldKinds,
 	nodeKeyTreeIdentifier,
 	SchemaBuilderInternal,
+	FieldSchema,
 } from "../../feature-libraries";
 
 const builder = new SchemaBuilderInternal({ scope: "com.fluidframework.nodeKey" });
@@ -35,7 +35,7 @@ assert(nodeKeyTreeSchema.name === nodeKeyTreeIdentifier, "mismatched identifiers
  * @alpha
  */
 export const nodeKeyField = {
-	[nodeKeyFieldKey]: SchemaBuilder.field(FieldKinds.nodeKey, nodeKeyTreeSchema),
+	[nodeKeyFieldKey]: FieldSchema.create(FieldKinds.nodeKey, [nodeKeyTreeSchema]),
 };
 
 /**

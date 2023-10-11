@@ -8,7 +8,14 @@ import { ValueSchema } from "../core";
 import { Assume, RestrictiveReadonlyRecord, transformObjectMap } from "../util";
 import { SchemaBuilderBase } from "./schemaBuilderBase";
 import { FieldKinds } from "./default-field-kinds";
-import { AllowedTypes, TreeSchema, FieldSchema, Any, TypedSchemaCollection } from "./typed-schema";
+import {
+	AllowedTypes,
+	TreeSchema,
+	FieldSchema,
+	Any,
+	TypedSchemaCollection,
+	Unenforced,
+} from "./typed-schema";
 import { FieldKind } from "./modular-schema";
 
 // TODO: tests and examples for this file
@@ -66,14 +73,14 @@ export class SchemaBuilder<
 	 * Same as `struct` but with less type safety and works for recursive objects.
 	 * Reduced type safety is a side effect of a workaround for a TypeScript limitation.
 	 *
-	 * See note on {@link InternalTypedSchemaTypes#RecursiveTreeSchema} for details.
+	 * See {@link Unenforced} for details.
 	 *
 	 * TODO: Make this work with ImplicitFieldSchema.
 	 */
-	public structRecursive<Name extends TName, T>(
-		name: Name,
-		t: T,
-	): TreeSchema<`${TScope}.${Name}`, { structFields: T }> {
+	public structRecursive<
+		Name extends TName,
+		const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
+	>(name: Name, t: T): TreeSchema<`${TScope}.${Name}`, { structFields: T }> {
 		return this.struct(
 			name,
 			t as unknown as RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
@@ -83,7 +90,7 @@ export class SchemaBuilder<
 	/**
 	 * Define (and add to this library) a {@link TreeSchema} for a {@link MapNode}.
 	 */
-	public map<Name extends TName, T extends ImplicitFieldSchema>(
+	public map<Name extends TName, const T extends ImplicitFieldSchema>(
 		name: Name,
 		fieldSchema: T,
 	): TreeSchema<`${TScope}.${Name}`, { mapFields: NormalizeField<T, DefaultFieldKind> }> {
@@ -98,11 +105,11 @@ export class SchemaBuilder<
 	 * Same as `map` but with less type safety and works for recursive objects.
 	 * Reduced type safety is a side effect of a workaround for a TypeScript limitation.
 	 *
-	 * See note on {@link InternalTypedSchemaTypes#RecursiveTreeSchema} for details.
+	 * See {@link Unenforced} for details.
 	 *
 	 * TODO: Make this work with ImplicitFieldSchema.
 	 */
-	public mapRecursive<Name extends TName, T>(
+	public mapRecursive<Name extends TName, const T extends Unenforced<ImplicitFieldSchema>>(
 		name: Name,
 		t: T,
 	): TreeSchema<`${TScope}.${Name}`, { mapFields: T }> {
@@ -121,7 +128,7 @@ export class SchemaBuilder<
 	 * TODO: Write and link document outlining field vs node data model and the separation of concerns related to that.
 	 * TODO: Maybe find a better name for this.
 	 */
-	public fieldNode<Name extends TName, T extends ImplicitFieldSchema>(
+	public fieldNode<Name extends TName, const T extends ImplicitFieldSchema>(
 		name: Name,
 		fieldSchema: T,
 	): TreeSchema<
@@ -139,11 +146,11 @@ export class SchemaBuilder<
 	 * Same as `fieldNode` but with less type safety and works for recursive objects.
 	 * Reduced type safety is a side effect of a workaround for a TypeScript limitation.
 	 *
-	 * See note on {@link InternalTypedSchemaTypes#RecursiveTreeSchema} for details.
+	 * See {@link Unenforced} for details.
 	 *
 	 * TODO: Make this work with ImplicitFieldSchema.
 	 */
-	public fieldNodeRecursive<Name extends TName, T>(
+	public fieldNodeRecursive<Name extends TName, const T extends Unenforced<ImplicitFieldSchema>>(
 		name: Name,
 		t: T,
 	): TreeSchema<`${TScope}.${Name}`, { structFields: { [""]: T } }> {
@@ -167,7 +174,7 @@ export class SchemaBuilder<
 	 * TODO: Maybe ban undefined from allowed values here.
 	 * TODO: Decide and document how unwrapping works for non-primitive terminals.
 	 */
-	public leaf<Name extends TName, T extends ValueSchema>(
+	public leaf<Name extends TName, const T extends ValueSchema>(
 		name: Name,
 		t: T,
 	): TreeSchema<`${TScope}.${Name}`, { leafValue: T }> {
@@ -180,10 +187,10 @@ export class SchemaBuilder<
 	 * Define a schema for an {@link OptionalField}.
 	 * Shorthand or passing `FieldKinds.optional` to {@link FieldSchema}.
 	 */
-	public static fieldOptional<T extends AllowedTypes>(
+	public static fieldOptional<const T extends AllowedTypes>(
 		...allowedTypes: T
 	): FieldSchema<typeof FieldKinds.optional, T> {
-		return new FieldSchema(FieldKinds.optional, allowedTypes);
+		return FieldSchema.create(FieldKinds.optional, allowedTypes);
 	}
 
 	/**
@@ -195,19 +202,19 @@ export class SchemaBuilder<
 	 * - AllowedTypes can be used as a FieldSchema (Or SchemaBuilder takes a default field kind).
 	 * - A TreeSchema can be used as AllowedTypes in the non-polymorphic case.
 	 */
-	public static fieldRequired<T extends AllowedTypes>(
+	public static fieldRequired<const T extends AllowedTypes>(
 		...allowedTypes: T
 	): FieldSchema<typeof FieldKinds.required, T> {
-		return new FieldSchema(FieldKinds.required, allowedTypes);
+		return FieldSchema.create(FieldKinds.required, allowedTypes);
 	}
 
 	/**
 	 * Define a schema for a {@link Sequence} field.
 	 */
-	public static fieldSequence<T extends AllowedTypes>(
+	public static fieldSequence<const T extends AllowedTypes>(
 		...t: T
 	): FieldSchema<typeof FieldKinds.sequence, T> {
-		return new FieldSchema(FieldKinds.sequence, t);
+		return FieldSchema.create(FieldKinds.sequence, t);
 	}
 
 	/**
@@ -218,7 +225,7 @@ export class SchemaBuilder<
 	 *
 	 * May only be called once after adding content to builder is complete.
 	 */
-	public toDocumentSchema<TSchema extends ImplicitFieldSchema>(
+	public toDocumentSchema<const TSchema extends ImplicitFieldSchema>(
 		root: TSchema,
 	): TypedSchemaCollection<NormalizeField<TSchema, DefaultFieldKind>> {
 		return this.toDocumentSchemaInternal(normalizeField(root, DefaultFieldKind));
@@ -273,7 +280,7 @@ export function normalizeField<TSchema extends ImplicitFieldSchema, TDefault ext
 		return schema as NormalizeField<TSchema, TDefault>;
 	}
 	const allowedTypes = normalizeAllowedTypes(schema);
-	return new FieldSchema(defaultKind, allowedTypes) as unknown as NormalizeField<
+	return FieldSchema.create(defaultKind, allowedTypes) as unknown as NormalizeField<
 		TSchema,
 		TDefault
 	>;

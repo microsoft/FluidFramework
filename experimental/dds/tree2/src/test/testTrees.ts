@@ -128,7 +128,7 @@ type NumericMapData = SchemaAware.AllowedTypesToTypedTrees<
 export const anyMap = builder.map("anyMap", SchemaBuilder.fieldSequence(Any));
 
 export const recursiveType = builder.structRecursive("recursiveType", {
-	field: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => recursiveType),
+	field: FieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveType]),
 });
 
 export const library = builder.finalize();
