@@ -143,6 +143,8 @@ variables:
   - name: toolAbsolutePath
     value:  $(Build.SourcesDirectory)/tools/telemetry-generator
     readonly: true
+  - name: testWorkspace
+    value: $(Pipeline.Workspace)/test
   - group: ado-feeds
 
 stages:
