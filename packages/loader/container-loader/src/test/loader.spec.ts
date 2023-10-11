@@ -73,7 +73,7 @@ describe("loader unit test", () => {
 			await loader.rehydrateDetachedContainerFromSnapshot(`{"foo":"bar"}`);
 			assert.fail("should fail");
 		} catch (e) {
-			assert.strict(isFluidError(e), `should be a fluid error: ${e}`);
+			assert.strict(isFluidError(e), `should be a Fluid error: ${e}`);
 			assert.strictEqual(e.errorType, FluidErrorTypes.usageError, "should be a usage error");
 		}
 	});
