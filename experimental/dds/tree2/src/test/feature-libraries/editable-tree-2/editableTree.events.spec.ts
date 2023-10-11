@@ -318,4 +318,56 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(beforeCounter, 0);
 		assert.strictEqual(afterCounter, 0);
 	});
+
+	it("bubble up from the affected node to the root", () => {
+		const factory = new TypedTreeFactory({
+			jsonValidator: typeboxValidator,
+			forest: ForestType.Reference,
+			allowedSchemaModifications: AllowedUpdateType.None,
+			initialTree: {
+				myString: "initial string",
+				myOptionalNumber: undefined,
+				child: { myInnerString: "initial string in child" },
+			},
+			schema,
+			subtype: "test",
+		});
+
+		const root = factory.create(new MockFluidDataStoreRuntime(), "the tree").root.content;
+
+		let rootBeforeCounter = 0;
+		let rootAfterCounter = 0;
+		let childBeforeCounter = 0;
+		let childAfterCounter = 0;
+
+		root.on("beforeChange", (upPath) => {
+			rootBeforeCounter++;
+			// Counts should match only after root counter has been increased
+			assert.strictEqual(rootBeforeCounter, childBeforeCounter);
+		});
+		root.on("afterChange", (upPath) => {
+			rootAfterCounter++;
+			// Counts should match only after root counter has been increased
+			assert.strictEqual(rootAfterCounter, childAfterCounter);
+		});
+		root.child.on("beforeChange", (upPath) => {
+			// Counts should match only before child counter has been increased
+			assert.strictEqual(rootBeforeCounter, childBeforeCounter);
+			childBeforeCounter++;
+		});
+		root.child.on("afterChange", (upPath) => {
+			// Counts should match only before child counter has been increased
+			assert.strictEqual(rootAfterCounter, childAfterCounter);
+			childAfterCounter++;
+		});
+
+		// TODO: update to `root.child.myInnerString = "new value";` once assignment to properties is implemented in EditableTree2
+		root.child.boxedMyInnerString.content = "new value";
+
+		// Events shouldn't have fired on the original myString node
+		assert.strictEqual(rootBeforeCounter, 1);
+		assert.strictEqual(rootAfterCounter, 1);
+		assert.strictEqual(childBeforeCounter, 1);
+		assert.strictEqual(childAfterCounter, 1);
+	});
 });
