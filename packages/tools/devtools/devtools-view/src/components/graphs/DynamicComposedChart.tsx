@@ -49,7 +49,7 @@ interface DataPoint {
 
 /**
  * Merges multiple {@link GraphDataSet}'s into singular objects by their x-axis (timestamp) value.
- * This method is necessary for showing composed graphs beacause Recharts expects data to be in a merged object format
+ * This method is necessary for showing composed graphs because Recharts expects data to be in a merged object format
  */
 const mergeDataSets = (dataSets: GraphDataSet[]): DataPoint[] => {
 	const xAxisDataPointToYAxisDataPointMap: Record<string, Record<string, number | string>> = {};

@@ -5,7 +5,14 @@
 
 import React from "react";
 import { Body1, Body1Strong, Subtitle1, makeStyles } from "@fluentui/react-components";
-import { DynamicComposedChart } from "./graphs";
+import {
+	handleIncomingMessage,
+	InboundHandlers,
+	ISourcedDevtoolsMessage,
+	TelemetryEvent,
+} from "@fluid-experimental/devtools-core";
+import { useMessageRelay } from "../MessageRelayContext";
+import { DynamicComposedChart, type GraphDataSet } from "./graphs";
 
 const useStyles = makeStyles({
 	flexColumn: {
@@ -44,6 +51,119 @@ const useStyles = makeStyles({
 export function OpLatencyView(): React.ReactElement {
 	const styles = useStyles();
 
+	const messageRelay = useMessageRelay();
+	const [durationOutboundBatchingData, setDurationOutboundBatchingData] =
+		React.useState<GraphDataSet>({
+			graphType: "line",
+			schema: {
+				displayName: "Duration Outbound",
+				uuid: "durationOutbound",
+				xAxisDataKey: "outboundtimestamp",
+				yAxisDataKey: "durationOutboundBatching",
+			},
+			data:[],
+		});
+	const [durationNetworkData, setDurationNetworkData] = React.useState<
+		GraphDataSet>({
+			graphType: "line",
+			schema: {
+				displayName: "Duration Network",
+				uuid: "durationNetwork",
+				xAxisDataKey: "networktimestamp",
+				yAxisDataKey: "durationNetwork",
+			},
+			data:[],
+		});
+	const [durationInboundToProcessingData, setDurationInboundToProcessingData] = React.useState<
+		GraphDataSet>({
+			graphType: "line",
+			schema: {
+				displayName: "Duration Inbound",
+				uuid: "durationInbound",
+				xAxisDataKey: "inboundtimestamp",
+				yAxisDataKey: "durationInboundToProcessing",
+			},
+			data:[],
+		});
+
+	console.log(durationOutboundBatchingData);
+	console.log(durationNetworkData);
+	console.log(durationInboundToProcessingData);
+
+	React.useEffect(() => {
+		/**
+		 * Handlers for inbound messages.
+		 */
+		const inboundMessageHandlers: InboundHandlers = {
+			[TelemetryEvent.MessageType]: async (untypedMessage) => {
+				const message = untypedMessage as TelemetryEvent.Message;
+				const eventContents = message.data.event.logContent;
+				if (!eventContents.eventName.endsWith("OpRoundtripTime")) {
+					return true;
+				}
+
+				if (eventContents.clientType === "noninteractive/summarizer") {
+					return true;
+				}
+
+				console.log(`OP LATENCY: ${JSON.stringify(eventContents)}`);
+				
+				setDurationOutboundBatchingData((currentData) => {
+					const newDataPoint = {
+						x: message.data.event.timestamp,
+						y: Number(eventContents.durationOutboundBatching),
+					}
+					return {
+						...currentData,
+						data: [...(currentData?.data ?? []), newDataPoint],
+					};
+				});
+				setDurationNetworkData((currentData) => {
+					const newDataPoint = {
+						x: message.data.event.timestamp,
+						y: Number(eventContents.durationNetwork),
+					}
+					return {
+						...currentData,
+						data: [...(currentData?.data ?? []), newDataPoint],
+					};
+				});
+				setDurationInboundToProcessingData((currentData) => {
+					const newDataPoint = {
+						x: message.data.event.timestamp,
+						y: Number(eventContents.durationInboundToProcessing),
+					}
+					return {
+						...currentData,
+						data: [...(currentData?.data ?? []), newDataPoint],
+					};
+				});
+				
+
+				return true;
+			},
+		};
+	
+
+		// Event handler for messages coming from the Message Relay
+		function messageHandler(message: Partial<ISourcedDevtoolsMessage>): void {
+			handleIncomingMessage(message, inboundMessageHandlers);
+		}
+
+		messageRelay.on("message", messageHandler);
+
+
+		return (): void => {
+			messageRelay.off("message", messageHandler);
+		};
+					
+	}, [
+		messageRelay,
+		setDurationOutboundBatchingData,
+		setDurationNetworkData,
+		setDurationInboundToProcessingData,
+	]);
+
 	return (
 		<div className={styles.mainContainer} data-testid="test-op-latency-view">
 			<h3>Op Latency</h3>
@@ -60,7 +180,7 @@ export function OpLatencyView(): React.ReactElement {
 				}}
 				yAxisUnitDisplayName="ms"
 				// NOTE: Because Op Latency data is not yet available, this is a placeholder
-				dataSets={[]}
+				dataSets={[durationOutboundBatchingData, durationNetworkData, durationInboundToProcessingData]}
 			/>
 			<div className={styles.graphAboutContainer}>
 				<div className={styles.flexColumn}>

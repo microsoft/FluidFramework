@@ -84,7 +84,7 @@ export function createSampledLogger(
 ): ISampledTelemetryLogger {
 	const monitoringContext = loggerToMonitoringContext(logger);
 	const isSamplingDisabled =
-		monitoringContext.config.getBoolean("Fluid.Telemetry.DisableSampling") ?? false;
+		monitoringContext.config.getBoolean("Fluid.Telemetry.DisableSampling") ?? true;
 
 	const sampledLogger = {
 		send: (event: ITelemetryBaseEvent): void => {
