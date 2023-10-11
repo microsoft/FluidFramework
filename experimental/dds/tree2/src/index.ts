@@ -273,6 +273,7 @@ export {
 	SchemaBuilderBase,
 	ImplicitFieldSchema,
 	ImplicitAllowedTypes,
+	Unenforced,
 } from "./feature-libraries";
 
 export {

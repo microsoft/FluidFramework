@@ -19,10 +19,10 @@ export const bubbleSchema = builder.struct("BubbleBenchAppStateBubble-1.0.0", {
 export const clientSchema = builder.struct("BubbleBenchAppStateClient-1.0.0", {
 	clientId: leaf.string,
 	color: leaf.string,
-	bubbles: SchemaBuilder.fieldSequence(bubbleSchema),
+	bubbles: builder.sequence(bubbleSchema),
 });
 
-export const rootAppStateSchema = SchemaBuilder.fieldSequence(clientSchema);
+export const rootAppStateSchema = SchemaBuilder.sequence(clientSchema);
 
 export const appSchemaData = builder.toDocumentSchema(rootAppStateSchema);
 
