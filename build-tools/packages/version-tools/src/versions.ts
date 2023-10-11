@@ -34,10 +34,10 @@ export function getSimpleVersion(
 			);
 		}
 
-		if (isBeta) {
-			version = changePreReleaseIdentifier(version, "dev-beta");
-		} else if (isAlpha) {
-			version = changePreReleaseIdentifier(version, "dev-alpha");
+		if (!argRelease && isBeta) {
+			version = changePreReleaseIdentifier(version, "dev-beta-types");
+		} else if (!argRelease && isAlpha) {
+			version = changePreReleaseIdentifier(version, "dev-alpha-types");
 		} else if (!argRelease) {
 			version = changePreReleaseIdentifier(version, "dev");
 		}
