@@ -46,9 +46,6 @@ import {
 	Any,
 	buildForest,
 	createMockNodeKeyManager,
-	DefaultChangeFamily,
-	DefaultChangeset,
-	DefaultEditBuilder,
 	FieldSchema,
 	jsonableTreeFromCursor,
 	makeSchemaCodec,
@@ -80,7 +77,6 @@ import {
 	compareUpPaths,
 	UpPath,
 	clonePath,
-	UndoRedoManager,
 	ChangeFamilyEditor,
 	ChangeFamily,
 	TaggedChange,
@@ -768,10 +764,6 @@ export function expectEqualFieldPaths(path: FieldUpPath, expectedPath: FieldUpPa
 }
 
 export const mockIntoDelta = (delta: Delta.Root) => delta;
-
-export function createMockUndoRedoManager(): UndoRedoManager<DefaultChangeset, DefaultEditBuilder> {
-	return UndoRedoManager.create(new DefaultChangeFamily({ jsonValidator: typeboxValidator }));
-}
 
 export interface EncodingTestData<TDecoded, TEncoded> {
 	/**

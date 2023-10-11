@@ -79,7 +79,6 @@ export {
 	Adapters,
 	TreeAdapter,
 	MapTree,
-	LocalCommitSource,
 	forbiddenFieldKindIdentifier,
 } from "./core";
 

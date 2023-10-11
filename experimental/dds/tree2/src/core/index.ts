@@ -177,3 +177,5 @@ export {
 	TreeAdapter,
 	AllowedUpdateType,
 } from "./schema-view";
+
+export { Revertible, RevertibleKind, RevertResult, DiscardResult } from "./undo";

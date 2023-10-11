@@ -13,11 +13,14 @@ import {
 	mintRevisionTag,
 	tagChange,
 	TaggedChange,
-	LocalCommitSource,
 	rebaseBranch,
 	RevisionTag,
 	findCommonAncestor,
 	makeAnonChange,
+	Revertible,
+	RevertibleKind,
+	RevertResult,
+	DiscardResult,
 } from "../core";
 import { EventEmitter, ISubscribable } from "../events";
 import { TransactionStack } from "./transactionStack";
@@ -93,10 +96,8 @@ export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TCha
 
 	/**
 	 * Fired when a revertible change is made to this branch.
-	 *
-	 * TODO pass a revertible to the event
 	 */
-	revertible(type: LocalCommitSource): void;
+	revertible(type: Revertible): void;
 
 	/**
 	 * Fired when this branch forks
@@ -155,13 +156,13 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		change: TChange,
 		revision: RevisionTag,
 	): [change: TChange, newCommit: GraphCommit<TChange>] {
-		return this.applyChange(change, revision, LocalCommitSource.Default);
+		return this.applyChange(change, revision, RevertibleKind.Default);
 	}
 
 	private applyChange(
 		change: TChange,
 		revision: RevisionTag,
-		undoRedoType: LocalCommitSource | undefined,
+		revertibleKind: RevertibleKind | undefined,
 	): [change: TChange, newCommit: GraphCommit<TChange>] {
 		this.assertNotDisposed();
 
@@ -171,10 +172,8 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		});
 
 		// If this is not part of a transaction, emit a revertible event
-		if (this.revertible && undoRedoType !== undefined && !this.isTransacting()) {
-			// TODO remove local commit source and pass a revertible
-			// TODO only do this when undo is enabled
-			this.emit("revertible", undoRedoType);
+		if (this.revertible && revertibleKind !== undefined && !this.isTransacting()) {
+			this.emit("revertible", this.makeSharedTreeRevertible(this.head, revertibleKind));
 		}
 
 		this.emit("change", {
@@ -245,9 +244,10 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		// If this transaction is not nested, emit a revertible event
 		if (this.revertible && !this.isTransacting()) {
-			// TODO return revertible
-			// TODO only do this when undo is enabled
-			this.emit("revertible", LocalCommitSource.Default);
+			this.emit(
+				"revertible",
+				this.makeSharedTreeRevertible(this.head, RevertibleKind.Default),
+			);
 		}
 
 		this.emit("change", {
@@ -312,9 +312,29 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		return [startCommit, commits];
 	}
 
-	// TODO does this need to be a public api? we might be able to return this as a the "revert" method of the revertible
-	public revert(
+	private makeSharedTreeRevertible(
 		commit: GraphCommit<TChange>,
+		kind: RevertibleKind,
+	): Revertible {
+		return {
+			kind,
+			origin: {
+				// This is currently always the case, but we may want to support reverting remote ops
+				isLocal: true,
+			},
+			revert: () => {
+				this.revert(commit, kind);
+				return RevertResult.Success;
+			},
+			// TODO: implement discard
+			discard: () => DiscardResult.Failure,
+		};
+	}
+
+	// TODO does this need to be a public api? we might be able to return this as a the "revert" method of the revertible
+	private revert(
+		commit: GraphCommit<TChange>,
+		revertibleKind: RevertibleKind,
 	): [change: TChange, newCommit: GraphCommit<TChange>] | undefined {
 		assert(!this.isTransacting(), "Undo is not yet supported during transactions");
 
@@ -338,8 +358,13 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			);
 		}
 
-		// TODO remove local commit source
-		return this.applyChange(change, mintRevisionTag(), LocalCommitSource.Undo);
+		return this.applyChange(
+			change,
+			mintRevisionTag(),
+			revertibleKind === RevertibleKind.Default || revertibleKind === RevertibleKind.Redo
+				? RevertibleKind.Undo
+				: RevertibleKind.Redo,
+		);
 	}
 
 	/**
