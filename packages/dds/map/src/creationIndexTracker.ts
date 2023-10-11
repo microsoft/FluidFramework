@@ -6,7 +6,9 @@
 import { RedBlackTree, compareNumbers } from "@fluidframework/merge-tree";
 
 /**
- * A utility class for tracking associations between keys and their creation indices
+ * A utility class for tracking associations between keys and their creation indices.
+ * This is relevant to support map iteration in insertion order, see
+ * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map/@@iterator
  */
 export class CreationIndexTracker {
 	/**
