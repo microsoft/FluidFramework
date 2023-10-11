@@ -40,10 +40,8 @@ export class CreationIndexTracker {
 	 * @param index - The creation index of a key.
 	 */
 	set(key: string, index: number): void {
-		// if (!this.has(key)) {
 		this.indexToKey.put(index, key);
 		this.keyToIndex?.set(key, index);
-		// }
 	}
 
 	/**

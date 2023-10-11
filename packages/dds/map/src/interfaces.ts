@@ -327,6 +327,25 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
  * {@link @fluidframework/datastore#FluidObjectHandle}.
  *
  * For more information, including example usages, see {@link https://fluidframework.com/docs/data-structures/map/}.
+ *
+ * @remarks
+ * Like JS maps, SharedMap orders its iteration methods by key insertion order whenever possible.
+ * However, due to the nature of collaborative editing, two keys might switch order due to concurrent edits to the map.
+ * Consider the scenario starting from an empty SharedMap:
+ * 1. Client 1 sets "foo" -- 2
+ * 2. Client 1 sets "bar" -- 3
+ * 3. Client 1 receives a message from the server that Client 2 has set "bar" to 1
+ * 4. Client 1 receives an 'ack' for each of its two ops.
+ *
+ * From the perspective of a third party, read-only client, the ops happened in the following order:
+ * - Set "bar" to 1
+ * - Set "foo" to 2
+ * - Set "bar" to 3
+ * SharedMap guarantees that iteration orders the keys ["bar", "foo"] at this point.
+ * However, when client 1 initially set "foo" and "bar" but before it received client 2's change,
+ * it would have ordered the keys ["foo", "bar"].
+ *
+ * In general, key ordering is only guaranteed to remain stable if there are no concurrent edits of the same key.
  */
 // TODO: Use `unknown` instead (breaking change).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -571,7 +571,7 @@ export class MapKernel {
 			}
 			serializableMapData[key] = {
 				...serializedValue,
-				index: this.ackedKeysIndexTracker.get(key) as number,
+				index: this.ackedKeysIndexTracker.get(key),
 			};
 		}
 
@@ -588,8 +588,8 @@ export class MapKernel {
 				this.ackedKeysIndexTracker.set(key, ++this.creationIndex);
 			}
 			serializableMapData[key] = {
-				...serializedValue,
-				index: this.ackedKeysIndexTracker.get(key) as number,
+				...serializableValue,
+				index: this.ackedKeysIndexTracker.get(key),
 			};
 		}
 
@@ -1164,9 +1164,9 @@ export class MapKernel {
 			}
 		} else {
 			if (this.pendingSetTracker.has(op.key)) {
-				const index = this.pendingSetTracker.get(op.key)?.[0];
+				const index = this.pendingSetTracker.get(op.key)?.[0] as number;
 				this.pendingSetTracker.delete(op.key);
-				this.localKeysIndexTracker.delete(index as number);
+				this.localKeysIndexTracker.delete(index);
 			}
 		}
 	}
