@@ -177,11 +177,6 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("tree is in correct state when events fire - primitive node deletions", () => {
-		// TODO: once assignment to properties is implemented in EditableTree2, update this test to apply changes like
-		//   root.myString = "new string";
-		// instead of
-		//   root.boxedMyString.content = "new string";
-
 		const initialNumber = 20;
 		const factory = new TypedTreeFactory({
 			jsonValidator: typeboxValidator,
@@ -208,16 +203,13 @@ describe("beforeChange/afterChange events", () => {
 			assert.strictEqual(root.myOptionalNumber, undefined);
 			totalListenerCalls++;
 		});
+
+		// TODO: update to `root.myOptionalNumber = undefined;` once assignment to properties is implemented in EditableTree2
 		root.boxedMyOptionalNumber.content = undefined;
 		assert.strictEqual(totalListenerCalls, 2);
 	});
 
 	it("tree is in correct state when events fire - primitive node additions", () => {
-		// TODO: once assignment to properties is implemented in EditableTree2, update this test to apply changes like
-		//   root.myString = "new string";
-		// instead of
-		//   root.boxedMyString.content = "new string";
-
 		const factory = new TypedTreeFactory({
 			jsonValidator: typeboxValidator,
 			forest: ForestType.Reference,
@@ -244,16 +236,13 @@ describe("beforeChange/afterChange events", () => {
 			assert.strictEqual(root.myOptionalNumber, newNumber);
 			totalListenerCalls++;
 		});
+
+		// TODO: update to `root.myOptionalNumber = newNumber;` once assignment to properties is implemented in EditableTree2
 		root.boxedMyOptionalNumber.content = newNumber;
 		assert.strictEqual(totalListenerCalls, 2);
 	});
 
 	it("tree is in correct state when events fire - primitive node replacements", () => {
-		// TODO: once assignment to properties is implemented in EditableTree2, update this test to apply changes like
-		//   root.myString = "new string";
-		// instead of
-		//   root.boxedMyString.content = "new string";
-
 		const factory = new TypedTreeFactory({
 			jsonValidator: typeboxValidator,
 			forest: ForestType.Reference,
@@ -279,16 +268,13 @@ describe("beforeChange/afterChange events", () => {
 			assert.strictEqual(root.myString, newString);
 			totalListenerCalls++;
 		});
+
+		// TODO: update to `root.myString = newString;` once assignment to properties is implemented in EditableTree2
 		root.boxedMyString.content = newString;
 		assert.strictEqual(totalListenerCalls, 2);
 	});
 
 	it("not emitted by nodes when they are replaced", () => {
-		// TODO: once assignment to properties is implemented in EditableTree2, update this test to apply changes like
-		//   root.myString = "new string";
-		// instead of
-		//   root.boxedMyString.content = "new string";
-
 		const factory = new TypedTreeFactory({
 			jsonValidator: typeboxValidator,
 			forest: ForestType.Reference,
@@ -312,7 +298,9 @@ describe("beforeChange/afterChange events", () => {
 		root.child.on("afterChange", (upPath) => {
 			afterCounter++;
 		});
-		root.boxedChild.content = { myInnerString: "initial string in new child" };
+
+		// TODO: update to `root.child = { myInnerString: "something" };` once assignment to properties is implemented in EditableTree2
+		root.boxedChild.content = { myInnerString: "something" };
 
 		// Events shouldn't have fired on the original myString node
 		assert.strictEqual(beforeCounter, 0);
