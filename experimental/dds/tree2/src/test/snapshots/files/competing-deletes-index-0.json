@@ -254,29 +254,65 @@
                 "content": [
                   [
                     "rootFieldKey",
-                    [
-                      {
-                        "type": "com.fluidframework.leaf.number",
-                        "value": 1
-                      },
-                      {
-                        "type": "com.fluidframework.leaf.number",
-                        "value": 2
-                      },
-                      {
-                        "type": "com.fluidframework.leaf.number",
-                        "value": 3
-                      }
-                    ]
+                    {
+                      "version": 1,
+                      "identifiers": [],
+                      "shapes": [
+                        {
+                          "c": {
+                            "extraFields": 1,
+                            "fields": []
+                          }
+                        },
+                        {
+                          "a": 0
+                        }
+                      ],
+                      "data": [
+                        1,
+                        [
+                          "com.fluidframework.leaf.number",
+                          true,
+                          1,
+                          [],
+                          "com.fluidframework.leaf.number",
+                          true,
+                          2,
+                          [],
+                          "com.fluidframework.leaf.number",
+                          true,
+                          3,
+                          []
+                        ]
+                      ]
+                    }
                   ],
                   [
                     "repair-4",
-                    [
-                      {
-                        "type": "com.fluidframework.leaf.number",
-                        "value": 0
-                      }
-                    ]
+                    {
+                      "version": 1,
+                      "identifiers": [],
+                      "shapes": [
+                        {
+                          "c": {
+                            "extraFields": 1,
+                            "fields": []
+                          }
+                        },
+                        {
+                          "a": 0
+                        }
+                      ],
+                      "data": [
+                        1,
+                        [
+                          "com.fluidframework.leaf.number",
+                          true,
+                          0,
+                          []
+                        ]
+                      ]
+                    }
                   ]
                 ],
                 "encoding": "utf-8"

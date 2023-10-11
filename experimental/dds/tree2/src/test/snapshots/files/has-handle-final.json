@@ -125,15 +125,26 @@
                 "content": [
                   [
                     "rootFieldKey",
-                    [
-                      {
-                        "type": "com.fluidframework.leaf.handle",
-                        "value": {
+                    {
+                      "version": 1,
+                      "identifiers": [],
+                      "shapes": [
+                        {
+                          "c": {
+                            "type": "com.fluidframework.leaf.handle",
+                            "value": true,
+                            "fields": []
+                          }
+                        }
+                      ],
+                      "data": [
+                        0,
+                        {
                           "type": "__fluid_handle__",
                           "url": "/test/test"
                         }
-                      }
-                    ]
+                      ]
+                    }
                   ]
                 ],
                 "encoding": "utf-8"

@@ -342,44 +342,48 @@
                 "content": [
                   [
                     "rootFieldKey",
-                    [
-                      {
-                        "type": "com.fluidframework.leaf.string",
-                        "value": "z"
-                      },
-                      {
-                        "type": "com.fluidframework.leaf.string",
-                        "value": "x"
-                      },
-                      {
-                        "type": "com.fluidframework.leaf.string",
-                        "value": "d"
-                      },
-                      {
-                        "type": "com.fluidframework.leaf.string",
-                        "value": "f"
-                      },
-                      {
-                        "type": "com.fluidframework.leaf.string",
-                        "value": "e"
-                      },
-                      {
-                        "type": "com.fluidframework.leaf.string",
-                        "value": "y"
-                      },
-                      {
-                        "type": "com.fluidframework.leaf.string",
-                        "value": "a"
-                      },
-                      {
-                        "type": "com.fluidframework.leaf.string",
-                        "value": "b"
-                      },
-                      {
-                        "type": "com.fluidframework.leaf.string",
-                        "value": "c"
-                      }
-                    ]
+                    {
+                      "version": 1,
+                      "identifiers": [],
+                      "shapes": [
+                        {
+                          "c": {
+                            "type": "com.fluidframework.leaf.string",
+                            "value": true,
+                            "fields": []
+                          }
+                        },
+                        {
+                          "a": 2
+                        },
+                        {
+                          "d": 0
+                        }
+                      ],
+                      "data": [
+                        1,
+                        [
+                          0,
+                          "z",
+                          0,
+                          "x",
+                          0,
+                          "d",
+                          0,
+                          "f",
+                          0,
+                          "e",
+                          0,
+                          "y",
+                          0,
+                          "a",
+                          0,
+                          "b",
+                          0,
+                          "c"
+                        ]
+                      ]
+                    }
                   ]
                 ],
                 "encoding": "utf-8"

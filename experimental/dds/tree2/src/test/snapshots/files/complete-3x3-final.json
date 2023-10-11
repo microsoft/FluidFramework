@@ -3916,441 +3916,390 @@
                 "content": [
                   [
                     "FieldA",
-                    [
-                      {
-                        "type": "test trees.TestInner",
-                        "fields": {
-                          "FieldA": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "1"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "2"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "3"
-                            }
-                          ],
-                          "FieldB": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "4"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "5"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "6"
-                            }
-                          ],
-                          "FieldC": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "7"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "8"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "9"
-                            }
-                          ]
+                    {
+                      "version": 1,
+                      "identifiers": [
+                        "FieldA",
+                        "FieldB",
+                        "FieldC"
+                      ],
+                      "shapes": [
+                        {
+                          "c": {
+                            "type": "com.fluidframework.leaf.string",
+                            "value": true,
+                            "fields": []
+                          }
+                        },
+                        {
+                          "c": {
+                            "type": "test trees.TestInner",
+                            "value": false,
+                            "fields": [],
+                            "extraFields": 2
+                          }
+                        },
+                        {
+                          "a": 3
+                        },
+                        {
+                          "d": 0
                         }
-                      },
-                      {
-                        "type": "test trees.TestInner",
-                        "fields": {
-                          "FieldA": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "10"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "11"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "12"
-                            }
+                      ],
+                      "data": [
+                        2,
+                        [
+                          1,
+                          [
+                            0,
+                            [
+                              0,
+                              "1",
+                              0,
+                              "2",
+                              0,
+                              "3"
+                            ],
+                            1,
+                            [
+                              0,
+                              "4",
+                              0,
+                              "5",
+                              0,
+                              "6"
+                            ],
+                            2,
+                            [
+                              0,
+                              "7",
+                              0,
+                              "8",
+                              0,
+                              "9"
+                            ]
                           ],
-                          "FieldB": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "13"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "14"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "15"
-                            }
+                          1,
+                          [
+                            0,
+                            [
+                              0,
+                              "10",
+                              0,
+                              "11",
+                              0,
+                              "12"
+                            ],
+                            1,
+                            [
+                              0,
+                              "13",
+                              0,
+                              "14",
+                              0,
+                              "15"
+                            ],
+                            2,
+                            [
+                              0,
+                              "16",
+                              0,
+                              "17",
+                              0,
+                              "18"
+                            ]
                           ],
-                          "FieldC": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "16"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "17"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "18"
-                            }
+                          1,
+                          [
+                            0,
+                            [
+                              0,
+                              "19",
+                              0,
+                              "20",
+                              0,
+                              "21"
+                            ],
+                            1,
+                            [
+                              0,
+                              "22",
+                              0,
+                              "23",
+                              0,
+                              "24"
+                            ],
+                            2,
+                            [
+                              0,
+                              "25",
+                              0,
+                              "26",
+                              0,
+                              "27"
+                            ]
                           ]
-                        }
-                      },
-                      {
-                        "type": "test trees.TestInner",
-                        "fields": {
-                          "FieldA": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "19"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "20"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "21"
-                            }
-                          ],
-                          "FieldB": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "22"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "23"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "24"
-                            }
-                          ],
-                          "FieldC": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "25"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "26"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "27"
-                            }
-                          ]
-                        }
-                      }
-                    ]
+                        ]
+                      ]
+                    }
                   ],
                   [
                     "FieldB",
-                    [
-                      {
-                        "type": "test trees.TestInner",
-                        "fields": {
-                          "FieldA": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "28"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "29"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "30"
-                            }
-                          ],
-                          "FieldB": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "31"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "32"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "33"
-                            }
-                          ],
-                          "FieldC": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "34"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "35"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "36"
-                            }
-                          ]
+                    {
+                      "version": 1,
+                      "identifiers": [
+                        "FieldA",
+                        "FieldB",
+                        "FieldC"
+                      ],
+                      "shapes": [
+                        {
+                          "c": {
+                            "type": "com.fluidframework.leaf.string",
+                            "value": true,
+                            "fields": []
+                          }
+                        },
+                        {
+                          "c": {
+                            "type": "test trees.TestInner",
+                            "value": false,
+                            "fields": [],
+                            "extraFields": 2
+                          }
+                        },
+                        {
+                          "a": 3
+                        },
+                        {
+                          "d": 0
                         }
-                      },
-                      {
-                        "type": "test trees.TestInner",
-                        "fields": {
-                          "FieldA": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "37"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "38"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "39"
-                            }
+                      ],
+                      "data": [
+                        2,
+                        [
+                          1,
+                          [
+                            0,
+                            [
+                              0,
+                              "28",
+                              0,
+                              "29",
+                              0,
+                              "30"
+                            ],
+                            1,
+                            [
+                              0,
+                              "31",
+                              0,
+                              "32",
+                              0,
+                              "33"
+                            ],
+                            2,
+                            [
+                              0,
+                              "34",
+                              0,
+                              "35",
+                              0,
+                              "36"
+                            ]
                           ],
-                          "FieldB": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "40"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "41"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "42"
-                            }
+                          1,
+                          [
+                            0,
+                            [
+                              0,
+                              "37",
+                              0,
+                              "38",
+                              0,
+                              "39"
+                            ],
+                            1,
+                            [
+                              0,
+                              "40",
+                              0,
+                              "41",
+                              0,
+                              "42"
+                            ],
+                            2,
+                            [
+                              0,
+                              "43",
+                              0,
+                              "44",
+                              0,
+                              "45"
+                            ]
                           ],
-                          "FieldC": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "43"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "44"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "45"
-                            }
+                          1,
+                          [
+                            0,
+                            [
+                              0,
+                              "46",
+                              0,
+                              "47",
+                              0,
+                              "48"
+                            ],
+                            1,
+                            [
+                              0,
+                              "49",
+                              0,
+                              "50",
+                              0,
+                              "51"
+                            ],
+                            2,
+                            [
+                              0,
+                              "52",
+                              0,
+                              "53",
+                              0,
+                              "54"
+                            ]
                           ]
-                        }
-                      },
-                      {
-                        "type": "test trees.TestInner",
-                        "fields": {
-                          "FieldA": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "46"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "47"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "48"
-                            }
-                          ],
-                          "FieldB": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "49"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "50"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "51"
-                            }
-                          ],
-                          "FieldC": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "52"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "53"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "54"
-                            }
-                          ]
-                        }
-                      }
-                    ]
+                        ]
+                      ]
+                    }
                   ],
                   [
                     "FieldC",
-                    [
-                      {
-                        "type": "test trees.TestInner",
-                        "fields": {
-                          "FieldA": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "55"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "56"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "57"
-                            }
-                          ],
-                          "FieldB": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "58"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "59"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "60"
-                            }
-                          ],
-                          "FieldC": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "61"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "62"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "63"
-                            }
-                          ]
+                    {
+                      "version": 1,
+                      "identifiers": [
+                        "FieldA",
+                        "FieldB",
+                        "FieldC"
+                      ],
+                      "shapes": [
+                        {
+                          "c": {
+                            "type": "com.fluidframework.leaf.string",
+                            "value": true,
+                            "fields": []
+                          }
+                        },
+                        {
+                          "c": {
+                            "type": "test trees.TestInner",
+                            "value": false,
+                            "fields": [],
+                            "extraFields": 2
+                          }
+                        },
+                        {
+                          "a": 3
+                        },
+                        {
+                          "d": 0
                         }
-                      },
-                      {
-                        "type": "test trees.TestInner",
-                        "fields": {
-                          "FieldA": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "64"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "65"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "66"
-                            }
+                      ],
+                      "data": [
+                        2,
+                        [
+                          1,
+                          [
+                            0,
+                            [
+                              0,
+                              "55",
+                              0,
+                              "56",
+                              0,
+                              "57"
+                            ],
+                            1,
+                            [
+                              0,
+                              "58",
+                              0,
+                              "59",
+                              0,
+                              "60"
+                            ],
+                            2,
+                            [
+                              0,
+                              "61",
+                              0,
+                              "62",
+                              0,
+                              "63"
+                            ]
                           ],
-                          "FieldB": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "67"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "68"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "69"
-                            }
+                          1,
+                          [
+                            0,
+                            [
+                              0,
+                              "64",
+                              0,
+                              "65",
+                              0,
+                              "66"
+                            ],
+                            1,
+                            [
+                              0,
+                              "67",
+                              0,
+                              "68",
+                              0,
+                              "69"
+                            ],
+                            2,
+                            [
+                              0,
+                              "70",
+                              0,
+                              "71",
+                              0,
+                              "72"
+                            ]
                           ],
-                          "FieldC": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "70"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "71"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "72"
-                            }
+                          1,
+                          [
+                            0,
+                            [
+                              0,
+                              "73",
+                              0,
+                              "74",
+                              0,
+                              "75"
+                            ],
+                            1,
+                            [
+                              0,
+                              "76",
+                              0,
+                              "77",
+                              0,
+                              "78"
+                            ],
+                            2,
+                            [
+                              0,
+                              "79",
+                              0,
+                              "80",
+                              0,
+                              "81"
+                            ]
                           ]
-                        }
-                      },
-                      {
-                        "type": "test trees.TestInner",
-                        "fields": {
-                          "FieldA": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "73"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "74"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "75"
-                            }
-                          ],
-                          "FieldB": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "76"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "77"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "78"
-                            }
-                          ],
-                          "FieldC": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "79"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "80"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "81"
-                            }
-                          ]
-                        }
-                      }
-                    ]
+                        ]
+                      ]
+                    }
                   ]
                 ],
                 "encoding": "utf-8"

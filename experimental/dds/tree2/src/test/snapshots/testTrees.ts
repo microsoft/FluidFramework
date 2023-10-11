@@ -10,6 +10,7 @@ import {
 	ISharedTreeView,
 	InitializeAndSchematizeConfiguration,
 	SharedTreeFactory,
+	SummaryEncodeType,
 	runSynchronous,
 } from "../../shared-tree";
 import {
