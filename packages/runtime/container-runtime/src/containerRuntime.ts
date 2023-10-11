@@ -358,12 +358,14 @@ export interface ISummaryRuntimeOptions {
  */
 export interface ICompressionRuntimeOptions {
 	/**
-	 * The minimum size the batch's content size must exceed for the batch to be compressed.
+	 * The value the batch's content size must exceed for the batch to be compressed.
+	 * By default the value is 600 * 1024 = 614400 bytes. If the value is set to `Infinity`, compression will be disabled.
 	 */
 	readonly minimumBatchSizeInBytes: number;
 
 	/**
 	 * The compression algorithm that will be used to compress the op.
+	 * By default the value is `lz4` which is the only compression algorithm currently supported.
 	 */
 	readonly compressionAlgorithm: CompressionAlgorithms;
 }
@@ -391,7 +393,7 @@ export interface IContainerRuntimeOptions {
 	 */
 	readonly flushMode?: FlushMode;
 	/**
-	 * Enables the runtime to compress ops. Compression is disabled when undefined.
+	 * Enables the runtime to compress ops. See {@link ICompressionRuntimeOptions}.
 	 */
 	readonly compressionOptions?: ICompressionRuntimeOptions;
 	/**
