@@ -3,13 +3,131 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/ban-types */
-/* eslint-disable @typescript-eslint/unbound-method */
-import { AllowedTypes, FieldNodeSchema } from "../../typed-schema";
-import { FieldNode, TreeNode } from "../editableTreeTypes";
+import { fail } from "../../../util";
+import {
+	AllowedTypes,
+	FieldNodeSchema,
+	FieldSchema,
+	StructSchema,
+	schemaIsFieldNode,
+	schemaIsLeaf,
+	schemaIsMap,
+	schemaIsStruct,
+} from "../../typed-schema";
+import { FieldKinds } from "../../default-field-kinds";
+import { FieldNode, TreeNode, TypedField, TypedNodeUnion } from "../editableTreeTypes";
 import { LazySequence } from "../lazyField";
-import { getProxyForNode, getTreeNode, setTreeNode } from "./node";
+import { FieldKey } from "../../../core";
 import { List } from "./types";
+
+/** Symbol used to store a private/internal reference to the underlying editable tree node. */
+const treeNodeSym = Symbol("TreeNode");
+
+/** Helper to retrieve the stored tree node. */
+export function getTreeNode(target: object): TreeNode {
+	return (target as any)[treeNodeSym] as TreeNode;
+}
+
+/** Helper to set the stored tree node. */
+export function setTreeNode(target: any, treeNode: TreeNode) {
+	Object.defineProperty(target, treeNodeSym, {
+		value: treeNode,
+		writable: false,
+		enumerable: false,
+		configurable: false,
+	});
+}
+
+// TODO: Implement lifetime.  The proxy that should be cached on their respective nodes and reused.
+// Object identity is tied to the proxy instance (not the target object)
+
+/** Retrieve the associated proxy for the given field. */
+export function getProxyForField<T extends FieldSchema>(field: TypedField<T>) {
+	switch (field.schema.kind) {
+		case FieldKinds.required: {
+			const asValue = field as TypedField<FieldSchema<typeof FieldKinds.required>>;
+
+			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
+			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
+			//       inner field.
+			return getProxyForNode(asValue.boxedContent);
+		}
+		case FieldKinds.optional: {
+			fail(`"not implemented"`);
+		}
+		case FieldKinds.sequence: {
+			fail("not implemented");
+		}
+		default:
+			fail("invalid field kind");
+	}
+}
+
+export function getProxyForNode(treeNode: TreeNode) {
+	const schema = treeNode.schema;
+
+	if (schemaIsMap(schema)) {
+		fail("Map not implemented");
+	}
+	if (schemaIsLeaf(schema)) {
+		return treeNode.value;
+	}
+	if (schemaIsFieldNode(schema)) {
+		return createListProxy(treeNode);
+	}
+	if (schemaIsStruct(schema)) {
+		return createObjectProxy(treeNode, schema);
+	}
+	fail("unrecognized node kind");
+}
+
+export function createObjectProxy<TTypes extends AllowedTypes>(
+	content: TypedNodeUnion<TTypes>,
+	schema: StructSchema,
+) {
+	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an object with the same
+	// 'null prototype' you would get from on object literal '{}' or 'Object.create(null)'.  This is
+	// because 'deepEquals' uses 'Object.getPrototypeOf' as a way to quickly reject objects with different
+	// prototype chains.
+
+	// TODO: Although the target is an object literal, it's still worthwhile to try experimenting with
+	// a dispatch object to see if it improves performance.
+	return new Proxy(
+		{},
+		{
+			get(target, key): unknown {
+				const field = content.tryGetField(key as FieldKey);
+				return field === undefined ? undefined : getProxyForField(field);
+			},
+			set(target, key, value) {
+				// TODO: Implement set
+				return false;
+			},
+			has: (target, key) => {
+				return schema.structFields.has(key as FieldKey);
+			},
+			ownKeys: (target) => {
+				return [...schema.structFields.keys()];
+			},
+			getOwnPropertyDescriptor: (target, key) => {
+				const field = content.tryGetField(key as FieldKey);
+
+				if (field === undefined) {
+					return undefined;
+				}
+
+				const p: PropertyDescriptor = {
+					value: getProxyForField(field),
+					writable: true,
+					enumerable: true,
+					configurable: true, // Must be 'configurable' if property is absent from proxy target.
+				};
+
+				return p;
+			},
+		},
+	) as unknown;
+}
 
 const getField = <TTypes extends AllowedTypes>(target: object) => {
 	const treeNode = getTreeNode(target) as FieldNode<FieldNodeSchema>;
@@ -26,6 +144,9 @@ const staticDispatchMap: PropertyDescriptorMap = {};
 
 // TODO: Historically I've been impressed by V8's ability to inline compositions of functions, but it's
 // still worth seeing if manually inlining 'thisContext' can improve performance.
+
+/* eslint-disable @typescript-eslint/ban-types */
+/* eslint-disable @typescript-eslint/unbound-method */
 
 /**
  * Adds a PropertyDescriptor for the given function to the 'staticDispatchMap'.  The 'thisContext' function
@@ -114,6 +235,9 @@ staticDispatchMap[Symbol.iterator] = {
 	enumerable: false,
 	configurable: false,
 };
+
+/* eslint-enable @typescript-eslint/unbound-method */
+/* eslint-enable @typescript-eslint/ban-types */
 
 const prototype = Object.create(null, staticDispatchMap);
 

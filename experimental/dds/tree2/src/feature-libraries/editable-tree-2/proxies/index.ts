@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export { getProxyForField } from "./node";
+export { getProxyForField } from "./proxies";
 export { List } from "./types";
