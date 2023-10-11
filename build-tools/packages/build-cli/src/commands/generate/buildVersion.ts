@@ -39,8 +39,8 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 		}),
 		packageTypesField: Flags.string({
 			description: "Indicates build type.",
-			options: ["alpha", "beta", "public", "untrimmed"],
-			default: "untrimmed",
+			options: ["alpha", "beta", "public", "untrimmed", "none"],
+			default: "none",
 			env: "PACKAGE_TYPES_FIELD",
 		}),
 		patch: Flags.string({

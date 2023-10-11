@@ -16,15 +16,16 @@ This command is used to compute the version number of Fluid packages. The releas
 ```
 USAGE
   $ flub generate buildVersion --build <value> [-v | --quiet] [--testBuild <value>] [--release release|prerelease|none]
-    [--packageTypesField alpha|beta|public|untrimmed] [--patch <value>] [--base <value>] [--tag <value>] [-i <value>]
+    [--packageTypesField alpha|beta|public|untrimmed|none] [--patch <value>] [--base <value>] [--tag <value>] [-i
+    <value>]
 
 FLAGS
   -i, --includeInternalVersions=<value>  Include Fluid internal versions.
   --base=<value>                         The base version. This will be read from lerna.json/package.json if not
                                          provided.
   --build=<value>                        (required) The CI build number.
-  --packageTypesField=<option>           [default: untrimmed] Indicates build type.
-                                         <options: alpha|beta|public|untrimmed>
+  --packageTypesField=<option>           [default: none] Indicates build type.
+                                         <options: alpha|beta|public|untrimmed|none>
   --patch=<value>                        Indicates the build is a patch build.
   --release=<option>                     Indicates the build is a release build.
                                          <options: release|prerelease|none>
