@@ -10,7 +10,7 @@ import { RedBlackTree, compareNumbers } from "@fluidframework/merge-tree";
  */
 export class CreationIndexTracker {
 	/**
-	 * A red-black tree that maps index to key, ensuring that keys are organized accoridng to
+	 * A red-black tree that maps index to key, ensuring that keys are organized according to
 	 * their creation order
 	 */
 	readonly indexToKey: RedBlackTree<number, string>;
