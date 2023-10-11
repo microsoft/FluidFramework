@@ -214,9 +214,8 @@ export class MapKernel {
 	private readonly pendingSetTracker: Map<string, number[]> = new Map();
 
 	/**
-	 * Entries that have been deleted locally but not yet ack'd from the server. This maintains the record
-	 * of delete op that are pending or yet to be acked from server. This is maintained just to track the locally
-	 * deleted entries and the count of deleted times.
+	 * Entries that have been deleted locally but not yet ack'd.
+	 * The value is the number of pending delete ops for the given map key, *not* a pendingMessageId.
 	 */
 	private readonly pendingDeleteTracker: Map<string, number> = new Map();
 
