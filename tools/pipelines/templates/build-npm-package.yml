@@ -129,7 +129,7 @@ parameters:
   default: false
 
 variables:
-- group: ado-feeds
+  - group: ado-feeds
   - name: isTestBranch
     value: ${{ startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}
     readonly: true
@@ -183,9 +183,6 @@ stages:
           releaseBuildVar: $[variables.releaseBuild]
           ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
             targetBranchName: $(System.PullRequest.TargetBranch)
-        - name: isTestBranch
-          value: ${{ startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}
-          readonly: true
         steps:
         # Setup
         - checkout: self
