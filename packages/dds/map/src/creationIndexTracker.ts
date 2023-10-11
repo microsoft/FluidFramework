@@ -106,10 +106,16 @@ export class CreationIndexTracker {
 		return keys;
 	}
 
+	/**
+	 * @returns The number of keys/items in the tracker.
+	 */
 	size(): number {
 		return this.indexToKey.size();
 	}
 
+	/**
+	 * @returns The maimum creation index or undefined if the tracker is empty.
+	 */
 	max(): number | undefined {
 		return this.indexToKey.max()?.key;
 	}
