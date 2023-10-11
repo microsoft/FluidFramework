@@ -28,7 +28,7 @@ export interface CombinedAppAndProtocolSummary extends ISummaryTree {
  * this is used internally for create new, and single commit summary
  * @internal
  */
-export function isCombinedAppAndProtocolSummary<T extends string>(
+export function isCombinedAppAndProtocolSummary(
 	summary: ISummaryTree | undefined,
 	...optionalRootTrees: string[]
 ): summary is CombinedAppAndProtocolSummary {
