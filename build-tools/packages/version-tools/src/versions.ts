@@ -20,7 +20,7 @@ export function getSimpleVersion(
 	argBuildNum: string,
 	argRelease: boolean,
 	patch: boolean,
-	packageReleaseType: string,
+	packageTypesField: string,
 ) {
 	// Azure DevOp passes in the build number as $(buildNum).$(buildAttempt).
 	// Get the Build number and ignore the attempt number.
@@ -37,10 +37,10 @@ export function getSimpleVersion(
 			let preReleaseIdentifier = "dev";
 
 			switch (true) {
-				case packageReleaseType === "beta":
+				case packageTypesField === "beta":
 					preReleaseIdentifier = "dev-beta-types";
 					break;
-				case packageReleaseType === "alpha":
+				case packageTypesField === "alpha":
 					preReleaseIdentifier = "dev-alpha-types";
 					break;
 				default:
