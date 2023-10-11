@@ -4,7 +4,6 @@
  */
 
 // This file contains several lambdas that do a simple property access
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable import/no-internal-modules */
 
 import { strict as assert } from "node:assert";
@@ -29,10 +28,10 @@ describe("raw structs", () => {
 		});
 		const structSchema = builder.struct("struct", {
 			foo: leaf.number,
-			bar: SchemaBuilder.fieldOptional(leaf.string),
-			baz: SchemaBuilder.fieldSequence(leaf.boolean),
+			bar: builder.optional(leaf.string),
+			baz: builder.sequence(leaf.boolean),
 		});
-		const rootFieldSchema = SchemaBuilder.fieldRequired(structSchema);
+		const rootFieldSchema = SchemaBuilder.required(structSchema);
 		const schema = builder.toDocumentSchema(rootFieldSchema);
 		const context = contextWithContentReadonly({
 			schema,

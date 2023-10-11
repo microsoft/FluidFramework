@@ -28,7 +28,7 @@ const diagramSchema = builder.structRecursive("Diagram", {
 	children: FieldSchema.createUnsafe(FieldKinds.sequence, [() => diagramSchema, ballSchema]),
 });
 
-const rootField = SchemaBuilder.fieldOptional(diagramSchema);
+const rootField = builder.optional(diagramSchema);
 
 // Collect the schema together.
 const schemaData = builder.toDocumentSchema(rootField);

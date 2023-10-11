@@ -61,13 +61,13 @@ export const complexPhoneSchema = builder.struct("Test:Phone-1.0.0", {
 
 export const phonesSchema = builder.fieldNode(
 	"Test:Phones-1.0.0",
-	SchemaBuilder.fieldSequence(
+	builder.sequence([
 		stringSchema,
 		int32Schema,
 		complexPhoneSchema,
 		// array of arrays
 		simplePhonesSchema,
-	),
+	]),
 );
 
 export const addressSchema = builder.struct("Test:Address-1.0.0", {
@@ -94,7 +94,7 @@ export const personSchema = builder.struct("Test:Person-1.0.0", {
 });
 
 export const optionalChildSchema = builder.struct("Test:OptionalChild-1.0.0", {
-	child: SchemaBuilder.fieldOptional(Any),
+	child: SchemaBuilder.optional(Any),
 });
 
 export const arraySchema = builder.fieldNode(

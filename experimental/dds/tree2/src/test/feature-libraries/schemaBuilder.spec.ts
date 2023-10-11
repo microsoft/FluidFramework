@@ -91,7 +91,7 @@ describe("SchemaBuilder", () => {
 		it("Simple", () => {
 			const schemaBuilder = new SchemaBuilder({ scope: "test" });
 			const leafSchema = schemaBuilder.leaf("leaf", ValueSchema.Boolean);
-			const schema = schemaBuilder.toDocumentSchema(SchemaBuilder.fieldOptional(leafSchema));
+			const schema = schemaBuilder.toDocumentSchema(SchemaBuilder.optional(leafSchema));
 
 			assert.equal(schema.treeSchema.size, 1); // "leaf"
 			assert.equal(schema.treeSchema.get(brand("test.leaf")), leafSchema);

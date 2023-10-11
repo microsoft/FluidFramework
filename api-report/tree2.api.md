@@ -1667,9 +1667,9 @@ export function recordDependency(dependent: ObservingDependent | undefined, depe
 const recursiveStruct: TreeSchema<"Test Recursive Domain.struct", {
 structFields: {
 readonly recursive: FieldSchema<Optional, readonly [() => TreeSchema<"Test Recursive Domain.struct", any>]>;
-readonly number: FieldSchema<Required_2, readonly [TreeSchema<"com.fluidframework.leaf.number", {
+readonly number: TreeSchema<"com.fluidframework.leaf.number", {
 leafValue: import("..").ValueSchema.Number;
-}>]>;
+}>;
 };
 }>;
 
@@ -1776,9 +1776,6 @@ export class SchemaBuilder<TScope extends string = string, TName extends number 
             [""]: T;
         };
     }>;
-    static fieldOptional<const T extends AllowedTypes>(...allowedTypes: T): FieldSchema<typeof FieldKinds.optional, T>;
-    static fieldRequired<const T extends AllowedTypes>(...allowedTypes: T): FieldSchema<typeof FieldKinds.required, T>;
-    static fieldSequence<const T extends AllowedTypes>(...t: T): FieldSchema<typeof FieldKinds.sequence, T>;
     leaf<Name extends TName, const T extends ValueSchema>(name: Name, t: T): TreeSchema<`${TScope}.${Name}`, {
         leafValue: T;
     }>;
@@ -1788,6 +1785,12 @@ export class SchemaBuilder<TScope extends string = string, TName extends number 
     mapRecursive<Name extends TName, const T extends Unenforced<ImplicitFieldSchema>>(name: Name, t: T): TreeSchema<`${TScope}.${Name}`, {
         mapFields: T;
     }>;
+    static optional<const T extends ImplicitAllowedTypes>(allowedTypes: T): FieldSchema<typeof FieldKinds.optional, NormalizeAllowedTypes<T>>;
+    readonly optional: typeof SchemaBuilder.optional;
+    static required<const T extends ImplicitAllowedTypes>(allowedTypes: T): FieldSchema<typeof FieldKinds.required, NormalizeAllowedTypes<T>>;
+    readonly required: typeof SchemaBuilder.required;
+    static sequence<const T extends ImplicitAllowedTypes>(allowedTypes: T): FieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>;
+    readonly sequence: typeof SchemaBuilder.sequence;
     struct<const Name extends TName, const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>(name: Name, t: T): TreeSchema<`${TScope}.${Name}`, {
         structFields: {
             [key in keyof T]: NormalizeField_2<T[key], DefaultFieldKind>;
@@ -1813,7 +1816,6 @@ export class SchemaBuilderBase<TScope extends string, TName extends number | str
     static fieldRecursive<Kind extends FieldKind, T extends FlexList<Unenforced<TreeSchema>>>(kind: Kind, ...allowedTypes: T): FieldSchema<Kind, T>;
     finalize(): SchemaLibrary;
     readonly name: string;
-    // (undocumented)
     readonly scope: TScope;
     // (undocumented)
     protected scoped<Name extends TName>(name: Name): `${TScope}.${Name}` & TreeSchemaIdentifier;

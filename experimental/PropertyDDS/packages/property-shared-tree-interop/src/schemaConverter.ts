@@ -134,7 +134,7 @@ function buildTreeSchema(
 					!fields.has(nodePropertyField),
 					0x712 /* name collision for nodePropertyField */,
 				);
-				fields.set(nodePropertyField, SchemaBuilder.fieldRequired(nodePropertySchema));
+				fields.set(nodePropertyField, SchemaBuilder.required(nodePropertySchema));
 			}
 			const fieldsObject = mapToObject(fields);
 			cache.treeSchema = builder.struct(typeid, fieldsObject);
@@ -312,7 +312,7 @@ const builtinBuilder = new SchemaBuilder({
 // to be put into one library like this.
 export const nodePropertySchema = builtinBuilder.map(
 	nodePropertyType,
-	SchemaBuilder.fieldOptional(Any),
+	builtinBuilder.optional(Any),
 );
 const builtinLibrary = builtinBuilder.finalize();
 

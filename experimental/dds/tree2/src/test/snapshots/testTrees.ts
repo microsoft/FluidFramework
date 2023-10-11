@@ -35,8 +35,8 @@ import { leaf } from "../../domains";
 const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
 
 const builder = new SchemaBuilder({ scope: "test trees", libraries: [leaf.library] });
-const rootNodeSchema = builder.map("TestInner", SchemaBuilder.fieldSequence(Any));
-const testSchema = builder.toDocumentSchema(SchemaBuilder.fieldSequence(Any));
+const rootNodeSchema = builder.map("TestInner", SchemaBuilder.sequence(Any));
+const testSchema = builder.toDocumentSchema(SchemaBuilder.sequence(Any));
 
 function generateCompleteTree(
 	fields: FieldKey[],
@@ -275,7 +275,7 @@ export function generateTestTrees() {
 					libraries: [leaf.library],
 				});
 				const docSchema = innerBuilder.toDocumentSchema(
-					SchemaBuilder.fieldOptional(leaf.handle),
+					SchemaBuilder.optional(leaf.handle),
 				);
 
 				const config = {
@@ -308,7 +308,7 @@ export function generateTestTrees() {
 					FieldSchema.createUnsafe(FieldKinds.sequence, [() => seqMapSchema]),
 				);
 				const docSchema = innerBuilder.toDocumentSchema(
-					SchemaBuilder.fieldSequence(seqMapSchema),
+					SchemaBuilder.sequence(seqMapSchema),
 				);
 
 				const config = {
