@@ -72,7 +72,7 @@ describe("List", () => {
 
 	/** Helper that creates an array of the given length, populating it with ["A", "B", ..etc..] */
 	function createArray(length: number): string[] {
-		return Array.from({ length }).map((_, i) => String.fromCodePoint(0x41 + i));
+		return Array.from({ length }, (_, i) => String.fromCodePoint(0x41 + i));
 	}
 
 	/** Helper that creates a new SharedTree with the test schema and returns the root proxy. */
@@ -147,9 +147,13 @@ describe("List", () => {
 			// 'deepEquals' enumerates and compares the own properties of objects.
 			describe("Object.getOwnPropertyDescriptors", () => {
 				for (let n = 0; n < 3; n++) {
-					test0("Object.getOwnPropertyDescriptors", (target) => {
-						return Object.getOwnPropertyDescriptors(target);
-					});
+					test0(
+						"Object.getOwnPropertyDescriptors",
+						(target) => {
+							return Object.getOwnPropertyDescriptors(target);
+						},
+						createArray(n),
+					);
 				}
 			});
 		});
@@ -293,7 +297,9 @@ describe("List", () => {
 				});
 			}
 
-			// TODO: Concat currently does not preserve the [Symbol.isConcatSpreadable] property.
+			// TODO: The List proxy implement does not currently allow [Symbol.isConcatSpreadable] to be set.
+			//       This will need to be fixed before we can pass the suite of 'concat' tests.
+			//       (Otherwise, concat() works as expected with the default isConcatSpreadable behavior.)
 			describe.skip("concat()", () => {
 				const setSpreadable = (
 					target: readonly string[],

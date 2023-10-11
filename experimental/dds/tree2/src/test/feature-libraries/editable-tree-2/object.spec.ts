@@ -71,6 +71,7 @@ function testObjectLike(testCases: TestCase[]) {
 		});
 
 		describe("Object.values", () => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			test1((subject) => Object.values(subject));
 		});
 
@@ -121,7 +122,6 @@ const tcs: TestCase[] = [
 		schema: (() => {
 			const _ = new SchemaBuilder({ scope: "test", libraries: [leaf.library] });
 			const $ = _.struct("empty", {});
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return _.toDocumentSchema($);
 		})(),
 		initialTree: {},
@@ -134,7 +134,6 @@ const tcs: TestCase[] = [
 				number: leaf.number,
 				string: leaf.string,
 			});
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return _.toDocumentSchema($);
 		})(),
 		initialTree: {
@@ -151,7 +150,6 @@ const tcs: TestCase[] = [
 				number: SchemaBuilder.fieldOptional(leaf.number),
 				string: SchemaBuilder.fieldOptional(leaf.string),
 			});
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return _.toDocumentSchema($);
 		})(),
 		initialTree: {},
@@ -166,7 +164,6 @@ const tcs: TestCase[] = [
 				nested: inner,
 			});
 
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return _.toDocumentSchema($);
 		})(),
 		initialTree: { nested: {} },
@@ -175,7 +172,6 @@ const tcs: TestCase[] = [
 		schema: (() => {
 			const _ = new SchemaBuilder({ scope: "test", libraries: [leaf.library] });
 			const $ = _.fieldNode("List<string> len(0)", SchemaBuilder.fieldSequence(leaf.string));
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return _.toDocumentSchema($);
 		})(),
 		initialTree: [],
@@ -184,7 +180,6 @@ const tcs: TestCase[] = [
 		schema: (() => {
 			const _ = new SchemaBuilder({ scope: "test", libraries: [leaf.library] });
 			const $ = _.fieldNode("List<string> len(1)", SchemaBuilder.fieldSequence(leaf.string));
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return _.toDocumentSchema($);
 		})(),
 		initialTree: ["A"],
@@ -193,7 +188,6 @@ const tcs: TestCase[] = [
 		schema: (() => {
 			const _ = new SchemaBuilder({ scope: "test", libraries: [leaf.library] });
 			const $ = _.fieldNode("List<string> len(2)", SchemaBuilder.fieldSequence(leaf.string));
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return _.toDocumentSchema($);
 		})(),
 		initialTree: ["A", "B"],
