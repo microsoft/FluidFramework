@@ -158,6 +158,7 @@ export {
 	fieldApiPrefixes,
 	validateStructFieldName,
 	Unenforced,
+	AllowedTypeSet,
 } from "./typed-schema";
 
 export { SchemaBuilderBase, SchemaLibrary } from "./schemaBuilderBase";
