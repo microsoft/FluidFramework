@@ -128,9 +128,9 @@ parameters:
   type: boolean
   default: false
 
-  - name: loggerPackage
-    type: string
-    default: '@ff-internal/aria-logger'
+- name: loggerPackage
+  type: string
+  default: '@ff-internal/aria-logger'
 
 variables:
   # We use 'chalk' to colorize output, which auto-detects color support in the
