@@ -720,11 +720,17 @@ export abstract class FluidDataStoreContext
 		}
 	}
 
-	public submitSignal(type: string, content: any) {
+	/**
+	 * Submits the signal to be sent to other clients.
+	 * @param type - Type of the signal.
+	 * @param content - Content of the signal.
+	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
+	 */
+	public submitSignal(type: string, content: any, targetClientId?: string) {
 		this.verifyNotClosed("submitSignal");
 
 		assert(!!this.channel, 0x147 /* "Channel must exist on submitting signal" */);
-		return this._containerRuntime.submitDataStoreSignal(this.id, type, content);
+		return this._containerRuntime.submitDataStoreSignal(this.id, type, content, targetClientId);
 	}
 
 	/**
