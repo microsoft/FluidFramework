@@ -61,46 +61,46 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 	public constructor(
 		public readonly id: string,
 		private readonly runtime: IFluidDataStoreRuntime,
-		private readonly oldFactory: LegacySharedTreeFactory, // Should this be a legacy shared tree factory only?
-		private readonly newFactory: SharedTreeFactory, // Should this be a new shared tree factory only?
+		private readonly legacyTreeFactory: LegacySharedTreeFactory,
+		private readonly newTreeFactory: SharedTreeFactory,
 		private readonly populateNewSharedObjectFn: (
-			oldSharedObject: LegacySharedTree,
-			newSharedObject: ISharedTree,
+			legacyTree: LegacySharedTree,
+			newTree: ISharedTree,
 		) => void,
 	) {
 		super();
 	}
 
-	private _oldTree: LegacySharedTree | undefined;
-	private get oldTree(): LegacySharedTree {
-		assert(this._oldTree !== undefined, "Old tree not initialized");
-		return this._oldTree;
+	private _legacyTree: LegacySharedTree | undefined;
+	private get legacyTree(): LegacySharedTree {
+		assert(this._legacyTree !== undefined, "Old tree not initialized");
+		return this._legacyTree;
 	}
 
 	// This is the magic button that tells this Spanner and all other Spanners to swap to the new Shared Object.
 	public submitMigrateOp(): void {
 		// These console logs are for compilation purposes
 		console.log(this.runtime);
-		console.log(this.oldFactory);
-		console.log(this.newFactory);
+		console.log(this.legacyTreeFactory);
+		console.log(this.newTreeFactory);
 		console.log(this.populateNewSharedObjectFn);
 		throw new Error("Method not implemented.");
 	}
 
-	public get target(): LegacySharedTree | ISharedTree {
-		return this.oldTree;
+	public get currentTree(): LegacySharedTree | ISharedTree {
+		return this.legacyTree;
 	}
 
 	public async load(services: IChannelServices): Promise<void> {
-		this._oldTree = (await this.oldFactory.load(
+		this._legacyTree = (await this.legacyTreeFactory.load(
 			this.runtime,
 			this.id,
 			services,
-			this.oldFactory.attributes,
+			this.legacyTreeFactory.attributes,
 		)) as LegacySharedTree;
 	}
 	public create(): void {
-		this._oldTree = this.oldFactory.create(this.runtime, this.id);
+		this._legacyTree = this.legacyTreeFactory.create(this.runtime, this.id);
 	}
 
 	public attributes!: IChannelAttributes;

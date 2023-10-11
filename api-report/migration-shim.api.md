@@ -29,15 +29,15 @@ export interface IMigrationEvent extends IEvent {
 
 // @public
 export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements IChannel {
-    constructor(id: string, runtime: IFluidDataStoreRuntime, oldFactory: SharedTreeFactory, // Should this be a legacy shared tree factory only?
-    newFactory: SharedTreeFactory_2, // Should this be a new shared tree factory only?
-    populateNewSharedObjectFn: (oldSharedObject: SharedTree, newSharedObject: ISharedTree) => void);
+    constructor(id: string, runtime: IFluidDataStoreRuntime, legacyTreeFactory: SharedTreeFactory, newTreeFactory: SharedTreeFactory_2, populateNewSharedObjectFn: (legacyTree: SharedTree, newTree: ISharedTree) => void);
     // (undocumented)
     attributes: IChannelAttributes;
     // (undocumented)
     connect(services: IChannelServices): void;
     // (undocumented)
     create(): void;
+    // (undocumented)
+    get currentTree(): SharedTree | ISharedTree;
     // (undocumented)
     getAttachSummary(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined): ISummaryTreeWithStats;
     // (undocumented)
@@ -56,8 +56,6 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
     submitMigrateOp(): void;
     // (undocumented)
     summarize(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined): Promise<ISummaryTreeWithStats>;
-    // (undocumented)
-    get target(): SharedTree | ISharedTree;
 }
 
 // @public @sealed
