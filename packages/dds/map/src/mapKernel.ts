@@ -204,10 +204,7 @@ export class MapKernel {
 	private readonly ackedKeysIndexTracker = new CreationIndexTracker();
 
 	/**
-	 * The object to track the creation index of local created entries but uncommitted yet, following
-	 * the order of pending message ids.
-	 *
-	 * It does not require the assistance of the `keyToIndex` map.
+	 * Similar to {@link ackedKeysIndexTracker}, but for local (unacked) entries.
 	 */
 	private readonly localKeysIndexTracker = new CreationIndexTracker(false);
 
