@@ -230,6 +230,7 @@ export function createSharedTreeView(args?: {
 	schema?: StoredSchemaRepository;
 	forest?: IEditableForest;
 	events?: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>;
+	revertible?: true;
 	removedTrees?: DetachedFieldIndex;
 }): SharedTreeView {
 	const schema = args?.schema ?? new InMemoryStoredSchemaRepository();
@@ -244,6 +245,7 @@ export function createSharedTreeView(args?: {
 				revision: assertIsRevisionTag("00000000-0000-4000-8000-000000000000"),
 			},
 			changeFamily,
+			args?.revertible,
 		);
 	const context = getEditableTreeContext(forest, schema, branch.editor);
 	const events = args?.events ?? createEmitter();

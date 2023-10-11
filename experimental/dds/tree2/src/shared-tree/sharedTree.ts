@@ -203,6 +203,13 @@ export interface SharedTreeOptions extends Partial<ICodecOptions> {
 	 * The {@link ForestType} indicating which forest type should be created for the SharedTree.
 	 */
 	forest?: ForestType;
+	/**
+	 * Indicates whether edits made on this {@link ISharedTree} and all of its branches are revertible.
+	 * If true, the {@link ISharedTree} will store additional data to support reverting edits and
+	 * emit revertible events that provide a way to revert edits and discard the additional data
+	 * when it's no longer needed.
+	 */
+	revertible?: true;
 }
 
 /**
@@ -223,6 +230,7 @@ export enum ForestType {
 export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
 	jsonValidator: noopValidator,
 	forest: ForestType.Reference,
+	revertible: true,
 };
 
 /**

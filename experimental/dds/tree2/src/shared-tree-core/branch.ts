@@ -122,14 +122,13 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	/**
 	 * Construct a new branch.
 	 * @param head - the head of the branch
-	 * @param rebaser - the rebaser used for rebasing and merging commits across branches
 	 * @param changeFamily - determines the set of changes that this branch can commit
-	 * @param repairDataStoreProvider - an optional provider of {@link RepairDataStore}s to use when generating
-	 * repair data. This must be provided in order to use features that require repair data such as undo/redo or constraints.
+	 * @param revertible - if true, this branch will emit revertible events when changes are made to it
 	 */
 	public constructor(
 		private head: GraphCommit<TChange>,
 		public readonly changeFamily: ChangeFamily<TEditor, TChange>,
+		private readonly revertible?: true,
 	) {
 		super();
 		this.editor = this.changeFamily.buildEditor((change) =>
@@ -172,7 +171,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		});
 
 		// If this is not part of a transaction, emit a revertible event
-		if (undoRedoType !== undefined && !this.isTransacting()) {
+		if (this.revertible && undoRedoType !== undefined && !this.isTransacting()) {
 			// TODO remove local commit source and pass a revertible
 			// TODO only do this when undo is enabled
 			this.emit("revertible", undoRedoType);
@@ -245,7 +244,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		});
 
 		// If this transaction is not nested, emit a revertible event
-		if (!this.isTransacting()) {
+		if (this.revertible && !this.isTransacting()) {
 			// TODO return revertible
 			// TODO only do this when undo is enabled
 			this.emit("revertible", LocalCommitSource.Default);
