@@ -2,13 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+/* eslint-disable tsdoc/syntax */
 
 import { RedBlackTree, compareNumbers } from "@fluidframework/merge-tree";
 
 /**
  * A utility class for tracking associations between keys and their creation indices.
  * This is relevant to support map iteration in insertion order, see
- * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map/@@iterator
+ * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Iterator/@@iterator
  */
 export class CreationIndexTracker {
 	/**

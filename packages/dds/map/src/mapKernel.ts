@@ -961,8 +961,8 @@ export class MapKernel {
 		// we need to ack this op
 		const pendingSetIds = this.pendingSetTracker.get(op.key);
 		if (pendingSetIds !== undefined && pendingSetIds[0] === pendingMessageId) {
-		// If the message id of the "earliest" existing pending op matches the current pendingMessageId,
-		// we need to ack this op. This is true iff there are no pending deletes.
+			if (!this.ackedKeysIndexTracker.has(op.key)) {
+				this.ackedKeysIndexTracker.set(op.key, ++this.creationIndex);
 			}
 
 			pendingSetIds.shift();
