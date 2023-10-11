@@ -3,9 +3,6 @@
  * Licensed under the MIT License.
  */
 import { AsyncPriorityQueue } from "async";
-import registerDebug from "debug";
-
-import { defaultLogger } from "../../common/logging";
 import { BuildPackage, BuildResult } from "../buildGraph";
 import { LeafTask } from "./leaf/leafTask";
 import { Task, TaskExec } from "./task";
