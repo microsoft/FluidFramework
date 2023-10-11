@@ -9,27 +9,6 @@ import { leaf } from "../../../domains";
 
 import { createTreeView, pretty } from "./utils";
 
-const builder = new SchemaBuilder({ scope: "test", libraries: [leaf.library] });
-
-export const stringList = builder.fieldNode(
-	"List<string>",
-	SchemaBuilder.fieldSequence(leaf.string),
-);
-
-export const numberList = builder.fieldNode(
-	"List<number>",
-	SchemaBuilder.fieldSequence(leaf.number),
-);
-
-// TODO: Using separate arrays for 'numbers' and 'strings' is a workaround for
-//       UnboxNodeUnion not unboxing unions.
-const root = builder.struct("root", {
-	strings: SchemaBuilder.fieldRequired(stringList),
-	numbers: SchemaBuilder.fieldRequired(numberList),
-});
-
-const schema = builder.toDocumentSchema(SchemaBuilder.fieldRequired(root));
-
 interface TestCase {
 	initialTree: object;
 	schema: TypedSchemaCollection;
@@ -146,9 +125,9 @@ const tcs: TestCase[] = [
 		schema: (() => {
 			const _ = new SchemaBuilder({ scope: "test", libraries: [leaf.library] });
 			const $ = _.struct("optional", {
-				boolean: SchemaBuilder.fieldOptional(leaf.boolean),
-				number: SchemaBuilder.fieldOptional(leaf.number),
-				string: SchemaBuilder.fieldOptional(leaf.string),
+				boolean: _.optional(leaf.boolean),
+				number: _.optional(leaf.number),
+				string: _.optional(leaf.string),
 			});
 			return _.toDocumentSchema($);
 		})(),
@@ -171,7 +150,7 @@ const tcs: TestCase[] = [
 	{
 		schema: (() => {
 			const _ = new SchemaBuilder({ scope: "test", libraries: [leaf.library] });
-			const $ = _.fieldNode("List<string> len(0)", SchemaBuilder.fieldSequence(leaf.string));
+			const $ = _.fieldNode("List<string> len(0)", _.sequence(leaf.string));
 			return _.toDocumentSchema($);
 		})(),
 		initialTree: [],
@@ -179,7 +158,7 @@ const tcs: TestCase[] = [
 	{
 		schema: (() => {
 			const _ = new SchemaBuilder({ scope: "test", libraries: [leaf.library] });
-			const $ = _.fieldNode("List<string> len(1)", SchemaBuilder.fieldSequence(leaf.string));
+			const $ = _.fieldNode("List<string> len(1)", _.sequence(leaf.string));
 			return _.toDocumentSchema($);
 		})(),
 		initialTree: ["A"],
@@ -187,7 +166,7 @@ const tcs: TestCase[] = [
 	{
 		schema: (() => {
 			const _ = new SchemaBuilder({ scope: "test", libraries: [leaf.library] });
-			const $ = _.fieldNode("List<string> len(2)", SchemaBuilder.fieldSequence(leaf.string));
+			const $ = _.fieldNode("List<string> len(2)", _.sequence(leaf.string));
 			return _.toDocumentSchema($);
 		})(),
 		initialTree: ["A", "B"],
@@ -195,22 +174,3 @@ const tcs: TestCase[] = [
 ];
 
 testObjectLike(tcs);
-
-describe("Object", () => {
-	function createTree() {
-		// Consider 'initializeTreeWithContent' for readonly tests?
-		return createTreeView(schema, { numbers: [0], strings: ["a"] });
-	}
-
-	it("works", () => {
-		const tree = createTree();
-		const obj = tree.root2(schema);
-		const list = obj.strings;
-		assert.deepEqual(list, list);
-		assert.deepEqual(list, ["a"]);
-		assert.deepEqual(obj, {
-			numbers: [0],
-			strings: ["a"],
-		});
-	});
-});

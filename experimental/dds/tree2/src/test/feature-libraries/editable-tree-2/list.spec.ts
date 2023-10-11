@@ -12,26 +12,20 @@ import { createTreeView } from "./utils";
 
 const builder = new SchemaBuilder({ scope: "test", libraries: [leaf.library] });
 
-export const stringList = builder.fieldNode(
-	"List<string>",
-	SchemaBuilder.fieldSequence(leaf.string),
-);
+export const stringList = builder.fieldNode("List<string>", builder.sequence(leaf.string));
 
-export const numberList = builder.fieldNode(
-	"List<number>",
-	SchemaBuilder.fieldSequence(leaf.number),
-);
+export const numberList = builder.fieldNode("List<number>", builder.sequence(leaf.number));
 
 // TODO: Using separate arrays for 'numbers' and 'strings' is a workaround for
 //       UnboxNodeUnion not unboxing unions.
 const root = builder.struct("root", {
-	strings: SchemaBuilder.fieldRequired(stringList),
-	numbers: SchemaBuilder.fieldRequired(numberList),
+	strings: stringList,
+	numbers: numberList,
 });
 
 type Root = TypedNode<typeof root>;
 
-const schema = builder.toDocumentSchema(SchemaBuilder.fieldRequired(root));
+const schema = builder.toDocumentSchema(root);
 
 describe("List", () => {
 	/** Similar to JSON stringify, but preserves 'undefined' and leaves numbers as-is. */

@@ -9,6 +9,7 @@ import { isAssignableTo, requireAssignableTo, requireFalse, requireTrue } from "
 import {
 	Any,
 	FieldNodeSchema,
+	FieldSchema,
 	LeafSchema,
 	MapSchema,
 	StructSchema,
@@ -23,12 +24,12 @@ import { FieldKinds, SchemaBuilder } from "../../../feature-libraries";
 describe("typedTreeSchema", () => {
 	const builder = new SchemaBuilder({ scope: "test", libraries: [jsonSchema] });
 	const emptyStruct = builder.struct("empty", {});
-	const basicStruct = builder.struct("basicStruct", { foo: SchemaBuilder.fieldOptional(Any) });
-	const basicFieldNode = builder.fieldNode("field", SchemaBuilder.fieldOptional(Any));
+	const basicStruct = builder.struct("basicStruct", { foo: builder.optional(Any) });
+	const basicFieldNode = builder.fieldNode("field", builder.optional(Any));
 	// TODO: once schema kinds are separated, test struct with EmptyKey.
 
 	const recursiveStruct = builder.structRecursive("recursiveStruct", {
-		foo: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => recursiveStruct),
+		foo: FieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveStruct]),
 	});
 
 	it("schema is", () => {

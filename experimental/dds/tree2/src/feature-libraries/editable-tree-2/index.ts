@@ -26,6 +26,7 @@ export {
 } from "./editableTreeTypes";
 
 export { getProxyForField, List } from "./proxies";
+export { createRawStruct, rawStructErrorMessage, nodeContent } from "./rawStruct";
 
 export {
 	visitBipartiteIterableTree,
