@@ -59,14 +59,14 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 	// Check the various ways to refer to child types produce the same results
 	{
-		const numberField1 = SchemaBuilder.field(required, numberSchema);
+		const numberField1 = FieldSchema.create(required, [numberSchema]);
 		const numberField2 = SchemaBuilder.fieldRequired(numberSchema);
-		const numberField3 = SchemaBuilder.fieldRecursive(required, numberSchema);
+		const numberField3 = FieldSchema.createUnsafe(required, [numberSchema]);
 		type check1_ = requireAssignableTo<typeof numberField1, typeof numberField2>;
 		type check2_ = requireAssignableTo<typeof numberField2, typeof numberField3>;
 		type check3_ = requireAssignableTo<typeof numberField3, typeof numberField1>;
 
-		const numberFieldLazy = SchemaBuilder.field(required, () => numberSchema);
+		const numberFieldLazy = FieldSchema.create(required, [() => numberSchema]);
 		type NonLazy = InternalTypedSchemaTypes.FlexListToNonLazyArray<
 			typeof numberFieldLazy.allowedTypes
 		>;
@@ -89,7 +89,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 	// Recursive case:
 	const boxSchema = builder.structRecursive("box", {
-		children: SchemaBuilder.fieldRecursive(sequence, ballSchema, () => boxSchema),
+		children: FieldSchema.createUnsafe(sequence, [ballSchema, () => boxSchema]),
 	});
 
 	{
@@ -148,7 +148,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 		// A concrete example for the "x" field:
 		type BallXFieldInfo = typeof ballSchema.structFieldsObject.x;
 		type BallXFieldTypes = BallXFieldInfo["allowedTypes"];
-		type check_ = requireAssignableTo<BallXFieldTypes, [typeof numberSchema]>;
+		type check_ = requireAssignableTo<BallXFieldTypes, readonly [typeof numberSchema]>;
 
 		type Child = AllowedTypesToTypedTrees<ApiMode.Flexible, BallXFieldTypes>;
 
@@ -285,7 +285,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 	{
 		const builder2 = new SchemaBuilder({ scope: "SchemaAwareRecursiveTest" });
 		const rec = builder2.structRecursive("rec", {
-			x: SchemaBuilder.fieldRecursive(optional, () => rec),
+			x: FieldSchema.createUnsafe(optional, [() => rec]),
 		});
 
 		type RecObjectSchema = typeof rec;
@@ -464,7 +464,7 @@ describe("SchemaAware Editing", () => {
 			children: SchemaBuilder.fieldSequence(leaf.string),
 		});
 		const schema = builder.toDocumentSchema(
-			SchemaBuilder.field(FieldKinds.required, rootNodeSchema),
+			FieldSchema.create(FieldKinds.required, [rootNodeSchema]),
 		);
 		const view = createSharedTreeView().schematize({
 			schema,

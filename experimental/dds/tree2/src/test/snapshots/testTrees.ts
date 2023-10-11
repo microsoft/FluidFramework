@@ -12,7 +12,13 @@ import {
 	SharedTreeFactory,
 	runSynchronous,
 } from "../../shared-tree";
-import { Any, FieldKinds, SchemaBuilder, singleTextCursor } from "../../feature-libraries";
+import {
+	Any,
+	FieldKinds,
+	FieldSchema,
+	SchemaBuilder,
+	singleTextCursor,
+} from "../../feature-libraries";
 import { typeboxValidator } from "../../external-utilities";
 import {
 	TestTreeProviderLite,
@@ -299,7 +305,7 @@ export function generateTestTrees() {
 				});
 				const seqMapSchema = innerBuilder.mapRecursive(
 					"SeqMap",
-					SchemaBuilder.fieldRecursive(FieldKinds.sequence, () => seqMapSchema),
+					FieldSchema.createUnsafe(FieldKinds.sequence, [() => seqMapSchema]),
 				);
 				const docSchema = innerBuilder.toDocumentSchema(
 					SchemaBuilder.fieldSequence(seqMapSchema),

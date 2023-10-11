@@ -48,7 +48,7 @@ const emptySchema = new SchemaBuilder({
 		rejectEmpty: false,
 		rejectForbidden: false,
 	},
-}).toDocumentSchema(SchemaBuilder.field(FieldKinds.forbidden));
+}).toDocumentSchema(FieldSchema.empty);
 
 function expectSchema(actual: SchemaData, expected: SchemaData): void {
 	// Check schema match
