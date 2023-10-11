@@ -85,7 +85,7 @@ export function makeTree(context: Context, cursor: ITreeSubscriptionCursor): Laz
 	const schema = context.schema.treeSchema.get(cursor.type) ?? fail("missing schema");
 	const output = buildSubclass(context, schema, cursor, anchorNode, anchor);
 	anchorNode.slots.set(lazyTreeSlot, output);
-	anchorNode.on("afterDelete", cleanupTree);
+	anchorNode.on("afterDestroy", cleanupTree);
 	return output;
 }
 
@@ -146,7 +146,7 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 		assert(cursor.mode === CursorLocationType.Nodes, 0x783 /* must be in nodes mode */);
 
 		anchorNode.slots.set(lazyTreeSlot, this);
-		this.#removeDeleteCallback = anchorNode.on("afterDelete", cleanupTree);
+		this.#removeDeleteCallback = anchorNode.on("afterDestroy", cleanupTree);
 
 		assert(
 			this.context.schema.treeSchema.get(this.schema.name) !== undefined,
@@ -235,7 +235,7 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 				// Additionally this approach makes it possible for a user to take an EditableTree node, get its parent, check its schema, down cast based on that, then edit that detached field (ex: removing the node in it).
 				// This MIGHT work properly with existing merge resolution logic (it must keep client in sync and be unable to violate schema), but this either needs robust testing or to be explicitly banned (error before s3ending the op).
 				// Issues like replacing a node in the a removed sequenced then undoing the remove could easily violate schema if not everything works exactly right!
-				fieldSchema = new FieldSchema(FieldKinds.sequence, [Any]);
+				fieldSchema = FieldSchema.create(FieldKinds.sequence, [Any]);
 			}
 		} else {
 			cursor.exitField();
@@ -370,11 +370,11 @@ export class LazyMap<TSchema extends MapSchema>
 	// TODO: when appropriate add setter that delegates to field kind specific setter.
 	// public set(key: FieldKey, content: FlexibleFieldContent<TSchema["mapFields"]>): void {
 	// 	const field = this.get(key);
-	// 	if (field.is(SchemaBuilder.fieldOptional(...this.schema.mapFields.allowedTypes))) {
+	// 	if (field.is(SchemaBuilder.optional(this.schema.mapFields.allowedTypes))) {
 	// 		field.setContent(content);
 	// 	} else {
 	// 		assert(
-	// 			field.is(SchemaBuilder.fieldSequence(...this.schema.mapFields.allowedTypes)),
+	// 			field.is(SchemaBuilder.sequence(this.schema.mapFields.allowedTypes)),
 	// 			"unexpected map field kind",
 	// 		);
 	// 		// TODO: fix merge semantics.
@@ -475,7 +475,7 @@ export abstract class LazyStruct<TSchema extends StructSchema>
 		assert(field instanceof LazyNodeKeyField, "unexpected node key field");
 		// TODO: ideally we would do something like this, but that adds dependencies we can't have here:
 		// assert(
-		// 	field.is(new FieldSchema(FieldKinds.nodeKey, [nodeKeyTreeSchema])),
+		// 	field.is(FieldSchema.create(FieldKinds.nodeKey, [nodeKeyTreeSchema])),
 		// 	"invalid node key field",
 		// );
 

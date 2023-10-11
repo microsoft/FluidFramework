@@ -6,16 +6,30 @@
 
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
+import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
+import { IEvent } from '@fluidframework/core-interfaces';
 import { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions';
+import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
+import { ISharedTree } from '@fluid-experimental/tree2';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
+import { SharedTree } from '@fluid-experimental/tree';
+import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @public
-export class MigrationShim implements IChannel {
+export interface IMigrationEvent extends IEvent {
+    (event: "migrated", listener: () => void): any;
+}
+
+// @public
+export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements IChannel {
+    constructor(id: string, runtime: IFluidDataStoreRuntime, oldFactory: IChannelFactory, // Should this be a legacy shared tree factory only?
+    newFactory: IChannelFactory, // Should this be a new shared tree factory only?
+    populateNewSharedObjectFn: (oldSharedObject: SharedTree, newSharedObject: ISharedTree) => void);
     // (undocumented)
     attributes: IChannelAttributes;
     // (undocumented)
@@ -27,11 +41,13 @@ export class MigrationShim implements IChannel {
     // (undocumented)
     handle: IFluidHandle;
     // (undocumented)
-    id: string;
+    readonly id: string;
     // (undocumented)
     IFluidLoadable: IFluidLoadable;
     // (undocumented)
     isAttached(): boolean;
+    // (undocumented)
+    submitMigrateOp(): void;
     // (undocumented)
     summarize(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined): Promise<ISummaryTreeWithStats>;
 }

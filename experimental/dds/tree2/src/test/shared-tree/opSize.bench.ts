@@ -36,15 +36,13 @@ const builder = new SchemaBuilder({ scope: "opSize" });
 
 const stringSchema = builder.leaf("String", ValueSchema.String);
 const childSchema = builder.struct("Test:Opsize-Bench-Child", {
-	data: SchemaBuilder.fieldRequired(stringSchema),
+	data: stringSchema,
 });
 const parentSchema = builder.struct("Test:Opsize-Bench-Root", {
-	children: SchemaBuilder.fieldSequence(childSchema),
+	children: builder.sequence(childSchema),
 });
 
-const rootSchema = SchemaBuilder.fieldRequired(parentSchema);
-
-const fullSchemaData = builder.toDocumentSchema(rootSchema);
+const fullSchemaData = builder.toDocumentSchema(parentSchema);
 
 const initialTestJsonTree = {
 	type: parentSchema.name,

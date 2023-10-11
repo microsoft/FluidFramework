@@ -51,31 +51,17 @@ export type NormalizeStructFields<T extends Fields | undefined> = NormalizeStruc
 >;
 
 /**
- * Placeholder for to `TreeSchema` to use in constraints where `TreeSchema` is desired but using it causes
- * recursive types to fail to compile due to TypeScript limitations.
+ * A placeholder to use in extends constraints when using the real type breaks compilation of some recursive types due to [a design limitation of TypeScript](https://github.com/microsoft/TypeScript/issues/55758).
  *
- * Using `TreeSchema` instead in some key "extends" clauses cause recursive types to error with:
- * "'theSchema' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer."
- *
- * TODO: how much more specific of a type can be provided without triggering the above error?
+ * These extends constraints only serve as documentation:
+ * to avoid breaking compilation, this type has to not actually enforce anything, and thus is just `unknown`.
+ * Therefore the type safety is the responsibility of the user of the API.
  * @alpha
  */
-export type RecursiveTreeSchema = unknown;
-
-/**
- * Placeholder for to `TreeSchemaSpecification` to use in constraints where `TreeSchemaSpecification` is desired but using it causes
- * recursive types to fail to compile due to TypeScript limitations.
- *
- * See `RecursiveTreeSchema`.
- *
- * TODO: how much more specific of a type can be provided without triggering the above error?
- * @alpha
- */
-export type RecursiveTreeSchemaSpecification = unknown;
+export type Unenforced<_DesiredExtendsConstraint> = unknown;
 
 {
-	type _check1 = requireAssignableTo<TreeSchemaSpecification, RecursiveTreeSchemaSpecification>;
-	type _check2 = requireAssignableTo<TreeSchema, RecursiveTreeSchema>;
+	type _check = requireAssignableTo<TreeSchema, Unenforced<TreeSchema>>;
 }
 
 /**
@@ -86,7 +72,7 @@ export type RecursiveTreeSchemaSpecification = unknown;
  */
 export class TreeSchema<
 	Name extends string = string,
-	T extends RecursiveTreeSchemaSpecification = TreeSchemaSpecification,
+	T extends Unenforced<TreeSchemaSpecification> = TreeSchemaSpecification,
 > {
 	// Allows reading fields through the normal map, but without losing type information.
 	public readonly structFields: ObjectToMap<
@@ -309,8 +295,7 @@ export type TreeSchemaSpecification = [
  * This can include policy for how to use this schema for "view" purposes, and well as how to expose editing APIs.
  *
  * @remarks
- * `Types` here must extend `AllowedTypes`, but this cannot be enforced with an "extends" clause due to the need to support recursive schema and
- * [a design limitation of TypeScript](https://github.com/microsoft/TypeScript/issues/55758).
+ * `Types` here must extend `AllowedTypes`, but this cannot be enforced with an "extends" clause: see {@link Unenforced} for details.
  *
  * @typeParam TKind - The kind of field.
  * @typeParam TTypes - The types allowed by the field.
@@ -318,11 +303,39 @@ export type TreeSchemaSpecification = [
  * @sealed
  * @alpha
  */
-export class FieldSchema<out TKind extends FieldKind = FieldKind, const out TTypes = AllowedTypes> {
+export class FieldSchema<
+	out TKind extends FieldKind = FieldKind,
+	const out TTypes extends Unenforced<AllowedTypes> = AllowedTypes,
+> {
 	/**
 	 * Schema for a field which must always be empty.
 	 */
-	public static readonly empty = new FieldSchema(FieldKinds.forbidden, []);
+	public static readonly empty = FieldSchema.create(FieldKinds.forbidden, []);
+
+	/**
+	 * Constructs a FieldSchema.
+	 * @privateRemarks
+	 * Alias for the constructor, but with extends clause for the `Types` parameter that {@link FieldSchema} can not have (due to recursive type issues).
+	 */
+	public static create<Kind extends FieldKind, const Types extends AllowedTypes>(
+		kind: Kind,
+		allowedTypes: Types,
+	): FieldSchema<Kind, Types> {
+		return new FieldSchema(kind, allowedTypes);
+	}
+
+	/**
+	 * Constructs a FieldSchema, but missing the extends clause which breaks most recursive types.
+	 * @remarks
+	 * `Types` here must extend `AllowedTypes`, but this cannot be enforced with an "extends" clause: see {@link Unenforced} for details.
+	 * Prefer {@link FieldSchema.create} when possible.
+	 */
+	public static createUnsafe<Kind extends FieldKind, const Types>(
+		kind: Kind,
+		allowedTypes: Types,
+	): FieldSchema<Kind, Types> {
+		return new FieldSchema(kind, allowedTypes);
+	}
 
 	protected _typeCheck?: MakeNominal;
 
@@ -336,10 +349,19 @@ export class FieldSchema<out TKind extends FieldKind = FieldKind, const out TTyp
 	 * Determine the multiplicity, viewing and editing APIs as well as the merge resolution policy.
 	 * @param allowedTypes - What types of tree nodes are allowed in this field.
 	 */
-	public constructor(
+	private constructor(
 		public readonly kind: TKind,
 		public readonly allowedTypes: TTypes,
 	) {
+		// Since this class can't have the desired extends clause, do some extra runtime validation:
+		assert(Array.isArray(allowedTypes), "Invalid allowedTypes");
+		for (const allowedType of allowedTypes) {
+			if (allowedType === Any) {
+				assert(allowedTypes.length === 1, "Invalid Any in allowedTypes");
+			} else if (typeof allowedType !== "function") {
+				assert(allowedType instanceof TreeSchema, "Invalid entry in allowedTypes");
+			}
+		}
 		this.lazyTypes = new Lazy(() =>
 			allowedTypesToTypeSet(this.allowedTypes as unknown as AllowedTypes),
 		);
@@ -373,7 +395,6 @@ export class FieldSchema<out TKind extends FieldKind = FieldKind, const out TTyp
 	}
 }
 
-// TODO: maybe remove the need for this here? Just use AllowedTypes in view schema?
 /**
  * Convert {@link AllowedTypes} to {@link TreeTypeSet}.
  * @alpha
@@ -383,7 +404,11 @@ export function allowedTypesToTypeSet(t: AllowedTypes): TreeTypeSet {
 		return undefined;
 	}
 	const list: readonly (() => TreeSchema)[] = normalizeFlexList(t);
-	const names = list.map((f) => f().name);
+	const names = list.map((f) => {
+		const type = f();
+		assert(type instanceof TreeSchema, "invalid allowed type");
+		return type.name;
+	});
 	return new Set(names);
 }
 

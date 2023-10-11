@@ -10,7 +10,6 @@ import { FieldChangeHandler, FieldChangeRebaser, singleTextCursor } from "../fea
 import {
 	FieldKindWithEditor,
 	Multiplicity,
-	ToDelta,
 	referenceFreeFieldChangeRebaser,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../feature-libraries/modular-schema";
@@ -49,14 +48,13 @@ export const counterHandle: FieldChangeHandler<number> = {
 	}),
 	codecsFactory: () => counterCodecFamily,
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
-	intoDelta: ({ change }: TaggedChange<number>, deltaFromChild: ToDelta): Delta.MarkList => [
+	intoDelta: ({ change, revision }: TaggedChange<number>): Delta.MarkList => [
 		{
 			type: Delta.MarkType.Modify,
 			fields: new Map([
 				[
 					brand("value"),
 					[
-						{ type: Delta.MarkType.Delete, count: 1 },
 						{
 							type: Delta.MarkType.Insert,
 							content: [
@@ -67,6 +65,13 @@ export const counterHandle: FieldChangeHandler<number> = {
 									value: change,
 								}),
 							],
+							oldContent: {
+								detachId: {
+									major: revision,
+									// This is an arbitrary number for testing.
+									minor: 424242,
+								},
+							},
 						},
 					],
 				],
