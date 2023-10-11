@@ -129,20 +129,6 @@ parameters:
   default: false
 
 variables:
-  - group: ado-feeds
-  - name: isTestBranch
-    value: ${{ startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}
-    readonly: true
-  - name: feed
-    ${{ if eq(variables.isTestBranch, 'true') }}:
-      value: $(ado-feeds-internal) # Comes from the ado-feeds variable group
-    ${{ else }}:
-      value: $(ado-feeds-build) # Comes from the ado-feeds variable group
-  - name: devFeed
-    ${{ if eq(variables.isTestBranch, 'true') }}:
-      value: $(ado-feeds-internal) # Comes from the ado-feeds variable group
-    ${{ else }}:
-      value: $(ado-feeds-dev) # Comes from the ado-feeds variable group
   # We use 'chalk' to colorize output, which auto-detects color support in the
   # running terminal.  The log output shown in Azure DevOps job runs only has
   # basic ANSI color support though, so force that in the pipeline
@@ -161,6 +147,7 @@ variables:
     value: $(Pipeline.Workspace)/test
   - name: loggerPackage
     value: '@ff-internal/aria-logger'
+  - group: ado-feeds
 
 stages:
   - ${{ if ne(convertToJson(parameters.checks), '[]') }}:
@@ -650,6 +637,8 @@ stages:
       - build
 
     jobs:
+      variables:
+      - group: ado-feeds
       - template: include-test-perf-benchmarks.yml
         parameters:
             testWorkspace: ${{ variables.testWorkspace }}
