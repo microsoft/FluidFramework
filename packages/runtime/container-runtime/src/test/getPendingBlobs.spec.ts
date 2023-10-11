@@ -172,7 +172,7 @@ describe("getPendingLocalState", () => {
 	it("does restart upload after applying stashed ops if expired", async () => {
 		await runtime.attach();
 		await runtime.connect();
-		runtime.attachedStorage.minTTL = 0.1; 
+		runtime.attachedStorage.minTTL = 0.001;
 		const blob = IsoBuffer.from("blob", "utf8");
 		const handleP = runtime.createBlob(blob);
 		await runtime.processBlobs();
@@ -193,5 +193,4 @@ describe("getPendingLocalState", () => {
 		assert.strictEqual(summaryData2.ids.length, 1);
 		assert.strictEqual(summaryData2.redirectTable.size, 1);
 	});
-
 });
