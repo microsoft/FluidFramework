@@ -101,6 +101,8 @@ import {
 	makeDetachedFieldIndex,
 	announceDelta,
 	FieldKey,
+	Revertible,
+	RevertibleKind,
 } from "../core";
 import { JsonCompatible, Named, brand, makeArray } from "../util";
 import { ICodecFamily, withSchemaValidation } from "../codec";
@@ -955,4 +957,23 @@ export function announceTestDelta(
 	detachedFieldIndex?: DetachedFieldIndex,
 ): void {
 	announceDelta(delta, deltaProcessor, detachedFieldIndex ?? makeDetachedFieldIndex());
+}
+
+export function createTestUndoRedoStacks(tree: SharedTree): {
+	undoStack: Revertible[];
+	redoStack: Revertible[];
+	unsubscribe: () => void;
+} {
+	const undoStack: Revertible[] = [];
+	const redoStack: Revertible[] = [];
+
+	const unsubscribe = tree.view.events.on("revertible", (revertible) => {
+		if (revertible.kind === RevertibleKind.Undo) {
+			redoStack.push(revertible);
+		} else {
+			undoStack.push(revertible);
+		}
+	});
+
+	return { undoStack, redoStack, unsubscribe };
 }
