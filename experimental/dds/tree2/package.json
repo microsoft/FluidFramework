@@ -44,7 +44,8 @@
 		"test:stress": "cross-env FUZZ_TEST_COUNT=20 FUZZ_STRESS_RUN=true mocha --ignore 'dist/test/memory/**/*' --recursive 'dist/test/**/*.spec.js' -r @fluidframework/mocha-test-setup",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
-		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
+		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize",
+		"depcruise": "depcruise src/ --ignore-known"
 	},
 	"c8": {
 		"all": true,
