@@ -208,7 +208,7 @@ export interface SharedTreeOptions extends Partial<ICodecOptions> {
 	 * The {@link ForestType} indicating which forest type should be created for the SharedTree.
 	 */
 	forest?: ForestType;
-	summaryEncodeType?: SummaryEncodeType;
+	summaryEncodeType?: TreeCompressionStrategy;
 }
 
 /**
@@ -227,16 +227,20 @@ export enum ForestType {
 }
 
 /**
- * Used to distinguish the type of encoding method applied to the tree summary.
+ * Selects which heuristics to use when encoding tree content.
+ * All encoding options here are compatible with the same decoder:
+ * the selection here does not impact compatibility.
  * @alpha
  */
-export enum SummaryEncodeType {
+export enum TreeCompressionStrategy {
 	/**
-	 * Optimized for encoded size and encoding performance.
+	 * Optimized for encoded size.
+	 * Use this in production to reduce bandwidth and storage use.
 	 */
 	Compressed = 0,
 	/**
-	 * Simple uncompressed encoding, which does not use polymorphism, identifier deduplication or schema based compression.
+	 * Optimized for human readability.
+	 * Use this when debugging or testing and needing to inspect encoded tree content.
 	 */
 	Uncompressed = 1,
 }
@@ -244,7 +248,7 @@ export enum SummaryEncodeType {
 export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
 	jsonValidator: noopValidator,
 	forest: ForestType.Reference,
-	summaryEncodeType: SummaryEncodeType.Uncompressed,
+	summaryEncodeType: TreeCompressionStrategy.Uncompressed,
 };
 
 /**

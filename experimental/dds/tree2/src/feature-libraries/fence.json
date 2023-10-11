@@ -1,13 +1,16 @@
 {
-	"tags": ["feature-libraries"],
-	"exports": ["index"],
+	"tags": [
+		"feature-libraries"
+	],
+	"exports": [
+		"index"
+	],
 	"imports": [
 		"codec",
 		"events",
 		"util",
 		"core",
 		"shared-tree-core",
-		"external-utilities",
 		"shared-tree"
 	]
 }
