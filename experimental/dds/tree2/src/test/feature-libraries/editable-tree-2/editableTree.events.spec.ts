@@ -71,7 +71,6 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(rootAfterChangeCount, 1);
 
 		// Add node where there was none before - child; should fire events on the root node.
-		// This also lets us put listeners on it, otherwise get complaints that root.child might be undefined below.
 		root.boxedChild.content = {
 			myInnerString: "initial string in original child",
 		};
@@ -79,10 +78,10 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(rootBeforeChangeCount, 2);
 		assert.strictEqual(rootAfterChangeCount, 2);
 
-		root.child?.on("beforeChange", (upPath) => {
+		root.child.on("beforeChange", (upPath) => {
 			childBeforeChangeCount++;
 		});
-		root.child?.on("afterChange", (upPath) => {
+		root.child.on("afterChange", (upPath) => {
 			childAfterChangeCount++;
 		});
 
