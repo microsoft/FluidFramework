@@ -193,9 +193,11 @@ export function createListProxy<TTypes extends AllowedTypes>(treeNode: TreeNode)
 			const field = getField(dispatch);
 			const maybeIndex = asIndex(key, field.length);
 			if (maybeIndex !== undefined) {
+				// To satisfy 'deepEquals' level scrutiny, the property descriptor for indexed properties must
+				// be a simple value property (as opposed to using getter) and declared writable/enumerable/configurable.
 				return {
 					value: field.at(maybeIndex),
-					writable: false, // For MVP, disallow setting indexed properties.
+					writable: true, // For MVP, disallow setting indexed properties.
 					enumerable: true,
 					configurable: true,
 				};

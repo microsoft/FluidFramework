@@ -59,3 +59,8 @@ export function createTreeView<TRoot extends FieldSchema>(
 		schema,
 	});
 }
+
+/** Similar to JSON stringify, but preserves 'undefined' and leaves numbers as-is. */
+export function pretty(arg: any) {
+	return arg === undefined ? "undefined" : typeof arg === "number" ? arg : JSON.stringify(arg);
+}
