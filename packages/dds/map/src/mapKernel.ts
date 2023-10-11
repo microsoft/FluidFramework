@@ -198,16 +198,13 @@ export class MapKernel {
 	private creationIndex: number = -1;
 
 	/**
-	 * The object to track the creation index of acknowledged entries, ensuring it aligns consistently
-	 * with the order of other clients, following the sequence number order precisely.
+	 * Maintains a bidirectional association between acked keys and the order in which they were inserted.
+	 * This helps to ensure iteration order which is consistent with the JS map spec.
 	 */
 	private readonly ackedKeysIndexTracker = new CreationIndexTracker();
 
 	/**
-	 * The object to track the creation index of local created entries but uncommitted yet, following
-	 * the order of pending message ids.
-	 *
-	 * It does not require the assistance of the `keyToIndex` map.
+	 * Similar to {@link ackedKeysIndexTracker}, but for local (unacked) entries.
 	 */
 	private readonly localKeysIndexTracker = new CreationIndexTracker(false);
 
@@ -217,9 +214,8 @@ export class MapKernel {
 	private readonly pendingSetTracker: Map<string, number[]> = new Map();
 
 	/**
-	 * Entries that have been deleted locally but not yet ack'd from the server. This maintains the record
-	 * of delete op that are pending or yet to be acked from server. This is maintained just to track the locally
-	 * deleted entries and the count of deleted times.
+	 * Entries that have been deleted locally but not yet ack'd.
+	 * The value is the number of pending delete ops for the given map key, *not* a pendingMessageId.
 	 */
 	private readonly pendingDeleteTracker: Map<string, number> = new Map();
 
@@ -586,7 +582,7 @@ export class MapKernel {
 		const serializableMapData: IMapDataObjectSerializable = {};
 
 		for (const [key, localValue] of this.data.entries()) {
-			const serializedValue = makeSerializable(localValue, serializer, this.handle);
+			const serializableValue = makeSerializable(localValue, serializer, this.handle);
 
 			if (!this.isAttached() || !this.ackedKeysIndexTracker.has(key)) {
 				this.ackedKeysIndexTracker.set(key, ++this.creationIndex);
