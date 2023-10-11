@@ -456,11 +456,11 @@ describe("LazyStruct", () => {
 describe("buildLazyStruct", () => {
 	const schemaBuilder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
 	const structNodeSchema = schemaBuilder.struct("struct", {
-		optional: SchemaBuilder.fieldOptional(leafDomain.string),
-		required: SchemaBuilder.fieldRequired(leafDomain.boolean),
-		sequence: SchemaBuilder.fieldSequence(leafDomain.number),
+		optional: SchemaBuilder.optional(leafDomain.string),
+		required: SchemaBuilder.required(leafDomain.boolean),
+		sequence: SchemaBuilder.sequence(leafDomain.number),
 	});
-	const schema = schemaBuilder.toDocumentSchema(SchemaBuilder.fieldOptional(Any));
+	const schema = schemaBuilder.toDocumentSchema(SchemaBuilder.optional(Any));
 
 	const context = contextWithContentReadonly({
 		schema,
