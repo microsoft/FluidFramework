@@ -540,7 +540,7 @@ describe("SharedTree", () => {
 			const schema = new SchemaBuilder({
 				scope: "optional",
 				libraries: [jsonSchema],
-			}).toDocumentSchema(SchemaBuilder.fieldOptional(jsonNumber));
+			}).toDocumentSchema(SchemaBuilder.optional(leaf.number));
 			const config: InitializeAndSchematizeConfiguration = {
 				schema,
 				initialTree: value,
@@ -1069,7 +1069,7 @@ describe("SharedTree", () => {
 		const treeSchema = builder.struct("root", {
 			x: numberSchema,
 		});
-		const schema = builder.toDocumentSchema(SchemaBuilder.fieldOptional(Any));
+		const schema = builder.toDocumentSchema(builder.optional(Any));
 
 		it("triggers events for local and subtree changes", () => {
 			const view = viewWithContent({
@@ -1885,12 +1885,12 @@ describe("SharedTree", () => {
 		it("Anchor Stability fails when root node is deleted", async () => {
 			const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 
-			const rootFieldSchema = SchemaBuilder.fieldRequired(Any);
+			const rootFieldSchema = SchemaBuilder.required(Any);
 			const testSchemaBuilder = new SchemaBuilder({ scope: "testSchema" });
 			const numberSchema = testSchemaBuilder.leaf("Number", ValueSchema.Number);
 			const rootNodeSchema = testSchemaBuilder.structRecursive("Node", {
-				foo: SchemaBuilder.fieldSequence(numberSchema),
-				foo2: SchemaBuilder.fieldSequence(numberSchema),
+				foo: SchemaBuilder.sequence(numberSchema),
+				foo2: SchemaBuilder.sequence(numberSchema),
 			});
 			const testSchema = testSchemaBuilder.toDocumentSchema(rootFieldSchema);
 

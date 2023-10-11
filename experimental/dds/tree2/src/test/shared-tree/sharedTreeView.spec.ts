@@ -9,14 +9,14 @@ import { ValueSchema, AllowedUpdateType, storedEmptyFieldSchema } from "../../co
 
 const builder = new SchemaBuilder({ scope: "test", name: "Schematize Tree Tests" });
 const root = builder.leaf("root", ValueSchema.Number);
-const schema = builder.toDocumentSchema(SchemaBuilder.fieldOptional(root));
+const schema = builder.toDocumentSchema(SchemaBuilder.optional(root));
 
 const builderGeneralized = new SchemaBuilder({
 	scope: "test",
 	name: "Schematize Tree Tests Generalized",
 });
 const rootGeneralized = builderGeneralized.leaf("root", ValueSchema.Number);
-const schemaGeneralized = builderGeneralized.toDocumentSchema(SchemaBuilder.fieldOptional(Any));
+const schemaGeneralized = builderGeneralized.toDocumentSchema(SchemaBuilder.optional(Any));
 
 describe("sharedTreeView", () => {
 	describe("schematize", () => {

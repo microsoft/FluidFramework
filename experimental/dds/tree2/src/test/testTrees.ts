@@ -40,7 +40,7 @@ function testTree<T extends TreeSchema>(
 	rootNode: T,
 	data: SchemaAware.AllowedTypesToTypedTrees<SchemaAware.ApiMode.Flexible, [T]>,
 ): TestTree {
-	const fieldSchema = SchemaBuilder.fieldRequired(rootNode);
+	const fieldSchema = FieldSchema.create(FieldKinds.required, [rootNode]);
 	return testField(name, schemaData, fieldSchema, data);
 }
 
@@ -105,27 +105,27 @@ export const hasAnyValueField = builder.struct("hasAnyValueField", {
 	field: Any,
 });
 export const hasOptionalField = builder.struct("hasOptionalField", {
-	field: SchemaBuilder.fieldOptional(leaf.number),
+	field: builder.optional(leaf.number),
 });
 export const allTheFields = builder.struct("allTheFields", {
-	optional: SchemaBuilder.fieldOptional(leaf.number),
+	optional: builder.optional(leaf.number),
 	valueField: leaf.number,
-	sequence: SchemaBuilder.fieldSequence(leaf.number),
+	sequence: builder.sequence(leaf.number),
 });
 export const anyFields = builder.struct("anyFields", {
-	optional: SchemaBuilder.fieldOptional(Any),
+	optional: builder.optional(Any),
 	valueField: Any,
-	sequence: SchemaBuilder.fieldSequence(Any),
+	sequence: builder.sequence(Any),
 });
 
-export const numericMap = builder.map("numericMap", SchemaBuilder.fieldOptional(leaf.number));
+export const numericMap = builder.map("numericMap", builder.optional(leaf.number));
 
 type NumericMapData = SchemaAware.AllowedTypesToTypedTrees<
 	SchemaAware.ApiMode.Flexible,
 	[typeof numericMap]
 >;
 
-export const anyMap = builder.map("anyMap", SchemaBuilder.fieldSequence(Any));
+export const anyMap = builder.map("anyMap", builder.sequence(Any));
 
 export const recursiveType = builder.structRecursive("recursiveType", {
 	field: FieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveType]),
@@ -134,10 +134,10 @@ export const recursiveType = builder.structRecursive("recursiveType", {
 export const library = builder.finalize();
 
 export const testTrees: readonly TestTree[] = [
-	testField("empty", library, SchemaBuilder.fieldOptional(), undefined),
+	testField("empty", library, SchemaBuilder.optional([]), undefined),
 	testTree("minimal", library, minimal, {}),
 	testTree("numeric", library, leaf.number, 5),
-	testField("numericSequence", library, SchemaBuilder.fieldSequence(leaf.number), [1, 2, 3]),
+	testField("numericSequence", library, SchemaBuilder.sequence(leaf.number), [1, 2, 3]),
 	testTree("true boolean", library, leaf.boolean, {
 		[typeNameSymbol]: leaf.boolean.name,
 		[valueSymbol]: true,

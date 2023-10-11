@@ -20,15 +20,14 @@ const builder = new SchemaBuilder({ scope: "EditableTree Node Keys", libraries: 
 const stringSchema = builder.leaf("string", ValueSchema.String);
 const childNodeSchema = builder.struct("ChildNode", {
 	...nodeKeyField,
-	name: SchemaBuilder.fieldRequired(stringSchema),
+	name: stringSchema,
 });
 
 const parentNodeSchema = builder.struct("ParentNode", {
 	...nodeKeyField,
-	children: SchemaBuilder.fieldSequence(childNodeSchema),
+	children: builder.sequence(childNodeSchema),
 });
-const rootField = SchemaBuilder.fieldRequired(parentNodeSchema);
-const schema = builder.toDocumentSchema(rootField);
+const schema = builder.toDocumentSchema(parentNodeSchema);
 
 // TODO: this can probably be removed once daesun's stuff goes in
 function addKey(view: NodeKeyManager, key: LocalNodeKey): { [nodeKeyFieldKey]: StableNodeKey } {
