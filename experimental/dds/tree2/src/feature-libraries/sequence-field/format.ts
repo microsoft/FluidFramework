@@ -115,7 +115,11 @@ export interface CellId extends ChangeAtomId, HasLineage {
 }
 
 export const CellId = Type.Composite(
-	[EncodedChangeAtomId, HasLineage, Type.Object({ adjacentCells: Type.Optional(IdRange) })],
+	[
+		EncodedChangeAtomId,
+		HasLineage,
+		Type.Object({ adjacentCells: Type.Optional(Type.Array(IdRange)) }),
+	],
 	noAdditionalProps,
 );
 

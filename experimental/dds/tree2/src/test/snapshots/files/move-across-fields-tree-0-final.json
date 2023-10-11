@@ -1,0 +1,231 @@
+{
+  "type": "tree",
+  "tree": {
+    "type": "tree",
+    "indexes": {
+      "type": "tree",
+      "entries": [
+        {
+          "type": "tree",
+          "EditManager": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "String": {
+                "type": "blob",
+                "content": {
+                  "trunk": [
+                    {
+                      "change": {
+                        "maxId": 0,
+                        "changes": [
+                          {
+                            "fieldKey": "rootFieldKey",
+                            "fieldKind": "Sequence",
+                            "change": [
+                              {
+                                "type": "Insert",
+                                "count": 1,
+                                "content": [
+                                  {
+                                    "type": "Node",
+                                    "fields": {
+                                      "foo": [
+                                        {
+                                          "type": "Node",
+                                          "value": "a"
+                                        },
+                                        {
+                                          "type": "Node",
+                                          "value": "b"
+                                        },
+                                        {
+                                          "type": "Node",
+                                          "value": "c"
+                                        }
+                                      ],
+                                      "bar": [
+                                        {
+                                          "type": "Node",
+                                          "value": "d"
+                                        },
+                                        {
+                                          "type": "Node",
+                                          "value": "e"
+                                        },
+                                        {
+                                          "type": "Node",
+                                          "value": "f"
+                                        }
+                                      ]
+                                    }
+                                  }
+                                ],
+                                "cellId": {
+                                  "localId": 0
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      "revision": "beefbeef-beef-4000-8000-000000000004",
+                      "sequenceNumber": 1,
+                      "sessionId": "beefbeef-beef-4000-8000-000000000001"
+                    },
+                    {
+                      "change": {
+                        "maxId": 0,
+                        "changes": [
+                          {
+                            "fieldKey": "rootFieldKey",
+                            "fieldKind": "ModularEditBuilder.Generic",
+                            "change": [
+                              {
+                                "index": 0,
+                                "nodeChange": {
+                                  "fieldChanges": [
+                                    {
+                                      "fieldKey": "foo",
+                                      "fieldKind": "Sequence",
+                                      "change": [
+                                        {
+                                          "count": 1
+                                        },
+                                        {
+                                          "type": "MoveOut",
+                                          "id": 0,
+                                          "count": 2
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "fieldKey": "bar",
+                                      "fieldKind": "Sequence",
+                                      "change": [
+                                        {
+                                          "count": 1
+                                        },
+                                        {
+                                          "type": "MoveIn",
+                                          "id": 0,
+                                          "count": 2,
+                                          "cellId": {
+                                            "localId": 0
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      "revision": "beefbeef-beef-4000-8000-000000000006",
+                      "sequenceNumber": 2,
+                      "sessionId": "beefbeef-beef-4000-8000-000000000001"
+                    }
+                  ],
+                  "branches": []
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "Schema": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "SchemaString": {
+                "type": "blob",
+                "content": {
+                  "version": "1.0.0",
+                  "treeSchema": [],
+                  "rootFieldSchema": {
+                    "kind": "Sequence"
+                  }
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "Forest": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "ForestTree": {
+                "type": "blob",
+                "content": [
+                  [
+                    "rootFieldKey",
+                    [
+                      {
+                        "type": "Node",
+                        "fields": {
+                          "foo": [
+                            {
+                              "type": "Node",
+                              "value": "a"
+                            }
+                          ],
+                          "bar": [
+                            {
+                              "type": "Node",
+                              "value": "d"
+                            },
+                            {
+                              "type": "Node",
+                              "value": "b"
+                            },
+                            {
+                              "type": "Node",
+                              "value": "c"
+                            },
+                            {
+                              "type": "Node",
+                              "value": "e"
+                            },
+                            {
+                              "type": "Node",
+                              "value": "f"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  ]
+                ],
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "DetachedFieldIndex": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "DetachedFieldIndexBlob": {
+                "type": "blob",
+                "content": {
+                  "data": "[]",
+                  "id": 2
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

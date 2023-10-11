@@ -17,7 +17,12 @@ import {
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../feature-libraries/contextuallyTyped";
-import { FieldKinds, SchemaBuilder, jsonableTreeFromCursor } from "../../feature-libraries";
+import {
+	FieldKinds,
+	FieldSchema,
+	SchemaBuilder,
+	jsonableTreeFromCursor,
+} from "../../feature-libraries";
 
 describe("ContextuallyTyped", () => {
 	it("isPrimitiveValue", () => {
@@ -89,7 +94,7 @@ describe("ContextuallyTyped", () => {
 	it("applyTypesFromContext omits empty fields", () => {
 		const builder = new SchemaBuilder({ scope: "applyTypesFromContext" });
 		const numberSchema = builder.leaf("number", ValueSchema.Number);
-		const numberSequence = SchemaBuilder.fieldSequence(numberSchema);
+		const numberSequence = SchemaBuilder.sequence(numberSchema);
 		const numbersObject = builder.struct("numbers", { numbers: numberSequence });
 		const schema = builder.toDocumentSchema(numberSequence);
 		const mapTree = applyTypesFromContext({ schema }, new Set([numbersObject.name]), {
@@ -102,7 +107,7 @@ describe("ContextuallyTyped", () => {
 	it("applyTypesFromContext omits empty primary fields", () => {
 		const builder = new SchemaBuilder({ scope: "applyTypesFromContext" });
 		const numberSchema = builder.leaf("number", ValueSchema.Number);
-		const numberSequence = SchemaBuilder.fieldSequence(numberSchema);
+		const numberSequence = SchemaBuilder.sequence(numberSchema);
 		const primaryObject = builder.struct("numbers", { [EmptyKey]: numberSequence });
 		const schema = builder.toDocumentSchema(numberSequence);
 		const mapTree = applyTypesFromContext({ schema }, new Set([primaryObject.name]), []);
@@ -115,12 +120,10 @@ describe("ContextuallyTyped", () => {
 			const builder = new SchemaBuilder({ scope: "cursorFromContextualData" });
 			const generatedSchema = builder.leaf("generated", ValueSchema.String);
 			const nodeSchema = builder.struct("node", {
-				foo: SchemaBuilder.fieldRequired(generatedSchema),
+				foo: generatedSchema,
 			});
 
-			const nodeSchemaData = builder.toDocumentSchema(
-				SchemaBuilder.fieldOptional(nodeSchema),
-			);
+			const nodeSchemaData = builder.toDocumentSchema(builder.optional(nodeSchema));
 			const contextualData: ContextuallyTypedNodeDataObject = {};
 
 			const generatedField = [
@@ -149,13 +152,11 @@ describe("ContextuallyTyped", () => {
 			const generatedSchema = builder.leaf("generated", ValueSchema.String);
 
 			const nodeSchema = builder.structRecursive("node", {
-				foo: SchemaBuilder.fieldRequired(generatedSchema),
-				child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchema),
+				foo: builder.required(generatedSchema),
+				child: FieldSchema.createUnsafe(FieldKinds.optional, [() => nodeSchema]),
 			});
 
-			const nodeSchemaData = builder.toDocumentSchema(
-				SchemaBuilder.fieldOptional(nodeSchema),
-			);
+			const nodeSchemaData = builder.toDocumentSchema(builder.optional(nodeSchema));
 			const contextualData: ContextuallyTypedNodeDataObject = { child: {} };
 
 			const generatedField = [
