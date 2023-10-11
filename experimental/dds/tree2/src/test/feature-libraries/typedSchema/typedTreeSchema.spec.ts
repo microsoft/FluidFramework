@@ -80,6 +80,13 @@ describe("typedTreeSchema", () => {
 			assert.deepEqual(schema.allowedTypeSet, new Set([leaf.number]));
 			assert.deepEqual(schema.types, new Set([leaf.number.name]));
 		});
+
+		it("types - lazy", () => {
+			const schema = FieldSchema.create(FieldKinds.optional, [() => leaf.number]);
+			assert(!allowedTypesIsAny(schema.allowedTypes));
+			assert.deepEqual(schema.allowedTypeSet, new Set([leaf.number]));
+			assert.deepEqual(schema.types, new Set([leaf.number.name]));
+		});
 	});
 
 	{
