@@ -6,7 +6,7 @@ import { strict as assert } from "assert";
 
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 
-import { FieldKinds, SchemaBuilder, typeNameSymbol } from "../../../feature-libraries";
+import { FieldKinds, SchemaBuilder } from "../../../feature-libraries";
 // import { TreeContent } from "../../../shared-tree";
 // import { Context } from "../../../feature-libraries/editable-tree-2/context";
 // import { IEditableForest } from "../../../core";
@@ -17,9 +17,7 @@ import { typeboxValidator } from "../../../external-utilities";
 import { leaf } from "../../..";
 // import { getReadonlyContext } from "./utils";
 
-
 describe("beforeChange/afterChange events", () => {
-
 	it("editable-tree-2-end-to-end", () => {
 		const builder = new SchemaBuilder("e2e");
 		const schema = builder.intoDocumentSchema(SchemaBuilder.fieldRequired(leaf.number));
@@ -37,20 +35,33 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it.only("fire the expected number of times", () => {
-		const builder = new SchemaBuilder("test");
+		// TODO: once assignment to properties is implemented in EditableTree2, update this test to apply changes like
+		//   root.myString = "new string";
+		// instead of
+		//   root.boxedMyString.content = "new string";
+
+		const builder = new SchemaBuilder("test", {}, leaf.library);
+		const myInnerNodeSchema = builder.struct("myInnerNode", {
+			myInnerString: SchemaBuilder.fieldRequired(leaf.string),
+		});
 		const myNodeSchema = builder.structRecursive("myNode", {
-			child: SchemaBuilder.fieldRecursive(FieldKinds.required, () => myNodeSchema),
+			child: SchemaBuilder.fieldRequired(myInnerNodeSchema),
 			myString: SchemaBuilder.fieldRequired(leaf.string),
-			myBoolean: SchemaBuilder.fieldRequired(leaf.boolean),
 			myOptionalNumber: SchemaBuilder.fieldOptional(leaf.number),
 		});
-		const schema = builder.intoDocumentSchema(SchemaBuilder.fieldRequired(myNodeSchema));
+		const schema = builder.intoDocumentSchema(
+			SchemaBuilder.field(FieldKinds.required, myNodeSchema),
+		);
 
 		const factory = new TypedTreeFactory({
 			jsonValidator: typeboxValidator,
 			forest: ForestType.Reference,
-			allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
-			initialTree: { [typeNameSymbol]: "myNode", myString: "initialString", myBoolean: true, myOptionalNumber: 3 },
+			allowedSchemaModifications: AllowedUpdateType.None,
+			initialTree: {
+				myString: "initial string",
+				myOptionalNumber: 3,
+				child: { myInnerString: "initial string in child" },
+			},
 			schema,
 			subtype: "test",
 		});
@@ -73,25 +84,24 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(rootAfterChangeCount, 0);
 
 		// Replace existing node - myString; should fire events on the root node.
-		root.myString = "newString";
+		root.boxedMyString.content = "new string";
 
 		assert.strictEqual(rootBeforeChangeCount, 1);
 		assert.strictEqual(rootAfterChangeCount, 1);
 
 		// Add node where there was none before - child; should fire events on the root node.
 		// This also lets us put listeners on it, otherwise get complaints that root.child might be undefined below.
-		root.child = {
-			myString: "initialStringInChild",
-			myBoolean: true,
+		root.boxedChild.content = {
+			myInnerString: "initial string in original child",
 		};
 
 		assert.strictEqual(rootBeforeChangeCount, 2);
 		assert.strictEqual(rootAfterChangeCount, 2);
 
-		root.child.on("beforeChange", (event) => {
+		root.child?.on("beforeChange", (event) => {
 			childBeforeChangeCount++;
 		});
-		root.child.on("afterChange", (event) => {
+		root.child?.on("afterChange", (event) => {
 			childAfterChangeCount++;
 		});
 
@@ -99,7 +109,7 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(childAfterChangeCount, 0);
 
 		// Replace myString in child; should fire events on the child node and the root node.
-		root.child.myString = "newStringInChild";
+		root.child.boxedMyInnerString.content = "new string in original child";
 
 		assert.strictEqual(rootBeforeChangeCount, 3);
 		assert.strictEqual(rootAfterChangeCount, 3);
@@ -107,9 +117,8 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(childAfterChangeCount, 1);
 
 		// Replace the whole child; should fire events on the root node.
-		root.child = {
-			myString: "newStringInNewChild",
-			myBoolean: false,
+		root.boxedChild.content = {
+			myInnerString: "initial string in new child",
 		};
 
 		assert.strictEqual(rootBeforeChangeCount, 4);
@@ -118,16 +127,17 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(childBeforeChangeCount, 1);
 		assert.strictEqual(childAfterChangeCount, 1);
 
-		// Replace myBoolean in new child node; should fire events on the root node (but not on the old child node)
-		root.child.myBoolean = true;
+		// Replace myInnerString in new child node; should fire events on the root node (but not on the old child node)
+		root.child.boxedMyInnerString.content = "new string in new child";
 
 		assert.strictEqual(rootBeforeChangeCount, 5);
 		assert.strictEqual(rootAfterChangeCount, 5);
+		// No events should have fired on the old address node.
 		assert.strictEqual(childBeforeChangeCount, 1);
 		assert.strictEqual(childAfterChangeCount, 1);
 
 		// Delete node - myOptionalNumber; should fire events on the root node
-		delete root.myOptionalNumber;
+		root.boxedMyOptionalNumber.content = undefined;
 
 		assert.strictEqual(rootBeforeChangeCount, 6);
 		assert.strictEqual(rootAfterChangeCount, 6);
