@@ -688,6 +688,17 @@ describe("SequenceField - Rebase", () => {
 		assert.deepEqual(rebased, expected);
 	});
 
+	it("delete ↷ composite move", () => {
+		const move1 = Change.move(0, 1, 1, brand(0));
+		const move2 = Change.move(1, 1, 2, brand(1));
+		const move3 = Change.move(2, 1, 3, brand(2));
+		const move = composeAnonChanges([move1, move2, move3]);
+		const del = Change.delete(0, 1);
+		const rebased = rebase(del, move);
+		const expected = Change.delete(3, 1);
+		assert.deepEqual(rebased, expected);
+	});
+
 	it("rebasing over transient revive changes cell ID", () => {
 		const change = TestChange.mint([0], 1);
 		const modify = Change.modifyDetached(0, change, {

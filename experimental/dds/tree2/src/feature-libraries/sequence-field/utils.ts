@@ -39,6 +39,7 @@ import {
 	CellMark,
 	TransientEffect,
 	MarkEffect,
+	MoveMarkEffect,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { isMoveMark, MoveEffectTable } from "./moveEffectTable";
@@ -520,7 +521,10 @@ function tryMergeEffects(
 		case "MoveOut":
 		case "ReturnFrom": {
 			const lhsMoveOut = lhs as MoveOut;
-			if ((lhsMoveOut.id as number) + lhsCount === rhs.id) {
+			if (
+				(lhsMoveOut.id as number) + lhsCount === rhs.id &&
+				areMergeableChangeAtoms(lhsMoveOut.finalEndpoint, lhsCount, rhs.finalEndpoint)
+			) {
 				return lhsMoveOut;
 			}
 			break;
@@ -934,8 +938,7 @@ function splitMarkEffect<TEffect extends MarkEffect>(
 			return [effect1, effect2];
 		}
 		case "MoveIn":
-		case "ReturnTo":
-		case "MoveOut": {
+		case "ReturnTo": {
 			const effect2: TEffect = { ...effect, id: (effect.id as number) + length };
 			return [effect, effect2];
 		}
@@ -952,18 +955,29 @@ function splitMarkEffect<TEffect extends MarkEffect>(
 			}
 			return [effect1, effect2];
 		}
+		case "MoveOut": {
+			const effect2: TEffect = { ...effect, id: (effect.id as number) + length };
+			const move2 = effect2 as MoveOut;
+			if (move2.finalEndpoint !== undefined) {
+				move2.finalEndpoint = splitDetachEvent(move2.finalEndpoint, length);
+			}
+
+			return [effect, effect2];
+		}
 		case "ReturnFrom": {
 			const effect2 = {
 				...effect,
 				id: (effect.id as number) + length,
 			};
 
-			const mark2Return = effect2 as ReturnFrom;
-			if (mark2Return.detachIdOverride !== undefined) {
-				mark2Return.detachIdOverride = splitDetachEvent(
-					mark2Return.detachIdOverride,
-					length,
-				);
+			const return2 = effect2 as ReturnFrom;
+
+			if (return2.detachIdOverride !== undefined) {
+				return2.detachIdOverride = splitDetachEvent(return2.detachIdOverride, length);
+			}
+
+			if (return2.finalEndpoint !== undefined) {
+				return2.finalEndpoint = splitDetachEvent(return2.finalEndpoint, length);
 			}
 			return [effect, effect2];
 		}
@@ -1071,4 +1085,17 @@ export function getMarkMoveId(mark: Mark<unknown>): MoveId | undefined {
 	}
 
 	return undefined;
+}
+
+export function getEndpoint(
+	effect: MoveMarkEffect,
+	revision: RevisionTag | undefined,
+): ChangeAtomId {
+	const effectRevision = effect.revision ?? revision;
+	return effect.finalEndpoint !== undefined
+		? {
+				...effect.finalEndpoint,
+				revision: effect.finalEndpoint.revision ?? effectRevision,
+		  }
+		: { revision: effectRevision, localId: effect.id };
 }

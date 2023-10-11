@@ -378,23 +378,6 @@ export function createFlushableBinderOptions<E extends Events<E>>({ sortFn, sort
 }): FlushableBinderOptions<E>;
 
 // @alpha
-<<<<<<< HEAD
-export interface CrossFieldManager<T = unknown> {
-    get(target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId, count: number, addDependency: boolean): RangeQueryResult<T>;
-    set(target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId, count: number, newValue: T, invalidateDependents: boolean): void;
-}
-
-// @alpha (undocumented)
-export enum CrossFieldTarget {
-    // (undocumented)
-    Destination = 1,
-    // (undocumented)
-    Source = 0
-}
-
-// @alpha
-=======
->>>>>>> fluid/main
 export interface CursorAdapter<TNode> {
     // (undocumented)
     getFieldFromNode(node: TNode, key: FieldKey): readonly TNode[];
@@ -1640,9 +1623,6 @@ type ProtoNodes = readonly ProtoNode[];
 export const proxyTargetSymbol: unique symbol;
 
 // @alpha
-<<<<<<< HEAD
-export interface RangeQueryResult<T> {
-=======
 interface Range_2 {
     readonly end: PlaceIndex;
     readonly start: PlaceIndex;
@@ -1650,9 +1630,7 @@ interface Range_2 {
 export { Range_2 as Range }
 
 // @alpha
-export interface RangeEntry<T> {
-    // (undocumented)
->>>>>>> fluid/main
+export interface RangeQueryResult<T> {
     length: number;
     value: T | undefined;
 }

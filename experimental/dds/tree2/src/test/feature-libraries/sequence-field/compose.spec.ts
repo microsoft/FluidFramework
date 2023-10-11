@@ -17,7 +17,6 @@ import {
 import { RevisionInfo, SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
-import { fakeTaggedRepair as fakeRepair } from "../../utils";
 import { cases, ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
 import { compose, composeAnonChanges, composeNoVerify, shallowCompose } from "./utils";
 

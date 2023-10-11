@@ -25,7 +25,6 @@ import {
 	getOffsetInCellRange,
 	compareLineages,
 	withNodeChange,
-	getMarkMoveId,
 	areOverlappingIdRanges,
 	cloneCellId,
 	areOutputCellsEmpty,
@@ -33,6 +32,7 @@ import {
 	getInputCellId,
 	isTransientEffect,
 	getOutputCellId,
+	getEndpoint,
 } from "./utils";
 import {
 	Changeset,
@@ -54,6 +54,7 @@ import {
 	MoveEffect,
 	MoveEffectTable,
 	PairedMarkUpdate,
+	isMoveSource,
 } from "./moveEffectTable";
 import { MarkQueue } from "./markQueue";
 import { EmptyInputCellMark } from "./helperTypes";
@@ -350,11 +351,16 @@ function rebaseMark<TNodeChange>(
 ): Mark<TNodeChange> {
 	let rebasedMark = rebaseNodeChange(cloneMark(currMark), baseMark, rebaseChild);
 	if (markEmptiesCells(baseMark)) {
-		const moveId = getMarkMoveId(baseMark);
-		if (moveId !== undefined) {
+		// TODO: Should also check if this is a transient move source
+		if (isMoveSource(baseMark)) {
 			assert(isMoveMark(baseMark), 0x6f0 /* Only move marks have move IDs */);
 			if (markFollowsMoves(rebasedMark)) {
-				sendMarkToDest(rebasedMark, moveEffects, baseRevision, moveId, baseMark.count);
+				sendMarkToDest(
+					rebasedMark,
+					moveEffects,
+					getEndpoint(baseMark, baseRevision),
+					baseMark.count,
+				);
 				return { count: 0 };
 			}
 
@@ -365,7 +371,12 @@ function rebaseMark<TNodeChange>(
 					count: 1,
 					changes: modify,
 				};
-				sendMarkToDest(nestedChange, moveEffects, baseRevision, moveId, baseMark.count);
+				sendMarkToDest(
+					nestedChange,
+					moveEffects,
+					getEndpoint(baseMark, baseRevision),
+					baseMark.count,
+				);
 			}
 		}
 
@@ -471,8 +482,7 @@ function markFollowsMoves(mark: Mark<unknown>): boolean {
 function sendMarkToDest<T>(
 	mark: Mark<T>,
 	moveEffects: MoveEffectTable<T>,
-	revision: RevisionTag,
-	id: MoveId,
+	{ revision, localId: id }: ChangeAtomId,
 	count: number,
 ) {
 	const effect = getMoveEffect(

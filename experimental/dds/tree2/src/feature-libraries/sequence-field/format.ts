@@ -193,7 +193,19 @@ export const Insert = Type.Composite(
 	noAdditionalProps,
 );
 
-export interface MoveIn extends HasMoveId, HasRevisionTag {
+export interface HasMoveFields extends HasMoveId, HasRevisionTag {
+	/**
+	 * Used when this mark represents the beginning or end of a chain of moves within a changeset.
+	 * If this mark is the start of the chain, this is the ID of the end mark of the chain, and vice-versa if this is the end of the chain.
+	 */
+	finalEndpoint?: ChangeAtomId;
+}
+export const HasMoveFields = Type.Composite([
+	HasMoveId,
+	Type.Object({ finalEndpoint: Type.Optional(EncodedChangeAtomId) }),
+]);
+
+export interface MoveIn extends HasMoveFields {
 	type: "MoveIn";
 	/**
 	 * When true, the corresponding MoveOut has a conflict.
@@ -204,8 +216,7 @@ export interface MoveIn extends HasMoveId, HasRevisionTag {
 
 export const MoveIn = Type.Composite(
 	[
-		HasMoveId,
-		HasRevisionTag,
+		HasMoveFields,
 		Type.Object({
 			type: Type.Literal("MoveIn"),
 			isSrcConflicted: OptionalTrue,
@@ -239,13 +250,12 @@ export const Delete = Type.Composite(
 	noAdditionalProps,
 );
 
-export interface MoveOut extends HasRevisionTag, HasMoveId {
+export interface MoveOut extends HasMoveFields {
 	type: "MoveOut";
 }
 export const MoveOut = Type.Composite(
 	[
-		HasRevisionTag,
-		HasMoveId,
+		HasMoveFields,
 		Type.Object({
 			type: Type.Literal("MoveOut"),
 		}),
@@ -267,7 +277,7 @@ export const Revive = Type.Composite(
 	noAdditionalProps,
 );
 
-export interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId {
+export interface ReturnTo extends HasReattachFields, HasMoveFields {
 	type: "ReturnTo";
 
 	/**
@@ -279,8 +289,7 @@ export interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId {
 export const ReturnTo = Type.Composite(
 	[
 		HasReattachFields,
-		HasRevisionTag,
-		HasMoveId,
+		HasMoveFields,
 		Type.Object({
 			type: Type.Literal("ReturnTo"),
 			isSrcConflicted: OptionalTrue,
@@ -289,7 +298,7 @@ export const ReturnTo = Type.Composite(
 	noAdditionalProps,
 );
 
-export interface ReturnFrom extends HasRevisionTag, HasMoveId, InverseAttachFields {
+export interface ReturnFrom extends HasMoveFields, InverseAttachFields {
 	type: "ReturnFrom";
 
 	/**
@@ -300,8 +309,7 @@ export interface ReturnFrom extends HasRevisionTag, HasMoveId, InverseAttachFiel
 }
 export const ReturnFrom = Type.Composite(
 	[
-		HasRevisionTag,
-		HasMoveId,
+		HasMoveFields,
 		InverseAttachFields,
 		Type.Object({
 			type: Type.Literal("ReturnFrom"),
