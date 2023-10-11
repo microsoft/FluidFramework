@@ -10,8 +10,33 @@ import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 
 // @public @sealed
 export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
-    constructor(client: ApplicationInsights);
+    constructor(client: ApplicationInsights, config?: FluidAppInsightsLoggerConfig);
     send(event: ITelemetryBaseEvent): void;
+}
+
+// @public
+export interface FluidAppInsightsLoggerConfig {
+    // (undocumented)
+    filterConfig: {
+        mode: "inclusive" | "exclusive";
+        filters?: TelemetryFilter[];
+    };
+}
+
+// @public
+export const TelemetryEventCategory: {
+    readonly PERFORMANCE: "performance";
+    readonly GENERIC: "generic";
+    readonly ERROR: "error";
+};
+
+// @public
+export type TelemetryEventCategory = (typeof TelemetryEventCategory)[keyof typeof TelemetryEventCategory];
+
+// @public
+export interface TelemetryFilter {
+    category: TelemetryEventCategory;
+    priority: number;
 }
 
 ```
