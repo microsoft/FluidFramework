@@ -129,14 +129,14 @@ describe("editableTreeTypes", () => {
 		const data = struct.x + (struct.foo?.foo?.foo?.x ?? 0);
 		assert(child);
 
-		// TODO: add shorthand setters
-		// child.foo?.foo?.foo?.foo?.setX(5);
-		// child.foo?.boxedFoo.content?.foo?.foo?.setFoo({ x: 5, foo: { x: 5, foo: undefined } });
+		child.foo?.foo?.foo?.foo?.setX(5);
+		child.foo?.boxedFoo.content?.foo?.foo?.setFoo({ x: 5, foo: { x: 5, foo: undefined } });
 
 		struct.boxedFoo.content = undefined;
+
 		// Shorthand for the above.
-		// TODO: add shorthand setters
-		// struct.setFoo(undefined);
+		struct.setFoo(undefined);
+		struct.foo = undefined;
 	}
 
 	function iteratorsExample(mixed: Mixed): void {
