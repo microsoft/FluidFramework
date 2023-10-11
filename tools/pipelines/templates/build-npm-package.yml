@@ -145,6 +145,9 @@ variables:
     readonly: true
   - name: testWorkspace
     value: $(Pipeline.Workspace)/test
+  - name: loggerPackage
+    type: string
+    default: '@ff-internal/aria-logger'
   - group: ado-feeds
 
 stages:
