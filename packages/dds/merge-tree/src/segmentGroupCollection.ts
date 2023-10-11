@@ -21,15 +21,24 @@ export class SegmentGroupCollection {
 		return this.segmentGroups.empty;
 	}
 
+	/**
+	 * @internal
+	 */
 	public enqueue(segmentGroup: SegmentGroup) {
 		this.segmentGroups.push(segmentGroup);
 		segmentGroup.segments.push(this.segment);
 	}
 
+	/**
+	 * @internal
+	 */
 	public dequeue(): SegmentGroup | undefined {
 		return this.segmentGroups.shift()?.data;
 	}
 
+	/**
+	 * @internal
+	 */
 	public pop?(): SegmentGroup | undefined {
 		return this.segmentGroups.pop ? this.segmentGroups.pop()?.data : undefined;
 	}

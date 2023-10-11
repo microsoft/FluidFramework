@@ -8,7 +8,14 @@ import { ISegment } from "./mergeTreeNodes";
 import { ReferenceType, ICombiningOp } from "./ops";
 import { PropertySet } from "./properties";
 
+/**
+ * @internal
+ */
 export const reservedTileLabelsKey = "referenceTileLabels";
+
+/**
+ * @internal
+ */
 export const reservedRangeLabelsKey = "referenceRangeLabels";
 
 export function refTypeIncludesFlag(

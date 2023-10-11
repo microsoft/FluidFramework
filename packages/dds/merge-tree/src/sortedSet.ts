@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * @internal
+ */
 export abstract class SortedSet<T, U extends string | number> {
 	protected abstract getKey(t: T): U;
 

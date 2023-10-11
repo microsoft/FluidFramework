@@ -138,6 +138,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * This method peeks the tail of that queue, and returns the segments groups there.
 	 * It is used to get the segment group(s) for the previous operations.
 	 * @param count - The number segment groups to get peek from the tail of the queue. Default 1.
+	 *
+	 * @internal
 	 */
 	public peekPendingSegmentGroups(count: number = 1): SegmentGroup | SegmentGroup[] | undefined {
 		const pending = this._mergeTree.pendingSegments;
@@ -198,6 +200,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 		return this.applyAnnotateRangeOp({ op: annotateOp }) ? annotateOp : undefined;
 	}
+
 	/**
 	 * Annotates the range with the provided properties
 	 * @param start - The inclusive start position of the range to annotate
@@ -379,6 +382,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param canSlideToEndpoint - Whether or not the created local reference can
 	 * slide onto one of the special endpoint segments denoting the position
 	 * before the start of or after the end of the tree
+	 *
+	 * @internal
 	 */
 	public createLocalReferencePosition(
 		segment: ISegment | "start" | "end",
@@ -738,6 +743,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				segmentGroup === segmentSegGroup,
 				0x035 /* "Segment group not at head of segment pending queue" */,
 			);
+			assert(
+				segmentGroup.localSeq !== undefined,
+				"expected segment group localSeq to be defined",
+			);
 			const segmentPosition = this.findReconnectionPosition(segment, segmentGroup.localSeq);
 			let newOp: IMergeTreeDeltaOp | undefined;
 			switch (resetOp.type) {
@@ -836,10 +845,22 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 	}
 
+	/**
+	 * @internal
+	 */
 	public applyStashedOp(op: IMergeTreeDeltaOp): SegmentGroup;
+	/**
+	 * @internal
+	 */
 	// eslint-disable-next-line import/no-deprecated
 	public applyStashedOp(op: IMergeTreeGroupMsg): SegmentGroup[];
+	/**
+	 * @internal
+	 */
 	public applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
+	/**
+	 * @internal
+	 */
 	public applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[] {
 		let metadata: SegmentGroup | SegmentGroup[] | undefined;
 		const stashed = true;
@@ -925,6 +946,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * can be resubmitted
 	 * @param resetOp - The op to reset
 	 * @param segmentGroup - The segment group associated with the op
+	 *
+	 * @internal
 	 */
 	public regeneratePendingOp(
 		resetOp: IMergeTreeOp,
@@ -994,6 +1017,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		return opList.length === 1 ? opList[0] : createGroupOp(...opList);
 	}
 
+	/**
+	 * @internal
+	 */
 	public createTextHelper(): IMergeTreeTextHelper {
 		return new MergeTreeTextHelper(this._mergeTree);
 	}

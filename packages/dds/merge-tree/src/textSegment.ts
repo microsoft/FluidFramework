@@ -87,22 +87,6 @@ export class TextSegment extends BaseSegment {
 		this.text += segment.text;
 	}
 
-	// TODO: retain removed text for undo
-	// returns true if entire string removed
-	public removeRange(start: number, end: number) {
-		let remnantString = "";
-		const len = this.text.length;
-		if (start > 0) {
-			remnantString += this.text.substring(0, start);
-		}
-		if (end < len) {
-			remnantString += this.text.substring(end);
-		}
-		this.text = remnantString;
-		this.cachedLength = remnantString.length;
-		return remnantString.length === 0;
-	}
-
 	protected createSplitSegmentAt(pos: number) {
 		if (pos > 0) {
 			const remainingText = this.text.substring(pos);
@@ -114,6 +98,9 @@ export class TextSegment extends BaseSegment {
 	}
 }
 
+/**
+ * @internal
+ */
 export interface IMergeTreeTextHelper {
 	getText(
 		refSeq: number,

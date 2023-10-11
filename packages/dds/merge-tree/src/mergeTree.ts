@@ -501,6 +501,7 @@ export class MergeTree {
 	public readonly collabWindow = new CollaborationWindow();
 
 	public readonly pendingSegments = new List<SegmentGroup>();
+
 	public readonly segmentsToScour = new Heap<LRUSegment>([], LRUSegmentComparer);
 
 	public readonly attributionPolicy: AttributionPolicy | undefined;
@@ -1421,12 +1422,11 @@ export class MergeTree {
 	) {
 		let _segmentGroup = segmentGroup;
 		if (_segmentGroup === undefined) {
-			// TODO: review the cast
 			_segmentGroup = {
 				segments: [],
 				localSeq,
 				refSeq: this.collabWindow.currentSeq,
-			} as any as SegmentGroup;
+			};
 			if (previousProps) {
 				_segmentGroup.previousProps = [];
 			}

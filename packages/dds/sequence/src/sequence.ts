@@ -29,7 +29,6 @@ import {
 	ISegment,
 	ISegmentAction,
 	LocalReferencePosition,
-	// eslint-disable-next-line import/no-deprecated
 	matchProperties,
 	MergeTreeDeltaType,
 	PropertySet,
@@ -148,7 +147,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 					if (
 						lastAnnotate &&
 						lastAnnotate.pos2 === r.position &&
-						// eslint-disable-next-line import/no-deprecated
 						matchProperties(lastAnnotate.props, props)
 					) {
 						lastAnnotate.pos2 += r.segment.cachedLength;
@@ -393,10 +391,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		);
 	}
 
-	/**
-	 * @deprecated - This method will no longer be public in an upcoming release as it is not safe to use outside of this class
-	 */
-	public submitSequenceMessage(message: IMergeTreeOp) {
+	private submitSequenceMessage(message: IMergeTreeOp) {
 		if (!this.isAttached()) {
 			return;
 		}

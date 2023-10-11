@@ -131,6 +131,9 @@
 			},
 			"ClassDeclaration_SharedString": {
 				"backCompat": false
+			},
+			"TypeAliasDeclaration_SharedStringSegment": {
+				"backCompat": false
 			}
 		}
 	}
