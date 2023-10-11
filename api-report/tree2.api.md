@@ -37,6 +37,9 @@ leafValue: ValueSchema.String;
 export type AllowedTypes = readonly [Any] | readonly LazyItem<TreeSchema>[];
 
 // @alpha
+export type AllowedTypeSet = Any | ReadonlySet<TreeSchema>;
+
+// @alpha
 type AllowedTypesToTypedTrees<Mode extends ApiMode, T extends AllowedTypes> = [
 T extends InternalTypedSchemaTypes.FlexList<TreeSchema> ? InternalTypedSchemaTypes.ArrayToUnion<TypeArrayToTypedTreeArray<Mode, Assume<InternalTypedSchemaTypes.ConstantFlexListToNonLazyArray<T>, readonly TreeSchema[]>>> : UntypedApi<Mode>
 ][_InlineTrick];
@@ -684,6 +687,7 @@ interface Fields {
 export class FieldSchema<out Kind extends FieldKind = FieldKind, const out Types extends Unenforced<AllowedTypes> = AllowedTypes> {
     // (undocumented)
     readonly allowedTypes: Types;
+    get allowedTypeSet(): AllowedTypeSet;
     static create<Kind extends FieldKind, const Types extends AllowedTypes>(kind: Kind, allowedTypes: Types): FieldSchema<Kind, Types>;
     static createUnsafe<Kind extends FieldKind, const Types>(kind: Kind, allowedTypes: Types): FieldSchema<Kind, Types>;
     static readonly empty: FieldSchema<Forbidden, readonly []>;
@@ -692,7 +696,6 @@ export class FieldSchema<out Kind extends FieldKind = FieldKind, const out Types
     readonly kind: Kind;
     // (undocumented)
     protected _typeCheck?: MakeNominal;
-    // (undocumented)
     get types(): TreeTypeSet;
 }
 
@@ -1532,6 +1535,9 @@ interface OldContent<TTree = ProtoNode> {
 export const on: unique symbol;
 
 // @alpha
+export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined;
+
+// @alpha
 export type Opaque<T extends Brand<any, string>> = T extends Brand<infer ValueType, infer Name> ? BrandedType<ValueType, Name> : never;
 
 // @alpha
@@ -1840,6 +1846,9 @@ export interface SchemaEvents {
     afterSchemaChange(newSchema: SchemaData): void;
     beforeSchemaChange(newSchema: SchemaData): void;
 }
+
+// @alpha
+export function schemaIsFieldNode(schema: TreeSchema): schema is FieldNodeSchema;
 
 // @alpha
 export interface SchemaLibrary extends TypedSchemaCollection {

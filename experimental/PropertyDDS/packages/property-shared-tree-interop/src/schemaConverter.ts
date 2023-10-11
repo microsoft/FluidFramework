@@ -27,6 +27,7 @@ const basePropertyType = "BaseProperty";
 const booleanType = "Bool";
 const stringType = "String";
 const enumType = "Enum";
+const numberType = "Float64";
 const numberTypes = new Set<string>([
 	"Int8",
 	"Int16",
@@ -37,7 +38,7 @@ const numberTypes = new Set<string>([
 	"Uint32",
 	"Uint64",
 	"Float32",
-	"Float64",
+	numberType,
 	enumType,
 ]);
 const primitiveTypes = new Set([...numberTypes, booleanType, stringType, referenceType]);
@@ -108,7 +109,7 @@ function buildTreeSchema(
 			return treeSchema;
 		}
 		if (TypeIdHelper.isPrimitiveType(type)) {
-			return getPrimitiveSchema(treeSchemaMap, type, isEnum);
+			return buildPrimitiveSchema(builder, treeSchemaMap, type, isEnum);
 		} else {
 			assert(type === typeid, 0x700 /* Unexpected typeid discrepancy */);
 			const cache: { treeSchema?: TreeSchema } = {};
@@ -249,22 +250,25 @@ function buildLocalFields(
 	}
 }
 
-function getPrimitiveSchema(
+function buildPrimitiveSchema(
+	builder: SchemaBuilder,
 	treeSchemaMap: Map<string, LazyTreeSchema>,
 	typeid: string,
 	isEnum?: boolean,
 ): TreeSchema {
 	let treeSchema: TreeSchema;
-	if (
-		typeid === stringType ||
-		typeid.startsWith(referenceGenericTypePrefix) ||
-		typeid === referenceType
-	) {
+	if (typeid === stringType) {
 		treeSchema = leaf.string;
+	} else if (typeid.startsWith(referenceGenericTypePrefix) || typeid === referenceType) {
+		// Strongly typed wrapper around a string
+		treeSchema = builder.fieldNode(typeid, leaf.string);
 	} else if (typeid === booleanType) {
 		treeSchema = leaf.boolean;
-	} else if (numberTypes.has(typeid) || isEnum) {
+	} else if (typeid === numberType) {
 		treeSchema = leaf.number;
+	} else if (numberTypes.has(typeid) || isEnum) {
+		// Strongly typed wrapper around a number
+		treeSchema = builder.fieldNode(typeid, leaf.number);
 	} else {
 		// If this case occurs, there is definetely a problem with the ajv template,
 		// as unknown primitives should be issued there otherwise.

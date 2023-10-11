@@ -24,7 +24,7 @@ import {
 } from "../../util";
 import { FieldKinds } from "../default-field-kinds";
 import { FieldKind, FullSchemaPolicy } from "../modular-schema";
-import { LazyItem, normalizeFlexList } from "./flexList";
+import { LazyItem } from "./flexList";
 import { ObjectToMap, WithDefault, objectToMapTyped } from "./typeUtils";
 
 // TODO: tests for this file
@@ -172,6 +172,10 @@ export function schemaIsLeaf(schema: TreeSchema): schema is LeafSchema {
 	return schema.leafValue !== undefined;
 }
 
+/**
+ * Checks if a {@link TreeSchema} is a {@link FieldNodeSchema}.
+ * @alpha
+ */
 export function schemaIsFieldNode(schema: TreeSchema): schema is FieldNodeSchema {
 	return schema.structFields.size === 1 && schema.structFields.has(EmptyKey);
 }
@@ -338,7 +342,7 @@ export class FieldSchema<
 	/**
 	 * This is computed lazily since types can be recursive, which makes evaluating this have to happen after all the schema are defined.
 	 */
-	private readonly lazyTypes: Lazy<TreeTypeSet>;
+	private readonly lazyTypes: Lazy<{ names: TreeTypeSet; schema: AllowedTypeSet }>;
 
 	/**
 	 * @param kind - The {@link https://en.wikipedia.org/wiki/Kind_(type_theory) | kind} of this field.
@@ -358,13 +362,31 @@ export class FieldSchema<
 				assert(allowedType instanceof TreeSchema, "Invalid entry in allowedTypes");
 			}
 		}
-		this.lazyTypes = new Lazy(() =>
-			allowedTypesToTypeSet(this.allowedTypes as unknown as AllowedTypes),
-		);
+		this.lazyTypes = new Lazy(() => ({
+			names: allowedTypesToTypeSet(this.allowedTypes as unknown as AllowedTypes),
+			schema: allowedTypesSchemaSet(this.allowedTypes as unknown as AllowedTypes),
+		}));
 	}
 
+	/**
+	 * Types which are allowed in this field (by {@link TreeSchemaIdentifier}), in a format optimized for stored schema.
+	 * This is the same set of types in {@link FieldSchema.allowedTypes}, just in a different format.
+	 */
 	public get types(): TreeTypeSet {
-		return this.lazyTypes.value;
+		return this.lazyTypes.value.names;
+	}
+
+	/**
+	 * Types which are allowed in this field.
+	 * This is the same set of types in {@link FieldSchema.allowedTypes}, just as a set with laziness removed.
+	 * @privateRemarks
+	 * TODO:
+	 * 3 ways to access the allowed types are now exposed.
+	 * Reducing this and/or renaming the more friendly options to take the shorter name (`types`)
+	 * would be a good idea.
+	 */
+	public get allowedTypeSet(): AllowedTypeSet {
+		return this.lazyTypes.value.schema;
 	}
 
 	/**
@@ -392,16 +414,43 @@ export class FieldSchema<
 }
 
 /**
+ * Types for use in fields.
+ * This representation is optimized for runtime use in view-schema.
+ *
+ * @remarks
+ * See {@link TreeTypeSet} for a stored-schema compatible version using the {@link TreeSchemaIdentifier}.
+ * See {@link AllowedTypes} for a compile time optimized version.
+ * @alpha
+ */
+export type AllowedTypeSet = Any | ReadonlySet<TreeSchema>;
+
+/**
+ * Convert {@link AllowedTypes} to {@link TreeTypeSet}.
+ * @alpha
+ */
+export function allowedTypesSchemaSet(t: AllowedTypes): AllowedTypeSet {
+	if (allowedTypesIsAny(t)) {
+		return Any;
+	}
+	const list: TreeSchema[] = t.map((value: LazyItem<TreeSchema>) => {
+		if (typeof value === "function") {
+			return value();
+		}
+		return value;
+	});
+	return new Set(list);
+}
+
+/**
  * Convert {@link AllowedTypes} to {@link TreeTypeSet}.
  * @alpha
  */
 export function allowedTypesToTypeSet(t: AllowedTypes): TreeTypeSet {
-	if (allowedTypesIsAny(t)) {
+	const list = allowedTypesSchemaSet(t);
+	if (list === Any) {
 		return undefined;
 	}
-	const list: readonly (() => TreeSchema)[] = normalizeFlexList(t);
-	const names = list.map((f) => {
-		const type = f();
+	const names = Array.from(list, (type) => {
 		assert(type instanceof TreeSchema, "invalid allowed type");
 		return type.name;
 	});

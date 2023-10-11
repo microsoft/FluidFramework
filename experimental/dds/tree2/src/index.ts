@@ -102,6 +102,7 @@ export {
 	BrandedMapSubset,
 	RangeEntry,
 	Named,
+	oneFromSet,
 } from "./util";
 
 export {
@@ -274,6 +275,8 @@ export {
 	ImplicitFieldSchema,
 	ImplicitAllowedTypes,
 	Unenforced,
+	schemaIsFieldNode,
+	AllowedTypeSet,
 } from "./feature-libraries";
 
 export {

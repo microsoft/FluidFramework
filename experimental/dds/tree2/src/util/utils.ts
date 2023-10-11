@@ -428,6 +428,7 @@ export function transformObjectMap<MapKey extends string | number | symbol, MapV
 
 /**
  * Returns the value from `set` if it contains exactly one item, otherwise `undefined`.
+ * @alpha
  */
 export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
 	if (set === undefined) {
