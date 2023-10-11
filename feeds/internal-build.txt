@@ -7,9 +7,7 @@
 @fluid-experimental/devtools-core
 @fluid-experimental/devtools
 @fluidframework/test-utils
-@fluid-internal/test-service-load
 @fluidframework/test-driver-definitions
-@fluid-internal/test-app-insights-logger
 @fluidframework/mocha-test-setup
 @fluidframework/test-runtime-utils
 @fluidframework/runtime-utils

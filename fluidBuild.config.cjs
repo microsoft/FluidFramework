@@ -185,9 +185,6 @@ module.exports = {
 				// to npm will also be published internally, however. This should be a minimal set required for legacy compat of
 				// internal partners or internal CI requirements.
 				internalFeed: [
-					// TODO: We may not need to publish test packages to the internal feed, remove these exceptions if possible.
-					"@fluid-internal/test-app-insights-logger",
-					"@fluid-internal/test-service-load",
 					// Most examples should be private, but table-document needs to publish internally for legacy compat
 					"@fluid-example/table-document",
 				],
