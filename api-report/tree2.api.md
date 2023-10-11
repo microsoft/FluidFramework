@@ -165,6 +165,9 @@ export interface ArrayLikeMut<TGet, TSet extends TGet = TGet> extends ArrayLike<
 type ArrayToUnion<T extends readonly unknown[]> = T extends readonly (infer TValue)[] ? TValue : never;
 
 // @alpha
+export type AssignableFieldKinds = typeof FieldKinds.optional | typeof FieldKinds.required;
+
+// @alpha
 type Assume<TInput, TAssumeToBe> = TInput extends TAssumeToBe ? TInput : TAssumeToBe;
 
 // @alpha
@@ -684,16 +687,16 @@ interface Fields {
 }
 
 // @alpha @sealed
-export class FieldSchema<out Kind extends FieldKind = FieldKind, const out Types extends Unenforced<AllowedTypes> = AllowedTypes> {
+export class FieldSchema<out TKind extends FieldKind = FieldKind, const out TTypes extends Unenforced<AllowedTypes> = AllowedTypes> {
     // (undocumented)
-    readonly allowedTypes: Types;
+    readonly allowedTypes: TTypes;
     get allowedTypeSet(): AllowedTypeSet;
-    static create<Kind extends FieldKind, const Types extends AllowedTypes>(kind: Kind, allowedTypes: Types): FieldSchema<Kind, Types>;
-    static createUnsafe<Kind extends FieldKind, const Types>(kind: Kind, allowedTypes: Types): FieldSchema<Kind, Types>;
+    static create<TKind extends FieldKind, const Types extends AllowedTypes>(kind: TKind, allowedTypes: Types): FieldSchema<TKind, Types>;
+    static createUnsafe<TKind extends FieldKind, const Types>(kind: TKind, allowedTypes: Types): FieldSchema<TKind, Types>;
     static readonly empty: FieldSchema<Forbidden, readonly []>;
     equals(other: FieldSchema): boolean;
     // (undocumented)
-    readonly kind: Kind;
+    readonly kind: TKind;
     // (undocumented)
     protected _typeCheck?: MakeNominal;
     get types(): TreeTypeSet;
@@ -1987,9 +1990,13 @@ export interface Struct extends TreeNode {
 
 // @alpha
 type StructFields<TFields extends RestrictiveReadonlyRecord<string, FieldSchema>> = {
-    readonly [key in keyof TFields]: UnboxField<TFields[key]>;
-} & {
     readonly [key in keyof TFields as `boxed${Capitalize<key & string>}`]: TypedField<TFields[key]>;
+} & {
+    readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? never : key]: UnboxField<TFields[key]>;
+} & {
+    -readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? key : never]: UnboxField<TFields[key]>;
+} & {
+    readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? `set${Capitalize<key & string>}` : never]: (content: FlexibleFieldContent<TFields[key]>) => void;
 };
 
 // @alpha

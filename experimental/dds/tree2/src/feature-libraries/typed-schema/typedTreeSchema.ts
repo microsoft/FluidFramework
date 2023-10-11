@@ -301,11 +301,15 @@ export type TreeSchemaSpecification = [
  * @remarks
  * `Types` here must extend `AllowedTypes`, but this cannot be enforced with an "extends" clause: see {@link Unenforced} for details.
  *
- * @sealed @alpha
+ * @typeParam TKind - The kind of field.
+ * @typeParam TTypes - The types allowed by the field.
+ *
+ * @sealed
+ * @alpha
  */
 export class FieldSchema<
-	out Kind extends FieldKind = FieldKind,
-	const out Types extends Unenforced<AllowedTypes> = AllowedTypes,
+	out TKind extends FieldKind = FieldKind,
+	const out TTypes extends Unenforced<AllowedTypes> = AllowedTypes,
 > {
 	/**
 	 * Schema for a field which must always be empty.
@@ -317,10 +321,10 @@ export class FieldSchema<
 	 * @privateRemarks
 	 * Alias for the constructor, but with extends clause for the `Types` parameter that {@link FieldSchema} can not have (due to recursive type issues).
 	 */
-	public static create<Kind extends FieldKind, const Types extends AllowedTypes>(
-		kind: Kind,
+	public static create<TKind extends FieldKind, const Types extends AllowedTypes>(
+		kind: TKind,
 		allowedTypes: Types,
-	): FieldSchema<Kind, Types> {
+	): FieldSchema<TKind, Types> {
 		return new FieldSchema(kind, allowedTypes);
 	}
 
@@ -330,10 +334,10 @@ export class FieldSchema<
 	 * `Types` here must extend `AllowedTypes`, but this cannot be enforced with an "extends" clause: see {@link Unenforced} for details.
 	 * Prefer {@link FieldSchema.create} when possible.
 	 */
-	public static createUnsafe<Kind extends FieldKind, const Types>(
-		kind: Kind,
+	public static createUnsafe<TKind extends FieldKind, const Types>(
+		kind: TKind,
 		allowedTypes: Types,
-	): FieldSchema<Kind, Types> {
+	): FieldSchema<TKind, Types> {
 		return new FieldSchema(kind, allowedTypes);
 	}
 
@@ -350,8 +354,8 @@ export class FieldSchema<
 	 * @param allowedTypes - What types of tree nodes are allowed in this field.
 	 */
 	private constructor(
-		public readonly kind: Kind,
-		public readonly allowedTypes: Types,
+		public readonly kind: TKind,
+		public readonly allowedTypes: TTypes,
 	) {
 		// Since this class can't have the desired extends clause, do some extra runtime validation:
 		assert(Array.isArray(allowedTypes), "Invalid allowedTypes");

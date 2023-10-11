@@ -229,6 +229,7 @@ export {
 } from "./untypedTree";
 
 export {
+	AssignableFieldKinds,
 	FieldNode,
 	FlexibleFieldContent,
 	FlexibleNodeContent,
