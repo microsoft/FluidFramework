@@ -451,13 +451,17 @@ export type StructFields<TFields extends RestrictiveReadonlyRecord<string, Field
 	// boxed fields (TODO: maybe remove these when same as non-boxed version?)
 	readonly [key in keyof TFields as `boxed${Capitalize<key & string>}`]: TypedField<TFields[key]>;
 } & {
-	// Unboxed fields
-	readonly [key in keyof TFields]: UnboxField<TFields[key]>;
+	// Add getter only (make property readonly) when the field is **not** of a kind that has a logical set operation.
+	// If we could map to getters and setters separately, we would preferably do that, but we can't.
+	// See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
+	readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
+		? never
+		: key]: UnboxField<TFields[key]>;
 } & {
 	// Add setter (make property writable) when the field is of a kind that has a logical set operation.
 	// If we could map to getters and setters separately, we would preferably do that, but we can't.
 	// See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
-	[key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
+	-readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
 		? key
 		: never]: UnboxField<TFields[key]>;
 } & {
