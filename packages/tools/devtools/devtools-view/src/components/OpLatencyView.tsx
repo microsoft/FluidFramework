@@ -61,21 +61,20 @@ export function OpLatencyView(): React.ReactElement {
 				xAxisDataKey: "outboundtimestamp",
 				yAxisDataKey: "durationOutboundBatching",
 			},
-			data:[],
+			data: [],
 		});
-	const [durationNetworkData, setDurationNetworkData] = React.useState<
-		GraphDataSet>({
-			graphType: "line",
-			schema: {
-				displayName: "Duration Network",
-				uuid: "durationNetwork",
-				xAxisDataKey: "networktimestamp",
-				yAxisDataKey: "durationNetwork",
-			},
-			data:[],
-		});
-	const [durationInboundToProcessingData, setDurationInboundToProcessingData] = React.useState<
-		GraphDataSet>({
+	const [durationNetworkData, setDurationNetworkData] = React.useState<GraphDataSet>({
+		graphType: "line",
+		schema: {
+			displayName: "Duration Network",
+			uuid: "durationNetwork",
+			xAxisDataKey: "networktimestamp",
+			yAxisDataKey: "durationNetwork",
+		},
+		data: [],
+	});
+	const [durationInboundToProcessingData, setDurationInboundToProcessingData] =
+		React.useState<GraphDataSet>({
 			graphType: "line",
 			schema: {
 				displayName: "Duration Inbound",
@@ -83,7 +82,7 @@ export function OpLatencyView(): React.ReactElement {
 				xAxisDataKey: "inboundtimestamp",
 				yAxisDataKey: "durationInboundToProcessing",
 			},
-			data:[],
+			data: [],
 		});
 
 	console.log(durationOutboundBatchingData);
@@ -107,12 +106,12 @@ export function OpLatencyView(): React.ReactElement {
 				}
 
 				console.log(`OP LATENCY: ${JSON.stringify(eventContents)}`);
-				
+
 				setDurationOutboundBatchingData((currentData) => {
 					const newDataPoint = {
 						x: message.data.event.timestamp,
 						y: Number(eventContents.durationOutboundBatching),
-					}
+					};
 					return {
 						...currentData,
 						data: [...(currentData?.data ?? []), newDataPoint],
@@ -122,7 +121,7 @@ export function OpLatencyView(): React.ReactElement {
 					const newDataPoint = {
 						x: message.data.event.timestamp,
 						y: Number(eventContents.durationNetwork),
-					}
+					};
 					return {
 						...currentData,
 						data: [...(currentData?.data ?? []), newDataPoint],
@@ -132,18 +131,16 @@ export function OpLatencyView(): React.ReactElement {
 					const newDataPoint = {
 						x: message.data.event.timestamp,
 						y: Number(eventContents.durationInboundToProcessing),
-					}
+					};
 					return {
 						...currentData,
 						data: [...(currentData?.data ?? []), newDataPoint],
 					};
 				});
-				
 
 				return true;
 			},
 		};
-	
 
 		// Event handler for messages coming from the Message Relay
 		function messageHandler(message: Partial<ISourcedDevtoolsMessage>): void {
@@ -152,11 +149,9 @@ export function OpLatencyView(): React.ReactElement {
 
 		messageRelay.on("message", messageHandler);
 
-
 		return (): void => {
 			messageRelay.off("message", messageHandler);
 		};
-					
 	}, [
 		messageRelay,
 		setDurationOutboundBatchingData,
@@ -180,7 +175,11 @@ export function OpLatencyView(): React.ReactElement {
 				}}
 				yAxisUnitDisplayName="ms"
 				// NOTE: Because Op Latency data is not yet available, this is a placeholder
-				dataSets={[durationOutboundBatchingData, durationNetworkData, durationInboundToProcessingData]}
+				dataSets={[
+					durationOutboundBatchingData,
+					durationNetworkData,
+					durationInboundToProcessingData,
+				]}
 			/>
 			<div className={styles.graphAboutContainer}>
 				<div className={styles.flexColumn}>
