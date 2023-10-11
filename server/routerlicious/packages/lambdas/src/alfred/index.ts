@@ -44,7 +44,6 @@ import {
 	createRoomLeaveMessage,
 	createRuntimeMessage,
 	generateClientId,
-	IRuntimeSignalEnvelope,
 } from "../utils";
 import {
 	IBroadcastSignalEventPayload,
