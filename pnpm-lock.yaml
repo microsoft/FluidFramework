@@ -8026,9 +8026,9 @@ importers:
       '@microsoft/applicationinsights-web': 2.8.13_tslib@1.14.1
     devDependencies:
       '@fluidframework/build-common': 2.0.0
-      '@fluidframework/build-tools': 0.25.0_@types+node@16.18.53
+      '@fluidframework/build-tools': 0.25.0
       '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
-      '@microsoft/api-extractor': 7.37.0_@types+node@16.18.53
+      '@microsoft/api-extractor': 7.37.0
       '@types/mocha': 9.1.1
       '@types/sinon': 7.5.2
       copyfiles: 2.4.1
