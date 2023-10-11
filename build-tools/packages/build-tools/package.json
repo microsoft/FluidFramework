@@ -12,7 +12,7 @@
 	"author": "Microsoft and contributors",
 	"exports": {
 		".": {
-			"types": "./lib/index.d.ts",
+			"types": "./dist/index.d.ts",
 			"import": "./lib/index.js",
 			"require": "./dist/index.js"
 		}
