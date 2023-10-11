@@ -77,10 +77,6 @@ class RawStruct<TSchema extends StructSchema> implements Struct {
 		return rawStructError();
 	}
 
-	public getField(key: FieldKey): TreeField {
-		return rawStructError();
-	}
-
 	public tryGetField(key: FieldKey): TreeField | undefined {
 		return rawStructError();
 	}

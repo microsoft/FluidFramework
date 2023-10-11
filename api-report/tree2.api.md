@@ -2087,7 +2087,6 @@ export const enum TreeNavigationResult {
 export interface TreeNode extends Tree<TreeSchema> {
     // (undocumented)
     [boxedIterator](): IterableIterator<TreeField>;
-    getField(key: FieldKey): TreeField;
     is<TSchema extends TreeSchema>(schema: TSchema): this is TypedNode<TSchema>;
     // (undocumented)
     on<K extends keyof EditableTreeEvents>(eventName: K, listener: EditableTreeEvents[K]): () => void;

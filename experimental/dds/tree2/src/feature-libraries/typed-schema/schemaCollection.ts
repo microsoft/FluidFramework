@@ -268,7 +268,6 @@ export function validateField(
 export const bannedFieldNames = new Set([
 	"constructor",
 	"context",
-	"getField",
 	"is",
 	"on",
 	"parentField",

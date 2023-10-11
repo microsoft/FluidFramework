@@ -5,16 +5,15 @@
 
 /* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable @typescript-eslint/unbound-method */
-import { EmptyKey } from "../../../core";
-import { AllowedTypes } from "../../typed-schema";
-import { TreeNode } from "../editableTreeTypes";
+import { AllowedTypes, FieldNodeSchema } from "../../typed-schema";
+import { FieldNode, TreeNode } from "../editableTreeTypes";
 import { LazySequence } from "../lazyField";
 import { getProxyForNode, getTreeNode, setTreeNode } from "./node";
 import { List } from "./types";
 
 const getField = <TTypes extends AllowedTypes>(target: object) => {
-	const treeNode = getTreeNode(target);
-	const field = treeNode.getField(EmptyKey);
+	const treeNode = getTreeNode(target) as FieldNode<FieldNodeSchema>;
+	const field = treeNode.content;
 	return field as LazySequence<TTypes>;
 };
 
