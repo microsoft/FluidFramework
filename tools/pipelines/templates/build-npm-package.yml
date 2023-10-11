@@ -11,10 +11,6 @@ parameters:
   type: string
   default: ci:build
 
-- name: taskGenerateRollups
-  type: string
-  default: build:docs
-
 - name: taskBuildDocs
   type: boolean
   default: true
@@ -184,7 +180,6 @@ stages:
               echo "
               Pipeline Variables:
                 releaseBuild=$(releaseBuildVar)
-                releaseAlphaBetaBuild=${{ variables.releaseAlphaBetaBuild }}
 
               Override Parameters:
                 publishOverride=${{ parameters.publishOverride }}
@@ -208,6 +203,7 @@ stages:
               Publish Parameters:
                 nonScopedPackages=${{ join(', ', parameters.nonScopedPackages) }}
                 interdependencyRange='${{ parameters.interdependencyRange }}'
+                releaseAlphaBetaBuild=${{ variables.releaseAlphaBetaBuild }}
 
               Computed variables:
                 shouldPublish=${{ variables.shouldPublish }}
@@ -284,23 +280,6 @@ stages:
               buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
               tagName: ${{ parameters.tagName }}
               interdependencyRange: ${{ parameters.interdependencyRange }}
-
-        # Generate rollups and update package.json types to alpha/beta
-        - ${{ if or(eq(variables.releaseAlphaBetaBuild, 'alpha'), eq(variables.releaseAlphaBetaBuild, 'beta')) }}:
-          - task: Npm@1
-            displayName: npm run ${{ parameters.taskGenerateRollups }}
-            inputs: 
-              command: 'custom'
-              workingDir: ${{ parameters.buildDirectory }}
-              customCommand: 'run ${{ parameters.taskGenerateRollups }}'
-
-          - task: Bash@3
-            displayName: Set package.json types to ${{ variables.releaseAlphaBetaBuild }}
-            inputs:
-              targetType: 'inline'
-              workingDir: ${{ parameters.buildDirectory }}
-              script: | 
-                flub release setDtsTypes -g ${{ parameters.tagName }} --types ${{ variables.releaseAlphaBetaBuild }} --json | jq -c > ${{ variables.releaseAlphaBetaBuild }}-types.json
 
         # Build
         - ${{ if ne(parameters.taskBuild, 'false') }}:
@@ -407,6 +386,14 @@ stages:
 
         # Pack
         - ${{ if ne(parameters.taskPack, false) }}:
+          - ${{ if or(eq(variables.releaseAlphaBetaBuild, 'alpha'), eq(variables.releaseAlphaBetaBuild, 'beta')) }}:
+            - task: Bash@3
+              displayName: Set package.json types to ${{ variables.releaseAlphaBetaBuild }}
+              inputs:
+                targetType: 'inline'
+                workingDir: ${{ parameters.buildDirectory }}
+                script: | 
+                  flub release setPackageTypesField -g ${{ parameters.tagName }} --types ${{ variables.releaseAlphaBetaBuild }} --json | jq -c > ${{ variables.releaseAlphaBetaBuild }}-types.json
           - task: Bash@3
             displayName: npm pack
             env:

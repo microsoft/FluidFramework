@@ -101,6 +101,14 @@ variables:
 - ${{ if ne(parameters.releaseBuildOverride, 'none') }}:
   - name: release
     value: ${{ parameters.releaseBuildOverride }}
-- ${{ if or(eq(parameters.releaseBuildOverride, 'alpha'), eq(parameters.releaseBuildOverride, 'beta')) }}:
+
+- ${{ if eq(parameters.packageTypesOverride, 'none') }}:
+  - ${{ if eq(variables.shouldPublish, true) }}:
+    - name: releaseAlphaBetaBuild
+      value: $[variables.releaseBuild]
+  - ${{ if ne(variables.shouldPublish, true) }}:
+    - name: releaseAlphaBetaBuild
+      value: none
+- ${{ if ne(parameters.packageTypesOverride, 'none') }}:
   - name: releaseAlphaBetaBuild
-    value: ${{ parameters.releaseBuildOverride }}
+    value: ${{ parameters.packageTypesOverride }}
