@@ -8,7 +8,6 @@ import {
 	fail,
 	FieldKinds,
 	FieldSchema,
-	ValueSchema,
 	SchemaBuilder,
 	FieldKind,
 	Any,
@@ -16,6 +15,7 @@ import {
 	LazyTreeSchema,
 	brand,
 	Brand,
+	leaf,
 } from "@fluid-experimental/tree2";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 import { TypeIdHelper } from "@fluid-experimental/property-changeset";
@@ -108,7 +108,7 @@ function buildTreeSchema(
 			return treeSchema;
 		}
 		if (TypeIdHelper.isPrimitiveType(type)) {
-			return buildPrimitiveSchema(builder, treeSchemaMap, type, isEnum);
+			return getPrimitiveSchema(treeSchemaMap, type, isEnum);
 		} else {
 			assert(type === typeid, 0x700 /* Unexpected typeid discrepancy */);
 			const cache: { treeSchema?: TreeSchema } = {};
@@ -249,29 +249,27 @@ function buildLocalFields(
 	}
 }
 
-function buildPrimitiveSchema(
-	builder: SchemaBuilder,
+function getPrimitiveSchema(
 	treeSchemaMap: Map<string, LazyTreeSchema>,
 	typeid: string,
 	isEnum?: boolean,
 ): TreeSchema {
-	let valueSchema: ValueSchema;
+	let treeSchema: TreeSchema;
 	if (
 		typeid === stringType ||
 		typeid.startsWith(referenceGenericTypePrefix) ||
 		typeid === referenceType
 	) {
-		valueSchema = ValueSchema.String;
+		treeSchema = leaf.string;
 	} else if (typeid === booleanType) {
-		valueSchema = ValueSchema.Boolean;
+		treeSchema = leaf.boolean;
 	} else if (numberTypes.has(typeid) || isEnum) {
-		valueSchema = ValueSchema.Number;
+		treeSchema = leaf.number;
 	} else {
 		// If this case occurs, there is definetely a problem with the ajv template,
 		// as unknown primitives should be issued there otherwise.
 		fail(`Unknown primitive typeid "${typeid}"`);
 	}
-	const treeSchema = builder.leaf(typeid, valueSchema);
 	treeSchemaMap.set(typeid, treeSchema);
 	return treeSchema;
 }
@@ -306,6 +304,7 @@ function buildFieldSchema<Kind extends FieldKind = FieldKind>(
 const builtinBuilder = new SchemaBuilder({
 	scope: "com.fluidframework.PropertyDDSBuiltIn",
 	name: "PropertyDDS to SharedTree builtin schema builder",
+	libraries: [leaf.library],
 });
 // TODO:
 // It might make sense for all builtins (not specific to the particular schema being processed),
