@@ -586,7 +586,7 @@ export class MapKernel {
 		const serializableMapData: IMapDataObjectSerializable = {};
 
 		for (const [key, localValue] of this.data.entries()) {
-			const serializedValue = makeSerializable(localValue, serializer, this.handle);
+			const serializableValue = makeSerializable(localValue, serializer, this.handle);
 
 			if (!this.isAttached() || !this.ackedKeysIndexTracker.has(key)) {
 				this.ackedKeysIndexTracker.set(key, ++this.creationIndex);
