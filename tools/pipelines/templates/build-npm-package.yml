@@ -124,6 +124,10 @@ parameters:
   type: object
   default: []
 
+- name: packageTypes 
+  type: string 
+  default: "none"
+
 variables:
   # We use 'chalk' to colorize output, which auto-detects color support in the
   # running terminal.  The log output shown in Azure DevOps job runs only has
@@ -203,7 +207,7 @@ stages:
               Publish Parameters:
                 nonScopedPackages=${{ join(', ', parameters.nonScopedPackages) }}
                 interdependencyRange='${{ parameters.interdependencyRange }}'
-                releaseAlphaBetaBuild=${{ variables.releaseAlphaBetaBuild }}
+                packageTypes=${{ parameters.packageTypesOverride }}
 
               Computed variables:
                 shouldPublish=${{ variables.shouldPublish }}
@@ -385,15 +389,16 @@ stages:
               testResultDirs: ${{ parameters.testResultDirs }}
 
         # Pack
-        - ${{ if ne(parameters.taskPack, false) }}:
-          - ${{ if or(eq(variables.releaseAlphaBetaBuild, 'alpha'), eq(variables.releaseAlphaBetaBuild, 'beta')) }}:
+        - ${{ if eq(parameters.taskPack, true) }}:
+          - ${{ if ne(variables.packageTypes, 'none') }}:
             - task: Bash@3
-              displayName: Set package.json types to ${{ variables.releaseAlphaBetaBuild }}
+              displayName: Set package.json types to ${{ variables.packageTypes }}
               inputs:
                 targetType: 'inline'
                 workingDir: ${{ parameters.buildDirectory }}
                 script: | 
-                  flub release setPackageTypesField -g ${{ parameters.tagName }} --types ${{ variables.releaseAlphaBetaBuild }} --json | jq -c > ${{ variables.releaseAlphaBetaBuild }}-types.json
+                  flub release setPackageTypesField -g ${{ parameters.tagName }} --types ${{ variables.packageTypes }}
+
           - task: Bash@3
             displayName: npm pack
             env:
@@ -429,16 +434,6 @@ stages:
               targetPath: '$(Build.ArtifactStagingDirectory)/test-files'
               artifactName: 'test-files'
               publishLocation: 'pipeline'
-        
-          # Point types back to default
-          - ${{ if or(eq(variables.releaseAlphaBetaBuild, 'alpha'), eq(variables.releaseAlphaBetaBuild, 'beta')) }}:
-            - task: Bash@3
-              displayName: Revert types to default
-              inputs: 
-                targetType: 'inline'
-                workingDir: ${{ parameters.buildDirectory }}
-                script: | 
-                  flub release setDtsTypes -g ${{ parameters.tagName }} --types public --json | jq -c > public-types.json
 
         # Collect/publish/run bundle analysis
         - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
