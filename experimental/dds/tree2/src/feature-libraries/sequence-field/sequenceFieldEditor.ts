@@ -4,10 +4,12 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { jsonableTreeFromCursor } from "../treeTextCursor";
-import { ChangesetLocalId, ITreeCursor } from "../../core";
+import { ChangesetLocalId, ITreeCursor, ITreeCursorSynchronous } from "../../core";
 import { FieldEditor } from "../modular-schema";
 import { brand } from "../../util";
+// eslint-disable-next-line import/no-internal-modules
+import { uncompressedEncode } from "../chunked-forest/codec/uncompressedEncode";
+import { chunkTree, defaultChunkPolicy } from "../chunked-forest";
 import {
 	CellId,
 	Changeset,
@@ -57,10 +59,14 @@ export const sequenceFieldEditor = {
 		cursors: readonly ITreeCursor[],
 		id: ChangesetLocalId,
 	): Changeset<never> => {
+		const chunkedCursors = cursors.map((cursor) =>
+			chunkTree(cursor as ITreeCursorSynchronous, defaultChunkPolicy).cursor(),
+		);
+		// TODO: once we refactor the code to have access to the schema/policy, add support for schemaCompressedEncode.
 		const mark: Insert<never> = {
 			type: "Insert",
 			count: cursors.length,
-			content: cursors.map(jsonableTreeFromCursor),
+			content: chunkedCursors.map(uncompressedEncode),
 			cellId: { localId: id },
 		};
 		return markAtIndex(index, mark);

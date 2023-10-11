@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { SequenceField as SF, singleTextCursor } from "../../../feature-libraries";
+import {
+	SequenceField as SF,
+	chunkTree,
+	defaultChunkPolicy,
+	singleTextCursor,
+} from "../../../feature-libraries";
 import { brand } from "../../../util";
 import {
 	ChangeAtomId,
@@ -14,6 +19,8 @@ import {
 	TreeSchemaIdentifier,
 } from "../../../core";
 import { TestChange } from "../../testChange";
+// eslint-disable-next-line import/no-internal-modules
+import { uncompressedEncode } from "../../../feature-libraries/chunked-forest/codec/uncompressedEncode";
 import { composeAnonChanges, composeAnonChangesShallow } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
@@ -191,10 +198,13 @@ function createInsertMark<TChange = never>(
 	const content = Array.isArray(countOrContent)
 		? countOrContent
 		: generateJsonables(countOrContent);
+	const cursors = content
+		.map(singleTextCursor)
+		.map((cursor) => chunkTree(cursor, defaultChunkPolicy).cursor());
 	const cellIdObject: SF.CellId = typeof cellId === "object" ? cellId : { localId: cellId };
 	const mark: SF.Insert<TChange> = {
 		type: "Insert",
-		content,
+		content: cursors.map(uncompressedEncode),
 		count: content.length,
 		cellId: cellIdObject,
 	};

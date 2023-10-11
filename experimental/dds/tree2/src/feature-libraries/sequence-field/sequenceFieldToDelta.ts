@@ -5,9 +5,16 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { brandOpaque, fail, Mutable, OffsetListFactory } from "../../util";
-import { Delta, RevisionTag, TaggedChange } from "../../core";
+import {
+	Delta,
+	ITreeCursorSynchronous,
+	RevisionTag,
+	TaggedChange,
+	mapCursorField,
+} from "../../core";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
-import { singleTextCursor } from "../treeTextCursor";
+// eslint-disable-next-line import/no-internal-modules
+import { decode } from "../chunked-forest/codec/chunkDecoding";
 import { Mark, MarkList, NoopMarkType } from "./format";
 import {
 	areInputCellsEmpty,
@@ -64,10 +71,16 @@ function cellDeltaFromMark<TNodeChange>(
 		// Inline into `switch(mark.type)` once we upgrade to TS 4.7
 		switch (type) {
 			case "Insert": {
-				const cursors = mark.content.map(singleTextCursor);
+				// Since these cursors are fieldCursors, round trip them back into node cursors.
+				const cursors = mark.content.map((encodedChunk) => decode(encodedChunk).cursor());
+				const nodeCursors: ITreeCursorSynchronous[] = [];
+				cursors.forEach((cursor) => {
+					nodeCursors.push(...mapCursorField(cursor, (c) => cursor.fork()));
+				});
+
 				const insertMark: Mutable<Delta.Insert> = {
 					type: Delta.MarkType.Insert,
-					content: cursors,
+					content: nodeCursors,
 				};
 				if (mark.transientDetach !== undefined) {
 					const majorForTransient = mark.transientDetach.revision ?? revision;

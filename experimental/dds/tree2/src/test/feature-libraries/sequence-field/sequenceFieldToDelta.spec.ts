@@ -14,6 +14,7 @@ import {
 	ChangesetLocalId,
 	makeAnonChange,
 	tagChange,
+	mapCursorField,
 } from "../../../core";
 import {
 	FieldChange,
@@ -26,6 +27,10 @@ import {
 import { brand, brandOpaque, makeArray } from "../../../util";
 import { TestChange } from "../../testChange";
 import { assertMarkListEqual, deepFreeze } from "../../utils";
+// eslint-disable-next-line import/no-internal-modules
+import { decode } from "../../../feature-libraries/chunked-forest/codec/chunkDecoding";
+// eslint-disable-next-line import/no-internal-modules
+import { Insert } from "../../../feature-libraries/sequence-field";
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
 import { composeAnonChanges, toDelta } from "./utils";
 
@@ -82,7 +87,7 @@ describe("SequenceField - toDelta", () => {
 		const changeset = Change.insert(0, 1);
 		const mark: Delta.Insert = {
 			type: Delta.MarkType.Insert,
-			content: contentCursor,
+			content: convertInsertMarkToNodeCursors(changeset[0] as Insert<never>),
 		};
 		const expected: Delta.MarkList = [mark];
 		const actual = toDelta(changeset);
@@ -235,7 +240,7 @@ describe("SequenceField - toDelta", () => {
 		};
 		const ins: Delta.Insert = {
 			type: Delta.MarkType.Insert,
-			content: contentCursor,
+			content: convertInsertMarkToNodeCursors(Mark.insert(1, brand(52))),
 		};
 		const expected: Delta.MarkList = [del, 3, ins, 1, childChange1Delta];
 		const actual = toDelta(changeset, tag);
@@ -371,3 +376,14 @@ describe("SequenceField - toDelta", () => {
 		});
 	});
 });
+
+// Function to convert an Insert mark to the expected cursors when a changeset is converted to delta.
+function convertInsertMarkToNodeCursors(mark: Insert<never>): ITreeCursorSynchronous[] {
+	const cursors = mark.content.map((encodedChunk) => decode(encodedChunk).cursor());
+	const newCursors: ITreeCursorSynchronous[] = [];
+	cursors.forEach((cursor) => {
+		const nodeCursors = mapCursorField(cursor, (c) => cursor.fork());
+		newCursors.push(...nodeCursors);
+	});
+	return newCursors;
+}
