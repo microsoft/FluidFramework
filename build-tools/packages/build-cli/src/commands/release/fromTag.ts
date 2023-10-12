@@ -63,7 +63,7 @@ export default class FromTagCommand extends ReleaseReportBaseCommand<typeof From
 		const context = await this.getContext();
 
 		const [releaseGroup, version, tag] = await this.parseTag(tagInput);
-		this.releaseGroupName = releaseGroup.name;
+		this.releaseGroupName = releaseGroup.name as ReleaseGroup;
 
 		this.releaseData = await this.collectReleaseData(
 			context,
