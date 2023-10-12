@@ -37,7 +37,7 @@ describe("beforeChange/afterChange events", () => {
 		const root = tree.schematize({
 			initialTree: {
 				myString: "initial string",
-				myOptionalNumber: 3,
+				myOptionalNumber: undefined,
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
@@ -65,11 +65,8 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(rootBeforeChangeCount, 1);
 		assert.strictEqual(rootAfterChangeCount, 1);
 
-		// Add node where there was none before - child; should fire events on the root node.
-		// TODO: update to `root.child = <something>;` once assignment to struct nodes is implemented in EditableTree2
-		root.boxedChild.content = {
-			myInnerString: "initial string in original child",
-		};
+		// Add node where there was none before - myOptionalNumber; should fire events on the root node.
+		root.myOptionalNumber = 3;
 
 		assert.strictEqual(rootBeforeChangeCount, 2);
 		assert.strictEqual(rootAfterChangeCount, 2);
@@ -100,7 +97,7 @@ describe("beforeChange/afterChange events", () => {
 
 		assert.strictEqual(rootBeforeChangeCount, 4);
 		assert.strictEqual(rootAfterChangeCount, 4);
-		// No events should have fired on the old address node.
+		// No events should have fired on the old child node.
 		assert.strictEqual(childBeforeChangeCount, 1);
 		assert.strictEqual(childAfterChangeCount, 1);
 
@@ -109,7 +106,7 @@ describe("beforeChange/afterChange events", () => {
 
 		assert.strictEqual(rootBeforeChangeCount, 5);
 		assert.strictEqual(rootAfterChangeCount, 5);
-		// No events should have fired on the old address node.
+		// No events should have fired on the old child node.
 		assert.strictEqual(childBeforeChangeCount, 1);
 		assert.strictEqual(childAfterChangeCount, 1);
 
