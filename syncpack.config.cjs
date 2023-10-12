@@ -31,9 +31,7 @@ module.exports = {
 		// Items should be removed from here when possible.
 		{
 			label: "Version compatibility workarounds should be used, or removed from syncpack.config.cjs if no longer needed.",
-			dependencies: [
-				"@oclif/core",
-			],
+			dependencies: ["@oclif/core"],
 			dependencyTypes: ["pnpmOverrides"],
 			packages: ["**"],
 			range: "~",
