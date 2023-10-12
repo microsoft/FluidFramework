@@ -82,7 +82,7 @@ export class SchemaBuilder<TScope extends string = string> extends SchemaBuilder
 	 * can be passed the `allowedTypes` and will implicitly wrap it up in a {@link RequiredField}.
 	 *
 	 * Since this creates a {@link FieldSchema} (and not a {@link TreeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
-	 * therefor this method is the same as the static version.
+	 * therefore this method is the same as the static version.
 	 */
 	public readonly required = SchemaBuilder.required;
 
@@ -101,7 +101,7 @@ export class SchemaBuilder<TScope extends string = string> extends SchemaBuilder
 	 * Shorthand or passing `FieldKinds.sequence` to {@link FieldSchema.create}.
 	 *
 	 * Since this creates a {@link FieldSchema} (and not a {@link TreeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
-	 * therefor this method is the same as the static version.
+	 * therefore this method is the same as the static version.
 	 */
 	public readonly sequence = SchemaBuilder.sequence;
 }

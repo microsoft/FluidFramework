@@ -48,6 +48,7 @@ export interface SchemaBuilderOptions<TScope extends string = string> {
 	/**
 	 * Libraries to include in this one.
 	 *
+	 * @remarks
 	 * Unlike adding of individual schema, adding of libraries is idempotent.
 	 * If a single library is added multiple times (even indirectly via libraries it was added into),
 	 * only a single copy will be included, so they will not conflict.
@@ -362,6 +363,9 @@ export class SchemaBuilderBase<
 		return FieldSchema.createUnsafe(kind, allowedTypes);
 	}
 
+	/**
+	 * {@link normalizeField} using this schema builder's `defaultKind`.
+	 */
 	protected normalizeField<TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
 	): NormalizeField<TSchema, TDefaultKind> {

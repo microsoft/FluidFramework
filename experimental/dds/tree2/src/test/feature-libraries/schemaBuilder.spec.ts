@@ -24,7 +24,7 @@ import {
 import { ValueSchema } from "../../core";
 import { SchemaBuilder } from "../../domains";
 
-describe("DefaultSchemaBuilder", () => {
+describe("SchemaBuilderBase", () => {
 	describe("typedTreeSchema", () => {
 		it("recursive", () => {
 			const builder = new SchemaBuilderBase(FieldKinds.required, { scope: "test" });
