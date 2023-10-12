@@ -27,7 +27,7 @@ export class SanitizationLumberFormatter implements ILumberFormatter {
 			this.redactException(lumber.exception, sensitiveKeys);
 
 			if (sensitiveKeys.size > 0) {
-				lumber.setProperty("SensitiveDataDetected", sensitiveKeys);
+				lumber.setProperty("detectedSensitiveKeys", sensitiveKeys);
 			}
 		}
 	}
