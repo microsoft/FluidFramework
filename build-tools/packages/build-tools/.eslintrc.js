@@ -11,7 +11,11 @@ module.exports = {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
 	rules: {
+		"@typescript-eslint/no-non-null-assertion": "error",
+		"@typescript-eslint/no-unused-vars": "error",
 		"@typescript-eslint/switch-exhaustiveness-check": "error",
+
+		"@typescript-eslint/no-explicit-any": "off",
 		"@typescript-eslint/no-inferrable-types": "off",
 		"@typescript-eslint/no-var-requires": "off",
 

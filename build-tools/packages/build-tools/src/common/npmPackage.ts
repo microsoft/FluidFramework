@@ -104,7 +104,6 @@ export class Package {
 		public readonly packageJsonFileName: string,
 		public readonly group: string,
 		public readonly monoRepo?: MonoRepo,
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		additionalProperties: any = {},
 	) {
 		[this._packageJson, this._indent] = readPackageJsonAndIndent(packageJsonFileName);
