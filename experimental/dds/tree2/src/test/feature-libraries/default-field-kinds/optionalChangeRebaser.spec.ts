@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 import {
 	CrossFieldManager,
 	NodeChangeset,
-	OptionalField,
 	RevisionMetadataSource,
 	singleTextCursor,
 } from "../../../feature-libraries";
@@ -36,31 +35,36 @@ import {
 } from "../../../feature-libraries/default-field-kinds/optionalField";
 // eslint-disable-next-line import/no-internal-modules
 import { OptionalChangeset } from "../../../feature-libraries/default-field-kinds/defaultFieldChangeTypes";
-import { BaseFuzzTestState } from "@fluid-internal/stochastic-test-utils";
 
-// Rather than use UUIDs, allocate these sequentially for an easier time debugging tests.
-let currentRevision = 0;
-function mintRevisionTag(): RevisionTag {
-	return `rev${currentRevision++}` as RevisionTag;
+type RevisionTagMinter = () => RevisionTag;
+
+interface OptionalFieldTestState {
+	contents: string | undefined;
+	mostRecentEdit?: NamedChangeset;
+	parent?: OptionalFieldTestState;
+}
+
+interface NamedChangeset {
+	changeset: TaggedChange<OptionalChangeset>;
+	intention: number;
+	description: string;
+}
+
+function makeRevisionTagMinter(prefix = "rev"): RevisionTagMinter {
+	// Rather than use UUIDs, allocate these sequentially for an easier time debugging tests.
+	let currentRevision = 0;
+	return () => `${prefix}${currentRevision++}` as RevisionTag;
+}
+
+function makeIntentionMinter(): () => number {
+	let intent = 0;
+	return () => intent++;
 }
 
 const type: TreeSchemaIdentifier = brand("Node");
-const tag1: RevisionTag = mintRevisionTag();
-const tag2: RevisionTag = mintRevisionTag();
-const tag3: RevisionTag = mintRevisionTag();
-const tag4: RevisionTag = mintRevisionTag();
-const tag5: RevisionTag = mintRevisionTag();
-const tag6: RevisionTag = mintRevisionTag();
-const tag7: RevisionTag = mintRevisionTag();
-const tags = [tag1, tag2, tag3, tag4, tag5, tag6, tag7];
-
-function getTag(index: number): RevisionTag {
-	const tag = tags[index];
-	if (!tag) {
-		throw new Error("Not enough tags in test setup: add more tags to the tags array");
-	}
-	return tag;
-}
+const mintRevisionTag = makeRevisionTagMinter();
+const tags: RevisionTag[] = Array.from({ length: 7 }, mintRevisionTag);
+const [tag1, tag2, tag3, tag4, tag5, tag6] = tags;
 
 const OptionalChange = {
 	set(value: string | undefined, wasEmpty: boolean, id: ChangesetLocalId = brand(0)) {
@@ -185,19 +189,166 @@ function compose(changes: TaggedChange<OptionalChangeset>[]): OptionalChangeset 
 	);
 }
 
-const testChanges: [string, OptionalChangeset][] = [
-	// TODO:AB#4622: This set of edits should be extended to ones with changes to previous content in the field.
-	// If certain types of changes can only be made in some state (e.g. the current format with "wasEmpty"),
-	// we could also consider running multiple exhaustive test suites for meaningfully different starting states.
-	// E.g. in the current format, changes A and B cannot disagree on 'wasEmpty' if they share the same base commit.
-	["SetA", OptionalChange.set("A", false)],
-	["SetB", OptionalChange.set("B", false)],
-	["SetUndefined", OptionalChange.set(undefined, false)],
-	["ChangeChild", OptionalChange.buildChildChange(TestChange.mint([], 1))],
-];
-deepFreeze(testChanges);
+function getInputContext(state: OptionalFieldTestState): number[] {
+	const inputContext: number[] = [];
+	for (
+		let current: OptionalFieldTestState | undefined = state;
+		current?.mostRecentEdit !== undefined;
+		current = current.parent
+	) {
+		inputContext.push(current.mostRecentEdit.intention);
+	}
+	inputContext.reverse();
+	return inputContext;
+}
 
-describe("OptionalField - Rebaser Axioms", () => {
+interface FieldStateUpTree<TContent, TChangeset> {
+	content: TContent;
+	mostRecentEdit?: NamedChangeset;
+	parent?: FieldStateUpTree<TContent, TChangeset>;
+}
+
+function* generateChildStates(
+	state: OptionalFieldTestState,
+	tagFromIntention: (intention: number) => RevisionTag,
+	mintIntention: () => number,
+): Iterable<OptionalFieldTestState> {
+	// Valid operations:
+	// - set to a new value
+	// - set to undefined
+	// - change child
+
+	const inputContext = getInputContext(state);
+	if (state.contents !== undefined) {
+		// Make a change to the child
+		const changeChildIntention = mintIntention();
+		yield {
+			contents: state.contents,
+			mostRecentEdit: {
+				changeset: tagChange(
+					OptionalChange.buildChildChange(
+						TestChange.mint(inputContext, changeChildIntention),
+					),
+					tagFromIntention(changeChildIntention),
+				),
+				intention: changeChildIntention,
+				description: `ChildChange${changeChildIntention}`,
+			},
+			parent: state,
+		};
+
+		const setUndefinedIntention = mintIntention();
+		yield {
+			contents: undefined,
+			mostRecentEdit: {
+				changeset: tagChange(
+					OptionalChange.set(undefined, false),
+					tagFromIntention(setUndefinedIntention),
+				),
+				intention: setUndefinedIntention,
+				description: "Delete",
+			},
+			parent: state,
+		};
+	}
+
+	for (const value of ["A", "B"]) {
+		const setIntention = mintIntention();
+		// Using length of the input context guarantees set operations generated at different times also have different
+		// values, which should tend to be easier to debug
+		const newContents = `${value},${inputContext.length}`;
+		yield {
+			contents: newContents,
+			mostRecentEdit: {
+				changeset: tagChange(
+					OptionalChange.set(newContents, state.contents === undefined),
+					tagFromIntention(setIntention),
+				),
+				intention: setIntention,
+				description: `Set${value},${inputContext.length}`,
+			},
+			parent: state,
+		};
+	}
+
+	if (state.mostRecentEdit !== undefined) {
+		const undoIntention = mintIntention();
+		yield {
+			contents: state.parent?.contents,
+			mostRecentEdit: {
+				changeset: tagChange(
+					invert(state.mostRecentEdit.changeset),
+					tagFromIntention(undoIntention),
+				),
+				// TODO: Invert/TestChange has some funky logic around negative intentions being used
+				// for inverses. The handling of intention/revision here might need to be updated.
+				// e.g. Should this be -state.mostRecentEdit.intention?
+				intention: undoIntention,
+				description: `Undo:${state.mostRecentEdit.description}`,
+			},
+			parent: state,
+		};
+	}
+}
+
+function* walkOptionalFieldTestStateTree(
+	initialState: OptionalFieldTestState,
+	depth: number,
+	tagFromIntention: (intention: number) => RevisionTag,
+	mintIntention: () => number,
+): Iterable<OptionalFieldTestState> {
+	yield initialState;
+	if (depth > 0) {
+		for (const childState of generateChildStates(
+			initialState,
+			tagFromIntention,
+			mintIntention,
+		)) {
+			yield* walkOptionalFieldTestStateTree(
+				childState,
+				depth - 1,
+				tagFromIntention,
+				mintIntention,
+			);
+		}
+	}
+}
+
+function* generatePossibleSequenceOfEdits(
+	initialState: OptionalFieldTestState,
+	numberOfEdits: number,
+	tagPrefix: string,
+): Iterable<NamedChangeset[]> {
+	for (const state of walkOptionalFieldTestStateTree(
+		initialState,
+		numberOfEdits,
+		(intention: number) => `${tagPrefix}${intention}` as RevisionTag,
+		makeIntentionMinter(),
+	)) {
+		const edits: NamedChangeset[] = [];
+		for (
+			let current: OptionalFieldTestState | undefined = state;
+			current?.mostRecentEdit !== undefined;
+			current = current.parent
+		) {
+			edits.push(current.mostRecentEdit);
+		}
+
+		if (edits.length === numberOfEdits) {
+			edits.reverse();
+			yield edits;
+		}
+	}
+}
+
+function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
+	const testChanges: [string, OptionalChangeset][] = Array.from(
+		generatePossibleSequenceOfEdits(initialState, 1, "rev"),
+		// TODO: Use generated tags rather than mint new ones.
+		([{ description, changeset }]) => [description, changeset.change],
+	);
+	deepFreeze(testChanges);
+
 	/**
 	 * This test simulates rebasing over an do-inverse pair.
 	 */
@@ -341,124 +492,16 @@ describe("OptionalField - Rebaser Axioms", () => {
 			}
 		}
 	});
+}
 
-	interface OptionalFieldTestState {
-		contents: string | undefined;
-		allocateIntention: () => number;
-		mostRecentEdit?: NamedChangeset;
-		parent: OptionalFieldTestState | undefined;
-	}
+describe.only("OptionalField - Rebaser Axioms", () => {
+	describe.only("Using valid edits from an undefined field", () => {
+		runSingleEditRebaseAxiomSuite({ contents: undefined });
+	});
 
-	function getInputContext(state: OptionalFieldTestState): number[] {
-		// todo: recursive might be clearer
-		// if (state.mostRecentIntention === undefined) {
-		// 	return [];
-		// }
-		const inputContext: number[] = [];
-		for (
-			let current: OptionalFieldTestState | undefined = state;
-			current?.mostRecentEdit !== undefined;
-			current = current.parent
-		) {
-			inputContext.push(current.mostRecentEdit.intention);
-		}
-		inputContext.reverse();
-		return inputContext;
-	}
-
-	function* generateChildStates(state: OptionalFieldTestState): Iterable<OptionalFieldTestState> {
-		// Valid operations:
-		// - set to a new value
-		// - set to undefined
-		// - change child
-
-		// TODO: inverse and undo of previous change
-
-		const inputContext = getInputContext(state);
-		if (state.contents !== undefined) {
-			// Make a change to the child
-			const changeChildIntention = state.allocateIntention();
-			yield {
-				contents: state.contents,
-				allocateIntention: state.allocateIntention,
-				mostRecentEdit: {
-					changeset: OptionalChange.buildChildChange(
-						TestChange.mint(inputContext, changeChildIntention),
-					),
-					intention: changeChildIntention,
-					description: `ChildChange ${changeChildIntention}`,
-				},
-				parent: state,
-			};
-
-			const setUndefinedIntention = state.allocateIntention();
-			yield {
-				contents: undefined,
-				allocateIntention: state.allocateIntention,
-				mostRecentEdit: {
-					changeset: OptionalChange.set(undefined, false),
-					intention: setUndefinedIntention,
-					description: "Set undefined",
-				},
-				parent: state,
-			};
-		}
-
-		const setIntention = state.allocateIntention();
-		const newContents = `set at depth ${inputContext.length}`;
-		yield {
-			contents: newContents,
-			allocateIntention: state.allocateIntention,
-			mostRecentEdit: {
-				changeset: OptionalChange.set(newContents, state.contents === undefined),
-				intention: setIntention,
-				description: `Set ${inputContext.length}`,
-			},
-			parent: state,
-		};
-	}
-
-	function createInitialState(contents: string | undefined): OptionalFieldTestState {
-		let nextIntention = 0;
-		return {
-			contents,
-			allocateIntention: () => nextIntention++,
-			parent: undefined,
-		};
-	}
-
-	function* walkOptionalFieldTestStateTree(
-		initialState: OptionalFieldTestState,
-		depth: number,
-	): Iterable<OptionalFieldTestState> {
-		yield initialState;
-		if (depth > 0) {
-			for (const childState of generateChildStates(initialState)) {
-				yield* walkOptionalFieldTestStateTree(childState, depth - 1);
-			}
-		}
-	}
-
-	function* generatePossibleSequenceOfEdits(
-		initialState: OptionalFieldTestState,
-		numberOfEdits: number,
-	): Iterable<NamedChangeset[]> {
-		for (const state of walkOptionalFieldTestStateTree(initialState, numberOfEdits)) {
-			const edits: NamedChangeset[] = [];
-			for (
-				let current: OptionalFieldTestState | undefined = state;
-				current?.mostRecentEdit !== undefined;
-				current = current.parent
-			) {
-				edits.push(current.mostRecentEdit);
-			}
-
-			if (edits.length === numberOfEdits) {
-				edits.reverse();
-				yield edits;
-			}
-		}
-	}
+	describe.only("Using valid edits from a field with content", () => {
+		runSingleEditRebaseAxiomSuite({ contents: "A" });
+	});
 
 	// To limit combinatorial explosion, we test 'rebasing over a compose is equivalent to rebasing over the individual edits'
 	// by:
@@ -466,18 +509,18 @@ describe("OptionalField - Rebaser Axioms", () => {
 	// - Rebasing N sequential edits over a single edit, sandwich-rebasing style
 	//   (meaning [A, B, C] ↷ D involves B ↷ compose([A⁻¹, D, A]) and C ↷ compose([B⁻¹, A⁻¹, D, A, B]))
 	describe("Rebase over compose exhaustive", () => {
-		for (const fieldContent of [undefined, "A"]) {
-			describe(`starting with contents ${fieldContent}`, () => {
-				const initialState = createInitialState(fieldContent);
+		for (const initialState of [{ contents: undefined }, { contents: "A" }]) {
+			describe(`starting with contents ${initialState.contents}`, () => {
 				for (const [
 					{ description: name, changeset: edit },
-				] of generatePossibleSequenceOfEdits(initialState, 1)) {
-					for (const editsToRebaseOver of generatePossibleSequenceOfEdits(
+				] of generatePossibleSequenceOfEdits(initialState, 1, "local-rev-")) {
+					for (const namedEditsToRebaseOver of generatePossibleSequenceOfEdits(
 						initialState,
 						2,
+						"trunk-rev-",
 					)) {
 						const title = `Rebase ${name} over compose ${JSON.stringify(
-							editsToRebaseOver.map(({ description }) => description),
+							namedEditsToRebaseOver.map(({ description }) => description),
 						)}`;
 
 						// if (
@@ -486,23 +529,18 @@ describe("OptionalField - Rebaser Axioms", () => {
 						// 	continue;
 						// }
 						it(title, () => {
-							const taggedEditToRebase = tagChange(edit, tag1);
-							const taggedTrunkEdits = editsToRebaseOver.map(
-								({ changeset: edit }, i) => tagChange(edit, getTag(i + 1)),
+							const editsToRebaseOver = namedEditsToRebaseOver.map(
+								({ changeset }) => changeset,
 							);
-
-							const rebaseWithoutCompose = rebaseTagged(
-								taggedEditToRebase,
-								...taggedTrunkEdits,
-							);
+							const rebaseWithoutCompose = rebaseTagged(edit, ...editsToRebaseOver);
 							const metadata = defaultRevisionMetadataFromChanges([
-								...taggedTrunkEdits,
-								taggedEditToRebase,
+								...editsToRebaseOver,
+								edit,
 							]);
 							const rebaseWithCompose = rebaseComposed(
 								metadata,
-								taggedEditToRebase,
-								...taggedTrunkEdits,
+								edit,
+								...editsToRebaseOver,
 							);
 							assert.deepEqual(rebaseWithCompose.change, rebaseWithoutCompose.change);
 						});
@@ -512,44 +550,32 @@ describe("OptionalField - Rebaser Axioms", () => {
 		}
 	});
 
-	interface NamedChangeset {
-		changeset: OptionalChangeset;
-		intention: number;
-		description: string;
-	}
-	{
-		interface OptionalFieldFuzzTestState extends BaseFuzzTestState {
-			contents: string | undefined;
-			allocateIntention: () => number;
-			edits: NamedChangeset[];
-		}
-	}
-
-	describe.only("Sandwich rebase over compose exhaustive", () => {
-		for (const fieldContent of [undefined, "A"]) {
-			describe(`starting with contents ${fieldContent}`, () => {
-				const initialState = createInitialState(fieldContent);
-				for (const sourceEdits of generatePossibleSequenceOfEdits(initialState, 2)) {
+	describe("Sandwich rebase over compose exhaustive", () => {
+		for (const initialState of [{ contents: undefined }, { contents: "A" }]) {
+			describe(`starting with contents ${initialState.contents}`, () => {
+				for (const namedSourceEdits of generatePossibleSequenceOfEdits(
+					initialState,
+					2,
+					"local-rev-",
+				)) {
 					for (const [
-						{ description: name, changeset: editToRebaseOver },
-					] of generatePossibleSequenceOfEdits(initialState, 1)) {
+						{ description: name, changeset: namedEditToRebaseOver },
+					] of generatePossibleSequenceOfEdits(initialState, 1, "trunk-rev-")) {
 						const title = `Rebase ${JSON.stringify(
-							sourceEdits.map(({ description }) => description),
+							namedSourceEdits.map(({ description }) => description),
 						)} over ${name}`;
 
-						if (title !== 'Rebase ["Set 0","ChildChange 1"] over Set 0') {
-							continue;
-						}
+						// if (title !== 'Rebase ["Set 0","ChildChange 1"] over Set 0') {
+						// 	continue;
+						// }
 						it(title, () => {
-							const taggedEditToRebaseOver = tagChange(editToRebaseOver, tag1);
-							const taggedSourceEdits = sourceEdits.map(({ changeset }, i) =>
-								tagChange(changeset, getTag(i + 1)),
-							);
+							const editToRebaseOver = namedEditToRebaseOver;
+							const sourceEdits = namedSourceEdits.map(({ changeset }) => changeset);
 
-							const inverses = taggedSourceEdits.map((change, i) =>
+							const inverses = sourceEdits.map((change) =>
 								tagRollbackInverse(
 									invert(change),
-									getTag(i + sourceEdits.length + 1),
+									`rollback-${change.revision}` as RevisionTag,
 									change.revision,
 								),
 							);
@@ -558,11 +584,11 @@ describe("OptionalField - Rebaser Axioms", () => {
 								[];
 							const rebasedEditsWithCompose: TaggedChange<OptionalChangeset>[] = [];
 
-							for (let i = 0; i < taggedSourceEdits.length; i++) {
-								const edit = taggedSourceEdits[i];
+							for (let i = 0; i < sourceEdits.length; i++) {
+								const edit = sourceEdits[i];
 								const editsToRebaseOver = [
 									...inverses.slice(0, i),
-									taggedEditToRebaseOver,
+									editToRebaseOver,
 									...rebasedEditsWithoutCompose,
 								];
 								rebasedEditsWithoutCompose.push(
@@ -570,12 +596,12 @@ describe("OptionalField - Rebaser Axioms", () => {
 								);
 							}
 
-							let currentComposedEdit = taggedEditToRebaseOver;
+							let currentComposedEdit = editToRebaseOver;
 							// This needs to be used to pass an updated RevisionMetadataSource to rebase.
-							const allTaggedEdits = [...inverses, taggedEditToRebaseOver];
-							for (let i = 0; i < taggedSourceEdits.length; i++) {
+							const allTaggedEdits = [...inverses, editToRebaseOver];
+							for (let i = 0; i < sourceEdits.length; i++) {
 								const metadata = defaultRevisionMetadataFromChanges(allTaggedEdits);
-								const edit = taggedSourceEdits[i];
+								const edit = sourceEdits[i];
 								const rebasedEdit = rebaseComposed(
 									metadata,
 									edit,
