@@ -650,7 +650,6 @@ stages:
       - build
 
     jobs:
-      variables:
       - template: include-test-perf-benchmarks.yml
         parameters:
             testWorkspace: ${{ variables.testWorkspace }}
