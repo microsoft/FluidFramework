@@ -109,8 +109,8 @@ export function OpLatencyView(): React.ReactElement {
 
 				setDurationOutboundBatchingData((currentData) => {
 					const newDataPoint = {
-						x: message.data.event.timestamp,
-						y: Number(eventContents.durationOutboundBatching),
+						outboundtimestamp: message.data.event.timestamp,
+						durationOutboundBatching: Number(eventContents.durationOutboundBatching),
 					};
 					return {
 						...currentData,
@@ -119,8 +119,8 @@ export function OpLatencyView(): React.ReactElement {
 				});
 				setDurationNetworkData((currentData) => {
 					const newDataPoint = {
-						x: message.data.event.timestamp,
-						y: Number(eventContents.durationNetwork),
+						networktimestamp: message.data.event.timestamp,
+						durationNetwork: Number(eventContents.durationNetwork),
 					};
 					return {
 						...currentData,
@@ -129,8 +129,8 @@ export function OpLatencyView(): React.ReactElement {
 				});
 				setDurationInboundToProcessingData((currentData) => {
 					const newDataPoint = {
-						x: message.data.event.timestamp,
-						y: Number(eventContents.durationInboundToProcessing),
+						inboundtimestamp: message.data.event.timestamp,
+						durationInboundToProcessing: Number(eventContents.durationInboundToProcessing),
 					};
 					return {
 						...currentData,
