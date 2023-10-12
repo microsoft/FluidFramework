@@ -114,6 +114,6 @@ describe("SharedTreeObject", () => {
 function createTypedTreeView<TRoot extends FieldSchema>(
 	schema: TypedSchemaCollection<TRoot>,
 	initialTree: any,
-): ISharedTreeView & { root2: (viewSchema: TypedSchemaCollection<TRoot>) => ProxyField<TRoot> } {
+): ISharedTreeView {
 	return createTreeView(schema, initialTree);
 }

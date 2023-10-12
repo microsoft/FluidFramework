@@ -278,6 +278,15 @@ export {
 	Unenforced,
 	schemaIsFieldNode,
 	AllowedTypeSet,
+	SharedTreeList,
+	ObjectFields,
+	ProxyField,
+	ProxyFieldInner,
+	ProxyNode,
+	ProxyNodeUnion,
+	SharedTreeMap,
+	SharedTreeObject,
+	is,
 } from "./feature-libraries";
 
 export {

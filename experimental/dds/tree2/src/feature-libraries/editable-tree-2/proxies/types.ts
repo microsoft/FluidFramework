@@ -26,7 +26,10 @@ import {
 	AssignableFieldKinds,
 } from "../editableTreeTypes";
 
-/** Implements 'readonly T[]' and the list mutation APIs. */
+/**
+ * Implements 'readonly T[]' and the list mutation APIs.
+ * @alpha
+ */
 export interface SharedTreeList<TTypes extends AllowedTypes>
 	extends ReadonlyArray<ProxyNodeUnion<TTypes>> {
 	/**
@@ -240,7 +243,7 @@ export type ProxyNode<TSchema extends TreeSchema> = TSchema extends LeafSchema
 	: TSchema extends MapSchema
 	? SharedTreeMap<TSchema>
 	: TSchema extends FieldNodeSchema
-	? ProxyField<TSchema["structFieldsObject"][""]>
+	? SharedTreeList<TSchema["structFieldsObject"][""]["allowedTypes"]>
 	: TSchema extends StructSchema
 	? SharedTreeObject<TSchema>
 	: unknown;

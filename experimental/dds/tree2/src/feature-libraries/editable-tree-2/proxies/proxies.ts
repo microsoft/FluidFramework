@@ -41,6 +41,7 @@ export function setTreeNode(target: any, treeNode: TreeNode) {
 
 /**
  * Checks if the given object is a {@link SharedTreeObject}
+ * @alpha
  */
 export function is<TSchema extends StructSchema>(
 	x: unknown,
