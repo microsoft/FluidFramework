@@ -10,6 +10,8 @@ import {
 	ICriticalContainerError,
 	ConnectionState,
 } from "@fluidframework/container-definitions";
+import type { Jsonable } from "@fluidframework/datastore-definitions";
+import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import type { IRootDataObject, LoadableObjectClass, LoadableObjectRecord } from "./types";
 
 /**
@@ -69,6 +71,18 @@ export interface IFluidContainerEvents extends IEvent {
 	 * {@link IFluidContainer.dispose}), this will contain details about the error that caused it.
 	 */
 	(event: "disposed", listener: (error?: ICriticalContainerError) => void);
+
+	/**
+	 * Emitted immediately after processing an incoming signal (signal) addressed to container.
+	 *
+	 * @remarks
+	 *
+	 * Listener parameters:
+	 *
+	 * - `message`: The signal that was processed.
+	 * - `local`: True when signal originated by this client.
+	 */
+	(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
 }
 
 /**
@@ -187,6 +201,21 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
 	 * Dispose of the container instance, permanently disabling it.
 	 */
 	dispose(): void;
+
+	/**
+	 * Submits the signal to be sent to other clients.
+	 *
+	 * @remarks
+	 *
+	 * Only functional when the container is in the
+	 * {@link @fluidframework/container-definitions#ConnectionState.Connected} state.
+	 *
+	 * This can be determined by observing {@link IFluidContainer.connectionState}.
+	 *
+	 * @param type - Type of the signal.
+	 * @param content - Content of the signal.
+	 */
+	submitSignal<T>(type: string, content: Jsonable<T>): void;
 }
 
 /**
@@ -218,6 +247,7 @@ export class FluidContainer
 		container.on("disconnected", this.disconnectedHandler);
 		container.on("saved", this.savedHandler);
 		container.on("dirty", this.dirtyHandler);
+		rootDataObject.on("signal", (message, local) => this.emit("signal", message, local));
 	}
 
 	/**
@@ -305,6 +335,13 @@ export class FluidContainer
 		this.container.off("disconnected", this.disconnectedHandler);
 		this.container.off("saved", this.savedHandler);
 		this.container.off("dirty", this.dirtyHandler);
+	}
+
+	/**
+	 * {@inheritDoc IFluidContainer.submitSignal}
+	 */
+	public submitSignal<T>(type: string, content: Jsonable<T>) {
+		this.rootDataObject.submitSignal(type, content);
 	}
 
 	/**

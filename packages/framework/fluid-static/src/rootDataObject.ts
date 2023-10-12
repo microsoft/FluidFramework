@@ -11,11 +11,13 @@ import {
 } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
+import { Jsonable } from "@fluidframework/datastore-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import {
 	ContainerSchema,
 	DataObjectClass,
 	IRootDataObject,
+	IRootDataObjectEvents,
 	LoadableObjectClass,
 	LoadableObjectClassRecord,
 	LoadableObjectRecord,
@@ -40,7 +42,7 @@ export interface RootDataObjectProps {
  * Abstracts the dynamic code required to build a Fluid Container into a static representation for end customers.
  */
 export class RootDataObject
-	extends DataObject<{ InitialState: RootDataObjectProps }>
+	extends DataObject<{ InitialState: RootDataObjectProps; Events: IRootDataObjectEvents }>
 	implements IRootDataObject
 {
 	private readonly initialObjectsDirKey = "initial-objects-key";
@@ -94,6 +96,8 @@ export class RootDataObject
 		}
 
 		await Promise.all(loadInitialObjectsP);
+
+		this.runtime.on("signal", (message, local) => this.emit("signal", message, local));
 	}
 
 	/**
@@ -134,6 +138,10 @@ export class RootDataObject
 		const factory = sharedObjectClass.getFactory();
 		const obj = this.runtime.createChannel(undefined, factory.type);
 		return obj as unknown as T;
+	}
+
+	public submitSignal<T>(signalName: string, payload?: Jsonable<T>) {
+		this.runtime.submitSignal(signalName, payload);
 	}
 }
 

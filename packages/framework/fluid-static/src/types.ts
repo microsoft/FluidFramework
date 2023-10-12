@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
-import { IChannelFactory } from "@fluidframework/datastore-definitions";
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import type { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
+import type { IChannelFactory, Jsonable } from "@fluidframework/datastore-definitions";
+import type {
+	IFluidDataStoreFactory,
+	IInboundSignalMessage,
+} from "@fluidframework/runtime-definitions";
 
 /**
  * A mapping of string identifiers to instantiated `DataObject`s or `SharedObject`s.
@@ -96,11 +99,25 @@ export interface ContainerSchema {
 	dynamicObjectTypes?: LoadableObjectClass<any>[];
 }
 
+export interface IRootDataObjectEvents extends IEvent {
+	/**
+	 * Emitted immediately after processing an incoming signal (signal).
+	 *
+	 * @remarks
+	 *
+	 * Listener parameters:
+	 *
+	 * - `message`: The signal that was processed.
+	 * - `local`: True when signal originated by this client.
+	 */
+	(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
+}
+
 /**
  * Holds the collection of objects that the container was initially created with, as well as provides the ability
  * to dynamically create further objects during usage.
  */
-export interface IRootDataObject {
+export interface IRootDataObject extends IEventProvider<IRootDataObjectEvents> {
 	/**
 	 * Provides a record of the initial objects defined on creation.
 	 */
@@ -114,6 +131,13 @@ export interface IRootDataObject {
 	 * @typeParam T - The class of the `DataObject` or `SharedObject`.
 	 */
 	create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
+
+	/**
+	 * Send a signal with payload to its connected listeners.
+	 * @param signalName - The name of the signal
+	 * @param payload - The data to send with the signal
+	 */
+	submitSignal<T>(signalName: string, payload?: Jsonable<T>);
 }
 
 /**

@@ -8,15 +8,17 @@ import { AttachState } from '@fluidframework/container-definitions';
 import { BaseContainerRuntimeFactory } from '@fluidframework/aqueduct';
 import { ConnectionState } from '@fluidframework/container-definitions';
 import { IAudience } from '@fluidframework/container-definitions';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
+import type { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IContainer } from '@fluidframework/container-definitions';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
-import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
+import type { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
+import type { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
+import type { Jsonable } from '@fluidframework/datastore-definitions';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @public
@@ -52,6 +54,7 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     // @internal
     readonly INTERNAL_CONTAINER_DO_NOT_USE?: () => IContainer;
     get isDirty(): boolean;
+    submitSignal<T>(type: string, content: Jsonable<T>): void;
 }
 
 // @public
@@ -72,6 +75,7 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     readonly disposed: boolean;
     readonly initialObjects: LoadableObjectRecord;
     readonly isDirty: boolean;
+    submitSignal<T>(type: string, content: Jsonable<T>): void;
 }
 
 // @public
@@ -81,6 +85,7 @@ export interface IFluidContainerEvents extends IEvent {
     (event: "saved", listener: () => void): void;
     (event: "dirty", listener: () => void): void;
     (event: "disposed", listener: (error?: ICriticalContainerError) => void): any;
+    (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): any;
 }
 
 // @public
@@ -90,9 +95,10 @@ export interface IMember {
 }
 
 // @public
-export interface IRootDataObject {
+export interface IRootDataObject extends IEventProvider<IRootDataObjectEvents> {
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
     readonly initialObjects: LoadableObjectRecord;
+    submitSignal<T>(signalName: string, payload?: Jsonable<T>): any;
 }
 
 // @public
