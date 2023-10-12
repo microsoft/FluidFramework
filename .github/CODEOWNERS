@@ -63,7 +63,8 @@ api-report/tree2.api.md                                @microsoft/fluid-cr-tree
 # The packages listed here are not necessarily considered part of the public API.
 packages/dds/shared-object-base/api-report/            @microsoft/fluid-cr-framework
 
-experimental/dds/**/api-report/                        @microsoft/fluid-cr-dds
+# TODO: uncomment once experimental reports have moved
+# experimental/dds/**/api-report/                        @microsoft/fluid-cr-dds
 packages/framework/dds-interceptions/api-report/       @microsoft/fluid-cr-dds
 
 packages/framework/request-handler/api-report/         @microsoft/fluid-cr-runtime
