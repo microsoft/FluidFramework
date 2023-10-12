@@ -134,7 +134,7 @@ describe("beforeChange/afterChange events", () => {
 
 		root.on("beforeChange", (args: unknown) => {
 			beforeCounter++;
-			assert.strictEqual(afterCounter, beforeCounter - 1, "beforeChange fired out of order");
+			assert.strictEqual(beforeCounter, afterCounter + 1, "beforeChange fired out of order");
 		});
 		root.on("afterChange", (args: unknown) => {
 			afterCounter++;
@@ -350,12 +350,12 @@ describe("beforeChange/afterChange events", () => {
 		});
 		root.child.on("beforeChange", (args: unknown) => {
 			// Counts should match only before child counter has been increased
-			assert.strictEqual(rootBeforeCounter, childBeforeCounter);
+			assert.strictEqual(childBeforeCounter, rootBeforeCounter);
 			childBeforeCounter++;
 		});
 		root.child.on("afterChange", (args: unknown) => {
 			// Counts should match only before child counter has been increased
-			assert.strictEqual(rootAfterCounter, childAfterCounter);
+			assert.strictEqual(childAfterCounter, rootAfterCounter);
 			childAfterCounter++;
 		});
 
