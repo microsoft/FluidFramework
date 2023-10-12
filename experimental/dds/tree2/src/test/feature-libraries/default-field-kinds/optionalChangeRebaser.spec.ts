@@ -36,6 +36,7 @@ import {
 } from "../../../feature-libraries/default-field-kinds/optionalField";
 // eslint-disable-next-line import/no-internal-modules
 import { OptionalChangeset } from "../../../feature-libraries/default-field-kinds/defaultFieldChangeTypes";
+import { BaseFuzzTestState } from "@fluid-internal/stochastic-test-utils";
 
 // Rather than use UUIDs, allocate these sequentially for an easier time debugging tests.
 let currentRevision = 0;
@@ -344,10 +345,8 @@ describe("OptionalField - Rebaser Axioms", () => {
 	interface OptionalFieldTestState {
 		contents: string | undefined;
 		allocateIntention: () => number;
-		mostRecentEdit: OptionalChangeset | undefined;
-		mostRecentIntention: number | undefined;
+		mostRecentEdit?: NamedChangeset;
 		parent: OptionalFieldTestState | undefined;
-		mostRecentEditDescription: string | undefined;
 	}
 
 	function getInputContext(state: OptionalFieldTestState): number[] {
@@ -358,10 +357,10 @@ describe("OptionalField - Rebaser Axioms", () => {
 		const inputContext: number[] = [];
 		for (
 			let current: OptionalFieldTestState | undefined = state;
-			current?.mostRecentIntention !== undefined;
+			current?.mostRecentEdit !== undefined;
 			current = current.parent
 		) {
-			inputContext.push(current.mostRecentIntention);
+			inputContext.push(current.mostRecentEdit.intention);
 		}
 		inputContext.reverse();
 		return inputContext;
@@ -382,22 +381,26 @@ describe("OptionalField - Rebaser Axioms", () => {
 			yield {
 				contents: state.contents,
 				allocateIntention: state.allocateIntention,
-				mostRecentEdit: OptionalChange.buildChildChange(
-					TestChange.mint(inputContext, changeChildIntention),
-				),
-				mostRecentIntention: changeChildIntention,
+				mostRecentEdit: {
+					changeset: OptionalChange.buildChildChange(
+						TestChange.mint(inputContext, changeChildIntention),
+					),
+					intention: changeChildIntention,
+					description: `ChildChange ${changeChildIntention}`,
+				},
 				parent: state,
-				mostRecentEditDescription: `ChildChange ${changeChildIntention}`,
 			};
 
 			const setUndefinedIntention = state.allocateIntention();
 			yield {
 				contents: undefined,
 				allocateIntention: state.allocateIntention,
-				mostRecentEdit: OptionalChange.set(undefined, false),
-				mostRecentIntention: setUndefinedIntention,
+				mostRecentEdit: {
+					changeset: OptionalChange.set(undefined, false),
+					intention: setUndefinedIntention,
+					description: "Set undefined",
+				},
 				parent: state,
-				mostRecentEditDescription: "Set undefined",
 			};
 		}
 
@@ -406,10 +409,12 @@ describe("OptionalField - Rebaser Axioms", () => {
 		yield {
 			contents: newContents,
 			allocateIntention: state.allocateIntention,
-			mostRecentEdit: OptionalChange.set(newContents, state.contents === undefined),
-			mostRecentIntention: setIntention,
+			mostRecentEdit: {
+				changeset: OptionalChange.set(newContents, state.contents === undefined),
+				intention: setIntention,
+				description: `Set ${inputContext.length}`,
+			},
 			parent: state,
-			mostRecentEditDescription: `Set ${inputContext.length}`,
 		};
 	}
 
@@ -418,10 +423,7 @@ describe("OptionalField - Rebaser Axioms", () => {
 		return {
 			contents,
 			allocateIntention: () => nextIntention++,
-			mostRecentEdit: undefined,
-			mostRecentIntention: undefined,
 			parent: undefined,
-			mostRecentEditDescription: undefined,
 		};
 	}
 
@@ -440,18 +442,15 @@ describe("OptionalField - Rebaser Axioms", () => {
 	function* generatePossibleSequenceOfEdits(
 		initialState: OptionalFieldTestState,
 		numberOfEdits: number,
-	): Iterable<{ name: string; edit: OptionalChangeset }[]> {
+	): Iterable<NamedChangeset[]> {
 		for (const state of walkOptionalFieldTestStateTree(initialState, numberOfEdits)) {
-			const edits: { name: string; edit: OptionalChangeset }[] = [];
+			const edits: NamedChangeset[] = [];
 			for (
 				let current: OptionalFieldTestState | undefined = state;
 				current?.mostRecentEdit !== undefined;
 				current = current.parent
 			) {
-				edits.push({
-					edit: current.mostRecentEdit,
-					name: current.mostRecentEditDescription!,
-				});
+				edits.push(current.mostRecentEdit);
 			}
 
 			if (edits.length === numberOfEdits) {
@@ -470,13 +469,15 @@ describe("OptionalField - Rebaser Axioms", () => {
 		for (const fieldContent of [undefined, "A"]) {
 			describe(`starting with contents ${fieldContent}`, () => {
 				const initialState = createInitialState(fieldContent);
-				for (const [{ name, edit }] of generatePossibleSequenceOfEdits(initialState, 1)) {
+				for (const [
+					{ description: name, changeset: edit },
+				] of generatePossibleSequenceOfEdits(initialState, 1)) {
 					for (const editsToRebaseOver of generatePossibleSequenceOfEdits(
 						initialState,
 						2,
 					)) {
 						const title = `Rebase ${name} over compose ${JSON.stringify(
-							editsToRebaseOver.map(({ name }) => name),
+							editsToRebaseOver.map(({ description }) => description),
 						)}`;
 
 						// if (
@@ -486,8 +487,8 @@ describe("OptionalField - Rebaser Axioms", () => {
 						// }
 						it(title, () => {
 							const taggedEditToRebase = tagChange(edit, tag1);
-							const taggedTrunkEdits = editsToRebaseOver.map(({ edit }, i) =>
-								tagChange(edit, getTag(i + 1)),
+							const taggedTrunkEdits = editsToRebaseOver.map(
+								({ changeset: edit }, i) => tagChange(edit, getTag(i + 1)),
 							);
 
 							const rebaseWithoutCompose = rebaseTagged(
@@ -511,16 +512,29 @@ describe("OptionalField - Rebaser Axioms", () => {
 		}
 	});
 
+	interface NamedChangeset {
+		changeset: OptionalChangeset;
+		intention: number;
+		description: string;
+	}
+	{
+		interface OptionalFieldFuzzTestState extends BaseFuzzTestState {
+			contents: string | undefined;
+			allocateIntention: () => number;
+			edits: NamedChangeset[];
+		}
+	}
+
 	describe.only("Sandwich rebase over compose exhaustive", () => {
 		for (const fieldContent of [undefined, "A"]) {
 			describe(`starting with contents ${fieldContent}`, () => {
 				const initialState = createInitialState(fieldContent);
 				for (const sourceEdits of generatePossibleSequenceOfEdits(initialState, 2)) {
 					for (const [
-						{ name, edit: editToRebaseOver },
+						{ description: name, changeset: editToRebaseOver },
 					] of generatePossibleSequenceOfEdits(initialState, 1)) {
 						const title = `Rebase ${JSON.stringify(
-							sourceEdits.map(({ name }) => name),
+							sourceEdits.map(({ description }) => description),
 						)} over ${name}`;
 
 						if (title !== 'Rebase ["Set 0","ChildChange 1"] over Set 0') {
@@ -528,8 +542,8 @@ describe("OptionalField - Rebaser Axioms", () => {
 						}
 						it(title, () => {
 							const taggedEditToRebaseOver = tagChange(editToRebaseOver, tag1);
-							const taggedSourceEdits = sourceEdits.map(({ edit }, i) =>
-								tagChange(edit, getTag(i + 1)),
+							const taggedSourceEdits = sourceEdits.map(({ changeset }, i) =>
+								tagChange(changeset, getTag(i + 1)),
 							);
 
 							const inverses = taggedSourceEdits.map((change, i) =>
