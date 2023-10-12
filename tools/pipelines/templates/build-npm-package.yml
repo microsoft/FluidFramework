@@ -632,7 +632,7 @@ stages:
   # Capture per-pipeline stage results
   - stage: runAfterAll
     displayName: Retrieve and upload client stage stats to Kusto
-    condition: always()
+    condition: and(succededOrFailed(), eq(variables['Build.Reason'], 'IndividualCI'))
     dependsOn: 
       - build
 
