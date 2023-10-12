@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { Lazy, assert } from "@fluidframework/core-utils";
 import {
 	Adapters,
 	EmptyKey,
@@ -20,10 +20,11 @@ import {
 	FlattenKeys,
 	Named,
 	requireAssignableTo,
+	compareSets,
 } from "../../util";
 import { FieldKinds } from "../default-field-kinds";
 import { FieldKind, FullSchemaPolicy } from "../modular-schema";
-import { LazyItem, normalizeFlexList } from "./flexList";
+import { LazyItem } from "./flexList";
 import { ObjectToMap, WithDefault, objectToMapTyped } from "./typeUtils";
 
 // TODO: tests for this file
@@ -50,31 +51,17 @@ export type NormalizeStructFields<T extends Fields | undefined> = NormalizeStruc
 >;
 
 /**
- * Placeholder for to `TreeSchema` to use in constraints where `TreeSchema` is desired but using it causes
- * recursive types to fail to compile due to TypeScript limitations.
+ * A placeholder to use in extends constraints when using the real type breaks compilation of some recursive types due to [a design limitation of TypeScript](https://github.com/microsoft/TypeScript/issues/55758).
  *
- * Using `TreeSchema` instead in some key "extends" clauses cause recursive types to error with:
- * "'theSchema' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer."
- *
- * TODO: how much more specific of a type can be provided without triggering the above error?
+ * These extends constraints only serve as documentation:
+ * to avoid breaking compilation, this type has to not actually enforce anything, and thus is just `unknown`.
+ * Therefore the type safety is the responsibility of the user of the API.
  * @alpha
  */
-export type RecursiveTreeSchema = unknown;
-
-/**
- * Placeholder for to `TreeSchemaSpecification` to use in constraints where `TreeSchemaSpecification` is desired but using it causes
- * recursive types to fail to compile due to TypeScript limitations.
- *
- * See `RecursiveTreeSchema`.
- *
- * TODO: how much more specific of a type can be provided without triggering the above error?
- * @alpha
- */
-export type RecursiveTreeSchemaSpecification = unknown;
+export type Unenforced<_DesiredExtendsConstraint> = unknown;
 
 {
-	type _check1 = requireAssignableTo<TreeSchemaSpecification, RecursiveTreeSchemaSpecification>;
-	type _check2 = requireAssignableTo<TreeSchema, RecursiveTreeSchema>;
+	type _check = requireAssignableTo<TreeSchema, Unenforced<TreeSchema>>;
 }
 
 /**
@@ -85,7 +72,7 @@ export type RecursiveTreeSchemaSpecification = unknown;
  */
 export class TreeSchema<
 	Name extends string = string,
-	T extends RecursiveTreeSchemaSpecification = TreeSchemaSpecification,
+	T extends Unenforced<TreeSchemaSpecification> = TreeSchemaSpecification,
 > {
 	// Allows reading fields through the normal map, but without losing type information.
 	public readonly structFields: ObjectToMap<
@@ -185,6 +172,10 @@ export function schemaIsLeaf(schema: TreeSchema): schema is LeafSchema {
 	return schema.leafValue !== undefined;
 }
 
+/**
+ * Checks if a {@link TreeSchema} is a {@link FieldNodeSchema}.
+ * @alpha
+ */
 export function schemaIsFieldNode(schema: TreeSchema): schema is FieldNodeSchema {
 	return schema.structFields.size === 1 && schema.structFields.has(EmptyKey);
 }
@@ -249,13 +240,13 @@ export type LazyTreeSchema = TreeSchema | (() => TreeSchema);
  * "Any" is boxed in an array to allow use as variadic parameter.
  * @alpha
  */
-export type AllowedTypes = [Any] | readonly LazyItem<TreeSchema>[];
+export type AllowedTypes = readonly [Any] | readonly LazyItem<TreeSchema>[];
 
 /**
  * Checks if an {@link AllowedTypes} is {@link (Any:type)}.
  * @alpha
  */
-export function allowedTypesIsAny(t: AllowedTypes): t is [Any] {
+export function allowedTypesIsAny(t: AllowedTypes): t is readonly [Any] {
 	return t.length === 1 && t[0] === Any;
 }
 
@@ -306,43 +297,167 @@ export type TreeSchemaSpecification = [
  * including functionality that does not have to be kept consistent across versions or deterministic.
  *
  * This can include policy for how to use this schema for "view" purposes, and well as how to expose editing APIs.
- * @sealed @alpha
+ *
+ * @remarks
+ * `Types` here must extend `AllowedTypes`, but this cannot be enforced with an "extends" clause: see {@link Unenforced} for details.
+ *
+ * @typeParam TKind - The kind of field.
+ * @typeParam TTypes - The types allowed by the field.
+ *
+ * @sealed
+ * @alpha
  */
-export class FieldSchema<Kind extends FieldKind = FieldKind, Types = AllowedTypes> {
+export class FieldSchema<
+	out TKind extends FieldKind = FieldKind,
+	const out TTypes extends Unenforced<AllowedTypes> = AllowedTypes,
+> {
 	/**
 	 * Schema for a field which must always be empty.
 	 */
-	public static readonly empty = new FieldSchema(FieldKinds.forbidden, []);
+	public static readonly empty = FieldSchema.create(FieldKinds.forbidden, []);
+
+	/**
+	 * Constructs a FieldSchema.
+	 * @privateRemarks
+	 * Alias for the constructor, but with extends clause for the `Types` parameter that {@link FieldSchema} can not have (due to recursive type issues).
+	 */
+	public static create<TKind extends FieldKind, const Types extends AllowedTypes>(
+		kind: TKind,
+		allowedTypes: Types,
+	): FieldSchema<TKind, Types> {
+		return new FieldSchema(kind, allowedTypes);
+	}
+
+	/**
+	 * Constructs a FieldSchema, but missing the extends clause which breaks most recursive types.
+	 * @remarks
+	 * `Types` here must extend `AllowedTypes`, but this cannot be enforced with an "extends" clause: see {@link Unenforced} for details.
+	 * Prefer {@link FieldSchema.create} when possible.
+	 */
+	public static createUnsafe<TKind extends FieldKind, const Types>(
+		kind: TKind,
+		allowedTypes: Types,
+	): FieldSchema<TKind, Types> {
+		return new FieldSchema(kind, allowedTypes);
+	}
 
 	protected _typeCheck?: MakeNominal;
+
+	/**
+	 * This is computed lazily since types can be recursive, which makes evaluating this have to happen after all the schema are defined.
+	 */
+	private readonly lazyTypes: Lazy<{ names: TreeTypeSet; schema: AllowedTypeSet }>;
 
 	/**
 	 * @param kind - The {@link https://en.wikipedia.org/wiki/Kind_(type_theory) | kind} of this field.
 	 * Determine the multiplicity, viewing and editing APIs as well as the merge resolution policy.
 	 * @param allowedTypes - What types of tree nodes are allowed in this field.
 	 */
-	public constructor(
-		public readonly kind: Kind,
-		public readonly allowedTypes: Types,
-	) {}
+	private constructor(
+		public readonly kind: TKind,
+		public readonly allowedTypes: TTypes,
+	) {
+		// Since this class can't have the desired extends clause, do some extra runtime validation:
+		assert(Array.isArray(allowedTypes), "Invalid allowedTypes");
+		for (const allowedType of allowedTypes) {
+			if (allowedType === Any) {
+				assert(allowedTypes.length === 1, "Invalid Any in allowedTypes");
+			} else if (typeof allowedType !== "function") {
+				assert(allowedType instanceof TreeSchema, "Invalid entry in allowedTypes");
+			}
+		}
+		this.lazyTypes = new Lazy(() => ({
+			names: allowedTypesToTypeSet(this.allowedTypes as unknown as AllowedTypes),
+			schema: allowedTypesSchemaSet(this.allowedTypes as unknown as AllowedTypes),
+		}));
+	}
 
-	// TODO:#5702 cache the result of this getter
+	/**
+	 * Types which are allowed in this field (by {@link TreeSchemaIdentifier}), in a format optimized for stored schema.
+	 * This is the same set of types in {@link FieldSchema.allowedTypes}, just in a different format.
+	 */
 	public get types(): TreeTypeSet {
-		return allowedTypesToTypeSet(this.allowedTypes as unknown as AllowedTypes);
+		return this.lazyTypes.value.names;
+	}
+
+	/**
+	 * Types which are allowed in this field.
+	 * This is the same set of types in {@link FieldSchema.allowedTypes}, just as a set with laziness removed.
+	 * @privateRemarks
+	 * TODO:
+	 * 3 ways to access the allowed types are now exposed.
+	 * Reducing this and/or renaming the more friendly options to take the shorter name (`types`)
+	 * would be a good idea.
+	 */
+	public get allowedTypeSet(): AllowedTypeSet {
+		return this.lazyTypes.value.schema;
+	}
+
+	/**
+	 * Compare this schema to another.
+	 *
+	 * @returns true iff the schema are identical.
+	 */
+	public equals(other: FieldSchema): boolean {
+		if (other.kind !== this.kind) {
+			return false;
+		}
+		if (other.types === undefined) {
+			return this.types === undefined;
+		}
+		if (this.types === undefined) {
+			return false;
+		}
+		return compareSets({
+			a: this.types,
+			b: other.types,
+			aExtra: () => false,
+			bExtra: () => false,
+		});
 	}
 }
 
-// TODO: maybe remove the need for this here? Just use AllowedTypes in view schema?
+/**
+ * Types for use in fields.
+ * This representation is optimized for runtime use in view-schema.
+ *
+ * @remarks
+ * See {@link TreeTypeSet} for a stored-schema compatible version using the {@link TreeSchemaIdentifier}.
+ * See {@link AllowedTypes} for a compile time optimized version.
+ * @alpha
+ */
+export type AllowedTypeSet = Any | ReadonlySet<TreeSchema>;
+
+/**
+ * Convert {@link AllowedTypes} to {@link TreeTypeSet}.
+ * @alpha
+ */
+export function allowedTypesSchemaSet(t: AllowedTypes): AllowedTypeSet {
+	if (allowedTypesIsAny(t)) {
+		return Any;
+	}
+	const list: TreeSchema[] = t.map((value: LazyItem<TreeSchema>) => {
+		if (typeof value === "function") {
+			return value();
+		}
+		return value;
+	});
+	return new Set(list);
+}
+
 /**
  * Convert {@link AllowedTypes} to {@link TreeTypeSet}.
  * @alpha
  */
 export function allowedTypesToTypeSet(t: AllowedTypes): TreeTypeSet {
-	if (allowedTypesIsAny(t)) {
+	const list = allowedTypesSchemaSet(t);
+	if (list === Any) {
 		return undefined;
 	}
-	const list: readonly (() => TreeSchema)[] = normalizeFlexList(t);
-	const names = list.map((f) => f().name);
+	const names = Array.from(list, (type) => {
+		assert(type instanceof TreeSchema, "invalid allowed type");
+		return type.name;
+	});
 	return new Set(names);
 }
 

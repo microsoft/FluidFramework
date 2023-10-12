@@ -7,8 +7,7 @@ import { unreachableCase } from "@fluidframework/core-utils";
 import { Type } from "@sinclair/typebox";
 import { JsonCompatible, JsonCompatibleReadOnly, fail } from "../../util";
 import { IJsonCodec, makeCodecFamily } from "../../codec";
-import { jsonableTreeFromCursor, singleTextCursor } from "../treeTextCursor";
-import { Changeset, Mark, NoopMarkType, Revive } from "./format";
+import { Changeset, Mark, NoopMarkType } from "./format";
 
 export const sequenceFieldChangeCodecFactory = <TNodeChange>(childCodec: IJsonCodec<TNodeChange>) =>
 	makeCodecFamily<Changeset<TNodeChange>>([[0, makeV0Codec(childCodec)]]);
@@ -34,12 +33,8 @@ function makeV0Codec<TNodeChange>(
 					case "Delete":
 					case "MoveOut":
 					case "ReturnFrom":
+					case "Revive":
 						break;
-					case "Revive": {
-						(encodedMark as unknown as { content: JsonCompatible[] }).content =
-							mark.content.map(jsonableTreeFromCursor) as unknown as JsonCompatible[];
-						break;
-					}
 					case "Placeholder":
 						fail("Should not have placeholders in serialized changeset");
 					default:
@@ -67,12 +62,8 @@ function makeV0Codec<TNodeChange>(
 					case "Delete":
 					case "MoveOut":
 					case "ReturnFrom":
+					case "Revive":
 						break;
-					case "Revive": {
-						(decodedMark as Revive<unknown>).content =
-							mark.content.map(singleTextCursor);
-						break;
-					}
 					case "Placeholder":
 						fail("Should not have placeholders in serialized changeset");
 					default:
