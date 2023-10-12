@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from "../../../util";
+import { fail, getOrCreate } from "../../../util";
 import {
 	AllowedTypes,
 	FieldNodeSchema,
@@ -40,6 +40,12 @@ export function setTreeNode(target: any, treeNode: TreeNode) {
 }
 
 /**
+ * Caches the proxy object that is created for each node.
+ * This saves memory, improves performance, and guarantees that all proxies retrieved for a given {@link TreeNode} are referentially equal.
+ */
+const nodeProxyCache = new WeakMap<TreeNode, ProxyNode<TreeSchema>>();
+
+/**
  * Checks if the given object is a {@link SharedTreeObject}
  */
 export function is<TSchema extends StructSchema>(
@@ -49,9 +55,6 @@ export function is<TSchema extends StructSchema>(
 	// TODO: Do this a better way. Perhaps, should `treeNodeSym` be attached to object proxies via `setTreeNode`?
 	return (x as any)[treeNodeSym].schema === schema;
 }
-
-// TODO: Implement lifetime.  The proxy that should be cached on their respective nodes and reused.
-// Object identity is tied to the proxy instance (not the target object)
 
 /** Retrieve the associated proxy for the given field. */
 export function getProxyForField<TSchema extends FieldSchema>(
@@ -89,10 +92,14 @@ export function getProxyForNode<TSchema extends TreeSchema>(
 		return treeNode.value as ProxyNode<TSchema>;
 	}
 	if (schemaIsFieldNode(schema)) {
-		return createListProxy(treeNode) as ProxyNode<TSchema>;
+		return getOrCreate(nodeProxyCache, treeNode, () =>
+			createListProxy(treeNode),
+		) as ProxyNode<TSchema>;
 	}
 	if (schemaIsStruct(schema)) {
-		return createObjectProxy(treeNode, schema) as ProxyNode<TSchema>;
+		return getOrCreate(nodeProxyCache, treeNode, () =>
+			createObjectProxy(treeNode, schema),
+		) as ProxyNode<TSchema>;
 	}
 	fail("unrecognized node kind");
 }
