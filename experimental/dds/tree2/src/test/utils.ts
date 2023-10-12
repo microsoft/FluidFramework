@@ -41,6 +41,7 @@ import {
 	createSharedTreeView,
 	SharedTree,
 	InitializeAndSchematizeConfiguration,
+	ISharedTreeBranchView,
 } from "../shared-tree";
 import {
 	Any,
@@ -951,7 +952,7 @@ export function announceTestDelta(
 	announceDelta(delta, deltaProcessor, detachedFieldIndex ?? makeDetachedFieldIndex());
 }
 
-export function createTestUndoRedoStacks(tree: SharedTree): {
+export function createTestUndoRedoStacks(view: ISharedTreeBranchView | ISharedTreeView): {
 	undoStack: Revertible[];
 	redoStack: Revertible[];
 	unsubscribe: () => void;
@@ -959,7 +960,7 @@ export function createTestUndoRedoStacks(tree: SharedTree): {
 	const undoStack: Revertible[] = [];
 	const redoStack: Revertible[] = [];
 
-	const unsubscribe = tree.view.events.on("revertible", (revertible) => {
+	const unsubscribe = view.events.on("revertible", (revertible) => {
 		if (revertible.kind === RevertibleKind.Undo) {
 			redoStack.push(revertible);
 		} else {
