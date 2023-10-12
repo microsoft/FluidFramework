@@ -25,6 +25,7 @@ import {
 	DetachedPlaceUpPath,
 	DeltaVisitor,
 	getDetachedFieldContainingPath,
+	FieldUpPath,
 } from "../../core";
 import { brand } from "../../util";
 import { announceTestDelta, applyTestDelta, expectEqualPaths } from "../utils";
@@ -410,7 +411,31 @@ describe("AnchorSet", () => {
 		assert.strictEqual(beforeCounter, 3);
 		assert.strictEqual(afterCounter, 3);
 
-		// TODO: test a move delta
+		// Test a move delta
+		const moveOutMark: Delta.MoveOut = {
+			type: Delta.MarkType.MoveOut,
+			count: 1,
+			moveId: brand(1),
+		};
+		const moveInMark: Delta.MoveIn = {
+			type: Delta.MarkType.MoveIn,
+			count: 1,
+			moveId: moveOutMark.moveId,
+		};
+		const moveDelta = makeFieldDelta(
+			[moveOutMark, 1, moveInMark],
+			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
+		);
+		announceTestDelta(moveDelta, anchors);
+		// TODO: this is wrong. Currently a move triggers the events twice, once when detaching nodes from the source
+		// and again when attaching them at the destination. Couldn't think of a quick way to avoid that.
+		// This means that:
+		// - In the first beforeChange callback, the moved nodes are still at the source (correct).
+		// - In the first afterChange callback, the moved nodes are not in the tree (probably unexpected).
+		// - In the second beforeChange callback, the moved nodes are not in the tree (probably unexpected).
+		// - In the second afterChange callback, the moved nodes are at the destination (correct).
+		assert.strictEqual(beforeCounter, 5);
+		assert.strictEqual(afterCounter, 5);
 
 		// Remove listeners and validate another delta doesn't trigger the listeners anymore
 		unsubscribeBeforeChange();
@@ -419,8 +444,8 @@ describe("AnchorSet", () => {
 			makeDelta(insertMark, makePath([rootFieldKey, 0], [fieldFoo, 4])),
 			anchors,
 		);
-		assert.strictEqual(beforeCounter, 3);
-		assert.strictEqual(afterCounter, 3);
+		assert.strictEqual(beforeCounter, 5);
+		assert.strictEqual(afterCounter, 5);
 	});
 
 	it("triggers path visitor callbacks", () => {
@@ -633,6 +658,14 @@ function makePath(...steps: [PathStep, ...PathStep[]]): UpPath {
 	) as UpPath;
 }
 
+function makeFieldPath(
+	field: FieldKey,
+	...stepsToFieldParent: [PathStep, ...PathStep[]]
+): FieldUpPath {
+	const pathToParent = makePath(...stepsToFieldParent);
+	return { parent: pathToParent, field };
+}
+
 function checkEquality(actual: UpPath | undefined, expected: UpPath | undefined) {
 	assert.deepEqual(clonePath(actual), clonePath(expected));
 }
@@ -645,6 +678,19 @@ function checkRemoved(path: UpPath | undefined, expected: FieldKey = brand("Temp
 
 function makeDelta(mark: Delta.Mark, path: UpPath): Delta.Root {
 	const fields: Delta.Root = new Map([[path.parentField, [path.parentIndex, mark]]]);
+	if (path.parent === undefined) {
+		return fields;
+	}
+
+	const modify = {
+		type: Delta.MarkType.Modify,
+		fields,
+	};
+	return makeDelta(modify, path.parent);
+}
+
+function makeFieldDelta(marks: Delta.Mark[], path: FieldUpPath): Delta.Root {
+	const fields: Delta.Root = new Map([[path.field, marks]]);
 	if (path.parent === undefined) {
 		return fields;
 	}
