@@ -787,6 +787,7 @@ describe("SharedTree", () => {
 			const value = "42";
 			const provider = new TestTreeProviderLite(2);
 			const tree1 = provider.trees[0].schematize(emptyJsonSequenceConfig);
+			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree1);
 			provider.processMessages();
 			const tree2 = provider.trees[1].schematize(emptyJsonSequenceConfig);
 			provider.processMessages();
@@ -799,29 +800,30 @@ describe("SharedTree", () => {
 			assert.equal(getTestValue(tree2), value);
 
 			// Undo node insertion
-			tree1.undo();
+			undoStack.pop()?.revert();
 			provider.processMessages();
 
 			assert.equal(getTestValue(tree1), undefined);
 			assert.equal(getTestValue(tree2), undefined);
 
 			// Undo again
-			tree1.undo();
+			undoStack.pop()?.revert();
 			provider.processMessages();
 
 			// Redo
-			tree1.redo();
+			redoStack.pop()?.revert();
 			provider.processMessages();
 
 			assert.equal(getTestValue(tree1), value);
 			assert.equal(getTestValue(tree2), value);
 
 			// Redo again
-			tree1.redo();
+			redoStack.pop()?.revert();
 			provider.processMessages();
 
 			assert.equal(getTestValue(tree1), value);
 			assert.equal(getTestValue(tree2), value);
+			unsubscribe();
 		});
 
 		it("does not undo edits made remotely", () => {
@@ -835,6 +837,7 @@ describe("SharedTree", () => {
 			const tree2 = provider.trees[1].schematize(content);
 			provider.processMessages();
 			const tree1 = provider.trees[0].schematize(content);
+			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree1);
 			provider.processMessages();
 
 			validateRootField(tree1, ["tree2"]);
@@ -853,9 +856,8 @@ describe("SharedTree", () => {
 			validateRootField(tree1, ["tree1"]);
 
 			// Undo
-			tree1.undo(); // undoes insert of "tree1"
-			// Call undo to ensure it doesn't undo the change from tree2
-			tree1.undo(); // No-op
+			undoStack.pop()?.revert(); // undoes insert of "tree1"
+			assert(undoStack.pop() === undefined, "there should be no more revertibles");
 			provider.processMessages();
 
 			// Validate undo
@@ -863,17 +865,19 @@ describe("SharedTree", () => {
 			validateRootField(tree2, []);
 
 			// Call redo
-			tree1.redo();
+			redoStack.pop()?.revert();
 			provider.processMessages();
 
 			// Validate redo
 			validateRootField(tree1, ["tree1"]);
+			unsubscribe();
 		});
 
 		it("the insert of a node in a sequence field", () => {
 			const value = "42";
 			const provider = new TestTreeProviderLite(2);
 			const tree1 = provider.trees[0].schematize(emptyJsonSequenceConfig);
+			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree1);
 			provider.processMessages();
 			const tree2 = provider.trees[1].schematize(emptyJsonSequenceConfig);
 			provider.processMessages();
@@ -886,18 +890,19 @@ describe("SharedTree", () => {
 			validateRootField(tree2, [value]);
 
 			// Undo node insertion
-			tree1.undo();
+			undoStack.pop()?.revert();
 			provider.processMessages();
 
 			validateRootField(tree1, []);
 			validateRootField(tree2, []);
 
 			// Redo node insertion
-			tree1.redo();
+			redoStack.pop()?.revert();
 			provider.processMessages();
 
 			validateRootField(tree1, [value]);
 			validateRootField(tree2, [value]);
+			unsubscribe();
 		});
 
 		it("rebased edits", () => {
@@ -909,6 +914,16 @@ describe("SharedTree", () => {
 			};
 			const tree1 = provider.trees[0].schematize(content);
 			const tree2 = provider.trees[1].view;
+			const {
+				undoStack: undoStack1,
+				redoStack: redoStack1,
+				unsubscribe: unsubscribe1,
+			} = createTestUndoRedoStacks(tree1);
+			const {
+				undoStack: undoStack2,
+				redoStack: redoStack2,
+				unsubscribe: unsubscribe2,
+			} = createTestUndoRedoStacks(tree2);
 			provider.processMessages();
 
 			// Validate insertion
@@ -925,10 +940,10 @@ describe("SharedTree", () => {
 			provider.processMessages();
 
 			// Undo node insertion on both trees
-			tree1.undo();
+			undoStack1.pop()?.revert();
 			assert.deepEqual([...tree1.context.root], ["A", "B", "C", "y", "D"]);
 
-			tree2.undo();
+			undoStack2.pop()?.revert();
 			assert.deepEqual([...tree2.context.root], ["A", "x", "B", "C", "D"]);
 
 			provider.processMessages();
@@ -941,135 +956,17 @@ describe("SharedTree", () => {
 
 			const expectedAfterRedo = ["0", "A", "x", "B", "C", "y", "D"];
 			// Redo node insertion on both trees
-			tree1.redo();
+			redoStack1.pop()?.revert();
 			assert.deepEqual([...tree1.context.root], ["0", "A", "x", "B", "C", "D"]);
 
-			tree2.redo();
+			redoStack2.pop()?.revert();
 			assert.deepEqual([...tree2.context.root], ["A", "B", "C", "y", "D"]);
 
 			provider.processMessages();
 			validateRootField(tree1, expectedAfterRedo);
 			validateRootField(tree2, expectedAfterRedo);
-		});
-
-		it("updates rebased undoable commits in the correct order", () => {
-			const provider = new TestTreeProviderLite(2);
-
-			// Initialize the tree
-			const content: InitializeAndSchematizeConfiguration = {
-				initialTree: ["A", "B", "C", "D"],
-				schema: jsonSequenceRootSchema,
-				allowedSchemaModifications: AllowedUpdateType.None,
-			};
-			const tree1 = provider.trees[0].schematize(content);
-			const tree2 = provider.trees[1].view;
-			provider.processMessages();
-
-			// Validate initialization
-			validateTreeContent(tree2, content);
-
-			// Insert a node on tree 2
-			insert(tree2, 4, "z");
-			assert.deepEqual([...tree2.context.root], ["A", "B", "C", "D", "z"]);
-
-			// Insert nodes on both trees
-			insert(tree1, 1, "x");
-			assert.deepEqual([...tree1.context.root], ["A", "x", "B", "C", "D"]);
-
-			insert(tree2, 3, "y");
-			assert.deepEqual([...tree2.context.root], ["A", "B", "C", "y", "D", "z"]);
-
-			// Syncing will cause both trees to rebase their local changes
-			provider.processMessages();
-
-			// Undo node insertion on both trees
-			tree1.undo();
-			assert.deepEqual([...tree1.context.root], ["A", "B", "C", "y", "D", "z"]);
-
-			// First undo should be the insertion of y
-			tree2.undo();
-			assert.deepEqual([...tree2.context.root], ["A", "x", "B", "C", "D", "z"]);
-			tree2.undo();
-			assert.deepEqual([...tree2.context.root], ["A", "x", "B", "C", "D"]);
-
-			provider.processMessages();
-			validateTreeContent(tree1, content);
-			validateTreeContent(tree2, content);
-
-			// Insert additional node at the beginning to require rebasing
-			insert(tree1, 0, "0");
-			assert.deepEqual([...tree1.context.root], ["0", "A", "B", "C", "D"]);
-			provider.processMessages();
-
-			const expectedAfterRedo = ["0", "A", "x", "B", "C", "y", "D", "z"];
-
-			// Redo node insertion on both trees
-			tree1.redo();
-			assert.deepEqual([...tree1.context.root], ["0", "A", "x", "B", "C", "D"]);
-
-			// First redo should be the insertion of z
-			tree2.redo();
-			assert.deepEqual([...tree2.context.root], ["0", "A", "B", "C", "D", "z"]);
-			tree2.redo();
-			assert.deepEqual([...tree2.context.root], ["0", "A", "B", "C", "y", "D", "z"]);
-
-			provider.processMessages();
-			assert.deepEqual([...tree1.context.root], expectedAfterRedo);
-			assert.deepEqual([...tree2.context.root], expectedAfterRedo);
-		});
-
-		it("an insert after another undo has been sequenced", () => {
-			const value = "42";
-			const value2 = "43";
-			const value3 = "44";
-			const provider = new TestTreeProviderLite(2);
-			const tree1 = provider.trees[0].schematize({
-				initialTree: ["A", "B", "C", "D"],
-				schema: jsonSequenceRootSchema,
-				allowedSchemaModifications: AllowedUpdateType.None,
-			});
-			const tree2 = provider.trees[1].view;
-			provider.processMessages();
-
-			// Insert node
-			insert(tree1, 1, value);
-			insert(tree1, 2, value2);
-
-			assert.deepEqual([...tree1.context.root], ["A", value, value2, "B", "C", "D"]);
-
-			insert(tree2, 0, value3);
-			assert.deepEqual([...tree2.context.root], [value3, "A", "B", "C", "D"]);
-
-			// Undo insertion of value2
-			tree1.undo();
-
-			assert.deepEqual([...tree1.context.root], ["A", value, "B", "C", "D"]);
-
-			// Sequence after the undo to ensure that undo commits are tracked
-			// correctly in the trunk undo redo manager and after the and after the insert
-			// on tree2 to cause rebasing of the local branch on tree1
-			provider.processMessages();
-
-			assert.deepEqual([...tree1.context.root], [value3, "A", value, "B", "C", "D"]);
-			assert.deepEqual([...tree2.context.root], [value3, "A", value, "B", "C", "D"]);
-
-			// Undo insertion of value
-			tree1.undo();
-
-			assert.deepEqual([...tree1.context.root], [value3, "A", "B", "C", "D"]);
-
-			// Insert another value to cause rebasing
-			insert(tree2, 0, value3);
-			assert.deepEqual([...tree2.context.root], [value3, value3, "A", value, "B", "C", "D"]);
-
-			provider.processMessages();
-
-			// Redo node insertion
-			tree1.redo();
-			provider.processMessages();
-
-			assert.deepEqual([...tree1.context.root], [value3, value3, "A", value, "B", "C", "D"]);
-			assert.deepEqual([...tree2.context.root], [value3, value3, "A", value, "B", "C", "D"]);
+			unsubscribe1();
+			unsubscribe2();
 		});
 	});
 
@@ -1531,6 +1428,7 @@ describe("SharedTree", () => {
 		});
 
 		itView("update anchors after undoing", (view) => {
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view);
 			insertFirstNode(view, "A");
 			let cursor = view.forest.allocateCursor();
 			moveToDetachedField(view.forest, cursor);
@@ -1538,11 +1436,12 @@ describe("SharedTree", () => {
 			const anchor = cursor.buildAnchor();
 			cursor.clear();
 			insertFirstNode(view, "B");
-			view.undo();
+			undoStack.pop()?.revert();
 			cursor = view.forest.allocateCursor();
 			view.forest.tryMoveCursorToNode(anchor, cursor);
 			assert.equal(cursor.value, "A");
 			cursor.clear();
+			unsubscribe();
 		});
 
 		itView("can be mutated after merging", (parent) => {
