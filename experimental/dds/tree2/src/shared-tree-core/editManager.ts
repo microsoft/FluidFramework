@@ -18,7 +18,6 @@ import {
 	RevisionTag,
 	SessionId,
 	SimpleDependee,
-	UndoRedoManager,
 } from "../core";
 import { createEmitter, ISubscribable } from "../events";
 import { getChangeReplaceType, onForkTransitive, SharedTreeBranch } from "./branch";
@@ -79,9 +78,6 @@ export class EditManager<
 		sequenceIdComparator,
 	);
 
-	/** The {@link UndoRedoManager} associated with the trunk */
-	private readonly trunkUndoRedoManager: UndoRedoManager<TChangeset, TEditor>;
-
 	/**
 	 * Branches are maintained to represent the local change list that the issuing client had
 	 * at the time of submitting the latest known edit on the branch.
@@ -95,9 +91,6 @@ export class EditManager<
 	 * This branch holds the changes made by this client which have not yet been confirmed as sequenced changes.
 	 */
 	public readonly localBranch: SharedTreeBranch<TEditor, TChangeset>;
-
-	/** The {@link UndoRedoManager} associated with the local branch. */
-	private readonly localBranchUndoRedoManager: UndoRedoManager<TChangeset, TEditor>;
 
 	/**
 	 * Tracks where on the trunk all registered branches are based. Each key is the sequence id of a commit on
@@ -148,14 +141,8 @@ export class EditManager<
 			change: changeFamily.rebaser.compose([]),
 		};
 		this.sequenceMap.set(minimumPossibleSequenceId, this.trunkBase);
-		this.localBranchUndoRedoManager = UndoRedoManager.create(changeFamily);
-		this.trunkUndoRedoManager = this.localBranchUndoRedoManager.clone();
-		this.trunk = new SharedTreeBranch(this.trunkBase, changeFamily, this.trunkUndoRedoManager);
-		this.localBranch = new SharedTreeBranch(
-			this.trunk.getHead(),
-			changeFamily,
-			this.localBranchUndoRedoManager,
-		);
+		this.trunk = new SharedTreeBranch(this.trunkBase, changeFamily);
+		this.localBranch = new SharedTreeBranch(this.trunk.getHead(), changeFamily);
 
 		// Track all forks of the local branch for purposes of trunk eviction. Unlike the local branch, they have
 		// an unknown lifetime and rebase frequency, so we can not make any assumptions about which trunk commits
@@ -290,7 +277,6 @@ export class EditManager<
 				(s, { revision }) => {
 					// Cleanup look-aside data for each evicted commit
 					this.trunkMetadata.delete(revision);
-					this.localBranchUndoRedoManager.untrackCommitType(revision);
 					// Delete all evicted commits from `sequenceMap` except for the latest one, which is the new `trunkBase`
 					if (equalSequenceIds(s, sequenceId)) {
 						assert(
@@ -548,13 +534,6 @@ export class EditManager<
 	private pushToTrunk(sequenceId: SequenceId, commit: Commit<TChangeset>, local = false): void {
 		this.trunk.setHead(mintCommit(this.trunk.getHead(), commit));
 		const trunkHead = this.trunk.getHead();
-		if (local) {
-			const type =
-				this.localBranchUndoRedoManager.getCommitType(trunkHead.revision) ??
-				fail("Local commit types must be tracked until they are sequenced.");
-
-			this.trunkUndoRedoManager.trackCommit(trunkHead, type);
-		}
 		this.sequenceMap.set(sequenceId, trunkHead);
 		this.trunkMetadata.set(trunkHead.revision, { sequenceId, sessionId: commit.sessionId });
 		this.events.emit("newTrunkHead", trunkHead);

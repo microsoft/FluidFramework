@@ -1057,7 +1057,6 @@ export interface ISharedTreeView extends AnchorLocator {
     merge(view: ISharedTreeBranchView): void;
     merge(view: ISharedTreeBranchView, disposeView: boolean): void;
     rebase(view: ISharedTreeBranchView): void;
-    redo(): void;
     get root(): UnwrappedEditableField;
     readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
     // @deprecated (undocumented)
@@ -1065,7 +1064,6 @@ export interface ISharedTreeView extends AnchorLocator {
     setContent(data: NewFieldContent): void;
     readonly storedSchema: StoredSchemaRepository;
     readonly transaction: ITransaction;
-    undo(): void;
 }
 
 // @alpha (undocumented)
@@ -1275,13 +1273,6 @@ const library: SchemaLibrary;
 
 // @alpha (undocumented)
 const library_2: SchemaLibrary;
-
-// @alpha
-export enum LocalCommitSource {
-    Default = 0,
-    Redo = 2,
-    Undo = 1
-}
 
 // @alpha
 export interface LocalNodeKey extends Opaque<Brand<SessionSpaceCompressedId, "Local Node Key">> {
@@ -1722,6 +1713,28 @@ type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
     readonly [P in symbol | string]: P extends K ? T : never;
 };
 
+// @public (undocumented)
+export interface Revertible {
+    // (undocumented)
+    discard(): DiscardResult;
+    // (undocumented)
+    readonly kind: RevertibleKind;
+    // (undocumented)
+    readonly origin: {
+        readonly isLocal: boolean;
+    };
+    // (undocumented)
+    revert(): RevertResult;
+}
+
+// @alpha
+export enum RevertResult {
+    // (undocumented)
+    Failure = 1,
+    // (undocumented)
+    Success = 0
+}
+
 // @alpha
 type Root<TTree = ProtoNode> = FieldMarks<TTree>;
 
@@ -1914,6 +1927,7 @@ export class SharedTreeFactory implements IChannelFactory {
 // @alpha (undocumented)
 export interface SharedTreeOptions extends Partial<ICodecOptions> {
     forest?: ForestType;
+    revertible?: true;
 }
 
 // @alpha
@@ -2412,7 +2426,7 @@ export const valueSymbol: unique symbol;
 // @alpha
 export interface ViewEvents {
     afterBatch(): void;
-    revertible(source: LocalCommitSource): void;
+    revertible(revertible: Revertible): void;
 }
 
 // @alpha
