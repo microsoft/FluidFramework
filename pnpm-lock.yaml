@@ -9,7 +9,6 @@ overrides:
   simplemde>codemirror: ^5.65.11
   simplemde>marked: ^4.3.0
   '@oclif/core': ~2.4.0
-  '@cerner/duplicate-package-checker-webpack-plugin': ~2.3
 
 importers:
 
@@ -3460,7 +3459,7 @@ importers:
 
   examples/utils/bundle-size-tests:
     specifiers:
-      '@cerner/duplicate-package-checker-webpack-plugin': ~2.3
+      '@cerner/duplicate-package-checker-webpack-plugin': ~2.3.0
       '@fluid-experimental/tree2': workspace:~
       '@fluid-tools/version-tools': ^0.25.0
       '@fluidframework/aqueduct': workspace:~

@@ -175,8 +175,7 @@
 			"@microsoft/api-extractor's dependency on typescript is force-upgraded to v5.1 to be compatible with tree2's use of new getter/setter functionality added in that version. This override may be removed once api-extractor has moved to at least typescript v5.1.",
 			"nodegit is replaced with an empty package here because it's currently only used by good-fences for features we do not need, and has issues building when changing node versions. See https://github.com/smikula/good-fences/issues/105 for details.",
 			"codemirror and marked overrides are because simplemde use * versions, and the fully up to date versions of its deps do not work. packageExtensions was tried to fix this, but did not work.",
-			"Fixing the @oclif/core version avoids a large number of peer dep errors since 2.6 adds a prod dep on ts-node and thus a peer dep on @types/node",
-			"@cerner/duplicate-package-checker-webpack-plugin is pinned since newer version (2.3 through 2.6) refuse to work on NodeJS other than 10 || 12 || 14 due to https://github.com/cerner/terra-toolkit/issues/828"
+			"Fixing the @oclif/core version avoids a large number of peer dep errors since 2.6 adds a prod dep on ts-node and thus a peer dep on @types/node"
 		],
 		"overrides": {
 			"@microsoft/api-extractor>typescript": "$typescript",
@@ -186,8 +185,7 @@
 			"qs": "^6.11.0",
 			"simplemde>codemirror": "^5.65.11",
 			"simplemde>marked": "^4.3.0",
-			"@oclif/core": "~2.4.0",
-			"@cerner/duplicate-package-checker-webpack-plugin": "~2.3"
+			"@oclif/core": "~2.4.0"
 		},
 		"peerDependencyComments": [
 			"@types/node is ignored because it is usually not needed by packages, and if it is, then the package will hit a compilation failure.",
