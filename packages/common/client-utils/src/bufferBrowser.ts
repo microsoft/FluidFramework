@@ -16,12 +16,17 @@ import * as base64js from "base64-js";
  *
  * @internal
  */
-export function Uint8ArrayToString(arr: Uint8Array, encoding?: string): string {
+export function Uint8ArrayToString(
+	arr: Uint8Array,
+	// eslint-disable-next-line unicorn/text-encoding-identifier-case -- this value is supported, just discouraged
+	encoding?: "utf8" | "utf-8" | "base64",
+): string {
 	switch (encoding) {
 		case "base64": {
 			return base64js.fromByteArray(arr);
 		}
 		case "utf8":
+		// eslint-disable-next-line unicorn/text-encoding-identifier-case -- this value is supported, just discouraged
 		case "utf-8":
 		case undefined: {
 			return new TextDecoder().decode(arr);
@@ -52,8 +57,11 @@ export const stringToBuffer = (input: string, encoding: string): ArrayBufferLike
  *
  * @internal
  */
-export const bufferToString = (blob: ArrayBufferLike, encoding: string): string =>
-	IsoBuffer.from(blob).toString(encoding);
+export const bufferToString = (
+	blob: ArrayBufferLike,
+	// eslint-disable-next-line unicorn/text-encoding-identifier-case -- this value is supported, just discouraged
+	encoding: "utf8" | "utf-8" | "base64",
+): string => IsoBuffer.from(blob).toString(encoding);
 
 /**
  * Determines if an object is an array buffer.
@@ -95,7 +103,8 @@ export class IsoBuffer extends Uint8Array {
 	 *
 	 * @param encoding - The encoding to use.
 	 */
-	public toString(encoding?: string): string {
+	// eslint-disable-next-line unicorn/text-encoding-identifier-case -- this value is supported, just discouraged
+	public toString(encoding?: "utf8" | "utf-8" | "base64"): string {
 		return Uint8ArrayToString(this, encoding);
 	}
 
@@ -157,6 +166,7 @@ export class IsoBuffer extends Uint8Array {
 				return new IsoBuffer(encoded.buffer);
 			}
 			case "utf8":
+			// eslint-disable-next-line unicorn/text-encoding-identifier-case -- this value is supported, just discouraged
 			case "utf-8":
 			case undefined: {
 				const encoded = new TextEncoder().encode(str);

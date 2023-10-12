@@ -5,6 +5,7 @@
 
 import { IEvent } from "@fluidframework/common-definitions";
 import { IClient, IConnected } from "@fluidframework/protocol-definitions";
+import { IRuntimeSignalEnvelope } from "../utils";
 
 /**
  * Connection details of a client.
@@ -56,7 +57,7 @@ export interface IBroadcastSignalEventPayload {
 	/**
 	 * Content of the runtime signal introduced from the broadcast-signal endpoint.
 	 */
-	signalContent: string;
+	signalContent: IRuntimeSignalEnvelope;
 }
 
 /**

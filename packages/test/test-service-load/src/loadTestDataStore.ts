@@ -119,9 +119,8 @@ export class LoadTestDataStoreModel {
 		let gcDataStore: LoadTestDataStore | undefined;
 		if (!root.has(gcDataStoreIdKey)) {
 			// The data store for this pair doesn't exist, create it and store its url.
-			gcDataStore = await LoadTestDataStoreInstantiationFactory.createInstance(
-				containerRuntime,
-			);
+			gcDataStore =
+				await LoadTestDataStoreInstantiationFactory.createInstance(containerRuntime);
 			// Force the new data store to be attached.
 			root.set("Fake", gcDataStore.handle);
 			root.delete("Fake");
@@ -750,16 +749,15 @@ const LoadTestDataStoreInstantiationFactory = new DataObjectFactory(
 const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 	runtime.IFluidHandleContext.resolveHandle(request);
 
-export const createFluidExport = (options: IContainerRuntimeOptions) =>
-	new ContainerRuntimeFactoryWithDefaultDataStore(
-		LoadTestDataStoreInstantiationFactory,
-		new Map([
+export const createFluidExport = (runtimeOptions: IContainerRuntimeOptions) =>
+	new ContainerRuntimeFactoryWithDefaultDataStore({
+		defaultFactory: LoadTestDataStoreInstantiationFactory,
+		registryEntries: new Map([
 			[
 				LoadTestDataStore.DataStoreName,
 				Promise.resolve(LoadTestDataStoreInstantiationFactory),
 			],
 		]),
-		undefined,
-		[innerRequestHandler],
-		options,
-	);
+		requestHandlers: [innerRequestHandler],
+		runtimeOptions,
+	});

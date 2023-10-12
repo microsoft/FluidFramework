@@ -22,6 +22,7 @@ export {
 	forEachNode,
 	forEachNodeInSubtree,
 	forEachField,
+	iterateCursorField,
 	ITreeCursorSynchronous,
 	PathRootPrefix,
 	inCursorField,
@@ -37,6 +38,13 @@ export {
 	getDepth,
 	UpPath,
 	FieldUpPath,
+	Range,
+	RangeUpPath,
+	PlaceUpPath,
+	PlaceIndex,
+	NodeIndex,
+	DetachedPlaceUpPath,
+	DetachedRangeUpPath,
 	compareUpPaths,
 	compareFieldUpPaths,
 	getDetachedFieldContainingPath,
@@ -68,7 +76,14 @@ export {
 	NodeData,
 	rootField,
 } from "./types";
-export { DeltaVisitor, visitDelta, applyDelta } from "./visitDelta";
+export { DeltaVisitor, visitDelta } from "./visitDelta";
+export {
+	AnnouncedVisitor,
+	announceDelta,
+	applyDelta,
+	combineVisitors,
+	makeDetachedFieldIndex,
+} from "./visitorUtils";
 export { PathVisitor } from "./visitPath";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
@@ -78,3 +93,5 @@ export { Delta };
 export { SparseNode, getDescendant } from "./sparseTree";
 
 export { isSkipMark, emptyDelta } from "./deltaUtil";
+
+export { DetachedFieldIndex, ForestRootId } from "./detachedFieldIndex";

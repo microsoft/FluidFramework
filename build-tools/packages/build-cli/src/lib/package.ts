@@ -7,7 +7,6 @@ import {
 	Logger,
 	MonoRepo,
 	Package,
-	VersionBag,
 	VersionDetails,
 	updatePackageJsonFile,
 } from "@fluidframework/build-tools";
@@ -293,7 +292,7 @@ export async function getPreReleaseDependencies(
 				if (depPkg.monoRepo === undefined) {
 					prereleasePackages.set(depPkg.name, depVersion);
 				} else {
-					prereleaseGroups.set(depPkg.monoRepo.kind, depVersion);
+					prereleaseGroups.set(depPkg.monoRepo.releaseGroup, depVersion);
 				}
 			}
 		}
@@ -561,7 +560,7 @@ export async function setVersion(
 		prettierConfig.filepath = lernaPath;
 	}
 	lernaJson.version = translatedVersion.version;
-	const output = prettier(
+	const output = await prettier(
 		JSON.stringify(lernaJson),
 		prettierConfig === null ? undefined : prettierConfig,
 	);
@@ -769,8 +768,8 @@ export async function npmCheckUpdatesHomegrown(
 			  AllPackagesSelectionCriteria
 			: {
 					independentPackages: false,
-					releaseGroups: [releaseGroup],
-					releaseGroupRoots: [releaseGroup],
+					releaseGroups: [releaseGroup as ReleaseGroup],
+					releaseGroupRoots: [releaseGroup as ReleaseGroup],
 			  };
 
 	// Remove the filtered release group from the list if needed

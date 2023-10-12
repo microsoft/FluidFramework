@@ -121,7 +121,7 @@ export class ObjectStoragePartition implements IChannelStorageService {
 // @public
 export type ReadAndParseBlob = <T>(id: string) => Promise<T>;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export function requestFluidObject<T = FluidObject>(router: IFluidRouter, url: string | IRequest): Promise<T>;
 
 // @public
