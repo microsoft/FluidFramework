@@ -6,10 +6,8 @@
 import type { IInventoryListAppModel, IInventoryList } from "../modelInterfaces";
 
 /**
- * The InventoryListAppModel serves the purpose of wrapping this particular Container in a friendlier interface,
- * with stronger typing and accessory functionality.  It should have the same layering restrictions as we want for
- * the Container (e.g. no direct access to the Loader).  It does not have a goal of being general-purpose like
- * Container does -- instead it is specially designed for the specific container code.
+ * The InventoryListAppModel provides two inventory lists, one using legacy SharedTree
+ * and the other using new SharedTree.  They function the same and share the same interface.
  */
 export class InventoryListAppModel implements IInventoryListAppModel {
 	public constructor(
