@@ -52,6 +52,9 @@ export function createMultiSinkLogger(props: {
 }): ITelemetryLoggerExt;
 
 // @internal
+export function createSampledLogger(logger: ITelemetryLoggerExt, eventSampler?: IEventSampler): ISampledTelemetryLogger;
+
+// @internal
 export class DataCorruptionError extends LoggingError implements IErrorBase, IFluidErrorBase {
     constructor(message: string, props: ITelemetryBaseProperties);
     // (undocumented)
@@ -148,6 +151,12 @@ export interface IConfigProviderBase {
 }
 
 // @internal
+export interface IEventSampler {
+    // (undocumented)
+    sample: () => boolean | undefined;
+}
+
+// @internal
 export interface IFluidErrorAnnotations {
     props?: ITelemetryBaseProperties;
 }
@@ -171,6 +180,11 @@ export interface IPerformanceEventMarkers {
     end?: true;
     // (undocumented)
     start?: true;
+}
+
+// @internal
+export interface ISampledTelemetryLogger extends ITelemetryLoggerExt {
+    isSamplingDisabled: boolean;
 }
 
 // @internal

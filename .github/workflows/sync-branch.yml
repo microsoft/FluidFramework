@@ -35,7 +35,7 @@ on:
       batchSize:
         description: The maximum number of commits to include in a single PR.
         type: number
-        default: 10
+        default: 20
         required: true
 
 env:
@@ -45,7 +45,7 @@ env:
   EMAIL: banana-bot@outlook.com
   # The inputs context is only available when triggered by workflow_dispatch. For the scheduled runs this uses the
   # default value
-  BATCH: ${{ inputs.batchSize || 10 }}
+  BATCH: ${{ inputs.batchSize || 20 }}
   REVIEWER1: sonalideshpandemsft
 
 jobs:

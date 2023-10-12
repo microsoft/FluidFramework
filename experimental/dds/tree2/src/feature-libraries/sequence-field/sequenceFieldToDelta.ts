@@ -70,7 +70,12 @@ function cellDeltaFromMark<TNodeChange>(
 					content: cursors,
 				};
 				if (mark.transientDetach !== undefined) {
-					insertMark.isTransient = true;
+					const majorForTransient = mark.transientDetach.revision ?? revision;
+					const detachId: Delta.DetachedNodeId = { minor: mark.transientDetach.localId };
+					if (majorForTransient !== undefined) {
+						detachId.major = majorForTransient;
+					}
+					insertMark.detachId = detachId;
 				}
 				return [insertMark];
 			}
@@ -87,10 +92,16 @@ function cellDeltaFromMark<TNodeChange>(
 				return [mark.count];
 			}
 			case "Delete": {
+				const major = mark.revision ?? revision;
+				const detachId: Delta.DetachedNodeId = { minor: mark.id };
+				if (major !== undefined) {
+					detachId.major = major;
+				}
 				return [
 					{
-						type: Delta.MarkType.Delete,
+						type: Delta.MarkType.Remove,
 						count: mark.count,
+						detachId,
 					},
 				];
 			}
@@ -104,14 +115,34 @@ function cellDeltaFromMark<TNodeChange>(
 				}));
 			}
 			case "Revive": {
-				const insertMark: Mutable<Delta.Insert> = {
-					type: Delta.MarkType.Insert,
-					content: mark.content,
-				};
+				const cellId = mark.cellId;
+				assert(cellId !== undefined, "Effective revive must target an empty cell");
+				const hasTransience: { detachId?: Delta.DetachedNodeId } = {};
 				if (mark.transientDetach !== undefined) {
-					insertMark.isTransient = true;
+					const majorForTransient = mark.transientDetach.revision ?? revision;
+					const hasMajorForTransient: { major?: RevisionTag } = {};
+					if (majorForTransient !== undefined) {
+						hasMajorForTransient.major = majorForTransient;
+					}
+					hasTransience.detachId = {
+						...hasMajorForTransient,
+						minor: mark.transientDetach.localId,
+					};
 				}
-				return [insertMark];
+				const major = cellId.revision ?? revision;
+				const restoreId: Delta.DetachedNodeId = { minor: cellId.localId };
+				if (major !== undefined) {
+					restoreId.major = major;
+				}
+				const restoreMark: Mutable<Delta.Restore> = {
+					type: Delta.MarkType.Restore,
+					count: mark.count,
+					newContent: {
+						restoreId,
+						...hasTransience,
+					},
+				};
+				return [restoreMark];
 			}
 			case "Placeholder":
 				fail("Should not have placeholders in a changeset being converted to delta");

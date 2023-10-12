@@ -44,7 +44,6 @@ import {
 	createRoomLeaveMessage,
 	createRuntimeMessage,
 	generateClientId,
-	IRuntimeSignalEnvelope,
 } from "../utils";
 export { IRuntimeSignalEnvelope } from "../utils";
 import {
@@ -53,7 +52,6 @@ import {
 	IConnectedClient,
 	IRoom,
 } from "./interfaces";
-export { IBroadcastSignalEventPayload, ICollaborationSessionEvents, IRoom } from "./interfaces";
 
 const summarizerClientType = "summarizer";
 
@@ -624,7 +622,8 @@ export function configureWebSocketServices(
 				// eslint-disable-next-line @typescript-eslint/no-misused-promises
 				async (broadcastSignal: IBroadcastSignalEventPayload) => {
 					try {
-						const { signalRoom, signalContent } = broadcastSignal;
+						const signalRoom = broadcastSignal.signalRoom;
+						const signalContent = broadcastSignal.signalContent;
 
 						// No-op if the room (collab session) that signal came in from is different
 						// than the current room. We reuse websockets so there could be multiple rooms
@@ -650,12 +649,11 @@ export function configureWebSocketServices(
 								});
 						}
 					} catch (error) {
-						const errorMsg = `Broadcast-signal failed with: ${error}`;
-						return handleServerError(
-							logger,
+						const errorMsg = `Unexpected error handling broadcastSignal event`;
+						Lumberjack.error(
 							errorMsg,
-							claims.documentId,
-							claims.tenantId,
+							getLumberBaseProperties(claims.documentId, claims.tenantId),
+							error,
 						);
 					}
 				},

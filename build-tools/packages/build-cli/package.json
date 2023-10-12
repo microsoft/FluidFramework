@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/build-cli",
-	"version": "0.24.0",
+	"version": "0.26.0",
 	"description": "Build tools for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -42,9 +42,8 @@
 		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
+		"test:coverage": "c8 npm run test",
 		"test:mocha": "mocha --forbid-only \"test/**/*.test.ts\"",
-		"test:mocha:report": "npm run test:mocha -- -- --reporter xunit --reporter-option output=nyc/mocha-junit-report.xml",
-		"test:report": "c8 npm run test:mocha:report",
 		"tsc": "tsc"
 	},
 	"c8": {
@@ -71,6 +70,7 @@
 		"@fluid-tools/version-tools": "workspace:*",
 		"@fluidframework/build-tools": "workspace:*",
 		"@fluidframework/bundle-size-tools": "workspace:*",
+		"@microsoft/api-extractor": "^7.36.1",
 		"@oclif/core": "^2.8.11",
 		"@oclif/plugin-autocomplete": "^2.3.1",
 		"@oclif/plugin-commands": "^2.2.17",
@@ -97,7 +97,7 @@
 		"node-fetch": "^2.6.9",
 		"npm-check-updates": "^16.10.15",
 		"oclif": "^3.9.1",
-		"prettier": "~2.6.2",
+		"prettier": "~3.0.3",
 		"prompts": "^2.4.2",
 		"read-pkg-up": "^7.0.1",
 		"semver": "^7.5.4",
@@ -110,10 +110,9 @@
 		"type-fest": "^2.19.0"
 	},
 	"devDependencies": {
-		"@fluid-internal/readme-command": "workspace:*",
-		"@fluidframework/build-common": "^2.0.0",
+		"@fluid-private/readme-command": "workspace:*",
+		"@fluidframework/build-common": "^2.0.1",
 		"@fluidframework/eslint-config-fluid": "^2.1.0",
-		"@microsoft/api-extractor": "^7.36.1",
 		"@types/async": "^3.2.20",
 		"@types/chai": "^4.3.5",
 		"@types/chai-arrays": "^2.0.0",
@@ -136,7 +135,7 @@
 		"eslint": "~8.6.0",
 		"eslint-config-oclif": "^4.0.0",
 		"eslint-config-oclif-typescript": "^1.0.3",
-		"eslint-config-prettier": "~8.5.0",
+		"eslint-config-prettier": "~9.0.0",
 		"mocha": "^10.2.0",
 		"mocha-json-output-reporter": "^2.1.0",
 		"mocha-multi-reporters": "^1.5.1",
