@@ -3,5 +3,14 @@
  * Licensed under the MIT License.
  */
 
-export { getProxyForField } from "./proxies";
-export { List } from "./types";
+export { getProxyForField, is } from "./proxies";
+export {
+	SharedTreeList,
+	ObjectFields,
+	ProxyField,
+	ProxyFieldInner,
+	ProxyNode,
+	ProxyNodeUnion,
+	SharedTreeMap,
+	SharedTreeObject,
+} from "./types";
