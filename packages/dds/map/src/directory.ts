@@ -616,17 +616,35 @@ export class SharedDirectory
 
 	/**
 	 * Submits an operation
+	 * @deprecated Use submitDirectoryMessage2 instead
+	 *
 	 * @param op - Op to submit
 	 * @param localOpMetadata - The local metadata associated with the op. We send a unique id that is used to track
 	 * this op while it has not been ack'd. This will be sent when we receive this op back from the server.
 	 * @internal
 	 */
-	public submitDirectoryMessage(
-		op: IDirectoryOperation,
-		localOpMetadata: unknown,
-		rootMetadata: unknown,
-	): void {
-		this.submitLocalMessage(op, localOpMetadata, rootMetadata);
+	public submitDirectoryMessage(op: IDirectoryOperation, localOpMetadata?: unknown): void {
+		this.submitLocalMessage(op, localOpMetadata, /* rootMetadata */ undefined); //* UNDO
+	}
+
+	/**
+	 * Submits an operation
+	 * @param data - a params object holding the contents and metadata to submit - Op to submit
+	 * @internal
+	 */
+	public submitDirectoryMessage2(data: {
+		/** Op to submit */
+		op: IDirectoryOperation;
+		/**
+		 * The local metadata associated with the op. We send a unique id that is used to track
+		 * this op while it has not been ack'd. This will be sent when we receive this op back from the server
+		 */
+		localOpMetadata: unknown;
+		/** Metadata to be handled by the runtime and included in the final op payload */
+		rootMetadata: unknown;
+	}): void {
+		const { op: messageContent, localOpMetadata, rootMetadata } = data;
+		this.submitLocalMessage2({ messageContent, localOpMetadata, rootMetadata });
 	}
 
 	/**
@@ -1777,12 +1795,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		this.throwIfDisposed();
 		const pendingMsgId = ++this.pendingMessageId;
 		this.pendingClearMessageIds.push(pendingMsgId);
-		const metadata: IClearLocalOpMetadata = {
+		const localOpMetadata: IClearLocalOpMetadata = {
 			type: "clear",
 			pendingMessageId: pendingMsgId,
 			previousStorage: previousValue,
 		};
-		this.directory.submitDirectoryMessage(op, metadata, /* rootMetadata */ undefined); //* FIX
+		this.directory.submitDirectoryMessage2({ op, localOpMetadata, rootMetadata: undefined }); //* FIX
 	}
 
 	/**
@@ -1827,8 +1845,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	private submitKeyMessage(op: IDirectoryKeyOperation, previousValue?: ILocalValue): void {
 		this.throwIfDisposed();
 		const pendingMessageId = this.getKeyMessageId(op);
-		const localMetadata = { type: "edit", pendingMessageId, previousValue };
-		this.directory.submitDirectoryMessage(op, localMetadata, /* rootMetadata */ undefined);
+		const localOpMetadata = { type: "edit", pendingMessageId, previousValue };
+		this.directory.submitDirectoryMessage2({ op, localOpMetadata, rootMetadata: undefined }); //* FIX
 	}
 
 	/**
@@ -1904,7 +1922,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		const localOpMetadata: ICreateSubDirLocalOpMetadata = {
 			type: "createSubDir",
 		};
-		this.directory.submitDirectoryMessage(op, localOpMetadata, /* rootMetadata */ undefined);
+		this.directory.submitDirectoryMessage2({ op, localOpMetadata, rootMetadata: undefined }); //* FIX
 	}
 
 	/**
@@ -1923,7 +1941,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			type: "deleteSubDir",
 			subDirectory: subDir,
 		};
-		this.directory.submitDirectoryMessage(op, localOpMetadata, /* rootMetadata */ undefined);
+		this.directory.submitDirectoryMessage2({ op, localOpMetadata, rootMetadata: undefined }); //* FIX
 	}
 
 	/**

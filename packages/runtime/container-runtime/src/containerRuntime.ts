@@ -3425,20 +3425,30 @@ export class ContainerRuntime
 		}
 	}
 
+	/** @deprecated use submitDataStoreOp2 instead */
 	public submitDataStoreOp(
 		id: string,
 		contents: any,
 		localOpMetadata: unknown,
 		rootMetadata: unknown,
 	): void {
+		this.submitDataStoreOp2({ id, contents, localOpMetadata, rootMetadata });
+	}
+
+	public submitDataStoreOp2(data: {
+		id: string;
+		contents: any;
+		localOpMetadata?: unknown;
+		rootMetadata: unknown;
+	}): void {
 		//* TODO: Apply rootMetadata to the envelope
 		const envelope: IEnvelope = {
-			address: id,
-			contents,
+			address: data.id,
+			contents: data.contents,
 		};
 		this.submit(
 			{ type: ContainerMessageType.FluidDataStoreOp, contents: envelope },
-			localOpMetadata,
+			data.localOpMetadata,
 		);
 	}
 

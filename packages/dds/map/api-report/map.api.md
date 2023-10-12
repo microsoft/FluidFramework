@@ -256,8 +256,14 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     set<T = unknown>(key: string, value: T): this;
     get size(): number;
     subdirectories(): IterableIterator<[string, IDirectory]>;
+    // @internal @deprecated
+    submitDirectoryMessage(op: IDirectoryOperation, localOpMetadata?: unknown): void;
     // @internal
-    submitDirectoryMessage(op: IDirectoryOperation, localOpMetadata: unknown, rootMetadata: unknown): void;
+    submitDirectoryMessage2(data: {
+        op: IDirectoryOperation;
+        localOpMetadata: unknown;
+        rootMetadata: unknown;
+    }): void;
     // @internal (undocumented)
     protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     values(): IterableIterator<any>;
