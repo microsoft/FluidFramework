@@ -32,7 +32,7 @@ export const jsonString = leaf.string;
 /**
  * @alpha
  */
-export const jsonNull = builder.struct("Null", {});
+export const jsonNull = builder.struct("null", {});
 
 /**
  * @alpha
@@ -57,7 +57,7 @@ export const jsonRoot = [() => jsonObject, () => jsonArray, ...jsonPrimitives] a
  * @alpha
  */
 export const jsonObject = builder.mapRecursive(
-	"Object",
+	"object",
 	FieldSchema.createUnsafe(FieldKinds.optional, jsonRoot),
 );
 
@@ -65,7 +65,7 @@ export const jsonObject = builder.mapRecursive(
  * @alpha
  */
 export const jsonArray = builder.fieldNodeRecursive(
-	"Array",
+	"array",
 	FieldSchema.createUnsafe(FieldKinds.sequence, jsonRoot),
 );
 
