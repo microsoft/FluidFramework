@@ -852,9 +852,15 @@ export class FluidDataStoreRuntime
 		this.submit(type, content, localOpMetadata);
 	}
 
-	public submitSignal(type: string, content: any) {
+	/**
+	 * Submits the signal to be sent to other clients.
+	 * @param type - Type of the signal.
+	 * @param content - Content of the signal.
+	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
+	 */
+	public submitSignal(type: string, content: any, targetClientId?: string) {
 		this.verifyNotClosed();
-		return this.dataStoreContext.submitSignal(type, content);
+		return this.dataStoreContext.submitSignal(type, content, targetClientId);
 	}
 
 	/**
