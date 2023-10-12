@@ -214,3 +214,46 @@ Release group are basically group of packages managed by a workspace. `fluid-bui
 independent packages within the same repo. The repo structure is specified in `fluidBuild.config.cjs` at the root of
 the repo under `repoPackages` property. See [fluidBuild.config.cjs](../../../fluidBuild.config.cjs) for how it looks
 like.
+
+## Debug Traces
+
+`fluid-build` using the `debug` package to do traces for investigating and diagnosing problem. Here are some of the trace
+names
+
+### fluid-build:init
+
+Trace the initialization `fluid-build`, including root inference, package loading and selection (based on command line
+scopes).
+
+### fluid-build:task:definition
+
+To debug the logic that combined task and dependency definitions from the default in `fluidBuild.config.cjs` at the root
+of the
+repo and the package's `package.json`. It will dump the full combined definition for each package.
+
+### fluid-build:task:init\*
+
+These traces shows the tasks and relationship in the build graph to diagnose task dependency and ordering problem.  
+It can be turned all of them on or individually.
+
+-   `fluid-build:task:init` - Trace the task that are created, to show what task is included
+-   `fluid-build:task:init:defdep` - Trace the task dependencies derived from expanding and resolving task definitions
+-   `fluid-build:task:init:dep` - Trace full build graph of leaf tasks (a single command invocation)
+-   `fluid-build:task:init:weight` - Weight assigned to each task (where higher weight is prioritized to run first).
+
+### fluid-build:task:trigger
+
+Trace the reason why each task is trigger. Use to diagnose incremental problems.
+
+### fluid-build:task:exec\*
+
+These traces shows the execution flow of the task, to show the task invocation in action.
+
+-   `fluid-build:task:exec` - trace whether the tasks is skipped or start and finish of the task.
+-   `fluid-build:task:queue` - trace when the task is queued after the dependent tasks are done
+-   `fluid-build:task:exec:wait` - trace wait time of a task in queue (delay in execution after it is ready to be scheduled).
+
+### Other fluid-build:\* traces
+
+-   `fluid-build:task:error` - Trace of detail error messages on any operations in a task.
+-   `fluid-build:symlink` - Trace the action of `--symlink` switch.

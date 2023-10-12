@@ -52,7 +52,7 @@ export class WebpackTask extends LeafWithDoneFileTask {
 
 			return JSON.stringify(content);
 		} catch (e) {
-			this.traceExec(`error generating done file content ${e}`);
+			this.traceError(`error generating done file content ${e}`);
 			return undefined;
 		}
 	}
