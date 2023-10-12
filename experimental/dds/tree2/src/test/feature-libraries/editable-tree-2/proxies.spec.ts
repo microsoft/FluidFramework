@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import {
 	FieldSchema,
-	ProxyField,
+	ProxyRoot,
 	SchemaBuilder,
 	TypedSchemaCollection,
 	is,
@@ -54,7 +54,7 @@ describe("SharedTreeObject", () => {
 
 	function itWithRoot(
 		title: string,
-		fn: (root: ProxyField<(typeof schema)["rootFieldSchema"]>) => void,
+		fn: (root: ProxyRoot<typeof schema, "sharedTree">) => void,
 	): void {
 		it(title, () => {
 			const view = createTypedTreeView(schema, initialTree);
@@ -111,9 +111,14 @@ describe("SharedTreeObject", () => {
 	});
 });
 
-function createTypedTreeView<TRoot extends FieldSchema>(
-	schema: TypedSchemaCollection<TRoot>,
-	initialTree: any,
-): ISharedTreeView & { root2: (viewSchema: TypedSchemaCollection<TRoot>) => ProxyField<TRoot> } {
+function createTypedTreeView<
+	TRoot extends FieldSchema,
+	TSchema extends TypedSchemaCollection<TRoot>,
+>(
+	schema: TSchema,
+	initialTree: ProxyRoot<TSchema, "javaScript">,
+): ISharedTreeView & {
+	root2: (viewSchema: TypedSchemaCollection<TRoot>) => ProxyRoot<TSchema, "sharedTree">;
+} {
 	return createTreeView(schema, initialTree);
 }
