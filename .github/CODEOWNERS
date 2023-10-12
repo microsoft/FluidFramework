@@ -57,12 +57,11 @@ azure/packages/azure-service-utils/api-report/         @microsoft/fluid-cr-api
 packages/framework/fluid-framework/api-report/         @microsoft/fluid-cr-api
 packages/framework/tinylicious-client/api-report/      @microsoft/fluid-cr-api
 
-experimental/dds/tree2/api-report/tree2.api.md         @microsoft/fluid-cr-tree
+api-report/tree2.api.md                                @microsoft/fluid-cr-tree
 
 # INTERNAL API REPORTS
 # The packages listed here are not necessarily considered part of the public API.
 packages/framework/**/api-report/                      @microsoft/fluid-cr-framework
-packages/experimental/**/api-report/                   @microsoft/fluid-cr-framework
 packages/dds/shared-object-base/api-report/            @microsoft/fluid-cr-framework
 
 packages/dds/**/api-report/                            @microsoft/fluid-cr-dds
