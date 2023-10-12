@@ -108,9 +108,12 @@ jobs:
           echo "@fluid-internal:registry=$(devFeed)" >> ./.npmrc
           echo "@fluid-private:registry=$(devFeed)" >> ./.npmrc
 
-          # These scopes must be loaded from different internal feeds beyond the Fluid feeds.
+          # This scope must be loaded from the "build" feed
           echo "@ff-internal:registry=$(ado-feeds-build)" >> ./.npmrc
+
+          # This scope must be loaded from the internal Office feed
           echo "@microsoft:registry=$(ado-feeds-office)" >> ./.npmrc
+
           echo "always-auth=true" >> ./.npmrc
           cat .npmrc
 
