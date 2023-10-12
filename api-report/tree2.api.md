@@ -1931,7 +1931,7 @@ export class SharedTreeFactory implements IChannelFactory {
 export interface SharedTreeOptions extends Partial<ICodecOptions> {
     forest?: ForestType;
     // (undocumented)
-    summaryEncodeType?: SummaryEncodeType;
+    summaryEncodeType?: TreeCompressionStratagy;
 }
 
 // @alpha
@@ -2005,12 +2005,6 @@ export interface SubtreePolicy {
     maxDepth: number;
 }
 
-// @alpha
-export enum SummaryEncodeType {
-    Compressed = 0,
-    Uncompressed = 1
-}
-
 declare namespace testRecursiveDomain {
     export {
         recursiveStruct,
@@ -2043,6 +2037,12 @@ export interface TreeAdapter {
     readonly input: TreeSchemaIdentifier;
     // (undocumented)
     readonly output: TreeSchemaIdentifier;
+}
+
+// @alpha
+export enum TreeCompressionStratagy {
+    Compressed = 0,
+    Uncompressed = 1
 }
 
 // @alpha
