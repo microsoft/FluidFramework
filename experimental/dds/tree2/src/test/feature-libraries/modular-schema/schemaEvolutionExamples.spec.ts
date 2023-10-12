@@ -405,7 +405,7 @@ describe("Schema Evolution Examples", () => {
 	// 	});
 
 	// 	const viewCollection: SchemaCollection = builder.toDocumentSchema(
-	// 		SchemaBuilder.fieldRequired(canvas2),
+	// 		SchemaBuilder.required(canvas2),
 	// 	);
 
 	// 	const textAdapter: TreeAdapter = { input: textIdentifier, output: formattedTextIdentifier };

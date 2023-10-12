@@ -60,7 +60,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 	// Check the various ways to refer to child types produce the same results
 	{
 		const numberField1 = FieldSchema.create(required, [numberSchema]);
-		const numberField2 = SchemaBuilder.fieldRequired(numberSchema);
+		const numberField2 = SchemaBuilder.required(numberSchema);
 		const numberField3 = FieldSchema.createUnsafe(required, [numberSchema]);
 		type check1_ = requireAssignableTo<typeof numberField1, typeof numberField2>;
 		type check2_ = requireAssignableTo<typeof numberField2, typeof numberField3>;
@@ -76,15 +76,15 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 	// Simple object
 	{
 		const simpleObject = builder.struct("simple", {
-			x: SchemaBuilder.fieldRequired(numberSchema),
+			x: builder.required(numberSchema),
 		});
 	}
 
 	const ballSchema = builder.struct("ball", {
 		// Test schema objects in as well as lazy functions
-		x: SchemaBuilder.fieldRequired(numberSchema),
-		y: SchemaBuilder.fieldRequired(() => numberSchema),
-		size: SchemaBuilder.fieldOptional(numberSchema),
+		x: numberSchema,
+		y: [() => numberSchema],
+		size: builder.optional(numberSchema),
 	});
 
 	// Recursive case:
@@ -219,7 +219,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 		const builder2 = new SchemaBuilder({ scope: "SchemaAwarePolymorphicTest" });
 		const bool = builder2.leaf("bool", ValueSchema.Boolean);
 		const str = builder2.leaf("str", ValueSchema.String);
-		const parentField = SchemaBuilder.fieldRequired(str, bool);
+		const parentField = SchemaBuilder.required([str, bool]);
 		const parent = builder2.struct("parent", { child: parentField });
 
 		type FlexBool =
@@ -461,7 +461,7 @@ describe("SchemaAware Editing", () => {
 	it("Use a sequence field", () => {
 		const builder = new SchemaBuilder({ scope: "SchemaAware", libraries: [leaf.library] });
 		const rootNodeSchema = builder.struct("Test", {
-			children: SchemaBuilder.fieldSequence(leaf.string),
+			children: SchemaBuilder.sequence(leaf.string),
 		});
 		const schema = builder.toDocumentSchema(
 			FieldSchema.create(FieldKinds.required, [rootNodeSchema]),

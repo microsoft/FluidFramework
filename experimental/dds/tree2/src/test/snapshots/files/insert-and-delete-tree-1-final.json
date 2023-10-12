@@ -1,0 +1,183 @@
+{
+  "type": "tree",
+  "tree": {
+    "type": "tree",
+    "indexes": {
+      "type": "tree",
+      "entries": [
+        {
+          "type": "tree",
+          "EditManager": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "String": {
+                "type": "blob",
+                "content": {
+                  "trunk": [
+                    {
+                      "change": {
+                        "changes": [
+                          {
+                            "fieldKey": "rootFieldKey",
+                            "fieldKind": "Sequence",
+                            "change": [
+                              {
+                                "type": "Delete",
+                                "count": 1,
+                                "id": 1
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      "revision": "beefbeef-beef-4000-8000-000000000004",
+                      "sequenceNumber": 3,
+                      "sessionId": "beefbeef-beef-4000-8000-000000000001"
+                    }
+                  ],
+                  "branches": [
+                    [
+                      "beefbeef-beef-4000-8000-000000000001",
+                      {
+                        "base": "beefbeef-beef-4000-8000-000000000004",
+                        "commits": []
+                      }
+                    ]
+                  ]
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "Schema": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "SchemaString": {
+                "type": "blob",
+                "content": {
+                  "version": "1.0.0",
+                  "treeSchema": [
+                    {
+                      "name": "Json.Array",
+                      "structFields": [
+                        {
+                          "kind": "Sequence",
+                          "types": [
+                            "Json.Object",
+                            "Json.Array",
+                            "com.fluidframework.leaf.number",
+                            "com.fluidframework.leaf.boolean",
+                            "com.fluidframework.leaf.string",
+                            "Json.Null"
+                          ],
+                          "name": ""
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Json.Null",
+                      "structFields": []
+                    },
+                    {
+                      "name": "Json.Object",
+                      "mapFields": {
+                        "kind": "Optional",
+                        "types": [
+                          "Json.Object",
+                          "Json.Array",
+                          "com.fluidframework.leaf.number",
+                          "com.fluidframework.leaf.boolean",
+                          "com.fluidframework.leaf.string",
+                          "Json.Null"
+                        ]
+                      },
+                      "structFields": []
+                    },
+                    {
+                      "name": "com.fluidframework.leaf.boolean",
+                      "structFields": [],
+                      "leafValue": 2
+                    },
+                    {
+                      "name": "com.fluidframework.leaf.handle",
+                      "structFields": [],
+                      "leafValue": 3
+                    },
+                    {
+                      "name": "com.fluidframework.leaf.number",
+                      "structFields": [],
+                      "leafValue": 0
+                    },
+                    {
+                      "name": "com.fluidframework.leaf.string",
+                      "structFields": [],
+                      "leafValue": 1
+                    }
+                  ],
+                  "rootFieldSchema": {
+                    "kind": "Sequence",
+                    "types": [
+                      "Json.Object",
+                      "Json.Array",
+                      "com.fluidframework.leaf.number",
+                      "com.fluidframework.leaf.boolean",
+                      "com.fluidframework.leaf.string",
+                      "Json.Null"
+                    ]
+                  }
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "Forest": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "ForestTree": {
+                "type": "blob",
+                "content": [
+                  [
+                    "repair-1",
+                    [
+                      {
+                        "type": "com.fluidframework.leaf.string",
+                        "value": "42"
+                      }
+                    ]
+                  ]
+                ],
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "DetachedFieldIndex": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "DetachedFieldIndexBlob": {
+                "type": "blob",
+                "content": {
+                  "data": "[[\"beefbeef-beef-4000-8000-000000000004\",1,{\"field\":\"repair-1\",\"root\":1}]]",
+                  "id": 1
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -83,26 +83,26 @@ describe("LazyField", () => {
 	it("LazyField implementations do not allow edits to detached trees", () => {
 		const builder = new SchemaBuilder({ scope: "lazyTree" });
 		builder.struct("empty", {});
-		const schema = builder.toDocumentSchema(SchemaBuilder.fieldOptional(Any));
+		const schema = builder.toDocumentSchema(SchemaBuilder.optional(Any));
 		const forest = forestWithContent({ schema, initialTree: {} });
 		const context = getReadonlyContext(forest, schema);
 		const cursor = initializeCursor(context, detachedFieldAnchor);
 
 		const sequenceField = new LazySequence(
 			context,
-			SchemaBuilder.fieldSequence(Any),
+			SchemaBuilder.sequence(Any),
 			cursor,
 			detachedFieldAnchor,
 		);
 		const optionalField = new LazyOptionalField(
 			context,
-			SchemaBuilder.fieldOptional(Any),
+			SchemaBuilder.optional(Any),
 			cursor,
 			detachedFieldAnchor,
 		);
 		const valueField = new LazyValueField(
 			context,
-			SchemaBuilder.fieldRequired(Any),
+			SchemaBuilder.required(Any),
 			cursor,
 			detachedFieldAnchor,
 		);
@@ -137,7 +137,7 @@ describe("LazyField", () => {
 		// #region Tree and schema initialization
 
 		const builder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
-		const rootSchema = SchemaBuilder.fieldOptional(builder.struct("struct", {}));
+		const rootSchema = SchemaBuilder.optional(builder.struct("struct", {}));
 		const schema = builder.toDocumentSchema(rootSchema);
 
 		// Note: this tree initialization is strictly to enable construction of the lazy field.
@@ -150,21 +150,21 @@ describe("LazyField", () => {
 
 		const anyOptionalField = new TestLazyField(
 			context,
-			SchemaBuilder.fieldOptional(Any),
+			SchemaBuilder.optional(Any),
 			cursor,
 			detachedFieldAnchor,
 		);
 
-		assert(anyOptionalField.is(SchemaBuilder.fieldOptional(Any)));
+		assert(anyOptionalField.is(SchemaBuilder.optional(Any)));
 
-		assert(!anyOptionalField.is(SchemaBuilder.fieldOptional()));
-		assert(!anyOptionalField.is(SchemaBuilder.fieldOptional(leafDomain.boolean)));
-		assert(!anyOptionalField.is(SchemaBuilder.fieldRequired()));
-		assert(!anyOptionalField.is(SchemaBuilder.fieldRequired(Any)));
-		assert(!anyOptionalField.is(SchemaBuilder.fieldRequired(leafDomain.boolean)));
-		assert(!anyOptionalField.is(SchemaBuilder.fieldSequence()));
-		assert(!anyOptionalField.is(SchemaBuilder.fieldSequence(Any)));
-		assert(!anyOptionalField.is(SchemaBuilder.fieldSequence(leafDomain.boolean)));
+		assert(!anyOptionalField.is(SchemaBuilder.optional([])));
+		assert(!anyOptionalField.is(SchemaBuilder.optional(leafDomain.boolean)));
+		assert(!anyOptionalField.is(SchemaBuilder.required([])));
+		assert(!anyOptionalField.is(SchemaBuilder.required(Any)));
+		assert(!anyOptionalField.is(SchemaBuilder.required(leafDomain.boolean)));
+		assert(!anyOptionalField.is(SchemaBuilder.sequence([])));
+		assert(!anyOptionalField.is(SchemaBuilder.sequence(Any)));
+		assert(!anyOptionalField.is(SchemaBuilder.sequence(leafDomain.boolean)));
 
 		// #endregion
 
@@ -172,24 +172,24 @@ describe("LazyField", () => {
 
 		const booleanOptionalField = new LazyOptionalField(
 			context,
-			SchemaBuilder.fieldOptional(leafDomain.boolean),
+			SchemaBuilder.optional(leafDomain.boolean),
 			cursor,
 			detachedFieldAnchor,
 		);
 
-		assert(booleanOptionalField.is(SchemaBuilder.fieldOptional(leafDomain.boolean)));
+		assert(booleanOptionalField.is(SchemaBuilder.optional(leafDomain.boolean)));
 
-		assert(!booleanOptionalField.is(SchemaBuilder.fieldOptional(Any)));
-		assert(!booleanOptionalField.is(SchemaBuilder.fieldOptional(leafDomain.number)));
-		assert(!booleanOptionalField.is(SchemaBuilder.fieldRequired()));
-		assert(!booleanOptionalField.is(SchemaBuilder.fieldRequired(Any)));
-		assert(!booleanOptionalField.is(SchemaBuilder.fieldRequired(leafDomain.boolean)));
-		assert(!booleanOptionalField.is(SchemaBuilder.fieldRequired(leafDomain.number)));
-		assert(!booleanOptionalField.is(SchemaBuilder.fieldSequence()));
-		assert(!booleanOptionalField.is(SchemaBuilder.fieldSequence(Any)));
-		assert(!booleanOptionalField.is(SchemaBuilder.fieldSequence(leafDomain.boolean)));
-		assert(!booleanOptionalField.is(SchemaBuilder.fieldSequence(leafDomain.number)));
-		assert(!booleanOptionalField.is(SchemaBuilder.fieldOptional()));
+		assert(!booleanOptionalField.is(SchemaBuilder.optional(Any)));
+		assert(!booleanOptionalField.is(SchemaBuilder.optional(leafDomain.number)));
+		assert(!booleanOptionalField.is(SchemaBuilder.required([])));
+		assert(!booleanOptionalField.is(SchemaBuilder.required(Any)));
+		assert(!booleanOptionalField.is(SchemaBuilder.required(leafDomain.boolean)));
+		assert(!booleanOptionalField.is(SchemaBuilder.required(leafDomain.number)));
+		assert(!booleanOptionalField.is(SchemaBuilder.sequence([])));
+		assert(!booleanOptionalField.is(SchemaBuilder.sequence(Any)));
+		assert(!booleanOptionalField.is(SchemaBuilder.sequence(leafDomain.boolean)));
+		assert(!booleanOptionalField.is(SchemaBuilder.sequence(leafDomain.number)));
+		assert(!booleanOptionalField.is(SchemaBuilder.optional([])));
 
 		// #endregion
 	});
@@ -197,9 +197,9 @@ describe("LazyField", () => {
 	it("parent", () => {
 		const builder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
 		const struct = builder.struct("struct", {
-			foo: SchemaBuilder.fieldOptional(...leafDomain.primitives),
+			foo: SchemaBuilder.optional(leafDomain.primitives),
 		});
-		const rootSchema = SchemaBuilder.fieldOptional(struct);
+		const rootSchema = SchemaBuilder.optional(struct);
 		const schema = builder.toDocumentSchema(rootSchema);
 
 		const { context, cursor } = initializeTreeWithContent({
@@ -225,7 +225,7 @@ describe("LazyField", () => {
 
 		const leafField = new TestLazyField(
 			context,
-			SchemaBuilder.fieldOptional(...leafDomain.primitives),
+			SchemaBuilder.optional(leafDomain.primitives),
 			cursor,
 			{
 				parent: parentAnchor,
@@ -238,7 +238,7 @@ describe("LazyField", () => {
 
 describe("LazyOptionalField", () => {
 	const builder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
-	const rootSchema = SchemaBuilder.fieldOptional(leafDomain.number);
+	const rootSchema = SchemaBuilder.optional(leafDomain.number);
 	const schema = builder.toDocumentSchema(rootSchema);
 
 	describe("Field with value", () => {
@@ -312,7 +312,7 @@ describe("LazyOptionalField", () => {
 
 describe("LazyValueField", () => {
 	const builder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
-	const rootSchema = SchemaBuilder.fieldRequired(leafDomain.string);
+	const rootSchema = SchemaBuilder.required(leafDomain.string);
 	const schema = builder.toDocumentSchema(rootSchema);
 
 	const initialTree = "Hello world";
@@ -351,7 +351,7 @@ describe("LazyValueField", () => {
 
 describe("LazySequence", () => {
 	const builder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
-	const rootSchema = SchemaBuilder.fieldSequence(leafDomain.number);
+	const rootSchema = SchemaBuilder.sequence(leafDomain.number);
 	const schema = builder.toDocumentSchema(rootSchema);
 
 	const { context, cursor } = initializeTreeWithContent({

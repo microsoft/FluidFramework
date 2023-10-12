@@ -23,7 +23,7 @@ describe("SchemaIndex", () => {
 		const data: SchemaData = new SchemaBuilder({
 			scope: "roundtrip",
 			libraries: [jsonSchema],
-		}).toDocumentSchema(SchemaBuilder.fieldOptional(...jsonRoot));
+		}).toDocumentSchema(SchemaBuilder.optional(jsonRoot));
 		const s = codec.encode(data);
 		const parsed = codec.decode(s);
 		const s2 = codec.encode(parsed);
