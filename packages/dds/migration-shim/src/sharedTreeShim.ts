@@ -22,11 +22,11 @@ import { type ISharedTree } from "@fluid-experimental/tree2";
 export class SharedTreeShim implements IChannel {
 	public constructor(
 		public readonly id: string,
-		public readonly target: ISharedTree,
+		public readonly currentTree: ISharedTree,
 	) {}
 
 	public get attributes(): IChannelAttributes {
-		return this.target.attributes;
+		return this.currentTree.attributes;
 	}
 	// TODO handle
 	public handle!: IFluidHandle;
@@ -38,7 +38,7 @@ export class SharedTreeShim implements IChannel {
 		trackState?: boolean | undefined,
 		telemetryContext?: ITelemetryContext | undefined,
 	): ISummaryTreeWithStats {
-		return this.target.getAttachSummary(fullTree, trackState, telemetryContext);
+		return this.currentTree.getAttachSummary(fullTree, trackState, telemetryContext);
 	}
 	public async summarize(
 		fullTree?: boolean | undefined,
@@ -46,7 +46,7 @@ export class SharedTreeShim implements IChannel {
 		telemetryContext?: ITelemetryContext | undefined,
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
 	): Promise<ISummaryTreeWithStats> {
-		return this.target.summarize(
+		return this.currentTree.summarize(
 			fullTree,
 			trackState,
 			telemetryContext,
@@ -54,12 +54,12 @@ export class SharedTreeShim implements IChannel {
 		);
 	}
 	public isAttached(): boolean {
-		return this.target.isAttached();
+		return this.currentTree.isAttached();
 	}
 	public connect(services: IChannelServices): void {
-		return this.target.connect(services);
+		return this.currentTree.connect(services);
 	}
 	public getGCData(fullGC?: boolean | undefined): IGarbageCollectionData {
-		return this.target.getGCData(fullGC);
+		return this.currentTree.getGCData(fullGC);
 	}
 }

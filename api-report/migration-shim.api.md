@@ -69,11 +69,13 @@ export class MigrationShimFactory implements IChannelFactory {
 
 // @public
 export class SharedTreeShim implements IChannel {
-    constructor(id: string, target: ISharedTree);
+    constructor(id: string, currentTree: ISharedTree);
     // (undocumented)
     get attributes(): IChannelAttributes;
     // (undocumented)
     connect(services: IChannelServices): void;
+    // (undocumented)
+    readonly currentTree: ISharedTree;
     // (undocumented)
     getAttachSummary(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined): ISummaryTreeWithStats;
     // (undocumented)
@@ -88,8 +90,6 @@ export class SharedTreeShim implements IChannel {
     isAttached(): boolean;
     // (undocumented)
     summarize(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined): Promise<ISummaryTreeWithStats>;
-    // (undocumented)
-    readonly target: ISharedTree;
 }
 
 // @public @sealed
