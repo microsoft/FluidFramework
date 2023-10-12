@@ -7,7 +7,7 @@ import { Package, FluidRepo } from "@fluidframework/build-tools";
 import { fromInternalScheme, isInternalVersionScheme } from "@fluid-tools/version-tools";
 import { Flags } from "@oclif/core";
 import { command as execCommand } from "execa";
-import { readFile, writeFile } from "fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { inc } from "semver";
 import { CleanOptions } from "simple-git";
 

@@ -44,9 +44,6 @@ module.exports = {
 		// The default for this rule is 4, but 5 is better
 		"max-params": ["warn", 5],
 
-		// Causes issues with some versions of node
-		"unicorn/prefer-node-protocol": "off",
-
 		// Too strict for our needs
 		"unicorn/filename-case": "off",
 
