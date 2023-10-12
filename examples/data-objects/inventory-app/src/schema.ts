@@ -5,15 +5,19 @@
 
 import { SchemaBuilder, Typed, leaf } from "@fluid-experimental/tree2";
 
-const builder = new SchemaBuilder({ scope: "inventory app" });
+const builder = new SchemaBuilder({
+	scope: "com.contoso.app.inventory",
+});
 
-export const part = builder.struct("Contoso:Part-1.0.0", {
+export const part = builder.struct("Part", {
 	name: leaf.string,
 	quantity: leaf.number,
 });
 
-export const inventory = builder.struct("Contoso:Inventory-1.0.0", {
-	parts: builder.sequence(part),
+export const partList = builder.fieldNode("List<Part>", builder.sequence(part));
+
+export const inventory = builder.struct("Inventory", {
+	parts: partList,
 });
 
 export const schema = builder.toDocumentSchema(inventory);

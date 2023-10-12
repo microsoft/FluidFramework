@@ -26,7 +26,7 @@ export class InventoryList extends DataObject {
 	private _tree: TypedTreeChannel | undefined;
 
 	public get tree(): InventoryField {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unsafe-return
 		return this._tree!.schematize({
 			initialTree: {
 				parts: [
@@ -42,7 +42,7 @@ export class InventoryList extends DataObject {
 			},
 			allowedSchemaModifications: AllowedUpdateType.None,
 			schema,
-		});
+		} as any) as any;
 	}
 
 	protected async initializingFirstTime() {
