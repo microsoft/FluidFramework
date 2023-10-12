@@ -101,6 +101,22 @@ pr:
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-log-test-failures.yml
 
+variables:
+- group: ado-feeds
+- name: isTestBranch
+  value: ${{ startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}
+  readonly: true
+- name: feed
+  ${{ if eq(variables.isTestBranch, 'true') }}:
+    value: $(ado-feeds-internal) # Comes from the ado-feeds variable group
+  ${{ else }}:
+    value: $(ado-feeds-build) # Comes from the ado-feeds variable group
+- name: devFeed
+  ${{ if eq(variables.isTestBranch, 'true') }}:
+    value: $(ado-feeds-internal) # Comes from the ado-feeds variable group
+  ${{ else }}:
+    value: $(ado-feeds-dev) # Comes from the ado-feeds variable group
+
 extends:
   template: templates/build-npm-package.yml
   parameters:
