@@ -213,18 +213,6 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
 	// TODO: use `unknown` instead (API breaking)
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	submitSignal(content: any, targetClientId?: string): void;
-
-	/**
-	 * @deprecated - 2.0.0-internal.5.3.0 - The IDeltaManager's dispose state is not recommended for observation
-	 * and will be removed in an upcoming release.
-	 */
-	readonly disposed: boolean;
-
-	/**
-	 * @deprecated - 2.0.0-internal.5.3.0 - Disposing the IDeltaManager results in inconsistent system state.
-	 * This member will be removed in an upcoming release.
-	 */
-	dispose(error?: Error): void;
 }
 
 /**
