@@ -69,7 +69,7 @@ export async function execAsync(
 	options: child_process.ExecOptions,
 	pipeStdIn?: string,
 ): Promise<ExecAsyncResult> {
-	return new Promise((resolve, reject) => {
+	return new Promise((resolve) => {
 		const p = child_process.exec(command, options, (error, stdout, stderr) => {
 			resolve({ error, stdout, stderr });
 		});

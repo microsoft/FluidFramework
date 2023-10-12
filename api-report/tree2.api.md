@@ -37,6 +37,9 @@ leafValue: ValueSchema.String;
 export type AllowedTypes = readonly [Any] | readonly LazyItem<TreeSchema>[];
 
 // @alpha
+export type AllowedTypeSet = Any | ReadonlySet<TreeSchema>;
+
+// @alpha
 type AllowedTypesToTypedTrees<Mode extends ApiMode, T extends AllowedTypes> = [
 T extends InternalTypedSchemaTypes.FlexList<TreeSchema> ? InternalTypedSchemaTypes.ArrayToUnion<TypeArrayToTypedTreeArray<Mode, Assume<InternalTypedSchemaTypes.ConstantFlexListToNonLazyArray<T>, readonly TreeSchema[]>>> : UntypedApi<Mode>
 ][_InlineTrick];
@@ -687,6 +690,7 @@ interface Fields {
 export class FieldSchema<out TKind extends FieldKind = FieldKind, const out TTypes extends Unenforced<AllowedTypes> = AllowedTypes> {
     // (undocumented)
     readonly allowedTypes: TTypes;
+    get allowedTypeSet(): AllowedTypeSet;
     static create<TKind extends FieldKind, const Types extends AllowedTypes>(kind: TKind, allowedTypes: Types): FieldSchema<TKind, Types>;
     static createUnsafe<TKind extends FieldKind, const Types>(kind: TKind, allowedTypes: Types): FieldSchema<TKind, Types>;
     static readonly empty: FieldSchema<Forbidden, readonly []>;
@@ -695,7 +699,6 @@ export class FieldSchema<out TKind extends FieldKind = FieldKind, const out TTyp
     readonly kind: TKind;
     // (undocumented)
     protected _typeCheck?: MakeNominal;
-    // (undocumented)
     get types(): TreeTypeSet;
 }
 
@@ -1073,6 +1076,8 @@ export interface ISharedTreeView extends AnchorLocator {
     rebase(view: ISharedTreeBranchView): void;
     redo(): void;
     get root(): UnwrappedEditableField;
+    // (undocumented)
+    root2<TRoot extends FieldSchema>(viewSchema: TypedSchemaCollection<TRoot>): any;
     readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
     // @deprecated (undocumented)
     schematize<TRoot extends FieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): ISharedTreeView;
@@ -1535,6 +1540,9 @@ interface OldContent<TTree = ProtoNode> {
 export const on: unique symbol;
 
 // @alpha
+export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined;
+
+// @alpha
 export type Opaque<T extends Brand<any, string>> = T extends Brand<infer ValueType, infer Name> ? BrandedType<ValueType, Name> : never;
 
 // @alpha
@@ -1843,6 +1851,9 @@ export interface SchemaEvents {
     afterSchemaChange(newSchema: SchemaData): void;
     beforeSchemaChange(newSchema: SchemaData): void;
 }
+
+// @alpha
+export function schemaIsFieldNode(schema: TreeSchema): schema is FieldNodeSchema;
 
 // @alpha
 export interface SchemaLibrary extends TypedSchemaCollection {
@@ -2227,25 +2238,25 @@ export interface TypedSchemaCollection<T extends FieldSchema = FieldSchema> {
 }
 
 // @alpha
-export type TypedTreeChannel<TRoot extends FieldSchema = FieldSchema> = IChannel & {
-    readonly root: TypedField<TRoot>;
-};
+export interface TypedTreeChannel extends IChannel {
+    schematize<TRoot extends FieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): TypedField<TRoot>;
+}
 
 // @alpha
-export class TypedTreeFactory<TRoot extends FieldSchema = FieldSchema> implements IChannelFactory {
-    constructor(options: TypedTreeOptions<TRoot>);
+export class TypedTreeFactory implements IChannelFactory {
+    constructor(options: TypedTreeOptions);
     // (undocumented)
     readonly attributes: IChannelAttributes;
     // (undocumented)
-    create(runtime: IFluidDataStoreRuntime, id: string): TypedTreeChannel<TRoot>;
+    create(runtime: IFluidDataStoreRuntime, id: string): TypedTreeChannel;
     // (undocumented)
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, channelAttributes: Readonly<IChannelAttributes>): Promise<TypedTreeChannel<TRoot>>;
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, channelAttributes: Readonly<IChannelAttributes>): Promise<TypedTreeChannel>;
     // (undocumented)
     readonly type: string;
 }
 
 // @alpha
-export interface TypedTreeOptions<TRoot extends FieldSchema = FieldSchema> extends SharedTreeOptions, InitializeAndSchematizeConfiguration<TRoot> {
+export interface TypedTreeOptions extends SharedTreeOptions {
     readonly subtype: string;
 }
 

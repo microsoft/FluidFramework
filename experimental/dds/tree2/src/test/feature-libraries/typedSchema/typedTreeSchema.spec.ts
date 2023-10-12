@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { jsonArray, jsonBoolean, jsonObject, jsonSchema } from "../../../domains";
+import { jsonArray, jsonBoolean, jsonObject, jsonSchema, leaf } from "../../../domains";
 import { isAssignableTo, requireAssignableTo, requireFalse, requireTrue } from "../../../util";
 import {
 	Any,
@@ -13,6 +13,7 @@ import {
 	LeafSchema,
 	MapSchema,
 	StructSchema,
+	allowedTypesIsAny,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
@@ -62,6 +63,30 @@ describe("typedTreeSchema", () => {
 		assert(!schemaIsFieldNode(recursiveStruct));
 		assert(schemaIsStruct(recursiveStruct));
 		assert(!schemaIsMap(recursiveStruct));
+	});
+
+	describe("FieldSchema", () => {
+		it("types - any", () => {
+			const schema = FieldSchema.create(FieldKinds.optional, [Any]);
+			assert(allowedTypesIsAny(schema.allowedTypes));
+			assert.equal(schema.allowedTypeSet, Any);
+			assert.equal(schema.types, undefined);
+		});
+
+		it("types - single", () => {
+			const schema = FieldSchema.create(FieldKinds.optional, [leaf.number]);
+			assert(!allowedTypesIsAny(schema.allowedTypes));
+			assert.deepEqual(schema.allowedTypes, [leaf.number]);
+			assert.deepEqual(schema.allowedTypeSet, new Set([leaf.number]));
+			assert.deepEqual(schema.types, new Set([leaf.number.name]));
+		});
+
+		it("types - lazy", () => {
+			const schema = FieldSchema.create(FieldKinds.optional, [() => leaf.number]);
+			assert(!allowedTypesIsAny(schema.allowedTypes));
+			assert.deepEqual(schema.allowedTypeSet, new Set([leaf.number]));
+			assert.deepEqual(schema.types, new Set([leaf.number.name]));
+		});
 	});
 
 	{

@@ -14,8 +14,6 @@ import prompts from "prompts";
 
 import { BaseCommand } from "../../base";
 import { Repository, getDefaultBumpTypeForBranch } from "../../lib";
-import GenerateUpcomingCommand from "./upcoming";
-import { ReleaseGroup } from "../../releaseGroups";
 import { releaseGroupFlag } from "../../flags";
 
 /**

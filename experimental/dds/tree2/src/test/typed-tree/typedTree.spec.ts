@@ -18,12 +18,13 @@ describe("TypedTree", () => {
 		const factory = new TypedTreeFactory({
 			jsonValidator: typeboxValidator,
 			forest: ForestType.Reference,
+			subtype: "test",
+		});
+		const root = factory.create(new MockFluidDataStoreRuntime(), "the tree").schematize({
 			allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
 			initialTree: 1,
 			schema,
-			subtype: "test",
 		});
-		const root = factory.create(new MockFluidDataStoreRuntime(), "the tree").root;
 		root.content += 1;
 		assert.equal(root.content, 2);
 	});
