@@ -124,6 +124,10 @@ parameters:
   type: object
   default: []
 
+- name: packageTypesOverride
+  type: string 
+  default: "none"
+
 variables:
   # We use 'chalk' to colorize output, which auto-detects color support in the
   # running terminal.  The log output shown in Azure DevOps job runs only has
@@ -203,6 +207,7 @@ stages:
               Publish Parameters:
                 nonScopedPackages=${{ join(', ', parameters.nonScopedPackages) }}
                 interdependencyRange='${{ parameters.interdependencyRange }}'
+                packageTypesOverride=${{ parameters.packageTypesOverride }}
 
               Computed variables:
                 shouldPublish=${{ variables.shouldPublish }}
@@ -384,7 +389,25 @@ stages:
               testResultDirs: ${{ parameters.testResultDirs }}
 
         # Pack
-        - ${{ if ne(parameters.taskPack, false) }}:
+        - ${{ if eq(parameters.taskPack, true) }}:
+          - ${{ if and(ne(parameters.packageTypesOverride, 'none'), eq(parameters.releaseBuildOverride, 'prerelease')) }}:
+            - task: Bash@3
+              displayName: Set Package Types to ${{ parameters.packageTypesOverride }}
+              inputs:
+                targetType: 'inline'
+                workingDir: ${{ parameters.buildDirectory }}
+                script: | 
+                  flub release setPackageTypesField -g ${{ parameters.tagName }} --types ${{ parameters.packageTypesOverride }}
+            
+            - task: Bash@3
+              displayName: Set Package Version to ${{ parameters.packageTypesOverride }} 
+              inputs:
+                targetType: 'inline'
+                workingDir: ${{ parameters.buildDirectory }}
+                script: | 
+                  formatted_version=$(SetVersion.version)-${{ parameters.packageTypesOverride }}-types
+                  flub bump ${{ parameters.tagName }} --exact "$formatted_version" --interdependencyRange="" -x
+
           - task: Bash@3
             displayName: npm pack
             env:
