@@ -38,7 +38,7 @@ describe("FluidAppInsightsLogger", () => {
 	});
 });
 
-describe("Category Filtering", () => {
+describe("Telemetry Filter - filter mode", () => {
 	let appInsightsClient: ApplicationInsights;
 	let trackEventSpy: Sinon.SinonSpy;
 
@@ -73,7 +73,42 @@ describe("Category Filtering", () => {
 		sinonAssert.callCount(trackEventSpy, eventCount);
 	});
 
-	it("exclusive filter mode sends all events except those that match category filters", () => {
+	it("inclusive filter mode sends no events when no filters are defined", () => {
+		const logger = new FluidAppInsightsLogger(appInsightsClient, {
+			filterConfig: {
+				mode: "inclusive",
+			},
+		});
+
+		const perfCategoryEvent = {
+			category: TelemetryEventCategory.PERFORMANCE,
+			eventName: "perfCategoryEventName",
+		};
+		for (let i = 0; i < 10; i++) {
+			logger.send(perfCategoryEvent);
+		}
+
+		// Expect no events to be sent
+		sinonAssert.callCount(trackEventSpy, 0);
+	});
+});
+
+describe("Telemetry Filter - Category filtering", () => {
+	let appInsightsClient: ApplicationInsights;
+	let trackEventSpy: Sinon.SinonSpy;
+
+	beforeEach(() => {
+		appInsightsClient = new ApplicationInsights({
+			config: {
+				connectionString:
+					// (this is an example string)
+					"InstrumentationKey=abcdefgh-ijkl-mnop-qrst-uvwxyz6ffd9c;IngestionEndpoint=https://westus2-2.in.applicationinsights.azure.com/;LiveEndpoint=https://westus2.livediagnostics.monitor.azure.com/",
+			},
+		});
+		trackEventSpy = spy(appInsightsClient, "trackEvent");
+	});
+
+	it("exclusive filter mode sends ALL events except those that match category filters", () => {
 		const logger = new FluidAppInsightsLogger(appInsightsClient, {
 			filterConfig: {
 				mode: "exclusive",
@@ -122,26 +157,7 @@ describe("Category Filtering", () => {
 		}
 	});
 
-	it("inclusive filter mode sends no events when no filters are defined", () => {
-		const logger = new FluidAppInsightsLogger(appInsightsClient, {
-			filterConfig: {
-				mode: "inclusive",
-			},
-		});
-
-		const perfCategoryEvent = {
-			category: TelemetryEventCategory.PERFORMANCE,
-			eventName: "perfCategoryEventName",
-		};
-		for (let i = 0; i < 10; i++) {
-			logger.send(perfCategoryEvent);
-		}
-
-		// Expect no events to be sent
-		sinonAssert.callCount(trackEventSpy, 0);
-	});
-
-	it("inclusive filter mode only sends events that DO NOT match category filters", () => {
+	it("inclusive filter mode sends NO events except those that match category filters", () => {
 		const logger = new FluidAppInsightsLogger(appInsightsClient, {
 			filterConfig: {
 				mode: "inclusive",
