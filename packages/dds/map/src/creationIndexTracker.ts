@@ -86,7 +86,11 @@ export class CreationIndexTracker {
 				this.keyToIndex.delete(keyOrIndex);
 				this.indexToKey.remove(index);
 			} else {
+				const key = this.indexToKey.get(keyOrIndex)?.data;
 				this.indexToKey.remove(keyOrIndex);
+				if (key && this.keyToIndex) {
+					this.keyToIndex.delete(key);
+				}
 			}
 		}
 	}

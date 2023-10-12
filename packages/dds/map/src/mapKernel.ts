@@ -209,7 +209,7 @@ export class MapKernel {
 	private readonly localKeysIndexTracker = new CreationIndexTracker(false);
 
 	/**
-	 * The object to store the message Ids for all set op's
+	 * The object to store the all pending sets' message ids since the last local delete/clear
 	 */
 	private readonly pendingSetTracker: Map<string, number[]> = new Map();
 
@@ -623,6 +623,10 @@ export class MapKernel {
 			}
 		}
 		if (this.ackedKeysIndexTracker.size() > 0) {
+			assert(
+				this.ackedKeysIndexTracker.max() !== undefined,
+				"There should exsit at least one data in the tracker",
+			);
 			this.creationIndex = this.ackedKeysIndexTracker.max() as number;
 		}
 	}
