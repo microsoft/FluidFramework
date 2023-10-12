@@ -287,10 +287,13 @@ function composeMarks<TNodeChange>(
 		assert(isDetach(newMark), 0x71c /* Unexpected mark type */);
 		assert(isAttach(baseMark), 0x71d /* Expected generative mark */);
 
-		if (isMoveDestination(baseMark) && isMoveSource(newMark)) {
+		const attach = extractMarkEffect(baseMark);
+		const detach = extractMarkEffect(withRevision(newMark, newRev));
+		if (isMoveDestination(attach) && isMoveSource(detach)) {
 			// XXX: Handle case where baseMark and newMark should cancel
-			const finalSource = getEndpoint(baseMark, undefined);
-			const finalDest = getEndpoint(newMark, newRev);
+			const finalSource = getEndpoint(attach, undefined);
+			const finalDest = getEndpoint(detach, newRev);
+
 			setEndpoint(
 				moveEffects,
 				CrossFieldTarget.Source,
@@ -306,6 +309,11 @@ function composeMarks<TNodeChange>(
 				baseMark.count,
 				finalSource,
 			);
+
+			// The `finalEndpoint` field of transient move effect pairs is not used,
+			// so we remove it as a normalization.
+			delete attach.finalEndpoint;
+			delete detach.finalEndpoint;
 		}
 
 		return withNodeChange(
@@ -313,8 +321,8 @@ function composeMarks<TNodeChange>(
 				type: "Transient",
 				cellId: baseMark.cellId,
 				count: baseMark.count,
-				attach: extractMarkEffect(baseMark),
-				detach: extractMarkEffect(withRevision(newMark, newRev)),
+				attach,
+				detach,
 			},
 			nodeChange,
 		);
