@@ -81,7 +81,7 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(childBeforeChangeCount, 0);
 		assert.strictEqual(childAfterChangeCount, 0);
 
-		// Replace myString in child; should fire events on the child node and the root node.
+		// Replace myInnerString in child; should fire events on the child node and the root node.
 		root.child.myInnerString = "new string in original child";
 
 		assert.strictEqual(rootBeforeChangeCount, 3);
