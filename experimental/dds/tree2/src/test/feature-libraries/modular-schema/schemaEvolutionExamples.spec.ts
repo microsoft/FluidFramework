@@ -9,7 +9,6 @@ import {
 	FieldSchema,
 	FullSchemaPolicy,
 	ViewSchema,
-	SchemaBuilder,
 	FieldKinds,
 	defaultSchemaPolicy,
 	TypedSchemaCollection,
@@ -27,6 +26,7 @@ import {
 } from "../../../core";
 // eslint-disable-next-line import/no-internal-modules
 import { allowsFieldSuperset, allowsTreeSuperset } from "../../../feature-libraries/modular-schema";
+import { SchemaBuilder } from "../../../domains";
 
 class TestSchemaRepository extends InMemoryStoredSchemaRepository {
 	public constructor(

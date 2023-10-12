@@ -4,13 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { SchemaBuilder } from "../../../feature-libraries";
-import { leaf } from "../../../domains";
+import { leaf, SchemaBuilder } from "../../../domains";
 // eslint-disable-next-line import/no-internal-modules
 import { TypedNode, List } from "../../../feature-libraries/editable-tree-2";
 import { createTreeView } from "./utils";
 
-const builder = new SchemaBuilder({ scope: "test", libraries: [leaf.library] });
+const builder = new SchemaBuilder({ scope: "test" });
 
 export const stringList = builder.fieldNode("List<string>", builder.sequence(leaf.string));
 

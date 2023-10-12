@@ -3,11 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { AllowedTypes, FieldKinds, FieldSchema, SchemaBuilder } from "../../feature-libraries";
+import {
+	AllowedTypes,
+	FieldKinds,
+	FieldSchema,
+	SchemaBuilderInternal,
+} from "../../feature-libraries";
 import { requireAssignableTo } from "../../util";
 import * as leaf from "../leafDomain";
 
-const builder = new SchemaBuilder({ scope: "Json", libraries: [leaf.library] });
+const builder = new SchemaBuilderInternal({
+	scope: "com.fluidframework.json",
+	libraries: [leaf.library],
+});
 
 /**
  * @alpha
