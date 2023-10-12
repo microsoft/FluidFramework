@@ -276,7 +276,7 @@ stages:
         # the pipeline is special - it runs a client build but doesn't publish anything. Working around this properly is
         # challenging and would create a much bigger change. Since this is the only pipeline that sets this variable to
         # true, we use that to determine whether to set versions.
-        - ${{ if eq(parameters.taskPublishBundleSizeArtifacts, false) }}:
+        - ${{ if and(eq(parameters.taskPublishBundleSizeArtifacts, false), eq(parameters.packageTypesOverride, 'none')) }}:
           - template: include-set-package-version.yml
             parameters:
               buildDirectory: ${{ parameters.buildDirectory }}
@@ -284,6 +284,16 @@ stages:
               buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
               tagName: ${{ parameters.tagName }}
               interdependencyRange: ${{ parameters.interdependencyRange }}
+        
+        - ${{ if and(eq(parameters.taskPublishBundleSizeArtifacts, false), ne(parameters.packageTypesOverride, 'none'), eq(parameters.releaseBuildOverride, 'prerelease')) }}:
+          - template: include-set-package-version-types.yml
+            parameters:
+              buildDirectory: ${{ parameters.buildDirectory }}
+              buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+              buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+              tagName: ${{ parameters.tagName }}
+              interdependencyRange: ${{ parameters.interdependencyRange }}
+              packageTypesOverride: ${{ parameters.packageTypesOverride }}
 
         # Build
         - ${{ if ne(parameters.taskBuild, 'false') }}:
@@ -390,24 +400,7 @@ stages:
 
         # Pack
         - ${{ if eq(parameters.taskPack, true) }}:
-          - ${{ if and(ne(parameters.packageTypesOverride, 'none'), eq(parameters.releaseBuildOverride, 'prerelease')) }}:
-            - task: Bash@3
-              displayName: Set Package Types to ${{ parameters.packageTypesOverride }}
-              inputs:
-                targetType: 'inline'
-                workingDir: ${{ parameters.buildDirectory }}
-                script: | 
-                  flub release setPackageTypesField -g ${{ parameters.tagName }} --types ${{ parameters.packageTypesOverride }}
-            
-            - task: Bash@3
-              displayName: Set Package Version to ${{ parameters.packageTypesOverride }} 
-              inputs:
-                targetType: 'inline'
-                workingDir: ${{ parameters.buildDirectory }}
-                script: | 
-                  formatted_version=$(SetVersion.version)-${{ parameters.packageTypesOverride }}-types
-                  flub bump ${{ parameters.tagName }} --exact "$formatted_version" --interdependencyRange="" -x
-
+          
           - task: Bash@3
             displayName: npm pack
             env:
