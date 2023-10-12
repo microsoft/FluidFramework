@@ -88,7 +88,7 @@ module.exports = {
 			dependencyTypes: ["pnpmOverrides"],
 			dependencies: ["**"],
 			packages: ["**"],
-			range: "^",
+			isIgnored: true,
 		},
 
 		{
