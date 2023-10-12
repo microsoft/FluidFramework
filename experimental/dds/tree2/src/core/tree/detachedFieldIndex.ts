@@ -81,7 +81,10 @@ export class DetachedFieldIndex {
 				this.detachedNodeToField.set(updated, innerCurrent);
 			} else {
 				for (const [minor, entry] of innerCurrent) {
-					assert(innerUpdated.get(minor) === undefined, "Collision during index update");
+					assert(
+						innerUpdated.get(minor) === undefined,
+						0x7a9 /* Collision during index update */,
+					);
 					innerUpdated.set(minor, entry);
 				}
 			}
@@ -110,7 +113,7 @@ export class DetachedFieldIndex {
 	 */
 	public getEntry(id: Delta.DetachedNodeId): Entry {
 		const key = this.tryGetEntry(id);
-		assert(key !== undefined, "Unknown removed node ID");
+		assert(key !== undefined, 0x7aa /* Unknown removed node ID */);
 		return key;
 	}
 
@@ -124,7 +127,7 @@ export class DetachedFieldIndex {
 
 	public deleteEntry(nodeId: Delta.DetachedNodeId): void {
 		const found = deleteFromNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor);
-		assert(found, "Unable to delete unknown entry");
+		assert(found, 0x7ab /* Unable to delete unknown entry */);
 	}
 
 	/**

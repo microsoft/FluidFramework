@@ -87,12 +87,12 @@ export class SchemaBuilderBase<TScope extends string, TName extends number | str
 	}
 
 	protected addNodeSchema<T extends TreeSchema<string, any>>(schema: T): void {
-		assert(!this.treeSchema.has(schema.name), "Conflicting TreeSchema names");
+		assert(!this.treeSchema.has(schema.name), 0x799 /* Conflicting TreeSchema names */);
 		this.treeSchema.set(schema.name, schema as TreeSchema);
 	}
 
 	private finalizeCommon(): void {
-		assert(!this.finalized, "SchemaBuilder can only be finalized once.");
+		assert(!this.finalized, 0x79a /* SchemaBuilder can only be finalized once. */);
 		this.finalized = true;
 		this.libraries.add({
 			name: this.name,
