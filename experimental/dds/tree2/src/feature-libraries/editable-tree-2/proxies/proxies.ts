@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fail, getOrCreate } from "../../../util";
+import { fail } from "../../../util";
 import {
 	AllowedTypes,
 	FieldNodeSchema,
@@ -39,11 +39,25 @@ export function setTreeNode(target: any, treeNode: TreeNode) {
 	});
 }
 
-/**
- * Caches the proxy object that is created for each node.
- * This saves memory, improves performance, and guarantees that all proxies retrieved for a given {@link TreeNode} are referentially equal.
- */
-const nodeProxyCache = new WeakMap<TreeNode, ProxyNode<TreeSchema>>();
+const proxyCacheSym = Symbol("ProxyCache");
+
+/** Cache the proxy that wraps the given tree node so that the proxy can be re-used in future reads */
+function cacheProxy(
+	target: TreeNode,
+	proxy: SharedTreeList<AllowedTypes> | SharedTreeObject<StructSchema>,
+): void {
+	Object.defineProperty(target, proxyCacheSym, {
+		value: proxy,
+		writable: false,
+		enumerable: false,
+		configurable: false,
+	});
+}
+
+/** If there has already been a proxy created to wrap the given tree node, return it */
+function getCachedProxy(treeNode: TreeNode): ProxyNode<TreeSchema> | undefined {
+	return (treeNode as unknown as { [treeNodeSym]: ProxyNode<TreeSchema> })[treeNodeSym];
+}
 
 /**
  * Checks if the given object is a {@link SharedTreeObject}
@@ -91,16 +105,18 @@ export function getProxyForNode<TSchema extends TreeSchema>(
 	if (schemaIsLeaf(schema)) {
 		return treeNode.value as ProxyNode<TSchema>;
 	}
-	if (schemaIsFieldNode(schema)) {
-		return getOrCreate(nodeProxyCache, treeNode, () =>
-			createListProxy(treeNode),
-		) as ProxyNode<TSchema>;
+	const isFieldNode = schemaIsFieldNode(schema);
+	if (isFieldNode || schemaIsStruct(schema)) {
+		const cachedProxy = getCachedProxy(treeNode);
+		if (cachedProxy !== undefined) {
+			return cachedProxy as ProxyNode<TSchema>;
+		}
+
+		const proxy = isFieldNode ? createListProxy(treeNode) : createObjectProxy(treeNode, schema);
+		cacheProxy(treeNode, proxy);
+		return proxy as ProxyNode<TSchema>;
 	}
-	if (schemaIsStruct(schema)) {
-		return getOrCreate(nodeProxyCache, treeNode, () =>
-			createObjectProxy(treeNode, schema),
-		) as ProxyNode<TSchema>;
-	}
+
 	fail("unrecognized node kind");
 }
 
