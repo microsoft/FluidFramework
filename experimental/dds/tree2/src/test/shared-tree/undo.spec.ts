@@ -277,12 +277,14 @@ describe("Undo and redo", () => {
 	it("can undo after forking a branch", () => {
 		const tree1 = makeTreeFromJson(["A", "B", "C"]);
 
-		const { undoStack: undoStack1, unsubscribe: unsubscribe1 } = createTestUndoRedoStacks(tree1);
+		const { undoStack: undoStack1, unsubscribe: unsubscribe1 } =
+			createTestUndoRedoStacks(tree1);
 		tree1.editor.sequenceField(rootField).delete(0, 1);
 		tree1.editor.sequenceField(rootField).delete(1, 1);
 
 		const tree2 = tree1.fork();
-		const { undoStack: undoStack2, unsubscribe: unsubscribe2 } = createTestUndoRedoStacks(tree2);
+		const { undoStack: undoStack2, unsubscribe: unsubscribe2 } =
+			createTestUndoRedoStacks(tree2);
 		expectJsonTree(tree2, ["B"]);
 		undoStack1.pop()?.revert();
 		expectJsonTree(tree2, ["B", "C"]);
@@ -296,14 +298,16 @@ describe("Undo and redo", () => {
 	it("can redo after forking a branch", () => {
 		const tree1 = makeTreeFromJson(["B"]);
 
-		const { undoStack: undoStack1, unsubscribe: unsubscribe1 } = createTestUndoRedoStacks(tree1);
+		const { undoStack: undoStack1, unsubscribe: unsubscribe1 } =
+			createTestUndoRedoStacks(tree1);
 		tree1.editor.sequenceField(rootField).insert(0, singleJsonCursor("A"));
 		tree1.editor.sequenceField(rootField).insert(2, singleJsonCursor("C"));
 		undoStack1.pop()?.revert();
 		undoStack1.pop()?.revert();
 
 		const tree2 = tree1.fork();
-		const { redoStack: redoStack2, unsubscribe: unsubscribe2 } = createTestUndoRedoStacks(tree2);
+		const { redoStack: redoStack2, unsubscribe: unsubscribe2 } =
+			createTestUndoRedoStacks(tree2);
 		expectJsonTree(tree2, ["B"]);
 		redoStack2.pop()?.revert();
 		expectJsonTree(tree2, ["A", "B"]);
