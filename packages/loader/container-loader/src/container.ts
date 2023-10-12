@@ -2430,7 +2430,7 @@ export class Container
 				this.submitSummaryMessage(summaryOp, referenceSequenceNumber),
 			(batch: IBatchMessage[], referenceSequenceNumber?: number) =>
 				this.submitBatch(batch, referenceSequenceNumber),
-			(message) => this.submitSignal(message),
+			(content, targetClientId) => this.submitSignal(content, targetClientId),
 			(error?: ICriticalContainerError) => this.dispose(error),
 			(error?: ICriticalContainerError) => this.close(error),
 			this.updateDirtyContainerState,
