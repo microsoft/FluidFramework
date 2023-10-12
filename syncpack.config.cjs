@@ -84,7 +84,7 @@ module.exports = {
 		},
 
 		{
-			label: "Deps in pnpm overrides should use caret dependency ranges",
+			label: "Deps in pnpm overrides can use whatever dependency ranges they need",
 			dependencyTypes: ["pnpmOverrides"],
 			dependencies: ["**"],
 			packages: ["**"],
