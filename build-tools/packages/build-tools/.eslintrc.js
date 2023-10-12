@@ -18,6 +18,8 @@ module.exports = {
 		"@typescript-eslint/no-unsafe-call": "off",
 		"@typescript-eslint/no-unsafe-member-access": "off",
 
+		"@typescript-eslint/no-non-null-assertion": "error",
+		"@typescript-eslint/no-unused-vars": "error",
 		"@typescript-eslint/switch-exhaustiveness-check": "error",
 		// This package is exclusively used in a Node.js context
 		"import/no-nodejs-modules": "off",

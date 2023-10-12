@@ -263,7 +263,6 @@ export function isFeed(str: string | undefined): str is Feed {
 	if (str === undefined) {
 		return false;
 	}
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	return feeds.includes(str as any);
 }
 

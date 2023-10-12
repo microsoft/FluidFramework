@@ -52,11 +52,13 @@ async function messageHandler(msg: WorkerMessage): Promise<WorkerExecResult> {
 
 if (parentPort) {
 	parentPort.on("message", (message: WorkerMessage) => {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		messageHandler(message).then(parentPort!.postMessage.bind(parentPort));
 	});
 } else if (process.send) {
 	collectMemoryUsage = process.argv.includes("--memoryUsage");
 	process.on("message", (message: WorkerMessage) => {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		messageHandler(message).then(process.send!.bind(process));
 	});
 	process.on("uncaughtException", (error) => {

@@ -443,7 +443,7 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 	}
 
 	protected async checkLeafIsUpToDate() {
-		const doneFileFullPath = this.doneFileFullPath!;
+		const doneFileFullPath = this.doneFileFullPath;
 		try {
 			const doneFileExpectedContent = await this.getDoneFileContent();
 			if (doneFileExpectedContent) {
