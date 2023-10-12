@@ -26,14 +26,13 @@ describe("beforeChange/afterChange events", () => {
 		myOptionalNumber: SchemaBuilder.optional(leaf.number),
 	});
 	const schema = builder.toDocumentSchema(SchemaBuilder.field(FieldKinds.required, myNodeSchema));
+	const factory = new TypedTreeFactory({
+		jsonValidator: typeboxValidator,
+		forest: ForestType.Reference,
+		subtype: "test",
+	});
 
 	it("fire the expected number of times", () => {
-		const factory = new TypedTreeFactory({
-			jsonValidator: typeboxValidator,
-			forest: ForestType.Reference,
-			subtype: "test",
-		});
-
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
 		const root = tree.schematize({
 			initialTree: {
@@ -122,12 +121,6 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("fire in the expected order and always together", () => {
-		const factory = new TypedTreeFactory({
-			jsonValidator: typeboxValidator,
-			forest: ForestType.Reference,
-			subtype: "test",
-		});
-
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
 		const root = tree.schematize({
 			initialTree: {
@@ -172,12 +165,6 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("listeners can be removed successfully", () => {
-		const factory = new TypedTreeFactory({
-			jsonValidator: typeboxValidator,
-			forest: ForestType.Reference,
-			subtype: "test",
-		});
-
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
 		const root = tree.schematize({
 			initialTree: {
@@ -226,12 +213,6 @@ describe("beforeChange/afterChange events", () => {
 
 	it("tree is in correct state when events fire - primitive node deletions", () => {
 		const initialNumber = 20;
-		const factory = new TypedTreeFactory({
-			jsonValidator: typeboxValidator,
-			forest: ForestType.Reference,
-			subtype: "test",
-		});
-
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
 		const root = tree.schematize({
 			initialTree: {
@@ -259,12 +240,6 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("tree is in correct state when events fire - primitive node additions", () => {
-		const factory = new TypedTreeFactory({
-			jsonValidator: typeboxValidator,
-			forest: ForestType.Reference,
-			subtype: "test",
-		});
-
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
 		const root = tree.schematize({
 			initialTree: {
@@ -294,12 +269,6 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("tree is in correct state when events fire - primitive node replacements", () => {
-		const factory = new TypedTreeFactory({
-			jsonValidator: typeboxValidator,
-			forest: ForestType.Reference,
-			subtype: "test",
-		});
-
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
 		const root = tree.schematize({
 			initialTree: {
@@ -327,12 +296,6 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("not emitted by nodes when they are replaced", () => {
-		const factory = new TypedTreeFactory({
-			jsonValidator: typeboxValidator,
-			forest: ForestType.Reference,
-			subtype: "test",
-		});
-
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
 		const root = tree.schematize({
 			initialTree: {
@@ -362,12 +325,6 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("bubble up from the affected node to the root", () => {
-		const factory = new TypedTreeFactory({
-			jsonValidator: typeboxValidator,
-			forest: ForestType.Reference,
-			subtype: "test",
-		});
-
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
 		const root = tree.schematize({
 			initialTree: {
