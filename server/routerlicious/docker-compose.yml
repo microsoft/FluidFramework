@@ -28,6 +28,8 @@ services:
     build:
       context: .
       target: runner
+      additional_contexts:
+        root: ../..
     expose:
       - "3000"
     command: node packages/routerlicious/dist/nexus/www.js
