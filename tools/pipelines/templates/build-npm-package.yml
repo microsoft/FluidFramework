@@ -124,7 +124,7 @@ parameters:
   type: object
   default: []
 
-- name: packageTypes 
+- name: packageTypesOverride
   type: string 
   default: "none"
 
@@ -207,7 +207,7 @@ stages:
               Publish Parameters:
                 nonScopedPackages=${{ join(', ', parameters.nonScopedPackages) }}
                 interdependencyRange='${{ parameters.interdependencyRange }}'
-                packageTypes=${{ parameters.packageTypesOverride }}
+                packageTypesOverride=${{ parameters.packageTypesOverride }}
 
               Computed variables:
                 shouldPublish=${{ variables.shouldPublish }}
@@ -390,14 +390,22 @@ stages:
 
         # Pack
         - ${{ if eq(parameters.taskPack, true) }}:
-          - ${{ if ne(variables.packageTypes, 'none') }}:
+          - ${{ if and(ne(variables.packageTypesOverride, 'none'), eq(parameters.releaseBuildOverride, 'prerelease')) }}:
             - task: Bash@3
-              displayName: Set package.json types to ${{ variables.packageTypes }}
+              displayName: Set Package Types to ${{ variables.packageTypesOverride }}
               inputs:
                 targetType: 'inline'
                 workingDir: ${{ parameters.buildDirectory }}
                 script: | 
-                  flub release setPackageTypesField -g ${{ parameters.tagName }} --types ${{ variables.packageTypes }}
+                  flub release setPackageTypesField -g ${{ parameters.tagName }} --types ${{ variables.packageTypesOverride }}
+            
+            - task: Bash@3
+              displayName: Set Package Version to ${{ variables.packageTypesOverride }} 
+              inputs:
+                targetType: 'inline'
+                workingDir: ${{ parameters.buildDirectory }}
+                script: | 
+                  flub bump ${{ parameters.tagName }} --exact ${{ SetVersion.version }}-${{ variables.packageTypesOverride }}-types --interdependencyRange="" -x
 
           - task: Bash@3
             displayName: npm pack
