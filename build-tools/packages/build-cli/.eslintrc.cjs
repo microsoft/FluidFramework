@@ -13,7 +13,7 @@ module.exports = {
 		"prettier",
 	],
 	rules: {
-		// This rule is often triggered when using custom Flag classes, so disabling.
+		// This rule is often triggered when using custom Flags, so disabling.
 		"object-shorthand": "off",
 
 		// This package is exclusively used in a Node.js context
@@ -50,7 +50,7 @@ module.exports = {
 		// Too strict for our needs
 		"unicorn/filename-case": "off",
 
-		// Destructuring is often awkward to use with commands
+		// In commands, destructuring is useful in some places but makes others less legible, so consistency isn't preferred.
 		"unicorn/consistent-destructuring": "off",
 
 		// Deprecated in 2018: https://eslint.org/blog/2018/11/jsdoc-end-of-life/
