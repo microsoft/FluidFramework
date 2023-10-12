@@ -19,7 +19,6 @@ import {
 	TreeSchema,
 } from "../../typed-schema";
 import {
-	UnboxNodeUnion,
 	CheckTypesOverlap,
 	FlexibleNodeContent,
 	Sequence,
@@ -29,7 +28,7 @@ import {
 
 /** Implements 'readonly T[]' and the list mutation APIs. */
 export interface SharedTreeList<TTypes extends AllowedTypes>
-	extends ReadonlyArray<UnboxNodeUnion<TTypes>> {
+	extends ReadonlyArray<ProxyNodeUnion<TTypes>> {
 	/**
 	 * Inserts new item(s) at a specified location.
 	 * @param index - The index at which to insert `value`.
@@ -221,6 +220,8 @@ export type ProxyNodeUnion<TTypes extends AllowedTypes> = TTypes extends readonl
 	? unknown
 	: {
 			// TODO: Is the the best way to write this type function? Can it be simplified?
+			// This first maps the tuple of AllowedTypes to a tuple of node API types.
+			// Then, it uses [number] to index arbitrarily into that tuple, effectively converting the type tuple into a type union.
 			[Index in keyof TTypes]: TTypes[Index] extends InternalTypedSchemaTypes.LazyItem<
 				infer InnerType
 			>
