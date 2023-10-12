@@ -139,7 +139,7 @@ extends:
     - ${{ if eq(variables['System.TeamProject'], 'public') }}:
       - ci:test:realsvc:local
       - ci:test:realsvc:tinylicious
-    - ${{ if ne(variables['System.TeamProject'], 'public') }}:
+    - ${{ if and(ne(variables['System.TeamProject'], 'public'), eq(parameters.packageTypesOverride, 'none')) }}:
       - ci:test:realsvc:local:full
       - ci:test:realsvc:tinylicious:full
     - ci:test:stress:tinylicious
