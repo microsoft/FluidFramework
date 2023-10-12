@@ -253,6 +253,15 @@ export {
 	CheckTypesOverlap,
 	TreeStatus,
 	getProxyForField,
+	ObjectFields,
+	ProxyField,
+	ProxyFieldInner,
+	ProxyNode,
+	ProxyNodeUnion,
+	SharedTreeList,
+	SharedTreeMap,
+	SharedTreeObject,
+	is,
 } from "./editable-tree-2";
 
 // Split into separate import and export for compatibility with API-Extractor.
