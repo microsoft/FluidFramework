@@ -14,6 +14,8 @@ import {
 	ITokenRevocationManager,
 	IRevokedTokenChecker,
 } from "@fluidframework/server-services-core";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { json, urlencoded } from "body-parser";
 import compression from "compression";
 import cookieParser from "cookie-parser";
@@ -46,6 +48,7 @@ export function create(
 	documentDeleteService: IDocumentDeleteService,
 	tokenRevocationManager?: ITokenRevocationManager,
 	revokedTokenChecker?: IRevokedTokenChecker,
+	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 ) {
 	// Maximum REST request size
 	const requestSize = config.get("alfred:restJsonSize");
@@ -110,6 +113,7 @@ export function create(
 		documentDeleteService,
 		tokenRevocationManager,
 		revokedTokenChecker,
+		collaborationSessionEventEmitter,
 	);
 
 	app.use(routes.api);
