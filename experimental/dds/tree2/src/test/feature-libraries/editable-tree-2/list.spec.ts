@@ -5,8 +5,7 @@
 
 import { strict as assert } from "assert";
 import { leaf, SchemaBuilder } from "../../../domains";
-// eslint-disable-next-line import/no-internal-modules
-import { TypedNode, List } from "../../../feature-libraries/editable-tree-2";
+import { ProxyField, SharedTreeList } from "../../../feature-libraries";
 import { createTreeView } from "./utils";
 
 const builder = new SchemaBuilder({ scope: "test" });
@@ -22,9 +21,8 @@ const root = builder.struct("root", {
 	numbers: numberList,
 });
 
-type Root = TypedNode<typeof root>;
-
 const schema = builder.toDocumentSchema(root);
+type Root = ProxyField<(typeof schema)["rootFieldSchema"]>;
 
 describe("List", () => {
 	/** Similar to JSON stringify, but preserves 'undefined' and leaves numbers as-is. */
@@ -80,7 +78,7 @@ describe("List", () => {
 
 	// TODO: Combine createList helpers once we unbox unions.
 	/** Helper that creates a new List<number> proxy */
-	function createNumberList(items: readonly number[]): List<[typeof leaf.number]> {
+	function createNumberList(items: readonly number[]): SharedTreeList<[typeof leaf.number]> {
 		const list = createTree().numbers;
 		list.insertAtStart(items);
 		assert.deepEqual(list, items);
@@ -89,7 +87,7 @@ describe("List", () => {
 
 	// TODO: Combine createList helpers once we unbox unions.
 	/** Helper that creates a new List<string> proxy */
-	function createStringList(items: readonly string[]): List<[typeof leaf.string]> {
+	function createStringList(items: readonly string[]): SharedTreeList<[typeof leaf.string]> {
 		const list = createTree().strings;
 		list.insertAtStart(items);
 		assert.deepEqual(list, items);

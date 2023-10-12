@@ -69,7 +69,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 	};
 
 	public async run(): Promise<void> {
-		const flags = this.flags;
+		const { flags } = this;
 		const isRelease = flags.release === "release";
 		const useSimplePatchVersion = flags.patch?.toLowerCase() === "true";
 		const useTestVersion = flags.testBuild?.toLowerCase() === "true";
@@ -137,15 +137,15 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 		}
 	}
 
-	private getFileVersion() {
+	private getFileVersion(): string {
 		if (fs.existsSync("./lerna.json")) {
-			// eslint-disable-next-line unicorn/prefer-json-parse-buffer
+			// eslint-disable-next-line unicorn/prefer-json-parse-buffer, @typescript-eslint/no-unsafe-member-access
 			return JSON.parse(fs.readFileSync("./lerna.json", { encoding: "utf8" }))
 				.version as string;
 		}
 
 		if (fs.existsSync("./package.json")) {
-			// eslint-disable-next-line unicorn/prefer-json-parse-buffer
+			// eslint-disable-next-line unicorn/prefer-json-parse-buffer, @typescript-eslint/no-unsafe-member-access
 			return JSON.parse(fs.readFileSync("./package.json", { encoding: "utf8" }))
 				.version as string;
 		}

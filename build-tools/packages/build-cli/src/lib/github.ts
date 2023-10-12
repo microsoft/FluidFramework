@@ -13,6 +13,7 @@ const LABEL = "POST /repos/{owner}/{repo}/issues/{issue_number}/labels";
 const REVIEWER = "POST /repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers";
 
 /**
+ * Check if a pull request exists.
  *
  * @param token - GitHub authentication token
  * @returns Returns true if pull request exists
@@ -41,6 +42,7 @@ export async function pullRequestExists(
 }
 
 /**
+ * Get commit info for a commit from GitHub.
  *
  * @param token - GitHub authentication token
  * @param commit_sha - Commit id for which we need pull request information
@@ -51,6 +53,7 @@ export async function getCommitInfo(
 	repo: string,
 	commit_sha: string,
 	log: CommandLogger,
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<any> {
 	const octokit = new Octokit({ auth: token });
 
@@ -65,6 +68,7 @@ export async function getCommitInfo(
 }
 
 /**
+ * Create a pull request.
  *
  * @param auth - GitHub authentication token
  * @param source - Source branch name
@@ -86,7 +90,7 @@ export async function createPullRequest(
 		labels: string[];
 	},
 	log: CommandLogger,
-): Promise<any> {
+): Promise<number> {
 	log.verbose(`Creating a pull request---------------`);
 	const octokit = new Octokit({ auth: pr.token });
 	const newPr = await octokit.request(PULL_REQUEST, {

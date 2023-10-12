@@ -995,6 +995,7 @@ export const handlers: Handler[] = [
 			}
 
 			const jestConfigFile = path.join(packageDir, jestFileName);
+			// eslint-disable-next-line @typescript-eslint/no-var-requires
 			const config = require(path.resolve(jestConfigFile));
 			if (config.reporters === undefined) {
 				return `Missing reporters in '${jestConfigFile}'`;
