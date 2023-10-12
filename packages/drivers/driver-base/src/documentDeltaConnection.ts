@@ -336,7 +336,7 @@ export class DocumentDeltaConnection
 		this.checkNotDisposed();
 
 		if (targetClientId) {
-			throw new Error("Sending signals to specific client ids is not supported");
+			throw new UsageError("Sending signals to specific client ids is not supported");
 		}
 
 		this.emitMessages("submitSignal", [[content]]);
