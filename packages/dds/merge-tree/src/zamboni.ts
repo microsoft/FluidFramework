@@ -16,7 +16,6 @@ import {
 	seqLTE,
 	toRemovalInfo,
 } from "./mergeTreeNodes";
-// eslint-disable-next-line import/no-deprecated
 import { matchProperties } from "./properties";
 
 export const zamboniSegmentsMax = 2;
@@ -75,8 +74,7 @@ export function packParent(parent: IMergeBlock, mergeTree: MergeTree) {
 	const holdNodes: IMergeNode[] = [];
 	for (childIndex = 0; childIndex < parent.childCount; childIndex++) {
 		// Debug assert not isLeaf()
-		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-		childBlock = <IMergeBlock>children[childIndex];
+		childBlock = children[childIndex] as IMergeBlock;
 		scourNode(childBlock, holdNodes, mergeTree);
 		// Will replace this block with a packed block
 		childBlock.parent = undefined;
@@ -167,7 +165,6 @@ function scourNode(node: IMergeBlock, holdNodes: IMergeNode[], mergeTree: MergeT
 				const segmentHasPositiveLength = (mergeTree.localNetLength(segment) ?? 0) > 0;
 				const canAppend =
 					prevSegment?.canAppend(segment) &&
-					// eslint-disable-next-line import/no-deprecated
 					matchProperties(prevSegment.properties, segment.properties) &&
 					prevSegment.trackingCollection.matches(segment.trackingCollection) &&
 					segmentHasPositiveLength;

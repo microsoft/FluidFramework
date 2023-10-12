@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/sequence",
-	"version": "2.0.0-internal.7.1.0",
+	"version": "2.0.0-internal.8.0.0",
 	"description": "Distributed sequence",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -43,7 +43,6 @@
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:newsnapfiles": "node dist/test/createSnapshotFiles.js",
 		"test:stress": "cross-env FUZZ_TEST_COUNT=100 FUZZ_STRESS_RUN=true mocha --ignore 'dist/test/memory/**/*' --recursive 'dist/test/**/*.fuzz.spec.js' -r @fluidframework/mocha-test-setup",
-		"testfarm": "node dist/test/testFarm.js",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
@@ -120,6 +119,19 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_ISharedString": {
+				"backCompat": false
+			},
+			"ClassDeclaration_SharedSegmentSequence": {
+				"backCompat": false
+			},
+			"ClassDeclaration_SharedSequence": {
+				"backCompat": false
+			},
+			"ClassDeclaration_SharedString": {
+				"backCompat": false
+			}
+		}
 	}
 }

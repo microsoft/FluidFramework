@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/merge-tree",
-	"version": "2.0.0-internal.7.1.0",
+	"version": "2.0.0-internal.8.0.0",
 	"description": "Merge tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -105,6 +105,58 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedInterfaceDeclaration_IIntegerRange": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_internedSpaces": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedVariableDeclaration_refGetRangeLabels": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_refHasRangeLabel": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_refHasRangeLabels": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"ClassDeclaration_Client": {
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_RangeStackMap": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedClassDeclaration_Stack": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"FunctionDeclaration_extendIfUndefined": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_clone": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_combine": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_extend": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_extendIfUndefined": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

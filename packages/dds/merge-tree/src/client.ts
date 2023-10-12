@@ -16,7 +16,6 @@ import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { ITelemetryLoggerExt, LoggingError, UsageError } from "@fluidframework/telemetry-utils";
-// eslint-disable-next-line import/no-deprecated
 import { IIntegerRange } from "./base";
 import { List, RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
@@ -62,8 +61,7 @@ import { SnapshotLegacy } from "./snapshotlegacy";
 import { SnapshotLoader } from "./snapshotLoader";
 import { IMergeTreeTextHelper } from "./textSegment";
 import { SnapshotV1 } from "./snapshotV1";
-// eslint-disable-next-line import/no-deprecated
-import { ReferencePosition, RangeStackMap, DetachedReferencePosition } from "./referencePositions";
+import { ReferencePosition, DetachedReferencePosition } from "./referencePositions";
 import { MergeTree } from "./mergeTree";
 import { MergeTreeTextHelper } from "./MergeTreeTextHelper";
 import { walkAllChildSegments } from "./mergeTreeNodeWalk";
@@ -539,7 +537,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	private getValidOpRange(
 		op: IMergeTreeAnnotateMsg | IMergeTreeInsertMsg | IMergeTreeRemoveMsg,
 		clientArgs: IMergeTreeClientSequenceArgs,
-		// eslint-disable-next-line import/no-deprecated
 	): IIntegerRange {
 		let start: number | undefined = op.pos1;
 		if (start === undefined && op.relativePos1) {
@@ -600,8 +597,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 
 		// start and end are guaranteed to be non-null here, otherwise we throw above.
-		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions, import/no-deprecated
-		return { start, end } as IIntegerRange;
+		return { start: start!, end: end! };
 	}
 
 	/**
@@ -1051,18 +1047,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		const loader = new SnapshotLoader(runtime, this, this._mergeTree, this.logger, serializer);
 
 		return loader.initialize(storage);
-	}
-
-	/**
-	 * @deprecated - this functionality is no longer supported and will be removed
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap {
-		return this._mergeTree.getStackContext(
-			startPos,
-			this.getCollabWindow().clientId,
-			rangeLabels,
-		);
 	}
 
 	private getLocalSequenceNumber() {

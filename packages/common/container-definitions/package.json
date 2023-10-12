@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/container-definitions",
-	"version": "2.0.0-internal.7.1.0",
+	"version": "2.0.0-internal.8.0.0",
 	"description": "Fluid container definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -60,6 +60,17 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedInterfaceDeclaration_IPendingLocalState": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IRuntime": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ISnapshotTreeWithBlobContents": {
+				"backCompat": false
+			}
+		}
 	}
 }

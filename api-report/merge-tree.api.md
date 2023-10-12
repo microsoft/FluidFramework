@@ -15,7 +15,7 @@ import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
-// @public @deprecated (undocumented)
+// @internal (undocumented)
 export function addProperties(oldProps: PropertySet | undefined, newProps: PropertySet, op?: ICombiningOp, seq?: number): PropertySet;
 
 // @alpha (undocumented)
@@ -145,8 +145,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     };
     // (undocumented)
     getShortClientId(longClientId: string): number;
-    // @deprecated (undocumented)
-    getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap;
     // (undocumented)
     insertAtReferencePositionLocal(refPos: ReferencePosition, segment: ISegment): IMergeTreeInsertMsg | undefined;
     // (undocumented)
@@ -191,9 +189,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     walkSegments<undefined>(handler: ISegmentAction<undefined>, start?: number, end?: number, accum?: undefined, splitRange?: boolean): void;
 }
 
-// @public @deprecated (undocumented)
-export function clone<T>(extension: MapLike<T> | undefined): MapLike<T> | undefined;
-
 // @public (undocumented)
 export class CollaborationWindow {
     // (undocumented)
@@ -209,9 +204,6 @@ export class CollaborationWindow {
     // (undocumented)
     minSeq: number;
 }
-
-// @public @deprecated (undocumented)
-export function combine(combiningInfo: ICombiningOp, currentValue: any, newValue: any, seq?: number): any;
 
 // @public (undocumented)
 export const compareNumbers: (a: number, b: number) => number;
@@ -246,7 +238,7 @@ export function createInsertOp(pos: number, segSpec: any): IMergeTreeInsertMsg;
 // @public (undocumented)
 export function createInsertSegmentOp(pos: number, segment: ISegment): IMergeTreeInsertMsg;
 
-// @public @deprecated (undocumented)
+// @internal (undocumented)
 export function createMap<T>(): MapLike<T>;
 
 // @public
@@ -272,12 +264,6 @@ export interface Dictionary<TKey, TData> {
 
 // @alpha (undocumented)
 export function discardMergeTreeDeltaRevertible(revertibles: MergeTreeDeltaRevertible[]): void;
-
-// @public @deprecated (undocumented)
-export function extend<T>(base: MapLike<T>, extension: MapLike<T> | undefined, combiningOp?: ICombiningOp, seq?: number): MapLike<T>;
-
-// @public @deprecated (undocumented)
-export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | undefined): MapLike<T>;
 
 // @internal
 export function getSlideToSegoff(segoff: {
@@ -360,14 +346,6 @@ export interface IConsensusValue {
     seq: number;
     // (undocumented)
     value: any;
-}
-
-// @internal @deprecated
-export interface IIntegerRange {
-    // (undocumented)
-    end: number;
-    // (undocumented)
-    start: number;
 }
 
 // @public (undocumented)
@@ -538,9 +516,6 @@ export interface IMergeTreeTextHelper {
     // (undocumented)
     getText(refSeq: number, clientId: number, placeholder: string, start?: number, end?: number): string;
 }
-
-// @public @deprecated (undocumented)
-export function internedSpaces(n: number): string;
 
 // @internal (undocumented)
 export interface IRBAugmentation<TKey, TData> {
@@ -732,7 +707,7 @@ export class Marker extends BaseSegment implements ReferencePosition {
     readonly type = "Marker";
 }
 
-// @public @deprecated (undocumented)
+// @internal (undocumented)
 export function matchProperties(a: PropertySet | undefined, b: PropertySet | undefined): boolean;
 
 // @public (undocumented)
@@ -860,9 +835,6 @@ export interface QProperty<TKey, TData> {
     key?: TKey;
 }
 
-// @public @deprecated (undocumented)
-export type RangeStackMap = MapLike<Stack<ReferencePosition>>;
-
 // @internal (undocumented)
 export const RBColor: {
     readonly RED: 0;
@@ -957,10 +929,6 @@ export interface ReferencePosition {
 
 // @public
 export enum ReferenceType {
-    // @deprecated (undocumented)
-    NestBegin = 2,
-    // @deprecated (undocumented)
-    NestEnd = 4,
     // (undocumented)
     RangeBegin = 16,
     // (undocumented)
@@ -973,17 +941,8 @@ export enum ReferenceType {
     Transient = 256
 }
 
-// @public @deprecated (undocumented)
-export const refGetRangeLabels: (refPos: ReferencePosition) => string[] | undefined;
-
 // @public (undocumented)
 export const refGetTileLabels: (refPos: ReferencePosition) => string[] | undefined;
-
-// @public @deprecated (undocumented)
-export function refHasRangeLabel(refPos: ReferencePosition, label: string): boolean;
-
-// @public @deprecated (undocumented)
-export function refHasRangeLabels(refPos: ReferencePosition): boolean;
 
 // @public (undocumented)
 export function refHasTileLabel(refPos: ReferencePosition, label: string): boolean;
@@ -1117,20 +1076,6 @@ export abstract class SortedSet<T, U extends string | number> {
     remove(item: T): boolean;
     // (undocumented)
     get size(): number;
-}
-
-// @public @deprecated (undocumented)
-export class Stack<T> {
-    // (undocumented)
-    empty(): boolean;
-    // (undocumented)
-    items: T[];
-    // (undocumented)
-    pop(): T | undefined;
-    // (undocumented)
-    push(val: T): void;
-    // (undocumented)
-    top(): T | undefined;
 }
 
 // @public (undocumented)

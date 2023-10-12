@@ -3,10 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/consistent-type-assertions */
-
-/* Remove once strictNullCheck is enabled */
-
 /**
  * @internal
  */
@@ -132,8 +128,8 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
 		private readonly aug?: IRBAugmentation<TKey, TData>,
 	) {}
 
-	private makeNode(key: TKey, data: TData, color: RBColor, size: number) {
-		return <RBNode<TKey, TData>>{ key, data, color, size };
+	private makeNode(key: TKey, data: TData, color: RBColor, size: number): RBNode<TKey, TData> {
+		return { key, data, color, size } as any as RBNode<TKey, TData>;
 	}
 
 	private isRed(node: RBNode<TKey, TData> | undefined) {
@@ -609,8 +605,8 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
 	}
 
 	public keys() {
-		const keyList = <TKey[]>[];
-		const actions = <RBNodeActions<TKey, TData>>{
+		const keyList: TKey[] = [];
+		const actions: RBNodeActions<TKey, TData> = {
 			showStructure: true,
 			infix: (node) => {
 				keyList.push(node.key);
