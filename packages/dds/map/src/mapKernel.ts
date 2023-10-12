@@ -915,14 +915,18 @@ export class MapKernel {
 					this.pendingKeys.delete(op.key);
 				}
 
+				// When handling a local set message, we should transfer the creation index information from the `localKeysIndexTracker`
+				// to the `ackedKeysIndexTracker`, as long as the key hasn't been inserted and acked by remote clients.
 				if (op.type === "set") {
 					this.ackPendingSetOp(op, pendingMessageId);
-				} else if (op.type === "delete") {
-					// Adjust the keys order if it is already ack'd
+				} else {
+					// If the local message is delete, the pending delete count needs to be updated.
 					this.decrementPendingDeleteCount(op.key);
 				}
 			} else {
-				// We do not process the remote message at this moment, but it is possible to impact the order of ack'd keys
+				// When processing a remote set message, two conditions need to be met to move it to the `ackedKeysIndexTracker`:
+				//  1. There are no pending local deletions associated with this key.
+				//  2. The key has not been inserted and acked by other clients yet.
 				if (
 					op.type === "set" &&
 					!this.pendingDeleteTracker.has(op.key) &&
@@ -930,6 +934,7 @@ export class MapKernel {
 				) {
 					this.ackedKeysIndexTracker.set(op.key, ++this.creationIndex);
 				} else if (op.type === "delete") {
+					// If the remote message is a delete, just remove it from the `ackedKeysIndexTracker` as long as it still exsits
 					this.ackedKeysIndexTracker.delete(op.key);
 				}
 			}
