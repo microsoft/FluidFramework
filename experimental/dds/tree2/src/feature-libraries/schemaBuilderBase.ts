@@ -33,12 +33,15 @@ export interface SchemaBuilderOptions<TScope extends string = string> {
 	scope: TScope;
 
 	/**
-	 * Name used to refer to this builder in error messages. Has no impact on the actual generated schema. Defaults to scope.
+	 * Name used to refer to this builder in error messages.
+	 * Has no impact on the actual generated schema.
+	 * Defaults to scope.
 	 */
 	name?: string;
 
 	/**
-	 * Optional configuration for "linting". See {@link SchemaLintConfiguration}. Currently defaults to enabling all lints.
+	 * Optional configuration for "linting".
+	 * See {@link SchemaLintConfiguration}. Currently defaults to enabling all lints.
 	 */
 	lint?: Partial<SchemaLintConfiguration>;
 
@@ -50,7 +53,7 @@ export interface SchemaBuilderOptions<TScope extends string = string> {
 	 * only a single copy will be included, so they will not conflict.
 	 * This allows adding any library this one depends on without risk of conflicts for users of this library.
 	 * Contents within the added libraries can still conflict however.
-	 * Such errors will be reported when finalizing this builder into a library of document schema.
+	 * Such errors will be reported when finalizing this builder into a library or document schema.
 	 */
 	libraries?: SchemaLibrary[];
 }
