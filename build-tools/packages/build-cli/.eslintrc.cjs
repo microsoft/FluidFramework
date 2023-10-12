@@ -9,12 +9,12 @@ module.exports = {
 		"oclif",
 		"oclif-typescript",
 		// eslint-disable-next-line node/no-extraneous-require
-		require.resolve("@fluidframework/eslint-config-fluid/minimal"),
+		require.resolve("@fluidframework/eslint-config-fluid/recommended"),
 		"prettier",
 	],
 	rules: {
-		"@typescript-eslint/no-unused-vars": "warn",
-		"unused-imports/no-unused-imports": "warn",
+		// This rule is often triggered when using custom Flags, so disabling.
+		"object-shorthand": "off",
 
 		// This package is exclusively used in a Node.js context
 		"import/no-nodejs-modules": "off",
@@ -49,6 +49,9 @@ module.exports = {
 
 		// Too strict for our needs
 		"unicorn/filename-case": "off",
+
+		// In commands, destructuring is useful in some places but makes others less legible, so consistency isn't preferred.
+		"unicorn/consistent-destructuring": "off",
 
 		// Deprecated in 2018: https://eslint.org/blog/2018/11/jsdoc-end-of-life/
 		"valid-jsdoc": "off",

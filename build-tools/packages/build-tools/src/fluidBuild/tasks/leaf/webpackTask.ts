@@ -21,6 +21,7 @@ export class WebpackTask extends LeafWithDoneFileTask {
 	}
 	protected async getDoneFileContent() {
 		try {
+			// eslint-disable-next-line @typescript-eslint/no-var-requires
 			const config = require(this.configFileFullPath);
 			const content: DoneFileContent = {
 				version: await this.getVersion(),
