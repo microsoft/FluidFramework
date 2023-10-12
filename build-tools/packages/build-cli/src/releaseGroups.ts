@@ -41,6 +41,7 @@ export type ReleaseGroup = (typeof knownReleaseGroups)[number];
  * @internal
  */
 export function isReleaseGroup(str: string | undefined): str is ReleaseGroup {
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
 	return str === undefined ? false : knownReleaseGroups.includes(str as any);
 }
 

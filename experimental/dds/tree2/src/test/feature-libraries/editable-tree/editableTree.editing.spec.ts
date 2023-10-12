@@ -23,6 +23,7 @@ import {
 	EditableTree,
 	treeStatus,
 	TreeStatus,
+	FieldSchema,
 } from "../../../feature-libraries";
 import { viewWithContent } from "../../utils";
 import {
@@ -49,10 +50,10 @@ const rootSchemaName: TreeSchemaIdentifier = brand("Test");
 function getTestSchema<Kind extends FieldKind>(fieldKind: Kind) {
 	const builder = new SchemaBuilder({ scope: "getTestSchema", libraries: [personSchemaLibrary] });
 	const rootNodeSchema = builder.struct("Test", {
-		foo: SchemaBuilder.field(fieldKind, stringSchema),
-		foo2: SchemaBuilder.field(fieldKind, stringSchema),
+		foo: FieldSchema.create(fieldKind, [stringSchema]),
+		foo2: FieldSchema.create(fieldKind, [stringSchema]),
 	});
-	return builder.toDocumentSchema(SchemaBuilder.field(FieldKinds.optional, rootNodeSchema));
+	return builder.toDocumentSchema(FieldSchema.create(FieldKinds.optional, [rootNodeSchema]));
 }
 
 describe("editable-tree: editing", () => {

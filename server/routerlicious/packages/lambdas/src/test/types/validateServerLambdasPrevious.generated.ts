@@ -199,6 +199,7 @@ declare function get_old_InterfaceDeclaration_IBroadcastSignalEventPayload():
 declare function use_current_InterfaceDeclaration_IBroadcastSignalEventPayload(
     use: TypeOnly<current.IBroadcastSignalEventPayload>);
 use_current_InterfaceDeclaration_IBroadcastSignalEventPayload(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IBroadcastSignalEventPayload());
 
 /*
@@ -211,6 +212,7 @@ declare function get_current_InterfaceDeclaration_IBroadcastSignalEventPayload()
 declare function use_old_InterfaceDeclaration_IBroadcastSignalEventPayload(
     use: TypeOnly<old.IBroadcastSignalEventPayload>);
 use_old_InterfaceDeclaration_IBroadcastSignalEventPayload(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IBroadcastSignalEventPayload());
 
 /*

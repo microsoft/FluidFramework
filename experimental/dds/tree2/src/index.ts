@@ -102,6 +102,7 @@ export {
 	BrandedMapSubset,
 	RangeEntry,
 	Named,
+	oneFromSet,
 } from "./util";
 
 export {
@@ -258,6 +259,7 @@ export {
 	Sequence2,
 	Struct,
 	StructTyped,
+	AssignableFieldKinds,
 	TreeContext,
 	TypedField,
 	TypedNode,
@@ -271,6 +273,11 @@ export {
 	StructSchema,
 	CheckTypesOverlap,
 	SchemaBuilderBase,
+	ImplicitFieldSchema,
+	ImplicitAllowedTypes,
+	Unenforced,
+	schemaIsFieldNode,
+	AllowedTypeSet,
 } from "./feature-libraries";
 
 export {

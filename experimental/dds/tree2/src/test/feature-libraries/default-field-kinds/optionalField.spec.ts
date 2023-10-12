@@ -4,10 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { CrossFieldManager, NodeChangeset, NodeReviver } from "../../../feature-libraries";
+import { CrossFieldManager, NodeChangeset } from "../../../feature-libraries";
 import {
 	makeAnonChange,
-	RevisionTag,
 	TaggedChange,
 	Delta,
 	mintRevisionTag,
@@ -15,11 +14,7 @@ import {
 	tagRollbackInverse,
 } from "../../../core";
 import { brand, fakeIdAllocator } from "../../../util";
-import {
-	assertMarkListEqual,
-	defaultRevisionMetadataFromChanges,
-	fakeTaggedRepair as fakeRepair,
-} from "../../utils";
+import { assertMarkListEqual, defaultRevisionMetadataFromChanges } from "../../utils";
 import {
 	optionalChangeRebaser,
 	optionalFieldEditor,
@@ -212,18 +207,10 @@ describe("optionalField", () => {
 				childChanges: [["self", nodeChange2]],
 			};
 
-			const repair: NodeReviver = (revision: RevisionTag, index: number, count: number) => {
-				assert.equal(revision, change1.revision);
-				assert.equal(index, 0);
-				assert.equal(count, 1);
-				return [testTreeCursor("tree1")];
-			};
-
 			assert.deepEqual(
 				optionalChangeRebaser.invert(
 					change1,
 					childInverter,
-					repair,
 					fakeIdAllocator,
 					failCrossFieldManager,
 				),
@@ -292,7 +279,6 @@ describe("optionalField", () => {
 					optionalChangeRebaser.invert(
 						deletion,
 						() => assert.fail("Should not need to invert children"),
-						fakeRepair,
 						fakeIdAllocator,
 						failCrossFieldManager,
 					),

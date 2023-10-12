@@ -23,19 +23,21 @@ const getKnownPaths = (manifest: IFluidBuildConfig) => {
 		// Add additional paths from the manifest
 		_knownPaths.push(...(manifest.policy?.additionalLockfilePaths ?? []));
 
-		// Add paths to known monorepos and packages
-		const vals = Object.values(manifest.repoPackages).filter(
-			(p) => typeof p === "string",
-		) as string[];
-		_knownPaths.push(...vals);
+		if (manifest.repoPackages) {
+			// Add paths to known monorepos and packages
+			const vals = Object.values(manifest.repoPackages).filter(
+				(p) => typeof p === "string",
+			) as string[];
+			_knownPaths.push(...vals);
 
-		// Add paths from entries that are arrays
-		const arrayVals = Object.values(manifest.repoPackages).filter(
-			(p) => typeof p !== "string",
-		) as IFluidRepoPackageEntry[];
-		for (const arr of arrayVals) {
-			if (Array.isArray(arr)) {
-				_knownPaths.push(...arr.map((p) => p.toString()));
+			// Add paths from entries that are arrays
+			const arrayVals = Object.values(manifest.repoPackages).filter(
+				(p) => typeof p !== "string",
+			) as IFluidRepoPackageEntry[];
+			for (const arr of arrayVals) {
+				if (Array.isArray(arr)) {
+					_knownPaths.push(...arr.map((p) => p.toString()));
+				}
 			}
 		}
 	}
