@@ -1,4 +1,23 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-	"extends": "@fluidframework/build-common/api-extractor-base.json"
+	"extends": "@fluidframework/build-common/api-extractor-base.json",
+
+	"messages": {
+		// The following overrides are workarounds for API-Extractor incorrectly running analysis on our application
+		// insights dependency.
+		"tsdocMessageReporting": {
+			"tsdoc-escape-right-brace": {
+				"logLevel": "warning",
+				"addToApiReportFile": false // Log to the console instead
+			},
+			"tsdoc-malformed-inline-tag": {
+				"logLevel": "warning",
+				"addToApiReportFile": false // Log to the console instead
+			},
+			"tsdoc-undefined-tag": {
+				"logLevel": "warning",
+				"addToApiReportFile": false // Log to the console instead
+			}
+		}
+	}
 }
