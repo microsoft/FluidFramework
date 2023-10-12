@@ -7,11 +7,10 @@ import { strict as assert } from "assert";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 
 import { FieldKinds, SchemaBuilder } from "../../../feature-libraries";
-import { AllowedUpdateType } from "../../../core";
 import { TypedTreeFactory } from "../../../typed-tree";
 import { ForestType } from "../../../shared-tree";
 import { typeboxValidator } from "../../../external-utilities";
-import { leaf } from "../../..";
+import { AllowedUpdateType, leaf } from "../../..";
 
 describe("beforeChange/afterChange events", () => {
 	const builder = new SchemaBuilder({
@@ -21,7 +20,7 @@ describe("beforeChange/afterChange events", () => {
 	const myInnerNodeSchema = builder.struct("myInnerNode", {
 		myInnerString: SchemaBuilder.required(leaf.string),
 	});
-	const myNodeSchema = builder.structRecursive("myNode", {
+	const myNodeSchema = builder.struct("myNode", {
 		child: SchemaBuilder.required(myInnerNodeSchema),
 		myString: SchemaBuilder.required(leaf.string),
 		myOptionalNumber: SchemaBuilder.optional(leaf.number),
@@ -29,35 +28,32 @@ describe("beforeChange/afterChange events", () => {
 	const schema = builder.toDocumentSchema(SchemaBuilder.field(FieldKinds.required, myNodeSchema));
 
 	it("fire the expected number of times", () => {
-		// TODO: once assignment to properties is implemented in EditableTree2, update this test to apply changes like
-		//   root.myString = "new string";
-		// instead of
-		//   root.boxedMyString.content = "new string";
-
 		const factory = new TypedTreeFactory({
 			jsonValidator: typeboxValidator,
 			forest: ForestType.Reference,
-			allowedSchemaModifications: AllowedUpdateType.None,
+			subtype: "test",
+		});
+
+		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
+		const root = tree.schematize({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: 3,
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
-			subtype: "test",
-		});
-
-		const root = factory.create(new MockFluidDataStoreRuntime(), "the tree").root.content;
+			allowedSchemaModifications: AllowedUpdateType.None,
+		}).content;
 
 		let rootBeforeChangeCount = 0;
 		let rootAfterChangeCount = 0;
 		let childBeforeChangeCount = 0;
 		let childAfterChangeCount = 0;
 
-		root.on("beforeChange", (upPath) => {
+		root.on("beforeChange", (args: unknown) => {
 			rootBeforeChangeCount++;
 		});
-		root.on("afterChange", (upPath) => {
+		root.on("afterChange", (args: unknown) => {
 			rootAfterChangeCount++;
 		});
 
@@ -65,12 +61,13 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(rootAfterChangeCount, 0);
 
 		// Replace existing node - myString; should fire events on the root node.
-		root.boxedMyString.content = "new string";
+		root.myString = "new string";
 
 		assert.strictEqual(rootBeforeChangeCount, 1);
 		assert.strictEqual(rootAfterChangeCount, 1);
 
 		// Add node where there was none before - child; should fire events on the root node.
+		// TODO: update to `root.child = <something>;` once assignment to struct nodes is implemented in EditableTree2
 		root.boxedChild.content = {
 			myInnerString: "initial string in original child",
 		};
@@ -78,10 +75,10 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(rootBeforeChangeCount, 2);
 		assert.strictEqual(rootAfterChangeCount, 2);
 
-		root.child.on("beforeChange", (upPath) => {
+		root.child.on("beforeChange", (args: unknown) => {
 			childBeforeChangeCount++;
 		});
-		root.child.on("afterChange", (upPath) => {
+		root.child.on("afterChange", (args: unknown) => {
 			childAfterChangeCount++;
 		});
 
@@ -89,7 +86,7 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(childAfterChangeCount, 0);
 
 		// Replace myString in child; should fire events on the child node and the root node.
-		root.child.boxedMyInnerString.content = "new string in original child";
+		root.child.myInnerString = "new string in original child";
 
 		assert.strictEqual(rootBeforeChangeCount, 3);
 		assert.strictEqual(rootAfterChangeCount, 3);
@@ -97,6 +94,7 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(childAfterChangeCount, 1);
 
 		// Replace the whole child; should fire events on the root node.
+		// TODO: update to `root.child = <something>;` once assignment to struct nodes is implemented in EditableTree2
 		root.boxedChild.content = {
 			myInnerString: "initial string in new child",
 		};
@@ -108,7 +106,7 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(childAfterChangeCount, 1);
 
 		// Replace myInnerString in new child node; should fire events on the root node (but not on the old child node)
-		root.child.boxedMyInnerString.content = "new string in new child";
+		root.child.myInnerString = "new string in new child";
 
 		assert.strictEqual(rootBeforeChangeCount, 5);
 		assert.strictEqual(rootAfterChangeCount, 5);
@@ -117,58 +115,56 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(childAfterChangeCount, 1);
 
 		// Delete node - myOptionalNumber; should fire events on the root node
-		root.boxedMyOptionalNumber.content = undefined;
+		root.myOptionalNumber = undefined;
 
 		assert.strictEqual(rootBeforeChangeCount, 6);
 		assert.strictEqual(rootAfterChangeCount, 6);
 	});
 
 	it("fire in the expected order and always together", () => {
-		// TODO: once assignment to properties is implemented in EditableTree2, update this test to apply changes like
-		//   root.myString = "new string";
-		// instead of
-		//   root.boxedMyString.content = "new string";
-
 		const factory = new TypedTreeFactory({
 			jsonValidator: typeboxValidator,
 			forest: ForestType.Reference,
-			allowedSchemaModifications: AllowedUpdateType.None,
+			subtype: "test",
+		});
+
+		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
+		const root = tree.schematize({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
-			subtype: "test",
-		});
-
-		const root = factory.create(new MockFluidDataStoreRuntime(), "the tree").root.content;
+			allowedSchemaModifications: AllowedUpdateType.None,
+		}).content;
 
 		let beforeCounter = 0;
 		let afterCounter = 0;
 
-		root.on("beforeChange", (upPath) => {
+		root.on("beforeChange", (args: unknown) => {
 			beforeCounter++;
 			assert.strictEqual(afterCounter, beforeCounter - 1, "beforeChange fired out of order");
 		});
-		root.on("afterChange", (upPath) => {
+		root.on("afterChange", (args: unknown) => {
 			afterCounter++;
 			assert.strictEqual(afterCounter, beforeCounter, "afterChange fired out of order");
 		});
 
 		// Make updates of different kinds to the tree
 		// Replace an existing node
-		root.boxedMyString.content = "new string";
+		root.myString = "new string";
 		// Add a node where there was none before
-		root.boxedMyOptionalNumber.content = 3;
+		root.myOptionalNumber = 3;
 		// Delete a node
-		root.boxedMyOptionalNumber.content = undefined;
+		root.myOptionalNumber = undefined;
 		// Other miscellaneous updates
-		root.child.boxedMyInnerString.content = "new string in child";
+		root.child.myInnerString = "new string in child";
+		// TODO: update to `root.child = <something>;` once assignment to struct nodes is implemented in EditableTree2
 		root.boxedChild.content = {
 			myInnerString: "original string in new child",
 		};
-		root.child.boxedMyInnerString.content = "new string in new child";
+		root.child.myInnerString = "new string in new child";
 
 		// Check the number of events fired is correct (otherwise the assertions in the listeners might not have ran)
 		assert.strictEqual(beforeCounter, 6);
@@ -179,22 +175,24 @@ describe("beforeChange/afterChange events", () => {
 		const factory = new TypedTreeFactory({
 			jsonValidator: typeboxValidator,
 			forest: ForestType.Reference,
-			allowedSchemaModifications: AllowedUpdateType.None,
+			subtype: "test",
+		});
+
+		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
+		const root = tree.schematize({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
-			subtype: "test",
-		});
-
-		const root = factory.create(new MockFluidDataStoreRuntime(), "the tree").root.content;
+			allowedSchemaModifications: AllowedUpdateType.None,
+		}).content;
 
 		let beforeHasFired = false;
 		let afterHasFired = false;
 
-		const unsubscribeBeforeChange = root.on("beforeChange", (upPath) => {
+		const unsubscribeBeforeChange = root.on("beforeChange", (args: unknown) => {
 			assert.strictEqual(
 				beforeHasFired,
 				false,
@@ -202,7 +200,7 @@ describe("beforeChange/afterChange events", () => {
 			);
 			beforeHasFired = true;
 		});
-		const unsubscribeAfterChange = root.on("afterChange", (upPath) => {
+		const unsubscribeAfterChange = root.on("afterChange", (args: unknown) => {
 			assert.strictEqual(
 				afterHasFired,
 				false,
@@ -212,8 +210,7 @@ describe("beforeChange/afterChange events", () => {
 		});
 
 		// Make a change that causes the listeners to fire
-		// TODO: update to `root.myString = "new string 1";` once assignment to properties is implemented in EditableTree2
-		root.boxedMyString.content = "new string 1";
+		root.myString = "new string 1";
 
 		// Confirm listeners fired once
 		assert.strictEqual(beforeHasFired, true);
@@ -224,8 +221,7 @@ describe("beforeChange/afterChange events", () => {
 		unsubscribeBeforeChange();
 
 		// Make another change; if the listeners fire again, they'll cause an assertion failure
-		// TODO: update to `root.myString = "new string 2";` once assignment to properties is implemented in EditableTree2
-		root.boxedMyString.content = "new string 2";
+		root.myString = "new string 2";
 	});
 
 	it("tree is in correct state when events fire - primitive node deletions", () => {
@@ -233,31 +229,32 @@ describe("beforeChange/afterChange events", () => {
 		const factory = new TypedTreeFactory({
 			jsonValidator: typeboxValidator,
 			forest: ForestType.Reference,
-			allowedSchemaModifications: AllowedUpdateType.None,
+			subtype: "test",
+		});
+
+		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
+		const root = tree.schematize({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: initialNumber,
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
-			subtype: "test",
-		});
-
-		const root = factory.create(new MockFluidDataStoreRuntime(), "the tree").root.content;
+			allowedSchemaModifications: AllowedUpdateType.None,
+		}).content;
 
 		let totalListenerCalls = 0;
 
-		root.on("beforeChange", (upPath) => {
+		root.on("beforeChange", (args: unknown) => {
 			assert.strictEqual(root.myOptionalNumber, initialNumber);
 			totalListenerCalls++;
 		});
-		root.on("afterChange", (upPath) => {
+		root.on("afterChange", (args: unknown) => {
 			assert.strictEqual(root.myOptionalNumber, undefined);
 			totalListenerCalls++;
 		});
 
-		// TODO: update to `root.myOptionalNumber = undefined;` once assignment to properties is implemented in EditableTree2
-		root.boxedMyOptionalNumber.content = undefined;
+		root.myOptionalNumber = undefined;
 		assert.strictEqual(totalListenerCalls, 2);
 	});
 
@@ -265,32 +262,34 @@ describe("beforeChange/afterChange events", () => {
 		const factory = new TypedTreeFactory({
 			jsonValidator: typeboxValidator,
 			forest: ForestType.Reference,
-			allowedSchemaModifications: AllowedUpdateType.None,
+			subtype: "test",
+		});
+
+		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
+		const root = tree.schematize({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
-			subtype: "test",
-		});
+			allowedSchemaModifications: AllowedUpdateType.None,
+		}).content;
 
 		const newNumber = 20;
 
-		const root = factory.create(new MockFluidDataStoreRuntime(), "the tree").root.content;
 		let totalListenerCalls = 0;
 
-		root.on("beforeChange", (upPath) => {
+		root.on("beforeChange", (args: unknown) => {
 			assert.strictEqual(root.myOptionalNumber, undefined);
 			totalListenerCalls++;
 		});
-		root.on("afterChange", (upPath) => {
+		root.on("afterChange", (args: unknown) => {
 			assert.strictEqual(root.myOptionalNumber, newNumber);
 			totalListenerCalls++;
 		});
 
-		// TODO: update to `root.myOptionalNumber = newNumber;` once assignment to properties is implemented in EditableTree2
-		root.boxedMyOptionalNumber.content = newNumber;
+		root.myOptionalNumber = newNumber;
 		assert.strictEqual(totalListenerCalls, 2);
 	});
 
@@ -298,31 +297,32 @@ describe("beforeChange/afterChange events", () => {
 		const factory = new TypedTreeFactory({
 			jsonValidator: typeboxValidator,
 			forest: ForestType.Reference,
-			allowedSchemaModifications: AllowedUpdateType.None,
+			subtype: "test",
+		});
+
+		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
+		const root = tree.schematize({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
-			subtype: "test",
-		});
-
-		const root = factory.create(new MockFluidDataStoreRuntime(), "the tree").root.content;
+			allowedSchemaModifications: AllowedUpdateType.None,
+		}).content;
 		let totalListenerCalls = 0;
 		const newString = "John";
 
-		root.on("beforeChange", (upPath) => {
+		root.on("beforeChange", (args: unknown) => {
 			assert.strictEqual(root.myString, "initial string");
 			totalListenerCalls++;
 		});
-		root.on("afterChange", (upPath) => {
+		root.on("afterChange", (args: unknown) => {
 			assert.strictEqual(root.myString, newString);
 			totalListenerCalls++;
 		});
 
-		// TODO: update to `root.myString = newString;` once assignment to properties is implemented in EditableTree2
-		root.boxedMyString.content = newString;
+		root.myString = newString;
 		assert.strictEqual(totalListenerCalls, 2);
 	});
 
@@ -330,28 +330,30 @@ describe("beforeChange/afterChange events", () => {
 		const factory = new TypedTreeFactory({
 			jsonValidator: typeboxValidator,
 			forest: ForestType.Reference,
-			allowedSchemaModifications: AllowedUpdateType.None,
+			subtype: "test",
+		});
+
+		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
+		const root = tree.schematize({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
-			subtype: "test",
-		});
-
-		const root = factory.create(new MockFluidDataStoreRuntime(), "the tree").root.content;
+			allowedSchemaModifications: AllowedUpdateType.None,
+		}).content;
 
 		let beforeCounter = 0;
 		let afterCounter = 0;
-		root.child.on("beforeChange", (upPath) => {
+		root.child.on("beforeChange", (args: unknown) => {
 			beforeCounter++;
 		});
-		root.child.on("afterChange", (upPath) => {
+		root.child.on("afterChange", (args: unknown) => {
 			afterCounter++;
 		});
 
-		// TODO: update to `root.child = { myInnerString: "something" };` once assignment to properties is implemented in EditableTree2
+		// TODO: update to `root.child = <something>;` once assignment to struct nodes is implemented in EditableTree2
 		root.boxedChild.content = { myInnerString: "something" };
 
 		// Events shouldn't have fired on the original myString node
@@ -363,46 +365,47 @@ describe("beforeChange/afterChange events", () => {
 		const factory = new TypedTreeFactory({
 			jsonValidator: typeboxValidator,
 			forest: ForestType.Reference,
-			allowedSchemaModifications: AllowedUpdateType.None,
+			subtype: "test",
+		});
+
+		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
+		const root = tree.schematize({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
-			subtype: "test",
-		});
-
-		const root = factory.create(new MockFluidDataStoreRuntime(), "the tree").root.content;
+			allowedSchemaModifications: AllowedUpdateType.None,
+		}).content;
 
 		let rootBeforeCounter = 0;
 		let rootAfterCounter = 0;
 		let childBeforeCounter = 0;
 		let childAfterCounter = 0;
 
-		root.on("beforeChange", (upPath) => {
+		root.on("beforeChange", (args: unknown) => {
 			rootBeforeCounter++;
 			// Counts should match only after root counter has been increased
 			assert.strictEqual(rootBeforeCounter, childBeforeCounter);
 		});
-		root.on("afterChange", (upPath) => {
+		root.on("afterChange", (args: unknown) => {
 			rootAfterCounter++;
 			// Counts should match only after root counter has been increased
 			assert.strictEqual(rootAfterCounter, childAfterCounter);
 		});
-		root.child.on("beforeChange", (upPath) => {
+		root.child.on("beforeChange", (args: unknown) => {
 			// Counts should match only before child counter has been increased
 			assert.strictEqual(rootBeforeCounter, childBeforeCounter);
 			childBeforeCounter++;
 		});
-		root.child.on("afterChange", (upPath) => {
+		root.child.on("afterChange", (args: unknown) => {
 			// Counts should match only before child counter has been increased
 			assert.strictEqual(rootAfterCounter, childAfterCounter);
 			childAfterCounter++;
 		});
 
-		// TODO: update to `root.child.myInnerString = "new value";` once assignment to properties is implemented in EditableTree2
-		root.child.boxedMyInnerString.content = "new value";
+		root.child.myInnerString = "new value";
 
 		// Events shouldn't have fired on the original myString node
 		assert.strictEqual(rootBeforeCounter, 1);
