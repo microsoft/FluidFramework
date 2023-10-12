@@ -268,31 +268,23 @@ export class MapKernel {
 	 * @returns The iterator
 	 */
 	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public entries(): IterableIterator<[string, any]> {
-		let localEntriesIterator;
-
-		if (!this.isAttached()) {
-			localEntriesIterator = this.data.entries();
-		} else {
-			const keys = this.getKeysInCreationOrder();
-			localEntriesIterator = {
-				index: 0,
-				map: this.data,
-				next(): IteratorResult<[string, any]> {
-					if (this.index < keys.length) {
-						const key = keys[this.index++];
-						const localValue = this.map.get(key);
-						return { value: [key, localValue], done: false };
-					}
-					return { value: undefined, done: true };
-				},
-				[Symbol.iterator](): IterableIterator<[string, any]> {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-					return this;
-				},
-			};
-		}
+		const keys = Array.from(this.keys());
+		const localEntriesIterator = {
+			index: 0,
+			map: this.data,
+			next(): IteratorResult<[string, any]> {
+				if (this.index < keys.length) {
+					const key = keys[this.index++];
+					const localValue = this.map.get(key);
+					return { value: [key, localValue], done: false };
+				}
+				return { value: undefined, done: true };
+			},
+			[Symbol.iterator](): IterableIterator<[string, any]> {
+				return this;
+			},
+		};
 
 		return {
 			next(): IteratorResult<[string, any]> {
@@ -312,31 +304,23 @@ export class MapKernel {
 	 * @returns The iterator
 	 */
 	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public values(): IterableIterator<any> {
-		let localValuesIterator;
-
-		if (!this.isAttached()) {
-			localValuesIterator = this.data.values();
-		} else {
-			const keys = this.getKeysInCreationOrder();
-			localValuesIterator = {
-				index: 0,
-				map: this.data,
-				next(): IteratorResult<any> {
-					if (this.index < keys.length) {
-						const key = keys[this.index++];
-						const localValue = this.map.get(key);
-						return { value: localValue, done: false };
-					}
-					return { value: undefined, done: true };
-				},
-				[Symbol.iterator](): IterableIterator<any> {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-					return this;
-				},
-			};
-		}
+		const keys = Array.from(this.keys());
+		const localValuesIterator = {
+			index: 0,
+			map: this.data,
+			next(): IteratorResult<any> {
+				if (this.index < keys.length) {
+					const key = keys[this.index++];
+					const localValue = this.map.get(key);
+					return { value: localValue, done: false };
+				}
+				return { value: undefined, done: true };
+			},
+			[Symbol.iterator](): IterableIterator<any> {
+				return this;
+			},
+		};
 
 		return {
 			next(): IteratorResult<any> {
