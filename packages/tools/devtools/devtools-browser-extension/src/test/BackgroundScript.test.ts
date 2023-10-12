@@ -82,7 +82,7 @@ describe("Background Script unit tests", () => {
 		): Port => {
 			connectCalled = true;
 			expect(_tabId).to.equal(tabId);
-			expect(connectionInfo).to.deep.equal({ name: "Content Script" });
+			expect(connectionInfo).to.deep.equal({ name: "Background-Content-Port" });
 			return tabPort;
 		};
 

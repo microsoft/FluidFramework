@@ -146,7 +146,7 @@ export type TypedFields<
 > = [
 	TFields extends { [key: string]: FieldSchema }
 		? {
-				[key in keyof TFields]: TypedField<
+				-readonly [key in keyof TFields]: TypedField<
 					TFields[key],
 					Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode
 				>;

@@ -10,4 +10,5 @@
  * @packageDocumentation
  */
 
+export type { IMigrationEvent } from "./migrationShim";
 export { MigrationShim } from "./migrationShim";

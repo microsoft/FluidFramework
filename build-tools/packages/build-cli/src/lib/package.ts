@@ -292,7 +292,7 @@ export async function getPreReleaseDependencies(
 				if (depPkg.monoRepo === undefined) {
 					prereleasePackages.set(depPkg.name, depVersion);
 				} else {
-					prereleaseGroups.set(depPkg.monoRepo.kind, depVersion);
+					prereleaseGroups.set(depPkg.monoRepo.releaseGroup, depVersion);
 				}
 			}
 		}
@@ -768,8 +768,8 @@ export async function npmCheckUpdatesHomegrown(
 			  AllPackagesSelectionCriteria
 			: {
 					independentPackages: false,
-					releaseGroups: [releaseGroup],
-					releaseGroupRoots: [releaseGroup],
+					releaseGroups: [releaseGroup as ReleaseGroup],
+					releaseGroupRoots: [releaseGroup as ReleaseGroup],
 			  };
 
 	// Remove the filtered release group from the list if needed

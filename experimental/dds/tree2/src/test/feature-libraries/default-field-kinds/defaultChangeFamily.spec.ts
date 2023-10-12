@@ -18,6 +18,7 @@ import {
 	TaggedChange,
 	UpPath,
 	applyDelta,
+	makeDetachedFieldIndex,
 } from "../../../core";
 import { jsonNumber, jsonObject, jsonString } from "../../../domains";
 import {
@@ -27,14 +28,12 @@ import {
 	buildForest,
 	singleTextCursor,
 	jsonableTreeFromCursor,
-	ModularChangeset,
 } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { assertDeltaEqual } from "../../utils";
 import { noopValidator } from "../../../codec";
 
 const defaultChangeFamily = new DefaultChangeFamily({ jsonValidator: noopValidator });
-const defaultIntoDelta = (change: ModularChangeset) => defaultChangeFamily.intoDelta(change);
 const family = defaultChangeFamily;
 
 const rootKey = rootFieldKey;
@@ -115,11 +114,13 @@ function initializeEditableForest(data?: JsonableTree): {
 	let currentRevision = mintRevisionTag();
 	const changes: TaggedChange<DefaultChangeset>[] = [];
 	const deltas: Delta.Root[] = [];
+	const detachedFieldIndex = makeDetachedFieldIndex();
 	const builder = new DefaultEditBuilder(family, (change) => {
-		changes.push({ revision: currentRevision, change });
-		const delta = defaultChangeFamily.intoDelta(change);
+		const taggedChange = { revision: currentRevision, change };
+		changes.push(taggedChange);
+		const delta = defaultChangeFamily.intoDelta(taggedChange);
 		deltas.push(delta);
-		applyDelta(delta, forest);
+		applyDelta(delta, forest, detachedFieldIndex);
 		currentRevision = mintRevisionTag();
 	});
 	return {

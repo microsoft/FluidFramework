@@ -14,8 +14,8 @@ import {
 	TreeSchema,
 	FieldSchema,
 	TypedSchemaCollection,
-	RecursiveTreeSchema,
 	FlexList,
+	Unenforced,
 } from "./typed-schema";
 import { FieldKind } from "./modular-schema";
 
@@ -34,6 +34,9 @@ export class SchemaBuilderBase<TScope extends string, TName extends number | str
 	private finalized: boolean = false;
 	private readonly treeSchema: Map<TreeSchemaIdentifier, TreeSchema> = new Map();
 	private readonly adapters: Adapters = {};
+	/**
+	 * Prefix appended to the identifiers of all {@link TreeSchema} produced by this builder.
+	 */
 	public readonly scope: TScope;
 
 	/**
@@ -42,7 +45,7 @@ export class SchemaBuilderBase<TScope extends string, TName extends number | str
 	public readonly name: string;
 
 	/**
-	 * @param scope - Prefix appended to the identifiers to all {@link TreeSchema} produced by this builder.
+	 * @param scope - Prefix appended to the identifiers of all {@link TreeSchema} produced by this builder.
 	 * Use of [Reverse domain name notation](https://en.wikipedia.org/wiki/Reverse_domain_name_notation) or a UUIDv4 is recommended to avoid collisions.
 	 * @param name - Name used to refer to this builder in error messages. Has no impact on the actual generated schema. Defaults to scope.
 	 * @param lint - Optional configuration for "linting". See {@link SchemaLintConfiguration}. Currently defaults to enabling all lints.
@@ -114,13 +117,12 @@ export class SchemaBuilderBase<TScope extends string, TName extends number | str
 
 	/**
 	 * Produce a TypedSchemaCollection which captures the content added to this builder, any additional SchemaLibraries that were added to it and a root field.
-	 * Can be used with schematize to provide schema aware access to document content.
 	 *
 	 * May only be called once after adding content to builder is complete.
 	 */
-	public toDocumentSchema<Kind extends FieldKind, Types extends AllowedTypes>(
-		root: FieldSchema<Kind, Types>,
-	): TypedSchemaCollection<FieldSchema<Kind, Types>> {
+	protected toDocumentSchemaInternal<TSchema extends FieldSchema>(
+		root: TSchema,
+	): TypedSchemaCollection<TSchema> {
 		this.finalizeCommon();
 		const rootLibrary: SchemaLibraryData = {
 			name: this.name,
@@ -132,7 +134,7 @@ export class SchemaBuilderBase<TScope extends string, TName extends number | str
 			rootLibrary,
 			...this.libraries,
 		]);
-		const typed: TypedSchemaCollection<FieldSchema<Kind, Types>> = {
+		const typed: TypedSchemaCollection<TSchema> = {
 			...collection,
 			rootFieldSchema: root,
 		};
@@ -146,7 +148,7 @@ export class SchemaBuilderBase<TScope extends string, TName extends number | str
 	 * Determine the multiplicity, viewing and editing APIs as well as the merge resolution policy.
 	 * @param allowedTypes - What types of children are allowed in this field.
 	 * @returns a {@link FieldSchema} which can be used as a struct field (see {@link SchemaBuilder.struct}),
-	 * a map field (see {@link SchemaBuilder.map}), a field node(see {@link SchemaBuilder.fieldNode}) or the root field (see {@link SchemaBuilderBase.toDocumentSchema}).
+	 * a map field (see {@link SchemaBuilder.map}), a field node(see {@link SchemaBuilder.fieldNode}) or the root field (see {@link SchemaBuilder.toDocumentSchema}).
 	 *
 	 * @privateRemarks
 	 * TODO:
@@ -157,7 +159,7 @@ export class SchemaBuilderBase<TScope extends string, TName extends number | str
 		kind: Kind,
 		...allowedTypes: T
 	): FieldSchema<Kind, T> {
-		return new FieldSchema(kind, allowedTypes);
+		return FieldSchema.create(kind, allowedTypes);
 	}
 
 	/**
@@ -173,9 +175,9 @@ export class SchemaBuilderBase<TScope extends string, TName extends number | str
 	public static fieldRecursive<
 		Kind extends FieldKind,
 		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
-		T extends FlexList<RecursiveTreeSchema>,
+		T extends FlexList<Unenforced<TreeSchema>>,
 	>(kind: Kind, ...allowedTypes: T): FieldSchema<Kind, T> {
-		return new FieldSchema(kind, allowedTypes);
+		return FieldSchema.createUnsafe(kind, allowedTypes);
 	}
 }
 
