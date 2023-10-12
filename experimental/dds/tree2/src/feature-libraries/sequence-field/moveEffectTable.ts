@@ -6,7 +6,7 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { ChangeAtomId, RevisionTag } from "../../core";
 import { CrossFieldManager, CrossFieldTarget } from "../modular-schema";
-import { RangeQueryResult } from "../../util";
+import { RangeQueryResult, brand } from "../../util";
 import {
 	CellMark,
 	Mark,
@@ -41,9 +41,17 @@ export interface MoveEffect<T> {
 	pairedMarkStatus?: PairedMarkUpdate;
 
 	/**
-	 * The new endpoint associated with this mark.
+	 * The ID of the new endpoint associated with this mark.
 	 */
 	endpoint?: ChangeAtomId;
+}
+
+interface MoveEffectWithBasis<T> extends MoveEffect<T> {
+	/**
+	 * The ID for the start of the range this MoveEffect was created for.
+	 * This is used, for example, to correctly interpret `MoveEffect.endpoint` field.
+	 */
+	basis: MoveId;
 }
 
 export enum MoveEnd {
@@ -84,6 +92,7 @@ export function setMoveEffect<T>(
 	effect: MoveEffect<T>,
 	invalidate: boolean = true,
 ) {
+	(effect as MoveEffectWithBasis<T>).basis = id;
 	moveEffects.set(target, revision, id, count, effect, invalidate);
 }
 
@@ -95,7 +104,10 @@ export function getMoveEffect<T>(
 	count: number,
 	addDependency: boolean = true,
 ): RangeQueryResult<MoveEffect<T>> {
-	return moveEffects.get(target, revision, id, count, addDependency);
+	const result = moveEffects.get(target, revision, id, count, addDependency);
+	return result.value !== undefined
+		? { ...result, value: adjustMoveEffectBasis(result.value as MoveEffectWithBasis<T>, id) }
+		: result;
 }
 
 export type MoveMark<T> = CellMark<MoveMarkEffect, T>;
@@ -122,6 +134,24 @@ export function isMoveDestination(effect: MarkEffect): effect is MoveDestination
 		default:
 			return false;
 	}
+}
+
+function adjustMoveEffectBasis<T>(effect: MoveEffectWithBasis<T>, newBasis: MoveId): MoveEffect<T> {
+	if (effect.basis === newBasis) {
+		return effect;
+	}
+
+	const adjusted = { ...effect, basis: newBasis };
+	const basisShift = newBasis - effect.basis;
+	if (effect.endpoint !== undefined) {
+		adjusted.endpoint = {
+			...effect.endpoint,
+			localId: brand(effect.endpoint.localId + basisShift),
+		};
+	}
+
+	// TODO: Handle splitting `movedMark`
+	return adjusted;
 }
 
 function applyMoveEffectsToDest(

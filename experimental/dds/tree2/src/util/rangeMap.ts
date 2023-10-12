@@ -50,7 +50,7 @@ export function getFromRangeMap<T>(
 		if (lastRangeKey >= start) {
 			// This range contains `start`.
 			const overlapLength = lastRangeKey - start + 1;
-			return { value: range.value, length: overlapLength };
+			return { value: range.value, length: Math.min(overlapLength, length) };
 		}
 	}
 

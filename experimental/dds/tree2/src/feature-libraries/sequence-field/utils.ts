@@ -40,6 +40,7 @@ import {
 	TransientEffect,
 	MarkEffect,
 	MoveMarkEffect,
+	MoveDestination,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { isMoveMark, MoveEffectTable } from "./moveEffectTable";
@@ -494,7 +495,8 @@ function tryMergeEffects(
 			const lhsMoveIn = lhs as MoveIn;
 			if (
 				lhsMoveIn.isSrcConflicted === rhs.isSrcConflicted &&
-				(lhsMoveIn.id as number) + lhsCount === rhs.id
+				(lhsMoveIn.id as number) + lhsCount === rhs.id &&
+				areMergeableChangeAtoms(lhsMoveIn.finalEndpoint, lhsCount, rhs.finalEndpoint)
 			) {
 				return lhsMoveIn;
 			}
@@ -505,7 +507,8 @@ function tryMergeEffects(
 			if (
 				lhsReturnTo.inverseOf === rhs.inverseOf &&
 				lhsReturnTo.isSrcConflicted === rhs.isSrcConflicted &&
-				(lhsReturnTo.id as number) + lhsCount === rhs.id
+				(lhsReturnTo.id as number) + lhsCount === rhs.id &&
+				areMergeableChangeAtoms(lhsReturnTo.finalEndpoint, lhsCount, rhs.finalEndpoint)
 			) {
 				return lhsReturnTo;
 			}
@@ -940,6 +943,10 @@ function splitMarkEffect<TEffect extends MarkEffect>(
 		case "MoveIn":
 		case "ReturnTo": {
 			const effect2: TEffect = { ...effect, id: (effect.id as number) + length };
+			const move2 = effect2 as MoveDestination;
+			if (move2.finalEndpoint !== undefined) {
+				move2.finalEndpoint = splitDetachEvent(move2.finalEndpoint, length);
+			}
 			return [effect, effect2];
 		}
 		case "Delete": {

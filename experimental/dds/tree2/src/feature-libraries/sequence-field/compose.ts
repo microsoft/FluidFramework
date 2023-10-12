@@ -769,8 +769,7 @@ function setEndpoint(
 ) {
 	const effect = getMoveEffect(moveEffects, target, revision, id, count);
 	assert(effect.length === count, 0x6ec /* Expected effect to cover entire mark */);
-	const newEffect: MoveEffect<unknown> =
-		effect.value !== undefined ? { ...effect.value, endpoint } : { endpoint };
+	const newEffect = effect.value !== undefined ? { ...effect.value, endpoint } : { endpoint };
 
 	setMoveEffect(moveEffects, target, revision, id, count, newEffect);
 }
