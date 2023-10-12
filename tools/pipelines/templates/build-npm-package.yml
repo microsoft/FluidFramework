@@ -390,22 +390,23 @@ stages:
 
         # Pack
         - ${{ if eq(parameters.taskPack, true) }}:
-          - ${{ if and(ne(variables.packageTypesOverride, 'none'), eq(parameters.releaseBuildOverride, 'prerelease')) }}:
+          - ${{ if and(ne(parameters.packageTypesOverride, 'none'), eq(parameters.releaseBuildOverride, 'prerelease')) }}:
             - task: Bash@3
-              displayName: Set Package Types to ${{ variables.packageTypesOverride }}
+              displayName: Set Package Types to ${{ parameters.packageTypesOverride }}
               inputs:
                 targetType: 'inline'
                 workingDir: ${{ parameters.buildDirectory }}
                 script: | 
-                  flub release setPackageTypesField -g ${{ parameters.tagName }} --types ${{ variables.packageTypesOverride }}
+                  flub release setPackageTypesField -g ${{ parameters.tagName }} --types ${{ parameters.packageTypesOverride }}
             
             - task: Bash@3
-              displayName: Set Package Version to ${{ variables.packageTypesOverride }} 
+              displayName: Set Package Version to ${{ parameters.packageTypesOverride }} 
               inputs:
                 targetType: 'inline'
                 workingDir: ${{ parameters.buildDirectory }}
                 script: | 
-                  flub bump ${{ parameters.tagName }} --exact $(SetVersion.version)-${{ variables.packageTypesOverride }}-types --interdependencyRange="" -x
+                  formatted_version=$(SetVersion.version)-${{ parameters.packageTypesOverride }}-types
+                  flub bump ${{ parameters.tagName }} --exact "$formatted_version" --interdependencyRange="" -x
 
           - task: Bash@3
             displayName: npm pack
