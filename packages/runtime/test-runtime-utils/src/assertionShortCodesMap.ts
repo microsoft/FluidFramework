@@ -1352,7 +1352,6 @@ export const shortCodeMap = {
 	"0x766": "proposalHandle should be available",
 	"0x767": "Must release existing visitor before acquiring another",
 	"0x768": "Multiple free calls for same visitor",
-	"0x769": "Unable to exit root node",
 	"0x76a": "Must release existing visitor before acquiring another",
 	"0x76b": "Multiple free calls for same visitor",
 	"0x76c": "Must release existing visitor before acquiring another",

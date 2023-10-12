@@ -858,7 +858,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					this.pathVisitors.delete(p);
 				});
 				const parent = this.parent;
-				assert(parent !== undefined, 0x769 /* Unable to exit root node */);
 				this.parentField = parent.parentField;
 				this.parent = parent.parent;
 			},
