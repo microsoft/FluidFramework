@@ -336,7 +336,11 @@ export class DocumentDeltaConnection
 		this.checkNotDisposed();
 
 		if (targetClientId) {
-			throw new UsageError("Sending signals to specific client ids is not supported");
+			this.logger.sendErrorEvent({
+				eventName: "SubmitSignalTargettedClient",
+				message:
+					"Sending signals to specific client ids is not supported. The signal will be broadcast to all clients",
+			});
 		}
 
 		this.emitMessages("submitSignal", [[content]]);
