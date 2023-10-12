@@ -4,6 +4,7 @@
  */
 /* eslint-disable tsdoc/syntax */
 
+import { assert } from "@fluidframework/core-utils";
 import { RedBlackTree, compareNumbers } from "@fluidframework/merge-tree";
 
 /**
@@ -59,12 +60,15 @@ export class CreationIndexTracker {
 	 * @returns True if the key or index exists; otherwise, false.
 	 */
 	has(keyOrIndex: string | number): boolean {
-		if (typeof keyOrIndex === "string" && this.keyToIndex) {
-			return this.keyToIndex?.has(keyOrIndex);
-		} else if (typeof keyOrIndex === "number") {
+		if (typeof keyOrIndex === "string") {
+			assert(
+				this.keyToIndex !== undefined,
+				"The keyToIndex lookup is not initialized from the outset",
+			);
+			return this.keyToIndex.has(keyOrIndex);
+		} else {
 			return this.indexToKey.get(keyOrIndex) !== undefined;
 		}
-		return false;
 	}
 
 	/**
@@ -73,12 +77,16 @@ export class CreationIndexTracker {
 	 */
 	delete(keyOrIndex: string | number): void {
 		if (this.has(keyOrIndex)) {
-			if (typeof keyOrIndex === "number") {
-				this.indexToKey.remove(keyOrIndex);
-			} else if (typeof keyOrIndex === "string" && this.keyToIndex) {
-				const index = this.keyToIndex.get(keyOrIndex);
+			if (typeof keyOrIndex === "string") {
+				assert(
+					this.keyToIndex !== undefined,
+					"The keyToIndex lookup is not initialized from the outset",
+				);
+				const index = this.keyToIndex.get(keyOrIndex) as number; // has been verified the keyOrIndex exists in the lookup
 				this.keyToIndex.delete(keyOrIndex);
-				this.indexToKey.remove(index as number);
+				this.indexToKey.remove(index);
+			} else {
+				this.indexToKey.remove(keyOrIndex);
 			}
 		}
 	}
@@ -115,7 +123,7 @@ export class CreationIndexTracker {
 	}
 
 	/**
-	 * @returns The maimum creation index or undefined if the tracker is empty.
+	 * @returns The maximum creation index or undefined if the tracker is empty.
 	 */
 	max(): number | undefined {
 		return this.indexToKey.max()?.key;
