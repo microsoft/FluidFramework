@@ -16,7 +16,6 @@ import {
 	IConnect,
 	IConnected,
 	IDocumentMessage,
-	ISentSignalMessage,
 	ISequencedDocumentMessage,
 	ISignalClient,
 	ISignalMessage,
@@ -308,10 +307,7 @@ export class DocumentDeltaConnection
 		return this.details.initialClients;
 	}
 
-	protected emitMessages(
-		type: string,
-		messages: (IDocumentMessage | unknown)[][] | ISentSignalMessage[],
-	) {
+	protected emitMessages(type: string, messages: IDocumentMessage[][]) {
 		// Although the implementation here disconnects the socket and does not reuse it, other subclasses
 		// (e.g. OdspDocumentDeltaConnection) may reuse the socket.  In these cases, we need to avoid emitting
 		// on the still-live socket.
@@ -336,7 +332,7 @@ export class DocumentDeltaConnection
 	 * @param content - Content of the signal.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	public submitSignal(content: unknown, targetClientId?: string): void {
+	public submitSignal(content: IDocumentMessage, targetClientId?: string): void {
 		this.checkNotDisposed();
 
 		if (targetClientId) {

@@ -110,13 +110,6 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {
-			"ClassDeclaration_ContainerRuntime": {
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_ISummarizerRuntime": {
-				"forwardCompat": false
-			}
-		}
+		"broken": {}
 	}
 }
