@@ -6,15 +6,13 @@ import * as assert from "assert";
 import * as fs from "fs";
 import path from "path";
 import type * as tsTypes from "typescript";
+import isEqual from "lodash.isequal";
 
 import { defaultLogger } from "../../../common/logging";
 import { existsSync, readFileAsync } from "../../../common/utils";
 import { getInstalledPackageVersion } from "../../../common/taskUtils";
 import { getTscUtils, TscUtil } from "../../../common/tscUtils";
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const isEqual = require("lodash.isequal");
 
 const { verbose } = defaultLogger;
 
