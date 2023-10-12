@@ -908,8 +908,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					// Remove subtree path visitors added at this node if there are any
 					this.pathVisitors.delete(p);
 				});
-				// QUESTION
-				// Can this.parent change because of the call above? Otherwise we're doing a redundant assert.
 				const parent = this.parent;
 				assert(parent !== undefined, 0x769 /* Unable to exit root node */);
 				this.parentField = parent.parentField;
