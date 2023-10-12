@@ -778,16 +778,21 @@ describe("SequenceField - Compose", () => {
 	});
 
 	it("return ○ return", () => {
-		const return1 = tagChange(
-			Change.return(0, 1, 3, { revision: tag2, localId: brand(0) }),
-			tag3,
-		);
-		const return2 = tagChange(
-			Change.return(3, 1, 0, { revision: tag3, localId: brand(0) }),
-			tag4,
-		);
+		const cellId1: ChangeAtomId = { revision: tag2, localId: brand(0) };
+		const cellId2: ChangeAtomId = { revision: tag3, localId: brand(0) };
+		const return1 = tagChange(Change.return(0, 1, 3, cellId1), tag3);
+		const return2 = tagChange(Change.return(3, 1, 0, cellId2), tag4);
 		const actual = shallowCompose([return1, return2]);
-		assert.deepEqual(actual, []);
+
+		// We expect vestigial moves to exist to record that the cell's ID was changed.
+		const expected = [
+			{ count: 4 },
+			Mark.transient(
+				Mark.returnTo(1, { revision: tag3, localId: brand(0) }, cellId1),
+				Mark.returnFrom(1, { revision: tag4, localId: brand(0) }),
+			),
+		];
+		assert.deepEqual(actual, expected);
 	});
 
 	it("modify ○ return", () => {
@@ -811,39 +816,88 @@ describe("SequenceField - Compose", () => {
 	it("move ○ move (forward)", () => {
 		const move1 = Change.move(0, 1, 1, brand(0));
 		const move2 = Change.move(1, 1, 2, brand(1));
-		const expected = Change.move(0, 1, 2, brand(1));
 		const actual = shallowCompose([makeAnonChange(move1), makeAnonChange(move2)]);
+		const expected = [
+			Mark.moveOut(1, brand(0), {
+				finalEndpoint: { revision: undefined, localId: brand(1) },
+			}),
+			{ count: 1 },
+			Mark.transient(Mark.moveIn(1, brand(0)), Mark.moveOut(1, brand(1))),
+			{ count: 1 },
+			Mark.moveIn(1, brand(1), { finalEndpoint: { revision: undefined, localId: brand(0) } }),
+		];
 		assert.deepEqual(actual, expected);
 	});
 
 	it("move ○ move (back)", () => {
 		const move1 = Change.move(2, 1, 1, brand(0));
 		const move2 = Change.move(1, 1, 0, brand(1));
-		const expected = Change.move(2, 1, 0, brand(1));
 		const actual = shallowCompose([makeAnonChange(move1), makeAnonChange(move2)]);
+		const expected = [
+			Mark.moveIn(1, brand(1), { finalEndpoint: { revision: undefined, localId: brand(0) } }),
+			{ count: 1 },
+			Mark.transient(Mark.moveIn(1, brand(0)), Mark.moveOut(1, brand(1))),
+			{ count: 1 },
+			Mark.moveOut(1, brand(0), {
+				finalEndpoint: { revision: undefined, localId: brand(1) },
+			}),
+		];
 		assert.deepEqual(actual, expected);
 	});
 
-	it("move ○ move with no net effect (back and forward)", () => {
+	it("move ○ move adjacent to starting position (back and forward)", () => {
 		const move1 = Change.move(1, 1, 0);
 		const move2 = Change.move(0, 1, 1);
-		const expected = [
-			{ count: 1 },
-			Mark.moveIn(1, { localId: brand(0), revision: tag2 }),
-			Mark.moveOut(1, { localId: brand(0), revision: tag2 }),
-		];
 		const actual = shallowCompose([tagChange(move1, tag1), tagChange(move2, tag2)]);
+		const expected = [
+			Mark.transient(
+				Mark.moveIn(1, { revision: tag1, localId: brand(0) }),
+				Mark.moveOut(1, { revision: tag2, localId: brand(0) }),
+			),
+			{ count: 1 },
+			Mark.moveIn(
+				1,
+				{ revision: tag2, localId: brand(0) },
+				{
+					finalEndpoint: { revision: tag1, localId: brand(0) },
+				},
+			),
+			Mark.moveOut(
+				1,
+				{ revision: tag1, localId: brand(0) },
+				{
+					finalEndpoint: { revision: tag2, localId: brand(0) },
+				},
+			),
+		];
 		assert.deepEqual(actual, expected);
 	});
 
-	it("move ○ move with no net effect (forward and back)", () => {
+	it("move ○ move adjacent to starting position (forward and back)", () => {
 		const move1 = Change.move(0, 1, 1);
 		const move2 = Change.move(1, 1, 0);
-		const expected = [
-			Mark.moveIn(1, { localId: brand(0), revision: tag2 }),
-			Mark.moveOut(1, { localId: brand(0), revision: tag2 }),
-		];
 		const actual = shallowCompose([tagChange(move1, tag1), tagChange(move2, tag2)]);
+		const expected = [
+			Mark.moveIn(
+				1,
+				{ revision: tag2, localId: brand(0) },
+				{
+					finalEndpoint: { revision: tag1, localId: brand(0) },
+				},
+			),
+			Mark.moveOut(
+				1,
+				{ revision: tag1, localId: brand(0) },
+				{
+					finalEndpoint: { revision: tag2, localId: brand(0) },
+				},
+			),
+			{ count: 1 },
+			Mark.transient(
+				Mark.moveIn(1, { revision: tag1, localId: brand(0) }),
+				Mark.moveOut(1, { revision: tag2, localId: brand(0) }),
+			),
+		];
 		assert.deepEqual(actual, expected);
 	});
 

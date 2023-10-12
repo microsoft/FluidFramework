@@ -29,7 +29,6 @@ import {
 	setMoveEffect,
 	isMoveMark,
 	MoveEffectTable,
-	MoveMark,
 	getModifyAfter,
 	MoveEffect,
 	isMoveDestination,
@@ -60,6 +59,7 @@ import {
 	markFillsCells,
 	extractMarkEffect,
 	getEndpoint,
+	areEqualCellIds,
 } from "./utils";
 import { EmptyInputCellMark } from "./helperTypes";
 
@@ -290,7 +290,6 @@ function composeMarks<TNodeChange>(
 		const attach = extractMarkEffect(baseMark);
 		const detach = extractMarkEffect(withRevision(newMark, newRev));
 		if (isMoveDestination(attach) && isMoveSource(detach)) {
-			// XXX: Handle case where baseMark and newMark should cancel
 			const finalSource = getEndpoint(attach, undefined);
 			const finalDest = getEndpoint(detach, newRev);
 
@@ -316,6 +315,13 @@ function composeMarks<TNodeChange>(
 			delete detach.finalEndpoint;
 		}
 
+		if (
+			baseMark.cellId.revision !== undefined &&
+			areEqualCellIds(getOutputCellId(newMark, newRev, revisionMetadata), baseMark.cellId)
+		) {
+			// The output and input cell IDs are the same, so this mark has no effect.
+			return { count: baseMark.count, cellId: baseMark.cellId };
+		}
 		return withNodeChange(
 			{
 				type: "Transient",
@@ -606,34 +612,6 @@ export class ComposeQueue<T> {
 interface ComposeMarks<T> {
 	baseMark?: Mark<T>;
 	newMark?: Mark<T>;
-}
-
-/**
- * Returns whether `baseMark` and `newMark` are inverses.
- * It is assumed that both marks are active, `baseMark` is an attach, and `newMark` is a detach.
- * This means that the marks are at the location of the moved content after the first move takes place, but before the second.
- */
-function _areInverseMovesAtIntermediateLocation(
-	baseMark: MoveMark<unknown>,
-	baseIntention: RevisionTag | undefined,
-	newMark: MoveMark<unknown>,
-	newIntention: RevisionTag | undefined,
-): boolean {
-	assert(
-		(baseMark.type === "MoveIn" || baseMark.type === "ReturnTo") &&
-			(newMark.type === "MoveOut" || newMark.type === "ReturnFrom"),
-		0x6d0 /* baseMark should be an attach and newMark should be a detach */,
-	);
-
-	if (baseMark.type === "ReturnTo" && baseMark.cellId?.revision === newIntention) {
-		return true;
-	}
-
-	if (newMark.type === "ReturnFrom" && newMark.cellId?.revision === baseIntention) {
-		return true;
-	}
-
-	return false;
 }
 
 // TODO: Try to share more logic with the version in rebase.ts.
