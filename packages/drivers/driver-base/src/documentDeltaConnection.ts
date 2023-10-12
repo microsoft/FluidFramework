@@ -337,7 +337,7 @@ export class DocumentDeltaConnection
 
 		if (targetClientId) {
 			this.logger.sendErrorEvent({
-				eventName: "SubmitSignalTargettedClient",
+				eventName: "SubmitSignalTargetedClient",
 				message:
 					"Sending signals to specific client ids is not supported. The signal will be broadcast to all clients",
 			});
