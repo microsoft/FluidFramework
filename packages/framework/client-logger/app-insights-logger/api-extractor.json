@@ -8,15 +8,15 @@
 		"tsdocMessageReporting": {
 			"tsdoc-escape-right-brace": {
 				"logLevel": "warning",
-				"addToApiReportFile": false // Log to the console instead
+				"addToApiReportFile": true
 			},
 			"tsdoc-malformed-inline-tag": {
 				"logLevel": "warning",
-				"addToApiReportFile": false // Log to the console instead
+				"addToApiReportFile": true
 			},
 			"tsdoc-undefined-tag": {
 				"logLevel": "warning",
-				"addToApiReportFile": false // Log to the console instead
+				"addToApiReportFile": true
 			}
 		}
 	}
