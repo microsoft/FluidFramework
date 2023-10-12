@@ -13,6 +13,7 @@ import {
 	areInputCellsEmpty,
 	areOutputCellsEmpty,
 	getEffectiveNodeChanges,
+	getEndpoint,
 	getOutputCellId,
 	isTransientEffect,
 } from "./utils";
@@ -74,7 +75,12 @@ function cellDeltaFromMark<TNodeChange>(
 			}
 			case "MoveIn":
 			case "ReturnTo": {
-				const ranges = idAllocator.allocate(mark.revision ?? revision, mark.id, mark.count);
+				const endpointId = getEndpoint(mark, revision);
+				const ranges = idAllocator.allocate(
+					endpointId.revision,
+					endpointId.localId,
+					mark.count,
+				);
 				return ranges.map(({ first, count }) => ({
 					type: Delta.MarkType.MoveIn,
 					moveId: brandOpaque<Delta.MoveId>(first),
