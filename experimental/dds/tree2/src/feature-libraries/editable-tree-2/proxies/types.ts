@@ -23,7 +23,6 @@ import {
 	CheckTypesOverlap,
 	FlexibleNodeContent,
 	Sequence,
-	NodeKeyField,
 	AssignableFieldKinds,
 } from "../editableTreeTypes";
 
@@ -215,11 +214,7 @@ export type ProxyFieldInner<
 	? ProxyNodeUnion<TTypes, API>
 	: Kind extends typeof FieldKinds.optional
 	? ProxyNodeUnion<TTypes, API> | (Emptiness extends "notEmpty" ? never : undefined)
-	: // Since struct already provides a short-hand accessor for the local field key, and the field provides a nicer general API than the node under it in this case, do not unbox nodeKey fields.
-	Kind extends typeof FieldKinds.nodeKey
-	? NodeKeyField
-	: // TODO: forbidden
-	  unknown;
+	: unknown;
 
 /**
  * Given multiple node schema types, return the corresponding object type union in the proxy-based API.

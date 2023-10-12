@@ -52,10 +52,7 @@ describe("SharedTreeObject", () => {
 		list: [{ content: 42 }, { content: 42 }],
 	};
 
-	function itWithRoot(
-		title: string,
-		fn: (root: ProxyRoot<typeof schema, "sharedTree">) => void,
-	): void {
+	function itWithRoot(title: string, fn: (root: ProxyRoot<typeof schema>) => void): void {
 		it(title, () => {
 			const view = createTypedTreeView(schema, initialTree);
 			const root = view.root2(schema);
@@ -118,7 +115,7 @@ function createTypedTreeView<
 	schema: TSchema,
 	initialTree: ProxyRoot<TSchema, "javaScript">,
 ): ISharedTreeView & {
-	root2: (viewSchema: TypedSchemaCollection<TRoot>) => ProxyRoot<TSchema, "sharedTree">;
+	root2: (viewSchema: TypedSchemaCollection<TRoot>) => ProxyRoot<TSchema>;
 } {
 	return createTreeView(schema, initialTree);
 }
