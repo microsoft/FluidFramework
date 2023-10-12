@@ -8,17 +8,15 @@ import { SchemaBuilder, TypedField, TypedNode, leaf } from "@fluid-experimental/
 const builder = new SchemaBuilder({ scope: "inventory app", libraries: [leaf.library] });
 
 export const part = builder.struct("Contoso:Part-1.0.0", {
-	name: SchemaBuilder.fieldRequired(leaf.string),
-	quantity: SchemaBuilder.fieldRequired(leaf.number),
+	name: leaf.string,
+	quantity: leaf.number,
 });
 
 export const inventory = builder.struct("Contoso:Inventory-1.0.0", {
-	parts: SchemaBuilder.fieldSequence(part),
+	parts: builder.sequence(part),
 });
 
-export const inventoryField = SchemaBuilder.fieldRequired(inventory);
-export type InventoryField = TypedField<typeof inventoryField>;
+export const schema = builder.toDocumentSchema(inventory);
 
-export const schema = builder.toDocumentSchema(inventoryField);
-
+export type InventoryField = TypedField<typeof schema.rootFieldSchema>;
 export type Inventory = TypedNode<typeof inventory>;

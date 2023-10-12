@@ -14,16 +14,17 @@ import { leaf } from "../../domains";
 describe("TypedTree", () => {
 	it("editable-tree-2-end-to-end", () => {
 		const builder = new SchemaBuilder({ scope: "e2e", libraries: [leaf.library] });
-		const schema = builder.toDocumentSchema(SchemaBuilder.fieldRequired(leaf.number));
+		const schema = builder.toDocumentSchema(leaf.number);
 		const factory = new TypedTreeFactory({
 			jsonValidator: typeboxValidator,
 			forest: ForestType.Reference,
+			subtype: "test",
+		});
+		const root = factory.create(new MockFluidDataStoreRuntime(), "the tree").schematize({
 			allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
 			initialTree: 1,
 			schema,
-			subtype: "test",
 		});
-		const root = factory.create(new MockFluidDataStoreRuntime(), "the tree").root;
 		root.content += 1;
 		assert.equal(root.content, 2);
 	});

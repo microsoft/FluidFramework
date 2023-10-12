@@ -87,12 +87,12 @@ describe("Schema Evolution Examples", () => {
 
 	// String made of unicode code points, allowing for sequence editing of a string.
 	const text = contentTypesBuilder.struct("Text", {
-		children: SchemaBuilder.field(FieldKinds.sequence, codePoint),
+		children: FieldSchema.create(FieldKinds.sequence, [codePoint]),
 	});
 
 	const point = contentTypesBuilder.struct("Point", {
-		x: SchemaBuilder.field(FieldKinds.required, number),
-		y: SchemaBuilder.field(FieldKinds.required, number),
+		x: number,
+		y: number,
 	});
 
 	const defaultContentLibrary = contentTypesBuilder.finalize();
@@ -105,16 +105,16 @@ describe("Schema Evolution Examples", () => {
 
 	// A type that can be used to position items without an inherent position within the canvas.
 	const positionedCanvasItem = containersBuilder.struct("PositionedCanvasItem", {
-		position: SchemaBuilder.field(FieldKinds.required, point),
-		content: SchemaBuilder.field(FieldKinds.required, text),
+		position: point,
+		content: text,
 	});
 	const canvas = containersBuilder.struct("Canvas", {
-		items: SchemaBuilder.field(FieldKinds.sequence, positionedCanvasItem),
+		items: FieldSchema.create(FieldKinds.sequence, [positionedCanvasItem]),
 	});
 
-	const root: FieldSchema = SchemaBuilder.field(FieldKinds.required, canvas);
+	const root: FieldSchema = FieldSchema.create(FieldKinds.required, [canvas]);
 
-	const tolerantRoot = SchemaBuilder.field(FieldKinds.optional, canvas);
+	const tolerantRoot = FieldSchema.create(FieldKinds.optional, [canvas]);
 
 	const treeViewSchema = containersBuilder.finalize();
 
@@ -244,20 +244,20 @@ describe("Schema Evolution Examples", () => {
 			});
 
 			const counter = builderWithCounter.struct("Counter", {
-				count: SchemaBuilder.field(FieldKinds.required, number),
+				count: number,
 			});
 			// Lets allow counters inside positionedCanvasItem, instead of just text:
 			const positionedCanvasItem2 = builderWithCounter.struct("PositionedCanvasItem", {
-				position: SchemaBuilder.field(FieldKinds.required, point),
-				content: SchemaBuilder.field(FieldKinds.required, text, counter),
+				position: point,
+				content: [text, counter],
 			});
 			// And canvas is still the same storage wise, but its view schema references the updated positionedCanvasItem2:
 			const canvas2 = builderWithCounter.struct("Canvas", {
-				items: SchemaBuilder.field(FieldKinds.sequence, positionedCanvasItem2),
+				items: FieldSchema.create(FieldKinds.sequence, [positionedCanvasItem2]),
 			});
 			// Once again we will simulate reloading the app with different schema by modifying the view schema.
 			const viewCollection3: TypedSchemaCollection = builderWithCounter.toDocumentSchema(
-				SchemaBuilder.field(FieldKinds.optional, canvas2),
+				FieldSchema.create(FieldKinds.optional, [canvas2]),
 			);
 			const view3 = new ViewSchema(defaultSchemaPolicy, adapters, viewCollection3);
 
@@ -379,12 +379,12 @@ describe("Schema Evolution Examples", () => {
 	// 	);
 	// 	const builder = new SchemaBuilder("adapters examples", defaultContentLibrary);
 	// 	const formattedText = builder.structRecursive(formattedTextIdentifier, {
-	// 		content: SchemaBuilder.fieldRecursive(
+	// 		content: FieldSchema.createUnsafe(
 	// 			FieldKinds.sequence,
 	// 			() => formattedText,
 	// 			codePoint,
 	// 		),
-	// 		size: SchemaBuilder.field(FieldKinds.required, number),
+	// 		size: (number),
 	// 	});
 
 	// 	// We are also updating positionedCanvasItem to accept the new type.
@@ -395,17 +395,17 @@ describe("Schema Evolution Examples", () => {
 	// 	// as no version of the app need both view schema at the same time
 	// 	// (except for some approaches for staging roll-outs which are not covered here).
 	// 	const positionedCanvasItemNew = builder.struct(positionedCanvasItemIdentifier, {
-	// 		position: SchemaBuilder.field(FieldKinds.required, point),
+	// 		position: (point),
 	// 		// Note that we are specifically excluding the old text here
-	// 		content: SchemaBuilder.field(FieldKinds.required, formattedText),
+	// 		content: (formattedText),
 	// 	});
 	// 	// And canvas is still the same storage wise, but its view schema references the updated positionedCanvasItem2:
 	// 	const canvas2 = builder.struct(canvasIdentifier, {
-	// 		items: SchemaBuilder.field(FieldKinds.sequence, positionedCanvasItemNew),
+	// 		items: FieldSchema.create(FieldKinds.sequence, positionedCanvasItemNew),
 	// 	});
 
 	// 	const viewCollection: SchemaCollection = builder.toDocumentSchema(
-	// 		SchemaBuilder.fieldRequired(canvas2),
+	// 		SchemaBuilder.required(canvas2),
 	// 	);
 
 	// 	const textAdapter: TreeAdapter = { input: textIdentifier, output: formattedTextIdentifier };

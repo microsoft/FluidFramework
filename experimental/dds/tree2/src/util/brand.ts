@@ -12,7 +12,8 @@ import { Invariant, isAny } from "./typeCheck";
  * Two usages of `Brand` should never use the same `Name`.
  * If they do, the resulting types will be assignable which defeats the point of this type.
  *
- * This type is constructed such that the first line of type errors when assigning mismatched branded types will be:
+ * This type is constructed such that the first line of type errors when assigning
+ * mismatched branded types will be:
  * `Type 'Name1' is not assignable to type 'Name2'.`
  *
  * These branded types are not opaque: A `Brand<A, B>` can still be used as a `B`.

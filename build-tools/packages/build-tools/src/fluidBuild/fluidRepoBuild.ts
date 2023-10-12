@@ -87,16 +87,16 @@ export class FluidRepoBuild extends FluidRepo {
 		return true;
 	}
 
-	public async depcheck() {
+	public async depcheck(fix: boolean) {
 		for (const pkg of this.packages.packages) {
 			// Fluid specific
 			let checkFiles: string[];
 			if (pkg.packageJson.dependencies) {
 				const tsFiles = await globFn(`${pkg.directory}/**/*.ts`, {
-					ignore: `${pkg.directory}/node_modules`,
+					ignore: `${pkg.directory}/node_modules/**`,
 				});
 				const tsxFiles = await globFn(`${pkg.directory}/**/*.tsx`, {
-					ignore: `${pkg.directory}/node_modules`,
+					ignore: `${pkg.directory}/node_modules/**`,
 				});
 				checkFiles = tsFiles.concat(tsxFiles);
 			} else {
@@ -104,7 +104,7 @@ export class FluidRepoBuild extends FluidRepo {
 			}
 
 			const npmDepChecker = new NpmDepChecker(pkg, checkFiles);
-			if (await npmDepChecker.run()) {
+			if (await npmDepChecker.run(fix)) {
 				await pkg.savePackageJson();
 			}
 		}
