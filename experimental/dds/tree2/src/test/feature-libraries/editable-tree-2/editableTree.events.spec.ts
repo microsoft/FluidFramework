@@ -316,7 +316,7 @@ describe("beforeChange/afterChange events", () => {
 		// TODO: update to `root.child = <something>;` once assignment to struct nodes is implemented in EditableTree2
 		root.boxedChild.content = { myInnerString: "something" };
 
-		// Events shouldn't have fired on the original myString node
+		// Events shouldn't have fired on the original child node
 		assert.strictEqual(beforeCounter, 0);
 		assert.strictEqual(afterCounter, 0);
 	});
