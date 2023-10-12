@@ -8039,6 +8039,7 @@ importers:
       '@microsoft/api-extractor': ^7.37.0
       '@microsoft/applicationinsights-web': ^2.8.11
       '@types/mocha': ^9.1.1
+      '@types/node': ^16.18.38
       '@types/sinon': ^7.0.13
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
@@ -8058,10 +8059,11 @@ importers:
       '@microsoft/applicationinsights-web': 2.8.13_tslib@1.14.1
     devDependencies:
       '@fluidframework/build-common': 2.0.1
-      '@fluidframework/build-tools': 0.25.0
+      '@fluidframework/build-tools': 0.25.0_@types+node@16.18.53
       '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
-      '@microsoft/api-extractor': 7.37.0
+      '@microsoft/api-extractor': 7.37.0_@types+node@16.18.53
       '@types/mocha': 9.1.1
+      '@types/node': 16.18.53
       '@types/sinon': 7.5.2
       copyfiles: 2.4.1
       cross-env: 7.0.3

@@ -9,9 +9,10 @@
  * @packageDocumentation
  */
 
-export {
-	FluidAppInsightsLogger,
+export type {
 	FluidAppInsightsLoggerConfig,
 	TelemetryEventCategory,
 	TelemetryFilter,
 } from "./fluidAppInsightsLogger";
+
+export { FluidAppInsightsLogger } from "./fluidAppInsightsLogger";
