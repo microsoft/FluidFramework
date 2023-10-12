@@ -611,8 +611,15 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					}
 				}
 			},
-			withNodeUpToRoot(withNode: (anchorNode: PathNode) => void) {
-				// No assertion that this.parent exists because this also gets called when we attach a node to the root field.
+			// Run `withNode` on every node from the current `this.parent` to the root.
+			// Should only be called when in a field.
+			withParentNodeUpToRoot(withNode: (anchorNode: PathNode) => void) {
+				assert(
+					this.parentField !== undefined,
+					"Must be in a field to call withNodeUpToRoot",
+				);
+				// This function gets called when we attach a node to the root field, in which case there is no parent.
+				// It's expected this will do nothing in that case.
 				let currentParent: UpPath | undefined = this.parent;
 				while (currentParent !== undefined) {
 					if (currentParent instanceof PathNode) {
@@ -652,7 +659,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					start: 0,
 					end: count,
 				});
-				this.withNodeUpToRoot((p) => {
+				this.withParentNodeUpToRoot((p) => {
 					p.events.emit("beforeChange", p);
 				});
 				for (const visitors of this.pathVisitors.values()) {
@@ -672,7 +679,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					field: this.parentField,
 					...destination,
 				};
-				this.withNodeUpToRoot((p) => {
+				this.withParentNodeUpToRoot((p) => {
 					p.events.emit("afterChange", p);
 				});
 				for (const visitors of this.pathVisitors.values()) {
@@ -710,7 +717,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					field: destination,
 					index: 0,
 				});
-				this.withNodeUpToRoot((p) => {
+				this.withParentNodeUpToRoot((p) => {
 					p.events.emit("beforeChange", p);
 				});
 				for (const visitors of this.pathVisitors.values()) {
@@ -731,7 +738,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					start: 0,
 					end: count,
 				});
-				this.withNodeUpToRoot((p) => {
+				this.withParentNodeUpToRoot((p) => {
 					p.events.emit("afterChange", p);
 				});
 				for (const visitors of this.pathVisitors.values()) {
@@ -774,7 +781,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					field: destination,
 					index: 0,
 				});
-				this.withNodeUpToRoot((p) => {
+				this.withParentNodeUpToRoot((p) => {
 					p.events.emit("beforeChange", p);
 				});
 				for (const visitors of this.pathVisitors.values()) {
@@ -807,7 +814,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					start: 0,
 					end: newContent.end - newContent.start,
 				});
-				this.withNodeUpToRoot((p) => {
+				this.withParentNodeUpToRoot((p) => {
 					p.events.emit("afterChange", p);
 				});
 				for (const visitors of this.pathVisitors.values()) {
