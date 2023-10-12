@@ -108,7 +108,15 @@ export interface IMapKeyDeleteLocalOpMetadata {
 	previousValue: ILocalValue;
 
 	/**
-	 * All associated pending message id's of a local set op, or the insertion index of an ack'd key, or both
+	 * All associated pending message id's of a local set op, or the creation index of an ack'd key, or both.
+	 *
+	 * For example:
+	 *
+	 * 1. previousIndex: [1] -- indicates the deleted key was already ack'd previously, and its creation index was 1.
+	 * 2. previousIndex: [[1, 2]] -- indicates the deleted key was not ack'd, and there existed two pending local set op targeting this key,
+	 * with message id 1 and 2.
+	 * 3. previousIndex: [1, [4]] -- indicates the delted key was already ack'd perviously, with creation idnex 1; additionaly there also
+	 * existed a local set op targeting this key, with message id 4
 	 */
 	previousIndex: (number | number[])[];
 }

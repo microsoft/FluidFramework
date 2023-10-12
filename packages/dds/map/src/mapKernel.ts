@@ -996,9 +996,6 @@ export class MapKernel {
 					return;
 				}
 				this.clearCore(local);
-				this.localKeysIndexTracker.clear();
-				this.pendingSetTracker.clear();
-				this.pendingDeleteTracker.clear();
 			},
 			submit: (op: IMapClearOperation, localOpMetadata: IMapClearLocalOpMetadata) => {
 				assert(
