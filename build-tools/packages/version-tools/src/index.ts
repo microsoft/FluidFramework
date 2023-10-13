@@ -28,6 +28,7 @@ export {
 	fromInternalScheme,
 	isInternalVersionRange,
 	isInternalVersionScheme,
+	REQUIRED_PRERELEASE_IDENTIFIER,
 	toInternalScheme,
 } from "./internalVersionScheme";
 export {
@@ -39,5 +40,5 @@ export {
 	VersionScheme,
 } from "./schemes";
 export { bumpRange, detectBumpType, isPrereleaseVersion, getPreviousVersions } from "./semver";
-export { getIsLatest, getSimpleVersion } from "./versions";
+export { getIsLatest, getSimpleVersion, TagPrefix } from "./versions";
 export { fromVirtualPatchScheme, toVirtualPatchScheme } from "./virtualPatchScheme";

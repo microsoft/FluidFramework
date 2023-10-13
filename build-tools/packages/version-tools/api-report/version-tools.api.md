@@ -30,8 +30,6 @@ export function fromInternalScheme(internalVersion: semver.SemVer | string, allo
 // @public
 export function fromVirtualPatchScheme(virtualPatchVersion: semver.SemVer | string): semver.SemVer;
 
-// Warning: (ae-forgotten-export) The symbol "TagPrefix" needs to be exported by the entry point index.d.ts
-//
 // @public (undocumented)
 export function getIsLatest(prefix: TagPrefix, current_version: string, input_tags?: string[], includeInternalVersions?: boolean, log?: boolean): boolean;
 
@@ -89,8 +87,14 @@ export type RangeOperatorWithVersion = `${Exclude<RangeOperator, "">}${string}`;
 // @public
 export type ReleaseVersion = string;
 
+// @public
+export const REQUIRED_PRERELEASE_IDENTIFIER = "internal";
+
 // @public (undocumented)
 export function sortVersions(versionList: string[], allowPrereleases?: boolean): string[];
+
+// @public (undocumented)
+export type TagPrefix = string | "client" | "server" | "azure" | "build-tools";
 
 // @public
 export function toInternalScheme(publicVersion: semver.SemVer | string, version: semver.SemVer | string, allowPrereleases?: boolean, prereleaseIdentifier?: string): semver.SemVer;

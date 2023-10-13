@@ -10,7 +10,7 @@ import { detectVersionScheme, getLatestReleaseFromList } from "./schemes";
 import { changePreReleaseIdentifier, isInternalVersionScheme } from "./internalVersionScheme";
 
 // TODO: Replace this with a shared release group type.
-type TagPrefix = string | "client" | "server" | "azure" | "build-tools";
+export type TagPrefix = string | "client" | "server" | "azure" | "build-tools";
 
 /**
  * Generates a simpler version scheme used for some packages and prereleases.
