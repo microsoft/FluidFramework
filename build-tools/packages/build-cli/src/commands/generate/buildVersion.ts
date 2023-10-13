@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 import { Flags } from "@oclif/core";
-import * as childProcess from "child_process";
-import * as fs from "fs";
+import * as childProcess from "node:child_process";
+import * as fs from "node:fs";
 
 import { getIsLatest, getSimpleVersion } from "@fluid-tools/version-tools";
 

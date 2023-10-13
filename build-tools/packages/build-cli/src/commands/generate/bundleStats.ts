@@ -4,7 +4,7 @@
  */
 import { Flags } from "@oclif/core";
 import { copySync, existsSync, readJson } from "fs-extra";
-import path from "path";
+import path from "node:path";
 
 import { BaseCommand } from "../../base";
 import { PnpmListEntry, pnpmList } from "../../pnpm";

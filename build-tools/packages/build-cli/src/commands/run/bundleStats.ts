@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 import { Flags } from "@oclif/core";
-import { execSync } from "child_process";
-import path from "path";
+import { execSync } from "node:child_process";
+import path from "node:path";
 
 import { BaseCommand } from "../../base";
 

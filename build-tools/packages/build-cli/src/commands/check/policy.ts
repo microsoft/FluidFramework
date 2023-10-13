@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 import { Flags } from "@oclif/core";
-import * as childProcess from "child_process";
-import * as fs from "fs";
+import * as childProcess from "node:child_process";
+import * as fs from "node:fs";
 import { readJson } from "fs-extra";
-import { EOL as newline } from "os";
-import path from "path";
+import { EOL as newline } from "node:os";
+import path from "node:path";
 
 import { getFluidBuildConfig, Handler, policyHandlers } from "@fluidframework/build-tools";
 
