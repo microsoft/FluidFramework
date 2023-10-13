@@ -364,7 +364,7 @@ export class SchemaBuilderBase<
 	}
 
 	/**
-	 * {@link normalizeField} using this schema builder's `defaultKind`.
+	 * Normalizes an {@link ImplicitFieldSchema} into a {@link FieldSchema} using this schema builder's `defaultKind`.
 	 */
 	protected normalizeField<TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
