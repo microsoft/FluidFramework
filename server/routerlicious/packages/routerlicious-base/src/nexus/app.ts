@@ -2,7 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
+import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { json, urlencoded } from "body-parser";
 import compression from "compression";
 import cookieParser from "cookie-parser";
@@ -12,16 +13,19 @@ import { DriverVersionHeaderName } from "@fluidframework/server-services-client"
 import {
 	alternativeMorganLoggerMiddleware,
 	bindCorrelationId,
+	bindTelemetryContext,
+    bindTimeoutContext,
 	jsonMorganLoggerMiddleware,
 } from "@fluidframework/server-services-utils";
-import { RestLessServer } from "@fluidframework/server-services";
+import { RestLessServer, IHttpServerConfig } from "@fluidframework/server-services";
 import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-services-telemetry";
 import { catch404, getIdFromRequest, getTenantIdFromRequest, handleError } from "../utils";
 
-export function create(config: Provider) {
+export function create(config: Provider,
+					   collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>) {
 	// Maximum REST request size
 	const requestSize = config.get("nexus:restJsonSize");
-
+	const httpServerConfig: IHttpServerConfig = config.get("system:httpServer");
 	// Express app configuration
 	const app: express.Express = express();
 
@@ -41,15 +45,24 @@ export function create(config: Provider) {
 	app.set("trust proxy", 1);
 
 	app.use(compression());
+    app.use(bindTelemetryContext());
+    if (httpServerConfig?.connectionTimeoutMs) {
+        // If connectionTimeoutMs configured and not 0, bind timeout context.
+        app.use(bindTimeoutContext(httpServerConfig.connectionTimeoutMs));
+    }
 	const loggerFormat = config.get("logger:morganFormat");
 	if (loggerFormat === "json") {
 		app.use(
 			jsonMorganLoggerMiddleware("nexus", (tokens, req, res) => {
-				return {
+				const additionalProperties: Record<string, any> = {
 					[HttpProperties.driverVersion]: tokens.req(req, res, DriverVersionHeaderName),
 					[BaseTelemetryProperties.tenantId]: getTenantIdFromRequest(req.params),
 					[BaseTelemetryProperties.documentId]: getIdFromRequest(req.params),
 				};
+				if (req.body?.isEphemeralContainer !== undefined) {
+                    additionalProperties.isEphemeralContainer = req.body.isEphemeralContainer;
+				}
+				return additionalProperties;
 			}),
 		);
 	} else {
