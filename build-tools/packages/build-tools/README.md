@@ -255,5 +255,5 @@ These traces show the execution flow of the task, to show the task invocation in
 
 ### Other fluid-build:\* traces
 
--   `fluid-build:task:error` - Trace of detail error messages on any operations in a task.
--   `fluid-build:symlink` - Trace the action of `--symlink` switch.
+-   `fluid-build:task:error` - Trace of detailed error messages on any operation in a task
+-   `fluid-build:symlink` - Trace the action of the `--symlink` switch
