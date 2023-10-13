@@ -23,7 +23,7 @@ import {
 	SequenceField as SF,
 	singleTextCursor,
 } from "../../../feature-libraries";
-import { brand, brandOpaque, makeArray } from "../../../util";
+import { brand, brandOpaque } from "../../../util";
 import { TestChange } from "../../testChange";
 import { assertMarkListEqual, deepFreeze } from "../../utils";
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
@@ -31,8 +31,11 @@ import { composeAnonChanges, toDelta } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const nodeX = { type, value: 0 };
+const nodeY = { type, value: 1 };
 const content = [nodeX];
+const content2 = [nodeX, nodeY];
 const contentCursor: ITreeCursorSynchronous[] = [singleTextCursor(nodeX)];
+const contentCursor2: ITreeCursorSynchronous[] = content2.map((node) => singleTextCursor(node));
 const moveId = brand<ChangesetLocalId>(4242);
 const moveId2 = brand<ChangesetLocalId>(4343);
 const tag: RevisionTag = mintRevisionTag();
@@ -40,12 +43,6 @@ const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
 const deltaMoveId = brandOpaque<Delta.MoveId>(0);
 const fooField = brand<FieldKey>("foo");
-
-const DUMMY_REVIVED_NODE_TYPE: TreeSchemaIdentifier = brand("DummyRevivedNode");
-
-function fakeRepairData(_revision: RevisionTag, _index: number, count: number): Delta.ProtoNode[] {
-	return makeArray(count, () => singleTextCursor({ type: DUMMY_REVIVED_NODE_TYPE }));
-}
 
 function toDeltaShallow(change: TestChangeset): Delta.MarkList {
 	deepFreeze(change);
@@ -313,6 +310,75 @@ describe("SequenceField - toDelta", () => {
 			MemoizedIdRangeAllocator.fromNextId(),
 		);
 		assertMarkListEqual(actual, expected);
+	});
+
+	describe("Transient changes", () => {
+		// TODO: Should test revives and returns in addition to inserts and moves
+		it("insert & delete", () => {
+			const changeset = [
+				Mark.transient(Mark.insert(content2, brand(0)), Mark.delete(2, brand(2))),
+			];
+			const delta = toDelta(changeset);
+			const expected: Delta.MarkList = [
+				{
+					type: Delta.MarkType.Insert,
+					content: contentCursor2,
+					detachId: { minor: 2 },
+				},
+			];
+			assertMarkListEqual(delta, expected);
+		});
+
+		it.skip("insert & move", () => {
+			const changeset = [
+				Mark.transient(Mark.insert(content2, brand(0)), Mark.moveOut(2, brand(2))),
+				{ count: 1 },
+				Mark.moveIn(2, brand(2)),
+			];
+			const delta = toDelta(changeset);
+			const expected: Delta.MarkList = [];
+			assertMarkListEqual(delta, expected);
+		});
+
+		it.skip("move & delete", () => {
+			const changeset = [
+				Mark.moveOut(2, brand(0)),
+				{ count: 1 },
+				Mark.transient(Mark.moveIn(2, brand(0)), Mark.delete(2, brand(2))),
+			];
+			const delta = toDelta(changeset);
+			const expected: Delta.MarkList = [];
+			assertMarkListEqual(delta, expected);
+		});
+
+		it.skip("insert & move & delete", () => {
+			const changeset = [
+				Mark.transient(Mark.insert(content2, brand(0)), Mark.moveOut(2, brand(2))),
+				{ count: 1 },
+				Mark.transient(Mark.moveIn(2, brand(0)), Mark.delete(2, brand(2))),
+			];
+			const delta = toDelta(changeset);
+			const expected: Delta.MarkList = [];
+			assertMarkListEqual(delta, expected);
+		});
+
+		it("move & move & move", () => {
+			const changeset = [
+				Mark.moveOut(2, brand(0), { finalEndpoint: { localId: brand(4) } }),
+				{ count: 1 },
+				Mark.transient(Mark.moveIn(2, brand(0)), Mark.moveOut(2, brand(2))),
+				Mark.transient(Mark.moveIn(2, brand(2)), Mark.moveOut(2, brand(4))),
+				{ count: 1 },
+				Mark.moveIn(2, brand(4), { finalEndpoint: { localId: brand(0) } }),
+			];
+			const delta = toDelta(changeset);
+			const expected: Delta.MarkList = [
+				{ type: Delta.MarkType.MoveOut, count: 2, moveId: brand(0) },
+				2,
+				{ type: Delta.MarkType.MoveIn, count: 2, moveId: brand(0) },
+			];
+			assertMarkListEqual(delta, expected);
+		});
 	});
 
 	describe("Muted changes", () => {
