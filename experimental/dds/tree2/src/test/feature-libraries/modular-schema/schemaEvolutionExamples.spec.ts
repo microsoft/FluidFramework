@@ -26,7 +26,7 @@ import {
 } from "../../../core";
 // eslint-disable-next-line import/no-internal-modules
 import { allowsFieldSuperset, allowsTreeSuperset } from "../../../feature-libraries/modular-schema";
-import { SchemaBuilder } from "../../../domains";
+import { SchemaBuilder, leaf } from "../../../domains";
 
 class TestSchemaRepository extends InMemoryStoredSchemaRepository {
 	public constructor(
@@ -227,6 +227,10 @@ describe("Schema Evolution Examples", () => {
 			assert(stored.tryUpdateTreeSchema(text.name, text));
 			assert(stored.tryUpdateTreeSchema(codePoint.name, codePoint));
 			assert(stored.tryUpdateRootFieldSchema(tolerantRoot));
+			assert(stored.tryUpdateTreeSchema(leaf.number.name, leaf.number));
+			assert(stored.tryUpdateTreeSchema(leaf.boolean.name, leaf.boolean));
+			assert(stored.tryUpdateTreeSchema(leaf.string.name, leaf.string));
+			assert(stored.tryUpdateTreeSchema(leaf.handle.name, leaf.handle));
 
 			// That will cause the document stored schema to change,
 			// which will notify and applications with the document open.
