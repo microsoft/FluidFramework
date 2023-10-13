@@ -119,7 +119,6 @@ export const doBumpReleasedDependencies: StateHandlerFunction = async (
 				? context.packagesInReleaseGroup(releaseGroup)
 				: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				  [context.fullPackageMap.get(releaseGroup)!],
-			false,
 		);
 		// There were updates, which is considered a failure.
 		BaseStateHandler.signalFailure(machine, state);
@@ -176,7 +175,7 @@ export const doReleaseGroupBump: StateHandlerFunction = async (
 		log,
 	);
 
-	if (shouldInstall === true && !(await FluidRepo.ensureInstalled(packages, false))) {
+	if (shouldInstall === true && !(await FluidRepo.ensureInstalled(packages))) {
 		log.errorLog("Install failed.");
 		BaseStateHandler.signalFailure(machine, state);
 		return true;

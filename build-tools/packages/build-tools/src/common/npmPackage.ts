@@ -19,13 +19,11 @@ import { defaultLogger } from "./logging";
 import { MonoRepo, PackageManager } from "./monoRepo";
 import {
 	ExecAsyncResult,
-	copyFileAsync,
 	execWithErrorAsync,
 	existsSync,
 	isSameFileOrDir,
 	lookUpDirSync,
 	rimrafWithErrorAsync,
-	unlinkAsync,
 } from "./utils";
 
 const { log, verbose, errorLog: error } = defaultLogger;
@@ -250,22 +248,6 @@ export class Package {
 		this._packageJson = readJsonSync(this.packageJsonFileName);
 	}
 
-	public async noHoistInstall(repoRoot: string) {
-		// Fluid specific
-		const rootNpmRC = path.join(repoRoot, ".npmrc");
-		const npmRC = path.join(this.directory, ".npmrc");
-
-		await copyFileAsync(rootNpmRC, npmRC);
-		const result = await execWithErrorAsync(
-			`${this.installCommand} --no-package-lock --no-shrinkwrap`,
-			{ cwd: this.directory },
-			this.nameColored,
-		);
-		await unlinkAsync(npmRC);
-
-		return result;
-	}
-
 	public async checkInstall(print: boolean = true) {
 		if (this.combinedDependencies.next().done) {
 			// No dependencies
@@ -428,20 +410,6 @@ export class Packages {
 
 	public async cleanNodeModules() {
 		return this.queueExecOnAllPackage((pkg) => pkg.cleanNodeModules(), "rimraf node_modules");
-	}
-
-	public async noHoistInstall(repoRoot: string) {
-		return this.queueExecOnAllPackage(
-			(pkg) => pkg.noHoistInstall(repoRoot),
-			"install dependencies",
-		);
-	}
-
-	public async filterPackages(releaseGroup: string | undefined) {
-		if (releaseGroup === undefined) {
-			return this.packages;
-		}
-		return this.packages.filter((p) => p.monoRepo?.kind === releaseGroup);
 	}
 
 	public async forEachAsync<TResult>(

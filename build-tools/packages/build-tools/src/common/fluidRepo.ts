@@ -320,29 +320,24 @@ export class FluidRepo {
 		this.packages.packages.forEach((pkg) => pkg.reload());
 	}
 
-	public static async ensureInstalled(packages: Package[], check: boolean = true) {
+	public static async ensureInstalled(packages: Package[]) {
 		const installedMonoRepo = new Set<MonoRepo>();
 		const installPromises: Promise<ExecAsyncResult>[] = [];
 		for (const pkg of packages) {
-			if (!check || !(await pkg.checkInstall(false))) {
-				if (pkg.monoRepo) {
-					if (!installedMonoRepo.has(pkg.monoRepo)) {
-						installedMonoRepo.add(pkg.monoRepo);
-						installPromises.push(pkg.monoRepo.install());
-					}
-				} else {
-					installPromises.push(pkg.install());
+			if (pkg.monoRepo) {
+				if (!installedMonoRepo.has(pkg.monoRepo)) {
+					installedMonoRepo.add(pkg.monoRepo);
+					installPromises.push(pkg.monoRepo.install());
 				}
+			} else {
+				installPromises.push(pkg.install());
 			}
 		}
 		const rets = await Promise.all(installPromises);
 		return !rets.some((ret) => ret.error);
 	}
 
-	public async install(nohoist: boolean = false) {
-		if (nohoist) {
-			return this.packages.noHoistInstall(this.resolvedRoot);
-		}
+	public async install() {
 		return FluidRepo.ensureInstalled(this.packages.packages);
 	}
 

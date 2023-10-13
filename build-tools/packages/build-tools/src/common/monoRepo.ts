@@ -247,7 +247,7 @@ export class MonoRepo {
 	}
 
 	public async install() {
-		this.logger.info(`${this.kind}: Installing - ${this.installCommand}`);
+		this.logger.log(`Release group ${this.kind}: Installing - ${this.installCommand}`);
 		return execWithErrorAsync(this.installCommand, { cwd: this.repoPath }, this.repoPath);
 	}
 	public async uninstall() {
