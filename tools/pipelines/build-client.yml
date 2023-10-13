@@ -119,7 +119,7 @@ extends:
     checkoutSubmodules: true
     taskBundleAnalysis: true
     taskLint: false
-    taskBuildDocs: false
+    taskBuildDocs: true
     publishDocs: true
     taskTest:
     - webpack
