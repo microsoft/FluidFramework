@@ -542,7 +542,7 @@ function checkPropertyInvariants(root: Tree): void {
 		assert(typeof child !== "function");
 		assert(typeof key !== "symbol");
 
-		if (typeof child === "object") {
+		if (typeof child === "object" && child !== null) {
 			if (treeValues.has(child)) {
 				assertAllowedValue(child);
 				primitivesAndValues.set(child, (primitivesAndValues.get(child) ?? 0) + 1);
@@ -557,7 +557,7 @@ function checkPropertyInvariants(root: Tree): void {
 				const prototypeInner = Object.getPrototypeOf(prototype);
 				assert(prototypeInner === LazyStruct.prototype);
 			}
-		} else if (isPrimitiveValue(child)) {
+		} else if (isPrimitiveValue(child) || child === null) {
 			// TODO: more robust check for schema names
 			if (key === "type") {
 				assert(typeof child === "string");

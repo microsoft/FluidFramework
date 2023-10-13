@@ -45,7 +45,7 @@ const TreeSchemaFormat = Type.Object(
 		name: TreeSchemaIdentifierSchema,
 		structFields: Type.Array(NamedFieldSchemaFormat),
 		mapFields: Type.Optional(FieldSchemaFormat),
-		// TODO: don't use external type here.
+		// TODO: don't use external type here!
 		leafValue: Type.Optional(Type.Enum(ValueSchema)),
 	},
 	noAdditionalProps,
