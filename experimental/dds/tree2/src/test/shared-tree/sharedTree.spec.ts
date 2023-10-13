@@ -657,6 +657,29 @@ describe("SharedTree", () => {
 			}
 		});
 
+		it.skip("Regression test for 0x370", async () => {
+			const b = new SchemaBuilder({ scope: "0x370 repro" });
+			const schema = b.toDocumentSchema(b.optional(leaf.number));
+			const config: InitializeAndSchematizeConfiguration<typeof schema.rootFieldSchema> = {
+				schema,
+				initialTree: undefined,
+				allowedSchemaModifications: AllowedUpdateType.None,
+			};
+
+			const provider = new TestTreeProviderLite(3);
+			const [tree1, tree2, tree3] = provider.trees.map((t) => t.schematize(config).editableTree2(schema));
+			
+			tree1.content = 1;
+			tree2.content = 2;
+			tree3.content = 3;
+
+			provider.processMessages();
+
+			assert.equal(tree1.content, 3);
+			assert.equal(tree2.content, 3);
+			assert.equal(tree3.content, 3);
+		});
+
 		it("can move nodes across fields", () => {
 			const provider = new TestTreeProviderLite(2);
 			const tree1 = provider.trees[0].view;
@@ -711,6 +734,10 @@ describe("SharedTree", () => {
 			};
 			validateTree(tree1, [expectedState]);
 			validateTree(tree2, [expectedState]);
+		});
+
+		it("can process multiple optional sets", () => {
+
 		});
 
 		// TODO: unskip once the bug which compose is fixed
