@@ -667,8 +667,10 @@ describe("SharedTree", () => {
 			};
 
 			const provider = new TestTreeProviderLite(3);
-			const [tree1, tree2, tree3] = provider.trees.map((t) => t.schematize(config).editableTree2(schema));
-			
+			const [tree1, tree2, tree3] = provider.trees.map((t) =>
+				t.schematize(config).editableTree2(schema),
+			);
+
 			tree1.content = 1;
 			tree2.content = 2;
 			tree3.content = 3;
