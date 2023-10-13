@@ -50,10 +50,10 @@
 
 # PUBLIC API REPORTS
 # All packages are assumed to have public APIs unless defined otherwise in the sections below.
-api-report/                                                               @microsoft/fluid-cr-api
+**/api-report/                                                            @microsoft/fluid-cr-api
 # These packages represent the primary public API of the framework.
-api-report/azure-client.api.md                                            @microsoft/fluid-cr-api
-api-report/azure-service-utils.api.md                                     @microsoft/fluid-cr-api
+azure/packages/azure-client/api-report/azure-client.api.md                @microsoft/fluid-cr-api
+azure/packages/azure-service-utils/api-report/azure-service-utils.api.md  @microsoft/fluid-cr-api
 api-report/fluid-framework.api.md                                         @microsoft/fluid-cr-api
 api-report/tinylicious-client.api.md                                      @microsoft/fluid-cr-api
 

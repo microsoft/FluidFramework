@@ -23,3 +23,5 @@ export {
 	RestrictiveReadonlyRecord,
 	BrandedKeyContent,
 } from "./util";
+
+export { NormalizeField, NormalizeAllowedTypes } from "./feature-libraries";

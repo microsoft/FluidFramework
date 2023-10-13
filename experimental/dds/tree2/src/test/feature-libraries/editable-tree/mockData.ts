@@ -19,9 +19,11 @@ import {
 	cursorsFromContextualData,
 	getEditableTreeContext,
 	FieldSchema,
-	SchemaBuilder,
 	Any,
 	TypedSchemaCollection,
+	NormalizeField,
+	ImplicitFieldSchema,
+	SchemaAware,
 } from "../../../feature-libraries";
 import {
 	ValueSchema,
@@ -34,6 +36,7 @@ import {
 	SchemaData,
 } from "../../../core";
 import { brand, Brand } from "../../../util";
+import { SchemaBuilder } from "../../../domains";
 
 const builder = new SchemaBuilder({ scope: "mock data" });
 
@@ -46,59 +49,59 @@ export const float64Schema = builder.leaf("Float64", ValueSchema.Number);
 export const boolSchema = builder.leaf("Bool", ValueSchema.Boolean);
 
 export const simplePhonesSchema = builder.struct("Test:SimplePhones-1.0.0", {
-	[EmptyKey]: SchemaBuilder.field(FieldKinds.sequence, stringSchema),
+	[EmptyKey]: FieldSchema.create(FieldKinds.sequence, [stringSchema]),
 });
 
 export const complexPhoneSchema = builder.struct("Test:Phone-1.0.0", {
-	number: SchemaBuilder.field(FieldKinds.required, stringSchema),
-	prefix: SchemaBuilder.field(FieldKinds.required, stringSchema),
-	extraPhones: SchemaBuilder.field(FieldKinds.optional, simplePhonesSchema),
+	number: stringSchema,
+	prefix: stringSchema,
+	extraPhones: FieldSchema.create(FieldKinds.optional, [simplePhonesSchema]),
 });
 
 export const phonesSchema = builder.fieldNode(
 	"Test:Phones-1.0.0",
-	SchemaBuilder.fieldSequence(
+	builder.sequence([
 		stringSchema,
 		int32Schema,
 		complexPhoneSchema,
 		// array of arrays
 		simplePhonesSchema,
-	),
+	]),
 );
 
 export const addressSchema = builder.struct("Test:Address-1.0.0", {
-	zip: SchemaBuilder.field(FieldKinds.required, stringSchema, int32Schema),
-	street: SchemaBuilder.field(FieldKinds.optional, stringSchema),
-	city: SchemaBuilder.field(FieldKinds.optional, stringSchema),
-	country: SchemaBuilder.field(FieldKinds.optional, stringSchema),
-	phones: SchemaBuilder.field(FieldKinds.optional, phonesSchema),
-	sequencePhones: SchemaBuilder.field(FieldKinds.sequence, stringSchema),
+	zip: [stringSchema, int32Schema],
+	street: FieldSchema.create(FieldKinds.optional, [stringSchema]),
+	city: FieldSchema.create(FieldKinds.optional, [stringSchema]),
+	country: FieldSchema.create(FieldKinds.optional, [stringSchema]),
+	phones: FieldSchema.create(FieldKinds.optional, [phonesSchema]),
+	sequencePhones: FieldSchema.create(FieldKinds.sequence, [stringSchema]),
 });
 
 export const mapStringSchema = builder.map(
 	"Map<String>",
-	SchemaBuilder.field(FieldKinds.optional, stringSchema),
+	FieldSchema.create(FieldKinds.optional, [stringSchema]),
 );
 
 export const personSchema = builder.struct("Test:Person-1.0.0", {
-	name: SchemaBuilder.field(FieldKinds.required, stringSchema),
-	age: SchemaBuilder.field(FieldKinds.optional, int32Schema),
-	adult: SchemaBuilder.field(FieldKinds.optional, boolSchema),
-	salary: SchemaBuilder.field(FieldKinds.optional, float64Schema, int32Schema, stringSchema),
-	friends: SchemaBuilder.field(FieldKinds.optional, mapStringSchema),
-	address: SchemaBuilder.field(FieldKinds.optional, addressSchema),
+	name: stringSchema,
+	age: FieldSchema.create(FieldKinds.optional, [int32Schema]),
+	adult: FieldSchema.create(FieldKinds.optional, [boolSchema]),
+	salary: FieldSchema.create(FieldKinds.optional, [float64Schema, int32Schema, stringSchema]),
+	friends: FieldSchema.create(FieldKinds.optional, [mapStringSchema]),
+	address: FieldSchema.create(FieldKinds.optional, [addressSchema]),
 });
 
 export const optionalChildSchema = builder.struct("Test:OptionalChild-1.0.0", {
-	child: SchemaBuilder.fieldOptional(Any),
+	child: SchemaBuilder.optional(Any),
 });
 
 export const arraySchema = builder.fieldNode(
 	"Test:Array-1.0.0",
-	SchemaBuilder.field(FieldKinds.sequence, stringSchema, int32Schema),
+	FieldSchema.create(FieldKinds.sequence, [stringSchema, int32Schema]),
 );
 
-export const rootPersonSchema = SchemaBuilder.field(FieldKinds.optional, personSchema);
+export const rootPersonSchema = FieldSchema.create(FieldKinds.optional, [personSchema]);
 
 export const personSchemaLibrary = builder.finalize();
 
@@ -154,14 +157,18 @@ export type Person = EditableTree &
 		"editable-tree.Test:Person-1.0.0"
 	>;
 
-export const personData: ContextuallyTypedNodeDataObject = {
+export const personData: SchemaAware.TypedField<
+	typeof rootPersonSchema,
+	SchemaAware.ApiMode.Flexible
+> &
+	ContextuallyTypedNodeData = {
 	name: "Adam",
 	age: 35,
 	adult: true,
 	salary: { [valueSymbol]: 10420.2, [typeNameSymbol]: float64Schema.name },
 	friends: {
 		Mat: "Mat",
-	},
+	} as any, // TODO: map node builder type safety
 	address: {
 		zip: "99999",
 		street: "treeStreet",
@@ -178,10 +185,12 @@ export const personData: ContextuallyTypedNodeDataObject = {
 				[typeNameSymbol]: simplePhonesSchema.name,
 				[EmptyKey]: ["112", "113"],
 			},
-		],
+		] as any, // TODO: field node builder type safety
 		sequencePhones: ["113", "114"],
+		city: undefined,
+		country: undefined,
 	},
-};
+} satisfies ContextuallyTypedNodeDataObject;
 
 export function personJsonableTree(): JsonableTree {
 	return jsonableTreeFromCursor(
@@ -236,7 +245,9 @@ export function getPerson(): Person {
 /**
  * Create schema supporting all type defined in this file, with the specified root field.
  */
-export function buildTestSchema<T extends FieldSchema>(rootField: T) {
+export function buildTestSchema<TSchema extends ImplicitFieldSchema>(
+	rootField: TSchema,
+): TypedSchemaCollection<NormalizeField<TSchema, typeof FieldKinds.required>> {
 	return new SchemaBuilder({
 		scope: "buildTestSchema",
 		libraries: [personSchemaLibrary],

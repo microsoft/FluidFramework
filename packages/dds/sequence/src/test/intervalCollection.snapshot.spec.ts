@@ -13,7 +13,7 @@ import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 import { IIntervalCollection, intervalLocatorFromEndpoint, Side } from "../intervalCollection";
-import { IntervalStickiness, IntervalType, SequenceInterval } from "../intervals";
+import { IntervalStickiness, SequenceInterval } from "../intervals";
 import { assertIntervals } from "./intervalUtils";
 
 async function loadSharedString(
@@ -51,20 +51,18 @@ async function getSingleIntervalSummary(): Promise<{ summary: ISummaryTree; seq:
 	sharedString.connect(services);
 	sharedString.insertText(0, "ABCDEF");
 	const collection = sharedString.getIntervalCollection("test");
-	collection.add(0, 2, IntervalType.SlideOnRemove);
+	collection.add({ start: 0, end: 2 });
 	const collectionStartSticky = sharedString.getIntervalCollection("start-sticky");
-	const startStickyInterval = collectionStartSticky.add(
-		{ pos: 0, side: Side.After },
-		{ pos: 2, side: Side.After },
-		IntervalType.SlideOnRemove,
-	);
+	const startStickyInterval = collectionStartSticky.add({
+		start: { pos: 0, side: Side.After },
+		end: { pos: 2, side: Side.After },
+	});
 	assert.equal(startStickyInterval.stickiness, IntervalStickiness.START);
 	const collectionEndSticky = sharedString.getIntervalCollection("end-sticky");
-	const endStickyInterval = collectionEndSticky.add(
-		{ pos: 0, side: Side.Before },
-		{ pos: 2, side: Side.Before },
-		IntervalType.SlideOnRemove,
-	);
+	const endStickyInterval = collectionEndSticky.add({
+		start: { pos: 0, side: Side.Before },
+		end: { pos: 2, side: Side.Before },
+	});
 	assert.equal(endStickyInterval.stickiness, IntervalStickiness.END);
 	containerRuntimeFactory.processAllMessages();
 	const { summary } = await sharedString.summarize();
@@ -170,7 +168,7 @@ describe("IntervalCollection snapshotting", () => {
 		});
 
 		it("new interval can be added after reload", async () => {
-			collection.add(2, 4, IntervalType.SlideOnRemove);
+			collection.add({ start: 2, end: 4 });
 			assertIntervals(sharedString, collection, [
 				{ start: 0, end: 2 },
 				{ start: 2, end: 4 },
@@ -188,7 +186,7 @@ describe("IntervalCollection snapshotting", () => {
 				collection.getIntervalById(id) ?? assert.fail("collection should have interval");
 			const locator1 = intervalLocatorFromEndpoint(interval1.start);
 			assert.deepEqual(locator1, { interval: interval1, label: "test" });
-			const interval2 = collection.add(1, 2, IntervalType.SlideOnRemove);
+			const interval2 = collection.add({ start: 1, end: 2 });
 			const locator2 = intervalLocatorFromEndpoint(interval2.start);
 			assert.deepEqual(locator2, { interval: interval2, label: "test" });
 		});

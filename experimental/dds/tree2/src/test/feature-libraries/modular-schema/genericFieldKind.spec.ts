@@ -14,11 +14,7 @@ import {
 } from "../../../feature-libraries";
 import { makeAnonChange, tagChange, TaggedChange, Delta, FieldKey } from "../../../core";
 import { fakeIdAllocator, brand } from "../../../util";
-import {
-	EncodingTestData,
-	fakeTaggedRepair as fakeRepair,
-	makeEncodingTestSuite,
-} from "../../utils";
+import { EncodingTestData, makeEncodingTestSuite } from "../../utils";
 import { IJsonCodec } from "../../../codec";
 import { singleJsonCursor } from "../../../domains";
 import { ValueChangeset, valueField, valueHandler } from "./basicRebasers";
@@ -84,7 +80,6 @@ const childInverter = (nodeChange: NodeChangeset): NodeChangeset => {
 	const inverse = valueHandler.rebaser.invert(
 		makeAnonChange(valueChange),
 		unexpectedDelegate,
-		fakeRepair,
 		fakeIdAllocator,
 		crossFieldManager,
 	);
@@ -355,7 +350,6 @@ describe("Generic FieldKind", () => {
 		const actual = genericFieldKind.changeHandler.rebaser.invert(
 			makeAnonChange(forward),
 			childInverter,
-			fakeRepair,
 			fakeIdAllocator,
 			crossFieldManager,
 		);

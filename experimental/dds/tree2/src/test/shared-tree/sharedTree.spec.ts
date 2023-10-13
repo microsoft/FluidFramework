@@ -16,7 +16,6 @@ import {
 	jsonableTreeFromCursor,
 	on,
 	ContextuallyTypedNodeData,
-	SchemaBuilder,
 	Any,
 	TreeStatus,
 } from "../../feature-libraries";
@@ -26,13 +25,14 @@ import {
 	SummarizeType,
 	TestTreeProvider,
 	TestTreeProviderLite,
+	emptyJsonSequenceConfig,
+	initializeTestTree,
 	jsonSequenceRootSchema,
 	toJsonableTree,
 	validateTree,
 	validateTreeContent,
 	validateViewConsistency,
 	viewWithContent,
-	wrongSchema,
 } from "../utils";
 import {
 	ForestType,
@@ -62,18 +62,12 @@ import {
 } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
 import { EditManager } from "../../shared-tree-core";
-import { jsonNumber, jsonSchema, leaf } from "../../domains";
+import { jsonNumber, jsonSchema, leaf, SchemaBuilder } from "../../domains";
 import { noopValidator } from "../../codec";
 
 const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator });
 
 const fooKey: FieldKey = brand("foo");
-
-const emptyJsonSequenceConfig: InitializeAndSchematizeConfiguration = {
-	schema: jsonSequenceRootSchema,
-	allowedSchemaModifications: AllowedUpdateType.None,
-	initialTree: [],
-};
 
 describe("SharedTree", () => {
 	// TODO: concurrent use of schematize should not double initialize. Should use constraints so second run conflicts.
@@ -103,8 +97,8 @@ describe("SharedTree", () => {
 	});
 
 	it("editable-tree-2-end-to-end", () => {
-		const builder = new SchemaBuilder({ scope: "e2e", libraries: [leaf.library] });
-		const schema = builder.toDocumentSchema(SchemaBuilder.fieldRequired(leaf.number));
+		const builder = new SchemaBuilder({ scope: "e2e" });
+		const schema = builder.toDocumentSchema(leaf.number);
 		const factory = new SharedTreeFactory({
 			jsonValidator: typeboxValidator,
 			forest: ForestType.Reference,
@@ -545,7 +539,7 @@ describe("SharedTree", () => {
 			const schema = new SchemaBuilder({
 				scope: "optional",
 				libraries: [jsonSchema],
-			}).toDocumentSchema(SchemaBuilder.fieldOptional(jsonNumber));
+			}).toDocumentSchema(SchemaBuilder.optional(leaf.number));
 			const config: InitializeAndSchematizeConfiguration = {
 				schema,
 				initialTree: value,
@@ -1072,9 +1066,9 @@ describe("SharedTree", () => {
 		const builder = new SchemaBuilder({ scope: "Events test schema" });
 		const numberSchema = builder.leaf("number", ValueSchema.Number);
 		const treeSchema = builder.struct("root", {
-			x: SchemaBuilder.fieldRequired(numberSchema),
+			x: numberSchema,
 		});
-		const schema = builder.toDocumentSchema(SchemaBuilder.fieldOptional(Any));
+		const schema = builder.toDocumentSchema(builder.optional(Any));
 
 		it("triggers events for local and subtree changes", () => {
 			const view = viewWithContent({
@@ -1890,12 +1884,12 @@ describe("SharedTree", () => {
 		it("Anchor Stability fails when root node is deleted", async () => {
 			const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 
-			const rootFieldSchema = SchemaBuilder.fieldRequired(Any);
+			const rootFieldSchema = SchemaBuilder.required(Any);
 			const testSchemaBuilder = new SchemaBuilder({ scope: "testSchema" });
 			const numberSchema = testSchemaBuilder.leaf("Number", ValueSchema.Number);
 			const rootNodeSchema = testSchemaBuilder.structRecursive("Node", {
-				foo: SchemaBuilder.fieldSequence(numberSchema),
-				foo2: SchemaBuilder.fieldSequence(numberSchema),
+				foo: SchemaBuilder.sequence(numberSchema),
+				foo2: SchemaBuilder.sequence(numberSchema),
 			});
 			const testSchema = testSchemaBuilder.toDocumentSchema(rootFieldSchema);
 
@@ -2031,37 +2025,6 @@ describe("SharedTree", () => {
 		});
 	});
 });
-
-/**
- * Updates the given `tree` to the given `schema` and inserts `state` as its root.
- */
-// TODO: replace use of this with initialize or schematize, and/or move them out of this file and use viewWithContent
-function initializeTestTree(
-	tree: ISharedTreeView,
-	state?: JsonableTree | JsonableTree[],
-	schema: SchemaData = wrongSchema,
-): void {
-	if (state === undefined) {
-		tree.storedSchema.update(schema);
-		return;
-	}
-
-	if (!Array.isArray(state)) {
-		initializeTestTree(tree, [state], schema);
-	} else {
-		tree.storedSchema.update(schema);
-
-		// Apply an edit to the tree which inserts a node with a value
-		runSynchronous(tree, () => {
-			const writeCursors = state.map(singleTextCursor);
-			const field = tree.editor.sequenceField({
-				parent: undefined,
-				field: rootFieldKey,
-			});
-			field.insert(0, writeCursors);
-		});
-	}
-}
 
 /**
  * Inserts a single node under the root of the tree with the given value.

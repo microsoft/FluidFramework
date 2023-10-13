@@ -75,7 +75,7 @@ export const doBumpReleasedDependencies: StateHandlerFunction = async (
 		if (pkg.monoRepo === undefined) {
 			updatedPkgs.add(pkg.name);
 		} else {
-			updatedReleaseGroups.add(pkg.monoRepo.kind);
+			updatedReleaseGroups.add(pkg.monoRepo.releaseGroup);
 		}
 	}
 
@@ -163,7 +163,7 @@ export const doReleaseGroupBump: StateHandlerFunction = async (
 	const packages = rgRepo instanceof MonoRepo ? rgRepo.packages : [rgRepo];
 
 	log.info(
-		`Bumping ${releaseGroup} from ${releaseVersion} to ${newVersion} (${chalk.blue(
+		`Bumping ${releaseGroup} from ${releaseVersion} to ${newVersion.version} (${chalk.blue(
 			bumpType,
 		)} bump)!`,
 	);
