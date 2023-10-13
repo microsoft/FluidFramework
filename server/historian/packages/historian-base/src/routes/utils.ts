@@ -114,10 +114,7 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 		}
 	}
 	if (isEphemeral) {
-		Lumberjack.info(
-			`Document is ephemeral.`,
-			getLumberBaseProperties(documentId, tenantId),
-		);
+		Lumberjack.info(`Document is ephemeral.`, getLumberBaseProperties(documentId, tenantId));
 	}
 
 	const calculatedStorageName =
