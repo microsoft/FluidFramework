@@ -13,34 +13,22 @@ import {
 	compareUpPaths,
 	forEachNodeInSubtree,
 } from "../../../core";
-import { FieldKinds, SchemaBuilder, StructTyped, TypedField } from "../../../feature-libraries";
+import { FieldKinds, FieldSchema, StructTyped, TypedField } from "../../../feature-libraries";
 import { SharedTree, ISharedTreeView } from "../../../shared-tree";
-import { leaf } from "../../../domains";
+import { SchemaBuilder, leaf } from "../../../domains";
 
-const builder = new SchemaBuilder("Tree2 Fuzz", {}, leaf.library);
-export const fuzzNode = builder.structRecursive("Fuzz node", {
-	requiredF: SchemaBuilder.fieldRecursive(
-		FieldKinds.required,
-		() => fuzzNode,
-		...leaf.primitives,
-	),
-	optionalF: SchemaBuilder.fieldRecursive(
-		FieldKinds.optional,
-		() => fuzzNode,
-		...leaf.primitives,
-	),
-	sequenceF: SchemaBuilder.fieldRecursive(
-		FieldKinds.sequence,
-		() => fuzzNode,
-		...leaf.primitives,
-	),
+const builder = new SchemaBuilder({ scope: "tree2fuzz", libraries: [leaf.library] });
+export const fuzzNode = builder.structRecursive("node", {
+	requiredF: FieldSchema.createUnsafe(FieldKinds.required, [() => fuzzNode, ...leaf.primitives]),
+	optionalF: FieldSchema.createUnsafe(FieldKinds.optional, [() => fuzzNode, ...leaf.primitives]),
+	sequenceF: FieldSchema.createUnsafe(FieldKinds.sequence, [() => fuzzNode, ...leaf.primitives]),
 });
 
 export type FuzzNodeSchema = typeof fuzzNode;
 
 export type FuzzNode = StructTyped<FuzzNodeSchema>;
 
-export const fuzzSchema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(fuzzNode));
+export const fuzzSchema = builder.toDocumentSchema(fuzzNode.structFieldsObject.optionalF);
 
 export const onCreate = (tree: SharedTree) => {
 	tree.storedSchema.update(fuzzSchema);

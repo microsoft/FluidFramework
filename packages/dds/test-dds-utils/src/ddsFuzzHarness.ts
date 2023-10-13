@@ -309,6 +309,15 @@ export interface DDSFuzzSuiteOptions {
 	emitter: TypedEventEmitter<DDSFuzzHarnessEvents>;
 
 	/**
+	 * Whether to attempt automatic minimization of failures.
+	 * Minimization only works when the failure occurs as part of a reducer, and is mostly useful if the
+	 * model being tested defines {@link DDSFuzzModel.minimizationTransforms}.
+	 *
+	 * Default: true.
+	 */
+	enableMinimization: boolean;
+
+	/**
 	 * Strategy for validating eventual consistency of DDSes.
 	 * In random mode, each generated operation has the specified probability to instead be a synchronization point
 	 * (all connected clients process all ops) followed by validation that all clients agree on their shared state.
@@ -401,6 +410,7 @@ export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
 		enabled: true,
 	},
 	emitter: new TypedEventEmitter(),
+	enableMinimization: true,
 	numberOfClients: 3,
 	only: [],
 	skip: [],
@@ -1011,7 +1021,7 @@ function runTest<TChannelFactory extends IChannelFactory, TOperation extends Bas
 		try {
 			await runTestForSeed(model, options, seed, inCi ? undefined : saveInfo);
 		} catch (error) {
-			if (!saveInfo || inCi) {
+			if (!saveInfo || inCi || !options.enableMinimization) {
 				throw error;
 			}
 

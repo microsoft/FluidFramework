@@ -122,7 +122,7 @@ function applyValueFieldEdit(tree: ISharedTreeView, change: FuzzSet): void {
 		field?.is(fuzzNode.structFieldsObject.requiredF),
 		"Parent of Value change should have an optional field to modify",
 	);
-	field.setContent(singleTextCursor(change.value) as any);
+	field.content = singleTextCursor(change.value) as any;
 }
 
 function navigateToNode(tree: ISharedTreeView, path: DownPath | undefined): TreeNode | undefined {
@@ -147,6 +147,7 @@ function navigateToNode(tree: ISharedTreeView, path: DownPath | undefined): Tree
 					containedNode: childField.at(nextStep.index),
 				};
 			} else if (
+				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 				childField?.is(fuzzNode.structFieldsObject.optionalF) ||
 				childField?.is(fuzzNode.structFieldsObject.requiredF)
 			) {
@@ -167,18 +168,18 @@ function applyOptionalFieldEdit(tree: ISharedTreeView, change: FuzzSet | FuzzDel
 		case "set": {
 			const rootField = getEditableTree(tree);
 			if (change.parent === undefined) {
-				rootField.setContent(singleTextCursor(change.value) as any);
+				rootField.content = singleTextCursor(change.value) as any;
 			} else {
 				const parent = navigateToNode(tree, change.parent);
 				assert(parent?.is(fuzzNode), "Defined down-path should point to a valid parent");
-				parent.boxedOptionalF.setContent(singleTextCursor(change.value) as any);
+				parent.boxedOptionalF.content = singleTextCursor(change.value) as any;
 			}
 			break;
 		}
 		case "delete": {
 			const field = navigateToNode(tree, change.firstNode)?.parentField.parent;
 			assert(field?.is(fuzzNode.structFieldsObject.optionalF));
-			field.setContent(undefined);
+			field.content = undefined;
 			break;
 		}
 		default:

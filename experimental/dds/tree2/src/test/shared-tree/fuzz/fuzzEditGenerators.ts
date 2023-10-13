@@ -125,7 +125,7 @@ export const makeEditGenerator = (
 					value: state.random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
 			  }
 			: {
-					type: brand("Fuzz node"),
+					type: brand("tree2fuzz.node"),
 					fields: {
 						requiredF: [
 							{
@@ -519,11 +519,7 @@ function trySelectTreeField(
 	for (const option of options) {
 		switch (option) {
 			case "optional": {
-				// Note: 'as const' here doesn't work since optional field allowing only FuzzNodes isn't assignable to
-				// optional field allowing that plus primitives.
-				// This is because of the presence of mutation methods on the optional field which shouldn't be called
-				// by reasonable generator filters.
-				const field = { type: "optional", content: editable } as unknown as FuzzField;
+				const field = { type: "optional", content: editable } as const;
 				if (filter(field)) {
 					return field;
 				}
