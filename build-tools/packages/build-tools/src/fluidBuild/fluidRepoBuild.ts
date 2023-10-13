@@ -19,8 +19,10 @@ import {
 import { BuildGraph } from "./buildGraph";
 import { NpmDepChecker } from "./npmDepChecker";
 import { ISymlinkOptions, symlinkPackage } from "./symlinkUtils";
+import registerDebug from "debug";
+const traceInit = registerDebug("fluid-build:init");
 
-const { log, verbose } = defaultLogger;
+const { log } = defaultLogger;
 
 export interface IPackageMatchedOptions {
 	match: string[];
@@ -191,7 +193,7 @@ export class FluidRepoBuild extends FluidRepo {
 	}
 
 	private setMatchedPackage(pkg: Package) {
-		verbose(`${pkg.nameColored}: matched`);
+		traceInit(`${pkg.nameColored}: matched`);
 		pkg.setMatched();
 	}
 }

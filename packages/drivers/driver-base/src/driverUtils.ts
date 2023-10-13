@@ -11,6 +11,8 @@ import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
  * Extract and return the w3c data.
  * @param url - request url for which w3c data needs to be reported.
  * @param initiatorType - type of the network call
+ *
+ * @public
  */
 export function getW3CData(url: string, initiatorType: string) {
 	// From: https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming
@@ -92,9 +94,11 @@ export function getW3CData(url: string, initiatorType: string) {
 	};
 }
 
-/*
+/**
  * An implementation of Promise.race that gives you the winner of the promise race.
  * If one of the promises is rejected before any other is resolved, this method will return the error/reason from that rejection.
+ *
+ * @public
  */
 export async function promiseRaceWithWinner<T>(
 	promises: Promise<T>[],
@@ -106,6 +110,9 @@ export async function promiseRaceWithWinner<T>(
 	});
 }
 
+/**
+ * @public
+ */
 export function validateMessages(
 	reason: string,
 	messages: ISequencedDocumentMessage[],

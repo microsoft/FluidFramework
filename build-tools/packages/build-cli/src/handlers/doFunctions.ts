@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import chalk from "chalk";
 import { Machine } from "jssm";
 
@@ -163,7 +163,7 @@ export const doReleaseGroupBump: StateHandlerFunction = async (
 	const packages = rgRepo instanceof MonoRepo ? rgRepo.packages : [rgRepo];
 
 	log.info(
-		`Bumping ${releaseGroup} from ${releaseVersion} to ${newVersion} (${chalk.blue(
+		`Bumping ${releaseGroup} from ${releaseVersion} to ${newVersion.version} (${chalk.blue(
 			bumpType,
 		)} bump)!`,
 	);

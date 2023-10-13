@@ -5,7 +5,15 @@
 
 import { strict as assert } from "assert";
 import { unreachableCase } from "@fluidframework/core-utils";
-import { jsonArray, jsonNull, jsonObject, jsonRoot, jsonSchema, leaf } from "../../../domains";
+import {
+	jsonArray,
+	jsonNull,
+	jsonObject,
+	jsonRoot,
+	jsonSchema,
+	leaf,
+	SchemaBuilder,
+} from "../../../domains";
 
 import {
 	Sequence,
@@ -35,7 +43,6 @@ import {
 	FieldNodeSchema,
 	LeafSchema,
 	MapSchema,
-	SchemaBuilder,
 	StructSchema,
 	TreeSchema,
 	FieldSchema,

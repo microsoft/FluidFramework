@@ -4,7 +4,14 @@
  */
 
 import { strict as assert } from "assert";
-import { jsonArray, jsonBoolean, jsonObject, jsonSchema, leaf } from "../../../domains";
+import {
+	jsonArray,
+	jsonBoolean,
+	jsonObject,
+	jsonSchema,
+	leaf,
+	SchemaBuilder,
+} from "../../../domains";
 import { isAssignableTo, requireAssignableTo, requireFalse, requireTrue } from "../../../util";
 import {
 	Any,
@@ -20,7 +27,7 @@ import {
 	schemaIsStruct,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/typed-schema/typedTreeSchema";
-import { FieldKinds, SchemaBuilder } from "../../../feature-libraries";
+import { FieldKinds } from "../../../feature-libraries";
 
 describe("typedTreeSchema", () => {
 	const builder = new SchemaBuilder({ scope: "test", libraries: [jsonSchema] });

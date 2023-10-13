@@ -9,6 +9,8 @@ import { type AttributionKey } from "@fluidframework/runtime-definitions";
 
 /**
  * Events emitted by {@link ISharedCell}.
+ *
+ * @public
  */
 export interface ISharedCellEvents<T> extends ISharedObjectEvents {
 	/**
@@ -73,6 +75,8 @@ export interface ISharedCellEvents<T> extends ISharedObjectEvents {
  * `SharedCell` is an `EventEmitter`, and will emit events when other clients make modifications. You should
  * register for these events and respond appropriately as the data is modified. `valueChanged` will be emitted
  * in response to a `set`, and `delete` will be emitted in response to a `delete`.
+ *
+ * @public
  */
 // TODO: use `unknown` instead (breaking change).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
