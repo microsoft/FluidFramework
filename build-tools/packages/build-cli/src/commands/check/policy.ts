@@ -92,7 +92,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 			exclusive: ["stdin", "path", "fix", "handler"],
 		}),
 		...BaseCommand.flags,
-	};
+	} as const;
 
 	static handlerActionPerf = new Map<policyAction, Map<string, number>>();
 	static processed = 0;

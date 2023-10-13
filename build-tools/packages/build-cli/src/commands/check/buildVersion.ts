@@ -29,7 +29,7 @@ export default class CheckBuildVersionCommand extends PackageCommand<
 			default: false,
 		}),
 		...PackageCommand.flags,
-	};
+	} as const;
 
 	private versionToCheck: string | undefined;
 

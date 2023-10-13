@@ -35,7 +35,7 @@ export class CheckLayers extends BaseCommand<typeof CheckLayers> {
 			required: false,
 		}),
 		...BaseCommand.flags,
-	};
+	} as const;
 
 	async run(): Promise<void> {
 		const { flags } = this;

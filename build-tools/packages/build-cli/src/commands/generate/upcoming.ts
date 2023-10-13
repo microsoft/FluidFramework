@@ -46,7 +46,7 @@ export default class GenerateUpcomingCommand extends BaseCommand<typeof Generate
 			default: DEFAULT_FILE,
 		}),
 		...BaseCommand.flags,
-	};
+	} as const;
 
 	static readonly examples = [
 		{

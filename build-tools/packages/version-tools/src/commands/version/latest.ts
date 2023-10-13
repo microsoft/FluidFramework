@@ -34,7 +34,7 @@ export default class LatestCommand extends Command {
 			description:
 				"Include prerelease versions. By default, prerelease versions are excluded.",
 		}),
-	};
+	} as const;
 
 	static readonly examples = [
 		{

@@ -60,7 +60,7 @@ export abstract class BaseCommand<T extends typeof Command>
 			hidden: true,
 			helpGroup: "GLOBAL",
 		}),
-	};
+	} as const;
 
 	protected flags!: Flags<T>;
 	protected args!: Args<T>;

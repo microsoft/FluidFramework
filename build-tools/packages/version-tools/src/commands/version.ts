@@ -54,7 +54,7 @@ export default class VersionCommand extends Command {
 			default: MINIMUM_PUBLIC_VERSION,
 			description: "The public version to use in the Fluid internal version.",
 		}),
-	};
+	} as const;
 
 	static readonly args = {
 		version: Args.string({
@@ -62,7 +62,7 @@ export default class VersionCommand extends Command {
 			name: "version",
 			required: true,
 		}),
-	};
+	} as const;
 
 	static readonly examples = [
 		{

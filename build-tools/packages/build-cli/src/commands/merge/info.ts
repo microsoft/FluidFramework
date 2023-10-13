@@ -40,7 +40,7 @@ export default class MergeInfoCommand extends BaseCommand<typeof MergeInfoComman
 			multiple: true,
 		}),
 		...BaseCommand.flags,
-	};
+	} as const;
 
 	static readonly examples = [
 		{

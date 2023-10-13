@@ -78,7 +78,7 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 			helpGroup: "EXPERIMENTAL",
 		}),
 		...BaseCommand.flags,
-	};
+	} as const;
 
 	static readonly examples = [
 		{

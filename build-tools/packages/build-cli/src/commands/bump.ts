@@ -39,7 +39,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 
 	static readonly args = {
 		package_or_release_group: packageOrReleaseGroupArg,
-	};
+	} as const;
 
 	static readonly flags = {
 		bumpType: bumpTypeFlag({

@@ -66,7 +66,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 			multiple: true,
 		}),
 		...BaseCommand.flags,
-	};
+	} as const;
 
 	public async run(): Promise<void> {
 		const { flags } = this;

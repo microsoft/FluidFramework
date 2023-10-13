@@ -34,7 +34,7 @@ export default class GenerateChangeLogCommand extends BaseCommand<typeof Generat
 				"The version for which to generate the changelog. If this is not provided, the version of the package according to package.json will be used.",
 		}),
 		...BaseCommand.flags,
-	};
+	} as const;
 
 	static readonly examples = [
 		{

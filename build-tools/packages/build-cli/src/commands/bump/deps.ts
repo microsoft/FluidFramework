@@ -45,7 +45,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 
 	static readonly args = {
 		package_or_release_group: packageOrReleaseGroupArg,
-	};
+	} as const;
 
 	static readonly flags = {
 		updateType: dependencyUpdateTypeFlag({
@@ -80,7 +80,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 		}),
 		testMode: testModeFlag,
 		...BaseCommand.flags,
-	};
+	} as const;
 
 	static readonly examples = [
 		{

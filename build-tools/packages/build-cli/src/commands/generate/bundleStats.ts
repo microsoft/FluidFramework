@@ -24,7 +24,7 @@ export default class GenerateBundlestats extends BaseCommand<typeof GenerateBund
 			required: false,
 		}),
 		...BaseCommand.flags,
-	};
+	} as const;
 
 	public async run(): Promise<void> {
 		const { flags } = this;

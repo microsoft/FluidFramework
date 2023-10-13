@@ -16,7 +16,7 @@ export default class ExecCommand extends PackageCommand<typeof ExecCommand> {
 			description: "The shell command to execute.",
 			required: true,
 		}),
-	};
+	} as const;
 
 	protected async processPackage(pkg: Package): Promise<void> {
 		// TODO: The shell option should not need to be true. AB#4067

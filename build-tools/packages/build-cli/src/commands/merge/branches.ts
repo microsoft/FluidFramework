@@ -77,7 +77,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			allowNo: true,
 		}),
 		...BaseCommand.flags,
-	};
+	} as const;
 
 	/**
 	 * The branch that the command was run from. This is used to checkout the branch in the case of a failure, so the user

@@ -21,7 +21,7 @@ export default class CheckChangesetCommand extends BaseCommand<typeof CheckChang
 			required: true,
 		}),
 		...BaseCommand.flags,
-	};
+	} as const;
 
 	static readonly examples = [
 		{

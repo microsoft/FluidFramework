@@ -33,7 +33,7 @@ export default class FromTagCommand extends ReleaseReportBaseCommand<typeof From
 			required: true,
 			description: "A git tag that represents a release. May begin with 'refs/tags/'.",
 		}),
-	};
+	} as const;
 
 	defaultMode: ReleaseSelectionMode = "inRepo";
 	releaseGroupName: ReleaseGroup | undefined;
