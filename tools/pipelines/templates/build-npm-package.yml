@@ -286,12 +286,6 @@ stages:
               interdependencyRange: ${{ parameters.interdependencyRange }}
         
         - ${{ if and(eq(parameters.taskPublishBundleSizeArtifacts, false), ne(parameters.packageTypesOverride, 'none'), eq(parameters.releaseBuildOverride, 'prerelease')) }}:
-          - task: Npm@1
-            displayName: npm run ci:build:docs
-            inputs:
-              command: 'custom'
-              workingDir: ${{ parameters.buildDirectory }}
-              customCommand: 'run ci:build:docs'
           - template: include-set-package-version-types.yml
             parameters:
               buildDirectory: ${{ parameters.buildDirectory }}
@@ -300,6 +294,20 @@ stages:
               tagName: ${{ parameters.tagName }}
               interdependencyRange: ${{ parameters.interdependencyRange }}
               packageTypesOverride: ${{ parameters.packageTypesOverride }}
+          # Publish to dist/ folder
+          - task: Npm@1
+            displayName: npm run build:docs
+            inputs:
+              command: 'custom'
+              workingDir: ${{ parameters.buildDirectory }}
+              customCommand: 'run build:docs'
+          - task: Bash@3
+            displayName: Set Package Types to ${{ parameters.packageTypesOverride }}
+            inputs:
+              targetType: 'inline'
+              workingDir: ${{ parameters.buildDirectory }}
+              script: | 
+                flub release setPackageTypesField -g ${{ parameters.tagName }} --types ${{ parameters.packageTypesOverride }}
 
         # Build
         - ${{ if ne(parameters.taskBuild, 'false') }}:

@@ -84,14 +84,6 @@ steps:
       flub commands
 
 - task: Bash@3
-  displayName: Set Package Types to ${{ parameters.packageTypesOverride }}
-  inputs:
-    targetType: 'inline'
-    workingDir: ${{ parameters.buildDirectory }}
-    script: | 
-      flub release setPackageTypesField -g ${{ parameters.tagName }} --types ${{ parameters.packageTypesOverride }}
-
-- task: Bash@3
   name: GenerateVersion
   displayName: Generate Package Version
   env:
