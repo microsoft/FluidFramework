@@ -11,35 +11,77 @@ import { ValueSchema } from "../core";
  */
 const builder = new SchemaBuilderInternal({ scope: "com.fluidframework.leaf" });
 
-/**
- * @alpha
- */
-export const number = builder.leaf("number", ValueSchema.Number);
-/**
- * @alpha
- */
-export const boolean = builder.leaf("boolean", ValueSchema.Boolean);
-/**
- * @alpha
- */
-export const string = builder.leaf("string", ValueSchema.String);
-/**
- * @alpha
- */
-export const handle = builder.leaf("handle", ValueSchema.FluidHandle);
+const number = builder.leaf("number", ValueSchema.Number);
+const boolean = builder.leaf("boolean", ValueSchema.Boolean);
+const string = builder.leaf("string", ValueSchema.String);
+const handle = builder.leaf("handle", ValueSchema.FluidHandle);
+
+const primitives = [number, boolean, string] as const;
+const all = [handle, ...primitives] as const;
+
+const library = builder.finalize();
 
 /**
+ * Schema for the built-in {@link Leaf} node types.
  * @alpha
  */
-export const primitives = [number, boolean, string] as const;
+export const leaf = {
+	/**
+	 * {@link TreeSchema} for a {@link Leaf} holding a JavaScript `number`.
+	 *
+	 * @remarks
+	 * The number is a [double-precision 64-bit binary format IEEE 754](https://en.wikipedia.org/wiki/Double-precision_floating-point_format) value, however there are some exceptions:
+	 * - `NaN`, and the infinities should not be used.
+	 * - `-0` may be converted to `0` in some cases.
+	 *
+	 * These limitations come from the use of JSON.
+	 * @privateRemarks
+	 * TODO:
+	 * We should be much more clear about what happens if you use problematic values.
+	 * We should validate and/or normalize them when inserting content.
+	 */
+	number,
 
-/**
- * Types allowed as roots of Json content.
- * @alpha
- */
-export const all = [handle, ...primitives] as const;
+	/**
+	 * {@link TreeSchema} for a {@link Leaf} holding a boolean.
+	 */
+	boolean,
 
-/**
- * @alpha
- */
-export const library = builder.finalize();
+	/**
+	 * {@link TreeSchema} for a {@link Leaf} holding a JavaScript `string`.
+	 *
+	 * @remarks
+	 * Strings containing unpaired UTF-16 surrogate pair code units may not be handled correctly.
+	 *
+	 * These limitations come from the use of UTF-8 encoding of the strings, which requires them to be valid unicode.
+	 * JavaScript does not make this requirement for its strings so not all possible JavaScript strings are supported.
+	 * @privateRemarks
+	 * TODO:
+	 * We should be much more clear about what happens if you use problematic values.
+	 * We should validate and/or normalize them when inserting content.
+	 */
+	string,
+
+	/**
+	 * {@link TreeSchema} for a {@link Leaf} holding an {@link @fluidframework/core-interfaces#IFluidHandle}.
+	 */
+	handle,
+
+	/**
+	 * The set of leaf schema which correspond to JavaScript primitive (non-object) types.
+	 */
+	primitives,
+
+	/**
+	 * Types allowed as roots of Json content.
+	 */
+	all,
+
+	/**
+	 * {@link SchemaLibrary} of the Leaf Schema types.
+	 *
+	 * @remarks
+	 * This is included by default in schema produced with {@link SchemaBuilder}.
+	 */
+	library,
+};

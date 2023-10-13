@@ -10,7 +10,7 @@ import {
 	SchemaBuilderInternal,
 } from "../../feature-libraries";
 import { requireAssignableTo } from "../../util";
-import * as leaf from "../leafDomain";
+import { leaf } from "../leafDomain";
 
 const builder = new SchemaBuilderInternal({
 	scope: "com.fluidframework.json",
