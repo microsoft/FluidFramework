@@ -813,6 +813,45 @@ describe("SequenceField - Compose", () => {
 		assert.deepEqual(actual, expected);
 	});
 
+	it("move ○ move with node changes", () => {
+		const move1 = [
+			Mark.moveIn(1, brand(0)),
+			{ count: 1 },
+			Mark.moveOut(1, brand(0), { changes: TestChange.mint([], 0) }),
+		];
+
+		const move2 = [
+			Mark.moveOut(1, brand(0), { changes: TestChange.mint([0], 1) }),
+			{ count: 2 },
+			Mark.moveIn(1, brand(0)),
+		];
+
+		const composed = compose([tagChange(move1, tag1), tagChange(move2, tag2)]);
+		const expected = [
+			Mark.transient(
+				Mark.moveIn(1, { revision: tag1, localId: brand(0) }),
+				Mark.moveOut(1, { revision: tag2, localId: brand(0) }),
+			),
+			{ count: 1 },
+			Mark.moveOut(
+				1,
+				{ revision: tag1, localId: brand(0) },
+				{
+					changes: TestChange.mint([], [0, 1]),
+					finalEndpoint: { revision: tag2, localId: brand(0) },
+				},
+			),
+			{ count: 1 },
+			Mark.moveIn(
+				1,
+				{ revision: tag2, localId: brand(0) },
+				{ finalEndpoint: { revision: tag1, localId: brand(0) } },
+			),
+		];
+
+		assert.deepEqual(composed, expected);
+	});
+
 	it("move ○ move (forward)", () => {
 		const move1 = Change.move(0, 1, 1, brand(0));
 		const move2 = Change.move(1, 1, 2, brand(1));

@@ -268,27 +268,32 @@ function composeMarks<TNodeChange>(
 	} else if (!markHasCellEffect(baseMark)) {
 		return withRevision(withNodeChange(newMark, nodeChange), newRev);
 	} else if (!markHasCellEffect(newMark)) {
-		const moveInId = getMarkMoveId(baseMark);
-		if (nodeChange !== undefined && moveInId !== undefined) {
-			assert(isMoveMark(baseMark), 0x68e /* Only move marks have move IDs */);
-			setModifyAfter(
-				moveEffects,
-				CrossFieldTarget.Source,
-				baseMark.revision,
-				baseMark.id,
-				baseMark.count,
-				nodeChange,
-				composeChild,
-			);
+		if (isMoveMark(baseMark) && nodeChange !== undefined) {
+			setModifyAfter(moveEffects, baseMark.revision, baseMark.id, nodeChange, composeChild);
 			return baseMark;
 		}
 		return withNodeChange(baseMark, nodeChange);
 	} else if (areInputCellsEmpty(baseMark)) {
 		assert(isDetach(newMark), 0x71c /* Unexpected mark type */);
 		assert(isAttach(baseMark), 0x71d /* Expected generative mark */);
+		let localNodeChange = nodeChange;
 
 		const attach = extractMarkEffect(baseMark);
 		const detach = extractMarkEffect(withRevision(newMark, newRev));
+
+		if (isMoveDestination(attach) && nodeChange !== undefined) {
+			const endpoint = getEndpoint(attach, undefined);
+			setModifyAfter(
+				moveEffects,
+				endpoint.revision,
+				endpoint.localId,
+				nodeChange,
+				composeChild,
+			);
+
+			localNodeChange = undefined;
+		}
+
 		if (isMoveDestination(attach) && isMoveSource(detach)) {
 			const finalSource = getEndpoint(attach, undefined);
 			const finalDest = getEndpoint(detach, newRev);
@@ -330,7 +335,7 @@ function composeMarks<TNodeChange>(
 				attach,
 				detach,
 			},
-			nodeChange,
+			localNodeChange,
 		);
 	} else {
 		if (isMoveMark(baseMark) && isMoveMark(newMark)) {
@@ -720,14 +725,13 @@ function compareCellPositions(
 // TODO: Reduce the duplication between this and other MoveEffect helpers
 function setModifyAfter<T>(
 	moveEffects: MoveEffectTable<T>,
-	// TODO: Shouldn't this only target sources?
-	target: CrossFieldTarget,
 	revision: RevisionTag | undefined,
 	id: MoveId,
-	count: number,
 	modifyAfter: T,
 	composeChanges: NodeChangeComposer<T>,
 ) {
+	const target = CrossFieldTarget.Source;
+	const count = 1;
 	const effect = getMoveEffect(moveEffects, target, revision, id, count, false);
 	let newEffect: MoveEffect<T>;
 	assert(effect.length === count, 0x6ec /* Expected effect to cover entire mark */);
