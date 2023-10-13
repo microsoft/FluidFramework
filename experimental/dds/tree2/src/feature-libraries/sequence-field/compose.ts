@@ -182,6 +182,12 @@ function composeMarks<TNodeChange>(
 		}
 
 		if (isTransientEffect(baseMark)) {
+			if (
+				areEqualCellIds(getOutputCellId(newMark, newRev, revisionMetadata), baseMark.cellId)
+			) {
+				return { count: baseMark.count, cellId: baseMark.cellId };
+			}
+
 			// `newMark`'s attach portion cancels with `baseMark`'s detach portion.
 			const originalAttach = { ...baseMark.attach };
 			if (originalAttach.revision === undefined && baseMark.revision !== undefined) {
