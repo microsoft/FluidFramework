@@ -48,7 +48,6 @@ import {
 	isDetach,
 	markHasCellEffect,
 	withNodeChange,
-	getMarkMoveId,
 	withRevision,
 	markEmptiesCells,
 	isTransientEffect,

@@ -323,7 +323,7 @@ describe("SequenceField - toDelta", () => {
 				{
 					type: Delta.MarkType.Insert,
 					content: contentCursor2,
-					detachId: { minor: 2 },
+					detachId: { major: undefined, minor: 2 },
 				},
 			];
 			assertMarkListEqual(delta, expected);

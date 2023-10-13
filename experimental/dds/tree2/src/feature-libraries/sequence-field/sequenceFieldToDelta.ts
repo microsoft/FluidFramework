@@ -28,7 +28,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 	const out = new OffsetListFactory<Delta.Mark>();
 	for (const mark of change) {
 		const changes = getEffectiveNodeChanges(mark);
-		const cellDeltas = cellDeltaFromMark(mark, revision, idAllocator, changes === undefined);
+		const cellDeltas = cellDeltaFromMark(mark, revision, idAllocator);
 		if (changes !== undefined) {
 			assert(
 				cellDeltas.length === 1,
@@ -47,17 +47,12 @@ function cellDeltaFromMark<TNodeChange>(
 	mark: Mark<TNodeChange>,
 	revision: RevisionTag | undefined,
 	idAllocator: MemoizedIdRangeAllocator,
-	ignoreTransient: boolean,
 ): Mutable<Delta.Mark>[] {
 	if (!areInputCellsEmpty(mark) && !areOutputCellsEmpty(mark)) {
 		// Since each cell is associated with exactly one node,
 		// the cell starting end ending populated means the cell content has not changed.
 		return [mark.count];
-	} else if (
-		areInputCellsEmpty(mark) &&
-		areOutputCellsEmpty(mark) &&
-		(!isTransientEffect(mark) || ignoreTransient)
-	) {
+	} else if (areInputCellsEmpty(mark) && areOutputCellsEmpty(mark) && !isTransientEffect(mark)) {
 		// The cell starting and ending empty means the cell content has not changed,
 		// unless transient content was inserted/attached.
 		return [0];
