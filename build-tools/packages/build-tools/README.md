@@ -233,8 +233,8 @@ repo and the local package's `package.json`. It will dump the full combined defi
 
 ### fluid-build:task:init\*
 
-These traces shows the tasks and relationship in the build graph to diagnose task dependency and ordering problem.  
-It can be turned all of them on or individually.
+These traces show the tasks and relationships in the build graph to diagnose task dependency and ordering problems.  
+Debugging traces can be enabled for individual steps or for all of them.
 
 -   `fluid-build:task:init` - Trace the task that are created, to show what task is included
 -   `fluid-build:task:init:defdep` - Trace the task dependencies derived from expanding and resolving task definitions
