@@ -241,7 +241,7 @@ export const checkDependenciesInstalled: StateHandlerFunction = async (
 		: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		  [context.fullPackageMap.get(releaseGroup)!];
 
-	const installed = await FluidRepo.ensureInstalled(packagesToCheck, true);
+	const installed = await FluidRepo.ensureInstalled(packagesToCheck);
 
 	if (installed) {
 		BaseStateHandler.signalSuccess(machine, state);

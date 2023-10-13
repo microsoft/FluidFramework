@@ -251,7 +251,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		);
 
 		if (shouldInstall) {
-			if (!(await FluidRepo.ensureInstalled(updatedPackages, false))) {
+			if (!(await FluidRepo.ensureInstalled(updatedPackages))) {
 				this.error("Install failed.");
 			}
 		} else {
