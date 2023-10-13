@@ -45,9 +45,21 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 			// We should get a new clientId on reconnection. If we have a clientId
 			// that is a single letter rather than a uuid, generate a new uuid that
 			// is stable to that letter
-			const clientIdIndex = this.clientId.charCodeAt(0) - "A".charCodeAt(0);
-			const clientId = this.clientId.length === 1 ? CLIENT_IDS[clientIdIndex] : this.clientId;
-			this.clientId = uuidv5("reconnect", clientId);
+			if (this.clientId.length === 1) {
+				const clientIdIndex = this.clientId.charCodeAt(0) - "A".charCodeAt(0);
+				assert(
+					clientIdIndex > 0 && clientIdIndex <= CLIENT_IDS.length,
+					`expected clientId to be a single letter A-Z. got ${this.clientId}`,
+				);
+				this.clientId = CLIENT_IDS[clientIdIndex];
+			} else {
+				assert(
+					this.clientId.length === 36,
+					`expected clientId to be a UUID. got ${this.clientId}`,
+				);
+				this.clientId = uuidv5("reconnect", this.clientId);
+			}
+			// const clientId = this.clientId.length === 1 ?  : this.clientId;
 			// Update the clientId in FluidDataStoreRuntime.
 			this.dataStoreRuntime.clientId = this.clientId;
 			this.factory.quorum.addMember(this.clientId, {});
