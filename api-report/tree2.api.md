@@ -1248,7 +1248,9 @@ export const leaf: {
     }>];
     all: readonly [TreeSchema<"com.fluidframework.leaf.handle", {
     leafValue: ValueSchema.FluidHandle;
-    }>, null, TreeSchema<"com.fluidframework.leaf.number", {
+    }>, TreeSchema<"com.fluidframework.leaf.null", {
+    leafValue: ValueSchema.Null;
+    }>, TreeSchema<"com.fluidframework.leaf.number", {
     leafValue: ValueSchema.Number;
     }>, TreeSchema<"com.fluidframework.leaf.boolean", {
     leafValue: ValueSchema.Boolean;

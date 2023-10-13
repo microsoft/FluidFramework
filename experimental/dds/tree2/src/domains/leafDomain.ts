@@ -18,7 +18,7 @@ const handle = builder.leaf("handle", ValueSchema.FluidHandle);
 const nullSchema = builder.leaf("null", ValueSchema.Null);
 
 const primitives = [number, boolean, string] as const;
-const all = [handle, null, ...primitives] as const;
+const all = [handle, nullSchema, ...primitives] as const;
 
 const library = builder.finalize();
 

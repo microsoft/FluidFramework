@@ -526,13 +526,7 @@ export function applyTypesFromContext(
 	const schema =
 		context.schema.treeSchema.get(type) ?? fail("requested type does not exist in schema");
 
-	if (isPrimitiveValue(data)) {
-		// This check avoids returning an out of schema node
-		// in the case where schema permits the value, but has required fields.
-		assert(
-			isPrimitive(schema),
-			0x5c3 /* Schema must be primitive when providing a primitive value */,
-		);
+	if (isPrimitiveValue(data) || data === null) {
 		assert(
 			allowsValue(schema.leafValue, data),
 			0x4d3 /* unsupported schema for provided primitive */,
