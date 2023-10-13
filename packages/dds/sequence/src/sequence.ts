@@ -621,7 +621,11 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 							m.minimumSequenceNumber < collabWindow.minSeq ||
 							m.referenceSequenceNumber < collabWindow.minSeq ||
 							m.sequenceNumber <= collabWindow.minSeq ||
-							m.sequenceNumber <= collabWindow.currentSeq
+							m.sequenceNumber < collabWindow.currentSeq ||
+							// When seqNum is the same, we need to check if clientSeqNum is different (grouped batching)
+							(m.sequenceNumber === collabWindow.currentSeq &&
+								(collabWindow.currentClientSeq === undefined ||
+									m.clientSequenceNumber <= collabWindow.currentClientSeq))
 						) {
 							throw new Error(
 								`Invalid catchup operations in snapshot: ${JSON.stringify({
@@ -629,10 +633,12 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 										seq: m.sequenceNumber,
 										minSeq: m.minimumSequenceNumber,
 										refSeq: m.referenceSequenceNumber,
+										clientSeq: m.clientSequenceNumber,
 									},
 									collabWindow: {
 										seq: collabWindow.currentSeq,
 										minSeq: collabWindow.minSeq,
+										clientSeq: collabWindow.currentClientSeq,
 									},
 								})}`,
 							);
