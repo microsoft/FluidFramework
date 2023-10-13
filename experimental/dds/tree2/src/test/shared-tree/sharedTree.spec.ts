@@ -736,10 +736,6 @@ describe("SharedTree", () => {
 			validateTree(tree2, [expectedState]);
 		});
 
-		it("can process multiple optional sets", () => {
-
-		});
-
 		// TODO: unskip once the bug which compose is fixed
 		it.skip("can make multiple moves in a transaction", () => {
 			const provider = new TestTreeProviderLite();
