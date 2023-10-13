@@ -1242,9 +1242,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 		if (isSequencePlace(start)) {
 			intStart = start;
-			assert(end !== undefined, "end must be defined");
+			assert(end !== undefined, 0x7c0 /* end must be defined */);
 			intEnd = end;
-			assert(intervalType !== undefined, "intervalType must be defined");
+			assert(intervalType !== undefined, 0x7c1 /* intervalType must be defined */);
 			type = intervalType;
 			properties = props;
 		} else {
