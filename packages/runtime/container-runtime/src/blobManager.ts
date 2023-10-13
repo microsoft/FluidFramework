@@ -27,9 +27,11 @@ import { AttachState, ICriticalContainerError } from "@fluidframework/container-
 import {
 	createChildMonitoringContext,
 	GenericError,
+	isFluidError,
 	LoggingError,
 	MonitoringContext,
 	PerformanceEvent,
+	wrapError,
 } from "@fluidframework/telemetry-utils";
 import {
 	IGarbageCollectionData,
@@ -37,7 +39,11 @@ import {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 
-import { runWithRetry } from "@fluidframework/driver-utils";
+import {
+	canRetryOnError,
+	createGenericNetworkError,
+	runWithRetry,
+} from "@fluidframework/driver-utils";
 import { ContainerRuntime, TombstoneResponseHeaderKey } from "./containerRuntime";
 import {
 	sendGCUnexpectedUsageEvent,
@@ -467,28 +473,51 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		blob: ArrayBufferLike,
 	): Promise<ICreateBlobResponse | void> {
 		return runWithRetry(
-			async () => this.getStorage().createBlob(blob),
+			async () => {
+				try {
+					return await this.getStorage().createBlob(blob);
+				} catch (error) {
+					const entry = this.pendingBlobs.get(localId);
+					assert(
+						!!entry,
+						0x387 /* Must have pending blob entry for blob which failed to upload */,
+					);
+					if (entry.opsent && !canRetryOnError(error)) {
+						if (isFluidError(error)) {
+							error.addTelemetryProperties({ forceRetry: true });
+							throw error;
+						} else {
+							throw wrapError(error, () =>
+								createGenericNetworkError(
+									`uploadBlob error`,
+									{ canRetry: true },
+									{
+										driverVersion: undefined,
+									},
+								),
+							);
+						}
+					}
+					if (canRetryOnError(error)) {
+						// runWithRetry will do the work
+						throw error;
+					}
+					// it will only reject if we haven't sent an op
+					// and is a non-retriable error. It will only reject
+					// the promise but not throw any error outside.
+					entry.handleP.reject(error);
+					this.deletePendingBlob(localId);
+				}
+			},
 			"createBlob",
 			this.mc.logger,
 			{
 				cancel: this.pendingBlobs.get(localId)?.abortSignal,
 			},
-		)
-			.then((response) => this.onUploadResolve(localId, response))
-			.catch((err) => {
-				const entry = this.pendingBlobs.get(localId);
-				assert(
-					!!entry,
-					0x387 /* Must have pending blob entry for blob which failed to upload */,
-				);
-				if (entry.opsent) {
-					// retry indefinitely if blob op was sent
-					entry.uploadP = this.uploadBlob(localId, blob);
-				} else {
-					entry.handleP.reject(err);
-					this.deletePendingBlob(localId);
-				}
-			});
+		).then(
+			(response) => response && this.onUploadResolve(localId, response),
+			() => {},
+		);
 	}
 
 	/**

@@ -28,11 +28,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 		private readonly internalStorageServiceP: Promise<IDocumentStorageService>,
 		private readonly logger: ITelemetryLoggerExt,
 	) {
-		this.initialize().catch(() => {});
-	}
-
-	private async initialize() {
-		this.internalStorageService = await this.internalStorageServiceP;
+		this.internalStorageServiceP.then((s) => (this.internalStorageService = s)).catch(() => {});
 	}
 
 	public get policies(): IDocumentStorageServicePolicies | undefined {

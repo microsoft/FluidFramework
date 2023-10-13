@@ -29,6 +29,7 @@ import {
 	MonitoringContext,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils";
+import { createGenericNetworkError } from "@fluidframework/driver-utils";
 import { BlobManager, IBlobManagerLoadInfo, IBlobManagerRuntime } from "../blobManager";
 import { disableAttachmentBlobSweepKey } from "../gc";
 
@@ -172,15 +173,23 @@ export class MockRuntime
 		this.ops = [];
 	}
 
-	public async processBlobs(resolve: boolean, canRetry?: boolean, retryAfterSeconds?: number) {
+	public async processBlobs(resolve: boolean, canRetry: boolean = false, retryAfterMs?: number) {
 		const blobPs = this.blobPs;
 		this.blobPs = [];
 		if (resolve) {
 			this.processBlobsP.resolve();
 		} else {
-			const err: any = new Error("fake error");
-			err.canRetry = canRetry;
-			err.retryAfterSeconds = retryAfterSeconds;
+			const err = createGenericNetworkError(
+				"fake driver error",
+				// TODO: https://dev.azure.com/fluidframework/internal/_workitems/edit/5913
+				{ canRetry, retryAfterMs },
+				{
+					// To avoid using the default retry time added when we don't have retryAfterMs
+					// in the error properties.
+					retryAfterSeconds: retryAfterMs,
+					driverVersion: undefined,
+				},
+			);
 			this.processBlobsP.reject(err);
 		}
 		this.processBlobsP = new Deferred<void>();
@@ -459,7 +468,7 @@ describe("BlobManager", () => {
 			await handleP;
 			assert.fail("should fail");
 		} catch (error: any) {
-			assert.strictEqual(error.message, "fake error");
+			assert.strictEqual(error.message, "fake driver error");
 		}
 		await assert.rejects(handleP);
 		const summaryData = validateSummary(runtime);
@@ -744,14 +753,10 @@ describe("BlobManager", () => {
 				assert.strictEqual(error.message, "uploadBlob aborted");
 			}
 			try {
-				// failure with or without aborting behaves similar right now
-				// because we haven't made distinction between retriable and
-				// non-retriable errors. If uploadBlob finds a retriable error,
-				// it will keep retrying until the call is aborted.
 				await handleP2;
 				assert.fail("Should not succeed");
 			} catch (error: any) {
-				assert.strictEqual(error.message, "fake error");
+				assert.strictEqual(error.message, "fake driver error");
 			}
 			await assert.rejects(handleP);
 			await assert.rejects(handleP2);
