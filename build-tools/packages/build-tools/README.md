@@ -247,7 +247,7 @@ Trace the reason why each task is trigger. Use to diagnose incremental problems.
 
 ### fluid-build:task:exec\*
 
-These traces shows the execution flow of the task, to show the task invocation in action.
+These traces show the execution flow of the task, to show the task invocation in action.
 
 -   `fluid-build:task:exec` - trace whether the tasks is skipped or start and finish of the task.
 -   `fluid-build:task:queue` - trace when the task is queued after the dependent tasks are done
