@@ -7,8 +7,8 @@ import React from "react";
 import { Body1, Body1Strong, Subtitle1, makeStyles } from "@fluentui/react-components";
 import {
 	handleIncomingMessage,
-	InboundHandlers,
-	ISourcedDevtoolsMessage,
+	type InboundHandlers,
+	type ISourcedDevtoolsMessage,
 	TelemetryEvent,
 } from "@fluid-experimental/devtools-core";
 import { useMessageRelay } from "../MessageRelayContext";
@@ -130,7 +130,9 @@ export function OpLatencyView(): React.ReactElement {
 				setDurationInboundToProcessingData((currentData) => {
 					const newDataPoint = {
 						inboundtimestamp: message.data.event.timestamp,
-						durationInboundToProcessing: Number(eventContents.durationInboundToProcessing),
+						durationInboundToProcessing: Number(
+							eventContents.durationInboundToProcessing,
+						),
 					};
 					return {
 						...currentData,
