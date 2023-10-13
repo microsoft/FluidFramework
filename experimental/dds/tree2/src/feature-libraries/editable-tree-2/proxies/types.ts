@@ -26,7 +26,10 @@ import {
 	AssignableFieldKinds,
 } from "../editableTreeTypes";
 
-/** Implements 'readonly T[]' and the list mutation APIs. */
+/**
+ * Implements 'readonly T[]' and the list mutation APIs.
+ * @alpha
+ */
 export interface SharedTreeList<
 	TTypes extends AllowedTypes,
 	API extends "javaScript" | "sharedTree" = "sharedTree",

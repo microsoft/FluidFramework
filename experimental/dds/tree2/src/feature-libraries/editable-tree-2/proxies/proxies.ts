@@ -61,6 +61,7 @@ function getCachedProxy(treeNode: TreeNode): ProxyNode<TreeSchema> | undefined {
 
 /**
  * Checks if the given object is a {@link SharedTreeObject}
+ * @alpha
  */
 export function is<TSchema extends StructSchema>(
 	x: unknown,
