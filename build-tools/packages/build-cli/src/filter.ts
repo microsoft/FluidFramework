@@ -182,7 +182,7 @@ const selectPackagesFromContext = (
 		}
 
 		if (packages[0].monoRepo === undefined) {
-			throw new Error(`No release group found for package: ${packages[0]}`);
+			throw new Error(`No release group found for package: ${packages[0].name}`);
 		}
 
 		const dir = packages[0].monoRepo.directory;

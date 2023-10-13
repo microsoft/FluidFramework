@@ -30,6 +30,7 @@ const knownDtsKinds = ["alpha", "beta", "public", "untrimmed"] as const;
 type DtsKind = (typeof knownDtsKinds)[number];
 
 function isDtsKind(str: string | undefined): str is DtsKind {
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
 	return str === undefined ? false : knownDtsKinds.includes(str as any);
 }
 
@@ -129,21 +130,26 @@ function updatePackageJsonTypes(
 			let filePath = "";
 
 			switch (dTsType) {
-				case "alpha":
+				case "alpha": {
 					filePath = extractorConfig.alphaTrimmedFilePath;
 					break;
-				case "beta":
+				}
+				case "beta": {
 					filePath = extractorConfig.betaTrimmedFilePath;
 					break;
-				case "public":
+				}
+				case "public": {
 					filePath = extractorConfig.publicTrimmedFilePath;
 					break;
-				case "untrimmed":
+				}
+				case "untrimmed": {
 					filePath = extractorConfig.untrimmedFilePath;
 					break;
-				default:
+				}
+				default: {
 					log.errorLog(`${dTsType} is not a valid value.`);
 					break;
+				}
 			}
 
 			if (filePath) {
