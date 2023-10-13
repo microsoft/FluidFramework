@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { Adapters, TreeSchemaIdentifier, ValueSchema } from "../core";
+import { Adapters, TreeSchemaIdentifier } from "../core";
 import { Assume, RestrictiveReadonlyRecord, transformObjectMap } from "../util";
 import {
 	SchemaLibraryData,
@@ -299,29 +299,6 @@ export class SchemaBuilderBase<
 			`${TScope}.${Name}`,
 			{ structFields: { [""]: T } }
 		>;
-	}
-
-	// TODO: move this to SchemaBuilderInternal once usages of it have been replaces with use of the leaf domain.
-	/**
-	 * Define (and add to this library) a {@link TreeSchema} for a node that wraps a value.
-	 * Such nodes will be implicitly unwrapped to the value in some APIs.
-	 *
-	 * The name must be unique among all TreeSchema in the the document schema.
-	 *
-	 * In addition to the normal properties of all nodes (having a schema for example),
-	 * Leaf nodes only contain a value.
-	 * Leaf nodes cannot have fields.
-	 *
-	 * TODO: Maybe ban undefined from allowed values here.
-	 * TODO: Decide and document how unwrapping works for non-primitive terminals.
-	 */
-	public leaf<Name extends TName, const T extends ValueSchema>(
-		name: Name,
-		t: T,
-	): TreeSchema<`${TScope}.${Name}`, { leafValue: T }> {
-		const schema = new TreeSchema(this, this.scoped(name), { leafValue: t });
-		this.addNodeSchema(schema);
-		return schema;
 	}
 
 	/**

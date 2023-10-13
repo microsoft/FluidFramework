@@ -274,7 +274,7 @@ export interface MapSchemaSpecification {
 export type MapFieldSchema = FieldSchema<typeof FieldKinds.optional | typeof FieldKinds.sequence>;
 
 /**
- * `TreeSchemaSpecification` for {@link SchemaBuilderBase.leaf}.
+ * `TreeSchemaSpecification` for {@link Leaf}.
  * @alpha
  */
 export interface LeafSchemaSpecification {
