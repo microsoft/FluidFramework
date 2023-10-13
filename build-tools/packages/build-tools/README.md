@@ -243,7 +243,7 @@ Debugging traces can be enabled for individual steps or for all of them.
 
 ### fluid-build:task:trigger
 
-Trace the reason why each task is trigger. Use to diagnose incremental problems.
+Trace the reasons why each task is triggered. Useful to diagnose problems with incremental build.
 
 ### fluid-build:task:exec\*
 
