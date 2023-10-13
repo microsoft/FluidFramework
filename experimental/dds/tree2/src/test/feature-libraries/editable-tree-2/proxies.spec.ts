@@ -155,7 +155,7 @@ function itWithRoot<TSchema extends TypedSchemaCollection<any>>(
 
 function createTypedTreeView<TSchema extends TypedSchemaCollection<any>>(
 	schema: TSchema,
-	initialTree: any,
+	initialTree: ProxyRoot<TSchema, "javaScript">,
 ): ISharedTreeView & { root2: (viewSchema: TSchema) => ProxyRoot<TSchema> } {
 	return createTreeView(schema, initialTree);
 }

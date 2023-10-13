@@ -209,9 +209,7 @@ export type ProxyFieldInner<
 	API extends "javaScript" | "sharedTree",
 	Emptiness extends "maybeEmpty" | "notEmpty",
 > = Kind extends typeof FieldKinds.sequence
-	? API extends "sharedTree"
-		? SharedTreeList<TTypes>
-		: readonly ProxyNodeUnion<TTypes, API>[]
+	? never // Sequences are only supported underneath FieldNodes. See FieldNode case in `ProxyNode`.
 	: Kind extends typeof FieldKinds.required
 	? ProxyNodeUnion<TTypes, API>
 	: Kind extends typeof FieldKinds.optional
@@ -254,7 +252,9 @@ export type ProxyNode<
 		? SharedTreeMap<TSchema>
 		: Map<string, ProxyField<TSchema["mapFields"], API>>
 	: TSchema extends FieldNodeSchema
-	? SharedTreeList<TSchema["structFieldsObject"][""]["allowedTypes"], API>
+	? API extends "sharedTree"
+		? SharedTreeList<TSchema["structFieldsObject"][""]["allowedTypes"], API>
+		: readonly ProxyNodeUnion<TSchema["structFieldsObject"][""]["allowedTypes"], API>[]
 	: TSchema extends StructSchema
 	? SharedTreeObject<TSchema, API>
 	: unknown;
