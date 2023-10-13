@@ -5,21 +5,18 @@
 
 /* eslint-disable no-inner-declarations */
 
-import { FieldKinds, ValueSchema, SchemaAware } from "../../../";
-import { SchemaBuilder, TreeSchema } from "../../../feature-libraries";
+import { ValueSchema } from "../../../core";
+import { SchemaBuilder } from "../../../domains";
+import { FieldKinds, FieldSchema, SchemaAware, TreeSchema } from "../../../feature-libraries";
 import { requireAssignableTo } from "../../../util";
 
-const builder = new SchemaBuilder("Complex Schema Example");
+const builder = new SchemaBuilder({ scope: "Complex Schema Example" });
 
 // Schema
 export const stringTaskSchema = builder.leaf("StringTask", ValueSchema.String);
 // Polymorphic recursive schema:
 export const listTaskSchema = builder.structRecursive("ListTask", {
-	items: SchemaBuilder.fieldRecursive(
-		FieldKinds.sequence,
-		stringTaskSchema,
-		() => listTaskSchema,
-	),
+	items: FieldSchema.createUnsafe(FieldKinds.sequence, [stringTaskSchema, () => listTaskSchema]),
 });
 
 {
@@ -27,9 +24,9 @@ export const listTaskSchema = builder.structRecursive("ListTask", {
 	type _check = requireAssignableTo<typeof listTaskSchema, TreeSchema>;
 }
 
-export const rootFieldSchema = SchemaBuilder.fieldRequired(stringTaskSchema, listTaskSchema);
+export const rootFieldSchema = SchemaBuilder.required([stringTaskSchema, listTaskSchema]);
 
-export const appSchemaData = builder.intoDocumentSchema(rootFieldSchema);
+export const appSchemaData = builder.toDocumentSchema(rootFieldSchema);
 
 // Schema aware types
 export type StringTask = SchemaAware.TypedNode<typeof stringTaskSchema>;

@@ -12,11 +12,12 @@ import {
 } from "@fluid-tools/version-tools";
 
 import { getFluidBuildConfig } from "./fluidUtils";
-import { Logger, defaultLogger } from "./logging";
 import { MonoRepo } from "./monoRepo";
 import { Package, Packages } from "./npmPackage";
 import { ExecAsyncResult } from "./utils";
 import { TaskDefinitionsOnDisk } from "./fluidTaskDefinitions";
+import registerDebug from "debug";
+const traceInit = registerDebug("fluid-build:init");
 
 /**
  * Fluid build configuration that is expected in the repo-root package.json.
@@ -31,14 +32,9 @@ export interface IFluidBuildConfig {
 	 * A mapping of package or release group names to metadata about the package or release group. This can only be
 	 * configured in the repo-wide Fluid build config (the repo-root package.json).
 	 */
-	repoPackages: {
+	repoPackages?: {
 		[name: string]: IFluidRepoPackageEntry;
 	};
-
-	/**
-	 * @deprecated
-	 */
-	generatorName?: string;
 
 	/**
 	 * Policy configuration for the `check:policy` command. This can only be configured in the rrepo-wide Fluid build
@@ -263,10 +259,7 @@ export class FluidRepo {
 
 	public readonly packages: Packages;
 
-	constructor(
-		public readonly resolvedRoot: string,
-		log: Logger = defaultLogger,
-	) {
+	constructor(public readonly resolvedRoot: string) {
 		const packageManifest = getFluidBuildConfig(resolvedRoot);
 
 		// Expand to full IFluidRepoPackage and full path
@@ -277,7 +270,7 @@ export class FluidRepo {
 				return item.map((entry) => normalizeEntry(entry) as IFluidRepoPackage);
 			}
 			if (typeof item === "string") {
-				log?.verbose(
+				traceInit(
 					`No defaultInterdependencyRange setting found for '${item}'. Defaulting to "${DEFAULT_INTERDEPENDENCY_RANGE}".`,
 				);
 				return {
@@ -306,7 +299,7 @@ export class FluidRepo {
 				}
 				continue;
 			}
-			const monoRepo = MonoRepo.load(group, item, log);
+			const monoRepo = MonoRepo.load(group, item);
 			if (monoRepo) {
 				this.releaseGroups.set(group, monoRepo);
 				loadedPackages.push(...monoRepo.packages);

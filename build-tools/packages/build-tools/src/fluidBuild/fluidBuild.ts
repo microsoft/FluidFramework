@@ -46,7 +46,7 @@ async function main() {
 
 	// Dependency checks
 	if (options.depcheck) {
-		repo.depcheck();
+		await repo.depcheck(false);
 		timer.time("Dependencies check completed", true);
 	}
 

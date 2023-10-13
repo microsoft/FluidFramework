@@ -15,6 +15,9 @@ import {
 import { Stats, getArrayStatistics } from "./ReporterUtilities";
 import { Timer, defaultMinimumTime, timer } from "./timer";
 
+/**
+ * @public
+ */
 export enum Phase {
 	WarmUp,
 	AdjustIterationPerBatch,
@@ -93,6 +96,9 @@ export interface BenchmarkError {
 	error: string;
 }
 
+/**
+ * @public
+ */
 export async function runBenchmark(args: BenchmarkRunningOptions): Promise<BenchmarkData> {
 	if (benchmarkArgumentsIsCustom(args)) {
 		const state = new BenchmarkState(timer, args);

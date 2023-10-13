@@ -167,21 +167,22 @@ module.exports = {
 				"@fluid-example",
 				"@fluid-experimental",
 				"@fluid-internal",
+				"@fluid-private",
 				"@fluid-tools",
 			],
 			// These packages are known unscoped packages.
 			unscopedPackages: ["fluid-framework", "fluidframework-docs", "tinylicious"],
 
 			mustPublish: {
-				// These packages will always be published to npm.
+				// These packages will always be published to npm. This is called the "public" feed.
 				npm: [
 					"@fluidframework",
 					"fluid-framework",
 					"tinylicious",
 					"@fluid-internal/client-utils",
 				],
-				// A list of packages known to be an internally published package but not to npm. Note that packages published
-				// to npm will also be published internally, however. This should be a minimal set required for legacy compat of
+				// A list of packages published to our internal-build feed. Note that packages published
+				// to npm will also be published to this feed. This should be a minimal set required for legacy compat of
 				// internal partners or internal CI requirements.
 				internalFeed: [
 					// TODO: We may not need to publish test packages to the internal feed, remove these exceptions if possible.
@@ -194,8 +195,8 @@ module.exports = {
 			mayPublish: {
 				// These packages may be published to npm in some cases. Policy doesn't enforce this.
 				npm: ["@fluid-experimental", "@fluid-tools"],
-				// These packages may be published to the internal feed in some cases. Policy doesn't enforce this.
-				internalFeed: ["@fluid-internal"],
+				// These packages may be published to the internal-build feed in some cases. Policy doesn't enforce this.
+				internalFeed: ["@fluid-internal", "@fluid-private"],
 			},
 		},
 		dependencies: {
@@ -221,7 +222,7 @@ module.exports = {
 		// around nested pnpm workspace behavior. These packages are not checked for the preinstall script that standard
 		// pnpm workspaces should have.
 		pnpmSinglePackageWorkspace: [
-			"@fluid-internal/changelog-generator-wrapper",
+			"@fluid-private/changelog-generator-wrapper",
 			"@fluid-tools/api-markdown-documenter",
 			"@fluid-tools/benchmark",
 			"@fluid-tools/markdown-magic",

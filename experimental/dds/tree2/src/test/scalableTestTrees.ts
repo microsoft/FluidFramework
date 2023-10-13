@@ -5,14 +5,14 @@
 import { strict as assert } from "assert";
 import {
 	FieldKinds,
+	FieldSchema,
 	isEditableField,
 	isEditableTree,
 	SchemaAware,
-	SchemaBuilder,
 	typeNameSymbol,
 	UnwrappedEditableField,
 } from "../feature-libraries";
-import { jsonNumber, jsonSchema } from "../domains";
+import { jsonNumber, jsonSchema, SchemaBuilder } from "../domains";
 import { brand, requireAssignableTo } from "../util";
 import { ISharedTreeView, TreeContent } from "../shared-tree";
 import { FieldKey, moveToDetachedField, rootFieldKey, UpPath } from "../core";
@@ -26,33 +26,37 @@ import { FieldKey, moveToDetachedField, rootFieldKey, UpPath } from "../core";
  */
 export const localFieldKey: FieldKey = brand("foo");
 
-const deepBuilder = new SchemaBuilder("sharedTree.bench: deep", {}, jsonSchema);
+const deepBuilder = new SchemaBuilder({
+	scope: "scalable",
+	name: "sharedTree.bench: deep",
+	libraries: [jsonSchema],
+});
 
 // Test data in "deep" mode: a linked list with a number at the end.
 const linkedListSchema = deepBuilder.structRecursive("linkedList", {
-	foo: SchemaBuilder.fieldRecursive(FieldKinds.required, () => linkedListSchema, jsonNumber),
+	foo: FieldSchema.createUnsafe(FieldKinds.required, [() => linkedListSchema, jsonNumber]),
 });
 
-const wideBuilder = new SchemaBuilder("sharedTree.bench: wide", {}, jsonSchema);
+const wideBuilder = new SchemaBuilder({
+	scope: "scalable",
+	name: "sharedTree.bench: wide",
+	libraries: [jsonSchema],
+});
 
 export const wideRootSchema = wideBuilder.struct("WideRoot", {
-	foo: SchemaBuilder.field(FieldKinds.sequence, jsonNumber),
+	foo: FieldSchema.create(FieldKinds.sequence, [jsonNumber]),
 });
 
-export const wideSchema = wideBuilder.intoDocumentSchema(
-	SchemaBuilder.field(FieldKinds.required, wideRootSchema),
-);
+export const wideSchema = wideBuilder.toDocumentSchema(wideRootSchema);
 
-export const deepSchema = deepBuilder.intoDocumentSchema(
-	SchemaBuilder.field(FieldKinds.required, linkedListSchema, jsonNumber),
-);
+export const deepSchema = deepBuilder.toDocumentSchema([linkedListSchema, jsonNumber]);
 
 /**
  * JS object like a deep tree.
  * Compatible with ContextuallyTypedNodeData
  */
 export interface JSDeepTree {
-	[typeNameSymbol]?: "linkedList" | undefined;
+	[typeNameSymbol]?: typeof linkedListSchema.name | undefined;
 	foo: JSDeepTree | number;
 }
 

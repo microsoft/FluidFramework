@@ -7,7 +7,7 @@ import Table from "easy-table";
 import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { SchemaBuilder, singleTextCursor } from "../../feature-libraries";
+import { singleTextCursor } from "../../feature-libraries";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../shared-tree";
 import { JsonCompatibleReadOnly, brand, getOrAddEmptyToMap } from "../../util";
 import {
@@ -21,6 +21,7 @@ import {
 	ValueSchema,
 } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
+import { SchemaBuilder } from "../../domains";
 
 // Notes:
 // 1. Within this file "percentile" is commonly used, and seems to refer to a portion (0 to 1) or some maximum size.
@@ -32,19 +33,17 @@ import { typeboxValidator } from "../../external-utilities";
 // They could be reimplemented targeted the lower level APIs if desired.
 // 5. "large" node just get a long repeated string value, not a complex tree, so tree encoding is not really covered here.
 
-const builder = new SchemaBuilder("opSize");
+const builder = new SchemaBuilder({ scope: "opSize" });
 
 const stringSchema = builder.leaf("String", ValueSchema.String);
 const childSchema = builder.struct("Test:Opsize-Bench-Child", {
-	data: SchemaBuilder.fieldRequired(stringSchema),
+	data: stringSchema,
 });
 const parentSchema = builder.struct("Test:Opsize-Bench-Root", {
-	children: SchemaBuilder.fieldSequence(childSchema),
+	children: builder.sequence(childSchema),
 });
 
-const rootSchema = SchemaBuilder.fieldRequired(parentSchema);
-
-const fullSchemaData = builder.intoDocumentSchema(rootSchema);
+const fullSchemaData = builder.toDocumentSchema(parentSchema);
 
 const initialTestJsonTree = {
 	type: parentSchema.name,

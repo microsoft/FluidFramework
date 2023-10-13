@@ -7,7 +7,6 @@ import { assert } from "@fluidframework/core-utils";
 import { isStableId } from "@fluidframework/container-runtime";
 import { StableId } from "@fluidframework/runtime-definitions";
 import { Brand, brandedStringType, generateStableId } from "../../util";
-import { ReadonlyRepairDataStore } from "../repair";
 
 /**
  * The identifier for a particular session/user/client that can generate `GraphCommit`s
@@ -81,8 +80,6 @@ export interface GraphCommit<TChange> {
 	readonly revision: RevisionTag;
 	/** The change that will result from applying this commit */
 	readonly change: TChange;
-	/* The repair data associated with the commit */
-	readonly repairData?: ReadonlyRepairDataStore;
 	/** The parent of this commit, on whose change this commit's change is based */
 	readonly parent?: GraphCommit<TChange>;
 	/** The inverse of this commit */
@@ -101,11 +98,10 @@ export function mintCommit<TChange>(
 	parent: GraphCommit<TChange>,
 	commit: Omit<GraphCommit<TChange>, "parent">,
 ): GraphCommit<TChange> {
-	const { revision, change, repairData } = commit;
+	const { revision, change } = commit;
 	return {
 		revision,
 		change,
 		parent,
-		repairData,
 	};
 }

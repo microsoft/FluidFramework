@@ -29,6 +29,7 @@ import {
 	ISegment,
 	ISegmentAction,
 	LocalReferencePosition,
+	// eslint-disable-next-line import/no-deprecated
 	matchProperties,
 	MergeTreeDeltaType,
 	PropertySet,
@@ -148,6 +149,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 					if (
 						lastAnnotate &&
 						lastAnnotate.pos2 === r.position &&
+						// eslint-disable-next-line import/no-deprecated
 						matchProperties(lastAnnotate.props, props)
 					) {
 						lastAnnotate.pos2 += r.segment.cachedLength;
