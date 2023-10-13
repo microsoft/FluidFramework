@@ -29,7 +29,6 @@ interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
 	install: boolean;
 	uninstall: boolean;
 	concurrency: number;
-	fix: boolean;
 	worker: boolean;
 	workerThreads: boolean;
 	workerMemoryLimit: number;
@@ -54,7 +53,6 @@ export const options: FastBuildOptions = {
 	install: false,
 	uninstall: false,
 	concurrency: os.cpus().length,
-	fix: false,
 	all: false,
 	worker: false,
 	workerThreads: false,
@@ -160,12 +158,6 @@ export function parseOptions(argv: string[]) {
 
 		if (arg === "-f" || arg === "--force") {
 			options.force = true;
-			continue;
-		}
-
-		if (arg === "--fix") {
-			options.fix = true;
-			setBuild(false);
 			continue;
 		}
 
