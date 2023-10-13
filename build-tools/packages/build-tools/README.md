@@ -222,7 +222,7 @@ names `fluid-build` uses.
 
 ### fluid-build:init
 
-Trace the initialization `fluid-build`, including root inference, package loading and selection (based on command line
+Trace the initialization of `fluid-build`, including root directory inference, package loading and selection (based on command line
 scopes).
 
 ### fluid-build:task:definition
