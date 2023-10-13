@@ -20,10 +20,12 @@ const testCases = [
 
 	-Infinity,
 	-Number.MAX_VALUE,
-	-Number.MIN_SAFE_INTEGER,
+	Number.MIN_SAFE_INTEGER,
+	-Number.MIN_VALUE,
 	-0,
 	NaN,
 	0,
+	Number.MIN_VALUE,
 	Number.MAX_SAFE_INTEGER,
 	Number.MAX_VALUE,
 	Infinity,
