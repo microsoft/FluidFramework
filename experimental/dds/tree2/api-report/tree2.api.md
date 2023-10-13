@@ -23,17 +23,6 @@ export interface Adapters {
 }
 
 // @alpha
-const all: readonly [TreeSchema<"com.fluidframework.leaf.handle", {
-leafValue: ValueSchema.FluidHandle;
-}>, TreeSchema<"com.fluidframework.leaf.number", {
-leafValue: ValueSchema.Number;
-}>, TreeSchema<"com.fluidframework.leaf.boolean", {
-leafValue: ValueSchema.Boolean;
-}>, TreeSchema<"com.fluidframework.leaf.string", {
-leafValue: ValueSchema.String;
-}>];
-
-// @alpha
 export type AllowedTypes = readonly [Any] | readonly LazyItem<TreeSchema>[];
 
 // @alpha
@@ -231,11 +220,6 @@ export interface BindTree<T = BindTreeDefault> extends PathStep {
 
 // @alpha
 export type BindTreeDefault = BindTree;
-
-// @alpha (undocumented)
-const boolean: TreeSchema<"com.fluidframework.leaf.boolean", {
-leafValue: ValueSchema.Boolean;
-}>;
 
 // @alpha
 export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
@@ -808,11 +792,6 @@ export function getPrimaryField(schema: TreeStoredSchema): {
 } | undefined;
 
 // @alpha (undocumented)
-const handle: TreeSchema<"com.fluidframework.leaf.handle", {
-leafValue: ValueSchema.FluidHandle;
-}>;
-
-// @alpha (undocumented)
 export interface HasListeners<E extends Events<E>> {
     hasListeners(eventName?: keyof Events<E>): boolean;
 }
@@ -1263,18 +1242,38 @@ export interface Leaf<TSchema extends LeafSchema> extends TreeNode {
     readonly value: SchemaAware.InternalTypes.TypedValue<TSchema["leafValue"]>;
 }
 
-declare namespace leaf {
-    export {
-        number,
-        boolean,
-        string,
-        handle,
-        primitives,
-        all,
-        library
-    }
-}
-export { leaf }
+// @alpha
+export const leaf: {
+    number: TreeSchema<"com.fluidframework.leaf.number", {
+    leafValue: ValueSchema.Number;
+    }>;
+    boolean: TreeSchema<"com.fluidframework.leaf.boolean", {
+    leafValue: ValueSchema.Boolean;
+    }>;
+    string: TreeSchema<"com.fluidframework.leaf.string", {
+    leafValue: ValueSchema.String;
+    }>;
+    handle: TreeSchema<"com.fluidframework.leaf.handle", {
+    leafValue: ValueSchema.FluidHandle;
+    }>;
+    primitives: readonly [TreeSchema<"com.fluidframework.leaf.number", {
+    leafValue: ValueSchema.Number;
+    }>, TreeSchema<"com.fluidframework.leaf.boolean", {
+    leafValue: ValueSchema.Boolean;
+    }>, TreeSchema<"com.fluidframework.leaf.string", {
+    leafValue: ValueSchema.String;
+    }>];
+    all: readonly [TreeSchema<"com.fluidframework.leaf.handle", {
+    leafValue: ValueSchema.FluidHandle;
+    }>, TreeSchema<"com.fluidframework.leaf.number", {
+    leafValue: ValueSchema.Number;
+    }>, TreeSchema<"com.fluidframework.leaf.boolean", {
+    leafValue: ValueSchema.Boolean;
+    }>, TreeSchema<"com.fluidframework.leaf.string", {
+    leafValue: ValueSchema.String;
+    }>];
+    library: SchemaLibrary;
+};
 
 // @alpha (undocumented)
 export type LeafSchema = TreeSchema & LeafSchemaSpecification;
@@ -1287,9 +1286,6 @@ interface LeafSchemaSpecification {
 
 // @alpha (undocumented)
 const library: SchemaLibrary;
-
-// @alpha (undocumented)
-const library_2: SchemaLibrary;
 
 // @alpha
 export enum LocalCommitSource {
@@ -1509,11 +1505,6 @@ type NormalizeStructFieldsInner<T extends Fields> = {
     [Property in keyof T]: NormalizeField<T[Property]>;
 };
 
-// @alpha (undocumented)
-const number: TreeSchema<"com.fluidframework.leaf.number", {
-leafValue: ValueSchema.Number;
-}>;
-
 // @alpha
 type ObjectToMap<ObjectMap, MapKey extends number | string, MapValue> = ReadonlyMap<MapKey, MapValue> & {
     get<TKey extends keyof ObjectMap>(key: TKey): ObjectMap[TKey];
@@ -1621,15 +1612,6 @@ export function prefixFieldPath(prefix: PathRootPrefix | undefined, path: FieldU
 
 // @alpha
 export function prefixPath(prefix: PathRootPrefix | undefined, path: UpPath | undefined): UpPath | undefined;
-
-// @alpha (undocumented)
-const primitives: readonly [TreeSchema<"com.fluidframework.leaf.number", {
-leafValue: ValueSchema.Number;
-}>, TreeSchema<"com.fluidframework.leaf.boolean", {
-leafValue: ValueSchema.Boolean;
-}>, TreeSchema<"com.fluidframework.leaf.string", {
-leafValue: ValueSchema.String;
-}>];
 
 // @alpha (undocumented)
 export type PrimitiveValue = string | boolean | number;
@@ -1774,12 +1756,28 @@ export { SchemaAware }
 // @alpha @sealed
 export class SchemaBuilder<TScope extends string = string> extends SchemaBuilderBase<TScope, typeof FieldKinds.required> {
     constructor(options: SchemaBuilderOptions<TScope>);
+    // (undocumented)
+    readonly boolean: TreeSchema<"com.fluidframework.leaf.boolean", {
+    leafValue: import("..").ValueSchema.Boolean;
+    }>;
+    // (undocumented)
+    readonly handle: TreeSchema<"com.fluidframework.leaf.handle", {
+    leafValue: import("..").ValueSchema.FluidHandle;
+    }>;
+    // (undocumented)
+    readonly number: TreeSchema<"com.fluidframework.leaf.number", {
+    leafValue: import("..").ValueSchema.Number;
+    }>;
     static optional: <const T extends ImplicitAllowedTypes>(allowedTypes: T) => FieldSchema<Optional, NormalizeAllowedTypes<T>>;
     readonly optional: <const T extends ImplicitAllowedTypes>(allowedTypes: T) => FieldSchema<Optional, NormalizeAllowedTypes<T>>;
     static required: <const T extends ImplicitAllowedTypes>(allowedTypes: T) => FieldSchema<Required_2, NormalizeAllowedTypes<T>>;
     readonly required: <const T extends ImplicitAllowedTypes>(allowedTypes: T) => FieldSchema<Required_2, NormalizeAllowedTypes<T>>;
     static sequence: <const T extends ImplicitAllowedTypes>(allowedTypes: T) => FieldSchema<Sequence, NormalizeAllowedTypes<T>>;
     readonly sequence: <const T extends ImplicitAllowedTypes>(allowedTypes: T) => FieldSchema<Sequence, NormalizeAllowedTypes<T>>;
+    // (undocumented)
+    readonly string: TreeSchema<"com.fluidframework.leaf.string", {
+    leafValue: import("..").ValueSchema.String;
+    }>;
 }
 
 // @alpha
@@ -1980,11 +1978,6 @@ export interface StoredSchemaRepository extends Dependee, ISubscribable<SchemaEv
     update(newSchema: SchemaData): void;
 }
 
-// @alpha (undocumented)
-const string: TreeSchema<"com.fluidframework.leaf.string", {
-leafValue: ValueSchema.String;
-}>;
-
 // @alpha
 export interface Struct extends TreeNode {
     readonly localNodeKey?: LocalNodeKey;
@@ -2025,7 +2018,7 @@ declare namespace testRecursiveDomain {
     export {
         recursiveStruct,
         recursiveStruct2,
-        library_2 as library
+        library
     }
 }
 export { testRecursiveDomain }

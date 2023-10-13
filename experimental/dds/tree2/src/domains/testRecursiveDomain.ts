@@ -12,7 +12,7 @@
 
 import { AllowedTypes, FieldKinds, FieldSchema } from "../feature-libraries";
 import { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../util";
-import * as leaf from "./leafDomain";
+import { leaf } from "./leafDomain";
 import { SchemaBuilder } from "./schemaBuilder";
 
 const builder = new SchemaBuilder({ scope: "Test Recursive Domain" });
