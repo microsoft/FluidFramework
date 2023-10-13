@@ -1,4 +1,4 @@
-# tinylicious
+# @fluidframework/tinylicious
 
 Tinylicious is a minimal, self-contained, test implementation of the Fluid Framework service that is much smaller (tinier!) than Routerlicious, our reference implementation of the service.
 

@@ -103,7 +103,6 @@ module.exports = {
 			"tools/changelog-generator-wrapper",
 			"tools/getkeys",
 			"tools/test-tools",
-			"server/routerlicious/packages/tinylicious",
 		],
 	},
 
@@ -178,7 +177,6 @@ module.exports = {
 				npm: [
 					"@fluidframework",
 					"fluid-framework",
-					"tinylicious",
 					"@fluid-internal/client-utils",
 				],
 				// A list of packages published to our internal-build feed. Note that packages published
