@@ -22,7 +22,6 @@ import {
 	clonePath,
 	ITreeCursor,
 	EmptyKey,
-	ValueSchema,
 	FieldUpPath,
 } from "../core";
 import {
@@ -34,6 +33,7 @@ import {
 	jsonBoolean,
 	jsonString,
 	SchemaBuilder,
+	leaf,
 } from "../domains";
 import { JsonCompatible, brand, brandOpaque } from "../util";
 import {
@@ -852,10 +852,9 @@ export function testForest(config: ForestTestConfiguration): void {
 			});
 			it("when moving the last node in the field", () => {
 				const builder = new SchemaBuilder({ scope: "moving" });
-				const leaf = builder.leaf("leaf", ValueSchema.Number);
 				const root = builder.struct("root", {
-					x: SchemaBuilder.sequence(leaf),
-					y: SchemaBuilder.sequence(leaf),
+					x: SchemaBuilder.sequence(leaf.number),
+					y: SchemaBuilder.sequence(leaf.number),
 				});
 				const schema = builder.toDocumentSchema(builder.optional(root));
 
