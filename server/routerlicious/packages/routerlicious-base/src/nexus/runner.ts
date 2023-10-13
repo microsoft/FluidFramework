@@ -23,7 +23,7 @@ import {
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { createMetricClient } from "@fluidframework/server-services";
-import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { LumberEventName, Lumberjack, LogLevel } from "@fluidframework/server-services-telemetry";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";
 import * as app from "./app";
 
@@ -108,25 +108,25 @@ export class NexusRunner implements IRunner {
 		httpServer.on("error", (error) => this.onError(error));
 		httpServer.on("listening", () => this.onListening());
 		httpServer.on("upgrade", (req, socket, initialMsgBuffer) => {
-			Lumberjack.info(
-				`WebSocket: Upgraded http request. Current connections: [${socket.server._connections}]`,
-			);
+			Lumberjack.newLumberMetric("WebSocket Connections", {
+				origin: "upgrade",
+				connections: socket.server._connections,
+			}).success("Connection Upgraded");
 			socket.on("close", (hadError: boolean) => {
-				Lumberjack.info(
-					`WebSocket: closed. Current connections [${socket.server._connections}]`,
-					{ hadError: hadError.toString() },
-				);
+				Lumberjack.newLumberMetric("WebSocket Connections", {
+					origin: "close",
+					connections: socket.server._connections,
+					hadError: hadError.toString(),
+				}).success("Connection closed", hadError ? LogLevel.Error : LogLevel.Info);
 			});
 			socket.on("error", (error) => {
-				Lumberjack.error(
-					`WebSocket: error. Current connections [${socket.server._connections}]`,
-					{
-						bytesRead: socket.bytesRead,
-						bytesWritten: socket.bytesWritten,
-						error: error.toString(),
-					},
-					error,
-				);
+				Lumberjack.newLumberMetric("WebSocket Connections", {
+					origin: "error",
+					connections: socket.server._connections,
+					bytesRead: socket.bytesRead,
+					bytesWritten: socket.bytesWritten,
+					error: error.toString(),
+				}).success("Connection error", LogLevel.Error);
 			});
 		});
 
