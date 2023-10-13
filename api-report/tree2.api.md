@@ -1162,25 +1162,25 @@ export interface JsonableTree extends GenericTreeNode<JsonableTree> {
 export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree;
 
 // @alpha (undocumented)
-export const jsonArray: TreeSchema<"com.fluidframework.json.Array", {
+export const jsonArray: TreeSchema<"com.fluidframework.json.array", {
 structFields: {
-"": FieldSchema<Sequence, readonly [() => TreeSchema<"com.fluidframework.json.Object", {
-mapFields: FieldSchema<Optional, readonly [any, () => TreeSchema<"com.fluidframework.json.Array", any>, TreeSchema<"com.fluidframework.leaf.number", {
+"": FieldSchema<Sequence, readonly [() => TreeSchema<"com.fluidframework.json.object", {
+mapFields: FieldSchema<Optional, readonly [any, () => TreeSchema<"com.fluidframework.json.array", any>, TreeSchema<"com.fluidframework.leaf.number", {
 leafValue: import("../..").ValueSchema.Number;
 }>, TreeSchema<"com.fluidframework.leaf.boolean", {
 leafValue: import("../..").ValueSchema.Boolean;
 }>, TreeSchema<"com.fluidframework.leaf.string", {
 leafValue: import("../..").ValueSchema.String;
-}>, TreeSchema<"com.fluidframework.json.Null", {
+}>, TreeSchema<"com.fluidframework.json.null", {
 structFields: {};
 }>]>;
-}>, () => TreeSchema<"com.fluidframework.json.Array", any>, TreeSchema<"com.fluidframework.leaf.number", {
+}>, () => TreeSchema<"com.fluidframework.json.array", any>, TreeSchema<"com.fluidframework.leaf.number", {
 leafValue: import("../..").ValueSchema.Number;
 }>, TreeSchema<"com.fluidframework.leaf.boolean", {
 leafValue: import("../..").ValueSchema.Boolean;
 }>, TreeSchema<"com.fluidframework.leaf.string", {
 leafValue: import("../..").ValueSchema.String;
-}>, TreeSchema<"com.fluidframework.json.Null", {
+}>, TreeSchema<"com.fluidframework.json.null", {
 structFields: {};
 }>]>;
 };
@@ -1205,7 +1205,7 @@ export type JsonCompatibleReadOnly = string | number | boolean | null | readonly
 };
 
 // @alpha (undocumented)
-export const jsonNull: TreeSchema<"com.fluidframework.json.Null", {
+export const jsonNull: TreeSchema<"com.fluidframework.json.null", {
 structFields: {};
 }>;
 
@@ -1215,16 +1215,16 @@ leafValue: import("../..").ValueSchema.Number;
 }>;
 
 // @alpha (undocumented)
-export const jsonObject: TreeSchema<"com.fluidframework.json.Object", {
-mapFields: FieldSchema<Optional, readonly [() => TreeSchema<"com.fluidframework.json.Object", any>, () => TreeSchema<"com.fluidframework.json.Array", {
+export const jsonObject: TreeSchema<"com.fluidframework.json.object", {
+mapFields: FieldSchema<Optional, readonly [() => TreeSchema<"com.fluidframework.json.object", any>, () => TreeSchema<"com.fluidframework.json.array", {
 structFields: {
-"": FieldSchema<Sequence, readonly [() => TreeSchema<"com.fluidframework.json.Object", any>, any, TreeSchema<"com.fluidframework.leaf.number", {
+"": FieldSchema<Sequence, readonly [() => TreeSchema<"com.fluidframework.json.object", any>, any, TreeSchema<"com.fluidframework.leaf.number", {
 leafValue: import("../..").ValueSchema.Number;
 }>, TreeSchema<"com.fluidframework.leaf.boolean", {
 leafValue: import("../..").ValueSchema.Boolean;
 }>, TreeSchema<"com.fluidframework.leaf.string", {
 leafValue: import("../..").ValueSchema.String;
-}>, TreeSchema<"com.fluidframework.json.Null", {
+}>, TreeSchema<"com.fluidframework.json.null", {
 structFields: {};
 }>]>;
 };
@@ -1234,7 +1234,7 @@ leafValue: import("../..").ValueSchema.Number;
 leafValue: import("../..").ValueSchema.Boolean;
 }>, TreeSchema<"com.fluidframework.leaf.string", {
 leafValue: import("../..").ValueSchema.String;
-}>, TreeSchema<"com.fluidframework.json.Null", {
+}>, TreeSchema<"com.fluidframework.json.null", {
 structFields: {};
 }>]>;
 }>;
@@ -1810,7 +1810,6 @@ export class SchemaBuilderBase<TScope extends string, TDefaultKind extends Field
         mapFields: T;
     }>;
     readonly name: string;
-    // (undocumented)
     protected normalizeField<TSchema extends ImplicitFieldSchema>(schema: TSchema): NormalizeField_2<TSchema, TDefaultKind>;
     readonly scope: TScope;
     // (undocumented)
