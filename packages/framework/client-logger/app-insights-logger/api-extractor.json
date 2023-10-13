@@ -7,16 +7,13 @@
 		// insights dependency.
 		"tsdocMessageReporting": {
 			"tsdoc-escape-right-brace": {
-				"logLevel": "warning",
-				"addToApiReportFile": true
+				"logLevel": "none"
 			},
 			"tsdoc-malformed-inline-tag": {
-				"logLevel": "warning",
-				"addToApiReportFile": true
+				"logLevel": "none"
 			},
 			"tsdoc-undefined-tag": {
-				"logLevel": "warning",
-				"addToApiReportFile": true
+				"logLevel": "none"
 			}
 		}
 	}
