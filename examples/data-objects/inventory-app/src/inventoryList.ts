@@ -7,27 +7,51 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import {
 	AllowedUpdateType,
 	ForestType,
-	TypedTreeChannel,
-	TypedTreeFactory,
+	ISharedTree,
+	ISharedTreeView,
+	SharedTreeFactory,
 	typeboxValidator,
 } from "@fluid-experimental/tree2";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { InventoryField, schema } from "./schema";
+import { Inventory, schema } from "./schema";
 
 const treeKey = "tree";
 
-const factory = new TypedTreeFactory({
+const factory = new SharedTreeFactory({
 	jsonValidator: typeboxValidator,
 	forest: ForestType.Reference,
-	subtype: "InventoryList",
 });
 
 export class InventoryList extends DataObject {
-	private _tree: TypedTreeChannel | undefined;
+	private _tree?: ISharedTree;
+	private _view?: ISharedTreeView;
 
-	public get tree(): InventoryField {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unsafe-return
-		return this._tree!.schematize({
+	private get tree(): ISharedTree {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		return this._tree!;
+	}
+
+	public get view(): ISharedTreeView {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		return this._view!;
+	}
+
+	public get inventory(): Inventory {
+		return this.view.root2(schema) as unknown as Inventory;
+	}
+
+	protected async initializingFirstTime() {
+		this._tree = this.runtime.createChannel(undefined, factory.type) as ISharedTree;
+		this.root.set(treeKey, this._tree.handle);
+	}
+
+	protected async initializingFromExisting() {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		this._tree = await this.root.get<IFluidHandle<ISharedTree>>(treeKey)!.get();
+	}
+
+	protected async hasInitialized() {
+		this._view = this.tree.schematize({
 			initialTree: {
 				parts: [
 					{
@@ -42,20 +66,8 @@ export class InventoryList extends DataObject {
 			},
 			allowedSchemaModifications: AllowedUpdateType.None,
 			schema,
-		} as any) as any;
+		} as any);
 	}
-
-	protected async initializingFirstTime() {
-		this._tree = this.runtime.createChannel(undefined, factory.type) as TypedTreeChannel;
-		this.root.set(treeKey, this._tree.handle);
-	}
-
-	protected async initializingFromExisting() {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		this._tree = await this.root.get<IFluidHandle<TypedTreeChannel>>(treeKey)!.get();
-	}
-
-	protected async hasInitialized() {}
 }
 
 export const InventoryListFactory = new DataObjectFactory(
