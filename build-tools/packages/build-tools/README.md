@@ -249,9 +249,9 @@ Trace the reasons why each task is triggered. Useful to diagnose problems with i
 
 These traces show the execution flow of the task, to show the task invocation in action.
 
--   `fluid-build:task:exec` - trace whether the tasks is skipped or start and finish of the task.
--   `fluid-build:task:queue` - trace when the task is queued after the dependent tasks are done
--   `fluid-build:task:exec:wait` - trace wait time of a task in queue (delay in execution after it is ready to be scheduled).
+-   `fluid-build:task:exec` - Trace whether the task is skipped or, if it runs, the start and finish of the task
+-   `fluid-build:task:queue` - Trace when the task is queued after the dependent tasks are done
+-   `fluid-build:task:exec:wait` - Trace the wait time of a task in queue (the delay in execution after it is ready to be scheduled)
 
 ### Other fluid-build:\* traces
 
