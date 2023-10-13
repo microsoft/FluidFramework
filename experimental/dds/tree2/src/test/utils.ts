@@ -106,9 +106,9 @@ import {
 	cursorToJsonObject,
 	jsonRoot,
 	jsonSchema,
-	jsonString,
 	singleJsonCursor,
 	SchemaBuilder,
+	leaf,
 } from "../domains";
 import { HasListeners, IEmitter, ISubscribable } from "../events";
 
@@ -678,7 +678,7 @@ export function toJsonTree(tree: ISharedTreeView): JsonCompatible[] {
  */
 export function insert(tree: ISharedTreeView, index: number, ...values: string[]): void {
 	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
-	const nodes = values.map((value) => singleTextCursor({ type: jsonString.name, value }));
+	const nodes = values.map((value) => singleTextCursor({ type: leaf.string.name, value }));
 	field.insert(index, nodes);
 }
 
