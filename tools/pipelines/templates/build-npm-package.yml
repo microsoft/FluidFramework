@@ -286,6 +286,12 @@ stages:
               interdependencyRange: ${{ parameters.interdependencyRange }}
         
         - ${{ if and(eq(parameters.taskPublishBundleSizeArtifacts, false), ne(parameters.packageTypesOverride, 'none'), eq(parameters.releaseBuildOverride, 'prerelease')) }}:
+          - task: Npm@1
+            displayName: npm run ci:build:docs
+            inputs:
+              command: 'custom'
+              workingDir: ${{ parameters.buildDirectory }}
+              customCommand: 'run ci:build:docs'
           - template: include-set-package-version-types.yml
             parameters:
               buildDirectory: ${{ parameters.buildDirectory }}
