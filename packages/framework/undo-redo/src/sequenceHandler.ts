@@ -16,6 +16,8 @@ import { IRevertible, UndoRedoStackManager } from "./undoRedoStackManager";
 /**
  * A shared segment sequence undo redo handler that will add all local sequences changes to the provided
  * undo redo stack manager
+ *
+ * @public
  */
 export class SharedSegmentSequenceUndoRedoHandler {
 	private readonly sequences = new Map<
@@ -53,6 +55,8 @@ export class SharedSegmentSequenceUndoRedoHandler {
 
 /**
  * Tracks a change on a shared segment sequence and allows reverting it
+ *
+ * @public
  */
 export class SharedSegmentSequenceRevertible implements IRevertible {
 	private readonly revertibles: MergeTreeDeltaRevertible[];

@@ -19,12 +19,20 @@ export {
 	AnchorSet,
 	DetachedField,
 	UpPath,
+	Range,
+	RangeUpPath,
+	PlaceUpPath,
+	DetachedRangeUpPath,
+	DetachedPlaceUpPath,
+	PlaceIndex,
+	NodeIndex,
 	FieldUpPath,
 	Anchor,
 	RootField,
 	ChildCollection,
 	ChildLocation,
 	DeltaVisitor,
+	AnnouncedVisitor,
 	FieldMapObject,
 	NodeData,
 	GenericTreeNode,
@@ -56,6 +64,7 @@ export {
 	SchemaData,
 	FieldAnchor,
 	SchemaEvents,
+	ChangesetLocalId,
 	ForestEvents,
 	PathRootPrefix,
 	AnchorSlot,
@@ -93,6 +102,7 @@ export {
 	BrandedMapSubset,
 	RangeEntry,
 	Named,
+	oneFromSet,
 } from "./util";
 
 export {
@@ -119,6 +129,7 @@ export {
 	nodeKeySchema,
 	leaf,
 	testRecursiveDomain,
+	SchemaBuilder,
 } from "./domains";
 
 export {
@@ -179,7 +190,6 @@ export {
 	UnwrappedUntypedField,
 	UnwrappedUntypedTree,
 	UntypedTreeOrPrimitive,
-	SchemaBuilder,
 	AllowedTypes,
 	TreeSchema,
 	Required,
@@ -249,6 +259,7 @@ export {
 	Sequence2,
 	Struct,
 	StructTyped,
+	AssignableFieldKinds,
 	TreeContext,
 	TypedField,
 	TypedNode,
@@ -261,6 +272,13 @@ export {
 	MapSchema,
 	StructSchema,
 	CheckTypesOverlap,
+	SchemaBuilderBase,
+	ImplicitFieldSchema,
+	ImplicitAllowedTypes,
+	Unenforced,
+	schemaIsFieldNode,
+	AllowedTypeSet,
+	SchemaBuilderOptions,
 } from "./feature-libraries";
 
 export {

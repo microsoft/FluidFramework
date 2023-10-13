@@ -128,16 +128,14 @@ const testCases: {
 	{
 		name: "a delete of content that is concurrently edited",
 		edit: (actedOn, other) => {
-			other.editor
-				.valueField({ parent: rootPath, field: brand("child") })
-				.set(singleTextCursor({ type: jsonString.name, value: "y" }));
+			other.editor.sequenceField({ parent: rootPath, field: brand("child") }).delete(0, 1);
 			actedOn.editor.sequenceField(rootField).delete(0, 1);
 		},
 		initialState: [{ child: "x" }],
 		editedState: [],
 		// Undoing the insertion of A on the parent branch is a no-op because the node was deleted
 		parentUndoState: [],
-		forkUndoState: [{ child: "y" }],
+		forkUndoState: [{}],
 	},
 ];
 

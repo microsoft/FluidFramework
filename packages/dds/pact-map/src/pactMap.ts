@@ -155,6 +155,8 @@ const snapshotFileName = "header";
  *     console.log(`New value was accepted for key: ${ key }, value: ${ pactMap.get(key) }`);
  * });
  * ```
+ *
+ * @public
  */
 export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implements IPactMap<T> {
 	/**

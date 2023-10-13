@@ -40,9 +40,8 @@
 		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
+		"test:coverage": "c8 npm run test",
 		"test:mocha": "mocha --forbid-only \"lib/test/**/*.test.js\"",
-		"test:mocha:report": "npm run test:mocha -- -- --reporter xunit --reporter-option output=nyc/mocha-junit-report.xml",
-		"test:report": "c8 npm run test:mocha:report",
 		"tsc": "tsc"
 	},
 	"c8": {
@@ -77,9 +76,9 @@
 		"table": "^6.8.1"
 	},
 	"devDependencies": {
-		"@fluid-internal/readme-command": "workspace:*",
-		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/eslint-config-fluid": "^2.1.0",
+		"@fluid-private/readme-command": "workspace:*",
+		"@fluidframework/build-common": "^2.0.1",
+		"@fluidframework/eslint-config-fluid": "^3.0.0",
 		"@microsoft/api-extractor": "^7.36.1",
 		"@oclif/test": "^2.3.27",
 		"@types/chai": "^4.3.5",
@@ -91,7 +90,7 @@
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
-		"eslint": "~8.6.0",
+		"eslint": "~8.51.0",
 		"eslint-config-oclif": "^4.0.0",
 		"eslint-config-oclif-typescript": "^1.0.3",
 		"eslint-config-prettier": "~9.0.0",

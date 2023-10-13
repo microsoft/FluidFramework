@@ -6,7 +6,7 @@
 import { Context, Package } from "@fluidframework/build-tools";
 import path from "node:path";
 import { filterFlags, selectionFlags } from "./flags";
-import { ReleaseGroup, knownReleaseGroups } from "./releaseGroups";
+import { knownReleaseGroups, ReleaseGroup } from "./releaseGroups";
 
 /**
  * The criteria that should be used for selecting package-like objects from a collection.
@@ -73,8 +73,8 @@ export const parsePackageSelectionFlags = (flags: selectionFlags): PackageSelect
 			? AllPackagesSelectionCriteria
 			: {
 					independentPackages: flags.packages ?? false,
-					releaseGroups: flags.releaseGroup ?? [],
-					releaseGroupRoots: flags.releaseGroupRoot ?? [],
+					releaseGroups: (flags.releaseGroup as ReleaseGroup[]) ?? [],
+					releaseGroupRoots: (flags.releaseGroupRoot as ReleaseGroup[]) ?? [],
 					directory: flags.dir,
 			  };
 
@@ -156,7 +156,7 @@ const selectPackagesFromContext = (
 	if (selection.independentPackages === true) {
 		for (const pkg of context.independentPackages) {
 			selected.push(
-				Package.load(pkg.packageJsonFileName, pkg.group, undefined, {
+				Package.load(pkg.packageJsonFileName, pkg.group, pkg.monoRepo, {
 					kind: "independentPackage",
 				}),
 			);
@@ -180,17 +180,14 @@ const selectPackagesFromContext = (
 		if (packages.length === 0) {
 			continue;
 		}
-		const { monoRepo } = packages[0];
-		if (monoRepo === undefined) {
-			throw new Error(
-				`Package is supposed to be a release group root but cannot find release group: ${rg}`,
-			);
+
+		if (packages[0].monoRepo === undefined) {
+			throw new Error(`No release group found for package: ${packages[0].name}`);
 		}
 
-		const loadedPackage: PackageWithKind = Package.loadDir(monoRepo.repoPath, rg, monoRepo, {
-			kind: "releaseGroupRootPackage",
-		});
-		selected.push(loadedPackage);
+		const dir = packages[0].monoRepo.directory;
+		const pkg = Package.loadDir(dir, rg);
+		selected.push(Package.loadDir(dir, rg, pkg.monoRepo, { kind: "releaseGroupRootPackage" }));
 	}
 
 	return selected;

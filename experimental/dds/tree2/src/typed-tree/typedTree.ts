@@ -17,20 +17,24 @@ import {
 	IExperimentalIncrementalSummaryContext,
 	IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
-import { FieldSchema, TypedField } from "../feature-libraries";
+import {
+	FieldSchema,
+	TypedField,
+	createNodeKeyManager,
+	nodeKeyFieldKey,
+} from "../feature-libraries";
 import {
 	SharedTree,
 	SharedTreeOptions,
 	InitializeAndSchematizeConfiguration,
 } from "../shared-tree";
+import { brand } from "../util";
 
 /**
  * Configuration to specialize a Tree DDS for a particular use.
  * @alpha
  */
-export interface TypedTreeOptions<TRoot extends FieldSchema = FieldSchema>
-	extends SharedTreeOptions,
-		InitializeAndSchematizeConfiguration<TRoot> {
+export interface TypedTreeOptions extends SharedTreeOptions {
 	/**
 	 * Name appended to {@link @fluidframework/datastore-definitions#IChannelFactory."type"} to identify this factory configuration.
 	 * @privateRemarks
@@ -44,24 +48,54 @@ export interface TypedTreeOptions<TRoot extends FieldSchema = FieldSchema>
  * Channel for a Tree DDS.
  * @alpha
  */
-export type TypedTreeChannel<TRoot extends FieldSchema = FieldSchema> = IChannel & {
-	readonly root: TypedField<TRoot>;
-};
+export interface TypedTreeChannel extends IChannel {
+	/**
+	 * Returns a tree known to be compatible with the provided schema with a schema aware API based on that schema.
+	 *
+	 * @remarks
+	 * If the tree is uninitialized (has no schema and no content), the tree is initialized with the provided `initialTree` and `schema`.
+	 *
+	 * The tree (now known to have been initialized) has its stored schema checked against the provided view `schema`.
+	 *
+	 * If the schema are compatible (including updating the stored schema if permitted via `allowedSchemaModifications`),
+	 * a {@link TreeField} for the root of the tree is returned, with a schema aware API based on the provided view schema.
+	 *
+	 * If the schema are not compatible, and exception is thrown.
+	 *
+	 * @privateRemarks
+	 * TODO: make the mismatch case recoverable.
+	 * - Provide a way to make a generic view schema for any document.
+	 * - Produce/throw the error in a document recoverable way (ex: specific exception type or return value).
+	 * TODO: Document and handle what happens when the stored schema changes after schematize has returned. Is some invalidation contract needed? How does editable tree behave?
+	 * TODO: Clarify lifetimes. Ensure calling schematize multiple times does not leak.
+	 * TODO: Support adapters for handling out of schema data.
+	 *
+	 * Doing initialization here, regardless of `AllowedUpdateType`, allows a small API that is hard to use incorrectly.
+	 * Other approach tend to have leave easy to make mistakes.
+	 * For example, having a separate initialization function means apps can forget to call it, making an app that can only open existing document,
+	 * or call it unconditionally leaving an app that can only create new documents.
+	 * It also would require the schema to be passed into to separate places and could cause issues if they didn't match.
+	 * Since the initialization function couldn't return a typed tree, the type checking wouldn't help catch that.
+	 * Also, if an app manages to create a document, but the initialization fails to get persisted, an app that only calls the initialization function
+	 * on the create code-path (for example how a schematized factory might do it),
+	 * would leave the document in an unusable state which could not be repaired when it is reopened (by the same or other clients).
+	 * Additionally, once out of schema content adapters are properly supported (with lazy document updates),
+	 * this initialization could become just another out of schema content adapter: at tha point it clearly belong here in schematize.
+	 */
+	schematize<TRoot extends FieldSchema>(
+		config: InitializeAndSchematizeConfiguration<TRoot>,
+	): TypedField<TRoot>;
+}
 
 /**
  * A channel factory that creates a {@link TreeField}.
  * @alpha
  */
-export class TypedTreeFactory<TRoot extends FieldSchema = FieldSchema> implements IChannelFactory {
+export class TypedTreeFactory implements IChannelFactory {
 	public readonly type: string;
 	public readonly attributes: IChannelAttributes;
 
-	public constructor(private readonly options: TypedTreeOptions<TRoot>) {
-		/**
-		 * TODO:
-		 * Either allow particular factory configurations to customize this string (for example `https://graph.microsoft.com/types/tree/${configurationName}`),
-		 * and/or schematize as a separate step, after the tree is loaded/created.
-		 */
+	public constructor(private readonly options: TypedTreeOptions) {
 		this.type = `https://graph.microsoft.com/types/tree/${options.subtype}`;
 
 		this.attributes = {
@@ -76,21 +110,16 @@ export class TypedTreeFactory<TRoot extends FieldSchema = FieldSchema> implement
 		id: string,
 		services: IChannelServices,
 		channelAttributes: Readonly<IChannelAttributes>,
-	): Promise<TypedTreeChannel<TRoot>> {
+	): Promise<TypedTreeChannel> {
 		const tree = new SharedTree(id, runtime, channelAttributes, this.options, "SharedTree");
 		await tree.load(services);
-		const view = tree.schematize(this.options);
-		const root = view.editableTree2(this.options.schema);
-		return new ChannelWrapperWithRoot(tree, root);
+		return new ChannelWrapperWithSchematize(runtime, tree);
 	}
 
-	public create(runtime: IFluidDataStoreRuntime, id: string): TypedTreeChannel<TRoot> {
+	public create(runtime: IFluidDataStoreRuntime, id: string): TypedTreeChannel {
 		const tree = new SharedTree(id, runtime, this.attributes, this.options, "SharedTree");
 		tree.initializeLocal();
-		// TODO: Once various issues with schema editing are fixed separate initialize from schematize, and explicitly do both here.
-		const view = tree.schematize(this.options);
-		const root = view.editableTree2(this.options.schema);
-		return new ChannelWrapperWithRoot(tree, root);
+		return new ChannelWrapperWithSchematize(runtime, tree);
 	}
 }
 
@@ -155,13 +184,21 @@ class ChannelWrapper implements IChannel {
 }
 
 /**
- * IChannel wrapper that exposes a "root".
+ * IChannel wrapper that exposes "schematize".
  */
-class ChannelWrapperWithRoot<T> extends ChannelWrapper {
+class ChannelWrapperWithSchematize extends ChannelWrapper implements TypedTreeChannel {
 	public constructor(
-		inner: IChannel,
-		public readonly root: T,
+		private readonly runtime: IFluidDataStoreRuntime,
+		private readonly tree: SharedTree,
 	) {
-		super(inner);
+		super(tree);
+	}
+
+	public schematize<TRoot extends FieldSchema>(
+		config: InitializeAndSchematizeConfiguration<TRoot>,
+	): TypedField<TRoot> {
+		const nodeKeyManager = createNodeKeyManager(this.runtime.idCompressor);
+		const view = this.tree.schematize(config);
+		return view.editableTree2(config.schema, nodeKeyManager, brand(nodeKeyFieldKey));
 	}
 }

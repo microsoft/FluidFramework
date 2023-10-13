@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { capitalize } from "../../util";
+import { capitalize, transformObjectMap } from "../../util";
 
 describe("Utils", () => {
 	it("capitalize", () => {
@@ -21,5 +21,12 @@ describe("Utils", () => {
 		for (const [input, expected] of data) {
 			assert.equal(capitalize(input), expected);
 		}
+	});
+
+	it("transformObjectMap", () => {
+		assert.deepEqual(
+			transformObjectMap({ a: "b", c: "d" }, (value, key) => `${key}${value}`),
+			Object.assign(Object.create(null), { a: "ab", c: "cd" }),
+		);
 	});
 });

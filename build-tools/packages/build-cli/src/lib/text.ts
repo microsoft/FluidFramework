@@ -14,6 +14,6 @@ export function indentString(str: string, indentNumber = 2): string {
 /**
  * Returns a string of spaces.
  */
-export function getIndent(indentNumber = 2) {
+export function getIndent(indentNumber = 2): string {
 	return " ".repeat(indentNumber);
 }

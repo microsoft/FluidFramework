@@ -4,12 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import { CursorLocationType, EmptyKey, mapCursorField, Value, ValueSchema } from "../../../core";
-import { jsonNull, jsonObject } from "../../../domains";
+import { CursorLocationType, EmptyKey, mapCursorField, Value } from "../../../core";
+import { jsonNull, jsonObject, leaf, SchemaBuilder } from "../../../domains";
 import {
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
-	SchemaBuilder,
 	singleTextCursor,
 	TreeChunk,
 } from "../../../feature-libraries";
@@ -43,14 +42,13 @@ import {
 } from "./fieldCursorTestUtilities";
 import { polygonTree, testData } from "./uniformChunkTestData";
 
-const builder = new SchemaBuilder("chunkTree");
-const leaf = builder.leaf("leaf", ValueSchema.Number);
+const builder = new SchemaBuilder({ scope: "chunkTree" });
 const empty = builder.struct("empty", {});
-const valueField = SchemaBuilder.fieldRequired(leaf);
+const valueField = SchemaBuilder.required(leaf.number);
 const structValue = builder.struct("structValue", { x: valueField });
-const optionalField = SchemaBuilder.fieldOptional(leaf);
+const optionalField = builder.optional(leaf.number);
 const structOptional = builder.struct("structOptional", { x: optionalField });
-const schema = builder.intoLibrary();
+const schema = builder.finalize();
 
 function expectEqual(a: ShapeInfo, b: ShapeInfo): void {
 	assert.deepEqual(a, b);
@@ -272,8 +270,13 @@ describe("chunkTree", () => {
 
 	describe("tryShapeFromSchema", () => {
 		it("leaf", () => {
-			const info = tryShapeFromSchema(schema, defaultSchemaPolicy, leaf.name, new Map());
-			expectEqual(info, new TreeShape(leaf.name, true, []));
+			const info = tryShapeFromSchema(
+				schema,
+				defaultSchemaPolicy,
+				leaf.number.name,
+				new Map(),
+			);
+			expectEqual(info, new TreeShape(leaf.number.name, true, []));
 		});
 		it("empty", () => {
 			const info = tryShapeFromSchema(schema, defaultSchemaPolicy, empty.name, new Map());
@@ -289,7 +292,7 @@ describe("chunkTree", () => {
 			expectEqual(
 				info,
 				new TreeShape(structValue.name, false, [
-					[brand("x"), new TreeShape(leaf.name, true, []), 1],
+					[brand("x"), new TreeShape(leaf.number.name, true, []), 1],
 				]),
 			);
 		});
@@ -313,7 +316,7 @@ describe("chunkTree", () => {
 				brand("key"),
 				new Map(),
 			);
-			assert.deepEqual(info, ["key", new TreeShape(leaf.name, true, []), 1]);
+			assert.deepEqual(info, ["key", new TreeShape(leaf.number.name, true, []), 1]);
 		});
 		it("optionalField", () => {
 			const info = tryShapeFromFieldSchema(
