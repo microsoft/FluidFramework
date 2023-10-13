@@ -43,8 +43,8 @@ export class LesscTask extends LeafTask {
 				this.traceNotUpToDate();
 			}
 			return result;
-		} catch (e: any) {
-			verbose(`${this.node.pkg.nameColored}: ${e.message}`);
+		} catch (e) {
+			verbose(`${this.node.pkg.nameColored}: ${(e as Error).message}`);
 			this.traceTrigger("failed to get file stats");
 			return false;
 		}

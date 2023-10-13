@@ -122,7 +122,7 @@ function getDefaultTscTaskDependencies(root: string, json: PackageJson) {
 			continue;
 		}
 		const satisfied =
-			version!.startsWith("workspace:") || semver.satisfies(depPackage.version, version!);
+			version.startsWith("workspace:") || semver.satisfies(depPackage.version, version);
 		if (!satisfied) {
 			continue;
 		}
@@ -181,7 +181,7 @@ function eslintGetScriptDependencies(
 				throw new Error(`Exports not found in ${eslintConfig}`);
 			}
 		}
-	} catch (e: any) {
+	} catch (e) {
 		throw new Error(`Unable to load eslint config file ${eslintConfig}. ${e}`);
 	}
 
@@ -237,6 +237,7 @@ function hasTaskDependency(root: string, json: PackageJson, taskName: string, se
 	}
 
 	while (pending.length !== 0) {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const dep = pending.pop()!;
 		if (seenDep.has(dep)) {
 			// This could be repeats or circular dependency (which we are not trying to detect)
@@ -292,13 +293,20 @@ function patchTaskDeps(root: string, json: PackageJson, taskName: string, taskDe
 	if (missingTaskDependencies.length > 0) {
 		const fileDep = json.fluidBuild?.tasks?.[taskName];
 		if (fileDep === undefined) {
-			if (json.fluidBuild === undefined) {
-				(json as any).fluidBuild = {};
+			let tasks: any;
+			if (json.fluidBuild !== undefined) {
+				if (json.fluidBuild.tasks !== undefined) {
+					tasks = json.fluidBuild.tasks;
+				} else {
+					tasks = {};
+					json.fluidBuild.tasks = tasks;
+				}
+			} else {
+				tasks = {};
+				json.fluidBuild = { tasks };
 			}
-			if (json.fluidBuild!.tasks === undefined) {
-				json.fluidBuild!.tasks = {};
-			}
-			json.fluidBuild!.tasks[taskName] = taskDeps;
+
+			tasks[taskName] = taskDeps;
 		} else {
 			let depArray: string[];
 			if (Array.isArray(fileDep)) {
@@ -434,6 +442,7 @@ export const handlers: Handler[] = [
 			const deps = getDefaultTscTaskDependencies(root, json);
 			const ignore = getFluidBuildTasksTscIgnore(root);
 			for (const script in json.scripts) {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const command = json.scripts[script]!;
 				if (command.startsWith("tsc") && !ignore.has(script)) {
 					try {
@@ -467,6 +476,7 @@ export const handlers: Handler[] = [
 				const deps = getDefaultTscTaskDependencies(root, json);
 				const ignore = getFluidBuildTasksTscIgnore(root);
 				for (const script in json.scripts) {
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const command = json.scripts[script]!;
 					if (command.startsWith("tsc") && !ignore.has(script)) {
 						try {

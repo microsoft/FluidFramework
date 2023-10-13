@@ -5,7 +5,7 @@
 
 import { SchemaBuilder, TypedField, leaf } from "@fluid-experimental/tree2";
 
-const builder = new SchemaBuilder({ scope: "tree-react-api", libraries: [leaf.library] });
+const builder = new SchemaBuilder({ scope: "tree-react-api" });
 
 export const inventory = builder.struct("Contoso:Inventory-1.0.0", {
 	nuts: leaf.number,

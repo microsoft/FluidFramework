@@ -16,7 +16,6 @@ import {
 	jsonableTreeFromCursor,
 	on,
 	ContextuallyTypedNodeData,
-	SchemaBuilder,
 	Any,
 	TreeStatus,
 } from "../../feature-libraries";
@@ -63,7 +62,7 @@ import {
 } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
 import { EditManager } from "../../shared-tree-core";
-import { jsonNumber, jsonSchema, leaf } from "../../domains";
+import { jsonNumber, jsonSchema, leaf, SchemaBuilder } from "../../domains";
 import { noopValidator } from "../../codec";
 
 const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator });
@@ -98,7 +97,7 @@ describe("SharedTree", () => {
 	});
 
 	it("editable-tree-2-end-to-end", () => {
-		const builder = new SchemaBuilder({ scope: "e2e", libraries: [leaf.library] });
+		const builder = new SchemaBuilder({ scope: "e2e" });
 		const schema = builder.toDocumentSchema(leaf.number);
 		const factory = new SharedTreeFactory({
 			jsonValidator: typeboxValidator,
