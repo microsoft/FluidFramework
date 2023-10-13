@@ -4,12 +4,14 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ChangesetLocalId, ITreeCursor, ITreeCursorSynchronous } from "../../core";
-import { FieldEditor } from "../modular-schema";
+import { ChangesetLocalId, ITreeCursor, ITreeCursorSynchronous, SchemaData } from "../../core";
+import { FieldEditor, FullSchemaPolicy } from "../modular-schema";
 import { brand } from "../../util";
 // eslint-disable-next-line import/no-internal-modules
 import { uncompressedEncode } from "../chunked-forest/codec/uncompressedEncode";
 import { chunkTree, defaultChunkPolicy } from "../chunked-forest";
+// eslint-disable-next-line import/no-internal-modules
+import { schemaCompressedEncode } from "../chunked-forest/codec/schemaBasedEncoding";
 import {
 	CellId,
 	Changeset,
@@ -24,7 +26,12 @@ import {
 import { MarkListFactory } from "./markListFactory";
 
 export interface SequenceFieldEditor extends FieldEditor<Changeset> {
-	insert(index: number, cursor: readonly ITreeCursor[], id: ChangesetLocalId): Changeset<never>;
+	insert(
+		index: number,
+		cursor: readonly ITreeCursor[],
+		id: ChangesetLocalId,
+		shapeInfo?: { schema: SchemaData; policy: FullSchemaPolicy },
+	): Changeset<never>;
 	delete(index: number, count: number, id: ChangesetLocalId): Changeset<never>;
 	revive(index: number, count: number, detachEvent: CellId, isIntention?: true): Changeset<never>;
 
@@ -58,6 +65,7 @@ export const sequenceFieldEditor = {
 		index: number,
 		cursors: readonly ITreeCursor[],
 		id: ChangesetLocalId,
+		shapeInfo?: { schema: SchemaData; policy: FullSchemaPolicy },
 	): Changeset<never> => {
 		const chunkedCursors = cursors.map((cursor) =>
 			chunkTree(cursor as ITreeCursorSynchronous, defaultChunkPolicy).cursor(),
@@ -66,7 +74,12 @@ export const sequenceFieldEditor = {
 		const mark: Insert<never> = {
 			type: "Insert",
 			count: cursors.length,
-			content: chunkedCursors.map(uncompressedEncode),
+			content:
+				shapeInfo !== undefined
+					? chunkedCursors.map((cursor) =>
+							schemaCompressedEncode(shapeInfo.schema, shapeInfo.policy, cursor),
+					  )
+					: chunkedCursors.map(uncompressedEncode),
 			cellId: { localId: id },
 		};
 		return markAtIndex(index, mark);

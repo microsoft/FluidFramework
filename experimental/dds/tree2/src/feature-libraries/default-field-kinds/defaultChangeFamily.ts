@@ -13,6 +13,7 @@ import {
 	ChangeFamilyEditor,
 	FieldUpPath,
 	TaggedChange,
+	SchemaData,
 } from "../../core";
 import { brand, isReadonlyArray } from "../../util";
 import {
@@ -20,6 +21,7 @@ import {
 	ModularEditBuilder,
 	FieldChangeset,
 	ModularChangeset,
+	FullSchemaPolicy,
 } from "../modular-schema";
 import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds";
 
@@ -183,7 +185,11 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 
 	public sequenceField(field: FieldUpPath): SequenceFieldEditBuilder {
 		return {
-			insert: (index: number, newContent: ITreeCursor | readonly ITreeCursor[]): void => {
+			insert: (
+				index: number,
+				newContent: ITreeCursor | readonly ITreeCursor[],
+				shapeInfo?: { schema: SchemaData; policy: FullSchemaPolicy },
+			): void => {
 				const content = isReadonlyArray(newContent) ? newContent : [newContent];
 				if (content.length === 0) {
 					return;
@@ -192,7 +198,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				const length = Array.isArray(newContent) ? newContent.length : 1;
 				const firstId = this.modularBuilder.generateId(length);
 				const change: FieldChangeset = brand(
-					sequence.changeHandler.editor.insert(index, content, firstId),
+					sequence.changeHandler.editor.insert(index, content, firstId, shapeInfo),
 				);
 				this.modularBuilder.submitChange(
 					field,
