@@ -3,22 +3,20 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { SchemaBuilder, Any } from "../../feature-libraries";
+import { Any } from "../../feature-libraries";
 import { createSharedTreeView } from "../../shared-tree";
 import { AllowedUpdateType, storedEmptyFieldSchema } from "../../core";
-import { leaf } from "../../domains";
+import { leaf, SchemaBuilder } from "../../domains";
 
 const builder = new SchemaBuilder({
 	scope: "test",
 	name: "Schematize Tree Tests",
-	libraries: [leaf.library],
 });
 const schema = builder.toDocumentSchema(SchemaBuilder.optional(leaf.number));
 
 const builderGeneralized = new SchemaBuilder({
 	scope: "test",
 	name: "Schematize Tree Tests Generalized",
-	libraries: [leaf.library],
 });
 
 const schemaGeneralized = builderGeneralized.toDocumentSchema(SchemaBuilder.optional(Any));

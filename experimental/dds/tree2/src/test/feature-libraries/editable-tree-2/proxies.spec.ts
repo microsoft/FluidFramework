@@ -7,12 +7,11 @@ import { strict as assert } from "assert";
 import {
 	FieldSchema,
 	ProxyField,
-	SchemaBuilder,
 	TypedSchemaCollection,
 	is,
 	typeNameSymbol,
 } from "../../../feature-libraries";
-import { leaf } from "../../../domains";
+import { leaf, SchemaBuilder } from "../../../domains";
 
 import { ISharedTreeView } from "../../../shared-tree";
 import { createTreeView } from "./utils";
