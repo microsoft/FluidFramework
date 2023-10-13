@@ -50,7 +50,7 @@ export interface JsonValidator {
 	/**
 	 * Compiles the provided JSON schema into a validator for that schema.
 	 * @param schema - A valid draft 6 JSON schema
-	 * @remarks Fluid handles--which have circular property references--are used in various places in the persisted
+	 * @remarks IFluidHandles--which have circular property references--are used in various places in SharedTree's persisted
 	 * format. Handles should only be contained in sections of data which are validated against the empty schema `{}`
 	 * (see https://datatracker.ietf.org/doc/html/draft-wright-json-schema-01#section-4.4).
 	 *
@@ -65,12 +65,13 @@ export interface JsonValidator {
  */
 export interface ICodecOptions {
 	/**
-	 * JSON Validator which should be used to validated persisted data SharedTree handles.
+	 * {@link JsonValidator} which should be used to validate persisted data SharedTree reads & writes
+	 * matches the expected encoded format (i.e. the wire format for ops and summaries).
 	 * See {@link noopValidator} and {@link typeboxValidator} for out-of-the-box implementations.
 	 *
 	 * SharedTree users are encouraged to use a non-trivial validator (i.e. not `noopValidator`) whenever
-	 * reasonable: it gives better fail-fast behavior when unexpected encoded data is found, which reduces
-	 * the risk of further data corruption.
+	 * reasonable: it gives better fail-fast behavior when unexpected encoded data is found,
+	 * which reduces the risk of further data corruption.
 	 */
 	readonly jsonValidator: JsonValidator;
 }
