@@ -124,12 +124,10 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 * Construct a new branch.
 	 * @param head - the head of the branch
 	 * @param changeFamily - determines the set of changes that this branch can commit
-	 * @param revertible - if true, this branch will emit revertible events when changes are made to it
 	 */
 	public constructor(
 		private head: GraphCommit<TChange>,
 		public readonly changeFamily: ChangeFamily<TEditor, TChange>,
-		private readonly revertible?: true,
 	) {
 		super();
 		this.editor = this.changeFamily.buildEditor((change) =>
@@ -172,7 +170,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		});
 
 		// If this is not part of a transaction, emit a revertible event
-		if (this.revertible && revertibleKind !== undefined && !this.isTransacting()) {
+		if (revertibleKind !== undefined && !this.isTransacting()) {
 			this.emit("revertible", this.makeSharedTreeRevertible(this.head, revertibleKind));
 		}
 
@@ -243,7 +241,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		});
 
 		// If this transaction is not nested, emit a revertible event
-		if (this.revertible && !this.isTransacting()) {
+		if (!this.isTransacting()) {
 			this.emit(
 				"revertible",
 				this.makeSharedTreeRevertible(this.head, RevertibleKind.Default),

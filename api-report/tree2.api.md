@@ -1927,7 +1927,6 @@ export class SharedTreeFactory implements IChannelFactory {
 // @alpha (undocumented)
 export interface SharedTreeOptions extends Partial<ICodecOptions> {
     forest?: ForestType;
-    revertible?: true;
 }
 
 // @alpha
