@@ -280,11 +280,8 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 
 export class LocalChannelContext extends LocalChannelContextBase {
 	private readonly dirtyFn: () => void;
-	public readonly channel: IChannel;
 	constructor(
-		id: string,
-		registry: ISharedObjectRegistry,
-		typeOrChannel: string | IChannel,
+		public readonly channel: IChannel,
 		runtime: IFluidDataStoreRuntime,
 		dataStoreContext: IFluidDataStoreContext,
 		storageService: IDocumentStorageService,
@@ -293,16 +290,8 @@ export class LocalChannelContext extends LocalChannelContextBase {
 		dirtyFn: (address: string) => void,
 		addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
 	) {
-		const type =
-			typeof typeOrChannel === "string" ? typeOrChannel : typeOrChannel.attributes.type;
-		const factory = registry.get(type);
-		if (factory === undefined) {
-			throw new Error(`Channel Factory ${type} not registered`);
-		}
-		const channel =
-			typeof typeOrChannel === "string" ? factory.create(runtime, id) : typeOrChannel;
 		super(
-			id,
+			channel.id,
 			runtime,
 			new Lazy(() => {
 				return createChannelServiceEndpoints(
@@ -320,7 +309,7 @@ export class LocalChannelContext extends LocalChannelContextBase {
 		this.channel = channel;
 
 		this.dirtyFn = () => {
-			dirtyFn(id);
+			dirtyFn(channel.id);
 		};
 	}
 }

@@ -12,7 +12,7 @@ import {
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { IChannel } from "@fluidframework/datastore-definitions";
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "../dataStoreRuntime";
-import { LocalChannelContext, RehydratedLocalChannelContext } from "../localChannelContext";
+import { RehydratedLocalChannelContext } from "../localChannelContext";
 
 describe("LocalChannelContext Tests", () => {
 	let dataStoreContext: MockFluidDataStoreContext;
@@ -34,29 +34,6 @@ describe("LocalChannelContext Tests", () => {
 				};
 			},
 		};
-	});
-
-	it("LocalChannelContext rejects ids with forward slashes", () => {
-		const invalidId = "beforeSlash/afterSlash";
-		const dataStoreRuntime = loadRuntime(dataStoreContext, sharedObjectRegistry);
-		const codeBlock = () =>
-			new LocalChannelContext(
-				invalidId,
-				sharedObjectRegistry,
-				"SomeType",
-				dataStoreRuntime,
-				dataStoreContext,
-				dataStoreContext.storage,
-				dataStoreContext.logger,
-				() => {},
-				(s: string) => {},
-				(s) => {},
-			);
-		assert.throws(
-			codeBlock,
-			(e: Error) => validateAssertionError(e, "Channel context ID cannot contain slashes"),
-			"Expected exception was not thrown",
-		);
 	});
 
 	it("RehydratedLocalChannelContext rejects ids with forward slashes", () => {
