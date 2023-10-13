@@ -239,7 +239,7 @@ It can be turned all of them on or individually.
 -   `fluid-build:task:init` - Trace the task that are created, to show what task is included
 -   `fluid-build:task:init:defdep` - Trace the task dependencies derived from expanding and resolving task definitions
 -   `fluid-build:task:init:dep` - Trace full build graph of leaf tasks (a single command invocation)
--   `fluid-build:task:init:weight` - Weight assigned to each task (where higher weight is prioritized to run first).
+-   `fluid-build:task:init:weight` - Weight assigned to each task (where higher weight is prioritized to run first)
 
 ### fluid-build:task:trigger
 
