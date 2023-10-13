@@ -4,14 +4,14 @@
  */
 import { Flags } from "@oclif/core";
 import { copySync, existsSync, readJson } from "fs-extra";
-import path from "path";
+import path from "node:path";
 
 import { BaseCommand } from "../../base";
 import { PnpmListEntry, pnpmList } from "../../pnpm";
 
 export default class GenerateBundlestats extends BaseCommand<typeof GenerateBundlestats> {
-	static description = `Find all bundle analysis artifacts and copy them into a central location to upload as build artifacts for later consumption`;
-	static flags = {
+	static readonly description = `Find all bundle analysis artifacts and copy them into a central location to upload as build artifacts for later consumption`;
+	static readonly flags = {
 		packageMetadataPath: Flags.file({
 			description:
 				"A path to a file containing JSON formatted package metadata. Used for testing. When not provided, the output of `pnpm -r list --depth -1 --json` is used.",
@@ -24,7 +24,7 @@ export default class GenerateBundlestats extends BaseCommand<typeof GenerateBund
 			required: false,
 		}),
 		...BaseCommand.flags,
-	};
+	} as const;
 
 	public async run(): Promise<void> {
 		const { flags } = this;

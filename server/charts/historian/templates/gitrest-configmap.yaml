@@ -18,6 +18,11 @@ data:
             "level": "verbose",
             "timestamp": false
         },
+        "lumberjack": {
+            "options": {
+                "enableSanitization": {{ .Values.lumberjack.options.enableSanitization }}
+            }
+        },
         "requestSizeLimit": "1gb",
         "storageDir": {
             "baseDir": "/home/node/documents",

@@ -1,5 +1,9 @@
 # @fluid-private/test-end-to-end-tests
 
+## 2.0.0-internal.7.1.0
+
+Dependency updates only.
+
 ## 2.0.0-internal.7.0.0
 
 Dependency updates only.
