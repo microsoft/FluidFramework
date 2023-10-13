@@ -67,10 +67,28 @@ export function getProxyForField<TSchema extends FieldSchema>(
 			return getProxyForNode(asValue.boxedContent) as ProxyField<TSchema>;
 		}
 		case FieldKinds.optional: {
-			fail(`"not implemented"`);
+			const asValue = field as TypedField<FieldSchema<typeof FieldKinds.optional>>;
+
+			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
+			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
+			//       inner field.
+
+			// TODO: Remove non-null assertion if/when ET2 editing API becomes internal.
+			//
+			//       The non-null assertion is required because the ET2 API forces undefined optional fields
+			//       into existence when setting maps via getting the key for the non-existent field.
+			// 
+			//       Normally, undefined fields are elided in enumeration and therefore do not expect to
+			//       encounter them in the proxy-based API.
+
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			return getProxyForNode(asValue.boxedContent!) as ProxyField<TSchema>;
 		}
+		// TODO: Remove if/when 'FieldNode' is removed.
 		case FieldKinds.sequence: {
-			fail("not implemented");
+			// 'getProxyForNode' handles FieldNodes by unconditionally creating a list proxy, making
+			// this case unreachable as long as users follow the 'list recipe'.
+			fail("'sequence' field is unexpected.");
 		}
 		default:
 			fail("invalid field kind");

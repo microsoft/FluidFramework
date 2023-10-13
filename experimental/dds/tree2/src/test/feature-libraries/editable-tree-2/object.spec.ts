@@ -124,7 +124,7 @@ const tcs: TestCase[] = [
 	{
 		schema: (() => {
 			const _ = new SchemaBuilder({ scope: "test", libraries: [leaf.library] });
-			const $ = _.struct("optional", {
+			const $ = _.struct("optional (undefined)", {
 				boolean: _.optional(leaf.boolean),
 				number: _.optional(leaf.number),
 				string: _.optional(leaf.string),
@@ -132,6 +132,22 @@ const tcs: TestCase[] = [
 			return _.toDocumentSchema($);
 		})(),
 		initialTree: {},
+	},
+	{
+		schema: (() => {
+			const _ = new SchemaBuilder({ scope: "test", libraries: [leaf.library] });
+			const $ = _.struct("optional (defined)", {
+				boolean: _.optional(leaf.boolean),
+				number: _.optional(leaf.number),
+				string: _.optional(leaf.string),
+			});
+			return _.toDocumentSchema($);
+		})(),
+		initialTree: {
+			boolean: true,
+			number: -0,
+			string: "",
+		},
 	},
 	{
 		schema: (() => {
