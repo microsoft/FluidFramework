@@ -56,7 +56,7 @@ function cacheProxy(
 
 /** If there has already been a proxy created to wrap the given tree node, return it */
 function getCachedProxy(treeNode: TreeNode): ProxyNode<TreeSchema> | undefined {
-	return (treeNode as unknown as { [treeNodeSym]: ProxyNode<TreeSchema> })[treeNodeSym];
+	return (treeNode as unknown as { [proxyCacheSym]: ProxyNode<TreeSchema> })[proxyCacheSym];
 }
 
 /**
