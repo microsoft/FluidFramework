@@ -6,7 +6,7 @@
 import { leaf, SchemaBuilder, TypedField, TypedNode } from "@fluid-experimental/tree2";
 
 // By importing the leaf library we don't have to define our own string and number types.
-const builder = new SchemaBuilder({ scope: "inventory app", libraries: [leaf.library] });
+const builder = new SchemaBuilder({ scope: "inventory app" });
 
 const inventoryItem = builder.struct("Contoso:InventoryItem-1.0.0", {
 	// REV: I added an ID here because I didn't find a unique identifier on the node.

@@ -19,8 +19,6 @@ import { InventoryItem } from "./inventoryItem";
 import { InventoryNode, InventoryField, InventoryItemNode, schema } from "./schema";
 
 const factory = new TypedTreeFactory({
-	// REV: I'm not exactly sure why a validator should be passed here?  Like what it's used for,
-	// so it's hard to know what a "correct" choice would be as a result.
 	jsonValidator: typeboxValidator,
 	// REV: I copied this from another example but I have no idea what it means - documentation is
 	// self-referencing.
