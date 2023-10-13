@@ -3,7 +3,7 @@
 "@fluidframework/location-redirection-utils": minor
 ---
 
-Move location-redirection-utils APIs to container-loader
+Move `location-redirection-utils` APIs to `container-loader`
 
 Moves the 2 package exports of `location-redirection-utils` to the `container-loader` package.
 

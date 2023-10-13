@@ -2,6 +2,15 @@
 "@fluidframework/merge-tree": minor
 ---
 
-Deprecate Stack, clone, combine, createMap, extend, extendIfUndefined, and matchProperties
+merge-tree: Deprecate Stack, clone, combine, createMap, extend, extendIfUndefined, and matchProperties
 
-This functionality was not intended for public export and will be removed in a future release.
+The following classes and functions have been deprecated. They were not intended for public export and will be removed
+in a future release.
+
+- Stack
+- clone
+- combine
+- createMap
+- extend
+- extendIfUndefined
+- matchProperties

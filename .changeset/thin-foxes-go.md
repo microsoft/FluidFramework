@@ -2,7 +2,7 @@
 "@fluid-experimental/tree2": minor
 ---
 
-SharedTreeFactory type changed
+tree2: SharedTreeFactory type changed
 
 The 'type' field for @fluid-experimental/tree2's exported `IChannelFactory`s has been changed to not overlap with @fluid-experimental/tree's channel type.
 This breaks existing tree2 documents: upon loading them, an error with message "Channel Factory SharedTree not registered" will be thrown.

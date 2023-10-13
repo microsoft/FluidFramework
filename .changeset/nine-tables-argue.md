@@ -2,7 +2,7 @@
 "@fluid-experimental/tree2": major
 ---
 
-Regressions and new node removal model
+tree2: Regressions and new node removal model
 
 Regression 1: All changes are atomized by the `visitDelta` function. This means that, if you insert/remove/move 2 contiguous nodes, the `visitDelta` function will call the `DeltaVisitor` twice (once for each node) instead of once for both nodes. Anything that sits downstream from the `DeltaVisitor` will therefore also see those changes as atomized.
 
