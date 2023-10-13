@@ -5,7 +5,6 @@
 
 /* eslint-disable no-inner-declarations */
 
-import { ValueSchema } from "../../../core";
 import { SchemaBuilder } from "../../../domains";
 import { FieldKinds, FieldSchema, SchemaAware, TreeSchema } from "../../../feature-libraries";
 import { requireAssignableTo } from "../../../util";
@@ -13,7 +12,7 @@ import { requireAssignableTo } from "../../../util";
 const builder = new SchemaBuilder({ scope: "Complex Schema Example" });
 
 // Schema
-export const stringTaskSchema = builder.leaf("StringTask", ValueSchema.String);
+export const stringTaskSchema = builder.fieldNode("StringTask", builder.string);
 // Polymorphic recursive schema:
 export const listTaskSchema = builder.structRecursive("ListTask", {
 	items: FieldSchema.createUnsafe(FieldKinds.sequence, [stringTaskSchema, () => listTaskSchema]),
@@ -40,11 +39,17 @@ type FlexibleTask = SchemaAware.AllowedTypesToTypedTrees<
 	typeof rootFieldSchema.allowedTypes
 >;
 
+type FlexibleStringTask = SchemaAware.TypedNode<
+	typeof stringTaskSchema,
+	SchemaAware.ApiMode.Flexible
+>;
+
 // Example Use
 {
-	const task1: FlexibleTask = "do it";
+	const stringTask: FlexibleStringTask = { [""]: "do it" };
+	const task1: FlexibleTask = { [""]: "do it" };
 	const task2: FlexibleTask = {
-		items: ["FHL", "record video"],
+		items: [{ [""]: "FHL" }, { [""]: "record video" }],
 	};
 	// const task3: FlexibleTask = {
 	// 	[typeNameSymbol]: stringTaskSchema.name,
@@ -53,8 +58,8 @@ type FlexibleTask = SchemaAware.AllowedTypesToTypedTrees<
 
 	function makeTask(tasks: string[]): FlexibleTask {
 		if (tasks.length === 1) {
-			return tasks[0];
+			return { [""]: tasks[0] };
 		}
-		return { items: tasks };
+		return { items: tasks.map((s) => ({ [""]: s })) };
 	}
 }

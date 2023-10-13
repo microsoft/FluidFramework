@@ -274,7 +274,7 @@ export interface MapSchemaSpecification {
 export type MapFieldSchema = FieldSchema<typeof FieldKinds.optional | typeof FieldKinds.sequence>;
 
 /**
- * `TreeSchemaSpecification` for {@link SchemaBuilderBase.leaf}.
+ * `TreeSchemaSpecification` for {@link Leaf}.
  * @alpha
  */
 export interface LeafSchemaSpecification {
@@ -358,12 +358,15 @@ export class FieldSchema<
 		public readonly allowedTypes: TTypes,
 	) {
 		// Since this class can't have the desired extends clause, do some extra runtime validation:
-		assert(Array.isArray(allowedTypes), "Invalid allowedTypes");
+		assert(Array.isArray(allowedTypes), 0x7bc /* Invalid allowedTypes */);
 		for (const allowedType of allowedTypes) {
 			if (allowedType === Any) {
-				assert(allowedTypes.length === 1, "Invalid Any in allowedTypes");
+				assert(allowedTypes.length === 1, 0x7bd /* Invalid Any in allowedTypes */);
 			} else if (typeof allowedType !== "function") {
-				assert(allowedType instanceof TreeSchema, "Invalid entry in allowedTypes");
+				assert(
+					allowedType instanceof TreeSchema,
+					0x7be /* Invalid entry in allowedTypes */,
+				);
 			}
 		}
 		this.lazyTypes = new Lazy(() => ({
@@ -455,7 +458,7 @@ export function allowedTypesToTypeSet(t: AllowedTypes): TreeTypeSet {
 		return undefined;
 	}
 	const names = Array.from(list, (type) => {
-		assert(type instanceof TreeSchema, "invalid allowed type");
+		assert(type instanceof TreeSchema, 0x7bf /* invalid allowed type */);
 		return type.name;
 	});
 	return new Set(names);

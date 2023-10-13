@@ -17,7 +17,6 @@ import {
 	FieldStoredSchema,
 	TreeStoredSchema,
 	TreeSchemaIdentifier,
-	ValueSchema,
 	InMemoryStoredSchemaRepository,
 	Adapters,
 	Compatibility,
@@ -82,8 +81,7 @@ describe("Schema Evolution Examples", () => {
 		name: "Schema Evolution Examples: default content types",
 	});
 
-	const number = contentTypesBuilder.leaf("Number", ValueSchema.Number);
-	const codePoint = contentTypesBuilder.leaf("Primitive.CodePoint", ValueSchema.Number);
+	const codePoint = contentTypesBuilder.fieldNode("Primitive.CodePoint", leaf.number);
 
 	// String made of unicode code points, allowing for sequence editing of a string.
 	const text = contentTypesBuilder.struct("Text", {
@@ -91,8 +89,8 @@ describe("Schema Evolution Examples", () => {
 	});
 
 	const point = contentTypesBuilder.struct("Point", {
-		x: number,
-		y: number,
+		x: leaf.number,
+		y: leaf.number,
 	});
 
 	const defaultContentLibrary = contentTypesBuilder.finalize();
@@ -221,7 +219,7 @@ describe("Schema Evolution Examples", () => {
 			// (either eagerly or lazily when first needing to do so when writing into the document).
 			// Once again the order does not matter:
 			assert(stored.tryUpdateTreeSchema(canvas.name, canvas));
-			assert(stored.tryUpdateTreeSchema(number.name, number));
+			assert(stored.tryUpdateTreeSchema(leaf.number.name, leaf.number));
 			assert(stored.tryUpdateTreeSchema(point.name, point));
 			assert(stored.tryUpdateTreeSchema(positionedCanvasItem.name, positionedCanvasItem));
 			assert(stored.tryUpdateTreeSchema(text.name, text));
@@ -248,7 +246,7 @@ describe("Schema Evolution Examples", () => {
 			});
 
 			const counter = builderWithCounter.struct("Counter", {
-				count: number,
+				count: leaf.number,
 			});
 			// Lets allow counters inside positionedCanvasItem, instead of just text:
 			const positionedCanvasItem2 = builderWithCounter.struct("PositionedCanvasItem", {
