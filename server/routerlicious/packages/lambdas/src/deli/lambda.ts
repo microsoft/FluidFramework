@@ -715,7 +715,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		if (this.serviceConfiguration.enableLumberjack) {
 			this.logSessionEndMetrics(closeType);
 			if (
-				this.checkpointService?.localCheckpointEnabled &&
+				this.checkpointService?.getLocalCheckpointEnabled() &&
 				!this.globalCheckpointOnly &&
 				closeType === LambdaCloseType.ActivityTimeout
 			) {
@@ -1978,6 +1978,10 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 					kafkaCheckpointOffset: checkpointParams.kafkaCheckpointMessage?.offset,
 					kafkaCheckpointPartition: checkpointParams.kafkaCheckpointMessage?.partition,
 				};
+				const checkpointReason = CheckpointReason[checkpointParams.reason];
+				lumberjackProperties.checkpointReason = checkpointReason;
+				const checkpointMessage = `Writing checkpoint. Reason: ${checkpointReason}`;
+				Lumberjack.info(checkpointMessage, lumberjackProperties);
 				this.checkpointContext
 					.checkpoint(
 						checkpointParams,
@@ -1987,10 +1991,6 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 					.catch((error) => {
 						Lumberjack.error("Error writing checkpoint", lumberjackProperties, error);
 					});
-				const checkpointReason = CheckpointReason[checkpointParams.reason];
-				lumberjackProperties.checkpointReason = checkpointReason;
-				const checkpointResult = `Writing checkpoint. Reason: ${checkpointReason}`;
-				Lumberjack.info(checkpointResult, lumberjackProperties);
 			})
 			.catch((error) => {
 				const errorMsg = `Could not send message to scriptorium`;

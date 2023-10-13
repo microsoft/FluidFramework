@@ -66,6 +66,8 @@ export class CheckpointContext {
 			databaseCheckpointFailed = true;
 		}
 
+		// We write a kafka checkpoint if either the local or global checkpoint succeeds
+		// databaseCheckpointFailed is true only if both local and global checkpoint fail
 		if (!databaseCheckpointFailed) {
 			// Kafka checkpoint
 			try {
@@ -127,7 +129,7 @@ export class CheckpointContext {
 
 		let updateP: Promise<void>;
 
-		const localCheckpointEnabled = this.checkpointService?.localCheckpointEnabled;
+		const localCheckpointEnabled = this.checkpointService?.getLocalCheckpointEnabled();
 
 		// determine if checkpoint is local
 		const isLocal =
