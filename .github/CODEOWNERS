@@ -57,14 +57,14 @@ azure/packages/azure-service-utils/api-report/         @microsoft/fluid-cr-api
 packages/framework/fluid-framework/api-report/         @microsoft/fluid-cr-api
 packages/framework/tinylicious-client/api-report/      @microsoft/fluid-cr-api
 
-api-report/tree2.api.md                                @microsoft/fluid-cr-tree
+experimental/dds/tree2/api-report/                     @microsoft/fluid-cr-tree
 
 # INTERNAL API REPORTS
 # The packages listed here are not necessarily considered part of the public API.
 packages/dds/shared-object-base/api-report/            @microsoft/fluid-cr-framework
 
 # TODO: uncomment once experimental reports have moved
-# experimental/dds/**/api-report/                        @microsoft/fluid-cr-dds
+experimental/dds/**/api-report/                        @microsoft/fluid-cr-dds
 packages/framework/dds-interceptions/api-report/       @microsoft/fluid-cr-dds
 
 packages/framework/request-handler/api-report/         @microsoft/fluid-cr-runtime
@@ -79,7 +79,7 @@ packages/test/test-driver-definitions/api-report/      @microsoft/fluid-cr-drive
 
 packages/drivers/routerlicious-driver/api-report/      @microsoft/fluid-cr-server
 
-api-report/experimental-tree.api.md                    @microsoft/fluid-cr-tree
+experimental/dds/tree/api-report                       @microsoft/fluid-cr-tree
 
 # No owners for package.json files to avoid review spam when mono-repo dependencies are updated
 package.json @msfluid-bot
