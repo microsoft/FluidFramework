@@ -34,7 +34,7 @@ export const leaf = {
 	 * - `NaN`, and the infinities should not be used.
 	 * - `-0` may be converted to `0` in some cases.
 	 *
-	 * These limitations come from the use of JSON.
+	 * These limitations match the limitations of JSON.
 	 * @privateRemarks
 	 * TODO:
 	 * We should be much more clear about what happens if you use problematic values.
