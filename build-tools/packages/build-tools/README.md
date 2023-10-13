@@ -227,9 +227,9 @@ scopes).
 
 ### fluid-build:task:definition
 
-To debug the logic that combined task and dependency definitions from the default in `fluidBuild.config.cjs` at the root
+Used to debug the logic that combines task and dependency definitions from the default in `fluidBuild.config.cjs` at the root
 of the
-repo and the package's `package.json`. It will dump the full combined definition for each package.
+repo and the local package's `package.json`. It will dump the full combined definition for each package.
 
 ### fluid-build:task:init\*
 
