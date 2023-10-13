@@ -33,6 +33,7 @@ import {
 	singleJsonCursor,
 	jsonBoolean,
 	jsonString,
+	SchemaBuilder,
 } from "../domains";
 import { JsonCompatible, brand, brandOpaque } from "../util";
 import {
@@ -41,7 +42,6 @@ import {
 	singleTextCursor,
 	defaultSchemaPolicy,
 	isNeverField,
-	SchemaBuilder,
 	cursorForTypedTreeData,
 	FieldSchema,
 } from "../feature-libraries";

@@ -6,7 +6,7 @@
 
 import { SchemaAware, SchemaBuilder, leaf } from "@fluid-experimental/tree2";
 
-const builder = new SchemaBuilder({ scope: "bubble-bench", libraries: [leaf.library] });
+const builder = new SchemaBuilder({ scope: "bubble-bench" });
 
 export const bubbleSchema = builder.struct("BubbleBenchAppStateBubble-1.0.0", {
 	x: leaf.number,

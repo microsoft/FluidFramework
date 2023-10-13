@@ -17,13 +17,8 @@ import {
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../feature-libraries/contextuallyTyped";
-import {
-	FieldKinds,
-	FieldSchema,
-	SchemaBuilder,
-	jsonableTreeFromCursor,
-} from "../../feature-libraries";
-import { leaf } from "../../domains";
+import { FieldKinds, FieldSchema, jsonableTreeFromCursor } from "../../feature-libraries";
+import { leaf, SchemaBuilder } from "../../domains";
 
 describe("ContextuallyTyped", () => {
 	it("isPrimitiveValue", () => {

@@ -91,7 +91,9 @@ type PendingResolve = (winner: boolean) => void;
 const snapshotFileName = "header";
 
 /**
- * Implementation of a consensus register collection
+ * {@inheritDoc IConsensusRegisterCollection}
+ *
+ * @public
  */
 export class ConsensusRegisterCollection<T>
 	extends SharedObject<IConsensusRegisterCollectionEvents>

@@ -29,6 +29,8 @@ const traceTaskTrigger = registerDebug("fluid-build:task:trigger");
 const traceTaskInitDep = registerDebug("fluid-build:task:init:dep");
 const traceTaskInitWeight = registerDebug("fluid-build:task:init:weight");
 const traceTaskQueue = registerDebug("fluid-build:task:exec:queue");
+const traceError = registerDebug("fluid-build:task:error");
+
 interface TaskExecResult extends ExecAsyncResult {
 	worker?: boolean;
 }
@@ -291,11 +293,14 @@ export abstract class LeafTask extends Task {
 
 	protected async runTask(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult> {
 		this.traceExec("Begin Leaf Task");
+
+		// Build all the dependent tasks first
 		const result = await this.buildDependentTask(q);
 		if (result === BuildResult.Failed) {
 			return BuildResult.Failed;
 		}
 
+		// Queue this task
 		return new Promise((resolve) => {
 			traceTaskQueue(`${this.nameColored}: queued with weight ${this.weight}`);
 			q.push({ task: this, resolve, queueTime: Date.now() }, -this.weight);
@@ -396,6 +401,10 @@ export abstract class LeafTask extends Task {
 	protected traceTrigger(reason: string) {
 		const msg = `${this.nameColored}: [${reason}]`;
 		traceTaskTrigger(msg);
+	}
+
+	protected traceError(msg: string) {
+		traceError(`${this.nameColored}: ${msg}`);
 	}
 }
 
@@ -513,7 +522,7 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 			});
 			return JSON.stringify({ srcFiles, dstFiles, srcInfo, dstInfo });
 		} catch (e: any) {
-			this.traceExec(`error comparing file times ${e.message}`);
+			this.traceError(`error comparing file times ${e.message}`);
 			this.traceTrigger("failed to get file stats");
 			return undefined;
 		}

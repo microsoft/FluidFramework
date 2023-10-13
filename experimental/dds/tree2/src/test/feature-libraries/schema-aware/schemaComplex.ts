@@ -5,8 +5,9 @@
 
 /* eslint-disable no-inner-declarations */
 
-import { FieldKinds, ValueSchema, SchemaAware } from "../../../";
-import { FieldSchema, SchemaBuilder, TreeSchema } from "../../../feature-libraries";
+import { ValueSchema } from "../../../core";
+import { SchemaBuilder } from "../../../domains";
+import { FieldKinds, FieldSchema, SchemaAware, TreeSchema } from "../../../feature-libraries";
 import { requireAssignableTo } from "../../../util";
 
 const builder = new SchemaBuilder({ scope: "Complex Schema Example" });
