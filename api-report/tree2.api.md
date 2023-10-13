@@ -1509,10 +1509,10 @@ type NormalizeStructFieldsInner<T extends Fields> = {
 };
 
 // @alpha
-export type ObjectFields<TFields extends RestrictiveReadonlyRecord<string, FieldSchema>> = {
-    readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? never : key]: ProxyField<TFields[key]>;
+export type ObjectFields<TFields extends RestrictiveReadonlyRecord<string, FieldSchema>, API extends "javaScript" | "sharedTree" = "sharedTree"> = {
+    readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? never : key]: ProxyField<TFields[key], API>;
 } & {
-    -readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? key : never]: ProxyField<TFields[key]>;
+    -readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? key : never]: ProxyField<TFields[key], API>;
 };
 
 // @alpha
@@ -1636,17 +1636,17 @@ type ProtoNode = ITreeCursorSynchronous;
 type ProtoNodes = readonly ProtoNode[];
 
 // @alpha
-export type ProxyField<TSchema extends FieldSchema, Emptiness extends "maybeEmpty" | "notEmpty" = "maybeEmpty"> = ProxyFieldInner<TSchema["kind"], TSchema["allowedTypes"], Emptiness>;
+export type ProxyField<TSchema extends FieldSchema, API extends "javaScript" | "sharedTree" = "sharedTree", Emptiness extends "maybeEmpty" | "notEmpty" = "maybeEmpty"> = ProxyFieldInner<TSchema["kind"], TSchema["allowedTypes"], API, Emptiness>;
 
 // @alpha
-export type ProxyFieldInner<Kind extends FieldKind, TTypes extends AllowedTypes, Emptiness extends "maybeEmpty" | "notEmpty"> = Kind extends typeof FieldKinds.sequence ? SharedTreeList<TTypes> : Kind extends typeof FieldKinds.required ? ProxyNodeUnion<TTypes> : Kind extends typeof FieldKinds.optional ? ProxyNodeUnion<TTypes> | (Emptiness extends "notEmpty" ? never : undefined) : Kind extends typeof FieldKinds.nodeKey ? NodeKeyField : unknown;
+export type ProxyFieldInner<Kind extends FieldKind, TTypes extends AllowedTypes, API extends "javaScript" | "sharedTree", Emptiness extends "maybeEmpty" | "notEmpty"> = Kind extends typeof FieldKinds.sequence ? never : Kind extends typeof FieldKinds.required ? ProxyNodeUnion<TTypes, API> : Kind extends typeof FieldKinds.optional ? ProxyNodeUnion<TTypes, API> | (Emptiness extends "notEmpty" ? never : undefined) : unknown;
 
 // @alpha
-export type ProxyNode<TSchema extends TreeSchema> = TSchema extends LeafSchema ? SchemaAware.InternalTypes.TypedValue<TSchema["leafValue"]> : TSchema extends MapSchema ? SharedTreeMap<TSchema> : TSchema extends FieldNodeSchema ? SharedTreeList<TSchema["structFieldsObject"][""]["allowedTypes"]> : TSchema extends StructSchema ? SharedTreeObject<TSchema> : unknown;
+export type ProxyNode<TSchema extends TreeSchema, API extends "javaScript" | "sharedTree" = "sharedTree"> = TSchema extends LeafSchema ? SchemaAware.InternalTypes.TypedValue<TSchema["leafValue"]> : TSchema extends MapSchema ? API extends "sharedTree" ? SharedTreeMap<TSchema> : Map<string, ProxyField<TSchema["mapFields"], API>> : TSchema extends FieldNodeSchema ? API extends "sharedTree" ? SharedTreeList<TSchema["structFieldsObject"][""]["allowedTypes"], API> : readonly ProxyNodeUnion<TSchema["structFieldsObject"][""]["allowedTypes"], API>[] : TSchema extends StructSchema ? SharedTreeObject<TSchema, API> : unknown;
 
 // @alpha
-export type ProxyNodeUnion<TTypes extends AllowedTypes> = TTypes extends readonly [Any] ? unknown : {
-    [Index in keyof TTypes]: TTypes[Index] extends InternalTypedSchemaTypes.LazyItem<infer InnerType> ? InnerType extends TreeSchema ? ProxyNode<InnerType> : never : never;
+export type ProxyNodeUnion<TTypes extends AllowedTypes, API extends "javaScript" | "sharedTree" = "sharedTree"> = TTypes extends readonly [Any] ? unknown : {
+    [Index in keyof TTypes]: TTypes[Index] extends InternalTypedSchemaTypes.LazyItem<infer InnerType> ? InnerType extends TreeSchema ? ProxyNode<InnerType, API> : never : never;
 }[number];
 
 // @alpha
@@ -1961,7 +1961,7 @@ export class SharedTreeFactory implements IChannelFactory {
 }
 
 // @alpha
-export interface SharedTreeList<TTypes extends AllowedTypes> extends ReadonlyArray<ProxyNodeUnion<TTypes>> {
+export interface SharedTreeList<TTypes extends AllowedTypes, API extends "javaScript" | "sharedTree" = "sharedTree"> extends ReadonlyArray<ProxyNodeUnion<TTypes, API>> {
     insertAt(index: number, value: Iterable<FlexibleNodeContent<TTypes>>): void;
     insertAtEnd(value: Iterable<FlexibleNodeContent<TTypes>>): void;
     insertAtStart(value: Iterable<FlexibleNodeContent<TTypes>>): void;
@@ -1978,7 +1978,7 @@ export interface SharedTreeList<TTypes extends AllowedTypes> extends ReadonlyArr
 export type SharedTreeMap<TSchema extends MapSchema> = Map<string, ProxyNode<TSchema>>;
 
 // @alpha
-export type SharedTreeObject<TSchema extends StructSchema> = ObjectFields<TSchema["structFieldsObject"]>;
+export type SharedTreeObject<TSchema extends StructSchema, API extends "javaScript" | "sharedTree" = "sharedTree"> = ObjectFields<TSchema["structFieldsObject"], API>;
 
 // @alpha (undocumented)
 export interface SharedTreeOptions extends Partial<ICodecOptions> {
