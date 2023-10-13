@@ -68,9 +68,6 @@ describe("List", () => {
 	function createTree() {
 		// Consider 'initializeTreeWithContent' for readonly tests?
 		const view = createTreeView(schema, { numbers: [], strings: [] });
-
-		// TODO: We do not yet have type generation for the proxy-based API.  However, the ET2
-		// API is pretty close.  Cast to that as a starting point.
 		return view.root2(schema);
 	}
 
