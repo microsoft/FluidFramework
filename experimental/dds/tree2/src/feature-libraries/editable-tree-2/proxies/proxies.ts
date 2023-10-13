@@ -77,7 +77,7 @@ export function getProxyForField<TSchema extends FieldSchema>(
 			//
 			//       The non-null assertion is required because the ET2 API forces undefined optional fields
 			//       into existence when setting maps via getting the key for the non-existent field.
-			// 
+			//
 			//       Normally, undefined fields are elided in enumeration and therefore do not expect to
 			//       encounter them in the proxy-based API.
 
