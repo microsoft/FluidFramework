@@ -217,8 +217,8 @@ like.
 
 ## Debug Traces
 
-`fluid-build` using the `debug` package to do traces for investigating and diagnosing problem. Here are some of the trace
-names
+`fluid-build` using the `debug` package to do traces for investigating and diagnosing problem. Below are some of the trace
+names `fluid-build` uses.
 
 ### fluid-build:init
 
