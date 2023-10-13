@@ -9,7 +9,6 @@ import { onForkTransitive, SharedTreeBranch, SharedTreeBranchChange } from "../.
 import {
 	GraphCommit,
 	RevisionTag,
-	UndoRedoManager,
 	assertIsRevisionTag,
 	findAncestor,
 	findCommonAncestor,

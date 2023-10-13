@@ -15,6 +15,7 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { UpPath, Anchor, JsonableTree, Value } from "../../../core";
 import {
 	SharedTreeTestFactory,
+	createTestUndoRedoStacks,
 	toJsonableTree,
 	validateTree,
 	validateTreeConsistency,
@@ -68,6 +69,21 @@ describe("Fuzz - undo/redo", () => {
 		emitter.on("testEnd", (finalState: UndoRedoFuzzTestState) => {
 			const clients = finalState.clients;
 
+			// set up the undo and redo stacks for each tree
+			const undoStacks = [];
+			const redoStacks = [];
+			const unsubscribes = [];
+
+			for (const [_, client] of clients.entries()) {
+				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
+					client.channel.view,
+				);
+
+				undoStacks.push(undoStack);
+				redoStacks.push(redoStack);
+				unsubscribes.push(unsubscribe);
+			}
+
 			const finalTreeStates = [];
 			// undo all of the changes and validate against initialTreeState for each tree
 			for (const [i, client] of clients.entries()) {
@@ -81,7 +97,7 @@ describe("Fuzz - undo/redo", () => {
 				 * Once the undo stack exposed, remove this array and use the stack to keep track instead.
 				 */
 				for (let j = 0; j < opsPerRun; j++) {
-					tree.undo();
+					undoStacks[i].pop()?.revert();
 				}
 			}
 
@@ -99,10 +115,12 @@ describe("Fuzz - undo/redo", () => {
 			// redo all of the undone changes and validate against the finalTreeState for each tree
 			for (const [i, client] of clients.entries()) {
 				for (let j = 0; j < opsPerRun; j++) {
-					client.channel.view.redo();
+					redoStacks[i].pop()?.revert();
 				}
 				validateTree(client.channel.view, finalTreeStates[i]);
 			}
+
+			unsubscribes.forEach((unsubscribe) => unsubscribe());
 		});
 		createDDSFuzzSuite(model, {
 			defaultTestCount: runsPerBatch,
@@ -138,6 +156,17 @@ describe("Fuzz - undo/redo", () => {
 		emitter.on("testEnd", (finalState: UndoRedoFuzzTestState) => {
 			const clients = finalState.clients;
 
+			// set up the undo stacks for each tree
+			const undoStacks = [];
+			const unsubscribes = [];
+
+			for (const [_, client] of clients.entries()) {
+				const { undoStack, unsubscribe } = createTestUndoRedoStacks(client.channel.view);
+
+				undoStacks.push(undoStack);
+				unsubscribes.push(unsubscribe);
+			}
+
 			/**
 			 * TODO: Currently this array is used to track that undo() is called "opsPerRun" number of times.
 			 * Once the undo stack exposed, remove this array and use the stack to keep track instead.
@@ -149,7 +178,7 @@ describe("Fuzz - undo/redo", () => {
 			finalState.random.shuffle(undoOrderByClientIndex);
 			// call undo() until trees contain no more edits to undo
 			for (const clientIndex of undoOrderByClientIndex) {
-				clients[clientIndex].channel.view.undo();
+				undoStacks[clientIndex].pop()?.revert();
 			}
 			// synchronize clients after undo
 			finalState.containerRuntimeFactory.processAllMessages();
@@ -161,6 +190,8 @@ describe("Fuzz - undo/redo", () => {
 				validateTree(client.channel.view, finalState.initialTreeState);
 				validateAnchors(client.channel.view, finalState.anchors[i], true);
 			}
+
+			unsubscribes.forEach((unsubscribe) => unsubscribe());
 		});
 		createDDSFuzzSuite(model, {
 			defaultTestCount: runsPerBatch,
