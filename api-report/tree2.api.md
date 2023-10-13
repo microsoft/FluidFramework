@@ -1798,9 +1798,6 @@ export class SchemaBuilderBase<TScope extends string, TDefaultKind extends Field
     }>;
     static fieldRecursive<Kind extends FieldKind, T extends FlexList<Unenforced<TreeSchema>>>(kind: Kind, ...allowedTypes: T): FieldSchema<Kind, T>;
     finalize(): SchemaLibrary;
-    leaf<Name extends TName, const T extends ValueSchema>(name: Name, t: T): TreeSchema<`${TScope}.${Name}`, {
-        leafValue: T;
-    }>;
     map<Name extends TName, const T extends ImplicitFieldSchema>(name: Name, fieldSchema: T): TreeSchema<`${TScope}.${Name}`, {
         mapFields: NormalizeField_2<T, TDefaultKind>;
     }>;

@@ -26,7 +26,6 @@ import {
 	SchemaAware,
 } from "../../../feature-libraries";
 import {
-	ValueSchema,
 	FieldKey,
 	EmptyKey,
 	JsonableTree,
@@ -36,17 +35,15 @@ import {
 	SchemaData,
 } from "../../../core";
 import { brand, Brand } from "../../../util";
-import { SchemaBuilder } from "../../../domains";
+import { SchemaBuilder, leaf } from "../../../domains";
 
 const builder = new SchemaBuilder({ scope: "mock data" });
 
-export const stringSchema = builder.leaf("String", ValueSchema.String);
+export const stringSchema = leaf.string;
 
-export const int32Schema = builder.leaf("Int32", ValueSchema.Number);
+export const float64Schema = leaf.number;
 
-export const float64Schema = builder.leaf("Float64", ValueSchema.Number);
-
-export const boolSchema = builder.leaf("Bool", ValueSchema.Boolean);
+export const boolSchema = leaf.boolean;
 
 export const simplePhonesSchema = builder.struct("Test:SimplePhones-1.0.0", {
 	[EmptyKey]: FieldSchema.create(FieldKinds.sequence, [stringSchema]),
@@ -62,7 +59,7 @@ export const phonesSchema = builder.fieldNode(
 	"Test:Phones-1.0.0",
 	builder.sequence([
 		stringSchema,
-		int32Schema,
+		leaf.number,
 		complexPhoneSchema,
 		// array of arrays
 		simplePhonesSchema,
@@ -70,7 +67,7 @@ export const phonesSchema = builder.fieldNode(
 );
 
 export const addressSchema = builder.struct("Test:Address-1.0.0", {
-	zip: [stringSchema, int32Schema],
+	zip: [stringSchema, leaf.number],
 	street: FieldSchema.create(FieldKinds.optional, [stringSchema]),
 	city: FieldSchema.create(FieldKinds.optional, [stringSchema]),
 	country: FieldSchema.create(FieldKinds.optional, [stringSchema]),
@@ -85,9 +82,9 @@ export const mapStringSchema = builder.map(
 
 export const personSchema = builder.struct("Test:Person-1.0.0", {
 	name: stringSchema,
-	age: FieldSchema.create(FieldKinds.optional, [int32Schema]),
+	age: FieldSchema.create(FieldKinds.optional, [leaf.number]),
 	adult: FieldSchema.create(FieldKinds.optional, [boolSchema]),
-	salary: FieldSchema.create(FieldKinds.optional, [float64Schema, int32Schema, stringSchema]),
+	salary: FieldSchema.create(FieldKinds.optional, [float64Schema, leaf.number, stringSchema]),
 	friends: FieldSchema.create(FieldKinds.optional, [mapStringSchema]),
 	address: FieldSchema.create(FieldKinds.optional, [addressSchema]),
 });
@@ -98,7 +95,7 @@ export const optionalChildSchema = builder.struct("Test:OptionalChild-1.0.0", {
 
 export const arraySchema = builder.fieldNode(
 	"Test:Array-1.0.0",
-	FieldSchema.create(FieldKinds.sequence, [stringSchema, int32Schema]),
+	FieldSchema.create(FieldKinds.sequence, [stringSchema, leaf.number]),
 );
 
 export const rootPersonSchema = FieldSchema.create(FieldKinds.optional, [personSchema]);
@@ -111,6 +108,7 @@ export const fullSchemaData = buildTestSchema(rootPersonSchema);
 
 // TODO: provide relaxed types like these based on ContextuallyTyped setters
 
+// TODO: these types don't make sense. Values can't be both primitives and EditableTree, and this isn't how Brand or TreeSchemaIdentifiers are used.
 export type Float64 = Brand<number, "editable-tree.Float64"> & EditableTree;
 export type Int32 = Brand<number, "editable-tree.Int32"> & EditableTree;
 export type Bool = Brand<boolean, "editable-tree.Bool"> & EditableTree;
