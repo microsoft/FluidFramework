@@ -73,16 +73,13 @@ export function getProxyForField<TSchema extends FieldSchema>(
 			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
 			//       inner field.
 
-			// TODO: Remove non-null assertion if/when ET2 editing API becomes internal.
-			//
-			//       The non-null assertion is required because the ET2 API forces undefined optional fields
-			//       into existence when setting maps via getting the key for the non-existent field.
-			//
-			//       Normally, undefined fields are elided in enumeration and therefore do not expect to
-			//       encounter them in the proxy-based API.
+			const maybeContent = asValue.boxedContent;
 
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			return getProxyForNode(asValue.boxedContent!) as ProxyField<TSchema>;
+			// Normally, empty fields are unreachable due to the behavior of 'tryGetField'.  However, the
+			// root field is a special case where the field is always present (even if empty).
+			return (
+				maybeContent === undefined ? undefined : getProxyForNode(maybeContent)
+			) as ProxyField<TSchema>;
 		}
 		// TODO: Remove if/when 'FieldNode' is removed.
 		case FieldKinds.sequence: {

@@ -16,25 +16,23 @@ interface TestCase {
 
 function testObjectLike(testCases: TestCase[]) {
 	describe("Object-like", () => {
-		describe("Satisfies 'deepEquals'", () => {
+		describe("satisfies 'deepEquals'", () => {
 			for (const testCase of testCases) {
 				const view = createTreeView(testCase.schema, testCase.initialTree);
 				const real = testCase.initialTree;
 				const proxy = view.root2(testCase.schema);
 
 				it(`deepEquals(${pretty(proxy)}, ${pretty(real)})`, () => {
-					assert.deepEqual(proxy, real);
+					assert.deepEqual(proxy, real, "Proxy must satisfy 'deepEquals'.");
 				});
 			}
 		});
 
 		function test1(fn: (subject: object) => unknown) {
-			for (const testCase of testCases) {
-				const view = createTreeView(testCase.schema, testCase.initialTree);
-				const real = structuredClone(testCase.initialTree);
-				const proxy = view.root2(testCase.schema);
-
-				assert.deepEqual(proxy, real, "Proxy must satisfy 'deepEquals'.");
+			for (const { schema, initialTree } of testCases) {
+				const view = createTreeView(schema, initialTree);
+				const real = structuredClone(initialTree);
+				const proxy = view.root2(schema);
 
 				const expected = fn(real);
 
