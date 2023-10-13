@@ -104,6 +104,26 @@ export class SchemaBuilder<TScope extends string = string> extends SchemaBuilder
 	 * therefore this method is the same as the static version.
 	 */
 	public readonly sequence = SchemaBuilder.sequence;
+
+	/**
+	 * {@link leaf.number}
+	 */
+	public readonly number = leaf.number;
+
+	/**
+	 * {@link leaf.boolean}
+	 */
+	public readonly boolean = leaf.boolean;
+
+	/**
+	 * {@link leaf.string}
+	 */
+	public readonly string = leaf.string;
+
+	/**
+	 * {@link leaf.handle}
+	 */
+	public readonly handle = leaf.handle;
 }
 
 /**
