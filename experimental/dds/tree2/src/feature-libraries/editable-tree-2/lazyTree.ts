@@ -22,6 +22,7 @@ import {
 	forEachField,
 } from "../../core";
 import { capitalize, disposeSymbol, fail, getOrCreate } from "../../util";
+import { ContextuallyTypedNodeData } from "../contextuallyTyped";
 import {
 	FieldSchema,
 	TreeSchema,
@@ -34,6 +35,7 @@ import {
 	LeafSchema,
 	StructSchema,
 	Any,
+	AllowedTypes,
 } from "../typed-schema";
 import { EditableTreeEvents } from "../untypedTree";
 import { FieldKinds } from "../default-field-kinds";
@@ -52,6 +54,8 @@ import {
 	TreeNode,
 	boxedIterator,
 	TreeStatus,
+	RequiredField,
+	OptionalField,
 } from "./editableTreeTypes";
 import { LazyNodeKeyField, makeField } from "./lazyField";
 import {
@@ -231,7 +235,7 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 				// Additionally this approach makes it possible for a user to take an EditableTree node, get its parent, check its schema, down cast based on that, then edit that detached field (ex: removing the node in it).
 				// This MIGHT work properly with existing merge resolution logic (it must keep client in sync and be unable to violate schema), but this either needs robust testing or to be explicitly banned (error before s3ending the op).
 				// Issues like replacing a node in the a removed sequenced then undoing the remove could easily violate schema if not everything works exactly right!
-				fieldSchema = new FieldSchema(FieldKinds.sequence, [Any]);
+				fieldSchema = FieldSchema.create(FieldKinds.sequence, [Any]);
 			}
 		} else {
 			cursor.exitField();
@@ -366,11 +370,11 @@ export class LazyMap<TSchema extends MapSchema>
 	// TODO: when appropriate add setter that delegates to field kind specific setter.
 	// public set(key: FieldKey, content: FlexibleFieldContent<TSchema["mapFields"]>): void {
 	// 	const field = this.get(key);
-	// 	if (field.is(SchemaBuilder.fieldOptional(...this.schema.mapFields.allowedTypes))) {
+	// 	if (field.is(SchemaBuilder.optional(this.schema.mapFields.allowedTypes))) {
 	// 		field.setContent(content);
 	// 	} else {
 	// 		assert(
-	// 			field.is(SchemaBuilder.fieldSequence(...this.schema.mapFields.allowedTypes)),
+	// 			field.is(SchemaBuilder.sequence(this.schema.mapFields.allowedTypes)),
 	// 			"unexpected map field kind",
 	// 		);
 	// 		// TODO: fix merge semantics.
@@ -468,10 +472,10 @@ export abstract class LazyStruct<TSchema extends StructSchema>
 		}
 
 		const field = this.tryGetField(key);
-		assert(field instanceof LazyNodeKeyField, "unexpected node key field");
+		assert(field instanceof LazyNodeKeyField, 0x7b4 /* unexpected node key field */);
 		// TODO: ideally we would do something like this, but that adds dependencies we can't have here:
 		// assert(
-		// 	field.is(new FieldSchema(FieldKinds.nodeKey, [nodeKeyTreeSchema])),
+		// 	field.is(FieldSchema.create(FieldKinds.nodeKey, [nodeKeyTreeSchema])),
 		// 	"invalid node key field",
 		// );
 
@@ -516,34 +520,79 @@ function buildStructClass<TSchema extends StructSchema>(
 	const propertyDescriptorMap: PropertyDescriptorMap = {};
 	const ownPropertyMap: PropertyDescriptorMap = {};
 
-	for (const [key, field] of schema.structFields) {
+	function getBoxedField(
+		struct: CustomStruct,
+		key: FieldKey,
+		fieldSchema: FieldSchema,
+	): TreeField {
+		return inCursorField(struct[cursorSymbol], key, (cursor) => {
+			return makeField(struct.context, fieldSchema, cursor);
+		});
+	}
+
+	for (const [key, fieldSchema] of schema.structFields) {
+		let setter: ((newContent: ContextuallyTypedNodeData) => void) | undefined;
+		switch (fieldSchema.kind) {
+			case FieldKinds.optional: {
+				setter = function (
+					this: CustomStruct,
+					newContent: ContextuallyTypedNodeData,
+				): void {
+					const field = getBoxedField(
+						this,
+						key,
+						fieldSchema,
+					) as RequiredField<AllowedTypes>;
+					field.content = newContent;
+				};
+				break;
+			}
+			case FieldKinds.required: {
+				setter = function (
+					this: CustomStruct,
+					newContent: ContextuallyTypedNodeData,
+				): void {
+					const field = getBoxedField(
+						this,
+						key,
+						fieldSchema,
+					) as OptionalField<AllowedTypes>;
+					field.content = newContent;
+				};
+				break;
+			}
+			default:
+				setter = undefined;
+				break;
+		}
+
+		// Create getter and setter (when appropriate) for property
 		ownPropertyMap[key] = {
 			enumerable: true,
 			get(this: CustomStruct): unknown {
 				return inCursorField(this[cursorSymbol], key, (cursor) =>
-					unboxedField(this.context, field, cursor),
+					unboxedField(this.context, fieldSchema, cursor),
 				);
 			},
+			set: setter,
 		};
+
+		// Create set method for property (when appropriate)
+		if (setter !== undefined) {
+			propertyDescriptorMap[`set${capitalize(key)}`] = {
+				enumerable: false,
+				get(this: CustomStruct) {
+					return setter;
+				},
+			};
+		}
 
 		propertyDescriptorMap[`boxed${capitalize(key)}`] = {
 			enumerable: false,
 			get(this: CustomStruct) {
-				return inCursorField(this[cursorSymbol], key, (cursor) =>
-					makeField(this.context, field, cursor),
-				);
+				return getBoxedField(this, key, fieldSchema);
 			},
 		};
-
-		// TODO: add setters (methods and assignment) when compatible with FieldKind and TypeScript.
-		// propertyDescriptorMap[`set${capitalize(key)}`] = {
-		// 	enumerable: false,
-		// 	get(this: CustomStruct) {
-		// 		return (content: NewFieldContent) => {
-		// 			this.getField(key).setContent(content);
-		// 		};
-		// 	},
-		// };
 	}
 
 	// This must implement `StructTyped<TSchema>`, but TypeScript can't constrain it to do so.

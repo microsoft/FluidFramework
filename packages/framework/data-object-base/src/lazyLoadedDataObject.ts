@@ -20,6 +20,9 @@ import { ISharedObject } from "@fluidframework/shared-object-base";
 import { EventForwarder } from "@fluid-internal/client-utils";
 import { create404Response } from "@fluidframework/runtime-utils";
 
+/**
+ * @public
+ */
 export abstract class LazyLoadedDataObject<
 		TRoot extends ISharedObject = ISharedObject,
 		TEvents extends IEvent = IEvent,

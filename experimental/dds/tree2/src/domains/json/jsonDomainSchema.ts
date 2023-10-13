@@ -3,11 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { AllowedTypes, FieldKinds, FieldSchema, SchemaBuilder } from "../../feature-libraries";
+import {
+	AllowedTypes,
+	FieldKinds,
+	FieldSchema,
+	SchemaBuilderInternal,
+} from "../../feature-libraries";
 import { requireAssignableTo } from "../../util";
-import * as leaf from "../leafDomain";
+import { leaf } from "../leafDomain";
 
-const builder = new SchemaBuilder({ scope: "Json", libraries: [leaf.library] });
+const builder = new SchemaBuilderInternal({
+	scope: "com.fluidframework.json",
+	libraries: [leaf.library],
+});
 
 /**
  * @alpha
@@ -24,7 +32,7 @@ export const jsonString = leaf.string;
 /**
  * @alpha
  */
-export const jsonNull = builder.struct("Null", {});
+export const jsonNull = builder.struct("null", {});
 
 /**
  * @alpha
@@ -49,16 +57,16 @@ export const jsonRoot = [() => jsonObject, () => jsonArray, ...jsonPrimitives] a
  * @alpha
  */
 export const jsonObject = builder.mapRecursive(
-	"Object",
-	new FieldSchema(FieldKinds.optional, jsonRoot),
+	"object",
+	FieldSchema.createUnsafe(FieldKinds.optional, jsonRoot),
 );
 
 /**
  * @alpha
  */
 export const jsonArray = builder.fieldNodeRecursive(
-	"Array",
-	new FieldSchema(FieldKinds.sequence, jsonRoot),
+	"array",
+	FieldSchema.createUnsafe(FieldKinds.sequence, jsonRoot),
 );
 
 /**

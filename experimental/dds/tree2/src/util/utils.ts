@@ -258,7 +258,7 @@ export function assertValidRangeIndices(
 	endIndex: number,
 	array: { readonly length: number },
 ) {
-	assert(endIndex > startIndex, "Range indices are malformed.");
+	assert(endIndex > startIndex, 0x79c /* Range indices are malformed. */);
 	assertValidIndex(startIndex, array, false);
 	assertValidIndex(endIndex, array, true);
 }
@@ -282,8 +282,8 @@ export function assertValidRange(
 ) {
 	assertNonNegativeSafeInteger(start);
 	assertNonNegativeSafeInteger(end);
-	assert(end <= array.length, "Range end must be less than or equal to length");
-	assert(start <= end, "Range start must be less than or equal to range start");
+	assert(end <= array.length, 0x79d /* Range end must be less than or equal to length */);
+	assert(start <= end, 0x79e /* Range start must be less than or equal to range start */);
 }
 
 export function assertNonNegativeSafeInteger(index: number) {
@@ -334,6 +334,21 @@ export function useDeterministicStableId<T>(f: () => T): T {
 	deterministicStableIdCount = 1;
 	try {
 		return f();
+		// Since this is intended to be used by tests, and test runners often recover from exceptions to run more tests,
+		// clean this up with a finally block to reduce risk of breaking unrelated tests after a failure.
+	} finally {
+		deterministicStableIdCount = undefined;
+	}
+}
+
+export async function useAsyncDeterministicStableId<T>(f: () => Promise<T>): Promise<T> {
+	assert(
+		deterministicStableIdCount === undefined,
+		0x79f /* useAsyncDeterministicStableId cannot be nested */,
+	);
+	deterministicStableIdCount = 1;
+	try {
+		return await f();
 		// Since this is intended to be used by tests, and test runners often recover from exceptions to run more tests,
 		// clean this up with a finally block to reduce risk of breaking unrelated tests after a failure.
 	} finally {
@@ -413,6 +428,7 @@ export function transformObjectMap<MapKey extends string | number | symbol, MapV
 
 /**
  * Returns the value from `set` if it contains exactly one item, otherwise `undefined`.
+ * @alpha
  */
 export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
 	if (set === undefined) {

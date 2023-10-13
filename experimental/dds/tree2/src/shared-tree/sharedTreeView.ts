@@ -41,6 +41,7 @@ import {
 	TypedField,
 	createNodeKeyManager,
 	nodeKeyFieldKey as nodeKeyFieldKeyDefault,
+	getProxyForField,
 } from "../feature-libraries";
 import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core";
 import { TransactionResult, brand } from "../util";
@@ -239,6 +240,8 @@ export interface ISharedTreeView extends AnchorLocator {
 	editableTree2<TRoot extends FieldSchema>(
 		viewSchema: TypedSchemaCollection<TRoot>,
 	): TypedField<TRoot>;
+
+	root2<TRoot extends FieldSchema>(viewSchema: TypedSchemaCollection<TRoot>): any;
 }
 
 /**
@@ -435,6 +438,11 @@ export class SharedTreeView implements ISharedTreeBranchView {
 			nodeKeyFieldKey ?? brand(nodeKeyFieldKeyDefault),
 		);
 		return context.root as TypedField<TRoot>;
+	}
+
+	public root2<TRoot extends FieldSchema>(viewSchema: TypedSchemaCollection<TRoot>) {
+		const rootField = this.editableTree2(viewSchema);
+		return getProxyForField(rootField);
 	}
 
 	public locate(anchor: Anchor): AnchorNode | undefined {

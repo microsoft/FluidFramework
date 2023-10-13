@@ -16,6 +16,7 @@ export type StateHandlerFunction = (
 	machine: Machine<unknown>,
 	testMode: boolean,
 	log: CommandLogger,
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	data: any,
 ) => Promise<boolean>;
 
@@ -52,7 +53,7 @@ export abstract class BaseStateHandler implements StateHandler {
 	 * @param machine - The state machine.
 	 * @param state - The state from which to transition. Only used for logging.
 	 */
-	static signalSuccess(machine: Machine<unknown>, state: MachineState) {
+	static signalSuccess(machine: Machine<unknown>, state: MachineState): void {
 		const transitioned = machine.action("success");
 		if (!transitioned) {
 			throw new Error(`Failed when signaling success from state: ${state}`);
@@ -65,7 +66,7 @@ export abstract class BaseStateHandler implements StateHandler {
 	 * @param machine - The state machine.
 	 * @param state - The state from which to transition. Only used for logging.
 	 */
-	static signalFailure(machine: Machine<unknown>, state: MachineState) {
+	static signalFailure(machine: Machine<unknown>, state: MachineState): void {
 		const transitioned = machine.action("failure");
 		if (!transitioned) {
 			throw new Error(`Failed when signaling failure from state: ${state}`);
