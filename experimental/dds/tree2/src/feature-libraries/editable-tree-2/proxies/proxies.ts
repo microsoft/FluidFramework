@@ -39,6 +39,26 @@ export function setTreeNode(target: any, treeNode: TreeNode) {
 	});
 }
 
+const proxyCacheSym = Symbol("ProxyCache");
+
+/** Cache the proxy that wraps the given tree node so that the proxy can be re-used in future reads */
+function cacheProxy(
+	target: TreeNode,
+	proxy: SharedTreeList<AllowedTypes> | SharedTreeObject<StructSchema>,
+): void {
+	Object.defineProperty(target, proxyCacheSym, {
+		value: proxy,
+		writable: false,
+		enumerable: false,
+		configurable: false,
+	});
+}
+
+/** If there has already been a proxy created to wrap the given tree node, return it */
+function getCachedProxy(treeNode: TreeNode): ProxyNode<TreeSchema> | undefined {
+	return (treeNode as unknown as { [proxyCacheSym]: ProxyNode<TreeSchema> })[proxyCacheSym];
+}
+
 /**
  * Checks if the given object is a {@link SharedTreeObject}
  * @alpha
@@ -50,9 +70,6 @@ export function is<TSchema extends StructSchema>(
 	// TODO: Do this a better way. Perhaps, should `treeNodeSym` be attached to object proxies via `setTreeNode`?
 	return (x as any)[treeNodeSym].schema === schema;
 }
-
-// TODO: Implement lifetime.  The proxy that should be cached on their respective nodes and reused.
-// Object identity is tied to the proxy instance (not the target object)
 
 /** Retrieve the associated proxy for the given field. */
 export function getProxyForField<TSchema extends FieldSchema>(
@@ -89,12 +106,18 @@ export function getProxyForNode<TSchema extends TreeSchema>(
 	if (schemaIsLeaf(schema)) {
 		return treeNode.value as ProxyNode<TSchema>;
 	}
-	if (schemaIsFieldNode(schema)) {
-		return createListProxy(treeNode) as ProxyNode<TSchema>;
+	const isFieldNode = schemaIsFieldNode(schema);
+	if (isFieldNode || schemaIsStruct(schema)) {
+		const cachedProxy = getCachedProxy(treeNode);
+		if (cachedProxy !== undefined) {
+			return cachedProxy as ProxyNode<TSchema>;
+		}
+
+		const proxy = isFieldNode ? createListProxy(treeNode) : createObjectProxy(treeNode, schema);
+		cacheProxy(treeNode, proxy);
+		return proxy as ProxyNode<TSchema>;
 	}
-	if (schemaIsStruct(schema)) {
-		return createObjectProxy(treeNode, schema) as ProxyNode<TSchema>;
-	}
+
 	fail("unrecognized node kind");
 }
 

@@ -9,11 +9,10 @@ import {
 	isEditableField,
 	isEditableTree,
 	SchemaAware,
-	SchemaBuilder,
 	typeNameSymbol,
 	UnwrappedEditableField,
 } from "../feature-libraries";
-import { jsonNumber, jsonSchema } from "../domains";
+import { jsonNumber, jsonSchema, SchemaBuilder } from "../domains";
 import { brand, requireAssignableTo } from "../util";
 import { ISharedTreeView, TreeContent } from "../shared-tree";
 import { FieldKey, moveToDetachedField, rootFieldKey, UpPath } from "../core";

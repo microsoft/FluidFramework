@@ -4,11 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { SchemaBuilder } from "../../../feature-libraries";
-import { leaf } from "../../../domains";
+import { leaf, SchemaBuilder } from "../../../domains";
 import { createTreeView } from "./utils";
 
-const builder = new SchemaBuilder({ scope: "test", libraries: [leaf.library] });
+const builder = new SchemaBuilder({ scope: "test" });
 
 export const stringList = builder.fieldNode("List<string>", builder.sequence(leaf.string));
 

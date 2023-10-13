@@ -150,7 +150,10 @@ class OpPerfTelemetry {
 				) {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const latencyStats = this.latencyStatistics.get(msg.clientSequenceNumber)!;
-					assert(latencyStats !== undefined, "Latency stats for op should exist");
+					assert(
+						latencyStats !== undefined,
+						0x7c2 /* Latency stats for op should exist */,
+					);
 					assert(
 						latencyStats.opProcessingTimes.outboundPushEventTime === undefined,
 						0x2c8 /* "outboundPushEventTime should be undefined" */,
@@ -188,7 +191,7 @@ class OpPerfTelemetry {
 				// We do an explicit check for undefined right after this
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const latencyStats = this.latencyStatistics.get(message.clientSequenceNumber)!;
-				assert(latencyStats !== undefined, "Latency stats for op should exist");
+				assert(latencyStats !== undefined, 0x7c3 /* Latency stats for op should exist */);
 				if (latencyStats.opProcessingTimes.outboundPushEventTime !== undefined) {
 					latencyStats.opProcessingTimes.inboundPushEventTime = Date.now();
 					latencyStats.opPerfData.durationNetwork =
@@ -259,7 +262,7 @@ class OpPerfTelemetry {
 		) {
 			assert(
 				this.latencyStatistics.get(message.clientSequenceNumber) === undefined,
-				"Existing op perf data for client sequence number",
+				0x7c4 /* Existing op perf data for client sequence number */,
 			);
 			this.clientSequenceNumberForLatencyStatistics = message.clientSequenceNumber;
 			this.latencyStatistics.set(message.clientSequenceNumber, {
@@ -308,7 +311,7 @@ class OpPerfTelemetry {
 			// We do an explicit check for undefined right after this
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const latencyData = this.latencyStatistics.get(message.clientSequenceNumber)!;
-			assert(latencyData !== undefined, "Undefined latency statistics for op");
+			assert(latencyData !== undefined, 0x7c5 /* Undefined latency statistics for op */);
 			assert(
 				latencyData.opProcessingTimes.submitOpEventTime !== undefined,
 				0x120 /* "Undefined latency statistics for op (op send time)" */,

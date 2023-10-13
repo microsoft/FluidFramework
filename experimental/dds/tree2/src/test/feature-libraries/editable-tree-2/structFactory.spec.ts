@@ -9,8 +9,7 @@
 import { strict as assert } from "node:assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { leaf } from "../../../domains";
-import { SchemaBuilder } from "../../../feature-libraries";
+import { leaf, SchemaBuilder } from "../../../domains";
 import {
 	boxedIterator,
 	createRawStruct,
@@ -22,10 +21,7 @@ import { contextWithContentReadonly } from "./utils";
 
 describe("raw structs", () => {
 	function getRawStruct() {
-		const builder = new SchemaBuilder({
-			scope: "raw struct test",
-			libraries: [leaf.library],
-		});
+		const builder = new SchemaBuilder({ scope: "raw struct test" });
 		const structSchema = builder.struct("struct", {
 			foo: leaf.number,
 			bar: builder.optional(leaf.string),

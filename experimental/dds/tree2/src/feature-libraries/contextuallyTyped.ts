@@ -388,6 +388,15 @@ function shallowCompatibilityTest(
 	if (isPrimitiveValue(data)) {
 		return isPrimitive(schema) && allowsValue(schema.leafValue, data);
 	}
+	// TODO: once this is using view schema, replace with schemaIsLeaf
+	if (schema.leafValue !== undefined) {
+		// Reject objects with no value from being leaf nodes.
+		// Note that if allowing IFluidHandles without wrapping them in a leaf node object,
+		// this (or the above isPrimitiveValue) would have to change.
+		if ((data as ContextuallyTypedNodeDataObject)[valueSymbol] === undefined) {
+			return false;
+		}
+	}
 	if (isArrayLike(data)) {
 		const primary = getPrimaryField(schema);
 		return (
