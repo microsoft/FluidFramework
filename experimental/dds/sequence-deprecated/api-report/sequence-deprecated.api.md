@@ -113,8 +113,6 @@ export class SharedNumberSequence extends SharedSequence<number> {
     constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
     // @deprecated
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedNumberSequence;
-    // Warning: (ae-forgotten-export) The symbol "SharedNumberSequenceFactory" needs to be exported by the entry point index.d.ts
-    //
     // @deprecated
     static getFactory(): SharedNumberSequenceFactory;
     // @deprecated (undocumented)
@@ -129,8 +127,6 @@ export class SharedObjectSequence<T> extends SharedSequence<T> {
     constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
     // @deprecated
     static create<T>(runtime: IFluidDataStoreRuntime, id?: string): SharedObjectSequence<T>;
-    // Warning: (ae-forgotten-export) The symbol "SharedObjectSequenceFactory" needs to be exported by the entry point index.d.ts
-    //
     // @deprecated
     static getFactory(): SharedObjectSequenceFactory;
     // @deprecated (undocumented)
