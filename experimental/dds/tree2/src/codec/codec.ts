@@ -65,13 +65,17 @@ export interface JsonValidator {
  */
 export interface ICodecOptions {
 	/**
-	 * {@link JsonValidator} which should be used to validate persisted data SharedTree reads & writes
+	 * {@link JsonValidator} which SharedTree uses to validate persisted data it reads & writes
 	 * matches the expected encoded format (i.e. the wire format for ops and summaries).
+	 *
 	 * See {@link noopValidator} and {@link typeboxValidator} for out-of-the-box implementations.
 	 *
-	 * SharedTree users are encouraged to use a non-trivial validator (i.e. not `noopValidator`) whenever
-	 * reasonable: it gives better fail-fast behavior when unexpected encoded data is found,
-	 * which reduces the risk of further data corruption.
+	 * This option is not "on-by-default" because JSON schema validation comes with a small but noticeable
+	 * runtime performance cost, and popular schema validation libraries have relatively large bundle size.
+	 *
+	 * SharedTree users are still encouraged to use a non-trivial validator (i.e. not `noopValidator`)
+	 * whenever reasonable: it gives better fail-fast behavior when unexpected encoded data is found,
+	 * which reduces the risk of unrecoverable data corruption.
 	 */
 	readonly jsonValidator: JsonValidator;
 }
