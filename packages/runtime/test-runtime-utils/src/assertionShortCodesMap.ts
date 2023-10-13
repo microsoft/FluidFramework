@@ -1373,7 +1373,6 @@ export const shortCodeMap = {
 	"0x795": "Data store runtime entryPoint does not have request",
 	"0x796": "Data store runtime entryPoint does not have request",
 	"0x797": "forest must be empty",
-	"0x798": "invalid ImplicitAllowedTypes",
 	"0x799": "Conflicting TreeSchema names",
 	"0x79a": "SchemaBuilder can only be finalized once.",
 	"0x79b": "unexpected format for resubmitted schema op",
@@ -1418,5 +1417,6 @@ export const shortCodeMap = {
 	"0x7c2": "Latency stats for op should exist",
 	"0x7c3": "Latency stats for op should exist",
 	"0x7c4": "Existing op perf data for client sequence number",
-	"0x7c5": "Undefined latency statistics for op"
+	"0x7c5": "Undefined latency statistics for op",
+	"0x7c6": "invalid ImplicitAllowedTypes"
 };

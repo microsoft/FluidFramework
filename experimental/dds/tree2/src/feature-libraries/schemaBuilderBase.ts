@@ -413,7 +413,7 @@ export function normalizeAllowedTypes<TSchema extends ImplicitAllowedTypes>(
 	if (schema instanceof TreeSchema) {
 		return [schema] as unknown as NormalizeAllowedTypes<TSchema>;
 	}
-	assert(Array.isArray(schema), "invalid ImplicitAllowedTypes");
+	assert(Array.isArray(schema), 0x7c6 /* invalid ImplicitAllowedTypes */);
 	return schema as unknown as NormalizeAllowedTypes<TSchema>;
 }
 
