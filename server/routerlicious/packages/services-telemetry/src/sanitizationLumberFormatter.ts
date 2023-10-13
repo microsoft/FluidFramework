@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ILumberFormatter, LogLevel } from "./resources";
+import { ILumberFormatter } from "./resources";
 import { Lumber } from "./lumber";
 
 export class SanitizationLumberFormatter implements ILumberFormatter {
@@ -21,7 +21,7 @@ export class SanitizationLumberFormatter implements ILumberFormatter {
 	private readonly redactedStr = "[LUMBER_REDACTED]";
 
 	public transform(lumber: Lumber<string>): void {
-		if (lumber.logLevel === LogLevel.Error && lumber.exception) {
+		if (lumber.exception) {
 			const sensitiveKeys = new Set<string>();
 
 			this.redactException(lumber.exception, sensitiveKeys);

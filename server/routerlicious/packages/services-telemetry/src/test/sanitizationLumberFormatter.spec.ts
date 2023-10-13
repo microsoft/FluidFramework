@@ -45,7 +45,7 @@ describe("SanitizationLumberFormatter", () => {
 		formatter.transform(lumber);
 
 		const lumberException = lumber.exception as TestSensitiveException;
-		const sensitiveKeys = lumber.properties.get("SensitiveDataDetected") as Set<string>;
+		const sensitiveKeys = lumber.properties.get("detectedSensitiveKeys") as Set<string>;
 
 		assert.strictEqual(lumberException.password, redactedStr);
 		assert.strictEqual(lumberException.apiKey, redactedStr);
