@@ -9,7 +9,7 @@ import { SequenceField as SF } from "../../../feature-libraries";
 import { Changeset } from "../../../feature-libraries/sequence-field";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
-import { EncodingTestData, fakeRepair, makeEncodingTestSuite } from "../../utils";
+import { EncodingTestData, makeEncodingTestSuite } from "../../utils";
 import { ChangeMaker as Change, cases } from "./testEdits";
 
 const encodingTestData: EncodingTestData<Changeset<TestChange>, unknown> = {
@@ -18,7 +18,7 @@ const encodingTestData: EncodingTestData<Changeset<TestChange>, unknown> = {
 		["without child change", Change.delete(2, 2)],
 		[
 			"with repair data",
-			Change.revive(0, 1, { revision: mintRevisionTag(), localId: brand(10) }, fakeRepair),
+			Change.revive(0, 1, { revision: mintRevisionTag(), localId: brand(10) }),
 		],
 		// TODO: Include revive case here or in other encode/decode tests in this file.
 		// It's likely we need a different notion of equality, as revive involves a ProtoNode type

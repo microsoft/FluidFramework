@@ -15,6 +15,7 @@ const nodeX = { type, value: "X", fields: emptyMap };
 const nodeXCursor = singleMapTreeCursor(nodeX);
 const fooField = brand<FieldKey>("foo");
 const moveId = brandOpaque<Delta.MoveId>(42);
+const detachId = { minor: 43 };
 
 describe("DeltaUtils", () => {
 	describe("mapFieldMarks", () => {
@@ -46,14 +47,19 @@ describe("DeltaUtils", () => {
 							fields: nestedCursorInsert,
 						},
 						{
-							type: Delta.MarkType.Delete,
+							type: Delta.MarkType.Remove,
 							count: 1,
 							fields: nestedCursorInsert,
+							detachId,
 						},
 						{
 							type: Delta.MarkType.Insert,
 							content: [nodeXCursor],
 							fields: nestedCursorInsert,
+							oldContent: {
+								detachId,
+								fields: nestedCursorInsert,
+							},
 						},
 					],
 				],
@@ -87,14 +93,19 @@ describe("DeltaUtils", () => {
 							fields: nestedMapTreeInsert,
 						},
 						{
-							type: Delta.MarkType.Delete,
+							type: Delta.MarkType.Remove,
 							count: 1,
 							fields: nestedMapTreeInsert,
+							detachId,
 						},
 						{
 							type: Delta.MarkType.Insert,
 							content: [nodeX],
 							fields: nestedMapTreeInsert,
+							oldContent: {
+								detachId,
+								fields: nestedMapTreeInsert,
+							},
 						},
 					],
 				],

@@ -141,7 +141,7 @@ export abstract class ReleaseReportBaseCommand<T extends typeof Command> extends
 			if (isReleaseGroup(releaseGroupOrPackage)) {
 				if (includeDependencies) {
 					[rgVerMap, pkgVerMap] = getFluidDependencies(context, releaseGroupOrPackage);
-					rgs.push(...Object.keys(rgVerMap));
+					rgs.push(...(Object.keys(rgVerMap) as ReleaseGroup[]));
 					pkgs.push(...Object.keys(pkgVerMap));
 				} else {
 					rgs.push(releaseGroupOrPackage);
@@ -152,7 +152,7 @@ export abstract class ReleaseReportBaseCommand<T extends typeof Command> extends
 			rgs.push(releaseGroupOrPackage);
 		} else if (releaseGroupOrPackage === undefined) {
 			// No filter, so include all release groups and packages
-			rgs.push(...context.repo.releaseGroups.keys());
+			rgs.push(...([...context.repo.releaseGroups.keys()] as ReleaseGroup[]));
 			pkgs.push(...context.independentPackages.map((p) => p.name));
 		} else {
 			// Filter to only the specified package
@@ -398,7 +398,7 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 	releaseGroupName: ReleaseGroup | ReleasePackage | undefined;
 
 	public async run(): Promise<void> {
-		const flags = this.flags;
+		const { flags } = this;
 
 		const shouldOutputFiles = flags.output !== undefined;
 		const outputPath = flags.output ?? process.cwd();
@@ -546,7 +546,7 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 						previousVersion: prevVer === DEFAULT_MIN_VERSION ? undefined : prevVer,
 						date: latestDate,
 						releaseType: bumpType,
-						releaseGroup: pkg.monoRepo?.kind,
+						releaseGroup: pkg.monoRepo?.releaseGroup,
 						isNewRelease,
 						ranges,
 					};
@@ -594,7 +594,7 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 			const highlight = this.isRecentReleaseByDate(latestDate) ? chalk.green : chalk.white;
 			const displayRelDate = highlight(getDisplayDateRelative(latestDate));
 
-			const displayPreviousVersion = prevVer === undefined ? DEFAULT_MIN_VERSION : prevVer;
+			const displayPreviousVersion = prevVer ?? DEFAULT_MIN_VERSION;
 
 			const bumpType = detectBumpType(prevVer ?? DEFAULT_MIN_VERSION, latestVer);
 			const displayBumpType = highlight(`${bumpType}`);

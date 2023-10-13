@@ -54,7 +54,7 @@ export default class MergeInfoCommand extends BaseCommand<typeof MergeInfoComman
 	];
 
 	public async run(): Promise<BranchMergeInfo> {
-		const flags = this.flags;
+		const { flags } = this;
 		const branchFlags = flags.branch;
 
 		let branch1: string;

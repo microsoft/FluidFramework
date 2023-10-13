@@ -34,7 +34,7 @@ export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
 	static readonly enableJsonFlag: boolean = true;
 
 	async run(): Promise<PackageVersionList> {
-		const flags = this.flags;
+		const { flags } = this;
 		const context = await this.getContext();
 		let packages =
 			flags.releaseGroup !== undefined && isMonoRepoKind(flags.releaseGroup)

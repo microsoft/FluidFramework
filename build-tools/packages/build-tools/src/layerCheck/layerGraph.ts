@@ -6,11 +6,10 @@ import assert from "node:assert";
 import { EOL as newline } from "node:os";
 import * as path from "node:path";
 import { readJsonSync } from "fs-extra";
-
-import { defaultLogger } from "../common/logging";
 import { Package, Packages } from "../common/npmPackage";
 
-const { verbose } = defaultLogger;
+import registerDebug from "debug";
+const traceLayerCheck = registerDebug("layer-check");
 
 interface ILayerInfo {
 	deps?: string[];
@@ -115,16 +114,16 @@ class LayerNode extends BaseNode {
 	 */
 	public verifyDependent(dep: PackageNode) {
 		if (this.packages.has(dep)) {
-			verbose(`Found: ${dep.name} in ${this.name}`);
+			traceLayerCheck(`Found: ${dep.name} in ${this.name}`);
 			return true;
 		}
 		if (this.allowedDependentPackageNodes.has(dep)) {
-			verbose(`Found: ${dep.name} in ${this.name}`);
+			traceLayerCheck(`Found: ${dep.name} in ${this.name}`);
 			return true;
 		}
 
 		for (const node of this.allowedDependentLayerNodes) {
-			verbose(`Traversing: ${this.name} -> ${node.name}`);
+			traceLayerCheck(`Traversing: ${this.name} -> ${node.name}`);
 			if (node.verifyDependent(dep)) {
 				return true;
 			}
@@ -368,7 +367,7 @@ export class LayerGraph {
 			for (const dir of Object.keys(this.dirMapping)) {
 				if (pkg.directory.startsWith(dir)) {
 					const layerNode = this.dirMapping[dir];
-					verbose(`${pkg.nameColored}: matched with ${layerNode.name} (${dir})`);
+					traceLayerCheck(`${pkg.nameColored}: matched with ${layerNode.name} (${dir})`);
 					const packageNode = this.createPackageNode(pkg.name, layerNode);
 					packageNode.pkg = pkg;
 					matched = true;
@@ -415,7 +414,7 @@ export class LayerGraph {
 				success = false;
 			}
 
-			verbose(
+			traceLayerCheck(
 				`${packageNode.pkg.nameColored}: checking ${depPackageNode.name} from ${packageNode.layerName}`,
 			);
 			if (!packageNode.verifyDependent(depPackageNode)) {

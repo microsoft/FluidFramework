@@ -37,15 +37,12 @@ export class CheckLayers extends BaseCommand<typeof CheckLayers> {
 		...BaseCommand.flags,
 	};
 
-	async run() {
-		const flags = this.flags;
+	async run(): Promise<void> {
+		const { flags } = this;
 		const timer = new Timer(flags.timer);
 
 		const context = await this.getContext();
-		const resolvedRoot = context.repo.resolvedRoot;
-
-		// Load the package
-		const packages = context.repo.packages;
+		const { packages, resolvedRoot } = context.repo;
 
 		timer.time("Package scan completed");
 

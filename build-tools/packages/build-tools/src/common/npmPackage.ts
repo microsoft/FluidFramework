@@ -28,7 +28,10 @@ import {
 	unlinkAsync,
 } from "./utils";
 
-const { log, verbose, errorLog: error } = defaultLogger;
+import registerDebug from "debug";
+const traceInit = registerDebug("fluid-build:init");
+
+const { log, errorLog: error } = defaultLogger;
 
 /**
  * A type representing fluid-build-specific config that may be in package.json.
@@ -104,7 +107,6 @@ export class Package {
 		public readonly packageJsonFileName: string,
 		public readonly group: string,
 		public readonly monoRepo?: MonoRepo,
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		additionalProperties: any = {},
 	) {
 		[this._packageJson, this._indent] = readPackageJsonAndIndent(packageJsonFileName);
@@ -115,7 +117,7 @@ export class Package {
 			: existsSync(yarnLockPath)
 			? "yarn"
 			: "npm";
-		verbose(`Package loaded: ${this.nameColored}`);
+		traceInit(`${this.nameColored}: Package loaded`);
 		Object.assign(this, additionalProperties);
 	}
 

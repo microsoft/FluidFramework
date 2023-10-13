@@ -63,7 +63,7 @@ export default class FromTagCommand extends ReleaseReportBaseCommand<typeof From
 		const context = await this.getContext();
 
 		const [releaseGroup, version, tag] = await this.parseTag(tagInput);
-		this.releaseGroupName = releaseGroup.name;
+		this.releaseGroupName = releaseGroup.name as ReleaseGroup;
 
 		this.releaseData = await this.collectReleaseData(
 			context,
@@ -152,5 +152,5 @@ const getReleaseTitle = (
 ): string => {
 	const name = releaseGroup === MonoRepoKind.Client ? "Fluid Framework" : releaseGroup;
 	// e.g. Fluid Framework v2.0.0-internal.4.1.0 (minor)
-	return `${name} v${version} (${releaseType})`;
+	return `${name} v${version.version} (${releaseType})`;
 };

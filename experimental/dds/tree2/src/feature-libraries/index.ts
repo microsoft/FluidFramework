@@ -125,7 +125,6 @@ export {
 	allowsRepoSuperset,
 	GenericChangeset,
 	genericFieldKind,
-	NodeReviver,
 	RevisionIndexer,
 	RevisionMetadataSource,
 	RevisionInfo,
@@ -158,13 +157,23 @@ export {
 	bannedFieldNames,
 	fieldApiPrefixes,
 	validateStructFieldName,
+	Unenforced,
+	AllowedTypeSet,
 } from "./typed-schema";
-export { SchemaBuilder, SchemaLibrary } from "./schemaBuilder";
+
+export {
+	SchemaBuilderBase,
+	SchemaLibrary,
+	ImplicitFieldSchema,
+	NormalizeField,
+	ImplicitAllowedTypes,
+	NormalizeAllowedTypes,
+	SchemaBuilderOptions,
+	normalizeAllowedTypes,
+} from "./schemaBuilderBase";
+export { SchemaBuilderInternal } from "./schemaBuilder";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
-
-export { ForestRepairDataStore, ForestRepairDataStoreProvider } from "./forestRepairDataStore";
-export { dummyRepairDataStore } from "./fakeRepairDataStore";
 
 export {
 	TreeChunk,
@@ -221,6 +230,7 @@ export {
 } from "./untypedTree";
 
 export {
+	AssignableFieldKinds,
 	FieldNode,
 	FlexibleFieldContent,
 	FlexibleNodeContent,
@@ -244,8 +254,21 @@ export {
 	boxedIterator,
 	CheckTypesOverlap,
 	TreeStatus,
+	getProxyForField,
+	ObjectFields,
+	ProxyField,
+	ProxyFieldInner,
+	ProxyNode,
+	ProxyNodeUnion,
+	SharedTreeList,
+	SharedTreeMap,
+	SharedTreeObject,
+	is,
+	ProxyRoot,
 } from "./editable-tree-2";
 
 // Split into separate import and export for compatibility with API-Extractor.
 import * as SchemaAware from "./schema-aware";
 export { SchemaAware };
+
+export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer";

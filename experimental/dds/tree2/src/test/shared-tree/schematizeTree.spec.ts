@@ -4,7 +4,6 @@
  */
 import { strict as assert, fail } from "assert";
 import {
-	SchemaBuilder,
 	Any,
 	TypedSchemaCollection,
 	FieldSchema,
@@ -15,7 +14,6 @@ import {
 } from "../../feature-libraries";
 import { ViewEvents } from "../../shared-tree";
 import {
-	ValueSchema,
 	AllowedUpdateType,
 	SimpleObservingDependent,
 	InMemoryStoredSchemaRepository,
@@ -26,23 +24,30 @@ import { jsonSequenceRootSchema } from "../utils";
 // eslint-disable-next-line import/no-internal-modules
 import { TreeContent, initializeContent, schematize } from "../../shared-tree/schematizedTree";
 import { createEmitter } from "../../events";
+import { SchemaBuilder, leaf } from "../../domains";
 
-const builder = new SchemaBuilder("Schematize Tree Tests");
-const root = builder.leaf("root", ValueSchema.Number);
-const schema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(root));
+const builder = new SchemaBuilder({ scope: "test", name: "Schematize Tree Tests" });
+const root = leaf.number;
+const schema = builder.toDocumentSchema(SchemaBuilder.optional(root));
 
-const builderGeneralized = new SchemaBuilder("Schematize Tree Tests Generalized");
-const rootGeneralized = builderGeneralized.leaf("root", ValueSchema.Number);
-const schemaGeneralized = builderGeneralized.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
+const builderGeneralized = new SchemaBuilder({
+	scope: "test",
+	name: "Schematize Tree Tests Generalized",
+});
 
-const builderValue = new SchemaBuilder("Schematize Tree Tests");
-const root2 = builderValue.leaf("root", ValueSchema.Number);
-const schemaValueRoot = builderValue.intoDocumentSchema(SchemaBuilder.fieldRequired(Any));
+const schemaGeneralized = builderGeneralized.toDocumentSchema(SchemaBuilder.optional(Any));
 
-const emptySchema = new SchemaBuilder("Empty", {
-	rejectEmpty: false,
-	rejectForbidden: false,
-}).intoDocumentSchema(SchemaBuilder.field(FieldKinds.forbidden));
+const builderValue = new SchemaBuilder({ scope: "test", name: "Schematize Tree Tests2" });
+
+const schemaValueRoot = builderValue.toDocumentSchema(SchemaBuilder.required(Any));
+
+const emptySchema = new SchemaBuilder({
+	scope: "Empty",
+	lint: {
+		rejectEmpty: false,
+		rejectForbidden: false,
+	},
+}).toDocumentSchema(FieldSchema.empty);
 
 function expectSchema(actual: SchemaData, expected: SchemaData): void {
 	// Check schema match
