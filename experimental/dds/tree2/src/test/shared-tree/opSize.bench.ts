@@ -7,7 +7,7 @@ import Table from "easy-table";
 import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { SchemaBuilder, singleTextCursor } from "../../feature-libraries";
+import { singleTextCursor } from "../../feature-libraries";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../shared-tree";
 import { JsonCompatibleReadOnly, brand, getOrAddEmptyToMap } from "../../util";
 import {
@@ -21,6 +21,7 @@ import {
 	ValueSchema,
 } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
+import { SchemaBuilder } from "../../domains";
 
 // Notes:
 // 1. Within this file "percentile" is commonly used, and seems to refer to a portion (0 to 1) or some maximum size.

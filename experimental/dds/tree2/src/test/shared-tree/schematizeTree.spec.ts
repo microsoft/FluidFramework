@@ -4,7 +4,6 @@
  */
 import { strict as assert, fail } from "assert";
 import {
-	SchemaBuilder,
 	Any,
 	TypedSchemaCollection,
 	FieldSchema,
@@ -26,6 +25,7 @@ import { jsonSequenceRootSchema } from "../utils";
 // eslint-disable-next-line import/no-internal-modules
 import { TreeContent, initializeContent, schematize } from "../../shared-tree/schematizedTree";
 import { createEmitter } from "../../events";
+import { SchemaBuilder } from "../../domains";
 
 const builder = new SchemaBuilder({ scope: "test", name: "Schematize Tree Tests" });
 const root = builder.leaf("root", ValueSchema.Number);

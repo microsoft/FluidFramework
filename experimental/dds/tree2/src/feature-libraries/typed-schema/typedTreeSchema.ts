@@ -251,7 +251,7 @@ export function allowedTypesIsAny(t: AllowedTypes): t is readonly [Any] {
 }
 
 /**
- * `TreeSchemaSpecification` for {@link SchemaBuilder.struct}.
+ * `TreeSchemaSpecification` for {@link SchemaBuilderBase.struct}.
  * @alpha
  */
 export interface StructSchemaSpecification {
@@ -259,7 +259,7 @@ export interface StructSchemaSpecification {
 }
 
 /**
- * `TreeSchemaSpecification` for {@link SchemaBuilder.map}.
+ * `TreeSchemaSpecification` for {@link SchemaBuilderBase.map}.
  * @alpha
  */
 export interface MapSchemaSpecification {
@@ -274,7 +274,7 @@ export interface MapSchemaSpecification {
 export type MapFieldSchema = FieldSchema<typeof FieldKinds.optional | typeof FieldKinds.sequence>;
 
 /**
- * `TreeSchemaSpecification` for {@link SchemaBuilder.leaf}.
+ * `TreeSchemaSpecification` for {@link SchemaBuilderBase.leaf}.
  * @alpha
  */
 export interface LeafSchemaSpecification {
