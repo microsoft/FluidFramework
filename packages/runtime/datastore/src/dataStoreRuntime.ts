@@ -432,7 +432,7 @@ export class FluidDataStoreRuntime
 		return context.getChannel();
 	}
 
-	public createChannel(id: string = uuid(), type: string): IChannel {
+	public createChannel(id: string = uuid(), type: string | IChannel): IChannel {
 		if (id.includes("/")) {
 			throw new UsageError(`Id cannot contain slashes: ${id}`);
 		}
@@ -457,7 +457,11 @@ export class FluidDataStoreRuntime
 		this.contexts.set(id, context);
 
 		// Channels (DDS) should not be created in summarizer client.
-		this.identifyLocalChangeInSummarizer("DDSCreatedInSummarizer", id, type);
+		this.identifyLocalChangeInSummarizer(
+			"DDSCreatedInSummarizer",
+			id,
+			context.channel.attributes.type,
+		);
 
 		return context.channel;
 	}

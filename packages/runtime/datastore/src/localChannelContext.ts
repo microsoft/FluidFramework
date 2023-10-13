@@ -284,7 +284,7 @@ export class LocalChannelContext extends LocalChannelContextBase {
 	constructor(
 		id: string,
 		registry: ISharedObjectRegistry,
-		type: string,
+		typeOrChannel: string | IChannel,
 		runtime: IFluidDataStoreRuntime,
 		dataStoreContext: IFluidDataStoreContext,
 		storageService: IDocumentStorageService,
@@ -293,12 +293,14 @@ export class LocalChannelContext extends LocalChannelContextBase {
 		dirtyFn: (address: string) => void,
 		addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
 	) {
-		assert(type !== undefined, 0x209 /* "Factory Type should be defined" */);
+		const type =
+			typeof typeOrChannel === "string" ? typeOrChannel : typeOrChannel.attributes.type;
 		const factory = registry.get(type);
 		if (factory === undefined) {
 			throw new Error(`Channel Factory ${type} not registered`);
 		}
-		const channel = factory.create(runtime, id);
+		const channel =
+			typeof typeOrChannel === "string" ? factory.create(runtime, id) : typeOrChannel;
 		super(
 			id,
 			runtime,
