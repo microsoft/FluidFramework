@@ -103,7 +103,7 @@ module.exports = {
 			"tools/changelog-generator-wrapper",
 			"tools/getkeys",
 			"tools/test-tools",
-			"server/tinylicious",
+			"server/routerlicious/packages/tinylicious",
 		],
 	},
 
@@ -171,7 +171,7 @@ module.exports = {
 				"@fluid-tools",
 			],
 			// These packages are known unscoped packages.
-			unscopedPackages: ["fluid-framework", "fluidframework-docs", "tinylicious"],
+			unscopedPackages: ["fluid-framework", "fluidframework-docs"],
 
 			mustPublish: {
 				// These packages will always be published to npm. This is called the "public" feed.
@@ -234,7 +234,6 @@ module.exports = {
 			"@fluidframework/protocol-definitions",
 			"@fluidframework/test-tools",
 			"fluidframework-docs",
-			"tinylicious",
 		],
 		fluidBuildTasks: {
 			tsc: {

@@ -8778,7 +8778,7 @@ packages:
     dependencies:
       colors: 0.6.2
       eyes: 0.1.8
-      winston: 0.8.0
+      winston: 0.8.3
     dev: true
 
   /cliui/6.0.0:
