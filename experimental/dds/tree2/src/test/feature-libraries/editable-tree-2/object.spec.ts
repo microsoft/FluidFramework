@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { SchemaBuilder, TypedSchemaCollection } from "../../../feature-libraries";
-import { leaf } from "../../../domains";
+import { TypedSchemaCollection } from "../../../feature-libraries";
+import { leaf, SchemaBuilder } from "../../../domains";
 
 import { createTreeView, pretty } from "./utils";
 
@@ -97,7 +97,7 @@ function testObjectLike(testCases: TestCase[]) {
 const tcs: TestCase[] = [
 	{
 		schema: (() => {
-			const _ = new SchemaBuilder({ scope: "test", libraries: [leaf.library] });
+			const _ = new SchemaBuilder({ scope: "test" });
 			const $ = _.struct("empty", {});
 			return _.toDocumentSchema($);
 		})(),
@@ -105,7 +105,7 @@ const tcs: TestCase[] = [
 	},
 	{
 		schema: (() => {
-			const _ = new SchemaBuilder({ scope: "test", libraries: [leaf.library] });
+			const _ = new SchemaBuilder({ scope: "test" });
 			const $ = _.struct("primitives", {
 				boolean: leaf.boolean,
 				number: leaf.number,
@@ -121,8 +121,8 @@ const tcs: TestCase[] = [
 	},
 	{
 		schema: (() => {
-			const _ = new SchemaBuilder({ scope: "test", libraries: [leaf.library] });
-			const $ = _.struct("optional (undefined)", {
+			const _ = new SchemaBuilder({ scope: "test" });
+			const $ = _.struct("optional", {
 				boolean: _.optional(leaf.boolean),
 				number: _.optional(leaf.number),
 				string: _.optional(leaf.string),
@@ -133,7 +133,7 @@ const tcs: TestCase[] = [
 	},
 	{
 		schema: (() => {
-			const _ = new SchemaBuilder({ scope: "test", libraries: [leaf.library] });
+			const _ = new SchemaBuilder({ scope: "test" });
 			const $ = _.struct("optional (defined)", {
 				boolean: _.optional(leaf.boolean),
 				number: _.optional(leaf.number),
@@ -149,7 +149,7 @@ const tcs: TestCase[] = [
 	},
 	{
 		schema: (() => {
-			const _ = new SchemaBuilder({ scope: "test", libraries: [leaf.library] });
+			const _ = new SchemaBuilder({ scope: "test" });
 
 			const inner = _.struct("inner", {});
 
@@ -163,7 +163,7 @@ const tcs: TestCase[] = [
 	},
 	{
 		schema: (() => {
-			const _ = new SchemaBuilder({ scope: "test", libraries: [leaf.library] });
+			const _ = new SchemaBuilder({ scope: "test" });
 			const $ = _.fieldNode("List<string> len(0)", _.sequence(leaf.string));
 			return _.toDocumentSchema($);
 		})(),
@@ -171,7 +171,7 @@ const tcs: TestCase[] = [
 	},
 	{
 		schema: (() => {
-			const _ = new SchemaBuilder({ scope: "test", libraries: [leaf.library] });
+			const _ = new SchemaBuilder({ scope: "test" });
 			const $ = _.fieldNode("List<string> len(1)", _.sequence(leaf.string));
 			return _.toDocumentSchema($);
 		})(),
@@ -179,7 +179,7 @@ const tcs: TestCase[] = [
 	},
 	{
 		schema: (() => {
-			const _ = new SchemaBuilder({ scope: "test", libraries: [leaf.library] });
+			const _ = new SchemaBuilder({ scope: "test" });
 			const $ = _.fieldNode("List<string> len(2)", _.sequence(leaf.string));
 			return _.toDocumentSchema($);
 		})(),

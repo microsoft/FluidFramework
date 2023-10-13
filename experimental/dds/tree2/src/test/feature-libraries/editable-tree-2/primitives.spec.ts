@@ -4,15 +4,14 @@
  */
 
 import { strict as assert } from "assert";
-import { SchemaBuilder } from "../../../feature-libraries";
-import { leaf } from "../../../domains";
+import { leaf, SchemaBuilder } from "../../../domains";
 import { createTreeView, pretty } from "./utils";
 
 const _ = new SchemaBuilder({ scope: "test", libraries: [leaf.library] });
 const schema = _.toDocumentSchema(_.optional(leaf.all));
 
 const testCases = [
-	undefined,
+	undefined, // via optional root
 
 	// TODO: null,
 
@@ -35,6 +34,11 @@ const testCases = [
 	"😂💁🏼‍♂️💁🏼‍💁‍♂", // surrogate pairs with glyph modifiers
 ];
 
+// Construct a SharedTree with each of the above primitives as the root and then
+// 'deepEquals' compares the proxy with the original primitive value.
+//
+// Also covers the corner case of an empty tree (via optional root) by constructing
+// a tree with an 'undefined' root.
 describe("Primitives", () => {
 	describe("satisfy 'deepEquals'", () => {
 		for (const testCase of testCases) {

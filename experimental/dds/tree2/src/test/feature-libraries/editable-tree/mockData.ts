@@ -19,11 +19,9 @@ import {
 	cursorsFromContextualData,
 	getEditableTreeContext,
 	FieldSchema,
-	SchemaBuilder,
 	Any,
 	TypedSchemaCollection,
 	NormalizeField,
-	DefaultFieldKind,
 	ImplicitFieldSchema,
 	SchemaAware,
 } from "../../../feature-libraries";
@@ -38,6 +36,7 @@ import {
 	SchemaData,
 } from "../../../core";
 import { brand, Brand } from "../../../util";
+import { SchemaBuilder } from "../../../domains";
 
 const builder = new SchemaBuilder({ scope: "mock data" });
 
@@ -248,7 +247,7 @@ export function getPerson(): Person {
  */
 export function buildTestSchema<TSchema extends ImplicitFieldSchema>(
 	rootField: TSchema,
-): TypedSchemaCollection<NormalizeField<TSchema, DefaultFieldKind>> {
+): TypedSchemaCollection<NormalizeField<TSchema, typeof FieldKinds.required>> {
 	return new SchemaBuilder({
 		scope: "buildTestSchema",
 		libraries: [personSchemaLibrary],
