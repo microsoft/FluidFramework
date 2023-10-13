@@ -182,7 +182,9 @@ function composeMarks<TNodeChange>(
 		}
 
 		if (isTransientEffect(baseMark)) {
+			// TODO: Cancel marks even when there are node changes
 			if (
+				nodeChange === undefined &&
 				areEqualCellIds(getOutputCellId(newMark, newRev, revisionMetadata), baseMark.cellId)
 			) {
 				return { count: baseMark.count, cellId: baseMark.cellId };
@@ -325,7 +327,9 @@ function composeMarks<TNodeChange>(
 			delete detach.finalEndpoint;
 		}
 
+		// TODO: Cancel marks even when there are node changes
 		if (
+			localNodeChange === undefined &&
 			baseMark.cellId.revision !== undefined &&
 			areEqualCellIds(getOutputCellId(newMark, newRev, revisionMetadata), baseMark.cellId)
 		) {
