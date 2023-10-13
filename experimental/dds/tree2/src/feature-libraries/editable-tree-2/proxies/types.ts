@@ -27,8 +27,10 @@ import {
 } from "../editableTreeTypes";
 
 /** Implements 'readonly T[]' and the list mutation APIs. */
-export interface SharedTreeList<TTypes extends AllowedTypes>
-	extends ReadonlyArray<ProxyNodeUnion<TTypes>> {
+export interface SharedTreeList<
+	TTypes extends AllowedTypes,
+	API extends "javaScript" | "sharedTree" = "sharedTree",
+> extends ReadonlyArray<ProxyNodeUnion<TTypes, API>> {
 	/**
 	 * Inserts new item(s) at a specified location.
 	 * @param index - The index at which to insert `value`.
@@ -252,7 +254,7 @@ export type ProxyNode<
 		? SharedTreeMap<TSchema>
 		: Map<string, ProxyField<TSchema["mapFields"], API>>
 	: TSchema extends FieldNodeSchema
-	? ProxyField<TSchema["structFieldsObject"][""], API>
+	? SharedTreeList<TSchema["structFieldsObject"][""]["allowedTypes"], API>
 	: TSchema extends StructSchema
 	? SharedTreeObject<TSchema, API>
 	: unknown;

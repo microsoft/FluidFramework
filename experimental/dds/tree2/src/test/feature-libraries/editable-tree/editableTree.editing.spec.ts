@@ -16,7 +16,6 @@ import {
 	valueSymbol,
 	typeNameSymbol,
 	getPrimaryField,
-	SchemaBuilder,
 	FieldKind,
 	UnwrappedEditableField,
 	setField,
@@ -26,6 +25,7 @@ import {
 	FieldSchema,
 } from "../../../feature-libraries";
 import { viewWithContent } from "../../utils";
+import { SchemaBuilder } from "../../../domains";
 import {
 	fullSchemaData,
 	Person,

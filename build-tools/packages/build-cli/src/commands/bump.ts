@@ -14,7 +14,6 @@ import {
 	InterdependencyRange,
 	RangeOperators,
 	ReleaseVersion,
-	VersionBumpType,
 	VersionChangeType,
 	VersionScheme,
 	WorkspaceRanges,
@@ -116,8 +115,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 	private readonly finalMessages: string[] = [];
 
 	public async run(): Promise<void> {
-		const args = this.args;
-		const flags = this.flags;
+		const { args, flags } = this;
 
 		if (args.package_or_release_group === undefined) {
 			this.error("No dependency provided.");
@@ -133,7 +131,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			: undefined;
 
 		const context = await this.getContext();
-		const bumpType: VersionBumpType | undefined = flags.bumpType;
+		const { bumpType } = flags;
 		const workspaceProtocol =
 			typeof interdependencyRange === "string"
 				? interdependencyRange?.startsWith("workspace:")
@@ -195,10 +193,8 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		}
 
 		const newVersion =
-			exactVersion === null
-				? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				  bumpVersionScheme(repoVersion, bumpType!, scheme)
-				: exactVersion;
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			exactVersion ?? bumpVersionScheme(repoVersion, bumpType!, scheme);
 
 		let bumpArg: VersionChangeType;
 		if (bumpType === undefined) {
@@ -219,7 +215,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		this.log(`Bump type: ${chalk.blue(bumpType ?? "exact")}`);
 		this.log(`Scheme: ${chalk.cyan(scheme)}`);
 		this.log(`Workspace protocol: ${workspaceProtocol === true ? chalk.green("yes") : "no"}`);
-		this.log(`Versions: ${newVersion} <== ${repoVersion}`);
+		this.log(`Versions: ${newVersion.version} <== ${repoVersion}`);
 		this.log(
 			`Interdependency range: ${
 				interdependencyRange === "" ? "exact" : interdependencyRange

@@ -62,7 +62,6 @@ import {
 	RevisionInfo,
 	RevisionMetadataSource,
 	revisionMetadataSourceFromInfo,
-	SchemaBuilder,
 	singleTextCursor,
 	TypedField,
 } from "../feature-libraries";
@@ -103,7 +102,14 @@ import {
 import { JsonCompatible, Named, brand } from "../util";
 import { ICodecFamily, withSchemaValidation } from "../codec";
 import { typeboxValidator } from "../external-utilities";
-import { cursorToJsonObject, jsonRoot, jsonSchema, jsonString, singleJsonCursor } from "../domains";
+import {
+	cursorToJsonObject,
+	jsonRoot,
+	jsonSchema,
+	jsonString,
+	singleJsonCursor,
+	SchemaBuilder,
+} from "../domains";
 import { HasListeners, IEmitter, ISubscribable } from "../events";
 
 // Testing utilities

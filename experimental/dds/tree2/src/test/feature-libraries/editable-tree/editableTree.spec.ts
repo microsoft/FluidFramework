@@ -27,7 +27,6 @@ import {
 	MarkedArrayLike,
 	parentField,
 	contextSymbol,
-	SchemaBuilder,
 	FieldSchema,
 } from "../../../feature-libraries";
 
@@ -42,6 +41,7 @@ import {
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../../feature-libraries/editable-tree/editableTreeContext";
 
+import { SchemaBuilder } from "../../../domains";
 import {
 	fullSchemaData,
 	personSchema,

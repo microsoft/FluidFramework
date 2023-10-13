@@ -9,7 +9,6 @@ import {
 	singleTextCursor,
 	prefixPath,
 	prefixFieldPath,
-	SchemaBuilder,
 	Any,
 } from "../feature-libraries";
 import {
@@ -26,10 +25,10 @@ import {
 	PathRootPrefix,
 } from "../core";
 import { brand } from "../util";
-import { leaf } from "../domains";
+import { SchemaBuilder, leaf } from "../domains";
 import { expectEqualFieldPaths, expectEqualPaths } from "./utils";
 
-const schemaBuilder = new SchemaBuilder({ scope: "Cursor Test Suite", libraries: [leaf.library] });
+const schemaBuilder = new SchemaBuilder({ scope: "Cursor Test Suite" });
 
 export const emptySchema = schemaBuilder.struct("Empty Struct", {});
 const emptySchema2 = schemaBuilder.struct("Empty Struct 2", {});
