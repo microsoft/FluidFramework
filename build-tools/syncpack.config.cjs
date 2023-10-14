@@ -94,8 +94,8 @@ module.exports = {
 				// Required due to use of "unstable" tree component APIs
 				"@fluentui/react-components",
 
-        // Later versions break some tests; needs investigation
-        "@oclif/test",
+				// Later versions break some tests; needs investigation
+				"@oclif/test",
 			],
 			packages: ["**"],
 			range: "~",

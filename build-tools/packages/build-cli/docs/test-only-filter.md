@@ -11,12 +11,13 @@ FOR INTERNAL TESTING ONLY. This command is used only to test the common package 
 
 ```
 USAGE
-  $ flub test-only-filter [--json] [-v | --quiet] [--concurrency <value>] [--all | --dir <value> | --packages | -g
+  $ flub test-only-filter [-v | --quiet] [--json] [--concurrency <value>] [--all | --dir <value> | --packages | -g
     client|server|azure|build-tools|gitrest|historian|all | --releaseGroupRoot
     client|server|azure|build-tools|gitrest|historian|all] [--private] [--scope <value> | --skipScope <value>]
 
 FLAGS
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
+  --json
 
 PACKAGE SELECTION FLAGS
   -g, --releaseGroup=<option>...  Run on all child packages within the specified release groups. This does not include
@@ -37,9 +38,6 @@ PACKAGE SELECTION FLAGS
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
   --quiet        Disable all logging.
-
-GLOBAL FLAGS
-  --json  Format output as json.
 
 PACKAGE FILTER FLAGS
   --[no-]private          Only include private packages. Use --no-private to exclude private packages instead.
