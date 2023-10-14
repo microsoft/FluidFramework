@@ -100,11 +100,11 @@
 			// Runs the `flub test-only-filter` command with a debugger attached.
 			"name": "flub test-only-filter",
 			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
-			"cwd": "${workspaceFolder}/build-tools/packages/build-cli",
+			"cwd": "${workspaceFolder}/build-tools",
 			"request": "launch",
 			"skipFiles": ["<node_internals>/**"],
 			"type": "node",
-			"args": ["test-only-filter", "--json", "--all"],
+			"args": ["test-only-filter", "--all"],
 		},
 		{
 			"name": "flub bump deps",
