@@ -34,10 +34,15 @@ function testObjectLike(testCases: TestCase[]) {
 				const real = structuredClone(initialTree);
 				const expected = fn(real);
 
-				itWithRoot(`${pretty(real)} -> ${pretty(expected)}`, schema, initialTree, (proxy) => {
-					const actual = fn(proxy as object);
-					assert.deepEqual(actual, expected);
-				});
+				itWithRoot(
+					`${pretty(real)} -> ${pretty(expected)}`,
+					schema,
+					initialTree,
+					(proxy) => {
+						const actual = fn(proxy as object);
+						assert.deepEqual(actual, expected);
+					},
+				);
 			}
 		}
 

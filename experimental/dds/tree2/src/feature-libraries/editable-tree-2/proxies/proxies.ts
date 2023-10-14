@@ -16,7 +16,14 @@ import {
 	schemaIsStruct,
 } from "../../typed-schema";
 import { FieldKinds } from "../../default-field-kinds";
-import { FieldNode, OptionalField, RequiredField, TreeNode, TypedField, TypedNodeUnion } from "../editableTreeTypes";
+import {
+	FieldNode,
+	OptionalField,
+	RequiredField,
+	TreeNode,
+	TypedField,
+	TypedNodeUnion,
+} from "../editableTreeTypes";
 import { LazySequence } from "../lazyField";
 import { FieldKey } from "../../../core";
 import { getBoxedField } from "../lazyTree";
@@ -170,13 +177,9 @@ export function createObjectProxy<TSchema extends StructSchema, TTypes extends A
 					// TODO: Verify that returning false will throw a TypeError in strict mode.
 					return false;
 				}
-				
+
 				// TODO: Is it safe to assume 'content' is a LazyEntity?
 				const field = getBoxedField(content as LazyEntity, key as FieldKey, fieldSchema);
-				
-				if (field === undefined) {
-					return false;
-				}
 
 				switch (field.schema.kind) {
 					case FieldKinds.required: {

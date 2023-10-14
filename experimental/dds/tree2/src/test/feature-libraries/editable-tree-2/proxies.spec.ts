@@ -4,13 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	is,
-	typeNameSymbol,
-} from "../../../feature-libraries";
+import { is, typeNameSymbol } from "../../../feature-libraries";
 import { leaf, SchemaBuilder } from "../../../domains";
 import { itWithRoot } from "./utils";
-
 
 describe("SharedTree proxies", () => {
 	const sb = new SchemaBuilder({

@@ -65,8 +65,12 @@ export function createTreeView<TRoot extends FieldSchema>(
 }
 
 /** Helper for making small test schemas. */
-export function makeSchema<const TSchema extends ImplicitFieldSchema>(fn: (builder: SchemaBuilder) => TSchema) {
-	const builder = new SchemaBuilder({ scope: `test.schema.${Math.random().toString(36).slice(2)}` });
+export function makeSchema<const TSchema extends ImplicitFieldSchema>(
+	fn: (builder: SchemaBuilder) => TSchema,
+) {
+	const builder = new SchemaBuilder({
+		scope: `test.schema.${Math.random().toString(36).slice(2)}`,
+	});
 	const root = fn(builder);
 	return builder.toDocumentSchema(root);
 }
