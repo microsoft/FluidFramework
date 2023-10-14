@@ -4,10 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import { TypedSchemaCollection } from "../../../feature-libraries";
+import { LeafSchema, TypedSchemaCollection } from "../../../feature-libraries";
 import { leaf, SchemaBuilder } from "../../../domains";
 
-import { createTreeView, pretty } from "./utils";
+import { TypedValue } from "../../../feature-libraries/schema-aware/internal";
+import { createTreeView, itWithRoot, makeSchema, pretty } from "./utils";
 
 interface TestCase {
 	initialTree: object;
@@ -17,10 +18,10 @@ interface TestCase {
 function testObjectLike(testCases: TestCase[]) {
 	describe("Object-like", () => {
 		describe("satisfies 'deepEquals'", () => {
-			for (const testCase of testCases) {
-				const view = createTreeView(testCase.schema, testCase.initialTree);
-				const real = testCase.initialTree;
-				const proxy = view.root2(testCase.schema);
+			for (const { schema, initialTree } of testCases) {
+				const view = createTreeView(schema, initialTree);
+				const real = initialTree;
+				const proxy = view.root2(schema);
 
 				it(`deepEquals(${pretty(proxy)}, ${pretty(real)})`, () => {
 					assert.deepEqual(proxy, real, "Proxy must satisfy 'deepEquals'.");
@@ -30,14 +31,11 @@ function testObjectLike(testCases: TestCase[]) {
 
 		function test1(fn: (subject: object) => unknown) {
 			for (const { schema, initialTree } of testCases) {
-				const view = createTreeView(schema, initialTree);
 				const real = structuredClone(initialTree);
-				const proxy = view.root2(schema) as object;
-
 				const expected = fn(real);
 
-				it(`${pretty(real)} -> ${pretty(expected)}`, () => {
-					const actual = fn(proxy);
+				itWithRoot(`${pretty(real)} -> ${pretty(expected)}`, schema, initialTree, (proxy) => {
+					const actual = fn(proxy as object);
 					assert.deepEqual(actual, expected);
 				});
 			}
@@ -188,3 +186,41 @@ const tcs: TestCase[] = [
 ];
 
 testObjectLike(tcs);
+
+describe("Object-like", () => {
+	describe("supports setting", () => {
+		function check<const TSchema extends LeafSchema>(
+			schema: LeafSchema,
+			before: TypedValue<TSchema["leafValue"]>,
+			after: TypedValue<TSchema["leafValue"]>,
+		) {
+			itWithRoot(
+				`required ${typeof before} (${pretty(before)} -> ${pretty(after)})`,
+				makeSchema((_) => _.struct("", { _value: schema })),
+				{ _value: before },
+				(root) => {
+					assert.equal(root._value, before);
+					root._value = after;
+					assert.equal(root._value, after);
+				},
+			);
+
+			itWithRoot(
+				`optional ${typeof before} (undefined -> ${pretty(before)} -> ${pretty(after)})`,
+				makeSchema((_) => _.struct("", { _value: _.optional(schema) })),
+				{ _value: undefined },
+				(root) => {
+					assert.equal(root._value, undefined);
+					root._value = before;
+					assert.equal(root._value, before);
+					root._value = after;
+					assert.equal(root._value, after);
+				},
+			);
+		}
+
+		check(leaf.boolean, false, true);
+		check(leaf.number, 0, 1);
+		check(leaf.string, "", "!");
+	});
+});
