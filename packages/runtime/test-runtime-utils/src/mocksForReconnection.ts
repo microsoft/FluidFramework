@@ -46,7 +46,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 			// that is a single letter rather than a uuid, generate a new uuid that
 			// is stable to that letter
 			if (this.clientId.length === 1) {
-				const clientIdIndex = this.clientId.charCodeAt(0) - "A".charCodeAt(0);
+				const clientIdIndex = this.clientId.charCodeAt(0);
 				assert(
 					clientIdIndex > 0 && clientIdIndex <= CLIENT_IDS.length,
 					`expected clientId to be a single letter A-Z. got ${this.clientId}`,
