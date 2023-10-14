@@ -9,9 +9,9 @@ import path from "node:path";
 import { BaseCommand } from "../../base";
 
 export default class RunBundlestats extends BaseCommand<typeof RunBundlestats> {
-	static readonly description = `Generate a report from input bundle stats collected through the collect bundleStats command.`;
+	static description = `Generate a report from input bundle stats collected through the collect bundleStats command.`;
 
-	static readonly flags = {
+	static flags = {
 		dangerfile: Flags.file({
 			description: "Path to dangerfile",
 			required: false,

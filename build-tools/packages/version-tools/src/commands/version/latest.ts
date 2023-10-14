@@ -16,12 +16,12 @@ import { getLatestReleaseFromList } from "../../schemes";
  */
 // eslint-disable-next-line import/no-default-export
 export default class LatestCommand extends Command {
-	static readonly description =
+	static description =
 		"Find the latest version from a list of version strings, accounting for the Fluid internal version scheme.";
 
-	static readonly enableJsonFlag = true;
+	static enableJsonFlag = true;
 
-	static readonly flags = {
+	static flags = {
 		versions: Flags.string({
 			char: "r",
 			description:
@@ -34,9 +34,9 @@ export default class LatestCommand extends Command {
 			description:
 				"Include prerelease versions. By default, prerelease versions are excluded.",
 		}),
-	} as const;
+	};
 
-	static readonly examples = [
+	static examples = [
 		{
 			description: "You can use the --versions (-r) flag multiple times.",
 			command:

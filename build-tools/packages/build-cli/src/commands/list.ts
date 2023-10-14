@@ -29,10 +29,10 @@ interface ListItem extends PnpmListEntry {
  * seeing errors if they happen to be installing packages while we are publishing a new release.
  */
 export default class ListCommand extends BaseCommand<typeof ListCommand> {
-	static readonly description = `List packages in a release group in topological order.`;
-	static readonly enableJsonFlag = true;
+	static description = `List packages in a release group in topological order.`;
+	static enableJsonFlag = true;
 
-	static readonly flags = {
+	static flags = {
 		releaseGroup: releaseGroupFlag({ required: true }),
 		feed: Flags.custom<Feed | undefined>({
 			description:

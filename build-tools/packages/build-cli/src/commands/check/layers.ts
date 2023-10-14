@@ -13,10 +13,10 @@ import { BaseCommand } from "../../base";
 const packagesMdFileName = "PACKAGES.md";
 
 export class CheckLayers extends BaseCommand<typeof CheckLayers> {
-	static readonly description =
+	static description =
 		"Checks that the dependencies between Fluid Framework packages are properly layered.";
 
-	static readonly flags = {
+	static flags = {
 		md: Flags.string({
 			description: `Generate ${packagesMdFileName} file at this path relative to repo root`,
 			required: false,
@@ -35,7 +35,7 @@ export class CheckLayers extends BaseCommand<typeof CheckLayers> {
 			required: false,
 		}),
 		...BaseCommand.flags,
-	} as const;
+	};
 
 	async run(): Promise<void> {
 		const { flags } = this;

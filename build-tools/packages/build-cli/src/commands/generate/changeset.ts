@@ -45,16 +45,16 @@ interface Choice {
 }
 
 export default class GenerateChangesetCommand extends BaseCommand<typeof GenerateChangesetCommand> {
-	static readonly summary = `Generates a new changeset file. You will be prompted to select the packages affected by this change. You can also create an empty changeset to include with this change that can be updated later.`;
-	static readonly aliases: string[] = [
+	static summary = `Generates a new changeset file. You will be prompted to select the packages affected by this change. You can also create an empty changeset to include with this change that can be updated later.`;
+	static aliases: string[] = [
 		// 'add' is the verb that the standard changesets cli uses. It's also shorter than 'generate'.
 		"changeset:add",
 	];
 
 	// Enables the global JSON flag in oclif.
-	static readonly enableJsonFlag = true;
+	static enableJsonFlag = true;
 
-	static readonly flags = {
+	static flags = {
 		releaseGroup: releaseGroupFlag(),
 		branch: Flags.string({
 			char: "b",
@@ -78,9 +78,9 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 			helpGroup: "EXPERIMENTAL",
 		}),
 		...BaseCommand.flags,
-	} as const;
+	};
 
-	static readonly examples = [
+	static examples = [
 		{
 			description: "Create an empty changeset using the --empty flag.",
 			command: "<%= config.bin %> <%= command.id %> --empty",

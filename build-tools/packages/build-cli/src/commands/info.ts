@@ -15,9 +15,9 @@ import { PackageVersionList } from "../lib";
  * The root `info` command.
  */
 export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
-	static readonly description = "Get info about the repo, release groups, and packages.";
+	static description = "Get info about the repo, release groups, and packages.";
 
-	static readonly flags = {
+	static flags = {
 		releaseGroup: releaseGroupFlag({
 			required: false,
 		}),
@@ -31,7 +31,7 @@ export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
 		...BaseCommand.flags,
 	};
 
-	static readonly enableJsonFlag: boolean = true;
+	static enableJsonFlag: boolean = true;
 
 	async run(): Promise<PackageVersionList> {
 		const { flags } = this;

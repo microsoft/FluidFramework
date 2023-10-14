@@ -335,7 +335,7 @@ export abstract class ReleaseReportBaseCommand<T extends typeof Command> extends
 export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 	typeof ReleaseReportCommand
 > {
-	static readonly description = `Generates a report of Fluid Framework releases.
+	static description = `Generates a report of Fluid Framework releases.
 
     The release report command is used to produce a report of all the packages that were released and their version. After a release, it is useful to generate this report to provide to customers, so they can update their dependencies to the most recent version.
 
@@ -343,7 +343,7 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 
     The "release group" mode can be activated by passing a --releaseGroup flag. In this mode, the specified release group's version will be loaded from the repo, and its immediate Fluid dependencies will be included in the report. This is useful when we want to include only the dependency versions that the release group depends on in the report.`;
 
-	static readonly examples = [
+	static examples = [
 		{
 			description:
 				"Generate a release report of the highest semver release for each package and release group and display it in the terminal only.",
@@ -360,8 +360,8 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 		},
 	];
 
-	static readonly enableJsonFlag = true;
-	static readonly flags = {
+	static enableJsonFlag = true;
+	static flags = {
 		interactive: Flags.boolean({
 			char: "i",
 			description:
@@ -394,7 +394,7 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 		...ReleaseReportBaseCommand.flags,
 	};
 
-	readonly defaultMode: ReleaseSelectionMode = "inRepo";
+	defaultMode: ReleaseSelectionMode = "inRepo";
 	releaseGroupName: ReleaseGroup | ReleasePackage | undefined;
 
 	public async run(): Promise<void> {

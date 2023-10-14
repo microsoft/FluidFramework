@@ -32,16 +32,16 @@ import {
 } from "../lib";
 
 export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
-	static readonly summary =
+	static summary =
 		"Bumps the version of a release group or package to the next minor, major, or patch version, or to a specific version, with control over the interdependency version ranges.";
 
-	static readonly description = `The bump command is used to bump the version of a release groups or individual packages within the repo. Typically this is done as part of the release process (see the release command), but it is sometimes useful to bump without doing a release, for example when moving a package from one release group to another.`;
+	static description = `The bump command is used to bump the version of a release groups or individual packages within the repo. Typically this is done as part of the release process (see the release command), but it is sometimes useful to bump without doing a release, for example when moving a package from one release group to another.`;
 
-	static readonly args = {
+	static args = {
 		package_or_release_group: packageOrReleaseGroupArg,
-	} as const;
+	};
 
-	static readonly flags = {
+	static flags = {
 		bumpType: bumpTypeFlag({
 			char: "t",
 			description:
@@ -80,7 +80,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		...BaseCommand.flags,
 	};
 
-	static readonly examples = [
+	static examples = [
 		{
 			description: "Bump @fluidframework/build-common to the next minor version.",
 			command: "<%= config.bin %> <%= command.id %> @fluidframework/build-common -t minor",

@@ -29,10 +29,10 @@ interface BranchMergeInfo {
 }
 
 export default class MergeInfoCommand extends BaseCommand<typeof MergeInfoCommand> {
-	static readonly description = `Get info about the merge status of branches in the repo. Uses "main" and "next" if no branch names are provided. Output the data as JSON using --json.`;
+	static description = `Get info about the merge status of branches in the repo. Uses "main" and "next" if no branch names are provided. Output the data as JSON using --json.`;
 
-	static readonly enableJsonFlag = true;
-	static readonly flags = {
+	static enableJsonFlag = true;
+	static flags = {
 		branch: Flags.string({
 			char: "b",
 			description:
@@ -40,9 +40,9 @@ export default class MergeInfoCommand extends BaseCommand<typeof MergeInfoComman
 			multiple: true,
 		}),
 		...BaseCommand.flags,
-	} as const;
+	};
 
-	static readonly examples = [
+	static examples = [
 		{
 			description: "Get info about the merge status of the main and next branch in the repo.",
 			command: "<%= config.bin %> <%= command.id %>",

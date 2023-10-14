@@ -19,12 +19,12 @@ const DEFAULT_FILE = "UPCOMING.md";
  * that provides a single place where developers can see upcoming changes.
  */
 export default class GenerateUpcomingCommand extends BaseCommand<typeof GenerateUpcomingCommand> {
-	static readonly summary = `Generates a summary of all changesets. This is used to generate an UPCOMING.md file that provides a single place where developers can see upcoming changes.`;
+	static summary = `Generates a summary of all changesets. This is used to generate an UPCOMING.md file that provides a single place where developers can see upcoming changes.`;
 
 	// Enables the global JSON flag in oclif.
-	static readonly enableJsonFlag = true;
+	static enableJsonFlag = true;
 
-	static readonly flags = {
+	static flags = {
 		releaseGroup: releaseGroupFlag({
 			required: true,
 		}),
@@ -46,9 +46,9 @@ export default class GenerateUpcomingCommand extends BaseCommand<typeof Generate
 			default: DEFAULT_FILE,
 		}),
 		...BaseCommand.flags,
-	} as const;
+	};
 
-	static readonly examples = [
+	static examples = [
 		{
 			description: `Generate UPCOMING.md for the client release group using the minor changesets.`,
 			command: "<%= config.bin %> <%= command.id %> -g client -t minor",

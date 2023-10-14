@@ -52,10 +52,10 @@ interface HandlerExclusions {
  * `fluid-repo-policy-check -s` is equivalent to `flub check policy --stdin`
  */
 export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
-	static readonly description =
+	static description =
 		"Checks and applies policies to the files in the repository, such as ensuring a consistent header comment in files, assert tagging, etc.";
 
-	static readonly flags = {
+	static flags = {
 		fix: Flags.boolean({
 			description: `Fix errors if possible.`,
 			required: false,
@@ -92,7 +92,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 			exclusive: ["stdin", "path", "fix", "handler"],
 		}),
 		...BaseCommand.flags,
-	} as const;
+	};
 
 	static handlerActionPerf = new Map<policyAction, Map<string, number>>();
 	static processed = 0;
