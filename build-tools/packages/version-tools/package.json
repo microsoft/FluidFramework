@@ -22,12 +22,12 @@
 		"/oclif.manifest.json"
 	],
 	"scripts": {
-		"build": "npm run clean:manifest && concurrently npm:build:compile npm:lint && npm run build:docs && npm run build:manifest",
+		"build": "concurrently npm:build:compile npm:lint && npm run build:docs",
 		"build:commonjs": "npm run tsc && npm run build:test",
 		"build:compile": "npm run build:commonjs && npm run build:readme",
 		"build:docs": "api-extractor run --local",
 		"build:manifest": "oclif manifest",
-		"build:readme": "fluid-readme generate readme",
+		"build:readme": "npm run build:manifest && fluid-readme generate readme",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob 'dist' 'lib' 'oclif.manifest.json' '*.tsbuildinfo' '*.build.log' '_api-extractor-temp' 'nyc'",

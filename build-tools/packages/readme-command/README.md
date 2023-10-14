@@ -39,12 +39,14 @@ Adds commands to README.md in current directory.
 
 ```
 USAGE
-  $ fluid-readme generate readme --dir <value> [--multi] [--aliases]
+  $ fluid-readme generate readme --dir <value> [--aliases] [--multi] [--repository-prefix <value>] [--version <value>]
 
 FLAGS
-  --[no-]aliases  include aliases in the command list
-  --dir=<value>   (required) [default: docs] output directory for multi docs
-  --multi         create a different markdown page for each topic
+  --[no-]aliases               include aliases in the command list
+  --dir=<value>                (required) [default: docs] output directory for multi docs
+  --multi                      create a different markdown page for each topic
+  --repository-prefix=<value>  a template string used to build links to the source code
+  --version=<value>            version to use in readme links. defaults to the version in package.json
 
 DESCRIPTION
   Adds commands to README.md in current directory.
@@ -60,6 +62,8 @@ DESCRIPTION
 
   Customize the code URL prefix by setting oclif.repositoryPrefix in package.json.
 ```
+
+_See code: [src/commands/generate/readme.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/readme-command/src/commands/generate/readme.ts)_
 <!-- commandsstop -->
 <!-- prettier-ignore-stop -->
 
