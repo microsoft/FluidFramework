@@ -48,8 +48,8 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 			if (this.clientId.length === 1) {
 				const clientIdIndex = this.clientId.charCodeAt(0);
 				assert(
-					clientIdIndex > 0 && clientIdIndex <= CLIENT_IDS.length,
-					`expected clientId to be a single letter A-Z. got ${this.clientId}`,
+					clientIdIndex >= 0 && clientIdIndex <= CLIENT_IDS.length,
+					`expected clientId to be a single character [0-9A-Za-z]. got ${this.clientId}`,
 				);
 				this.clientId = CLIENT_IDS[clientIdIndex];
 			} else {
@@ -59,7 +59,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 				);
 				this.clientId = uuidv5("reconnect", this.clientId);
 			}
-			// const clientId = this.clientId.length === 1 ?  : this.clientId;
+
 			// Update the clientId in FluidDataStoreRuntime.
 			this.dataStoreRuntime.clientId = this.clientId;
 			this.factory.quorum.addMember(this.clientId, {});
