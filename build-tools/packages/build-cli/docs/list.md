@@ -11,7 +11,7 @@ List packages in a release group in topological order.
 
 ```
 USAGE
-  $ flub list -g client|server|azure|build-tools|gitrest|historian [-v | --quiet] [--json] [--feed
+  $ flub list -g client|server|azure|build-tools|gitrest|historian [--json] [-v | --quiet] [--feed
     public|internal-build|internal-test|internal-dev|official|internal] [--private] [--scope <value> | --skipScope
     <value>] [--tarball]
 
