@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuidv4, v5 as uuidv5 } from "uuid";
+import { v4 as uuidv4 } from "uuid";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { assert } from "@fluidframework/core-utils";
 import {
@@ -13,8 +13,6 @@ import {
 	IMockContainerRuntimeOptions,
 	MockFluidDataStoreRuntime,
 } from "./mocks";
-
-const CLIENT_IDS = Array.from({ length: 150 }, () => uuidv4());
 
 /**
  * Specialized implementation of MockContainerRuntime for testing ops during reconnection.
@@ -42,23 +40,8 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 			}
 			this.pendingRemoteMessages.length = 0;
 			this.clientSequenceNumber = 0;
-			// We should get a new clientId on reconnection. If we have a clientId
-			// that is a single letter rather than a uuid, generate a new uuid that
-			// is stable to that letter
-			if (this.clientId.length === 1) {
-				const clientIdIndex = this.clientId.charCodeAt(0);
-				assert(
-					clientIdIndex >= 0 && clientIdIndex <= CLIENT_IDS.length,
-					`expected clientId to be a single character [0-9A-Za-z]. got ${this.clientId}`,
-				);
-				this.clientId = CLIENT_IDS[clientIdIndex];
-			} else {
-				assert(
-					this.clientId.length === 36,
-					`expected clientId to be a UUID. got ${this.clientId}`,
-				);
-				this.clientId = uuidv5("reconnect", this.clientId);
-			}
+
+			this.clientId = uuidv4();
 
 			// Update the clientId in FluidDataStoreRuntime.
 			this.dataStoreRuntime.clientId = this.clientId;

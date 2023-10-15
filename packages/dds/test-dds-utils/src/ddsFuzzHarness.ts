@@ -747,7 +747,7 @@ export function mixinSynchronization<
 								.filter(() =>
 									state.random.bool(validationStrategy.clientProbability),
 								)
-								.map((client) => client.containerRuntime.clientId),
+								.map((client) => client.channel.id),
 						);
 
 						return { type: "synchronize", clients: [...selectedClients] };
@@ -839,16 +839,14 @@ export function mixinClientSelection<
 				? done
 				: {
 						...baseOp,
-						clientId: client.containerRuntime.clientId,
+						clientId: client.channel.id,
 				  };
 		};
 	};
 
 	const reducer: Reducer<TOperation | Synchronize, TState> = async (state, operation) => {
 		assert(isClientSpec(operation), "operation should have been given a client");
-		const client = state.clients.find(
-			(c) => c.containerRuntime.clientId === operation.clientId,
-		);
+		const client = state.clients.find((c) => c.channel.id === operation.clientId);
 		assert(client !== undefined);
 		return model.reducer({ ...state, client }, operation as TOperation);
 	};
