@@ -24,8 +24,8 @@ import {
 	appendDeleteIntervalToRevertibles,
 	appendIntervalPropertyChangedToRevertibles,
 	appendSharedStringDeltaToRevertibles,
-} from "../revertibles";
-import { assertEquivalentSharedStrings } from "./intervalUtils";
+} from "../../revertibles";
+import { assertEquivalentSharedStrings } from "../intervalUtils";
 import {
 	Operation,
 	FuzzTestState,
@@ -36,7 +36,7 @@ import {
 	IntervalOperationGenerationConfig,
 	RevertSharedStringRevertibles,
 	SharedStringFuzzFactory,
-} from "./intervalCollection.fuzzUtils";
+} from "./fuzzUtils";
 import { makeOperationGenerator } from "./intervalCollection.fuzz.spec";
 
 const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();

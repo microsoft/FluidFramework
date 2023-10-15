@@ -15,7 +15,7 @@ import {
 	DDSFuzzSuiteOptions,
 } from "@fluid-internal/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { assertEquivalentSharedStrings } from "./intervalUtils";
+import { assertEquivalentSharedStrings } from "../intervalUtils";
 import {
 	Operation,
 	FuzzTestState,
@@ -24,7 +24,7 @@ import {
 	createSharedStringGeneratorOperations,
 	SharedStringOperationGenerationConfig,
 	SharedStringFuzzFactory,
-} from "./intervalCollection.fuzzUtils";
+} from "./fuzzUtils";
 
 type ClientOpState = FuzzTestState;
 export function makeSharedStringOperationGenerator(

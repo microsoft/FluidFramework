@@ -18,10 +18,10 @@ import {
 } from "@fluid-internal/test-dds-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { IIntervalCollection, Side } from "../intervalCollection";
-import { SharedStringFactory } from "../sequenceFactory";
-import { SequenceInterval } from "../intervals";
-import { assertEquivalentSharedStrings } from "./intervalUtils";
+import { IIntervalCollection, Side } from "../../intervalCollection";
+import { SharedStringFactory } from "../../sequenceFactory";
+import { SequenceInterval } from "../../intervals";
+import { assertEquivalentSharedStrings } from "../intervalUtils";
 import {
 	Operation,
 	RangeSpec,
@@ -35,7 +35,7 @@ import {
 	defaultIntervalOperationGenerationConfig,
 	createSharedStringGeneratorOperations,
 	SharedStringFuzzFactory,
-} from "./intervalCollection.fuzzUtils";
+} from "./fuzzUtils";
 
 type ClientOpState = FuzzTestState;
 export function makeOperationGenerator(
