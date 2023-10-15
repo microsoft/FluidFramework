@@ -104,6 +104,10 @@ parameters:
   type: string
   default: npm
 
+- name: packageTypesOverride
+  type: string
+  default: none
+
 - name: packageManagerInstallCommand
   type: string
   default: 'npm ci --unsafe-perm'
@@ -184,6 +188,7 @@ stages:
               Override Parameters:
                 publishOverride=${{ parameters.publishOverride }}
                 releaseBuildOverride=${{ parameters.releaseBuildOverride }}
+                packageTypesOverride=${{ parameters.packageTypesOverride }}
 
               Tasks Parameters:
                 BuildDir=${{ parameters.buildDirectory }}
@@ -279,6 +284,7 @@ stages:
               buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
               tagName: ${{ parameters.tagName }}
               interdependencyRange: ${{ parameters.interdependencyRange }}
+              packageTypesOverride: ${{ parameters.packageTypesOverride }}
 
         # Build
         - ${{ if ne(parameters.taskBuild, 'false') }}:

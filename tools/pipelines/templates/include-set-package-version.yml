@@ -15,6 +15,9 @@ parameters:
 - name: buildToolsVersionToInstall
   type: string
   default: repo
+- name: include-set-package-version.yml
+  type: string
+  default: none
 
 # The path to the pnpm store.
 - name: pnpmStorePath
@@ -25,6 +28,10 @@ parameters:
 # group
 - name: interdependencyRange
   type: string
+
+- name: packageTypesOverride
+  type: string
+  default: none
 
 # Set version
 steps:
@@ -90,6 +97,7 @@ steps:
     VERSION_PATCH: ${{ parameters.buildNumberInPatch }}
     VERSION_TAGNAME: ${{ parameters.tagName }}
     VERSION_INCLUDE_INTERNAL_VERSIONS: ${{ parameters.includeInternalVersions }}
+    PACKAGE_TYPES_FIELD: ${{ parameters.packageTypesOverride }}
   inputs:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
@@ -101,6 +109,7 @@ steps:
       echo VERSION_RELEASE=$VERSION_RELEASE
       echo VERSION_PATCH=$VERSION_PATCH
       echo VERSION_INCLUDE_INTERNAL_VERSIONS=$VERSION_INCLUDE_INTERNAL_VERSIONS
+      echo PACKAGE_TYPES_FIELD=$PACKAGE_TYPES_FIELD
 
       # Generate the build version. Sets the environment variables version, codeVersion, and isLatest.
       # These are referenced in following steps prefixed by this task name. E.g. SetVersion.version
@@ -144,3 +153,12 @@ steps:
         echo "##vso[task.logissue type=error]Fluid internal dev versions shouldn't use caret dependencies"
         exit -1;
       fi
+
+- ${{ if ne(parameters.packageTypesOverride, 'none') }}:
+  - task: Bash@3
+    displayName: Set Package Types - ${{ parameters.packageTypesOverride }}
+    inputs:
+      targetType: 'inline'
+      workingDirectory: ${{ parameters.buildDirectory }}
+      script: |
+        flub release setPackageTypes -g ${{ parameters.tagName }} --types ${{ parameters.packageTypesOverride }} --json
