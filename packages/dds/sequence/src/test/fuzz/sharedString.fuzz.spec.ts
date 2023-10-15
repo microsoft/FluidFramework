@@ -9,21 +9,15 @@ import {
 	AsyncGenerator as Generator,
 	takeAsync as take,
 } from "@fluid-internal/stochastic-test-utils";
-import {
-	createDDSFuzzSuite,
-	DDSFuzzModel,
-	DDSFuzzSuiteOptions,
-} from "@fluid-internal/test-dds-utils";
+import { createDDSFuzzSuite, DDSFuzzSuiteOptions } from "@fluid-internal/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { assertEquivalentSharedStrings } from "../intervalUtils";
 import {
 	Operation,
 	FuzzTestState,
-	makeReducer,
 	defaultIntervalOperationGenerationConfig,
 	createSharedStringGeneratorOperations,
 	SharedStringOperationGenerationConfig,
-	SharedStringFuzzFactory,
+	baseModel,
 } from "./fuzzUtils";
 
 type ClientOpState = FuzzTestState;
@@ -55,18 +49,10 @@ export function makeSharedStringOperationGenerator(
 	]);
 }
 
-const baseModel: Omit<
-	DDSFuzzModel<SharedStringFuzzFactory, Operation, FuzzTestState>,
-	"workloadName"
-> = {
+const baseSharedStringModel = {
+	...baseModel,
 	generatorFactory: () =>
 		take(100, makeSharedStringOperationGenerator(defaultIntervalOperationGenerationConfig)),
-	reducer:
-		// makeReducer supports a param for logging output which tracks the provided intervalId over time:
-		// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
-		makeReducer(),
-	validateConsistency: assertEquivalentSharedStrings,
-	factory: new SharedStringFuzzFactory(),
 };
 
 const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
@@ -95,7 +81,7 @@ const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
 
 describe("SharedString no reconnect fuzz testing", () => {
 	const noReconnectNoIntervalsModel = {
-		...baseModel,
+		...baseSharedStringModel,
 		workloadName: "SharedString without reconnects",
 		generatorFactory: () =>
 			take(
@@ -106,7 +92,7 @@ describe("SharedString no reconnect fuzz testing", () => {
 			),
 	};
 
-	const options = {
+	createDDSFuzzSuite(noReconnectNoIntervalsModel, {
 		...defaultFuzzOptions,
 		reconnectProbability: 0.0,
 		numberOfClients: 3,
@@ -114,10 +100,6 @@ describe("SharedString no reconnect fuzz testing", () => {
 			maxNumberOfClients: 3,
 			clientAddProbability: 0.0,
 		},
-	};
-
-	createDDSFuzzSuite(noReconnectNoIntervalsModel, {
-		...options,
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
 	});
@@ -125,7 +107,7 @@ describe("SharedString no reconnect fuzz testing", () => {
 
 describe("SharedString fuzz testing with rebased batches", () => {
 	const noReconnectWithRebaseModel = {
-		...baseModel,
+		...baseSharedStringModel,
 		workloadName: "SharedString with rebasing",
 	};
 

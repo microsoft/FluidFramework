@@ -25,17 +25,16 @@ import {
 	appendIntervalPropertyChangedToRevertibles,
 	appendSharedStringDeltaToRevertibles,
 } from "../../revertibles";
-import { assertEquivalentSharedStrings } from "../intervalUtils";
 import {
 	Operation,
 	FuzzTestState,
 	RevertOperation,
-	makeReducer,
 	RevertibleSharedString,
 	isRevertibleSharedString,
 	IntervalOperationGenerationConfig,
 	RevertSharedStringRevertibles,
 	SharedStringFuzzFactory,
+	baseModel,
 } from "./fuzzUtils";
 import { makeOperationGenerator } from "./intervalCollection.fuzz.spec";
 
@@ -149,6 +148,7 @@ function operationGenerator(
 
 describe("IntervalCollection fuzz testing", () => {
 	const model: DDSFuzzModel<SharedStringFuzzFactory, RevertOperation, FuzzTestState> = {
+		...baseModel,
 		workloadName: "interval collection with revertibles",
 		generatorFactory: () =>
 			take(
@@ -167,12 +167,6 @@ describe("IntervalCollection fuzz testing", () => {
 					},
 				}),
 			),
-		reducer:
-			// makeReducer supports a param for logging output which tracks the provided intervalId over time:
-			// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
-			makeReducer(),
-		validateConsistency: assertEquivalentSharedStrings,
-		factory: new SharedStringFuzzFactory(),
 	};
 
 	createDDSFuzzSuite(model, optionsWithEmitter);
@@ -180,6 +174,7 @@ describe("IntervalCollection fuzz testing", () => {
 
 describe("IntervalCollection fuzz testing with rebasing", () => {
 	const model: DDSFuzzModel<SharedStringFuzzFactory, RevertOperation, FuzzTestState> = {
+		...baseModel,
 		workloadName: "interval collection with revertibles and rebasing",
 		generatorFactory: () =>
 			take(
@@ -198,12 +193,6 @@ describe("IntervalCollection fuzz testing with rebasing", () => {
 					},
 				}),
 			),
-		reducer:
-			// makeReducer supports a param for logging output which tracks the provided intervalId over time:
-			// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
-			makeReducer(),
-		validateConsistency: assertEquivalentSharedStrings,
-		factory: new SharedStringFuzzFactory(),
 	};
 
 	createDDSFuzzSuite(model, {

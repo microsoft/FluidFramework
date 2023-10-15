@@ -11,17 +11,11 @@ import {
 	AsyncGenerator as Generator,
 	takeAsync as take,
 } from "@fluid-internal/stochastic-test-utils";
-import {
-	createDDSFuzzSuite,
-	DDSFuzzModel,
-	DDSFuzzSuiteOptions,
-} from "@fluid-internal/test-dds-utils";
+import { createDDSFuzzSuite, DDSFuzzSuiteOptions } from "@fluid-internal/test-dds-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { IIntervalCollection, Side } from "../../intervalCollection";
-import { SharedStringFactory } from "../../sequenceFactory";
 import { SequenceInterval } from "../../intervals";
-import { assertEquivalentSharedStrings } from "../intervalUtils";
 import {
 	Operation,
 	RangeSpec,
@@ -30,11 +24,10 @@ import {
 	ChangeInterval,
 	ChangeProperties,
 	FuzzTestState,
-	makeReducer,
 	IntervalOperationGenerationConfig,
 	defaultIntervalOperationGenerationConfig,
 	createSharedStringGeneratorOperations,
-	SharedStringFuzzFactory,
+	baseModel,
 } from "./fuzzUtils";
 
 type ClientOpState = FuzzTestState;
@@ -187,59 +180,10 @@ export function makeOperationGenerator(
 	]);
 }
 
-const baseModel: Omit<
-	DDSFuzzModel<SharedStringFactory, Operation, FuzzTestState>,
-	"workloadName"
-> = {
+const baseIntervalModel = {
+	...baseModel,
 	generatorFactory: () =>
 		take(100, makeOperationGenerator(defaultIntervalOperationGenerationConfig)),
-	reducer:
-		// makeReducer supports a param for logging output which tracks the provided intervalId over time:
-		// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
-		makeReducer(),
-	validateConsistency: assertEquivalentSharedStrings,
-	factory: new SharedStringFuzzFactory(),
-	minimizationTransforms: [
-		(op) => {
-			if (op.type !== "addText") {
-				return;
-			}
-			op.content = op.content.slice(1);
-		},
-		(op) => {
-			switch (op.type) {
-				case "addText":
-					if (op.index > 0) {
-						op.index -= 1;
-					}
-					break;
-				case "removeRange":
-				case "addInterval":
-				case "changeInterval":
-					if (op.start > 0) {
-						op.start -= 1;
-					}
-					if (op.end > 0) {
-						op.end -= 1;
-					}
-					break;
-				default:
-					break;
-			}
-		},
-		(op) => {
-			if (
-				op.type !== "removeRange" &&
-				op.type !== "addInterval" &&
-				op.type !== "changeInterval"
-			) {
-				return;
-			}
-			if (op.end > 0) {
-				op.end -= 1;
-			}
-		},
-	],
 };
 
 const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
@@ -268,7 +212,7 @@ const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
 
 describe("IntervalCollection fuzz testing", () => {
 	const model = {
-		...baseModel,
+		...baseIntervalModel,
 		workloadName: "default interval collection",
 	};
 
@@ -292,7 +236,7 @@ describe("IntervalCollection fuzz testing", () => {
 
 describe("IntervalCollection no reconnect fuzz testing", () => {
 	const noReconnectModel = {
-		...baseModel,
+		...baseIntervalModel,
 		workloadName: "interval collection without reconnects",
 	};
 
@@ -315,7 +259,7 @@ describe("IntervalCollection no reconnect fuzz testing", () => {
 
 describe("IntervalCollection fuzz testing with rebased batches", () => {
 	const noReconnectWithRebaseModel = {
-		...baseModel,
+		...baseIntervalModel,
 		workloadName: "interval collection with rebasing",
 	};
 

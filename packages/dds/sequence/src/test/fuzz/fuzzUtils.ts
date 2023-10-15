@@ -9,7 +9,7 @@ import {
 	combineReducersAsync as combineReducers,
 	AsyncReducer as Reducer,
 } from "@fluid-internal/stochastic-test-utils";
-import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
+import { DDSFuzzModel, DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import {
 	IChannelAttributes,
 	IChannelServices,
@@ -20,6 +20,7 @@ import { revertSharedStringRevertibles, SharedStringRevertible } from "../../rev
 import { SharedStringFactory } from "../../sequenceFactory";
 import { SharedString } from "../../sharedString";
 import { Side } from "../../intervalCollection";
+import { assertEquivalentSharedStrings } from "../intervalUtils";
 
 export type RevertibleSharedString = SharedString & {
 	revertibles: SharedStringRevertible[];
@@ -100,8 +101,8 @@ export type TextOperation = AddText | RemoveRange;
 
 export type ClientOperation = IntervalOperation | TextOperation;
 
-export type Operation = ClientOperation;
 export type RevertOperation = OperationWithRevert | TextOperation;
+export type Operation = RevertOperation;
 
 export type FuzzTestState = DDSFuzzTestState<SharedStringFactory>;
 
@@ -322,3 +323,56 @@ export class SharedStringFuzzFactory extends SharedStringFactory {
 		return super.create(document, id);
 	}
 }
+
+export const baseModel: Omit<
+	DDSFuzzModel<SharedStringFactory, Operation, FuzzTestState>,
+	"workloadName" | "generatorFactory"
+> = {
+	reducer:
+		// makeReducer supports a param for logging output which tracks the provided intervalId over time:
+		// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
+		makeReducer(),
+	validateConsistency: assertEquivalentSharedStrings,
+	factory: new SharedStringFuzzFactory(),
+	minimizationTransforms: [
+		(op) => {
+			if (op.type !== "addText") {
+				return;
+			}
+			op.content = op.content.slice(1);
+		},
+		(op) => {
+			switch (op.type) {
+				case "addText":
+					if (op.index > 0) {
+						op.index -= 1;
+					}
+					break;
+				case "removeRange":
+				case "addInterval":
+				case "changeInterval":
+					if (op.start > 0) {
+						op.start -= 1;
+					}
+					if (op.end > 0) {
+						op.end -= 1;
+					}
+					break;
+				default:
+					break;
+			}
+		},
+		(op) => {
+			if (
+				op.type !== "removeRange" &&
+				op.type !== "addInterval" &&
+				op.type !== "changeInterval"
+			) {
+				return;
+			}
+			if (op.end > 0) {
+				op.end -= 1;
+			}
+		},
+	],
+};
