@@ -119,7 +119,10 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
 		return this._socket;
 	}
 
-	public constructor(public readonly key: string, socket: Socket) {
+	public constructor(
+		public readonly key: string,
+		socket: Socket,
+	) {
 		super();
 
 		this._socket = socket;
@@ -533,9 +536,16 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 				}
 			};
 
-			this.earlySignalHandler = (msg: ISignalMessage, messageDocumentId?: string) => {
+			this.earlySignalHandler = (
+				msg: ISignalMessage | ISignalMessage[],
+				messageDocumentId?: string,
+			) => {
 				if (messageDocumentId === undefined || messageDocumentId === this.documentId) {
-					this.queuedSignals.push(msg);
+					if (Array.isArray(msg)) {
+						this.queuedSignals.push(...msg);
+					} else {
+						this.queuedSignals.push(msg);
+					}
 				}
 			};
 		}
@@ -631,11 +641,18 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 
 			case "signal":
 				// per document signal handling
-				super.addTrackedListener(event, (msg: ISignalMessage, documentId?: string) => {
-					if (!this.enableMultiplexing || !documentId || documentId === this.documentId) {
-						listener(msg, documentId);
-					}
-				});
+				super.addTrackedListener(
+					event,
+					(msg: ISignalMessage | ISignalMessage[], documentId?: string) => {
+						if (
+							!this.enableMultiplexing ||
+							!documentId ||
+							documentId === this.documentId
+						) {
+							listener(msg, documentId);
+						}
+					},
+				);
 				break;
 
 			case "nack":

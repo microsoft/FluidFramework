@@ -40,7 +40,6 @@ import { MergeTreeMaintenanceType } from '@fluidframework/merge-tree';
 import { MergeTreeRevertibleDriver } from '@fluidframework/merge-tree';
 import { PropertiesManager } from '@fluidframework/merge-tree';
 import { PropertySet } from '@fluidframework/merge-tree';
-import { RangeStackMap } from '@fluidframework/merge-tree';
 import { ReferencePosition } from '@fluidframework/merge-tree';
 import { ReferenceType } from '@fluidframework/merge-tree';
 import { Serializable } from '@fluidframework/datastore-definitions';
@@ -136,7 +135,13 @@ export interface IInterval {
 export interface IIntervalCollection<TInterval extends ISerializableInterval> extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
     // (undocumented)
     [Symbol.iterator](): Iterator<TInterval>;
+    // @deprecated
     add(start: SequencePlace, end: SequencePlace, intervalType: IntervalType, props?: PropertySet): TInterval;
+    add({ start, end, props, }: {
+        start: SequencePlace;
+        end: SequencePlace;
+        props?: PropertySet;
+    }): TInterval;
     // (undocumented)
     attachDeserializer(onDeserialize: DeserializeCallback): void;
     // (undocumented)
@@ -301,12 +306,10 @@ export const IntervalStickiness: {
 };
 
 // @internal
-export type IntervalStickiness = typeof IntervalStickiness[keyof typeof IntervalStickiness];
+export type IntervalStickiness = (typeof IntervalStickiness)[keyof typeof IntervalStickiness];
 
 // @public (undocumented)
 export enum IntervalType {
-    // @deprecated (undocumented)
-    Nest = 1,
     // (undocumented)
     Simple = 0,
     SlideOnRemove = 2,
@@ -561,8 +564,6 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
         posStart: number | undefined;
         posAfterEnd: number | undefined;
     };
-    // @deprecated (undocumented)
-    getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap;
     // @deprecated (undocumented)
     groupOperation(groupOp: IMergeTreeGroupMsg): void;
     // @internal

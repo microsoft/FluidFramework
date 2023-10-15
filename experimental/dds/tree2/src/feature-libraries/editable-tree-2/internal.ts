@@ -13,4 +13,7 @@ export {
 	UnboxField,
 	UnboxNode,
 	UnboxNodeUnion,
+	NodeKeyField,
 } from "./editableTreeTypes";
+
+export { NodeKeys } from "./nodeKeys";

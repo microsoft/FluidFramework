@@ -10,7 +10,7 @@ import {
 	getPrimaryField,
 	getFieldKind,
 	getFieldSchema,
-	SchemaBuilder,
+	FieldSchema,
 } from "../../../feature-libraries";
 import { FieldKey, FieldStoredSchema, EmptyKey } from "../../../core";
 import {
@@ -44,7 +44,7 @@ describe("editable-tree utilities", () => {
 			schema,
 		};
 
-		const rootSchema = SchemaBuilder.field(FieldKinds.value, arraySchema);
+		const rootSchema = FieldSchema.create(FieldKinds.required, [arraySchema]);
 		const fullSchemaData = buildTestSchema(rootSchema);
 		const primary = getPrimaryField(arraySchema);
 		assert(primary !== undefined);

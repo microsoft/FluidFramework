@@ -223,6 +223,42 @@ const baseModel: Omit<
 		makeReducer(),
 	validateConsistency: assertEquivalentSharedStrings,
 	factory: new IntervalCollectionFuzzFactory(),
+	minimizationTransforms: [
+		(op) => {
+			if (op.type !== "addText") {
+				return;
+			}
+			op.content = op.content.slice(1);
+		},
+		(op) => {
+			switch (op.type) {
+				case "addText":
+					if (op.index > 0) {
+						op.index -= 1;
+					}
+					break;
+				case "removeRange":
+				case "addInterval":
+					if (op.start > 0) {
+						op.start -= 1;
+					}
+					if (op.end > 0) {
+						op.end -= 1;
+					}
+					break;
+				default:
+					break;
+			}
+		},
+		(op) => {
+			if (op.type !== "removeRange" && op.type !== "addInterval") {
+				return;
+			}
+			if (op.end > 0) {
+				op.end -= 1;
+			}
+		},
+	],
 };
 
 const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {

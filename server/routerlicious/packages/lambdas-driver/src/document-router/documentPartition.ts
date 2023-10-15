@@ -166,6 +166,7 @@ export class DocumentPartition {
 			restart: false,
 			tenantId: this.tenantId,
 			documentId: this.documentId,
+			errorLabel: "documentPartition:markAsCorrupt",
 		});
 		if (message) {
 			this.context.checkpoint(message);

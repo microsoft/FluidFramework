@@ -46,7 +46,7 @@ async function main() {
 
 	// Dependency checks
 	if (options.depcheck) {
-		repo.depcheck();
+		await repo.depcheck(false);
 		timer.time("Dependencies check completed", true);
 	}
 
@@ -88,13 +88,6 @@ async function main() {
 	const symlinkTaskName = options.symlink ? "Symlink" : "Symlink check";
 	await repo.symlink(options);
 	timer.time(`${symlinkTaskName} completed`, options.symlink);
-
-	// TODO: port these to repo-policy-checkes
-	if (process.env["FLUID_BUILD_CHECK"] === "1") {
-		// Check scripts
-		await repo.checkPackages(options.fix);
-		timer.time("Check scripts completed");
-	}
 
 	let failureSummary = "";
 	let exitCode = 0;

@@ -5,11 +5,7 @@
 import { ApiItem, ReleaseTag } from "@microsoft/api-extractor-model";
 
 import { SectionNode } from "../../documentation-domain";
-import {
-	doesItemRequireOwnDocument,
-	getHeadingForApiItem,
-	getReleaseTag,
-} from "../ApiItemUtilities";
+import { doesItemRequireOwnDocument, getHeadingForApiItem } from "../ApiItemTransformUtilities";
 import { ApiItemTransformationConfiguration } from "../configuration";
 import {
 	alphaWarningSpan,
@@ -23,6 +19,7 @@ import {
 	createThrowsSection,
 	wrapInSection,
 } from "../helpers";
+import { getReleaseTag } from "../../utilities";
 
 /**
  * Default content layout for all API items.

@@ -23,6 +23,7 @@ import {
 	ICriticalContainerError,
 	AttachState,
 	ILoaderOptions,
+	ILoader,
 	LoaderHeader,
 } from "@fluidframework/container-definitions";
 import {
@@ -99,12 +100,11 @@ import {
 	create404Response,
 	exceptionToResponse,
 	GCDataBuilder,
-	// eslint-disable-next-line import/no-deprecated
-	requestFluidObject,
 	seqFromTree,
 	calculateStats,
 	TelemetryContext,
 	ReadAndParseBlob,
+	responseToException,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
@@ -144,7 +144,6 @@ import {
 	IConnectableRuntime,
 	IGeneratedSummaryStats,
 	ISubmitSummaryOptions,
-	ISummarizer,
 	ISummarizerInternalsProvider,
 	ISummarizerRuntime,
 	IRefreshSummaryAckOptions,
@@ -157,6 +156,7 @@ import {
 	EnqueueSummarizeResult,
 	ISummarizerEvents,
 	IBaseSummarizeResult,
+	ISummarizer,
 } from "./summary";
 import { formExponentialFn, Throttler } from "./throttler";
 import {
@@ -355,16 +355,17 @@ export interface ISummaryRuntimeOptions {
 
 /**
  * Options for op compression.
- * @experimental - Not ready for use
  */
 export interface ICompressionRuntimeOptions {
 	/**
-	 * The minimum size the batch's payload must exceed before the batch's contents will be compressed.
+	 * The value the batch's content size must exceed for the batch to be compressed.
+	 * By default the value is 600 * 1024 = 614400 bytes. If the value is set to `Infinity`, compression will be disabled.
 	 */
 	readonly minimumBatchSizeInBytes: number;
 
 	/**
 	 * The compression algorithm that will be used to compress the op.
+	 * By default the value is `lz4` which is the only compression algorithm currently supported.
 	 */
 	readonly compressionAlgorithm: CompressionAlgorithms;
 }
@@ -392,8 +393,7 @@ export interface IContainerRuntimeOptions {
 	 */
 	readonly flushMode?: FlushMode;
 	/**
-	 * Enables the runtime to compress ops. Compression is disabled when undefined.
-	 * @experimental Not ready for use.
+	 * Enables the runtime to compress ops. See {@link ICompressionRuntimeOptions}.
 	 */
 	readonly compressionOptions?: ICompressionRuntimeOptions;
 	/**
@@ -410,12 +410,15 @@ export interface IContainerRuntimeOptions {
 	/**
 	 * If the op payload needs to be chunked in order to work around the maximum size of the batch, this value represents
 	 * how large the individual chunks will be. This is only supported when compression is enabled. If after compression, the
-	 * batch size exceeds this value, it will be chunked into smaller ops of this size.
+	 * batch content size exceeds this value, it will be chunked into smaller ops of this exact size.
 	 *
-	 * If unspecified, if a batch exceeds `maxBatchSizeInBytes` after compression, the container will close with an instance
-	 * of `GenericError` with the `BatchTooLarge` message.
+	 * This value is a trade-off between having many small chunks vs fewer larger chunks and by default, the runtime is configured to use
+	 * 200 * 1024 = 204800 bytes. This default value ensures that no compressed payload's content is able to exceed {@link IContainerRuntimeOptions.maxBatchSizeInBytes}
+	 * regardless of the overhead of an individual op.
 	 *
-	 * @experimental Not ready for use.
+	 * Any value of `chunkSizeInBytes` exceeding {@link IContainerRuntimeOptions.maxBatchSizeInBytes} will disable this feature, therefore if a compressed batch's content
+	 * size exceeds {@link IContainerRuntimeOptions.maxBatchSizeInBytes} after compression, the container will close with an instance of `GenericError` with
+	 * the `BatchTooLarge` message.
 	 */
 	readonly chunkSizeInBytes?: number;
 
@@ -628,6 +631,53 @@ type MessageWithContext =
 			modernRuntimeMessage: false;
 			local: boolean;
 	  };
+
+const summarizerRequestUrl = "_summarizer";
+
+/**
+ * Create and retrieve the summmarizer
+ */
+async function createSummarizer(loader: ILoader, url: string): Promise<ISummarizer> {
+	const request: IRequest = {
+		headers: {
+			[LoaderHeader.cache]: false,
+			[LoaderHeader.clientDetails]: {
+				capabilities: { interactive: false },
+				type: summarizerClientType,
+			},
+			[DriverHeader.summarizingClient]: true,
+			[LoaderHeader.reconnect]: false,
+		},
+		url,
+	};
+
+	const resolvedContainer = await loader.resolve(request);
+	let fluidObject: FluidObject<ISummarizer> | undefined;
+
+	// Older containers may not have the "getEntryPoint" API
+	// ! This check will need to stay until LTS of loader moves past 2.0.0-internal.7.0.0
+	if (resolvedContainer.getEntryPoint !== undefined) {
+		fluidObject = await resolvedContainer.getEntryPoint();
+	} else {
+		const response = await resolvedContainer.request({ url: `/${summarizerRequestUrl}` });
+		if (response.status !== 200 || response.mimeType !== "fluid/object") {
+			throw responseToException(response, request);
+		}
+		fluidObject = response.value;
+	}
+
+	if (fluidObject?.ISummarizer === undefined) {
+		throw new UsageError("Fluid object does not implement ISummarizer");
+	}
+	return fluidObject.ISummarizer;
+}
+
+/**
+ * This function is not supported publicly and exists for e2e testing
+ */
+export async function TEST_requestSummarizer(loader: ILoader, url: string): Promise<ISummarizer> {
+	return createSummarizer(loader, url);
+}
 
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
@@ -1577,7 +1627,7 @@ export class ContainerRuntime
 					this, // IConnectedState
 					this.summaryCollection,
 					this.logger,
-					this.formRequestSummarizerFn(loader),
+					this.formCreateSummarizerFn(loader),
 					new Throttler(
 						60 * 1000, // 60 sec delay window
 						30 * 1000, // 30 sec max delay
@@ -1683,7 +1733,7 @@ export class ContainerRuntime
 			const parser = RequestParser.create(request);
 			const id = parser.pathParts[0];
 
-			if (id === "_summarizer" && parser.pathParts.length === 1) {
+			if (id === summarizerRequestUrl && parser.pathParts.length === 1) {
 				if (this._summarizer !== undefined) {
 					return {
 						status: 200,
@@ -1694,6 +1744,7 @@ export class ContainerRuntime
 				return create404Response(request);
 			}
 			if (this.requestHandler !== undefined) {
+				// eslint-disable-next-line @typescript-eslint/return-await -- Adding an await here causes test failures
 				return this.requestHandler(parser, this);
 			}
 
@@ -1713,6 +1764,7 @@ export class ContainerRuntime
 			const id = requestParser.pathParts[0];
 
 			if (id === "_channels") {
+				// eslint-disable-next-line @typescript-eslint/return-await -- Adding an await here causes test failures
 				return this.resolveHandle(requestParser.createSubRequest(1));
 			}
 
@@ -1734,6 +1786,7 @@ export class ContainerRuntime
 					subRequest.url.startsWith("/"),
 					0x126 /* "Expected createSubRequest url to include a leading slash" */,
 				);
+				// eslint-disable-next-line @typescript-eslint/return-await -- Adding an await here causes test failures
 				return dataStore.request(subRequest);
 			}
 
@@ -3836,8 +3889,6 @@ export class ContainerRuntime
 		);
 	}
 
-	public notifyAttaching() {} // do nothing (deprecated method)
-
 	public async getPendingLocalState(props?: {
 		notifyImminentClosure: boolean;
 	}): Promise<unknown> {
@@ -3905,37 +3956,11 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * * Forms a function that will request a Summarizer.
-	 * @param loaderRouter - the loader acting as an IFluidRouter
-	 * */
-	// eslint-disable-next-line import/no-deprecated
-	private formRequestSummarizerFn(loaderRouter: IFluidRouter) {
+	 * Forms a function that will create and retrieve a Summarizer.
+	 */
+	private formCreateSummarizerFn(loader: ILoader) {
 		return async () => {
-			const request: IRequest = {
-				headers: {
-					[LoaderHeader.cache]: false,
-					[LoaderHeader.clientDetails]: {
-						capabilities: { interactive: false },
-						type: summarizerClientType,
-					},
-					[DriverHeader.summarizingClient]: true,
-					[LoaderHeader.reconnect]: false,
-				},
-				url: "/_summarizer",
-			};
-
-			// eslint-disable-next-line import/no-deprecated
-			const fluidObject = await requestFluidObject<FluidObject<ISummarizer>>(
-				loaderRouter,
-				request,
-			);
-			const summarizer = fluidObject.ISummarizer;
-
-			if (!summarizer) {
-				throw new UsageError("Fluid object does not implement ISummarizer");
-			}
-
-			return summarizer;
+			return createSummarizer(loader, `/${summarizerRequestUrl}`);
 		};
 	}
 
