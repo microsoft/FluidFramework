@@ -136,10 +136,10 @@ extends:
     - webpack
     - ci:test:mocha
     - ci:test:jest
-    - ${{ if and(eq(variables['System.TeamProject'], 'public'), eq(parameters.packageTypesOverride, "none")) }}:
+    - ${{ if and(eq(variables['System.TeamProject'], 'public'), eq(parameters.packageTypesOverride, 'none')) }}:
       - ci:test:realsvc:local
       - ci:test:realsvc:tinylicious
-    - ${{ if and(ne(variables['System.TeamProject'], 'public'), eq(parameters.packageTypesOverride, "none")) }}:
+    - ${{ if and(ne(variables['System.TeamProject'], 'public'), eq(parameters.packageTypesOverride, 'none')) }}:
       - ci:test:realsvc:local:full
       - ci:test:realsvc:tinylicious:full
     - ci:test:stress:tinylicious
