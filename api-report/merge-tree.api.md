@@ -92,7 +92,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 // @public (undocumented)
 export class Client extends TypedEventEmitter<IClientEvents> {
     constructor(specToSegment: (spec: IJSONSegment) => ISegment, logger: ITelemetryLoggerExt, options?: PropertySet);
-    // (undocumented)
+    // @internal (undocumented)
     addLongClientId(longClientId: string): void;
     annotateMarker(marker: Marker, props: PropertySet, combiningOp?: ICombiningOp): IMergeTreeAnnotateMsg | undefined;
     annotateMarkerNotifyConsensus(marker: Marker, props: PropertySet, consensusCallback: (m: Marker) => void): IMergeTreeAnnotateMsg | undefined;
@@ -130,7 +130,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     getCurrentSeq(): number;
     // (undocumented)
     getLength(): number;
-    // (undocumented)
+    // @internal (undocumented)
     getLongClientId(shortClientId: number): string;
     // (undocumented)
     getMarkerFromId(id: string): ISegment | undefined;
@@ -145,7 +145,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
         posAfterEnd: number | undefined;
     };
     // (undocumented)
-    getShortClientId(longClientId: string): number;
+    protected getShortClientId(longClientId: string): number;
     // (undocumented)
     insertAtReferencePositionLocal(refPos: ReferencePosition, segment: ISegment): IMergeTreeInsertMsg | undefined;
     // (undocumented)
@@ -178,12 +178,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     startOrUpdateCollaboration(longClientId: string | undefined, minSeq?: number, currentSeq?: number): void;
     // (undocumented)
     summarize(runtime: IFluidDataStoreRuntime, handle: IFluidHandle, serializer: IFluidSerializer, catchUpMsgs: ISequencedDocumentMessage[]): ISummaryTreeWithStats;
-    // (undocumented)
-    updateConsensusProperty(op: IMergeTreeAnnotateMsg, msg: ISequencedDocumentMessage): void;
-    // (undocumented)
+    // @internal (undocumented)
     updateMinSeq(minSeq: number): void;
-    // (undocumented)
-    updateSeqNumbers(min: number, seq: number): void;
     // (undocumented)
     protected walkAllSegments<TClientData>(action: (segment: ISegment, accum?: TClientData) => boolean, accum?: TClientData): boolean;
     // (undocumented)
@@ -908,7 +904,7 @@ export function refHasTileLabels(refPos: ReferencePosition): boolean;
 // @public (undocumented)
 export function refTypeIncludesFlag(refPosOrType: ReferencePosition | ReferenceType, flags: ReferenceType): boolean;
 
-// @internal (undocumented)
+// @public (undocumented)
 export const reservedMarkerIdKey = "markerId";
 
 // @internal (undocumented)

@@ -683,16 +683,25 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		return this.getShortClientId(longClientId);
 	}
 
-	getShortClientId(longClientId: string) {
+	protected getShortClientId(longClientId: string) {
 		return this.clientNameToIds.get(longClientId)!.data;
 	}
+
+	/**
+	 * @internal
+	 */
 	getLongClientId(shortClientId: number) {
 		return shortClientId >= 0 ? this.shortClientIdMap[shortClientId] : "original";
 	}
+
+	/**
+	 * @internal
+	 */
 	addLongClientId(longClientId: string) {
 		this.clientNameToIds.put(longClientId, this.shortClientIdMap.length);
 		this.shortClientIdMap.push(longClientId);
 	}
+
 	private getOrAddShortClientIdFromMessage(msg: Pick<ISequencedDocumentMessage, "clientId">) {
 		return this.getOrAddShortClientId(msg.clientId ?? "server");
 	}
@@ -905,7 +914,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		this.updateSeqNumbers(msg.minimumSequenceNumber, msg.sequenceNumber);
 	}
 
-	public updateSeqNumbers(min: number, seq: number) {
+	private updateSeqNumbers(min: number, seq: number) {
 		const collabWindow = this.getCollabWindow();
 		// Equal is fine here due to SharedSegmentSequence<>.snapshotContent() potentially updating with same #
 		assert(
@@ -1102,7 +1111,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			}
 		}
 	}
-	updateConsensusProperty(op: IMergeTreeAnnotateMsg, msg: ISequencedDocumentMessage) {
+
+	private updateConsensusProperty(op: IMergeTreeAnnotateMsg, msg: ISequencedDocumentMessage) {
 		const markerId = op.relativePos1!.id!;
 		const consensusInfo = this.pendingConsensus.get(markerId);
 		if (consensusInfo) {
@@ -1113,6 +1123,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		);
 	}
 
+	/**
+	 * @internal
+	 */
 	updateMinSeq(minSeq: number) {
 		this._mergeTree.setMinSeq(minSeq);
 	}
@@ -1141,6 +1154,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 		return propertiesAtPosition;
 	}
+
 	getRangeExtentsOfPosition(pos: number) {
 		let posStart: number | undefined;
 		let posAfterEnd: number | undefined;
@@ -1153,9 +1167,11 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 		return { posStart, posAfterEnd };
 	}
+
 	getCurrentSeq() {
 		return this.getCollabWindow().currentSeq;
 	}
+
 	getClientId() {
 		return this.getCollabWindow().clientId;
 	}

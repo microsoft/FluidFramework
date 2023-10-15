@@ -567,9 +567,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 	protected abstract createSplitSegmentAt(pos: number): BaseSegment | undefined;
 }
 
-/**
- * @internal
- */
 export const reservedMarkerIdKey = "markerId";
 
 /**
