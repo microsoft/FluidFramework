@@ -619,4 +619,76 @@ describe("MergeTree.Client", () => {
 		assert.equal(client2.getText(), "aghidef");
 		assert.equal(client2.localReferencePositionToPosition(localRef), 0);
 	});
+
+	it("doesn't crash for remove ref then link to undefined", () => {
+		const client1 = new TestClient();
+		const client2 = new TestClient();
+
+		client1.startOrUpdateCollaboration("1");
+		client2.startOrUpdateCollaboration("2");
+
+		let seq = 0;
+		const insert1 = client1.makeOpMessage(client1.insertTextLocal(0, "abcdef"), ++seq);
+		client1.applyMsg(insert1);
+		client2.applyMsg(insert1);
+
+		const segInfo = client1.getContainingSegment(3);
+
+		assert(segInfo.segment);
+
+		const localRef = client1.createLocalReferencePosition(
+			segInfo.segment,
+			segInfo.offset,
+			ReferenceType.SlideOnRemove,
+			undefined,
+		);
+
+		assert.equal(localRef.getSegment(), segInfo.segment);
+
+		assert(segInfo.segment.localRefs);
+
+		segInfo.segment.localRefs.removeLocalRef(localRef);
+		(localRef as any).link(undefined, 0, undefined);
+
+		assert.equal(segInfo.segment.localRefs.empty, true);
+		assert.equal(segInfo.segment.localRefs.has(localRef), false);
+		assert.equal(localRef.getSegment(), undefined);
+		assert.equal(localRef.getOffset(), 0);
+	});
+
+	it("doesn't crash for link to undefined then remove ref", () => {
+		const client1 = new TestClient();
+		const client2 = new TestClient();
+
+		client1.startOrUpdateCollaboration("1");
+		client2.startOrUpdateCollaboration("2");
+
+		let seq = 0;
+		const insert1 = client1.makeOpMessage(client1.insertTextLocal(0, "abcdef"), ++seq);
+		client1.applyMsg(insert1);
+		client2.applyMsg(insert1);
+
+		const segInfo = client1.getContainingSegment(3);
+
+		assert(segInfo.segment);
+
+		const localRef = client1.createLocalReferencePosition(
+			segInfo.segment,
+			segInfo.offset,
+			ReferenceType.SlideOnRemove,
+			undefined,
+		);
+
+		assert.equal(localRef.getSegment(), segInfo.segment);
+
+		assert(segInfo.segment.localRefs);
+
+		segInfo.segment.localRefs.removeLocalRef(localRef);
+		(localRef as any).link(undefined, 0, undefined);
+
+		assert.equal(segInfo.segment.localRefs.empty, true);
+		assert.equal(segInfo.segment.localRefs.has(localRef), false);
+		assert.equal(localRef.getSegment(), undefined);
+		assert.equal(localRef.getOffset(), 0);
+	});
 });

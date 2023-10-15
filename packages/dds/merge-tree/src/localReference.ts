@@ -33,9 +33,6 @@ export const SlidingPreference = {
  */
 export type SlidingPreference = (typeof SlidingPreference)[keyof typeof SlidingPreference];
 
-/**
- * @internal
- */
 function _validateReferenceType(refType: ReferenceType) {
 	let exclusiveCount = 0;
 	if (refTypeIncludesFlag(refType, ReferenceType.Transient)) {
@@ -194,7 +191,8 @@ export function* filterLocalReferencePositions(
 }
 
 /**
- * Represents a collection of {@link LocalReferencePosition}s associated with one segment in a merge-tree.
+ * Represents a collection of {@link LocalReferencePosition}s associated with
+ * one segment in a merge-tree.
  */
 export class LocalReferenceCollection {
 	public static append(seg1: ISegment, seg2: ISegment) {
@@ -215,10 +213,10 @@ export class LocalReferenceCollection {
 	}
 
 	/**
-	 * This is the number of references whose reference type is one of the
-	 * hierarchical reference types, that is: NestBegin, NestEnd, or Tile.
+	 * The number of references whose reference type is one of the hierarchical
+	 * reference types, currently only {@link ReferenceType.Tile}.
 	 *
-	 * @remarks This method should only be called by mergeTree.
+	 * @remarks This field should only be accessed by mergeTree.
 	 * @internal
 	 */
 	public hierRefCount: number = 0;
@@ -346,7 +344,7 @@ export class LocalReferenceCollection {
 			node?.list?.remove(node);
 
 			lref.link(undefined, 0, undefined);
-			
+
 			if (refHasTileLabels(lref)) {
 				this.hierRefCount--;
 			}
