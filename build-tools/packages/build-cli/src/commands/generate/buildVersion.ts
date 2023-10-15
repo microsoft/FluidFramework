@@ -107,19 +107,15 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 		}
 
 		// Generate and print the version to console
-		const simpleVersion =
-			flags.packageTypes === "none"
-				? getSimpleVersion(fileVersion, flags.build, isRelease, useSimplePatchVersion)
-				: getAlphaBetaVersion(
-						fileVersion,
-						flags.build,
-						isRelease,
-						useSimplePatchVersion,
-						flags.packageTypes,
-				  );
+		let simpleVersion = getSimpleVersion(
+			fileVersion,
+			flags.build,
+			isRelease,
+			useSimplePatchVersion,
+		);
 
-		if (flags.packageTypes !== "none") {
-			// simpleVersion = getAlphaBetaSimpleVersion();
+		if (flags.packageTypes === "alpha" || flags.packageTypes === "beta") {
+			simpleVersion = `${simpleVersion}-${flags.packageTypes}-types`;
 		}
 
 		const version = useTestVersion ? `0.0.0-${flags.build}-test` : simpleVersion;
