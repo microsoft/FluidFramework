@@ -199,12 +199,18 @@ export class FuzzTestMinimizer<
 				return false;
 			}
 
+			// reproduce based on the final line+col of the error
+			const message = error.stack
+				?.split("\n")
+				.map((s) => s.trim())
+				.find((s) => s.startsWith("at"));
+
 			if (this.initialErrorMessage === undefined) {
-				this.initialErrorMessage = error.message;
+				this.initialErrorMessage = message;
 				return true;
 			}
 
-			return error.message === this.initialErrorMessage;
+			return message === this.initialErrorMessage;
 		}
 	}
 }
