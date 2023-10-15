@@ -30,6 +30,9 @@ export function fromInternalScheme(internalVersion: semver.SemVer | string, allo
 // @public
 export function fromVirtualPatchScheme(virtualPatchVersion: semver.SemVer | string): semver.SemVer;
 
+// @public (undocumented)
+export function generateAlphaBetaVersion(fileVersion: string, argBuildNum: string, argRelease: boolean, patch: boolean, packageTypes: string): string;
+
 // Warning: (ae-forgotten-export) The symbol "TagPrefix" needs to be exported by the entry point index.d.ts
 //
 // @public (undocumented)

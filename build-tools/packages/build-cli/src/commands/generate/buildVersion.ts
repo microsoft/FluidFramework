@@ -54,6 +54,11 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 			description: "Include Fluid internal versions.",
 			env: "VERSION_INCLUDE_INTERNAL_VERSIONS",
 		}),
+		packageTypes: Flags.string({
+			description: "Include package.json types field.",
+			options: ["none", "alpha", "beta", "public", "untrimmed"],
+			env: "PACKAGE_TYPES_FIELD",
+		}),
 		fileVersion: Flags.string({
 			description:
 				"Will be used as the version instead of reading from package.json/lerna.json. Used for testing.",
@@ -102,12 +107,21 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 		}
 
 		// Generate and print the version to console
-		const simpleVersion = getSimpleVersion(
-			fileVersion,
-			flags.build,
-			isRelease,
-			useSimplePatchVersion,
-		);
+		const simpleVersion =
+			flags.packageTypes === "none"
+				? getSimpleVersion(fileVersion, flags.build, isRelease, useSimplePatchVersion)
+				: getAlphaBetaVersion(
+						fileVersion,
+						flags.build,
+						isRelease,
+						useSimplePatchVersion,
+						flags.packageTypes,
+				  );
+
+		if (flags.packageTypes !== "none") {
+			// simpleVersion = getAlphaBetaSimpleVersion();
+		}
+
 		const version = useTestVersion ? `0.0.0-${flags.build}-test` : simpleVersion;
 		this.log(`version=${version}`);
 		this.log(`##vso[task.setvariable variable=version;isOutput=true]${version}`);

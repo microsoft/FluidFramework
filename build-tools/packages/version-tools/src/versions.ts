@@ -43,6 +43,49 @@ export function getSimpleVersion(
 	return fullVersion;
 }
 
+export function generateAlphaBetaVersion(
+	fileVersion: string,
+	argBuildNum: string,
+	argRelease: boolean,
+	patch: boolean,
+	packageTypes: string,
+) {
+	// Azure DevOp passes in the build number as $(buildNum).$(buildAttempt).
+	// Get the Build number and ignore the attempt number.
+	const buildId = patch ? parseInt(argBuildNum.split(".")[0], 10) : undefined;
+	let version = fileVersion;
+	if (isInternalVersionScheme(version, /* allowPrereleases */ true)) {
+		if (patch) {
+			throw new Error(
+				`Cannot use simple patch versioning with Fluid internal versions. Version: ${fileVersion}`,
+			);
+		}
+
+		if (!argRelease) {
+			version = changePreReleaseIdentifier(version, "dev");
+		}
+	}
+
+	const { releaseVersion, prereleaseVersion } = parseFileVersion(version, buildId);
+	const build_suffix = buildId ? "" : argRelease ? "" : argBuildNum;
+	let fullVersion = generateSimpleVersion(releaseVersion, prereleaseVersion, build_suffix);
+
+	if (!argRelease && packageTypes !== "none") {
+		switch (true) {
+			case packageTypes === "alpha":
+				fullVersion = fullVersion.concat("-alpha-types");
+				break;
+			case packageTypes === "beta":
+				fullVersion = fullVersion.concat("-beta-types");
+				break;
+			default:
+				break;
+		}
+	}
+
+	return fullVersion;
+}
+
 /**
  * @param prefix - The tag prefix to filter the tags by (client, server, etc.).
  * @param current_version - The version to test; that is, the version to check for being the latest build.
