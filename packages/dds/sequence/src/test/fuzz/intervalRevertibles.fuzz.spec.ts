@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
 import { strict as assert } from "assert";
 import {
 	createWeightedAsyncGenerator as createWeightedGenerator,
@@ -26,7 +25,6 @@ import {
 	appendSharedStringDeltaToRevertibles,
 } from "../../revertibles";
 import {
-	Operation,
 	FuzzTestState,
 	RevertOperation,
 	RevertibleSharedString,
@@ -35,6 +33,7 @@ import {
 	RevertSharedStringRevertibles,
 	SharedStringFuzzFactory,
 	baseModel,
+	defaultFuzzOptions,
 } from "./fuzzUtils";
 import { makeOperationGenerator } from "./intervalCollection.fuzz.spec";
 
@@ -86,35 +85,17 @@ emitter.on("clientCreate", (client) => {
 	});
 });
 
-const intervalTestOptions: Partial<DDSFuzzSuiteOptions> = {
-	validationStrategy: { type: "fixedInterval", interval: 10 },
+const defaultRevertiblesFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
+	...defaultFuzzOptions,
 	reconnectProbability: 0,
-	numberOfClients: 3,
 	clientJoinOptions: {
 		maxNumberOfClients: 6,
 		clientAddProbability: 0,
 	},
-	// Once the bugs are resolved, the test count will go back to being set at 100.
-	defaultTestCount: 100,
-	// Uncomment this line to replay a specific seed from its failure file:
-	// replay: 0,
-	saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
-	parseOperations: (serialized: string) => {
-		const operations: Operation[] = JSON.parse(serialized);
-		// Replace this value with some other interval ID and uncomment to filter replay of the test
-		// suite to only include interval operations with this ID.
-		// const filterIntervalId = "00000000-0000-0000-0000-000000000000";
-		// if (filterIntervalId) {
-		// 	return operations.filter((entry) =>
-		// 		[undefined, filterIntervalId].includes((entry as any).id),
-		// 	);
-		// }
-		return operations;
-	},
 };
 
 const optionsWithEmitter: Partial<DDSFuzzSuiteOptions> = {
-	...intervalTestOptions,
+	...defaultRevertiblesFuzzOptions,
 	emitter,
 };
 

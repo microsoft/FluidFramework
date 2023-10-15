@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
 import {
 	createWeightedAsyncGenerator as createWeightedGenerator,
 	AsyncGenerator as Generator,
 	takeAsync as take,
 } from "@fluid-internal/stochastic-test-utils";
-import { createDDSFuzzSuite, DDSFuzzSuiteOptions } from "@fluid-internal/test-dds-utils";
+import { createDDSFuzzSuite } from "@fluid-internal/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import {
 	Operation,
@@ -18,6 +17,7 @@ import {
 	createSharedStringGeneratorOperations,
 	SharedStringOperationGenerationConfig,
 	baseModel,
+	defaultFuzzOptions,
 } from "./fuzzUtils";
 
 type ClientOpState = FuzzTestState;
@@ -55,30 +55,6 @@ const baseSharedStringModel = {
 		take(100, makeSharedStringOperationGenerator(defaultIntervalOperationGenerationConfig)),
 };
 
-const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
-	validationStrategy: { type: "fixedInterval", interval: 10 },
-	reconnectProbability: 0.1,
-	numberOfClients: 3,
-	clientJoinOptions: {
-		maxNumberOfClients: 6,
-		clientAddProbability: 0.1,
-	},
-	defaultTestCount: 100,
-	saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
-	parseOperations: (serialized: string) => {
-		const operations: Operation[] = JSON.parse(serialized);
-		// Replace this value with some other interval ID and uncomment to filter replay of the test
-		// suite to only include interval operations with this ID.
-		// const filterIntervalId = "00000000-0000-0000-0000-000000000000";
-		// if (filterIntervalId) {
-		// 	return operations.filter((entry) =>
-		// 		[undefined, filterIntervalId].includes((entry as any).id),
-		// 	);
-		// }
-		return operations;
-	},
-};
-
 describe("SharedString no reconnect fuzz testing", () => {
 	const noReconnectNoIntervalsModel = {
 		...baseSharedStringModel,
@@ -95,7 +71,6 @@ describe("SharedString no reconnect fuzz testing", () => {
 	createDDSFuzzSuite(noReconnectNoIntervalsModel, {
 		...defaultFuzzOptions,
 		reconnectProbability: 0.0,
-		numberOfClients: 3,
 		clientJoinOptions: {
 			maxNumberOfClients: 3,
 			clientAddProbability: 0.0,

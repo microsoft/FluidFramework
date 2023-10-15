@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
 import { strict as assert } from "assert";
 import {
 	AcceptanceCondition,
@@ -11,7 +10,7 @@ import {
 	AsyncGenerator as Generator,
 	takeAsync as take,
 } from "@fluid-internal/stochastic-test-utils";
-import { createDDSFuzzSuite, DDSFuzzSuiteOptions } from "@fluid-internal/test-dds-utils";
+import { createDDSFuzzSuite } from "@fluid-internal/test-dds-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { IIntervalCollection, Side } from "../../intervalCollection";
@@ -28,6 +27,7 @@ import {
 	defaultIntervalOperationGenerationConfig,
 	createSharedStringGeneratorOperations,
 	baseModel,
+	defaultFuzzOptions,
 } from "./fuzzUtils";
 
 type ClientOpState = FuzzTestState;
@@ -186,30 +186,6 @@ const baseIntervalModel = {
 		take(100, makeOperationGenerator(defaultIntervalOperationGenerationConfig)),
 };
 
-const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
-	validationStrategy: { type: "fixedInterval", interval: 10 },
-	reconnectProbability: 0.1,
-	numberOfClients: 3,
-	clientJoinOptions: {
-		maxNumberOfClients: 6,
-		clientAddProbability: 0.1,
-	},
-	defaultTestCount: 100,
-	saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
-	parseOperations: (serialized: string) => {
-		const operations: Operation[] = JSON.parse(serialized);
-		// Replace this value with some other interval ID and uncomment to filter replay of the test
-		// suite to only include interval operations with this ID.
-		// const filterIntervalId = "00000000-0000-0000-0000-000000000000";
-		// if (filterIntervalId) {
-		// 	return operations.filter((entry) =>
-		// 		[undefined, filterIntervalId].includes((entry as any).id),
-		// 	);
-		// }
-		return operations;
-	},
-};
-
 describe("IntervalCollection fuzz testing", () => {
 	const model = {
 		...baseIntervalModel,
@@ -243,7 +219,6 @@ describe("IntervalCollection no reconnect fuzz testing", () => {
 	const options = {
 		...defaultFuzzOptions,
 		reconnectProbability: 0.0,
-		numberOfClients: 3,
 		clientJoinOptions: {
 			maxNumberOfClients: 3,
 			clientAddProbability: 0.0,
@@ -269,7 +244,6 @@ describe("IntervalCollection fuzz testing with rebased batches", () => {
 		// or 0x54e, see AB#5337 or comment on "default interval collection" fuzz suite.
 		skip: [3, 9, 11, 13, 23, 26, 29, 30, 31, 32, 36, 39, 41, 46, 49, 52, 53, 71, 73, 81, 86],
 		reconnectProbability: 0.0,
-		numberOfClients: 3,
 		clientJoinOptions: {
 			maxNumberOfClients: 3,
 			clientAddProbability: 0.0,
