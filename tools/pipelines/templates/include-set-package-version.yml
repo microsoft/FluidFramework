@@ -161,4 +161,4 @@ steps:
       targetType: 'inline'
       workingDirectory: ${{ parameters.buildDirectory }}
       script: |
-        flub release setPackageTypes -g ${{ parameters.tagName }} --types ${{ parameters.packageTypesOverride }} --json
+        flub release setPackageTypesField -g ${{ parameters.tagName }} --types ${{ parameters.packageTypesOverride }} --json
