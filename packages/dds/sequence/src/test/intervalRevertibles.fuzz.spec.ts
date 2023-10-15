@@ -17,13 +17,7 @@ import {
 	DDSFuzzSuiteOptions,
 } from "@fluid-internal/test-dds-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import {
-	IFluidDataStoreRuntime,
-	IChannelServices,
-	IChannelAttributes,
-} from "@fluidframework/datastore-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { SharedStringFactory } from "../sequenceFactory";
 import {
 	appendAddIntervalToRevertibles,
 	appendChangeIntervalToRevertibles,
@@ -31,7 +25,6 @@ import {
 	appendIntervalPropertyChangedToRevertibles,
 	appendSharedStringDeltaToRevertibles,
 } from "../revertibles";
-import { SharedString } from "../sharedString";
 import { assertEquivalentSharedStrings } from "./intervalUtils";
 import {
 	Operation,
@@ -42,25 +35,9 @@ import {
 	isRevertibleSharedString,
 	IntervalOperationGenerationConfig,
 	RevertSharedStringRevertibles,
+	SharedStringFuzzFactory,
 } from "./intervalCollection.fuzzUtils";
 import { makeOperationGenerator } from "./intervalCollection.fuzz.spec";
-
-class RevertibleFactory extends SharedStringFactory {
-	public async load(
-		runtime: IFluidDataStoreRuntime,
-		id: string,
-		services: IChannelServices,
-		attributes: IChannelAttributes,
-	): Promise<SharedString> {
-		runtime.options.intervalStickinessEnabled = true;
-		return super.load(runtime, id, services, attributes);
-	}
-
-	public create(document: IFluidDataStoreRuntime, id: string): SharedString {
-		document.options.intervalStickinessEnabled = true;
-		return super.create(document, id);
-	}
-}
 
 const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 
@@ -171,7 +148,7 @@ function operationGenerator(
 }
 
 describe("IntervalCollection fuzz testing", () => {
-	const model: DDSFuzzModel<RevertibleFactory, RevertOperation, FuzzTestState> = {
+	const model: DDSFuzzModel<SharedStringFuzzFactory, RevertOperation, FuzzTestState> = {
 		workloadName: "interval collection with revertibles",
 		generatorFactory: () =>
 			take(
@@ -195,14 +172,14 @@ describe("IntervalCollection fuzz testing", () => {
 			// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
 			makeReducer(),
 		validateConsistency: assertEquivalentSharedStrings,
-		factory: new RevertibleFactory(),
+		factory: new SharedStringFuzzFactory(),
 	};
 
 	createDDSFuzzSuite(model, optionsWithEmitter);
 });
 
 describe("IntervalCollection fuzz testing with rebasing", () => {
-	const model: DDSFuzzModel<RevertibleFactory, RevertOperation, FuzzTestState> = {
+	const model: DDSFuzzModel<SharedStringFuzzFactory, RevertOperation, FuzzTestState> = {
 		workloadName: "interval collection with revertibles and rebasing",
 		generatorFactory: () =>
 			take(
@@ -226,7 +203,7 @@ describe("IntervalCollection fuzz testing with rebasing", () => {
 			// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
 			makeReducer(),
 		validateConsistency: assertEquivalentSharedStrings,
-		factory: new RevertibleFactory(),
+		factory: new SharedStringFuzzFactory(),
 	};
 
 	createDDSFuzzSuite(model, {

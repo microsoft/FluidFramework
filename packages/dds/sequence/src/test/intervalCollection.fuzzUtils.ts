@@ -10,6 +10,11 @@ import {
 	AsyncReducer as Reducer,
 } from "@fluid-internal/stochastic-test-utils";
 import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
+import {
+	IChannelAttributes,
+	IChannelServices,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions";
 import { PropertySet } from "@fluidframework/merge-tree";
 import { revertSharedStringRevertibles, SharedStringRevertible } from "../revertibles";
 import { SharedStringFactory } from "../sequenceFactory";
@@ -299,4 +304,21 @@ export function createSharedStringGeneratorOperations(
 		hasNonzeroLength,
 		isShorterThanMaxLength,
 	};
+}
+
+export class SharedStringFuzzFactory extends SharedStringFactory {
+	public async load(
+		runtime: IFluidDataStoreRuntime,
+		id: string,
+		services: IChannelServices,
+		attributes: IChannelAttributes,
+	): Promise<SharedString> {
+		runtime.options.intervalStickinessEnabled = true;
+		return super.load(runtime, id, services, attributes);
+	}
+
+	public create(document: IFluidDataStoreRuntime, id: string): SharedString {
+		document.options.intervalStickinessEnabled = true;
+		return super.create(document, id);
+	}
 }

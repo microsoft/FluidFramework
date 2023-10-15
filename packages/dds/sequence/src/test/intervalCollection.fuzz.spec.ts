@@ -17,15 +17,9 @@ import {
 	DDSFuzzSuiteOptions,
 } from "@fluid-internal/test-dds-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
-import {
-	IChannelAttributes,
-	IChannelServices,
-	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { IIntervalCollection, Side } from "../intervalCollection";
 import { SharedStringFactory } from "../sequenceFactory";
-import { SharedString } from "../sharedString";
 import { SequenceInterval } from "../intervals";
 import { assertEquivalentSharedStrings } from "./intervalUtils";
 import {
@@ -40,6 +34,7 @@ import {
 	IntervalOperationGenerationConfig,
 	defaultIntervalOperationGenerationConfig,
 	createSharedStringGeneratorOperations,
+	SharedStringFuzzFactory,
 } from "./intervalCollection.fuzzUtils";
 
 type ClientOpState = FuzzTestState;
@@ -192,23 +187,6 @@ export function makeOperationGenerator(
 	]);
 }
 
-class IntervalCollectionFuzzFactory extends SharedStringFactory {
-	public async load(
-		runtime: IFluidDataStoreRuntime,
-		id: string,
-		services: IChannelServices,
-		attributes: IChannelAttributes,
-	): Promise<SharedString> {
-		runtime.options.intervalStickinessEnabled = true;
-		return super.load(runtime, id, services, attributes);
-	}
-
-	public create(document: IFluidDataStoreRuntime, id: string): SharedString {
-		document.options.intervalStickinessEnabled = true;
-		return super.create(document, id);
-	}
-}
-
 const baseModel: Omit<
 	DDSFuzzModel<SharedStringFactory, Operation, FuzzTestState>,
 	"workloadName"
@@ -220,7 +198,7 @@ const baseModel: Omit<
 		// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
 		makeReducer(),
 	validateConsistency: assertEquivalentSharedStrings,
-	factory: new IntervalCollectionFuzzFactory(),
+	factory: new SharedStringFuzzFactory(),
 	minimizationTransforms: [
 		(op) => {
 			if (op.type !== "addText") {

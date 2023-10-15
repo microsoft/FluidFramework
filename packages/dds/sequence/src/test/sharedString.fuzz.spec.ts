@@ -15,7 +15,6 @@ import {
 	DDSFuzzSuiteOptions,
 } from "@fluid-internal/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { SharedStringFactory } from "../sequenceFactory";
 import { assertEquivalentSharedStrings } from "./intervalUtils";
 import {
 	Operation,
@@ -24,6 +23,7 @@ import {
 	defaultIntervalOperationGenerationConfig,
 	createSharedStringGeneratorOperations,
 	SharedStringOperationGenerationConfig,
+	SharedStringFuzzFactory,
 } from "./intervalCollection.fuzzUtils";
 
 type ClientOpState = FuzzTestState;
@@ -56,7 +56,7 @@ export function makeSharedStringOperationGenerator(
 }
 
 const baseModel: Omit<
-	DDSFuzzModel<SharedStringFactory, Operation, FuzzTestState>,
+	DDSFuzzModel<SharedStringFuzzFactory, Operation, FuzzTestState>,
 	"workloadName"
 > = {
 	generatorFactory: () =>
@@ -66,7 +66,7 @@ const baseModel: Omit<
 		// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
 		makeReducer(),
 	validateConsistency: assertEquivalentSharedStrings,
-	factory: new SharedStringFactory(),
+	factory: new SharedStringFuzzFactory(),
 };
 
 const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
