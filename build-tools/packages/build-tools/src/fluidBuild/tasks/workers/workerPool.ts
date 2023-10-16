@@ -82,7 +82,7 @@ export class WorkerPool {
 		try {
 			if (this.useWorkerThreads) {
 				const worker = this.getThreadWorker();
-				const res = await new Promise<WorkerExecResultWithOutput>((res, rej) => {
+				const res = await new Promise<WorkerExecResultWithOutput>((res) => {
 					setupWorker(worker, res);
 					worker.postMessage(workerMessage);
 				});

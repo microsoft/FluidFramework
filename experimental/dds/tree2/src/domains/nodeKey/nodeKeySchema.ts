@@ -6,11 +6,11 @@
 import { assert } from "@fluidframework/core-utils";
 import { ValueSchema } from "../../core";
 import {
-	SchemaBuilder,
 	nodeKeyFieldKey,
 	FieldKinds,
 	nodeKeyTreeIdentifier,
 	SchemaBuilderInternal,
+	FieldSchema,
 } from "../../feature-libraries";
 
 const builder = new SchemaBuilderInternal({ scope: "com.fluidframework.nodeKey" });
@@ -24,7 +24,7 @@ const builder = new SchemaBuilderInternal({ scope: "com.fluidframework.nodeKey" 
  * This might need to be changed to be a node holding a string node instead.
  */
 export const nodeKeyTreeSchema = builder.leaf("NodeKey", ValueSchema.String);
-assert(nodeKeyTreeSchema.name === nodeKeyTreeIdentifier, "mismatched identifiers");
+assert(nodeKeyTreeSchema.name === nodeKeyTreeIdentifier, 0x7ae /* mismatched identifiers */);
 
 /**
  * Key and Field schema for working with {@link LocalNodeKey}s in a shared tree.
@@ -35,7 +35,7 @@ assert(nodeKeyTreeSchema.name === nodeKeyTreeIdentifier, "mismatched identifiers
  * @alpha
  */
 export const nodeKeyField = {
-	[nodeKeyFieldKey]: SchemaBuilder.field(FieldKinds.nodeKey, nodeKeyTreeSchema),
+	[nodeKeyFieldKey]: FieldSchema.create(FieldKinds.nodeKey, [nodeKeyTreeSchema]),
 };
 
 /**

@@ -86,9 +86,6 @@ function invert(change: TaggedChange<OptionalChangeset>): OptionalChangeset {
 	return optionalChangeRebaser.invert(
 		change,
 		TestChange.invert as any,
-		// Note: content here is arbitrary. If adding or changing this test suite, this NodeReviver implementation
-		// may need to be changed.
-		() => [singleTextCursor({ type, value: "revived" })],
 		// Optional fields should not generate IDs during invert
 		fakeIdAllocator,
 		failCrossFieldManager,

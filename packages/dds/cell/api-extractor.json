@@ -1,4 +1,13 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-	"extends": "@fluidframework/build-common/api-extractor-common-report.json"
+	"extends": "@fluidframework/build-common/api-extractor-base.json",
+
+	// TODO: Fix violations and remove these rule overrides
+	"messages": {
+		"extractorMessageReporting": {
+			"ae-forgotten-export": {
+				"logLevel": "none"
+			}
+		}
+	}
 }
