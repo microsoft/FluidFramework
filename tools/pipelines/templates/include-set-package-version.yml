@@ -122,14 +122,18 @@ steps:
         flub release setPackageTypesField -g ${{ parameters.tagName }} --types ${{ parameters.packageTypesOverride }}
 
 # Set INTERDEPENDENCY_RANGE
-- name: Calculate INTERDEPENDENCY_RANGE
-  id: calculateInterdependencyRange
-  run: |
-    if [[ "${{ parameters.packageTypesOverride }}" == "alpha" ]] || [[ "${{ parameters.packageTypesOverride }}" == "beta" ]]; then
-      echo "##vso[task.setvariable variable=INTERDEPENDENCY_RANGE]exact"
-    else
-      echo "##vso[task.setvariable variable=INTERDEPENDENCY_RANGE;isOutput=true]$(interdependencyRange)"
-    fi
+- task: Bash@3
+  name: calculateInterdependencyRange
+  displayName: Calculate INTERDEPENDENCY_RANGE
+  inputs:
+    targetType: 'inline'
+    workingDirectory: ${{ parameters.buildDirectory }}
+    script: |
+      if [[ "${{ parameters.packageTypesOverride }}" == "alpha" ]] || [[ "${{ parameters.packageTypesOverride }}" == "beta" ]]; then
+        echo "##vso[task.setvariable variable=INTERDEPENDENCY_RANGE]exact"
+      else
+        echo "##vso[task.setvariable variable=INTERDEPENDENCY_RANGE;isOutput=true]$(interdependencyRange)"
+      fi
 
 - task: Bash@3
   displayName: Update Package Version (flub)
