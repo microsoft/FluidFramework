@@ -116,9 +116,7 @@ export class CheckpointService implements ICheckpointService {
 
 		try {
 			await this.documentRepository.updateOne(checkpointFilter, checkpointData, null);
-			if (this.globalCheckpointFailed) {
-				this.globalCheckpointFailed = false;
-			}
+			this.globalCheckpointFailed = false;
 		} catch (error) {
 			Lumberjack.error(
 				`Error writing checkpoint to the global database.`,
