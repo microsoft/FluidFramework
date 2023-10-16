@@ -212,10 +212,6 @@
 				"forwardCompat": false,
 				"backCompat": false
 			},
-			"RemovedInterfaceDeclaration_IJSONTextSegment": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
 			"RemovedEnumDeclaration_PropertiesRollback": {
 				"forwardCompat": false,
 				"backCompat": false

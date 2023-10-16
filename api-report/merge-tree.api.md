@@ -335,6 +335,12 @@ export interface IJSONSegment {
 }
 
 // @public (undocumented)
+export interface IJSONTextSegment extends IJSONSegment {
+    // (undocumented)
+    text: string;
+}
+
+// @public (undocumented)
 export interface IMarkerDef {
     // (undocumented)
     refType?: ReferenceType;
@@ -907,13 +913,13 @@ export function refTypeIncludesFlag(refPosOrType: ReferencePosition | ReferenceT
 // @public (undocumented)
 export const reservedMarkerIdKey = "markerId";
 
-// @internal (undocumented)
+// @public (undocumented)
 export const reservedMarkerSimpleTypeKey = "markerSimpleType";
 
-// @internal (undocumented)
+// @public (undocumented)
 export const reservedRangeLabelsKey = "referenceRangeLabels";
 
-// @internal (undocumented)
+// @public (undocumented)
 export const reservedTileLabelsKey = "referenceTileLabels";
 
 // @alpha (undocumented)
@@ -1043,10 +1049,7 @@ export class TextSegment extends BaseSegment {
     // (undocumented)
     text: string;
     // (undocumented)
-    toJSONObject(): string | {
-        text: string;
-        props: PropertySet;
-    };
+    toJSONObject(): IJSONTextSegment | string;
     // (undocumented)
     toString(): string;
     // (undocumented)

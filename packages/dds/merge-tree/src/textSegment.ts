@@ -55,7 +55,7 @@ export class TextSegment extends BaseSegment {
 		this.cachedLength = text.length;
 	}
 
-	public toJSONObject() {
+	public toJSONObject(): IJSONTextSegment | string {
 		// To reduce snapshot/ops size, we serialize a TextSegment as a plain 'string' if it is
 		// not annotated.
 		return this.properties ? { text: this.text, props: this.properties } : this.text;

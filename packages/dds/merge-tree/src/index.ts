@@ -112,7 +112,7 @@ export { SegmentGroupCollection } from "./segmentGroupCollection";
 export { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManager";
 export { SortedSet } from "./sortedSet";
 export { SortedSegmentSet, SortedSegmentSetItem } from "./sortedSegmentSet";
-export { IMergeTreeTextHelper, TextSegment } from "./textSegment";
+export { IJSONTextSegment, IMergeTreeTextHelper, TextSegment } from "./textSegment";
 export {
 	appendToMergeTreeDeltaRevertibles,
 	discardMergeTreeDeltaRevertible,

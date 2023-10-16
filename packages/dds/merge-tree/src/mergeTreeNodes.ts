@@ -568,10 +568,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 }
 
 export const reservedMarkerIdKey = "markerId";
-
-/**
- * @internal
- */
 export const reservedMarkerSimpleTypeKey = "markerSimpleType";
 
 export interface IJSONMarkerSegment extends IJSONSegment {
