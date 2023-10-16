@@ -195,6 +195,12 @@ export function* filterLocalReferencePositions(
  * one segment in a merge-tree.
  */
 export class LocalReferenceCollection {
+	/**
+	 * Injectable hook for validating that the refCount property matches the
+	 * expected value
+	 *
+	 * @internal
+	 */
 	public static validateRefCount?: (collection?: LocalReferenceCollection) => void;
 
 	public static append(seg1: ISegment, seg2: ISegment) {

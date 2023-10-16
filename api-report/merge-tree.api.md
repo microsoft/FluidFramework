@@ -647,6 +647,8 @@ export class LocalReferenceCollection {
     removeLocalRef(lref: LocalReferencePosition): LocalReferencePosition | undefined;
     // @internal
     split(offset: number, splitSeg: ISegment): void;
+    // @internal
+    static validateRefCount?: (collection?: LocalReferenceCollection) => void;
     // @internal (undocumented)
     walkReferences(visitor: (lref: LocalReferencePosition) => boolean | void | undefined, start?: LocalReferencePosition, forward?: boolean): boolean;
 }
