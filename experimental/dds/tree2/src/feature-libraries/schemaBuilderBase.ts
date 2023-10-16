@@ -20,6 +20,8 @@ import {
 	Any,
 } from "./typed-schema";
 import { FieldKind } from "./modular-schema";
+import { FieldKinds } from "./default-field-kinds";
+import { SchemaBuilder } from "../domains";
 
 /**
  * Configuration for a SchemaBuilder.
@@ -167,22 +169,7 @@ export class SchemaBuilderBase<
 		root: TSchema,
 	): TypedSchemaCollection<NormalizeField<TSchema, TDefaultKind>>;
 
-	/**
-	 * Finalizes the schema builder, producing SchemaLibraries that capture the content added to this builder,
-	 * any additional SchemaLibraries that were added to it, and (optionally) the schema of a root field.
-	 *
-	 * @remarks
-	 * May only be called once after adding content to builder is complete.
-	 *
-	 * @param root - Optional root field schema.
-	 * If provided, this will return a {@link TypedSchemaCollection} that may be used in the construction of trees.
-	 * If not provided, this will return a {@link SchemaLibrary} for use with future `SchemaBuilder`s.
-	 *
-	 * @typeParam TSchema - The kind of field schema of `root`.
-	 *
-	 * @returns A {@link TypedSchemaCollection} if given a `root` field schema, otherwise a {@link SchemaLibrary}
-	 * usable with future `SchemaBuilder`s.
-	 */
+	// Implementation of `finalize` signatures above.
 	public finalize<const TSchema extends ImplicitFieldSchema>(
 		root?: TSchema,
 	): SchemaLibrary | TypedSchemaCollection<NormalizeField<TSchema, TDefaultKind>> {
