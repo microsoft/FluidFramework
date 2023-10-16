@@ -148,9 +148,7 @@ export function OpLatencyView(): React.ReactElement {
 		return (): void => {
 			messageRelay.off("message", messageHandler);
 		};
-	}, [
-		messageRelay,
-	]);
+	}, [messageRelay]);
 
 	return (
 		<div className={styles.mainContainer} data-testid="test-op-latency-view">
