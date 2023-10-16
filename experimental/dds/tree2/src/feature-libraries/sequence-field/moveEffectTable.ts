@@ -304,7 +304,6 @@ export function applyMoveEffectsToMark<T>(
 	if (isTransientEffect(mark)) {
 		if (isMoveDestination(mark.attach)) {
 			if (isMoveSource(mark.detach)) {
-				// XXX: Do we need to apply move effects to this kind of mark?
 				return [mark];
 			}
 			const attachRevision = mark.attach.revision ?? mark.revision ?? revision;
