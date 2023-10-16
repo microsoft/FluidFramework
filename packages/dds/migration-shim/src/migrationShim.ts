@@ -28,7 +28,7 @@ import { type SharedTreeFactory, type ISharedTree } from "@fluid-experimental/tr
 import { assert } from "@fluidframework/core-utils";
 
 /**
- * Interface for migration events.
+ * Interface for migration events to indicate the stage of the migration. There really is two stages: before, and after.
  *
  * @public
  */
@@ -48,17 +48,20 @@ export interface IMigrationOp {
 	 */
 	type: "hotSwap";
 	/**
-	 * Old channel attributes.
+	 * Old channel attributes so we can do verification and understand what changed. This will allow future clients to
+	 * accurately reason about what state of the document was before the migration op initiated at.
 	 */
 	oldAttributes: IChannelAttributes;
 	/**
-	 * New channel attributes.
+	 * New channel attributes so we can do verification and understand what changed. This will allow future clients to
+	 * accurately reason about what the migration state of the new container is expected to be.
 	 */
 	newAttributes: IChannelAttributes;
 }
 
 /**
- * Create skeleton Migration Shim that can hot swap from one DDS to a new DDS.
+ * This MigrationShim is responsible for submitting a migration op, processing the migrate op, swapping from the old
+ * tree to the new tree, loading an old tree snapshot and creating an old tree.
  *
  * @public
  */

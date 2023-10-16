@@ -31,7 +31,8 @@ export class SharedTreeShimFactory implements IChannelFactory {
 	public constructor(private readonly factory: SharedTreeFactory) {}
 
 	/**
-	 * Can only load the new SharedTree
+	 * Can only load the new SharedTree - this allows our snapshots to be simple. We do not have to consider any new
+	 * unique snapshot formats and how to load from them.
 	 *
 	 * {@link @fluidframework/datastore-definitions#IChannelFactory."type"}
 	 */
@@ -40,7 +41,8 @@ export class SharedTreeShimFactory implements IChannelFactory {
 	}
 
 	/**
-	 * Should be the new SharedTree attributes
+	 * Should be the new SharedTree attributes - this should indicate what type of tree snapshot we are expecting or
+	 * are capable of loading from.
 	 *
 	 * {@link @fluidframework/datastore-definitions#IChannelFactory.attributes}
 	 */
@@ -51,7 +53,7 @@ export class SharedTreeShimFactory implements IChannelFactory {
 	/**
 	 * {@link @fluidframework/datastore-definitions#IChannelFactory.load}
 	 *
-	 * Should be loading the SharedTreeShim from a new SharedTree snapshot only
+	 * Should be loading the SharedTreeShim from a new SharedTree snapshot only.
 	 */
 	public async load(
 		runtime: IFluidDataStoreRuntime,
@@ -69,7 +71,8 @@ export class SharedTreeShimFactory implements IChannelFactory {
 	/**
 	 * {@link @fluidframework/datastore-definitions#IChannelFactory.create}
 	 *
-	 * Should be only creating the SharedTreeShim
+	 * Should be only creating the SharedTreeShim, which will only generate a new SharedTree snapshot. That way we do
+	 * not have the capability of accidentally creating a LegacySharedTree snapshot.
 	 */
 	public create(runtime: IFluidDataStoreRuntime, id: string): SharedTreeShim {
 		const sharedTree = this.factory.create(runtime, id);

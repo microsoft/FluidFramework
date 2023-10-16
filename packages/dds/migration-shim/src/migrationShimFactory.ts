@@ -58,7 +58,8 @@ export class MigrationShimFactory implements IChannelFactory {
 	/**
 	 * {@link @fluidframework/datastore-definitions#IChannelFactory.load}
 	 *
-	 * Should be loading the MigrationShim
+	 * Should be loading the MigrationShim - it should just load the old tree as this makes the factory's
+	 * responsibility simple. Trying to follow the Single Responsibility Principle here.
 	 */
 	public async load(
 		runtime: IFluidDataStoreRuntime,
@@ -81,7 +82,9 @@ export class MigrationShimFactory implements IChannelFactory {
 	/**
 	 * {@link @fluidframework/datastore-definitions#IChannelFactory.create}
 	 *
-	 * Create MigrationShim that can hot swap from one DDS to a new DDS.
+	 * Create MigrationShim that can hot swap from one DDS to a new DDS. We want the capability of creating an old tree
+	 * as when this code rolls out, there may be clients on the v1 version of the code, and we may want to have a dark
+	 * rollout capability.
 	 */
 	public create(runtime: IFluidDataStoreRuntime, id: string): MigrationShim {
 		const migrationShim = new MigrationShim(

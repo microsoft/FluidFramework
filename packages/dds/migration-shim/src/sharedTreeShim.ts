@@ -17,7 +17,10 @@ import {
 import { type ISharedTree } from "@fluid-experimental/tree2";
 
 /**
- * Create SharedTree Shim to load after the LegacySharedTree was migrated to SharedTree
+ * Create SharedTree Shim to load after the LegacySharedTree was migrated to SharedTree. This should just load after
+ * the migration is complete and the SharedTree is ready to be used. It's sole responsibility should be to drop v1 &
+ * migrate ops. It should not be responsible for any other migration logic. This should make the class easier to reason
+ * about.
  */
 export class SharedTreeShim implements IChannel {
 	public constructor(
