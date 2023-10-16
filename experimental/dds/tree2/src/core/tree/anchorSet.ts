@@ -615,7 +615,10 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				);
 			},
 			beforeAttach(source: FieldKey, count: number, destination: PlaceIndex): void {
-				assert(this.parentField !== undefined, "Must be in a field in order to attach");
+				assert(
+					this.parentField !== undefined,
+					0x7a0 /* Must be in a field in order to attach */,
+				);
 				const destinationPath: PlaceUpPath = {
 					parent: this.parent,
 					field: this.parentField,
@@ -633,7 +636,10 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				}
 			},
 			afterAttach(source: FieldKey, destination: Range): void {
-				assert(this.parentField !== undefined, "Must be in a field in order to attach");
+				assert(
+					this.parentField !== undefined,
+					0x7a1 /* Must be in a field in order to attach */,
+				);
 				const sourcePath: DetachedPlaceUpPath = brand({
 					field: source,
 					index: 0,
@@ -654,7 +660,10 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				this.attachEdit(source, count, destination);
 			},
 			attachEdit(source: FieldKey, count: number, destination: PlaceIndex): void {
-				assert(this.parentField !== undefined, "Must be in a field in order to attach");
+				assert(
+					this.parentField !== undefined,
+					0x7a2 /* Must be in a field in order to attach */,
+				);
 				const sourcePath = {
 					parent: this.anchorSet.root,
 					parentField: source,
@@ -668,7 +677,10 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				this.anchorSet.moveChildren(sourcePath, destinationPath, count);
 			},
 			beforeDetach(source: Range, destination: FieldKey): void {
-				assert(this.parentField !== undefined, "Must be in a field in order to attach");
+				assert(
+					this.parentField !== undefined,
+					0x7a3 /* Must be in a field in order to attach */,
+				);
 				const sourcePath: RangeUpPath = {
 					parent: this.parent,
 					field: this.parentField,
@@ -685,7 +697,10 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				}
 			},
 			afterDetach(source: PlaceIndex, count: number, destination: FieldKey): void {
-				assert(this.parentField !== undefined, "Must be in a field in order to attach");
+				assert(
+					this.parentField !== undefined,
+					0x7a4 /* Must be in a field in order to attach */,
+				);
 				const sourcePath: PlaceUpPath = {
 					parent: this.parent,
 					field: this.parentField,
@@ -707,7 +722,10 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				this.detachEdit(source, destination);
 			},
 			detachEdit(source: Range, destination: FieldKey): void {
-				assert(this.parentField !== undefined, "Must be in a field in order to detach");
+				assert(
+					this.parentField !== undefined,
+					0x7a5 /* Must be in a field in order to detach */,
+				);
 				const sourcePath = {
 					parent: this.parent,
 					parentField: this.parentField,
@@ -721,7 +739,10 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				this.anchorSet.moveChildren(sourcePath, destinationPath, source.end - source.start);
 			},
 			beforeReplace(newContent: FieldKey, oldContent: Range, destination: FieldKey): void {
-				assert(this.parentField !== undefined, "Must be in a field in order to replace");
+				assert(
+					this.parentField !== undefined,
+					0x7a6 /* Must be in a field in order to replace */,
+				);
 				const oldContentPath: RangeUpPath = {
 					parent: this.parent,
 					field: this.parentField,
@@ -751,7 +772,10 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				newContent: Range,
 				oldContent: FieldKey,
 			): void {
-				assert(this.parentField !== undefined, "Must be in a field in order to replace");
+				assert(
+					this.parentField !== undefined,
+					0x7a7 /* Must be in a field in order to replace */,
+				);
 				const newContentPath: RangeUpPath = {
 					parent: this.parent,
 					field: this.parentField,

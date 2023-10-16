@@ -3,20 +3,23 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { SchemaBuilder, Any } from "../../feature-libraries";
+import { Any } from "../../feature-libraries";
 import { createSharedTreeView } from "../../shared-tree";
-import { ValueSchema, AllowedUpdateType, storedEmptyFieldSchema } from "../../core";
+import { AllowedUpdateType, storedEmptyFieldSchema } from "../../core";
+import { leaf, SchemaBuilder } from "../../domains";
 
-const builder = new SchemaBuilder({ scope: "test", name: "Schematize Tree Tests" });
-const root = builder.leaf("root", ValueSchema.Number);
-const schema = builder.toDocumentSchema(SchemaBuilder.fieldOptional(root));
+const builder = new SchemaBuilder({
+	scope: "test",
+	name: "Schematize Tree Tests",
+});
+const schema = builder.finalize(SchemaBuilder.optional(leaf.number));
 
 const builderGeneralized = new SchemaBuilder({
 	scope: "test",
 	name: "Schematize Tree Tests Generalized",
 });
-const rootGeneralized = builderGeneralized.leaf("root", ValueSchema.Number);
-const schemaGeneralized = builderGeneralized.toDocumentSchema(SchemaBuilder.fieldOptional(Any));
+
+const schemaGeneralized = builderGeneralized.finalize(SchemaBuilder.optional(Any));
 
 describe("sharedTreeView", () => {
 	describe("schematize", () => {

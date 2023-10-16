@@ -41,7 +41,7 @@ export async function createBumpBranch(
 	context: Context,
 	releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
 	bumpType: VersionBumpType,
-) {
+): Promise<string> {
 	const version = context.getVersion(releaseGroupOrPackage);
 	const name = generateBumpVersionBranchName(releaseGroupOrPackage, bumpType, version);
 	await context.createBranch(name);
@@ -68,7 +68,7 @@ export function generateBumpVersionBranchName(
 	bumpType: VersionChangeTypeExtended,
 	version: ReleaseVersion,
 	scheme?: VersionScheme,
-) {
+): string {
 	const newVersion = isVersionBumpTypeExtended(bumpType)
 		? bumpVersionScheme(version, bumpType, scheme)
 		: bumpType.version;
@@ -76,6 +76,7 @@ export function generateBumpVersionBranchName(
 		? releaseGroupOrPackage
 		: PackageName.getUnscopedName(releaseGroupOrPackage);
 	const bumpTypeLog = isVersionBumpTypeExtended(bumpType) ? bumpType : "exact";
+	// eslint-disable-next-line @typescript-eslint/no-base-to-string
 	const branchName = `bump_${name.toLowerCase()}_${bumpTypeLog}_${newVersion}`;
 	return branchName;
 }
@@ -185,6 +186,7 @@ export function generateBumpVersionCommitMessage(
 		? releaseGroupOrPackage
 		: PackageName.getUnscopedName(releaseGroupOrPackage);
 	const bumpTypeLog = isVersionBumpTypeExtended(bumpType) ? bumpType : "exact";
+	// eslint-disable-next-line @typescript-eslint/no-base-to-string
 	const message = `[bump] ${name}: ${version} => ${newVersion} (${bumpTypeLog})\n\nBumped ${name} from ${version} to ${newVersion}.`;
 	return message;
 }

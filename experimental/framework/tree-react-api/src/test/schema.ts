@@ -3,17 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKinds, SchemaBuilder, TypedField, leaf } from "@fluid-experimental/tree2";
+import { SchemaBuilder, TypedField, leaf } from "@fluid-experimental/tree2";
 
-const builder = new SchemaBuilder({ scope: "tree-react-api", libraries: [leaf.library] });
+const builder = new SchemaBuilder({ scope: "tree-react-api" });
 
 export const inventory = builder.struct("Contoso:Inventory-1.0.0", {
-	nuts: SchemaBuilder.field(FieldKinds.required, leaf.number),
-	bolts: SchemaBuilder.field(FieldKinds.required, leaf.number),
+	nuts: leaf.number,
+	bolts: leaf.number,
 });
 
-export const inventoryField = SchemaBuilder.field(FieldKinds.required, inventory);
-
-export const schema = builder.toDocumentSchema(inventoryField);
+export const schema = builder.finalize(inventory);
 
 export type Inventory = TypedField<typeof schema.rootFieldSchema>;

@@ -11,8 +11,8 @@ import { Format, makeSchemaCodec } from "../../feature-libraries/schemaIndexForm
 
 import { FieldKindIdentifier, SchemaData } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
-import { jsonSchema, jsonRoot } from "../../domains";
-import { defaultSchemaPolicy, allowsRepoSuperset, SchemaBuilder } from "../../feature-libraries";
+import { jsonSchema, jsonRoot, SchemaBuilder } from "../../domains";
+import { defaultSchemaPolicy, allowsRepoSuperset } from "../../feature-libraries";
 
 const codec = makeSchemaCodec({ jsonValidator: typeboxValidator });
 
@@ -23,7 +23,7 @@ describe("SchemaIndex", () => {
 		const data: SchemaData = new SchemaBuilder({
 			scope: "roundtrip",
 			libraries: [jsonSchema],
-		}).toDocumentSchema(SchemaBuilder.fieldOptional(...jsonRoot));
+		}).finalize(SchemaBuilder.optional(jsonRoot));
 		const s = codec.encode(data);
 		const parsed = codec.decode(s);
 		const s2 = codec.encode(parsed);

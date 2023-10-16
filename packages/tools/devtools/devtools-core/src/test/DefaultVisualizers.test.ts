@@ -410,20 +410,20 @@ describe("DefaultVisualizers unit tests", () => {
 		const sharedTree = factory.create(new MockFluidDataStoreRuntime(), "test");
 
 		const leafSchema = builder.struct("leaf-item", {
-			leafField: SchemaBuilder.fieldRequired(leaf.boolean, leaf.handle, leaf.string),
+			leafField: [leaf.boolean, leaf.handle, leaf.string],
 		});
 
 		const childSchema = builder.struct("child-item", {
-			childField: SchemaBuilder.fieldRequired(leaf.string, leaf.boolean),
-			childData: SchemaBuilder.fieldOptional(leafSchema),
+			childField: [leaf.string, leaf.boolean],
+			childData: builder.optional(leafSchema),
 		});
 
 		const rootNodeSchema = builder.struct("root-item", {
-			childrenOne: SchemaBuilder.fieldSequence(childSchema),
-			childrenTwo: SchemaBuilder.fieldRequired(leaf.number),
+			childrenOne: builder.sequence(childSchema),
+			childrenTwo: leaf.number,
 		});
 
-		const schema = builder.toDocumentSchema(SchemaBuilder.fieldRequired(rootNodeSchema));
+		const schema = builder.finalize(rootNodeSchema);
 
 		sharedTree.schematize({
 			schema,

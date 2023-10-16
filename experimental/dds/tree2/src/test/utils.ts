@@ -41,6 +41,7 @@ import {
 	createSharedTreeView,
 	SharedTree,
 	InitializeAndSchematizeConfiguration,
+	runSynchronous,
 } from "../shared-tree";
 import {
 	Any,
@@ -61,7 +62,6 @@ import {
 	RevisionInfo,
 	RevisionMetadataSource,
 	revisionMetadataSourceFromInfo,
-	SchemaBuilder,
 	singleTextCursor,
 	TypedField,
 } from "../feature-libraries";
@@ -102,7 +102,14 @@ import {
 import { JsonCompatible, Named, brand } from "../util";
 import { ICodecFamily, withSchemaValidation } from "../codec";
 import { typeboxValidator } from "../external-utilities";
-import { cursorToJsonObject, jsonRoot, jsonSchema, jsonString, singleJsonCursor } from "../domains";
+import {
+	cursorToJsonObject,
+	jsonRoot,
+	jsonSchema,
+	singleJsonCursor,
+	SchemaBuilder,
+	leaf,
+} from "../domains";
 import { HasListeners, IEmitter, ISubscribable } from "../events";
 
 // Testing utilities
@@ -613,11 +620,17 @@ export function treeWithContent<TRoot extends FieldSchema>(
 	);
 }
 
-const jsonSequenceRootField = SchemaBuilder.fieldSequence(...jsonRoot);
+const jsonSequenceRootField = SchemaBuilder.sequence(jsonRoot);
 export const jsonSequenceRootSchema = new SchemaBuilder({
 	scope: "JsonSequenceRoot",
 	libraries: [jsonSchema],
-}).toDocumentSchema(jsonSequenceRootField);
+}).finalize(jsonSequenceRootField);
+
+export const emptyJsonSequenceConfig: InitializeAndSchematizeConfiguration = {
+	schema: jsonSequenceRootSchema,
+	allowedSchemaModifications: AllowedUpdateType.None,
+	initialTree: [],
+};
 
 /**
  * If the root is an array, this creates a sequence field at the root instead of a JSON array node.
@@ -665,7 +678,7 @@ export function toJsonTree(tree: ISharedTreeView): JsonCompatible[] {
  */
 export function insert(tree: ISharedTreeView, index: number, ...values: string[]): void {
 	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
-	const nodes = values.map((value) => singleTextCursor({ type: jsonString.name, value }));
+	const nodes = values.map((value) => singleTextCursor({ type: leaf.string.name, value }));
 	field.insert(index, nodes);
 }
 
@@ -688,18 +701,31 @@ export function expectJsonTree(
 /**
  * Updates the given `tree` to the given `schema` and inserts `state` as its root.
  */
+// TODO: replace use of this with initialize or schematize, and/or move them out of this file and use viewWithContent
 export function initializeTestTree(
 	tree: ISharedTreeView,
-	state: JsonableTree | undefined,
-	schema: SchemaData,
+	state: JsonableTree | JsonableTree[] | undefined,
+	schema: SchemaData = wrongSchema,
 ): void {
-	tree.storedSchema.update(schema);
+	if (state === undefined) {
+		tree.storedSchema.update(schema);
+		return;
+	}
 
-	if (state) {
+	if (!Array.isArray(state)) {
+		initializeTestTree(tree, [state], schema);
+	} else {
+		tree.storedSchema.update(schema);
+
 		// Apply an edit to the tree which inserts a node with a value
-		const writeCursor = singleTextCursor(state);
-		const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
-		field.insert(0, writeCursor);
+		runSynchronous(tree, () => {
+			const writeCursors = state.map(singleTextCursor);
+			const field = tree.editor.sequenceField({
+				parent: undefined,
+				field: rootFieldKey,
+			});
+			field.insert(0, writeCursors);
+		});
 	}
 }
 
@@ -874,7 +900,7 @@ export const wrongSchema = new SchemaBuilder({
 	lint: {
 		rejectEmpty: false,
 	},
-}).toDocumentSchema(SchemaBuilder.fieldSequence(Any));
+}).finalize(SchemaBuilder.sequence(Any));
 
 /**
  * Schematize config Schema which is not correct.
