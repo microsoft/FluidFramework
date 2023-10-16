@@ -180,7 +180,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     // (undocumented)
     updateMinSeq(minSeq: number): void;
     // (undocumented)
-    updateSeqNumbers(min: number, seq: number, clientSeq: number): void;
+    updateSeqNumbers(min: number, seq: number): void;
     // (undocumented)
     protected walkAllSegments<TClientData>(action: (segment: ISegment, accum?: TClientData) => boolean, accum?: TClientData): boolean;
     // (undocumented)
@@ -198,8 +198,6 @@ export class CollaborationWindow {
     clientId: number;
     // (undocumented)
     collaborating: boolean;
-    // (undocumented)
-    currentClientSeq?: number | undefined;
     // (undocumented)
     currentSeq: number;
     // (undocumented)

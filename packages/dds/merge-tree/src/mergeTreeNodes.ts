@@ -714,9 +714,6 @@ export class CollaborationWindow {
 	// reference segment for this client
 	currentSeq = 0;
 
-	// Grouped batching means seqNum can potentially be the same for different ops. Use clientSeqNum to differentiate
-	currentClientSeq? = 0;
-
 	localSeq = 0;
 
 	loadFrom(a: CollaborationWindow) {
@@ -724,7 +721,6 @@ export class CollaborationWindow {
 		this.collaborating = a.collaborating;
 		this.minSeq = a.minSeq;
 		this.currentSeq = a.currentSeq;
-		this.currentClientSeq = a.currentClientSeq;
 	}
 }
 

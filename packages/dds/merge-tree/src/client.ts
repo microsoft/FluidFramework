@@ -885,14 +885,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			}
 		}
 
-		this.updateSeqNumbers(
-			msg.minimumSequenceNumber,
-			msg.sequenceNumber,
-			msg.clientSequenceNumber,
-		);
+		this.updateSeqNumbers(msg.minimumSequenceNumber, msg.sequenceNumber);
 	}
 
-	public updateSeqNumbers(min: number, seq: number, clientSeq: number) {
+	public updateSeqNumbers(min: number, seq: number) {
 		const collabWindow = this.getCollabWindow();
 		// Equal is fine here due to SharedSegmentSequence<>.snapshotContent() potentially updating with same #
 		assert(
@@ -900,7 +896,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			0x038 /* "Incoming op sequence# < local collabWindow's currentSequence#" */,
 		);
 		collabWindow.currentSeq = seq;
-		collabWindow.currentClientSeq = clientSeq;
 		assert(min <= seq, 0x039 /* "Incoming op sequence# < minSequence#" */);
 		this.updateMinSeq(min);
 	}
@@ -1020,7 +1015,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		// Required for case where FluidDataStoreRuntime.attachChannel()
 		// generates summary right after loading data store.
 
-		this.updateSeqNumbers(minSeq, deltaManager.lastSequenceNumber, 0);
+		this.updateSeqNumbers(minSeq, deltaManager.lastSequenceNumber);
 
 		// One of the summaries (from SPO) I observed to have chunk.chunkSequenceNumber > minSeq!
 		// Not sure why - need to catch it sooner
