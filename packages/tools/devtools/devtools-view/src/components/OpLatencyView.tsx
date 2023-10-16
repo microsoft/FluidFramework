@@ -85,10 +85,6 @@ export function OpLatencyView(): React.ReactElement {
 			data: [],
 		});
 
-	console.log(durationOutboundBatchingData);
-	console.log(durationNetworkData);
-	console.log(durationInboundToProcessingData);
-
 	React.useEffect(() => {
 		/**
 		 * Handlers for inbound messages.
@@ -104,8 +100,6 @@ export function OpLatencyView(): React.ReactElement {
 				if (eventContents.clientType === "noninteractive/summarizer") {
 					return true;
 				}
-
-				console.log(`OP LATENCY: ${JSON.stringify(eventContents)}`);
 
 				setDurationOutboundBatchingData((currentData) => {
 					const newDataPoint = {
@@ -156,9 +150,6 @@ export function OpLatencyView(): React.ReactElement {
 		};
 	}, [
 		messageRelay,
-		setDurationOutboundBatchingData,
-		setDurationNetworkData,
-		setDurationInboundToProcessingData,
 	]);
 
 	return (
