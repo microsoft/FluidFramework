@@ -39,6 +39,7 @@ import {
 	FieldStateTree,
 	getInputContext,
 	generatePossibleSequenceOfEdits,
+	ChildStateGenerator,
 } from "./exhaustiveRebaserUtils";
 
 type RevisionTagMinter = () => RevisionTag;
@@ -178,7 +179,10 @@ function compose(changes: TaggedChange<OptionalChangeset>[]): OptionalChangeset 
 
 type OptionalFieldTestState = FieldStateTree<string | undefined, OptionalChangeset>;
 
-function* generateChildStates(
+/**
+ * See {@link ChildStateGenerator}
+ */
+const generateChildStates: ChildStateGenerator<string | undefined, OptionalChangeset> = function* (
 	state: OptionalFieldTestState,
 	tagFromIntention: (intention: number) => RevisionTag,
 	mintIntention: () => number,
@@ -253,7 +257,7 @@ function* generateChildStates(
 			parent: state,
 		};
 	}
-}
+};
 
 /**
  * Runs a suite of axiomatic tests which use combinations of single edits that are valid to apply from an initial state.
@@ -375,7 +379,7 @@ describe("OptionalField - Rebaser Axioms", () => {
 	// by:
 	// - Rebasing a single edit over N sequential edits
 	// - Rebasing N sequential edits over a single edit, sandwich-rebasing style
-	//   (meaning [A, B, C] ↷ D involves B ↷ compose([A⁻¹, D, A]) and C ↷ compose([B⁻¹, A⁻¹, D, A, B]))
+	//   (meaning [A, B, C] ↷ D involves B ↷ compose([A⁻¹, D, A']) and C ↷ compose([B⁻¹, A⁻¹, D, A', B']))
 	const numberOfEditsToRebaseOver = 2;
 	const numberOfEditsToRebase = numberOfEditsToRebaseOver;
 
