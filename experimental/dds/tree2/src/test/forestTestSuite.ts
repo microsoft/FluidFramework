@@ -66,7 +66,7 @@ export interface ForestTestConfiguration {
 const jsonDocumentSchema = new SchemaBuilder({
 	scope: "jsonDocumentSchema",
 	libraries: [jsonSchema],
-}).finalize(SchemaBuilder.sequence(jsonRoot));
+}).toDocumentSchema(SchemaBuilder.sequence(jsonRoot));
 
 const detachId = { minor: 42 };
 
@@ -853,7 +853,7 @@ export function testForest(config: ForestTestConfiguration): void {
 					x: SchemaBuilder.sequence(leaf.number),
 					y: SchemaBuilder.sequence(leaf.number),
 				});
-				const schema = builder.finalize(builder.optional(root));
+				const schema = builder.toDocumentSchema(builder.optional(root));
 
 				const forest = factory(new InMemoryStoredSchemaRepository(schema));
 				initializeForest(forest, [

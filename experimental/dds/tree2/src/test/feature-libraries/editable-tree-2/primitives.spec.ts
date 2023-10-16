@@ -8,7 +8,7 @@ import { leaf, SchemaBuilder } from "../../../domains";
 import { createTreeView, pretty } from "./utils";
 
 const _ = new SchemaBuilder({ scope: "test", libraries: [leaf.library] });
-const schema = _.finalize(_.optional(leaf.all));
+const schema = _.toDocumentSchema(_.optional(leaf.all));
 
 const testCases = [
 	undefined, // via optional root

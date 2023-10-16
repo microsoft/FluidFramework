@@ -28,7 +28,7 @@ describe("raw structs", () => {
 			baz: builder.sequence(leaf.boolean),
 		});
 		const rootFieldSchema = SchemaBuilder.required(structSchema);
-		const schema = builder.finalize(rootFieldSchema);
+		const schema = builder.toDocumentSchema(rootFieldSchema);
 		const context = contextWithContentReadonly({
 			schema,
 			initialTree: { foo: 42, baz: [] },
