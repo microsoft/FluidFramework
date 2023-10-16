@@ -290,11 +290,11 @@ describe("interval rebasing", () => {
 	// todo: a failing obliterate reconnect test. when rebasing the op,
 	// the character "C" has been concurrently obliterated, so the reconnect
 	// position of "B" is computed to be 0, rather than 1
-	// 
+	//
 	// at the time of writing, i'm not sure of a good solution. either we could
 	// change calculation of reconnection position in some way or we could not
 	// concurrently obliterate "C" in this context.
-	// 
+	//
 	// in both cases, it's not clear to me how we detect when we're reconnecting
 	it.skip("...", () => {
 		// AB
