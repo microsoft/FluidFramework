@@ -57,6 +57,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 		packageTypes: Flags.string({
 			description: "Include package.json types field.",
 			options: ["none", "alpha", "beta", "public", "untrimmed"],
+			default: "none",
 			env: "PACKAGE_TYPES_FIELD",
 		}),
 		fileVersion: Flags.string({
@@ -80,6 +81,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 		const useTestVersion = flags.testBuild?.toLowerCase() === "true";
 		const shouldIncludeInternalVersions =
 			flags.includeInternalVersions?.toLowerCase() === "true";
+		const packageTypes = ["alpha", "beta"].includes(flags.packageTypes);
 
 		let fileVersion = "";
 
@@ -114,11 +116,11 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 			useSimplePatchVersion,
 		);
 
-		if (isRelease && (flags.packageTypes === "alpha" || flags.packageTypes === "beta")) {
+		if (isRelease && packageTypes) {
 			this.errorLog(`ERROR: alpha/beta prereleases are allowed`);
 		}
 
-		if (!isRelease && (flags.packageTypes === "alpha" || flags.packageTypes === "beta")) {
+		if (!isRelease && packageTypes) {
 			simpleVersion = `${simpleVersion}-${flags.packageTypes}-types`;
 		}
 

@@ -22,6 +22,7 @@ parameters:
     - none
     - alpha
     - beta
+    # 'public' and 'untrimmed' options have not been fully developed yet
     # - public
     # - untrimmed
 - name: publishOverride
