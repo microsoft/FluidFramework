@@ -155,8 +155,7 @@ export class LegacyTreeInventoryList extends DataObject implements IInventoryLis
 			const { changed, added, removed } = before.delta(after);
 			for (const quantityNodeId of changed) {
 				const quantityNode = this.tree.currentView.getViewNode(quantityNodeId);
-				// REV: This is annoying to iterate over since I can't filter until I've retrieved the node object.
-				// When adding a node the "inventory" node changes too, but we don't want to handle that here.
+				// When adding/removing an inventory item the "inventory" node changes too, but we don't want to handle that here.
 				if (quantityNode.definition === "quantity") {
 					const newQuantity = quantityNode.payload as number;
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -174,8 +173,7 @@ export class LegacyTreeInventoryList extends DataObject implements IInventoryLis
 
 			for (const inventoryNodeId of added) {
 				const inventoryItemNode = this.tree.currentView.getViewNode(inventoryNodeId);
-				// REV: Similar to above, this can't be filtered without grabbing the actual node objects.
-				// This list will include the "name" and "quantity" nodes too, but we only want to handle the "inventoryItem".
+				// Filter to just the inventoryItem nodes.  Each addition will result in four added nodes (inventoryItem, id, name, quantity).
 				if (inventoryItemNode.definition === "inventoryItem") {
 					const addedInventoryItem =
 						this.makeInventoryItemFromInventoryItemNode(inventoryItemNode);
@@ -188,6 +186,7 @@ export class LegacyTreeInventoryList extends DataObject implements IInventoryLis
 				// Note that in the removal handling we get nodes from "before" rather than currentView, since they're already
 				// gone in the current view.
 				const inventoryItemNode = before.getViewNode(inventoryNodeId);
+				// Filter to just the inventoryItem nodes.  Each deletion will result in four removed nodes (inventoryItem, id, name, quantity).
 				if (inventoryItemNode.definition === "inventoryItem") {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const idNodeId = inventoryItemNode.traits.get("id" as TraitLabel)![0];
