@@ -21,6 +21,8 @@ import { type ISharedTree } from "@fluid-experimental/tree2";
  * the migration is complete and the SharedTree is ready to be used. It's sole responsibility should be to drop v1 &
  * migrate ops. It should not be responsible for any other migration logic. This should make the class easier to reason
  * about.
+ *
+ * @internal
  */
 export class SharedTreeShim implements IChannel {
 	public constructor(

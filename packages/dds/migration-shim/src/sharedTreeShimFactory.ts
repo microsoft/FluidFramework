@@ -26,6 +26,7 @@ import { attributesMatch } from "./utils";
  * 3. post-migration after a summary has been generated and the msn has moved far enough forward for only v2 ops
  *
  * @sealed
+ * @internal
  */
 export class SharedTreeShimFactory implements IChannelFactory {
 	public constructor(private readonly factory: SharedTreeFactory) {}

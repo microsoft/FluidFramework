@@ -58,7 +58,7 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
     summarize(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined): Promise<ISummaryTreeWithStats>;
 }
 
-// @public @sealed
+// @internal @sealed
 export class MigrationShimFactory implements IChannelFactory {
     constructor(oldFactory: SharedTreeFactory, newFactory: SharedTreeFactory_2, populateNewChannelFn: (oldChannel: SharedTree, newChannel: ISharedTree) => void);
     get attributes(): IChannelAttributes;
@@ -67,7 +67,7 @@ export class MigrationShimFactory implements IChannelFactory {
     get type(): string;
 }
 
-// @public
+// @internal
 export class SharedTreeShim implements IChannel {
     constructor(id: string, currentTree: ISharedTree);
     // (undocumented)
@@ -92,7 +92,7 @@ export class SharedTreeShim implements IChannel {
     summarize(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined): Promise<ISummaryTreeWithStats>;
 }
 
-// @public @sealed
+// @internal @sealed
 export class SharedTreeShimFactory implements IChannelFactory {
     constructor(factory: SharedTreeFactory_2);
     get attributes(): IChannelAttributes;

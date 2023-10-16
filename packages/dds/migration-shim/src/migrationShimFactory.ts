@@ -26,6 +26,7 @@ import { attributesMatch } from "./utils";
  * 1. pre-migration
  *
  * @sealed
+ * @internal
  */
 export class MigrationShimFactory implements IChannelFactory {
 	public constructor(
