@@ -268,16 +268,38 @@ export interface ISequencedDocumentMessage {
 
 	/**
 	 * Experimental field for storing the rolling hash at sequence number.
-	 * @alpha
+	 *
+	 * @deprecated Use {@link ISequencedDocumentMessageExperimental} instead.
 	 */
 	expHash1?: string;
 
 	/**
 	 * The compression algorithm that was used to compress contents of this message.
-	 * @experimental Not ready for use.
+	 *
+	 * @deprecated Use {@link ISequencedDocumentMessageExperimental} instead.
 	 */
 	compression?: string;
 }
+
+/**
+ * {@link ISequencedDocumentAugmentedMessage} with experimental properties.
+ *
+ * @alpha
+ */
+export type ISequencedDocumentMessageExperimental = Omit<
+	ISequencedDocumentMessage,
+	"expHash1" | "compression"
+> & {
+	/**
+	 * Stores the rolling hash at sequence number.
+	 */
+	expHash1?: string;
+
+	/**
+	 * The compression algorithm that was used to compress contents of this message.
+	 */
+	compression?: string;
+};
 
 export interface ISequencedDocumentSystemMessage extends ISequencedDocumentMessage {
 	data: string;
