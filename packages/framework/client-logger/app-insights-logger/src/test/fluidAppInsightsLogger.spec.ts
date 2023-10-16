@@ -115,11 +115,9 @@ describe("Telemetry Filter - Category filtering", () => {
 				filters: [
 					{
 						category: TelemetryEventCategory.PERFORMANCE,
-						priority: 1,
 					},
 					{
 						category: TelemetryEventCategory.GENERIC,
-						priority: 1,
 					},
 				],
 			},
@@ -164,11 +162,9 @@ describe("Telemetry Filter - Category filtering", () => {
 				filters: [
 					{
 						category: TelemetryEventCategory.PERFORMANCE,
-						priority: 1,
 					},
 					{
 						category: TelemetryEventCategory.GENERIC,
-						priority: 1,
 					},
 				],
 			},

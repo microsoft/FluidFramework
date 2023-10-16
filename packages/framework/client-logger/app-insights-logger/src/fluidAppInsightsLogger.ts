@@ -54,14 +54,6 @@ export interface TelemetryFilter {
 	 * The category {@link (TelemetryEventCategory:type)} of telemetry event that this filter applies to
 	 */
 	category: TelemetryEventCategory;
-	/**
-	 * The priority in which this filter should be evaluated.
-	 * A lower number means the filter will be evaluated earlier.
-	 *
-	 * If there are two filters with the same priority,
-	 * there is no guarentee to the order in which they will be evaluated
-	 */
-	priority: number;
 }
 
 // Questions:
@@ -86,30 +78,12 @@ export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 
 	public constructor(client: ApplicationInsights, config?: FluidAppInsightsLoggerConfig) {
 		this.baseLoggingClient = client;
-		if (config === undefined) {
-			this.config = {
-				filterConfig: {
-					mode: "exclusive",
-					filters: [],
-				},
-			};
-		} else {
-			this.config = config;
-			this.initializeFiltersFromConfig(config);
-		}
-	}
-
-	private initializeFiltersFromConfig(config: FluidAppInsightsLoggerConfig): void {
-		if (config.filterConfig.filters === undefined) {
-			return;
-		}
-
-		for (const filter of config.filterConfig.filters) {
-			this.filters.push(filter);
-		}
-
-		// Sort filters using priority from low to high
-		this.filters.sort((a, b) => a.priority - b.priority);
+		this.config = config ?? {
+			filterConfig: {
+				mode: "exclusive",
+				filters: [],
+			},
+		};
 	}
 
 	/**
