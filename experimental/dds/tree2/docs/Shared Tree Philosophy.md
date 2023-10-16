@@ -71,7 +71,7 @@ This puts a large tension between maintainability and extensibility, and leads t
 optimizing for extensibility while minimizing the difficulty of maintaining compatibility across these extensions.
 The approach Shared Tree takes for this is separation of concerns and version-ability of components.
 
-Concepts are split into three categories based on compatibility requirements (see [SchemaVersioning](packages/dds/SchemaVersioning.md) for details of why these exist and what is in each):
+Concepts are split into two categories based on compatibility requirements (see [SchemaVersioning](packages/dds/SchemaVersioning.md) for details of why these exist and what is in each):
 
 1. Critical for consistent behavior and thus must have compatibility forever to support old document and cross version collaboration.
 2. Only impacts the current instance of the application, and can be changed without maintaining identical behavior in previously supported cases.
@@ -201,4 +201,4 @@ Accomplishing this goal requires specialized tree data formats or APIs at a few 
     Accessing the content of a Forest is done through Cursors.
     Specialized chunked implementations can declare support for fast path APIs via symbols to allow their user to query for and use them.
 
-To enable efficient encoding and decoding between these formats, both are owned by chunked forest (allowing zero copy optimizations for data arrays between the two), and ref-counting is used on chunks so trees can be lazily closed, and modified in place when only referenced once.
+To enable efficient encoding and decoding between these formats, both are owned by chunked forest (allowing zero copy optimizations for data arrays between the two), and ref-counting is used on chunks so trees can be lazily cloned, and modified in place when only referenced once.
