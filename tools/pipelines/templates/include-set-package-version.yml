@@ -26,6 +26,8 @@ parameters:
 - name: interdependencyRange
   type: string
 
+# Parameter for modifying the 'types' field in the package.json.
+# If none is provided, the 'types' field in package.json will remain unchanged.
 - name: packageTypesOverride
   type: string
   default: none

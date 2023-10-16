@@ -55,7 +55,8 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 			env: "VERSION_INCLUDE_INTERNAL_VERSIONS",
 		}),
 		packageTypes: Flags.string({
-			description: "Include package.json types field.",
+			description:
+				"If provided, the version generated will include extra strings based on the TypeScript types that are expected to be used. This flag should only be used in the Fluid Framework CI pipeline.",
 			options: ["none", "alpha", "beta", "public", "untrimmed"],
 			default: "none",
 			env: "PACKAGE_TYPES_FIELD",
@@ -116,12 +117,16 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 			useSimplePatchVersion,
 		);
 
-		if (isRelease && isAlphaOrBetaTypes) {
-			this.errorLog(`ERROR: alpha/beta prereleases are allowed`);
-		}
+		if (isAlphaOrBetaTypes) {
+			if (isRelease) {
+				this.errorLog(
+					"ERROR: This release type is not supported. Alpha/beta ***prereleases*** are allowed.",
+				);
+			}
 
-		if (!isRelease && isAlphaOrBetaTypes) {
-			simpleVersion = `${simpleVersion}-${flags.packageTypes}-types`;
+			if (!isRelease) {
+				simpleVersion = `${simpleVersion}-${flags.packageTypes}-types`;
+			}
 		}
 
 		const version = useTestVersion
