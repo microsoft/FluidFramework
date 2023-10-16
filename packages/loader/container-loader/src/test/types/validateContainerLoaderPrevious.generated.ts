@@ -79,7 +79,6 @@ declare function get_old_InterfaceDeclaration_IContainerExperimental():
 declare function use_current_InterfaceDeclaration_IContainerExperimental(
     use: TypeOnly<current.IContainerExperimental>);
 use_current_InterfaceDeclaration_IContainerExperimental(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainerExperimental());
 
 /*
@@ -236,7 +235,6 @@ declare function get_current_InterfaceDeclaration_IProtocolHandler():
 declare function use_old_InterfaceDeclaration_IProtocolHandler(
     use: TypeOnly<old.IProtocolHandler>);
 use_old_InterfaceDeclaration_IProtocolHandler(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IProtocolHandler());
 
 /*
@@ -290,6 +288,30 @@ use_old_TypeAliasDeclaration_ProtocolHandlerBuilder(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_isLocationRedirectionError": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_isLocationRedirectionError():
+    TypeOnly<typeof old.isLocationRedirectionError>;
+declare function use_current_FunctionDeclaration_isLocationRedirectionError(
+    use: TypeOnly<typeof current.isLocationRedirectionError>);
+use_current_FunctionDeclaration_isLocationRedirectionError(
+    get_old_FunctionDeclaration_isLocationRedirectionError());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_isLocationRedirectionError": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_isLocationRedirectionError():
+    TypeOnly<typeof current.isLocationRedirectionError>;
+declare function use_old_FunctionDeclaration_isLocationRedirectionError(
+    use: TypeOnly<typeof old.isLocationRedirectionError>);
+use_old_FunctionDeclaration_isLocationRedirectionError(
+    get_current_FunctionDeclaration_isLocationRedirectionError());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_requestResolvedObjectFromContainer": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_requestResolvedObjectFromContainer():
@@ -310,6 +332,30 @@ declare function use_old_FunctionDeclaration_requestResolvedObjectFromContainer(
     use: TypeOnly<typeof old.requestResolvedObjectFromContainer>);
 use_old_FunctionDeclaration_requestResolvedObjectFromContainer(
     get_current_FunctionDeclaration_requestResolvedObjectFromContainer());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_resolveWithLocationRedirectionHandling": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_resolveWithLocationRedirectionHandling():
+    TypeOnly<typeof old.resolveWithLocationRedirectionHandling>;
+declare function use_current_FunctionDeclaration_resolveWithLocationRedirectionHandling(
+    use: TypeOnly<typeof current.resolveWithLocationRedirectionHandling>);
+use_current_FunctionDeclaration_resolveWithLocationRedirectionHandling(
+    get_old_FunctionDeclaration_resolveWithLocationRedirectionHandling());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_resolveWithLocationRedirectionHandling": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_resolveWithLocationRedirectionHandling():
+    TypeOnly<typeof current.resolveWithLocationRedirectionHandling>;
+declare function use_old_FunctionDeclaration_resolveWithLocationRedirectionHandling(
+    use: TypeOnly<typeof old.resolveWithLocationRedirectionHandling>);
+use_old_FunctionDeclaration_resolveWithLocationRedirectionHandling(
+    get_current_FunctionDeclaration_resolveWithLocationRedirectionHandling());
 
 /*
 * Validate forward compat by using old type in place of current type

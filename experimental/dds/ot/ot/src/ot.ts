@@ -24,6 +24,9 @@ interface ISequencedOpInfo<TOp> {
 	op: TOp;
 }
 
+/**
+ * @public
+ */
 export abstract class SharedOT<TState, TOp> extends SharedObject {
 	/**
 	 * Queue of sequenced ops that are above minSeq.  Used by 'processCore' to

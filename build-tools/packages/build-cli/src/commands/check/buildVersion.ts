@@ -11,9 +11,9 @@ import { PackageCommand } from "../../BasePackageCommand";
 export default class CheckBuildVersionCommand extends PackageCommand<
 	typeof CheckBuildVersionCommand
 > {
-	static description = `Checks that all packages have the same version set in package.json. The packages checked can be filtered by standard criteria. THIS COMMAND IS INTENDED FOR USE IN FLUID FRAMEWORK CI PIPELINES ONLY.`;
+	static readonly description = `Checks that all packages have the same version set in package.json. The packages checked can be filtered by standard criteria. THIS COMMAND IS INTENDED FOR USE IN FLUID FRAMEWORK CI PIPELINES ONLY.`;
 
-	static flags = {
+	static readonly flags = {
 		version: Flags.string({
 			description: "The version against which to check all the packages.",
 			exclusive: ["path"],
@@ -29,7 +29,7 @@ export default class CheckBuildVersionCommand extends PackageCommand<
 			default: false,
 		}),
 		...PackageCommand.flags,
-	};
+	} as const;
 
 	private versionToCheck: string | undefined;
 

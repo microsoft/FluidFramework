@@ -23,7 +23,6 @@ import {
 	singleTextCursor,
 } from "../../feature-libraries";
 import { brand, fail } from "../../util";
-import { MockRepairDataStoreProvider } from "../utils";
 import { noopValidator } from "../../codec";
 
 const defaultChangeFamily = new DefaultChangeFamily({ jsonValidator: noopValidator });
@@ -620,12 +619,7 @@ describe("Branches", () => {
 			revision: nullRevisionTag,
 		};
 
-		const branch = new SharedTreeBranch(
-			initCommit,
-			defaultChangeFamily,
-			mintRevisionTag,
-			new MockRepairDataStoreProvider(),
-		);
+		const branch = new SharedTreeBranch(initCommit, defaultChangeFamily, mintRevisionTag);
 		if (onChange !== undefined) {
 			branch.on("change", onChange);
 		}
@@ -638,7 +632,6 @@ describe("Branches", () => {
 			from.getHead(),
 			defaultChangeFamily,
 			mintRevisionTag,
-			new MockRepairDataStoreProvider(),
 			UndoRedoManager.create(defaultChangeFamily),
 		);
 	}

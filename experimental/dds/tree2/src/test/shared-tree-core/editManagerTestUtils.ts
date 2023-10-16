@@ -16,7 +16,6 @@ import {
 	testChangeFamilyFactory,
 	TestChangeRebaser,
 } from "../testChange";
-import { MockRepairDataStoreProvider } from "../utils";
 import { Commit, EditManager } from "../../shared-tree-core";
 import { brand, makeArray } from "../../util";
 
@@ -34,7 +33,7 @@ export function editManagerFactory(options: {
 		ChangeFamilyEditor,
 		TestChange,
 		ChangeFamily<ChangeFamilyEditor, TestChange>
-	>(family, options.sessionId ?? "0", new MockRepairDataStoreProvider(), mintRevisionTag);
+	>(family, options.sessionId ?? "0", mintRevisionTag);
 	return { manager, family };
 }
 

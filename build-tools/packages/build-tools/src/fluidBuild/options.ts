@@ -27,10 +27,8 @@ interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
 	depcheck: boolean;
 	force: boolean;
 	install: boolean;
-	nohoist: boolean;
 	uninstall: boolean;
 	concurrency: number;
-	fix: boolean;
 	worker: boolean;
 	workerThreads: boolean;
 	workerMemoryLimit: number;
@@ -53,10 +51,8 @@ export const options: FastBuildOptions = {
 	depcheck: false,
 	force: false,
 	install: false,
-	nohoist: false,
 	uninstall: false,
 	concurrency: os.cpus().length,
-	fix: false,
 	all: false,
 	worker: false,
 	workerThreads: false,
@@ -71,22 +67,22 @@ function printUsage() {
 Usage: fluid-build <options> [(<package regexp>|<path>) ...]
     [<package regexp> ...] Regexp to match the package name (default: all packages)
 Options:
-       --all            Operate on all packages/monorepo (default: client monorepo). See also "--server".
-    -c --clean          Same as running build script 'clean' on matched packages (all if package regexp is not specified)
-    -d --dep            Apply actions (clean/force/rebuild) to matched packages and their dependent packages
-       --fix            Auto fix warning from package check if possible
-    -f --force          Force build and ignore dependency check on matched packages (all if package regexp is not specified)
-    -? --help           Print this message
-       --install        Run npm install for all packages/monorepo. This skips a package if node_modules already exists: it can not be used to update in response to changes to the package.json.
-    -r --rebuild        Clean and build on matched packages (all if package regexp is not specified)
-       --reinstall      Same as --uninstall --install.
-	-g --releaseGroup   Release group to operate on
-       --root <path>    Root directory of the Fluid repo (default: env _FLUID_ROOT_)
-	-t --task <name>    target to execute (default:build)
-       --symlink        Fix symlink between packages within monorepo (isolate mode). This configures the symlinks to only connect within each lerna managed group of packages. This is the configuration tested by CI and should be kept working.
-       --symlink:full   Fix symlink between packages across monorepo (full mode). This symlinks everything in the repo together. CI does not ensure this configuration is functional, so it may or may not work.
-       --uninstall      Clean all node_modules. This errors if some node-nodules folders do not exists: if hitting this limitation you can do an install first to work around it.
-       --vscode         Output error message to work with default problem matcher in vscode
+     --all            Operate on all packages/monorepo (default: client monorepo). See also "-g" or "--releaseGroup".
+  -c --clean          Same as running build script 'clean' on matched packages (all if package regexp is not specified)
+  -d --dep            Apply actions (clean/force/rebuild) to matched packages and their dependent packages
+     --fix            Auto fix warning from package check if possible
+  -f --force          Force build and ignore dependency check on matched packages (all if package regexp is not specified)
+  -? --help           Print this message
+     --install        Run npm install for all packages/monorepo. This skips a package if node_modules already exists: it can not be used to update in response to changes to the package.json.
+  -r --rebuild        Clean and build on matched packages (all if package regexp is not specified)
+     --reinstall      Same as --uninstall --install.
+  -g --releaseGroup   Release group to operate on
+     --root <path>    Root directory of the Fluid repo (default: env _FLUID_ROOT_)
+  -t --task <name>    target to execute (default:build)
+     --symlink        Fix symlink between packages within monorepo (isolate mode). This configures the symlinks to only connect within each lerna managed group of packages. This is the configuration tested by CI and should be kept working.
+     --symlink:full   Fix symlink between packages across monorepo (full mode). This symlinks everything in the repo together. CI does not ensure this configuration is functional, so it may or may not work.
+     --uninstall      Clean all node_modules. This errors if some node-nodules folders do not exists: if hitting this limitation you can do an install first to work around it.
+     --vscode         Output error message to work with default problem matcher in vscode
 ${commonOptionString}
 `,
 	);
@@ -104,14 +100,13 @@ function setBuild(build: boolean) {
 	}
 }
 
-function setReinstall(nohoist: boolean) {
+function setReinstall() {
 	options.uninstall = true;
-	setInstall(nohoist);
+	setInstall();
 }
 
-function setInstall(nohoist: boolean) {
+function setInstall() {
 	options.install = true;
-	options.nohoist = nohoist;
 	setBuild(false);
 }
 
@@ -166,29 +161,13 @@ export function parseOptions(argv: string[]) {
 			continue;
 		}
 
-		if (arg === "--fix") {
-			options.fix = true;
-			setBuild(false);
-			continue;
-		}
-
 		if (arg === "--install") {
-			setInstall(false);
-			continue;
-		}
-
-		if (arg === "--install:nohoist") {
-			setInstall(true);
+			setInstall();
 			continue;
 		}
 
 		if (arg === "--reinstall") {
-			setReinstall(false);
-			continue;
-		}
-
-		if (arg === "--reinstall:nohoist") {
-			setReinstall(true);
+			setReinstall();
 			continue;
 		}
 

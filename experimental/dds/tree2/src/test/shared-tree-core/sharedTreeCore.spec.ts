@@ -27,10 +27,20 @@ import {
 	SummaryElementParser,
 	SummaryElementStringifier,
 } from "../../shared-tree-core";
-import { ChangeFamily, ChangeFamilyEditor, rootFieldKey } from "../../core";
-import { DefaultChangeset, DefaultEditBuilder, singleTextCursor } from "../../feature-libraries";
+import { AllowedUpdateType, ChangeFamily, ChangeFamilyEditor, rootFieldKey } from "../../core";
+import {
+	DefaultChangeset,
+	DefaultEditBuilder,
+	FieldKinds,
+	FieldSchema,
+	singleTextCursor,
+	typeNameSymbol,
+} from "../../feature-libraries";
 import { brand } from "../../util";
 import { ISubscribable } from "../../events";
+import { SharedTreeTestFactory } from "../utils";
+import { InitializeAndSchematizeConfiguration } from "../../shared-tree";
+import { leaf, SchemaBuilder } from "../../domains";
 import { TestSharedTreeCore } from "./utils";
 
 describe("SharedTreeCore", () => {
@@ -300,6 +310,60 @@ describe("SharedTreeCore", () => {
 		changeTree(tree);
 		branch5.dispose(); //                                [x, x, x, x, x, x, 7]
 		assert.equal(getTrunkLength(tree), 1);
+	});
+
+	// This test triggers 0x4a6 at the time of writing, as rebasing tree2's final edit over tree1's final edit
+	// didn't properly track state related to the detached node the edit affects.
+	// When unskipping this test, it may be desirable to add assertions verifying the final state of the two trees.
+	it.skip("Regression test for 0x4a6", async () => {
+		const containerRuntimeFactory = new MockContainerRuntimeFactory();
+		const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
+		const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+		const factory = new SharedTreeTestFactory(() => {});
+
+		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+		const tree1 = factory.create(dataStoreRuntime1, "A");
+		tree1.connect({
+			deltaConnection: dataStoreRuntime1.createDeltaConnection(),
+			objectStorage: new MockStorage(),
+		});
+
+		const b = new SchemaBuilder({ scope: "0x4a6 repro" });
+		const node = b.structRecursive("test node", {
+			child: FieldSchema.createUnsafe(FieldKinds.optional, [() => node, leaf.number]),
+		});
+		const schema = b.toDocumentSchema(b.optional(node));
+
+		const tree2 = await factory.load(
+			dataStoreRuntime2,
+			"B",
+			{
+				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
+				objectStorage: MockStorage.createFromSummary((await tree1.summarize()).summary),
+			},
+			factory.attributes,
+		);
+
+		const config: InitializeAndSchematizeConfiguration = {
+			schema,
+			initialTree: undefined,
+			allowedSchemaModifications: AllowedUpdateType.None,
+		};
+
+		const view1 = tree1.schematize(config);
+		const view2 = tree2.schematize(config);
+		const editable1 = view1.editableTree2(schema);
+		const editable2 = view2.editableTree2(schema);
+
+		editable2.content = { [typeNameSymbol]: node.name, child: undefined };
+		editable1.content = { [typeNameSymbol]: node.name, child: undefined };
+		const rootNode = editable2.content;
+		assert(rootNode?.is(node), "Expected set operation to set root node");
+		rootNode.boxedChild.content = 42;
+		editable1.content = { [typeNameSymbol]: node.name, child: undefined };
+		rootNode.boxedChild.content = 43;
+		containerRuntimeFactory.processAllMessages();
 	});
 
 	function isSummaryTree(summaryObject: SummaryObject): summaryObject is ISummaryTree {

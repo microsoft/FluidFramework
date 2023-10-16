@@ -74,9 +74,6 @@ export type ChildCollection = FieldKey | RootField;
  * any additional content inserted before or after contents of this range will be included in the range.
  * This also means that moving the content from this range elsewhere will leave this range valid, but empty.
  *
- * DetachedFields are not valid to use as across edits:
- * they are only valid within the edit in which they were created.
- *
  * In some APIs DetachedFields are used as FieldKeys on a special implicit root node
  * to simplify the APIs and implementation.
  * @alpha
@@ -127,6 +124,8 @@ export type TreeValue<TSchema extends ValueSchema = ValueSchema> = [
 		[ValueSchema.String]: string;
 		[ValueSchema.Boolean]: boolean;
 		[ValueSchema.FluidHandle]: IFluidHandle;
+		// eslint-disable-next-line @rushstack/no-new-null
+		[ValueSchema.Null]: null;
 	}[TSchema],
 ][_InlineTrick];
 

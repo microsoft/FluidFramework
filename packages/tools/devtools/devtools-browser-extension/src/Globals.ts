@@ -6,6 +6,7 @@
 declare const browser: typeof chrome;
 
 // Normalize access to extension APIs across browsers.
+// eslint-disable-next-line unicorn/no-negated-condition, unicorn/no-typeof-undefined
 const _browser: typeof chrome = typeof browser !== "undefined" ? browser : chrome;
 
 // Include references to web browser globals to facilitate mocks during testing.

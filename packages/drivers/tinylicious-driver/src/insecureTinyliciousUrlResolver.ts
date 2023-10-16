@@ -8,11 +8,15 @@ import { DriverHeader, IResolvedUrl, IUrlResolver } from "@fluidframework/driver
 
 /**
  * Default endpoint port. Will be used by the service if the consumer does not specify a port.
+ *
+ * @public
  */
 export const defaultTinyliciousPort = 7070;
 
 /**
  * Default endpoint URL base. Will be used by the service if the consumer does not specify an endpoint.
+ *
+ * @public
  */
 export const defaultTinyliciousEndpoint = "http://localhost";
 
@@ -21,6 +25,8 @@ export const defaultTinyliciousEndpoint = "http://localhost";
  * for a given request.  This particular implementation has a goal to avoid imposing requirements on the app's
  * URL shape, so it expects the request url to have this format (as opposed to a more traditional URL):
  * documentId/containerRelativePathing
+ *
+ * @public
  */
 export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 	private readonly fluidProtocolEndpoint: string;
@@ -83,6 +89,11 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 	}
 }
 
+/**
+ * Creates a Routerlicious {@link @fluidframework/core-interfaces#IRequest}.
+ *
+ * @public
+ */
 export const createTinyliciousCreateNewRequest = (documentId?: string): IRequest => ({
 	url: documentId ?? "",
 	headers: {

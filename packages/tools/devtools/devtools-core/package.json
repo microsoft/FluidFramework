@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/devtools-core",
-	"version": "2.0.0-internal.7.1.0",
+	"version": "2.0.0-internal.7.2.0",
 	"description": "Fluid Framework developer tools core functionality",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -18,10 +18,10 @@
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../../_api-extractor-temp/",
+		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:genver": "gen-version",
-		"ci:build:docs": "api-extractor run && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../../_api-extractor-temp/",
+		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob '_api-extractor-temp' 'nyc' 'dist' 'lib' '*.tsbuildinfo' '*.build.log'",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
@@ -78,12 +78,12 @@
 		"@fluidframework/telemetry-utils": "workspace:~"
 	},
 	"devDependencies": {
-		"@fluid-experimental/devtools-core-previous": "npm:@fluid-experimental/devtools-core@2.0.0-internal.6.3.0",
-		"@fluid-tools/build-cli": "^0.24.0",
-		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.24.0",
+		"@fluid-experimental/devtools-core-previous": "npm:@fluid-experimental/devtools-core@2.0.0-internal.7.1.0",
+		"@fluid-tools/build-cli": "^0.25.0",
+		"@fluidframework/build-common": "^2.0.1",
+		"@fluidframework/build-tools": "^0.25.0",
 		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^2.1.0",
+		"@fluidframework/eslint-config-fluid": "^3.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.37.0",
@@ -94,15 +94,15 @@
 		"chai": "^4.2.0",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
-		"eslint": "~8.6.0",
-		"eslint-config-prettier": "~8.5.0",
+		"eslint": "~8.50.0",
+		"eslint-config-prettier": "~9.0.0",
 		"eslint-plugin-chai-expect": "~3.0.0",
 		"events": "^3.1.0",
 		"mocha": "^10.2.0",
 		"mocha-json-output-reporter": "^2.0.1",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
-		"prettier": "~2.6.2",
+		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.1.6"
 	},
@@ -115,13 +115,6 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"InterfaceDeclaration_ContainerDevtoolsProps": {
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_FluidDevtoolsProps": {
-				"forwardCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

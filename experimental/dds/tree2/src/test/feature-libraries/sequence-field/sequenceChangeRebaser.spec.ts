@@ -75,7 +75,7 @@ const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<Te
 		(i) => [
 			{ count: i },
 			Mark.revive(
-				[singleTextCursor({ type, value: 1 })],
+				1,
 				{
 					revision: tag1,
 					localId: brand(0),

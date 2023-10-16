@@ -4,7 +4,7 @@
  */
 
 import fetch from "node-fetch";
-import * as fs from "fs/promises";
+import * as fs from "node:fs/promises";
 import { Flags } from "@oclif/core";
 import { Logger } from "@fluidframework/build-tools";
 import { BaseCommand } from "../../base";
@@ -24,7 +24,7 @@ interface IBuildDetails {
 export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReportCommand> {
 	static readonly description = `Creates a release report for the most recent build of the client release group published to an internal ADO feed. It does this by finding the most recent build in ADO produced from a provided branch, and creates a report using that version. The report is a combination of the "simple" and "caret" report formats. Packages released as part of the client release group will have an exact version range, while other packages, such as server packages or independent packages, will have a caret-equivalent version range.`;
 
-	static flags = {
+	static readonly flags = {
 		repo: Flags.string({
 			description: "Repository name",
 			required: true,
@@ -47,7 +47,7 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 	};
 
 	public async run(): Promise<void> {
-		const flags = this.flags;
+		const { flags, logger } = this;
 
 		const repoName: string[] = flags.repo.split("/");
 
@@ -76,7 +76,7 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 				authHeader,
 				ADO_BASE_URL,
 				flags.sourceBranch,
-				this.logger,
+				logger,
 			);
 			if (buildNumber !== undefined) {
 				this.log(
@@ -88,7 +88,7 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 					REGISTRY_URL,
 					PACKAGE_NAME,
 					buildNumber,
-					this.logger,
+					logger,
 				);
 				if (devVersion !== undefined) {
 					this.log(`Fetched dev version: ${devVersion}`);
@@ -96,10 +96,10 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 					const manifestFile = await generateReleaseReportForUnreleasedVersions(
 						GITHUB_RELEASE_URL,
 						devVersion,
-						this.logger,
+						logger,
 					);
 					if (manifestFile !== undefined) {
-						await writeManifestToFile(manifestFile, flags.output, this.logger);
+						await writeManifestToFile(manifestFile, flags.output, logger);
 					}
 				}
 			} else if (buildNumber === undefined) {
@@ -128,6 +128,8 @@ async function getFirstSuccessfulBuild(
 ): Promise<string | undefined> {
 	try {
 		const response = await fetch(adoUrl, { headers: { Authorization: authHeader } });
+
+		/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
 		const data = await response.json();
 
 		const twentyFourHoursAgo = new Date();
@@ -153,6 +155,7 @@ async function getFirstSuccessfulBuild(
 		return successfulBuilds.length > 0
 			? (successfulBuilds[0].buildNumber as string)
 			: undefined;
+		/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call  */
 	} catch (error) {
 		log?.errorLog("Error fetching successful builds:", error);
 		return undefined;
@@ -178,6 +181,7 @@ async function fetchDevVersionNumber(
 		const response = await fetch(`${registryUrl}/${packageName}`, {
 			headers: { Authorization: authHeader },
 		});
+		/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
 		const data = await response.json();
 		const buildVersionKey: string | undefined = Object.keys(data.time).find((key) =>
 			key.includes(buildNumber),
@@ -189,6 +193,7 @@ async function fetchDevVersionNumber(
 
 		log?.log(`No version with build number ${buildNumber} found.`);
 		return undefined;
+		/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
 	} catch (error: unknown) {
 		log?.errorLog("Error fetching dev version number:", error);
 		return undefined;
@@ -207,10 +212,12 @@ async function generateReleaseReportForUnreleasedVersions(
 ): Promise<PackageVersionList | undefined> {
 	try {
 		const releasesResponse = await fetch(gitHubUrl);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const releases = await releasesResponse.json();
 
 		let manifestAsset;
 
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		for (const asset of releases[0].assets) {
 			/**
 			 * Only `caret` manifest file is required by partner repository.
@@ -233,6 +240,7 @@ async function generateReleaseReportForUnreleasedVersions(
 			 * }
 			 * ```
 			 */
+			/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument */
 			const includesCaretJson: boolean = asset.name.includes(".caret.json");
 			if (includesCaretJson) {
 				manifestAsset = asset;
@@ -257,6 +265,7 @@ async function generateReleaseReportForUnreleasedVersions(
 		}
 
 		return undefined;
+		/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument */
 	} catch (error) {
 		log?.errorLog("Error generating manifest object:", error);
 		return undefined;
@@ -275,7 +284,7 @@ async function writeManifestToFile(
 	log?: Logger,
 ): Promise<string | undefined> {
 	try {
-		await fs.writeFile(output, JSON.stringify(manifestFile, null, 2));
+		await fs.writeFile(output, JSON.stringify(manifestFile, undefined, 2));
 
 		log?.log("Manifest modified successfully.", output);
 

@@ -16,7 +16,6 @@ import {
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../core/rebase";
 import { NonEmptyTestChange, TestChange, TestChangeRebaser } from "../testChange";
-import { MockRepairDataStoreProvider } from "../utils";
 
 function newCommit(
 	intention: number | number[],
@@ -75,12 +74,12 @@ describe("rebaseBranch", () => {
 		const n3 = newCommit(3);
 
 		assert.throws(
-			() => rebaseBranch(new TestChangeRebaser(), undefined, mintRevisionTag, n3, n2),
+			() => rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n3, n2),
 			(e: Error) => validateAssertionError(e, "branches must be related"),
 		);
 
 		assert.throws(
-			() => rebaseBranch(new TestChangeRebaser(), undefined, mintRevisionTag, n2, n3, n1),
+			() => rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n2, n3, n1),
 			(e: Error) => validateAssertionError(e, "target commit is not in target branch"),
 		);
 	});
@@ -95,9 +94,8 @@ describe("rebaseBranch", () => {
 		// (1)
 		//  └─ 2 ─ 3
 		const [n3_1, change, commits] = rebaseBranch(
-			new TestChangeRebaser(),
-			undefined,
 			mintRevisionTag,
+			new TestChangeRebaser(),
 			n3,
 			n1,
 		);
@@ -120,9 +118,8 @@ describe("rebaseBranch", () => {
 		// 1 ─ 2 ─(3)
 		//         └─ 4'─ 5'
 		const [n5_1, change, commits] = rebaseBranch(
-			new TestChangeRebaser(),
-			undefined,
 			mintRevisionTag,
+			new TestChangeRebaser(),
 			n5,
 			n3,
 		);
@@ -150,9 +147,8 @@ describe("rebaseBranch", () => {
 		// 1 ─(2)─ 3
 		//     └─ 4'─ 5'
 		const [n5_1, change, commits] = rebaseBranch(
-			new TestChangeRebaser(),
-			undefined,
 			mintRevisionTag,
+			new TestChangeRebaser(),
 			n5,
 			n2,
 			n3,
@@ -183,9 +179,8 @@ describe("rebaseBranch", () => {
 		// 1 ─(2)─ 3 ─ 4
 		//         └─ 5'
 		const [n5_1, change, commits] = rebaseBranch(
-			new TestChangeRebaser(),
-			undefined,
 			mintRevisionTag,
+			new TestChangeRebaser(),
 			n5,
 			n2,
 			n4,
@@ -216,9 +211,8 @@ describe("rebaseBranch", () => {
 		// 1 ─ 2 ─ 3 ─(4)
 		//             └─ 5'
 		const [n5_1, change, commits] = rebaseBranch(
-			new TestChangeRebaser(),
-			undefined,
 			mintRevisionTag,
+			new TestChangeRebaser(),
 			n5,
 			n4,
 		);
@@ -247,9 +241,8 @@ describe("rebaseBranch", () => {
 		// 1 ─ 2 ─(3)─ 4
 		//         └─
 		const [n3_2, change, commits] = rebaseBranch(
-			new TestChangeRebaser(),
-			undefined,
 			mintRevisionTag,
+			new TestChangeRebaser(),
 			n3_1,
 			n3,
 			n4,
@@ -268,25 +261,13 @@ describe("rebaseBranch", () => {
 		const n2 = newCommit(2, n1);
 		const n3 = newCommit(3, n2);
 		const n4 = newCommit(4, n3);
-		const repair4 = n4.repairData;
 		const n2_1 = newCommit(2, n1);
 		const n3_1 = newCommit(3, n2_1);
 		const n5 = newCommit(5, n3_1);
 
 		// 1 ─ 2 ─ 3 ─(4)
 		//             └─ 5'
-		const [n5_1] = rebaseBranch(
-			new TestChangeRebaser(),
-			new MockRepairDataStoreProvider(),
-			mintRevisionTag,
-			n5,
-			n4,
-		);
-
-		// Check that 5' has newly generated repair data from 5
-		// and the 4 has the same repair data as before
-		assert.notEqual(n5.repairData, n5_1.repairData);
-		assert.equal(n5_1.parent?.repairData, repair4);
+		const [n5_1] = rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n5, n4);
 	});
 });
 

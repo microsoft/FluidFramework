@@ -55,7 +55,7 @@ describe("Schema Comparison", () => {
 	/**
 	 * FieldStoredSchema which is impossible for any data to be in schema with.
 	 */
-	const neverField = fieldSchema(FieldKinds.value, []);
+	const neverField = fieldSchema(FieldKinds.required, []);
 
 	/**
 	 * TreeStoredSchema which is impossible for any data to be in schema with.
@@ -86,11 +86,11 @@ describe("Schema Comparison", () => {
 
 	const valueLocalFieldTree = namedTreeSchema({
 		name: "valueLocalFieldTree",
-		structFields: { x: fieldSchema(FieldKinds.value, [emptyTree.name]) },
+		structFields: { x: fieldSchema(FieldKinds.required, [emptyTree.name]) },
 	});
 
-	const valueAnyField = fieldSchema(FieldKinds.value);
-	const valueEmptyTreeField = fieldSchema(FieldKinds.value, [emptyTree.name]);
+	const valueAnyField = fieldSchema(FieldKinds.required);
+	const valueEmptyTreeField = fieldSchema(FieldKinds.required, [emptyTree.name]);
 	const optionalAnyField = fieldSchema(FieldKinds.optional);
 	const optionalEmptyTreeField = fieldSchema(FieldKinds.optional, [emptyTree.name]);
 
@@ -109,7 +109,7 @@ describe("Schema Comparison", () => {
 		const repo = new InMemoryStoredSchemaRepository();
 		assert(isNeverField(defaultSchemaPolicy, repo, neverField));
 		updateTreeSchema(repo, brand("never"), neverTree);
-		const neverField2: FieldStoredSchema = fieldSchema(FieldKinds.value, [brand("never")]);
+		const neverField2: FieldStoredSchema = fieldSchema(FieldKinds.required, [brand("never")]);
 		assert(isNeverField(defaultSchemaPolicy, repo, neverField2));
 		assert.equal(isNeverField(defaultSchemaPolicy, repo, storedEmptyFieldSchema), false);
 		assert.equal(isNeverField(defaultSchemaPolicy, repo, anyField), false);
@@ -119,7 +119,7 @@ describe("Schema Comparison", () => {
 			isNeverField(
 				defaultSchemaPolicy,
 				repo,
-				fieldSchema(FieldKinds.value, [brand("empty")]),
+				fieldSchema(FieldKinds.required, [brand("empty")]),
 			),
 			false,
 		);
@@ -165,7 +165,7 @@ describe("Schema Comparison", () => {
 
 	it("isNeverTreeRecursive", () => {
 		const repo = new InMemoryStoredSchemaRepository();
-		const recursiveField = fieldSchema(FieldKinds.value, [brand("recursive")]);
+		const recursiveField = fieldSchema(FieldKinds.required, [brand("recursive")]);
 		const recursiveType = treeSchema({
 			mapFields: recursiveField,
 		});
@@ -175,7 +175,10 @@ describe("Schema Comparison", () => {
 
 	it("isNeverTreeRecursive non-never", () => {
 		const repo = new InMemoryStoredSchemaRepository();
-		const recursiveField = fieldSchema(FieldKinds.value, [brand("recursive"), emptyTree.name]);
+		const recursiveField = fieldSchema(FieldKinds.required, [
+			brand("recursive"),
+			emptyTree.name,
+		]);
 		const recursiveType = treeSchema({
 			mapFields: recursiveField,
 		});
@@ -201,11 +204,16 @@ describe("Schema Comparison", () => {
 			getOrdering(ValueSchema.String, undefined, allowsValueSuperset),
 			Ordering.Incomparable,
 		);
+		assert.equal(
+			getOrdering(ValueSchema.Null, undefined, allowsValueSuperset),
+			Ordering.Incomparable,
+		);
 		testPartialOrder<ValueSchema | undefined>(allowsValueSuperset, [
 			ValueSchema.Boolean,
 			ValueSchema.Number,
 			ValueSchema.String,
 			ValueSchema.FluidHandle,
+			ValueSchema.Null,
 		]);
 	});
 
@@ -236,7 +244,7 @@ describe("Schema Comparison", () => {
 		const repo = new InMemoryStoredSchemaRepository();
 		updateTreeSchema(repo, brand("never"), neverTree);
 		updateTreeSchema(repo, emptyTree.name, emptyTree);
-		const neverField2: FieldStoredSchema = fieldSchema(FieldKinds.value, [brand("never")]);
+		const neverField2: FieldStoredSchema = fieldSchema(FieldKinds.required, [brand("never")]);
 		const compare = (a: FieldStoredSchema, b: FieldStoredSchema): boolean =>
 			allowsFieldSuperset(defaultSchemaPolicy, repo, a, b);
 		testOrder(compare, [
@@ -410,7 +418,7 @@ function testPartialOrder<T>(
  * Flatten maps and arrays into simple objects for better printing.
  */
 function intoSimpleObject(obj: unknown): unknown {
-	if (typeof obj !== "object") {
+	if (typeof obj !== "object" || obj === null) {
 		return obj;
 	}
 	if (obj instanceof Array) {

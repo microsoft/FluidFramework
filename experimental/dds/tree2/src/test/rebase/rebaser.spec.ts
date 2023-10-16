@@ -12,7 +12,6 @@ import { ChangeRebaser, RevisionTag } from "../../core";
 import { GraphCommit, mintRevisionTag, rebaseBranch } from "../../core/rebase";
 
 import { fail } from "../../util";
-import { MockRepairDataStoreProvider } from "../utils";
 
 /** Given a number in the range [0, 15], turn it into a deterministic and human-rememberable v4 UUID */
 function makeRevisionTag(tag: number): RevisionTag {
@@ -130,9 +129,8 @@ describe("rebaser", () => {
 						: tester.main;
 
 				const [result] = rebaseBranch(
-					new DummyChangeRebaser(),
-					new MockRepairDataStoreProvider(),
 					mintRevisionTag,
+					new DummyChangeRebaser(),
 					tester.branch,
 					base,
 					tester.main,

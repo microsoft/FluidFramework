@@ -103,6 +103,8 @@ export function valueSchemaAllows<TSchema extends ValueSchema>(
 			return typeof nodeValue === "boolean";
 		case ValueSchema.FluidHandle:
 			return isFluidHandle(nodeValue);
+		case ValueSchema.Null:
+			return nodeValue === null;
 		default:
 			unreachableCase(schema);
 	}
@@ -315,7 +317,7 @@ export function isArrayLike(
 ): data is
 	| readonly ContextuallyTypedNodeData[]
 	| ReadonlyMarkedArrayLike<ContextuallyTypedNodeData> {
-	if (typeof data !== "object") {
+	if (typeof data !== "object" || data === null) {
 		return false;
 	}
 	return (
@@ -385,8 +387,17 @@ function shallowCompatibilityTest(
 	);
 	const schema =
 		schemaData.treeSchema.get(type) ?? fail("requested type does not exist in schema");
-	if (isPrimitiveValue(data)) {
-		return isPrimitive(schema) && allowsValue(schema.leafValue, data);
+	if (isPrimitiveValue(data) || data === null) {
+		return allowsValue(schema.leafValue, data);
+	}
+	// TODO: once this is using view schema, replace with schemaIsLeaf
+	if (schema.leafValue !== undefined) {
+		// Reject objects with no value from being leaf nodes.
+		// Note that if allowing IFluidHandles without wrapping them in a leaf node object,
+		// this (or the above isPrimitiveValue) would have to change.
+		if ((data as ContextuallyTypedNodeDataObject)[valueSymbol] === undefined) {
+			return false;
+		}
 	}
 	if (isArrayLike(data)) {
 		const primary = getPrimaryField(schema);
@@ -515,13 +526,7 @@ export function applyTypesFromContext(
 	const schema =
 		context.schema.treeSchema.get(type) ?? fail("requested type does not exist in schema");
 
-	if (isPrimitiveValue(data)) {
-		// This check avoids returning an out of schema node
-		// in the case where schema permits the value, but has required fields.
-		assert(
-			isPrimitive(schema),
-			0x5c3 /* Schema must be primitive when providing a primitive value */,
-		);
+	if (isPrimitiveValue(data) || data === null) {
 		assert(
 			allowsValue(schema.leafValue, data),
 			0x4d3 /* unsupported schema for provided primitive */,
@@ -574,7 +579,7 @@ function setFieldForKey(
 ): void {
 	const requiredFieldSchema = getFieldSchema(key, schema);
 	const multiplicity = getFieldKind(requiredFieldSchema).multiplicity;
-	if (multiplicity === Multiplicity.Value && context.fieldSource !== undefined) {
+	if (multiplicity === Multiplicity.Single && context.fieldSource !== undefined) {
 		const fieldGenerator = context.fieldSource(key, requiredFieldSchema);
 		if (fieldGenerator !== undefined) {
 			const children = fieldGenerator();
@@ -621,7 +626,7 @@ export function applyFieldTypesFromContext(
 		return children;
 	}
 	assert(
-		multiplicity === Multiplicity.Value || multiplicity === Multiplicity.Optional,
+		multiplicity === Multiplicity.Single || multiplicity === Multiplicity.Optional,
 		0x4da /* single value provided for an unsupported field */,
 	);
 	return [applyTypesFromContext(context, field.types, data)];

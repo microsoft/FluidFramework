@@ -27,7 +27,7 @@ import {
 	MarkedArrayLike,
 	parentField,
 	contextSymbol,
-	SchemaBuilder,
+	FieldSchema,
 } from "../../../feature-libraries";
 
 import {
@@ -41,6 +41,7 @@ import {
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../../feature-libraries/editable-tree/editableTreeContext";
 
+import { SchemaBuilder, leaf } from "../../../domains";
 import {
 	fullSchemaData,
 	personSchema,
@@ -50,7 +51,6 @@ import {
 	stringSchema,
 	phonesSchema,
 	optionalChildSchema,
-	int32Schema,
 	personData,
 	personJsonableTree,
 	buildTestSchema,
@@ -286,7 +286,7 @@ describe("editable-tree: read-only", () => {
 
 		const emptyOptional = buildTestTree(
 			{},
-			SchemaBuilder.field(FieldKinds.value, optionalChildSchema),
+			FieldSchema.create(FieldKinds.required, [optionalChildSchema]),
 		).unwrappedRoot;
 		assert(isEditableTree(emptyOptional));
 		// Check empty field does not show up:
@@ -294,9 +294,9 @@ describe("editable-tree: read-only", () => {
 
 		const fullOptional = buildTestTree(
 			{
-				child: { [typeNameSymbol]: int32Schema.name, [valueSymbol]: 1 },
+				child: { [typeNameSymbol]: leaf.number.name, [valueSymbol]: 1 },
 			},
-			SchemaBuilder.field(FieldKinds.value, optionalChildSchema),
+			FieldSchema.create(FieldKinds.required, [optionalChildSchema]),
 		).unwrappedRoot;
 		assert(isEditableTree(fullOptional));
 		// Check full field does show up:
@@ -306,7 +306,7 @@ describe("editable-tree: read-only", () => {
 			{
 				[valueSymbol]: 1,
 			},
-			SchemaBuilder.field(FieldKinds.value, float64Schema),
+			FieldSchema.create(FieldKinds.required, [float64Schema]),
 		).root.content;
 		assert(isEditableTree(hasValue));
 		// Value does show up when not empty:
@@ -314,7 +314,7 @@ describe("editable-tree: read-only", () => {
 	});
 
 	it("sequence roots are sequence fields", () => {
-		const rootSchema = SchemaBuilder.field(FieldKinds.sequence, optionalChildSchema);
+		const rootSchema = FieldSchema.create(FieldKinds.sequence, [optionalChildSchema]);
 		const schemaData = buildTestSchema(rootSchema);
 		// Test empty
 		{
@@ -346,7 +346,7 @@ describe("editable-tree: read-only", () => {
 	});
 
 	it("value roots are unwrapped", () => {
-		const schemaData = buildTestSchema(SchemaBuilder.fieldValue(optionalChildSchema));
+		const schemaData = buildTestSchema(SchemaBuilder.required(optionalChildSchema));
 		const forest = setupForest(schemaData, {});
 		const context = getReadonlyEditableTreeContext(forest, schemaData);
 		assert(isEditableTree(context.unwrappedRoot));
@@ -355,7 +355,7 @@ describe("editable-tree: read-only", () => {
 	});
 
 	it("optional roots are unwrapped", () => {
-		const schemaData = buildTestSchema(SchemaBuilder.fieldOptional(optionalChildSchema));
+		const schemaData = buildTestSchema(SchemaBuilder.optional(optionalChildSchema));
 		// Empty
 		{
 			const forest = setupForest(schemaData, undefined);
@@ -375,22 +375,22 @@ describe("editable-tree: read-only", () => {
 	});
 
 	it("primitives are unwrapped at root", () => {
-		const rootSchema = SchemaBuilder.field(FieldKinds.value, int32Schema);
+		const rootSchema = FieldSchema.create(FieldKinds.required, [leaf.number]);
 		const schemaData = buildTestSchema(rootSchema);
 		const forest = setupForest(schemaData, 1);
 		const context = getReadonlyEditableTreeContext(forest, schemaData);
 		assert.equal(context.unwrappedRoot, 1);
-		expectFieldEquals(schemaData, context.root, [{ type: int32Schema.name, value: 1 }]);
+		expectFieldEquals(schemaData, context.root, [{ type: leaf.number.name, value: 1 }]);
 		context.free();
 	});
 
 	it("primitives under node are unwrapped, but may be accessed without unwrapping", () => {
-		const builder = new SchemaBuilder("test", {}, personSchemaLibrary);
+		const builder = new SchemaBuilder({ scope: "test", libraries: [personSchemaLibrary] });
 		const parentSchema = builder.struct("parent", {
-			child: SchemaBuilder.field(FieldKinds.value, stringSchema),
+			child: stringSchema,
 		});
-		const rootSchema = SchemaBuilder.field(FieldKinds.value, parentSchema);
-		const schemaData = builder.intoDocumentSchema(rootSchema);
+		const rootSchema = FieldSchema.create(FieldKinds.required, [parentSchema]);
+		const schemaData = builder.toDocumentSchema(rootSchema);
 		const forest = setupForest(schemaData, { child: "x" });
 		const context = getReadonlyEditableTreeContext(forest, schemaData);
 		assert(isEditableTree(context.unwrappedRoot));
@@ -404,7 +404,7 @@ describe("editable-tree: read-only", () => {
 	});
 
 	it("array nodes get unwrapped", () => {
-		const rootSchema = SchemaBuilder.field(FieldKinds.value, phonesSchema);
+		const rootSchema = FieldSchema.create(FieldKinds.required, [phonesSchema]);
 		assert(getPrimaryField(phonesSchema) !== undefined);
 		const schemaData = buildTestSchema(rootSchema);
 
@@ -433,7 +433,7 @@ describe("editable-tree: read-only", () => {
 			const data = [
 				{
 					type: phonesSchema.name,
-					fields: { [EmptyKey]: [{ type: int32Schema.name, value: 1 }] },
+					fields: { [EmptyKey]: [{ type: leaf.number.name, value: 1 }] },
 				},
 			];
 			const forest = setupForest(schemaData, [1]);
