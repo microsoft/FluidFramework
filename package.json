@@ -208,8 +208,5 @@
 				"fluid-framework"
 			]
 		}
-	},
-	"dependencies": {
-		"tinylicious": "2.0.2"
 	}
 }
