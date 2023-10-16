@@ -20,8 +20,6 @@ import {
 	Any,
 } from "./typed-schema";
 import { FieldKind } from "./modular-schema";
-import { FieldKinds } from "./default-field-kinds";
-import { SchemaBuilder } from "../domains";
 
 /**
  * Configuration for a SchemaBuilder.
