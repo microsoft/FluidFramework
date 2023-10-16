@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * @public
+ */
 export enum MessageType {
 	/**
 	 * Empty operation message. Used to send an updated reference sequence number.
@@ -73,6 +76,9 @@ export enum MessageType {
 	Control = "control",
 }
 
+/**
+ * @public
+ */
 export enum SignalType {
 	/**
 	 * System signal sent to indicate a new client has joined the collaboration.
@@ -86,7 +92,9 @@ export enum SignalType {
 }
 
 /**
- * Messages to track latency trace
+ * Messages to track latency trace.
+ *
+ * @public
  */
 export interface ITrace {
 	/**
@@ -105,6 +113,9 @@ export interface ITrace {
 	timestamp: number;
 }
 
+/**
+ * @public
+ */
 export interface INack {
 	/**
 	 * The operation that was just nacked.
@@ -123,7 +134,9 @@ export interface INack {
 }
 
 /**
- * Document specific message
+ * Document-specific message.
+ *
+ * @public
  */
 export interface IDocumentMessage {
 	/**
@@ -170,13 +183,17 @@ export interface IDocumentMessage {
 
 /**
  * Document Message with optional system level data field.
+ *
+ * @public
  */
 export interface IDocumentSystemMessage extends IDocumentMessage {
 	data: string;
 }
 
 /**
- * Branch origin information
+ * Branch origin information.
+ *
+ * @public
  */
 export interface IBranchOrigin {
 	/**
@@ -196,7 +213,9 @@ export interface IBranchOrigin {
 }
 
 /**
- * Sequenced message for a distributed document
+ * Sequenced message for a distributed document.
+ *
+ * @public
  */
 export interface ISequencedDocumentMessage {
 	/**
@@ -263,7 +282,9 @@ export interface ISequencedDocumentMessage {
 	 */
 	timestamp: number;
 
-	// Data provided by service. Only present in service generated messages.
+	/**
+	 * Data provided by service. Only present in service generated messages.
+	 */
 	data?: string;
 
 	/**
@@ -301,16 +322,24 @@ export type ISequencedDocumentMessageExperimental = Omit<
 	compression?: string;
 };
 
+/**
+ * @public
+ */
 export interface ISequencedDocumentSystemMessage extends ISequencedDocumentMessage {
 	data: string;
 }
 
+/**
+ * @public
+ */
 export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMessage {
 	additionalContent: string;
 }
 
 /**
- * Common interface between incoming and outgoing signals
+ * Common interface between incoming and outgoing signals.
+ *
+ * @public
  */
 export interface ISignalMessageBase {
 	/**
@@ -335,7 +364,9 @@ export interface ISignalMessageBase {
 }
 
 /**
- * Interface for signals sent by the server to clients
+ * Interface for signals sent by the server to clients.
+ *
+ * @public
  */
 export interface ISignalMessage extends ISignalMessageBase {
 	/**
@@ -347,7 +378,9 @@ export interface ISignalMessage extends ISignalMessageBase {
 }
 
 /**
- * Interface for signals sent by clients to the server when submit_signals_v2 is enabled
+ * Interface for signals sent by clients to the server when submit_signals_v2 is enabled.
+ *
+ * @public
  */
 export interface ISentSignalMessage extends ISignalMessageBase {
 	/**
@@ -356,25 +389,43 @@ export interface ISentSignalMessage extends ISignalMessageBase {
 	targetClientId?: string;
 }
 
+/**
+ * @public
+ */
 export interface IUploadedSummaryDetails {
-	// Indicates whether the uploaded summary contains ".protocol" tree
+	/**
+	 * Indicates whether the uploaded summary contains ".protocol" tree.
+	 */
 	includesProtocolTree?: boolean;
 }
 
+/**
+ * @public
+ */
 export interface ISummaryContent {
-	// Handle reference to the summary data
+	/**
+	 * Handle reference to the summary data.
+	 */
 	handle: string;
 
-	// Message included as part of the summary
+	/**
+	 * Message included as part of the summary.
+	 */
 	message: string;
 
-	// Handles to parent summaries of the proposed new summary
+	/**
+	 * Handles to parent summaries of the proposed new summary.
+	 */
 	parents: string[];
 
-	// Handle to the current latest summary stored by the service
+	/**
+	 * Handle to the current latest summary stored by the service
+	 */
 	head: string;
 
-	// Details of the uploaded summary
+	/**
+	 * Details of the uploaded summary.
+	 */
 	details?: IUploadedSummaryDetails;
 
 	// TODO - need an epoch/reload bit to indicate to clients that the summary has changed and requires a reload
@@ -384,6 +435,8 @@ export interface ISummaryContent {
 /**
  * General errors returned from the server.
  * May want to add error code or something similar in the future.
+ *
+ * @public
  */
 export interface IServerError {
 	/**
@@ -394,6 +447,8 @@ export interface IServerError {
 
 /**
  * Data about the original proposed summary message.
+ *
+ * @public
  */
 export interface ISummaryProposal {
 	/**
@@ -404,6 +459,8 @@ export interface ISummaryProposal {
 
 /**
  * Contents of summary ack expected from the server.
+ *
+ * @public
  */
 export interface ISummaryAck {
 	/**
@@ -419,6 +476,8 @@ export interface ISummaryAck {
 
 /**
  * Contents of summary nack expected from the server.
+ *
+ * @public
  */
 export interface ISummaryNack {
 	/**
@@ -448,6 +507,8 @@ export interface ISummaryNack {
 
 /**
  * Interface for nack content.
+ *
+ * @public
  */
 export interface INackContent {
 	/**
@@ -476,15 +537,28 @@ export interface INackContent {
 }
 
 /**
- * Type of the Nack.
- * InvalidScopeError: Client's token is not valid for the intended message.
- * ThrottlingError: Retriable after retryAfter number.
- * BadRequestError: Clients message is invalid and should retry immediately with a valid message.
- * LimitExceededError: Service is having issues. Client should not retry.
+ * Type of the nack.
+ *
+ * @public
  */
 export enum NackErrorType {
+	/**
+	 * Retriable after {@link ISummaryNack.retryAfter} seconds.
+	 */
 	ThrottlingError = "ThrottlingError",
+
+	/**
+	 * Client's token is not valid for the intended message.
+	 */
 	InvalidScopeError = "InvalidScopeError",
+
+	/**
+	 * Clients message is invalid and should retry immediately with a valid message.
+	 */
 	BadRequestError = "BadRequestError",
+
+	/**
+	 * Service is having issues. Client should not retry.
+	 */
 	LimitExceededError = "LimitExceededError",
 }
