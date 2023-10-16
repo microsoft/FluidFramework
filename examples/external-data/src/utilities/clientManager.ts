@@ -3,11 +3,27 @@
  * Licensed under the MIT License.
  */
 
+// /**
+//  * Create a single string representation of container identity that consists of tenantId and documentId
+//  */
+// function createClientSessionUrl(tenantId: string, documentId: string) {
+// 	return `${tenantId}/${documentId}`
+// }
+
+// /**
+//  * Break single string representation of container identity to its constituents of tenantId and documentId
+//  */
+// function splitClientSessionUrl(tenantId: string, documentId: string) {
+// 	return `${tenantId}/${documentId}`
+// }
+
+type DocumentId = string;
+type TenantId = string;
 /**
  * Represents a Fluid containers URL.
  * This URL contains the client's Fluid session information necessary for broadcasting signals to.
  */
-type ClientSessionUrl = string;
+type ClientSessionUrl = Record<TenantId, DocumentId>;
 
 /**
  * Represents the external data servers query url or uuid.
@@ -71,7 +87,9 @@ export class ClientManager<TData = unknown> {
 			this._taskListMapping.get(externalTaskListId)?.add(client);
 		}
 		console.log(
-			`CUSTOMER SERVICE: "${client}" has been registered with ${externalTaskListId}.`,
+			`CUSTOMER SERVICE: "${JSON.stringify(
+				client,
+			)}" has been registered with ${externalTaskListId}.`,
 		);
 	}
 

@@ -13,6 +13,33 @@ import { ClientManager } from "../utilities";
 import { assertValidTaskData, ITaskData } from "../model-interface";
 
 /**
+ * Expected shape of the "broadcast-signal" message that is sent to the /broadcast-signal service endpoint.
+ */
+export interface BroadcastSignalBodyInterface {
+	/**
+	 * Content of signal. Required by server.
+	 */
+	signalContent: {
+		/**
+		 * Required parameter. Required by server. User may add more parameters than the required `type` and `content` below.
+		 */
+		contents: {
+			/**
+			 * Required parameter. User defined content. User defined content that will be pass
+			 * unchanged to client.
+			 */
+			content: JSON | string;
+			/**
+			 * Required parameter. User defined content that will be pass unchanged to client.
+			 * User may consider using this type to differentiate between multiple diffrent signal types,
+			 * and possibly use it for versioning as well.
+			 */
+			type: string;
+		};
+	};
+}
+
+/**
  * Submits notifications of changes to Fluid Service.
  */
 function echoExternalDataWebhookToFluid(
@@ -23,20 +50,26 @@ function echoExternalDataWebhookToFluid(
 	documentId: string,
 ): void {
 	console.log(
-		`CUSTOMER SERVICE: External data has been updated. Notifying Fluid Service at ${fluidServiceUrl}`);
+		`CUSTOMER SERVICE: External data has been updated. Notifying Fluid Service at ${fluidServiceUrl}`,
+	);
 
 	const fluidService = `${fluidServiceUrl}/${tenantId}/${documentId}/broadcast-signal`;
 
-	// TODO: we will need to add details (like ContainerId) to the message body or the url,
-	// so this message body format will evolve
-	const messageBody = JSON.stringify({ taskData, externalTaskListId });
+	const messageBody = {
+		signalContent: {
+			contents: {
+				content: { taskData, externalTaskListId },
+				type: "ExternalDataChanged_V1.0.0",
+			},
+		},
+	} as unknown as BroadcastSignalBodyInterface;
 	fetch(fluidService, {
 		method: "POST",
 		headers: {
 			"Access-Control-Allow-Origin": "*",
 			"Content-Type": "application/json",
 		},
-		body: messageBody,
+		body: JSON.stringify(messageBody),
 	}).catch((error) => {
 		console.error(
 			"CUSTOMER SERVICE: Encountered an error while notifying Fluid Service:",
@@ -70,9 +103,13 @@ export interface SessionEndEventsListenerRequest extends EventsListenerRequest {
 		 */
 		type: "session-end";
 		/**
-		 * The URL of the Fluid container whose session has ended.
+		 * The documentId of the Fluid container whose session has ended.
 		 */
-		containerUrl: string;
+		documentId: string;
+		/**
+		 * The tenantId of the Fluid container whose session has ended.
+		 */
+		tenantId: string;
 	};
 }
 
@@ -194,13 +231,22 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 				),
 			);
 			for (const containerUrl of containerUrls) {
-				const [ tenantId, documentId ] = containerUrl.split("/");
+				console.log(
+					"containerUrl fluid://localhost:7070/tinylicious/67d53f9a-ff1c-42f9-93ca-f777e356b35d",
+				);
+				console.log(JSON.stringify(containerUrl));
+				const tenantId = containerUrl.TenantId;
+				const documentId = containerUrl.DocumentId;
+				console.log("tenantId");
+				console.log(tenantId);
+				console.log("documentId");
+				console.log(documentId);
 				echoExternalDataWebhookToFluid(
 					taskData,
 					fluidServiceUrl,
 					externalTaskListId,
 					tenantId,
-					documentId
+					documentId,
 				);
 			}
 			result.send();
@@ -217,23 +263,28 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	 *
 	 * ```json
 	 *	{
-	 *		containerUrl: string,
+	 *		documentId: string,
+	 *		tenantId: string,
 	 *		externalTaskListId: string
 	 *	}
 	 * ```
-	 *
-	 * Note: Implementers choice --can choose to break up containerUrl into multiple pieces
-	 * containing tenantId, documentId and socketStreamURL separately and send them as a json
-	 * object. The URL also contains all this information so for simplicity I use the URL here.
 	 */
 	expressApp.post("/register-session-url", (request, result) => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const containerUrl = request.body?.containerUrl as string;
+		const tenantId = request.body?.tenantId as string;
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		const documentId = request.body?.documentId as string;
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		const externalTaskListId = request.body?.externalTaskListId as string;
-		if (containerUrl === undefined) {
+		if (tenantId === undefined) {
 			const errorMessage =
-				'No session data provided by client. Expected under "containerUrl" property.';
+				'No session data provided by client. Expected under "tenantId" property.';
+			result.status(400).json({ message: errorMessage });
+			return;
+		}
+		if (documentId === undefined) {
+			const errorMessage =
+				'No session data provided by client. Expected under "documentId" property.';
 			result.status(400).json({ message: errorMessage });
 			return;
 		}
@@ -267,10 +318,13 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 			});
 		}
 
+		const containerUrl = { TenantId: tenantId, DocumentId: documentId };
 		clientManager.registerClient(containerUrl, externalTaskListId);
 		console.log(
 			formatLogMessage(
-				`Registered containerUrl ${containerUrl} with external query: ${externalTaskListId}".`,
+				`Registered containerUrl ${JSON.stringify(
+					containerUrl,
+				)} with external query: ${externalTaskListId}".`,
 			),
 		);
 
@@ -292,16 +346,24 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 
 		if (eventType === "session-end") {
 			const typedRequest = request as SessionEndEventsListenerRequest;
-			const containerUrl = typedRequest.body?.containerUrl;
-			if (containerUrl === undefined || typeof containerUrl !== "string") {
-				const errorMessage = `Missing or malformed containerUrl: ${containerUrl}`;
+			const documentId = typedRequest.body?.documentId;
+			if (documentId === undefined || typeof documentId !== "string") {
+				const errorMessage = `Missing or malformed documentId: ${documentId}`;
+				result.status(400).json({ message: errorMessage });
+				return;
+			}
+
+			const tenantId = typedRequest.body?.tenantId;
+			if (tenantId === undefined || typeof tenantId !== "string") {
+				const errorMessage = `Missing or malformed tenantId: ${tenantId}`;
 				result.status(400).json({ message: errorMessage });
 				return;
 			}
 
 			// Removes the mapping of the given container URL from all task id's
-			const emptyTaskListRegistrationIds =
-				clientManager.removeAllClientTaskListRegistrations(containerUrl);
+			const emptyTaskListRegistrationIds = clientManager.removeAllClientTaskListRegistrations(
+				{ TenantId: tenantId, DocumentId: documentId },
+			);
 			// If there are any task list id's that no longer have any active client sessions mapped to them
 			// then we should deregister our webhook for that task list id.
 			for (const emptyExternalTaskListId of emptyTaskListRegistrationIds) {
