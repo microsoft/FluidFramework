@@ -116,7 +116,10 @@ function cellDeltaFromMark<TNodeChange>(
 			}
 			case "Revive": {
 				const cellId = mark.cellId;
-				assert(cellId !== undefined, "Effective revive must target an empty cell");
+				assert(
+					cellId !== undefined,
+					0x7bb /* Effective revive must target an empty cell */,
+				);
 				const hasTransience: { detachId?: Delta.DetachedNodeId } = {};
 				if (mark.transientDetach !== undefined) {
 					const majorForTransient = mark.transientDetach.revision ?? revision;

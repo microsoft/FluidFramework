@@ -10,6 +10,8 @@ import { IFluidLastEditedTracker, ILastEditDetails } from "./interfaces";
  * Tracks the last edit details such as the last edited user details and the last edited timestamp. The last edited
  * details should be updated (via updateLastEditDetails) in response to a remote op since it uses shared summary block
  * as storage.
+ *
+ * @public
  */
 export class LastEditedTracker implements IFluidLastEditedTracker {
 	private readonly lastEditedDetailsKey = "lastEditDetailsKey";

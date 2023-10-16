@@ -119,16 +119,13 @@ export {
 	cursorToJsonObject,
 	singleJsonCursor,
 	jsonArray,
-	jsonBoolean,
-	jsonNull,
-	jsonNumber,
 	jsonObject,
-	jsonString,
 	jsonSchema,
 	nodeKeyField,
 	nodeKeySchema,
 	leaf,
 	testRecursiveDomain,
+	SchemaBuilder,
 } from "./domains";
 
 export {
@@ -189,7 +186,6 @@ export {
 	UnwrappedUntypedField,
 	UnwrappedUntypedTree,
 	UntypedTreeOrPrimitive,
-	SchemaBuilder,
 	AllowedTypes,
 	TreeSchema,
 	Required,
@@ -278,6 +274,16 @@ export {
 	Unenforced,
 	schemaIsFieldNode,
 	AllowedTypeSet,
+	SchemaBuilderOptions,
+	SharedTreeList,
+	ObjectFields,
+	ProxyField,
+	ProxyFieldInner,
+	ProxyNode,
+	ProxyNodeUnion,
+	SharedTreeMap,
+	SharedTreeObject,
+	is,
 } from "./feature-libraries";
 
 export {

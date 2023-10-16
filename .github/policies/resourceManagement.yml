@@ -1,14 +1,14 @@
-id: 
+id:
 name: GitOps.PullRequestIssueManagement
 description: GitOps.PullRequestIssueManagement primitive
-owner: 
+owner:
 resource: repository
 disabled: false
-where: 
+where:
 configuration:
   resourceManagementConfiguration:
     scheduledSearches:
-    - description: 
+    - description:
       frequencies:
       - hourly:
           hour: 3
@@ -23,7 +23,7 @@ configuration:
       - addReply:
           reply: "This issue has been marked as being beyond the support scope of Fluid Frameworks's issue board. It will now be closed automatically for house-keeping purposes. "
       - closeIssue
-    - description: 
+    - description:
       frequencies:
       - hourly:
           hour: 6
@@ -37,7 +37,7 @@ configuration:
       - addReply:
           reply: "Because this issue is marked as \"by design\" and has not had activity for over 3 days, we're automatically closing it for house-keeping purposes. "
       - closeIssue
-    - description: 
+    - description:
       frequencies:
       - hourly:
           hour: 3
@@ -51,7 +51,7 @@ configuration:
       - addReply:
           reply: "Because this issue is marked as \"won't fix\" and has not had activity for over 3 days, we're automatically closing it for house-keeping purposes. "
       - closeIssue
-    - description: 
+    - description:
       frequencies:
       - hourly:
           hour: 6
@@ -65,7 +65,7 @@ configuration:
       - addReply:
           reply: "Because this issue is marked as \"can't repro\" and has not had activity for over 3 days, we're automatically closing it for house-keeping purposes. "
       - closeIssue
-    - description: 
+    - description:
       frequencies:
       - hourly:
           hour: 6
@@ -83,7 +83,7 @@ configuration:
           reply: This issue has been automatically marked as stale because it has marked as requiring more information but has not had any activity for **2 days**. It will be closed if no further activity occurs **within 8 days of this comment**. Thank you for your contributions to Fluid Framework!
       - addLabel:
           label: 'Status: No Recent Activity'
-    - description: 
+    - description:
       frequencies:
       - hourly:
           hour: 3
@@ -96,7 +96,7 @@ configuration:
           days: 8
       actions:
       - closeIssue
-    - description: 
+    - description:
       frequencies:
       - hourly:
           hour: 6
@@ -110,7 +110,7 @@ configuration:
       - addReply:
           reply: "Because this issue is marked as \"duplicate\" and has not had activity for over 3 days, we're automatically closing it for house-keeping purposes. "
       - closeIssue
-    - description: 
+    - description:
       frequencies:
       - hourly:
           hour: 12
@@ -130,7 +130,7 @@ configuration:
           label: 'status: stale'
       - addReply:
           reply: This issue has been automatically marked as stale because it has had no activity for 180 days. It will be closed if no further activity occurs **within 8 days of this comment**. Thank you for your contributions to Fluid Framework!
-    - description: 
+    - description:
       frequencies:
       - hourly:
           hour: 12
@@ -144,7 +144,7 @@ configuration:
           label: 'status: stale'
       - addReply:
           reply: This PR has been automatically marked as stale because it has had no activity for 60 days. It will be closed if no further activity occurs **within 8 days of this comment**. Thank you for your contributions to Fluid Framework!
-    - description: 
+    - description:
       frequencies:
       - hourly:
           hour: 12
@@ -161,22 +161,7 @@ configuration:
       - payloadType: Issue_Comment
       then:
       - cleanEmailReply
-      description: 
-    - if:
-      - payloadType: Pull_Request
-      - hasLabel:
-          label: 'msftbot: merge-next'
-      then:
-      - enableAutoMerge:
-          mergeMethod: Squash
-      description: 
-    - if:
-      - payloadType: Pull_Request
-      - labelRemoved:
-          label: 'msftbot: merge-next'
-      then:
-      - disableAutoMerge
-      description: 
+      description:
     - if:
       - payloadType: Issues
       - not:
@@ -190,7 +175,7 @@ configuration:
       then:
       - removeLabel:
           label: 'status: no recent activity'
-      description: 
+      description:
     - if:
       - payloadType: Issue_Comment
       - hasLabel:
@@ -198,7 +183,7 @@ configuration:
       then:
       - removeLabel:
           label: 'status: no recent activity'
-      description: 
+      description:
     - if:
       - payloadType: Issues
       - labelAdded:
@@ -209,12 +194,12 @@ configuration:
       then:
       - addReply:
           reply: >-
-            The Fluid Framework issue queue is meant to capture bug reports and feature requests. 
+            The Fluid Framework issue queue is meant to capture bug reports and feature requests.
 
             It is best to ask questions in the "Discussions" section of the FluidFramework GitHub repo so that the entire community can contribute and learn from the question.
       - addLabel:
           label: 'resolution: not an issue'
-      description: 
+      description:
     - if:
       - payloadType: Pull_Request
       - not:
@@ -228,7 +213,7 @@ configuration:
       then:
       - removeLabel:
           label: 'status: stale'
-      description: 
+      description:
     - if:
       - payloadType: Issue_Comment
       - hasLabel:
@@ -236,7 +221,7 @@ configuration:
       then:
       - removeLabel:
           label: 'status: stale'
-      description: 
+      description:
     - if:
       - payloadType: Issues
       - not:
@@ -250,7 +235,7 @@ configuration:
       then:
       - removeLabel:
           label: 'status: stale'
-      description: 
+      description:
     - if:
       - payloadType: Issue_Comment
       - hasLabel:
@@ -258,7 +243,7 @@ configuration:
       then:
       - removeLabel:
           label: 'status: stale'
-      description: 
+      description:
     - if:
       - payloadType: Issues
       - activitySenderHasAssociation:
@@ -266,7 +251,7 @@ configuration:
       then:
       - addLabel:
           label: community-contribution
-      description: 
+      description:
     - if:
       - payloadType: Issues
       - hasLabel:
@@ -276,7 +261,7 @@ configuration:
       - assignTo:
           users:
           - ${issueAuthor}
-      description: 
+      description:
     - if:
       - payloadType: Issues
       - hasLabel:
@@ -286,6 +271,6 @@ configuration:
       then:
       - addLabel:
           label: triage
-      description: 
-onFailure: 
-onSuccess: 
+      description:
+onFailure:
+onSuccess:
