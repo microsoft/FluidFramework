@@ -9,8 +9,5 @@
 				"logLevel": "none"
 			}
 		}
-	},
-	"dtsRollup": {
-		"enabled": false
 	}
 }
