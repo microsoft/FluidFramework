@@ -257,7 +257,7 @@ describe("Object-like", () => {
 			const parent = _.struct("parent", {
 				child,
 			});
-			const schema = _.toDocumentSchema(parent);
+			const schema = _.finalize(parent);
 
 			const before = { objId: 0 };
 			const after = { objId: 1 };
@@ -282,7 +282,7 @@ describe("Object-like", () => {
 			const parent = _.struct("parent", {
 				child: _.optional(child),
 			});
-			const schema = _.toDocumentSchema(parent);
+			const schema = _.finalize(parent);
 
 			const before = { objId: 0 };
 			const after = { objId: 1 };
