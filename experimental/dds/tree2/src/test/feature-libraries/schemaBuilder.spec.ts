@@ -92,7 +92,7 @@ describe("SchemaBuilderBase", () => {
 		it("Simple", () => {
 			const schemaBuilder = new SchemaBuilderBase(FieldKinds.required, { scope: "test" });
 			const empty = schemaBuilder.struct("empty", {});
-			const schema = schemaBuilder.finalize(SchemaBuilder.optional(empty));
+			const schema = schemaBuilder.toDocumentSchema(SchemaBuilder.optional(empty));
 
 			assert.equal(schema.treeSchema.size, 1); // "empty"
 			assert.equal(schema.treeSchema.get(brand("test.empty")), empty);

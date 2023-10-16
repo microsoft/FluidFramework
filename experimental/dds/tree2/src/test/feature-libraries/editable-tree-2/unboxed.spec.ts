@@ -61,7 +61,7 @@ describe("unboxedField", () => {
 		it("No value", () => {
 			const builder = new SchemaBuilder({ scope: "test" });
 			const fieldSchema = SchemaBuilder.optional(leafDomain.number);
-			const schema = builder.finalize(fieldSchema);
+			const schema = builder.toDocumentSchema(fieldSchema);
 
 			const { context, cursor } = initializeTreeWithContent({
 				schema,
@@ -74,7 +74,7 @@ describe("unboxedField", () => {
 		it("With value (leaf)", () => {
 			const builder = new SchemaBuilder({ scope: "test" });
 			const fieldSchema = SchemaBuilder.optional(leafDomain.number);
-			const schema = builder.finalize(fieldSchema);
+			const schema = builder.toDocumentSchema(fieldSchema);
 
 			const { context, cursor } = initializeTreeWithContent({
 				schema,
@@ -92,7 +92,7 @@ describe("unboxedField", () => {
 			child: FieldSchema.createUnsafe(FieldKinds.optional, [() => structSchema]),
 		});
 		const fieldSchema = SchemaBuilder.optional(structSchema);
-		const schema = builder.finalize(fieldSchema);
+		const schema = builder.toDocumentSchema(fieldSchema);
 
 		const initialTree = {
 			name: "Foo",
@@ -119,7 +119,7 @@ describe("unboxedField", () => {
 	it("Sequence field", () => {
 		const builder = new SchemaBuilder({ scope: "test" });
 		const fieldSchema = SchemaBuilder.sequence(leafDomain.string);
-		const schema = builder.finalize(fieldSchema);
+		const schema = builder.toDocumentSchema(fieldSchema);
 
 		const { context, cursor } = initializeTreeWithContent({
 			schema,
@@ -134,7 +134,7 @@ describe("unboxedField", () => {
 	it("Schema: Any", () => {
 		const builder = new SchemaBuilder({ scope: "test" });
 		const fieldSchema = SchemaBuilder.optional(Any);
-		const schema = builder.finalize(fieldSchema);
+		const schema = builder.toDocumentSchema(fieldSchema);
 
 		const { context, cursor } = initializeTreeWithContent({ schema, initialTree: 42 });
 
@@ -149,7 +149,7 @@ describe("unboxedField", () => {
 describe("unboxedTree", () => {
 	it("Leaf", () => {
 		const builder = new SchemaBuilder({ scope: "test" });
-		const schema = builder.finalize(leafDomain.string);
+		const schema = builder.toDocumentSchema(leafDomain.string);
 
 		const { context, cursor } = initializeTreeWithContent({
 			schema,
@@ -164,7 +164,7 @@ describe("unboxedTree", () => {
 		const builder = new SchemaBuilder({ scope: "test" });
 		const mapSchema = builder.map("map", builder.optional(leafDomain.string));
 		const rootSchema = SchemaBuilder.optional(mapSchema);
-		const schema = builder.finalize(rootSchema);
+		const schema = builder.toDocumentSchema(rootSchema);
 
 		const { context, cursor } = initializeTreeWithContent({
 			schema,
@@ -188,7 +188,7 @@ describe("unboxedTree", () => {
 			child: FieldSchema.createUnsafe(FieldKinds.optional, [() => structSchema]),
 		});
 		const rootSchema = builder.optional(structSchema);
-		const schema = builder.finalize(rootSchema);
+		const schema = builder.toDocumentSchema(rootSchema);
 
 		const initialTree = {
 			name: "Foo",
@@ -214,7 +214,7 @@ describe("unboxedUnion", () => {
 	it("Any", () => {
 		const builder = new SchemaBuilder({ scope: "test" });
 		const fieldSchema = SchemaBuilder.optional(Any);
-		const schema = builder.finalize(fieldSchema);
+		const schema = builder.toDocumentSchema(fieldSchema);
 
 		const { context, cursor } = initializeTreeWithContent({ schema, initialTree: 42 });
 		cursor.enterNode(0); // Root node field has 1 node; move into it
@@ -228,7 +228,7 @@ describe("unboxedUnion", () => {
 	it("Single type", () => {
 		const builder = new SchemaBuilder({ scope: "test" });
 		const fieldSchema = SchemaBuilder.required(leafDomain.boolean);
-		const schema = builder.finalize(fieldSchema);
+		const schema = builder.toDocumentSchema(fieldSchema);
 
 		const { context, cursor } = initializeTreeWithContent({
 			schema,
@@ -242,7 +242,7 @@ describe("unboxedUnion", () => {
 	it("Multi-type", () => {
 		const builder = new SchemaBuilder({ scope: "test" });
 		const fieldSchema = SchemaBuilder.optional([leafDomain.string, leafDomain.handle]);
-		const schema = builder.finalize(fieldSchema);
+		const schema = builder.toDocumentSchema(fieldSchema);
 
 		const { context, cursor } = initializeTreeWithContent({
 			schema,
