@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 import { LeafSchema, TypedSchemaCollection } from "../../../feature-libraries";
 import { leaf, SchemaBuilder } from "../../../domains";
 
+// eslint-disable-next-line import/no-internal-modules
 import { TypedValue } from "../../../feature-libraries/schema-aware/internal";
 import { createTreeView, itWithRoot, makeSchema, pretty } from "./utils";
 
@@ -194,38 +195,150 @@ testObjectLike(tcs);
 
 describe("Object-like", () => {
 	describe("supports setting", () => {
-		function check<const TSchema extends LeafSchema>(
-			schema: LeafSchema,
-			before: TypedValue<TSchema["leafValue"]>,
-			after: TypedValue<TSchema["leafValue"]>,
-		) {
-			itWithRoot(
-				`required ${typeof before} (${pretty(before)} -> ${pretty(after)})`,
-				makeSchema((_) => _.struct("", { _value: schema })),
-				{ _value: before },
-				(root) => {
-					assert.equal(root._value, before);
-					root._value = after;
-					assert.equal(root._value, after);
-				},
-			);
+		describe("primitives", () => {
+			function check<const TSchema extends LeafSchema>(
+				schema: LeafSchema,
+				before: TypedValue<TSchema["leafValue"]>,
+				after: TypedValue<TSchema["leafValue"]>,
+			) {
+				describe(`required ${typeof before} `, () => {
+					itWithRoot(
+						`(${pretty(before)} -> ${pretty(after)})`,
+						makeSchema((_) => _.struct("", { _value: schema })),
+						{ _value: before },
+						(root) => {
+							assert.equal(root._value, before);
+							root._value = after;
+							assert.equal(root._value, after);
+						},
+					);
+				});
+
+				describe(`optional ${typeof before}`, () => {
+					itWithRoot(
+						`(undefined -> ${pretty(before)} -> ${pretty(after)})`,
+						makeSchema((_) => _.struct("", { _value: _.optional(schema) })),
+						{ _value: undefined },
+						(root) => {
+							assert.equal(root._value, undefined);
+							root._value = before;
+							assert.equal(root._value, before);
+							root._value = after;
+							assert.equal(root._value, after);
+						},
+					);
+				});
+			}
+
+			check(leaf.boolean, false, true);
+			check(leaf.number, 0, 1);
+			check(leaf.string, "", "!");
+		});
+
+		describe("required object", () => {
+			const _ = new SchemaBuilder({ scope: "test" });
+			const child = _.struct("child", {
+				objId: _.number,
+			});
+			const parent = _.struct("parent", {
+				child,
+			});
+			const schema = _.toDocumentSchema(parent);
+
+			const before = { objId: 0 };
+			const after = { objId: 1 };
 
 			itWithRoot(
-				`optional ${typeof before} (undefined -> ${pretty(before)} -> ${pretty(after)})`,
-				makeSchema((_) => _.struct("", { _value: _.optional(schema) })),
-				{ _value: undefined },
+				`(${pretty(before)} -> ${pretty(after)})`,
+				schema,
+				{ child: before },
 				(root) => {
-					assert.equal(root._value, undefined);
-					root._value = before;
-					assert.equal(root._value, before);
-					root._value = after;
-					assert.equal(root._value, after);
+					assert.equal(root.child.objId, 0);
+					root.child = after;
+					assert.equal(root.child.objId, 1);
 				},
 			);
-		}
+		});
 
-		check(leaf.boolean, false, true);
-		check(leaf.number, 0, 1);
-		check(leaf.string, "", "!");
+		describe("optional object", () => {
+			const _ = new SchemaBuilder({ scope: "test" });
+			const child = _.struct("child", {
+				objId: _.number,
+			});
+			const parent = _.struct("parent", {
+				child: _.optional(child),
+			});
+			const schema = _.toDocumentSchema(parent);
+
+			const before = { objId: 0 };
+			const after = { objId: 1 };
+
+			itWithRoot(
+				`(undefined -> ${pretty(before)} -> ${pretty(after)})`,
+				schema,
+				// TODO: Remove explicit undefined once implicit undefined is supported.
+				{ child: undefined },
+				(root) => {
+					assert.equal(root.child, undefined);
+					root.child = before;
+					assert.equal(root.child.objId, 0);
+					root.child = after;
+					assert.equal(root.child.objId, 1);
+				},
+			);
+		});
+
+		describe.skip("required list", () => {
+			// const _ = new SchemaBuilder({ scope: "test" });
+			// const list = _.fieldNode("List<string>", _.sequence(leaf.string));
+			// const parent = _.struct("parent", {
+			// 	list,
+			// });
+			// const schema = _.toDocumentSchema(parent);
+			// const before: string[] = [];
+			// const after = ["A"];
+			// itWithRoot(
+			// 	`(${pretty(before)} -> ${pretty(after)})`,
+			// 	schema,
+			// 	{ list: before },
+			// 	(root) => {
+			// 		assert.deepEqual(root.list, before);
+			// 		root.list = after;
+			// 		assert.deepEqual(root.list, after);
+			// 	},
+			// );
+		});
+
+		describe.skip("optinal list", () => {
+			// const _ = new SchemaBuilder({ scope: "test" });
+			// const list = _.fieldNode("List<string>", _.sequence(leaf.string));
+			// const parent = _.struct("parent", {
+			// 	list: _.optional(list),
+			// });
+			// const schema = _.toDocumentSchema(parent);
+			// const before: string[] = [];
+			// const after = ["A"];
+			// itWithRoot(
+			// 	`(undefined -> ${pretty(before)} -> ${pretty(after)})`,
+			// 	schema,
+			// 	// TODO: Remove explicit undefined once implicit undefined is supported.
+			// 	{ list: undefined },
+			// 	(root) => {
+			// 		assert.equal(root.list, undefined);
+			// 		root.list = before;
+			// 		assert.deepEqual(root.list, before);
+			// 		root.list = after;
+			// 		assert.deepEqual(root.list, after);
+			// 	},
+			// );
+		});
+
+		describe("required map", () => {
+			// TODO
+		});
+
+		describe("optional map", () => {
+			// TODO
+		});
 	});
 });
