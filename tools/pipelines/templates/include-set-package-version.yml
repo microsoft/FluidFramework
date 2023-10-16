@@ -155,6 +155,9 @@ steps:
       fi
 
 - ${{ if ne(parameters.packageTypesOverride, 'none') }}:
+  - template: include-install-pnpm.yml
+    parameters:
+      buildDirectory: ${{ parameters.buildDirectory }}
   - task: Npm@1
     displayName: npm run build:docs
     inputs:
