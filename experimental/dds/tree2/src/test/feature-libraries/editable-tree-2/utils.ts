@@ -7,6 +7,9 @@ import { strict as assert } from "assert";
 import {
 	DefaultEditBuilder,
 	FieldSchema,
+	ImplicitFieldSchema,
+	ProxyField,
+	ProxyRoot,
 	TypedSchemaCollection,
 	createMockNodeKeyManager,
 	nodeKeyFieldKey,
@@ -17,6 +20,7 @@ import { AllowedUpdateType, IEditableForest } from "../../../core";
 import { ISharedTree, ISharedTreeView, TreeContent } from "../../../shared-tree";
 import { TestTreeProviderLite, forestWithContent } from "../../utils";
 import { brand } from "../../../util";
+import { SchemaBuilder } from "../../../domains";
 
 export function getReadonlyContext(
 	forest: IEditableForest,
@@ -57,6 +61,30 @@ export function createTreeView<TRoot extends FieldSchema>(
 		allowedSchemaModifications: AllowedUpdateType.None,
 		initialTree,
 		schema,
+	});
+}
+
+/** Helper for making small test schemas. */
+export function makeSchema<const TSchema extends ImplicitFieldSchema>(
+	fn: (builder: SchemaBuilder) => TSchema,
+) {
+	const builder = new SchemaBuilder({
+		scope: `test.schema.${Math.random().toString(36).slice(2)}`,
+	});
+	const root = fn(builder);
+	return builder.toDocumentSchema(root);
+}
+
+export function itWithRoot<TSchema extends TypedSchemaCollection<any>>(
+	title: string,
+	schema: TSchema,
+	initialTree: ProxyRoot<TSchema, "javaScript">,
+	fn: (root: ProxyField<(typeof schema)["rootFieldSchema"]>) => void,
+): void {
+	it(title, () => {
+		const view = createTreeView(schema, initialTree);
+		const root = view.root2(schema);
+		fn(root);
 	});
 }
 
