@@ -103,7 +103,7 @@ const tcs: TestCase[] = [
 		schema: (() => {
 			const _ = new SchemaBuilder({ scope: "test" });
 			const $ = _.struct("empty", {});
-			return _.finalize($);
+			return _.toDocumentSchema($);
 		})(),
 		initialTree: {},
 	},
@@ -115,7 +115,7 @@ const tcs: TestCase[] = [
 				number: leaf.number,
 				string: leaf.string,
 			});
-			return _.finalize($);
+			return _.toDocumentSchema($);
 		})(),
 		initialTree: {
 			boolean: false,
@@ -131,7 +131,7 @@ const tcs: TestCase[] = [
 				number: _.optional(leaf.number),
 				string: _.optional(leaf.string),
 			});
-			return _.finalize($);
+			return _.toDocumentSchema($);
 		})(),
 		initialTree: {},
 	},
@@ -143,7 +143,7 @@ const tcs: TestCase[] = [
 				number: _.optional(leaf.number),
 				string: _.optional(leaf.string),
 			});
-			return _.finalize($);
+			return _.toDocumentSchema($);
 		})(),
 		initialTree: {
 			boolean: true,
@@ -161,7 +161,7 @@ const tcs: TestCase[] = [
 				nested: inner,
 			});
 
-			return _.finalize($);
+			return _.toDocumentSchema($);
 		})(),
 		initialTree: { nested: {} },
 	},
@@ -169,7 +169,7 @@ const tcs: TestCase[] = [
 		schema: (() => {
 			const _ = new SchemaBuilder({ scope: "test" });
 			const $ = _.fieldNode("List<string> len(0)", _.sequence(leaf.string));
-			return _.finalize($);
+			return _.toDocumentSchema($);
 		})(),
 		initialTree: [],
 	},
@@ -177,7 +177,7 @@ const tcs: TestCase[] = [
 		schema: (() => {
 			const _ = new SchemaBuilder({ scope: "test" });
 			const $ = _.fieldNode("List<string> len(1)", _.sequence(leaf.string));
-			return _.finalize($);
+			return _.toDocumentSchema($);
 		})(),
 		initialTree: ["A"],
 	},
@@ -185,7 +185,7 @@ const tcs: TestCase[] = [
 		schema: (() => {
 			const _ = new SchemaBuilder({ scope: "test" });
 			const $ = _.fieldNode("List<string> len(2)", _.sequence(leaf.string));
-			return _.finalize($);
+			return _.toDocumentSchema($);
 		})(),
 		initialTree: ["A", "B"],
 	},

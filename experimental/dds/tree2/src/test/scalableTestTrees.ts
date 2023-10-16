@@ -47,9 +47,9 @@ export const wideRootSchema = wideBuilder.struct("WideRoot", {
 	foo: FieldSchema.create(FieldKinds.sequence, [leaf.number]),
 });
 
-export const wideSchema = wideBuilder.finalize(wideRootSchema);
+export const wideSchema = wideBuilder.toDocumentSchema(wideRootSchema);
 
-export const deepSchema = deepBuilder.finalize([linkedListSchema, leaf.number]);
+export const deepSchema = deepBuilder.toDocumentSchema([linkedListSchema, leaf.number]);
 
 /**
  * JS object like a deep tree.

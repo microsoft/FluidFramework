@@ -12,14 +12,14 @@ const builder = new SchemaBuilder({
 	scope: "test",
 	name: "Schematize Tree Tests",
 });
-const schema = builder.finalize(SchemaBuilder.optional(leaf.number));
+const schema = builder.toDocumentSchema(SchemaBuilder.optional(leaf.number));
 
 const builderGeneralized = new SchemaBuilder({
 	scope: "test",
 	name: "Schematize Tree Tests Generalized",
 });
 
-const schemaGeneralized = builderGeneralized.finalize(SchemaBuilder.optional(Any));
+const schemaGeneralized = builderGeneralized.toDocumentSchema(SchemaBuilder.optional(Any));
 
 describe("sharedTreeView", () => {
 	describe("schematize", () => {
