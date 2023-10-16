@@ -60,7 +60,9 @@ function mergeResults(
 		into.requiredGenerics = from.requiredGenerics;
 	} else {
 		into.typeAsString = `${into.typeAsString}${separator}${from.typeAsString}`;
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		from.replacedTypes.forEach((v) => into.replacedTypes!.add(v));
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		into.requiredGenerics!.merge(from.requiredGenerics);
 	}
 }
@@ -132,6 +134,7 @@ export function decomposeType(checker: TypeChecker, node: Type): DecompositionRe
 			// Array shorthand (type[]) is handled by type arguments
 			const typeArgsResult = decomposeTypes(checker, typeArgs, ", ");
 			const symbolName = checker.compilerObject.symbolToString(
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				node.compilerType.getSymbol()!,
 			);
 			typeArgsResult.requiredGenerics.set(symbolName, typeArgs.length);
