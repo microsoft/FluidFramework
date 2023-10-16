@@ -70,9 +70,7 @@ export interface IClient {
 
 // @public
 export interface IClientConfiguration {
-    // (undocumented)
     blockSize: number;
-    // (undocumented)
     maxMessageSize: number;
     noopCountFrequency?: number;
     noopTimeFrequency?: number;
@@ -271,7 +269,6 @@ export interface ISequencedDocumentMessage {
     // @deprecated
     compression?: string;
     contents: unknown;
-    // (undocumented)
     data?: string;
     // @deprecated
     expHash1?: string;
@@ -381,15 +378,10 @@ export interface ISummaryBlob {
 
 // @public (undocumented)
 export interface ISummaryContent {
-    // (undocumented)
     details?: IUploadedSummaryDetails;
-    // (undocumented)
     handle: string;
-    // (undocumented)
     head: string;
-    // (undocumented)
     message: string;
-    // (undocumented)
     parents: string[];
 }
 
@@ -490,7 +482,6 @@ export type ITreeEntry = {
 
 // @public (undocumented)
 export interface IUploadedSummaryDetails {
-    // (undocumented)
     includesProtocolTree?: boolean;
 }
 
@@ -525,13 +516,9 @@ export enum MessageType {
 
 // @public
 export enum NackErrorType {
-    // (undocumented)
     BadRequestError = "BadRequestError",
-    // (undocumented)
     InvalidScopeError = "InvalidScopeError",
-    // (undocumented)
     LimitExceededError = "LimitExceededError",
-    // (undocumented)
     ThrottlingError = "ThrottlingError"
 }
 

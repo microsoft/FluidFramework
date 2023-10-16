@@ -28,18 +28,18 @@ import { SchemaBuilder, leaf } from "../../domains";
 
 const builder = new SchemaBuilder({ scope: "test", name: "Schematize Tree Tests" });
 const root = leaf.number;
-const schema = builder.finalize(SchemaBuilder.optional(root));
+const schema = builder.toDocumentSchema(SchemaBuilder.optional(root));
 
 const builderGeneralized = new SchemaBuilder({
 	scope: "test",
 	name: "Schematize Tree Tests Generalized",
 });
 
-const schemaGeneralized = builderGeneralized.finalize(SchemaBuilder.optional(Any));
+const schemaGeneralized = builderGeneralized.toDocumentSchema(SchemaBuilder.optional(Any));
 
 const builderValue = new SchemaBuilder({ scope: "test", name: "Schematize Tree Tests2" });
 
-const schemaValueRoot = builderValue.finalize(SchemaBuilder.required(Any));
+const schemaValueRoot = builderValue.toDocumentSchema(SchemaBuilder.required(Any));
 
 const emptySchema = new SchemaBuilder({
 	scope: "Empty",
@@ -47,7 +47,7 @@ const emptySchema = new SchemaBuilder({
 		rejectEmpty: false,
 		rejectForbidden: false,
 	},
-}).finalize(FieldSchema.empty);
+}).toDocumentSchema(FieldSchema.empty);
 
 function expectSchema(actual: SchemaData, expected: SchemaData): void {
 	// Check schema match

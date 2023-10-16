@@ -31,4 +31,4 @@ const diagramSchema = builder.structRecursive("Diagram", {
 const rootField = builder.optional(diagramSchema);
 
 // Collect the schema together.
-const schemaData = builder.finalize(rootField);
+const schemaData = builder.toDocumentSchema(rootField);
