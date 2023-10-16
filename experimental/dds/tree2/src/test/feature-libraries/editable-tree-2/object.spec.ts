@@ -323,7 +323,7 @@ describe("Object-like", () => {
 			// );
 		});
 
-		describe.skip("optinal list", () => {
+		describe.skip("optional list", () => {
 			// const _ = new SchemaBuilder({ scope: "test" });
 			// const list = _.fieldNode("List<string>", _.sequence(leaf.string));
 			// const parent = _.struct("parent", {
