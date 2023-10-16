@@ -53,7 +53,7 @@ function getTestSchema<Kind extends FieldKind>(fieldKind: Kind) {
 		foo: FieldSchema.create(fieldKind, [stringSchema]),
 		foo2: FieldSchema.create(fieldKind, [stringSchema]),
 	});
-	return builder.finalize(FieldSchema.create(FieldKinds.optional, [rootNodeSchema]));
+	return builder.toDocumentSchema(FieldSchema.create(FieldKinds.optional, [rootNodeSchema]));
 }
 
 describe("editable-tree: editing", () => {

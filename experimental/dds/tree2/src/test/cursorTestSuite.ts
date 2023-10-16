@@ -39,7 +39,7 @@ export const structSchema = schemaBuilder.struct("struct", {
 	child: leaf.number,
 });
 
-export const testTreeSchema = schemaBuilder.finalize(SchemaBuilder.sequence(Any));
+export const testTreeSchema = schemaBuilder.toDocumentSchema(SchemaBuilder.sequence(Any));
 
 export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 	["minimal", { type: emptySchema.name }],

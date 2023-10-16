@@ -131,7 +131,7 @@ describe("LazyTree", () => {
 	it("property names", () => {
 		const builder = new SchemaBuilder({ scope: "lazyTree" });
 		const emptyStruct = builder.struct("empty", {});
-		const testSchema = builder.finalize(SchemaBuilder.optional(emptyStruct));
+		const testSchema = builder.toDocumentSchema(SchemaBuilder.optional(emptyStruct));
 
 		const { cursor, context } = initializeTreeWithContent({
 			schema: testSchema,
@@ -199,7 +199,7 @@ describe("LazyTree", () => {
 			SchemaBuilder.optional(leafDomain.string),
 		);
 
-		const schema = schemaBuilder.finalize(fieldNodeOptionalAnySchema);
+		const schema = schemaBuilder.toDocumentSchema(fieldNodeOptionalAnySchema);
 
 		// #endregion
 
@@ -236,7 +236,7 @@ describe("LazyTree", () => {
 			"field",
 			SchemaBuilder.optional(leafDomain.string),
 		);
-		const schema = schemaBuilder.finalize(fieldNodeSchema);
+		const schema = schemaBuilder.toDocumentSchema(fieldNodeSchema);
 
 		const { context, cursor } = initializeTreeWithContent({
 			schema,
@@ -302,7 +302,7 @@ describe("LazyFieldNode", () => {
 		"field",
 		SchemaBuilder.optional(leafDomain.string),
 	);
-	const schema = schemaBuilder.finalize(fieldNodeSchema);
+	const schema = schemaBuilder.toDocumentSchema(fieldNodeSchema);
 
 	const { context, cursor } = initializeTreeWithContent({
 		schema,
@@ -331,7 +331,7 @@ describe("LazyLeaf", () => {
 		scope: "test",
 		libraries: [leafDomain.library],
 	});
-	const schema = schemaBuilder.finalize(leafDomain.string);
+	const schema = schemaBuilder.toDocumentSchema(leafDomain.string);
 
 	const { context, cursor } = initializeTreeWithContent({
 		schema,
@@ -354,7 +354,7 @@ describe("LazyMap", () => {
 		libraries: [leafDomain.library],
 	});
 	const mapNodeSchema = schemaBuilder.map("mapString", SchemaBuilder.optional(leafDomain.string));
-	const schema = schemaBuilder.finalize(mapNodeSchema);
+	const schema = schemaBuilder.toDocumentSchema(mapNodeSchema);
 
 	const { context, cursor } = initializeTreeWithContent({
 		schema,
@@ -389,7 +389,7 @@ describe("LazyStruct", () => {
 		foo: SchemaBuilder.optional(leafDomain.string),
 		bar: SchemaBuilder.sequence(leafDomain.number),
 	});
-	const schema = schemaBuilder.finalize(SchemaBuilder.optional(Any));
+	const schema = schemaBuilder.toDocumentSchema(SchemaBuilder.optional(Any));
 
 	// Count the number of times edits have been generated.
 	let editCallCount = 0;
@@ -458,7 +458,7 @@ describe("buildLazyStruct", () => {
 		required: SchemaBuilder.required(leafDomain.boolean),
 		sequence: SchemaBuilder.sequence(leafDomain.number),
 	});
-	const schema = schemaBuilder.finalize(SchemaBuilder.optional(Any));
+	const schema = schemaBuilder.toDocumentSchema(SchemaBuilder.optional(Any));
 
 	const context = contextWithContentReadonly({
 		schema,

@@ -141,46 +141,10 @@ export class SchemaBuilderBase<
 	}
 
 	/**
-	 * Finalizes the schema builder, producing {@link SchemaLibrary}s that capture the content added to this builder
-	 * and any additional `SchemaLibrary`s that were added to it.
-	 *
-	 * @remarks
-	 * May only be called once after adding content to builder is complete.
-	 *
-	 * @returns A {@link SchemaLibrary} usable with future `SchemaBuilder`s
-	 */
-	public finalize(): SchemaLibrary;
-
-	/**
-	 * Finalizes the schema builder, producing SchemaLibraries that capture the content added to this builder,
-	 * any additional SchemaLibraries that were added to it, and the schema of a root field.
-	 *
-	 * @remarks
-	 * May only be called once after adding content to builder is complete.
-	 *
-	 * @param root - The root field schema.
-	 * @typeParam TSchema - The kind of field schema of `root`.
-	 *
-	 * @returns A {@link TypedSchemaCollection} that may be used in the construction of trees.
-	 */
-	public finalize<const TSchema extends ImplicitFieldSchema>(
-		root: TSchema,
-	): TypedSchemaCollection<NormalizeField<TSchema, TDefaultKind>>;
-
-	// Implementation of `finalize` signatures above.
-	public finalize<const TSchema extends ImplicitFieldSchema>(
-		root?: TSchema,
-	): SchemaLibrary | TypedSchemaCollection<NormalizeField<TSchema, TDefaultKind>> {
-		return root === undefined ? this.toLibrarySchema() : this.toDocumentSchema(root);
-	}
-
-	/**
 	 * Produce SchemaLibraries which capture the content added to this builder, as well as any additional SchemaLibraries that were added to it.
-	 *
-	 * @remarks
 	 * May only be called once after adding content to builder is complete.
 	 */
-	private toLibrarySchema(): SchemaLibrary {
+	public finalize(): SchemaLibrary {
 		this.finalizeCommon();
 
 		// Check for errors:
@@ -196,7 +160,7 @@ export class SchemaBuilderBase<
 	 * @remarks
 	 * May only be called once after adding content to builder is complete.
 	 */
-	private toDocumentSchema<const TSchema extends ImplicitFieldSchema>(
+	public toDocumentSchema<const TSchema extends ImplicitFieldSchema>(
 		root: TSchema,
 	): TypedSchemaCollection<NormalizeField<TSchema, TDefaultKind>> {
 		// return this.toDocumentSchemaInternal(normalizeField(root, DefaultFieldKind));

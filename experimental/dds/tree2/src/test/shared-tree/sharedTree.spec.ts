@@ -97,7 +97,7 @@ describe("SharedTree", () => {
 
 	it("editable-tree-2-end-to-end", () => {
 		const builder = new SchemaBuilder({ scope: "e2e" });
-		const schema = builder.finalize(leaf.number);
+		const schema = builder.toDocumentSchema(leaf.number);
 		const factory = new SharedTreeFactory({
 			jsonValidator: typeboxValidator,
 			forest: ForestType.Reference,
@@ -538,7 +538,7 @@ describe("SharedTree", () => {
 			const schema = new SchemaBuilder({
 				scope: "optional",
 				libraries: [jsonSchema],
-			}).finalize(SchemaBuilder.optional(leaf.number));
+			}).toDocumentSchema(SchemaBuilder.optional(leaf.number));
 			const config: InitializeAndSchematizeConfiguration = {
 				schema,
 				initialTree: value,
@@ -1066,7 +1066,7 @@ describe("SharedTree", () => {
 		const treeSchema = builder.struct("root", {
 			x: builder.number,
 		});
-		const schema = builder.finalize(builder.optional(Any));
+		const schema = builder.toDocumentSchema(builder.optional(Any));
 
 		it("triggers events for local and subtree changes", () => {
 			const view = viewWithContent({
@@ -1888,7 +1888,7 @@ describe("SharedTree", () => {
 				foo: SchemaBuilder.sequence(leaf.number),
 				foo2: SchemaBuilder.sequence(leaf.number),
 			});
-			const testSchema = testSchemaBuilder.finalize(rootFieldSchema);
+			const testSchema = testSchemaBuilder.toDocumentSchema(rootFieldSchema);
 
 			// TODO: if this tests is just about deleting the root, it should use a simpler tree.
 			const initialTreeState: JsonableTree = {

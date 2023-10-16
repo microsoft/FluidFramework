@@ -359,5 +359,5 @@ export function convertPropertyToSharedTreeSchema<Kind extends FieldKind = Field
 		rootFieldKind,
 		...allowedTypes,
 	);
-	return builder.finalize(rootSchema);
+	return builder.toDocumentSchema(rootSchema);
 }
