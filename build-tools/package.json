@@ -13,8 +13,7 @@
 	"scripts": {
 		"build": "pnpm run generate:packageList && pnpm run build:compile && pnpm run lint && pnpm run build:docs",
 		"build:compile": "pnpm run -r --stream build:compile",
-		"build:copy-api-metadata": "copyfiles packages/**/*.api.json ../_api-extractor-temp/doc-models/ -f -V",
-		"build:docs": "pnpm run -r --no-sort --stream build:docs && npm run build:copy-api-metadata",
+		"build:docs": "pnpm run -r --no-sort --stream build:docs",
 		"build:fast": "fluid-build --root .. -g build-tools",
 		"changelog": "conventional-changelog -p conventionalcommits -i CHANGELOG.md -s -r 2 --commit-path . -t build-tools_v --context lerna.json",
 		"ci:build": "npm run build",
