@@ -193,7 +193,7 @@ export {
 	Sequence,
 	NodeKeyFieldKind,
 	Forbidden,
-	TypedSchemaCollection,
+	DocumentSchema,
 	SchemaLibrary,
 	SchemaLibraryData,
 	FieldSchema,

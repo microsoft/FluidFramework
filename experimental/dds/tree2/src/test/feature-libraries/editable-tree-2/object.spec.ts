@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { LeafSchema, TypedSchemaCollection } from "../../../feature-libraries";
+import { LeafSchema, DocumentSchema } from "../../../feature-libraries";
 import { leaf, SchemaBuilder } from "../../../domains";
 
 // eslint-disable-next-line import/no-internal-modules
@@ -13,7 +13,7 @@ import { createTreeView, itWithRoot, makeSchema, pretty } from "./utils";
 
 interface TestCase {
 	initialTree: object;
-	schema: TypedSchemaCollection;
+	schema: DocumentSchema;
 }
 
 function testObjectLike(testCases: TestCase[]) {
