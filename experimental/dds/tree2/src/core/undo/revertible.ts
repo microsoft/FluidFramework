@@ -3,6 +3,12 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * Can be called in order to revert a change. Discard should be called to garbage collect
+ * any resources associated with the revertible.
+ *
+ * @alpha
+ */
 export interface Revertible {
 	readonly kind: RevertibleKind;
 	readonly origin: {

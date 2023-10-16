@@ -406,16 +406,18 @@ describe("Editing", () => {
 		it.skip("intentional revive", () => {
 			const tree1 = makeTreeFromJson(["A", "B", "C"]);
 			const tree2 = tree1.fork();
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree2);
 
 			remove(tree1, 1, 1);
 
 			remove(tree2, 0, 3);
-			tree2.undo();
+			undoStack.pop()?.revert();
 
 			tree1.merge(tree2);
 			tree2.rebaseOnto(tree1);
 
 			expectJsonTree([tree1, tree2], ["A", "B", "C"]);
+			unsubscribe();
 		});
 
 		it("intra-field move", () => {
@@ -1661,6 +1663,7 @@ describe("Editing", () => {
 
 					const tree = makeTreeFromJson(startState);
 					const peers = makeArray(nbPeers, () => tree.fork());
+					const peerUndoStacks = peers.map((peer) => createTestUndoRedoStacks(peer));
 					for (const step of scenario) {
 						const iPeer = step.peer;
 						const peer = peers[iPeer];
@@ -1678,7 +1681,7 @@ describe("Editing", () => {
 								break;
 							}
 							case StepType.Undo: {
-								peer.undo();
+								peerUndoStacks[iPeer].undoStack.pop()?.revert();
 								presence = 1;
 								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 								affectedNode = undoQueues[iPeer].pop()!;
@@ -1700,6 +1703,7 @@ describe("Editing", () => {
 					}
 					peers.forEach((peer) => peer.rebaseOnto(tree));
 					expectJsonTree([tree, ...peers], startState);
+					peerUndoStacks.forEach(({ unsubscribe }) => unsubscribe());
 				});
 			}
 
@@ -1765,7 +1769,7 @@ describe("Editing", () => {
 
 			tree1.editor.optionalField(rootField).set(singleJsonCursor({ foo: "41" }), false);
 
-			tree1.undo();
+			undoStack.pop()?.revert();
 
 			const editor = tree2.editor.valueField({ parent: rootNode, field: brand("foo") });
 			editor.set(singleTextCursor({ type: leaf.string.name, value: "42" }));
@@ -1774,6 +1778,7 @@ describe("Editing", () => {
 			tree2.rebaseOnto(tree1);
 
 			expectJsonTree([tree1, tree2], [{ foo: "42" }]);
+			unsubscribe();
 		});
 
 		it("can replace and restore a node", () => {

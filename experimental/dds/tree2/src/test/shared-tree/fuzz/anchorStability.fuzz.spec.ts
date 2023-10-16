@@ -12,10 +12,16 @@ import {
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import { UpPath, Anchor, Value } from "../../../core";
-import { SharedTreeTestFactory, validateTree } from "../../utils";
+import { SharedTreeTestFactory, createTestUndoRedoStacks, validateTree } from "../../utils";
 import { makeOpGenerator, EditGeneratorOpWeights, FuzzTestState } from "./fuzzEditGenerators";
 import { fuzzReducer } from "./fuzzEditReducers";
-import { onCreate, initialTreeState, createAnchors, validateAnchors } from "./fuzzUtils";
+import {
+	onCreate,
+	initialTreeState,
+	createAnchors,
+	validateAnchors,
+	RevertibleSharedTreeView,
+} from "./fuzzUtils";
 import { Operation } from "./operationTypes";
 
 interface AbortFuzzTestState extends FuzzTestState {
@@ -102,7 +108,12 @@ describe("Fuzz - anchor stability", () => {
 		emitter.on("testStart", (initialState: AbortFuzzTestState) => {
 			initialState.anchors = [];
 			for (const client of initialState.clients) {
-				initialState.anchors.push(createAnchors(client.channel.view));
+				const view = client.channel.view as RevertibleSharedTreeView;
+				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view);
+				view.undoStack = undoStack;
+				view.redoStack = redoStack;
+				view.unsubscribe = unsubscribe;
+				initialState.anchors.push(createAnchors(view));
 			}
 		});
 

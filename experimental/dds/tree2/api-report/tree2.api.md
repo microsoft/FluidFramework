@@ -495,6 +495,14 @@ export type DetachedPlaceUpPath = Brand<Omit<PlaceUpPath, "parent">, "DetachedRa
 export type DetachedRangeUpPath = Brand<Omit<RangeUpPath, "parent">, "DetachedRangeUpPath">;
 
 // @alpha
+export enum DiscardResult {
+    // (undocumented)
+    Failure = 1,
+    // (undocumented)
+    Success = 0
+}
+
+// @alpha
 function downCast<TSchema extends TreeSchema>(schema: TSchema, tree: UntypedTreeCore<any, any>): tree is TypedNode_2<TSchema>;
 
 // @alpha
@@ -1722,7 +1730,7 @@ type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
     readonly [P in symbol | string]: P extends K ? T : never;
 };
 
-// @public (undocumented)
+// @alpha
 export interface Revertible {
     // (undocumented)
     discard(): DiscardResult;
@@ -1734,6 +1742,13 @@ export interface Revertible {
     };
     // (undocumented)
     revert(): RevertResult;
+}
+
+// @alpha
+export enum RevertibleKind {
+    Default = 0,
+    Redo = 2,
+    Undo = 1
 }
 
 // @alpha

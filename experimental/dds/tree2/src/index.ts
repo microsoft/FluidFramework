@@ -80,7 +80,9 @@ export {
 	TreeAdapter,
 	MapTree,
 	Revertible,
+	RevertibleKind,
 	RevertResult,
+	DiscardResult,
 	forbiddenFieldKindIdentifier,
 } from "./core";
 

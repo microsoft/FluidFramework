@@ -24,7 +24,7 @@ import {
 	applyTransactionEdit,
 	applyUndoRedoEdit,
 } from "./fuzzEditReducers";
-import { onCreate } from "./fuzzUtils";
+import { isRevertibleSharedTreeView, onCreate } from "./fuzzUtils";
 import { Operation } from "./operationTypes";
 
 /**
@@ -58,7 +58,8 @@ const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, Branched
 	undoRedo: async (state, operation) => {
 		const { contents } = operation;
 		const tree = state.client.channel;
-		applyUndoRedoEdit(tree.view, contents);
+		assert(isRevertibleSharedTreeView(tree.view));
+		applyUndoRedoEdit(tree.view.undoStack, tree.view.redoStack, contents);
 		return state;
 	},
 	synchronizeTrees: async (state) => {

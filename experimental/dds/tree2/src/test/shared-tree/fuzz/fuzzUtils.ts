@@ -15,6 +15,7 @@ import {
 	clonePath,
 	compareUpPaths,
 	forEachNodeInSubtree,
+	Revertible,
 } from "../../../core";
 import { FieldKinds, singleTextCursor } from "../../../feature-libraries";
 import { brand } from "../../../util";
@@ -83,4 +84,14 @@ export function createAnchors(tree: ISharedTreeView): Map<Anchor, [UpPath, Value
 	});
 	cursor.free();
 	return anchors;
+}
+
+export type RevertibleSharedTreeView = ISharedTreeView & {
+	undoStack: Revertible[];
+	redoStack: Revertible[];
+	unsubscribe: () => void;
+};
+
+export function isRevertibleSharedTreeView(s: ISharedTreeView): s is RevertibleSharedTreeView {
+	return (s as RevertibleSharedTreeView).undoStack !== undefined;
 }

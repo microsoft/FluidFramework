@@ -22,7 +22,13 @@ import {
 } from "../../utils";
 import { makeOpGenerator, EditGeneratorOpWeights, FuzzTestState } from "./fuzzEditGenerators";
 import { fuzzReducer } from "./fuzzEditReducers";
-import { createAnchors, onCreate, validateAnchors } from "./fuzzUtils";
+import {
+	RevertibleSharedTreeView,
+	createAnchors,
+	isRevertibleSharedTreeView,
+	onCreate,
+	validateAnchors,
+} from "./fuzzUtils";
 import { Operation } from "./operationTypes";
 
 /**
@@ -63,31 +69,22 @@ describe("Fuzz - undo/redo", () => {
 			initialState.initialTreeState = toJsonableTree(tree);
 			initialState.anchors = [];
 			for (const client of initialState.clients) {
-				initialState.anchors.push(createAnchors(client.channel.view));
+				const view = client.channel.view as RevertibleSharedTreeView;
+				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view);
+				view.undoStack = undoStack;
+				view.redoStack = redoStack;
+				view.unsubscribe = unsubscribe;
+				initialState.anchors.push(createAnchors(view));
 			}
 		});
 		emitter.on("testEnd", (finalState: UndoRedoFuzzTestState) => {
 			const clients = finalState.clients;
 
-			// set up the undo and redo stacks for each tree
-			const undoStacks = [];
-			const redoStacks = [];
-			const unsubscribes = [];
-
-			for (const [_, client] of clients.entries()) {
-				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
-					client.channel.view,
-				);
-
-				undoStacks.push(undoStack);
-				redoStacks.push(redoStack);
-				unsubscribes.push(unsubscribe);
-			}
-
 			const finalTreeStates = [];
 			// undo all of the changes and validate against initialTreeState for each tree
 			for (const [i, client] of clients.entries()) {
 				const tree = client.channel.view;
+				assert(isRevertibleSharedTreeView(tree));
 
 				// save final tree states to validate redo later
 				finalTreeStates.push(toJsonableTree(tree));
@@ -97,7 +94,7 @@ describe("Fuzz - undo/redo", () => {
 				 * Once the undo stack exposed, remove this array and use the stack to keep track instead.
 				 */
 				for (let j = 0; j < opsPerRun; j++) {
-					undoStacks[i].pop()?.revert();
+					tree.undoStack.pop()?.revert();
 				}
 			}
 
@@ -114,13 +111,19 @@ describe("Fuzz - undo/redo", () => {
 
 			// redo all of the undone changes and validate against the finalTreeState for each tree
 			for (const [i, client] of clients.entries()) {
+				const tree = client.channel.view;
+				assert(isRevertibleSharedTreeView(tree));
 				for (let j = 0; j < opsPerRun; j++) {
-					redoStacks[i].pop()?.revert();
+					tree.redoStack.pop()?.revert();
 				}
-				validateTree(client.channel.view, finalTreeStates[i]);
+				validateTree(tree, finalTreeStates[i]);
 			}
 
-			unsubscribes.forEach((unsubscribe) => unsubscribe());
+			for (const [_, client] of clients.entries()) {
+				const view = client.channel.view;
+				assert(isRevertibleSharedTreeView(view));
+				view.unsubscribe();
+			}
 		});
 		createDDSFuzzSuite(model, {
 			defaultTestCount: runsPerBatch,
@@ -150,22 +153,16 @@ describe("Fuzz - undo/redo", () => {
 			initialState.anchors = [];
 			// creates an initial anchor for each tree
 			for (const client of initialState.clients) {
-				initialState.anchors.push(createAnchors(client.channel.view));
+				const view = client.channel.view as RevertibleSharedTreeView;
+				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view);
+				view.undoStack = undoStack;
+				view.redoStack = redoStack;
+				view.unsubscribe = unsubscribe;
+				initialState.anchors.push(createAnchors(view));
 			}
 		});
 		emitter.on("testEnd", (finalState: UndoRedoFuzzTestState) => {
 			const clients = finalState.clients;
-
-			// set up the undo stacks for each tree
-			const undoStacks = [];
-			const unsubscribes = [];
-
-			for (const [_, client] of clients.entries()) {
-				const { undoStack, unsubscribe } = createTestUndoRedoStacks(client.channel.view);
-
-				undoStacks.push(undoStack);
-				unsubscribes.push(unsubscribe);
-			}
 
 			/**
 			 * TODO: Currently this array is used to track that undo() is called "opsPerRun" number of times.
@@ -178,7 +175,9 @@ describe("Fuzz - undo/redo", () => {
 			finalState.random.shuffle(undoOrderByClientIndex);
 			// call undo() until trees contain no more edits to undo
 			for (const clientIndex of undoOrderByClientIndex) {
-				undoStacks[clientIndex].pop()?.revert();
+				const view = clients[clientIndex].channel.view;
+				assert(isRevertibleSharedTreeView(view));
+				view.undoStack.pop()?.revert();
 			}
 			// synchronize clients after undo
 			finalState.containerRuntimeFactory.processAllMessages();
@@ -191,7 +190,11 @@ describe("Fuzz - undo/redo", () => {
 				validateAnchors(client.channel.view, finalState.anchors[i], true);
 			}
 
-			unsubscribes.forEach((unsubscribe) => unsubscribe());
+			for (const [_, client] of clients.entries()) {
+				const view = client.channel.view;
+				assert(isRevertibleSharedTreeView(view));
+				view.unsubscribe();
+			}
 		});
 		createDDSFuzzSuite(model, {
 			defaultTestCount: runsPerBatch,
@@ -229,6 +232,21 @@ describe("Fuzz - undo/redo", () => {
 			validateConsistency: validateTreeConsistency,
 		};
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+		
+		// todo: check why this didn't exist in the first place
+		emitter.on("testStart", (initialState: UndoRedoFuzzTestState) => {
+			initialState.initialTreeState = toJsonableTree(initialState.clients[0].channel.view);
+			initialState.anchors = [];
+			// creates an initial anchor for each tree
+			for (const client of initialState.clients) {
+				const view = client.channel.view as RevertibleSharedTreeView;
+				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view);
+				view.undoStack = undoStack;
+				view.redoStack = redoStack;
+				view.unsubscribe = unsubscribe;
+				initialState.anchors.push(createAnchors(view));
+			}
+		});
 
 		emitter.on("testEnd", (finalState: UndoRedoFuzzTestState) => {
 			// synchronize clients after undo

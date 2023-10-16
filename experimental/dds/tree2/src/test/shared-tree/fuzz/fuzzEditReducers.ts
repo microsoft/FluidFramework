@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import { combineReducersAsync } from "@fluid-internal/stochastic-test-utils";
 import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import { singleTextCursor } from "../../../feature-libraries";
 import { brand, fail } from "../../../util";
 import { validateTreeConsistency } from "../../utils";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../../shared-tree";
-import { FieldUpPath } from "../../../core";
+import { FieldUpPath, Revertible } from "../../../core";
 import {
 	FieldEdit,
 	FuzzDelete,
@@ -18,6 +19,7 @@ import {
 	FuzzUndoRedoType,
 	Operation,
 } from "./operationTypes";
+import { isRevertibleSharedTreeView } from "./fuzzUtils";
 
 export const fuzzReducer = combineReducersAsync<Operation, DDSFuzzTestState<SharedTreeFactory>>({
 	edit: async (state, operation) => {
@@ -42,7 +44,8 @@ export const fuzzReducer = combineReducersAsync<Operation, DDSFuzzTestState<Shar
 	undoRedo: async (state, operation) => {
 		const { contents } = operation;
 		const tree = state.client.channel;
-		applyUndoRedoEdit(tree.view, contents);
+		assert(isRevertibleSharedTreeView(tree.view));
+		applyUndoRedoEdit(tree.view.undoStack, tree.view.redoStack, contents);
 		return state;
 	},
 	synchronizeTrees: async (state) => {
@@ -160,14 +163,18 @@ export function applyTransactionEdit(tree: ISharedTreeView, contents: FuzzTransa
 	}
 }
 
-export function applyUndoRedoEdit(tree: ISharedTreeView, contents: FuzzUndoRedoType): void {
+export function applyUndoRedoEdit(
+	undoStack: Revertible[],
+	redoStack: Revertible[],
+	contents: FuzzUndoRedoType,
+): void {
 	switch (contents.type) {
 		case "undo": {
-			tree.undo();
+			undoStack.pop()?.revert();
 			break;
 		}
 		case "redo": {
-			tree.redo();
+			redoStack.pop()?.revert();
 			break;
 		}
 		default:
