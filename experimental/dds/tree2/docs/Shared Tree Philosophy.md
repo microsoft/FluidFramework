@@ -96,7 +96,7 @@ For example the APIs Shared Tree exposes for working with schema are designed to
 
 The Tree is made up of Nodes and Fields:
 
-1. Nodes are (shallowly) immutable and have a logical identity, a type and either a value or fields under string keys.
+1. Nodes are (shallowly) immutable and have a logical identity, a type and either a value (for leaf nodes) or fields under string keys (for non-leaf nodes).
 2. Fields are collaboratively editable collections of nodes.
 
 When users edit documents, those high level semantic operations need to be encoded in a way that supports merges.
@@ -123,29 +123,65 @@ This results in a tree where the overall shape is controlled by the application 
 This can also be thought of as a tree of entities alternating between fields and nodes.
 As these two kinds of entities alternate and thus never touch, this resembles a [Bipartite Graph](https://en.wikipedia.org/wiki/Bipartite_graph), and can be called a Bipartite Tree.
 
-# Constraints and Sub-Trees
+# Constraints
 
 When users edit documents, those high level semantic operations need to be encoded in a way that supports merges.
-Applications need to be able to easily ensure the invariants they require will be maintained across merged, and (possible with some effort) high fidelity merge resolution should be achievable.
+These merges need to balance two competing requirements:
 
-While the built in merge resolution will often be sufficient to ensure the application invariants hold (see "Field Kinds" above), this won't always be the case.
-To cover those instances, an additional tool is required: "Constraints".
-Constraints are used to specify which concurrent edits could cause an unacceptable merge result.
-The constraints API (status: it's not finished yet) allows defining a constraint that is sufficiently conservative, meaning that it will detect all concurrent edits that could possibly be an issue, but might include some that would be fine.
-The most basic constraint, that nothing has changed, will detect any concurrent edit, and the application can opt into refining that to allow concurrent edits it knows are safe.
-For example for many transactions, edits to unrelated subtrees are safe, so only constraining the smallest impacted subtree makes sense.
-Furthermore, for most simple transactions, like operations impacting a single field, its likely the built in merge resolution and automatic field level constraints will be sufficient (for example setting an optional value could pick last write wins semantics, and not need any additional constraints, or might use a first write wins approach, and automatically get a constraint that the field hasn't changed).
+1. The merges apply both sets of edits.
+2. Applications can easily ensure the invariants they require will be maintained across merges.
 
-One of the reasons SharedTree is a tree (not a graph or something else) is forcing clear ownership and scoping based on the tree structure enables effective and intuitive constraints.
+The second requirement can always be met by discarding one of the edits, while the first can be met by always adjusting the second editing into something that can be applied.
+This places these two requirements in conflict with each-other.
 
-Logically different subtrees are independent of each-other, and when operations do span them, both sides or a common parent can be constrained as needed.
+To keep developers from falling into the common pitfalls of merging violating application invariants, the editing APIs are designed to ensure that which invariants are maintained by default is clear.
+When these invariants are insufficient, the application author will always have the option to apply a constraint which will ensure than if the edit could result in a constraint violation due to a merge, it will be rejected instead of merged.
+The most important of these constraints, the one which will always be enough, is to reject the edit if any other concurrent edit got sequenced before it.
+Having this option available ensues the application author can always author their editing logic with confidence it won't behave unexpectedly due to concurrency, which is key to ensuring they can be productive.
 
-Users of Shared Tree are encouraged to factor their applications in this tree structured pattern as well, allowing subtrees to be passed into the relevant application components.
-This helps enable reuse of application components within and across shared tree applications, as well as best enables optimizations like those mentioned in "Efficient Data Storage" to be effective and encapsulated.
+This general purpose no-concurrency constraint is unfortunately not great for the "The merges apply both sets of edits" requirement.
+This can be addressed by providing more specific constraints, and designing the editing APIs so constraints are needed in less cases.
+For example allowing a constraint that only rejects a transaction if a field or subtree was concurrently edited, or providing a field kind with higher level editing operations like a set or counter with appropriate editing methods.
+
+This design pattern ensures there is always a way for the application author to ensure correctness, and by a little doing more work to be less conservative with the constraints, the application can improve the merge granularity when needed.
+
+Additionally, even higher merge fidelity can be achieved by adding new field kinds as application needs for them arise, and this work can be shared among all users of SharedTree.
+
+Note that the current implementation does not yet provide access to constraints, but this is planned for future versions.
+
+# Sub-Trees
+
+To help applications scale to larger schema and more complex documents, SharedTree is designed to enable applications to process different subtrees independently.
+If the application aligns their data model with this, keeping invariants and operations as local to a given subtree as possible, then can benefit in several ways.
+It allows for easy to express but still fine grained constraints, using subtree constraint (which reject concurrent edits to the same subtree),
+as well as more efficient and simple application logic for things like producing and updating a user interface for a given subtree's content.
+The part of an application which handles a given subtree can be though of as a mini application which can be nested in a larger one:
+this can both be great for reuse of logic, as well as integration into other tree structured systems, like [React](https://react.dev/) or even just the [DOM](https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model/Introduction.)
+
+When operations need to span different subtrees, they can be though of as an operation at (or above) the level of their common parent, and can be constrained according when needed.
+
+---
+
+**NOTE**
+
+This is part of why SHaredTree is a tree, and not a graph.
+When dealing with mutable content, its really useful to be clear about what the invariants of any given data are.
+Having these comes from its schema is ideal, but in the cases where thats insufficient for constraints be contextually applied by the parents.
+This approach is most practical when any given data only has a single context (based on its single parentage path).
+In a graph, data can have many parents, so they either need to not put constraints on the child (which makes it hard to have any application invariants which the schema language can't express),
+or all need to be accounted for (which doesn't scale to complex applications well).
+Therefor SharedTree goes with he tree approach, where constraints and invariants are handled at the subtree level;
+There are plans to support references to nodes allowing more graph like data, but these will not be able to easily put requirements on those subtrees like their parents can.
+
+---
+
+This subtree focused approach also helps optimizations like those mentioned in "Efficient Data Storage" to be effective and encapsulated.
 
 Some areas of the SharedTree design that currently do not deliver ideal subtree isolation are:
 
--   Schema: A given schema identifier has the same meaning in the entire tree. This means that currently embedding two different versions of a sub-tree application in different places with mismatched schema versions might not work depending on how it versions its schema. Designs to address this, and some related issues (like generically parameterized collections) are referred to as "contextual schema" and could be implemented in future version of SharedTree.
+-   Schema: A given schema identifier has the same meaning in the entire tree.
+    This means that currently embedding two different versions of a sub-tree application in different places with mismatched schema versions might not work depending on how it versions its schema.
+    Designs to address this, and some related issues (like generically parameterized collections) are referred to as "contextual schema" and could be implemented in future version of SharedTree.
 -   Loading and Summarization: Currently all subtrees are downloaded and summarized together.
     Designs for "partial checkouts" are planned to address this for data loading, but there isn't a plan do address this for summarization.
 -   Op transmitting and processing: All clients will receive and process all ops in the shared tree.
@@ -166,7 +202,7 @@ This approach is designed to enable separating the portion of the application th
 
 Importantly, the View Schema allows the application to have strong types for the document content, which helps make it clear which invariants Shared Tree guarantees (mainly that the document stays in schema) and which ones the application must take action to maintain (nearly everything else).
 Additionally the strong types from the view schema should help improve readability and maintainability of Shared Tree powered collaborative experiences,
-and the checking of the stored schema against the view schema guards against many data corruption sceneries that are common in collaborative editing scenarios.
+and the checking of the stored schema against the view schema guards against many data corruption scenarios that are common in collaborative editing scenarios.
 
 # Efficient Data Storage
 
