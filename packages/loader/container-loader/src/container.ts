@@ -1716,7 +1716,10 @@ export class Container
 		// replay saved ops
 		if (pendingLocalState) {
 			for (const message of pendingLocalState.savedOps) {
-				this.processRemoteMessage(message);
+				this.processRemoteMessage({
+					...message,
+					metadata: { ...(message.metadata as Record<string, unknown>), savedOp: true },
+				});
 
 				// allow runtime to apply stashed ops at this op's sequence number
 				await this.runtime.notifyOpReplay?.(message);
@@ -2294,10 +2297,7 @@ export class Container
 
 	private processRemoteMessage(message: ISequencedDocumentMessage) {
 		if (this.offlineLoadEnabled) {
-			this.savedOps.push({
-				...message,
-				metadata: { ...(message.metadata as Record<string, unknown>), savedOp: true },
-			});
+			this.savedOps.push(message);
 		}
 		const local = this.clientId === message.clientId;
 
