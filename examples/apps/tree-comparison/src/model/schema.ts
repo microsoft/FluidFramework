@@ -9,8 +9,6 @@ import { leaf, SchemaBuilder, TypedField, TypedNode } from "@fluid-experimental/
 const builder = new SchemaBuilder({ scope: "inventory app" });
 
 const inventoryItem = builder.struct("Contoso:InventoryItem-1.0.0", {
-	// REV: I added an ID here because I didn't find a unique identifier on the node.
-	// I'm not necessarily opposed to this, but I wonder if it's needed/duplicative.
 	id: leaf.string,
 	name: leaf.string,
 	quantity: leaf.number,

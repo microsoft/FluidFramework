@@ -143,8 +143,7 @@ export class LegacyTreeInventoryList extends DataObject implements IInventoryLis
 			.get<IFluidHandle<LegacySharedTree>>(legacySharedTreeKey)!
 			.get();
 
-		// REV: Not exactly sure why a checkout is required to get "viewChange" events, seems like it should be able
-		// to fire off the legacy shared tree itself?
+		// We must use a checkout in order to get "viewChange" events - it doesn't change any of the rest of our usage though.
 		const checkout = new EagerCheckout(this._tree);
 		// This event handler fires for any change to the tree, so it needs to handle all possibilities (change, add, remove).
 		checkout.on("viewChange", (before: TreeView, after: TreeView) => {

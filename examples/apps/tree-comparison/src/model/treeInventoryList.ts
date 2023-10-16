@@ -50,8 +50,8 @@ export class TreeInventoryList extends DataObject implements IInventoryList {
 	public readonly addItem = (name: string, quantity: number) => {
 		this.inventory.inventoryItems.insertAtEnd([
 			{
-				// REV: I think this might be a good place to use the SharedTree ID generation?
-				// If so, could use a pointer to how to do that?
+				// In a real-world scenario, this is probably a known unique inventory ID (rather than
+				// randomly generated).  Randomly generating here just for convenience.
 				id: uuid(),
 				name,
 				quantity,
