@@ -90,7 +90,7 @@ For example shared tree can introduce a new version of editing primitives and/or
 which applications can opt into in their schema in a compatible way.
 
 Shared Tree is also designed to ensure applications using it can also adopt this same compatibility approach while minimizing the frequency and difficulty of doing so.
-This has the largest impact around application schema evolution (changing the schema the application uses to view and edit documents).
+For example the APIs Shared Tree exposes for working with schema are designed to help guide users of it into design patterns that are robust and maintainable even when faced with supporting large numbers of legacy schema.
 
 ## Bipartite Tree and Field Kinds
 
@@ -166,7 +166,7 @@ This approach is designed to enable separating the portion of the application th
 
 Importantly, the View Schema allows the application to have strong types for the document content, which helps make it clear which invariants Shared Tree guarantees (mainly that the document stays in schema) and which ones the application must take action to maintain (nearly everything else).
 Additionally the strong types from the view schema should help improve readability and maintainability of Shared Tree powered collaborative experiences,
-and the checking of them against view schema guards against may data corruption sceneries that are common in collaborative editing scenarios.
+and the checking of the stored schema against the view schema guards against many data corruption sceneries that are common in collaborative editing scenarios.
 
 # Efficient Data Storage
 
