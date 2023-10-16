@@ -15,8 +15,6 @@ import {
 	InsecureTinyliciousTokenProvider,
 	InsecureTinyliciousUrlResolver,
 } from "@fluidframework/tinylicious-driver";
-// eslint-disable-next-line import/no-deprecated
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ContainerSchema,
 	DOProviderContainerRuntimeFactory,
@@ -32,6 +30,8 @@ import { TinyliciousAudience } from "./TinyliciousAudience";
  * Provides the ability to have a Fluid object backed by a Tinylicious service.
  *
  * See {@link https://fluidframework.com/docs/testing/tinylicious/}
+ *
+ * @public
  */
 export class TinyliciousClient {
 	private readonly documentServiceFactory: IDocumentServiceFactory;
@@ -71,8 +71,7 @@ export class TinyliciousClient {
 			config: {},
 		});
 
-		// eslint-disable-next-line import/no-deprecated
-		const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");
+		const rootDataObject = (await container.getEntryPoint()) as IRootDataObject;
 
 		/**
 		 * See {@link FluidContainer.attach}
@@ -111,8 +110,7 @@ export class TinyliciousClient {
 	}> {
 		const loader = this.createLoader(containerSchema);
 		const container = await loader.resolve({ url: id });
-		// eslint-disable-next-line import/no-deprecated
-		const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");
+		const rootDataObject = (await container.getEntryPoint()) as IRootDataObject;
 		const fluidContainer = new FluidContainer(container, rootDataObject);
 		const services = this.getContainerServices(container);
 		return { container: fluidContainer, services };

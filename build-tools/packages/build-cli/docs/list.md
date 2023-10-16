@@ -11,8 +11,9 @@ List packages in a release group in topological order.
 
 ```
 USAGE
-  $ flub list -g client|server|azure|build-tools|gitrest|historian [-v | --quiet] [--json] [--private]
-    [--scope <value> | --skipScope <value>] [--feed official|internal|internal-test] [--tarball]
+  $ flub list -g client|server|azure|build-tools|gitrest|historian [--json] [-v | --quiet] [--feed
+    public|internal-build|internal-test|internal-dev|official|internal] [--private] [--scope <value> | --skipScope
+    <value>] [--tarball]
 
 FLAGS
   -g, --releaseGroup=<option>  (required) Name of a release group.
@@ -26,8 +27,9 @@ LOGGING FLAGS
 
 PACKAGE FILTER FLAGS
   --feed=<option>         Filter the resulting packages to those that should be published to a particular npm feed. Use
-                          'official' for public npm.
-                          <options: official|internal|internal-test>
+                          'public' for public npm. The 'official' and 'internal' values are deprecated and should not be
+                          used.
+                          <options: public|internal-build|internal-test|internal-dev|official|internal>
   --[no-]private          Only include private packages. Use --no-private to exclude private packages instead.
   --scope=<value>...      Package scopes to filter to. If provided, only packages whose scope matches the flag will be
                           included. Cannot be used with --skipScope.

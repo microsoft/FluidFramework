@@ -3,36 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { AllowedTypes, FieldKinds, SchemaBuilder } from "../../feature-libraries";
+import {
+	AllowedTypes,
+	FieldKinds,
+	FieldSchema,
+	SchemaBuilderInternal,
+} from "../../feature-libraries";
 import { requireAssignableTo } from "../../util";
-import * as leaf from "../leafDomain";
+import { leaf } from "../leafDomain";
 
-const builder = new SchemaBuilder("Json Domain", {}, leaf.library);
+const builder = new SchemaBuilderInternal({
+	scope: "com.fluidframework.json",
+	libraries: [leaf.library],
+});
 
-/**
- * @alpha
- * @deprecated Use leaf.number
- */
-export const jsonNumber = leaf.number;
-
-/**
- * @alpha
- * @deprecated Use leaf.string
- */
-export const jsonString = leaf.string;
-
-/**
- * @alpha
- */
-export const jsonNull = builder.struct("Json.Null", {});
-
-/**
- * @alpha
- * @deprecated Use leaf.boolean
- */
-export const jsonBoolean = leaf.boolean;
-
-const jsonPrimitives = [...leaf.primitives, jsonNull] as const;
+const jsonPrimitives = [...leaf.primitives, leaf.null] as const;
 
 /**
  * Types allowed as roots of Json content.
@@ -49,19 +34,19 @@ export const jsonRoot = [() => jsonObject, () => jsonArray, ...jsonPrimitives] a
  * @alpha
  */
 export const jsonObject = builder.mapRecursive(
-	"Json.Object",
-	SchemaBuilder.fieldRecursive(FieldKinds.optional, ...jsonRoot),
+	"object",
+	FieldSchema.createUnsafe(FieldKinds.optional, jsonRoot),
 );
 
 /**
  * @alpha
  */
 export const jsonArray = builder.fieldNodeRecursive(
-	"Json.Array",
-	SchemaBuilder.fieldRecursive(FieldKinds.sequence, ...jsonRoot),
+	"array",
+	FieldSchema.createUnsafe(FieldKinds.sequence, jsonRoot),
 );
 
 /**
  * @alpha
  */
-export const jsonSchema = builder.intoLibrary();
+export const jsonSchema = builder.finalize();

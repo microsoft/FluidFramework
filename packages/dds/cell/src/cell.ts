@@ -60,6 +60,8 @@ const snapshotFileName = "header";
 
 /**
  * {@inheritDoc ISharedCell}
+ *
+ * @public
  */
 // TODO: use `unknown` instead (breaking change).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -300,6 +302,7 @@ export class SharedCell<T = any>
 			return;
 		}
 
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 		if (message.type === MessageType.Operation && !local) {
 			const op = message.contents as ICellOperation;
 			// update the attributor

@@ -1,0 +1,36 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+parameters:
+- name: buildDirectory
+  type: string
+
+# A list of directories (under the buildDirectory) to run the PublishTestResults task on in separate steps.
+# Used to avoid the force merge limit of 100 result files.
+- name: testResultDirs
+  type: object
+  default:
+  - nyc
+
+# Log test failures
+steps:
+  # Test - Upload results
+  - ${{ each testResultDir in parameters.testResultDirs }}:
+    - task: PublishTestResults@2
+      displayName: Publish Test Results in ${{ testResultDir }}
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: '**/*junit-report.xml'
+        searchFolder: ${{ parameters.buildDirectory }}/${{ testResultDir }}
+        mergeTestResults: false
+      condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+
+  # Console Log Failed Tests
+  - ${{ each testResultDir in parameters.testResultDirs }}:    
+    - task: Bash@3
+      displayName: Log Failed Tests in ${{ testResultDir }}
+      inputs:
+        targetType: inline
+        script: node $(Build.SourcesDirectory)/scripts/report-parser.js ${{ testResultDir }}
+        workingDirectory: ${{ parameters.buildDirectory }}
+      condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))

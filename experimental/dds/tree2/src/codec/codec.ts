@@ -9,21 +9,23 @@ import type { Static, TAnySchema, TSchema } from "@sinclair/typebox";
 import { fail, JsonCompatibleReadOnly } from "../util";
 
 /**
- * @alpha
+ * Translates decoded data to encoded data.
+ * @remarks Typically paired with an {@link IEncoder}.
  */
 export interface IEncoder<TDecoded, TEncoded> {
 	/**
-	 * Encodes `obj` into some encoded format. Typically paired with an {@link IDecoder}.
+	 * Encodes `obj` into some encoded format.
 	 */
 	encode(obj: TDecoded): TEncoded;
 }
 
 /**
- * @alpha
+ * Translates encoded data to decoded data.
+ * @remarks Typically paired with an {@link IEncoder}.
  */
 export interface IDecoder<TDecoded, TEncoded> {
 	/**
-	 * Decodes `obj` from some encoded format. Typically paired with an {@link IEncoder}.
+	 * Decodes `obj` from some encoded format.
 	 */
 	decode(obj: TEncoded): TDecoded;
 }
@@ -48,7 +50,7 @@ export interface JsonValidator {
 	/**
 	 * Compiles the provided JSON schema into a validator for that schema.
 	 * @param schema - A valid draft 6 JSON schema
-	 * @remarks Fluid handles--which have circular property references--are used in various places in the persisted
+	 * @remarks IFluidHandles--which have circular property references--are used in various places in SharedTree's persisted
 	 * format. Handles should only be contained in sections of data which are validated against the empty schema `{}`
 	 * (see https://datatracker.ietf.org/doc/html/draft-wright-json-schema-01#section-4.4).
 	 *
@@ -63,31 +65,37 @@ export interface JsonValidator {
  */
 export interface ICodecOptions {
 	/**
-	 * JSON Validator which should be used to validated persisted data SharedTree handles.
+	 * {@link JsonValidator} which SharedTree uses to validate persisted data it reads & writes
+	 * matches the expected encoded format (i.e. the wire format for ops and summaries).
+	 *
 	 * See {@link noopValidator} and {@link typeboxValidator} for out-of-the-box implementations.
 	 *
-	 * SharedTree users are encouraged to use a non-trivial validator (i.e. not `noopValidator`) whenever
-	 * reasonable: it gives better fail-fast behavior when unexpected encoded data is found, which reduces
-	 * the risk of further data corruption.
+	 * This option is not "on-by-default" because JSON schema validation comes with a small but noticeable
+	 * runtime performance cost, and popular schema validation libraries have relatively large bundle size.
+	 *
+	 * SharedTree users are still encouraged to use a non-trivial validator (i.e. not `noopValidator`)
+	 * whenever reasonable: it gives better fail-fast behavior when unexpected encoded data is found,
+	 * which reduces the risk of unrecoverable data corruption.
 	 */
 	readonly jsonValidator: JsonValidator;
 }
 
 /**
- * @alpha
  * @remarks `TEncoded` should always be valid Json (i.e. not contain functions), but due to TypeScript's handling
  * of index signatures and `JsonCompatibleReadOnly`'s index signature in the Json object case, specifying this as a
  * type-system level constraint makes code that uses this interface more difficult to write.
+ *
+ * If provided, `TValidate` allows the input type passed to `decode` to be different than `TEncoded`.
+ * This is useful when, for example, the type being decoded is `unknown` and must be validated to be a `TEncoded` before being decoded to a `TDecoded`.
  */
-export interface IJsonCodec<TDecoded, TEncoded = JsonCompatibleReadOnly>
+export interface IJsonCodec<TDecoded, TEncoded = JsonCompatibleReadOnly, TValidate = TEncoded>
 	extends IEncoder<TDecoded, TEncoded>,
-		IDecoder<TDecoded, TEncoded> {
+		IDecoder<TDecoded, TValidate> {
 	encodedSchema?: TAnySchema;
 }
 
 /**
  * @remarks TODO: We might consider using DataView or some kind of writer instead of IsoBuffer.
- * @alpha
  */
 export interface IBinaryCodec<TDecoded>
 	extends IEncoder<TDecoded, IsoBuffer>,
@@ -103,14 +111,13 @@ export interface IBinaryCodec<TDecoded>
  *
  * Using an {@link ICodecFamily} is the recommended strategy for managing this support, keeping in
  * mind evolution of encodings over time.
- *
- * @alpha
  */
 export interface IMultiFormatCodec<
 	TDecoded,
 	TJsonEncoded extends JsonCompatibleReadOnly = JsonCompatibleReadOnly,
+	TJsonValidate = TJsonEncoded,
 > {
-	json: IJsonCodec<TDecoded, TJsonEncoded>;
+	json: IJsonCodec<TDecoded, TJsonEncoded, TJsonValidate>;
 	binary: IBinaryCodec<TDecoded>;
 
 	/** Ensures multi-format codecs cannot also be single-format codecs. */
@@ -127,7 +134,6 @@ export interface IMultiFormatCodec<
  * the `formatVersion` parameter)
  * allows avoiding some duplicate work at encode/decode time, since the vast majority of document usage will not
  * involve mixed format versions.
- * @alpha
  */
 export interface ICodecFamily<TDecoded> {
 	/**

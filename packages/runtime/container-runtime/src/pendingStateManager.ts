@@ -310,6 +310,7 @@ export class PendingStateManager implements IDisposable {
 							{
 								runtimeVersion: pkgVersion,
 								batchClientId:
+									// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 									this.pendingBatchBeginMessage.clientId === null
 										? "null"
 										: this.pendingBatchBeginMessage.clientId,

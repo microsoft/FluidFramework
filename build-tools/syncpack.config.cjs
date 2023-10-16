@@ -93,6 +93,9 @@ module.exports = {
 
 				// Required due to use of "unstable" tree component APIs
 				"@fluentui/react-components",
+
+				// Later versions break some tests; needs investigation
+				"@oclif/test",
 			],
 			packages: ["**"],
 			range: "~",
@@ -101,7 +104,7 @@ module.exports = {
 		{
 			label: "Dependencies on other fluid packages within the workspace should use tilde dependency ranges",
 			dependencies: [
-				"@fluid-internal/readme-command",
+				"@fluid-private/readme-command",
 				"@fluid-tools/build-cli",
 				"@fluid-tools/version-tools",
 				"@fluidframework/build-tools",
@@ -159,6 +162,7 @@ module.exports = {
 				"@fluid-example/**",
 				"@fluid-experimental/**",
 				"@fluid-internal/**",
+				"@fluid-private/**",
 				"@fluid-tools/**",
 				"@fluidframework/**",
 				"fluid-framework",
@@ -167,6 +171,7 @@ module.exports = {
 				"@fluid-example/**",
 				"@fluid-experimental/**",
 				"@fluid-internal/**",
+				"@fluid-private/**",
 				"@fluid-tools/**",
 				"@fluidframework/**",
 				"fluid-framework",

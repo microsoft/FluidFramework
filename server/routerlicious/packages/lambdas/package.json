@@ -76,11 +76,11 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.22.0",
-		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.22.0",
+		"@fluid-tools/build-cli": "^0.25.0",
+		"@fluidframework/build-common": "^2.0.1",
+		"@fluidframework/build-tools": "^0.25.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/server-lambdas-previous": "npm:@fluidframework/server-lambdas@0.1040.1000",
+		"@fluidframework/server-lambdas-previous": "npm:@fluidframework/server-lambdas@2.0.0",
 		"@fluidframework/server-test-utils": "workspace:~",
 		"@types/async": "^3.2.9",
 		"@types/json-stringify-safe": "^5.0.0",
@@ -94,7 +94,7 @@
 		"concurrently": "^8.2.1",
 		"eslint": "~8.27.0",
 		"mocha": "^10.2.0",
-		"prettier": "~2.6.2",
+		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"sinon": "^9.2.3",
 		"source-map-loader": "^0.2.4",
@@ -104,26 +104,9 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"ClassDeclaration_DeliLambda": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_ICheckpointParams": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_ILatestSummaryState": {
-				"backCompat": false
-			},
-			"RemovedVariableDeclaration_getRandomInt": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedClassDeclaration_ForemanLambda": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedClassDeclaration_ForemanLambdaFactory": {
-				"forwardCompat": false,
-				"backCompat": false
+			"InterfaceDeclaration_IBroadcastSignalEventPayload": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}

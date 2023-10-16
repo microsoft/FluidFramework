@@ -16,7 +16,7 @@ import {
 	IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
-import { ICodecOptions, IJsonCodec } from "../codec";
+import { ICodecOptions, IJsonCodec, SchemaValidationFunction } from "../codec";
 import {
 	cachedValue,
 	Dependee,
@@ -33,7 +33,7 @@ import {
 } from "../core";
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
 import { isJsonObject, JsonCompatibleReadOnly } from "../util";
-import { makeSchemaCodec } from "./schemaIndexFormat";
+import { makeSchemaCodec, Format } from "./schemaIndexFormat";
 
 /**
  * The storage key for the blob in the summary containing schema data
@@ -49,7 +49,7 @@ export class SchemaSummarizer implements Summarizable {
 	public readonly key = "Schema";
 
 	private readonly schemaBlob: ICachedValue<Promise<IFluidHandle<ArrayBufferLike>>>;
-	private readonly codec: IJsonCodec<SchemaData, string>;
+	private readonly codec: IJsonCodec<SchemaData, Format>;
 
 	public constructor(
 		private readonly runtime: IFluidDataStoreRuntime,
@@ -59,7 +59,8 @@ export class SchemaSummarizer implements Summarizable {
 		this.codec = makeSchemaCodec(options);
 		this.schemaBlob = cachedValue(async (observer) => {
 			recordDependency(observer, this.schema);
-			const schemaText = this.codec.encode(this.schema);
+			// Currently no Fluid handles are used, so just use JSON.stringify.
+			const schemaText = JSON.stringify(this.codec.encode(this.schema));
 
 			// For now we are not chunking the the schema, but still put it in a reusable blob:
 			return this.runtime.uploadBlob(IsoBuffer.from(schemaText));
@@ -72,7 +73,8 @@ export class SchemaSummarizer implements Summarizable {
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTreeWithStats {
-		const dataString = this.codec.encode(this.schema);
+		// Currently no Fluid handles are used, so just use JSON.stringify.
+		const dataString = JSON.stringify(this.codec.encode(this.schema));
 		return createSingleBlobSummary(schemaStringKey, dataString);
 	}
 
@@ -124,14 +126,15 @@ export class SchemaSummarizer implements Summarizable {
 		);
 
 		const schemaString = bufferToString(schemaBuffer, "utf-8");
-		const decoded = this.codec.decode(schemaString);
+		// Currently no Fluid handles are used, so just use JSON.parse.
+		const decoded = this.codec.decode(JSON.parse(schemaString));
 		this.schema.update(decoded);
 	}
 }
 
 interface SchemaOp {
 	readonly type: "SchemaOp";
-	readonly data: string;
+	readonly data: Format;
 }
 
 /**
@@ -142,13 +145,15 @@ interface SchemaOp {
 export class SchemaEditor<TRepository extends StoredSchemaRepository>
 	implements StoredSchemaRepository
 {
-	private readonly codec: IJsonCodec<SchemaData, string>;
+	private readonly codec: IJsonCodec<SchemaData, Format, unknown>;
+	private readonly formatValidator: SchemaValidationFunction<typeof Format>;
 	public constructor(
 		public readonly inner: TRepository,
 		private readonly submit: (op: SchemaOp) => void,
 		options: ICodecOptions,
 	) {
 		this.codec = makeSchemaCodec(options);
+		this.formatValidator = options.jsonValidator.compile(Format);
 	}
 
 	public on<K extends keyof SchemaEvents>(eventName: K, listener: SchemaEvents[K]): () => void {
@@ -185,8 +190,8 @@ export class SchemaEditor<TRepository extends StoredSchemaRepository>
 		const op: JsonCompatibleReadOnly = content;
 		if (isJsonObject(op) && op.type === "SchemaOp") {
 			assert(
-				typeof op.data === "string",
-				0x5e3 /* expected string data for resubmitted schema op */,
+				this.formatValidator.check(op.data),
+				0x79b /* unexpected format for resubmitted schema op */,
 			);
 			const schemaOp: SchemaOp = {
 				type: op.type,
@@ -230,10 +235,6 @@ export class SchemaEditor<TRepository extends StoredSchemaRepository>
 
 	private tryDecodeOp(encodedOp: JsonCompatibleReadOnly): SchemaData | undefined {
 		if (isJsonObject(encodedOp) && encodedOp.type === "SchemaOp") {
-			assert(
-				typeof encodedOp.data === "string",
-				0x6ca /* SchemaOps should have string data */,
-			);
 			return this.codec.decode(encodedOp.data);
 		}
 

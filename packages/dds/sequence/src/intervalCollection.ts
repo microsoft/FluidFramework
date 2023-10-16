@@ -715,6 +715,12 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 	);
 }
 
+// solely for type checking in the implementation of add - will be removed once
+// deprecated signatures are removed
+const isSequencePlace = (place: any): place is SequencePlace => {
+	return typeof place === "number" || typeof place === "string" || place.pos !== undefined;
+};
+
 /**
  * Collection of intervals that supports addition, modification, removal, and efficient spatial querying.
  * Changes to this collection will be incur updates on collaborating clients (i.e. they are not local-only).
@@ -746,10 +752,10 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	getIntervalById(id: string): TInterval | undefined;
 	/**
 	 * Creates a new interval and add it to the collection.
-	 * @param start - interval start position
-	 * @param end - interval end position
-	 * @param intervalType - type of the interval. All intervals are SlideOnRemove.
-	 * Intervals may not be Transient.
+	 * @deprecated - call IntervalCollection.add without specifying an intervalType
+	 * @param start - interval start position (inclusive)
+	 * @param end - interval end position (exclusive)
+	 * @param intervalType - type of the interval. All intervals are SlideOnRemove. Intervals may not be Transient.
 	 * @param props - properties of the interval
 	 * @returns The created interval
 	 * @remarks See documentation on {@link SequenceInterval} for comments on
@@ -824,6 +830,24 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 		props?: PropertySet,
 	): TInterval;
 	/**
+	 * Creates a new interval and add it to the collection.
+	 * @param start - interval start position (inclusive)
+	 * @param end - interval end position (exclusive)
+	 * @param props - properties of the interval
+	 * @returns - the created interval
+	 * @remarks - See documentation on {@link SequenceInterval} for comments on interval endpoint semantics: there are subtleties
+	 * with how the current half-open behavior is represented.
+	 */
+	add({
+		start,
+		end,
+		props,
+	}: {
+		start: SequencePlace;
+		end: SequencePlace;
+		props?: PropertySet;
+	}): TInterval;
+	/**
 	 * Removes an interval from the collection.
 	 * @param id - Id of the interval to remove
 	 * @returns the removed interval
@@ -839,8 +863,8 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	/**
 	 * Changes the endpoints of an existing interval.
 	 * @param id - Id of the interval to change
-	 * @param start - New start value. This can be the existing position to keep it unchanged.
-	 * @param end - New end value. This can be the existing position to keep it unchanged.
+	 * @param start - New start value. To leave the endpoint unchanged, pass the current value.
+	 * @param end - New end value. To leave the endpoint unchanged, pass the current value.
 	 * @returns the interval that was changed, if it existed in the collection.
 	 */
 	change(id: string, start: SequencePlace, end: SequencePlace): TInterval | undefined;
@@ -1180,21 +1204,64 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 	/**
 	 * {@inheritdoc IIntervalCollection.add}
+	 * @deprecated - call IntervalCollection.add without specifying an intervalType
 	 */
 	public add(
 		start: SequencePlace,
 		end: SequencePlace,
 		intervalType: IntervalType,
 		props?: PropertySet,
+	): TInterval;
+
+	public add({
+		start,
+		end,
+		props,
+	}: {
+		start: SequencePlace;
+		end: SequencePlace;
+		props?: PropertySet;
+	}): TInterval;
+
+	public add(
+		start:
+			| SequencePlace
+			| {
+					start: SequencePlace;
+					end: SequencePlace;
+					props?: PropertySet;
+			  },
+		end?: SequencePlace,
+		intervalType?: IntervalType,
+		props?: PropertySet,
 	): TInterval {
+		let intStart: SequencePlace;
+		let intEnd: SequencePlace;
+		let type: IntervalType;
+		let properties: PropertySet | undefined;
+
+		if (isSequencePlace(start)) {
+			intStart = start;
+			assert(end !== undefined, 0x7c0 /* end must be defined */);
+			intEnd = end;
+			assert(intervalType !== undefined, 0x7c1 /* intervalType must be defined */);
+			type = intervalType;
+			properties = props;
+		} else {
+			intStart = start.start;
+			intEnd = start.end;
+			type = IntervalType.SlideOnRemove;
+			properties = start.props;
+		}
+
 		if (!this.localCollection) {
 			throw new LoggingError("attach must be called prior to adding intervals");
 		}
-		if (intervalType & IntervalType.Transient) {
+		if (type & IntervalType.Transient) {
 			throw new LoggingError("Can not add transient intervals");
 		}
 
-		const { startSide, endSide, startPos, endPos } = endpointPosAndSide(start, end);
+		const { startSide, endSide, startPos, endPos } = endpointPosAndSide(intStart, intEnd);
 
 		assert(
 			startPos !== undefined &&
@@ -1206,13 +1273,13 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 		const stickiness = computeStickinessFromSide(startPos, startSide, endPos, endSide);
 
-		this.assertStickinessEnabled(start, end);
+		this.assertStickinessEnabled(intStart, intEnd);
 
 		const interval: TInterval = this.localCollection.addInterval(
 			toSequencePlace(startPos, startSide),
 			toSequencePlace(endPos, endSide),
-			intervalType,
-			props,
+			type,
+			properties,
 		);
 
 		if (interval) {
@@ -1223,7 +1290,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			const serializedInterval: ISerializedInterval = {
 				start: startPos,
 				end: endPos,
-				intervalType,
+				intervalType: type,
 				properties: interval.properties,
 				sequenceNumber: this.client?.getCurrentSeq() ?? 0,
 				stickiness,
@@ -1329,7 +1396,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	/**
 	 * {@inheritdoc IIntervalCollection.change}
 	 */
-	public change(id: string, start: SequencePlace, end: SequencePlace): TInterval | undefined {
+	public change(id: string, start: SequencePlace, end: SequencePlace) {
 		if (!this.localCollection) {
 			throw new LoggingError("Attach must be called before accessing intervals");
 		}
@@ -1582,6 +1649,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 		if (
 			opName === "change" &&
+			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when .hasPendingChangeStart returns false.
 			(this.hasPendingChangeStart(intervalId) || this.hasPendingChangeEnd(intervalId))
 		) {
 			this.removePendingChange(serializedInterval);
