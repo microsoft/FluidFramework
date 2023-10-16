@@ -84,6 +84,10 @@ export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 				filters: [],
 			},
 		};
+
+		if (config?.filterConfig.filters) {
+			this.filters = config.filterConfig.filters;
+		}
 	}
 
 	/**
