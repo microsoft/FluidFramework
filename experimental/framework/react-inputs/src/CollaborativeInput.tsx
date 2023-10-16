@@ -5,6 +5,11 @@
 import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence";
 import React from "react";
 
+/**
+ * {@link CollaborativeInput} input props.
+ *
+ * @public
+ */
 export interface ICollaborativeInputProps {
 	/**
 	 * The SharedString that will store the input value.
@@ -28,13 +33,20 @@ export interface ICollaborativeInputProps {
 	onInput?: (sharedString: SharedString) => void;
 }
 
+/**
+ * {@link CollaborativeInput} component state.
+ *
+ * @public
+ */
 export interface ICollaborativeInputState {
 	selectionEnd: number;
 	selectionStart: number;
 }
 
 /**
- * Given a SharedString will produce a collaborative input element.
+ * Given a {@link @fluidframework/sequence#SharedString}, will produce a collaborative input element.
+ *
+ * @public
  */
 export class CollaborativeInput extends React.Component<
 	ICollaborativeInputProps,

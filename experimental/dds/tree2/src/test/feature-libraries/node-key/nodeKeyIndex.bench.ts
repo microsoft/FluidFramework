@@ -47,7 +47,7 @@ const nodeWithKeySchema = builder.struct("nodeWithKey", {
 	// ),
 });
 const schemaData = builder.intoDocumentSchema(
-	SchemaBuilder.fieldSequence(nodeSchema, nodeWithKeySchema),
+	SchemaBuilder.sequence(nodeSchema, nodeWithKeySchema),
 );
 
 describe("Node Key Index Benchmarks", () => {

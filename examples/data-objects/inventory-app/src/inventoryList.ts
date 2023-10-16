@@ -12,50 +12,47 @@ import {
 	typeboxValidator,
 } from "@fluid-experimental/tree2";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { InventoryField, inventoryField, schema } from "./schema";
+import { InventoryField, schema } from "./schema";
 
 const treeKey = "tree";
 
 const factory = new TypedTreeFactory({
 	jsonValidator: typeboxValidator,
 	forest: ForestType.Reference,
-	initialTree: {
-		parts: [
-			{
-				name: "nut",
-				quantity: 0,
-			},
-			{
-				name: "bolt",
-				quantity: 0,
-			},
-		],
-	},
-	allowedSchemaModifications: AllowedUpdateType.None,
-	schema,
 	subtype: "InventoryList",
 });
 
 export class InventoryList extends DataObject {
-	private _tree: TypedTreeChannel<typeof inventoryField> | undefined;
+	private _tree: TypedTreeChannel | undefined;
 
 	public get tree(): InventoryField {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return this._tree!.root;
+		return this._tree!.schematize({
+			initialTree: {
+				parts: [
+					{
+						name: "nut",
+						quantity: 0,
+					},
+					{
+						name: "bolt",
+						quantity: 0,
+					},
+				],
+			},
+			allowedSchemaModifications: AllowedUpdateType.None,
+			schema,
+		});
 	}
 
 	protected async initializingFirstTime() {
-		this._tree = this.runtime.createChannel(undefined, factory.type) as TypedTreeChannel<
-			typeof inventoryField
-		>;
+		this._tree = this.runtime.createChannel(undefined, factory.type) as TypedTreeChannel;
 		this.root.set(treeKey, this._tree.handle);
 	}
 
 	protected async initializingFromExisting() {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		this._tree = await this.root
-			.get<IFluidHandle<TypedTreeChannel<typeof inventoryField>>>(treeKey)!
-			.get();
+		this._tree = await this.root.get<IFluidHandle<TypedTreeChannel>>(treeKey)!.get();
 	}
 
 	protected async hasInitialized() {}
