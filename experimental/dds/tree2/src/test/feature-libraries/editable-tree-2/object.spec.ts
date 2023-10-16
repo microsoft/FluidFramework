@@ -194,6 +194,20 @@ const tcs: TestCase[] = [
 testObjectLike(tcs);
 
 describe("Object-like", () => {
+	describe("setting an invalid field", () => {
+		itWithRoot(
+			"throws TypeError in strict mode",
+			makeSchema((_) => _.struct("no fields", {})),
+			{},
+			(root) => {
+				assert.throws(() => {
+					// The actual error "'TypeError: 'set' on proxy: trap returned falsish for property 'foo'"
+					(root as any).foo = 3;
+				}, "attempting to set an invalid field must throw.");
+			},
+		);
+	});
+
 	describe("supports setting", () => {
 		describe("primitives", () => {
 			function check<const TSchema extends LeafSchema>(

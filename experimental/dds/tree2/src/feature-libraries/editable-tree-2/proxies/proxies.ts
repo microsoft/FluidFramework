@@ -174,7 +174,6 @@ export function createObjectProxy<TSchema extends StructSchema, TTypes extends A
 				const fieldSchema = content.schema.structFields.get(key as FieldKey);
 
 				if (fieldSchema === undefined) {
-					// TODO: Verify that returning false will throw a TypeError in strict mode.
 					return false;
 				}
 
