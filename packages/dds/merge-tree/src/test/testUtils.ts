@@ -13,6 +13,7 @@ import { PropertySet } from "../properties";
 import { MergeTree } from "../mergeTree";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk";
 import { loadText } from "./text";
+import { LocalReferenceCollection } from "../localReference";
 
 export function loadTextFromFile(filename: string, mergeTree: MergeTree, segLimit = 0) {
 	const content = fs.readFileSync(filename, "utf8");
@@ -245,4 +246,15 @@ export function validatePartialLengths(
 		assert.equal(partialLen, len);
 		assert.equal(actualLen, len);
 	}
+}
+
+export function validateRefCount(collection?: LocalReferenceCollection) {
+	if (!collection) {
+		return;
+	}
+
+	const expectedLength = Array.from(collection).length;
+
+	// eslint-disable-next-line @typescript-eslint/dot-notation
+	assert.equal(collection["refCount"], expectedLength);
 }

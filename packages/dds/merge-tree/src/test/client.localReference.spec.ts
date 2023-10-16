@@ -11,9 +11,14 @@ import { toRemovalInfo } from "../mergeTreeNodes";
 import { MergeTreeDeltaType, ReferenceType } from "../ops";
 import { TextSegment } from "../textSegment";
 import { DetachedReferencePosition } from "../referencePositions";
-import { LocalReferencePosition, SlidingPreference } from "../localReference";
+import {
+	LocalReferenceCollection,
+	LocalReferencePosition,
+	SlidingPreference,
+} from "../localReference";
 import { getSlideToSegoff } from "../mergeTree";
 import { createClientsAtInitialState } from "./testClientLogger";
+import { validateRefCount } from "./testUtils";
 import { TestClient } from "./";
 
 function getSlideOnRemoveReferencePosition(
@@ -30,6 +35,14 @@ function getSlideOnRemoveReferencePosition(
 }
 
 describe("MergeTree.Client", () => {
+	beforeEach(() => {
+		LocalReferenceCollection.validateRefCount = validateRefCount;
+	});
+
+	afterEach(() => {
+		LocalReferenceCollection.validateRefCount = undefined;
+	});
+
 	it("Remove segment of non-sliding local reference", () => {
 		const client1 = new TestClient();
 		const client2 = new TestClient();
@@ -646,9 +659,12 @@ describe("MergeTree.Client", () => {
 		assert.equal(localRef.getSegment(), segInfo.segment);
 
 		assert(segInfo.segment.localRefs);
+		assert(!segInfo.segment.localRefs.empty);
 
 		segInfo.segment.localRefs.removeLocalRef(localRef);
+		assert(segInfo.segment.localRefs.empty);
 		(localRef as any).link(undefined, 0, undefined);
+		assert(segInfo.segment.localRefs.empty);
 
 		assert.equal(segInfo.segment.localRefs.empty, true);
 		assert.equal(segInfo.segment.localRefs.has(localRef), false);
@@ -682,9 +698,12 @@ describe("MergeTree.Client", () => {
 		assert.equal(localRef.getSegment(), segInfo.segment);
 
 		assert(segInfo.segment.localRefs);
+		assert(!segInfo.segment.localRefs.empty);
 
-		segInfo.segment.localRefs.removeLocalRef(localRef);
 		(localRef as any).link(undefined, 0, undefined);
+		assert(segInfo.segment.localRefs.empty);
+		segInfo.segment.localRefs.removeLocalRef(localRef);
+		assert(segInfo.segment.localRefs.empty);
 
 		assert.equal(segInfo.segment.localRefs.empty, true);
 		assert.equal(segInfo.segment.localRefs.has(localRef), false);

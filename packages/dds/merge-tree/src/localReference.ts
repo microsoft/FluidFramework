@@ -195,6 +195,8 @@ export function* filterLocalReferencePositions(
  * one segment in a merge-tree.
  */
 export class LocalReferenceCollection {
+	public static validateRefCount?: (collection?: LocalReferenceCollection) => void;
+
 	public static append(seg1: ISegment, seg2: ISegment) {
 		if (seg2.localRefs && !seg2.localRefs.empty) {
 			if (!seg1.localRefs) {
@@ -210,6 +212,8 @@ export class LocalReferenceCollection {
 			// segments that had no local references. Account for them now by padding the array.
 			seg1.localRefs.refsByOffset.length += seg2.cachedLength;
 		}
+		LocalReferenceCollection.validateRefCount?.(seg1.localRefs);
+		LocalReferenceCollection.validateRefCount?.(seg2.localRefs);
 	}
 
 	/**
@@ -283,6 +287,7 @@ export class LocalReferenceCollection {
 	 * @internal
 	 */
 	public get empty() {
+		LocalReferenceCollection.validateRefCount?.(this);
 		return this.refCount === 0;
 	}
 
@@ -302,6 +307,7 @@ export class LocalReferenceCollection {
 		if (!refTypeIncludesFlag(ref, ReferenceType.Transient)) {
 			this.addLocalRef(ref, offset);
 		}
+		LocalReferenceCollection.validateRefCount?.(this);
 		return ref;
 	}
 
@@ -330,6 +336,7 @@ export class LocalReferenceCollection {
 			}
 			this.refCount++;
 		}
+		LocalReferenceCollection.validateRefCount?.(this);
 	}
 
 	/**
@@ -349,6 +356,7 @@ export class LocalReferenceCollection {
 				this.hierRefCount--;
 			}
 			this.refCount--;
+			LocalReferenceCollection.validateRefCount?.(this);
 			return lref;
 		}
 	}
@@ -383,6 +391,7 @@ export class LocalReferenceCollection {
 		}
 
 		this.refsByOffset.push(...other.refsByOffset);
+		other.refsByOffset.length = 0;
 	}
 	/**
 	 * Returns true of the local reference is in the collection, otherwise false.
@@ -455,6 +464,7 @@ export class LocalReferenceCollection {
 			// shrink the offset array when empty and splitting
 			this.refsByOffset.length = offset;
 		}
+		LocalReferenceCollection.validateRefCount?.(this);
 	}
 
 	/**
@@ -492,6 +502,7 @@ export class LocalReferenceCollection {
 				}
 			}
 		}
+		LocalReferenceCollection.validateRefCount?.(this);
 	}
 	/**
 	 * @remarks This method should only be called by mergeTree.
@@ -525,6 +536,7 @@ export class LocalReferenceCollection {
 				}
 			}
 		}
+		LocalReferenceCollection.validateRefCount?.(this);
 	}
 
 	/**
