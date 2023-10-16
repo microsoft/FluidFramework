@@ -14,14 +14,12 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { LocalCommitSource, ReversibleCommit } from "../../core/undo/undoRedoManager";
 import { TestChange, testChangeFamilyFactory } from "../testChange";
-import { MockRepairDataStore } from "../utils";
 
 describe("UndoRedoManager", () => {
 	describe("trackCommit", () => {
 		it("should create an undoable commit with the previous head as the parent", () => {
 			const parent = {
 				commit: createTestGraphCommit([], 0),
-				repairData: new MockRepairDataStore(),
 			};
 			const childCommit = createTestGraphCommit([0], 1);
 			const manager = undoRedoManagerFactory(parent);
@@ -35,7 +33,6 @@ describe("UndoRedoManager", () => {
 		it("should create a redoable commit with the previous head as the parent", () => {
 			const parent = {
 				commit: createTestGraphCommit([], 0),
-				repairData: new MockRepairDataStore(),
 			};
 			const childCommit = createTestGraphCommit([0], 1);
 			const manager = undoRedoManagerFactory(undefined, parent);
@@ -49,7 +46,6 @@ describe("UndoRedoManager", () => {
 		it("pops the head undoable commit and pushes to the redoable commit tree when an undo commit is tracked", () => {
 			const initialCommit = {
 				commit: createTestGraphCommit([], 0),
-				repairData: new MockRepairDataStore(),
 			};
 			const manager = undoRedoManagerFactory(initialCommit);
 			const fakeInvertedCommit = createTestGraphCommit([0, 1], 2);
@@ -63,7 +59,6 @@ describe("UndoRedoManager", () => {
 		it("pops the head redoable commit and pushes to the undoable commit tree when a redo commit is tracked", () => {
 			const initialCommit = {
 				commit: createTestGraphCommit([], 0),
-				repairData: new MockRepairDataStore(),
 			};
 			const manager = undoRedoManagerFactory(initialCommit);
 			const fakeInvertedCommit = createTestGraphCommit([0, 1], 2);
@@ -77,7 +72,6 @@ describe("UndoRedoManager", () => {
 		it("should add undoable commits to the undoable commit tree without changing the redoable commit tree", () => {
 			const initialCommit = {
 				commit: createTestGraphCommit([], 0),
-				repairData: new MockRepairDataStore(),
 			};
 			const manager = undoRedoManagerFactory(initialCommit);
 			const fakeInvertedCommit = createTestGraphCommit([0, 1], 2);
@@ -94,7 +88,6 @@ describe("UndoRedoManager", () => {
 			const commit = createTestGraphCommit([], 0);
 			const initialCommit = {
 				commit,
-				repairData: new MockRepairDataStore(),
 			};
 			const manager = undoRedoManagerFactory(initialCommit);
 			const undoChange = manager.undo(commit);
@@ -115,7 +108,6 @@ describe("UndoRedoManager", () => {
 			const commit = createTestGraphCommit([], 0);
 			const initialCommit = {
 				commit,
-				repairData: new MockRepairDataStore(),
 			};
 			const manager = undoRedoManagerFactory(undefined, initialCommit);
 			const redoChange = manager.redo(commit);

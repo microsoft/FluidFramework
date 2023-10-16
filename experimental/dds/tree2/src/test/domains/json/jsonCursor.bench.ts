@@ -52,11 +52,10 @@ function bench(
 		dataConsumer: (cursor: ITreeCursor, calculate: (...operands: any[]) => void) => any;
 	}[],
 ) {
-	const schemaCollection = new SchemaBuilder(
-		"JsonCursor benchmark",
-		{},
-		jsonSchema,
-	).intoDocumentSchema(SchemaBuilder.fieldOptional(...jsonRoot));
+	const schemaCollection = new SchemaBuilder({
+		scope: "JsonCursor benchmark",
+		libraries: [jsonSchema],
+	}).toDocumentSchema(SchemaBuilder.optional(jsonRoot));
 	const schema = new InMemoryStoredSchemaRepository(schemaCollection);
 	for (const { name, getJson, dataConsumer } of data) {
 		describe(name, () => {

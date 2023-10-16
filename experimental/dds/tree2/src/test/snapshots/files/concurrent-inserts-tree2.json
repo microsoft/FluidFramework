@@ -1,0 +1,297 @@
+{
+  "type": "tree",
+  "tree": {
+    "type": "tree",
+    "indexes": {
+      "type": "tree",
+      "entries": [
+        {
+          "type": "tree",
+          "EditManager": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "String": {
+                "type": "blob",
+                "content": {
+                  "trunk": [
+                    {
+                      "change": {
+                        "maxId": 0,
+                        "changes": [
+                          {
+                            "fieldKey": "rootFieldKey",
+                            "fieldKind": "Sequence",
+                            "change": [
+                              {
+                                "type": "Insert",
+                                "count": 1,
+                                "content": [
+                                  {
+                                    "type": "com.fluidframework.leaf.string",
+                                    "value": "y"
+                                  }
+                                ],
+                                "cellId": {
+                                  "localId": 0
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      "revision": "beefbeef-beef-4000-8000-000000000002",
+                      "sequenceNumber": -9007199254740990,
+                      "sessionId": "beefbeef-beef-4000-8000-000000000001"
+                    },
+                    {
+                      "change": {
+                        "maxId": 1,
+                        "changes": [
+                          {
+                            "fieldKey": "rootFieldKey",
+                            "fieldKind": "Sequence",
+                            "change": [
+                              {
+                                "type": "Insert",
+                                "count": 1,
+                                "content": [
+                                  {
+                                    "type": "com.fluidframework.leaf.string",
+                                    "value": "x"
+                                  }
+                                ],
+                                "cellId": {
+                                  "localId": 1
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      "revision": "beefbeef-beef-4000-8000-000000000003",
+                      "sequenceNumber": -9007199254740989,
+                      "sessionId": "beefbeef-beef-4000-8000-000000000001"
+                    },
+                    {
+                      "change": {
+                        "maxId": 1,
+                        "changes": [
+                          {
+                            "fieldKey": "rootFieldKey",
+                            "fieldKind": "Sequence",
+                            "change": [
+                              {
+                                "count": 2
+                              },
+                              {
+                                "type": "Insert",
+                                "count": 2,
+                                "content": [
+                                  {
+                                    "type": "com.fluidframework.leaf.string",
+                                    "value": "a"
+                                  },
+                                  {
+                                    "type": "com.fluidframework.leaf.string",
+                                    "value": "c"
+                                  }
+                                ],
+                                "cellId": {
+                                  "localId": 0
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      "revision": "beefbeef-beef-4000-8000-000000000004",
+                      "sequenceNumber": -9007199254740988,
+                      "sessionId": "beefbeef-beef-4000-8000-000000000001"
+                    },
+                    {
+                      "change": {
+                        "maxId": 2,
+                        "changes": [
+                          {
+                            "fieldKey": "rootFieldKey",
+                            "fieldKind": "Sequence",
+                            "change": [
+                              {
+                                "count": 3
+                              },
+                              {
+                                "type": "Insert",
+                                "count": 1,
+                                "content": [
+                                  {
+                                    "type": "com.fluidframework.leaf.string",
+                                    "value": "b"
+                                  }
+                                ],
+                                "cellId": {
+                                  "localId": 2
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      "revision": "beefbeef-beef-4000-8000-000000000005",
+                      "sequenceNumber": -9007199254740987,
+                      "sessionId": "beefbeef-beef-4000-8000-000000000001"
+                    }
+                  ],
+                  "branches": []
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "Schema": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "SchemaString": {
+                "type": "blob",
+                "content": {
+                  "version": "1.0.0",
+                  "treeSchema": [
+                    {
+                      "name": "Json.Array",
+                      "structFields": [
+                        {
+                          "kind": "Sequence",
+                          "types": [
+                            "Json.Object",
+                            "Json.Array",
+                            "com.fluidframework.leaf.number",
+                            "com.fluidframework.leaf.boolean",
+                            "com.fluidframework.leaf.string",
+                            "Json.Null"
+                          ],
+                          "name": ""
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Json.Null",
+                      "structFields": []
+                    },
+                    {
+                      "name": "Json.Object",
+                      "mapFields": {
+                        "kind": "Optional",
+                        "types": [
+                          "Json.Object",
+                          "Json.Array",
+                          "com.fluidframework.leaf.number",
+                          "com.fluidframework.leaf.boolean",
+                          "com.fluidframework.leaf.string",
+                          "Json.Null"
+                        ]
+                      },
+                      "structFields": []
+                    },
+                    {
+                      "name": "com.fluidframework.leaf.boolean",
+                      "structFields": [],
+                      "leafValue": 2
+                    },
+                    {
+                      "name": "com.fluidframework.leaf.handle",
+                      "structFields": [],
+                      "leafValue": 3
+                    },
+                    {
+                      "name": "com.fluidframework.leaf.number",
+                      "structFields": [],
+                      "leafValue": 0
+                    },
+                    {
+                      "name": "com.fluidframework.leaf.string",
+                      "structFields": [],
+                      "leafValue": 1
+                    }
+                  ],
+                  "rootFieldSchema": {
+                    "kind": "Sequence",
+                    "types": [
+                      "Json.Object",
+                      "Json.Array",
+                      "com.fluidframework.leaf.number",
+                      "com.fluidframework.leaf.boolean",
+                      "com.fluidframework.leaf.string",
+                      "Json.Null"
+                    ]
+                  }
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "Forest": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "ForestTree": {
+                "type": "blob",
+                "content": [
+                  [
+                    "rootFieldKey",
+                    [
+                      {
+                        "type": "com.fluidframework.leaf.string",
+                        "value": "x"
+                      },
+                      {
+                        "type": "com.fluidframework.leaf.string",
+                        "value": "y"
+                      },
+                      {
+                        "type": "com.fluidframework.leaf.string",
+                        "value": "a"
+                      },
+                      {
+                        "type": "com.fluidframework.leaf.string",
+                        "value": "b"
+                      },
+                      {
+                        "type": "com.fluidframework.leaf.string",
+                        "value": "c"
+                      }
+                    ]
+                  ]
+                ],
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "DetachedFieldIndex": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "DetachedFieldIndexBlob": {
+                "type": "blob",
+                "content": {
+                  "data": "[]",
+                  "id": 9
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

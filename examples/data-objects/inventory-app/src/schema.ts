@@ -3,22 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKinds, SchemaBuilder, TypedField, TypedNode, leaf } from "@fluid-experimental/tree2";
+import { SchemaBuilder, TypedField, TypedNode, leaf } from "@fluid-experimental/tree2";
 
-const builder = new SchemaBuilder("inventory app", {}, leaf.library);
+const builder = new SchemaBuilder({ scope: "inventory app", libraries: [leaf.library] });
 
 export const part = builder.struct("Contoso:Part-1.0.0", {
-	name: SchemaBuilder.field(FieldKinds.required, leaf.string),
-	quantity: SchemaBuilder.field(FieldKinds.required, leaf.number),
+	name: leaf.string,
+	quantity: leaf.number,
 });
 
 export const inventory = builder.struct("Contoso:Inventory-1.0.0", {
-	parts: SchemaBuilder.field(FieldKinds.sequence, part),
+	parts: builder.sequence(part),
 });
 
-export const inventoryField = SchemaBuilder.field(FieldKinds.required, inventory);
-export type InventoryField = TypedField<typeof inventoryField>;
+export const schema = builder.toDocumentSchema(inventory);
 
-export const schema = builder.intoDocumentSchema(inventoryField);
-
+export type InventoryField = TypedField<typeof schema.rootFieldSchema>;
 export type Inventory = TypedNode<typeof inventory>;

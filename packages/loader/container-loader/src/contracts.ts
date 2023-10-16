@@ -133,10 +133,10 @@ export interface IConnectionManagerFactoryArgs {
 	readonly incomingOpHandler: (messages: ISequencedDocumentMessage[], reason: string) => void;
 
 	/**
-	 * Called by connection manager for each incoming signals.
-	 * Maybe called before connectHandler is called (initial signals on socket connection)
+	 * Called by connection manager for each incoming signal.
+	 * May be called before connectHandler is called (due to initial signals on socket connection)
 	 */
-	readonly signalHandler: (message: ISignalMessage) => void;
+	readonly signalHandler: (signals: ISignalMessage[]) => void;
 
 	/**
 	 * Called when connection manager experiences delay in connecting to relay service.

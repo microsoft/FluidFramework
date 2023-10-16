@@ -11,7 +11,6 @@ import {
 } from "@fluid-internal/stochastic-test-utils";
 import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
-import { IntervalType } from "../intervals";
 import { revertSharedStringRevertibles, SharedStringRevertible } from "../revertibles";
 import { SharedStringFactory } from "../sequenceFactory";
 import { SharedString } from "../sharedString";
@@ -220,12 +219,11 @@ export function makeReducer(
 		},
 		addInterval: async ({ client }, { start, end, collectionName, id, startSide, endSide }) => {
 			const collection = client.channel.getIntervalCollection(collectionName);
-			collection.add(
-				{ pos: start, side: startSide },
-				{ pos: end, side: endSide },
-				IntervalType.SlideOnRemove,
-				{ intervalId: id },
-			);
+			collection.add({
+				start: { pos: start, side: startSide },
+				end: { pos: end, side: endSide },
+				props: { intervalId: id },
+			});
 		},
 		deleteInterval: async ({ client }, { id, collectionName }) => {
 			const collection = client.channel.getIntervalCollection(collectionName);

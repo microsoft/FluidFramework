@@ -89,6 +89,10 @@ export class MonoRepo {
 		return this.repoPath;
 	}
 
+	public get releaseGroup(): "build-tools" | "client" | "server" | "gitrest" | "historian" {
+		return this.kind as "build-tools" | "client" | "server" | "gitrest" | "historian";
+	}
+
 	private _packageJson: PackageJson;
 
 	static load(group: string, repoPackage: IFluidRepoPackage, log: Logger) {

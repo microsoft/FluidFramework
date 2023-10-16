@@ -12,23 +12,23 @@ import {
 	nodeKeyFieldKey,
 	NodeKeyManager,
 } from "../../../feature-libraries";
-import { nodeKeyField, nodeKeySchema } from "../../../domains";
-import { ValueSchema } from "../../../core";
+import { leaf, nodeKeyField, nodeKeySchema } from "../../../domains";
 import { treeWithContent } from "../../utils";
 
-const builder = new SchemaBuilder("EditableTree Node Keys", {}, nodeKeySchema);
-const stringSchema = builder.leaf("string", ValueSchema.String);
+const builder = new SchemaBuilder({
+	scope: "EditableTree Node Keys",
+	libraries: [nodeKeySchema, leaf.library],
+});
 const childNodeSchema = builder.struct("ChildNode", {
 	...nodeKeyField,
-	name: SchemaBuilder.fieldRequired(stringSchema),
+	name: leaf.string,
 });
 
 const parentNodeSchema = builder.struct("ParentNode", {
 	...nodeKeyField,
-	children: SchemaBuilder.fieldSequence(childNodeSchema),
+	children: builder.sequence(childNodeSchema),
 });
-const rootField = SchemaBuilder.fieldRequired(parentNodeSchema);
-const schema = builder.intoDocumentSchema(rootField);
+const schema = builder.toDocumentSchema(parentNodeSchema);
 
 // TODO: this can probably be removed once daesun's stuff goes in
 function addKey(view: NodeKeyManager, key: LocalNodeKey): { [nodeKeyFieldKey]: StableNodeKey } {

@@ -355,16 +355,17 @@ export interface ISummaryRuntimeOptions {
 
 /**
  * Options for op compression.
- * @experimental - Not ready for use
  */
 export interface ICompressionRuntimeOptions {
 	/**
-	 * The minimum size the batch's payload must exceed before the batch's contents will be compressed.
+	 * The value the batch's content size must exceed for the batch to be compressed.
+	 * By default the value is 600 * 1024 = 614400 bytes. If the value is set to `Infinity`, compression will be disabled.
 	 */
 	readonly minimumBatchSizeInBytes: number;
 
 	/**
 	 * The compression algorithm that will be used to compress the op.
+	 * By default the value is `lz4` which is the only compression algorithm currently supported.
 	 */
 	readonly compressionAlgorithm: CompressionAlgorithms;
 }
@@ -392,8 +393,7 @@ export interface IContainerRuntimeOptions {
 	 */
 	readonly flushMode?: FlushMode;
 	/**
-	 * Enables the runtime to compress ops. Compression is disabled when undefined.
-	 * @experimental Not ready for use.
+	 * Enables the runtime to compress ops. See {@link ICompressionRuntimeOptions}.
 	 */
 	readonly compressionOptions?: ICompressionRuntimeOptions;
 	/**
@@ -410,12 +410,15 @@ export interface IContainerRuntimeOptions {
 	/**
 	 * If the op payload needs to be chunked in order to work around the maximum size of the batch, this value represents
 	 * how large the individual chunks will be. This is only supported when compression is enabled. If after compression, the
-	 * batch size exceeds this value, it will be chunked into smaller ops of this size.
+	 * batch content size exceeds this value, it will be chunked into smaller ops of this exact size.
 	 *
-	 * If unspecified, if a batch exceeds `maxBatchSizeInBytes` after compression, the container will close with an instance
-	 * of `GenericError` with the `BatchTooLarge` message.
+	 * This value is a trade-off between having many small chunks vs fewer larger chunks and by default, the runtime is configured to use
+	 * 200 * 1024 = 204800 bytes. This default value ensures that no compressed payload's content is able to exceed {@link IContainerRuntimeOptions.maxBatchSizeInBytes}
+	 * regardless of the overhead of an individual op.
 	 *
-	 * @experimental Not ready for use.
+	 * Any value of `chunkSizeInBytes` exceeding {@link IContainerRuntimeOptions.maxBatchSizeInBytes} will disable this feature, therefore if a compressed batch's content
+	 * size exceeds {@link IContainerRuntimeOptions.maxBatchSizeInBytes} after compression, the container will close with an instance of `GenericError` with
+	 * the `BatchTooLarge` message.
 	 */
 	readonly chunkSizeInBytes?: number;
 
@@ -3885,8 +3888,6 @@ export class ContainerRuntime
 			},
 		);
 	}
-
-	public notifyAttaching() {} // do nothing (deprecated method)
 
 	public async getPendingLocalState(props?: {
 		notifyImminentClosure: boolean;

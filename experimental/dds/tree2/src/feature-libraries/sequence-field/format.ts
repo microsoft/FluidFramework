@@ -7,7 +7,6 @@ import { ObjectOptions, TSchema, Type } from "@sinclair/typebox";
 import {
 	ChangeAtomId,
 	ChangesetLocalId,
-	ITreeCursorSynchronous,
 	JsonableTree,
 	RevisionTag,
 	RevisionTagSchema,
@@ -120,7 +119,11 @@ export interface CellId extends ChangeAtomId, HasLineage {
 }
 
 export const CellId = Type.Composite(
-	[EncodedChangeAtomId, HasLineage, Type.Object({ adjacentCells: Type.Optional(IdRange) })],
+	[
+		EncodedChangeAtomId,
+		HasLineage,
+		Type.Object({ adjacentCells: Type.Optional(Type.Array(IdRange)) }),
+	],
 	noAdditionalProps,
 );
 
@@ -290,7 +293,6 @@ export interface Revive<TNodeChange = NodeChangeType>
 		HasRevisionTag,
 		CanBeTransient {
 	type: "Revive";
-	content: ITreeCursorSynchronous[];
 }
 export const Revive = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Composite(
@@ -300,7 +302,6 @@ export const Revive = <Schema extends TSchema>(tNodeChange: Schema) =>
 			CanBeTransient,
 			Type.Object({
 				type: Type.Literal("Revive"),
-				content: Type.Array(ProtoNode),
 			}),
 		],
 		noAdditionalProps,

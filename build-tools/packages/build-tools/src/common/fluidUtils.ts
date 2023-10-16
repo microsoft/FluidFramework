@@ -14,45 +14,6 @@ import { Logger, defaultLogger } from "./logging";
 import { realpathAsync } from "./utils";
 import { readJson } from "fs-extra";
 
-/**
- * This function checks that there is a lerna.json file in root of the client and server release groups.
- *
- * Long term we want to get rid of this file, since we no longer use lerna. However, that is a larger change that will
- * be done later. For now, the file must be in the root for both the client and server release groups.
- *
- * Client is needed because it's the root of the repo, and server needs it because the server CI pipeline is built using
- * docker, and the docker context is rooted at the release group root, so it doesn't have access to any files outside
- * the root of the server release group.
- */
-async function isFluidRootLerna(dir: string, log: Logger = defaultLogger) {
-	const filename = path.join(dir, "lerna.json");
-	if (!existsSync(filename)) {
-		log.verbose(`InferRoot: lerna.json not found`);
-		return false;
-	}
-	const rootPackageManifest = getFluidBuildConfig(dir);
-	if (rootPackageManifest.repoPackages.server !== undefined) {
-		if (Array.isArray(rootPackageManifest.repoPackages.server)) {
-			log.warning(
-				`InferRoot: fluid-build settings for the server release group are an array, which is not expected.`,
-			);
-			return false;
-		}
-
-		const serverPath =
-			typeof rootPackageManifest.repoPackages.server === "string"
-				? rootPackageManifest.repoPackages.server
-				: rootPackageManifest.repoPackages.server.directory;
-
-		if (!existsSync(path.join(dir, serverPath, "lerna.json"))) {
-			log.verbose(`InferRoot: ${dir}/${serverPath}/lerna.json not found`);
-			return false;
-		}
-	}
-
-	return true;
-}
-
 async function isFluidRootPackage(dir: string, log: Logger = defaultLogger) {
 	const filename = path.join(dir, "package.json");
 	if (!existsSync(filename)) {
@@ -69,7 +30,7 @@ async function isFluidRootPackage(dir: string, log: Logger = defaultLogger) {
 }
 
 async function isFluidRoot(dir: string) {
-	return (await isFluidRootLerna(dir)) && (await isFluidRootPackage(dir));
+	return isFluidRootPackage(dir);
 }
 
 async function inferRoot(log: Logger = defaultLogger) {

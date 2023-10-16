@@ -189,8 +189,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     readonly logger: ITelemetryLoggerExt;
     // (undocumented)
-    notifyAttaching(): void;
-    // (undocumented)
     notifyOpReplay(message: ISequencedDocumentMessage): Promise<void>;
     // (undocumented)
     readonly options: ILoaderOptions;
