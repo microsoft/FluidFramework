@@ -3372,7 +3372,7 @@ importers:
       stream-http: ^3.2.0
       style-loader: ^1.0.0
       supertest: ^3.4.2
-      tinylicious: ^2.0.1
+      tinylicious: ^2.0.2
       ts-jest: ^29.1.1
       ts-loader: ^9.3.0
       typescript: ~5.1.6
@@ -3448,7 +3448,7 @@ importers:
       start-server-and-test: 1.15.5
       stream-http: 3.2.0
       supertest: 3.4.2
-      tinylicious: 2.0.1
+      tinylicious: 2.0.2
       ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
       ts-loader: 9.5.0_wlox7xpecxj4rvkt6b6o7frtlu
       typescript: 5.1.6
@@ -24961,7 +24961,7 @@ packages:
     dependencies:
       colors: 0.6.2
       eyes: 0.1.8
-      winston: 0.8.0
+      winston: 0.8.3
     dev: true
 
   /cliui/3.2.0:
@@ -41239,6 +41239,51 @@ packages:
       - debug
       - supports-color
       - utf-8-validate
+
+  /tinylicious/2.0.2:
+    resolution: {integrity: sha512-ujP28wKDSMF0JRGrqOgunUDbxLZAWicZsoX5Ou+T+lAiT2lgMXnNfuuVDN5b+5/LzZhn+hgt1wUgAALH3ascJQ==}
+    engines: {node: '>=14.0.0'}
+    hasBin: true
+    dependencies:
+      '@fluidframework/common-utils': 3.0.0
+      '@fluidframework/gitresources': 2.0.2
+      '@fluidframework/protocol-base': 2.0.2
+      '@fluidframework/protocol-definitions': 3.0.0
+      '@fluidframework/server-lambdas': 2.0.2
+      '@fluidframework/server-local-server': 2.0.2
+      '@fluidframework/server-memory-orderer': 2.0.2
+      '@fluidframework/server-services-client': 2.0.2
+      '@fluidframework/server-services-core': 2.0.2
+      '@fluidframework/server-services-shared': 2.0.2
+      '@fluidframework/server-services-telemetry': 2.0.2
+      '@fluidframework/server-services-utils': 2.0.2
+      '@fluidframework/server-test-utils': 2.0.2
+      agentkeepalive: 4.5.0
+      axios: 0.26.1
+      body-parser: 1.20.2
+      charwise: 3.0.1
+      compression: 1.7.4
+      cookie-parser: 1.4.6
+      cors: 2.8.5
+      detect-port: 1.5.1
+      express: 4.18.2
+      isomorphic-git: 1.24.5
+      json-stringify-safe: 5.0.1
+      level: 8.0.0
+      level-sublevel: 6.6.4
+      lodash: 4.17.21
+      morgan: 1.10.0
+      nconf: 0.12.0
+      socket.io: 4.7.2
+      split: 1.0.1
+      uuid: 9.0.1
+      winston: 3.11.0
+    transitivePeerDependencies:
+      - bufferutil
+      - debug
+      - supports-color
+      - utf-8-validate
+    dev: true
 
   /tmp/0.0.33:
     resolution: {integrity: sha512-jRCJlojKnZ3addtTOjdIqoRuPEKBvNXcGYqzO6zWZX8KfKEpnGY5jfggJQ3EjKuu8D4bJRr0y+cYJFmYbImXGw==}
