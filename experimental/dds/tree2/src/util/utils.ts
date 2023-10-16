@@ -341,6 +341,21 @@ export function useDeterministicStableId<T>(f: () => T): T {
 	}
 }
 
+export async function useAsyncDeterministicStableId<T>(f: () => Promise<T>): Promise<T> {
+	assert(
+		deterministicStableIdCount === undefined,
+		"useAsyncDeterministicStableId cannot be nested",
+	);
+	deterministicStableIdCount = 1;
+	try {
+		return await f();
+		// Since this is intended to be used by tests, and test runners often recover from exceptions to run more tests,
+		// clean this up with a finally block to reduce risk of breaking unrelated tests after a failure.
+	} finally {
+		deterministicStableIdCount = undefined;
+	}
+}
+
 /**
  * Generates a random StableId.
  *
@@ -413,6 +428,7 @@ export function transformObjectMap<MapKey extends string | number | symbol, MapV
 
 /**
  * Returns the value from `set` if it contains exactly one item, otherwise `undefined`.
+ * @alpha
  */
 export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
 	if (set === undefined) {

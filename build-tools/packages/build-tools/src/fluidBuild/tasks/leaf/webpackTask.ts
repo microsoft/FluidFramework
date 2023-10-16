@@ -5,7 +5,7 @@
 import * as path from "path";
 import * as fs from "fs";
 
-import { execAsync, globFn, toPosixPath } from "../../../common/utils";
+import { globFn, toPosixPath } from "../../../common/utils";
 import { LeafWithDoneFileTask } from "./leafTask";
 import { TscTask } from "./tscTask";
 
@@ -21,6 +21,7 @@ export class WebpackTask extends LeafWithDoneFileTask {
 	}
 	protected async getDoneFileContent() {
 		try {
+			// eslint-disable-next-line @typescript-eslint/no-var-requires
 			const config = require(this.configFileFullPath);
 			const content: DoneFileContent = {
 				version: await this.getVersion(),

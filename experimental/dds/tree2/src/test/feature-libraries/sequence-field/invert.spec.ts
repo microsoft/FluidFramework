@@ -231,13 +231,7 @@ describe("SequenceField - Invert", () => {
 		it("intentional redundant revive => skip", () => {
 			const input = composeAnonChanges([
 				Change.modify(0, childChange1),
-				Change.redundantRevive(
-					1,
-					1,
-					{ revision: tag1, localId: brand(0) },
-					undefined,
-					true,
-				),
+				Change.redundantRevive(1, 1, { revision: tag1, localId: brand(0) }, true),
 				Change.modify(2, childChange2),
 			]);
 			const expected = composeAnonChanges([

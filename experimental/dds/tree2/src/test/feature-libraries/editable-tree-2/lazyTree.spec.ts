@@ -7,6 +7,7 @@
 
 import { strict as assert, fail } from "assert";
 
+import { noopValidator } from "../../../codec";
 import {
 	LazyFieldNode,
 	LazyLeaf,
@@ -34,6 +35,11 @@ import {
 	AllowedTypes,
 	typeNameSymbol,
 	TreeSchema,
+	createMockNodeKeyManager,
+	nodeKeyFieldKey,
+	DefaultEditBuilder,
+	DefaultChangeFamily,
+	DefaultChangeset,
 } from "../../../feature-libraries";
 import {
 	Anchor,
@@ -55,10 +61,11 @@ import {
 	LazyValueField,
 } from "../../../feature-libraries/editable-tree-2/lazyField";
 import { boxedIterator, visitIterableTree } from "../../../feature-libraries/editable-tree-2";
-import { Context } from "../../../feature-libraries/editable-tree-2/context";
+import { Context, getTreeContext } from "../../../feature-libraries/editable-tree-2/context";
 import { TreeContent } from "../../../shared-tree";
-import { testTrees, treeContentFromTestTree } from "../../testTrees";
 import { leaf as leafDomain } from "../../../domains";
+import { testTrees, treeContentFromTestTree } from "../../testTrees";
+import { forestWithContent } from "../../utils";
 import { contextWithContentReadonly } from "./utils";
 
 function collectPropertyNames(obj: object): Set<string> {
@@ -125,7 +132,7 @@ describe("LazyTree", () => {
 	it("property names", () => {
 		const builder = new SchemaBuilder({ scope: "lazyTree" });
 		const emptyStruct = builder.struct("empty", {});
-		const testSchema = builder.toDocumentSchema(SchemaBuilder.fieldOptional(emptyStruct));
+		const testSchema = builder.toDocumentSchema(SchemaBuilder.optional(emptyStruct));
 
 		const { cursor, context } = initializeTreeWithContent({
 			schema: testSchema,
@@ -176,11 +183,11 @@ describe("LazyTree", () => {
 
 		const fieldNodeOptionalAnySchema = schemaBuilder.fieldNode(
 			"optionalAny",
-			SchemaBuilder.fieldOptional(Any),
+			SchemaBuilder.optional(Any),
 		);
 		const fieldNodeOptionalStringSchema = schemaBuilder.fieldNode(
 			"optionalString",
-			SchemaBuilder.fieldOptional(leafDomain.string),
+			SchemaBuilder.optional(leafDomain.string),
 		);
 		const fieldNodeRequiredAnySchema = schemaBuilder.fieldNode("requiredAny", Any);
 		const fieldNodeRequiredStringSchema = schemaBuilder.fieldNode(
@@ -188,10 +195,10 @@ describe("LazyTree", () => {
 			leafDomain.string,
 		);
 		const structNodeSchema = schemaBuilder.struct("struct", {});
-		const mapNodeAnySchema = schemaBuilder.map("mapAny", SchemaBuilder.fieldOptional(Any));
+		const mapNodeAnySchema = schemaBuilder.map("mapAny", SchemaBuilder.optional(Any));
 		const mapNodeStringSchema = schemaBuilder.map(
 			"mapString",
-			SchemaBuilder.fieldOptional(leafDomain.string),
+			SchemaBuilder.optional(leafDomain.string),
 		);
 
 		const schema = schemaBuilder.toDocumentSchema(fieldNodeOptionalAnySchema);
@@ -229,7 +236,7 @@ describe("LazyTree", () => {
 		});
 		const fieldNodeSchema = schemaBuilder.fieldNode(
 			"field",
-			SchemaBuilder.fieldOptional(leafDomain.string),
+			SchemaBuilder.optional(leafDomain.string),
 		);
 		const schema = schemaBuilder.toDocumentSchema(fieldNodeSchema);
 
@@ -295,7 +302,7 @@ describe("LazyFieldNode", () => {
 	});
 	const fieldNodeSchema = schemaBuilder.fieldNode(
 		"field",
-		SchemaBuilder.fieldOptional(leafDomain.string),
+		SchemaBuilder.optional(leafDomain.string),
 	);
 	const schema = schemaBuilder.toDocumentSchema(fieldNodeSchema);
 
@@ -317,7 +324,7 @@ describe("LazyFieldNode", () => {
 	it("tryGetField", () => {
 		const field = node.tryGetField(EmptyKey);
 		assert(field !== undefined);
-		assert(field.is(SchemaBuilder.fieldOptional(leafDomain.string)));
+		assert(field.is(SchemaBuilder.optional(leafDomain.string)));
 	});
 });
 
@@ -348,10 +355,7 @@ describe("LazyMap", () => {
 		scope: "test",
 		libraries: [leafDomain.library],
 	});
-	const mapNodeSchema = schemaBuilder.map(
-		"mapString",
-		SchemaBuilder.fieldOptional(leafDomain.string),
-	);
+	const mapNodeSchema = schemaBuilder.map("mapString", SchemaBuilder.optional(leafDomain.string));
 	const schema = schemaBuilder.toDocumentSchema(mapNodeSchema);
 
 	const { context, cursor } = initializeTreeWithContent({
@@ -384,19 +388,37 @@ describe("LazyStruct", () => {
 		libraries: [leafDomain.library],
 	});
 	const structNodeSchema = schemaBuilder.struct("struct", {
-		foo: SchemaBuilder.fieldOptional(leafDomain.string),
-		bar: SchemaBuilder.fieldSequence(leafDomain.number),
+		foo: SchemaBuilder.optional(leafDomain.string),
+		bar: SchemaBuilder.sequence(leafDomain.number),
 	});
-	const schema = schemaBuilder.toDocumentSchema(SchemaBuilder.fieldOptional(Any));
+	const schema = schemaBuilder.toDocumentSchema(SchemaBuilder.optional(Any));
 
-	const context = contextWithContentReadonly({
-		schema,
-		initialTree: {
-			[typeNameSymbol]: structNodeSchema.name,
-			foo: "Hello world", // Will unbox
-			bar: [], // Won't unbox
-		},
+	// Count the number of times edits have been generated.
+	let editCallCount = 0;
+	beforeEach(() => {
+		editCallCount = 0;
 	});
+
+	const editBuilder = new DefaultEditBuilder(
+		new DefaultChangeFamily({ jsonValidator: noopValidator }),
+		(change: DefaultChangeset) => {
+			editCallCount++;
+		},
+	);
+	const initialTree = {
+		[typeNameSymbol]: structNodeSchema.name,
+		foo: "Hello world", // Will unbox
+		bar: [], // Won't unbox
+	};
+	const forest = forestWithContent({ schema, initialTree });
+	const context = getTreeContext(
+		schema,
+		forest,
+		editBuilder,
+		createMockNodeKeyManager(),
+		brand(nodeKeyFieldKey),
+	);
+
 	const cursor = initializeCursor(context, rootFieldAnchor);
 	cursor.enterNode(0);
 
@@ -417,6 +439,56 @@ describe("LazyStruct", () => {
 		assert.notEqual(node.tryGetField(brand("foo")), undefined);
 		assert.equal(node.tryGetField(brand("bar")), undefined); // TODO: this is presumably wrong - empty array shouldn't yield undefined
 		assert.equal(node.tryGetField(brand("baz")), undefined);
+	});
+
+	// Validates that
+	it("Value assignment generates edits", () => {
+		assert.equal(editCallCount, 0);
+
+		node.foo = "First edit";
+		assert.equal(editCallCount, 1);
+
+		node.setFoo("Second edit");
+		assert.equal(editCallCount, 2);
+	});
+});
+
+describe("buildLazyStruct", () => {
+	const schemaBuilder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
+	const structNodeSchema = schemaBuilder.struct("struct", {
+		optional: SchemaBuilder.optional(leafDomain.string),
+		required: SchemaBuilder.required(leafDomain.boolean),
+		sequence: SchemaBuilder.sequence(leafDomain.number),
+	});
+	const schema = schemaBuilder.toDocumentSchema(SchemaBuilder.optional(Any));
+
+	const context = contextWithContentReadonly({
+		schema,
+		initialTree: {
+			optional: "Hello",
+			required: true,
+			sequence: [1, 2, 3],
+		},
+	});
+
+	const cursor = initializeCursor(context, rootFieldAnchor);
+	cursor.enterNode(0);
+
+	const { anchor, anchorNode } = createAnchors(context, cursor);
+
+	const node = buildLazyStruct(context, structNodeSchema, cursor, anchorNode, anchor);
+
+	it("Binds setter properties for values, but not other field kinds", () => {
+		assert(Object.getOwnPropertyDescriptor(node, "optional")?.set !== undefined);
+		assert(Object.getOwnPropertyDescriptor(node, "required")?.set !== undefined);
+		assert(Object.getOwnPropertyDescriptor(node, "sequence")?.set === undefined);
+	});
+
+	it('Binds "set" methods for values, but not other field kinds', () => {
+		const record = node as unknown as Record<string | number | symbol, unknown>;
+		assert(record.setOptional !== undefined);
+		assert(record.setRequired !== undefined);
+		assert(record.setSequence === undefined);
 	});
 });
 
