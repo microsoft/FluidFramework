@@ -36,7 +36,6 @@ export type TelemetryEventCategory = (typeof TelemetryEventCategory)[keyof typeo
 // @public
 export interface TelemetryFilter {
     category: TelemetryEventCategory;
-    priority: number;
 }
 
 ```

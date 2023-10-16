@@ -93,7 +93,7 @@ export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 	/**
 	 * Routes Fluid telemetry events to the trackEvent App Insights API.
 	 * This method also uses the provided {@link FluidAppInsightsLoggerConfig} to
-	 * determine whether an event should sent or not.
+	 * determine whether an event should be sent or not.
 	 */
 	public send(event: ITelemetryBaseEvent): void {
 		// By default, "inclusive" filter mode means all events should not be sent by default
