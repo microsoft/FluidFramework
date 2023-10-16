@@ -17,6 +17,7 @@ import {
 	SlidingPreference,
 	compareReferencePositions,
 	createDetachedLocalReferencePosition,
+	createMap,
 	getSlideToSegoff,
 	maxReferencePosition,
 	minReferencePosition,
@@ -340,7 +341,17 @@ export class SequenceInterval implements ISerializableInterval {
 		seq?: number,
 		op?: ICombiningOp,
 	): PropertySet | undefined {
+		this.initializeProperties();
 		return this.propertyManager.addProperties(this.properties, newProps, op, seq, collab);
+	}
+
+	private initializeProperties(): void {
+		if (!this.propertyManager) {
+			this.propertyManager = new PropertiesManager();
+		}
+		if (!this.properties) {
+			this.properties = createMap<any>();
+		}
 	}
 
 	/**
@@ -426,6 +437,7 @@ export class SequenceInterval implements ISerializableInterval {
 			endSide ?? this.endSide,
 		);
 		if (this.properties) {
+			newInterval.initializeProperties();
 			this.propertyManager.copyTo(
 				this.properties,
 				newInterval.properties,

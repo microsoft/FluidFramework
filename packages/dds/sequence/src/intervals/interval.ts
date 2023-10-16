@@ -8,6 +8,7 @@ import {
 	ICombiningOp,
 	PropertiesManager,
 	PropertySet,
+	createMap,
 	reservedRangeLabelsKey,
 } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -175,6 +176,7 @@ export class Interval implements ISerializableInterval {
 		op?: ICombiningOp,
 	): PropertySet | undefined {
 		if (newProps) {
+			this.initializeProperties();
 			return this.propertyManager.addProperties(
 				this.properties,
 				newProps,
@@ -182,6 +184,15 @@ export class Interval implements ISerializableInterval {
 				seq,
 				collaborating,
 			);
+		}
+	}
+
+	private initializeProperties(): void {
+		if (!this.propertyManager) {
+			this.propertyManager = new PropertiesManager();
+		}
+		if (!this.properties) {
+			this.properties = createMap<any>();
 		}
 	}
 
@@ -210,6 +221,7 @@ export class Interval implements ISerializableInterval {
 		}
 		const newInterval = new Interval(startPos, endPos);
 		if (this.properties) {
+			newInterval.initializeProperties();
 			this.propertyManager.copyTo(
 				this.properties,
 				newInterval.properties,
