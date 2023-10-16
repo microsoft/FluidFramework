@@ -212,6 +212,114 @@ describe("interval rebasing", () => {
 		assertConsistent(clients);
 	});
 
+	it("keeps obliterate segment group the same across multiple reconnects", () => {
+		// A-C
+		// (A-B-C)
+		clients[0].sharedString.insertText(0, "C");
+		clients[0].sharedString.insertText(0, "A");
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+		clients[0].sharedString.insertText(1, "B");
+		clients[1].sharedString.obliterateRange(0, 2);
+		clients[1].containerRuntime.connected = false;
+		clients[1].containerRuntime.connected = true;
+		clients[1].containerRuntime.connected = false;
+		clients[1].containerRuntime.connected = true;
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+	});
+
+	it("doesn't crash for empty pending segment group", () => {
+		// A
+		// ((A))-[D]
+		clients[0].sharedString.insertText(0, "A");
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+		clients[1].sharedString.obliterateRange(0, 1);
+		clients[0].sharedString.insertText(1, "D");
+		clients[0].sharedString.obliterateRange(0, 1);
+		clients[0].sharedString.removeRange(0, 1);
+		clients[0].containerRuntime.connected = false;
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+		clients[0].containerRuntime.connected = true;
+
+		assert.equal(clients[0].sharedString.getText(), "");
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+	});
+
+	it("doesn't create empty segment group when obliterated segment was obliterated by other client during reconnect", () => {
+		// A
+		// ((A))-[D]
+		clients[0].sharedString.insertText(0, "A");
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+		clients[1].sharedString.obliterateRange(0, 1);
+		clients[0].sharedString.insertText(1, "D");
+		clients[0].sharedString.obliterateRange(0, 1);
+		clients[0].sharedString.removeRange(0, 1);
+		clients[0].containerRuntime.connected = false;
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+		clients[0].containerRuntime.connected = true;
+		clients[0].containerRuntime.connected = false;
+		clients[0].containerRuntime.connected = true;
+
+		assert.equal(clients[0].sharedString.getText(), "");
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+	});
+
+	// todo: a failing obliterate reconnect test. when rebasing the op,
+	// the character "C" has been concurrently obliterated, so the reconnect
+	// position of "B" is computed to be 0, rather than 1
+	// 
+	// at the time of writing, i'm not sure of a good solution. either we could
+	// change calculation of reconnection position in some way or we could not
+	// concurrently obliterate "C" in this context.
+	// 
+	// in both cases, it's not clear to me how we detect when we're reconnecting
+	it.skip("...", () => {
+		// AB
+		// A-C-B
+		clients[0].sharedString.insertText(0, "AB");
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+		clients[0].sharedString.insertText(1, "C");
+		clients[1].containerRuntime.connected = false;
+		clients[1].sharedString.obliterateRange(0, 2);
+		clients[1].containerRuntime.connected = true;
+		clients[1].containerRuntime.connected = false;
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+		clients[1].containerRuntime.connected = true;
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+	});
+
+	// todo: a failing obliterate reconnect test. i have not yet investigated
+	// this error
+	it.skip("...", () => {
+		clients[0].sharedString.insertText(0, "AB");
+		clients[1].sharedString.insertText(0, "CD");
+		clients[1].sharedString.insertText(1, "E");
+		clients[0].sharedString.obliterateRange(0, 1);
+		clients[0].sharedString.insertText(0, "FGHIJK");
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+		clients[0].sharedString.insertText(4, "L");
+		clients[2].sharedString.obliterateRange(3, 5);
+		clients[0].containerRuntime.connected = false;
+		clients[0].sharedString.obliterateRange(1, 2);
+		clients[0].sharedString.insertText(7, "M");
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+		clients[0].containerRuntime.connected = true;
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+	});
+
 	it("slides two refs on same segment to different segments", () => {
 		clients[0].sharedString.insertText(0, "AB");
 		clients[0].sharedString.insertText(0, "C");

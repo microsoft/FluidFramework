@@ -32,12 +32,7 @@ import {
 	IMergeBlock,
 	IMergeLeaf,
 	IMergeNode,
-<<<<<<< HEAD
 	IMoveInfo,
-	IncrementalExecOp,
-	IncrementalMapState,
-=======
->>>>>>> 75eb656639ffee3900e4e1f191e906a84ee78fdc
 	InsertContext,
 	IRemovalInfo,
 	ISegment,
@@ -454,6 +449,7 @@ function getSlideToSegment(
 			result.seg = seg;
 			return false;
 		}
+		// TODO: moveSeq should be taken into account here
 		if (cache !== undefined && seg.removedSeq === segment.removedSeq) {
 			cache.set(seg, result);
 		}
@@ -653,8 +649,8 @@ export class MergeTree {
 		if (localSeq === undefined) {
 			if (removalInfo !== undefined || moveInfo !== undefined) {
 				if (
-					(removalInfo && !seqLTE(removalInfo.removedSeq, this.collabWindow.minSeq)) ||
-					(moveInfo && !seqLTE(moveInfo.movedSeq, this.collabWindow.minSeq))
+					(!!removalInfo && !seqLTE(removalInfo.removedSeq, this.collabWindow.minSeq)) ||
+					(!!moveInfo && !seqLTE(moveInfo.movedSeq, this.collabWindow.minSeq))
 				) {
 					return 0;
 				}

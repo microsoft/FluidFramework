@@ -557,68 +557,11 @@ export interface IMoveInfo {
 }
 
 // @internal (undocumented)
-export interface IncrementalBlockAction<TContext> {
-    // (undocumented)
-    (state: IncrementalMapState<TContext>): any;
-}
-
-// @internal (undocumented)
-export enum IncrementalExecOp {
-    // (undocumented)
-    Go = 0,
-    // (undocumented)
-    Stop = 1,
-    // (undocumented)
-    Yield = 2
-}
-
-// @internal (undocumented)
-export class IncrementalMapState<TContext> {
-    constructor(block: IMergeBlock, actions: IncrementalSegmentActions<TContext>, pos: number, refSeq: number, clientId: number, context: TContext, start: number, end: number, childIndex?: number);
-    // (undocumented)
-    actions: IncrementalSegmentActions<TContext>;
-    // Warning: (ae-forgotten-export) The symbol "IMergeBlock" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    block: IMergeBlock;
-    // (undocumented)
-    childIndex: number;
-    // (undocumented)
-    clientId: number;
-    // (undocumented)
-    context: TContext;
-    // (undocumented)
-    end: number;
-    // (undocumented)
-    op: IncrementalExecOp;
-    // (undocumented)
-    pos: number;
-    // (undocumented)
-    refSeq: number;
-    // (undocumented)
-    start: number;
-}
-
-// @internal (undocumented)
-export interface IncrementalSegmentAction<TContext> {
-    // (undocumented)
-    (segment: ISegment, state: IncrementalMapState<TContext>): any;
-}
-
-// @internal (undocumented)
-export interface IncrementalSegmentActions<TContext> {
-    // (undocumented)
-    leaf: IncrementalSegmentAction<TContext>;
-    // (undocumented)
-    post?: IncrementalBlockAction<TContext>;
-    // (undocumented)
-    pre?: IncrementalBlockAction<TContext>;
-}
-
-// @internal (undocumented)
 export interface InsertContext {
     // (undocumented)
     candidateSegment?: ISegment;
+    // Warning: (ae-forgotten-export) The symbol "IMergeBlock" needs to be exported by the entry point index.d.ts
+    //
     // (undocumented)
     continuePredicate?: (continueFromBlock: IMergeBlock) => boolean;
     // Warning: (ae-forgotten-export) The symbol "ISegmentChanges" needs to be exported by the entry point index.d.ts

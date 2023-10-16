@@ -773,6 +773,13 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			this.pendingRebase = undefined;
 		}
 
+		// if this is an obliterate op, keep all segments in same segment group
+		const obliterateSegmentGroup: SegmentGroup = {
+			segments: [],
+			localSeq: segmentGroup.localSeq,
+			refSeq: this.getCollabWindow().currentSeq,
+		};
+
 		const opList: IMergeTreeDeltaOp[] = [];
 		// We need to sort the segments by ordinal, as the segments are not sorted in the segment group.
 		// The reason they need them sorted, as they have the same local sequence number and which means
@@ -863,7 +870,17 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					throw new Error(`Invalid op type`);
 			}
 
-			if (newOp) {
+			if (newOp && resetOp.type === MergeTreeDeltaType.OBLITERATE) {
+				segment.segmentGroups.enqueue(obliterateSegmentGroup);
+
+				const first = opList[0];
+
+				if (!!first && first.pos2 !== undefined) {
+					first.pos2 += newOp.pos2! - newOp.pos1!;
+				} else {
+					opList.push(newOp);
+				}
+			} else if (newOp) {
 				const newSegmentGroup: SegmentGroup = {
 					segments: [],
 					localSeq: segmentGroup.localSeq,
@@ -873,22 +890,15 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 				this._mergeTree.pendingSegments.push(newSegmentGroup);
 
-				const first = opList[0];
-
-				if (first && resetOp.type === MergeTreeDeltaType.OBLITERATE) {
-					// HACK: if an obliterate op gets split, it becomes more
-					// difficult to track concurrently obliterated segments.
-					// instead of writing more traversal code, we can reuse the
-					// existing implementation by concatening the obliterate ops
-					//
-					// we still have to create nop obliterates in order to clear
-					// the segment queue
-					first.pos2! += newOp.pos2! - newOp.pos1!;
-					opList.push(createObliterateRangeOp(0, 0));
-				} else {
-					opList.push(newOp);
-				}
+				opList.push(newOp);
 			}
+		}
+
+		if (
+			resetOp.type === MergeTreeDeltaType.OBLITERATE &&
+			obliterateSegmentGroup.segments.length > 0
+		) {
+			this._mergeTree.pendingSegments.push(obliterateSegmentGroup);
 		}
 
 		return opList;

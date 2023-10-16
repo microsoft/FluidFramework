@@ -57,7 +57,7 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		it("does deletes reconnected insert into obliterate range when entire string deleted if rebased", () => {
+		it("deletes reconnected insert into obliterate range when entire string deleted if rebased", () => {
 			const helper = new ReconnectTestHelper();
 
 			helper.insertText("B", 0, "ABCD");

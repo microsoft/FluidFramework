@@ -438,7 +438,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 		// if loading isn't complete, we need to cache
 		// local ops until loading is complete, and then
-		// they will be resent
+		// they will be present
 		if (!this.loadedDeferred.isCompleted) {
 			this.loadedDeferredOutgoingOps.push(metadata ? [translated, metadata] : translated);
 		} else {

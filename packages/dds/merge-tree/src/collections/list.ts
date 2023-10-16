@@ -78,6 +78,11 @@ function insertAfter<T>(node: DataNode<T> | HeadNode<T>, items: T[]): ListNodeRa
 	return newRange;
 }
 
+/**
+ * A doubly linked list
+ *
+ * @privateRemarks TODO: rename to DoublyLinkedList
+ */
 export class List<T>
 	implements
 		Iterable<ListNode<T>>,
@@ -132,6 +137,9 @@ export class List<T>
 		return insertAfter(start, items);
 	}
 
+	/**
+	 * Remove and return the first element
+	 */
 	shift(): ListNode<T> | undefined {
 		return this.remove(this.first);
 	}
@@ -141,6 +149,11 @@ export class List<T>
 		return insertAfter(this.headNode, items);
 	}
 
+	/**
+	 * Remove nodes starting at `start` until either the `end` node is reached
+	 * or until `count` nodes have been removed. Returns the removed nodes as
+	 * a separate linked list
+	 */
 	splice(start: ListNode<T>, countOrEnd?: ListNode<T> | number): List<T> {
 		const newList = new List<T>();
 		walkList(
