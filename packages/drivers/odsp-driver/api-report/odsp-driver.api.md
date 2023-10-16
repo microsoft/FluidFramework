@@ -57,6 +57,46 @@ export function createOdspUrl(l: OdspFluidDataStoreLocator): string;
 export function encodeOdspFluidDataStoreLocator(locator: OdspFluidDataStoreLocator): string;
 
 // @public
+export class EpochTracker implements IPersistedFileCache {
+    constructor(cache: IPersistedCache, fileEntry: IFileEntry, logger: ITelemetryLoggerExt, clientIsSummarizer?: boolean | undefined);
+    // (undocumented)
+    protected readonly cache: IPersistedCache;
+    // (undocumented)
+    protected readonly clientIsSummarizer?: boolean | undefined;
+    fetch(url: string, fetchOptions: RequestInit, fetchType: FetchType, addInBody?: boolean, fetchReason?: string): Promise<IOdspResponse<Response>>;
+    fetchAndParseAsJSON<T>(url: string, fetchOptions: RequestInit, fetchType: FetchType, addInBody?: boolean, fetchReason?: string): Promise<IOdspResponse<T>>;
+    fetchArray(url: string, fetchOptions: {
+        [index: string]: any;
+    }, fetchType: FetchType, addInBody?: boolean, fetchReason?: string): Promise<IOdspResponse<ArrayBuffer>>;
+    // (undocumented)
+    protected readonly fileEntry: IFileEntry;
+    // (undocumented)
+    get fluidEpoch(): string | undefined;
+    // (undocumented)
+    get(entry: IEntry): Promise<any>;
+    // (undocumented)
+    protected readonly logger: ITelemetryLoggerExt;
+    // (undocumented)
+    put(entry: IEntry, value: any): Promise<void>;
+    // (undocumented)
+    readonly rateLimiter: RateLimiter;
+    // (undocumented)
+    removeEntries(): Promise<void>;
+    // (undocumented)
+    setEpoch(epoch: string, fromCache: boolean, fetchType: FetchTypeInternal): void;
+    // (undocumented)
+    validateEpoch(epoch: string | undefined, fetchType: FetchType): Promise<void>;
+    // (undocumented)
+    protected validateEpochFromResponse(epochFromResponse: string | undefined, fetchType: FetchTypeInternal, fromCache?: boolean): void;
+}
+
+// @public (undocumented)
+export type FetchType = "blob" | "createBlob" | "createFile" | "joinSession" | "ops" | "test" | "snapshotTree" | "treesLatest" | "uploadSummary" | "push" | "versions";
+
+// @public (undocumented)
+export type FetchTypeInternal = FetchType | "cache";
+
+// @public
 export function getApiRoot(origin: string): string;
 
 // @public (undocumented)
@@ -69,9 +109,62 @@ export function getLocatorFromOdspUrl(url: URL, requireFluidSignature?: boolean)
 export function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefined>;
 
 // @public (undocumented)
+export interface ICacheAndTracker {
+    // (undocumented)
+    cache: IOdspCache;
+    // (undocumented)
+    epochTracker: EpochTracker;
+}
+
+// @public (undocumented)
 export interface IClpCompliantAppHeader {
     // (undocumented)
     [ClpCompliantAppHeader.isClpCompliantApp]: boolean;
+}
+
+// @public
+export interface INonPersistentCache {
+    readonly fileUrlCache: PromiseCache<string, IOdspResolvedUrl>;
+    readonly sessionJoinCache: PromiseCache<string, {
+        entryTime: number;
+        joinSessionResponse: ISocketStorageDiscovery;
+    }>;
+    readonly snapshotPrefetchResultCache: PromiseCache<string, IPrefetchSnapshotContents>;
+}
+
+// @public
+export interface IOdspCache extends INonPersistentCache {
+    readonly persistedCache: IPersistedFileCache;
+}
+
+// @public (undocumented)
+export interface IOdspResponse<T> {
+    // (undocumented)
+    content: T;
+    // (undocumented)
+    duration: number;
+    // (undocumented)
+    headers: Map<string, string>;
+    // (undocumented)
+    propsToLog: ITelemetryProperties;
+}
+
+// @public
+export interface IPersistedFileCache {
+    // (undocumented)
+    get(entry: IEntry): Promise<any>;
+    // (undocumented)
+    put(entry: IEntry, value: any): Promise<void>;
+    // (undocumented)
+    removeEntries(): Promise<void>;
+}
+
+// @public (undocumented)
+export interface IPrefetchSnapshotContents extends ISnapshotContents {
+    // (undocumented)
+    fluidEpoch: string;
+    // (undocumented)
+    prefetchStartTime: number;
 }
 
 // @public (undocumented)
@@ -93,6 +186,12 @@ export interface ISnapshotContents {
 }
 
 // @public
+export interface ISnapshotContentsWithProps extends ISnapshotContents {
+    // (undocumented)
+    telemetryProps: Record<string, number>;
+}
+
+// @public
 export function isOdcOrigin(origin: string): boolean;
 
 // @public
@@ -101,7 +200,7 @@ export function isOdcUrl(url: string | URL): boolean;
 // @public
 export function isSpoUrl(url: string): boolean;
 
-// @public (undocumented)
+// @public
 export const locatorQueryParamName = "nav";
 
 // @public (undocumented)
@@ -187,6 +286,16 @@ export interface ShareLinkFetcherProps {
 export enum SharingLinkHeader {
     // (undocumented)
     isSharingLinkToRedeem = "isSharingLinkToRedeem"
+}
+
+// @public
+export enum SnapshotFormatSupportType {
+    // (undocumented)
+    Binary = 1,
+    // (undocumented)
+    Json = 0,
+    // (undocumented)
+    JsonAndBinary = 2
 }
 
 // @public

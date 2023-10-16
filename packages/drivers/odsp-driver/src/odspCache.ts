@@ -16,6 +16,7 @@ import { ISnapshotContents } from "./odspPublicUtils";
 
 /**
  * Similar to IPersistedCache, but exposes cache interface for single file
+ * @public
  */
 export interface IPersistedFileCache {
 	get(entry: IEntry): Promise<any>;
@@ -90,6 +91,7 @@ export class PromiseCacheWithOneHourSlidingExpiry<T> extends PromiseCache<string
 
 /**
  * Internal cache interface used within driver only
+ * @public
  */
 export interface INonPersistentCache {
 	/**
@@ -114,6 +116,7 @@ export interface INonPersistentCache {
 
 /**
  * Internal cache interface used within driver only
+ * @public
  */
 export interface IOdspCache extends INonPersistentCache {
 	/**
@@ -136,6 +139,9 @@ export class NonPersistentCache implements INonPersistentCache {
 	>();
 }
 
+/**
+ * @public
+ */
 export interface IPrefetchSnapshotContents extends ISnapshotContents {
 	fluidEpoch: string;
 	prefetchStartTime: number;
