@@ -159,6 +159,21 @@ module.exports = {
 				// getKeys has a fake tsconfig.json to make ./eslintrc.cjs work, but we don't need clean script
 				"tools/getkeys",
 			],
+			// This handler will be rolled out slowly, so excluding most packages here while we roll it out.
+			"npm-package-exports-field": [
+				"common/",
+				"examples/",
+				"experimental/",
+				"packages/dds/",
+				"packages/drivers/",
+				"packages/framework/",
+				"packages/loader/",
+				"packages/runtime/",
+				"packages/test/",
+				"packages/utils/",
+				"server/",
+				"tools/",
+			],
 		},
 		packageNames: {
 			// The allowed package scopes for the repo.
