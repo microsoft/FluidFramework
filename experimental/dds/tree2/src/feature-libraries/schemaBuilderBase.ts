@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { Adapters, TreeNavigationResult, TreeSchemaIdentifier } from "../core";
+import { Adapters, TreeSchemaIdentifier } from "../core";
 import { Assume, RestrictiveReadonlyRecord, transformObjectMap } from "../util";
 import {
 	SchemaLibraryData,

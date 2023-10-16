@@ -30,4 +30,4 @@ export type InventoryNode = TypedNode<typeof inventory>;
 const inventoryField = SchemaBuilder.required(inventory);
 export type InventoryField = TypedField<typeof inventoryField>;
 
-export const schema = builder.toDocumentSchema(inventoryField);
+export const schema = builder.finalize(inventoryField);

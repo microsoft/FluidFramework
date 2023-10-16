@@ -624,7 +624,7 @@ const jsonSequenceRootField = SchemaBuilder.sequence(jsonRoot);
 export const jsonSequenceRootSchema = new SchemaBuilder({
 	scope: "JsonSequenceRoot",
 	libraries: [jsonSchema],
-}).toDocumentSchema(jsonSequenceRootField);
+}).finalize(jsonSequenceRootField);
 
 export const emptyJsonSequenceConfig: InitializeAndSchematizeConfiguration = {
 	schema: jsonSequenceRootSchema,
@@ -900,7 +900,7 @@ export const wrongSchema = new SchemaBuilder({
 	lint: {
 		rejectEmpty: false,
 	},
-}).toDocumentSchema(SchemaBuilder.sequence(Any));
+}).finalize(SchemaBuilder.sequence(Any));
 
 /**
  * Schematize config Schema which is not correct.

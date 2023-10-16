@@ -462,9 +462,7 @@ describe("SchemaAware Editing", () => {
 		const rootNodeSchema = builder.struct("Test", {
 			children: SchemaBuilder.sequence(leaf.string),
 		});
-		const schema = builder.toDocumentSchema(
-			FieldSchema.create(FieldKinds.required, [rootNodeSchema]),
-		);
+		const schema = builder.finalize(FieldSchema.create(FieldKinds.required, [rootNodeSchema]));
 		const view = createSharedTreeView().schematize({
 			schema,
 			allowedSchemaModifications: AllowedUpdateType.None,
