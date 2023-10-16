@@ -1014,19 +1014,22 @@ function runTest<TChannelFactory extends IChannelFactory, TOperation extends Bas
 ): void {
 	const itFn = options.only.has(seed) ? it.only : options.skip.has(seed) ? it.skip : it;
 	itFn(`seed ${seed}`, async function () {
+		const inCi = !!process.env.TF_BUILD;
+		const shouldMinimize = !options.skipMinimization && saveInfo && !inCi;
+
 		// 10 seconds per test should be quite a bit more than is necessary, but
 		// a timeout during minimization can cause bad UX because it obfuscates
 		// the actual error
 		//
 		// it should be noted that if a timeout occurs during minimization, the
 		// intermediate results are not lost and will still be written to the file
-		this.timeout(options.skipMinimization ? 2000 : 10_000);
-		// don't write to files or do minimization in CI
-		const inCi = !!process.env.TF_BUILD;
+		this.timeout(shouldMinimize ? 10_000 : 2000);
+
 		try {
+			// don't write to files in CI
 			await runTestForSeed(model, options, seed, inCi ? undefined : saveInfo);
 		} catch (error) {
-			if (!saveInfo || inCi || options.skipMinimization) {
+			if (!shouldMinimize) {
 				throw error;
 			}
 

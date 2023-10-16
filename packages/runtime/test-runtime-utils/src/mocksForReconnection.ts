@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuidv4 } from "uuid";
+import { v4 as uuid } from "uuid";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { assert } from "@fluidframework/core-utils";
 import {
@@ -40,9 +40,8 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 			}
 			this.pendingRemoteMessages.length = 0;
 			this.clientSequenceNumber = 0;
-
-			this.clientId = uuidv4();
-
+			// We should get a new clientId on reconnection.
+			this.clientId = uuid();
 			// Update the clientId in FluidDataStoreRuntime.
 			this.dataStoreRuntime.clientId = this.clientId;
 			this.factory.quorum.addMember(this.clientId, {});
