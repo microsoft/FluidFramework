@@ -12,6 +12,6 @@ export const inventory = builder.struct("Contoso:Inventory-1.0.0", {
 	bolts: leaf.number,
 });
 
-export const schema = builder.toDocumentSchema(inventory);
+export const schema = builder.finalize(inventory);
 
 export type Inventory = TypedField<typeof schema.rootFieldSchema>;

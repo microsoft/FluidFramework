@@ -13,7 +13,7 @@ import { leaf, SchemaBuilder } from "../../domains";
 describe("TypedTree", () => {
 	it("editable-tree-2-end-to-end", () => {
 		const builder = new SchemaBuilder({ scope: "e2e" });
-		const schema = builder.toDocumentSchema(leaf.number);
+		const schema = builder.finalize(leaf.number);
 		const factory = new TypedTreeFactory({
 			jsonValidator: typeboxValidator,
 			forest: ForestType.Reference,

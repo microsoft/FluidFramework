@@ -266,9 +266,11 @@ export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMe
 export interface ISequencedDocumentMessage {
     clientId: string | null;
     clientSequenceNumber: number;
+    // @deprecated
     compression?: string;
     contents: unknown;
     data?: string;
+    // @deprecated
     expHash1?: string;
     metadata?: unknown;
     minimumSequenceNumber: number;
@@ -280,6 +282,12 @@ export interface ISequencedDocumentMessage {
     traces?: ITrace[];
     type: string;
 }
+
+// @alpha
+export type ISequencedDocumentMessageExperimental = Omit<ISequencedDocumentMessage, "expHash1" | "compression"> & {
+    expHash1?: string;
+    compression?: string;
+};
 
 // @public (undocumented)
 export interface ISequencedDocumentSystemMessage extends ISequencedDocumentMessage {

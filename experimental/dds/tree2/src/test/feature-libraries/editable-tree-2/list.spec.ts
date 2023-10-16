@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { leaf, SchemaBuilder } from "../../../domains";
-import { createTreeView } from "./utils";
+import { createTreeView, pretty } from "./utils";
 
 const builder = new SchemaBuilder({ scope: "test" });
 
@@ -20,18 +20,9 @@ const root = builder.struct("root", {
 	numbers: numberList,
 });
 
-const schema = builder.toDocumentSchema(root);
+const schema = builder.finalize(root);
 
 describe("List", () => {
-	/** Similar to JSON stringify, but preserves 'undefined' and leaves numbers as-is. */
-	function pretty(arg: any) {
-		return arg === undefined
-			? "undefined"
-			: typeof arg === "number"
-			? arg
-			: JSON.stringify(arg);
-	}
-
 	/** Formats 'args' array, inserting commas and eliding trailing undefines.  */
 	function prettyArgs(...args: any[]) {
 		return args.reduce((prev: string, arg, index) => {

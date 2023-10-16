@@ -1811,6 +1811,7 @@ export class SchemaBuilderBase<TScope extends string, TDefaultKind extends Field
     }>;
     static fieldRecursive<Kind extends FieldKind, T extends FlexList<Unenforced<TreeSchema>>>(kind: Kind, ...allowedTypes: T): FieldSchema<Kind, T>;
     finalize(): SchemaLibrary;
+    finalize<const TSchema extends ImplicitFieldSchema>(root: TSchema): TypedSchemaCollection<NormalizeField_2<TSchema, TDefaultKind>>;
     map<Name extends TName, const T extends ImplicitFieldSchema>(name: Name, fieldSchema: T): TreeSchema<`${TScope}.${Name}`, {
         mapFields: NormalizeField_2<T, TDefaultKind>;
     }>;
@@ -1830,7 +1831,6 @@ export class SchemaBuilderBase<TScope extends string, TDefaultKind extends Field
     structRecursive<Name extends TName, const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>>(name: Name, t: T): TreeSchema<`${TScope}.${Name}`, {
         structFields: T;
     }>;
-    toDocumentSchema<const TSchema extends ImplicitFieldSchema>(root: TSchema): TypedSchemaCollection<NormalizeField_2<TSchema, TDefaultKind>>;
 }
 
 // @alpha

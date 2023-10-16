@@ -53,7 +53,7 @@ function testField<T extends FieldSchema>(
 		scope: name,
 		lint: { rejectForbidden: false, rejectEmpty: false },
 		libraries: [schemaLibrary],
-	}).toDocumentSchema(rootField);
+	}).finalize(rootField);
 	return {
 		name,
 		schemaData: schema,

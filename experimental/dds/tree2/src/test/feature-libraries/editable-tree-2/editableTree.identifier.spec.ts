@@ -27,7 +27,7 @@ const parentNodeSchema = builder.struct("ParentNode", {
 	...nodeKeyField,
 	children: builder.sequence(childNodeSchema),
 });
-const schema = builder.toDocumentSchema(parentNodeSchema);
+const schema = builder.finalize(parentNodeSchema);
 
 // TODO: this can probably be removed once daesun's stuff goes in
 function addKey(view: NodeKeyManager, key: LocalNodeKey): { [nodeKeyFieldKey]: StableNodeKey } {
