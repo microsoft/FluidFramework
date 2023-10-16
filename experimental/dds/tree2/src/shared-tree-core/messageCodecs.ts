@@ -35,7 +35,7 @@ export function makeMessageCodec<TChangeset>(
 				const message: Message = {
 					revision,
 					originatorId: sessionId,
-					changeset: changesetCodec.encode(commit.change),
+					changeset: changesetCodec.encode(commit.change, idCompressor),
 				};
 				return message as unknown as JsonCompatibleReadOnly;
 			},

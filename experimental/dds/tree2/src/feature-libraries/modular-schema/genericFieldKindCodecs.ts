@@ -4,6 +4,7 @@
  */
 
 import { Type } from "@sinclair/typebox";
+import { IIdCompressor } from "@fluidframework/runtime-definitions";
 import { ICodecFamily, IJsonCodec, makeCodecFamily } from "../../codec";
 import type { NodeChangeset } from "../modular-schema";
 import { EncodedGenericChange, EncodedGenericChangeset } from "./genericFieldKindFormat";
@@ -19,10 +20,13 @@ function makeV0Codec(
 	childCodec: IJsonCodec<NodeChangeset>,
 ): IJsonCodec<GenericChangeset, EncodedGenericChangeset> {
 	return {
-		encode: (change: GenericChangeset): EncodedGenericChangeset => {
+		encode: (
+			change: GenericChangeset,
+			idCompressor?: IIdCompressor,
+		): EncodedGenericChangeset => {
 			const encoded: EncodedGenericChangeset = change.map(({ index, nodeChange }) => ({
 				index,
-				nodeChange: childCodec.encode(nodeChange),
+				nodeChange: childCodec.encode(nodeChange, idCompressor),
 			}));
 			return encoded;
 		},

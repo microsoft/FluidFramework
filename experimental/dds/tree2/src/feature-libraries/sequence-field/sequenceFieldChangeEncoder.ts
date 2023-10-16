@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { SessionSpaceCompressedId } from "@fluidframework/runtime-definitions";
 import { Type } from "@sinclair/typebox";
 import { JsonCompatible, JsonCompatibleReadOnly, fail } from "../../util";
 import { IJsonCodec, makeCodecFamily } from "../../codec";
@@ -16,13 +17,28 @@ function makeV0Codec<TNodeChange>(
 	childCodec: IJsonCodec<TNodeChange>,
 ): IJsonCodec<Changeset<TNodeChange>> {
 	return {
-		encode: (changeset) => {
+		encode: (changeset, idCompressor) => {
 			const jsonMarks: JsonCompatible[] = [];
 			for (const mark of changeset) {
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 				const encodedMark = { ...mark } as Mark<JsonCompatibleReadOnly>;
 				if (mark.changes !== undefined) {
 					encodedMark.changes = childCodec.encode(mark.changes);
+				}
+				if (mark.cellId?.revision !== undefined) {
+					assert(
+						encodedMark.cellId?.revision !== undefined,
+						"Spread operator ensures this well be present.",
+					);
+					encodedMark.cellId = {
+						...encodedMark.cellId,
+						revision:
+							idCompressor !== undefined
+								? idCompressor.normalizeToOpSpace(
+										encodedMark.cellId.revision as SessionSpaceCompressedId,
+								  )
+								: encodedMark.cellId.revision,
+					};
 				}
 				const type = mark.type;
 				switch (type) {
@@ -33,7 +49,16 @@ function makeV0Codec<TNodeChange>(
 					case "Delete":
 					case "MoveOut":
 					case "ReturnFrom":
+						break;
 					case "Revive":
+						if (mark.inverseOf !== undefined) {
+							(encodedMark as any).inverseOf =
+								idCompressor !== undefined
+									? idCompressor.normalizeToOpSpace(
+											(encodedMark as any).inverseOf,
+									  )
+									: (encodedMark as any).inverseOf;
+						}
 						break;
 					case "Placeholder":
 						fail("Should not have placeholders in serialized changeset");

@@ -30,6 +30,7 @@ import {
 	EncodedModularChangeset,
 	EncodedNodeChangeset,
 } from "./modularChangeFormat";
+import { IIdCompressor } from "@fluidframework/runtime-definitions";
 
 function makeV0Codec(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
@@ -74,11 +75,14 @@ function makeV0Codec(
 		return entry;
 	};
 
-	function encodeFieldChangesForJson(change: FieldChangeMap): EncodedFieldChangeMap {
+	function encodeFieldChangesForJson(
+		change: FieldChangeMap,
+		idCompressor?: IIdCompressor,
+	): EncodedFieldChangeMap {
 		const encodedFields: EncodedFieldChangeMap = [];
 		for (const [field, fieldChange] of change) {
 			const { codec, compiledSchema } = getFieldChangesetCodec(fieldChange.fieldKind);
-			const encodedChange = codec.json.encode(fieldChange.change);
+			const encodedChange = codec.json.encode(fieldChange.change, idCompressor);
 			if (compiledSchema !== undefined && !compiledSchema.check(encodedChange)) {
 				fail("Encoded change didn't pass schema validation.");
 			}
@@ -96,12 +100,15 @@ function makeV0Codec(
 		return encodedFields;
 	}
 
-	function encodeNodeChangesForJson(change: NodeChangeset): EncodedNodeChangeset {
+	function encodeNodeChangesForJson(
+		change: NodeChangeset,
+		idCompressor?: IIdCompressor,
+	): EncodedNodeChangeset {
 		const encodedChange: EncodedNodeChangeset = {};
 		const { fieldChanges, nodeExistsConstraint } = change;
 
 		if (fieldChanges !== undefined) {
-			encodedChange.fieldChanges = encodeFieldChangesForJson(fieldChanges);
+			encodedChange.fieldChanges = encodeFieldChangesForJson(fieldChanges, idCompressor);
 		}
 
 		if (nodeExistsConstraint !== undefined) {
@@ -147,11 +154,11 @@ function makeV0Codec(
 	}
 
 	return {
-		encode: (change) => {
+		encode: (change, idCompressor) => {
 			return {
 				maxId: change.maxId,
 				revisions: change.revisions as readonly RevisionInfo[] & JsonCompatibleReadOnly,
-				changes: encodeFieldChangesForJson(change.fieldChanges),
+				changes: encodeFieldChangesForJson(change.fieldChanges, idCompressor),
 			};
 		},
 		decode: (change) => {
