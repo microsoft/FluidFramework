@@ -22,17 +22,15 @@ import {
 	clonePath,
 	ITreeCursor,
 	EmptyKey,
-	ValueSchema,
 	FieldUpPath,
 } from "../core";
 import {
 	cursorToJsonObject,
-	jsonNumber,
 	jsonSchema,
 	jsonRoot,
 	singleJsonCursor,
-	jsonBoolean,
-	jsonString,
+	SchemaBuilder,
+	leaf,
 } from "../domains";
 import { JsonCompatible, brand, brandOpaque } from "../util";
 import {
@@ -41,8 +39,8 @@ import {
 	singleTextCursor,
 	defaultSchemaPolicy,
 	isNeverField,
-	SchemaBuilder,
 	cursorForTypedTreeData,
+	FieldSchema,
 } from "../feature-libraries";
 import { MockDependent, applyTestDelta, expectEqualFieldPaths } from "./utils";
 import { testGeneralPurposeTreeCursor, testTreeSchema } from "./cursorTestSuite";
@@ -68,7 +66,7 @@ export interface ForestTestConfiguration {
 const jsonDocumentSchema = new SchemaBuilder({
 	scope: "jsonDocumentSchema",
 	libraries: [jsonSchema],
-}).toDocumentSchema(SchemaBuilder.fieldSequence(...jsonRoot));
+}).toDocumentSchema(SchemaBuilder.sequence(jsonRoot));
 
 const detachId = { minor: 42 };
 
@@ -100,7 +98,7 @@ export function testForest(config: ForestTestConfiguration): void {
 					const schema = new InMemoryStoredSchemaRepository();
 					const forest = factory(schema);
 
-					const rootFieldSchema = SchemaBuilder.field(FieldKinds.optional, ...jsonRoot);
+					const rootFieldSchema = FieldSchema.create(FieldKinds.optional, jsonRoot);
 					schema.update({
 						...jsonSchema,
 						rootFieldSchema,
@@ -405,9 +403,9 @@ export function testForest(config: ForestTestConfiguration): void {
 			const schema = new InMemoryStoredSchemaRepository(jsonSchema);
 			const forest = factory(schema);
 			const content: JsonableTree[] = [
-				{ type: jsonNumber.name, value: 1 },
-				{ type: jsonBoolean.name, value: true },
-				{ type: jsonString.name, value: "test" },
+				{ type: leaf.number.name, value: 1 },
+				{ type: leaf.boolean.name, value: true },
+				{ type: leaf.string.name, value: "test" },
 			];
 			initializeForest(forest, content.map(singleTextCursor));
 
@@ -462,7 +460,7 @@ export function testForest(config: ForestTestConfiguration): void {
 									type: Delta.MarkType.Insert,
 									content: [
 										singleTextCursor({
-											type: jsonBoolean.name,
+											type: leaf.boolean.name,
 											value: true,
 										}),
 									],
@@ -496,7 +494,7 @@ export function testForest(config: ForestTestConfiguration): void {
 									type: Delta.MarkType.Insert,
 									content: [
 										singleTextCursor({
-											type: jsonBoolean.name,
+											type: leaf.boolean.name,
 											value: true,
 										}),
 									],
@@ -661,14 +659,14 @@ export function testForest(config: ForestTestConfiguration): void {
 
 				const mark: Delta.Insert = {
 					type: Delta.MarkType.Insert,
-					content: [singleTextCursor({ type: jsonNumber.name, value: 3 })],
+					content: [singleTextCursor({ type: leaf.number.name, value: 3 })],
 					fields: new Map([
 						[
 							brand("newField"),
 							[
 								{
 									type: Delta.MarkType.Insert,
-									content: [{ type: jsonNumber.name, value: 4 }].map(
+									content: [{ type: leaf.number.name, value: 4 }].map(
 										singleTextCursor,
 									),
 								},
@@ -851,12 +849,11 @@ export function testForest(config: ForestTestConfiguration): void {
 			});
 			it("when moving the last node in the field", () => {
 				const builder = new SchemaBuilder({ scope: "moving" });
-				const leaf = builder.leaf("leaf", ValueSchema.Number);
 				const root = builder.struct("root", {
-					x: SchemaBuilder.fieldSequence(leaf),
-					y: SchemaBuilder.fieldSequence(leaf),
+					x: SchemaBuilder.sequence(leaf.number),
+					y: SchemaBuilder.sequence(leaf.number),
 				});
-				const schema = builder.toDocumentSchema(SchemaBuilder.fieldOptional(root));
+				const schema = builder.toDocumentSchema(builder.optional(root));
 
 				const forest = factory(new InMemoryStoredSchemaRepository(schema));
 				initializeForest(forest, [

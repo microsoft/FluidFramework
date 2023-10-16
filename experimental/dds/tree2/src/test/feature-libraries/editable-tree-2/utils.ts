@@ -3,17 +3,19 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import {
 	DefaultEditBuilder,
+	FieldSchema,
 	TypedSchemaCollection,
 	createMockNodeKeyManager,
 	nodeKeyFieldKey,
 } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { Context, getTreeContext } from "../../../feature-libraries/editable-tree-2/context";
-import { IEditableForest } from "../../../core";
-import { TreeContent } from "../../../shared-tree";
-import { forestWithContent } from "../../utils";
+import { AllowedUpdateType, IEditableForest } from "../../../core";
+import { ISharedTree, ISharedTreeView, TreeContent } from "../../../shared-tree";
+import { TestTreeProviderLite, forestWithContent } from "../../utils";
 import { brand } from "../../../util";
 
 export function getReadonlyContext(
@@ -39,4 +41,26 @@ export function getReadonlyContext(
 export function contextWithContentReadonly(content: TreeContent): Context {
 	const forest = forestWithContent(content);
 	return getReadonlyContext(forest, content.schema);
+}
+
+export function createTree(): ISharedTree {
+	const tree = new TestTreeProviderLite(1).trees[0];
+	assert(tree.isAttached());
+	return tree;
+}
+
+export function createTreeView<TRoot extends FieldSchema>(
+	schema: TypedSchemaCollection<TRoot>,
+	initialTree: any,
+): ISharedTreeView {
+	return createTree().schematize({
+		allowedSchemaModifications: AllowedUpdateType.None,
+		initialTree,
+		schema,
+	});
+}
+
+/** Similar to JSON stringify, but preserves 'undefined' and leaves numbers as-is. */
+export function pretty(arg: any) {
+	return arg === undefined ? "undefined" : typeof arg === "number" ? arg : JSON.stringify(arg);
 }

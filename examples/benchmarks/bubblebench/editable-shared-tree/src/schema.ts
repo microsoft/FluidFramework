@@ -6,23 +6,23 @@
 
 import { SchemaAware, SchemaBuilder, leaf } from "@fluid-experimental/tree2";
 
-const builder = new SchemaBuilder({ scope: "bubble-bench", libraries: [leaf.library] });
+const builder = new SchemaBuilder({ scope: "bubble-bench" });
 
 export const bubbleSchema = builder.struct("BubbleBenchAppStateBubble-1.0.0", {
-	x: SchemaBuilder.fieldRequired(leaf.number),
-	y: SchemaBuilder.fieldRequired(leaf.number),
-	r: SchemaBuilder.fieldRequired(leaf.number),
-	vx: SchemaBuilder.fieldRequired(leaf.number),
-	vy: SchemaBuilder.fieldRequired(leaf.number),
+	x: leaf.number,
+	y: leaf.number,
+	r: leaf.number,
+	vx: leaf.number,
+	vy: leaf.number,
 });
 
 export const clientSchema = builder.struct("BubbleBenchAppStateClient-1.0.0", {
-	clientId: SchemaBuilder.fieldRequired(leaf.string),
-	color: SchemaBuilder.fieldRequired(leaf.string),
-	bubbles: SchemaBuilder.fieldSequence(bubbleSchema),
+	clientId: leaf.string,
+	color: leaf.string,
+	bubbles: builder.sequence(bubbleSchema),
 });
 
-export const rootAppStateSchema = SchemaBuilder.fieldSequence(clientSchema);
+export const rootAppStateSchema = SchemaBuilder.sequence(clientSchema);
 
 export const appSchemaData = builder.toDocumentSchema(rootAppStateSchema);
 

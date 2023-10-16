@@ -21,6 +21,9 @@ import {
 } from "ot-json1";
 import { Json1Factory } from "./factory";
 
+/**
+ * @public
+ */
 export class SharedJson1 extends SharedOT<Doc, JSONOp> {
 	public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedJson1 {
 		return runtime.createChannel(id, Json1Factory.Type) as SharedJson1;

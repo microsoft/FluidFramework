@@ -4,7 +4,7 @@
  */
 
 import cluster from "cluster";
-import { Deferred } from "@fluidframework/common-utils";
+import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	ICache,
 	IClientManager,
@@ -28,7 +28,10 @@ import * as winston from "winston";
 import { createMetricClient } from "@fluidframework/server-services";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
-import { configureWebSocketServices } from "@fluidframework/server-lambdas";
+import {
+	configureWebSocketServices,
+	ICollaborationSessionEvents,
+} from "@fluidframework/server-lambdas";
 import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
 import * as app from "./app";
 import { IDocumentDeleteService } from "./services";
@@ -66,6 +69,7 @@ export class AlfredRunner implements IRunner {
 		private readonly socketTracker?: IWebSocketTracker,
 		private readonly tokenRevocationManager?: ITokenRevocationManager,
 		private readonly revokedTokenChecker?: IRevokedTokenChecker,
+		private readonly collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -87,6 +91,7 @@ export class AlfredRunner implements IRunner {
 			this.documentDeleteService,
 			this.tokenRevocationManager,
 			this.revokedTokenChecker,
+			this.collaborationSessionEventEmitter,
 		);
 		alfred.set("port", this.port);
 
@@ -136,6 +141,7 @@ export class AlfredRunner implements IRunner {
 				this.verifyMaxMessageSize,
 				this.socketTracker,
 				this.revokedTokenChecker,
+				this.collaborationSessionEventEmitter,
 			);
 			// Listen on primary thread port, on all network interfaces.
 			httpServer.listen(cluster.isPrimary ? this.port : 0);
