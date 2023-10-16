@@ -103,6 +103,7 @@ export {
 	BrandedMapSubset,
 	RangeEntry,
 	Named,
+	oneFromSet,
 } from "./util";
 
 export {
@@ -119,16 +120,13 @@ export {
 	cursorToJsonObject,
 	singleJsonCursor,
 	jsonArray,
-	jsonBoolean,
-	jsonNull,
-	jsonNumber,
 	jsonObject,
-	jsonString,
 	jsonSchema,
 	nodeKeyField,
 	nodeKeySchema,
 	leaf,
 	testRecursiveDomain,
+	SchemaBuilder,
 } from "./domains";
 
 export {
@@ -189,7 +187,6 @@ export {
 	UnwrappedUntypedField,
 	UnwrappedUntypedTree,
 	UntypedTreeOrPrimitive,
-	SchemaBuilder,
 	AllowedTypes,
 	TreeSchema,
 	Required,
@@ -259,6 +256,7 @@ export {
 	Sequence2,
 	Struct,
 	StructTyped,
+	AssignableFieldKinds,
 	TreeContext,
 	TypedField,
 	TypedNode,
@@ -272,6 +270,21 @@ export {
 	StructSchema,
 	CheckTypesOverlap,
 	SchemaBuilderBase,
+	ImplicitFieldSchema,
+	ImplicitAllowedTypes,
+	Unenforced,
+	schemaIsFieldNode,
+	AllowedTypeSet,
+	SchemaBuilderOptions,
+	SharedTreeList,
+	ObjectFields,
+	ProxyField,
+	ProxyFieldInner,
+	ProxyNode,
+	ProxyNodeUnion,
+	SharedTreeMap,
+	SharedTreeObject,
+	is,
 } from "./feature-libraries";
 
 export {

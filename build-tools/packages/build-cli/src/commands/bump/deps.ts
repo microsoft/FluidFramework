@@ -40,14 +40,14 @@ import { npmCheckUpdatesHomegrown } from "../../lib/package";
  * This command is roughly equivalent to `fluid-bump-version --dep`.
  */
 export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
-	static description =
+	static readonly description =
 		"Update the dependency version of a specified package or release group. That is, if one or more packages in the repo depend on package A, then this command will update the dependency range on package A. The dependencies and the packages updated can be filtered using various flags.\n\nTo learn more see the detailed documentation at https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/bumpDetails.md";
 
-	static args = {
+	static readonly args = {
 		package_or_release_group: packageOrReleaseGroupArg,
-	};
+	} as const;
 
-	static flags = {
+	static readonly flags = {
 		updateType: dependencyUpdateTypeFlag({
 			char: "t",
 			default: "minor",
@@ -80,9 +80,9 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 		}),
 		testMode: testModeFlag,
 		...BaseCommand.flags,
-	};
+	} as const;
 
-	static examples = [
+	static readonly examples = [
 		{
 			description:
 				"Bump dependencies on @fluidframework/build-common to the latest release version across all release groups.",
@@ -116,8 +116,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 	 * Runs the `bump deps` command.
 	 */
 	public async run(): Promise<void> {
-		const args = this.args;
-		const flags = this.flags;
+		const { args, flags } = this;
 
 		const context = await this.getContext();
 		const shouldInstall = flags.install && !flags.skipChecks;
@@ -139,6 +138,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 		const branchName = await context.gitRepo.getCurrentBranchName();
 
 		if (args.package_or_release_group === MonoRepoKind.Server && branchName !== "next") {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const { confirmed } = await prompts({
 				type: "confirm",
 				name: "confirmed",
@@ -146,8 +146,9 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 					"next",
 				)} branch only. The current branch is ${branchName}. Are you sure you want to continue?`,
 				initial: false,
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				onState: (state: any) => {
-					// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+					// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unsafe-member-access
 					if (state.aborted) {
 						process.nextTick(() => this.exit(0));
 					}
@@ -215,7 +216,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 						context,
 						flags.releaseGroup ?? flags.package, // if undefined the whole repo will be checked
 						depsToUpdate,
-						rgOrPackage instanceof MonoRepo ? rgOrPackage.name : undefined,
+						rgOrPackage instanceof MonoRepo ? rgOrPackage.releaseGroup : undefined,
 						/* prerelease */ flags.prerelease,
 						/* writeChanges */ !flags.testMode,
 						this.logger,
@@ -224,7 +225,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 						context,
 						flags.releaseGroup ?? flags.package, // if undefined the whole repo will be checked
 						depsToUpdate,
-						rgOrPackage instanceof MonoRepo ? rgOrPackage.name : undefined,
+						rgOrPackage instanceof MonoRepo ? rgOrPackage.releaseGroup : undefined,
 						flags.updateType,
 						/* prerelease */ flags.prerelease,
 						/* writeChanges */ !flags.testMode,
@@ -233,7 +234,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 
 		if (updatedPackages.length > 0) {
 			if (shouldInstall) {
-				if (!(await FluidRepo.ensureInstalled(updatedPackages, false))) {
+				if (!(await FluidRepo.ensureInstalled(updatedPackages))) {
 					this.error("Install failed.");
 				}
 			} else {
@@ -244,8 +245,8 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 				...new Set(
 					updatedPackages
 						.filter((p) => p.monoRepo !== undefined)
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						.map((p) => p.monoRepo!.kind),
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unsafe-return
+						.map((p) => p.monoRepo!.releaseGroup),
 				),
 			];
 

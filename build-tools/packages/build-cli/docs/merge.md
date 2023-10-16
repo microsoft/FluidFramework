@@ -32,13 +32,15 @@ DESCRIPTION
   Sync branches depending on the batch size passed
 ```
 
+_See code: [src/commands/merge/branches.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/merge/branches.ts)_
+
 ## `flub merge info`
 
 Get info about the merge status of branches in the repo. Uses "main" and "next" if no branch names are provided. Output the data as JSON using --json.
 
 ```
 USAGE
-  $ flub merge info [-v | --quiet] [--json] [-b <value>]
+  $ flub merge info [--json] [-v | --quiet] [-b <value>]
 
 FLAGS
   -b, --branch=<value>...  A branch name. Use this argument multiple times to provide multiple branch names.
@@ -63,3 +65,5 @@ EXAMPLES
 
     $ flub merge info --json
 ```
+
+_See code: [src/commands/merge/info.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/merge/info.ts)_

@@ -1,16 +1,13 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-	"extends": "@fluidframework/build-common/api-extractor-common-report.json",
+	"extends": "../../api-extractor-base.json",
 	"mainEntryPointFilePath": "<projectFolder>/lib/index.d.ts",
-	"apiReport": {
-		"enabled": true,
-		"reportFolder": "<projectFolder>/api-report/"
-	},
+	// TODO: Fix violations and remove this rule override
 	"messages": {
 		"extractorMessageReporting": {
-			"ae-unresolved-link": {
+			"ae-forgotten-export": {
 				"logLevel": "warning",
-				"addToApiReportFile": false
+				"addToApiReportFile": true
 			}
 		}
 	}

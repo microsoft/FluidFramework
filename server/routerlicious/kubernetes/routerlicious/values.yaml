@@ -171,3 +171,4 @@ error:
 lumberjack:
   options:
     enableGlobalTelemetryContext: true
+    enableSanitization: false

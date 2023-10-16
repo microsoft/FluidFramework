@@ -28,7 +28,7 @@ import { brand, brandOpaque, Mutable } from "../../util";
 import { testChangeReceiver } from "../utils";
 // eslint-disable-next-line import/no-internal-modules
 import { ModularChangeFamily } from "../../feature-libraries/modular-schema/modularChangeFamily";
-import { jsonNumber } from "../../domains";
+import { leaf } from "../../domains";
 // eslint-disable-next-line import/no-internal-modules
 import { sequence } from "../../feature-libraries/default-field-kinds/defaultFieldKinds";
 // eslint-disable-next-line import/no-internal-modules
@@ -119,7 +119,7 @@ describe("ModularChangeFamily integration", () => {
 			);
 
 			const newValue = "new value";
-			const newNode = singleTextCursor({ type: jsonNumber.name, value: newValue });
+			const newNode = singleTextCursor({ type: leaf.number.name, value: newValue });
 			editor
 				.sequenceField({
 					parent: { parent: undefined, parentField: fieldB, parentIndex: 0 },
@@ -162,7 +162,7 @@ describe("ModularChangeFamily integration", () => {
 			);
 
 			const newValue = "new value";
-			const newNode = singleTextCursor({ type: jsonNumber.name, value: newValue });
+			const newNode = singleTextCursor({ type: leaf.number.name, value: newValue });
 			editor
 				.sequenceField({
 					parent: { parent: undefined, parentField: fieldB, parentIndex: 0 },

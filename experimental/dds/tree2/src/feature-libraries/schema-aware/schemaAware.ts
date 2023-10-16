@@ -7,8 +7,10 @@ import { assert } from "@fluidframework/core-utils";
 import { PrimitiveValueSchema, TreeSchemaIdentifier, ValueSchema } from "../../core";
 import {
 	ContextuallyTypedNodeData,
+	FluidSerializableReadOnly,
 	MarkedArrayLike,
 	PrimitiveValue,
+	isFluidHandle,
 	typeNameSymbol,
 	valueSymbol,
 } from "../contextuallyTyped";
@@ -146,7 +148,7 @@ export type TypedFields<
 > = [
 	TFields extends { [key: string]: FieldSchema }
 		? {
-				[key in keyof TFields]: TypedField<
+				-readonly [key in keyof TFields]: TypedField<
 					TFields[key],
 					Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode
 				>;
@@ -296,6 +298,11 @@ export function downCast<TSchema extends TreeSchema>(
 	tree: UntypedTreeCore<any, any>,
 ): tree is TypedNode<TSchema> {
 	assert(typeof tree === "object", 0x72b /* downCast only valid on wrapped nodes */);
+	assert(tree !== null, "downCast only valid on wrapped nodes");
+	assert(
+		!isFluidHandle(tree as unknown as FluidSerializableReadOnly),
+		"downCast only valid on wrapped nodes",
+	);
 
 	const contextSchema = tree[contextSymbol].schema;
 	const lookedUp = contextSchema.treeSchema.get(schema.name);

@@ -17,7 +17,8 @@ import {
 import { CursorAdapter, singleStackTreeCursor } from "./treeCursorUtils";
 
 /**
- * This module provides support for reading and writing a human readable (and editable) tree format.
+ * This module provides support for reading and writing a human readable (and
+ * editable) tree format.
  *
  * This implementation can handle all trees (so it does not need a fallback for any special cases),
  * and is not optimized.

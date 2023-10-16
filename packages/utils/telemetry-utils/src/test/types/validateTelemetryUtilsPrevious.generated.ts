@@ -192,6 +192,30 @@ use_old_InterfaceDeclaration_IConfigProviderBase(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IEventSampler": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IEventSampler():
+    TypeOnly<old.IEventSampler>;
+declare function use_current_InterfaceDeclaration_IEventSampler(
+    use: TypeOnly<current.IEventSampler>);
+use_current_InterfaceDeclaration_IEventSampler(
+    get_old_InterfaceDeclaration_IEventSampler());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IEventSampler": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IEventSampler():
+    TypeOnly<current.IEventSampler>;
+declare function use_old_InterfaceDeclaration_IEventSampler(
+    use: TypeOnly<old.IEventSampler>);
+use_old_InterfaceDeclaration_IEventSampler(
+    get_current_InterfaceDeclaration_IEventSampler());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IFluidErrorAnnotations": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IFluidErrorAnnotations():
@@ -260,6 +284,30 @@ declare function use_old_InterfaceDeclaration_IPerformanceEventMarkers(
     use: TypeOnly<old.IPerformanceEventMarkers>);
 use_old_InterfaceDeclaration_IPerformanceEventMarkers(
     get_current_InterfaceDeclaration_IPerformanceEventMarkers());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISampledTelemetryLogger": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ISampledTelemetryLogger():
+    TypeOnly<old.ISampledTelemetryLogger>;
+declare function use_current_InterfaceDeclaration_ISampledTelemetryLogger(
+    use: TypeOnly<current.ISampledTelemetryLogger>);
+use_current_InterfaceDeclaration_ISampledTelemetryLogger(
+    get_old_InterfaceDeclaration_ISampledTelemetryLogger());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISampledTelemetryLogger": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ISampledTelemetryLogger():
+    TypeOnly<current.ISampledTelemetryLogger>;
+declare function use_old_InterfaceDeclaration_ISampledTelemetryLogger(
+    use: TypeOnly<old.ISampledTelemetryLogger>);
+use_old_InterfaceDeclaration_ISampledTelemetryLogger(
+    get_current_InterfaceDeclaration_ISampledTelemetryLogger());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -908,6 +956,30 @@ declare function use_old_FunctionDeclaration_createMultiSinkLogger(
     use: TypeOnly<typeof old.createMultiSinkLogger>);
 use_old_FunctionDeclaration_createMultiSinkLogger(
     get_current_FunctionDeclaration_createMultiSinkLogger());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createSampledLogger": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_createSampledLogger():
+    TypeOnly<typeof old.createSampledLogger>;
+declare function use_current_FunctionDeclaration_createSampledLogger(
+    use: TypeOnly<typeof current.createSampledLogger>);
+use_current_FunctionDeclaration_createSampledLogger(
+    get_old_FunctionDeclaration_createSampledLogger());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createSampledLogger": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_createSampledLogger():
+    TypeOnly<typeof current.createSampledLogger>;
+declare function use_old_FunctionDeclaration_createSampledLogger(
+    use: TypeOnly<typeof old.createSampledLogger>);
+use_old_FunctionDeclaration_createSampledLogger(
+    get_current_FunctionDeclaration_createSampledLogger());
 
 /*
 * Validate forward compat by using old type in place of current type
