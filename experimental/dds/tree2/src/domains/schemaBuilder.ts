@@ -124,6 +124,11 @@ export class SchemaBuilder<TScope extends string = string> extends SchemaBuilder
 	 * {@link leaf.handle}
 	 */
 	public readonly handle = leaf.handle;
+
+	/**
+	 * {@link leaf.null}
+	 */
+	public readonly null = leaf.null;
 }
 
 /**

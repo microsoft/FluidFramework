@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 import { Flags } from "@oclif/core";
-import * as childProcess from "child_process";
-import * as fs from "fs";
+import * as childProcess from "node:child_process";
+import * as fs from "node:fs";
 import { readJson } from "fs-extra";
-import { EOL as newline } from "os";
-import path from "path";
+import { EOL as newline } from "node:os";
+import path from "node:path";
 
 import { getFluidBuildConfig, Handler, policyHandlers } from "@fluidframework/build-tools";
 
@@ -52,10 +52,10 @@ interface HandlerExclusions {
  * `fluid-repo-policy-check -s` is equivalent to `flub check policy --stdin`
  */
 export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
-	static description =
+	static readonly description =
 		"Checks and applies policies to the files in the repository, such as ensuring a consistent header comment in files, assert tagging, etc.";
 
-	static flags = {
+	static readonly flags = {
 		fix: Flags.boolean({
 			description: `Fix errors if possible.`,
 			required: false,
@@ -92,7 +92,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 			exclusive: ["stdin", "path", "fix", "handler"],
 		}),
 		...BaseCommand.flags,
-	};
+	} as const;
 
 	static handlerActionPerf = new Map<policyAction, Map<string, number>>();
 	static processed = 0;

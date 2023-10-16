@@ -204,11 +204,16 @@ describe("Schema Comparison", () => {
 			getOrdering(ValueSchema.String, undefined, allowsValueSuperset),
 			Ordering.Incomparable,
 		);
+		assert.equal(
+			getOrdering(ValueSchema.Null, undefined, allowsValueSuperset),
+			Ordering.Incomparable,
+		);
 		testPartialOrder<ValueSchema | undefined>(allowsValueSuperset, [
 			ValueSchema.Boolean,
 			ValueSchema.Number,
 			ValueSchema.String,
 			ValueSchema.FluidHandle,
+			ValueSchema.Null,
 		]);
 	});
 
@@ -413,7 +418,7 @@ function testPartialOrder<T>(
  * Flatten maps and arrays into simple objects for better printing.
  */
 function intoSimpleObject(obj: unknown): unknown {
-	if (typeof obj !== "object") {
+	if (typeof obj !== "object" || obj === null) {
 		return obj;
 	}
 	if (obj instanceof Array) {

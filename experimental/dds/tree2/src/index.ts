@@ -119,11 +119,7 @@ export {
 	cursorToJsonObject,
 	singleJsonCursor,
 	jsonArray,
-	jsonBoolean,
-	jsonNull,
-	jsonNumber,
 	jsonObject,
-	jsonString,
 	jsonSchema,
 	nodeKeyField,
 	nodeKeySchema,
@@ -279,6 +275,15 @@ export {
 	schemaIsFieldNode,
 	AllowedTypeSet,
 	SchemaBuilderOptions,
+	SharedTreeList,
+	ObjectFields,
+	ProxyField,
+	ProxyFieldInner,
+	ProxyNode,
+	ProxyNodeUnion,
+	SharedTreeMap,
+	SharedTreeObject,
+	is,
 } from "./feature-libraries";
 
 export {

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/odsp-doclib-utils",
-	"version": "2.0.0-internal.7.1.0",
+	"version": "2.0.0-internal.7.2.0",
 	"description": "ODSP utilities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -75,7 +75,7 @@
 		"@fluidframework/build-tools": "^0.25.0",
 		"@fluidframework/eslint-config-fluid": "^3.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@fluidframework/odsp-doclib-utils-previous": "npm:@fluidframework/odsp-doclib-utils@2.0.0-internal.7.0.0",
+		"@fluidframework/odsp-doclib-utils-previous": "npm:@fluidframework/odsp-doclib-utils@2.0.0-internal.7.1.0",
 		"@microsoft/api-extractor": "^7.37.0",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^16.18.38",

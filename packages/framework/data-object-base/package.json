@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/data-object-base",
-	"version": "2.0.0-internal.7.1.0",
+	"version": "2.0.0-internal.7.2.0",
 	"description": "Data object base for synchronously and lazily loaded object scenarios",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -57,7 +57,7 @@
 		"@fluid-tools/build-cli": "^0.25.0",
 		"@fluidframework/build-common": "^2.0.1",
 		"@fluidframework/build-tools": "^0.25.0",
-		"@fluidframework/data-object-base-previous": "npm:@fluidframework/data-object-base@2.0.0-internal.7.0.0",
+		"@fluidframework/data-object-base-previous": "npm:@fluidframework/data-object-base@2.0.0-internal.7.1.0",
 		"@fluidframework/eslint-config-fluid": "^3.0.0",
 		"@microsoft/api-extractor": "^7.37.0",
 		"@types/node": "^16.18.38",

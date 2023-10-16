@@ -42,6 +42,7 @@ import {
 	createNodeKeyManager,
 	nodeKeyFieldKey as nodeKeyFieldKeyDefault,
 	getProxyForField,
+	ProxyField,
 } from "../feature-libraries";
 import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core";
 import { TransactionResult, brand } from "../util";
@@ -241,7 +242,7 @@ export interface ISharedTreeView extends AnchorLocator {
 		viewSchema: TypedSchemaCollection<TRoot>,
 	): TypedField<TRoot>;
 
-	root2<TRoot extends FieldSchema>(viewSchema: TypedSchemaCollection<TRoot>): any;
+	root2<TRoot extends FieldSchema>(viewSchema: TypedSchemaCollection<TRoot>): ProxyField<TRoot>;
 }
 
 /**
