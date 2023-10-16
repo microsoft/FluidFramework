@@ -24,7 +24,7 @@ export const clientSchema = builder.struct("BubbleBenchAppStateClient-1.0.0", {
 
 export const rootAppStateSchema = SchemaBuilder.sequence(clientSchema);
 
-export const appSchemaData = builder.toDocumentSchema(rootAppStateSchema);
+export const appSchemaData = builder.finalize(rootAppStateSchema);
 
 export type Bubble = SchemaAware.TypedNode<typeof bubbleSchema>;
 export type Client = SchemaAware.TypedNode<typeof clientSchema>;

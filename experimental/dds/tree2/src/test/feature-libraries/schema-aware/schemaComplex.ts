@@ -25,7 +25,7 @@ export const listTaskSchema = builder.structRecursive("ListTask", {
 
 export const rootFieldSchema = SchemaBuilder.required([stringTaskSchema, listTaskSchema]);
 
-export const appSchemaData = builder.toDocumentSchema(rootFieldSchema);
+export const appSchemaData = builder.finalize(rootFieldSchema);
 
 // Schema aware types
 export type StringTask = SchemaAware.TypedNode<typeof stringTaskSchema>;

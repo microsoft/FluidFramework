@@ -333,7 +333,7 @@ describe("SharedTreeCore", () => {
 		const node = b.structRecursive("test node", {
 			child: FieldSchema.createUnsafe(FieldKinds.optional, [() => node, leaf.number]),
 		});
-		const schema = b.toDocumentSchema(b.optional(node));
+		const schema = b.finalize(b.optional(node));
 
 		const tree2 = await factory.load(
 			dataStoreRuntime2,

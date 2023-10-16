@@ -390,7 +390,7 @@ describe("editable-tree: read-only", () => {
 			child: stringSchema,
 		});
 		const rootSchema = FieldSchema.create(FieldKinds.required, [parentSchema]);
-		const schemaData = builder.toDocumentSchema(rootSchema);
+		const schemaData = builder.finalize(rootSchema);
 		const forest = setupForest(schemaData, { child: "x" });
 		const context = getReadonlyEditableTreeContext(forest, schemaData);
 		assert(isEditableTree(context.unwrappedRoot));

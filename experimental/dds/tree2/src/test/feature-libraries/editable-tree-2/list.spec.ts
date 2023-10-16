@@ -20,7 +20,7 @@ const root = builder.struct("root", {
 	numbers: numberList,
 });
 
-const schema = builder.toDocumentSchema(root);
+const schema = builder.finalize(root);
 
 describe("List", () => {
 	/** Formats 'args' array, inserting commas and eliding trailing undefines.  */
