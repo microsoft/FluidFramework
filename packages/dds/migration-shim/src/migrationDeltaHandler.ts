@@ -11,6 +11,10 @@ import { type IShimDeltaHandler } from "./types";
 /**
  * Handles incoming and outgoing deltas/ops for the Migration Shim distributed data structure.
  * Intercepts processing of ops to allow for migration, and swapping from LegacySharedTree to new SharedTree
+ *
+ * TODO: Needs to be able to process v1 and v2 ops, differentiate between them, understand the various states
+ * and drop v1 ops after migration. After the MSN of the barrier op, it needs to process v2 ops without needing to
+ * check for the v2 stamp.
  */
 export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 	private oldHandler?: IDeltaHandler;

@@ -12,9 +12,10 @@ import { type IShimDeltaHandler } from "./types";
  * Handles incoming and outgoing deltas/ops for the SharedTreeShim distributed data structure.
  * This serves as an adapter to the real DeltaHandler, filter/process migration ops
  *
- * TODO: Needs to be able to process v1 and v2 ops, differentiate between them, understand the various states
- * and drop v1 ops after migration. After the MSN of the barrier op, it needs to process v2 ops without needing to
- * check for the v2 stamp.
+ * This should just have the ability to drop v1 & migrate ops, and process v2 ops. There may be an opportunity to
+ * combine this class with the MigrationShimDeltaHandler, but for now the classes are separated. Once it is clear what
+ * exact code can be shared between the two classes is and how it can be merge, we may figure out a way of merging
+ * MigrationShimDeltaHandler and SharedTreeShimDeltaHandler.
  */
 export class SharedTreeShimDeltaHandler implements IShimDeltaHandler {
 	private _handler?: IDeltaHandler;

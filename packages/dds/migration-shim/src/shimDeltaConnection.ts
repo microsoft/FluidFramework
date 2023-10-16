@@ -13,7 +13,11 @@ import { type IShimDeltaHandler } from "./types";
  *
  * This allows the Shim class to swap out the delta handler on the fly.
  *
- * TODO: stamp the V2 ops until the MSN has passed.
+ * TODO: stamp the V2 ops. Either the MigrationShim needs to pass this logic to the ShimDeltaConnection, or
+ * the ShimDeltaConnection needs to do it itself. We can probably put submitting and processing ops on the
+ * IShimDeltaHandler interface. I'm of the opinion to iterate over this design. For now we will have one class, and
+ * see what works best. Ideally, this class doesn't need to know about swapping handlers. It will need to know to stamp
+ * ops as that's how this was designed. We can probably get away with just stamping the ops in the submit method.
  *
  * This special logic allows for connect to be called for the underlying new SharedObject without the need for
  * modifications on the current ChannelDeltaConnection.

@@ -31,8 +31,9 @@ export class ShimChannelServices implements IChannelServices {
 
 /**
  * NoDeltasChannelServices wraps an existing IChannelServices object and provides a new objectStorage
- * object in place of the original deltaConnection object. During load, if the runtime is in a detached state, we only want to
- * connect once on attached. Thus this is here to catch us from making a mistake.
+ * object in place of the original deltaConnection object. During load, if the runtime is in a detached state, we only
+ * want to connect once on attached. Thus this is here to catch us from making a mistake. This should follow the
+ * Single-Responsibility Principle.
  *
  * This potentially can be baked into the ShimChannelServices.
  */
