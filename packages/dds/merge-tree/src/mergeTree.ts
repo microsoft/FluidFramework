@@ -1887,7 +1887,7 @@ export class MergeTree {
 				props,
 				combiningOp,
 				seq,
-				this.collabWindow,
+				this.collabWindow.collaborating,
 				rollback,
 			);
 			deltaSegments.push({ segment, propertyDeltas });

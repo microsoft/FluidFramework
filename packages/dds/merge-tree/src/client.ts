@@ -350,6 +350,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 	}
 
+	/**
+	 * @internal
+	 */
 	public getCollabWindow(): CollaborationWindow {
 		return this._mergeTree.collabWindow;
 	}

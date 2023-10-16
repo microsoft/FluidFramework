@@ -198,7 +198,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
 		newProps: PropertySet,
 		op?: ICombiningOp,
 		seq?: number,
-		collabWindow?: CollaborationWindow,
+		collaborating?: boolean,
 		rollback?: PropertiesRollback,
 	): PropertySet | undefined;
 	clone(): ISegment;
@@ -404,7 +404,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 		newProps: PropertySet,
 		op?: ICombiningOp,
 		seq?: number,
-		collabWindow?: CollaborationWindow,
+		collaborating?: boolean,
 		rollback: PropertiesRollback = PropertiesRollback.None,
 	) {
 		this.propertyManager ??= new PropertiesManager();
@@ -414,7 +414,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 			newProps,
 			op,
 			seq,
-			collabWindow?.collaborating,
+			collaborating,
 			rollback,
 		);
 	}
@@ -650,6 +650,9 @@ export class Marker extends BaseSegment implements ReferencePosition {
 	}
 }
 
+/**
+ * @internal
+ */
 export class CollaborationWindow {
 	clientId = LocalClientId;
 	collaborating = false;
