@@ -5,7 +5,7 @@
 import { assert, expect } from "chai";
 import * as semver from "semver";
 
-import { getAlphaBetaVersion, getIsLatest, getSimpleVersion } from "../versions";
+import { getIsLatest, getSimpleVersion } from "../versions";
 import { getVersionRange } from "../internalVersionScheme";
 
 // Deliberately not sorted here; highest version is 0.59.3000
@@ -91,78 +91,6 @@ describe("getSimpleVersion", () => {
 			const input = "2.0.0-internal.1.3.0";
 			expect(() => getSimpleVersion(input, "93923", true, true)).to.throw();
 		});
-	});
-});
-
-describe("getAlphaBetaVersion", () => {
-	it("alpha prerelease versions", () => {
-		const input = "2.0.0-dev.1.3.0";
-		const expected = "2.0.0-dev.1.3.0.93923-alpha-types";
-		const result = getAlphaBetaVersion(input, "93923", false, false, "alpha");
-		expect(result).to.equal(expected);
-	});
-
-	it("beta prerelease versions", () => {
-		const input = "2.0.0-dev.1.3.0";
-		const expected = "2.0.0-dev.1.3.0.93923-beta-types";
-		const result = getAlphaBetaVersion(input, "93923", false, false, "beta");
-		expect(result).to.equal(expected);
-	});
-
-	it("none prerelease versions", () => {
-		const input = "2.0.0-dev.1.3.0";
-		const expected = "2.0.0-dev.1.3.0.93923";
-		const result = getAlphaBetaVersion(input, "93923", false, false, "none");
-		expect(result).to.equal(expected);
-	});
-
-	it("public prerelease versions", () => {
-		const input = "2.0.0-dev.1.3.0";
-		const expected = "2.0.0-dev.1.3.0.93923";
-		const result = getAlphaBetaVersion(input, "93923", false, false, "public");
-		expect(result).to.equal(expected);
-	});
-
-	it("untrimmed prerelease versions", () => {
-		const input = "2.0.0-dev.1.3.0";
-		const expected = "2.0.0-dev.1.3.0.93923";
-		const result = getAlphaBetaVersion(input, "93923", false, false, "untrimmed");
-		expect(result).to.equal(expected);
-	});
-
-	it("alpha release versions", () => {
-		const input = "2.0.0-dev.1.3.0";
-		const expected = "2.0.0-dev.1.3.0";
-		const result = getAlphaBetaVersion(input, "93923", true, false, "alpha");
-		expect(result).to.equal(expected);
-	});
-
-	it("beta release versions", () => {
-		const input = "2.0.0-dev.1.3.0";
-		const expected = "2.0.0-dev.1.3.0";
-		const result = getAlphaBetaVersion(input, "93923", true, false, "beta");
-		expect(result).to.equal(expected);
-	});
-
-	it("none release versions", () => {
-		const input = "2.0.0-dev.1.3.0";
-		const expected = "2.0.0-dev.1.3.0";
-		const result = getAlphaBetaVersion(input, "93923", true, false, "none");
-		expect(result).to.equal(expected);
-	});
-
-	it("public release versions", () => {
-		const input = "2.0.0-dev.1.3.0";
-		const expected = "2.0.0-dev.1.3.0";
-		const result = getAlphaBetaVersion(input, "93923", true, false, "public");
-		expect(result).to.equal(expected);
-	});
-
-	it("untrimmed release versions", () => {
-		const input = "2.0.0-dev.1.3.0";
-		const expected = "2.0.0-dev.1.3.0";
-		const result = getAlphaBetaVersion(input, "93923", true, false, "untrimmed");
-		expect(result).to.equal(expected);
 	});
 });
 

@@ -43,31 +43,6 @@ export function getSimpleVersion(
 	return fullVersion;
 }
 
-export function getAlphaBetaVersion(
-	fileVersion: string,
-	argBuildNum: string,
-	argRelease: boolean,
-	patch: boolean,
-	packageTypes: string,
-) {
-	let fullVersion = getSimpleVersion(fileVersion, argBuildNum, argRelease, patch);
-
-	if (!argRelease && packageTypes !== "none") {
-		switch (true) {
-			case packageTypes === "alpha":
-				fullVersion = fullVersion.concat("-alpha-types");
-				break;
-			case packageTypes === "beta":
-				fullVersion = fullVersion.concat("-beta-types");
-				break;
-			default:
-				break;
-		}
-	}
-
-	return fullVersion;
-}
-
 /**
  * @param prefix - The tag prefix to filter the tags by (client, server, etc.).
  * @param current_version - The version to test; that is, the version to check for being the latest build.

@@ -114,11 +114,20 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 			useSimplePatchVersion,
 		);
 
-		if (flags.packageTypes === "alpha" || flags.packageTypes === "beta") {
+		if (isRelease && (flags.packageTypes === "alpha" || flags.packageTypes === "beta")) {
+			this.errorLog(`ERROR: alpha/beta prereleases are allowed`);
+		}
+
+		if (!isRelease && (flags.packageTypes === "alpha" || flags.packageTypes === "beta")) {
 			simpleVersion = `${simpleVersion}-${flags.packageTypes}-types`;
 		}
 
-		const version = useTestVersion ? `0.0.0-${flags.build}-test` : simpleVersion;
+		const version = useTestVersion
+			? flags.packageTypes === "alpha" || flags.packageTypes === "beta"
+				? `0.0.0-${flags.build}-${flags.packageTypes}-types-test`
+				: `0.0.0-${flags.build}-test`
+			: simpleVersion;
+
 		this.log(`version=${version}`);
 		this.log(`##vso[task.setvariable variable=version;isOutput=true]${version}`);
 

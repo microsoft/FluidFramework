@@ -344,4 +344,227 @@ describe("generate:buildVersion", () => {
 			expect(ctx.stdout).to.contain("version=1.3.0-100339");
 			expect(ctx.stdout).to.contain("isLatest=false");
 		});
+
+	test.env({
+		VERSION_BUILDNUMBER: "88879",
+		VERSION_TAGNAME: "client",
+		TEST_BUILD: "false",
+		VERSION_RELEASE: "prerelease",
+		VERSION_PATCH: "False",
+		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+		PACKAGE_TYPES_FIELD: "alpha",
+	})
+		.stdout()
+		.command(["generate:buildVersion", "--fileVersion", "0.4.0"])
+		.it("client tag with package types field selected as alpha", (ctx) => {
+			expect(ctx.stdout).to.contain("version=0.4.0-88879-alpha-types");
+			expect(ctx.stdout).to.contain("isLatest=false");
+		});
+
+	test.env({
+		VERSION_BUILDNUMBER: "88879",
+		VERSION_TAGNAME: "client",
+		TEST_BUILD: "false",
+		VERSION_RELEASE: "prerelease",
+		VERSION_PATCH: "False",
+		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+		PACKAGE_TYPES_FIELD: "beta",
+	})
+		.stdout()
+		.command(["generate:buildVersion", "--fileVersion", "0.4.0"])
+		.it("client tag with package types field selected as beta", (ctx) => {
+			expect(ctx.stdout).to.contain("version=0.4.0-88879-beta-types");
+			expect(ctx.stdout).to.contain("isLatest=false");
+		});
+
+	test.env({
+		VERSION_BUILDNUMBER: "88879",
+		VERSION_TAGNAME: "client",
+		TEST_BUILD: "false",
+		VERSION_RELEASE: "prerelease",
+		VERSION_PATCH: "False",
+		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+		PACKAGE_TYPES_FIELD: "none",
+	})
+		.stdout()
+		.command(["generate:buildVersion", "--fileVersion", "0.4.0"])
+		.it("client tag with package types field selected as none", (ctx) => {
+			expect(ctx.stdout).to.contain("version=0.4.0-88879");
+			expect(ctx.stdout).to.contain("isLatest=false");
+		});
+
+	test.env({
+		VERSION_BUILDNUMBER: "88879",
+		VERSION_TAGNAME: "client",
+		TEST_BUILD: "false",
+		VERSION_RELEASE: "prerelease",
+		VERSION_PATCH: "False",
+		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+		PACKAGE_TYPES_FIELD: "public",
+	})
+		.stdout()
+		.command(["generate:buildVersion", "--fileVersion", "0.4.0"])
+		.it("client tag with package types field selected as public", (ctx) => {
+			expect(ctx.stdout).to.contain("version=0.4.0-88879");
+			expect(ctx.stdout).to.contain("isLatest=false");
+		});
+
+	test.env({
+		VERSION_BUILDNUMBER: "88879",
+		VERSION_TAGNAME: "client",
+		TEST_BUILD: "false",
+		VERSION_RELEASE: "prerelease",
+		VERSION_PATCH: "False",
+		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+		PACKAGE_TYPES_FIELD: "untrimmed",
+	})
+		.stdout()
+		.command(["generate:buildVersion", "--fileVersion", "0.4.0"])
+		.it("client tag with package types field selected as untrimmed", (ctx) => {
+			expect(ctx.stdout).to.contain("version=0.4.0-88879");
+			expect(ctx.stdout).to.contain("isLatest=false");
+		});
+
+	test.env({
+		VERSION_BUILDNUMBER: "88879",
+		VERSION_TAGNAME: "client",
+		TEST_BUILD: "false",
+		VERSION_RELEASE: "release",
+		VERSION_PATCH: "False",
+		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+		PACKAGE_TYPES_FIELD: "untrimmed",
+	})
+		.stdout()
+		.command(["generate:buildVersion", "--fileVersion", "0.4.0"])
+		.it(
+			"client tag with package types field selected as untrimmed and a release build",
+			(ctx) => {
+				expect(ctx.stdout).to.contain("version=0.4.0");
+			},
+		);
+
+	test.env({
+		VERSION_BUILDNUMBER: "88879",
+		VERSION_TAGNAME: "client",
+		TEST_BUILD: "false",
+		VERSION_RELEASE: "release",
+		VERSION_PATCH: "False",
+		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+		PACKAGE_TYPES_FIELD: "public",
+	})
+		.stdout()
+		.command(["generate:buildVersion", "--fileVersion", "0.4.0"])
+		.it("client tag with package types field selected as public and a release build", (ctx) => {
+			expect(ctx.stdout).to.contain("version=0.4.0");
+		});
+
+	test.env({
+		VERSION_BUILDNUMBER: "88879",
+		VERSION_TAGNAME: "client",
+		TEST_BUILD: "false",
+		VERSION_RELEASE: "release",
+		VERSION_PATCH: "False",
+		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+		PACKAGE_TYPES_FIELD: "alpha",
+	})
+		.stdout()
+		.command(["generate:buildVersion", "--fileVersion", "0.4.0"])
+		.it("client tag with package types field selected as alpha and a release build", (ctx) => {
+			expect(ctx.stdout).to.contain(`ERROR: ERROR: alpha/beta prereleases are allowed`);
+		});
+
+	test.env({
+		VERSION_BUILDNUMBER: "88879",
+		VERSION_TAGNAME: "client",
+		TEST_BUILD: "false",
+		VERSION_RELEASE: "release",
+		VERSION_PATCH: "False",
+		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+		PACKAGE_TYPES_FIELD: "beta",
+	})
+		.stdout()
+		.command(["generate:buildVersion", "--fileVersion", "0.4.0"])
+		.it("client tag with package types field selected as beta and a release build", (ctx) => {
+			expect(ctx.stdout).to.contain(`ERROR: ERROR: alpha/beta prereleases are allowed`);
+		});
+
+	test.env({
+		VERSION_BUILDNUMBER: "88879",
+		VERSION_TAGNAME: "client",
+		TEST_BUILD: "true",
+		VERSION_RELEASE: "prerelease",
+		VERSION_PATCH: "False",
+		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+		PACKAGE_TYPES_FIELD: "alpha",
+	})
+		.stdout()
+		.command(["generate:buildVersion", "--fileVersion", "0.4.0"])
+		.it("client tag with package types field selected as alpha and test build", (ctx) => {
+			expect(ctx.stdout).to.contain("version=0.0.0-88879-alpha-types-test");
+			expect(ctx.stdout).to.contain("isLatest=false");
+		});
+
+	test.env({
+		VERSION_BUILDNUMBER: "88879",
+		VERSION_TAGNAME: "client",
+		TEST_BUILD: "true",
+		VERSION_RELEASE: "prerelease",
+		VERSION_PATCH: "False",
+		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+		PACKAGE_TYPES_FIELD: "beta",
+	})
+		.stdout()
+		.command(["generate:buildVersion", "--fileVersion", "0.4.0"])
+		.it("client tag with package types field selected as alpha and test build", (ctx) => {
+			expect(ctx.stdout).to.contain("version=0.0.0-88879-beta-types-test");
+			expect(ctx.stdout).to.contain("isLatest=false");
+		});
+
+	test.env({
+		VERSION_BUILDNUMBER: "88879",
+		VERSION_TAGNAME: "client",
+		TEST_BUILD: "true",
+		VERSION_RELEASE: "prerelease",
+		VERSION_PATCH: "False",
+		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+		PACKAGE_TYPES_FIELD: "none",
+	})
+		.stdout()
+		.command(["generate:buildVersion", "--fileVersion", "0.4.0"])
+		.it("client tag with package types field selected as alpha and test build", (ctx) => {
+			expect(ctx.stdout).to.contain("version=0.0.0-88879-test");
+			expect(ctx.stdout).to.contain("isLatest=false");
+		});
+
+	test.env({
+		VERSION_BUILDNUMBER: "88879",
+		VERSION_TAGNAME: "client",
+		TEST_BUILD: "true",
+		VERSION_RELEASE: "prerelease",
+		VERSION_PATCH: "False",
+		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+		PACKAGE_TYPES_FIELD: "public",
+	})
+		.stdout()
+		.command(["generate:buildVersion", "--fileVersion", "0.4.0"])
+		.it("client tag with package types field selected as alpha and test build", (ctx) => {
+			expect(ctx.stdout).to.contain("version=0.0.0-88879-test");
+			expect(ctx.stdout).to.contain("isLatest=false");
+		});
+
+	test.env({
+		VERSION_BUILDNUMBER: "88879",
+		VERSION_TAGNAME: "client",
+		TEST_BUILD: "true",
+		VERSION_RELEASE: "prerelease",
+		VERSION_PATCH: "False",
+		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+		PACKAGE_TYPES_FIELD: "untrimmed",
+	})
+		.stdout()
+		.command(["generate:buildVersion", "--fileVersion", "0.4.0"])
+		.it("client tag with package types field selected as alpha and test build", (ctx) => {
+			expect(ctx.stdout).to.contain("version=0.0.0-88879-test");
+			expect(ctx.stdout).to.contain("isLatest=false");
+		});
 });
