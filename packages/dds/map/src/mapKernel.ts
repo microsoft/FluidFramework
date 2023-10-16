@@ -1164,7 +1164,7 @@ export class MapKernel {
 	/**
 	 * Submit a map key message to remote clients.
 	 * @param op - The map key message
-	 * @param op - The message id
+	 * @param messageId - The message id
 	 * @param previousValue - The value of the key before this op
 	 * @param previousIndex - The information of creation index before this op
 	 */
@@ -1211,12 +1211,12 @@ export class MapKernel {
 		if (op.type === "set") {
 			const pendingSetIds = this.pendingSetTracker.get(op.key);
 			if (pendingSetIds !== undefined) {
-				const topPendingSetId = pendingSetIds?.shift() as number;
+				const firstPendingSetId = pendingSetIds?.shift() as number;
 				if (pendingSetIds?.length === 0) {
 					this.pendingSetTracker.delete(op.key);
 				}
-				if (this.localKeysIndexTracker.has(topPendingSetId)) {
-					this.localKeysIndexTracker.delete(topPendingSetId);
+				if (this.localKeysIndexTracker.has(firstPendingSetId)) {
+					this.localKeysIndexTracker.delete(firstPendingSetId);
 					if (pendingSetIds.length > 0) {
 						this.localKeysIndexTracker.set(op.key, pendingSetIds[0]);
 					}
