@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-/** @remarks Used by `markEager`and `isMarkedEager`. */
+/**
+ * A symbol that, when attached to an object as a property and given a truthy value,
+ * causes that object to be treated as an "eager" item in a `FlexList` even if it otherwise would have been considered to be "lazy".
+ * @remarks
+ * Used by `markEager`and `isMarkedEager`.
+ */
 const flexListEager = Symbol("FlexList Eager");
 
 /** Mark the given object as an "eager" item in a `FlexList`, regardless of its type. */
