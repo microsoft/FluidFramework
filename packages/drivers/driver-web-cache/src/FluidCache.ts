@@ -28,6 +28,9 @@ interface StorageQuotaUsageDetails {
 	indexedDB: number | undefined;
 }
 
+/**
+ * @public
+ */
 export interface FluidCacheConfig {
 	/**
 	 * A string to specify what partition of the cache you wish to use (e.g. a user id).
@@ -58,7 +61,9 @@ export interface FluidCacheConfig {
 }
 
 /**
- * A cache that can be used by the Fluid ODSP driver to cache data for faster performance
+ * A cache that can be used by the Fluid ODSP driver to cache data for faster performance.
+ *
+ * @public
  */
 export class FluidCache implements IPersistedCache {
 	private readonly logger: ITelemetryLoggerExt;

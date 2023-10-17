@@ -82,6 +82,7 @@ describe("SequenceField - toDelta", () => {
 		const changeset = Change.insert(0, 1);
 		const mark: Delta.Insert = {
 			type: Delta.MarkType.Insert,
+			buildId: { minor: 0 },
 			content: contentCursor,
 		};
 		const expected: Delta.MarkList = [mark];
@@ -96,7 +97,7 @@ describe("SequenceField - toDelta", () => {
 			assert.equal(count, 1);
 			return contentCursor;
 		}
-		const changeset = Change.revive(0, 1, { revision: tag, localId: brand(0) }, reviver);
+		const changeset = Change.revive(0, 1, { revision: tag, localId: brand(0) });
 		const actual = toDelta(changeset);
 		const expected: Delta.MarkList = [
 			{
@@ -235,6 +236,7 @@ describe("SequenceField - toDelta", () => {
 		};
 		const ins: Delta.Insert = {
 			type: Delta.MarkType.Insert,
+			buildId: { minor: 52 },
 			content: contentCursor,
 		};
 		const expected: Delta.MarkList = [del, 3, ins, 1, childChange1Delta];
@@ -246,6 +248,7 @@ describe("SequenceField - toDelta", () => {
 		const changeset = composeAnonChanges([Change.insert(0, 1), Change.modify(0, childChange1)]);
 		const mark: Delta.Insert = {
 			type: Delta.MarkType.Insert,
+			buildId: { minor: 0 },
 			content: [
 				singleTextCursor({
 					type,
@@ -299,6 +302,7 @@ describe("SequenceField - toDelta", () => {
 		]);
 		const mark: Delta.Insert = {
 			type: Delta.MarkType.Insert,
+			buildId: { minor: 0 },
 			content: contentCursor,
 			fields: nestedMoveDelta,
 		};

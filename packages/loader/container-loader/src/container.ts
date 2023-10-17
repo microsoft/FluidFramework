@@ -135,6 +135,8 @@ const savedContainerEvent = "saved";
 
 const packageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
+const hasBlobsSummaryTree = ".hasAttachmentBlobs";
+
 /**
  * @internal
  */
@@ -474,7 +476,11 @@ export class Container
 			container.mc.logger,
 			{ eventName: "RehydrateDetachedFromSnapshot" },
 			async (_event) => {
-				const deserializedSummary = JSON.parse(snapshot) as ISummaryTree;
+				const deserializedSummary = JSON.parse(snapshot);
+				if (!isCombinedAppAndProtocolSummary(deserializedSummary, hasBlobsSummaryTree)) {
+					throw new UsageError("Cannot rehydrate detached container. Incorrect format");
+				}
+
 				await container.rehydrateDetachedFromSnapshot(deserializedSummary);
 				return container;
 			},
@@ -1182,7 +1188,7 @@ export class Container
 		const combinedSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
 		if (this.detachedBlobStorage && this.detachedBlobStorage.size > 0) {
-			combinedSummary.tree[".hasAttachmentBlobs"] = {
+			combinedSummary.tree[hasBlobsSummaryTree] = {
 				type: SummaryType.Blob,
 				content: "true",
 			};
@@ -1819,12 +1825,13 @@ export class Container
 	}
 
 	private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: ISummaryTree) {
-		if (detachedContainerSnapshot.tree[".hasAttachmentBlobs"] !== undefined) {
+		if (detachedContainerSnapshot.tree[hasBlobsSummaryTree] !== undefined) {
 			assert(
 				!!this.detachedBlobStorage && this.detachedBlobStorage.size > 0,
 				0x250 /* "serialized container with attachment blobs must be rehydrated with detached blob storage" */,
 			);
-			delete detachedContainerSnapshot.tree[".hasAttachmentBlobs"];
+			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+			delete detachedContainerSnapshot.tree[hasBlobsSummaryTree];
 		}
 
 		const snapshotTree = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot);

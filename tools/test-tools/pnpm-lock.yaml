@@ -4,7 +4,7 @@ importers:
 
   .:
     specifiers:
-      '@fluidframework/build-common': ^2.0.0
+      '@fluidframework/build-common': ^2.0.2
       '@fluidframework/build-tools': ^0.25.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@types/mocha': ^10.0.0
@@ -19,7 +19,7 @@ importers:
       rimraf: ^2.6.2
       typescript: ~4.5.5
     devDependencies:
-      '@fluidframework/build-common': 2.0.0
+      '@fluidframework/build-common': 2.0.2
       '@fluidframework/build-tools': 0.25.0_@types+node@14.18.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@types/mocha': 10.0.1
@@ -142,8 +142,8 @@ packages:
       - typescript
     dev: true
 
-  /@fluidframework/build-common/2.0.0:
-    resolution: {integrity: sha512-oJsAczo32UpnM+/8LeE2KKOhr1KBxA48Y4umq/t9QfIFRiX0YtgyrLHRAtnGV6l/+4LX/Urmv6bbckeTFaPw7g==}
+  /@fluidframework/build-common/2.0.2:
+    resolution: {integrity: sha512-lqAsi/EuncrcJVSP4mOlh+Aci9LAjHlvc2tkymidXXqMaJcATCyqUuaSXaZutgNkJ4wZZNZvWCQRJyqL4dtfWA==}
     hasBin: true
     dev: true
 
@@ -1578,7 +1578,7 @@ packages:
       normalize-path: 3.0.0
       readdirp: 3.6.0
     optionalDependencies:
-      fsevents: 2.3.2
+      fsevents: 2.3.3
     dev: true
 
   /chrome-trace-event/1.0.3:
@@ -2629,8 +2629,8 @@ packages:
     resolution: {integrity: sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==}
     dev: true
 
-  /fsevents/2.3.2:
-    resolution: {integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==}
+  /fsevents/2.3.3:
+    resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
     requiresBuild: true

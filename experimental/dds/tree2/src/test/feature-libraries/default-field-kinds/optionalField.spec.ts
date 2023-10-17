@@ -4,10 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { CrossFieldManager, NodeChangeset, NodeReviver } from "../../../feature-libraries";
+import { CrossFieldManager, NodeChangeset } from "../../../feature-libraries";
 import {
 	makeAnonChange,
-	RevisionTag,
 	TaggedChange,
 	Delta,
 	mintRevisionTag,
@@ -15,11 +14,7 @@ import {
 	tagRollbackInverse,
 } from "../../../core";
 import { brand, fakeIdAllocator } from "../../../util";
-import {
-	assertMarkListEqual,
-	defaultRevisionMetadataFromChanges,
-	fakeTaggedRepair as fakeRepair,
-} from "../../utils";
+import { assertMarkListEqual, defaultRevisionMetadataFromChanges } from "../../utils";
 import {
 	optionalChangeRebaser,
 	optionalFieldEditor,
@@ -91,7 +86,11 @@ const change1: TaggedChange<OptionalChangeset> = tagChange(
 	{
 		fieldChange: {
 			id: brand(1),
-			newContent: { set: testTree("tree1"), changes: nodeChange1 },
+			newContent: {
+				set: testTree("tree1"),
+				changes: nodeChange1,
+				buildId: { localId: brand(41) },
+			},
 			wasEmpty: true,
 		},
 	},
@@ -99,7 +98,7 @@ const change1: TaggedChange<OptionalChangeset> = tagChange(
 );
 
 const change2: TaggedChange<OptionalChangeset> = tagChange(
-	optionalFieldEditor.set(testTreeCursor("tree2"), false, brand(2)),
+	optionalFieldEditor.set(testTreeCursor("tree2"), false, brand(2), brand(42)),
 	mintRevisionTag(),
 );
 
@@ -120,7 +119,7 @@ const revertChange2: TaggedChange<OptionalChangeset> = tagChange(
  * Represents what change2 would have been had it been concurrent with change1.
  */
 const change2PreChange1: TaggedChange<OptionalChangeset> = tagChange(
-	optionalFieldEditor.set(testTreeCursor("tree2"), true, brand(2)),
+	optionalFieldEditor.set(testTreeCursor("tree2"), true, brand(2), brand(42)),
 	change2.revision,
 );
 
@@ -138,9 +137,14 @@ describe("optionalField", () => {
 				testTreeCursor("x"),
 				true,
 				brand(42),
+				brand(43),
 			);
 			const expected: OptionalChangeset = {
-				fieldChange: { id: brand(42), newContent: { set: testTree("x") }, wasEmpty: true },
+				fieldChange: {
+					id: brand(42),
+					newContent: { set: testTree("x"), buildId: { localId: brand(43) } },
+					wasEmpty: true,
+				},
 			};
 			assert.deepEqual(actual, expected);
 		});
@@ -164,7 +168,7 @@ describe("optionalField", () => {
 				fieldChange: {
 					id: brand(2),
 					revision: change2.revision,
-					newContent: { set: testTree("tree2") },
+					newContent: { set: testTree("tree2"), buildId: { localId: brand(42) } },
 					wasEmpty: true,
 				},
 				childChanges: [[{ revision: change2.revision, localId: brand(2) }, nodeChange1]],
@@ -179,7 +183,11 @@ describe("optionalField", () => {
 					id: brand(1),
 					revision: change1.revision,
 					wasEmpty: true,
-					newContent: { set: testTree("tree1"), changes: arbitraryChildChange },
+					newContent: {
+						set: testTree("tree1"),
+						buildId: { localId: brand(41) },
+						changes: arbitraryChildChange,
+					},
 				},
 			};
 
@@ -212,18 +220,10 @@ describe("optionalField", () => {
 				childChanges: [["self", nodeChange2]],
 			};
 
-			const repair: NodeReviver = (revision: RevisionTag, index: number, count: number) => {
-				assert.equal(revision, change1.revision);
-				assert.equal(index, 0);
-				assert.equal(count, 1);
-				return [testTreeCursor("tree1")];
-			};
-
 			assert.deepEqual(
 				optionalChangeRebaser.invert(
 					change1,
 					childInverter,
-					repair,
 					fakeIdAllocator,
 					failCrossFieldManager,
 				),
@@ -284,15 +284,11 @@ describe("optionalField", () => {
 				const tag1 = mintRevisionTag();
 				const tag2 = mintRevisionTag();
 				const changeToRebase = optionalFieldEditor.buildChildChange(0, nodeChange1);
-				const deletion = tagChange(
-					optionalFieldEditor.set(undefined, false, brand(1)),
-					tag1,
-				);
+				const deletion = tagChange(optionalFieldEditor.clear(false, brand(1)), tag1);
 				const revive = tagRollbackInverse(
 					optionalChangeRebaser.invert(
 						deletion,
 						() => assert.fail("Should not need to invert children"),
-						fakeRepair,
 						fakeIdAllocator,
 						failCrossFieldManager,
 					),
@@ -342,7 +338,10 @@ describe("optionalField", () => {
 					fieldChange: {
 						id: brand(1),
 						wasEmpty: false,
-						newContent: { set: { type: brand("value"), value: "X" } },
+						newContent: {
+							set: { type: brand("value"), value: "X" },
+							buildId: { localId: brand(41) },
+						},
 					},
 					childChanges: [["self", nodeChange2]],
 				};
@@ -360,7 +359,10 @@ describe("optionalField", () => {
 					fieldChange: {
 						id: brand(1),
 						wasEmpty: true,
-						newContent: { set: { type: brand("value"), value: "X" } },
+						newContent: {
+							set: { type: brand("value"), value: "X" },
+							buildId: { localId: brand(41) },
+						},
 					},
 					childChanges: [[{ localId: brand(0) }, arbitraryChildChange]],
 				};
@@ -383,6 +385,7 @@ describe("optionalField", () => {
 			const expected: Delta.MarkList = [
 				{
 					type: Delta.MarkType.Insert,
+					buildId: { minor: 41 },
 					content: [testTreeCursor("tree1")],
 					fields: new Map([
 						[
@@ -401,12 +404,10 @@ describe("optionalField", () => {
 				},
 			];
 
-			assertMarkListEqual(
-				optionalFieldIntoDelta(change1, (change) =>
-					deltaFromChild1(tagChange(change, tag)),
-				),
-				expected,
+			const actual = optionalFieldIntoDelta(change1, (change) =>
+				deltaFromChild1(tagChange(change, tag)),
 			);
+			assertMarkListEqual(actual, expected);
 		});
 
 		it("can be converted to a delta when restoring content", () => {

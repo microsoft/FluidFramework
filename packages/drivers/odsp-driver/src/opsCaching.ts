@@ -65,7 +65,14 @@ export class OpsCache {
 
 	public flushOps() {
 		for (const [key, value] of this.batches) {
-			if (value === null || !value.dirty) {
+			// Don't flush if the batch has no ops, already flushed or has empty slots at both beginning and end.
+			if (
+				value === null ||
+				!value.dirty ||
+				value.batchData.length === 0 ||
+				(value.batchData[0] === undefined &&
+					value.batchData[value.batchData.length - 1] === undefined)
+			) {
 				continue;
 			}
 			value.dirty = false;
@@ -138,6 +145,7 @@ export class OpsCache {
 				return messages;
 			}
 			const result: CacheEntry = JSON.parse(res);
+			const prevMessagesLength = messages.length;
 			for (const op of result) {
 				// Note that we write out undefined, but due to JSON.stringify, it turns into null!
 				if (op) {
@@ -153,10 +161,16 @@ export class OpsCache {
 					}
 					messages.push(op);
 				} else if (messages.length !== 0) {
+					// If there is any gap, return the messages till now.
 					return messages;
 				}
 			}
 
+			// If we didn't get any op from this batch, then return messages till now. As it tells us that,
+			// either the first message "from" is not present in cache or a gap will occur from 1 batch to next.
+			if (prevMessagesLength === messages.length) {
+				return messages;
+			}
 			batchNumber++;
 		}
 	}

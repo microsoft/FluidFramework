@@ -10,6 +10,7 @@ import {
 	IBroadcastSignalEventPayload,
 	ICollaborationSessionEvents,
 	IRoom,
+	IRuntimeSignalEnvelope,
 } from "@fluidframework/server-lambdas";
 import { BasicRestWrapper } from "@fluidframework/server-services-client";
 import * as core from "@fluidframework/server-services-core";
@@ -144,14 +145,30 @@ export function create(
 		async (request, response) => {
 			const tenantId = getParam(request.params, "tenantId");
 			const documentId = getParam(request.params, "id");
-			const signalContent = getParam(request.body, "singalContent");
+			const signalContent = request?.body?.signalContent;
+			if (!isValidSignalEnvelope(signalContent)) {
+				response
+					.status(400)
+					.send(
+						`signalContent should contain 'contents.content' and 'contents.type' keys.`,
+					);
+				return;
+			}
+			if (!collaborationSessionEventEmitter) {
+				response
+					.status(500)
+					.send(`No emitter configured for the broadcast-signal endpoint.`);
+				return;
+			}
 			try {
 				const signalRoom: IRoom = { tenantId, documentId };
 				const payload: IBroadcastSignalEventPayload = { signalRoom, signalContent };
 				collaborationSessionEventEmitter.emit("broadcastSignal", payload);
 				response.status(200).send("OK");
+				return;
 			} catch (error) {
 				response.status(500).send(error);
+				return;
 			}
 		},
 	);
@@ -196,6 +213,12 @@ function sendJoin(
 		};
 		Lumberjack.error("Error sending join message to producer", lumberjackProperties, err);
 	});
+}
+
+function isValidSignalEnvelope(
+	input: Partial<IRuntimeSignalEnvelope>,
+): input is IRuntimeSignalEnvelope {
+	return typeof input?.contents?.type === "string" && input?.contents?.content !== undefined;
 }
 
 function sendLeave(

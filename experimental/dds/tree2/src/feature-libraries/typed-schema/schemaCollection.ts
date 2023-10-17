@@ -8,12 +8,7 @@ import { Adapters, TreeAdapter, TreeSchemaIdentifier } from "../../core";
 import { FieldKind, FullSchemaPolicy } from "../modular-schema";
 import { capitalize, fail, requireAssignableTo } from "../../util";
 import { defaultSchemaPolicy, FieldKinds } from "../default-field-kinds";
-import {
-	FieldSchema,
-	TreeSchema,
-	allowedTypesIsAny,
-	TypedSchemaCollection,
-} from "./typedTreeSchema";
+import { FieldSchema, TreeSchema, allowedTypesIsAny, DocumentSchema } from "./typedTreeSchema";
 import { normalizeFlexListEager } from "./flexList";
 import { Sourced } from "./view";
 
@@ -66,7 +61,7 @@ export const schemaLintDefault: SchemaLintConfiguration = {
 export function buildViewSchemaCollection(
 	lintConfiguration: SchemaLintConfiguration,
 	libraries: Iterable<SchemaLibraryData>,
-): TypedSchemaCollection {
+): DocumentSchema {
 	let rootFieldSchema: FieldSchema | undefined;
 	const treeSchema: Map<TreeSchemaIdentifier, TreeSchema> = new Map();
 	const adapters: SourcedAdapters = { tree: [] };
@@ -132,7 +127,7 @@ export function buildViewSchemaCollection(
 		// Thus a library can be used as SchemaData, but if used for full document's SchemaData,
 		// the document will be forced to be empty (due to having an empty root field):
 		// this seems unlikely to cause issues in practice, and results in convenient type compatibility.
-		rootFieldSchema: rootFieldSchema ?? new FieldSchema(FieldKinds.forbidden, []),
+		rootFieldSchema: rootFieldSchema ?? FieldSchema.create(FieldKinds.forbidden, []),
 		treeSchema,
 		adapters,
 		policy: defaultSchemaPolicy,

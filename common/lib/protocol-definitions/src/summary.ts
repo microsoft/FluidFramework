@@ -5,17 +5,25 @@
 
 /**
  * Object representing a node within a summary tree.
+ *
+ * @remarks
  * If any particular node is an {@link ISummaryTree}, it can contain additional `SummaryObject`s as its children.
+ *
+ * @public
  */
 export type SummaryObject = ISummaryTree | ISummaryBlob | ISummaryHandle | ISummaryAttachment;
 
 /**
  * The root of the summary tree.
+ *
+ * @public
  */
 export type SummaryTree = ISummaryTree | ISummaryHandle;
 
 /**
  * Type tag used to distinguish different types of nodes in a {@link ISummaryTree}.
+ *
+ * @public
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace SummaryType {
@@ -51,6 +59,8 @@ export namespace SummaryType {
 
 /**
  * {@inheritDoc (SummaryType:namespace)}
+ *
+ * @public
  */
 export type SummaryType =
 	| SummaryType.Attachment
@@ -64,6 +74,8 @@ export type SummaryType =
  * @remarks
  * Summary handles are often used to point to summary tree objects contained within older summaries, thus avoiding
  * the need to re-send the entire subtree if summary object has not changed.
+ *
+ * @public
  */
 export type SummaryTypeNoHandle = SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment;
 
@@ -75,6 +87,8 @@ export type SummaryTypeNoHandle = SummaryType.Tree | SummaryType.Blob | SummaryT
  * To illustrate, if a DataStore did not change since last summary, the framework runtime will use a handle for the
  * entire DataStore instead of re-sending the entire subtree. The same concept applies for a DDS.
  * An example of handle would be: '/<DataStoreId>/<DDSId>'.
+ *
+ * @public
  */
 export interface ISummaryHandle {
 	type: SummaryType.Handle;
@@ -92,10 +106,16 @@ export interface ISummaryHandle {
 
 /**
  * String or Binary data to be uploaded to the server as part of the container's Summary.
- * Note: Already uploaded blobs would be referenced by a ISummaryAttachment.
+ *
+ * @remarks
+ * Note: Already uploaded blobs would be referenced by an {@link ISummaryAttachment}.
  * Additional information can be found here: {@link https://github.com/microsoft/FluidFramework/issues/6568}
- * @example "content": "\{ \"pkg\":\"[\\\"OfficeRootComponent\\\",\\\"LastEditedComponent\\\"]\",
+ *
+ * @example
+ * "content": "\{ \"pkg\":\"[\\\"OfficeRootComponent\\\",\\\"LastEditedComponent\\\"]\",
  *                    \"summaryFormatVersion\":2,\"isRootDataStore\":false \}"
+ *
+ * @public
  */
 export interface ISummaryBlob {
 	type: SummaryType.Blob;
@@ -103,12 +123,18 @@ export interface ISummaryBlob {
 }
 
 /**
- * Unique identifier for blobs uploaded outside of the summary. Attachment Blobs are uploaded and
- * downloaded separately and do not take part of the snapshot payload.
- * The id gets returned from the backend after the attachment has been uploaded.
+ * Unique identifier for blobs uploaded outside of the summary.
+ *
+ * @remarks
+ *
+ * Attachment Blobs are uploaded and downloaded separately and do not take part of the snapshot payload.
+ * The ID gets returned from the backend after the attachment has been uploaded.
  * Additional information can be found here: {@link https://github.com/microsoft/FluidFramework/issues/6374}
  *
- * @example "id": "bQAQKARDdMdTgqICmBa_ZB86YXwGP"
+ * @example
+ * "id": "bQAQKARDdMdTgqICmBa_ZB86YXwGP"
+ *
+ * @public
  */
 export interface ISummaryAttachment {
 	type: SummaryType.Attachment;
@@ -118,6 +144,8 @@ export interface ISummaryAttachment {
 /**
  * Tree Node data structure with children that are nodes of SummaryObject type:
  * Blob, Handle, Attachment or another Tree.
+ *
+ * @public
  */
 export interface ISummaryTree {
 	type: SummaryType.Tree;
