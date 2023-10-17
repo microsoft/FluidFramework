@@ -153,7 +153,7 @@ export interface DetachedNodeChanges<TTree = ProtoNode> {
 }
 
 export interface DetachedNodeBuild<TTree = ProtoNode> {
-	readonly id: DetachedNodeId | undefined; // Remove undefined
+	readonly id: DetachedNodeId;
 	readonly trees: readonly TTree[];
 }
 
@@ -163,17 +163,17 @@ export interface DetachedNodeRelocation {
 	readonly destination: DetachedNodeId;
 }
 
-export interface DetachedNodeDestruction {
-	readonly id: DetachedNodeId;
-	readonly count: number;
-}
+// export interface DetachedNodeDestruction {
+// 	readonly id: DetachedNodeId;
+// 	readonly count: number;
+// }
 
 export interface FieldChanges<TTree = ProtoNode> {
 	readonly attached?: MarkList<TTree>;
 	readonly detached?: readonly DetachedNodeChanges<TTree>[];
 	readonly build?: readonly DetachedNodeBuild<TTree>[];
 	readonly relocate?: readonly DetachedNodeRelocation[];
-	readonly destroy?: readonly DetachedNodeDestruction[];
+	// readonly destroy?: readonly DetachedNodeDestruction[];
 }
 
 // const concurBuild: DetachedNodeId = { minor: 0 };

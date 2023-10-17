@@ -64,9 +64,6 @@ export function mapFieldChanges<TIn, TOut>(
 	if (fieldChanges.relocate !== undefined) {
 		out.relocate = fieldChanges.relocate;
 	}
-	if (fieldChanges.destroy !== undefined) {
-		out.destroy = fieldChanges.destroy;
-	}
 	return out;
 }
 
