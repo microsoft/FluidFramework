@@ -1800,6 +1800,12 @@ export class SchemaBuilder<TScope extends string = string, TName extends string 
             [""]: FieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>;
         };
     }>;
+    map<const T extends TreeSchema | Any | readonly TreeSchema[]>(allowedTypes: T): TreeSchema<`${TScope}.Map<${string}>`, {
+        mapFields: NormalizeField_2<T, typeof FieldKinds.optional>;
+    }>;
+    map<Name extends TName, const T extends MapFieldSchema | ImplicitAllowedTypes>(name: Name, fieldSchema: T): TreeSchema<`${TScope}.${Name}`, {
+        mapFields: NormalizeField_2<T, typeof FieldKinds.optional>;
+    }>;
     // (undocumented)
     readonly null: TreeSchema<"com.fluidframework.leaf.null", {
         leafValue: import("..").ValueSchema.Null;
@@ -1838,10 +1844,10 @@ export class SchemaBuilderBase<TScope extends string, TDefaultKind extends Field
     }>;
     static fieldRecursive<Kind extends FieldKind, T extends FlexList<Unenforced<TreeSchema>>>(kind: Kind, ...allowedTypes: T): FieldSchema<Kind, T>;
     finalize(): SchemaLibrary;
-    map<Name extends TName, const T extends ImplicitFieldSchema>(name: Name, fieldSchema: T): TreeSchema<`${TScope}.${Name}`, {
-        mapFields: NormalizeField_2<T, TDefaultKind>;
+    map<Name extends TName, const T extends MapFieldSchema>(name: Name, fieldSchema: T): TreeSchema<`${TScope}.${Name}`, {
+        mapFields: T;
     }>;
-    mapRecursive<Name extends TName, const T extends Unenforced<ImplicitFieldSchema>>(name: Name, t: T): TreeSchema<`${TScope}.${Name}`, {
+    mapRecursive<Name extends TName, const T extends Unenforced<MapFieldSchema>>(name: Name, t: T): TreeSchema<`${TScope}.${Name}`, {
         mapFields: T;
     }>;
     readonly name: string;
