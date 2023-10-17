@@ -39,7 +39,7 @@ export class MigrationShimFactory implements IChannelFactory {
 	) {}
 
 	/**
-	 * Can only load the LegacySharedTree
+	 * This factory takes over the type of the oldFactory to load in its place.  The user must not include the MigrationShimFactory and the oldFactory in the same registry to avoid conflict.
 	 *
 	 * {@link @fluidframework/datastore-definitions#IChannelFactory."type"}
 	 */
