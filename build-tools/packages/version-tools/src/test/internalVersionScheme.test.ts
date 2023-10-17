@@ -59,6 +59,12 @@ describe("internalScheme", () => {
 			assert.isTrue(result);
 		});
 
+		it("validateVersionScheme: 2.0.0-dev.1.1.0.123-alpha-types is valid when allowAnyPrereleaseId is true", () => {
+			const input = `2.0.0-dev.1.1.0.123-alpha-types`;
+			const result = validateVersionScheme(input, true, "dev");
+			assert.isTrue(result);
+		});
+
 		it("2.0.0-internal.1.1.0.123 is a valid internal prerelease version", () => {
 			const input = `2.0.0-internal.1.1.0.123`;
 			const result = isInternalVersionScheme(input, true);

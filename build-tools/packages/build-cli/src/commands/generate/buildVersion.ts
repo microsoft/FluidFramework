@@ -122,16 +122,14 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 				this.errorLog(
 					"ERROR: This release type is not supported. Alpha/beta ***prereleases*** are allowed.",
 				);
-			}
-
-			if (!isRelease) {
+			} else {
 				simpleVersion = `${simpleVersion}-${flags.packageTypes}-types`;
 			}
 		}
 
 		const version = useTestVersion
 			? flags.packageTypes === "alpha" || flags.packageTypes === "beta"
-				? `0.0.0-${flags.build}-${flags.packageTypes}-types-test`
+				? `0.0.0-${flags.build}-test-${flags.packageTypes}-types`
 				: `0.0.0-${flags.build}-test`
 			: simpleVersion;
 

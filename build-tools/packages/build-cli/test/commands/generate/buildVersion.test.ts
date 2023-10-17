@@ -503,7 +503,7 @@ describe("generate:buildVersion for alpha/beta", () => {
 		.stdout()
 		.command(["generate:buildVersion", "--fileVersion", "0.4.0"])
 		.it("tagName: client, release: prerelease, test-build: true, types: alpha", (ctx) => {
-			expect(ctx.stdout).to.contain("version=0.0.0-88879-alpha-types-test");
+			expect(ctx.stdout).to.contain("version=0.0.0-88879-test-alpha-types");
 			expect(ctx.stdout).to.contain("isLatest=false");
 		});
 
@@ -519,7 +519,7 @@ describe("generate:buildVersion for alpha/beta", () => {
 		.stdout()
 		.command(["generate:buildVersion", "--fileVersion", "0.4.0"])
 		.it("tagName: client, release: prerelease, test-build: true, types: beta", (ctx) => {
-			expect(ctx.stdout).to.contain("version=0.0.0-88879-beta-types-test");
+			expect(ctx.stdout).to.contain("version=0.0.0-88879-test-beta-types");
 			expect(ctx.stdout).to.contain("isLatest=false");
 		});
 
