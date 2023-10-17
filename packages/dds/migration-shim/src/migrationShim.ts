@@ -60,8 +60,14 @@ export interface IMigrationOp {
 }
 
 /**
+ * The MigrationShim loads in place of the legacy SharedTree.  It provides API surface for migrating it to the new SharedTree, while also providing access to the current SharedTree for usage.
+ *
+ * @remarks
+ *
  * This MigrationShim is responsible for submitting a migration op, processing the migrate op, swapping from the old
  * tree to the new tree, loading an old tree snapshot and creating an old tree.
+ * 
+ * The MigrationShim expects to always load from a legacy SharedTree snapshot, though by the time it catches up in processing all ops, it may find that the migration has already occurred.  After migration occurs, it modifies its attributes to point at the SharedTreeShimFactory.  This will cause future clients to load with a SharedTreeShim and the new SharedTree snapshot instead after the next summarization.
  *
  * @public
  */
