@@ -284,6 +284,7 @@ export {
 	SharedTreeMap,
 	SharedTreeObject,
 	is,
+	Typed,
 } from "./feature-libraries";
 
 export {
