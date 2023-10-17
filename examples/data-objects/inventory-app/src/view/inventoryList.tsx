@@ -17,7 +17,8 @@ export const MainView: React.FC<{ inventory: Inventory }> = ({ inventory }) => {
 	React.useEffect(() => {
 		// Returns the cleanup function to be invoked when the component unmounts.
 		const u = node(inventory).on("subtreeChanging", () => {
-			setInvalidations((i) => i + 1);
+			// TODO: Remove RAF when we have an "afterChange" event.
+			requestAnimationFrame(() => setInvalidations((i) => i + 1));
 		});
 
 		return u;
