@@ -361,7 +361,6 @@ describe("beforeChange/afterChange events", () => {
 
 		root.child.myInnerString = "new value";
 
-		// Events shouldn't have fired on the original myString node
 		assert.strictEqual(rootBeforeCounter, 1);
 		assert.strictEqual(rootAfterCounter, 1);
 		assert.strictEqual(childBeforeCounter, 1);
