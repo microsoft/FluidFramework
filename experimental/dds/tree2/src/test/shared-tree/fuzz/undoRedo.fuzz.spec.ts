@@ -232,19 +232,15 @@ describe("Fuzz - undo/redo", () => {
 			validateConsistency: validateTreeConsistency,
 		};
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
-		
-		// todo: check why this didn't exist in the first place
+
 		emitter.on("testStart", (initialState: UndoRedoFuzzTestState) => {
-			initialState.initialTreeState = toJsonableTree(initialState.clients[0].channel.view);
-			initialState.anchors = [];
-			// creates an initial anchor for each tree
+			// set up undo and redo stacks for each client
 			for (const client of initialState.clients) {
 				const view = client.channel.view as RevertibleSharedTreeView;
 				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view);
 				view.undoStack = undoStack;
 				view.redoStack = redoStack;
 				view.unsubscribe = unsubscribe;
-				initialState.anchors.push(createAnchors(view));
 			}
 		});
 
