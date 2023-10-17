@@ -61,26 +61,73 @@ function testObjectLike(testCases: TestCase[]) {
 			}
 
 			for (const { schema, initialTree } of testCases) {
-				itWithRoot(
-					`${pretty(initialTree)} instanceof Object`,
-					schema,
-					initialTree,
-					(root) => {
+				describe("instanceof Object", () => {
+					itWithRoot(`${pretty(initialTree)} -> true`, schema, initialTree, (root) => {
 						assert(root instanceof Object, "object must be instanceof Object");
-					},
-				);
-
-				for (const [key, descriptor] of Object.entries(
-					Object.getOwnPropertyDescriptors(Object.prototype),
-				)) {
-					itWithRoot(`${key} -> ${pretty(descriptor)}}`, schema, initialTree, (root) => {
-						assert.deepEqual(
-							Object.getOwnPropertyDescriptor(findObjectPrototype(root), key),
-							descriptor,
-							`Proxy must expose Object.prototype.${key}`,
-						);
 					});
-				}
+				});
+
+				describe("properties inherited from Object.prototype", () => {
+					for (const [key, descriptor] of Object.entries(
+						Object.getOwnPropertyDescriptors(Object.prototype),
+					)) {
+						itWithRoot(
+							`Object.getOwnPropertyDescriptor(${pretty(
+								initialTree,
+							)}, ${key}) -> ${pretty(descriptor)}}`,
+							schema,
+							initialTree,
+							(root) => {
+								assert.deepEqual(
+									Object.getOwnPropertyDescriptor(findObjectPrototype(root), key),
+									descriptor,
+									`Proxy must expose Object.prototype.${key}`,
+								);
+							},
+						);
+					}
+				});
+
+				describe("methods inherited from Object.prototype", () => {
+					itWithRoot(
+						`${pretty(initialTree)}.isPrototypeOf(Object.create(root)) -> true`,
+						schema,
+						initialTree,
+
+						(root) => {
+							const asObject = root as object;
+							// eslint-disable-next-line no-prototype-builtins -- compatibility test
+							assert.equal(asObject.isPrototypeOf(Object.create(asObject)), true);
+						},
+					);
+
+					itWithRoot(
+						`${pretty(initialTree)}.isPrototypeOf(root) -> false`,
+						schema,
+						initialTree,
+
+						(root) => {
+							const asObject = root as object;
+							// eslint-disable-next-line no-prototype-builtins -- compatibility test
+							assert.equal(asObject.isPrototypeOf(asObject), false);
+						},
+					);
+				});
+
+				describe(`${pretty(initialTree)}.propertyIsEnumerable`, () => {
+					for (const key of Object.getOwnPropertyNames(initialTree)) {
+						const expected = Object.prototype.propertyIsEnumerable.call(
+							initialTree,
+							key,
+						);
+
+						itWithRoot(`${key} -> ${expected}`, schema, initialTree, (root) => {
+							const asObject = root as object;
+							// eslint-disable-next-line no-prototype-builtins -- compatibility test
+							assert.equal(asObject.propertyIsEnumerable(key), expected);
+						});
+					}
+				});
 			}
 		});
 
@@ -120,6 +167,10 @@ function testObjectLike(testCases: TestCase[]) {
 			test1((subject) => Object.prototype.toString.call(subject));
 		});
 
+		describe("Object.prototype.toLocaleString", () => {
+			test1((subject) => Object.prototype.toLocaleString.call(subject));
+		});
+
 		// 'deepEquals' requires that objects have the same prototype to be considered equal.
 		describe("Object.getPrototypeOf", () => {
 			test1((subject) => Object.getPrototypeOf(subject) as unknown);
@@ -145,7 +196,18 @@ function testObjectLike(testCases: TestCase[]) {
 			});
 		});
 
-		// Enumerates keys configured as 'enumerable: true' (both own and inherited.)
+		// Validate that root.toString() === initialTree.toString()
+		describe(".toString()", () => {
+			// eslint-disable-next-line @typescript-eslint/no-base-to-string
+			test1((subject) => subject.toString());
+		});
+
+		// Validate that root.toLocaleString() === initialTree.toLocaleString()
+		describe(".toLocaleString()", () => {
+			test1((subject) => subject.toLocaleString());
+		});
+
+		// Validate that JSON.stringify(root) === JSON.stringify(initialTree)
 		describe("JSON.stringify()", () => {
 			test1((subject) => JSON.stringify(subject));
 		});

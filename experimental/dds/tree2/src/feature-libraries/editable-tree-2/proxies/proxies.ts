@@ -168,7 +168,7 @@ export function createObjectProxy<TSchema extends StructSchema, TTypes extends A
 				if (key === treeNodeSym) {
 					return { schema };
 				}
-				return undefined;
+				return Reflect.get(target, key);
 			},
 			set(target, key, value) {
 				const fieldSchema = content.schema.structFields.get(key as FieldKey);
