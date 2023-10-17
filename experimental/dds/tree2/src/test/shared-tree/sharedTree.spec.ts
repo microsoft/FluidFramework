@@ -55,14 +55,13 @@ import {
 	Value,
 	moveToDetachedField,
 	SchemaData,
-	ValueSchema,
 	AllowedUpdateType,
 	LocalCommitSource,
 	storedEmptyFieldSchema,
 } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
 import { EditManager } from "../../shared-tree-core";
-import { jsonNumber, jsonSchema, leaf, SchemaBuilder } from "../../domains";
+import { jsonSchema, leaf, SchemaBuilder } from "../../domains";
 import { noopValidator } from "../../codec";
 
 const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator });
@@ -93,7 +92,7 @@ describe("SharedTree", () => {
 			t.context.root.insertNodes(0, [5]);
 		});
 
-		assert.deepEqual(toJsonableTree(view), [{ type: jsonNumber.name, value: 5 }]);
+		assert.deepEqual(toJsonableTree(view), [{ type: leaf.number.name, value: 5 }]);
 	});
 
 	it("editable-tree-2-end-to-end", () => {
@@ -1064,9 +1063,8 @@ describe("SharedTree", () => {
 	// TODO: many of these events tests should be tests of SharedTreeView instead.
 	describe("Events", () => {
 		const builder = new SchemaBuilder({ scope: "Events test schema" });
-		const numberSchema = builder.leaf("number", ValueSchema.Number);
 		const treeSchema = builder.struct("root", {
-			x: numberSchema,
+			x: builder.number,
 		});
 		const schema = builder.toDocumentSchema(builder.optional(Any));
 
@@ -1566,7 +1564,7 @@ describe("SharedTree", () => {
 				rootFieldSchema: storedEmptyFieldSchema,
 			};
 			const schemaB: SchemaData = {
-				treeSchema: new Map([[jsonNumber.name, jsonNumber]]),
+				treeSchema: new Map([[leaf.number.name, leaf.number]]),
 				rootFieldSchema: storedEmptyFieldSchema,
 			};
 			function getSchema(t: ISharedTreeView): "schemaA" | "schemaB" {
@@ -1886,10 +1884,9 @@ describe("SharedTree", () => {
 
 			const rootFieldSchema = SchemaBuilder.required(Any);
 			const testSchemaBuilder = new SchemaBuilder({ scope: "testSchema" });
-			const numberSchema = testSchemaBuilder.leaf("Number", ValueSchema.Number);
 			const rootNodeSchema = testSchemaBuilder.structRecursive("Node", {
-				foo: SchemaBuilder.sequence(numberSchema),
-				foo2: SchemaBuilder.sequence(numberSchema),
+				foo: SchemaBuilder.sequence(leaf.number),
+				foo2: SchemaBuilder.sequence(leaf.number),
 			});
 			const testSchema = testSchemaBuilder.toDocumentSchema(rootFieldSchema);
 
@@ -1898,14 +1895,14 @@ describe("SharedTree", () => {
 				type: rootNodeSchema.name,
 				fields: {
 					foo: [
-						{ type: numberSchema.name, value: 0 },
-						{ type: numberSchema.name, value: 1 },
-						{ type: numberSchema.name, value: 2 },
+						{ type: leaf.number.name, value: 0 },
+						{ type: leaf.number.name, value: 1 },
+						{ type: leaf.number.name, value: 2 },
 					],
 					foo2: [
-						{ type: numberSchema.name, value: 0 },
-						{ type: numberSchema.name, value: 1 },
-						{ type: numberSchema.name, value: 2 },
+						{ type: leaf.number.name, value: 0 },
+						{ type: leaf.number.name, value: 1 },
+						{ type: leaf.number.name, value: 2 },
 					],
 				},
 			};

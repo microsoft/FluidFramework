@@ -124,7 +124,7 @@ export function withEditor<
 >(
 	kind: FieldKind<TName, TMultiplicity>,
 ): FieldKindWithEditor<FieldEditor<any>, TMultiplicity, TName> {
-	assert(kind instanceof FieldKindWithEditor, "kind must be FieldKindWithEditor");
+	assert(kind instanceof FieldKindWithEditor, 0x7b5 /* kind must be FieldKindWithEditor */);
 	return kind as FieldKindWithEditor<FieldEditor<any>, TMultiplicity, TName>;
 }
 /**

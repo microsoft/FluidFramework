@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { Adapters, TreeSchemaIdentifier, ValueSchema } from "../core";
+import { Adapters, TreeSchemaIdentifier } from "../core";
 import { Assume, RestrictiveReadonlyRecord, transformObjectMap } from "../util";
 import {
 	SchemaLibraryData,
@@ -14,10 +14,11 @@ import {
 	AllowedTypes,
 	TreeSchema,
 	FieldSchema,
-	TypedSchemaCollection,
+	DocumentSchema,
 	FlexList,
 	Unenforced,
 	Any,
+	MapFieldSchema,
 } from "./typed-schema";
 import { FieldKind } from "./modular-schema";
 
@@ -125,12 +126,12 @@ export class SchemaBuilderBase<
 	}
 
 	protected addNodeSchema<T extends TreeSchema<string, any>>(schema: T): void {
-		assert(!this.treeSchema.has(schema.name), "Conflicting TreeSchema names");
+		assert(!this.treeSchema.has(schema.name), 0x799 /* Conflicting TreeSchema names */);
 		this.treeSchema.set(schema.name, schema as TreeSchema);
 	}
 
 	private finalizeCommon(): void {
-		assert(!this.finalized, "SchemaBuilder can only be finalized once.");
+		assert(!this.finalized, 0x79a /* SchemaBuilder can only be finalized once. */);
 		this.finalized = true;
 		this.libraries.add({
 			name: this.name,
@@ -154,7 +155,7 @@ export class SchemaBuilderBase<
 	}
 
 	/**
-	 * Produce a TypedSchemaCollection which captures the content added to this builder, any additional SchemaLibraries that were added to it and a root field.
+	 * Produce a DocumentSchema which captures the content added to this builder, any additional SchemaLibraries that were added to it and a root field.
 	 * Can be used with schematize to provide schema aware access to document content.
 	 *
 	 * @remarks
@@ -162,7 +163,7 @@ export class SchemaBuilderBase<
 	 */
 	public toDocumentSchema<const TSchema extends ImplicitFieldSchema>(
 		root: TSchema,
-	): TypedSchemaCollection<NormalizeField<TSchema, TDefaultKind>> {
+	): DocumentSchema<NormalizeField<TSchema, TDefaultKind>> {
 		// return this.toDocumentSchemaInternal(normalizeField(root, DefaultFieldKind));
 		const field = this.normalizeField(root);
 		this.finalizeCommon();
@@ -176,7 +177,7 @@ export class SchemaBuilderBase<
 			rootLibrary,
 			...this.libraries,
 		]);
-		const typed: TypedSchemaCollection<NormalizeField<TSchema, TDefaultKind>> = {
+		const typed: DocumentSchema<NormalizeField<TSchema, TDefaultKind>> = {
 			...collection,
 			rootFieldSchema: field,
 		};
@@ -231,12 +232,12 @@ export class SchemaBuilderBase<
 	/**
 	 * Define (and add to this library) a {@link TreeSchema} for a {@link MapNode}.
 	 */
-	public map<Name extends TName, const T extends ImplicitFieldSchema>(
+	public map<Name extends TName, const T extends MapFieldSchema>(
 		name: Name,
 		fieldSchema: T,
-	): TreeSchema<`${TScope}.${Name}`, { mapFields: NormalizeField<T, TDefaultKind> }> {
+	): TreeSchema<`${TScope}.${Name}`, { mapFields: T }> {
 		const schema = new TreeSchema(this, this.scoped(name), {
-			mapFields: this.normalizeField(fieldSchema),
+			mapFields: fieldSchema,
 		});
 		this.addNodeSchema(schema);
 		return schema;
@@ -250,11 +251,11 @@ export class SchemaBuilderBase<
 	 *
 	 * TODO: Make this work with ImplicitFieldSchema.
 	 */
-	public mapRecursive<Name extends TName, const T extends Unenforced<ImplicitFieldSchema>>(
+	public mapRecursive<Name extends TName, const T extends Unenforced<MapFieldSchema>>(
 		name: Name,
 		t: T,
 	): TreeSchema<`${TScope}.${Name}`, { mapFields: T }> {
-		return this.map(name, t as unknown as ImplicitFieldSchema) as unknown as TreeSchema<
+		return this.map(name, t as unknown as MapFieldSchema) as unknown as TreeSchema<
 			`${TScope}.${Name}`,
 			{ mapFields: T }
 		>;
@@ -299,29 +300,6 @@ export class SchemaBuilderBase<
 			`${TScope}.${Name}`,
 			{ structFields: { [""]: T } }
 		>;
-	}
-
-	// TODO: move this to SchemaBuilderInternal once usages of it have been replaces with use of the leaf domain.
-	/**
-	 * Define (and add to this library) a {@link TreeSchema} for a node that wraps a value.
-	 * Such nodes will be implicitly unwrapped to the value in some APIs.
-	 *
-	 * The name must be unique among all TreeSchema in the the document schema.
-	 *
-	 * In addition to the normal properties of all nodes (having a schema for example),
-	 * Leaf nodes only contain a value.
-	 * Leaf nodes cannot have fields.
-	 *
-	 * TODO: Maybe ban undefined from allowed values here.
-	 * TODO: Decide and document how unwrapping works for non-primitive terminals.
-	 */
-	public leaf<Name extends TName, const T extends ValueSchema>(
-		name: Name,
-		t: T,
-	): TreeSchema<`${TScope}.${Name}`, { leafValue: T }> {
-		const schema = new TreeSchema(this, this.scoped(name), { leafValue: t });
-		this.addNodeSchema(schema);
-		return schema;
 	}
 
 	/**
@@ -378,7 +356,7 @@ export class SchemaBuilderBase<
  * Can be aggregated into other libraries by adding to their builders.
  * @alpha
  */
-export interface SchemaLibrary extends TypedSchemaCollection {
+export interface SchemaLibrary extends DocumentSchema {
 	/**
 	 * Schema data aggregated from a collection of libraries by a SchemaBuilder.
 	 */
@@ -413,7 +391,7 @@ export function normalizeAllowedTypes<TSchema extends ImplicitAllowedTypes>(
 	if (schema instanceof TreeSchema) {
 		return [schema] as unknown as NormalizeAllowedTypes<TSchema>;
 	}
-	assert(Array.isArray(schema), "invalid ImplicitAllowedTypes");
+	assert(Array.isArray(schema), 0x7c6 /* invalid ImplicitAllowedTypes */);
 	return schema as unknown as NormalizeAllowedTypes<TSchema>;
 }
 

@@ -15,9 +15,8 @@ import {
 	Mark,
 	MoveId,
 	NodeChangeType,
-	Reattach,
 	ReturnFrom,
-	ReturnTo,
+	MoveIn,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 
@@ -75,8 +74,8 @@ export const sequenceFieldEditor = {
 		isIntention: boolean = false,
 	): Changeset<never> => {
 		assert(detachEvent.revision !== undefined, 0x724 /* Detach event must have a revision */);
-		const mark: Reattach<never> = {
-			type: "Revive",
+		const mark: Insert<never> = {
+			type: "Insert",
 			count,
 			cellId: detachEvent,
 		};
@@ -125,8 +124,8 @@ export const sequenceFieldEditor = {
 			count,
 		};
 
-		const returnTo: ReturnTo = {
-			type: "ReturnTo",
+		const returnTo: MoveIn = {
+			type: "MoveIn",
 			id,
 			count,
 			cellId: detachEvent,

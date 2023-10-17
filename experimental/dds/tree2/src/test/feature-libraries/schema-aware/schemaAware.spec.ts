@@ -21,7 +21,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/schema-aware/schemaAware";
 
-import { AllowedUpdateType, TreeSchemaIdentifier, ValueSchema } from "../../../core";
+import { AllowedUpdateType, TreeSchemaIdentifier } from "../../../core";
 import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../../util";
 import {
 	valueSymbol,
@@ -216,22 +216,22 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 	// Test polymorphic cases:
 	{
 		const builder2 = new SchemaBuilder({ scope: "SchemaAwarePolymorphicTest" });
-		const bool = builder2.leaf("bool", ValueSchema.Boolean);
-		const str = builder2.leaf("str", ValueSchema.String);
+		const bool = leaf.boolean;
+		const str = leaf.string;
 		const parentField = SchemaBuilder.required([str, bool]);
 		const parent = builder2.struct("parent", { child: parentField });
 
 		type FlexBool =
 			| boolean
 			| {
-					[typeNameSymbol]?: "SchemaAwarePolymorphicTest.bool";
+					[typeNameSymbol]?: UnbrandedName<typeof leaf.boolean.name>;
 					[valueSymbol]: boolean;
 			  };
 
 		type FlexStr =
 			| string
 			| {
-					[typeNameSymbol]?: "SchemaAwarePolymorphicTest.str";
+					[typeNameSymbol]?: UnbrandedName<typeof leaf.string.name>;
 					[valueSymbol]: string;
 			  };
 		interface FlexParent {

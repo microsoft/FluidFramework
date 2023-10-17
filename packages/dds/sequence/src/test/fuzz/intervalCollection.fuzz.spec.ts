@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
-import { readdirSync } from "fs";
 import { strict as assert } from "assert";
 import {
 	AcceptanceCondition,
@@ -12,23 +10,11 @@ import {
 	AsyncGenerator as Generator,
 	takeAsync as take,
 } from "@fluid-internal/stochastic-test-utils";
-import {
-	createDDSFuzzSuite,
-	DDSFuzzModel,
-	DDSFuzzSuiteOptions,
-} from "@fluid-internal/test-dds-utils";
+import { createDDSFuzzSuite } from "@fluid-internal/test-dds-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
-import {
-	IChannelAttributes,
-	IChannelServices,
-	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { IIntervalCollection, Side } from "../intervalCollection";
-import { SharedStringFactory } from "../sequenceFactory";
-import { SharedString } from "../sharedString";
-import { SequenceInterval } from "../intervals";
-import { assertEquivalentSharedStrings } from "./intervalUtils";
+import { IIntervalCollection, Side } from "../../intervalCollection";
+import { SequenceInterval } from "../../intervals";
 import {
 	Operation,
 	RangeSpec,
@@ -37,12 +23,12 @@ import {
 	ChangeInterval,
 	ChangeProperties,
 	FuzzTestState,
-	makeReducer,
 	IntervalOperationGenerationConfig,
 	defaultIntervalOperationGenerationConfig,
 	createSharedStringGeneratorOperations,
-} from "./intervalCollection.fuzzUtils";
-import { minimizeTestFromFailureFile } from "./intervalCollection.fuzzMinimization";
+	baseModel,
+	defaultFuzzOptions,
+} from "./fuzzUtils";
 
 type ClientOpState = FuzzTestState;
 export function makeOperationGenerator(
@@ -194,100 +180,15 @@ export function makeOperationGenerator(
 	]);
 }
 
-class IntervalCollectionFuzzFactory extends SharedStringFactory {
-	public async load(
-		runtime: IFluidDataStoreRuntime,
-		id: string,
-		services: IChannelServices,
-		attributes: IChannelAttributes,
-	): Promise<SharedString> {
-		runtime.options.intervalStickinessEnabled = true;
-		return super.load(runtime, id, services, attributes);
-	}
-
-	public create(document: IFluidDataStoreRuntime, id: string): SharedString {
-		document.options.intervalStickinessEnabled = true;
-		return super.create(document, id);
-	}
-}
-
-const baseModel: Omit<
-	DDSFuzzModel<SharedStringFactory, Operation, FuzzTestState>,
-	"workloadName"
-> = {
+const baseIntervalModel = {
+	...baseModel,
 	generatorFactory: () =>
 		take(100, makeOperationGenerator(defaultIntervalOperationGenerationConfig)),
-	reducer:
-		// makeReducer supports a param for logging output which tracks the provided intervalId over time:
-		// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
-		makeReducer(),
-	validateConsistency: assertEquivalentSharedStrings,
-	factory: new IntervalCollectionFuzzFactory(),
-	minimizationTransforms: [
-		(op) => {
-			if (op.type !== "addText") {
-				return;
-			}
-			op.content = op.content.slice(1);
-		},
-		(op) => {
-			switch (op.type) {
-				case "addText":
-					if (op.index > 0) {
-						op.index -= 1;
-					}
-					break;
-				case "removeRange":
-				case "addInterval":
-					if (op.start > 0) {
-						op.start -= 1;
-					}
-					if (op.end > 0) {
-						op.end -= 1;
-					}
-					break;
-				default:
-					break;
-			}
-		},
-		(op) => {
-			if (op.type !== "removeRange" && op.type !== "addInterval") {
-				return;
-			}
-			if (op.end > 0) {
-				op.end -= 1;
-			}
-		},
-	],
-};
-
-const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
-	validationStrategy: { type: "fixedInterval", interval: 10 },
-	reconnectProbability: 0.1,
-	numberOfClients: 3,
-	clientJoinOptions: {
-		maxNumberOfClients: 6,
-		clientAddProbability: 0.1,
-	},
-	defaultTestCount: 100,
-	saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
-	parseOperations: (serialized: string) => {
-		const operations: Operation[] = JSON.parse(serialized);
-		// Replace this value with some other interval ID and uncomment to filter replay of the test
-		// suite to only include interval operations with this ID.
-		// const filterIntervalId = "00000000-0000-0000-0000-000000000000";
-		// if (filterIntervalId) {
-		// 	return operations.filter((entry) =>
-		// 		[undefined, filterIntervalId].includes((entry as any).id),
-		// 	);
-		// }
-		return operations;
-	},
 };
 
 describe("IntervalCollection fuzz testing", () => {
 	const model = {
-		...baseModel,
+		...baseIntervalModel,
 		workloadName: "default interval collection",
 	};
 
@@ -311,14 +212,13 @@ describe("IntervalCollection fuzz testing", () => {
 
 describe("IntervalCollection no reconnect fuzz testing", () => {
 	const noReconnectModel = {
-		...baseModel,
+		...baseIntervalModel,
 		workloadName: "interval collection without reconnects",
 	};
 
 	const options = {
 		...defaultFuzzOptions,
 		reconnectProbability: 0.0,
-		numberOfClients: 3,
 		clientJoinOptions: {
 			maxNumberOfClients: 3,
 			clientAddProbability: 0.0,
@@ -334,7 +234,7 @@ describe("IntervalCollection no reconnect fuzz testing", () => {
 
 describe("IntervalCollection fuzz testing with rebased batches", () => {
 	const noReconnectWithRebaseModel = {
-		...baseModel,
+		...baseIntervalModel,
 		workloadName: "interval collection with rebasing",
 	};
 
@@ -344,7 +244,6 @@ describe("IntervalCollection fuzz testing with rebased batches", () => {
 		// or 0x54e, see AB#5337 or comment on "default interval collection" fuzz suite.
 		skip: [3, 9, 11, 13, 23, 26, 29, 30, 31, 32, 36, 39, 41, 46, 49, 52, 53, 71, 73, 81, 86],
 		reconnectProbability: 0.0,
-		numberOfClients: 3,
 		clientJoinOptions: {
 			maxNumberOfClients: 3,
 			clientAddProbability: 0.0,
@@ -357,23 +256,4 @@ describe("IntervalCollection fuzz testing with rebased batches", () => {
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
 	});
-});
-
-describe.skip("minimize specific seed", () => {
-	const seedToMinimize = 0;
-	minimizeTestFromFailureFile(seedToMinimize);
-});
-
-describe.skip("minimize all seeds", () => {
-	let files;
-	try {
-		files = readdirSync("./results");
-	} catch {
-		return;
-	}
-
-	for (const file of files) {
-		const seedToMinimize = parseInt(file.substring(0, file.length - ".json".length), 10);
-		minimizeTestFromFailureFile(seedToMinimize);
-	}
 });

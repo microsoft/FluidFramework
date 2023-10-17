@@ -472,7 +472,7 @@ export abstract class LazyStruct<TSchema extends StructSchema>
 		}
 
 		const field = this.tryGetField(key);
-		assert(field instanceof LazyNodeKeyField, "unexpected node key field");
+		assert(field instanceof LazyNodeKeyField, 0x7b4 /* unexpected node key field */);
 		// TODO: ideally we would do something like this, but that adds dependencies we can't have here:
 		// assert(
 		// 	field.is(FieldSchema.create(FieldKinds.nodeKey, [nodeKeyTreeSchema])),
@@ -509,6 +509,16 @@ const cachedStructClasses = new WeakMap<
 	) => LazyStruct<StructSchema>
 >();
 
+export function getBoxedField(
+	struct: LazyEntity,
+	key: FieldKey,
+	fieldSchema: FieldSchema,
+): TreeField {
+	return inCursorField(struct[cursorSymbol], key, (cursor) => {
+		return makeField(struct.context, fieldSchema, cursor);
+	});
+}
+
 function buildStructClass<TSchema extends StructSchema>(
 	schema: TSchema,
 ): new (
@@ -519,16 +529,6 @@ function buildStructClass<TSchema extends StructSchema>(
 ) => LazyStruct<TSchema> {
 	const propertyDescriptorMap: PropertyDescriptorMap = {};
 	const ownPropertyMap: PropertyDescriptorMap = {};
-
-	function getBoxedField(
-		struct: CustomStruct,
-		key: FieldKey,
-		fieldSchema: FieldSchema,
-	): TreeField {
-		return inCursorField(struct[cursorSymbol], key, (cursor) => {
-			return makeField(struct.context, fieldSchema, cursor);
-		});
-	}
 
 	for (const [key, fieldSchema] of schema.structFields) {
 		let setter: ((newContent: ContextuallyTypedNodeData) => void) | undefined;

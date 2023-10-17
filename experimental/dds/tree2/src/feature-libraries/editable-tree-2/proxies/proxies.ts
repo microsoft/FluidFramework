@@ -16,9 +16,18 @@ import {
 	schemaIsStruct,
 } from "../../typed-schema";
 import { FieldKinds } from "../../default-field-kinds";
-import { FieldNode, TreeNode, TypedField, TypedNodeUnion } from "../editableTreeTypes";
+import {
+	FieldNode,
+	OptionalField,
+	RequiredField,
+	TreeNode,
+	TypedField,
+	TypedNodeUnion,
+} from "../editableTreeTypes";
 import { LazySequence } from "../lazyField";
 import { FieldKey } from "../../../core";
+import { getBoxedField } from "../lazyTree";
+import { LazyEntity } from "../lazyEntity";
 import { ProxyField, ProxyNode, SharedTreeList, SharedTreeObject } from "./types";
 
 /** Symbol used to store a private/internal reference to the underlying editable tree node. */
@@ -61,6 +70,7 @@ function getCachedProxy(treeNode: TreeNode): ProxyNode<TreeSchema> | undefined {
 
 /**
  * Checks if the given object is a {@link SharedTreeObject}
+ * @alpha
  */
 export function is<TSchema extends StructSchema>(
 	x: unknown,
@@ -84,10 +94,25 @@ export function getProxyForField<TSchema extends FieldSchema>(
 			return getProxyForNode(asValue.boxedContent) as ProxyField<TSchema>;
 		}
 		case FieldKinds.optional: {
-			fail(`"not implemented"`);
+			const asValue = field as TypedField<FieldSchema<typeof FieldKinds.optional>>;
+
+			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
+			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
+			//       inner field.
+
+			const maybeContent = asValue.boxedContent;
+
+			// Normally, empty fields are unreachable due to the behavior of 'tryGetField'.  However, the
+			// root field is a special case where the field is always present (even if empty).
+			return (
+				maybeContent === undefined ? undefined : getProxyForNode(maybeContent)
+			) as ProxyField<TSchema>;
 		}
+		// TODO: Remove if/when 'FieldNode' is removed.
 		case FieldKinds.sequence: {
-			fail("not implemented");
+			// 'getProxyForNode' handles FieldNodes by unconditionally creating a list proxy, making
+			// this case unreachable as long as users follow the 'list recipe'.
+			fail("'sequence' field is unexpected.");
 		}
 		default:
 			fail("invalid field kind");
@@ -146,8 +171,29 @@ export function createObjectProxy<TSchema extends StructSchema, TTypes extends A
 				return undefined;
 			},
 			set(target, key, value) {
-				// TODO: Implement set
-				return false;
+				const fieldSchema = content.schema.structFields.get(key as FieldKey);
+
+				if (fieldSchema === undefined) {
+					return false;
+				}
+
+				// TODO: Is it safe to assume 'content' is a LazyEntity?
+				const field = getBoxedField(content as LazyEntity, key as FieldKey, fieldSchema);
+
+				switch (field.schema.kind) {
+					case FieldKinds.required: {
+						(field as RequiredField<AllowedTypes>).content = value;
+						break;
+					}
+					case FieldKinds.optional: {
+						(field as OptionalField<AllowedTypes>).content = value;
+						break;
+					}
+					default:
+						fail("invalid FieldKind");
+				}
+
+				return true;
 			},
 			has: (target, key) => {
 				return schema.structFields.has(key as FieldKey);

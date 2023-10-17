@@ -87,15 +87,6 @@ describe("editable-tree: editing", () => {
 		} as any; // TODO: schema aware typing.
 		// unambiguous type
 		maybePerson.salary = "not ok";
-		// ambiguous type since there are multiple options which are numbers:
-		assert.throws(
-			() => (maybePerson.salary = 99.99),
-			(e: Error) =>
-				validateAssertionError(
-					e,
-					"data compatible with more than one type allowed by the schema",
-				),
-		);
 		// explicit typing
 		maybePerson.salary = {
 			[typeNameSymbol]: float64Schema.name,

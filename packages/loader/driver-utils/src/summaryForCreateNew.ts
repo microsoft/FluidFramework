@@ -30,6 +30,7 @@ export interface CombinedAppAndProtocolSummary extends ISummaryTree {
  */
 export function isCombinedAppAndProtocolSummary(
 	summary: ISummaryTree | undefined,
+	...optionalRootTrees: string[]
 ): summary is CombinedAppAndProtocolSummary {
 	if (
 		summary?.tree === undefined ||
@@ -38,7 +39,7 @@ export function isCombinedAppAndProtocolSummary(
 	) {
 		return false;
 	}
-	const treeKeys = Object.keys(summary.tree);
+	const treeKeys = Object.keys(summary.tree).filter((t) => !optionalRootTrees.includes(t));
 	if (treeKeys.length !== 2) {
 		return false;
 	}

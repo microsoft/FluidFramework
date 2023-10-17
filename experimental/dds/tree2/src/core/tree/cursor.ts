@@ -396,7 +396,7 @@ export function* iterateCursorField<T, TCursor extends ITreeCursor = ITreeCursor
 	cursor: TCursor,
 	f: (cursor: TCursor) => T,
 ): IterableIterator<T> {
-	assert(cursor.mode === CursorLocationType.Fields, "should be in fields");
+	assert(cursor.mode === CursorLocationType.Fields, 0x7a8 /* should be in fields */);
 	for (let inNodes = cursor.firstNode(); inNodes; inNodes = cursor.nextNode()) {
 		yield f(cursor);
 	}
