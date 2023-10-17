@@ -54,7 +54,6 @@ function echoExternalDataWebhookToFluid(
 		`CUSTOMER SERVICE: External data has been updated. Notifying Fluid Service at ${fluidService}`,
 	);
 
-
 	const messageBody = {
 		signalContent: {
 			contents: {
