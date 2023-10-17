@@ -68,7 +68,7 @@ const contentPath = "content";
 /**
  * Events emitted in response to changes to the sequence data.
  *
- * @remarks
+ * @remarks @public
  *
  * The following is the list of events emitted.
  *
@@ -113,6 +113,9 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 	);
 }
 
+/**
+ * @public
+ */
 export abstract class SharedSegmentSequence<T extends ISegment>
 	extends SharedObject<ISharedSegmentSequenceEvents>
 	implements ISharedIntervalCollection<SequenceInterval>, MergeTreeRevertibleDriver

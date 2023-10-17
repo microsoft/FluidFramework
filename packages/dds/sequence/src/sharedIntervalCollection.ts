@@ -33,6 +33,7 @@ const snapshotFileName = "header";
 /**
  * The factory that defines the SharedIntervalCollection.
  * @deprecated `SharedIntervalCollection` is not maintained and is planned to be removed.
+ * @public
  */
 export class SharedIntervalCollectionFactory implements IChannelFactory {
 	public static readonly Type = "https://graph.microsoft.com/types/sharedIntervalCollection";
@@ -74,12 +75,16 @@ export class SharedIntervalCollectionFactory implements IChannelFactory {
 	}
 }
 
+/**
+ * @public
+ */
 export interface ISharedIntervalCollection<TInterval extends ISerializableInterval> {
 	getIntervalCollection(label: string): IIntervalCollection<TInterval>;
 }
 
 /**
  * @deprecated `SharedIntervalCollection` is not maintained and is planned to be removed.
+ * @public
  */
 export class SharedIntervalCollection
 	extends SharedObject
