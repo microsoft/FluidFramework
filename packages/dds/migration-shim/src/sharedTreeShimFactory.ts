@@ -62,10 +62,11 @@ export class SharedTreeShimFactory implements IChannelFactory {
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<SharedTreeShim> {
+		// TODO: remove attributes check and move it to an automated test that constructing a SharedTreeShimFactory and checking its attributes/type matches the oldFactory.
 		assert(attributesMatch(attributes, this.factory.attributes), "Attributes do not match");
 		const sharedTree = await this.factory.load(runtime, id, services, attributes);
 		const sharedTreeShim = new SharedTreeShim(id, sharedTree);
-		// TODO: sharedTreeShim.load so we know to process v1 ops?
+		// TODO: sharedTreeShim.load so we know to process v1 ops? Or we can add it to the constructor if possible.
 		return sharedTreeShim;
 	}
 
@@ -74,6 +75,8 @@ export class SharedTreeShimFactory implements IChannelFactory {
 	 *
 	 * Should be only creating the SharedTreeShim, which will only generate a new SharedTree snapshot. That way we do
 	 * not have the capability of accidentally creating a LegacySharedTree snapshot.
+	 *
+	 * TODO: get feedback on this API.
 	 */
 	public create(runtime: IFluidDataStoreRuntime, id: string): SharedTreeShim {
 		const sharedTree = this.factory.create(runtime, id);

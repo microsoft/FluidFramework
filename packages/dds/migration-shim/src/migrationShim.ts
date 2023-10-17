@@ -66,7 +66,7 @@ export interface IMigrationOp {
  *
  * This MigrationShim is responsible for submitting a migration op, processing the migrate op, swapping from the old
  * tree to the new tree, loading an old tree snapshot and creating an old tree.
- * 
+ *
  * The MigrationShim expects to always load from a legacy SharedTree snapshot, though by the time it catches up in processing all ops, it may find that the migration has already occurred.  After migration occurs, it modifies its attributes to point at the SharedTreeShimFactory.  This will cause future clients to load with a SharedTreeShim and the new SharedTree snapshot instead after the next summarization.
  *
  * @public
@@ -88,7 +88,7 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 	private _legacyTree: LegacySharedTree | undefined;
 	private get legacyTree(): LegacySharedTree {
 		assert(this._legacyTree !== undefined, "Old tree not initialized");
-		return this._legacyTree;
+		return /* this.newTree ?? */ this._legacyTree;
 	}
 
 	// This is the magic button that tells this Spanner and all other Spanners to swap to the new Shared Object.

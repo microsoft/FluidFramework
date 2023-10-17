@@ -34,6 +34,7 @@ export class SharedTreeShim implements IChannel {
 	) {}
 
 	public get attributes(): IChannelAttributes {
+		// TODO: investigate if we need to add the shim attributes to denote the transition from v1 -> v2 with v1 ops -> v2 ops
 		return this.currentTree.attributes;
 	}
 	// TODO handle
@@ -65,6 +66,7 @@ export class SharedTreeShim implements IChannel {
 		return this.currentTree.isAttached();
 	}
 	public connect(services: IChannelServices): void {
+		// TODO: wrap services before passing it down to currentTree with the appropriate IDeltaHandler.
 		return this.currentTree.connect(services);
 	}
 	public getGCData(fullGC?: boolean | undefined): IGarbageCollectionData {

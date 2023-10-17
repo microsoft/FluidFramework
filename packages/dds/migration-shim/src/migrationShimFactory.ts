@@ -70,6 +70,7 @@ export class MigrationShimFactory implements IChannelFactory {
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<MigrationShim> {
+		// TODO: remove attributes check and move it to an automated test that constructing a MigrationShimFactory and checking its attributes/type matches the oldFactory.
 		assert(attributesMatch(attributes, this.oldFactory.attributes), "Attributes do not match");
 		const migrationShim = new MigrationShim(
 			id,
@@ -90,6 +91,7 @@ export class MigrationShimFactory implements IChannelFactory {
 	 * rollout capability.
 	 */
 	public create(runtime: IFluidDataStoreRuntime, id: string): MigrationShim {
+		// Maybe this should throw an error.
 		const migrationShim = new MigrationShim(
 			id,
 			runtime,
