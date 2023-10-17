@@ -10,13 +10,12 @@ import { FieldChangeHandler, FieldChangeRebaser, singleTextCursor } from "../fea
 import {
 	FieldKindWithEditor,
 	Multiplicity,
-	ToDelta,
 	referenceFreeFieldChangeRebaser,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../feature-libraries/modular-schema";
 import { brand, fail } from "../util";
 import { Delta, TaggedChange } from "../core";
-import { jsonNumber } from "../domains";
+import { leaf } from "../domains";
 
 export const counterCodecFamily: ICodecFamily<number> = makeCodecFamily([
 	[0, makeValueCodec(Type.Number())],
@@ -49,24 +48,30 @@ export const counterHandle: FieldChangeHandler<number> = {
 	}),
 	codecsFactory: () => counterCodecFamily,
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
-	intoDelta: ({ change }: TaggedChange<number>, deltaFromChild: ToDelta): Delta.MarkList => [
+	intoDelta: ({ change, revision }: TaggedChange<number>): Delta.MarkList => [
 		{
 			type: Delta.MarkType.Modify,
 			fields: new Map([
 				[
 					brand("value"),
 					[
-						{ type: Delta.MarkType.Delete, count: 1 },
 						{
 							type: Delta.MarkType.Insert,
 							content: [
 								singleTextCursor({
 									// KLUDGE: Domains should not be depended on by anything.
 									// This is to get around the removal of setValue.
-									type: jsonNumber.name,
+									type: leaf.number.name,
 									value: change,
 								}),
 							],
+							oldContent: {
+								detachId: {
+									major: revision,
+									// This is an arbitrary number for testing.
+									minor: 424242,
+								},
+							},
 						},
 					],
 				],

@@ -17,7 +17,10 @@ import {
 	UndoRedoManager,
 	LocalCommitSource,
 	schemaDataIsEmpty,
-	applyDelta,
+	combineVisitors,
+	visitDelta,
+	DetachedFieldIndex,
+	makeDetachedFieldIndex,
 	FieldKey,
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
@@ -29,20 +32,19 @@ import {
 	buildForest,
 	DefaultChangeFamily,
 	getEditableTreeContext,
-	ForestRepairDataStoreProvider,
 	DefaultEditBuilder,
 	NewFieldContent,
 	NodeKeyManager,
-	ForestRepairDataStore,
-	ModularChangeset,
 	FieldSchema,
-	TypedSchemaCollection,
+	DocumentSchema,
 	getTreeContext,
 	TypedField,
 	createNodeKeyManager,
 	nodeKeyFieldKey as nodeKeyFieldKeyDefault,
+	getProxyForField,
+	ProxyField,
 } from "../feature-libraries";
-import { SharedTreeBranch } from "../shared-tree-core";
+import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core";
 import { TransactionResult, brand } from "../util";
 import { noopValidator } from "../codec";
 import {
@@ -236,9 +238,9 @@ export interface ISharedTreeView extends AnchorLocator {
 	 * If the stored schema is edited and becomes incompatible (or was not originally compatible),
 	 * using the returned tree is invalid and is likely to error or corrupt the document.
 	 */
-	editableTree2<TRoot extends FieldSchema>(
-		viewSchema: TypedSchemaCollection<TRoot>,
-	): TypedField<TRoot>;
+	editableTree2<TRoot extends FieldSchema>(viewSchema: DocumentSchema<TRoot>): TypedField<TRoot>;
+
+	root2<TRoot extends FieldSchema>(viewSchema: DocumentSchema<TRoot>): ProxyField<TRoot>;
 }
 
 /**
@@ -253,18 +255,13 @@ export function createSharedTreeView(args?: {
 	changeFamily?: DefaultChangeFamily;
 	schema?: StoredSchemaRepository;
 	forest?: IEditableForest;
-	repairProvider?: ForestRepairDataStoreProvider<DefaultChangeset>;
 	events?: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>;
+	removedTrees?: DetachedFieldIndex;
 }): SharedTreeView {
 	const schema = args?.schema ?? new InMemoryStoredSchemaRepository();
 	const forest = args?.forest ?? buildForest();
 	const changeFamily =
 		args?.changeFamily ?? new DefaultChangeFamily({ jsonValidator: noopValidator });
-	const repairDataStoreProvider =
-		args?.repairProvider ??
-		new ForestRepairDataStoreProvider(forest, schema, (change) =>
-			changeFamily.intoDelta(change),
-		);
 	const undoRedoManager = UndoRedoManager.create(changeFamily);
 	const branch =
 		args?.branch ??
@@ -274,15 +271,23 @@ export function createSharedTreeView(args?: {
 				revision: assertIsRevisionTag("00000000-0000-4000-8000-000000000000"),
 			},
 			changeFamily,
-			repairDataStoreProvider,
 			undoRedoManager,
 		);
 	const context = getEditableTreeContext(forest, schema, branch.editor);
 	const events = args?.events ?? createEmitter();
 
-	const transaction = new Transaction(branch, changeFamily, forest);
+	const transaction = new Transaction(branch);
 
-	return new SharedTreeView(transaction, branch, changeFamily, schema, forest, context, events);
+	return new SharedTreeView(
+		transaction,
+		branch,
+		changeFamily,
+		schema,
+		forest,
+		context,
+		events,
+		args?.removedTrees,
+	);
 }
 
 /**
@@ -321,14 +326,10 @@ export interface ITransaction {
 class Transaction implements ITransaction {
 	public constructor(
 		private readonly branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
-		private readonly changeFamily: DefaultChangeFamily,
-		private readonly forest: IEditableForest,
 	) {}
 
 	public start(): void {
-		this.branch.startTransaction(
-			new ForestRepairDataStore(this.forest, (change) => this.changeFamily.intoDelta(change)),
-		);
+		this.branch.startTransaction();
 		this.branch.editor.enterTransaction();
 	}
 	public commit(): TransactionResult.Commit {
@@ -374,13 +375,25 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		public readonly events: ISubscribable<ViewEvents> &
 			IEmitter<ViewEvents> &
 			HasListeners<ViewEvents>,
+		private readonly removedTrees: DetachedFieldIndex = makeDetachedFieldIndex("repair"),
 	) {
-		branch.on("change", ({ change }) => {
-			if (change !== undefined) {
-				const delta = this.changeFamily.intoDelta(change);
-				applyDelta(delta, this.forest.anchors);
-				applyDelta(delta, this.forest);
+		branch.on("change", (event) => {
+			if (event.change !== undefined) {
+				const delta = this.changeFamily.intoDelta(event.change);
+				const anchorVisitor = this.forest.anchors.acquireVisitor();
+				const combinedVisitor = combineVisitors(
+					[this.forest.acquireVisitor(), anchorVisitor],
+					[anchorVisitor],
+				);
+				visitDelta(delta, combinedVisitor, this.removedTrees);
+				combinedVisitor.free();
 				this.events.emit("afterBatch");
+			}
+			if (event.type === "replace" && getChangeReplaceType(event) === "transactionCommit") {
+				const transactionRevision = event.newCommits[0].revision;
+				for (const transactionStep of event.removedCommits) {
+					this.removedTrees.updateMajor(transactionStep.revision, transactionRevision);
+				}
 			}
 		});
 		branch.on("revertible", (type) => {
@@ -412,7 +425,7 @@ export class SharedTreeView implements ISharedTreeBranchView {
 	}
 
 	public editableTree2<TRoot extends FieldSchema>(
-		viewSchema: TypedSchemaCollection<TRoot>,
+		viewSchema: DocumentSchema<TRoot>,
 		nodeKeyManager?: NodeKeyManager,
 		nodeKeyFieldKey?: FieldKey,
 	): TypedField<TRoot> {
@@ -426,6 +439,11 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		return context.root as TypedField<TRoot>;
 	}
 
+	public root2<TRoot extends FieldSchema>(viewSchema: DocumentSchema<TRoot>) {
+		const rootField = this.editableTree2(viewSchema);
+		return getProxyForField(rootField);
+	}
+
 	public locate(anchor: Anchor): AnchorNode | undefined {
 		return this.forest.anchors.locate(anchor);
 	}
@@ -435,14 +453,9 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		// TODO: ensure editing this clone of the schema does the right thing.
 		const storedSchema = new InMemoryStoredSchemaRepository(this.storedSchema);
 		const forest = this.forest.clone(storedSchema, anchors);
-		const repairDataStoreProvider = new ForestRepairDataStoreProvider(
-			forest,
-			storedSchema,
-			(change: ModularChangeset) => this.changeFamily.intoDelta(change),
-		);
-		const branch = this.branch.fork(repairDataStoreProvider);
+		const branch = this.branch.fork();
 		const context = getEditableTreeContext(forest, storedSchema, branch.editor);
-		const transaction = new Transaction(branch, this.changeFamily, forest);
+		const transaction = new Transaction(branch);
 		return new SharedTreeView(
 			transaction,
 			branch,
@@ -451,6 +464,7 @@ export class SharedTreeView implements ISharedTreeBranchView {
 			forest,
 			context,
 			createEmitter(),
+			this.removedTrees.clone(),
 		);
 	}
 

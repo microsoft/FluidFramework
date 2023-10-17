@@ -73,7 +73,7 @@ export function makeField(
 		const anchorNode =
 			context.forest.anchors.locate(fieldAnchor.parent) ??
 			fail("parent anchor node should always exist since field is under a node");
-		anchorNode.on("afterDelete", () => {
+		anchorNode.on("afterDestroy", () => {
 			targetSequence.free();
 		});
 	}
@@ -668,6 +668,7 @@ export function unwrappedField(
 export function isEditableField(field: UnwrappedEditableField): field is EditableField {
 	return (
 		typeof field === "object" &&
+		field !== null &&
 		isFieldProxyTarget(field[proxyTargetSymbol] as ProxyTarget<Anchor | FieldAnchor>)
 	);
 }

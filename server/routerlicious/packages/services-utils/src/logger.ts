@@ -75,6 +75,7 @@ const defaultLumberjackConfig: ILumberjackConfig = {
 	schemaValidator: undefined,
 	options: {
 		enableGlobalTelemetryContext: false,
+		enableSanitization: false,
 	},
 };
 function configureLumberjackLogging(config: ILumberjackConfig) {

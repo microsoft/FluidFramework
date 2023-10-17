@@ -22,7 +22,7 @@ import {
 // Search this file for "as any" and "as NodeChangeset"
 import { TestChange } from "../../testChange";
 import { deepFreeze, defaultRevisionMetadataFromChanges, isDeltaVisible } from "../../utils";
-import { brand, idAllocatorFromMaxId } from "../../../util";
+import { brand, fakeIdAllocator, idAllocatorFromMaxId } from "../../../util";
 import {
 	optionalChangeRebaser,
 	optionalFieldEditor,
@@ -41,12 +41,17 @@ const tag5: RevisionTag = mintRevisionTag();
 const tag6: RevisionTag = mintRevisionTag();
 
 const OptionalChange = {
-	set(value: string | undefined, wasEmpty: boolean, id: ChangesetLocalId = brand(0)) {
-		return optionalFieldEditor.set(
-			value !== undefined ? singleTextCursor({ type, value }) : undefined,
-			wasEmpty,
-			id,
-		);
+	set(
+		value: string,
+		wasEmpty: boolean,
+		id: ChangesetLocalId = brand(0),
+		buildId: ChangesetLocalId = brand(40),
+	) {
+		return optionalFieldEditor.set(singleTextCursor({ type, value }), wasEmpty, id, buildId);
+	},
+
+	clear(wasEmpty: boolean, id: ChangesetLocalId = brand(0)) {
+		return optionalFieldEditor.clear(wasEmpty, id);
 	},
 
 	buildChildChange(childChange: TestChange) {
@@ -59,8 +64,10 @@ const failCrossFieldManager: CrossFieldManager = {
 	set: () => assert.fail("Should not modify CrossFieldManager"),
 };
 
-function toDelta(change: OptionalChangeset): Delta.MarkList {
-	return optionalFieldIntoDelta(change, TestChange.toDelta as any);
+function toDelta(change: OptionalChangeset, revision?: RevisionTag): Delta.MarkList {
+	return optionalFieldIntoDelta(tagChange(change, revision), (childChange) =>
+		TestChange.toDelta(tagChange(childChange as TestChange, revision)),
+	);
 }
 
 function getMaxId(...changes: OptionalChangeset[]): ChangesetLocalId | undefined {
@@ -84,10 +91,8 @@ function invert(change: TaggedChange<OptionalChangeset>): OptionalChangeset {
 	return optionalChangeRebaser.invert(
 		change,
 		TestChange.invert as any,
-		// Note: content here is arbitrary. If adding or changing this test suite, this NodeReviver implementation
-		// may need to be changed.
-		() => [singleTextCursor({ type, value: "revived" })],
-		() => assert.fail("Optional fields should not generate IDs during invert"),
+		// Optional fields should not generate IDs during invert
+		fakeIdAllocator,
 		failCrossFieldManager,
 	);
 }
@@ -144,7 +149,7 @@ const testChanges: [string, OptionalChangeset][] = [
 	// E.g. in the current format, changes A and B cannot disagree on 'wasEmpty' if they share the same base commit.
 	["SetA", OptionalChange.set("A", false)],
 	["SetB", OptionalChange.set("B", false)],
-	["SetUndefined", OptionalChange.set(undefined, false)],
+	["SetUndefined", OptionalChange.clear(false)],
 	["ChangeChild", OptionalChange.buildChildChange(TestChange.mint([], 1))],
 ];
 deepFreeze(testChanges);

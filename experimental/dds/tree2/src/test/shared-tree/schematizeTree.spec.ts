@@ -4,9 +4,8 @@
  */
 import { strict as assert, fail } from "assert";
 import {
-	SchemaBuilder,
 	Any,
-	TypedSchemaCollection,
+	DocumentSchema,
 	FieldSchema,
 	FieldKinds,
 	allowsRepoSuperset,
@@ -15,7 +14,6 @@ import {
 } from "../../feature-libraries";
 import { ViewEvents } from "../../shared-tree";
 import {
-	ValueSchema,
 	AllowedUpdateType,
 	SimpleObservingDependent,
 	InMemoryStoredSchemaRepository,
@@ -26,21 +24,22 @@ import { jsonSequenceRootSchema } from "../utils";
 // eslint-disable-next-line import/no-internal-modules
 import { TreeContent, initializeContent, schematize } from "../../shared-tree/schematizedTree";
 import { createEmitter } from "../../events";
+import { SchemaBuilder, leaf } from "../../domains";
 
 const builder = new SchemaBuilder({ scope: "test", name: "Schematize Tree Tests" });
-const root = builder.leaf("root", ValueSchema.Number);
-const schema = builder.toDocumentSchema(SchemaBuilder.fieldOptional(root));
+const root = leaf.number;
+const schema = builder.toDocumentSchema(SchemaBuilder.optional(root));
 
 const builderGeneralized = new SchemaBuilder({
 	scope: "test",
 	name: "Schematize Tree Tests Generalized",
 });
-const rootGeneralized = builderGeneralized.leaf("root", ValueSchema.Number);
-const schemaGeneralized = builderGeneralized.toDocumentSchema(SchemaBuilder.fieldOptional(Any));
+
+const schemaGeneralized = builderGeneralized.toDocumentSchema(SchemaBuilder.optional(Any));
 
 const builderValue = new SchemaBuilder({ scope: "test", name: "Schematize Tree Tests2" });
-const root2 = builderValue.leaf("root", ValueSchema.Number);
-const schemaValueRoot = builderValue.toDocumentSchema(SchemaBuilder.fieldRequired(Any));
+
+const schemaValueRoot = builderValue.toDocumentSchema(SchemaBuilder.required(Any));
 
 const emptySchema = new SchemaBuilder({
 	scope: "Empty",
@@ -48,7 +47,7 @@ const emptySchema = new SchemaBuilder({
 		rejectEmpty: false,
 		rejectForbidden: false,
 	},
-}).toDocumentSchema(SchemaBuilder.field(FieldKinds.forbidden));
+}).toDocumentSchema(FieldSchema.empty);
 
 function expectSchema(actual: SchemaData, expected: SchemaData): void {
 	// Check schema match
@@ -134,7 +133,7 @@ describe("schematizeTree", () => {
 
 	describe("schematize", () => {
 		describe("noop upgrade", () => {
-			const testCases: [string, TypedSchemaCollection][] = [
+			const testCases: [string, DocumentSchema][] = [
 				["empty", emptySchema],
 				["basic-optional", schema],
 				["basic-value", schemaValueRoot],

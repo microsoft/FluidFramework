@@ -18,8 +18,10 @@ export {
 	schemaIsLeaf,
 	schemaIsMap,
 	schemaIsStruct,
-	TypedSchemaCollection,
-	RecursiveTreeSchema,
+	DocumentSchema,
+	Unenforced,
+	AllowedTypeSet,
+	MapFieldSchema,
 } from "./typedTreeSchema";
 
 export { ViewSchema } from "./view";

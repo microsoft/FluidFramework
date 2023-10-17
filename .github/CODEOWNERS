@@ -50,62 +50,36 @@
 
 # PUBLIC API REPORTS
 # All packages are assumed to have public APIs unless defined otherwise in the sections below.
-api-report/                                                               @microsoft/fluid-cr-api
+**/api-report/                                         @microsoft/fluid-cr-api
 # These packages represent the primary public API of the framework.
-api-report/azure-client.api.md                                            @microsoft/fluid-cr-api
-api-report/azure-service-utils.api.md                                     @microsoft/fluid-cr-api
-api-report/fluid-framework.api.md                                         @microsoft/fluid-cr-api
-api-report/tinylicious-client.api.md                                      @microsoft/fluid-cr-api
+azure/packages/azure-client/api-report/                @microsoft/fluid-cr-api
+azure/packages/azure-service-utils/api-report/         @microsoft/fluid-cr-api
+packages/framework/fluid-framework/api-report/         @microsoft/fluid-cr-api
+packages/framework/tinylicious-client/api-report/      @microsoft/fluid-cr-api
+
+experimental/dds/tree2/api-report/                     @microsoft/fluid-cr-tree
 
 # INTERNAL API REPORTS
-# The packages listed here are not considered part of the public API.
-api-report/aqueduct.api.md                                                @microsoft/fluid-cr-framework
-api-report/cell.api.md                                                    @microsoft/fluid-cr-dds
-api-report/container-loader.api.md                                        @microsoft/fluid-cr-loader
-api-report/container-runtime-definitions.api.md                           @microsoft/fluid-cr-runtime
-api-report/container-runtime.api.md                                       @microsoft/fluid-cr-runtime
-api-report/counter.api.md                                                 @microsoft/fluid-cr-dds
-api-report/data-object-base.api.md                                        @microsoft/fluid-cr-framework
-api-report/datastore-definitions.api.md                                   @microsoft/fluid-cr-runtime
-api-report/datastore.api.md                                               @microsoft/fluid-cr-runtime
-api-report/dds-interceptions.api.md                                       @microsoft/fluid-cr-dds
-api-report/debugger.api.md                                                @microsoft/fluid-cr-tools
-api-report/driver-base.api.md                                             @microsoft/fluid-cr-drivers
-api-report/driver-utils.api.md                                            @microsoft/fluid-cr-drivers
-api-report/driver-web-cache.api.md                                        @microsoft/fluid-cr-drivers
-api-report/experimental-tree.api.md                                       @microsoft/fluid-cr-tree
-api-report/file-driver.api.md                                             @microsoft/fluid-cr-drivers
-api-report/fluid-static.api.md                                            @microsoft/fluid-cr-framework
-api-report/garbage-collector.api.md                                       @microsoft/fluid-cr-runtime
-api-report/ink.api.md                                                     @microsoft/fluid-cr-dds
-api-report/location-redirection-utils.api.md                              @microsoft/fluid-cr-loader
-api-report/map.api.md                                                     @microsoft/fluid-cr-dds
-api-report/matrix.api.md                                                  @microsoft/fluid-cr-dds
-api-report/merge-tree.api.md                                              @microsoft/fluid-cr-dds
-api-report/odsp-driver-definitions.api.md                                 @microsoft/fluid-cr-odsp
-api-report/odsp-driver.api.md                                             @microsoft/fluid-cr-odsp
-api-report/ordered-collection.api.md                                      @microsoft/fluid-cr-dds
-api-report/pact-map.api.md                                                @microsoft/fluid-cr-dds
-api-report/register-collection.api.md                                     @microsoft/fluid-cr-dds
-api-report/replay-driver.api.md                                           @microsoft/fluid-cr-drivers
-api-report/request-handler.api.md                                         @microsoft/fluid-cr-runtime
-api-report/routerlicious-driver.api.md                                    @microsoft/fluid-cr-server
-api-report/runtime-definitions.api.md                                     @microsoft/fluid-cr-runtime
-api-report/runtime-utils.api.md                                           @microsoft/fluid-cr-runtime
-api-report/sequence.api.md                                                @microsoft/fluid-cr-dds
-api-report/shared-object-base.api.md                                      @microsoft/fluid-cr-framework
-api-report/shared-summary-block.api.md                                    @microsoft/fluid-cr-runtime
-api-report/synthesize.api.md                                              @microsoft/fluid-cr-runtime
-api-report/task-manager.api.md                                            @microsoft/fluid-cr-dds
-api-report/telemetry-utils.api.md                                         @microsoft/fluid-cr-telemetry
-api-report/test-driver-definitions.api.md                                 @microsoft/fluid-cr-drivers
-api-report/test-runtime-utils.api.md                                      @microsoft/fluid-cr-runtime
-api-report/test-utils.api.md                                              @microsoft/fluid-cr-test
-api-report/tool-utils.api.md                                              @microsoft/fluid-cr-tools
-api-report/tree2.api.md                                                   @microsoft/fluid-cr-tree
-api-report/undo-redo.api.md                                               @microsoft/fluid-cr-framework
-api-report/view-adapters.api.md                                           @microsoft/fluid-cr-framework
-api-report/view-interfaces.api.md                                         @microsoft/fluid-cr-framework
+# The packages listed here are not necessarily considered part of the public API.
+packages/dds/shared-object-base/api-report/            @microsoft/fluid-cr-framework
+
+# TODO: uncomment once experimental reports have moved
+experimental/dds/**/api-report/                        @microsoft/fluid-cr-dds
+packages/framework/dds-interceptions/api-report/       @microsoft/fluid-cr-dds
+
+packages/framework/request-handler/api-report/         @microsoft/fluid-cr-runtime
+packages/dds/shared-summary-block/api-report/          @microsoft/fluid-cr-runtime
+packages/framework/synthesize/api-report/              @microsoft/fluid-cr-runtime
+
+packages/drivers/debugger/api-report/                  @microsoft/fluid-cr-tools
+packages/utils/tool-utils/api-report/                  @microsoft/fluid-cr-tools
+
+packages/loader/driver-utils/api-report/               @microsoft/fluid-cr-drivers
+packages/test/test-driver-definitions/api-report/      @microsoft/fluid-cr-drivers
+
+packages/drivers/routerlicious-driver/api-report/      @microsoft/fluid-cr-server
+
+experimental/dds/tree/api-report                       @microsoft/fluid-cr-tree
 
 # No owners for package.json files to avoid review spam when mono-repo dependencies are updated
 package.json @msfluid-bot

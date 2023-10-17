@@ -78,7 +78,7 @@ export function makeField(
 		const anchorNode =
 			context.forest.anchors.locate(fieldAnchor.parent) ??
 			fail("parent anchor node should always exist since field is under a node");
-		anchorNode.on("afterDelete", () => {
+		anchorNode.on("afterDestroy", () => {
 			field[disposeSymbol]();
 		});
 	}
@@ -345,7 +345,7 @@ export class LazySequence<TTypes extends AllowedTypes>
 		}
 		assertValidIndex(destinationIndex, this, true);
 		// TODO: determine support for move across different sequence types
-		assert(source instanceof LazySequence, "Unsupported sequence implementation.");
+		assert(source instanceof LazySequence, 0x7b1 /* Unsupported sequence implementation. */);
 		const sourceFieldPath = (sourceField as LazySequence<TTypesSource>).getFieldPath();
 		const destinationFieldPath = this.getFieldPath();
 		this.context.editor.move(
@@ -459,9 +459,9 @@ export class LazyNodeKeyField<TTypes extends AllowedTypes>
 	public get stableNodeKey(): StableNodeKey {
 		const cursor = this[cursorSymbol];
 		cursor.enterNode(0);
-		assert(cursor.type === nodeKeyTreeIdentifier, "invalid node key type");
+		assert(cursor.type === nodeKeyTreeIdentifier, 0x7b2 /* invalid node key type */);
 		const stableKey = cursor.value;
-		assert(typeof stableKey === "string", "invalid node key type");
+		assert(typeof stableKey === "string", 0x7b3 /* invalid node key type */);
 		cursor.exitNode();
 		return brand(stableKey as StableId);
 	}

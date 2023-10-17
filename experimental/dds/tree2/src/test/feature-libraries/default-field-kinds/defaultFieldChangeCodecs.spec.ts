@@ -13,7 +13,7 @@ import { OptionalChangeset } from "../../../feature-libraries/default-field-kind
 import { IJsonCodec } from "../../../codec";
 // eslint-disable-next-line import/no-internal-modules
 import { makeOptionalFieldCodecFamily } from "../../../feature-libraries/default-field-kinds/defaultFieldChangeCodecs";
-import { changesetForChild, testTree, testTreeCursor } from "./fieldKindTestUtils";
+import { changesetForChild, testTree } from "./fieldKindTestUtils";
 
 const nodeChange1 = changesetForChild("nodeChange1");
 
@@ -33,7 +33,11 @@ const childCodec1: IJsonCodec<NodeChangeset> = {
 const change1: OptionalChangeset = {
 	fieldChange: {
 		id: brand(1),
-		newContent: { set: testTree("tree1"), changes: nodeChange1 },
+		newContent: {
+			set: testTree("tree1"),
+			changes: nodeChange1,
+			buildId: { localId: brand(41) },
+		},
 		wasEmpty: true,
 	},
 };
@@ -42,8 +46,7 @@ const revertChange2: OptionalChangeset = {
 	fieldChange: {
 		id: brand(2),
 		newContent: {
-			revert: testTreeCursor("tree1"),
-			changeId: { revision: mintRevisionTag(), localId: brand(2) },
+			revert: { revision: mintRevisionTag(), localId: brand(2) },
 		},
 		wasEmpty: false,
 	},
@@ -51,7 +54,11 @@ const revertChange2: OptionalChangeset = {
 
 const change1WithChildChange: OptionalChangeset = {
 	fieldChange: {
-		newContent: { set: testTree("tree1"), changes: nodeChange1 },
+		newContent: {
+			set: testTree("tree1"),
+			changes: nodeChange1,
+			buildId: { localId: brand(41) },
+		},
 		wasEmpty: false,
 		id: brand(1),
 		revision: mintRevisionTag(),

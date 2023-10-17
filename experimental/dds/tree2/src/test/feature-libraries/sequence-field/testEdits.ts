@@ -5,11 +5,9 @@
 
 import { SequenceField as SF, singleTextCursor } from "../../../feature-libraries";
 import { brand } from "../../../util";
-import { fakeTaggedRepair as fakeRepair } from "../../utils";
 import {
 	ChangeAtomId,
 	ChangesetLocalId,
-	ITreeCursorSynchronous,
 	JsonableTree,
 	mintRevisionTag,
 	RevisionTag,
@@ -90,11 +88,10 @@ function createReviveChangeset(
 	startIndex: number,
 	count: number,
 	detachEvent: SF.CellId,
-	reviver = fakeRepair,
 	lastDetach?: SF.CellId,
 ): SF.Changeset<never> {
-	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent, reviver);
-	const mark = markList[markList.length - 1] as SF.Reattach;
+	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent);
+	const mark = markList[markList.length - 1] as SF.Attach;
 	if (lastDetach !== undefined) {
 		mark.cellId = lastDetach;
 	}
@@ -105,17 +102,10 @@ function createRedundantReviveChangeset(
 	startIndex: number,
 	count: number,
 	detachEvent: SF.CellId,
-	reviver = fakeRepair,
 	isIntention?: boolean,
 ): SF.Changeset<never> {
-	const markList = SF.sequenceFieldEditor.revive(
-		startIndex,
-		count,
-		detachEvent,
-		reviver,
-		isIntention,
-	);
-	const mark = markList[markList.length - 1] as SF.Reattach;
+	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent, isIntention);
+	const mark = markList[markList.length - 1] as SF.Attach;
 	delete mark.cellId;
 	return markList;
 }
@@ -125,10 +115,9 @@ function createBlockedReviveChangeset(
 	count: number,
 	detachEvent: SF.CellId,
 	lastDetach: SF.CellId,
-	reviver = fakeRepair,
 ): SF.Changeset<never> {
-	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent, reviver);
-	const mark = markList[markList.length - 1] as SF.Reattach;
+	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent);
+	const mark = markList[markList.length - 1] as SF.Attach;
 	mark.cellId = lastDetach;
 	return markList;
 }
@@ -137,11 +126,10 @@ function createIntentionalReviveChangeset(
 	startIndex: number,
 	count: number,
 	detachEvent: SF.CellId,
-	reviver = fakeRepair,
 	lastDetach?: SF.CellId,
 ): SF.Changeset<never> {
-	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent, reviver, true);
-	const mark = markList[markList.length - 1] as SF.Reattach;
+	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent, true);
+	const mark = markList[markList.length - 1] as SF.Attach;
 
 	if (lastDetach !== undefined) {
 		mark.cellId = lastDetach;
@@ -217,7 +205,7 @@ function createInsertMark<TChange = never>(
 }
 
 /**
- * @param countOrContent - The content to revive.
+ * @param count - The content to revive.
  * If a number is passed, that many dummy nodes will be generated.
  * @param cellId - The first cell to revive content into.
  * If undefined, the revive targets populated cells and is therefore muted.
@@ -225,17 +213,13 @@ function createInsertMark<TChange = never>(
  * Use this to give the mark a `RevisionTag`
  */
 function createReviveMark<TChange = never>(
-	countOrContent: number | ITreeCursorSynchronous[],
+	count: number,
 	cellId?: SF.CellId,
-	overrides?: Partial<SF.Revive<TChange>>,
-): SF.Revive<TChange> {
-	const content = Array.isArray(countOrContent)
-		? countOrContent
-		: generateJsonables(countOrContent).map(singleTextCursor);
-	const mark: SF.Revive<TChange> = {
-		type: "Revive",
-		count: content.length,
-		content,
+	overrides?: Partial<SF.Insert<TChange>>,
+): SF.Insert<TChange> {
+	const mark: SF.Insert<TChange> = {
+		type: "Insert",
+		count,
 	};
 	if (cellId !== undefined) {
 		mark.cellId = cellId;
@@ -347,11 +331,11 @@ function createReturnToMark(
 	count: number,
 	markId: ChangesetLocalId | ChangeAtomId,
 	cellId?: SF.CellId,
-	overrides?: Partial<SF.ReturnTo>,
-): SF.ReturnTo {
+	overrides?: Partial<SF.MoveIn>,
+): SF.MoveIn {
 	const atomId: ChangeAtomId = typeof markId === "object" ? markId : { localId: markId };
-	const mark: SF.ReturnTo = {
-		type: "ReturnTo",
+	const mark: SF.MoveIn = {
+		type: "MoveIn",
 		id: atomId.localId,
 		count,
 	};

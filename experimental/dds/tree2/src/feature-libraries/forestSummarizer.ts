@@ -19,6 +19,7 @@ import {
 	IEditableForest,
 	ITreeSubscriptionCursor,
 	JsonableTree,
+	makeDetachedFieldIndex,
 	mapCursorField,
 	mapCursorFields,
 } from "../core";
@@ -106,8 +107,8 @@ export class ForestSummarizer implements Summarizable {
 				return [fieldKey, [insert]];
 			});
 
-			assert(this.forest.isEmpty, "forest must be empty");
-			applyDelta(new Map(delta), this.forest);
+			assert(this.forest.isEmpty, 0x797 /* forest must be empty */);
+			applyDelta(new Map(delta), this.forest, makeDetachedFieldIndex("init"));
 		}
 	}
 }

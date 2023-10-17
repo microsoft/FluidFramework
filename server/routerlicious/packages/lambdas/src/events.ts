@@ -17,6 +17,5 @@ export interface IEvent {
 	 *
 	 * @eventProperty
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	(event: string, listener: (...args: any[]) => void);
 }

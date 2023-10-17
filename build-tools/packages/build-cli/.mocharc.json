@@ -2,6 +2,7 @@
 	"require": ["test/helpers/init.js", "ts-node/register"],
 	"watch-extensions": ["ts"],
 	"recursive": true,
-	"reporter": "spec",
+	"reporter": "mocha-multi-reporters",
+	"reporter-options": "configFile=mocha-multi-reporter-config.json",
 	"timeout": 60000
 }

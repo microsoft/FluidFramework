@@ -7,7 +7,7 @@ import Table from "easy-table";
 import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { SchemaBuilder, singleTextCursor } from "../../feature-libraries";
+import { singleTextCursor } from "../../feature-libraries";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../shared-tree";
 import { JsonCompatibleReadOnly, brand, getOrAddEmptyToMap } from "../../util";
 import {
@@ -18,9 +18,9 @@ import {
 	moveToDetachedField,
 	rootFieldKey,
 	Value,
-	ValueSchema,
 } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
+import { SchemaBuilder, leaf } from "../../domains";
 
 // Notes:
 // 1. Within this file "percentile" is commonly used, and seems to refer to a portion (0 to 1) or some maximum size.
@@ -34,17 +34,14 @@ import { typeboxValidator } from "../../external-utilities";
 
 const builder = new SchemaBuilder({ scope: "opSize" });
 
-const stringSchema = builder.leaf("String", ValueSchema.String);
 const childSchema = builder.struct("Test:Opsize-Bench-Child", {
-	data: SchemaBuilder.fieldRequired(stringSchema),
+	data: leaf.string,
 });
 const parentSchema = builder.struct("Test:Opsize-Bench-Root", {
-	children: SchemaBuilder.fieldSequence(childSchema),
+	children: builder.sequence(childSchema),
 });
 
-const rootSchema = SchemaBuilder.fieldRequired(parentSchema);
-
-const fullSchemaData = builder.toDocumentSchema(rootSchema);
+const fullSchemaData = builder.toDocumentSchema(parentSchema);
 
 const initialTestJsonTree = {
 	type: parentSchema.name,
@@ -75,7 +72,7 @@ function createTreeWithSize(desiredByteSize: number): JsonableTree {
 	const node = {
 		type: childSchema.name,
 		fields: {
-			data: [{ value: "", type: stringSchema.name }],
+			data: [{ value: "", type: leaf.string.name }],
 		},
 	};
 
@@ -226,7 +223,7 @@ function editNodesWithIndividualTransactions(
 				type: childSchema.name,
 				value: editPayload,
 				fields: {
-					data: [{ value: "", type: stringSchema.name }],
+					data: [{ value: "", type: leaf.string.name }],
 				},
 			}),
 		);
@@ -254,7 +251,7 @@ function editNodesWithSingleTransaction(
 				type: childSchema.name,
 				value: editPayload,
 				fields: {
-					data: [{ value: "", type: stringSchema.name }],
+					data: [{ value: "", type: leaf.string.name }],
 				},
 			}),
 		);

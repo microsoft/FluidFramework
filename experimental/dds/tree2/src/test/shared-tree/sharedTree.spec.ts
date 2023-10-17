@@ -16,7 +16,6 @@ import {
 	jsonableTreeFromCursor,
 	on,
 	ContextuallyTypedNodeData,
-	SchemaBuilder,
 	Any,
 	TreeStatus,
 } from "../../feature-libraries";
@@ -26,13 +25,14 @@ import {
 	SummarizeType,
 	TestTreeProvider,
 	TestTreeProviderLite,
+	emptyJsonSequenceConfig,
+	initializeTestTree,
 	jsonSequenceRootSchema,
 	toJsonableTree,
 	validateTree,
 	validateTreeContent,
 	validateViewConsistency,
 	viewWithContent,
-	wrongSchema,
 } from "../utils";
 import {
 	ForestType,
@@ -55,25 +55,18 @@ import {
 	Value,
 	moveToDetachedField,
 	SchemaData,
-	ValueSchema,
 	AllowedUpdateType,
 	LocalCommitSource,
 	storedEmptyFieldSchema,
 } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
 import { EditManager } from "../../shared-tree-core";
-import { jsonNumber, jsonSchema, leaf } from "../../domains";
+import { jsonSchema, leaf, SchemaBuilder } from "../../domains";
 import { noopValidator } from "../../codec";
 
 const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator });
 
 const fooKey: FieldKey = brand("foo");
-
-const emptyJsonSequenceConfig: InitializeAndSchematizeConfiguration = {
-	schema: jsonSequenceRootSchema,
-	allowedSchemaModifications: AllowedUpdateType.None,
-	initialTree: [],
-};
 
 describe("SharedTree", () => {
 	// TODO: concurrent use of schematize should not double initialize. Should use constraints so second run conflicts.
@@ -99,12 +92,12 @@ describe("SharedTree", () => {
 			t.context.root.insertNodes(0, [5]);
 		});
 
-		assert.deepEqual(toJsonableTree(view), [{ type: jsonNumber.name, value: 5 }]);
+		assert.deepEqual(toJsonableTree(view), [{ type: leaf.number.name, value: 5 }]);
 	});
 
 	it("editable-tree-2-end-to-end", () => {
-		const builder = new SchemaBuilder({ scope: "e2e", libraries: [leaf.library] });
-		const schema = builder.toDocumentSchema(SchemaBuilder.fieldRequired(leaf.number));
+		const builder = new SchemaBuilder({ scope: "e2e" });
+		const schema = builder.toDocumentSchema(leaf.number);
 		const factory = new SharedTreeFactory({
 			jsonValidator: typeboxValidator,
 			forest: ForestType.Reference,
@@ -276,6 +269,74 @@ describe("SharedTree", () => {
 		assert.equal(cursor.nextNode(), true);
 		assert.equal(cursor.value, "c");
 		assert.equal(cursor.nextNode(), false);
+	});
+
+	it("can load a summary from a tree and receive edits that require repair data", async () => {
+		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
+		const [summarizingTree] = provider.trees;
+
+		const initialState: JsonableTree = {
+			type: brand("Node"),
+			fields: {
+				foo: [
+					{ type: brand("Node"), value: "a" },
+					{ type: brand("Node"), value: "b" },
+					{ type: brand("Node"), value: "c" },
+				],
+			},
+		};
+		initializeTestTree(summarizingTree.view, initialState);
+		const fooField: FieldKey = brand("foo");
+		runSynchronous(summarizingTree.view, () => {
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKey,
+				parentIndex: 0,
+			};
+			summarizingTree.editor
+				.sequenceField({ parent: rootPath, field: fooField })
+				.delete(0, 1);
+		});
+
+		const cursor = summarizingTree.view.forest.allocateCursor();
+		moveToDetachedField(summarizingTree.view.forest, cursor);
+		assert.equal(cursor.firstNode(), true);
+		cursor.enterField(fooField);
+		assert.equal(cursor.firstNode(), true);
+		assert.equal(cursor.value, "b");
+		cursor.free();
+
+		await provider.ensureSynchronized();
+		await provider.summarize();
+
+		const loadingTree = (await provider.createTree()).view;
+
+		summarizingTree.undo();
+
+		const cursor2 = summarizingTree.view.forest.allocateCursor();
+		moveToDetachedField(summarizingTree.view.forest, cursor2);
+		assert.equal(cursor2.firstNode(), true);
+		cursor2.enterField(fooField);
+		assert.equal(cursor2.firstNode(), true);
+		assert.equal(cursor2.value, "a");
+		cursor2.free();
+
+		await provider.ensureSynchronized();
+
+		const cursor3 = loadingTree.forest.allocateCursor();
+		moveToDetachedField(loadingTree.forest, cursor3);
+		assert.equal(cursor3.firstNode(), true);
+		cursor3.enterField(fooField);
+		assert.equal(cursor3.firstNode(), true);
+		// An error may occur earlier in the test but may be swallowed up. If so, this line will fail
+		// due to the undo edit above not being able to be applied to loadingTree.
+		assert.equal(cursor3.value, "a");
+		assert.equal(cursor3.nextNode(), true);
+		assert.equal(cursor3.value, "b");
+		assert.equal(cursor3.nextNode(), true);
+		assert.equal(cursor3.value, "c");
+		assert.equal(cursor3.nextNode(), false);
+		cursor3.free();
 	});
 
 	it("can summarize local edits in the attach summary", async () => {
@@ -477,7 +538,7 @@ describe("SharedTree", () => {
 			const schema = new SchemaBuilder({
 				scope: "optional",
 				libraries: [jsonSchema],
-			}).toDocumentSchema(SchemaBuilder.fieldOptional(jsonNumber));
+			}).toDocumentSchema(SchemaBuilder.optional(leaf.number));
 			const config: InitializeAndSchematizeConfiguration = {
 				schema,
 				initialTree: value,
@@ -1002,11 +1063,10 @@ describe("SharedTree", () => {
 	// TODO: many of these events tests should be tests of SharedTreeView instead.
 	describe("Events", () => {
 		const builder = new SchemaBuilder({ scope: "Events test schema" });
-		const numberSchema = builder.leaf("number", ValueSchema.Number);
 		const treeSchema = builder.struct("root", {
-			x: SchemaBuilder.fieldRequired(numberSchema),
+			x: builder.number,
 		});
-		const schema = builder.toDocumentSchema(SchemaBuilder.fieldOptional(Any));
+		const schema = builder.toDocumentSchema(builder.optional(Any));
 
 		it("triggers events for local and subtree changes", () => {
 			const view = viewWithContent({
@@ -1037,13 +1097,11 @@ describe("SharedTree", () => {
 			assert.deepEqual(log, [
 				"editStart",
 				"subtree",
-				"change",
 				"subtree",
 				"change",
 				"after",
 				"editStart",
 				"subtree",
-				"change",
 				"subtree",
 				"change",
 				"after",
@@ -1083,13 +1141,11 @@ describe("SharedTree", () => {
 			assert.deepEqual(log, [
 				"editStart",
 				"subtree-rootFieldKey-0",
-				"change-rootFieldKey-0",
 				"subtree-rootFieldKey-0",
 				"change-rootFieldKey-0",
 				"after",
 				"editStart",
 				"subtree-rootFieldKey-0",
-				"change-rootFieldKey-0",
 				"subtree-rootFieldKey-0",
 				"change-rootFieldKey-0",
 				"after",
@@ -1508,7 +1564,7 @@ describe("SharedTree", () => {
 				rootFieldSchema: storedEmptyFieldSchema,
 			};
 			const schemaB: SchemaData = {
-				treeSchema: new Map([[jsonNumber.name, jsonNumber]]),
+				treeSchema: new Map([[leaf.number.name, leaf.number]]),
 				rootFieldSchema: storedEmptyFieldSchema,
 			};
 			function getSchema(t: ISharedTreeView): "schemaA" | "schemaB" {
@@ -1826,12 +1882,11 @@ describe("SharedTree", () => {
 		it("Anchor Stability fails when root node is deleted", async () => {
 			const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 
-			const rootFieldSchema = SchemaBuilder.fieldRequired(Any);
+			const rootFieldSchema = SchemaBuilder.required(Any);
 			const testSchemaBuilder = new SchemaBuilder({ scope: "testSchema" });
-			const numberSchema = testSchemaBuilder.leaf("Number", ValueSchema.Number);
 			const rootNodeSchema = testSchemaBuilder.structRecursive("Node", {
-				foo: SchemaBuilder.fieldSequence(numberSchema),
-				foo2: SchemaBuilder.fieldSequence(numberSchema),
+				foo: SchemaBuilder.sequence(leaf.number),
+				foo2: SchemaBuilder.sequence(leaf.number),
 			});
 			const testSchema = testSchemaBuilder.toDocumentSchema(rootFieldSchema);
 
@@ -1840,14 +1895,14 @@ describe("SharedTree", () => {
 				type: rootNodeSchema.name,
 				fields: {
 					foo: [
-						{ type: numberSchema.name, value: 0 },
-						{ type: numberSchema.name, value: 1 },
-						{ type: numberSchema.name, value: 2 },
+						{ type: leaf.number.name, value: 0 },
+						{ type: leaf.number.name, value: 1 },
+						{ type: leaf.number.name, value: 2 },
 					],
 					foo2: [
-						{ type: numberSchema.name, value: 0 },
-						{ type: numberSchema.name, value: 1 },
-						{ type: numberSchema.name, value: 2 },
+						{ type: leaf.number.name, value: 0 },
+						{ type: leaf.number.name, value: 1 },
+						{ type: leaf.number.name, value: 2 },
 					],
 				},
 			};
@@ -1967,37 +2022,6 @@ describe("SharedTree", () => {
 		});
 	});
 });
-
-/**
- * Updates the given `tree` to the given `schema` and inserts `state` as its root.
- */
-// TODO: replace use of this with initialize or schematize, and/or move them out of this file and use viewWithContent
-function initializeTestTree(
-	tree: ISharedTreeView,
-	state?: JsonableTree | JsonableTree[],
-	schema: SchemaData = wrongSchema,
-): void {
-	if (state === undefined) {
-		tree.storedSchema.update(schema);
-		return;
-	}
-
-	if (!Array.isArray(state)) {
-		initializeTestTree(tree, [state], schema);
-	} else {
-		tree.storedSchema.update(schema);
-
-		// Apply an edit to the tree which inserts a node with a value
-		runSynchronous(tree, () => {
-			const writeCursors = state.map(singleTextCursor);
-			const field = tree.editor.sequenceField({
-				parent: undefined,
-				field: rootFieldKey,
-			});
-			field.insert(0, writeCursors);
-		});
-	}
-}
 
 /**
  * Inserts a single node under the root of the tree with the given value.
