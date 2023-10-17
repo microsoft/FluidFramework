@@ -22,9 +22,14 @@ The eventName for the Inactive log ends with `InactiveObject_Loaded`.
 
 The default timeout for an unreferenced object to become "Inactive" is 7 days. This is intended to be long enough such that
 it's very unlikely to hit a legitimate case where an object is revived within the same session it was deleted (e.g. delete then undo).
-Based on your application's user experience, you may choose to shorten this timeout to get an earlier signal (but beware of false positives).
+Based on your application's user experience, you may choose to shorten this timeout to get an earlier signal.
 
-To override the default InactiveObject timeout, use the `inactiveTimeoutMs` GC Option.
+This option comes with a big caveat though: The design we've chosen for GC means that until GC runs, the system has incomplete knowledge
+of the true reference state of the document. The InactiveObject telemetry is inherently noisy, and the shorter the timeout, the more
+noise you will face. And this doesn't include noise from user interactions like delete-then-undo - it's about the sequence of events in
+the container, which snapshot was loaded from, etc.
+
+All that said - to override the default InactiveObject timeout, use the `inactiveTimeoutMs` GC Option.
 There's also a Config Setting which can be used for testing (if the Config Provider allows overriding via localStorage/sessionStorage):
 `Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs`
 
