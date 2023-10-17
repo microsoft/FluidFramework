@@ -224,6 +224,12 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 	}
 }
 
+function assertIsLazySequence<TTypesSource extends AllowedTypes>(
+	sourceField: unknown,
+): asserts sourceField is LazySequence<TTypesSource> {
+	assert(sourceField instanceof LazySequence, 0x7b1 /* Unsupported sequence implementation. */);
+}
+
 export class LazySequence<TTypes extends AllowedTypes>
 	extends LazyField<typeof FieldKinds.sequence, TTypes>
 	implements Sequence<TTypes>
@@ -329,6 +335,8 @@ export class LazySequence<TTypes extends AllowedTypes>
 		source?: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
 	): void {
 		const sourceField = source !== undefined ? (this.isSameAs(source) ? this : source) : this;
+		// TODO: determine support for move across different sequence types
+		assertIsLazySequence(sourceField);
 		assertValidRangeIndices(sourceStart, sourceEnd, sourceField);
 		if (this.schema.types !== undefined && sourceField !== this) {
 			for (let i = sourceStart; i < sourceEnd; i++) {
@@ -344,9 +352,7 @@ export class LazySequence<TTypes extends AllowedTypes>
 			destinationIndex -= count;
 		}
 		assertValidIndex(destinationIndex, this, true);
-		// TODO: determine support for move across different sequence types
-		assert(source instanceof LazySequence, 0x7b1 /* Unsupported sequence implementation. */);
-		const sourceFieldPath = (sourceField as LazySequence<TTypesSource>).getFieldPath();
+		const sourceFieldPath = sourceField.getFieldPath();
 		const destinationFieldPath = this.getFieldPath();
 		this.context.editor.move(
 			sourceFieldPath,
