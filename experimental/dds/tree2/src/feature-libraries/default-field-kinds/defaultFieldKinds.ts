@@ -44,10 +44,13 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 export interface ValueFieldEditor extends FieldEditor<OptionalChangeset> {
 	/**
 	 * Creates a change which replaces the current value of the field with `newValue`.
+	 * @param newContent - the new content for the field
+	 * @param changeId - the ID associated with the replacement of the current content.
+	 * @param buildId - the ID associated with the creation of the `newContent`.
 	 */
 	set(
-		newValue: ITreeCursor,
-		setId: ChangesetLocalId,
+		newContent: ITreeCursor,
+		changeId: ChangesetLocalId,
 		buildId: ChangesetLocalId,
 	): OptionalChangeset;
 }

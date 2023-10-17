@@ -441,7 +441,7 @@ export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 	 * Creates a change which replaces the field with `newContent`
 	 * @param newContent - the new content for the field
 	 * @param wasEmpty - whether the field is empty when creating this change
-	 * @param id - the ID associated with the change.
+	 * @param changeId - the ID associated with the replacement of the current content.
 	 * @param buildId - the ID associated with the creation of the `newContent`.
 	 */
 	set(
@@ -452,12 +452,11 @@ export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 	): OptionalChangeset;
 
 	/**
-	 * Creates a change which replaces the field with `newContent`
-	 * @param newContent - the new content for the field
+	 * Creates a change which clears the field's contents (if any).
 	 * @param wasEmpty - whether the field is empty when creating this change
-	 * @param id - the ID associated with the change.
+	 * @param changeId - the ID associated with the change.
 	 */
-	clear(wasEmpty: boolean, id: ChangesetLocalId): OptionalChangeset;
+	clear(wasEmpty: boolean, changeId: ChangesetLocalId): OptionalChangeset;
 }
 
 export const optionalFieldEditor: OptionalFieldEditor = {
