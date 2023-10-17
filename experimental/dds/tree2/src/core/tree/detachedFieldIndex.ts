@@ -139,7 +139,9 @@ export class DetachedFieldIndex {
 		const entry = { field, root };
 
 		if (nodeId !== undefined) {
-			setInNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor, entry);
+			for (let i = 0; i < count; i++) {
+				setInNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor + i, entry);
+			}
 		}
 		return entry;
 	}
