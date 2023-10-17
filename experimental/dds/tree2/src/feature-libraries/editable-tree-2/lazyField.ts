@@ -328,6 +328,10 @@ export class LazySequence<TTypes extends AllowedTypes>
 		sourceEnd: number,
 		source?: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
 	): void {
+		if (source !== undefined) {
+			// TODO: determine support for move across different sequence types
+			assert(source instanceof LazySequence, "Unsupported sequence implementation.");
+		}
 		const sourceField = source !== undefined ? (this.isSameAs(source) ? this : source) : this;
 		assertValidRangeIndices(sourceStart, sourceEnd, sourceField);
 		if (this.schema.types !== undefined && sourceField !== this) {
@@ -344,8 +348,6 @@ export class LazySequence<TTypes extends AllowedTypes>
 			destinationIndex -= count;
 		}
 		assertValidIndex(destinationIndex, this, true);
-		// TODO: determine support for move across different sequence types
-		assert(source instanceof LazySequence, "Unsupported sequence implementation.");
 		const sourceFieldPath = (sourceField as LazySequence<TTypesSource>).getFieldPath();
 		const destinationFieldPath = this.getFieldPath();
 		this.context.editor.move(
