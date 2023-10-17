@@ -24,7 +24,7 @@ const builder = new SchemaBuilderInternal({ scope: "com.fluidframework.nodeKey" 
  * This might need to be changed to be a node holding a string node instead.
  */
 export const nodeKeyTreeSchema = builder.leaf("NodeKey", ValueSchema.String);
-assert(nodeKeyTreeSchema.name === nodeKeyTreeIdentifier, "mismatched identifiers");
+assert(nodeKeyTreeSchema.name === nodeKeyTreeIdentifier, 0x7ae /* mismatched identifiers */);
 
 /**
  * Key and Field schema for working with {@link LocalNodeKey}s in a shared tree.

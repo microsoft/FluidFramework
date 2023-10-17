@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { SchemaBuilder, TypedSchemaCollection } from "../../../feature-libraries";
-import { leaf } from "../../../domains";
+import { TypedSchemaCollection } from "../../../feature-libraries";
+import { leaf, SchemaBuilder } from "../../../domains";
 
 import { createTreeView, pretty } from "./utils";
 
@@ -16,25 +16,23 @@ interface TestCase {
 
 function testObjectLike(testCases: TestCase[]) {
 	describe("Object-like", () => {
-		describe("Satisfies 'deepEquals'", () => {
+		describe("satisfies 'deepEquals'", () => {
 			for (const testCase of testCases) {
 				const view = createTreeView(testCase.schema, testCase.initialTree);
 				const real = testCase.initialTree;
 				const proxy = view.root2(testCase.schema);
 
 				it(`deepEquals(${pretty(proxy)}, ${pretty(real)})`, () => {
-					assert.deepEqual(proxy, real);
+					assert.deepEqual(proxy, real, "Proxy must satisfy 'deepEquals'.");
 				});
 			}
 		});
 
 		function test1(fn: (subject: object) => unknown) {
-			for (const testCase of testCases) {
-				const view = createTreeView(testCase.schema, testCase.initialTree);
-				const real = structuredClone(testCase.initialTree);
-				const proxy = view.root2(testCase.schema);
-
-				assert.deepEqual(proxy, real, "Proxy must satisfy 'deepEquals'.");
+			for (const { schema, initialTree } of testCases) {
+				const view = createTreeView(schema, initialTree);
+				const real = structuredClone(initialTree);
+				const proxy = view.root2(schema);
 
 				const expected = fn(real);
 
@@ -99,7 +97,7 @@ function testObjectLike(testCases: TestCase[]) {
 const tcs: TestCase[] = [
 	{
 		schema: (() => {
-			const _ = new SchemaBuilder({ scope: "test", libraries: [leaf.library] });
+			const _ = new SchemaBuilder({ scope: "test" });
 			const $ = _.struct("empty", {});
 			return _.toDocumentSchema($);
 		})(),
@@ -107,7 +105,7 @@ const tcs: TestCase[] = [
 	},
 	{
 		schema: (() => {
-			const _ = new SchemaBuilder({ scope: "test", libraries: [leaf.library] });
+			const _ = new SchemaBuilder({ scope: "test" });
 			const $ = _.struct("primitives", {
 				boolean: leaf.boolean,
 				number: leaf.number,
@@ -123,7 +121,7 @@ const tcs: TestCase[] = [
 	},
 	{
 		schema: (() => {
-			const _ = new SchemaBuilder({ scope: "test", libraries: [leaf.library] });
+			const _ = new SchemaBuilder({ scope: "test" });
 			const $ = _.struct("optional", {
 				boolean: _.optional(leaf.boolean),
 				number: _.optional(leaf.number),
@@ -135,7 +133,23 @@ const tcs: TestCase[] = [
 	},
 	{
 		schema: (() => {
-			const _ = new SchemaBuilder({ scope: "test", libraries: [leaf.library] });
+			const _ = new SchemaBuilder({ scope: "test" });
+			const $ = _.struct("optional (defined)", {
+				boolean: _.optional(leaf.boolean),
+				number: _.optional(leaf.number),
+				string: _.optional(leaf.string),
+			});
+			return _.toDocumentSchema($);
+		})(),
+		initialTree: {
+			boolean: true,
+			number: -0,
+			string: "",
+		},
+	},
+	{
+		schema: (() => {
+			const _ = new SchemaBuilder({ scope: "test" });
 
 			const inner = _.struct("inner", {});
 
@@ -149,7 +163,7 @@ const tcs: TestCase[] = [
 	},
 	{
 		schema: (() => {
-			const _ = new SchemaBuilder({ scope: "test", libraries: [leaf.library] });
+			const _ = new SchemaBuilder({ scope: "test" });
 			const $ = _.fieldNode("List<string> len(0)", _.sequence(leaf.string));
 			return _.toDocumentSchema($);
 		})(),
@@ -157,7 +171,7 @@ const tcs: TestCase[] = [
 	},
 	{
 		schema: (() => {
-			const _ = new SchemaBuilder({ scope: "test", libraries: [leaf.library] });
+			const _ = new SchemaBuilder({ scope: "test" });
 			const $ = _.fieldNode("List<string> len(1)", _.sequence(leaf.string));
 			return _.toDocumentSchema($);
 		})(),
@@ -165,7 +179,7 @@ const tcs: TestCase[] = [
 	},
 	{
 		schema: (() => {
-			const _ = new SchemaBuilder({ scope: "test", libraries: [leaf.library] });
+			const _ = new SchemaBuilder({ scope: "test" });
 			const $ = _.fieldNode("List<string> len(2)", _.sequence(leaf.string));
 			return _.toDocumentSchema($);
 		})(),
