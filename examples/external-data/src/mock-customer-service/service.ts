@@ -49,11 +49,11 @@ function echoExternalDataWebhookToFluid(
 	tenantId: string,
 	documentId: string,
 ): void {
+	const fluidService = `${fluidServiceUrl}/${tenantId}/${documentId}/broadcast-signal`;
 	console.log(
-		`CUSTOMER SERVICE: External data has been updated. Notifying Fluid Service at ${fluidServiceUrl}`,
+		`CUSTOMER SERVICE: External data has been updated. Notifying Fluid Service at ${fluidService}`,
 	);
 
-	const fluidService = `${fluidServiceUrl}/${tenantId}/${documentId}/broadcast-signal`;
 
 	const messageBody = {
 		signalContent: {
@@ -63,6 +63,7 @@ function echoExternalDataWebhookToFluid(
 			},
 		},
 	} as unknown as BroadcastSignalBodyInterface;
+
 	fetch(fluidService, {
 		method: "POST",
 		headers: {
@@ -231,16 +232,8 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 				),
 			);
 			for (const containerUrl of containerUrls) {
-				console.log(
-					"containerUrl fluid://localhost:7070/tinylicious/67d53f9a-ff1c-42f9-93ca-f777e356b35d",
-				);
-				console.log(JSON.stringify(containerUrl));
 				const tenantId = containerUrl.TenantId;
 				const documentId = containerUrl.DocumentId;
-				console.log("tenantId");
-				console.log(tenantId);
-				console.log("documentId");
-				console.log(documentId);
 				echoExternalDataWebhookToFluid(
 					taskData,
 					fluidServiceUrl,

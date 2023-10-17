@@ -3,21 +3,15 @@
  * Licensed under the MIT License.
  */
 
-// /**
-//  * Create a single string representation of container identity that consists of tenantId and documentId
-//  */
-// function createClientSessionUrl(tenantId: string, documentId: string) {
-// 	return `${tenantId}/${documentId}`
-// }
-
-// /**
-//  * Break single string representation of container identity to its constituents of tenantId and documentId
-//  */
-// function splitClientSessionUrl(tenantId: string, documentId: string) {
-// 	return `${tenantId}/${documentId}`
-// }
-
+/**
+ * Represents a Fluid containers documentId.
+ * It is part of the client's Fluid session information necessary for broadcasting signals to.
+ */
 type DocumentId = string;
+/**
+ * Represents a Fluid containers tenantId.
+ * It is part of the client's Fluid session information necessary for broadcasting signals to.
+ */
 type TenantId = string;
 /**
  * Represents a Fluid containers URL.
