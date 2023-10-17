@@ -38,7 +38,7 @@
 		"@fluidframework/core-utils": "workspace:~"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "^2.0.1",
+		"@fluidframework/build-common": "^2.0.2",
 		"@fluidframework/build-tools": "^0.25.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@types/jest": "29.5.3",

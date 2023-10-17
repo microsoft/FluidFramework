@@ -16,7 +16,6 @@ import {
 import {
 	getInputLength,
 	isDetachMark,
-	isNewAttach,
 	cloneMark,
 	areInputCellsEmpty,
 	markEmptiesCells,
@@ -28,8 +27,10 @@ import {
 	areOverlappingIdRanges,
 	cloneCellId,
 	areOutputCellsEmpty,
+	isNewAttach,
 	getDetachCellId,
 	getInputCellId,
+	isReattach,
 } from "./utils";
 import {
 	Changeset,
@@ -362,7 +363,7 @@ function rebaseMark<TNodeChange>(
 					rebasedMark.count,
 					PairedMarkUpdate.Deactivated,
 				);
-			} else if (rebasedMark.type === "ReturnTo") {
+			} else if (isReattach(rebasedMark)) {
 				setPairedMarkStatus(
 					moveEffects,
 					CrossFieldTarget.Source,
@@ -405,7 +406,7 @@ function rebaseMark<TNodeChange>(
 					rebasedMark.count,
 					PairedMarkUpdate.Reactivated,
 				);
-			} else if (rebasedMark.type === "ReturnTo") {
+			} else if (isReattach(rebasedMark)) {
 				setPairedMarkStatus(
 					moveEffects,
 					CrossFieldTarget.Source,
@@ -451,13 +452,12 @@ function markFollowsMoves(mark: Mark<unknown>): boolean {
 	switch (type) {
 		case "Delete":
 		case "MoveOut":
-		case "Revive":
 			return true;
+		case "Insert":
+			return isReattach(mark);
 		case NoopMarkType:
 		case "ReturnFrom":
-		case "Insert":
 		case "MoveIn":
-		case "ReturnTo":
 		case "Placeholder":
 			return false;
 		default:
@@ -614,10 +614,7 @@ function amendRebaseI<TNodeChange>(
 			factory.push(withNodeChange(newMark, rebaseChild(newMark.changes, undefined)));
 		}
 
-		if (
-			baseMark !== undefined &&
-			(baseMark.type === "MoveIn" || baseMark.type === "ReturnTo")
-		) {
+		if (baseMark !== undefined && baseMark.type === "MoveIn") {
 			const movedMark = getMovedMark(
 				moveEffects,
 				baseMark.revision ?? baseRevision,

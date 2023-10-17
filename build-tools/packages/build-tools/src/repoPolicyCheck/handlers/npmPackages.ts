@@ -10,7 +10,7 @@ import * as readline from "readline";
 import replace from "replace-in-file";
 import sortPackageJson from "sort-package-json";
 
-import { updatePackageJsonFile } from "../../common/npmPackage";
+import { PackageJson, updatePackageJsonFile } from "../../common/npmPackage";
 import { getFluidBuildConfig } from "../../common/fluidUtils";
 import { Handler, readFile, writeFile } from "../common";
 import { PackageNamePolicyConfig } from "../../common/fluidRepo";
@@ -1125,6 +1125,35 @@ export const handlers: Handler[] = [
 			});
 
 			return result;
+		},
+	},
+	{
+		name: "npm-package-types-field",
+		match,
+		handler: (file) => {
+			// This rule enforces each package has a types field in its package.json
+			let json: PackageJson;
+
+			try {
+				json = JSON.parse(readFile(file));
+			} catch (err) {
+				return "Error parsing JSON file: " + file;
+			}
+
+			if (
+				// Ignore private packages...
+				json.private === true ||
+				// and those without main/module defined
+				(json.main === undefined && json.module === undefined) ||
+				// and packages without a tsconfig
+				!fs.existsSync(path.join(path.dirname(file), "tsconfig.json"))
+			) {
+				return;
+			}
+
+			if (json.types === undefined) {
+				return "Missing 'types' field in package.json.";
+			}
 		},
 	},
 ];
