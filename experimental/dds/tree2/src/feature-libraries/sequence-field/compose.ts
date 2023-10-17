@@ -218,12 +218,24 @@ function composeMarks<TNodeChange>(
 	}
 	if (isTransientEffect(baseMark)) {
 		if (markFillsCells(newMark)) {
+			const baseAttachRevision = baseMark.attach.revision ?? baseMark.revision;
+			if (isMoveDestination(baseMark.attach) && isMoveSource(baseMark.detach)) {
+				assert(isMoveDestination(newMark), "Unexpected mark type");
+				setEndpoint(
+					moveEffects,
+					CrossFieldTarget.Source,
+					getEndpoint(newMark, newRev),
+					baseMark.count,
+					{ revision: baseAttachRevision, localId: baseMark.attach.id },
+				);
+			}
+
 			const originalAttach = withRevision(
 				withNodeChange(
 					{ ...baseMark.attach, cellId: baseMark.cellId, count: baseMark.count },
 					nodeChange,
 				),
-				baseMark.attach.revision ?? baseMark.revision,
+				baseAttachRevision,
 			);
 
 			// TODO: This assumes that the original attach was successful.

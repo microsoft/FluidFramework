@@ -16,7 +16,7 @@ import {
 	MoveMarkEffect,
 	MoveSource,
 } from "./format";
-import { cloneMark, isTransientEffect, splitMark } from "./utils";
+import { areEqualCellIds, cloneMark, isTransientEffect, splitMark } from "./utils";
 
 export type MoveEffectTable<T> = CrossFieldManager<MoveEffect<T>>;
 
@@ -280,17 +280,22 @@ function updateEndpoint(
 	effects: MoveEffectTable<unknown>,
 	consumeEffects: boolean,
 ) {
+	const markRevision = markEffect.revision ?? revision;
 	const finalDest = getEndpoint(
 		effects,
 		target,
-		markEffect.revision ?? revision,
+		markRevision,
 		markEffect.id,
 		count,
 		consumeEffects,
 	);
 
 	if (finalDest !== undefined) {
-		markEffect.finalEndpoint = finalDest;
+		if (areEqualCellIds(finalDest, { revision: markRevision, localId: markEffect.id })) {
+			delete markEffect.finalEndpoint;
+		} else {
+			markEffect.finalEndpoint = finalDest;
+		}
 	}
 }
 
