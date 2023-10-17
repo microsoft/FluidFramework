@@ -1157,10 +1157,11 @@ export const handlers: Handler[] = [
 		},
 	},
 	{
+		// This rule enforces each package has an exports field in its package.json. It also verifies that the values in the
+		// exports["."] field match the ones in the main/module/types fields.
 		name: "npm-package-exports-field",
 		match,
 		handler: (file) => {
-			// This rule enforces each package has an exports field in its package.json
 			let json: PackageJson;
 
 			try {
@@ -1218,11 +1219,6 @@ export const handlers: Handler[] = [
 					return `Incorrect 'import' extry in 'exports' field in package.json. Expected '${moduleField}', got '${importField}'`;
 				}
 			}
-			// else {
-			// 	if (importField !== mainField) {
-			// 		return `Incorrect 'import' extry in 'exports' field in package.json. Expected '${mainField}', got '${importField}'`;
-			// 	}
-			// }
 		},
 		resolver: (file) => {
 			const result: { resolved: boolean; message?: string } = { resolved: true };
@@ -1320,6 +1316,9 @@ function generateExportsField(json: PackageJson) {
 	}
 }
 
+/**
+ * Returns true if the package should be checked for an exports field.
+ */
 function shouldCheckExportsField(json: PackageJson): boolean {
 	if (
 		// skip private packages
@@ -1336,6 +1335,9 @@ function shouldCheckExportsField(json: PackageJson): boolean {
 	return true;
 }
 
+/**
+ * Normalizes a path value so it has a leading './'
+ */
 function normalizePathField(pathIn: string) {
 	if (pathIn === "" || pathIn === undefined) {
 		throw new Error(`Invalid path!`);
