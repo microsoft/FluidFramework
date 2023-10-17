@@ -60,9 +60,7 @@ export function isReattach<TNodeChange>(mark: Mark<TNodeChange>): boolean {
 	return isAttach(mark) && !isNewAttach(mark);
 }
 
-export function isActiveReattach<TNodeChange>(
-	mark: Mark<TNodeChange>,
-): mark is Attach<TNodeChange> {
+export function isActiveReattach<TNodeChange>(mark: Mark<TNodeChange>): boolean {
 	// No need to check Attach.lastDeletedBy because it can only be set if the mark is conflicted
 	return isAttach(mark) && isReattach(mark) && !isReattachConflicted(mark);
 }
