@@ -34,11 +34,15 @@ export interface IEditableForest extends IForestSubscription {
 	readonly anchors: AnchorSet;
 
 	/**
+	 * Provides a visitor that can be used to mutate the forest.
+	 *
 	 * @returns a visitor that can be used to mutate the forest.
 	 *
+	 * @remarks
 	 * Mutating the forest does NOT update anchors.
-	 * The visitor must be released after use.
-	 * It is invalid to acquire a visitor without releasing the previous one.
+	 * The visitor must be released after use by calling {@link DeltaVisitor.free} on it.
+	 * It is invalid to acquire a visitor without releasing the previous one,
+	 * and this method will throw an error if this is attempted.
 	 */
 	acquireVisitor(): DeltaVisitor;
 }

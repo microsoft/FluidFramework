@@ -140,6 +140,10 @@ function transferRoots(
  * @alpha
  */
 export interface DeltaVisitor {
+	/**
+	 * Frees/releases the visitor. Must be called once the visitor is no longer needed, since trying to acquire
+	 * a new one before freeing an existing one will result in an error being thrown.
+	 */
 	free(): void;
 	/**
 	 * Creates nodes for the given content in a new detached field.

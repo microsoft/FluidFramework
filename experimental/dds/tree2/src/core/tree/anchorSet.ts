@@ -575,8 +575,9 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 	 *
 	 * @remarks
 	 * Mutating the {@link AnchorSet} does NOT update the forest.
-	 * The visitor must be released after use.
-	 * It is invalid to acquire a visitor without releasing the previous one.
+	 * The visitor must be released after use by calling {@link DeltaVisitor.free} on it.
+	 * It is invalid to acquire a visitor without releasing the previous one,
+	 * and this method will throw an error if this is attempted.
 	 */
 	public acquireVisitor(): AnnouncedVisitor & DeltaVisitor {
 		assert(
