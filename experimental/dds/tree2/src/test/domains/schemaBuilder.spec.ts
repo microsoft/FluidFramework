@@ -4,18 +4,21 @@
  */
 
 import { strict as assert } from "assert";
-import { SchemaBuilder } from "../../domains";
+import { SchemaBuilder, leaf } from "../../domains";
 import {
 	Any,
 	FieldKinds,
 	FieldSchema,
-	Sequence2,
+	Sequence,
 	TreeSchema,
 	schemaIsFieldNode,
+	schemaIsMap,
 } from "../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { UnboxNode } from "../../feature-libraries/editable-tree-2/editableTreeTypes";
 import { areSafelyAssignable, requireTrue } from "../../util";
+// eslint-disable-next-line import/no-internal-modules
+import { structuralName } from "../../domains/schemaBuilder";
 
 describe("domains - SchemaBuilder", () => {
 	describe("list", () => {
@@ -32,26 +35,9 @@ describe("domains - SchemaBuilder", () => {
 						.equals(FieldSchema.create(FieldKinds.sequence, [Any])),
 				);
 				type ListAny = UnboxNode<typeof listAny>;
-				type _check = requireTrue<areSafelyAssignable<ListAny, Sequence2<readonly [Any]>>>;
+				type _check = requireTrue<areSafelyAssignable<ListAny, Sequence<readonly [Any]>>>;
 
 				assert.equal(builder.list(Any), listAny);
-			});
-
-			it("never", () => {
-				const builder = new SchemaBuilder({ scope: "scope" });
-
-				const listNever = builder.list([]);
-				assert(schemaIsFieldNode(listNever));
-				assert.equal(listNever.name, "scope.List<[]>");
-				assert(
-					listNever.structFields
-						.get("")
-						.equals(FieldSchema.create(FieldKinds.sequence, [])),
-				);
-				type ListAny = UnboxNode<typeof listNever>;
-				type _check = requireTrue<areSafelyAssignable<ListAny, Sequence2<readonly []>>>;
-
-				assert.equal(builder.list([]), listNever);
 			});
 
 			it("implicit", () => {
@@ -67,7 +53,7 @@ describe("domains - SchemaBuilder", () => {
 				);
 				type ListAny = UnboxNode<typeof listImplicit>;
 				type _check = requireTrue<
-					areSafelyAssignable<ListAny, Sequence2<readonly [typeof builder.number]>>
+					areSafelyAssignable<ListAny, Sequence<readonly [typeof builder.number]>>
 				>;
 
 				assert.equal(builder.list(builder.number), listImplicit);
@@ -107,7 +93,7 @@ describe("domains - SchemaBuilder", () => {
 				type _check = requireTrue<
 					areSafelyAssignable<
 						ListAny,
-						Sequence2<readonly [typeof builder.number, typeof builder.boolean]>
+						Sequence<readonly [typeof builder.number, typeof builder.boolean]>
 					>
 				>;
 				// TODO: this should compile: ideally EditableTree's use of AllowedTypes would be compile time order independent like it is runtime order independent, but its currently not.
@@ -115,37 +101,22 @@ describe("domains - SchemaBuilder", () => {
 					// @ts-expect-error Currently not order independent: ideally this would compile
 					areSafelyAssignable<
 						ListAny,
-						Sequence2<readonly [typeof builder.boolean, typeof builder.number]>
+						Sequence<readonly [typeof builder.boolean, typeof builder.number]>
 					>
 				>;
 
 				assert.equal(builder.list([builder.number, builder.boolean]), listUnion);
 				assert.equal(builder.list([builder.boolean, builder.number]), listUnion);
 			});
-
-			it("escaped names", () => {
-				const builder = new SchemaBuilder({ scope: "scope" });
-				const doubleName = builder.struct(`bar","scope.foo`, {});
-
-				const listDoubleName = builder.list(doubleName);
-				assert(schemaIsFieldNode(listDoubleName));
-				assert.equal(listDoubleName.name, `scope.List<["scope.bar\\",\\"scope.foo"]>`);
-
-				// This escaping ensures named don't collide:
-				const foo = builder.struct("foo", {});
-				const bar = builder.struct("bar", {});
-				const listUnion = builder.list([bar, foo]);
-				assert(listUnion.name !== listDoubleName.name);
-			});
 		});
 
-		it("named list", () => {
+		describe("named list", () => {
 			it("implicit normalizes", () => {
 				const builder = new SchemaBuilder({ scope: "scope" });
 
 				const list = builder.list("Foo", builder.number);
 				assert(schemaIsFieldNode(list));
-				assert.equal(list.name, `scope2.Foo`);
+				assert.equal(list.name, `scope.Foo`);
 				assert(
 					list.structFields
 						.get("")
@@ -153,7 +124,7 @@ describe("domains - SchemaBuilder", () => {
 				);
 				type ListAny = UnboxNode<typeof list>;
 				type _check = requireTrue<
-					areSafelyAssignable<ListAny, Sequence2<readonly [typeof builder.number]>>
+					areSafelyAssignable<ListAny, Sequence<readonly [typeof builder.number]>>
 				>;
 
 				// Not cached for structural use
@@ -162,5 +133,74 @@ describe("domains - SchemaBuilder", () => {
 				assert.throws(() => builder.list("Foo", builder.number));
 			});
 		});
+	});
+
+	describe("map", () => {
+		describe("structural", () => {
+			it("implicit", () => {
+				const builder = new SchemaBuilder({ scope: "scope" });
+				const mapAny = builder.map(Any);
+				assert(schemaIsMap(mapAny));
+				// Correct name
+				assert.equal(mapAny.name, "scope.Map<Any>");
+				// Infers optional kind
+				assert(mapAny.mapFields.equals(FieldSchema.create(FieldKinds.optional, [Any])));
+				// Cached and reused
+				assert.equal(builder.map(Any), mapAny);
+			});
+
+			describe("named map", () => {
+				it("implicit normalizes", () => {
+					const builder = new SchemaBuilder({ scope: "scope" });
+
+					const map = builder.map("Foo", builder.number);
+					assert(schemaIsMap(map));
+					assert.equal(map.name, `scope.Foo`);
+					assert(
+						map.mapFields.equals(
+							FieldSchema.create(FieldKinds.optional, [builder.number]),
+						),
+					);
+				});
+
+				it("explicit", () => {
+					const builder = new SchemaBuilder({ scope: "scope" });
+
+					const map = builder.map(
+						"Foo",
+						FieldSchema.create(FieldKinds.sequence, [leaf.string]),
+					);
+					assert(schemaIsMap(map));
+					assert.equal(map.name, `scope.Foo`);
+					assert(
+						map.mapFields.equals(
+							FieldSchema.create(FieldKinds.sequence, [leaf.string]),
+						),
+					);
+				});
+			});
+		});
+	});
+
+	it("structuralName", () => {
+		assert.equal(structuralName("X", Any), "X<Any>");
+		assert.equal(structuralName("Y", []), "Y<[]>");
+		// implicitly normalizes
+		assert.equal(structuralName("List", leaf.number), structuralName("List", [leaf.number]));
+		// Single item
+		assert.equal(structuralName("List", leaf.number), `List<["${leaf.number.name}"]>`);
+		// Sorted alphabetically
+		assert.equal(
+			structuralName("X", [leaf.number, leaf.boolean]),
+			`X<["${leaf.boolean.name}","${leaf.number.name}"]>`,
+		);
+		// escaped names
+		const builder = new SchemaBuilder({ scope: "scope" });
+		const doubleName = builder.struct(`bar","scope.foo`, {});
+		assert.equal(structuralName("X", doubleName), `X<["scope.bar\\",\\"scope.foo"]>`);
+		// This escaping ensures named don't collide:
+		const foo = builder.struct("foo", {});
+		const bar = builder.struct("bar", {});
+		assert(structuralName("X", [bar, foo]) !== structuralName("X", doubleName));
 	});
 });

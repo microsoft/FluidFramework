@@ -12,9 +12,12 @@ import {
 	FieldSchema,
 	ImplicitAllowedTypes,
 	NormalizeAllowedTypes,
+	NormalizeField,
 	SchemaBuilderBase,
 	SchemaBuilderOptions,
 	TreeSchema,
+	MapFieldSchema,
+	normalizeField,
 } from "../feature-libraries";
 import { getOrCreate, isAny, requireFalse } from "../util";
 
@@ -22,7 +25,7 @@ import { getOrCreate, isAny, requireFalse } from "../util";
  * Builds schema libraries, and the schema within them.
  *
  * @remarks
- * Fields, when inferred from {@link ImplicitFieldSchema}, default to the `Required` {@link FieldKind}.
+ * Fields, when inferred from {@link ImplicitFieldSchema}, default to the `Required` {@link FieldKind} (except for in Maps, which default to `Optional`).
  * Implicitly includes `leaf` schema library by default.
  *
  * This type has some built in defaults which impact compatibility.
@@ -109,45 +112,8 @@ export class SchemaBuilder<
 		}
 	> {
 		if (allowedTypes === undefined) {
-			let inner: string;
 			const types = nameOrAllowedTypes as (T & TreeSchema) | Any | readonly TreeSchema[];
-			if (types === Any) {
-				inner = "Any";
-			} else if (types instanceof TreeSchema) {
-				// Call back into this with a array to ensure version with array gets named identical to version with single item.
-				return this.list([types]) as TreeSchema<
-					`${TScope}.${string}`,
-					{
-						structFields: {
-							[""]: FieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>;
-						};
-					}
-				>;
-			} else {
-				assert(Array.isArray(types), "Types should be an array");
-				const names = types.map((t): string => {
-					// Ensure that lazy types (functions) don't slip through here.
-					assert(t instanceof TreeSchema, "invalid type provided");
-					// TypeScript should know `t.name` is a string (from the extends constraint on TreeSchema's name), but the linter objects.
-					// @ts-expect-error: Apparently TypeScript also fails to apply this constraint for some reason and is giving any:
-					type _check = requireFalse<isAny<typeof t.name>>;
-					// Adding `as string` here would silence the linter, but make this code less type safe (since if this became not a string, it would still build).
-					// Thus we explicitly check that this satisfies string.
-					// This would best be done by appending `satisfies string`, but the linter also rejects this.
-					// Therefor introducing a variable to do the same thing as `satisfies string` but such that the linter can understand:
-					const name: string = t.name;
-					// Just incase the compiler and linter really are onto something and this might sometimes not be a string, validate it:
-					assert(typeof name === "string", "Name should be a string");
-					return name;
-				});
-				// Ensure name is order independent
-				names.sort();
-				// Ensure name can't have collisions by quoting and escaping any quotes in the names of types.
-				// Using JSON is a simple way to accomplish this.
-				// The outer `[]` around the result are also needed so that a single type name "Any" would not collide with the "any" case above.
-				inner = JSON.stringify(names);
-			}
-			const fullName = `List<${inner}>`;
+			const fullName = structuralName("List", types);
 			return getOrCreate(this.structuralTypes, fullName, () =>
 				this.namedList(fullName, nameOrAllowedTypes as T),
 			) as TreeSchema<
@@ -186,6 +152,72 @@ export class SchemaBuilder<
 		});
 		this.addNodeSchema(schema);
 		return schema;
+	}
+
+	/**
+	 * Define (and add to this library if not already present) a structurally typed {@link TreeSchema} for a {@link MapNode}.
+	 *
+	 * @remarks
+	 * The {@link TreeSchemaIdentifier} for this Map is defined as a function of the provided types.
+	 * It is still scoped to this SchemaBuilder, but multiple calls with the same arguments will return the same schema object, providing somewhat structural typing.
+	 * This does not support recursive types.
+	 *
+	 * If using these structurally named maps, other types in this schema builder should avoid names of the form `Map<${string}>`.
+	 *
+	 * @privateRemarks
+	 * See note on list.
+	 */
+	public override map<const T extends TreeSchema | Any | readonly TreeSchema[]>(
+		allowedTypes: T,
+	): TreeSchema<
+		`${TScope}.Map<${string}>`,
+		{
+			mapFields: NormalizeField<T, typeof FieldKinds.optional>;
+		}
+	>;
+
+	/**
+	 * Define (and add to this library) a {@link TreeSchema} for a {@link MapNode}.
+	 */
+	public override map<Name extends TName, const T extends MapFieldSchema | ImplicitAllowedTypes>(
+		name: Name,
+		fieldSchema: T,
+	): TreeSchema<
+		`${TScope}.${Name}`,
+		{ mapFields: NormalizeField<T, typeof FieldKinds.optional> }
+	>;
+
+	public override map<const T extends MapFieldSchema | ImplicitAllowedTypes>(
+		nameOrAllowedTypes: TName | ((T & TreeSchema) | Any | readonly TreeSchema[]),
+		allowedTypes?: T,
+	): TreeSchema<
+		`${TScope}.${string}`,
+		{
+			mapFields: NormalizeField<T, typeof FieldKinds.optional>;
+		}
+	> {
+		if (allowedTypes === undefined) {
+			const types = nameOrAllowedTypes as (T & TreeSchema) | Any | readonly TreeSchema[];
+			const fullName = structuralName("Map", types);
+			return getOrCreate(
+				this.structuralTypes,
+				fullName,
+				() =>
+					super.map(
+						fullName as TName,
+						normalizeField(nameOrAllowedTypes as T, FieldKinds.optional),
+					) as TreeSchema,
+			) as TreeSchema<
+				`${TScope}.${string}`,
+				{
+					mapFields: NormalizeField<T, typeof FieldKinds.optional>;
+				}
+			>;
+		}
+		return super.map(
+			nameOrAllowedTypes as TName,
+			normalizeField(allowedTypes, FieldKinds.optional),
+		);
 	}
 
 	/**
@@ -280,4 +312,40 @@ function fieldHelper<Kind extends FieldKind>(kind: Kind) {
 	return <const T extends ImplicitAllowedTypes>(
 		allowedTypes: T,
 	): FieldSchema<Kind, NormalizeAllowedTypes<T>> => SchemaBuilder.field(kind, allowedTypes);
+}
+
+export function structuralName<const T extends string>(
+	collectionName: T,
+	allowedTypes: TreeSchema | Any | readonly TreeSchema[],
+): `${T}<${string}>` {
+	let inner: string;
+	if (allowedTypes === Any) {
+		inner = "Any";
+	} else if (allowedTypes instanceof TreeSchema) {
+		return structuralName(collectionName, [allowedTypes]);
+	} else {
+		assert(Array.isArray(allowedTypes), "Types should be an array");
+		const names = allowedTypes.map((t): string => {
+			// Ensure that lazy types (functions) don't slip through here.
+			assert(t instanceof TreeSchema, "invalid type provided");
+			// TypeScript should know `t.name` is a string (from the extends constraint on TreeSchema's name), but the linter objects.
+			// @ts-expect-error: Apparently TypeScript also fails to apply this constraint for some reason and is giving any:
+			type _check = requireFalse<isAny<typeof t.name>>;
+			// Adding `as string` here would silence the linter, but make this code less type safe (since if this became not a string, it would still build).
+			// Thus we explicitly check that this satisfies string.
+			// This would best be done by appending `satisfies string`, but the linter also rejects this.
+			// Therefor introducing a variable to do the same thing as `satisfies string` but such that the linter can understand:
+			const name: string = t.name;
+			// Just incase the compiler and linter really are onto something and this might sometimes not be a string, validate it:
+			assert(typeof name === "string", "Name should be a string");
+			return name;
+		});
+		// Ensure name is order independent
+		names.sort();
+		// Ensure name can't have collisions by quoting and escaping any quotes in the names of types.
+		// Using JSON is a simple way to accomplish this.
+		// The outer `[]` around the result are also needed so that a single type name "Any" would not collide with the "any" case above.
+		inner = JSON.stringify(names);
+	}
+	return `${collectionName}<${inner}>`;
 }
