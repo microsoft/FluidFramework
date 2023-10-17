@@ -8,10 +8,12 @@ import { strict as assert } from "assert";
 import {
 	FlexListToNonLazyArray,
 	FlexListToLazyArray,
-	normalizeFlexList,
+	normalizeFlexListLazy,
 	LazyItem,
 	ArrayHasFixedLength,
 	normalizeFlexListEager,
+	markEager,
+	FlexList,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../../feature-libraries/typed-schema/flexList";
@@ -76,17 +78,25 @@ import { requireAssignableTo, requireFalse, requireTrue } from "../../../util";
 }
 
 describe("FlexList", () => {
-	it("normalizeFlexList", () => {
+	it("correctly normalizes lists to be lazy", () => {
 		const list = [2, (): 1 => 1] as const;
-		const normalized = normalizeFlexList(list);
+		const normalized = normalizeFlexListLazy(list);
 		assert(normalized.length === 2);
 		const data = normalized.map((f) => f());
 		assert.deepEqual(data, [2, 1]);
 	});
 
-	it("normalizeFlexListEager", () => {
+	it("correctly normalizes lists to be eager", () => {
 		const list = [2, (): 1 => 1] as const;
 		const normalized: readonly [2, 1] = normalizeFlexListEager(list);
 		assert.deepEqual(normalized, [2, 1]);
+	});
+
+	it("can mark functions as eager", () => {
+		const eagerGenerator = markEager(() => 42);
+		const lazyGenerator = () => () => 42;
+		const list: FlexList<() => number> = [eagerGenerator, lazyGenerator];
+		normalizeFlexListEager(list).forEach((g) => assert.equal(g(), 42));
+		normalizeFlexListLazy(list).forEach((g) => assert.equal(g()(), 42));
 	});
 });
