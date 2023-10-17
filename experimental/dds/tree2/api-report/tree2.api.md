@@ -1435,6 +1435,9 @@ export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;
 export type NewFieldContent = ITreeCursorSynchronous | readonly ITreeCursorSynchronous[] | ContextuallyTypedFieldData;
 
 // @alpha
+export function node(owner: SharedTreeNode): Required<SharedTreeNode>[typeof nodeSym];
+
+// @alpha
 export interface NodeData {
     readonly type: TreeSchemaIdentifier;
     value?: TreeValue;
@@ -1983,24 +1986,32 @@ export class SharedTreeFactory implements IChannelFactory {
 }
 
 // @alpha
-export interface SharedTreeList<TTypes extends AllowedTypes, API extends "javaScript" | "sharedTree" = "sharedTree"> extends ReadonlyArray<ProxyNodeUnion<TTypes, API>> {
+export type SharedTreeList<TTypes extends AllowedTypes, API extends "javaScript" | "sharedTree" = "sharedTree"> = readonly ProxyNodeUnion<TTypes, API>[] & SharedTreeNode & {
     insertAt(index: number, value: Iterable<FlexibleNodeContent<TTypes>>): void;
-    insertAtEnd(value: Iterable<FlexibleNodeContent<TTypes>>): void;
     insertAtStart(value: Iterable<FlexibleNodeContent<TTypes>>): void;
+    insertAtEnd(value: Iterable<FlexibleNodeContent<TTypes>>): void;
+    removeAt(index: number): void;
+    removeRange(start?: number, end?: number): void;
+    moveToStart(sourceStart: number, sourceEnd: number): void;
+    moveToStart<TTypesSource extends AllowedTypes>(sourceStart: number, sourceEnd: number, source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>): void;
     moveToEnd(sourceStart: number, sourceEnd: number): void;
     moveToEnd<TTypesSource extends AllowedTypes>(sourceStart: number, sourceEnd: number, source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>): void;
     moveToIndex(index: number, sourceStart: number, sourceEnd: number): void;
-    moveToStart(sourceStart: number, sourceEnd: number): void;
-    moveToStart<TTypesSource extends AllowedTypes>(sourceStart: number, sourceEnd: number, source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>): void;
-    removeAt(index: number): void;
-    removeRange(start?: number, end?: number): void;
+};
+
+// @alpha
+export type SharedTreeMap<TSchema extends MapSchema> = Map<string, ProxyNode<TSchema>> & SharedTreeNode;
+
+// @alpha
+export interface SharedTreeNode {
+    // (undocumented)
+    [nodeSym]?: {
+        on<K extends keyof EditableTreeEvents>(eventName: K, listener: EditableTreeEvents[K]): () => void;
+    };
 }
 
 // @alpha
-export type SharedTreeMap<TSchema extends MapSchema> = Map<string, ProxyNode<TSchema>>;
-
-// @alpha
-export type SharedTreeObject<TSchema extends StructSchema, API extends "javaScript" | "sharedTree" = "sharedTree"> = ObjectFields<TSchema["structFieldsObject"], API>;
+export type SharedTreeObject<TSchema extends StructSchema, API extends "javaScript" | "sharedTree" = "sharedTree"> = ObjectFields<TSchema["structFieldsObject"], API> & SharedTreeNode;
 
 // @alpha (undocumented)
 export interface SharedTreeOptions extends Partial<ICodecOptions> {

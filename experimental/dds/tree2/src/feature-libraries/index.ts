@@ -268,6 +268,8 @@ export {
 	SharedTreeObject,
 	is,
 	ProxyRoot,
+	node,
+	SharedTreeNode,
 	Typed,
 } from "./editable-tree-2";
 

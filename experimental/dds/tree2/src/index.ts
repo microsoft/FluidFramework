@@ -279,6 +279,8 @@ export {
 	SharedTreeMap,
 	SharedTreeObject,
 	is,
+	node,
+	SharedTreeNode,
 	Typed,
 } from "./feature-libraries";
 

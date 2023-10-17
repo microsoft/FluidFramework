@@ -91,7 +91,7 @@ function testObjectLike(testCases: TestCase[]) {
 			});
 		});
 
-		// Enumerates keys configured as 'enumerable: true' (both own and inherited.)
+		// Ensure that the JSON.stringify() produces the same output for the proxy and the original.
 		describe("JSON.stringify()", () => {
 			test1((subject) => JSON.stringify(subject));
 		});
