@@ -3,20 +3,22 @@
  * Licensed under the MIT License.
  */
 
-/** Used by `markEager`and `isMarkedEager` */
+/** @remarks Used by `markEager`and `isMarkedEager`. */
 const flexListEager = Symbol("FlexList Eager");
 
 /** Mark the given object as an "eager" item in a `FlexList`, regardless of its type. */
 export function markEager<T>(t: T): T {
-	return Object.defineProperty(t, flexListEager, {
-		value: true,
-		configurable: true,
-		enumerable: false,
-		writable: false,
-	});
+	return isLazy(t)
+		? Object.defineProperty(t, flexListEager, {
+				value: true,
+				configurable: true,
+				enumerable: false,
+				writable: false,
+		  })
+		: t;
 }
 
-/** Check if the given object has been marked "eager" via `markEager` */
+/** Check if the given object has been marked "eager" via `markEager`. */
 function isMarkedEager(x: unknown): x is { [flexListEager]: true } {
 	return (x as { [flexListEager]?: boolean })[flexListEager] ?? false;
 }
@@ -41,7 +43,7 @@ export function normalizeFlexListLazy<List extends FlexList>(t: List): FlexListT
 		if (isMarkedEager(value)) {
 			return () => value;
 		}
-		if (typeof value === "function") {
+		if (isLazy(value)) {
 			return value;
 		}
 		return () => value;
@@ -58,12 +60,16 @@ export function normalizeFlexListEager<List extends FlexList>(
 		if (isMarkedEager(value)) {
 			return value;
 		}
-		if (typeof value === "function") {
-			return value() as unknown;
+		if (isLazy(value)) {
+			return value();
 		}
 		return value;
 	});
 	return data as FlexListToNonLazyArray<List>;
+}
+
+function isLazy<Item>(x: LazyItem<Item>): x is () => Item {
+	return typeof x === "function";
 }
 
 /**
