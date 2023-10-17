@@ -161,6 +161,9 @@ module.exports = {
 			],
 			// This handler will be rolled out slowly, so excluding most packages here while we roll it out.
 			"npm-package-exports-field": [
+				// We deliberately improperly import from deep in the package tree while we migrate everything into other
+				// packages. This is temporary and can be fixed once the build-tools/build-cli pigration is complete.
+				"^build-tools/packages/build-tools/package.json",
 				"^common/",
 				"^examples/",
 				"^experimental/",
