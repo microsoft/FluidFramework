@@ -31,6 +31,7 @@ type InventoryItemNode = Typed<typeof inventoryItem>;
 // REV: Building this up as a series of builder invocations makes it hard to read the schema.
 // Would be nice if instead we could define some single big Serializable or similar that laid the
 // schema out and then pass that in.
+// TODO: Convert this to use builder.list() rather than builder.sequence when ready.
 const inventory = builder.struct("Contoso:Inventory-1.0.0", {
 	inventoryItems: builder.sequence(inventoryItem),
 });
