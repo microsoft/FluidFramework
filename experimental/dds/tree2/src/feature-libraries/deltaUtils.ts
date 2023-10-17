@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/core-utils";
-import { Delta, FieldKey, isSkipMark } from "../core";
+import { Delta, FieldKey } from "../core";
 import { Mutable } from "../util";
 
 /**
@@ -17,13 +16,52 @@ import { Mutable } from "../util";
  * @param fields - The Map of fields to convert. Not mutated.
  * @param func - The functions used to map tree content.
  */
-export function mapFieldMarks<TIn, TOut>(
-	fields: Delta.FieldMarks<TIn>,
+export function mapFieldsChanges<TIn, TOut>(
+	fields: Delta.FieldsChanges<TIn>,
 	func: (tree: TIn) => TOut,
-): Delta.FieldMarks<TOut> {
-	const out: Map<FieldKey, Delta.MarkList<TOut>> = new Map();
+): Delta.FieldsChanges<TOut> {
+	const out: Map<FieldKey, Delta.FieldChanges<TOut>> = new Map();
 	for (const [k, v] of fields) {
-		out.set(k, mapMarkList(v, func));
+		out.set(k, mapFieldChanges(v, func));
+	}
+	return out;
+}
+
+/**
+ * Converts a `Delta.FieldChanges` whose tree content is represented with by `TIn` instances
+ * into a `Delta.FieldChanges`whose tree content is represented with by `TOut` instances.
+ *
+ * This function is useful for converting `Delta`s that represent tree content with cursors
+ * into `Delta`s that represent tree content with a deep-comparable representation of the content.
+ * See {@link assertMarkListEqual}.
+ * @param fieldChanges - The instance to convert. Not mutated.
+ * @param func - The functions used to map tree content.
+ */
+export function mapFieldChanges<TIn, TOut>(
+	fieldChanges: Delta.FieldChanges<TIn>,
+	func: (tree: TIn) => TOut,
+): Delta.FieldChanges<TOut> {
+	const out: Mutable<Delta.FieldChanges<TOut>> = {};
+	if (fieldChanges.attached !== undefined) {
+		out.attached = mapMarkList(fieldChanges.attached, func);
+	}
+	if (fieldChanges.detached !== undefined) {
+		out.detached = fieldChanges.detached.map(({ id, fields }) => ({
+			id,
+			fields: mapFieldsChanges(fields, func),
+		}));
+	}
+	if (fieldChanges.build !== undefined) {
+		out.build = fieldChanges.build.map(({ id, trees }) => ({
+			id,
+			trees: trees.map(func),
+		}));
+	}
+	if (fieldChanges.relocate !== undefined) {
+		out.relocate = fieldChanges.relocate;
+	}
+	if (fieldChanges.destroy !== undefined) {
+		out.destroy = fieldChanges.destroy;
 	}
 	return out;
 }
@@ -59,75 +97,15 @@ export function mapMark<TIn, TOut>(
 	mark: Delta.Mark<TIn>,
 	func: (tree: TIn) => TOut,
 ): Delta.Mark<TOut> {
-	if (isSkipMark(mark)) {
-		return mark;
-	}
-	const type = mark.type;
-	switch (type) {
-		case Delta.MarkType.Insert:
-			return {
-				...(mark as unknown as Delta.Insert<TOut>),
-				...mapModifications(mark, func),
-				...mapOldContent(mark, func),
-				content: mark.content.map(func),
-			};
-		case Delta.MarkType.Restore: {
-			return {
-				...(mark as unknown as Delta.Restore<TOut>),
-				...mapModifications(mark, func),
-				...mapOldContent(mark, func),
-			};
-		}
-		case Delta.MarkType.Modify:
-		case Delta.MarkType.Remove:
-		case Delta.MarkType.MoveOut:
-			return {
-				...(mark as unknown as Exclude<Delta.Mark<TOut>, Delta.Skip>),
-				...mapModifications(mark, func),
-			};
-		case Delta.MarkType.MoveIn: {
-			return { ...mark };
-		}
-		default:
-			unreachableCase(type);
-	}
-}
-
-type OldContent<T> = Mutable<(Delta.Insert<T> | Delta.Restore<T>)["oldContent"]>;
-interface HasOldContent<T> {
-	oldContent?: OldContent<T>;
-}
-
-function mapOldContent<TIn, TOut>(
-	input: HasOldContent<TIn>,
-	func: (tree: TIn) => TOut,
-): HasOldContent<TOut> {
-	const hasOldContent: HasOldContent<TOut> = {};
-	if (input.oldContent !== undefined) {
-		hasOldContent.oldContent = { detachId: input.oldContent.detachId };
-		if (input.oldContent.fields !== undefined) {
-			hasOldContent.oldContent.fields = mapFieldMarks(input.oldContent.fields, func);
-		}
-	}
-	return hasOldContent;
-}
-
-function mapModifications<TIn, TOut>(
-	mark: Delta.HasModifications<TIn>,
-	func: (tree: TIn) => TOut,
-): Delta.HasModifications<TOut> {
-	const out: Mutable<Delta.HasModifications<TOut>> = {};
+	const out: Mutable<Delta.Mark<TOut>> = { count: mark.count };
 	if (mark.fields !== undefined) {
-		out.fields = mapFieldMarks(mark.fields, func);
+		out.fields = mapFieldsChanges(mark.fields, func);
+	}
+	if (mark.detach !== undefined) {
+		out.detach = mark.detach;
+	}
+	if (mark.attach !== undefined) {
+		out.attach = mark.attach;
 	}
 	return out;
-}
-
-export function populateChildModifications(
-	modifications: Delta.HasModifications,
-	deltaMark: Mutable<Delta.HasModifications>,
-): void {
-	if (modifications.fields !== undefined) {
-		deltaMark.fields = modifications.fields;
-	}
 }

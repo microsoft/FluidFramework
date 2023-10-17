@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { unreachableCase } from "@fluidframework/core-utils";
 import { LocalServerTestDriver } from "@fluid-internal/test-drivers";
 import { IContainer } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
@@ -53,7 +52,7 @@ import {
 	FieldSchema,
 	jsonableTreeFromCursor,
 	makeSchemaCodec,
-	mapFieldMarks,
+	mapFieldsChanges,
 	mapMarkList,
 	mapTreeFromCursor,
 	nodeKeyFieldKey as nodeKeyFieldKeyDefault,
@@ -440,42 +439,16 @@ export function spyOnMethod(
 /**
  * @returns `true` iff the given delta has a visible impact on the document tree.
  */
-export function isDeltaVisible(delta: Delta.MarkList): boolean {
-	for (const mark of delta) {
-		if (typeof mark === "object") {
-			const type = mark.type;
-			switch (type) {
-				case Delta.MarkType.Modify: {
-					if (Object.prototype.hasOwnProperty.call(mark, "setValue")) {
-						return true;
-					}
-					if (mark.fields !== undefined) {
-						for (const field of mark.fields.values()) {
-							if (isDeltaVisible(field)) {
-								return true;
-							}
-						}
-					}
-					break;
-				}
-				case Delta.MarkType.Restore: {
-					if (mark.newContent.detachId === undefined || mark.oldContent !== undefined) {
-						return true;
-					}
-					break;
-				}
-				case Delta.MarkType.Insert: {
-					if (mark.detachId === undefined) {
-						return true;
-					}
-					break;
-				}
-				case Delta.MarkType.MoveOut:
-				case Delta.MarkType.MoveIn:
-				case Delta.MarkType.Remove:
+export function isDeltaVisible(delta: Delta.FieldChanges): boolean {
+	for (const mark of delta.attached ?? []) {
+		if (mark.attach !== undefined || mark.detach !== undefined) {
+			return true;
+		}
+		if (mark.fields !== undefined) {
+			for (const field of mark.fields.values()) {
+				if (isDeltaVisible(field)) {
 					return true;
-				default:
-					unreachableCase(type);
+				}
 			}
 		}
 	}
@@ -494,9 +467,9 @@ export function assertMarkListEqual(a: Delta.MarkList, b: Delta.MarkList): void 
 /**
  * Assert two Delta are equal, handling cursors.
  */
-export function assertDeltaEqual(a: Delta.FieldMarks, b: Delta.FieldMarks): void {
-	const aTree = mapFieldMarks(a, mapTreeFromCursor);
-	const bTree = mapFieldMarks(b, mapTreeFromCursor);
+export function assertDeltaEqual(a: Delta.FieldsChanges, b: Delta.FieldsChanges): void {
+	const aTree = mapFieldsChanges(a, mapTreeFromCursor);
+	const bTree = mapFieldsChanges(b, mapTreeFromCursor);
 	assert.deepStrictEqual(aTree, bTree);
 }
 

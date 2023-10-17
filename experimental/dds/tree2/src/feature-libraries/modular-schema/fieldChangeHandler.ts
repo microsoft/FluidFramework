@@ -26,7 +26,7 @@ export interface FieldChangeHandler<
 		change: TaggedChange<TChangeset>,
 		deltaFromChild: ToDelta,
 		idAllocator: MemoizedIdRangeAllocator,
-	): Delta.MarkList;
+	): Delta.FieldChanges;
 
 	/**
 	 * Returns whether this change is empty, meaning that it represents no modifications to the field
@@ -152,7 +152,7 @@ export interface FieldEditor<TChangeset> {
  * The `index` should be `undefined` iff the child node does not exist in the input context (e.g., an inserted node).
  * @alpha
  */
-export type ToDelta = (child: NodeChangeset) => Delta.Modify;
+export type ToDelta = (child: NodeChangeset) => Delta.FieldsChanges;
 
 /**
  * @alpha

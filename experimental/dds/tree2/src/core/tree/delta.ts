@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { Brand, Opaque } from "../../util";
 import { FieldKey } from "../schema-stored";
 import { ITreeCursorSynchronous } from "./cursor";
 
@@ -33,10 +32,6 @@ import { ITreeCursorSynchronous } from "./cursor";
  * of operation on any kind of field.
  * This means all such operations must be expressible in terms of this format.
  *
- * Future work:
- * - Define where and how field-specific and operation-specific metadata is meant to be represented.
- * - Add a move table to describe the src and dst paths of move operations.
- *
  * Within the above design constrains, this format is designed with the following goals in mind:
  *
  * 1. Make it easy to walk both a document tree and the delta tree to apply the changes described in the delta
@@ -60,69 +55,13 @@ import { ITreeCursorSynchronous } from "./cursor";
  * - maintain a pointer within each such linear structure and advance them in lock-step (like in a k-way merge-sort but
  * more fiddly because of the offsets).
  *
- * The drawback of this design choice is that it relies heavily on polymorphism:
- * for each mark encountered a reader has to check which kind of mark it is.
- * This is a source of code and time complexity in the reader code and adds a memory overhead to the format since each
- * mark has to carry a tag field to announce what kind of mark it is.
+ * 2. Nested changes are not inlined within `ProtoNode`s.
  *
- * 2. `MoveIn` marks in inserted portions of the document are inlined in their corresponding `ProtoField`.
- *
- * If the MoveIn marks were represented in a separate sub-structure (like they are under moved-in portions of the tree)
- * then the representation would forced to describe the path to them (in the form field keys and field offsets) from
- * the root of the inserted portion of the tree.
- * This would have two adverse effects:
- * - It would make the format less terse since this same path information would be redundant (it is already included in
- * the ProtoTree).
- * - It would lead the consumer of the format first build the inserted subtree, then traverse it again from its root to
- * apply the relevant `MoveIn` marks.
- *
- *
- * 3. Modifications of deleted and moved-out nodes are represented using modify marks within `Delete` and `MoveOut`
- * marks.
- * This is in opposition to a structure where the fact that a modified node is being deleted or moved-out would
- * be represented a `Modify` mark like so:
- * ```typescript
- * interface ModifyAndDelete {
- *   type: typeof MarkType.ModifyAndDelete;
- *   fields: FieldMap<PositionedMarks<ModifyDeleted | MoveOut>>;
- * }
- * interface ModifyAndMoveOut {
- *   type: typeof MarkType.ModifyAndMoveOut;
- *   moveId: MoveId;
- *   fields: FieldMap<PositionedMarks<ModifyMovedOut | MoveOut>>;
- * }
- * export interface Delete {
- *   type: typeof MarkType.Delete;
- *   count: number;
- * }
- * export interface MoveOut {
- *   type: typeof MarkType.MoveOut;
- *   count: number;
- *   moveId: MoveId;
- * }
- * ```
- * Note the absence of modify information in `Delete` and `MoveOut` above.
- *
- * The benefit of the chosen representation over the alternative are two-fold:
- * - It leads to less splitting of moved and deleted ranges of nodes.
- * - It makes the format more uniform since modifications to moved-in subtrees must be represented with modifications
- * marks within a `MoveIn` mark.
- *
- * 4. `MoveIn` marks are represented in the location where the content being moved resides in the input context that
- * the delta is applied to, and `MoveOut` marks are represented in the location where the content being moved should
- * reside after the delta is applied.
- *
- * The alternative would be to allow such marks to appear in temporary locations (e.g., in field "bar" for a
- * transaction that moves content from "foo" to "bar" then moves that same content from "bar" to "baz").
- * This makes the format less terse and harder to reason about.
- *
- * 5. MoveIn marks are not inlined within `ProtoField`s.
- *
- * Inlining them would force the consuming code to detect `MoveIn` marks within the `ProtoField` and handle them
- * within the context of the insert.
- * This would be cumbersome because either the code that is responsible for consuming the `ProtoField` would need to
- * be aware of and have the context to handle `MoveIn`, or some caller of that code would need to find and extract such
- * `MoveIn` marks ahead to calling that code.
+ * Inlining them would force the consuming code to detect such changes within the `ProtoNode` and handle them
+ * within the context of the content creation.
+ * This would be cumbersome because either the code that is responsible for consuming the `ProtoNode` would need to
+ * be aware of and have the context to handle such changes, or some caller of that code would need to find and extract such
+ * change information ahead to calling that code.
  */
 
 /**
@@ -130,18 +69,7 @@ import { ITreeCursorSynchronous } from "./cursor";
  * Immutable, therefore safe to retain for async processing.
  * @alpha
  */
-export type Root<TTree = ProtoNode> = FieldMarks<TTree>;
-
-/**
- * A Delta mark that targets detached content.
- * @alpha
- */
-export interface IsDetachedMark {
-	/**
-	 * When specified, indicates that the target node(s) are detached, and specifies the ID associated with the first node.
-	 */
-	readonly detachedNodeId: DetachedNodeId;
-}
+export type Root<TTree = ProtoNode> = FieldsChanges<TTree>;
 
 /**
  * The default representation for inserted content.
@@ -170,189 +98,35 @@ export type ProtoNodes = readonly ProtoNode[];
  * Represents a change being made to a part of the tree.
  * @alpha
  */
-export type Mark<TTree = ProtoNode> =
-	| Skip
-	| Modify<TTree>
-	| Remove<TTree>
-	| Restore<TTree>
-	| MoveOut<TTree>
-	| MoveIn
-	| Insert<TTree>;
+export interface Mark<TTree = ProtoNode> {
+	/**
+	 * The number of nodes affected.
+	 * Must be 1 when `fields` is populated.
+	 */
+	readonly count: number;
+	/**
+	 * Modifications to the pre-existing content.
+	 */
+	readonly fields?: FieldsChanges<TTree>;
+
+	/**
+	 * When set, indicates that some pre-existing content is being detached and sent to the given detached field.
+	 */
+	readonly detach?: DetachedNodeId;
+
+	/**
+	 * When set, indicates that some content is being attached from the given detached field.
+	 */
+	readonly attach?: DetachedNodeId;
+}
 
 /**
  * Represents a list of changes to some range of nodes. The index of each mark within the range of nodes, before
  * applying any of the changes, is not represented explicitly.
- * It corresponds to the sum of `inputLength(mark)` for all previous marks.
+ * It corresponds to the sum of `mark.count` values for all previous marks.
  * @alpha
  */
 export type MarkList<TTree = ProtoNode> = readonly Mark<TTree>[];
-
-/**
- * Represents a range of contiguous nodes that is unaffected by changes.
- * The value represents the length of the range.
- * @alpha
- */
-export type Skip = number;
-
-/**
- * Describes modifications made to a subtree.
- * @alpha
- */
-export interface HasModifications<TTree = ProtoNode> {
-	readonly fields?: FieldMarks<TTree>;
-}
-
-/**
- * Describes existing content that is replaced.
- * @alpha
- */
-export interface CanReplaceContent<TTree = ProtoNode> {
-	readonly oldContent?: OldContent<TTree>;
-}
-
-/**
- * Describes modifications made to an otherwise untouched subtree.
- * @alpha
- */
-export interface Modify<TTree = ProtoNode>
-	extends HasModifications<TTree>,
-		Partial<IsDetachedMark> {
-	readonly type: typeof MarkType.Modify;
-	readonly count?: never;
-}
-
-/**
- * Describes the removal of a contiguous range of nodes.
- * @alpha
- */
-export interface Remove<TTree = ProtoNode> extends HasModifications<TTree> {
-	readonly type: typeof MarkType.Remove;
-	/**
-	 * Must be 1 when `fields` is populated.
-	 */
-	readonly count: number;
-	/**
-	 * The ID assigned to the first node being removed.
-	 * Subsequent nodes should be assigned incrementing IDs.
-	 */
-	readonly detachId: DetachedNodeId;
-}
-
-/**
- * Describes the moving out of a contiguous range of node.
- * @alpha
- */
-export interface MoveOut<TTree = ProtoNode>
-	extends HasModifications<TTree>,
-		Partial<IsDetachedMark> {
-	readonly type: typeof MarkType.MoveOut;
-	/**
-	 * Must be 1 when `fields` is populated.
-	 */
-	readonly count: number;
-	/**
-	 * The delta should carry exactly one `MoveIn` mark with the same move ID.
-	 */
-	readonly moveId: MoveId;
-}
-
-/**
- * Describes the moving in of a contiguous range of node.
- * @alpha
- */
-export interface MoveIn {
-	readonly type: typeof MarkType.MoveIn;
-	readonly count: number;
-	/**
-	 * The delta should carry exactly one `MoveOut` mark with the same move ID.
-	 */
-	readonly moveId: MoveId;
-
-	/**
-	 * The ID to assign the first node being replaced.
-	 * Subsequent replaced nodes should be assigned incrementing IDs.
-	 * Populated iff the insertion is transient.
-	 */
-	readonly detachId?: DetachedNodeId;
-}
-
-/**
- * When set, indicates that the inserted content is replacing some existing content.
- * @alpha
- */
-export interface OldContent<TTree = ProtoNode> {
-	/**
-	 * Modifications to the old content.
-	 */
-	readonly fields?: FieldMarks<TTree>;
-	/**
-	 * The ID to assign the first node being replaced.
-	 * Subsequent replaced nodes should be assigned incrementing IDs.
-	 */
-	readonly detachId: DetachedNodeId;
-}
-
-/**
- * Describes the insertion of a contiguous range of node.
- * @alpha
- */
-export interface Insert<TTree = ProtoNode>
-	extends HasModifications<TTree>,
-		CanReplaceContent<TTree> {
-	readonly type: typeof MarkType.Insert;
-
-	// TODO: use a single cursor with multiple nodes instead of array of cursors.
-	/**
-	 * Must be of length 1 when `fields` is populated.
-	 */
-	readonly content: readonly TTree[];
-
-	/**
-	 * The ID to assign the first node being replaced.
-	 * Subsequent replaced nodes should be assigned incrementing IDs.
-	 * Populated iff the insertion is transient.
-	 */
-	readonly detachId?: DetachedNodeId;
-}
-
-/**
- * Describes the restoration of a contiguous range of node.
- * @alpha
- */
-export interface Restore<TTree = ProtoNode> extends CanReplaceContent<TTree> {
-	readonly type: typeof MarkType.Restore;
-	/**
-	 * Must be 1 when `fields` is populated.
-	 */
-	readonly count: number;
-
-	readonly newContent: {
-		/**
-		 * The ID assigned to the first node being restored.
-		 * Subsequent nodes should be assigned incrementing IDs.
-		 */
-		readonly restoreId: DetachedNodeId;
-
-		/**
-		 * The ID to assign the first node being replaced.
-		 * Subsequent replaced nodes should be assigned incrementing IDs.
-		 * Populated iff the restoration is transient.
-		 */
-		readonly detachId?: DetachedNodeId;
-	};
-
-	/**
-	 * Modifications to the new content.
-	 */
-	readonly fields?: FieldMarks<TTree>;
-}
-
-/**
- * Uniquely identifies a node in the scope of a delta.
- * Often accompanied with a count that indicates a set of nodes whose IDs are contiguous.
- * @alpha
- */
-export interface MoveId extends Opaque<Brand<number, "delta.MoveId">> {}
 
 /**
  * A globally unique ID for a node in a detached field.
@@ -371,16 +145,61 @@ export type FieldMap<T> = ReadonlyMap<FieldKey, T>;
 /**
  * @alpha
  */
-export type FieldMarks<TTree = ProtoNode> = FieldMap<MarkList<TTree>>;
+export type FieldsChanges<TTree = ProtoNode> = FieldMap<FieldChanges<TTree>>;
 
-/**
- * @alpha
- */
-export const MarkType = {
-	Modify: 0,
-	Insert: 1,
-	MoveIn: 2,
-	Remove: 3,
-	MoveOut: 4,
-	Restore: 5,
-} as const;
+export interface FieldChanges<TTree = ProtoNode> {
+	readonly attached?: MarkList<TTree>;
+	readonly detached?: {
+		readonly id: DetachedNodeId;
+		readonly fields: FieldsChanges<TTree>;
+	}[];
+	readonly build?: {
+		readonly id: DetachedNodeId | undefined;
+		readonly trees: TTree[];
+	}[];
+	readonly relocate?: {
+		readonly id: DetachedNodeId;
+		readonly count: number;
+		readonly destination: DetachedNodeId;
+	}[];
+	readonly destroy?: {
+		readonly id: DetachedNodeId;
+		readonly count: number;
+	}[];
+}
+
+// const concurBuild: DetachedNodeId = { minor: 0 };
+// const concurSet: DetachedNodeId = { minor: 1 };
+// const local: DetachedNodeId = { minor: 2 };
+
+// const moveId: DetachedNodeId = { minor: 0 };
+// const delId: DetachedNodeId = { minor: 1 };
+
+// const moveAndDelChange: FieldChanges = {
+// 	attached: [{ count: 1, detach: moveId }],
+// 	relocate: [{
+// 		id: moveId,
+// 		count: 1,
+// 		destination: delId,
+// 	}],
+// };
+
+// const optFieldChange: FieldChanges = {
+// 	build: [{ id: concurBuild, tree: [] }],
+// 	relocate: [
+// 		{
+// 			id: local,
+// 			count: 1,
+// 			destination: concurSet,
+// 		},
+// 		{
+// 			id: concurBuild,
+// 			count: 1,
+// 			destination: local,
+// 		},
+// 	],
+// };
+
+// const delta: Root = new Map([
+// 	["root", optFieldChange];
+// ]);

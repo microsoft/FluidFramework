@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { Delta, FieldKey, MapTree, TreeSchemaIdentifier } from "../../core";
-import { mapFieldMarks, mapTreeFromCursor, singleMapTreeCursor } from "../../feature-libraries";
+import { mapFieldsChanges, mapTreeFromCursor, singleMapTreeCursor } from "../../feature-libraries";
 import { brand, brandOpaque } from "../../util";
 import { deepFreeze } from "../utils";
 
@@ -65,7 +65,7 @@ describe("DeltaUtils", () => {
 				],
 			]);
 			deepFreeze(input);
-			const actual = mapFieldMarks(input, mapTreeFromCursor);
+			const actual = mapFieldsChanges(input, mapTreeFromCursor);
 			const nestedMapTreeInsert = new Map([
 				[
 					fooField,

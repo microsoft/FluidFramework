@@ -44,10 +44,10 @@ export function visitDelta(
 	visitor: DeltaVisitor,
 	detachedFieldIndex: DetachedFieldIndex,
 ): void {
-	const modsToMovedTrees: Map<Delta.MoveId, Delta.FieldMarks> = new Map();
+	const modsToMovedTrees: Map<Delta.MoveId, Delta.FieldsChanges> = new Map();
 	const insertToRootId: Map<Delta.Insert, ForestRootId> = new Map();
 	const creations: Set<Delta.Insert> = new Set();
-	const rootChanges: Map<ForestRootId, Delta.FieldMarks> = new Map();
+	const rootChanges: Map<ForestRootId, Delta.FieldsChanges> = new Map();
 	const rootTransfers: RootTransfers = new Map();
 	const detachConfig: PassConfig = {
 		name: "detach",
@@ -207,7 +207,7 @@ interface PassConfig {
 	 * In the attach pass, this is used for:
 	 * - Changes under trees end up as removed as part of this visit (no matter what happened to them during this visit)
 	 */
-	readonly rootChanges: Map<ForestRootId, Delta.FieldMarks>;
+	readonly rootChanges: Map<ForestRootId, Delta.FieldsChanges>;
 	/**
 	 * Represents transfers of roots from one detached field to another.
 	 * In the detach pass, this is used for:
@@ -222,7 +222,7 @@ interface PassConfig {
 	/**
 	 * Stores the nested changes for all moved trees.
 	 */
-	readonly modsToMovedTrees: Map<Delta.MoveId, Delta.FieldMarks>;
+	readonly modsToMovedTrees: Map<Delta.MoveId, Delta.FieldsChanges>;
 	/**
 	 * All creations are made in a detached field and eventually transferred to their final destination.
 	 * This map keeps track of the root ID where creations occur.
@@ -244,7 +244,7 @@ function ensureCreation(mark: Delta.Insert, config: PassConfig): ForestRootId {
 type Pass = (delta: Delta.MarkList, visitor: DeltaVisitor, config: PassConfig) => void;
 
 function visitFieldMarks(
-	fields: Delta.FieldMarks,
+	fields: Delta.FieldsChanges,
 	visitor: DeltaVisitor,
 	config: PassConfig,
 ): void {
@@ -257,7 +257,7 @@ function visitFieldMarks(
 
 function visitNode(
 	index: number,
-	fields: Delta.FieldMarks | undefined,
+	fields: Delta.FieldsChanges | undefined,
 	visitor: DeltaVisitor,
 	config: PassConfig,
 ): void {
@@ -280,7 +280,7 @@ interface Replace {
 		/**
 		 * Modifications to the replaced content.
 		 */
-		readonly fields?: Delta.FieldMarks;
+		readonly fields?: Delta.FieldsChanges;
 	};
 
 	/**
@@ -299,7 +299,7 @@ interface Replace {
 		/**
 		 * Modifications to the new content.
 		 */
-		readonly fields?: Delta.FieldMarks;
+		readonly fields?: Delta.FieldsChanges;
 	};
 }
 
@@ -453,7 +453,7 @@ function asReplaces(
  */
 function catalogDetachPassRootChanges(mark: Exclude<Delta.Mark, number>, config: PassConfig): void {
 	let nodeId: Delta.DetachedNodeId | undefined;
-	let fields: Delta.FieldMarks | undefined;
+	let fields: Delta.FieldsChanges | undefined;
 	switch (mark.type) {
 		case Delta.MarkType.Insert: {
 			if (mark.content.length > 0) {
@@ -499,7 +499,7 @@ function catalogDetachPassRootChanges(mark: Exclude<Delta.Mark, number>, config:
  */
 function catalogAttachPassRootChanges(mark: Exclude<Delta.Mark, number>, config: PassConfig): void {
 	let nodeId: Delta.DetachedNodeId | undefined;
-	let fields: Delta.FieldMarks | undefined;
+	let fields: Delta.FieldsChanges | undefined;
 	switch (mark.type) {
 		case Delta.MarkType.Insert: {
 			if (mark.content.length > 0) {
