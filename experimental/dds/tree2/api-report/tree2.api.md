@@ -496,11 +496,8 @@ export type DetachedRangeUpPath = Brand<Omit<RangeUpPath, "parent">, "DetachedRa
 
 // @alpha
 export interface DocumentSchema<out T extends FieldSchema = FieldSchema> extends SchemaCollection {
-    // (undocumented)
     readonly adapters: Adapters;
-    // (undocumented)
     readonly policy: FullSchemaPolicy;
-    // (undocumented)
     readonly rootFieldSchema: T;
 }
 
@@ -1873,8 +1870,7 @@ export interface SchemaBuilderOptions<TScope extends string = string> {
 }
 
 // @alpha
-export interface SchemaCollection {
-    // (undocumented)
+export interface SchemaCollection extends StoredSchemaCollection {
     readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
 }
 
@@ -1885,7 +1881,6 @@ export interface SchemaConfiguration<TRoot extends FieldSchema = FieldSchema> {
 
 // @alpha
 export interface SchemaData extends StoredSchemaCollection {
-    // (undocumented)
     readonly rootFieldSchema: FieldStoredSchema;
 }
 
@@ -2036,7 +2031,6 @@ export type StableNodeKey = Brand<StableId, "Stable Node Key">;
 
 // @alpha
 export interface StoredSchemaCollection {
-    // (undocumented)
     readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeStoredSchema>;
 }
 

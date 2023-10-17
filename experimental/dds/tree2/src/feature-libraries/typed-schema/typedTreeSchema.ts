@@ -8,6 +8,8 @@ import {
 	Adapters,
 	EmptyKey,
 	FieldKey,
+	SchemaData,
+	StoredSchemaCollection,
 	TreeSchemaIdentifier,
 	TreeTypeSet,
 	ValueSchema,
@@ -476,16 +478,40 @@ export function allowedTypesToTypeSet(t: AllowedTypes): TreeTypeSet {
  */
 
 export interface DocumentSchema<out T extends FieldSchema = FieldSchema> extends SchemaCollection {
+	/**
+	 * Schema for the root field which contains the whole tree.
+	 */
 	readonly rootFieldSchema: T;
+	/**
+	 * Extra configuration for how this schema is handled at runtime.
+	 */
 	readonly policy: FullSchemaPolicy;
+	/**
+	 * Compatibility information how how to interact with content who's stored schema is not directly compatible with this schema.
+	 */
 	readonly adapters: Adapters;
+}
+
+{
+	// It is convenient that DocumentSchema can be used as a SchemaData with no conversion.
+	// This type check ensures this ability is not broken on accident (if it needs to be broken on purpose for some reason thats fine: just delete this check).
+	// Since TypeScript does not allow extending two types with the same field (even if they are compatible),
+	// this check cannot be done by adding an extends clause to DocumentSchema.
+	type _check = requireAssignableTo<DocumentSchema, SchemaData>;
 }
 
 /**
  * Schema data that can be be used to view a document.
  * @alpha
+ *
+ * @privateRemarks
+ * It is convenient that this can be used as a StoredSchemaCollection with no conversion.
+ * There there isn't a design requirement for this however, so this extends clause can be removed later if needed.
  */
 
-export interface SchemaCollection {
+export interface SchemaCollection extends StoredSchemaCollection {
+	/**
+	 * {@inheritdoc SchemaCollection}
+	 */
 	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
 }
