@@ -24,6 +24,7 @@ describe("beforeChange/afterChange events", () => {
 		child: SchemaBuilder.required(myInnerNodeSchema),
 		myString: SchemaBuilder.required(leaf.string),
 		myOptionalNumber: SchemaBuilder.optional(leaf.number),
+		myNumberSequence: SchemaBuilder.sequence(leaf.number),
 	});
 	const schema = builder.toDocumentSchema(SchemaBuilder.field(FieldKinds.required, myNodeSchema));
 	const factory = new TypedTreeFactory({
@@ -38,6 +39,7 @@ describe("beforeChange/afterChange events", () => {
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
+				myNumberSequence: [],
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
@@ -115,6 +117,28 @@ describe("beforeChange/afterChange events", () => {
 
 		assert.strictEqual(rootBeforeChangeCount, 6);
 		assert.strictEqual(rootAfterChangeCount, 6);
+
+		// Insert nodes into a sequence field - myNumberSequence; should fire events on the root node
+		// NOTE: events will fire for each node individually
+		root.myNumberSequence.insertAtStart([0, 1, 2, 3, 4]);
+
+		assert.strictEqual(rootBeforeChangeCount, 11);
+		assert.strictEqual(rootAfterChangeCount, 11);
+
+		// Remove nodes into a sequence field - myNumberSequence; should fire events on the root node
+		// NOTE: events will fire for each node individually
+		root.myNumberSequence.removeRange(3);
+
+		assert.strictEqual(rootBeforeChangeCount, 13);
+		assert.strictEqual(rootAfterChangeCount, 13);
+
+		// Move nodes in a sequence field - myNumberSequence; should fire events on the root node
+		// NOTE: events will fire for each node individually. Also this is a special case where the events are fired twice:
+		// once when detaching the nodes from the source location, and again when attaching them at the target location.
+		root.myNumberSequence.moveToEnd(0, 2);
+
+		assert.strictEqual(rootBeforeChangeCount, 17);
+		assert.strictEqual(rootAfterChangeCount, 17);
 	});
 
 	it("fire in the expected order and always together", () => {
@@ -123,6 +147,7 @@ describe("beforeChange/afterChange events", () => {
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
+				myNumberSequence: [],
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
@@ -148,6 +173,17 @@ describe("beforeChange/afterChange events", () => {
 		root.myOptionalNumber = 3;
 		// Delete a node
 		root.myOptionalNumber = undefined;
+		// Insert nodes in a sequence
+		// NOTE: events will fire for each inserted node (so 5 times)
+		root.myNumberSequence.insertAtStart([0, 1, 2, 3, 4]);
+		// Remove nodes from a sequence
+		// NOTE: events will fire for each removed node (so 2 times)
+		root.myNumberSequence.removeRange(3);
+		// Move nodes within a sequence
+		// NOTE: events will fire for each moved node (so 2 time)
+		// NOTE: this is a special case where the beforeChange/afterChange events are fired twice for each node: once when
+		// detaching it from the source location, and again when attaching it at the target location.
+		root.myNumberSequence.moveToEnd(0, 2);
 		// Other miscellaneous updates
 		root.child.myInnerString = "new string in child";
 		// TODO: update to `root.child = <something>;` once assignment to struct nodes is implemented in EditableTree2
@@ -157,8 +193,8 @@ describe("beforeChange/afterChange events", () => {
 		root.child.myInnerString = "new string in new child";
 
 		// Check the number of events fired is correct (otherwise the assertions in the listeners might not have ran)
-		assert.strictEqual(beforeCounter, 6);
-		assert.strictEqual(afterCounter, 6);
+		assert.strictEqual(beforeCounter, 17);
+		assert.strictEqual(afterCounter, 17);
 	});
 
 	it("listeners can be removed successfully", () => {
@@ -167,6 +203,7 @@ describe("beforeChange/afterChange events", () => {
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
+				myNumberSequence: [],
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
@@ -215,6 +252,7 @@ describe("beforeChange/afterChange events", () => {
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: initialNumber,
+				myNumberSequence: [],
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
@@ -242,6 +280,7 @@ describe("beforeChange/afterChange events", () => {
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
+				myNumberSequence: [],
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
@@ -271,6 +310,7 @@ describe("beforeChange/afterChange events", () => {
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
+				myNumberSequence: [],
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
@@ -292,12 +332,187 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(totalListenerCalls, 2);
 	});
 
+	it("tree is in correct state when events fire - node inserts to sequence fields", () => {
+		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
+		const root = tree.schematize({
+			initialTree: {
+				myString: "initial string",
+				myOptionalNumber: undefined,
+				myNumberSequence: [],
+				child: { myInnerString: "initial string in child" },
+			},
+			schema,
+			allowedSchemaModifications: AllowedUpdateType.None,
+		}).content;
+
+		let totalListenerCalls = 0;
+
+		root.on("beforeChange", (args: unknown) => {
+			totalListenerCalls++;
+			switch (totalListenerCalls) {
+				case 1: {
+					// Before inserting the first node
+					assert.deepEqual(root.myNumberSequence.asArray, []);
+					break;
+				}
+				case 3: {
+					// Before inserting the second node
+					assert.deepEqual(root.myNumberSequence.asArray, [0]);
+					break;
+				}
+				case 5: {
+					// Before inserting the third node
+					assert.deepEqual(root.myNumberSequence.asArray, [0, 1]);
+					break;
+				}
+				// No default
+			}
+		});
+		root.on("afterChange", (args: unknown) => {
+			totalListenerCalls++;
+			switch (totalListenerCalls) {
+				case 2: {
+					// After inserting the first node
+					assert.deepEqual(root.myNumberSequence.asArray, [0]);
+					break;
+				}
+				case 4: {
+					// After inserting the second node
+					assert.deepEqual(root.myNumberSequence.asArray, [0, 1]);
+					break;
+				}
+				case 6: {
+					// After inserting the third node
+					assert.deepEqual(root.myNumberSequence.asArray, [0, 1, 2]);
+					break;
+				}
+				// No default
+			}
+		});
+
+		root.myNumberSequence.insertAtStart([0, 1, 2]);
+		assert.strictEqual(totalListenerCalls, 6); // 3 inserted nodes * 2 events each
+	});
+
+	it("tree is in correct state when events fire - node removals from sequence fields", () => {
+		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
+		const root = tree.schematize({
+			initialTree: {
+				myString: "initial string",
+				myOptionalNumber: undefined,
+				myNumberSequence: [0, 1, 2, 3, 4],
+				child: { myInnerString: "initial string in child" },
+			},
+			schema,
+			allowedSchemaModifications: AllowedUpdateType.None,
+		}).content;
+
+		let totalListenerCalls = 0;
+
+		root.on("beforeChange", (args: unknown) => {
+			totalListenerCalls++;
+			if (totalListenerCalls === 1) {
+				// Before removing the first node
+				assert.deepEqual(root.myNumberSequence.asArray, [0, 1, 2, 3, 4]);
+			} else if (totalListenerCalls === 3) {
+				// Before removing the second node
+				assert.deepEqual(root.myNumberSequence.asArray, [0, 2, 3, 4]);
+			}
+		});
+		root.on("afterChange", (args: unknown) => {
+			totalListenerCalls++;
+			if (totalListenerCalls === 2) {
+				// After removing the first node
+				assert.deepEqual(root.myNumberSequence.asArray, [0, 2, 3, 4]);
+			} else if (totalListenerCalls === 4) {
+				// After removing the second node
+				assert.deepEqual(root.myNumberSequence.asArray, [0, 3, 4]);
+			}
+		});
+
+		root.myNumberSequence.removeRange(1, 3);
+		assert.strictEqual(totalListenerCalls, 4); // 2 removed nodes * 2 events each
+	});
+
+	it("tree is in correct state when events fire - node moves in sequence fields", () => {
+		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
+		const root = tree.schematize({
+			initialTree: {
+				myString: "initial string",
+				myOptionalNumber: undefined,
+				myNumberSequence: [0, 1, 2],
+				child: { myInnerString: "initial string in child" },
+			},
+			schema,
+			allowedSchemaModifications: AllowedUpdateType.None,
+		}).content;
+
+		let totalListenerCalls = 0;
+
+		root.on("beforeChange", (args: unknown) => {
+			totalListenerCalls++;
+			switch (totalListenerCalls) {
+				case 1: {
+					// Before detaching the first node
+					assert.deepEqual(root.myNumberSequence.asArray, [0, 1, 2]);
+					break;
+				}
+				case 3: {
+					// Before detaching the second node
+					assert.deepEqual(root.myNumberSequence.asArray, [1, 2]);
+					break;
+				}
+				case 5: {
+					// Before re-attaching the first node
+					assert.deepEqual(root.myNumberSequence.asArray, [2]);
+					break;
+				}
+				case 7: {
+					// Before re-attaching the second node
+					assert.deepEqual(root.myNumberSequence.asArray, [2, 0]);
+					break;
+				}
+				// No default
+			}
+		});
+		root.on("afterChange", (args: unknown) => {
+			totalListenerCalls++;
+			switch (totalListenerCalls) {
+				case 2: {
+					// After detaching the first node
+					assert.deepEqual(root.myNumberSequence.asArray, [1, 2]);
+					break;
+				}
+				case 4: {
+					// After detaching the second node
+					assert.deepEqual(root.myNumberSequence.asArray, [2]);
+					break;
+				}
+				case 6: {
+					// After re-attaching the first node
+					assert.deepEqual(root.myNumberSequence.asArray, [2, 0]);
+					break;
+				}
+				case 8: {
+					// After re-attaching the second node
+					assert.deepEqual(root.myNumberSequence.asArray, [2, 0, 1]);
+					break;
+				}
+				// No default
+			}
+		});
+
+		root.myNumberSequence.moveToEnd(0, 2);
+		assert.strictEqual(totalListenerCalls, 8); // 2 moved nodes * 2 events each * 2 times fired (detach + attach)
+	});
+
 	it("not emitted by nodes when they are replaced", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
 		const root = tree.schematize({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
+				myNumberSequence: [],
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
@@ -327,6 +542,7 @@ describe("beforeChange/afterChange events", () => {
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
+				myNumberSequence: [],
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
