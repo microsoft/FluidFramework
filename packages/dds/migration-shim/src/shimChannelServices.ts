@@ -34,23 +34,21 @@ export class ShimChannelServices implements IChannelServices {
 }
 
 /**
- * NoDeltasChannelServices wraps an existing IChannelServices object and provides a new objectStorage
- * object in place of the original deltaConnection object. During load, if the runtime is in a detached state, we only
- * want to connect once on attached. Thus this is here to catch us from making a mistake. This should follow the
- * Single-Responsibility Principle.
- *
- * This is for the scenario for when we rehydrate a container in a detached state, load a SharedObject and later we
- * call connect. We don't store the services in the SharedObject, and the goal of this class is to mimic that and
- * prevent us from accidentally setting our services twice.
+ * NoDeltasChannelServices wraps an existing IChannelServices object. During rehydration of a container, loading in a
+ * detached state, we only want to connect to the deltaConnection once on attached. We also only want to set the
+ * channel services once. This enables us to allow deltaHandler attach only once, even though there are flows that
+ * call only load, only connect, and load and then connect.
  *
  * Steps:
- * 1. Load SharedObject in detached container runtime state
+ * 1. Rehydrate/load SharedObject in detached container runtime state
  * 2. Attach detached container runtime
  * 3. Connect SharedObject.
  *
  * Refer to SharedObject.load for the scenario.
  *
  * This potentially can be baked into the ShimChannelServices.
+ *
+ * TODO: convert this to a test and remove usage of this class
  */
 export class NoDeltasChannelServices implements IChannelServices {
 	public constructor(channelServices: IChannelServices) {
