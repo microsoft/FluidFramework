@@ -14,8 +14,8 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
 			},
 			"require": {
 				"types": "./dist/index.d.ts",
@@ -24,7 +24,7 @@
 		}
 	},
 	"main": "dist/index.js",
-	"module": "dist/index.js",
+	"module": "lib/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
