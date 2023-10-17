@@ -156,6 +156,21 @@
 			"RemovedFunctionDeclaration_extendIfUndefined": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"ClassDeclaration_BaseSegment": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IConsensusInfo": {
+				"backCompat": false
+			},
+			"ClassDeclaration_LocalReferenceCollection": {
+				"backCompat": false
+			},
+			"ClassDeclaration_Marker": {
+				"backCompat": false
+			},
+			"ClassDeclaration_TextSegment": {
+				"backCompat": false
 			}
 		}
 	}

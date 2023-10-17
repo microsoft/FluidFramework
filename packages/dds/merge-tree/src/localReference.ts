@@ -10,7 +10,7 @@ import { ISegment } from "./mergeTreeNodes";
 import { TrackingGroup, TrackingGroupCollection } from "./mergeTreeTracking";
 import { ICombiningOp, ReferenceType } from "./ops";
 import { addProperties, PropertySet } from "./properties";
-import { refHasTileLabels, ReferencePosition, refTypeIncludesFlag } from "./referencePositions";
+import { ReferencePosition, refTypeIncludesFlag } from "./referencePositions";
 
 /**
  * Dictates the preferential direction for a {@link ReferencePosition} to slide
@@ -214,11 +214,6 @@ export class LocalReferenceCollection {
 		}
 	}
 
-	/**
-	 * @remarks This method should only be called by mergeTree.
-	 * @internal
-	 */
-	public hierRefCount: number = 0;
 	private readonly refsByOffset: (IRefsAtOffset | undefined)[];
 	private refCount: number = 0;
 
@@ -283,7 +278,6 @@ export class LocalReferenceCollection {
 	 */
 	public clear() {
 		this.refCount = 0;
-		this.hierRefCount = 0;
 		const detachSegments = (refs: List<LocalReference> | undefined) => {
 			if (refs) {
 				for (const r of refs) {
@@ -349,9 +343,6 @@ export class LocalReferenceCollection {
 
 			lref.link(this.segment, offset, atRefs.push(lref).last);
 
-			if (refHasTileLabels(lref)) {
-				this.hierRefCount++;
-			}
 			this.refCount++;
 		}
 	}
@@ -368,9 +359,7 @@ export class LocalReferenceCollection {
 			node?.list?.remove(node);
 
 			lref.link(lref.getSegment(), lref.getOffset(), undefined);
-			if (refHasTileLabels(lref)) {
-				this.hierRefCount--;
-			}
+
 			this.refCount--;
 			return lref;
 		}
@@ -392,9 +381,7 @@ export class LocalReferenceCollection {
 		if (!other || other.empty) {
 			return;
 		}
-		this.hierRefCount += other.hierRefCount;
 		this.refCount += other.refCount;
-		other.hierRefCount = 0;
 		other.refCount = 0;
 		for (const lref of other) {
 			assertLocalReferences(lref);
@@ -467,10 +454,6 @@ export class LocalReferenceCollection {
 			for (const lref of localRefs) {
 				assertLocalReferences(lref);
 				lref.link(splitSeg, lref.getOffset() - offset, lref.getListNode());
-				if (refHasTileLabels(lref)) {
-					this.hierRefCount--;
-					localRefs.hierRefCount++;
-				}
 				this.refCount--;
 				localRefs.refCount++;
 			}
@@ -505,9 +488,6 @@ export class LocalReferenceCollection {
 							? beforeRefs.unshift(lref)?.first
 							: beforeRefs.insertAfter(precedingRef, lref)?.first;
 					lref.link(this.segment, 0, precedingRef);
-					if (refHasTileLabels(lref)) {
-						this.hierRefCount++;
-					}
 					this.refCount++;
 					lref.callbacks?.afterSlide?.(lref);
 				} else {
@@ -538,9 +518,6 @@ export class LocalReferenceCollection {
 					lref.callbacks?.beforeSlide?.(lref);
 					afterRefs.push(lref);
 					lref.link(this.segment, lastOffset, afterRefs.last);
-					if (refHasTileLabels(lref)) {
-						this.hierRefCount++;
-					}
 					this.refCount++;
 					lref.callbacks?.afterSlide?.(lref);
 				} else {
