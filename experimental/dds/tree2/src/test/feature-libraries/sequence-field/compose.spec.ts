@@ -1102,7 +1102,10 @@ describe("SequenceField - Compose", () => {
 			);
 			const move2 = tagChange(Change.move(a, 1, c), tag3);
 			const part2 = shallowCompose([return1, move2]);
-			const composed = shallowCompose([move1, makeAnonChange(part2)]);
+			const composed = shallowCompose(
+				[move1, makeAnonChange(part2)],
+				[{ revision: tag1 }, { revision: tag2, rollbackOf: tag1 }, { revision: tag3 }],
+			);
 			const expected = shallowCompose([move2]);
 			assert.deepEqual(composed, expected);
 		}
@@ -1123,7 +1126,15 @@ describe("SequenceField - Compose", () => {
 			);
 			const move3 = tagChange(Change.move(b, 1, d), tag4);
 			const part2 = shallowCompose([return2, move3]);
-			const composed = shallowCompose([makeAnonChange(part1), makeAnonChange(part2)]);
+			const composed = shallowCompose(
+				[makeAnonChange(part1), makeAnonChange(part2)],
+				[
+					{ revision: tag1 },
+					{ revision: tag2 },
+					{ revision: tag3, rollbackOf: tag2 },
+					{ revision: tag4 },
+				],
+			);
 			const expected = shallowCompose([move1, move3]);
 			assert.deepEqual(composed, expected);
 		}

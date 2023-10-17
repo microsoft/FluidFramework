@@ -172,12 +172,24 @@ function composeMarks<TNodeChange>(
 	const nodeChange = composeChildChanges(baseMark.changes, newMark.changes, newRev, composeChild);
 
 	if (isTransientEffect(newMark)) {
+		const newDetachRevision = newMark.detach.revision ?? newMark.revision ?? newRev;
 		if (markEmptiesCells(baseMark)) {
+			if (isMoveDestination(newMark.attach) && isMoveSource(newMark.detach)) {
+				assert(isMoveSource(baseMark), "Unexpected mark type");
+				setEndpoint(
+					moveEffects,
+					CrossFieldTarget.Destination,
+					getEndpoint(baseMark, undefined),
+					baseMark.count,
+					{ revision: newDetachRevision, localId: newMark.detach.id },
+				);
+			}
+
 			// baseMark is a detach which cancels with the attach portion of the transient,
 			// so we are just left with the detach portion of the transient.
 			return withRevision(
 				withNodeChange({ ...newMark.detach, count: baseMark.count }, nodeChange),
-				newMark.detach.revision ?? newMark.revision ?? newRev,
+				newDetachRevision,
 			);
 		}
 
