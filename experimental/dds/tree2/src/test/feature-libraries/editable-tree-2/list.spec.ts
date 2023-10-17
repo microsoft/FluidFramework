@@ -4,13 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { SchemaBuilder } from "../../../feature-libraries";
-import { leaf } from "../../../domains";
-// eslint-disable-next-line import/no-internal-modules
-import { TypedNode, List } from "../../../feature-libraries/editable-tree-2";
-import { createTreeView } from "./utils";
+import { leaf, SchemaBuilder } from "../../../domains";
+import { createTreeView, pretty } from "./utils";
 
-const builder = new SchemaBuilder({ scope: "test", libraries: [leaf.library] });
+const builder = new SchemaBuilder({ scope: "test" });
 
 export const stringList = builder.fieldNode("List<string>", builder.sequence(leaf.string));
 
@@ -23,20 +20,9 @@ const root = builder.struct("root", {
 	numbers: numberList,
 });
 
-type Root = TypedNode<typeof root>;
-
 const schema = builder.toDocumentSchema(root);
 
 describe("List", () => {
-	/** Similar to JSON stringify, but preserves 'undefined' and leaves numbers as-is. */
-	function pretty(arg: any) {
-		return arg === undefined
-			? "undefined"
-			: typeof arg === "number"
-			? arg
-			: JSON.stringify(arg);
-	}
-
 	/** Formats 'args' array, inserting commas and eliding trailing undefines.  */
 	function prettyArgs(...args: any[]) {
 		return args.reduce((prev: string, arg, index) => {
@@ -70,18 +56,15 @@ describe("List", () => {
 	}
 
 	/** Helper that creates a new SharedTree with the test schema and returns the root proxy. */
-	function createTree(): Root {
+	function createTree() {
 		// Consider 'initializeTreeWithContent' for readonly tests?
 		const view = createTreeView(schema, { numbers: [], strings: [] });
-
-		// TODO: We do not yet have type generation for the proxy-based API.  However, the ET2
-		// API is pretty close.  Cast to that as a starting point.
-		return view.root2(schema) as Root;
+		return view.root2(schema);
 	}
 
 	// TODO: Combine createList helpers once we unbox unions.
 	/** Helper that creates a new List<number> proxy */
-	function createNumberList(items: readonly number[]): List<[typeof leaf.number]> {
+	function createNumberList(items: readonly number[]) {
 		const list = createTree().numbers;
 		list.insertAtStart(items);
 		assert.deepEqual(list, items);
@@ -90,7 +73,7 @@ describe("List", () => {
 
 	// TODO: Combine createList helpers once we unbox unions.
 	/** Helper that creates a new List<string> proxy */
-	function createStringList(items: readonly string[]): List<[typeof leaf.string]> {
+	function createStringList(items: readonly string[]) {
 		const list = createTree().strings;
 		list.insertAtStart(items);
 		assert.deepEqual(list, items);

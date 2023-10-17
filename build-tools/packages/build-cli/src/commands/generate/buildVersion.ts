@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 import { Flags } from "@oclif/core";
-import * as childProcess from "child_process";
-import * as fs from "fs";
+import * as childProcess from "node:child_process";
+import * as fs from "node:fs";
 
 import { getIsLatest, getSimpleVersion } from "@fluid-tools/version-tools";
 
@@ -18,11 +18,11 @@ import { BaseCommand } from "../../base";
 export default class GenerateBuildVersionCommand extends BaseCommand<
 	typeof GenerateBuildVersionCommand
 > {
-	static description = `This command is used to compute the version number of Fluid packages. The release version number is based on what's in the lerna.json/package.json. The CI pipeline will supply the build number and branch to determine the prerelease suffix if it is not a tagged build`;
+	static readonly description = `This command is used to compute the version number of Fluid packages. The release version number is based on what's in the lerna.json/package.json. The CI pipeline will supply the build number and branch to determine the prerelease suffix if it is not a tagged build`;
 
-	static examples = ["<%= config.bin %> <%= command.id %>"];
+	static readonly examples = ["<%= config.bin %> <%= command.id %>"];
 
-	static flags = {
+	static readonly flags = {
 		build: Flags.string({
 			description: "The CI build number.",
 			env: "VERSION_BUILDNUMBER",
@@ -66,10 +66,10 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 			multiple: true,
 		}),
 		...BaseCommand.flags,
-	};
+	} as const;
 
 	public async run(): Promise<void> {
-		const flags = this.flags;
+		const { flags } = this;
 		const isRelease = flags.release === "release";
 		const useSimplePatchVersion = flags.patch?.toLowerCase() === "true";
 		const useTestVersion = flags.testBuild?.toLowerCase() === "true";
@@ -137,15 +137,15 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 		}
 	}
 
-	private getFileVersion() {
+	private getFileVersion(): string {
 		if (fs.existsSync("./lerna.json")) {
-			// eslint-disable-next-line unicorn/prefer-json-parse-buffer
+			// eslint-disable-next-line unicorn/prefer-json-parse-buffer, @typescript-eslint/no-unsafe-member-access
 			return JSON.parse(fs.readFileSync("./lerna.json", { encoding: "utf8" }))
 				.version as string;
 		}
 
 		if (fs.existsSync("./package.json")) {
-			// eslint-disable-next-line unicorn/prefer-json-parse-buffer
+			// eslint-disable-next-line unicorn/prefer-json-parse-buffer, @typescript-eslint/no-unsafe-member-access
 			return JSON.parse(fs.readFileSync("./package.json", { encoding: "utf8" }))
 				.version as string;
 		}

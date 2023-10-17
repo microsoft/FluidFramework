@@ -24,7 +24,7 @@ const adoConstants = {
 
 const localReportPath = "./artifacts/bundleAnalysis";
 
-export async function dangerfile() {
+export async function dangerfile(): Promise<void> {
 	if (process.env.ADO_API_TOKEN === undefined) {
 		throw new Error("no env ado api token provided");
 	}
@@ -53,4 +53,5 @@ export async function dangerfile() {
 	}
 }
 
+// eslint-disable-next-line unicorn/prefer-top-level-await
 dangerfile().catch((error: string) => console.error(error));

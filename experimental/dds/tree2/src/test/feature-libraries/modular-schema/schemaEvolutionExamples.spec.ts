@@ -9,7 +9,6 @@ import {
 	FieldSchema,
 	FullSchemaPolicy,
 	ViewSchema,
-	SchemaBuilder,
 	FieldKinds,
 	defaultSchemaPolicy,
 	TypedSchemaCollection,
@@ -18,7 +17,6 @@ import {
 	FieldStoredSchema,
 	TreeStoredSchema,
 	TreeSchemaIdentifier,
-	ValueSchema,
 	InMemoryStoredSchemaRepository,
 	Adapters,
 	Compatibility,
@@ -27,6 +25,7 @@ import {
 } from "../../../core";
 // eslint-disable-next-line import/no-internal-modules
 import { allowsFieldSuperset, allowsTreeSuperset } from "../../../feature-libraries/modular-schema";
+import { SchemaBuilder, leaf } from "../../../domains";
 
 class TestSchemaRepository extends InMemoryStoredSchemaRepository {
 	public constructor(
@@ -82,8 +81,7 @@ describe("Schema Evolution Examples", () => {
 		name: "Schema Evolution Examples: default content types",
 	});
 
-	const number = contentTypesBuilder.leaf("Number", ValueSchema.Number);
-	const codePoint = contentTypesBuilder.leaf("Primitive.CodePoint", ValueSchema.Number);
+	const codePoint = contentTypesBuilder.fieldNode("Primitive.CodePoint", leaf.number);
 
 	// String made of unicode code points, allowing for sequence editing of a string.
 	const text = contentTypesBuilder.struct("Text", {
@@ -91,8 +89,8 @@ describe("Schema Evolution Examples", () => {
 	});
 
 	const point = contentTypesBuilder.struct("Point", {
-		x: number,
-		y: number,
+		x: leaf.number,
+		y: leaf.number,
 	});
 
 	const defaultContentLibrary = contentTypesBuilder.finalize();
@@ -221,12 +219,17 @@ describe("Schema Evolution Examples", () => {
 			// (either eagerly or lazily when first needing to do so when writing into the document).
 			// Once again the order does not matter:
 			assert(stored.tryUpdateTreeSchema(canvas.name, canvas));
-			assert(stored.tryUpdateTreeSchema(number.name, number));
+			assert(stored.tryUpdateTreeSchema(leaf.number.name, leaf.number));
 			assert(stored.tryUpdateTreeSchema(point.name, point));
 			assert(stored.tryUpdateTreeSchema(positionedCanvasItem.name, positionedCanvasItem));
 			assert(stored.tryUpdateTreeSchema(text.name, text));
 			assert(stored.tryUpdateTreeSchema(codePoint.name, codePoint));
 			assert(stored.tryUpdateRootFieldSchema(tolerantRoot));
+			assert(stored.tryUpdateTreeSchema(leaf.number.name, leaf.number));
+			assert(stored.tryUpdateTreeSchema(leaf.boolean.name, leaf.boolean));
+			assert(stored.tryUpdateTreeSchema(leaf.string.name, leaf.string));
+			assert(stored.tryUpdateTreeSchema(leaf.handle.name, leaf.handle));
+			assert(stored.tryUpdateTreeSchema(leaf.null.name, leaf.null));
 
 			// That will cause the document stored schema to change,
 			// which will notify and applications with the document open.
@@ -244,7 +247,7 @@ describe("Schema Evolution Examples", () => {
 			});
 
 			const counter = builderWithCounter.struct("Counter", {
-				count: number,
+				count: leaf.number,
 			});
 			// Lets allow counters inside positionedCanvasItem, instead of just text:
 			const positionedCanvasItem2 = builderWithCounter.struct("PositionedCanvasItem", {

@@ -34,7 +34,7 @@ export type ChangesetEntry = Omit<Changeset, "metadata" | "changeTypes"> & {
 	changeType: VersionBumpType;
 };
 
-function compareChangesets<T extends Pick<Changeset, "added">>(a: T, b: T) {
+function compareChangesets<T extends Pick<Changeset, "added">>(a: T, b: T): number {
 	if (a.added === undefined || b.added === undefined) {
 		return 0;
 	}
@@ -81,6 +81,7 @@ export async function loadChangesets(dir: string, log?: Logger): Promise<Changes
 			added,
 			summary,
 			sourceFile: file,
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			changeTypes: [...new Set(Object.values(md.data))],
 		};
 

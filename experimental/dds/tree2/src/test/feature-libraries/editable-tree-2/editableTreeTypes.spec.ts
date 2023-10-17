@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { unreachableCase } from "@fluidframework/core-utils";
-import { jsonArray, jsonNull, jsonObject, jsonRoot, jsonSchema, leaf } from "../../../domains";
+import { jsonArray, jsonObject, jsonRoot, jsonSchema, leaf, SchemaBuilder } from "../../../domains";
 
 import {
 	Sequence,
@@ -35,7 +35,6 @@ import {
 	FieldNodeSchema,
 	LeafSchema,
 	MapSchema,
-	SchemaBuilder,
 	StructSchema,
 	TreeSchema,
 	FieldSchema,
@@ -60,8 +59,8 @@ describe("editableTreeTypes", () => {
 				jsonExample(a);
 			} else if (tree.is(jsonObject)) {
 				const x = tree.get(EmptyKey);
-			} else if (tree.is(jsonNull)) {
-				const x = tree.schema;
+			} else if (tree.is(leaf.null)) {
+				const x: null = tree.value;
 			} else {
 				// Proves at compile time exhaustive match checking works, and tree is typed `never`.
 				unreachableCase(tree);

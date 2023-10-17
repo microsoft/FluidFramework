@@ -22,7 +22,7 @@ import {
 } from "../common/fluidTaskDefinitions";
 import registerDebug from "debug";
 
-const traceBuildPackageCreate = registerDebug("fluid-build:package:create");
+const traceTaskDef = registerDebug("fluid-build:task:definition");
 const traceTaskDepTask = registerDebug("fluid-build:task:init:dep:task");
 const traceGraph = registerDebug("fluid-build:graph");
 
@@ -76,12 +76,8 @@ export class BuildPackage {
 		globalTaskDefinitions: TaskDefinitionsOnDisk | undefined,
 	) {
 		this.taskDefinitions = getTaskDefinitions(this.pkg.packageJson, globalTaskDefinitions);
-		traceBuildPackageCreate(
-			`${pkg.nameColored}: created. Task def: ${JSON.stringify(
-				this.taskDefinitions,
-				undefined,
-				2,
-			)}`,
+		traceTaskDef(
+			`${pkg.nameColored}: Task def: ${JSON.stringify(this.taskDefinitions, undefined, 2)}`,
 		);
 	}
 
@@ -167,7 +163,9 @@ export class BuildPackage {
 			return dependentTasks;
 		}
 
-		traceTaskDepTask(`${task.nameColored} -> ${JSON.stringify(taskConfig.dependsOn)}`);
+		traceTaskDepTask(
+			`Expanding: ${task.nameColored} -> ${JSON.stringify(taskConfig.dependsOn)}`,
+		);
 		for (const dep of taskConfig.dependsOn) {
 			let found = false;
 			// should have be replaced already.

@@ -27,10 +27,8 @@ interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
 	depcheck: boolean;
 	force: boolean;
 	install: boolean;
-	nohoist: boolean;
 	uninstall: boolean;
 	concurrency: number;
-	fix: boolean;
 	worker: boolean;
 	workerThreads: boolean;
 	workerMemoryLimit: number;
@@ -53,10 +51,8 @@ export const options: FastBuildOptions = {
 	depcheck: false,
 	force: false,
 	install: false,
-	nohoist: false,
 	uninstall: false,
 	concurrency: os.cpus().length,
-	fix: false,
 	all: false,
 	worker: false,
 	workerThreads: false,
@@ -104,14 +100,13 @@ function setBuild(build: boolean) {
 	}
 }
 
-function setReinstall(nohoist: boolean) {
+function setReinstall() {
 	options.uninstall = true;
-	setInstall(nohoist);
+	setInstall();
 }
 
-function setInstall(nohoist: boolean) {
+function setInstall() {
 	options.install = true;
-	options.nohoist = nohoist;
 	setBuild(false);
 }
 
@@ -166,29 +161,13 @@ export function parseOptions(argv: string[]) {
 			continue;
 		}
 
-		if (arg === "--fix") {
-			options.fix = true;
-			setBuild(false);
-			continue;
-		}
-
 		if (arg === "--install") {
-			setInstall(false);
-			continue;
-		}
-
-		if (arg === "--install:nohoist") {
-			setInstall(true);
+			setInstall();
 			continue;
 		}
 
 		if (arg === "--reinstall") {
-			setReinstall(false);
-			continue;
-		}
-
-		if (arg === "--reinstall:nohoist") {
-			setReinstall(true);
+			setReinstall();
 			continue;
 		}
 
