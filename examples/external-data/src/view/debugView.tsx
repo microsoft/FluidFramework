@@ -15,7 +15,7 @@ const externalTaskListId = "task-list-1";
 /**
  * Helper function used in several of the views to fetch data form the external app
  */
-async function pollForServiceUpdates(
+async function fetchExternalServiceData(
 	externalData: Record<string, unknown>,
 	setExternalData: React.Dispatch<React.SetStateAction<Record<string, unknown>>>,
 ): Promise<void> {
@@ -70,16 +70,7 @@ const ExternalDataDebugView: React.FC<IExternalDataDebugViewProps> = (
 	const [externalData, setExternalData] = useState({});
 	useEffect(() => {
 		// Run once immediately to run without waiting.
-		pollForServiceUpdates(externalData, setExternalData).catch(console.error);
-
-		// HACK: Poll every 3 seconds
-		// const timer = setInterval(() => {
-		// 	pollForServiceUpdates(externalData, setExternalData).catch(console.error);
-		// }, 3000);
-
-		return (): void => {
-			// clearInterval(timer);
-		};
+		fetchExternalServiceData(externalData, setExternalData).catch(console.error);
 	}, [externalData, setExternalData]);
 	const parsedExternalData = isEqual(externalData, {})
 		? []
@@ -209,7 +200,7 @@ export const ExternalServerTaskListView: React.FC = () => {
 	const [externalData, setExternalData] = useState({});
 	useEffect(() => {
 		// HACK: Populate the external view form with the data in the external server to start off with
-		pollForServiceUpdates(externalData, setExternalData).catch(console.error);
+		fetchExternalServiceData(externalData, setExternalData).catch(console.error);
 
 		return (): void => {};
 	}, [externalData, setExternalData]);
@@ -241,8 +232,6 @@ export const ExternalServerTaskListView: React.FC = () => {
 
 			// TODO: display error status to user?
 		}
-		// Send signal to simulate RuntimeSignal that will get sent from alfred in the dev branch
-		// model.sendCustomDebugSignal();
 	};
 
 	/* eslint-disable @typescript-eslint/no-misused-promises */
