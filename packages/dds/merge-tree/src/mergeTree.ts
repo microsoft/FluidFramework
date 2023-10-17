@@ -658,8 +658,7 @@ export class MergeTree {
 			const children = parent.children;
 			for (let childIndex = 0; childIndex < parent.childCount; childIndex++) {
 				const child = children[childIndex];
-				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when the first clause returns false.
-				if ((prevParent && child === prevParent) || child === node) {
+				if ((!!prevParent && child === prevParent) || child === node) {
 					break;
 				}
 				totalOffset += this.nodeLength(child, refSeq, clientId, localSeq) ?? 0;
@@ -1175,9 +1174,8 @@ export class MergeTree {
 		}
 
 		if (
-			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when the first clause returns false.
-			(!_segmentGroup.previousProps && previousProps) ||
-			(_segmentGroup.previousProps && !previousProps)
+			(!_segmentGroup.previousProps && !!previousProps) ||
+			(!!_segmentGroup.previousProps && !previousProps)
 		) {
 			throw new Error("All segments in group should have previousProps or none");
 		}
