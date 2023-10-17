@@ -102,7 +102,7 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 	}
 
 	public get currentTree(): LegacySharedTree | ISharedTree {
-		return this.legacyTree;
+		return /* this.newTree ?? */ this.legacyTree;
 	}
 
 	public async load(services: IChannelServices): Promise<void> {
@@ -114,6 +114,7 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 		)) as LegacySharedTree;
 	}
 	public create(): void {
+		// TODO: Should we be allowing the creation of legacy shared trees?
 		this._legacyTree = this.legacyTreeFactory.create(this.runtime, this.id);
 	}
 
