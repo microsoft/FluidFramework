@@ -331,7 +331,7 @@ staticDispatchMap[Symbol.iterator] = {
 /* eslint-enable @typescript-eslint/unbound-method */
 /* eslint-enable @typescript-eslint/ban-types */
 
-const prototype = Object.create(Object.getPrototypeOf({}), staticDispatchMap);
+const prototype = Object.create(Object.prototype, staticDispatchMap);
 
 /**
  * Helper to coerce property keys to integer indexes (or undefined if not an in-range integer).
