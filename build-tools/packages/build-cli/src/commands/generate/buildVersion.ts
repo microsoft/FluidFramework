@@ -110,12 +110,14 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 		}
 
 		// Generate and print the version to console
-		let simpleVersion = getSimpleVersion(
+		const simpleVersion = getSimpleVersion(
 			fileVersion,
 			flags.build,
 			isRelease,
 			useSimplePatchVersion,
 		);
+
+		let version = simpleVersion;
 
 		if (isAlphaOrBetaTypes) {
 			if (isRelease) {
@@ -123,15 +125,15 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 					"ERROR: This release type is not supported. Alpha/beta ***prereleases*** are allowed.",
 				);
 			} else {
-				simpleVersion = `${simpleVersion}-${flags.packageTypes}-types`;
+				version = `${simpleVersion}-${flags.packageTypes}-types`;
 			}
 		}
 
-		const version = useTestVersion
-			? flags.packageTypes === "alpha" || flags.packageTypes === "beta"
+		if (useTestVersion) {
+			version = isAlphaOrBetaTypes
 				? `0.0.0-${flags.build}-test-${flags.packageTypes}-types`
-				: `0.0.0-${flags.build}-test`
-			: simpleVersion;
+				: `0.0.0-${flags.build}-test`;
+		}
 
 		this.log(`version=${version}`);
 		this.log(`##vso[task.setvariable variable=version;isOutput=true]${version}`);
@@ -139,7 +141,9 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 		// Output the code version for test builds. This is used in the CI system.
 		// See common/build/build-common/gen_version.js
 		if (useTestVersion) {
-			const codeVersion = `${simpleVersion}-test`;
+			const codeVersion = isAlphaOrBetaTypes
+				? `${simpleVersion}-test-${flags.packageTypes}-types`
+				: `${simpleVersion}-test`;
 			this.log(`codeVersion=${codeVersion}`);
 			this.log(`##vso[task.setvariable variable=codeVersion;isOutput=true]${codeVersion}`);
 		}

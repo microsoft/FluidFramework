@@ -128,10 +128,7 @@ steps:
   env:
     VERSION_RELEASE: $(release)
     RELEASE_GROUP: ${{ parameters.tagName }}
-    ${{ if or(eq(parameters.packageTypesOverride, 'alpha'), eq(parameters.packageTypesOverride, 'beta')) }}:
-      INTERDEPENDENCY_RANGE: exact
-    ${{ else }}:
-      INTERDEPENDENCY_RANGE: ${{ parameters.interdependencyRange }}
+    INTERDEPENDENCY_RANGE: ${{ parameters.interdependencyRange }}
   inputs:
     targetType: 'filePath'
     workingDirectory: ${{ parameters.buildDirectory }}
