@@ -32,7 +32,7 @@ import { nodeSym } from "./node";
  * @alpha
  */
 export interface SharedTreeNode {
-	// TODO: Make [node] non-optional when we have factory functions.
+	// TODO: Make [nodeSym] non-optional when we have factory functions.
 	[nodeSym]?: {
 		on<K extends keyof EditableTreeEvents>(
 			eventName: K,
