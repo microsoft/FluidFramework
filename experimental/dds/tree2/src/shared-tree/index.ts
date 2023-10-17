@@ -17,6 +17,7 @@ export {
 	runSynchronous,
 	ViewEvents,
 	ITransaction,
+	TransactionEvents,
 	ISharedTreeBranchView,
 } from "./sharedTreeView";
 

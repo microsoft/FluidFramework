@@ -303,6 +303,7 @@ export function createSharedTreeView(args?: {
  * @alpha
  */
 export interface ITransaction {
+	readonly events: ISubscribable<TransactionEvents>;
 	/**
 	 * Start a new transaction.
 	 * If a transaction is already in progress when this new transaction starts, then this transaction will be "nested" inside of it,
@@ -324,21 +325,38 @@ export interface ITransaction {
 	inProgress(): boolean;
 }
 
+/**
+ * Events for {@link ITransaction}.
+ * @alpha
+ */
+export interface TransactionEvents {
+	start(): void;
+
+	commit(): void;
+
+	abort(): void;
+}
+
 class Transaction implements ITransaction {
 	public constructor(
 		private readonly branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
+		public readonly events: ISubscribable<TransactionEvents> &
+			IEmitter<TransactionEvents> = createEmitter(),
 	) {}
 
 	public start(): void {
+		this.events.emit("start");
 		this.branch.startTransaction();
 		this.branch.editor.enterTransaction();
 	}
 	public commit(): TransactionResult.Commit {
+		this.events.emit("commit");
 		this.branch.commitTransaction();
 		this.branch.editor.exitTransaction();
 		return TransactionResult.Commit;
 	}
 	public abort(): TransactionResult.Abort {
+		this.events.emit("abort");
 		this.branch.abortTransaction();
 		this.branch.editor.exitTransaction();
 		return TransactionResult.Abort;
@@ -376,7 +394,7 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		public readonly events: ISubscribable<ViewEvents> &
 			IEmitter<ViewEvents> &
 			HasListeners<ViewEvents>,
-		private readonly removedTrees: DetachedFieldIndex = makeDetachedFieldIndex("repair"),
+		public readonly removedTrees: DetachedFieldIndex = makeDetachedFieldIndex("repair"),
 	) {
 		branch.on("change", (event) => {
 			if (event.change !== undefined) {

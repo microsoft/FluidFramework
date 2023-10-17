@@ -333,8 +333,9 @@ export class EditManager<
 		// B) The contents of such a branch should be computed on demand based on the trunk.
 		// Note that option (A) would be a simple change to `addSequencedChange` whereas (B) would likely require
 		// rebasing trunk changes over the inverse of trunk changes.
+		// TODO: update w.r.t above comment
 		assert(
-			this.localBranch.getHead() === this.trunk.getHead(),
+			this.localBranch.getHead() === this.trunk.getHead() || this.localBranch.isTransacting(),
 			0x428 /* Clients with local changes cannot be used to generate summaries */,
 		);
 

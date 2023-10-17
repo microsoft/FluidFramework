@@ -17,7 +17,6 @@ import {
 	Delta,
 	FieldKey,
 	IEditableForest,
-	ITreeSubscriptionCursor,
 	JsonableTree,
 	makeDetachedFieldIndex,
 	mapCursorField,
@@ -37,11 +36,7 @@ const treeBlobKey = "ForestTree";
 export class ForestSummarizer implements Summarizable {
 	public readonly key = "Forest";
 
-	private readonly cursor: ITreeSubscriptionCursor;
-
-	public constructor(private readonly forest: IEditableForest) {
-		this.cursor = this.forest.allocateCursor();
-	}
+	public constructor(private readonly getForest: () => IEditableForest) {}
 
 	/**
 	 * Synchronous monolithic summarization of tree content.
@@ -51,12 +46,15 @@ export class ForestSummarizer implements Summarizable {
 	 * @returns a snapshot of the forest's tree as a string.
 	 */
 	private getTreeString(stringify: SummaryElementStringifier): string {
-		this.forest.moveCursorToPath(undefined, this.cursor);
-		const fields = mapCursorFields(this.cursor, (cursor) => [
-			this.cursor.getFieldKey(),
-			mapCursorField(cursor, jsonableTreeFromCursor),
+		const forest = this.getForest();
+		const cursor = forest.allocateCursor();
+		forest.moveCursorToPath(undefined, cursor);
+		const fields = mapCursorFields(cursor, (c) => [
+			cursor.getFieldKey(),
+			mapCursorField(c, jsonableTreeFromCursor),
 		]);
-		this.cursor.clear();
+		cursor.clear();
+		cursor.free();
 		return stringify(fields);
 	}
 
@@ -107,8 +105,9 @@ export class ForestSummarizer implements Summarizable {
 				return [fieldKey, [insert]];
 			});
 
-			assert(this.forest.isEmpty, "forest must be empty");
-			applyDelta(new Map(delta), this.forest, makeDetachedFieldIndex("init"));
+			const forest = this.getForest();
+			assert(forest.isEmpty, "forest must be empty");
+			applyDelta(new Map(delta), forest, makeDetachedFieldIndex("init"));
 		}
 	}
 }

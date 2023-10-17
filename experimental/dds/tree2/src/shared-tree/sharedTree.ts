@@ -100,6 +100,8 @@ export class SharedTree
 		IEmitter<ViewEvents> &
 		HasListeners<ViewEvents>;
 	public readonly view: SharedTreeView;
+	private viewForSummarization: SharedTreeView;
+	private deregisterViewClone?: () => void;
 	public readonly storedSchema: SchemaEditor<InMemoryStoredSchemaRepository>;
 
 	public constructor(
@@ -117,8 +119,10 @@ export class SharedTree
 				: buildForest();
 		const removedTrees = makeDetachedFieldIndex("repair");
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);
-		const forestSummarizer = new ForestSummarizer(forest);
-		const removedTreesSummarizer = new DetachedFieldIndexSummarizer(removedTrees);
+		const forestSummarizer = new ForestSummarizer(() => this.viewForSummarization.forest);
+		const removedTreesSummarizer = new DetachedFieldIndexSummarizer(
+			() => this.viewForSummarization.removedTrees,
+		);
 		const changeFamily = new DefaultChangeFamily(options);
 		super(
 			[schemaSummarizer, forestSummarizer, removedTreesSummarizer],
@@ -141,6 +145,37 @@ export class SharedTree
 			events: this._events,
 			removedTrees,
 		});
+		this.viewForSummarization = this.view;
+
+		let activeTransactionCount = 0;
+
+		const transactionStart = () => {
+			if (activeTransactionCount === 0) {
+				this.viewForSummarization = this.view.fork();
+			}
+			activeTransactionCount++;
+		};
+		const transactionFinish = () => {
+			activeTransactionCount--;
+			if (activeTransactionCount === 0) {
+				this.viewForSummarization.dispose();
+				this.viewForSummarization = this.view;
+			}
+		};
+		const deregisterStart = this.view.transaction.events.on("start", transactionStart);
+		const deregisterAbort = this.view.transaction.events.on("abort", transactionFinish);
+		const deregisterCommit = this.view.transaction.events.on("commit", transactionFinish);
+		this.deregisterViewClone = () => {
+			deregisterStart();
+			deregisterAbort();
+			deregisterCommit();
+			this.deregisterViewClone = undefined;
+		};
+	}
+
+	public override didAttach(): void {
+		super.didAttach();
+		this.deregisterViewClone?.();
 	}
 
 	public schematize<TRoot extends FieldSchema>(

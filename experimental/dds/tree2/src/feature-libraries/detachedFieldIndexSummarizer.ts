@@ -25,7 +25,7 @@ const detachedFieldIndexBlobKey = "DetachedFieldIndexBlob";
 export class DetachedFieldIndexSummarizer implements Summarizable {
 	public readonly key = "DetachedFieldIndex";
 
-	public constructor(private readonly detachedFieldIndex: DetachedFieldIndex) {}
+	public constructor(private readonly getDetachedFieldIndex: () => DetachedFieldIndex) {}
 
 	public getAttachSummary(
 		stringify: SummaryElementStringifier,
@@ -33,7 +33,10 @@ export class DetachedFieldIndexSummarizer implements Summarizable {
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTreeWithStats {
-		return createSingleBlobSummary(detachedFieldIndexBlobKey, this.detachedFieldIndex.encode());
+		return createSingleBlobSummary(
+			detachedFieldIndexBlobKey,
+			this.getDetachedFieldIndex().encode(),
+		);
 	}
 
 	public async summarize(
@@ -42,7 +45,10 @@ export class DetachedFieldIndexSummarizer implements Summarizable {
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummaryTreeWithStats> {
-		return createSingleBlobSummary(detachedFieldIndexBlobKey, this.detachedFieldIndex.encode());
+		return createSingleBlobSummary(
+			detachedFieldIndexBlobKey,
+			this.getDetachedFieldIndex().encode(),
+		);
 	}
 
 	public getGCData(fullGC?: boolean): IGarbageCollectionData {
@@ -62,7 +68,7 @@ export class DetachedFieldIndexSummarizer implements Summarizable {
 		if (await services.contains(detachedFieldIndexBlobKey)) {
 			const detachedFieldIndexBuffer = await services.readBlob(detachedFieldIndexBlobKey);
 			const treeBufferString = bufferToString(detachedFieldIndexBuffer, "utf8");
-			this.detachedFieldIndex.loadData(treeBufferString);
+			this.getDetachedFieldIndex().loadData(treeBufferString);
 		}
 	}
 }

@@ -284,6 +284,7 @@ export {
 	ISharedTree,
 	ISharedTreeView,
 	ITransaction,
+	TransactionEvents,
 	runSynchronous,
 	SharedTreeFactory,
 	SharedTreeOptions,

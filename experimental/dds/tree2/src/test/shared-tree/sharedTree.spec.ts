@@ -393,8 +393,7 @@ describe("SharedTree", () => {
 		validateRootField(tree2, ["A", "B", "C"]);
 	});
 
-	// AB#5745: Enable this test once it passes.
-	it.skip("can tolerate incomplete transactions when attaching", async () => {
+	it("can tolerate incomplete transactions when attaching", async () => {
 		const onCreate = (tree: SharedTree) => {
 			tree.storedSchema.update(jsonSequenceRootSchema);
 			tree.view.transaction.start();

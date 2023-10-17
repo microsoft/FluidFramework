@@ -1102,6 +1102,8 @@ export interface ISubscribable<E extends Events<E>> {
 export interface ITransaction {
     abort(): TransactionResult.Abort;
     commit(): TransactionResult.Commit;
+    // (undocumented)
+    readonly events: ISubscribable<TransactionEvents>;
     inProgress(): boolean;
     start(): void;
 }
@@ -2032,6 +2034,16 @@ export { testRecursiveDomain }
 
 // @alpha
 export function toDownPath(upPath: UpPath): DownPath;
+
+// @alpha
+export interface TransactionEvents {
+    // (undocumented)
+    abort(): void;
+    // (undocumented)
+    commit(): void;
+    // (undocumented)
+    start(): void;
+}
 
 // @alpha
 export enum TransactionResult {
