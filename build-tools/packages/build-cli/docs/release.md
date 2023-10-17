@@ -60,7 +60,7 @@ Determines release information based on a git tag argument.
 
 ```
 USAGE
-  $ flub release fromTag TAG [-v | --quiet] [--json]
+  $ flub release fromTag TAG [--json] [-v | --quiet]
 
 ARGUMENTS
   TAG  A git tag that represents a release. May begin with 'refs/tags/'.
@@ -87,14 +87,16 @@ EXAMPLES
     $ flub release fromTag refs/tags/2.0.0-internal.2.0.2
 ```
 
+_See code: [src/commands/release/fromTag.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/release/fromTag.ts)_
+
 ## `flub release history`
 
 Prints a list of released versions of a package or release group. Releases are gathered from the git tags in repo containing the working directory.
 
 ```
 USAGE
-  $ flub release history [-v | --quiet] [-g client|server|azure|build-tools|gitrest|historian | -p <value>] [-l
-    <value>] [--json]
+  $ flub release history [--json] [-v | --quiet] [-g client|server|azure|build-tools|gitrest|historian | -p <value>]
+    [-l <value>]
 
 FLAGS
   -g, --releaseGroup=<option>  Name of a release group.
@@ -129,13 +131,15 @@ EXAMPLES
     $ flub release history -g client --limit 10
 ```
 
+_See code: [src/commands/release/history.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/release/history.ts)_
+
 ## `flub release report`
 
 Generates a report of Fluid Framework releases.
 
 ```
 USAGE
-  $ flub release report [-v | --quiet] [--json] [-i | -r | -s] [-g
+  $ flub release report [--json] [-v | --quiet] [-i | -r | -s] [-g
     client|server|azure|build-tools|gitrest|historian] [-o <value>]
 
 FLAGS
@@ -200,6 +204,8 @@ EXAMPLES
     $ flub release report -i
 ```
 
+_See code: [src/commands/release/report.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/release/report.ts)_
+
 ## `flub release report-unreleased`
 
 Creates a release report for the most recent build of the client release group published to an internal ADO feed. It does this by finding the most recent build in ADO produced from a provided branch, and creates a report using that version. The report is a combination of the "simple" and "caret" report formats. Packages released as part of the client release group will have an exact version range, while other packages, such as server packages or independent packages, will have a caret-equivalent version range.
@@ -228,15 +234,17 @@ DESCRIPTION
   packages, will have a caret-equivalent version range.
 ```
 
+_See code: [src/commands/release/report-unreleased.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/release/report-unreleased.ts)_
+
 ## `flub release setPackageTypesField`
 
 Updates which .d.ts file is referenced by the `types` field in package.json. This command is used during package publishing (by CI) to select the d.ts file which corresponds to the selected API-Extractor release tag.
 
 ```
 USAGE
-  $ flub release setPackageTypesField --types <value> [-v | --quiet] [--concurrency <value>] [--all | --dir <value> | --packages |
-    -g client|server|azure|build-tools|gitrest|historian|all | --releaseGroupRoot
-    client|server|azure|build-tools|gitrest|historian|all] [--private] [--scope <value> | --skipScope <value>] [--json]
+  $ flub release setPackageTypesField --types <value> [--json] [-v | --quiet] [--concurrency <value>] [--all | --dir <value> |
+    --packages | -g client|server|azure|build-tools|gitrest|historian|all | --releaseGroupRoot
+    client|server|azure|build-tools|gitrest|historian|all] [--private] [--scope <value> | --skipScope <value>]
 
 FLAGS
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
@@ -276,3 +284,5 @@ DESCRIPTION
   Updates which .d.ts file is referenced by the `types` field in package.json. This command is used during package
   publishing (by CI) to select the d.ts file which corresponds to the selected API-Extractor release tag.
 ```
+
+_See code: [src/commands/release/setPackageTypesField.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/release/setPackageTypesField.ts)_

@@ -14,14 +14,14 @@ import {
 } from "../../core";
 import { JsonCompatible } from "../../util";
 import { CursorAdapter, isPrimitiveValue, singleStackTreeCursor } from "../../feature-libraries";
-import * as leaf from "../leafDomain";
-import { jsonArray, jsonNull, jsonObject } from "./jsonDomainSchema";
+import { leaf } from "../leafDomain";
+import { jsonArray, jsonObject } from "./jsonDomainSchema";
 
 const adapter: CursorAdapter<JsonCompatible> = {
 	value: (node: JsonCompatible) =>
-		typeof node === "object"
-			? undefined // null, arrays, and objects have no defined value
-			: node, // boolean, numbers, and strings are their own value
+		node !== null && typeof node === "object"
+			? undefined // arrays and objects have no defined value
+			: node, // null, boolean, numbers, and strings are their own value
 	type: (node: JsonCompatible) => {
 		const type = typeof node;
 
@@ -34,7 +34,7 @@ const adapter: CursorAdapter<JsonCompatible> = {
 				return leaf.boolean.name;
 			default:
 				if (node === null) {
-					return jsonNull.name;
+					return leaf.null.name;
 				} else if (Array.isArray(node)) {
 					return jsonArray.name;
 				} else {
@@ -134,7 +134,7 @@ export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible {
 			return result;
 		}
 		default: {
-			assert(type === jsonNull.name, 0x422 /* unexpected type */);
+			assert(type === leaf.null.name, 0x422 /* unexpected type */);
 			return null;
 		}
 	}

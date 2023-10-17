@@ -7,7 +7,7 @@ import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { RevisionTag } from "../../core";
 import { CrossFieldManager, CrossFieldTarget } from "../modular-schema";
 import { RangeEntry } from "../../util";
-import { Mark, MoveId, MoveIn, MoveOut, ReturnFrom, ReturnTo } from "./format";
+import { Mark, MoveId, MoveIn, MoveOut, ReturnFrom } from "./format";
 import { cloneMark, splitMark } from "./utils";
 
 export type MoveEffectTable<T> = CrossFieldManager<MoveEffect<T>>;
@@ -95,14 +95,13 @@ export function getMoveEffect<T>(
 	return moveEffects.get(target, revision, id, count, addDependency);
 }
 
-export type MoveMark<T> = MoveOut<T> | MoveIn | ReturnFrom<T> | ReturnTo;
+export type MoveMark<T> = MoveOut<T> | MoveIn | ReturnFrom<T>;
 
 export function isMoveMark<T>(mark: Mark<T>): mark is MoveMark<T> {
 	switch (mark.type) {
 		case "MoveIn":
 		case "MoveOut":
 		case "ReturnFrom":
-		case "ReturnTo":
 			return true;
 		default:
 			return false;
@@ -110,12 +109,12 @@ export function isMoveMark<T>(mark: Mark<T>): mark is MoveMark<T> {
 }
 
 function applyMoveEffectsToDest<T>(
-	mark: MoveIn | ReturnTo,
+	mark: MoveIn,
 	revision: RevisionTag | undefined,
 	effects: MoveEffectTable<T>,
 	consumeEffect: boolean,
 ): Mark<T> {
-	const newMark: MoveIn | ReturnTo = {
+	const newMark: MoveIn = {
 		...mark,
 	};
 
@@ -257,8 +256,7 @@ export function applyMoveEffectsToMark<T>(
 					),
 				];
 			}
-			case "MoveIn":
-			case "ReturnTo": {
+			case "MoveIn": {
 				const effect = getMoveEffect(
 					effects,
 					CrossFieldTarget.Destination,

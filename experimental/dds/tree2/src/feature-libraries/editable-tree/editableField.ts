@@ -668,6 +668,7 @@ export function unwrappedField(
 export function isEditableField(field: UnwrappedEditableField): field is EditableField {
 	return (
 		typeof field === "object" &&
+		field !== null &&
 		isFieldProxyTarget(field[proxyTargetSymbol] as ProxyTarget<Anchor | FieldAnchor>)
 	);
 }

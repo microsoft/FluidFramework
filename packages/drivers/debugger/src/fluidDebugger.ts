@@ -8,6 +8,9 @@ import { ReplayDocumentService, ReplayDocumentServiceFactory } from "@fluidframe
 import { DebugReplayController } from "./fluidDebuggerController";
 import { DebuggerUI } from "./fluidDebuggerUi";
 
+/**
+ * @public
+ */
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace FluidDebugger {
 	/**

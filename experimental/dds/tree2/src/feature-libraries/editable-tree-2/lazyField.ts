@@ -227,7 +227,7 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 function assertIsLazySequence<TTypesSource extends AllowedTypes>(
 	sourceField: unknown,
 ): asserts sourceField is LazySequence<TTypesSource> {
-	assert(sourceField instanceof LazySequence, "Unsupported sequence implementation.");
+	assert(sourceField instanceof LazySequence, 0x7b1 /* Unsupported sequence implementation. */);
 }
 
 export class LazySequence<TTypes extends AllowedTypes>
@@ -335,6 +335,7 @@ export class LazySequence<TTypes extends AllowedTypes>
 		source?: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
 	): void {
 		const sourceField = source !== undefined ? (this.isSameAs(source) ? this : source) : this;
+		// TODO: determine support for move across different sequence types
 		assertIsLazySequence(sourceField);
 		assertValidRangeIndices(sourceStart, sourceEnd, sourceField);
 		if (this.schema.types !== undefined && sourceField !== this) {
@@ -464,9 +465,9 @@ export class LazyNodeKeyField<TTypes extends AllowedTypes>
 	public get stableNodeKey(): StableNodeKey {
 		const cursor = this[cursorSymbol];
 		cursor.enterNode(0);
-		assert(cursor.type === nodeKeyTreeIdentifier, "invalid node key type");
+		assert(cursor.type === nodeKeyTreeIdentifier, 0x7b2 /* invalid node key type */);
 		const stableKey = cursor.value;
-		assert(typeof stableKey === "string", "invalid node key type");
+		assert(typeof stableKey === "string", 0x7b3 /* invalid node key type */);
 		cursor.exitNode();
 		return brand(stableKey as StableId);
 	}

@@ -14,6 +14,7 @@ export const EncodedNodeUpdate = <Schema extends TSchema>(tNodeChange: Schema) =
 		Type.Object(
 			{
 				set: EncodedJsonableTree,
+				buildId: EncodedChangeAtomId,
 				changes: Type.Optional(tNodeChange),
 			},
 			noAdditionalProps,

@@ -21,7 +21,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/schema-aware/schemaAware";
 
-import { AllowedUpdateType, TreeSchemaIdentifier, ValueSchema } from "../../../core";
+import { AllowedUpdateType, TreeSchemaIdentifier } from "../../../core";
 import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../../util";
 import {
 	valueSymbol,
@@ -29,7 +29,6 @@ import {
 	typeNameSymbol,
 	ContextuallyTypedNodeDataObject,
 	UntypedTreeCore,
-	SchemaBuilder,
 	TreeSchema,
 	FieldSchema,
 	AllowedTypes,
@@ -37,7 +36,7 @@ import {
 	isEditableTree,
 } from "../../../feature-libraries";
 import { createSharedTreeView } from "../../../shared-tree";
-import { leaf } from "../../../domains";
+import { leaf, SchemaBuilder } from "../../../domains";
 import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 // Test UnbrandedName
@@ -52,7 +51,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 	const { optional, required, sequence } = FieldKinds;
 
 	// Example Schema:
-	const builder = new SchemaBuilder({ scope: "SchemaAwareTests", libraries: [leaf.library] });
+	const builder = new SchemaBuilder({ scope: "SchemaAwareTests" });
 
 	// Declare a simple type which just holds a number.
 	const numberSchema = leaf.number;
@@ -217,22 +216,22 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 	// Test polymorphic cases:
 	{
 		const builder2 = new SchemaBuilder({ scope: "SchemaAwarePolymorphicTest" });
-		const bool = builder2.leaf("bool", ValueSchema.Boolean);
-		const str = builder2.leaf("str", ValueSchema.String);
+		const bool = leaf.boolean;
+		const str = leaf.string;
 		const parentField = SchemaBuilder.required([str, bool]);
 		const parent = builder2.struct("parent", { child: parentField });
 
 		type FlexBool =
 			| boolean
 			| {
-					[typeNameSymbol]?: "SchemaAwarePolymorphicTest.bool";
+					[typeNameSymbol]?: UnbrandedName<typeof leaf.boolean.name>;
 					[valueSymbol]: boolean;
 			  };
 
 		type FlexStr =
 			| string
 			| {
-					[typeNameSymbol]?: "SchemaAwarePolymorphicTest.str";
+					[typeNameSymbol]?: UnbrandedName<typeof leaf.string.name>;
 					[valueSymbol]: string;
 			  };
 		interface FlexParent {
@@ -459,7 +458,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 describe("SchemaAware Editing", () => {
 	it("Use a sequence field", () => {
-		const builder = new SchemaBuilder({ scope: "SchemaAware", libraries: [leaf.library] });
+		const builder = new SchemaBuilder({ scope: "SchemaAware" });
 		const rootNodeSchema = builder.struct("Test", {
 			children: SchemaBuilder.sequence(leaf.string),
 		});

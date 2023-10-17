@@ -91,7 +91,7 @@ function createReviveChangeset(
 	lastDetach?: SF.CellId,
 ): SF.Changeset<never> {
 	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent);
-	const mark = markList[markList.length - 1] as SF.Reattach;
+	const mark = markList[markList.length - 1] as SF.Attach;
 	if (lastDetach !== undefined) {
 		mark.cellId = lastDetach;
 	}
@@ -105,7 +105,7 @@ function createRedundantReviveChangeset(
 	isIntention?: boolean,
 ): SF.Changeset<never> {
 	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent, isIntention);
-	const mark = markList[markList.length - 1] as SF.Reattach;
+	const mark = markList[markList.length - 1] as SF.Attach;
 	delete mark.cellId;
 	return markList;
 }
@@ -117,7 +117,7 @@ function createBlockedReviveChangeset(
 	lastDetach: SF.CellId,
 ): SF.Changeset<never> {
 	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent);
-	const mark = markList[markList.length - 1] as SF.Reattach;
+	const mark = markList[markList.length - 1] as SF.Attach;
 	mark.cellId = lastDetach;
 	return markList;
 }
@@ -129,7 +129,7 @@ function createIntentionalReviveChangeset(
 	lastDetach?: SF.CellId,
 ): SF.Changeset<never> {
 	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent, true);
-	const mark = markList[markList.length - 1] as SF.Reattach;
+	const mark = markList[markList.length - 1] as SF.Attach;
 
 	if (lastDetach !== undefined) {
 		mark.cellId = lastDetach;
@@ -215,10 +215,10 @@ function createInsertMark<TChange = never>(
 function createReviveMark<TChange = never>(
 	count: number,
 	cellId?: SF.CellId,
-	overrides?: Partial<SF.Revive<TChange>>,
-): SF.Revive<TChange> {
-	const mark: SF.Revive<TChange> = {
-		type: "Revive",
+	overrides?: Partial<SF.Insert<TChange>>,
+): SF.Insert<TChange> {
+	const mark: SF.Insert<TChange> = {
+		type: "Insert",
 		count,
 	};
 	if (cellId !== undefined) {
@@ -331,11 +331,11 @@ function createReturnToMark(
 	count: number,
 	markId: ChangesetLocalId | ChangeAtomId,
 	cellId?: SF.CellId,
-	overrides?: Partial<SF.ReturnTo>,
-): SF.ReturnTo {
+	overrides?: Partial<SF.MoveIn>,
+): SF.MoveIn {
 	const atomId: ChangeAtomId = typeof markId === "object" ? markId : { localId: markId };
-	const mark: SF.ReturnTo = {
-		type: "ReturnTo",
+	const mark: SF.MoveIn = {
+		type: "MoveIn",
 		id: atomId.localId,
 		count,
 	};

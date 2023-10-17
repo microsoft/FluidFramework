@@ -16,9 +16,18 @@ import {
 	schemaIsStruct,
 } from "../../typed-schema";
 import { FieldKinds } from "../../default-field-kinds";
-import { FieldNode, TreeNode, TypedField, TypedNodeUnion } from "../editableTreeTypes";
+import {
+	FieldNode,
+	OptionalField,
+	RequiredField,
+	TreeNode,
+	TypedField,
+	TypedNodeUnion,
+} from "../editableTreeTypes";
 import { LazySequence } from "../lazyField";
 import { FieldKey } from "../../../core";
+import { getBoxedField } from "../lazyTree";
+import { LazyEntity } from "../lazyEntity";
 import { ProxyField, ProxyNode, SharedTreeList, SharedTreeObject } from "./types";
 
 /** Symbol used to store a private/internal reference to the underlying editable tree node. */
@@ -39,8 +48,29 @@ export function setTreeNode(target: any, treeNode: TreeNode) {
 	});
 }
 
+const proxyCacheSym = Symbol("ProxyCache");
+
+/** Cache the proxy that wraps the given tree node so that the proxy can be re-used in future reads */
+function cacheProxy(
+	target: TreeNode,
+	proxy: SharedTreeList<AllowedTypes> | SharedTreeObject<StructSchema>,
+): void {
+	Object.defineProperty(target, proxyCacheSym, {
+		value: proxy,
+		writable: false,
+		enumerable: false,
+		configurable: false,
+	});
+}
+
+/** If there has already been a proxy created to wrap the given tree node, return it */
+function getCachedProxy(treeNode: TreeNode): ProxyNode<TreeSchema> | undefined {
+	return (treeNode as unknown as { [proxyCacheSym]: ProxyNode<TreeSchema> })[proxyCacheSym];
+}
+
 /**
  * Checks if the given object is a {@link SharedTreeObject}
+ * @alpha
  */
 export function is<TSchema extends StructSchema>(
 	x: unknown,
@@ -49,9 +79,6 @@ export function is<TSchema extends StructSchema>(
 	// TODO: Do this a better way. Perhaps, should `treeNodeSym` be attached to object proxies via `setTreeNode`?
 	return (x as any)[treeNodeSym].schema === schema;
 }
-
-// TODO: Implement lifetime.  The proxy that should be cached on their respective nodes and reused.
-// Object identity is tied to the proxy instance (not the target object)
 
 /** Retrieve the associated proxy for the given field. */
 export function getProxyForField<TSchema extends FieldSchema>(
@@ -67,10 +94,25 @@ export function getProxyForField<TSchema extends FieldSchema>(
 			return getProxyForNode(asValue.boxedContent) as ProxyField<TSchema>;
 		}
 		case FieldKinds.optional: {
-			fail(`"not implemented"`);
+			const asValue = field as TypedField<FieldSchema<typeof FieldKinds.optional>>;
+
+			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
+			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
+			//       inner field.
+
+			const maybeContent = asValue.boxedContent;
+
+			// Normally, empty fields are unreachable due to the behavior of 'tryGetField'.  However, the
+			// root field is a special case where the field is always present (even if empty).
+			return (
+				maybeContent === undefined ? undefined : getProxyForNode(maybeContent)
+			) as ProxyField<TSchema>;
 		}
+		// TODO: Remove if/when 'FieldNode' is removed.
 		case FieldKinds.sequence: {
-			fail("not implemented");
+			// 'getProxyForNode' handles FieldNodes by unconditionally creating a list proxy, making
+			// this case unreachable as long as users follow the 'list recipe'.
+			fail("'sequence' field is unexpected.");
 		}
 		default:
 			fail("invalid field kind");
@@ -88,12 +130,18 @@ export function getProxyForNode<TSchema extends TreeSchema>(
 	if (schemaIsLeaf(schema)) {
 		return treeNode.value as ProxyNode<TSchema>;
 	}
-	if (schemaIsFieldNode(schema)) {
-		return createListProxy(treeNode) as ProxyNode<TSchema>;
+	const isFieldNode = schemaIsFieldNode(schema);
+	if (isFieldNode || schemaIsStruct(schema)) {
+		const cachedProxy = getCachedProxy(treeNode);
+		if (cachedProxy !== undefined) {
+			return cachedProxy as ProxyNode<TSchema>;
+		}
+
+		const proxy = isFieldNode ? createListProxy(treeNode) : createObjectProxy(treeNode, schema);
+		cacheProxy(treeNode, proxy);
+		return proxy as ProxyNode<TSchema>;
 	}
-	if (schemaIsStruct(schema)) {
-		return createObjectProxy(treeNode, schema) as ProxyNode<TSchema>;
-	}
+
 	fail("unrecognized node kind");
 }
 
@@ -123,8 +171,29 @@ export function createObjectProxy<TSchema extends StructSchema, TTypes extends A
 				return undefined;
 			},
 			set(target, key, value) {
-				// TODO: Implement set
-				return false;
+				const fieldSchema = content.schema.structFields.get(key as FieldKey);
+
+				if (fieldSchema === undefined) {
+					return false;
+				}
+
+				// TODO: Is it safe to assume 'content' is a LazyEntity?
+				const field = getBoxedField(content as LazyEntity, key as FieldKey, fieldSchema);
+
+				switch (field.schema.kind) {
+					case FieldKinds.required: {
+						(field as RequiredField<AllowedTypes>).content = value;
+						break;
+					}
+					case FieldKinds.optional: {
+						(field as OptionalField<AllowedTypes>).content = value;
+						break;
+					}
+					default:
+						fail("invalid FieldKind");
+				}
+
+				return true;
 			},
 			has: (target, key) => {
 				return schema.structFields.has(key as FieldKey);

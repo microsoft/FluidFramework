@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/azure-local-service",
-	"version": "2.0.0-internal.7.1.0",
+	"version": "2.0.0-internal.7.2.0",
 	"description": "Local implementation of the Azure Fluid Relay service for testing/development use",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -11,7 +11,7 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"main": "dist/index.js",
-	"typings": "dist/index.d.ts",
+	"types": "dist/index.d.ts",
 	"bin": "dist/index.js",
 	"scripts": {
 		"build": "fluid-build . --task build",
@@ -36,12 +36,13 @@
 		"tinylicious": "^2.0.1"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "^2.0.1",
+		"@fluidframework/build-common": "^2.0.2",
 		"@fluidframework/build-tools": "^0.25.0",
 		"@fluidframework/eslint-config-fluid": "^3.0.0",
 		"@microsoft/api-extractor": "^7.37.0",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.50.0",
+		"eslint-config-prettier": "~9.0.0",
 		"forever": "^4.0.3",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",

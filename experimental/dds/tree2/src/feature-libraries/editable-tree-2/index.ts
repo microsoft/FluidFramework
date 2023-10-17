@@ -24,6 +24,7 @@ export {
 	boxedIterator,
 	CheckTypesOverlap,
 	TreeStatus,
+	Typed,
 } from "./editableTreeTypes";
 
 export {
@@ -37,6 +38,7 @@ export {
 	SharedTreeMap,
 	SharedTreeObject,
 	is,
+	ProxyRoot,
 } from "./proxies";
 export { createRawStruct, rawStructErrorMessage, nodeContent } from "./rawStruct";
 
