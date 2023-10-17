@@ -1,11 +1,4 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-	"extends": "@fluidframework/build-common/api-extractor-base.json",
-
-	// Configures how the .d.ts rollup file will be generated.
-	"dtsRollup": {
-		// This package has a root module named "map" which conflicts with the default naming here.
-		// TODO: remove this override once the base config has been updated to append `-untrimmed` globally.
-		"untrimmedFilePath": "<projectFolder>/dist/<unscopedPackageName>-untrimmed.d.ts"
-	}
+	"extends": "@fluidframework/build-common/api-extractor-base.json"
 }
