@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { leaf } from "../../../domains";
-import { FieldKinds, FieldSchema, SchemaBuilder } from "../../../feature-libraries";
+import { leaf, SchemaBuilder } from "../../../domains";
+import { FieldKinds, FieldSchema } from "../../../feature-libraries";
 
-const builder = new SchemaBuilder({ scope: "example", libraries: [leaf.library] });
+const builder = new SchemaBuilder({ scope: "example" });
 
 // Declare struct
 const ballSchema = builder.struct("Ball", {

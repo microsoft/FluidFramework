@@ -21,13 +21,13 @@ import {
 import { brand } from "../../../util";
 import { getField, jsonableTreeFromCursor, on, singleTextCursor } from "../../../feature-libraries";
 import { IEmitter } from "../../../events";
+import { leaf } from "../../../domains";
 import {
 	fullSchemaData,
 	personData,
 	getReadonlyEditableTreeContext,
 	setupForest,
 	addressSchema,
-	int32Schema,
 } from "./mockData";
 
 const fieldAddress: FieldKey = brand("address");
@@ -80,7 +80,7 @@ describe("editable-tree: event subscription", () => {
 							fields: {
 								zip: [
 									{
-										type: int32Schema.name,
+										type: leaf.number.name,
 										value: 33428,
 									},
 								],
@@ -117,7 +117,7 @@ describe("editable-tree: event subscription", () => {
 				fields: {
 					zip: [
 						{
-							type: int32Schema.name,
+							type: leaf.number.name,
 							value: 33428,
 						},
 					],

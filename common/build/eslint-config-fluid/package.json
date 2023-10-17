@@ -43,7 +43,7 @@
 		"eslint-plugin-unused-imports": "~3.0.0"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "^2.0.1",
+		"@fluidframework/build-common": "^2.0.2",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.49.0",
 		"prettier": "~3.0.3",

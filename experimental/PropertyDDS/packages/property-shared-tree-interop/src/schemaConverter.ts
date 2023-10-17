@@ -302,7 +302,7 @@ function buildFieldSchema<Kind extends FieldKind = FieldKind>(
 	}
 	return isAny
 		? SchemaBuilder.field(fieldKind, Any)
-		: SchemaBuilder.field(fieldKind, ...allowedTypes);
+		: SchemaBuilder.field(fieldKind, [...allowedTypes]);
 }
 
 const builtinBuilder = new SchemaBuilder({
@@ -320,7 +320,7 @@ export const nodePropertySchema = builtinBuilder.map(
 const builtinLibrary = builtinBuilder.finalize();
 
 /**
- * Creates a TypedSchemaCollection out of PropertyDDS schema templates.
+ * Creates a DocumentSchema out of PropertyDDS schema templates.
  * The templates must be registered beforehand using {@link PropertyFactory.register}.
  * @param rootFieldKind - The kind of the root field.
  * @param allowedRootTypes - The types of children nodes allowed for the root field.

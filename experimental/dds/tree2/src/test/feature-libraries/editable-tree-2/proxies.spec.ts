@@ -4,18 +4,46 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	FieldSchema,
-	ProxyField,
-	SchemaBuilder,
-	TypedSchemaCollection,
-	is,
-	typeNameSymbol,
-} from "../../../feature-libraries";
-import { leaf } from "../../../domains";
+import { is, typeNameSymbol } from "../../../feature-libraries";
+import { leaf, SchemaBuilder } from "../../../domains";
+import { itWithRoot } from "./utils";
 
-import { ISharedTreeView } from "../../../shared-tree";
-import { createTreeView } from "./utils";
+describe("SharedTree proxies", () => {
+	const sb = new SchemaBuilder({
+		scope: "test",
+		libraries: [leaf.library],
+	});
+
+	const childSchema = sb.struct("struct", {
+		content: leaf.number,
+	});
+
+	const parentSchema = sb.struct("parent", {
+		struct: childSchema,
+		list: sb.fieldNode("list", sb.sequence(leaf.number)),
+	});
+
+	const schema = sb.toDocumentSchema(parentSchema);
+
+	const initialTree = {
+		struct: { content: 42 },
+		list: [42, 42, 42],
+	};
+
+	itWithRoot("cache and reuse structs", schema, initialTree, (root) => {
+		const structProxy = root.struct;
+		const structProxyAgain = root.struct;
+		assert.equal(structProxyAgain, structProxy);
+	});
+
+	itWithRoot("cache and reuse lists", schema, initialTree, (root) => {
+		const listProxy = root.list;
+		const listProxyAgain = root.list;
+		assert.equal(listProxyAgain, listProxy);
+	});
+
+	// TODO: Test map proxy re-use when maps are implemented
+});
 
 describe("SharedTreeObject", () => {
 	const sb = new SchemaBuilder({
@@ -37,8 +65,8 @@ describe("SharedTreeObject", () => {
 		polyValue: [leaf.number, leaf.string],
 		polyChild: [numberChild, stringChild],
 		polyValueChild: [leaf.number, numberChild],
-		// map: sb.map("map", sb.optional(leaf.string)),
-		list: sb.sequence(numberChild),
+		// map: sb.map("map", sb.optional(leaf.string)), // TODO Test Maps
+		list: sb.fieldNode("list", sb.sequence(numberChild)),
 	});
 
 	const schema = sb.toDocumentSchema(parentSchema);
@@ -52,35 +80,23 @@ describe("SharedTreeObject", () => {
 		list: [{ content: 42 }, { content: 42 }],
 	};
 
-	function itWithRoot(
-		title: string,
-		fn: (root: ProxyField<(typeof schema)["rootFieldSchema"]>) => void,
-	): void {
-		it(title, () => {
-			const view = createTypedTreeView(schema, initialTree);
-			const root = view.root2(schema);
-			fn(root);
-		});
-	}
-
-	itWithRoot("can read required fields", (root) => {
+	itWithRoot("can read required fields", schema, initialTree, (root) => {
 		assert.equal(root.content, 42);
 		assert.equal(root.child.content, 42);
 	});
 
-	// TODO: Enable when implemented
-	// itWithRoot("can read lists", (root) => {
-	// 	assert.equal(root.list.length, 2);
-	// 	for (const x of root.list) {
-	// 		assert.equal(x, 42);
-	// 	}
-	// });
+	itWithRoot("can read lists", schema, initialTree, (root) => {
+		assert.equal(root.list.length, 2);
+		for (const x of root.list) {
+			assert.equal(x.content, 42);
+		}
+	});
 
-	itWithRoot("can read fields common to all polymorphic types", (root) => {
+	itWithRoot("can read fields common to all polymorphic types", schema, initialTree, (root) => {
 		assert.equal(root.polyChild.content, "42");
 	});
 
-	itWithRoot("can narrow polymorphic value fields", (root) => {
+	itWithRoot("can narrow polymorphic value fields", schema, initialTree, (root) => {
 		if (typeof root.polyValue === "number") {
 			assert.equal(root.polyChild.content, 42);
 		} else {
@@ -88,7 +104,7 @@ describe("SharedTreeObject", () => {
 		}
 	});
 
-	itWithRoot("can narrow polymorphic struct fields", (root) => {
+	itWithRoot("can narrow polymorphic struct fields", schema, initialTree, (root) => {
 		if (is(root.polyChild, numberChild)) {
 			assert.equal(root.polyChild.content, 42);
 		} else {
@@ -96,24 +112,22 @@ describe("SharedTreeObject", () => {
 		}
 	});
 
-	itWithRoot("can narrow polymorphic combinations of value and struct fields", (root) => {
-		if (is(root.polyValueChild, numberChild)) {
-			assert.equal(root.polyValueChild.content, 42);
-		} else {
-			assert.equal(root.polyValueChild, 42);
-		}
+	itWithRoot(
+		"can narrow polymorphic combinations of value and struct fields",
+		schema,
+		initialTree,
+		(root) => {
+			if (is(root.polyValueChild, numberChild)) {
+				assert.equal(root.polyValueChild.content, 42);
+			} else {
+				assert.equal(root.polyValueChild, 42);
+			}
 
-		if (typeof root.polyValueChild === "number") {
-			assert.equal(root.polyValueChild, 42);
-		} else {
-			assert.equal(root.polyValueChild.content, 42);
-		}
-	});
+			if (typeof root.polyValueChild === "number") {
+				assert.equal(root.polyValueChild, 42);
+			} else {
+				assert.equal(root.polyValueChild.content, 42);
+			}
+		},
+	);
 });
-
-function createTypedTreeView<TRoot extends FieldSchema>(
-	schema: TypedSchemaCollection<TRoot>,
-	initialTree: any,
-): ISharedTreeView & { root2: (viewSchema: TypedSchemaCollection<TRoot>) => ProxyField<TRoot> } {
-	return createTreeView(schema, initialTree);
-}

@@ -29,7 +29,7 @@ import {
 } from "../../core";
 import { brand } from "../../util";
 import { announceTestDelta, applyTestDelta, expectEqualPaths } from "../utils";
-import { jsonString } from "../../domains";
+import { leaf } from "../../domains";
 
 const fieldFoo: FieldKey = brand("foo");
 const fieldBar: FieldKey = brand("bar");
@@ -325,7 +325,7 @@ describe("AnchorSet", () => {
 
 		const insertMark: Delta.Insert = {
 			type: Delta.MarkType.Insert,
-			content: [singleTextCursor({ type: jsonString.name, value: "x" })],
+			content: [singleTextCursor({ type: leaf.string.name, value: "x" })],
 		};
 		announceTestDelta(new Map([[rootFieldKey, [deleteMark, insertMark]]]), anchors);
 

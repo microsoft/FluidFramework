@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/devtools-view",
-	"version": "2.0.0-internal.7.1.0",
+	"version": "2.0.0-internal.7.2.0",
 	"private": true,
 	"description": "Contains a visualization suite for use alongside the Fluid Devtools",
 	"homepage": "https://fluidframework.com",
@@ -20,8 +20,8 @@
 		"build": "fluid-build . --task build",
 		"build-and-test-mocha": "npm run build && npm run test:mocha:verbose",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../../_api-extractor-temp/",
-		"ci:build:docs": "api-extractor run && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../../_api-extractor-temp/",
+		"build:docs": "api-extractor run --local",
+		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob '_api-extractor-temp' 'coverage' 'dist' 'nyc' '*.tsbuildinfo' '*.build.log'",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
@@ -64,7 +64,7 @@
 		"scheduler": "^0.20.0"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "^2.0.1",
+		"@fluidframework/build-common": "^2.0.2",
 		"@fluidframework/build-tools": "^0.25.0",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",

@@ -162,15 +162,15 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 				const [parent, key] = cursor.getParent();
 				assert(
 					parent !== this.forest.roots || key !== source,
-					"Attach source field must be different from current field",
+					0x7b6 /* Attach source field must be different from current field */,
 				);
 				const currentField = getMapTreeField(parent, key, true);
 				assertValidIndex(destination, currentField, true);
 				const sourceField = getMapTreeField(this.forest.roots, source, false);
-				assert(sourceField !== undefined, "Attach source field must exist");
+				assert(sourceField !== undefined, 0x7b7 /* Attach source field must exist */);
 				assert(
 					sourceField.length === count,
-					"Attach must consume all nodes in source field",
+					0x7b8 /* Attach must consume all nodes in source field */,
 				);
 				// TODO: this will fail for very large insertions due to argument limits.
 				currentField.splice(destination, 0, ...sourceField);
@@ -189,7 +189,7 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 					destination === undefined ||
 						parent !== this.forest.roots ||
 						key !== destination,
-					"Detach destination field must be different from current field",
+					0x7b9 /* Detach destination field must be different from current field */,
 				);
 				const currentField = getMapTreeField(parent, key, true);
 				assertValidRange(source, currentField);
@@ -210,7 +210,7 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 			): void {
 				assert(
 					newContentSource !== oldContentDestination,
-					"Replace detached source field and detached destination field must be different",
+					0x7ba /* Replace detached source field and detached destination field must be different */,
 				);
 				this.forest.invalidateDependents();
 				this.detachEdit(range, oldContentDestination);

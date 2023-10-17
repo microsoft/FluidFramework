@@ -24,6 +24,7 @@ import { SharedStringFactory } from "./sequenceFactory";
 
 /**
  * Fluid object interface describing access methods on a SharedString
+ * @public
  */
 export interface ISharedString extends SharedSegmentSequence<SharedStringSegment> {
 	/**
@@ -52,6 +53,9 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
 	posFromRelativePos(relativePos: IRelativePosition): number;
 }
 
+/**
+ * @public
+ */
 export type SharedStringSegment = TextSegment | Marker;
 
 /**
@@ -63,6 +67,7 @@ export type SharedStringSegment = TextSegment | Marker;
  * used to store metadata at positions within the text, like the details of an
  * image or Fluid object that should be rendered with the text.
  *
+ * @public
  */
 export class SharedString
 	extends SharedSegmentSequence<SharedStringSegment>
@@ -309,7 +314,6 @@ interface ITextAndMarkerAccumulator {
  * @param sharedString - String to retrieve text and markers from
  * @param label - label to split on
  * @returns Two parallel lists of text and markers, split by markers with the provided `label`.
- *
  * For example:
  * ```typescript
  * // Say sharedstring has contents "hello<paragraph marker 1>world<paragraph marker 2>missing".
@@ -318,6 +322,7 @@ interface ITextAndMarkerAccumulator {
  * // parallelMarkers === [<paragraph marker 1 object>, <paragraph marker 2 object>]
  * // Note parallelText does not include "missing".
  * ```
+ * @public
  */
 export function getTextAndMarkers(
 	sharedString: SharedString,

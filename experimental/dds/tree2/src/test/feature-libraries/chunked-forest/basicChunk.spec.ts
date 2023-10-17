@@ -37,7 +37,7 @@ import {
 } from "../../../feature-libraries/chunked-forest/chunkTree";
 // eslint-disable-next-line import/no-internal-modules
 import { SequenceChunk } from "../../../feature-libraries/chunked-forest/sequenceChunk";
-import { jsonNumber } from "../../../domains";
+import { leaf } from "../../../domains";
 import {
 	ChunkedCursor,
 	// eslint-disable-next-line import/no-internal-modules
@@ -218,7 +218,7 @@ describe("basic chunk", () => {
 });
 
 function numericBasicChunk(value: number = 0): BasicChunk {
-	return new BasicChunk(jsonNumber.name, new Map(), value);
+	return new BasicChunk(leaf.number.name, new Map(), value);
 }
 
 /**

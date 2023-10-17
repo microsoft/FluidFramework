@@ -474,6 +474,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 export function isEditableTree(field: UnwrappedEditableField): field is EditableTree {
 	return (
 		typeof field === "object" &&
+		field !== null &&
 		isNodeProxyTarget(field[proxyTargetSymbol] as ProxyTarget<Anchor | FieldAnchor>)
 	);
 }

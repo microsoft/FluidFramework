@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/shared-text",
-	"version": "2.0.0-internal.7.1.0",
+	"version": "2.0.0-internal.7.2.0",
 	"private": true,
 	"description": "Shared text",
 	"homepage": "https://fluidframework.com",
@@ -66,7 +66,7 @@
 	},
 	"devDependencies": {
 		"@fluid-tools/webpack-fluid-loader": "workspace:~",
-		"@fluidframework/build-common": "^2.0.1",
+		"@fluidframework/build-common": "^2.0.2",
 		"@fluidframework/build-tools": "^0.25.0",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@types/expect-puppeteer": "2.2.1",

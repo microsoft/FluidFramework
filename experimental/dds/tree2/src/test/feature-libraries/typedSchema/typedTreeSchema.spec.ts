@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { jsonArray, jsonBoolean, jsonObject, jsonSchema, leaf } from "../../../domains";
+import { jsonArray, jsonObject, jsonSchema, leaf, SchemaBuilder } from "../../../domains";
 import { isAssignableTo, requireAssignableTo, requireFalse, requireTrue } from "../../../util";
 import {
 	Any,
@@ -20,7 +20,7 @@ import {
 	schemaIsStruct,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/typed-schema/typedTreeSchema";
-import { FieldKinds, SchemaBuilder } from "../../../feature-libraries";
+import { FieldKinds } from "../../../feature-libraries";
 
 describe("typedTreeSchema", () => {
 	const builder = new SchemaBuilder({ scope: "test", libraries: [jsonSchema] });
@@ -34,10 +34,10 @@ describe("typedTreeSchema", () => {
 	});
 
 	it("schema is", () => {
-		assert(schemaIsLeaf(jsonBoolean));
-		assert(!schemaIsFieldNode(jsonBoolean));
-		assert(!schemaIsStruct(jsonBoolean));
-		assert(!schemaIsMap(jsonBoolean));
+		assert(schemaIsLeaf(leaf.boolean));
+		assert(!schemaIsFieldNode(leaf.boolean));
+		assert(!schemaIsStruct(leaf.boolean));
+		assert(!schemaIsMap(leaf.boolean));
 
 		assert(!schemaIsLeaf(jsonArray));
 		assert(schemaIsFieldNode(jsonArray));
@@ -90,7 +90,7 @@ describe("typedTreeSchema", () => {
 	});
 
 	{
-		type _1 = requireAssignableTo<typeof jsonBoolean, LeafSchema>;
+		type _1 = requireAssignableTo<typeof leaf.boolean, LeafSchema>;
 		type _2a = requireAssignableTo<typeof basicFieldNode, FieldNodeSchema>;
 		type _2 = requireAssignableTo<typeof jsonArray, FieldNodeSchema>;
 		type _3 = requireAssignableTo<typeof jsonObject, MapSchema>;
@@ -99,10 +99,10 @@ describe("typedTreeSchema", () => {
 	}
 
 	{
-		type _1 = requireTrue<isAssignableTo<typeof jsonBoolean, LeafSchema>>;
-		type _2 = requireFalse<isAssignableTo<typeof jsonBoolean, FieldNodeSchema>>;
-		type _3 = requireFalse<isAssignableTo<typeof jsonBoolean, MapSchema>>;
-		type _4 = requireFalse<isAssignableTo<typeof jsonBoolean, StructSchema>>;
+		type _1 = requireTrue<isAssignableTo<typeof leaf.boolean, LeafSchema>>;
+		type _2 = requireFalse<isAssignableTo<typeof leaf.boolean, FieldNodeSchema>>;
+		type _3 = requireFalse<isAssignableTo<typeof leaf.boolean, MapSchema>>;
+		type _4 = requireFalse<isAssignableTo<typeof leaf.boolean, StructSchema>>;
 	}
 
 	{

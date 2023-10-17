@@ -13,7 +13,6 @@ import {
 	type IChannel,
 	type IChannelServices,
 	type IFluidDataStoreRuntime,
-	type IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import {
 	type IExperimentalIncrementalSummaryContext,
@@ -21,10 +20,17 @@ import {
 	type ITelemetryContext,
 	type ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
-import { type SharedTree as LegacySharedTree } from "@fluid-experimental/tree";
-import { type ISharedTree } from "@fluid-experimental/tree2";
+import {
+	type SharedTreeFactory as LegacySharedTreeFactory,
+	type SharedTree as LegacySharedTree,
+} from "@fluid-experimental/tree";
+import { type SharedTreeFactory, type ISharedTree } from "@fluid-experimental/tree2";
+import { assert } from "@fluidframework/core-utils";
+
 /**
- * Interface for migration events.
+ * Interface for migration events to indicate the stage of the migration. There really is two stages: before, and after.
+ *
+ * @public
  */
 export interface IMigrationEvent extends IEvent {
 	/**
@@ -42,40 +48,74 @@ export interface IMigrationOp {
 	 */
 	type: "hotSwap";
 	/**
-	 * Old channel attributes.
+	 * Old channel attributes so we can do verification and understand what changed. This will allow future clients to
+	 * accurately reason about what state of the document was before the migration op initiated at.
 	 */
 	oldAttributes: IChannelAttributes;
 	/**
-	 * New channel attributes.
+	 * New channel attributes so we can do verification and understand what changed. This will allow future clients to
+	 * accurately reason about what the migration state of the new container is expected to be.
 	 */
 	newAttributes: IChannelAttributes;
 }
 
 /**
- * Create skeleton Migration Shim that can hot swap from one DDS to a new DDS.
+ * The MigrationShim loads in place of the legacy SharedTree.  It provides API surface for migrating it to the new SharedTree, while also providing access to the current SharedTree for usage.
+ *
+ * @remarks
+ *
+ * This MigrationShim is responsible for submitting a migration op, processing the migrate op, swapping from the old
+ * tree to the new tree, loading an old tree snapshot and creating an old tree.
+ *
+ * The MigrationShim expects to always load from a legacy SharedTree snapshot, though by the time it catches up in processing all ops, it may find that the migration has already occurred.  After migration occurs, it modifies its attributes to point at the SharedTreeShimFactory.  This will cause future clients to load with a SharedTreeShim and the new SharedTree snapshot instead after the next summarization.
+ *
+ * @public
  */
 export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements IChannel {
 	public constructor(
 		public readonly id: string,
 		private readonly runtime: IFluidDataStoreRuntime,
-		private readonly oldFactory: IChannelFactory, // Should this be a legacy shared tree factory only?
-		private readonly newFactory: IChannelFactory, // Should this be a new shared tree factory only?
+		private readonly legacyTreeFactory: LegacySharedTreeFactory,
+		private readonly newTreeFactory: SharedTreeFactory,
 		private readonly populateNewSharedObjectFn: (
-			oldSharedObject: LegacySharedTree,
-			newSharedObject: ISharedTree,
+			legacyTree: LegacySharedTree,
+			newTree: ISharedTree,
 		) => void,
 	) {
 		super();
+	}
+
+	private _legacyTree: LegacySharedTree | undefined;
+	private get legacyTree(): LegacySharedTree {
+		assert(this._legacyTree !== undefined, "Old tree not initialized");
+		return /* this.newTree ?? */ this._legacyTree;
 	}
 
 	// This is the magic button that tells this Spanner and all other Spanners to swap to the new Shared Object.
 	public submitMigrateOp(): void {
 		// These console logs are for compilation purposes
 		console.log(this.runtime);
-		console.log(this.oldFactory);
-		console.log(this.newFactory);
+		console.log(this.legacyTreeFactory);
+		console.log(this.newTreeFactory);
 		console.log(this.populateNewSharedObjectFn);
 		throw new Error("Method not implemented.");
+	}
+
+	public get currentTree(): LegacySharedTree | ISharedTree {
+		return /* this.newTree ?? */ this.legacyTree;
+	}
+
+	public async load(services: IChannelServices): Promise<void> {
+		this._legacyTree = (await this.legacyTreeFactory.load(
+			this.runtime,
+			this.id,
+			services,
+			this.legacyTreeFactory.attributes,
+		)) as LegacySharedTree;
+	}
+	public create(): void {
+		// TODO: Should we be allowing the creation of legacy shared trees?
+		this._legacyTree = this.legacyTreeFactory.create(this.runtime, this.id);
 	}
 
 	public attributes!: IChannelAttributes;
