@@ -198,7 +198,6 @@ export class LegacyTreeInventoryList extends DataObject implements IInventoryLis
 		// Last step of initializing is to populate our map of InventoryItems.
 		// Note that this.tree.currentView.root is the ID of the root node, not the root node itself.
 		const rootNode = this.tree.currentView.getViewNode(this.tree.currentView.root);
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const inventoryItemsNodeIds = this.tree.currentView
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			.getViewNode(rootNode.traits.get("inventory" as TraitLabel)![0])

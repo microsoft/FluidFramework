@@ -21,28 +21,28 @@ import { InventoryItem } from "./inventoryItem";
 
 const builder = new SchemaBuilder({ scope: "inventory app" });
 
-const inventoryItem = builder.struct("Contoso:InventoryItem-1.0.0", {
+const inventoryItemSchema = builder.struct("Contoso:InventoryItem-1.0.0", {
 	id: builder.string,
 	name: builder.string,
 	quantity: builder.number,
 });
-type InventoryItemNode = Typed<typeof inventoryItem>;
+type InventoryItemNode = Typed<typeof inventoryItemSchema>;
 
 // REV: Building this up as a series of builder invocations makes it hard to read the schema.
 // Would be nice if instead we could define some single big Serializable or similar that laid the
 // schema out and then pass that in.
 // TODO: Convert this to use builder.list() rather than builder.sequence when ready.
-const inventory = builder.struct("Contoso:Inventory-1.0.0", {
-	inventoryItems: builder.sequence(inventoryItem),
+const inventorySchema = builder.struct("Contoso:Inventory-1.0.0", {
+	inventoryItems: builder.sequence(inventoryItemSchema),
 });
-type InventoryNode = Typed<typeof inventory>;
+type InventoryNode = Typed<typeof inventorySchema>;
 
-// REV: The rootField feels extra to me.  Is there a way to omit it?  Something like
-// builder.intoDocumentSchema(inventory)
-const inventoryField = SchemaBuilder.required(inventory);
-type InventoryField = Typed<typeof inventoryField>;
+// REV: The root inventoryFieldSchema feels extra to me.  Is there a way to omit it?  Something like
+// builder.toDocumentSchema(inventorySchema)
+const inventoryFieldSchema = SchemaBuilder.required(inventorySchema);
+type InventoryField = Typed<typeof inventoryFieldSchema>;
 
-const schema = builder.toDocumentSchema(inventoryField);
+const schema = builder.toDocumentSchema(inventoryFieldSchema);
 
 const newTreeFactory = new TypedTreeFactory({
 	jsonValidator: typeboxValidator,
