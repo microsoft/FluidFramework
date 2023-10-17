@@ -198,7 +198,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private readonly tombstonedBlobs: Set<string> = new Set();
 
 	private readonly sendBlobAttachOp: (localId: string, storageId?: string) => void;
-	private blobsStashed: boolean = false;
+	private stashing: boolean = false;
 
 	constructor(
 		private readonly routeContext: IFluidHandleContext,
@@ -531,7 +531,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private onUploadResolve(localId: string, response: ICreateBlobResponseWithTTL) {
 		const entry = this.pendingBlobs.get(localId);
 		assert(entry !== undefined, 0x6c8 /* pending blob entry not found for uploaded blob */);
-		if(this.blobsStashed){
+		if (this.stashing) {
+			// It means blob finished uploading while stashing. It can lead to scenarios
+			// which are not worth covering given the fact we are already making a huge effort to get
+			// the blob and its intention back once we reload pending state.
 			return;
 		}
 		if (entry.abortSignal?.aborted === true && !entry.opsent) {
@@ -944,7 +947,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				if (this.pendingBlobs.size === 0) {
 					return;
 				}
-				this.blobsStashed = true;
+				this.stashing = true;
 				const blobs = {};
 				const localBlobs = new Set<PendingBlob>();
 				const abortPromise = new Promise<void>((resolve, reject) => {
