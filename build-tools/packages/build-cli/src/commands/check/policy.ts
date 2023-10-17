@@ -4,7 +4,6 @@
  */
 import { Flags } from "@oclif/core";
 import * as fs from "node:fs";
-import execa from "execa";
 import { readJson } from "fs-extra";
 import { EOL as newline } from "node:os";
 import path from "node:path";
@@ -12,6 +11,7 @@ import path from "node:path";
 import { getFluidBuildConfig, Handler, policyHandlers } from "@fluidframework/build-tools";
 
 import { BaseCommand } from "../../base";
+import { Repository } from "../../lib";
 
 const readStdin: () => Promise<string | undefined> = async () => {
 	return new Promise((resolve) => {
@@ -160,56 +160,47 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 			}
 		}
 
-		// if (this.flags.stdin) {
-		// 	const pipeString = await readStdin();
+		if (this.flags.stdin) {
+			const pipeString = await readStdin();
 
-		// 	if (pipeString !== undefined) {
-		// 		try {
-		// 			pipeString
-		// 				.split("\n")
-		// 				.map((line: string) =>
-		// 					this.handleLine(
-		// 						line,
-		// 						pathRegex,
-		// 						exclusions,
-		// 						handlersToRun,
-		// 						handlerExclusions,
-		// 					),
-		// 				);
-		// 		} finally {
-		// 			try {
-		// 				runPolicyCheck(handlersToRun, this.flags.fix, this.pathToGitRoot);
-		// 			} finally {
-		// 				this.logStats();
-		// 			}
-		// 		}
-		// 	}
+			if (pipeString !== undefined) {
+				try {
+					pipeString
+						.split("\n")
+						.map((line: string) =>
+							this.handleLine(
+								line,
+								pathRegex,
+								exclusions,
+								handlersToRun,
+								handlerExclusions,
+							),
+						);
+				} finally {
+					try {
+						runPolicyCheck(handlersToRun, this.flags.fix, this.pathToGitRoot);
+					} finally {
+						this.logStats();
+					}
+				}
+			}
 
-		// 	return;
-		// }
-
-		// const rootResult = await execa.command("git rev-parse --show-cdup", {
-		// 	stdio: "inherit",
-		// 	shell: true,
-		// });
+			return;
+		}
 
 		const context = await this.getContext();
 		this.pathToGitRoot = context.repo.resolvedRoot;
 
-		// const p = (await execa("git", [
-		// 	"ls-files",
-		// 	"-co",
-		// 	"--exclude-standard",
-		// 	"--full-name",
-		// // eslint-disable-next-line unicorn/no-await-expression-member
-		// ])).stdout;
+		const repo = new Repository({ baseDir: this.pathToGitRoot });
 
-		const p = await execa.command("git ls-files -co --exclude-standard --full-name", {
-			stdio: "inherit",
-			shell: true,
-		});
+		const results = await repo.gitClient.raw(
+			"ls-files",
+			"-co",
+			"--exclude-standard",
+			"--full-name",
+		);
 
-		const scriptOutput = p.stdout;
+		const scriptOutput = results;
 		try {
 			scriptOutput
 				.split("\n")
