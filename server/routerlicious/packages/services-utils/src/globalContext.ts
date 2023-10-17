@@ -4,9 +4,15 @@
  */
 
 import { setGlobalTelemetryContext } from "@fluidframework/server-services-telemetry";
-import { AsyncLocalStorageTelemetryContext } from "./asyncContext";
+import { setGlobalTimeoutContext } from "@fluidframework/server-services-client";
+import { AsyncLocalStorageTelemetryContext, AsyncLocalStorageTimeoutContext } from "./asyncContext";
 
-export function configureGlobalContext() {
+export function configureGlobalTelemetryContext() {
 	const globalTelemetryContext = new AsyncLocalStorageTelemetryContext();
 	setGlobalTelemetryContext(globalTelemetryContext);
+}
+
+export function configureGlobalTimeoutContext() {
+	const globalTimeoutContext = new AsyncLocalStorageTimeoutContext();
+	setGlobalTimeoutContext(globalTimeoutContext);
 }
