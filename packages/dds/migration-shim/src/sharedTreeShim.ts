@@ -7,7 +7,7 @@ import {
 	type IChannelAttributes,
 	type IChannel,
 	type IChannelServices,
-	IFluidDataStoreRuntime,
+	type IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import {
 	type IExperimentalIncrementalSummaryContext,
@@ -17,8 +17,8 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { type ISharedTree, type SharedTreeFactory } from "@fluid-experimental/tree2";
 import { AttachState } from "@fluidframework/container-definitions";
-import { NoDeltasChannelServices, ShimChannelServices } from "./shimChannelServices";
 import { assert } from "@fluidframework/core-utils";
+import { NoDeltasChannelServices, ShimChannelServices } from "./shimChannelServices";
 import { SharedTreeShimDeltaHandler } from "./sharedTreeDeltaHandler";
 
 /**
@@ -95,12 +95,12 @@ export class SharedTreeShim implements IChannel {
 			this.runtime.attachState === AttachState.Detached
 				? new NoDeltasChannelServices(services)
 				: this.generateShimServicesOnce(services);
-		this._currentTree = (await this.sharedTreeFactory.load(
+		this._currentTree = await this.sharedTreeFactory.load(
 			this.runtime,
 			this.id,
 			shimServices,
 			this.sharedTreeFactory.attributes,
-		)) as ISharedTree;
+		);
 	}
 
 	public create(): void {
