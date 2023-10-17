@@ -167,7 +167,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 				try {
 					pipeString
 						.split("\n")
-						.map((line: string) =>
+						.map(async (line: string) =>
 							this.handleLine(
 								line,
 								pathRegex,
@@ -178,7 +178,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 						);
 				} finally {
 					try {
-						runPolicyCheck(handlersToRun, this.flags.fix);
+						await runPolicyCheck(handlersToRun, this.flags.fix);
 					} finally {
 						this.logStats();
 					}
@@ -208,7 +208,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 			try {
 				scriptOutput
 					.split("\n")
-					.map((line: string) =>
+					.map(async (line: string) =>
 						this.handleLine(
 							line,
 							pathRegex,
@@ -219,7 +219,11 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 					);
 			} finally {
 				try {
-					runPolicyCheck(handlersToRun, this.flags.fix);
+					runPolicyCheck(handlersToRun, this.flags.fix).then(()=> {
+            // do nothing
+          }).catch((error)=> {
+            throw error;
+          });
 				} finally {
 					this.logStats();
 				}
@@ -229,11 +233,10 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 
 	// route files to their handlers by regex testing their full paths
 	// synchronize output, exit code, and resolve decision for all handlers
-	routeToHandlers(file: string, handlers: Handler[], handlerExclusions: HandlerExclusions): void {
+	async routeToHandlers(file: string, handlers: Handler[], handlerExclusions: HandlerExclusions): Promise<void> {
 		handlers
 			.filter((handler) => handler.match.test(file))
-			// eslint-disable-next-line unicorn/no-array-for-each
-			.forEach((handler) => {
+			.map(async (handler) => {
 				// doing exclusion per handler
 				const exclusions = handlerExclusions[handler.name];
 				if (exclusions !== undefined && !exclusions.every((value) => !value.test(file))) {
@@ -241,7 +244,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 					return;
 				}
 
-				const result = runWithPerf(handler.name, "handle", () =>
+				const result = await runWithPerf(handler.name, "handle", async () =>
 					handler.handler(file, CheckPolicy.pathToGitRoot),
 				);
 				if (result !== undefined && result !== "") {
@@ -249,7 +252,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 					const { resolver } = handler;
 					if (this.flags.fix && resolver) {
 						output += `${newline}attempting to resolve: ${file}`;
-						const resolveResult = runWithPerf(handler.name, "resolve", () =>
+						const resolveResult = await runWithPerf(handler.name, "resolve", async () =>
 							resolver(file, CheckPolicy.pathToGitRoot),
 						);
 
@@ -287,13 +290,13 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		}
 	}
 
-	handleLine(
+	async handleLine(
 		line: string,
 		pathRegex: RegExp,
 		exclusions: RegExp[],
 		handlers: Handler[],
 		handlerExclusions: HandlerExclusions,
-	): void {
+	): Promise<void> {
 		const filePath = path.join(CheckPolicy.pathToGitRoot, line).trim().replace(/\\/g, "/");
 
 		if (!pathRegex.test(line) || !fs.existsSync(filePath)) {
@@ -307,7 +310,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		}
 
 		try {
-			this.routeToHandlers(filePath, handlers, handlerExclusions);
+			await this.routeToHandlers(filePath, handlers, handlerExclusions);
 		} catch (error: unknown) {
 			throw new Error(`Line error: ${error}`);
 		}
@@ -316,7 +319,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 	}
 }
 
-function runWithPerf<T>(name: string, action: policyAction, run: () => T): T {
+async function runWithPerf<T>(name: string, action: policyAction, run: () => Promise<T>): Promise<T> {
 	const actionMap = CheckPolicy.handlerActionPerf.get(action) ?? new Map<string, number>();
 	let dur = actionMap.get(name) ?? 0;
 
@@ -329,11 +332,12 @@ function runWithPerf<T>(name: string, action: policyAction, run: () => T): T {
 	return result;
 }
 
-function runPolicyCheck(handlers: Handler[], fix: boolean): void {
+async function runPolicyCheck(handlers: Handler[], fix: boolean): Promise<void> {
 	for (const h of handlers) {
 		const { final } = h;
 		if (final) {
-			const result = runWithPerf(h.name, "final", () =>
+			// eslint-disable-next-line no-await-in-loop
+			const result = await runWithPerf(h.name, "final", async () =>
 				final(CheckPolicy.pathToGitRoot, fix),
 			);
 			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions

@@ -15,7 +15,7 @@ export const handlers: Handler[] = [
 		// A workspace that uses pnpm must also have a preinstall script that tells the user to use pnpm.
 		name: "pnpm-npm-package-json-preinstall",
 		match,
-		handler: (file, root) => {
+		handler: async (file, root) => {
 			const dirname = path.dirname(file);
 			const packageJsonFile = path.join(dirname, "package.json");
 			const manifest = getFluidBuildConfig(root);
@@ -57,7 +57,7 @@ export const handlers: Handler[] = [
 		// This is needed because we have a workspace in the root so independent packages need one at the package level to override it.
 		name: "pnpm-lock-workspace",
 		match,
-		handler: (file) => {
+		handler: async (file) => {
 			const dirname = path.dirname(file);
 			const workspaceFile = path.join(dirname, "pnpm-workspace.yaml");
 			if (!fs.existsSync(workspaceFile)) {
@@ -70,7 +70,7 @@ export const handlers: Handler[] = [
 		// A package or workspace that uses pnpm must not have an npm package-lock.json file.
 		name: "pnpm-lock-no-package-lock",
 		match,
-		handler: (file) => {
+		handler: async (file) => {
 			const dirname = path.dirname(file);
 			const packageLockFile = path.join(dirname, "package-lock.json");
 			if (fs.existsSync(packageLockFile)) {

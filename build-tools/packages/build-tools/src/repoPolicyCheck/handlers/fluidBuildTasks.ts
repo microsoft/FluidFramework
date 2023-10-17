@@ -383,7 +383,7 @@ export const handlers: Handler[] = [
 	{
 		name: "fluid-build-tasks-eslint",
 		match,
-		handler: (file, root) => {
+		handler: async (file, root) => {
 			let json;
 			try {
 				json = JSON.parse(readFile(file));
@@ -423,7 +423,7 @@ export const handlers: Handler[] = [
 	{
 		name: "fluid-build-tasks-tsc",
 		match,
-		handler: (file, root) => {
+		handler: async (file, root) => {
 			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file));
