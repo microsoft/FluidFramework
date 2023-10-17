@@ -251,6 +251,9 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
 	instantiateRuntime(context: IContainerContext, existing: boolean): Promise<IRuntime>;
 }
 
+/**
+ * @public
+ */
 export interface IGetPendingLocalStateProps {
 	readonly notifyImminentClosure: boolean;
 
