@@ -22,8 +22,8 @@ import { TestClientLogger } from "./testClientLogger";
 
 const defaultOptions: Record<"initLen" | "modLen", IConfigRange> & IMergeTreeOperationRunnerConfig =
 	{
-		initLen: { min: 2, max: 4 },
-		modLen: { min: 1, max: 8 },
+		initLen: { min: 2, max: 256 },
+		modLen: { min: 1, max: 256 },
 		opsPerRoundRange: { min: 10, max: 10 },
 		rounds: 10,
 		operations: [removeRange],

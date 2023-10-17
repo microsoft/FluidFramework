@@ -15,7 +15,7 @@ import { ISubscribable } from "../../events";
 import { DefaultEditBuilder } from "../default-field-kinds";
 import { NodeKeyIndex, NodeKeyManager } from "../node-key";
 import { FieldGenerator } from "../contextuallyTyped";
-import { TypedSchemaCollection } from "../typed-schema";
+import { DocumentSchema } from "../typed-schema";
 import { disposeSymbol, IDisposable } from "../../util";
 import { TreeField } from "./editableTreeTypes";
 import { makeField } from "./lazyField";
@@ -37,7 +37,7 @@ export interface TreeContext extends ISubscribable<ForestEvents> {
 	 * Schema used within this context.
 	 * All data must conform to these schema.
 	 */
-	readonly schema: TypedSchemaCollection;
+	readonly schema: DocumentSchema;
 
 	// TODO: Add more members:
 	// - transaction APIs
@@ -65,7 +65,7 @@ export class Context implements TreeContext, IDisposable {
 	 * If present, clients may query the {@link LocalNodeKey} of a node directly via the {@link localNodeKeySymbol}.
 	 */
 	public constructor(
-		public readonly schema: TypedSchemaCollection,
+		public readonly schema: DocumentSchema,
 		public readonly forest: IEditableForest,
 		public readonly editor: DefaultEditBuilder,
 		public readonly nodeKeys: NodeKeys,
@@ -141,7 +141,7 @@ export class Context implements TreeContext, IDisposable {
  * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
  */
 export function getTreeContext(
-	schema: TypedSchemaCollection,
+	schema: DocumentSchema,
 	forest: IEditableForest,
 	editor: DefaultEditBuilder,
 	nodeKeyManager: NodeKeyManager,

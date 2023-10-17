@@ -1,5 +1,9 @@
 # @fluidframework/protocol-definitions Changelog
 
+## [3.1.0](https://github.com/microsoft/FluidFramework/releases/tag/protocol-definitions_v3.1.0)
+
+`ISequencedDocumentMessage` properties `compression` and `expHash1` are deprecated. They have been extracted into a separate interface `ISequencedDocumentMessageExperimental` and should be used from there instead.
+
 ## [3.0.0](https://github.com/microsoft/FluidFramework/releases/tag/protocol-definitions_v3.0.0)
 
 ### Updated @fluidframework/common-definitions
