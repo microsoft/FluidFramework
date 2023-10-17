@@ -180,6 +180,7 @@ stages:
               script: |
                 echo "Run execution-time tests for ${{ testPackage }}"
                 cp ${{ variables.testWorkspace }}/.npmrc . ;
+                cat package.json
                 pnpm i;
                 pnpm run test:benchmark:report;
 
