@@ -21,6 +21,7 @@ describe("SharedTree proxies", () => {
 	const parentSchema = sb.struct("parent", {
 		struct: childSchema,
 		list: sb.fieldNode("list", sb.sequence(leaf.number)),
+		map: sb.map("map", sb.optional(leaf.string)),
 	});
 
 	const schema = sb.toDocumentSchema(parentSchema);
@@ -28,6 +29,10 @@ describe("SharedTree proxies", () => {
 	const initialTree = {
 		struct: { content: 42 },
 		list: [42, 42, 42],
+		map: new Map([
+			["foo", "Hello"],
+			["bar", "World"],
+		]),
 	};
 
 	itWithRoot("cache and reuse structs", schema, initialTree, (root) => {
@@ -42,7 +47,11 @@ describe("SharedTree proxies", () => {
 		assert.equal(listProxyAgain, listProxy);
 	});
 
-	// TODO: Test map proxy re-use when maps are implemented
+	itWithRoot("cache and reuse lists", schema, initialTree, (root) => {
+		const mapProxy = root.map;
+		const mapProxyAgain = root.map;
+		assert.equal(mapProxyAgain, mapProxy);
+	});
 });
 
 describe("SharedTreeObject", () => {
@@ -65,7 +74,7 @@ describe("SharedTreeObject", () => {
 		polyValue: [leaf.number, leaf.string],
 		polyChild: [numberChild, stringChild],
 		polyValueChild: [leaf.number, numberChild],
-		// map: sb.map("map", sb.optional(leaf.string)), // TODO Test Maps
+		map: sb.map("map", sb.optional(leaf.string)),
 		list: sb.fieldNode("list", sb.sequence(numberChild)),
 	});
 
@@ -77,6 +86,10 @@ describe("SharedTreeObject", () => {
 		polyValue: "42",
 		polyChild: { content: "42", [typeNameSymbol]: stringChild.name },
 		polyValueChild: { content: 42 },
+		map: new Map([
+			["foo", "Hello"],
+			["bar", "World"],
+		]),
 		list: [{ content: 42 }, { content: 42 }],
 	};
 
@@ -90,6 +103,13 @@ describe("SharedTreeObject", () => {
 		for (const x of root.list) {
 			assert.equal(x.content, 42);
 		}
+	});
+
+	itWithRoot("can read maps", schema, initialTree, (root) => {
+		assert.equal(root.map.size, 2);
+		assert.equal(root.map.get("foo"), "Hello");
+		assert.equal(root.map.get("bar"), "World");
+		assert.equal(root.map.get("baz"), undefined);
 	});
 
 	itWithRoot("can read fields common to all polymorphic types", schema, initialTree, (root) => {
