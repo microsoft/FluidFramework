@@ -120,6 +120,10 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_SharedString": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

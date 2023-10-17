@@ -991,6 +991,7 @@ declare function get_old_ClassDeclaration_SharedString():
 declare function use_current_ClassDeclaration_SharedString(
     use: TypeOnly<current.SharedString>);
 use_current_ClassDeclaration_SharedString(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SharedString());
 
 /*

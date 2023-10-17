@@ -628,6 +628,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     annotateMarker(marker: Marker, props: PropertySet, combiningOp?: ICombiningOp): void;
     annotateMarkerNotifyConsensus(marker: Marker, props: PropertySet, callback: (m: Marker) => void): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedString;
+    // @deprecated
     findTile(startPos: number | undefined, tileLabel: string, preceding?: boolean): {
         tile: ReferencePosition;
         pos: number;
@@ -649,6 +650,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     removeText(start: number, end: number): IMergeTreeRemoveMsg;
     replaceText(start: number, end: number, text: string, props?: PropertySet): void;
     protected rollback(content: any, localOpMetadata: unknown): void;
+    searchForMarker(startPos: number | undefined, markerLabel: string, forwards?: boolean): Marker | undefined;
 }
 
 // @public (undocumented)

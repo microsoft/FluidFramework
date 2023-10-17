@@ -220,6 +220,7 @@ export class SharedString
 	/**
 	 * Finds the nearest reference with ReferenceType.Tile to `startPos` in the direction dictated by `tilePrecedesPos`.
 	 * Note that Markers receive `ReferenceType.Tile` by default.
+	 * @deprecated - Use `searchForMarker` instead.
 	 * @param startPos - Position at which to start the search
 	 * @param clientId - clientId dictating the perspective to search from
 	 * @param tileLabel - Label of the tile to search for
@@ -236,6 +237,22 @@ export class SharedString
 		  }
 		| undefined {
 		return this.client.findTile(startPos ?? 0, tileLabel, preceding);
+	}
+
+	/**
+	 * Searches a string for the nearest marker in either direction to a given start position.
+	 * The search will include the start position, so markers at the start position are valid
+	 * results of the search.
+	 * @param startPos - Position at which to start the search
+	 * @param markerLabel - Label of the marker to search for
+	 * @param forwards - Whether the desired marker comes before (false) or after (true) `startPos`
+	 */
+	public searchForMarker(
+		startPos: number | undefined,
+		markerLabel: string,
+		forwards = true,
+	): Marker | undefined {
+		return this.client.searchForMarker(startPos ?? 0, markerLabel, forwards);
 	}
 
 	/**
