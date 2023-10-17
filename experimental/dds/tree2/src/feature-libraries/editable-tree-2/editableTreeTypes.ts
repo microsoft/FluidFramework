@@ -790,6 +790,14 @@ export type TypeArrayToTypedTreeArray<T extends readonly TreeSchema[]> = [
 ][_InlineTrick];
 
 /**
+ * Schema aware specialization of {@link Tree}.
+ * @alpha
+ */
+export type Typed<TSchema extends FieldSchema | TreeSchema> = TSchema extends TreeSchema
+	? TypedNode<TSchema>
+	: TypedField<Assume<TSchema, FieldSchema>>;
+
+/**
  * Schema aware specialization of {@link TreeNode} for a given {@link TreeSchema}.
  * @alpha
  */

@@ -2229,6 +2229,9 @@ TypedNode<Assume<Head, TreeSchema>>,
 export const typeboxValidator: JsonValidator;
 
 // @alpha
+export type Typed<TSchema extends FieldSchema | TreeSchema> = TSchema extends TreeSchema ? TypedNode<TSchema> : TypedField<Assume<TSchema, FieldSchema>>;
+
+// @alpha
 export type TypedField<TSchema extends FieldSchema> = TypedFieldInner<TSchema["kind"], TSchema["allowedTypes"]>;
 
 // @alpha
