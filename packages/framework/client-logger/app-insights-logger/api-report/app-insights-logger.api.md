@@ -16,7 +16,6 @@ export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 
 // @public
 export interface FluidAppInsightsLoggerConfig {
-    // (undocumented)
     filterConfig: {
         mode: "inclusive" | "exclusive";
         filters?: TelemetryFilter[];
@@ -25,9 +24,9 @@ export interface FluidAppInsightsLoggerConfig {
 
 // @public
 export const TelemetryEventCategory: {
-    readonly PERFORMANCE: "performance";
-    readonly GENERIC: "generic";
-    readonly ERROR: "error";
+    readonly Performance: "performance";
+    readonly Generic: "generic";
+    readonly Error: "error";
 };
 
 // @public

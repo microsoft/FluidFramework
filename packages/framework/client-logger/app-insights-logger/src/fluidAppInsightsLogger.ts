@@ -34,6 +34,10 @@ export type TelemetryEventCategory =
  * @public
  */
 export interface FluidAppInsightsLoggerConfig {
+	/**
+	 * This Configuration defines how filtering will be applied to Fluid telemetry events flowing throguh the logger.
+	 * This determines which events will be sent to Azure App insights.
+	 */
 	filterConfig: {
 		/**
 		 * Determines whether all telemetry events are sent or not sent by default and whether filters will exclude matching telemetry events or include them.
