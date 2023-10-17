@@ -2,9 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { serializeError } from "serialize-error";
-import { Deferred } from "@fluidframework/common-utils";
+import cluster from "cluster";
+import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	ICache,
 	IClientManager,
@@ -24,7 +23,10 @@ import { Provider } from "nconf";
 import * as winston from "winston";
 import { createMetricClient } from "@fluidframework/server-services";
 import { LumberEventName, Lumberjack, LogLevel } from "@fluidframework/server-services-telemetry";
-import { configureWebSocketServices } from "@fluidframework/server-lambdas";
+import { configureWebSocketServices,
+		 ICollaborationSessionEvents
+	   } from "@fluidframework/server-lambdas";
+import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
 import * as app from "./app";
 
 export class NexusRunner implements IRunner {
@@ -52,6 +54,7 @@ export class NexusRunner implements IRunner {
 		private readonly socketTracker?: IWebSocketTracker,
 		private readonly tokenRevocationManager?: ITokenRevocationManager,
 		private readonly revokedTokenChecker?: IRevokedTokenChecker,
+		private readonly collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -59,7 +62,8 @@ export class NexusRunner implements IRunner {
 		this.runningDeferred = new Deferred<void>();
 
 		// Create the HTTP server and attach nexus to it
-		const nexus = app.create(this.config);
+		const nexus = app.create(this.config,
+								this.collaborationSessionEventEmitter);
 		nexus.set("port", this.port);
 
 		this.server = this.serverFactory.create(nexus);
@@ -77,34 +81,6 @@ export class NexusRunner implements IRunner {
 		);
 		const isSignalUsageCountingEnabled = this.config.get("usage:signalUsageCountingEnabled");
 
-		// Register all the socket.io stuff
-		configureWebSocketServices(
-			this.server.webSocketServer,
-			this.orderManager,
-			this.tenantManager,
-			this.storage,
-			this.clientManager,
-			createMetricClient(this.metricClientConfig),
-			winston,
-			maxNumberOfClientsPerDocument,
-			numberOfMessagesPerTrace,
-			maxTokenLifetimeSec,
-			isTokenExpiryEnabled,
-			isClientConnectivityCountingEnabled,
-			isSignalUsageCountingEnabled,
-			this.redisCache,
-			this.socketConnectTenantThrottler,
-			this.socketConnectClusterThrottler,
-			this.socketSubmitOpThrottler,
-			this.socketSubmitSignalThrottler,
-			this.throttleAndUsageStorageManager,
-			this.verifyMaxMessageSize,
-			this.socketTracker,
-			this.revokedTokenChecker,
-		);
-
-		// Listen on provided port, on all network interfaces.
-		httpServer.listen(this.port);
 		httpServer.on("error", (error) => this.onError(error));
 		httpServer.on("listening", () => this.onListening());
 		httpServer.on("upgrade", (req, socket, initialMsgBuffer) => {
@@ -130,14 +106,47 @@ export class NexusRunner implements IRunner {
 			});
 		});
 
-		// Start token manager
-		if (this.tokenRevocationManager) {
-			this.tokenRevocationManager.start().catch((error) => {
-				// Prevent service crash if token revocation manager fails to start
-				Lumberjack.error("Failed to start token revocation manager.", undefined, error);
-			});
-		}
+		if (cluster.isPrimary && this.server.webSocketServer === null) {
+            // Listen on provided port, on all network interfaces.
+            httpServer.listen(this.port);
+        } else {
+            // Register all the socket.io stuff
+            configureWebSocketServices(
+                this.server.webSocketServer,
+                this.orderManager,
+                this.tenantManager,
+                this.storage,
+                this.clientManager,
+                createMetricClient(this.metricClientConfig),
+                winston,
+                maxNumberOfClientsPerDocument,
+                numberOfMessagesPerTrace,
+                maxTokenLifetimeSec,
+                isTokenExpiryEnabled,
+                isClientConnectivityCountingEnabled,
+                isSignalUsageCountingEnabled,
+                this.redisCache,
+                this.socketConnectTenantThrottler,
+                this.socketConnectClusterThrottler,
+                this.socketSubmitOpThrottler,
+                this.socketSubmitSignalThrottler,
+                this.throttleAndUsageStorageManager,
+                this.verifyMaxMessageSize,
+                this.socketTracker,
+                this.revokedTokenChecker,
+                this.collaborationSessionEventEmitter,
+            );
 
+			// Listen on primary thread port, on all network interfaces.
+            httpServer.listen(cluster.isPrimary ? this.port : 0);
+			
+            if (this.tokenRevocationManager) {
+                this.tokenRevocationManager.start().catch((error) => {
+                    // Prevent service crash if token revocation manager fails to start
+                    Lumberjack.error("Failed to start token revocation manager.", undefined, error);
+                });
+            }
+		}
 		this.stopped = false;
 
 		return this.runningDeferred.promise;
@@ -145,41 +154,24 @@ export class NexusRunner implements IRunner {
 
 	public async stop(caller?: string, uncaughtException?: any): Promise<void> {
 		if (this.stopped) {
+			Lumberjack.info("AlfredRunner.stop already called, returning early.");
 			return;
 		}
 		this.stopped = true;
-
-		try {
-			// Close the underlying server and then resolve the runner once closed
-			await this.server.close();
-			if (caller === "uncaughtException") {
-				this.runningDeferred?.reject({
-					uncaughtException: serializeError(uncaughtException),
-				}); // reject the promise so that the runService exits the process with exit(1)
-			} else {
-				this.runningDeferred?.resolve();
-			}
-			this.runningDeferred = undefined;
-			if (!this.runnerMetric.isCompleted()) {
-				this.runnerMetric.success("Nexus runner stopped");
-			}
-		} catch (error) {
-			if (!this.runnerMetric.isCompleted()) {
-				this.runnerMetric.error("Nexus runner encountered an error during stop", error);
-			}
-			if (caller === "sigterm") {
-				this.runningDeferred?.resolve();
-			} else {
-				// uncaughtException
-				this.runningDeferred?.reject({
-					forceKill: true,
-					uncaughtException: serializeError(uncaughtException),
-					runnerStopException: serializeError(error),
-				});
-			}
-			this.runningDeferred = undefined;
-			throw error;
-		}
+        Lumberjack.info("AlfredRunner.stop starting.");
+		
+        const runnerServerCloseTimeoutMs =
+            this.config.get("shared:runnerServerCloseTimeoutMs") ?? 30000;
+		
+        await runnerHttpServerStop(
+            this.server,
+            this.runningDeferred,
+            runnerServerCloseTimeoutMs,
+            this.runnerMetric,
+            caller,
+            uncaughtException,
+        );
+		
 	}
 
 	/**
@@ -187,7 +179,10 @@ export class NexusRunner implements IRunner {
 	 */
 	private onError(error) {
 		if (!this.runnerMetric.isCompleted()) {
-			this.runnerMetric.error("Nexus runner encountered an error in http server", error);
+			this.runnerMetric.error(
+                `${this.runnerMetric.eventName} encountered an error in http server`,
+                error,
+            );
 		}
 		if (error.syscall !== "listen") {
 			throw error;
