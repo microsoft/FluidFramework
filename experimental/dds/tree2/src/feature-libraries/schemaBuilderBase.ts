@@ -9,7 +9,7 @@ import { Assume, RestrictiveReadonlyRecord, transformObjectMap } from "../util";
 import {
 	SchemaLibraryData,
 	SchemaLintConfiguration,
-	buildViewSchemaCollection,
+	aggregateSchemaLibraries,
 	schemaLintDefault,
 	AllowedTypes,
 	TreeSchema,
@@ -142,7 +142,7 @@ export class SchemaBuilderBase<
 		});
 
 		// Check for errors and aggregate data
-		return buildViewSchemaCollection(this.name, this.lintConfiguration, this.libraries, field);
+		return aggregateSchemaLibraries(this.name, this.lintConfiguration, this.libraries, field);
 	}
 
 	/**

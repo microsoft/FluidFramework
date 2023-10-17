@@ -33,7 +33,7 @@ export {
 	validateStructFieldName,
 	SchemaLibraryData,
 	SchemaLintConfiguration,
-	aggregateSchemaLibraries as buildViewSchemaCollection,
+	aggregateSchemaLibraries,
 	schemaLintDefault,
 } from "./schemaCollection";
 
