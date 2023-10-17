@@ -17,6 +17,7 @@ import {
 	StoredSchemaRepository,
 	CursorLocationType,
 	SchemaData,
+	StoredSchemaCollection,
 } from "../../core";
 import { FullSchemaPolicy, Multiplicity } from "../modular-schema";
 import { fail } from "../../util";
@@ -194,7 +195,7 @@ export function makePolicy(policy?: Partial<ChunkPolicy>): ChunkPolicy {
 }
 
 export function shapesFromSchema(
-	schema: SchemaData,
+	schema: StoredSchemaCollection,
 	policy: FullSchemaPolicy,
 ): Map<TreeSchemaIdentifier, ShapeInfo> {
 	const shapes: Map<TreeSchemaIdentifier, ShapeInfo> = new Map();
@@ -210,7 +211,7 @@ export function shapesFromSchema(
  * Note that this does not tolerate optional or sequence fields, nor does it optimize for patterns of specific values.
  */
 export function tryShapeFromSchema(
-	schema: SchemaData,
+	schema: StoredSchemaCollection,
 	policy: FullSchemaPolicy,
 	type: TreeSchemaIdentifier,
 	shapes: Map<TreeSchemaIdentifier, ShapeInfo>,
@@ -243,7 +244,7 @@ export function tryShapeFromSchema(
  * Note that this does not tolerate optional or sequence fields, nor does it optimize for patterns of specific values.
  */
 export function tryShapeFromFieldSchema(
-	schema: SchemaData,
+	schema: StoredSchemaCollection,
 	policy: FullSchemaPolicy,
 	type: FieldStoredSchema,
 	key: FieldKey,

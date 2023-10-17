@@ -161,6 +161,7 @@ export {
 	AllowedTypeSet,
 	markEager,
 	MapFieldSchema,
+	SchemaCollection,
 } from "./typed-schema";
 
 export {
