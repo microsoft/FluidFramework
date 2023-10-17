@@ -10,7 +10,7 @@ export type NodeUpdate =
 	| {
 			set: JsonableTree;
 			/**
-			 * Id associated with the creation of the new tree.
+			 * ID associated with the creation of the new tree.
 			 */
 			buildId: ChangeAtomId;
 			changes?: NodeChangeset;

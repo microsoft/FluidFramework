@@ -308,7 +308,7 @@ export interface Insert<TTree = ProtoNode>
 	readonly content: readonly TTree[];
 
 	/**
-	 * Id associated with the tree being built.
+	 * ID associated with the tree being built.
 	 * If not specified, a random unique ID will be used.
 	 */
 	readonly buildId?: DetachedNodeId;
