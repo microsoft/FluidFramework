@@ -191,13 +191,23 @@ export interface TreeStoredSchema {
 }
 
 /**
- * View of schema data that can be stored in a document.
+ * Document schema data that can be stored in a document.
  *
  * Note: the owner of this may modify it over time:
  * thus if needing to hand onto a specific version, make a copy.
  * @alpha
  */
-export interface SchemaData {
+export interface SchemaData extends StoredSchemaCollection {
 	readonly rootFieldSchema: FieldStoredSchema;
+}
+
+/**
+ * Collection of TreeSchema data that can be stored in a document.
+ *
+ * Note: the owner of this may modify it over time:
+ * thus if needing to hand onto a specific version, make a copy.
+ * @alpha
+ */
+export interface StoredSchemaCollection {
 	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeStoredSchema>;
 }

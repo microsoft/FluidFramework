@@ -140,6 +140,7 @@ export {
 	forbiddenFieldKindIdentifier,
 	storedEmptyFieldSchema,
 	cloneSchemaData,
+	StoredSchemaCollection,
 } from "./schema-stored";
 
 export { ChangeFamily, ChangeFamilyEditor, EditBuilder } from "./change-family";

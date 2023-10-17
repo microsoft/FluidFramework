@@ -160,6 +160,7 @@ export {
 	Unenforced,
 	AllowedTypeSet,
 	MapFieldSchema,
+	SchemaCollection,
 } from "./typed-schema";
 
 export {

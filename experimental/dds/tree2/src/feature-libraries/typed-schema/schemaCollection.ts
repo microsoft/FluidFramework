@@ -5,10 +5,10 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { Adapters, TreeAdapter, TreeSchemaIdentifier } from "../../core";
-import { FieldKind, FullSchemaPolicy } from "../modular-schema";
+import { Multiplicity } from "../modular-schema";
 import { capitalize, fail, requireAssignableTo } from "../../util";
 import { defaultSchemaPolicy, FieldKinds } from "../default-field-kinds";
-import { FieldSchema, TreeSchema, allowedTypesIsAny, DocumentSchema } from "./typedTreeSchema";
+import { FieldSchema, TreeSchema, allowedTypesIsAny, SchemaCollection } from "./typedTreeSchema";
 import { normalizeFlexListEager } from "./flexList";
 import { Sourced } from "./view";
 
@@ -18,10 +18,8 @@ import { Sourced } from "./view";
  * Schema data collected by a single SchemaBuilder (does not include referenced libraries).
  * @alpha
  */
-export interface SchemaLibraryData {
+export interface SchemaLibraryData extends SchemaCollection {
 	readonly name: string;
-	readonly rootFieldSchema?: FieldSchema;
-	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
 	readonly adapters: Adapters;
 }
 
@@ -57,12 +55,22 @@ export const schemaLintDefault: SchemaLintConfiguration = {
  * As much as possible tries to detect anything that might be a mistake made by the schema author.
  * This will error on some valid but probably never intended to be used patterns
  * (like libraries with the same name, nodes which are impossible to create etc).
+ *
+ * @param name - Name of the resulting library.
+ * @param lintConfiguration - configuration for what errors to generate.
+ * @param libraries - Data to aggregate into the SchemaCollection.
+ * @param rootFieldSchema - Only validated: not included in the result.
+ *
+ * @privateRemarks
+ * This checks that input works with defaultSchemaPolicy.
+ * If support fo other policies is added, this will need to take in the policy.
  */
-export function buildViewSchemaCollection(
+export function aggregateSchemaLibraries(
+	name: string,
 	lintConfiguration: SchemaLintConfiguration,
 	libraries: Iterable<SchemaLibraryData>,
-): DocumentSchema {
-	let rootFieldSchema: FieldSchema | undefined;
+	rootFieldSchema?: FieldSchema,
+): SchemaLibraryData {
 	const treeSchema: Map<TreeSchemaIdentifier, TreeSchema> = new Map();
 	const adapters: SourcedAdapters = { tree: [] };
 
@@ -82,13 +90,6 @@ export function buildViewSchemaCollection(
 			errors.push(`Found another library with name "${library.name}"`);
 		}
 
-		if (library.rootFieldSchema !== undefined) {
-			if (rootFieldSchema !== undefined) {
-				errors.push(`Multiple root field schema`);
-			} else {
-				rootFieldSchema = library.rootFieldSchema;
-			}
-		}
 		for (const [key, tree] of library.treeSchema) {
 			// This check is an assert since if it fails, the other error messages would be incorrect.
 			assert(
@@ -114,35 +115,16 @@ export function buildViewSchemaCollection(
 	}
 
 	const result = { rootFieldSchema, treeSchema, adapters, policy: defaultSchemaPolicy };
-	const errors2 = validateViewSchemaCollection(lintConfiguration, result);
+	const errors2 = validateSchemaCollection(lintConfiguration, result, rootFieldSchema);
 	if (errors2.length !== 0) {
 		fail(errors2.join("\n"));
 	}
 
 	return {
-		// The returned value here needs to implement the SchemaData interface (which SchemaCollection extends).
-		// This means it must have a rootFieldSchema.
-		// In the case where this SchemaCollection is a library and not a full document schema,
-		// no caller provided rootFieldSchema is available and a "forbidden" field is used instead.
-		// Thus a library can be used as SchemaData, but if used for full document's SchemaData,
-		// the document will be forced to be empty (due to having an empty root field):
-		// this seems unlikely to cause issues in practice, and results in convenient type compatibility.
-		rootFieldSchema: rootFieldSchema ?? FieldSchema.create(FieldKinds.forbidden, []),
+		name,
 		treeSchema,
 		adapters,
-		policy: defaultSchemaPolicy,
 	};
-}
-
-/**
- * View Schema information collected from a SchemaBuilder.
- * Internal type for unifying document schema and libraries for use in validation and conversion.
- */
-export interface ViewSchemaCollection {
-	readonly rootFieldSchema?: FieldSchema;
-	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
-	readonly policy: FullSchemaPolicy;
-	readonly adapters: Adapters;
 }
 
 /**
@@ -151,9 +133,10 @@ export interface ViewSchemaCollection {
  * As much as possible tries to detect anything that might be a mistake made by the schema author.
  * This will error on some valid but probably never intended to be used patterns (like never nodes).
  */
-export function validateViewSchemaCollection(
+export function validateSchemaCollection(
 	lintConfiguration: SchemaLintConfiguration,
-	collection: ViewSchemaCollection,
+	collection: SchemaCollection,
+	rootFieldSchema?: FieldSchema,
 ): string[] {
 	const errors: string[] = [];
 
@@ -162,13 +145,9 @@ export function validateViewSchemaCollection(
 		errors.push("No tree schema are included, meaning no data can possibly be stored.");
 	}
 
-	if (collection.policy !== defaultSchemaPolicy) {
-		errors.push("Unexpected policy.");
-	}
-
 	// Validate that all schema referenced are included, and none are "never".
-	if (collection.rootFieldSchema !== undefined) {
-		validateRootField(lintConfiguration, collection, collection.rootFieldSchema, errors);
+	if (rootFieldSchema !== undefined) {
+		validateRootField(lintConfiguration, collection, rootFieldSchema, errors);
 	}
 	for (const [identifier, tree] of collection.treeSchema) {
 		for (const [key, field] of tree.structFields) {
@@ -185,9 +164,9 @@ export function validateViewSchemaCollection(
 				() => `Map fields of "${identifier}" schema from library "${tree.builder.name}"`,
 				errors,
 			);
-			if ((tree.mapFields.kind as FieldKind) === FieldKinds.required) {
+			if ((tree.mapFields.kind.multiplicity as Multiplicity) === Multiplicity.Single) {
 				errors.push(
-					`Map fields of "${identifier}" schema from library "${tree.builder.name}" has kind "value". This is invalid since it requires all possible field keys to have a value under them.`,
+					`Map fields of "${identifier}" schema from library "${tree.builder.name}" has kind with multiplicity "Single". This is invalid since it requires all possible field keys to have a value under them.`,
 				);
 			}
 		}
@@ -199,7 +178,7 @@ export function validateViewSchemaCollection(
 
 export function validateRootField(
 	lintConfiguration: SchemaLintConfiguration,
-	collection: ViewSchemaCollection,
+	collection: SchemaCollection,
 	field: FieldSchema,
 	errors: string[],
 ): void {
@@ -209,7 +188,7 @@ export function validateRootField(
 
 export function validateField(
 	lintConfiguration: SchemaLintConfiguration,
-	collection: ViewSchemaCollection,
+	collection: SchemaCollection,
 	field: FieldSchema,
 	describeField: () => string,
 	errors: string[],

@@ -19,8 +19,10 @@ import {
 	Unenforced,
 	Any,
 	MapFieldSchema,
+	SchemaCollection,
 } from "./typed-schema";
 import { FieldKind } from "./modular-schema";
+import { defaultSchemaPolicy } from "./default-field-kinds";
 
 /**
  * Configuration for a SchemaBuilder.
@@ -130,15 +132,17 @@ export class SchemaBuilderBase<
 		this.treeSchema.set(schema.name, schema as TreeSchema);
 	}
 
-	private finalizeCommon(): void {
+	private finalizeCommon(field?: FieldSchema): SchemaLibraryData {
 		assert(!this.finalized, 0x79a /* SchemaBuilder can only be finalized once. */);
 		this.finalized = true;
 		this.libraries.add({
 			name: this.name,
-			rootFieldSchema: undefined,
 			treeSchema: this.treeSchema,
 			adapters: this.adapters,
 		});
+
+		// Check for errors and aggregate data
+		return buildViewSchemaCollection(this.name, this.lintConfiguration, this.libraries, field);
 	}
 
 	/**
@@ -146,12 +150,10 @@ export class SchemaBuilderBase<
 	 * May only be called once after adding content to builder is complete.
 	 */
 	public finalize(): SchemaLibrary {
-		this.finalizeCommon();
+		const aggregated = this.finalizeCommon();
 
-		// Check for errors:
-		const collection = buildViewSchemaCollection(this.lintConfiguration, this.libraries);
-
-		return { ...collection, libraries: this.libraries };
+		// Full library set (instead of just aggregated) is kept since it is required to handle deduplication of libraries included through different paths.
+		return { treeSchema: aggregated.treeSchema, libraries: this.libraries };
 	}
 
 	/**
@@ -165,21 +167,14 @@ export class SchemaBuilderBase<
 		root: TSchema,
 	): DocumentSchema<NormalizeField<TSchema, TDefaultKind>> {
 		// return this.toDocumentSchemaInternal(normalizeField(root, DefaultFieldKind));
-		const field = this.normalizeField(root);
-		this.finalizeCommon();
-		const rootLibrary: SchemaLibraryData = {
-			name: this.name,
-			rootFieldSchema: field,
-			treeSchema: new Map(),
-			adapters: {},
-		};
-		const collection = buildViewSchemaCollection(this.lintConfiguration, [
-			rootLibrary,
-			...this.libraries,
-		]);
+		const field: NormalizeField<TSchema, TDefaultKind> = this.normalizeField(root);
+		const library = this.finalizeCommon(field);
+
 		const typed: DocumentSchema<NormalizeField<TSchema, TDefaultKind>> = {
-			...collection,
+			treeSchema: library.treeSchema,
+			adapters: library.adapters,
 			rootFieldSchema: field,
+			policy: defaultSchemaPolicy,
 		};
 		return typed;
 	}
@@ -356,7 +351,7 @@ export class SchemaBuilderBase<
  * Can be aggregated into other libraries by adding to their builders.
  * @alpha
  */
-export interface SchemaLibrary extends DocumentSchema {
+export interface SchemaLibrary extends SchemaCollection {
 	/**
 	 * Schema data aggregated from a collection of libraries by a SchemaBuilder.
 	 */

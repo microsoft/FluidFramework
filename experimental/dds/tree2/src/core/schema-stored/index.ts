@@ -19,6 +19,7 @@ export {
 	PrimitiveValueSchema,
 	forbiddenFieldKindIdentifier,
 	storedEmptyFieldSchema,
+	StoredSchemaCollection,
 } from "./schema";
 export {
 	StoredSchemaRepository,

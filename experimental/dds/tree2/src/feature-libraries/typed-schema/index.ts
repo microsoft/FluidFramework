@@ -22,6 +22,7 @@ export {
 	Unenforced,
 	AllowedTypeSet,
 	MapFieldSchema,
+	SchemaCollection,
 } from "./typedTreeSchema";
 
 export { ViewSchema } from "./view";
@@ -32,7 +33,7 @@ export {
 	validateStructFieldName,
 	SchemaLibraryData,
 	SchemaLintConfiguration,
-	buildViewSchemaCollection,
+	aggregateSchemaLibraries as buildViewSchemaCollection,
 	schemaLintDefault,
 } from "./schemaCollection";
 

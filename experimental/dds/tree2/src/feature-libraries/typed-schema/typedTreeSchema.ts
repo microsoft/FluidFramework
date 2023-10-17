@@ -475,9 +475,17 @@ export function allowedTypesToTypeSet(t: AllowedTypes): TreeTypeSet {
  * @alpha
  */
 
-export interface DocumentSchema<out T extends FieldSchema = FieldSchema> {
+export interface DocumentSchema<out T extends FieldSchema = FieldSchema> extends SchemaCollection {
 	readonly rootFieldSchema: T;
-	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
 	readonly policy: FullSchemaPolicy;
 	readonly adapters: Adapters;
+}
+
+/**
+ * Schema data that can be be used to view a document.
+ * @alpha
+ */
+
+export interface SchemaCollection {
+	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
 }
