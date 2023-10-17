@@ -3899,7 +3899,7 @@ export class ContainerRuntime
 			async (event) => {
 				this.verifyNotClosed();
 				const waitBlobsToAttach = props?.notifyImminentClosure;
-				const signal = props?.signal;
+				const stopWaitingAttachingSignal = props?.signal;
 				if (this._orderSequentiallyCalls !== 0) {
 					throw new UsageError("can't get state during orderSequentially");
 				}
@@ -3908,7 +3908,7 @@ export class ContainerRuntime
 				// to close current batch.
 				this.flush();
 				const pendingAttachmentBlobs = waitBlobsToAttach
-					? await this.blobManager.attachAndGetPendingBlobs(signal)
+					? await this.blobManager.attachAndGetPendingBlobs(stopWaitingAttachingSignal)
 					: undefined;
 				const pending = this.pendingStateManager.getLocalState();
 				if (!pendingAttachmentBlobs && !this.hasPendingMessages()) {

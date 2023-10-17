@@ -938,7 +938,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	}
 
 	public async attachAndGetPendingBlobs(
-		signal?: AbortSignal,
+		stopWaitingAttachingSignal?: AbortSignal,
 	): Promise<IPendingBlobs | undefined> {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
@@ -951,7 +951,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				const blobs = {};
 				const localBlobs = new Set<PendingBlob>();
 				const abortPromise = new Promise<void>((resolve, reject) => {
-					signal?.addEventListener(
+					stopWaitingAttachingSignal?.addEventListener(
 						"abort",
 						() => {
 							reject(new Error("Operation aborted"));
@@ -986,7 +986,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				}
 
 				for (const [id, entry] of this.pendingBlobs) {
-					if (signal?.aborted && !entry.attached) {
+					if (stopWaitingAttachingSignal?.aborted && !entry.attached) {
 						continue;
 					}
 					assert(entry.attached === true, 0x790 /* stashed blob should be attached */);
