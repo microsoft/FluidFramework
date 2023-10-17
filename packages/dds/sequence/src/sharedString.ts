@@ -248,7 +248,7 @@ export class SharedString
 	 * @param forwards - Whether the desired marker comes before (false) or after (true) `startPos`
 	 */
 	public searchForMarker(
-		startPos: number | undefined,
+		startPos: number,
 		markerLabel: string,
 		forwards = true,
 	): Marker | undefined {

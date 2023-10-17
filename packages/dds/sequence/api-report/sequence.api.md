@@ -650,7 +650,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     removeText(start: number, end: number): IMergeTreeRemoveMsg;
     replaceText(start: number, end: number, text: string, props?: PropertySet): void;
     protected rollback(content: any, localOpMetadata: unknown): void;
-    searchForMarker(startPos: number | undefined, markerLabel: string, forwards?: boolean): Marker | undefined;
+    searchForMarker(startPos: number, markerLabel: string, forwards?: boolean): Marker | undefined;
 }
 
 // @public (undocumented)
