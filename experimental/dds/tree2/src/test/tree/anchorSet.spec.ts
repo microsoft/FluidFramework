@@ -412,6 +412,8 @@ describe("AnchorSet", () => {
 		assert.strictEqual(afterCounter, 3);
 
 		// Test a move delta
+		// NOTE: This is a special case where the beforeChange and afterChange callbacks are called twice;
+		// once when detaching nodes from the source location, and once when attaching them at the target location.
 		const moveOutMark: Delta.MoveOut = {
 			type: Delta.MarkType.MoveOut,
 			count: 1,
@@ -427,13 +429,6 @@ describe("AnchorSet", () => {
 			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
 		);
 		announceTestDelta(moveDelta, anchors);
-		// TODO: this is wrong. Currently a move triggers the events twice, once when detaching nodes from the source
-		// and again when attaching them at the destination. Couldn't think of a quick way to avoid that.
-		// This means that:
-		// - In the first beforeChange callback, the moved nodes are still at the source (correct).
-		// - In the first afterChange callback, the moved nodes are not in the tree (probably unexpected).
-		// - In the second beforeChange callback, the moved nodes are not in the tree (probably unexpected).
-		// - In the second afterChange callback, the moved nodes are at the destination (correct).
 		assert.strictEqual(beforeCounter, 5);
 		assert.strictEqual(afterCounter, 5);
 
