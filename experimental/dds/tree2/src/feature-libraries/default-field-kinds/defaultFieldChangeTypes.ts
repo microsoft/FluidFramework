@@ -9,6 +9,10 @@ import { NodeChangeset } from "../modular-schema";
 export type NodeUpdate =
 	| {
 			set: JsonableTree;
+			/**
+			 * ID associated with the creation of the new tree.
+			 */
+			buildId: ChangeAtomId;
 			changes?: NodeChangeset;
 	  }
 	| {

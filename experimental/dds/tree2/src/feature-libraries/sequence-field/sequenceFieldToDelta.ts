@@ -100,10 +100,18 @@ function cellDeltaFromMark<TNodeChange>(
 			}
 			case "Insert": {
 				if (isNewAttach(mark)) {
+					assert(mark.cellId !== undefined, "Active insert mark must have CellId");
 					assert(mark.content !== undefined, "New insert must have content");
 					const cursors = mark.content.map(singleTextCursor);
+					const buildId: Delta.DetachedNodeId = {
+						minor: mark.cellId.localId,
+					};
+					if (mark.cellId.revision !== undefined) {
+						buildId.major = mark.cellId.revision;
+					}
 					const insertMark: Mutable<Delta.Insert> = {
 						type: Delta.MarkType.Insert,
+						buildId,
 						content: cursors,
 					};
 					if (mark.transientDetach !== undefined) {
