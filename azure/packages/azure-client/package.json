@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/azure-client",
-	"version": "2.0.0-internal.7.1.0",
+	"version": "2.0.0-internal.7.2.0",
 	"description": "A tool to enable creation and loading of Fluid containers using the Azure Fluid Relay service",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -59,7 +59,7 @@
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.25.0",
 		"@fluidframework/aqueduct": "workspace:~",
-		"@fluidframework/azure-client-previous": "npm:@fluidframework/azure-client@2.0.0-internal.7.0.0",
+		"@fluidframework/azure-client-previous": "npm:@fluidframework/azure-client@2.0.0-internal.7.1.0",
 		"@fluidframework/azure-local-service": "workspace:~",
 		"@fluidframework/build-common": "^2.0.1",
 		"@fluidframework/build-tools": "^0.25.0",

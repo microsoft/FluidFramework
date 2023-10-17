@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import execa from "execa";
 import inquirer from "inquirer";
 import { Machine } from "jssm";
@@ -241,7 +241,7 @@ export const checkDependenciesInstalled: StateHandlerFunction = async (
 		: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		  [context.fullPackageMap.get(releaseGroup)!];
 
-	const installed = await FluidRepo.ensureInstalled(packagesToCheck, true);
+	const installed = await FluidRepo.ensureInstalled(packagesToCheck);
 
 	if (installed) {
 		BaseStateHandler.signalSuccess(machine, state);

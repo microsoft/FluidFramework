@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/migration-shim",
-	"version": "2.0.0-internal.7.1.0",
+	"version": "2.0.0-internal.7.2.0",
 	"private": true,
 	"description": "HotSwap DDS",
 	"homepage": "https://fluidframework.com",
@@ -69,7 +69,9 @@
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/protocol-definitions": "^3.0.0",
-		"@fluidframework/runtime-definitions": "workspace:~"
+		"@fluidframework/runtime-definitions": "workspace:~",
+		"@fluidframework/runtime-utils": "workspace:~",
+		"@fluidframework/telemetry-utils": "workspace:~"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.25.0",
@@ -94,7 +96,7 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {},
-		"disabled": true
+		"disabled": true,
+		"broken": {}
 	}
 }

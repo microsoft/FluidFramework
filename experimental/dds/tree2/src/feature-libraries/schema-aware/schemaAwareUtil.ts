@@ -17,6 +17,8 @@ export type TypedValue<TValue extends ValueSchema> = {
 	[ValueSchema.String]: string;
 	[ValueSchema.Boolean]: boolean;
 	[ValueSchema.FluidHandle]: IFluidHandle;
+	// eslint-disable-next-line @rushstack/no-new-null
+	[ValueSchema.Null]: null;
 }[TValue];
 
 /**

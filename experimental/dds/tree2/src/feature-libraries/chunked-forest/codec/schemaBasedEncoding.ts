@@ -126,6 +126,8 @@ function valueShapeFromSchema(schema: ValueSchema | undefined): undefined | Enco
 		case ValueSchema.Boolean:
 		case ValueSchema.FluidHandle:
 			return true;
+		case ValueSchema.Null:
+			return [null];
 		default:
 			unreachableCase(schema);
 	}

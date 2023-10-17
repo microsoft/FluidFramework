@@ -11,7 +11,7 @@ import {
 	ViewSchema,
 	FieldKinds,
 	defaultSchemaPolicy,
-	TypedSchemaCollection,
+	DocumentSchema,
 } from "../../../feature-libraries";
 import {
 	FieldStoredSchema,
@@ -127,7 +127,7 @@ describe("Schema Evolution Examples", () => {
 	it("basic usage", () => {
 		// Collect our view schema.
 		// This will represent our view schema for a simple canvas application.
-		const viewCollection: TypedSchemaCollection = new SchemaBuilder({
+		const viewCollection: DocumentSchema = new SchemaBuilder({
 			scope: "test",
 			name: "basic usage",
 			libraries: [treeViewSchema],
@@ -229,6 +229,7 @@ describe("Schema Evolution Examples", () => {
 			assert(stored.tryUpdateTreeSchema(leaf.boolean.name, leaf.boolean));
 			assert(stored.tryUpdateTreeSchema(leaf.string.name, leaf.string));
 			assert(stored.tryUpdateTreeSchema(leaf.handle.name, leaf.handle));
+			assert(stored.tryUpdateTreeSchema(leaf.null.name, leaf.null));
 
 			// That will cause the document stored schema to change,
 			// which will notify and applications with the document open.
@@ -258,7 +259,7 @@ describe("Schema Evolution Examples", () => {
 				items: FieldSchema.create(FieldKinds.sequence, [positionedCanvasItem2]),
 			});
 			// Once again we will simulate reloading the app with different schema by modifying the view schema.
-			const viewCollection3: TypedSchemaCollection = builderWithCounter.toDocumentSchema(
+			const viewCollection3: DocumentSchema = builderWithCounter.toDocumentSchema(
 				FieldSchema.create(FieldKinds.optional, [canvas2]),
 			);
 			const view3 = new ViewSchema(defaultSchemaPolicy, adapters, viewCollection3);

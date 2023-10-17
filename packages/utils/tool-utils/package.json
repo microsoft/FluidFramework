@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/tool-utils",
-	"version": "2.0.0-internal.7.1.0",
+	"version": "2.0.0-internal.7.2.0",
 	"description": "Common utilities for Fluid tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -75,7 +75,7 @@
 		"@fluidframework/build-tools": "^0.25.0",
 		"@fluidframework/eslint-config-fluid": "^3.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@fluidframework/tool-utils-previous": "npm:@fluidframework/tool-utils@2.0.0-internal.7.0.0",
+		"@fluidframework/tool-utils-previous": "npm:@fluidframework/tool-utils@2.0.0-internal.7.1.0",
 		"@microsoft/api-extractor": "^7.37.0",
 		"@types/debug": "^4.1.5",
 		"@types/jwt-decode": "^2.2.1",

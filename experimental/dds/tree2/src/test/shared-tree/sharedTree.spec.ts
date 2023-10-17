@@ -61,7 +61,7 @@ import {
 } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
 import { EditManager } from "../../shared-tree-core";
-import { jsonNumber, jsonSchema, leaf, SchemaBuilder } from "../../domains";
+import { jsonSchema, leaf, SchemaBuilder } from "../../domains";
 import { noopValidator } from "../../codec";
 
 const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator });
@@ -92,7 +92,7 @@ describe("SharedTree", () => {
 			t.context.root.insertNodes(0, [5]);
 		});
 
-		assert.deepEqual(toJsonableTree(view), [{ type: jsonNumber.name, value: 5 }]);
+		assert.deepEqual(toJsonableTree(view), [{ type: leaf.number.name, value: 5 }]);
 	});
 
 	it("editable-tree-2-end-to-end", () => {
@@ -1564,7 +1564,7 @@ describe("SharedTree", () => {
 				rootFieldSchema: storedEmptyFieldSchema,
 			};
 			const schemaB: SchemaData = {
-				treeSchema: new Map([[jsonNumber.name, jsonNumber]]),
+				treeSchema: new Map([[leaf.number.name, leaf.number]]),
 				rootFieldSchema: storedEmptyFieldSchema,
 			};
 			function getSchema(t: ISharedTreeView): "schemaA" | "schemaB" {

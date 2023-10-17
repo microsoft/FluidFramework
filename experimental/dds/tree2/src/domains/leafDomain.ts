@@ -15,9 +15,10 @@ const number = builder.leaf("number", ValueSchema.Number);
 const boolean = builder.leaf("boolean", ValueSchema.Boolean);
 const string = builder.leaf("string", ValueSchema.String);
 const handle = builder.leaf("handle", ValueSchema.FluidHandle);
+const nullSchema = builder.leaf("null", ValueSchema.Null);
 
 const primitives = [number, boolean, string] as const;
-const all = [handle, ...primitives] as const;
+const all = [handle, nullSchema, ...primitives] as const;
 
 const library = builder.finalize();
 
@@ -66,6 +67,16 @@ export const leaf = {
 	 * {@link TreeSchema} for a {@link Leaf} holding an {@link @fluidframework/core-interfaces#IFluidHandle}.
 	 */
 	handle,
+
+	/**
+	 * JavaScript `null`.
+	 *
+	 * @remarks
+	 * There are good [reasons to avoid using null](https://www.npmjs.com/package/%40rushstack/eslint-plugin#rushstackno-new-null) in JavaScript, however sometimes it is desired.
+	 * This {@link Leaf} node provide the option to include nulls in trees when desired.
+	 * Unless directly inter-operating with existing data using null, consider other approaches, like wrapping the value in an optional field, or using a more specifically named empty struct node.
+	 */
+	null: nullSchema,
 
 	/**
 	 * The set of leaf schema which correspond to JavaScript primitive (non-object) types.
