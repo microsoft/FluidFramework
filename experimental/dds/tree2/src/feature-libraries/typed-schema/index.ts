@@ -21,6 +21,7 @@ export {
 	TypedSchemaCollection,
 	Unenforced,
 	AllowedTypeSet,
+	MapFieldSchema,
 } from "./typedTreeSchema";
 
 export { ViewSchema } from "./view";
