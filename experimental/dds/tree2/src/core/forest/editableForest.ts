@@ -41,8 +41,7 @@ export interface IEditableForest extends IForestSubscription {
 	 * @remarks
 	 * Mutating the forest does NOT update anchors.
 	 * The visitor must be released after use by calling {@link DeltaVisitor.free} on it.
-	 * It is invalid to acquire a visitor without releasing the previous one,
-	 * and this method will throw an error if this is attempted.
+	 * It is invalid to acquire a visitor without releasing the previous one.
 	 */
 	acquireVisitor(): DeltaVisitor;
 }

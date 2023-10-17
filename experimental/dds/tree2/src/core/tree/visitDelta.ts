@@ -142,7 +142,7 @@ function transferRoots(
 export interface DeltaVisitor {
 	/**
 	 * Frees/releases the visitor. Must be called once the visitor is no longer needed, since trying to acquire
-	 * a new one before freeing an existing one will result in an error being thrown.
+	 * a new one before freeing an existing one is invalid.
 	 */
 	free(): void;
 	/**
@@ -185,7 +185,7 @@ export interface DeltaVisitor {
 	replace(newContentSource: FieldKey, range: Range, oldContentDestination: FieldKey): void;
 
 	/**
-	 * Tells the visitor's "owner" that it should update its "current location" to be the Node at the specified index
+	 * Tells the visitor that it should update its "current location" to be the Node at the specified index
 	 * within the Field that is the current "current location".
 	 * Future calls to methods of {@link DeltaVisitor} will assume that's the location where their effects are happening.
 	 * @param index - The index (within the Field) of the node that should become the new "current location".
@@ -195,21 +195,17 @@ export interface DeltaVisitor {
 	enterNode(index: NodeIndex): void;
 
 	/**
-	 * Tells the visitor's "owner" that it should update its "current location" to be the Field which contains the Node
+	 * Tells the visitor that it should update its "current location" to be the Field which contains the Node
 	 * that is the current "current location".
 	 * Future calls to methods of {@link DeltaVisitor} will assume that's the location where their effects are happening.
-	 * @param index - NOT USED.
+	 * @param index - The index (within its Field) of the node that is being exited.
 	 *
 	 * @remarks This should only be called when the "current location" is a Node.
-	 *
-	 * @privateremarks
-	 * TODO: Should the `index` parameter be removed? When exiting a Node you can only go to the Field that
-	 * contains it, so no need to specify an index (as opposed to going into a Node from the Field)?
 	 */
 	exitNode(index: NodeIndex): void;
 
 	/**
-	 * Tells the visitor's "owner" that it should update its "current location" to be the Field with the specified key,
+	 * Tells the visitor that it should update its "current location" to be the Field with the specified key,
 	 * within the Node that is the current "current location".
 	 * Future calls to methods of {@link DeltaVisitor} will assume that's the location where their effects are happening.
 	 * @param key - The key of the field that should become the new "current location".
@@ -219,16 +215,12 @@ export interface DeltaVisitor {
 	enterField(key: FieldKey): void;
 
 	/**
-	 * Tells the visitor's "owner" that it should update its "current location" to be the Node which contains the Field
+	 * Tells the visitor that it should update its "current location" to be the Node which contains the Field
 	 * that is the current "current location".
 	 * Future calls to methods of {@link DeltaVisitor} will assume that's the location where their effects are happening.
-	 * @param key - NOT USED.
+	 * @param key - The key of the field that is being exited.
 	 *
 	 * @remarks This should only be called when the "current location" is a Field.
-	 *
-	 * @privateremarks
-	 * TODO: Should the `key` parameter be removed? When exiting a Field you can only go to the Node that
-	 * contains it, so no need to specify a key (as opposed to going into a Field from the Node)?
 	 */
 	exitField(key: FieldKey): void;
 }
