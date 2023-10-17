@@ -23,12 +23,11 @@ import { type IShimDeltaHandler } from "./types";
  * modifications on the current ChannelDeltaConnection.
  */
 export class ShimDeltaConnection implements IDeltaConnection {
-	public constructor(private readonly deltaConnection: IDeltaConnection) {}
-	private _handler: IShimDeltaHandler | undefined;
-	private get handler(): IShimDeltaHandler {
-		assert(this._handler !== undefined, "Missing delta handler");
-		return this._handler;
-	}
+	public constructor(
+		private readonly deltaConnection: IDeltaConnection,
+		private readonly shimDeltaHandler: IShimDeltaHandler,
+	) {}
+	private isShimDeltaHandlerAttachedToConnection = false;
 
 	public get connected(): boolean {
 		return this.deltaConnection.connected;
@@ -36,25 +35,29 @@ export class ShimDeltaConnection implements IDeltaConnection {
 
 	// Should we be adding some metadata here?
 	public submit(messageContent: unknown, localOpMetadata: unknown): void {
-		// The expectation is to currently add some form of V2 stamp to the metadata here that can eventually be
-		// ignored by a SharedObject V2
-		// TODO: stamp messageContent with V2 metadata
+		// TODO: stamp messageContent with V2 metadata - this is not the final implementation
+		this.shimDeltaHandler.stampV2Ops(messageContent);
 		this.deltaConnection.submit(messageContent, localOpMetadata);
 	}
 
-	// Note we have an option of also adding submit to the IShimDeltaHandler interface
-	// That way in the submit method above we could call this.handler.preSubmit(messageContent, localOpMetadata) to
-	// stamp the v2 ops properly.
-	public preAttach(handler: IShimDeltaHandler): void {
-		assert(this._handler === undefined, "Should only attempt to preAttach once!");
-		this._handler = handler;
-		this.deltaConnection.attach(handler);
+	// The underlying ChannelDeltaConnection can only attach one IDeltaHandler.
+	// Maybe we could do this in the constructor?
+	public attachShimDeltaHandler(): void {
+		assert(this.shimDeltaHandler.hasTreeDeltaHandler(), "No tree handler to process op");
+		this.deltaConnection.attach(this.shimDeltaHandler);
+		this.isShimDeltaHandlerAttachedToConnection = true;
 	}
 
 	// We only want to call attach on the underlying delta connection once, as we'll hit an assert if we call it twice.
 	// Note: SharedObject.load calls attach as well as SharedObject.connect
 	public attach(handler: IDeltaHandler): void {
-		this.handler.attach(handler);
+		// There are essentially two delta handlers that process ops, the shim delta handler to process shim ops
+		// preventing them from being processed by the tree delta handler, and the tree delta handler to process tree
+		// ops. Post migration v1 ops can be considered "shim" ops as they are dropped.
+		this.shimDeltaHandler.attachTreeDeltaHandler(handler);
+		if (!this.isShimDeltaHandlerAttachedToConnection) {
+			this.attachShimDeltaHandler();
+		}
 	}
 	public dirty(): void {
 		this.deltaConnection.dirty();
@@ -62,8 +65,6 @@ export class ShimDeltaConnection implements IDeltaConnection {
 
 	// This needs to be more thoroughly thought through. What happens when the source handle is changed?
 	public addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void {
-		if (this.deltaConnection.addedGCOutboundReference !== undefined) {
-			this.deltaConnection.addedGCOutboundReference(srcHandle, outboundHandle);
-		}
+		this.deltaConnection.addedGCOutboundReference?.(srcHandle, outboundHandle);
 	}
 }

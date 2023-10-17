@@ -25,9 +25,14 @@ export class SharedTreeShimDeltaHandler implements IShimDeltaHandler {
 		return handler;
 	}
 
-	public attach(handler: IDeltaHandler): void {
+	public attachTreeDeltaHandler(handler: IDeltaHandler): void {
 		assert(this._handler === undefined, "Should only be able to connect once!");
 		this._handler = handler;
+	}
+
+	public stampV2Ops(messageContent: unknown): void {}
+	public hasTreeDeltaHandler(): boolean {
+		return this._handler !== undefined;
 	}
 
 	public process(

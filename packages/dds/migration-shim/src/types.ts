@@ -10,10 +10,20 @@ import { type IDeltaHandler } from "@fluidframework/datastore-definitions";
  */
 export interface IShimDeltaHandler extends IDeltaHandler {
 	/**
-	 * Attaches a delta handler to this attachable delta handler.
-	 * @param handler - The delta handler to attach.
+	 * Provide the real tree delta handler (either legacy or new) to the shim that will be used to process the tree ops.
+	 * @param treeDeltaHandler - The appropriate tree delta handler.
 	 */
-	attach(handler: IDeltaHandler): void;
+	attachTreeDeltaHandler(treeDeltaHandler: IDeltaHandler): void;
 
-	// TODO: preSubmit(messageContent: unknown, localOpMetadata: unknown): void; ?
+	/**
+	 * Allows the handler to preprocess the message content (aka stamp the v2 ops) before submitting.
+	 * @param messageContent - the content that needs stamping
+	 */
+	stampV2Ops(messageContent: unknown): void;
+
+	/**
+	 * The delta handler needs to be attached to the IShimDeltaHandler before attaching it to the delta connection.
+	 * Otherwise the IShimDeltaHandler will not be able to process ops.
+	 */
+	hasTreeDeltaHandler(): boolean;
 }
