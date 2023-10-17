@@ -414,8 +414,7 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 				setPairedMarkStatus(
 					moveEffects,
 					CrossFieldTarget.Destination,
-					rebasedMark.revision,
-					rebasedMark.id,
+					getEndpoint(rebasedMark, undefined),
 					rebasedMark.count,
 					PairedMarkUpdate.Deactivated,
 				);
@@ -423,8 +422,7 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 				setPairedMarkStatus(
 					moveEffects,
 					CrossFieldTarget.Source,
-					rebasedMark.revision,
-					rebasedMark.id,
+					getEndpoint(rebasedMark, undefined),
 					rebasedMark.count,
 					PairedMarkUpdate.Reactivated,
 				);
@@ -442,8 +440,7 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 				setPairedMarkStatus(
 					moveEffects,
 					CrossFieldTarget.Destination,
-					rebasedMark.revision,
-					rebasedMark.id,
+					getEndpoint(rebasedMark, undefined),
 					rebasedMark.count,
 					PairedMarkUpdate.Reactivated,
 				);
@@ -451,8 +448,7 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 				setPairedMarkStatus(
 					moveEffects,
 					CrossFieldTarget.Source,
-					rebasedMark.revision,
-					rebasedMark.id,
+					getEndpoint(rebasedMark, undefined),
 					rebasedMark.count,
 					PairedMarkUpdate.Deactivated,
 				);
@@ -532,8 +528,7 @@ function sendMarkToDest<T>(
 function setPairedMarkStatus(
 	moveEffects: MoveEffectTable<unknown>,
 	target: CrossFieldTarget,
-	revision: RevisionTag | undefined,
-	id: MoveId,
+	{ revision, localId: id }: ChangeAtomId,
 	count: number,
 	status: PairedMarkUpdate,
 ) {

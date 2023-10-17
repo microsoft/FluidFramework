@@ -774,4 +774,38 @@ describe("SequenceField - Rebase", () => {
 		const expected = Change.intentionalRevive(1, 1, { revision: tag2, localId: brand(2) });
 		assert.deepEqual(rebased, expected);
 	});
+
+	it("[move, move] ↷ delete", () => {
+		const del = Change.delete(0, 1);
+		const move = [
+			Mark.moveOut(1, brand(0), {
+				finalEndpoint: { localId: brand(1) },
+			}),
+			{ count: 1 },
+			Mark.transient(Mark.moveIn(1, brand(0)), Mark.moveOut(1, brand(1))),
+			{ count: 1 },
+			Mark.moveIn(1, brand(1), { finalEndpoint: { localId: brand(0) } }),
+		];
+
+		const rebased = rebase(move, del);
+		const expected = [
+			Mark.moveOut(1, brand(0), {
+				cellId: {
+					revision: tag1,
+					localId: brand(0),
+					adjacentCells: [{ id: brand(0), count: 1 }],
+				},
+				finalEndpoint: { localId: brand(1) },
+			}),
+			{ count: 1 },
+			Mark.transient(Mark.moveIn(1, brand(0)), Mark.moveOut(1, brand(1))),
+			{ count: 1 },
+			Mark.moveIn(1, brand(1), {
+				finalEndpoint: { localId: brand(0) },
+				isSrcConflicted: true,
+			}),
+		];
+
+		assert.deepEqual(rebased, expected);
+	});
 });
