@@ -9,7 +9,7 @@ import { ExtractorConfig } from "@microsoft/api-extractor";
 import { CommandLogger } from "../../logging";
 import path from "node:path";
 import { strict as assert } from "node:assert";
-import * as fs from "fs";
+import * as fs from "node:fs";
 
 /**
  * Represents a list of package categorized into two arrays
@@ -30,6 +30,7 @@ const knownDtsKinds = ["alpha", "beta", "public", "untrimmed"] as const;
 type DtsKind = (typeof knownDtsKinds)[number];
 
 function isDtsKind(str: string | undefined): str is DtsKind {
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
 	return str === undefined ? false : knownDtsKinds.includes(str as any);
 }
 
@@ -129,21 +130,26 @@ function updatePackageJsonTypes(
 			let filePath = "";
 
 			switch (dTsType) {
-				case "alpha":
+				case "alpha": {
 					filePath = extractorConfig.alphaTrimmedFilePath;
 					break;
-				case "beta":
+				}
+				case "beta": {
 					filePath = extractorConfig.betaTrimmedFilePath;
 					break;
-				case "public":
+				}
+				case "public": {
 					filePath = extractorConfig.publicTrimmedFilePath;
 					break;
-				case "untrimmed":
+				}
+				case "untrimmed": {
 					filePath = extractorConfig.untrimmedFilePath;
 					break;
-				default:
+				}
+				default: {
 					log.errorLog(`${dTsType} is not a valid value.`);
 					break;
+				}
 			}
 
 			if (filePath) {

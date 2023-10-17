@@ -17,6 +17,9 @@ import { SharedString } from "../sharedString";
 import { SequencePlace, endpointPosAndSide } from "../intervalCollection";
 import { IntervalIndex } from "./intervalIndex";
 
+/**
+ * @public
+ */
 export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 	extends IntervalIndex<TInterval> {
 	/**
@@ -36,6 +39,9 @@ export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInter
 	): void;
 }
 
+/**
+ * @public
+ */
 export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 	implements IOverlappingIntervalsIndex<TInterval>
 {
@@ -170,6 +176,9 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 	}
 }
 
+/**
+ * @public
+ */
 export function createOverlappingIntervalsIndex(
 	sharedString: SharedString,
 ): IOverlappingIntervalsIndex<SequenceInterval> {

@@ -28,7 +28,7 @@ import { brand, brandOpaque, Mutable } from "../../util";
 import { testChangeReceiver } from "../utils";
 // eslint-disable-next-line import/no-internal-modules
 import { ModularChangeFamily } from "../../feature-libraries/modular-schema/modularChangeFamily";
-import { jsonNumber } from "../../domains";
+import { leaf } from "../../domains";
 // eslint-disable-next-line import/no-internal-modules
 import { sequence } from "../../feature-libraries/default-field-kinds/defaultFieldKinds";
 // eslint-disable-next-line import/no-internal-modules
@@ -119,7 +119,7 @@ describe("ModularChangeFamily integration", () => {
 			);
 
 			const newValue = "new value";
-			const newNode = singleTextCursor({ type: jsonNumber.name, value: newValue });
+			const newNode = singleTextCursor({ type: leaf.number.name, value: newValue });
 			editor
 				.sequenceField({
 					parent: { parent: undefined, parentField: fieldB, parentIndex: 0 },
@@ -138,7 +138,16 @@ describe("ModularChangeFamily integration", () => {
 							count: 1,
 							moveId: brand(0),
 							fields: new Map([
-								[fieldC, [{ type: Delta.MarkType.Insert, content: [newNode] }]],
+								[
+									fieldC,
+									[
+										{
+											type: Delta.MarkType.Insert,
+											buildId: { minor: 1 },
+											content: [newNode],
+										},
+									],
+								],
 							]),
 						},
 					],
@@ -162,7 +171,7 @@ describe("ModularChangeFamily integration", () => {
 			);
 
 			const newValue = "new value";
-			const newNode = singleTextCursor({ type: jsonNumber.name, value: newValue });
+			const newNode = singleTextCursor({ type: leaf.number.name, value: newValue });
 			editor
 				.sequenceField({
 					parent: { parent: undefined, parentField: fieldB, parentIndex: 0 },
@@ -190,7 +199,16 @@ describe("ModularChangeFamily integration", () => {
 						{
 							type: Delta.MarkType.Modify,
 							fields: new Map([
-								[fieldC, [{ type: Delta.MarkType.Insert, content: [newNode] }]],
+								[
+									fieldC,
+									[
+										{
+											type: Delta.MarkType.Insert,
+											buildId: { major: tag2, minor: 1 },
+											content: [newNode],
+										},
+									],
+								],
 							]),
 						},
 					],

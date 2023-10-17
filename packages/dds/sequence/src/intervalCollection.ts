@@ -88,6 +88,7 @@ import {
  * If a SequencePlace is the endpoint of a range (e.g. start/end of an interval or search range),
  * the Side value means it is exclusive if it is nearer to the other position and inclusive if it is farther.
  * E.g. the start of a range with Side.After is exclusive of the character at the position.
+ * @public
  */
 export type SequencePlace = number | "start" | "end" | InteriorSequencePlace;
 
@@ -95,6 +96,7 @@ export type SequencePlace = number | "start" | "end" | InteriorSequencePlace;
  * A sequence place that does not refer to the special endpoint segments.
  *
  * See {@link SequencePlace} for additional context.
+ * @public
  */
 export interface InteriorSequencePlace {
 	pos: number;
@@ -105,6 +107,7 @@ export interface InteriorSequencePlace {
  * Defines a side relative to a character in a sequence.
  *
  * @remarks See {@link SequencePlace} for additional context on usage.
+ * @public
  */
 export enum Side {
 	Before = 0,
@@ -620,6 +623,9 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<
 	]);
 }
 
+/**
+ * @public
+ */
 export type DeserializeCallback = (properties: PropertySet) => void;
 
 class IntervalCollectionIterator<TInterval extends ISerializableInterval>
@@ -657,6 +663,7 @@ class IntervalCollectionIterator<TInterval extends ISerializableInterval>
 
 /**
  * Change events emitted by `IntervalCollection`s
+ * @public
  */
 export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> extends IEvent {
 	/**
@@ -724,6 +731,7 @@ const isSequencePlace = (place: any): place is SequencePlace => {
 /**
  * Collection of intervals that supports addition, modification, removal, and efficient spatial querying.
  * Changes to this collection will be incur updates on collaborating clients (i.e. they are not local-only).
+ * @public
  */
 export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
@@ -1242,9 +1250,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 		if (isSequencePlace(start)) {
 			intStart = start;
-			assert(end !== undefined, "end must be defined");
+			assert(end !== undefined, 0x7c0 /* end must be defined */);
 			intEnd = end;
-			assert(intervalType !== undefined, "intervalType must be defined");
+			assert(intervalType !== undefined, 0x7c1 /* intervalType must be defined */);
 			type = intervalType;
 			properties = props;
 		} else {
@@ -2024,6 +2032,7 @@ function setSlideOnRemove(lref: LocalReferencePosition) {
 
 /**
  * Information that identifies an interval within a `Sequence`.
+ * @public
  */
 export interface IntervalLocator {
 	/**
@@ -2041,6 +2050,7 @@ export interface IntervalLocator {
  * @returns undefined if the reference position is not the endpoint of any interval (e.g. it was created
  * on the merge tree directly by app code), otherwise an {@link IntervalLocator} for the interval this
  * endpoint is a part of.
+ * @public
  */
 export function intervalLocatorFromEndpoint(
 	potentialEndpoint: LocalReferencePosition,

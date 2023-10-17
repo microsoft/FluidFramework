@@ -8,7 +8,6 @@ import {
 	fail,
 	FieldKinds,
 	FieldSchema,
-	ValueSchema,
 	SchemaBuilder,
 	FieldKind,
 	Any,
@@ -16,6 +15,7 @@ import {
 	LazyTreeSchema,
 	brand,
 	Brand,
+	leaf,
 } from "@fluid-experimental/tree2";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 import { TypeIdHelper } from "@fluid-experimental/property-changeset";
@@ -27,6 +27,7 @@ const basePropertyType = "BaseProperty";
 const booleanType = "Bool";
 const stringType = "String";
 const enumType = "Enum";
+const numberType = "Float64";
 const numberTypes = new Set<string>([
 	"Int8",
 	"Int16",
@@ -37,7 +38,7 @@ const numberTypes = new Set<string>([
 	"Uint32",
 	"Uint64",
 	"Float32",
-	"Float64",
+	numberType,
 	enumType,
 ]);
 const primitiveTypes = new Set([...numberTypes, booleanType, stringType, referenceType]);
@@ -255,23 +256,24 @@ function buildPrimitiveSchema(
 	typeid: string,
 	isEnum?: boolean,
 ): TreeSchema {
-	let valueSchema: ValueSchema;
-	if (
-		typeid === stringType ||
-		typeid.startsWith(referenceGenericTypePrefix) ||
-		typeid === referenceType
-	) {
-		valueSchema = ValueSchema.String;
+	let treeSchema: TreeSchema;
+	if (typeid === stringType) {
+		treeSchema = leaf.string;
+	} else if (typeid.startsWith(referenceGenericTypePrefix) || typeid === referenceType) {
+		// Strongly typed wrapper around a string
+		treeSchema = builder.fieldNode(typeid, leaf.string);
 	} else if (typeid === booleanType) {
-		valueSchema = ValueSchema.Boolean;
+		treeSchema = leaf.boolean;
+	} else if (typeid === numberType) {
+		treeSchema = leaf.number;
 	} else if (numberTypes.has(typeid) || isEnum) {
-		valueSchema = ValueSchema.Number;
+		// Strongly typed wrapper around a number
+		treeSchema = builder.fieldNode(typeid, leaf.number);
 	} else {
 		// If this case occurs, there is definetely a problem with the ajv template,
 		// as unknown primitives should be issued there otherwise.
 		fail(`Unknown primitive typeid "${typeid}"`);
 	}
-	const treeSchema = builder.leaf(typeid, valueSchema);
 	treeSchemaMap.set(typeid, treeSchema);
 	return treeSchema;
 }
@@ -300,12 +302,13 @@ function buildFieldSchema<Kind extends FieldKind = FieldKind>(
 	}
 	return isAny
 		? SchemaBuilder.field(fieldKind, Any)
-		: SchemaBuilder.field(fieldKind, ...allowedTypes);
+		: SchemaBuilder.field(fieldKind, [...allowedTypes]);
 }
 
 const builtinBuilder = new SchemaBuilder({
 	scope: "com.fluidframework.PropertyDDSBuiltIn",
 	name: "PropertyDDS to SharedTree builtin schema builder",
+	libraries: [leaf.library],
 });
 // TODO:
 // It might make sense for all builtins (not specific to the particular schema being processed),
@@ -317,7 +320,7 @@ export const nodePropertySchema = builtinBuilder.map(
 const builtinLibrary = builtinBuilder.finalize();
 
 /**
- * Creates a TypedSchemaCollection out of PropertyDDS schema templates.
+ * Creates a DocumentSchema out of PropertyDDS schema templates.
  * The templates must be registered beforehand using {@link PropertyFactory.register}.
  * @param rootFieldKind - The kind of the root field.
  * @param allowedRootTypes - The types of children nodes allowed for the root field.

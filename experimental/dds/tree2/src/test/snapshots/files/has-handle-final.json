@@ -51,6 +51,9 @@
                                       "type": "__fluid_handle__",
                                       "url": "/test/test"
                                     }
+                                  },
+                                  "buildId": {
+                                    "localId": 1
                                   }
                                 }
                               }
@@ -90,6 +93,11 @@
                       "name": "com.fluidframework.leaf.handle",
                       "structFields": [],
                       "leafValue": 3
+                    },
+                    {
+                      "name": "com.fluidframework.leaf.null",
+                      "structFields": [],
+                      "leafValue": 4
                     },
                     {
                       "name": "com.fluidframework.leaf.number",

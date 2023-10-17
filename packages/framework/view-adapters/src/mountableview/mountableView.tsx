@@ -14,6 +14,8 @@ import * as ReactDOM from "react-dom";
  * The MountableView must be applied from within the same bundle that provides the view, and then that MountableView
  * can be used by a separate bundle.  Attempting to apply a MountableView to a view that was retrieved from a separate
  * bundle is not supported.
+ *
+ * @public
  */
 export class MountableView implements IFluidMountableView {
 	public get IFluidMountableView(): MountableView {

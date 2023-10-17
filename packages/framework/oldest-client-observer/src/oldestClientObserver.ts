@@ -67,6 +67,8 @@ import {
  *     console.log("I'm not the oldest anymore");
  * });
  * ```
+ *
+ * @public
  */
 export class OldestClientObserver
 	extends TypedEventEmitter<IOldestClientObserverEvents>

@@ -5,22 +5,22 @@
 
 import { strict as assert } from "assert";
 import {
-	SchemaBuilder,
 	createMockNodeKeyManager,
 	StableNodeKey,
 	LocalNodeKey,
 	nodeKeyFieldKey,
 	NodeKeyManager,
 } from "../../../feature-libraries";
-import { nodeKeyField, nodeKeySchema } from "../../../domains";
-import { ValueSchema } from "../../../core";
+import { leaf, nodeKeyField, nodeKeySchema, SchemaBuilder } from "../../../domains";
 import { treeWithContent } from "../../utils";
 
-const builder = new SchemaBuilder({ scope: "EditableTree Node Keys", libraries: [nodeKeySchema] });
-const stringSchema = builder.leaf("string", ValueSchema.String);
+const builder = new SchemaBuilder({
+	scope: "EditableTree Node Keys",
+	libraries: [nodeKeySchema],
+});
 const childNodeSchema = builder.struct("ChildNode", {
 	...nodeKeyField,
-	name: stringSchema,
+	name: leaf.string,
 });
 
 const parentNodeSchema = builder.struct("ParentNode", {

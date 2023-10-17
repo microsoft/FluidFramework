@@ -64,7 +64,10 @@ export function visitDelta(
 		for (const insert of creations) {
 			creations.delete(insert);
 			const firstRoot = insertToRootId.get(insert);
-			assert(firstRoot !== undefined, "Expected to find a root ID for the creation");
+			assert(
+				firstRoot !== undefined,
+				0x7ac /* Expected to find a root ID for the creation */,
+			);
 			for (let i = 0; i < insert.content.length; i += 1) {
 				const root: ForestRootId = brand(firstRoot + i);
 				const field = detachedFieldIndex.toFieldKey(root);
@@ -271,7 +274,7 @@ function ensureCreation(mark: Delta.Insert, config: PassConfig): ForestRootId {
 	if (existing !== undefined) {
 		return existing;
 	}
-	const { root } = config.detachedFieldIndex.createEntry(undefined, mark.content.length);
+	const { root } = config.detachedFieldIndex.createEntry(mark.buildId, mark.content.length);
 	config.insertToRootId.set(mark, root);
 	config.creations.add(mark);
 	return root;
@@ -331,7 +334,7 @@ interface Replace {
 		 * The node ID entry associated with the content.
 		 * Undefined for created content.
 		 */
-		readonly nodeId?: Delta.DetachedNodeId;
+		readonly nodeId: Delta.DetachedNodeId | undefined;
 		/**
 		 * Modifications to the new content.
 		 */
@@ -433,6 +436,7 @@ function asReplaces(
 					const replace: Mutable<Replace> = {};
 					if (mark.detachId === undefined) {
 						replace.newContent = {
+							nodeId: offsetDetachId(mark.buildId, i),
 							source: brand(newContentSource + i),
 							fields: mark.fields,
 						};
@@ -542,7 +546,7 @@ function catalogAttachPassRootChanges(mark: Exclude<Delta.Mark, number>, config:
 				const rootSource = config.insertToRootId.get(mark);
 				assert(
 					rootSource !== undefined,
-					"content should've been created in the detach pass",
+					0x7ad /* content should've been created in the detach pass */,
 				);
 				nodeId = mark.detachId;
 				fields = mark.fields;

@@ -77,6 +77,8 @@ export type MatrixItem<T> = Serializable<Exclude<T, null>> | undefined;
  * matrix data and physically stores data in Z-order to leverage CPU caches and
  * prefetching when reading in either row or column major order.  (See README.md
  * for more details.)
+ *
+ * @public
  */
 export class SharedMatrix<T = any>
 	extends SharedObject

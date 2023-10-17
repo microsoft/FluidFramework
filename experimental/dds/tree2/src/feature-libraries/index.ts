@@ -139,7 +139,7 @@ export {
 	TreeSchema,
 	AllowedTypes,
 	FieldSchema,
-	TypedSchemaCollection,
+	DocumentSchema,
 	Any,
 	SchemaLibraryData,
 	LazyTreeSchema,
@@ -158,18 +158,23 @@ export {
 	fieldApiPrefixes,
 	validateStructFieldName,
 	Unenforced,
+	AllowedTypeSet,
+	markEager,
+	MapFieldSchema,
 } from "./typed-schema";
 
-export { SchemaBuilderBase, SchemaLibrary } from "./schemaBuilderBase";
 export {
-	SchemaBuilder,
-	SchemaBuilderInternal,
+	SchemaBuilderBase,
+	SchemaLibrary,
 	ImplicitFieldSchema,
 	NormalizeField,
-	DefaultFieldKind,
 	ImplicitAllowedTypes,
 	NormalizeAllowedTypes,
-} from "./schemaBuilder";
+	SchemaBuilderOptions,
+	normalizeAllowedTypes,
+	normalizeField,
+} from "./schemaBuilderBase";
+export { SchemaBuilderInternal } from "./schemaBuilder";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
 
@@ -197,7 +202,7 @@ export {
 	FieldKinds,
 	Required,
 	Optional,
-	Sequence,
+	Sequence as SequenceFieldKind,
 	NodeKeyFieldKind,
 	Forbidden,
 	DefaultChangeset,
@@ -228,6 +233,7 @@ export {
 } from "./untypedTree";
 
 export {
+	AssignableFieldKinds,
 	FieldNode,
 	FlexibleFieldContent,
 	FlexibleNodeContent,
@@ -236,7 +242,7 @@ export {
 	MapNode,
 	OptionalField,
 	RequiredField,
-	Sequence as Sequence2,
+	Sequence,
 	Skip,
 	Struct,
 	StructTyped,
@@ -251,6 +257,18 @@ export {
 	boxedIterator,
 	CheckTypesOverlap,
 	TreeStatus,
+	getProxyForField,
+	ObjectFields,
+	ProxyField,
+	ProxyFieldInner,
+	ProxyNode,
+	ProxyNodeUnion,
+	SharedTreeList,
+	SharedTreeMap,
+	SharedTreeObject,
+	is,
+	ProxyRoot,
+	Typed,
 } from "./editable-tree-2";
 
 // Split into separate import and export for compatibility with API-Extractor.
