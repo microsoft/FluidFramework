@@ -20,11 +20,14 @@ interface HandlerExclusions {
 }
 
 interface CheckPolicyCommandProperties {
-  pathRegex: RegExp,
-  exclusions: RegExp[],
-  handlers: Handler[],
-  handlerExclusions: HandlerExclusions,
-  gitRoot: string,
+	/**
+	 * A regular expression
+	 */
+	pathRegex: RegExp;
+	exclusions: RegExp[];
+	handlers: Handler[];
+	handlerExclusions: HandlerExclusions;
+	gitRoot: string;
 }
 
 /**
@@ -149,7 +152,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 
 		const filePathsToCheck: string[] = [];
 		const context = await this.getContext();
-		const pathToGitRoot = context.repo.resolvedRoot;
+		const gitRoot = context.repo.resolvedRoot;
 
 		if (this.flags.stdin) {
 			const stdInput = await readStdin();
@@ -158,7 +161,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 				filePathsToCheck.push(...stdInput.split("\n"));
 			}
 		} else {
-			const repo = new Repository({ baseDir: pathToGitRoot });
+			const repo = new Repository({ baseDir: gitRoot });
 			const gitFiles = await repo.gitClient.raw(
 				"ls-files",
 				"-co",
@@ -169,32 +172,26 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 			filePathsToCheck.push(...gitFiles.split("\n"));
 		}
 
-		await this.executePolicy(
-			filePathsToCheck,
+		const config: CheckPolicyCommandProperties = {
 			pathRegex,
 			exclusions,
-			handlersToRun,
+			handlers: handlersToRun,
 			handlerExclusions,
-			pathToGitRoot,
-		);
+			gitRoot,
+		};
+
+		await this.executePolicy(filePathsToCheck, config);
 	}
 
-	// eslint-disable-next-line max-params
 	private async executePolicy(
 		pathsToCheck: string[],
-		pathRegex: RegExp,
-		exclusions: RegExp[],
-		handlers: Handler[],
-		handlerExclusions: HandlerExclusions,
-		gitRoot: string,
+		config: CheckPolicyCommandProperties,
 	): Promise<void> {
 		try {
-			pathsToCheck.map((line: string) =>
-				this.handleLine(line, pathRegex, exclusions, handlers, handlerExclusions, gitRoot),
-			);
+			pathsToCheck.map((line: string) => this.handleLine(line, config));
 		} finally {
 			try {
-				runPolicyCheck(handlers, this.flags.fix, gitRoot);
+				runPolicyCheck(config, this.flags.fix);
 			} finally {
 				this.logStats();
 			}
@@ -203,12 +200,9 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 
 	// route files to their handlers by regex testing their full paths
 	// synchronize output, exit code, and resolve decision for all handlers
-	private routeToHandlers(
-		file: string,
-		handlers: Handler[],
-		handlerExclusions: HandlerExclusions,
-		gitRoot: string,
-	): void {
+	private routeToHandlers(file: string, config: CheckPolicyCommandProperties): void {
+		const { handlers, handlerExclusions, gitRoot } = config;
+
 		handlers
 			.filter((handler) => handler.match.test(file))
 			// eslint-disable-next-line unicorn/no-array-for-each
@@ -266,15 +260,9 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		}
 	}
 
-	// eslint-disable-next-line max-params
-	private handleLine(
-		line: string,
-		pathRegex: RegExp,
-		exclusions: RegExp[],
-		handlers: Handler[],
-		handlerExclusions: HandlerExclusions,
-		gitRoot: string,
-	): void {
+	private handleLine(line: string, config: CheckPolicyCommandProperties): void {
+		const { exclusions, gitRoot, pathRegex } = config;
+
 		const filePath = path.join(gitRoot, line).trim().replace(/\\/g, "/");
 
 		if (!pathRegex.test(line) || !fs.existsSync(filePath)) {
@@ -288,7 +276,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		}
 
 		try {
-			this.routeToHandlers(filePath, handlers, handlerExclusions, gitRoot);
+			this.routeToHandlers(filePath, config);
 		} catch (error: unknown) {
 			throw new Error(`Line error: ${error}`);
 		}
@@ -310,11 +298,12 @@ function runWithPerf<T>(name: string, action: policyAction, run: () => T): T {
 	return result;
 }
 
-function runPolicyCheck(handlers: Handler[], fix: boolean, pathToGitRoot: string): void {
+function runPolicyCheck(config: CheckPolicyCommandProperties, fix: boolean): void {
+	const { gitRoot, handlers } = config;
 	for (const h of handlers) {
 		const { final } = h;
 		if (final) {
-			const result = runWithPerf(h.name, "final", () => final(pathToGitRoot, fix));
+			const result = runWithPerf(h.name, "final", () => final(gitRoot, fix));
 			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 			if (result?.error) {
 				throw new Error(result.error);
@@ -342,4 +331,3 @@ async function readStdin(): Promise<string> {
 		}
 	});
 }
-
