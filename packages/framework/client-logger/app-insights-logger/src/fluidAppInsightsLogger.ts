@@ -11,21 +11,27 @@ import {
 
 /**
  * An Enum of Fluid telemetry event categories
+ *
+ * @public
  */
 export const TelemetryEventCategory = {
-	PERFORMANCE: "performance",
-	GENERIC: "generic",
-	ERROR: "error",
+	Performance: "performance",
+	Generic: "generic",
+	Error: "error",
 } as const;
 
 /**
- * The type for the enum of Fluid telemetry event categories
+ * {@inheritDoc (TelemetryEventCategory:variable)}
+ *
+ * @public
  */
 export type TelemetryEventCategory =
 	(typeof TelemetryEventCategory)[keyof typeof TelemetryEventCategory];
 
 /**
  * The configuration object for the {@link FluidAppInsightsLogger}
+ *
+ * @public
  */
 export interface FluidAppInsightsLoggerConfig {
 	filterConfig: {
@@ -39,7 +45,7 @@ export interface FluidAppInsightsLoggerConfig {
 		mode: "inclusive" | "exclusive";
 		/**
 		 * Controls the default filtering of log events by their category.
-		 * This can be overriden with namespace level filters
+		 * This can be overriden with namespace level filters.
 		 */
 		filters?: TelemetryFilter[];
 	};
@@ -48,6 +54,8 @@ export interface FluidAppInsightsLoggerConfig {
 /**
  * Object used with an {@link FluidAppInsightsLoggerConfig}
  * to define logic for filtering of telemetry events
+ *
+ * @public
  */
 export interface TelemetryFilter {
 	/**

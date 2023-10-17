@@ -61,7 +61,7 @@ describe("Telemetry Filter - filter mode", () => {
 		});
 
 		const perfCategoryEvent = {
-			category: TelemetryEventCategory.PERFORMANCE,
+			category: TelemetryEventCategory.Performance,
 			eventName: "perfCategoryEventName",
 		};
 
@@ -81,7 +81,7 @@ describe("Telemetry Filter - filter mode", () => {
 		});
 
 		const perfCategoryEvent = {
-			category: TelemetryEventCategory.PERFORMANCE,
+			category: TelemetryEventCategory.Performance,
 			eventName: "perfCategoryEventName",
 		};
 		for (let i = 0; i < 10; i++) {
@@ -114,25 +114,25 @@ describe("Telemetry Filter - Category filtering", () => {
 				mode: "exclusive",
 				filters: [
 					{
-						category: TelemetryEventCategory.PERFORMANCE,
+						category: TelemetryEventCategory.Performance,
 					},
 					{
-						category: TelemetryEventCategory.GENERIC,
+						category: TelemetryEventCategory.Generic,
 					},
 				],
 			},
 		});
 
 		const errorCategoryEvent = {
-			category: TelemetryEventCategory.ERROR,
+			category: TelemetryEventCategory.Error,
 			eventName: "errorCategoryEventName",
 		};
 		const perfCategoryEvent = {
-			category: TelemetryEventCategory.PERFORMANCE,
+			category: TelemetryEventCategory.Performance,
 			eventName: "perfCategoryEventName",
 		};
 		const genericCategoryEvent = {
-			category: TelemetryEventCategory.GENERIC,
+			category: TelemetryEventCategory.Generic,
 			eventName: "genericCategoryEventName",
 		};
 
@@ -161,25 +161,25 @@ describe("Telemetry Filter - Category filtering", () => {
 				mode: "inclusive",
 				filters: [
 					{
-						category: TelemetryEventCategory.PERFORMANCE,
+						category: TelemetryEventCategory.Performance,
 					},
 					{
-						category: TelemetryEventCategory.GENERIC,
+						category: TelemetryEventCategory.Generic,
 					},
 				],
 			},
 		});
 
 		const errorCategoryEvent = {
-			category: TelemetryEventCategory.ERROR,
+			category: TelemetryEventCategory.Error,
 			eventName: "errorCategoryEventName",
 		};
 		const perfCategoryEvent = {
-			category: TelemetryEventCategory.PERFORMANCE,
+			category: TelemetryEventCategory.Performance,
 			eventName: "perfCategoryEventName",
 		};
 		const genericCategoryEvent = {
-			category: TelemetryEventCategory.GENERIC,
+			category: TelemetryEventCategory.Generic,
 			eventName: "genericCategoryEventName",
 		};
 
