@@ -3,15 +3,29 @@
  * Licensed under the MIT License.
  */
 
-/**
- * A symbol that, when attached to an object as a property and given a truthy value,
- * causes that object to be treated as an "eager" item in a `FlexList` even if it otherwise would have been considered to be "lazy".
- * @remarks
- * Used by `markEager`and `isMarkedEager`.
- */
+/** A symbol used to identify a `MarkedEager`. */
 const flexListEager = Symbol("FlexList Eager");
 
-/** Mark the given object as an "eager" item in a `FlexList`, regardless of its type. */
+/**
+ * An object that has been marked as eager (as opposed to lazy) when used as an item in a `FlexList`.
+ * It will be considered to be an eager item in a `FlexList` even if it is a function.
+ */
+interface MarkedEager {
+	[flexListEager]: true;
+}
+
+/** Returns true iff the given item is a function and is not a `MarkedEager`. */
+export function isLazy<Item>(item: LazyItem<Item>): item is () => Item {
+	return typeof item === "function" && (item as Partial<MarkedEager>)[flexListEager] !== true;
+}
+
+/**
+ * Mark the given object as an eager item in a `FlexList`.
+ * @remarks
+ * This only has an effect on function objects that would otherwise be considered to be lazy items in a `FlexList`.
+ * @param t - The object to mark as eager.
+ * @returns `t`, marked as eager if applicable.
+ */
 export function markEager<T>(t: T): T {
 	return isLazy(t)
 		? Object.defineProperty(t, flexListEager, {
@@ -23,16 +37,11 @@ export function markEager<T>(t: T): T {
 		: t;
 }
 
-/** Check if the given object has been marked "eager" via `markEager`. */
-function isMarkedEager(x: unknown): x is { [flexListEager]: true } {
-	return (x as { [flexListEager]?: boolean })[flexListEager] ?? false;
-}
-
 /**
  * A flexible way to list values.
- * Each item in the list can either be a **value** or a **function that returns a value** (the latter allows cyclic references to work).
+ * Each item in the list can either be an "eager" **value** or a "lazy" **function that returns a value** (the latter allows cyclic references to work).
  * @privateRemarks
- * By default, items that are of type `"function"` will be considered "lazy" and all other items will be considered eager.
+ * By default, items that are of type `"function"` will be considered lazy and all other items will be considered eager.
  * To force a `"function"` item to be treated as an eager item, call `markEager` before putting it in the list.
  * This is necessary e.g. when the eager list items are function types and the lazy items are functions that _return_ function types.
  * `FlexList`s are processed by `normalizeFlexList` and `normalizeFlexListEager`.
@@ -45,9 +54,6 @@ export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
  */
 export function normalizeFlexListLazy<List extends FlexList>(t: List): FlexListToLazyArray<List> {
 	return t.map((value: LazyItem) => {
-		if (isMarkedEager(value)) {
-			return () => value;
-		}
 		if (isLazy(value)) {
 			return value;
 		}
@@ -62,19 +68,12 @@ export function normalizeFlexListEager<List extends FlexList>(
 	t: List,
 ): FlexListToNonLazyArray<List> {
 	const data: readonly unknown[] = t.map((value: LazyItem) => {
-		if (isMarkedEager(value)) {
-			return value;
-		}
 		if (isLazy(value)) {
 			return value();
 		}
 		return value;
 	});
 	return data as FlexListToNonLazyArray<List>;
-}
-
-function isLazy<Item>(x: LazyItem<Item>): x is () => Item {
-	return typeof x === "function";
 }
 
 /**

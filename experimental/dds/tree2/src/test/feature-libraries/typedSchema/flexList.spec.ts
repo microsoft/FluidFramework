@@ -14,6 +14,7 @@ import {
 	normalizeFlexListEager,
 	markEager,
 	FlexList,
+	isLazy,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../../feature-libraries/typed-schema/flexList";
@@ -93,6 +94,13 @@ describe("FlexList", () => {
 	});
 
 	it("can mark functions as eager", () => {
+		const fn = () => 42;
+		assert.equal(isLazy(fn), true);
+		markEager(fn);
+		assert.equal(isLazy(fn), false);
+	});
+
+	it("correctly normalizes functions marked as eager", () => {
 		const eagerGenerator = markEager(() => 42);
 		const lazyGenerator = () => () => 42;
 		const list: FlexList<() => number> = [eagerGenerator, lazyGenerator];
